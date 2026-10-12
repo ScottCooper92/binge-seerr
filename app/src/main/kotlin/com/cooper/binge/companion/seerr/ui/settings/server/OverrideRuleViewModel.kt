@@ -184,9 +184,9 @@ class OverrideRuleViewModel
                         analytics.event(AnalyticsEvents.OVERRIDE_RULE_CHANGED, mapOf(AnalyticsEvents.PARAM_ACTION to "deleted"))
                         notify(EditorEvent.Deleted)
                     }.onFailure { failure ->
-                        // The change discarded above is gone, so the page reads the rule again rather than show a draft
-                        // that looks unsent and is not owed to anyone.
-                        reload()
+                        // An existing rule saves as made, so the change discarded above is gone: read the rule again rather
+                        // than show a draft that looks unsent. A rule created here has nothing discarded and no id to read.
+                        if (id != null) reload()
                         notify(EditorEvent.Failed(failure.toSeerrError()))
                     }
             }

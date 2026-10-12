@@ -360,6 +360,32 @@ class OverrideRuleViewModelTest {
             assertEquals(1, seerr.count("DELETE", "/api/v1/overrideRule/12"))
         }
 
+    /** A rule created on this page has no id to read again, so a failed delete leaves it as it is (#930). */
+    @Test
+    fun `a failed delete of a just-created rule keeps the rule on the page`() =
+        runTest {
+            seerr.serve("POST /api/v1/overrideRule", """{"id":12,"radarrServiceId":1,"users":"3"}""")
+            seerr.serve("DELETE /api/v1/overrideRule/12", """{"message":"nope"}""", code = 500)
+            val vm = viewModel(id = null)
+            vm.awaitReady()
+            vm.selectInstance(vm.awaitReady { it.extras.instances.isNotEmpty() }.extras.instances[0])
+            vm.awaitReady { it.extras.choices != null }
+            vm.toggleUser(3)
+            vm.toggleTag(2)
+            val saved = awaitEvent(vm.events)
+            vm.save()
+            assertEquals(EditorEvent.Saved, saved.await())
+            val created = vm.awaitReady { it.saved.id == 12 }
+
+            val failed = awaitEvent(vm.events)
+            vm.delete()
+            assertTrue(failed.await() is EditorEvent.Failed)
+            val after = vm.awaitReady()
+            assertEquals(created.draft, after.draft)
+            assertEquals(12, after.draft.id)
+            assertEquals(setOf(3), after.draft.userIds)
+        }
+
     /** An existing rule saves as it changes (#930): the saved rule with the change in it, after the delay, with no Save. */
     @Test
     fun `an existing rule writes a change as made, and keeps it through a failed write until a retry sends it`() =
