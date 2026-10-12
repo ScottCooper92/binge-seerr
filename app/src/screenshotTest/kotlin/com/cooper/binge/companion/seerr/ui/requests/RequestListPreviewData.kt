@@ -53,3 +53,15 @@ internal fun seasonListRow(): RequestItem =
         seasonNumbers = listOf(1, 2, 3),
         is4k = false,
     )
+
+/** A TV request with a title long enough to wrap, a long status, a year and one season: the row at its tallest. */
+internal fun longTitleTvRow(): RequestItem =
+    seasonListRow().copy(
+        id = 7,
+        title = "The Lord of the Rings: The Rings of Power",
+        requestedBy = "Scott",
+        requestedById = 1,
+        status = SeerrRequestStatusCode.Approved,
+        mediaStatus = SeerrMediaStatusCode.PartiallyAvailable,
+        seasonNumbers = listOf(1),
+    )

@@ -80,6 +80,12 @@ annotation class SeerrTabletPanesPreview
 @Preview(name = "font20", device = PHONE_PORTRAIT_SPEC, fontScale = 2f, uiMode = UI_MODE_NIGHT_YES, locale = SOURCE_LOCALE)
 annotation class SeerrFontScalePreviews
 
+/** A component at a phone's width and font scale 1.3, the size a phone's own "larger text" setting commonly lands on, between the 1.0 and 1.5 cells. */
+@PreviewWrapper(SeerrScreenshotThemeWrapper::class)
+@Preview(name = "font13-dark", widthDp = 411, fontScale = 1.3f, uiMode = UI_MODE_NIGHT_YES, locale = SOURCE_LOCALE)
+@Preview(name = "font13-light", widthDp = 411, fontScale = 1.3f, uiMode = UI_MODE_NIGHT_NO, locale = SOURCE_LOCALE)
+annotation class SeerrFontScale13ComponentPreviews
+
 /** One phone cell in Spanish, whose labels run longer than English ("Unblock" is "Desbloquear"). */
 @PreviewWrapper(SeerrScreenshotThemeWrapper::class)
 @Preview(name = "es", device = PHONE_PORTRAIT_SPEC, uiMode = UI_MODE_NIGHT_YES, locale = "es")

@@ -2,7 +2,6 @@ package com.cooper.binge.companion.seerr.ui.requests
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -46,6 +45,7 @@ import com.binge.designsystem.formatRelativeOrAbsolute
 import com.binge.designsystem.template.PagedPhase
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.data.ListRefresh
+import com.cooper.binge.companion.seerr.ui.WrappingRow
 import com.cooper.binge.companion.seerr.ui.state.EmptyScreen
 import com.cooper.binge.companion.seerr.ui.state.PagedPullToRefresh
 import com.cooper.binge.companion.seerr.ui.state.PullableMessage
@@ -209,12 +209,8 @@ private fun RequestRowMeta(
         ListRowHeader(title = item.title ?: stringResource(item.mediaType.labelRes()))
         Spacer(Modifier.height(gap))
         // Wraps rather than clips: the status chip carries a dot, and a long status beside the type, 4K and year
-        // would otherwise cut the year short.
-        FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(gap),
-            verticalArrangement = Arrangement.spacedBy(gap),
-            itemVerticalAlignment = Alignment.CenterVertically,
-        ) {
+        // would otherwise cut the year short. `WrappingRow`, not `FlowRow`, so the card counts every wrapped line.
+        WrappingRow(horizontalSpacing = gap, verticalSpacing = gap) {
             RequestStateChip(label = stringResource(chip.labelRes), tone = chip.tone)
             MediaTypeTag(type = item.mediaType.toTagType())
             if (item.is4k) {

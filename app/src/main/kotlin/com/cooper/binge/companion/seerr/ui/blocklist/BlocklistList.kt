@@ -2,7 +2,6 @@ package com.cooper.binge.companion.seerr.ui.blocklist
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -38,6 +37,7 @@ import com.binge.designsystem.formatRelativeOrAbsolute
 import com.binge.designsystem.template.PagedPhase
 import com.binge.designsystem.template.screenListPadding
 import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.ui.WrappingRow
 import com.cooper.binge.companion.seerr.ui.requests.PagedAppendState
 import com.cooper.binge.companion.seerr.ui.requests.PagedRefreshError
 import com.cooper.binge.companion.seerr.ui.requests.labelRes
@@ -196,9 +196,9 @@ private fun BlocklistRowMeta(
         }
         if (item.tags.isNotEmpty()) {
             Spacer(Modifier.height(gap))
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_xs)),
-                verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_xs)),
+            WrappingRow(
+                horizontalSpacing = dimensionResource(DesR.dimen.padding_xs),
+                verticalSpacing = dimensionResource(DesR.dimen.padding_xs),
             ) {
                 item.tags.forEach { tag -> BingeTag(label = tag) }
             }
