@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.di.IoDispatcher
 import com.cooper.binge.companion.seerr.seerr.SeerrApi
+import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.seerr.SeerrJobDto
 import com.cooper.binge.companion.seerr.seerr.SeerrJobScheduleBody
 import com.cooper.binge.companion.seerr.seerr.attempt
@@ -157,8 +158,11 @@ class JobsViewModel
 
         /**
          * Writes [cron] as [id]'s schedule as soon as it is picked (#930): the page says Saving, then Saved. A write that
-         * fails is kept as the unsent schedule, which the page's Retry sends here again, and stays until a schedule write
-         * succeeds.
+         * fails because of the network or the server (`Unreachable`, `Server`, `Unknown`) is kept as the unsent schedule,
+         * which the page's Retry sends here again, and stays until a schedule write succeeds. A write the server refuses
+         * (a cron it rejects, or a permission it withholds) is not kept, since sending it again cannot succeed: it is
+         * reported once, with its reason, as an [EditorEvent.Failed]. One status and one unsent slot serve every job, so
+         * two schedules in flight at once share them; the dialog makes that hard to reach, and it is deliberate.
          */
         fun schedule(
             id: String,
@@ -174,13 +178,21 @@ class JobsViewModel
             viewModelScope.launch(dispatcher) {
                 val outcome = attempt { connection.api().scheduleJob(id, SeerrJobScheduleBody(cron.trim())).toServerJob() }
                 outcome.onSuccess { updated -> setJobs(jobs().map { if (it.id == updated.id) updated else it }) }
+                val error = outcome.exceptionOrNull()?.toSeerrError()
+                val retryable = error == SeerrError.Unreachable || error == SeerrError.Server || error == SeerrError.Unknown
                 state.update { current ->
                     (current as? JobsUiState.Ready)?.copy(
                         busyIds = current.busyIds - id,
                         scheduleStatus = if (outcome.isSuccess) SaveStatus.Saved else SaveStatus.Idle,
-                        unsentSchedule = if (outcome.isSuccess) null else UnsentSchedule(id, cron),
+                        unsentSchedule =
+                            when {
+                                outcome.isSuccess -> null
+                                retryable -> UnsentSchedule(id, cron)
+                                else -> current.unsentSchedule
+                            },
                     ) ?: current
                 }
+                if (error != null && !retryable) eventFlow.emit(EditorEvent.Failed(error))
             }
         }
 

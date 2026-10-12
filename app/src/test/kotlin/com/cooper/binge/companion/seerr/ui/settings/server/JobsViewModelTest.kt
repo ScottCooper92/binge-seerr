@@ -2,6 +2,7 @@ package com.cooper.binge.companion.seerr.ui.settings.server
 
 import androidx.lifecycle.ViewModelStore
 import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.ui.users.settings.ADMIN
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorEvent
 import com.cooper.binge.companion.seerr.ui.users.settings.SaveStatus
@@ -477,5 +478,22 @@ class JobsViewModelTest {
             vm.schedule(unsent.jobId, unsent.cron)
             vm.uiState.first { it is JobsUiState.Ready && it.unsentSchedule == null && it.scheduleStatus == SaveStatus.Saved }
             assertEquals(2, seerr.count("POST", "/api/v1/settings/jobs/download-sync/schedule"))
+        }
+
+    /** A cron the server rejects cannot succeed on a retry: it is reported with its reason and not kept. */
+    @Test
+    fun `a schedule the server rejects is reported and not kept`() =
+        runTest {
+            seerr.serve("POST /api/v1/settings/jobs/download-sync/schedule", """{"message":"Invalid job schedule."}""", code = 400)
+            val vm = viewModel()
+            vm.awaitReady()
+            val event = awaitEvent(vm.events)
+
+            vm.schedule("download-sync", "0 */15 * *")
+
+            assertEquals(EditorEvent.Failed(SeerrError.Rejected), event.await())
+            val settled = vm.uiState.first { it is JobsUiState.Ready && it.busyIds.isEmpty() } as JobsUiState.Ready
+            assertEquals(null, settled.unsentSchedule)
+            assertEquals(SaveStatus.Idle, settled.scheduleStatus)
         }
 }

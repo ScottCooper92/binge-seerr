@@ -72,7 +72,8 @@ sealed interface JobsUiState {
      * [busyIds] are the jobs with a run, cancel or schedule in flight; [outcomes] each job's last run, shown briefly.
      * [now] is the instant the rows word their times against, moved on each minute while the list is showing. A schedule
      * saves as it is picked (#930): [scheduleStatus] is the page's Saving and Saved, and [unsentSchedule] the one whose
-     * write failed, kept for Retry until a schedule write succeeds.
+     * write failed for the network or the server, kept for Retry until a schedule write succeeds. A refused schedule is
+     * reported, not kept.
      */
     data class Ready(
         val jobs: List<ServerJob>,
