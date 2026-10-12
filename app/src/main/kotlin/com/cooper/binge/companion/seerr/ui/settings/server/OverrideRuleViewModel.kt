@@ -4,6 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.di.IoDispatcher
+import com.cooper.binge.companion.seerr.notifications.ApplicationScope
 import com.cooper.binge.companion.seerr.seerr.SeerrServiceSettingsDto
 import com.cooper.binge.companion.seerr.seerr.attempt
 import com.cooper.binge.companion.seerr.seerr.displayString
@@ -23,6 +24,7 @@ import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -35,6 +37,9 @@ private const val USERS_PAGE = 1000
  * One override rule, new ([id] null) or existing: an instance, the conditions a request must
  * meet, and what to override on it. The overrides are picked from what the chosen instance offers,
  * reached through the same test call the instance page uses, with the credentials the server holds.
+ * An existing rule saves as it changes (#930), each write the saved rule with the change in it, and a
+ * change that leaves it short of an instance, a condition or an override is held until it is whole again.
+ * A new rule keeps its explicit Create.
  */
 @HiltViewModel(assistedFactory = OverrideRuleViewModel.Factory::class)
 class OverrideRuleViewModel
@@ -44,12 +49,18 @@ class OverrideRuleViewModel
         private val listCatalog: ServerListCatalog,
         @IoDispatcher private val dispatcher: CoroutineDispatcher,
         @Assisted private val id: Int?,
+        @ApplicationScope appScope: CoroutineScope,
         private val analytics: Analytics = NoOpAnalytics,
         private val crashBreadcrumbs: CrashBreadcrumbs = NoOpCrashBreadcrumbs,
         savedState: SavedStateHandle = SavedStateHandle(),
     ) : ExtrasEditorViewModel<OverrideRuleForm, OverrideRuleExtras>(OverrideRuleExtras(), dispatcher) {
-        /** A long form, kept across the process being killed (#1246). It holds no credential. */
-        override val savedDraft = SavedDraft(savedState, OverrideRuleForm.serializer())
+        /**
+         * A new rule's form, kept across the process being killed (#1246). It holds no credential. An existing rule saves
+         * as it changes, so it has no unsaved draft to keep.
+         */
+        override val savedDraft = SavedDraft(savedState, OverrideRuleForm.serializer()).takeIf { id == null }
+
+        override val saveAsMadeScope: CoroutineScope? = appScope.takeIf { id != null }
 
         /** The choices being read for the instance picked last; a newer pick cancels it (#1021). */
         private var choicesJob: Job? = null
@@ -103,7 +114,7 @@ class OverrideRuleViewModel
                 val userChoices = users.await().map { user -> Choice(user.id, user.displayString() ?: user.id.toString()) }
                 editExtras { it.copy(instances = instances, users = userChoices) }
                 // What the page will show is the kept draft where there is one, so its instance is the one read.
-                val shown = savedDraft.restoreOver(form) ?: form
+                val shown = savedDraft?.restoreOver(form) ?: form
                 shown.serviceId?.let { serviceId -> shown.serviceType?.let { type -> loadChoices(type, serviceId) } }
                 shown.serviceType?.let { genres.ensure(it.genreSegment()) }
                 keywords.name(shown.keywords.tagIds())
@@ -161,6 +172,8 @@ class OverrideRuleViewModel
 
         fun delete() {
             val existing = ready()?.draft?.id ?: return
+            // A change still waiting would otherwise be written to the rule as it goes.
+            discardUnsent()
             crashBreadcrumbs.key("override_rule_id", existing.toString())
             crashBreadcrumbs.log("deleting override rule")
             viewModelScope.launch(dispatcher) {
