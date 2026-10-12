@@ -240,6 +240,22 @@ class IssueDetailViewModelTest {
             )
         }
 
+    /** A refusal on the merits would only be refused again, so the outbox does not offer to resend it (#1465). */
+    @Test
+    fun `a comment the server refuses waits in the outbox without a retry`() =
+        runTest {
+            server(ADMIN)
+            serve("POST /api/v1/issue/31/comment", """{"message":"Comment too long"}""", code = 400)
+            val vm = viewModel()
+            vm.awaitReady()
+
+            vm.setDraft("Still broken")
+            vm.postComment()
+
+            val failed = vm.awaitReady { it.outbox.singleOrNull()?.state is SendState.Failed }
+            assertEquals(SendState.Failed(retryable = false), failed.outbox.single().state)
+        }
+
     @Test
     fun `a comment landing on the same issue while a post is in flight is not mistaken for the one just posted`() =
         runTest {
