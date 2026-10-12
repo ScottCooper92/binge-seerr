@@ -204,6 +204,8 @@ private fun Ready(
     val sides = resolvedContentPadding()
     // The thread scrolls under the top bar. The navigation bar's inset goes under the pinned bar where there is one, and into
     // the thread's scroll where there is not.
+    // A write in flight refuses a second one, so nothing opens an editor then.
+    val writeIdle = state.commentAction == CommentAction.None && state.action == IssueAction.None
     val pinnedBar = detail.canComment || detail.canResolve
     Column(modifier = Modifier.fillMaxSize()) {
         Column(
@@ -229,7 +231,7 @@ private fun Ready(
                             Modifier
                                 .fillMaxWidth()
                                 .then(
-                                    if (detail.canActOn(report)) {
+                                    if (detail.canActOn(report) && writeIdle) {
                                         Modifier.combinedClickable(
                                             onClick = { modals.openEdit(report) },
                                             onLongClick = { modals.actingOnCommentId = report.id },
@@ -247,6 +249,7 @@ private fun Ready(
                 thread = state.thread,
                 detail = detail,
                 commentAction = state.commentAction,
+                issueActionRunning = state.action != IssueAction.None,
                 now = state.now,
                 onActOn = { comment -> modals.actingOnCommentId = comment.id },
                 onTapOutbox = { entry -> modals.outboxActionId = entry.localId },

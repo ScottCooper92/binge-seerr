@@ -456,6 +456,24 @@ class IssueDetailViewModelTest {
         }
 
     @Test
+    fun `deleting a comment whose edit failed drops the edit that was owed to it`() =
+        runTest {
+            server(ADMIN)
+            serve("PUT /api/v1/issueComment/2", "{}", code = 500)
+            serve("DELETE /api/v1/issueComment/2", "{}")
+            val vm = viewModel()
+            vm.awaitReady()
+
+            vm.editComment(2, "Same here, fixed now")
+            vm.awaitReady { it.unsentEdit != null }
+
+            val commentDeleted = awaitEvent(vm.events)
+            vm.deleteComment(2)
+            assertEquals(IssueDetailEvent.CommentDeleted, commentDeleted.await())
+            assertNull(vm.awaitReady { it.commentAction == CommentAction.None }.unsentEdit)
+        }
+
+    @Test
     fun `editing and deleting a comment reload the thread and report the outcome`() =
         runTest {
             server(ADMIN)

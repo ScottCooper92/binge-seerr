@@ -249,6 +249,8 @@ class IssueDetailViewModel
             viewModelScope.launch(dispatcher) {
                 attempt { connection.api().deleteIssueComment(commentId) }
                     .onSuccess {
+                        // The comment is gone, so an edit still owed to it can never land.
+                        state.updateReady { it.copy(unsentEdit = it.unsentEdit?.takeIf { unsent -> unsent.commentId != commentId }) }
                         val reloadFailure = reloadAfterWrite()
                         if (reloadFailure == null) {
                             analytics.event(AnalyticsEvents.ISSUE_COMMENTED, mapOf(AnalyticsEvents.PARAM_ACTION to "deleted"))
