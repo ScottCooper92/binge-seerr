@@ -282,9 +282,9 @@ private fun SeasonToggleRow(
 ) {
     CheckboxRow(
         label = season.name ?: stringResource(R.string.request_season_number, season.number),
-        subtitle = pluralStringResource(R.plurals.request_episodes, season.episodeCount, season.episodeCount),
+        supportingText = pluralStringResource(R.plurals.request_episodes, season.episodeCount, season.episodeCount),
         checked = season.selected || season.locked,
-        onToggle = { onToggle() },
+        onCheckedChange = { onToggle() },
         enabled = enabled && !season.locked,
         showDivider = showDivider,
         leadingContent = { RowIconBox(Icons.Filled.Tv) },

@@ -42,7 +42,7 @@ internal fun displayLanguageSettingItem(
                     BingeChoice(
                         value = tag,
                         label = label,
-                        subtitle = deviceName(tag)?.takeIf { it != label },
+                        supportingText = deviceName(tag)?.takeIf { it != label },
                         mark = tag.substringBefore('-').uppercase().ifEmpty { GLOBE },
                     )
                 }

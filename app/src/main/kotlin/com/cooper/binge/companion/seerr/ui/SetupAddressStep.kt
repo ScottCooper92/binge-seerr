@@ -59,7 +59,7 @@ internal fun SetupAddressContent(
             CheckboxRow(
                 label = stringResource(R.string.setup_allow_cleartext),
                 checked = state.cleartextAllowed,
-                onToggle = actions.onAllowCleartext,
+                onCheckedChange = actions.onAllowCleartext,
                 enabled = !state.isInspecting,
             )
         }
