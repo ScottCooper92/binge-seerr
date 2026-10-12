@@ -543,6 +543,26 @@ class IssueDetailViewModelTest {
         }
 
     @Test
+    fun `a refused edit whose reload also fails leaves the thread on the text it had`() =
+        runTest {
+            server(ADMIN)
+            serve("PUT /api/v1/issueComment/2", "{}", code = 403)
+            val vm = viewModel()
+            vm.awaitReady()
+            serve("GET /api/v1/issue/31", "{}", code = 500)
+
+            vm.editComment(2, "Same here, fixed now")
+            val ready = vm.awaitReady { it.commentAction == CommentAction.None && it.editStatus == SaveStatus.Idle }
+            assertTrue(ready.unsentEdits.isEmpty())
+            assertEquals(
+                "Same here",
+                ready.detail.comments
+                    .single()
+                    .message,
+            )
+        }
+
+    @Test
     fun `deleting a comment whose edit failed drops the edit that was owed to it`() =
         runTest {
             server(ADMIN)

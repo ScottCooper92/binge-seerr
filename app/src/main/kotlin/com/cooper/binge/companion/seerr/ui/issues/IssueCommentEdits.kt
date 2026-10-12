@@ -40,6 +40,7 @@ internal class IssueCommentEdits(
         val trimmed = message.trim()
         if (trimmed.isEmpty() || ready.commentAction != CommentAction.None || ready.action != IssueAction.None) return
         val edit = CommentEdit(commentId, trimmed)
+        val before = ready.detail
         state.value =
             ready.copy(
                 detail = ready.detail.withEdit(edit),
@@ -72,12 +73,15 @@ internal class IssueCommentEdits(
                             )
                         }
                     } else {
-                        // A refusal would only be refused again: take the text off the page and say why, once.
+                        // A refusal would only be refused again: take the text off the page and say why, once. The
+                        // text goes back before the reload, so a reload that fails cannot leave the refused text shown.
+                        // An earlier owed edit to this comment, with other text, is still owed and still shown.
                         state.updateReady {
                             it.copy(
+                                detail = before,
                                 commentAction = CommentAction.None,
                                 editStatus = SaveStatus.Idle,
-                                unsentEdits = it.unsentEdits.filter { unsent -> unsent.commentId != commentId },
+                                unsentEdits = it.unsentEdits.filter { unsent -> unsent != edit },
                             )
                         }
                         reloadAfterWrite()
