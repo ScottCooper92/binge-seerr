@@ -4,6 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.di.IoDispatcher
+import com.cooper.binge.companion.seerr.notifications.ApplicationScope
 import com.cooper.binge.companion.seerr.seerr.attempt
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorEvent
@@ -14,7 +15,9 @@ import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * One custom slider, new ([id] null) or existing: its title, its kind, and what it queries. Keywords are picked by
@@ -28,10 +31,21 @@ class DiscoverSliderViewModel
         private val listCatalog: ServerListCatalog,
         @IoDispatcher private val dispatcher: CoroutineDispatcher,
         @Assisted private val id: Int?,
+        @ApplicationScope appScope: CoroutineScope,
         savedState: SavedStateHandle = SavedStateHandle(),
     ) : ExtrasEditorViewModel<SliderForm, SliderExtras>(SliderExtras(), dispatcher) {
-        /** A short form, kept across the process being killed (#1246). It holds no credential. */
-        override val savedDraft = SavedDraft(savedState, SliderForm.serializer())
+        /**
+         * A new slider's form, kept across the process being killed (#1246). It holds no credential. An existing slider
+         * saves as it changes, so it has no unsaved draft to keep.
+         */
+        override val savedDraft = SavedDraft(savedState, SliderForm.serializer()).takeIf { id == null }
+
+        /**
+         * An existing slider saves as it changes (#930), each write the saved slider with the change in it. A change that
+         * leaves it without a title or the data its kind needs (a new kind drops the old kind's data) is held until it is
+         * whole again. A new slider keeps its explicit Create.
+         */
+        override val saveAsMadeScope: CoroutineScope? = appScope.takeIf { id != null }
 
         private val keywords =
             KeywordLookup(
@@ -87,7 +101,7 @@ class DiscoverSliderViewModel
                         ?.toForm() ?: throw NoSuchElementException("slider $id")
                 }
             // What the page will show is the kept draft where there is one, so it is the draft that is named and offered.
-            readers.readFor(savedDraft.restoreOver(form) ?: form)
+            readers.readFor(savedDraft?.restoreOver(form) ?: form)
             return form
         }
 
@@ -161,10 +175,18 @@ class DiscoverSliderViewModel
 
         fun delete() {
             val existing = id ?: return
-            viewModelScope.launch(dispatcher) {
-                attempt { connection.api().deleteDiscoverSlider(existing) }
+            // A change still waiting would otherwise be written to the slider as it goes.
+            discardUnsent()
+            // On the main thread, as save-as-made needs: only the request hops to the dispatcher.
+            viewModelScope.launch {
+                withContext(dispatcher) { attempt { connection.api().deleteDiscoverSlider(existing) } }
                     .onSuccess { notify(EditorEvent.Deleted) }
-                    .onFailure { failure -> notify(EditorEvent.Failed(failure.toSeerrError())) }
+                    .onFailure { failure ->
+                        notify(EditorEvent.Failed(failure.toSeerrError()))
+                        // The slider is still there, so the change discarded above is owed to it again: sent now, and kept for a
+                        // retry if that fails too.
+                        if (ready()?.dirty == true) save()
+                    }
             }
         }
 

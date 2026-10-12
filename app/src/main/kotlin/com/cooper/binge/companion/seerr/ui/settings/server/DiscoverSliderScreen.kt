@@ -65,6 +65,7 @@ fun DiscoverSliderScreen(
 ) {
     val ready = state as? ExtrasEditorUiState.Ready<SliderForm, SliderExtras>
     val extras = ready?.extras ?: SliderExtras()
+    val existing = ready?.draft?.id != null
     EditorPage(
         title =
             stringResource(
@@ -74,8 +75,10 @@ fun DiscoverSliderScreen(
         events = events,
         actions = actions,
         canSave = { it.valid },
-        footerCommit = true,
-        commitLabel = ready?.takeIf { it.draft.id == null }?.let { stringResource(R.string.editor_create) },
+        // An existing slider saves as it changes (#930); a new one waits for Create.
+        saveAsMade = existing,
+        footerCommit = !existing,
+        commitLabel = stringResource(R.string.editor_create).takeIf { !existing },
     ) { draft, enabled ->
         ItemGroup(
             title = null,
