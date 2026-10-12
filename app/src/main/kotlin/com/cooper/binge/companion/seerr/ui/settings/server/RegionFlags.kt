@@ -1,18 +1,11 @@
 package com.cooper.binge.companion.seerr.ui.settings.server
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.res.dimensionResource
 import androidx.core.os.LocaleListCompat
-import com.binge.designsystem.theme.BingeShapes
-import com.binge.designsystem.R as DesR
+import com.binge.designsystem.component.BingeIconPlate
 
 /** Regions people most often pick, after the device's own, for a region picker's suggestions. */
 private val POPULAR_REGIONS = listOf("US", "GB", "CA", "AU", "DE", "FR", "ES", "IN", "BR", "JP")
@@ -37,16 +30,6 @@ internal fun suggestedRegions(): List<String> {
     return (device + POPULAR_REGIONS).distinct().take(SUGGESTED_REGIONS)
 }
 
-/** [code]'s flag in a settings row's icon box, for the region setting's own row. */
+/** [code]'s flag on the design system's icon plate, for the region setting's own row. */
 @Composable
-internal fun RegionFlag(code: String) =
-    Box(
-        modifier =
-            Modifier
-                .size(dimensionResource(DesR.dimen.item_group_icon_size))
-                .clip(BingeShapes.MoreCard)
-                .background(MaterialTheme.colorScheme.surfaceContainerHigh),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(flagOf(code), style = MaterialTheme.typography.titleMedium)
-    }
+internal fun RegionFlag(code: String) = BingeIconPlate { Text(flagOf(code), style = MaterialTheme.typography.titleMedium) }
