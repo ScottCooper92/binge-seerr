@@ -109,7 +109,7 @@ private fun Suggestions(
                     icon = candidate.source.icon(),
                     label = candidate.address.displayAddress(),
                     detail = stringResource(candidate.source.tagRes()),
-                    disabled = !enabled,
+                    enabled = enabled,
                     onClick = { onPick(candidate.address) },
                     // The fill-in arrow search suggestions use, in place of a chevron that would promise a new screen.
                     trailingContent = {

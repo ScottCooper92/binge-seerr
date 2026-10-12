@@ -73,8 +73,7 @@ internal fun apiKeyItem(
         icon = Icons.Filled.Key,
         label = title,
         detail = hidden ?: stringResource(R.string.settings_value_unknown),
-        clickable = enabled,
-        disabled = !enabled,
+        enabled = enabled,
         onClick = { open = true },
     )
 }
@@ -112,7 +111,7 @@ internal fun ApiKeyRows(
                 ListItem(
                     icon = Icons.Filled.ContentCopy,
                     label = stringResource(R.string.server_settings_api_key_copy),
-                    disabled = apiKey.key.isEmpty(),
+                    enabled = apiKey.key.isNotEmpty(),
                     destination = ListItemDestination.Action,
                     onClick = { actions.onCopy(apiKey.key) },
                 ),

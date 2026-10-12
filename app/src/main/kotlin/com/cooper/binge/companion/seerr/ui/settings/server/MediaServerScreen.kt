@@ -118,8 +118,7 @@ private fun SettingsGroup(
                     icon = Icons.Filled.Storage,
                     label = stringResource(R.string.server_settings_plex_server),
                     detail = draft.serverName.ifBlank { stringResource(R.string.settings_value_not_set) },
-                    clickable = enabled,
-                    disabled = !enabled,
+                    enabled = enabled,
                     onClick = serverActions.onOpenServerPicker,
                 ).takeIf { draft.kind == MediaServerKind.Plex },
                 textSettingItem(

@@ -28,8 +28,7 @@ internal fun editorToggle(
     icon = icon,
     label = label,
     detail = detail,
-    clickable = enabled,
-    disabled = !enabled,
+    enabled = enabled,
     toggled = checked,
     onClick = { onToggle(!checked) },
 )

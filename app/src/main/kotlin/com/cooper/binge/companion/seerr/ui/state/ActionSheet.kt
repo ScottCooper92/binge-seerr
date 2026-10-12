@@ -21,7 +21,7 @@ internal fun openItem(
     label: String,
     enabled: Boolean = true,
     onClick: () -> Unit,
-): ListItem = ListItem(icon = icon, label = label, disabled = !enabled, onClick = onClick)
+): ListItem = ListItem(icon = icon, label = label, enabled = enabled, onClick = onClick)
 
 /**
  * A row of an action sheet that does something where it is and stays on the screen, so it has no chevron: Retry, Delete,
@@ -41,7 +41,7 @@ internal fun actionItem(
         iconTint = if (destructive) MaterialTheme.colorScheme.error else null,
         label = label,
         destination = ListItemDestination.Action,
-        disabled = !enabled,
+        enabled = enabled,
         onClick = onClick,
     )
 

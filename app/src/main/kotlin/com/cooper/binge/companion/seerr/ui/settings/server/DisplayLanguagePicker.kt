@@ -60,8 +60,7 @@ internal fun displayLanguageSettingItem(
         icon = icon,
         label = title,
         detail = choices.firstOrNull { it.first == selected }?.second ?: selected,
-        clickable = enabled,
-        disabled = !enabled,
+        enabled = enabled,
         onClick = { open = true },
     )
 }

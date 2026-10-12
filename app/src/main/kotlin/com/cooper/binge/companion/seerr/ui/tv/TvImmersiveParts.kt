@@ -36,6 +36,7 @@ import androidx.tv.material3.Icon
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import coil3.compose.AsyncImage
+import com.binge.designsystem.template.ScreenAction
 import com.binge.designsystem.theme.BingeShapes
 import com.binge.designsystem.theme.BingeTheme
 import com.binge.designsystem.tv.focus.restoreTvOverlayFocus
@@ -44,7 +45,6 @@ import com.binge.designsystem.tv.focus.tvFocusIndicator
 import com.binge.designsystem.tv.template.TvImmersiveGrid
 import com.binge.designsystem.tv.template.TvImmersiveHubSkeleton
 import com.binge.designsystem.tv.template.TvMessagePage
-import com.binge.designsystem.tv.template.TvPageAction
 import com.binge.designsystem.tv.template.TvPageHosting
 import com.cooper.binge.companion.seerr.R
 
@@ -185,7 +185,7 @@ internal fun TvRowsFallback(
                 body = stringResource(R.string.tv_list_load_failed),
                 modifier = modifier,
                 icon = Icons.Filled.Warning,
-                primary = TvPageAction(stringResource(R.string.hub_retry), onRetryLoad),
+                primary = ScreenAction(stringResource(R.string.hub_retry), onRetryLoad),
             )
         else -> TvMessagePage(body = emptyBody, modifier = modifier, icon = Icons.Filled.Inbox)
     }

@@ -162,7 +162,7 @@ internal fun untestedItem(
     label = title,
     detail = savedLabel ?: waitingFor,
     clickable = false,
-    disabled = true,
+    enabled = false,
 )
 
 /** A Sonarr's language profiles; null on a Sonarr v4, which dropped them, and so no row. */
