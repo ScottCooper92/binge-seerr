@@ -101,6 +101,6 @@ class EditorReloadTest {
             runCurrent()
             vm.writes[2].complete(Unit)
             runCurrent()
-            assertEquals(EditorUiState.Ready(draft = 5, saved = 5), vm.uiState.value)
+            assertEquals(EditorUiState.Ready(draft = 5, saved = 5, saveStatus = SaveStatus.Saved), vm.uiState.value)
         }
 }

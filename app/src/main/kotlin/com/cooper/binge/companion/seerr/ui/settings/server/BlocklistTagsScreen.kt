@@ -41,6 +41,7 @@ import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
 import com.cooper.binge.companion.seerr.ui.state.LoadingScreen
 import com.cooper.binge.companion.seerr.ui.state.SaveFailedSnackbar
+import com.cooper.binge.companion.seerr.ui.state.SaveStatusLine
 import com.cooper.binge.companion.seerr.ui.state.SearchResultRow
 import com.binge.designsystem.R as DesR
 
@@ -57,7 +58,7 @@ class BlocklistTagsActions(
  * The automatic blocklist's tags as a page: a search field over the tags the server blocklists, each a tag that removes
  * it, or an empty state when there are none. Typing swaps the tags for TMDB's matches, each added or taken out with a
  * tap. Every change saves on its own (#930); a failed save says so in a snackbar that stays until
- * Retry, or until the next change sends the tags again.
+ * Retry or the next save that succeeds.
  */
 @Composable
 fun BlocklistTagsScreen(
@@ -79,6 +80,7 @@ fun BlocklistTagsScreen(
         bar = ScreenBar.Small,
         snackbarHostState = snackbar,
         scrolling = false,
+        extraActions = { ready?.let { SaveStatusLine(status = it.saveStatus, failed = it.saveFailed) } },
         notReady =
             when (state) {
                 BlocklistTagsUiState.Loading -> { inner -> LoadingScreen(Modifier.padding(inner)) }

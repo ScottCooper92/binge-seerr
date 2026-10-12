@@ -39,6 +39,7 @@ import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
 import com.cooper.binge.companion.seerr.ui.state.LoadingScreen
 import com.cooper.binge.companion.seerr.ui.state.SaveFailedSnackbar
+import com.cooper.binge.companion.seerr.ui.state.SaveStatusLine
 import com.cooper.binge.companion.seerr.ui.state.messageRes
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
@@ -171,7 +172,10 @@ internal fun <T> EditorPage(
                 FormAction(label = stringResource(R.string.editor_cancel), onClick = onBack, enabled = !draft.saving)
             },
         scrolling = scrolling,
-        extraActions = extraActions,
+        extraActions = {
+            if (saveAsMade) ready?.let { SaveStatusLine(status = it.saveStatus, failed = it.saveFailed) }
+            extraActions()
+        },
         bottomBar = bottomBar,
         notReady =
             when (state) {
