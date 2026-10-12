@@ -32,46 +32,42 @@ private val DISCORD_OFF = AgentForm(ServerAgent.Discord)
 @Composable
 private fun Agent(
     draft: AgentForm,
-    onSave: () -> Unit = {},
     onTest: () -> Unit = {},
 ) = BingeExpressiveTheme(dynamicColor = false) {
     NotificationAgentScreen(
         state = ExtrasEditorUiState.Ready(draft = draft, saved = DISCORD_OFF, extras = AgentExtras()),
         events = emptyFlow(),
-        actions = EditorActions(onBack = {}, onRetry = {}, onEdit = {}, onSave = onSave),
+        actions = EditorActions(onBack = {}, onRetry = {}, onEdit = {}, onSave = {}),
         agentActions = AgentActions(onSetEnabled = {}, onSetOption = { _, _ -> }, onSetEncryption = {}, onToggleType = {}, onTest = onTest),
         agent = draft.agent,
     )
 }
 
-/** An agent's page: a required setting left blank says so in its row and holds Save, and the test waits on it too. */
+/** An agent's page: a required setting left blank says so in its row, and the test waits on it. It has no Save (#930). */
 @RunWith(RobolectricTestRunner::class)
 class NotificationAgentFormTest {
     @get:Rule
     val rule = createSeerrComposeRule()
 
-    private var saves = 0
     private var tests = 0
 
-    private fun show(draft: AgentForm) = rule.setContent { Agent(draft, onSave = { saves++ }, onTest = { tests++ }) }
+    private fun show(draft: AgentForm) = rule.setContent { Agent(draft, onTest = { tests++ }) }
 
     @Test
-    fun `an agent that is on with its webhook blank says it is required and can't be saved`() {
+    fun `an agent that is on with its webhook blank says it is required and can't be tested`() {
         show(DISCORD_OFF.copy(enabled = true))
 
         rule.onNodeWithText("Required").assertExists()
-        rule.onNodeWithText("Save").assertIsNotEnabled()
         rule.onNode(hasText("Send a test notification") and hasClickAction()).performScrollTo().assertIsNotEnabled()
     }
 
     @Test
-    fun `an agent that is off saves half-typed and marks nothing`() {
+    fun `an agent that is off marks nothing half-typed, and has no save or cancel to press`() {
         show(DISCORD_OFF.copy(options = mapOf(AgentOption.DiscordBotUsername to "Seerr")))
 
         rule.onNodeWithText("Required").assertDoesNotExist()
-        rule.onNodeWithText("Save").performSemanticsAction(SemanticsActions.OnClick)
-
-        assertEquals(1, saves)
+        rule.onNodeWithText("Save").assertDoesNotExist()
+        rule.onNodeWithText("Cancel").assertDoesNotExist()
     }
 
     @Test
