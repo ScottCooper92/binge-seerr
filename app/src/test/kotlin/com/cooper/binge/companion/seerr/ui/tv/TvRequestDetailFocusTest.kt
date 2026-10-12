@@ -273,7 +273,7 @@ class TvRequestDetailFocusTest {
         }
         composeTestRule.waitForIdle()
 
-        composeTestRule.onNode(hasText(string(R.string.hub_retry)) and isFocusable()).assertIsFocused()
+        composeTestRule.onNode(hasText(string(DesR.string.error_kind_retry)) and isFocusable()).assertIsFocused()
         pressOk()
         assertEquals(1, retries)
     }
