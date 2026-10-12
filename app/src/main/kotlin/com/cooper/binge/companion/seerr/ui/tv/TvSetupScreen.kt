@@ -3,7 +3,12 @@ package com.cooper.binge.companion.seerr.ui.tv
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Bolt
+import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.PlayCircle
+import androidx.compose.material.icons.filled.VideoLibrary
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -16,14 +21,15 @@ import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import com.binge.designsystem.DISABLED_ALPHA
 import com.binge.designsystem.tv.component.TvButton
 import com.binge.designsystem.tv.component.TvCheckboxRow
-import com.binge.designsystem.tv.component.TvTabRow
-import com.binge.designsystem.tv.component.TvTabUi
+import com.binge.designsystem.tv.component.TvChoiceRow
+import com.binge.designsystem.tv.component.TvChoiceUi
 import com.binge.designsystem.tv.component.TvTextField
 import com.binge.designsystem.tv.focus.TvArrivalFocus
 import com.binge.designsystem.tv.focus.TvArrivalFocusEffect
@@ -164,13 +170,14 @@ private fun TvSetupSignInStep(
                 null
             } else {
                 {
-                    TvTabRow(
-                        tabs = offered.map { mode -> TvTabUi(key = mode.name, label = mode.label(state.server)) },
+                    // OK commits a mode, so moving across the row changes nothing under the user's hands; the page lands
+                    // here, since the first thing to choose is how to sign in.
+                    TvChoiceRow(
+                        choices = offered.map { mode -> TvChoiceUi(key = mode.name, label = mode.label(state.server), icon = mode.icon()) },
                         selectedKey = state.form.mode.name,
                         onSelect = { key ->
                             offered.firstOrNull { it.name == key }?.let { mode -> actions.onEditForm { copy(mode = mode) } }
                         },
-                        // Where the page lands: the first thing to choose is how to sign in.
                         arrival = arrival,
                     )
                 }
@@ -340,3 +347,13 @@ private val SetupNotice.tone: TvFormNoteTone
             SetupNotice.ResetEmailSent -> TvFormNoteTone.Success
             SetupNotice.SessionRejected -> TvFormNoteTone.Neutral
         }
+
+/** Each way in has a glyph of its own: a key, a person, a play button for Plex, the media server's library, a bolt for the quick one. */
+private fun SeerrSignInMode.icon(): ImageVector =
+    when (this) {
+        SeerrSignInMode.ApiKey -> Icons.Filled.Key
+        SeerrSignInMode.Local -> Icons.Filled.Person
+        SeerrSignInMode.Plex -> Icons.Filled.PlayCircle
+        SeerrSignInMode.Jellyfin, SeerrSignInMode.Emby -> Icons.Filled.VideoLibrary
+        SeerrSignInMode.QuickConnect -> Icons.Filled.Bolt
+    }
