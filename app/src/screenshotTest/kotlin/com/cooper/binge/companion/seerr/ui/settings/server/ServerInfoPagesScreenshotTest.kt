@@ -6,6 +6,7 @@ import com.cooper.binge.companion.seerr.preview.SeerrScreenPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrScreenStatePreview
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.seerr.SeerrVariant
+import com.cooper.binge.companion.seerr.ui.users.settings.SaveStatus
 import kotlinx.coroutines.flow.emptyFlow
 
 /**
@@ -64,6 +65,16 @@ class CacheScreenshotTest {
     @SeerrScreenStatePreview
     @Composable
     fun apiOnly() = CacheFrame(CacheUiState.Ready(apiCaches(), emptyList(), dns = null))
+
+    /** A job's schedule saves as it is picked (#930): its row is busy and the top bar says Saving. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun scheduleSaving() =
+        CacheFrame(
+            CacheUiState.Ready(apiCaches(), imageCaches(), dns = null),
+            jobs = JobsUiState.Ready(cacheJobs(), busyIds = setOf("download-sync"), scheduleStatus = SaveStatus.Saving),
+        )
 
     /** One flush in flight: its row is busy. */
     @PreviewTest

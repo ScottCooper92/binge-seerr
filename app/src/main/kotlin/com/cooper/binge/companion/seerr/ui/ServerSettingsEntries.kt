@@ -127,7 +127,12 @@ private fun CachePage(onBack: () -> Unit) {
     val events = remember(viewModel, jobsViewModel) { merge(viewModel.events, jobsViewModel.events) }
     CacheScreen(
         jobs = jobs,
-        jobActions = JobsActions(onRun = jobsViewModel::run, onCancel = jobsViewModel::cancel, onSchedule = jobsViewModel::schedule),
+        jobActions =
+            JobsActions(
+                onRun = jobsViewModel::run,
+                onCancel = jobsViewModel::cancel,
+                onSchedule = jobsViewModel::schedule,
+            ),
         state = state,
         events = events,
         actions =
