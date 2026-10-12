@@ -54,18 +54,23 @@ internal fun setupSignIn(
     notice: SetupNotice? = null,
 ) = SetupUiState.SignIn(server = server, form = form, isConnecting = isConnecting, link = null, error = error, notice = notice)
 
+/**
+ * [singleChoices] offers one choice per group, so the rows are short enough that the note and the buttons
+ * below them stay inside a 1080p frame.
+ */
 internal fun advancedReady(
     isLoadingChoices: Boolean = false,
     isSubmitting: Boolean = false,
     error: AdvancedRequestError? = null,
+    singleChoices: Boolean = false,
 ) = AdvancedRequestUiState.Ready(
     destination =
         DestinationChoices(
-            servers = listOf(Choice(1, "Radarr"), Choice(2, "Radarr 4K")),
+            servers = listOf(Choice(1, "Radarr"), Choice(2, "Radarr 4K")).take(if (singleChoices) 1 else 2),
             serverId = 1,
-            profiles = listOf(Choice(10, "HD-1080p"), Choice(20, "Ultra-HD")),
+            profiles = listOf(Choice(10, "HD-1080p"), Choice(20, "Ultra-HD")).take(if (singleChoices) 1 else 2),
             profileId = 10,
-            rootFolders = listOf("/data/media/movies", "/data/media/kids"),
+            rootFolders = listOf("/data/media/movies", "/data/media/kids").take(if (singleChoices) 1 else 2),
             rootFolder = "/data/media/movies",
             loadingChoices = isLoadingChoices,
         ),

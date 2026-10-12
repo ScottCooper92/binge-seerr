@@ -20,7 +20,8 @@ class TvAdvancedRequestScreenshotTest {
     @PreviewTest
     @SeerrTvScreenPreviews
     @Composable
-    fun submitFocused() = TvAdvancedRequestScreen(state = advancedReady(), actions = NoAdvancedActions, initialSubmitFocused = true)
+    fun submitFocused() =
+        TvAdvancedRequestScreen(state = advancedReady(singleChoices = true), actions = NoAdvancedActions, initialSubmitFocused = true)
 
     @PreviewTest
     @SeerrTvScreenPreviews
@@ -30,12 +31,17 @@ class TvAdvancedRequestScreenshotTest {
     @PreviewTest
     @SeerrTvScreenPreviews
     @Composable
-    fun rejected() = TvAdvancedRequestScreen(state = advancedReady(error = AdvancedRequestError.Rejected), actions = NoAdvancedActions)
+    fun rejected() =
+        TvAdvancedRequestScreen(
+            state = advancedReady(error = AdvancedRequestError.Rejected, singleChoices = true),
+            actions = NoAdvancedActions,
+        )
 
     @PreviewTest
     @SeerrTvScreenPreviews
     @Composable
-    fun submitting() = TvAdvancedRequestScreen(state = advancedReady(isSubmitting = true), actions = NoAdvancedActions)
+    fun submitting() =
+        TvAdvancedRequestScreen(state = advancedReady(isSubmitting = true, singleChoices = true), actions = NoAdvancedActions)
 
     @PreviewTest
     @SeerrTvScreenPreviews
