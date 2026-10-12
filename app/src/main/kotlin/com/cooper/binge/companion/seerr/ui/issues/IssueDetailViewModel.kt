@@ -159,7 +159,7 @@ class IssueDetailViewModel
             commentId: Int,
             message: String,
         ) {
-            val ready = ready() ?: return
+            val ready = currentReady ?: return
             val trimmed = message.trim()
             if (trimmed.isEmpty() || ready.commentAction != CommentAction.None || ready.action != IssueAction.None) return
             val edit = CommentEdit(commentId, trimmed)
@@ -198,13 +198,13 @@ class IssueDetailViewModel
 
         /** Sends the first unsent edit, read when this is called so a Retry never sends text that has since changed. */
         fun retryEdit() {
-            val edit = ready()?.unsentEdits?.firstOrNull() ?: return
+            val edit = currentReady?.unsentEdits?.firstOrNull() ?: return
             editComment(edit.commentId, edit.message)
         }
 
         /** Resolves an open issue or reopens a resolved one; the cached row moves with it, so the browser agrees at once. */
         fun toggleStatus() {
-            val ready = ready() ?: return
+            val ready = currentReady ?: return
             if (ready.action != IssueAction.None || ready.commentAction != CommentAction.None || !ready.detail.canResolve) return
             val resolving = ready.detail.item.status == IssueStatus.Open
             state.value = ready.copy(action = IssueAction.UpdatingStatus)
@@ -233,7 +233,7 @@ class IssueDetailViewModel
 
         /** Removes the report and its whole thread; the page has nothing left to show, so it pops. */
         fun deleteIssue() {
-            val ready = ready() ?: return
+            val ready = currentReady ?: return
             if (ready.action != IssueAction.None || ready.commentAction != CommentAction.None || !ready.detail.canDelete) return
             state.value = ready.copy(action = IssueAction.Deleting)
             crashBreadcrumbs.key("issue_id", issueId.toString())
@@ -253,7 +253,7 @@ class IssueDetailViewModel
         }
 
         fun deleteComment(commentId: Int) {
-            val ready = ready() ?: return
+            val ready = currentReady ?: return
             if (ready.commentAction != CommentAction.None || ready.action != IssueAction.None) return
             state.value = ready.copy(commentAction = CommentAction.Deleting(commentId))
             crashBreadcrumbs.key("issue_id", issueId.toString())
@@ -304,7 +304,7 @@ class IssueDetailViewModel
                 dto.toDetail(item, user.await(), connection.current().baseUrl, connection.profile())
             }
 
-        private fun ready(): IssueDetailUiState.Ready? = state.value as? IssueDetailUiState.Ready
+        private val currentReady: IssueDetailUiState.Ready? get() = state.value as? IssueDetailUiState.Ready
 
         @AssistedFactory
         interface Factory {
