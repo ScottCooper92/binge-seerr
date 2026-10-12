@@ -95,6 +95,8 @@ internal fun ApiKeyRows(
                     icon = Icons.Filled.Key,
                     label = stringResource(R.string.server_settings_api_key),
                     detail = if (apiKey.revealed) apiKey.key else apiKey.hidden() ?: stringResource(R.string.settings_value_unknown),
+                    // A revealed key is the thing the user came to read, so it wraps rather than ending in an ellipsis.
+                    supportingMaxLines = if (apiKey.revealed) 3 else 1,
                     clickable = false,
                     trailingContent = {
                         ExpressiveIconButton(

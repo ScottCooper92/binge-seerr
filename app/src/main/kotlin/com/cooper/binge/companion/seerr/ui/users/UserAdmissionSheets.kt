@@ -182,6 +182,7 @@ internal fun CreateUserSheetContent(
             onCheckedChange = { value -> onEditDraft { it.copy(generatePassword = value) } },
             // The caption is the reason the row is off, so it stays legible rather than following the label down.
             supportingText = stringResource(R.string.users_create_generate_unavailable).takeIf { !draft.canGeneratePassword },
+            supportingMaxLines = 3,
             enabled = !saving && draft.canGeneratePassword,
             leadingContent = {
                 Icon(Icons.Filled.Password, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)

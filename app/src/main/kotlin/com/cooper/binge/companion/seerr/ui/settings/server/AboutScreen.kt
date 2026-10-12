@@ -95,7 +95,7 @@ private fun AboutContent(
                         icon = Icons.Filled.Favorite,
                         iconTint = BingeSentiment.Info.fill(),
                         label = stringResource(R.string.server_settings_about_contribute),
-                        detail = info.variant.contributeUrl(),
+                        detail = info.variant.contributeUrl().withoutScheme(),
                         destination = ListItemDestination.External,
                         onClick = { onOpenUrl(info.variant.contributeUrl()) },
                     ),
@@ -202,7 +202,7 @@ private fun supportRows(
             icon = Icons.AutoMirrored.Filled.MenuBook,
             iconTint = BingeSentiment.Info.fill(),
             label = stringResource(R.string.server_settings_about_docs),
-            detail = info.variant.docsUrl(),
+            detail = info.variant.docsUrl().withoutScheme(),
             destination = ListItemDestination.External,
             onClick = { onOpenUrl(info.variant.docsUrl()) },
         ),
@@ -210,7 +210,7 @@ private fun supportRows(
             icon = Icons.Filled.QuestionAnswer,
             iconTint = BingeSentiment.Info.fill(),
             label = stringResource(R.string.server_settings_about_discussions),
-            detail = info.variant.discussionsUrl(),
+            detail = info.variant.discussionsUrl().withoutScheme(),
             destination = ListItemDestination.External,
             onClick = { onOpenUrl(info.variant.discussionsUrl()) },
         ),
@@ -218,8 +218,11 @@ private fun supportRows(
             icon = Icons.AutoMirrored.Filled.Chat,
             iconTint = BingeSentiment.Info.fill(),
             label = stringResource(R.string.server_settings_about_discord),
-            detail = info.variant.discordUrl(),
+            detail = info.variant.discordUrl().withoutScheme(),
             destination = ListItemDestination.External,
             onClick = { onOpenUrl(info.variant.discordUrl()) },
         ),
     )
+
+/** The link as the row shows it: the scheme is noise on a line that has room for one line only. */
+private fun String.withoutScheme(): String = removePrefix("https://").removePrefix("http://")

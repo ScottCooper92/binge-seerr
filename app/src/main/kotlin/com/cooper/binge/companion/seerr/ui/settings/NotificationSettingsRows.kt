@@ -71,6 +71,8 @@ internal fun notificationRows(
                 label = stringResource(R.string.settings_notifications_blocked),
                 detail = stringResource(R.string.settings_notifications_blocked_caption),
                 detailColor = BingeSentiment.Negative.fill(),
+                // The caption is the warning's only explanation, so it is read in full rather than cut to a line.
+                supportingMaxLines = 3,
                 // It leaves the app for Android's notification settings.
                 destination = ListItemDestination.External,
                 onClick = {

@@ -184,7 +184,8 @@ private fun textOptionItem(
             if (option.secret && value.isNotEmpty()) {
                 stringResource(R.string.server_settings_secret_set)
             } else {
-                value.ifBlank { stringResource(R.string.settings_value_not_set) }
+                // The row holds one line, so a multi-line value reads as its words rather than as its first line break.
+                value.split(WHITESPACE).joinToString(" ").ifBlank { stringResource(R.string.settings_value_not_set) }
             },
         secret = option.secret,
         multiline = option.kind == OptionKind.Multiline,
@@ -207,3 +208,5 @@ internal fun AgentOption.keyboard(): KeyboardOptions =
 
 /** The kinds a keyboard must never rewrite: addresses, whatever else the option is. */
 private val VERBATIM_KINDS = setOf(OptionKind.Uri, OptionKind.Host, OptionKind.Email)
+
+private val WHITESPACE = Regex("\\s+")
