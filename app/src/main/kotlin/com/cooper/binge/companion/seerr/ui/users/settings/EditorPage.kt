@@ -110,11 +110,6 @@ fun <T, X> ExtrasEditorViewModel<T, X>.editorActions(onBack: () -> Unit): Editor
  * [extraActions] composes into the same top-bar row as Save, after it - an overflow menu button,
  * say. [bottomBar] is the page's own, passed straight through to [BingeScreenScaffold].
  *
- * A page passes [validation] to opt into the sectioned form (#549): Cancel and Save move to a bar
- * pinned at the bottom, Save stays tappable while the draft has issues, and a Save that finds one
- * shows the page's required fields and scrolls the first issue into view.
- * Without it the page is exactly as it was.
- *
  * [footerCommit] puts the commit in that same bottom bar, Cancel beside it, for a page whose commit stays explicit
  * because the server checks what was entered or the fields only make sense together (#941). [commitLabel] names
  * it where Save is not the word: Create for something new, Change password.
@@ -129,7 +124,6 @@ internal fun <T> EditorPage(
     events: Flow<EditorEvent>,
     actions: EditorActions<T>,
     canSave: (T) -> Boolean = { true },
-    validation: EditorValidation<T>? = null,
     showSaveAction: Boolean = true,
     saveAsMade: Boolean = false,
     footerCommit: Boolean = false,
@@ -151,27 +145,16 @@ internal fun <T> EditorPage(
             onRetry = actions.onSave,
         )
     }
-    val form = rememberEditorFormState(validation?.formKey.orEmpty())
-    val issues = remember(validation, ready?.draft) { ready?.draft?.let { validation?.issues?.invoke(it) }.orEmpty() }
-    EditorRevealEffect(form)
     val onBack = rememberDiscardGuard(guarded = !saveAsMade && ready?.dirty == true && !ready.saving, onLeave = actions.onBack)
     FormScreen(
         title = title,
         onBack = onBack,
         bar = ScreenBar.Small,
         snackbarHostState = snackbarHostState,
-        placement = if (validation != null || footerCommit) FormActionPlacement.Footer else FormActionPlacement.TopBar,
+        placement = if (footerCommit) FormActionPlacement.Footer else FormActionPlacement.TopBar,
         primaryAction =
             ready?.let { draft ->
                 when {
-                    validation != null ->
-                        // Save stays tappable while the draft has issues: the tap is what shows the user which ones.
-                        FormAction(
-                            label = commitLabel ?: stringResource(R.string.user_settings_save),
-                            onClick = { issues.firstOrNull()?.let(form::saveFailed) ?: actions.onSave() },
-                            enabled = draft.dirty && !draft.saving,
-                            busy = draft.saving,
-                        )
                     // A page that saves as it changes has nothing to press.
                     footerCommit || (showSaveAction && !saveAsMade) ->
                         FormAction(
@@ -184,7 +167,7 @@ internal fun <T> EditorPage(
                 }
             },
         secondaryAction =
-            ready?.takeIf { validation != null || footerCommit }?.let { draft ->
+            ready?.takeIf { footerCommit }?.let { draft ->
                 FormAction(label = stringResource(R.string.editor_cancel), onClick = onBack, enabled = !draft.saving)
             },
         scrolling = scrolling,
@@ -202,11 +185,7 @@ internal fun <T> EditorPage(
         // A page that scrolls itself folds [inner] into its own scrollable through LocalEditorPageInsets; a page
         // the template scrolls is handed none, since the scroll already carries it.
         ready?.let { draft ->
-            CompositionLocalProvider(
-                LocalEditorPageInsets provides inner,
-                LocalEditorForm provides form.takeIf { validation != null },
-                LocalEditorIssues provides issues.visible(form.submitted),
-            ) {
+            CompositionLocalProvider(LocalEditorPageInsets provides inner) {
                 content(draft.draft, !draft.saving)
             }
         }
