@@ -58,7 +58,7 @@ internal fun TvIssuesEntry(
     )
 }
 
-/** Every issue behind one filter's row, as a paged grid above the rail, on the same ViewModel as the board. */
+/** Every issue behind one filter's row, as a paged grid above Home, on the same ViewModel as the board. */
 @Composable
 internal fun TvIssuesGridOverlay(
     filter: IssueFilter,
@@ -96,7 +96,7 @@ internal fun TvIssuesGridOverlay(
 }
 
 /**
- * An issue's read-only page, above the rail exactly as the connection form is: the same
+ * An issue's read-only page, above Home exactly as the connection form is: the same
  * [IssueDetailViewModel] the phone's `IssueDetailEntry` binds, in a view-model scope of its own as the request
  * page's is.
  */

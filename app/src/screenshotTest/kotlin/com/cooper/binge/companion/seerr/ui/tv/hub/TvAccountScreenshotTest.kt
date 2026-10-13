@@ -14,9 +14,9 @@ import com.cooper.binge.companion.seerr.ui.FixedSampleRequests
 import com.cooper.binge.companion.seerr.ui.hub.HubQuota
 import com.cooper.binge.companion.seerr.ui.hub.HubQuotaBucket
 import com.cooper.binge.companion.seerr.ui.tv.TvDestination
+import com.cooper.binge.companion.seerr.ui.tv.TvHomeShell
 import com.cooper.binge.companion.seerr.ui.tv.TvLoadPhase
 import com.cooper.binge.companion.seerr.ui.tv.TvPagedRows
-import com.cooper.binge.companion.seerr.ui.tv.TvShellScaffold
 import com.cooper.binge.companion.seerr.ui.tv.request
 import com.cooper.binge.companion.seerr.ui.users.UserDetail
 import com.cooper.binge.companion.seerr.ui.users.UserDetailUiState
@@ -179,12 +179,12 @@ class TvAccountScreenshotTest {
         )
     }
 
-    /** The rail: the account's avatar as its top item, Home selected, and Settings pinned to the bottom edge. */
+    /** Home's top row: the Account, Issues and Settings buttons in the top-right corner. */
     @PreviewTest
     @SeerrTvScreenPreviews
     @Composable
-    fun Rail() {
-        TvShellScaffold(selected = TvDestination.Hub, onSelect = {}, accountName = "Scott") {
+    fun HomeTopRow() {
+        TvHomeShell(page = TvDestination.Hub, onOpenPage = {}, onClosePage = {}) {
             Box(modifier = Modifier.fillMaxSize())
         }
     }
@@ -205,12 +205,12 @@ class TvAccountScreenshotTest {
         )
     }
 
-    /** A server with issues turned off, or a viewer who may not see them: the rail has no Issues item. */
+    /** A server with issues turned off, or a viewer who may not see them: the top row has no Issues button. */
     @PreviewTest
     @SeerrTvScreenPreviews
     @Composable
-    fun RailWithoutIssues() {
-        TvShellScaffold(selected = TvDestination.Hub, onSelect = {}, accountName = "Scott", showIssues = false) {
+    fun HomeTopRowWithoutIssues() {
+        TvHomeShell(page = TvDestination.Hub, onOpenPage = {}, onClosePage = {}, showIssues = false) {
             Box(modifier = Modifier.fillMaxSize())
         }
     }

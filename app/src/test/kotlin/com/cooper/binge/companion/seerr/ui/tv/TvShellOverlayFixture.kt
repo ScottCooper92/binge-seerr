@@ -3,6 +3,7 @@ package com.cooper.binge.companion.seerr.ui.tv
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -24,7 +25,7 @@ internal const val OVERLAY_TAG = "shell-overlay"
 private const val HAND_OFF_FRAMES = 30
 
 /**
- * A board in the real shell, with a stand-in for what it opens above the rail: a full-screen page that takes focus
+ * A board in the real shell, with a stand-in for what it opens above Home: a full-screen page that takes focus
  * while [overlayOpen] and calls [onCloseOverlay] on Back, as the request and issue pages and the see-all grids do. A
  * test of focus coming back from one of those has to run through the shell, because the shell is what hands it back.
  */
@@ -35,11 +36,19 @@ internal fun ShellWithOverlay(
     onCloseOverlay: () -> Unit,
     board: @Composable () -> Unit,
 ) {
-    TvShellScaffold(
-        selected = destination,
-        onSelect = {},
-        overlay = if (overlayOpen) ({ StandInPage(onCloseOverlay) }) else null,
-    ) { board() }
+    BoardInShell(destination, overlay = if (overlayOpen) ({ StandInPage(onCloseOverlay) }) else null, board = board)
+}
+
+/** [board] as [destination] shows it in the real shell: Home itself, or the page above Home its button opens. */
+@Composable
+internal fun BoardInShell(
+    destination: TvDestination,
+    overlay: (@Composable BoxScope.() -> Unit)?,
+    board: @Composable () -> Unit,
+) {
+    TvHomeShell(page = destination, onOpenPage = {}, onClosePage = {}, overlay = overlay) { shown ->
+        if (shown == destination) board()
+    }
 }
 
 @Composable
@@ -66,7 +75,7 @@ internal fun TakeDownAndroidComposeRule<*>.press(key: Key) {
     waitForIdle()
 }
 
-/** Lets the shell hand focus back from its sink once the overlay above the rail has closed. */
+/** Lets the shell hand focus back from its sink once the overlay above Home has closed. */
 internal fun TakeDownAndroidComposeRule<*>.settleShellHandOff() {
     repeat(HAND_OFF_FRAMES) { mainClock.advanceTimeByFrame() }
     waitForIdle()
