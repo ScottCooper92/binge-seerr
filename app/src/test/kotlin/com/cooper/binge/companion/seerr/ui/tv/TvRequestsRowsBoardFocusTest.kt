@@ -1,8 +1,5 @@
 package com.cooper.binge.companion.seerr.ui.tv
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.hasContentDescription
@@ -39,8 +36,8 @@ private const val SEE_ALL = "See all"
 private const val MORE_THAN_A_ROW = 45
 
 /**
- * The requests hub under a real D-pad: down from one row to the next, a card to its detail page and focus coming
- * back to it, and a long row's see-all tile to the paged grid and focus coming back to the tile. The rows come
+ * The requests hub under a real D-pad: down from one row to the next, a card to its detail page, and a long row's
+ * see-all tile to the paged grid. Focus coming back from either is `TvRequestsHubBackTest`'s, in the real shell. The rows come
  * from plain lists decomposed the way the entry decomposes the pagers, so nothing here waits on paging.
  */
 @RunWith(RobolectricTestRunner::class)
@@ -51,8 +48,6 @@ class TvRequestsRowsBoardFocusTest {
 
     private val opened = mutableListOf<Int>()
     private val seeAll = mutableListOf<RequestFilter>()
-    private var openRequestId: Int? by mutableStateOf(null)
-    private var seeAllOpen by mutableStateOf(false)
     private var retries = 0
     private var scopeRetries = 0
 
@@ -80,21 +75,6 @@ class TvRequestsRowsBoardFocusTest {
     }
 
     @Test
-    fun theCardRegainsFocusOnceTheOpenRequestClears() {
-        setBoard()
-        card(HEAT).requestFocus()
-        composeTestRule.waitForIdle()
-        pressOk()
-        assertEquals(listOf(1), opened)
-
-        // The overlay above the rail owns closing itself; the board only reacts to the open id clearing.
-        openRequestId = null
-        settleFocusRestore()
-
-        card(HEAT).assertIsFocused()
-    }
-
-    @Test
     fun aRowWithMoreThanARowEndsInASeeAllTileThatOpensTheGrid() {
         setBoard(pendingTotal = MORE_THAN_A_ROW)
         card(HEAT).requestFocus()
@@ -106,21 +86,6 @@ class TvRequestsRowsBoardFocusTest {
         pressOk()
 
         assertEquals(listOf(RequestFilter.Pending), seeAll)
-    }
-
-    @Test
-    fun theSeeAllTileRegainsFocusOnceTheGridCloses() {
-        setBoard(pendingTotal = MORE_THAN_A_ROW)
-        card(HEAT).requestFocus()
-        composeTestRule.waitForIdle()
-        pressRight()
-        pressOk()
-        assertEquals(listOf(RequestFilter.Pending), seeAll)
-
-        seeAllOpen = false
-        settleFocusRestore()
-
-        seeAllTile().assertIsFocused()
     }
 
     @Test
@@ -187,17 +152,13 @@ class TvRequestsRowsBoardFocusTest {
                             }
                         TvPagedRows(count = items.size, at = { items.getOrNull(it) }, refresh = refresh)
                     },
-                    openRequestId = openRequestId,
-                    seeAllOpen = seeAllOpen,
                     actions =
                         TvRequestsActions(
                             onOpenDetail = { item ->
                                 opened += item.id
-                                openRequestId = item.id
                             },
                             onSeeAll = {
                                 seeAll += it
-                                seeAllOpen = true
                             },
                             onRetryLoad = { retries++ },
                             onRetryScope = { scopeRetries++ },
@@ -217,12 +178,6 @@ class TvRequestsRowsBoardFocusTest {
     private fun pressRight() = press(Key.DirectionRight)
 
     private fun pressOk() = press(Key.DirectionCenter)
-
-    /** The board offers focus back one frame after what opened above the rail closes. */
-    private fun settleFocusRestore() {
-        composeTestRule.mainClock.advanceTimeByFrame()
-        composeTestRule.waitForIdle()
-    }
 
     private fun press(key: Key) {
         composeTestRule.onRoot().performKeyInput { pressKey(key) }

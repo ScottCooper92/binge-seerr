@@ -99,14 +99,11 @@ internal fun TvConnectedShell(hubViewModel: HubViewModel = hiltViewModel()) {
             TvDestination.Hub ->
                 TvHomeEntry(
                     onReconnect = { editingConnection = true },
-                    openRequestId = openRequestId,
                     onOpenRequest = { openRequestId = it },
-                    seeAllOpen = seeAllRequests != null,
                     onSeeAll = { seeAllRequests = it.name },
                 )
             TvDestination.Issues ->
                 TvIssuesEntry(
-                    openIssueId = openIssueId,
                     onOpenIssue = { openIssueId = it },
                     seeAllOpen = seeAllIssues != null,
                     onSeeAll = { seeAllIssues = it.name },
