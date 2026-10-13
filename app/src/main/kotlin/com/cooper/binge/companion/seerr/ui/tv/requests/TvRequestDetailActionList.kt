@@ -14,12 +14,14 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.tv.component.TvDetailAction
+import com.binge.designsystem.tv.theme.TvButtonStyle
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.requests.RequestDetail
 import com.cooper.binge.companion.seerr.ui.requests.canOpenUser
 
 /**
- * The action row: what this viewer may do to the request, in the order a manager reaches for them.
+ * The action row: what this viewer may do to the request, in the order a manager reaches for them, with the destructive
+ * actions last: block (reversible, an outline) and then remove (irreversible, solid).
  *
  * The TV page is a deliberate subset of the phone's (#1036). It moderates, marks the title's state and reports an issue.
  * Editing the seasons and the destination, opening the requester's page and the title's other requests stay on the
@@ -48,17 +50,13 @@ internal fun requestDetailActions(
         if (allowed.canDecline) {
             add(TvDetailAction(declineLabel, Icons.Filled.Close, onClick = { actions.onDecline(false) }, showLabel = true))
         }
-        if (allowed.canRemove) {
-            add(
-                TvDetailAction(
-                    removeLabel,
-                    Icons.Filled.Delete,
-                    onClick = { onOpenSheet(DetailSheet.Remove) },
-                    showLabel = true,
-                    focusRequester = sheetFocus.getValue(DetailSheet.Remove),
-                ),
-            )
+        if (detail.media?.let { it.canSetStatus && it.instances.isNotEmpty() } == true) {
+            add(sheetAction(markLabel, Icons.Filled.Done, DetailSheet.MarkAs, onOpenSheet, sheetFocus))
         }
+        if (detail.canReportIssue && detail.mediaId != null) {
+            add(sheetAction(reportLabel, Icons.Filled.ReportProblem, DetailSheet.Report, onOpenSheet, sheetFocus))
+        }
+        actions.onOpenInBinge?.let { add(TvDetailAction(openLabel, Icons.AutoMirrored.Filled.OpenInNew, onClick = it)) }
         if (allowed.canBlock) {
             add(
                 TvDetailAction(
@@ -67,16 +65,22 @@ internal fun requestDetailActions(
                     onClick = { onOpenSheet(DetailSheet.Block) },
                     showLabel = true,
                     focusRequester = sheetFocus.getValue(DetailSheet.Block),
+                    style = TvButtonStyle.DestructiveOutline,
                 ),
             )
         }
-        if (detail.media?.let { it.canSetStatus && it.instances.isNotEmpty() } == true) {
-            add(sheetAction(markLabel, Icons.Filled.Done, DetailSheet.MarkAs, onOpenSheet, sheetFocus))
+        if (allowed.canRemove) {
+            add(
+                TvDetailAction(
+                    removeLabel,
+                    Icons.Filled.Delete,
+                    onClick = { onOpenSheet(DetailSheet.Remove) },
+                    showLabel = true,
+                    focusRequester = sheetFocus.getValue(DetailSheet.Remove),
+                    style = TvButtonStyle.Destructive,
+                ),
+            )
         }
-        if (detail.canReportIssue && detail.mediaId != null) {
-            add(sheetAction(reportLabel, Icons.Filled.ReportProblem, DetailSheet.Report, onOpenSheet, sheetFocus))
-        }
-        actions.onOpenInBinge?.let { add(TvDetailAction(openLabel, Icons.AutoMirrored.Filled.OpenInNew, onClick = it)) }
     }
 }
 
