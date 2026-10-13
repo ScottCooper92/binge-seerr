@@ -135,6 +135,7 @@ class TvRequestDetailSheetsTest {
         composeTestRule.onNodeWithText(string(R.string.media_mark_as_scope_caption), substring = true).assertIsDisplayed()
         composeTestRule.onNodeWithText(string(DesR.string.save_status_failed)).assertDoesNotExist()
         composeTestRule.onNodeWithText(string(DesR.string.save_status_retry)).assertDoesNotExist()
+    }
 
     /** A failure from the action row is not the Mark as sheet's, and a failure left in the sheet does not move under the row (#1510). */
     @Test
