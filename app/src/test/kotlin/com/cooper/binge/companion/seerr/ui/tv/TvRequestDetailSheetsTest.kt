@@ -135,6 +135,35 @@ class TvRequestDetailSheetsTest {
         composeTestRule.onNodeWithText(string(R.string.media_mark_as_scope_caption), substring = true).assertIsDisplayed()
         composeTestRule.onNodeWithText(string(DesR.string.save_status_failed)).assertDoesNotExist()
         composeTestRule.onNodeWithText(string(DesR.string.save_status_retry)).assertDoesNotExist()
+
+    /** A failure from the action row is not the Mark as sheet's, and a failure left in the sheet does not move under the row (#1510). */
+    @Test
+    fun markAsOpensWithoutAnotherActionsFailureAndLeavesNoneBehind() {
+        setContent(
+            detail(
+                actions = RequestActions(canApprove = true),
+                media = media(MediaInstance(false, SeerrMediaStatusCode.Processing, null, null, null)),
+            ),
+        )
+        actionButton(R.string.tv_detail_approve).requestFocus()
+        pressOk()
+        events.tryEmit(ModerationEvent.Failed(SeerrError.Server))
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithText(string(DesR.string.save_status_failed)).assertIsDisplayed()
+
+        actionButton(R.string.media_mark_as).requestFocus()
+        pressOk()
+        composeTestRule.onNodeWithText(string(R.string.media_mark_as_scope_caption), substring = true).assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(DesR.string.save_status_failed)).assertDoesNotExist()
+
+        pressOk()
+        events.tryEmit(ModerationEvent.Failed(SeerrError.Server))
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithText(string(DesR.string.save_status_failed)).assertIsDisplayed()
+        pressLeft()
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText(string(DesR.string.save_status_failed)).assertDoesNotExist()
     }
 
     @Test
@@ -248,6 +277,11 @@ class TvRequestDetailSheetsTest {
             isFocusable() and
                 (hasContentDescription(string(label)) or hasText(string(label)) or hasAnyDescendant(hasText(string(label)))),
         )
+
+    private fun pressLeft() {
+        composeTestRule.onRoot().performKeyInput { pressKey(Key.DirectionLeft) }
+        composeTestRule.waitForIdle()
+    }
 
     private fun pressOk() {
         composeTestRule.onRoot().performKeyInput { pressKey(Key.DirectionCenter) }

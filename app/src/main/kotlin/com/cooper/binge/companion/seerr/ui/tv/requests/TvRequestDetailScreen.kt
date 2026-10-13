@@ -172,7 +172,11 @@ private fun TvRequestDetailContent(
         requestDetailActions(
             detail = detail,
             actions = actions,
-            onOpenSheet = { sheet = it },
+            onOpenSheet = {
+                // The sheet shows the run as its own, so a failure from the action row is not carried into it.
+                if (it == DetailSheet.MarkAs) run.clear()
+                sheet = it
+            },
             sheetFocus = sheetFocus,
         )
     LaunchedEffect(allowed) {
