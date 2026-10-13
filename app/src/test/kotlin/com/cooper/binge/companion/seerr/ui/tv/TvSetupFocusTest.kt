@@ -351,7 +351,7 @@ class TvSetupFocusTest {
     }
 
     @Test
-    fun theSignInStepLandsOnTheChosenTabThenWalksTheFieldThenConnect() {
+    fun theSignInStepLandsOnTheChosenModeThenWalksTheFieldThenConnect() {
         setScreen(
             signIn(
                 modes = listOf(SeerrSignInMode.Local, SeerrSignInMode.ApiKey),
@@ -442,9 +442,9 @@ class TvSetupFocusTest {
         assertEquals(0, resetRequests)
     }
 
-    /** Only a local account has a password the server can reset, so the other tabs have no Forgot password? (#1302). */
+    /** Only a local account has a password the server can reset, so the other modes have no Forgot password? (#1302). */
     @Test
-    fun anotherTabHasNoForgotPassword() {
+    fun anotherModeHasNoForgotPassword() {
         setScreen(
             signIn(
                 modes = listOf(SeerrSignInMode.Jellyfin, SeerrSignInMode.Local),
@@ -464,9 +464,9 @@ class TvSetupFocusTest {
         composeTestRule.onAllNodes(hasText(string(R.string.setup_forgot_password))).assertCountEquals(0)
     }
 
-    /** Tabs select on focus, as they do on a television: moving onto one is choosing it. */
+    /** OK is the commit: moving across the modes changes nothing, so a typed field is never dropped by a stray D-pad press. */
     @Test
-    fun movingAcrossTheTabsChangesTheMode() {
+    fun movingAcrossTheModesChangesNothingUntilOkCommitsOne() {
         setScreen(
             signIn(
                 modes = listOf(SeerrSignInMode.Local, SeerrSignInMode.ApiKey),
@@ -476,6 +476,9 @@ class TvSetupFocusTest {
 
         modeRow(R.string.setup_mode_api_key).assertIsFocused()
         pressLeft()
+        modeRow(R.string.setup_mode_local).assertIsFocused()
+        assertTrue("focus alone must not switch the mode", formEdits.isEmpty())
+        pressOk()
 
         val applied = formEdits.fold(SignInForm(mode = SeerrSignInMode.ApiKey)) { form, edit -> form.edit() }
         assertEquals(SeerrSignInMode.Local, applied.mode)

@@ -22,8 +22,8 @@ import androidx.compose.ui.test.pressKey
 import androidx.compose.ui.test.requestFocus
 import androidx.compose.ui.unit.dp
 import com.binge.designsystem.tv.component.TvCheckboxRow
+import com.binge.designsystem.tv.component.TvChoiceRow
 import com.binge.designsystem.tv.component.TvOptionGroup
-import com.binge.designsystem.tv.component.TvTabRow
 import com.binge.designsystem.tv.theme.BingeTvTheme
 import com.cooper.binge.companion.seerr.util.createSeerrKeyboardComposeRule
 import org.junit.Assert.assertEquals
@@ -74,8 +74,8 @@ class TvInputsTest {
             BingeTvTheme {
                 Column {
                     TvOptionGroup(title = "Root folder", choices = emptyList<Pair<Int, String>>(), selected = null, onSelect = {})
-                    // An empty tab row draws nothing, not even its row's padding.
-                    Box(Modifier.testTag(TABS)) { TvTabRow(tabs = emptyList(), selectedKey = null, onSelect = {}) }
+                    // An empty choice row draws nothing, not even its row's padding.
+                    Box(Modifier.testTag(TABS)) { TvChoiceRow(choices = emptyList(), selectedKey = "", onSelect = {}) }
                 }
             }
         }
