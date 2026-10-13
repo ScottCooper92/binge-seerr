@@ -182,25 +182,31 @@ class TvIssuesBoardFocusTest {
         assertEquals(listOf(11, 11), deleted)
     }
 
-    /** A failure left in one issue's sheet is not the next issue's: its Retry would run the first issue's action (#1519). */
+    /** An action still saving when its sheet is dismissed is not the next issue's: B's sheet shows nothing of it, and A's late answer is ignored (#1519). */
     @Test
-    fun aFailureIsNotCarriedFromOneIssuesSheetToTheNext() {
+    fun aLateAnswerFromADismissedSheetNeverReachesTheNextIssue() {
+        trackActing = true
         setBoard(manager)
         focusFirstRow()
         confirmFirstAction()
-        events.tryEmit(IssueListEvent.Failed(SeerrError.Unreachable))
-        composeTestRule.waitForIdle()
-        composeTestRule.onNodeWithText(string(DesR.string.save_status_failed)).assertExists()
-
         pressLeft()
         settleFocusRestore()
         row(HORSES).requestFocus()
         composeTestRule.waitForIdle()
         pressOk()
 
-        sheetRow(R.string.tv_issue_resolve).assertExists()
+        // Its rows wait for A's write, but it says nothing of an action B never took.
+        sheetRow(R.string.tv_issue_resolve).assertDoesNotExist()
+        composeTestRule.onNodeWithText(string(DesR.string.save_status_saving)).assertDoesNotExist()
+
+        events.tryEmit(IssueListEvent.Failed(SeerrError.Unreachable))
+        composeTestRule.runOnIdle { finishActing() }
+        composeTestRule.waitForIdle()
+
         composeTestRule.onNodeWithText(string(DesR.string.save_status_failed)).assertDoesNotExist()
         composeTestRule.onNodeWithText(string(DesR.string.save_status_retry)).assertDoesNotExist()
+        sheetRow(R.string.tv_issue_resolve).assertExists()
+        assertEquals(listOf(11), resolved)
     }
 
     /** Opens the sheet on the first row, takes its first action and confirms it. */
@@ -328,6 +334,10 @@ class TvIssuesBoardFocusTest {
         seeAllTile().assertDoesNotExist()
     }
 
+    /** Whether a resolve marks its issue as acting, as the ViewModel does until the server answers. */
+    private var trackActing = false
+    private var finishActing: () -> Unit = {}
+
     private fun setBoard(
         scope: IssueListScope,
         items: List<IssueItem> = listOf(issue(11, SEVERANCE, reportedById = 3), issue(12, HORSES, reportedById = 5)),
@@ -337,6 +347,7 @@ class TvIssuesBoardFocusTest {
             var state by remember {
                 mutableStateOf(IssuesUiState.Ready(filter = IssueFilter.Open, sort = IssueSort.Added, counts = counts, scope = scope))
             }
+            finishActing = { state = state.copy(actingIds = emptySet()) }
             BingeTvTheme {
                 TvIssuesBoard(
                     state = state,
@@ -358,7 +369,10 @@ class TvIssuesBoardFocusTest {
                                 state = state.copy(actionItem = null)
                             },
                             onOpenDetail = { opened += it.id },
-                            onResolve = { resolved += it.id },
+                            onResolve = {
+                                resolved += it.id
+                                if (trackActing) state = state.copy(actingIds = state.actingIds + it.id)
+                            },
                             onReopen = { reopened += it.id },
                             onDelete = { deleted += it.id },
                             onSeeAll = { seeAll += it },

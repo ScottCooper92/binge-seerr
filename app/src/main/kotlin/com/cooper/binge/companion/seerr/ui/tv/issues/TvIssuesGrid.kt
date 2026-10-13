@@ -77,6 +77,7 @@ internal fun TvIssuesGrid(
             item = item,
             canDelete = management.scope?.let(item::canBeDeleted) == true,
             run = management.run,
+            actionInFlight = actingIds.isNotEmpty(),
             onResolve = { management.run.run { management.onResolve(item) } },
             onReopen = { management.run.run { management.onReopen(item) } },
             onDelete = { management.run.run { management.onDelete(item) } },

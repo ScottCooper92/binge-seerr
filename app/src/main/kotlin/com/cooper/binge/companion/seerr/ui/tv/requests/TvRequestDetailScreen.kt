@@ -173,8 +173,9 @@ private fun TvRequestDetailContent(
             detail = detail,
             actions = actions,
             onOpenSheet = {
-                // The sheet shows the run as its own, so a failure from the action row is not carried into it.
-                if (it == DetailSheet.MarkAs) run.clear()
+                // The sheet shows the run as its own, so a failure from the action row is not carried into it. Like the
+                // sheet's own scope, this keeps an action still saving: it is this page's, and its answer should land.
+                if (it == DetailSheet.MarkAs) run.clearUnlessSaving()
                 sheet = it
             },
             sheetFocus = sheetFocus,

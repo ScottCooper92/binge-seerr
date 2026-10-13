@@ -76,11 +76,18 @@ internal class TvActionRun(
 /**
  * Gives this status a fresh start each time the place it stands in appears ([key] changes, or the sheet opens) and
  * clears it when that place goes, so a Back out of a failed sheet never leaves its Retry for the next one (#1519).
+ *
+ * [keepSaving] says whether an action still saving survives that. It does where the action belongs to the place that
+ * comes next, as Mark as's does to its page. It does not where the run is shared across items, as the issue sheets'
+ * is: a late answer must find the run idle and be ignored, not settle another issue's.
  */
 @Composable
-internal fun TvActionRun.ScopedTo(key: Any?) {
-    LaunchedEffect(key) { clearUnlessSaving() }
-    DisposableEffect(this) { onDispose { clearUnlessSaving() } }
+internal fun TvActionRun.ScopedTo(
+    key: Any?,
+    keepSaving: Boolean = true,
+) {
+    LaunchedEffect(key) { if (keepSaving) clearUnlessSaving() else clear() }
+    DisposableEffect(this) { onDispose { if (keepSaving) clearUnlessSaving() else clear() } }
 }
 
 /**

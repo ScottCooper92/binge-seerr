@@ -125,6 +125,7 @@ internal fun TvIssuesBoard(
                 item = item,
                 canDelete = item.canBeDeleted(ready.scope),
                 run = run,
+                actionInFlight = ready.actingIds.isNotEmpty(),
                 onResolve = { run.run { actions.onResolve(item) } },
                 onReopen = { run.run { actions.onReopen(item) } },
                 onDelete = { run.run { actions.onDelete(item) } },
@@ -266,6 +267,11 @@ internal fun TvIssueActionsSheet(
     modifier: Modifier = Modifier,
     /** What the last action is doing; a frame passes one already saving or failed. */
     run: TvActionRun = remember { TvActionRun() },
+    /**
+     * Whether the ViewModel still has an issue's action in flight, perhaps one from a sheet since dismissed. This sheet's
+     * rows wait for it, so an action it takes is never the one a late answer settles.
+     */
+    actionInFlight: Boolean = false,
     /** The confirm step open on arrival, for a frame: a static render cannot press the row that opens one. Production passes null. */
     initialConfirm: TvIssueConfirm? = null,
 ) {
@@ -273,8 +279,8 @@ internal fun TvIssueActionsSheet(
     val open = item.status == IssueStatus.Open
     // The sheet stays open while the action saves, so its answer is read where it was asked; "Saved" closes it.
     run.OnSaved(onDismiss)
-    run.ScopedTo(item.id)
-    val busy = run.status == SaveStatus.Saving
+    run.ScopedTo(item.id, keepSaving = false)
+    val busy = run.status == SaveStatus.Saving || actionInFlight
     TvSideSheet(onDismissRequest = onDismiss, modifier = modifier) { entryFocus ->
         when (pending) {
             TvIssueConfirm.Resolve ->
