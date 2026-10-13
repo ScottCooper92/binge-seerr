@@ -135,14 +135,21 @@ internal fun ComposeContentTestRule.assertNoClippingAt(
 }
 
 /**
- * [assertNoClippingAt] for a television screen: the TV theme and the whole of the screen's viewport, which a test of a TV
- * screen sets with its `qualifiers` (960 by 540dp). A screen that scrolls is partly out of view, and text only scrolled
- * out is skipped by the assertion, so a TV test checks what is on the first screen of the page.
+ * The largest font scale a TV screen is held to: a television is read from across the room, so it stops at 1.3
+ * (binge-seerr#1492).
+ */
+internal const val TV_MAX_FONT_SCALE = FONT_SCALE_13
+
+/**
+ * [assertNoClippingAt] for a television screen: the TV theme and the whole of its viewport (a test sets 960 by 540dp with
+ * its `qualifiers`), so a page that scrolls is checked on its first screen. TV stops at 1.3 because it is read from
+ * across the room (Scott, #1492).
  */
 internal fun ComposeContentTestRule.assertNoTvClippingAt(
     fontScale: Float,
     content: @Composable () -> Unit,
 ) {
+    require(fontScale <= TV_MAX_FONT_SCALE) { "a TV screen is checked up to $TV_MAX_FONT_SCALE, not $fontScale" }
     setContent {
         val density = LocalDensity.current
         CompositionLocalProvider(LocalDensity provides Density(density.density, fontScale = fontScale)) {
