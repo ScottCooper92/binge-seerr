@@ -159,6 +159,27 @@ class TvIssuesBoardFocusTest {
         assertEquals(listOf(11, 11), deleted)
     }
 
+    /** A failure left in one issue's sheet is not the next issue's: its Retry would run the first issue's action (#1519). */
+    @Test
+    fun aFailureIsNotCarriedFromOneIssuesSheetToTheNext() {
+        setBoard(manager)
+        focusFirstRow()
+        confirmFirstAction()
+        events.tryEmit(IssueListEvent.Failed(SeerrError.Unreachable))
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithText(string(DesR.string.save_status_failed)).assertExists()
+
+        pressLeft()
+        settleFocusRestore()
+        row(HORSES).requestFocus()
+        composeTestRule.waitForIdle()
+        pressOk()
+
+        sheetRow(R.string.tv_issue_resolve).assertExists()
+        composeTestRule.onNodeWithText(string(DesR.string.save_status_failed)).assertDoesNotExist()
+        composeTestRule.onNodeWithText(string(DesR.string.save_status_retry)).assertDoesNotExist()
+    }
+
     /** Opens the sheet on the first row, takes its first action and confirms it. */
     private fun confirmFirstAction() {
         pressOk()

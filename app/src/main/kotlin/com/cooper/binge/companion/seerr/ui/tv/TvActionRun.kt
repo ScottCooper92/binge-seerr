@@ -1,6 +1,7 @@
 package com.cooper.binge.companion.seerr.ui.tv
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
@@ -60,6 +61,24 @@ internal class TvActionRun(
         status = SaveStatus.Idle
         attempt = null
     }
+
+    /**
+     * A new place for the status to stand, such as another issue's sheet or the Mark as sheet: whatever the last place left
+     * behind, a failure and its Retry, is not this place's to show. An action still saving is kept, so its answer lands.
+     */
+    fun clearUnlessSaving() {
+        if (status != SaveStatus.Saving) clear()
+    }
+}
+
+/**
+ * Gives this status a fresh start each time the place it stands in appears ([key] changes, or the sheet opens) and
+ * clears it when that place goes, so a Back out of a failed sheet never leaves its Retry for the next one (#1519).
+ */
+@Composable
+internal fun TvActionRun.ScopedTo(key: Any?) {
+    LaunchedEffect(key) { clearUnlessSaving() }
+    DisposableEffect(this) { onDispose { clearUnlessSaving() } }
 }
 
 /**

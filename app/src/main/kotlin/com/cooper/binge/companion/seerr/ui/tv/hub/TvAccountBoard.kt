@@ -38,6 +38,7 @@ import com.binge.designsystem.tv.nav.LocalTvContentInset
 import com.binge.designsystem.tv.template.TvMessagePage
 import com.binge.designsystem.tv.template.TvScreenHeading
 import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.ui.requests.RequestItem
 import com.cooper.binge.companion.seerr.ui.requests.labelRes
 import com.cooper.binge.companion.seerr.ui.requests.statusChip
@@ -45,10 +46,11 @@ import com.cooper.binge.companion.seerr.ui.tv.OverlayFocusRestore
 import com.cooper.binge.companion.seerr.ui.tv.TV_ROW_ITEM_CAP
 import com.cooper.binge.companion.seerr.ui.tv.TvFormNote
 import com.cooper.binge.companion.seerr.ui.tv.TvFormNoteTone
-import com.cooper.binge.companion.seerr.ui.tv.TvLoadPhase
+import com.cooper.binge.companion.seerr.ui.tv.TvLocalNetworkDeniedPage
 import com.cooper.binge.companion.seerr.ui.tv.TvPagedRows
 import com.cooper.binge.companion.seerr.ui.tv.TvPosterCard
 import com.cooper.binge.companion.seerr.ui.tv.TvPosterIconChip
+import com.cooper.binge.companion.seerr.ui.tv.isFailure
 import com.cooper.binge.companion.seerr.ui.tv.rememberOverlayFocusRestore
 import com.cooper.binge.companion.seerr.ui.tv.tvColor
 import com.cooper.binge.companion.seerr.ui.users.UserDetailUiState
@@ -96,12 +98,17 @@ internal fun TvAccountBoard(
         }
     val quota = (detail as? UserDetailUiState.Ready)?.detail?.quota
     if (item == null) {
-        TvAccountUnresolved(failed = accountFailed || detail is UserDetailUiState.Error, onRetry = onRetry, modifier = modifier)
+        TvAccountUnresolved(
+            failed = accountFailed || detail is UserDetailUiState.Error,
+            denied = (detail as? UserDetailUiState.Error)?.error == SeerrError.LocalNetworkDenied,
+            onRetry = onRetry,
+            modifier = modifier,
+        )
         return
     }
     val restore = rememberOverlayFocusRestore(overlayOpen)
     val rows = (0 until minOf(requests.count, TV_ROW_ITEM_CAP)).mapNotNull { requests.at(it) }
-    val requestsFailed = requests.refresh == TvLoadPhase.Failed || requests.append == TvLoadPhase.Failed
+    val requestsFailed = requests.refresh.isFailure || requests.append.isFailure
     val verticalInset = dimensionResource(TvR.dimen.tv_overscan_vertical)
     val listState = rememberLazyListState()
     // Which block holds focus. The page is taller than the screen, and the default scroll only brings the focused
@@ -172,10 +179,13 @@ internal fun TvAccountBoard(
 @Composable
 private fun TvAccountUnresolved(
     failed: Boolean,
+    denied: Boolean,
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    if (failed) {
+    if (denied) {
+        TvLocalNetworkDeniedPage(onRetry = onRetry, modifier = modifier)
+    } else if (failed) {
         TvMessagePage(
             body = stringResource(R.string.tv_list_load_failed),
             modifier = modifier,

@@ -7,6 +7,13 @@ import io.grpc.StatusException
 
 internal fun invalidArgument(reason: String): StatusException = StatusException(Status.INVALID_ARGUMENT.withDescription(reason))
 
+/**
+ * A contract request id as Seerr's own: the contract's ids are opaque strings, and Seerr's are numbers. An id
+ * this server could never have issued is the contract's NOT_FOUND, the answer for any unknown request.
+ */
+internal fun String.toSeerrRequestId(): Int =
+    toIntOrNull() ?: throw StatusException(Status.NOT_FOUND.withDescription("No request with that id"))
+
 internal fun IssueType.toSeerrIssueType(): SeerrIssueTypeCode =
     when (this) {
         IssueType.ISSUE_TYPE_VIDEO -> SeerrIssueTypeCode.Video

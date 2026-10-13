@@ -44,6 +44,9 @@ enum class SeerrError {
     Quota,
     NotFound,
     Unreachable,
+
+    /** The server is on the local network and Android has not let this app reach it. Only the permission fixes it. */
+    LocalNetworkDenied,
     Server,
     Rejected,
     Unknown,
@@ -68,11 +71,16 @@ val SeerrError.rejectsSession: Boolean
  * (a permission, a quota, a 4xx on the merits, a target gone) would only be refused again, so it is reported instead.
  */
 val SeerrError.isTransient: Boolean
-    get() = this == SeerrError.Unreachable || this == SeerrError.Server || this == SeerrError.Unknown
+    get() =
+        this == SeerrError.Unreachable ||
+            this == SeerrError.LocalNetworkDenied ||
+            this == SeerrError.Server ||
+            this == SeerrError.Unknown
 
 fun Throwable.toSeerrError(): SeerrError =
     when (this) {
         is NotConnectedException -> SeerrError.NotConnected
+        is LocalNetworkDeniedException -> SeerrError.LocalNetworkDenied
         is HttpException ->
             when {
                 rejectsSessionByAnswer() -> SeerrError.Unauthorized

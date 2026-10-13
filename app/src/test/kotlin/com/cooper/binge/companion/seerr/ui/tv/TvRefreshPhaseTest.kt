@@ -4,6 +4,7 @@ import androidx.paging.CombinedLoadStates
 import androidx.paging.LoadState
 import androidx.paging.LoadStates
 import com.binge.designsystem.template.PagedPhase
+import com.cooper.binge.companion.seerr.seerr.LocalNetworkDeniedException
 import okhttp3.ResponseBody.Companion.toResponseBody
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -18,6 +19,15 @@ import java.io.IOException
 class TvRefreshPhaseTest {
     private val idle = LoadState.NotLoading(endOfPaginationReached = false)
     private val failure = IOException("unreachable")
+
+    @Test
+    fun `a failure that only the local network permission fixes is its own phase`() {
+        val denied = LocalNetworkDeniedException("seerr.lan")
+
+        assertEquals(TvLoadPhase.Denied, PagedPhase.Failed(denied).tvRefresh())
+        assertEquals(TvLoadPhase.Denied, PagedPhase.Rows(refreshing = false, refreshError = denied).tvRefresh())
+        assertEquals(true, TvLoadPhase.Denied.isFailure)
+    }
 
     @Test
     fun `the skeleton is the loading plate and an empty list is idle`() {

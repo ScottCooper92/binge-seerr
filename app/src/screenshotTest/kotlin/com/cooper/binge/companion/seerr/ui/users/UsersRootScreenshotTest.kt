@@ -59,6 +59,12 @@ class UsersRootScreenshotTest {
     @SeerrScreenStatePreview
     @Composable
     fun scopeUnreachable() = Frame(UsersUiState.Error(SeerrError.Unreachable))
+
+    /** The server is on the local network and Android has not let this app reach it: Allow, as the hub offers, not a retry. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun scopeLocalNetworkDenied() = Frame(UsersUiState.Error(SeerrError.LocalNetworkDenied))
 }
 
 private fun ready(

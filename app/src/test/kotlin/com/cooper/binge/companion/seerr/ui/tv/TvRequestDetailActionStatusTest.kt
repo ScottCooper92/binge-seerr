@@ -15,6 +15,9 @@ import androidx.compose.ui.test.requestFocus
 import com.binge.designsystem.tv.theme.BingeTvTheme
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.seerr.SeerrError
+import com.cooper.binge.companion.seerr.seerr.SeerrMediaStatusCode
+import com.cooper.binge.companion.seerr.ui.requests.MediaInstance
+import com.cooper.binge.companion.seerr.ui.requests.MediaRecord
 import com.cooper.binge.companion.seerr.ui.requests.MediaStatusChoice
 import com.cooper.binge.companion.seerr.ui.requests.ModerationEvent
 import com.cooper.binge.companion.seerr.ui.requests.RequestActions
@@ -47,11 +50,14 @@ class TvRequestDetailActionStatusTest {
     private val events = MutableSharedFlow<ModerationEvent>(extraBufferCapacity = 1)
     private val calls = mutableListOf<String>()
 
-    private fun setContent(allowed: RequestActions) {
+    private fun setContent(
+        allowed: RequestActions,
+        withMedia: Boolean = false,
+    ) {
         composeTestRule.setContent {
             BingeTvTheme {
                 TvRequestDetailScreen(
-                    state = RequestDetailUiState.Ready(requestDetail(actions = allowed)),
+                    state = RequestDetailUiState.Ready(requestDetail(actions = allowed, media = if (withMedia) markableMedia() else null)),
                     events = events,
                     actions =
                         TvRequestDetailActions(
@@ -72,6 +78,16 @@ class TvRequestDetailActionStatusTest {
         }
         composeTestRule.waitForIdle()
     }
+
+    private fun markableMedia() =
+        MediaRecord(
+            mediaId = 9,
+            isTv = false,
+            instances = listOf(MediaInstance(false, SeerrMediaStatusCode.Processing, null, null, null)),
+            canSetStatus = true,
+            canClearData = false,
+            canDeleteFiles = false,
+        )
 
     private fun actionButton(label: Int) =
         composeTestRule.onNode(
@@ -211,6 +227,22 @@ class TvRequestDetailActionStatusTest {
         pressRetryOnTheLine()
 
         assertEquals(listOf("decline", "block"), calls)
+    }
+
+    /** An approve that failed is not the Mark as sheet's: opening it shows no Retry that would approve again (#1519). */
+    @Test
+    fun aFailedApproveIsNotShownInTheMarkAsSheet() {
+        setContent(RequestActions(canApprove = true), withMedia = true)
+        take(R.string.tv_detail_approve)
+        events.tryEmit(ModerationEvent.Failed(SeerrError.Unreachable))
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithText(string(DesR.string.save_status_failed)).assertExists()
+
+        take(R.string.media_mark_as)
+
+        composeTestRule.onNodeWithText(string(R.string.media_mark_as_scope_caption), substring = true).assertExists()
+        composeTestRule.onNodeWithText(string(DesR.string.save_status_failed)).assertDoesNotExist()
+        assertEquals(listOf("approve"), calls)
     }
 
     @Test

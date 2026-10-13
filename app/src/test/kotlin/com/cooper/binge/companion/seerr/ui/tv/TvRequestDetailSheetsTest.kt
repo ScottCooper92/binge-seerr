@@ -116,6 +116,27 @@ class TvRequestDetailSheetsTest {
         composeTestRule.onNodeWithText(string(R.string.media_mark_as_scope_caption), substring = true).assertIsDisplayed()
     }
 
+    /** A refused pick is not the next opening's: the sheet starts clean, with no Retry for a pick that was left (#1519). */
+    @Test
+    fun aRefusedPickIsNotCarriedToTheNextOpening() {
+        setContent(detail(media = media(MediaInstance(false, SeerrMediaStatusCode.Processing, null, null, null))))
+        pressOk()
+        pressOk()
+        events.tryEmit(ModerationEvent.Failed(SeerrError.Unreachable))
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithText(string(DesR.string.save_status_failed)).assertIsDisplayed()
+
+        composeTestRule.runOnUiThread { composeTestRule.activity.onBackPressedDispatcher.onBackPressed() }
+        composeTestRule.waitForIdle()
+        actionButton(R.string.media_mark_as).requestFocus()
+        composeTestRule.waitForIdle()
+        pressOk()
+
+        composeTestRule.onNodeWithText(string(R.string.media_mark_as_scope_caption), substring = true).assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(DesR.string.save_status_failed)).assertDoesNotExist()
+        composeTestRule.onNodeWithText(string(DesR.string.save_status_retry)).assertDoesNotExist()
+    }
+
     @Test
     fun aTitleHeldTwiceAsksWhichInstanceFirst() {
         setContent(

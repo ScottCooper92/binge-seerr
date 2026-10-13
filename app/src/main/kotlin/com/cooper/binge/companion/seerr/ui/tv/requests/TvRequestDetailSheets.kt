@@ -37,6 +37,7 @@ import com.cooper.binge.companion.seerr.ui.requests.MediaStatusChoice
 import com.cooper.binge.companion.seerr.ui.requests.icon
 import com.cooper.binge.companion.seerr.ui.requests.labelRes
 import com.cooper.binge.companion.seerr.ui.tv.OnSaved
+import com.cooper.binge.companion.seerr.ui.tv.ScopedTo
 import com.cooper.binge.companion.seerr.ui.tv.TvActionRun
 import com.cooper.binge.companion.seerr.ui.tv.TvFormNote
 import com.cooper.binge.companion.seerr.ui.tv.TvFormNoteTone
@@ -122,6 +123,8 @@ internal fun TvRequestDetailSheet(
                 }
                 // The sheet stays open while it saves: "Saved" is read, and then it closes.
                 run.OnSaved { closer.close() }
+                // Another action's failure, left on the page, is not this sheet's to show or retry.
+                run.ScopedTo(DetailSheet.MarkAs)
             }
         DetailSheet.Report ->
             TvSideSheet(onDismissRequest = dismiss) { entryFocus ->

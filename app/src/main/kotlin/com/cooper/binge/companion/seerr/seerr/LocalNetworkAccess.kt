@@ -6,6 +6,9 @@ import android.content.pm.PackageManager
 import android.os.Build
 import androidx.core.content.ContextCompat
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import okhttp3.Interceptor
+import okhttp3.Response
+import java.io.IOException
 
 /** The first SDK with the `ACCESS_LOCAL_NETWORK` runtime permission. */
 private const val LOCAL_NETWORK_SDK = 37
@@ -66,3 +69,28 @@ private fun ByteArray.isLocalNetworkAddress(): Boolean =
 /** Whether [this] address needs the permission and [permission] does not hold it. */
 fun String.isBlockedByLocalNetwork(permission: LocalNetworkPermission): Boolean =
     localNetworkHostOrNull() != null && !permission.isGranted()
+
+/**
+ * A call the app declined to make because the server is on the local network and Android has not let this app reach it.
+ * An [IOException], so everything that already treats a failed connection as one still does, and [toSeerrError] gives it
+ * its own [SeerrError.LocalNetworkDenied]: a retry cannot fix it, only the permission can.
+ */
+class LocalNetworkDeniedException(
+    host: String,
+) : IOException("Local network access is off, so $host cannot be reached")
+
+/**
+ * Refuses a call to a local-network host while [permission] is not granted, before the platform does. The platform's own
+ * refusal is a bare connection failure that no screen can tell from a server that is down; this one names itself, so every
+ * screen that reads the server can show the hub's "Local network access is off" and its Allow button (#1507).
+ * The permission is read per call, so granting it takes effect on the next retry with no new client.
+ */
+internal class SeerrLocalNetworkInterceptor(
+    private val permission: LocalNetworkPermission,
+) : Interceptor {
+    override fun intercept(chain: Interceptor.Chain): Response {
+        val host = chain.request().url.host
+        if (host.isLocalNetworkHost() && !permission.isGranted()) throw LocalNetworkDeniedException(host)
+        return chain.proceed(chain.request())
+    }
+}

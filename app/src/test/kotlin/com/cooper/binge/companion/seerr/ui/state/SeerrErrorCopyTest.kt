@@ -20,12 +20,19 @@ class SeerrErrorCopyTest {
                 SeerrError.Quota to ErrorKind.RateLimited,
                 SeerrError.NotFound to ErrorKind.NotFound,
                 SeerrError.Unreachable to ErrorKind.Network,
+                SeerrError.LocalNetworkDenied to ErrorKind.Forbidden,
                 SeerrError.Server to ErrorKind.Server,
                 SeerrError.Rejected to ErrorKind.Generic,
                 SeerrError.Unknown to ErrorKind.Generic,
             ),
             kinds,
         )
+    }
+
+    @Test
+    fun `a refused local network says what the hub says`() {
+        assertEquals(R.string.hub_local_network_headline, SeerrError.LocalNetworkDenied.titleRes())
+        assertEquals(R.string.hub_local_network_body, SeerrError.LocalNetworkDenied.messageRes())
     }
 
     @Test

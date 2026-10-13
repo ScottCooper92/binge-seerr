@@ -2,6 +2,7 @@ package com.cooper.binge.companion.seerr.ui.state
 
 import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.SearchOff
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -10,9 +11,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import com.binge.designsystem.ErrorKind
 import com.binge.designsystem.template.LoadingMessageScreen
+import com.binge.designsystem.template.MessageScreen
+import com.binge.designsystem.template.ScreenAction
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.theme.SeerrTheme
+import com.cooper.binge.companion.seerr.ui.rememberAllowLocalNetwork
 import com.binge.designsystem.template.EmptyScreen as DesignEmptyScreen
 import com.binge.designsystem.template.ErrorScreen as DesignErrorScreen
 
@@ -44,12 +48,36 @@ fun ErrorScreen(
     modifier: Modifier = Modifier,
     onRetry: (() -> Unit)? = null,
 ) {
+    if (error == SeerrError.LocalNetworkDenied) {
+        LocalNetworkDeniedScreen(onRetry = onRetry, modifier = modifier)
+        return
+    }
     DesignErrorScreen(
         kind = error.toErrorKind(),
         onRetry = onRetry,
         modifier = modifier,
         title = stringResource(error.titleRes()),
         message = stringResource(error.messageRes()),
+    )
+}
+
+/**
+ * The hub's own answer to a server Android will not let this app reach (#1507): the same words, and Allow where a retry
+ * would sit, since only the permission fixes it. Coming back from the prompt or from Settings retries, so the screen
+ * loads as soon as the permission holds.
+ */
+@Composable
+private fun LocalNetworkDeniedScreen(
+    onRetry: (() -> Unit)?,
+    modifier: Modifier = Modifier,
+) {
+    val allow = rememberAllowLocalNetwork { onRetry?.invoke() }
+    MessageScreen(
+        headline = stringResource(SeerrError.LocalNetworkDenied.titleRes()),
+        body = stringResource(SeerrError.LocalNetworkDenied.messageRes()),
+        icon = Icons.Filled.CloudOff,
+        primary = ScreenAction(stringResource(allow.label), allow.run),
+        modifier = modifier,
     )
 }
 
@@ -65,6 +93,7 @@ internal fun SeerrError.toErrorKind(): ErrorKind =
         SeerrError.Quota -> ErrorKind.RateLimited
         SeerrError.NotFound -> ErrorKind.NotFound
         SeerrError.Unreachable -> ErrorKind.Network
+        SeerrError.LocalNetworkDenied -> ErrorKind.Forbidden
         SeerrError.Server -> ErrorKind.Server
         SeerrError.NotConnected, SeerrError.Rejected, SeerrError.Unknown -> ErrorKind.Generic
     }
@@ -78,6 +107,7 @@ internal fun SeerrError.titleRes(): Int =
         SeerrError.Quota -> R.string.state_error_quota_title
         SeerrError.NotFound -> R.string.state_error_not_found_title
         SeerrError.Unreachable -> R.string.state_error_unreachable_title
+        SeerrError.LocalNetworkDenied -> R.string.hub_local_network_headline
         SeerrError.Server -> R.string.state_error_server_title
         SeerrError.Rejected -> R.string.state_error_rejected_title
         SeerrError.Unknown -> R.string.state_error_unknown_title
@@ -92,6 +122,7 @@ internal fun SeerrError.messageRes(): Int =
         SeerrError.Quota -> R.string.state_error_quota_message
         SeerrError.NotFound -> R.string.state_error_not_found_message
         SeerrError.Unreachable -> R.string.state_error_unreachable_message
+        SeerrError.LocalNetworkDenied -> R.string.hub_local_network_body
         SeerrError.Server -> R.string.state_error_server_message
         SeerrError.Rejected -> R.string.state_error_rejected_message
         SeerrError.Unknown -> R.string.state_error_unknown_message

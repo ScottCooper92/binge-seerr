@@ -162,7 +162,7 @@ client offers:
 ## A capability this companion does not offer
 
 `CAPABILITY_MEDIA_FILE_INFO`, a movie's file name, size, resolution and codec, is never declared,
-and `RequestStatus.file_info` is never set. The contract makes both optional. Seerr's API does not
+and `VersionStatus.file_info` is never set. The contract makes both optional. Seerr's API does not
 carry a finished download's file; only Radarr does. Radarr's host and API key are only in Seerr's
 admin-only `GET /settings/radarr`. Serving it would mean holding a Radarr key and calling a second
 host, for admins only. That would break the privacy promise that the app's server traffic goes only

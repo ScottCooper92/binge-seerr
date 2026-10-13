@@ -31,6 +31,7 @@ import com.binge.designsystem.tv.template.TvHubRow
 import com.binge.designsystem.tv.template.TvImmersiveHub
 import com.binge.designsystem.tv.template.TvMessagePage
 import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.ui.issues.IssueCounts
 import com.cooper.binge.companion.seerr.ui.issues.IssueFilter
 import com.cooper.binge.companion.seerr.ui.issues.IssueItem
@@ -44,11 +45,13 @@ import com.cooper.binge.companion.seerr.ui.issues.labelRes
 import com.cooper.binge.companion.seerr.ui.issues.tone
 import com.cooper.binge.companion.seerr.ui.tv.OnSaved
 import com.cooper.binge.companion.seerr.ui.tv.OverlayFocusRestore
+import com.cooper.binge.companion.seerr.ui.tv.ScopedTo
 import com.cooper.binge.companion.seerr.ui.tv.TV_ROW_ITEM_CAP
 import com.cooper.binge.companion.seerr.ui.tv.TvActionRun
 import com.cooper.binge.companion.seerr.ui.tv.TvBackdropArtwork
 import com.cooper.binge.companion.seerr.ui.tv.TvBackdropCopy
 import com.cooper.binge.companion.seerr.ui.tv.TvHubLoading
+import com.cooper.binge.companion.seerr.ui.tv.TvLocalNetworkDeniedPage
 import com.cooper.binge.companion.seerr.ui.tv.TvPagedRows
 import com.cooper.binge.companion.seerr.ui.tv.TvPosterCard
 import com.cooper.binge.companion.seerr.ui.tv.TvRowsFallback
@@ -152,6 +155,10 @@ private fun TvIssuesUnresolved(
 ) {
     if (state !is IssuesUiState.Error) {
         TvHubLoading()
+        return
+    }
+    if (state.error == SeerrError.LocalNetworkDenied) {
+        TvLocalNetworkDeniedPage(onRetry = actions.onRetryScope)
         return
     }
     TvMessagePage(
@@ -273,6 +280,7 @@ internal fun TvIssueActionsSheet(
     val open = item.status == IssueStatus.Open
     // The sheet stays open while the action saves, so its answer is read where it was asked; "Saved" closes it.
     run.OnSaved(onDismiss)
+    run.ScopedTo(item.id)
     val busy = run.status == SaveStatus.Saving
     TvSideSheet(onDismissRequest = onDismiss, modifier = modifier) { entryFocus ->
         when (pending) {
