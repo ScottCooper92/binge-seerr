@@ -23,7 +23,6 @@ import com.cooper.binge.companion.seerr.ui.tv.issues.TvIssuesGridManagement
 
 @Composable
 internal fun TvIssuesEntry(
-    openIssueId: Int?,
     onOpenIssue: (Int) -> Unit,
     seeAllOpen: Boolean,
     onSeeAll: (IssueFilter) -> Unit,
@@ -42,7 +41,6 @@ internal fun TvIssuesEntry(
         state = state,
         rowsFor = { rowsByFilter.getValue(it) },
         events = viewModel.events,
-        openIssueId = openIssueId,
         seeAllOpen = seeAllOpen,
         now = ready?.now ?: System.currentTimeMillis(),
         actions =
