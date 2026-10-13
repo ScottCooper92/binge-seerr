@@ -3,13 +3,14 @@ package com.cooper.binge.companion.seerr.service
 import com.binge.companion.contracts.request.v1.ApprovalState
 import com.binge.companion.contracts.request.v1.Availability
 import com.binge.companion.contracts.request.v1.Capability
-import com.binge.companion.contracts.request.v1.DownloadProgress
 import com.binge.companion.contracts.request.v1.RequestInfo
 import com.binge.companion.contracts.request.v1.RequestStatus
 import com.cooper.binge.companion.seerr.data.CachedStatus
 import com.cooper.binge.companion.seerr.seerr.SeerrPermissions
 import com.cooper.binge.companion.seerr.seerr.SeerrServerProfile
 import com.cooper.binge.companion.seerr.seerr.requesterIds
+import com.cooper.binge.companion.seerr.seerr.standardVersion
+import com.cooper.binge.companion.seerr.seerr.version4k
 import kotlinx.coroutines.flow.map
 
 /**
@@ -58,9 +59,9 @@ private val REQUEST_SCOPED =
 
 /**
  * The server's status with its allowed actions filled in for the user [viewerId]. Each request carries
- * its own set. The 4K state is cleared unless this user is declared `CAPABILITY_REQUEST_4K`, as the
- * contract asks, so it never tells them about a version they cannot request; their `download` leaves
- * the 4K downloads out for the same reason. The title's set holds a
+ * its own set. The 4K version's entry is left out unless this user is declared `CAPABILITY_REQUEST_4K`, as
+ * the contract asks, so it never tells them about a version they cannot request, its downloads included.
+ * The title's set holds a
  * report only against something available in a version they can see, and the block
  * capability either way: it offers a block on a title and an unblock on a blocked one. Its
  * request-scoped entries are the union of the requests', so a
@@ -75,7 +76,7 @@ fun SeerrPermissions.withAllowedActions(
     val status = server.status
     val requests =
         status.requestsList.map { request ->
-            val own = server.requesterIds[request.id] == viewerId
+            val own = request.id.toIntOrNull()?.let(server.requesterIds::get) == viewerId
             request
                 .toBuilder()
                 .clearAllowedActions()
@@ -95,7 +96,7 @@ fun SeerrPermissions.withAllowedActions(
         }
     return status
         .toBuilder()
-        .apply { if (!sees4k) leaveOut4k(server.standardDownload) }
+        .apply { if (!sees4k) leaveOut4k() }
         .clearRequests()
         .addAllRequests(requests)
         .clearAllowedActions()
@@ -103,17 +104,18 @@ fun SeerrPermissions.withAllowedActions(
         .build()
 }
 
-/** Everything about the 4K version: its state, and its downloads, which leaves [standardDownload] as the download. */
-private fun RequestStatus.Builder.leaveOut4k(standardDownload: DownloadProgress?) {
-    clearAvailability4K().clearSeasons4K()
-    if (standardDownload != null) setDownload(standardDownload) else clearDownload()
+/** Everything about the 4K version, which is all in its own entry. */
+private fun RequestStatus.Builder.leaveOut4k() {
+    val standard = versionsList.filterNot { it.is4K }
+    clearVersions().addAllVersions(standard)
 }
 
 /**
  * Whether there is something to report an issue against: the standard version available, or partly,
  * or the 4K one where [sees4k]. `ReportIssue` refuses anything else with FAILED_PRECONDITION.
  */
-fun RequestStatus.isReportable(sees4k: Boolean): Boolean = availability.isReportable() || (sees4k && availability4K.isReportable())
+fun RequestStatus.isReportable(sees4k: Boolean): Boolean =
+    standardVersion().availability.isReportable() || (sees4k && version4k().availability.isReportable())
 
 private fun Availability.isReportable(): Boolean =
     this == Availability.AVAILABILITY_AVAILABLE || this == Availability.AVAILABILITY_PARTIALLY_AVAILABLE
