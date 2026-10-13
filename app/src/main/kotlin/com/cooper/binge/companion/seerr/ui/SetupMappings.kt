@@ -1,5 +1,6 @@
 package com.cooper.binge.companion.seerr.ui
 
+import com.binge.companion.sdk.attempt
 import com.cooper.binge.companion.seerr.auth.InvalidServerUrlException
 import com.cooper.binge.companion.seerr.auth.NotSeerrServerException
 import com.cooper.binge.companion.seerr.auth.PlexPinExpiredException
@@ -17,7 +18,6 @@ import com.cooper.binge.companion.seerr.seerr.SeerrAuth
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.seerr.SeerrLoginRequest
 import com.cooper.binge.companion.seerr.seerr.SeerrSignInMode
-import com.cooper.binge.companion.seerr.seerr.attempt
 import com.cooper.binge.companion.seerr.seerr.isBlockedByLocalNetwork
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
 import com.cooper.binge.companion.seerr.telemetry.Analytics

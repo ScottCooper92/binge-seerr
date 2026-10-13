@@ -1,10 +1,10 @@
 package com.cooper.binge.companion.seerr.auth
 
+import com.binge.companion.sdk.attempt
 import com.cooper.binge.companion.seerr.seerr.HTTP_NOT_FOUND
 import com.cooper.binge.companion.seerr.seerr.PlexClientIdentity
 import com.cooper.binge.companion.seerr.seerr.PlexPinDto
 import com.cooper.binge.companion.seerr.seerr.PlexTvApi
-import com.cooper.binge.companion.seerr.seerr.attempt
 import com.cooper.binge.companion.seerr.seerr.plexTvApi
 import kotlinx.coroutines.delay
 import retrofit2.HttpException

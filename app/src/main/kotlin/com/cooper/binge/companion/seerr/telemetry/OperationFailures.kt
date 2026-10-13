@@ -1,10 +1,10 @@
 package com.cooper.binge.companion.seerr.telemetry
 
+import com.binge.companion.sdk.attempt
 import com.cooper.binge.companion.seerr.auth.NotConnectedException
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.seerr.SeerrServerProfile
-import com.cooper.binge.companion.seerr.seerr.attempt
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
 import com.cooper.binge.companion.seerr.seerr.toStatusException
 import io.grpc.StatusException

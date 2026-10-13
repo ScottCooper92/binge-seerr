@@ -3,10 +3,10 @@ package com.cooper.binge.companion.seerr.ui.users.settings
 import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.binge.companion.sdk.attempt
 import com.binge.designsystem.SaveStatus
 import com.binge.designsystem.save.SaveAsMade
 import com.cooper.binge.companion.seerr.seerr.SeerrError
-import com.cooper.binge.companion.seerr.seerr.attempt
 import com.cooper.binge.companion.seerr.seerr.isTransient
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
 import kotlinx.coroutines.CoroutineDispatcher

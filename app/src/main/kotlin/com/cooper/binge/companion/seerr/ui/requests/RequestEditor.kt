@@ -1,5 +1,6 @@
 package com.cooper.binge.companion.seerr.ui.requests
 
+import com.binge.companion.sdk.attempt
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.seerr.SeerrEditRequestBody
 import com.cooper.binge.companion.seerr.seerr.SeerrMediaDetailsDto
@@ -9,7 +10,6 @@ import com.cooper.binge.companion.seerr.seerr.SeerrRequestStatusCode
 import com.cooper.binge.companion.seerr.seerr.SeerrServerDto
 import com.cooper.binge.companion.seerr.seerr.arrServer
 import com.cooper.binge.companion.seerr.seerr.arrServers
-import com.cooper.binge.companion.seerr.seerr.attempt
 import com.cooper.binge.companion.seerr.seerr.forRequest
 import com.cooper.binge.companion.seerr.seerr.isTv
 import com.cooper.binge.companion.seerr.seerr.preferred

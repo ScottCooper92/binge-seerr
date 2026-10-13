@@ -1,6 +1,6 @@
 package com.cooper.binge.companion.seerr.auth
 
-import com.cooper.binge.companion.seerr.seerr.attempt
+import com.binge.companion.sdk.attempt
 import com.google.android.gms.auth.blockstore.BlockstoreClient
 import com.google.android.gms.auth.blockstore.DeleteBytesRequest
 import com.google.android.gms.auth.blockstore.RetrieveBytesRequest

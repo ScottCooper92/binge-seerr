@@ -1,7 +1,7 @@
 package com.cooper.binge.companion.seerr.ui.settings
 
+import com.binge.companion.sdk.attempt
 import com.cooper.binge.companion.seerr.seerr.SeerrVariant
-import com.cooper.binge.companion.seerr.seerr.attempt
 import java.util.Locale
 
 /**

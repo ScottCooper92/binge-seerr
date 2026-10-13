@@ -1,7 +1,7 @@
 package com.cooper.binge.companion.seerr.ui.users.settings
 
 import androidx.lifecycle.SavedStateHandle
-import com.cooper.binge.companion.seerr.seerr.attempt
+import com.binge.companion.sdk.attempt
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.Json
 

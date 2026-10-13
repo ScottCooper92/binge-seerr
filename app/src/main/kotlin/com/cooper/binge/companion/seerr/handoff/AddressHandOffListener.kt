@@ -1,6 +1,6 @@
 package com.cooper.binge.companion.seerr.handoff
 
-import com.cooper.binge.companion.seerr.seerr.attempt
+import com.binge.companion.sdk.attempt
 import com.cooper.binge.companion.seerr.seerr.isValidBaseUrl
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers

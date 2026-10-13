@@ -1,6 +1,6 @@
 package com.cooper.binge.companion.seerr.handoff
 
-import com.cooper.binge.companion.seerr.seerr.attempt
+import com.binge.companion.sdk.attempt
 import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.io.InputStream

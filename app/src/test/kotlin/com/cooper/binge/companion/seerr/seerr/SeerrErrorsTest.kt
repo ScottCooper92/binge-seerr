@@ -1,5 +1,6 @@
 package com.cooper.binge.companion.seerr.seerr
 
+import com.binge.companion.sdk.attempt
 import com.cooper.binge.companion.seerr.auth.NotConnectedException
 import io.grpc.Status
 import kotlinx.coroutines.CancellationException

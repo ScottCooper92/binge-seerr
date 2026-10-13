@@ -1,12 +1,12 @@
 package com.cooper.binge.companion.seerr.ui.settings.server
 
+import com.binge.companion.sdk.attempt
 import com.binge.designsystem.SaveStatus
 import com.cooper.binge.companion.seerr.seerr.SeerrApiCacheDto
 import com.cooper.binge.companion.seerr.seerr.SeerrCacheDto
 import com.cooper.binge.companion.seerr.seerr.SeerrDnsEntryDto
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.seerr.SeerrJobDto
-import com.cooper.binge.companion.seerr.seerr.attempt
 import com.cooper.binge.companion.seerr.seerr.toEpochMillisOrNull
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray

@@ -2,7 +2,7 @@ package com.cooper.binge.companion.seerr.service
 
 import com.binge.companion.contracts.request.v1.ListRequestsRequest
 import com.binge.companion.contracts.request.v1.RequestFilter
-import com.cooper.binge.companion.seerr.seerr.attempt
+import com.binge.companion.sdk.attempt
 import java.util.Base64
 
 /** What `ListRequests` answers with when the host leaves `page_size` at 0. */

@@ -1,5 +1,6 @@
 package com.cooper.binge.companion.seerr.seerr
 
+import com.binge.companion.sdk.attempt
 import java.net.Inet4Address
 import java.net.Inet6Address
 import java.net.InetAddress

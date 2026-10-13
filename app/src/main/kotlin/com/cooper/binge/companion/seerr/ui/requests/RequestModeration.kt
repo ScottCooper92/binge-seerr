@@ -1,5 +1,6 @@
 package com.cooper.binge.companion.seerr.ui.requests
 
+import com.binge.companion.sdk.attempt
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.data.NoRequestStore
 import com.cooper.binge.companion.seerr.data.RequestStore
@@ -10,7 +11,6 @@ import com.cooper.binge.companion.seerr.seerr.SeerrMediaStatusBody
 import com.cooper.binge.companion.seerr.seerr.SeerrMediaStatusSeasonBody
 import com.cooper.binge.companion.seerr.seerr.SeerrRequestStatusCode
 import com.cooper.binge.companion.seerr.seerr.addToBlocklistOnce
-import com.cooper.binge.companion.seerr.seerr.attempt
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
 import com.cooper.binge.companion.seerr.seerr.updateRequest
 import com.cooper.binge.companion.seerr.telemetry.Analytics

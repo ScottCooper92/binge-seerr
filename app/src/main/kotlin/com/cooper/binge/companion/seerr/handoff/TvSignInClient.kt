@@ -1,7 +1,7 @@
 package com.cooper.binge.companion.seerr.handoff
 
+import com.binge.companion.sdk.attempt
 import com.cooper.binge.companion.seerr.logWarning
-import com.cooper.binge.companion.seerr.seerr.attempt
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext

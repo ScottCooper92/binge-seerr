@@ -1,7 +1,7 @@
 package com.cooper.binge.companion.seerr.handoff
 
+import com.binge.companion.sdk.attempt
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
-import com.cooper.binge.companion.seerr.seerr.attempt
 import javax.inject.Inject
 
 /** The connected server's Application URL, normalised, or null where the administrator left it blank. */

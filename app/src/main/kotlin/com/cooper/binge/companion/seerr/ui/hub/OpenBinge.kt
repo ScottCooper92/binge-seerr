@@ -4,7 +4,7 @@ import android.content.Context
 import android.content.Intent
 import androidx.core.net.toUri
 import com.binge.companion.sdk.BingeHosts
-import com.cooper.binge.companion.seerr.seerr.attempt
+import com.binge.companion.sdk.attempt
 import com.cooper.binge.companion.seerr.ui.openInBrowser
 
 private const val PLAY_STORE_WEB_URL = "https://play.google.com/store/apps/details?id=${BingeHosts.RELEASE_PACKAGE_NAME}"

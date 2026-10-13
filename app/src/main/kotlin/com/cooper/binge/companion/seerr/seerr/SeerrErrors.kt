@@ -1,5 +1,6 @@
 package com.cooper.binge.companion.seerr.seerr
 
+import com.binge.companion.sdk.attempt
 import com.cooper.binge.companion.seerr.auth.NotConnectedException
 import io.grpc.Status
 import io.grpc.StatusException
@@ -215,15 +216,6 @@ suspend inline fun <T> statusCatching(block: () -> T): T =
     } catch (e: Exception) {
         throw e.toStatusException()
     }
-
-/**
- * [runCatching] catches everything, cancellation included, which would swallow the cancellation a
- * cancelled scope or a stopped worker sends. This lets that one back out and treats the rest as a
- * failure to classify with [toSeerrError].
- */
-@Suppress("ForbiddenMethodCall") // The one place `runCatching` is allowed: this is what it is wrapped to fix.
-internal inline fun <T> attempt(block: () -> T): Result<T> =
-    runCatching(block).onFailure { failure -> if (failure is CancellationException) throw failure }
 
 private const val UNREADABLE = "Seerr returned something this companion could not read"
 private const val UNHANDLED = "The companion failed to handle this request"

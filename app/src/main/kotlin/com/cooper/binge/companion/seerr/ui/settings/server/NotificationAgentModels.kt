@@ -1,10 +1,10 @@
 package com.cooper.binge.companion.seerr.ui.settings.server
 
+import com.binge.companion.sdk.attempt
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.seerr.SeerrNotificationAgentDto
 import com.cooper.binge.companion.seerr.seerr.SeerrPushoverSoundDto
 import com.cooper.binge.companion.seerr.seerr.SeerrServerProfile
-import com.cooper.binge.companion.seerr.seerr.attempt
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
