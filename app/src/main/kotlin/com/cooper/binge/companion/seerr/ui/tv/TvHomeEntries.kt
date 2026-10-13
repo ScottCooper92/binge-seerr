@@ -39,9 +39,7 @@ import com.cooper.binge.companion.seerr.ui.tv.requests.TvRequestsRowsBoard
 @Composable
 internal fun TvHomeEntry(
     onReconnect: () -> Unit,
-    openRequestId: Int?,
     onOpenRequest: (Int) -> Unit,
-    seeAllOpen: Boolean,
     onSeeAll: (RequestFilter) -> Unit,
     hubViewModel: HubViewModel = hiltViewModel(),
 ) {
@@ -50,12 +48,7 @@ internal fun TvHomeEntry(
     var answering by remember { mutableStateOf(false) }
     answering = homeAnswering(hub, answering)
     if (answering) {
-        TvRequestsEntry(
-            openRequestId = openRequestId,
-            onOpenRequest = onOpenRequest,
-            seeAllOpen = seeAllOpen,
-            onSeeAll = onSeeAll,
-        )
+        TvRequestsEntry(onOpenRequest = onOpenRequest, onSeeAll = onSeeAll)
     } else {
         TvHubEntry(onReconnect = onReconnect, viewModel = hubViewModel)
     }
@@ -101,9 +94,7 @@ private fun TvHubEntry(
 
 @Composable
 private fun TvRequestsEntry(
-    openRequestId: Int?,
     onOpenRequest: (Int) -> Unit,
-    seeAllOpen: Boolean,
     onSeeAll: (RequestFilter) -> Unit,
     viewModel: RequestsViewModel = hiltViewModel(),
 ) {
@@ -125,8 +116,6 @@ private fun TvRequestsEntry(
     TvRequestsRowsBoard(
         state = state,
         rowsFor = { rowsByFilter.getValue(it) },
-        openRequestId = openRequestId,
-        seeAllOpen = seeAllOpen,
         actions =
             TvRequestsActions(
                 onOpenDetail = { item -> onOpenRequest(item.id) },
