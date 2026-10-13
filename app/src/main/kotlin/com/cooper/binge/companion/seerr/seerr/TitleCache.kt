@@ -1,5 +1,6 @@
 package com.cooper.binge.companion.seerr.seerr
 
+import com.binge.companion.sdk.attempt
 import com.cooper.binge.companion.seerr.data.TitleDao
 import com.cooper.binge.companion.seerr.data.TitleEntity
 import kotlinx.coroutines.sync.Mutex

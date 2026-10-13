@@ -1,5 +1,6 @@
 package com.cooper.binge.companion.seerr.ui.settings
 
+import com.binge.companion.sdk.attempt
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.notifications.NotificationSignal
 import com.cooper.binge.companion.seerr.seerr.SeerrApi
@@ -9,7 +10,6 @@ import com.cooper.binge.companion.seerr.seerr.SeerrDefaultQuotaDto
 import com.cooper.binge.companion.seerr.seerr.SeerrJobDto
 import com.cooper.binge.companion.seerr.seerr.SeerrMainSettingsDto
 import com.cooper.binge.companion.seerr.seerr.SeerrServiceSettingsDto
-import com.cooper.binge.companion.seerr.seerr.attempt
 import com.cooper.binge.companion.seerr.seerr.toEpochMillisOrNull
 import com.cooper.binge.companion.seerr.seerr.toPermissions
 import kotlinx.coroutines.async

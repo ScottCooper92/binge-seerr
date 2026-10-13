@@ -2,6 +2,7 @@ package com.cooper.binge.companion.seerr.ui.users.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.binge.companion.sdk.attempt
 import com.cooper.binge.companion.seerr.auth.PlexPinExpiredException
 import com.cooper.binge.companion.seerr.auth.PlexPinFlow
 import com.cooper.binge.companion.seerr.auth.QuickConnectExpiredException
@@ -12,7 +13,6 @@ import com.cooper.binge.companion.seerr.seerr.SeerrLinkJellyfinBody
 import com.cooper.binge.companion.seerr.seerr.SeerrLinkPlexBody
 import com.cooper.binge.companion.seerr.seerr.SeerrLinkQuickConnectBody
 import com.cooper.binge.companion.seerr.seerr.SeerrMediaServer
-import com.cooper.binge.companion.seerr.seerr.attempt
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
 import com.cooper.binge.companion.seerr.ui.LinkFlow
 import com.cooper.binge.companion.seerr.ui.users.UserOrigin

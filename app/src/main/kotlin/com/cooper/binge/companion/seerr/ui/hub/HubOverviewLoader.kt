@@ -1,12 +1,12 @@
 package com.cooper.binge.companion.seerr.ui.hub
 
+import com.binge.companion.sdk.attempt
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.seerr.SeerrApi
 import com.cooper.binge.companion.seerr.seerr.SeerrQuotaBucketDto
 import com.cooper.binge.companion.seerr.seerr.SeerrQuotaDto
 import com.cooper.binge.companion.seerr.seerr.SeerrRequestDto
 import com.cooper.binge.companion.seerr.seerr.SeerrUserDto
-import com.cooper.binge.companion.seerr.seerr.attempt
 import com.cooper.binge.companion.seerr.seerr.details
 import com.cooper.binge.companion.seerr.seerr.displayString
 import com.cooper.binge.companion.seerr.seerr.etaMinutes

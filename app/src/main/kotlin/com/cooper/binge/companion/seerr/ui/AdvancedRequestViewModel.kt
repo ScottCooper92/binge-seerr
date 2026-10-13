@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.binge.companion.contracts.v1.MediaId
 import com.binge.companion.contracts.v1.MediaType
 import com.binge.companion.sdk.AdvancedRequest
+import com.binge.companion.sdk.attempt
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.di.IoDispatcher
 import com.cooper.binge.companion.seerr.seerr.HTTP_CONFLICT
@@ -13,7 +14,6 @@ import com.cooper.binge.companion.seerr.seerr.SeerrRequestBody
 import com.cooper.binge.companion.seerr.seerr.SeerrServerDto
 import com.cooper.binge.companion.seerr.seerr.arrServer
 import com.cooper.binge.companion.seerr.seerr.arrServers
-import com.cooper.binge.companion.seerr.seerr.attempt
 import com.cooper.binge.companion.seerr.seerr.forRequest
 import com.cooper.binge.companion.seerr.seerr.preferred
 import com.cooper.binge.companion.seerr.seerr.seerrMediaType

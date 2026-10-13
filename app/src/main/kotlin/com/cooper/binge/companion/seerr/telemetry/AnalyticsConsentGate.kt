@@ -1,8 +1,8 @@
 package com.cooper.binge.companion.seerr.telemetry
 
 import android.util.Log
+import com.binge.companion.sdk.attempt
 import com.cooper.binge.companion.seerr.notifications.ApplicationScope
-import com.cooper.binge.companion.seerr.seerr.attempt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

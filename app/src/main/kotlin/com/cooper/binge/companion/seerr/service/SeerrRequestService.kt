@@ -46,6 +46,7 @@ import com.binge.companion.contracts.request.v1.TitleStatus
 import com.binge.companion.contracts.request.v1.UnblockTitleRequest
 import com.binge.companion.contracts.request.v1.UnblockTitleResponse
 import com.binge.companion.contracts.v1.MediaId
+import com.binge.companion.sdk.attempt
 import com.binge.companion.sdk.handshakeResponse
 import com.binge.companion.sdk.requireDeclared
 import com.binge.companion.sdk.withUserMessage
@@ -71,7 +72,6 @@ import com.cooper.binge.companion.seerr.seerr.SeerrServerProfile
 import com.cooper.binge.companion.seerr.seerr.SeerrVariant
 import com.cooper.binge.companion.seerr.seerr.addToBlocklistOnce
 import com.cooper.binge.companion.seerr.seerr.advancedRequestOptions
-import com.cooper.binge.companion.seerr.seerr.attempt
 import com.cooper.binge.companion.seerr.seerr.checkHasSeasons
 import com.cooper.binge.companion.seerr.seerr.checkedSeasonNumbers
 import com.cooper.binge.companion.seerr.seerr.destinationOptions

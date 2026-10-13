@@ -157,7 +157,7 @@ naming:
     active: false
 
 style:
-  # `attempt` (seerr/SeerrErrors.kt) is the only way to turn a throw into a Result here: `runCatching` also
+  # The SDK's `attempt` (com.binge.companion.sdk) is the only way to turn a throw into a Result here: `runCatching` also
   # catches the CancellationException a cancelled scope sends, so a screen reads its own cancellation as a failure (#1025).
   # Needs type resolution to see into the stdlib, which binge.gates.detekt wires. It matches the
   # plain call, `runCatching { }`; the receiver form, `x.runCatching { }`, is not matched, and nothing here uses it.
@@ -165,7 +165,7 @@ style:
     active: true
     methods:
       - value: 'kotlin.runCatching'
-        reason: 'runCatching swallows cancellation. Use attempt from seerr/SeerrErrors.kt.'
+        reason: 'runCatching swallows cancellation. Use attempt from com.binge.companion.sdk.'
   ReturnCount:
     active: true
     # excludeGuardClauses is the substantive change, not the count: a run of leading

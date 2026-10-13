@@ -2,13 +2,13 @@ package com.cooper.binge.companion.seerr.ui.settings.server
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.binge.companion.sdk.attempt
 import com.binge.designsystem.SaveStatus
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.di.IoDispatcher
 import com.cooper.binge.companion.seerr.seerr.SeerrApi
 import com.cooper.binge.companion.seerr.seerr.SeerrJobDto
 import com.cooper.binge.companion.seerr.seerr.SeerrJobScheduleBody
-import com.cooper.binge.companion.seerr.seerr.attempt
 import com.cooper.binge.companion.seerr.seerr.isTransient
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
 import com.cooper.binge.companion.seerr.ui.Ticker

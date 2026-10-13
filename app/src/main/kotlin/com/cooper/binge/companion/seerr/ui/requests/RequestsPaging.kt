@@ -2,12 +2,12 @@ package com.cooper.binge.companion.seerr.ui.requests
 
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
+import com.binge.companion.sdk.attempt
 import com.cooper.binge.companion.seerr.seerr.HydratedTitle
 import com.cooper.binge.companion.seerr.seerr.SeerrApi
 import com.cooper.binge.companion.seerr.seerr.SeerrDownloadStatusDto
 import com.cooper.binge.companion.seerr.seerr.SeerrRequestDto
 import com.cooper.binge.companion.seerr.seerr.SeerrRequestsPageDto
-import com.cooper.binge.companion.seerr.seerr.attempt
 import com.cooper.binge.companion.seerr.seerr.displayString
 import com.cooper.binge.companion.seerr.seerr.downloadFraction
 import com.cooper.binge.companion.seerr.seerr.etaMinutes

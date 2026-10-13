@@ -1,7 +1,7 @@
 package com.cooper.binge.companion.seerr.auth
 
+import com.binge.companion.sdk.attempt
 import com.cooper.binge.companion.seerr.seerr.SeerrApiFactory
-import com.cooper.binge.companion.seerr.seerr.attempt
 import com.cooper.binge.companion.seerr.seerr.insecurePublicHostOrNull
 import com.cooper.binge.companion.seerr.seerr.rejectsSession
 import com.cooper.binge.companion.seerr.seerr.toSeerrError

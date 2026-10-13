@@ -1,7 +1,7 @@
 package com.cooper.binge.companion.seerr.ui.settings.server
 
+import com.binge.companion.sdk.attempt
 import com.cooper.binge.companion.seerr.seerr.SeerrApi
-import com.cooper.binge.companion.seerr.seerr.attempt
 import com.cooper.binge.companion.seerr.ui.Choice
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope

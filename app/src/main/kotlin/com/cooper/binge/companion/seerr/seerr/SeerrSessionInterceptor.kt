@@ -1,5 +1,6 @@
 package com.cooper.binge.companion.seerr.seerr
 
+import com.binge.companion.sdk.attempt
 import okhttp3.Headers
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl

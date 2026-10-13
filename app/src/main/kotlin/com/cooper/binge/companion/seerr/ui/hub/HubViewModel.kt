@@ -2,6 +2,7 @@ package com.cooper.binge.companion.seerr.ui.hub
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.binge.companion.sdk.attempt
 import com.cooper.binge.companion.seerr.auth.BingeConnectionStore
 import com.cooper.binge.companion.seerr.auth.BingeHint
 import com.cooper.binge.companion.seerr.auth.NoBingeConnectionStore
@@ -10,7 +11,6 @@ import com.cooper.binge.companion.seerr.auth.SeerrConnectionHealth
 import com.cooper.binge.companion.seerr.di.IoDispatcher
 import com.cooper.binge.companion.seerr.seerr.LocalNetworkPermission
 import com.cooper.binge.companion.seerr.seerr.SeerrCredentials
-import com.cooper.binge.companion.seerr.seerr.attempt
 import com.cooper.binge.companion.seerr.seerr.isBlockedByLocalNetwork
 import com.cooper.binge.companion.seerr.ui.Ticker
 import dagger.hilt.android.lifecycle.HiltViewModel

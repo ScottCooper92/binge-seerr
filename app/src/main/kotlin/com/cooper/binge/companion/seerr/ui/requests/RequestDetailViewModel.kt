@@ -2,6 +2,7 @@ package com.cooper.binge.companion.seerr.ui.requests
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.binge.companion.sdk.attempt
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.data.NoRequestStore
 import com.cooper.binge.companion.seerr.data.RequestStore
@@ -12,7 +13,6 @@ import com.cooper.binge.companion.seerr.seerr.SeerrCreateIssueBody
 import com.cooper.binge.companion.seerr.seerr.SeerrRequestDto
 import com.cooper.binge.companion.seerr.seerr.arrServer
 import com.cooper.binge.companion.seerr.seerr.arrServers
-import com.cooper.binge.companion.seerr.seerr.attempt
 import com.cooper.binge.companion.seerr.seerr.details
 import com.cooper.binge.companion.seerr.seerr.toPermissions
 import com.cooper.binge.companion.seerr.seerr.toSeerrError

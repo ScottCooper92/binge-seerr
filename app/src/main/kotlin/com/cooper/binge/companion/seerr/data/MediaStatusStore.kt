@@ -3,7 +3,7 @@ package com.cooper.binge.companion.seerr.data
 import com.binge.companion.contracts.request.v1.DownloadProgress
 import com.binge.companion.contracts.request.v1.RequestStatus
 import com.binge.companion.contracts.v1.MediaId
-import com.cooper.binge.companion.seerr.seerr.attempt
+import com.binge.companion.sdk.attempt
 import java.util.Base64
 
 /**

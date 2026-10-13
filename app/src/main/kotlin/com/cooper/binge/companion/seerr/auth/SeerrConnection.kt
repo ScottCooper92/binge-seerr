@@ -1,5 +1,6 @@
 package com.cooper.binge.companion.seerr.auth
 
+import com.binge.companion.sdk.attempt
 import com.cooper.binge.companion.seerr.seerr.HTTP_NOT_FOUND
 import com.cooper.binge.companion.seerr.seerr.SeerrApi
 import com.cooper.binge.companion.seerr.seerr.SeerrApiFactory
@@ -14,7 +15,6 @@ import com.cooper.binge.companion.seerr.seerr.SeerrQuickConnectSecretBody
 import com.cooper.binge.companion.seerr.seerr.SeerrServerProfile
 import com.cooper.binge.companion.seerr.seerr.SeerrUserDto
 import com.cooper.binge.companion.seerr.seerr.SeerrVariant
-import com.cooper.binge.companion.seerr.seerr.attempt
 import com.cooper.binge.companion.seerr.seerr.hasExplicitPort
 import com.cooper.binge.companion.seerr.seerr.insecurePublicHostOrNull
 import com.cooper.binge.companion.seerr.seerr.inspectProfile

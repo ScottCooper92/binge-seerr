@@ -1,9 +1,9 @@
 package com.cooper.binge.companion.seerr.auth
 
+import com.binge.companion.sdk.attempt
 import com.cooper.binge.companion.seerr.seerr.SeerrAuth
 import com.cooper.binge.companion.seerr.seerr.SeerrCredentials
 import com.cooper.binge.companion.seerr.seerr.SeerrVariant
-import com.cooper.binge.companion.seerr.seerr.attempt
 import com.cooper.binge.companion.seerr.seerr.insecurePublicHostOrNull
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable

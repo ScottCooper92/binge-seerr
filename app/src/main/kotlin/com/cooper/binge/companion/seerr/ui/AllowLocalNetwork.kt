@@ -15,9 +15,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
+import com.binge.companion.sdk.attempt
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.seerr.LOCAL_NETWORK_PERMISSION
-import com.cooper.binge.companion.seerr.seerr.attempt
 
 /**
  * What the "allow local network access" button does now, and what it says. [shortLabel] is for a row

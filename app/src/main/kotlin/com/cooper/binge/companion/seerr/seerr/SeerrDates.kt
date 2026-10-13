@@ -1,5 +1,6 @@
 package com.cooper.binge.companion.seerr.seerr
 
+import com.binge.companion.sdk.attempt
 import java.time.Instant
 import java.time.OffsetDateTime
 

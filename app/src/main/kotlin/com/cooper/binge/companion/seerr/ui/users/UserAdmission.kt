@@ -1,12 +1,12 @@
 package com.cooper.binge.companion.seerr.ui.users
 
+import com.binge.companion.sdk.attempt
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.seerr.SeerrCreateUserBody
 import com.cooper.binge.companion.seerr.seerr.SeerrImportJellyfinBody
 import com.cooper.binge.companion.seerr.seerr.SeerrImportPlexBody
 import com.cooper.binge.companion.seerr.seerr.SeerrJellyfinUserDto
 import com.cooper.binge.companion.seerr.seerr.SeerrPlexUserDto
-import com.cooper.binge.companion.seerr.seerr.attempt
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
