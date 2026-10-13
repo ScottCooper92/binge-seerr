@@ -1,6 +1,6 @@
 package com.cooper.binge.companion.seerr.ui.users
 
-import com.cooper.binge.companion.seerr.data.ListRefresh
+import com.binge.companion.sdk.paging.ListRefresh
 import com.cooper.binge.companion.seerr.seerr.ManageablePermission
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.seerr.isAdminBitmask

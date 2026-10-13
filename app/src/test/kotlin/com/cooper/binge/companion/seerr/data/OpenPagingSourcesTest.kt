@@ -1,6 +1,7 @@
 package com.cooper.binge.companion.seerr.data
 
 import androidx.paging.PagingSource
+import com.binge.companion.sdk.paging.OpenPagingSources
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking

@@ -1,11 +1,11 @@
 package com.cooper.binge.companion.seerr.ui.settings.server
 
+import com.binge.companion.sdk.paging.OffsetPage
+import com.binge.companion.sdk.paging.OffsetPagingSource
 import com.cooper.binge.companion.seerr.seerr.SeerrApi
 import com.cooper.binge.companion.seerr.seerr.SeerrLogEntryDto
 import com.cooper.binge.companion.seerr.seerr.SeerrLogPageDto
 import com.cooper.binge.companion.seerr.seerr.toEpochMillisOrNull
-import com.cooper.binge.companion.seerr.ui.requests.OffsetPage
-import com.cooper.binge.companion.seerr.ui.requests.OffsetPagingSource
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement

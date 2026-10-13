@@ -9,12 +9,12 @@ import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import androidx.paging.map
 import com.binge.companion.sdk.attempt
+import com.binge.companion.sdk.paging.ListRefreshes
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.data.ISSUES_PAGE_SIZE
 import com.cooper.binge.companion.seerr.data.IssueListQuery
 import com.cooper.binge.companion.seerr.data.IssueStore
 import com.cooper.binge.companion.seerr.data.IssuesRemoteMediator
-import com.cooper.binge.companion.seerr.data.ListRefreshes
 import com.cooper.binge.companion.seerr.data.whileSet
 import com.cooper.binge.companion.seerr.di.IoDispatcher
 import com.cooper.binge.companion.seerr.seerr.SeerrError

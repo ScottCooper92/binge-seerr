@@ -26,6 +26,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.itemKey
+import com.binge.companion.sdk.paging.ListRefresh
 import com.binge.designsystem.component.BingeInitialsAvatar
 import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
@@ -34,7 +35,6 @@ import com.binge.designsystem.resolvedContentInset
 import com.binge.designsystem.resolvedContentPadding
 import com.binge.designsystem.template.PagedPhase
 import com.cooper.binge.companion.seerr.R
-import com.cooper.binge.companion.seerr.data.ListRefresh
 import com.cooper.binge.companion.seerr.ui.requests.PagedAppendState
 import com.cooper.binge.companion.seerr.ui.requests.PagedRefreshError
 import com.cooper.binge.companion.seerr.ui.state.EmptyScreen

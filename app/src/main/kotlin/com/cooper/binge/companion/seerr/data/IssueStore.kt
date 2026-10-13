@@ -1,6 +1,7 @@
 package com.cooper.binge.companion.seerr.data
 
 import androidx.paging.PagingSource
+import com.binge.companion.sdk.paging.OpenPagingSources
 
 /**
  * The issue cache behind a seam, so the mediator and the browser are tested against a fake rather
