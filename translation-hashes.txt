@@ -953,8 +953,6 @@ app:tv_handoff_pin_description  163786adb97a
 app:tv_hub_health_checking  86d5ab0a7412
 app:tv_hub_quota_none_left  7d0b2f243290
 app:tv_hub_stat_open_issues  28aa0023dce4
-app:tv_issue_action_failed  bf50ec855e19
-app:tv_issue_deleted  0187e4800963
 app:tv_issue_read_comments  79d21d7114ec
 app:tv_issue_reopen  17b1eb39b270
 app:tv_issue_resolve  a02552f9c783

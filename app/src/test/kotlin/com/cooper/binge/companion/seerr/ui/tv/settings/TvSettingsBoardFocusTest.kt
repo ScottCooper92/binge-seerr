@@ -15,6 +15,7 @@ import androidx.compose.ui.test.pressKey
 import androidx.compose.ui.test.requestFocus
 import com.binge.designsystem.tv.theme.BingeTvTheme
 import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.seerr.SeerrVariant
 import com.cooper.binge.companion.seerr.ui.settings.ConnectionSummary
 import com.cooper.binge.companion.seerr.ui.settings.ServerConfig
@@ -49,6 +50,7 @@ class TvSettingsBoardFocusTest {
     val composeTestRule = createSeerrKeyboardComposeRule()
 
     private var scans = 0
+    private var scanOutcome: EditorEvent = EditorEvent.Notice(R.string.tv_settings_scan_started)
 
     @Test
     fun aNonAdminNeverSeesTheScanOption() {
@@ -80,6 +82,41 @@ class TvSettingsBoardFocusTest {
 
         assertEquals(1, scans)
         composeTestRule.onNodeWithText(string(R.string.tv_settings_scan_started)).assertExists()
+    }
+
+    /** The scan's answer stays on its row until the next scan: nothing times out (#1510). */
+    @Test
+    fun theScanNoteStaysUntilTheNextScan() {
+        setBoard(config = ServerConfig(), initialFocusedKey = KEY_MEDIA_SERVER)
+        plexRow().requestFocus()
+        composeTestRule.waitForIdle()
+        pressRight()
+        pressOk()
+
+        composeTestRule.mainClock.advanceTimeBy(60_000)
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText(string(R.string.tv_settings_scan_started)).assertExists()
+    }
+
+    /** A refused scan says why on its row, and the option becomes Retry, which runs the scan again. */
+    @Test
+    fun aFailedScanLeavesARetryOnTheRow() {
+        scanOutcome = EditorEvent.Failed(SeerrError.Unreachable)
+        setBoard(config = ServerConfig(), initialFocusedKey = KEY_MEDIA_SERVER)
+        plexRow().requestFocus()
+        composeTestRule.waitForIdle()
+        pressRight()
+        pressOk()
+
+        composeTestRule.mainClock.advanceTimeBy(60_000)
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithText(string(R.string.state_error_unreachable_message)).assertExists()
+        composeTestRule.onNodeWithText(string(R.string.tv_settings_start_library_scan)).assertDoesNotExist()
+        retryOption().assertIsFocused()
+        pressOk()
+
+        assertEquals(2, scans)
     }
 
     /** The scan's outcome is announced, but the static "change this on the phone" note is not (#1039). */
@@ -126,7 +163,7 @@ class TvSettingsBoardFocusTest {
                     onDisconnect = {},
                     onStartLibraryScan = {
                         scans++
-                        events.tryEmit(EditorEvent.Notice(R.string.tv_settings_scan_started))
+                        events.tryEmit(scanOutcome)
                     },
                     libraryScanEvents = if (config != null) events else emptyFlow(),
                     initialFocusedKey = initialFocusedKey,
@@ -137,6 +174,8 @@ class TvSettingsBoardFocusTest {
     }
 
     private fun plexRow() = composeTestRule.onNode(hasText(string(R.string.user_origin_plex)) and isFocusable())
+
+    private fun retryOption() = composeTestRule.onNode(hasText(string(R.string.hub_retry)) and isFocusable())
 
     private fun option() = composeTestRule.onNode(hasText(string(R.string.tv_settings_start_library_scan)) and isFocusable())
 

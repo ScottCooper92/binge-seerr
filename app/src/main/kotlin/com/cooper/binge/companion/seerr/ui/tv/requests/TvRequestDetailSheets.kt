@@ -9,6 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -16,8 +17,10 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
+import com.binge.designsystem.SaveStatus
 import com.binge.designsystem.tv.component.TvConfirmDialog
 import com.binge.designsystem.tv.component.TvOptionRow
+import com.binge.designsystem.tv.component.TvSaveStatus
 import com.binge.designsystem.tv.component.TvSideSheet
 import com.binge.designsystem.tv.component.TvSideSheetBody
 import com.binge.designsystem.tv.component.TvSideSheetRow
@@ -33,6 +36,8 @@ import com.cooper.binge.companion.seerr.ui.requests.MediaRecord
 import com.cooper.binge.companion.seerr.ui.requests.MediaStatusChoice
 import com.cooper.binge.companion.seerr.ui.requests.icon
 import com.cooper.binge.companion.seerr.ui.requests.labelRes
+import com.cooper.binge.companion.seerr.ui.tv.OnSaved
+import com.cooper.binge.companion.seerr.ui.tv.TvActionRun
 import com.cooper.binge.companion.seerr.ui.tv.TvFormNote
 import com.cooper.binge.companion.seerr.ui.tv.TvFormNoteTone
 import com.binge.designsystem.R as DesR
@@ -69,6 +74,7 @@ internal fun TvRequestDetailSheet(
     media: MediaRecord?,
     report: IssueReport,
     draft: TvReportDraft,
+    run: TvActionRun,
 ) {
     val closer = host.closer
     // A report closed while it is still sending keeps its guard: the view model refuses a second send until it answers.
@@ -108,13 +114,14 @@ internal fun TvRequestDetailSheet(
                 media?.let {
                     TvMarkAsSteps(
                         media = it,
-                        onSelect = { instance, choice ->
-                            actions.onSetMediaStatus(it.mediaId, choice, instance.is4k)
-                            closer.close()
-                        },
+                        onSelect = { instance, choice -> actions.onSetMediaStatus(it.mediaId, choice, instance.is4k) },
                         entryFocus = entryFocus,
+                        status = run.status,
+                        onRetry = run::again,
                     )
                 }
+                // The sheet stays open while it saves: "Saved" is read, and then it closes.
+                run.OnSaved { closer.close() }
             }
         DetailSheet.Report ->
             TvSideSheet(onDismissRequest = dismiss) { entryFocus ->
@@ -125,16 +132,29 @@ internal fun TvRequestDetailSheet(
 
 /**
  * Marking the title's state, as the phone's Mark as sheet does: which instance first where the server holds the
- * title twice, then the states, the current one ticked. A pick applies and closes.
+ * title twice, then the states, the current one ticked. A pick applies in place: the tick moves to it at once, [status]
+ * says "Saving…" and then "Saved" above the options, and the sheet closes after. On a failure the tick moves back and the
+ * line offers Try again, which applies the same pick once more.
  */
 @Composable
 internal fun ColumnScope.TvMarkAsSteps(
     media: MediaRecord,
     onSelect: (MediaInstance, MediaStatusChoice) -> Unit,
     entryFocus: FocusRequester,
+    status: SaveStatus = SaveStatus.Idle,
+    onRetry: () -> Unit = {},
 ) {
     var picked by rememberSaveable { mutableStateOf(media.instances.singleOrNull()?.is4k) }
     val instance = media.instances.firstOrNull { it.is4k == picked }
+    // The pick being saved, ticked ahead of the server's answer; a failure puts the tick back where it was.
+    var pending by remember { mutableStateOf<MediaStatusChoice?>(null) }
+    var failedPick by remember { mutableStateOf<MediaStatusChoice?>(null) }
+    LaunchedEffect(status) {
+        if (status == SaveStatus.Failed) {
+            failedPick = pending
+            pending = null
+        }
+    }
     TvSideSheetTitle(stringResource(R.string.media_mark_as))
     if (instance == null) {
         media.instances.forEachIndexed { index, candidate ->
@@ -148,13 +168,26 @@ internal fun ColumnScope.TvMarkAsSteps(
         TvSideSheetStepFocus(entryFocus)
     } else {
         TvSideSheetBody(stringResource(instance.labelRes()) + "\n" + stringResource(R.string.media_mark_as_scope_caption))
+        // Above the options, not under them: five rows fill a television's height, and the line must never sit off-screen.
+        TvSaveStatus(
+            status = status,
+            onRetry = {
+                pending = failedPick
+                onRetry()
+            },
+        )
         MediaStatusChoice.entries.forEachIndexed { index, choice ->
             val current = choice.code == instance.status
             TvOptionRow(
                 label = stringResource(choice.labelRes()),
                 icon = choice.icon(),
-                selected = current,
-                onClick = { if (!current) onSelect(instance, choice) },
+                selected = pending?.let { it == choice } ?: current,
+                onClick = {
+                    if (!current && status != SaveStatus.Saving) {
+                        pending = choice
+                        onSelect(instance, choice)
+                    }
+                },
                 modifier = if (index == 0) Modifier.focusRequester(entryFocus) else Modifier,
             )
         }

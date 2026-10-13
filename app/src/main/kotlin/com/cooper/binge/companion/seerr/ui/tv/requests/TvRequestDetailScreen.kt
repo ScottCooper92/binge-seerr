@@ -4,7 +4,6 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -12,7 +11,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.layout.ContentScale
@@ -20,6 +18,7 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.tv.material3.MaterialTheme
 import coil3.compose.AsyncImage
+import com.binge.designsystem.SaveStatus
 import com.binge.designsystem.formatRelativeOrAbsolute
 import com.binge.designsystem.tv.component.TvCardRow
 import com.binge.designsystem.tv.component.TvDetailAction
@@ -27,8 +26,8 @@ import com.binge.designsystem.tv.component.TvDetailActionRow
 import com.binge.designsystem.tv.component.TvDetailHero
 import com.binge.designsystem.tv.component.TvDetailHeroItem
 import com.binge.designsystem.tv.component.TvHeroOverview
+import com.binge.designsystem.tv.component.TvSaveStatus
 import com.binge.designsystem.tv.focus.rememberTvOverlayCloser
-import com.binge.designsystem.tv.nav.tvContentGutterStart
 import com.binge.designsystem.tv.template.TvDetailPage
 import com.binge.designsystem.tv.template.TvDetailPageScope
 import com.binge.designsystem.tv.template.TvPageHosting
@@ -42,17 +41,14 @@ import com.cooper.binge.companion.seerr.ui.requests.RequestDetailUiState
 import com.cooper.binge.companion.seerr.ui.requests.RequestItem
 import com.cooper.binge.companion.seerr.ui.requests.isError
 import com.cooper.binge.companion.seerr.ui.requests.labelRes
-import com.cooper.binge.companion.seerr.ui.requests.messageRes
 import com.cooper.binge.companion.seerr.ui.requests.statusChip
-import com.cooper.binge.companion.seerr.ui.state.messageRes
+import com.cooper.binge.companion.seerr.ui.tv.ClearWhenSaved
+import com.cooper.binge.companion.seerr.ui.tv.TvActionRun
 import com.cooper.binge.companion.seerr.ui.tv.TvBackdropArtwork
-import com.cooper.binge.companion.seerr.ui.tv.TvFormNoteTone
 import com.cooper.binge.companion.seerr.ui.tv.TvLoadingPlate
-import com.cooper.binge.companion.seerr.ui.tv.TvOutcomePlate
 import com.cooper.binge.companion.seerr.ui.tv.TvSeerrErrorPage
-import com.cooper.binge.companion.seerr.ui.tv.rememberTvTransientEvent
+import com.cooper.binge.companion.seerr.ui.tv.rememberTvActionRun
 import kotlinx.coroutines.flow.Flow
-import com.binge.designsystem.tv.R as TvR
 
 /** Everything the TV request detail page can ask of its host, in one place so the overlay stays a wiring. */
 internal class TvRequestDetailActions(
@@ -87,8 +83,8 @@ internal fun TvRequestDetailScreen(
     modifier: Modifier = Modifier,
     /** The sheet open on arrival, for a frame: a static render cannot press the button that opens one. Production passes null. */
     initialSheet: DetailSheet? = null,
-    /** The outcome note showing on arrival, for a frame, which never collects [events]. Production passes null. */
-    initialEvent: ModerationEvent? = null,
+    /** The action status showing on arrival, for a frame, which never collects [events]. Production passes idle. */
+    initialStatus: SaveStatus = SaveStatus.Idle,
 ) {
     BackHandler(onBack = actions.onBack)
     // A removed request has no page to stay on.
@@ -115,7 +111,7 @@ internal fun TvRequestDetailScreen(
                     events = events,
                     given = actions,
                     initialSheet = initialSheet,
-                    initialEvent = initialEvent,
+                    initialStatus = initialStatus,
                 )
         }
     }
@@ -138,13 +134,21 @@ private fun TvRequestDetailContent(
     events: Flow<ModerationEvent>,
     given: TvRequestDetailActions,
     initialSheet: DetailSheet?,
-    initialEvent: ModerationEvent?,
+    initialStatus: SaveStatus,
 ) {
     // An approve, a decline, a retry or a block that lands reloads the page without its own button, and the focus that
     // button held would go with it to nowhere the D-pad can reach. Each marks the row to be focused again when the page's
     // actions change (#801).
     var refocusRow by remember { mutableStateOf(false) }
-    val actions = remember(given) { given.markingRefocus { refocusRow = true } }
+    // What the last action is doing, and its answer: it stands under the action row, or in the sheet that ran it, until the
+    // user acts again, so a failure always has a Try again within reach (#1510). A title that could not be blocked after a
+    // decline or a block of its own is retried as a block.
+    val run =
+        rememberTvActionRun(events, initialStatus) { event ->
+            val blockFailed = event == ModerationEvent.DeclinedButBlockFailed || event == ModerationEvent.BlockFailed
+            settle(failed = event.isError(), retry = if (blockFailed) given.onBlock else null)
+        }
+    val actions = remember(given, run) { given.markingRefocus { refocusRow = true }.running(run) }
     // The two actions that cannot be undone take a confirm, and Mark as and Report open their own sheets; the rest run at
     // once, since a decline keeps the request.
     var sheet by rememberSaveable { mutableStateOf(initialSheet) }
@@ -156,8 +160,9 @@ private fun TvRequestDetailContent(
                 onClose = { sheet = null },
             )
         }
+    // The Mark as sheet shows its own status; every other action's stands under the row.
+    if (sheet != DetailSheet.MarkAs) run.ClearWhenSaved()
     val draft = rememberTvReportDraft()
-    val event = rememberTvTransientEvent(events, initialEvent)
     val actionRowFocus = remember { FocusRequester() }
     val synopsisFocus = remember { FocusRequester() }
     var synopsisFocused by remember { mutableStateOf(false) }
@@ -193,19 +198,10 @@ private fun TvRequestDetailContent(
                     synopsisFocus = synopsisFocus,
                     synopsisFocused = synopsisFocused,
                     onSynopsisFocused = { synopsisFocused = it },
+                    run = run.takeUnless { sheet == DetailSheet.MarkAs },
                 )
             }
             requestSections(detail, infoCards)
-        }
-        event?.let {
-            TvOutcomePlate(
-                text = stringResource(it.messageRes()),
-                tone = if (it.isError()) TvFormNoteTone.Error else TvFormNoteTone.Success,
-                modifier =
-                    Modifier
-                        .align(Alignment.BottomStart)
-                        .padding(start = tvContentGutterStart(), bottom = dimensionResource(TvR.dimen.tv_overscan_vertical)),
-            )
         }
     }
     sheet?.let { step ->
@@ -215,6 +211,7 @@ private fun TvRequestDetailContent(
             media = detail.media,
             report = report,
             draft = draft,
+            run = run,
         )
     }
 }
@@ -229,6 +226,7 @@ private fun RequestHero(
     synopsisFocus: FocusRequester,
     synopsisFocused: Boolean,
     onSynopsisFocused: (Boolean) -> Unit,
+    run: TvActionRun?,
 ) {
     val separator = stringResource(R.string.hub_meta_separator)
     val chip = item.statusChip()
@@ -276,6 +274,7 @@ private fun RequestHero(
             },
     ) {
         TvDetailActionRow(actions = actionList, entryFocus = actionRowFocus)
+        run?.let { TvSaveStatus(status = it.status, onRetry = it::again) }
     }
 }
 
@@ -349,6 +348,22 @@ private fun TvRequestDetailActions.markingRefocus(mark: () -> Unit) =
             onBlock()
         },
         onSetMediaStatus = onSetMediaStatus,
+        onReportIssue = onReportIssue,
+        onDismissReport = onDismissReport,
+    )
+
+/** These actions, each run through [run] so the page knows what is saving, and whether it failed. Reporting an issue has its own state. */
+private fun TvRequestDetailActions.running(run: TvActionRun) =
+    TvRequestDetailActions(
+        onBack = onBack,
+        onRetry = onRetry,
+        onOpenInBinge = onOpenInBinge,
+        onApprove = { run.run { onApprove() } },
+        onRetryRequest = { run.run { onRetryRequest() } },
+        onDecline = { block -> run.run { onDecline(block) } },
+        onRemove = { block -> run.run { onRemove(block) } },
+        onBlock = { run.run { onBlock() } },
+        onSetMediaStatus = { mediaId, status, is4k -> run.run { onSetMediaStatus(mediaId, status, is4k) } },
         onReportIssue = onReportIssue,
         onDismissReport = onDismissReport,
     )

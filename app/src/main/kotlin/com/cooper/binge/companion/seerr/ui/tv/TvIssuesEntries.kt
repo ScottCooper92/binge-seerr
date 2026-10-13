@@ -10,6 +10,7 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import com.cooper.binge.companion.seerr.ui.issues.IssueDetailUiState
 import com.cooper.binge.companion.seerr.ui.issues.IssueDetailViewModel
 import com.cooper.binge.companion.seerr.ui.issues.IssueFilter
+import com.cooper.binge.companion.seerr.ui.issues.IssueListEvent
 import com.cooper.binge.companion.seerr.ui.issues.IssuesUiState
 import com.cooper.binge.companion.seerr.ui.issues.IssuesViewModel
 import com.cooper.binge.companion.seerr.ui.tv.issues.IssueRowFilters
@@ -71,6 +72,7 @@ internal fun TvIssuesGridOverlay(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val ready = state as? IssuesUiState.Ready
     val lazyItems = viewModel.issues(filter).collectAsLazyPagingItems()
+    val run = rememberTvActionRun(viewModel.events) { settle(failed = it is IssueListEvent.Failed) }
     TvIssuesGrid(
         filter = filter,
         counts = ready?.counts,
@@ -85,6 +87,7 @@ internal fun TvIssuesGridOverlay(
                 onResolve = viewModel::resolve,
                 onReopen = viewModel::reopen,
                 onDelete = viewModel::delete,
+                run = run,
             ),
         detailOpen = detailOpen,
         onOpenDetail = { onOpenIssue(it.id) },

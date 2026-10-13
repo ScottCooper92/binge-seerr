@@ -9,9 +9,11 @@ import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.LinkOff
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PowerSettingsNew
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Storage
 import androidx.compose.material.icons.filled.Sync
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -39,7 +41,6 @@ import com.cooper.binge.companion.seerr.ui.settings.labelRes
 import com.cooper.binge.companion.seerr.ui.settings.requestPolicyRows
 import com.cooper.binge.companion.seerr.ui.state.messageRes
 import com.cooper.binge.companion.seerr.ui.tv.TvBoardPlate
-import com.cooper.binge.companion.seerr.ui.tv.rememberTvTransientEvent
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorEvent
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
@@ -93,8 +94,11 @@ internal fun TvSettingsBoard(
     val closer = rememberTvOverlayCloser(restoreTo = disconnectFocus, onClose = { confirmingDisconnect = false })
     val bugReportFocus = remember { FocusRequester() }
     val bugReportCloser = rememberTvOverlayCloser(restoreTo = bugReportFocus, onClose = { showingBugReport = false })
-    // A newer notice supersedes the one still showing, same as the board's paged-list toasts.
-    val scanNote = rememberTvTransientEvent(libraryScanEvents, initialScanEvent).tvNoteOrNull()
+    // The scan's last answer stays on its row until the next scan replaces it, so a failure is still there to act on (#1510).
+    var scanEvent by remember { mutableStateOf(initialScanEvent) }
+    LaunchedEffect(libraryScanEvents) { libraryScanEvents.collect { if (it.isScanAnswer()) scanEvent = it } }
+    val scanNote = scanEvent.tvNoteOrNull()
+    val scanFailed = scanEvent is EditorEvent.Failed
     val groups =
         tvSettingGroups(
             ready,
@@ -103,6 +107,7 @@ internal fun TvSettingsBoard(
             disconnectFocus = disconnectFocus,
             onStartLibraryScan = onStartLibraryScan,
             scanNote = scanNote,
+            scanFailed = scanFailed,
             hub = hub,
             onOpenBingeListing = onOpenBingeListing,
         ) +
@@ -155,6 +160,7 @@ private fun tvSettingGroups(
     disconnectFocus: FocusRequester,
     onStartLibraryScan: () -> Unit,
     scanNote: String?,
+    scanFailed: Boolean,
     hub: HubUiState?,
     onOpenBingeListing: () -> Unit,
 ): List<TvPaneGroup> {
@@ -164,7 +170,7 @@ private fun tvSettingGroups(
             config?.general?.let { add(readOnlyGroup(stringResource(R.string.settings_group_general), generalRows(it))) }
             // Admin-only, same as the phone: this is the one section that also gets an action, so it is
             // built by hand rather than through the read-only mapping every other section shares.
-            if (config != null) add(mediaServerGroup(state.server, onStartLibraryScan, scanNote = scanNote))
+            if (config != null) add(mediaServerGroup(state.server, onStartLibraryScan, scanNote = scanNote, scanFailed = scanFailed))
             config?.services?.let { add(readOnlyGroup(stringResource(R.string.settings_group_services), serviceRows(it))) }
             config?.requestPolicy?.let { add(readOnlyGroup(stringResource(R.string.settings_group_requests), requestPolicyRows(it))) }
             config?.system?.let { add(readOnlyGroup(stringResource(R.string.settings_group_system), systemRows(it, state.now))) }
@@ -190,14 +196,15 @@ internal fun List<TvPaneGroup>.carryingNoteOnFirst(note: String): List<TvPaneGro
 
 /**
  * The media server row, with one option beside its read-out: start the library scan job that the phone's Jobs & cache page's
- * job row runs, the "it downloaded but isn't showing" fix from the sofa. [scanNote] is the scan's own outcome while it is
- * still showing, announced as it arrives, else none.
+ * job row runs, the "it downloaded but isn't showing" fix from the sofa. [scanNote] is the scan's last outcome, announced as
+ * it arrives and kept until the next scan. A failed one ([scanFailed]) marks the row and turns its option into Try again.
  */
 @Composable
 private fun mediaServerGroup(
     server: ServerSummary,
     onStartLibraryScan: () -> Unit,
     scanNote: String?,
+    scanFailed: Boolean,
 ): TvPaneGroup =
     TvPaneGroup(
         title = stringResource(R.string.server_settings_media_server),
@@ -209,11 +216,12 @@ private fun mediaServerGroup(
                     body = stringResource(R.string.server_settings_media_server_caption),
                     note = scanNote,
                     announceNote = scanNote != null,
+                    badgeAlert = scanFailed,
                     options =
                         listOf(
                             TvPaneOption(
-                                label = stringResource(R.string.tv_settings_start_library_scan),
-                                icon = Icons.Filled.Sync,
+                                label = stringResource(if (scanFailed) R.string.hub_retry else R.string.tv_settings_start_library_scan),
+                                icon = if (scanFailed) Icons.Filled.Refresh else Icons.Filled.Sync,
                                 onSelect = onStartLibraryScan,
                             ),
                         ),
@@ -221,6 +229,9 @@ private fun mediaServerGroup(
                 ),
             ),
     )
+
+/** Whether this is the answer to a scan: a notice, or a failure. A save or a delete on the same ViewModel is not. */
+private fun EditorEvent.isScanAnswer(): Boolean = this is EditorEvent.Notice || this is EditorEvent.Failed
 
 /** The line to show for a job outcome; null for an event this row never emits (a save or a delete). */
 @Composable

@@ -6,6 +6,7 @@ import com.android.tools.screenshot.PreviewTest
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.preview.SeerrTvScreenPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrTvSpanishScreenPreviews
+import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.ui.hub.BingeStatus
 import com.cooper.binge.companion.seerr.ui.hub.previewAdminOverview
 import com.cooper.binge.companion.seerr.ui.hub.previewReady
@@ -69,7 +70,7 @@ class TvSettingsScreenshotTest {
         )
     }
 
-    /** A scan that started: the media server row says so in place of its usual line, until the note clears (#1053). */
+    /** A scan that started: the media server row says so, and keeps saying it until the next scan (#1510). */
     @PreviewTest
     @SeerrTvScreenPreviews
     @Composable
@@ -81,6 +82,21 @@ class TvSettingsScreenshotTest {
             initialFocusedKey = KEY_MEDIA_SERVER,
             initialFocusedOptionLabel = "Start library scan",
             initialScanEvent = EditorEvent.Notice(R.string.tv_settings_scan_started),
+        )
+    }
+
+    /** A scan the server refused: the row is marked, says why, and its option is Retry. */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun ScanFailed() {
+        TvSettingsBoard(
+            state = SampleSettingsAdmin,
+            onEditConnection = {},
+            onDisconnect = {},
+            initialFocusedKey = KEY_MEDIA_SERVER,
+            initialFocusedOptionLabel = "Retry",
+            initialScanEvent = EditorEvent.Failed(SeerrError.Unreachable),
         )
     }
 

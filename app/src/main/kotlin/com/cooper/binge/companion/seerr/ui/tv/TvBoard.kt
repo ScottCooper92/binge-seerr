@@ -31,12 +31,6 @@ import com.binge.designsystem.tv.component.TvMessagePlate
 import com.binge.designsystem.tv.focus.restoreTvOverlayFocus
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.state.RequestStateTone
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.onStart
-
-private const val TRANSIENT_MESSAGE_MILLIS = 4_000L
 
 /** How many items a board's row shows before its see-all tile takes over. */
 internal const val TV_ROW_ITEM_CAP = 20
@@ -159,27 +153,3 @@ internal fun RequestStateTone.tvColor(): Color =
         RequestStateTone.Success -> MaterialTheme.colorScheme.onSurface
         RequestStateTone.Declined, RequestStateTone.Blocked -> MaterialTheme.colorScheme.error
     }
-
-/**
- * The latest one-shot event, held for a few seconds and then cleared — the board's answer to the phone's
- * snackbar. A newer event supersedes the one still showing.
- *
- * [initial] is an event already showing on arrival, for a frame: a static render runs no effect, so it never
- * collects one. It is held and cleared like the first event of [events]. Production passes null.
- */
-@Composable
-internal fun <T : Any> rememberTvTransientEvent(
-    events: Flow<T>,
-    initial: T? = null,
-): T? {
-    var current by remember { mutableStateOf(initial) }
-    LaunchedEffect(events) {
-        val arriving = if (initial == null) events else events.onStart { emit(initial) }
-        arriving.collectLatest { event ->
-            current = event
-            delay(TRANSIENT_MESSAGE_MILLIS)
-            current = null
-        }
-    }
-    return current
-}

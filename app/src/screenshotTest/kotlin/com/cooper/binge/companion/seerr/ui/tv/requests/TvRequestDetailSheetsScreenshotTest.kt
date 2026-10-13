@@ -8,6 +8,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import com.android.tools.screenshot.PreviewTest
+import com.binge.designsystem.SaveStatus
 import com.binge.designsystem.tv.component.TvSideSheetPanel
 import com.cooper.binge.companion.seerr.preview.SeerrTvScreenPreviews
 import com.cooper.binge.companion.seerr.seerr.SeerrMediaStatusCode
@@ -48,6 +49,34 @@ class TvRequestDetailSheetsScreenshotTest {
                 media = media(MediaInstance(false, SeerrMediaStatusCode.Available, null, null, null)),
                 onSelect = { _, _ -> },
                 entryFocus = FocusRequester(),
+            )
+        }
+
+    /** A pick being saved: the tick has moved to it, and the sheet says "Saving…" under the options before it closes (#1510). */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun MarkAsSaving() =
+        SheetFrame {
+            TvMarkAsSteps(
+                media = media(MediaInstance(false, SeerrMediaStatusCode.Available, null, null, null)),
+                onSelect = { _, _ -> },
+                entryFocus = FocusRequester(),
+                status = SaveStatus.Saving,
+            )
+        }
+
+    /** A pick the server refused: the tick is back where it was, and the line offers Retry. */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun MarkAsFailed() =
+        SheetFrame {
+            TvMarkAsSteps(
+                media = media(MediaInstance(false, SeerrMediaStatusCode.Available, null, null, null)),
+                onSelect = { _, _ -> },
+                entryFocus = FocusRequester(),
+                status = SaveStatus.Failed,
             )
         }
 

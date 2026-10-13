@@ -10,6 +10,7 @@ import com.cooper.binge.companion.seerr.ui.issues.IssueListScope
 import com.cooper.binge.companion.seerr.ui.issues.canBeDeleted
 import com.cooper.binge.companion.seerr.ui.issues.emptyMessageRes
 import com.cooper.binge.companion.seerr.ui.issues.labelRes
+import com.cooper.binge.companion.seerr.ui.tv.TvActionRun
 import com.cooper.binge.companion.seerr.ui.tv.TvBackdropArtwork
 import com.cooper.binge.companion.seerr.ui.tv.TvPagedGridScreen
 import com.cooper.binge.companion.seerr.ui.tv.TvPagedRows
@@ -25,6 +26,8 @@ internal class TvIssuesGridManagement(
     val onResolve: (IssueItem) -> Unit,
     val onReopen: (IssueItem) -> Unit,
     val onDelete: (IssueItem) -> Unit,
+    /** What the sheet's last action is doing, read from the ViewModel's answers. */
+    val run: TvActionRun = TvActionRun(),
 )
 
 /**
@@ -73,18 +76,10 @@ internal fun TvIssuesGrid(
         TvIssueActionsSheet(
             item = item,
             canDelete = management.scope?.let(item::canBeDeleted) == true,
-            onResolve = {
-                management.onResolve(item)
-                management.onDismissActions()
-            },
-            onReopen = {
-                management.onReopen(item)
-                management.onDismissActions()
-            },
-            onDelete = {
-                management.onDelete(item)
-                management.onDismissActions()
-            },
+            run = management.run,
+            onResolve = { management.run.run { management.onResolve(item) } },
+            onReopen = { management.run.run { management.onReopen(item) } },
+            onDelete = { management.run.run { management.onDelete(item) } },
             onOpenDetail = {
                 management.onDismissActions()
                 onOpenDetail(item)
