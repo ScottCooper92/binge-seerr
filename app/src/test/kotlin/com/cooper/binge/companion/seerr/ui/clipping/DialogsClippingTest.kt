@@ -17,11 +17,13 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
+import com.binge.designsystem.R as DesR
 
-private const val LONG_DIALOG_NAME = "$LONG_NAME of the Upstairs Server"
-
-/** The width an alert dialog gets on a 412dp phone: the screen less a 24dp margin each side. */
-private val DIALOG_WIDTH = 364.dp
+/**
+ * The width to give the card so its text gets what the real dialog's does. The window is 364dp (the screen less a 24dp
+ * margin each side) and Material's `AlertDialog` pads its text by 24dp, where the card pads by 16dp: 16dp less in all.
+ */
+private val DIALOG_WIDTH = 348.dp
 
 /**
  * The confirm dialogs' cards with the app's longest titles, messages and labels, at font scales 1.3 and 2.0, through the
@@ -40,9 +42,7 @@ class DialogsClippingTest {
     @Test fun `the confirm dialogs at 2_0`() = rule.assertNoClippingAt(FONT_SCALE_20) { ConfirmDialogs() }
 }
 
-/**
- * The television's confirm dialog, at font scale 1.3 only: the TV is held to 1.3, the largest the platform offers.
- */
+/** The television's confirm dialog, at font scale 1.3 only: the TV is read from across the room (#1492). */
 @RunWith(RobolectricTestRunner::class)
 @Config(qualifiers = "w960dp-h540dp-television-xhdpi")
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -56,7 +56,7 @@ class TvConfirmDialogClippingTest {
                 title = stringResource(R.string.hub_disconnect_confirm_title),
                 message = stringResource(R.string.hub_disconnect_confirm_message),
                 confirmLabel = stringResource(R.string.tv_settings_disconnect_confirm),
-                dismissLabel = stringResource(R.string.editor_discard),
+                dismissLabel = stringResource(DesR.string.action_cancel),
                 destructive = true,
                 onConfirm = {},
                 onDismissRequest = {},
@@ -69,7 +69,7 @@ class TvConfirmDialogClippingTest {
                 title = stringResource(R.string.request_block_confirm_title),
                 message = stringResource(R.string.request_block_confirm_message),
                 confirmLabel = stringResource(R.string.tv_detail_block),
-                dismissLabel = stringResource(R.string.editor_discard),
+                dismissLabel = stringResource(DesR.string.action_cancel),
                 destructive = true,
                 onConfirm = {},
                 onDismissRequest = {},
@@ -81,7 +81,7 @@ class TvConfirmDialogClippingTest {
 private fun ConfirmDialogs() {
     Column {
         Confirm(
-            stringResource(R.string.user_delete_confirm_title, LONG_DIALOG_NAME),
+            stringResource(R.string.user_delete_confirm_title, LONG_ROW_NAME),
             stringResource(R.string.user_delete_confirm_message),
             stringResource(R.string.user_delete),
         )
@@ -96,7 +96,7 @@ private fun ConfirmDialogs() {
             stringResource(R.string.server_settings_api_key_regenerate),
         )
         Confirm(
-            stringResource(R.string.server_settings_job_schedule_title, LONG_DIALOG_NAME),
+            stringResource(R.string.server_settings_job_schedule_title, LONG_ROW_NAME),
             stringResource(R.string.server_settings_job_schedule_message),
             stringResource(R.string.editor_done),
         )
