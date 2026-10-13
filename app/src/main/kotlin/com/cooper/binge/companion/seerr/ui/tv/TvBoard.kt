@@ -71,14 +71,25 @@ internal class OverlayFocusRestore(
 /** The restore state for one board; it puts focus back once [overlayOpen] goes false, and survives a rotation. */
 @Composable
 internal fun rememberOverlayFocusRestore(overlayOpen: Boolean): OverlayFocusRestore {
+    val restore = rememberSheetFocusReturn()
+    LaunchedEffect(overlayOpen) {
+        if (!overlayOpen && restore.pending) restoreTvOverlayFocus(restore.requester)
+    }
+    return restore
+}
+
+/**
+ * The restore state for a board that only puts focus back from a sheet of its own, through the sheet's closer. A page
+ * the shell shows above the rail is not one of those: when it closes, the shell hands focus back into the destination
+ * and the board's own entry routing lands it. A second request from the board races that hand-off, and the loser is
+ * the opened card (#1509).
+ */
+@Composable
+internal fun rememberSheetFocusReturn(): OverlayFocusRestore {
     val requester = remember { FocusRequester() }
     val rowId = rememberSaveable { mutableStateOf<Int?>(null) }
     val seeAllKey = rememberSaveable { mutableStateOf<String?>(null) }
-    val restore = remember { OverlayFocusRestore(requester, rowId, seeAllKey) }
-    LaunchedEffect(overlayOpen) {
-        if (!overlayOpen && restore.pending) restoreTvOverlayFocus(requester)
-    }
-    return restore
+    return remember { OverlayFocusRestore(requester, rowId, seeAllKey) }
 }
 
 /** A board's whole-content message: the first load, or an empty list. A failure is [TvErrorPlate][com.binge.designsystem.tv.component.TvErrorPlate]'s. */

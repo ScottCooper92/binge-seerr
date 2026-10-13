@@ -70,7 +70,20 @@ class TvIssueDetailFocusTest {
             // No manage permission at all, so the row has nothing to offer but the read page.
             val scope = IssueListScope(permissions = SeerrPermissions(), currentUserId = 9)
             BingeTvTheme {
-                Box(modifier = Modifier.fillMaxSize()) {
+                // The page is the shell's overlay, as the app hosts it, so its close goes through the shell's hand-off.
+                TvShellScaffold(
+                    selected = TvDestination.Issues,
+                    onSelect = {},
+                    overlay =
+                        openId?.let {
+                            {
+                                TvIssueDetailScreen(
+                                    state = IssueDetailUiState.Ready(detail(item, listOf(comment(2, "mod", "We'll check episode 4.")))),
+                                    actions = TvIssueDetailActions(onBack = { openId = null }, onRetry = {}),
+                                )
+                            }
+                        },
+                ) {
                     TvIssuesBoard(
                         state =
                             IssuesUiState.Ready(filter = IssueFilter.Open, sort = IssueSort.Added, counts = null, scope = scope),
@@ -84,7 +97,6 @@ class TvIssueDetailFocusTest {
                             }
                         },
                         events = emptyFlow(),
-                        openIssueId = openId,
                         actions =
                             TvIssuesActions(
                                 onOpenActions = {},
@@ -98,12 +110,6 @@ class TvIssueDetailFocusTest {
                                 onRetryScope = {},
                             ),
                     )
-                    if (openId != null) {
-                        TvIssueDetailScreen(
-                            state = IssueDetailUiState.Ready(detail(item, listOf(comment(2, "mod", "We'll check episode 4.")))),
-                            actions = TvIssueDetailActions(onBack = { openId = null }, onRetry = {}),
-                        )
-                    }
                 }
             }
         }
@@ -244,11 +250,8 @@ class TvIssueDetailFocusTest {
         composeTestRule.waitForIdle()
     }
 
-    /** The board offers focus back to the row one frame after the open issue id clears. */
-    private fun settleFocusRestore() {
-        composeTestRule.mainClock.advanceTimeByFrame()
-        composeTestRule.waitForIdle()
-    }
+    /** The shell hands focus back into the board once the page above the rail has closed. */
+    private fun settleFocusRestore() = composeTestRule.settleShellHandOff()
 
     private fun press(key: Key) {
         composeTestRule.onRoot().performKeyInput { pressKey(key) }
