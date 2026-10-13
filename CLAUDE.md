@@ -262,7 +262,7 @@ It runs on production `src/main` only, and **with type resolution** — `binge.g
 the compile classpath onto the task. Without that classpath `UnsafeCallOnNullableType`, the `!!` ban,
 loads and silently never fires.
 
-`runCatching` is banned in `app/src/main` by `ForbiddenMethodCall`: `attempt` (`seerr/SeerrErrors.kt`) is the one
+`runCatching` is banned in `app/src/main` by `ForbiddenMethodCall`: the SDK's `attempt` (`com.binge.companion.sdk`) is the one
 idiom, because `runCatching` also catches the cancellation a cancelled scope sends. The rule sees into the stdlib
 through the same type resolution.
 
