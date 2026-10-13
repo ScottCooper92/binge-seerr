@@ -1,12 +1,12 @@
 package com.cooper.binge.companion.seerr.ui.settings.server
 
 import androidx.lifecycle.ViewModelStore
+import com.binge.designsystem.SaveStatus
+import com.binge.designsystem.save.SAVE_AS_MADE_DELAY_MILLIS
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.ui.users.settings.ADMIN
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorEvent
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorUiState
-import com.cooper.binge.companion.seerr.ui.users.settings.SAVE_AS_MADE_DELAY_MILLIS
-import com.cooper.binge.companion.seerr.ui.users.settings.SaveStatus
 import com.cooper.binge.companion.seerr.ui.users.settings.ScriptedSeerr
 import com.cooper.binge.companion.seerr.util.MainDispatcherRule
 import com.cooper.binge.companion.seerr.util.awaitEvent

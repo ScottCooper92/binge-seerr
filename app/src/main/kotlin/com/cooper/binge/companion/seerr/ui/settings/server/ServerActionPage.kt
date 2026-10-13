@@ -10,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import com.binge.designsystem.SaveStatus
 import com.binge.designsystem.template.BingeScreenScaffold
 import com.binge.designsystem.template.ScreenBar
 import com.binge.designsystem.template.screenInnerPadding
@@ -19,7 +20,6 @@ import com.cooper.binge.companion.seerr.ui.state.SaveFailedSnackbar
 import com.cooper.binge.companion.seerr.ui.state.SaveStatusLine
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorEvent
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorEventSnackbarEffect
-import com.cooper.binge.companion.seerr.ui.users.settings.SaveStatus
 import kotlinx.coroutines.flow.Flow
 
 /**

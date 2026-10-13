@@ -3,8 +3,11 @@ package com.cooper.binge.companion.seerr.ui.users.settings
 import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.binge.designsystem.SaveStatus
+import com.binge.designsystem.save.SaveAsMade
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.seerr.attempt
+import com.cooper.binge.companion.seerr.seerr.isTransient
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -16,9 +19,6 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-
-/** Where a page that saves as it changes stands, for the status line in its top bar (#930). A failure is [EditorUiState.Ready.saveFailed]. */
-enum class SaveStatus { Idle, Saving, Saved }
 
 /** A form over one server record: what was loaded, what the user has typed, and whether a save is in flight. */
 sealed interface EditorUiState<out T> {
@@ -131,7 +131,9 @@ abstract class EditorViewModel<T>(
                 status = { status ->
                     state.update { current -> (current as? EditorUiState.Ready<T>)?.copy(saveStatus = status) ?: current }
                 },
-                refused = { error ->
+                isTransient = { it.toSeerrError().isTransient },
+                refused = { failure ->
+                    val error = failure.toSeerrError()
                     state.update { current -> (current as? EditorUiState.Ready<T>)?.let { it.copy(draft = it.saved) } ?: current }
                     eventFlow.emit(EditorEvent.Failed(error))
                 },
@@ -321,7 +323,9 @@ abstract class ExtrasEditorViewModel<T, X>(
                 status = { status ->
                     state.update { current -> (current as? ExtrasEditorUiState.Ready<T, X>)?.copy(saveStatus = status) ?: current }
                 },
-                refused = { error ->
+                isTransient = { it.toSeerrError().isTransient },
+                refused = { failure ->
+                    val error = failure.toSeerrError()
                     state.update { current -> (current as? ExtrasEditorUiState.Ready<T, X>)?.let { it.copy(draft = it.saved) } ?: current }
                     eventFlow.emit(EditorEvent.Failed(error))
                 },
