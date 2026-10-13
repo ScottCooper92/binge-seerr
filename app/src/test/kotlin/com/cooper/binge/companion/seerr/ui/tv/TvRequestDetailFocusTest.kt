@@ -322,9 +322,8 @@ class TvRequestDetailFocusTest {
                 ModerationScope(permissions = SeerrPermissions(canManageRequests = true), currentUserId = 7, hasBlocklist = false)
             BingeTvTheme {
                 // The page is the shell's overlay, as the app hosts it, so its close goes through the shell's hand-off.
-                TvShellScaffold(
-                    selected = TvDestination.Hub,
-                    onSelect = {},
+                BoardInShell(
+                    destination = TvDestination.Hub,
                     overlay =
                         openId?.let {
                             {
