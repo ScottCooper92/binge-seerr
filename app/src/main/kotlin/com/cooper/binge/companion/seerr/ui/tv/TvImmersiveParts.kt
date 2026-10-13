@@ -4,6 +4,7 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
@@ -27,6 +28,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -153,16 +155,27 @@ internal fun ColumnScope.TvBackdropCopy(
         maxLines = 1,
         overflow = TextOverflow.Ellipsis,
     )
-    synopsis?.takeIf { it.isNotBlank() }?.let {
-        Text(
-            text = it,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis,
-        )
+    synopsis?.takeIf { it.isNotBlank() }?.let { text ->
+        // The band is a fixed height, so the synopsis takes the lines the rest leaves it, up to two: at a large font the
+        // lines above it grow and it gives one up, rather than running past the band's end.
+        val style = MaterialTheme.typography.bodyMedium
+        BoxWithConstraints(modifier = Modifier.weight(1f, fill = false)) {
+            val lineHeight = with(LocalDensity.current) { style.lineHeight.toDp() }
+            val lines = (maxHeight / lineHeight).toInt().coerceIn(0, SYNOPSIS_LINES)
+            if (lines > 0) {
+                Text(
+                    text = text,
+                    style = style,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = lines,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+        }
     }
 }
+
+private const val SYNOPSIS_LINES = 2
 
 /**
  * What an immersive board shows when no row has anything: loading, that it could not load (with a retry), or
