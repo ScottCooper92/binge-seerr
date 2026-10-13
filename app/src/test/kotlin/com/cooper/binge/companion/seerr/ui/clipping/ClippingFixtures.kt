@@ -1,7 +1,18 @@
 package com.cooper.binge.companion.seerr.ui.clipping
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.width
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.test.junit4.ComposeContentTestRule
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.dp
+import com.binge.designsystem.testing.assertNoTextClipped
 import com.cooper.binge.companion.seerr.seerr.SeerrMediaStatusCode
 import com.cooper.binge.companion.seerr.seerr.SeerrRequestStatusCode
+import com.cooper.binge.companion.seerr.theme.SeerrTheme
 import com.cooper.binge.companion.seerr.ui.blocklist.BlocklistItem
 import com.cooper.binge.companion.seerr.ui.issues.IssueItem
 import com.cooper.binge.companion.seerr.ui.issues.IssueStatus
@@ -11,6 +22,7 @@ import com.cooper.binge.companion.seerr.ui.requests.RequestItem
 import com.cooper.binge.companion.seerr.ui.requests.RequestMediaType
 import com.cooper.binge.companion.seerr.ui.users.UserItem
 import com.cooper.binge.companion.seerr.ui.users.UserOrigin
+import org.junit.Assert.assertTrue
 
 /*
  * The app's own rows at their worst: every optional line filled and long text, for the no-clipping test to render at
@@ -90,3 +102,32 @@ internal fun worstCaseUser(): UserItem =
         requestCount = 12_840,
         createdAtMillis = LONG_AGO_MILLIS,
     )
+
+/** The phone width the guard tests render at. */
+internal val CLIPPING_PHONE_WIDTH = 412.dp
+
+/** The two font scales the guard tests render at: a common large setting, and the largest. */
+internal const val FONT_SCALE_13 = 1.3f
+internal const val FONT_SCALE_20 = 2.0f
+
+/** The fewest text nodes a guard test must have examined, so a test that checked nothing cannot pass. */
+private const val MIN_TEXT_NODES_CHECKED = 3
+
+/**
+ * Renders [content] in the app's theme at [fontScale], in a phone-width box, and fails if any of its text is clipped by a
+ * parent. Native graphics, which the test class asks for, gives the real text metrics this needs.
+ */
+internal fun ComposeContentTestRule.assertNoClippingAt(
+    fontScale: Float,
+    content: @Composable () -> Unit,
+) {
+    setContent {
+        val density = LocalDensity.current
+        CompositionLocalProvider(LocalDensity provides Density(density.density, fontScale = fontScale)) {
+            SeerrTheme { Box(Modifier.width(CLIPPING_PHONE_WIDTH)) { content() } }
+        }
+    }
+    waitForIdle()
+    val checked = assertNoTextClipped()
+    assertTrue("only $checked text nodes were checked", checked >= MIN_TEXT_NODES_CHECKED)
+}

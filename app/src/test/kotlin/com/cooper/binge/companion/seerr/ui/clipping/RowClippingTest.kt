@@ -1,21 +1,10 @@
 package com.cooper.binge.companion.seerr.ui.clipping
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.width
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.Density
-import androidx.compose.ui.unit.dp
-import com.binge.designsystem.testing.assertNoTextClipped
-import com.binge.designsystem.theme.BingeExpressiveTheme
 import com.cooper.binge.companion.seerr.ui.blocklist.BlocklistRow
 import com.cooper.binge.companion.seerr.ui.issues.IssueRow
 import com.cooper.binge.companion.seerr.ui.requests.RequestRow
 import com.cooper.binge.companion.seerr.ui.users.UserRow
 import com.cooper.binge.companion.seerr.util.createSeerrComposeRule
-import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -38,54 +27,43 @@ class RowClippingTest {
     @get:Rule
     val rule = createSeerrComposeRule()
 
-    private fun check(
-        fontScale: Float,
-        row: @Composable () -> Unit,
-    ) {
-        rule.setContent {
-            val density = LocalDensity.current
-            CompositionLocalProvider(LocalDensity provides Density(density.density, fontScale = fontScale)) {
-                BingeExpressiveTheme { Box(Modifier.width(PHONE_WIDTH)) { row() } }
-            }
+    @Test fun `a request row at 1_3`() =
+        rule.assertNoClippingAt(FONT_SCALE_13) {
+            RequestRow(worstCaseRequest(), onClick = {}, onManage = {}, now = NOW_MILLIS)
         }
-        rule.waitForIdle()
-        val checked = rule.assertNoTextClipped()
-        // A pass that checked nothing is no pass.
-        assertTrue("only $checked text nodes were checked", checked >= MIN_CHECKED)
-    }
 
-    @Test fun `a request row at 1_3`() = check(FONT_13) { RequestRow(worstCaseRequest(), onClick = {}, onManage = {}, now = NOW_MILLIS) }
+    @Test fun `a request row at 2_0`() =
+        rule.assertNoClippingAt(FONT_SCALE_20) {
+            RequestRow(worstCaseRequest(), onClick = {}, onManage = {}, now = NOW_MILLIS)
+        }
 
-    @Test fun `a request row at 2_0`() = check(FONT_20) { RequestRow(worstCaseRequest(), onClick = {}, onManage = {}, now = NOW_MILLIS) }
+    @Test fun `an issue row at 1_3`() =
+        rule.assertNoClippingAt(
+            FONT_SCALE_13,
+        ) { IssueRow(worstCaseIssue(), onClick = {}, now = NOW_MILLIS) }
 
-    @Test fun `an issue row at 1_3`() = check(FONT_13) { IssueRow(worstCaseIssue(), onClick = {}, now = NOW_MILLIS) }
-
-    @Test fun `an issue row at 2_0`() = check(FONT_20) { IssueRow(worstCaseIssue(), onClick = {}, now = NOW_MILLIS) }
+    @Test fun `an issue row at 2_0`() =
+        rule.assertNoClippingAt(
+            FONT_SCALE_20,
+        ) { IssueRow(worstCaseIssue(), onClick = {}, now = NOW_MILLIS) }
 
     @Test fun `a blocklist row at 1_3`() =
-        check(FONT_13) {
+        rule.assertNoClippingAt(FONT_SCALE_13) {
             BlocklistRow(worstCaseBlocklistItem(), isActing = false, onClick = {}, onRemove = {})
         }
 
     @Test fun `a blocklist row at 2_0`() =
-        check(FONT_20) {
+        rule.assertNoClippingAt(FONT_SCALE_20) {
             BlocklistRow(worstCaseBlocklistItem(), isActing = false, onClick = {}, onRemove = {})
         }
 
     @Test fun `a user row at 1_3`() =
-        check(FONT_13) {
+        rule.assertNoClippingAt(FONT_SCALE_13) {
             UserRow(worstCaseUser(), selecting = false, selected = false, onClick = {}, onLongClick = {})
         }
 
     @Test fun `a user row at 2_0`() =
-        check(FONT_20) {
+        rule.assertNoClippingAt(FONT_SCALE_20) {
             UserRow(worstCaseUser(), selecting = false, selected = false, onClick = {}, onLongClick = {})
         }
-
-    private companion object {
-        val PHONE_WIDTH = 412.dp
-        const val MIN_CHECKED = 3
-        const val FONT_13 = 1.3f
-        const val FONT_20 = 2.0f
-    }
 }
