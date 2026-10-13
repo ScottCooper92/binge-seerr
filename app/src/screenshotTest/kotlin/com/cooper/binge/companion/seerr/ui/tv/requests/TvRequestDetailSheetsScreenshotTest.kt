@@ -15,9 +15,13 @@ import com.cooper.binge.companion.seerr.ui.requests.IssueReport
 import com.cooper.binge.companion.seerr.ui.requests.IssueType
 import com.cooper.binge.companion.seerr.ui.requests.MediaInstance
 import com.cooper.binge.companion.seerr.ui.requests.MediaRecord
+import com.cooper.binge.companion.seerr.ui.requests.RequestEditorControls
+import com.cooper.binge.companion.seerr.ui.requests.refusedEditState
+import com.cooper.binge.companion.seerr.ui.requests.seasonListRow
+import com.cooper.binge.companion.seerr.ui.requests.tvEditState
 
 /**
- * The bodies of the request page's Mark as and Report an issue sheets, on the panel. The sheets' scrim and focus
+ * The bodies of the request page's Edit, Mark as and Report an issue sheets, on the panel. The sheets' scrim and focus
  * trap are the modal half and are not framed; what is framed is every row's icon: an instance, a state, a kind.
  */
 class TvRequestDetailSheetsScreenshotTest {
@@ -51,6 +55,52 @@ class TvRequestDetailSheetsScreenshotTest {
             )
         }
 
+    /** The edit: standard or 4K, a held season locked with the server's state, and the destination rows. It scrolls past the fold. */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun EditForm() =
+        SheetFrame {
+            TvEditRequestSheet(
+                item = seasonListRow(),
+                edit = tvEditState(),
+                controls = NoEditorControls,
+                onClosed = {},
+                entryFocus = FocusRequester(),
+            )
+        }
+
+    /** A save the server refused: the status line offers Retry above Save, and the edit stays as the user left it. */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun EditRefusedSave() =
+        SheetFrame {
+            TvEditRequestSheet(
+                item = seasonListRow(),
+                edit = refusedEditState(),
+                controls = NoEditorControls,
+                onClosed = {},
+                entryFocus = FocusRequester(),
+            )
+        }
+
+    /** One destination field's choices swapped in for the form, the current one ticked. */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun EditServerPicker() =
+        SheetFrame {
+            TvEditRequestSheet(
+                item = seasonListRow(),
+                edit = tvEditState(),
+                controls = NoEditorControls,
+                onClosed = {},
+                entryFocus = FocusRequester(),
+                initialStep = EditStep.Server,
+            )
+        }
+
     /** The kinds of issue, each with its glyph, over the message field. */
     @PreviewTest
     @SeerrTvScreenPreviews
@@ -65,6 +115,26 @@ class TvRequestDetailSheetsScreenshotTest {
                 entryFocus = FocusRequester(),
             )
         }
+}
+
+private object NoEditorControls : RequestEditorControls {
+    override fun cancel() = Unit
+
+    override fun toggleSeason(number: Int) = Unit
+
+    override fun selectAllSeasons(selected: Boolean) = Unit
+
+    override fun select4k(is4k: Boolean) = Unit
+
+    override fun selectServer(id: Int) = Unit
+
+    override fun selectProfile(id: Int) = Unit
+
+    override fun selectRootFolder(path: String) = Unit
+
+    override fun toggleTag(id: Int) = Unit
+
+    override fun save() = Unit
 }
 
 private fun media(vararg instances: MediaInstance) =

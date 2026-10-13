@@ -200,6 +200,7 @@ class RequestDetailViewModel
                     details = sources.details,
                     canEditDestination = sources.canEditDestination,
                     seasonsEditable = sources.seasonsEditable,
+                    can4k = sources.can4k,
                 )
             return sources.toDetail()
         }

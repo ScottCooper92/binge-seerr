@@ -26,19 +26,29 @@ import com.binge.designsystem.tv.component.TvSideSheetTitle
 import com.binge.designsystem.tv.component.TvTextField
 import com.binge.designsystem.tv.focus.TvOverlayCloser
 import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.ui.requests.EditState
 import com.cooper.binge.companion.seerr.ui.requests.IssueReport
 import com.cooper.binge.companion.seerr.ui.requests.IssueType
 import com.cooper.binge.companion.seerr.ui.requests.MediaInstance
 import com.cooper.binge.companion.seerr.ui.requests.MediaRecord
 import com.cooper.binge.companion.seerr.ui.requests.MediaStatusChoice
+import com.cooper.binge.companion.seerr.ui.requests.RequestItem
 import com.cooper.binge.companion.seerr.ui.requests.icon
 import com.cooper.binge.companion.seerr.ui.requests.labelRes
 import com.cooper.binge.companion.seerr.ui.tv.TvFormNote
 import com.cooper.binge.companion.seerr.ui.tv.TvFormNoteTone
 import com.binge.designsystem.R as DesR
 
-/** What the page opens over itself: the two confirm dialogs, and the sheets for marking the title's state and reporting an issue. */
-internal enum class DetailSheet { Remove, Block, MarkAs, Report }
+/** What the page opens over itself: the two confirm dialogs, and the sheets for editing the request, marking the title's state and reporting an issue. */
+internal enum class DetailSheet { Remove, Block, Edit, MarkAs, Report }
+
+/** What the sheets read from the page: the request, its title's record, the open editor and the issue report. */
+internal class TvDetailSheetContent(
+    val item: RequestItem,
+    val media: MediaRecord?,
+    val edit: EditState?,
+    val report: IssueReport,
+)
 
 /** The issue being written, kept by the page so a sheet closed before sending opens again on the same words. */
 internal class TvReportDraft(
@@ -66,14 +76,19 @@ internal class TvDetailSheetHost(
 internal fun TvRequestDetailSheet(
     host: TvDetailSheetHost,
     actions: TvRequestDetailActions,
-    media: MediaRecord?,
-    report: IssueReport,
+    content: TvDetailSheetContent,
     draft: TvReportDraft,
 ) {
     val closer = host.closer
+    val media = content.media
     // A report closed while it is still sending keeps its guard: the view model refuses a second send until it answers.
+    // An edit closed unsaved is dropped, as the phone's sheet drops it.
     val dismiss = {
-        if (host.step == DetailSheet.Report) actions.onDismissReport()
+        when (host.step) {
+            DetailSheet.Report -> actions.onDismissReport()
+            DetailSheet.Edit -> actions.edit?.controls?.cancel()
+            else -> Unit
+        }
         closer.close()
     }
     // The two confirms are a question and nothing else, so each is a dialog; Mark as and Report carry a list and a form, so
@@ -103,6 +118,12 @@ internal fun TvRequestDetailSheet(
                 onDismissRequest = closer::close,
                 destructive = true,
             )
+        DetailSheet.Edit ->
+            TvSideSheet(onDismissRequest = dismiss) { entryFocus ->
+                actions.edit?.let { edit ->
+                    TvEditRequestSheet(content.item, content.edit, edit.controls, onClosed = closer::close, entryFocus = entryFocus)
+                }
+            }
         DetailSheet.MarkAs ->
             TvSideSheet(onDismissRequest = dismiss) { entryFocus ->
                 media?.let {
@@ -118,7 +139,7 @@ internal fun TvRequestDetailSheet(
             }
         DetailSheet.Report ->
             TvSideSheet(onDismissRequest = dismiss) { entryFocus ->
-                TvReportIssueStep(report, draft, actions, onDone = dismiss, entryFocus = entryFocus)
+                TvReportIssueStep(content.report, draft, actions, onDone = dismiss, entryFocus = entryFocus)
             }
     }
 }

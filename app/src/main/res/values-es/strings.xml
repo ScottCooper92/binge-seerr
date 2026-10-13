@@ -1099,6 +1099,7 @@
     <string name="tv_consent_point_change_title">Se desactiva con una pulsación</string>
     <string name="tv_consent_reassurance">No se recoge nada a menos que elijas Compartir datos de uso.</string>
     <string name="tv_detail_approve">Aprobar</string>
+    <string name="tv_detail_edit">Editar</string>
     <string name="tv_detail_decline">Rechazar</string>
     <string name="tv_detail_remove">Eliminar</string>
     <string name="tv_detail_block">Bloquear</string>
@@ -1110,7 +1111,7 @@
     <string name="tv_detail_info_status">Estado</string>
     <string name="tv_detail_info_sent_to">Enviado a</string>
     <string name="tv_detail_info_phone_only">Cámbialo en el móvil</string>
-    <string name="tv_detail_phone_edit">Editar la petición</string>
+    <string name="tv_detail_phone_tags">Las etiquetas de la petición</string>
     <string name="tv_detail_phone_requester">Quien la pidió</string>
     <string name="tv_detail_phone_siblings">Otras peticiones</string>
     <string name="tv_detail_details">Detalles</string>

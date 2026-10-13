@@ -356,6 +356,60 @@ class RequestEditorTest {
             assertEquals(8, body.getValue("profileId").jsonPrimitive.int)
         }
 
+    /** Season 3 is held in the standard version only, so moving to 4K frees it; the 4K instance becomes the only server. */
+    @Test
+    fun `moving a request to 4K offers that version's servers and holds, and saves it as 4K`() =
+        runTest {
+            val editor = editor()
+            editor.start(EditSource(tvRequest(), details = showDetails(), canEditDestination = true, can4k = true))
+            val standard = editor.awaitLoaded()
+            assertTrue(standard.can4k)
+            assertFalse(standard.is4k)
+            assertEquals(listOf(false, false, true), standard.seasons.map { it.locked })
+            editor.toggleSeason(2)
+
+            editor.select4k(true)
+
+            val fourK = editor.state.first { it?.is4k == true && it.destination?.loadingChoices == false } as EditState
+            assertEquals(listOf(3), fourK.destination?.servers?.map { it.id })
+            assertEquals(3, fourK.destination?.serverId)
+            assertEquals(listOf(false, false, false), fourK.seasons.map { it.locked })
+            // The tick on season 2 rides across the move.
+            assertEquals(listOf(true, true, false), fourK.seasons.map { it.selected })
+
+            editor.save()
+            editor.awaitClosed()
+            val body = editBody()
+            assertTrue(
+                body
+                    .getValue("is4k")
+                    .jsonPrimitive.content
+                    .toBoolean(),
+            )
+            assertEquals(3, body.getValue("serverId").jsonPrimitive.int)
+            assertEquals(listOf(1, 2), body.getValue("seasons").jsonArray.map { it.jsonPrimitive.int })
+        }
+
+    @Test
+    fun `a user who may not request 4K cannot move the request to it`() =
+        runTest {
+            val editor = editor()
+            editor.start(EditSource(movieRequest(), details = null, canEditDestination = true))
+            assertFalse(editor.awaitLoaded().can4k)
+
+            editor.select4k(true)
+
+            assertFalse(editor.awaitLoaded().is4k)
+            editor.save()
+            editor.awaitClosed()
+            assertFalse(
+                editBody()
+                    .getValue("is4k")
+                    .jsonPrimitive.content
+                    .toBoolean(),
+            )
+        }
+
     private fun movieRequest(tags: List<Int> = emptyList()) =
         SeerrRequestDto(
             id = 11,

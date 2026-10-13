@@ -983,12 +983,16 @@ data class SeerrRequestBody(
     @SerialName("rootFolder") val rootFolder: String? = null,
 )
 
-/** `PUT request/{id}`: only the fields sent change; the seasons list is a show's whole new set. */
+/**
+ * `PUT request/{id}`: only the fields sent change; the seasons list is a show's whole new set. [is4k] is always sent,
+ * so an edit that moves a 4K request back to standard says so rather than leaving the version as it was.
+ */
+@OptIn(ExperimentalSerializationApi::class)
 @Serializable
 data class SeerrEditRequestBody(
     @SerialName("mediaType") val mediaType: String,
     @SerialName("seasons") val seasons: List<Int>? = null,
-    @SerialName("is4k") val is4k: Boolean = false,
+    @EncodeDefault @SerialName("is4k") val is4k: Boolean = false,
     @SerialName("serverId") val serverId: Int? = null,
     @SerialName("profileId") val profileId: Int? = null,
     @SerialName("rootFolder") val rootFolder: String? = null,

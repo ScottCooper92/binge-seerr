@@ -27,6 +27,7 @@ import com.cooper.binge.companion.seerr.ui.tv.hub.TvHubBoard
 import com.cooper.binge.companion.seerr.ui.tv.requests.RequestRowFilters
 import com.cooper.binge.companion.seerr.ui.tv.requests.TvRequestDetailActions
 import com.cooper.binge.companion.seerr.ui.tv.requests.TvRequestDetailScreen
+import com.cooper.binge.companion.seerr.ui.tv.requests.TvRequestEditActions
 import com.cooper.binge.companion.seerr.ui.tv.requests.TvRequestsActions
 import com.cooper.binge.companion.seerr.ui.tv.requests.TvRequestsGrid
 import com.cooper.binge.companion.seerr.ui.tv.requests.TvRequestsRowsBoard
@@ -207,6 +208,7 @@ internal fun TvRequestDetailOverlay(
                 },
                 onReportIssue = viewModel::reportIssue,
                 onDismissReport = viewModel::dismissReport,
+                edit = TvRequestEditActions(onStart = viewModel::startEdit, controls = viewModel.editor),
             ),
     )
 }

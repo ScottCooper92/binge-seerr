@@ -59,3 +59,23 @@ private fun editDestination() =
         rootFolders = listOf("/tv"),
         rootFolder = "/tv",
     )
+
+/** The TV sheet's fullest form: the version choice, a held season and two to choose, and the destination. */
+internal fun tvEditState(): EditState =
+    EditState(
+        seasons =
+            (1..HELD_SEASONS).map { number ->
+                SeasonChoice(
+                    number = number,
+                    name = null,
+                    episodeCount = EPISODES_BASE,
+                    selected = number != HELD_SEASONS,
+                    heldStatus = if (number == 1) SeerrMediaStatusCode.Available else null,
+                )
+            },
+        destination = editDestination().copy(servers = listOf(Choice(SONARR_ID, "Sonarr"), Choice(SONARR_ID + 1, "Sonarr Anime"))),
+        can4k = true,
+    )
+
+/** A save the server refused, on a form short enough to show the status line and Save together. */
+internal fun refusedEditState(): EditState = destinationOnlyEditState().copy(failed = true)
