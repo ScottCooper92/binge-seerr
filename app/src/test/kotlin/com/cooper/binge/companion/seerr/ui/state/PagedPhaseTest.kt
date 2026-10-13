@@ -3,10 +3,10 @@ package com.cooper.binge.companion.seerr.ui.state
 import androidx.paging.CombinedLoadStates
 import androidx.paging.LoadState
 import androidx.paging.LoadStates
+import com.binge.companion.sdk.paging.ListRefresh
 import com.binge.designsystem.template.PagedPhase
 import com.binge.designsystem.template.PagedPhaseTracker
 import com.binge.designsystem.template.pagedPhase
-import com.cooper.binge.companion.seerr.data.ListRefresh
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import java.io.IOException

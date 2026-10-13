@@ -1,6 +1,7 @@
 package com.cooper.binge.companion.seerr.data
 
 import androidx.paging.PagingSource
+import com.binge.companion.sdk.paging.OpenPagingSources
 
 /** The user cache behind a seam, as [IssueStore] is, so the mediator and the browser are tested against a fake. */
 interface UserStore {

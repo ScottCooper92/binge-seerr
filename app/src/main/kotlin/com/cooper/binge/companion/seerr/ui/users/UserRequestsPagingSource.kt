@@ -1,9 +1,9 @@
 package com.cooper.binge.companion.seerr.ui.users
 
+import com.binge.companion.sdk.paging.OffsetPage
+import com.binge.companion.sdk.paging.OffsetPagingSource
 import com.cooper.binge.companion.seerr.seerr.HydratedTitle
 import com.cooper.binge.companion.seerr.seerr.SeerrApi
-import com.cooper.binge.companion.seerr.ui.requests.OffsetPage
-import com.cooper.binge.companion.seerr.ui.requests.OffsetPagingSource
 import com.cooper.binge.companion.seerr.ui.requests.REQUESTS_PAGE_SIZE
 import com.cooper.binge.companion.seerr.ui.requests.RequestItem
 import com.cooper.binge.companion.seerr.ui.requests.toRequestPage

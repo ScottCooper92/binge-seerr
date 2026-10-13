@@ -7,11 +7,11 @@ import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingDataEvent
 import androidx.paging.PagingDataPresenter
+import com.binge.companion.sdk.paging.ListRefresh
+import com.binge.companion.sdk.paging.ListRefreshes
 import com.binge.designsystem.template.PagedPhase
 import com.binge.designsystem.template.PagedPhaseTracker
 import com.cooper.binge.companion.seerr.data.CacheDatabaseRule
-import com.cooper.binge.companion.seerr.data.ListRefresh
-import com.cooper.binge.companion.seerr.data.ListRefreshes
 import com.cooper.binge.companion.seerr.data.RequestEntity
 import com.cooper.binge.companion.seerr.data.RequestListQuery
 import com.cooper.binge.companion.seerr.data.RequestsRemoteMediator

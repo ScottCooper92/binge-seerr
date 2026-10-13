@@ -1,5 +1,7 @@
 package com.cooper.binge.companion.seerr.ui.blocklist
 
+import com.binge.companion.sdk.paging.OffsetPage
+import com.binge.companion.sdk.paging.OffsetPagingSource
 import com.cooper.binge.companion.seerr.seerr.HydratedTitle
 import com.cooper.binge.companion.seerr.seerr.SEERR_MEDIA_TYPE_MOVIE
 import com.cooper.binge.companion.seerr.seerr.SEERR_MEDIA_TYPE_TV
@@ -8,8 +10,6 @@ import com.cooper.binge.companion.seerr.seerr.SeerrBlocklistEntryDto
 import com.cooper.binge.companion.seerr.seerr.displayString
 import com.cooper.binge.companion.seerr.seerr.toAvatarUrl
 import com.cooper.binge.companion.seerr.seerr.toEpochMillisOrNull
-import com.cooper.binge.companion.seerr.ui.requests.OffsetPage
-import com.cooper.binge.companion.seerr.ui.requests.OffsetPagingSource
 import com.cooper.binge.companion.seerr.ui.requests.RequestMediaType
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
