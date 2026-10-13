@@ -10,6 +10,7 @@ import com.cooper.binge.companion.seerr.seerr.SeerrPermissions
 import com.cooper.binge.companion.seerr.seerr.SeerrPublicSettings
 import com.cooper.binge.companion.seerr.seerr.SeerrServerProfile
 import com.cooper.binge.companion.seerr.seerr.SeerrStatusDto
+import com.cooper.binge.companion.seerr.util.requestStatusOf
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -31,7 +32,7 @@ class SeerrAllowedActionsTest {
     ): RequestInfo =
         RequestInfo
             .newBuilder()
-            .setId(id)
+            .setId(id.toString())
             .setState(state)
             .addAllSeasonNumbers(seasons)
             .build()
@@ -41,16 +42,15 @@ class SeerrAllowedActionsTest {
         availability: Availability = Availability.AVAILABILITY_PENDING,
     ) = CachedStatus(
         status =
-            RequestStatus
-                .newBuilder()
-                .setAvailability(availability)
+            requestStatusOf(availability)
+                .toBuilder()
                 .addAllRequests(requests.map { it.first })
                 .build(),
         fetchedAtMillis = 0,
-        requesterIds = requests.associate { (request, user) -> request.id to user },
+        requesterIds = requests.associate { (request, user) -> request.id.toInt() to user },
     )
 
-    private fun RequestStatus.actionsOf(id: Int): List<Capability> = requestsList.single { it.id == id }.allowedActionsList
+    private fun RequestStatus.actionsOf(id: Int): List<Capability> = requestsList.single { it.id == id.toString() }.allowedActionsList
 
     @Test
     fun `a requester may cancel their own pending request and nothing else`() {

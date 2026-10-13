@@ -5,6 +5,7 @@ import com.binge.companion.contracts.request.v1.DownloadProgress
 import com.binge.companion.contracts.request.v1.DownloadState
 import com.binge.companion.contracts.request.v1.RequestStatus
 import com.cooper.binge.companion.seerr.data.CachedStatus
+import com.cooper.binge.companion.seerr.util.requestStatusOf
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -20,12 +21,7 @@ class MediaStatusFreshnessTest {
     private fun status(
         availability: Availability,
         download: DownloadState? = null,
-    ): RequestStatus =
-        RequestStatus
-            .newBuilder()
-            .setAvailability(availability)
-            .apply { download?.let { setDownload(DownloadProgress.newBuilder().setState(it)) } }
-            .build()
+    ): RequestStatus = requestStatusOf(availability, download = download?.let { DownloadProgress.newBuilder().setState(it).build() })
 
     @Test
     fun `something in flight goes stale at the poll interval`() {
@@ -84,9 +80,7 @@ class MediaStatusFreshnessTest {
 
     @Test
     fun `the 4k version moving keeps the row as fresh as the standard one moving would`() {
-        val settledWith4k: (Availability) -> RequestStatus = {
-            status(Availability.AVAILABILITY_AVAILABLE).toBuilder().setAvailability4K(it).build()
-        }
+        val settledWith4k: (Availability) -> RequestStatus = { requestStatusOf(Availability.AVAILABILITY_AVAILABLE, availability4k = it) }
 
         assertEquals(POLL, freshness.maxAgeMillis(settledWith4k(Availability.AVAILABILITY_PROCESSING)))
         assertEquals(3 * MINUTE, freshness.maxAgeMillis(settledWith4k(Availability.AVAILABILITY_PENDING)))

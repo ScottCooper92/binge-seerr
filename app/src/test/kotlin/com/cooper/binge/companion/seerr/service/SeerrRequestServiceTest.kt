@@ -23,7 +23,6 @@ import com.binge.companion.contracts.request.v1.ObserveStatusRequest
 import com.binge.companion.contracts.request.v1.ReportIssueRequest
 import com.binge.companion.contracts.request.v1.RequestFilter
 import com.binge.companion.contracts.request.v1.RequestServiceGrpcKt
-import com.binge.companion.contracts.request.v1.RequestStatus
 import com.binge.companion.contracts.request.v1.RetryRequestRequest
 import com.binge.companion.contracts.request.v1.SubmitAdvancedRequestRequest
 import com.binge.companion.contracts.request.v1.SubmitRequestRequest
@@ -44,11 +43,14 @@ import com.cooper.binge.companion.seerr.seerr.SeerrApiFactory
 import com.cooper.binge.companion.seerr.seerr.SeerrAuth
 import com.cooper.binge.companion.seerr.seerr.SeerrCredentials
 import com.cooper.binge.companion.seerr.seerr.SeerrVariant
+import com.cooper.binge.companion.seerr.seerr.standardVersion
+import com.cooper.binge.companion.seerr.seerr.version4k
 import com.cooper.binge.companion.seerr.telemetry.Analytics
 import com.cooper.binge.companion.seerr.telemetry.NoOpAnalytics
 import com.cooper.binge.companion.seerr.util.PlainCipher
 import com.cooper.binge.companion.seerr.util.RecordingAnalytics
 import com.cooper.binge.companion.seerr.util.enqueueProfile
+import com.cooper.binge.companion.seerr.util.requestStatusOf
 import com.cooper.binge.companion.seerr.util.routeProfiles
 import io.grpc.ManagedChannel
 import io.grpc.Server
@@ -622,7 +624,7 @@ class SeerrRequestServiceTest {
             val status = stub.getStatus(GetStatusRequest.newBuilder().setMedia(movie).build()).status
 
             assertEquals("/api/v1/movie/603", seerr.takeRequest().url.encodedPath)
-            assertEquals(Availability.AVAILABILITY_AVAILABLE, status.availability)
+            assertEquals(Availability.AVAILABILITY_AVAILABLE, status.standardVersion().availability)
             assertTrue(Capability.CAPABILITY_REPORT_ISSUE in status.allowedActionsList)
             assertTrue(Capability.CAPABILITY_CANCEL in status.allowedActionsList)
             assertFalse("nothing is pending, so nothing is approvable", Capability.CAPABILITY_APPROVE in status.allowedActionsList)
@@ -642,9 +644,9 @@ class SeerrRequestServiceTest {
             seerr.enqueue(json("""{"id":77}"""))
             seerr.enqueue(json("""{"mediaInfo":{"status":2}}"""))
             val created = stub.submitRequest(request)
-            assertEquals(77, created.requestId)
+            assertEquals("77", created.requestId)
             assertFalse(created.alreadyRequested)
-            assertEquals(Availability.AVAILABILITY_PENDING, created.status.availability)
+            assertEquals(Availability.AVAILABILITY_PENDING, created.status.standardVersion().availability)
             val posted = seerr.takeRequest()
             assertEquals("/api/v1/request", posted.url.encodedPath)
             assertTrue(
@@ -667,7 +669,7 @@ class SeerrRequestServiceTest {
             seerr.enqueue(MockResponse(code = 202, body = """{"message":"No seasons available to request"}"""))
             seerr.enqueue(json("""{"mediaInfo":{"status":5}}"""))
             val nothing = stub.submitRequest(request)
-            assertEquals(0, nothing.requestId)
+            assertEquals("", nothing.requestId)
             assertFalse(nothing.alreadyRequested)
         }
 
@@ -842,7 +844,7 @@ class SeerrRequestServiceTest {
                         .build(),
                 )
 
-            assertEquals(88, response.result.requestId)
+            assertEquals("88", response.result.requestId)
             // No arr-server details fetch: both axes were explicit, so there was no default to resolve.
             seerr.takeRequest()
             val postedRequest = seerr.takeRequest()
@@ -1025,7 +1027,7 @@ class SeerrRequestServiceTest {
                         .build(),
                 )
 
-            assertEquals(90, created.requestId)
+            assertEquals("90", created.requestId)
         }
 
     @Test
@@ -1115,7 +1117,7 @@ class SeerrRequestServiceTest {
 
             assertEquals(
                 Status.Code.PERMISSION_DENIED,
-                stub.code { approveRequest(ApproveRequestRequest.newBuilder().setRequestId(4).build()) },
+                stub.code { approveRequest(ApproveRequestRequest.newBuilder().setRequestId("4").build()) },
             )
             assertEquals(
                 Status.Code.PERMISSION_DENIED,
@@ -1200,8 +1202,8 @@ class SeerrRequestServiceTest {
 
             val status = stub.getStatus(GetStatusRequest.newBuilder().setMedia(movie).build()).status
 
-            assertEquals(Availability.AVAILABILITY_NOT_REQUESTED, status.availability)
-            assertEquals(Availability.AVAILABILITY_AVAILABLE, status.availability4K)
+            assertEquals(Availability.AVAILABILITY_NOT_REQUESTED, status.standardVersion().availability)
+            assertEquals(Availability.AVAILABILITY_AVAILABLE, status.version4k().availability)
         }
 
     /** The contract sets the 4K state only under CAPABILITY_REQUEST_4K, so a version they cannot request is not shown. */
@@ -1213,34 +1215,37 @@ class SeerrRequestServiceTest {
 
             val status = stub.getStatus(GetStatusRequest.newBuilder().setMedia(movie).build()).status
 
-            assertEquals(Availability.AVAILABILITY_NOT_REQUESTED, status.availability)
-            assertEquals(Availability.AVAILABILITY_UNSPECIFIED, status.availability4K)
+            assertEquals(Availability.AVAILABILITY_NOT_REQUESTED, status.standardVersion().availability)
+            assertEquals(Availability.AVAILABILITY_UNSPECIFIED, status.version4k().availability)
         }
 
-    /** `download` is every active download, so a user who may request 4K sees the 4K ones in it too (#724). */
+    /** Each version carries its own downloads, so a user who may request 4K sees them apart (#724). */
     @Test
-    fun `the download takes in the 4k downloads for a user who may request 4k`() =
+    fun `each version carries its own download for a user who may request 4k`() =
         runTest {
             val stub = connected(publicSettings = MOVIE_4K_ENABLED)
             seerr.enqueue(json(DOWNLOADING_IN_BOTH))
 
-            val download = stub.getStatus(GetStatusRequest.newBuilder().setMedia(movie).build()).status.download
+            val status = stub.getStatus(GetStatusRequest.newBuilder().setMedia(movie).build()).status
 
-            assertEquals(4_000L, download.totalBytes)
-            assertEquals(0.125f, download.fraction, 0.0001f)
-            assertEquals("Standard", download.label)
+            assertEquals(1_000L, status.standardVersion().download.totalBytes)
+            assertEquals(0.5f, status.standardVersion().download.fraction, 0.0001f)
+            assertEquals("Standard", status.standardVersion().download.label)
+            assertEquals(3_000L, status.version4k().download.totalBytes)
+            assertEquals("UHD", status.version4k().download.label)
         }
 
     @Test
-    fun `the download leaves the 4k downloads out for a user who may not request 4k`() =
+    fun `the 4k downloads are left out for a user who may not request 4k`() =
         runTest {
             val stub = connected()
             seerr.enqueue(json(DOWNLOADING_IN_BOTH))
 
-            val download = stub.getStatus(GetStatusRequest.newBuilder().setMedia(movie).build()).status.download
+            val status = stub.getStatus(GetStatusRequest.newBuilder().setMedia(movie).build()).status
 
-            assertEquals(1_000L, download.totalBytes)
-            assertEquals(0.5f, download.fraction, 0.0001f)
+            assertEquals(1_000L, status.standardVersion().download.totalBytes)
+            assertEquals(0.5f, status.standardVersion().download.fraction, 0.0001f)
+            assertEquals(listOf(false), status.versionsList.map { it.is4K })
         }
 
     @Test
@@ -1249,7 +1254,9 @@ class SeerrRequestServiceTest {
             val stub = connected()
             seerr.enqueue(json(DOWNLOADING_ONLY_IN_4K))
 
-            assertFalse(stub.getStatus(GetStatusRequest.newBuilder().setMedia(movie).build()).status.hasDownload())
+            val status = stub.getStatus(GetStatusRequest.newBuilder().setMedia(movie).build()).status
+
+            assertFalse(status.versionsList.any { it.hasDownload() })
         }
 
     /** The cache keeps the server's full answer, so a cached read has to leave the 4K downloads out the same way. */
@@ -1262,10 +1269,11 @@ class SeerrRequestServiceTest {
             getStatus(stub)
             val before = seerr.requestCount
 
-            val download = getStatus(stub).download
+            val status = getStatus(stub)
 
             assertEquals("served from the cache", before, seerr.requestCount)
-            assertEquals(1_000L, download.totalBytes)
+            assertEquals(1_000L, status.standardVersion().download.totalBytes)
+            assertEquals(listOf(false), status.versionsList.map { it.is4K })
         }
 
     @Test
@@ -1380,7 +1388,7 @@ class SeerrRequestServiceTest {
 
             cache.put(
                 movie,
-                CachedStatus(RequestStatus.newBuilder().setAvailability(Availability.AVAILABILITY_BLOCKLISTED).build(), 0L),
+                CachedStatus(requestStatusOf(Availability.AVAILABILITY_BLOCKLISTED), 0L),
             )
             val known = stub.submitFailure(movie)
             assertEquals(Status.Code.FAILED_PRECONDITION, known.status.code)
@@ -1394,7 +1402,7 @@ class SeerrRequestServiceTest {
             val stub = connected(cache = cache)
             cache.put(
                 movie,
-                CachedStatus(RequestStatus.newBuilder().setAvailability(Availability.AVAILABILITY_BLOCKLISTED).build(), 0L),
+                CachedStatus(requestStatusOf(Availability.AVAILABILITY_BLOCKLISTED), 0L),
             )
             val before = seerr.requestCount
 
@@ -1409,7 +1417,7 @@ class SeerrRequestServiceTest {
             val stub = connected(cache = cache, now = { 24 * 60 * 60 * 1000L })
             cache.put(
                 movie,
-                CachedStatus(RequestStatus.newBuilder().setAvailability(Availability.AVAILABILITY_BLOCKLISTED).build(), 0L),
+                CachedStatus(requestStatusOf(Availability.AVAILABILITY_BLOCKLISTED), 0L),
             )
             val before = seerr.requestCount
 
@@ -1424,7 +1432,7 @@ class SeerrRequestServiceTest {
             val stub = connected()
             seerr.enqueue(MockResponse(code = 204))
 
-            stub.cancelRequest(CancelRequestRequest.newBuilder().setRequestId(4).build())
+            stub.cancelRequest(CancelRequestRequest.newBuilder().setRequestId("4").build())
 
             val deleted = seerr.takeRequest()
             assertEquals("DELETE", deleted.method)
@@ -1436,7 +1444,7 @@ class SeerrRequestServiceTest {
     fun `cancelling a request this user may not delete is PERMISSION_DENIED, or FAILED_PRECONDITION once it is past pending`() =
         runTest {
             val stub = connected(permissions = REQUEST)
-            val cancel = CancelRequestRequest.newBuilder().setRequestId(4).build()
+            val cancel = CancelRequestRequest.newBuilder().setRequestId("4").build()
             val refused = """{"message":"You do not have permission to delete this request."}"""
 
             // Someone else's pending request: the refusal, then auth/me still answering, then the request read.
@@ -1461,7 +1469,7 @@ class SeerrRequestServiceTest {
 
             assertEquals(
                 Status.Code.UNAUTHENTICATED,
-                stub.code { cancelRequest(CancelRequestRequest.newBuilder().setRequestId(4).build()) },
+                stub.code { cancelRequest(CancelRequestRequest.newBuilder().setRequestId("4").build()) },
             )
         }
 
@@ -1477,7 +1485,7 @@ class SeerrRequestServiceTest {
 
             assertEquals(
                 listOf(Availability.AVAILABILITY_PENDING, Availability.AVAILABILITY_PROCESSING),
-                seen.map { it.status.availability },
+                seen.map { it.status.standardVersion().availability },
             )
         }
 
@@ -1613,7 +1621,7 @@ class SeerrRequestServiceTest {
             stub.editRequest(
                 EditRequestRequest
                     .newBuilder()
-                    .setRequestId(7)
+                    .setRequestId("7")
                     .addAllSeasonNumbers(listOf(1, 3))
                     .build(),
             )
@@ -1645,7 +1653,7 @@ class SeerrRequestServiceTest {
 
             assertEquals(
                 Status.Code.INVALID_ARGUMENT,
-                stub.code { editRequest(EditRequestRequest.newBuilder().setRequestId(7).build()) },
+                stub.code { editRequest(EditRequestRequest.newBuilder().setRequestId("7").build()) },
             )
             assertEquals(before, seerr.requestCount)
 
@@ -1656,7 +1664,7 @@ class SeerrRequestServiceTest {
                     editRequest(
                         EditRequestRequest
                             .newBuilder()
-                            .setRequestId(8)
+                            .setRequestId("8")
                             .addSeasonNumbers(1)
                             .build(),
                     )
@@ -1678,7 +1686,7 @@ class SeerrRequestServiceTest {
                         editRequest(
                             EditRequestRequest
                                 .newBuilder()
-                                .setRequestId(7)
+                                .setRequestId("7")
                                 .addAllSeasonNumbers(seasons)
                                 .build(),
                         )
@@ -1702,7 +1710,7 @@ class SeerrRequestServiceTest {
                     editRequest(
                         EditRequestRequest
                             .newBuilder()
-                            .setRequestId(7)
+                            .setRequestId("7")
                             .addAllSeasonNumbers(listOf(2, 99))
                             .build(),
                     )
@@ -1773,7 +1781,7 @@ class SeerrRequestServiceTest {
                     editRequest(
                         EditRequestRequest
                             .newBuilder()
-                            .setRequestId(7)
+                            .setRequestId("7")
                             .addSeasonNumbers(1)
                             .build(),
                     )
@@ -1832,9 +1840,15 @@ class SeerrRequestServiceTest {
             assertEquals("/api/v1/movie/603", seerr.takeRequest().url.encodedPath)
             assertEquals(2, seerr.requestCount - before)
             assertEquals(listOf(movie, movie), first.entriesList.map { it.media })
-            assertEquals(listOf(4 to false, 5 to true), first.entriesList.map { it.request.id to it.request.is4K })
+            assertEquals(listOf("4" to false, "5" to true), first.entriesList.map { it.request.id to it.request.is4K })
             assertEquals("Neo", first.entriesList[0].request.requestedBy)
-            assertEquals(Availability.AVAILABILITY_PENDING, first.entriesList[0].status.availability)
+            assertEquals(
+                Availability.AVAILABILITY_PENDING,
+                first.entriesList[0]
+                    .status
+                    .standardVersion()
+                    .availability,
+            )
             assertEquals(2, first.entriesList[0].status.requestsCount)
             assertTrue(Capability.CAPABILITY_APPROVE in first.entriesList[0].request.allowedActionsList)
             assertTrue(first.nextPageToken.isNotEmpty())
@@ -1855,7 +1869,9 @@ class SeerrRequestServiceTest {
                 Availability.AVAILABILITY_AVAILABLE,
                 last.entriesList
                     .single()
-                    .status.availability,
+                    .status
+                    .standardVersion()
+                    .availability,
             )
             assertEquals("", last.nextPageToken)
         }
@@ -1975,7 +1991,7 @@ class SeerrRequestServiceTest {
         runTest {
             val cache = FakeStatusCache()
             cache.rows[show.mediaTypeValue to show.tmdbId] =
-                CachedStatus(RequestStatus.newBuilder().setAvailability(Availability.AVAILABILITY_AVAILABLE).build(), 0L)
+                CachedStatus(requestStatusOf(Availability.AVAILABILITY_AVAILABLE), 0L)
             val stub = connected(cache = cache)
             val before = seerr.requestCount
             seerr.enqueue(json("""{"mediaInfo":{"id":9,"status":3}}"""))
@@ -1991,7 +2007,7 @@ class SeerrRequestServiceTest {
             assertEquals(listOf(movie, show, movie), response.statusesList.map { it.media })
             assertEquals(
                 listOf(Availability.AVAILABILITY_PROCESSING, Availability.AVAILABILITY_AVAILABLE, Availability.AVAILABILITY_PROCESSING),
-                response.statusesList.map { it.status.availability },
+                response.statusesList.map { it.status.standardVersion().availability },
             )
             assertEquals(1, seerr.requestCount - before)
         }
@@ -2067,8 +2083,8 @@ class SeerrRequestServiceTest {
             val before = seerr.requestCount
             seerr.enqueue(json("""{"mediaInfo":{"id":9,"status":5}}"""))
 
-            assertEquals(Availability.AVAILABILITY_AVAILABLE, getStatus(stub).availability)
-            assertEquals(Availability.AVAILABILITY_AVAILABLE, getStatus(stub).availability)
+            assertEquals(Availability.AVAILABILITY_AVAILABLE, getStatus(stub).standardVersion().availability)
+            assertEquals(Availability.AVAILABILITY_AVAILABLE, getStatus(stub).standardVersion().availability)
 
             // One call for two lookups: nothing was enqueued for a second, and nothing asked for one.
             assertEquals(1, seerr.requestCount - before)
@@ -2082,12 +2098,12 @@ class SeerrRequestServiceTest {
             val stub = connected(cache = cache, now = { now })
             val before = seerr.requestCount
             seerr.enqueue(json("""{"mediaInfo":{"id":9,"status":3}}"""))
-            assertEquals(Availability.AVAILABILITY_PROCESSING, getStatus(stub).availability)
+            assertEquals(Availability.AVAILABILITY_PROCESSING, getStatus(stub).standardVersion().availability)
 
             now = 60_000
             seerr.enqueue(json("""{"mediaInfo":{"id":9,"status":5}}"""))
 
-            assertEquals(Availability.AVAILABILITY_AVAILABLE, getStatus(stub).availability)
+            assertEquals(Availability.AVAILABILITY_AVAILABLE, getStatus(stub).standardVersion().availability)
             assertEquals(2, seerr.requestCount - before)
             assertEquals(
                 60_000,
@@ -2107,12 +2123,12 @@ class SeerrRequestServiceTest {
             seerr.takeRequest()
 
             seerr.enqueue(json("{}"))
-            stub.approveRequest(ApproveRequestRequest.newBuilder().setRequestId(4).build())
+            stub.approveRequest(ApproveRequestRequest.newBuilder().setRequestId("4").build())
             assertEquals(1, cache.clears)
             assertTrue(cache.rows.isEmpty())
 
             seerr.enqueue(json("""{"mediaInfo":{"id":9,"status":5}}"""))
-            assertEquals(Availability.AVAILABILITY_AVAILABLE, getStatus(stub).availability)
+            assertEquals(Availability.AVAILABILITY_AVAILABLE, getStatus(stub).standardVersion().availability)
         }
 
     /** Seerr's 409 for a request in the wrong state is the contract's FAILED_PRECONDITION, so the host refreshes (#999). */
@@ -2124,12 +2140,12 @@ class SeerrRequestServiceTest {
             seerr.enqueue(MockResponse(code = 409, body = """{"message":"Only pending requests can be approved or declined."}"""))
             assertEquals(
                 Status.Code.FAILED_PRECONDITION,
-                stub.code { approveRequest(ApproveRequestRequest.newBuilder().setRequestId(4).build()) },
+                stub.code { approveRequest(ApproveRequestRequest.newBuilder().setRequestId("4").build()) },
             )
             seerr.enqueue(MockResponse(code = 409, body = """{"message":"Only failed requests can be retried."}"""))
             assertEquals(
                 Status.Code.FAILED_PRECONDITION,
-                stub.code { retryRequest(RetryRequestRequest.newBuilder().setRequestId(4).build()) },
+                stub.code { retryRequest(RetryRequestRequest.newBuilder().setRequestId("4").build()) },
             )
             seerr.enqueue(json("""{"id":4,"media":{"tmdbId":1399,"mediaType":"tv"}}"""))
             seerr.enqueue(MockResponse(code = 409, body = """{"message":"Only pending requests can be modified."}"""))
@@ -2139,7 +2155,7 @@ class SeerrRequestServiceTest {
                     editRequest(
                         EditRequestRequest
                             .newBuilder()
-                            .setRequestId(4)
+                            .setRequestId("4")
                             .addSeasonNumbers(1)
                             .build(),
                     )
@@ -2180,8 +2196,8 @@ class SeerrRequestServiceTest {
 
             listOf(getStatus(stub), getStatus(stub)).forEach { status ->
                 val byId = status.requestsList.associate { it.id to it.allowedActionsList }
-                assertEquals(listOf(Capability.CAPABILITY_CANCEL), byId[4])
-                assertEquals(emptyList<Capability>(), byId[6])
+                assertEquals(listOf(Capability.CAPABILITY_CANCEL), byId["4"])
+                assertEquals(emptyList<Capability>(), byId["6"])
                 assertTrue(Capability.CAPABILITY_CANCEL in status.allowedActionsList)
             }
             assertEquals(
@@ -2209,7 +2225,7 @@ class SeerrRequestServiceTest {
                     .observeStatus(ObserveStatusRequest.newBuilder().setMedia(movie).build())
                     .take(2)
                     .toList()
-                    .map { it.status.availability }
+                    .map { it.status.standardVersion().availability }
 
             assertEquals(
                 listOf(Availability.AVAILABILITY_AVAILABLE, Availability.AVAILABILITY_PARTIALLY_AVAILABLE),
