@@ -189,10 +189,12 @@ internal fun TvRowsFallback(
     onRetryLoad: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val failed = rows.any { it.refresh == TvLoadPhase.Failed }
+    val denied = rows.any { it.refresh == TvLoadPhase.Denied }
+    val failed = rows.any { it.refresh.isFailure }
     val loading = rows.any { it.refresh is TvLoadPhase.Loading }
     when {
         loading -> TvHubLoading(modifier)
+        denied -> TvLocalNetworkDeniedPage(onRetry = onRetryLoad, modifier = modifier)
         failed ->
             TvMessagePage(
                 body = stringResource(R.string.tv_list_load_failed),

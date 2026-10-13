@@ -34,6 +34,8 @@ class SeerrApiFactory(
     private val onWrite: () -> Unit = {},
     /** The public hosts the user agreed to reach over plain HTTP. Every client this factory builds enforces it. */
     private val cleartext: CleartextConsent = CleartextConsent.None,
+    /** Whether the saved server, when it is on the local network, may be reached. The cached client refuses a call while it is not. */
+    private val localNetwork: LocalNetworkPermission = LocalNetworkPermission.AlwaysGranted,
     /**
      * No socket exists when this is set: every client this factory builds is answered by the
      * interceptor it returns for that call's cookie jar, instead of the network. Test-only (#337).
@@ -81,6 +83,7 @@ class SeerrApiFactory(
                     OkHttpClient
                         .Builder()
                         .addInterceptor(SeerrHealthInterceptor(health, baseUrl))
+                        .addInterceptor(SeerrLocalNetworkInterceptor(localNetwork))
                         .addInterceptor(SeerrWriteInterceptor(onWrite))
                         .addInterceptor(SeerrSessionInterceptor(baseUrl))
                         .applyAuth(auth, baseUrl)

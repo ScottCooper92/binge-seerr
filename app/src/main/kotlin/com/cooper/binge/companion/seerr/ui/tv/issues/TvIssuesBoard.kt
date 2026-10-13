@@ -49,6 +49,7 @@ import com.cooper.binge.companion.seerr.ui.tv.TvBackdropArtwork
 import com.cooper.binge.companion.seerr.ui.tv.TvBackdropCopy
 import com.cooper.binge.companion.seerr.ui.tv.TvFormNoteTone
 import com.cooper.binge.companion.seerr.ui.tv.TvHubLoading
+import com.cooper.binge.companion.seerr.ui.tv.TvLocalNetworkDeniedPage
 import com.cooper.binge.companion.seerr.ui.tv.TvOutcomePlate
 import com.cooper.binge.companion.seerr.ui.tv.TvPagedRows
 import com.cooper.binge.companion.seerr.ui.tv.TvPosterCard
@@ -170,6 +171,10 @@ private fun TvIssuesUnresolved(
 ) {
     if (state !is IssuesUiState.Error) {
         TvHubLoading()
+        return
+    }
+    if (state.error == SeerrError.LocalNetworkDenied) {
+        TvLocalNetworkDeniedPage(onRetry = actions.onRetryScope)
         return
     }
     TvMessagePage(

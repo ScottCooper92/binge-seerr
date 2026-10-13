@@ -31,7 +31,7 @@ import kotlinx.coroutines.launch
 import retrofit2.HttpException
 
 /** Why the picker cannot open, or why a submit failed, as the screen shows it. */
-enum class AdvancedRequestError { NotConnected, NoServers, Rejected, Unreachable, Unknown }
+enum class AdvancedRequestError { NotConnected, NoServers, Rejected, Unreachable, LocalNetworkDenied, Unknown }
 
 /** One entry in a picker: the server's own id, and the name the user sees. */
 data class Choice(
@@ -189,5 +189,6 @@ private fun Throwable.toAdvancedRequestError(): AdvancedRequestError =
         SeerrError.NotConnected -> AdvancedRequestError.NotConnected
         SeerrError.Unauthorized, SeerrError.Forbidden, SeerrError.Quota -> AdvancedRequestError.Rejected
         SeerrError.Unreachable -> AdvancedRequestError.Unreachable
+        SeerrError.LocalNetworkDenied -> AdvancedRequestError.LocalNetworkDenied
         else -> AdvancedRequestError.Unknown
     }
