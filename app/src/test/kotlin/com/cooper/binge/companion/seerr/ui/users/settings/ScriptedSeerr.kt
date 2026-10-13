@@ -19,6 +19,7 @@ import mockwebserver3.RecordedRequest
 import mockwebserver3.SocketEffect
 import okhttp3.Headers.Companion.headersOf
 import org.junit.rules.TemporaryFolder
+import java.net.InetAddress
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
@@ -234,6 +235,7 @@ internal class ScriptedSeerr(
         quickConnectPollInterval: Duration = 10.milliseconds,
         onServerChanged: suspend () -> Unit = {},
         apis: SeerrApiFactory = SeerrApiFactory(logRequests = false, testDispatcher = drain::newDispatcher),
+        host: String? = null,
     ): SeerrConnection {
         val connection =
             SeerrConnection(
@@ -246,10 +248,29 @@ internal class ScriptedSeerr(
                 quickConnectPollInterval = quickConnectPollInterval,
                 onServerChanged = onServerChanged,
             )
-        connection.connect(server.url("/").toString(), SeerrAuth.ApiKey("k3y")).getOrThrow()
+        val address = server.url("/").let { url -> if (host == null) url else url.newBuilder().host(host).build() }
+        connection.connect(address.toString(), SeerrAuth.ApiKey("k3y")).getOrThrow()
         return connection
     }
 }
+
+/**
+ * A connection to this server under a name on the local network, with the local-network permission refused (#1507): it
+ * connects, because setup's probe is not gated, and then every call a screen makes is turned away the way Android would.
+ * [testDns] sends the name to the scripted server, so nothing but the gate stands between a screen and its answer.
+ */
+internal suspend fun ScriptedSeerr.deniedConnection(scope: TestScope): SeerrConnection =
+    connection(
+        scope,
+        apis =
+            SeerrApiFactory(
+                logRequests = false,
+                localNetwork = { false },
+                testDns = { listOf(InetAddress.getLoopbackAddress()) },
+                testDispatcher = ::newDispatcher,
+            ),
+        host = "seerr.lan",
+    )
 
 /** An answer [ScriptedSeerr.serveHeld] keeps back until [release]. */
 internal class HeldResponse {

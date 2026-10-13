@@ -17,6 +17,7 @@ import com.binge.designsystem.tv.template.TvHubRow
 import com.binge.designsystem.tv.template.TvImmersiveHub
 import com.binge.designsystem.tv.template.TvMessagePage
 import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.ui.requests.RequestFilter
 import com.cooper.binge.companion.seerr.ui.requests.RequestItem
 import com.cooper.binge.companion.seerr.ui.requests.RequestsUiState
@@ -26,10 +27,10 @@ import com.cooper.binge.companion.seerr.ui.tv.TV_ROW_ITEM_CAP
 import com.cooper.binge.companion.seerr.ui.tv.TvBackdropArtwork
 import com.cooper.binge.companion.seerr.ui.tv.TvBackdropCopy
 import com.cooper.binge.companion.seerr.ui.tv.TvHubLoading
+import com.cooper.binge.companion.seerr.ui.tv.TvLocalNetworkDeniedPage
 import com.cooper.binge.companion.seerr.ui.tv.TvPagedRows
 import com.cooper.binge.companion.seerr.ui.tv.TvPosterCard
 import com.cooper.binge.companion.seerr.ui.tv.TvRowsFallback
-import com.cooper.binge.companion.seerr.ui.tv.rememberOverlayFocusRestore
 import com.cooper.binge.companion.seerr.ui.tv.tvColor
 import com.binge.designsystem.tv.R as TvR
 
@@ -52,8 +53,8 @@ private const val PERCENT = 100
  * in it has no row, and one with more than a row holds ends in a see-all tile that opens the paged grid. OK on a
  * card opens the request's detail page, an overlay above the rail that this board does not own.
  *
- * [openRequestId] is the id of the request whose page is showing, and [seeAllOpen] whether a grid is: when both are
- * gone the board offers focus back to the card or the see-all tile that opened them.
+ * When the page or grid a card or tile opened closes, the shell hands focus back into this board, and the hub's own
+ * memory lands it on that card or tile. The board makes no request of its own, which would race the hand-off (#1509).
  */
 @Composable
 internal fun TvRequestsRowsBoard(
@@ -61,11 +62,8 @@ internal fun TvRequestsRowsBoard(
     rowsFor: (RequestFilter) -> TvPagedRows<RequestItem>,
     actions: TvRequestsActions,
     modifier: Modifier = Modifier,
-    openRequestId: Int? = null,
-    seeAllOpen: Boolean = false,
 ) {
     val ready = state as? RequestsUiState.Ready
-    val restore = rememberOverlayFocusRestore(overlayOpen = openRequestId != null || seeAllOpen)
     if (ready == null) {
         TvRequestsUnresolved(state, actions, modifier)
         return
@@ -89,11 +87,7 @@ internal fun TvRequestsRowsBoard(
                 title = if (count != null) stringResource(R.string.tv_filter_with_count, label, count) else label,
                 // Reading the item is what pages it in.
                 items = (0 until minOf(rows.count, TV_ROW_ITEM_CAP)).mapNotNull { rows.at(it) },
-                onSeeAll =
-                    {
-                        restore.leavingFromSeeAll(filter.name)
-                        actions.onSeeAll(filter)
-                    }.takeIf { (count ?: rows.count) > TV_ROW_ITEM_CAP },
+                onSeeAll = { actions.onSeeAll(filter) }.takeIf { (count ?: rows.count) > TV_ROW_ITEM_CAP },
             )
         }
     val now = ready.now
@@ -101,12 +95,8 @@ internal fun TvRequestsRowsBoard(
         rows = hubRows,
         itemId = { it.id },
         cardWidth = dimensionResource(TvR.dimen.tv_immersive_card_width),
-        onItemClick = {
-            restore.leavingFromRow(it.id)
-            actions.onOpenDetail(it)
-        },
+        onItemClick = actions.onOpenDetail,
         seeAllLabel = stringResource(R.string.tv_see_all),
-        seeAllModifier = restore::seeAllModifier,
         artwork = { item -> TvBackdropArtwork(item.backdropUrl, item.posterUrl) },
         copy = { item -> TvRequestCopy(item, now) },
         modifier = modifier,
@@ -118,7 +108,7 @@ internal fun TvRequestsRowsBoard(
             onFocusChanged = onFocusChanged,
             enabled = true,
             onClick = onClick,
-            modifier = restore.rowModifier(item.id, cellModifier),
+            modifier = cellModifier,
         )
     }
 }
@@ -132,6 +122,10 @@ private fun TvRequestsUnresolved(
 ) {
     if (state !is RequestsUiState.Error) {
         TvHubLoading(modifier)
+        return
+    }
+    if (state.error == SeerrError.LocalNetworkDenied) {
+        TvLocalNetworkDeniedPage(onRetry = actions.onRetryScope, modifier = modifier)
         return
     }
     TvMessagePage(

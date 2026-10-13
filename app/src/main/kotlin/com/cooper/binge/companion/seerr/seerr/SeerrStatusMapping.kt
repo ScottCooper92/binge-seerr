@@ -7,6 +7,7 @@ import com.binge.companion.contracts.request.v1.DownloadState
 import com.binge.companion.contracts.request.v1.RequestInfo
 import com.binge.companion.contracts.request.v1.RequestStatus
 import com.binge.companion.contracts.request.v1.SeasonAvailability
+import com.binge.companion.contracts.request.v1.VersionStatus
 import kotlin.math.ceil
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
@@ -17,13 +18,10 @@ import kotlin.time.Duration.Companion.seconds
  * Seerr's view of a title as the contract's [RequestStatus]. A title the server does not track has
  * no `mediaInfo`, which is the contract's `AVAILABILITY_NOT_REQUESTED` with nothing else set.
  *
- * Seerr keeps the 4K version's state apart (`status4k`), and so does the contract: it goes in
- * `availability_4k` and `seasons_4k`, never folded into `availability` (#704). Both are always
- * filled here; the service clears them for a user it does not declare `CAPABILITY_REQUEST_4K` to.
- *
- * `download` is the progress of every active download, so it takes in Seerr's `downloadStatus4k` as
- * well as `downloadStatus` (#724). For a user it does not declare `CAPABILITY_REQUEST_4K` to, the
- * service swaps it for [standardDownload], which leaves the 4K downloads out.
+ * Seerr keeps the 4K version's state apart (`status4k`, `downloadStatus4k`), and so does the contract:
+ * one `VersionStatus` per version, never folded together (#704, #724). Both entries are always filled
+ * here; the service drops the 4K one for a user it does not declare `CAPABILITY_REQUEST_4K` to.
+ * The watch link is the standard version's: Seerr names no 4K link this app reads yet.
  *
  * `allowed_actions` is not filled here: it is the intersection of what the user may do and what
  * the title's state admits, which the service computes with the permissions in hand.
@@ -32,21 +30,30 @@ fun SeerrMediaInfoDto?.toRequestStatus(nowMillis: Long): RequestStatus {
     val info =
         this ?: return RequestStatus
             .newBuilder()
-            .setAvailability(Availability.AVAILABILITY_NOT_REQUESTED)
-            .setAvailability4K(Availability.AVAILABILITY_NOT_REQUESTED)
+            .addVersions(version(is4k = false, Availability.AVAILABILITY_NOT_REQUESTED))
+            .addVersions(version(is4k = true, Availability.AVAILABILITY_NOT_REQUESTED))
             .build()
-    val builder =
-        RequestStatus
-            .newBuilder()
-            .setAvailability(info.status.toAvailability())
+    val standard =
+        version(is4k = false, info.status.toAvailability())
             .addAllSeasons(info.seasons.map { it.toSeasonAvailability(it.status) })
-            .setAvailability4K(info.status4k.toAvailability())
-            .addAllSeasons4K(info.seasons.map { it.toSeasonAvailability(it.status4k) })
-            .addAllRequests(info.requests.map { it.toRequestInfo() })
-    (info.downloadStatus + info.downloadStatus4k).toDownloadProgress(nowMillis)?.let(builder::setDownload)
-    (info.mediaUrl ?: info.jellyfinMediaUrl ?: info.plexUrl)?.let(builder::setWatchUrl)
-    return builder.build()
+    info.downloadStatus.toDownloadProgress(nowMillis)?.let(standard::setDownload)
+    (info.mediaUrl ?: info.jellyfinMediaUrl ?: info.plexUrl)?.let(standard::setWatchUrl)
+    val fourK =
+        version(is4k = true, info.status4k.toAvailability())
+            .addAllSeasons(info.seasons.map { it.toSeasonAvailability(it.status4k) })
+    info.downloadStatus4k.toDownloadProgress(nowMillis)?.let(fourK::setDownload)
+    return RequestStatus
+        .newBuilder()
+        .addVersions(standard)
+        .addVersions(fourK)
+        .addAllRequests(info.requests.map { it.toRequestInfo() })
+        .build()
 }
+
+private fun version(
+    is4k: Boolean,
+    availability: Availability,
+): VersionStatus.Builder = VersionStatus.newBuilder().setIs4K(is4k).setAvailability(availability)
 
 private fun SeerrSeasonStatusDto.toSeasonAvailability(status: SeerrMediaStatusCode?): SeasonAvailability =
     SeasonAvailability
@@ -54,9 +61,6 @@ private fun SeerrSeasonStatusDto.toSeasonAvailability(status: SeerrMediaStatusCo
         .setSeasonNumber(seasonNumber)
         .setAvailability(status.toAvailability())
         .build()
-
-/** The standard version's downloads alone: the `download` a user who may not request 4K is shown. */
-fun SeerrMediaInfoDto?.standardDownload(nowMillis: Long): DownloadProgress? = this?.downloadStatus?.toDownloadProgress(nowMillis)
 
 /** Who made each request, by user id; a request whose requester the server did not name is left out. */
 fun SeerrMediaInfoDto?.requesterIds(): Map<Int, Int> =
@@ -105,7 +109,7 @@ private fun SeerrRequestSummaryDto.toRequestInfo(): RequestInfo {
     val builder =
         RequestInfo
             .newBuilder()
-            .setId(id)
+            .setId(id.toString())
             .setState(status.toApprovalState())
             .addAllSeasonNumbers(seasons.map { it.seasonNumber })
             .setIs4K(is4k)
@@ -118,7 +122,7 @@ private const val STATUS_DOWNLOADING = "downloading"
 private const val TIME_LEFT_FIELD_COUNT = 3
 private const val MILLIS_PER_MINUTE = 60_000.0
 
-/** One aggregate bar across every active download: summed sizes, the slowest ETA, the first title. */
+/** One aggregate bar across one version's active downloads: summed sizes, the slowest ETA, the first title. */
 fun List<SeerrDownloadStatusDto>.toDownloadProgress(nowMillis: Long): DownloadProgress? {
     if (isEmpty()) return null
     val totalSize = sumOf { it.size ?: 0.0 }
