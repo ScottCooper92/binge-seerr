@@ -32,6 +32,7 @@ import com.binge.designsystem.tv.template.TvHubRow
 import com.binge.designsystem.tv.template.TvImmersiveHub
 import com.binge.designsystem.tv.template.TvMessagePage
 import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.ui.issues.IssueCounts
 import com.cooper.binge.companion.seerr.ui.issues.IssueFilter
 import com.cooper.binge.companion.seerr.ui.issues.IssueItem
