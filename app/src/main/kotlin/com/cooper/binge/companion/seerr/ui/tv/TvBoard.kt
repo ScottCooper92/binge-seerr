@@ -112,7 +112,13 @@ internal sealed interface TvLoadPhase {
 
     /** Any failure, a rejected session included: the app-wide gate, not the list, moves a rejected session to sign-in. */
     data object Failed : TvLoadPhase
+
+    /** The server is on the local network and Android has not let this app reach it: a failure that only the permission fixes (#1507). */
+    data object Denied : TvLoadPhase
 }
+
+/** Whether the load failed, for whatever reason: [TvLoadPhase.Failed] or [TvLoadPhase.Denied]. */
+internal val TvLoadPhase.isFailure: Boolean get() = this == TvLoadPhase.Failed || this == TvLoadPhase.Denied
 
 /**
  * A paged list decomposed into a count and an accessor, so a board is reachable from a plain JVM test:

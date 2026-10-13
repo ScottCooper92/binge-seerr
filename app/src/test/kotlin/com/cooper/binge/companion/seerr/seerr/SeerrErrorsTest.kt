@@ -29,9 +29,17 @@ class SeerrErrorsTest {
     @Test
     fun `only a failure that sending again could clear is transient`() {
         val transient = SeerrError.entries.filter { it.isTransient }.toSet()
-        assertEquals(setOf(SeerrError.Unreachable, SeerrError.Server, SeerrError.Unknown), transient)
+        assertEquals(setOf(SeerrError.Unreachable, SeerrError.LocalNetworkDenied, SeerrError.Server, SeerrError.Unknown), transient)
         assertEquals(SeerrError.Rejected, http(400).toSeerrError())
         assertFalse(http(400).toSeerrError().isTransient)
+    }
+
+    @Test
+    fun `a call refused for the local network is its own error, and the contract's UNAVAILABLE`() {
+        val refused = LocalNetworkDeniedException("seerr.lan")
+
+        assertEquals(SeerrError.LocalNetworkDenied, refused.toSeerrError())
+        assertEquals(Status.Code.UNAVAILABLE, refused.toStatusException().status.code)
     }
 
     @Test

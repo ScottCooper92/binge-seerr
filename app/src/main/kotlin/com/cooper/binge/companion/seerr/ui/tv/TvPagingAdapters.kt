@@ -7,6 +7,8 @@ import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.itemKey
 import com.binge.designsystem.template.PagedPhase
 import com.cooper.binge.companion.seerr.data.ListRefresh
+import com.cooper.binge.companion.seerr.seerr.SeerrError
+import com.cooper.binge.companion.seerr.seerr.toSeerrError
 import com.cooper.binge.companion.seerr.ui.state.rememberPagedPhase
 
 /**
@@ -36,14 +38,19 @@ internal fun PagedPhase.tvRefresh(): TvLoadPhase =
     when (this) {
         PagedPhase.Skeleton -> TvLoadPhase.Loading
         PagedPhase.Empty -> TvLoadPhase.Idle
-        is PagedPhase.Rows ->
+        is PagedPhase.Rows -> {
+            val failure = refreshError
             when {
-                refreshError != null -> TvLoadPhase.Failed
+                failure != null -> failure.toFailurePhase()
                 refreshing -> TvLoadPhase.Loading
                 else -> TvLoadPhase.Idle
             }
-        is PagedPhase.Failed -> TvLoadPhase.Failed
+        }
+        is PagedPhase.Failed -> error.toFailurePhase()
     }
+
+private fun Throwable.toFailurePhase(): TvLoadPhase =
+    if (toSeerrError() == SeerrError.LocalNetworkDenied) TvLoadPhase.Denied else TvLoadPhase.Failed
 
 internal fun CombinedLoadStates.appendPhase(): TvLoadPhase = settle(mediator?.append, append).toPhase()
 
@@ -59,6 +66,6 @@ private fun settle(
 private fun LoadState.toPhase(): TvLoadPhase =
     when (this) {
         is LoadState.Loading -> TvLoadPhase.Loading
-        is LoadState.Error -> TvLoadPhase.Failed
+        is LoadState.Error -> error.toFailurePhase()
         is LoadState.NotLoading -> TvLoadPhase.Idle
     }

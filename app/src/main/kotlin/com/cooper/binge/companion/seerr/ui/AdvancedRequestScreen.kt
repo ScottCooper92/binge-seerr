@@ -153,5 +153,6 @@ internal fun AdvancedRequestError.messageRes(): Int =
         AdvancedRequestError.NoServers -> R.string.advanced_error_no_servers
         AdvancedRequestError.Rejected -> R.string.advanced_error_rejected
         AdvancedRequestError.Unreachable -> R.string.advanced_error_unreachable
+        AdvancedRequestError.LocalNetworkDenied -> R.string.hub_local_network_body
         AdvancedRequestError.Unknown -> R.string.advanced_error_unknown
     }
