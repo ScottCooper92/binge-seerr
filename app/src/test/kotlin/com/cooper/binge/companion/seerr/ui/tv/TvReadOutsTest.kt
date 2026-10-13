@@ -1,5 +1,6 @@
 package com.cooper.binge.companion.seerr.ui.tv
 
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
 import com.binge.designsystem.tv.theme.BingeTvTheme
@@ -12,8 +13,9 @@ import com.cooper.binge.companion.seerr.ui.requests.RequestActions
 import com.cooper.binge.companion.seerr.ui.requests.RequestDetailUiState
 import com.cooper.binge.companion.seerr.ui.tv.requests.TvRequestDetailActions
 import com.cooper.binge.companion.seerr.ui.tv.requests.TvRequestDetailScreen
-import com.cooper.binge.companion.seerr.ui.tv.settings.KEY_VERSION
-import com.cooper.binge.companion.seerr.ui.tv.settings.TvSettingsBoard
+import com.cooper.binge.companion.seerr.ui.tv.settings.TvSettingsActions
+import com.cooper.binge.companion.seerr.ui.tv.settings.TvSettingsSheet
+import com.cooper.binge.companion.seerr.ui.tv.settings.groupPage
 import com.cooper.binge.companion.seerr.util.createSeerrKeyboardComposeRule
 import com.cooper.binge.companion.seerr.util.requestDetail
 import com.cooper.binge.companion.seerr.util.string
@@ -102,7 +104,14 @@ class TvReadOutsTest {
                 server = SampleSettings.server.copy(commitsBehind = commitsBehind, updateAvailable = updateAvailable),
             )
         composeTestRule.setContent {
-            BingeTvTheme { TvSettingsBoard(state = state, onEditConnection = {}, onDisconnect = {}, initialFocusedKey = KEY_VERSION) }
+            BingeTvTheme {
+                TvSettingsSheet(
+                    state = state,
+                    actions = TvSettingsActions(),
+                    onDismissRequest = {},
+                    initialPage = groupPage(stringResource(R.string.settings_group_connection)),
+                )
+            }
         }
         composeTestRule.waitForIdle()
     }

@@ -20,7 +20,7 @@ class ReadOnlyGroupTest {
     }
 
     @Test
-    fun `the page's note rides on the first group and no other`() {
+    fun `every server group page carries the note, since each is a page of its own`() {
         val groups =
             listOf(
                 readOnlyGroup("General", listOf(row("A"))),
@@ -28,14 +28,14 @@ class ReadOnlyGroupTest {
                 readOnlyGroup("System", listOf(row("C"))),
             )
 
-        val noted = groups.carryingNoteOnFirst("Change this on the phone.")
+        val noted = groups.carryingNote("Change this on the phone.")
 
-        assertEquals(listOf("Change this on the phone.", null, null), noted.map(TvPaneGroup::note))
+        assertEquals(List(groups.size) { "Change this on the phone." }, noted.map(TvPaneGroup::note))
         assertEquals(groups.map { it.rows }, noted.map { it.rows })
     }
 
     @Test
     fun `no groups leaves no note to place`() {
-        assertEquals(emptyList<TvPaneGroup>(), emptyList<TvPaneGroup>().carryingNoteOnFirst("Change this on the phone."))
+        assertEquals(emptyList<TvPaneGroup>(), emptyList<TvPaneGroup>().carryingNote("Change this on the phone."))
     }
 }

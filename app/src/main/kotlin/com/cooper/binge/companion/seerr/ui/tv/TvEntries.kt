@@ -85,7 +85,7 @@ internal fun TvConnectedShell(hubViewModel: HubViewModel = hiltViewModel()) {
                     }
                 else -> null
             },
-    ) { destination ->
+    ) { destination, close ->
         when (destination) {
             TvDestination.Account ->
                 TvAccountEntry(
@@ -108,7 +108,7 @@ internal fun TvConnectedShell(hubViewModel: HubViewModel = hiltViewModel()) {
                     seeAllOpen = seeAllIssues != null,
                     onSeeAll = { seeAllIssues = it.name },
                 )
-            TvDestination.Settings -> TvSettingsEntry(onEditConnection = { editingConnection = true })
+            TvDestination.Settings -> TvSettingsEntry(onEditConnection = { editingConnection = true }, onDismissRequest = close)
         }
     }
 }

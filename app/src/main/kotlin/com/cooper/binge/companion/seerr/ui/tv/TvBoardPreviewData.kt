@@ -4,7 +4,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.tv.preview.TvPreviewsOnBlack
+import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.seerr.SeerrMediaStatusCode
 import com.cooper.binge.companion.seerr.seerr.SeerrPermissions
 import com.cooper.binge.companion.seerr.seerr.SeerrRequestStatusCode
@@ -44,9 +46,10 @@ import com.cooper.binge.companion.seerr.ui.tv.issues.TvIssuesActions
 import com.cooper.binge.companion.seerr.ui.tv.issues.TvIssuesBoard
 import com.cooper.binge.companion.seerr.ui.tv.requests.TvRequestsActions
 import com.cooper.binge.companion.seerr.ui.tv.requests.TvRequestsRowsBoard
-import com.cooper.binge.companion.seerr.ui.tv.settings.KEY_DISCONNECT
-import com.cooper.binge.companion.seerr.ui.tv.settings.KEY_MEDIA_SERVER
-import com.cooper.binge.companion.seerr.ui.tv.settings.TvSettingsBoard
+import com.cooper.binge.companion.seerr.ui.tv.settings.PAGE_DISCONNECT
+import com.cooper.binge.companion.seerr.ui.tv.settings.TvSettingsActions
+import com.cooper.binge.companion.seerr.ui.tv.settings.TvSettingsSheet
+import com.cooper.binge.companion.seerr.ui.tv.settings.groupPage
 import kotlinx.coroutines.flow.emptyFlow
 
 /*
@@ -222,7 +225,7 @@ internal val SampleSettingsWithApp =
 @TvPreviewsOnBlack
 @Composable
 internal fun TvShellHubPreview() {
-    TvHomeShell(page = TvDestination.Hub, onOpenPage = {}, onClosePage = {}) {
+    TvHomeShell(page = TvDestination.Hub, onOpenPage = {}, onClosePage = {}) { _, _ ->
         TvHubBoard(state = hub(health = ConnectionHealth.Unreachable), actions = NoHubActions)
     }
 }
@@ -285,31 +288,24 @@ internal fun TvIssuesSheetPreview() {
 
 @TvPreviewsOnBlack
 @Composable
-internal fun TvSettingsBoardPreview() {
-    TvSettingsBoard(state = SampleSettings, onEditConnection = {}, onDisconnect = {}, initialListHasFocus = true)
+internal fun TvSettingsSheetPreview() {
+    TvSettingsSheet(state = SampleSettings, actions = TvSettingsActions(), onDismissRequest = {})
 }
 
 @TvPreviewsOnBlack
 @Composable
 internal fun TvSettingsDisconnectPreview() {
-    TvSettingsBoard(
-        state = SampleSettings,
-        onEditConnection = {},
-        onDisconnect = {},
-        initialFocusedKey = KEY_DISCONNECT,
-        initialFocusedOptionLabel = "Disconnect",
-    )
+    TvSettingsSheet(state = SampleSettings, actions = TvSettingsActions(), onDismissRequest = {}, initialPage = PAGE_DISCONNECT)
 }
 
-/** The admin-only board: the media server row now carries the library scan option. */
+/** The admin-only group: its page carries the library scan. */
 @TvPreviewsOnBlack
 @Composable
 internal fun TvSettingsMediaServerPreview() {
-    TvSettingsBoard(
+    TvSettingsSheet(
         state = SampleSettingsAdmin,
-        onEditConnection = {},
-        onDisconnect = {},
-        initialFocusedKey = KEY_MEDIA_SERVER,
-        initialFocusedOptionLabel = "Start library scan",
+        actions = TvSettingsActions(),
+        onDismissRequest = {},
+        initialPage = groupPage(stringResource(R.string.server_settings_media_server)),
     )
 }
