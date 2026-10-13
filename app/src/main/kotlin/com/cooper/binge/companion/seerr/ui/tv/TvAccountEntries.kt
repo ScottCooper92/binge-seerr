@@ -16,7 +16,7 @@ import com.cooper.binge.companion.seerr.ui.tv.requests.TvRequestsGridContent
 import com.cooper.binge.companion.seerr.ui.users.UserDetailUiState
 import com.cooper.binge.companion.seerr.ui.users.UserDetailViewModel
 
-/** Who is signed in, and what they have requested: the page reads the same hub state the rail's avatar does. */
+/** Who is signed in, and what they have requested: the page reads the same hub state Home's top row does. */
 @Composable
 internal fun TvAccountEntry(
     openRequestId: Int?,
@@ -90,7 +90,7 @@ private fun accountViewModel(accountId: Int): UserDetailViewModel =
         creationCallback = { factory -> factory.create(accountId) },
     )
 
-/** Every request the signed-in user has made, as a paged grid above the rail, on the same ViewModel as the account page. */
+/** Every request the signed-in user has made, as a paged grid above Home, on the same ViewModel as the account page. */
 @Composable
 internal fun TvAccountRequestsGridOverlay(
     accountId: Int,

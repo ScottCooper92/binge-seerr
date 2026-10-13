@@ -18,34 +18,33 @@ import com.cooper.binge.companion.seerr.ui.issues.IssueFilter
 import com.cooper.binge.companion.seerr.ui.requests.RequestFilter
 
 /**
- * The connected television: the rail with a board per destination, each bound to the same ViewModel as
- * its phone screen, and the edit-connection form as a full-screen overlay above the rail.
+ * The connected television: Home, with Account, Issues and Settings opening above it from its top row, each
+ * bound to the same ViewModel as its phone screen, and the edit-connection form as a full-screen overlay above them.
  */
 @Composable
 internal fun TvConnectedShell(hubViewModel: HubViewModel = hiltViewModel()) {
-    // The account's avatar on the rail's top item, from the same hub state the Account page reads.
+    // The hub state the Account page reads, for the signed-in user's id and whether Issues is offered.
     val hub by hubViewModel.uiState.collectAsStateWithLifecycle()
     val account = (hub as? HubUiState.Ready)?.overview?.account
-    var selected by rememberSaveable { mutableStateOf(TvDestination.Hub) }
+    var page by rememberSaveable { mutableStateOf(TvDestination.Hub) }
     val analytics = LocalAnalytics.current
-    LaunchedEffect(selected) { analytics.screen(selected.screenName()) }
+    LaunchedEffect(page) { analytics.screen(page.screenName()) }
     var editingConnection by rememberSaveable { mutableStateOf(false) }
-    // The requests board's open detail page, above the rail exactly as the connection form is. The two
+    // The requests board's open detail page, above the page exactly as the connection form is. The two
     // overlays are mutually exclusive by construction — nothing opens one while the other is showing.
     var openRequestId by rememberSaveable { mutableStateOf<Int?>(null) }
     // The issues board's own read-only detail page, on the same footing.
     var openIssueId by rememberSaveable { mutableStateOf<Int?>(null) }
-    // A see-all grid (a filter's name), above the rail. Unlike the others it stays up under a detail page opened
+    // A see-all grid (a filter's name), above the page. Unlike the others it stays up under a detail page opened
     // from one of its cards, so the page above and the grid below can both be showing.
     var seeAllRequests by rememberSaveable { mutableStateOf<String?>(null) }
     var seeAllIssues by rememberSaveable { mutableStateOf<String?>(null) }
     // The account page's own see-all: the signed-in user's requests, which belong to no filter.
     var seeAllAccount by rememberSaveable { mutableStateOf(false) }
-    TvShellScaffold(
-        selected = selected,
-        onSelect = { selected = it },
-        accountName = account?.name,
-        accountAvatarUrl = account?.avatarUrl,
+    TvHomeShell(
+        page = page,
+        onOpenPage = { page = it },
+        onClosePage = { page = TvDestination.Hub },
         // The phone's rule for its Issues section: shown once the server is known to let this account list them.
         showIssues = (hub as? HubUiState.Ready)?.overview?.let { HubSection.Issues.isVisible(it) } == true,
         overlay =
@@ -118,7 +117,7 @@ internal fun TvConnectedShell(hubViewModel: HubViewModel = hiltViewModel()) {
 }
 
 /**
- * The request and issue pages above the rail. Each page its own view models, cleared when it closes: a reopened page starts
+ * The request and issue pages above the page. Each page its own view models, cleared when it closes: a reopened page starts
  * fresh, and nothing piles up in the activity's store or outlives a change of server (#789).
  */
 @Composable
