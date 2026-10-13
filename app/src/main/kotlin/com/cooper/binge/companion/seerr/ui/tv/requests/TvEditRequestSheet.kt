@@ -40,8 +40,6 @@ import com.cooper.binge.companion.seerr.ui.requests.RequestEditorControls
 import com.cooper.binge.companion.seerr.ui.requests.RequestItem
 import com.cooper.binge.companion.seerr.ui.requests.SeasonChoice
 import com.cooper.binge.companion.seerr.ui.state.labelRes
-import com.cooper.binge.companion.seerr.ui.tv.TvFormNote
-import com.cooper.binge.companion.seerr.ui.tv.TvFormNoteTone
 import com.binge.designsystem.R as DesR
 
 private const val KEY_STANDARD = "standard"
@@ -53,7 +51,7 @@ internal enum class EditStep { Form, Server, Profile, RootFolder }
 /**
  * The request's editor as a side sheet, the TV form of the phone's `EditRequestSheet`: the version, where the user may
  * move it; a show's seasons as a checklist, those the server holds locked; and the destination, each field a row that
- * swaps its choices in. One Save sends it all. [TvSaveStatus] shows it saving, and a note says when the server refused
+ * swaps its choices in. One Save sends it all, and [TvSaveStatus] says how it went, with Retry when the server refused
  * it. The editor closes itself once the edit lands, and the sheet goes with it, leaving the page to say so. Tags stay on
  * the phone.
  */
@@ -120,13 +118,7 @@ private fun ColumnScope.TvEditForm(
             )
         }
         edit.destination?.let { TvDestinationRows(it, entryFocus.takeIf { entry == EditEntry.Destination }, onOpen) }
-        // A refused save is a note rather than TvSaveStatus's own line, whose Retry does not fit the sheet's width: Save
-        // below is the retry.
-        if (edit.failed && !edit.saving) {
-            TvFormNote(stringResource(DesR.string.save_status_failed), tone = TvFormNoteTone.Error)
-        } else {
-            TvSaveStatus(status = edit.saveStatus(), onRetry = controls::save)
-        }
+        TvSaveStatus(status = edit.saveStatus(), onRetry = controls::save)
         // Kept focusable while it saves, so focus is not dropped from under the press; the editor ignores a second save.
         TvSideSheetRow(
             label = stringResource(R.string.request_edit_save),
@@ -167,7 +159,12 @@ private fun EditState.entryTarget(): EditEntry =
         else -> EditEntry.Save
     }
 
-private fun EditState.saveStatus(): SaveStatus = if (saving) SaveStatus.Saving else SaveStatus.Idle
+private fun EditState.saveStatus(): SaveStatus =
+    when {
+        saving -> SaveStatus.Saving
+        failed -> SaveStatus.Failed
+        else -> SaveStatus.Idle
+    }
 
 /** One season: ticked when the request covers it, and locked with the server's state where the server holds it. */
 @Composable

@@ -50,6 +50,21 @@ internal fun requestDetailActions(
         if (allowed.canDecline) {
             add(TvDetailAction(declineLabel, Icons.Filled.Close, onClick = { actions.onDecline(false) }, showLabel = true))
         }
+        val edit = actions.edit
+        if (detail.canEdit && edit != null) {
+            add(
+                TvDetailAction(
+                    editLabel,
+                    Icons.Filled.Edit,
+                    onClick = {
+                        edit.onStart()
+                        onOpenSheet(DetailSheet.Edit)
+                    },
+                    showLabel = true,
+                    focusRequester = sheetFocus.getValue(DetailSheet.Edit),
+                ),
+            )
+        }
         if (allowed.canRemove) {
             add(
                 TvDetailAction(
@@ -69,21 +84,6 @@ internal fun requestDetailActions(
                     onClick = { onOpenSheet(DetailSheet.Block) },
                     showLabel = true,
                     focusRequester = sheetFocus.getValue(DetailSheet.Block),
-                ),
-            )
-        }
-        val edit = actions.edit
-        if (detail.canEdit && edit != null) {
-            add(
-                TvDetailAction(
-                    editLabel,
-                    Icons.Filled.Edit,
-                    onClick = {
-                        edit.onStart()
-                        onOpenSheet(DetailSheet.Edit)
-                    },
-                    showLabel = true,
-                    focusRequester = sheetFocus.getValue(DetailSheet.Edit),
                 ),
             )
         }
