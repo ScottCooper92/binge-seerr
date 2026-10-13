@@ -38,8 +38,7 @@ import com.binge.designsystem.theme.BingeShapes
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
 import com.cooper.binge.companion.seerr.ui.state.LoadingScreen
-import com.cooper.binge.companion.seerr.ui.state.SaveFailedSnackbar
-import com.cooper.binge.companion.seerr.ui.state.SaveStatusLine
+import com.cooper.binge.companion.seerr.ui.state.formSaveStatus
 import com.cooper.binge.companion.seerr.ui.state.messageRes
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
@@ -139,15 +138,6 @@ internal fun <T> EditorPage(
     val snackbarHostState = remember { SnackbarHostState() }
     EditorEventSnackbarEffect(events, snackbarHostState)
     val ready = state as? EditorUiState.Ready<T>
-    if (saveAsMade) {
-        SaveFailedSnackbar(
-            failed = ready?.saveFailed == true,
-            snackbarHostState = snackbarHostState,
-            message = stringResource(R.string.editor_save_failed),
-            retryLabel = stringResource(R.string.action_try_again),
-            onRetry = actions.onSave,
-        )
-    }
     val guarded =
         when {
             ready == null || !ready.dirty -> false
@@ -180,10 +170,8 @@ internal fun <T> EditorPage(
                 FormAction(label = stringResource(R.string.editor_cancel), onClick = onBack, enabled = !draft.saving)
             },
         scrolling = scrolling,
-        extraActions = {
-            if (saveAsMade) ready?.let { SaveStatusLine(status = it.saveStatus, failed = it.saveFailed) }
-            extraActions()
-        },
+        saveStatus = if (saveAsMade) ready?.let { formSaveStatus(it.saveStatus, it.saveFailed, actions.onSave) } else null,
+        extraActions = extraActions,
         bottomBar = bottomBar,
         notReady =
             when (state) {

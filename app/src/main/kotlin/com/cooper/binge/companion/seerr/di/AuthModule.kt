@@ -89,6 +89,7 @@ object AuthModule {
         health: SeerrConnectionHealthMonitor,
         statuses: MediaStatusStore,
         cleartext: CleartextConsent,
+        localNetwork: LocalNetworkPermission,
         @ApplicationScope scope: CoroutineScope,
     ): SeerrApiFactory =
         SeerrApiFactory(
@@ -96,6 +97,7 @@ object AuthModule {
             health = health,
             onWrite = dropStatusesOnWrite(statuses, scope),
             cleartext = cleartext,
+            localNetwork = localNetwork,
         )
 
     @Provides

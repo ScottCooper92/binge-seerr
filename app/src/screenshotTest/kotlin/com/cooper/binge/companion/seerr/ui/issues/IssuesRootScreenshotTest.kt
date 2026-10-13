@@ -53,6 +53,12 @@ class IssuesRootScreenshotTest {
     @SeerrScreenStatePreview
     @Composable
     fun scopeUnreachable() = Frame(IssuesUiState.Error(SeerrError.Unreachable))
+
+    /** The server is on the local network and Android has not let this app reach it: Allow, as the hub offers, not a retry. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun scopeLocalNetworkDenied() = Frame(IssuesUiState.Error(SeerrError.LocalNetworkDenied))
 }
 
 private fun moderatorScope() = IssueListScope(permissions = SeerrPermissions(canManageIssues = true), currentUserId = 1)

@@ -153,25 +153,25 @@ class ServerGeneralSaveFailedTest {
     @Test
     fun `an event's snackbar does not take the retry away for good`() {
         show()
-        rule.onNodeWithText("Try again").assertExists()
+        rule.onNodeWithText("Retry").assertExists()
 
         events.tryEmit(EditorEvent.Failed(SeerrError.Unreachable))
         rule.waitForIdle()
         rule.mainClock.advanceTimeBy(10_000)
         rule.waitForIdle()
 
-        rule.onNodeWithText("Try again").assertExists()
+        rule.onNodeWithText("Retry").assertExists()
     }
 
     @Test
     fun `a retry that fails again shows the snackbar again`() {
         show()
 
-        rule.onNodeWithText("Try again").performClick()
+        rule.onNodeWithText("Retry").performClick()
         rule.waitForIdle()
 
         assertEquals(1, retries)
-        rule.onNodeWithText("Try again").assertExists()
+        rule.onNodeWithText("Retry").assertExists()
     }
 }
 

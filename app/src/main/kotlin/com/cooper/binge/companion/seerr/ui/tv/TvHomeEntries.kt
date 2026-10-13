@@ -40,9 +40,7 @@ import com.cooper.binge.companion.seerr.ui.tv.requests.TvRequestsRowsBoard
 @Composable
 internal fun TvHomeEntry(
     onReconnect: () -> Unit,
-    openRequestId: Int?,
     onOpenRequest: (Int) -> Unit,
-    seeAllOpen: Boolean,
     onSeeAll: (RequestFilter) -> Unit,
     hubViewModel: HubViewModel = hiltViewModel(),
 ) {
@@ -51,12 +49,7 @@ internal fun TvHomeEntry(
     var answering by remember { mutableStateOf(false) }
     answering = homeAnswering(hub, answering)
     if (answering) {
-        TvRequestsEntry(
-            openRequestId = openRequestId,
-            onOpenRequest = onOpenRequest,
-            seeAllOpen = seeAllOpen,
-            onSeeAll = onSeeAll,
-        )
+        TvRequestsEntry(onOpenRequest = onOpenRequest, onSeeAll = onSeeAll)
     } else {
         TvHubEntry(onReconnect = onReconnect, viewModel = hubViewModel)
     }
@@ -102,9 +95,7 @@ private fun TvHubEntry(
 
 @Composable
 private fun TvRequestsEntry(
-    openRequestId: Int?,
     onOpenRequest: (Int) -> Unit,
-    seeAllOpen: Boolean,
     onSeeAll: (RequestFilter) -> Unit,
     viewModel: RequestsViewModel = hiltViewModel(),
 ) {
@@ -126,8 +117,6 @@ private fun TvRequestsEntry(
     TvRequestsRowsBoard(
         state = state,
         rowsFor = { rowsByFilter.getValue(it) },
-        openRequestId = openRequestId,
-        seeAllOpen = seeAllOpen,
         actions =
             TvRequestsActions(
                 onOpenDetail = { item -> onOpenRequest(item.id) },
@@ -138,7 +127,7 @@ private fun TvRequestsEntry(
     )
 }
 
-/** Every request behind one filter's row, as a paged grid above the rail, on the same ViewModel as the board. */
+/** Every request behind one filter's row, as a paged grid above Home, on the same ViewModel as the board. */
 @Composable
 internal fun TvRequestsGridOverlay(
     filter: RequestFilter,
@@ -163,7 +152,7 @@ internal fun TvRequestsGridOverlay(
 }
 
 /**
- * A request's page, above the rail exactly as the connection form is: the same
+ * A request's page, above Home exactly as the connection form is: the same
  * [RequestDetailViewModel] the phone's `RequestDetailEntry` binds. The shell gives each opening its own view-model
  * scope, so the view model is this request's and is gone when the page closes. Open in Binge checks whether Binge
  * would answer the link once per detail load — this surface has no browser to fall back to, so the button is hidden

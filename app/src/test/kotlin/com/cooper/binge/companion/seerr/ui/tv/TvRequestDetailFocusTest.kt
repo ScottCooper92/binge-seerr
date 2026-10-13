@@ -323,7 +323,39 @@ class TvRequestDetailFocusTest {
             val scope =
                 ModerationScope(permissions = SeerrPermissions(canManageRequests = true), currentUserId = 7, hasBlocklist = false)
             BingeTvTheme {
-                Box(modifier = Modifier.fillMaxSize()) {
+                // The page is the shell's overlay, as the app hosts it, so its close goes through the shell's hand-off.
+                BoardInShell(
+                    destination = TvDestination.Hub,
+                    overlay =
+                        openId?.let {
+                            {
+                                TvRequestDetailScreen(
+                                    state = RequestDetailUiState.Ready(detail.copy(actions = offered)),
+                                    events = emptyFlow(),
+                                    actions =
+                                        TvRequestDetailActions(
+                                            onBack = { openId = null },
+                                            onRetry = {},
+                                            onOpenInBinge = null,
+                                            onApprove = {
+                                                approved += item.id
+                                                afterApprove?.let { offered = it }
+                                            },
+                                            onRetryRequest = {},
+                                            onDecline = {
+                                                declined += it
+                                                afterDecline?.let { next -> offered = next }
+                                            },
+                                            onRemove = { removed += it },
+                                            onBlock = { blocked++ },
+                                            onSetMediaStatus = { _, _, _ -> },
+                                            onReportIssue = { _, _ -> },
+                                            onDismissReport = {},
+                                        ),
+                                )
+                            }
+                        },
+                ) {
                     TvRequestsRowsBoard(
                         state =
                             RequestsUiState.Ready(
@@ -342,7 +374,6 @@ class TvRequestDetailFocusTest {
                                 TvPagedRows(count = 0, at = { null })
                             }
                         },
-                        openRequestId = openId,
                         actions =
                             TvRequestsActions(
                                 onOpenDetail = { openId = it.id },
@@ -351,33 +382,6 @@ class TvRequestDetailFocusTest {
                                 onRetryScope = {},
                             ),
                     )
-                    // The overlay a real detail page would be, stacked on top exactly as the shell's overlay slot is.
-                    if (openId != null) {
-                        TvRequestDetailScreen(
-                            state = RequestDetailUiState.Ready(detail.copy(actions = offered)),
-                            events = emptyFlow(),
-                            actions =
-                                TvRequestDetailActions(
-                                    onBack = { openId = null },
-                                    onRetry = {},
-                                    onOpenInBinge = null,
-                                    onApprove = {
-                                        approved += item.id
-                                        afterApprove?.let { offered = it }
-                                    },
-                                    onRetryRequest = {},
-                                    onDecline = {
-                                        declined += it
-                                        afterDecline?.let { next -> offered = next }
-                                    },
-                                    onRemove = { removed += it },
-                                    onBlock = { blocked++ },
-                                    onSetMediaStatus = { _, _, _ -> },
-                                    onReportIssue = { _, _ -> },
-                                    onDismissReport = {},
-                                ),
-                        )
-                    }
                 }
             }
         }
@@ -408,11 +412,8 @@ class TvRequestDetailFocusTest {
         composeTestRule.waitForIdle()
     }
 
-    /** The board offers focus back to the row one frame after the open request id clears. */
-    private fun settleFocusRestore() {
-        composeTestRule.mainClock.advanceTimeByFrame()
-        composeTestRule.waitForIdle()
-    }
+    /** The shell hands focus back into the board once the page above the rail has closed. */
+    private fun settleFocusRestore() = composeTestRule.settleShellHandOff()
 
     private fun press(key: Key) {
         // A confirm dialog is a second root, drawn over the page; keys go to the topmost.

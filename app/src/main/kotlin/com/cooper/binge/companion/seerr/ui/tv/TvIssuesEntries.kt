@@ -22,7 +22,6 @@ import com.cooper.binge.companion.seerr.ui.tv.issues.TvIssuesGridManagement
 
 @Composable
 internal fun TvIssuesEntry(
-    openIssueId: Int?,
     onOpenIssue: (Int) -> Unit,
     seeAllOpen: Boolean,
     onSeeAll: (IssueFilter) -> Unit,
@@ -41,7 +40,6 @@ internal fun TvIssuesEntry(
         state = state,
         rowsFor = { rowsByFilter.getValue(it) },
         events = viewModel.events,
-        openIssueId = openIssueId,
         seeAllOpen = seeAllOpen,
         now = ready?.now ?: System.currentTimeMillis(),
         actions =
@@ -59,7 +57,7 @@ internal fun TvIssuesEntry(
     )
 }
 
-/** Every issue behind one filter's row, as a paged grid above the rail, on the same ViewModel as the board. */
+/** Every issue behind one filter's row, as a paged grid above Home, on the same ViewModel as the board. */
 @Composable
 internal fun TvIssuesGridOverlay(
     filter: IssueFilter,
@@ -95,7 +93,7 @@ internal fun TvIssuesGridOverlay(
 }
 
 /**
- * An issue's read-only page, above the rail exactly as the connection form is: the same
+ * An issue's read-only page, above Home exactly as the connection form is: the same
  * [IssueDetailViewModel] the phone's `IssueDetailEntry` binds, in a view-model scope of its own as the request
  * page's is.
  */
