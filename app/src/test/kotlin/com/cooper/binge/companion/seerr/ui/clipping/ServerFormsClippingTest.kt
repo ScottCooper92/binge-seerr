@@ -56,29 +56,29 @@ class ServerFormsClippingTest {
     @get:Rule
     val rule = createSeerrComposeRule()
 
-    @Test fun `the general page at 1_3`() = rule.assertClipFree(FONT_13) { GeneralPage() }
+    @Test fun `the general page at 1_3`() = rule.assertNoClippingAt(FONT_SCALE_13) { GeneralPage() }
 
-    @Test fun `the general page at 2_0`() = rule.assertClipFree(FONT_20) { GeneralPage() }
+    @Test fun `the general page at 2_0`() = rule.assertNoClippingAt(FONT_SCALE_20) { GeneralPage() }
 
-    @Test fun `the media server page at 1_3`() = rule.assertClipFree(FONT_13) { MediaServerPage() }
+    @Test fun `the media server page at 1_3`() = rule.assertNoClippingAt(FONT_SCALE_13) { MediaServerPage() }
 
-    @Test fun `the media server page at 2_0`() = rule.assertClipFree(FONT_20) { MediaServerPage() }
+    @Test fun `the media server page at 2_0`() = rule.assertNoClippingAt(FONT_SCALE_20) { MediaServerPage() }
 
-    @Test fun `the server users page at 1_3`() = rule.assertClipFree(FONT_13) { ServerUsersPage() }
+    @Test fun `the server users page at 1_3`() = rule.assertNoClippingAt(FONT_SCALE_13) { ServerUsersPage() }
 
-    @Test fun `the server users page at 2_0`() = rule.assertClipFree(FONT_20) { ServerUsersPage() }
+    @Test fun `the server users page at 2_0`() = rule.assertNoClippingAt(FONT_SCALE_20) { ServerUsersPage() }
 
-    @Test fun `the metadata page at 1_3`() = rule.assertClipFree(FONT_13) { MetadataPage() }
+    @Test fun `the metadata page at 1_3`() = rule.assertNoClippingAt(FONT_SCALE_13) { MetadataPage() }
 
-    @Test fun `the metadata page at 2_0`() = rule.assertClipFree(FONT_20) { MetadataPage() }
+    @Test fun `the metadata page at 2_0`() = rule.assertNoClippingAt(FONT_SCALE_20) { MetadataPage() }
 
-    @Test fun `the tautulli page at 1_3`() = rule.assertClipFree(FONT_13) { TautulliPage() }
+    @Test fun `the tautulli page at 1_3`() = rule.assertNoClippingAt(FONT_SCALE_13) { TautulliPage() }
 
-    @Test fun `the tautulli page at 2_0`() = rule.assertClipFree(FONT_20) { TautulliPage() }
+    @Test fun `the tautulli page at 2_0`() = rule.assertNoClippingAt(FONT_SCALE_20) { TautulliPage() }
 
-    @Test fun `the blocklist tags page at 1_3`() = rule.assertClipFree(FONT_13) { BlocklistTagsPage() }
+    @Test fun `the blocklist tags page at 1_3`() = rule.assertNoClippingAt(FONT_SCALE_13) { BlocklistTagsPage() }
 
-    @Test fun `the blocklist tags page at 2_0`() = rule.assertClipFree(FONT_20) { BlocklistTagsPage() }
+    @Test fun `the blocklist tags page at 2_0`() = rule.assertNoClippingAt(FONT_SCALE_20) { BlocklistTagsPage() }
 
     private fun <T> actions() = EditorActions<T>(onBack = {}, onRetry = {}, onEdit = {}, onSave = {})
 

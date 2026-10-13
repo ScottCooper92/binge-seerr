@@ -52,25 +52,25 @@ class ListScreensClippingTest {
     @get:Rule
     val rule = createSeerrComposeRule()
 
-    @Test fun `the requests screen at 1_3`() = rule.assertClipFree(FONT_13) { Requests() }
+    @Test fun `the requests screen at 1_3`() = rule.assertNoClippingAt(FONT_SCALE_13) { Requests() }
 
-    @Test fun `the requests screen at 2_0`() = rule.assertClipFree(FONT_20) { Requests() }
+    @Test fun `the requests screen at 2_0`() = rule.assertNoClippingAt(FONT_SCALE_20) { Requests() }
 
-    @Test fun `the issues screen at 1_3`() = rule.assertClipFree(FONT_13) { Issues() }
+    @Test fun `the issues screen at 1_3`() = rule.assertNoClippingAt(FONT_SCALE_13) { Issues() }
 
-    @Test fun `the issues screen at 2_0`() = rule.assertClipFree(FONT_20) { Issues() }
+    @Test fun `the issues screen at 2_0`() = rule.assertNoClippingAt(FONT_SCALE_20) { Issues() }
 
-    @Test fun `the users screen at 1_3`() = rule.assertClipFree(FONT_13) { Users() }
+    @Test fun `the users screen at 1_3`() = rule.assertNoClippingAt(FONT_SCALE_13) { Users() }
 
-    @Test fun `the users screen at 2_0`() = rule.assertClipFree(FONT_20) { Users() }
+    @Test fun `the users screen at 2_0`() = rule.assertNoClippingAt(FONT_SCALE_20) { Users() }
 
-    @Test fun `the blocklist screen at 1_3`() = rule.assertClipFree(FONT_13) { Blocklist() }
+    @Test fun `the blocklist screen at 1_3`() = rule.assertNoClippingAt(FONT_SCALE_13) { Blocklist() }
 
-    @Test fun `the blocklist screen at 2_0`() = rule.assertClipFree(FONT_20) { Blocklist() }
+    @Test fun `the blocklist screen at 2_0`() = rule.assertNoClippingAt(FONT_SCALE_20) { Blocklist() }
 
-    @Test fun `the blocklist detail page at 1_3`() = rule.assertClipFree(FONT_13) { BlocklistDetail() }
+    @Test fun `the blocklist detail page at 1_3`() = rule.assertNoClippingAt(FONT_SCALE_13) { BlocklistDetail() }
 
-    @Test fun `the blocklist detail page at 2_0`() = rule.assertClipFree(FONT_20) { BlocklistDetail() }
+    @Test fun `the blocklist detail page at 2_0`() = rule.assertNoClippingAt(FONT_SCALE_20) { BlocklistDetail() }
 
     @Composable
     private fun Requests() {

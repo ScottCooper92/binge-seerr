@@ -1,6 +1,7 @@
 package com.cooper.binge.companion.seerr.ui.clipping
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -13,6 +14,7 @@ import com.binge.designsystem.testing.assertNoTextClipped
 import com.cooper.binge.companion.seerr.seerr.SeerrMediaStatusCode
 import com.cooper.binge.companion.seerr.seerr.SeerrRequestStatusCode
 import com.cooper.binge.companion.seerr.theme.SeerrTheme
+import com.cooper.binge.companion.seerr.theme.SeerrTvTheme
 import com.cooper.binge.companion.seerr.ui.blocklist.BlocklistItem
 import com.cooper.binge.companion.seerr.ui.issues.IssueItem
 import com.cooper.binge.companion.seerr.ui.issues.IssueStatus
@@ -125,6 +127,26 @@ internal fun ComposeContentTestRule.assertNoClippingAt(
         val density = LocalDensity.current
         CompositionLocalProvider(LocalDensity provides Density(density.density, fontScale = fontScale)) {
             SeerrTheme { Box(Modifier.width(CLIPPING_PHONE_WIDTH)) { content() } }
+        }
+    }
+    waitForIdle()
+    val checked = assertNoTextClipped()
+    assertTrue("only $checked text nodes were checked", checked >= MIN_TEXT_NODES_CHECKED)
+}
+
+/**
+ * [assertNoClippingAt] for a television screen: the TV theme and the whole of the screen's viewport, which a test of a TV
+ * screen sets with its `qualifiers` (960 by 540dp). A screen that scrolls is partly out of view, and text only scrolled
+ * out is skipped by the assertion, so a TV test checks what is on the first screen of the page.
+ */
+internal fun ComposeContentTestRule.assertNoTvClippingAt(
+    fontScale: Float,
+    content: @Composable () -> Unit,
+) {
+    setContent {
+        val density = LocalDensity.current
+        CompositionLocalProvider(LocalDensity provides Density(density.density, fontScale = fontScale)) {
+            SeerrTvTheme { Box(Modifier.fillMaxSize()) { content() } }
         }
     }
     waitForIdle()

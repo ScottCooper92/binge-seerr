@@ -66,21 +66,21 @@ class SheetsClippingTest {
     @get:Rule
     val rule = createSeerrComposeRule()
 
-    @Test fun `the user sheets at 1_3`() = rule.assertClipFree(FONT_13) { UserSheets() }
+    @Test fun `the user sheets at 1_3`() = rule.assertNoClippingAt(FONT_SCALE_13) { UserSheets() }
 
-    @Test fun `the user sheets at 2_0`() = rule.assertClipFree(FONT_20) { UserSheets() }
+    @Test fun `the user sheets at 2_0`() = rule.assertNoClippingAt(FONT_SCALE_20) { UserSheets() }
 
-    @Test fun `the request sheets at 1_3`() = rule.assertClipFree(FONT_13) { RequestSheets() }
+    @Test fun `the request sheets at 1_3`() = rule.assertNoClippingAt(FONT_SCALE_13) { RequestSheets() }
 
-    @Test fun `the request sheets at 2_0`() = rule.assertClipFree(FONT_20) { RequestSheets() }
+    @Test fun `the request sheets at 2_0`() = rule.assertNoClippingAt(FONT_SCALE_20) { RequestSheets() }
 
-    @Test fun `the issue sheets at 1_3`() = rule.assertClipFree(FONT_13) { IssueSheets() }
+    @Test fun `the issue sheets at 1_3`() = rule.assertNoClippingAt(FONT_SCALE_13) { IssueSheets() }
 
-    @Test fun `the issue sheets at 2_0`() = rule.assertClipFree(FONT_20) { IssueSheets() }
+    @Test fun `the issue sheets at 2_0`() = rule.assertNoClippingAt(FONT_SCALE_20) { IssueSheets() }
 
-    @Test fun `the send address sheet at 1_3`() = rule.assertClipFree(FONT_13) { SendAddressSheets() }
+    @Test fun `the send address sheet at 1_3`() = rule.assertNoClippingAt(FONT_SCALE_13) { SendAddressSheets() }
 
-    @Test fun `the send address sheet at 2_0`() = rule.assertClipFree(FONT_20) { SendAddressSheets() }
+    @Test fun `the send address sheet at 2_0`() = rule.assertNoClippingAt(FONT_SCALE_20) { SendAddressSheets() }
 
     @Composable
     private fun UserSheets() {

@@ -44,21 +44,21 @@ class ServicesClippingTest {
     @get:Rule
     val rule = createSeerrComposeRule()
 
-    @Test fun `the services page at 1_3`() = rule.assertClipFree(FONT_13) { ServicesPage() }
+    @Test fun `the services page at 1_3`() = rule.assertNoClippingAt(FONT_SCALE_13) { ServicesPage() }
 
-    @Test fun `the services page at 2_0`() = rule.assertClipFree(FONT_20) { ServicesPage() }
+    @Test fun `the services page at 2_0`() = rule.assertNoClippingAt(FONT_SCALE_20) { ServicesPage() }
 
-    @Test fun `a radarr instance at 1_3`() = rule.assertClipFree(FONT_13) { InstancePage(ServiceType.Radarr) }
+    @Test fun `a radarr instance at 1_3`() = rule.assertNoClippingAt(FONT_SCALE_13) { InstancePage(ServiceType.Radarr) }
 
-    @Test fun `a radarr instance at 2_0`() = rule.assertClipFree(FONT_20) { InstancePage(ServiceType.Radarr) }
+    @Test fun `a radarr instance at 2_0`() = rule.assertNoClippingAt(FONT_SCALE_20) { InstancePage(ServiceType.Radarr) }
 
-    @Test fun `a sonarr instance at 1_3`() = rule.assertClipFree(FONT_13) { InstancePage(ServiceType.Sonarr) }
+    @Test fun `a sonarr instance at 1_3`() = rule.assertNoClippingAt(FONT_SCALE_13) { InstancePage(ServiceType.Sonarr) }
 
-    @Test fun `a sonarr instance at 2_0`() = rule.assertClipFree(FONT_20) { InstancePage(ServiceType.Sonarr) }
+    @Test fun `a sonarr instance at 2_0`() = rule.assertNoClippingAt(FONT_SCALE_20) { InstancePage(ServiceType.Sonarr) }
 
-    @Test fun `an override rule at 1_3`() = rule.assertClipFree(FONT_13) { RulePage() }
+    @Test fun `an override rule at 1_3`() = rule.assertNoClippingAt(FONT_SCALE_13) { RulePage() }
 
-    @Test fun `an override rule at 2_0`() = rule.assertClipFree(FONT_20) { RulePage() }
+    @Test fun `an override rule at 2_0`() = rule.assertNoClippingAt(FONT_SCALE_20) { RulePage() }
 
     private fun <T> actions() = EditorActions<T>(onBack = {}, onRetry = {}, onEdit = {}, onSave = {})
 

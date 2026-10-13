@@ -54,29 +54,29 @@ class UserSettingsClippingTest {
     @get:Rule
     val rule = createSeerrComposeRule()
 
-    @Test fun `the settings index at 1_3`() = rule.assertClipFree(FONT_13) { Index() }
+    @Test fun `the settings index at 1_3`() = rule.assertNoClippingAt(FONT_SCALE_13) { Index() }
 
-    @Test fun `the settings index at 2_0`() = rule.assertClipFree(FONT_20) { Index() }
+    @Test fun `the settings index at 2_0`() = rule.assertNoClippingAt(FONT_SCALE_20) { Index() }
 
-    @Test fun `the general page at 1_3`() = rule.assertClipFree(FONT_13) { General() }
+    @Test fun `the general page at 1_3`() = rule.assertNoClippingAt(FONT_SCALE_13) { General() }
 
-    @Test fun `the general page at 2_0`() = rule.assertClipFree(FONT_20) { General() }
+    @Test fun `the general page at 2_0`() = rule.assertNoClippingAt(FONT_SCALE_20) { General() }
 
-    @Test fun `the password page at 1_3`() = rule.assertClipFree(FONT_13) { Password() }
+    @Test fun `the password page at 1_3`() = rule.assertNoClippingAt(FONT_SCALE_13) { Password() }
 
-    @Test fun `the password page at 2_0`() = rule.assertClipFree(FONT_20) { Password() }
+    @Test fun `the password page at 2_0`() = rule.assertNoClippingAt(FONT_SCALE_20) { Password() }
 
-    @Test fun `the permissions page at 1_3`() = rule.assertClipFree(FONT_13) { Permissions() }
+    @Test fun `the permissions page at 1_3`() = rule.assertNoClippingAt(FONT_SCALE_13) { Permissions() }
 
-    @Test fun `the permissions page at 2_0`() = rule.assertClipFree(FONT_20) { Permissions() }
+    @Test fun `the permissions page at 2_0`() = rule.assertNoClippingAt(FONT_SCALE_20) { Permissions() }
 
-    @Test fun `the notifications page at 1_3`() = rule.assertClipFree(FONT_13) { Notifications() }
+    @Test fun `the notifications page at 1_3`() = rule.assertNoClippingAt(FONT_SCALE_13) { Notifications() }
 
-    @Test fun `the notifications page at 2_0`() = rule.assertClipFree(FONT_20) { Notifications() }
+    @Test fun `the notifications page at 2_0`() = rule.assertNoClippingAt(FONT_SCALE_20) { Notifications() }
 
-    @Test fun `the linked accounts page at 1_3`() = rule.assertClipFree(FONT_13) { Linked() }
+    @Test fun `the linked accounts page at 1_3`() = rule.assertNoClippingAt(FONT_SCALE_13) { Linked() }
 
-    @Test fun `the linked accounts page at 2_0`() = rule.assertClipFree(FONT_20) { Linked() }
+    @Test fun `the linked accounts page at 2_0`() = rule.assertNoClippingAt(FONT_SCALE_20) { Linked() }
 
     private fun <T> actions() = EditorActions<T>(onBack = {}, onRetry = {}, onEdit = {}, onSave = {})
 
