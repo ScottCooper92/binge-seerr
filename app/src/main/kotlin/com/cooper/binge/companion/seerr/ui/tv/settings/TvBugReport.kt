@@ -1,8 +1,9 @@
 package com.cooper.binge.companion.seerr.ui.tv.settings
 
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.Healing
@@ -122,13 +123,17 @@ internal fun ColumnScope.TvBugReportSheetContent(
 ) {
     TvSideSheetTitle(stringResource(R.string.settings_report_bug))
     TvSideSheetBody(stringResource(R.string.tv_settings_report_bug_scan))
+    val codeSize = dimensionResource(R.dimen.tv_bug_report_code_size)
+    // The code takes what the sheet has left, up to its size, so a larger font shrinks it rather than cutting off Close.
     TvQrCode(
         content = app.bugReportUrl,
         contentDescription = stringResource(R.string.tv_settings_report_bug_code_description),
         modifier =
             Modifier
                 .padding(vertical = dimensionResource(DesR.dimen.padding_s))
-                .size(dimensionResource(R.dimen.tv_bug_report_code_size)),
+                .weight(1f, fill = false)
+                .sizeIn(maxWidth = codeSize, maxHeight = codeSize)
+                .aspectRatio(1f),
     )
     TvSideSheetRow(
         label = stringResource(R.string.tv_settings_report_bug_close),
