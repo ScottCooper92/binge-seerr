@@ -2,9 +2,9 @@ package com.cooper.binge.companion.seerr.ui.state
 
 import androidx.compose.runtime.Composable
 import androidx.paging.compose.LazyPagingItems
+import com.binge.companion.sdk.paging.ListRefresh
 import com.binge.designsystem.template.PagedPhase
 import com.binge.designsystem.template.PagedRefresh
-import com.cooper.binge.companion.seerr.data.ListRefresh
 import com.binge.designsystem.template.rememberPagedPhase as rememberDesignSystemPagedPhase
 
 /**

@@ -5,8 +5,8 @@ import androidx.paging.CombinedLoadStates
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.itemKey
+import com.binge.companion.sdk.paging.ListRefresh
 import com.binge.designsystem.template.PagedPhase
-import com.cooper.binge.companion.seerr.data.ListRefresh
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
 import com.cooper.binge.companion.seerr.ui.state.rememberPagedPhase

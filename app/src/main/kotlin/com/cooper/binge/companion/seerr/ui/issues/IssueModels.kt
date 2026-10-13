@@ -1,6 +1,6 @@
 package com.cooper.binge.companion.seerr.ui.issues
 
-import com.cooper.binge.companion.seerr.data.ListRefresh
+import com.binge.companion.sdk.paging.ListRefresh
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.seerr.SeerrPermissions
 import com.cooper.binge.companion.seerr.ui.requests.IssueType

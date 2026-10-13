@@ -5,7 +5,6 @@ import com.binge.companion.contracts.request.v1.Availability
 import com.binge.companion.contracts.request.v1.DownloadState
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -16,8 +15,8 @@ class SeerrStatusMappingTest {
     fun `an untracked title is not requested, with nothing else set`() {
         val status = (null as SeerrMediaInfoDto?).toRequestStatus(NOW)
 
-        assertEquals(Availability.AVAILABILITY_NOT_REQUESTED, status.availability)
-        assertFalse(status.hasDownload())
+        assertEquals(Availability.AVAILABILITY_NOT_REQUESTED, status.standardVersion().availability)
+        assertFalse(status.standardVersion().hasDownload())
         assertTrue(status.requestsList.isEmpty())
     }
 
@@ -47,16 +46,18 @@ class SeerrStatusMappingTest {
 
         val status = info.toRequestStatus(NOW)
 
-        assertEquals(Availability.AVAILABILITY_PARTIALLY_AVAILABLE, status.availability)
-        assertEquals(listOf(1, 2), status.seasonsList.map { it.seasonNumber })
-        assertEquals(Availability.AVAILABILITY_PENDING, status.seasonsList[1].availability)
+        val standard = status.standardVersion()
+        assertEquals(Availability.AVAILABILITY_PARTIALLY_AVAILABLE, standard.availability)
+        assertEquals(listOf(1, 2), standard.seasonsList.map { it.seasonNumber })
+        assertEquals(Availability.AVAILABILITY_PENDING, standard.seasonsList[1].availability)
         val request = status.requestsList.single()
         assertEquals(ApprovalState.APPROVAL_STATE_APPROVED, request.state)
         // Only an email: the contract never sends any part of one, so the field stays empty (#695).
         assertEquals("", request.requestedBy)
         assertEquals(1_781_253_000_000L, request.requestedAtEpochMs)
         assertEquals(listOf(1), request.seasonNumbersList)
-        assertEquals("https://jellyfin.local/web/#/details?id=1", status.watchUrl)
+        assertEquals("4", request.id)
+        assertEquals("https://jellyfin.local/web/#/details?id=1", standard.watchUrl)
     }
 
     @Test
@@ -74,7 +75,7 @@ class SeerrStatusMappingTest {
 
         val requests = info.toRequestStatus(NOW).requestsList
 
-        assertEquals(listOf(4, 5), requests.map { it.id })
+        assertEquals(listOf("4", "5"), requests.map { it.id })
         assertEquals(listOf(false, true), requests.map { it.is4K })
     }
 
@@ -170,30 +171,47 @@ class SeerrStatusMappingTest {
 
         val status = info.toRequestStatus(NOW)
 
-        assertEquals(Availability.AVAILABILITY_NOT_REQUESTED, status.availability)
-        assertEquals(Availability.AVAILABILITY_PROCESSING, status.availability4K)
-        assertEquals(Availability.AVAILABILITY_AVAILABLE, status.seasonsList.single().availability)
-        assertEquals(Availability.AVAILABILITY_PENDING, status.seasons4KList.single().availability)
-        assertEquals(Availability.AVAILABILITY_NOT_REQUESTED, (null as SeerrMediaInfoDto?).toRequestStatus(NOW).availability4K)
+        assertEquals(listOf(false, true), status.versionsList.map { it.is4K })
+        assertEquals(Availability.AVAILABILITY_NOT_REQUESTED, status.standardVersion().availability)
+        assertEquals(Availability.AVAILABILITY_PROCESSING, status.version4k().availability)
+        assertEquals(
+            Availability.AVAILABILITY_AVAILABLE,
+            status
+                .standardVersion()
+                .seasonsList
+                .single()
+                .availability,
+        )
+        assertEquals(
+            Availability.AVAILABILITY_PENDING,
+            status
+                .version4k()
+                .seasonsList
+                .single()
+                .availability,
+        )
+        assertEquals(Availability.AVAILABILITY_NOT_REQUESTED, (null as SeerrMediaInfoDto?).toRequestStatus(NOW).version4k().availability)
     }
 
     @Test
-    fun `the download takes in the 4k downloads, and the standard download leaves them out`() {
+    fun `each version carries its own downloads`() {
         val info =
             SeerrMediaInfoDto(
                 downloadStatus = listOf(SeerrDownloadStatusDto(title = "Standard", size = 1_000.0, sizeLeft = 500.0)),
                 downloadStatus4k = listOf(SeerrDownloadStatusDto(title = "UHD", size = 3_000.0, sizeLeft = 3_000.0)),
             )
 
-        assertEquals(4_000L, info.toRequestStatus(NOW).download.totalBytes)
-        assertEquals(1_000L, checkNotNull(info.standardDownload(NOW)).totalBytes)
+        val status = info.toRequestStatus(NOW)
+        assertEquals(1_000L, status.standardVersion().download.totalBytes)
+        assertEquals(3_000L, status.version4k().download.totalBytes)
     }
 
     @Test
-    fun `a title downloading only in 4k has a download but no standard one`() {
+    fun `a title downloading only in 4k has a 4k download but no standard one`() {
         val info = SeerrMediaInfoDto(downloadStatus4k = listOf(SeerrDownloadStatusDto(size = 3_000.0, sizeLeft = 1_500.0)))
 
-        assertEquals(0.5f, info.toRequestStatus(NOW).download.fraction, 0.0001f)
-        assertNull(info.standardDownload(NOW))
+        val status = info.toRequestStatus(NOW)
+        assertEquals(0.5f, status.version4k().download.fraction, 0.0001f)
+        assertFalse(status.standardVersion().hasDownload())
     }
 }

@@ -1,6 +1,7 @@
 package com.cooper.binge.companion.seerr.data
 
 import androidx.room.withTransaction
+import com.binge.companion.sdk.paging.OpenPagingSources
 
 /**
  * The two-table writes the request, issue and user caches share: a list's rows and its cursor go in one transaction, so a

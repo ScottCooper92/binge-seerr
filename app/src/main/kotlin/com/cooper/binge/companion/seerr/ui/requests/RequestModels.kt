@@ -1,6 +1,6 @@
 package com.cooper.binge.companion.seerr.ui.requests
 
-import com.cooper.binge.companion.seerr.data.ListRefresh
+import com.binge.companion.sdk.paging.ListRefresh
 import com.cooper.binge.companion.seerr.seerr.SEERR_MEDIA_TYPE_MOVIE
 import com.cooper.binge.companion.seerr.seerr.SEERR_MEDIA_TYPE_TV
 import com.cooper.binge.companion.seerr.seerr.SeerrError
