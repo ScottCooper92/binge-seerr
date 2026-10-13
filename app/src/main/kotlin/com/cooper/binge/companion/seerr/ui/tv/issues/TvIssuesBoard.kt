@@ -53,7 +53,7 @@ import com.cooper.binge.companion.seerr.ui.tv.TvOutcomePlate
 import com.cooper.binge.companion.seerr.ui.tv.TvPagedRows
 import com.cooper.binge.companion.seerr.ui.tv.TvPosterCard
 import com.cooper.binge.companion.seerr.ui.tv.TvRowsFallback
-import com.cooper.binge.companion.seerr.ui.tv.rememberOverlayFocusRestore
+import com.cooper.binge.companion.seerr.ui.tv.rememberSheetFocusReturn
 import com.cooper.binge.companion.seerr.ui.tv.rememberTvTransientEvent
 import com.cooper.binge.companion.seerr.ui.tv.tvColor
 import kotlinx.coroutines.flow.Flow
@@ -80,9 +80,8 @@ internal class TvIssuesActions(
  * this viewer may act on, where resolving, reopening and deleting stay; directly for one they may not,
  * where the sheet has nothing else to offer.
  *
- * [openIssueId] is the id of the issue whose detail page is currently showing, or null once it has
- * closed — on that transition the board offers focus back to the row that opened it, one frame after
- * the page's own disposal, the same round trip the requests board runs for its detail page.
+ * When the issue page or a see-all grid closes, the shell hands focus back into this board and the hub's own memory
+ * lands it on the card or tile that opened it. The board puts focus back itself only from its own sheet (#1509).
  */
 @Composable
 internal fun TvIssuesBoard(
@@ -91,7 +90,6 @@ internal fun TvIssuesBoard(
     events: Flow<IssueListEvent>,
     actions: TvIssuesActions,
     modifier: Modifier = Modifier,
-    openIssueId: Int? = null,
     seeAllOpen: Boolean = false,
     now: Long = System.currentTimeMillis(),
     /** The outcome note showing on arrival, for a frame, which never collects [events]. Production passes null. */
@@ -99,7 +97,7 @@ internal fun TvIssuesBoard(
 ) {
     val ready = state as? IssuesUiState.Ready
     val event = rememberTvTransientEvent(events, initialEvent)
-    val restore = rememberOverlayFocusRestore(overlayOpen = openIssueId != null || seeAllOpen)
+    val restore = rememberSheetFocusReturn()
     val closer = rememberTvOverlayCloser(restoreTo = restore.requester, onClose = actions.onDismissActions)
     Box(modifier = modifier.fillMaxSize()) {
         if (ready == null) {
@@ -110,10 +108,7 @@ internal fun TvIssuesBoard(
                 rowsFor = rowsFor,
                 actions = actions,
                 restore = restore,
-                onSeeAll = { filter ->
-                    restore.leavingFromSeeAll(filter.name)
-                    actions.onSeeAll(filter)
-                },
+                onSeeAll = actions.onSeeAll,
                 onSelect = { item ->
                     restore.leavingFromRow(item.id)
                     if (item.canBeActedOn(ready.scope)) actions.onOpenActions(item) else actions.onOpenDetail(item)
@@ -150,8 +145,7 @@ internal fun TvIssuesBoard(
                 },
                 // Not `closer.close()`: that would request focus back onto this (now hidden) row one frame
                 // after the sheet disposes, racing the detail page's own arrival focus for the same beat.
-                // The board's `openIssueId` effect above is the one restore this path needs, once the page
-                // the viewer is going to actually closes.
+                // The shell's hand-off is the one restore this path needs, once the page the viewer is going to closes.
                 onOpenDetail = {
                     actions.onDismissActions()
                     actions.onOpenDetail(item)
@@ -217,7 +211,6 @@ private fun TvIssuesRows(
         cardWidth = dimensionResource(TvR.dimen.tv_immersive_card_width),
         onItemClick = onSelect,
         seeAllLabel = stringResource(R.string.tv_see_all),
-        seeAllModifier = restore::seeAllModifier,
         artwork = { item -> TvBackdropArtwork(item.backdropUrl, item.posterUrl) },
         copy = { item -> TvIssueCopy(item, now) },
     ) { item, isFocused, onFocusChanged, onClick, cellModifier ->
