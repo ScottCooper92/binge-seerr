@@ -2,15 +2,16 @@ package com.cooper.binge.companion.seerr.ui.settings.server
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.binge.designsystem.SaveStatus
+import com.binge.designsystem.save.SaveAsMade
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.di.IoDispatcher
 import com.cooper.binge.companion.seerr.notifications.ApplicationScope
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.seerr.SeerrMainSettingsUpdateBody
 import com.cooper.binge.companion.seerr.seerr.attempt
+import com.cooper.binge.companion.seerr.seerr.isTransient
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
-import com.cooper.binge.companion.seerr.ui.users.settings.SaveAsMade
-import com.cooper.binge.companion.seerr.ui.users.settings.SaveStatus
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -80,6 +81,7 @@ class BlocklistTagsViewModel
                 // The server answers with the whole of settings/main, so the tags sent are what is adopted.
                 adopt = { sent, _ -> (state.value as? BlocklistTagsUiState.Ready)?.tags != sent },
                 failed = { failed -> editReady { it.copy(saveFailed = failed) } },
+                isTransient = { it.toSeerrError().isTransient },
                 status = { status -> editReady { it.copy(saveStatus = status) } },
             )
 

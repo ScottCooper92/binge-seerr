@@ -1,7 +1,7 @@
 package com.cooper.binge.companion.seerr.ui.issues
 
+import com.binge.designsystem.SaveStatus
 import com.cooper.binge.companion.seerr.seerr.SeerrError
-import com.cooper.binge.companion.seerr.ui.users.settings.SaveStatus
 import com.cooper.binge.companion.seerr.ui.users.settings.UserRole
 import com.cooper.binge.companion.seerr.ui.users.userRole
 

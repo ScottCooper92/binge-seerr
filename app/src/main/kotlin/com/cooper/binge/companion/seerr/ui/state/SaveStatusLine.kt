@@ -10,8 +10,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
+import com.binge.designsystem.SaveStatus
 import com.cooper.binge.companion.seerr.R
-import com.cooper.binge.companion.seerr.ui.users.settings.SaveStatus
 import com.binge.designsystem.R as DesR
 
 /**
