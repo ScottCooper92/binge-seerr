@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -120,6 +121,8 @@ internal fun TvRequestDetailSheet(
                         onRetry = run::again,
                     )
                 }
+                // A failure left in a closed sheet would show under the action row, and Try again would run it there.
+                DisposableEffect(Unit) { onDispose { run.clear() } }
                 // The sheet stays open while it saves: "Saved" is read, and then it closes.
                 run.OnSaved { closer.close() }
             }

@@ -126,6 +126,29 @@ class TvIssuesBoardFocusTest {
         composeTestRule.onNodeWithText(string(DesR.string.save_status_saving)).assertExists()
     }
 
+    /** A failure left in a sheet that was dismissed is not the next issue's: its sheet opens idle, and Retry has nothing to run (#1510). */
+    @Test
+    fun aDismissedSheetLeavesNoFailureForTheNextIssue() {
+        setBoard(manager)
+        focusFirstRow()
+        confirmFirstAction()
+        events.tryEmit(IssueListEvent.Failed(SeerrError.Server))
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithText(string(DesR.string.save_status_failed)).assertExists()
+        sheetRow(R.string.tv_issue_resolve).requestFocus()
+        pressLeft()
+        assertEquals(1, dismissed)
+        settleFocusRestore()
+        pressRight()
+        row(HORSES).assertIsFocused()
+        pressOk()
+
+        sheetRow(R.string.tv_issue_resolve).assertExists()
+        composeTestRule.onNodeWithText(string(DesR.string.save_status_failed)).assertDoesNotExist()
+        composeTestRule.onNodeWithText(string(DesR.string.save_status_retry)).assertDoesNotExist()
+        assertEquals(listOf(11), resolved)
+    }
+
     @Test
     fun aFailedReopenRetriesTheReopen() {
         setBoard(manager, items = listOf(issue(11, SEVERANCE, reportedById = 3, status = IssueStatus.Resolved)))

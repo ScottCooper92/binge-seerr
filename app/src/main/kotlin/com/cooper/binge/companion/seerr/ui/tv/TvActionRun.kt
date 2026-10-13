@@ -22,7 +22,9 @@ internal const val TV_SAVED_HOLD_MILLIS = 800L
  *
  * An action [run]s through here. The ViewModel's one-shot answer then [settle]s it: the first answer after a run is that
  * run's, since a ViewModel refuses a second while one is in flight. An answer with nothing running is some other screen's
- * and is ignored.
+ * and is ignored. So every action routed through a run must emit exactly one answer: one that returns early without
+ * emitting would leave the status at Saving. A surface that owns a run [clear]s it when it goes away, so its status is not
+ * the next surface's.
  */
 @Stable
 internal class TvActionRun(

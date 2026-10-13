@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -278,6 +279,8 @@ internal fun TvIssueActionsSheet(
     val open = item.status == IssueStatus.Open
     // The sheet stays open while the action saves, so its answer is read where it was asked; "Saved" closes it.
     run.OnSaved(onDismiss)
+    // A status left behind would show on the next issue's sheet, and its Try again would run this issue's action there.
+    DisposableEffect(Unit) { onDispose { run.clear() } }
     val busy = run.status == SaveStatus.Saving
     TvSideSheet(onDismissRequest = onDismiss, modifier = modifier) { entryFocus ->
         when (pending) {
