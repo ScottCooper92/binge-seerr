@@ -96,7 +96,7 @@ private fun TvAdminSettingsEntry(
     )
 }
 
-/** The setup form on the live connection, above the rail; leaves once new credentials are saved, or on Back. */
+/** The setup form on the live connection, above Home; leaves once new credentials are saved, or on Back. */
 @Composable
 internal fun TvEditConnectionOverlay(
     onDone: () -> Unit,
