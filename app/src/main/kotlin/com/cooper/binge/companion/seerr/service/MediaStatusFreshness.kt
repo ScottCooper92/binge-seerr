@@ -4,6 +4,7 @@ import com.binge.companion.contracts.request.v1.Availability
 import com.binge.companion.contracts.request.v1.DownloadState
 import com.binge.companion.contracts.request.v1.RequestStatus
 import com.cooper.binge.companion.seerr.data.CachedStatus
+import com.cooper.binge.companion.seerr.seerr.standardVersion
 
 /**
  * A few minutes: a pending request is waiting on a person, and a partly-available show on the next
@@ -29,9 +30,9 @@ class MediaStatusFreshness(
 ) {
     /** Null where the status says nothing worth keeping, which is never written and never read. */
     fun maxAgeMillis(status: RequestStatus): Long? {
-        if (status.availability == Availability.AVAILABILITY_UNSPECIFIED) return null
+        if (status.standardVersion().availability == Availability.AVAILABILITY_UNSPECIFIED) return null
         // The 4K version is graded the same way, and whichever of the two moves faster sets the age.
-        val versions = listOf(status.availability, status.availability4K)
+        val versions = status.versionsList.map { it.availability }
         return when {
             status.isMoving() -> movingMaxAgeMillis
             versions.any { it == Availability.AVAILABILITY_PENDING || it == Availability.AVAILABILITY_PARTIALLY_AVAILABLE } ->
@@ -56,6 +57,7 @@ class MediaStatusFreshness(
  * client picking it up, which can happen at any moment.
  */
 private fun RequestStatus.isMoving(): Boolean =
-    availability == Availability.AVAILABILITY_PROCESSING ||
-        availability4K == Availability.AVAILABILITY_PROCESSING ||
-        (hasDownload() && download.state != DownloadState.DOWNLOAD_STATE_UNSPECIFIED)
+    versionsList.any { version ->
+        version.availability == Availability.AVAILABILITY_PROCESSING ||
+            (version.hasDownload() && version.download.state != DownloadState.DOWNLOAD_STATE_UNSPECIFIED)
+    }

@@ -17,6 +17,7 @@ import com.binge.designsystem.tv.template.TvHubRow
 import com.binge.designsystem.tv.template.TvImmersiveHub
 import com.binge.designsystem.tv.template.TvMessagePage
 import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.ui.requests.RequestFilter
 import com.cooper.binge.companion.seerr.ui.requests.RequestItem
 import com.cooper.binge.companion.seerr.ui.requests.RequestsUiState
@@ -26,6 +27,7 @@ import com.cooper.binge.companion.seerr.ui.tv.TV_ROW_ITEM_CAP
 import com.cooper.binge.companion.seerr.ui.tv.TvBackdropArtwork
 import com.cooper.binge.companion.seerr.ui.tv.TvBackdropCopy
 import com.cooper.binge.companion.seerr.ui.tv.TvHubLoading
+import com.cooper.binge.companion.seerr.ui.tv.TvLocalNetworkDeniedPage
 import com.cooper.binge.companion.seerr.ui.tv.TvPagedRows
 import com.cooper.binge.companion.seerr.ui.tv.TvPosterCard
 import com.cooper.binge.companion.seerr.ui.tv.TvRowsFallback
@@ -132,6 +134,10 @@ private fun TvRequestsUnresolved(
 ) {
     if (state !is RequestsUiState.Error) {
         TvHubLoading(modifier)
+        return
+    }
+    if (state.error == SeerrError.LocalNetworkDenied) {
+        TvLocalNetworkDeniedPage(onRetry = actions.onRetryScope, modifier = modifier)
         return
     }
     TvMessagePage(

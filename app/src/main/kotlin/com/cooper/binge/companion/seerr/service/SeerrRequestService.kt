@@ -83,7 +83,7 @@ import com.cooper.binge.companion.seerr.seerr.rejectsSession
 import com.cooper.binge.companion.seerr.seerr.requesterIds
 import com.cooper.binge.companion.seerr.seerr.resolveAdvancedDestination
 import com.cooper.binge.companion.seerr.seerr.seerrMediaType
-import com.cooper.binge.companion.seerr.seerr.standardDownload
+import com.cooper.binge.companion.seerr.seerr.standardVersion
 import com.cooper.binge.companion.seerr.seerr.statusCatching
 import com.cooper.binge.companion.seerr.seerr.toMediaId
 import com.cooper.binge.companion.seerr.seerr.toPermissions
@@ -93,6 +93,7 @@ import com.cooper.binge.companion.seerr.seerr.toSeerrError
 import com.cooper.binge.companion.seerr.seerr.toStatusException
 import com.cooper.binge.companion.seerr.seerr.updateRequest
 import com.cooper.binge.companion.seerr.seerr.userFacingRefusal
+import com.cooper.binge.companion.seerr.seerr.version4k
 import com.cooper.binge.companion.seerr.telemetry.Analytics
 import com.cooper.binge.companion.seerr.telemetry.NoOpAnalytics
 import com.cooper.binge.companion.seerr.telemetry.operationFailed
@@ -281,7 +282,7 @@ class SeerrRequestService(
         val builder = SubmitRequestResponse.newBuilder()
         when {
             response.code() == HTTP_ACCEPTED -> Unit
-            response.isSuccessful -> response.body()?.id?.let(builder::setRequestId)
+            response.isSuccessful -> response.body()?.id?.let { builder.setRequestId(it.toString()) }
             response.code() == HTTP_CONFLICT -> builder.setAlreadyRequested(true)
             else -> throw HttpException(response)
         }
@@ -318,12 +319,13 @@ class SeerrRequestService(
     override suspend fun cancelRequest(request: CancelRequestRequest): CancelRequestResponse =
         gated("cancel_request", Capability.CAPABILITY_CANCEL) {
             val api = connection.api()
+            val requestId = request.requestId.toSeerrRequestId()
             try {
-                api.deleteRequest(request.requestId)
+                api.deleteRequest(requestId)
             } catch (e: HttpException) {
                 if (!e.refusedWithLiveSession()) throw e
                 // A request with no status is pending, as everywhere else; one that will not read is taken as pending too.
-                val status = attempt { api.request(request.requestId).status }.getOrNull()
+                val status = attempt { api.request(requestId).status }.getOrNull()
                 val pending = status == null || status == SeerrRequestStatusCode.Pending
                 throw StatusException(
                     if (pending) {
@@ -333,27 +335,29 @@ class SeerrRequestService(
                     },
                 )
             }
-            requestCache.delete(request.requestId)
+            requestCache.delete(requestId)
             CancelRequestResponse.getDefaultInstance()
         }
 
     override suspend fun approveRequest(request: ApproveRequestRequest): ApproveRequestResponse =
         gated("approve_request", Capability.CAPABILITY_APPROVE) {
-            connection.api().approveRequest(request.requestId)
-            requestCache.updateStatus(request.requestId, SeerrRequestStatusCode.Approved.raw)
+            val requestId = request.requestId.toSeerrRequestId()
+            connection.api().approveRequest(requestId)
+            requestCache.updateStatus(requestId, SeerrRequestStatusCode.Approved.raw)
             ApproveRequestResponse.getDefaultInstance()
         }
 
     override suspend fun declineRequest(request: DeclineRequestRequest): DeclineRequestResponse =
         gated("decline_request", Capability.CAPABILITY_DECLINE) {
-            connection.api().declineRequest(request.requestId)
-            requestCache.updateStatus(request.requestId, SeerrRequestStatusCode.Declined.raw)
+            val requestId = request.requestId.toSeerrRequestId()
+            connection.api().declineRequest(requestId)
+            requestCache.updateStatus(requestId, SeerrRequestStatusCode.Declined.raw)
             DeclineRequestResponse.getDefaultInstance()
         }
 
     override suspend fun retryRequest(request: RetryRequestRequest): RetryRequestResponse =
         gated("retry_request", Capability.CAPABILITY_RETRY) {
-            connection.api().retryRequest(request.requestId)
+            connection.api().retryRequest(request.requestId.toSeerrRequestId())
             RetryRequestResponse.getDefaultInstance()
         }
 
@@ -369,7 +373,8 @@ class SeerrRequestService(
             if (request.seasonNumbersList.isEmpty()) throw invalidArgument("a request covers at least one season")
             val seasons = request.seasonNumbersList.checkedSeasonNumbers()
             val api = connection.api()
-            val current = api.request(request.requestId)
+            val requestId = request.requestId.toSeerrRequestId()
+            val current = api.request(requestId)
             if (!current.media.mediaType.isSeerrTv()) throw invalidArgument("only a TV request has seasons to edit")
             // The contract's INVALID_ARGUMENT for "a season the show does not have", which Seerr itself never checks.
             api.tvDetails(current.media.tmdbId).checkHasSeasons(seasons)
@@ -383,7 +388,7 @@ class SeerrRequestService(
                     rootFolder = current.rootFolder,
                     tags = current.tags,
                 )
-            api.updateRequest(request.requestId, body)
+            api.updateRequest(requestId, body)
             EditRequestResponse.getDefaultInstance()
         }
 
@@ -416,10 +421,10 @@ class SeerrRequestService(
             val sees4k = mayRequest4k()
             if (!status.isReportable(sees4k = sees4k)) {
                 // The 4K state is named only to a user who may see it, as withAllowedActions does for every status.
-                val fourK = if (sees4k) " (4K: ${status.availability4K})" else ""
+                val fourK = if (sees4k) " (4K: ${status.version4k().availability})" else ""
                 throw StatusException(
                     Status.FAILED_PRECONDITION.withDescription(
-                        "Nothing to report against: the title is ${status.availability}$fourK",
+                        "Nothing to report against: the title is ${status.standardVersion().availability}$fourK",
                     ),
                 )
             }
@@ -433,7 +438,7 @@ class SeerrRequestService(
      * the contract says (#682). A cold cache falls through to Seerr, whose own refusal maps the same way.
      */
     private suspend fun refuseIfKnownBlocklisted(media: MediaId) {
-        if (cachedStatus(media)?.status?.availability == Availability.AVAILABILITY_BLOCKLISTED) {
+        if (cachedStatus(media)?.status?.standardVersion()?.availability == Availability.AVAILABILITY_BLOCKLISTED) {
             throw BlocklistedTitleException()
         }
     }
@@ -592,7 +597,7 @@ class SeerrRequestService(
     private suspend fun fetchStatus(media: MediaId): CachedStatus {
         val now = clock()
         val info = connection.api().details(media).mediaInfo
-        val fetched = CachedStatus(info.toRequestStatus(now), now, info.requesterIds(), info.standardDownload(now))
+        val fetched = CachedStatus(info.toRequestStatus(now), now, info.requesterIds())
         if (freshness.maxAgeMillis(fetched.status) != null) statusCache.put(media, fetched)
         return fetched
     }

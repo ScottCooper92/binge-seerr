@@ -83,6 +83,18 @@ class TvRequestsScreenshotTest {
         )
     }
 
+    /** The server is on the local network and Android has not let this app reach it: Allow, as the hub offers, not a retry. */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun ScopeLocalNetworkDenied() {
+        TvRequestsRowsBoard(
+            state = RequestsUiState.Error(SeerrError.LocalNetworkDenied),
+            rowsFor = { rows(emptyList()) },
+            actions = NoRequestsActions,
+        )
+    }
+
     /** A filter with more than a row holds (#1053): its row ends in the See all tile, which opens the grid. */
     @PreviewTest
     @SeerrTvScreenPreviews

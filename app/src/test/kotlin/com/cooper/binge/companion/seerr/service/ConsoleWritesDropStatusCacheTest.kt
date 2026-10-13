@@ -3,7 +3,6 @@ package com.cooper.binge.companion.seerr.service
 import androidx.lifecycle.ViewModelStore
 import com.binge.companion.contracts.request.v1.Availability
 import com.binge.companion.contracts.request.v1.GetStatusRequest
-import com.binge.companion.contracts.request.v1.RequestStatus
 import com.binge.companion.contracts.v1.MediaId
 import com.binge.companion.contracts.v1.MediaType
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
@@ -13,6 +12,7 @@ import com.cooper.binge.companion.seerr.data.MediaStatusStore
 import com.cooper.binge.companion.seerr.di.dropStatusesOnWrite
 import com.cooper.binge.companion.seerr.seerr.SeerrApiFactory
 import com.cooper.binge.companion.seerr.seerr.SeerrRequestStatusCode
+import com.cooper.binge.companion.seerr.seerr.standardVersion
 import com.cooper.binge.companion.seerr.ui.blocklist.BlocklistDetailEvent
 import com.cooper.binge.companion.seerr.ui.blocklist.BlocklistDetailViewModel
 import com.cooper.binge.companion.seerr.ui.blocklist.BlocklistItem
@@ -24,6 +24,7 @@ import com.cooper.binge.companion.seerr.ui.users.settings.ScriptedSeerr
 import com.cooper.binge.companion.seerr.util.MainDispatcherRule
 import com.cooper.binge.companion.seerr.util.awaitEvent
 import com.cooper.binge.companion.seerr.util.requestItem
+import com.cooper.binge.companion.seerr.util.requestStatusOf
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -100,7 +101,7 @@ class ConsoleWritesDropStatusCacheTest {
 
     private fun blocklisted() {
         statuses.rows[movie.tmdbId] =
-            CachedStatus(RequestStatus.newBuilder().setAvailability(Availability.AVAILABILITY_BLOCKLISTED).build(), fetchedAtMillis = 0L)
+            CachedStatus(requestStatusOf(Availability.AVAILABILITY_BLOCKLISTED), fetchedAtMillis = 0L)
     }
 
     @Test
@@ -110,7 +111,14 @@ class ConsoleWritesDropStatusCacheTest {
             val connection = connection()
             val service = SeerrRequestService(connection, versionName = "test", clock = { 0L }, statusCache = statuses)
             val request = GetStatusRequest.newBuilder().setMedia(movie).build()
-            assertEquals(Availability.AVAILABILITY_BLOCKLISTED, service.getStatus(request).status.availability)
+            assertEquals(
+                Availability.AVAILABILITY_BLOCKLISTED,
+                service
+                    .getStatus(request)
+                    .status
+                    .standardVersion()
+                    .availability,
+            )
             assertEquals(0, seerr.count("GET", "/api/v1/movie/$TMDB_ID"))
 
             val vm = BlocklistDetailViewModel(connection, mainDispatcherRule.dispatcher, blocklistItem, canManage = true)
@@ -121,7 +129,14 @@ class ConsoleWritesDropStatusCacheTest {
             advanceUntilIdle()
 
             // Only the server can say NOT_REQUESTED: the cached row said BLOCKLISTED.
-            assertEquals(Availability.AVAILABILITY_NOT_REQUESTED, service.getStatus(request).status.availability)
+            assertEquals(
+                Availability.AVAILABILITY_NOT_REQUESTED,
+                service
+                    .getStatus(request)
+                    .status
+                    .standardVersion()
+                    .availability,
+            )
         }
 
     @Test
