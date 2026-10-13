@@ -71,9 +71,8 @@ class TvIssueDetailFocusTest {
             val scope = IssueListScope(permissions = SeerrPermissions(), currentUserId = 9)
             BingeTvTheme {
                 // The page is the shell's overlay, as the app hosts it, so its close goes through the shell's hand-off.
-                TvShellScaffold(
-                    selected = TvDestination.Issues,
-                    onSelect = {},
+                BoardInShell(
+                    destination = TvDestination.Issues,
                     overlay =
                         openId?.let {
                             {

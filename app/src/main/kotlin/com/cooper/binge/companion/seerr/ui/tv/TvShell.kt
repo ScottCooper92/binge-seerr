@@ -2,6 +2,7 @@ package com.cooper.binge.companion.seerr.ui.tv
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
+import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -15,17 +16,24 @@ import androidx.compose.material.icons.filled.ReportProblem
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.tv.material3.MaterialTheme
 import com.binge.designsystem.tv.component.TvIconButton
+import com.binge.designsystem.tv.focus.TvFocusSink
 import com.binge.designsystem.tv.focus.rememberTvOverlayCloser
+import com.binge.designsystem.tv.focus.restoreTvOverlayFocus
 import com.binge.designsystem.tv.focus.tvExitFocusGroup
 import com.binge.designsystem.tv.nav.LocalTvHostedAsOverlay
 import com.cooper.binge.companion.seerr.R
@@ -65,7 +73,10 @@ internal fun TvHomeShell(
     val closer = rememberTvOverlayCloser(restoreTo = opener.getValue(page), onClose = onClosePage)
     Box(modifier = modifier.fillMaxSize()) {
         // Nothing sits beside Home, so it carries its own overscan and claims first focus as an overlay does.
-        CompositionLocalProvider(LocalTvHostedAsOverlay provides true) { content(TvDestination.Hub) }
+        CompositionLocalProvider(LocalTvHostedAsOverlay provides true) {
+            // Inert while a page covers it, so the page's own hand-off is the only one that takes focus back.
+            HandBackHost(active = page == TvDestination.Hub) { content(TvDestination.Hub) }
+        }
         TvHomeTopRow(
             destinations = TvDestination.entries.filter { it != TvDestination.Hub && (it != TvDestination.Issues || showIssues) },
             opener = opener,
@@ -76,8 +87,13 @@ internal fun TvHomeShell(
             // Back is the page's own handler only while no overlay above it is up to take it first.
             BackHandler(enabled = overlay == null, onBack = closer::close)
             CompositionLocalProvider(LocalTvHostedAsOverlay provides true) {
-                Box(
-                    modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).tvExitFocusGroup(),
+                HandBackHost(
+                    active = true,
+                    // A trap refuses a request leaving it, so the page lets go of it while an overlay above takes focus.
+                    modifier =
+                        Modifier
+                            .background(MaterialTheme.colorScheme.background)
+                            .then(if (overlay == null) Modifier.tvExitFocusGroup() else Modifier),
                 ) { content(page) }
             }
         }
@@ -86,6 +102,40 @@ internal fun TvHomeShell(
                 Box(modifier = Modifier.fillMaxSize().tvExitFocusGroup(), content = it)
             }
         }
+    }
+}
+
+/**
+ * A surface whose focus is handed back to it, as the rail's content pane does, when a page or grid above it closes.
+ *
+ * Closing disposes the focused node, and Compose parks focus on the first focusable thing left, which is the wrong
+ * card, and a request into a group that already holds focus skips its entry routing. So the surface carries a [TvFocusSink]
+ * while nothing in it has focus; the sink takes the parked focus, and the hand-off then enters the content's own group,
+ * where the hub's memory lands the card or tile that opened the page (#1509).
+ */
+@Composable
+private fun HandBackHost(
+    active: Boolean,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit,
+) {
+    val entry = remember { FocusRequester() }
+    var hostHasFocus by remember { mutableStateOf(false) }
+    var contentHasFocus by remember { mutableStateOf(false) }
+    Box(modifier = modifier.fillMaxSize().onFocusChanged { hostHasFocus = it.hasFocus }.focusGroup()) {
+        Box(
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .onFocusChanged { contentHasFocus = it.hasFocus }
+                    .focusRequester(entry)
+                    .focusGroup(),
+        ) { content() }
+        if (active && !contentHasFocus) TvFocusSink()
+    }
+    val sinkHoldsFocus = active && hostHasFocus && !contentHasFocus
+    LaunchedEffect(sinkHoldsFocus) {
+        if (sinkHoldsFocus) restoreTvOverlayFocus(entry)
     }
 }
 
