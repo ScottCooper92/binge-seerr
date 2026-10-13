@@ -179,6 +179,8 @@ and stores against a `ScriptedSeerr`; only `DeviceKeysModule` is replaced. Reach
 whether the real entries are wired the way the pane logic assumes: a journey across screens, a rotation, a
 retry. A rotation there is a real activity recreate, so the back stack comes back through saved state.
 
+**Where a screen's commit goes.** A filled primary button pinned in the footer (`FormActionPlacement.Footer`) when the action is the reason the screen exists and finishes it: connect, send, request, create, report. Editing an existing setting saves as it is made, with no button. A top-bar text "Save" (`FormActionPlacement.TopBar`) is only for a multi-field edit that must apply together, and stays disabled until something changes. A single toggle or choice applies at once. One primary per screen; a top-bar action is a verb, never an icon alone; a destructive action sits in an overflow menu or behind a confirm.
+
 **Where the code does not follow this**, it is an open issue rather than a line here: a list of
 departures in this file goes stale faster than it is read. There is no standing exception to the
 stream rule: the DVR instance and override rule editors fold their pickers' choices into `uiState`
