@@ -23,6 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.itemKey
 import com.binge.designsystem.component.BingeInitialsAvatar
@@ -165,10 +166,15 @@ internal fun UserRow(
                             if (selecting) {
                                 Checkbox(checked = selected, onCheckedChange = null)
                             } else {
+                                // The count gives way before the name does: the group caps this slot, and the count is the
+                                // part of it that ellipsizes, so the role tag and the chevron keep their width.
                                 Text(
                                     pluralStringResource(R.plurals.users_request_count, item.requestCount, item.requestCount),
                                     style = MaterialTheme.typography.labelMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier.weight(1f, fill = false),
                                 )
                                 Icon(
                                     imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,

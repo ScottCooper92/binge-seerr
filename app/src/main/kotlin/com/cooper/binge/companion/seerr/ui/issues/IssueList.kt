@@ -32,6 +32,7 @@ import com.binge.designsystem.component.ListRowHeader
 import com.binge.designsystem.component.ListRowPoster
 import com.binge.designsystem.component.ListRowSkeletonColumn
 import com.binge.designsystem.component.MediaTypeTag
+import com.binge.designsystem.component.WrappingRow
 import com.binge.designsystem.formatRelativeOrAbsolute
 import com.binge.designsystem.template.PagedPhase
 import com.cooper.binge.companion.seerr.R
@@ -167,14 +168,12 @@ private fun IssueRowMeta(
     Column(modifier = modifier.padding(top = dimensionResource(DesR.dimen.detail_meta_spacing))) {
         ListRowHeader(title = item.title ?: stringResource(item.mediaType.labelRes()))
         Spacer(Modifier.height(gap))
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        // Wraps rather than squeezes: at a large font a plain row gave its last item no width at all.
+        WrappingRow(horizontalSpacing = gap, verticalSpacing = gap) {
             RequestStateChip(label = stringResource(item.status.labelRes()), tone = item.status.tone())
-            Spacer(Modifier.width(gap))
             MediaTypeTag(type = item.mediaType.toTagType())
-            Spacer(Modifier.width(gap))
             BingeTag(label = stringResource(item.type.labelRes()))
             issueAffectedLabel(item)?.let { affected ->
-                Spacer(Modifier.width(gap))
                 Text(
                     affected,
                     style = MaterialTheme.typography.labelMedium,
