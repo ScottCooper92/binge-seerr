@@ -48,6 +48,8 @@
     <dimen name="server_settings_job_action_size">48dp</dimen>
     <dimen name="log_row_severity_stripe_width">4dp</dimen>
     <dimen name="log_row_level_icon_size">16dp</dimen>
+    <!-- A region's flag on its icon plate: a glyph, so its size is fixed and does not grow with the font scale past the plate. -->
+    <dimen name="region_flag_size">16dp</dimen>
     <dimen name="hub_quota_bar_width">72dp</dimen>
     <!-- The hub bar's account action (#1325): the quota ring, its stroke, and the avatar inside it. -->
     <dimen name="hub_account_ring_size">40dp</dimen>

@@ -4,8 +4,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.unit.TextUnit
 import androidx.core.os.LocaleListCompat
 import com.binge.designsystem.component.BingeIconPlate
+import com.cooper.binge.companion.seerr.R
 
 /** Regions people most often pick, after the device's own, for a region picker's suggestions. */
 private val POPULAR_REGIONS = listOf("US", "GB", "CA", "AU", "DE", "FR", "ES", "IN", "BR", "JP")
@@ -32,4 +36,9 @@ internal fun suggestedRegions(): List<String> {
 
 /** [code]'s flag on the design system's icon plate, for the region setting's own row. */
 @Composable
-internal fun RegionFlag(code: String) = BingeIconPlate { Text(flagOf(code), style = MaterialTheme.typography.titleMedium) }
+internal fun RegionFlag(code: String) =
+    BingeIconPlate {
+        // The flag is a glyph rather than copy: a larger font scale must not grow it past the plate it sits on.
+        val size = with(LocalDensity.current) { dimensionResource(R.dimen.region_flag_size).toSp() }
+        Text(flagOf(code), style = MaterialTheme.typography.titleMedium.copy(fontSize = size, lineHeight = TextUnit.Unspecified))
+    }
