@@ -18,11 +18,9 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 
-private const val LONG_RAIL_NAME = "Alexandria Fitzgerald-Montgomery of the Upstairs Server"
-
 /**
  * The television's shell rail with a long account name and every destination, at font scale 1.3 only (the TV rule),
- * through the design system's `assertNoTextClipped`. The rail is checked as it rests, collapsed beside the content.
+ * through the design system's `assertNoTextClipped`. The rail is checked as it rests, collapsed beside the content, and open.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(qualifiers = "w960dp-h540dp-television-xhdpi")
@@ -36,14 +34,17 @@ class TvShellClippingTest {
     @Test fun `the expanded rail at 1_3`() = rule.assertNoTvClippingAt(FONT_SCALE_13) { ExpandedRail() }
 }
 
-/** The rail open, the state it takes when focus is on it, because the shell shows labels only then. */
+/**
+ * The rail open, the state it takes when focus is on it, because the shell shows labels only then. The items are built
+ * here from the app's destinations, since the shell's own mapping is private: a destination added there needs adding here.
+ */
 @Composable
 private fun ExpandedRail() {
     @Composable
     fun item(destination: TvDestination) =
         TvNavRailItem(key = destination, label = stringResource(destination.labelRes), icon = destination.icon)
     BingeTvNavRail(
-        header = item(TvDestination.Account).copy(displayName = LONG_RAIL_NAME),
+        header = item(TvDestination.Account).copy(displayName = LONG_ROW_NAME),
         items = listOf(item(TvDestination.Hub), item(TvDestination.Issues)),
         footer = item(TvDestination.Settings),
         selectedKey = TvDestination.Hub,
@@ -69,7 +70,7 @@ private fun Shell() {
     TvShellScaffold(
         selected = TvDestination.Hub,
         onSelect = {},
-        accountName = LONG_RAIL_NAME,
+        accountName = LONG_ROW_NAME,
     ) {
         Content()
     }
