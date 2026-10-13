@@ -35,13 +35,13 @@ class LogsClippingTest {
     @get:Rule
     val rule = createSeerrComposeRule()
 
-    @Test fun `log rows at 1_3`() = rule.assertClipFree(FONT_13) { Rows() }
+    @Test fun `log rows at 1_3`() = rule.assertNoClippingAt(FONT_SCALE_13) { Rows() }
 
-    @Test fun `log rows at 2_0`() = rule.assertClipFree(FONT_20) { Rows() }
+    @Test fun `log rows at 2_0`() = rule.assertNoClippingAt(FONT_SCALE_20) { Rows() }
 
-    @Test fun `the logs screen at 1_3`() = rule.assertClipFree(FONT_13) { Screen() }
+    @Test fun `the logs screen at 1_3`() = rule.assertNoClippingAt(FONT_SCALE_13) { Screen() }
 
-    @Test fun `the logs screen at 2_0`() = rule.assertClipFree(FONT_20) { Screen() }
+    @Test fun `the logs screen at 2_0`() = rule.assertNoClippingAt(FONT_SCALE_20) { Screen() }
 
     private fun entry(
         level: LogLevel,

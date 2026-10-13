@@ -37,25 +37,25 @@ class HubClippingTest {
     private fun check(
         fontScale: Float,
         state: HubUiState,
-    ) = rule.assertClipFree(fontScale) { HubScreen(state = state, actions = noActions()) }
+    ) = rule.assertNoClippingAt(fontScale) { HubScreen(state = state, actions = noActions()) }
 
-    @Test fun `a full hub at 1_3`() = check(FONT_13, worstCaseHub())
+    @Test fun `a full hub at 1_3`() = check(FONT_SCALE_13, worstCaseHub())
 
-    @Test fun `a full hub at 2_0`() = check(FONT_20, worstCaseHub())
+    @Test fun `a full hub at 2_0`() = check(FONT_SCALE_20, worstCaseHub())
 
-    @Test fun `an unreachable hub at 1_3`() = check(FONT_13, worstCaseHub(ConnectionHealth.Unreachable))
+    @Test fun `an unreachable hub at 1_3`() = check(FONT_SCALE_13, worstCaseHub(ConnectionHealth.Unreachable))
 
-    @Test fun `an unreachable hub at 2_0`() = check(FONT_20, worstCaseHub(ConnectionHealth.Unreachable))
+    @Test fun `an unreachable hub at 2_0`() = check(FONT_SCALE_20, worstCaseHub(ConnectionHealth.Unreachable))
 
-    @Test fun `a hub denied the local network at 2_0`() = check(FONT_20, worstCaseHub(ConnectionHealth.LocalNetworkDenied))
+    @Test fun `a hub denied the local network at 2_0`() = check(FONT_SCALE_20, worstCaseHub(ConnectionHealth.LocalNetworkDenied))
 
-    @Test fun `a hub that could not load at 2_0`() = check(FONT_20, worstCaseHub(ConnectionHealth.CouldNotLoad))
+    @Test fun `a hub that could not load at 2_0`() = check(FONT_SCALE_20, worstCaseHub(ConnectionHealth.CouldNotLoad))
 
-    @Test fun `a first read that failed at 2_0`() = check(FONT_20, HubUiState.Error(ConnectionHealth.Unreachable))
+    @Test fun `a first read that failed at 2_0`() = check(FONT_SCALE_20, HubUiState.Error(ConnectionHealth.Unreachable))
 
-    @Test fun `a hub offering Binge at 2_0`() = check(FONT_20, worstCaseHub(binge = BingeStatus.NotInstalled))
+    @Test fun `a hub offering Binge at 2_0`() = check(FONT_SCALE_20, worstCaseHub(binge = BingeStatus.NotInstalled))
 
-    @Test fun `a hub with Binge hint at 2_0`() = check(FONT_20, worstCaseHub(binge = BingeStatus.Connected))
+    @Test fun `a hub with Binge hint at 2_0`() = check(FONT_SCALE_20, worstCaseHub(binge = BingeStatus.Connected))
 
     private fun worstCaseHub(
         health: ConnectionHealth = ConnectionHealth.Healthy,

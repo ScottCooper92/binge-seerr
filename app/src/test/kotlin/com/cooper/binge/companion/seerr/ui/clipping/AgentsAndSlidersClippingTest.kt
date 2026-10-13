@@ -52,29 +52,29 @@ class AgentsAndSlidersClippingTest {
     @get:Rule
     val rule = createSeerrComposeRule()
 
-    @Test fun `the agents list at 1_3`() = rule.assertClipFree(FONT_13) { AgentsList() }
+    @Test fun `the agents list at 1_3`() = rule.assertNoClippingAt(FONT_SCALE_13) { AgentsList() }
 
-    @Test fun `the agents list at 2_0`() = rule.assertClipFree(FONT_20) { AgentsList() }
+    @Test fun `the agents list at 2_0`() = rule.assertNoClippingAt(FONT_SCALE_20) { AgentsList() }
 
-    @Test fun `an email agent at 1_3`() = rule.assertClipFree(FONT_13) { Agent(emailForm(), ServerAgent.Email) }
+    @Test fun `an email agent at 1_3`() = rule.assertNoClippingAt(FONT_SCALE_13) { Agent(emailForm(), ServerAgent.Email) }
 
-    @Test fun `an email agent at 2_0`() = rule.assertClipFree(FONT_20) { Agent(emailForm(), ServerAgent.Email) }
+    @Test fun `an email agent at 2_0`() = rule.assertNoClippingAt(FONT_SCALE_20) { Agent(emailForm(), ServerAgent.Email) }
 
-    @Test fun `a webhook agent at 1_3`() = rule.assertClipFree(FONT_13) { Agent(webhookForm(), ServerAgent.Webhook) }
+    @Test fun `a webhook agent at 1_3`() = rule.assertNoClippingAt(FONT_SCALE_13) { Agent(webhookForm(), ServerAgent.Webhook) }
 
-    @Test fun `a webhook agent at 2_0`() = rule.assertClipFree(FONT_20) { Agent(webhookForm(), ServerAgent.Webhook) }
+    @Test fun `a webhook agent at 2_0`() = rule.assertNoClippingAt(FONT_SCALE_20) { Agent(webhookForm(), ServerAgent.Webhook) }
 
-    @Test fun `an ntfy agent at 2_0`() = rule.assertClipFree(FONT_20) { Agent(ntfyForm(), ServerAgent.Ntfy) }
+    @Test fun `an ntfy agent at 2_0`() = rule.assertNoClippingAt(FONT_SCALE_20) { Agent(ntfyForm(), ServerAgent.Ntfy) }
 
-    @Test fun `the sliders list at 1_3`() = rule.assertClipFree(FONT_13) { SlidersList() }
+    @Test fun `the sliders list at 1_3`() = rule.assertNoClippingAt(FONT_SCALE_13) { SlidersList() }
 
-    @Test fun `the sliders list at 2_0`() = rule.assertClipFree(FONT_20) { SlidersList() }
+    @Test fun `the sliders list at 2_0`() = rule.assertNoClippingAt(FONT_SCALE_20) { SlidersList() }
 
-    @Test fun `a keyword slider at 1_3`() = rule.assertClipFree(FONT_13) { Slider(keywordSlider(), keywordExtras()) }
+    @Test fun `a keyword slider at 1_3`() = rule.assertNoClippingAt(FONT_SCALE_13) { Slider(keywordSlider(), keywordExtras()) }
 
-    @Test fun `a keyword slider at 2_0`() = rule.assertClipFree(FONT_20) { Slider(keywordSlider(), keywordExtras()) }
+    @Test fun `a keyword slider at 2_0`() = rule.assertNoClippingAt(FONT_SCALE_20) { Slider(keywordSlider(), keywordExtras()) }
 
-    @Test fun `a streaming slider at 2_0`() = rule.assertClipFree(FONT_20) { Slider(streamingSlider(), streamingExtras()) }
+    @Test fun `a streaming slider at 2_0`() = rule.assertNoClippingAt(FONT_SCALE_20) { Slider(streamingSlider(), streamingExtras()) }
 
     private fun <T> actions() = EditorActions<T>(onBack = {}, onRetry = {}, onEdit = {}, onSave = {})
 

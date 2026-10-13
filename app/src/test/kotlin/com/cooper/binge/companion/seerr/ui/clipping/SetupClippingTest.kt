@@ -40,65 +40,65 @@ class SetupClippingTest {
     val rule = createSeerrComposeRule()
 
     @Test fun `an insecure address at 1_3`() =
-        rule.assertClipFree(
-            FONT_13,
+        rule.assertNoClippingAt(
+            FONT_SCALE_13,
         ) { Address(error = SetupError.UnreachableNotLocal, insecure = true) }
 
     @Test fun `an insecure address at 2_0`() =
-        rule.assertClipFree(
-            FONT_20,
+        rule.assertNoClippingAt(
+            FONT_SCALE_20,
         ) { Address(error = SetupError.UnreachableNotLocal, insecure = true) }
 
-    @Test fun `an address needing the local network at 2_0`() = rule.assertClipFree(FONT_20) { Address(needsLocalNetwork = true) }
+    @Test fun `an address needing the local network at 2_0`() = rule.assertNoClippingAt(FONT_SCALE_20) { Address(needsLocalNetwork = true) }
 
     @Test fun `an address denied the local network at 2_0`() =
-        rule.assertClipFree(
-            FONT_20,
+        rule.assertNoClippingAt(
+            FONT_SCALE_20,
         ) { Address(error = SetupError.LocalNetworkDenied) }
 
-    @Test fun `an address that is not a server at 2_0`() = rule.assertClipFree(FONT_20) { Address(error = SetupError.NotSeerr) }
+    @Test fun `an address that is not a server at 2_0`() = rule.assertNoClippingAt(FONT_SCALE_20) { Address(error = SetupError.NotSeerr) }
 
-    @Test fun `an expired link at 2_0`() = rule.assertClipFree(FONT_20) { Address(error = SetupError.LinkExpired) }
+    @Test fun `an expired link at 2_0`() = rule.assertNoClippingAt(FONT_SCALE_20) { Address(error = SetupError.LinkExpired) }
 
-    @Test fun `a local sign-in at 1_3`() = rule.assertClipFree(FONT_13) { SignIn(SeerrSignInMode.Local, SetupError.Rejected) }
+    @Test fun `a local sign-in at 1_3`() = rule.assertNoClippingAt(FONT_SCALE_13) { SignIn(SeerrSignInMode.Local, SetupError.Rejected) }
 
-    @Test fun `a local sign-in at 2_0`() = rule.assertClipFree(FONT_20) { SignIn(SeerrSignInMode.Local, SetupError.Rejected) }
+    @Test fun `a local sign-in at 2_0`() = rule.assertNoClippingAt(FONT_SCALE_20) { SignIn(SeerrSignInMode.Local, SetupError.Rejected) }
 
     @Test fun `a sign-in with a reset notice at 2_0`() =
-        rule.assertClipFree(FONT_20) {
+        rule.assertNoClippingAt(FONT_SCALE_20) {
             SignIn(SeerrSignInMode.Local, notice = SetupNotice.ResetEmailSent)
         }
 
     @Test fun `a sign-in that came back rejected at 2_0`() =
-        rule.assertClipFree(FONT_20) {
+        rule.assertNoClippingAt(FONT_SCALE_20) {
             SignIn(SeerrSignInMode.ApiKey, notice = SetupNotice.SessionRejected)
         }
 
     @Test fun `a media server sign-in at 2_0`() =
-        rule.assertClipFree(FONT_20) {
+        rule.assertNoClippingAt(FONT_SCALE_20) {
             SignIn(SeerrSignInMode.Jellyfin, SetupError.HandOffSessionRejected)
         }
 
-    @Test fun `a plex sign-in at 2_0`() = rule.assertClipFree(FONT_20) { SignIn(SeerrSignInMode.Plex) }
+    @Test fun `a plex sign-in at 2_0`() = rule.assertNoClippingAt(FONT_SCALE_20) { SignIn(SeerrSignInMode.Plex) }
 
-    @Test fun `a quick connect sign-in at 2_0`() = rule.assertClipFree(FONT_20) { SignIn(SeerrSignInMode.QuickConnect) }
+    @Test fun `a quick connect sign-in at 2_0`() = rule.assertNoClippingAt(FONT_SCALE_20) { SignIn(SeerrSignInMode.QuickConnect) }
 
-    @Test fun `the consent question at 1_3`() = rule.assertClipFree(FONT_13) { ConsentScreen(onChoice = {}) }
+    @Test fun `the consent question at 1_3`() = rule.assertNoClippingAt(FONT_SCALE_13) { ConsentScreen(onChoice = {}) }
 
-    @Test fun `the consent question at 2_0`() = rule.assertClipFree(FONT_20) { ConsentScreen(onChoice = {}) }
+    @Test fun `the consent question at 2_0`() = rule.assertNoClippingAt(FONT_SCALE_20) { ConsentScreen(onChoice = {}) }
 
     @Test fun `the options hand-off at 1_3`() =
-        rule.assertClipFree(FONT_13) {
+        rule.assertNoClippingAt(FONT_SCALE_13) {
             Options(AdvancedRequestUiState.Ready(destination(), false, null))
         }
 
     @Test fun `the options hand-off at 2_0`() =
-        rule.assertClipFree(FONT_20) {
+        rule.assertNoClippingAt(FONT_SCALE_20) {
             Options(AdvancedRequestUiState.Ready(destination(), false, AdvancedRequestError.Rejected))
         }
 
     @Test fun `the options hand-off not connected at 2_0`() =
-        rule.assertClipFree(FONT_20) { Options(AdvancedRequestUiState.Failed(AdvancedRequestError.NotConnected)) }
+        rule.assertNoClippingAt(FONT_SCALE_20) { Options(AdvancedRequestUiState.Failed(AdvancedRequestError.NotConnected)) }
 
     @Composable
     private fun Address(

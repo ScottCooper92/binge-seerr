@@ -83,65 +83,74 @@ class TvPagesClippingTest {
     @get:Rule
     val rule = createSeerrKeyboardComposeRule()
 
-    @Test fun `a request detail page at 1_3`() = rule.assertTvClipFree(FONT_13) { RequestDetail() }
+    @Test fun `a request detail page at 1_3`() = rule.assertNoTvClippingAt(FONT_SCALE_13) { RequestDetail() }
 
-    @Test fun `a request detail page at 2_0`() = rule.assertTvClipFree(FONT_20) { RequestDetail() }
+    @Test fun `a request detail page at 2_0`() = rule.assertNoTvClippingAt(FONT_SCALE_20) { RequestDetail() }
 
-    @Test fun `an issue detail page at 1_3`() = rule.assertTvClipFree(FONT_13) { IssueDetail() }
+    @Test fun `an issue detail page at 1_3`() = rule.assertNoTvClippingAt(FONT_SCALE_13) { IssueDetail() }
 
-    @Test fun `an issue detail page at 2_0`() = rule.assertTvClipFree(FONT_20) { IssueDetail() }
+    @Test fun `an issue detail page at 2_0`() = rule.assertNoTvClippingAt(FONT_SCALE_20) { IssueDetail() }
 
-    @Test fun `the settings board at 1_3`() = rule.assertTvClipFree(FONT_13) { Settings() }
+    @Test fun `the settings board at 1_3`() = rule.assertNoTvClippingAt(FONT_SCALE_13) { Settings() }
 
-    @Test fun `the settings board at 2_0`() = rule.assertTvClipFree(FONT_20) { Settings() }
+    @Test fun `the settings board at 2_0`() = rule.assertNoTvClippingAt(FONT_SCALE_20) { Settings() }
 
-    @Test fun `the setup address page at 1_3`() = rule.assertTvClipFree(FONT_13) { SetupAddress() }
+    @Test fun `the setup address page at 1_3`() = rule.assertNoTvClippingAt(FONT_SCALE_13) { SetupAddress() }
 
-    @Test fun `the setup sign-in page at 1_3`() = rule.assertTvClipFree(FONT_13) { SetupSignIn(SeerrSignInMode.Local, SetupError.Rejected) }
+    @Test fun `the setup sign-in page at 1_3`() =
+        rule.assertNoTvClippingAt(FONT_SCALE_13) {
+            SetupSignIn(SeerrSignInMode.Local, SetupError.Rejected)
+        }
 
     @Test fun `the setup api key page at 1_3`() =
-        rule.assertTvClipFree(FONT_13) {
+        rule.assertNoTvClippingAt(FONT_SCALE_13) {
             SetupSignIn(SeerrSignInMode.ApiKey, notice = SetupNotice.SessionRejected)
         }
 
-    @Test fun `the consent question at 1_3`() = rule.assertTvClipFree(FONT_13) { TvConsentScreen(onChoice = {}) }
+    @Test fun `the consent question at 1_3`() = rule.assertNoTvClippingAt(FONT_SCALE_13) { TvConsentScreen(onChoice = {}) }
 
-    @Test fun `the consent question at 2_0`() = rule.assertTvClipFree(FONT_20) { TvConsentScreen(onChoice = {}) }
+    @Test fun `the consent question at 2_0`() = rule.assertNoTvClippingAt(FONT_SCALE_20) { TvConsentScreen(onChoice = {}) }
 
-    @Test fun `the options hand-off at 1_3`() = rule.assertTvClipFree(FONT_13) { Options(rejectedOptions) }
+    @Test fun `the options hand-off at 1_3`() = rule.assertNoTvClippingAt(FONT_SCALE_13) { Options(rejectedOptions) }
 
-    @Test fun `the options hand-off at 2_0`() = rule.assertTvClipFree(FONT_20) { Options(rejectedOptions) }
+    @Test fun `the options hand-off at 2_0`() = rule.assertNoTvClippingAt(FONT_SCALE_20) { Options(rejectedOptions) }
 
-    @Test fun `the error page at 1_3`() = rule.assertTvClipFree(FONT_13) { TvSeerrErrorPage(SeerrError.Unreachable, onRetry = {}) }
+    @Test fun `the error page at 1_3`() =
+        rule.assertNoTvClippingAt(
+            FONT_SCALE_13,
+        ) { TvSeerrErrorPage(SeerrError.Unreachable, onRetry = {}) }
 
-    @Test fun `the error page at 2_0`() = rule.assertTvClipFree(FONT_20) { TvSeerrErrorPage(SeerrError.Unreachable, onRetry = {}) }
+    @Test fun `the error page at 2_0`() =
+        rule.assertNoTvClippingAt(
+            FONT_SCALE_20,
+        ) { TvSeerrErrorPage(SeerrError.Unreachable, onRetry = {}) }
 
     @Test fun `the quick connect plate at 1_3`() =
-        rule.assertTvClipFree(FONT_13) {
+        rule.assertNoTvClippingAt(FONT_SCALE_13) {
             TvSetupLinkPlate(LinkFlow.QuickConnect(code = "472913"), onCancel = {})
         }
 
     @Test fun `the quick connect plate at 2_0`() =
-        rule.assertTvClipFree(FONT_20) {
+        rule.assertNoTvClippingAt(FONT_SCALE_20) {
             TvSetupLinkPlate(LinkFlow.QuickConnect(code = "472913"), onCancel = {})
         }
 
     @Test fun `the plex plate at 2_0`() =
-        rule.assertTvClipFree(FONT_20) {
+        rule.assertNoTvClippingAt(FONT_SCALE_20) {
             TvSetupLinkPlate(LinkFlow.Plex(code = "JKLM", authUrl = "https://app.plex.tv/auth", launchPending = false), onCancel = {})
         }
 
-    @Test fun `the mark as sheet at 1_3`() = rule.assertTvClipFree(FONT_13) { Sheet { MarkAs() } }
+    @Test fun `the mark as sheet at 1_3`() = rule.assertNoTvClippingAt(FONT_SCALE_13) { Sheet { MarkAs() } }
 
-    @Test fun `the mark as sheet at 2_0`() = rule.assertTvClipFree(FONT_20) { Sheet { MarkAs() } }
+    @Test fun `the mark as sheet at 2_0`() = rule.assertNoTvClippingAt(FONT_SCALE_20) { Sheet { MarkAs() } }
 
-    @Test fun `the report sheet at 1_3`() = rule.assertTvClipFree(FONT_13) { Sheet { Report() } }
+    @Test fun `the report sheet at 1_3`() = rule.assertNoTvClippingAt(FONT_SCALE_13) { Sheet { Report() } }
 
-    @Test fun `the report sheet at 2_0`() = rule.assertTvClipFree(FONT_20) { Sheet { Report() } }
+    @Test fun `the report sheet at 2_0`() = rule.assertNoTvClippingAt(FONT_SCALE_20) { Sheet { Report() } }
 
-    @Test fun `the bug report page at 1_3`() = rule.assertTvClipFree(FONT_13) { Settings(showBugReport = true) }
+    @Test fun `the bug report page at 1_3`() = rule.assertNoTvClippingAt(FONT_SCALE_13) { Settings(showBugReport = true) }
 
-    @Test fun `the bug report page at 2_0`() = rule.assertTvClipFree(FONT_20) { Settings(showBugReport = true) }
+    @Test fun `the bug report page at 2_0`() = rule.assertNoTvClippingAt(FONT_SCALE_20) { Settings(showBugReport = true) }
 
     @Composable
     private fun Sheet(content: @Composable ColumnScope.() -> Unit) {

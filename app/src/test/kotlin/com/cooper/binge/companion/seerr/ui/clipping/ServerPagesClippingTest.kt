@@ -43,17 +43,17 @@ class ServerPagesClippingTest {
     @get:Rule
     val rule = createSeerrComposeRule()
 
-    @Test fun `the network page at 1_3`() = rule.assertClipFree(FONT_13) { NetworkPage() }
+    @Test fun `the network page at 1_3`() = rule.assertNoClippingAt(FONT_SCALE_13) { NetworkPage() }
 
-    @Test fun `the network page at 2_0`() = rule.assertClipFree(FONT_20) { NetworkPage() }
+    @Test fun `the network page at 2_0`() = rule.assertNoClippingAt(FONT_SCALE_20) { NetworkPage() }
 
-    @Test fun `the about page at 1_3`() = rule.assertClipFree(FONT_13) { AboutPage() }
+    @Test fun `the about page at 1_3`() = rule.assertNoClippingAt(FONT_SCALE_13) { AboutPage() }
 
-    @Test fun `the about page at 2_0`() = rule.assertClipFree(FONT_20) { AboutPage() }
+    @Test fun `the about page at 2_0`() = rule.assertNoClippingAt(FONT_SCALE_20) { AboutPage() }
 
-    @Test fun `the cache page at 1_3`() = rule.assertClipFree(FONT_13) { CachePage() }
+    @Test fun `the cache page at 1_3`() = rule.assertNoClippingAt(FONT_SCALE_13) { CachePage() }
 
-    @Test fun `the cache page at 2_0`() = rule.assertClipFree(FONT_20) { CachePage() }
+    @Test fun `the cache page at 2_0`() = rule.assertNoClippingAt(FONT_SCALE_20) { CachePage() }
 
     @androidx.compose.runtime.Composable
     private fun NetworkPage() {

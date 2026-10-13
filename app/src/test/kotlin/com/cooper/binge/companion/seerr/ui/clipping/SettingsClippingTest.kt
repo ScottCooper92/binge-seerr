@@ -41,11 +41,11 @@ class SettingsClippingTest {
     @get:Rule
     val rule = createSeerrComposeRule()
 
-    private fun check(fontScale: Float) = rule.assertClipFree(fontScale) { SettingsScreen(state = worstCase(), actions = noActions()) }
+    private fun check(fontScale: Float) = rule.assertNoClippingAt(fontScale) { SettingsScreen(state = worstCase(), actions = noActions()) }
 
-    @Test fun `the settings page at 1_3`() = check(FONT_13)
+    @Test fun `the settings page at 1_3`() = check(FONT_SCALE_13)
 
-    @Test fun `the settings page at 2_0`() = check(FONT_20)
+    @Test fun `the settings page at 2_0`() = check(FONT_SCALE_20)
 
     private fun worstCase() =
         SettingsUiState.Ready(

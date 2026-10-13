@@ -65,21 +65,21 @@ class TvBoardsClippingTest {
     @get:Rule
     val rule = createSeerrKeyboardComposeRule()
 
-    @Test fun `an unreachable hub at 1_3`() = rule.assertTvClipFree(FONT_13) { Hub(ConnectionHealth.Unreachable) }
+    @Test fun `an unreachable hub at 1_3`() = rule.assertNoTvClippingAt(FONT_SCALE_13) { Hub(ConnectionHealth.Unreachable) }
 
-    @Test fun `an unreachable hub at 2_0`() = rule.assertTvClipFree(FONT_20) { Hub(ConnectionHealth.Unreachable) }
+    @Test fun `an unreachable hub at 2_0`() = rule.assertNoTvClippingAt(FONT_SCALE_20) { Hub(ConnectionHealth.Unreachable) }
 
-    @Test fun `the requests board at 1_3`() = rule.assertTvClipFree(FONT_13) { RequestsBoard() }
+    @Test fun `the requests board at 1_3`() = rule.assertNoTvClippingAt(FONT_SCALE_13) { RequestsBoard() }
 
-    @Test fun `the requests board at 2_0`() = rule.assertTvClipFree(FONT_20) { RequestsBoard() }
+    @Test fun `the requests board at 2_0`() = rule.assertNoTvClippingAt(FONT_SCALE_20) { RequestsBoard() }
 
-    @Test fun `the issues board at 1_3`() = rule.assertTvClipFree(FONT_13) { IssuesBoard() }
+    @Test fun `the issues board at 1_3`() = rule.assertNoTvClippingAt(FONT_SCALE_13) { IssuesBoard() }
 
-    @Test fun `the issues board at 2_0`() = rule.assertTvClipFree(FONT_20) { IssuesBoard() }
+    @Test fun `the issues board at 2_0`() = rule.assertNoTvClippingAt(FONT_SCALE_20) { IssuesBoard() }
 
-    @Test fun `the account board at 1_3`() = rule.assertTvClipFree(FONT_13) { Account() }
+    @Test fun `the account board at 1_3`() = rule.assertNoTvClippingAt(FONT_SCALE_13) { Account() }
 
-    @Test fun `the account board at 2_0`() = rule.assertTvClipFree(FONT_20) { Account() }
+    @Test fun `the account board at 2_0`() = rule.assertNoTvClippingAt(FONT_SCALE_20) { Account() }
 
     private fun longRequest(index: Int) =
         request(
