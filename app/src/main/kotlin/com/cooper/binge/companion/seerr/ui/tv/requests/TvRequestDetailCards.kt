@@ -42,11 +42,12 @@ internal data class TvInfoCardItem(
     val value: String,
 )
 
-/** The request's facts, each dropped when the server named nothing for it. */
+/** The request's facts, each dropped when the server named nothing for it. [requesterSheetOffered] is whether the page has the requester's sheet. */
 @Composable
 internal fun requestInfoCards(
     detail: RequestDetail,
     now: Long,
+    requesterSheetOffered: Boolean = false,
 ): List<TvInfoCardItem> {
     val item = detail.item
     val separator = stringResource(R.string.hub_meta_separator)
@@ -66,7 +67,7 @@ internal fun requestInfoCards(
             ?.takeIf { it.isNotEmpty() }
             ?.let { TvInfoCardItem(stringResource(R.string.tv_detail_info_sent_to), it) },
         destination?.tagsLabel?.let { TvInfoCardItem(stringResource(R.string.request_tags), it) },
-        phoneOnlyCard(detail),
+        phoneOnlyCard(detail, requesterSheetOffered),
     )
 }
 

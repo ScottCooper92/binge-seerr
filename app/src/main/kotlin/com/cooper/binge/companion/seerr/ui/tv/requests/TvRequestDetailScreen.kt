@@ -3,6 +3,7 @@ package com.cooper.binge.companion.seerr.ui.tv.requests
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
@@ -73,6 +74,11 @@ internal class TvRequestDetailActions(
     val onDismissReport: () -> Unit,
     /** Null hides Edit: a surface with no editor behind it has nothing to open. */
     val edit: TvRequestEditActions? = null,
+    /**
+     * The requester's sheet, given the requester's id, whether the request is a movie, and the sheet's entry focus. The
+     * app's entry passes one over the user's own editors; null leaves the page without it, as a test does.
+     */
+    val requesterSheet: (@Composable ColumnScope.(userId: Int, isMovie: Boolean, entryFocus: FocusRequester) -> Unit)? = null,
 )
 
 /** Opening the request's editor, and what its sheet may ask of it once open. */
@@ -190,7 +196,7 @@ private fun TvRequestDetailContent(
         }
     }
     // Resolved here: the section builder below is not composable, so it cannot read resources itself.
-    val infoCards = requestInfoCards(detail, now)
+    val infoCards = requestInfoCards(detail, now, requesterSheetOffered = offersRequesterSheet(detail) && actions.requesterSheet != null)
     Box(modifier = Modifier.fillMaxSize()) {
         TvDetailPage(
             entryFocus = if (actionList.isEmpty()) synopsisFocus else actionRowFocus,
@@ -363,4 +369,5 @@ private fun TvRequestDetailActions.markingRefocus(mark: () -> Unit) =
         onReportIssue = onReportIssue,
         onDismissReport = onDismissReport,
         edit = edit,
+        requesterSheet = requesterSheet,
     )

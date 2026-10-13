@@ -8,6 +8,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.ReportProblem
 import androidx.compose.runtime.Composable
@@ -25,9 +26,10 @@ import com.cooper.binge.companion.seerr.ui.requests.canOpenUser
  * actions last: block (reversible, an outline) and then remove (irreversible, solid).
  *
  * The TV page is a deliberate subset of the phone's (#1036). It moderates, edits the request, marks the title's state and
- * reports an issue. A request's tags, its requester's page and the title's other requests stay on the phone: each needs
- * a picker or a page this surface has no room for. The details row says so where they apply
- * ([phoneOnlyCard]), so a missing control reads as a decision rather than a gap.
+ * reports an issue. A request's tags, its requester's full page and the title's other requests stay on the phone: each
+ * needs a picker or a page this surface has no room for. The details row says so where they apply
+ * ([phoneOnlyCard]), so a missing control reads as a decision rather than a gap. A manager gets the requester's
+ * quick controls in a sheet of their own (#1516).
  */
 @Composable
 internal fun requestDetailActions(
@@ -46,6 +48,7 @@ internal fun requestDetailActions(
     val editLabel = stringResource(R.string.tv_detail_edit)
     val markLabel = stringResource(R.string.media_mark_as)
     val reportLabel = stringResource(R.string.issue_report_title)
+    val requesterLabel = stringResource(R.string.tv_detail_requester)
     return buildList {
         if (allowed.canRetry) add(TvDetailAction(retryLabel, Icons.Filled.Refresh, onClick = actions.onRetryRequest, isPrimary = true))
         if (allowed.canApprove) add(TvDetailAction(approveLabel, Icons.Filled.Check, onClick = actions.onApprove, isPrimary = true))
@@ -72,6 +75,9 @@ internal fun requestDetailActions(
         }
         if (detail.canReportIssue && detail.mediaId != null) {
             add(sheetAction(reportLabel, Icons.Filled.ReportProblem, DetailSheet.Report, onOpenSheet, sheetFocus))
+        }
+        if (offersRequesterSheet(detail) && actions.requesterSheet != null) {
+            add(sheetAction(requesterLabel, Icons.Filled.Person, DetailSheet.Requester, onOpenSheet, sheetFocus))
         }
         actions.onOpenInBinge?.let { add(TvDetailAction(openLabel, Icons.AutoMirrored.Filled.OpenInNew, onClick = it)) }
         if (allowed.canBlock) {
@@ -114,12 +120,16 @@ private fun sheetAction(
  * other requests. Null when none of them applies.
  */
 @Composable
-internal fun phoneOnlyCard(detail: RequestDetail): TvInfoCardItem? {
+internal fun phoneOnlyCard(
+    detail: RequestDetail,
+    requesterSheetOffered: Boolean,
+): TvInfoCardItem? {
     val parts =
         listOfNotNull(
             stringResource(R.string.tv_detail_phone_tags).takeIf { detail.canEdit && detail.canEditDestination },
+            // Where the requester has a sheet here, the sheet itself says the rest is on the phone.
             stringResource(R.string.tv_detail_phone_requester).takeIf {
-                canOpenUser(detail.item.requestedById, detail.viewerId, detail.canManageUsers)
+                !requesterSheetOffered && canOpenUser(detail.item.requestedById, detail.viewerId, detail.canManageUsers)
             },
             stringResource(R.string.tv_detail_phone_siblings).takeIf { detail.siblings.isNotEmpty() },
         )

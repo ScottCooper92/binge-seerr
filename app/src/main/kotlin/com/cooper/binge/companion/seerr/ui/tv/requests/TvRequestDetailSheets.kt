@@ -33,14 +33,18 @@ import com.cooper.binge.companion.seerr.ui.requests.MediaInstance
 import com.cooper.binge.companion.seerr.ui.requests.MediaRecord
 import com.cooper.binge.companion.seerr.ui.requests.MediaStatusChoice
 import com.cooper.binge.companion.seerr.ui.requests.RequestItem
+import com.cooper.binge.companion.seerr.ui.requests.RequestMediaType
 import com.cooper.binge.companion.seerr.ui.requests.icon
 import com.cooper.binge.companion.seerr.ui.requests.labelRes
 import com.cooper.binge.companion.seerr.ui.tv.TvFormNote
 import com.cooper.binge.companion.seerr.ui.tv.TvFormNoteTone
 import com.binge.designsystem.R as DesR
 
-/** What the page opens over itself: the two confirm dialogs, and the sheets for editing the request, marking the title's state and reporting an issue. */
-internal enum class DetailSheet { Remove, Block, Edit, MarkAs, Report }
+/**
+ * What the page opens over itself: the two confirm dialogs, and the sheets for editing the request, marking the title's
+ * state, reporting an issue and the requester's quick controls.
+ */
+internal enum class DetailSheet { Remove, Block, Edit, MarkAs, Report, Requester }
 
 /** What the sheets read from the page: the request, its title's record, the open editor and the issue report. */
 internal class TvDetailSheetContent(
@@ -140,6 +144,14 @@ internal fun TvRequestDetailSheet(
         DetailSheet.Report ->
             TvSideSheet(onDismissRequest = dismiss) { entryFocus ->
                 TvReportIssueStep(content.report, draft, actions, onDone = dismiss, entryFocus = entryFocus)
+            }
+        DetailSheet.Requester ->
+            TvSideSheet(onDismissRequest = dismiss) { entryFocus ->
+                val sheet = actions.requesterSheet
+                val requester = content.item.requestedById
+                if (sheet != null && requester != null) {
+                    sheet(requester, content.item.mediaType == RequestMediaType.Movie, entryFocus)
+                }
             }
     }
 }
