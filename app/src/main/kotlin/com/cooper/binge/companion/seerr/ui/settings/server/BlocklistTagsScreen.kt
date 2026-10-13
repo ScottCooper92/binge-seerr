@@ -40,9 +40,8 @@ import com.binge.designsystem.template.ScreenBar
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
 import com.cooper.binge.companion.seerr.ui.state.LoadingScreen
-import com.cooper.binge.companion.seerr.ui.state.SaveFailedSnackbar
-import com.cooper.binge.companion.seerr.ui.state.SaveStatusLine
 import com.cooper.binge.companion.seerr.ui.state.SearchResultRow
+import com.cooper.binge.companion.seerr.ui.state.formSaveStatus
 import com.binge.designsystem.R as DesR
 
 /** What the blocklisted tags page asks of its view model. */
@@ -67,20 +66,13 @@ fun BlocklistTagsScreen(
 ) {
     val snackbar = remember { SnackbarHostState() }
     val ready = state as? BlocklistTagsUiState.Ready
-    SaveFailedSnackbar(
-        failed = ready?.saveFailed == true,
-        snackbarHostState = snackbar,
-        message = stringResource(R.string.server_settings_blocklist_tags_save_failed),
-        retryLabel = stringResource(R.string.server_settings_blocklist_tags_retry),
-        onRetry = actions.onRetry,
-    )
     FormScreen(
         title = stringResource(R.string.server_settings_blocklist_tags),
         onBack = actions.onBack,
         bar = ScreenBar.Small,
         snackbarHostState = snackbar,
         scrolling = false,
-        extraActions = { ready?.let { SaveStatusLine(status = it.saveStatus, failed = it.saveFailed) } },
+        saveStatus = ready?.let { formSaveStatus(it.saveStatus, it.saveFailed, actions.onRetry) },
         notReady =
             when (state) {
                 BlocklistTagsUiState.Loading -> { inner -> LoadingScreen(Modifier.padding(inner)) }
