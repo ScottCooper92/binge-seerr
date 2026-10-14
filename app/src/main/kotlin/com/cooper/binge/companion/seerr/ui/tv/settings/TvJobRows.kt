@@ -14,8 +14,8 @@ import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.settings.ServerSummary
 import com.cooper.binge.companion.seerr.ui.settings.labelRes
 import com.cooper.binge.companion.seerr.ui.settings.server.JobsUiState
-import com.cooper.binge.companion.seerr.ui.settings.server.MEDIA_SERVER_SCAN_JOB_ID
 import com.cooper.binge.companion.seerr.ui.settings.server.ServerJob
+import com.cooper.binge.companion.seerr.ui.settings.server.mediaServerScanJobId
 
 /** What a television can do to a scheduled job: start it, or stop it while it runs. */
 internal class TvJobActions(
@@ -78,8 +78,9 @@ internal fun mediaServerGroup(
     jobs: TvJobs,
     now: Long,
 ): TvPaneGroup {
-    val job = jobs.state.jobOrNull(MEDIA_SERVER_SCAN_JOB_ID)
-    val status = jobs.state.statusOf(MEDIA_SERVER_SCAN_JOB_ID)
+    val scanId = mediaServerScanJobId((jobs.state as? JobsUiState.Ready)?.jobs, server.mediaServer)
+    val job = jobs.state.jobOrNull(scanId)
+    val status = jobs.state.statusOf(scanId)
     val running = job?.running == true
     val line = if (status != TvJobStatus.Idle || running) jobLine(job, status, now) else null
     return TvPaneGroup(
@@ -98,13 +99,13 @@ internal fun mediaServerGroup(
                                 TvPaneOption(
                                     label = stringResource(R.string.tv_settings_cancel_library_scan),
                                     icon = Icons.Filled.Cancel,
-                                    onSelect = { jobs.actions.onCancel(MEDIA_SERVER_SCAN_JOB_ID) },
+                                    onSelect = { jobs.actions.onCancel(scanId) },
                                 )
                             } else {
                                 TvPaneOption(
                                     label = stringResource(R.string.tv_settings_start_library_scan),
                                     icon = Icons.Filled.PlayArrow,
-                                    onSelect = { jobs.actions.onRun(MEDIA_SERVER_SCAN_JOB_ID) },
+                                    onSelect = { jobs.actions.onRun(scanId) },
                                 )
                             },
                         ),

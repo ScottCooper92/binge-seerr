@@ -16,7 +16,7 @@ import com.cooper.binge.companion.seerr.ui.settings.SettingsUiState
 import com.cooper.binge.companion.seerr.ui.settings.SystemInfo
 import com.cooper.binge.companion.seerr.ui.settings.server.JobInterval
 import com.cooper.binge.companion.seerr.ui.settings.server.JobsUiState
-import com.cooper.binge.companion.seerr.ui.settings.server.MEDIA_SERVER_SCAN_JOB_ID
+import com.cooper.binge.companion.seerr.ui.settings.server.PLEX_FULL_SCAN_JOB_ID
 import com.cooper.binge.companion.seerr.ui.settings.server.ServerJob
 import com.cooper.binge.companion.seerr.ui.tv.SampleSettings
 import com.cooper.binge.companion.seerr.ui.tv.SampleSettingsAdmin
@@ -32,7 +32,7 @@ private fun jobsReady(
 ) = JobsUiState.Ready(
     jobs =
         listOf(
-            ServerJob(MEDIA_SERVER_SCAN_JOB_ID, "Plex Full Library Scan", JobInterval.Long, scanRunning, null),
+            ServerJob(PLEX_FULL_SCAN_JOB_ID, "Plex Full Library Scan", JobInterval.Long, scanRunning, null),
             ServerJob(SYNC_JOB_ID, "Download Sync", JobInterval.Short, syncRunning, FIXED_NOW_MILLIS + 3 * 60 * 60_000L),
         ),
     busyIds = busy,
@@ -91,7 +91,7 @@ class TvSettingsScreenshotTest {
     @SeerrTvScreenPreviews
     @Composable
     fun ScanBusy() {
-        Sheet(SampleSettingsAdmin, page = mediaServerPage(), jobs = jobsReady(busy = setOf(MEDIA_SERVER_SCAN_JOB_ID)))
+        Sheet(SampleSettingsAdmin, page = mediaServerPage(), jobs = jobsReady(busy = setOf(PLEX_FULL_SCAN_JOB_ID)))
     }
 
     /** A call the server refused or that could not be sent: kept on the row until the next attempt. */
@@ -99,7 +99,7 @@ class TvSettingsScreenshotTest {
     @SeerrTvScreenPreviews
     @Composable
     fun ScanFailed() {
-        Sheet(SampleSettingsAdmin, page = mediaServerPage(), jobs = jobsReady(failed = setOf(MEDIA_SERVER_SCAN_JOB_ID)))
+        Sheet(SampleSettingsAdmin, page = mediaServerPage(), jobs = jobsReady(failed = setOf(PLEX_FULL_SCAN_JOB_ID)))
     }
 
     /** The System group, once the jobs list is in: each job a row that opens its own page. */
