@@ -40,6 +40,9 @@ import org.robolectric.annotation.Config
 private val BAR_CLEARANCE = 120.dp
 private const val OVERLAY = "overlay"
 
+/** The shell's two tabs today, the start tab first. */
+private val BothTabs = listOf(TvDestination.Hub, TvDestination.Issues)
+
 /**
  * The top bar under a real D-pad: where focus starts, that Up reaches the current tab, that choosing a tab leaves focus on
  * it, how Back walks from a page to the bar and from Issues to Home, that a sheet hands focus back to what opened it, and
@@ -52,7 +55,10 @@ class TvHomeShellFocusTest {
     @get:Rule
     val composeTestRule = createSeerrKeyboardAndroidComposeRule<ComponentActivity>()
 
-    private var tab by mutableStateOf(TvDestination.Hub)
+    private var chosenTab by mutableStateOf(TvDestination.Hub)
+    private var tabs by mutableStateOf(BothTabs)
+    private val pages = TvOpenPages()
+    private val tab get() = chosenTab.takeIf { it in tabs } ?: tabs.first()
     private var sheet by mutableStateOf<TvDestination?>(null)
     private var overlayShown by mutableStateOf(false)
     private val selections = mutableListOf<TvDestination>()
@@ -177,31 +183,90 @@ class TvHomeShellFocusTest {
         assertEquals(false, handled)
     }
 
-    /** An account the server will not list issues for gets no Issues tab (#1054). */
+    /** With one tab offered there is nothing to choose between, so the bar shows no tabs at all, only the avatar and the gear. */
     @Test
-    fun withoutIssuesTheBarHasNoIssuesTab() {
-        setShell(showIssues = false)
+    fun withOneTabTheBarShowsNoTabs() {
+        setShell(offered = listOf(BothTabs.first()))
 
-        composeTestRule.onAllNodes(hasContentDescription(string(R.string.hub_section_issues))).assertCountEquals(0)
+        BothTabs.forEach { composeTestRule.onAllNodes(hasContentDescription(string(it.labelRes))).assertCountEquals(0) }
+        item(R.string.tv_rail_account).assertExists()
+        item(R.string.hub_section_settings).assertExists()
+    }
+
+    @Test
+    fun withOneTabBackOnAPageMovesFocusToTheAvatar() {
+        setShell(offered = listOf(BothTabs.first()))
+
+        pressBack()
+
+        item(R.string.tv_rail_account).assertIsFocused()
+    }
+
+    @Test
+    fun withOneTabUpFromThePageLandsOnTheAvatar() {
+        setShell(offered = listOf(BothTabs.first()))
+
+        press(Key.DirectionUp)
+
+        item(R.string.tv_rail_account).assertIsFocused()
+    }
+
+    /** On the avatar of a one-tab bar the user is already on the start tab, so Back leaves the app. */
+    @Test
+    fun withOneTabBackOnTheBarIsNotHandled() {
+        setShell(offered = listOf(BothTabs.first()))
+        pressBack()
+        item(R.string.tv_rail_account).assertIsFocused()
+
+        val handled = composeTestRule.runOnUiThread { composeTestRule.activity.onBackPressedDispatcher.hasEnabledCallbacks() }
+
+        assertEquals(false, handled)
+    }
+
+    /**
+     * A tab withdrawn while it shows (a permission change, a reconnect as someone else) hands over to the start tab, and focus
+     * lands on its page rather than staying with the page that went.
+     */
+    @Test
+    fun aWithdrawnTabHandsOverToTheStartTabWithFocusOnItsPage() {
+        val start = BothTabs.first()
+        val other = BothTabs.last()
+        setShell()
+        press(Key.DirectionUp)
+        press(Key.DirectionRight)
+        press(Key.Enter)
+        press(Key.DirectionDown)
+        content(other).assertIsFocused()
+
+        tabs = listOf(start)
+        composeTestRule.waitForIdle()
+        composeTestRule.settleShellHandOff()
+
+        assertEquals(start, chosenTab)
+        content(other).assertDoesNotExist()
+        content(start).assertIsFocused()
     }
 
     private fun setShell(
-        showIssues: Boolean = true,
+        offered: List<TvDestination> = BothTabs,
         tabsResolved: Boolean = true,
         overlay: Boolean = false,
     ) {
         overlayShown = overlay
+        tabs = offered
         composeTestRule.setContent {
+            // The connected shell's reconcile, as TvConnectedShell runs it over the offered tabs.
+            LaunchedEffect(tabs) { chosenTab = pages.reconcile(chosenTab, tabs) }
             BingeTvTheme {
                 TvHomeShell(
                     tab = tab,
                     sheet = sheet,
                     onSelectTab = { selected ->
-                        if (selected == tab) selections += selected else tab = selected
+                        if (selected == tab) selections += selected else chosenTab = selected
                     },
                     onOpenSheet = { sheet = it },
                     onCloseSheet = { sheet = null },
-                    showIssues = showIssues,
+                    tabs = tabs,
                     tabsResolved = tabsResolved,
                     overlay = if (overlayShown) ({ Claiming(OVERLAY) }) else null,
                 ) { destination, _ ->

@@ -62,7 +62,7 @@ private val PreviewBarAccount = TvTopBarAccount(name = "Scott Cooper", avatarUrl
  * The television account sheet: the profile as one card with a line per request quota (one spent, one part used; or both
  * unlimited) over Sign out, and none for a key connection; the confirm Sign out asks; the sheets before the account is
  * known; and the top bar over Home: the avatar, the Home
- * and Issues tabs, and the Settings gear. The user's own requests are a row on Home, framed on `TvRequestsScreenshotTest`.
+ * and Issues tabs, and the Settings gear, or the avatar and the gear alone when only one tab is offered. The user's own requests are a row on Home, framed on `TvRequestsScreenshotTest`.
  */
 
 class TvAccountScreenshotTest {
@@ -134,18 +134,18 @@ class TvAccountScreenshotTest {
         }
     }
 
-    /** A server with issues turned off, or a viewer who may not see them: the top row has no Issues button. */
+    /** One tab offered (a server with issues turned off, or a viewer who may not see them): the bar shows no tabs, only the avatar and the gear. */
     @PreviewTest
     @SeerrTvScreenPreviews
     @Composable
-    fun HomeTopRowWithoutIssues() {
+    fun HomeTopRowOneTab() {
         TvHomeShell(
             tab = TvDestination.Hub,
             sheet = null,
             onSelectTab = {},
             onOpenSheet = {},
             onCloseSheet = {},
-            showIssues = false,
+            tabs = listOf(TvDestination.Hub),
             account = PreviewBarAccount,
         ) { _, _ ->
             Box(modifier = Modifier.fillMaxSize())
