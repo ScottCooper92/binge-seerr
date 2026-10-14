@@ -1319,4 +1319,13 @@
     <string name="companion_refusal_quota">You\'ve reached your request limit on this server. Try again once it resets.</string>
     <string name="companion_refusal_blocklisted">This title is on the server\'s blocklist, so it can\'t be requested.</string>
     <string name="companion_refusal_locale">en</string>
+    <string name="tv_settings_open_job">Open</string>
+    <string name="tv_settings_group_household">Household</string>
+    <string name="tv_settings_household_note">Each switch saves as you press it.</string>
+    <string name="tv_settings_agents_note">Switch an agent on or off here. Its details are changed on your phone.</string>
+    <string name="tv_settings_agent_unavailable">This agent\'s settings couldn\'t be read. Try again from your phone.</string>
+    <string name="tv_settings_agent_setup_first">This agent can\'t send until it is set up. Finish that on your phone.</string>
+    <string name="tv_settings_agent_body">Switch this agent on or off. Its details are changed on your phone.</string>
+    <string name="tv_settings_agent_turn_on">Turn on</string>
+    <string name="tv_settings_agent_turn_off">Turn off</string>
 </resources>

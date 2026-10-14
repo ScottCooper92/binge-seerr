@@ -17,6 +17,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
+import com.binge.designsystem.tv.component.TvSaveStatus
 import com.binge.designsystem.tv.component.TvSideSheetBody
 import com.binge.designsystem.tv.component.TvSideSheetConfirm
 import com.binge.designsystem.tv.component.TvSideSheetNav
@@ -72,22 +73,20 @@ internal fun TvSettingsSheet(
         when {
             ready == null -> LoadingPage(nav)
             nav.page.startsWith(PAGE_JOB_PREFIX) ->
-                JobPage(
-                    nav,
-                    TvJobs(jobs, actions.jobs, onOpenJob = {
-                    }),
-                    nav.page.removePrefix(PAGE_JOB_PREFIX),
-                    ready.now,
-                )
+                JobPage(nav, jobs, actions.jobs, nav.page.removePrefix(PAGE_JOB_PREFIX), ready.now)
+            nav.page.agentOrNull() != null && actions.agents != null ->
+                actions.agents.page(this, checkNotNull(nav.page.agentOrNull()), nav)
             nav.page == PAGE_DISCONNECT -> DisconnectPage(nav, onDisconnect = actions.onDisconnect)
             nav.page == PAGE_BUG_REPORT && ready.app != null -> BugReportPage(nav, ready.app)
             else -> {
                 val tvJobs =
                     TvJobs(jobs, actions.jobs, onOpenJob = { id -> nav.push(jobPage(id), openedBy = "$KEY_JOB_PREFIX$id") })
+                val agents =
+                    actions.agents?.opening { agent -> nav.push(agentPage(agent), openedBy = "$KEY_AGENT_PREFIX${agent.segment}") }
                 val groups =
-                    tvSettingGroups(ready, actions, tvJobs, hub, onShowBugReport = { nav.push(PAGE_BUG_REPORT, KEY_REPORT_BUG) })
+                    tvSettingGroups(ready, actions, tvJobs, hub, onShowBugReport = { nav.push(PAGE_BUG_REPORT, KEY_REPORT_BUG) }, agents)
                 val group = groups.firstOrNull { groupPage(it.title) == nav.page }
-                if (group != null) GroupPage(nav, group) else RootPage(nav, groups)
+                if (group != null) GroupPage(nav, group, actions.household) else RootPage(nav, groups)
             }
         }
     }
@@ -130,6 +129,7 @@ private fun ColumnScope.RootPage(
 private fun ColumnScope.GroupPage(
     nav: TvSideSheetNav,
     group: TvPaneGroup,
+    household: TvHousehold?,
 ) {
     TvSideSheetTitle(group.title)
     group.note?.let { TvSideSheetBody(it) }
@@ -137,6 +137,8 @@ private fun ColumnScope.GroupPage(
         group.rows.forEach { SettingsRow(it, nav) }
         TvSideSheetRow(label = stringResource(DesR.string.cd_navigate_back), onClick = nav::pop, modifier = nav.row(KEY_BACK))
     }
+    // Pinned under the rows, not among them, so a long page scrolls under it rather than carrying it out of sight.
+    if (household != null && group.isHousehold()) TvSaveStatus(status = household.status, onRetry = household.onRetry)
 }
 
 /** A page's rows in a column that scrolls with focus, since a group can hold more than the panel is tall. */
@@ -182,12 +184,13 @@ private fun SettingsRow(
 @Composable
 private fun ColumnScope.JobPage(
     nav: TvSideSheetNav,
-    jobs: TvJobs,
+    jobs: JobsUiState,
+    actions: TvJobActions,
     id: String,
     now: Long,
 ) {
-    val job = jobs.state.jobOrNull(id)
-    val status = jobs.state.statusOf(id)
+    val job = jobs.jobOrNull(id)
+    val status = jobs.statusOf(id)
     val running = job?.running == true
     TvSideSheetTitle(job?.name ?: stringResource(R.string.settings_group_system))
     TvSideSheetBody(stringResource(R.string.tv_settings_job_body))
@@ -197,7 +200,7 @@ private fun ColumnScope.JobPage(
             label = stringResource(if (running) R.string.server_settings_job_cancel else R.string.server_settings_job_run),
             icon = if (running) Icons.Filled.Cancel else Icons.Filled.PlayArrow,
             enabled = status != TvJobStatus.Busy,
-            onClick = { if (running) jobs.actions.onCancel(id) else jobs.actions.onRun(id) },
+            onClick = { if (running) actions.onCancel(id) else actions.onRun(id) },
             modifier = nav.row(KEY_ACTION),
         )
     }

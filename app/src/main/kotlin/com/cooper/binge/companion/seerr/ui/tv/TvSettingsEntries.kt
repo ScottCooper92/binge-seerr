@@ -3,6 +3,7 @@ package com.cooper.binge.companion.seerr.ui.tv
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -14,6 +15,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.tv.material3.MaterialTheme
+import com.binge.designsystem.tv.component.TvSideSheetNav
+import com.cooper.binge.companion.seerr.ui.ScopedViewModels
 import com.cooper.binge.companion.seerr.ui.SetupViewModel
 import com.cooper.binge.companion.seerr.ui.hub.HubUiState
 import com.cooper.binge.companion.seerr.ui.hub.HubViewModel
@@ -22,9 +25,18 @@ import com.cooper.binge.companion.seerr.ui.rememberEnteredEditingGuard
 import com.cooper.binge.companion.seerr.ui.settings.SettingsUiState
 import com.cooper.binge.companion.seerr.ui.settings.SettingsViewModel
 import com.cooper.binge.companion.seerr.ui.settings.server.JobsViewModel
+import com.cooper.binge.companion.seerr.ui.settings.server.NotificationAgentViewModel
+import com.cooper.binge.companion.seerr.ui.settings.server.NotificationAgentsViewModel
+import com.cooper.binge.companion.seerr.ui.settings.server.ServerAgent
+import com.cooper.binge.companion.seerr.ui.settings.server.ServerGeneralViewModel
+import com.cooper.binge.companion.seerr.ui.tv.settings.TvAgentPage
+import com.cooper.binge.companion.seerr.ui.tv.settings.TvAgents
+import com.cooper.binge.companion.seerr.ui.tv.settings.TvHousehold
 import com.cooper.binge.companion.seerr.ui.tv.settings.TvJobActions
 import com.cooper.binge.companion.seerr.ui.tv.settings.TvSettingsActions
 import com.cooper.binge.companion.seerr.ui.tv.settings.TvSettingsSheet
+import com.cooper.binge.companion.seerr.ui.users.settings.ExtrasEditorUiState
+import com.cooper.binge.companion.seerr.ui.users.settings.toEditorUiState
 
 /**
  * The settings sheet over Home, on the same view models as the phone's Settings. [onEditConnection] is called before the sheet
@@ -79,8 +91,17 @@ private fun TvAdminSettingsSheet(
     hub: HubUiState,
     onDismissRequest: () -> Unit,
     jobsViewModel: JobsViewModel = hiltViewModel(),
+    generalViewModel: ServerGeneralViewModel = hiltViewModel(),
+    agentsViewModel: NotificationAgentsViewModel = hiltViewModel(),
 ) {
     val jobs by jobsViewModel.uiState.collectAsStateWithLifecycle()
+    val general by generalViewModel.uiState.collectAsStateWithLifecycle()
+    val agents by agentsViewModel.uiState.collectAsStateWithLifecycle()
+    // Read on every arrival, as the phone's pages do: both view models outlive the sheet.
+    LaunchedEffect(generalViewModel, agentsViewModel) {
+        generalViewModel.reload()
+        agentsViewModel.reload()
+    }
     TvSettingsSheet(
         state = state,
         // `runWhenReady`, not `run`: this view model's own load races the scan row becoming visible, so an early press
@@ -93,11 +114,49 @@ private fun TvAdminSettingsSheet(
                 onToggleShareUsageData = actions.onToggleShareUsageData,
                 onToggleSendCrashReports = actions.onToggleSendCrashReports,
                 onOpenBingeListing = actions.onOpenBingeListing,
+                household =
+                    (general as? ExtrasEditorUiState.Ready)?.let {
+                        TvHousehold(
+                            settings = it.draft,
+                            status = it.saveStatus,
+                            onChange = generalViewModel::edit,
+                            onRetry = generalViewModel::save,
+                        )
+                    },
+                agents =
+                    TvAgents(
+                        state = agents,
+                        page = { agent, nav -> TvAgentPageEntry(agent, nav, onChanged = agentsViewModel::refresh) },
+                    ),
             ),
         onDismissRequest = onDismissRequest,
         jobs = jobs,
         hub = hub,
     )
+}
+
+/** An agent's page on its own view model, scoped to the page so leaving it lets the view model go. */
+@Composable
+private fun ColumnScope.TvAgentPageEntry(
+    agent: ServerAgent,
+    nav: TvSideSheetNav,
+    onChanged: () -> Unit,
+) {
+    val column = this
+    ScopedViewModels("tv-agent-${agent.segment}") {
+        val viewModel =
+            hiltViewModel<NotificationAgentViewModel, NotificationAgentViewModel.Factory>(creationCallback = { it.create(agent) })
+        val state by viewModel.uiState.collectAsStateWithLifecycle()
+        // The list behind this page reads the agent's state when it was opened; it is read again as the page is left.
+        DisposableEffect(viewModel) { onDispose(onChanged) }
+        column.TvAgentPage(
+            nav = nav,
+            agent = agent,
+            state = state.toEditorUiState(),
+            onSetEnabled = viewModel::setEnabled,
+            onRetry = viewModel::save,
+        )
+    }
 }
 
 /** The setup form on the live connection, above Home; leaves once new credentials are saved, or on Back. */
