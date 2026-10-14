@@ -82,7 +82,7 @@ internal fun rememberMyRequests(
             is UserDetailUiState.Seeded -> ready.item.requestCount
             else -> null
         }
-    return TvMyRequests(rows = requests.toRows(null) { it.id }, count = count, onSeeAll = onSeeAll)
+    return TvMyRequests(rows = requests.toRows(null) { it.id }, count = count, onSeeAll = onSeeAll, onRetry = requests::retry)
 }
 
 /** The signed-in user's [UserDetailViewModel], under one key so the page and its see-all grid share the one paged list. */
