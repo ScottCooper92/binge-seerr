@@ -1091,7 +1091,6 @@
     <string name="settings_shake_to_report">Shake to report</string>
     <string name="shake_report_title">Report a bug?</string>
     <string name="shake_report_message">This opens a new issue on this app\'s GitHub page, with your app version and device filled in. Nothing about your server is included.</string>
-    <string name="tv_settings_report_bug_body">Found something wrong with this app? Show a code and scan it with your phone to report it on GitHub.</string>
     <string name="tv_settings_report_bug_show_code">Show code</string>
     <string name="tv_settings_report_bug_scan">Scan it with your phone\'s camera. The report opens with this app\'s version and this TV\'s details filled in.</string>
     <string name="tv_settings_report_bug_code_description">QR code that opens a bug report for this app on GitHub</string>
@@ -1109,7 +1108,6 @@
     <string name="settings_share_usage_data">Share usage data</string>
     <string name="settings_share_usage_data_caption">Sends which screens and actions you use</string>
     <string name="settings_send_crash_reports">Send crash reports</string>
-    <string name="settings_send_crash_reports_caption">What the app was doing when it crashed, so it can be fixed</string>
     <string name="consent_kicker">Privacy</string>
     <string name="tv_consent_point_change_title">Off with one press</string>
     <string name="tv_consent_reassurance">Nothing is collected unless you choose Share usage data.</string>

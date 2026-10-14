@@ -823,7 +823,6 @@ app:settings_section_notifications  788011833a5a
 app:settings_section_services  604dce445e32
 app:settings_section_services_none  c0a158ccbc1b
 app:settings_send_crash_reports  2b8f06d96293
-app:settings_send_crash_reports_caption  04ea533234a2
 app:settings_server  aef7de28d529
 app:settings_service_default  21b111cbfe6e
 app:settings_shake_to_report  6897cd64a477
@@ -968,7 +967,6 @@ app:tv_settings_job_failed_short  1a97d93e7f6e
 app:tv_settings_job_stopped  1a4f630ac1b6
 app:tv_settings_job_working  5474eef8d0f1
 app:tv_settings_open_job  ed077f3d8125
-app:tv_settings_report_bug_body  60f9974a8bf0
 app:tv_settings_report_bug_code_description  f9ec3a4be5c3
 app:tv_settings_report_bug_scan  788e6d3aaded
 app:tv_settings_report_bug_show_code  c9eab29c97b9
