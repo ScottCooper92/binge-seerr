@@ -171,14 +171,17 @@ private fun TvRequestDetailContent(
             settle(failed = event.isError(), retry = if (blockFailed) given.onBlock else null)
         }
     val actions = remember(given, run, isActing) { given.markingRefocus { refocusRow = true }.running(run, isActing) }
-    // The two actions that cannot be undone take a confirm, and Mark as and Report open their own sheets; the rest run at
-    // once, since a decline keeps the request.
+    // The two actions that cannot be undone take a confirm, and Edit, Mark as and Report open their own pages; the rest run
+    // at once, since a decline keeps the request.
     var sheet by rememberSaveable { mutableStateOf(initialSheet) }
     var manageOpen by rememberSaveable { mutableStateOf(initialManageOpen) }
     val sheetFocus = remember { DetailSheet.entries.associateWith { FocusRequester() } }
     val manageFocus = remember { FocusRequester() }
-    // The Mark as sheet shows its own status; every other action's stands under the row.
-    if (sheet != DetailSheet.MarkAs) run.ClearWhenSaved()
+    // The Mark as page shows its own status, from the row or from Manage; every other action's stands under the row.
+    var markAsShown by remember { mutableStateOf(false) }
+    val statusInPage = markAsShown || sheet == DetailSheet.MarkAs
+    if (!statusInPage) run.ClearWhenSaved()
+    val openPage: (DetailSheet) -> Unit = { readyPage(it, actions, run) }
     val actionRowFocus = remember { FocusRequester() }
     val synopsisFocus = remember { FocusRequester() }
     var synopsisFocused by remember { mutableStateOf(false) }
@@ -189,9 +192,7 @@ private fun TvRequestDetailContent(
             detail = detail,
             actions = actions,
             onOpenSheet = {
-                // The sheet shows the run as its own, so a failure from the action row is not carried into it. Like the
-                // sheet's own scope, this keeps an action still saving: it is this page's, and its answer should land.
-                if (it == DetailSheet.MarkAs) run.clearUnlessSaving()
+                openPage(it)
                 sheet = it
             },
             onOpenManage = { manageOpen = true },
@@ -199,14 +200,10 @@ private fun TvRequestDetailContent(
             manageFocus = manageFocus,
         )
     val actionList = plan.row
-    // A sheet hands focus back to what opened it: its own button in the row, or Manage.
-    val fromManage = plan.managed.mapNotNull { it.action.sheet }.toSet()
+    // A sheet opened from the row hands focus back to its own button; Manage's pages stay in Manage's stack.
     val closers =
         DetailSheet.entries.associateWith {
-            rememberTvOverlayCloser(
-                restoreTo = if (it in fromManage) manageFocus else sheetFocus.getValue(it),
-                onClose = { sheet = null },
-            )
+            rememberTvOverlayCloser(restoreTo = sheetFocus.getValue(it), onClose = { sheet = null })
         }
     val manageCloser = rememberTvOverlayCloser(restoreTo = manageFocus, onClose = { manageOpen = false })
     LaunchedEffect(allowed) {
@@ -237,23 +234,58 @@ private fun TvRequestDetailContent(
                     synopsisFocus = synopsisFocus,
                     synopsisFocused = synopsisFocused,
                     onSynopsisFocused = { synopsisFocused = it },
-                    run = run.takeUnless { sheet == DetailSheet.MarkAs },
+                    run = run.takeUnless { statusInPage },
                 )
             }
             requestSections(detail, details)
         }
     }
-    if (manageOpen && sheet == null) {
-        TvRequestManageSheet(managed = plan.managed, onOpenActionSheet = { manageOpen = false }, onDismiss = manageCloser::close)
-    }
-    sheet?.let { step ->
-        TvRequestDetailSheet(
-            host = TvDetailSheetHost(step, closers.getValue(step)),
+    val pageHost =
+        TvDetailPageHost(
             actions = actions,
             content = TvDetailSheetContent(detail.item, detail.media, edit, detail.webUrl, detail.serverName),
             run = run,
             isActing = isActing,
+            onMarkAsShown = { markAsShown = it },
         )
+    val open = sheet
+    when {
+        open != null -> TvRequestDetailSheet(TvDetailSheetHost(open, closers.getValue(open)), pageHost)
+        manageOpen -> ManageStack(plan.managed, pageHost, openPage, manageCloser::close)
+    }
+}
+
+/**
+ * What a page reads, readied as it opens: the editor started, and another action's status cleared, keeping one still saving
+ * so its answer lands (#1519).
+ */
+private fun readyPage(
+    step: DetailSheet,
+    actions: TvRequestDetailActions,
+    run: TvActionRun,
+) {
+    when (step) {
+        DetailSheet.Edit -> actions.edit?.onStart?.invoke()
+        DetailSheet.MarkAs -> run.clearUnlessSaving()
+        else -> Unit
+    }
+}
+
+/** Manage, as a stack whose pages are the same Edit, Mark as and Report the action row opens as sheets of their own. */
+@Composable
+private fun ManageStack(
+    managed: List<TvRequestActionItem>,
+    pageHost: TvDetailPageHost,
+    openPage: (DetailSheet) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    TvRequestManageSheet(
+        managed = managed,
+        actions = pageHost.actions,
+        onOpenPage = openPage,
+        onDismiss = onDismiss,
+    ) { step, entryFocus, pop ->
+        TvRequestDetailPage(step, pageHost, entryFocus, onEditClosed = pop)
     }
 }
 

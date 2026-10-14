@@ -165,8 +165,8 @@ class TvRequestDetailSheetsScreenshotTest {
                         managed(TvRequestAction.Block, R.string.tv_detail_block, Icons.Filled.Block),
                         managed(TvRequestAction.Remove, R.string.tv_detail_remove, Icons.Filled.Delete),
                     ),
+                rowModifier = { Modifier },
                 onSelect = {},
-                entryFocus = FocusRequester(),
             )
         }
 }

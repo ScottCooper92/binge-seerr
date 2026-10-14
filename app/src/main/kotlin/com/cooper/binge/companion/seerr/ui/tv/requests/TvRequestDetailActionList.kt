@@ -117,7 +117,7 @@ internal class TvRequestActionPlan(
 
 /**
  * The row and Manage for this request. A lead that opens a sheet carries the sheet's focus requester, so the sheet hands
- * focus back to it; a sheet opened from Manage hands it back to Manage, [manageFocus].
+ * focus back to it. Manage opens its pages in its own stack, and hands focus back to its button, [manageFocus], as it closes.
  */
 @Composable
 internal fun requestDetailActions(
@@ -192,10 +192,7 @@ private fun actionItem(
                 actions.onOpenInMediaServer ?: {},
             )
         TvRequestAction.Edit ->
-            TvRequestActionItem(action, stringResource(R.string.tv_detail_edit), Icons.Filled.Edit) {
-                actions.edit?.onStart?.invoke()
-                onOpenSheet(DetailSheet.Edit)
-            }
+            TvRequestActionItem(action, stringResource(R.string.tv_detail_edit), Icons.Filled.Edit, openSheet(DetailSheet.Edit))
         TvRequestAction.MarkAs ->
             TvRequestActionItem(action, stringResource(R.string.media_mark_as), Icons.Filled.Done, openSheet(DetailSheet.MarkAs))
         TvRequestAction.Report ->
