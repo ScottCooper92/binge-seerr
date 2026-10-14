@@ -16,74 +16,51 @@ import com.cooper.binge.companion.seerr.ui.hub.HubUiState
 import com.cooper.binge.companion.seerr.ui.hub.HubViewModel
 import com.cooper.binge.companion.seerr.ui.issues.IssueFilter
 import com.cooper.binge.companion.seerr.ui.requests.RequestFilter
+import com.cooper.binge.companion.seerr.ui.settings.SettingsUiState
+import com.cooper.binge.companion.seerr.ui.settings.SettingsViewModel
 
 /**
- * The connected television: Home, with Account, Issues and Settings opening above it from its top row, each
- * bound to the same ViewModel as its phone screen, and the edit-connection form as a full-screen overlay above them.
+ * The connected television: Home and Issues as tabs under the top bar, with Account and Settings opening as sheets over them,
+ * each bound to the same ViewModel as its phone screen, and the edit-connection form as a full-screen overlay above them.
  */
 @Composable
-internal fun TvConnectedShell(hubViewModel: HubViewModel = hiltViewModel()) {
+internal fun TvConnectedShell(
+    hubViewModel: HubViewModel = hiltViewModel(),
+    settingsViewModel: SettingsViewModel = hiltViewModel(),
+) {
     // The hub state the Account page reads, for the signed-in user's id and whether Issues is offered.
     val hub by hubViewModel.uiState.collectAsStateWithLifecycle()
     val account = (hub as? HubUiState.Ready)?.overview?.account
-    var page by rememberSaveable { mutableStateOf(TvDestination.Hub) }
+    var tab by rememberSaveable { mutableStateOf(TvDestination.Hub) }
+    var sheet by rememberSaveable { mutableStateOf<TvDestination?>(null) }
+    val openSheet = rememberSheetOpener(settingsViewModel) { sheet = it }
     val analytics = LocalAnalytics.current
-    LaunchedEffect(page) { analytics.screen(page.screenName()) }
+    LaunchedEffect(tab, sheet) { analytics.screen((sheet ?: tab).screenName()) }
     var editingConnection by rememberSaveable { mutableStateOf(false) }
-    // The requests board's open detail page, above the page exactly as the connection form is. The two
-    // overlays are mutually exclusive by construction — nothing opens one while the other is showing.
-    var openRequestId by rememberSaveable { mutableStateOf<Int?>(null) }
-    // The issues board's own read-only detail page, on the same footing.
-    var openIssueId by rememberSaveable { mutableStateOf<Int?>(null) }
-    // A see-all grid (a filter's name), above the page. Unlike the others it stays up under a detail page opened
-    // from one of its cards, so the page above and the grid below can both be showing.
-    var seeAllRequests by rememberSaveable { mutableStateOf<String?>(null) }
-    var seeAllIssues by rememberSaveable { mutableStateOf<String?>(null) }
-    // Home's see-all for the signed-in user's own requests, which belong to no filter.
-    var seeAllAccount by rememberSaveable { mutableStateOf(false) }
+    val pages = rememberTvOpenPages()
     TvHomeShell(
-        page = page,
-        onOpenPage = { page = it },
-        onClosePage = { page = TvDestination.Hub },
+        tab = tab,
+        sheet = sheet,
+        onSelectTab = { selected -> if (selected == tab) pages.clear(tab) else tab = selected },
+        onOpenSheet = openSheet,
+        onCloseSheet = { sheet = null },
         // The phone's rule for its Issues section: shown once the server is known to let this account list them.
         showIssues = (hub as? HubUiState.Ready)?.overview?.let { HubSection.Issues.isVisible(it) } == true,
+        tabsResolved = hub !is HubUiState.Loading,
+        account = TvTopBarAccount(name = account?.name.orEmpty(), avatarUrl = account?.avatarUrl),
+        showBar = !editingConnection,
         overlay =
             when {
-                editingConnection ->
-                    {
-                        { TvEditConnectionOverlay(onDone = { editingConnection = false }) }
-                    }
-                openRequestId != null || openIssueId != null || seeAllRequests != null || seeAllIssues != null || seeAllAccount ->
-                    {
-                        {
-                            seeAllRequests?.let { name ->
-                                TvRequestsGridOverlay(
-                                    filter = RequestFilter.valueOf(name),
-                                    detailOpen = openRequestId != null,
-                                    onOpenRequest = { openRequestId = it },
-                                    onDone = { seeAllRequests = null },
-                                )
-                            }
-                            if (seeAllAccount && account != null) {
-                                TvAccountRequestsGridOverlay(
-                                    accountId = account.id,
-                                    detailOpen = openRequestId != null,
-                                    onOpenRequest = { openRequestId = it },
-                                    onDone = { seeAllAccount = false },
-                                )
-                            }
-                            seeAllIssues?.let { name ->
-                                TvIssuesGridOverlay(
-                                    filter = IssueFilter.valueOf(name),
-                                    detailOpen = openIssueId != null,
-                                    onOpenIssue = { openIssueId = it },
-                                    onDone = { seeAllIssues = null },
-                                )
-                            }
-                            TvDetailOverlays(openRequestId, openIssueId, { openRequestId = null }, { openIssueId = null })
-                        }
-                    }
-                else -> null
+                editingConnection -> {
+                    { TvEditConnectionOverlay(onDone = { editingConnection = false }) }
+                }
+                !pages.anyOpen(tab) -> null
+                tab == TvDestination.Hub -> {
+                    { TvHubPages(pages, seeAllAccountId = account?.id) }
+                }
+                else -> {
+                    { TvIssuesPages(pages) }
+                }
             },
     ) { destination, close ->
         when (destination) {
@@ -93,19 +70,81 @@ internal fun TvConnectedShell(hubViewModel: HubViewModel = hiltViewModel()) {
             TvDestination.Hub ->
                 TvHomeEntry(
                     onReconnect = { editingConnection = true },
-                    onOpenRequest = { openRequestId = it },
-                    onSeeAll = { seeAllRequests = it.name },
-                    onSeeAllMine = { seeAllAccount = true },
+                    onOpenRequest = { pages.openRequestId = it },
+                    onSeeAll = { pages.seeAllRequests = it.name },
+                    onSeeAllMine = { pages.seeAllAccount = true },
                 )
             TvDestination.Issues ->
                 TvIssuesEntry(
-                    onOpenIssue = { openIssueId = it },
-                    seeAllOpen = seeAllIssues != null,
-                    onSeeAll = { seeAllIssues = it.name },
+                    onOpenIssue = { pages.openIssueId = it },
+                    seeAllOpen = pages.seeAllIssues != null,
+                    onSeeAll = { pages.seeAllIssues = it.name },
                 )
-            TvDestination.Settings -> TvSettingsEntry(onEditConnection = { editingConnection = true }, onDismissRequest = close)
+            TvDestination.Settings ->
+                TvSettingsEntry(onEditConnection = { editingConnection = true }, onDismissRequest = close, viewModel = settingsViewModel)
         }
     }
+}
+
+/**
+ * Opens a sheet. Settings is held back until its state is ready, so it opens on its page rather than a loading line; its
+ * state is collected from the shell's start, so that is rarely a wait.
+ */
+@Composable
+private fun rememberSheetOpener(
+    settingsViewModel: SettingsViewModel,
+    open: (TvDestination) -> Unit,
+): (TvDestination) -> Unit {
+    val settings by settingsViewModel.uiState.collectAsStateWithLifecycle()
+    var settingsPending by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(settingsPending, settings) {
+        if (settingsPending && settings is SettingsUiState.Ready) {
+            settingsPending = false
+            open(TvDestination.Settings)
+        }
+    }
+    return { opened ->
+        if (opened == TvDestination.Settings && settings !is SettingsUiState.Ready) settingsPending = true else open(opened)
+    }
+}
+
+/** Home's pages over its rows: a see-all grid, the user's own requests, and a request's detail page above either. */
+@Composable
+private fun TvHubPages(
+    pages: TvOpenPages,
+    seeAllAccountId: Int?,
+) {
+    pages.seeAllRequests?.let { name ->
+        TvRequestsGridOverlay(
+            filter = RequestFilter.valueOf(name),
+            detailOpen = pages.openRequestId != null,
+            onOpenRequest = { pages.openRequestId = it },
+            onDone = { pages.seeAllRequests = null },
+        )
+    }
+    if (pages.seeAllAccount && seeAllAccountId != null) {
+        TvAccountRequestsGridOverlay(
+            accountId = seeAllAccountId,
+            detailOpen = pages.openRequestId != null,
+            onOpenRequest = { pages.openRequestId = it },
+            onDone = { pages.seeAllAccount = false },
+        )
+    }
+    TvDetailOverlays(openRequestId = pages.openRequestId, openIssueId = null, onCloseRequest = { pages.openRequestId = null })
+}
+
+/** The Issues tab's pages over its board: a see-all grid, and an issue's detail page above it. */
+@Composable
+private fun TvIssuesPages(pages: TvOpenPages) {
+    pages.seeAllIssues?.let { name ->
+        TvIssuesGridOverlay(
+            filter = IssueFilter.valueOf(name),
+            detailOpen = pages.openIssueId != null,
+            onOpenIssue = { pages.openIssueId = it },
+            onDone = { pages.seeAllIssues = null },
+        )
+    }
+    TvDetailOverlays(openRequestId = null, openIssueId = pages.openIssueId, onCloseIssue = { pages.openIssueId = null })
 }
 
 /**
@@ -116,8 +155,8 @@ internal fun TvConnectedShell(hubViewModel: HubViewModel = hiltViewModel()) {
 private fun TvDetailOverlays(
     openRequestId: Int?,
     openIssueId: Int?,
-    onCloseRequest: () -> Unit,
-    onCloseIssue: () -> Unit,
+    onCloseRequest: () -> Unit = {},
+    onCloseIssue: () -> Unit = {},
 ) {
     openRequestId?.let { id ->
         ScopedViewModels("request-detail-$id") { TvRequestDetailOverlay(requestId = id, onDone = onCloseRequest) }
