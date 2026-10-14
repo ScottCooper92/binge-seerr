@@ -7,9 +7,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.res.stringResource
 import com.android.tools.screenshot.PreviewTest
 import com.binge.designsystem.SaveStatus
 import com.binge.designsystem.tv.component.TvSideSheetPanel
+import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.preview.SeerrTvScreenPreviews
 import com.cooper.binge.companion.seerr.seerr.SeerrMediaStatusCode
 import com.cooper.binge.companion.seerr.ui.hub.HubQuotaBucket
@@ -149,6 +151,21 @@ class TvRequestDetailSheetsScreenshotTest {
                 isMovie = true,
                 actions = noRequesterActions(),
                 entryFocus = FocusRequester(),
+            )
+        }
+
+    /** A change the server refused: the control is back as it was, and the note under the rows says why, with no Retry. */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun RequesterRefused() =
+        SheetFrame {
+            TvRequesterStep(
+                state = requester(override = null).copy(saveStatus = SaveStatus.Idle),
+                isMovie = true,
+                actions = noRequesterActions(),
+                entryFocus = FocusRequester(),
+                note = stringResource(R.string.state_error_forbidden_message),
             )
         }
 

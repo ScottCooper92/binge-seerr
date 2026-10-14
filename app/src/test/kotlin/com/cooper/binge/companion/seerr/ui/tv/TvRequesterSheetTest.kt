@@ -19,15 +19,20 @@ import androidx.compose.ui.test.requestFocus
 import com.binge.designsystem.SaveStatus
 import com.binge.designsystem.tv.theme.BingeTvTheme
 import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.ui.hub.HubQuotaBucket
+import com.cooper.binge.companion.seerr.ui.state.messageRes
 import com.cooper.binge.companion.seerr.ui.tv.requests.ReloadWhenSaved
 import com.cooper.binge.companion.seerr.ui.tv.requests.TvQuotaOverride
 import com.cooper.binge.companion.seerr.ui.tv.requests.TvRequesterActions
 import com.cooper.binge.companion.seerr.ui.tv.requests.TvRequesterState
 import com.cooper.binge.companion.seerr.ui.tv.requests.TvRequesterStep
 import com.cooper.binge.companion.seerr.ui.tv.requests.TvRequesterToggle
+import com.cooper.binge.companion.seerr.ui.tv.requests.rememberRequesterRefusal
+import com.cooper.binge.companion.seerr.ui.users.settings.EditorEvent
 import com.cooper.binge.companion.seerr.util.createSeerrKeyboardComposeRule
 import com.cooper.binge.companion.seerr.util.string
+import kotlinx.coroutines.flow.MutableSharedFlow
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -35,6 +40,9 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
+
+/** Well past the four seconds a timed message would have lasted. */
+private const val STILL_SHOWING_MILLIS = 10_000L
 
 /** The requester sheet on a remote (#1516): the toggles, then the override's limit and window, each reported as made. */
 @RunWith(RobolectricTestRunner::class)
@@ -116,7 +124,7 @@ class TvRequesterSheetTest {
     @Test
     fun aLandedSaveReloadsTheQuotaLineOncePerSave() {
         var reloads = 0
-        var status by mutableStateOf(SaveStatus.Idle)
+        var status by mutableStateOf<SaveStatus>(SaveStatus.Idle)
         composeTestRule.setContent { ReloadWhenSaved(status) { reloads++ } }
         composeTestRule.waitForIdle()
         assertEquals(0, reloads)
@@ -131,6 +139,36 @@ class TvRequesterSheetTest {
         status = SaveStatus.Saved
         composeTestRule.waitForIdle()
         assertEquals(2, reloads)
+    }
+
+    @Test
+    fun aRefusalStaysUntilTheNextChange() {
+        val events = MutableSharedFlow<EditorEvent>(extraBufferCapacity = 1)
+        composeTestRule.setContent {
+            val refusal = rememberRequesterRefusal(events)
+            BingeTvTheme {
+                Column {
+                    TvRequesterStep(
+                        state = state(),
+                        isMovie = true,
+                        actions = TvRequesterActions(onToggleAutoApprove = refusal::clear, {}, {}, {}),
+                        entryFocus = remember { FocusRequester() },
+                        note = refusal.failed?.let { string(it.error.messageRes()) },
+                    )
+                }
+            }
+        }
+        composeTestRule.waitForIdle()
+        val refused = string(R.string.state_error_forbidden_message)
+
+        events.tryEmit(EditorEvent.Failed(SeerrError.Forbidden))
+        composeTestRule.mainClock.advanceTimeBy(STILL_SHOWING_MILLIS)
+        composeTestRule.onNodeWithText(refused).assertIsDisplayed()
+
+        row(R.string.permission_auto_approve).requestFocus()
+        composeTestRule.waitForIdle()
+        pressKey(Key.DirectionCenter)
+        composeTestRule.onNodeWithText(refused).assertDoesNotExist()
     }
 
     @Test

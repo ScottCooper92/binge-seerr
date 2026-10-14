@@ -8,8 +8,11 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -30,16 +33,17 @@ import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.seerr.ManageablePermission
 import com.cooper.binge.companion.seerr.ui.hub.HubQuotaBucket
 import com.cooper.binge.companion.seerr.ui.settings.server.MAX_LIMIT_CHOICE
+import com.cooper.binge.companion.seerr.ui.state.messageRes
 import com.cooper.binge.companion.seerr.ui.tv.TvFormNote
 import com.cooper.binge.companion.seerr.ui.tv.TvFormNoteTone
-import com.cooper.binge.companion.seerr.ui.tv.rememberTvTransientEvent
-import com.cooper.binge.companion.seerr.ui.tv.settings.tvNoteOrNull
 import com.cooper.binge.companion.seerr.ui.users.UserDetailViewModel
+import com.cooper.binge.companion.seerr.ui.users.settings.EditorEvent
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorUiState
 import com.cooper.binge.companion.seerr.ui.users.settings.ExtrasEditorUiState
 import com.cooper.binge.companion.seerr.ui.users.settings.GeneralSettingsViewModel
 import com.cooper.binge.companion.seerr.ui.users.settings.PermissionsViewModel
 import com.cooper.binge.companion.seerr.ui.users.settings.QuotaDefault
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.merge
 import com.binge.designsystem.R as DesR
 
@@ -179,6 +183,34 @@ private fun QuotaDefault?.label(): String =
     }
 
 /**
+ * The server's last refusal of a change made on the sheet. It stays until the next change, or until the sheet closes and
+ * takes it along: a refusal is permanent, so it has no Retry, and TV shows no timed messages.
+ */
+@Stable
+internal class TvRequesterRefusal {
+    var failed: EditorEvent.Failed? by mutableStateOf(null)
+        private set
+
+    fun record(event: EditorEvent.Failed) {
+        failed = event
+    }
+
+    fun clear() {
+        failed = null
+    }
+}
+
+/** The sheet's [TvRequesterRefusal], fed by its editors' [events]. A save-as-made editor sends only refusals as events. */
+@Composable
+internal fun rememberRequesterRefusal(events: Flow<EditorEvent>): TvRequesterRefusal {
+    val refusal = remember { TvRequesterRefusal() }
+    LaunchedEffect(events) {
+        events.collect { if (it is EditorEvent.Failed) refusal.record(it) }
+    }
+    return refusal
+}
+
+/**
  * The sheet over the requester's own user page, permissions page and general page, under keys of its own so it does not
  * share an editor with a page the phone has open. Each editor saves as it changes, on the application's scope, so a change
  * made just before the sheet closes still lands.
@@ -211,26 +243,34 @@ internal fun ColumnScope.TvRequesterSheetEntry(
     val userState by user.uiState.collectAsStateWithLifecycle()
     val permissionsState by permissions.uiState.collectAsStateWithLifecycle()
     val generalState by general.uiState.collectAsStateWithLifecycle()
-    // A refused save puts the control back and says nothing else, so the sheet reports it as the phone's snackbar does.
     // The quota line is read once by the user page, so a landed override save has it read again.
     ReloadWhenSaved((generalState as? ExtrasEditorUiState.Ready)?.saveStatus, user::reload)
-    val events = remember(permissions, general) { merge(permissions.events, general.events) }
-    val note = rememberTvTransientEvent(events).tvNoteOrNull()
+    val refusal = rememberRequesterRefusal(remember(permissions, general) { merge(permissions.events, general.events) })
     TvRequesterStep(
         state = requesterState(isMovie, userState, permissionsState, generalState),
         isMovie = isMovie,
         actions =
             TvRequesterActions(
-                onToggleAutoApprove = { permissions.toggle(ManageablePermission.AutoApprove) },
-                onToggleRequest4k = { permissions.toggle(ManageablePermission.Request4k) },
-                onOverrideChange = { override -> general.edit { it.withOverride(isMovie, override) } },
+                onToggleAutoApprove = {
+                    refusal.clear()
+                    permissions.toggle(ManageablePermission.AutoApprove)
+                },
+                onToggleRequest4k = {
+                    refusal.clear()
+                    permissions.toggle(ManageablePermission.Request4k)
+                },
+                onOverrideChange = { override ->
+                    refusal.clear()
+                    general.edit { it.withOverride(isMovie, override) }
+                },
                 onRetrySave = {
+                    refusal.clear()
                     if ((permissionsState as? EditorUiState.Ready)?.saveFailed == true) permissions.save()
                     if ((generalState as? ExtrasEditorUiState.Ready)?.saveFailed == true) general.save()
                 },
             ),
         entryFocus = entryFocus,
-        note = note,
+        note = refusal.failed?.let { stringResource(it.error.messageRes()) },
     )
 }
 
