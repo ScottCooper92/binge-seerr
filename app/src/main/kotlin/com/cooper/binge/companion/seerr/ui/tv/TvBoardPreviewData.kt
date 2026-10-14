@@ -53,7 +53,7 @@ import com.cooper.binge.companion.seerr.ui.tv.settings.groupPage
 import kotlinx.coroutines.flow.emptyFlow
 
 /*
- * The rail's boards, one frame per state and one per focused control. The `@TvPreviewsOnBlack` functions
+ * Home's boards, one frame per state and one per focused control. The `@TvPreviewsOnBlack` functions
  * below are IDE-only preview tooling; the fixtures above them are `internal` so the screenshotTest suite
  * (`ui/tv/requests`, `ui/tv/issues`, `ui/tv/settings`) can reuse them instead of duplicating sample data.
  */

@@ -16,7 +16,7 @@ import com.cooper.binge.companion.seerr.ui.consent.ConsentPoints
 import com.cooper.binge.companion.seerr.ui.consent.ConsentUiState
 import com.cooper.binge.companion.seerr.ui.consent.ConsentViewModel
 
-/** The phone's consent gate on a television: the same question, before setup and the rail. */
+/** The phone's consent gate on a television: the same question, before setup and Home. */
 @Composable
 internal fun TvConsentGate(
     viewModel: ConsentViewModel = hiltViewModel(),
@@ -56,7 +56,7 @@ internal fun TvConsentScreen(
         accept = ScreenAction(stringResource(R.string.consent_accept), onClick = { onChoice(true) }),
         decline = ScreenAction(stringResource(R.string.consent_decline), onClick = { onChoice(false) }),
         modifier = modifier,
-        // A gate before setup and the rail, so the page places its own first focus on Share usage data.
+        // A gate before setup and Home, so the page places its own first focus on Share usage data.
         hosting = TvPageHosting.PreShell,
     )
 }

@@ -20,7 +20,7 @@ The app then manages the server from your phone or your TV:
 - **Notifications**: new requests waiting for approval, new issues, and your own requests being
   approved, declined or becoming available, checked in the background against your server. No
   third-party push service.
-- **Android TV**: a rail with the hub, requests, issues and settings, driven from the remote.
+- **Android TV**: Home with requests, and Account, Issues and Settings above it, driven from the remote.
 
 What it shows depends on the server: Overseerr, Jellyseerr and Seerr share one API but not one
 feature set, and your account's permissions decide what you may change. Each screen reads those

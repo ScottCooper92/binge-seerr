@@ -43,7 +43,7 @@ import com.binge.designsystem.tv.R as TvR
  * A form as a television shows it: the design system's [TvTwoPanePage] with the copy centred in a fixed pane
  * on the left — an illustration, what this page is and what to do — and the controls in a scrolling column on
  * the right, so the eye reads once and the remote walks down one column. Every form here is full-screen, so
- * its edges take the overscan margin rather than clearing a rail.
+ * its edges take the overscan margin, with no navigation beside it to clear.
  */
 @Composable
 internal fun TvFormPage(

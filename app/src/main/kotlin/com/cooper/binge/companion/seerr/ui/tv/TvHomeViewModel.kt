@@ -11,19 +11,19 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-/** What the television home shows: nothing until the store has answered, then setup, the sign-in again, or the rail. */
+/** What the television home shows: nothing until the store has answered, then setup, the sign-in again, or Home. */
 sealed interface TvHomeUiState {
     data object Loading : TvHomeUiState
 
     data object Setup : TvHomeUiState
 
-    /** A server is saved but has rejected the session (#810): the sign-in takes the screen, with no rail behind it. */
+    /** A server is saved but has rejected the session (#810): the sign-in takes the screen, with no Home behind it. */
     data object Reconnect : TvHomeUiState
 
     data object Connected : TvHomeUiState
 }
 
-/** The television home over the saved credentials: whether there is a server to put the rail in front of. */
+/** The television home over the saved credentials: whether there is a server to show Home for. */
 @HiltViewModel
 class TvHomeViewModel
     @Inject

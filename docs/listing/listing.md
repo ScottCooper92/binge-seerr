@@ -45,7 +45,7 @@ maintainer's decision; see the README.
 > opens here with the server, profile and folder choices. Binge is optional; everything above
 > works without it.
 >
-> **Android TV.** A rail with the hub, requests, issues and settings, driven from the remote.
+> **Android TV.** Home with requests, and Account, Issues and Settings above it, driven from the remote.
 >
 > **Your server, your data.** Sign in with an API key, a local account, Plex, Jellyfin or Emby (with
 > Quick Connect where the server offers it). The key or session is encrypted with an Android

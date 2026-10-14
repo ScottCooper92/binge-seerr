@@ -58,7 +58,7 @@ fun SeerrRoute.screenName(): String =
         else -> debugScreenName(this)
     }
 
-/** A television destination's name: the rail's own key, marked so it never collides with a phone screen. */
+/** A television destination's name: its own key, marked so it never collides with a phone screen. */
 internal fun TvDestination.screenName(): String = "tv_$key"
 
 /** The app's [Analytics], for the television shell, which has no route stack to watch. Silent by default. */
