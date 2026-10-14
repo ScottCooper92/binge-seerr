@@ -60,10 +60,11 @@ class TvAccountSheetTest {
     }
 
     @Test
-    fun anAccountStillLoadingHasNothingToPressAndNoClose() {
+    fun anAccountStillLoadingHoldsFocusOnTheLoadingTextAndHasNoClose() {
         setSheet(detail = null, accountFailed = false)
 
-        composeTestRule.onNodeWithText(string(R.string.tv_loading)).assertExists()
+        // Focus waits on the text itself, so a screen reader reads it out rather than landing on silence.
+        composeTestRule.onNodeWithText(string(R.string.tv_loading)).assertIsFocused()
         composeTestRule.onNode(hasText(string(R.string.hub_retry))).assertDoesNotExist()
         composeTestRule.onNodeWithText(string(R.string.tv_sheet_close)).assertDoesNotExist()
     }

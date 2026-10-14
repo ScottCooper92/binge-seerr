@@ -28,15 +28,8 @@ import androidx.tv.material3.MaterialTheme
 import coil3.compose.AsyncImage
 import com.binge.designsystem.theme.BingeShapes
 import com.binge.designsystem.tv.component.TvMessagePlate
-import com.binge.designsystem.tv.focus.restoreTvOverlayFocus
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.state.RequestStateTone
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.onStart
-
-private const val TRANSIENT_MESSAGE_MILLIS = 4_000L
 
 /** How many items a board's row shows before its see-all tile takes over. */
 internal const val TV_ROW_ITEM_CAP = 20
@@ -54,8 +47,6 @@ internal class OverlayFocusRestore(
     private val rowId: MutableState<Int?>,
     private val seeAllKey: MutableState<String?>,
 ) {
-    val pending: Boolean get() = rowId.value != null || seeAllKey.value != null
-
     fun leavingFromRow(id: Int) {
         rowId.value = id
         seeAllKey.value = null
@@ -72,16 +63,6 @@ internal class OverlayFocusRestore(
     ): Modifier = if (id == rowId.value) base.focusRequester(requester) else base
 
     fun seeAllModifier(key: String): Modifier = if (key == seeAllKey.value) Modifier.focusRequester(requester) else Modifier
-}
-
-/** The restore state for one board; it puts focus back once [overlayOpen] goes false, and survives a rotation. */
-@Composable
-internal fun rememberOverlayFocusRestore(overlayOpen: Boolean): OverlayFocusRestore {
-    val restore = rememberSheetFocusReturn()
-    LaunchedEffect(overlayOpen) {
-        if (!overlayOpen && restore.pending) restoreTvOverlayFocus(restore.requester)
-    }
-    return restore
 }
 
 /**
@@ -176,27 +157,3 @@ internal fun RequestStateTone.tvColor(): Color =
         RequestStateTone.Success -> MaterialTheme.colorScheme.onSurface
         RequestStateTone.Declined, RequestStateTone.Blocked -> MaterialTheme.colorScheme.error
     }
-
-/**
- * The latest one-shot event, held for a few seconds and then cleared — the board's answer to the phone's
- * snackbar. A newer event supersedes the one still showing.
- *
- * [initial] is an event already showing on arrival, for a frame: a static render runs no effect, so it never
- * collects one. It is held and cleared like the first event of [events]. Production passes null.
- */
-@Composable
-internal fun <T : Any> rememberTvTransientEvent(
-    events: Flow<T>,
-    initial: T? = null,
-): T? {
-    var current by remember { mutableStateOf(initial) }
-    LaunchedEffect(events) {
-        val arriving = if (initial == null) events else events.onStart { emit(initial) }
-        arriving.collectLatest { event ->
-            current = event
-            delay(TRANSIENT_MESSAGE_MILLIS)
-            current = null
-        }
-    }
-    return current
-}

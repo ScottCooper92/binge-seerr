@@ -18,7 +18,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -29,7 +28,6 @@ import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
-import com.binge.designsystem.theme.BingeShapes
 import com.binge.designsystem.tv.nav.LocalTvTopInset
 import com.binge.designsystem.tv.template.TvMessagePage
 import com.binge.designsystem.tv.template.TvPageHosting
@@ -230,27 +228,6 @@ internal fun TvFormNote(
                 .width(dimensionResource(R.dimen.tv_form_field_width))
                 .semantics { liveRegion = if (tone == TvFormNoteTone.Error) LiveRegionMode.Assertive else LiveRegionMode.Polite },
     )
-}
-
-/**
- * A transient outcome ("Request approved", "Issue resolved") laid over a page: [TvFormNote]'s line on a plate of its
- * own, so it reads over whatever sits beneath it, the cards and row headings of the page it lands on.
- */
-@Composable
-internal fun TvOutcomePlate(
-    text: String,
-    tone: TvFormNoteTone,
-    modifier: Modifier = Modifier,
-) {
-    Box(
-        modifier =
-            modifier
-                .clip(BingeShapes.TvListItem)
-                .background(MaterialTheme.colorScheme.surfaceVariant)
-                .padding(horizontal = dimensionResource(DesR.dimen.padding_l), vertical = dimensionResource(DesR.dimen.padding_m)),
-    ) {
-        TvFormNote(text = text, tone = tone)
-    }
 }
 
 /**
