@@ -7,80 +7,62 @@ import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.preview.SeerrTvScreenPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrTvSpanishScreenPreviews
 import com.cooper.binge.companion.seerr.ui.hub.BingeStatus
+import com.cooper.binge.companion.seerr.ui.hub.HubUiState
 import com.cooper.binge.companion.seerr.ui.hub.previewAdminOverview
 import com.cooper.binge.companion.seerr.ui.hub.previewReady
 import com.cooper.binge.companion.seerr.ui.settings.SettingsUiState
-import com.cooper.binge.companion.seerr.ui.tv.ConfirmDialogFrame
 import com.cooper.binge.companion.seerr.ui.tv.SampleSettings
 import com.cooper.binge.companion.seerr.ui.tv.SampleSettingsAdmin
 import com.cooper.binge.companion.seerr.ui.tv.SampleSettingsWithApp
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorEvent
 
 /**
- * The television settings board: the connection/server list, the disconnect confirmation focused,
- * and — admin only — the media server row's library scan option. Mirrors the states already sketched
- * in `TvBoardPreviewData.kt`.
+ * The television settings sheet: its list of groups with Disconnect last, then a page for each kind of group: the connection and what
+ * can be done to it, the confirm Disconnect asks on its own page, the server's status, the admin's media server with its
+ * library scan, this app's own group and the code the bug report shows.
  */
 class TvSettingsScreenshotTest {
-    /** A non-admin sees the connection group only: no media server row, so no scan option either. */
+    /** The sheet's first page: the groups, then Disconnect after them all, in the error colour. */
     @PreviewTest
     @SeerrTvScreenPreviews
     @Composable
-    fun Board() {
-        TvSettingsBoard(state = SampleSettings, onEditConnection = {}, onDisconnect = {}, initialListHasFocus = true)
+    fun Root() {
+        Sheet(SampleSettings)
     }
 
+    /** The connection's page: its read-outs, then Edit connection, the one thing a television can do about it. */
     @PreviewTest
     @SeerrTvScreenPreviews
     @Composable
-    fun Disconnect() {
-        TvSettingsBoard(
-            state = SampleSettings,
-            onEditConnection = {},
-            onDisconnect = {},
-            initialFocusedKey = KEY_DISCONNECT,
-            initialFocusedOptionLabel = "Disconnect",
-        )
+    fun Connection() {
+        Sheet(SampleSettings, page = groupPage(stringResource(R.string.settings_group_connection)))
     }
 
-    /** Disconnect asks first: what it does, then Disconnect and Cancel, in a dialog. */
+    /** Disconnect asks first, on a page of its own: what it does, then Disconnect and Cancel. */
     @PreviewTest
     @SeerrTvScreenPreviews
     @Composable
     fun DisconnectConfirm() {
-        ConfirmDialogFrame(
-            title = stringResource(R.string.hub_disconnect_confirm_title),
-            message = stringResource(R.string.hub_disconnect_confirm_message),
-            confirmLabel = stringResource(R.string.tv_settings_disconnect_confirm),
-        )
+        Sheet(SampleSettings, page = PAGE_DISCONNECT)
     }
 
-    /** An admin's board: the media server row now carries "Start library scan". */
+    /** An admin's media server page: the library scan row, over the note that the rest is read here and changed on the phone. */
     @PreviewTest
     @SeerrTvScreenPreviews
     @Composable
     fun MediaServer() {
-        TvSettingsBoard(
-            state = SampleSettingsAdmin,
-            onEditConnection = {},
-            onDisconnect = {},
-            initialFocusedKey = KEY_MEDIA_SERVER,
-            initialFocusedOptionLabel = "Start library scan",
-        )
+        Sheet(SampleSettingsAdmin, page = groupPage(stringResource(R.string.server_settings_media_server)))
     }
 
-    /** A scan that started: the media server row says so in place of its usual line, until the note clears (#1053). */
+    /** A scan that started: the row says so in place of the server's name, until the note clears (#1053). */
     @PreviewTest
     @SeerrTvScreenPreviews
     @Composable
     fun ScanStarted() {
-        TvSettingsBoard(
-            state = SampleSettingsAdmin,
-            onEditConnection = {},
-            onDisconnect = {},
-            initialFocusedKey = KEY_MEDIA_SERVER,
-            initialFocusedOptionLabel = "Start library scan",
-            initialScanEvent = EditorEvent.Notice(R.string.tv_settings_scan_started),
+        Sheet(
+            SampleSettingsAdmin,
+            page = groupPage(stringResource(R.string.server_settings_media_server)),
+            scanEvent = EditorEvent.Notice(R.string.tv_settings_scan_started),
         )
     }
 
@@ -89,13 +71,7 @@ class TvSettingsScreenshotTest {
     @SeerrTvScreenPreviews
     @Composable
     fun ServerStatus() {
-        TvSettingsBoard(
-            state = SampleSettings,
-            onEditConnection = {},
-            onDisconnect = {},
-            hub = previewReady(overview = previewAdminOverview()),
-            initialFocusedKey = KEY_ACTIVITY,
-        )
+        Sheet(SampleSettings, page = serverPage(), hub = previewReady(overview = previewAdminOverview()))
     }
 
     /** The status rows in Spanish: each count carries its own words, in the translator's order (#1042). */
@@ -103,77 +79,62 @@ class TvSettingsScreenshotTest {
     @SeerrTvSpanishScreenPreviews
     @Composable
     fun ServerStatusSpanish() {
-        TvSettingsBoard(
-            state = SampleSettings,
-            onEditConnection = {},
-            onDisconnect = {},
-            hub = previewReady(overview = previewAdminOverview()),
-            initialFocusedKey = KEY_ACTIVITY,
-        )
+        Sheet(SampleSettings, page = serverPage(), hub = previewReady(overview = previewAdminOverview()))
     }
 
-    /** Binge missing: the row carries the one option, opening its Play Store listing. */
+    /** Binge missing: its row is the one to press, opening its Play Store listing. */
     @PreviewTest
     @SeerrTvScreenPreviews
     @Composable
     fun ServerStatusBingeMissing() {
-        TvSettingsBoard(
-            state = SampleSettings,
-            onEditConnection = {},
-            onDisconnect = {},
+        Sheet(
+            SampleSettings,
+            page = serverPage(),
             hub = previewReady(overview = previewAdminOverview(), bingeStatus = BingeStatus.NotInstalled),
-            initialFocusedKey = KEY_BINGE,
-            initialFocusedOptionLabel = "Open the Play Store",
         )
     }
 
-    /** This app's own group: the bug report row, with its one option to show a code. */
+    /** This app's own group: the bug report row and the two switches, each saying where it stands. */
     @PreviewTest
     @SeerrTvScreenPreviews
     @Composable
     fun ReportBug() {
-        TvSettingsBoard(
-            state = SampleSettingsWithApp,
-            onEditConnection = {},
-            onDisconnect = {},
-            initialFocusedKey = KEY_REPORT_BUG,
-            initialFocusedOptionLabel = "Show code",
-        )
+        Sheet(SampleSettingsWithApp, page = groupPage(stringResource(R.string.settings_group_app)))
     }
 
-    /** The code the phone scans, over the board. */
+    /** The code the phone scans, on a page of the sheet. */
     @PreviewTest
     @SeerrTvScreenPreviews
     @Composable
     fun ReportBugCode() {
-        TvSettingsBoard(
-            state = SampleSettingsWithApp,
-            onEditConnection = {},
-            onDisconnect = {},
-            initialFocusedKey = KEY_REPORT_BUG,
-            initialShowingBugReport = true,
-        )
+        Sheet(SampleSettingsWithApp, page = PAGE_BUG_REPORT)
     }
 
-    /** The usage data switch, off: its one option turns it on. */
-    @PreviewTest
-    @SeerrTvScreenPreviews
-    @Composable
-    fun ShareUsageData() {
-        TvSettingsBoard(
-            state = SampleSettingsWithApp,
-            onEditConnection = {},
-            onDisconnect = {},
-            initialFocusedKey = KEY_SHARE_USAGE_DATA,
-            initialFocusedOptionLabel = "Turn on",
-        )
-    }
-
-    /** Before the settings are read (#1053): the board's title over its loading plate. */
+    /** Before the settings are read (#1053): the sheet's title over its loading line. */
     @PreviewTest
     @SeerrTvScreenPreviews
     @Composable
     fun Loading() {
-        TvSettingsBoard(state = SettingsUiState.Loading, onEditConnection = {}, onDisconnect = {})
+        Sheet(SettingsUiState.Loading)
+    }
+
+    @Composable
+    private fun serverPage() = groupPage(stringResource(R.string.tv_settings_group_server))
+
+    @Composable
+    private fun Sheet(
+        state: SettingsUiState,
+        page: String = PAGE_SETTINGS,
+        hub: HubUiState? = null,
+        scanEvent: EditorEvent? = null,
+    ) {
+        TvSettingsSheet(
+            state = state,
+            actions = TvSettingsActions(),
+            onDismissRequest = {},
+            hub = hub,
+            initialPage = page,
+            initialScanEvent = scanEvent,
+        )
     }
 }
