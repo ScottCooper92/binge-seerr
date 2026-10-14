@@ -67,7 +67,15 @@ internal fun TvIssueSheet(
     val run = rememberTvActionRun(events, initialStatus) { settle(failed = it is IssueDetailEvent.Failed) }
     // Where focus lands when the thread shows again after a comment is deleted: the card after it, else before, else reply.
     var afterDelete by rememberSaveable { mutableStateOf<String?>(null) }
-    TvSideSheetStack(root = initialPage, onDismissRequest = actions.onDismiss, modifier = modifier, toBottomEdge = true) { nav ->
+    // Loading and a failure are roots of their own, so the issue arriving starts the thread afresh and focus is offered to
+    // the report; on one root, the offer went to the loading line and was not made again once it was gone.
+    val root =
+        when (state) {
+            is IssueDetailUiState.Ready -> initialPage
+            is IssueDetailUiState.Error -> PAGE_FAILED
+            IssueDetailUiState.Loading, is IssueDetailUiState.Seeded -> PAGE_LOADING
+        }
+    TvSideSheetStack(root = root, onDismissRequest = actions.onDismiss, modifier = modifier, toBottomEdge = true) { nav ->
         when (state) {
             is IssueDetailUiState.Ready -> IssuePages(state, nav, actions, run, afterDelete) { afterDelete = it }
             is IssueDetailUiState.Error -> Failed(nav, actions.onRetry)
@@ -134,5 +142,7 @@ private fun ColumnScope.Failed(
     }
 }
 
+private const val PAGE_LOADING = "loading"
+private const val PAGE_FAILED = "failed"
 private const val KEY_LOADING = "loading"
 private const val KEY_RETRY = "retry"
