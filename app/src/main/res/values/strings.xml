@@ -1307,8 +1307,6 @@
     <string name="server_settings_api_timeout_none">No timeout</string>
     <string name="placeholder_api_timeout" translatable="false">30</string>
     <string name="hub_rechecking">Checking the server…</string>
-    <string name="editor_saving">Saving…</string>
-    <string name="editor_save_failed">Couldn\'t save your change.</string>
     <string name="editor_discard_title">Discard changes?</string>
     <string name="editor_discard_message">Your changes on this page haven\'t been saved.</string>
     <string name="editor_discard">Discard</string>

@@ -15,6 +15,7 @@ import com.cooper.binge.companion.seerr.ui.settings.server.ServerList
 import com.cooper.binge.companion.seerr.ui.settings.server.ServerListCatalog
 import com.cooper.binge.companion.seerr.ui.users.OWNER_USER_ID
 import com.cooper.binge.companion.seerr.ui.users.UserOrigin
+import com.cooper.binge.companion.seerr.ui.users.UserSettingsChanges
 import com.cooper.binge.companion.seerr.ui.users.toUserOrigin
 import com.cooper.binge.companion.seerr.ui.users.userRole
 import dagger.assisted.Assisted
@@ -42,6 +43,7 @@ class GeneralSettingsViewModel
         @IoDispatcher private val dispatcher: CoroutineDispatcher,
         @ApplicationScope appScope: CoroutineScope,
         @Assisted private val userId: Int,
+        private val settingsChanges: UserSettingsChanges = UserSettingsChanges(),
     ) : ExtrasEditorViewModel<GeneralSettings, UserGeneralExtras>(UserGeneralExtras(), dispatcher) {
         /**
          * A user's General saves as it changes (#930). Its endpoint assigns every field it is sent, so each write carries the
@@ -83,6 +85,7 @@ class GeneralSettingsViewModel
 
         override suspend fun write(draft: GeneralSettings): GeneralSettings {
             connection.api().updateUserMainSettings(userId, draft.toDto())
+            settingsChanges.changed(userId)
             return load()
         }
 
