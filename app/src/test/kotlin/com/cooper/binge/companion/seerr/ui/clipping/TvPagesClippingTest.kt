@@ -51,8 +51,12 @@ import com.cooper.binge.companion.seerr.ui.tv.TvConsentScreen
 import com.cooper.binge.companion.seerr.ui.tv.TvSeerrErrorPage
 import com.cooper.binge.companion.seerr.ui.tv.TvSetupLinkPlate
 import com.cooper.binge.companion.seerr.ui.tv.TvSetupScreen
-import com.cooper.binge.companion.seerr.ui.tv.issues.TvIssueDetailActions
-import com.cooper.binge.companion.seerr.ui.tv.issues.TvIssueDetailScreen
+import com.cooper.binge.companion.seerr.ui.tv.issues.ISSUE_PAGE_PHONE
+import com.cooper.binge.companion.seerr.ui.tv.issues.ISSUE_PAGE_THREAD
+import com.cooper.binge.companion.seerr.ui.tv.issues.KEY_REPORT
+import com.cooper.binge.companion.seerr.ui.tv.issues.NoIssueSheetActions
+import com.cooper.binge.companion.seerr.ui.tv.issues.TvIssueSheet
+import com.cooper.binge.companion.seerr.ui.tv.issues.issueCardPage
 import com.cooper.binge.companion.seerr.ui.tv.requests.TvMarkAsSteps
 import com.cooper.binge.companion.seerr.ui.tv.requests.TvReportDraft
 import com.cooper.binge.companion.seerr.ui.tv.requests.TvReportIssueStep
@@ -79,9 +83,11 @@ private const val OVERVIEW =
     "A long overview that runs on for several sentences, so that the page has a paragraph to wrap at a large font. " +
         "It keeps going past what any one screen shows at once, which is the case a clip is most likely to hide in."
 
+private const val PHONE_PAGE_TEXTS = 2
+
 /**
  * The television's pages with long text and every optional part present, at font scales 1.3 and 2.0, through the design
- * system's `assertNoTextClipped`: the request and issue detail pages, the settings board, the setup flow, the consent
+ * system's `assertNoTextClipped`: the request page, the issue sheet's pages, the settings board, the setup flow, the consent
  * question, the options hand-off and the error page. A page that scrolls is checked on its first screen.
  */
 @RunWith(RobolectricTestRunner::class)
@@ -98,7 +104,13 @@ class TvPagesClippingTest {
             RequestDetail(sevenActions = true)
         }
 
-    @Test fun `an issue detail page at 1_3`() = rule.assertNoTvClippingAt(FONT_SCALE_13) { IssueDetail() }
+    @Test fun `an issue sheet's thread at 1_3`() = rule.assertNoTvClippingAt(FONT_SCALE_13) { IssueSheet(ISSUE_PAGE_THREAD) }
+
+    @Test fun `an issue sheet's card page at 1_3`() = rule.assertNoTvClippingAt(FONT_SCALE_13) { IssueSheet(issueCardPage(KEY_REPORT)) }
+
+    /** The page is its title, one line on what to do, and the code: two texts, both checked. */
+    @Test fun `an issue sheet's phone page at 1_3`() =
+        rule.assertNoTvClippingAt(FONT_SCALE_13, minTextNodes = PHONE_PAGE_TEXTS) { IssueSheet(ISSUE_PAGE_PHONE) }
 
     @Test fun `the settings sheet at 1_3`() = rule.assertNoTvClippingAt(FONT_SCALE_13) { Settings() }
 
@@ -234,9 +246,9 @@ class TvPagesClippingTest {
         )
 
     @Composable
-    private fun IssueDetail() {
+    private fun IssueSheet(page: String) {
         val detail = commonIssueDetail()
-        TvIssueDetailScreen(
+        TvIssueSheet(
             state =
                 IssueDetailUiState.Ready(
                     detail =
@@ -244,9 +256,13 @@ class TvPagesClippingTest {
                             item = worstCaseIssue(),
                             report = detail.report?.copy(author = LONG_NAME, message = OVERVIEW),
                             comments = detail.comments.map { it.copy(author = LONG_NAME, message = OVERVIEW) },
+                            canResolve = true,
+                            canDelete = true,
+                            mediaServerName = LONG_NAME,
                         ),
                 ),
-            actions = TvIssueDetailActions(onBack = {}, onRetry = {}),
+            actions = NoIssueSheetActions,
+            initialPage = page,
         )
     }
 

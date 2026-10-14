@@ -123,7 +123,6 @@ class LocalNetworkDeniedViewModelsTest {
                     TitleCache(FakeTitleDao()),
                     FakeIssueStore(),
                     dispatcher,
-                    RecordingAnalytics(),
                     minuteTicker = ticker,
                 )
             backgroundScope.launch { vm.uiState.collect {} }

@@ -1,31 +1,23 @@
 package com.cooper.binge.companion.seerr.ui.tv
 
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.hasContentDescription
-import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isFocusable
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performKeyInput
 import androidx.compose.ui.test.pressKey
 import androidx.compose.ui.test.requestFocus
 import com.binge.designsystem.tv.theme.BingeTvTheme
-import com.cooper.binge.companion.seerr.R
-import com.cooper.binge.companion.seerr.seerr.SeerrPermissions
 import com.cooper.binge.companion.seerr.ui.issues.IssueFilter
 import com.cooper.binge.companion.seerr.ui.issues.IssueItem
-import com.cooper.binge.companion.seerr.ui.issues.IssueListScope
 import com.cooper.binge.companion.seerr.ui.issues.IssueStatus
 import com.cooper.binge.companion.seerr.ui.requests.IssueType
 import com.cooper.binge.companion.seerr.ui.requests.RequestMediaType
 import com.cooper.binge.companion.seerr.ui.tv.issues.TvIssuesGrid
-import com.cooper.binge.companion.seerr.ui.tv.issues.TvIssuesGridManagement
 import com.cooper.binge.companion.seerr.util.createSeerrKeyboardComposeRule
-import com.cooper.binge.companion.seerr.util.string
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -36,8 +28,8 @@ import org.robolectric.annotation.Config
 private const val SEVERANCE = "Severance"
 
 /**
- * The issues grid under a real D-pad: OK on a card a manager may act on opens the actions sheet, the way
- * it does on the board's row, so an issue past a row's cap can still be resolved.
+ * The issues grid under a real D-pad: OK on a card opens the issue, the way it does on the board's row, so an issue past a
+ * row's cap is as manageable as one on it.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(qualifiers = "w960dp-h540dp-television-xhdpi")
@@ -45,65 +37,35 @@ class TvIssuesGridFocusTest {
     @get:Rule
     val composeTestRule = createSeerrKeyboardComposeRule()
 
-    private val resolved = mutableListOf<Int>()
     private val opened = mutableListOf<Int>()
 
     @Test
-    fun okOnAManagedCardOpensTheActionsSheetAndResolves() {
-        setGrid(SeerrPermissions(canManageIssues = true))
-        card().requestFocus()
-        composeTestRule.waitForIdle()
-
-        press(Key.DirectionCenter)
-        sheetRow(R.string.tv_issue_resolve).assertIsFocused()
-        press(Key.DirectionCenter)
-        press(Key.DirectionUp)
-        press(Key.DirectionCenter)
-
-        assertEquals(listOf(11), resolved)
-        assertEquals(emptyList<Int>(), opened)
-    }
-
-    /** A see-all grid is an overlay: nothing offers it focus, so it takes it itself, with no `requestFocus()` from outside. */
-    @Test
-    fun anOpenedGridTakesFocusItself() {
-        setGrid(SeerrPermissions())
-
-        card().assertIsFocused()
-    }
-
-    @Test
-    fun okOnACardTheViewerMayNotActOnOpensItsPage() {
-        setGrid(SeerrPermissions())
+    fun okOnACardOpensTheIssue() {
+        setGrid()
         card().requestFocus()
         composeTestRule.waitForIdle()
 
         press(Key.DirectionCenter)
 
         assertEquals(listOf(11), opened)
-        assertEquals(emptyList<Int>(), resolved)
     }
 
-    private fun setGrid(permissions: SeerrPermissions) {
+    /** A see-all grid is an overlay: nothing offers it focus, so it takes it itself, with no `requestFocus()` from outside. */
+    @Test
+    fun anOpenedGridTakesFocusItself() {
+        setGrid()
+
+        card().assertIsFocused()
+    }
+
+    private fun setGrid() {
         val items = listOf(issue(11, SEVERANCE))
         composeTestRule.setContent {
-            var actionItem by remember { mutableStateOf<IssueItem?>(null) }
             BingeTvTheme {
                 TvIssuesGrid(
                     filter = IssueFilter.Open,
                     counts = null,
                     rows = TvPagedRows(count = items.size, at = { items.getOrNull(it) }),
-                    actingIds = emptySet(),
-                    management =
-                        TvIssuesGridManagement(
-                            scope = IssueListScope(permissions = permissions, currentUserId = 7),
-                            actionItem = actionItem,
-                            onOpenActions = { actionItem = it },
-                            onDismissActions = { actionItem = null },
-                            onResolve = { resolved += it.id },
-                            onReopen = {},
-                            onDelete = {},
-                        ),
                     detailOpen = false,
                     onOpenDetail = { opened += it.id },
                     onRetryLoad = {},
@@ -115,8 +77,6 @@ class TvIssuesGridFocusTest {
     }
 
     private fun card() = composeTestRule.onNode(hasContentDescription(SEVERANCE) and isFocusable())
-
-    private fun sheetRow(label: Int) = composeTestRule.onNode(hasText(string(label)) and isFocusable())
 
     private fun press(key: Key) {
         composeTestRule.onRoot().performKeyInput { pressKey(key) }

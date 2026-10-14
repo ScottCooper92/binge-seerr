@@ -85,10 +85,6 @@ sealed interface IssuesUiState {
         val sort: IssueSort,
         val counts: IssueCounts?,
         val scope: IssueListScope,
-        /** Issues with a write in flight, dimmed in a list that offers actions on its rows. */
-        val actingIds: Set<Int> = emptySet(),
-        /** The issue whose actions sheet is open; held here so it survives rotation. */
-        val actionItem: IssueItem? = null,
         /** Each filter's latest finished network refresh; a filter is missing while its refresh runs. */
         val refreshes: Map<IssueFilter, ListRefresh> = emptyMap(),
         /** What the rows' relative times are worded against: moved on each minute while the list shows (#1239). */
@@ -99,17 +95,4 @@ sealed interface IssuesUiState {
     data class Error(
         val error: SeerrError,
     ) : IssuesUiState
-}
-
-/** One-shot feedback for an action taken on an issue from its row. */
-sealed interface IssueListEvent {
-    data object Resolved : IssueListEvent
-
-    data object Reopened : IssueListEvent
-
-    data object Deleted : IssueListEvent
-
-    data class Failed(
-        val error: SeerrError,
-    ) : IssueListEvent
 }
