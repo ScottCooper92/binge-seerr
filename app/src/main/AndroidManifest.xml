@@ -42,6 +42,9 @@
             <data android:scheme="binge" />
         </intent>
         <package android:name="com.cooper.binge.app" />
+        <!-- The media servers' TV apps, so a TV page can offer to open a title in the one installed. -->
+        <package android:name="org.jellyfin.androidtv" />
+        <package android:name="tv.emby.embyatv" />
     </queries>
 
     <!--

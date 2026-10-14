@@ -11,8 +11,10 @@ import com.cooper.binge.companion.seerr.data.RequestStore
 import com.cooper.binge.companion.seerr.seerr.SeerrApiFactory
 import com.cooper.binge.companion.seerr.seerr.SeerrAuth
 import com.cooper.binge.companion.seerr.seerr.SeerrError
+import com.cooper.binge.companion.seerr.seerr.SeerrMediaServer
 import com.cooper.binge.companion.seerr.seerr.SeerrMediaStatusCode
 import com.cooper.binge.companion.seerr.seerr.SeerrRequestStatusCode
+import com.cooper.binge.companion.seerr.ui.MediaServerItem
 import com.cooper.binge.companion.seerr.util.FakeRequest
 import com.cooper.binge.companion.seerr.util.FakeResponse
 import com.cooper.binge.companion.seerr.util.FakeSeerrServer
@@ -88,7 +90,7 @@ class RequestDetailViewModelTest {
             """{"id":11,"status":2,"createdAt":"2026-06-01T10:00:00.000Z","updatedAt":"2026-06-02T10:00:00.000Z",
                "requestedBy":{"id":7,"displayName":"scott"},"modifiedBy":{"id":9,"displayName":"admin"},"serverId":1,"profileId":4,"rootFolder":"/tv","tags":[2],
                "seasons":[{"seasonNumber":1,"status":5},{"seasonNumber":2,"status":3}],
-               "media":{"id":900,"tmdbId":200,"mediaType":"tv","status":4,"mediaUrl":"https://jellyfin.example.com/item/1",
+               "media":{"id":900,"tmdbId":200,"mediaType":"tv","status":4,"mediaUrl":"https://jellyfin.example.com/item/1","jellyfinMediaId":"a1b2",
                  "downloadStatus":[{"title":"Severance.S02","size":1000,"sizeLeft":250,"status":"downloading","timeLeft":"00:10:00"}]}}""",
         )
         serve(
@@ -274,6 +276,7 @@ class RequestDetailViewModelTest {
             assertTrue(detail.canReportIssue)
             assertEquals(seerr.url("/") + "tv/200", detail.webUrl)
             assertEquals("https://jellyfin.example.com/item/1", detail.mediaServerUrl)
+            assertEquals(MediaServerItem(SeerrMediaServer.Jellyfin, "a1b2"), detail.mediaServerItem)
         }
 
     @Test

@@ -63,6 +63,8 @@ internal data class TvRequestDetailActions(
     val onRetry: () -> Unit,
     /** Null hides the affordance — Binge is not expected to answer, and there is no browser to fall back to. */
     val onOpenInBinge: (() -> Unit)?,
+    /** Opens the title in the media server's TV app; null where there is no app to open it, or it is not installed. */
+    val onOpenInMediaServer: (() -> Unit)? = null,
     val onApprove: () -> Unit,
     val onRetryRequest: () -> Unit,
     val onDecline: (Boolean) -> Unit,

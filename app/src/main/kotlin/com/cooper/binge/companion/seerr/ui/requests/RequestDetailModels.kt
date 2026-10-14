@@ -5,6 +5,7 @@ import com.cooper.binge.companion.seerr.seerr.SeerrIssueTypeCode
 import com.cooper.binge.companion.seerr.seerr.SeerrMediaStatusCode
 import com.cooper.binge.companion.seerr.seerr.SeerrRequestStatusCode
 import com.cooper.binge.companion.seerr.ui.DestinationChoices
+import com.cooper.binge.companion.seerr.ui.MediaServerItem
 
 /** One season of a requested show: the request asked for it, and this is where the server has it. */
 data class SeasonState(
@@ -183,6 +184,8 @@ data class RequestDetail(
     /** What the server calls itself, and the media server it fronts when there is one, for the open-in labels. */
     val serverName: String = "Seerr",
     val mediaServerName: String? = null,
+    /** The title on that media server, where its apps can be handed it. */
+    val mediaServerItem: MediaServerItem? = null,
 ) {
     /** Every request against this title, this page's own first, then [siblings]. */
     fun summaries(): List<RequestSummary> =
