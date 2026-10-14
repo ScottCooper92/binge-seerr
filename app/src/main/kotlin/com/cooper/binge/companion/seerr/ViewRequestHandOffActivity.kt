@@ -19,7 +19,12 @@ class ViewRequestHandOffActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         if (bingeHandOffPolicy().permits(callingPackage)) {
-            startActivity(Intent(this, MainActivity::class.java).setData(Uri.parse(linkFor(intent.getStringExtra(CompanionManifest.EXTRA_REQUEST_ID)))))
+            startActivity(
+                Intent(
+                    this,
+                    MainActivity::class.java,
+                ).setData(Uri.parse(linkFor(intent.getStringExtra(CompanionManifest.EXTRA_REQUEST_ID)))),
+            )
         }
         finish()
     }
