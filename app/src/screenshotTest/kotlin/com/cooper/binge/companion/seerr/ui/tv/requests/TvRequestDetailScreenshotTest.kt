@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import com.android.tools.screenshot.PreviewTest
 import com.binge.designsystem.SaveStatus
+import com.binge.designsystem.tv.component.TV_DETAILS_SECTION_KEY
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.preview.SeerrTvScreenPreviews
 import com.cooper.binge.companion.seerr.seerr.SeerrError
@@ -191,6 +192,50 @@ class TvRequestDetailScreenshotTest {
                 ),
             events = emptyFlow(),
             actions = actions(onOpenInBinge = {}),
+        )
+    }
+
+    /**
+     * The page anchored on its Details footer, with every fact the server can name: who asked and when, the request's state,
+     * each version's state, who moderated it, where it was sent, and the line naming what stays on the phone.
+     */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun Details() {
+        TvRequestDetailScreen(
+            state =
+                RequestDetailUiState.Ready(
+                    filmDetail().copy(
+                        canEdit = true,
+                        canEditDestination = true,
+                        modifiedBy = "Ada",
+                        updatedAtMillis = REQUESTED_AT_MILLIS,
+                        destination =
+                            RequestDestination(
+                                serverName = "Radarr",
+                                profileName = "Ultra-HD",
+                                rootFolder = "/movies",
+                                tags = listOf("4k-hdr"),
+                            ),
+                        media =
+                            MediaRecord(
+                                mediaId = 900,
+                                isTv = false,
+                                instances =
+                                    listOf(
+                                        MediaInstance(false, SeerrMediaStatusCode.Available, null, null, null),
+                                        MediaInstance(true, SeerrMediaStatusCode.Processing, null, null, null),
+                                    ),
+                                canSetStatus = false,
+                                canClearData = false,
+                                canDeleteFiles = false,
+                            ),
+                    ),
+                ),
+            events = emptyFlow(),
+            actions = actions(onOpenInBinge = {}),
+            initialFocusedSectionKey = TV_DETAILS_SECTION_KEY,
         )
     }
 

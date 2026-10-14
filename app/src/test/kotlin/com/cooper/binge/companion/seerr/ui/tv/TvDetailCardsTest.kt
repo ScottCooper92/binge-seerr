@@ -5,17 +5,22 @@ import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.tv.material3.Text
+import com.binge.designsystem.tv.component.TvInfoGroup
 import com.binge.designsystem.tv.theme.BingeTvTheme
 import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.seerr.SeerrMediaStatusCode
 import com.cooper.binge.companion.seerr.ui.hub.HubQuotaBucket
 import com.cooper.binge.companion.seerr.ui.requests.DetailDownload
+import com.cooper.binge.companion.seerr.ui.requests.MediaInstance
+import com.cooper.binge.companion.seerr.ui.requests.MediaRecord
 import com.cooper.binge.companion.seerr.ui.requests.RequestDestination
+import com.cooper.binge.companion.seerr.ui.requests.RequestDetail
 import com.cooper.binge.companion.seerr.ui.requests.SeasonState
+import com.cooper.binge.companion.seerr.ui.state.labelRes
 import com.cooper.binge.companion.seerr.ui.tv.hub.quotaLine
 import com.cooper.binge.companion.seerr.ui.tv.requests.TvDownloadCard
-import com.cooper.binge.companion.seerr.ui.tv.requests.TvInfoCardItem
 import com.cooper.binge.companion.seerr.ui.tv.requests.TvSeasonCard
-import com.cooper.binge.companion.seerr.ui.tv.requests.requestInfoCards
+import com.cooper.binge.companion.seerr.ui.tv.requests.requestInfoGroups
 import com.cooper.binge.companion.seerr.util.createSeerrComposeRule
 import com.cooper.binge.companion.seerr.util.requestDetail
 import com.cooper.binge.companion.seerr.util.string
@@ -39,21 +44,49 @@ class TvDetailCardsTest {
     @get:Rule
     val composeTestRule = createSeerrComposeRule()
 
-    /** A destination the server named nothing for has no "Sent to" card, but its tags still get theirs. */
+    /** A destination the server named nothing for has no server, profile or folder groups, but its tags still get theirs. */
     @Test
     fun aDestinationWithNoNamesIsDroppedAndItsTagsKept() {
-        val cards = infoCards(RequestDestination(serverName = null, profileName = null, rootFolder = null, tags = listOf("4k", "kids")))
+        val destination = RequestDestination(serverName = null, profileName = null, rootFolder = null, tags = listOf("4k", "kids"))
+        val groups = infoGroups(detail(destination))
 
-        assertNull(cards.labelled(R.string.tv_detail_info_sent_to))
-        assertEquals("4k, kids", cards.labelled(R.string.request_tags)?.value)
+        assertNull(groups.labelled(R.string.request_server))
+        assertNull(groups.labelled(R.string.request_profile))
+        assertNull(groups.labelled(R.string.request_root_folder))
+        assertEquals("4k, kids", groups.labelled(R.string.request_tags)?.value)
     }
 
     @Test
-    fun aNamedDestinationReadsAsOneLine() {
-        val cards = infoCards(RequestDestination(serverName = "Radarr", profileName = "Ultra-HD", rootFolder = null, tags = emptyList()))
+    fun aNamedDestinationGetsAGroupPerName() {
+        val destination = RequestDestination(serverName = "Radarr", profileName = "Ultra-HD", rootFolder = null, tags = emptyList())
+        val groups = infoGroups(detail(destination))
 
-        assertEquals("Radarr · Ultra-HD", cards.labelled(R.string.tv_detail_info_sent_to)?.value)
-        assertNull(cards.labelled(R.string.request_tags))
+        assertEquals("Radarr", groups.labelled(R.string.request_server)?.value)
+        assertEquals("Ultra-HD", groups.labelled(R.string.request_profile)?.value)
+        assertNull(groups.labelled(R.string.request_root_folder))
+        assertNull(groups.labelled(R.string.request_tags))
+    }
+
+    /** Each version the server keeps reads as its own group, and a version it has no status for is left out. */
+    @Test
+    fun eachVersionTheServerKeepsGetsItsStatus() {
+        val media =
+            MediaRecord(
+                mediaId = 9,
+                isTv = false,
+                instances =
+                    listOf(
+                        instance(is4k = false, status = SeerrMediaStatusCode.Available),
+                        instance(is4k = true, status = null),
+                    ),
+                canSetStatus = false,
+                canClearData = false,
+                canDeleteFiles = false,
+            )
+        val groups = infoGroups(requestDetail(media = media))
+
+        assertEquals(string(SeerrMediaStatusCode.Available.labelRes()), groups.labelled(R.string.media_instance_standard)?.value)
+        assertNull(groups.labelled(R.string.settings_service_4k))
     }
 
     @Test
@@ -133,14 +166,19 @@ class TvDetailCardsTest {
         composeTestRule.waitForIdle()
     }
 
-    private fun infoCards(destination: RequestDestination): List<TvInfoCardItem> {
-        var cards = emptyList<TvInfoCardItem>()
-        composeTestRule.setContent { BingeTvTheme { cards = requestInfoCards(detail(destination), now = 0L) } }
+    private fun infoGroups(detail: RequestDetail): List<TvInfoGroup> {
+        var groups = emptyList<TvInfoGroup>()
+        composeTestRule.setContent { BingeTvTheme { groups = requestInfoGroups(detail, now = 0L) } }
         composeTestRule.waitForIdle()
-        return cards
+        return groups
     }
 
-    private fun List<TvInfoCardItem>.labelled(id: Int): TvInfoCardItem? = firstOrNull { it.label == string(id) }
+    private fun instance(
+        is4k: Boolean,
+        status: SeerrMediaStatusCode?,
+    ) = MediaInstance(is4k = is4k, status = status, serviceUrl = null, mediaServerUrl = null, watch = null)
+
+    private fun List<TvInfoGroup>.labelled(id: Int): TvInfoGroup? = firstOrNull { it.label == string(id) }
 
     private fun detail(destination: RequestDestination) = requestDetail(destination = destination, mediaId = null)
 }

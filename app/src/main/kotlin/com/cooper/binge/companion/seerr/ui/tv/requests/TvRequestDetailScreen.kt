@@ -3,6 +3,7 @@ package com.cooper.binge.companion.seerr.ui.tv.requests
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -20,12 +21,15 @@ import androidx.tv.material3.MaterialTheme
 import coil3.compose.AsyncImage
 import com.binge.designsystem.SaveStatus
 import com.binge.designsystem.formatRelativeOrAbsolute
+import com.binge.designsystem.tv.component.TV_DETAILS_SECTION_KEY
 import com.binge.designsystem.tv.component.TvCardRow
 import com.binge.designsystem.tv.component.TvDetailAction
 import com.binge.designsystem.tv.component.TvDetailActionRow
 import com.binge.designsystem.tv.component.TvDetailHero
 import com.binge.designsystem.tv.component.TvDetailHeroItem
+import com.binge.designsystem.tv.component.TvDetailInfoFooterSection
 import com.binge.designsystem.tv.component.TvHeroOverview
+import com.binge.designsystem.tv.component.TvInfoGroup
 import com.binge.designsystem.tv.component.TvSaveStatus
 import com.binge.designsystem.tv.focus.rememberTvOverlayCloser
 import com.binge.designsystem.tv.template.TvDetailPage
@@ -95,6 +99,8 @@ internal fun TvRequestDetailScreen(
     initialSheet: DetailSheet? = null,
     /** The action status showing on arrival, for a frame, which never collects [events]. Production passes idle. */
     initialStatus: SaveStatus = SaveStatus.Idle,
+    /** The section the page opens anchored on, for a frame that shows what sits below the hero. Production passes null. */
+    initialFocusedSectionKey: String? = null,
 ) {
     BackHandler(onBack = actions.onBack)
     // A removed request has no page to stay on.
@@ -123,6 +129,7 @@ internal fun TvRequestDetailScreen(
                     given = actions,
                     initialSheet = initialSheet,
                     initialStatus = initialStatus,
+                    initialFocusedSectionKey = initialFocusedSectionKey,
                 )
         }
     }
@@ -130,9 +137,10 @@ internal fun TvRequestDetailScreen(
 
 /**
  * The loaded page, laid out as Binge's TV detail pages are: a hero band with the poster, the title over its state
- * and a synopsis, and the actions at its foot; then a row of seasons, a row of what is downloading, and a row of
- * details, each a [TvCardRow] of focusable cards. [TvDetailPage] owns the scroll: the focused section is pulled to
- * a fixed rest under the hero, so crossing sections never leaves one flush against the bottom edge.
+ * and a synopsis, and the actions at its foot; then a row of seasons and a row of what is downloading, each a
+ * [TvCardRow] of focusable cards, and the request's facts in the Details footer. [TvDetailPage] owns the scroll: the
+ * focused section is pulled to a fixed rest under the hero, so crossing sections never leaves one flush against the
+ * bottom edge.
  *
  * Arrival focus lands on the action row; a request this viewer cannot act on and cannot hand to Binge has none, so
  * the synopsis takes focus instead, and the page is never left with nowhere for the D-pad to land.
@@ -147,6 +155,7 @@ private fun TvRequestDetailContent(
     given: TvRequestDetailActions,
     initialSheet: DetailSheet?,
     initialStatus: SaveStatus,
+    initialFocusedSectionKey: String?,
 ) {
     // An approve, a decline, a retry or a block that lands reloads the page without its own button, and the focus that
     // button held would go with it to nowhere the D-pad can reach. Each marks the row to be focused again when the page's
@@ -200,11 +209,12 @@ private fun TvRequestDetailContent(
         }
     }
     // Resolved here: the section builder below is not composable, so it cannot read resources itself.
-    val infoCards = requestInfoCards(detail, now)
+    val details = TvRequestDetails(stringResource(R.string.tv_detail_details), requestInfoGroups(detail, now), phoneOnlyHint(detail))
     Box(modifier = Modifier.fillMaxSize()) {
         TvDetailPage(
             entryFocus = if (actionList.isEmpty()) synopsisFocus else actionRowFocus,
             hosting = TvPageHosting.Overlay,
+            initialFocusedSectionKey = initialFocusedSectionKey,
         ) {
             hero {
                 RequestHero(
@@ -218,7 +228,7 @@ private fun TvRequestDetailContent(
                     run = run.takeUnless { sheet == DetailSheet.MarkAs },
                 )
             }
-            requestSections(detail, infoCards)
+            requestSections(detail, details)
         }
     }
     sheet?.let { step ->
@@ -294,10 +304,10 @@ private fun RequestHero(
     }
 }
 
-/** The rows below the hero: the seasons asked for, what is downloading, and the request's details. */
+/** The rows below the hero: the seasons asked for and what is downloading, then the request's details. */
 private fun TvDetailPageScope.requestSections(
     detail: RequestDetail,
-    infoCards: List<TvInfoCardItem>,
+    details: TvRequestDetails,
 ) {
     if (detail.seasons.isNotEmpty()) {
         section("seasons") { onFocused ->
@@ -325,20 +335,21 @@ private fun TvDetailPageScope.requestSections(
             }
         }
     }
-    if (infoCards.isNotEmpty()) {
-        section("details") { onFocused ->
-            TvCardRow(
-                items = infoCards,
-                key = { it.label },
-                cellWidth = dimensionResource(R.dimen.tv_detail_info_card_width),
-                heading = stringResource(R.string.tv_detail_details),
-                onCellFocused = onFocused,
-            ) { card, isFocused, onFocusChanged, cellModifier ->
-                TvInfoCard(card, isFocused, onFocusChanged, cellModifier)
-            }
+    // The page's facts in Binge's own Details footer, with the phone-only hint as a line under it rather than a fact.
+    section(TV_DETAILS_SECTION_KEY) { _ ->
+        Column {
+            TvDetailInfoFooterSection(header = details.header, groups = details.groups)
+            details.phoneOnlyHint?.let { TvPhoneOnlyHint(it) }
         }
     }
 }
+
+/** The Details section's content, resolved where resources can be read: the section builder is not composable. */
+private class TvRequestDetails(
+    val header: String,
+    val groups: List<TvInfoGroup>,
+    val phoneOnlyHint: String?,
+)
 
 /** These actions, with [mark] run first by those whose success removes their own button: Approve, Decline, Retry and Block. */
 private fun TvRequestDetailActions.markingRefocus(mark: () -> Unit) =
