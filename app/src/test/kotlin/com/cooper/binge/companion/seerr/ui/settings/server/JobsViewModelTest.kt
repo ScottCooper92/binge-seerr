@@ -352,12 +352,14 @@ class JobsViewModelTest {
 
             collector.cancel()
             testScheduler.runCurrent()
+            // The baseline is taken here, with the held read already counted and nothing else able to ask the server for the
+            // list: the page has left, so no read is scheduled, and the return has not happened. It does not wait on the
+            // cancelled read's answer, which lands on OkHttp's thread after a hop the drain below can only time (#1539).
+            val reads = seerr.count("GET", "/api/v1/settings/jobs")
             held.release(code = 503)
-            // The cancelled read's answer lands on OkHttp's thread: let it finish before the page comes back, or it can land
-            // beside the return and the count below is taken against a read still settling.
+            // Let the cancelled read's answer finish before the page comes back, so it cannot land beside the return.
             seerr.awaitCallbacks()
             testScheduler.runCurrent()
-            val reads = seerr.count("GET", "/api/v1/settings/jobs")
 
             val returned = launch(start = CoroutineStart.UNDISPATCHED) { vm.uiState.collect {} }
             testScheduler.runCurrent()
