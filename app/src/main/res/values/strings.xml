@@ -1170,6 +1170,11 @@
     <string name="tv_detail_phone_hint">Change on your phone: %1$s</string>
     <string name="tv_detail_phone_requester">The requester</string>
     <string name="tv_detail_phone_siblings">Other requests</string>
+    <string name="tv_detail_requester">Requester</string>
+    <string name="tv_requester_quota">%1$s: %2$s</string>
+    <string name="tv_requester_limit_title">Limit</string>
+    <string name="tv_requester_window_title">Counted over</string>
+    <string name="tv_requester_phone">Everything else on your phone</string>
     <string name="tv_detail_details">Details</string>
     <string name="settings_group_server_settings">Server settings</string>
     <string name="settings_section_general_detail">Title, address and discovery</string>

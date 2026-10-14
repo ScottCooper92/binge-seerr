@@ -1112,6 +1112,11 @@
     <string name="tv_detail_phone_hint">Cámbialo en el móvil: %1$s</string>
     <string name="tv_detail_phone_requester">Quien la pidió</string>
     <string name="tv_detail_phone_siblings">Otras peticiones</string>
+    <string name="tv_detail_requester">Solicitante</string>
+    <string name="tv_requester_quota">%1$s: %2$s</string>
+    <string name="tv_requester_limit_title">Límite</string>
+    <string name="tv_requester_window_title">Contadas en</string>
+    <string name="tv_requester_phone">Todo lo demás, en tu teléfono</string>
     <string name="tv_detail_details">Detalles</string>
     <string name="settings_group_server_settings">Ajustes del servidor</string>
     <string name="settings_section_general_detail">Título, dirección y Descubrir</string>

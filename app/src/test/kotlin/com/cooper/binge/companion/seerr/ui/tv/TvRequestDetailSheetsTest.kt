@@ -1,6 +1,7 @@
 package com.cooper.binge.companion.seerr.ui.tv
 
 import androidx.activity.ComponentActivity
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsFocused
@@ -32,8 +33,10 @@ import com.cooper.binge.companion.seerr.ui.requests.RequestDetailUiState
 import com.cooper.binge.companion.seerr.ui.requests.labelRes
 import com.cooper.binge.companion.seerr.ui.tv.requests.TvRequestDetailActions
 import com.cooper.binge.companion.seerr.ui.tv.requests.TvRequestDetailScreen
+import com.cooper.binge.companion.seerr.ui.users.OWNER_USER_ID
 import com.cooper.binge.companion.seerr.util.createSeerrKeyboardAndroidComposeRule
 import com.cooper.binge.companion.seerr.util.requestDetail
+import com.cooper.binge.companion.seerr.util.requestItem
 import com.cooper.binge.companion.seerr.util.string
 import kotlinx.coroutines.flow.MutableSharedFlow
 import org.junit.Assert.assertEquals
@@ -57,6 +60,7 @@ class TvRequestDetailSheetsTest {
     private val reported = mutableListOf<Pair<IssueType, String>>()
     private var dismissedReports = 0
     private val events = MutableSharedFlow<ModerationEvent>(extraBufferCapacity = 1)
+    private val openedRequesters = mutableListOf<Pair<Int, Boolean>>()
 
     @Test
     fun markAsOpensOnTheStatesAndAPickApplies() {
@@ -227,6 +231,28 @@ class TvRequestDetailSheetsTest {
         actionButton(R.string.issue_report_title).assertDoesNotExist()
     }
 
+    @Test
+    fun aManagerGetsTheRequesterSheetInPlaceOfThePhoneLine() {
+        setContent(requestDetail(mediaId = MEDIA_ID, canManageUsers = true), requesterSheet = true)
+        composeTestRule.onNodeWithText(string(R.string.tv_detail_phone_requester), substring = true).assertDoesNotExist()
+
+        actionButton(R.string.tv_detail_requester).requestFocus()
+        composeTestRule.waitForIdle()
+        pressOk()
+
+        assertEquals(listOf(3 to true), openedRequesters)
+    }
+
+    @Test
+    fun theRequesterSheetIsNotOfferedForTheOwner() {
+        setContent(
+            requestDetail(item = requestItem(requestedById = OWNER_USER_ID), mediaId = MEDIA_ID, canManageUsers = true),
+            requesterSheet = true,
+        )
+
+        actionButton(R.string.tv_detail_requester).assertDoesNotExist()
+    }
+
     private fun media(vararg instances: MediaInstance) =
         MediaRecord(
             mediaId = MEDIA_ID,
@@ -246,6 +272,7 @@ class TvRequestDetailSheetsTest {
     private fun setContent(
         detail: RequestDetail,
         report: IssueReport = IssueReport.Idle,
+        requesterSheet: Boolean = false,
     ) {
         composeTestRule.setContent {
             BingeTvTheme {
@@ -265,6 +292,12 @@ class TvRequestDetailSheetsTest {
                             onSetMediaStatus = { mediaId, status, is4k -> marked += Triple(mediaId, status, is4k) },
                             onReportIssue = { type, message -> reported += type to message },
                             onDismissReport = { dismissedReports++ },
+                            requesterSheet =
+                                if (requesterSheet) {
+                                    { userId, isMovie, _ -> LaunchedEffect(userId) { openedRequesters += userId to isMovie } }
+                                } else {
+                                    null
+                                },
                         ),
                 )
             }
