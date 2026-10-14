@@ -37,6 +37,11 @@ class NotificationAgentsViewModel
             }
         }
 
+        /** Reads again without going back to Loading, for a page that is showing the list while an agent is changed under it. */
+        fun refresh() {
+            viewModelScope.launch(dispatcher) { attempt { load() }.onSuccess { state.value = it } }
+        }
+
         private suspend fun load(): AgentsUiState.Ready =
             coroutineScope {
                 val api = connection.api()

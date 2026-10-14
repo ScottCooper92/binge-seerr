@@ -3,6 +3,7 @@ package com.cooper.binge.companion.seerr.ui.tv.settings
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import com.android.tools.screenshot.PreviewTest
+import com.binge.designsystem.SaveStatus
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.preview.SeerrTvScreenPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrTvSpanishScreenPreviews
@@ -14,13 +15,20 @@ import com.cooper.binge.companion.seerr.ui.hub.previewReady
 import com.cooper.binge.companion.seerr.ui.settings.ServerConfig
 import com.cooper.binge.companion.seerr.ui.settings.SettingsUiState
 import com.cooper.binge.companion.seerr.ui.settings.SystemInfo
+import com.cooper.binge.companion.seerr.ui.settings.server.AgentForm
+import com.cooper.binge.companion.seerr.ui.settings.server.AgentOption
+import com.cooper.binge.companion.seerr.ui.settings.server.AgentSummary
+import com.cooper.binge.companion.seerr.ui.settings.server.AgentsUiState
 import com.cooper.binge.companion.seerr.ui.settings.server.JobInterval
 import com.cooper.binge.companion.seerr.ui.settings.server.JobsUiState
 import com.cooper.binge.companion.seerr.ui.settings.server.PLEX_FULL_SCAN_JOB_ID
+import com.cooper.binge.companion.seerr.ui.settings.server.ServerAgent
+import com.cooper.binge.companion.seerr.ui.settings.server.ServerGeneralSettings
 import com.cooper.binge.companion.seerr.ui.settings.server.ServerJob
 import com.cooper.binge.companion.seerr.ui.tv.SampleSettings
 import com.cooper.binge.companion.seerr.ui.tv.SampleSettingsAdmin
 import com.cooper.binge.companion.seerr.ui.tv.SampleSettingsWithApp
+import com.cooper.binge.companion.seerr.ui.users.settings.EditorUiState
 
 private const val SYNC_JOB_ID = "download-sync"
 
@@ -190,6 +198,97 @@ class TvSettingsScreenshotTest {
         Sheet(SettingsUiState.Loading)
     }
 
+    /** The household's switches, each saying On or Off in place, with a line under them for how the last one saved. */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun Household() {
+        Sheet(SampleSettingsAdmin, page = householdPage(), actions = householdActions(SaveStatus.Saved))
+    }
+
+    /** A switch that did not save: it stays as pressed, and the line offers Retry. */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun HouseholdSaveFailed() {
+        Sheet(SampleSettingsAdmin, page = householdPage(), actions = householdActions(SaveStatus.Failed))
+    }
+
+    /** The notification agents the server offers, each with whether it is on. */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun Agents() {
+        Sheet(SampleSettingsAdmin, page = groupPage(stringResource(R.string.settings_group_notifications)), actions = agentActions())
+    }
+
+    /** One agent's page: its switch to press, and how the press saved. */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun AgentPage() {
+        Sheet(SampleSettingsAdmin, page = agentPage(ServerAgent.Discord), actions = agentActions(configured = true))
+    }
+
+    /** An agent that cannot send until a setting is filled in: its switch is out of reach and the page says where to finish. */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun AgentPageNeedsSetup() {
+        Sheet(SampleSettingsAdmin, page = agentPage(ServerAgent.Discord), actions = agentActions(configured = false))
+    }
+
+    @Composable
+    private fun householdPage() = groupPage(stringResource(R.string.tv_settings_group_household))
+
+    private fun householdActions(status: SaveStatus) =
+        TvSettingsActions(
+            household =
+                TvHousehold(
+                    settings =
+                        ServerGeneralSettings(
+                            hideAvailable = true,
+                            hideRequested = false,
+                            hideBlocklisted = false,
+                            specialEpisodes = true,
+                        ),
+                    status = status,
+                    onChange = {},
+                    onRetry = {},
+                ),
+        )
+
+    private fun agentActions(configured: Boolean = true) =
+        TvSettingsActions(
+            agents =
+                TvAgents(
+                    state =
+                        AgentsUiState.Ready(
+                            listOf(
+                                AgentSummary(ServerAgent.Discord, enabled = false),
+                                AgentSummary(ServerAgent.Email, enabled = true),
+                                AgentSummary(ServerAgent.Slack, enabled = null),
+                            ),
+                        ),
+                    page = { agent, nav ->
+                        val form =
+                            AgentForm(
+                                agent,
+                                enabled = false,
+                                options =
+                                    if (configured) {
+                                        mapOf(
+                                            AgentOption.DiscordWebhookUrl to "https://discord.test/hook",
+                                        )
+                                    } else {
+                                        emptyMap()
+                                    },
+                            )
+                        TvAgentPage(nav, agent, EditorUiState.Ready(draft = form, saved = form, saveStatus = SaveStatus.Saved), {}, {})
+                    },
+                ),
+        )
+
     @Composable
     private fun mediaServerPage() = groupPage(stringResource(R.string.server_settings_media_server))
 
@@ -202,11 +301,12 @@ class TvSettingsScreenshotTest {
         page: String = PAGE_SETTINGS,
         hub: HubUiState? = null,
         jobs: JobsUiState = JobsUiState.Loading,
+        actions: TvSettingsActions = TvSettingsActions(),
     ) {
         TvSettingsSheet(
             // Fixed, so a job's "next run" reads the same whichever day the suite runs.
             state = (state as? SettingsUiState.Ready)?.copy(now = FIXED_NOW_MILLIS) ?: state,
-            actions = TvSettingsActions(),
+            actions = actions,
             onDismissRequest = {},
             hub = hub,
             initialPage = page,
