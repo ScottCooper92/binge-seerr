@@ -1015,7 +1015,10 @@
     <string name="tv_settings_read_only_note">Cámbialo en la app del móvil o en el cliente web.</string>
     <string name="tv_settings_disconnect_confirm">Sí, desconectar</string>
     <string name="tv_settings_start_library_scan">Iniciar escaneo de la biblioteca</string>
-    <string name="tv_settings_scan_started">Escaneo de la biblioteca iniciado</string>
+    <string name="tv_settings_cancel_library_scan">Cancelar escaneo de la biblioteca</string>
+    <string name="tv_settings_job_working">Trabajando…</string>
+    <string name="tv_settings_job_body">Se ejecuta según una programación. Ejecútala ahora o cancélala mientras se ejecuta. La programación se cambia en el teléfono.</string>
+    <string name="tv_settings_job_failed_note">No se ha podido completar. Selecciona la opción para volver a intentarlo.</string>
     <string name="tv_filter_with_count">%1$s (%2$d)</string>
     <string name="tv_settings_group_server">Estado del servidor</string>
     <string name="tv_settings_status">Estado</string>

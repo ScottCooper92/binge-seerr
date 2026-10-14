@@ -117,34 +117,21 @@ class JobsViewModel
         fun run(id: String) = act(id, trackRun = true) { api -> api.runJob(id) }
 
         /**
-         * Same call as [run], but with a notice on success — for a caller with no jobs list of its own
-         * to read the outcome off (the TV settings board's one confirmed option), which needs telling
-         * rather than a row it does not render.
-         */
-        fun run(
-            id: String,
-            noticeRes: Int,
-        ) = act(id, noticeRes, trackRun = true) { api -> api.runJob(id) }
-
-        /**
-         * Same as [run] with a notice, but for a caller whose first tap can land before the one-shot
-         * [reload] in [init] resolves: the media server row appears as soon as `SettingsViewModel`'s
-         * own, separately-cached state is `Ready`, which races this view model's own fresh fetch. A tap
+         * Same as [run], but for a caller whose first tap can land before the one-shot [reload] in [init]
+         * resolves: the TV board's media server row appears as soon as `SettingsViewModel`'s own,
+         * separately-cached state is `Ready`, which races this view model's own fresh fetch. A tap
          * that lands on [JobsUiState.Loading] waits it out instead of being silently dropped; one that
-         * lands on [JobsUiState.Error] retries the load once before reporting that failure. Concurrent
-         * taps join the wait already in flight rather than stacking retries.
+         * lands on [JobsUiState.Error] retries the load once before reporting that failure, which the
+         * [Error][JobsUiState.Error] state itself carries. Concurrent taps join the wait already in flight.
          */
-        fun runWhenReady(
-            id: String,
-            noticeRes: Int,
-        ) {
+        fun runWhenReady(id: String) {
             if (readyWait?.isActive == true) return
             readyWait =
                 viewModelScope.launch(dispatcher) {
                     if (state.value is JobsUiState.Error) reload()
                     when (val settled = state.first { it !is JobsUiState.Loading }) {
                         JobsUiState.Loading -> Unit
-                        is JobsUiState.Ready -> run(id, noticeRes)
+                        is JobsUiState.Ready -> run(id)
                         is JobsUiState.Error -> eventFlow.emit(EditorEvent.Failed(settled.error))
                     }
                 }
@@ -198,7 +185,6 @@ class JobsViewModel
 
         private fun act(
             id: String,
-            noticeRes: Int? = null,
             trackRun: Boolean = false,
             call: suspend (SeerrApi) -> SeerrJobDto,
         ) {
@@ -206,9 +192,9 @@ class JobsViewModel
             // overwritten with a stale copy (#973). The block can run more than once; only the attempt that lands counts.
             var claimed = false
             state.update { current ->
-                val ready = current as? JobsUiState.Ready
-                claimed = ready != null && id !in ready.busyIds
-                if (ready != null && claimed) ready.copy(busyIds = ready.busyIds + id) else current
+                val claiming = (current as? JobsUiState.Ready)?.claiming(id)
+                claimed = claiming != null
+                claiming ?: current
             }
             if (!claimed) return
             viewModelScope.launch(dispatcher) {
@@ -227,10 +213,8 @@ class JobsViewModel
                 // Before the event, not after it: a terminal event is this action's last observable
                 // effect, so anything reacting to one sees the job already released rather than a
                 // state that still says busy for however long the emitting coroutine takes to resume.
-                state.update { current -> (current as? JobsUiState.Ready)?.copy(busyIds = current.busyIds - id) ?: current }
-                outcome
-                    .onSuccess { noticeRes?.let { eventFlow.emit(EditorEvent.Notice(it)) } }
-                    .onFailure { failure -> eventFlow.emit(EditorEvent.Failed(failure.toSeerrError())) }
+                state.update { current -> (current as? JobsUiState.Ready)?.releasing(id, failed = outcome.isFailure) ?: current }
+                outcome.onFailure { failure -> eventFlow.emit(EditorEvent.Failed(failure.toSeerrError())) }
             }
         }
 
@@ -242,6 +226,7 @@ class JobsViewModel
                 JobsUiState.Ready(
                     jobs,
                     busyIds = ready?.busyIds.orEmpty(),
+                    failedIds = ready?.failedIds.orEmpty(),
                     outcomes = ready?.outcomes.orEmpty(),
                     now = clock(),
                     scheduleStatus = ready?.scheduleStatus ?: SaveStatus.Idle,
@@ -341,3 +326,13 @@ class JobsViewModel
                 }
         }
     }
+
+/** [this] with [id] in flight and any earlier refusal of it forgotten, or null when [id] already is in flight. */
+private fun JobsUiState.Ready.claiming(id: String): JobsUiState.Ready? =
+    if (id in busyIds) null else copy(busyIds = busyIds + id, failedIds = failedIds - id)
+
+/** [this] with [id] released, and kept as refused until its next attempt when it [failed]. */
+private fun JobsUiState.Ready.releasing(
+    id: String,
+    failed: Boolean,
+): JobsUiState.Ready = copy(busyIds = busyIds - id, failedIds = if (failed) failedIds + id else failedIds)
