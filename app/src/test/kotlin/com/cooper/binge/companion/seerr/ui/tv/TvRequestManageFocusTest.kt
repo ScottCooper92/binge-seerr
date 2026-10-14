@@ -3,10 +3,13 @@ package com.cooper.binge.companion.seerr.ui.tv
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.test.assertIsFocused
+import androidx.compose.ui.test.filterToOne
 import androidx.compose.ui.test.getBoundsInRoot
+import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.isFocusable
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
@@ -19,6 +22,7 @@ import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.seerr.SeerrMediaStatusCode
 import com.cooper.binge.companion.seerr.ui.requests.MediaInstance
 import com.cooper.binge.companion.seerr.ui.requests.MediaRecord
+import com.cooper.binge.companion.seerr.ui.requests.MediaStatusChoice
 import com.cooper.binge.companion.seerr.ui.requests.ModerationEvent
 import com.cooper.binge.companion.seerr.ui.requests.RequestActions
 import com.cooper.binge.companion.seerr.ui.requests.RequestDetail
@@ -41,8 +45,9 @@ import com.binge.designsystem.R as DesR
 private val Pending = RequestActions(canApprove = true, canDecline = true, canRemove = true, canBlock = true)
 
 /**
- * The request page's row leads with at most two actions, and Manage holds the rest in a sheet. Manage takes focus back from
- * whatever it opened: its own sheet, a sheet one of its rows opened, or an action it ran in place.
+ * The request page's row leads with at most two actions, and Manage holds the rest in a stack of pages. A page a row opens
+ * hands focus back to that row, and so does a confirm cancelled over Manage; Manage's own button takes it back when Manage
+ * closes, after an action it ran or a confirm answered.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(qualifiers = "w960dp-h540dp-television-xhdpi")
@@ -51,6 +56,9 @@ class TvRequestManageFocusTest {
     val composeTestRule = createSeerrKeyboardAndroidComposeRule<ComponentActivity>()
 
     private var openedInBinge = 0
+    private var blocks = 0
+    private val marked = mutableListOf<MediaStatusChoice>()
+    private val events = MutableSharedFlow<ModerationEvent>(extraBufferCapacity = 1)
 
     @Test
     fun aPendingRequestLeadsWithItsDecisionAndManageHoldsTheRest() {
@@ -69,16 +77,28 @@ class TvRequestManageFocusTest {
         assertTrue("Remove, the irreversible one, is last", remove.top > block.top)
     }
 
+    /** With no decision to make, three of the title's own actions lead: the media server, Binge and Mark as. Report is managed. */
     @Test
-    fun aRequestWithNoDecisionLeadsWithTheMediaServerAndMarkAs() {
-        setContent(markable().copy(mediaServerName = "Jellyfin", canReportIssue = true), mediaServer = true)
+    fun aRequestWithNoDecisionLeadsWithItsTitleActions() {
+        setContent(markable().copy(mediaServerName = "Jellyfin", canReportIssue = true), mediaServer = true, openInBinge = true)
 
         rowButton(string(R.string.open_in_named, "Jellyfin")).assertIsFocused()
+        rowButton(R.string.request_open_binge).assertExists()
         rowButton(R.string.media_mark_as).assertExists()
         rowButton(R.string.issue_report_title).assertDoesNotExist()
 
         openManage()
         sheetRow(R.string.issue_report_title).assertIsFocused()
+    }
+
+    /** Where Binge would answer and there is no media server app, Binge, Mark as and Report all lead. */
+    @Test
+    fun withoutAMediaServerAppReportLeadsBesideBinge() {
+        setContent(markable().copy(canReportIssue = true), openInBinge = true)
+
+        rowButton(R.string.request_open_binge).assertIsFocused()
+        rowButton(R.string.media_mark_as).assertExists()
+        rowButton(R.string.issue_report_title).assertExists()
     }
 
     @Test
@@ -108,9 +128,9 @@ class TvRequestManageFocusTest {
         rowButton(R.string.tv_detail_manage).assertIsFocused()
     }
 
-    /** Block opens its confirm in Manage's place, and cancelling it lands on Manage, where the viewer came from. */
+    /** Block asks over Manage, and cancelling it lands on Block's row, where the viewer was. */
     @Test
-    fun aSheetOpenedFromManageHandsFocusBackToManage() {
+    fun cancellingBlockFromManageLandsOnItsRow() {
         setContent(requestDetail(actions = Pending))
         openManage()
         pressOk()
@@ -121,21 +141,62 @@ class TvRequestManageFocusTest {
         settle()
 
         composeTestRule.onNodeWithText(string(R.string.request_block_confirm_title)).assertDoesNotExist()
+        assertEquals(0, blocks)
+        sheetRow(R.string.tv_detail_block).assertIsFocused()
+    }
+
+    /** An answered Block runs, and closes Manage with it: focus is back on Manage's button. */
+    @Test
+    fun confirmingBlockFromManageBlocksAndClosesManage() {
+        setContent(requestDetail(actions = Pending))
+        openManage()
+        pressOk()
+
+        composeTestRule
+            .onAllNodes(hasText(string(R.string.tv_detail_block)) and isFocusable())
+            .filterToOne(hasAnyAncestor(isDialog()))
+            .performClick()
+        settle()
+
+        assertEquals(1, blocks)
+        sheetRow(R.string.tv_detail_remove).assertDoesNotExist()
         rowButton(R.string.tv_detail_manage).assertIsFocused()
     }
 
-    /** Report, from Manage, is the title's page as a code; Back from it lands on Manage too. */
+    /** Report, from Manage, is a page in Manage's stack: Back returns to its row, and Back again closes Manage. */
     @Test
-    fun theReportCodeOpenedFromManageHandsFocusBackToManage() {
-        setContent(markable().copy(canReportIssue = true))
+    fun theReportCodeOpenedFromManageGoesBackToItsRow() {
+        setContent(requestDetail(actions = Pending, canReportIssue = true))
         openManage()
         sheetRow(R.string.issue_report_title).requestFocus()
         pressOk()
         composeTestRule.onNodeWithText(string(R.string.tv_detail_report_on_phone, "Seerr")).assertExists()
 
         pressBack()
+        sheetRow(R.string.issue_report_title).assertIsFocused()
 
+        pressBack()
         rowButton(R.string.tv_detail_manage).assertIsFocused()
+    }
+
+    /** Mark as, from Manage, applies in place and stays open once saved; Back returns to its row in Manage. */
+    @Test
+    fun markAsOpenedFromManageStaysOpenAndGoesBackToItsRow() {
+        setContent(markable().copy(actions = Pending))
+        openManage()
+        sheetRow(R.string.media_mark_as).requestFocus()
+        pressOk()
+        composeTestRule.onNodeWithText(string(R.string.media_mark_as_scope_caption), substring = true).assertExists()
+        pressOk()
+        assertEquals(listOf(MediaStatusChoice.Available), marked)
+
+        events.tryEmit(ModerationEvent.MediaStatusSet)
+        composeTestRule.mainClock.advanceTimeBy(TV_SAVED_HOLD_MILLIS + 200)
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithText(string(R.string.media_mark_as_scope_caption), substring = true).assertExists()
+
+        pressBack()
+        sheetRow(R.string.media_mark_as).assertIsFocused()
     }
 
     @Test
@@ -174,7 +235,7 @@ class TvRequestManageFocusTest {
             BingeTvTheme {
                 TvRequestDetailScreen(
                     state = RequestDetailUiState.Ready(detail),
-                    events = MutableSharedFlow<ModerationEvent>(),
+                    events = events,
                     actions =
                         TvRequestDetailActions(
                             onBack = {},
@@ -185,8 +246,8 @@ class TvRequestManageFocusTest {
                             onRetryRequest = {},
                             onDecline = {},
                             onRemove = {},
-                            onBlock = {},
-                            onSetMediaStatus = { _, _, _ -> },
+                            onBlock = { blocks++ },
+                            onSetMediaStatus = { _, status, _ -> marked += status },
                         ),
                 )
             }

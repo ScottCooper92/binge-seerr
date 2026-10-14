@@ -20,8 +20,15 @@ import com.binge.designsystem.tv.component.TvDetailAction
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.requests.RequestDetail
 
-/** The most the action row shows before Manage. */
-private const val MAX_LEADS = 2
+/** The most a decision leads the row with before Manage: Approve and Decline. */
+private const val MAX_DECISION_LEADS = 2
+
+/** What leads the row when there is no decision to make: the title's own actions, each where it is offered, in this order. */
+private val TitleLeads =
+    listOf(TvRequestAction.OpenInMediaServer, TvRequestAction.OpenInBinge, TvRequestAction.MarkAs, TvRequestAction.Report)
+
+/** The most of [TitleLeads] the row holds: three labelled buttons and Manage fit a television's width on one line; four do not. */
+private const val MAX_TITLE_LEADS = 3
 
 /**
  * What a viewer may do to a request from the TV page, in the order Manage lists them: the decisions first, the destructive
@@ -79,25 +86,18 @@ internal data class TvRequestActionSplit(
 )
 
 /**
- * At most two actions lead the row. A request awaiting a decision leads with it: Approve and Decline, or Retry. Any other
- * leads with opening the title in the media server and marking its state, or reporting an issue where it cannot be
- * marked. Everything else is in Manage, in [TvRequestAction]'s order, so the destructive ones are last; a single action
- * left over joins the row instead where there is room, unless it is destructive.
+ * A request awaiting a decision leads the row with it: Approve and Decline, or Retry. Any other leads with up to three of the
+ * title's own actions, where each is offered: open it in the media server, open it in Binge, mark its state, report an issue.
+ * Everything else is in Manage, in [TvRequestAction]'s order, so the destructive ones are last; a single action left over
+ * joins the row instead where there is room, unless it is destructive.
  */
 internal fun List<TvRequestAction>.splitLeads(): TvRequestActionSplit {
     val decisions = filter { it.isDecision }
-    val leads =
-        if (decisions.isNotEmpty()) {
-            decisions
-        } else {
-            listOfNotNull(
-                TvRequestAction.OpenInMediaServer.takeIf { it in this },
-                TvRequestAction.MarkAs.takeIf { it in this } ?: TvRequestAction.Report.takeIf { it in this },
-            )
-        }.take(MAX_LEADS)
+    val room = if (decisions.isNotEmpty()) MAX_DECISION_LEADS else MAX_TITLE_LEADS
+    val leads = (decisions.ifEmpty { TitleLeads.filter { it in this } }).take(room)
     val managed = this - leads.toSet()
     // A Manage holding one thing is a menu for nothing: it joins the row, unless it is destructive or the row is full.
-    val lone = managed.singleOrNull()?.takeIf { !it.destructive && leads.size < MAX_LEADS }
+    val lone = managed.singleOrNull()?.takeIf { !it.destructive && leads.size < room }
     return if (lone != null) TvRequestActionSplit(leads + lone, emptyList()) else TvRequestActionSplit(leads, managed)
 }
 
@@ -117,7 +117,7 @@ internal class TvRequestActionPlan(
 
 /**
  * The row and Manage for this request. A lead that opens a sheet carries the sheet's focus requester, so the sheet hands
- * focus back to it; a sheet opened from Manage hands it back to Manage, [manageFocus].
+ * focus back to it. Manage opens its pages in its own stack, and hands focus back to its button, [manageFocus], as it closes.
  */
 @Composable
 internal fun requestDetailActions(
@@ -192,10 +192,7 @@ private fun actionItem(
                 actions.onOpenInMediaServer ?: {},
             )
         TvRequestAction.Edit ->
-            TvRequestActionItem(action, stringResource(R.string.tv_detail_edit), Icons.Filled.Edit) {
-                actions.edit?.onStart?.invoke()
-                onOpenSheet(DetailSheet.Edit)
-            }
+            TvRequestActionItem(action, stringResource(R.string.tv_detail_edit), Icons.Filled.Edit, openSheet(DetailSheet.Edit))
         TvRequestAction.MarkAs ->
             TvRequestActionItem(action, stringResource(R.string.media_mark_as), Icons.Filled.Done, openSheet(DetailSheet.MarkAs))
         TvRequestAction.Report ->

@@ -83,3 +83,9 @@ fun Context.openTitleInBinge(
     val uri = BingeHandOff.titleUri(mediaType, tmdbId) ?: return
     attempt { startActivity(Intent(Intent.ACTION_VIEW, uri.toUri())) }
 }
+
+/** Opening a title in Binge on a television, or null where Binge would not answer: the caller hides the affordance then. */
+fun Context.bingeTitleHandOff(
+    mediaType: RequestMediaType,
+    tmdbId: Int,
+): (() -> Unit)? = { openTitleInBinge(mediaType, tmdbId) }.takeIf { bingeAnswersTitleLink(mediaType, tmdbId) }

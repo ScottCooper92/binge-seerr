@@ -21,6 +21,7 @@ import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.Choice
 import com.cooper.binge.companion.seerr.ui.DestinationChoices
 import com.cooper.binge.companion.seerr.ui.requests.EditState
+import com.cooper.binge.companion.seerr.ui.requests.RequestActions
 import com.cooper.binge.companion.seerr.ui.requests.RequestDetailUiState
 import com.cooper.binge.companion.seerr.ui.requests.RequestEditorControls
 import com.cooper.binge.companion.seerr.ui.tv.requests.TvRequestDetailActions
@@ -79,6 +80,27 @@ class TvRequestEditSheetTest {
         actionButton(R.string.tv_detail_edit).assertIsFocused()
     }
 
+    /** Edit, from Manage, is a page in Manage's stack: Back drops the edit and returns to Edit's row in Manage. */
+    @Test
+    fun fromManageBackDropsTheEditAndReturnsToItsRow() {
+        setContent(
+            EditState(seasons = emptyList(), destination = destination()),
+            actions = RequestActions(canApprove = true, canDecline = true, canRemove = true),
+        )
+        actionButton(R.string.tv_detail_manage).requestFocus()
+        pressOk()
+        option(R.string.tv_detail_edit).assertIsFocused()
+        pressOk()
+        assertEquals(1, editor.starts)
+        option(R.string.advanced_server).assertIsFocused()
+
+        composeTestRule.runOnUiThread { composeTestRule.activity.onBackPressedDispatcher.onBackPressed() }
+        composeTestRule.waitForIdle()
+
+        assertEquals(1, editor.cancels)
+        option(R.string.tv_detail_edit).assertIsFocused()
+    }
+
     @Test
     fun aRefusedSaveSaysSoInTheSheet() {
         setContent(EditState(seasons = emptyList(), destination = destination(), failed = true))
@@ -100,14 +122,17 @@ class TvRequestEditSheetTest {
             rootFolder = "/films",
         )
 
-    private fun setContent(opened: EditState) {
+    private fun setContent(
+        opened: EditState,
+        actions: RequestActions = RequestActions(),
+    ) {
         var edit by mutableStateOf<EditState?>(null)
         editor.onStart = { edit = opened }
         editor.onCancel = { edit = null }
         composeTestRule.setContent {
             BingeTvTheme {
                 TvRequestDetailScreen(
-                    state = RequestDetailUiState.Ready(requestDetail(canEdit = true), edit = edit),
+                    state = RequestDetailUiState.Ready(requestDetail(canEdit = true, actions = actions), edit = edit),
                     events = emptyFlow(),
                     actions =
                         TvRequestDetailActions(

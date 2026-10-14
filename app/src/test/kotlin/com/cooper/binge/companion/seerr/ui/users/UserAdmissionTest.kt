@@ -83,7 +83,7 @@ class UserAdmissionTest {
             val vm = viewModel()
             val ready = vm.awaitReady()
             vm.admission.startCreate(canGeneratePassword = ready.canGeneratePassword)
-            assertTrue(vm.awaitReady().admission is UserAdmissionState.Creating)
+            assertTrue(vm.awaitReady { it.admission is UserAdmissionState.Creating }.admission is UserAdmissionState.Creating)
 
             vm.admission.backToChoice()
 

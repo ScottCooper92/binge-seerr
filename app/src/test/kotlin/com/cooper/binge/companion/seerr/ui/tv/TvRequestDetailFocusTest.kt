@@ -116,9 +116,9 @@ class TvRequestDetailFocusTest {
         assertEquals(listOf(false), declined)
     }
 
-    /** Remove is in Manage; it asks first, and Cancel hands focus back to Manage, where the viewer came from. */
+    /** Remove is in Manage; it asks first, over Manage, and Cancel hands focus back to its row, where the viewer was. */
     @Test
-    fun removeAsksFirstAndCancelReturnsToManage() {
+    fun removeAsksFirstAndCancelReturnsToItsRow() {
         setContent(RequestActions(canRemove = true))
         openPage()
         openManageRow(R.string.tv_detail_remove)
@@ -130,7 +130,7 @@ class TvRequestDetailFocusTest {
         settleFocusRestore()
 
         assertEquals(emptyList<Boolean>(), removed)
-        actionButton(R.string.tv_detail_manage).assertIsFocused()
+        actionButton(R.string.tv_detail_remove).assertIsFocused()
     }
 
     @Test
