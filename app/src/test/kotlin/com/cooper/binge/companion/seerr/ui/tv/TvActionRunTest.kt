@@ -22,14 +22,13 @@ class TvActionRunTest {
 
     private val events = MutableSharedFlow<Boolean>(extraBufferCapacity = 1)
     private var attempts = 0
-    private var closed = 0
     private lateinit var run: TvActionRun
 
     private fun show(initial: SaveStatus = SaveStatus.Idle) {
         composeTestRule.setContent {
             BingeTvTheme {
                 run = rememberTvActionRun(events, initial) { settle(failed = !it) }
-                run.OnSaved { closed++ }
+                run.ClearWhenSaved()
                 Text(run.status.toString())
             }
         }
@@ -42,7 +41,7 @@ class TvActionRunTest {
     }
 
     @Test
-    fun anActionSavesThenIsSavedAndClosesOnlyAfterItIsRead() {
+    fun anActionSavesThenIsSavedAndClearsOnlyAfterItIsRead() {
         show()
 
         composeTestRule.runOnIdle { run.run { attempts++ } }
@@ -53,10 +52,8 @@ class TvActionRunTest {
         events.tryEmit(true)
         composeTestRule.mainClock.advanceTimeBy(100)
         composeTestRule.onNodeWithText("Saved").assertExists()
-        assertEquals(0, closed)
 
         composeTestRule.mainClock.advanceTimeBy(TV_SAVED_HOLD_MILLIS + 100)
-        assertEquals(1, closed)
         composeTestRule.onNodeWithText("Idle").assertExists()
     }
 
@@ -69,7 +66,6 @@ class TvActionRunTest {
         composeTestRule.mainClock.advanceTimeBy(60_000)
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText("Failed").assertExists()
-        assertEquals(0, closed)
 
         composeTestRule.runOnIdle { run.again() }
         composeTestRule.waitForIdle()
@@ -78,7 +74,6 @@ class TvActionRunTest {
 
         answer(ok = true)
         composeTestRule.mainClock.advanceTimeBy(TV_SAVED_HOLD_MILLIS + 200)
-        assertEquals(1, closed)
     }
 
     @Test
