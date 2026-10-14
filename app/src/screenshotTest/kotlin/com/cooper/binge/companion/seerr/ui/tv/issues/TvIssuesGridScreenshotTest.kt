@@ -49,7 +49,6 @@ private fun GridFrame(rows: TvPagedRows<IssueItem>) =
         filter = IssueFilter.Open,
         counts = GridCounts,
         rows = rows,
-        actingIds = emptySet(),
         detailOpen = false,
         onOpenDetail = {},
         onRetryLoad = {},
