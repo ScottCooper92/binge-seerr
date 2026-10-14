@@ -72,6 +72,9 @@ internal fun RequestActionsSheet(
         // The editor's state is the view model's, so Back from its page cancels the edit there.
         onPageBack = { page -> if (page == EDIT_PAGE) editActions?.onDismiss?.invoke() },
     ) { nav ->
+        // The page follows the edit, not the tap: an edit begun in a narrow window shows here once it widens.
+        val editOpen = nav.stacksPages && editActions != null && edit != null
+        LaunchedEffect(editOpen, nav.page) { if (editOpen && nav.page != EDIT_PAGE) nav.push(EDIT_PAGE) }
         // A stack that survived a narrow window keeps its page, but there the editor is a sheet of its own, not this one.
         if (nav.page == EDIT_PAGE && nav.stacksPages && editActions != null) {
             EditRequestPage(nav = nav, item = item, edit = edit, actions = editActions)
@@ -110,10 +113,7 @@ internal fun RequestActionsSheet(
                     // Stacked, as Binge's advanced-options picker opens over its request sheet: this sheet
                     // stays open underneath, and Back, a choice or a save returns to it rather than the page.
                     // Where the sheet stacks pages the editor is a page of it instead of a second sheet.
-                    onEdit = {
-                        onEdit()
-                        if (nav.stacksPages && editActions != null) nav.push(EDIT_PAGE)
-                    },
+                    onEdit = onEdit,
                     onMarkStatus = onMarkStatus,
                     onDeleteFiles = { is4k -> pending = Pending.DeleteFiles(is4k) },
                     onClearData = { pending = Pending.ClearData },

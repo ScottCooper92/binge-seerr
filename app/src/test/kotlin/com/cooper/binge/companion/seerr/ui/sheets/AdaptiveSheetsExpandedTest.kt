@@ -51,7 +51,8 @@ class RequestActionsSheetExpandedTest {
     private val editState =
         EditState(seasons = listOf(SeasonChoice(1, "Season 1", 8, selected = true, heldStatus = null)), destination = null)
 
-    private fun show() {
+    private fun show(editing: Boolean = false) {
+        edit = editState.takeIf { editing }
         val detail = requestDetail(canEdit = true)
         rule.setContent {
             BingeExpressiveTheme(dynamicColor = false) {
@@ -102,6 +103,15 @@ class RequestActionsSheetExpandedTest {
         openEditor()
 
         assertEquals(1, starts)
+        rule.onAllNodes(backBar()).assertCountEquals(1)
+        rule.onNodeWithText(string(R.string.request_edit_save)).assertExists()
+    }
+
+    @Test
+    fun `an edit already open, begun in a narrow window, shows as a page`() {
+        show(editing = true)
+
+        assertEquals(0, starts)
         rule.onAllNodes(backBar()).assertCountEquals(1)
         rule.onNodeWithText(string(R.string.request_edit_save)).assertExists()
     }
