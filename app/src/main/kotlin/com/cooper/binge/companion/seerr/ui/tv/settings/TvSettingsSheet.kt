@@ -7,7 +7,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Cancel
 import androidx.compose.material.icons.filled.LinkOff
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
@@ -27,19 +29,21 @@ import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.hub.HubUiState
 import com.cooper.binge.companion.seerr.ui.settings.AppSettings
 import com.cooper.binge.companion.seerr.ui.settings.SettingsUiState
-import com.cooper.binge.companion.seerr.ui.tv.rememberTvTransientEvent
-import com.cooper.binge.companion.seerr.ui.users.settings.EditorEvent
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.emptyFlow
+import com.cooper.binge.companion.seerr.ui.settings.server.JobsUiState
 import com.binge.designsystem.R as DesR
 
 internal const val PAGE_SETTINGS = "settings"
 internal const val PAGE_DISCONNECT = "disconnect"
 internal const val PAGE_BUG_REPORT = "bug-report"
 private const val PAGE_GROUP_PREFIX = "group:"
+private const val PAGE_JOB_PREFIX = "job-page:"
+private const val KEY_ACTION = "action"
 private const val KEY_BACK = "back"
 private const val KEY_CANCEL = "cancel"
 private const val KEY_CLOSE = "close"
+
+/** The page a job opens, named by its id. */
+internal fun jobPage(id: String): String = PAGE_JOB_PREFIX + id
 
 /** The page a group opens, named by its title: a group appears or goes as the hub reads the server, so an index would shift. */
 internal fun groupPage(title: String): String = PAGE_GROUP_PREFIX + title
@@ -58,23 +62,29 @@ internal fun TvSettingsSheet(
     actions: TvSettingsActions,
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier,
-    libraryScanEvents: Flow<EditorEvent> = emptyFlow(),
+    jobs: JobsUiState = JobsUiState.Loading,
     hub: HubUiState? = null,
     initialPage: String = PAGE_SETTINGS,
-    /** The scan note showing on arrival, for a frame, which never collects [libraryScanEvents]. Production passes null. */
-    initialScanEvent: EditorEvent? = null,
 ) {
     val ready = state as? SettingsUiState.Ready
-    // A newer notice supersedes the one still showing, same as the board's paged-list toasts.
-    val scanNote = rememberTvTransientEvent(libraryScanEvents, initialScanEvent).tvNoteOrNull()
     TvSideSheetStack(root = initialPage, onDismissRequest = onDismissRequest, modifier = modifier) { nav ->
         when {
             ready == null -> LoadingPage(nav)
+            nav.page.startsWith(PAGE_JOB_PREFIX) ->
+                JobPage(
+                    nav,
+                    TvJobs(jobs, actions.jobs, onOpenJob = {
+                    }),
+                    nav.page.removePrefix(PAGE_JOB_PREFIX),
+                    ready.now,
+                )
             nav.page == PAGE_DISCONNECT -> DisconnectPage(nav, onDisconnect = actions.onDisconnect)
             nav.page == PAGE_BUG_REPORT && ready.app != null -> BugReportPage(nav, ready.app)
             else -> {
+                val tvJobs =
+                    TvJobs(jobs, actions.jobs, onOpenJob = { id -> nav.push(jobPage(id), openedBy = "$KEY_JOB_PREFIX$id") })
                 val groups =
-                    tvSettingGroups(ready, actions, scanNote, hub, onShowBugReport = { nav.push(PAGE_BUG_REPORT, KEY_REPORT_BUG) })
+                    tvSettingGroups(ready, actions, tvJobs, hub, onShowBugReport = { nav.push(PAGE_BUG_REPORT, KEY_REPORT_BUG) })
                 val group = groups.firstOrNull { groupPage(it.title) == nav.page }
                 if (group != null) GroupPage(nav, group) else RootPage(nav, groups)
             }
@@ -86,7 +96,7 @@ internal fun TvSettingsSheet(
 private fun ColumnScope.LoadingPage(nav: TvSideSheetNav) {
     TvSideSheetTitle(stringResource(R.string.hub_section_settings))
     TvSideSheetBody(stringResource(R.string.tv_loading))
-    TvSideSheetRow(label = stringResource(R.string.tv_settings_report_bug_close), onClick = nav::pop, modifier = nav.row(KEY_CLOSE))
+    TvSideSheetRow(label = stringResource(R.string.tv_sheet_close), onClick = nav::pop, modifier = nav.row(KEY_CLOSE))
 }
 
 /** The groups, then Disconnect after them all: the one destructive thing here goes where a stray OK is least likely to reach it. */
@@ -159,9 +169,38 @@ private fun SettingsRow(
         label = if (forMediaServer) option.label else row.label,
         icon = row.icon,
         onClick = option.onSelect,
-        supportingText = row.note ?: if (forMediaServer) row.label else row.body.ifEmpty { null },
+        supportingText = row.note ?: row.detail ?: if (forMediaServer) row.label else row.body.ifEmpty { null },
         modifier = nav.row(row.key).then(announce),
     )
+}
+
+/**
+ * One job: what it does and where it stands, with Run now, or Cancel while it runs, on a row of its own. A call on its way, or
+ * one that was refused, is said here in place until the job's next attempt, as a live region.
+ */
+@Composable
+private fun ColumnScope.JobPage(
+    nav: TvSideSheetNav,
+    jobs: TvJobs,
+    id: String,
+    now: Long,
+) {
+    val job = jobs.state.jobOrNull(id)
+    val status = jobs.state.statusOf(id)
+    val running = job?.running == true
+    TvSideSheetTitle(job?.name ?: stringResource(R.string.settings_group_system))
+    TvSideSheetBody(stringResource(R.string.tv_settings_job_body))
+    jobLine(job, status, now)?.let { TvSideSheetBody(it, Modifier.semantics { liveRegion = LiveRegionMode.Polite }) }
+    if (job != null) {
+        TvSideSheetRow(
+            label = stringResource(if (running) R.string.server_settings_job_cancel else R.string.server_settings_job_run),
+            icon = if (running) Icons.Filled.Cancel else Icons.Filled.PlayArrow,
+            enabled = status != TvJobStatus.Busy,
+            onClick = { if (running) jobs.actions.onCancel(id) else jobs.actions.onRun(id) },
+            modifier = nav.row(KEY_ACTION),
+        )
+    }
+    TvSideSheetRow(label = stringResource(DesR.string.cd_navigate_back), onClick = nav::pop, modifier = nav.row(KEY_BACK))
 }
 
 /** Disconnect's confirm, as a page of its own: Cancel takes focus and pops back to the Disconnect row. */

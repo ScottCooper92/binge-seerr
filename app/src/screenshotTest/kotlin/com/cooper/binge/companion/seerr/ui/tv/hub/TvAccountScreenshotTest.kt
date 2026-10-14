@@ -7,17 +7,11 @@ import androidx.compose.ui.Modifier
 import com.android.tools.screenshot.PreviewTest
 import com.cooper.binge.companion.seerr.preview.SeerrTvScreenPreviews
 import com.cooper.binge.companion.seerr.seerr.SeerrError
-import com.cooper.binge.companion.seerr.seerr.SeerrMediaStatusCode
-import com.cooper.binge.companion.seerr.seerr.SeerrRequestStatusCode
 import com.cooper.binge.companion.seerr.ui.FIXED_NOW_MILLIS
-import com.cooper.binge.companion.seerr.ui.FixedSampleRequests
 import com.cooper.binge.companion.seerr.ui.hub.HubQuota
 import com.cooper.binge.companion.seerr.ui.hub.HubQuotaBucket
 import com.cooper.binge.companion.seerr.ui.tv.TvDestination
 import com.cooper.binge.companion.seerr.ui.tv.TvHomeShell
-import com.cooper.binge.companion.seerr.ui.tv.TvLoadPhase
-import com.cooper.binge.companion.seerr.ui.tv.TvPagedRows
-import com.cooper.binge.companion.seerr.ui.tv.request
 import com.cooper.binge.companion.seerr.ui.users.UserDetail
 import com.cooper.binge.companion.seerr.ui.users.UserDetailUiState
 import com.cooper.binge.companion.seerr.ui.users.UserItem
@@ -27,13 +21,9 @@ import com.cooper.binge.companion.seerr.ui.users.UserOrigin
 private const val JOINED_MILLIS = FIXED_NOW_MILLIS - 400L * 24 * 60 * 60 * 1000
 private const val ADMIN_PERMISSIONS = 2
 
-private val SampleRequests =
-    FixedSampleRequests +
-        request(4, "Severance", SeerrRequestStatusCode.Approved, mediaStatus = SeerrMediaStatusCode.Available, now = FIXED_NOW_MILLIS)
-
 private fun detail(
     quota: HubQuota?,
-    requestCount: Int = SampleRequests.size,
+    requestCount: Int = 4,
     id: Int = 7,
 ) = UserDetailUiState.Ready(
     UserDetail(
@@ -62,29 +52,22 @@ private fun detail(
 )
 
 /**
- * The television account page: the profile as the phone's user page shows it, a tile per request quota (one spent,
- * one part used; or both unlimited), the user's own requests as a row with a state chip on each poster, the pages
- * before the account is known, and the rail with the account's avatar at its top and Settings on the bottom edge.
+ * The television account sheet: the profile as the phone's user page shows it and a line per request quota (one spent, one
+ * part used; or both unlimited), the sheets before the account is known, and Home's top row with its Account, Issues and
+ * Settings buttons. The user's own requests are a row on Home, framed on `TvRequestsScreenshotTest`.
  */
 class TvAccountScreenshotTest {
     @PreviewTest
     @SeerrTvScreenPreviews
     @Composable
-    fun Board() {
-        TvAccountBoard(
-            detail =
-                detail(
-                    HubQuota(
-                        movie = HubQuotaBucket(limit = 5, remaining = 0, days = 7),
-                        tv = HubQuotaBucket(limit = 8, remaining = 5, days = 7),
-                    ),
+    fun Sheet() {
+        Sheet(
+            detail(
+                HubQuota(
+                    movie = HubQuotaBucket(limit = 5, remaining = 0, days = 7),
+                    tv = HubQuotaBucket(limit = 8, remaining = 5, days = 7),
                 ),
-            requests = TvPagedRows(count = SampleRequests.size, at = { SampleRequests.getOrNull(it) }),
-            onOpenRequest = {},
-            onRetry = {},
-            onRetryRequests = {},
-            overlayOpen = false,
-            now = FIXED_NOW_MILLIS,
+            ),
         )
     }
 
@@ -92,31 +75,7 @@ class TvAccountScreenshotTest {
     @SeerrTvScreenPreviews
     @Composable
     fun UnlimitedQuota() {
-        TvAccountBoard(
-            detail = detail(HubQuota(movie = null, tv = null)),
-            requests = TvPagedRows(count = SampleRequests.size, at = { SampleRequests.getOrNull(it) }),
-            onOpenRequest = {},
-            onRetry = {},
-            onRetryRequests = {},
-            overlayOpen = false,
-            now = FIXED_NOW_MILLIS,
-        )
-    }
-
-    /** More requests than the row holds: the heading carries the whole count and the row ends in a See all tile (#1043). */
-    @PreviewTest
-    @SeerrTvScreenPreviews
-    @Composable
-    fun SeeAll() {
-        TvAccountBoard(
-            detail = detail(HubQuota(movie = null, tv = null), requestCount = 57),
-            requests = TvPagedRows(count = SampleRequests.size, at = { SampleRequests.getOrNull(it) }),
-            onOpenRequest = {},
-            onRetry = {},
-            onRetryRequests = {},
-            overlayOpen = false,
-            now = FIXED_NOW_MILLIS,
-        )
+        Sheet(detail(HubQuota(movie = null, tv = null)))
     }
 
     /** User 1 is the server's owner: the role line reads Owner, not Admin (#1236). */
@@ -124,59 +83,29 @@ class TvAccountScreenshotTest {
     @SeerrTvScreenPreviews
     @Composable
     fun Owner() {
-        TvAccountBoard(
-            detail = detail(HubQuota(movie = null, tv = null), id = 1),
-            requests = TvPagedRows(count = SampleRequests.size, at = { SampleRequests.getOrNull(it) }),
-            onOpenRequest = {},
-            onRetry = {},
-            onRetryRequests = {},
-            overlayOpen = false,
-            now = FIXED_NOW_MILLIS,
-        )
+        Sheet(detail(HubQuota(movie = null, tv = null), id = 1))
     }
 
     @PreviewTest
     @SeerrTvScreenPreviews
     @Composable
     fun Loading() {
-        TvAccountBoard(
-            detail = null,
-            requests = TvPagedRows(count = 0, at = { null }),
-            onOpenRequest = {},
-            onRetry = {},
-            onRetryRequests = {},
-            overlayOpen = false,
-        )
+        Sheet(detail = null)
     }
 
     @PreviewTest
     @SeerrTvScreenPreviews
     @Composable
     fun Failed() {
-        TvAccountBoard(
-            detail = UserDetailUiState.Error(SeerrError.Unreachable),
-            requests = TvPagedRows(count = 0, at = { null }),
-            onOpenRequest = {},
-            onRetry = {},
-            onRetryRequests = {},
-            overlayOpen = false,
-        )
+        Sheet(detail = UserDetailUiState.Error(SeerrError.Unreachable))
     }
 
-    /** The user's own requests could not be read: the page says so where the row would be, with a retry (#1035). */
+    /** The cached profile before the account loads (#1053): the quota lines hold their place without guessing the numbers. */
     @PreviewTest
     @SeerrTvScreenPreviews
     @Composable
-    fun RequestsFailed() {
-        TvAccountBoard(
-            detail = detail(HubQuota(movie = null, tv = null)),
-            requests = TvPagedRows(count = 0, at = { null }, refresh = TvLoadPhase.Failed),
-            onOpenRequest = {},
-            onRetry = {},
-            onRetryRequests = {},
-            overlayOpen = false,
-            now = FIXED_NOW_MILLIS,
-        )
+    fun Seeded() {
+        Sheet(UserDetailUiState.Seeded(detail(quota = null).detail.item))
     }
 
     /** Home's top row: the Account, Issues and Settings buttons in the top-right corner. */
@@ -189,22 +118,6 @@ class TvAccountScreenshotTest {
         }
     }
 
-    /** The cached profile before the account loads (#1053): the quota tiles hold their place without guessing the numbers. */
-    @PreviewTest
-    @SeerrTvScreenPreviews
-    @Composable
-    fun Seeded() {
-        TvAccountBoard(
-            detail = UserDetailUiState.Seeded(detail(quota = null).detail.item),
-            requests = TvPagedRows(count = SampleRequests.size, at = { SampleRequests.getOrNull(it) }),
-            onOpenRequest = {},
-            onRetry = {},
-            onRetryRequests = {},
-            overlayOpen = false,
-            now = FIXED_NOW_MILLIS,
-        )
-    }
-
     /** A server with issues turned off, or a viewer who may not see them: the top row has no Issues button. */
     @PreviewTest
     @SeerrTvScreenPreviews
@@ -213,5 +126,15 @@ class TvAccountScreenshotTest {
         TvHomeShell(page = TvDestination.Hub, onOpenPage = {}, onClosePage = {}, showIssues = false) { _, _ ->
             Box(modifier = Modifier.fillMaxSize())
         }
+    }
+
+    @Composable
+    private fun Sheet(detail: UserDetailUiState?) {
+        TvAccountSheet(
+            detail = detail,
+            accountFailed = detail is UserDetailUiState.Error,
+            onRetry = {},
+            onDismissRequest = {},
+        )
     }
 }

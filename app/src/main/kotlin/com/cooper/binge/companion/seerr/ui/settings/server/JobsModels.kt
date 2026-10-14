@@ -73,11 +73,13 @@ sealed interface JobsUiState {
      * [now] is the instant the rows word their times against, moved on each minute while the list is showing. A schedule
      * saves as it is picked (#930): [scheduleStatus] is the page's Saving and Saved, and [unsentSchedule] the one whose
      * write failed for the network or the server, kept for Retry until a schedule write succeeds. A refused schedule is
-     * reported, not kept.
+     * reported, not kept. [failedIds] are the jobs whose last run or cancel was refused or could not be sent: unlike the
+     * timed [outcomes], they stay until that job's next attempt, for a page that reports in place (the TV board).
      */
     data class Ready(
         val jobs: List<ServerJob>,
         val busyIds: Set<String> = emptySet(),
+        val failedIds: Set<String> = emptySet(),
         val outcomes: Map<String, JobOutcome> = emptyMap(),
         val now: Long = System.currentTimeMillis(),
         val scheduleStatus: SaveStatus = SaveStatus.Idle,

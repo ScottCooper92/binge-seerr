@@ -52,7 +52,7 @@ internal fun BoardInShell(
 }
 
 @Composable
-private fun StandInPage(onClose: () -> Unit) {
+internal fun StandInPage(onClose: () -> Unit) {
     val requester = remember { FocusRequester() }
     BackHandler(onBack = onClose)
     Box(

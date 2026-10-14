@@ -1051,7 +1051,10 @@
     <string name="tv_settings_read_only_note">Change this in the phone app or the web client.</string>
     <string name="tv_settings_disconnect_confirm">Yes, disconnect</string>
     <string name="tv_settings_start_library_scan">Start library scan</string>
-    <string name="tv_settings_scan_started">Library scan started</string>
+    <string name="tv_settings_cancel_library_scan">Cancel library scan</string>
+    <string name="tv_settings_job_working">Working…</string>
+    <string name="tv_settings_job_body">Runs on a schedule. Run it now, or cancel it while it is running. The schedule is changed on your phone.</string>
+    <string name="tv_settings_job_failed_note">That didn\'t go through. Select the option to try again.</string>
     <string name="tv_filter_with_count">%1$s (%2$d)</string>
     <string name="tv_settings_group_server">Server status</string>
     <string name="tv_settings_status">Status</string>
@@ -1076,8 +1079,6 @@
     <string name="tv_settings_binge_install">Open the Play Store</string>
     <string name="tv_see_all">See all</string>
     <string name="tv_rail_account">Account</string>
-    <string name="tv_account_quota_of">of %1$d left</string>
-    <string name="tv_account_quota_unlimited_note">No limit</string>
     <string name="tv_account_your_requests">Your requests</string>
     <string name="tv_account_requests_empty">You have not made any requests yet.</string>
     <!-- The eye in a masked field. The description names the tap's effect, so it changes with the state. -->
@@ -1129,7 +1130,7 @@
     <string name="tv_settings_report_bug_show_code">Show code</string>
     <string name="tv_settings_report_bug_scan">Scan it with your phone\'s camera. The report opens with this app\'s version and this TV\'s details filled in.</string>
     <string name="tv_settings_report_bug_code_description">QR code that opens a bug report for this app on GitHub</string>
-    <string name="tv_settings_report_bug_close">Close</string>
+    <string name="tv_sheet_close">Close</string>
     <string name="consent_title">Help make this app better</string>
     <string name="consent_subtitle">Share usage data so we can see which parts of the app get used and what breaks.</string>
     <string name="consent_point_shared_title">Shapes what gets fixed</string>
