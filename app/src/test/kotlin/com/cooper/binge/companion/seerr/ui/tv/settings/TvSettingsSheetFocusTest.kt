@@ -35,9 +35,10 @@ import com.cooper.binge.companion.seerr.ui.settings.server.AgentForm
 import com.cooper.binge.companion.seerr.ui.settings.server.AgentOption
 import com.cooper.binge.companion.seerr.ui.settings.server.AgentSummary
 import com.cooper.binge.companion.seerr.ui.settings.server.AgentsUiState
+import com.cooper.binge.companion.seerr.ui.settings.server.JELLYFIN_FULL_SCAN_JOB_ID
 import com.cooper.binge.companion.seerr.ui.settings.server.JobInterval
 import com.cooper.binge.companion.seerr.ui.settings.server.JobsUiState
-import com.cooper.binge.companion.seerr.ui.settings.server.MEDIA_SERVER_SCAN_JOB_ID
+import com.cooper.binge.companion.seerr.ui.settings.server.PLEX_FULL_SCAN_JOB_ID
 import com.cooper.binge.companion.seerr.ui.settings.server.ServerAgent
 import com.cooper.binge.companion.seerr.ui.settings.server.ServerGeneralSettings
 import com.cooper.binge.companion.seerr.ui.settings.server.ServerJob
@@ -66,10 +67,11 @@ private fun jobsReady(
     syncRunning: Boolean = false,
     busy: Set<String> = emptySet(),
     failed: Set<String> = emptySet(),
+    scanId: String = PLEX_FULL_SCAN_JOB_ID,
 ) = JobsUiState.Ready(
     jobs =
         listOf(
-            ServerJob(MEDIA_SERVER_SCAN_JOB_ID, "Plex Full Library Scan", JobInterval.Long, scanRunning, null),
+            ServerJob(scanId, "Full Library Scan", JobInterval.Long, scanRunning, null),
             ServerJob(SYNC_JOB_ID, SYNC_JOB_NAME, JobInterval.Short, syncRunning, null),
         ),
     busyIds = busy,
@@ -135,8 +137,20 @@ class TvSettingsSheetFocusTest {
 
         press(Key.DirectionCenter)
 
-        assertEquals(listOf(MEDIA_SERVER_SCAN_JOB_ID), runs)
+        assertEquals(listOf(PLEX_FULL_SCAN_JOB_ID), runs)
         assertEquals(emptyList<String>(), cancels)
+    }
+
+    /** #1546: a Jellyfin or Emby server registers its scan as `jellyfin-full-scan`, and the row runs the id the server lists. */
+    @Test
+    fun aJellyfinServersScanRunsUnderItsOwnId() {
+        jobsState = jobsReady(scanRunning = false, scanId = JELLYFIN_FULL_SCAN_JOB_ID)
+        setSheet(config = ServerConfig())
+        open(string(R.string.server_settings_media_server))
+
+        press(Key.DirectionCenter)
+
+        assertEquals(listOf(JELLYFIN_FULL_SCAN_JOB_ID), runs)
     }
 
     /** A scan that is running offers Cancel in the same row, and pressing it cancels. */
@@ -149,7 +163,7 @@ class TvSettingsSheetFocusTest {
         composeTestRule.onNodeWithText(string(R.string.tv_settings_start_library_scan)).assertDoesNotExist()
         press(Key.DirectionCenter)
 
-        assertEquals(listOf(MEDIA_SERVER_SCAN_JOB_ID), cancels)
+        assertEquals(listOf(PLEX_FULL_SCAN_JOB_ID), cancels)
         assertEquals(emptyList<String>(), runs)
     }
 
@@ -162,13 +176,13 @@ class TvSettingsSheetFocusTest {
         setSheet(config = ServerConfig())
         open(string(R.string.server_settings_media_server))
 
-        jobsState = jobsReady(scanRunning = false, busy = setOf(MEDIA_SERVER_SCAN_JOB_ID))
+        jobsState = jobsReady(scanRunning = false, busy = setOf(PLEX_FULL_SCAN_JOB_ID))
         composeTestRule.waitForIdle()
         composeTestRule
             .onNodeWithText(string(R.string.tv_settings_job_working))
             .assert(SemanticsMatcher.expectValue(SemanticsProperties.LiveRegion, LiveRegionMode.Polite))
 
-        jobsState = jobsReady(scanRunning = false, failed = setOf(MEDIA_SERVER_SCAN_JOB_ID))
+        jobsState = jobsReady(scanRunning = false, failed = setOf(PLEX_FULL_SCAN_JOB_ID))
         composeTestRule.mainClock.advanceTimeBy(A_MINUTE_MILLIS)
         composeTestRule.waitForIdle()
         composeTestRule

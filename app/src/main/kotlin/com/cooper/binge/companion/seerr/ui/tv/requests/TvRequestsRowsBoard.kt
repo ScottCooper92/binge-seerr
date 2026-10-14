@@ -31,6 +31,7 @@ import com.cooper.binge.companion.seerr.ui.tv.TvLocalNetworkDeniedPage
 import com.cooper.binge.companion.seerr.ui.tv.TvPagedRows
 import com.cooper.binge.companion.seerr.ui.tv.TvPosterCard
 import com.cooper.binge.companion.seerr.ui.tv.TvRowsFallback
+import com.cooper.binge.companion.seerr.ui.tv.hubFailure
 import com.cooper.binge.companion.seerr.ui.tv.tvColor
 import com.binge.designsystem.tv.R as TvR
 
@@ -47,6 +48,7 @@ internal class TvMyRequests(
     val rows: TvPagedRows<RequestItem>,
     val count: Int?,
     val onSeeAll: () -> Unit,
+    val onRetry: () -> Unit = {},
 )
 
 /** The key of the signed-in user's own row, which no filter is called. */
@@ -60,8 +62,9 @@ private const val PERCENT = 100
 /**
  * The requests browser as the design system's immersive hub: a row of poster cards per filter over a backdrop that
  * follows focus and describes the focused request. [rowsFor] gives each filter's paged rows; a filter with nothing
- * in it has no row, and one with more than a row holds ends in a see-all tile that opens the paged grid. OK on a
- * card opens the request's detail page, a page above Home that this board does not own.
+ * in it has no row, one whose list could not be read says so in its slot with a retry, and one with more than a row
+ * holds ends in a see-all tile that opens the paged grid. OK on a card opens the request's detail page, a page above
+ * Home that this board does not own.
  *
  * [mine] adds the signed-in user's own requests as a last row, so what they asked for is on Home rather than a page of its own.
  *
@@ -86,7 +89,10 @@ internal fun TvRequestsRowsBoard(
         TvRowsFallback(
             rows = perFilter.map { it.second } + listOfNotNull(mine?.rows),
             emptyBody = stringResource(R.string.requests_empty_all),
-            onRetryLoad = actions.onRetryLoad,
+            onRetryLoad = {
+                actions.onRetryLoad()
+                mine?.onRetry?.invoke()
+            },
             modifier = modifier,
         )
         return
@@ -101,6 +107,7 @@ internal fun TvRequestsRowsBoard(
                 // Reading the item is what pages it in.
                 items = (0 until minOf(rows.count, TV_ROW_ITEM_CAP)).mapNotNull { rows.at(it) },
                 onSeeAll = { actions.onSeeAll(filter) }.takeIf { (count ?: rows.count) > TV_ROW_ITEM_CAP },
+                failure = rows.hubFailure(actions.onRetryLoad),
             )
         }
     val hubRows = filterRows + listOfNotNull(mine?.let { myRequestsRow(it) })
@@ -135,6 +142,7 @@ private fun myRequestsRow(mine: TvMyRequests): TvHubRow<RequestItem> {
         title = if (mine.count != null) stringResource(R.string.tv_filter_with_count, label, mine.count) else label,
         items = (0 until minOf(mine.rows.count, TV_ROW_ITEM_CAP)).mapNotNull { mine.rows.at(it) },
         onSeeAll = mine.onSeeAll.takeIf { (mine.count ?: mine.rows.count) > TV_ROW_ITEM_CAP },
+        failure = mine.rows.hubFailure(mine.onRetry),
     )
 }
 

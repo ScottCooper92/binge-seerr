@@ -132,4 +132,25 @@ class TvRequestsScreenshotTest {
             actions = NoRequestsActions,
         )
     }
+
+    /**
+     * The first filter's list could not be read while the next one's could: its row keeps its place and says so, with a
+     * retry, rather than vanishing as a row with nothing in it does (#1537).
+     */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun RowFailed() {
+        TvRequestsRowsBoard(
+            state = requestsReady(),
+            rowsFor = { filter ->
+                when (filter) {
+                    RequestFilter.Pending -> TvPagedRows(count = 0, at = { null }, refresh = TvLoadPhase.Failed)
+                    RequestFilter.Approved -> rows(SampleRequests)
+                    else -> rows(emptyList())
+                }
+            },
+            actions = NoRequestsActions,
+        )
+    }
 }

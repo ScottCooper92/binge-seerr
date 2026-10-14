@@ -132,6 +132,9 @@ fun IssueDetailScreen(
         overflowIcon = Icons.AutoMirrored.Filled.OpenInNew,
         leadingActions = {
             ready?.let { SaveStatusLine(status = it.editStatus, failed = it.unsentEdits.isNotEmpty()) }
+        },
+        // After the overflow button: a destructive action is the last on the bar.
+        trailingActions = {
             if (ready?.detail?.canDelete == true) {
                 IconButton(onClick = { confirmingDelete = true }) {
                     Icon(Icons.Filled.Delete, contentDescription = stringResource(R.string.issue_delete))
