@@ -20,7 +20,12 @@ import androidx.compose.ui.test.pressKey
 import androidx.compose.ui.test.requestFocus
 import com.binge.designsystem.tv.theme.BingeTvTheme
 import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.ui.issues.IssueDetailUiState
+import com.cooper.binge.companion.seerr.ui.issues.IssueItem
+import com.cooper.binge.companion.seerr.ui.issues.IssueStatus
+import com.cooper.binge.companion.seerr.ui.requests.IssueType
+import com.cooper.binge.companion.seerr.ui.requests.RequestMediaType
 import com.cooper.binge.companion.seerr.ui.tv.issues.TvIssueSheet
 import com.cooper.binge.companion.seerr.ui.tv.issues.TvIssueSheetActions
 import com.cooper.binge.companion.seerr.ui.tv.issues.sampleIssueSheetState
@@ -55,6 +60,7 @@ class TvIssueSheetFocusTest {
     private var toggles = 0
     private var issueDeletes = 0
     private var opened = 0
+    private var retries = 0
     private val commentDeletes = mutableListOf<Int>()
 
     @Test
@@ -76,6 +82,26 @@ class TvIssueSheetFocusTest {
         composeTestRule.settleShellHandOff()
 
         card(REPORT).assertIsFocused()
+    }
+
+    /**
+     * A row seeded from the board whose load then fails has no thread to show, so it shows the failure with Retry, focused,
+     * rather than a loading line that never ends (#1583). Retry asks for the issue again.
+     */
+    @Test
+    fun aSeededIssueThatFailsToLoadOffersRetry() {
+        val item = issueItem()
+        state = IssueDetailUiState.Seeded(item)
+        setSheet()
+        row(R.string.tv_loading).assertIsFocused()
+
+        state = IssueDetailUiState.Seeded(item, error = SeerrError.Unreachable)
+        composeTestRule.waitForIdle()
+        composeTestRule.settleShellHandOff()
+
+        row(R.string.hub_retry).assertIsFocused()
+        composeTestRule.press(Key.DirectionCenter)
+        assertEquals(1, retries)
     }
 
     @Test
@@ -234,7 +260,7 @@ class TvIssueSheetFocusTest {
                     actions =
                         TvIssueSheetActions(
                             onDismiss = { dismissals++ },
-                            onRetry = {},
+                            onRetry = { retries++ },
                             onToggleStatus = { toggles++ },
                             onDeleteIssue = { issueDeletes++ },
                             onDeleteComment = { commentDeletes += it },
@@ -246,6 +272,26 @@ class TvIssueSheetFocusTest {
         composeTestRule.waitForIdle()
         composeTestRule.settleShellHandOff()
     }
+
+    private fun issueItem() =
+        IssueItem(
+            id = 100,
+            tmdbId = 100,
+            mediaType = RequestMediaType.Tv,
+            title = "Severance",
+            posterUrl = null,
+            year = "2022",
+            type = IssueType.Subtitles,
+            status = IssueStatus.Open,
+            reportedBy = "ana",
+            reportedById = 3,
+            commentCount = 0,
+            createdAtMillis = null,
+            updatedAtMillis = null,
+            problem = REPORT,
+            problemSeason = 1,
+            problemEpisode = 4,
+        )
 
     private fun openInJellyfin() = string(R.string.open_in_named, "Jellyfin")
 

@@ -68,18 +68,20 @@ internal fun TvIssueSheet(
     // Where focus lands when the thread shows again after a comment is deleted: the card after it, else before, else reply.
     var afterDelete by rememberSaveable { mutableStateOf<String?>(null) }
     // Loading and a failure are roots of their own, so the issue arriving starts the thread afresh and focus is offered to
-    // the report; on one root, the offer went to the loading line and was not made again once it was gone.
+    // the report; on one root, the offer went to the loading line and was not made again once it was gone. A seeded row
+    // whose load failed is a failure too: it has nothing to show the thread with, so it offers Retry (#1583).
+    val failed = state is IssueDetailUiState.Error || (state is IssueDetailUiState.Seeded && state.error != null)
     val root =
-        when (state) {
-            is IssueDetailUiState.Ready -> initialPage
-            is IssueDetailUiState.Error -> PAGE_FAILED
-            IssueDetailUiState.Loading, is IssueDetailUiState.Seeded -> PAGE_LOADING
+        when {
+            state is IssueDetailUiState.Ready -> initialPage
+            failed -> PAGE_FAILED
+            else -> PAGE_LOADING
         }
     TvSideSheetStack(root = root, onDismissRequest = actions.onDismiss, modifier = modifier, toBottomEdge = true) { nav ->
-        when (state) {
-            is IssueDetailUiState.Ready -> IssuePages(state, nav, actions, run, afterDelete) { afterDelete = it }
-            is IssueDetailUiState.Error -> Failed(nav, actions.onRetry)
-            IssueDetailUiState.Loading, is IssueDetailUiState.Seeded -> Loading(nav)
+        when {
+            state is IssueDetailUiState.Ready -> IssuePages(state, nav, actions, run, afterDelete) { afterDelete = it }
+            failed -> Failed(nav, actions.onRetry)
+            else -> Loading(nav)
         }
     }
 }
