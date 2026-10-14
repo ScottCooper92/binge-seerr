@@ -596,16 +596,8 @@
     <string name="settings_hide_available">Ocultar el contenido disponible</string>
     <string name="settings_group_services">Servicios multimedia</string>
     <string name="settings_service_default">Predeterminado</string>
-    <string name="settings_group_requests">Usuarios y peticiones</string>
-    <string name="settings_default_permissions">Permisos predeterminados</string>
-    <string name="settings_default_access_none">Los usuarios nuevos no pueden pedir</string>
-    <string name="settings_default_access_request">Pedir con aprobación</string>
-    <string name="settings_default_access_auto">Pedir con aprobación automática</string>
-    <string name="settings_request_limit">Límite global de peticiones</string>
     <string name="settings_request_limit_unlimited">Sin límite</string>
     <string name="settings_request_limit_value">%1$d cada %2$d días</string>
-    <string name="settings_request_limit_movie">Películas %1$s</string>
-    <string name="settings_request_limit_tv">Series %1$s</string>
     <string name="settings_group_notify_me">Avisarme de</string>
     <string name="settings_signal_pending">Peticiones nuevas</string>
     <string name="settings_signal_issues">Incidencias nuevas</string>

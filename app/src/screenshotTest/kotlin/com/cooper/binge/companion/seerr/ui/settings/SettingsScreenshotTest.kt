@@ -83,20 +83,6 @@ class SettingsGroupsScreenshotTest {
     @Composable
     fun serviceInstances() = Group(R.string.settings_group_services, serviceRows(services()))
 
-    @PreviewTest
-    @SeerrComponentPreviews
-    @Composable
-    fun requestPolicyLimited() = Group(R.string.settings_group_requests, requestPolicyRows(policy()))
-
-    @PreviewTest
-    @SeerrComponentPreviews
-    @Composable
-    fun requestPolicyUnlimited() =
-        Group(
-            R.string.settings_group_requests,
-            requestPolicyRows(RequestPolicy(SeerrDefaultAccess.NoRequests, movieLimit = null, tvLimit = null)),
-        )
-
     /** The server's settings as the web client's Settings menu lists them, each with what is set there now. */
     @PreviewTest
     @SeerrComponentPreviews

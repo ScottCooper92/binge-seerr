@@ -791,10 +791,6 @@ app:settings_agent_email  969ccbd3cf63
 app:settings_agent_webhook  4814f62c108d
 app:settings_application_url  96884337d874
 app:settings_choices_filter  638e249f4a15
-app:settings_default_access_auto  f2d6c2a145c6
-app:settings_default_access_none  89f24af8a3d5
-app:settings_default_access_request  e9fccdb074be
-app:settings_default_permissions  43fc0abd72ea
 app:settings_display_language  11a045e402c3
 app:settings_edit_connection  047f9f951500
 app:settings_edit_connection_caption  bc5acad237f1
@@ -803,7 +799,6 @@ app:settings_group_connection  639a40e82b9a
 app:settings_group_general  c910d474dcd7
 app:settings_group_notifications  d6d14bda33a3
 app:settings_group_notify_me  a5b3a74811e6
-app:settings_group_requests  2a6df06e2ff4
 app:settings_group_server_settings  3e8fb11efc9e
 app:settings_group_services  c94941bf42cf
 app:settings_group_system  6725e7bbcd28
@@ -819,9 +814,6 @@ app:settings_notifications_not_yet  881d23f6ba57
 app:settings_notifications_poll  6dddca73fef3
 app:settings_report_bug  f75e0bd8ff23
 app:settings_report_bug_caption  d91cdd5edb81
-app:settings_request_limit  d05f269db0cd
-app:settings_request_limit_movie  03bd4b8cbd52
-app:settings_request_limit_tv  cfeb1bf41637
 app:settings_request_limit_unlimited  11dde17d6c3e
 app:settings_request_limit_value  9c7f4dc9bdd6
 app:settings_section_agents_detail  886387c0bf8b

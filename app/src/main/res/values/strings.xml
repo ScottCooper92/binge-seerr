@@ -620,16 +620,8 @@
     <string name="settings_group_services">Media services</string>
     <string name="settings_service_4k" translatable="false">4K</string>
     <string name="settings_service_default">Default</string>
-    <string name="settings_group_requests">Users and requests</string>
-    <string name="settings_default_permissions">Default permissions</string>
-    <string name="settings_default_access_none">New users cannot request</string>
-    <string name="settings_default_access_request">Request with approval</string>
-    <string name="settings_default_access_auto">Request and auto-approve</string>
-    <string name="settings_request_limit">Global request limit</string>
     <string name="settings_request_limit_unlimited">Unlimited</string>
     <string name="settings_request_limit_value">%1$d per %2$d days</string>
-    <string name="settings_request_limit_movie">Movies %1$s</string>
-    <string name="settings_request_limit_tv">TV %1$s</string>
     <string name="settings_group_notify_me">Notify me</string>
     <string name="settings_signal_pending">New requests</string>
     <string name="settings_signal_issues">New issues</string>

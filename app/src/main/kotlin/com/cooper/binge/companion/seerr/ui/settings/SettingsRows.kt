@@ -6,8 +6,6 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Public
-import androidx.compose.material.icons.filled.RequestPage
-import androidx.compose.material.icons.filled.Shield
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -16,7 +14,6 @@ import com.binge.designsystem.component.ListItemDestination
 import com.binge.designsystem.theme.BingeSentiment
 import com.binge.designsystem.theme.fill
 import com.cooper.binge.companion.seerr.R
-import com.cooper.binge.companion.seerr.seerr.SeerrDefaultAccess
 import com.cooper.binge.companion.seerr.seerr.isWebUrl
 import com.cooper.binge.companion.seerr.seerr.releaseNotesUrl
 import com.cooper.binge.companion.seerr.ui.openInBrowser
@@ -93,48 +90,5 @@ private fun ServerSummary.versionDetail(): String {
         else -> edition
     }
 }
-
-@Composable
-internal fun requestPolicyRows(policy: RequestPolicy): List<ListItem> =
-    listOf(
-        ListItem(
-            icon = Icons.Filled.Shield,
-            iconTint = BingeSentiment.Info.fill(),
-            label = stringResource(R.string.settings_default_permissions),
-            detail =
-                stringResource(
-                    when (policy.defaultAccess) {
-                        SeerrDefaultAccess.NoRequests -> R.string.settings_default_access_none
-                        SeerrDefaultAccess.RequestWithApproval -> R.string.settings_default_access_request
-                        SeerrDefaultAccess.AutoApprove -> R.string.settings_default_access_auto
-                    },
-                ),
-            clickable = false,
-        ),
-        ListItem(
-            icon = Icons.Filled.RequestPage,
-            iconTint = BingeSentiment.Info.fill(),
-            label = stringResource(R.string.settings_request_limit),
-            detail = requestLimitDetail(policy.movieLimit, policy.tvLimit),
-            clickable = false,
-        ),
-    )
-
-@Composable
-private fun requestLimitDetail(
-    movie: RequestLimit?,
-    tv: RequestLimit?,
-): String {
-    if (movie == null && tv == null) return stringResource(R.string.settings_request_limit_unlimited)
-    return listOf(
-        stringResource(R.string.settings_request_limit_movie, movie.limitText()),
-        stringResource(R.string.settings_request_limit_tv, tv.limitText()),
-    ).joinToString(stringResource(R.string.hub_meta_separator))
-}
-
-@Composable
-private fun RequestLimit?.limitText(): String =
-    this?.let { stringResource(R.string.settings_request_limit_value, it.count, it.days) }
-        ?: stringResource(R.string.settings_request_limit_unlimited)
 
 internal fun onOffRes(on: Boolean): Int = if (on) R.string.settings_value_on else R.string.settings_value_off
