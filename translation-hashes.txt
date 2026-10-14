@@ -962,7 +962,6 @@ app:tv_settings_disconnect_confirm  ff9c95dc28f5
 app:tv_settings_group_household  a1c6c97f415f
 app:tv_settings_group_maintenance  17ccfa5b681e
 app:tv_settings_group_media  54cbc8c86f5d
-app:tv_settings_household_note  4b660f01592f
 app:tv_settings_job_done  11a6767d5674
 app:tv_settings_job_failed_short  1a97d93e7f6e
 app:tv_settings_job_stopped  1a4f630ac1b6

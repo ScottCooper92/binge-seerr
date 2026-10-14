@@ -1220,7 +1220,6 @@
     <string name="companion_refusal_locale">es</string>
     <string name="tv_settings_open_job">Abrir</string>
     <string name="tv_settings_group_household">Hogar</string>
-    <string name="tv_settings_household_note">Cada interruptor se guarda al pulsarlo.</string>
     <string name="tv_settings_agents_note">Activa o desactiva un agente aquí. Sus datos se cambian en el teléfono.</string>
     <string name="tv_settings_agent_unavailable">No se han podido leer los ajustes de este agente. Inténtalo de nuevo desde el teléfono.</string>
     <string name="tv_settings_agent_setup_first">Este agente no puede enviar hasta que esté configurado. Termina de configurarlo en el teléfono.</string>
