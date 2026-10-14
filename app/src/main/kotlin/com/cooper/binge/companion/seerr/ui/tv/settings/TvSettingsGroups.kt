@@ -4,7 +4,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Dns
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Link
+import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Tv
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
@@ -33,6 +35,8 @@ internal const val KEY_MEDIA_SERVER = "media-server"
 internal class TvSettingsActions(
     val onEditConnection: () -> Unit = {},
     val onDisconnect: () -> Unit = {},
+    /** PROTOTYPE: end this session and go back to the server's sign-in; null for an API-key connection, which has none. */
+    val onSignOut: (() -> Unit)? = null,
     val jobs: TvJobActions = TvJobActions.None,
     val onToggleShareUsageData: (Boolean) -> Unit = {},
     val onToggleSendCrashReports: (Boolean) -> Unit = {},
@@ -51,37 +55,65 @@ internal fun tvSettingGroups(
     hub: HubUiState?,
     onShowBugReport: () -> Unit,
 ): List<TvPaneGroup> {
+    // PROTOTYPE: what is left after the summary at the sheet's head and its Edit connection row: the media server and
+    // where requests go, the server's jobs, and this app. Server config read-outs live on the phone.
     val config = state.config
-    val configGroups =
-        buildList {
-            config?.general?.let { add(readOnlyGroup(stringResource(R.string.settings_group_general), generalRows(it))) }
-            // Admin-only, same as the phone: this is the one section that also gets an action, so it is
-            // built by hand rather than through the read-only mapping every other section shares.
-            if (config != null) add(mediaServerGroup(state.server, jobs, state.now))
-            config?.services?.let { add(readOnlyGroup(stringResource(R.string.settings_group_services), serviceRows(it))) }
-            config?.requestPolicy?.let { add(readOnlyGroup(stringResource(R.string.settings_group_requests), requestPolicyRows(it))) }
-            // The server's jobs, each with its own page to run or cancel it, once the jobs list is in; else the settings read of them.
-            val readyJobs = jobs.state as? JobsUiState.Ready
-            if (config?.system != null && readyJobs != null) {
-                add(tvJobsGroup(jobs, readyJobs, state.now))
-            } else {
-                config?.system?.let { add(readOnlyGroup(stringResource(R.string.settings_group_system), systemRows(it, state.now))) }
+    val status = hub?.let { serverStatusGroup(it, actions.onOpenBingeListing) }?.rows.orEmpty()
+    val mediaRows =
+        (if (config != null) mediaServerGroup(state.server, jobs, state.now).rows else emptyList()) +
+            config?.services.orEmpty().mapIndexed { index, service ->
+                TvPaneRow(key = "service/$index", label = service.compactLabel(), icon = service.icon())
             }
-        }.filter { it.rows.isNotEmpty() }
-    return buildList {
-        add(
-            TvPaneGroup(
-                stringResource(R.string.settings_group_connection),
-                connectionRows(state.connection, state.server, actions.onEditConnection),
-            ),
-        )
-        hub?.let { serverStatusGroup(it, actions.onOpenBingeListing) }?.let(::add)
-        addAll(configGroups.carryingNote(stringResource(R.string.tv_settings_read_only_note)))
-        state.app?.let { app ->
-            add(tvAppGroup(app, TvAppActions(onShowBugReport, actions.onToggleShareUsageData, actions.onToggleSendCrashReports)))
+    val readyJobs = jobs.state as? JobsUiState.Ready
+    val maintenanceRows =
+        when {
+            config?.system != null && readyJobs != null -> tvJobsGroup(jobs, readyJobs, state.now).rows
+            else -> config?.system?.let { readOnlyGroup(stringResource(R.string.settings_group_system), systemRows(it, state.now)).rows }.orEmpty()
         }
-    }.filter { it.rows.isNotEmpty() }
+    val bingeRow = status.filter { it.key == KEY_BINGE }
+    val appGroup =
+        state.app?.let { app ->
+            tvAppGroup(app, TvAppActions(onShowBugReport, actions.onToggleShareUsageData, actions.onToggleSendCrashReports))
+        }
+    return listOfNotNull(
+        TvPaneGroup(stringResource(R.string.tv_settings_group_media_proto), mediaRows),
+        TvPaneGroup(stringResource(R.string.tv_settings_group_maintenance_proto), maintenanceRows),
+        appGroup?.let { it.copy(rows = bingeRow + it.rows) } ?: TvPaneGroup(stringResource(R.string.settings_group_app), bingeRow),
+    ).filter { it.rows.isNotEmpty() }
 }
+
+/**
+ * PROTOTYPE: the sheet's head, read at a glance: which server and its version, how it is answering, and who is signed in.
+ * Each row's [TvPaneRow.label] is the value and its body what the value is.
+ */
+@Composable
+internal fun tvSettingsSummary(
+    state: SettingsUiState.Ready,
+    hub: HubUiState?,
+): List<TvPaneRow> {
+    val connection = connectionRows(state.connection, state.server) {}
+    val status = hub?.let { serverStatusGroup(it) {} }?.rows.orEmpty().firstOrNull { it.key == KEY_STATUS }
+    val signedIn = connection.first { it.key == KEY_SIGNED_IN }
+    return listOfNotNull(
+        TvPaneRow(key = KEY_VERSION, label = state.server.versionLine(), body = state.connection.baseUrl, icon = Icons.Filled.Dns),
+        // The update is already on the version line, so the status line is only how the server answers.
+        status?.let { it.copy(label = it.body.substringBefore(stringResource(R.string.hub_meta_separator)), body = "") },
+        signedIn.copy(label = signedIn.body, body = signedIn.label),
+    )
+}
+
+@Composable
+private fun com.cooper.binge.companion.seerr.ui.settings.ServerService.compactLabel(): String {
+    val markers =
+        listOfNotNull(
+            if (is4k) stringResource(R.string.settings_service_4k) else null,
+            if (isDefault) stringResource(R.string.settings_service_default) else null,
+        )
+    return (listOf(name) + markers).joinToString(stringResource(R.string.hub_meta_separator))
+}
+
+private fun com.cooper.binge.companion.seerr.ui.settings.ServerService.icon() =
+    if (type == com.cooper.binge.companion.seerr.ui.settings.ServiceType.Radarr) Icons.Filled.Movie else Icons.Filled.Tv
 
 /** The "change this on the phone" line, on each of the server's groups: each is its own page in the sheet (#1439). */
 internal fun List<TvPaneGroup>.carryingNote(note: String): List<TvPaneGroup> = map { it.copy(note = note) }

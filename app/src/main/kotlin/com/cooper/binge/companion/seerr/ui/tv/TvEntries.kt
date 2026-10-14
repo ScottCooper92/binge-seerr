@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -15,6 +16,9 @@ import com.cooper.binge.companion.seerr.ui.hub.HubSection
 import com.cooper.binge.companion.seerr.ui.hub.HubUiState
 import com.cooper.binge.companion.seerr.ui.hub.HubViewModel
 import com.cooper.binge.companion.seerr.ui.issues.IssueFilter
+import com.cooper.binge.companion.seerr.ui.settings.SettingsUiState
+import com.cooper.binge.companion.seerr.ui.settings.SettingsViewModel
+import com.cooper.binge.companion.seerr.ui.settings.SignInKind
 import com.cooper.binge.companion.seerr.ui.requests.RequestFilter
 
 /**
@@ -26,9 +30,20 @@ internal fun TvConnectedShell(hubViewModel: HubViewModel = hiltViewModel()) {
     // The hub state the Account page reads, for the signed-in user's id and whether Issues is offered.
     val hub by hubViewModel.uiState.collectAsStateWithLifecycle()
     val account = (hub as? HubUiState.Ready)?.overview?.account
-    var page by rememberSaveable { mutableStateOf(TvDestination.Hub) }
+    var tab by rememberSaveable { mutableStateOf(TvDestination.Hub) }
+    var sheet by rememberSaveable { mutableStateOf<TvDestination?>(null) }
+    // Settings opens once its page has loaded, so the sheet never slides in on a loading line.
+    val settingsViewModel: SettingsViewModel = hiltViewModel()
+    val settings by settingsViewModel.uiState.collectAsStateWithLifecycle()
+    var settingsPending by remember { mutableStateOf(false) }
+    LaunchedEffect(settingsPending, settings) {
+        if (settingsPending && settings is SettingsUiState.Ready) {
+            settingsPending = false
+            sheet = TvDestination.Settings
+        }
+    }
     val analytics = LocalAnalytics.current
-    LaunchedEffect(page) { analytics.screen(page.screenName()) }
+    LaunchedEffect(tab, sheet) { analytics.screen((sheet ?: tab).screenName()) }
     var editingConnection by rememberSaveable { mutableStateOf(false) }
     // The requests board's open detail page, above the page exactly as the connection form is. The two
     // overlays are mutually exclusive by construction — nothing opens one while the other is showing.
@@ -41,19 +56,46 @@ internal fun TvConnectedShell(hubViewModel: HubViewModel = hiltViewModel()) {
     var seeAllIssues by rememberSaveable { mutableStateOf<String?>(null) }
     // Home's see-all for the signed-in user's own requests, which belong to no filter.
     var seeAllAccount by rememberSaveable { mutableStateOf(false) }
+    val homeOverlay = openRequestId != null || seeAllRequests != null || seeAllAccount
+    val issuesOverlay = openIssueId != null || seeAllIssues != null
     TvHomeShell(
-        page = page,
-        onOpenPage = { page = it },
-        onClosePage = { page = TvDestination.Hub },
+        tab = tab,
+        sheet = sheet,
+        onSelectTab = { selected ->
+            if (selected != tab) {
+                tab = selected
+            } else if (selected == TvDestination.Hub) {
+                // The current tab again: pop it to its root, as the phone's tab reselect does.
+                openRequestId = null
+                seeAllRequests = null
+                seeAllAccount = false
+            } else {
+                openIssueId = null
+                seeAllIssues = null
+            }
+        },
+        onOpenSheet = {
+            if (it == TvDestination.Settings && settings !is SettingsUiState.Ready) {
+                settingsViewModel.setScreenVisible(true)
+                settingsPending = true
+            } else {
+                sheet = it
+            }
+        },
+        showBar = !editingConnection,
+        onCloseSheet = { sheet = null },
         // The phone's rule for its Issues section: shown once the server is known to let this account list them.
         showIssues = (hub as? HubUiState.Ready)?.overview?.let { HubSection.Issues.isVisible(it) } == true,
+        tabsResolved = hub !is HubUiState.Loading,
+        accountName = account?.name.orEmpty(),
+        accountAvatarUrl = account?.avatarUrl,
         overlay =
             when {
                 editingConnection ->
                     {
                         { TvEditConnectionOverlay(onDone = { editingConnection = false }) }
                     }
-                openRequestId != null || openIssueId != null || seeAllRequests != null || seeAllIssues != null || seeAllAccount ->
+                tab == TvDestination.Hub && homeOverlay ->
                     {
                         {
                             seeAllRequests?.let { name ->
@@ -72,6 +114,12 @@ internal fun TvConnectedShell(hubViewModel: HubViewModel = hiltViewModel()) {
                                     onDone = { seeAllAccount = false },
                                 )
                             }
+                            TvDetailOverlays(openRequestId, null, { openRequestId = null }, {})
+                        }
+                    }
+                tab == TvDestination.Issues && issuesOverlay ->
+                    {
+                        {
                             seeAllIssues?.let { name ->
                                 TvIssuesGridOverlay(
                                     filter = IssueFilter.valueOf(name),
@@ -80,7 +128,7 @@ internal fun TvConnectedShell(hubViewModel: HubViewModel = hiltViewModel()) {
                                     onDone = { seeAllIssues = null },
                                 )
                             }
-                            TvDetailOverlays(openRequestId, openIssueId, { openRequestId = null }, { openIssueId = null })
+                            TvDetailOverlays(null, openIssueId, {}, { openIssueId = null })
                         }
                     }
                 else -> null
@@ -88,7 +136,17 @@ internal fun TvConnectedShell(hubViewModel: HubViewModel = hiltViewModel()) {
     ) { destination, close ->
         when (destination) {
             TvDestination.Account ->
-                TvAccountEntry(hubViewModel = hubViewModel, onDismissRequest = close)
+                TvAccountEntry(
+                    hubViewModel = hubViewModel,
+                    onDismissRequest = close,
+                    onSignOut =
+                        (settings as? SettingsUiState.Ready)?.takeIf { it.connection.signInKind == SignInKind.Session }?.let { ready ->
+                            {
+                                com.cooper.binge.companion.seerr.ui.ProtoSignOut.serverUrl = ready.connection.baseUrl
+                                settingsViewModel.disconnect()
+                            }
+                        },
+                )
             // Home is what needs attention: the requests as rows over a backdrop, once the server answers.
             TvDestination.Hub ->
                 TvHomeEntry(

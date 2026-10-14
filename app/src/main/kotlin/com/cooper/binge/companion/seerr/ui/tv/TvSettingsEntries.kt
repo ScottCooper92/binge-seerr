@@ -5,6 +5,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import com.cooper.binge.companion.seerr.ui.ProtoSignOut
+import com.cooper.binge.companion.seerr.ui.settings.SignInKind
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -59,6 +61,13 @@ internal fun TvSettingsEntry(
                 onDismissRequest()
             },
             onDisconnect = viewModel::disconnect,
+            onSignOut =
+                (state as? SettingsUiState.Ready)?.takeIf { it.connection.signInKind == SignInKind.Session }?.let { ready ->
+                    {
+                        ProtoSignOut.serverUrl = ready.connection.baseUrl
+                        viewModel.disconnect()
+                    }
+                },
             onToggleShareUsageData = viewModel::setShareUsageData,
             onToggleSendCrashReports = viewModel::setSendCrashReports,
             onOpenBingeListing = { context.openBingeOnPlayStore() },
@@ -89,6 +98,7 @@ private fun TvAdminSettingsSheet(
             TvSettingsActions(
                 onEditConnection = actions.onEditConnection,
                 onDisconnect = actions.onDisconnect,
+                onSignOut = actions.onSignOut,
                 jobs = TvJobActions(onRun = jobsViewModel::runWhenReady, onCancel = jobsViewModel::cancel),
                 onToggleShareUsageData = actions.onToggleShareUsageData,
                 onToggleSendCrashReports = actions.onToggleSendCrashReports,

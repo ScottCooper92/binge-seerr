@@ -1260,4 +1260,15 @@
     <string name="companion_refusal_quota">Has alcanzado tu límite de peticiones en este servidor. Vuelve a intentarlo cuando se renueve.</string>
     <string name="companion_refusal_blocklisted">Este título está en la lista de bloqueo del servidor, así que no se puede pedir.</string>
     <string name="companion_refusal_locale">es</string>
+    <string name="tv_settings_group_server_proto">Servidor</string>
+    <string name="tv_settings_group_media_proto">Servidor multimedia y servicios</string>
+    <string name="tv_settings_group_maintenance_proto">Mantenimiento</string>
+    <string name="tv_settings_sign_out_proto">Cerrar sesión</string>
+    <string name="tv_settings_job_failed_short_proto">No funcionó. Vuelve a intentarlo.</string>
+    <string name="tv_settings_binge_open_proto">Abre Binge</string>
+    <string name="tv_settings_binge_get_proto">Descarga Binge de Play Store</string>
+    <string name="tv_account_sign_out_title_proto">¿Cerrar sesión?</string>
+    <string name="tv_account_sign_out_message_proto">Tendrás que volver a iniciar sesión en este servidor.</string>
+    <string name="tv_settings_job_done_proto">Hecho</string>
+    <string name="tv_settings_job_stopped_proto">Detenido</string>
 </resources>

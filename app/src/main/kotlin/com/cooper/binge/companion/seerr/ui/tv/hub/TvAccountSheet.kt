@@ -7,6 +7,16 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import com.binge.designsystem.tv.component.TvConfirmDialog
+import com.cooper.binge.companion.seerr.ui.tv.settings.TvInfoCard
+import androidx.compose.foundation.focusable
+import com.binge.designsystem.tv.component.TvSideSheetConfirm
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.activity.compose.BackHandler
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.Person
@@ -49,7 +59,10 @@ internal fun TvAccountSheet(
     onRetry: () -> Unit,
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier,
+    /** PROTOTYPE: ends the session; null for an API-key connection, which has none to end. */
+    onSignOut: (() -> Unit)? = null,
 ) {
+    var confirmingSignOut by remember { mutableStateOf(false) }
     val item =
         when (detail) {
             is UserDetailUiState.Ready -> detail.detail.item
@@ -58,6 +71,17 @@ internal fun TvAccountSheet(
         }
     val quota = (detail as? UserDetailUiState.Ready)?.detail?.quota
     TvSideSheet(onDismissRequest = onDismissRequest, modifier = modifier) { entryFocus ->
+        // PROTOTYPE: the confirm is a centred dialog over the sheet rather than a step in it.
+        if (confirmingSignOut && onSignOut != null) {
+            TvConfirmDialog(
+                title = stringResource(R.string.tv_account_sign_out_title_proto),
+                message = stringResource(R.string.tv_account_sign_out_message_proto),
+                confirmLabel = stringResource(R.string.tv_settings_sign_out_proto),
+                onConfirm = onSignOut,
+                onDismissRequest = { confirmingSignOut = false },
+                destructive = true,
+            )
+        }
         TvSideSheetTitle(stringResource(R.string.tv_rail_account))
         if (item == null) {
             Unresolved(
@@ -68,16 +92,30 @@ internal fun TvAccountSheet(
                 entryFocus = entryFocus,
             )
         } else {
-            Column(
-                modifier = Modifier.weight(1f, fill = false).fillMaxWidth().verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
-            ) {
-                Profile(item)
-                QuotaRow(stringResource(R.string.hub_quota_movies), quota?.movie, quota != null, Icons.Filled.Movie)
-                QuotaRow(stringResource(R.string.hub_quota_tv), quota?.tv, quota != null, Icons.Filled.Tv)
+            // PROTOTYPE: who is signed in and what they may request, as one info card; no Close, Back is the way out.
+            val separator = stringResource(R.string.hub_meta_separator)
+            val handle = item.handle?.takeUnless { it.equals(item.email, ignoreCase = true) }
+            TvInfoCard(
+                icon = Icons.Filled.Person,
+                title = item.name,
+                lines =
+                    listOfNotNull(
+                        listOf(stringResource(item.role.roleLabelRes()), stringResource(item.origin.originLabelRes())).joinToString(separator),
+                        listOfNotNull(item.email, handle).distinct().joinToString(separator).ifEmpty { null },
+                        listOf(stringResource(R.string.hub_quota_movies), quotaLine(quota?.movie, quota != null)).joinToString(separator),
+                        listOf(stringResource(R.string.hub_quota_tv), quotaLine(quota?.tv, quota != null)).joinToString(separator),
+                    ),
+                modifier = Modifier.focusRequester(entryFocus),
+            )
+            // Destructive, so last, where a stray OK is least likely to land.
+            onSignOut?.let {
+                TvSideSheetRow(
+                    label = stringResource(R.string.tv_settings_sign_out_proto),
+                    icon = Icons.AutoMirrored.Filled.Logout,
+                    destructive = true,
+                    onClick = { confirmingSignOut = true },
+                )
             }
-            // Outside the scroll, so the one row to press is always on screen however many read-outs scroll past.
-            Close(onDismissRequest, Modifier.focusRequester(entryFocus))
             TvSideSheetStepFocus(entryFocus)
         }
     }
@@ -103,9 +141,9 @@ private fun ColumnScope.Unresolved(
             onClick = onRetry,
             modifier = Modifier.focusRequester(entryFocus),
         )
-        Close(onClose)
     } else {
-        Close(onClose, Modifier.focusRequester(entryFocus))
+        // PROTOTYPE: nothing to press while loading, so a focus holder stands in for the old Close.
+        androidx.compose.foundation.layout.Box(Modifier.focusRequester(entryFocus).focusable())
     }
     TvSideSheetStepFocus(entryFocus)
 }

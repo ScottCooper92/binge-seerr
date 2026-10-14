@@ -17,6 +17,7 @@ import com.binge.designsystem.tv.template.TvPaneGroup
 import com.binge.designsystem.tv.template.TvPaneOption
 import com.binge.designsystem.tv.template.TvPaneRow
 import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.ui.hub.openBinge
 import com.cooper.binge.companion.seerr.ui.hub.BingeStatus
 import com.cooper.binge.companion.seerr.ui.hub.ConnectionHealth
 import com.cooper.binge.companion.seerr.ui.hub.HubOverview
@@ -42,6 +43,7 @@ internal fun serverStatusGroup(
     onOpenBingeListing: () -> Unit,
 ): TvPaneGroup? {
     val ready = hub as? HubUiState.Ready ?: return null
+    val context = androidx.compose.ui.platform.LocalContext.current
     val overview = ready.overview
     val separator = stringResource(R.string.hub_meta_separator)
     val placeholder = stringResource(R.string.hub_stat_placeholder)
@@ -109,7 +111,14 @@ internal fun serverStatusGroup(
                                 ),
                             )
                         } else {
-                            emptyList()
+                            // PROTOTYPE: Binge itself, where it last was; there is no deep link to its companion screen yet.
+                            listOf(
+                                TvPaneOption(
+                                    label = stringResource(R.string.tv_settings_binge_open_proto),
+                                    icon = Icons.Filled.Tv,
+                                    onSelect = { context.openBinge() },
+                                ),
+                            )
                         },
                     icon = Icons.Filled.Tv,
                 ),

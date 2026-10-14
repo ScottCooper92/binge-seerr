@@ -10,6 +10,8 @@ import androidx.compose.material.icons.filled.Healing
 import androidx.compose.material.icons.filled.Insights
 import androidx.compose.material.icons.filled.QrCode
 import androidx.compose.runtime.Composable
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.focusable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.dimensionResource
@@ -120,19 +122,19 @@ internal fun ColumnScope.TvBugReportSheetContent(
     TvSideSheetBody(stringResource(R.string.tv_settings_report_bug_scan))
     val codeSize = dimensionResource(R.dimen.tv_bug_report_code_size)
     // The code takes what the sheet has left, up to its size, so a larger font shrinks it rather than cutting off Close.
-    TvQrCode(
-        content = app.bugReportUrl,
-        contentDescription = stringResource(R.string.tv_settings_report_bug_code_description),
-        modifier =
-            Modifier
-                .padding(vertical = dimensionResource(DesR.dimen.padding_s))
-                .weight(1f, fill = false)
-                .sizeIn(maxWidth = codeSize, maxHeight = codeSize)
-                .aspectRatio(1f),
-    )
-    TvSideSheetRow(
-        label = stringResource(R.string.tv_sheet_close),
-        onClick = onClose,
-        modifier = closeModifier,
-    )
+    // PROTOTYPE: centred in the space left, with no Close: Back is the way out, and the code holds focus meanwhile.
+    androidx.compose.foundation.layout.Box(
+        modifier = Modifier.weight(1f).fillMaxWidth().padding(bottom = dimensionResource(com.binge.designsystem.tv.R.dimen.tv_overscan_vertical)),
+        contentAlignment = androidx.compose.ui.Alignment.Center,
+    ) {
+        TvQrCode(
+            content = app.bugReportUrl,
+            contentDescription = stringResource(R.string.tv_settings_report_bug_code_description),
+            modifier =
+                closeModifier
+                    .focusable()
+                    .sizeIn(maxWidth = codeSize, maxHeight = codeSize)
+                    .aspectRatio(1f),
+        )
+    }
 }

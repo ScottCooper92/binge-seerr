@@ -6,6 +6,14 @@ import androidx.compose.material.icons.filled.Cancel
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Storage
 import androidx.compose.runtime.Composable
+import kotlinx.coroutines.delay
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.key
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.tv.template.TvPaneGroup
 import com.binge.designsystem.tv.template.TvPaneOption
@@ -14,7 +22,6 @@ import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.settings.ServerSummary
 import com.cooper.binge.companion.seerr.ui.settings.labelRes
 import com.cooper.binge.companion.seerr.ui.settings.server.JobsUiState
-import com.cooper.binge.companion.seerr.ui.settings.server.MEDIA_SERVER_SCAN_JOB_ID
 import com.cooper.binge.companion.seerr.ui.settings.server.ServerJob
 
 /** What a television can do to a scheduled job: start it, or stop it while it runs. */
@@ -64,7 +71,7 @@ internal fun jobLine(
 ): String? =
     when (status) {
         TvJobStatus.Busy -> stringResource(R.string.tv_settings_job_working)
-        TvJobStatus.Failed -> stringResource(R.string.tv_settings_job_failed_note)
+        TvJobStatus.Failed -> stringResource(R.string.tv_settings_job_failed_short_proto)
         TvJobStatus.Idle -> job?.let { jobStatusText(it.running, it.nextRunMillis, now) }
     }
 
@@ -78,8 +85,12 @@ internal fun mediaServerGroup(
     jobs: TvJobs,
     now: Long,
 ): TvPaneGroup {
-    val job = jobs.state.jobOrNull(MEDIA_SERVER_SCAN_JOB_ID)
-    val status = jobs.state.statusOf(MEDIA_SERVER_SCAN_JOB_ID)
+    // PROTOTYPE fix: Jellyfin and Emby servers run the full scan as `jellyfin-full-scan`, Plex as `plex-full-scan`
+    // (server/job/schedule.ts upstream), so the id is whichever the server's own job list carries.
+    val listed = (jobs.state as? JobsUiState.Ready)?.jobs.orEmpty().map { it.id }
+    val scanId = if (JELLYFIN_FULL_SCAN in listed) JELLYFIN_FULL_SCAN else PLEX_FULL_SCAN
+    val job = jobs.state.jobOrNull(scanId)
+    val status = jobs.state.statusOf(scanId)
     val running = job?.running == true
     val line = if (status != TvJobStatus.Idle || running) jobLine(job, status, now) else null
     return TvPaneGroup(
@@ -98,13 +109,13 @@ internal fun mediaServerGroup(
                                 TvPaneOption(
                                     label = stringResource(R.string.tv_settings_cancel_library_scan),
                                     icon = Icons.Filled.Cancel,
-                                    onSelect = { jobs.actions.onCancel(MEDIA_SERVER_SCAN_JOB_ID) },
+                                    onSelect = { jobs.actions.onCancel(scanId) },
                                 )
                             } else {
                                 TvPaneOption(
                                     label = stringResource(R.string.tv_settings_start_library_scan),
                                     icon = Icons.Filled.PlayArrow,
-                                    onSelect = { jobs.actions.onRun(MEDIA_SERVER_SCAN_JOB_ID) },
+                                    onSelect = { jobs.actions.onRun(scanId) },
                                 )
                             },
                         ),
@@ -125,14 +136,66 @@ internal fun tvJobsGroup(
         title = stringResource(R.string.settings_group_system),
         rows =
             ready.jobs.map { job ->
+                val status = ready.statusOf(job.id)
+                val hold = key(job.id) { rememberJobHold() }
+                val line =
+                    when {
+                        hold.holding || status == TvJobStatus.Busy -> stringResource(R.string.tv_settings_job_working)
+                        status == TvJobStatus.Failed -> stringResource(R.string.tv_settings_job_failed_short_proto)
+                        hold.stopped && !job.running -> stringResource(R.string.tv_settings_job_stopped_proto)
+                        hold.ran && !job.running -> stringResource(R.string.tv_settings_job_done_proto)
+                        else -> jobLine(job, status, now)
+                    }
                 TvPaneRow(
                     key = "$KEY_JOB_PREFIX${job.id}",
                     label = job.name,
-                    detail = jobLine(job, ready.statusOf(job.id), now),
-                    options = listOf(TvPaneOption(label = job.name, icon = Icons.Filled.Cached, onSelect = { jobs.onOpenJob(job.id) })),
+                    detail = line,
+                    announceNote = hold.pressed != 0L,
+                    // PROTOTYPE: OK runs the job, or stops it while it runs; its page is for a long press, later.
+                    options =
+                        listOf(
+                            TvPaneOption(
+                                label = job.name,
+                                icon = Icons.Filled.Cached,
+                                onSelect = {
+                                    hold.press(stopping = job.running)
+                                    if (job.running) jobs.actions.onCancel(job.id) else jobs.actions.onRun(job.id)
+                                },
+                            ),
+                        ),
                     icon = Icons.Filled.Cached,
                 )
             },
     )
 
 internal const val KEY_JOB_PREFIX = "job:"
+
+/** PROTOTYPE: the shortest a press reads as Working, so a job the server finishes in 20ms still shows that it ran. */
+private const val JOB_MIN_WORKING_MILLIS = 900L
+
+/** A row's own memory of being pressed: Working for at least [JOB_MIN_WORKING_MILLIS], then which way it went. */
+private class JobHold {
+    var pressed by mutableLongStateOf(0L)
+    var holding by mutableStateOf(false)
+    var stopped by mutableStateOf(false)
+    val ran get() = pressed != 0L && !stopped
+
+    fun press(stopping: Boolean) {
+        stopped = stopping
+        pressed = android.os.SystemClock.uptimeMillis()
+    }
+}
+
+@Composable
+private fun rememberJobHold(): JobHold {
+    val hold = remember { JobHold() }
+    LaunchedEffect(hold.pressed) {
+        if (hold.pressed == 0L) return@LaunchedEffect
+        hold.holding = true
+        delay(JOB_MIN_WORKING_MILLIS)
+        hold.holding = false
+    }
+    return hold
+}
+private const val PLEX_FULL_SCAN = "plex-full-scan"
+private const val JELLYFIN_FULL_SCAN = "jellyfin-full-scan"

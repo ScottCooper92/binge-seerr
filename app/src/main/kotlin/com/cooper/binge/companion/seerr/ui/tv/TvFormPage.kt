@@ -114,7 +114,7 @@ internal fun TvFormPage(
                                     Modifier
                                         .fillMaxSize()
                                         .verticalScroll(rememberScrollState())
-                                        .padding(top = dimensionResource(R.dimen.tv_form_top_inset)),
+                                        .padding(top = dimensionResource(R.dimen.tv_form_top_inset) + com.binge.designsystem.tv.nav.LocalTvTopInset.current),
                                 verticalArrangement = Arrangement.spacedBy(dimensionResource(TvR.dimen.tv_two_pane_action_gap)),
                                 content = form,
                             )

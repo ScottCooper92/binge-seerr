@@ -111,6 +111,11 @@ class SetupViewModel
 
         init {
             restore()
+            ProtoSignOut.serverUrl?.let { url ->
+                ProtoSignOut.serverUrl = null
+                draft.update { it.copy(serverUrl = url) }
+                inspect()
+            }
         }
 
         val uiState: StateFlow<SetupUiState> =

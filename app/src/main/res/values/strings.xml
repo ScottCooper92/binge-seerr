@@ -1314,4 +1314,15 @@
     <string name="companion_refusal_quota">You\'ve reached your request limit on this server. Try again once it resets.</string>
     <string name="companion_refusal_blocklisted">This title is on the server\'s blocklist, so it can\'t be requested.</string>
     <string name="companion_refusal_locale">en</string>
+    <string name="tv_settings_group_server_proto">Server</string>
+    <string name="tv_settings_group_media_proto">Media server and services</string>
+    <string name="tv_settings_group_maintenance_proto">Maintenance</string>
+    <string name="tv_settings_sign_out_proto">Sign out</string>
+    <string name="tv_settings_job_failed_short_proto">Didn\'t work. Try again.</string>
+    <string name="tv_settings_binge_open_proto">Opens Binge</string>
+    <string name="tv_settings_binge_get_proto">Gets Binge from the Play Store</string>
+    <string name="tv_account_sign_out_title_proto">Sign out?</string>
+    <string name="tv_account_sign_out_message_proto">You\'ll need to sign in to this server again.</string>
+    <string name="tv_settings_job_done_proto">Done</string>
+    <string name="tv_settings_job_stopped_proto">Stopped</string>
 </resources>
