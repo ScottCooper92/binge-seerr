@@ -324,11 +324,14 @@ class TvSettingsSheetFocusTest {
 
         open(disconnect)
         composeTestRule.onNodeWithText(string(R.string.hub_disconnect_confirm_title)).assertExists()
-        composeTestRule.onNode(hasText(string(DesR.string.action_cancel)) and isFocusable()).assertIsFocused()
+        val cancel = composeTestRule.onNode(hasText(string(DesR.string.action_cancel)) and isFocusable())
+        cancel.assertIsFocused()
         assertEquals(0, disconnects)
 
-        pressBack()
+        cancel.performKeyInput { pressKey(Key.DirectionCenter) }
+        composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText(string(R.string.hub_disconnect_confirm_title)).assertDoesNotExist()
+        assertEquals(0, disconnects)
         assertEquals(0, dismissals)
     }
 
@@ -337,9 +340,12 @@ class TvSettingsSheetFocusTest {
         setSheet(config = null)
         open(string(R.string.hub_disconnect))
 
-        composeTestRule.onNode(hasText(string(R.string.tv_settings_disconnect_confirm)) and isFocusable()).requestFocus()
+        val confirm = composeTestRule.onNode(hasText(string(R.string.tv_settings_disconnect_confirm)) and isFocusable())
+        confirm.requestFocus()
         composeTestRule.waitForIdle()
-        press(Key.DirectionCenter)
+        // The confirm is a dialog, a window of its own, so the key goes to its node rather than the activity's root.
+        confirm.performKeyInput { pressKey(Key.DirectionCenter) }
+        composeTestRule.waitForIdle()
 
         assertEquals(1, disconnects)
     }

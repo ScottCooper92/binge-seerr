@@ -134,7 +134,9 @@ class TvPagesClippingTest {
 
     @Test fun `the settings media server page at 1_3`() = rule.assertNoTvClippingAt(FONT_SCALE_13) { Settings(mediaPage = true) }
 
-    @Test fun `the bug report page at 1_3`() = rule.assertNoTvClippingAt(FONT_SCALE_13) { Settings(showBugReport = true) }
+    /** The code page holds its title and one line, and the code, which is no text at all. */
+    @Test
+    fun `the bug report page at 1_3`() = rule.assertNoTvClippingAt(FONT_SCALE_13, minTextNodes = 2) { Settings(showBugReport = true) }
 
     @Composable
     private fun Sheet(content: @Composable ColumnScope.() -> Unit) {
