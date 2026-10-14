@@ -163,8 +163,8 @@ class TvRequestDetailScreenshotTest {
     }
 
     /**
-     * A manager's page for a title the server tracks and no decision is waiting on: Mark as leads, Manage holds Edit, Report
-     * an issue, Open in Binge and Remove, and the details row names what stays on the phone (#1036).
+     * A manager's page for a title the server tracks and no decision is waiting on: Mark as leads, and Manage holds Edit,
+     * Report an issue, Open in Binge and Remove (#1036).
      */
     @PreviewTest
     @SeerrTvScreenPreviews
@@ -195,7 +195,7 @@ class TvRequestDetailScreenshotTest {
 
     /**
      * The page anchored on its Details footer, with every fact the server can name: who asked and when, the request's state,
-     * each version's state, who moderated it, where it was sent, and the line naming what stays on the phone.
+     * each version's state, who moderated it, and where it was sent.
      */
     @PreviewTest
     @SeerrTvScreenPreviews

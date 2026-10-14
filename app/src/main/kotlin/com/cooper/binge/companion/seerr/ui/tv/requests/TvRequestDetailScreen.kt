@@ -3,7 +3,6 @@ package com.cooper.binge.companion.seerr.ui.tv.requests
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -222,7 +221,6 @@ private fun TvRequestDetailContent(
         TvRequestDetails(
             stringResource(R.string.tv_detail_details),
             requestInfoGroups(detail, now),
-            phoneOnlyHint(detail),
         )
     Box(modifier = Modifier.fillMaxSize()) {
         TvDetailPage(
@@ -352,12 +350,9 @@ private fun TvDetailPageScope.requestSections(
             }
         }
     }
-    // The page's facts in Binge's own Details footer, with the phone-only hint as a line under it rather than a fact.
+    // The page's facts in Binge's own Details footer.
     section(TV_DETAILS_SECTION_KEY) { _ ->
-        Column {
-            TvDetailInfoFooterSection(header = details.header, groups = details.groups)
-            details.phoneOnlyHint?.let { TvPhoneOnlyHint(it) }
-        }
+        TvDetailInfoFooterSection(header = details.header, groups = details.groups)
     }
 }
 
@@ -365,5 +360,4 @@ private fun TvDetailPageScope.requestSections(
 private class TvRequestDetails(
     val header: String,
     val groups: List<TvInfoGroup>,
-    val phoneOnlyHint: String?,
 )
