@@ -43,7 +43,6 @@
     <string name="link_quick_connect_body">En cualquier app de Jellyfin con la sesión iniciada, abre Quick Connect e introduce este código.</string>
     <string name="link_waiting">Esperando la aprobación…</string>
     <string name="link_cancel">Cancelar</string>
-    <string name="connected_hint">Abre Binge y permite esta app en Cuenta → Integraciones. Las peticiones que hagas allí irán a este servidor.</string>
     <string name="hub_binge_not_installed_title">¿Buscas un explorador de contenido?</string>
     <string name="hub_binge_not_installed_detail">Prueba Binge, funciona con esta app.</string>
     <string name="hub_binge_get">Obtener Binge</string>
@@ -597,16 +596,8 @@
     <string name="settings_hide_available">Ocultar el contenido disponible</string>
     <string name="settings_group_services">Servicios multimedia</string>
     <string name="settings_service_default">Predeterminado</string>
-    <string name="settings_group_requests">Usuarios y peticiones</string>
-    <string name="settings_default_permissions">Permisos predeterminados</string>
-    <string name="settings_default_access_none">Los usuarios nuevos no pueden pedir</string>
-    <string name="settings_default_access_request">Pedir con aprobación</string>
-    <string name="settings_default_access_auto">Pedir con aprobación automática</string>
-    <string name="settings_request_limit">Límite global de peticiones</string>
     <string name="settings_request_limit_unlimited">Sin límite</string>
     <string name="settings_request_limit_value">%1$d cada %2$d días</string>
-    <string name="settings_request_limit_movie">Películas %1$s</string>
-    <string name="settings_request_limit_tv">Series %1$s</string>
     <string name="settings_group_notify_me">Avisarme de</string>
     <string name="settings_signal_pending">Peticiones nuevas</string>
     <string name="settings_signal_issues">Incidencias nuevas</string>
@@ -1003,41 +994,17 @@
     <string name="setup_error_unreachable_not_local">No se pudo conectar con el servidor. Esa no es una dirección local, así que puede que este televisor no consiga llegar a ella. Prueba con una dirección de tu red doméstica.</string>
     <string name="tv_rail_hub">Inicio</string>
     <string name="tv_hub_health_checking">Comprobando el servidor…</string>
-    <string name="tv_hub_stat_open_issues">Incidencias abiertas</string>
     <string name="tv_hub_quota_none_left">No queda ninguna</string>
     <string name="tv_download_percent">%1$d %%</string>
     <string name="tv_list_load_failed">No se pudo cargar la lista.</string>
     <string name="tv_issue_resolve">Resolver la incidencia</string>
     <string name="tv_issue_reopen">Reabrir la incidencia</string>
     <string name="tv_issue_read_comments">Leer comentarios</string>
-    <string name="tv_settings_read_only_note">Cámbialo en la app del móvil o en el cliente web.</string>
     <string name="tv_settings_disconnect_confirm">Sí, desconectar</string>
     <string name="tv_settings_start_library_scan">Iniciar escaneo de la biblioteca</string>
     <string name="tv_settings_cancel_library_scan">Cancelar escaneo de la biblioteca</string>
     <string name="tv_settings_job_working">Trabajando…</string>
-    <string name="tv_settings_job_body">Se ejecuta según una programación. Ejecútala ahora o cancélala mientras se ejecuta. La programación se cambia en el teléfono.</string>
-    <string name="tv_settings_job_failed_note">No se ha podido completar. Selecciona la opción para volver a intentarlo.</string>
     <string name="tv_filter_with_count">%1$s (%2$d)</string>
-    <string name="tv_settings_group_server">Estado del servidor</string>
-    <string name="tv_settings_status">Estado</string>
-    <plurals name="tv_settings_requests_pending">
-        <item quantity="one">%1$d Pendiente</item>
-        <item quantity="many">%1$d Pendientes</item>
-        <item quantity="other">%1$d Pendientes</item>
-    </plurals>
-    <plurals name="tv_settings_requests_movies">
-        <item quantity="one">%1$d Película</item>
-        <item quantity="many">%1$d Películas</item>
-        <item quantity="other">%1$d Películas</item>
-    </plurals>
-    <plurals name="tv_settings_requests_tv">
-        <item quantity="one">%1$d Serie</item>
-        <item quantity="many">%1$d Series</item>
-        <item quantity="other">%1$d Series</item>
-    </plurals>
-    <string name="tv_settings_requests_pending_unknown">%1$s Pendientes</string>
-    <string name="tv_settings_requests_movies_unknown">%1$s Películas</string>
-    <string name="tv_settings_requests_tv_unknown">%1$s Series</string>
     <string name="tv_settings_binge">Binge</string>
     <string name="tv_settings_binge_install">Abrir Play Store</string>
     <string name="tv_see_all">Ver todo</string>
@@ -1090,10 +1057,6 @@
     <string name="settings_share_usage_data_caption">Envía qué pantallas y acciones usas</string>
     <string name="settings_send_crash_reports">Enviar informes de fallos</string>
     <string name="settings_send_crash_reports_caption">Qué hacía la aplicación cuando falló, para poder corregirlo</string>
-    <string name="tv_settings_toggle_on">Activado</string>
-    <string name="tv_settings_toggle_off">Desactivado</string>
-    <string name="tv_settings_turn_on">Activar</string>
-    <string name="tv_settings_turn_off">Desactivar</string>
     <string name="consent_kicker">Privacidad</string>
     <string name="tv_consent_point_change_title">Se desactiva con una pulsación</string>
     <string name="tv_consent_reassurance">No se recoge nada a menos que elijas Compartir datos de uso.</string>
@@ -1268,6 +1231,11 @@
     <string name="tv_settings_agent_unavailable">No se han podido leer los ajustes de este agente. Inténtalo de nuevo desde el teléfono.</string>
     <string name="tv_settings_agent_setup_first">Este agente no puede enviar hasta que esté configurado. Termina de configurarlo en el teléfono.</string>
     <string name="tv_settings_agent_body">Activa o desactiva este agente. Sus datos se cambian en el teléfono.</string>
-    <string name="tv_settings_agent_turn_on">Activar</string>
-    <string name="tv_settings_agent_turn_off">Desactivar</string>
+    <string name="tv_settings_group_media">Servidor multimedia y servicios</string>
+    <string name="tv_settings_group_maintenance">Mantenimiento</string>
+    <string name="tv_settings_signed_in_as">Sesión iniciada como %1$s</string>
+    <string name="tv_settings_job_failed_short">No ha funcionado. Vuelve a intentarlo.</string>
+    <string name="tv_settings_job_done">Hecho</string>
+    <string name="tv_settings_job_stopped">Detenido</string>
+    <string name="tv_settings_signed_in_api_key">Sesión iniciada con la clave de API del servidor</string>
 </resources>

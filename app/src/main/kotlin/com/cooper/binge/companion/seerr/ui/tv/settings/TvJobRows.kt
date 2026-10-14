@@ -6,8 +6,11 @@ import androidx.compose.material.icons.filled.Cancel
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Storage
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.Stable
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.ui.res.stringResource
-import com.binge.designsystem.tv.template.TvPaneGroup
 import com.binge.designsystem.tv.template.TvPaneOption
 import com.binge.designsystem.tv.template.TvPaneRow
 import com.cooper.binge.companion.seerr.R
@@ -16,6 +19,7 @@ import com.cooper.binge.companion.seerr.ui.settings.labelRes
 import com.cooper.binge.companion.seerr.ui.settings.server.JobsUiState
 import com.cooper.binge.companion.seerr.ui.settings.server.ServerJob
 import com.cooper.binge.companion.seerr.ui.settings.server.mediaServerScanJobId
+import kotlinx.coroutines.delay
 
 /** What a television can do to a scheduled job: start it, or stop it while it runs. */
 internal class TvJobActions(
@@ -27,12 +31,64 @@ internal class TvJobActions(
     }
 }
 
-/** What the sheet shows of the jobs: the list's state, what can be done to a job, and how to open one's page. */
+/** What the sheet shows of the jobs: the list's state, what can be done to a job, and which the user has pressed. */
 internal class TvJobs(
     val state: JobsUiState,
     val actions: TvJobActions,
-    val onOpenJob: (id: String) -> Unit,
+    val presses: TvJobPresses = TvJobPresses(),
 )
+
+/** A press on a job's row: whether it stopped the job, and whether the row still says it is working. */
+internal data class TvJobPress(
+    val stopping: Boolean,
+    val holding: Boolean = true,
+)
+
+/**
+ * The jobs pressed since the sheet opened. A press says the job is working for at least [JOB_MIN_WORKING_MILLIS], so a
+ * job the server finishes in a moment still shows that it ran, and then what came of it until the sheet closes.
+ */
+@Stable
+internal class TvJobPresses {
+    private val presses = mutableStateMapOf<String, TvJobPress>()
+
+    operator fun get(id: String): TvJobPress? = presses[id]
+
+    fun press(
+        id: String,
+        stopping: Boolean,
+    ) {
+        presses[id] = TvJobPress(stopping)
+    }
+
+    fun release(id: String) {
+        presses[id]?.let { presses[id] = it.copy(holding = false) }
+    }
+}
+
+/** The shortest time a pressed job's row says it is working. */
+internal const val JOB_MIN_WORKING_MILLIS = 900L
+
+/** What a job's row says, in order of precedence. */
+internal enum class TvJobLine { Failed, Working, Running, Stopped, Done, Schedule }
+
+/**
+ * A job's line: a refusal first, then working while a call is out or a press is held, then running for as long as the job
+ * runs, then what the last press did, and otherwise when it next runs.
+ */
+internal fun jobLineOf(
+    running: Boolean,
+    status: TvJobStatus,
+    press: TvJobPress?,
+): TvJobLine =
+    when {
+        status == TvJobStatus.Failed -> TvJobLine.Failed
+        status == TvJobStatus.Busy || press?.holding == true -> TvJobLine.Working
+        running -> TvJobLine.Running
+        press?.stopping == true -> TvJobLine.Stopped
+        press != null -> TvJobLine.Done
+        else -> TvJobLine.Schedule
+    }
 
 /** Where a job's last action stands, as its row and page show it. */
 internal enum class TvJobStatus { Idle, Busy, Failed }
@@ -63,7 +119,7 @@ internal fun jobLine(
 ): String? =
     when (status) {
         TvJobStatus.Busy -> stringResource(R.string.tv_settings_job_working)
-        TvJobStatus.Failed -> stringResource(R.string.tv_settings_job_failed_note)
+        TvJobStatus.Failed -> stringResource(R.string.tv_settings_job_failed_short)
         TvJobStatus.Idle -> job?.let { jobStatusText(it.running, it.nextRunMillis, now) }
     }
 
@@ -72,79 +128,94 @@ internal fun jobLine(
  * while it runs. Its line is the scan's own state in place, else the server it scans.
  */
 @Composable
-internal fun mediaServerGroup(
+internal fun mediaServerRow(
     server: ServerSummary,
     jobs: TvJobs,
     now: Long,
-): TvPaneGroup {
+): TvPaneRow {
     val scanId = mediaServerScanJobId((jobs.state as? JobsUiState.Ready)?.jobs, server.mediaServer)
     val job = jobs.state.jobOrNull(scanId)
     val status = jobs.state.statusOf(scanId)
     val running = job?.running == true
     val line = if (status != TvJobStatus.Idle || running) jobLine(job, status, now) else null
-    return TvPaneGroup(
-        title = stringResource(R.string.server_settings_media_server),
-        rows =
+    return TvPaneRow(
+        key = KEY_MEDIA_SERVER,
+        label = stringResource(server.mediaServer.labelRes()),
+        body = stringResource(R.string.server_settings_media_server_caption),
+        note = line,
+        announceNote = line != null,
+        options =
             listOf(
-                TvPaneRow(
-                    key = KEY_MEDIA_SERVER,
-                    label = stringResource(server.mediaServer.labelRes()),
-                    body = stringResource(R.string.server_settings_media_server_caption),
-                    note = line,
-                    announceNote = line != null,
-                    options =
-                        listOf(
-                            if (running) {
-                                TvPaneOption(
-                                    label = stringResource(R.string.tv_settings_cancel_library_scan),
-                                    icon = Icons.Filled.Cancel,
-                                    onSelect = { jobs.actions.onCancel(scanId) },
-                                )
-                            } else {
-                                TvPaneOption(
-                                    label = stringResource(R.string.tv_settings_start_library_scan),
-                                    icon = Icons.Filled.PlayArrow,
-                                    onSelect = { jobs.actions.onRun(scanId) },
-                                )
-                            },
-                        ),
-                    icon = Icons.Filled.Storage,
-                ),
+                if (running) {
+                    TvPaneOption(
+                        label = stringResource(R.string.tv_settings_cancel_library_scan),
+                        icon = Icons.Filled.Cancel,
+                        onSelect = { jobs.actions.onCancel(scanId) },
+                    )
+                } else {
+                    TvPaneOption(
+                        label = stringResource(R.string.tv_settings_start_library_scan),
+                        icon = Icons.Filled.PlayArrow,
+                        onSelect = { jobs.actions.onRun(scanId) },
+                    )
+                },
             ),
+        icon = Icons.Filled.Storage,
     )
 }
 
-/** Every scheduled job as a row that opens its page, from the jobs view model's own list rather than the settings read. */
+/**
+ * Every scheduled job as a row, from the jobs view model's own list rather than the settings read. OK runs the job, or
+ * stops it while it runs, and the row says what came of it in place, as a live region once pressed.
+ */
 @Composable
-internal fun tvJobsGroup(
+internal fun tvJobRows(
     jobs: TvJobs,
     ready: JobsUiState.Ready,
     now: Long,
-): TvPaneGroup =
-    TvPaneGroup(
-        title = stringResource(R.string.settings_group_system),
-        rows =
-            ready.jobs.map { job ->
-                TvPaneRow(
-                    key = "$KEY_JOB_PREFIX${job.id}",
-                    label = job.name,
-                    detail = jobLine(job, ready.statusOf(job.id), now),
-                    options =
-                        listOf(
-                            TvPaneOption(
-                                label =
-                                    stringResource(
-                                        R.string.tv_settings_open_job,
-                                    ),
-                                icon = Icons.Filled.Cached,
-                                onSelect = {
-                                    jobs.onOpenJob(job.id)
-                                },
-                            ),
-                        ),
-                    icon = Icons.Filled.Cached,
-                )
-            },
-    )
+): List<TvPaneRow> =
+    ready.jobs.map { job ->
+        val press = jobs.presses[job.id]
+        key(job.id) {
+            if (press?.holding == true) {
+                LaunchedEffect(press) {
+                    delay(JOB_MIN_WORKING_MILLIS)
+                    jobs.presses.release(job.id)
+                }
+            }
+        }
+        TvPaneRow(
+            key = "$KEY_JOB_PREFIX${job.id}",
+            label = job.name,
+            detail = jobLineText(jobLineOf(job.running, ready.statusOf(job.id), press), job, now),
+            announceNote = press != null,
+            options =
+                listOf(
+                    TvPaneOption(
+                        label = job.name,
+                        icon = Icons.Filled.Cached,
+                        onSelect = {
+                            jobs.presses.press(job.id, stopping = job.running)
+                            if (job.running) jobs.actions.onCancel(job.id) else jobs.actions.onRun(job.id)
+                        },
+                    ),
+                ),
+            icon = Icons.Filled.Cached,
+        )
+    }
+
+@Composable
+private fun jobLineText(
+    line: TvJobLine,
+    job: ServerJob,
+    now: Long,
+): String =
+    when (line) {
+        TvJobLine.Failed -> stringResource(R.string.tv_settings_job_failed_short)
+        TvJobLine.Working -> stringResource(R.string.tv_settings_job_working)
+        TvJobLine.Stopped -> stringResource(R.string.tv_settings_job_stopped)
+        TvJobLine.Done -> stringResource(R.string.tv_settings_job_done)
+        TvJobLine.Running, TvJobLine.Schedule -> jobStatusText(job.running, job.nextRunMillis, now)
+    }
 
 internal const val KEY_JOB_PREFIX = "job:"

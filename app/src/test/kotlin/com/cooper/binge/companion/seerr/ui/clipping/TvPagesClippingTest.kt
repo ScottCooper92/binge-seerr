@@ -39,7 +39,9 @@ import com.cooper.binge.companion.seerr.ui.requests.SeasonState
 import com.cooper.binge.companion.seerr.ui.settings.AppSettings
 import com.cooper.binge.companion.seerr.ui.settings.ConnectionSummary
 import com.cooper.binge.companion.seerr.ui.settings.ServerConfig
+import com.cooper.binge.companion.seerr.ui.settings.ServerService
 import com.cooper.binge.companion.seerr.ui.settings.ServerSummary
+import com.cooper.binge.companion.seerr.ui.settings.ServiceType
 import com.cooper.binge.companion.seerr.ui.settings.SettingsUiState
 import com.cooper.binge.companion.seerr.ui.settings.SignInKind
 import com.cooper.binge.companion.seerr.ui.tv.NoAdvancedActions
@@ -130,9 +132,11 @@ class TvPagesClippingTest {
 
     @Test fun `the report sheet at 1_3`() = rule.assertNoTvClippingAt(FONT_SCALE_13) { Sheet { Report() } }
 
-    @Test fun `the settings connection page at 1_3`() = rule.assertNoTvClippingAt(FONT_SCALE_13) { Settings(connectionPage = true) }
+    @Test fun `the settings media server page at 1_3`() = rule.assertNoTvClippingAt(FONT_SCALE_13) { Settings(mediaPage = true) }
 
-    @Test fun `the bug report page at 1_3`() = rule.assertNoTvClippingAt(FONT_SCALE_13) { Settings(showBugReport = true) }
+    /** The code page holds its title and one line, and the code, which is no text at all. */
+    @Test
+    fun `the bug report page at 1_3`() = rule.assertNoTvClippingAt(FONT_SCALE_13, minTextNodes = 2) { Settings(showBugReport = true) }
 
     @Composable
     private fun Sheet(content: @Composable ColumnScope.() -> Unit) {
@@ -249,7 +253,7 @@ class TvPagesClippingTest {
     @Composable
     private fun Settings(
         showBugReport: Boolean = false,
-        connectionPage: Boolean = false,
+        mediaPage: Boolean = false,
     ) = TvSettingsSheet(
         state =
             SettingsUiState.Ready(
@@ -262,7 +266,14 @@ class TvPagesClippingTest {
                         updateAvailable = true,
                         commitsBehind = 1_204,
                     ),
-                config = ServerConfig(),
+                config =
+                    ServerConfig(
+                        services =
+                            listOf(
+                                ServerService(1, LONG_SERVER, ServiceType.Radarr, null, null, null, is4k = true, isDefault = true),
+                                ServerService(2, LONG_SERVER, ServiceType.Sonarr, null, null, null, is4k = false, isDefault = true),
+                            ),
+                    ),
                 app =
                     AppSettings(
                         bugReportUrl = "$LONG_ADDRESS/issues/new?template=bug.yml&app-version=0.1.0+%281%29",
@@ -274,7 +285,7 @@ class TvPagesClippingTest {
         initialPage =
             when {
                 showBugReport -> PAGE_BUG_REPORT
-                connectionPage -> groupPage(stringResource(R.string.settings_group_connection))
+                mediaPage -> groupPage(stringResource(R.string.tv_settings_group_media))
                 else -> PAGE_SETTINGS
             },
     )

@@ -20,4 +20,39 @@ class TvJobStatusTest {
         assertEquals(TvJobStatus.Failed, ready.statusOf("b"))
         assertEquals(TvJobStatus.Idle, ready.statusOf("c"))
     }
+
+    @Test
+    fun `a refusal is said before anything else, and a call out or a held press reads as working`() {
+        assertEquals(TvJobLine.Failed, jobLineOf(running = true, TvJobStatus.Failed, TvJobPress(stopping = false)))
+        assertEquals(TvJobLine.Working, jobLineOf(running = false, TvJobStatus.Busy, press = null))
+        assertEquals(TvJobLine.Working, jobLineOf(running = true, TvJobStatus.Idle, TvJobPress(stopping = false, holding = true)))
+    }
+
+    @Test
+    fun `once the hold is over a long job keeps its running line, then says what the press did`() {
+        val ran = TvJobPress(stopping = false, holding = false)
+        val stopped = TvJobPress(stopping = true, holding = false)
+
+        assertEquals(TvJobLine.Running, jobLineOf(running = true, TvJobStatus.Idle, ran))
+        assertEquals(TvJobLine.Done, jobLineOf(running = false, TvJobStatus.Idle, ran))
+        assertEquals(TvJobLine.Stopped, jobLineOf(running = false, TvJobStatus.Idle, stopped))
+    }
+
+    @Test
+    fun `a job nobody pressed says when it runs`() {
+        assertEquals(TvJobLine.Schedule, jobLineOf(running = false, TvJobStatus.Idle, press = null))
+        assertEquals(TvJobLine.Running, jobLineOf(running = true, TvJobStatus.Idle, press = null))
+    }
+
+    @Test
+    fun `a press is held until it is released, and released only if it was pressed`() {
+        val presses = TvJobPresses()
+        presses.release("a")
+        assertEquals(null, presses["a"])
+
+        presses.press("a", stopping = true)
+        assertEquals(TvJobPress(stopping = true, holding = true), presses["a"])
+        presses.release("a")
+        assertEquals(TvJobPress(stopping = true, holding = false), presses["a"])
+    }
 }

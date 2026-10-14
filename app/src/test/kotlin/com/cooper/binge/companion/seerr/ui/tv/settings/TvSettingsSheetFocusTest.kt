@@ -6,12 +6,16 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
+import androidx.compose.ui.test.assertHasNoClickAction
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isFocusable
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
@@ -22,6 +26,11 @@ import com.binge.designsystem.SaveStatus
 import com.binge.designsystem.tv.theme.BingeTvTheme
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.seerr.SeerrVariant
+import com.cooper.binge.companion.seerr.ui.hub.BingeStatus
+import com.cooper.binge.companion.seerr.ui.hub.ConnectionHealth
+import com.cooper.binge.companion.seerr.ui.hub.HubOverview
+import com.cooper.binge.companion.seerr.ui.hub.HubServer
+import com.cooper.binge.companion.seerr.ui.hub.HubUiState
 import com.cooper.binge.companion.seerr.ui.settings.AppSettings
 import com.cooper.binge.companion.seerr.ui.settings.ConnectionSummary
 import com.cooper.binge.companion.seerr.ui.settings.ServerConfig
@@ -61,6 +70,7 @@ private val SERVER =
 private const val SYNC_JOB_ID = "download-sync"
 private const val SYNC_JOB_NAME = "Download Sync"
 private const val A_MINUTE_MILLIS = 60_000L
+private const val A_FRAME_MILLIS = 16L
 
 private fun jobsReady(
     scanRunning: Boolean,
@@ -78,11 +88,20 @@ private fun jobsReady(
     failedIds = failed,
 )
 
+private fun hubWith(binge: BingeStatus) =
+    HubUiState.Ready(
+        server = HubServer("http://seerr.lan:5055", "Seerr", SeerrVariant.Jellyseerr, "2.7.2", updateAvailable = false, commitsBehind = 0),
+        health = ConnectionHealth.Healthy,
+        overview = HubOverview(loaded = true),
+        downloading = emptyList(),
+        bingeStatus = binge,
+    )
+
 private val APP = AppSettings(bugReportUrl = "https://example.test/issues/new", shakeToReport = false)
 
 /**
- * The settings sheet under a real D-pad: a group opens as a page and Back returns to the row that opened it, the admin's
- * library scan, the confirm Disconnect asks first on its own page, and the actions on a page that has any.
+ * The settings sheet under a real D-pad: the summary and the groups in order, a group opening as a page that Back leaves
+ * for the row that opened it, the admin's library scan and jobs, the switches, Binge, and the confirm Disconnect asks first.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(qualifiers = "w960dp-h540dp-television-xhdpi")
@@ -93,7 +112,9 @@ class TvSettingsSheetFocusTest {
     private val runs = mutableListOf<String>()
     private val cancels = mutableListOf<String>()
     private var jobsState by mutableStateOf<JobsUiState>(jobsReady(scanRunning = false))
-    private var edits = 0
+    private var bingeOpens = 0
+    private var listingOpens = 0
+    private var hub by mutableStateOf<HubUiState?>(null)
     private var disconnects = 0
     private var dismissals = 0
     private var sharingUsage by mutableStateOf(false)
@@ -114,10 +135,39 @@ class TvSettingsSheetFocusTest {
     private val agentEnabled = mutableListOf<Boolean>()
 
     @Test
+    fun theSummaryLeadsTheFirstPageAndTakesFirstFocus() {
+        setSheet(config = null)
+
+        composeTestRule
+            .onNode(hasText(CONNECTION.baseUrl, substring = true) and isFocusable())
+            .assertIsFocused()
+            .assert(hasText(string(R.string.tv_settings_signed_in_as, "Scott")))
+    }
+
+    @Test
+    fun anAdminsGroupsComeInOrderAndDisconnectIsLast() {
+        household = ServerGeneralSettings()
+        agents = AgentsUiState.Ready(listOf(AgentSummary(ServerAgent.Discord, enabled = false)))
+        setSheet(config = ServerConfig(system = SystemInfo(jobs = emptyList())), app = APP)
+
+        val order =
+            listOf(
+                string(R.string.tv_settings_group_media),
+                string(R.string.tv_settings_group_maintenance),
+                string(R.string.tv_settings_group_household),
+                string(R.string.settings_group_notifications),
+                string(R.string.settings_group_app),
+                string(R.string.hub_disconnect),
+            )
+        val tops = order.map { groupRow(it).fetchSemanticsNode().boundsInRoot.top }
+        assertEquals(tops.sorted(), tops)
+    }
+
+    @Test
     fun aNonAdminNeverSeesTheMediaServerGroupOrItsScan() {
         setSheet(config = null)
 
-        composeTestRule.onNodeWithText(string(R.string.server_settings_media_server)).assertDoesNotExist()
+        composeTestRule.onNodeWithText(string(R.string.tv_settings_group_media)).assertDoesNotExist()
         composeTestRule.onNodeWithText(string(R.string.tv_settings_start_library_scan)).assertDoesNotExist()
     }
 
@@ -125,7 +175,7 @@ class TvSettingsSheetFocusTest {
     fun anAdminOpensTheMediaServerAndTheScanTakesFocusFirst() {
         setSheet(config = ServerConfig())
 
-        open(string(R.string.server_settings_media_server))
+        open(string(R.string.tv_settings_group_media))
 
         scanRow().assertIsFocused()
     }
@@ -133,7 +183,7 @@ class TvSettingsSheetFocusTest {
     @Test
     fun pressingTheScanStartsIt() {
         setSheet(config = ServerConfig())
-        open(string(R.string.server_settings_media_server))
+        open(string(R.string.tv_settings_group_media))
 
         press(Key.DirectionCenter)
 
@@ -146,7 +196,7 @@ class TvSettingsSheetFocusTest {
     fun aJellyfinServersScanRunsUnderItsOwnId() {
         jobsState = jobsReady(scanRunning = false, scanId = JELLYFIN_FULL_SCAN_JOB_ID)
         setSheet(config = ServerConfig())
-        open(string(R.string.server_settings_media_server))
+        open(string(R.string.tv_settings_group_media))
 
         press(Key.DirectionCenter)
 
@@ -158,7 +208,7 @@ class TvSettingsSheetFocusTest {
     fun aRunningScanOffersCancelInsteadAndPressingItCancels() {
         jobsState = jobsReady(scanRunning = true)
         setSheet(config = ServerConfig())
-        open(string(R.string.server_settings_media_server))
+        open(string(R.string.tv_settings_group_media))
 
         composeTestRule.onNodeWithText(string(R.string.tv_settings_start_library_scan)).assertDoesNotExist()
         press(Key.DirectionCenter)
@@ -174,7 +224,7 @@ class TvSettingsSheetFocusTest {
     @Test
     fun theScansStateIsSaidInPlaceAndStaysUntilItsNextAttempt() {
         setSheet(config = ServerConfig())
-        open(string(R.string.server_settings_media_server))
+        open(string(R.string.tv_settings_group_media))
 
         jobsState = jobsReady(scanRunning = false, busy = setOf(PLEX_FULL_SCAN_JOB_ID))
         composeTestRule.waitForIdle()
@@ -186,101 +236,103 @@ class TvSettingsSheetFocusTest {
         composeTestRule.mainClock.advanceTimeBy(A_MINUTE_MILLIS)
         composeTestRule.waitForIdle()
         composeTestRule
-            .onNodeWithText(string(R.string.tv_settings_job_failed_note))
+            .onNodeWithText(string(R.string.tv_settings_job_failed_short))
             .assert(SemanticsMatcher.expectValue(SemanticsProperties.LiveRegion, LiveRegionMode.Polite))
     }
 
-    /** The static "change this on the phone" note is not announced (#1039). */
+    /**
+     * The services are one card of read-outs after the scan: each instance by its own name and markers, so two "Sonarr" rows
+     * each show (#865), and nothing of where it files a request.
+     */
     @Test
-    fun theStaticReadOnlyNoteIsNotALiveRegion() {
-        setSheet(config = ServerConfig())
-        open(string(R.string.server_settings_media_server))
-
-        composeTestRule
-            .onNodeWithText(string(R.string.tv_settings_read_only_note))
-            .assert(SemanticsMatcher.keyNotDefined(SemanticsProperties.LiveRegion))
-    }
-
-    /** Each scheduled job opens a page of its own, so a stray OK on the list cannot start one; Run now is a second press. */
-    @Test
-    fun aJobOpensItsPageAndRunNowStartsIt() {
-        setSheet(config = ServerConfig(system = SystemInfo(jobs = emptyList())))
-        open(string(R.string.settings_group_system))
-        open(SYNC_JOB_NAME)
-
-        assertEquals(emptyList<String>(), runs)
-        composeTestRule.onNode(hasText(string(R.string.server_settings_job_run)) and isFocusable()).assertIsFocused()
-        press(Key.DirectionCenter)
-
-        assertEquals(listOf(SYNC_JOB_ID), runs)
-    }
-
-    @Test
-    fun aRunningJobOffersCancelAndBackReturnsToItsRow() {
-        jobsState = jobsReady(scanRunning = false, syncRunning = true)
-        setSheet(config = ServerConfig(system = SystemInfo(jobs = emptyList())))
-        open(string(R.string.settings_group_system))
-        open(SYNC_JOB_NAME)
-
-        press(Key.DirectionCenter)
-        assertEquals(listOf(SYNC_JOB_ID), cancels)
-        pressBack()
-
-        groupRow(SYNC_JOB_NAME).assertIsFocused()
-    }
-
-    /** Seerr doesn't make instance names unique, so two "Sonarr" rows must each show their own instance (#865). */
-    @Test
-    fun twoServicesWithOneNameEachShowTheirOwnInstance() {
+    fun theServicesAreOneCardOfNamesAfterTheScan() {
         val services =
             listOf(
-                ServerService(1, "Sonarr", ServiceType.Sonarr, null, "HD-1080p", "/tv", is4k = false, isDefault = false),
-                ServerService(2, "Sonarr", ServiceType.Sonarr, null, "SD", "/tv-sd", is4k = false, isDefault = false),
+                ServerService(1, "Sonarr", ServiceType.Sonarr, null, "HD-1080p", "/tv", is4k = false, isDefault = true),
+                ServerService(2, "Sonarr", ServiceType.Sonarr, null, "SD", "/tv-sd", is4k = true, isDefault = false),
             )
         setSheet(config = ServerConfig(services = services))
+        open(string(R.string.tv_settings_group_media))
 
-        open(string(R.string.settings_group_services))
+        val card = composeTestRule.onNode(hasText(string(R.string.settings_group_services)) and isFocusable())
+        card.assert(hasText("Sonarr · ${string(R.string.settings_service_default)}"))
+        card.assert(hasText("Sonarr · ${string(R.string.settings_service_4k)}"))
+        card.assertHasNoClickAction()
+        composeTestRule.onNodeWithText("HD-1080p", substring = true).assertDoesNotExist()
+    }
 
-        composeTestRule.onNodeWithText("HD-1080p · /tv", substring = true).assertExists()
-        composeTestRule.onNodeWithText("SD · /tv-sd", substring = true).assertExists()
+    /** OK on a job runs it: the row says it is working for a moment, then that it is done, until the sheet closes. */
+    @Test
+    fun pressingAJobRunsItAndItsRowSaysWorkingThenDone() {
+        setSheet(config = ServerConfig(system = SystemInfo(jobs = emptyList())))
+        open(string(R.string.tv_settings_group_maintenance))
+        groupRow(SYNC_JOB_NAME).requestFocus()
+        composeTestRule.mainClock.autoAdvance = false
+
+        press(Key.DirectionCenter)
+        composeTestRule.mainClock.advanceTimeByFrame()
+
+        assertEquals(listOf(SYNC_JOB_ID), runs)
+        jobRow(string(R.string.tv_settings_job_working)).assertExists()
+        composeTestRule.mainClock.advanceTimeBy(JOB_MIN_WORKING_MILLIS + A_FRAME_MILLIS)
+        jobRow(string(R.string.tv_settings_job_done)).assertExists()
+    }
+
+    /** OK on a running job stops it, and once it has stopped its row says so. */
+    @Test
+    fun pressingARunningJobStopsIt() {
+        jobsState = jobsReady(scanRunning = false, syncRunning = true)
+        setSheet(config = ServerConfig(system = SystemInfo(jobs = emptyList())))
+        open(string(R.string.tv_settings_group_maintenance))
+        groupRow(SYNC_JOB_NAME).requestFocus()
+
+        press(Key.DirectionCenter)
+        jobsState = jobsReady(scanRunning = false, syncRunning = false)
+        composeTestRule.mainClock.advanceTimeBy(JOB_MIN_WORKING_MILLIS + A_FRAME_MILLIS)
+        composeTestRule.waitForIdle()
+
+        assertEquals(listOf(SYNC_JOB_ID), cancels)
+        jobRow(string(R.string.tv_settings_job_stopped)).assertExists()
     }
 
     @Test
-    fun editConnectionRunsAndIsTheFirstThingFocusedOnItsPage() {
-        setSheet(config = null)
-        open(string(R.string.settings_group_connection))
+    fun aRefusedJobSaysToTryAgain() {
+        jobsState = jobsReady(scanRunning = false, failed = setOf(SYNC_JOB_ID))
+        setSheet(config = ServerConfig(system = SystemInfo(jobs = emptyList())))
+        open(string(R.string.tv_settings_group_maintenance))
 
-        composeTestRule.onNode(hasText(string(R.string.settings_edit_connection)) and isFocusable()).assertIsFocused()
-        press(Key.DirectionCenter)
-
-        assertEquals(1, edits)
+        jobRow(string(R.string.tv_settings_job_failed_short)).assertExists()
     }
 
     @Test
     fun backGoesUpAPageAndThenClosesTheSheet() {
-        setSheet(config = null)
-        open(string(R.string.settings_group_connection))
+        setSheet(config = null, app = APP)
+        open(string(R.string.settings_group_app))
 
         pressBack()
 
-        groupRow(string(R.string.settings_group_connection)).assertIsFocused()
+        groupRow(string(R.string.settings_group_app)).assertIsFocused()
         assertEquals(0, dismissals)
         pressBack()
         assertEquals(1, dismissals)
     }
 
     @Test
-    fun disconnectIsTheLastRowAndAsksOnAPageOfItsOwn() {
+    fun disconnectIsTheLastRowAndAsksFirst() {
         setSheet(config = null)
         val disconnect = string(R.string.hub_disconnect)
 
         open(disconnect)
         composeTestRule.onNodeWithText(string(R.string.hub_disconnect_confirm_title)).assertExists()
-        composeTestRule.onNode(hasText(string(DesR.string.action_cancel)) and isFocusable()).assertIsFocused()
+        val cancel = composeTestRule.onNode(hasText(string(DesR.string.action_cancel)) and isFocusable())
+        cancel.assertIsFocused()
         assertEquals(0, disconnects)
 
-        pressBack()
-        groupRow(disconnect).assertIsFocused()
+        cancel.performKeyInput { pressKey(Key.DirectionCenter) }
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithText(string(R.string.hub_disconnect_confirm_title)).assertDoesNotExist()
+        assertEquals(0, disconnects)
+        assertEquals(0, dismissals)
     }
 
     @Test
@@ -288,30 +340,53 @@ class TvSettingsSheetFocusTest {
         setSheet(config = null)
         open(string(R.string.hub_disconnect))
 
-        composeTestRule.onNode(hasText(string(R.string.tv_settings_disconnect_confirm)) and isFocusable()).requestFocus()
+        val confirm = composeTestRule.onNode(hasText(string(R.string.tv_settings_disconnect_confirm)) and isFocusable())
+        confirm.requestFocus()
         composeTestRule.waitForIdle()
-        press(Key.DirectionCenter)
+        // The confirm is a dialog, a window of its own, so the key goes to its node rather than the activity's root.
+        confirm.performKeyInput { pressKey(Key.DirectionCenter) }
+        composeTestRule.waitForIdle()
 
         assertEquals(1, disconnects)
     }
 
-    /** The switch reports where it stands on its own row, and one press flips it. */
+    /** A switch is a switch to a screen reader and says where it stands; one press flips it. */
     @Test
     fun aSwitchSaysWhereItStandsAndOnePressFlipsIt() {
         setSheet(config = null, app = APP)
         open(string(R.string.settings_group_app))
-        composeTestRule.onNode(hasText(string(R.string.settings_share_usage_data)) and isFocusable()).requestFocus()
+        val row = composeTestRule.onNode(hasText(string(R.string.settings_share_usage_data)) and isFocusable())
+        row.requestFocus()
         composeTestRule.waitForIdle()
-        sharingUsageRow(string(R.string.tv_settings_toggle_off)).assertExists()
+        row.assert(isSwitch(ToggleableState.Off))
 
         press(Key.DirectionCenter)
 
         assertTrue(sharingUsage)
-        sharingUsageRow(string(R.string.tv_settings_toggle_on)).assertExists()
+        row.assert(isSwitch(ToggleableState.On))
     }
 
+    /** Binge leads this app's page: open it when it is installed, else its Play Store listing. */
     @Test
-    fun theBugReportOpensItsCodeAndBackReturnsToItsRow() {
+    fun bingeLeadsThisAppAndOpensBingeOrItsListing() {
+        hub = hubWith(BingeStatus.Connected)
+        setSheet(config = null, app = APP)
+        open(string(R.string.settings_group_app))
+
+        composeTestRule.onNode(hasText(string(R.string.hub_binge_open)) and isFocusable()).assertIsFocused()
+        press(Key.DirectionCenter)
+        assertEquals(1, bingeOpens)
+
+        hub = hubWith(BingeStatus.NotInstalled)
+        composeTestRule.waitForIdle()
+        composeTestRule.onNode(hasText(string(R.string.tv_settings_binge_install)) and isFocusable()).requestFocus()
+        press(Key.DirectionCenter)
+        assertEquals(1, listingOpens)
+    }
+
+    /** The bug report's code holds focus, and Back, not a Close row, is the way back to the row that opened it. */
+    @Test
+    fun theBugReportsCodeHoldsFocusAndBackReturnsToItsRow() {
         setSheet(config = null, app = APP)
         open(string(R.string.settings_group_app))
         composeTestRule.onNode(hasText(string(R.string.settings_report_bug)) and isFocusable()).requestFocus()
@@ -319,6 +394,8 @@ class TvSettingsSheetFocusTest {
 
         press(Key.DirectionCenter)
         composeTestRule.onNodeWithText(string(R.string.tv_settings_report_bug_scan)).assertExists()
+        composeTestRule.onNodeWithContentDescription(string(R.string.tv_settings_report_bug_code_description)).assertIsFocused()
+        composeTestRule.onNodeWithText(string(R.string.tv_sheet_close)).assertDoesNotExist()
         pressBack()
 
         composeTestRule.onNode(hasText(string(R.string.settings_report_bug)) and isFocusable()).assertIsFocused()
@@ -331,14 +408,12 @@ class TvSettingsSheetFocusTest {
         setSheet(config = ServerConfig())
         open(string(R.string.tv_settings_group_household))
 
-        composeTestRule.onNode(hasText(string(R.string.settings_hide_available)) and isFocusable()).requestFocus()
+        val row = composeTestRule.onNode(hasText(string(R.string.settings_hide_available)) and isFocusable())
+        row.requestFocus()
         press(Key.DirectionCenter)
 
         assertEquals(true, household?.hideAvailable)
-        composeTestRule
-            .onNode(
-                hasText(string(R.string.settings_hide_available)) and hasText(string(R.string.settings_value_on)),
-            ).assertExists()
+        row.assert(isSwitch(ToggleableState.On))
     }
 
     @Test
@@ -374,13 +449,14 @@ class TvSettingsSheetFocusTest {
     }
 
     @Test
-    fun anAgentOpensItsPageAndPressingItsRowSwitchesItOn() {
+    fun anAgentOpensItsPageAndItsSwitchTurnsItOn() {
         agents = AgentsUiState.Ready(listOf(AgentSummary(ServerAgent.Discord, enabled = false)))
         setSheet(config = ServerConfig())
         open(string(R.string.settings_group_notifications))
         open(string(R.string.settings_agent_discord))
 
-        composeTestRule.onNode(hasText(string(R.string.tv_settings_agent_turn_on)) and isFocusable()).assertIsFocused()
+        val toggle = composeTestRule.onNode(hasText(string(R.string.settings_agent_discord)) and isFocusable())
+        toggle.assertIsFocused().assert(isSwitch(ToggleableState.Off))
         press(Key.DirectionCenter)
 
         assertEquals(listOf(true), agentEnabled)
@@ -397,7 +473,7 @@ class TvSettingsSheetFocusTest {
         open(string(R.string.settings_agent_discord))
 
         composeTestRule.onNodeWithText(string(R.string.tv_settings_agent_setup_first)).assertExists()
-        composeTestRule.onNode(hasText(string(R.string.tv_settings_agent_turn_on)) and isFocusable()).assertDoesNotExist()
+        composeTestRule.onNode(hasText(string(R.string.settings_agent_discord)) and isFocusable()).assertDoesNotExist()
     }
 
     private fun setSheet(
@@ -416,7 +492,8 @@ class TvSettingsSheetFocusTest {
                         ),
                     actions =
                         TvSettingsActions(
-                            onEditConnection = { edits++ },
+                            onOpenBinge = { bingeOpens++ },
+                            onOpenBingeListing = { listingOpens++ },
                             onDisconnect = { disconnects++ },
                             jobs = TvJobActions(onRun = { runs += it }, onCancel = { cancels += it }),
                             onToggleShareUsageData = { sharingUsage = it },
@@ -449,6 +526,7 @@ class TvSettingsSheetFocusTest {
                         ),
                     onDismissRequest = { dismissals++ },
                     jobs = if (config != null) jobsState else JobsUiState.Loading,
+                    hub = hub,
                 )
             }
         }
@@ -464,8 +542,11 @@ class TvSettingsSheetFocusTest {
 
     private fun groupRow(title: String) = composeTestRule.onNode(hasText(title) and isFocusable())
 
-    private fun sharingUsageRow(state: String) =
-        composeTestRule.onNode(hasText(string(R.string.settings_share_usage_data)) and hasText(state))
+    private fun jobRow(line: String) = composeTestRule.onNode(hasText(SYNC_JOB_NAME) and hasText(line) and isFocusable())
+
+    private fun isSwitch(state: ToggleableState) =
+        SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Switch) and
+            SemanticsMatcher.expectValue(SemanticsProperties.ToggleableState, state)
 
     private fun scanRow() = composeTestRule.onNode(hasText(string(R.string.tv_settings_start_library_scan)) and isFocusable())
 

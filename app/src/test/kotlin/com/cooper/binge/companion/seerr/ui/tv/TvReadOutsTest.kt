@@ -1,6 +1,5 @@
 package com.cooper.binge.companion.seerr.ui.tv
 
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
@@ -18,7 +17,6 @@ import com.cooper.binge.companion.seerr.ui.tv.requests.TvRequestDetailActions
 import com.cooper.binge.companion.seerr.ui.tv.requests.TvRequestDetailScreen
 import com.cooper.binge.companion.seerr.ui.tv.settings.TvSettingsActions
 import com.cooper.binge.companion.seerr.ui.tv.settings.TvSettingsSheet
-import com.cooper.binge.companion.seerr.ui.tv.settings.groupPage
 import com.cooper.binge.companion.seerr.util.createSeerrKeyboardComposeRule
 import com.cooper.binge.companion.seerr.util.requestDetail
 import com.cooper.binge.companion.seerr.util.string
@@ -42,7 +40,7 @@ class TvReadOutsTest {
     @get:Rule
     val composeTestRule = createSeerrKeyboardComposeRule()
 
-    /** The version row, described: commits behind is the more specific news, so it wins over a plain "update available". */
+    /** The summary's title: commits behind is the more specific news, so it wins over a plain "update available". */
     @Test
     fun aServerBehindByCommitsSaysHowManyRatherThanJustThatAnUpdateIsOut() {
         setSettings(commitsBehind = 3, updateAvailable = true)
@@ -66,13 +64,13 @@ class TvReadOutsTest {
         assertTextAbsent(string(R.string.settings_version_update, EDITION))
     }
 
-    /** A read-out is a fact, not a control that cannot be used yet, so it is not announced as disabled (#1534). */
+    /** The summary is a fact, not a control that cannot be used yet: one item, not announced as disabled (#1534). */
     @Test
-    fun theVersionReadOutIsOneItemThatIsNotDisabled() {
+    fun theSummaryIsOneItemThatIsNotDisabled() {
         setSettings(commitsBehind = 0, updateAvailable = false)
 
         composeTestRule
-            .onNode(hasText(EDITION) and hasText(string(R.string.settings_version)))
+            .onNode(hasText(EDITION) and hasText(SampleSettings.connection.baseUrl))
             .assert(SemanticsMatcher.keyNotDefined(SemanticsProperties.Disabled))
     }
 
@@ -122,7 +120,6 @@ class TvReadOutsTest {
                     state = state,
                     actions = TvSettingsActions(),
                     onDismissRequest = {},
-                    initialPage = groupPage(stringResource(R.string.settings_group_connection)),
                 )
             }
         }

@@ -46,7 +46,6 @@ import com.cooper.binge.companion.seerr.ui.tv.issues.TvIssuesActions
 import com.cooper.binge.companion.seerr.ui.tv.issues.TvIssuesBoard
 import com.cooper.binge.companion.seerr.ui.tv.requests.TvRequestsActions
 import com.cooper.binge.companion.seerr.ui.tv.requests.TvRequestsRowsBoard
-import com.cooper.binge.companion.seerr.ui.tv.settings.PAGE_DISCONNECT
 import com.cooper.binge.companion.seerr.ui.tv.settings.TvSettingsActions
 import com.cooper.binge.companion.seerr.ui.tv.settings.TvSettingsSheet
 import com.cooper.binge.companion.seerr.ui.tv.settings.groupPage
@@ -292,13 +291,7 @@ internal fun TvSettingsSheetPreview() {
     TvSettingsSheet(state = SampleSettings, actions = TvSettingsActions(), onDismissRequest = {})
 }
 
-@TvPreviewsOnBlack
-@Composable
-internal fun TvSettingsDisconnectPreview() {
-    TvSettingsSheet(state = SampleSettings, actions = TvSettingsActions(), onDismissRequest = {}, initialPage = PAGE_DISCONNECT)
-}
-
-/** The admin-only group: its page carries the library scan. */
+/** The admin-only group: its page carries the library scan, then the services. */
 @TvPreviewsOnBlack
 @Composable
 internal fun TvSettingsMediaServerPreview() {
@@ -306,6 +299,6 @@ internal fun TvSettingsMediaServerPreview() {
         state = SampleSettingsAdmin,
         actions = TvSettingsActions(),
         onDismissRequest = {},
-        initialPage = groupPage(stringResource(R.string.server_settings_media_server)),
+        initialPage = groupPage(stringResource(R.string.tv_settings_group_media)),
     )
 }
