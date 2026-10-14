@@ -245,6 +245,21 @@ class TvRequestDetailActionStatusTest {
         assertEquals(listOf("approve"), calls)
     }
 
+    /** A second action pressed while the first is saving is not run, and does not take over the first's Retry. */
+    @Test
+    fun anActionPressedWhileSavingDoesNotReplaceTheRun() {
+        setContent(RequestActions(canApprove = true, canDecline = true))
+        take(R.string.tv_detail_approve)
+        take(R.string.tv_detail_decline)
+        assertEquals(listOf("approve"), calls)
+
+        events.tryEmit(ModerationEvent.Failed(SeerrError.Unreachable))
+        composeTestRule.waitForIdle()
+        pressRetryOnTheLine()
+
+        assertEquals(listOf("approve", "approve"), calls)
+    }
+
     @Test
     fun noOutcomeIsLaidOverThePageAsAPlate() {
         setContent(RequestActions(canApprove = true))

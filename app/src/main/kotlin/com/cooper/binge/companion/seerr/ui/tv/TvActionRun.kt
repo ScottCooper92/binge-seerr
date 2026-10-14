@@ -36,8 +36,9 @@ internal class TvActionRun(
 
     private var attempt: (() -> Unit)? = null
 
-    /** Starts [attempt], and keeps it for [again]. */
+    /** Starts [attempt], and keeps it for [again]. Does nothing while a run is saving: a run is not replaced mid-flight. */
     fun run(attempt: () -> Unit) {
+        if (status == SaveStatus.Saving) return
         this.attempt = attempt
         status = SaveStatus.Saving
         attempt()
