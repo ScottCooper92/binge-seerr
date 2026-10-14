@@ -2,6 +2,7 @@ package com.cooper.binge.companion.seerr.ui.state
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -42,7 +43,7 @@ internal fun OverflowDetailScaffold(
     onOverflowClick: () -> Unit,
     modifier: Modifier = Modifier,
     overflowIcon: ImageVector = Icons.Filled.MoreVert,
-    leadingActions: @Composable () -> Unit = {},
+    leadingActions: @Composable RowScope.() -> Unit = {},
     trailingActions: @Composable () -> Unit = {},
     content: @Composable (PaddingValues) -> Unit,
 ) {

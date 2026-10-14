@@ -4,7 +4,10 @@ import androidx.lifecycle.ViewModelStore
 import com.binge.designsystem.save.SAVE_AS_MADE_DELAY_MILLIS
 import com.cooper.binge.companion.seerr.ui.settings.server.ServerListCatalog
 import com.cooper.binge.companion.seerr.ui.users.UserOrigin
+import com.cooper.binge.companion.seerr.ui.users.UserSettingsChanges
 import com.cooper.binge.companion.seerr.util.MainDispatcherRule
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
@@ -47,6 +50,8 @@ class GeneralSettingsViewModelTest {
         seerr.serve("POST /api/v1/user/8/settings/main")
     }
 
+    private val settingsChanges = UserSettingsChanges()
+
     @After
     fun tearDown() {
         viewModels.clear()
@@ -55,7 +60,15 @@ class GeneralSettingsViewModelTest {
 
     private suspend fun TestScope.viewModel(): GeneralSettingsViewModel {
         val connection = seerr.connection(this)
-        val vm = GeneralSettingsViewModel(connection, ServerListCatalog(connection), mainDispatcherRule.dispatcher, backgroundScope, 8)
+        val vm =
+            GeneralSettingsViewModel(
+                connection,
+                ServerListCatalog(connection),
+                mainDispatcherRule.dispatcher,
+                backgroundScope,
+                8,
+                settingsChanges = settingsChanges,
+            )
         viewModels.put(vm.hashCode().toString(), vm)
         backgroundScope.launch { vm.uiState.collect {} }
         return vm
@@ -181,6 +194,21 @@ class GeneralSettingsViewModelTest {
             assertEquals("Ana B", ready.saved.displayName)
             assertTrue(ready.saved.tvQuotaOverride)
             assertFalse(ready.dirty)
+        }
+
+    /** #1540: a save says whose settings changed, so the user page beside it reads its quota again. */
+    @Test
+    fun `a save says this user's settings changed`() =
+        runTest {
+            seerr.viewer(id = 1, permissions = ADMIN)
+            val vm = viewModel()
+            vm.awaitReady()
+            val heard = backgroundScope.async(start = CoroutineStart.UNDISPATCHED) { settingsChanges.changes.first() }
+
+            vm.edit { it.copy(movieQuotaOverride = true, movieQuotaLimit = 10) }
+            awaitWritten(vm)
+
+            assertEquals(8, heard.await())
         }
 
     @Test

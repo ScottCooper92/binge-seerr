@@ -38,6 +38,7 @@ import com.binge.designsystem.theme.BingeSentiment
 import com.binge.designsystem.theme.fill
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.seerr.SeerrError
+import com.cooper.binge.companion.seerr.ui.state.formSaveStatus
 import com.cooper.binge.companion.seerr.ui.state.messageRes
 import com.cooper.binge.companion.seerr.ui.state.titleRes
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorEvent
@@ -72,10 +73,10 @@ fun CacheScreen(
         events = events,
         onBack = actions.onBack,
         // A job's schedule saves as it is picked (#930).
-        saveAsMade =
+        saveStatus =
             readyJobs?.let { ready ->
                 val unsent = ready.unsentSchedule
-                SaveAsMadeState(
+                formSaveStatus(
                     status = ready.scheduleStatus,
                     failed = unsent != null,
                     onRetry = { unsent?.let { jobActions.onSchedule(it.jobId, it.cron) } },

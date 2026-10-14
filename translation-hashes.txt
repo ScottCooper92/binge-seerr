@@ -57,8 +57,6 @@ app:editor_error_web_url_no_slash  9977eb7dc6a9
 app:editor_error_whole_number  e24f56c429cd
 app:editor_field_required  4850b174b713
 app:editor_keep_editing  e76fd2add010
-app:editor_save_failed  c3c267addddb
-app:editor_saving  23e39291d613
 app:editor_test_and_save  be8494fb38fe
 app:field_clear  a8ff550536c7
 app:field_secret_hide  ad5caeb74e49
