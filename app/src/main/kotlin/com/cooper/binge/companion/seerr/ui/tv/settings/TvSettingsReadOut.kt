@@ -63,15 +63,23 @@ internal fun systemRows(
             icon = Icons.Filled.Cached,
             iconTint = BingeSentiment.Neutral.fill(),
             label = job.name,
-            detail =
-                when {
-                    job.running -> stringResource(R.string.settings_job_running)
-                    else ->
-                        formatRelativeOrAbsolute(job.nextRunMillis, now)?.let { stringResource(R.string.settings_job_next_run, it) }
-                            ?: stringResource(R.string.settings_value_unknown)
-                },
+            detail = jobStatusText(job.running, job.nextRunMillis, now),
             clickable = false,
         )
+    }
+
+/** A job's line: that it is running, else its next run worded against [now], else unknown. */
+@Composable
+internal fun jobStatusText(
+    running: Boolean,
+    nextRunMillis: Long?,
+    now: Long,
+): String =
+    when {
+        running -> stringResource(R.string.settings_job_running)
+        else ->
+            formatRelativeOrAbsolute(nextRunMillis, now)?.let { stringResource(R.string.settings_job_next_run, it) }
+                ?: stringResource(R.string.settings_value_unknown)
     }
 
 @Composable

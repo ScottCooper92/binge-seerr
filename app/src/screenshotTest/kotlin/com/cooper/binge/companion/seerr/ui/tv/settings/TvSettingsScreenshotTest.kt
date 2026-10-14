@@ -6,15 +6,39 @@ import com.android.tools.screenshot.PreviewTest
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.preview.SeerrTvScreenPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrTvSpanishScreenPreviews
+import com.cooper.binge.companion.seerr.ui.FIXED_NOW_MILLIS
 import com.cooper.binge.companion.seerr.ui.hub.BingeStatus
 import com.cooper.binge.companion.seerr.ui.hub.HubUiState
 import com.cooper.binge.companion.seerr.ui.hub.previewAdminOverview
 import com.cooper.binge.companion.seerr.ui.hub.previewReady
+import com.cooper.binge.companion.seerr.ui.settings.ServerConfig
 import com.cooper.binge.companion.seerr.ui.settings.SettingsUiState
+import com.cooper.binge.companion.seerr.ui.settings.SystemInfo
+import com.cooper.binge.companion.seerr.ui.settings.server.JobInterval
+import com.cooper.binge.companion.seerr.ui.settings.server.JobsUiState
+import com.cooper.binge.companion.seerr.ui.settings.server.MEDIA_SERVER_SCAN_JOB_ID
+import com.cooper.binge.companion.seerr.ui.settings.server.ServerJob
 import com.cooper.binge.companion.seerr.ui.tv.SampleSettings
 import com.cooper.binge.companion.seerr.ui.tv.SampleSettingsAdmin
 import com.cooper.binge.companion.seerr.ui.tv.SampleSettingsWithApp
-import com.cooper.binge.companion.seerr.ui.users.settings.EditorEvent
+
+private const val SYNC_JOB_ID = "download-sync"
+
+private fun jobsReady(
+    scanRunning: Boolean = false,
+    syncRunning: Boolean = false,
+    busy: Set<String> = emptySet(),
+    failed: Set<String> = emptySet(),
+) = JobsUiState.Ready(
+    jobs =
+        listOf(
+            ServerJob(MEDIA_SERVER_SCAN_JOB_ID, "Plex Full Library Scan", JobInterval.Long, scanRunning, null),
+            ServerJob(SYNC_JOB_ID, "Download Sync", JobInterval.Short, syncRunning, FIXED_NOW_MILLIS + 3 * 60 * 60_000L),
+        ),
+    busyIds = busy,
+    failedIds = failed,
+    now = FIXED_NOW_MILLIS,
+)
 
 /**
  * The television settings sheet: its list of groups with Disconnect last, then a page for each kind of group: the connection and what
@@ -51,19 +75,67 @@ class TvSettingsScreenshotTest {
     @SeerrTvScreenPreviews
     @Composable
     fun MediaServer() {
-        Sheet(SampleSettingsAdmin, page = groupPage(stringResource(R.string.server_settings_media_server)))
+        Sheet(SampleSettingsAdmin, page = mediaServerPage(), jobs = jobsReady())
     }
 
-    /** A scan that started: the row says so in place of the server's name, until the note clears (#1053). */
+    /** A scan that is running: the row offers Cancel, and says so in place of the server's name. */
     @PreviewTest
     @SeerrTvScreenPreviews
     @Composable
-    fun ScanStarted() {
+    fun ScanRunning() {
+        Sheet(SampleSettingsAdmin, page = mediaServerPage(), jobs = jobsReady(scanRunning = true))
+    }
+
+    /** A call on its way: said on the row until it lands, not as a note that clears (#1513). */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun ScanBusy() {
+        Sheet(SampleSettingsAdmin, page = mediaServerPage(), jobs = jobsReady(busy = setOf(MEDIA_SERVER_SCAN_JOB_ID)))
+    }
+
+    /** A call the server refused or that could not be sent: kept on the row until the next attempt. */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun ScanFailed() {
+        Sheet(SampleSettingsAdmin, page = mediaServerPage(), jobs = jobsReady(failed = setOf(MEDIA_SERVER_SCAN_JOB_ID)))
+    }
+
+    /** The System group, once the jobs list is in: each job a row that opens its own page. */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun SystemJobs() {
         Sheet(
-            SampleSettingsAdmin,
-            page = groupPage(stringResource(R.string.server_settings_media_server)),
-            scanEvent = EditorEvent.Notice(R.string.tv_settings_scan_started),
+            SampleSettingsAdmin.copy(config = ServerConfig(system = SystemInfo(jobs = emptyList()))),
+            page = groupPage(stringResource(R.string.settings_group_system)),
+            jobs = jobsReady(syncRunning = true),
         )
+    }
+
+    /** One job's page: what it is, when it runs next, and Run now. */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun JobPage() {
+        Sheet(SampleSettingsAdmin, page = jobPage(SYNC_JOB_ID), jobs = jobsReady())
+    }
+
+    /** A running job's page: Cancel in place of Run now. */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun JobPageRunning() {
+        Sheet(SampleSettingsAdmin, page = jobPage(SYNC_JOB_ID), jobs = jobsReady(syncRunning = true))
+    }
+
+    /** A refused run: said on the page, with Run now there to try again. */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun JobPageFailed() {
+        Sheet(SampleSettingsAdmin, page = jobPage(SYNC_JOB_ID), jobs = jobsReady(failed = setOf(SYNC_JOB_ID)))
     }
 
     /** What the home board used to carry at its head: whether the server answers, and an update where there is one. */
@@ -119,6 +191,9 @@ class TvSettingsScreenshotTest {
     }
 
     @Composable
+    private fun mediaServerPage() = groupPage(stringResource(R.string.server_settings_media_server))
+
+    @Composable
     private fun serverPage() = groupPage(stringResource(R.string.tv_settings_group_server))
 
     @Composable
@@ -126,15 +201,16 @@ class TvSettingsScreenshotTest {
         state: SettingsUiState,
         page: String = PAGE_SETTINGS,
         hub: HubUiState? = null,
-        scanEvent: EditorEvent? = null,
+        jobs: JobsUiState = JobsUiState.Loading,
     ) {
         TvSettingsSheet(
-            state = state,
+            // Fixed, so a job's "next run" reads the same whichever day the suite runs.
+            state = (state as? SettingsUiState.Ready)?.copy(now = FIXED_NOW_MILLIS) ?: state,
             actions = TvSettingsActions(),
             onDismissRequest = {},
             hub = hub,
             initialPage = page,
-            initialScanEvent = scanEvent,
+            jobs = jobs,
         )
     }
 }

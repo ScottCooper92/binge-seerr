@@ -1051,7 +1051,10 @@
     <string name="tv_settings_read_only_note">Change this in the phone app or the web client.</string>
     <string name="tv_settings_disconnect_confirm">Yes, disconnect</string>
     <string name="tv_settings_start_library_scan">Start library scan</string>
-    <string name="tv_settings_scan_started">Library scan started</string>
+    <string name="tv_settings_cancel_library_scan">Cancel library scan</string>
+    <string name="tv_settings_job_working">Working…</string>
+    <string name="tv_settings_job_body">Runs on a schedule. Run it now, or cancel it while it is running. The schedule is changed on your phone.</string>
+    <string name="tv_settings_job_failed_note">That didn\'t go through. Select the option to try again.</string>
     <string name="tv_filter_with_count">%1$s (%2$d)</string>
     <string name="tv_settings_group_server">Server status</string>
     <string name="tv_settings_status">Status</string>
@@ -1165,9 +1168,8 @@
     <string name="request_block_confirm_message">The title is blocked from being requested again. This request is left as it is.</string>
     <string name="tv_detail_info_requested">Requested</string>
     <string name="tv_detail_info_status">Status</string>
-    <string name="tv_detail_info_sent_to">Sent to</string>
-    <string name="tv_detail_info_phone_only">Change on your phone</string>
     <string name="tv_detail_phone_tags">The request\'s tags</string>
+    <string name="tv_detail_phone_hint">Change on your phone: %1$s</string>
     <string name="tv_detail_phone_requester">The requester</string>
     <string name="tv_detail_phone_siblings">Other requests</string>
     <string name="tv_detail_requester">Requester</string>

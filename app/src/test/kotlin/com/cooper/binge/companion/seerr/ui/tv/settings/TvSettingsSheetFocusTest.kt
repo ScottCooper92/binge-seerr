@@ -28,11 +28,13 @@ import com.cooper.binge.companion.seerr.ui.settings.ServerSummary
 import com.cooper.binge.companion.seerr.ui.settings.ServiceType
 import com.cooper.binge.companion.seerr.ui.settings.SettingsUiState
 import com.cooper.binge.companion.seerr.ui.settings.SignInKind
-import com.cooper.binge.companion.seerr.ui.users.settings.EditorEvent
+import com.cooper.binge.companion.seerr.ui.settings.SystemInfo
+import com.cooper.binge.companion.seerr.ui.settings.server.JobInterval
+import com.cooper.binge.companion.seerr.ui.settings.server.JobsUiState
+import com.cooper.binge.companion.seerr.ui.settings.server.MEDIA_SERVER_SCAN_JOB_ID
+import com.cooper.binge.companion.seerr.ui.settings.server.ServerJob
 import com.cooper.binge.companion.seerr.util.createSeerrKeyboardAndroidComposeRule
 import com.cooper.binge.companion.seerr.util.string
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.emptyFlow
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -46,6 +48,25 @@ import com.binge.designsystem.R as DesR
 private val CONNECTION = ConnectionSummary(baseUrl = "http://seerr.lan:5055", signInKind = SignInKind.Session, userName = "Scott")
 private val SERVER =
     ServerSummary(title = "Seerr", variant = SeerrVariant.Jellyseerr, versionLabel = "2.7.2", updateAvailable = false, commitsBehind = 0)
+private const val SYNC_JOB_ID = "download-sync"
+private const val SYNC_JOB_NAME = "Download Sync"
+private const val A_MINUTE_MILLIS = 60_000L
+
+private fun jobsReady(
+    scanRunning: Boolean,
+    syncRunning: Boolean = false,
+    busy: Set<String> = emptySet(),
+    failed: Set<String> = emptySet(),
+) = JobsUiState.Ready(
+    jobs =
+        listOf(
+            ServerJob(MEDIA_SERVER_SCAN_JOB_ID, "Plex Full Library Scan", JobInterval.Long, scanRunning, null),
+            ServerJob(SYNC_JOB_ID, SYNC_JOB_NAME, JobInterval.Short, syncRunning, null),
+        ),
+    busyIds = busy,
+    failedIds = failed,
+)
+
 private val APP = AppSettings(bugReportUrl = "https://example.test/issues/new", shakeToReport = false)
 
 /**
@@ -58,7 +79,9 @@ class TvSettingsSheetFocusTest {
     @get:Rule
     val composeTestRule = createSeerrKeyboardAndroidComposeRule<ComponentActivity>()
 
-    private var scans = 0
+    private val runs = mutableListOf<String>()
+    private val cancels = mutableListOf<String>()
+    private var jobsState by mutableStateOf<JobsUiState>(jobsReady(scanRunning = false))
     private var edits = 0
     private var disconnects = 0
     private var dismissals = 0
@@ -82,19 +105,54 @@ class TvSettingsSheetFocusTest {
     }
 
     @Test
-    fun pressingTheScanStartsItAndTheOutcomeIsAnnounced() {
+    fun pressingTheScanStartsIt() {
         setSheet(config = ServerConfig())
         open(string(R.string.server_settings_media_server))
 
         press(Key.DirectionCenter)
 
-        assertEquals(1, scans)
+        assertEquals(listOf(MEDIA_SERVER_SCAN_JOB_ID), runs)
+        assertEquals(emptyList<String>(), cancels)
+    }
+
+    /** A scan that is running offers Cancel in the same row, and pressing it cancels. */
+    @Test
+    fun aRunningScanOffersCancelInsteadAndPressingItCancels() {
+        jobsState = jobsReady(scanRunning = true)
+        setSheet(config = ServerConfig())
+        open(string(R.string.server_settings_media_server))
+
+        composeTestRule.onNodeWithText(string(R.string.tv_settings_start_library_scan)).assertDoesNotExist()
+        press(Key.DirectionCenter)
+
+        assertEquals(listOf(MEDIA_SERVER_SCAN_JOB_ID), cancels)
+        assertEquals(emptyList<String>(), runs)
+    }
+
+    /**
+     * A call on its way and a refused one are said on the row itself and stay until the job's next attempt, as a live region:
+     * neither passes as a note that clears on a timer (#1513).
+     */
+    @Test
+    fun theScansStateIsSaidInPlaceAndStaysUntilItsNextAttempt() {
+        setSheet(config = ServerConfig())
+        open(string(R.string.server_settings_media_server))
+
+        jobsState = jobsReady(scanRunning = false, busy = setOf(MEDIA_SERVER_SCAN_JOB_ID))
+        composeTestRule.waitForIdle()
         composeTestRule
-            .onNodeWithText(string(R.string.tv_settings_scan_started))
+            .onNodeWithText(string(R.string.tv_settings_job_working))
+            .assert(SemanticsMatcher.expectValue(SemanticsProperties.LiveRegion, LiveRegionMode.Polite))
+
+        jobsState = jobsReady(scanRunning = false, failed = setOf(MEDIA_SERVER_SCAN_JOB_ID))
+        composeTestRule.mainClock.advanceTimeBy(A_MINUTE_MILLIS)
+        composeTestRule.waitForIdle()
+        composeTestRule
+            .onNodeWithText(string(R.string.tv_settings_job_failed_note))
             .assert(SemanticsMatcher.expectValue(SemanticsProperties.LiveRegion, LiveRegionMode.Polite))
     }
 
-    /** The scan's outcome is announced, but the static "change this on the phone" note is not (#1039). */
+    /** The static "change this on the phone" note is not announced (#1039). */
     @Test
     fun theStaticReadOnlyNoteIsNotALiveRegion() {
         setSheet(config = ServerConfig())
@@ -103,6 +161,34 @@ class TvSettingsSheetFocusTest {
         composeTestRule
             .onNodeWithText(string(R.string.tv_settings_read_only_note))
             .assert(SemanticsMatcher.keyNotDefined(SemanticsProperties.LiveRegion))
+    }
+
+    /** Each scheduled job opens a page of its own, so a stray OK on the list cannot start one; Run now is a second press. */
+    @Test
+    fun aJobOpensItsPageAndRunNowStartsIt() {
+        setSheet(config = ServerConfig(system = SystemInfo(jobs = emptyList())))
+        open(string(R.string.settings_group_system))
+        open(SYNC_JOB_NAME)
+
+        assertEquals(emptyList<String>(), runs)
+        composeTestRule.onNode(hasText(string(R.string.server_settings_job_run)) and isFocusable()).assertIsFocused()
+        press(Key.DirectionCenter)
+
+        assertEquals(listOf(SYNC_JOB_ID), runs)
+    }
+
+    @Test
+    fun aRunningJobOffersCancelAndBackReturnsToItsRow() {
+        jobsState = jobsReady(scanRunning = false, syncRunning = true)
+        setSheet(config = ServerConfig(system = SystemInfo(jobs = emptyList())))
+        open(string(R.string.settings_group_system))
+        open(SYNC_JOB_NAME)
+
+        press(Key.DirectionCenter)
+        assertEquals(listOf(SYNC_JOB_ID), cancels)
+        pressBack()
+
+        groupRow(SYNC_JOB_NAME).assertIsFocused()
     }
 
     /** Seerr doesn't make instance names unique, so two "Sonarr" rows must each show their own instance (#865). */
@@ -205,7 +291,6 @@ class TvSettingsSheetFocusTest {
         config: ServerConfig?,
         app: AppSettings? = null,
     ) {
-        val events = MutableSharedFlow<EditorEvent>(extraBufferCapacity = 1)
         composeTestRule.setContent {
             BingeTvTheme {
                 TvSettingsSheet(
@@ -220,14 +305,11 @@ class TvSettingsSheetFocusTest {
                         TvSettingsActions(
                             onEditConnection = { edits++ },
                             onDisconnect = { disconnects++ },
-                            onStartLibraryScan = {
-                                scans++
-                                events.tryEmit(EditorEvent.Notice(R.string.tv_settings_scan_started))
-                            },
+                            jobs = TvJobActions(onRun = { runs += it }, onCancel = { cancels += it }),
                             onToggleShareUsageData = { sharingUsage = it },
                         ),
                     onDismissRequest = { dismissals++ },
-                    libraryScanEvents = if (config != null) events else emptyFlow(),
+                    jobs = if (config != null) jobsState else JobsUiState.Loading,
                 )
             }
         }

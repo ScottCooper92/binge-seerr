@@ -5,8 +5,6 @@ import androidx.compose.material.icons.filled.Dns
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Storage
-import androidx.compose.material.icons.filled.Sync
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
@@ -21,10 +19,8 @@ import com.cooper.binge.companion.seerr.ui.settings.ConnectionSummary
 import com.cooper.binge.companion.seerr.ui.settings.ServerSummary
 import com.cooper.binge.companion.seerr.ui.settings.SettingsUiState
 import com.cooper.binge.companion.seerr.ui.settings.SignInKind
-import com.cooper.binge.companion.seerr.ui.settings.labelRes
 import com.cooper.binge.companion.seerr.ui.settings.requestPolicyRows
-import com.cooper.binge.companion.seerr.ui.state.messageRes
-import com.cooper.binge.companion.seerr.ui.users.settings.EditorEvent
+import com.cooper.binge.companion.seerr.ui.settings.server.JobsUiState
 
 internal const val KEY_SERVER = "server"
 internal const val KEY_SIGNED_IN = "signed-in"
@@ -37,7 +33,7 @@ internal const val KEY_MEDIA_SERVER = "media-server"
 internal class TvSettingsActions(
     val onEditConnection: () -> Unit = {},
     val onDisconnect: () -> Unit = {},
-    val onStartLibraryScan: () -> Unit = {},
+    val jobs: TvJobActions = TvJobActions.None,
     val onToggleShareUsageData: (Boolean) -> Unit = {},
     val onToggleSendCrashReports: (Boolean) -> Unit = {},
     val onOpenBingeListing: () -> Unit = {},
@@ -51,7 +47,7 @@ internal class TvSettingsActions(
 internal fun tvSettingGroups(
     state: SettingsUiState.Ready,
     actions: TvSettingsActions,
-    scanNote: String?,
+    jobs: TvJobs,
     hub: HubUiState?,
     onShowBugReport: () -> Unit,
 ): List<TvPaneGroup> {
@@ -61,10 +57,16 @@ internal fun tvSettingGroups(
             config?.general?.let { add(readOnlyGroup(stringResource(R.string.settings_group_general), generalRows(it))) }
             // Admin-only, same as the phone: this is the one section that also gets an action, so it is
             // built by hand rather than through the read-only mapping every other section shares.
-            if (config != null) add(mediaServerGroup(state.server, actions.onStartLibraryScan, scanNote = scanNote))
+            if (config != null) add(mediaServerGroup(state.server, jobs, state.now))
             config?.services?.let { add(readOnlyGroup(stringResource(R.string.settings_group_services), serviceRows(it))) }
             config?.requestPolicy?.let { add(readOnlyGroup(stringResource(R.string.settings_group_requests), requestPolicyRows(it))) }
-            config?.system?.let { add(readOnlyGroup(stringResource(R.string.settings_group_system), systemRows(it, state.now))) }
+            // The server's jobs, each with its own page to run or cancel it, once the jobs list is in; else the settings read of them.
+            val readyJobs = jobs.state as? JobsUiState.Ready
+            if (config?.system != null && readyJobs != null) {
+                add(tvJobsGroup(jobs, readyJobs, state.now))
+            } else {
+                config?.system?.let { add(readOnlyGroup(stringResource(R.string.settings_group_system), systemRows(it, state.now))) }
+            }
         }.filter { it.rows.isNotEmpty() }
     return buildList {
         add(
@@ -83,50 +85,6 @@ internal fun tvSettingGroups(
 
 /** The "change this on the phone" line, on each of the server's groups: each is its own page in the sheet (#1439). */
 internal fun List<TvPaneGroup>.carryingNote(note: String): List<TvPaneGroup> = map { it.copy(note = note) }
-
-/**
- * The media server row, with one option beside its read-out: start the library scan job that the phone's Jobs & cache page's
- * job row runs, the "it downloaded but isn't showing" fix from the sofa. [scanNote] is the scan's own outcome while it is
- * still showing, announced as it arrives, else none.
- */
-@Composable
-private fun mediaServerGroup(
-    server: ServerSummary,
-    onStartLibraryScan: () -> Unit,
-    scanNote: String?,
-): TvPaneGroup =
-    TvPaneGroup(
-        title = stringResource(R.string.server_settings_media_server),
-        rows =
-            listOf(
-                TvPaneRow(
-                    key = KEY_MEDIA_SERVER,
-                    label = stringResource(server.mediaServer.labelRes()),
-                    body = stringResource(R.string.server_settings_media_server_caption),
-                    note = scanNote,
-                    announceNote = scanNote != null,
-                    options =
-                        listOf(
-                            TvPaneOption(
-                                label = stringResource(R.string.tv_settings_start_library_scan),
-                                icon = Icons.Filled.Sync,
-                                onSelect = onStartLibraryScan,
-                            ),
-                        ),
-                    icon = Icons.Filled.Storage,
-                ),
-            ),
-    )
-
-/** The line to show for a job outcome; null for an event this row never emits (a save or a delete). */
-@Composable
-internal fun EditorEvent?.tvNoteOrNull(): String? =
-    when (this) {
-        null -> null
-        is EditorEvent.Notice -> stringResource(messageRes)
-        is EditorEvent.Failed -> stringResource(error.messageRes())
-        EditorEvent.Saved, EditorEvent.Deleted, is EditorEvent.Undoable -> null
-    }
 
 /**
  * The phone's rows as read-outs: the label and its detail, and where to change it. Each row is keyed by place, not label:
