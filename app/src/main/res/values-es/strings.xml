@@ -1068,10 +1068,6 @@
     <string name="request_block_confirm_message">El título no se podrá volver a solicitar. Esta petición se queda como está.</string>
     <string name="tv_detail_info_requested">Solicitado</string>
     <string name="tv_detail_info_status">Estado</string>
-    <string name="tv_detail_phone_tags">Las etiquetas de la petición</string>
-    <string name="tv_detail_phone_hint">Cámbialo en el móvil: %1$s</string>
-    <string name="tv_detail_phone_requester">Quien la pidió</string>
-    <string name="tv_detail_phone_siblings">Otras peticiones</string>
     <string name="tv_detail_manage">Gestionar</string>
     <string name="tv_detail_report_on_phone">Escanea el código con el móvil para abrir este título en %1$s e informar de la incidencia allí.</string>
     <string name="tv_detail_details">Detalles</string>
@@ -1220,7 +1216,6 @@
     <string name="companion_refusal_locale">es</string>
     <string name="tv_settings_open_job">Abrir</string>
     <string name="tv_settings_group_household">Hogar</string>
-    <string name="tv_settings_household_note">Cada interruptor se guarda al pulsarlo.</string>
     <string name="tv_settings_agents_note">Activa o desactiva un agente aquí. Sus datos se cambian en el teléfono.</string>
     <string name="tv_settings_agent_unavailable">No se han podido leer los ajustes de este agente. Inténtalo de nuevo desde el teléfono.</string>
     <string name="tv_settings_agent_setup_first">Este agente no puede enviar hasta que esté configurado. Termina de configurarlo en el teléfono.</string>

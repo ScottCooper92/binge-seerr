@@ -225,14 +225,6 @@ class TvRequestDetailSheetsTest {
         actionButton(R.string.issue_report_title).assertDoesNotExist()
     }
 
-    /** The requester's controls are the phone's: the page offers no button for them, and the phone line names them. */
-    @Test
-    fun aManagerIsPointedToThePhoneForTheRequester() {
-        setContent(requestDetail(mediaId = MEDIA_ID, canManageUsers = true))
-
-        composeTestRule.onNodeWithText(string(R.string.tv_detail_phone_requester), substring = true).assertExists()
-    }
-
     private fun media(vararg instances: MediaInstance) =
         MediaRecord(
             mediaId = MEDIA_ID,

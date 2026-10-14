@@ -100,7 +100,6 @@ internal fun householdGroup(household: TvHousehold): TvPaneGroup {
     return TvPaneGroup(
         title = stringResource(R.string.tv_settings_group_household),
         rows = rows,
-        note = stringResource(R.string.tv_settings_household_note),
     )
 }
 

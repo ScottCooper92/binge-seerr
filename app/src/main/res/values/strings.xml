@@ -1129,10 +1129,6 @@
     <string name="request_block_confirm_message">The title is blocked from being requested again. This request is left as it is.</string>
     <string name="tv_detail_info_requested">Requested</string>
     <string name="tv_detail_info_status">Status</string>
-    <string name="tv_detail_phone_tags">The request\'s tags</string>
-    <string name="tv_detail_phone_hint">Change on your phone: %1$s</string>
-    <string name="tv_detail_phone_requester">The requester</string>
-    <string name="tv_detail_phone_siblings">Other requests</string>
     <string name="tv_detail_manage">Manage</string>
     <string name="tv_detail_report_on_phone">Scan with your phone to open this title in %1$s, and report the issue there.</string>
     <string name="tv_detail_details">Details</string>
@@ -1277,7 +1273,6 @@
     <string name="companion_refusal_locale">en</string>
     <string name="tv_settings_open_job">Open</string>
     <string name="tv_settings_group_household">Household</string>
-    <string name="tv_settings_household_note">Each switch saves as you press it.</string>
     <string name="tv_settings_agents_note">Switch an agent on or off here. Its details are changed on your phone.</string>
     <string name="tv_settings_agent_unavailable">This agent\'s settings couldn\'t be read. Try again from your phone.</string>
     <string name="tv_settings_agent_setup_first">This agent can\'t send until it is set up. Finish that on your phone.</string>
