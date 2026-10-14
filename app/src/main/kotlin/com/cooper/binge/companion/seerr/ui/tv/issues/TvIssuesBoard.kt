@@ -54,6 +54,7 @@ import com.cooper.binge.companion.seerr.ui.tv.TvOutcomePlate
 import com.cooper.binge.companion.seerr.ui.tv.TvPagedRows
 import com.cooper.binge.companion.seerr.ui.tv.TvPosterCard
 import com.cooper.binge.companion.seerr.ui.tv.TvRowsFallback
+import com.cooper.binge.companion.seerr.ui.tv.hubFailure
 import com.cooper.binge.companion.seerr.ui.tv.rememberSheetFocusReturn
 import com.cooper.binge.companion.seerr.ui.tv.rememberTvTransientEvent
 import com.cooper.binge.companion.seerr.ui.tv.tvColor
@@ -208,6 +209,7 @@ private fun TvIssuesRows(
                 title = filterLabel(filter, ready.counts),
                 items = (0 until minOf(rows.count, TV_ROW_ITEM_CAP)).mapNotNull { rows.at(it) },
                 onSeeAll = { onSeeAll(filter) }.takeIf { (ready.counts?.countFor(filter) ?: rows.count) > TV_ROW_ITEM_CAP },
+                failure = rows.hubFailure(actions.onRetryLoad),
             )
         }
     TvImmersiveHub(

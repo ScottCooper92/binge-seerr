@@ -44,11 +44,14 @@ import com.binge.designsystem.theme.BingeTheme
 import com.binge.designsystem.tv.focus.restoreTvOverlayFocus
 import com.binge.designsystem.tv.focus.tvClickable
 import com.binge.designsystem.tv.focus.tvFocusIndicator
+import com.binge.designsystem.tv.template.TvHubRowFailure
 import com.binge.designsystem.tv.template.TvImmersiveGrid
 import com.binge.designsystem.tv.template.TvImmersiveHubSkeleton
 import com.binge.designsystem.tv.template.TvMessagePage
 import com.binge.designsystem.tv.template.TvPageHosting
 import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.seerr.SeerrError
+import com.cooper.binge.companion.seerr.ui.state.messageRes
 
 private const val POSTER_ASPECT_RATIO = 2f / 3f
 private const val CHIP_SCRIM_ALPHA = 0.7f
@@ -176,6 +179,17 @@ internal fun ColumnScope.TvBackdropCopy(
 }
 
 private const val SYNOPSIS_LINES = 2
+
+/**
+ * A hub row's failure, while its list could not be read and it has nothing to show: the row then says so in its slot,
+ * with a retry, rather than vanishing as an empty row does (#1537). Null while it has items or has not failed.
+ */
+@Composable
+internal fun TvPagedRows<*>.hubFailure(onRetry: () -> Unit): TvHubRowFailure? {
+    if (count > 0 || !refresh.isFailure) return null
+    val message = if (refresh == TvLoadPhase.Denied) SeerrError.LocalNetworkDenied.messageRes() else R.string.tv_list_load_failed
+    return TvHubRowFailure(message = stringResource(message), retryLabel = stringResource(R.string.hub_retry), onRetry = onRetry)
+}
 
 /**
  * What an immersive board shows when no row has anything: loading, that it could not load (with a retry), or
