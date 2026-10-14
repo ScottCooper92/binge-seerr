@@ -63,7 +63,6 @@ internal fun tvAppGroup(
                 TvPaneRow(
                     key = KEY_REPORT_BUG,
                     label = stringResource(R.string.settings_report_bug),
-                    body = stringResource(R.string.tv_settings_report_bug_body),
                     options =
                         listOf(
                             TvPaneOption(
@@ -77,7 +76,6 @@ internal fun tvAppGroup(
                 switchRow(
                     key = KEY_SHARE_USAGE_DATA,
                     label = stringResource(R.string.settings_share_usage_data),
-                    body = stringResource(R.string.settings_share_usage_data_caption),
                     on = app.shareUsageData,
                     icon = Icons.Filled.Insights,
                     onToggle = { actions.onToggleShareUsageData(!app.shareUsageData) },
@@ -85,7 +83,6 @@ internal fun tvAppGroup(
                 switchRow(
                     key = KEY_SEND_CRASH_REPORTS,
                     label = stringResource(R.string.settings_send_crash_reports),
-                    body = stringResource(R.string.settings_send_crash_reports_caption),
                     on = app.sendCrashReports,
                     icon = Icons.Filled.Healing,
                     onToggle = { actions.onToggleSendCrashReports(!app.sendCrashReports) },
@@ -94,7 +91,7 @@ internal fun tvAppGroup(
     )
 
 /**
- * Binge, as the row that gets you to it: open it when it is installed, else its Play Store listing. Its line is the
+ * Binge, as the row that gets you to it: open it when it is installed, else its Play Store listing. Its option is the
  * action, so the row reads as what pressing it does.
  */
 @Composable
@@ -107,7 +104,6 @@ private fun bingeRow(
     return TvPaneRow(
         key = KEY_BINGE,
         label = stringResource(R.string.tv_settings_binge),
-        detail = action,
         options =
             listOf(
                 TvPaneOption(

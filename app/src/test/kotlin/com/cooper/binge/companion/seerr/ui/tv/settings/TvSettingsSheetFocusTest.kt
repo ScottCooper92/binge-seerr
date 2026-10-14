@@ -64,15 +64,15 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import com.binge.designsystem.R as DesR
 
-private val CONNECTION = ConnectionSummary(baseUrl = "http://seerr.lan:5055", signInKind = SignInKind.Session, userName = "Scott")
-private val SERVER =
+internal val CONNECTION = ConnectionSummary(baseUrl = "http://seerr.lan:5055", signInKind = SignInKind.Session, userName = "Scott")
+internal val SERVER =
     ServerSummary(title = "Seerr", variant = SeerrVariant.Jellyseerr, versionLabel = "2.7.2", updateAvailable = false, commitsBehind = 0)
 private const val SYNC_JOB_ID = "download-sync"
 private const val SYNC_JOB_NAME = "Download Sync"
 private const val A_MINUTE_MILLIS = 60_000L
 private const val A_FRAME_MILLIS = 16L
 
-private fun jobsReady(
+internal fun jobsReady(
     scanRunning: Boolean,
     syncRunning: Boolean = false,
     busy: Set<String> = emptySet(),
@@ -88,7 +88,7 @@ private fun jobsReady(
     failedIds = failed,
 )
 
-private fun hubWith(binge: BingeStatus) =
+internal fun hubWith(binge: BingeStatus) =
     HubUiState.Ready(
         server = HubServer("http://seerr.lan:5055", "Seerr", SeerrVariant.Jellyseerr, "2.7.2", updateAvailable = false, commitsBehind = 0),
         health = ConnectionHealth.Healthy,
@@ -97,7 +97,7 @@ private fun hubWith(binge: BingeStatus) =
         bingeStatus = binge,
     )
 
-private val APP = AppSettings(bugReportUrl = "https://example.test/issues/new", shakeToReport = false)
+internal val APP = AppSettings(bugReportUrl = "https://example.test/issues/new", shakeToReport = false)
 
 /**
  * The settings sheet under a real D-pad: the summary and the groups in order, a group opening as a page that Back leaves
@@ -373,13 +373,13 @@ class TvSettingsSheetFocusTest {
         setSheet(config = null, app = APP)
         open(string(R.string.settings_group_app))
 
-        composeTestRule.onNode(hasText(string(R.string.hub_binge_open)) and isFocusable()).assertIsFocused()
+        bingeRow().assertIsFocused()
         press(Key.DirectionCenter)
         assertEquals(1, bingeOpens)
 
         hub = hubWith(BingeStatus.NotInstalled)
         composeTestRule.waitForIdle()
-        composeTestRule.onNode(hasText(string(R.string.tv_settings_binge_install)) and isFocusable()).requestFocus()
+        bingeRow().requestFocus()
         press(Key.DirectionCenter)
         assertEquals(1, listingOpens)
     }
@@ -547,6 +547,8 @@ class TvSettingsSheetFocusTest {
     private fun isSwitch(state: ToggleableState) =
         SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Switch) and
             SemanticsMatcher.expectValue(SemanticsProperties.ToggleableState, state)
+
+    private fun bingeRow() = composeTestRule.onNode(hasText(string(R.string.tv_settings_binge)) and isFocusable())
 
     private fun scanRow() = composeTestRule.onNode(hasText(string(R.string.tv_settings_start_library_scan)) and isFocusable())
 
