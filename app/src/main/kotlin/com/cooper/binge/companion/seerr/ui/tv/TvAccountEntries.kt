@@ -16,11 +16,15 @@ import com.cooper.binge.companion.seerr.ui.tv.requests.TvRequestsGridContent
 import com.cooper.binge.companion.seerr.ui.users.UserDetailUiState
 import com.cooper.binge.companion.seerr.ui.users.UserDetailViewModel
 
-/** Who is signed in: the sheet reads the same hub state Home's top row does, and the account's own detail once it has an id. */
+/**
+ * Who is signed in: the sheet reads the same hub state Home's top row does, and the account's own detail once it has an id.
+ * [onSignOut] is null for a connection with no session to end.
+ */
 @Composable
 internal fun TvAccountEntry(
     hubViewModel: HubViewModel,
     onDismissRequest: () -> Unit,
+    onSignOut: (() -> Unit)? = null,
 ) {
     val hub by hubViewModel.uiState.collectAsStateWithLifecycle()
     // The hub is `Lazily` and only auto-retries while it is visible, so this sheet says so, as Home and Settings do.
@@ -40,7 +44,7 @@ internal fun TvAccountEntry(
         )
         return
     }
-    TvAccountContent(accountId = account.id, onDismissRequest = onDismissRequest)
+    TvAccountContent(accountId = account.id, onDismissRequest = onDismissRequest, onSignOut = onSignOut)
 }
 
 /** The account's own sheet: the same [UserDetailViewModel] as the phone's user page, bound to the signed-in user. */
@@ -48,6 +52,7 @@ internal fun TvAccountEntry(
 private fun TvAccountContent(
     accountId: Int,
     onDismissRequest: () -> Unit,
+    onSignOut: (() -> Unit)?,
     viewModel: UserDetailViewModel = accountViewModel(accountId),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -60,6 +65,7 @@ private fun TvAccountContent(
         accountFailed = false,
         onRetry = viewModel::reload,
         onDismissRequest = onDismissRequest,
+        onSignOut = onSignOut,
     )
 }
 

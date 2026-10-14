@@ -25,6 +25,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -111,6 +112,7 @@ class SetupViewModel
 
         init {
             restore()
+            reopenSignedOutServer()
         }
 
         val uiState: StateFlow<SetupUiState> =
@@ -312,6 +314,16 @@ class SetupViewModel
             val pending = links.pending() ?: return
             draft.update { it.copy(serverUrl = pending.serverUrl, busy = true) }
             viewModelScope.launch(dispatcher) { resume(pending) }
+        }
+
+        /** After a sign-out, the server it left, read again so setup opens on its sign-in rather than an empty address. */
+        private fun reopenSignedOutServer() {
+            viewModelScope.launch(dispatcher) {
+                val url = connection.signedOutServer.first() ?: return@launch
+                if (draft.value.serverUrl.isNotBlank()) return@launch
+                draft.update { it.copy(serverUrl = url) }
+                inspect()
+            }
         }
 
         /** Reads the pending link's server again and picks the wait up where it was. */

@@ -111,6 +111,9 @@ class SeerrConnection(
 
     val credentials: Flow<SeerrCredentials?> get() = store.credentials
 
+    /** The server the user signed out of, while nothing is saved; see [signOut]. */
+    val signedOutServer: Flow<String?> get() = store.signedOutServer
+
     /**
      * Live health of the saved server, fed by every call the cached client makes.
      *
@@ -377,7 +380,15 @@ class SeerrConnection(
      * clear must not wait on a server that may be the reason the user is disconnecting. A session shared with
      * another device is only forgotten here: ending it would sign that device out too.
      */
-    suspend fun disconnect() {
+    suspend fun disconnect() = forget(keepAddress = false)
+
+    /**
+     * Ends this session as [disconnect] does, but keeps the server's address as [signedOutServer], so setup opens on that
+     * server's sign-in: someone signing out of a shared television means to sign in again, not to set up a new server.
+     */
+    suspend fun signOut() = forget(keepAddress = true)
+
+    private suspend fun forget(keepAddress: Boolean) {
         val saved = store.credentials.first()
         val auth = saved?.auth
         if (auth is SeerrAuth.Session && !auth.shared) attempt { apis.cached(saved.baseUrl, auth).logOut() }
@@ -385,7 +396,7 @@ class SeerrConnection(
             cachedUser = null
             cachedProfile = null
         }
-        store.clear()
+        if (keepAddress) store.signOut() else store.clear()
         cleartext.retainOnly(null)
         carrier.clear()
         apis.evict()

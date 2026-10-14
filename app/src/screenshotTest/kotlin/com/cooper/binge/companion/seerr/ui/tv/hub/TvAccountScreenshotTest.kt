@@ -4,7 +4,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import com.android.tools.screenshot.PreviewTest
+import com.binge.designsystem.tv.component.TvConfirmDialogContent
+import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.preview.SeerrTvScreenPreviews
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.ui.FIXED_NOW_MILLIS
@@ -17,6 +20,7 @@ import com.cooper.binge.companion.seerr.ui.users.UserDetail
 import com.cooper.binge.companion.seerr.ui.users.UserDetailUiState
 import com.cooper.binge.companion.seerr.ui.users.UserItem
 import com.cooper.binge.companion.seerr.ui.users.UserOrigin
+import com.binge.designsystem.R as DesR
 
 /** When the account joined, a fixed span before [FIXED_NOW_MILLIS], so the "joined" line does not move with the day the suite runs. */
 private const val JOINED_MILLIS = FIXED_NOW_MILLIS - 400L * 24 * 60 * 60 * 1000
@@ -55,8 +59,9 @@ private fun detail(
 private val PreviewBarAccount = TvTopBarAccount(name = "Scott Cooper", avatarUrl = null)
 
 /**
- * The television account sheet: the profile as the phone's user page shows it and a line per request quota (one spent, one
- * part used; or both unlimited), the sheets before the account is known, and the top bar over Home: the avatar, the Home
+ * The television account sheet: the profile as one card with a line per request quota (one spent, one part used; or both
+ * unlimited) over Sign out, and none for a key connection; the confirm Sign out asks; the sheets before the account is
+ * known; and the top bar over Home: the avatar, the Home
  * and Issues tabs, and the Settings gear. The user's own requests are a row on Home, framed on `TvRequestsScreenshotTest`.
  */
 
@@ -147,13 +152,42 @@ class TvAccountScreenshotTest {
         }
     }
 
+    /** A connection on the server's API key: there is no session to end, so no Sign out. */
+    @PreviewTest
+    @SeerrTvScreenPreviews
     @Composable
-    private fun Sheet(detail: UserDetailUiState?) {
+    fun ApiKey() {
+        Sheet(detail(HubQuota(movie = null, tv = null)), canSignOut = false)
+    }
+
+    /** Sign out asks first, in a dialog over the sheet: what it means, then Sign out in the error colour, and Cancel. */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun SignOutConfirm() {
+        TvConfirmDialogContent(
+            title = stringResource(R.string.tv_account_sign_out_title),
+            message = stringResource(R.string.tv_account_sign_out_message),
+            confirmLabel = stringResource(R.string.tv_account_sign_out),
+            dismissLabel = stringResource(DesR.string.action_cancel),
+            destructive = true,
+            onConfirm = {},
+            onDismissRequest = {},
+            initiallyDismissFocused = true,
+        )
+    }
+
+    @Composable
+    private fun Sheet(
+        detail: UserDetailUiState?,
+        canSignOut: Boolean = true,
+    ) {
         TvAccountSheet(
             detail = detail,
             accountFailed = detail is UserDetailUiState.Error,
             onRetry = {},
             onDismissRequest = {},
+            onSignOut = if (canSignOut) ({}) else null,
         )
     }
 }

@@ -1,33 +1,38 @@
 package com.cooper.binge.companion.seerr.ui.tv.hub
 
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.Movie
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Tv
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import com.binge.designsystem.tv.component.TvConfirmDialog
+import com.binge.designsystem.tv.component.TvInfoCard
 import com.binge.designsystem.tv.component.TvSideSheet
 import com.binge.designsystem.tv.component.TvSideSheetBody
-import com.binge.designsystem.tv.component.TvSideSheetReadout
 import com.binge.designsystem.tv.component.TvSideSheetRow
 import com.binge.designsystem.tv.component.TvSideSheetStepFocus
 import com.binge.designsystem.tv.component.TvSideSheetTitle
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.seerr.SeerrError
+import com.cooper.binge.companion.seerr.ui.hub.HubQuota
 import com.cooper.binge.companion.seerr.ui.hub.HubQuotaBucket
 import com.cooper.binge.companion.seerr.ui.state.messageRes
 import com.cooper.binge.companion.seerr.ui.users.UserDetailUiState
@@ -37,11 +42,12 @@ import com.cooper.binge.companion.seerr.ui.state.labelRes as roleLabelRes
 import com.cooper.binge.companion.seerr.ui.users.labelRes as originLabelRes
 
 /**
- * Who is signed in, as a side sheet over Home: their name, role and where they come from, email and handle, and what is left of each request quota. Read-outs, so the one row to press is Close; their own requests are a row
- * on Home. Until the account is known it says so, and once the hub has answered without one, or the account's own read
- * failed, it says that with a Retry.
+ * Who is signed in, as a side sheet over Home: one card with their name, role and where they come from, email and handle,
+ * and what is left of each request quota. Back is the way out, so there is no Close. Until the account is known it says
+ * so, and once the hub has answered without one, or the account's own read failed, it says that with a Retry.
  *
- * [detail] is null until the account is known, and [accountFailed] says it could not be resolved at all.
+ * [detail] is null until the account is known, and [accountFailed] says it could not be resolved at all. [onSignOut] ends
+ * the session and is null for a connection with none to end, a server's API key; it is the last row, and asks first.
  */
 @Composable
 internal fun TvAccountSheet(
@@ -50,6 +56,7 @@ internal fun TvAccountSheet(
     onRetry: () -> Unit,
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier,
+    onSignOut: (() -> Unit)? = null,
 ) {
     val item =
         when (detail) {
@@ -58,6 +65,17 @@ internal fun TvAccountSheet(
             else -> null
         }
     val quota = (detail as? UserDetailUiState.Ready)?.detail?.quota
+    var confirmingSignOut by rememberSaveable { mutableStateOf(false) }
+    if (confirmingSignOut && onSignOut != null) {
+        TvConfirmDialog(
+            title = stringResource(R.string.tv_account_sign_out_title),
+            message = stringResource(R.string.tv_account_sign_out_message),
+            confirmLabel = stringResource(R.string.tv_account_sign_out),
+            onConfirm = onSignOut,
+            onDismissRequest = { confirmingSignOut = false },
+            destructive = true,
+        )
+    }
     TvSideSheet(onDismissRequest = onDismissRequest, modifier = modifier) { entryFocus ->
         TvSideSheetTitle(stringResource(R.string.tv_rail_account))
         if (item == null) {
@@ -65,7 +83,6 @@ internal fun TvAccountSheet(
                 failed = accountFailed || detail is UserDetailUiState.Error,
                 denied = (detail as? UserDetailUiState.Error)?.error == SeerrError.LocalNetworkDenied,
                 onRetry = onRetry,
-                onClose = onDismissRequest,
                 entryFocus = entryFocus,
             )
         } else {
@@ -73,12 +90,21 @@ internal fun TvAccountSheet(
                 modifier = Modifier.weight(1f, fill = false).fillMaxWidth().verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
             ) {
-                Profile(item)
-                QuotaRow(stringResource(R.string.hub_quota_movies), quota?.movie, quota != null, Icons.Filled.Movie)
-                QuotaRow(stringResource(R.string.hub_quota_tv), quota?.tv, quota != null, Icons.Filled.Tv)
+                TvInfoCard(
+                    title = item.name,
+                    lines = accountLines(item, quota),
+                    icon = Icons.Filled.Person,
+                    modifier = Modifier.focusRequester(entryFocus),
+                )
+                onSignOut?.let {
+                    TvSideSheetRow(
+                        label = stringResource(R.string.tv_account_sign_out),
+                        icon = Icons.AutoMirrored.Filled.Logout,
+                        destructive = true,
+                        onClick = { confirmingSignOut = true },
+                    )
+                }
             }
-            // Outside the scroll, so the one row to press is always on screen however many read-outs scroll past.
-            Close(onDismissRequest, Modifier.focusRequester(entryFocus))
             TvSideSheetStepFocus(entryFocus)
         }
     }
@@ -89,7 +115,6 @@ private fun ColumnScope.Unresolved(
     failed: Boolean,
     denied: Boolean,
     onRetry: () -> Unit,
-    onClose: () -> Unit,
     entryFocus: FocusRequester,
 ) {
     when {
@@ -104,53 +129,30 @@ private fun ColumnScope.Unresolved(
             onClick = onRetry,
             modifier = Modifier.focusRequester(entryFocus),
         )
-        Close(onClose)
     } else {
-        Close(onClose, Modifier.focusRequester(entryFocus))
+        // Nothing to press while the account loads, so focus waits here rather than falling back to the page beneath.
+        Box(modifier = Modifier.focusRequester(entryFocus).focusable())
     }
     TvSideSheetStepFocus(entryFocus)
 }
 
-@Composable
-private fun Close(
-    onClose: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    TvSideSheetRow(label = stringResource(R.string.tv_sheet_close), onClick = onClose, modifier = modifier)
-}
-
 /**
- * The signed-in user, in two rows so the page fits the screen with both quotas and Close, since a read-out below the fold
- * is out of D-pad reach: the name with their role and where the account comes from, then their email with their handle.
+ * The account card's lines: role and where the account comes from, then email and handle (one when they are the same),
+ * then each request quota. Every line holds two facts, so the card reads in four lines whatever the account.
  */
 @Composable
-private fun Profile(item: UserItem) {
+private fun accountLines(
+    item: UserItem,
+    quota: HubQuota?,
+): List<String> {
     val separator = stringResource(R.string.hub_meta_separator)
-    TvSideSheetReadout(
-        label = item.name,
-        icon = Icons.Filled.Person,
-        supportingText =
-            listOf(stringResource(item.role.roleLabelRes()), stringResource(item.origin.originLabelRes())).joinToString(separator),
-    )
     val handle = item.handle?.takeUnless { it.equals(item.email, ignoreCase = true) }
-    (item.email ?: handle)?.let { primary ->
-        TvSideSheetReadout(
-            label = primary,
-            icon = Icons.Filled.Email,
-            supportingText = handle.takeUnless { it == primary },
-        )
-    }
-}
-
-/** One request type's allowance: what is left of what, with its window, and nothing but placeholders until it has loaded. */
-@Composable
-private fun QuotaRow(
-    label: String,
-    bucket: HubQuotaBucket?,
-    loaded: Boolean,
-    icon: ImageVector,
-) {
-    TvSideSheetReadout(label = label, icon = icon, supportingText = quotaLine(bucket, loaded))
+    return listOfNotNull(
+        listOf(stringResource(item.role.roleLabelRes()), stringResource(item.origin.originLabelRes())).joinToString(separator),
+        listOfNotNull(item.email, handle).joinToString(separator).ifEmpty { null },
+        stringResource(R.string.hub_quota_movies) + separator + quotaLine(quota?.movie, quota != null),
+        stringResource(R.string.hub_quota_tv) + separator + quotaLine(quota?.tv, quota != null),
+    )
 }
 
 /**

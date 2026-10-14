@@ -171,6 +171,21 @@ class SettingsViewModelTest {
     private suspend fun SettingsViewModel.awaitReady(match: (SettingsUiState.Ready) -> Boolean): SettingsUiState.Ready =
         uiState.first { it is SettingsUiState.Ready && match(it) } as SettingsUiState.Ready
 
+    /** A sign-out ends the session but keeps its server, so setup opens on that server's sign-in. */
+    @Test
+    fun `signing out forgets the connection but keeps its server to sign in to again`() =
+        runTest {
+            server(ADMIN)
+            val vm = viewModel()
+            vm.awaitReady { true }
+            val baseUrl = checkNotNull(connection.credentials.first()).baseUrl
+
+            vm.signOut()
+
+            connection.credentials.first { it == null }
+            assertEquals(baseUrl, connection.signedOutServer.first())
+        }
+
     /** #989: the jobs' and the poll's "next run in 20 minutes" count down while the screen shows them, and no longer. */
     @Test
     fun `the rows' clock moves on each minute while the screen is showing, and stops when it leaves`() =

@@ -281,4 +281,11 @@ class SettingsViewModel
             crashBreadcrumbs.log("disconnecting from server")
             viewModelScope.launch(dispatcher) { connection.disconnect() }
         }
+
+        /** Ends this session but keeps the server, so setup opens on its sign-in. A session sign-in only: a key has none to end. */
+        fun signOut() {
+            analytics.event(AnalyticsEvents.SERVER_DISCONNECTED, mapOf(AnalyticsEvents.PARAM_ACTION to "sign_out"))
+            crashBreadcrumbs.log("signing out of the server")
+            viewModelScope.launch(dispatcher) { connection.signOut() }
+        }
     }

@@ -407,6 +407,25 @@ class SetupViewModelTest {
             assertEquals(SetupNotice.SessionRejected, signIn.notice)
         }
 
+    /** Someone signing out of a shared television means to sign in again, so setup opens on that server's sign-in. */
+    @Test
+    fun `after a sign-out setup opens on the server it left, at its sign-in`() =
+        runTest {
+            val vm = viewModel()
+            vm.awaitAddress()
+            seerr.enqueue(json("""{"id":1,"permissions":2}"""))
+            seerr.enqueueProfile(json("""{"version":"3.0.0"}"""), json("""{"mediaServerType":2}"""))
+            val saved = connection.connect(seerr.url("/").toString(), SeerrAuth.ApiKey("k3y")).getOrThrow()
+            vm.awaitConnected()
+            connection.signOut()
+            seerr.enqueueProfile(json("""{"version":"3.0.0"}"""), json("""{"mediaServerType":2}"""))
+            seerr.enqueue(json("[]"))
+
+            val signIn = viewModel(reuseConnection = true).awaitSignIn()
+
+            assertEquals(saved.baseUrl, signIn.server.baseUrl)
+        }
+
     @Test
     fun `a key connect saves the connection and drops the key from the form`() =
         runTest {

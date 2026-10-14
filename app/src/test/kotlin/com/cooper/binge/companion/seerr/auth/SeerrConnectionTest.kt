@@ -597,6 +597,43 @@ class SeerrConnectionTest {
         }
 
     @Test
+    fun `signing out ends the session but keeps the server's address, until a new connection saves`() =
+        runTest {
+            server.enqueue(json("""{"id":42}""", headersOf("Set-Cookie", "connect.sid=s3ss10n; Path=/")))
+            server.enqueueProfile(json("""{"version":"3.1.0"}"""), json("""{"initialized":true}"""))
+            server.enqueue(json("""{"status":"ok"}"""))
+            val sut = connection(backgroundScope)
+            val saved = sut.logIn(baseUrl, SeerrLoginRequest.Local("s@example.com", "pw")).getOrThrow()
+            repeat(3) { server.takeRequest() }
+
+            sut.signOut()
+
+            assertEquals("/api/v1/auth/logout", server.takeRequest().url.encodedPath)
+            assertNull(sut.credentials.first())
+            assertEquals(saved.baseUrl, sut.signedOutServer.first())
+
+            server.enqueue(json("""{"id":1,"permissions":2}"""))
+            server.enqueueProfile(json("""{"version":"3.1.0"}"""), json("""{"initialized":true}"""))
+            sut.connect(baseUrl, SeerrAuth.ApiKey("k3y")).getOrThrow()
+
+            assertNull(sut.signedOutServer.first())
+        }
+
+    @Test
+    fun `a disconnect keeps no address to sign in to again`() =
+        runTest {
+            server.enqueue(json("""{"id":1,"permissions":2}"""))
+            server.enqueueProfile(json("""{"version":"3.1.0"}"""), json("""{"initialized":true}"""))
+            val sut = connection(backgroundScope)
+            sut.connect(baseUrl, SeerrAuth.ApiKey("k3y")).getOrThrow()
+            sut.signOut()
+
+            sut.disconnect()
+
+            assertNull(sut.signedOutServer.first())
+        }
+
+    @Test
     fun `disconnect forgets the connection and the cached user`() =
         runTest {
             server.enqueue(json("""{"id":1,"permissions":2}"""))
