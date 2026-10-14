@@ -385,7 +385,7 @@ private fun instanceRow(
 ): ListItem =
     ListItem(
         icon = instance.icon(isTv),
-        label = stringResource(if (instance.is4k) R.string.settings_service_4k else R.string.media_instance_standard),
+        label = stringResource(instance.labelRes()),
         // Where the status can be set the row is a picker, so its detail is its current value. Where it cannot, the
         // status is only information and keeps its chip.
         detail = instance.status?.takeIf { canSetStatus }?.let { stringResource(it.labelRes()) },

@@ -28,7 +28,7 @@ internal fun MediaStatusSheet(
 ) {
     BingeChoiceSheet(
         title = stringResource(R.string.media_mark_as),
-        subtitle = instance.label(),
+        subtitle = stringResource(instance.labelRes()),
         caption = stringResource(R.string.media_mark_as_scope_caption),
         choices = statusChoices(),
         selected = instance.selectedChoice(),
@@ -46,7 +46,7 @@ internal fun MediaStatusSheetContent(
 ) {
     BingeChoiceSheetContent(
         title = stringResource(R.string.media_mark_as),
-        subtitle = instance.label(),
+        subtitle = stringResource(instance.labelRes()),
         caption = stringResource(R.string.media_mark_as_scope_caption),
         choices = statusChoices(),
         selected = instance.selectedChoice(),
@@ -62,6 +62,3 @@ private fun statusChoices(): BingeChoiceList<MediaStatusChoice> =
     )
 
 private fun MediaInstance.selectedChoice(): MediaStatusChoice? = MediaStatusChoice.entries.firstOrNull { it.code == status }
-
-@Composable
-private fun MediaInstance.label(): String = stringResource(if (is4k) R.string.settings_service_4k else R.string.media_instance_standard)

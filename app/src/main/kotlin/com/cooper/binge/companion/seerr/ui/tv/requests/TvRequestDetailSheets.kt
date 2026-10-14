@@ -183,8 +183,6 @@ internal fun ColumnScope.TvMarkAsSteps(
     }
 }
 
-private fun MediaInstance.labelRes(): Int = if (is4k) R.string.settings_service_4k else R.string.media_instance_standard
-
 /**
  * Reporting an issue with the title: the kind, then the message, then Send. It scrolls, since the kinds and the field
  * outgrow the panel on a short screen. Once the server has it, the sheet says so and Done closes it.

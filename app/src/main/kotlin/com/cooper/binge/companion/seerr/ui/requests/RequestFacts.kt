@@ -228,7 +228,7 @@ private fun watchFacts(detail: RequestDetail): List<Fact> {
     return instances.flatMap { instance ->
         val watch = instance.watch ?: return@flatMap emptyList()
         val instanceLabel =
-            if (named) stringResource(if (instance.is4k) R.string.settings_service_4k else R.string.media_instance_standard) else null
+            if (named) stringResource(instance.labelRes()) else null
         listOfNotNull(
             Fact(
                 icon = Icons.Filled.PlayCircle,
