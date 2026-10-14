@@ -80,8 +80,7 @@ internal fun TvConnectedShell(
                     seeAllOpen = pages.seeAllIssues != null,
                     onSeeAll = { pages.seeAllIssues = it.name },
                 )
-            TvDestination.Settings ->
-                TvSettingsEntry(onEditConnection = { editingConnection = true }, onDismissRequest = close, viewModel = settingsViewModel)
+            TvDestination.Settings -> TvSettingsEntry(onDismissRequest = close, viewModel = settingsViewModel)
         }
     }
 }

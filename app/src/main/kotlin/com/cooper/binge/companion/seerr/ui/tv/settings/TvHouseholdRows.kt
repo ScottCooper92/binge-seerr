@@ -11,12 +11,14 @@ import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import com.binge.designsystem.SaveStatus
 import com.binge.designsystem.tv.component.TvSaveStatus
 import com.binge.designsystem.tv.component.TvSideSheetBody
 import com.binge.designsystem.tv.component.TvSideSheetNav
 import com.binge.designsystem.tv.component.TvSideSheetRow
 import com.binge.designsystem.tv.component.TvSideSheetTitle
+import com.binge.designsystem.tv.component.TvSwitch
 import com.binge.designsystem.tv.template.TvPaneGroup
 import com.binge.designsystem.tv.template.TvPaneOption
 import com.binge.designsystem.tv.template.TvPaneRow
@@ -28,13 +30,11 @@ import com.cooper.binge.companion.seerr.ui.settings.server.ServerAgent
 import com.cooper.binge.companion.seerr.ui.settings.server.ServerGeneralSettings
 import com.cooper.binge.companion.seerr.ui.settings.server.labelRes
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorUiState
-import com.binge.designsystem.R as DesR
 
 internal const val KEY_HOUSEHOLD_PREFIX = "household:"
 internal const val KEY_AGENT_PREFIX = "agent:"
 private const val PAGE_AGENT_PREFIX = "agent-page:"
 private const val KEY_AGENT_TOGGLE = "agent-toggle"
-private const val KEY_BACK = "back"
 
 /** The page an agent opens, named by its segment. */
 internal fun agentPage(agent: ServerAgent): String = PAGE_AGENT_PREFIX + agent.segment
@@ -111,16 +111,7 @@ private fun toggle(
     on: Boolean,
     household: TvHousehold,
     flip: (ServerGeneralSettings) -> ServerGeneralSettings,
-): TvPaneRow {
-    val name = stringResource(label)
-    return TvPaneRow(
-        key = KEY_HOUSEHOLD_PREFIX + key,
-        label = name,
-        detail = stringResource(onOffRes(on)),
-        options = listOf(TvPaneOption(label = name, icon = icon, onSelect = { household.onChange(flip) })),
-        icon = icon,
-    )
-}
+): TvPaneRow = switchRow(key = KEY_HOUSEHOLD_PREFIX + key, label = stringResource(label), on = on, icon = icon) { household.onChange(flip) }
 
 /** Whether [group] is the household's, whose page also shows how its last change saved. */
 internal fun TvPaneGroup.isHousehold(): Boolean = rows.any { it.key.startsWith(KEY_HOUSEHOLD_PREFIX) }
@@ -154,7 +145,7 @@ internal fun agentsGroup(agents: TvAgents): TvPaneGroup? {
 }
 
 /**
- * One agent's page: whether it is on, as a row to press, saved as it is pressed. An agent that cannot send without a setting
+ * One agent's page: whether it is on, as a switch, saved as it is pressed. Back is the way out. An agent that cannot send without a setting
  * still blank cannot be switched on from here, and one already on without it is held unsent; both say so, since typing is the phone's.
  */
 @Composable
@@ -174,15 +165,14 @@ internal fun ColumnScope.TvAgentPage(
             val blocked = !form.valid || (!form.enabled && !form.copy(enabled = true).valid)
             TvSideSheetBody(stringResource(if (blocked) R.string.tv_settings_agent_setup_first else R.string.tv_settings_agent_body))
             TvSideSheetRow(
-                label = stringResource(if (form.enabled) R.string.tv_settings_agent_turn_off else R.string.tv_settings_agent_turn_on),
+                label = stringResource(agent.labelRes()),
                 icon = Icons.Filled.Notifications,
                 enabled = form.enabled || !blocked,
-                supportingText = stringResource(onOffRes(form.enabled)),
                 onClick = { onSetEnabled(!form.enabled) },
                 modifier = nav.row(KEY_AGENT_TOGGLE),
-            )
+                role = Role.Switch,
+            ) { isFocused -> TvSwitch(checked = form.enabled, isFocused = isFocused) }
             TvSaveStatus(status = state.saveStatus, onRetry = onRetry)
         }
     }
-    TvSideSheetRow(label = stringResource(DesR.string.cd_navigate_back), onClick = nav::pop, modifier = nav.row(KEY_BACK))
 }
