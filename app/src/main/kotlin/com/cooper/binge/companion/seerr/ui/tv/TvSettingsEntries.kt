@@ -14,7 +14,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.tv.material3.MaterialTheme
-import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.SetupViewModel
 import com.cooper.binge.companion.seerr.ui.hub.HubUiState
 import com.cooper.binge.companion.seerr.ui.hub.HubViewModel
@@ -23,7 +22,7 @@ import com.cooper.binge.companion.seerr.ui.rememberEnteredEditingGuard
 import com.cooper.binge.companion.seerr.ui.settings.SettingsUiState
 import com.cooper.binge.companion.seerr.ui.settings.SettingsViewModel
 import com.cooper.binge.companion.seerr.ui.settings.server.JobsViewModel
-import com.cooper.binge.companion.seerr.ui.settings.server.MEDIA_SERVER_SCAN_JOB_ID
+import com.cooper.binge.companion.seerr.ui.tv.settings.TvJobActions
 import com.cooper.binge.companion.seerr.ui.tv.settings.TvSettingsActions
 import com.cooper.binge.companion.seerr.ui.tv.settings.TvSettingsSheet
 
@@ -81,23 +80,22 @@ private fun TvAdminSettingsSheet(
     onDismissRequest: () -> Unit,
     jobsViewModel: JobsViewModel = hiltViewModel(),
 ) {
+    val jobs by jobsViewModel.uiState.collectAsStateWithLifecycle()
     TvSettingsSheet(
         state = state,
-        // The Jobs & cache page's job-row run action, reused rather than a second call to the same endpoint:
-        // this sheet has no jobs list of its own, so the notice is what tells the admin it started.
-        // `runWhenReady`, not `run`: this view model's own load races the row becoming visible, so an
-        // early tap has to wait it out (and retry once from a failed one) rather than being dropped.
+        // `runWhenReady`, not `run`: this view model's own load races the scan row becoming visible, so an early press
+        // has to wait it out (and retry once from a failed load) rather than being dropped.
         actions =
             TvSettingsActions(
                 onEditConnection = actions.onEditConnection,
                 onDisconnect = actions.onDisconnect,
-                onStartLibraryScan = { jobsViewModel.runWhenReady(MEDIA_SERVER_SCAN_JOB_ID, R.string.tv_settings_scan_started) },
+                jobs = TvJobActions(onRun = jobsViewModel::runWhenReady, onCancel = jobsViewModel::cancel),
                 onToggleShareUsageData = actions.onToggleShareUsageData,
                 onToggleSendCrashReports = actions.onToggleSendCrashReports,
                 onOpenBingeListing = actions.onOpenBingeListing,
             ),
         onDismissRequest = onDismissRequest,
-        libraryScanEvents = jobsViewModel.events,
+        jobs = jobs,
         hub = hub,
     )
 }

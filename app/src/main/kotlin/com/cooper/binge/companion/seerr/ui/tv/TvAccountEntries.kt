@@ -87,7 +87,7 @@ internal fun rememberMyRequests(
 
 /** The signed-in user's [UserDetailViewModel], under one key so the page and its see-all grid share the one paged list. */
 @Composable
-internal fun accountViewModel(accountId: Int): UserDetailViewModel =
+private fun accountViewModel(accountId: Int): UserDetailViewModel =
     hiltViewModel<UserDetailViewModel, UserDetailViewModel.Factory>(
         key = "account-$accountId",
         creationCallback = { factory -> factory.create(accountId) },

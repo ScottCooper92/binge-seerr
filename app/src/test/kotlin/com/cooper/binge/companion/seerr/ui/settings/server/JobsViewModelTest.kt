@@ -2,7 +2,6 @@ package com.cooper.binge.companion.seerr.ui.settings.server
 
 import androidx.lifecycle.ViewModelStore
 import com.binge.designsystem.SaveStatus
-import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.ui.users.settings.ADMIN
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorEvent
@@ -10,6 +9,7 @@ import com.cooper.binge.companion.seerr.ui.users.settings.ScriptedSeerr
 import com.cooper.binge.companion.seerr.util.MainDispatcherRule
 import com.cooper.binge.companion.seerr.util.awaitEvent
 import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
@@ -103,29 +103,34 @@ class JobsViewModelTest {
         }
 
     @Test
-    fun `run with a notice reports success on the same endpoint the plain run uses`() =
-        runTest {
-            // running = false: this test is about the notice, not the running-poll loop — a true
-            // here would launch followRunning() and leave it unawaited past this test's own scope,
-            // the same dangling-coroutine trap #177 documents for a delay-loop under a virtual clock.
-            seerr.serve("POST /api/v1/settings/jobs/plex-full-scan/run", job("plex-full-scan", running = false))
-            val vm = viewModel()
-            vm.awaitReady()
-            val notice = awaitEvent(vm.events)
-            vm.run(MEDIA_SERVER_SCAN_JOB_ID, R.string.tv_settings_scan_started)
-            assertEquals(EditorEvent.Notice(R.string.tv_settings_scan_started), notice.await())
-            assertEquals(1, seerr.count("POST", "/api/v1/settings/jobs/plex-full-scan/run"))
-        }
-
-    @Test
-    fun `run with a notice still reports a failure, not the notice`() =
+    fun `a refused run reports the failure and keeps the job failed until its next attempt`() =
         runTest {
             seerr.serve("POST /api/v1/settings/jobs/plex-full-scan/run", """{"message":"boom"}""", code = 500)
             val vm = viewModel()
             vm.awaitReady()
             val failed = awaitEvent(vm.events)
-            vm.run(MEDIA_SERVER_SCAN_JOB_ID, R.string.tv_settings_scan_started)
+            vm.run(MEDIA_SERVER_SCAN_JOB_ID)
             assertTrue(failed.await() is EditorEvent.Failed)
+            val kept = vm.uiState.first { it is JobsUiState.Ready && MEDIA_SERVER_SCAN_JOB_ID in it.failedIds } as JobsUiState.Ready
+            assertFalse(MEDIA_SERVER_SCAN_JOB_ID in kept.busyIds)
+
+            // Longer than the outcome note lasts: the failure is the row's state, not a timed note.
+            delay(50)
+            assertTrue(MEDIA_SERVER_SCAN_JOB_ID in (vm.uiState.value as JobsUiState.Ready).failedIds)
+
+            seerr.serve("POST /api/v1/settings/jobs/plex-full-scan/run", job("plex-full-scan", running = false))
+            vm.run(MEDIA_SERVER_SCAN_JOB_ID)
+            vm.uiState.first { it is JobsUiState.Ready && MEDIA_SERVER_SCAN_JOB_ID !in it.failedIds }
+        }
+
+    @Test
+    fun `a refused cancel keeps the job failed too`() =
+        runTest {
+            seerr.serve("POST /api/v1/settings/jobs/plex-full-scan/cancel", """{"message":"boom"}""", code = 500)
+            val vm = viewModel()
+            vm.awaitReady()
+            vm.cancel(MEDIA_SERVER_SCAN_JOB_ID)
+            vm.uiState.first { it is JobsUiState.Ready && MEDIA_SERVER_SCAN_JOB_ID in it.failedIds }
         }
 
     @Test
@@ -134,9 +139,14 @@ class JobsViewModelTest {
             seerr.serveFrom("GET /api/v1/settings/jobs", delayMillis = 50) { JOBS }
             seerr.serve("POST /api/v1/settings/jobs/plex-full-scan/run", job("plex-full-scan", running = false))
             val vm = viewModel()
-            val notice = awaitEvent(vm.events)
-            vm.runWhenReady(MEDIA_SERVER_SCAN_JOB_ID, R.string.tv_settings_scan_started)
-            assertEquals(EditorEvent.Notice(R.string.tv_settings_scan_started), notice.await())
+            vm.runWhenReady(MEDIA_SERVER_SCAN_JOB_ID)
+            seerr.awaitCount(
+                "POST",
+                "/api/v1/settings/jobs/plex-full-scan/run",
+                moreThan = 0,
+                timeoutMillis = seerr.expectedCallWaitMillis(),
+            )
+            assertEquals(1, seerr.count("POST", "/api/v1/settings/jobs/plex-full-scan/run"))
         }
 
     @Test
@@ -147,9 +157,14 @@ class JobsViewModelTest {
             val vm = viewModel()
             vm.uiState.first { it is JobsUiState.Error }
             seerr.serve("GET /api/v1/settings/jobs", JOBS)
-            val notice = awaitEvent(vm.events)
-            vm.runWhenReady(MEDIA_SERVER_SCAN_JOB_ID, R.string.tv_settings_scan_started)
-            assertEquals(EditorEvent.Notice(R.string.tv_settings_scan_started), notice.await())
+            vm.runWhenReady(MEDIA_SERVER_SCAN_JOB_ID)
+            seerr.awaitCount(
+                "POST",
+                "/api/v1/settings/jobs/plex-full-scan/run",
+                moreThan = 0,
+                timeoutMillis = seerr.expectedCallWaitMillis(),
+            )
+            assertEquals(1, seerr.count("POST", "/api/v1/settings/jobs/plex-full-scan/run"))
         }
 
     @Test
@@ -159,8 +174,9 @@ class JobsViewModelTest {
             val vm = viewModel()
             vm.uiState.first { it is JobsUiState.Error }
             val failed = awaitEvent(vm.events)
-            vm.runWhenReady(MEDIA_SERVER_SCAN_JOB_ID, R.string.tv_settings_scan_started)
+            vm.runWhenReady(MEDIA_SERVER_SCAN_JOB_ID)
             assertTrue(failed.await() is EditorEvent.Failed)
+            assertTrue(vm.uiState.value is JobsUiState.Error)
         }
 
     @Test
