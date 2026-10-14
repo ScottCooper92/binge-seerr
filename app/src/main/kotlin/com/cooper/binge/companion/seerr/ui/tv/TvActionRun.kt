@@ -13,7 +13,7 @@ import com.binge.designsystem.SaveStatus
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 
-/** How long "Saved" stays up before a sheet that was saving closes, long enough to read and short enough not to be waited on. */
+/** How long "Saved" stays up before it clears, long enough to read and short enough not to be waited on. */
 internal const val TV_SAVED_HOLD_MILLIS = 800L
 
 /**
@@ -105,19 +105,6 @@ internal fun <E : Any> rememberTvActionRun(
     val latest by rememberUpdatedState(answer)
     LaunchedEffect(events) { events.collect { run.latest(it) } }
     return run
-}
-
-/** Clears a "Saved" once it has been read, and runs [then]: how a sheet that saved in place closes. */
-@Composable
-internal fun TvActionRun.OnSaved(then: () -> Unit) {
-    val latest by rememberUpdatedState(then)
-    LaunchedEffect(status) {
-        if (status == SaveStatus.Saved) {
-            delay(TV_SAVED_HOLD_MILLIS)
-            clear()
-            latest()
-        }
-    }
 }
 
 /** Clears a "Saved" once it has been read, for a line that stays on its page. */
