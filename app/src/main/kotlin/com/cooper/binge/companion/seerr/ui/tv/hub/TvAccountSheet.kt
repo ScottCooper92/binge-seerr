@@ -16,6 +16,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -150,7 +151,7 @@ private fun QuotaRow(
     label: String,
     bucket: HubQuotaBucket?,
     loaded: Boolean,
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    icon: ImageVector,
 ) {
     TvSideSheetRow(label = label, icon = icon, enabled = false, onClick = {}, supportingText = quotaLine(bucket, loaded))
 }
