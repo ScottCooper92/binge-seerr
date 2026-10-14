@@ -407,4 +407,5 @@ private fun TvRequestDetailActions.running(run: TvActionRun) =
         onReportIssue = onReportIssue,
         onDismissReport = onDismissReport,
         edit = edit,
+        requesterSheet = requesterSheet,
     )
