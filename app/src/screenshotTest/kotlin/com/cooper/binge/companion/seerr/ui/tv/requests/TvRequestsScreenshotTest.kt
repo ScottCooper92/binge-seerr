@@ -134,22 +134,22 @@ class TvRequestsScreenshotTest {
     }
 
     /**
-     * Your own requests could not be read while the filters' could: the row keeps its place under the filter's,
-     * says so and offers a retry, rather than vanishing as a row with nothing in it does (#1537).
+     * The first filter's list could not be read while the next one's could: its row keeps its place and says so, with a
+     * retry, rather than vanishing as a row with nothing in it does (#1537).
      */
     @PreviewTest
     @SeerrTvScreenPreviews
     @Composable
-    fun YourRequestsFailed() {
+    fun RowFailed() {
         TvRequestsRowsBoard(
             state = requestsReady(),
-            rowsFor = { filter -> if (filter == RequestFilter.Pending) rows(SampleRequests) else rows(emptyList()) },
-            mine =
-                TvMyRequests(
-                    rows = TvPagedRows(count = 0, at = { null }, refresh = TvLoadPhase.Failed),
-                    count = null,
-                    onSeeAll = {},
-                ),
+            rowsFor = { filter ->
+                when (filter) {
+                    RequestFilter.Pending -> TvPagedRows(count = 0, at = { null }, refresh = TvLoadPhase.Failed)
+                    RequestFilter.Approved -> rows(SampleRequests)
+                    else -> rows(emptyList())
+                }
+            },
             actions = NoRequestsActions,
         )
     }
