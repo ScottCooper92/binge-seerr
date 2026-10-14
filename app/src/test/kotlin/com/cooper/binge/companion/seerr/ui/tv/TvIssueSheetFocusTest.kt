@@ -60,6 +60,7 @@ class TvIssueSheetFocusTest {
     private var toggles = 0
     private var issueDeletes = 0
     private var opened = 0
+    private var openedInBinge = 0
     private var retries = 0
     private val commentDeletes = mutableListOf<Int>()
 
@@ -106,10 +107,12 @@ class TvIssueSheetFocusTest {
 
     @Test
     fun leftStepsBackAlongTheButtonsAndClosesOnlyFromTheFirst() {
-        setSheet()
+        setSheet(bingeAnswers = true)
         button(R.string.issue_delete).requestFocus()
         composeTestRule.waitForIdle()
 
+        composeTestRule.press(Key.DirectionLeft)
+        button(R.string.request_open_binge).assertIsFocused()
         composeTestRule.press(Key.DirectionLeft)
         button(openInJellyfin()).assertIsFocused()
         composeTestRule.press(Key.DirectionLeft)
@@ -225,6 +228,24 @@ class TvIssueSheetFocusTest {
     }
 
     @Test
+    fun openInBingeOpensIt() {
+        setSheet(bingeAnswers = true)
+        button(R.string.request_open_binge).requestFocus()
+
+        composeTestRule.press(Key.DirectionCenter)
+
+        assertEquals(1, openedInBinge)
+    }
+
+    /** Binge is offered only where it would answer: there is no browser on a television to fall back to. */
+    @Test
+    fun whereBingeWouldNotAnswerThereIsNoBingeButton() {
+        setSheet()
+
+        composeTestRule.onAllNodes(hasContentDescription(string(R.string.request_open_binge))).assertCountEquals(0)
+    }
+
+    @Test
     fun withNoAppToOpenThereIsNoOpenButton() {
         setSheet(appInstalled = false)
 
@@ -252,7 +273,10 @@ class TvIssueSheetFocusTest {
         landsOn().assertIsFocused()
     }
 
-    private fun setSheet(appInstalled: Boolean = true) {
+    private fun setSheet(
+        appInstalled: Boolean = true,
+        bingeAnswers: Boolean = false,
+    ) {
         composeTestRule.setContent {
             BingeTvTheme {
                 TvIssueSheet(
@@ -265,6 +289,7 @@ class TvIssueSheetFocusTest {
                             onDeleteIssue = { issueDeletes++ },
                             onDeleteComment = { commentDeletes += it },
                             onOpenInMediaServer = if (appInstalled) ({ opened++ }) else null,
+                            onOpenInBinge = if (bingeAnswers) ({ openedInBinge++ }) else null,
                         ),
                 )
             }

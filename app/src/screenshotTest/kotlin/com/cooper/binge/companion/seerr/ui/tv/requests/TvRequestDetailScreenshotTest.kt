@@ -117,18 +117,21 @@ private fun filmDetail(): RequestDetail =
         siblings = emptyList(),
     )
 
-private fun actions(onOpenInBinge: (() -> Unit)?) =
-    TvRequestDetailActions(
-        onBack = {},
-        onRetry = {},
-        onOpenInBinge = onOpenInBinge,
-        onApprove = {},
-        onRetryRequest = {},
-        onDecline = {},
-        onRemove = {},
-        onBlock = {},
-        onSetMediaStatus = { _, _, _ -> },
-    )
+private fun actions(
+    onOpenInBinge: (() -> Unit)?,
+    onOpenInMediaServer: (() -> Unit)? = null,
+) = TvRequestDetailActions(
+    onBack = {},
+    onRetry = {},
+    onOpenInBinge = onOpenInBinge,
+    onOpenInMediaServer = onOpenInMediaServer,
+    onApprove = {},
+    onRetryRequest = {},
+    onDecline = {},
+    onRemove = {},
+    onBlock = {},
+    onSetMediaStatus = { _, _, _ -> },
+)
 
 /**
  * The television request detail page: a series with its seasons and a download, a film with neither, and
@@ -163,8 +166,8 @@ class TvRequestDetailScreenshotTest {
     }
 
     /**
-     * A manager's page for a title the server tracks and no decision is waiting on: Mark as leads, and Manage holds Edit,
-     * Report an issue, Open in Binge and Remove (#1036).
+     * A manager's page for a title the server tracks and no decision is waiting on: Open in Binge, Mark as and Report an
+     * issue lead, and Manage holds Edit and Remove (#1036).
      */
     @PreviewTest
     @SeerrTvScreenPreviews
@@ -190,6 +193,34 @@ class TvRequestDetailScreenshotTest {
                 ),
             events = emptyFlow(),
             actions = actions(onOpenInBinge = {}),
+        )
+    }
+
+    /** The widest row the title's actions make: three lead, with the media server's longest name, and Manage holds Report. */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun EveryTitleLead() {
+        TvRequestDetailScreen(
+            state =
+                RequestDetailUiState.Ready(
+                    filmDetail().copy(
+                        actions = RequestActions(canRemove = true),
+                        canReportIssue = true,
+                        mediaServerName = "Jellyfin",
+                        media =
+                            MediaRecord(
+                                mediaId = 900,
+                                isTv = false,
+                                instances = listOf(MediaInstance(false, SeerrMediaStatusCode.Available, null, null, null)),
+                                canSetStatus = true,
+                                canClearData = false,
+                                canDeleteFiles = false,
+                            ),
+                    ),
+                ),
+            events = emptyFlow(),
+            actions = actions(onOpenInBinge = {}, onOpenInMediaServer = {}),
         )
     }
 

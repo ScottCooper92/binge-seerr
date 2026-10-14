@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Chat
+import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.PlayArrow
@@ -52,6 +53,7 @@ internal const val KEY_REPORT = "report"
 internal const val KEY_REPLY = "reply"
 private const val KEY_TOGGLE = "toggle"
 private const val KEY_OPEN = "open"
+private const val KEY_BINGE = "binge"
 private const val KEY_DELETE = "delete"
 
 internal fun commentKey(commentId: Int) = "comment:$commentId"
@@ -96,7 +98,7 @@ internal fun ColumnScope.TvIssueThread(
                 modifier = nav.row(KEY_REPORT),
             )
         }
-        IssueButtons(detail, state.action, nav, actions.onOpenInMediaServer, onToggle = { run.run { actions.onToggleStatus() } }) {
+        IssueButtons(detail, state.action, nav, actions, onToggle = { run.run { actions.onToggleStatus() } }) {
             confirmingDelete = true
         }
         TvSaveStatus(status = run.status, onRetry = run::again)
@@ -125,15 +127,15 @@ internal fun ColumnScope.TvIssueThread(
 }
 
 /**
- * The issue's actions, centred: resolve or reopen, open the title in the media server's TV app, and delete, last and
- * behind a confirm. Left from any button but the first steps to the one before it, rather than closing the sheet.
+ * The issue's actions, centred: resolve or reopen, open the title in the media server's TV app or in Binge, each only where
+ * it would open, and delete, last and behind a confirm. Left from any button but the first steps to the one before it, rather than closing the sheet.
  */
 @Composable
 private fun IssueButtons(
     detail: IssueDetail,
     action: IssueAction,
     nav: TvSideSheetNav,
-    onOpenInMediaServer: (() -> Unit)?,
+    actions: TvIssueSheetActions,
     onToggle: () -> Unit,
     onDelete: () -> Unit,
 ) {
@@ -161,8 +163,17 @@ private fun IssueButtons(
                 modifier = nav.row(KEY_TOGGLE),
             )
         }
+        val onOpenInMediaServer = actions.onOpenInMediaServer
         if (onOpenInMediaServer != null && openLabel != null) {
             TvIconButton(icon = Icons.Filled.PlayArrow, label = openLabel, onClick = onOpenInMediaServer, modifier = nav.row(KEY_OPEN))
+        }
+        actions.onOpenInBinge?.let { open ->
+            TvIconButton(
+                icon = Icons.AutoMirrored.Filled.OpenInNew,
+                label = stringResource(R.string.request_open_binge),
+                onClick = open,
+                modifier = nav.row(KEY_BINGE),
+            )
         }
         if (detail.canDelete) {
             TvIconButton(

@@ -19,7 +19,7 @@ import com.cooper.binge.companion.seerr.util.requestDetail
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
-/** Which actions the TV request page offers, and which two lead the row ahead of Manage. */
+/** Which actions the TV request page offers, and which lead the row ahead of Manage. */
 class TvRequestActionsTest {
     @Test
     fun `a decision leads, and everything else is managed in order, the destructive ones last`() {
@@ -35,17 +35,26 @@ class TvRequestActionsTest {
     }
 
     @Test
-    fun `with no decision the media server and Mark as lead`() {
+    fun `with no decision the title's own actions lead, three at most`() {
         assertEquals(
-            TvRequestActionSplit(leads = listOf(OpenInMediaServer, MarkAs), managed = listOf(Report, OpenInBinge, Remove)),
-            listOf(OpenInMediaServer, MarkAs, Report, OpenInBinge, Remove).splitLeads(),
+            TvRequestActionSplit(leads = listOf(OpenInMediaServer, OpenInBinge, MarkAs), managed = listOf(Edit, Report, Remove)),
+            listOf(OpenInMediaServer, Edit, MarkAs, Report, OpenInBinge, Remove).splitLeads(),
         )
+        assertEquals(listOf(OpenInBinge, MarkAs, Report), listOf(MarkAs, Report, OpenInBinge, Remove).splitLeads().leads)
     }
 
     @Test
-    fun `Report leads in Mark as's place where the title cannot be marked`() {
+    fun `each title action leads only where it is offered`() {
         assertEquals(listOf(OpenInMediaServer, Report), listOf(OpenInMediaServer, Report, Remove).splitLeads().leads)
-        assertEquals(listOf(Report), listOf(Edit, Report, Remove).splitLeads().leads)
+        assertEquals(listOf(OpenInBinge, Report), listOf(Edit, Report, OpenInBinge, Remove).splitLeads().leads)
+    }
+
+    @Test
+    fun `a full row of the title's actions keeps its Manage`() {
+        assertEquals(
+            TvRequestActionSplit(leads = listOf(OpenInMediaServer, OpenInBinge, MarkAs), managed = listOf(Edit, Report)),
+            listOf(OpenInMediaServer, Edit, MarkAs, Report, OpenInBinge).splitLeads(),
+        )
     }
 
     @Test
@@ -57,6 +66,7 @@ class TvRequestActionsTest {
     fun `a single action left over joins the row rather than a Manage of one`() {
         assertEquals(TvRequestActionSplit(leads = listOf(OpenInBinge), managed = emptyList()), listOf(OpenInBinge).splitLeads())
         assertEquals(TvRequestActionSplit(leads = listOf(MarkAs, Edit), managed = emptyList()), listOf(Edit, MarkAs).splitLeads())
+        assertEquals(TvRequestActionSplit(leads = listOf(Report, Edit), managed = emptyList()), listOf(Edit, Report).splitLeads())
     }
 
     @Test

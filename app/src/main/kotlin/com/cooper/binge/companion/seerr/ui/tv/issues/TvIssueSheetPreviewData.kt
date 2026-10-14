@@ -89,4 +89,5 @@ internal val NoIssueSheetActions =
         onDeleteIssue = {},
         onDeleteComment = {},
         onOpenInMediaServer = {},
+        onOpenInBinge = {},
     )
