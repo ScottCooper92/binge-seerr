@@ -28,7 +28,6 @@ import androidx.tv.material3.MaterialTheme
 import coil3.compose.AsyncImage
 import com.binge.designsystem.theme.BingeShapes
 import com.binge.designsystem.tv.component.TvMessagePlate
-import com.binge.designsystem.tv.focus.restoreTvOverlayFocus
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.state.RequestStateTone
 import kotlinx.coroutines.delay
@@ -54,8 +53,6 @@ internal class OverlayFocusRestore(
     private val rowId: MutableState<Int?>,
     private val seeAllKey: MutableState<String?>,
 ) {
-    val pending: Boolean get() = rowId.value != null || seeAllKey.value != null
-
     fun leavingFromRow(id: Int) {
         rowId.value = id
         seeAllKey.value = null
@@ -72,16 +69,6 @@ internal class OverlayFocusRestore(
     ): Modifier = if (id == rowId.value) base.focusRequester(requester) else base
 
     fun seeAllModifier(key: String): Modifier = if (key == seeAllKey.value) Modifier.focusRequester(requester) else Modifier
-}
-
-/** The restore state for one board; it puts focus back once [overlayOpen] goes false, and survives a rotation. */
-@Composable
-internal fun rememberOverlayFocusRestore(overlayOpen: Boolean): OverlayFocusRestore {
-    val restore = rememberSheetFocusReturn()
-    LaunchedEffect(overlayOpen) {
-        if (!overlayOpen && restore.pending) restoreTvOverlayFocus(restore.requester)
-    }
-    return restore
 }
 
 /**

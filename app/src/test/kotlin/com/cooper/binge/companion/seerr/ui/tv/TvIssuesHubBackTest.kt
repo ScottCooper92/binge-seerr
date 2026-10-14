@@ -11,6 +11,7 @@ import androidx.compose.ui.test.isFocusable
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.requestFocus
 import com.binge.designsystem.tv.theme.BingeTvTheme
+import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.seerr.SeerrPermissions
 import com.cooper.binge.companion.seerr.ui.issues.IssueCounts
 import com.cooper.binge.companion.seerr.ui.issues.IssueFilter
@@ -25,6 +26,7 @@ import com.cooper.binge.companion.seerr.ui.tv.issues.IssueRowFilters
 import com.cooper.binge.companion.seerr.ui.tv.issues.TvIssuesActions
 import com.cooper.binge.companion.seerr.ui.tv.issues.TvIssuesBoard
 import com.cooper.binge.companion.seerr.util.createSeerrKeyboardAndroidComposeRule
+import com.cooper.binge.companion.seerr.util.string
 import kotlinx.coroutines.flow.emptyFlow
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -58,7 +60,7 @@ class TvIssuesHubBackTest {
     private val seeAll = mutableListOf<IssueFilter>()
 
     @Test
-    fun backFromAnIssueBelowTheFirstRowLandsOnItsCard() {
+    fun backFromAnIssueBelowTheFirstRowLandsOnItsCardAndASecondBackOnTheIssuesTab() {
         setBoard()
         enterAt(LOWER_ROW, OPENED_COLUMN)
         composeTestRule.press(Key.DirectionCenter)
@@ -69,10 +71,13 @@ class TvIssuesHubBackTest {
         composeTestRule.settleShellHandOff()
 
         card(LOWER_ROW, OPENED_COLUMN).assertIsFocused()
+
+        composeTestRule.pressBack()
+        issuesTab().assertIsFocused()
     }
 
     @Test
-    fun backFromASeeAllGridBelowTheFirstRowLandsOnItsTile() {
+    fun backFromASeeAllGridBelowTheFirstRowLandsOnItsTileAndASecondBackOnTheIssuesTab() {
         setBoard(longRow = IssueRowFilters[LOWER_ROW])
         enterAt(LOWER_ROW, CARDS_PER_ROW - 1)
         composeTestRule.press(Key.DirectionRight)
@@ -85,6 +90,9 @@ class TvIssuesHubBackTest {
         composeTestRule.settleShellHandOff()
 
         seeAllTile().assertIsFocused()
+
+        composeTestRule.pressBack()
+        issuesTab().assertIsFocused()
     }
 
     private fun setBoard(longRow: IssueFilter? = null) {
@@ -157,6 +165,8 @@ class TvIssuesHubBackTest {
     ) = composeTestRule.onNode(hasContentDescription(titleOf(row, column)) and isFocusable())
 
     private fun seeAllTile() = composeTestRule.onNode(hasContentDescription(SEE_ALL) and isFocusable())
+
+    private fun issuesTab() = composeTestRule.onNode(hasContentDescription(string(R.string.hub_section_issues)))
 }
 
 private fun issue(

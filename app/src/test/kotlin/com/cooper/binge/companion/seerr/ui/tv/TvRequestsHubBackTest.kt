@@ -11,6 +11,7 @@ import androidx.compose.ui.test.isFocusable
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.requestFocus
 import com.binge.designsystem.tv.theme.BingeTvTheme
+import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.seerr.SeerrPermissions
 import com.cooper.binge.companion.seerr.ui.requests.ModerationScope
 import com.cooper.binge.companion.seerr.ui.requests.RequestCounts
@@ -18,10 +19,12 @@ import com.cooper.binge.companion.seerr.ui.requests.RequestFilter
 import com.cooper.binge.companion.seerr.ui.requests.RequestSort
 import com.cooper.binge.companion.seerr.ui.requests.RequestsUiState
 import com.cooper.binge.companion.seerr.ui.tv.requests.RequestRowFilters
+import com.cooper.binge.companion.seerr.ui.tv.requests.TvMyRequests
 import com.cooper.binge.companion.seerr.ui.tv.requests.TvRequestsActions
 import com.cooper.binge.companion.seerr.ui.tv.requests.TvRequestsRowsBoard
 import com.cooper.binge.companion.seerr.util.createSeerrKeyboardAndroidComposeRule
 import com.cooper.binge.companion.seerr.util.requestItem
+import com.cooper.binge.companion.seerr.util.string
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -56,9 +59,10 @@ class TvRequestsHubBackTest {
     private var seeAllOpen by mutableStateOf(false)
     private val opened = mutableListOf<Int>()
     private val seeAll = mutableListOf<RequestFilter>()
+    private var seeAllMine = 0
 
     @Test
-    fun backFromACardBelowTheFirstRowLandsOnThatCard() {
+    fun backFromACardBelowTheFirstRowLandsOnThatCardAndASecondBackOnTheHomeTab() {
         setBoard()
         enterAt(OPENED_ROW, OPENED_COLUMN)
         composeTestRule.press(Key.DirectionCenter)
@@ -69,10 +73,13 @@ class TvRequestsHubBackTest {
         composeTestRule.settleShellHandOff()
 
         card(OPENED_ROW, OPENED_COLUMN).assertIsFocused()
+
+        composeTestRule.pressBack()
+        homeTab().assertIsFocused()
     }
 
     @Test
-    fun backFromASeeAllGridBelowTheFirstRowLandsOnItsTile() {
+    fun backFromASeeAllGridBelowTheFirstRowLandsOnItsTileAndASecondBackOnTheHomeTab() {
         setBoard(longRow = RequestRowFilters[SEE_ALL_ROW])
         enterAt(SEE_ALL_ROW, CARDS_PER_ROW - 1)
         composeTestRule.press(Key.DirectionRight)
@@ -85,9 +92,34 @@ class TvRequestsHubBackTest {
         composeTestRule.settleShellHandOff()
 
         seeAllTile().assertIsFocused()
+
+        composeTestRule.pressBack()
+        homeTab().assertIsFocused()
     }
 
-    private fun setBoard(longRow: RequestFilter? = null) {
+    /** The signed-in user's own row ends Home, so its see-all is the lowest tile there (#1524). */
+    @Test
+    fun backFromMyRequestsSeeAllLandsOnItsTileAndASecondBackOnTheHomeTab() {
+        setBoard(mineLong = true)
+        enterAt(RequestRowFilters.size, CARDS_PER_ROW - 1)
+        composeTestRule.press(Key.DirectionRight)
+        seeAllTile().assertIsFocused()
+        composeTestRule.press(Key.DirectionCenter)
+        assertEquals(1, seeAllMine)
+        composeTestRule.onNodeWithTag(OVERLAY_TAG).assertIsFocused()
+
+        composeTestRule.pressBack()
+        composeTestRule.settleShellHandOff()
+        seeAllTile().assertIsFocused()
+
+        composeTestRule.pressBack()
+        homeTab().assertIsFocused()
+    }
+
+    private fun setBoard(
+        longRow: RequestFilter? = null,
+        mineLong: Boolean = false,
+    ) {
         fun countFor(filter: RequestFilter) = if (filter == longRow) MORE_THAN_A_ROW else CARDS_PER_ROW
         composeTestRule.setContent {
             val ready =
@@ -111,6 +143,7 @@ class TvRequestsHubBackTest {
                     listVersion = 0,
                 )
             BingeTvTheme {
+                val mine = myRequests(count = if (mineLong) MORE_THAN_A_ROW else CARDS_PER_ROW)
                 ShellWithOverlay(
                     destination = TvDestination.Hub,
                     overlayOpen = openRequestId != null || seeAllOpen,
@@ -121,6 +154,7 @@ class TvRequestsHubBackTest {
                 ) {
                     TvRequestsRowsBoard(
                         state = ready,
+                        mine = mine,
                         rowsFor = { filter ->
                             val row = RequestRowFilters.indexOf(filter)
                             val items = List(CARDS_PER_ROW) { column -> requestItem(id = idOf(row, column), title = titleOf(row, column)) }
@@ -164,6 +198,22 @@ class TvRequestsHubBackTest {
     ) = composeTestRule.onNode(hasContentDescription(titleOf(row, column)) and isFocusable())
 
     private fun seeAllTile() = composeTestRule.onNode(hasContentDescription(SEE_ALL) and isFocusable())
+
+    /** The signed-in user's own row, one row's worth of cards, with [count] behind its see-all. */
+    private fun myRequests(count: Int): TvMyRequests {
+        val row = RequestRowFilters.size
+        val items = List(CARDS_PER_ROW) { column -> requestItem(id = idOf(row, column), title = titleOf(row, column)) }
+        return TvMyRequests(
+            rows = TvPagedRows(count = items.size, at = { items.getOrNull(it) }),
+            count = count,
+            onSeeAll = {
+                seeAllMine++
+                seeAllOpen = true
+            },
+        )
+    }
+
+    private fun homeTab() = composeTestRule.onNode(hasContentDescription(string(R.string.tv_rail_hub)))
 }
 
 private fun idOf(
