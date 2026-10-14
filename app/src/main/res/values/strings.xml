@@ -1036,7 +1036,7 @@
     <string name="send_address_sign_in_shared">The TV uses this phone\'s sign-in</string>
     <string name="setup_error_unreachable_not_local">The server could not be reached. That isn\'t a local address, so this TV may not be able to reach it. Try an address on your home network.</string>
 
-    <!-- The television shell: the rail, the hub board, the lists and their action sheets. -->
+    <!-- The television shell: Home, the lists and their action sheets. -->
     <string name="tv_rail_hub">Home</string>
     <string name="tv_hub_health_checking">Checking the server…</string>
     <string name="tv_hub_stat_open_issues">Open issues</string>

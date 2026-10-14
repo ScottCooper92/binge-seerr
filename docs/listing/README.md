@@ -36,7 +36,7 @@ automatically, so the frames come from the app on a device. Capture, in this ord
 6. A settings page with real values (blur the server address).
 7. Binge's title page with this app's request button, for "what Binge adds".
 
-Optionally two Android TV frames (1920×1080): the rail with the hub board, and a list with its
+Optionally two Android TV frames (1920×1080): Home with the hub board, and a list with its
 action sheet. The feature graphic (1024×500) is a design asset; it does not exist yet.
 
 **The app name is a maintainer's decision.** `listing.md` proposes one and says why. The
