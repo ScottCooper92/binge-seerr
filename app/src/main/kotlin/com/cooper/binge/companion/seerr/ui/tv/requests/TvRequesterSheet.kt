@@ -7,6 +7,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -17,6 +18,7 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.binge.designsystem.SaveStatus
 import com.binge.designsystem.tv.component.TvCheckboxRow
 import com.binge.designsystem.tv.component.TvNumberStepper
 import com.binge.designsystem.tv.component.TvOptionGroup
@@ -210,6 +212,8 @@ internal fun ColumnScope.TvRequesterSheetEntry(
     val permissionsState by permissions.uiState.collectAsStateWithLifecycle()
     val generalState by general.uiState.collectAsStateWithLifecycle()
     // A refused save puts the control back and says nothing else, so the sheet reports it as the phone's snackbar does.
+    // The quota line is read once by the user page, so a landed override save has it read again.
+    ReloadWhenSaved((generalState as? ExtrasEditorUiState.Ready)?.saveStatus, user::reload)
     val events = remember(permissions, general) { merge(permissions.events, general.events) }
     val note = rememberTvTransientEvent(events).tvNoteOrNull()
     TvRequesterStep(
@@ -228,4 +232,13 @@ internal fun ColumnScope.TvRequesterSheetEntry(
         entryFocus = entryFocus,
         note = note,
     )
+}
+
+/** Calls [reload] each time [status] arrives at [SaveStatus.Saved], which a later save reaches again through Saving. */
+@Composable
+internal fun ReloadWhenSaved(
+    status: SaveStatus?,
+    reload: () -> Unit,
+) {
+    LaunchedEffect(status) { if (status == SaveStatus.Saved) reload() }
 }

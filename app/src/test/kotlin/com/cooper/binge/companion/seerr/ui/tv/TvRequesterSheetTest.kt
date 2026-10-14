@@ -20,6 +20,7 @@ import com.binge.designsystem.SaveStatus
 import com.binge.designsystem.tv.theme.BingeTvTheme
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.hub.HubQuotaBucket
+import com.cooper.binge.companion.seerr.ui.tv.requests.ReloadWhenSaved
 import com.cooper.binge.companion.seerr.ui.tv.requests.TvQuotaOverride
 import com.cooper.binge.companion.seerr.ui.tv.requests.TvRequesterActions
 import com.cooper.binge.companion.seerr.ui.tv.requests.TvRequesterState
@@ -110,6 +111,26 @@ class TvRequesterSheetTest {
         setContent(state(), note = "Refused")
 
         composeTestRule.onNodeWithText("Refused").assertIsDisplayed()
+    }
+
+    @Test
+    fun aLandedSaveReloadsTheQuotaLineOncePerSave() {
+        var reloads = 0
+        var status by mutableStateOf(SaveStatus.Idle)
+        composeTestRule.setContent { ReloadWhenSaved(status) { reloads++ } }
+        composeTestRule.waitForIdle()
+        assertEquals(0, reloads)
+        status = SaveStatus.Saving
+        composeTestRule.waitForIdle()
+        assertEquals(0, reloads)
+        status = SaveStatus.Saved
+        composeTestRule.waitForIdle()
+        assertEquals(1, reloads)
+        status = SaveStatus.Saving
+        composeTestRule.waitForIdle()
+        status = SaveStatus.Saved
+        composeTestRule.waitForIdle()
+        assertEquals(2, reloads)
     }
 
     @Test
