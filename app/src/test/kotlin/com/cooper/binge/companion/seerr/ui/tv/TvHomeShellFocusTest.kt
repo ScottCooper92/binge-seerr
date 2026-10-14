@@ -167,6 +167,16 @@ class TvHomeShellFocusTest {
         item(R.string.tv_rail_hub).assertIsNotFocused()
     }
 
+    /** With the bar hidden Back cannot move focus anywhere, so it is left to the system and the app can close. */
+    @Test
+    fun backIsNotHandledWhileTheBarIsHidden() {
+        setShell(tabsResolved = false)
+
+        val handled = composeTestRule.runOnUiThread { composeTestRule.activity.onBackPressedDispatcher.hasEnabledCallbacks() }
+
+        assertEquals(false, handled)
+    }
+
     /** An account the server will not list issues for gets no Issues tab (#1054). */
     @Test
     fun withoutIssuesTheBarHasNoIssuesTab() {

@@ -79,6 +79,7 @@ internal fun TvHomeShell(
     account: TvTopBarAccount = TvTopBarAccount(name = "", avatarUrl = null),
     /** False while a full-screen task (editing the connection) is up: the bar hides and pages take no inset. */
     showBar: Boolean = true,
+    /** [content] draws a destination; its `close` returns to Home, so on Home it is a reselect and clears Home's pages. */
     content: @Composable (destination: TvDestination, close: () -> Unit) -> Unit,
 ) {
     val density = LocalDensity.current
@@ -94,6 +95,7 @@ internal fun TvHomeShell(
         TvShellBack(
             tab = tab,
             barFocused = barFocused,
+            barUp = barUp,
             covered = overlay != null || sheet != null,
             opener = opener,
             onSelectTab = onSelectTab,
@@ -129,18 +131,20 @@ internal fun TvHomeShell(
 }
 
 /**
- * Back when nothing above the pages takes it ([covered]): on a page it goes to the current tab; on the bar it leaves Issues
+ * Back when nothing above the pages takes it ([covered]) and the bar is up ([barUp]; a hidden bar cannot take focus, so Back
+ * falls through to the system): on a page it goes to the current tab; on the bar it leaves Issues
  * for Home, and from Home it is not handled, so the app closes.
  */
 @Composable
 private fun TvShellBack(
     tab: TvDestination,
     barFocused: Boolean,
+    barUp: Boolean,
     covered: Boolean,
     opener: Map<TvDestination, FocusRequester>,
     onSelectTab: (TvDestination) -> Unit,
 ) {
-    BackHandler(enabled = !covered && !(barFocused && tab == TvDestination.Hub)) {
+    BackHandler(enabled = !covered && barUp && !(barFocused && tab == TvDestination.Hub)) {
         if (barFocused) onSelectTab(TvDestination.Hub)
         opener.getValue(if (barFocused) TvDestination.Hub else tab).requestFocus()
     }
