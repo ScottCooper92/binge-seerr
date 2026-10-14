@@ -72,7 +72,8 @@ internal fun RequestActionsSheet(
         // The editor's state is the view model's, so Back from its page cancels the edit there.
         onPageBack = { page -> if (page == EDIT_PAGE) editActions?.onDismiss?.invoke() },
     ) { nav ->
-        if (nav.page == EDIT_PAGE && editActions != null) {
+        // A stack that survived a narrow window keeps its page, but there the editor is a sheet of its own, not this one.
+        if (nav.page == EDIT_PAGE && nav.stacksPages && editActions != null) {
             EditRequestPage(nav = nav, item = item, edit = edit, actions = editActions)
             return@BingeAdaptiveSheet
         }
