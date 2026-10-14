@@ -42,6 +42,8 @@
             <data android:scheme="binge" />
         </intent>
         <package android:name="com.cooper.binge.app" />
+        <!-- PROTOTYPE: the TV issue sheet opens the title in Jellyfin's TV app. -->
+        <package android:name="org.jellyfin.androidtv" />
     </queries>
 
     <!--

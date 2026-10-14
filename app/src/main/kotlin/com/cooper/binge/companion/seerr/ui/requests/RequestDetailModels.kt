@@ -183,6 +183,8 @@ data class RequestDetail(
     /** What the server calls itself, and the media server it fronts when there is one, for the open-in labels. */
     val serverName: String = "Seerr",
     val mediaServerName: String? = null,
+    /** PROTOTYPE: the title's item id on a Jellyfin or Emby server. */
+    val mediaServerItemId: String? = null,
 ) {
     /** Every request against this title, this page's own first, then [siblings]. */
     fun summaries(): List<RequestSummary> =

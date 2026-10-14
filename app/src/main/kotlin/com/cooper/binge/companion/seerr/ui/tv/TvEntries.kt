@@ -2,6 +2,8 @@ package com.cooper.binge.companion.seerr.ui.tv
 
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.runtime.Composable
+import com.binge.designsystem.tv.focus.tvExitFocusGroup
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -59,11 +61,40 @@ internal fun TvConnectedShell(
         tabsResolved = tabsResolved,
         account = TvTopBarAccount(name = account?.name.orEmpty(), avatarUrl = account?.avatarUrl),
         showBar = !editingConnection,
+        aboveBar =
+            // PROTOTYPE: a request's detail page is a full screen of its own, over the bar, as Netflix's title page is.
+            pages.openRequestId?.takeIf { tab == TvDestination.Hub }?.let { id ->
+                {
+                    androidx.compose.runtime.CompositionLocalProvider(
+                        com.binge.designsystem.tv.nav.LocalTvTopInset provides androidx.compose.ui.unit.Dp(0f),
+                    ) {
+                        androidx.compose.foundation.layout.Box(
+                            modifier =
+                                androidx.compose.ui.Modifier
+                                    .fillMaxSize()
+                                    .tvExitFocusGroup(),
+                        ) {
+                            ScopedViewModels("request-detail-$id") { TvRequestDetailOverlay(requestId = id, onDone = { pages.openRequestId = null }) }
+                        }
+                    }
+                }
+            } ?: pages.openIssueId?.takeIf { tab == TvDestination.Issues }?.let { id ->
+                {
+                    ScopedViewModels("issue-sheet-$id") {
+                        com.cooper.binge.companion.seerr.ui.tv.issues.TvIssueSheetEntry(
+                            issueId = id,
+                            onDone = { pages.openIssueId = null },
+                        )
+                    }
+                }
+            },
         overlay =
             when {
                 editingConnection -> {
                     { TvEditConnectionOverlay(onDone = { editingConnection = false }) }
                 }
+                // PROTOTYPE: an issue opens as a sheet above the bar, so the Issues tab needs an overlay only for its grid.
+                tab == TvDestination.Issues && pages.seeAllIssues == null -> null
                 !pages.anyOpen(tab) -> null
                 else -> tabPages(tab, pages, seeAllAccountId = account?.id)
             },
@@ -141,7 +172,7 @@ private fun TvHubPages(
             onDone = { pages.seeAllAccount = false },
         )
     }
-    TvDetailOverlays(openRequestId = pages.openRequestId, openIssueId = null, onCloseRequest = { pages.openRequestId = null })
+    // PROTOTYPE: the request page itself is drawn over the bar; see TvConnectedShell.
 }
 
 /** The Issues tab's pages over its board: a see-all grid, and an issue's detail page above it. */
@@ -155,7 +186,7 @@ private fun TvIssuesPages(pages: TvOpenPages) {
             onDone = { pages.seeAllIssues = null },
         )
     }
-    TvDetailOverlays(openRequestId = null, openIssueId = pages.openIssueId, onCloseIssue = { pages.openIssueId = null })
+    // PROTOTYPE: the issue itself opens as a sheet above the bar; see TvConnectedShell.
 }
 
 /**
@@ -208,3 +239,4 @@ internal fun offeredTabs(hub: HubUiState): List<TvDestination> {
     val overview = (hub as? HubUiState.Ready)?.overview
     return TabRules.filterIndexed { index, (_, rule) -> index == 0 || (overview != null && rule(overview)) }.map { it.first }
 }
+

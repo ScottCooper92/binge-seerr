@@ -36,6 +36,7 @@ internal fun SeerrIssueDto.toDetail(
         serviceUrl = media?.serviceUrl?.takeIf { it.isWebUrl() },
         serverName = profile.variant.displayName,
         mediaServerName = profile.mediaServerName(),
+        mediaServerItemId = media?.jellyfinMediaId?.takeIf { it.isNotBlank() },
         currentUserName = user?.displayString(),
     )
 }

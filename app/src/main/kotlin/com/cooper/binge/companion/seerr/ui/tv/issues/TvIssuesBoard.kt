@@ -115,7 +115,8 @@ internal fun TvIssuesBoard(
                 onSeeAll = actions.onSeeAll,
                 onSelect = { item ->
                     restore.leavingFromRow(item.id)
-                    if (item.canBeActedOn(ready.scope)) actions.onOpenActions(item) else actions.onOpenDetail(item)
+                    // PROTOTYPE: the issue sheet holds the actions now, so OK opens it directly.
+                    actions.onOpenDetail(item)
                 },
                 now = now,
             )

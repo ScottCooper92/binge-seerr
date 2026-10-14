@@ -81,6 +81,8 @@ internal fun TvHomeShell(
     account: TvTopBarAccount = TvTopBarAccount(name = "", avatarUrl = null),
     /** False while a full-screen task (editing the connection) is up: the bar hides and pages take no inset. */
     showBar: Boolean = true,
+    /** PROTOTYPE: a sheet a page opened (an issue), drawn over everything, the bar included, as Account and Settings are. */
+    aboveBar: (@Composable () -> Unit)? = null,
     /** [content] draws a destination; its `close` returns to the start tab, so there it is a reselect and clears its pages. */
     content: @Composable (destination: TvDestination, close: () -> Unit) -> Unit,
 ) {
@@ -101,7 +103,7 @@ internal fun TvHomeShell(
             onStart = tab == start,
             barFocused = barFocused,
             barUp = barUp,
-            covered = overlay != null || sheet != null,
+            covered = overlay != null || sheet != null || aboveBar != null,
             barStop = barStop,
             onLeaveForStart = {
                 onSelectTab(start)
@@ -134,6 +136,7 @@ internal fun TvHomeShell(
             onSelect = { if (it.isSheet) onOpenSheet(it) else onSelectTab(it) },
             modifier = Modifier.align(Alignment.TopCenter).onSizeChanged { barHeightPx = it.height },
         )
+        aboveBar?.let { CompositionLocalProvider(LocalTvHostedAsOverlay provides true) { it() } }
         if (sheet != null) {
             TvShellSheet(overlayOpen = overlay != null, onClose = sheetCloser::close) { content(sheet, sheetCloser::close) }
         }

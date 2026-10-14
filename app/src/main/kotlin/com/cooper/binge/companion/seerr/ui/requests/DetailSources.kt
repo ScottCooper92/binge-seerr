@@ -116,6 +116,7 @@ internal class DetailSources(
             media = dto.mediaRecord(permissions, profile, watch),
             serverName = profile.variant.displayName,
             mediaServerName = profile.mediaServerName(),
+            mediaServerItemId = dto.media.jellyfinMediaId?.takeIf { it.isNotBlank() },
             siblings =
                 details
                     ?.mediaInfo

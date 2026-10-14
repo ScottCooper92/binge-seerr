@@ -1298,4 +1298,12 @@
     <string name="tv_account_sign_out">Sign out</string>
     <string name="tv_account_sign_out_title">Sign out?</string>
     <string name="tv_account_sign_out_message">You\'ll need to sign in to this server again.</string>
+    <string name="tv_issue_reply_on_phone_proto">Reply on your phone</string>
+    <string name="tv_issue_edit_report_proto">Edit the report</string>
+    <string name="tv_issue_edit_comment_proto">Edit your comment</string>
+    <string name="tv_issue_edit_on_phone_proto">Edit on your phone</string>
+    <string name="tv_issue_hand_off_body_proto">Scan with your phone to open this issue in %1$s, and reply or edit there.</string>
+    <string name="tv_issue_open_in_proto">Open in %1$s</string>
+    <string name="tv_detail_manage_proto">Manage</string>
+    <string name="tv_detail_report_scan_proto">Scan with your phone to open this title in %1$s, and report the issue there.</string>
 </resources>

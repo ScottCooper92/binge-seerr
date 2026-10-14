@@ -41,6 +41,8 @@ data class IssueDetail(
     val serverName: String = "Seerr",
     /** Plex, Jellyfin or Emby; null where the server's type is not known. */
     val mediaServerName: String? = null,
+    /** PROTOTYPE: the title's item id on a Jellyfin or Emby server. */
+    val mediaServerItemId: String? = null,
 ) {
     fun canActOn(comment: IssueComment): Boolean = canManage || comment.isMine
 }

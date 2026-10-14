@@ -7,6 +7,16 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import com.cooper.binge.companion.seerr.ui.tv.openInJellyfinTv
+import com.cooper.binge.companion.seerr.ui.tv.jellyfinTvInstalled
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.focusable
+import androidx.compose.material.icons.filled.PlayCircle
+import androidx.compose.material.icons.Icons
+import androidx.compose.ui.focus.focusRequester
+import com.binge.designsystem.tv.theme.TvButtonStyle
+import androidx.compose.material.icons.filled.Tune
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -182,13 +192,6 @@ private fun TvRequestDetailContent(
     // once, since a decline keeps the request.
     var sheet by rememberSaveable { mutableStateOf(initialSheet) }
     val sheetFocus = remember { DetailSheet.entries.associateWith { FocusRequester() } }
-    val closers =
-        DetailSheet.entries.associateWith {
-            rememberTvOverlayCloser(
-                restoreTo = sheetFocus.getValue(it),
-                onClose = { sheet = null },
-            )
-        }
     // The Mark as sheet shows its own status; every other action's stands under the row.
     if (sheet != DetailSheet.MarkAs) run.ClearWhenSaved()
     val draft = rememberTvReportDraft()
@@ -197,7 +200,7 @@ private fun TvRequestDetailContent(
     var synopsisFocused by remember { mutableStateOf(false) }
     val item = detail.item
     val allowed = detail.actions
-    val actionList =
+    val fullActionList =
         requestDetailActions(
             detail = detail,
             actions = actions,
@@ -208,6 +211,70 @@ private fun TvRequestDetailContent(
                 sheet = it
             },
             sheetFocus = sheetFocus,
+        )
+    // PROTOTYPE: the row keeps the request's main move (Retry, Approve and Decline; else Mark as, else Report an issue)
+    // and a Manage button; the rest live in a side sheet Manage opens, destructive last.
+    val manageFocus = remember { FocusRequester() }
+    var manageOpen by rememberSaveable { mutableStateOf(false) }
+    // PROTOTYPE: reporting needs a keyboard, so the TV hands it to the phone, at the title's own page on the server.
+    var reportCodeOpen by rememberSaveable { mutableStateOf(false) }
+    val reportLabel = stringResource(R.string.issue_report_title)
+    val context = androidx.compose.ui.platform.LocalContext.current
+    // For an admin checking the title: open it in the media server's own TV app, where it is on the server.
+    val openAction =
+        detail.mediaServerItemId?.takeIf { context.jellyfinTvInstalled() }?.let { itemId ->
+            TvDetailAction(
+                label = stringResource(R.string.tv_issue_open_in_proto, detail.mediaServerName ?: "Jellyfin"),
+                icon = Icons.Filled.PlayCircle,
+                onClick = { context.openInJellyfinTv(itemId) },
+                showLabel = true,
+            )
+        }
+    val allActions =
+        listOfNotNull(openAction) +
+            fullActionList
+                // PROTOTYPE: the requester's controls are admin work the phone has a whole page for; the TV drops them.
+                .filter { it.label != stringResource(R.string.tv_detail_requester) }
+                .map { if (it.label == reportLabel) it.copy(onClick = { reportCodeOpen = true }) else it }
+    val primaries = allActions.filter { it.isPrimary || it.label == stringResource(R.string.tv_detail_decline) }
+    val leads =
+        primaries.ifEmpty {
+            listOfNotNull(
+                openAction,
+                allActions.firstOrNull { it.label == stringResource(R.string.media_mark_as) }
+                    ?: allActions.firstOrNull { it.label == reportLabel },
+            )
+        }.take(2)
+    val managed = allActions - leads.toSet()
+    val sheetOf = sheetFocus.entries.associate { (key, requester) -> requester to key }
+    val managedSheets = managed.mapNotNull { action -> action.focusRequester?.let(sheetOf::get) }.toSet()
+    val actionList =
+        if (managed.isEmpty()) {
+            leads
+        } else {
+            leads +
+                TvDetailAction(
+                    label = stringResource(R.string.tv_detail_manage_proto),
+                    icon = Icons.Filled.Tune,
+                    onClick = { manageOpen = true },
+                    showLabel = true,
+                    focusRequester = manageFocus,
+                )
+        }
+    // A sheet opened from Manage hands focus back to Manage, where the viewer left from.
+    val closers =
+        DetailSheet.entries.associateWith {
+            rememberTvOverlayCloser(
+                restoreTo = if (it in managedSheets) manageFocus else sheetFocus.getValue(it),
+                onClose = { sheet = null },
+            )
+        }
+    val manageCloser = rememberTvOverlayCloser(restoreTo = manageFocus, onClose = { manageOpen = false })
+    val reportInRow = leads.any { it.label == reportLabel }
+    val reportCloser =
+        rememberTvOverlayCloser(
+            restoreTo = if (reportInRow) sheetFocus.getValue(DetailSheet.Report) else manageFocus,
+            onClose = { reportCodeOpen = false },
         )
     LaunchedEffect(allowed) {
         if (refocusRow) {
@@ -242,6 +309,60 @@ private fun TvRequestDetailContent(
                 )
             }
             requestSections(detail, details)
+        }
+    }
+    if (reportCodeOpen) {
+        com.binge.designsystem.tv.component.TvSideSheet(onDismissRequest = reportCloser::close) { entry ->
+            com.binge.designsystem.tv.component.TvSideSheetTitle(reportLabel)
+            com.binge.designsystem.tv.component.TvSideSheetBody(
+                stringResource(R.string.tv_detail_report_scan_proto, detail.serverName),
+            )
+            androidx.compose.foundation.layout.Box(
+                modifier =
+                    Modifier
+                        .weight(1f)
+                        .fillMaxWidth(),
+                contentAlignment = androidx.compose.ui.Alignment.Center,
+            ) {
+                com.binge.designsystem.tv.component.TvQrCode(
+                    content = detail.webUrl,
+                    contentDescription = stringResource(R.string.tv_detail_report_scan_proto, detail.serverName),
+                    modifier =
+                        Modifier
+                            .focusRequester(entry)
+                            .focusable()
+                            .size(androidx.compose.ui.res.dimensionResource(R.dimen.tv_bug_report_code_size)),
+                )
+            }
+            com.binge.designsystem.tv.component.TvSideSheetStepFocus(entry)
+        }
+    }
+    if (manageOpen && sheet == null && !reportCodeOpen) {
+        com.binge.designsystem.tv.component.TvSideSheet(onDismissRequest = manageCloser::close) { entry ->
+            com.binge.designsystem.tv.component.TvSideSheetTitle(stringResource(R.string.tv_detail_manage_proto))
+            // The same row column the settings sheet uses, so rows sit the same distance apart on every sheet.
+            androidx.compose.foundation.layout.Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement =
+                    androidx.compose.foundation.layout.Arrangement.spacedBy(
+                        androidx.compose.ui.res.dimensionResource(com.binge.designsystem.R.dimen.padding_xs),
+                    ),
+            ) {
+            managed.forEachIndexed { index, action ->
+                com.binge.designsystem.tv.component.TvSideSheetRow(
+                    label = action.label,
+                    icon = action.icon,
+                    destructive = action.style == TvButtonStyle.Destructive || action.style == TvButtonStyle.DestructiveOutline,
+                    onClick = {
+                        // The action's own sheet replaces this one; an action with none runs and closes it.
+                        manageOpen = false
+                        action.onClick()
+                    },
+                    modifier = if (index == 0) Modifier.focusRequester(entry) else Modifier,
+                )
+            }
+            }
+            com.binge.designsystem.tv.component.TvSideSheetStepFocus(entry)
         }
     }
     sheet?.let { step ->

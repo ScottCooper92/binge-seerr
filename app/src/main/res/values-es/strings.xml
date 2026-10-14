@@ -1241,4 +1241,12 @@
     <string name="tv_account_sign_out">Cerrar sesión</string>
     <string name="tv_account_sign_out_title">¿Cerrar sesión?</string>
     <string name="tv_account_sign_out_message">Tendrás que volver a iniciar sesión en este servidor.</string>
+    <string name="tv_issue_reply_on_phone_proto">Responde desde tu teléfono</string>
+    <string name="tv_issue_edit_report_proto">Editar el informe</string>
+    <string name="tv_issue_edit_comment_proto">Editar tu comentario</string>
+    <string name="tv_issue_edit_on_phone_proto">Editar en tu teléfono</string>
+    <string name="tv_issue_hand_off_body_proto">Escanea con tu teléfono para abrir esta incidencia en %1$s y responder o editar allí.</string>
+    <string name="tv_issue_open_in_proto">Abrir en %1$s</string>
+    <string name="tv_detail_manage_proto">Gestionar</string>
+    <string name="tv_detail_report_scan_proto">Escanea con tu teléfono para abrir este título en %1$s y comunicar la incidencia allí.</string>
 </resources>
