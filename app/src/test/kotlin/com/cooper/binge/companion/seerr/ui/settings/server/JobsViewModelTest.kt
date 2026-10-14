@@ -109,18 +109,18 @@ class JobsViewModelTest {
             val vm = viewModel()
             vm.awaitReady()
             val failed = awaitEvent(vm.events)
-            vm.run(MEDIA_SERVER_SCAN_JOB_ID)
+            vm.run(PLEX_FULL_SCAN_JOB_ID)
             assertTrue(failed.await() is EditorEvent.Failed)
-            val kept = vm.uiState.first { it is JobsUiState.Ready && MEDIA_SERVER_SCAN_JOB_ID in it.failedIds } as JobsUiState.Ready
-            assertFalse(MEDIA_SERVER_SCAN_JOB_ID in kept.busyIds)
+            val kept = vm.uiState.first { it is JobsUiState.Ready && PLEX_FULL_SCAN_JOB_ID in it.failedIds } as JobsUiState.Ready
+            assertFalse(PLEX_FULL_SCAN_JOB_ID in kept.busyIds)
 
             // Longer than the outcome note lasts: the failure is the row's state, not a timed note.
             delay(50)
-            assertTrue(MEDIA_SERVER_SCAN_JOB_ID in (vm.uiState.value as JobsUiState.Ready).failedIds)
+            assertTrue(PLEX_FULL_SCAN_JOB_ID in (vm.uiState.value as JobsUiState.Ready).failedIds)
 
             seerr.serve("POST /api/v1/settings/jobs/plex-full-scan/run", job("plex-full-scan", running = false))
-            vm.run(MEDIA_SERVER_SCAN_JOB_ID)
-            vm.uiState.first { it is JobsUiState.Ready && MEDIA_SERVER_SCAN_JOB_ID !in it.failedIds }
+            vm.run(PLEX_FULL_SCAN_JOB_ID)
+            vm.uiState.first { it is JobsUiState.Ready && PLEX_FULL_SCAN_JOB_ID !in it.failedIds }
         }
 
     @Test
@@ -129,8 +129,8 @@ class JobsViewModelTest {
             seerr.serve("POST /api/v1/settings/jobs/plex-full-scan/cancel", """{"message":"boom"}""", code = 500)
             val vm = viewModel()
             vm.awaitReady()
-            vm.cancel(MEDIA_SERVER_SCAN_JOB_ID)
-            vm.uiState.first { it is JobsUiState.Ready && MEDIA_SERVER_SCAN_JOB_ID in it.failedIds }
+            vm.cancel(PLEX_FULL_SCAN_JOB_ID)
+            vm.uiState.first { it is JobsUiState.Ready && PLEX_FULL_SCAN_JOB_ID in it.failedIds }
         }
 
     @Test
@@ -139,7 +139,7 @@ class JobsViewModelTest {
             seerr.serveFrom("GET /api/v1/settings/jobs", delayMillis = 50) { JOBS }
             seerr.serve("POST /api/v1/settings/jobs/plex-full-scan/run", job("plex-full-scan", running = false))
             val vm = viewModel()
-            vm.runWhenReady(MEDIA_SERVER_SCAN_JOB_ID)
+            vm.runWhenReady(PLEX_FULL_SCAN_JOB_ID)
             seerr.awaitCount(
                 "POST",
                 "/api/v1/settings/jobs/plex-full-scan/run",
@@ -157,7 +157,7 @@ class JobsViewModelTest {
             val vm = viewModel()
             vm.uiState.first { it is JobsUiState.Error }
             seerr.serve("GET /api/v1/settings/jobs", JOBS)
-            vm.runWhenReady(MEDIA_SERVER_SCAN_JOB_ID)
+            vm.runWhenReady(PLEX_FULL_SCAN_JOB_ID)
             seerr.awaitCount(
                 "POST",
                 "/api/v1/settings/jobs/plex-full-scan/run",
@@ -174,7 +174,7 @@ class JobsViewModelTest {
             val vm = viewModel()
             vm.uiState.first { it is JobsUiState.Error }
             val failed = awaitEvent(vm.events)
-            vm.runWhenReady(MEDIA_SERVER_SCAN_JOB_ID)
+            vm.runWhenReady(PLEX_FULL_SCAN_JOB_ID)
             assertTrue(failed.await() is EditorEvent.Failed)
             assertTrue(vm.uiState.value is JobsUiState.Error)
         }
