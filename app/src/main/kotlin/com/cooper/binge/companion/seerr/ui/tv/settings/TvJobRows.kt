@@ -38,10 +38,14 @@ internal class TvJobs(
     val presses: TvJobPresses = TvJobPresses(),
 )
 
-/** A press on a job's row: whether it stopped the job, and whether the row still says it is working. */
+/**
+ * A press on a job's row: whether it stopped the job, and whether the row still says it is working. [serial] counts the
+ * presses on that row, so a second press while the first is held is a new value and restarts the hold.
+ */
 internal data class TvJobPress(
     val stopping: Boolean,
     val holding: Boolean = true,
+    val serial: Int = 1,
 )
 
 /**
@@ -58,7 +62,7 @@ internal class TvJobPresses {
         id: String,
         stopping: Boolean,
     ) {
-        presses[id] = TvJobPress(stopping)
+        presses[id] = TvJobPress(stopping, serial = (presses[id]?.serial ?: 0) + 1)
     }
 
     fun release(id: String) {
@@ -90,7 +94,7 @@ internal fun jobLineOf(
         else -> TvJobLine.Schedule
     }
 
-/** Where a job's last action stands, as its row and page show it. */
+/** Where a job's last action stands, as its row shows it. */
 internal enum class TvJobStatus { Idle, Busy, Failed }
 
 /** The status of [id] in [this]: busy while a call is in flight, failed once one was refused, else idle. A list not read says nothing of a job. */
@@ -125,7 +129,8 @@ internal fun jobLine(
 
 /**
  * The media server row: start the library scan, the "it downloaded but isn't showing" fix from the sofa, or cancel it
- * while it runs. Its line is the scan's own state in place, else the server it scans.
+ * while it runs. Its line is the scan's own state in place, else the server it scans. It takes no press hold: a scan
+ * runs for minutes, so its own running line already shows the press took, where a short job would be gone in a blink.
  */
 @Composable
 internal fun mediaServerRow(
