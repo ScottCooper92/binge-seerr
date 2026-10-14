@@ -1173,10 +1173,6 @@
     <string name="tv_detail_requester">Requester</string>
     <string name="tv_requester_quota">%1$s: %2$s</string>
     <string name="tv_requester_limit_title">Limit</string>
-    <plurals name="tv_requester_limit_value">
-        <item quantity="one">%1$d request</item>
-        <item quantity="other">%1$d requests</item>
-    </plurals>
     <string name="tv_requester_window_title">Counted over</string>
     <string name="tv_requester_phone">Everything else on your phone</string>
     <string name="tv_detail_details">Details</string>

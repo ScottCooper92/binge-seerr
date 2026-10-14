@@ -15,9 +15,6 @@ import com.cooper.binge.companion.seerr.ui.users.settings.QuotaDefault
 /** The quota windows the sheet offers, in days: a remote picks one rather than stepping through a month. */
 internal val QuotaWindowDays = listOf(1, 3, 7, 14, 30)
 
-/** The highest request limit the sheet's stepper reaches; 0 is unlimited. */
-internal const val QUOTA_LIMIT_MAX = 100
-
 /**
  * What the requester sheet shows, put together from the three editors it drives. A null part is one this viewer is not
  * offered here: the server does not offer the permission, or does not let this viewer change this user's quota.

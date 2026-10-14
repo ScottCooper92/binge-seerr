@@ -8,6 +8,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -26,12 +27,18 @@ import com.binge.designsystem.tv.component.TvSideSheetTitle
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.seerr.ManageablePermission
 import com.cooper.binge.companion.seerr.ui.hub.HubQuotaBucket
+import com.cooper.binge.companion.seerr.ui.settings.server.MAX_LIMIT_CHOICE
+import com.cooper.binge.companion.seerr.ui.tv.TvFormNote
+import com.cooper.binge.companion.seerr.ui.tv.TvFormNoteTone
+import com.cooper.binge.companion.seerr.ui.tv.rememberTvTransientEvent
+import com.cooper.binge.companion.seerr.ui.tv.settings.tvNoteOrNull
 import com.cooper.binge.companion.seerr.ui.users.UserDetailViewModel
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorUiState
 import com.cooper.binge.companion.seerr.ui.users.settings.ExtrasEditorUiState
 import com.cooper.binge.companion.seerr.ui.users.settings.GeneralSettingsViewModel
 import com.cooper.binge.companion.seerr.ui.users.settings.PermissionsViewModel
 import com.cooper.binge.companion.seerr.ui.users.settings.QuotaDefault
+import kotlinx.coroutines.flow.merge
 import com.binge.designsystem.R as DesR
 
 /** What the requester sheet can be asked to do, as the user's own settings pages would do it. */
@@ -54,6 +61,7 @@ internal fun ColumnScope.TvRequesterStep(
     isMovie: Boolean,
     actions: TvRequesterActions,
     entryFocus: FocusRequester,
+    note: String? = null,
 ) {
     TvSideSheetTitle(state.name ?: stringResource(R.string.tv_detail_requester))
     quotaLine(state, isMovie)?.let { TvSideSheetBody(it) }
@@ -90,6 +98,7 @@ internal fun ColumnScope.TvRequesterStep(
     }
     // Under the rows rather than among them, so a failed save's Retry stays in view however far the override runs.
     TvSaveStatus(status = state.saveStatus, onRetry = actions.onRetrySave)
+    note?.let { TvFormNote(it, tone = TvFormNoteTone.Error) }
     TvSideSheetBody(stringResource(R.string.tv_requester_phone))
     TvSideSheetStepFocus(entryFocus)
 }
@@ -113,16 +122,18 @@ private fun TvQuotaOverrideRows(
         modifier = modifier,
     )
     if (!override.on) return
+    // Widened to a limit the server holds past the web client's top, and kept so it does not shrink as the user steps down.
+    val limitTop = remember { maxOf(MAX_LIMIT_CHOICE, override.limit) }
     TvSideSheetBody(stringResource(R.string.tv_requester_limit_title))
     TvNumberStepper(
         value = override.limit,
         onValueChange = { onChange(override.copy(limit = it)) },
-        range = 0..QUOTA_LIMIT_MAX,
+        range = 0..limitTop,
         valueLabel =
             if (override.limit == 0) {
                 stringResource(R.string.hub_quota_unlimited)
             } else {
-                pluralStringResource(R.plurals.tv_requester_limit_value, override.limit, override.limit)
+                pluralStringResource(R.plurals.server_settings_limit_count, override.limit, override.limit)
             },
     )
     TvOptionGroup(
@@ -198,6 +209,9 @@ internal fun ColumnScope.TvRequesterSheetEntry(
     val userState by user.uiState.collectAsStateWithLifecycle()
     val permissionsState by permissions.uiState.collectAsStateWithLifecycle()
     val generalState by general.uiState.collectAsStateWithLifecycle()
+    // A refused save puts the control back and says nothing else, so the sheet reports it as the phone's snackbar does.
+    val events = remember(permissions, general) { merge(permissions.events, general.events) }
+    val note = rememberTvTransientEvent(events).tvNoteOrNull()
     TvRequesterStep(
         state = requesterState(isMovie, userState, permissionsState, generalState),
         isMovie = isMovie,
@@ -212,5 +226,6 @@ internal fun ColumnScope.TvRequesterSheetEntry(
                 },
             ),
         entryFocus = entryFocus,
+        note = note,
     )
 }

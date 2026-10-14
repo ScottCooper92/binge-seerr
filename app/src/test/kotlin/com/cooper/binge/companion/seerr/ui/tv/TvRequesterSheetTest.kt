@@ -94,6 +94,25 @@ class TvRequesterSheetTest {
     }
 
     @Test
+    fun aLimitPastTheWebClientsTopIsSteppedFromRatherThanClamped() {
+        setContent(state(override = TvQuotaOverride(on = true, limit = 150, days = 7, default = null)))
+
+        row(R.string.user_settings_quota_override_movie).requestFocus()
+        composeTestRule.waitForIdle()
+        pressKey(Key.DirectionDown)
+        pressKey(Key.DirectionLeft)
+
+        assertEquals(149, overrides.last().limit)
+    }
+
+    @Test
+    fun aRefusedSaveIsShownAsANote() {
+        setContent(state(), note = "Refused")
+
+        composeTestRule.onNodeWithText("Refused").assertIsDisplayed()
+    }
+
+    @Test
     fun theQuotaLineIsLeftOutUntilTheServerAnswers() {
         setContent(state(quotaKnown = false))
 
@@ -115,7 +134,10 @@ class TvRequesterSheetTest {
         saveStatus = SaveStatus.Idle,
     )
 
-    private fun setContent(initial: TvRequesterState) {
+    private fun setContent(
+        initial: TvRequesterState,
+        note: String? = null,
+    ) {
         composeTestRule.setContent {
             var state by remember { mutableStateOf(initial) }
             BingeTvTheme {
@@ -134,6 +156,7 @@ class TvRequesterSheetTest {
                                 onRetrySave = {},
                             ),
                         entryFocus = remember { FocusRequester() },
+                        note = note,
                     )
                 }
             }
