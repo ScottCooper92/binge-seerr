@@ -57,6 +57,7 @@ class UserDetailViewModelTest {
     private val responses = mutableMapOf<String, () -> FakeResponse>()
     private val viewModels = ViewModelStore()
     private val cache = FakeUserStore()
+    private val settingsChanges = UserSettingsChanges()
     private var stores = 0
 
     @Before
@@ -116,7 +117,15 @@ class UserDetailViewModelTest {
                 apis = SeerrApiFactory(logRequests = false, testTransport = seerr::interceptor, testDispatcher = seerr::newDispatcher),
             )
         connection.connect(seerr.url("/"), SeerrAuth.ApiKey("k3y")).getOrThrow()
-        val vm = UserDetailViewModel(connection, TitleCache(FakeTitleDao()), cache, mainDispatcherRule.dispatcher, userId)
+        val vm =
+            UserDetailViewModel(
+                connection,
+                TitleCache(FakeTitleDao()),
+                cache,
+                mainDispatcherRule.dispatcher,
+                userId,
+                settingsChanges = settingsChanges,
+            )
         viewModels.put(vm.hashCode().toString(), vm)
         backgroundScope.launch { vm.uiState.collect {} }
         return vm
@@ -199,6 +208,48 @@ class UserDetailViewModelTest {
                     .detail.quota
                     ?.movie,
             )
+        }
+
+    /** #1540: a save on the user's General page brings the page's quota up to date, and the rest of the page stands. */
+    @Test
+    fun `a save to this user's settings reads the quota again`() =
+        runTest {
+            server(viewerId = 1, permissions = ADMIN)
+            val vm = viewModel()
+            assertEquals(
+                7,
+                vm
+                    .awaitReady()
+                    .detail.quota
+                    ?.movie
+                    ?.remaining,
+            )
+            serve("GET /api/v1/user/8/quota", """{"movie":{"days":7,"limit":20,"used":3,"remaining":17},"tv":{"days":7,"limit":0}}""")
+
+            settingsChanges.changed(8)
+
+            val updated =
+                vm.uiState.first {
+                    (it as? UserDetailUiState.Ready)
+                        ?.detail
+                        ?.quota
+                        ?.movie
+                        ?.remaining == 17
+                }
+            assertEquals("Ana", (updated as UserDetailUiState.Ready).detail.item.name)
+        }
+
+    @Test
+    fun `a save to another user's settings leaves this page alone`() =
+        runTest {
+            server(viewerId = 1, permissions = ADMIN)
+            val vm = viewModel()
+            vm.awaitReady()
+            val reads = received.count { it.url.encodedPath == "/api/v1/user/8/quota" }
+
+            settingsChanges.changed(9)
+
+            assertEquals(reads, received.count { it.url.encodedPath == "/api/v1/user/8/quota" })
         }
 
     /** The server lists a user's requests to that user and to who may see everyone's, so nobody else is shown a failing list (#1015). */
