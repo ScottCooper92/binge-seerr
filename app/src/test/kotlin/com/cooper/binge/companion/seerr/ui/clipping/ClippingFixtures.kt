@@ -150,6 +150,8 @@ internal const val TV_MAX_FONT_SCALE = FONT_SCALE_13
  */
 internal fun ComposeContentTestRule.assertNoTvClippingAt(
     fontScale: Float,
+    /** Brings the screen to the state worth checking, such as a control focused, once it has first settled. */
+    settle: ComposeContentTestRule.() -> Unit = {},
     content: @Composable () -> Unit,
 ) {
     require(fontScale <= TV_MAX_FONT_SCALE) { "a TV screen is checked up to $TV_MAX_FONT_SCALE, not $fontScale" }
@@ -159,6 +161,8 @@ internal fun ComposeContentTestRule.assertNoTvClippingAt(
             SeerrTvTheme { Box(Modifier.fillMaxSize()) { content() } }
         }
     }
+    waitForIdle()
+    settle()
     waitForIdle()
     val checked = assertNoTextClipped()
     assertTrue("only $checked text nodes were checked", checked >= MIN_TEXT_NODES_CHECKED)

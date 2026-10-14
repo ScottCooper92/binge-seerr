@@ -225,7 +225,7 @@ internal val SampleSettingsWithApp =
 @TvPreviewsOnBlack
 @Composable
 internal fun TvShellHubPreview() {
-    TvHomeShell(page = TvDestination.Hub, onOpenPage = {}, onClosePage = {}) { _, _ ->
+    TvHomeShell(tab = TvDestination.Hub, sheet = null, onSelectTab = {}, onOpenSheet = {}, onCloseSheet = {}) { _, _ ->
         TvHubBoard(state = hub(health = ConnectionHealth.Unreachable), actions = NoHubActions)
     }
 }

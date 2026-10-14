@@ -46,7 +46,14 @@ internal fun BoardInShell(
     overlay: (@Composable BoxScope.() -> Unit)?,
     board: @Composable () -> Unit,
 ) {
-    TvHomeShell(page = destination, onOpenPage = {}, onClosePage = {}, overlay = overlay) { shown, _ ->
+    TvHomeShell(
+        tab = if (destination.isSheet) TvDestination.Hub else destination,
+        sheet = destination.takeIf { it.isSheet },
+        onSelectTab = {},
+        onOpenSheet = {},
+        onCloseSheet = {},
+        overlay = overlay,
+    ) { shown, _ ->
         if (shown == destination) board()
     }
 }

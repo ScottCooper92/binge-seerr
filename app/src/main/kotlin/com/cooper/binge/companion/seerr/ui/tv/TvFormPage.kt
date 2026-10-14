@@ -30,6 +30,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.binge.designsystem.theme.BingeShapes
+import com.binge.designsystem.tv.nav.LocalTvTopInset
 import com.binge.designsystem.tv.template.TvMessagePage
 import com.binge.designsystem.tv.template.TvPageHosting
 import com.binge.designsystem.tv.template.TvTwoPaneCopy
@@ -114,7 +115,7 @@ internal fun TvFormPage(
                                     Modifier
                                         .fillMaxSize()
                                         .verticalScroll(rememberScrollState())
-                                        .padding(top = dimensionResource(R.dimen.tv_form_top_inset)),
+                                        .padding(top = dimensionResource(R.dimen.tv_form_top_inset) + LocalTvTopInset.current),
                                 verticalArrangement = Arrangement.spacedBy(dimensionResource(TvR.dimen.tv_two_pane_action_gap)),
                                 content = form,
                             )
