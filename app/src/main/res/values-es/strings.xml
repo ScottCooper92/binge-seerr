@@ -1041,8 +1041,6 @@
     <string name="tv_settings_binge_install">Abrir Play Store</string>
     <string name="tv_see_all">Ver todo</string>
     <string name="tv_rail_account">Cuenta</string>
-    <string name="tv_account_quota_of">de %1$d restantes</string>
-    <string name="tv_account_quota_unlimited_note">Sin límite</string>
     <string name="tv_account_your_requests">Tus peticiones</string>
     <string name="tv_account_requests_empty">Todavía no has hecho ninguna petición.</string>
     <string name="field_secret_show">Mostrar el valor</string>
@@ -1076,7 +1074,7 @@
     <string name="tv_settings_report_bug_show_code">Mostrar código</string>
     <string name="tv_settings_report_bug_scan">Escanéalo con la cámara del móvil. El informe se abre con la versión de la aplicación y los datos de este televisor ya rellenados.</string>
     <string name="tv_settings_report_bug_code_description">Código QR que abre un informe de error de esta aplicación en GitHub</string>
-    <string name="tv_settings_report_bug_close">Cerrar</string>
+    <string name="tv_sheet_close">Cerrar</string>
     <string name="consent_title">Ayuda a mejorar esta aplicación</string>
     <string name="consent_subtitle">Comparte datos de uso para que veamos qué partes de la aplicación se usan y qué falla.</string>
     <string name="consent_point_shared_title">Decide qué se arregla</string>

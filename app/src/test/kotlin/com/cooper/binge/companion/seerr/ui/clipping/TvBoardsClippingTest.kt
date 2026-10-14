@@ -22,8 +22,7 @@ import com.cooper.binge.companion.seerr.ui.requests.RequestCounts
 import com.cooper.binge.companion.seerr.ui.requests.RequestFilter
 import com.cooper.binge.companion.seerr.ui.tv.NoIssuesActions
 import com.cooper.binge.companion.seerr.ui.tv.NoRequestsActions
-import com.cooper.binge.companion.seerr.ui.tv.TvPagedRows
-import com.cooper.binge.companion.seerr.ui.tv.hub.TvAccountBoard
+import com.cooper.binge.companion.seerr.ui.tv.hub.TvAccountSheet
 import com.cooper.binge.companion.seerr.ui.tv.hub.TvHubActions
 import com.cooper.binge.companion.seerr.ui.tv.hub.TvHubBoard
 import com.cooper.binge.companion.seerr.ui.tv.issue
@@ -75,7 +74,7 @@ class TvBoardsClippingTest {
 
     @Test fun `the issues grid at 1_3`() = rule.assertNoTvClippingAt(FONT_SCALE_13) { IssuesGrid() }
 
-    @Test fun `the account board at 1_3`() = rule.assertNoTvClippingAt(FONT_SCALE_13) { Account() }
+    @Test fun `the account sheet at 1_3`() = rule.assertNoTvClippingAt(FONT_SCALE_13) { Account() }
 
     private fun longRequest(index: Int) =
         request(
@@ -207,7 +206,7 @@ class TvBoardsClippingTest {
 
     @Composable
     private fun Account() =
-        TvAccountBoard(
+        TvAccountSheet(
             detail =
                 UserDetailUiState.Ready(
                     UserDetail(
@@ -223,15 +222,8 @@ class TvBoardsClippingTest {
                         webUrl = "http://seerr.lan:5055/users/7",
                     ),
                 ),
-            requests =
-                TvPagedRows(
-                    count = 4,
-                    at = { listOf(longRequest(1), longRequest(2), longRequest(3), longRequest(4)).getOrNull(it) },
-                ),
-            onOpenRequest = {},
+            accountFailed = false,
             onRetry = {},
-            onRetryRequests = {},
-            overlayOpen = false,
-            now = NOW,
+            onDismissRequest = {},
         )
 }

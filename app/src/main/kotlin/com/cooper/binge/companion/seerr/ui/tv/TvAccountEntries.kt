@@ -3,7 +3,6 @@ package com.cooper.binge.companion.seerr.ui.tv
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -11,22 +10,20 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.hub.HubUiState
 import com.cooper.binge.companion.seerr.ui.hub.HubViewModel
-import com.cooper.binge.companion.seerr.ui.tv.hub.TvAccountBoard
+import com.cooper.binge.companion.seerr.ui.tv.hub.TvAccountSheet
+import com.cooper.binge.companion.seerr.ui.tv.requests.TvMyRequests
 import com.cooper.binge.companion.seerr.ui.tv.requests.TvRequestsGridContent
 import com.cooper.binge.companion.seerr.ui.users.UserDetailUiState
 import com.cooper.binge.companion.seerr.ui.users.UserDetailViewModel
 
-/** Who is signed in, and what they have requested: the page reads the same hub state Home's top row does. */
+/** Who is signed in: the sheet reads the same hub state Home's top row does, and the account's own detail once it has an id. */
 @Composable
 internal fun TvAccountEntry(
-    openRequestId: Int?,
-    onOpenRequest: (Int) -> Unit,
-    seeAllOpen: Boolean,
-    onSeeAll: () -> Unit,
     hubViewModel: HubViewModel,
+    onDismissRequest: () -> Unit,
 ) {
     val hub by hubViewModel.uiState.collectAsStateWithLifecycle()
-    // The hub is `Lazily` and only auto-retries while it is visible, so this page says so, as Home and Settings do.
+    // The hub is `Lazily` and only auto-retries while it is visible, so this sheet says so, as Home and Settings do.
     DisposableEffect(hubViewModel) {
         // It reads the account and nothing of the dashboard's, so no downloads poll and no counts (#827).
         hubViewModel.setScreenVisible(true, dashboard = false)
@@ -35,56 +32,62 @@ internal fun TvAccountEntry(
     val account = (hub as? HubUiState.Ready)?.overview?.account
     if (account == null) {
         // Still loading while the hub is, failed once it has answered without an account.
-        TvAccountBoard(
+        TvAccountSheet(
             detail = null,
-            requests = TvPagedRows(count = 0, at = { null }),
-            onOpenRequest = {},
-            onRetry = hubViewModel::recheck,
-            onRetryRequests = {},
-            overlayOpen = false,
             accountFailed = hub !is HubUiState.Loading,
+            onRetry = hubViewModel::recheck,
+            onDismissRequest = onDismissRequest,
         )
         return
     }
-    TvAccountContent(
-        accountId = account.id,
-        overlayOpen = openRequestId != null || seeAllOpen,
-        onOpenRequest = onOpenRequest,
-        onSeeAll = onSeeAll,
-    )
+    TvAccountContent(accountId = account.id, onDismissRequest = onDismissRequest)
 }
 
-/** The account's own page: the same [UserDetailViewModel] as the phone's user page, bound to the signed-in user. */
+/** The account's own sheet: the same [UserDetailViewModel] as the phone's user page, bound to the signed-in user. */
 @Composable
 private fun TvAccountContent(
     accountId: Int,
-    overlayOpen: Boolean,
-    onOpenRequest: (Int) -> Unit,
-    onSeeAll: () -> Unit,
+    onDismissRequest: () -> Unit,
     viewModel: UserDetailViewModel = accountViewModel(accountId),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    // The page stays under its see-all grid, so this one hook ticks the clock for both.
     DisposableEffect(viewModel) {
         viewModel.setScreenVisible(true)
         onDispose { viewModel.setScreenVisible(false) }
     }
-    val requests = viewModel.requests.collectAsLazyPagingItems()
-    TvAccountBoard(
+    TvAccountSheet(
         detail = state,
-        requests = requests.toRows(null) { it.id },
-        onOpenRequest = { onOpenRequest(it.id) },
+        accountFailed = false,
         onRetry = viewModel::reload,
-        onRetryRequests = requests::retry,
-        overlayOpen = overlayOpen,
-        onSeeAll = onSeeAll,
-        now = (state as? UserDetailUiState.Ready)?.now ?: System.currentTimeMillis(),
+        onDismissRequest = onDismissRequest,
     )
+}
+
+/**
+ * The signed-in user's own requests as a Home row, on the one [UserDetailViewModel] the account sheet and the see-all grid share.
+ * Null while the account is unknown, which leaves Home to the server's filters.
+ */
+@Composable
+internal fun rememberMyRequests(
+    accountId: Int?,
+    onSeeAll: () -> Unit,
+): TvMyRequests? {
+    accountId ?: return null
+    val viewModel = accountViewModel(accountId)
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val requests = viewModel.requests.collectAsLazyPagingItems()
+    val count =
+        when (val ready = state) {
+            is UserDetailUiState.Ready -> ready.detail.item.requestCount
+            is UserDetailUiState.Seeded -> ready.item.requestCount
+            else -> null
+        }
+    return TvMyRequests(rows = requests.toRows(null) { it.id }, count = count, onSeeAll = onSeeAll)
 }
 
 /** The signed-in user's [UserDetailViewModel], under one key so the page and its see-all grid share the one paged list. */
 @Composable
-private fun accountViewModel(accountId: Int): UserDetailViewModel =
+internal fun accountViewModel(accountId: Int): UserDetailViewModel =
     hiltViewModel<UserDetailViewModel, UserDetailViewModel.Factory>(
         key = "account-$accountId",
         creationCallback = { factory -> factory.create(accountId) },

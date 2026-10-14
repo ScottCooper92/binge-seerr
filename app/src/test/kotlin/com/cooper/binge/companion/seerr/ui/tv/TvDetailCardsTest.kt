@@ -4,13 +4,14 @@ import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onNodeWithText
+import androidx.tv.material3.Text
 import com.binge.designsystem.tv.theme.BingeTvTheme
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.hub.HubQuotaBucket
 import com.cooper.binge.companion.seerr.ui.requests.DetailDownload
 import com.cooper.binge.companion.seerr.ui.requests.RequestDestination
 import com.cooper.binge.companion.seerr.ui.requests.SeasonState
-import com.cooper.binge.companion.seerr.ui.tv.hub.TvQuotaTile
+import com.cooper.binge.companion.seerr.ui.tv.hub.quotaLine
 import com.cooper.binge.companion.seerr.ui.tv.requests.TvDownloadCard
 import com.cooper.binge.companion.seerr.ui.tv.requests.TvInfoCardItem
 import com.cooper.binge.companion.seerr.ui.tv.requests.TvSeasonCard
@@ -26,12 +27,11 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
-private const val MOVIES = "Movies"
 private const val TITLE = "Heat.1995.2160p"
 
 /**
  * The TV detail and account cards' own rules (#1054): which facts a request page lists, a season and a download
- * with less to say, and a quota tile in each of its states.
+ * with less to say, and the account sheet's quota line in each of its states.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(qualifiers = "w960dp-h540dp-television-xhdpi")
@@ -95,23 +95,23 @@ class TvDetailCardsTest {
 
     @Test
     fun aSpentQuotaSaysNoneLeft() {
-        setTile(HubQuotaBucket(limit = 5, remaining = 0, days = 7), loaded = true)
+        setQuota(HubQuotaBucket(limit = 5, remaining = 0, days = 7), loaded = true)
 
-        composeTestRule.onNodeWithText(string(R.string.tv_hub_quota_none_left)).assertExists()
-        composeTestRule.onNodeWithText(string(R.string.tv_account_quota_of, 5)).assertDoesNotExist()
+        composeTestRule.onNodeWithText(string(R.string.tv_hub_quota_none_left), substring = true).assertExists()
+        composeTestRule.onNodeWithText("0 of 5", substring = true).assertDoesNotExist()
     }
 
     @Test
     fun aPartUsedQuotaSaysWhatItIsOutOf() {
-        setTile(HubQuotaBucket(limit = 5, remaining = 3, days = 7), loaded = true)
+        setQuota(HubQuotaBucket(limit = 5, remaining = 3, days = 7), loaded = true)
 
-        composeTestRule.onNodeWithText("3").assertExists()
-        composeTestRule.onNodeWithText(string(R.string.tv_account_quota_of, 5)).assertExists()
+        composeTestRule.onNodeWithText("3 of 5 left", substring = true).assertExists()
+        composeTestRule.onNodeWithText("Every 7 days", substring = true).assertExists()
     }
 
     @Test
     fun anUnlimitedQuotaSaysSo() {
-        setTile(bucket = null, loaded = true)
+        setQuota(bucket = null, loaded = true)
 
         composeTestRule.onNodeWithText(string(R.string.hub_quota_unlimited)).assertExists()
     }
@@ -119,17 +119,17 @@ class TvDetailCardsTest {
     /** Before the quota loads the tile holds its place, so the row does not jump when the numbers land. */
     @Test
     fun aQuotaThatHasNotLoadedShowsAPlaceholder() {
-        setTile(HubQuotaBucket(limit = 5, remaining = 3, days = 7), loaded = false)
+        setQuota(HubQuotaBucket(limit = 5, remaining = 3, days = 7), loaded = false)
 
         composeTestRule.onNodeWithText(string(R.string.hub_stat_placeholder)).assertExists()
-        composeTestRule.onNodeWithText("3").assertDoesNotExist()
+        composeTestRule.onNodeWithText("3 of 5", substring = true).assertDoesNotExist()
     }
 
-    private fun setTile(
+    private fun setQuota(
         bucket: HubQuotaBucket?,
         loaded: Boolean,
     ) {
-        composeTestRule.setContent { BingeTvTheme { TvQuotaTile(label = MOVIES, bucket = bucket, loaded = loaded) } }
+        composeTestRule.setContent { BingeTvTheme { Text(quotaLine(bucket, loaded)) } }
         composeTestRule.waitForIdle()
     }
 

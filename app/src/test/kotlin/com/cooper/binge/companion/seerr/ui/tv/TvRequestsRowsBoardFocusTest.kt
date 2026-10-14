@@ -3,6 +3,7 @@ package com.cooper.binge.companion.seerr.ui.tv
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.hasTextExactly
 import androidx.compose.ui.test.isFocusable
 import androidx.compose.ui.test.onRoot
@@ -19,6 +20,7 @@ import com.cooper.binge.companion.seerr.ui.requests.RequestCounts
 import com.cooper.binge.companion.seerr.ui.requests.RequestFilter
 import com.cooper.binge.companion.seerr.ui.requests.RequestSort
 import com.cooper.binge.companion.seerr.ui.requests.RequestsUiState
+import com.cooper.binge.companion.seerr.ui.tv.requests.TvMyRequests
 import com.cooper.binge.companion.seerr.ui.tv.requests.TvRequestsActions
 import com.cooper.binge.companion.seerr.ui.tv.requests.TvRequestsRowsBoard
 import com.cooper.binge.companion.seerr.util.createSeerrKeyboardComposeRule
@@ -32,6 +34,7 @@ import org.robolectric.annotation.Config
 
 private const val HEAT = "Heat"
 private const val BEAR = "The Bear"
+private const val SEVERANCE = "Severance"
 private const val SEE_ALL = "See all"
 private const val MORE_THAN_A_ROW = 45
 
@@ -48,6 +51,7 @@ class TvRequestsRowsBoardFocusTest {
 
     private val opened = mutableListOf<Int>()
     private val seeAll = mutableListOf<RequestFilter>()
+    private var seeAllMine = 0
     private var retries = 0
     private var scopeRetries = 0
 
@@ -95,6 +99,53 @@ class TvRequestsRowsBoardFocusTest {
         composeTestRule.onNode(hasContentDescription(SEE_ALL)).assertDoesNotExist()
     }
 
+    /** The signed-in user's own requests are a last row below the filters', so Down from the last filter reaches them. */
+    @Test
+    fun yourRequestsAreTheLastRowAndOkOnACardOpensIt() {
+        setBoard(mine = listOf(request(3, SEVERANCE, SeerrRequestStatusCode.Approved)))
+        card(HEAT).requestFocus()
+        composeTestRule.waitForIdle()
+
+        pressDown()
+        pressDown()
+        card(SEVERANCE).assertIsFocused()
+        pressOk()
+
+        assertEquals(listOf(3), opened)
+    }
+
+    @Test
+    fun noRequestsOfYoursLeavesNoRow() {
+        setBoard(mine = emptyList())
+
+        composeTestRule.onNode(hasText(string(R.string.tv_account_your_requests), substring = true)).assertDoesNotExist()
+    }
+
+    @Test
+    fun pastTheCapYourRowEndsInASeeAllTileThatOpensYourWholeList() {
+        setBoard(mine = listOf(request(3, SEVERANCE, SeerrRequestStatusCode.Approved)), mineCount = MORE_THAN_A_ROW)
+        card(HEAT).requestFocus()
+        composeTestRule.waitForIdle()
+        pressDown()
+        pressDown()
+        card(SEVERANCE).assertIsFocused()
+        composeTestRule.waitForIdle()
+
+        pressRight()
+        seeAllTile().assertIsFocused()
+        pressOk()
+
+        assertEquals(1, seeAllMine)
+        assertEquals(emptyList<RequestFilter>(), seeAll)
+    }
+
+    @Test
+    fun yourRequestsAloneStillMakeAHome() {
+        setBoard(empty = true, mine = listOf(request(3, SEVERANCE, SeerrRequestStatusCode.Approved)))
+
+        card(SEVERANCE).assertExists()
+    }
+
     @Test
     fun aFailedLoadOffersARetry() {
         setBoard(refresh = TvLoadPhase.Failed, empty = true)
@@ -121,6 +172,8 @@ class TvRequestsRowsBoardFocusTest {
         refresh: TvLoadPhase = TvLoadPhase.Idle,
         empty: Boolean = false,
         scopeError: SeerrError? = null,
+        mine: List<com.cooper.binge.companion.seerr.ui.requests.RequestItem> = emptyList(),
+        mineCount: Int = mine.size,
     ) {
         val pending = listOf(request(1, HEAT, SeerrRequestStatusCode.Pending))
         val approved = listOf(request(2, BEAR, SeerrRequestStatusCode.Approved))
@@ -152,6 +205,12 @@ class TvRequestsRowsBoardFocusTest {
                             }
                         TvPagedRows(count = items.size, at = { items.getOrNull(it) }, refresh = refresh)
                     },
+                    mine =
+                        TvMyRequests(
+                            rows = TvPagedRows(count = mine.size, at = { mine.getOrNull(it) }),
+                            count = mineCount,
+                            onSeeAll = { seeAllMine++ },
+                        ),
                     actions =
                         TvRequestsActions(
                             onOpenDetail = { item ->

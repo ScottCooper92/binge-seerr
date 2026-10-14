@@ -1076,8 +1076,6 @@
     <string name="tv_settings_binge_install">Open the Play Store</string>
     <string name="tv_see_all">See all</string>
     <string name="tv_rail_account">Account</string>
-    <string name="tv_account_quota_of">of %1$d left</string>
-    <string name="tv_account_quota_unlimited_note">No limit</string>
     <string name="tv_account_your_requests">Your requests</string>
     <string name="tv_account_requests_empty">You have not made any requests yet.</string>
     <!-- The eye in a masked field. The description names the tap's effect, so it changes with the state. -->
@@ -1129,7 +1127,7 @@
     <string name="tv_settings_report_bug_show_code">Show code</string>
     <string name="tv_settings_report_bug_scan">Scan it with your phone\'s camera. The report opens with this app\'s version and this TV\'s details filled in.</string>
     <string name="tv_settings_report_bug_code_description">QR code that opens a bug report for this app on GitHub</string>
-    <string name="tv_settings_report_bug_close">Close</string>
+    <string name="tv_sheet_close">Close</string>
     <string name="consent_title">Help make this app better</string>
     <string name="consent_subtitle">Share usage data so we can see which parts of the app get used and what breaks.</string>
     <string name="consent_point_shared_title">Shapes what gets fixed</string>
