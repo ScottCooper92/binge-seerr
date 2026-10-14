@@ -15,11 +15,13 @@ import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.isFocusable
+import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performKeyInput
 import androidx.compose.ui.test.pressKey
 import androidx.compose.ui.test.requestFocus
 import com.binge.designsystem.tv.theme.BingeTvTheme
 import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.ui.issues.IssueDetailUiState
 import com.cooper.binge.companion.seerr.ui.tv.issues.TvIssueSheet
 import com.cooper.binge.companion.seerr.ui.tv.issues.TvIssueSheetActions
@@ -55,12 +57,31 @@ class TvIssueSheetFocusTest {
     private var toggles = 0
     private var issueDeletes = 0
     private var opened = 0
+    private var retries = 0
     private val commentDeletes = mutableListOf<Int>()
 
     @Test
     fun focusArrivesOnTheReport() {
         setSheet()
 
+        card(REPORT).assertIsFocused()
+    }
+
+    /** A row seeded from the board whose fetch then failed offers Retry, not a loading line that never ends (#1583). */
+    @Test
+    fun aSeededIssueWhoseFetchFailsOffersRetry() {
+        val loaded = state as IssueDetailUiState.Ready
+        state = IssueDetailUiState.Seeded(loaded.detail.item, error = SeerrError.Unreachable)
+        setSheet()
+
+        row(R.string.hub_retry).assertIsFocused()
+        composeTestRule.onRoot().performKeyInput { pressKey(Key.DirectionCenter) }
+        composeTestRule.waitForIdle()
+        assertEquals(1, retries)
+
+        state = loaded
+        composeTestRule.waitForIdle()
+        composeTestRule.settleShellHandOff()
         card(REPORT).assertIsFocused()
     }
 
@@ -234,7 +255,7 @@ class TvIssueSheetFocusTest {
                     actions =
                         TvIssueSheetActions(
                             onDismiss = { dismissals++ },
-                            onRetry = {},
+                            onRetry = { retries++ },
                             onToggleStatus = { toggles++ },
                             onDeleteIssue = { issueDeletes++ },
                             onDeleteComment = { commentDeletes += it },

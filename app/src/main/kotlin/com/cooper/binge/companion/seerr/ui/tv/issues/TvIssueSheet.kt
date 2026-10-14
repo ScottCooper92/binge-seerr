@@ -69,17 +69,19 @@ internal fun TvIssueSheet(
     var afterDelete by rememberSaveable { mutableStateOf<String?>(null) }
     // Loading and a failure are roots of their own, so the issue arriving starts the thread afresh and focus is offered to
     // the report; on one root, the offer went to the loading line and was not made again once it was gone.
+    // A row seeded from the board's cache whose fetch then failed is a failure too, with Retry, not a loading line forever.
+    val failed = state is IssueDetailUiState.Error || (state as? IssueDetailUiState.Seeded)?.error != null
     val root =
-        when (state) {
-            is IssueDetailUiState.Ready -> initialPage
-            is IssueDetailUiState.Error -> PAGE_FAILED
-            IssueDetailUiState.Loading, is IssueDetailUiState.Seeded -> PAGE_LOADING
+        when {
+            state is IssueDetailUiState.Ready -> initialPage
+            failed -> PAGE_FAILED
+            else -> PAGE_LOADING
         }
     TvSideSheetStack(root = root, onDismissRequest = actions.onDismiss, modifier = modifier, toBottomEdge = true) { nav ->
-        when (state) {
-            is IssueDetailUiState.Ready -> IssuePages(state, nav, actions, run, afterDelete) { afterDelete = it }
-            is IssueDetailUiState.Error -> Failed(nav, actions.onRetry)
-            IssueDetailUiState.Loading, is IssueDetailUiState.Seeded -> Loading(nav)
+        when {
+            state is IssueDetailUiState.Ready -> IssuePages(state, nav, actions, run, afterDelete) { afterDelete = it }
+            failed -> Failed(nav, actions.onRetry)
+            else -> Loading(nav)
         }
     }
 }
