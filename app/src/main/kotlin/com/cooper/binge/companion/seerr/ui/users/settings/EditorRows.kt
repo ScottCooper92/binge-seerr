@@ -21,11 +21,12 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import com.binge.designsystem.component.BingeBottomSheet
+import com.binge.designsystem.component.BingeAdaptiveSheet
 import com.binge.designsystem.component.BingeChoice
 import com.binge.designsystem.component.BingeChoiceList
 import com.binge.designsystem.component.BingeFilledButton
 import com.binge.designsystem.component.BingeOutlinedButton
+import com.binge.designsystem.component.BingeSheetKind
 import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.component.ListItemConnector
 import com.binge.designsystem.component.TextEntrySurface
@@ -92,7 +93,7 @@ internal fun textSettingItem(
         // A secret is kept as typed: a password's edge spaces are part of it. A caller that wants a key trimmed trims it.
         val submitted = if (secret) draft else draft.trim()
         val problem = check(submitted)
-        BingeBottomSheet(onDismissRequest = { open = false }) {
+        BingeAdaptiveSheet(kind = BingeSheetKind.Task, onDismissRequest = { open = false }) {
             if (secret) {
                 SecretEntry(
                     title = label,

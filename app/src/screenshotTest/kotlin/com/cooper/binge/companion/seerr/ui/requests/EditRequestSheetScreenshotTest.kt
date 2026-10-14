@@ -8,6 +8,7 @@ import androidx.compose.ui.unit.dp
 import com.android.tools.screenshot.PreviewTest
 import com.cooper.binge.companion.seerr.preview.SeerrComponentPreviews
 import com.cooper.binge.companion.seerr.preview.SheetFrame
+import com.cooper.binge.companion.seerr.preview.SideSheetFrame
 
 /** A phone-height sheet: a lazy list under an unbounded height would not measure, so the frame bounds it as the real sheet does. */
 private val SHEET_HEIGHT = 640.dp
@@ -26,6 +27,12 @@ class EditRequestSheetScreenshotTest {
     @Composable
     fun longRun() = EditFrame(longRunEditState(), LONG_RUN_SHEET_HEIGHT)
 
+    /** The editor as a page of the actions side sheet, under a Back, at the expanded width. */
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun expandedPage() = EditFrame(allTickedEditState(), side = true)
+
     /** Everything changeable is ticked, so the toggle reads "Clear" and the held season stays checked and disabled. */
     @PreviewTest
     @SeerrComponentPreviews
@@ -43,22 +50,30 @@ class EditRequestSheetScreenshotTest {
 private fun EditFrame(
     edit: EditState,
     height: Dp = SHEET_HEIGHT,
+    side: Boolean = false,
 ) {
-    SheetFrame(Modifier.height(height)) {
-        EditRequestContent(
-            item = pendingDetail().item,
-            edit = edit,
-            actions =
-                EditRequestActions(
-                    onToggleSeason = {},
-                    onSelectAllSeasons = {},
-                    onSelectServer = {},
-                    onSelectProfile = {},
-                    onSelectRootFolder = {},
-                    onToggleTag = {},
-                    onSave = {},
-                    onDismiss = {},
-                ),
-        )
+    if (side) {
+        SideSheetFrame(stacked = true) { EditBody(edit) }
+    } else {
+        SheetFrame(Modifier.height(height)) { EditBody(edit) }
     }
+}
+
+@Composable
+private fun EditBody(edit: EditState) {
+    EditRequestContent(
+        item = pendingDetail().item,
+        edit = edit,
+        actions =
+            EditRequestActions(
+                onToggleSeason = {},
+                onSelectAllSeasons = {},
+                onSelectServer = {},
+                onSelectProfile = {},
+                onSelectRootFolder = {},
+                onToggleTag = {},
+                onSave = {},
+                onDismiss = {},
+            ),
+    )
 }

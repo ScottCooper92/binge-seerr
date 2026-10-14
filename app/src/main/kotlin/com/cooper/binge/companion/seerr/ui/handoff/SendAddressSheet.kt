@@ -23,10 +23,11 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
-import com.binge.designsystem.component.BingeBottomSheet
+import com.binge.designsystem.component.BingeAdaptiveSheet
 import com.binge.designsystem.component.BingeFilledButton
 import com.binge.designsystem.component.BingeLoadingIndicator
 import com.binge.designsystem.component.BingePinField
+import com.binge.designsystem.component.BingeSheetKind
 import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
 import com.cooper.binge.companion.seerr.R
@@ -39,7 +40,7 @@ internal fun SendAddressSheet(
     state: SendAddressUiState,
     actions: SendAddressActions,
 ) {
-    BingeBottomSheet(onDismissRequest = actions.onClose) {
+    BingeAdaptiveSheet(kind = BingeSheetKind.Task, onDismissRequest = actions.onClose) {
         SendAddressSheetContent(state = state, actions = actions)
     }
 }

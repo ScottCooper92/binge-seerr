@@ -14,7 +14,8 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.BingeActionFooter
-import com.binge.designsystem.component.BingeBottomSheet
+import com.binge.designsystem.component.BingeAdaptiveSheet
+import com.binge.designsystem.component.BingeSheetKind
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.seerr.ManageablePermission
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorToggleGroup
@@ -36,7 +37,7 @@ internal fun PermissionsEditorSheet(
     onSave: () -> Unit,
     onDismiss: () -> Unit,
 ) {
-    BingeBottomSheet(onDismissRequest = onDismiss, gesturesEnabled = !edit.saving) {
+    BingeAdaptiveSheet(kind = BingeSheetKind.Task, onDismissRequest = onDismiss, gesturesEnabled = !edit.saving) {
         PermissionsEditorContent(
             offered = offered,
             selected = edit.selected,

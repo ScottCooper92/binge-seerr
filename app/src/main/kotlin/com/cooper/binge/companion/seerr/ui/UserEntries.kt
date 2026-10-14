@@ -48,6 +48,7 @@ internal fun UsersEntry(
                     UserAdmissionActions(
                         onStart = viewModel.admission::start,
                         onCancel = viewModel.admission::cancel,
+                        onBackToChoice = viewModel.admission::backToChoice,
                         onStartCreate = {
                             viewModel.admission.startCreate((state as? UsersUiState.Ready)?.canGeneratePassword == true)
                         },

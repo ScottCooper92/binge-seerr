@@ -2,13 +2,16 @@ package com.cooper.binge.companion.seerr.ui.requests
 
 import androidx.annotation.StringRes
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.stringResource
-import com.binge.designsystem.component.BingeBottomSheet
+import com.binge.designsystem.component.BingeAdaptiveSheet
 import com.binge.designsystem.component.BingeConfirmDialog
+import com.binge.designsystem.component.BingeSheetKind
+import com.binge.designsystem.component.BingeSheetNav
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 
@@ -58,10 +61,21 @@ internal fun RequestActionsSheet(
     canManageUsers: Boolean = false,
     detailLoad: SheetDetailLoad = SheetDetailLoad.Loaded,
     onRetryDetail: () -> Unit = {},
+    edit: EditState? = null,
+    editActions: EditRequestActions? = null,
 ) {
     var blockTitle by rememberSaveable { mutableStateOf(false) }
     var pending by rememberSaveable { mutableStateOf<Pending?>(null) }
-    BingeBottomSheet(onDismissRequest = onDismiss) {
+    BingeAdaptiveSheet(
+        kind = BingeSheetKind.Task,
+        onDismissRequest = onDismiss,
+        // The editor's state is the view model's, so Back from its page cancels the edit there.
+        onPageBack = { page -> if (page == EDIT_PAGE) editActions?.onDismiss?.invoke() },
+    ) { nav ->
+        if (nav.page == EDIT_PAGE && editActions != null) {
+            EditRequestPage(nav = nav, item = item, edit = edit, actions = editActions)
+            return@BingeAdaptiveSheet
+        }
         RequestActionsContent(
             model =
                 RequestSheetModel(
@@ -94,7 +108,11 @@ internal fun RequestActionsSheet(
                     onRemove = { pending = Pending.Remove },
                     // Stacked, as Binge's advanced-options picker opens over its request sheet: this sheet
                     // stays open underneath, and Back, a choice or a save returns to it rather than the page.
-                    onEdit = onEdit,
+                    // Where the sheet stacks pages the editor is a page of it instead of a second sheet.
+                    onEdit = {
+                        onEdit()
+                        if (nav.stacksPages && editActions != null) nav.push(EDIT_PAGE)
+                    },
                     onMarkStatus = onMarkStatus,
                     onDeleteFiles = { is4k -> pending = Pending.DeleteFiles(is4k) },
                     onClearData = { pending = Pending.ClearData },
@@ -126,6 +144,20 @@ internal fun RequestActionsSheet(
             onRemove = onRemove,
         )
     }
+}
+
+private const val EDIT_PAGE = "edit"
+
+/** The request editor as a page of the actions sheet, closing itself when the edit ends, saved or cancelled. */
+@Composable
+private fun EditRequestPage(
+    nav: BingeSheetNav,
+    item: RequestItem,
+    edit: EditState?,
+    actions: EditRequestActions,
+) {
+    LaunchedEffect(edit == null) { if (edit == null) nav.pop() }
+    edit?.let { EditRequestContent(item = item, edit = it, actions = actions) }
 }
 
 /**

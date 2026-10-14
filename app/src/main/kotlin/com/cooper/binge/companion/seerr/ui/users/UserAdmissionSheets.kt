@@ -18,6 +18,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
@@ -26,12 +27,15 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import com.binge.designsystem.component.BingeActionFooter
-import com.binge.designsystem.component.BingeBottomSheet
+import com.binge.designsystem.component.BingeAdaptiveSheet
 import com.binge.designsystem.component.BingeInitialsAvatar
 import com.binge.designsystem.component.BingeLoadingIndicator
+import com.binge.designsystem.component.BingeSheetKind
+import com.binge.designsystem.component.BingeSheetNav
 import com.binge.designsystem.component.BingeTextButton
 import com.binge.designsystem.component.CheckboxRow
 import com.binge.designsystem.component.ListItem
+import com.binge.designsystem.isExpandedLayout
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.state.ActionSheetGroup
 import com.cooper.binge.companion.seerr.ui.state.EmptyScreen
@@ -43,6 +47,7 @@ import com.binge.designsystem.R as DesR
 class UserAdmissionActions(
     val onStart: () -> Unit,
     val onCancel: () -> Unit,
+    val onBackToChoice: () -> Unit,
     val onStartCreate: () -> Unit,
     val onEditDraft: ((CreateUserDraft) -> CreateUserDraft) -> Unit,
     val onCreate: () -> Unit,
@@ -52,14 +57,25 @@ class UserAdmissionActions(
     val onImport: () -> Unit,
 )
 
-/** The add-user flow as sheets: the choice, then the form or the picker. */
+private const val CHOICE_PAGE = "choice"
+private const val CREATE_PAGE = "create"
+private const val IMPORT_PAGE = "import"
+
+/**
+ * The add-user flow as sheets: the choice, then the form or the picker. At the expanded width it is one side sheet whose
+ * form and picker are pages over the choice, with Back; below it each is a bottom sheet in turn, as before.
+ */
 @Composable
 internal fun UserAdmissionSheets(
     state: UsersUiState.Ready,
     actions: UserAdmissionActions,
 ) {
-    when (val admission = state.admission) {
-        null -> Unit
+    val current = state.admission ?: return
+    if (isExpandedLayout()) {
+        AdmissionPagesSheet(current = current, importSource = state.importSource, actions = actions)
+        return
+    }
+    when (val admission = current) {
         is UserAdmissionState.Choosing ->
             AdmissionChoiceSheet(importSource = state.importSource, actions = actions)
         is UserAdmissionState.Creating ->
@@ -69,12 +85,75 @@ internal fun UserAdmissionSheets(
     }
 }
 
+/**
+ * The flow's side sheet. The state machine in [UserAdmission] stays the truth about what is being added; the sheet only
+ * follows it: a row that starts the form or the picker also opens its page, and Back from a page asks the state machine
+ * to return to the choice. Where the server offers no import the flow starts on the form, which is then the root.
+ */
+@Composable
+private fun AdmissionPagesSheet(
+    current: UserAdmissionState,
+    importSource: UserOrigin?,
+    actions: UserAdmissionActions,
+) {
+    val root = rememberSaveable { if (current is UserAdmissionState.Choosing) CHOICE_PAGE else CREATE_PAGE }
+    BingeAdaptiveSheet(
+        kind = BingeSheetKind.Task,
+        onDismissRequest = actions.onCancel,
+        root = root,
+        onPageBack = { actions.onBackToChoice() },
+        gesturesEnabled = !current.saving,
+    ) { nav ->
+        when (nav.page) {
+            CHOICE_PAGE ->
+                AdmissionChoiceContent(
+                    importSource = importSource,
+                    actions = actions.openingPagesOn(nav),
+                )
+            CREATE_PAGE ->
+                (current as? UserAdmissionState.Creating)?.let {
+                    CreateUserSheetContent(
+                        draft = it.draft,
+                        saving = it.saving,
+                        onEditDraft = actions.onEditDraft,
+                        onCreate = actions.onCreate,
+                    )
+                }
+            IMPORT_PAGE ->
+                (current as? UserAdmissionState.Importing)?.let {
+                    ImportUsersContent(picker = it.picker, saving = it.saving, actions = actions)
+                }
+        }
+    }
+}
+
+/** The actions with the two that start a form or a picker also opening its page, so the choice leads somewhere inside the sheet. */
+private fun UserAdmissionActions.openingPagesOn(nav: BingeSheetNav) =
+    UserAdmissionActions(
+        onStart = onStart,
+        onCancel = onCancel,
+        onBackToChoice = onBackToChoice,
+        onStartCreate = {
+            onStartCreate()
+            nav.push(CREATE_PAGE)
+        },
+        onEditDraft = onEditDraft,
+        onCreate = onCreate,
+        onStartImport = { source ->
+            onStartImport(source)
+            nav.push(IMPORT_PAGE)
+        },
+        onToggleCandidate = onToggleCandidate,
+        onSelectAllCandidates = onSelectAllCandidates,
+        onImport = onImport,
+    )
+
 @Composable
 private fun AdmissionChoiceSheet(
     importSource: UserOrigin?,
     actions: UserAdmissionActions,
 ) {
-    BingeBottomSheet(onDismissRequest = actions.onCancel) {
+    BingeAdaptiveSheet(kind = BingeSheetKind.Menu, onDismissRequest = actions.onCancel) {
         AdmissionChoiceContent(importSource = importSource, actions = actions)
     }
 }
@@ -115,7 +194,7 @@ private fun CreateUserSheet(
     saving: Boolean,
     actions: UserAdmissionActions,
 ) {
-    BingeBottomSheet(onDismissRequest = actions.onCancel, gesturesEnabled = !saving) {
+    BingeAdaptiveSheet(kind = BingeSheetKind.Task, onDismissRequest = actions.onCancel, gesturesEnabled = !saving) {
         CreateUserSheetContent(
             draft = draft,
             saving = saving,
@@ -204,7 +283,7 @@ private fun ImportUsersSheet(
     saving: Boolean,
     actions: UserAdmissionActions,
 ) {
-    BingeBottomSheet(onDismissRequest = actions.onCancel, gesturesEnabled = !saving) {
+    BingeAdaptiveSheet(kind = BingeSheetKind.Task, onDismissRequest = actions.onCancel, gesturesEnabled = !saving) {
         ImportUsersContent(picker = picker, saving = saving, actions = actions)
     }
 }

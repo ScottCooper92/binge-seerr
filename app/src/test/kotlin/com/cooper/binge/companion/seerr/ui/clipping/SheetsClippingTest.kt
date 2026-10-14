@@ -122,6 +122,7 @@ class SheetsClippingTest {
         UserAdmissionActions(
             onStart = {},
             onCancel = {},
+            onBackToChoice = {},
             onStartCreate = {},
             onEditDraft = {},
             onCreate = {},

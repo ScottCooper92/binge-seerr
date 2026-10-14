@@ -8,8 +8,9 @@ import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import com.binge.designsystem.component.BingeBottomSheet
+import com.binge.designsystem.component.BingeAdaptiveSheet
 import com.binge.designsystem.component.BingeConfirmDialog
+import com.binge.designsystem.component.BingeSheetKind
 import com.binge.designsystem.component.TextEntrySurface
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.state.ActionSheetGroup
@@ -24,7 +25,7 @@ internal fun CommentComposerSheet(
     onSubmit: () -> Unit,
     onDismiss: () -> Unit,
 ) {
-    BingeBottomSheet(onDismissRequest = onDismiss) {
+    BingeAdaptiveSheet(kind = BingeSheetKind.Task, onDismissRequest = onDismiss) {
         TextEntrySurface(
             title = stringResource(R.string.issue_comment_title),
             value = draft,
@@ -48,7 +49,7 @@ internal fun EditCommentSheet(
     onSubmit: () -> Unit,
     onDismiss: () -> Unit,
 ) {
-    BingeBottomSheet(onDismissRequest = onDismiss) {
+    BingeAdaptiveSheet(kind = BingeSheetKind.Task, onDismissRequest = onDismiss) {
         TextEntrySurface(
             title = title,
             value = draft,
@@ -69,7 +70,7 @@ internal fun CommentActionsSheet(
     onDelete: () -> Unit,
     onDismiss: () -> Unit,
 ) {
-    BingeBottomSheet(onDismissRequest = onDismiss) {
+    BingeAdaptiveSheet(kind = BingeSheetKind.Menu, onDismissRequest = onDismiss) {
         CommentActionsContent(
             onEdit = onEdit,
             onDelete = onDelete,
@@ -106,7 +107,7 @@ internal fun OutboxActionsSheet(
     onDrop: () -> Unit,
     onDismiss: () -> Unit,
 ) {
-    BingeBottomSheet(onDismissRequest = onDismiss) {
+    BingeAdaptiveSheet(kind = BingeSheetKind.Menu, onDismissRequest = onDismiss) {
         OutboxActionsContent(
             retryable = retryable,
             sending = sending,

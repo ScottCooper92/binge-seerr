@@ -28,6 +28,9 @@ interface UserAdmissionControls {
 
     fun cancel()
 
+    /** Back from the form or the picker to the choice, unless a write is in flight. A side sheet's Back goes through this. */
+    fun backToChoice()
+
     fun startCreate(canGeneratePassword: Boolean)
 
     fun editDraft(transform: (CreateUserDraft) -> CreateUserDraft)
@@ -68,6 +71,15 @@ class UserAdmission(
 
     override fun cancel() {
         if (stateFlow.value?.saving != true) stateFlow.value = null
+    }
+
+    override fun backToChoice() {
+        stateFlow.update { current ->
+            when {
+                current is UserAdmissionState.Choosing || current == null || current.saving -> current
+                else -> UserAdmissionState.Choosing()
+            }
+        }
     }
 
     override fun startCreate(canGeneratePassword: Boolean) {

@@ -6,6 +6,7 @@ import com.android.tools.screenshot.PreviewTest
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.preview.SeerrComponentPreviews
 import com.cooper.binge.companion.seerr.preview.SheetFrame
+import com.cooper.binge.companion.seerr.preview.SideSheetFrame
 import com.cooper.binge.companion.seerr.seerr.ManageablePermission
 
 /**
@@ -31,6 +32,30 @@ class PermissionsEditorScreenshotTest {
                         ManageablePermission.ManageUsers,
                     ),
                 // ManageRequests implies ViewRequests, so that row shows on and cannot be flipped.
+                selected = setOf(ManageablePermission.ManageRequests),
+                title = "Permissions",
+                saving = false,
+                onToggle = {},
+                onSave = {},
+                locked = setOf(ManageablePermission.ManageUsers),
+            )
+        }
+    }
+
+    /** At the expanded width the editor is a side sheet. */
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun expanded() {
+        SideSheetFrame {
+            PermissionsEditorContent(
+                offered =
+                    listOf(
+                        ManageablePermission.ManageRequests,
+                        ManageablePermission.ViewRequests,
+                        ManageablePermission.Request,
+                        ManageablePermission.ManageUsers,
+                    ),
                 selected = setOf(ManageablePermission.ManageRequests),
                 title = "Permissions",
                 saving = false,

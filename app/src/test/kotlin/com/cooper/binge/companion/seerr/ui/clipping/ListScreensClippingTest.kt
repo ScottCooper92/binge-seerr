@@ -143,7 +143,7 @@ class ListScreensClippingTest {
                     onApplyBulkEdit = {},
                     onCancelBulkEdit = {},
                     onRetryLoad = {},
-                    admission = UserAdmissionActions({}, {}, {}, {}, {}, {}, {}, {}, {}),
+                    admission = UserAdmissionActions({}, {}, {}, {}, {}, {}, {}, {}, {}, {}),
                 ),
         )
     }
