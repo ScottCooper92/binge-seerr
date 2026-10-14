@@ -3,6 +3,7 @@ package com.cooper.binge.companion.seerr.ui.tv.settings
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.ui.settings.server.JobsUiState
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Test
 
 class TvJobStatusTest {
@@ -54,5 +55,17 @@ class TvJobStatusTest {
         assertEquals(TvJobPress(stopping = true, holding = true), presses["a"])
         presses.release("a")
         assertEquals(TvJobPress(stopping = true, holding = false), presses["a"])
+    }
+
+    @Test
+    fun `a second press while the first is held is a new press, so its hold starts again`() {
+        val presses = TvJobPresses()
+        presses.press("a", stopping = false)
+        val first = presses["a"]
+
+        presses.press("a", stopping = false)
+
+        assertNotEquals(first, presses["a"])
+        assertEquals(true, presses["a"]?.holding)
     }
 }
