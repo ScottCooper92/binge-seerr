@@ -64,6 +64,20 @@ class TvIssueSheetFocusTest {
         card(REPORT).assertIsFocused()
     }
 
+    /** The sheet opens on its loading line, as it does from the board; once the issue arrives, focus moves to the report. */
+    @Test
+    fun focusMovesToTheReportOnceTheIssueLoads() {
+        val loaded = state
+        state = IssueDetailUiState.Loading
+        setSheet()
+
+        state = loaded
+        composeTestRule.waitForIdle()
+        composeTestRule.settleShellHandOff()
+
+        card(REPORT).assertIsFocused()
+    }
+
     @Test
     fun leftStepsBackAlongTheButtonsAndClosesOnlyFromTheFirst() {
         setSheet()
