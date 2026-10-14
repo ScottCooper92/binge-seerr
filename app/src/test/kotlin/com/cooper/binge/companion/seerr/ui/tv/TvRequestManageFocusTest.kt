@@ -77,16 +77,28 @@ class TvRequestManageFocusTest {
         assertTrue("Remove, the irreversible one, is last", remove.top > block.top)
     }
 
+    /** With no decision to make, three of the title's own actions lead: the media server, Binge and Mark as. Report is managed. */
     @Test
-    fun aRequestWithNoDecisionLeadsWithTheMediaServerAndMarkAs() {
-        setContent(markable().copy(mediaServerName = "Jellyfin", canReportIssue = true), mediaServer = true)
+    fun aRequestWithNoDecisionLeadsWithItsTitleActions() {
+        setContent(markable().copy(mediaServerName = "Jellyfin", canReportIssue = true), mediaServer = true, openInBinge = true)
 
         rowButton(string(R.string.open_in_named, "Jellyfin")).assertIsFocused()
+        rowButton(R.string.request_open_binge).assertExists()
         rowButton(R.string.media_mark_as).assertExists()
         rowButton(R.string.issue_report_title).assertDoesNotExist()
 
         openManage()
         sheetRow(R.string.issue_report_title).assertIsFocused()
+    }
+
+    /** Where Binge would answer and there is no media server app, Binge, Mark as and Report all lead. */
+    @Test
+    fun withoutAMediaServerAppReportLeadsBesideBinge() {
+        setContent(markable().copy(canReportIssue = true), openInBinge = true)
+
+        rowButton(R.string.request_open_binge).assertIsFocused()
+        rowButton(R.string.media_mark_as).assertExists()
+        rowButton(R.string.issue_report_title).assertExists()
     }
 
     @Test
@@ -154,7 +166,7 @@ class TvRequestManageFocusTest {
     /** Report, from Manage, is a page in Manage's stack: Back returns to its row, and Back again closes Manage. */
     @Test
     fun theReportCodeOpenedFromManageGoesBackToItsRow() {
-        setContent(markable().copy(canReportIssue = true))
+        setContent(requestDetail(actions = Pending, canReportIssue = true))
         openManage()
         sheetRow(R.string.issue_report_title).requestFocus()
         pressOk()

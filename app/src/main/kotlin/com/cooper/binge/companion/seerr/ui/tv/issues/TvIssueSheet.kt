@@ -37,6 +37,8 @@ internal class TvIssueSheetActions(
     val onDeleteComment: (commentId: Int) -> Unit,
     /** Opens the title in the media server's TV app; null where there is no app to open it, or it is not installed. */
     val onOpenInMediaServer: (() -> Unit)? = null,
+    /** Opens the title in Binge; null where Binge would not answer, since there is no browser to fall back to. */
+    val onOpenInBinge: (() -> Unit)? = null,
 )
 
 /** The sheet's first page: the report, the issue's actions and the comments. */

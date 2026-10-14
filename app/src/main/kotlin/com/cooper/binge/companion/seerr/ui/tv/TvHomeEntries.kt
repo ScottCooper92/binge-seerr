@@ -11,12 +11,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.compose.collectAsLazyPagingItems
-import com.cooper.binge.companion.seerr.ui.bingeAnswersTitleLink
+import com.cooper.binge.companion.seerr.ui.bingeTitleHandOff
 import com.cooper.binge.companion.seerr.ui.hub.ConnectionHealth
 import com.cooper.binge.companion.seerr.ui.hub.HubUiState
 import com.cooper.binge.companion.seerr.ui.hub.HubViewModel
 import com.cooper.binge.companion.seerr.ui.hub.isProblem
-import com.cooper.binge.companion.seerr.ui.openTitleInBinge
 import com.cooper.binge.companion.seerr.ui.requests.RequestDetailUiState
 import com.cooper.binge.companion.seerr.ui.requests.RequestDetailViewModel
 import com.cooper.binge.companion.seerr.ui.requests.RequestFilter
@@ -182,13 +181,7 @@ internal fun TvRequestDetailOverlay(
     }
     val context = LocalContext.current
     val detail = (state as? RequestDetailUiState.Ready)?.detail
-    val onOpenInBinge =
-        remember(context, detail) {
-            detail?.let { ready ->
-                { context.openTitleInBinge(ready.item.mediaType, ready.item.tmdbId) }
-                    .takeIf { context.bingeAnswersTitleLink(ready.item.mediaType, ready.item.tmdbId) }
-            }
-        }
+    val onOpenInBinge = remember(context, detail) { detail?.let { context.bingeTitleHandOff(it.item.mediaType, it.item.tmdbId) } }
     val onOpenInMediaServer = remember(context, detail) { context.mediaServerHandOff(detail?.mediaServerItem) }
     TvRequestDetailScreen(
         state = state,
