@@ -2,6 +2,7 @@ package com.cooper.binge.companion.seerr.ui.issues
 
 import com.binge.designsystem.SaveStatus
 import com.cooper.binge.companion.seerr.seerr.SeerrError
+import com.cooper.binge.companion.seerr.ui.MediaServerItem
 import com.cooper.binge.companion.seerr.ui.users.settings.UserRole
 import com.cooper.binge.companion.seerr.ui.users.userRole
 
@@ -41,6 +42,8 @@ data class IssueDetail(
     val serverName: String = "Seerr",
     /** Plex, Jellyfin or Emby; null where the server's type is not known. */
     val mediaServerName: String? = null,
+    /** The title on that media server, where its apps can be handed it. */
+    val mediaServerItem: MediaServerItem? = null,
 ) {
     fun canActOn(comment: IssueComment): Boolean = canManage || comment.isMine
 }

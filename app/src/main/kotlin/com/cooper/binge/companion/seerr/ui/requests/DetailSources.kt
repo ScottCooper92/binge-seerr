@@ -23,6 +23,7 @@ import com.cooper.binge.companion.seerr.seerr.toAvatarUrl
 import com.cooper.binge.companion.seerr.seerr.toEpochMillisOrNull
 import com.cooper.binge.companion.seerr.seerr.toTmdbBackdropUrl
 import com.cooper.binge.companion.seerr.seerr.toTmdbPosterUrl
+import com.cooper.binge.companion.seerr.ui.mediaServerItem
 import java.util.Locale
 
 private fun SeerrRequestSummaryDto.toSummary(): RequestSummary =
@@ -116,6 +117,7 @@ internal class DetailSources(
             media = dto.mediaRecord(permissions, profile, watch),
             serverName = profile.variant.displayName,
             mediaServerName = profile.mediaServerName(),
+            mediaServerItem = profile.mediaServerItem(dto.media.jellyfinMediaId),
             siblings =
                 details
                     ?.mediaInfo

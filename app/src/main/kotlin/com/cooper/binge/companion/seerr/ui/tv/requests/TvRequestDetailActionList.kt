@@ -9,6 +9,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.ReportProblem
 import androidx.compose.runtime.Composable
@@ -25,9 +26,10 @@ import com.cooper.binge.companion.seerr.ui.requests.canOpenUser
  * The action row: what this viewer may do to the request, in the order a manager reaches for them, with the destructive
  * actions last: block (reversible, an outline) and then remove (irreversible, solid).
  *
- * The TV page is a deliberate subset of the phone's (#1036). It moderates, edits the request, marks the title's state and
- * reports an issue. A request's tags, its requester's full page and the title's other requests stay on the phone: each needs
- * a picker or a page this surface has no room for. A line under the details says so where they apply
+ * The TV page is a deliberate subset of the phone's (#1036). It moderates, edits the request, marks the title's state,
+ * reports an issue, and opens the title in the media server's TV app where one is installed. A request's tags, its
+ * requester's full page and the title's other requests stay on the phone: each needs a picker or a page this surface has
+ * no room for. A line under the details says so where they apply
  * ([phoneOnlyHint]), so a missing control reads as a decision rather than a gap. A manager gets the requester's
  * quick controls in a sheet of their own (#1516).
  */
@@ -49,6 +51,7 @@ internal fun requestDetailActions(
     val markLabel = stringResource(R.string.media_mark_as)
     val reportLabel = stringResource(R.string.issue_report_title)
     val requesterLabel = stringResource(R.string.tv_detail_requester)
+    val mediaServerLabel = detail.mediaServerName?.let { stringResource(R.string.open_in_named, it) }
     return buildList {
         if (allowed.canRetry) add(TvDetailAction(retryLabel, Icons.Filled.Refresh, onClick = actions.onRetryRequest, isPrimary = true))
         if (allowed.canApprove) add(TvDetailAction(approveLabel, Icons.Filled.Check, onClick = actions.onApprove, isPrimary = true))
@@ -79,6 +82,7 @@ internal fun requestDetailActions(
         if (offersRequesterSheet(detail) && actions.requesterSheet != null) {
             add(sheetAction(requesterLabel, Icons.Filled.Person, DetailSheet.Requester, onOpenSheet, sheetFocus))
         }
+        mediaServerAction(mediaServerLabel, actions.onOpenInMediaServer)?.let(::add)
         actions.onOpenInBinge?.let { add(TvDetailAction(openLabel, Icons.AutoMirrored.Filled.OpenInNew, onClick = it)) }
         if (allowed.canBlock) {
             add(
@@ -105,6 +109,15 @@ internal fun requestDetailActions(
             )
         }
     }
+}
+
+/** Open in the media server's TV app, where there is both a name to offer it under and an installed app to open. */
+private fun mediaServerAction(
+    label: String?,
+    onOpen: (() -> Unit)?,
+): TvDetailAction? {
+    if (label == null || onOpen == null) return null
+    return TvDetailAction(label, Icons.Filled.PlayArrow, onClick = onOpen, showLabel = true)
 }
 
 private fun sheetAction(

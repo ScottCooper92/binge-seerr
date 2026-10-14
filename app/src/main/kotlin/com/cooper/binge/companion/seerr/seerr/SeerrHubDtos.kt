@@ -58,6 +58,8 @@ data class SeerrRequestMediaDto(
     /** Links the server derives: the title in the media server, and in the download client. */
     @SerialName("mediaUrl") val mediaUrl: String? = null,
     @SerialName("serviceUrl") val serviceUrl: String? = null,
+    /** The title's id on a Jellyfin or Emby server, which that server's apps open it by. */
+    @SerialName("jellyfinMediaId") val jellyfinMediaId: String? = null,
     @SerialName("mediaUrl4k") val mediaUrl4k: String? = null,
     @SerialName("serviceUrl4k") val serviceUrl4k: String? = null,
 )

@@ -11,7 +11,9 @@ import com.cooper.binge.companion.seerr.data.IssueEntity
 import com.cooper.binge.companion.seerr.seerr.SeerrApiFactory
 import com.cooper.binge.companion.seerr.seerr.SeerrAuth
 import com.cooper.binge.companion.seerr.seerr.SeerrError
+import com.cooper.binge.companion.seerr.seerr.SeerrMediaServer
 import com.cooper.binge.companion.seerr.seerr.TitleCache
+import com.cooper.binge.companion.seerr.ui.MediaServerItem
 import com.cooper.binge.companion.seerr.ui.requests.IssueType
 import com.cooper.binge.companion.seerr.util.FakeRequest
 import com.cooper.binge.companion.seerr.util.FakeResponse
@@ -89,7 +91,7 @@ class IssueDetailViewModelTest {
         comments: String = """[{"id":1,"message":"Audio out of sync","user":{"id":8,"displayName":"ana"}},
             {"id":2,"message":"Same here","user":{"id":9,"displayName":"bo","permissions":2}}]""",
     ) = """{"id":31,"issueType":2,"status":1,"createdAt":"2026-06-01T10:00:00.000Z","createdBy":{"id":8,"displayName":"ana"},
-            "media":{"id":900,"tmdbId":100,"mediaType":"movie","mediaUrl":"https://jellyfin.example.com/item/1"},
+            "media":{"id":900,"tmdbId":100,"mediaType":"movie","mediaUrl":"https://jellyfin.example.com/item/1","jellyfinMediaId":"a1b2"},
             "comments":$comments}"""
 
     private fun server(
@@ -192,6 +194,7 @@ class IssueDetailViewModelTest {
             assertTrue(detail.canActOn(reply))
             assertEquals(seerr.url("/") + "issues/31", detail.webUrl)
             assertEquals("https://jellyfin.example.com/item/1", detail.mediaServerUrl)
+            assertEquals(MediaServerItem(SeerrMediaServer.Jellyfin, "a1b2"), detail.mediaServerItem)
         }
 
     @Test

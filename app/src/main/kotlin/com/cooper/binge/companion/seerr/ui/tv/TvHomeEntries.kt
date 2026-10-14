@@ -167,7 +167,7 @@ internal fun TvRequestsGridOverlay(
  * [RequestDetailViewModel] the phone's `RequestDetailEntry` binds. The shell gives each opening its own view-model
  * scope, so the view model is this request's and is gone when the page closes. Open in Binge checks whether Binge
  * would answer the link once per detail load — this surface has no browser to fall back to, so the button is hidden
- * rather than tried and abandoned.
+ * rather than tried and abandoned. Open in the media server's TV app is offered the same way: only when that app is here.
  */
 @Composable
 internal fun TvRequestDetailOverlay(
@@ -190,6 +190,7 @@ internal fun TvRequestDetailOverlay(
                     .takeIf { context.bingeAnswersTitleLink(ready.item.mediaType, ready.item.tmdbId) }
             }
         }
+    val onOpenInMediaServer = remember(context, detail) { context.mediaServerHandOff(detail?.mediaServerItem) }
     TvRequestDetailScreen(
         state = state,
         events = viewModel.events,
@@ -198,6 +199,7 @@ internal fun TvRequestDetailOverlay(
                 onBack = onDone,
                 onRetry = viewModel::reload,
                 onOpenInBinge = onOpenInBinge,
+                onOpenInMediaServer = onOpenInMediaServer,
                 onApprove = { viewModel.moderation.approve(requestId) },
                 onRetryRequest = { viewModel.moderation.retry(requestId) },
                 onDecline = { block -> detail?.let { viewModel.moderation.decline(it.item, block) } },
