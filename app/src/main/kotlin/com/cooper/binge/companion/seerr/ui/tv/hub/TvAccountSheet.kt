@@ -2,7 +2,6 @@ package com.cooper.binge.companion.seerr.ui.tv.hub
 
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -117,10 +116,13 @@ private fun ColumnScope.Unresolved(
     onRetry: () -> Unit,
     entryFocus: FocusRequester,
 ) {
+    // With nothing to press, focus waits on the message itself, so it neither falls to the page beneath nor lands on
+    // silence: a screen reader reads the message out.
+    val holdsFocus = if (failed) Modifier else Modifier.focusRequester(entryFocus).focusable()
     when {
-        denied -> TvSideSheetBody(stringResource(SeerrError.LocalNetworkDenied.messageRes()))
+        denied -> TvSideSheetBody(stringResource(SeerrError.LocalNetworkDenied.messageRes()), modifier = holdsFocus)
         failed -> TvSideSheetBody(stringResource(R.string.tv_list_load_failed))
-        else -> TvSideSheetBody(stringResource(R.string.tv_loading))
+        else -> TvSideSheetBody(stringResource(R.string.tv_loading), modifier = holdsFocus)
     }
     if (failed) {
         TvSideSheetRow(
@@ -129,16 +131,13 @@ private fun ColumnScope.Unresolved(
             onClick = onRetry,
             modifier = Modifier.focusRequester(entryFocus),
         )
-    } else {
-        // Nothing to press while the account loads, so focus waits here rather than falling back to the page beneath.
-        Box(modifier = Modifier.focusRequester(entryFocus).focusable())
     }
     TvSideSheetStepFocus(entryFocus)
 }
 
 /**
  * The account card's lines: role and where the account comes from, then email and handle (one when they are the same),
- * then each request quota. Every line holds two facts, so the card reads in four lines whatever the account.
+ * then each request quota. The email line goes when the account has neither, so the card reads in three or four lines.
  */
 @Composable
 private fun accountLines(
