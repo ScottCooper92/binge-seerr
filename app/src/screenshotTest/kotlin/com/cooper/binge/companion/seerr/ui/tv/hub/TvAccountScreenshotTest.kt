@@ -12,6 +12,7 @@ import com.cooper.binge.companion.seerr.ui.hub.HubQuota
 import com.cooper.binge.companion.seerr.ui.hub.HubQuotaBucket
 import com.cooper.binge.companion.seerr.ui.tv.TvDestination
 import com.cooper.binge.companion.seerr.ui.tv.TvHomeShell
+import com.cooper.binge.companion.seerr.ui.tv.TvTopBarAccount
 import com.cooper.binge.companion.seerr.ui.users.UserDetail
 import com.cooper.binge.companion.seerr.ui.users.UserDetailUiState
 import com.cooper.binge.companion.seerr.ui.users.UserItem
@@ -51,11 +52,14 @@ private fun detail(
     ),
 )
 
+private val PreviewBarAccount = TvTopBarAccount(name = "Scott Cooper", avatarUrl = null)
+
 /**
  * The television account sheet: the profile as the phone's user page shows it and a line per request quota (one spent, one
- * part used; or both unlimited), the sheets before the account is known, and Home's top row with its Account, Issues and
- * Settings buttons. The user's own requests are a row on Home, framed on `TvRequestsScreenshotTest`.
+ * part used; or both unlimited), the sheets before the account is known, and the top bar over Home: the avatar, the Home
+ * and Issues tabs, and the Settings gear. The user's own requests are a row on Home, framed on `TvRequestsScreenshotTest`.
  */
+
 class TvAccountScreenshotTest {
     @PreviewTest
     @SeerrTvScreenPreviews
@@ -113,7 +117,14 @@ class TvAccountScreenshotTest {
     @SeerrTvScreenPreviews
     @Composable
     fun HomeTopRow() {
-        TvHomeShell(page = TvDestination.Hub, onOpenPage = {}, onClosePage = {}) { _, _ ->
+        TvHomeShell(
+            tab = TvDestination.Hub,
+            sheet = null,
+            onSelectTab = {},
+            onOpenSheet = {},
+            onCloseSheet = {},
+            account = PreviewBarAccount,
+        ) { _, _ ->
             Box(modifier = Modifier.fillMaxSize())
         }
     }
@@ -123,7 +134,15 @@ class TvAccountScreenshotTest {
     @SeerrTvScreenPreviews
     @Composable
     fun HomeTopRowWithoutIssues() {
-        TvHomeShell(page = TvDestination.Hub, onOpenPage = {}, onClosePage = {}, showIssues = false) { _, _ ->
+        TvHomeShell(
+            tab = TvDestination.Hub,
+            sheet = null,
+            onSelectTab = {},
+            onOpenSheet = {},
+            onCloseSheet = {},
+            showIssues = false,
+            account = PreviewBarAccount,
+        ) { _, _ ->
             Box(modifier = Modifier.fillMaxSize())
         }
     }

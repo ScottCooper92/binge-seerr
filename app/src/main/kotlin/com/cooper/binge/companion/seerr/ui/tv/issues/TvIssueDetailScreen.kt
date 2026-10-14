@@ -36,6 +36,7 @@ import com.binge.designsystem.tv.focus.tvArrivalTarget
 import com.binge.designsystem.tv.focus.tvFocusContentColor
 import com.binge.designsystem.tv.focus.tvFocusFill
 import com.binge.designsystem.tv.focus.tvFocusTarget
+import com.binge.designsystem.tv.nav.LocalTvTopInset
 import com.binge.designsystem.tv.template.TvPageHosting
 import com.binge.designsystem.uppercaseLocalised
 import com.cooper.binge.companion.seerr.R
@@ -122,8 +123,10 @@ private fun TvIssueDetailContent(
                     .fillMaxHeight()
                     .verticalScroll(rememberScrollState())
                     .padding(
-                        horizontal = dimensionResource(TvR.dimen.tv_overscan_horizontal),
-                        vertical = dimensionResource(TvR.dimen.tv_overscan_vertical),
+                        start = dimensionResource(TvR.dimen.tv_overscan_horizontal),
+                        end = dimensionResource(TvR.dimen.tv_overscan_horizontal),
+                        top = dimensionResource(TvR.dimen.tv_overscan_vertical) + LocalTvTopInset.current,
+                        bottom = dimensionResource(TvR.dimen.tv_overscan_vertical),
                     ),
             verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.tv_detail_section_gap)),
         ) {

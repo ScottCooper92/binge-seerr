@@ -1036,7 +1036,7 @@
     <string name="send_address_sign_in_shared">The TV uses this phone\'s sign-in</string>
     <string name="setup_error_unreachable_not_local">The server could not be reached. That isn\'t a local address, so this TV may not be able to reach it. Try an address on your home network.</string>
 
-    <!-- The television shell: the rail, the hub board, the lists and their action sheets. -->
+    <!-- The television shell: Home, the lists and their action sheets. -->
     <string name="tv_rail_hub">Home</string>
     <string name="tv_hub_health_checking">Checking the server…</string>
     <string name="tv_hub_stat_open_issues">Open issues</string>
@@ -1305,8 +1305,6 @@
     <string name="server_settings_api_timeout_none">No timeout</string>
     <string name="placeholder_api_timeout" translatable="false">30</string>
     <string name="hub_rechecking">Checking the server…</string>
-    <string name="editor_saving">Saving…</string>
-    <string name="editor_save_failed">Couldn\'t save your change.</string>
     <string name="editor_discard_title">Discard changes?</string>
     <string name="editor_discard_message">Your changes on this page haven\'t been saved.</string>
     <string name="editor_discard">Discard</string>
@@ -1317,4 +1315,13 @@
     <string name="companion_refusal_quota">You\'ve reached your request limit on this server. Try again once it resets.</string>
     <string name="companion_refusal_blocklisted">This title is on the server\'s blocklist, so it can\'t be requested.</string>
     <string name="companion_refusal_locale">en</string>
+    <string name="tv_settings_open_job">Open</string>
+    <string name="tv_settings_group_household">Household</string>
+    <string name="tv_settings_household_note">Each switch saves as you press it.</string>
+    <string name="tv_settings_agents_note">Switch an agent on or off here. Its details are changed on your phone.</string>
+    <string name="tv_settings_agent_unavailable">This agent\'s settings couldn\'t be read. Try again from your phone.</string>
+    <string name="tv_settings_agent_setup_first">This agent can\'t send until it is set up. Finish that on your phone.</string>
+    <string name="tv_settings_agent_body">Switch this agent on or off. Its details are changed on your phone.</string>
+    <string name="tv_settings_agent_turn_on">Turn on</string>
+    <string name="tv_settings_agent_turn_off">Turn off</string>
 </resources>

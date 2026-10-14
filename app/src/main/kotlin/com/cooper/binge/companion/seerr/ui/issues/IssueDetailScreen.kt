@@ -46,14 +46,16 @@ import com.binge.designsystem.layout.LayoutAnchors
 import com.binge.designsystem.layout.layoutAnchor
 import com.binge.designsystem.resolvedContentInset
 import com.binge.designsystem.resolvedContentPadding
+import com.binge.designsystem.template.FormSaveFailureSnackbar
+import com.binge.designsystem.template.FormSaveStatus
+import com.binge.designsystem.template.FormSaveStatusText
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.openInBrowser
 import com.cooper.binge.companion.seerr.ui.requests.labelRes
 import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
 import com.cooper.binge.companion.seerr.ui.state.OverflowDetailScaffold
 import com.cooper.binge.companion.seerr.ui.state.RequestStateChip
-import com.cooper.binge.companion.seerr.ui.state.SaveFailedSnackbar
-import com.cooper.binge.companion.seerr.ui.state.SaveStatusLine
+import com.cooper.binge.companion.seerr.ui.state.formSaveStatus
 import com.cooper.binge.companion.seerr.ui.state.messageRes
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
@@ -115,13 +117,8 @@ fun IssueDetailScreen(
     var confirmingDelete by rememberSaveable { mutableStateOf(false) }
     val ready = state as? IssueDetailUiState.Ready
     val seeded = state as? IssueDetailUiState.Seeded
-    SaveFailedSnackbar(
-        failed = ready?.unsentEdits?.isNotEmpty() == true,
-        snackbarHostState = snackbarHostState,
-        message = stringResource(R.string.editor_save_failed),
-        retryLabel = stringResource(R.string.action_try_again),
-        onRetry = actions.onRetryEdit,
-    )
+    val saveStatus = ready?.let { formSaveStatus(it.editStatus, it.unsentEdits.isNotEmpty(), actions.onRetryEdit) } ?: FormSaveStatus.Idle
+    FormSaveFailureSnackbar(saveStatus, snackbarHostState)
     OverflowDetailScaffold(
         title = ready?.detail?.item?.title ?: seeded?.item?.title ?: stringResource(R.string.issue_detail_title),
         onBack = actions.onBack.takeIf { showBack },
@@ -131,7 +128,10 @@ fun IssueDetailScreen(
         onOverflowClick = { managing = true },
         overflowIcon = Icons.AutoMirrored.Filled.OpenInNew,
         leadingActions = {
-            ready?.let { SaveStatusLine(status = it.editStatus, failed = it.unsentEdits.isNotEmpty()) }
+            FormSaveStatusText(saveStatus)
+        },
+        // After the overflow button: a destructive action is the last on the bar.
+        trailingActions = {
             if (ready?.detail?.canDelete == true) {
                 IconButton(onClick = { confirmingDelete = true }) {
                     Icon(Icons.Filled.Delete, contentDescription = stringResource(R.string.issue_delete))

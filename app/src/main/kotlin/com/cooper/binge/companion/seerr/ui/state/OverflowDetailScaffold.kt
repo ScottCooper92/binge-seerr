@@ -2,6 +2,7 @@ package com.cooper.binge.companion.seerr.ui.state
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -28,6 +29,9 @@ import com.binge.designsystem.template.screenOuterPadding
  * arms — a generic [LoadingScreen] here, a bespoke skeleton there), so each keeps its own exhaustive
  * `when` and its own `if (managing) { ...ManageSheet(...) }` block, wiring [onOverflowClick] to open
  * it. This composable only ever owns the icon button.
+ *
+ * [leadingActions] draw before the overflow button and [trailingActions] after it. A destructive action goes in
+ * [trailingActions], so it is the last thing on the bar (#1531).
  */
 @Composable
 internal fun OverflowDetailScaffold(
@@ -39,7 +43,8 @@ internal fun OverflowDetailScaffold(
     onOverflowClick: () -> Unit,
     modifier: Modifier = Modifier,
     overflowIcon: ImageVector = Icons.Filled.MoreVert,
-    leadingActions: @Composable () -> Unit = {},
+    leadingActions: @Composable RowScope.() -> Unit = {},
+    trailingActions: @Composable () -> Unit = {},
     content: @Composable (PaddingValues) -> Unit,
 ) {
     BingeScreenScaffold(
@@ -54,6 +59,7 @@ internal fun OverflowDetailScaffold(
                 IconButton(onClick = onOverflowClick) {
                     Icon(overflowIcon, contentDescription = overflowContentDescription)
                 }
+                trailingActions()
             }
         },
     ) { padding ->

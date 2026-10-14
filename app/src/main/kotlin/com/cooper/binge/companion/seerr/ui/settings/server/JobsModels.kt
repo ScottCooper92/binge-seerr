@@ -7,6 +7,7 @@ import com.cooper.binge.companion.seerr.seerr.SeerrCacheDto
 import com.cooper.binge.companion.seerr.seerr.SeerrDnsEntryDto
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.seerr.SeerrJobDto
+import com.cooper.binge.companion.seerr.seerr.SeerrMediaServer
 import com.cooper.binge.companion.seerr.seerr.toEpochMillisOrNull
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
@@ -16,12 +17,23 @@ import kotlinx.serialization.json.JsonObject
 /** How often a job runs by design: [Fixed] ones keep the server's own interval and offer no schedule. */
 enum class JobInterval { Short, Long, Fixed }
 
+/** The full library scan's job id on a Plex server, as upstream's `server/job/schedule.ts` registers it. */
+const val PLEX_FULL_SCAN_JOB_ID = "plex-full-scan"
+
+/** The full library scan's job id on a Jellyfin or Emby server, which upstream registers in place of the Plex one. */
+const val JELLYFIN_FULL_SCAN_JOB_ID = "jellyfin-full-scan"
+
 /**
- * The job id the media server's full library scan runs under. The Seerr API names it after Plex
- * regardless of whether the connected server is Plex, Jellyfin or Emby — a naming quirk upstream,
- * not something this app chose.
+ * The job id the media server's full library scan runs under (#1546). The server registers only its own media server's
+ * scan, so its job list decides when one has loaded. Before then the media server type does: Jellyfin and Emby share
+ * the Jellyfin id, and anything else falls back to Plex's.
  */
-const val MEDIA_SERVER_SCAN_JOB_ID = "plex-full-scan"
+fun mediaServerScanJobId(
+    jobs: List<ServerJob>?,
+    server: SeerrMediaServer,
+): String =
+    jobs?.firstOrNull { it.id == PLEX_FULL_SCAN_JOB_ID || it.id == JELLYFIN_FULL_SCAN_JOB_ID }?.id
+        ?: if (server == SeerrMediaServer.Jellyfin || server == SeerrMediaServer.Emby) JELLYFIN_FULL_SCAN_JOB_ID else PLEX_FULL_SCAN_JOB_ID
 
 data class ServerJob(
     val id: String,

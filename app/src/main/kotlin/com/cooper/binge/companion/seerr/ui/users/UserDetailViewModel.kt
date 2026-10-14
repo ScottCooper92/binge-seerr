@@ -43,6 +43,7 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
@@ -76,6 +77,7 @@ class UserDetailViewModel
         @IoDispatcher private val dispatcher: CoroutineDispatcher,
         @Assisted private val userId: Int,
         private val minuteTicker: Ticker = Ticker(),
+        private val settingsChanges: UserSettingsChanges = UserSettingsChanges(),
     ) : ViewModel() {
         private val state = MutableStateFlow<UserDetailUiState>(UserDetailUiState.Loading)
         val uiState: StateFlow<UserDetailUiState> = state.asStateFlow()
@@ -124,6 +126,23 @@ class UserDetailViewModel
 
         init {
             reload()
+            viewModelScope.launch(dispatcher) {
+                settingsChanges.changes.filter { it == userId }.collect { refreshQuota() }
+            }
+        }
+
+        /**
+         * Reads the quota again after this user's settings were saved elsewhere, such as their General page (#1540). The rest
+         * of the page stands, and a read that fails leaves the quota the page had.
+         */
+        private suspend fun refreshQuota() {
+            val viewer = attempt { connection.authenticatedUser() }.getOrNull()
+            if (!viewer.mayReadQuotaOf(userId)) return
+            val quota = attempt { connection.api().userQuota(userId).toHubQuota() }.getOrNull() ?: return
+            state.update { current ->
+                (current as? UserDetailUiState.Ready)?.let { it.copy(detail = it.detail.copy(quota = quota)) }
+                    ?: current
+            }
         }
 
         /** Ticks the page's clock once a minute while it shows, so "joined" and each request's time age (#1239). */

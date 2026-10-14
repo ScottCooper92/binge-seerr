@@ -55,7 +55,7 @@ private const val HEAT = "Heat"
 private const val BEAR = "The Bear"
 
 /**
- * Where focus lands as the top row and the sheets hand it around, in the real shell: Down from the top row returns to the card
+ * Where focus lands as the top row and the sheets hand it around, in the real shell: Down from the bar returns to the card
  * the user came from, and Edit connection leaves focus in the form it opens rather than on the gear the sheet's close would
  * otherwise return it to.
  */
@@ -103,8 +103,15 @@ class TvHomeShellHandOffTest {
         val requests = listOf(request(1, HEAT, SeerrRequestStatusCode.Pending), request(2, BEAR, SeerrRequestStatusCode.Approved))
         composeTestRule.setContent {
             BingeTvTheme {
-                var page by rememberSaveable { mutableStateOf(TvDestination.Hub) }
-                TvHomeShell(page = page, onOpenPage = { page = it }, onClosePage = { page = TvDestination.Hub }) { shown, _ ->
+                var tab by rememberSaveable { mutableStateOf(TvDestination.Hub) }
+                var sheet by rememberSaveable { mutableStateOf<TvDestination?>(null) }
+                TvHomeShell(
+                    tab = tab,
+                    sheet = sheet,
+                    onSelectTab = { tab = it },
+                    onOpenSheet = { sheet = it },
+                    onCloseSheet = { sheet = null },
+                ) { shown, _ ->
                     if (shown == TvDestination.Hub) {
                         TvRequestsRowsBoard(
                             state =
@@ -141,11 +148,16 @@ class TvHomeShellHandOffTest {
     private fun setHomeWithSettingsSheet() {
         composeTestRule.setContent {
             BingeTvTheme {
-                var page by rememberSaveable { mutableStateOf(TvDestination.Hub) }
+                var tab by rememberSaveable { mutableStateOf(TvDestination.Hub) }
+                var sheet by rememberSaveable { mutableStateOf<TvDestination?>(null) }
                 TvHomeShell(
-                    page = page,
-                    onOpenPage = { page = it },
-                    onClosePage = { page = TvDestination.Hub },
+                    tab = tab,
+                    sheet = sheet,
+                    onSelectTab = { tab = it },
+                    onOpenSheet = { sheet = it },
+                    onCloseSheet = { sheet = null },
+                    // As the connected shell does: the form is full screen, so the bar steps away.
+                    showBar = !editing,
                     overlay = if (editing) ({ StandInPage(onClose = { editing = false }) }) else null,
                 ) { shown, close ->
                     when (shown) {
@@ -199,15 +211,8 @@ class TvHomeShellHandOffTest {
 
     private fun card(title: String) = composeTestRule.onNode(hasContentDescription(title) and isFocusable())
 
-    /** Up from Home lands on whichever top-row button is nearest, so any of them being focused is the row. */
-    private fun focusedTopRowButton() =
-        composeTestRule.onNode(
-            (
-                hasContentDescription(string(R.string.tv_rail_account)) or
-                    hasContentDescription(string(R.string.hub_section_issues)) or
-                    hasContentDescription(string(R.string.hub_section_settings))
-            ) and isFocused(),
-        )
+    /** Up from Home lands on the current tab. */
+    private fun focusedTopRowButton() = composeTestRule.onNode(hasContentDescription(string(R.string.tv_rail_hub)) and isFocused())
 
     private companion object {
         const val FOCUS_SETTLE_MILLIS = 1_000L

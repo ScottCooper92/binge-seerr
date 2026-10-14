@@ -14,9 +14,11 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isFocusable
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performKeyInput
 import androidx.compose.ui.test.pressKey
 import androidx.compose.ui.test.requestFocus
+import com.binge.designsystem.SaveStatus
 import com.binge.designsystem.tv.theme.BingeTvTheme
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.seerr.SeerrVariant
@@ -29,10 +31,18 @@ import com.cooper.binge.companion.seerr.ui.settings.ServiceType
 import com.cooper.binge.companion.seerr.ui.settings.SettingsUiState
 import com.cooper.binge.companion.seerr.ui.settings.SignInKind
 import com.cooper.binge.companion.seerr.ui.settings.SystemInfo
+import com.cooper.binge.companion.seerr.ui.settings.server.AgentForm
+import com.cooper.binge.companion.seerr.ui.settings.server.AgentOption
+import com.cooper.binge.companion.seerr.ui.settings.server.AgentSummary
+import com.cooper.binge.companion.seerr.ui.settings.server.AgentsUiState
+import com.cooper.binge.companion.seerr.ui.settings.server.JELLYFIN_FULL_SCAN_JOB_ID
 import com.cooper.binge.companion.seerr.ui.settings.server.JobInterval
 import com.cooper.binge.companion.seerr.ui.settings.server.JobsUiState
-import com.cooper.binge.companion.seerr.ui.settings.server.MEDIA_SERVER_SCAN_JOB_ID
+import com.cooper.binge.companion.seerr.ui.settings.server.PLEX_FULL_SCAN_JOB_ID
+import com.cooper.binge.companion.seerr.ui.settings.server.ServerAgent
+import com.cooper.binge.companion.seerr.ui.settings.server.ServerGeneralSettings
 import com.cooper.binge.companion.seerr.ui.settings.server.ServerJob
+import com.cooper.binge.companion.seerr.ui.users.settings.EditorUiState
 import com.cooper.binge.companion.seerr.util.createSeerrKeyboardAndroidComposeRule
 import com.cooper.binge.companion.seerr.util.string
 import org.junit.Assert.assertEquals
@@ -57,10 +67,11 @@ private fun jobsReady(
     syncRunning: Boolean = false,
     busy: Set<String> = emptySet(),
     failed: Set<String> = emptySet(),
+    scanId: String = PLEX_FULL_SCAN_JOB_ID,
 ) = JobsUiState.Ready(
     jobs =
         listOf(
-            ServerJob(MEDIA_SERVER_SCAN_JOB_ID, "Plex Full Library Scan", JobInterval.Long, scanRunning, null),
+            ServerJob(scanId, "Full Library Scan", JobInterval.Long, scanRunning, null),
             ServerJob(SYNC_JOB_ID, SYNC_JOB_NAME, JobInterval.Short, syncRunning, null),
         ),
     busyIds = busy,
@@ -86,6 +97,21 @@ class TvSettingsSheetFocusTest {
     private var disconnects = 0
     private var dismissals = 0
     private var sharingUsage by mutableStateOf(false)
+    private var household by mutableStateOf<ServerGeneralSettings?>(null)
+    private var householdStatus by mutableStateOf(SaveStatus.Idle as SaveStatus)
+    private var retries = 0
+    private var agents by mutableStateOf<AgentsUiState>(AgentsUiState.Ready(emptyList()))
+    private var agentForm by mutableStateOf(
+        AgentForm(
+            ServerAgent.Discord,
+            enabled = false,
+            options =
+                mapOf(
+                    AgentOption.DiscordWebhookUrl to "https://x.test",
+                ),
+        ),
+    )
+    private val agentEnabled = mutableListOf<Boolean>()
 
     @Test
     fun aNonAdminNeverSeesTheMediaServerGroupOrItsScan() {
@@ -111,8 +137,20 @@ class TvSettingsSheetFocusTest {
 
         press(Key.DirectionCenter)
 
-        assertEquals(listOf(MEDIA_SERVER_SCAN_JOB_ID), runs)
+        assertEquals(listOf(PLEX_FULL_SCAN_JOB_ID), runs)
         assertEquals(emptyList<String>(), cancels)
+    }
+
+    /** #1546: a Jellyfin or Emby server registers its scan as `jellyfin-full-scan`, and the row runs the id the server lists. */
+    @Test
+    fun aJellyfinServersScanRunsUnderItsOwnId() {
+        jobsState = jobsReady(scanRunning = false, scanId = JELLYFIN_FULL_SCAN_JOB_ID)
+        setSheet(config = ServerConfig())
+        open(string(R.string.server_settings_media_server))
+
+        press(Key.DirectionCenter)
+
+        assertEquals(listOf(JELLYFIN_FULL_SCAN_JOB_ID), runs)
     }
 
     /** A scan that is running offers Cancel in the same row, and pressing it cancels. */
@@ -125,7 +163,7 @@ class TvSettingsSheetFocusTest {
         composeTestRule.onNodeWithText(string(R.string.tv_settings_start_library_scan)).assertDoesNotExist()
         press(Key.DirectionCenter)
 
-        assertEquals(listOf(MEDIA_SERVER_SCAN_JOB_ID), cancels)
+        assertEquals(listOf(PLEX_FULL_SCAN_JOB_ID), cancels)
         assertEquals(emptyList<String>(), runs)
     }
 
@@ -138,13 +176,13 @@ class TvSettingsSheetFocusTest {
         setSheet(config = ServerConfig())
         open(string(R.string.server_settings_media_server))
 
-        jobsState = jobsReady(scanRunning = false, busy = setOf(MEDIA_SERVER_SCAN_JOB_ID))
+        jobsState = jobsReady(scanRunning = false, busy = setOf(PLEX_FULL_SCAN_JOB_ID))
         composeTestRule.waitForIdle()
         composeTestRule
             .onNodeWithText(string(R.string.tv_settings_job_working))
             .assert(SemanticsMatcher.expectValue(SemanticsProperties.LiveRegion, LiveRegionMode.Polite))
 
-        jobsState = jobsReady(scanRunning = false, failed = setOf(MEDIA_SERVER_SCAN_JOB_ID))
+        jobsState = jobsReady(scanRunning = false, failed = setOf(PLEX_FULL_SCAN_JOB_ID))
         composeTestRule.mainClock.advanceTimeBy(A_MINUTE_MILLIS)
         composeTestRule.waitForIdle()
         composeTestRule
@@ -287,6 +325,81 @@ class TvSettingsSheetFocusTest {
         assertFalse(dismissals > 0)
     }
 
+    @Test
+    fun pressingAHouseholdSwitchFlipsItAndSavesAsItIsMade() {
+        household = ServerGeneralSettings(hideAvailable = false)
+        setSheet(config = ServerConfig())
+        open(string(R.string.tv_settings_group_household))
+
+        composeTestRule.onNode(hasText(string(R.string.settings_hide_available)) and isFocusable()).requestFocus()
+        press(Key.DirectionCenter)
+
+        assertEquals(true, household?.hideAvailable)
+        composeTestRule
+            .onNode(
+                hasText(string(R.string.settings_hide_available)) and hasText(string(R.string.settings_value_on)),
+            ).assertExists()
+    }
+
+    @Test
+    fun aSwitchTheServerLacksIsNotOffered() {
+        household = ServerGeneralSettings(hideRequested = null, specialEpisodes = null, hideBlocklisted = null)
+        setSheet(config = ServerConfig())
+        open(string(R.string.tv_settings_group_household))
+
+        composeTestRule.onNodeWithText(string(R.string.server_settings_hide_requested)).assertDoesNotExist()
+        composeTestRule.onNodeWithText(string(R.string.server_settings_special_episodes)).assertDoesNotExist()
+        composeTestRule.onNodeWithText(string(R.string.server_settings_partial_requests)).assertExists()
+    }
+
+    @Test
+    fun aFailedHouseholdSaveIsSaidInPlaceWithRetry() {
+        household = ServerGeneralSettings()
+        householdStatus = SaveStatus.Failed
+        setSheet(config = ServerConfig())
+        open(string(R.string.tv_settings_group_household))
+
+        composeTestRule.onNodeWithText(string(DesR.string.save_status_failed)).assertExists()
+        composeTestRule.onNodeWithText(string(DesR.string.save_status_retry)).performClick()
+
+        assertEquals(1, retries)
+    }
+
+    @Test
+    fun aNonAdminHasNeitherHouseholdNorAgents() {
+        setSheet(config = null)
+
+        composeTestRule.onNodeWithText(string(R.string.tv_settings_group_household)).assertDoesNotExist()
+        composeTestRule.onNodeWithText(string(R.string.settings_group_notifications)).assertDoesNotExist()
+    }
+
+    @Test
+    fun anAgentOpensItsPageAndPressingItsRowSwitchesItOn() {
+        agents = AgentsUiState.Ready(listOf(AgentSummary(ServerAgent.Discord, enabled = false)))
+        setSheet(config = ServerConfig())
+        open(string(R.string.settings_group_notifications))
+        open(string(R.string.settings_agent_discord))
+
+        composeTestRule.onNode(hasText(string(R.string.tv_settings_agent_turn_on)) and isFocusable()).assertIsFocused()
+        press(Key.DirectionCenter)
+
+        assertEquals(listOf(true), agentEnabled)
+        pressBack()
+        groupRow(string(R.string.settings_agent_discord)).assertIsFocused()
+    }
+
+    @Test
+    fun anAgentThatCannotSendYetCannotBeSwitchedOnFromTheTv() {
+        agents = AgentsUiState.Ready(listOf(AgentSummary(ServerAgent.Discord, enabled = false)))
+        agentForm = AgentForm(ServerAgent.Discord, enabled = false)
+        setSheet(config = ServerConfig())
+        open(string(R.string.settings_group_notifications))
+        open(string(R.string.settings_agent_discord))
+
+        composeTestRule.onNodeWithText(string(R.string.tv_settings_agent_setup_first)).assertExists()
+        composeTestRule.onNode(hasText(string(R.string.tv_settings_agent_turn_on)) and isFocusable()).assertDoesNotExist()
+    }
+
     private fun setSheet(
         config: ServerConfig?,
         app: AppSettings? = null,
@@ -307,6 +420,32 @@ class TvSettingsSheetFocusTest {
                             onDisconnect = { disconnects++ },
                             jobs = TvJobActions(onRun = { runs += it }, onCancel = { cancels += it }),
                             onToggleShareUsageData = { sharingUsage = it },
+                            household =
+                                household?.takeIf { config != null }?.let {
+                                    TvHousehold(
+                                        settings = it,
+                                        status = householdStatus,
+                                        onChange = { change -> household = change(it) },
+                                        onRetry = { retries++ },
+                                    )
+                                },
+                            agents =
+                                if (config != null) {
+                                    TvAgents(
+                                        state = agents,
+                                        page = { agent, nav ->
+                                            TvAgentPage(
+                                                nav = nav,
+                                                agent = agent,
+                                                state = EditorUiState.Ready(draft = agentForm, saved = agentForm),
+                                                onSetEnabled = { agentEnabled += it },
+                                                onRetry = {},
+                                            )
+                                        },
+                                    )
+                                } else {
+                                    null
+                                },
                         ),
                     onDismissRequest = { dismissals++ },
                     jobs = if (config != null) jobsState else JobsUiState.Loading,

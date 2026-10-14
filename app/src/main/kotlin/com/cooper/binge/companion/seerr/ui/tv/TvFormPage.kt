@@ -28,6 +28,7 @@ import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
+import com.binge.designsystem.tv.nav.LocalTvTopInset
 import com.binge.designsystem.tv.template.TvMessagePage
 import com.binge.designsystem.tv.template.TvPageHosting
 import com.binge.designsystem.tv.template.TvTwoPaneCopy
@@ -41,7 +42,7 @@ import com.binge.designsystem.tv.R as TvR
  * A form as a television shows it: the design system's [TvTwoPanePage] with the copy centred in a fixed pane
  * on the left — an illustration, what this page is and what to do — and the controls in a scrolling column on
  * the right, so the eye reads once and the remote walks down one column. Every form here is full-screen, so
- * its edges take the overscan margin rather than clearing a rail.
+ * its edges take the overscan margin, with no navigation beside it to clear.
  */
 @Composable
 internal fun TvFormPage(
@@ -112,7 +113,7 @@ internal fun TvFormPage(
                                     Modifier
                                         .fillMaxSize()
                                         .verticalScroll(rememberScrollState())
-                                        .padding(top = dimensionResource(R.dimen.tv_form_top_inset)),
+                                        .padding(top = dimensionResource(R.dimen.tv_form_top_inset) + LocalTvTopInset.current),
                                 verticalArrangement = Arrangement.spacedBy(dimensionResource(TvR.dimen.tv_two_pane_action_gap)),
                                 content = form,
                             )

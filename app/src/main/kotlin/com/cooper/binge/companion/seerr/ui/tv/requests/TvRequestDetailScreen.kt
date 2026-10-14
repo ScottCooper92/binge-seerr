@@ -92,7 +92,7 @@ internal class TvRequestEditActions(
  * and their status, and what is downloading now. What it lets a viewer do is a deliberate subset of the phone's;
  * `requestDetailActions` records the split. The same [RequestDetailUiState] the phone's
  * `RequestDetailScreen` renders — this is a TV surface over the same ViewModel, so a moderation elsewhere
- * (or this page's own) shows here without any polling. Presented as a full-screen overlay above the rail,
+ * (or this page's own) shows here without any polling. Presented as a full-screen page above Home,
  * so it owns Back itself rather than leaving it to the shell.
  */
 @Composable

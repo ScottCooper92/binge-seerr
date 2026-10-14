@@ -63,4 +63,7 @@
     <dimen name="search_result_min_height">64dp</dimen>
     <dimen name="search_result_icon_container">40dp</dimen>
     <dimen name="search_result_toggle">36dp</dimen>
+    <!-- The TV top bar: the ring a focused avatar shows, and a tab pill's padding either side of its label -->
+    <dimen name="tv_top_bar_avatar_ring">2dp</dimen>
+    <dimen name="tv_top_bar_item_padding_horizontal">23dp</dimen>
 </resources>

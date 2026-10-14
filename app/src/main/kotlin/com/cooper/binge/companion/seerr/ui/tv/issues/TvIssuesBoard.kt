@@ -55,6 +55,7 @@ import com.cooper.binge.companion.seerr.ui.tv.TvLocalNetworkDeniedPage
 import com.cooper.binge.companion.seerr.ui.tv.TvPagedRows
 import com.cooper.binge.companion.seerr.ui.tv.TvPosterCard
 import com.cooper.binge.companion.seerr.ui.tv.TvRowsFallback
+import com.cooper.binge.companion.seerr.ui.tv.hubFailure
 import com.cooper.binge.companion.seerr.ui.tv.rememberSheetFocusReturn
 import com.cooper.binge.companion.seerr.ui.tv.rememberTvActionRun
 import com.cooper.binge.companion.seerr.ui.tv.tvColor
@@ -78,7 +79,7 @@ internal class TvIssuesActions(
 /**
  * The issues browser as a television board: the filters as a band, the selected filter's rows beneath,
  * and a row's actions — resolve or reopen, and delete — on the end-edge sheet. Every row also opens the
- * read-only issue page (an overlay above the rail, not owned by this board) — from the sheet for a row
+ * read-only issue page (a page above Home, not owned by this board) — from the sheet for a row
  * this viewer may act on, where resolving, reopening and deleting stay; directly for one they may not,
  * where the sheet has nothing else to offer.
  *
@@ -193,6 +194,7 @@ private fun TvIssuesRows(
                 title = filterLabel(filter, ready.counts),
                 items = (0 until minOf(rows.count, TV_ROW_ITEM_CAP)).mapNotNull { rows.at(it) },
                 onSeeAll = { onSeeAll(filter) }.takeIf { (ready.counts?.countFor(filter) ?: rows.count) > TV_ROW_ITEM_CAP },
+                failure = rows.hubFailure(actions.onRetryLoad),
             )
         }
     TvImmersiveHub(

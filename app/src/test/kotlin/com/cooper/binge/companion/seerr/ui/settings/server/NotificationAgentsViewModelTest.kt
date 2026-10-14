@@ -68,4 +68,23 @@ class NotificationAgentsViewModelTest {
             assertFalse(ServerAgent.Ntfy in agents)
             assertEquals(0, seerr.count("GET", "/api/v1/settings/notifications/ntfy"))
         }
+
+    @Test
+    fun `a refresh reads the agents again without going back to loading`() =
+        runTest {
+            seerr.viewer(id = 1, permissions = ADMIN)
+            val vm = NotificationAgentsViewModel(seerr.connection(this), mainDispatcherRule.dispatcher)
+            vm.reload()
+            vm.uiState.first { it is AgentsUiState.Ready }
+            seerr.serve("GET /api/v1/settings/notifications/discord", """{"enabled":true,"types":0,"options":{}}""")
+
+            vm.refresh()
+
+            val after =
+                vm.uiState.first { state ->
+                    state is AgentsUiState.Ready &&
+                        state.agents.first { it.agent == ServerAgent.Discord }.enabled == true
+                }
+            assertTrue(after is AgentsUiState.Ready)
+        }
 }

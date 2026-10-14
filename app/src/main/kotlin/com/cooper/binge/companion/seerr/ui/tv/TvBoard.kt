@@ -80,7 +80,7 @@ internal fun rememberOverlayFocusRestore(overlayOpen: Boolean): OverlayFocusRest
 
 /**
  * The restore state for a board that only puts focus back from a sheet of its own, through the sheet's closer. A page
- * the shell shows above the rail is not one of those: when it closes, the shell hands focus back into the destination
+ * the shell shows above Home is not one of those: when it closes, the shell hands focus back into the surface beneath
  * and the board's own entry routing lands it. A second request from the board races that hand-off, and the loser is
  * the opened card (#1509).
  */

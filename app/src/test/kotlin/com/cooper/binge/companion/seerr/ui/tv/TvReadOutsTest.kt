@@ -1,6 +1,9 @@
 package com.cooper.binge.companion.seerr.ui.tv
 
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
 import com.binge.designsystem.tv.theme.BingeTvTheme
@@ -61,6 +64,16 @@ class TvReadOutsTest {
 
         assertTextExists(EDITION)
         assertTextAbsent(string(R.string.settings_version_update, EDITION))
+    }
+
+    /** A read-out is a fact, not a control that cannot be used yet, so it is not announced as disabled (#1534). */
+    @Test
+    fun theVersionReadOutIsOneItemThatIsNotDisabled() {
+        setSettings(commitsBehind = 0, updateAvailable = false)
+
+        composeTestRule
+            .onNode(hasText(EDITION) and hasText(string(R.string.settings_version)))
+            .assert(SemanticsMatcher.keyNotDefined(SemanticsProperties.Disabled))
     }
 
     /** The PIN is announced digit by digit, as the PIN, so a screen reader does not read "four thousand…". */

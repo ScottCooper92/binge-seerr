@@ -54,6 +54,7 @@ class TvRequestsRowsBoardFocusTest {
     private var seeAllMine = 0
     private var retries = 0
     private var scopeRetries = 0
+    private var mineRetries = 0
 
     @Test
     fun downFromARowLandsOnTheNextRow() {
@@ -153,6 +154,39 @@ class TvRequestsRowsBoardFocusTest {
         composeTestRule.onNode(hasTextExactly(string(R.string.hub_retry)) and isFocusable()).assertExists()
     }
 
+    /** A row whose list could not be read says so in its slot amid the others, and Down stops on its retry (#1537). */
+    @Test
+    fun aRowThatCouldNotBeReadSaysSoAmidTheOthersAndRetries() {
+        setBoard(failedFilter = RequestFilter.Processing)
+        card(HEAT).requestFocus()
+        composeTestRule.waitForIdle()
+
+        pressDown()
+        pressDown()
+        retryButton().assertIsFocused()
+        composeTestRule.onNode(hasText(string(R.string.tv_list_load_failed))).assertExists()
+        pressOk()
+
+        assertEquals(1, retries)
+    }
+
+    /** Your own requests failing is not the same as having made none: the row stays, says so, and retries its own list. */
+    @Test
+    fun yourRequestsThatCouldNotBeReadSaySoAndRetryTheirOwnList() {
+        setBoard(mineRefresh = TvLoadPhase.Failed)
+        card(HEAT).requestFocus()
+        composeTestRule.waitForIdle()
+
+        pressDown()
+        pressDown()
+        retryButton().assertIsFocused()
+        composeTestRule.onNode(hasText(string(R.string.tv_account_your_requests), substring = true)).assertExists()
+        pressOk()
+
+        assertEquals(1, mineRetries)
+        assertEquals(0, retries)
+    }
+
     /** The scope itself could not be read: the page's retry reads the scope again, not a row (#1054). */
     @Test
     fun aScopeThatCouldNotBeReadRetriesTheScope() {
@@ -174,6 +208,8 @@ class TvRequestsRowsBoardFocusTest {
         scopeError: SeerrError? = null,
         mine: List<com.cooper.binge.companion.seerr.ui.requests.RequestItem> = emptyList(),
         mineCount: Int = mine.size,
+        failedFilter: RequestFilter? = null,
+        mineRefresh: TvLoadPhase = TvLoadPhase.Idle,
     ) {
         val pending = listOf(request(1, HEAT, SeerrRequestStatusCode.Pending))
         val approved = listOf(request(2, BEAR, SeerrRequestStatusCode.Approved))
@@ -198,18 +234,20 @@ class TvRequestsRowsBoardFocusTest {
                     rowsFor = { filter ->
                         val items =
                             when {
-                                empty -> emptyList()
+                                empty || filter == failedFilter -> emptyList()
                                 filter == RequestFilter.Pending -> pending
                                 filter == RequestFilter.Approved -> approved
                                 else -> emptyList()
                             }
-                        TvPagedRows(count = items.size, at = { items.getOrNull(it) }, refresh = refresh)
+                        val phase = if (filter == failedFilter) TvLoadPhase.Failed else refresh
+                        TvPagedRows(count = items.size, at = { items.getOrNull(it) }, refresh = phase)
                     },
                     mine =
                         TvMyRequests(
-                            rows = TvPagedRows(count = mine.size, at = { mine.getOrNull(it) }),
+                            rows = TvPagedRows(count = mine.size, at = { mine.getOrNull(it) }, refresh = mineRefresh),
                             count = mineCount,
                             onSeeAll = { seeAllMine++ },
+                            onRetry = { mineRetries++ },
                         ),
                     actions =
                         TvRequestsActions(
@@ -229,6 +267,8 @@ class TvRequestsRowsBoardFocusTest {
     }
 
     private fun card(title: String) = composeTestRule.onNode(hasContentDescription(title) and isFocusable())
+
+    private fun retryButton() = composeTestRule.onNode(hasTextExactly(string(R.string.hub_retry)) and isFocusable())
 
     private fun seeAllTile() = composeTestRule.onNode(hasContentDescription(SEE_ALL) and isFocusable())
 
