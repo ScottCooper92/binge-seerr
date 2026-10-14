@@ -9,6 +9,7 @@ import com.cooper.binge.companion.seerr.seerr.displayString
 import com.cooper.binge.companion.seerr.seerr.isWebUrl
 import com.cooper.binge.companion.seerr.seerr.toEpochMillisOrNull
 import com.cooper.binge.companion.seerr.seerr.toPermissions
+import com.cooper.binge.companion.seerr.ui.mediaServerItem
 import com.cooper.binge.companion.seerr.ui.requests.mediaServerName
 
 internal const val STATUS_OPEN = "open"
@@ -36,6 +37,7 @@ internal fun SeerrIssueDto.toDetail(
         serviceUrl = media?.serviceUrl?.takeIf { it.isWebUrl() },
         serverName = profile.variant.displayName,
         mediaServerName = profile.mediaServerName(),
+        mediaServerItem = profile.mediaServerItem(media?.jellyfinMediaId),
         currentUserName = user?.displayString(),
     )
 }
