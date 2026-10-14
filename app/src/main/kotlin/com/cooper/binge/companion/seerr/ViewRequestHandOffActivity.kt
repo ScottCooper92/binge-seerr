@@ -4,7 +4,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
-import com.binge.companion.sdk.toViewRequestId
+import com.binge.companion.sdk.CompanionManifest
 import com.cooper.binge.companion.seerr.ui.DeepLinks
 
 /**
@@ -19,7 +19,7 @@ class ViewRequestHandOffActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         if (bingeHandOffPolicy().permits(callingPackage)) {
-            startActivity(Intent(this, MainActivity::class.java).setData(Uri.parse(linkFor(intent.toViewRequestId()))))
+            startActivity(Intent(this, MainActivity::class.java).setData(Uri.parse(linkFor(intent.getStringExtra(CompanionManifest.EXTRA_REQUEST_ID)))))
         }
         finish()
     }
