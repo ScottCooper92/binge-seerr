@@ -13,7 +13,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
-/** What a television page's last action is doing, and how its answer settles it (#1510). */
+/** What a television page's last action is doing, and how its answer settles it (#1519). */
 @RunWith(RobolectricTestRunner::class)
 @Config(qualifiers = "w960dp-h540dp-television-xhdpi")
 class TvActionRunTest {

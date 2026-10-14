@@ -74,7 +74,7 @@ class TvRequestDetailSheetsTest {
         assertEquals(listOf(Triple(MEDIA_ID, MediaStatusChoice.Available, false)), marked)
     }
 
-    /** The sheet stays open while it saves, ticks the pick at once, says Saving, then Saved, and only then closes (#1510). */
+    /** The sheet stays open while it saves, ticks the pick at once, says Saving, then Saved, and only then closes (#1519). */
     @Test
     fun aPickKeepsTheSheetOpenSavingThenSavedBeforeItCloses() {
         setContent(detail(media = media(MediaInstance(false, SeerrMediaStatusCode.Processing, null, null, null))))
@@ -141,7 +141,7 @@ class TvRequestDetailSheetsTest {
         composeTestRule.onNodeWithText(string(DesR.string.save_status_retry)).assertDoesNotExist()
     }
 
-    /** A failure from the action row is not the Mark as sheet's, and a failure left in the sheet does not move under the row (#1510). */
+    /** A failure from the action row is not the Mark as sheet's, and a failure left in the sheet does not move under the row (#1519). */
     @Test
     fun markAsOpensWithoutAnotherActionsFailureAndLeavesNoneBehind() {
         setContent(

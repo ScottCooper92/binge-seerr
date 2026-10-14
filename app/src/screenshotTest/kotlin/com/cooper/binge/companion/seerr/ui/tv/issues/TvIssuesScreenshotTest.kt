@@ -133,7 +133,7 @@ class TvIssuesScreenshotTest {
     @Composable
     fun DeleteConfirm() = ConfirmFrame(FixedSampleIssues[0], TvIssueConfirm.Delete)
 
-    /** The sheet stays open while an action saves, and says so under its rows (#1510). */
+    /** The sheet stays open while an action saves, and says so under its rows (#1519). */
     @PreviewTest
     @SeerrTvScreenPreviews
     @Composable

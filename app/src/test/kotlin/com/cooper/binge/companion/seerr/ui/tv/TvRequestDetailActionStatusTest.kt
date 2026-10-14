@@ -37,7 +37,7 @@ import org.robolectric.annotation.Config
 import com.binge.designsystem.R as DesR
 
 /**
- * What each action of the request page says about itself (#1510). There is no timed plate over the page: an action's answer
+ * What each action of the request page says about itself (#1519). There is no timed plate over the page: an action's answer
  * stands under its row until the user acts again, a failure keeps a Retry within reach of the remote, and a success is the
  * page's own state refreshing, with "Saved" for as long as it takes to read.
  */
@@ -53,11 +53,16 @@ class TvRequestDetailActionStatusTest {
     private fun setContent(
         allowed: RequestActions,
         withMedia: Boolean = false,
+        isActing: Boolean = false,
     ) {
         composeTestRule.setContent {
             BingeTvTheme {
                 TvRequestDetailScreen(
-                    state = RequestDetailUiState.Ready(requestDetail(actions = allowed, media = if (withMedia) markableMedia() else null)),
+                    state =
+                        RequestDetailUiState.Ready(
+                            requestDetail(actions = allowed, media = if (withMedia) markableMedia() else null),
+                            isActing = isActing,
+                        ),
                     events = events,
                     actions =
                         TvRequestDetailActions(
@@ -258,6 +263,20 @@ class TvRequestDetailActionStatusTest {
         pressRetryOnTheLine()
 
         assertEquals(listOf("approve", "approve"), calls)
+    }
+
+    /** An action in flight that did not come through the run, such as an edit whose sheet was dismissed, is not answered as this press. */
+    @Test
+    fun anActionPressedWhileAnotherIsInFlightIsDroppedAndItsLateAnswerIgnored() {
+        setContent(RequestActions(canApprove = true), isActing = true)
+        take(R.string.tv_detail_approve)
+        assertEquals(emptyList<String>(), calls)
+
+        events.tryEmit(ModerationEvent.Failed(SeerrError.Unreachable))
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText(string(DesR.string.save_status_saving)).assertDoesNotExist()
+        composeTestRule.onNodeWithText(string(DesR.string.save_status_retry)).assertDoesNotExist()
     }
 
     @Test

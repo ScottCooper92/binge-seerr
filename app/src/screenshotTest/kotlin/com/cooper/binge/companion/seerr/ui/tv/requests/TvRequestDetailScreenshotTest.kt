@@ -304,7 +304,7 @@ class TvRequestDetailScreenshotTest {
         )
     }
 
-    /** An approval that landed: "Saved" under the action row, which clears once it has been read (#1510). */
+    /** An approval that landed: "Saved" under the action row, which clears once it has been read (#1519). */
     @PreviewTest
     @SeerrTvScreenPreviews
     @Composable

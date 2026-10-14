@@ -18,7 +18,7 @@ internal const val TV_SAVED_HOLD_MILLIS = 800L
 
 /**
  * What a television page's last action is doing, as the design system's [SaveStatus]: saving, saved, or failed with the
- * attempt kept so Try again can run it once more (#1510). It stands where the action lives, in its sheet or under its row,
+ * attempt kept so Try again can run it once more (#1519). It stands where the action lives, in its sheet or under its row,
  * and stays until the user acts again, so a failure is never a message that times out before a remote can reach it.
  *
  * An action [run]s through here. The ViewModel's one-shot answer then [settle]s it: the first answer after a run is that

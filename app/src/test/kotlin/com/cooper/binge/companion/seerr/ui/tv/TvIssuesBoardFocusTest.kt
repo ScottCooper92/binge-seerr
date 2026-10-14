@@ -80,7 +80,7 @@ class TvIssuesBoardFocusTest {
         pressOk()
 
         assertEquals(listOf(11), resolved)
-        // The sheet stays open while the action saves (#1510).
+        // The sheet stays open while the action saves (#1519).
         assertEquals(0, dismissed)
         composeTestRule.onNodeWithText(string(DesR.string.save_status_saving)).assertExists()
     }
@@ -126,7 +126,7 @@ class TvIssuesBoardFocusTest {
         composeTestRule.onNodeWithText(string(DesR.string.save_status_saving)).assertExists()
     }
 
-    /** A failure left in a sheet that was dismissed is not the next issue's: its sheet opens idle, and Retry has nothing to run (#1510). */
+    /** A failure left in a sheet that was dismissed is not the next issue's: its sheet opens idle, and Retry has nothing to run (#1519). */
     @Test
     fun aDismissedSheetLeavesNoFailureForTheNextIssue() {
         setBoard(manager)

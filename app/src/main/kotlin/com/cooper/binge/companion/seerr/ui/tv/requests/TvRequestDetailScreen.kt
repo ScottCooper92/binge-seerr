@@ -58,7 +58,7 @@ import com.cooper.binge.companion.seerr.ui.tv.rememberTvActionRun
 import kotlinx.coroutines.flow.Flow
 
 /** Everything the TV request detail page can ask of its host, in one place so the overlay stays a wiring. */
-internal class TvRequestDetailActions(
+internal data class TvRequestDetailActions(
     val onBack: () -> Unit,
     val onRetry: () -> Unit,
     /** Null hides the affordance — Binge is not expected to answer, and there is no browser to fall back to. */
@@ -136,6 +136,7 @@ internal fun TvRequestDetailScreen(
                     initialSheet = initialSheet,
                     initialStatus = initialStatus,
                     initialFocusedSectionKey = initialFocusedSectionKey,
+                    isActing = state.isActing,
                 )
         }
     }
@@ -162,20 +163,21 @@ private fun TvRequestDetailContent(
     initialSheet: DetailSheet?,
     initialStatus: SaveStatus,
     initialFocusedSectionKey: String?,
+    isActing: Boolean,
 ) {
     // An approve, a decline, a retry or a block that lands reloads the page without its own button, and the focus that
     // button held would go with it to nowhere the D-pad can reach. Each marks the row to be focused again when the page's
     // actions change (#801).
     var refocusRow by remember { mutableStateOf(false) }
     // What the last action is doing, and its answer: it stands under the action row, or in the sheet that ran it, until the
-    // user acts again, so a failure always has a Try again within reach (#1510). A title that could not be blocked after a
-    // decline or a block of its own is retried as a block.
+    // user acts again, so a failure always has a Try again within reach (#1519). A title that could not be blocked after a
+    // decline or a block of its own is retried as a block. TV's Decline never blocks, so the decline case is defensive.
     val run =
         rememberTvActionRun(events, initialStatus) { event ->
             val blockFailed = event == ModerationEvent.DeclinedButBlockFailed || event == ModerationEvent.BlockFailed
             settle(failed = event.isError(), retry = if (blockFailed) given.onBlock else null)
         }
-    val actions = remember(given, run) { given.markingRefocus { refocusRow = true }.running(run) }
+    val actions = remember(given, run, isActing) { given.markingRefocus { refocusRow = true }.running(run, isActing) }
     // The two actions that cannot be undone take a confirm, and Mark as and Report open their own sheets; the rest run at
     // once, since a decline keeps the request.
     var sheet by rememberSaveable { mutableStateOf(initialSheet) }
@@ -361,51 +363,3 @@ private class TvRequestDetails(
     val groups: List<TvInfoGroup>,
     val phoneOnlyHint: String?,
 )
-
-/** These actions, with [mark] run first by those whose success removes their own button: Approve, Decline, Retry and Block. */
-private fun TvRequestDetailActions.markingRefocus(mark: () -> Unit) =
-    TvRequestDetailActions(
-        onBack = onBack,
-        onRetry = onRetry,
-        onOpenInBinge = onOpenInBinge,
-        onApprove = {
-            mark()
-            onApprove()
-        },
-        onRetryRequest = {
-            mark()
-            onRetryRequest()
-        },
-        onDecline = {
-            mark()
-            onDecline(it)
-        },
-        onRemove = onRemove,
-        onBlock = {
-            mark()
-            onBlock()
-        },
-        onSetMediaStatus = onSetMediaStatus,
-        onReportIssue = onReportIssue,
-        onDismissReport = onDismissReport,
-        edit = edit,
-        requesterSheet = requesterSheet,
-    )
-
-/** These actions, each run through [run] so the page knows what is saving, and whether it failed. Reporting an issue has its own state. */
-private fun TvRequestDetailActions.running(run: TvActionRun) =
-    TvRequestDetailActions(
-        onBack = onBack,
-        onRetry = onRetry,
-        onOpenInBinge = onOpenInBinge,
-        onApprove = { run.run { onApprove() } },
-        onRetryRequest = { run.run { onRetryRequest() } },
-        onDecline = { block -> run.run { onDecline(block) } },
-        onRemove = { block -> run.run { onRemove(block) } },
-        onBlock = { run.run { onBlock() } },
-        onSetMediaStatus = { mediaId, status, is4k -> run.run { onSetMediaStatus(mediaId, status, is4k) } },
-        onReportIssue = onReportIssue,
-        onDismissReport = onDismissReport,
-        edit = edit,
-        requesterSheet = requesterSheet,
-    )

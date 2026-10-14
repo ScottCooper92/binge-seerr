@@ -61,7 +61,7 @@ class TvRequestDetailSheetsScreenshotTest {
             )
         }
 
-    /** A pick being saved: the tick has moved to it, and the sheet says "Saving…" under the options before it closes (#1510). */
+    /** A pick being saved: the tick has moved to it, and the sheet says "Saving…" under the options before it closes (#1519). */
     @PreviewTest
     @SeerrTvScreenPreviews
     @Composable

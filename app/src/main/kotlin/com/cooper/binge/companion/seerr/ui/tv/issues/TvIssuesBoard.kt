@@ -99,7 +99,7 @@ internal fun TvIssuesBoard(
     initialStatus: SaveStatus = SaveStatus.Idle,
 ) {
     val ready = state as? IssuesUiState.Ready
-    // The sheet that took the action stays open while it saves, and says how it went (#1510).
+    // The sheet that took the action stays open while it saves, and says how it went (#1519).
     val run = rememberTvActionRun(events, initialStatus) { settle(failed = it is IssueListEvent.Failed) }
     val restore = rememberSheetFocusReturn()
     val closer = rememberTvOverlayCloser(restoreTo = restore.requester, onClose = actions.onDismissActions)
