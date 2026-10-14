@@ -1110,9 +1110,8 @@
     <string name="request_block_confirm_message">El título no se podrá volver a solicitar. Esta petición se queda como está.</string>
     <string name="tv_detail_info_requested">Solicitado</string>
     <string name="tv_detail_info_status">Estado</string>
-    <string name="tv_detail_info_sent_to">Enviado a</string>
-    <string name="tv_detail_info_phone_only">Cámbialo en el móvil</string>
     <string name="tv_detail_phone_tags">Las etiquetas de la petición</string>
+    <string name="tv_detail_phone_hint">Cámbialo en el móvil: %1$s</string>
     <string name="tv_detail_phone_requester">Quien la pidió</string>
     <string name="tv_detail_phone_siblings">Otras peticiones</string>
     <string name="tv_detail_details">Detalles</string>

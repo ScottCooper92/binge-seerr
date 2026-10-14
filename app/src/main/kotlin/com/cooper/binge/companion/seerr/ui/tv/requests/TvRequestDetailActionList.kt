@@ -26,8 +26,8 @@ import com.cooper.binge.companion.seerr.ui.requests.canOpenUser
  *
  * The TV page is a deliberate subset of the phone's (#1036). It moderates, edits the request, marks the title's state and
  * reports an issue. A request's tags, its requester's page and the title's other requests stay on the phone: each needs
- * a picker or a page this surface has no room for. The details row says so where they apply
- * ([phoneOnlyCard]), so a missing control reads as a decision rather than a gap.
+ * a picker or a page this surface has no room for. A line under the details says so where they apply
+ * ([phoneOnlyHint]), so a missing control reads as a decision rather than a gap.
  */
 @Composable
 internal fun requestDetailActions(
@@ -110,11 +110,11 @@ private fun sheetAction(
 ) = TvDetailAction(label, icon, onClick = { onOpenSheet(sheet) }, showLabel = true, focusRequester = sheetFocus.getValue(sheet))
 
 /**
- * The card that names what this request has on the phone and not here: its tags, its requester's page, the title's
+ * The line that names what this request has on the phone and not here: its tags, its requester's page, the title's
  * other requests. Null when none of them applies.
  */
 @Composable
-internal fun phoneOnlyCard(detail: RequestDetail): TvInfoCardItem? {
+internal fun phoneOnlyHint(detail: RequestDetail): String? {
     val parts =
         listOfNotNull(
             stringResource(R.string.tv_detail_phone_tags).takeIf { detail.canEdit && detail.canEditDestination },
@@ -124,8 +124,5 @@ internal fun phoneOnlyCard(detail: RequestDetail): TvInfoCardItem? {
             stringResource(R.string.tv_detail_phone_siblings).takeIf { detail.siblings.isNotEmpty() },
         )
     if (parts.isEmpty()) return null
-    return TvInfoCardItem(
-        stringResource(R.string.tv_detail_info_phone_only),
-        parts.joinToString(stringResource(R.string.hub_meta_separator)),
-    )
+    return stringResource(R.string.tv_detail_phone_hint, parts.joinToString(stringResource(R.string.hub_meta_separator)))
 }
