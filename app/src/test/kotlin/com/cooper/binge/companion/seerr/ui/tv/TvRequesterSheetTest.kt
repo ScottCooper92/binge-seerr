@@ -116,7 +116,7 @@ class TvRequesterSheetTest {
     @Test
     fun aLandedSaveReloadsTheQuotaLineOncePerSave() {
         var reloads = 0
-        var status by mutableStateOf(SaveStatus.Idle)
+        var status by mutableStateOf<SaveStatus>(SaveStatus.Idle)
         composeTestRule.setContent { ReloadWhenSaved(status) { reloads++ } }
         composeTestRule.waitForIdle()
         assertEquals(0, reloads)
