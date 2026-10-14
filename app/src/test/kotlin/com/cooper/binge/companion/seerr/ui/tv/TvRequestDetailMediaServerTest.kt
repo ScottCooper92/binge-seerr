@@ -58,8 +58,6 @@ class TvRequestDetailMediaServerTest {
                             onRemove = {},
                             onBlock = {},
                             onSetMediaStatus = { _, _, _ -> },
-                            onReportIssue = { _, _ -> },
-                            onDismissReport = {},
                         ),
                 )
             }

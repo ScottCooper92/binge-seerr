@@ -28,8 +28,6 @@ import com.cooper.binge.companion.seerr.ui.SignInForm
 import com.cooper.binge.companion.seerr.ui.issues.IssueDetailUiState
 import com.cooper.binge.companion.seerr.ui.issues.commonIssueDetail
 import com.cooper.binge.companion.seerr.ui.requests.DetailDownload
-import com.cooper.binge.companion.seerr.ui.requests.IssueReport
-import com.cooper.binge.companion.seerr.ui.requests.IssueType
 import com.cooper.binge.companion.seerr.ui.requests.MediaInstance
 import com.cooper.binge.companion.seerr.ui.requests.MediaRecord
 import com.cooper.binge.companion.seerr.ui.requests.RequestActions
@@ -57,9 +55,8 @@ import com.cooper.binge.companion.seerr.ui.tv.issues.KEY_REPORT
 import com.cooper.binge.companion.seerr.ui.tv.issues.NoIssueSheetActions
 import com.cooper.binge.companion.seerr.ui.tv.issues.TvIssueSheet
 import com.cooper.binge.companion.seerr.ui.tv.issues.issueCardPage
+import com.cooper.binge.companion.seerr.ui.tv.requests.DetailSheet
 import com.cooper.binge.companion.seerr.ui.tv.requests.TvMarkAsSteps
-import com.cooper.binge.companion.seerr.ui.tv.requests.TvReportDraft
-import com.cooper.binge.companion.seerr.ui.tv.requests.TvReportIssueStep
 import com.cooper.binge.companion.seerr.ui.tv.requests.TvRequestDetailActions
 import com.cooper.binge.companion.seerr.ui.tv.requests.TvRequestDetailScreen
 import com.cooper.binge.companion.seerr.ui.tv.settings.PAGE_BUG_REPORT
@@ -99,10 +96,9 @@ class TvPagesClippingTest {
 
     @Test fun `a request detail page at 1_3`() = rule.assertNoTvClippingAt(FONT_SCALE_13) { RequestDetail() }
 
-    @Test fun `a pending request page offering seven actions at 1_3`() =
-        rule.assertNoTvClippingAt(FONT_SCALE_13) {
-            RequestDetail(sevenActions = true)
-        }
+    @Test fun `a pending request page at 1_3`() = rule.assertNoTvClippingAt(FONT_SCALE_13) { RequestDetail(pending = true) }
+
+    @Test fun `a request's manage sheet at 1_3`() = rule.assertNoTvClippingAt(FONT_SCALE_13) { RequestDetail(manageOpen = true) }
 
     @Test fun `an issue sheet's thread at 1_3`() = rule.assertNoTvClippingAt(FONT_SCALE_13) { IssueSheet(ISSUE_PAGE_THREAD) }
 
@@ -142,7 +138,7 @@ class TvPagesClippingTest {
 
     @Test fun `the mark as sheet at 1_3`() = rule.assertNoTvClippingAt(FONT_SCALE_13) { Sheet { MarkAs() } }
 
-    @Test fun `the report sheet at 1_3`() = rule.assertNoTvClippingAt(FONT_SCALE_13) { Sheet { Report() } }
+    @Test fun `the report sheet at 1_3`() = rule.assertNoTvClippingAt(FONT_SCALE_13) { RequestDetail(sheet = DetailSheet.Report) }
 
     @Test fun `the settings media server page at 1_3`() = rule.assertNoTvClippingAt(FONT_SCALE_13) { Settings(mediaPage = true) }
 
@@ -175,16 +171,6 @@ class TvPagesClippingTest {
             entryFocus = remember { FocusRequester() },
         )
 
-    @Composable
-    private fun ColumnScope.Report() =
-        TvReportIssueStep(
-            report = IssueReport.Idle,
-            draft = TvReportDraft(type = IssueType.Video, message = OVERVIEW, onTypeChange = {}, onMessageChange = {}),
-            actions = detailActions(),
-            onDone = {},
-            entryFocus = remember { FocusRequester() },
-        )
-
     private fun detailActions() =
         TvRequestDetailActions(
             onBack = {},
@@ -196,54 +182,57 @@ class TvPagesClippingTest {
             onRemove = {},
             onBlock = {},
             onSetMediaStatus = { _, _, _ -> },
-            onReportIssue = { _, _ -> },
-            onDismissReport = {},
         )
 
     @Composable
-    private fun RequestDetail(sevenActions: Boolean = false) =
-        TvRequestDetailScreen(
-            state =
-                RequestDetailUiState.Ready(
-                    requestDetail(
-                        item = worstCaseRequest(),
-                        actions = RequestActions(canApprove = sevenActions, canDecline = true, canRemove = true, canBlock = true),
-                        canEdit = true,
-                        overview = OVERVIEW,
-                        canReportIssue = true,
-                        canManageUsers = true,
-                        destination =
-                            RequestDestination(
-                                serverName = "Sonarr 4K Remux Library on the Upstairs Server",
-                                profileName = "Ultra-HD Remux with Lossless Audio and Subtitles",
-                                rootFolder = "/mnt/storage/media/tv/4k-remux-collection",
-                                tags = listOf("kids and family friendly", "4k-hdr", "remux"),
-                            ),
-                        media =
-                            MediaRecord(
-                                mediaId = 501,
-                                isTv = true,
-                                instances = listOf(MediaInstance(true, SeerrMediaStatusCode.PartiallyAvailable, null, null, null)),
-                                canSetStatus = true,
-                                canClearData = true,
-                                canDeleteFiles = true,
-                            ),
-                    ).copy(
-                        seasons =
-                            (1..6).map {
-                                SeasonState(
-                                    it,
-                                    "Season $it: The Rings of Power, Extended Edition",
-                                    10,
-                                    SeerrMediaStatusCode.Processing,
-                                )
-                            },
-                        downloads = listOf(DetailDownload(LONG_TITLE, 0.42f, 46_000_000_000_000L, 1_440)),
-                    ),
+    private fun RequestDetail(
+        pending: Boolean = false,
+        manageOpen: Boolean = false,
+        sheet: DetailSheet? = null,
+    ) = TvRequestDetailScreen(
+        state =
+            RequestDetailUiState.Ready(
+                requestDetail(
+                    item = worstCaseRequest(),
+                    actions = RequestActions(canApprove = pending, canDecline = pending, canRemove = true, canBlock = true),
+                    canEdit = true,
+                    overview = OVERVIEW,
+                    canReportIssue = true,
+                    canManageUsers = true,
+                    destination =
+                        RequestDestination(
+                            serverName = "Sonarr 4K Remux Library on the Upstairs Server",
+                            profileName = "Ultra-HD Remux with Lossless Audio and Subtitles",
+                            rootFolder = "/mnt/storage/media/tv/4k-remux-collection",
+                            tags = listOf("kids and family friendly", "4k-hdr", "remux"),
+                        ),
+                    media =
+                        MediaRecord(
+                            mediaId = 501,
+                            isTv = true,
+                            instances = listOf(MediaInstance(true, SeerrMediaStatusCode.PartiallyAvailable, null, null, null)),
+                            canSetStatus = true,
+                            canClearData = true,
+                            canDeleteFiles = true,
+                        ),
+                ).copy(
+                    seasons =
+                        (1..6).map {
+                            SeasonState(
+                                it,
+                                "Season $it: The Rings of Power, Extended Edition",
+                                10,
+                                SeerrMediaStatusCode.Processing,
+                            )
+                        },
+                    downloads = listOf(DetailDownload(LONG_TITLE, 0.42f, 46_000_000_000_000L, 1_440)),
                 ),
-            events = emptyFlow(),
-            actions = detailActions(),
-        )
+            ),
+        events = emptyFlow(),
+        actions = detailActions(),
+        initialSheet = sheet,
+        initialManageOpen = manageOpen,
+    )
 
     @Composable
     private fun IssueSheet(page: String) {

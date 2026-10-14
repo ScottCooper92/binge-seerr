@@ -128,8 +128,6 @@ private fun actions(onOpenInBinge: (() -> Unit)?) =
         onRemove = {},
         onBlock = {},
         onSetMediaStatus = { _, _, _ -> },
-        onReportIssue = { _, _ -> },
-        onDismissReport = {},
     )
 
 /**
@@ -149,7 +147,7 @@ class TvRequestDetailScreenshotTest {
         )
     }
 
-    /** A manager's page for a pending request: Approve, Decline, Remove and Block in one row. */
+    /** A manager's page for a pending request: Approve and Decline lead, and Manage holds the rest. */
     @PreviewTest
     @SeerrTvScreenPreviews
     @Composable
@@ -165,8 +163,8 @@ class TvRequestDetailScreenshotTest {
     }
 
     /**
-     * A manager's page for a title the server tracks: Mark as and Report an issue beside the moderation, and the details row
-     * naming what stays on the phone (#1036).
+     * A manager's page for a title the server tracks and no decision is waiting on: Mark as leads, Manage holds Edit, Report
+     * an issue, Open in Binge and Remove, and the details row names what stays on the phone (#1036).
      */
     @PreviewTest
     @SeerrTvScreenPreviews

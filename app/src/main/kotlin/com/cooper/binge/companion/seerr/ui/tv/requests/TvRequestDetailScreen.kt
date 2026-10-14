@@ -4,7 +4,6 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -38,8 +37,6 @@ import com.binge.designsystem.tv.template.TvDetailPageScope
 import com.binge.designsystem.tv.template.TvPageHosting
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.requests.EditState
-import com.cooper.binge.companion.seerr.ui.requests.IssueReport
-import com.cooper.binge.companion.seerr.ui.requests.IssueType
 import com.cooper.binge.companion.seerr.ui.requests.MediaStatusChoice
 import com.cooper.binge.companion.seerr.ui.requests.ModerationEvent
 import com.cooper.binge.companion.seerr.ui.requests.RequestDetail
@@ -72,15 +69,8 @@ internal data class TvRequestDetailActions(
     /** Blocks the title alone, leaving the request as it is. */
     val onBlock: () -> Unit,
     val onSetMediaStatus: (mediaId: Int, status: MediaStatusChoice, is4k: Boolean) -> Unit,
-    val onReportIssue: (IssueType, String) -> Unit,
-    val onDismissReport: () -> Unit,
     /** Null hides Edit: a surface with no editor behind it has nothing to open. */
     val edit: TvRequestEditActions? = null,
-    /**
-     * The requester's sheet, given the requester's id, whether the request is a movie, and the sheet's entry focus. The
-     * app's entry passes one over the user's own editors; null leaves the page without it, as a test does.
-     */
-    val requesterSheet: (@Composable ColumnScope.(userId: Int, isMovie: Boolean, entryFocus: FocusRequester) -> Unit)? = null,
 )
 
 /** Opening the request's editor, and what its sheet may ask of it once open. */
@@ -105,6 +95,8 @@ internal fun TvRequestDetailScreen(
     modifier: Modifier = Modifier,
     /** The sheet open on arrival, for a frame: a static render cannot press the button that opens one. Production passes null. */
     initialSheet: DetailSheet? = null,
+    /** Whether Manage is open on arrival, for a frame. Production passes false. */
+    initialManageOpen: Boolean = false,
     /** The action status showing on arrival, for a frame, which never collects [events]. Production passes idle. */
     initialStatus: SaveStatus = SaveStatus.Idle,
     /** The section the page opens anchored on, for a frame that shows what sits below the hero. Production passes null. */
@@ -131,11 +123,11 @@ internal fun TvRequestDetailScreen(
                 TvRequestDetailContent(
                     detail = state.detail,
                     edit = state.edit,
-                    report = state.report,
                     now = state.now,
                     events = events,
                     given = actions,
                     initialSheet = initialSheet,
+                    initialManageOpen = initialManageOpen,
                     initialStatus = initialStatus,
                     initialFocusedSectionKey = initialFocusedSectionKey,
                     isActing = state.isActing,
@@ -158,11 +150,11 @@ internal fun TvRequestDetailScreen(
 private fun TvRequestDetailContent(
     detail: RequestDetail,
     edit: EditState?,
-    report: IssueReport,
     now: Long,
     events: Flow<ModerationEvent>,
     given: TvRequestDetailActions,
     initialSheet: DetailSheet?,
+    initialManageOpen: Boolean,
     initialStatus: SaveStatus,
     initialFocusedSectionKey: String?,
     isActing: Boolean,
@@ -183,23 +175,17 @@ private fun TvRequestDetailContent(
     // The two actions that cannot be undone take a confirm, and Mark as and Report open their own sheets; the rest run at
     // once, since a decline keeps the request.
     var sheet by rememberSaveable { mutableStateOf(initialSheet) }
+    var manageOpen by rememberSaveable { mutableStateOf(initialManageOpen) }
     val sheetFocus = remember { DetailSheet.entries.associateWith { FocusRequester() } }
-    val closers =
-        DetailSheet.entries.associateWith {
-            rememberTvOverlayCloser(
-                restoreTo = sheetFocus.getValue(it),
-                onClose = { sheet = null },
-            )
-        }
+    val manageFocus = remember { FocusRequester() }
     // The Mark as sheet shows its own status; every other action's stands under the row.
     if (sheet != DetailSheet.MarkAs) run.ClearWhenSaved()
-    val draft = rememberTvReportDraft()
     val actionRowFocus = remember { FocusRequester() }
     val synopsisFocus = remember { FocusRequester() }
     var synopsisFocused by remember { mutableStateOf(false) }
     val item = detail.item
     val allowed = detail.actions
-    val actionList =
+    val plan =
         requestDetailActions(
             detail = detail,
             actions = actions,
@@ -209,8 +195,21 @@ private fun TvRequestDetailContent(
                 if (it == DetailSheet.MarkAs) run.clearUnlessSaving()
                 sheet = it
             },
+            onOpenManage = { manageOpen = true },
             sheetFocus = sheetFocus,
+            manageFocus = manageFocus,
         )
+    val actionList = plan.row
+    // A sheet hands focus back to what opened it: its own button in the row, or Manage.
+    val fromManage = plan.managed.mapNotNull { it.action.sheet }.toSet()
+    val closers =
+        DetailSheet.entries.associateWith {
+            rememberTvOverlayCloser(
+                restoreTo = if (it in fromManage) manageFocus else sheetFocus.getValue(it),
+                onClose = { sheet = null },
+            )
+        }
+    val manageCloser = rememberTvOverlayCloser(restoreTo = manageFocus, onClose = { manageOpen = false })
     LaunchedEffect(allowed) {
         if (refocusRow) {
             refocusRow = false
@@ -223,7 +222,7 @@ private fun TvRequestDetailContent(
         TvRequestDetails(
             stringResource(R.string.tv_detail_details),
             requestInfoGroups(detail, now),
-            phoneOnlyHint(detail, requesterSheetOffered = offersRequesterSheet(detail) && actions.requesterSheet != null),
+            phoneOnlyHint(detail),
         )
     Box(modifier = Modifier.fillMaxSize()) {
         TvDetailPage(
@@ -246,12 +245,14 @@ private fun TvRequestDetailContent(
             requestSections(detail, details)
         }
     }
+    if (manageOpen && sheet == null) {
+        TvRequestManageSheet(managed = plan.managed, onOpenActionSheet = { manageOpen = false }, onDismiss = manageCloser::close)
+    }
     sheet?.let { step ->
         TvRequestDetailSheet(
             host = TvDetailSheetHost(step, closers.getValue(step)),
             actions = actions,
-            content = TvDetailSheetContent(detail.item, detail.media, edit, report),
-            draft = draft,
+            content = TvDetailSheetContent(detail.item, detail.media, edit, detail.webUrl, detail.serverName),
             run = run,
             isActing = isActing,
         )

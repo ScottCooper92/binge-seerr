@@ -75,8 +75,6 @@ class TvRequestDetailActionStatusTest {
                             onRemove = { calls += "remove" },
                             onBlock = { calls += "block" },
                             onSetMediaStatus = { _, _: MediaStatusChoice, _ -> calls += "mark" },
-                            onReportIssue = { _, _ -> },
-                            onDismissReport = {},
                         ),
                 )
             }
@@ -112,11 +110,17 @@ class TvRequestDetailActionStatusTest {
         press()
     }
 
-    /** Takes the action behind [label], confirming it where it asks first. */
+    /** Takes the action behind [label], from Manage where it is one of Manage's, confirming it where it asks first. */
     private fun take(
         label: Int,
         confirmLabel: Int? = null,
+        inManage: Boolean = false,
     ) {
+        if (inManage) {
+            actionButton(R.string.tv_detail_manage).requestFocus()
+            composeTestRule.waitForIdle()
+            press()
+        }
         actionButton(label).requestFocus()
         composeTestRule.waitForIdle()
         press()
@@ -132,8 +136,9 @@ class TvRequestDetailActionStatusTest {
         call: String,
         success: ModerationEvent,
         confirmLabel: Int? = null,
+        inManage: Boolean = false,
     ) {
-        take(label, confirmLabel)
+        take(label, confirmLabel, inManage)
         assertEquals(listOf(call), calls)
         composeTestRule.onNodeWithText(string(DesR.string.save_status_saving)).assertExists()
 
@@ -151,8 +156,9 @@ class TvRequestDetailActionStatusTest {
         label: Int,
         call: String,
         confirmLabel: Int? = null,
+        inManage: Boolean = false,
     ) {
-        take(label, confirmLabel)
+        take(label, confirmLabel, inManage)
         assertEquals(listOf(call), calls)
         events.tryEmit(ModerationEvent.Failed(SeerrError.Unreachable))
         composeTestRule.waitForIdle()
@@ -205,19 +211,25 @@ class TvRequestDetailActionStatusTest {
     @Test
     fun removeThatFailsKeepsARetry() {
         setContent(RequestActions(canRemove = true))
-        assertFailsThenRetries(R.string.tv_detail_remove, "remove", confirmLabel = R.string.request_remove)
+        assertFailsThenRetries(R.string.tv_detail_remove, "remove", confirmLabel = R.string.request_remove, inManage = true)
     }
 
     @Test
     fun blockSavesThenSaved() {
         setContent(RequestActions(canBlock = true))
-        assertSavesThenSaves(R.string.tv_detail_block, "block", ModerationEvent.Blocked, confirmLabel = R.string.tv_detail_block)
+        assertSavesThenSaves(
+            R.string.tv_detail_block,
+            "block",
+            ModerationEvent.Blocked,
+            confirmLabel = R.string.tv_detail_block,
+            inManage = true,
+        )
     }
 
     @Test
     fun blockThatFailsKeepsARetry() {
         setContent(RequestActions(canBlock = true))
-        assertFailsThenRetries(R.string.tv_detail_block, "block", confirmLabel = R.string.tv_detail_block)
+        assertFailsThenRetries(R.string.tv_detail_block, "block", confirmLabel = R.string.tv_detail_block, inManage = true)
     }
 
     /** A decline that landed but could not block the title: the retry is the block, not a second decline. */
