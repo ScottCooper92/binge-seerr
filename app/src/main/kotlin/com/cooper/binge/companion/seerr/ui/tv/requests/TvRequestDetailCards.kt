@@ -23,7 +23,6 @@ import com.binge.designsystem.theme.BingeShapes
 import com.binge.designsystem.tv.component.TvInfoGroup
 import com.binge.designsystem.tv.focus.tvFocusIndicator
 import com.binge.designsystem.tv.focus.tvFocusTarget
-import com.binge.designsystem.tv.nav.tvContentGutterStart
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.requests.DetailDownload
 import com.cooper.binge.companion.seerr.ui.requests.RequestDetail
@@ -82,28 +81,6 @@ internal fun requestInfoGroups(
             destination?.tagsLabel?.let { TvInfoGroup(stringResource(R.string.request_tags), it) },
         )
     return requested + versions + handled
-}
-
-/**
- * The line under the Details footer naming what this request can still have changed, but only on the phone. A hint
- * rather than a fact, so it reads as a sentence and takes no focus of its own.
- */
-@Composable
-internal fun TvPhoneOnlyHint(
-    text: String,
-    modifier: Modifier = Modifier,
-) {
-    Text(
-        text = text,
-        style = MaterialTheme.typography.bodyMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier =
-            modifier.padding(
-                start = tvContentGutterStart() + dimensionResource(DesR.dimen.padding_m),
-                end = dimensionResource(TvR.dimen.tv_overscan_horizontal),
-                top = dimensionResource(DesR.dimen.padding_s),
-            ),
-    )
 }
 
 /** A card with the page's shared anatomy: a fixed height, the ring on focus, and nothing to press. */

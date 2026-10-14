@@ -19,7 +19,6 @@ import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.tv.component.TvDetailAction
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.requests.RequestDetail
-import com.cooper.binge.companion.seerr.ui.requests.canOpenUser
 
 /** The most the action row shows before Manage. */
 private const val MAX_LEADS = 2
@@ -48,8 +47,7 @@ internal enum class TvRequestAction(
 /**
  * The actions this request offers on TV. The page is a deliberate subset of the phone's (#1036): it moderates, edits the
  * request, marks the title's state, opens the title in the media server's TV app where one is installed, and hands an
- * issue report to the phone. A request's tags, its requester and the title's other requests stay on the phone, and a
- * line under the details says so ([phoneOnlyHint]), so a missing control reads as a decision rather than a gap.
+ * issue report to the phone. A request's tags, its requester and the title's other requests stay on the phone.
  */
 internal fun availableRequestActions(
     detail: RequestDetail,
@@ -224,22 +222,4 @@ private fun actionItem(
         TvRequestAction.Remove ->
             TvRequestActionItem(action, stringResource(R.string.tv_detail_remove), Icons.Filled.Delete, openSheet(DetailSheet.Remove))
     }
-}
-
-/**
- * The line that names what this request has on the phone and not here: its tags, its requester's page, the title's
- * other requests. Null when none of them applies.
- */
-@Composable
-internal fun phoneOnlyHint(detail: RequestDetail): String? {
-    val parts =
-        listOfNotNull(
-            stringResource(R.string.tv_detail_phone_tags).takeIf { detail.canEdit && detail.canEditDestination },
-            stringResource(R.string.tv_detail_phone_requester).takeIf {
-                canOpenUser(detail.item.requestedById, detail.viewerId, detail.canManageUsers)
-            },
-            stringResource(R.string.tv_detail_phone_siblings).takeIf { detail.siblings.isNotEmpty() },
-        )
-    if (parts.isEmpty()) return null
-    return stringResource(R.string.tv_detail_phone_hint, parts.joinToString(stringResource(R.string.hub_meta_separator)))
 }
