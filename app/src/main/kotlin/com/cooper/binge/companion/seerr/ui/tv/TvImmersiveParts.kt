@@ -221,7 +221,7 @@ internal fun TvRowsFallback(
 }
 
 /**
- * A see-all destination: every item behind a hub row, as a paged grid under the same backdrop, above the rail.
+ * A see-all destination: every item behind a hub row, as a paged grid under the same backdrop, above Home.
  * Back closes it through [onBack]. [detailOpen] says a page opened from one of its cards is showing above it, so
  * that focus returns to the card the moment that page closes.
  */
@@ -258,7 +258,7 @@ internal fun <T : Any> TvPagedGridScreen(
                 artwork = artwork,
                 copy = copy,
                 rememberedCellModifier = Modifier.focusRequester(restoreFocus),
-                // A see-all grid is shown above the rail, so it claims focus itself and takes the full overscan margin.
+                // A see-all grid is shown above Home, so it claims focus itself and takes the full overscan margin.
                 // Said here rather than read from the shell, so the frames and the tests host it the way it is shown.
                 hosting = TvPageHosting.Overlay,
                 cell = cell,
@@ -276,7 +276,7 @@ internal fun <T : Any> TvPagedGridScreen(
 /**
  * What every hub-shaped destination shows while it loads: the design system's hub skeleton, where the rows will be.
  * One page for Home's whole wait, from the first read of the server to the first row, instead of a board's plate
- * and then a message page: each swap between those replaced the node that held focus, and the rail opened and
+ * and then a message page: each swap between those replaced the node that held focus, and the surface beneath opened and
  * closed under it. The skeleton has nothing focusable of its own, so the shell's one focus holder stays put
  * until the rows arrive and claim focus.
  */

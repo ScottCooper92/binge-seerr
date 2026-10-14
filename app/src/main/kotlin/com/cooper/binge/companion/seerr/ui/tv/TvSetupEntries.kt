@@ -17,7 +17,7 @@ internal fun TvSetupEntry(viewModel: SetupViewModel = hiltViewModel()) {
 
 /**
  * The sign-in again, after the server rejected the session (#810): the setup form on the saved server, at its sign-in
- * step, saying why. The saved connection stays until a new sign-in saves, and that sign-in brings the rail back on its
+ * step, saying why. The saved connection stays until a new sign-in saves, and that sign-in brings Home back on its
  * own. Back has nothing to return to, so it leaves the app.
  */
 @Composable

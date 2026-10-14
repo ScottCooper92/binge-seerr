@@ -62,8 +62,9 @@ private const val PERCENT = 100
 /**
  * The requests browser as the design system's immersive hub: a row of poster cards per filter over a backdrop that
  * follows focus and describes the focused request. [rowsFor] gives each filter's paged rows; a filter with nothing
- * in it has no row, one whose list could not be read says so in its slot with a retry, and one with more than a row holds ends in a see-all tile that opens the paged grid. OK on a
- * card opens the request's detail page, an overlay above the rail that this board does not own.
+ * in it has no row, one whose list could not be read says so in its slot with a retry, and one with more than a row
+ * holds ends in a see-all tile that opens the paged grid. OK on a card opens the request's detail page, a page above
+ * Home that this board does not own.
  *
  * [mine] adds the signed-in user's own requests as a last row, so what they asked for is on Home rather than a page of its own.
  *
