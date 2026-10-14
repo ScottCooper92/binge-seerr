@@ -28,6 +28,7 @@ import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.requests.DetailDownload
 import com.cooper.binge.companion.seerr.ui.requests.RequestDetail
 import com.cooper.binge.companion.seerr.ui.requests.SeasonState
+import com.cooper.binge.companion.seerr.ui.requests.labelRes
 import com.cooper.binge.companion.seerr.ui.requests.pluralStringResourceEpisodes
 import com.cooper.binge.companion.seerr.ui.requests.statusChip
 import com.cooper.binge.companion.seerr.ui.state.formatFileSize
@@ -63,7 +64,7 @@ internal fun requestInfoGroups(
     val versions =
         detail.media?.instances.orEmpty().mapNotNull { instance ->
             instance.status?.let { status ->
-                val version = if (instance.is4k) R.string.settings_service_4k else R.string.media_instance_standard
+                val version = instance.labelRes()
                 TvInfoGroup(stringResource(version), stringResource(status.labelRes()))
             }
         }
