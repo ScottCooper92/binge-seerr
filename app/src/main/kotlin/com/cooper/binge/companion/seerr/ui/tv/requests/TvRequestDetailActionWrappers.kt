@@ -27,8 +27,9 @@ internal fun TvRequestDetailActions.markingRefocus(mark: () -> Unit) =
  * These actions, each run through [run] so the page knows what is saving, and whether it failed. Reporting an issue has
  * its own state.
  *
- * A press while the request has an action in flight, [isActing], is dropped, as the ViewModel would refuse it without
- * an answer. Otherwise the run would wait for an answer that is another action's, such as an edit whose sheet was
+ * A press while the request has an action in flight, [isActing], is dropped. That covers the reload after an action
+ * lands too, which the ViewModel would not refuse: the page is still catching up, and a press then would be answered
+ * by the reload's events rather than its own. Otherwise the run would wait for an answer that is another action's, such as an edit whose sheet was
  * dismissed while it saved, and report it as this press's.
  */
 internal fun TvRequestDetailActions.running(

@@ -74,6 +74,21 @@ class TvRequestDetailSheetsTest {
         assertEquals(listOf(Triple(MEDIA_ID, MediaStatusChoice.Available, false)), marked)
     }
 
+    /** A pick the page drops, while another action is in flight or the page reloads, is not ticked as if it applied. */
+    @Test
+    fun aPickDroppedWhileActingIsNotTicked() {
+        setContent(
+            detail(media = media(MediaInstance(false, SeerrMediaStatusCode.Processing, null, null, null))),
+            isActing = true,
+        )
+        pressOk()
+        pressOk()
+
+        assertEquals(emptyList<Triple<Int, MediaStatusChoice, Boolean>>(), marked)
+        composeTestRule.onNode(isSelected() and hasText(string(MediaStatusChoice.Available.labelRes()))).assertDoesNotExist()
+        composeTestRule.onNode(isSelected() and hasText(string(MediaStatusChoice.Processing.labelRes()))).assertExists()
+    }
+
     /** The sheet stays open while it saves, ticks the pick at once, says Saving, then Saved, and only then closes (#1519). */
     @Test
     fun aPickKeepsTheSheetOpenSavingThenSavedBeforeItCloses() {
@@ -273,11 +288,12 @@ class TvRequestDetailSheetsTest {
         detail: RequestDetail,
         report: IssueReport = IssueReport.Idle,
         requesterSheet: Boolean = false,
+        isActing: Boolean = false,
     ) {
         composeTestRule.setContent {
             BingeTvTheme {
                 TvRequestDetailScreen(
-                    state = RequestDetailUiState.Ready(detail, report = report),
+                    state = RequestDetailUiState.Ready(detail, report = report, isActing = isActing),
                     events = events,
                     actions =
                         TvRequestDetailActions(

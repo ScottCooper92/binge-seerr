@@ -89,6 +89,7 @@ internal fun TvRequestDetailSheet(
     content: TvDetailSheetContent,
     draft: TvReportDraft,
     run: TvActionRun,
+    isActing: Boolean = false,
 ) {
     val closer = host.closer
     val media = content.media
@@ -144,6 +145,7 @@ internal fun TvRequestDetailSheet(
                         entryFocus = entryFocus,
                         status = run.status,
                         onRetry = run::again,
+                        actionInFlight = isActing,
                     )
                 }
                 // The sheet stays open while it saves: "Saved" is read, and then it closes.
@@ -170,7 +172,8 @@ internal fun TvRequestDetailSheet(
  * Marking the title's state, as the phone's Mark as sheet does: which instance first where the server holds the
  * title twice, then the states, the current one ticked. A pick applies in place: the tick moves to it at once, [status]
  * says "Saving…" and then "Saved" above the options, and the sheet closes after. On a failure the tick moves back and the
- * line offers Try again, which applies the same pick once more.
+ * line offers Try again, which applies the same pick once more. While [actionInFlight] the page drops a pick, so the
+ * rows ignore it and the tick stays where it was.
  */
 @Composable
 internal fun ColumnScope.TvMarkAsSteps(
@@ -179,6 +182,7 @@ internal fun ColumnScope.TvMarkAsSteps(
     entryFocus: FocusRequester,
     status: SaveStatus = SaveStatus.Idle,
     onRetry: () -> Unit = {},
+    actionInFlight: Boolean = false,
 ) {
     var picked by rememberSaveable { mutableStateOf(media.instances.singleOrNull()?.is4k) }
     val instance = media.instances.firstOrNull { it.is4k == picked }
@@ -219,7 +223,7 @@ internal fun ColumnScope.TvMarkAsSteps(
                 icon = choice.icon(),
                 selected = pending?.let { it == choice } ?: current,
                 onClick = {
-                    if (!current && status != SaveStatus.Saving) {
+                    if (!current && status != SaveStatus.Saving && !actionInFlight) {
                         pending = choice
                         onSelect(instance, choice)
                     }

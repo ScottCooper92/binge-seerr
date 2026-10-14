@@ -251,6 +251,7 @@ private fun TvRequestDetailContent(
             content = TvDetailSheetContent(detail.item, detail.media, edit, report),
             draft = draft,
             run = run,
+            isActing = isActing,
         )
     }
 }
