@@ -170,6 +170,7 @@ class TvIssuesBoardFocusTest {
         focusFirstRow()
         pressOk()
         pressDown()
+        pressDown()
         pressOk()
         pressUp()
         pressOk()

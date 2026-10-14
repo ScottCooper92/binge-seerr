@@ -383,4 +383,5 @@ private fun TvRequestDetailActions.running(run: TvActionRun) =
         onSetMediaStatus = { mediaId, status, is4k -> run.run { onSetMediaStatus(mediaId, status, is4k) } },
         onReportIssue = onReportIssue,
         onDismissReport = onDismissReport,
+        edit = edit,
     )
