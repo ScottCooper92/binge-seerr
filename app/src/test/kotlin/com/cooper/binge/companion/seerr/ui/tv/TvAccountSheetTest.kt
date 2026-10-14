@@ -1,14 +1,20 @@
 package com.cooper.binge.companion.seerr.ui.tv
 
+import androidx.activity.ComponentActivity
 import androidx.compose.ui.input.key.Key
-import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.assert
+import androidx.compose.ui.test.assertHasNoClickAction
 import androidx.compose.ui.test.assertIsFocused
+import androidx.compose.ui.test.filterToOne
+import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.isFocusable
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performKeyInput
 import androidx.compose.ui.test.pressKey
+import androidx.compose.ui.test.requestFocus
 import com.binge.designsystem.tv.theme.BingeTvTheme
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.hub.HubQuota
@@ -18,7 +24,7 @@ import com.cooper.binge.companion.seerr.ui.users.UserDetail
 import com.cooper.binge.companion.seerr.ui.users.UserDetailUiState
 import com.cooper.binge.companion.seerr.ui.users.UserItem
 import com.cooper.binge.companion.seerr.ui.users.UserOrigin
-import com.cooper.binge.companion.seerr.util.createSeerrKeyboardComposeRule
+import com.cooper.binge.companion.seerr.util.createSeerrKeyboardAndroidComposeRule
 import com.cooper.binge.companion.seerr.util.string
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -28,17 +34,19 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * The account sheet: who is signed in and what is left of each quota as read-outs with Close the one row to press, and, when the
- * hub could not resolve the account, a Retry rather than a spinner with no way out.
+ * The account sheet: who is signed in and what is left of each quota as one card that holds focus, with no Close, and Back
+ * the way out; Sign out last for a session sign-in, asking first. When the hub could not resolve the account, a Retry
+ * rather than a spinner with no way out.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(qualifiers = "w960dp-h540dp-television-xhdpi")
 class TvAccountSheetTest {
     @get:Rule
-    val composeTestRule = createSeerrKeyboardComposeRule()
+    val composeTestRule = createSeerrKeyboardAndroidComposeRule<ComponentActivity>()
 
     private var retries = 0
     private var dismissals = 0
+    private var signOuts = 0
 
     @Test
     fun aFailedAccountOffersRetryAndItTakesFocus() {
@@ -52,27 +60,24 @@ class TvAccountSheetTest {
     }
 
     @Test
-    fun anAccountStillLoadingOffersOnlyClose() {
+    fun anAccountStillLoadingHasNothingToPressAndNoClose() {
         setSheet(detail = null, accountFailed = false)
 
         composeTestRule.onNodeWithText(string(R.string.tv_loading)).assertExists()
         composeTestRule.onNode(hasText(string(R.string.hub_retry))).assertDoesNotExist()
-        closeRow().assertIsFocused()
+        composeTestRule.onNodeWithText(string(R.string.tv_sheet_close)).assertDoesNotExist()
     }
 
     @Test
-    fun theProfileAndEachQuotaAreReadOutAndCloseDismisses() {
+    fun theProfileAndEachQuotaAreOneCardThatTakesFocus() {
         setSheet(detail = UserDetailUiState.Ready(detail()), accountFailed = false)
 
-        composeTestRule.onNodeWithText("Scott").assertExists()
-        composeTestRule.onNodeWithText("scott@example.com").assertExists()
-        composeTestRule.onNodeWithText("7 of 10 left", substring = true).assertExists()
-        composeTestRule.onNodeWithText(string(R.string.hub_quota_unlimited)).assertExists()
-        closeRow().assertIsFocused()
-
-        press(Key.DirectionCenter)
-
-        assertEquals(1, dismissals)
+        val card = composeTestRule.onNode(hasText("Scott") and isFocusable())
+        card.assertIsFocused().assertHasNoClickAction()
+        card.assert(hasText("scott@example.com · scott"))
+        card.assert(hasText("7 of 10 left", substring = true))
+        card.assert(hasText(string(R.string.hub_quota_unlimited), substring = true))
+        composeTestRule.onNodeWithText(string(R.string.tv_sheet_close)).assertDoesNotExist()
     }
 
     /** The cached profile shows before the quota loads, with placeholders where the numbers will land (#1053). */
@@ -80,13 +85,41 @@ class TvAccountSheetTest {
     fun aSeededProfileHoldsThePlaceOfItsQuota() {
         setSheet(detail = UserDetailUiState.Seeded(user()), accountFailed = false)
 
-        composeTestRule.onNodeWithText("Scott").assertExists()
-        composeTestRule.onAllNodes(hasText(string(R.string.hub_stat_placeholder), substring = true)).assertCountEquals(2)
+        composeTestRule.onNode(hasText("Scott") and isFocusable()).assert(hasText(string(R.string.hub_stat_placeholder), substring = true))
+    }
+
+    @Test
+    fun aKeyConnectionHasNoSignOut() {
+        setSheet(detail = UserDetailUiState.Ready(detail()), accountFailed = false, canSignOut = false)
+
+        composeTestRule.onNodeWithText(string(R.string.tv_account_sign_out)).assertDoesNotExist()
+    }
+
+    /** Sign out is last and destructive, and asks before it ends the session. */
+    @Test
+    fun signOutIsLastAndAsksFirst() {
+        setSheet(detail = UserDetailUiState.Ready(detail()), accountFailed = false)
+        press(Key.DirectionDown)
+        signOutRow().assertIsFocused()
+
+        press(Key.DirectionCenter)
+        composeTestRule.onNodeWithText(string(R.string.tv_account_sign_out_title)).assertExists()
+        assertEquals(0, signOuts)
+
+        composeTestRule
+            .onAllNodes(hasText(string(R.string.tv_account_sign_out)) and isFocusable())
+            .filterToOne(hasAnyAncestor(isDialog()))
+            .requestFocus()
+            .performKeyInput { pressKey(Key.DirectionCenter) }
+        composeTestRule.waitForIdle()
+
+        assertEquals(1, signOuts)
     }
 
     private fun setSheet(
         detail: UserDetailUiState?,
         accountFailed: Boolean,
+        canSignOut: Boolean = true,
     ) {
         composeTestRule.setContent {
             BingeTvTheme {
@@ -95,6 +128,7 @@ class TvAccountSheetTest {
                     accountFailed = accountFailed,
                     onRetry = { retries++ },
                     onDismissRequest = { dismissals++ },
+                    onSignOut = if (canSignOut) ({ signOuts++ }) else null,
                 )
             }
         }
@@ -103,7 +137,8 @@ class TvAccountSheetTest {
 
     private fun retryRow() = composeTestRule.onNode(hasText(string(R.string.hub_retry)) and isFocusable())
 
-    private fun closeRow() = composeTestRule.onNode(hasText(string(R.string.tv_sheet_close)) and isFocusable())
+    private fun signOutRow() =
+        composeTestRule.onAllNodes(hasText(string(R.string.tv_account_sign_out)) and isFocusable()).filterToOne(!hasAnyAncestor(isDialog()))
 
     private fun press(key: Key) {
         composeTestRule.onRoot().performKeyInput { pressKey(key) }

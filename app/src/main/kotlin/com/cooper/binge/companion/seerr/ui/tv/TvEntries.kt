@@ -18,6 +18,7 @@ import com.cooper.binge.companion.seerr.ui.issues.IssueFilter
 import com.cooper.binge.companion.seerr.ui.requests.RequestFilter
 import com.cooper.binge.companion.seerr.ui.settings.SettingsUiState
 import com.cooper.binge.companion.seerr.ui.settings.SettingsViewModel
+import com.cooper.binge.companion.seerr.ui.settings.SignInKind
 
 /**
  * The connected television: Home and Issues as tabs under the top bar, with Account and Settings opening as sheets over them,
@@ -34,6 +35,7 @@ internal fun TvConnectedShell(
     var tab by rememberSaveable { mutableStateOf(TvDestination.Hub) }
     var sheet by rememberSaveable { mutableStateOf<TvDestination?>(null) }
     val openSheet = rememberSheetOpener(settingsViewModel) { sheet = it }
+    val settings by settingsViewModel.uiState.collectAsStateWithLifecycle()
     val analytics = LocalAnalytics.current
     LaunchedEffect(tab, sheet) { analytics.screen((sheet ?: tab).screenName()) }
     var editingConnection by rememberSaveable { mutableStateOf(false) }
@@ -65,7 +67,12 @@ internal fun TvConnectedShell(
     ) { destination, close ->
         when (destination) {
             TvDestination.Account ->
-                TvAccountEntry(hubViewModel = hubViewModel, onDismissRequest = close)
+                TvAccountEntry(
+                    hubViewModel = hubViewModel,
+                    onDismissRequest = close,
+                    // Only a session sign-in has a session to end; a server's API key has nothing to sign out of.
+                    onSignOut = settingsViewModel::signOut.takeIf { settings.signsInWithSession() },
+                )
             // Home is what needs attention: the requests as rows over a backdrop, once the server answers.
             TvDestination.Hub ->
                 TvHomeEntry(
@@ -84,6 +91,8 @@ internal fun TvConnectedShell(
         }
     }
 }
+
+private fun SettingsUiState.signsInWithSession(): Boolean = (this as? SettingsUiState.Ready)?.connection?.signInKind == SignInKind.Session
 
 /**
  * Opens a sheet. Settings is held back until its state is ready, so it opens on its page rather than a loading line; its

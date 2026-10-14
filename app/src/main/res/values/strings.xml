@@ -1297,4 +1297,7 @@
     <string name="tv_settings_job_done">Done</string>
     <string name="tv_settings_job_stopped">Stopped</string>
     <string name="tv_settings_signed_in_api_key">Signed in with the server\'s API key</string>
+    <string name="tv_account_sign_out">Sign out</string>
+    <string name="tv_account_sign_out_title">Sign out?</string>
+    <string name="tv_account_sign_out_message">You\'ll need to sign in to this server again.</string>
 </resources>

@@ -225,5 +225,6 @@ class TvBoardsClippingTest {
             accountFailed = false,
             onRetry = {},
             onDismissRequest = {},
+            onSignOut = {},
         )
 }

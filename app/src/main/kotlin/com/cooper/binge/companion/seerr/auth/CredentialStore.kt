@@ -35,6 +35,12 @@ class CredentialStore(
             }.distinctUntilChanged()
 
     /**
+     * The server the user signed out of, while nothing is saved, so setup can open on its sign-in. A new connection or a
+     * disconnect forgets it.
+     */
+    val signedOutServer: Flow<String?> = dataStore.data.map { it[Keys.SIGNED_OUT_URL] }.distinctUntilChanged()
+
+    /**
      * Encrypts and persists [credentials]. Returns false, storing nothing, if encryption fails —
      * a flaky vendor keymaster can throw from the Keystore — so a failure is an unsaved connection
      * rather than a half-written row.
@@ -47,6 +53,7 @@ class CredentialStore(
             }
         val secret = attempt { cipher.encrypt(plaintext) }.getOrElse { return false }
         dataStore.edit { prefs ->
+            prefs.remove(Keys.SIGNED_OUT_URL)
             prefs[Keys.BASE_URL] = credentials.baseUrl
             prefs[Keys.VARIANT] = credentials.variant.name
             prefs[Keys.SECRET] = secret
@@ -67,6 +74,15 @@ class CredentialStore(
 
     suspend fun clear() {
         dataStore.edit { it.clear() }
+    }
+
+    /** Forgets the connection, secret and all, but keeps its address as [signedOutServer]. */
+    suspend fun signOut() {
+        dataStore.edit { prefs ->
+            val baseUrl = prefs[Keys.BASE_URL]
+            prefs.clear()
+            baseUrl?.let { prefs[Keys.SIGNED_OUT_URL] = it }
+        }
     }
 
     private fun Preferences.toVariant(): SeerrVariant =
@@ -92,5 +108,6 @@ class CredentialStore(
         val SESSION_USER_ID = intPreferencesKey("session_user_id")
         val SESSION_SHARED = booleanPreferencesKey("session_shared")
         val VARIANT = stringPreferencesKey("variant")
+        val SIGNED_OUT_URL = stringPreferencesKey("signed_out_url")
     }
 }
