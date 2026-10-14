@@ -8,51 +8,44 @@ import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 
+/** What one tab has open over its board: a see-all grid by its key, and a detail page by id above it. */
+@Stable
+internal class TvTabPages(
+    detailId: Int? = null,
+    seeAll: String? = null,
+) {
+    /** A detail page, over the board or over the see-all grid it was opened from. */
+    var detailId by mutableStateOf(detailId)
+
+    /** A see-all grid, by its key. It stays up under a detail page opened from one of its cards. */
+    var seeAll by mutableStateOf(seeAll)
+
+    val anyOpen: Boolean get() = detailId != null || seeAll != null
+
+    fun clear() {
+        detailId = null
+        seeAll = null
+    }
+}
+
 /**
- * The pages open over each tab's root. Each tab keeps its own, so switching away hides them and switching back shows them
- * again; choosing the current tab again clears them, as the phone's reselect does.
+ * The pages open over each tab's root, one [TvTabPages] per tab. Each tab keeps its own, so switching away hides them and
+ * switching back shows them again; choosing the current tab again clears them, as the phone's reselect does. Every tab
+ * gets its pages here, so a tab added to [TvDestination] needs nothing in this class.
  */
 @Stable
 internal class TvOpenPages(
-    openRequestId: Int? = null,
-    openIssueId: Int? = null,
-    seeAllRequests: String? = null,
-    seeAllIssues: String? = null,
-    seeAllAccount: Boolean = false,
+    initial: Map<TvDestination, TvTabPages> = emptyMap(),
 ) {
-    /** A request's detail page, over Home or over one of its see-all grids. */
-    var openRequestId by mutableStateOf(openRequestId)
+    private val tabs = Tabs.associateWith { initial[it] ?: TvTabPages() }
 
-    /** An issue's read-only detail page, on the same footing over Issues. */
-    var openIssueId by mutableStateOf(openIssueId)
+    /** [tab]'s pages; a sheet has none to ask for. */
+    operator fun get(tab: TvDestination): TvTabPages = tabs.getValue(tab)
 
-    /** A see-all grid, by its filter's name. It stays up under a detail page opened from one of its cards. */
-    var seeAllRequests by mutableStateOf(seeAllRequests)
-    var seeAllIssues by mutableStateOf(seeAllIssues)
-
-    /** Home's see-all for the signed-in user's own requests, which belong to no filter. */
-    var seeAllAccount by mutableStateOf(seeAllAccount)
-
-    fun anyOpen(tab: TvDestination): Boolean =
-        when (tab) {
-            TvDestination.Hub -> openRequestId != null || seeAllRequests != null || seeAllAccount
-            TvDestination.Issues -> openIssueId != null || seeAllIssues != null
-            else -> false
-        }
+    fun anyOpen(tab: TvDestination): Boolean = tabs[tab]?.anyOpen == true
 
     fun clear(tab: TvDestination) {
-        when (tab) {
-            TvDestination.Hub -> {
-                openRequestId = null
-                seeAllRequests = null
-                seeAllAccount = false
-            }
-            TvDestination.Issues -> {
-                openIssueId = null
-                seeAllIssues = null
-            }
-            else -> Unit
-        }
+        tabs[tab]?.clear()
     }
 
     /**
@@ -63,21 +56,22 @@ internal class TvOpenPages(
         tab: TvDestination,
         offered: List<TvDestination>,
     ): TvDestination {
-        TvDestination.entries.filterNot { it in offered }.forEach(::clear)
+        tabs.keys.filterNot { it in offered }.forEach(::clear)
         return if (tab in offered) tab else offered.first()
     }
 
     companion object {
+        /** The destinations that are tabs, the ones with pages of their own. */
+        private val Tabs = TvDestination.entries.filterNot { it.isSheet }
+
         val Saver =
             listSaver<TvOpenPages, Any?>(
-                save = { listOf(it.openRequestId, it.openIssueId, it.seeAllRequests, it.seeAllIssues, it.seeAllAccount) },
-                restore = {
+                save = { pages -> Tabs.flatMap { listOf(pages[it].detailId, pages[it].seeAll) } },
+                restore = { saved ->
                     TvOpenPages(
-                        openRequestId = it[0] as Int?,
-                        openIssueId = it[1] as Int?,
-                        seeAllRequests = it[2] as String?,
-                        seeAllIssues = it[3] as String?,
-                        seeAllAccount = it[4] as Boolean,
+                        Tabs
+                            .mapIndexed { index, tab -> tab to TvTabPages(saved[index * 2] as Int?, saved[index * 2 + 1] as String?) }
+                            .toMap(),
                     )
                 },
             )

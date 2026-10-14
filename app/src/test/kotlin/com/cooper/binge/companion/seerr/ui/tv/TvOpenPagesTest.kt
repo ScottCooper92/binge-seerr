@@ -1,5 +1,6 @@
 package com.cooper.binge.companion.seerr.ui.tv
 
+import androidx.compose.runtime.saveable.SaverScope
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -9,75 +10,95 @@ import org.junit.Test
 /** Each tab keeps its own pages, choosing a tab again clears only that tab's, and a withdrawn tab hands over to the start tab. */
 class TvOpenPagesTest {
     @Test
-    fun `a tab with nothing open has no pages`() {
+    fun `every tab has pages, and none is open to begin with`() {
         val pages = TvOpenPages()
 
-        assertFalse(pages.anyOpen(TvDestination.Hub))
-        assertFalse(pages.anyOpen(TvDestination.Issues))
+        Tabs.forEach { assertFalse(pages.anyOpen(it)) }
+    }
+
+    @Test
+    fun `a sheet has no pages`() {
+        val pages = TvOpenPages()
+
+        TvDestination.entries.filter { it.isSheet }.forEach { assertFalse(pages.anyOpen(it)) }
     }
 
     @Test
     fun `a page belongs to its own tab`() {
-        val pages = TvOpenPages(openRequestId = 1)
+        val pages = TvOpenPages()
 
-        assertTrue(pages.anyOpen(TvDestination.Hub))
-        assertFalse(pages.anyOpen(TvDestination.Issues))
+        pages[Tabs.first()].detailId = 1
+
+        assertTrue(pages.anyOpen(Tabs.first()))
+        assertFalse(pages.anyOpen(Tabs.last()))
     }
 
     @Test
-    fun `clearing Home leaves Issues' pages open`() {
-        val pages = TvOpenPages(openRequestId = 1, seeAllRequests = "Pending", seeAllAccount = true, openIssueId = 2)
+    fun `clearing one tab leaves the other's pages open`() {
+        val pages = withBothOpen()
 
-        pages.clear(TvDestination.Hub)
+        pages.clear(Tabs.first())
 
-        assertFalse(pages.anyOpen(TvDestination.Hub))
-        assertEquals(2, pages.openIssueId)
-    }
-
-    @Test
-    fun `clearing Issues leaves Home's pages open`() {
-        val pages = TvOpenPages(openRequestId = 1, seeAllIssues = "Open", openIssueId = 2)
-
-        pages.clear(TvDestination.Issues)
-
-        assertNull(pages.openIssueId)
-        assertNull(pages.seeAllIssues)
-        assertEquals(1, pages.openRequestId)
+        assertNull(pages[Tabs.first()].detailId)
+        assertNull(pages[Tabs.first()].seeAll)
+        assertEquals(2, pages[Tabs.last()].detailId)
+        assertEquals("Open", pages[Tabs.last()].seeAll)
     }
 
     @Test
     fun `reconciling keeps an offered tab and every offered tab's pages`() {
-        val pages = TvOpenPages(openRequestId = 1, openIssueId = 2)
+        val pages = withBothOpen()
 
-        val tab = pages.reconcile(Both.last(), offered = Both)
+        val tab = pages.reconcile(Tabs.last(), offered = Tabs)
 
-        assertEquals(Both.last(), tab)
-        Both.forEach { assertTrue(pages.anyOpen(it)) }
+        assertEquals(Tabs.last(), tab)
+        Tabs.forEach { assertTrue(pages.anyOpen(it)) }
     }
 
     @Test
     fun `reconciling away from a withdrawn tab lands on the start tab and drops the withdrawn tab's pages`() {
-        val pages = TvOpenPages(openRequestId = 1, openIssueId = 2)
-        val offered = listOf(Both.first())
+        val pages = withBothOpen()
+        val offered = listOf(Tabs.first())
 
-        val tab = pages.reconcile(Both.last(), offered)
+        val tab = pages.reconcile(Tabs.last(), offered)
 
         assertEquals(offered.first(), tab)
-        assertFalse(pages.anyOpen(Both.last()))
+        assertFalse(pages.anyOpen(Tabs.last()))
         assertTrue(pages.anyOpen(offered.first()))
     }
 
     /** A tab withdrawn while another shows still loses its pages, so they do not come back when the tab does. */
     @Test
     fun `reconciling drops a withdrawn tab's pages even when it is not the one showing`() {
-        val pages = TvOpenPages(openIssueId = 2)
+        val pages = withBothOpen()
 
-        val tab = pages.reconcile(Both.first(), offered = listOf(Both.first()))
+        val tab = pages.reconcile(Tabs.first(), offered = listOf(Tabs.first()))
 
-        assertEquals(Both.first(), tab)
-        assertFalse(pages.anyOpen(Both.last()))
+        assertEquals(Tabs.first(), tab)
+        assertFalse(pages.anyOpen(Tabs.last()))
     }
+
+    /** The pages survive a rotation: each tab gets back its own detail and see-all, not its neighbour's. */
+    @Test
+    fun `saved pages come back to the tabs they were saved from`() {
+        val saved = with(TvOpenPages.Saver) { SaverScope { true }.save(withBothOpen()) }
+
+        val restored = TvOpenPages.Saver.restore(checkNotNull(saved))
+
+        assertEquals(1, restored?.get(Tabs.first())?.detailId)
+        assertEquals("Pending", restored?.get(Tabs.first())?.seeAll)
+        assertEquals(2, restored?.get(Tabs.last())?.detailId)
+        assertEquals("Open", restored?.get(Tabs.last())?.seeAll)
+    }
+
+    private fun withBothOpen() =
+        TvOpenPages(
+            mapOf(
+                Tabs.first() to TvTabPages(detailId = 1, seeAll = "Pending"),
+                Tabs.last() to TvTabPages(detailId = 2, seeAll = "Open"),
+            ),
+        )
 }
 
-/** The shell's two tabs today, the start tab first. */
-private val Both = listOf(TvDestination.Hub, TvDestination.Issues)
+/** The shell's tabs today, the start tab first. */
+private val Tabs = TvDestination.entries.filterNot { it.isSheet }
