@@ -45,15 +45,18 @@ internal enum class TvDestination(
     val key: String,
     val labelRes: Int,
     val icon: ImageVector,
+    /** Whether the page is a side sheet over Home, which draws its own scrim, rather than a full-screen page. */
+    val isSheet: Boolean = false,
 ) {
     Account("account", R.string.tv_rail_account, Icons.Filled.Person),
     Hub("hub", R.string.tv_rail_hub, Icons.Filled.Home),
     Issues("issues", R.string.hub_section_issues, Icons.Filled.ReportProblem),
-    Settings("settings", R.string.hub_section_settings, Icons.Filled.Settings),
+    Settings("settings", R.string.hub_section_settings, Icons.Filled.Settings, isSheet = true),
 }
 
 /**
- * Home with a top row of buttons that open the other pages above it. There is no rail: Home is the only
+ * Home with a top row of buttons that open the other pages above it, a page being full-screen or, for [TvDestination.isSheet], a
+ * side sheet over Home. [content] is given a `close` for a page that ends itself. There is no rail: Home is the only
  * destination, so Back on it leaves the app, and a [page] other than [TvDestination.Hub] is a full-screen surface above
  * Home that owns Back and returns focus to the button that opened it. An [overlay] (a detail page, a see-all grid) sits
  * above both and owns Back itself.
@@ -67,7 +70,7 @@ internal fun TvHomeShell(
     overlay: (@Composable BoxScope.() -> Unit)? = null,
     /** Whether Issues is offered: only for an account the server lets list issues. */
     showIssues: Boolean = true,
-    content: @Composable (TvDestination) -> Unit,
+    content: @Composable (destination: TvDestination, close: () -> Unit) -> Unit,
 ) {
     val opener = remember { TvDestination.entries.associateWith { FocusRequester() } }
     val closer = rememberTvOverlayCloser(restoreTo = opener.getValue(page), onClose = onClosePage)
@@ -75,7 +78,7 @@ internal fun TvHomeShell(
         // Nothing sits beside Home, so it carries its own overscan and claims first focus as an overlay does.
         CompositionLocalProvider(LocalTvHostedAsOverlay provides true) {
             // Inert while a page covers it, so the page's own hand-off is the only one that takes focus back.
-            HandBackHost(active = page == TvDestination.Hub) { content(TvDestination.Hub) }
+            HandBackHost(active = page == TvDestination.Hub) { content(TvDestination.Hub, closer::close) }
         }
         TvHomeTopRow(
             destinations = TvDestination.entries.filter { it != TvDestination.Hub && (it != TvDestination.Issues || showIssues) },
@@ -92,9 +95,9 @@ internal fun TvHomeShell(
                     // A trap refuses a request leaving it, so the page lets go of it while an overlay above takes focus.
                     modifier =
                         Modifier
-                            .background(MaterialTheme.colorScheme.background)
+                            .then(if (page.isSheet) Modifier else Modifier.background(MaterialTheme.colorScheme.background))
                             .then(if (overlay == null) Modifier.tvExitFocusGroup() else Modifier),
-                ) { content(page) }
+                ) { content(page, closer::close) }
             }
         }
         overlay?.let {

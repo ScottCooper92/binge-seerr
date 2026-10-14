@@ -24,11 +24,17 @@ import com.cooper.binge.companion.seerr.ui.settings.SettingsUiState
 import com.cooper.binge.companion.seerr.ui.settings.SettingsViewModel
 import com.cooper.binge.companion.seerr.ui.settings.server.JobsViewModel
 import com.cooper.binge.companion.seerr.ui.settings.server.MEDIA_SERVER_SCAN_JOB_ID
-import com.cooper.binge.companion.seerr.ui.tv.settings.TvSettingsBoard
+import com.cooper.binge.companion.seerr.ui.tv.settings.TvSettingsActions
+import com.cooper.binge.companion.seerr.ui.tv.settings.TvSettingsSheet
 
+/**
+ * The settings sheet over Home, on the same view models as the phone's Settings. [onEditConnection] is called before the sheet
+ * closes: the form is a full-screen page above Home, and the sheet's focus trap would refuse its request for focus.
+ */
 @Composable
 internal fun TvSettingsEntry(
     onEditConnection: () -> Unit,
+    onDismissRequest: () -> Unit,
     viewModel: SettingsViewModel = hiltViewModel(),
     hubViewModel: HubViewModel = hiltViewModel(),
 ) {
@@ -47,52 +53,52 @@ internal fun TvSettingsEntry(
         hubViewModel.setScreenVisible(true, downloads = false)
         onDispose { hubViewModel.setScreenVisible(false) }
     }
-    // The jobs view model is only stood up once the row it feeds can actually appear — admin-only, same
-    // gate as the row itself — so a non-admin viewer never pays for a `/settings/jobs` fetch they cannot use.
-    if ((state as? SettingsUiState.Ready)?.config != null) {
-        TvAdminSettingsEntry(
-            state = state,
-            onEditConnection = onEditConnection,
-            viewModel = viewModel,
-            hub = hub,
-            onOpenBingeListing = { context.openBingeOnPlayStore() },
-        )
-    } else {
-        TvSettingsBoard(
-            state = state,
-            onEditConnection = onEditConnection,
+    val actions =
+        TvSettingsActions(
+            onEditConnection = {
+                onEditConnection()
+                onDismissRequest()
+            },
             onDisconnect = viewModel::disconnect,
             onToggleShareUsageData = viewModel::setShareUsageData,
             onToggleSendCrashReports = viewModel::setSendCrashReports,
-            hub = hub,
             onOpenBingeListing = { context.openBingeOnPlayStore() },
         )
+    // The jobs view model is only stood up once the row it feeds can actually appear — admin-only, same
+    // gate as the row itself — so a non-admin viewer never pays for a `/settings/jobs` fetch they cannot use.
+    if ((state as? SettingsUiState.Ready)?.config != null) {
+        TvAdminSettingsSheet(state = state, actions = actions, hub = hub, onDismissRequest = onDismissRequest)
+    } else {
+        TvSettingsSheet(state = state, actions = actions, onDismissRequest = onDismissRequest, hub = hub)
     }
 }
 
 @Composable
-private fun TvAdminSettingsEntry(
+private fun TvAdminSettingsSheet(
     state: SettingsUiState,
-    onEditConnection: () -> Unit,
-    viewModel: SettingsViewModel,
+    actions: TvSettingsActions,
     hub: HubUiState,
-    onOpenBingeListing: () -> Unit,
+    onDismissRequest: () -> Unit,
     jobsViewModel: JobsViewModel = hiltViewModel(),
 ) {
-    TvSettingsBoard(
-        hub = hub,
-        onOpenBingeListing = onOpenBingeListing,
+    TvSettingsSheet(
         state = state,
-        onEditConnection = onEditConnection,
-        onDisconnect = viewModel::disconnect,
-        onToggleShareUsageData = viewModel::setShareUsageData,
-        onToggleSendCrashReports = viewModel::setSendCrashReports,
         // The Jobs & cache page's job-row run action, reused rather than a second call to the same endpoint:
-        // this board has no jobs list of its own, so the notice is what tells the admin it started.
+        // this sheet has no jobs list of its own, so the notice is what tells the admin it started.
         // `runWhenReady`, not `run`: this view model's own load races the row becoming visible, so an
         // early tap has to wait it out (and retry once from a failed one) rather than being dropped.
-        onStartLibraryScan = { jobsViewModel.runWhenReady(MEDIA_SERVER_SCAN_JOB_ID, R.string.tv_settings_scan_started) },
+        actions =
+            TvSettingsActions(
+                onEditConnection = actions.onEditConnection,
+                onDisconnect = actions.onDisconnect,
+                onStartLibraryScan = { jobsViewModel.runWhenReady(MEDIA_SERVER_SCAN_JOB_ID, R.string.tv_settings_scan_started) },
+                onToggleShareUsageData = actions.onToggleShareUsageData,
+                onToggleSendCrashReports = actions.onToggleSendCrashReports,
+                onOpenBingeListing = actions.onOpenBingeListing,
+            ),
+        onDismissRequest = onDismissRequest,
         libraryScanEvents = jobsViewModel.events,
+        hub = hub,
     )
 }
 

@@ -184,7 +184,7 @@ class TvAccountScreenshotTest {
     @SeerrTvScreenPreviews
     @Composable
     fun HomeTopRow() {
-        TvHomeShell(page = TvDestination.Hub, onOpenPage = {}, onClosePage = {}) {
+        TvHomeShell(page = TvDestination.Hub, onOpenPage = {}, onClosePage = {}) { _, _ ->
             Box(modifier = Modifier.fillMaxSize())
         }
     }
@@ -210,7 +210,7 @@ class TvAccountScreenshotTest {
     @SeerrTvScreenPreviews
     @Composable
     fun HomeTopRowWithoutIssues() {
-        TvHomeShell(page = TvDestination.Hub, onOpenPage = {}, onClosePage = {}, showIssues = false) {
+        TvHomeShell(page = TvDestination.Hub, onOpenPage = {}, onClosePage = {}, showIssues = false) { _, _ ->
             Box(modifier = Modifier.fillMaxSize())
         }
     }

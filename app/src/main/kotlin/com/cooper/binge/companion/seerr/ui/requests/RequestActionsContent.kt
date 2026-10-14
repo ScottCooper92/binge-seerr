@@ -343,7 +343,10 @@ private fun mediaRows(
     return buildList {
         media.instances.forEach { instance ->
             add(instanceRow(instance, media.isTv, media.canSetStatus) { callbacks.onMarkStatus(instance.is4k) })
-            if (media.canDeleteFiles && instance.status.hasFiles()) {
+        }
+        // Every picker comes before the first delete, so the destructive rows run together at the end.
+        if (media.canDeleteFiles) {
+            media.instances.filter { it.status.hasFiles() }.forEach { instance ->
                 add(
                     ListItem(
                         icon = Icons.Filled.DeleteSweep,

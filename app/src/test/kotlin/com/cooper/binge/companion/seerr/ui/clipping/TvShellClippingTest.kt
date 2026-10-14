@@ -40,7 +40,7 @@ private fun Content() {
 
 @Composable
 private fun Shell() {
-    TvHomeShell(page = TvDestination.Hub, onOpenPage = {}, onClosePage = {}) {
+    TvHomeShell(page = TvDestination.Hub, onOpenPage = {}, onClosePage = {}) { _, _ ->
         Content()
     }
 }

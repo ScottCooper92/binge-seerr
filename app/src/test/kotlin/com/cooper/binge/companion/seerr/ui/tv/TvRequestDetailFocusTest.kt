@@ -200,8 +200,6 @@ class TvRequestDetailFocusTest {
         row(HEAT).requestFocus()
         composeTestRule.waitForIdle()
         pressOk()
-        actionButton(R.string.tv_detail_remove).assertIsFocused()
-        pressRight()
         actionButton(R.string.tv_detail_block).assertIsFocused()
         pressOk()
         composeTestRule.onAllNodes(hasText(string(R.string.tv_detail_block)) and isFocusable()).onLast().requestFocus()

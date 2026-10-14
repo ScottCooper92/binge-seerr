@@ -8,7 +8,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.tv.component.TvSideSheetPanel
+import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.seerr.SeerrMediaStatusCode
 import com.cooper.binge.companion.seerr.seerr.SeerrSignInMode
@@ -54,7 +56,11 @@ import com.cooper.binge.companion.seerr.ui.tv.requests.TvReportDraft
 import com.cooper.binge.companion.seerr.ui.tv.requests.TvReportIssueStep
 import com.cooper.binge.companion.seerr.ui.tv.requests.TvRequestDetailActions
 import com.cooper.binge.companion.seerr.ui.tv.requests.TvRequestDetailScreen
-import com.cooper.binge.companion.seerr.ui.tv.settings.TvSettingsBoard
+import com.cooper.binge.companion.seerr.ui.tv.settings.PAGE_BUG_REPORT
+import com.cooper.binge.companion.seerr.ui.tv.settings.PAGE_SETTINGS
+import com.cooper.binge.companion.seerr.ui.tv.settings.TvSettingsActions
+import com.cooper.binge.companion.seerr.ui.tv.settings.TvSettingsSheet
+import com.cooper.binge.companion.seerr.ui.tv.settings.groupPage
 import com.cooper.binge.companion.seerr.util.createSeerrKeyboardComposeRule
 import com.cooper.binge.companion.seerr.util.requestDetail
 import kotlinx.coroutines.flow.emptyFlow
@@ -92,7 +98,7 @@ class TvPagesClippingTest {
 
     @Test fun `an issue detail page at 1_3`() = rule.assertNoTvClippingAt(FONT_SCALE_13) { IssueDetail() }
 
-    @Test fun `the settings board at 1_3`() = rule.assertNoTvClippingAt(FONT_SCALE_13) { Settings() }
+    @Test fun `the settings sheet at 1_3`() = rule.assertNoTvClippingAt(FONT_SCALE_13) { Settings() }
 
     @Test fun `the setup address page at 1_3`() = rule.assertNoTvClippingAt(FONT_SCALE_13) { SetupAddress() }
 
@@ -123,6 +129,8 @@ class TvPagesClippingTest {
     @Test fun `the mark as sheet at 1_3`() = rule.assertNoTvClippingAt(FONT_SCALE_13) { Sheet { MarkAs() } }
 
     @Test fun `the report sheet at 1_3`() = rule.assertNoTvClippingAt(FONT_SCALE_13) { Sheet { Report() } }
+
+    @Test fun `the settings connection page at 1_3`() = rule.assertNoTvClippingAt(FONT_SCALE_13) { Settings(connectionPage = true) }
 
     @Test fun `the bug report page at 1_3`() = rule.assertNoTvClippingAt(FONT_SCALE_13) { Settings(showBugReport = true) }
 
@@ -239,30 +247,37 @@ class TvPagesClippingTest {
     }
 
     @Composable
-    private fun Settings(showBugReport: Boolean = false) =
-        TvSettingsBoard(
-            state =
-                SettingsUiState.Ready(
-                    connection = ConnectionSummary(baseUrl = LONG_ADDRESS, signInKind = SignInKind.Session, userName = LONG_NAME),
-                    server =
-                        ServerSummary(
-                            title = LONG_SERVER,
-                            variant = SeerrVariant.Jellyseerr,
-                            versionLabel = "3.1.0-develop.2026.10.12",
-                            updateAvailable = true,
-                            commitsBehind = 1_204,
-                        ),
-                    config = ServerConfig(),
-                    app =
-                        AppSettings(
-                            bugReportUrl = "$LONG_ADDRESS/issues/new?template=bug.yml&app-version=0.1.0+%281%29",
-                            shakeToReport = true,
-                        ),
-                ),
-            onEditConnection = {},
-            onDisconnect = {},
-            initialShowingBugReport = showBugReport,
-        )
+    private fun Settings(
+        showBugReport: Boolean = false,
+        connectionPage: Boolean = false,
+    ) = TvSettingsSheet(
+        state =
+            SettingsUiState.Ready(
+                connection = ConnectionSummary(baseUrl = LONG_ADDRESS, signInKind = SignInKind.Session, userName = LONG_NAME),
+                server =
+                    ServerSummary(
+                        title = LONG_SERVER,
+                        variant = SeerrVariant.Jellyseerr,
+                        versionLabel = "3.1.0-develop.2026.10.12",
+                        updateAvailable = true,
+                        commitsBehind = 1_204,
+                    ),
+                config = ServerConfig(),
+                app =
+                    AppSettings(
+                        bugReportUrl = "$LONG_ADDRESS/issues/new?template=bug.yml&app-version=0.1.0+%281%29",
+                        shakeToReport = true,
+                    ),
+            ),
+        actions = TvSettingsActions(),
+        onDismissRequest = {},
+        initialPage =
+            when {
+                showBugReport -> PAGE_BUG_REPORT
+                connectionPage -> groupPage(stringResource(R.string.settings_group_connection))
+                else -> PAGE_SETTINGS
+            },
+    )
 
     @Composable
     private fun SetupAddress() =

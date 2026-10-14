@@ -327,6 +327,7 @@ internal fun TvIssueActionsSheet(
                     onClick = { pending = if (open) TvIssueConfirm.Resolve else TvIssueConfirm.Reopen },
                     modifier = Modifier.focusRequester(entryFocus),
                 )
+                TvSideSheetRow(label = stringResource(R.string.tv_issue_read_comments), onClick = onOpenDetail)
                 if (canDelete) {
                     TvSideSheetRow(
                         label = stringResource(R.string.issue_delete),
@@ -334,7 +335,6 @@ internal fun TvIssueActionsSheet(
                         destructive = true,
                     )
                 }
-                TvSideSheetRow(label = stringResource(R.string.tv_issue_read_comments), onClick = onOpenDetail)
                 TvSideSheetStepFocus(entryFocus)
             }
         }
