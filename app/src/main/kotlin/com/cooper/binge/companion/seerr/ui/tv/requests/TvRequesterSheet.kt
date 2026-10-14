@@ -30,11 +30,12 @@ import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.seerr.ManageablePermission
 import com.cooper.binge.companion.seerr.ui.hub.HubQuotaBucket
 import com.cooper.binge.companion.seerr.ui.settings.server.MAX_LIMIT_CHOICE
+import com.cooper.binge.companion.seerr.ui.state.messageRes
 import com.cooper.binge.companion.seerr.ui.tv.TvFormNote
 import com.cooper.binge.companion.seerr.ui.tv.TvFormNoteTone
 import com.cooper.binge.companion.seerr.ui.tv.rememberTvTransientEvent
-import com.cooper.binge.companion.seerr.ui.tv.settings.tvNoteOrNull
 import com.cooper.binge.companion.seerr.ui.users.UserDetailViewModel
+import com.cooper.binge.companion.seerr.ui.users.settings.EditorEvent
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorUiState
 import com.cooper.binge.companion.seerr.ui.users.settings.ExtrasEditorUiState
 import com.cooper.binge.companion.seerr.ui.users.settings.GeneralSettingsViewModel
@@ -242,3 +243,13 @@ internal fun ReloadWhenSaved(
 ) {
     LaunchedEffect(status) { if (status == SaveStatus.Saved) reload() }
 }
+
+/** The line to show for an editor outcome; null for an event this sheet never says (a save or a delete). */
+@Composable
+private fun EditorEvent?.tvNoteOrNull(): String? =
+    when (this) {
+        null -> null
+        is EditorEvent.Notice -> stringResource(messageRes)
+        is EditorEvent.Failed -> stringResource(error.messageRes())
+        EditorEvent.Saved, EditorEvent.Deleted, is EditorEvent.Undoable -> null
+    }
