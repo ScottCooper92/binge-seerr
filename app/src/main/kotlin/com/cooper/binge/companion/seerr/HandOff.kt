@@ -7,7 +7,7 @@ import com.binge.companion.sdk.HandOffPolicy
 private const val HAND_OFF_TAG = "SeerrCompanion"
 
 /**
- * Who this app takes a hand-off from, in one place: both exported Activities ask the same question
+ * Who this app takes a hand-off from, in one place: every exported hand-off Activity asks the same question
  * and must not drift apart on the answer.
  *
  * Pinned in release. In debug, Binge's package names under any certificate (#679): a debug Binge is signed with
