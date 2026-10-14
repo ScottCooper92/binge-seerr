@@ -3,22 +3,23 @@ package com.cooper.binge.companion.seerr.ui.tv.issues
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import com.binge.designsystem.SaveStatus
 import com.binge.designsystem.formatRelativeOrAbsolute
 import com.binge.designsystem.template.ScreenAction
+import com.binge.designsystem.tv.component.TvSaveStatus
 import com.binge.designsystem.tv.component.TvSideSheet
 import com.binge.designsystem.tv.component.TvSideSheetBody
 import com.binge.designsystem.tv.component.TvSideSheetConfirm
@@ -26,7 +27,6 @@ import com.binge.designsystem.tv.component.TvSideSheetRow
 import com.binge.designsystem.tv.component.TvSideSheetStepFocus
 import com.binge.designsystem.tv.component.TvSideSheetTitle
 import com.binge.designsystem.tv.focus.rememberTvOverlayCloser
-import com.binge.designsystem.tv.nav.tvContentGutterStart
 import com.binge.designsystem.tv.template.TvHubRow
 import com.binge.designsystem.tv.template.TvImmersiveHub
 import com.binge.designsystem.tv.template.TvMessagePage
@@ -43,20 +43,21 @@ import com.cooper.binge.companion.seerr.ui.issues.emptyMessageRes
 import com.cooper.binge.companion.seerr.ui.issues.issueAffectedLabel
 import com.cooper.binge.companion.seerr.ui.issues.labelRes
 import com.cooper.binge.companion.seerr.ui.issues.tone
+import com.cooper.binge.companion.seerr.ui.tv.OnSaved
 import com.cooper.binge.companion.seerr.ui.tv.OverlayFocusRestore
+import com.cooper.binge.companion.seerr.ui.tv.ScopedTo
 import com.cooper.binge.companion.seerr.ui.tv.TV_ROW_ITEM_CAP
+import com.cooper.binge.companion.seerr.ui.tv.TvActionRun
 import com.cooper.binge.companion.seerr.ui.tv.TvBackdropArtwork
 import com.cooper.binge.companion.seerr.ui.tv.TvBackdropCopy
-import com.cooper.binge.companion.seerr.ui.tv.TvFormNoteTone
 import com.cooper.binge.companion.seerr.ui.tv.TvHubLoading
 import com.cooper.binge.companion.seerr.ui.tv.TvLocalNetworkDeniedPage
-import com.cooper.binge.companion.seerr.ui.tv.TvOutcomePlate
 import com.cooper.binge.companion.seerr.ui.tv.TvPagedRows
 import com.cooper.binge.companion.seerr.ui.tv.TvPosterCard
 import com.cooper.binge.companion.seerr.ui.tv.TvRowsFallback
 import com.cooper.binge.companion.seerr.ui.tv.hubFailure
 import com.cooper.binge.companion.seerr.ui.tv.rememberSheetFocusReturn
-import com.cooper.binge.companion.seerr.ui.tv.rememberTvTransientEvent
+import com.cooper.binge.companion.seerr.ui.tv.rememberTvActionRun
 import com.cooper.binge.companion.seerr.ui.tv.tvColor
 import kotlinx.coroutines.flow.Flow
 import com.binge.designsystem.tv.R as TvR
@@ -94,11 +95,12 @@ internal fun TvIssuesBoard(
     modifier: Modifier = Modifier,
     seeAllOpen: Boolean = false,
     now: Long = System.currentTimeMillis(),
-    /** The outcome note showing on arrival, for a frame, which never collects [events]. Production passes null. */
-    initialEvent: IssueListEvent? = null,
+    /** The action status showing on arrival, for a frame, which never collects [events]. Production passes idle. */
+    initialStatus: SaveStatus = SaveStatus.Idle,
 ) {
     val ready = state as? IssuesUiState.Ready
-    val event = rememberTvTransientEvent(events, initialEvent)
+    // The sheet that took the action stays open while it saves, and says how it went (#1519).
+    val run = rememberTvActionRun(events, initialStatus) { settle(failed = it is IssueListEvent.Failed) }
     val restore = rememberSheetFocusReturn()
     val closer = rememberTvOverlayCloser(restoreTo = restore.requester, onClose = actions.onDismissActions)
     Box(modifier = modifier.fillMaxSize()) {
@@ -118,33 +120,16 @@ internal fun TvIssuesBoard(
                 now = now,
             )
         }
-        event?.let {
-            TvOutcomePlate(
-                text = stringResource(it.messageRes()),
-                tone = if (it is IssueListEvent.Failed) TvFormNoteTone.Error else TvFormNoteTone.Success,
-                modifier =
-                    Modifier
-                        .align(Alignment.BottomStart)
-                        .padding(start = tvContentGutterStart(), bottom = dimensionResource(TvR.dimen.tv_overscan_vertical)),
-            )
-        }
         // While the grid is open it renders the sheet itself, on this same ViewModel; one sheet, not two.
         ready?.actionItem?.takeUnless { seeAllOpen }?.let { item ->
             TvIssueActionsSheet(
                 item = item,
                 canDelete = item.canBeDeleted(ready.scope),
-                onResolve = {
-                    actions.onResolve(item)
-                    closer.close()
-                },
-                onReopen = {
-                    actions.onReopen(item)
-                    closer.close()
-                },
-                onDelete = {
-                    actions.onDelete(item)
-                    closer.close()
-                },
+                run = run,
+                actionInFlight = ready.actingIds.isNotEmpty(),
+                onResolve = { run.run { actions.onResolve(item) } },
+                onReopen = { run.run { actions.onReopen(item) } },
+                onDelete = { run.run { actions.onDelete(item) } },
                 // Not `closer.close()`: that would request focus back onto this (now hidden) row one frame
                 // after the sheet disposes, racing the detail page's own arrival focus for the same beat.
                 // The shell's hand-off is the one restore this path needs, once the page the viewer is going to closes.
@@ -282,11 +267,22 @@ internal fun TvIssueActionsSheet(
     onOpenDetail: () -> Unit,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
+    /** What the last action is doing; a frame passes one already saving or failed. */
+    run: TvActionRun = remember { TvActionRun() },
+    /**
+     * Whether the ViewModel still has an issue's action in flight, perhaps one from a sheet since dismissed. This sheet's
+     * rows wait for it, so an action it takes is never the one a late answer settles.
+     */
+    actionInFlight: Boolean = false,
     /** The confirm step open on arrival, for a frame: a static render cannot press the row that opens one. Production passes null. */
     initialConfirm: TvIssueConfirm? = null,
 ) {
     var pending by rememberSaveable { mutableStateOf(initialConfirm) }
     val open = item.status == IssueStatus.Open
+    // The sheet stays open while the action saves, so its answer is read where it was asked; "Saved" closes it.
+    run.OnSaved(onDismiss)
+    run.ScopedTo(item.id, keepSaving = false)
+    val busy = run.status == SaveStatus.Saving || actionInFlight
     TvSideSheet(onDismissRequest = onDismiss, modifier = modifier) { entryFocus ->
         when (pending) {
             TvIssueConfirm.Resolve ->
@@ -294,7 +290,10 @@ internal fun TvIssueActionsSheet(
                     title = stringResource(R.string.issue_resolve_confirm_title),
                     message = stringResource(R.string.issue_resolve_confirm_message),
                     confirmLabel = stringResource(R.string.tv_issue_resolve),
-                    onConfirm = onResolve,
+                    onConfirm = {
+                        pending = null
+                        onResolve()
+                    },
                     onCancel = { pending = null },
                     entryFocus = entryFocus,
                     destructive = false,
@@ -304,7 +303,10 @@ internal fun TvIssueActionsSheet(
                     title = stringResource(R.string.issue_reopen_confirm_title),
                     message = stringResource(R.string.issue_reopen_confirm_message),
                     confirmLabel = stringResource(R.string.tv_issue_reopen),
-                    onConfirm = onReopen,
+                    onConfirm = {
+                        pending = null
+                        onReopen()
+                    },
                     onCancel = { pending = null },
                     entryFocus = entryFocus,
                     destructive = false,
@@ -314,7 +316,10 @@ internal fun TvIssueActionsSheet(
                     title = stringResource(R.string.issue_delete_confirm_title),
                     message = stringResource(R.string.issue_delete_confirm_message),
                     confirmLabel = stringResource(R.string.issue_delete),
-                    onConfirm = onDelete,
+                    onConfirm = {
+                        pending = null
+                        onDelete()
+                    },
                     onCancel = { pending = null },
                     entryFocus = entryFocus,
                 )
@@ -328,6 +333,7 @@ internal fun TvIssueActionsSheet(
                     label = stringResource(if (open) R.string.tv_issue_resolve else R.string.tv_issue_reopen),
                     onClick = { pending = if (open) TvIssueConfirm.Resolve else TvIssueConfirm.Reopen },
                     modifier = Modifier.focusRequester(entryFocus),
+                    enabled = !busy,
                 )
                 TvSideSheetRow(label = stringResource(R.string.tv_issue_read_comments), onClick = onOpenDetail)
                 if (canDelete) {
@@ -335,29 +341,15 @@ internal fun TvIssueActionsSheet(
                         label = stringResource(R.string.issue_delete),
                         onClick = { pending = TvIssueConfirm.Delete },
                         destructive = true,
+                        enabled = !busy,
                     )
                 }
+                TvSaveStatus(status = run.status, onRetry = run::again)
                 TvSideSheetStepFocus(entryFocus)
             }
         }
     }
 }
-
-/** The line the board shows for an action's outcome. */
-internal fun IssueListEvent.messageRes(): Int =
-    when (this) {
-        IssueListEvent.Resolved -> R.string.issue_resolved
-        IssueListEvent.Reopened -> R.string.issue_reopened
-        IssueListEvent.Deleted -> R.string.tv_issue_deleted
-        is IssueListEvent.Failed ->
-            if (error ==
-                SeerrError.Unauthorized
-            ) {
-                R.string.hub_unauthorized_body
-            } else {
-                R.string.tv_issue_action_failed
-            }
-    }
 
 @Composable
 private fun filterLabel(

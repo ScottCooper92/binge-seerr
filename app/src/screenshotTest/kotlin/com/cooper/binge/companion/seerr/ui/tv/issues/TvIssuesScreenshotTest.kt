@@ -2,15 +2,16 @@ package com.cooper.binge.companion.seerr.ui.tv.issues
 
 import androidx.compose.runtime.Composable
 import com.android.tools.screenshot.PreviewTest
+import com.binge.designsystem.SaveStatus
 import com.cooper.binge.companion.seerr.preview.SeerrTvScreenPreviews
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.ui.FIXED_NOW_MILLIS
 import com.cooper.binge.companion.seerr.ui.issues.IssueFilter
 import com.cooper.binge.companion.seerr.ui.issues.IssueItem
-import com.cooper.binge.companion.seerr.ui.issues.IssueListEvent
 import com.cooper.binge.companion.seerr.ui.issues.IssueStatus
 import com.cooper.binge.companion.seerr.ui.issues.IssuesUiState
 import com.cooper.binge.companion.seerr.ui.tv.NoIssuesActions
+import com.cooper.binge.companion.seerr.ui.tv.TvActionRun
 import com.cooper.binge.companion.seerr.ui.tv.TvLoadPhase
 import com.cooper.binge.companion.seerr.ui.tv.TvPagedRows
 import com.cooper.binge.companion.seerr.ui.tv.issue
@@ -46,27 +47,6 @@ class TvIssuesScreenshotTest {
             events = emptyFlow(),
             actions = NoIssuesActions,
             now = FIXED_NOW_MILLIS,
-        )
-    }
-
-    /** A resolve that landed: the note at the foot of the board, until it clears a few seconds later (#1053). */
-    @PreviewTest
-    @SeerrTvScreenPreviews
-    @Composable
-    fun ResolvedNote() {
-        TvIssuesBoard(
-            state = issuesReady(),
-            rowsFor = { filter ->
-                when (filter) {
-                    IssueFilter.Open -> rows(listOf(FixedSampleIssues[0]))
-                    IssueFilter.Resolved -> rows(listOf(FixedSampleIssues[1]))
-                    else -> rows(emptyList())
-                }
-            },
-            events = emptyFlow(),
-            actions = NoIssuesActions,
-            now = FIXED_NOW_MILLIS,
-            initialEvent = IssueListEvent.Resolved,
         )
     }
 
@@ -152,9 +132,35 @@ class TvIssuesScreenshotTest {
     @SeerrTvScreenPreviews
     @Composable
     fun DeleteConfirm() = ConfirmFrame(FixedSampleIssues[0], TvIssueConfirm.Delete)
+
+    /** The sheet stays open while an action saves, and says so under its rows (#1519). */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun ActionSaving() = StatusFrame(SaveStatus.Saving)
+
+    /** An action the server refused: the line says so, with a Retry to reach, and the sheet stays. */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun ActionFailed() = StatusFrame(SaveStatus.Failed)
 }
 
 /** The sheet on one of its confirm steps, alone: the board behind it is framed by [TvIssuesScreenshotTest.Sheet]. */
+@Composable
+private fun StatusFrame(status: SaveStatus) {
+    TvIssueActionsSheet(
+        item = FixedSampleIssues[0],
+        canDelete = true,
+        run = TvActionRun(status),
+        onResolve = {},
+        onReopen = {},
+        onDelete = {},
+        onOpenDetail = {},
+        onDismiss = {},
+    )
+}
+
 @Composable
 private fun ConfirmFrame(
     item: IssueItem,

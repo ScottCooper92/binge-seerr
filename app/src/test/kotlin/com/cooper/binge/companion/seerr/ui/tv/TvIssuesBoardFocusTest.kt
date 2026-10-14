@@ -10,16 +10,19 @@ import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isFocusable
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performKeyInput
 import androidx.compose.ui.test.pressKey
 import androidx.compose.ui.test.requestFocus
 import com.binge.designsystem.tv.theme.BingeTvTheme
 import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.seerr.SeerrPermissions
 import com.cooper.binge.companion.seerr.ui.issues.IssueCounts
 import com.cooper.binge.companion.seerr.ui.issues.IssueFilter
 import com.cooper.binge.companion.seerr.ui.issues.IssueItem
+import com.cooper.binge.companion.seerr.ui.issues.IssueListEvent
 import com.cooper.binge.companion.seerr.ui.issues.IssueListScope
 import com.cooper.binge.companion.seerr.ui.issues.IssueSort
 import com.cooper.binge.companion.seerr.ui.issues.IssueStatus
@@ -30,7 +33,7 @@ import com.cooper.binge.companion.seerr.ui.tv.issues.TvIssuesActions
 import com.cooper.binge.companion.seerr.ui.tv.issues.TvIssuesBoard
 import com.cooper.binge.companion.seerr.util.createSeerrKeyboardComposeRule
 import com.cooper.binge.companion.seerr.util.string
-import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -38,6 +41,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import com.binge.designsystem.R as DesR
 
 private const val SEVERANCE = "Severance"
 private const val HORSES = "Slow Horses"
@@ -58,6 +62,7 @@ class TvIssuesBoardFocusTest {
     private val seeAll = mutableListOf<IssueFilter>()
     private val opened = mutableListOf<Int>()
     private var dismissed = 0
+    private val events = MutableSharedFlow<IssueListEvent>(extraBufferCapacity = 1)
 
     private val manager = IssueListScope(permissions = SeerrPermissions(canManageIssues = true), currentUserId = 7)
     private val reporter = IssueListScope(permissions = SeerrPermissions(canCreateIssues = true), currentUserId = 3)
@@ -75,7 +80,142 @@ class TvIssuesBoardFocusTest {
         pressOk()
 
         assertEquals(listOf(11), resolved)
+        // The sheet stays open while the action saves (#1519).
+        assertEquals(0, dismissed)
+        composeTestRule.onNodeWithText(string(DesR.string.save_status_saving)).assertExists()
+    }
+
+    /** Saved is read before the sheet closes, and focus returns to the row that opened it. */
+    @Test
+    fun aSavedActionClosesTheSheetAfterItIsRead() {
+        setBoard(manager)
+        focusFirstRow()
+        confirmFirstAction()
+
+        composeTestRule.mainClock.autoAdvance = false
+        events.tryEmit(IssueListEvent.Resolved)
+        composeTestRule.mainClock.advanceTimeBy(100)
+        composeTestRule.onNodeWithText(string(DesR.string.save_status_saved)).assertExists()
+        assertEquals(0, dismissed)
+
+        composeTestRule.mainClock.advanceTimeBy(TV_SAVED_HOLD_MILLIS + 200)
+        composeTestRule.mainClock.autoAdvance = true
+        settleFocusRestore()
         assertEquals(1, dismissed)
+        row(SEVERANCE).assertIsFocused()
+    }
+
+    /** A refusal stays in the sheet with a Retry that runs the same action again; nothing times out. */
+    @Test
+    fun aFailedActionStaysWithARetryThatRunsItAgain() {
+        setBoard(manager)
+        focusFirstRow()
+        confirmFirstAction()
+
+        events.tryEmit(IssueListEvent.Failed(SeerrError.Unreachable))
+        composeTestRule.waitForIdle()
+        composeTestRule.mainClock.advanceTimeBy(60_000)
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText(string(DesR.string.save_status_failed)).assertExists()
+        assertEquals(0, dismissed)
+        composeTestRule.onNode(hasText(string(DesR.string.save_status_retry)) and isFocusable()).requestFocus()
+        pressOk()
+
+        assertEquals(listOf(11, 11), resolved)
+        composeTestRule.onNodeWithText(string(DesR.string.save_status_saving)).assertExists()
+    }
+
+    /** A failure left in a sheet that was dismissed is not the next issue's: its sheet opens idle, and Retry has nothing to run (#1519). */
+    @Test
+    fun aDismissedSheetLeavesNoFailureForTheNextIssue() {
+        setBoard(manager)
+        focusFirstRow()
+        confirmFirstAction()
+        events.tryEmit(IssueListEvent.Failed(SeerrError.Server))
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithText(string(DesR.string.save_status_failed)).assertExists()
+        sheetRow(R.string.tv_issue_resolve).requestFocus()
+        pressLeft()
+        assertEquals(1, dismissed)
+        settleFocusRestore()
+        pressRight()
+        row(HORSES).assertIsFocused()
+        pressOk()
+
+        sheetRow(R.string.tv_issue_resolve).assertExists()
+        composeTestRule.onNodeWithText(string(DesR.string.save_status_failed)).assertDoesNotExist()
+        composeTestRule.onNodeWithText(string(DesR.string.save_status_retry)).assertDoesNotExist()
+        assertEquals(listOf(11), resolved)
+    }
+
+    @Test
+    fun aFailedReopenRetriesTheReopen() {
+        setBoard(manager, items = listOf(issue(11, SEVERANCE, reportedById = 3, status = IssueStatus.Resolved)))
+        focusFirstRow()
+        confirmFirstAction()
+        events.tryEmit(IssueListEvent.Failed(SeerrError.Server))
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNode(hasText(string(DesR.string.save_status_retry)) and isFocusable()).requestFocus()
+        pressOk()
+
+        assertEquals(listOf(11, 11), reopened)
+        assertTrue(resolved.isEmpty())
+    }
+
+    @Test
+    fun aFailedDeleteRetriesTheDelete() {
+        setBoard(manager)
+        focusFirstRow()
+        pressOk()
+        pressDown()
+        pressDown()
+        pressOk()
+        pressUp()
+        pressOk()
+        events.tryEmit(IssueListEvent.Failed(SeerrError.Server))
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNode(hasText(string(DesR.string.save_status_retry)) and isFocusable()).requestFocus()
+        pressOk()
+
+        assertEquals(listOf(11, 11), deleted)
+    }
+
+    /** An action still saving when its sheet is dismissed is not the next issue's: B's sheet shows nothing of it, and A's late answer is ignored (#1519). */
+    @Test
+    fun aLateAnswerFromADismissedSheetNeverReachesTheNextIssue() {
+        trackActing = true
+        setBoard(manager)
+        focusFirstRow()
+        confirmFirstAction()
+        pressLeft()
+        settleFocusRestore()
+        row(HORSES).requestFocus()
+        composeTestRule.waitForIdle()
+        pressOk()
+
+        // Its rows wait for A's write, but it says nothing of an action B never took.
+        sheetRow(R.string.tv_issue_resolve).assertDoesNotExist()
+        composeTestRule.onNodeWithText(string(DesR.string.save_status_saving)).assertDoesNotExist()
+
+        events.tryEmit(IssueListEvent.Failed(SeerrError.Unreachable))
+        composeTestRule.runOnIdle { finishActing() }
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText(string(DesR.string.save_status_failed)).assertDoesNotExist()
+        composeTestRule.onNodeWithText(string(DesR.string.save_status_retry)).assertDoesNotExist()
+        sheetRow(R.string.tv_issue_resolve).assertExists()
+        assertEquals(listOf(11), resolved)
+    }
+
+    /** Opens the sheet on the first row, takes its first action and confirms it. */
+    private fun confirmFirstAction() {
+        pressOk()
+        pressOk()
+        pressUp()
+        pressOk()
     }
 
     @Test
@@ -196,6 +336,10 @@ class TvIssuesBoardFocusTest {
         seeAllTile().assertDoesNotExist()
     }
 
+    /** Whether a resolve marks its issue as acting, as the ViewModel does until the server answers. */
+    private var trackActing = false
+    private var finishActing: () -> Unit = {}
+
     private fun setBoard(
         scope: IssueListScope,
         items: List<IssueItem> = listOf(issue(11, SEVERANCE, reportedById = 3), issue(12, HORSES, reportedById = 5)),
@@ -205,6 +349,7 @@ class TvIssuesBoardFocusTest {
             var state by remember {
                 mutableStateOf(IssuesUiState.Ready(filter = IssueFilter.Open, sort = IssueSort.Added, counts = counts, scope = scope))
             }
+            finishActing = { state = state.copy(actingIds = emptySet()) }
             BingeTvTheme {
                 TvIssuesBoard(
                     state = state,
@@ -217,7 +362,7 @@ class TvIssuesBoardFocusTest {
                             TvPagedRows(count = 0, at = { null })
                         }
                     },
-                    events = emptyFlow(),
+                    events = events,
                     actions =
                         TvIssuesActions(
                             onOpenActions = { state = state.copy(actionItem = it) },
@@ -226,7 +371,10 @@ class TvIssuesBoardFocusTest {
                                 state = state.copy(actionItem = null)
                             },
                             onOpenDetail = { opened += it.id },
-                            onResolve = { resolved += it.id },
+                            onResolve = {
+                                resolved += it.id
+                                if (trackActing) state = state.copy(actingIds = state.actingIds + it.id)
+                            },
                             onReopen = { reopened += it.id },
                             onDelete = { deleted += it.id },
                             onSeeAll = { seeAll += it },

@@ -61,6 +61,34 @@ class TvRequestDetailSheetsScreenshotTest {
             )
         }
 
+    /** A pick being saved: the tick has moved to it, and the sheet says "Saving…" under the options before it closes (#1519). */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun MarkAsSaving() =
+        SheetFrame {
+            TvMarkAsSteps(
+                media = media(MediaInstance(false, SeerrMediaStatusCode.Available, null, null, null)),
+                onSelect = { _, _ -> },
+                entryFocus = FocusRequester(),
+                status = SaveStatus.Saving,
+            )
+        }
+
+    /** A pick the server refused: the tick is back where it was, and the line offers Retry. */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun MarkAsFailed() =
+        SheetFrame {
+            TvMarkAsSteps(
+                media = media(MediaInstance(false, SeerrMediaStatusCode.Available, null, null, null)),
+                onSelect = { _, _ -> },
+                entryFocus = FocusRequester(),
+                status = SaveStatus.Failed,
+            )
+        }
+
     /** The edit: a held season locked with the server's state, the others to choose, and the destination rows. */
     @PreviewTest
     @SeerrTvScreenPreviews

@@ -3,6 +3,7 @@ package com.cooper.binge.companion.seerr.ui.tv.requests
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import com.android.tools.screenshot.PreviewTest
+import com.binge.designsystem.SaveStatus
 import com.binge.designsystem.tv.component.TV_DETAILS_SECTION_KEY
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.preview.SeerrTvScreenPreviews
@@ -12,7 +13,6 @@ import com.cooper.binge.companion.seerr.seerr.SeerrRequestStatusCode
 import com.cooper.binge.companion.seerr.ui.requests.DetailDownload
 import com.cooper.binge.companion.seerr.ui.requests.MediaInstance
 import com.cooper.binge.companion.seerr.ui.requests.MediaRecord
-import com.cooper.binge.companion.seerr.ui.requests.ModerationEvent
 import com.cooper.binge.companion.seerr.ui.requests.RequestActions
 import com.cooper.binge.companion.seerr.ui.requests.RequestDestination
 import com.cooper.binge.companion.seerr.ui.requests.RequestDetail
@@ -304,29 +304,29 @@ class TvRequestDetailScreenshotTest {
         )
     }
 
-    /** An approval that landed: the note at the foot of the page, until it clears a few seconds later (#1053). */
+    /** An approval that landed: "Saved" under the action row, which clears once it has been read (#1519). */
     @PreviewTest
     @SeerrTvScreenPreviews
     @Composable
-    fun ApprovedNote() {
+    fun ActionSaved() {
         TvRequestDetailScreen(
             state = RequestDetailUiState.Ready(seriesDetail()),
             events = emptyFlow(),
             actions = actions(onOpenInBinge = {}),
-            initialEvent = ModerationEvent.Approved,
+            initialStatus = SaveStatus.Saved,
         )
     }
 
-    /** A moderation the server refused: the same note, in the error tone, saying why. */
+    /** A moderation the server refused: the line under the row says so, with a Retry that stays until the user acts. */
     @PreviewTest
     @SeerrTvScreenPreviews
     @Composable
-    fun FailedNote() {
+    fun ActionFailed() {
         TvRequestDetailScreen(
             state = RequestDetailUiState.Ready(seriesDetail()),
             events = emptyFlow(),
             actions = actions(onOpenInBinge = {}),
-            initialEvent = ModerationEvent.Failed(SeerrError.Unreachable),
+            initialStatus = SaveStatus.Failed,
         )
     }
 }
