@@ -131,7 +131,7 @@ internal fun ColumnScope.TvBugReportSheetContent(
                 .aspectRatio(1f),
     )
     TvSideSheetRow(
-        label = stringResource(R.string.tv_settings_report_bug_close),
+        label = stringResource(R.string.tv_sheet_close),
         onClick = onClose,
         modifier = closeModifier,
     )

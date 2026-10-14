@@ -86,7 +86,7 @@ internal fun TvSettingsSheet(
 private fun ColumnScope.LoadingPage(nav: TvSideSheetNav) {
     TvSideSheetTitle(stringResource(R.string.hub_section_settings))
     TvSideSheetBody(stringResource(R.string.tv_loading))
-    TvSideSheetRow(label = stringResource(R.string.tv_settings_report_bug_close), onClick = nav::pop, modifier = nav.row(KEY_CLOSE))
+    TvSideSheetRow(label = stringResource(R.string.tv_sheet_close), onClick = nav::pop, modifier = nav.row(KEY_CLOSE))
 }
 
 /** The groups, then Disconnect after them all: the one destructive thing here goes where a stray OK is least likely to reach it. */

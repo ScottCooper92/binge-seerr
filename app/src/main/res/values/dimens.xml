@@ -22,11 +22,9 @@
     <dimen name="tv_list_row_poster_width">40dp</dimen>
     <dimen name="tv_list_row_poster_height">60dp</dimen>
     <dimen name="tv_bug_report_code_size">240dp</dimen>
-    <dimen name="tv_account_avatar_size">80dp</dimen>
     <dimen name="tv_poster_chip_size">28dp</dimen>
     <dimen name="tv_poster_chip_icon">18dp</dimen>
     <dimen name="tv_poster_chip_inset">6dp</dimen>
-    <dimen name="tv_stat_tile_gap">12dp</dimen>
     <dimen name="tv_download_progress_height">6dp</dimen>
     <!-- The request detail page: a constrained reading column, its rows and section gaps. -->
     <dimen name="tv_detail_content_width">760dp</dimen>

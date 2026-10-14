@@ -42,6 +42,16 @@ internal class TvRequestsActions(
     val onRetryScope: () -> Unit,
 )
 
+/** The signed-in user's own requests as a row after the filters', with the count behind its see-all tile. */
+internal class TvMyRequests(
+    val rows: TvPagedRows<RequestItem>,
+    val count: Int?,
+    val onSeeAll: () -> Unit,
+)
+
+/** The key of the signed-in user's own row, which no filter is called. */
+internal const val KEY_MY_REQUESTS = "mine"
+
 /** The filters that get a row; "All" would only repeat the others, so the rows are the tabs. */
 internal val RequestRowFilters = RequestFilter.entries.filter { it != RequestFilter.All }
 
@@ -53,6 +63,8 @@ private const val PERCENT = 100
  * in it has no row, and one with more than a row holds ends in a see-all tile that opens the paged grid. OK on a
  * card opens the request's detail page, an overlay above the rail that this board does not own.
  *
+ * [mine] adds the signed-in user's own requests as a last row, so what they asked for is on Home rather than a page of its own.
+ *
  * When the page or grid a card or tile opened closes, the shell hands focus back into this board, and the hub's own
  * memory lands it on that card or tile. The board makes no request of its own, which would race the hand-off (#1509).
  */
@@ -62,6 +74,7 @@ internal fun TvRequestsRowsBoard(
     rowsFor: (RequestFilter) -> TvPagedRows<RequestItem>,
     actions: TvRequestsActions,
     modifier: Modifier = Modifier,
+    mine: TvMyRequests? = null,
 ) {
     val ready = state as? RequestsUiState.Ready
     if (ready == null) {
@@ -69,16 +82,16 @@ internal fun TvRequestsRowsBoard(
         return
     }
     val perFilter = RequestRowFilters.map { it to rowsFor(it) }
-    if (perFilter.none { (_, rows) -> rows.count > 0 }) {
+    if (perFilter.none { (_, rows) -> rows.count > 0 } && (mine?.rows?.count ?: 0) == 0) {
         TvRowsFallback(
-            rows = perFilter.map { it.second },
+            rows = perFilter.map { it.second } + listOfNotNull(mine?.rows),
             emptyBody = stringResource(R.string.requests_empty_all),
             onRetryLoad = actions.onRetryLoad,
             modifier = modifier,
         )
         return
     }
-    val hubRows =
+    val filterRows =
         perFilter.map { (filter, rows) ->
             val label = stringResource(filter.labelRes())
             val count = ready.counts?.countFor(filter)
@@ -90,6 +103,7 @@ internal fun TvRequestsRowsBoard(
                 onSeeAll = { actions.onSeeAll(filter) }.takeIf { (count ?: rows.count) > TV_ROW_ITEM_CAP },
             )
         }
+    val hubRows = filterRows + listOfNotNull(mine?.let { myRequestsRow(it) })
     val now = ready.now
     TvImmersiveHub(
         rows = hubRows,
@@ -111,6 +125,17 @@ internal fun TvRequestsRowsBoard(
             modifier = cellModifier,
         )
     }
+}
+
+@Composable
+private fun myRequestsRow(mine: TvMyRequests): TvHubRow<RequestItem> {
+    val label = stringResource(R.string.tv_account_your_requests)
+    return TvHubRow(
+        key = KEY_MY_REQUESTS,
+        title = if (mine.count != null) stringResource(R.string.tv_filter_with_count, label, mine.count) else label,
+        items = (0 until minOf(mine.rows.count, TV_ROW_ITEM_CAP)).mapNotNull { mine.rows.at(it) },
+        onSeeAll = mine.onSeeAll.takeIf { (mine.count ?: mine.rows.count) > TV_ROW_ITEM_CAP },
+    )
 }
 
 /** What the board shows before the requests are known: the loading page, or that they could not be read, with a retry. */

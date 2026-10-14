@@ -39,7 +39,7 @@ internal fun TvConnectedShell(hubViewModel: HubViewModel = hiltViewModel()) {
     // from one of its cards, so the page above and the grid below can both be showing.
     var seeAllRequests by rememberSaveable { mutableStateOf<String?>(null) }
     var seeAllIssues by rememberSaveable { mutableStateOf<String?>(null) }
-    // The account page's own see-all: the signed-in user's requests, which belong to no filter.
+    // Home's see-all for the signed-in user's own requests, which belong to no filter.
     var seeAllAccount by rememberSaveable { mutableStateOf(false) }
     TvHomeShell(
         page = page,
@@ -88,19 +88,14 @@ internal fun TvConnectedShell(hubViewModel: HubViewModel = hiltViewModel()) {
     ) { destination, close ->
         when (destination) {
             TvDestination.Account ->
-                TvAccountEntry(
-                    openRequestId = openRequestId,
-                    onOpenRequest = { openRequestId = it },
-                    seeAllOpen = seeAllAccount,
-                    onSeeAll = { seeAllAccount = true },
-                    hubViewModel = hubViewModel,
-                )
+                TvAccountEntry(hubViewModel = hubViewModel, onDismissRequest = close)
             // Home is what needs attention: the requests as rows over a backdrop, once the server answers.
             TvDestination.Hub ->
                 TvHomeEntry(
                     onReconnect = { editingConnection = true },
                     onOpenRequest = { openRequestId = it },
                     onSeeAll = { seeAllRequests = it.name },
+                    onSeeAllMine = { seeAllAccount = true },
                 )
             TvDestination.Issues ->
                 TvIssuesEntry(

@@ -921,8 +921,6 @@ app:state_error_unreachable_message  5ffff6c5878b
 app:state_error_unreachable_title  8884ecffcd27
 app:three_pane_nothing_open_message  99ac963e3b6a
 app:three_pane_nothing_open_title  d957e41014e9
-app:tv_account_quota_of  d7d879803c54
-app:tv_account_quota_unlimited_note  f7fcff0d8fea
 app:tv_account_requests_empty  1bea507092bb
 app:tv_account_your_requests  4c64a2a1c581
 app:tv_advanced_submitting  5d7513c4aa39
@@ -969,7 +967,6 @@ app:tv_settings_disconnect_confirm  ff9c95dc28f5
 app:tv_settings_group_server  344c9097cc03
 app:tv_settings_read_only_note  5dc9a6be3289
 app:tv_settings_report_bug_body  60f9974a8bf0
-app:tv_settings_report_bug_close  7d9eb7acb13e
 app:tv_settings_report_bug_code_description  f9ec3a4be5c3
 app:tv_settings_report_bug_scan  788e6d3aaded
 app:tv_settings_report_bug_show_code  c9eab29c97b9
@@ -1004,6 +1001,7 @@ app:tv_setup_status_found_on_tv  387ce4e0ab24
 app:tv_setup_status_preparing  dacdeffbb5dd
 app:tv_setup_status_signing_in  b2344a820268
 app:tv_setup_status_waiting  3c5ba65f33ad
+app:tv_sheet_close  7d9eb7acb13e
 app:user_actions_cd  33634352212a
 app:user_delete  58363fd94240
 app:user_delete_confirm_message  a02ad34c7a48
