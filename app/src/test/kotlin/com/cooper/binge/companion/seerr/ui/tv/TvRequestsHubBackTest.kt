@@ -67,7 +67,7 @@ class TvRequestsHubBackTest {
         enterAt(OPENED_ROW, OPENED_COLUMN)
         composeTestRule.press(Key.DirectionCenter)
         assertEquals(listOf(idOf(OPENED_ROW, OPENED_COLUMN)), opened)
-        composeTestRule.onNodeWithTag(OVERLAY_TAG).assertIsFocused()
+        composeTestRule.onNodeWithTag(TOP_LAYER_TAG).assertIsFocused()
 
         composeTestRule.pressBack()
         composeTestRule.settleShellHandOff()
@@ -146,11 +146,10 @@ class TvRequestsHubBackTest {
                 val mine = myRequests(count = if (mineLong) MORE_THAN_A_ROW else CARDS_PER_ROW)
                 ShellWithOverlay(
                     destination = TvDestination.Hub,
-                    overlayOpen = openRequestId != null || seeAllOpen,
-                    onCloseOverlay = {
-                        openRequestId = null
-                        seeAllOpen = false
-                    },
+                    overlayOpen = seeAllOpen,
+                    onCloseOverlay = { seeAllOpen = false },
+                    topLayerOpen = openRequestId != null,
+                    onCloseTopLayer = { openRequestId = null },
                 ) {
                     TvRequestsRowsBoard(
                         state = ready,

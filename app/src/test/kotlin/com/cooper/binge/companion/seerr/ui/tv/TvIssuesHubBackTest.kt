@@ -65,7 +65,7 @@ class TvIssuesHubBackTest {
         enterAt(LOWER_ROW, OPENED_COLUMN)
         composeTestRule.press(Key.DirectionCenter)
         assertEquals(listOf(idOf(LOWER_ROW, OPENED_COLUMN)), opened)
-        composeTestRule.onNodeWithTag(OVERLAY_TAG).assertIsFocused()
+        composeTestRule.onNodeWithTag(TOP_LAYER_TAG).assertIsFocused()
 
         composeTestRule.pressBack()
         composeTestRule.settleShellHandOff()
@@ -108,11 +108,10 @@ class TvIssuesHubBackTest {
             BingeTvTheme {
                 ShellWithOverlay(
                     destination = TvDestination.Issues,
-                    overlayOpen = openIssueId != null || seeAllOpen,
-                    onCloseOverlay = {
-                        openIssueId = null
-                        seeAllOpen = false
-                    },
+                    overlayOpen = seeAllOpen,
+                    onCloseOverlay = { seeAllOpen = false },
+                    topLayerOpen = openIssueId != null,
+                    onCloseTopLayer = { openIssueId = null },
                 ) {
                     TvIssuesBoard(
                         state = ready,

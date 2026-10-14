@@ -30,6 +30,7 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Dp
 import androidx.tv.material3.MaterialTheme
 import com.binge.designsystem.tv.focus.TvFocusSink
 import com.binge.designsystem.tv.focus.rememberTvOverlayCloser
@@ -61,9 +62,12 @@ internal enum class TvDestination(
  * see-all grid) belongs to the current tab and sits under the bar too. With one tab offered there is nothing to choose
  * between, so the bar shows no tabs, only the avatar and the gear, and the avatar stands where the current tab would.
  *
+ * A [topLayer] is a title's own page, such as a request: a full screen drawn over everything, the bar included, with no top
+ * inset. It traps focus and takes Back itself; when it closes, focus goes back to the card that opened it on the page beneath.
+ *
  * Focus: selecting a tab leaves focus on it, and Down enters the page. Up out of a page's top edge lands on the current tab.
- * Back: an overlay or a sheet takes it first; on a page it moves focus to the current tab; on the bar it leaves any other
- * tab for the start tab, and from the start tab leaves the app.
+ * Back: a top layer, an overlay or a sheet takes it first; on a page it moves focus to the current tab; on the bar it leaves
+ * any other tab for the start tab, and from the start tab leaves the app.
  */
 @Composable
 internal fun TvHomeShell(
@@ -81,6 +85,7 @@ internal fun TvHomeShell(
     account: TvTopBarAccount = TvTopBarAccount(name = "", avatarUrl = null),
     /** False while a full-screen task (editing the connection) is up: the bar hides and pages take no inset. */
     showBar: Boolean = true,
+    topLayer: (@Composable () -> Unit)? = null,
     /** [content] draws a destination; its `close` returns to the start tab, so there it is a reselect and clears its pages. */
     content: @Composable (destination: TvDestination, close: () -> Unit) -> Unit,
 ) {
@@ -101,7 +106,7 @@ internal fun TvHomeShell(
             onStart = tab == start,
             barFocused = barFocused,
             barUp = barUp,
-            covered = overlay != null || sheet != null,
+            covered = overlay != null || sheet != null || topLayer != null,
             barStop = barStop,
             onLeaveForStart = {
                 onSelectTab(start)
@@ -116,6 +121,7 @@ internal fun TvHomeShell(
                 tab = tab,
                 start = start,
                 sheetOpen = sheet != null,
+                topLayerOpen = topLayer != null,
                 overlay = overlay,
                 entries = entries,
                 overlayEntry = overlayEntry,
@@ -134,6 +140,7 @@ internal fun TvHomeShell(
             onSelect = { if (it.isSheet) onOpenSheet(it) else onSelectTab(it) },
             modifier = Modifier.align(Alignment.TopCenter).onSizeChanged { barHeightPx = it.height },
         )
+        topLayer?.let { TvShellTopLayer(it) }
         if (sheet != null) {
             TvShellSheet(overlayOpen = overlay != null, onClose = sheetCloser::close) { content(sheet, sheetCloser::close) }
         }
@@ -170,15 +177,18 @@ private fun TvShellPages(
     tab: TvDestination,
     start: TvDestination,
     sheetOpen: Boolean,
+    topLayerOpen: Boolean,
     overlay: (@Composable BoxScope.() -> Unit)?,
     entries: Map<TvDestination, FocusRequester>,
     overlayEntry: FocusRequester,
     upToBar: FocusRequester?,
     content: @Composable (TvDestination) -> Unit,
 ) {
+    // A sheet hands focus back itself, and a top layer over an overlay leaves it to the overlay, so the tab stays out of both.
+    val tabTakesFocusBack = !sheetOpen && !(topLayerOpen && overlay != null)
     HandBackHost(
         entry = entries.getValue(start),
-        active = tab == start && !sheetOpen,
+        active = tab == start && tabTakesFocusBack,
         modifier = Modifier.exitUpTo(upToBar),
     ) { content(start) }
     // A tab page that goes while it holds focus (its tab withdrawn) would leave focus on the bar's first item, so the start
@@ -190,7 +200,7 @@ private fun TvShellPages(
             key(tab) {
                 HandBackHost(
                     entry = entries.getValue(tab),
-                    active = !sheetOpen,
+                    active = tabTakesFocusBack,
                     modifier =
                         Modifier
                             .onFocusChanged { tabPage.held = it.hasFocus }
@@ -201,14 +211,33 @@ private fun TvShellPages(
         }
     }
     LaunchedEffect(handOffToStart) { if (handOffToStart) restoreTvOverlayFocus(entries.getValue(start)) }
+    // The overlay hands focus back as a tab page does, so a page closed over it returns to the overlay rather than the tab.
     overlay?.let {
-        Box(modifier = Modifier.fillMaxSize().focusRequester(overlayEntry).pageTrap(upToBar), content = it)
+        HandBackHost(entry = overlayEntry, active = !sheetOpen, modifier = Modifier.pageTrap(upToBar)) {
+            Box(modifier = Modifier.fillMaxSize(), content = it)
+        }
     }
 }
 
 /** Whether a tab page above the start tab holds focus, read without recomposing on every move. */
 private class TabPageFocus {
     var held = false
+}
+
+/**
+ * A title's own page over everything, the bar included: it fills the screen, so it takes no top inset, and it is opaque, so the
+ * bar does not show through. Focus is trapped in it; Back is the page's own, and closing it hands focus back to the page beneath.
+ */
+@Composable
+private fun TvShellTopLayer(content: @Composable () -> Unit) {
+    CompositionLocalProvider(LocalTvTopInset provides Dp.Hairline, LocalTvHostedAsOverlay provides true) {
+        HandBackHost(
+            entry = remember { FocusRequester() },
+            active = true,
+            modifier = Modifier.background(MaterialTheme.colorScheme.background).tvExitFocusGroup(),
+            content = content,
+        )
+    }
 }
 
 /** A sheet slides in over everything, the bar included; Back closes it unless a page above it takes Back first. */

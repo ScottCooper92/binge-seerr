@@ -65,9 +65,10 @@ internal fun TvConnectedShell(
                 editingConnection -> {
                     { TvEditConnectionOverlay(onDone = { editingConnection = false }) }
                 }
-                !pages.anyOpen(tab) -> null
+                pages[tab].seeAll == null -> null
                 else -> tabPages(tab, pages, seeAllAccountId = account?.id)
             },
+        topLayer = detailPage(tab, pages[tab]).takeUnless { editingConnection },
     ) { destination, close ->
         when (destination) {
             TvDestination.Account ->
@@ -123,7 +124,7 @@ private fun rememberSheetOpener(
 /** Home's see-all key for the signed-in user's own requests, which belong to no filter. */
 private const val SEE_ALL_MINE = KEY_MY_REQUESTS
 
-/** Home's pages over its rows: a filter's see-all grid or the user's own, and a request's detail page above either. */
+/** Home's see-all page over its rows: a filter's grid, or the user's own requests. A request's page opens above it, over the bar. */
 @Composable
 private fun TvHubPages(
     pages: TvTabPages,
@@ -148,10 +149,9 @@ private fun TvHubPages(
                 onDone = { pages.seeAll = null },
             )
     }
-    TvDetailOverlays(openRequestId = pages.detailId, openIssueId = null, onCloseRequest = { pages.detailId = null })
 }
 
-/** The Issues tab's pages over its board: a see-all grid, and an issue's detail page above it. */
+/** The Issues tab's see-all page over its board. An issue's page opens above it, over the bar. */
 @Composable
 private fun TvIssuesPages(pages: TvTabPages) {
     pages.seeAll?.let { name ->
@@ -162,25 +162,27 @@ private fun TvIssuesPages(pages: TvTabPages) {
             onDone = { pages.seeAll = null },
         )
     }
-    TvDetailOverlays(openRequestId = null, openIssueId = pages.detailId, onCloseIssue = { pages.detailId = null })
 }
 
 /**
- * The request and issue pages above the page. Each page its own view models, cleared when it closes: a reopened page starts
- * fresh, and nothing piles up in the activity's store or outlives a change of server (#789).
+ * The tab's open title as a page of its own, over the bar: a request on Home, an issue on Issues. Each page has its own view
+ * models, cleared when it closes: a reopened page starts fresh, and nothing piles up in the activity's store or outlives a
+ * change of server (#789).
  */
-@Composable
-private fun TvDetailOverlays(
-    openRequestId: Int?,
-    openIssueId: Int?,
-    onCloseRequest: () -> Unit = {},
-    onCloseIssue: () -> Unit = {},
-) {
-    openRequestId?.let { id ->
-        ScopedViewModels("request-detail-$id") { TvRequestDetailOverlay(requestId = id, onDone = onCloseRequest) }
-    }
-    openIssueId?.let { id ->
-        ScopedViewModels("issue-detail-$id") { TvIssueDetailOverlay(issueId = id, onDone = onCloseIssue) }
+private fun detailPage(
+    tab: TvDestination,
+    pages: TvTabPages,
+): (@Composable () -> Unit)? {
+    val id = pages.detailId ?: return null
+    val close = { pages.detailId = null }
+    return when (tab) {
+        TvDestination.Hub -> {
+            { ScopedViewModels("request-detail-$id") { TvRequestDetailOverlay(requestId = id, onDone = close) } }
+        }
+        TvDestination.Issues -> {
+            { ScopedViewModels("issue-detail-$id") { TvIssueDetailOverlay(issueId = id, onDone = close) } }
+        }
+        TvDestination.Account, TvDestination.Settings -> null
     }
 }
 
@@ -194,7 +196,7 @@ private val TabRules: List<Pair<TvDestination, (HubOverview) -> Boolean>> =
         TvDestination.Issues to { overview -> HubSection.Issues.isVisible(overview) },
     )
 
-/** Each tab's own pages over its board, chosen by tab. */
+/** Each tab's see-all page over its board, chosen by tab. */
 private fun tabPages(
     tab: TvDestination,
     pages: TvOpenPages,
