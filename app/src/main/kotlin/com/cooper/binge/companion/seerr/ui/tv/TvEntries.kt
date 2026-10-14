@@ -1,5 +1,6 @@
 package com.cooper.binge.companion.seerr.ui.tv
 
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -11,6 +12,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.cooper.binge.companion.seerr.telemetry.LocalAnalytics
 import com.cooper.binge.companion.seerr.telemetry.screenName
 import com.cooper.binge.companion.seerr.ui.ScopedViewModels
+import com.cooper.binge.companion.seerr.ui.hub.HubOverview
 import com.cooper.binge.companion.seerr.ui.hub.HubSection
 import com.cooper.binge.companion.seerr.ui.hub.HubUiState
 import com.cooper.binge.companion.seerr.ui.hub.HubViewModel
@@ -29,26 +31,32 @@ internal fun TvConnectedShell(
     hubViewModel: HubViewModel = hiltViewModel(),
     settingsViewModel: SettingsViewModel = hiltViewModel(),
 ) {
-    // The hub state the Account page reads, for the signed-in user's id and whether Issues is offered.
+    // The hub state the Account page reads, for the signed-in user's id and which tabs are offered.
     val hub by hubViewModel.uiState.collectAsStateWithLifecycle()
     val account = (hub as? HubUiState.Ready)?.overview?.account
-    var tab by rememberSaveable { mutableStateOf(TvDestination.Hub) }
+    val pages = rememberTvOpenPages()
+    val tabsResolved = hub !is HubUiState.Loading
+    // Until the hub answers, the bar is hidden and every tab stands, so a tab kept across a rotation is not dropped early.
+    val tabs = if (tabsResolved) offeredTabs(hub) else TabRules.map { it.first }
+    var chosenTab by rememberSaveable { mutableStateOf(TvDestination.Hub) }
+    // A tab withdrawn under the user (a permission change, a reconnect as someone else) hands over to the start tab at once;
+    // the effect then drops its pages and settles the choice.
+    val tab = chosenTab.takeIf { it in tabs } ?: tabs.first()
+    LaunchedEffect(tabs) { chosenTab = pages.reconcile(chosenTab, tabs) }
     var sheet by rememberSaveable { mutableStateOf<TvDestination?>(null) }
     val openSheet = rememberSheetOpener(settingsViewModel) { sheet = it }
     val settings by settingsViewModel.uiState.collectAsStateWithLifecycle()
     val analytics = LocalAnalytics.current
     LaunchedEffect(tab, sheet) { analytics.screen((sheet ?: tab).screenName()) }
     var editingConnection by rememberSaveable { mutableStateOf(false) }
-    val pages = rememberTvOpenPages()
     TvHomeShell(
         tab = tab,
         sheet = sheet,
-        onSelectTab = { selected -> if (selected == tab) pages.clear(tab) else tab = selected },
+        onSelectTab = { selected -> if (selected == tab) pages.clear(tab) else chosenTab = selected },
         onOpenSheet = openSheet,
         onCloseSheet = { sheet = null },
-        // The phone's rule for its Issues section: shown once the server is known to let this account list them.
-        showIssues = (hub as? HubUiState.Ready)?.overview?.let { HubSection.Issues.isVisible(it) } == true,
-        tabsResolved = hub !is HubUiState.Loading,
+        tabs = tabs,
+        tabsResolved = tabsResolved,
         account = TvTopBarAccount(name = account?.name.orEmpty(), avatarUrl = account?.avatarUrl),
         showBar = !editingConnection,
         overlay =
@@ -57,12 +65,7 @@ internal fun TvConnectedShell(
                     { TvEditConnectionOverlay(onDone = { editingConnection = false }) }
                 }
                 !pages.anyOpen(tab) -> null
-                tab == TvDestination.Hub -> {
-                    { TvHubPages(pages, seeAllAccountId = account?.id) }
-                }
-                else -> {
-                    { TvIssuesPages(pages) }
-                }
+                else -> tabPages(tab, pages, seeAllAccountId = account?.id)
             },
     ) { destination, close ->
         when (destination) {
@@ -172,4 +175,36 @@ private fun TvDetailOverlays(
     openIssueId?.let { id ->
         ScopedViewModels("issue-detail-$id") { TvIssueDetailOverlay(issueId = id, onDone = onCloseIssue) }
     }
+}
+
+/**
+ * The tabs the bar can offer, in order, each with its own rule over what the server has said of this account. The first,
+ * Home, is the start tab and is always offered; the rest follow the phone's rule for the matching hub section.
+ */
+private val TabRules: List<Pair<TvDestination, (HubOverview) -> Boolean>> =
+    listOf(
+        TvDestination.Hub to { _ -> true },
+        TvDestination.Issues to { overview -> HubSection.Issues.isVisible(overview) },
+    )
+
+/** Each tab's own pages over its board, chosen by tab. */
+private fun tabPages(
+    tab: TvDestination,
+    pages: TvOpenPages,
+    seeAllAccountId: Int?,
+): (@Composable BoxScope.() -> Unit)? =
+    when (tab) {
+        TvDestination.Hub -> {
+            { TvHubPages(pages, seeAllAccountId) }
+        }
+        TvDestination.Issues -> {
+            { TvIssuesPages(pages) }
+        }
+        TvDestination.Account, TvDestination.Settings -> null
+    }
+
+/** The tabs the server offers this account, by [TabRules]; the start tab alone when it has not said. */
+internal fun offeredTabs(hub: HubUiState): List<TvDestination> {
+    val overview = (hub as? HubUiState.Ready)?.overview
+    return TabRules.filterIndexed { index, (_, rule) -> index == 0 || (overview != null && rule(overview)) }.map { it.first }
 }

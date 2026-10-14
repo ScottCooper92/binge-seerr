@@ -55,6 +55,18 @@ internal class TvOpenPages(
         }
     }
 
+    /**
+     * Keeps the shell on an offered tab, as the phone's tabbed back stack reconciles: a tab that stops being offered loses
+     * its pages, so they do not come back with it, and if it was [tab] the start tab, the first of [offered], takes over.
+     */
+    fun reconcile(
+        tab: TvDestination,
+        offered: List<TvDestination>,
+    ): TvDestination {
+        TvDestination.entries.filterNot { it in offered }.forEach(::clear)
+        return if (tab in offered) tab else offered.first()
+    }
+
     companion object {
         val Saver =
             listSaver<TvOpenPages, Any?>(

@@ -15,6 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -39,7 +40,7 @@ import com.binge.designsystem.tv.nav.LocalTvTabHosted
 import com.binge.designsystem.tv.nav.LocalTvTopInset
 import com.cooper.binge.companion.seerr.R
 
-/** The pages of the connected TV app: the two tabs in the top bar, and the two sheets it opens over them. */
+/** The pages of the connected TV app: the tabs in the top bar, and the two sheets it opens over them. */
 internal enum class TvDestination(
     val key: String,
     val labelRes: Int,
@@ -54,14 +55,15 @@ internal enum class TvDestination(
 }
 
 /**
- * The connected app under a bar that stays over every page, as the phone's bottom navigation does: Home and Issues are [tab]s,
- * and Account and Settings open as a [sheet] over whichever tab shows, above the bar. Pages draw under the bar and pad their
- * content by its measured height, through `LocalTvTopInset`. An [overlay] (a detail page, a see-all grid) belongs to the
- * current tab and sits under the bar too.
+ * The connected app under a bar that stays over every page, as the phone's bottom navigation does: the offered [tabs], the
+ * first of them the start tab, and Account and Settings as a [sheet] over whichever tab shows, above the bar. Pages draw
+ * under the bar and pad their content by its measured height, through `LocalTvTopInset`. An [overlay] (a detail page, a
+ * see-all grid) belongs to the current tab and sits under the bar too. With one tab offered there is nothing to choose
+ * between, so the bar shows no tabs, only the avatar and the gear, and the avatar stands where the current tab would.
  *
  * Focus: selecting a tab leaves focus on it, and Down enters the page. Up out of a page's top edge lands on the current tab.
- * Back: an overlay or a sheet takes it first; on a page it moves focus to the current tab; on the bar it leaves Issues for
- * Home, and from Home leaves the app.
+ * Back: an overlay or a sheet takes it first; on a page it moves focus to the current tab; on the bar it leaves any other
+ * tab for the start tab, and from the start tab leaves the app.
  */
 @Composable
 internal fun TvHomeShell(
@@ -72,33 +74,39 @@ internal fun TvHomeShell(
     onCloseSheet: () -> Unit,
     modifier: Modifier = Modifier,
     overlay: (@Composable BoxScope.() -> Unit)? = null,
-    /** Whether Issues is offered: only for an account the server lets list issues. */
-    showIssues: Boolean = true,
+    /** The tabs offered, in order; the first is the start tab and is always among them. [tab] must be one of them. */
+    tabs: List<TvDestination> = listOf(TvDestination.Hub, TvDestination.Issues),
     /** Whether the server has said which tabs this account gets; the bar stays hidden until it has. */
     tabsResolved: Boolean = true,
     account: TvTopBarAccount = TvTopBarAccount(name = "", avatarUrl = null),
     /** False while a full-screen task (editing the connection) is up: the bar hides and pages take no inset. */
     showBar: Boolean = true,
-    /** [content] draws a destination; its `close` returns to Home, so on Home it is a reselect and clears Home's pages. */
+    /** [content] draws a destination; its `close` returns to the start tab, so there it is a reselect and clears its pages. */
     content: @Composable (destination: TvDestination, close: () -> Unit) -> Unit,
 ) {
     val density = LocalDensity.current
     var barHeightPx by remember { mutableIntStateOf(0) }
     var barFocused by remember { mutableStateOf(false) }
     val opener = remember { TvDestination.entries.associateWith { FocusRequester() } }
-    val entries = remember { TvShellEntries() }
+    val entries = remember { TvDestination.entries.associateWith { FocusRequester() } }
+    val overlayEntry = remember { FocusRequester() }
     // Held here, not in the sheet: it hands focus back after the sheet has gone.
     val sheetCloser = rememberTvOverlayCloser(restoreTo = opener.getValue(sheet ?: tab), onClose = onCloseSheet)
-    val currentTab = opener.getValue(tab)
+    val start = tabs.first()
+    // Where the bar is reached from a page: the current tab, or the avatar when the bar has no tabs to show.
+    val barStop = opener.getValue(if (tabs.size > 1) tab else TvDestination.Account)
     val barUp = showBar && tabsResolved
     Box(modifier = modifier.fillMaxSize()) {
         TvShellBack(
-            tab = tab,
+            onStart = tab == start,
             barFocused = barFocused,
             barUp = barUp,
             covered = overlay != null || sheet != null,
-            opener = opener,
-            onSelectTab = onSelectTab,
+            barStop = barStop,
+            onLeaveForStart = {
+                onSelectTab(start)
+                opener.getValue(start).requestFocus()
+            },
         )
         CompositionLocalProvider(
             LocalTvTopInset provides with(density) { (if (showBar) barHeightPx else 0).toDp() },
@@ -106,18 +114,20 @@ internal fun TvHomeShell(
         ) {
             TvShellPages(
                 tab = tab,
+                start = start,
                 sheetOpen = sheet != null,
                 overlay = overlay,
                 entries = entries,
-                upToBar = if (barUp) currentTab else null,
-                content = { destination -> content(destination) { onSelectTab(TvDestination.Hub) } },
+                overlayEntry = overlayEntry,
+                upToBar = if (barUp) barStop else null,
+                content = { destination -> content(destination) { onSelectTab(start) } },
             )
         }
         TvTopBar(
-            destinations = TvDestination.entries.filter { it != TvDestination.Issues || showIssues },
+            destinations = listOf(TvDestination.Account) + tabs.takeIf { it.size > 1 }.orEmpty() + TvDestination.Settings,
             current = tab,
             opener = opener,
-            down = entries.down(tab, overlayOpen = overlay != null),
+            down = if (overlay != null) overlayEntry else entries.getValue(tab),
             visible = barUp,
             account = account,
             onFocusedChange = { barFocused = it },
@@ -132,75 +142,73 @@ internal fun TvHomeShell(
 
 /**
  * Back when nothing above the pages takes it ([covered]) and the bar is up ([barUp]; a hidden bar cannot take focus, so Back
- * falls through to the system): on a page it goes to the current tab; on the bar it leaves Issues
- * for Home, and from Home it is not handled, so the app closes.
+ * falls through to the system): on a page it goes to [barStop]; on the bar it leaves any other tab for the start tab, and
+ * [onStart] it is not handled, so the app closes.
  */
 @Composable
 private fun TvShellBack(
-    tab: TvDestination,
+    onStart: Boolean,
     barFocused: Boolean,
     barUp: Boolean,
     covered: Boolean,
-    opener: Map<TvDestination, FocusRequester>,
-    onSelectTab: (TvDestination) -> Unit,
+    barStop: FocusRequester,
+    onLeaveForStart: () -> Unit,
 ) {
-    BackHandler(enabled = !covered && barUp && !(barFocused && tab == TvDestination.Hub)) {
-        if (barFocused) onSelectTab(TvDestination.Hub)
-        opener.getValue(if (barFocused) TvDestination.Hub else tab).requestFocus()
+    BackHandler(enabled = !covered && barUp && !(barFocused && onStart)) {
+        if (barFocused) onLeaveForStart() else barStop.requestFocus()
     }
 }
 
-/** Where focus enters each layer of the shell, so Down from the bar lands in whichever page is on top. */
-private class TvShellEntries {
-    val home = FocusRequester()
-    val issues = FocusRequester()
-    val overlay = FocusRequester()
-
-    fun down(
-        tab: TvDestination,
-        overlayOpen: Boolean,
-    ): FocusRequester =
-        when {
-            overlayOpen -> overlay
-            tab == TvDestination.Issues -> issues
-            else -> home
-        }
-}
-
 /**
- * The pages under the bar: Home, Issues above it when chosen, and the current tab's [overlay] above both. Home claims first
- * focus when the app opens, and stays composed under Issues so it keeps its place. [upToBar] is the tab Up returns to from a
- * page's top edge, or null while the bar takes no focus.
+ * The pages under the bar: the [start] tab, any other current tab above it, and the current tab's [overlay] above both. The
+ * start tab claims first focus when the app opens, and stays composed under the others so it keeps its place. Each tab and
+ * the overlay is entered through its own requester in [entries] and [overlayEntry], so Down from the bar lands in whichever
+ * page is on top. [upToBar] is where Up from a page's top edge lands, or null while the bar takes no focus.
  */
 @Composable
 private fun TvShellPages(
     tab: TvDestination,
+    start: TvDestination,
     sheetOpen: Boolean,
     overlay: (@Composable BoxScope.() -> Unit)?,
-    entries: TvShellEntries,
+    entries: Map<TvDestination, FocusRequester>,
+    overlayEntry: FocusRequester,
     upToBar: FocusRequester?,
     content: @Composable (TvDestination) -> Unit,
 ) {
     HandBackHost(
-        entry = entries.home,
-        active = tab == TvDestination.Hub && !sheetOpen,
+        entry = entries.getValue(start),
+        active = tab == start && !sheetOpen,
         modifier = Modifier.exitUpTo(upToBar),
-    ) { content(TvDestination.Hub) }
-    if (tab == TvDestination.Issues) {
+    ) { content(start) }
+    // A tab page that goes while it holds focus (its tab withdrawn) would leave focus on the bar's first item, so the start
+    // tab takes it. Read as the tab changes, before the page detaches and reports losing focus.
+    val tabPage = remember { TabPageFocus() }
+    val handOffToStart = remember(tab) { tab == start && tabPage.held }
+    if (tab != start) {
         CompositionLocalProvider(LocalTvTabHosted provides true) {
-            HandBackHost(
-                entry = entries.issues,
-                active = !sheetOpen,
-                modifier =
-                    Modifier
-                        .background(MaterialTheme.colorScheme.background)
-                        .then(if (overlay == null && !sheetOpen) Modifier.pageTrap(upToBar) else Modifier),
-            ) { content(TvDestination.Issues) }
+            key(tab) {
+                HandBackHost(
+                    entry = entries.getValue(tab),
+                    active = !sheetOpen,
+                    modifier =
+                        Modifier
+                            .onFocusChanged { tabPage.held = it.hasFocus }
+                            .background(MaterialTheme.colorScheme.background)
+                            .then(if (overlay == null && !sheetOpen) Modifier.pageTrap(upToBar) else Modifier),
+                ) { content(tab) }
+            }
         }
     }
+    LaunchedEffect(handOffToStart) { if (handOffToStart) restoreTvOverlayFocus(entries.getValue(start)) }
     overlay?.let {
-        Box(modifier = Modifier.fillMaxSize().focusRequester(entries.overlay).pageTrap(upToBar), content = it)
+        Box(modifier = Modifier.fillMaxSize().focusRequester(overlayEntry).pageTrap(upToBar), content = it)
     }
+}
+
+/** Whether a tab page above the start tab holds focus, read without recomposing on every move. */
+private class TabPageFocus {
+    var held = false
 }
 
 /** A sheet slides in over everything, the bar included; Back closes it unless a page above it takes Back first. */
