@@ -6,34 +6,17 @@ import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.issues.IssueCounts
 import com.cooper.binge.companion.seerr.ui.issues.IssueFilter
 import com.cooper.binge.companion.seerr.ui.issues.IssueItem
-import com.cooper.binge.companion.seerr.ui.issues.IssueListScope
-import com.cooper.binge.companion.seerr.ui.issues.canBeDeleted
 import com.cooper.binge.companion.seerr.ui.issues.emptyMessageRes
 import com.cooper.binge.companion.seerr.ui.issues.labelRes
-import com.cooper.binge.companion.seerr.ui.tv.TvActionRun
 import com.cooper.binge.companion.seerr.ui.tv.TvBackdropArtwork
 import com.cooper.binge.companion.seerr.ui.tv.TvPagedGridScreen
 import com.cooper.binge.companion.seerr.ui.tv.TvPagedRows
 import com.cooper.binge.companion.seerr.ui.tv.TvPosterCard
 import com.cooper.binge.companion.seerr.ui.requests.labelRes as mediaTypeLabelRes
 
-/** What the grid needs for a card's actions sheet: who is asking, which card it is open for, and the ViewModel's verbs. */
-internal class TvIssuesGridManagement(
-    val scope: IssueListScope?,
-    val actionItem: IssueItem?,
-    val onOpenActions: (IssueItem) -> Unit,
-    val onDismissActions: () -> Unit,
-    val onResolve: (IssueItem) -> Unit,
-    val onReopen: (IssueItem) -> Unit,
-    val onDelete: (IssueItem) -> Unit,
-    /** What the sheet's last action is doing, read from the ViewModel's answers. */
-    val run: TvActionRun = TvActionRun(),
-)
-
 /**
- * Every issue behind one filter's row, as a paged grid. OK on a card does what it does on the row: a card
- * this viewer may act on opens the actions sheet over the grid, [management] holding the one it is for, and
- * any other opens the read-only page. So an issue past a row's cap is as manageable as one on the row.
+ * Every issue behind one filter's row, as a paged grid. OK on a card does what it does on the row: it opens the issue's
+ * sheet, so an issue past a row's cap is as manageable as one on the row.
  */
 @Composable
 internal fun TvIssuesGrid(
@@ -41,7 +24,6 @@ internal fun TvIssuesGrid(
     counts: IssueCounts?,
     rows: TvPagedRows<IssueItem>,
     actingIds: Set<Int>,
-    management: TvIssuesGridManagement,
     detailOpen: Boolean,
     onOpenDetail: (IssueItem) -> Unit,
     onRetryLoad: () -> Unit,
@@ -66,26 +48,8 @@ internal fun TvIssuesGrid(
             isFocused = isFocused,
             onFocusChanged = onFocusChanged,
             enabled = item.id !in actingIds,
-            onClick = {
-                if (management.scope?.let(item::canBeActedOn) == true) management.onOpenActions(item) else onOpenDetail(item)
-            },
+            onClick = { onOpenDetail(item) },
             modifier = cellModifier,
-        )
-    }
-    management.actionItem?.let { item ->
-        TvIssueActionsSheet(
-            item = item,
-            canDelete = management.scope?.let(item::canBeDeleted) == true,
-            run = management.run,
-            actionInFlight = actingIds.isNotEmpty(),
-            onResolve = { management.run.run { management.onResolve(item) } },
-            onReopen = { management.run.run { management.onReopen(item) } },
-            onDelete = { management.run.run { management.onDelete(item) } },
-            onOpenDetail = {
-                management.onDismissActions()
-                onOpenDetail(item)
-            },
-            onDismiss = management.onDismissActions,
         )
     }
 }

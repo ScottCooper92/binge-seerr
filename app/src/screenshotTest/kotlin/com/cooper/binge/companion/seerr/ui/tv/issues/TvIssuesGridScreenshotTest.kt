@@ -50,16 +50,6 @@ private fun GridFrame(rows: TvPagedRows<IssueItem>) =
         counts = GridCounts,
         rows = rows,
         actingIds = emptySet(),
-        management =
-            TvIssuesGridManagement(
-                scope = null,
-                actionItem = null,
-                onOpenActions = {},
-                onDismissActions = {},
-                onResolve = {},
-                onReopen = {},
-                onDelete = {},
-            ),
         detailOpen = false,
         onOpenDetail = {},
         onRetryLoad = {},

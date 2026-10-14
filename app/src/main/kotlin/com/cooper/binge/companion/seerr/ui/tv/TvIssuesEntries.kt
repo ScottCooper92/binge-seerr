@@ -2,29 +2,30 @@ package com.cooper.binge.companion.seerr.ui.tv
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.compose.collectAsLazyPagingItems
+import com.cooper.binge.companion.seerr.ui.issues.IssueDetailEvent
 import com.cooper.binge.companion.seerr.ui.issues.IssueDetailUiState
 import com.cooper.binge.companion.seerr.ui.issues.IssueDetailViewModel
 import com.cooper.binge.companion.seerr.ui.issues.IssueFilter
-import com.cooper.binge.companion.seerr.ui.issues.IssueListEvent
 import com.cooper.binge.companion.seerr.ui.issues.IssuesUiState
 import com.cooper.binge.companion.seerr.ui.issues.IssuesViewModel
 import com.cooper.binge.companion.seerr.ui.tv.issues.IssueRowFilters
-import com.cooper.binge.companion.seerr.ui.tv.issues.TvIssueDetailActions
-import com.cooper.binge.companion.seerr.ui.tv.issues.TvIssueDetailScreen
+import com.cooper.binge.companion.seerr.ui.tv.issues.TvIssueSheet
+import com.cooper.binge.companion.seerr.ui.tv.issues.TvIssueSheetActions
 import com.cooper.binge.companion.seerr.ui.tv.issues.TvIssuesActions
 import com.cooper.binge.companion.seerr.ui.tv.issues.TvIssuesBoard
 import com.cooper.binge.companion.seerr.ui.tv.issues.TvIssuesGrid
-import com.cooper.binge.companion.seerr.ui.tv.issues.TvIssuesGridManagement
 
 @Composable
 internal fun TvIssuesEntry(
     onOpenIssue: (Int) -> Unit,
-    seeAllOpen: Boolean,
     onSeeAll: (IssueFilter) -> Unit,
     viewModel: IssuesViewModel = hiltViewModel(),
 ) {
@@ -40,17 +41,10 @@ internal fun TvIssuesEntry(
     TvIssuesBoard(
         state = state,
         rowsFor = { rowsByFilter.getValue(it) },
-        events = viewModel.events,
-        seeAllOpen = seeAllOpen,
         now = ready?.now ?: System.currentTimeMillis(),
         actions =
             TvIssuesActions(
-                onOpenActions = viewModel::openActions,
-                onDismissActions = viewModel::dismissActions,
                 onOpenDetail = { item -> onOpenIssue(item.id) },
-                onResolve = viewModel::resolve,
-                onReopen = viewModel::reopen,
-                onDelete = viewModel::delete,
                 onSeeAll = onSeeAll,
                 onRetryLoad = { pagers.values.forEach { it.retry() } },
                 onRetryScope = viewModel::retry,
@@ -70,23 +64,11 @@ internal fun TvIssuesGridOverlay(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val ready = state as? IssuesUiState.Ready
     val lazyItems = viewModel.issues(filter).collectAsLazyPagingItems()
-    val run = rememberTvActionRun(viewModel.events) { settle(failed = it is IssueListEvent.Failed) }
     TvIssuesGrid(
         filter = filter,
         counts = ready?.counts,
         rows = lazyItems.toRows(ready?.refreshes?.get(filter)) { it.id },
         actingIds = ready?.actingIds.orEmpty(),
-        management =
-            TvIssuesGridManagement(
-                scope = ready?.scope,
-                actionItem = ready?.actionItem,
-                onOpenActions = viewModel::openActions,
-                onDismissActions = viewModel::dismissActions,
-                onResolve = viewModel::resolve,
-                onReopen = viewModel::reopen,
-                onDelete = viewModel::delete,
-                run = run,
-            ),
         detailOpen = detailOpen,
         onOpenDetail = { onOpenIssue(it.id) },
         onRetryLoad = { lazyItems.retry() },
@@ -96,12 +78,11 @@ internal fun TvIssuesGridOverlay(
 }
 
 /**
- * An issue's read-only page, above Home exactly as the connection form is: the same
- * [IssueDetailViewModel] the phone's `IssueDetailEntry` binds, in a view-model scope of its own as the request
- * page's is.
+ * An issue's sheet, over the bar: the same [IssueDetailViewModel] the phone's `IssueDetailEntry` binds, in a view-model
+ * scope of its own as the request page's is. A deleted issue closes it.
  */
 @Composable
-internal fun TvIssueDetailOverlay(
+internal fun TvIssueSheetEntry(
     issueId: Int,
     onDone: () -> Unit,
     viewModel: IssueDetailViewModel =
@@ -112,9 +93,21 @@ internal fun TvIssueDetailOverlay(
         viewModel.setScreenVisible(true)
         onDispose { viewModel.setScreenVisible(false) }
     }
-    TvIssueDetailScreen(
+    LaunchedEffect(viewModel) { viewModel.events.collect { if (it == IssueDetailEvent.IssueDeleted) onDone() } }
+    val context = LocalContext.current
+    val item = (state as? IssueDetailUiState.Ready)?.detail?.mediaServerItem
+    val onOpenInMediaServer = remember(context, item) { context.mediaServerHandOff(item) }
+    TvIssueSheet(
         state = state,
-        actions = TvIssueDetailActions(onBack = onDone, onRetry = viewModel::reload),
-        now = (state as? IssueDetailUiState.Ready)?.now ?: System.currentTimeMillis(),
+        events = viewModel.events,
+        actions =
+            TvIssueSheetActions(
+                onDismiss = onDone,
+                onRetry = viewModel::reload,
+                onToggleStatus = viewModel::toggleStatus,
+                onDeleteIssue = viewModel::deleteIssue,
+                onDeleteComment = viewModel::deleteComment,
+                onOpenInMediaServer = onOpenInMediaServer,
+            ),
     )
 }

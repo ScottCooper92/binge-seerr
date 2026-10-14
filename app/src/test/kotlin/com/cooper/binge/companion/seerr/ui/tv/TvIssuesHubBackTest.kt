@@ -27,7 +27,6 @@ import com.cooper.binge.companion.seerr.ui.tv.issues.TvIssuesActions
 import com.cooper.binge.companion.seerr.ui.tv.issues.TvIssuesBoard
 import com.cooper.binge.companion.seerr.util.createSeerrKeyboardAndroidComposeRule
 import com.cooper.binge.companion.seerr.util.string
-import kotlinx.coroutines.flow.emptyFlow
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -120,19 +119,12 @@ class TvIssuesHubBackTest {
                             val items = List(CARDS_PER_ROW) { column -> issue(idOf(row, column), titleOf(row, column)) }
                             TvPagedRows(count = items.size, at = { items.getOrNull(it) })
                         },
-                        events = emptyFlow(),
-                        seeAllOpen = seeAllOpen,
                         actions =
                             TvIssuesActions(
-                                onOpenActions = {},
-                                onDismissActions = {},
                                 onOpenDetail = { item ->
                                     opened += item.id
                                     openIssueId = item.id
                                 },
-                                onResolve = {},
-                                onReopen = {},
-                                onDelete = {},
                                 onSeeAll = {
                                     seeAll += it
                                     seeAllOpen = true

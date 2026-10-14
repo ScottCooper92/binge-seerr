@@ -49,7 +49,6 @@ import com.cooper.binge.companion.seerr.ui.tv.requests.TvRequestsRowsBoard
 import com.cooper.binge.companion.seerr.ui.tv.settings.TvSettingsActions
 import com.cooper.binge.companion.seerr.ui.tv.settings.TvSettingsSheet
 import com.cooper.binge.companion.seerr.ui.tv.settings.groupPage
-import kotlinx.coroutines.flow.emptyFlow
 
 /*
  * Home's boards, one frame per state and one per focused control. The `@TvPreviewsOnBlack` functions
@@ -63,7 +62,7 @@ internal val NOW = System.currentTimeMillis()
 
 private val NoHubActions = TvHubActions({}, {}, {})
 internal val NoRequestsActions = TvRequestsActions({}, {}, {}, {})
-internal val NoIssuesActions = TvIssuesActions({}, {}, {}, {}, {}, {}, {}, {}, {})
+internal val NoIssuesActions = TvIssuesActions({}, {}, {}, {})
 
 private val SampleServer =
     HubServer(
@@ -269,18 +268,6 @@ internal fun TvIssuesBoardPreview() {
     TvIssuesBoard(
         state = issuesReady(),
         rowsFor = { rows(SampleIssues) },
-        events = emptyFlow(),
-        actions = NoIssuesActions,
-    )
-}
-
-@TvPreviewsOnBlack
-@Composable
-internal fun TvIssuesSheetPreview() {
-    TvIssuesBoard(
-        state = issuesReady(actionItem = SampleIssues.first()),
-        rowsFor = { rows(SampleIssues) },
-        events = emptyFlow(),
         actions = NoIssuesActions,
     )
 }

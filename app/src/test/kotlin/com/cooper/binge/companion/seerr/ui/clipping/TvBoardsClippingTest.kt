@@ -26,10 +26,8 @@ import com.cooper.binge.companion.seerr.ui.tv.hub.TvAccountSheet
 import com.cooper.binge.companion.seerr.ui.tv.hub.TvHubActions
 import com.cooper.binge.companion.seerr.ui.tv.hub.TvHubBoard
 import com.cooper.binge.companion.seerr.ui.tv.issue
-import com.cooper.binge.companion.seerr.ui.tv.issues.TvIssueActionsSheet
 import com.cooper.binge.companion.seerr.ui.tv.issues.TvIssuesBoard
 import com.cooper.binge.companion.seerr.ui.tv.issues.TvIssuesGrid
-import com.cooper.binge.companion.seerr.ui.tv.issues.TvIssuesGridManagement
 import com.cooper.binge.companion.seerr.ui.tv.issuesReady
 import com.cooper.binge.companion.seerr.ui.tv.request
 import com.cooper.binge.companion.seerr.ui.tv.requests.TvRequestsGrid
@@ -39,7 +37,6 @@ import com.cooper.binge.companion.seerr.ui.tv.rows
 import com.cooper.binge.companion.seerr.ui.users.UserDetail
 import com.cooper.binge.companion.seerr.ui.users.UserDetailUiState
 import com.cooper.binge.companion.seerr.util.createSeerrKeyboardComposeRule
-import kotlinx.coroutines.flow.emptyFlow
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -163,21 +160,8 @@ class TvBoardsClippingTest {
         TvIssuesBoard(
             state = issuesReady().copy(counts = IssueCounts(total = 12_840, open = 5_000, resolved = 7_000)),
             rowsFor = { filter -> if (filter == IssueFilter.Open) rows(listOf(longIssue(1), longIssue(2))) else rows(emptyList()) },
-            events = emptyFlow(),
             actions = NoIssuesActions,
             now = NOW,
-        )
-
-    @Composable
-    private fun IssueSheet() =
-        TvIssueActionsSheet(
-            item = longIssue(1),
-            canDelete = true,
-            onResolve = {},
-            onReopen = {},
-            onDelete = {},
-            onOpenDetail = {},
-            onDismiss = {},
         )
 
     @Composable
@@ -187,16 +171,6 @@ class TvBoardsClippingTest {
             counts = IssueCounts(total = 12_840, open = 5_000, resolved = 7_000),
             rows = rows((1..6).map { longIssue(it) }),
             actingIds = emptySet(),
-            management =
-                TvIssuesGridManagement(
-                    scope = null,
-                    actionItem = null,
-                    onOpenActions = {},
-                    onDismissActions = {},
-                    onResolve = {},
-                    onReopen = {},
-                    onDelete = {},
-                ),
             detailOpen = false,
             onOpenDetail = {},
             onRetryLoad = {},

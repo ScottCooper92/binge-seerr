@@ -89,7 +89,6 @@ internal fun TvConnectedShell(
             TvDestination.Issues ->
                 TvIssuesEntry(
                     onOpenIssue = { pages[TvDestination.Issues].detailId = it },
-                    seeAllOpen = pages[TvDestination.Issues].seeAll != null,
                     onSeeAll = { pages[TvDestination.Issues].seeAll = it.name },
                 )
             TvDestination.Settings -> TvSettingsEntry(onDismissRequest = close, viewModel = settingsViewModel)
@@ -165,7 +164,7 @@ private fun TvIssuesPages(pages: TvTabPages) {
 }
 
 /**
- * The tab's open title as a page of its own, over the bar: a request on Home, an issue on Issues. Each page has its own view
+ * The tab's open title over the bar: a request's page on Home, an issue's sheet on Issues. Each page has its own view
  * models, cleared when it closes: a reopened page starts fresh, and nothing piles up in the activity's store or outlives a
  * change of server (#789).
  */
@@ -180,7 +179,7 @@ private fun detailPage(
             { ScopedViewModels("request-detail-$id") { TvRequestDetailOverlay(requestId = id, onDone = close) } }
         }
         TvDestination.Issues -> {
-            { ScopedViewModels("issue-detail-$id") { TvIssueDetailOverlay(issueId = id, onDone = close) } }
+            { ScopedViewModels("issue-detail-$id") { TvIssueSheetEntry(issueId = id, onDone = close) } }
         }
         TvDestination.Account, TvDestination.Settings -> null
     }

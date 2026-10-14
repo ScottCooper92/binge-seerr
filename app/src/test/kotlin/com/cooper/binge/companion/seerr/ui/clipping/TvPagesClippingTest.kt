@@ -51,8 +51,12 @@ import com.cooper.binge.companion.seerr.ui.tv.TvConsentScreen
 import com.cooper.binge.companion.seerr.ui.tv.TvSeerrErrorPage
 import com.cooper.binge.companion.seerr.ui.tv.TvSetupLinkPlate
 import com.cooper.binge.companion.seerr.ui.tv.TvSetupScreen
-import com.cooper.binge.companion.seerr.ui.tv.issues.TvIssueDetailActions
-import com.cooper.binge.companion.seerr.ui.tv.issues.TvIssueDetailScreen
+import com.cooper.binge.companion.seerr.ui.tv.issues.ISSUE_PAGE_PHONE
+import com.cooper.binge.companion.seerr.ui.tv.issues.ISSUE_PAGE_THREAD
+import com.cooper.binge.companion.seerr.ui.tv.issues.KEY_REPORT
+import com.cooper.binge.companion.seerr.ui.tv.issues.NoIssueSheetActions
+import com.cooper.binge.companion.seerr.ui.tv.issues.TvIssueSheet
+import com.cooper.binge.companion.seerr.ui.tv.issues.issueCardPage
 import com.cooper.binge.companion.seerr.ui.tv.requests.TvMarkAsSteps
 import com.cooper.binge.companion.seerr.ui.tv.requests.TvReportDraft
 import com.cooper.binge.companion.seerr.ui.tv.requests.TvReportIssueStep
@@ -98,7 +102,11 @@ class TvPagesClippingTest {
             RequestDetail(sevenActions = true)
         }
 
-    @Test fun `an issue detail page at 1_3`() = rule.assertNoTvClippingAt(FONT_SCALE_13) { IssueDetail() }
+    @Test fun `an issue sheet's thread at 1_3`() = rule.assertNoTvClippingAt(FONT_SCALE_13) { IssueSheet(ISSUE_PAGE_THREAD) }
+
+    @Test fun `an issue sheet's card page at 1_3`() = rule.assertNoTvClippingAt(FONT_SCALE_13) { IssueSheet(issueCardPage(KEY_REPORT)) }
+
+    @Test fun `an issue sheet's phone page at 1_3`() = rule.assertNoTvClippingAt(FONT_SCALE_13) { IssueSheet(ISSUE_PAGE_PHONE) }
 
     @Test fun `the settings sheet at 1_3`() = rule.assertNoTvClippingAt(FONT_SCALE_13) { Settings() }
 
@@ -234,9 +242,9 @@ class TvPagesClippingTest {
         )
 
     @Composable
-    private fun IssueDetail() {
+    private fun IssueSheet(page: String) {
         val detail = commonIssueDetail()
-        TvIssueDetailScreen(
+        TvIssueSheet(
             state =
                 IssueDetailUiState.Ready(
                     detail =
@@ -244,9 +252,13 @@ class TvPagesClippingTest {
                             item = worstCaseIssue(),
                             report = detail.report?.copy(author = LONG_NAME, message = OVERVIEW),
                             comments = detail.comments.map { it.copy(author = LONG_NAME, message = OVERVIEW) },
+                            canResolve = true,
+                            canDelete = true,
+                            mediaServerName = LONG_NAME,
                         ),
                 ),
-            actions = TvIssueDetailActions(onBack = {}, onRetry = {}),
+            actions = NoIssueSheetActions,
+            initialPage = page,
         )
     }
 

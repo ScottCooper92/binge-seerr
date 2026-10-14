@@ -997,9 +997,6 @@
     <string name="tv_hub_quota_none_left">No queda ninguna</string>
     <string name="tv_download_percent">%1$d %%</string>
     <string name="tv_list_load_failed">No se pudo cargar la lista.</string>
-    <string name="tv_issue_resolve">Resolver la incidencia</string>
-    <string name="tv_issue_reopen">Reabrir la incidencia</string>
-    <string name="tv_issue_read_comments">Leer comentarios</string>
     <string name="tv_settings_disconnect_confirm">Sí, desconectar</string>
     <string name="tv_settings_start_library_scan">Iniciar escaneo de la biblioteca</string>
     <string name="tv_settings_cancel_library_scan">Cancelar escaneo de la biblioteca</string>
@@ -1241,4 +1238,7 @@
     <string name="tv_account_sign_out">Cerrar sesión</string>
     <string name="tv_account_sign_out_title">¿Cerrar sesión?</string>
     <string name="tv_account_sign_out_message">Tendrás que volver a iniciar sesión en este servidor.</string>
+    <string name="tv_issue_reply_on_phone">Responder desde el móvil</string>
+    <string name="tv_issue_edit_on_phone">Editar desde el móvil</string>
+    <string name="tv_issue_phone_body">Escanea el código con el móvil para abrir esta incidencia en %1$s y responder o editar allí.</string>
 </resources>

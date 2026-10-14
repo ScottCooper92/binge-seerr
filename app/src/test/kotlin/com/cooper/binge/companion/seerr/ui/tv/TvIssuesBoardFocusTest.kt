@@ -1,28 +1,22 @@
 package com.cooper.binge.companion.seerr.ui.tv
 
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.input.key.Key
-import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.hasContentDescription
-import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isFocusable
-import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performKeyInput
 import androidx.compose.ui.test.pressKey
 import androidx.compose.ui.test.requestFocus
 import com.binge.designsystem.tv.theme.BingeTvTheme
 import com.cooper.binge.companion.seerr.R
-import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.seerr.SeerrPermissions
 import com.cooper.binge.companion.seerr.ui.issues.IssueCounts
 import com.cooper.binge.companion.seerr.ui.issues.IssueFilter
 import com.cooper.binge.companion.seerr.ui.issues.IssueItem
-import com.cooper.binge.companion.seerr.ui.issues.IssueListEvent
 import com.cooper.binge.companion.seerr.ui.issues.IssueListScope
 import com.cooper.binge.companion.seerr.ui.issues.IssueSort
 import com.cooper.binge.companion.seerr.ui.issues.IssueStatus
@@ -33,22 +27,19 @@ import com.cooper.binge.companion.seerr.ui.tv.issues.TvIssuesActions
 import com.cooper.binge.companion.seerr.ui.tv.issues.TvIssuesBoard
 import com.cooper.binge.companion.seerr.util.createSeerrKeyboardComposeRule
 import com.cooper.binge.companion.seerr.util.string
-import kotlinx.coroutines.flow.MutableSharedFlow
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
-import com.binge.designsystem.R as DesR
 
 private const val SEVERANCE = "Severance"
 private const val HORSES = "Slow Horses"
 
 /**
- * The issues board under a real D-pad: a row to its sheet, resolve through its confirm step, and the
- * reporter's own row against someone else's when the viewer is no manager.
+ * The issues board under a real D-pad: OK on an issue opens it, whoever is looking, since what the viewer may do is the
+ * issue sheet's to offer; and a row past its cap ends in See all.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(qualifiers = "w960dp-h540dp-television-xhdpi")
@@ -56,263 +47,33 @@ class TvIssuesBoardFocusTest {
     @get:Rule
     val composeTestRule = createSeerrKeyboardComposeRule()
 
-    private val resolved = mutableListOf<Int>()
-    private val deleted = mutableListOf<Int>()
-    private val reopened = mutableListOf<Int>()
     private val seeAll = mutableListOf<IssueFilter>()
     private val opened = mutableListOf<Int>()
-    private var dismissed = 0
-    private val events = MutableSharedFlow<IssueListEvent>(extraBufferCapacity = 1)
 
     private val manager = IssueListScope(permissions = SeerrPermissions(canManageIssues = true), currentUserId = 7)
     private val reporter = IssueListScope(permissions = SeerrPermissions(canCreateIssues = true), currentUserId = 3)
 
     @Test
-    fun resolvingFromTheRowGoesThroughTheConfirmStep() {
+    fun okOnAnIssueTheViewerManagesOpensIt() {
         setBoard(manager)
         focusFirstRow()
 
-        pressOk()
-        sheetRow(R.string.tv_issue_resolve).assertIsFocused()
-        pressOk()
-        sheetRow(com.binge.designsystem.R.string.action_cancel).assertIsFocused()
-        pressUp()
-        pressOk()
-
-        assertEquals(listOf(11), resolved)
-        // The sheet stays open while the action saves (#1519).
-        assertEquals(0, dismissed)
-        composeTestRule.onNodeWithText(string(DesR.string.save_status_saving)).assertExists()
-    }
-
-    /** Saved is read before the sheet closes, and focus returns to the row that opened it. */
-    @Test
-    fun aSavedActionClosesTheSheetAfterItIsRead() {
-        setBoard(manager)
-        focusFirstRow()
-        confirmFirstAction()
-
-        composeTestRule.mainClock.autoAdvance = false
-        events.tryEmit(IssueListEvent.Resolved)
-        composeTestRule.mainClock.advanceTimeBy(100)
-        composeTestRule.onNodeWithText(string(DesR.string.save_status_saved)).assertExists()
-        assertEquals(0, dismissed)
-
-        composeTestRule.mainClock.advanceTimeBy(TV_SAVED_HOLD_MILLIS + 200)
-        composeTestRule.mainClock.autoAdvance = true
-        settleFocusRestore()
-        assertEquals(1, dismissed)
-        row(SEVERANCE).assertIsFocused()
-    }
-
-    /** A refusal stays in the sheet with a Retry that runs the same action again; nothing times out. */
-    @Test
-    fun aFailedActionStaysWithARetryThatRunsItAgain() {
-        setBoard(manager)
-        focusFirstRow()
-        confirmFirstAction()
-
-        events.tryEmit(IssueListEvent.Failed(SeerrError.Unreachable))
-        composeTestRule.waitForIdle()
-        composeTestRule.mainClock.advanceTimeBy(60_000)
-        composeTestRule.waitForIdle()
-
-        composeTestRule.onNodeWithText(string(DesR.string.save_status_failed)).assertExists()
-        assertEquals(0, dismissed)
-        composeTestRule.onNode(hasText(string(DesR.string.save_status_retry)) and isFocusable()).requestFocus()
-        pressOk()
-
-        assertEquals(listOf(11, 11), resolved)
-        composeTestRule.onNodeWithText(string(DesR.string.save_status_saving)).assertExists()
-    }
-
-    /** A failure left in a sheet that was dismissed is not the next issue's: its sheet opens idle, and Retry has nothing to run (#1519). */
-    @Test
-    fun aDismissedSheetLeavesNoFailureForTheNextIssue() {
-        setBoard(manager)
-        focusFirstRow()
-        confirmFirstAction()
-        events.tryEmit(IssueListEvent.Failed(SeerrError.Server))
-        composeTestRule.waitForIdle()
-        composeTestRule.onNodeWithText(string(DesR.string.save_status_failed)).assertExists()
-        sheetRow(R.string.tv_issue_resolve).requestFocus()
-        pressLeft()
-        assertEquals(1, dismissed)
-        settleFocusRestore()
-        pressRight()
-        row(HORSES).assertIsFocused()
-        pressOk()
-
-        sheetRow(R.string.tv_issue_resolve).assertExists()
-        composeTestRule.onNodeWithText(string(DesR.string.save_status_failed)).assertDoesNotExist()
-        composeTestRule.onNodeWithText(string(DesR.string.save_status_retry)).assertDoesNotExist()
-        assertEquals(listOf(11), resolved)
-    }
-
-    @Test
-    fun aFailedReopenRetriesTheReopen() {
-        setBoard(manager, items = listOf(issue(11, SEVERANCE, reportedById = 3, status = IssueStatus.Resolved)))
-        focusFirstRow()
-        confirmFirstAction()
-        events.tryEmit(IssueListEvent.Failed(SeerrError.Server))
-        composeTestRule.waitForIdle()
-
-        composeTestRule.onNode(hasText(string(DesR.string.save_status_retry)) and isFocusable()).requestFocus()
-        pressOk()
-
-        assertEquals(listOf(11, 11), reopened)
-        assertTrue(resolved.isEmpty())
-    }
-
-    @Test
-    fun aFailedDeleteRetriesTheDelete() {
-        setBoard(manager)
-        focusFirstRow()
-        pressOk()
-        pressDown()
-        pressDown()
-        pressOk()
-        pressUp()
-        pressOk()
-        events.tryEmit(IssueListEvent.Failed(SeerrError.Server))
-        composeTestRule.waitForIdle()
-
-        composeTestRule.onNode(hasText(string(DesR.string.save_status_retry)) and isFocusable()).requestFocus()
-        pressOk()
-
-        assertEquals(listOf(11, 11), deleted)
-    }
-
-    /** An action still saving when its sheet is dismissed is not the next issue's: B's sheet shows nothing of it, and A's late answer is ignored (#1519). */
-    @Test
-    fun aLateAnswerFromADismissedSheetNeverReachesTheNextIssue() {
-        trackActing = true
-        setBoard(manager)
-        focusFirstRow()
-        confirmFirstAction()
-        pressLeft()
-        settleFocusRestore()
-        row(HORSES).requestFocus()
-        composeTestRule.waitForIdle()
-        pressOk()
-
-        // Its rows wait for A's write, but it says nothing of an action B never took.
-        sheetRow(R.string.tv_issue_resolve).assertDoesNotExist()
-        composeTestRule.onNodeWithText(string(DesR.string.save_status_saving)).assertDoesNotExist()
-
-        events.tryEmit(IssueListEvent.Failed(SeerrError.Unreachable))
-        composeTestRule.runOnIdle { finishActing() }
-        composeTestRule.waitForIdle()
-
-        composeTestRule.onNodeWithText(string(DesR.string.save_status_failed)).assertDoesNotExist()
-        composeTestRule.onNodeWithText(string(DesR.string.save_status_retry)).assertDoesNotExist()
-        sheetRow(R.string.tv_issue_resolve).assertExists()
-        assertEquals(listOf(11), resolved)
-    }
-
-    /** Opens the sheet on the first row, takes its first action and confirms it. */
-    private fun confirmFirstAction() {
-        pressOk()
-        pressOk()
-        pressUp()
-        pressOk()
-    }
-
-    @Test
-    fun cancelOnTheConfirmStepReturnsToTheActions() {
-        setBoard(manager)
-        focusFirstRow()
-        pressOk()
-        pressDown()
-        pressDown()
-        sheetRow(R.string.issue_delete).assertIsFocused()
-        pressOk()
-
-        pressOk()
-
-        assertTrue(deleted.isEmpty())
-        sheetRow(R.string.tv_issue_resolve).assertIsFocused()
-    }
-
-    @Test
-    fun aReporterMayActOnTheirOwnIssueButNotAnothers() {
-        setBoard(reporter)
-        focusFirstRow()
-
-        pressOk()
-        sheetRow(R.string.tv_issue_resolve).assertIsFocused()
-        pressLeft()
-        assertEquals(1, dismissed)
-        settleFocusRestore()
-        row(SEVERANCE).assertIsFocused()
-
-        // The reporter isn't a manager of the other user's issue, so its card has nothing to offer but
-        // the read page — no sheet, no confirm step, straight to the page.
-        pressRight()
-        row(HORSES).assertIsFocused()
-        pressOk()
-        assertEquals(1, dismissed)
-        assertEquals(listOf(12), opened)
-    }
-
-    /** The server refuses a reporter's delete once someone has replied, so the sheet does not offer it (#1151). */
-    @Test
-    fun aReporterIsNotOfferedDeleteOnceSomeoneHasReplied() {
-        setBoard(reporter, items = listOf(issue(11, SEVERANCE, reportedById = 3, commentCount = 2)))
-        focusFirstRow()
-
-        pressOk()
-        sheetRow(R.string.tv_issue_resolve).assertIsFocused()
-        composeTestRule.onAllNodes(hasText(string(R.string.issue_delete))).assertCountEquals(0)
-        pressDown()
-        sheetRow(R.string.tv_issue_read_comments).assertIsFocused()
-    }
-
-    @Test
-    fun theSheetsReadCommentsRowOpensTheDetailPage() {
-        setBoard(manager)
-        focusFirstRow()
-
-        pressOk()
-        pressDown()
-        sheetRow(R.string.tv_issue_read_comments).assertIsFocused()
         pressOk()
 
         assertEquals(listOf(11), opened)
-        assertTrue(resolved.isEmpty())
     }
 
-    /** A resolved issue's first action is to reopen it, through its own confirm step (#1054). */
+    /** A reporter opens someone else's issue too: the sheet reads it to them, and offers only what they may do. */
     @Test
-    fun aResolvedIssueReopensThroughTheConfirmStep() {
-        setBoard(manager, items = listOf(issue(11, SEVERANCE, reportedById = 3, status = IssueStatus.Resolved)))
+    fun okOnSomeoneElsesIssueOpensItForAReporter() {
+        setBoard(reporter)
         focusFirstRow()
+        pressRight()
+        row(HORSES).assertIsFocused()
 
         pressOk()
-        sheetRow(R.string.tv_issue_reopen).assertIsFocused()
-        pressOk()
-        sheetRow(com.binge.designsystem.R.string.action_cancel).assertIsFocused()
-        pressUp()
-        pressOk()
 
-        assertEquals(listOf(11), reopened)
-        assertTrue(resolved.isEmpty())
-    }
-
-    @Test
-    fun deletingFromTheRowGoesThroughTheConfirmStep() {
-        setBoard(manager)
-        focusFirstRow()
-        pressOk()
-        pressDown()
-        pressDown()
-        sheetRow(R.string.issue_delete).assertIsFocused()
-        pressOk()
-        sheetRow(com.binge.designsystem.R.string.action_cancel).assertIsFocused()
-        pressUp()
-        pressOk()
-
-        assertEquals(listOf(11), deleted)
+        assertEquals(listOf(12), opened)
     }
 
     /** Past the row's cap the row ends in See all, which opens that filter's grid (#1054). */
@@ -336,20 +97,13 @@ class TvIssuesBoardFocusTest {
         seeAllTile().assertDoesNotExist()
     }
 
-    /** Whether a resolve marks its issue as acting, as the ViewModel does until the server answers. */
-    private var trackActing = false
-    private var finishActing: () -> Unit = {}
-
     private fun setBoard(
         scope: IssueListScope,
         items: List<IssueItem> = listOf(issue(11, SEVERANCE, reportedById = 3), issue(12, HORSES, reportedById = 5)),
         counts: IssueCounts? = null,
     ) {
         composeTestRule.setContent {
-            var state by remember {
-                mutableStateOf(IssuesUiState.Ready(filter = IssueFilter.Open, sort = IssueSort.Added, counts = counts, scope = scope))
-            }
-            finishActing = { state = state.copy(actingIds = emptySet()) }
+            val state = remember { IssuesUiState.Ready(filter = IssueFilter.Open, sort = IssueSort.Added, counts = counts, scope = scope) }
             BingeTvTheme {
                 TvIssuesBoard(
                     state = state,
@@ -362,21 +116,9 @@ class TvIssuesBoardFocusTest {
                             TvPagedRows(count = 0, at = { null })
                         }
                     },
-                    events = events,
                     actions =
                         TvIssuesActions(
-                            onOpenActions = { state = state.copy(actionItem = it) },
-                            onDismissActions = {
-                                dismissed++
-                                state = state.copy(actionItem = null)
-                            },
                             onOpenDetail = { opened += it.id },
-                            onResolve = {
-                                resolved += it.id
-                                if (trackActing) state = state.copy(actingIds = state.actingIds + it.id)
-                            },
-                            onReopen = { reopened += it.id },
-                            onDelete = { deleted += it.id },
                             onSeeAll = { seeAll += it },
                             onRetryLoad = {},
                             onRetryScope = {},
@@ -397,23 +139,9 @@ class TvIssuesBoardFocusTest {
 
     private fun seeAllTile() = composeTestRule.onNode(hasContentDescription(string(R.string.tv_see_all)) and isFocusable())
 
-    private fun sheetRow(label: Int) = composeTestRule.onNode(hasText(string(label)) and isFocusable())
-
-    private fun pressDown() = press(Key.DirectionDown)
-
-    private fun pressUp() = press(Key.DirectionUp)
-
     private fun pressRight() = press(Key.DirectionRight)
 
-    private fun pressLeft() = press(Key.DirectionLeft)
-
     private fun pressOk() = press(Key.DirectionCenter)
-
-    /** The closer hands focus back one frame after the sheet's nodes go, so the walk resumes from the row that opened it. */
-    private fun settleFocusRestore() {
-        composeTestRule.mainClock.advanceTimeByFrame()
-        composeTestRule.waitForIdle()
-    }
 
     private fun press(key: Key) {
         composeTestRule.onRoot().performKeyInput { pressKey(key) }

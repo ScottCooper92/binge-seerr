@@ -1033,9 +1033,6 @@
     <string name="tv_hub_quota_none_left">None left</string>
     <string name="tv_download_percent">%1$d%%</string>
     <string name="tv_list_load_failed">The list could not be loaded.</string>
-    <string name="tv_issue_resolve">Resolve issue</string>
-    <string name="tv_issue_reopen">Reopen issue</string>
-    <string name="tv_issue_read_comments">Read comments</string>
     <string name="tv_settings_disconnect_confirm">Yes, disconnect</string>
     <string name="tv_settings_start_library_scan">Start library scan</string>
     <string name="tv_settings_cancel_library_scan">Cancel library scan</string>
@@ -1298,4 +1295,7 @@
     <string name="tv_account_sign_out">Sign out</string>
     <string name="tv_account_sign_out_title">Sign out?</string>
     <string name="tv_account_sign_out_message">You\'ll need to sign in to this server again.</string>
+    <string name="tv_issue_reply_on_phone">Reply on your phone</string>
+    <string name="tv_issue_edit_on_phone">Edit on your phone</string>
+    <string name="tv_issue_phone_body">Scan with your phone to open this issue in %1$s, and reply or edit there.</string>
 </resources>
