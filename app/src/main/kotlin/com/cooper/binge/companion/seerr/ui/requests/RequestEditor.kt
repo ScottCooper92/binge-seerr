@@ -60,8 +60,8 @@ interface RequestEditorControls {
 /**
  * The editor for one request: which of a show's seasons it covers, and, for a user with
  * `REQUEST_ADVANCED`, where it goes. Saving sends the whole new season set and the destination in
- * one `PUT`; the moderation events say how it went, so the editor closes on [ModerationEvent.Edited]
- * and unlocks again on a failure.
+ * one `PUT`. The edit's own answer says how it went, not the shared moderation events, which carry
+ * every action's on the request (#1541): the editor closes on a success and unlocks again on a failure.
  *
  * Every launch below runs on [dispatcher] rather than `scope`'s own, for the same reason
  * [RequestModeration] does (#177): `loadServers`/`loadChoices` are exactly the "editor's own load"
@@ -81,18 +81,6 @@ class RequestEditor(
     /** @Volatile: written by [loadServers] on [dispatcher], read by [selectServer] on the caller's thread. */
     @Volatile
     private var servers: List<SeerrServerDto> = emptyList()
-
-    init {
-        scope.launch(dispatcher) {
-            moderation.events.collect { event ->
-                when (event) {
-                    ModerationEvent.Edited -> edit.value = null
-                    is ModerationEvent.Failed -> edit.update { it?.copy(saving = false, failed = true) }
-                    else -> Unit
-                }
-            }
-        }
-    }
 
     fun start(source: EditSource) {
         if (edit.value != null) return
@@ -145,7 +133,12 @@ class RequestEditor(
         val request = source?.request ?: return
         if (!state.canSave) return
         edit.value = state.copy(saving = true, failed = false)
-        moderation.edit(request.id, state.toBody(request))
+        val started =
+            moderation.edit(request.id, state.toBody(request)) { succeeded ->
+                if (succeeded) edit.value = null else edit.update { it?.copy(saving = false, failed = true) }
+            }
+        // Another action on the request is still in flight, so nothing was sent: the edit stays as it was, to save again.
+        if (!started) edit.update { it?.copy(saving = false) }
     }
 
     /** The list a request of this shape may go to; the request's own server where it is still listed, else the default. */
