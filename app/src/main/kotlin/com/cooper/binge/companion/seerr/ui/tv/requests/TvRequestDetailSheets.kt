@@ -19,6 +19,7 @@ import com.binge.designsystem.tv.component.TvSaveStatus
 import com.binge.designsystem.tv.component.TvSideSheet
 import com.binge.designsystem.tv.component.TvSideSheetBody
 import com.binge.designsystem.tv.component.TvSideSheetRow
+import com.binge.designsystem.tv.component.TvSideSheetRows
 import com.binge.designsystem.tv.component.TvSideSheetStepFocus
 import com.binge.designsystem.tv.component.TvSideSheetTitle
 import com.binge.designsystem.tv.focus.TvOverlayCloser
@@ -158,13 +159,15 @@ internal fun ColumnScope.TvMarkAsSteps(
     }
     TvSideSheetTitle(stringResource(R.string.media_mark_as))
     if (instance == null) {
-        media.instances.forEachIndexed { index, candidate ->
-            TvSideSheetRow(
-                label = stringResource(candidate.labelRes()),
-                icon = candidate.icon(media.isTv),
-                onClick = { picked = candidate.is4k },
-                modifier = if (index == 0) Modifier.focusRequester(entryFocus) else Modifier,
-            )
+        TvSideSheetRows {
+            media.instances.forEachIndexed { index, candidate ->
+                TvSideSheetRow(
+                    label = stringResource(candidate.labelRes()),
+                    icon = candidate.icon(media.isTv),
+                    onClick = { picked = candidate.is4k },
+                    modifier = if (index == 0) Modifier.focusRequester(entryFocus) else Modifier,
+                )
+            }
         }
         TvSideSheetStepFocus(entryFocus)
     } else {
@@ -177,20 +180,22 @@ internal fun ColumnScope.TvMarkAsSteps(
                 onRetry()
             },
         )
-        MediaStatusChoice.entries.forEachIndexed { index, choice ->
-            val current = choice.code == instance.status
-            TvOptionRow(
-                label = stringResource(choice.labelRes()),
-                icon = choice.icon(),
-                selected = pending?.let { it == choice } ?: current,
-                onClick = {
-                    if (!current && status != SaveStatus.Saving && !actionInFlight) {
-                        pending = choice
-                        onSelect(instance, choice)
-                    }
-                },
-                modifier = if (index == 0) Modifier.focusRequester(entryFocus) else Modifier,
-            )
+        TvSideSheetRows {
+            MediaStatusChoice.entries.forEachIndexed { index, choice ->
+                val current = choice.code == instance.status
+                TvOptionRow(
+                    label = stringResource(choice.labelRes()),
+                    icon = choice.icon(),
+                    selected = pending?.let { it == choice } ?: current,
+                    onClick = {
+                        if (!current && status != SaveStatus.Saving && !actionInFlight) {
+                            pending = choice
+                            onSelect(instance, choice)
+                        }
+                    },
+                    modifier = if (index == 0) Modifier.focusRequester(entryFocus) else Modifier,
+                )
+            }
         }
         TvSideSheetStepFocus(entryFocus)
     }
