@@ -22,6 +22,7 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.tv.component.TvSideSheet
 import com.binge.designsystem.tv.component.TvSideSheetBody
+import com.binge.designsystem.tv.component.TvSideSheetReadout
 import com.binge.designsystem.tv.component.TvSideSheetRow
 import com.binge.designsystem.tv.component.TvSideSheetStepFocus
 import com.binge.designsystem.tv.component.TvSideSheetTitle
@@ -125,21 +126,17 @@ private fun Close(
 @Composable
 private fun Profile(item: UserItem) {
     val separator = stringResource(R.string.hub_meta_separator)
-    TvSideSheetRow(
+    TvSideSheetReadout(
         label = item.name,
         icon = Icons.Filled.Person,
-        enabled = false,
-        onClick = {},
         supportingText =
             listOf(stringResource(item.role.roleLabelRes()), stringResource(item.origin.originLabelRes())).joinToString(separator),
     )
     val handle = item.handle?.takeUnless { it.equals(item.email, ignoreCase = true) }
     (item.email ?: handle)?.let { primary ->
-        TvSideSheetRow(
+        TvSideSheetReadout(
             label = primary,
             icon = Icons.Filled.Email,
-            enabled = false,
-            onClick = {},
             supportingText = handle.takeUnless { it == primary },
         )
     }
@@ -153,7 +150,7 @@ private fun QuotaRow(
     loaded: Boolean,
     icon: ImageVector,
 ) {
-    TvSideSheetRow(label = label, icon = icon, enabled = false, onClick = {}, supportingText = quotaLine(bucket, loaded))
+    TvSideSheetReadout(label = label, icon = icon, supportingText = quotaLine(bucket, loaded))
 }
 
 /**
