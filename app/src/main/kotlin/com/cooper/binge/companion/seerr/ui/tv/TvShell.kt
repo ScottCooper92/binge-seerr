@@ -225,8 +225,9 @@ private class TabPageFocus {
 }
 
 /**
- * A title's own page over everything, the bar included: it fills the screen, so it takes no top inset, and it is opaque, so the
- * bar does not show through. Focus is trapped in it; Back is the page's own, and closing it hands focus back to the page beneath.
+ * A title's own page over everything, the bar included: it fills the screen, so it takes no top inset. It draws its own
+ * background, a page an opaque one and a side sheet its scrim, so a sheet can show the board through. Focus is trapped in
+ * it; Back is the page's own, and closing it hands focus back to the page beneath.
  */
 @Composable
 private fun TvShellTopLayer(content: @Composable () -> Unit) {
@@ -234,7 +235,7 @@ private fun TvShellTopLayer(content: @Composable () -> Unit) {
         HandBackHost(
             entry = remember { FocusRequester() },
             active = true,
-            modifier = Modifier.background(MaterialTheme.colorScheme.background).tvExitFocusGroup(),
+            modifier = Modifier.tvExitFocusGroup(),
             content = content,
         )
     }
