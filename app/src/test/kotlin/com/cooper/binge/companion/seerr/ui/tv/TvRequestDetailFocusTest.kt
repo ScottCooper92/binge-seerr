@@ -57,7 +57,7 @@ private const val HEAT = "Heat"
  * The board's row through to its read-only detail page and back, under a real Back key rather than a
  * directional dismiss: OK on the row reaches the page with the D-pad, and Back returns focus to the row
  * that opened it. The page's own primary action is covered here too, since it is what the row's moderation
- * moved onto: Approve and Decline run at once from the action row, and Remove and Block ask first.
+ * moved onto: Approve and Decline run at once from the action row, and Remove and Block, in Manage, ask first.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(qualifiers = "w960dp-h540dp-television-xhdpi")
@@ -116,13 +116,12 @@ class TvRequestDetailFocusTest {
         assertEquals(listOf(false), declined)
     }
 
+    /** Remove is in Manage; it asks first, and Cancel hands focus back to Manage, where the viewer came from. */
     @Test
-    fun removeAsksFirstAndCancelReturnsToTheButton() {
+    fun removeAsksFirstAndCancelReturnsToManage() {
         setContent(RequestActions(canRemove = true))
-        row(HEAT).requestFocus()
-        composeTestRule.waitForIdle()
-        pressOk()
-        actionButton(R.string.tv_detail_remove).assertIsFocused()
+        openPage()
+        openManageRow(R.string.tv_detail_remove)
 
         pressOk()
         composeTestRule.onNodeWithText(string(R.string.request_remove_confirm_title)).assertIsDisplayed()
@@ -131,24 +130,19 @@ class TvRequestDetailFocusTest {
         settleFocusRestore()
 
         assertEquals(emptyList<Boolean>(), removed)
-        actionButton(R.string.tv_detail_remove).assertIsFocused()
+        actionButton(R.string.tv_detail_manage).assertIsFocused()
     }
 
     @Test
     fun blockingTheTitleAsksFirstThenBlocksOnConfirm() {
         setContent(RequestActions(canBlock = true))
-        row(HEAT).requestFocus()
-        composeTestRule.waitForIdle()
-        pressOk()
-        actionButton(R.string.tv_detail_block).assertIsFocused()
+        openPage()
+        openManageRow(R.string.tv_detail_block)
 
         pressOk()
         composeTestRule.onNodeWithText(string(R.string.request_block_confirm_title)).assertIsDisplayed()
         assertEquals(0, blocked)
-        // The dialog's confirm button shares its label with the button beneath it; it is the later of the two.
-        composeTestRule.onAllNodes(hasText(string(R.string.tv_detail_block)) and isFocusable()).onLast().requestFocus()
-        composeTestRule.waitForIdle()
-        pressOk()
+        confirmBlock()
 
         assertEquals(1, blocked)
     }
@@ -176,9 +170,7 @@ class TvRequestDetailFocusTest {
             allowed = RequestActions(canApprove = true, canDecline = true, canRemove = true),
             afterDecline = RequestActions(canRemove = true),
         )
-        row(HEAT).requestFocus()
-        composeTestRule.waitForIdle()
-        pressOk()
+        openPage()
         pressRight()
         actionButton(R.string.tv_detail_decline).assertIsFocused()
 
@@ -187,54 +179,45 @@ class TvRequestDetailFocusTest {
 
         assertEquals(listOf(false), declined)
         actionButton(R.string.tv_detail_decline).assertDoesNotExist()
-        actionButton(R.string.tv_detail_remove).assertIsFocused()
+        actionButton(R.string.tv_detail_manage).assertIsFocused()
     }
 
     /**
-     * A successful block reloads the page without Block, after the confirm sheet has handed focus back to it, as the
-     * real reload lands once the server answers; focus moves to what is left on the row (#801).
+     * A successful block reloads the page without Block, after the confirm has handed focus back to Manage, as the real
+     * reload lands once the server answers; focus stays on the row, on Manage, which still holds Remove (#801).
      */
     @Test
     fun blockingRemovesBlockAndFocusStaysOnTheActionRow() {
         setContent(RequestActions(canBlock = true, canRemove = true))
-        row(HEAT).requestFocus()
-        composeTestRule.waitForIdle()
+        openPage()
+        openManageRow(R.string.tv_detail_block)
         pressOk()
-        actionButton(R.string.tv_detail_block).assertIsFocused()
-        pressOk()
-        composeTestRule.onAllNodes(hasText(string(R.string.tv_detail_block)) and isFocusable()).onLast().requestFocus()
-        composeTestRule.waitForIdle()
-        pressOk()
+        confirmBlock()
         settleFocusRestore()
         assertEquals(1, blocked)
-        actionButton(R.string.tv_detail_block).assertIsFocused()
+        actionButton(R.string.tv_detail_manage).assertIsFocused()
 
         offered = RequestActions(canRemove = true)
         composeTestRule.waitForIdle()
 
-        actionButton(R.string.tv_detail_block).assertDoesNotExist()
-        actionButton(R.string.tv_detail_remove).assertIsFocused()
+        actionButton(R.string.tv_detail_manage).assertIsFocused()
     }
 
     /** A block that leaves no action behind hands focus to the synopsis rather than the root (#801). */
     @Test
     fun blockingTheLastActionLeavesFocusOnTheSynopsis() {
         setContent(RequestActions(canBlock = true))
-        row(HEAT).requestFocus()
-        composeTestRule.waitForIdle()
+        openPage()
+        openManageRow(R.string.tv_detail_block)
         pressOk()
-        actionButton(R.string.tv_detail_block).assertIsFocused()
-        pressOk()
-        composeTestRule.onAllNodes(hasText(string(R.string.tv_detail_block)) and isFocusable()).onLast().requestFocus()
-        composeTestRule.waitForIdle()
-        pressOk()
+        confirmBlock()
         settleFocusRestore()
         assertEquals(1, blocked)
 
         offered = RequestActions()
         composeTestRule.waitForIdle()
 
-        actionButton(R.string.tv_detail_block).assertDoesNotExist()
+        actionButton(R.string.tv_detail_manage).assertDoesNotExist()
         composeTestRule.onNode(isFocused()).assertExists()
     }
 
@@ -263,8 +246,6 @@ class TvRequestDetailFocusTest {
                             onRemove = {},
                             onBlock = {},
                             onSetMediaStatus = { _, _, _ -> },
-                            onReportIssue = { _, _ -> },
-                            onDismissReport = {},
                         ),
                 )
             }
@@ -296,8 +277,6 @@ class TvRequestDetailFocusTest {
                                 onRemove = {},
                                 onBlock = {},
                                 onSetMediaStatus = { _, _, _ -> },
-                                onReportIssue = { _, _ -> },
-                                onDismissReport = {},
                             ),
                     )
                 }
@@ -347,8 +326,6 @@ class TvRequestDetailFocusTest {
                                             onRemove = { removed += it },
                                             onBlock = { blocked++ },
                                             onSetMediaStatus = { _, _, _ -> },
-                                            onReportIssue = { _, _ -> },
-                                            onDismissReport = {},
                                         ),
                                 )
                             }
@@ -396,6 +373,30 @@ class TvRequestDetailFocusTest {
         )
 
     private fun pressOk() = press(Key.DirectionCenter)
+
+    /** OK on the board's row, which reaches the page on its first action. */
+    private fun openPage() {
+        row(HEAT).requestFocus()
+        composeTestRule.waitForIdle()
+        pressOk()
+    }
+
+    /** Manage, then [label]'s row in its sheet, focused. */
+    private fun openManageRow(label: Int) {
+        actionButton(R.string.tv_detail_manage).requestFocus()
+        composeTestRule.waitForIdle()
+        pressOk()
+        actionButton(label).requestFocus()
+        composeTestRule.waitForIdle()
+        actionButton(label).assertIsFocused()
+    }
+
+    /** Block in the confirm dialog. */
+    private fun confirmBlock() {
+        composeTestRule.onAllNodes(hasText(string(R.string.tv_detail_block)) and isFocusable()).onLast().requestFocus()
+        composeTestRule.waitForIdle()
+        pressOk()
+    }
 
     private fun pressRight() = press(Key.DirectionRight)
 

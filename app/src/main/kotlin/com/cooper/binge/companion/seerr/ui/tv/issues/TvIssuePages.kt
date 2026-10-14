@@ -1,10 +1,6 @@
 package com.cooper.binge.companion.seerr.ui.tv.issues
 
-import androidx.compose.foundation.focusable
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.Delete
@@ -14,14 +10,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.tv.component.TvConfirmDialog
-import com.binge.designsystem.tv.component.TvQrCode
 import com.binge.designsystem.tv.component.TvSaveStatus
-import com.binge.designsystem.tv.component.TvSideSheetBody
 import com.binge.designsystem.tv.component.TvSideSheetNav
 import com.binge.designsystem.tv.component.TvSideSheetRow
 import com.binge.designsystem.tv.component.TvSideSheetRows
@@ -30,6 +21,7 @@ import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.issues.IssueDetail
 import com.cooper.binge.companion.seerr.ui.issues.IssueDetailUiState
 import com.cooper.binge.companion.seerr.ui.tv.TvActionRun
+import com.cooper.binge.companion.seerr.ui.tv.TvPhoneCode
 import com.cooper.binge.companion.seerr.ui.requests.labelRes as mediaTypeLabelRes
 
 private const val KEY_TEXT = "text"
@@ -123,16 +115,8 @@ internal fun ColumnScope.TvIssuePhonePage(
     detail: IssueDetail,
     nav: TvSideSheetNav,
 ) {
-    val body = stringResource(R.string.tv_issue_phone_body, detail.serverName)
     TvSideSheetTitle(detail.item.title ?: stringResource(detail.item.mediaType.mediaTypeLabelRes()))
-    TvSideSheetBody(body)
-    Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
-        TvQrCode(
-            content = detail.webUrl,
-            contentDescription = body,
-            modifier = nav.row(KEY_CODE).focusable().size(dimensionResource(R.dimen.tv_bug_report_code_size)),
-        )
-    }
+    TvPhoneCode(url = detail.webUrl, body = stringResource(R.string.tv_issue_phone_body, detail.serverName), modifier = nav.row(KEY_CODE))
 }
 
 private val PARAGRAPH = Regex("\n\\s*\n")

@@ -145,8 +145,6 @@ class TvReadOutsTest {
             onRemove = {},
             onBlock = {},
             onSetMediaStatus = { _, _, _ -> },
-            onReportIssue = { _, _ -> },
-            onDismissReport = {},
         )
 
     private fun detail() = requestDetail(actions = RequestActions(canRemove = true), mediaId = null)

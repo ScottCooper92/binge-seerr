@@ -1,12 +1,21 @@
 package com.cooper.binge.companion.seerr.ui.tv.requests
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.OpenInNew
+import androidx.compose.material.icons.filled.Block
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Done
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.ReportProblem
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import com.android.tools.screenshot.PreviewTest
 import com.binge.designsystem.SaveStatus
@@ -14,21 +23,17 @@ import com.binge.designsystem.tv.component.TvSideSheetPanel
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.preview.SeerrTvScreenPreviews
 import com.cooper.binge.companion.seerr.seerr.SeerrMediaStatusCode
-import com.cooper.binge.companion.seerr.ui.hub.HubQuotaBucket
-import com.cooper.binge.companion.seerr.ui.requests.IssueReport
-import com.cooper.binge.companion.seerr.ui.requests.IssueType
 import com.cooper.binge.companion.seerr.ui.requests.MediaInstance
 import com.cooper.binge.companion.seerr.ui.requests.MediaRecord
 import com.cooper.binge.companion.seerr.ui.requests.RequestEditorControls
 import com.cooper.binge.companion.seerr.ui.requests.refusedEditState
 import com.cooper.binge.companion.seerr.ui.requests.seasonListRow
 import com.cooper.binge.companion.seerr.ui.requests.tvEditState
-import com.cooper.binge.companion.seerr.ui.users.settings.QuotaDefault
 
 /**
- * The bodies of the request page's Edit, Mark as, Report an issue and requester sheets, on the panel. The sheets'
- * scrim and focus trap are the modal half and are not framed; what is framed is every row's icon: an instance, a
- * state, a kind.
+ * The bodies of the request page's Edit, Mark as, Report an issue and Manage sheets, on the panel. The sheets' scrim
+ * and focus trap are the modal half and are not framed; what is framed is every row's icon: an instance, a state, an
+ * action.
  */
 class TvRequestDetailSheetsScreenshotTest {
     /** A title the server holds twice: which instance first, each with the glyph its web client gives it. */
@@ -135,87 +140,43 @@ class TvRequestDetailSheetsScreenshotTest {
             )
         }
 
-    /** The kinds of issue, each with its glyph, over the message field. */
+    /** Reporting an issue on the phone: the title's page on the server as a code, under what to do with it. */
     @PreviewTest
     @SeerrTvScreenPreviews
     @Composable
-    fun ReportKinds() =
+    fun ReportOnPhone() =
         SheetFrame {
-            TvReportIssueStep(
-                report = IssueReport.Idle,
-                draft = TvReportDraft(type = IssueType.Video, message = "", onTypeChange = {}, onMessageChange = {}),
-                actions = noActions(),
-                onDone = {},
-                entryFocus = FocusRequester(),
-            )
+            TvReportOnPhoneStep(webUrl = "https://seerr.example/movie/900", serverName = "Jellyseerr", entryFocus = FocusRequester())
         }
 
-    /** The requester sheet as a manager opens it: the quota left, both permissions, the override off, and a failed save. */
+    /** Manage on a pending request: everything past Approve and Decline, with Block and Remove last, in red. */
     @PreviewTest
     @SeerrTvScreenPreviews
     @Composable
-    fun Requester() =
+    fun Manage() =
         SheetFrame {
-            TvRequesterStep(
-                state =
-                    requester(TvQuotaOverride(on = false, limit = 0, days = 7, default = QuotaDefault(10, 7)))
-                        .copy(saveStatus = SaveStatus.Failed),
-                isMovie = true,
-                actions = noRequesterActions(),
-                entryFocus = FocusRequester(),
-            )
-        }
-
-    /** The override on, on a server that offers neither permission: the limit's stepper, then the windows, the current one ticked. */
-    @PreviewTest
-    @SeerrTvScreenPreviews
-    @Composable
-    fun RequesterOverride() =
-        SheetFrame {
-            TvRequesterStep(
-                state =
-                    requester(TvQuotaOverride(on = true, limit = 5, days = 3, default = QuotaDefault(10, 7)))
-                        .copy(autoApprove = null, request4k = null),
-                isMovie = true,
-                actions = noRequesterActions(),
-                entryFocus = FocusRequester(),
-            )
-        }
-
-    /** A change the server refused: the control is back as it was, and the note under the rows says why, with no Retry. */
-    @PreviewTest
-    @SeerrTvScreenPreviews
-    @Composable
-    fun RequesterRefused() =
-        SheetFrame {
-            TvRequesterStep(
-                state = requester(override = null).copy(saveStatus = SaveStatus.Idle),
-                isMovie = true,
-                actions = noRequesterActions(),
-                entryFocus = FocusRequester(),
-                note = stringResource(R.string.state_error_forbidden_message),
-            )
-        }
-
-    /** Still loading: no name yet and no quota line, Request 4K locked, and no override for a viewer the server denies it. */
-    @PreviewTest
-    @SeerrTvScreenPreviews
-    @Composable
-    fun RequesterLoading() =
-        SheetFrame {
-            TvRequesterStep(
-                state =
-                    requester(override = null).copy(
-                        name = null,
-                        quotaKnown = false,
-                        request4k = TvRequesterToggle(checked = true, enabled = false),
+            TvRequestManageStep(
+                managed =
+                    listOf(
+                        managed(TvRequestAction.Edit, R.string.tv_detail_edit, Icons.Filled.Edit),
+                        managed(TvRequestAction.MarkAs, R.string.media_mark_as, Icons.Filled.Done),
+                        managed(TvRequestAction.Report, R.string.issue_report_title, Icons.Filled.ReportProblem),
+                        managed(TvRequestAction.OpenInBinge, R.string.request_open_binge, Icons.AutoMirrored.Filled.OpenInNew),
+                        managed(TvRequestAction.Block, R.string.tv_detail_block, Icons.Filled.Block),
+                        managed(TvRequestAction.Remove, R.string.tv_detail_remove, Icons.Filled.Delete),
                     ),
-                isMovie = false,
-                actions = noRequesterActions(),
+                onSelect = {},
                 entryFocus = FocusRequester(),
             )
         }
 }
+
+@Composable
+private fun managed(
+    action: TvRequestAction,
+    @StringRes label: Int,
+    icon: ImageVector,
+) = TvRequestActionItem(action, stringResource(label), icon, onClick = {})
 
 private object NoEditorControls : RequestEditorControls {
     override fun cancel() = Unit
@@ -235,19 +196,6 @@ private object NoEditorControls : RequestEditorControls {
     override fun save() = Unit
 }
 
-private fun requester(override: TvQuotaOverride?) =
-    TvRequesterState(
-        name = "ana",
-        quota = HubQuotaBucket(limit = 10, remaining = 7, days = 7),
-        quotaKnown = true,
-        autoApprove = TvRequesterToggle(checked = true, enabled = true),
-        request4k = TvRequesterToggle(checked = false, enabled = true),
-        override = override,
-        saveStatus = SaveStatus.Saved,
-    )
-
-private fun noRequesterActions() = TvRequesterActions({}, {}, {}, {})
-
 private fun media(vararg instances: MediaInstance) =
     MediaRecord(
         mediaId = 900,
@@ -256,21 +204,6 @@ private fun media(vararg instances: MediaInstance) =
         canSetStatus = true,
         canClearData = false,
         canDeleteFiles = false,
-    )
-
-private fun noActions() =
-    TvRequestDetailActions(
-        onBack = {},
-        onRetry = {},
-        onOpenInBinge = null,
-        onApprove = {},
-        onRetryRequest = {},
-        onDecline = {},
-        onRemove = {},
-        onBlock = {},
-        onSetMediaStatus = { _, _, _ -> },
-        onReportIssue = { _, _ -> },
-        onDismissReport = {},
     )
 
 @Composable

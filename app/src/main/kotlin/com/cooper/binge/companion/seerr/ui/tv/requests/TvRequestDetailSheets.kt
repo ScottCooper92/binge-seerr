@@ -1,10 +1,6 @@
 package com.cooper.binge.companion.seerr.ui.tv.requests
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -15,7 +11,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.SaveStatus
 import com.binge.designsystem.tv.component.TvConfirmDialog
@@ -26,54 +21,34 @@ import com.binge.designsystem.tv.component.TvSideSheetBody
 import com.binge.designsystem.tv.component.TvSideSheetRow
 import com.binge.designsystem.tv.component.TvSideSheetStepFocus
 import com.binge.designsystem.tv.component.TvSideSheetTitle
-import com.binge.designsystem.tv.component.TvTextField
 import com.binge.designsystem.tv.focus.TvOverlayCloser
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.requests.EditState
-import com.cooper.binge.companion.seerr.ui.requests.IssueReport
-import com.cooper.binge.companion.seerr.ui.requests.IssueType
 import com.cooper.binge.companion.seerr.ui.requests.MediaInstance
 import com.cooper.binge.companion.seerr.ui.requests.MediaRecord
 import com.cooper.binge.companion.seerr.ui.requests.MediaStatusChoice
 import com.cooper.binge.companion.seerr.ui.requests.RequestItem
-import com.cooper.binge.companion.seerr.ui.requests.RequestMediaType
 import com.cooper.binge.companion.seerr.ui.requests.icon
 import com.cooper.binge.companion.seerr.ui.requests.labelRes
 import com.cooper.binge.companion.seerr.ui.tv.OnSaved
 import com.cooper.binge.companion.seerr.ui.tv.ScopedTo
 import com.cooper.binge.companion.seerr.ui.tv.TvActionRun
-import com.cooper.binge.companion.seerr.ui.tv.TvFormNote
-import com.cooper.binge.companion.seerr.ui.tv.TvFormNoteTone
-import com.binge.designsystem.R as DesR
+import com.cooper.binge.companion.seerr.ui.tv.TvPhoneCode
 
 /**
  * What the page opens over itself: the two confirm dialogs, and the sheets for editing the request, marking the title's
- * state, reporting an issue and the requester's quick controls.
+ * state and reporting an issue on the phone.
  */
-internal enum class DetailSheet { Remove, Block, Edit, MarkAs, Report, Requester }
+internal enum class DetailSheet { Remove, Block, Edit, MarkAs, Report }
 
-/** What the sheets read from the page: the request, its title's record, the open editor and the issue report. */
+/** What the sheets read from the page: the request, its title's record, the open editor, and the title's page on the server. */
 internal class TvDetailSheetContent(
     val item: RequestItem,
     val media: MediaRecord?,
     val edit: EditState?,
-    val report: IssueReport,
+    val webUrl: String,
+    val serverName: String,
 )
-
-/** The issue being written, kept by the page so a sheet closed before sending opens again on the same words. */
-internal class TvReportDraft(
-    val type: IssueType,
-    val message: String,
-    val onTypeChange: (IssueType) -> Unit,
-    val onMessageChange: (String) -> Unit,
-)
-
-@Composable
-internal fun rememberTvReportDraft(): TvReportDraft {
-    var type by rememberSaveable { mutableStateOf(IssueType.Video) }
-    var message by rememberSaveable { mutableStateOf("") }
-    return TvReportDraft(type = type, message = message, onTypeChange = { type = it }, onMessageChange = { message = it })
-}
 
 /** The open sheet, and the requester its closer hands focus back to. */
 internal class TvDetailSheetHost(
@@ -87,23 +62,17 @@ internal fun TvRequestDetailSheet(
     host: TvDetailSheetHost,
     actions: TvRequestDetailActions,
     content: TvDetailSheetContent,
-    draft: TvReportDraft,
     run: TvActionRun,
     isActing: Boolean = false,
 ) {
     val closer = host.closer
     val media = content.media
-    // A report closed while it is still sending keeps its guard: the view model refuses a second send until it answers.
     // An edit closed unsaved is dropped, as the phone's sheet drops it.
     val dismiss = {
-        when (host.step) {
-            DetailSheet.Report -> actions.onDismissReport()
-            DetailSheet.Edit -> actions.edit?.controls?.cancel()
-            else -> Unit
-        }
+        if (host.step == DetailSheet.Edit) actions.edit?.controls?.cancel()
         closer.close()
     }
-    // The two confirms are a question and nothing else, so each is a dialog; Mark as and Report carry a list and a form, so
+    // The two confirms are a question and nothing else, so each is a dialog; the rest carry a list, a form or a code, so
     // they stay sheets.
     when (host.step) {
         DetailSheet.Remove ->
@@ -155,15 +124,7 @@ internal fun TvRequestDetailSheet(
             }
         DetailSheet.Report ->
             TvSideSheet(onDismissRequest = dismiss) { entryFocus ->
-                TvReportIssueStep(content.report, draft, actions, onDone = dismiss, entryFocus = entryFocus)
-            }
-        DetailSheet.Requester ->
-            TvSideSheet(onDismissRequest = dismiss) { entryFocus ->
-                val sheet = actions.requesterSheet
-                val requester = content.item.requestedById
-                if (sheet != null && requester != null) {
-                    sheet(requester, content.item.mediaType == RequestMediaType.Movie, entryFocus)
-                }
+                TvReportOnPhoneStep(content.webUrl, content.serverName, entryFocus)
             }
     }
 }
@@ -236,53 +197,20 @@ internal fun ColumnScope.TvMarkAsSteps(
 }
 
 /**
- * Reporting an issue with the title: the kind, then the message, then Send. It scrolls, since the kinds and the field
- * outgrow the panel on a short screen. Once the server has it, the sheet says so and Done closes it.
+ * Reporting an issue needs a keyboard, so the sheet hands it to the phone: the title's page on the server, as a code, where
+ * the report is written.
  */
 @Composable
-internal fun ColumnScope.TvReportIssueStep(
-    report: IssueReport,
-    draft: TvReportDraft,
-    actions: TvRequestDetailActions,
-    onDone: () -> Unit,
+internal fun ColumnScope.TvReportOnPhoneStep(
+    webUrl: String,
+    serverName: String,
     entryFocus: FocusRequester,
 ) {
     TvSideSheetTitle(stringResource(R.string.issue_report_title))
-    if (report == IssueReport.Sent) {
-        // Sent: the next report starts from nothing.
-        LaunchedEffect(Unit) { draft.onMessageChange("") }
-        TvSideSheetBody(stringResource(R.string.issue_report_sent))
-        TvSideSheetRow(label = stringResource(R.string.editor_done), onClick = onDone, modifier = Modifier.focusRequester(entryFocus))
-        TvSideSheetStepFocus(entryFocus)
-        return
-    }
-    val sending = report == IssueReport.Sending
-    val canSend = draft.message.isNotBlank() && !sending
-    val send = { if (canSend) actions.onReportIssue(draft.type, draft.message) }
-    Column(
-        modifier = Modifier.verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
-    ) {
-        IssueType.entries.forEachIndexed { index, type ->
-            TvOptionRow(
-                label = stringResource(type.labelRes()),
-                icon = type.icon(),
-                selected = type == draft.type,
-                onClick = { draft.onTypeChange(type) },
-                modifier = if (index == 0) Modifier.focusRequester(entryFocus) else Modifier,
-            )
-        }
-        TvTextField(
-            value = draft.message,
-            onValueChange = draft.onMessageChange,
-            label = stringResource(R.string.issue_report_message),
-            enabled = !sending,
-            placeholder = stringResource(R.string.issue_message_placeholder),
-            fillWidth = true,
-            onImeAction = send,
-        )
-        if (report is IssueReport.Failed) TvFormNote(stringResource(R.string.issue_report_failed), tone = TvFormNoteTone.Error)
-        TvSideSheetRow(label = stringResource(R.string.issue_report_send), onClick = send, enabled = canSend)
-    }
+    TvPhoneCode(
+        url = webUrl,
+        body = stringResource(R.string.tv_detail_report_on_phone, serverName),
+        modifier = Modifier.focusRequester(entryFocus),
+    )
     TvSideSheetStepFocus(entryFocus)
 }

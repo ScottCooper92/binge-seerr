@@ -120,8 +120,6 @@ class TvRequestEditSheetTest {
                             onRemove = {},
                             onBlock = {},
                             onSetMediaStatus = { _, _, _ -> },
-                            onReportIssue = { _, _ -> },
-                            onDismissReport = {},
                             edit = TvRequestEditActions(onStart = { editor.start() }, controls = editor),
                         ),
                 )

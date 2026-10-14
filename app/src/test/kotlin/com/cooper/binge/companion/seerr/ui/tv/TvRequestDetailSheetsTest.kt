@@ -1,7 +1,6 @@
 package com.cooper.binge.companion.seerr.ui.tv
 
 import androidx.activity.ComponentActivity
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsFocused
@@ -14,15 +13,12 @@ import androidx.compose.ui.test.isSelected
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performKeyInput
-import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.pressKey
 import androidx.compose.ui.test.requestFocus
 import com.binge.designsystem.tv.theme.BingeTvTheme
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.seerr.SeerrMediaStatusCode
-import com.cooper.binge.companion.seerr.ui.requests.IssueReport
-import com.cooper.binge.companion.seerr.ui.requests.IssueType
 import com.cooper.binge.companion.seerr.ui.requests.MediaInstance
 import com.cooper.binge.companion.seerr.ui.requests.MediaRecord
 import com.cooper.binge.companion.seerr.ui.requests.MediaStatusChoice
@@ -33,10 +29,8 @@ import com.cooper.binge.companion.seerr.ui.requests.RequestDetailUiState
 import com.cooper.binge.companion.seerr.ui.requests.labelRes
 import com.cooper.binge.companion.seerr.ui.tv.requests.TvRequestDetailActions
 import com.cooper.binge.companion.seerr.ui.tv.requests.TvRequestDetailScreen
-import com.cooper.binge.companion.seerr.ui.users.OWNER_USER_ID
 import com.cooper.binge.companion.seerr.util.createSeerrKeyboardAndroidComposeRule
 import com.cooper.binge.companion.seerr.util.requestDetail
-import com.cooper.binge.companion.seerr.util.requestItem
 import com.cooper.binge.companion.seerr.util.string
 import kotlinx.coroutines.flow.MutableSharedFlow
 import org.junit.Assert.assertEquals
@@ -48,8 +42,9 @@ import org.robolectric.annotation.Config
 import com.binge.designsystem.R as DesR
 
 private const val MEDIA_ID = 9
+private const val SERVER_NAME = "Jellyseerr"
 
-/** The two sheets the TV request page gained from the phone's (#1036): marking the title's state, and reporting an issue. */
+/** The TV request page's sheets for the title (#1036): marking its state, and reporting an issue on the phone. */
 @RunWith(RobolectricTestRunner::class)
 @Config(qualifiers = "w960dp-h540dp-television-xhdpi")
 class TvRequestDetailSheetsTest {
@@ -57,10 +52,7 @@ class TvRequestDetailSheetsTest {
     val composeTestRule = createSeerrKeyboardAndroidComposeRule<ComponentActivity>()
 
     private val marked = mutableListOf<Triple<Int, MediaStatusChoice, Boolean>>()
-    private val reported = mutableListOf<Pair<IssueType, String>>()
-    private var dismissedReports = 0
     private val events = MutableSharedFlow<ModerationEvent>(extraBufferCapacity = 1)
-    private val openedRequesters = mutableListOf<Pair<Int, Boolean>>()
 
     @Test
     fun markAsOpensOnTheStatesAndAPickApplies() {
@@ -206,35 +198,22 @@ class TvRequestDetailSheetsTest {
         assertEquals(listOf(Triple(MEDIA_ID, MediaStatusChoice.Available, true)), marked)
     }
 
+    /** Reporting needs a keyboard, so the sheet is the title's page on the server as a code for the phone. */
     @Test
-    fun aReportSendsTheKindAndTheMessage() {
+    fun aReportIsTheTitlesPageAsACodeForThePhone() {
         setContent(detail(canReportIssue = true))
         actionButton(R.string.issue_report_title).assertIsFocused()
 
         pressOk()
-        composeTestRule.onNode(hasText(string(R.string.issue_type_audio)) and isFocusable()).requestFocus()
-        composeTestRule.waitForIdle()
-        pressOk()
-        composeTestRule.onNode(hasSetTextAction()).performTextReplacement("No sound after the intro")
-        composeTestRule.onNode(hasText(string(R.string.issue_report_send)) and isFocusable()).requestFocus()
-        composeTestRule.waitForIdle()
-        pressOk()
 
-        assertEquals(listOf(IssueType.Audio to "No sound after the intro"), reported)
-    }
+        val body = string(R.string.tv_detail_report_on_phone, SERVER_NAME)
+        composeTestRule.onNodeWithText(body).assertIsDisplayed()
+        composeTestRule.onNode(hasContentDescription(body) and isFocusable()).assertIsFocused()
+        composeTestRule.onNode(hasSetTextAction()).assertDoesNotExist()
 
-    @Test
-    fun aSentReportSaysSoAndDoneClosesIt() {
-        setContent(detail(canReportIssue = true), report = IssueReport.Sent)
-        pressOk()
-
-        composeTestRule.onNodeWithText(string(R.string.issue_report_sent)).assertIsDisplayed()
-        composeTestRule.onNode(hasText(string(R.string.editor_done)) and isFocusable()).assertIsFocused()
-        pressOk()
+        composeTestRule.runOnUiThread { composeTestRule.activity.onBackPressedDispatcher.onBackPressed() }
         composeTestRule.mainClock.advanceTimeByFrame()
         composeTestRule.waitForIdle()
-
-        assertEquals(1, dismissedReports)
         actionButton(R.string.issue_report_title).assertIsFocused()
     }
 
@@ -246,26 +225,12 @@ class TvRequestDetailSheetsTest {
         actionButton(R.string.issue_report_title).assertDoesNotExist()
     }
 
+    /** The requester's controls are the phone's: the page offers no button for them, and the phone line names them. */
     @Test
-    fun aManagerGetsTheRequesterSheetInPlaceOfThePhoneLine() {
-        setContent(requestDetail(mediaId = MEDIA_ID, canManageUsers = true), requesterSheet = true)
-        composeTestRule.onNodeWithText(string(R.string.tv_detail_phone_requester), substring = true).assertDoesNotExist()
+    fun aManagerIsPointedToThePhoneForTheRequester() {
+        setContent(requestDetail(mediaId = MEDIA_ID, canManageUsers = true))
 
-        actionButton(R.string.tv_detail_requester).requestFocus()
-        composeTestRule.waitForIdle()
-        pressOk()
-
-        assertEquals(listOf(3 to true), openedRequesters)
-    }
-
-    @Test
-    fun theRequesterSheetIsNotOfferedForTheOwner() {
-        setContent(
-            requestDetail(item = requestItem(requestedById = OWNER_USER_ID), mediaId = MEDIA_ID, canManageUsers = true),
-            requesterSheet = true,
-        )
-
-        actionButton(R.string.tv_detail_requester).assertDoesNotExist()
+        composeTestRule.onNodeWithText(string(R.string.tv_detail_phone_requester), substring = true).assertExists()
     }
 
     private fun media(vararg instances: MediaInstance) =
@@ -282,18 +247,16 @@ class TvRequestDetailSheetsTest {
         media: MediaRecord? = null,
         canReportIssue: Boolean = false,
         actions: RequestActions = RequestActions(),
-    ) = requestDetail(actions = actions, mediaId = MEDIA_ID, canReportIssue = canReportIssue, media = media)
+    ) = requestDetail(actions = actions, mediaId = MEDIA_ID, canReportIssue = canReportIssue, media = media).copy(serverName = SERVER_NAME)
 
     private fun setContent(
         detail: RequestDetail,
-        report: IssueReport = IssueReport.Idle,
-        requesterSheet: Boolean = false,
         isActing: Boolean = false,
     ) {
         composeTestRule.setContent {
             BingeTvTheme {
                 TvRequestDetailScreen(
-                    state = RequestDetailUiState.Ready(detail, report = report, isActing = isActing),
+                    state = RequestDetailUiState.Ready(detail, isActing = isActing),
                     events = events,
                     actions =
                         TvRequestDetailActions(
@@ -306,14 +269,6 @@ class TvRequestDetailSheetsTest {
                             onRemove = {},
                             onBlock = {},
                             onSetMediaStatus = { mediaId, status, is4k -> marked += Triple(mediaId, status, is4k) },
-                            onReportIssue = { type, message -> reported += type to message },
-                            onDismissReport = { dismissedReports++ },
-                            requesterSheet =
-                                if (requesterSheet) {
-                                    { userId, isMovie, _ -> LaunchedEffect(userId) { openedRequesters += userId to isMovie } }
-                                } else {
-                                    null
-                                },
                         ),
                 )
             }
