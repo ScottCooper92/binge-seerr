@@ -20,6 +20,7 @@ import androidx.compose.ui.semantics.semantics
 import com.binge.designsystem.tv.component.TvSideSheetBody
 import com.binge.designsystem.tv.component.TvSideSheetConfirm
 import com.binge.designsystem.tv.component.TvSideSheetNav
+import com.binge.designsystem.tv.component.TvSideSheetReadout
 import com.binge.designsystem.tv.component.TvSideSheetRow
 import com.binge.designsystem.tv.component.TvSideSheetStack
 import com.binge.designsystem.tv.component.TvSideSheetTitle
@@ -149,7 +150,7 @@ private fun ColumnScope.ScrollingRows(content: @Composable ColumnScope.() -> Uni
 }
 
 /**
- * A pane row as a sheet row. One with no option is a read-out, out of the focus order. One with an option is a row to
+ * A pane row as a sheet row. One with no option is a read-out, out of the focus order and at full contrast. One with an option is a row to
  * press that runs it, saying what it holds in place of its description (a switch's state, a scan's outcome). The media
  * server row is named for what pressing it does, since its own label is the server's.
  */
@@ -160,7 +161,7 @@ private fun SettingsRow(
 ) {
     val option = row.options.firstOrNull()
     if (option == null) {
-        TvSideSheetRow(label = row.label, icon = row.icon, enabled = false, onClick = {}, supportingText = row.body.ifEmpty { null })
+        TvSideSheetReadout(label = row.label, icon = row.icon, supportingText = row.body.ifEmpty { null })
         return
     }
     val announce = if (row.announceNote) Modifier.semantics { liveRegion = LiveRegionMode.Polite } else Modifier
