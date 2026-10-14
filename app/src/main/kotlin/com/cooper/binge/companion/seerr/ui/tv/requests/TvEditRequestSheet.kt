@@ -24,8 +24,6 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.SaveStatus
 import com.binge.designsystem.tv.component.TvCheckboxRow
-import com.binge.designsystem.tv.component.TvChoiceRow
-import com.binge.designsystem.tv.component.TvChoiceUi
 import com.binge.designsystem.tv.component.TvOptionRow
 import com.binge.designsystem.tv.component.TvSaveStatus
 import com.binge.designsystem.tv.component.TvSideSheetBody
@@ -42,18 +40,14 @@ import com.cooper.binge.companion.seerr.ui.requests.SeasonChoice
 import com.cooper.binge.companion.seerr.ui.state.labelRes
 import com.binge.designsystem.R as DesR
 
-private const val KEY_STANDARD = "standard"
-private const val KEY_4K = "4k"
-
 /** What the sheet shows: the form, or one destination field's choices in its place. */
 internal enum class EditStep { Form, Server, Profile, RootFolder }
 
 /**
- * The request's editor as a side sheet, the TV form of the phone's `EditRequestSheet`: the version, where the user may
- * move it; a show's seasons as a checklist, those the server holds locked; and the destination, each field a row that
- * swaps its choices in. One Save sends it all, and [TvSaveStatus] says how it went, with Retry when the server refused
- * it. The editor closes itself once the edit lands, and the sheet goes with it, leaving the page to say so. Tags stay on
- * the phone.
+ * The request's editor as a side sheet, the TV form of the phone's `EditRequestSheet`: a show's seasons as a checklist,
+ * those the server holds locked, and the destination within the request's own version, each field a row that swaps its
+ * choices in. The version is not offered, because Seerr's edit keeps a request's version whatever the body says. One
+ * Save sends it all, and [TvSaveStatus] says how it went, with Retry when the server refused it. Tags stay on the phone.
  */
 @Composable
 internal fun ColumnScope.TvEditRequestSheet(
@@ -88,7 +82,7 @@ internal fun ColumnScope.TvEditRequestSheet(
     TvSideSheetStepFocus(entryFocus)
 }
 
-/** The form: the version, the seasons, the destination rows, how the last save went, and Save. */
+/** The form: the seasons, the destination rows, how the last save went, and Save. */
 @Composable
 private fun ColumnScope.TvEditForm(
     edit: EditState,
@@ -102,7 +96,6 @@ private fun ColumnScope.TvEditForm(
         modifier = Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
     ) {
-        if (edit.can4k) TvVersionChoice(edit, controls, entryFocus)
         edit.seasons.forEach { season ->
             TvSeasonCheckbox(
                 season = season,
@@ -129,31 +122,11 @@ private fun ColumnScope.TvEditForm(
     }
 }
 
-/** Standard or 4K. OK commits, so moving across the pair changes nothing until the user presses. */
-@Composable
-private fun TvVersionChoice(
-    edit: EditState,
-    controls: RequestEditorControls,
-    entryFocus: FocusRequester,
-) {
-    TvChoiceRow(
-        choices =
-            listOf(
-                TvChoiceUi(KEY_STANDARD, stringResource(R.string.media_instance_standard)),
-                TvChoiceUi(KEY_4K, stringResource(R.string.settings_service_4k)),
-            ),
-        selectedKey = if (edit.is4k) KEY_4K else KEY_STANDARD,
-        onSelect = { key -> if (!edit.saving) controls.select4k(key == KEY_4K) },
-        entryFocusRequester = entryFocus,
-    )
-}
-
 /** Which of the form's controls the sheet lands on: the first the user can change. */
-private enum class EditEntry { Version, Season, Destination, Save }
+private enum class EditEntry { Season, Destination, Save }
 
 private fun EditState.entryTarget(): EditEntry =
     when {
-        can4k -> EditEntry.Version
         seasons.any { !it.locked } -> EditEntry.Season
         destination != null -> EditEntry.Destination
         else -> EditEntry.Save

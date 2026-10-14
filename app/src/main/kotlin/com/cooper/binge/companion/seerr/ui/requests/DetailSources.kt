@@ -67,15 +67,6 @@ internal class DetailSources(
 
     val canEditDestination: Boolean get() = pending && permissions.canRequestAdvanced
 
-    /** The user may request 4K of this kind and the server has 4K on for it, so the editor may move the request between versions. */
-    val can4k: Boolean
-        get() =
-            if (dto.media.mediaType == SEERR_MEDIA_TYPE_TV) {
-                permissions.canRequest4kTv && profile.settings.series4kEnabled
-            } else {
-                permissions.canRequest4kMovie && profile.settings.movie4kEnabled
-            }
-
     /** With partial requests off the server takes a whole show, so a show's seasons are not the editor's to change. */
     val seasonsEditable: Boolean
         get() = dto.media.mediaType != SEERR_MEDIA_TYPE_TV || profile.settings.partialRequestsEnabled

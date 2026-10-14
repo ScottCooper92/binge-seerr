@@ -29,15 +29,13 @@ private const val FIRST_SEASON = 1
  * What the editor opens on: the request as the server returned it, and its title as the server lists it.
  * [seasonsEditable] is false for a show on a server with partial requests off: the editor then offers
  * no season list. Its save still sends the request's own seasons, because the server refuses a show's
- * edit without them (#1003). [can4k] offers the move between the standard and the 4K version: the user may
- * request 4K of this kind and the server has it on.
+ * edit without them (#1003).
  */
 class EditSource(
     val request: SeerrRequestDto,
     val details: SeerrMediaDetailsDto?,
     val canEditDestination: Boolean,
     val seasonsEditable: Boolean = true,
-    val can4k: Boolean = false,
 )
 
 /** What a screen may ask of a [RequestEditor]: its actions, and none of its flows (#1048). */
@@ -47,8 +45,6 @@ interface RequestEditorControls {
     fun toggleSeason(number: Int)
 
     fun selectAllSeasons(selected: Boolean)
-
-    fun select4k(is4k: Boolean)
 
     fun selectServer(id: Int)
 
@@ -106,14 +102,12 @@ class RequestEditor(
         val seasonsUnknown = request.isTv && source.seasonsEditable && source.details == null
         edit.value =
             EditState(
-                seasons = if (source.seasonsEditable) source.seasonChoices(request.is4k) else emptyList(),
+                seasons = if (source.seasonsEditable) source.seasonChoices() else emptyList(),
                 destination = destination,
                 seasonsUnknown = seasonsUnknown,
                 seasonsEditable = source.seasonsEditable,
-                is4k = request.is4k,
-                can4k = source.can4k && destination != null,
             )
-        if (destination != null) scope.launch(dispatcher) { loadServers(request.is4k) }
+        if (destination != null) scope.launch(dispatcher) { loadServers(request) }
     }
 
     override fun cancel() {
@@ -128,27 +122,6 @@ class RequestEditor(
     /** Ticks or clears every season the editor may change; a held season is left exactly as it is. */
     override fun selectAllSeasons(selected: Boolean) =
         update { state -> state.copy(seasons = state.seasons.map { if (it.locked) it else it.copy(selected = selected) }) }
-
-    /**
-     * Moves the request to the other version. Its servers are that version's, so the destination starts over from
-     * its default, and a season's hold is read again, since what the server holds differs by version. The ticks stay,
-     * bar a held season's, which is the request's own again.
-     */
-    override fun select4k(is4k: Boolean) {
-        val source = source ?: return
-        var changed = false
-        update { state ->
-            if (!state.can4k || state.saving || state.is4k == is4k) return@update state
-            changed = true
-            val ticked = state.seasons.associate { it.number to it.selected }
-            state.copy(
-                is4k = is4k,
-                seasons = if (state.seasons.isEmpty()) state.seasons else source.seasonChoices(is4k).keepTicks(ticked),
-                destination = DestinationChoices(loadingChoices = true),
-            )
-        }
-        if (changed) scope.launch(dispatcher) { loadServers(is4k) }
-    }
 
     override fun selectServer(id: Int) {
         val server = servers.firstOrNull { it.id == id } ?: return
@@ -175,14 +148,9 @@ class RequestEditor(
         moderation.edit(request.id, state.toBody(request))
     }
 
-    /**
-     * The list a request of this shape may go to; the request's own server where it is still listed, else the default.
-     * A load for the version the editor has since moved off is dropped.
-     */
-    private suspend fun loadServers(is4k: Boolean) {
-        val request = source?.request ?: return
-        val loaded = attempt { connection.api().arrServers(request.isTv).forRequest(is4k) }.getOrNull()
-        if (edit.value?.is4k != is4k) return
+    /** The list a request of this shape may go to; the request's own server where it is still listed, else the default. */
+    private suspend fun loadServers(request: SeerrRequestDto) {
+        val loaded = attempt { connection.api().arrServers(request.isTv).forRequest(request.is4k) }.getOrNull()
         if (loaded == null) {
             updateDestination { it.copy(loadingChoices = false) }
             return
@@ -224,7 +192,7 @@ class RequestEditor(
                     seasonsEditable && !seasonsUnknown -> seasons.filter { it.selected }.map { it.number }
                     else -> request.seasons.map { it.seasonNumber }
                 },
-            is4k = is4k,
+            is4k = request.is4k,
             serverId = destination.serverId,
             profileId = destination.profileId,
             rootFolder = destination.rootFolder,
@@ -251,7 +219,7 @@ private fun SeerrRequestDto.destination(): DestinationChoices =
  * A show's seasons as the checklist: specials and empty seasons are left out, this request's own
  * seasons start ticked, and a season the server holds or another live request covers is locked.
  */
-private fun EditSource.seasonChoices(is4k: Boolean): List<SeasonChoice> {
+private fun EditSource.seasonChoices(): List<SeasonChoice> {
     val details = details ?: return emptyList()
     val requested = request.seasons.map { it.seasonNumber }.toSet()
     return details.seasons
@@ -262,14 +230,10 @@ private fun EditSource.seasonChoices(is4k: Boolean): List<SeasonChoice> {
                 name = season.name,
                 episodeCount = season.episodeCount,
                 selected = season.seasonNumber in requested,
-                heldStatus = details.heldStatus(season.seasonNumber, request.id, is4k),
+                heldStatus = details.heldStatus(season.seasonNumber, request.id, request.is4k),
             )
         }
 }
-
-/** These choices with the user's ticks carried over, where the season is still theirs to tick. */
-private fun List<SeasonChoice>.keepTicks(ticked: Map<Int, Boolean>): List<SeasonChoice> =
-    map { if (it.locked) it else it.copy(selected = ticked[it.number] ?: it.selected) }
 
 /** A request that is neither declined nor failed still occupies the season it covers. */
 private fun SeerrRequestStatusCode?.isLive(): Boolean = this != SeerrRequestStatusCode.Declined && this != SeerrRequestStatusCode.Failed

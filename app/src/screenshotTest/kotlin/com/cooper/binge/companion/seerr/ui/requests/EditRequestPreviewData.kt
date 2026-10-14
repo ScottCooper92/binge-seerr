@@ -60,7 +60,7 @@ private fun editDestination() =
         rootFolder = "/tv",
     )
 
-/** The TV sheet's fullest form: the version choice, a held season and two to choose, and the destination. */
+/** The TV sheet's fullest form: a held season and two to choose, and the destination. */
 internal fun tvEditState(): EditState =
     EditState(
         seasons =
@@ -74,7 +74,6 @@ internal fun tvEditState(): EditState =
                 )
             },
         destination = editDestination().copy(servers = listOf(Choice(SONARR_ID, "Sonarr"), Choice(SONARR_ID + 1, "Sonarr Anime"))),
-        can4k = true,
     )
 
 /** A save the server refused, on a form short enough to show the status line and Save together. */

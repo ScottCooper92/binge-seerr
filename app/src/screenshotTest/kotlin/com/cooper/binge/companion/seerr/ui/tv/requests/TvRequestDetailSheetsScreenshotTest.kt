@@ -55,7 +55,7 @@ class TvRequestDetailSheetsScreenshotTest {
             )
         }
 
-    /** The edit: standard or 4K, a held season locked with the server's state, and the destination rows. It scrolls past the fold. */
+    /** The edit: a held season locked with the server's state, the others to choose, and the destination rows. */
     @PreviewTest
     @SeerrTvScreenPreviews
     @Composable
@@ -123,8 +123,6 @@ private object NoEditorControls : RequestEditorControls {
     override fun toggleSeason(number: Int) = Unit
 
     override fun selectAllSeasons(selected: Boolean) = Unit
-
-    override fun select4k(is4k: Boolean) = Unit
 
     override fun selectServer(id: Int) = Unit
 

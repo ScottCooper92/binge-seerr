@@ -68,10 +68,6 @@ data class EditState(
     val seasonsUnknown: Boolean = false,
     /** False where the server takes a whole show, so [seasons] is empty by rule and the save sends back the request's own. */
     val seasonsEditable: Boolean = true,
-    /** Which version the edit sends: the request's own until the user moves it. */
-    val is4k: Boolean = false,
-    /** Whether the editor offers the move between versions; see [EditSource.can4k]. */
-    val can4k: Boolean = false,
     /** The last save was refused; the edit stays open with the user's changes, to retry. */
     val failed: Boolean = false,
 ) {

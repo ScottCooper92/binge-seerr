@@ -52,25 +52,12 @@ class TvRequestEditSheetTest {
     private val editor = FakeEditor()
 
     @Test
-    fun editOpensTheEditorOnTheVersionChoice() {
-        setContent(EditState(seasons = emptyList(), destination = destination(), can4k = true))
-
-        actionButton(R.string.tv_detail_edit).assertIsFocused()
-        pressOk()
-
-        assertEquals(1, editor.starts)
-        option(R.string.media_instance_standard).assertIsFocused()
-        option(R.string.settings_service_4k).requestFocus()
-        pressOk()
-        assertEquals(listOf(true), editor.versions)
-    }
-
-    @Test
     fun aServerPickedFromItsStepAppliesAndGoesBackToTheForm() {
         setContent(EditState(seasons = emptyList(), destination = destination()))
         pressOk()
 
-        // No version to choose and no seasons: the sheet lands on the server row.
+        // No seasons to tick: the sheet lands on the server row, and Edit is what opened the editor.
+        assertEquals(1, editor.starts)
         option(R.string.advanced_server).assertIsFocused()
         pressOk()
         composeTestRule.onNode(hasText("Spare") and isFocusable()).requestFocus()
@@ -167,7 +154,6 @@ private class FakeEditor : RequestEditorControls {
     var starts = 0
     var cancels = 0
     var saves = 0
-    val versions = mutableListOf<Boolean>()
     val servers = mutableListOf<Int>()
 
     fun start() {
@@ -183,10 +169,6 @@ private class FakeEditor : RequestEditorControls {
     override fun toggleSeason(number: Int) = Unit
 
     override fun selectAllSeasons(selected: Boolean) = Unit
-
-    override fun select4k(is4k: Boolean) {
-        versions += is4k
-    }
 
     override fun selectServer(id: Int) {
         servers += id
