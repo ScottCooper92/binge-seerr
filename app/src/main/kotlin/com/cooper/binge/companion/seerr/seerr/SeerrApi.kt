@@ -1173,6 +1173,12 @@ data class SeerrMediaInfoDto(
     @SerialName("mediaUrl") val mediaUrl: String? = null,
     @SerialName("jellyfinMediaUrl") val jellyfinMediaUrl: String? = null,
     @SerialName("plexUrl") val plexUrl: String? = null,
+    /**
+     * Link to the 4K version on the 4K media server: [mediaUrl4k] on Seerr and Jellyseerr, [plexUrl4k] on Overseerr. The
+     * server sets it only once the 4K version is in that server's library.
+     */
+    @SerialName("mediaUrl4k") val mediaUrl4k: String? = null,
+    @SerialName("plexUrl4k") val plexUrl4k: String? = null,
 )
 
 @Serializable
