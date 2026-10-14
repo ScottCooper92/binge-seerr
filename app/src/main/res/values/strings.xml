@@ -1167,9 +1167,8 @@
     <string name="request_block_confirm_message">The title is blocked from being requested again. This request is left as it is.</string>
     <string name="tv_detail_info_requested">Requested</string>
     <string name="tv_detail_info_status">Status</string>
-    <string name="tv_detail_info_sent_to">Sent to</string>
-    <string name="tv_detail_info_phone_only">Change on your phone</string>
     <string name="tv_detail_phone_tags">The request\'s tags</string>
+    <string name="tv_detail_phone_hint">Change on your phone: %1$s</string>
     <string name="tv_detail_phone_requester">The requester</string>
     <string name="tv_detail_phone_siblings">Other requests</string>
     <string name="tv_detail_details">Details</string>
