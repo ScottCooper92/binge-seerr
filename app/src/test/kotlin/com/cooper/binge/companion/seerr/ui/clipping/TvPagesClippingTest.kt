@@ -83,9 +83,11 @@ private const val OVERVIEW =
     "A long overview that runs on for several sentences, so that the page has a paragraph to wrap at a large font. " +
         "It keeps going past what any one screen shows at once, which is the case a clip is most likely to hide in."
 
+private const val PHONE_PAGE_TEXTS = 2
+
 /**
  * The television's pages with long text and every optional part present, at font scales 1.3 and 2.0, through the design
- * system's `assertNoTextClipped`: the request and issue detail pages, the settings board, the setup flow, the consent
+ * system's `assertNoTextClipped`: the request page, the issue sheet's pages, the settings board, the setup flow, the consent
  * question, the options hand-off and the error page. A page that scrolls is checked on its first screen.
  */
 @RunWith(RobolectricTestRunner::class)
@@ -106,7 +108,9 @@ class TvPagesClippingTest {
 
     @Test fun `an issue sheet's card page at 1_3`() = rule.assertNoTvClippingAt(FONT_SCALE_13) { IssueSheet(issueCardPage(KEY_REPORT)) }
 
-    @Test fun `an issue sheet's phone page at 1_3`() = rule.assertNoTvClippingAt(FONT_SCALE_13) { IssueSheet(ISSUE_PAGE_PHONE) }
+    /** The page is its title, one line on what to do, and the code: two texts, both checked. */
+    @Test fun `an issue sheet's phone page at 1_3`() =
+        rule.assertNoTvClippingAt(FONT_SCALE_13, minTextNodes = PHONE_PAGE_TEXTS) { IssueSheet(ISSUE_PAGE_PHONE) }
 
     @Test fun `the settings sheet at 1_3`() = rule.assertNoTvClippingAt(FONT_SCALE_13) { Settings() }
 

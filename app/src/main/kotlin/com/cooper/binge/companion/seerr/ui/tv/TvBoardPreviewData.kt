@@ -184,13 +184,12 @@ internal fun issue(
 
 internal val SampleIssues = listOf(issue(11, "Severance", IssueStatus.Open), issue(12, "Slow Horses", IssueStatus.Resolved))
 
-internal fun issuesReady(actionItem: IssueItem? = null) =
+internal fun issuesReady() =
     IssuesUiState.Ready(
         filter = IssueFilter.Open,
         sort = IssueSort.Added,
         counts = IssueCounts(total = 2, open = 1, resolved = 1),
         scope = IssueListScope(permissions = SeerrPermissions(canManageIssues = true), currentUserId = 7),
-        actionItem = actionItem,
     )
 
 internal val SampleSettings =

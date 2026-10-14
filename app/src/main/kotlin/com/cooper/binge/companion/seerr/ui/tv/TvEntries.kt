@@ -17,6 +17,7 @@ import com.cooper.binge.companion.seerr.ui.hub.HubSection
 import com.cooper.binge.companion.seerr.ui.hub.HubUiState
 import com.cooper.binge.companion.seerr.ui.hub.HubViewModel
 import com.cooper.binge.companion.seerr.ui.issues.IssueFilter
+import com.cooper.binge.companion.seerr.ui.issues.IssuesViewModel
 import com.cooper.binge.companion.seerr.ui.requests.RequestFilter
 import com.cooper.binge.companion.seerr.ui.settings.SettingsUiState
 import com.cooper.binge.companion.seerr.ui.settings.SettingsViewModel
@@ -31,6 +32,8 @@ import com.cooper.binge.companion.seerr.ui.tv.requests.KEY_MY_REQUESTS
 internal fun TvConnectedShell(
     hubViewModel: HubViewModel = hiltViewModel(),
     settingsViewModel: SettingsViewModel = hiltViewModel(),
+    // The Issues tab's own, so an issue changed in its sheet moves the tab's counts.
+    issuesViewModel: IssuesViewModel = hiltViewModel(),
 ) {
     // The hub state the Account page reads, for the signed-in user's id and which tabs are offered.
     val hub by hubViewModel.uiState.collectAsStateWithLifecycle()
@@ -68,7 +71,7 @@ internal fun TvConnectedShell(
                 pages[tab].seeAll == null -> null
                 else -> tabPages(tab, pages, seeAllAccountId = account?.id)
             },
-        topLayer = detailPage(tab, pages[tab]).takeUnless { editingConnection },
+        topLayer = detailPage(tab, pages[tab], onIssueChanged = issuesViewModel::refreshCounts).takeUnless { editingConnection },
     ) { destination, close ->
         when (destination) {
             TvDestination.Account ->
@@ -171,6 +174,7 @@ private fun TvIssuesPages(pages: TvTabPages) {
 private fun detailPage(
     tab: TvDestination,
     pages: TvTabPages,
+    onIssueChanged: () -> Unit,
 ): (@Composable () -> Unit)? {
     val id = pages.detailId ?: return null
     val close = { pages.detailId = null }
@@ -179,7 +183,7 @@ private fun detailPage(
             { ScopedViewModels("request-detail-$id") { TvRequestDetailOverlay(requestId = id, onDone = close) } }
         }
         TvDestination.Issues -> {
-            { ScopedViewModels("issue-detail-$id") { TvIssueSheetEntry(issueId = id, onDone = close) } }
+            { ScopedViewModels("issue-detail-$id") { TvIssueSheetEntry(issueId = id, onDone = close, onIssueChanged = onIssueChanged) } }
         }
         TvDestination.Account, TvDestination.Settings -> null
     }

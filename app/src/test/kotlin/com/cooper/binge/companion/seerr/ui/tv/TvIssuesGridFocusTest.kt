@@ -66,7 +66,6 @@ class TvIssuesGridFocusTest {
                     filter = IssueFilter.Open,
                     counts = null,
                     rows = TvPagedRows(count = items.size, at = { items.getOrNull(it) }),
-                    actingIds = emptySet(),
                     detailOpen = false,
                     onOpenDetail = { opened += it.id },
                     onRetryLoad = {},

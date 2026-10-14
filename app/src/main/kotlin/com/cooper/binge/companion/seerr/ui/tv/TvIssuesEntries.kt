@@ -68,7 +68,6 @@ internal fun TvIssuesGridOverlay(
         filter = filter,
         counts = ready?.counts,
         rows = lazyItems.toRows(ready?.refreshes?.get(filter)) { it.id },
-        actingIds = ready?.actingIds.orEmpty(),
         detailOpen = detailOpen,
         onOpenDetail = { onOpenIssue(it.id) },
         onRetryLoad = { lazyItems.retry() },
@@ -79,12 +78,14 @@ internal fun TvIssuesGridOverlay(
 
 /**
  * An issue's sheet, over the bar: the same [IssueDetailViewModel] the phone's `IssueDetailEntry` binds, in a view-model
- * scope of its own as the request page's is. A deleted issue closes it.
+ * scope of its own as the request page's is. A deleted issue closes it. [onIssueChanged] hears a resolve, a reopen or a
+ * delete, so the board's counts move with it.
  */
 @Composable
 internal fun TvIssueSheetEntry(
     issueId: Int,
     onDone: () -> Unit,
+    onIssueChanged: () -> Unit,
     viewModel: IssueDetailViewModel =
         hiltViewModel<IssueDetailViewModel, IssueDetailViewModel.Factory>(creationCallback = { factory -> factory.create(issueId) }),
 ) {
@@ -93,7 +94,12 @@ internal fun TvIssueSheetEntry(
         viewModel.setScreenVisible(true)
         onDispose { viewModel.setScreenVisible(false) }
     }
-    LaunchedEffect(viewModel) { viewModel.events.collect { if (it == IssueDetailEvent.IssueDeleted) onDone() } }
+    LaunchedEffect(viewModel) {
+        viewModel.events.collect { event ->
+            if (event.changesTheIssue()) onIssueChanged()
+            if (event == IssueDetailEvent.IssueDeleted) onDone()
+        }
+    }
     val context = LocalContext.current
     val item = (state as? IssueDetailUiState.Ready)?.detail?.mediaServerItem
     val onOpenInMediaServer = remember(context, item) { context.mediaServerHandOff(item) }
@@ -111,3 +117,7 @@ internal fun TvIssueSheetEntry(
             ),
     )
 }
+
+/** An answer that moves the issue between the board's filters, or off the board. */
+internal fun IssueDetailEvent.changesTheIssue(): Boolean =
+    this == IssueDetailEvent.IssueResolved || this == IssueDetailEvent.IssueReopened || this == IssueDetailEvent.IssueDeleted

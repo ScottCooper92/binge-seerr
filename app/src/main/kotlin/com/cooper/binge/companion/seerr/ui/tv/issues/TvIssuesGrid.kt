@@ -23,7 +23,6 @@ internal fun TvIssuesGrid(
     filter: IssueFilter,
     counts: IssueCounts?,
     rows: TvPagedRows<IssueItem>,
-    actingIds: Set<Int>,
     detailOpen: Boolean,
     onOpenDetail: (IssueItem) -> Unit,
     onRetryLoad: () -> Unit,
@@ -47,7 +46,7 @@ internal fun TvIssuesGrid(
             posterUrl = item.posterUrl,
             isFocused = isFocused,
             onFocusChanged = onFocusChanged,
-            enabled = item.id !in actingIds,
+            enabled = true,
             onClick = { onOpenDetail(item) },
             modifier = cellModifier,
         )

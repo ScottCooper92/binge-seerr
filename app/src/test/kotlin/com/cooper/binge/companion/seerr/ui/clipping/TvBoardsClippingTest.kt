@@ -170,7 +170,6 @@ class TvBoardsClippingTest {
             filter = IssueFilter.Open,
             counts = IssueCounts(total = 12_840, open = 5_000, resolved = 7_000),
             rows = rows((1..6).map { longIssue(it) }),
-            actingIds = emptySet(),
             detailOpen = false,
             onOpenDetail = {},
             onRetryLoad = {},
