@@ -17,6 +17,7 @@ import com.binge.designsystem.tv.component.TvSaveStatus
 import com.binge.designsystem.tv.component.TvSideSheetBody
 import com.binge.designsystem.tv.component.TvSideSheetNav
 import com.binge.designsystem.tv.component.TvSideSheetRow
+import com.binge.designsystem.tv.component.TvSideSheetRows
 import com.binge.designsystem.tv.component.TvSideSheetTitle
 import com.binge.designsystem.tv.component.TvSwitch
 import com.binge.designsystem.tv.template.TvPaneGroup
@@ -163,14 +164,16 @@ internal fun ColumnScope.TvAgentPage(
             val form = state.draft
             val blocked = !form.valid || (!form.enabled && !form.copy(enabled = true).valid)
             TvSideSheetBody(stringResource(if (blocked) R.string.tv_settings_agent_setup_first else R.string.tv_settings_agent_body))
-            TvSideSheetRow(
-                label = stringResource(agent.labelRes()),
-                icon = Icons.Filled.Notifications,
-                enabled = form.enabled || !blocked,
-                onClick = { onSetEnabled(!form.enabled) },
-                modifier = nav.row(KEY_AGENT_TOGGLE),
-                role = Role.Switch,
-            ) { isFocused -> TvSwitch(checked = form.enabled, isFocused = isFocused) }
+            TvSideSheetRows {
+                TvSideSheetRow(
+                    label = stringResource(agent.labelRes()),
+                    icon = Icons.Filled.Notifications,
+                    enabled = form.enabled || !blocked,
+                    onClick = { onSetEnabled(!form.enabled) },
+                    modifier = nav.row(KEY_AGENT_TOGGLE),
+                    role = Role.Switch,
+                ) { isFocused -> TvSwitch(checked = form.enabled, isFocused = isFocused) }
+            }
             TvSaveStatus(status = state.saveStatus, onRetry = onRetry)
         }
     }

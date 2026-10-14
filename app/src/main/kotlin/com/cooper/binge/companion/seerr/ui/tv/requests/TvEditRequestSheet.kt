@@ -1,11 +1,7 @@
 package com.cooper.binge.companion.seerr.ui.tv.requests
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Tv
 import androidx.compose.runtime.Composable
@@ -19,7 +15,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.SaveStatus
@@ -28,6 +23,7 @@ import com.binge.designsystem.tv.component.TvOptionRow
 import com.binge.designsystem.tv.component.TvSaveStatus
 import com.binge.designsystem.tv.component.TvSideSheetBody
 import com.binge.designsystem.tv.component.TvSideSheetRow
+import com.binge.designsystem.tv.component.TvSideSheetRows
 import com.binge.designsystem.tv.component.TvSideSheetStepFocus
 import com.binge.designsystem.tv.component.TvSideSheetTitle
 import com.cooper.binge.companion.seerr.R
@@ -38,7 +34,6 @@ import com.cooper.binge.companion.seerr.ui.requests.RequestEditorControls
 import com.cooper.binge.companion.seerr.ui.requests.RequestItem
 import com.cooper.binge.companion.seerr.ui.requests.SeasonChoice
 import com.cooper.binge.companion.seerr.ui.state.labelRes
-import com.binge.designsystem.R as DesR
 
 /** What the sheet shows: the form, or one destination field's choices in its place. */
 internal enum class EditStep { Form, Server, Profile, RootFolder }
@@ -92,10 +87,7 @@ private fun ColumnScope.TvEditForm(
 ) {
     val entry = edit.entryTarget()
     val firstOpenSeason = edit.seasons.firstOrNull { !it.locked }?.number
-    Column(
-        modifier = Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
-    ) {
+    TvSideSheetRows {
         edit.seasons.forEach { season ->
             TvSeasonCheckbox(
                 season = season,
@@ -250,12 +242,11 @@ private fun <T> ColumnScope.TvPickerStep(
     TvSideSheetTitle(title)
     if (choices.isEmpty()) {
         TvSideSheetBody(stringResource(R.string.tv_loading))
-        TvSideSheetRow(label = stringResource(R.string.editor_done), onClick = onBack, modifier = Modifier.focusRequester(entryFocus))
+        TvSideSheetRows {
+            TvSideSheetRow(label = stringResource(R.string.editor_done), onClick = onBack, modifier = Modifier.focusRequester(entryFocus))
+        }
     } else {
-        Column(
-            modifier = Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
-        ) {
+        TvSideSheetRows {
             choices.forEachIndexed { index, (key, label) ->
                 TvOptionRow(
                     label = label,

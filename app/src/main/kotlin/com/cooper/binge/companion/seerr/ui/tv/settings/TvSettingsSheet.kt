@@ -1,12 +1,7 @@
 package com.cooper.binge.companion.seerr.ui.tv.settings
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Dns
 import androidx.compose.material.icons.filled.LinkOff
@@ -29,6 +24,7 @@ import com.binge.designsystem.tv.component.TvSaveStatus
 import com.binge.designsystem.tv.component.TvSideSheetBody
 import com.binge.designsystem.tv.component.TvSideSheetNav
 import com.binge.designsystem.tv.component.TvSideSheetRow
+import com.binge.designsystem.tv.component.TvSideSheetRows
 import com.binge.designsystem.tv.component.TvSideSheetStack
 import com.binge.designsystem.tv.component.TvSideSheetTitle
 import com.binge.designsystem.tv.component.TvSwitch
@@ -39,7 +35,6 @@ import com.cooper.binge.companion.seerr.ui.hub.HubUiState
 import com.cooper.binge.companion.seerr.ui.settings.AppSettings
 import com.cooper.binge.companion.seerr.ui.settings.SettingsUiState
 import com.cooper.binge.companion.seerr.ui.settings.server.JobsUiState
-import com.binge.designsystem.R as DesR
 import com.binge.designsystem.tv.R as TvR
 
 internal const val PAGE_SETTINGS = "settings"
@@ -100,7 +95,9 @@ internal fun TvSettingsSheet(
 private fun ColumnScope.LoadingPage(nav: TvSideSheetNav) {
     TvSideSheetTitle(stringResource(R.string.hub_section_settings))
     TvSideSheetBody(stringResource(R.string.tv_loading))
-    TvSideSheetRow(label = stringResource(R.string.tv_sheet_close), onClick = nav::pop, modifier = nav.row(KEY_CLOSE))
+    TvSideSheetRows {
+        TvSideSheetRow(label = stringResource(R.string.tv_sheet_close), onClick = nav::pop, modifier = nav.row(KEY_CLOSE))
+    }
 }
 
 /**
@@ -126,7 +123,7 @@ private fun ColumnScope.RootPage(
         )
     }
     TvSideSheetTitle(stringResource(R.string.hub_section_settings))
-    ScrollingRows {
+    TvSideSheetRows {
         TvInfoCard(title = summary.title, lines = summary.lines, icon = Icons.Filled.Dns, modifier = nav.row(KEY_SUMMARY))
         groups.forEach { group ->
             TvSideSheetRow(
@@ -156,7 +153,7 @@ private fun ColumnScope.GroupPage(
     TvSideSheetTitle(group.title)
     group.note?.let { TvSideSheetBody(it) }
     val (facts, rows) = group.rows.partition { it.options.isEmpty() }
-    ScrollingRows {
+    TvSideSheetRows {
         rows.forEach { SettingsRow(it, nav) }
         facts.firstOrNull()?.let { head ->
             TvInfoCard(
@@ -178,24 +175,6 @@ private fun ColumnScope.GroupPage(
 }
 
 private fun TvPaneRow.factLine(separator: String): String = if (body.isEmpty()) label else "$label$separator$body"
-
-/**
- * A page's rows in a column that scrolls with focus, since a group can hold more than the panel is tall. The sheet runs to
- * the screen's edge, so the bottom overscan is inside the scroll: the last row clears the edge once scrolled to.
- */
-@Composable
-private fun ColumnScope.ScrollingRows(content: @Composable ColumnScope.() -> Unit) {
-    Column(
-        modifier =
-            Modifier
-                .weight(1f, fill = false)
-                .fillMaxWidth()
-                .verticalScroll(rememberScrollState())
-                .padding(bottom = dimensionResource(TvR.dimen.tv_overscan_vertical)),
-        verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
-        content = content,
-    )
-}
 
 /**
  * A pane row as a sheet row that runs its one option. A [switchRow] ends in a switch, which says on or off, with its

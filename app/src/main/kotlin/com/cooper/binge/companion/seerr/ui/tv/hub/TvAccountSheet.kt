@@ -1,12 +1,7 @@
 package com.cooper.binge.companion.seerr.ui.tv.hub
 
 import androidx.compose.foundation.focusable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Person
@@ -19,7 +14,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.tv.component.TvConfirmDialog
@@ -27,6 +21,7 @@ import com.binge.designsystem.tv.component.TvInfoCard
 import com.binge.designsystem.tv.component.TvSideSheet
 import com.binge.designsystem.tv.component.TvSideSheetBody
 import com.binge.designsystem.tv.component.TvSideSheetRow
+import com.binge.designsystem.tv.component.TvSideSheetRows
 import com.binge.designsystem.tv.component.TvSideSheetStepFocus
 import com.binge.designsystem.tv.component.TvSideSheetTitle
 import com.cooper.binge.companion.seerr.R
@@ -36,7 +31,6 @@ import com.cooper.binge.companion.seerr.ui.hub.HubQuotaBucket
 import com.cooper.binge.companion.seerr.ui.state.messageRes
 import com.cooper.binge.companion.seerr.ui.users.UserDetailUiState
 import com.cooper.binge.companion.seerr.ui.users.UserItem
-import com.binge.designsystem.R as DesR
 import com.cooper.binge.companion.seerr.ui.state.labelRes as roleLabelRes
 import com.cooper.binge.companion.seerr.ui.users.labelRes as originLabelRes
 
@@ -85,10 +79,7 @@ internal fun TvAccountSheet(
                 entryFocus = entryFocus,
             )
         } else {
-            Column(
-                modifier = Modifier.weight(1f, fill = false).fillMaxWidth().verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
-            ) {
+            TvSideSheetRows {
                 TvInfoCard(
                     title = item.name,
                     lines = accountLines(item, quota),
@@ -125,12 +116,14 @@ private fun ColumnScope.Unresolved(
         else -> TvSideSheetBody(stringResource(R.string.tv_loading), modifier = holdsFocus)
     }
     if (failed) {
-        TvSideSheetRow(
-            label = stringResource(R.string.hub_retry),
-            icon = Icons.Filled.Refresh,
-            onClick = onRetry,
-            modifier = Modifier.focusRequester(entryFocus),
-        )
+        TvSideSheetRows {
+            TvSideSheetRow(
+                label = stringResource(R.string.hub_retry),
+                icon = Icons.Filled.Refresh,
+                onClick = onRetry,
+                modifier = Modifier.focusRequester(entryFocus),
+            )
+        }
     }
     TvSideSheetStepFocus(entryFocus)
 }
