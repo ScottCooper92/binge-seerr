@@ -27,6 +27,7 @@ import com.cooper.binge.companion.seerr.ui.tv.hub.TvHubBoard
 import com.cooper.binge.companion.seerr.ui.tv.requests.RequestRowFilters
 import com.cooper.binge.companion.seerr.ui.tv.requests.TvRequestDetailActions
 import com.cooper.binge.companion.seerr.ui.tv.requests.TvRequestDetailScreen
+import com.cooper.binge.companion.seerr.ui.tv.requests.TvRequestEditActions
 import com.cooper.binge.companion.seerr.ui.tv.requests.TvRequestsActions
 import com.cooper.binge.companion.seerr.ui.tv.requests.TvRequestsGrid
 import com.cooper.binge.companion.seerr.ui.tv.requests.TvRequestsRowsBoard
@@ -41,6 +42,7 @@ internal fun TvHomeEntry(
     onReconnect: () -> Unit,
     onOpenRequest: (Int) -> Unit,
     onSeeAll: (RequestFilter) -> Unit,
+    onSeeAllMine: () -> Unit,
     hubViewModel: HubViewModel = hiltViewModel(),
 ) {
     val hub by hubViewModel.uiState.collectAsStateWithLifecycle()
@@ -48,7 +50,12 @@ internal fun TvHomeEntry(
     var answering by remember { mutableStateOf(false) }
     answering = homeAnswering(hub, answering)
     if (answering) {
-        TvRequestsEntry(onOpenRequest = onOpenRequest, onSeeAll = onSeeAll)
+        TvRequestsEntry(
+            onOpenRequest = onOpenRequest,
+            onSeeAll = onSeeAll,
+            accountId = (hub as? HubUiState.Ready)?.overview?.account?.id,
+            onSeeAllMine = onSeeAllMine,
+        )
     } else {
         TvHubEntry(onReconnect = onReconnect, viewModel = hubViewModel)
     }
@@ -96,6 +103,8 @@ private fun TvHubEntry(
 private fun TvRequestsEntry(
     onOpenRequest: (Int) -> Unit,
     onSeeAll: (RequestFilter) -> Unit,
+    accountId: Int?,
+    onSeeAllMine: () -> Unit,
     viewModel: RequestsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -113,9 +122,11 @@ private fun TvRequestsEntry(
         }
     }
     val rowsByFilter = RequestRowFilters.associateWith { pagers.getValue(it).toRows(ready?.refreshes?.get(it)) { item -> item.id } }
+    val mine = rememberMyRequests(accountId, onSeeAllMine)
     TvRequestsRowsBoard(
         state = state,
         rowsFor = { rowsByFilter.getValue(it) },
+        mine = mine,
         actions =
             TvRequestsActions(
                 onOpenDetail = { item -> onOpenRequest(item.id) },
@@ -196,6 +207,7 @@ internal fun TvRequestDetailOverlay(
                 },
                 onReportIssue = viewModel::reportIssue,
                 onDismissReport = viewModel::dismissReport,
+                edit = TvRequestEditActions(onStart = viewModel::startEdit, controls = viewModel.editor),
             ),
     )
 }

@@ -333,6 +333,7 @@ internal fun TvIssueActionsSheet(
                     modifier = Modifier.focusRequester(entryFocus),
                     enabled = !busy,
                 )
+                TvSideSheetRow(label = stringResource(R.string.tv_issue_read_comments), onClick = onOpenDetail)
                 if (canDelete) {
                     TvSideSheetRow(
                         label = stringResource(R.string.issue_delete),
@@ -341,7 +342,6 @@ internal fun TvIssueActionsSheet(
                         enabled = !busy,
                     )
                 }
-                TvSideSheetRow(label = stringResource(R.string.tv_issue_read_comments), onClick = onOpenDetail)
                 TvSaveStatus(status = run.status, onRetry = run::again)
                 TvSideSheetStepFocus(entryFocus)
             }

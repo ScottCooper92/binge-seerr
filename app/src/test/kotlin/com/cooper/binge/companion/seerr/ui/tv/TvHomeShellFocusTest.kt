@@ -98,7 +98,7 @@ class TvHomeShellFocusTest {
                     onOpenPage = { page = it },
                     onClosePage = { page = TvDestination.Hub },
                     showIssues = showIssues,
-                ) { destination ->
+                ) { destination, _ ->
                     Box(modifier = Modifier.fillMaxSize().padding(top = TOP_ROW_CLEARANCE)) {
                         val claim = remember { FocusRequester() }
                         // A board hosted as an overlay claims first focus itself; this stand-in does the same.

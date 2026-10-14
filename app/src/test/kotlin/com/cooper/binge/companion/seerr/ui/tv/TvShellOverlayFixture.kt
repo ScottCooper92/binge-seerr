@@ -46,13 +46,13 @@ internal fun BoardInShell(
     overlay: (@Composable BoxScope.() -> Unit)?,
     board: @Composable () -> Unit,
 ) {
-    TvHomeShell(page = destination, onOpenPage = {}, onClosePage = {}, overlay = overlay) { shown ->
+    TvHomeShell(page = destination, onOpenPage = {}, onClosePage = {}, overlay = overlay) { shown, _ ->
         if (shown == destination) board()
     }
 }
 
 @Composable
-private fun StandInPage(onClose: () -> Unit) {
+internal fun StandInPage(onClose: () -> Unit) {
     val requester = remember { FocusRequester() }
     BackHandler(onBack = onClose)
     Box(

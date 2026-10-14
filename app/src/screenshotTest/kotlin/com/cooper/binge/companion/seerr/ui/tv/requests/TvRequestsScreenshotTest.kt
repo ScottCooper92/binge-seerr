@@ -106,4 +106,30 @@ class TvRequestsScreenshotTest {
             actions = NoRequestsActions,
         )
     }
+
+    /** The signed-in user's own requests are a row of their own on Home: here the only one, as for a server that lists nothing else. */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun YourRequests() {
+        TvRequestsRowsBoard(
+            state = requestsReady(),
+            rowsFor = { rows(emptyList()) },
+            mine = TvMyRequests(rows = rows(SampleRequests), count = SampleRequests.size, onSeeAll = {}),
+            actions = NoRequestsActions,
+        )
+    }
+
+    /** More of their own than the row holds: the heading carries the whole count and the row ends in a See all tile (#1043). */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun YourRequestsPastTheRowCap() {
+        TvRequestsRowsBoard(
+            state = requestsReady(),
+            rowsFor = { rows(emptyList()) },
+            mine = TvMyRequests(rows = rows(SampleRequests), count = 57, onSeeAll = {}),
+            actions = NoRequestsActions,
+        )
+    }
 }

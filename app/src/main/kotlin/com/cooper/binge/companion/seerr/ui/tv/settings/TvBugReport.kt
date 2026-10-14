@@ -11,15 +11,12 @@ import androidx.compose.material.icons.filled.Insights
 import androidx.compose.material.icons.filled.QrCode
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.tv.component.TvQrCode
 import com.binge.designsystem.tv.component.TvSideSheetBody
 import com.binge.designsystem.tv.component.TvSideSheetRow
-import com.binge.designsystem.tv.component.TvSideSheetStepFocus
 import com.binge.designsystem.tv.component.TvSideSheetTitle
 import com.binge.designsystem.tv.template.TvPaneGroup
 import com.binge.designsystem.tv.template.TvPaneOption
@@ -48,7 +45,6 @@ internal class TvAppActions(
 internal fun tvAppGroup(
     app: AppSettings,
     actions: TvAppActions,
-    optionFocus: FocusRequester,
 ): TvPaneGroup =
     TvPaneGroup(
         title = stringResource(R.string.settings_group_app),
@@ -64,7 +60,6 @@ internal fun tvAppGroup(
                                 label = stringResource(R.string.tv_settings_report_bug_show_code),
                                 icon = Icons.Filled.QrCode,
                                 onSelect = actions.onShowBugReport,
-                                focusRequester = optionFocus,
                             ),
                         ),
                     icon = Icons.Filled.BugReport,
@@ -119,7 +114,7 @@ private fun toggleRow(
 internal fun ColumnScope.TvBugReportSheetContent(
     app: AppSettings,
     onClose: () -> Unit,
-    entryFocus: FocusRequester,
+    closeModifier: Modifier,
 ) {
     TvSideSheetTitle(stringResource(R.string.settings_report_bug))
     TvSideSheetBody(stringResource(R.string.tv_settings_report_bug_scan))
@@ -136,9 +131,8 @@ internal fun ColumnScope.TvBugReportSheetContent(
                 .aspectRatio(1f),
     )
     TvSideSheetRow(
-        label = stringResource(R.string.tv_settings_report_bug_close),
+        label = stringResource(R.string.tv_sheet_close),
         onClick = onClose,
-        modifier = Modifier.focusRequester(entryFocus),
+        modifier = closeModifier,
     )
-    TvSideSheetStepFocus(entryFocus)
 }

@@ -223,6 +223,7 @@ class TvIssuesBoardFocusTest {
         focusFirstRow()
         pressOk()
         pressDown()
+        pressDown()
         sheetRow(R.string.issue_delete).assertIsFocused()
         pressOk()
 
@@ -273,7 +274,6 @@ class TvIssuesBoardFocusTest {
 
         pressOk()
         pressDown()
-        pressDown()
         sheetRow(R.string.tv_issue_read_comments).assertIsFocused()
         pressOk()
 
@@ -303,6 +303,7 @@ class TvIssuesBoardFocusTest {
         setBoard(manager)
         focusFirstRow()
         pressOk()
+        pressDown()
         pressDown()
         sheetRow(R.string.issue_delete).assertIsFocused()
         pressOk()

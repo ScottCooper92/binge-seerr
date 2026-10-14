@@ -356,6 +356,24 @@ class RequestEditorTest {
             assertEquals(8, body.getValue("profileId").jsonPrimitive.int)
         }
 
+    /** A refused save keeps the edit open and marked failed, for the sheet to offer Retry; the next save clears the mark. */
+    @Test
+    fun `a refused save marks the edit failed until the next save`() =
+        runTest {
+            val editor = editor()
+            editor.start(EditSource(tvRequest(), details = showDetails(), canEditDestination = false))
+            editor.awaitLoaded()
+            failing += "/api/v1/request/12"
+
+            editor.save()
+
+            val refused = editor.state.first { it?.failed == true } as EditState
+            assertFalse(refused.saving)
+            failing.clear()
+            editor.save()
+            editor.awaitClosed()
+        }
+
     private fun movieRequest(tags: List<Int> = emptyList()) =
         SeerrRequestDto(
             id = 11,
