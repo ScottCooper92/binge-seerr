@@ -39,6 +39,10 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+
+private const val GATE_TIMEOUT_SECONDS = 10L
 
 /** Radarr answers for a film and Sonarr for a series; the editor picks by the request's own media type. */
 private const val RADARR = "/api/v1/service/radarr"
@@ -71,6 +75,12 @@ class RequestEditorTest {
     /** When set, the edit's `PUT` gets Seerr's 202 for an edit that leaves nothing to request. */
     @Volatile private var nothingLeftToRequest = false
 
+    /** Holds an approve's answer until released, so another action can be tried while it is in flight (#1541). */
+    private val approveGate = CountDownLatch(1)
+
+    /** The moderation the editor saves through, for a test to start another action on the same request. */
+    private lateinit var moderation: RequestModeration
+
     @After
     fun tearDown() = seerr.close()
 
@@ -80,6 +90,7 @@ class RequestEditorTest {
                 override fun dispatch(request: RecordedRequest): MockResponse {
                     received += request
                     val path = request.url.encodedPath
+                    if (path.endsWith("/approve")) approveGate.await(GATE_TIMEOUT_SECONDS, TimeUnit.SECONDS)
                     if (path in failing) return MockResponse(code = 500)
                     if (nothingLeftToRequest && request.method == "PUT") {
                         return MockResponse(code = 202, body = """{"message":"No seasons available to request"}""")
@@ -109,7 +120,7 @@ class RequestEditorTest {
             )
         connection.connect(seerr.url("/").toString(), SeerrAuth.ApiKey("k3y")).getOrThrow()
         val dispatcher = UnconfinedTestDispatcher(testScheduler)
-        val moderation = RequestModeration(scope = backgroundScope, dispatcher = dispatcher, connection = connection) {}
+        moderation = RequestModeration(scope = backgroundScope, dispatcher = dispatcher, connection = connection) {}
         return RequestEditor(scope = backgroundScope, dispatcher = dispatcher, connection = connection, moderation = moderation)
     }
 
@@ -372,6 +383,55 @@ class RequestEditorTest {
             failing.clear()
             editor.save()
             editor.awaitClosed()
+        }
+
+    /**
+     * #1541: a save tried while another action on the request is in flight is never sent, so the editor stays editable,
+     * and that other action's answer, success or failure, is not taken as the save's.
+     */
+    @Test
+    fun `another action's answer is not taken as the edit's own`() =
+        runTest {
+            val editor = editor()
+            editor.start(EditSource(tvRequest(), details = showDetails(), canEditDestination = false))
+            editor.awaitLoaded()
+            failing += "/api/v1/request/12/approve"
+            moderation.approve(12)
+
+            editor.save()
+
+            val refused = editor.awaitLoaded()
+            assertFalse("a save that was never sent is not saving", refused.saving)
+            assertFalse(refused.failed)
+            approveGate.countDown()
+            moderation.actingIds.first { it.isEmpty() }
+            val after = checkNotNull(editor.state.value) { "the approve's failure does not close the edit" }
+            assertFalse("the approve's failure is not the edit's", after.failed)
+            assertFalse(after.saving)
+            assertTrue(received.none { it.method == "PUT" })
+
+            failing.clear()
+            editor.save()
+            editor.awaitClosed()
+            assertEquals(1, received.count { it.method == "PUT" })
+        }
+
+    /** The same, when the other action succeeds: its success does not close an edit whose save never ran. */
+    @Test
+    fun `another action's success does not close the edit`() =
+        runTest {
+            val editor = editor()
+            editor.start(EditSource(tvRequest(), details = showDetails(), canEditDestination = false))
+            editor.awaitLoaded()
+            moderation.approve(12)
+
+            editor.save()
+
+            approveGate.countDown()
+            moderation.actingIds.first { it.isEmpty() }
+            val after = checkNotNull(editor.state.value) { "the approve's success does not close the edit" }
+            assertFalse(after.saving)
+            assertFalse(after.failed)
         }
 
     private fun movieRequest(tags: List<Int> = emptyList()) =

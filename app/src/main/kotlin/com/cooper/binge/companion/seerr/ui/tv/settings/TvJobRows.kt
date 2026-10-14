@@ -37,7 +37,7 @@ internal class TvJobs(
 /** Where a job's last action stands, as its row and page show it. */
 internal enum class TvJobStatus { Idle, Busy, Failed }
 
-/** The status of [id] in [this]: busy while a call is in flight, failed once one was refused, else idle. */
+/** The status of [id] in [this]: busy while a call is in flight, failed once one was refused, else idle. A list not read says nothing of a job. */
 internal fun JobsUiState.statusOf(id: String): TvJobStatus =
     when (this) {
         is JobsUiState.Ready ->
@@ -46,8 +46,7 @@ internal fun JobsUiState.statusOf(id: String): TvJobStatus =
                 in failedIds -> TvJobStatus.Failed
                 else -> TvJobStatus.Idle
             }
-        JobsUiState.Loading -> TvJobStatus.Busy
-        is JobsUiState.Error -> TvJobStatus.Failed
+        JobsUiState.Loading, is JobsUiState.Error -> TvJobStatus.Idle
     }
 
 internal fun JobsUiState.jobOrNull(id: String): ServerJob? = (this as? JobsUiState.Ready)?.jobs?.firstOrNull { it.id == id }
@@ -130,7 +129,19 @@ internal fun tvJobsGroup(
                     key = "$KEY_JOB_PREFIX${job.id}",
                     label = job.name,
                     detail = jobLine(job, ready.statusOf(job.id), now),
-                    options = listOf(TvPaneOption(label = job.name, icon = Icons.Filled.Cached, onSelect = { jobs.onOpenJob(job.id) })),
+                    options =
+                        listOf(
+                            TvPaneOption(
+                                label =
+                                    stringResource(
+                                        R.string.tv_settings_open_job,
+                                    ),
+                                icon = Icons.Filled.Cached,
+                                onSelect = {
+                                    jobs.onOpenJob(job.id)
+                                },
+                            ),
+                        ),
                     icon = Icons.Filled.Cached,
                 )
             },

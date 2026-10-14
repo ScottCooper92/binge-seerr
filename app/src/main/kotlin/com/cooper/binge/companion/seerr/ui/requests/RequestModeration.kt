@@ -152,10 +152,25 @@ class RequestModeration(
 
     override fun retry(requestId: Int) = moderate(requestId, ModerationEvent.Retried) { connection.api().retryRequest(it) }
 
+    /**
+     * An edit answers its caller directly through [onSettled], as well as on [events], because the events are shared: the
+     * editor cannot tell its own answer there from another action's on the same request (#1541). False when another
+     * action on the request is still in flight, so the edit was never sent and [onSettled] will not be called.
+     */
     fun edit(
         requestId: Int,
         body: SeerrEditRequestBody,
-    ) = moderate(requestId, ModerationEvent.Edited) { connection.api().updateRequest(it, body) }
+        onSettled: (succeeded: Boolean) -> Unit,
+    ): Boolean =
+        actThenMaybeBlock(
+            item = null,
+            requestId = requestId,
+            blockTitle = false,
+            done = ModerationEvent.Edited,
+            doneAndBlocked = ModerationEvent.Edited,
+            blockFailed = ModerationEvent.Edited,
+            onSettled = onSettled,
+        ) { connection.api().updateRequest(it, body) }
 
     /**
      * [seasonNumbers] is this request's own seasons - what marking *this* title available should
@@ -218,7 +233,9 @@ class RequestModeration(
         requestId: Int,
         success: ModerationEvent,
         action: suspend (Int) -> Unit,
-    ) = actThenMaybeBlock(null, requestId, false, success, success, success, action)
+    ) {
+        actThenMaybeBlock(null, requestId, false, success, success, success, action = action)
+    }
 
     private fun actThenMaybeBlock(
         item: RequestItem,
@@ -227,11 +244,14 @@ class RequestModeration(
         doneAndBlocked: ModerationEvent,
         blockFailed: ModerationEvent,
         action: suspend (Int) -> Unit,
-    ) = actThenMaybeBlock(item, item.id, blockTitle, done, doneAndBlocked, blockFailed, action)
+    ) {
+        actThenMaybeBlock(item, item.id, blockTitle, done, doneAndBlocked, blockFailed, action = action)
+    }
 
     /**
      * Acting is raised before the launch so a second tap is swallowed at once, and cleared as soon
-     * as the action settles, before the refresh and the longer block follow-up.
+     * as the action settles, before the refresh and the longer block follow-up. False when an action on the request is
+     * already in flight, so this one was not started; [onSettled] hears how a started one went, before the event does.
      *
      * Launched on [dispatcher] rather than inheriting `scope`'s own, so [onModerated]'s reload and
      * this launch's own state updates never touch `Dispatchers.Main` - including the tail end of a
@@ -244,15 +264,17 @@ class RequestModeration(
         done: ModerationEvent,
         doneAndBlocked: ModerationEvent,
         blockFailed: ModerationEvent,
+        onSettled: (succeeded: Boolean) -> Unit = {},
         action: suspend (Int) -> Unit,
-    ) {
-        if (requestId in acting.value) return
+    ): Boolean {
+        if (requestId in acting.value) return false
         acting.update { it + requestId }
         crashBreadcrumbs.key("request_id", requestId.toString())
         crashBreadcrumbs.log("moderating request: ${done.actionLabel()}")
         scope.launch(dispatcher) {
             val result = attempt { action(requestId) }
             acting.update { it - requestId }
+            onSettled(result.isSuccess)
             result
                 .onSuccess {
                     onModerated()
@@ -269,6 +291,7 @@ class RequestModeration(
                     eventFlow.emit(ModerationEvent.Failed(it.toSeerrError()))
                 }
         }
+        return true
     }
 
     /** Blocks the title alone, leaving the request as it is; the owner refreshes what it shows on success. */

@@ -37,6 +37,9 @@ internal class TvSettingsActions(
     val onToggleShareUsageData: (Boolean) -> Unit = {},
     val onToggleSendCrashReports: (Boolean) -> Unit = {},
     val onOpenBingeListing: () -> Unit = {},
+    /** The household's switches, for an admin; null leaves them out, and General reads its one as before. */
+    val household: TvHousehold? = null,
+    val agents: TvAgents? = null,
 )
 
 /**
@@ -50,11 +53,16 @@ internal fun tvSettingGroups(
     jobs: TvJobs,
     hub: HubUiState?,
     onShowBugReport: () -> Unit,
+    agents: TvAgents? = actions.agents,
 ): List<TvPaneGroup> {
     val config = state.config
     val configGroups =
         buildList {
-            config?.general?.let { add(readOnlyGroup(stringResource(R.string.settings_group_general), generalRows(it))) }
+            config?.general?.let {
+                // The household group carries this switch to press, so General does not read it out a second time.
+                val general = if (actions.household != null) it.copy(hideAvailable = null) else it
+                add(readOnlyGroup(stringResource(R.string.settings_group_general), generalRows(general)))
+            }
             // Admin-only, same as the phone: this is the one section that also gets an action, so it is
             // built by hand rather than through the read-only mapping every other section shares.
             if (config != null) add(mediaServerGroup(state.server, jobs, state.now))
@@ -77,6 +85,8 @@ internal fun tvSettingGroups(
         )
         hub?.let { serverStatusGroup(it, actions.onOpenBingeListing) }?.let(::add)
         addAll(configGroups.carryingNote(stringResource(R.string.tv_settings_read_only_note)))
+        actions.household?.let { add(householdGroup(it)) }
+        agents?.let { agentsGroup(it) }?.let(::add)
         state.app?.let { app ->
             add(tvAppGroup(app, TvAppActions(onShowBugReport, actions.onToggleShareUsageData, actions.onToggleSendCrashReports)))
         }
