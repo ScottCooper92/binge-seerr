@@ -8,7 +8,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import com.binge.designsystem.component.BingeBottomSheet
+import com.binge.designsystem.component.BingeAdaptiveSheet
+import com.binge.designsystem.component.BingeSheetKind
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.openInBrowser
 import com.cooper.binge.companion.seerr.ui.requests.RequestMediaType
@@ -28,7 +29,7 @@ internal fun IssueManageSheet(
             onDismiss()
             context.openInBrowser(url)
         }
-    BingeBottomSheet(onDismissRequest = onDismiss) {
+    BingeAdaptiveSheet(kind = BingeSheetKind.Menu, onDismissRequest = onDismiss) {
         IssueManageContent(
             serverName = detail.serverName,
             mediaServerName = detail.mediaServerName,

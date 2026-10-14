@@ -29,8 +29,9 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.BingeActionFooter
-import com.binge.designsystem.component.BingeBottomSheet
+import com.binge.designsystem.component.BingeAdaptiveSheet
 import com.binge.designsystem.component.BingeFilterChip
+import com.binge.designsystem.component.BingeSheetKind
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.state.RequestStateChip
 import com.cooper.binge.companion.seerr.ui.state.RequestStateTone
@@ -53,7 +54,7 @@ internal fun ReportIssueSheet(
 ) {
     var unsent by remember { mutableStateOf(false) }
     var asking by rememberSaveable { mutableStateOf(false) }
-    BingeBottomSheet(onDismissRequest = onDismiss, gesturesEnabled = !unsent) {
+    BingeAdaptiveSheet(kind = BingeSheetKind.Task, onDismissRequest = onDismiss, gesturesEnabled = !unsent) {
         // Inside the sheet, which has a window and a Back of its own; the lock above stops it closing on Back itself.
         BackHandler(enabled = unsent) { asking = true }
         ReportIssueContent(report = report, onSend = onSend, onUnsentChange = { unsent = it })

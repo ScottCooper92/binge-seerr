@@ -39,9 +39,10 @@ import androidx.paging.PagingData
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
-import com.binge.designsystem.component.BingeBottomSheet
+import com.binge.designsystem.component.BingeAdaptiveSheet
 import com.binge.designsystem.component.BingeConfirmDialog
 import com.binge.designsystem.component.BingeInitialsAvatar
+import com.binge.designsystem.component.BingeSheetKind
 import com.binge.designsystem.component.BingeTag
 import com.binge.designsystem.component.DetailStat
 import com.binge.designsystem.component.DetailStatRow
@@ -351,7 +352,7 @@ private fun UserActionsSheet(
 ) {
     val context = LocalContext.current
     var confirmingDelete by rememberSaveable { mutableStateOf(false) }
-    BingeBottomSheet(onDismissRequest = onDismiss) {
+    BingeAdaptiveSheet(kind = BingeSheetKind.Menu, onDismissRequest = onDismiss) {
         UserActionsContent(
             detail = detail,
             deleting = deleting,

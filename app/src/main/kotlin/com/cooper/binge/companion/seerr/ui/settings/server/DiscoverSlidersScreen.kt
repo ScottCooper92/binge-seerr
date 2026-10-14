@@ -30,9 +30,10 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
-import com.binge.designsystem.component.BingeBottomSheet
+import com.binge.designsystem.component.BingeAdaptiveSheet
 import com.binge.designsystem.component.BingeConfirmDialog
 import com.binge.designsystem.component.BingeIconPlate
+import com.binge.designsystem.component.BingeSheetKind
 import com.binge.designsystem.component.HintCard
 import com.binge.designsystem.component.ReorderableHandleRow
 import com.binge.designsystem.component.bingeSwitchColors
@@ -152,7 +153,7 @@ fun DiscoverSlidersScreen(
     }
 
     if (showOverflow) {
-        BingeBottomSheet(onDismissRequest = { showOverflow = false }) {
+        BingeAdaptiveSheet(kind = BingeSheetKind.Menu, onDismissRequest = { showOverflow = false }) {
             SlidersOverflowContent(onReset = { confirmingReset = true })
         }
     }

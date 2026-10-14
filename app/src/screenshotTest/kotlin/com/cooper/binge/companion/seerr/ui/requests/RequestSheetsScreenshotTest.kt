@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import com.android.tools.screenshot.PreviewTest
 import com.cooper.binge.companion.seerr.preview.SeerrComponentPreviews
 import com.cooper.binge.companion.seerr.preview.SheetFrame
+import com.cooper.binge.companion.seerr.preview.SideSheetFrame
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 
 /**
@@ -16,6 +17,12 @@ class RequestSheetsScreenshotTest {
     @SeerrComponentPreviews
     @Composable
     fun actionsPending() = SheetFrame { ActionsContent(pendingDetail()) }
+
+    /** At the expanded width the actions are a side sheet, and Edit request opens as a page of it. */
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun actionsExpanded() = SideSheetFrame { ActionsContent(pendingDetail()) }
 
     /** Settled: the media half leads, and the request half is what is left of it. */
     @PreviewTest

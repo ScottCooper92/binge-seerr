@@ -124,7 +124,7 @@ private fun Frame(
                 onApplyBulkEdit = {},
                 onCancelBulkEdit = {},
                 onRetryLoad = {},
-                admission = UserAdmissionActions({}, {}, {}, {}, {}, {}, {}, {}, {}),
+                admission = UserAdmissionActions({}, {}, {}, {}, {}, {}, {}, {}, {}, {}),
             ),
     )
 }

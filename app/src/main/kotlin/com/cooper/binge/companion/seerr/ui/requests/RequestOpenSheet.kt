@@ -11,7 +11,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
-import com.binge.designsystem.component.BingeBottomSheet
+import com.binge.designsystem.component.BingeAdaptiveSheet
+import com.binge.designsystem.component.BingeSheetKind
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.seerr.SeerrMediaServer
 import com.cooper.binge.companion.seerr.seerr.SeerrServerProfile
@@ -81,7 +82,7 @@ internal fun RequestOpenSheet(
     links: List<RequestOpenLink>,
     onDismiss: () -> Unit,
 ) {
-    BingeBottomSheet(onDismissRequest = onDismiss) {
+    BingeAdaptiveSheet(kind = BingeSheetKind.Menu, onDismissRequest = onDismiss) {
         RequestOpenSheetContent(
             links = links,
             onOpen = { link ->

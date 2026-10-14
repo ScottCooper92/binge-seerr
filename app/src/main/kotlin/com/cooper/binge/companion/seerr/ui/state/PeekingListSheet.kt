@@ -11,9 +11,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import com.binge.designsystem.component.BingeBottomSheet
+import com.binge.designsystem.component.BingeAdaptiveSheet
 import com.binge.designsystem.component.BingeSheetDockingHeader
 import com.binge.designsystem.component.BingeSheetHeader
+import com.binge.designsystem.component.BingeSheetKind
 import com.binge.designsystem.component.BingeSheetTopBar
 
 /**
@@ -29,7 +30,13 @@ fun PeekingListSheet(
     content: @Composable ColumnScope.() -> Unit,
 ) {
     // Edge to edge: the list runs under the navigation bar and pads its own end, as a long list does.
-    BingeBottomSheet(onDismissRequest = onDismiss, skipPartiallyExpanded = false, dockable = true, edgeToEdge = true) {
+    BingeAdaptiveSheet(
+        kind = BingeSheetKind.Task,
+        onDismissRequest = onDismiss,
+        skipPartiallyExpanded = false,
+        dockable = true,
+        edgeToEdge = true,
+    ) {
         BingeSheetDockingHeader(
             header = { BingeSheetHeader(title = title, actions = actions) },
             dockedTopBar = { onClose -> BingeSheetTopBar(title = title, onClose = onClose, actions = actions) },

@@ -20,6 +20,7 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.ExpressiveIconButton
 import com.binge.designsystem.component.IconButtonTone
+import com.binge.designsystem.isExpandedLayout
 import com.binge.designsystem.layout.LayoutAnchors
 import com.binge.designsystem.layout.layoutAnchor
 import com.binge.designsystem.resolvedContentInset
@@ -227,9 +228,15 @@ internal fun RequestManagementSheets(
             canManageUsers = detail?.canManageUsers == true,
             detailLoad = detailLoad,
             onRetryDetail = onRetryDetail,
+            edit = state?.edit,
+            editActions = actions.edit,
         )
     }
-    state?.edit?.let { edit -> EditRequestSheet(item = state.detail.item, edit = edit, actions = actions.edit) }
+    // Where the actions sheet stacks pages the editor is one of its pages; otherwise it is a sheet of its own.
+    val editsInActions = acting && isExpandedLayout()
+    state?.edit?.takeUnless { editsInActions }?.let { edit ->
+        EditRequestSheet(item = state.detail.item, edit = edit, actions = actions.edit)
+    }
     val media = detail?.media
     if (media != null) {
         marking?.let { is4k ->

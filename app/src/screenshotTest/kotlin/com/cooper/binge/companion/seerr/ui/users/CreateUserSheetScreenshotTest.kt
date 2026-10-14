@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import com.android.tools.screenshot.PreviewTest
 import com.cooper.binge.companion.seerr.preview.SeerrComponentPreviews
 import com.cooper.binge.companion.seerr.preview.SheetFrame
+import com.cooper.binge.companion.seerr.preview.SideSheetFrame
 
 /**
  * What the create-account sheet says before it is submitted. Every state here is one the sheet knew
@@ -47,6 +48,21 @@ class CreateUserSheetScreenshotTest {
             ),
         )
 
+    /** At the expanded width the sheet is a side sheet, and the form is its page. */
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun expanded() =
+        Frame(
+            CreateUserDraft(
+                email = "ada@example.com",
+                username = "Ada Lovelace",
+                password = "hunter2hunter2",
+                canGeneratePassword = true,
+            ),
+            side = true,
+        )
+
     /** An address that is not the shape of one: the same field error the profile editor shows. */
     @PreviewTest
     @SeerrComponentPreviews
@@ -63,8 +79,13 @@ class CreateUserSheetScreenshotTest {
 }
 
 @Composable
-private fun Frame(draft: CreateUserDraft) {
-    SheetFrame {
-        CreateUserSheetContent(draft = draft, saving = false, onEditDraft = {}, onCreate = {})
+private fun Frame(
+    draft: CreateUserDraft,
+    side: Boolean = false,
+) {
+    if (side) {
+        SideSheetFrame(stacked = true) { CreateUserSheetContent(draft = draft, saving = false, onEditDraft = {}, onCreate = {}) }
+    } else {
+        SheetFrame { CreateUserSheetContent(draft = draft, saving = false, onEditDraft = {}, onCreate = {}) }
     }
 }

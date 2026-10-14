@@ -7,6 +7,7 @@ import com.cooper.binge.companion.seerr.handoff.AddressLocality
 import com.cooper.binge.companion.seerr.handoff.AddressSource
 import com.cooper.binge.companion.seerr.preview.SeerrComponentPreviews
 import com.cooper.binge.companion.seerr.preview.SheetFrame
+import com.cooper.binge.companion.seerr.preview.SideSheetFrame
 import com.cooper.binge.companion.seerr.seerr.SeerrSignInMode
 import com.cooper.binge.companion.seerr.ui.SignInForm
 
@@ -23,6 +24,12 @@ class SendAddressSheetScreenshotTest {
     @SeerrComponentPreviews
     @Composable
     fun enterPin() = Frame(SendAddressUiState.EnterPin(tv = "192.168.86.53", entered = "48"))
+
+    /** At the expanded width the confirmation is a side sheet. */
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun readyExpanded() = Frame(sampleReady(), side = true)
 
     @PreviewTest
     @SeerrComponentPreviews
@@ -205,8 +212,13 @@ private fun ready(vararg candidates: AddressCandidate) =
 private fun sampleReady() = ready(candidate("http://seerr.lan:5055/", AddressSource.Connected, AddressLocality.Unknown))
 
 @Composable
-private fun Frame(state: SendAddressUiState) {
-    SheetFrame {
-        SendAddressSheetContent(state = state, actions = SendAddressActions())
+private fun Frame(
+    state: SendAddressUiState,
+    side: Boolean = false,
+) {
+    if (side) {
+        SideSheetFrame { SendAddressSheetContent(state = state, actions = SendAddressActions()) }
+    } else {
+        SheetFrame { SendAddressSheetContent(state = state, actions = SendAddressActions()) }
     }
 }

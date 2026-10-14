@@ -78,6 +78,24 @@ class UserAdmissionTest {
         }
 
     @Test
+    fun `back from the form or the picker returns to the choice, and a write in flight keeps it where it is`() =
+        runTest {
+            val vm = viewModel()
+            val ready = vm.awaitReady()
+            vm.admission.startCreate(canGeneratePassword = ready.canGeneratePassword)
+            assertTrue(vm.awaitReady().admission is UserAdmissionState.Creating)
+
+            vm.admission.backToChoice()
+
+            assertTrue(vm.awaitReady { it.admission is UserAdmissionState.Choosing }.admission is UserAdmissionState.Choosing)
+
+            vm.admission.cancel()
+            vm.admission.backToChoice()
+
+            assertNull(vm.awaitReady { it.admission == null }.admission)
+        }
+
+    @Test
     fun `creating posts the account, with the password left to the server when asked, then refreshes the list`() =
         runTest {
             seerr.serve("POST /api/v1/user", """{"id":9,"displayName":"Ana","email":"ana@example.com","permissions":32}""")

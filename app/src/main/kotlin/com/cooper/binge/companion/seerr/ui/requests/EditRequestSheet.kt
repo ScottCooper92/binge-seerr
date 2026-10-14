@@ -30,7 +30,8 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.BingeActionFooter
-import com.binge.designsystem.component.BingeBottomSheet
+import com.binge.designsystem.component.BingeAdaptiveSheet
+import com.binge.designsystem.component.BingeSheetKind
 import com.binge.designsystem.component.BingeTextButton
 import com.binge.designsystem.component.CheckboxRow
 import com.cooper.binge.companion.seerr.R
@@ -63,7 +64,7 @@ internal fun EditRequestSheet(
     edit: EditState,
     actions: EditRequestActions,
 ) {
-    BingeBottomSheet(onDismissRequest = actions.onDismiss) {
+    BingeAdaptiveSheet(kind = BingeSheetKind.Task, onDismissRequest = actions.onDismiss) {
         EditRequestContent(item = item, edit = edit, actions = actions)
     }
 }
