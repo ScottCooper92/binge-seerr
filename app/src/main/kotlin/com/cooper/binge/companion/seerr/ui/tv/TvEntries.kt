@@ -21,6 +21,7 @@ import com.cooper.binge.companion.seerr.ui.requests.RequestFilter
 import com.cooper.binge.companion.seerr.ui.settings.SettingsUiState
 import com.cooper.binge.companion.seerr.ui.settings.SettingsViewModel
 import com.cooper.binge.companion.seerr.ui.settings.SignInKind
+import com.cooper.binge.companion.seerr.ui.tv.requests.KEY_MY_REQUESTS
 
 /**
  * The connected television: Home and Issues as tabs under the top bar, with Account and Settings opening as sheets over them,
@@ -37,7 +38,7 @@ internal fun TvConnectedShell(
     val pages = rememberTvOpenPages()
     val tabsResolved = hub !is HubUiState.Loading
     // Until the hub answers, the bar is hidden and every tab stands, so a tab kept across a rotation is not dropped early.
-    val tabs = if (tabsResolved) offeredTabs(hub) else TabRules.map { it.first }
+    val tabs = if (tabsResolved) offeredTabs((hub as? HubUiState.Ready)?.overview) else TabRules.map { it.first }
     var chosenTab by rememberSaveable { mutableStateOf(TvDestination.Hub) }
     // A tab withdrawn under the user (a permission change, a reconnect as someone else) hands over to the start tab at once;
     // the effect then drops its pages and settles the choice.
@@ -80,15 +81,15 @@ internal fun TvConnectedShell(
             TvDestination.Hub ->
                 TvHomeEntry(
                     onReconnect = { editingConnection = true },
-                    onOpenRequest = { pages.openRequestId = it },
-                    onSeeAll = { pages.seeAllRequests = it.name },
-                    onSeeAllMine = { pages.seeAllAccount = true },
+                    onOpenRequest = { pages[TvDestination.Hub].detailId = it },
+                    onSeeAll = { pages[TvDestination.Hub].seeAll = it.name },
+                    onSeeAllMine = { pages[TvDestination.Hub].seeAll = SEE_ALL_MINE },
                 )
             TvDestination.Issues ->
                 TvIssuesEntry(
-                    onOpenIssue = { pages.openIssueId = it },
-                    seeAllOpen = pages.seeAllIssues != null,
-                    onSeeAll = { pages.seeAllIssues = it.name },
+                    onOpenIssue = { pages[TvDestination.Issues].detailId = it },
+                    seeAllOpen = pages[TvDestination.Issues].seeAll != null,
+                    onSeeAll = { pages[TvDestination.Issues].seeAll = it.name },
                 )
             TvDestination.Settings -> TvSettingsEntry(onDismissRequest = close, viewModel = settingsViewModel)
         }
@@ -119,43 +120,49 @@ private fun rememberSheetOpener(
     }
 }
 
-/** Home's pages over its rows: a see-all grid, the user's own requests, and a request's detail page above either. */
+/** Home's see-all key for the signed-in user's own requests, which belong to no filter. */
+private const val SEE_ALL_MINE = KEY_MY_REQUESTS
+
+/** Home's pages over its rows: a filter's see-all grid or the user's own, and a request's detail page above either. */
 @Composable
 private fun TvHubPages(
-    pages: TvOpenPages,
+    pages: TvTabPages,
     seeAllAccountId: Int?,
 ) {
-    pages.seeAllRequests?.let { name ->
-        TvRequestsGridOverlay(
-            filter = RequestFilter.valueOf(name),
-            detailOpen = pages.openRequestId != null,
-            onOpenRequest = { pages.openRequestId = it },
-            onDone = { pages.seeAllRequests = null },
-        )
+    when (val seeAll = pages.seeAll) {
+        null -> Unit
+        SEE_ALL_MINE ->
+            if (seeAllAccountId != null) {
+                TvAccountRequestsGridOverlay(
+                    accountId = seeAllAccountId,
+                    detailOpen = pages.detailId != null,
+                    onOpenRequest = { pages.detailId = it },
+                    onDone = { pages.seeAll = null },
+                )
+            }
+        else ->
+            TvRequestsGridOverlay(
+                filter = RequestFilter.valueOf(seeAll),
+                detailOpen = pages.detailId != null,
+                onOpenRequest = { pages.detailId = it },
+                onDone = { pages.seeAll = null },
+            )
     }
-    if (pages.seeAllAccount && seeAllAccountId != null) {
-        TvAccountRequestsGridOverlay(
-            accountId = seeAllAccountId,
-            detailOpen = pages.openRequestId != null,
-            onOpenRequest = { pages.openRequestId = it },
-            onDone = { pages.seeAllAccount = false },
-        )
-    }
-    TvDetailOverlays(openRequestId = pages.openRequestId, openIssueId = null, onCloseRequest = { pages.openRequestId = null })
+    TvDetailOverlays(openRequestId = pages.detailId, openIssueId = null, onCloseRequest = { pages.detailId = null })
 }
 
 /** The Issues tab's pages over its board: a see-all grid, and an issue's detail page above it. */
 @Composable
-private fun TvIssuesPages(pages: TvOpenPages) {
-    pages.seeAllIssues?.let { name ->
+private fun TvIssuesPages(pages: TvTabPages) {
+    pages.seeAll?.let { name ->
         TvIssuesGridOverlay(
             filter = IssueFilter.valueOf(name),
-            detailOpen = pages.openIssueId != null,
-            onOpenIssue = { pages.openIssueId = it },
-            onDone = { pages.seeAllIssues = null },
+            detailOpen = pages.detailId != null,
+            onOpenIssue = { pages.detailId = it },
+            onDone = { pages.seeAll = null },
         )
     }
-    TvDetailOverlays(openRequestId = null, openIssueId = pages.openIssueId, onCloseIssue = { pages.openIssueId = null })
+    TvDetailOverlays(openRequestId = null, openIssueId = pages.detailId, onCloseIssue = { pages.detailId = null })
 }
 
 /**
@@ -179,7 +186,7 @@ private fun TvDetailOverlays(
 
 /**
  * The tabs the bar can offer, in order, each with its own rule over what the server has said of this account. The first,
- * Home, is the start tab and is always offered; the rest follow the phone's rule for the matching hub section.
+ * Home, is the start tab, and its rule offers it always; the rest follow the phone's rule for the matching hub section.
  */
 private val TabRules: List<Pair<TvDestination, (HubOverview) -> Boolean>> =
     listOf(
@@ -195,16 +202,14 @@ private fun tabPages(
 ): (@Composable BoxScope.() -> Unit)? =
     when (tab) {
         TvDestination.Hub -> {
-            { TvHubPages(pages, seeAllAccountId) }
+            { TvHubPages(pages[tab], seeAllAccountId) }
         }
         TvDestination.Issues -> {
-            { TvIssuesPages(pages) }
+            { TvIssuesPages(pages[tab]) }
         }
         TvDestination.Account, TvDestination.Settings -> null
     }
 
-/** The tabs the server offers this account, by [TabRules]; the start tab alone when it has not said. */
-internal fun offeredTabs(hub: HubUiState): List<TvDestination> {
-    val overview = (hub as? HubUiState.Ready)?.overview
-    return TabRules.filterIndexed { index, (_, rule) -> index == 0 || (overview != null && rule(overview)) }.map { it.first }
-}
+/** The tabs [TabRules] offers for what the server has said of this account; the start tab alone while it has said nothing. */
+internal fun offeredTabs(overview: HubOverview?): List<TvDestination> =
+    if (overview == null) listOf(TabRules.first().first) else TabRules.filter { (_, rule) -> rule(overview) }.map { it.first }
