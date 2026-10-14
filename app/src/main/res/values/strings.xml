@@ -59,7 +59,6 @@
     <string name="link_waiting">Waiting for approval…</string>
     <string name="link_cancel">Cancel</string>
 
-    <string name="connected_hint">Open Binge and allow this app under Account → Integrations. Requests you make there go to this server.</string>
     <string name="hub_binge_not_installed_title">Looking for a media browser?</string>
     <string name="hub_binge_not_installed_detail">Check out Binge, it works with this app.</string>
     <string name="hub_binge_get">Get Binge</string>
@@ -1039,7 +1038,6 @@
     <!-- The television shell: Home, the lists and their action sheets. -->
     <string name="tv_rail_hub">Home</string>
     <string name="tv_hub_health_checking">Checking the server…</string>
-    <string name="tv_hub_stat_open_issues">Open issues</string>
     <string name="tv_hub_quota_none_left">None left</string>
     <string name="tv_download_percent">%1$d%%</string>
     <string name="tv_list_load_failed">The list could not be loaded.</string>
@@ -1048,33 +1046,13 @@
     <string name="tv_issue_deleted">Issue deleted</string>
     <string name="tv_issue_action_failed">The issue could not be updated. Try again.</string>
     <string name="tv_issue_read_comments">Read comments</string>
-    <string name="tv_settings_read_only_note">Change this in the phone app or the web client.</string>
     <string name="tv_settings_disconnect_confirm">Yes, disconnect</string>
     <string name="tv_settings_start_library_scan">Start library scan</string>
     <string name="tv_settings_cancel_library_scan">Cancel library scan</string>
     <string name="tv_settings_job_working">Working…</string>
-    <string name="tv_settings_job_body">Runs on a schedule. Run it now, or cancel it while it is running. The schedule is changed on your phone.</string>
-    <string name="tv_settings_job_failed_note">That didn\'t go through. Select the option to try again.</string>
     <string name="tv_filter_with_count">%1$s (%2$d)</string>
-    <string name="tv_settings_group_server">Server status</string>
-    <string name="tv_settings_status">Status</string>
     <!-- The TV settings Requests row: each count with its own words, so a translator can reorder or pluralise them (#1042). -->
-    <plurals name="tv_settings_requests_pending">
-        <item quantity="one">%1$d Pending</item>
-        <item quantity="other">%1$d Pending</item>
-    </plurals>
-    <plurals name="tv_settings_requests_movies">
-        <item quantity="one">%1$d Movie</item>
-        <item quantity="other">%1$d Movies</item>
-    </plurals>
-    <plurals name="tv_settings_requests_tv">
-        <item quantity="one">%1$d TV</item>
-        <item quantity="other">%1$d TV</item>
-    </plurals>
     <!-- The same, for a count the hub could not read; %1$s is the placeholder dash. -->
-    <string name="tv_settings_requests_pending_unknown">%1$s Pending</string>
-    <string name="tv_settings_requests_movies_unknown">%1$s Movies</string>
-    <string name="tv_settings_requests_tv_unknown">%1$s TV</string>
     <string name="tv_settings_binge">Binge</string>
     <string name="tv_settings_binge_install">Open the Play Store</string>
     <string name="tv_see_all">See all</string>
@@ -1145,10 +1123,6 @@
     <string name="settings_share_usage_data_caption">Sends which screens and actions you use</string>
     <string name="settings_send_crash_reports">Send crash reports</string>
     <string name="settings_send_crash_reports_caption">What the app was doing when it crashed, so it can be fixed</string>
-    <string name="tv_settings_toggle_on">On</string>
-    <string name="tv_settings_toggle_off">Off</string>
-    <string name="tv_settings_turn_on">Turn on</string>
-    <string name="tv_settings_turn_off">Turn off</string>
     <string name="consent_kicker">Privacy</string>
     <string name="tv_consent_point_change_title">Off with one press</string>
     <string name="tv_consent_reassurance">Nothing is collected unless you choose Share usage data.</string>
@@ -1326,6 +1300,11 @@
     <string name="tv_settings_agent_unavailable">This agent\'s settings couldn\'t be read. Try again from your phone.</string>
     <string name="tv_settings_agent_setup_first">This agent can\'t send until it is set up. Finish that on your phone.</string>
     <string name="tv_settings_agent_body">Switch this agent on or off. Its details are changed on your phone.</string>
-    <string name="tv_settings_agent_turn_on">Turn on</string>
-    <string name="tv_settings_agent_turn_off">Turn off</string>
+    <string name="tv_settings_group_media">Media server &amp; services</string>
+    <string name="tv_settings_group_maintenance">Maintenance</string>
+    <string name="tv_settings_signed_in_as">Signed in as %1$s</string>
+    <string name="tv_settings_job_failed_short">Didn\'t work. Try again.</string>
+    <string name="tv_settings_job_done">Done</string>
+    <string name="tv_settings_job_stopped">Stopped</string>
+    <string name="tv_settings_signed_in_api_key">Signed in with the server\'s API key</string>
 </resources>

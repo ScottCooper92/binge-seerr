@@ -18,7 +18,6 @@ import com.cooper.binge.companion.seerr.ui.settings.server.JobOutcome
 import com.cooper.binge.companion.seerr.ui.settings.server.JobsActions
 import com.cooper.binge.companion.seerr.ui.settings.server.ServerJob
 import com.cooper.binge.companion.seerr.ui.settings.server.jobRow
-import com.cooper.binge.companion.seerr.ui.tv.settings.generalRows
 import com.cooper.binge.companion.seerr.ui.tv.settings.serviceRows
 import com.cooper.binge.companion.seerr.ui.tv.settings.systemRows
 
@@ -78,18 +77,7 @@ class SettingsGroupsScreenshotTest {
     fun connectionNameUnknown() =
         Group(R.string.settings_group_connection, connectionRows(connection(SignInKind.Session).copy(userName = null), server(), {}, {}))
 
-    @PreviewTest
-    @SeerrComponentPreviews
-    @Composable
-    fun generalFull() = Group(R.string.settings_group_general, generalRows(general()))
-
-    /** The TV's read-out with no address and the hide-available state unread: the display language alone. */
-    @PreviewTest
-    @SeerrComponentPreviews
-    @Composable
-    fun generalMinimal() = Group(R.string.settings_group_general, generalRows(general().copy(hideAvailable = null, applicationUrl = null)))
-
-    /** Each instance as the TV reads it out: its markers, then where it sends a request or its address. */
+    /** Each instance as the TV reads it out: its name and markers. */
     @PreviewTest
     @SeerrComponentPreviews
     @Composable

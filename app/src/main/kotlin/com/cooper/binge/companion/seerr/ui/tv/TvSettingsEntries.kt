@@ -20,6 +20,7 @@ import com.cooper.binge.companion.seerr.ui.ScopedViewModels
 import com.cooper.binge.companion.seerr.ui.SetupViewModel
 import com.cooper.binge.companion.seerr.ui.hub.HubUiState
 import com.cooper.binge.companion.seerr.ui.hub.HubViewModel
+import com.cooper.binge.companion.seerr.ui.hub.openBinge
 import com.cooper.binge.companion.seerr.ui.hub.openBingeOnPlayStore
 import com.cooper.binge.companion.seerr.ui.rememberEnteredEditingGuard
 import com.cooper.binge.companion.seerr.ui.settings.SettingsUiState
@@ -38,13 +39,9 @@ import com.cooper.binge.companion.seerr.ui.tv.settings.TvSettingsSheet
 import com.cooper.binge.companion.seerr.ui.users.settings.ExtrasEditorUiState
 import com.cooper.binge.companion.seerr.ui.users.settings.toEditorUiState
 
-/**
- * The settings sheet over Home, on the same view models as the phone's Settings. [onEditConnection] is called before the sheet
- * closes: the form is a full-screen page above Home, and the sheet's focus trap would refuse its request for focus.
- */
+/** The settings sheet over Home, on the same view models as the phone's Settings. */
 @Composable
 internal fun TvSettingsEntry(
-    onEditConnection: () -> Unit,
     onDismissRequest: () -> Unit,
     viewModel: SettingsViewModel = hiltViewModel(),
     hubViewModel: HubViewModel = hiltViewModel(),
@@ -66,13 +63,10 @@ internal fun TvSettingsEntry(
     }
     val actions =
         TvSettingsActions(
-            onEditConnection = {
-                onEditConnection()
-                onDismissRequest()
-            },
             onDisconnect = viewModel::disconnect,
             onToggleShareUsageData = viewModel::setShareUsageData,
             onToggleSendCrashReports = viewModel::setSendCrashReports,
+            onOpenBinge = { context.openBinge() },
             onOpenBingeListing = { context.openBingeOnPlayStore() },
         )
     // The jobs view model is only stood up once the row it feeds can actually appear — admin-only, same
@@ -108,11 +102,11 @@ private fun TvAdminSettingsSheet(
         // has to wait it out (and retry once from a failed load) rather than being dropped.
         actions =
             TvSettingsActions(
-                onEditConnection = actions.onEditConnection,
                 onDisconnect = actions.onDisconnect,
                 jobs = TvJobActions(onRun = jobsViewModel::runWhenReady, onCancel = jobsViewModel::cancel),
                 onToggleShareUsageData = actions.onToggleShareUsageData,
                 onToggleSendCrashReports = actions.onToggleSendCrashReports,
+                onOpenBinge = actions.onOpenBinge,
                 onOpenBingeListing = actions.onOpenBingeListing,
                 household =
                     (general as? ExtrasEditorUiState.Ready)?.let {
