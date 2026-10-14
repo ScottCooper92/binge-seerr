@@ -1,11 +1,14 @@
 package com.cooper.binge.companion.seerr.ui.tv.requests
 
+import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -31,16 +34,24 @@ import com.cooper.binge.companion.seerr.ui.requests.MediaStatusChoice
 import com.cooper.binge.companion.seerr.ui.requests.RequestItem
 import com.cooper.binge.companion.seerr.ui.requests.icon
 import com.cooper.binge.companion.seerr.ui.requests.labelRes
-import com.cooper.binge.companion.seerr.ui.tv.OnSaved
 import com.cooper.binge.companion.seerr.ui.tv.ScopedTo
 import com.cooper.binge.companion.seerr.ui.tv.TvActionRun
 import com.cooper.binge.companion.seerr.ui.tv.TvPhoneCode
 
 /**
- * What the page opens over itself: the two confirm dialogs, and the sheets for editing the request, marking the title's
- * state and reporting an issue on the phone.
+ * What the page opens over itself: the two confirm dialogs, and the pages for editing the request, marking the title's
+ * state and reporting an issue on the phone. A page opens as a sheet of its own from the action row, and inside the Manage
+ * stack from Manage, where Back returns to the row that opened it.
  */
-internal enum class DetailSheet { Remove, Block, Edit, MarkAs, Report }
+internal enum class DetailSheet(
+    val isPage: Boolean,
+) {
+    Remove(isPage = false),
+    Block(isPage = false),
+    Edit(isPage = true),
+    MarkAs(isPage = true),
+    Report(isPage = true),
+}
 
 /** What the sheets read from the page: the request, its title's record, the open editor, and the title's page on the server. */
 internal class TvDetailSheetContent(
@@ -57,83 +68,106 @@ internal class TvDetailSheetHost(
     val closer: TvOverlayCloser,
 )
 
-/** The sheet [host] names, over the page. Each closes through its own closer, so focus returns to the button that opened it. */
+/** What a page needs from the screen, wherever it opens: the actions, what it shows, the page's run and whether it acts. */
+internal class TvDetailPageHost(
+    val actions: TvRequestDetailActions,
+    val content: TvDetailSheetContent,
+    val run: TvActionRun,
+    val isActing: Boolean,
+    /** Tells the screen whether Mark as is showing, so the action row leaves its status to the page. */
+    val onMarkAsShown: (Boolean) -> Unit,
+)
+
+/** The sheet [host] names, opened from the action row. Each closes through its own closer, so focus returns to its button. */
 @Composable
 internal fun TvRequestDetailSheet(
     host: TvDetailSheetHost,
-    actions: TvRequestDetailActions,
-    content: TvDetailSheetContent,
-    run: TvActionRun,
-    isActing: Boolean = false,
+    page: TvDetailPageHost,
 ) {
     val closer = host.closer
-    val media = content.media
-    // An edit closed unsaved is dropped, as the phone's sheet drops it.
-    val dismiss = {
-        if (host.step == DetailSheet.Edit) actions.edit?.controls?.cancel()
-        closer.close()
-    }
     // The two confirms are a question and nothing else, so each is a dialog; the rest carry a list, a form or a code, so
-    // they stay sheets.
-    when (host.step) {
-        DetailSheet.Remove ->
-            TvConfirmDialog(
-                title = stringResource(R.string.request_remove_confirm_title),
-                message = stringResource(R.string.request_remove_confirm_message),
-                confirmLabel = stringResource(R.string.request_remove),
-                onConfirm = {
-                    actions.onRemove(false)
-                    closer.close()
-                },
-                onDismissRequest = closer::close,
-                destructive = true,
-            )
-        DetailSheet.Block ->
-            TvConfirmDialog(
-                title = stringResource(R.string.request_block_confirm_title),
-                message = stringResource(R.string.request_block_confirm_message),
-                confirmLabel = stringResource(R.string.tv_detail_block),
-                onConfirm = {
-                    actions.onBlock()
-                    closer.close()
-                },
-                onDismissRequest = closer::close,
-                destructive = true,
-            )
+    // they are pages of a sheet.
+    if (host.step.isPage) {
+        TvSideSheet(onDismissRequest = closer::close) { entryFocus ->
+            TvRequestDetailPage(host.step, page, entryFocus, onEditClosed = closer::close)
+        }
+    } else {
+        TvRequestConfirm(host.step, page.actions, onDone = { closer.close() })
+    }
+}
+
+/** Remove's or Block's confirm. [onDone] closes it, and says whether it was answered: the action has run if so. */
+@Composable
+internal fun TvRequestConfirm(
+    step: DetailSheet,
+    actions: TvRequestDetailActions,
+    onDone: (confirmed: Boolean) -> Unit,
+) {
+    val remove = step == DetailSheet.Remove
+    TvConfirmDialog(
+        title = stringResource(if (remove) R.string.request_remove_confirm_title else R.string.request_block_confirm_title),
+        message = stringResource(if (remove) R.string.request_remove_confirm_message else R.string.request_block_confirm_message),
+        confirmLabel = stringResource(if (remove) R.string.request_remove else R.string.tv_detail_block),
+        onConfirm = {
+            if (remove) actions.onRemove(false) else actions.onBlock()
+            onDone(true)
+        },
+        onDismissRequest = { onDone(false) },
+        destructive = true,
+    )
+}
+
+/**
+ * One of the pages, [step]: Edit, Mark as or Report. Each brings its own arrival focus through [entryFocus]. [onEditClosed]
+ * runs once a saved edit has closed the editor. An edit the page leaves unsaved is dropped, as the phone's sheet drops it;
+ * a configuration change keeps it, since the page comes back.
+ */
+@Composable
+internal fun ColumnScope.TvRequestDetailPage(
+    step: DetailSheet,
+    host: TvDetailPageHost,
+    entryFocus: FocusRequester,
+    onEditClosed: () -> Unit,
+) {
+    val content = host.content
+    when (step) {
         DetailSheet.Edit ->
-            TvSideSheet(onDismissRequest = dismiss) { entryFocus ->
-                actions.edit?.let { edit ->
-                    TvEditRequestSheet(content.item, content.edit, edit.controls, onClosed = closer::close, entryFocus = entryFocus)
+            host.actions.edit?.let { edit ->
+                val activity = LocalActivity.current
+                DisposableEffect(edit.controls) {
+                    onDispose { if (activity?.isChangingConfigurations != true) edit.controls.cancel() }
                 }
+                TvEditRequestSheet(content.item, content.edit, edit.controls, onClosed = onEditClosed, entryFocus = entryFocus)
             }
-        DetailSheet.MarkAs ->
-            TvSideSheet(onDismissRequest = dismiss) { entryFocus ->
-                media?.let {
-                    TvMarkAsSteps(
-                        media = it,
-                        onSelect = { instance, choice -> actions.onSetMediaStatus(it.mediaId, choice, instance.is4k) },
-                        entryFocus = entryFocus,
-                        status = run.status,
-                        onRetry = run::again,
-                        actionInFlight = isActing,
-                    )
-                }
-                // The sheet stays open while it saves: "Saved" is read, and then it closes.
-                run.OnSaved { closer.close() }
-                // Another action's failure, left on the page, is not this sheet's to show or retry.
-                run.ScopedTo(DetailSheet.MarkAs)
+        DetailSheet.MarkAs -> {
+            content.media?.let {
+                TvMarkAsSteps(
+                    media = it,
+                    onSelect = { instance, choice -> host.actions.onSetMediaStatus(it.mediaId, choice, instance.is4k) },
+                    entryFocus = entryFocus,
+                    status = host.run.status,
+                    onRetry = host.run::again,
+                    actionInFlight = host.isActing,
+                )
             }
-        DetailSheet.Report ->
-            TvSideSheet(onDismissRequest = dismiss) { entryFocus ->
-                TvReportOnPhoneStep(content.webUrl, content.serverName, entryFocus)
+            // The page stays open once it has saved: the tick and "Saved" are the answer, read in place. Another action's
+            // failure, left on the page, is not this page's to show or retry.
+            host.run.ScopedTo(DetailSheet.MarkAs)
+            val shown by rememberUpdatedState(host.onMarkAsShown)
+            DisposableEffect(Unit) {
+                shown(true)
+                onDispose { shown(false) }
             }
+        }
+        DetailSheet.Report -> TvReportOnPhoneStep(content.webUrl, content.serverName, entryFocus)
+        DetailSheet.Remove, DetailSheet.Block -> Unit
     }
 }
 
 /**
  * Marking the title's state, as the phone's Mark as sheet does: which instance first where the server holds the
- * title twice, then the states, the current one ticked. A pick applies in place: the tick moves to it at once, [status]
- * says "Saving…" and then "Saved" above the options, and the sheet closes after. On a failure the tick moves back and the
+ * title twice, then the states, the current one ticked. A pick applies in place: the tick moves to it at once, and [status]
+ * says "Saving…" and then "Saved" above the options. The page stays open. On a failure the tick moves back and the
  * line offers Try again, which applies the same pick once more. While [actionInFlight] the page drops a pick, so the
  * rows ignore it and the tick stays where it was.
  */

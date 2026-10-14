@@ -81,9 +81,9 @@ class TvRequestDetailSheetsTest {
         composeTestRule.onNode(isSelected() and hasText(string(MediaStatusChoice.Processing.labelRes()))).assertExists()
     }
 
-    /** The sheet stays open while it saves, ticks the pick at once, says Saving, then Saved, and only then closes (#1519). */
+    /** The sheet stays open while it saves, ticks the pick at once, says Saving, then Saved, and stays open after (#1519). */
     @Test
-    fun aPickKeepsTheSheetOpenSavingThenSavedBeforeItCloses() {
+    fun aPickSavesInPlaceAndTheSheetStaysOpen() {
         setContent(detail(media = media(MediaInstance(false, SeerrMediaStatusCode.Processing, null, null, null))))
         pressOk()
         pressOk()
@@ -92,17 +92,14 @@ class TvRequestDetailSheetsTest {
         composeTestRule.onNodeWithText(string(R.string.media_mark_as_scope_caption), substring = true).assertIsDisplayed()
         composeTestRule.onNode(isSelected() and hasText(string(MediaStatusChoice.Available.labelRes()))).assertExists()
 
-        composeTestRule.mainClock.autoAdvance = false
         events.tryEmit(ModerationEvent.MediaStatusSet)
-        composeTestRule.mainClock.advanceTimeBy(100)
+        composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText(string(DesR.string.save_status_saved)).assertIsDisplayed()
-        composeTestRule.onNodeWithText(string(R.string.media_mark_as_scope_caption), substring = true).assertIsDisplayed()
 
         composeTestRule.mainClock.advanceTimeBy(TV_SAVED_HOLD_MILLIS + 200)
-        composeTestRule.mainClock.autoAdvance = true
         composeTestRule.waitForIdle()
-        composeTestRule.onNodeWithText(string(R.string.media_mark_as_scope_caption), substring = true).assertDoesNotExist()
-        actionButton(R.string.media_mark_as).assertIsFocused()
+        composeTestRule.onNodeWithText(string(R.string.media_mark_as_scope_caption), substring = true).assertIsDisplayed()
+        composeTestRule.onNode(isSelected() and hasText(string(MediaStatusChoice.Available.labelRes()))).assertExists()
     }
 
     /** A refused pick puts the tick back and offers Retry in the sheet, which applies the same pick again. */
