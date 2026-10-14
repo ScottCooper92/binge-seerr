@@ -9,8 +9,11 @@ import com.cooper.binge.companion.seerr.ui.requests.RequestCounts
 import com.cooper.binge.companion.seerr.ui.requests.RequestFilter
 import com.cooper.binge.companion.seerr.ui.requests.RequestsUiState
 import com.cooper.binge.companion.seerr.ui.tv.NoRequestsActions
+import com.cooper.binge.companion.seerr.ui.tv.TvDestination
+import com.cooper.binge.companion.seerr.ui.tv.TvHomeShell
 import com.cooper.binge.companion.seerr.ui.tv.TvLoadPhase
 import com.cooper.binge.companion.seerr.ui.tv.TvPagedRows
+import com.cooper.binge.companion.seerr.ui.tv.TvTopBarAccount
 import com.cooper.binge.companion.seerr.ui.tv.requestsReady
 import com.cooper.binge.companion.seerr.ui.tv.rows
 
@@ -24,7 +27,7 @@ private val SampleRequests =
     )
 
 /**
- * The television requests hub: the rows over the backdrop at rest, the empty arm, the loading and failed-load
+ * The television requests hub: the rows over the backdrop at rest, alone and under the app's top bar, the empty arm, the loading and failed-load
  * pages, and the failed-scope pages. A request's own moderation is framed on `TvRequestDetailScreenshotTest`.
  * Mirrors the states sketched in `TvBoardPreviewData.kt`.
  */
@@ -45,6 +48,21 @@ class TvRequestsScreenshotTest {
             },
             actions = NoRequestsActions,
         )
+    }
+
+    /** Home as the app shows it, under the top bar: the copy sits just under the bar, not a bar's height below it. */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun BoardUnderTopBar() {
+        TvHomeShell(
+            tab = TvDestination.Hub,
+            sheet = null,
+            onSelectTab = {},
+            onOpenSheet = {},
+            onCloseSheet = {},
+            account = TvTopBarAccount(name = "Scott Cooper", avatarUrl = null),
+        ) { _, _ -> Board() }
     }
 
     @PreviewTest
