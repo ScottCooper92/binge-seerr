@@ -2,22 +2,18 @@ package com.cooper.binge.companion.seerr.ui.tv.issues
 
 import androidx.compose.runtime.Composable
 import com.android.tools.screenshot.PreviewTest
-import com.binge.designsystem.SaveStatus
 import com.cooper.binge.companion.seerr.preview.SeerrTvScreenPreviews
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.ui.FIXED_NOW_MILLIS
 import com.cooper.binge.companion.seerr.ui.issues.IssueFilter
-import com.cooper.binge.companion.seerr.ui.issues.IssueItem
 import com.cooper.binge.companion.seerr.ui.issues.IssueStatus
 import com.cooper.binge.companion.seerr.ui.issues.IssuesUiState
 import com.cooper.binge.companion.seerr.ui.tv.NoIssuesActions
-import com.cooper.binge.companion.seerr.ui.tv.TvActionRun
 import com.cooper.binge.companion.seerr.ui.tv.TvLoadPhase
 import com.cooper.binge.companion.seerr.ui.tv.TvPagedRows
 import com.cooper.binge.companion.seerr.ui.tv.issue
 import com.cooper.binge.companion.seerr.ui.tv.issuesReady
 import com.cooper.binge.companion.seerr.ui.tv.rows
-import kotlinx.coroutines.flow.emptyFlow
 
 private val FixedSampleIssues =
     listOf(
@@ -27,8 +23,8 @@ private val FixedSampleIssues =
 
 /**
  * The television issues board as the design system's immersive hub: the open and resolved issues as rows over the
- * backdrop, the actions sheet open on a card, the empty arm and the failed-load page. Mirrors the states sketched
- * in `TvBoardPreviewData.kt`.
+ * backdrop, the empty arm and the failed-load page. Mirrors the states sketched in `TvBoardPreviewData.kt`; an issue's
+ * own sheet is framed by `TvIssueSheetScreenshotTest`.
  */
 class TvIssuesScreenshotTest {
     @PreviewTest
@@ -44,20 +40,6 @@ class TvIssuesScreenshotTest {
                     else -> rows(emptyList())
                 }
             },
-            events = emptyFlow(),
-            actions = NoIssuesActions,
-            now = FIXED_NOW_MILLIS,
-        )
-    }
-
-    @PreviewTest
-    @SeerrTvScreenPreviews
-    @Composable
-    fun Sheet() {
-        TvIssuesBoard(
-            state = issuesReady(actionItem = FixedSampleIssues.first()),
-            rowsFor = { filter -> if (filter == IssueFilter.Open) rows(listOf(FixedSampleIssues[0])) else rows(emptyList()) },
-            events = emptyFlow(),
             actions = NoIssuesActions,
             now = FIXED_NOW_MILLIS,
         )
@@ -67,7 +49,7 @@ class TvIssuesScreenshotTest {
     @SeerrTvScreenPreviews
     @Composable
     fun Empty() {
-        TvIssuesBoard(state = issuesReady(), rowsFor = { rows(emptyList()) }, events = emptyFlow(), actions = NoIssuesActions)
+        TvIssuesBoard(state = issuesReady(), rowsFor = { rows(emptyList()) }, actions = NoIssuesActions)
     }
 
     /** A load that failed, a rejected one included: the page says so, with a retry. */
@@ -78,7 +60,6 @@ class TvIssuesScreenshotTest {
         TvIssuesBoard(
             state = issuesReady(),
             rowsFor = { TvPagedRows(count = 0, at = { null }, refresh = TvLoadPhase.Failed) },
-            events = emptyFlow(),
             actions = NoIssuesActions,
         )
     }
@@ -88,7 +69,7 @@ class TvIssuesScreenshotTest {
     @SeerrTvScreenPreviews
     @Composable
     fun ScopeLoading() {
-        TvIssuesBoard(state = IssuesUiState.Loading, rowsFor = { rows(emptyList()) }, events = emptyFlow(), actions = NoIssuesActions)
+        TvIssuesBoard(state = IssuesUiState.Loading, rowsFor = { rows(emptyList()) }, actions = NoIssuesActions)
     }
 
     /** The scope could not be read: the page says so, and its retry reads the scope again. */
@@ -99,81 +80,7 @@ class TvIssuesScreenshotTest {
         TvIssuesBoard(
             state = IssuesUiState.Error(SeerrError.Unreachable),
             rowsFor = { rows(emptyList()) },
-            events = emptyFlow(),
             actions = NoIssuesActions,
         )
     }
-
-    /** A resolved issue's sheet (#1053): its first action reopens it. */
-    @PreviewTest
-    @SeerrTvScreenPreviews
-    @Composable
-    fun ResolvedSheet() {
-        TvIssuesBoard(
-            state = issuesReady(actionItem = FixedSampleIssues[1]),
-            rowsFor = { filter -> if (filter == IssueFilter.Resolved) rows(listOf(FixedSampleIssues[1])) else rows(emptyList()) },
-            events = emptyFlow(),
-            actions = NoIssuesActions,
-            now = FIXED_NOW_MILLIS,
-        )
-    }
-
-    @PreviewTest
-    @SeerrTvScreenPreviews
-    @Composable
-    fun ResolveConfirm() = ConfirmFrame(FixedSampleIssues[0], TvIssueConfirm.Resolve)
-
-    @PreviewTest
-    @SeerrTvScreenPreviews
-    @Composable
-    fun ReopenConfirm() = ConfirmFrame(FixedSampleIssues[1], TvIssueConfirm.Reopen)
-
-    @PreviewTest
-    @SeerrTvScreenPreviews
-    @Composable
-    fun DeleteConfirm() = ConfirmFrame(FixedSampleIssues[0], TvIssueConfirm.Delete)
-
-    /** The sheet stays open while an action saves, and says so under its rows (#1519). */
-    @PreviewTest
-    @SeerrTvScreenPreviews
-    @Composable
-    fun ActionSaving() = StatusFrame(SaveStatus.Saving)
-
-    /** An action the server refused: the line says so, with a Retry to reach, and the sheet stays. */
-    @PreviewTest
-    @SeerrTvScreenPreviews
-    @Composable
-    fun ActionFailed() = StatusFrame(SaveStatus.Failed)
-}
-
-/** The sheet on one of its confirm steps, alone: the board behind it is framed by [TvIssuesScreenshotTest.Sheet]. */
-@Composable
-private fun StatusFrame(status: SaveStatus) {
-    TvIssueActionsSheet(
-        item = FixedSampleIssues[0],
-        canDelete = true,
-        run = TvActionRun(status),
-        onResolve = {},
-        onReopen = {},
-        onDelete = {},
-        onOpenDetail = {},
-        onDismiss = {},
-    )
-}
-
-@Composable
-private fun ConfirmFrame(
-    item: IssueItem,
-    confirm: TvIssueConfirm,
-) {
-    TvIssueActionsSheet(
-        item = item,
-        canDelete = true,
-        onResolve = {},
-        onReopen = {},
-        onDelete = {},
-        onOpenDetail = {},
-        onDismiss = {},
-        initialConfirm = confirm,
-    )
 }

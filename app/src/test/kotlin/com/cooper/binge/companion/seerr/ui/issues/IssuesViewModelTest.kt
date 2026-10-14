@@ -18,8 +18,6 @@ import com.cooper.binge.companion.seerr.util.FakeSeerrServer
 import com.cooper.binge.companion.seerr.util.FakeTitleDao
 import com.cooper.binge.companion.seerr.util.MainDispatcherRule
 import com.cooper.binge.companion.seerr.util.PlainCipher
-import com.cooper.binge.companion.seerr.util.RecordingAnalytics
-import com.cooper.binge.companion.seerr.util.awaitEvent
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.first
@@ -58,7 +56,6 @@ class IssuesViewModelTest {
     private val seerr = FakeSeerrServer()
     private val received = CopyOnWriteArrayList<FakeRequest>()
     private val viewModels = ViewModelStore()
-    private val analytics = RecordingAnalytics()
 
     /** The viewer's permissions as the server currently has them; a test can change them mid-run. */
     private val viewerPermissions = AtomicInteger(0)
@@ -109,8 +106,6 @@ class IssuesViewModelTest {
                            "createdBy":{"displayName":"ana"},"media":{"tmdbId":100,"mediaType":"movie"}}]}""",
                     )
                 "/api/v1/movie/100" -> json("""{"title":"Heat","posterPath":"/heat.jpg","releaseDate":"1995-12-15"}""")
-                "/api/v1/issue/31/resolved", "/api/v1/issue/31/open" -> json("""{"id":31,"status":2}""")
-                "/api/v1/issue/31" -> if (request.method == "DELETE") FakeResponse(code = 204) else FakeResponse(code = 404)
                 else -> FakeResponse(code = 404)
             }
         }
@@ -144,7 +139,6 @@ class IssuesViewModelTest {
                 TitleCache(FakeTitleDao()),
                 FakeIssueStore(),
                 mainDispatcherRule.dispatcher,
-                analytics,
                 minuteTicker = ticker,
             )
         viewModels.put("issues", vm)
@@ -314,78 +308,6 @@ class IssuesViewModelTest {
             val listed = received.last { it.url.encodedPath == "/api/v1/issue" }.url
             assertNull("Seerr's validator refuses createdBy", listed.queryParameter("createdBy"))
             assertEquals("all", listed.queryParameter("filter"))
-        }
-
-    @Test
-    fun `resolving from the row posts the status, moves the cached row, and reports once`() =
-        runTest {
-            server(ADMIN)
-            val vm = viewModel()
-            vm.awaitReady { it.counts != null }
-            val heat = vm.issues(IssueFilter.Open).asSnapshot().single()
-            val event = awaitEvent(vm.events)
-
-            vm.resolve(heat)
-
-            assertEquals(IssueListEvent.Resolved, event.await())
-            assertTrue(received.any { it.method == "POST" && it.url.encodedPath == "/api/v1/issue/31/resolved" })
-            vm.awaitReady { it.actingIds.isEmpty() }
-            assertEquals(listOf("issue_moderated" to mapOf("action" to "resolved")), analytics.events)
-        }
-
-    /** The server refuses a reporter's delete once someone has replied, so none is sent (#1151). */
-    @Test
-    fun `a reporter's delete is not sent once someone has replied, and is while nobody has`() =
-        runTest {
-            server(CREATE_ISSUES)
-            val vm = viewModel()
-            vm.awaitReady { true }
-            val heat =
-                vm
-                    .issues(IssueFilter.Open)
-                    .asSnapshot()
-                    .single()
-                    .copy(reportedById = 7)
-
-            vm.delete(heat.copy(commentCount = 2))
-            vm.awaitReady { it.actingIds.isEmpty() }
-            assertTrue(received.none { it.method == "DELETE" })
-
-            val event = awaitEvent(vm.events)
-            vm.delete(heat.copy(commentCount = 1))
-            assertEquals(IssueListEvent.Deleted, event.await())
-            assertTrue(received.any { it.method == "DELETE" && it.url.encodedPath == "/api/v1/issue/31" })
-        }
-
-    @Test
-    fun `deleting from the row removes it from the server and the cache`() =
-        runTest {
-            server(ADMIN)
-            val vm = viewModel()
-            vm.awaitReady { it.counts != null }
-            val heat = vm.issues(IssueFilter.Open).asSnapshot().single()
-            val event = awaitEvent(vm.events)
-
-            vm.delete(heat)
-
-            assertEquals(IssueListEvent.Deleted, event.await())
-            assertTrue(received.any { it.method == "DELETE" && it.url.encodedPath == "/api/v1/issue/31" })
-        }
-
-    @Test
-    fun `a refused action reports the failure and leaves the row free to try again`() =
-        runTest {
-            server(ADMIN)
-            val vm = viewModel()
-            vm.awaitReady { it.counts != null }
-            val heat = vm.issues(IssueFilter.Open).asSnapshot().single()
-            val event = awaitEvent(vm.events)
-
-            vm.reopen(heat.copy(id = 99))
-
-            assertTrue(event.await() is IssueListEvent.Failed)
-            vm.awaitReady { it.actingIds.isEmpty() }
-            assertTrue(analytics.events.isEmpty())
         }
 
     private fun countReads() = received.count { it.url.encodedPath == "/api/v1/issue/count" }

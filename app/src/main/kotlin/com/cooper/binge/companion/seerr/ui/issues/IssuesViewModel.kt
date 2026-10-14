@@ -21,11 +21,6 @@ import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.seerr.TitleCache
 import com.cooper.binge.companion.seerr.seerr.toPermissions
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
-import com.cooper.binge.companion.seerr.telemetry.Analytics
-import com.cooper.binge.companion.seerr.telemetry.AnalyticsEvents
-import com.cooper.binge.companion.seerr.telemetry.CrashBreadcrumbs
-import com.cooper.binge.companion.seerr.telemetry.NoOpAnalytics
-import com.cooper.binge.companion.seerr.telemetry.NoOpCrashBreadcrumbs
 import com.cooper.binge.companion.seerr.ui.Ticker
 import com.cooper.binge.companion.seerr.ui.minuteClock
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -33,11 +28,9 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterIsInstance
@@ -47,7 +40,6 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
@@ -81,8 +73,6 @@ class IssuesViewModel
         private val titles: TitleCache,
         private val store: IssueStore,
         @IoDispatcher private val dispatcher: CoroutineDispatcher,
-        private val analytics: Analytics = NoOpAnalytics,
-        private val crashBreadcrumbs: CrashBreadcrumbs = NoOpCrashBreadcrumbs,
         private val minuteTicker: Ticker = Ticker(),
     ) : ViewModel() {
         internal var clock: () -> Long = System::currentTimeMillis
@@ -98,12 +88,6 @@ class IssuesViewModel
         /** An `issue/count` read is running, so a pull leaves it to finish rather than restarting it (#1193). */
         private val countsInFlight = AtomicBoolean(false)
         private val scopeRefresh = MutableStateFlow(0)
-        private val actionItem = MutableStateFlow<IssueItem?>(null)
-        private val actingState = MutableStateFlow<Set<Int>>(emptySet())
-        private val eventFlow = MutableSharedFlow<IssueListEvent>(extraBufferCapacity = 1)
-
-        /** The outcome of each row action, once. */
-        val events: Flow<IssueListEvent> = eventFlow.asSharedFlow()
 
         /**
          * The user's permissions decide whether the list is theirs alone, and the server's version whether it has
@@ -185,9 +169,8 @@ class IssuesViewModel
                 combine(selectedFilter, selectedSort) { filter, sort -> filter to sort },
                 counts,
                 scope,
-                combine(actingState, actionItem) { acting, actionItem -> acting to actionItem },
                 refreshes.latest,
-            ) { (filter, sort), counts, scope, (acting, actionItem), refreshes ->
+            ) { (filter, sort), counts, scope, refreshes ->
                 when (scope) {
                     ScopeState.Resolving -> IssuesUiState.Loading
                     is ScopeState.Failed -> IssuesUiState.Error(scope.error)
@@ -197,69 +180,11 @@ class IssuesViewModel
                             sort = sort,
                             counts = counts,
                             scope = scope.scope,
-                            actingIds = acting,
-                            actionItem = actionItem,
                             refreshes = refreshes,
                         )
                 }
             }.combine(now) { state, now -> (state as? IssuesUiState.Ready)?.copy(now = now) ?: state }
                 .stateIn(viewModelScope, SharingStarted.Lazily, IssuesUiState.Loading)
-
-        fun openActions(item: IssueItem) {
-            actionItem.value = item
-        }
-
-        fun dismissActions() {
-            actionItem.value = null
-        }
-
-        /** Marks an open issue resolved; the cached row moves with it, so the list agrees at once. */
-        fun resolve(item: IssueItem) =
-            act(item, IssueListEvent.Resolved, "resolved") {
-                connection.api().setIssueStatus(item.id, STATUS_RESOLVED)
-                store.updateStatus(item.id, IssueStatus.Resolved.name)
-            }
-
-        fun reopen(item: IssueItem) =
-            act(item, IssueListEvent.Reopened, "reopened") {
-                connection.api().setIssueStatus(item.id, STATUS_OPEN)
-                store.updateStatus(item.id, IssueStatus.Open.name)
-            }
-
-        /**
-         * Removes the report and its whole thread from the server and the cache. Nothing is sent for an issue the server
-         * would refuse to let this user delete (#1151): it would answer 401, and the row would only report a failure.
-         */
-        fun delete(item: IssueItem) {
-            val resolved = (scope.value as? ScopeState.Resolved)?.scope ?: return
-            if (!item.canBeDeleted(resolved)) return
-            act(item, IssueListEvent.Deleted, "deleted") {
-                connection.api().deleteIssue(item.id)
-                store.delete(item.id)
-            }
-        }
-
-        private fun act(
-            item: IssueItem,
-            success: IssueListEvent,
-            action: String,
-            write: suspend () -> Unit,
-        ) {
-            if (item.id in actingState.value) return
-            actingState.update { it + item.id }
-            crashBreadcrumbs.key("issue_id", item.id.toString())
-            crashBreadcrumbs.log("$action issue")
-            viewModelScope.launch(dispatcher) {
-                val result = attempt { write() }
-                actingState.update { it - item.id }
-                result
-                    .onSuccess {
-                        countsRefresh.value++
-                        analytics.event(AnalyticsEvents.ISSUE_MODERATED, mapOf(AnalyticsEvents.PARAM_ACTION to action))
-                        eventFlow.emit(success)
-                    }.onFailure { failure -> eventFlow.emit(IssueListEvent.Failed(failure.toSeerrError())) }
-            }
-        }
 
         fun setFilter(filter: IssueFilter) {
             selectedFilter.value = filter
@@ -274,7 +199,10 @@ class IssuesViewModel
             scopeRefresh.value++
         }
 
-        /** A pull refreshed the list: the chips re-read their counts too, unless a read is already running (#1193). */
+        /**
+         * A pull refreshed the list, or an issue changed on its own page: the chips re-read their counts too, unless a
+         * read is already running (#1193).
+         */
         fun refreshCounts() {
             if (!countsInFlight.get()) countsRefresh.value++
         }

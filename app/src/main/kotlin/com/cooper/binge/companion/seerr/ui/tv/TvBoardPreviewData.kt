@@ -49,7 +49,6 @@ import com.cooper.binge.companion.seerr.ui.tv.requests.TvRequestsRowsBoard
 import com.cooper.binge.companion.seerr.ui.tv.settings.TvSettingsActions
 import com.cooper.binge.companion.seerr.ui.tv.settings.TvSettingsSheet
 import com.cooper.binge.companion.seerr.ui.tv.settings.groupPage
-import kotlinx.coroutines.flow.emptyFlow
 
 /*
  * Home's boards, one frame per state and one per focused control. The `@TvPreviewsOnBlack` functions
@@ -63,7 +62,7 @@ internal val NOW = System.currentTimeMillis()
 
 private val NoHubActions = TvHubActions({}, {}, {})
 internal val NoRequestsActions = TvRequestsActions({}, {}, {}, {})
-internal val NoIssuesActions = TvIssuesActions({}, {}, {}, {}, {}, {}, {}, {}, {})
+internal val NoIssuesActions = TvIssuesActions({}, {}, {}, {})
 
 private val SampleServer =
     HubServer(
@@ -185,13 +184,12 @@ internal fun issue(
 
 internal val SampleIssues = listOf(issue(11, "Severance", IssueStatus.Open), issue(12, "Slow Horses", IssueStatus.Resolved))
 
-internal fun issuesReady(actionItem: IssueItem? = null) =
+internal fun issuesReady() =
     IssuesUiState.Ready(
         filter = IssueFilter.Open,
         sort = IssueSort.Added,
         counts = IssueCounts(total = 2, open = 1, resolved = 1),
         scope = IssueListScope(permissions = SeerrPermissions(canManageIssues = true), currentUserId = 7),
-        actionItem = actionItem,
     )
 
 internal val SampleSettings =
@@ -269,18 +267,6 @@ internal fun TvIssuesBoardPreview() {
     TvIssuesBoard(
         state = issuesReady(),
         rowsFor = { rows(SampleIssues) },
-        events = emptyFlow(),
-        actions = NoIssuesActions,
-    )
-}
-
-@TvPreviewsOnBlack
-@Composable
-internal fun TvIssuesSheetPreview() {
-    TvIssuesBoard(
-        state = issuesReady(actionItem = SampleIssues.first()),
-        rowsFor = { rows(SampleIssues) },
-        events = emptyFlow(),
         actions = NoIssuesActions,
     )
 }
