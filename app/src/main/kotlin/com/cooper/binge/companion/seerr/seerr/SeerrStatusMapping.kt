@@ -20,8 +20,8 @@ import kotlin.time.Duration.Companion.seconds
  *
  * Seerr keeps the 4K version's state apart (`status4k`, `downloadStatus4k`), and so does the contract:
  * one `VersionStatus` per version, never folded together (#704, #724). Both entries are always filled
- * here; the service drops the 4K one for a user it does not declare `CAPABILITY_REQUEST_4K` to.
- * The watch link is the standard version's: Seerr names no 4K link this app reads yet.
+ * here; the service drops the 4K one for a user it does not declare `CAPABILITY_REQUEST_4K` to. Each entry carries its own
+ * version's watch link, so a link into the 4K server goes out only with the 4K entry, to a user who may reach it (#1526).
  *
  * `allowed_actions` is not filled here: it is the intersection of what the user may do and what
  * the title's state admits, which the service computes with the permissions in hand.
@@ -37,11 +37,12 @@ fun SeerrMediaInfoDto?.toRequestStatus(nowMillis: Long): RequestStatus {
         version(is4k = false, info.status.toAvailability())
             .addAllSeasons(info.seasons.map { it.toSeasonAvailability(it.status) })
     info.downloadStatus.toDownloadProgress(nowMillis)?.let(standard::setDownload)
-    (info.mediaUrl ?: info.jellyfinMediaUrl ?: info.plexUrl)?.let(standard::setWatchUrl)
+    watchLink(info.mediaUrl, info.jellyfinMediaUrl, info.plexUrl)?.let(standard::setWatchUrl)
     val fourK =
         version(is4k = true, info.status4k.toAvailability())
             .addAllSeasons(info.seasons.map { it.toSeasonAvailability(it.status4k) })
     info.downloadStatus4k.toDownloadProgress(nowMillis)?.let(fourK::setDownload)
+    watchLink(info.mediaUrl4k, info.plexUrl4k)?.let(fourK::setWatchUrl)
     return RequestStatus
         .newBuilder()
         .addVersions(standard)
@@ -49,6 +50,9 @@ fun SeerrMediaInfoDto?.toRequestStatus(nowMillis: Long): RequestStatus {
         .addAllRequests(info.requests.map { it.toRequestInfo() })
         .build()
 }
+
+/** The first of a version's links the server filled in, if it is http or https: the contract carries no other scheme. */
+private fun watchLink(vararg candidates: String?): String? = candidates.firstOrNull { !it.isNullOrBlank() }?.takeIf { it.isWebUrl() }
 
 private fun version(
     is4k: Boolean,

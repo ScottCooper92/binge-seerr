@@ -97,6 +97,11 @@ private const val DOWNLOADING_IN_BOTH =
         """"downloadStatus":[{"title":"Standard","size":1000,"sizeLeft":500,"status":"downloading"}],""" +
         """"downloadStatus4k":[{"title":"UHD","size":3000,"sizeLeft":3000,"status":"queued"}]}}"""
 
+/** A movie in both libraries, each with its own link: the standard server's and the 4K server's. */
+private const val AVAILABLE_IN_BOTH_WITH_LINKS =
+    """{"mediaInfo":{"id":9,"status":5,"status4k":5,""" +
+        """"mediaUrl":"https://media.local/web/details?id=1","mediaUrl4k":"https://media4k.local/web/details?id=2"}}"""
+
 /** A movie downloading only in 4K. */
 private const val DOWNLOADING_ONLY_IN_4K =
     """{"mediaInfo":{"id":9,"status":1,"status4k":3,"downloadStatus4k":[{"title":"UHD","size":3000,"sizeLeft":1500}]}}"""
@@ -1217,6 +1222,33 @@ class SeerrRequestServiceTest {
 
             assertEquals(Availability.AVAILABILITY_NOT_REQUESTED, status.standardVersion().availability)
             assertEquals(Availability.AVAILABILITY_UNSPECIFIED, status.version4k().availability)
+        }
+
+    /** The 4K entry links into the 4K server, which a user who may request 4K may reach (#1526). */
+    @Test
+    fun `the 4k version links into the 4k server for a user who may request 4k`() =
+        runTest {
+            val stub = connected(publicSettings = MOVIE_4K_ENABLED)
+            seerr.enqueue(json(AVAILABLE_IN_BOTH_WITH_LINKS))
+
+            val status = stub.getStatus(GetStatusRequest.newBuilder().setMedia(movie).build()).status
+
+            assertEquals("https://media.local/web/details?id=1", status.standardVersion().watchUrl)
+            assertEquals("https://media4k.local/web/details?id=2", status.version4k().watchUrl)
+        }
+
+    /** The contract never hands a user a link into a 4K server they may not reach: the whole 4K entry stays out. */
+    @Test
+    fun `a user who may not request 4k gets no link into the 4k server`() =
+        runTest {
+            val stub = connected()
+            seerr.enqueue(json(AVAILABLE_IN_BOTH_WITH_LINKS))
+
+            val status = stub.getStatus(GetStatusRequest.newBuilder().setMedia(movie).build()).status
+
+            assertEquals("https://media.local/web/details?id=1", status.standardVersion().watchUrl)
+            assertEquals(listOf(false), status.versionsList.map { it.is4K })
+            assertFalse(status.versionsList.any { it.watchUrl.contains("media4k") })
         }
 
     /** Each version carries its own downloads, so a user who may request 4K sees them apart (#724). */

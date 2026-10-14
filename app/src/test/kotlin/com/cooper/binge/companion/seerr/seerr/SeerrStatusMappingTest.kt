@@ -60,6 +60,35 @@ class SeerrStatusMappingTest {
         assertEquals("https://jellyfin.local/web/#/details?id=1", standard.watchUrl)
     }
 
+    /** Seerr and Jellyseerr name the 4K server's link `mediaUrl4k`, Overseerr `plexUrl4k`; each version keeps its own (#1526). */
+    @Test
+    fun `each version carries its own server's watch link`() {
+        val seerr =
+            SeerrMediaInfoDto(mediaUrl = "https://jellyfin.local/a", mediaUrl4k = "https://jellyfin4k.local/b").toRequestStatus(NOW)
+        val overseerr = SeerrMediaInfoDto(plexUrl = "https://app.plex.tv/a", plexUrl4k = "https://app.plex.tv/b").toRequestStatus(NOW)
+
+        assertEquals("https://jellyfin.local/a", seerr.standardVersion().watchUrl)
+        assertEquals("https://jellyfin4k.local/b", seerr.version4k().watchUrl)
+        assertEquals("https://app.plex.tv/a", overseerr.standardVersion().watchUrl)
+        assertEquals("https://app.plex.tv/b", overseerr.version4k().watchUrl)
+    }
+
+    @Test
+    fun `a version the 4k server does not hold has no watch link`() {
+        val status = SeerrMediaInfoDto(status = SeerrMediaStatusCode.Available, mediaUrl = "https://jellyfin.local/a").toRequestStatus(NOW)
+
+        assertEquals("", status.version4k().watchUrl)
+    }
+
+    /** The contract carries http and https only; a server's link in any other scheme is left out rather than sent. */
+    @Test
+    fun `a watch link that is not http or https is not sent`() {
+        val status = SeerrMediaInfoDto(mediaUrl = "plex://preplay/?metadataKey=1", mediaUrl4k = "file:///media/x.mkv").toRequestStatus(NOW)
+
+        assertEquals("", status.standardVersion().watchUrl)
+        assertEquals("", status.version4k().watchUrl)
+    }
+
     @Test
     fun `a standard and a 4K request against one title are told apart`() {
         val info =
