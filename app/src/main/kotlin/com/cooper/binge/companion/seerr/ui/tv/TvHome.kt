@@ -9,8 +9,8 @@ import com.cooper.binge.companion.seerr.ui.AdvancedRequestUiState
 import com.cooper.binge.companion.seerr.ui.ScopedViewModels
 
 /**
- * The television shell of the app's own UI: setup while no server is saved, and once one is, the rail
- * with the hub, the lists and settings beside it.
+ * The television shell of the app's own UI: setup while no server is saved, and once one is, Home. Home is the only
+ * destination: Account, Issues and Settings open above it from its top row.
  */
 @Composable
 internal fun TvSeerrShell(viewModel: TvHomeViewModel = hiltViewModel()) {

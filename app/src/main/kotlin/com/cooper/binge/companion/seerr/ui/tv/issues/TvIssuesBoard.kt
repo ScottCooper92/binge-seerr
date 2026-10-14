@@ -77,7 +77,7 @@ internal class TvIssuesActions(
 /**
  * The issues browser as a television board: the filters as a band, the selected filter's rows beneath,
  * and a row's actions — resolve or reopen, and delete — on the end-edge sheet. Every row also opens the
- * read-only issue page (an overlay above the rail, not owned by this board) — from the sheet for a row
+ * read-only issue page (a page above Home, not owned by this board) — from the sheet for a row
  * this viewer may act on, where resolving, reopening and deleting stay; directly for one they may not,
  * where the sheet has nothing else to offer.
  *
