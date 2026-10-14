@@ -33,12 +33,14 @@ import com.binge.designsystem.tv.template.TvDetailPage
 import com.binge.designsystem.tv.template.TvDetailPageScope
 import com.binge.designsystem.tv.template.TvPageHosting
 import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.ui.requests.EditState
 import com.cooper.binge.companion.seerr.ui.requests.IssueReport
 import com.cooper.binge.companion.seerr.ui.requests.IssueType
 import com.cooper.binge.companion.seerr.ui.requests.MediaStatusChoice
 import com.cooper.binge.companion.seerr.ui.requests.ModerationEvent
 import com.cooper.binge.companion.seerr.ui.requests.RequestDetail
 import com.cooper.binge.companion.seerr.ui.requests.RequestDetailUiState
+import com.cooper.binge.companion.seerr.ui.requests.RequestEditorControls
 import com.cooper.binge.companion.seerr.ui.requests.RequestItem
 import com.cooper.binge.companion.seerr.ui.requests.isError
 import com.cooper.binge.companion.seerr.ui.requests.labelRes
@@ -69,6 +71,14 @@ internal class TvRequestDetailActions(
     val onSetMediaStatus: (mediaId: Int, status: MediaStatusChoice, is4k: Boolean) -> Unit,
     val onReportIssue: (IssueType, String) -> Unit,
     val onDismissReport: () -> Unit,
+    /** Null hides Edit: a surface with no editor behind it has nothing to open. */
+    val edit: TvRequestEditActions? = null,
+)
+
+/** Opening the request's editor, and what its sheet may ask of it once open. */
+internal class TvRequestEditActions(
+    val onStart: () -> Unit,
+    val controls: RequestEditorControls,
 )
 
 /**
@@ -110,6 +120,7 @@ internal fun TvRequestDetailScreen(
             is RequestDetailUiState.Ready ->
                 TvRequestDetailContent(
                     detail = state.detail,
+                    edit = state.edit,
                     report = state.report,
                     now = state.now,
                     events = events,
@@ -133,6 +144,7 @@ internal fun TvRequestDetailScreen(
 @Composable
 private fun TvRequestDetailContent(
     detail: RequestDetail,
+    edit: EditState?,
     report: IssueReport,
     now: Long,
     events: Flow<ModerationEvent>,
@@ -212,8 +224,7 @@ private fun TvRequestDetailContent(
         TvRequestDetailSheet(
             host = TvDetailSheetHost(step, closers.getValue(step)),
             actions = actions,
-            media = detail.media,
-            report = report,
+            content = TvDetailSheetContent(detail.item, detail.media, edit, report),
             draft = draft,
         )
     }
@@ -351,4 +362,5 @@ private fun TvRequestDetailActions.markingRefocus(mark: () -> Unit) =
         onSetMediaStatus = onSetMediaStatus,
         onReportIssue = onReportIssue,
         onDismissReport = onDismissReport,
+        edit = edit,
     )

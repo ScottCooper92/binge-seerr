@@ -1157,6 +1157,7 @@
          own UI prototypes strings live there instead, since that screen is debug-only code (#467). -->
     <string name="debug_group_developer" translatable="false">Developer</string>
     <string name="tv_detail_approve">Approve</string>
+    <string name="tv_detail_edit">Edit</string>
     <string name="tv_detail_decline">Decline</string>
     <string name="tv_detail_remove">Remove</string>
     <string name="tv_detail_block">Block</string>
@@ -1168,7 +1169,7 @@
     <string name="tv_detail_info_status">Status</string>
     <string name="tv_detail_info_sent_to">Sent to</string>
     <string name="tv_detail_info_phone_only">Change on your phone</string>
-    <string name="tv_detail_phone_edit">Edit the request</string>
+    <string name="tv_detail_phone_tags">The request\'s tags</string>
     <string name="tv_detail_phone_requester">The requester</string>
     <string name="tv_detail_phone_siblings">Other requests</string>
     <string name="tv_detail_details">Details</string>

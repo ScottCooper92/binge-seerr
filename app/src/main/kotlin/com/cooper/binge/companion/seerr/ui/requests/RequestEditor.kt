@@ -87,7 +87,7 @@ class RequestEditor(
             moderation.events.collect { event ->
                 when (event) {
                     ModerationEvent.Edited -> edit.value = null
-                    is ModerationEvent.Failed -> edit.update { it?.copy(saving = false) }
+                    is ModerationEvent.Failed -> edit.update { it?.copy(saving = false, failed = true) }
                     else -> Unit
                 }
             }
@@ -144,7 +144,7 @@ class RequestEditor(
         val state = edit.value ?: return
         val request = source?.request ?: return
         if (!state.canSave) return
-        edit.value = state.copy(saving = true)
+        edit.value = state.copy(saving = true, failed = false)
         moderation.edit(request.id, state.toBody(request))
     }
 
