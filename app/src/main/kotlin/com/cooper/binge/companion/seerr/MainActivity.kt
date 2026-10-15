@@ -10,6 +10,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
@@ -29,11 +30,13 @@ import com.cooper.binge.companion.seerr.ui.HomeRoute
 import com.cooper.binge.companion.seerr.ui.SeerrNavHost
 import com.cooper.binge.companion.seerr.ui.SeerrRoute
 import com.cooper.binge.companion.seerr.ui.consent.ConsentGate
+import com.cooper.binge.companion.seerr.ui.linkedRequestId
 import com.cooper.binge.companion.seerr.ui.tv.TvSeerrShell
 import com.cooper.binge.companion.seerr.ui.tv.isTelevision
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.mapNotNull
 import javax.inject.Inject
 
 private const val KEY_CONSUMED_LINK = "consumed_link"
@@ -82,10 +85,11 @@ class MainActivity : ComponentActivity() {
         }
         drawEdgeToEdge()
         setContent {
-            // A television gets the D-pad shell, as Binge's MainActivity selects its own at runtime; the
-            // notification links push phone routes, which the TV shell grows into with a later phase.
+            // A television gets the D-pad shell, as Binge's MainActivity selects its own at runtime. It has no
+            // back stack, so of the links it follows only a request's, opening its page over Home.
             if (LocalConfiguration.current.isTelevision()) {
-                CompositionLocalProvider(LocalAnalytics provides analytics) { TvSeerrShell() }
+                val linkedRequests = remember { deepLinks.backStacks.mapNotNull { it.linkedRequestId() } }
+                CompositionLocalProvider(LocalAnalytics provides analytics) { TvSeerrShell(linkedRequests = linkedRequests) }
                 return@setContent
             }
             val backStack = rememberNavBackStack(HomeRoute)

@@ -37,4 +37,11 @@ class DeepLinksTest {
         assertEquals(DeepLinks.request(8), NotificationSignal.RequestApproved.deepLink(listOf(8)))
         assertEquals(DeepLinks.requests(), NotificationSignal.RequestDeclined.deepLink(listOf(8, 9)))
     }
+
+    @Test
+    fun `the television follows a request's link to its page, and no other`() {
+        assertEquals(42, DeepLinks.backStackFor(DeepLinks.request(42))?.linkedRequestId())
+        assertNull(DeepLinks.backStackFor(DeepLinks.requests())?.linkedRequestId())
+        assertNull(DeepLinks.backStackFor(DeepLinks.issue(7))?.linkedRequestId())
+    }
 }
