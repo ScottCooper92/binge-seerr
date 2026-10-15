@@ -25,6 +25,7 @@ import com.cooper.binge.companion.seerr.preview.SeerrTvScreenPreviews
 import com.cooper.binge.companion.seerr.seerr.SeerrMediaStatusCode
 import com.cooper.binge.companion.seerr.ui.requests.MediaInstance
 import com.cooper.binge.companion.seerr.ui.requests.MediaRecord
+import com.cooper.binge.companion.seerr.ui.requests.MediaStatusChoice
 import com.cooper.binge.companion.seerr.ui.requests.RequestEditorControls
 import com.cooper.binge.companion.seerr.ui.requests.refusedEditState
 import com.cooper.binge.companion.seerr.ui.requests.seasonListRow
@@ -66,7 +67,7 @@ class TvRequestDetailSheetsScreenshotTest {
             )
         }
 
-    /** A pick being saved: the tick has moved to it, and the sheet says "Saving…" under the options before it closes (#1519). */
+    /** A pick being saved: its row spins in the tick's place, and the tick stays on the state the title is in until it lands. */
     @PreviewTest
     @SeerrTvScreenPreviews
     @Composable
@@ -77,6 +78,7 @@ class TvRequestDetailSheetsScreenshotTest {
                 onSelect = { _, _ -> },
                 entryFocus = FocusRequester(),
                 status = SaveStatus.Saving,
+                initialPick = MediaStatusChoice.Processing,
             )
         }
 

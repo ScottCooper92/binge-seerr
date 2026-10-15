@@ -166,10 +166,10 @@ internal fun ColumnScope.TvRequestDetailPage(
 
 /**
  * Marking the title's state, as the phone's Mark as sheet does: which instance first where the server holds the
- * title twice, then the states, the current one ticked. A pick applies in place: the tick moves to it at once, and [status]
- * says "Saving…" and then "Saved" above the options. The page stays open. On a failure the tick moves back and the
- * line offers Try again, which applies the same pick once more. While [actionInFlight] the page drops a pick, so the
- * rows ignore it and the tick stays where it was.
+ * title twice, then the states, the current one ticked. A pick applies in place: the row picked shows a spinner in the
+ * tick's place while it saves, and the tick moves to it once saved. The page stays open. On a failure the tick stays where
+ * it was, and a line above the options offers Try again, which applies the same pick once more. While [actionInFlight]
+ * the page drops a pick, so the rows ignore it and the tick stays where it was.
  */
 @Composable
 internal fun ColumnScope.TvMarkAsSteps(
@@ -179,11 +179,13 @@ internal fun ColumnScope.TvMarkAsSteps(
     status: SaveStatus = SaveStatus.Idle,
     onRetry: () -> Unit = {},
     actionInFlight: Boolean = false,
+    /** The pick already being saved on arrival, for a frame, which cannot press a row. Production passes null. */
+    initialPick: MediaStatusChoice? = null,
 ) {
     var picked by rememberSaveable { mutableStateOf(media.instances.singleOrNull()?.is4k) }
     val instance = media.instances.firstOrNull { it.is4k == picked }
-    // The pick being saved, ticked ahead of the server's answer; a failure puts the tick back where it was.
-    var pending by remember { mutableStateOf<MediaStatusChoice?>(null) }
+    // The pick being saved: its row spins until the server answers, then takes the tick. A failure leaves the tick where it was.
+    var pending by remember { mutableStateOf(initialPick) }
     var failedPick by remember { mutableStateOf<MediaStatusChoice?>(null) }
     LaunchedEffect(status) {
         if (status == SaveStatus.Failed) {
@@ -199,6 +201,7 @@ internal fun ColumnScope.TvMarkAsSteps(
                     label = stringResource(candidate.labelRes()),
                     icon = candidate.icon(media.isTv),
                     onClick = { picked = candidate.is4k },
+                    opensPage = true,
                     modifier = if (index == 0) Modifier.focusRequester(entryFocus) else Modifier,
                 )
             }
@@ -206,9 +209,10 @@ internal fun ColumnScope.TvMarkAsSteps(
         TvSideSheetStepFocus(entryFocus)
     } else {
         TvSideSheetBody(stringResource(instance.labelRes()) + "\n" + stringResource(R.string.media_mark_as_scope_caption))
-        // Above the options, not under them: five rows fill a television's height, and the line must never sit off-screen.
+        // Saving and saved show in the row picked. A failure says so here, with its Retry: above the options, not under them,
+        // since five rows fill a television's height and the line must never sit off-screen.
         TvSaveStatus(
-            status = status,
+            status = if (status == SaveStatus.Failed) status else SaveStatus.Idle,
             onRetry = {
                 pending = failedPick
                 onRetry()
@@ -220,7 +224,8 @@ internal fun ColumnScope.TvMarkAsSteps(
                 TvOptionRow(
                     label = stringResource(choice.labelRes()),
                     icon = choice.icon(),
-                    selected = pending?.let { it == choice } ?: current,
+                    selected = pending?.takeIf { status == SaveStatus.Saved }?.let { it == choice } ?: current,
+                    saving = status == SaveStatus.Saving && pending == choice,
                     onClick = {
                         if (!current && status != SaveStatus.Saving && !actionInFlight) {
                             pending = choice

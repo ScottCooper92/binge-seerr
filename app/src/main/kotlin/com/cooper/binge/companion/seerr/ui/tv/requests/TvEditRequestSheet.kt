@@ -168,6 +168,7 @@ private fun TvDestinationRows(
         supportingText = destination.servers.firstOrNull { it.id == destination.serverId }?.label ?: loading,
         icon = DestinationIcons.server,
         onClick = { onOpen(EditStep.Server) },
+        opensPage = true,
         modifier = entryFocus?.let { Modifier.focusRequester(it) } ?: Modifier,
     )
     TvSideSheetRow(
@@ -175,12 +176,14 @@ private fun TvDestinationRows(
         supportingText = destination.profiles.firstOrNull { it.id == destination.profileId }?.label ?: loading,
         icon = DestinationIcons.profile,
         onClick = { onOpen(EditStep.Profile) },
+        opensPage = true,
     )
     TvSideSheetRow(
         label = stringResource(R.string.advanced_root_folder),
         supportingText = destination.rootFolder ?: loading,
         icon = DestinationIcons.rootFolder,
         onClick = { onOpen(EditStep.RootFolder) },
+        opensPage = true,
     )
 }
 

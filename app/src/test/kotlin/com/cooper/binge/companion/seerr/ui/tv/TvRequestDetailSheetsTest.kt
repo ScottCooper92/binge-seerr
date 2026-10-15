@@ -2,6 +2,9 @@ package com.cooper.binge.companion.seerr.ui.tv
 
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.hasAnyDescendant
@@ -81,28 +84,32 @@ class TvRequestDetailSheetsTest {
         composeTestRule.onNode(isSelected() and hasText(string(MediaStatusChoice.Processing.labelRes()))).assertExists()
     }
 
-    /** The sheet stays open while it saves, ticks the pick at once, says Saving, then Saved, and stays open after (#1519). */
+    /**
+     * The row picked spins in its tick's place while it saves, and takes the tick once saved; the sheet stays open throughout,
+     * and nothing but the row says how it went (#1519).
+     */
     @Test
-    fun aPickSavesInPlaceAndTheSheetStaysOpen() {
+    fun aPickSpinsInItsRowThenTakesTheTickAndTheSheetStaysOpen() {
         setContent(detail(media = media(MediaInstance(false, SeerrMediaStatusCode.Processing, null, null, null))))
         pressOk()
         pressOk()
 
-        composeTestRule.onNodeWithText(string(DesR.string.save_status_saving)).assertIsDisplayed()
-        composeTestRule.onNodeWithText(string(R.string.media_mark_as_scope_caption), substring = true).assertIsDisplayed()
-        composeTestRule.onNode(isSelected() and hasText(string(MediaStatusChoice.Available.labelRes()))).assertExists()
+        val saving = string(DesR.string.cd_list_item_loading)
+        option(MediaStatusChoice.Available).assert(SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, saving))
+        composeTestRule.onNode(isSelected() and hasText(string(MediaStatusChoice.Processing.labelRes()))).assertExists()
+        composeTestRule.onNodeWithText(string(DesR.string.save_status_saving)).assertDoesNotExist()
 
         events.tryEmit(ModerationEvent.MediaStatusSet)
         composeTestRule.waitForIdle()
-        composeTestRule.onNodeWithText(string(DesR.string.save_status_saved)).assertIsDisplayed()
+        composeTestRule.onNode(isSelected() and hasText(string(MediaStatusChoice.Available.labelRes()))).assertExists()
+        option(MediaStatusChoice.Available).assert(SemanticsMatcher.keyNotDefined(SemanticsProperties.StateDescription))
 
         composeTestRule.mainClock.advanceTimeBy(TV_SAVED_HOLD_MILLIS + 200)
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText(string(R.string.media_mark_as_scope_caption), substring = true).assertIsDisplayed()
-        composeTestRule.onNode(isSelected() and hasText(string(MediaStatusChoice.Available.labelRes()))).assertExists()
     }
 
-    /** A refused pick puts the tick back and offers Retry in the sheet, which applies the same pick again. */
+    /** A refused pick leaves the tick where it was and offers Retry in the sheet, which saves the same pick again. */
     @Test
     fun aRefusedPickMovesTheTickBackAndRetryAppliesItAgain() {
         setContent(detail(media = media(MediaInstance(false, SeerrMediaStatusCode.Processing, null, null, null))))
@@ -120,7 +127,8 @@ class TvRequestDetailSheetsTest {
 
         assertEquals(2, marked.size)
         assertEquals(MediaStatusChoice.Available, marked.last().second)
-        composeTestRule.onNode(isSelected() and hasText(string(MediaStatusChoice.Available.labelRes()))).assertExists()
+        option(MediaStatusChoice.Available)
+            .assert(SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, string(DesR.string.cd_list_item_loading)))
         composeTestRule.onNodeWithText(string(R.string.media_mark_as_scope_caption), substring = true).assertIsDisplayed()
     }
 
@@ -221,6 +229,8 @@ class TvRequestDetailSheetsTest {
         actionButton(R.string.media_mark_as).assertDoesNotExist()
         actionButton(R.string.issue_report_title).assertDoesNotExist()
     }
+
+    private fun option(choice: MediaStatusChoice) = composeTestRule.onNode(hasText(string(choice.labelRes())) and isFocusable())
 
     private fun media(vararg instances: MediaInstance) =
         MediaRecord(
