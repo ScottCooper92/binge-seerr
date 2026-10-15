@@ -50,7 +50,7 @@ import com.binge.designsystem.template.FormSaveFailureSnackbar
 import com.binge.designsystem.template.FormSaveStatus
 import com.binge.designsystem.template.FormSaveStatusText
 import com.cooper.binge.companion.seerr.R
-import com.cooper.binge.companion.seerr.ui.openInBrowser
+import com.cooper.binge.companion.seerr.ui.openTitle
 import com.cooper.binge.companion.seerr.ui.requests.labelRes
 import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
 import com.cooper.binge.companion.seerr.ui.state.OverflowDetailScaffold
@@ -218,7 +218,8 @@ private fun Ready(
         ) {
             IssueHeader(
                 detail.item,
-                onOpen = { context.openInBrowser(detail.webUrl) },
+                // The title opens in Binge where Binge answers, as on the request page; else the issue's own web page, as before.
+                onOpen = { context.openTitle(detail.item.mediaType, detail.item.tmdbId, detail.webUrl) },
                 modifier = Modifier.padding(resolvedContentPadding(vertical = inset)),
             )
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, modifier = Modifier.padding(sides))

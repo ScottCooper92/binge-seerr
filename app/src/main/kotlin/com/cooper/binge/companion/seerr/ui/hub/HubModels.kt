@@ -93,6 +93,17 @@ data class HubOverview(
 /** Binge's relationship to this device, for the Hub's contextual tile (#469). */
 enum class BingeStatus { NotInstalled, NotConnected, Connected }
 
+/** Not installed always wins; otherwise "connected" is whether Binge has ever handshaken this server. */
+fun bingeStatusOf(
+    installed: Boolean,
+    connected: Boolean,
+): BingeStatus =
+    when {
+        !installed -> BingeStatus.NotInstalled
+        connected -> BingeStatus.Connected
+        else -> BingeStatus.NotConnected
+    }
+
 /** One card of the "Downloading now" strip. */
 data class HubDownload(
     val requestId: Int,

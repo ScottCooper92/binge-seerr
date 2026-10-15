@@ -1,5 +1,6 @@
 package com.cooper.binge.companion.seerr.ui.settings
 
+import com.cooper.binge.companion.seerr.ui.hub.BingeStatus
 import com.cooper.binge.companion.seerr.notifications.NotificationSignal
 import com.cooper.binge.companion.seerr.seerr.SeerrDefaultAccess
 import com.cooper.binge.companion.seerr.seerr.SeerrMediaServer
@@ -110,6 +111,8 @@ data class AppSettings(
     val shakeToReport: Boolean,
     val shareUsageData: Boolean = false,
     val sendCrashReports: Boolean = true,
+    /** Where Binge stands on this device, for the group's first row. */
+    val binge: BingeStatus = BingeStatus.NotInstalled,
 )
 
 sealed interface SettingsUiState {
