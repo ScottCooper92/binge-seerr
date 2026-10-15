@@ -790,6 +790,7 @@ app:settings_about_version  b65bfa7f1eb0
 app:settings_agent_email  969ccbd3cf63
 app:settings_agent_webhook  4814f62c108d
 app:settings_application_url  96884337d874
+app:settings_binge  b914ef32a2e1
 app:settings_choices_filter  638e249f4a15
 app:settings_display_language  11a045e402c3
 app:settings_edit_connection  047f9f951500
@@ -950,7 +951,6 @@ app:tv_settings_agent_body  863d7d173a6b
 app:tv_settings_agent_setup_first  424a7f02b01f
 app:tv_settings_agent_unavailable  5a75150b91c2
 app:tv_settings_agents_note  1ef1a45dff37
-app:tv_settings_binge  b914ef32a2e1
 app:tv_settings_binge_install  801a5813f691
 app:tv_settings_cancel_library_scan  8422c5747da3
 app:tv_settings_disconnect_confirm  ff9c95dc28f5

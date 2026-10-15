@@ -16,6 +16,7 @@ import com.binge.designsystem.theme.fill
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.hub.BingeStatus
 import com.cooper.binge.companion.seerr.ui.hub.openBinge
+import com.cooper.binge.companion.seerr.ui.hub.openBingeCompanions
 import com.cooper.binge.companion.seerr.ui.hub.openBingeOnPlayStore
 import com.cooper.binge.companion.seerr.ui.openInBrowser
 
@@ -33,7 +34,7 @@ internal fun appRows(
 ): List<ListItem> {
     val context = LocalContext.current
     return listOf(
-        bingeRow(app.binge, onOpen = context::openBinge, onGet = context::openBingeOnPlayStore),
+        bingeRow(app.binge, onOpen = context::openBinge, onConnect = context::openBingeCompanions, onGet = context::openBingeOnPlayStore),
         ListItem(
             icon = Icons.Filled.BugReport,
             iconTint = BingeSentiment.Info.fill(),
@@ -68,19 +69,21 @@ internal fun appRows(
 }
 
 /**
- * Binge, as the row that gets you to it: open it when it is installed, else its Play listing. The second line says where
+ * Binge, as the row that gets you to it: its Play listing when it is missing, its page for this app when it has not connected
+ * yet, else Binge itself. The second line says where
  * this app stands with it, as the hub's tile does, so the row is still worth reading once the tile is dismissed.
  */
 @Composable
 private fun bingeRow(
     status: BingeStatus,
     onOpen: () -> Unit,
+    onConnect: () -> Unit,
     onGet: () -> Unit,
 ): ListItem =
     ListItem(
         icon = Icons.Filled.Tv,
         iconTint = BingeSentiment.Info.fill(),
-        label = stringResource(R.string.tv_settings_binge),
+        label = stringResource(R.string.settings_binge),
         detail =
             stringResource(
                 when (status) {
@@ -91,7 +94,12 @@ private fun bingeRow(
             ),
         supportingMaxLines = BINGE_DETAIL_MAX_LINES,
         destination = ListItemDestination.External,
-        onClick = if (status == BingeStatus.NotInstalled) onGet else onOpen,
+        onClick =
+            when (status) {
+                BingeStatus.NotInstalled -> onGet
+                BingeStatus.NotConnected -> onConnect
+                BingeStatus.Connected -> onOpen
+            },
     )
 
 private const val BINGE_DETAIL_MAX_LINES = 2
