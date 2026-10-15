@@ -81,6 +81,7 @@ internal fun ColumnScope.TvIssueCardPage(
                 icon = Icons.AutoMirrored.Filled.Chat,
                 onClick = { nav.push(ISSUE_PAGE_PHONE, openedBy = KEY_EDIT) },
                 modifier = nav.row(KEY_EDIT),
+                opensPage = true,
             )
         }
         if (canAct && comment != null) {

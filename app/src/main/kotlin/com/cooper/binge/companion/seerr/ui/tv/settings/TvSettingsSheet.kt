@@ -131,6 +131,7 @@ private fun ColumnScope.RootPage(
                 icon = group.icon,
                 onClick = { nav.push(groupPage(group.page.title), openedBy = group.page.title) },
                 modifier = nav.row(group.page.title),
+                opensPage = true,
             )
         }
         TvSideSheetRow(
@@ -207,8 +208,15 @@ private fun SettingsRow(
         onClick = option.onSelect,
         supportingText = row.note ?: row.detail ?: if (forMediaServer) row.label else row.body.ifEmpty { null },
         modifier = nav.row(row.key).then(announce),
+        opensPage = row.opensPage(),
     )
 }
+
+/**
+ * Whether pressing the row opens another page of this sheet: the bug report's code, or an agent's page. The pane model is the
+ * design system's and does not say, so the row's key does; every other row runs its action or opens another app.
+ */
+private fun TvPaneRow.opensPage(): Boolean = key == KEY_REPORT_BUG || key.startsWith(KEY_AGENT_PREFIX)
 
 @Composable
 private fun ColumnScope.BugReportPage(

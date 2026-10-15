@@ -88,6 +88,7 @@ internal fun ColumnScope.TvRequestManageStep(
                 destructive = item.action.destructive,
                 onClick = { onSelect(item) },
                 modifier = rowModifier(item.action),
+                opensPage = item.action.sheet?.isPage == true,
             )
         }
     }

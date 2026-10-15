@@ -108,6 +108,7 @@ internal fun ColumnScope.TvIssueThread(
                 icon = Icons.AutoMirrored.Filled.Chat,
                 onClick = { nav.push(ISSUE_PAGE_PHONE, openedBy = KEY_REPLY) },
                 modifier = nav.row(KEY_REPLY),
+                opensPage = true,
             )
         }
         detail.comments.forEach { comment ->
