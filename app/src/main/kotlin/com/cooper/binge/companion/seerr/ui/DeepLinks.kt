@@ -60,6 +60,12 @@ object DeepLinks {
 }
 
 /**
+ * The request a resolved link's back stack ends on, or null for any other. The television shell has no back stack, so a
+ * request's link is all it can follow: it opens that request's page over Home.
+ */
+internal fun List<SeerrRoute>.linkedRequestId(): Int? = (lastOrNull() as? RequestDetailRoute)?.requestId
+
+/**
  * Hands a resolved link from the Activity to the host. Buffered, so a tap that starts the app is
  * delivered once the host is composed and subscribes.
  */

@@ -23,6 +23,8 @@ import com.cooper.binge.companion.seerr.ui.settings.SettingsUiState
 import com.cooper.binge.companion.seerr.ui.settings.SettingsViewModel
 import com.cooper.binge.companion.seerr.ui.settings.SignInKind
 import com.cooper.binge.companion.seerr.ui.tv.requests.KEY_MY_REQUESTS
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 
 /**
  * The connected television: Home and Issues as tabs under the top bar, with Account and Settings opening as sheets over them,
@@ -34,6 +36,8 @@ internal fun TvConnectedShell(
     settingsViewModel: SettingsViewModel = hiltViewModel(),
     // The Issues tab's own, so an issue changed in its sheet moves the tab's counts.
     issuesViewModel: IssuesViewModel = hiltViewModel(),
+    // A request's link, from a notification or a host's hand-off: its page opens over Home.
+    linkedRequests: Flow<Int> = emptyFlow(),
 ) {
     // The hub state the Account page reads, for the signed-in user's id and which tabs are offered.
     val hub by hubViewModel.uiState.collectAsStateWithLifecycle()
@@ -49,6 +53,13 @@ internal fun TvConnectedShell(
     LaunchedEffect(tabs) { chosenTab = pages.reconcile(chosenTab, tabs) }
     var sheet by rememberSaveable { mutableStateOf<TvDestination?>(null) }
     val openSheet = rememberSheetOpener(settingsViewModel) { sheet = it }
+    LaunchedEffect(linkedRequests) {
+        linkedRequests.collect { id ->
+            sheet = null
+            chosenTab = TvDestination.Hub
+            pages[TvDestination.Hub].detailId = id
+        }
+    }
     val settings by settingsViewModel.uiState.collectAsStateWithLifecycle()
     val analytics = LocalAnalytics.current
     LaunchedEffect(tab, sheet) { analytics.screen((sheet ?: tab).screenName()) }
