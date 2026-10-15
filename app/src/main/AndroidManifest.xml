@@ -140,6 +140,21 @@
         </activity>
 
         <!--
+            The host's "open this request" hand-off, gated by resolution: Binge offers it only when this resolves on
+            this package. Its own Activity for the reason SettingsHandOffActivity gives; it admits the caller with
+            HandOffPolicy and opens MainActivity on the request's page.
+        -->
+        <activity
+            android:name=".ViewRequestHandOffActivity"
+            android:exported="true"
+            android:theme="@style/Theme.SeerrHandOff">
+            <intent-filter>
+                <action android:name="com.binge.companion.VIEW_REQUEST" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
+        <!--
             The phone's end of the TV address hand-off (#323). The page a television serves links
             here from the phone's browser, so it is exported and BROWSABLE, and matches only the
             tv-handoff host of this app's own scheme: the notification links on MainActivity stay
