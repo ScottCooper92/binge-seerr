@@ -55,6 +55,12 @@ abstract class TvSettingsCroppedText {
     fun theMediaServerPageFits() = fits(R.string.tv_settings_group_media)
 
     @Test
+    fun theHouseholdPageFits() = fits(R.string.tv_settings_group_household)
+
+    @Test
+    fun aHouseholdChangeThatDidNotSaveFits() = fits(R.string.tv_settings_group_household, status = SaveStatus.Failed)
+
+    @Test
     fun aScanTheServerRefusedFits() = fits(R.string.tv_settings_group_media, jobs = jobs(failed = setOf(PLEX_FULL_SCAN_JOB_ID)))
 
     @Test
@@ -157,17 +163,8 @@ abstract class TvSettingsCroppedText {
 
 /** [TvSettingsCroppedText] in English. */
 @Config(qualifiers = "w960dp-h540dp-television-xhdpi")
-class TvSettingsCroppedTextTest : TvSettingsCroppedText() {
-    @Test
-    fun theHouseholdPageFits() = fits(R.string.tv_settings_group_household)
+class TvSettingsCroppedTextTest : TvSettingsCroppedText()
 
-    @Test
-    fun aHouseholdChangeThatDidNotSaveFits() = fits(R.string.tv_settings_group_household, status = SaveStatus.Failed)
-}
-
-/**
- * [TvSettingsCroppedText] in Spanish. Household is not here: two of its Spanish labels are cut beside their switch (#1582),
- * and they are labels, not details. Its tests move into the base class when that is fixed.
- */
+/** [TvSettingsCroppedText] in Spanish. */
 @Config(qualifiers = "es-w960dp-h540dp-television-xhdpi")
 class TvSettingsCroppedTextSpanishTest : TvSettingsCroppedText()

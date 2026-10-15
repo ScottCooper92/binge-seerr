@@ -451,7 +451,7 @@
     <string name="server_settings_discover_region">Región de Descubrir</string>
     <string name="server_settings_streaming_region">Región de streaming</string>
     <string name="server_settings_hide_requested">Ocultar el contenido solicitado</string>
-    <string name="server_settings_partial_requests">Permitir peticiones parciales de series</string>
+    <string name="server_settings_partial_requests">Pedir temporadas sueltas</string>
     <string name="server_settings_special_episodes">Permitir episodios especiales</string>
     <string name="server_settings_version_check">Buscar actualizaciones</string>
     <string name="server_settings_cache_images">Guardar imágenes en caché</string>
@@ -593,7 +593,7 @@
     <string name="settings_group_general">General</string>
     <string name="settings_application_url">URL de la aplicación</string>
     <string name="settings_display_language">Idioma de la interfaz</string>
-    <string name="settings_hide_available">Ocultar el contenido disponible</string>
+    <string name="settings_hide_available">Ocultar lo disponible</string>
     <string name="settings_group_services">Servicios multimedia</string>
     <string name="settings_service_default">Predeterminado</string>
     <string name="settings_request_limit_unlimited">Sin límite</string>
