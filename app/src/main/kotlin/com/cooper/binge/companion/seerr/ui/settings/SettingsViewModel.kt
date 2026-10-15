@@ -1,13 +1,10 @@
 package com.cooper.binge.companion.seerr.ui.settings
 
-import com.cooper.binge.companion.seerr.ui.hub.bingeStatusOf
-import com.cooper.binge.companion.seerr.ui.hub.NoBingeInstallCheck
-import com.cooper.binge.companion.seerr.ui.hub.BingeInstallCheck
-import com.cooper.binge.companion.seerr.auth.NoBingeConnectionStore
-import com.cooper.binge.companion.seerr.auth.BingeConnectionStore
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.binge.companion.sdk.attempt
+import com.cooper.binge.companion.seerr.auth.BingeConnectionStore
+import com.cooper.binge.companion.seerr.auth.NoBingeConnectionStore
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.di.IoDispatcher
 import com.cooper.binge.companion.seerr.feedback.BugReportLinks
@@ -25,6 +22,9 @@ import com.cooper.binge.companion.seerr.telemetry.NoOpAnalytics
 import com.cooper.binge.companion.seerr.telemetry.NoOpCrashBreadcrumbs
 import com.cooper.binge.companion.seerr.telemetry.TelemetryPrefs
 import com.cooper.binge.companion.seerr.ui.Ticker
+import com.cooper.binge.companion.seerr.ui.hub.BingeInstallCheck
+import com.cooper.binge.companion.seerr.ui.hub.NoBingeInstallCheck
+import com.cooper.binge.companion.seerr.ui.hub.bingeStatusOf
 import com.cooper.binge.companion.seerr.ui.minuteClock
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher

@@ -1,10 +1,10 @@
 package com.cooper.binge.companion.seerr.ui.settings
 
-import com.cooper.binge.companion.seerr.ui.hub.BingeStatus
 import com.cooper.binge.companion.seerr.notifications.NotificationSignal
 import com.cooper.binge.companion.seerr.seerr.SeerrDefaultAccess
 import com.cooper.binge.companion.seerr.seerr.SeerrMediaServer
 import com.cooper.binge.companion.seerr.seerr.SeerrVariant
+import com.cooper.binge.companion.seerr.ui.hub.BingeStatus
 
 /** How the app is signed in, as the Connection group names it. */
 enum class SignInKind { ApiKey, Session }
