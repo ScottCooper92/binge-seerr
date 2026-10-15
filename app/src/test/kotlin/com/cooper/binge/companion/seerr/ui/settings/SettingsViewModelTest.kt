@@ -2,7 +2,9 @@ package com.cooper.binge.companion.seerr.ui.settings
 
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.lifecycle.ViewModelStore
+import com.cooper.binge.companion.seerr.auth.BingeConnectionStore
 import com.cooper.binge.companion.seerr.auth.CredentialStore
+import com.cooper.binge.companion.seerr.auth.NoBingeConnectionStore
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.feedback.BugReportLinks
 import com.cooper.binge.companion.seerr.feedback.FeedbackPrefs
@@ -18,12 +20,16 @@ import com.cooper.binge.companion.seerr.seerr.SeerrVariant
 import com.cooper.binge.companion.seerr.telemetry.AnalyticsConsent
 import com.cooper.binge.companion.seerr.telemetry.TelemetryPrefs
 import com.cooper.binge.companion.seerr.ui.Ticker
+import com.cooper.binge.companion.seerr.ui.hub.BingeInstallCheck
+import com.cooper.binge.companion.seerr.ui.hub.BingeStatus
+import com.cooper.binge.companion.seerr.ui.hub.NoBingeInstallCheck
 import com.cooper.binge.companion.seerr.util.FakeResponse
 import com.cooper.binge.companion.seerr.util.FakeSeerrServer
 import com.cooper.binge.companion.seerr.util.MainDispatcherRule
 import com.cooper.binge.companion.seerr.util.PlainCipher
 import com.cooper.binge.companion.seerr.util.RecordingAnalytics
 import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -129,6 +135,8 @@ class SettingsViewModelTest {
     private suspend fun TestScope.viewModel(
         session: Boolean = false,
         ticker: Ticker = boundedTicker,
+        bingeInstallCheck: BingeInstallCheck = NoBingeInstallCheck,
+        bingeConnection: BingeConnectionStore = NoBingeConnectionStore,
     ): SettingsViewModel {
         connection =
             SeerrConnection(
@@ -161,6 +169,8 @@ class SettingsViewModelTest {
                 mainDispatcherRule.dispatcher,
                 analytics,
                 minuteTicker = ticker,
+                bingeInstallCheck = bingeInstallCheck,
+                bingeConnection = bingeConnection,
             )
         viewModels.put("settings", vm)
         backgroundScope.launch { vm.uiState.collect {} }
@@ -422,6 +432,28 @@ class SettingsViewModelTest {
             assertFalse(checkNotNull(vm.awaitReady { it.app?.shakeToReport == false }.app).shakeToReport)
             assertFalse(feedbackPrefs.shakeToReport.first())
             assertEquals(listOf("shake_to_report_changed" to mapOf("enabled" to false)), analytics.events)
+        }
+
+    @Test
+    fun `the Binge row reads install on each arrival, then whether Binge has connected`() =
+        runTest {
+            server(REQUEST)
+            var installed = false
+            val handshaked = MutableStateFlow(false)
+            val store =
+                object : BingeConnectionStore by NoBingeConnectionStore {
+                    override val hasConnected = handshaked
+                }
+            val vm = viewModel(session = true, bingeInstallCheck = { installed }, bingeConnection = store)
+
+            assertEquals(BingeStatus.NotInstalled, checkNotNull(vm.awaitReady { it.app != null }.app).binge)
+
+            installed = true
+            vm.setScreenVisible(true)
+            assertEquals(BingeStatus.NotConnected, checkNotNull(vm.awaitReady { it.app?.binge == BingeStatus.NotConnected }.app).binge)
+
+            handshaked.value = true
+            assertEquals(BingeStatus.Connected, checkNotNull(vm.awaitReady { it.app?.binge == BingeStatus.Connected }.app).binge)
         }
 
     @Test

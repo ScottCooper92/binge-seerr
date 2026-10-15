@@ -150,7 +150,6 @@ class HubViewModel
                 ticker = pollerTicker,
             )
 
-        /** Not installed always wins; otherwise "connected" is whether Binge has ever handshaken this server. */
         private val bingeStatus: Flow<BingeStatus> =
             combine(installedTrigger, bingeConnection.hasConnected, ::bingeStatusOf)
 

@@ -221,7 +221,7 @@ internal fun BingeTile(
                 text = stringResource(R.string.hub_binge_connect_hint),
                 actionLabel = stringResource(R.string.hub_binge_open),
                 actionIcon = Icons.AutoMirrored.Filled.OpenInNew,
-                onAction = { context.openBinge() },
+                onAction = { context.openBingeCompanions() },
                 onDismissRequest = onDismissHint,
             )
         BingeStatus.Connected ->

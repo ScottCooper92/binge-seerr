@@ -548,7 +548,7 @@ class TvSettingsSheetFocusTest {
         SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Switch) and
             SemanticsMatcher.expectValue(SemanticsProperties.ToggleableState, state)
 
-    private fun bingeRow() = composeTestRule.onNode(hasText(string(R.string.tv_settings_binge)) and isFocusable())
+    private fun bingeRow() = composeTestRule.onNode(hasText(string(R.string.settings_binge)) and isFocusable())
 
     private fun scanRow() = composeTestRule.onNode(hasText(string(R.string.tv_settings_start_library_scan)) and isFocusable())
 

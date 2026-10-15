@@ -103,7 +103,7 @@ private fun bingeRow(
     val action = stringResource(if (missing) R.string.tv_settings_binge_install else R.string.hub_binge_open)
     return TvPaneRow(
         key = KEY_BINGE,
-        label = stringResource(R.string.tv_settings_binge),
+        label = stringResource(R.string.settings_binge),
         options =
             listOf(
                 TvPaneOption(
