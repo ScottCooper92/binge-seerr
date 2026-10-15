@@ -3,6 +3,8 @@ package com.cooper.binge.companion.seerr.ui.settings
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.binge.companion.sdk.attempt
+import com.cooper.binge.companion.seerr.auth.BingeConnectionStore
+import com.cooper.binge.companion.seerr.auth.NoBingeConnectionStore
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.di.IoDispatcher
 import com.cooper.binge.companion.seerr.feedback.BugReportLinks
@@ -20,6 +22,9 @@ import com.cooper.binge.companion.seerr.telemetry.NoOpAnalytics
 import com.cooper.binge.companion.seerr.telemetry.NoOpCrashBreadcrumbs
 import com.cooper.binge.companion.seerr.telemetry.TelemetryPrefs
 import com.cooper.binge.companion.seerr.ui.Ticker
+import com.cooper.binge.companion.seerr.ui.hub.BingeInstallCheck
+import com.cooper.binge.companion.seerr.ui.hub.NoBingeInstallCheck
+import com.cooper.binge.companion.seerr.ui.hub.bingeStatusOf
 import com.cooper.binge.companion.seerr.ui.minuteClock
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
@@ -113,7 +118,12 @@ class SettingsViewModel
         private val analytics: Analytics = NoOpAnalytics,
         private val crashBreadcrumbs: CrashBreadcrumbs = NoOpCrashBreadcrumbs,
         private val minuteTicker: Ticker = Ticker(),
+        private val bingeInstallCheck: BingeInstallCheck = NoBingeInstallCheck,
+        bingeConnection: BingeConnectionStore = NoBingeConnectionStore,
     ) : ViewModel() {
+        /** Re-read on every arrival, so Binge installed while this screen was away shows on return. */
+        private val bingeInstalled = MutableStateFlow(bingeInstallCheck.isInstalled())
+
         private val fetchTrigger = MutableStateFlow(0)
 
         internal var clock: () -> Long = System::currentTimeMillis
@@ -198,12 +208,14 @@ class SettingsViewModel
                 feedbackPrefs.shakeToReport,
                 telemetryPrefs.analyticsConsent,
                 telemetryPrefs.crashReportingEnabled,
-            ) { shake, consent, crashes ->
+                combine(bingeInstalled, bingeConnection.hasConnected, ::bingeStatusOf),
+            ) { shake, consent, crashes, binge ->
                 AppSettings(
                     bugReportUrl = bugReportLinks.url(),
                     shakeToReport = shake,
                     shareUsageData = consent == AnalyticsConsent.GRANTED,
                     sendCrashReports = crashes,
+                    binge = binge,
                 )
             }
 
@@ -240,6 +252,7 @@ class SettingsViewModel
             ticker?.cancel()
             ticker = null
             if (visible) {
+                bingeInstalled.value = bingeInstallCheck.isInstalled()
                 fetchTrigger.value++
                 blockedTrigger.value++
                 // The jobs' and the poll's "next run in 20 minutes" count down while the screen shows them, and no longer.

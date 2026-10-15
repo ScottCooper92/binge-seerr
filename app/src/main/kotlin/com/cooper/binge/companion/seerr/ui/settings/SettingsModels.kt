@@ -4,6 +4,7 @@ import com.cooper.binge.companion.seerr.notifications.NotificationSignal
 import com.cooper.binge.companion.seerr.seerr.SeerrDefaultAccess
 import com.cooper.binge.companion.seerr.seerr.SeerrMediaServer
 import com.cooper.binge.companion.seerr.seerr.SeerrVariant
+import com.cooper.binge.companion.seerr.ui.hub.BingeStatus
 
 /** How the app is signed in, as the Connection group names it. */
 enum class SignInKind { ApiKey, Session }
@@ -110,6 +111,8 @@ data class AppSettings(
     val shakeToReport: Boolean,
     val shareUsageData: Boolean = false,
     val sendCrashReports: Boolean = true,
+    /** Where Binge stands on this device, for the group's first row. */
+    val binge: BingeStatus = BingeStatus.NotInstalled,
 )
 
 sealed interface SettingsUiState {

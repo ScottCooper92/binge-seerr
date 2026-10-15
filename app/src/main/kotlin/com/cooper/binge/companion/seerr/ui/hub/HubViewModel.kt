@@ -152,13 +152,7 @@ class HubViewModel
 
         /** Not installed always wins; otherwise "connected" is whether Binge has ever handshaken this server. */
         private val bingeStatus: Flow<BingeStatus> =
-            combine(installedTrigger, bingeConnection.hasConnected) { installed, connected ->
-                when {
-                    !installed -> BingeStatus.NotInstalled
-                    connected -> BingeStatus.Connected
-                    else -> BingeStatus.NotConnected
-                }
-            }
+            combine(installedTrigger, bingeConnection.hasConnected, ::bingeStatusOf)
 
         private val bingeHintDismissed: Flow<Boolean> =
             combine(bingeStatus, bingeConnection.dismissedHints) { status, dismissed -> status.hint() in dismissed }
