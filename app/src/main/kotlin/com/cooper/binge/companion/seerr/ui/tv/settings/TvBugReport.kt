@@ -41,25 +41,26 @@ internal class TvAppActions(
     val onToggleShareUsageData: (Boolean) -> Unit,
     val onToggleSendCrashReports: (Boolean) -> Unit,
     val onOpenBinge: () -> Unit = {},
+    val onConnectBinge: () -> Unit = {},
     val onOpenBingeListing: () -> Unit = {},
 )
 
 /**
  * This app's own group on a television: Binge first, then report a bug in this app, and the two things it may report on
  * its own. A TV cannot open the bug form itself, so that row shows a code the phone scans. There is no shake toggle here,
- * because a TV has nothing to shake. [binge] is null until the hub has looked, which leaves Binge's row out.
+ * because a TV has nothing to shake. [binge] is Settings' own reading of Binge, as the phone's group has (#1599).
  */
 @Composable
 internal fun tvAppGroup(
     app: AppSettings,
-    binge: BingeStatus?,
+    binge: BingeStatus,
     actions: TvAppActions,
 ): TvPaneGroup =
     TvPaneGroup(
         title = stringResource(R.string.settings_group_app),
         rows =
-            listOfNotNull(
-                binge?.let { bingeRow(it, actions) },
+            listOf(
+                bingeRow(binge, actions),
                 TvPaneRow(
                     key = KEY_REPORT_BUG,
                     label = stringResource(R.string.settings_report_bug),
@@ -91,7 +92,8 @@ internal fun tvAppGroup(
     )
 
 /**
- * Binge, as the row that gets you to it: open it when it is installed, else its Play Store listing. Its option is the
+ * Binge, as the row that gets you to it: its Play Store listing when it is missing, its page for this app when it has not
+ * connected yet (#1601), else Binge itself. Its option is the
  * action, so the row reads as what pressing it does.
  */
 @Composable
@@ -109,7 +111,12 @@ private fun bingeRow(
                 TvPaneOption(
                     label = action,
                     icon = if (missing) Icons.Filled.Download else Icons.Filled.Tv,
-                    onSelect = if (missing) actions.onOpenBingeListing else actions.onOpenBinge,
+                    onSelect =
+                        when (status) {
+                            BingeStatus.NotInstalled -> actions.onOpenBingeListing
+                            BingeStatus.NotConnected -> actions.onConnectBinge
+                            BingeStatus.Connected -> actions.onOpenBinge
+                        },
                 ),
             ),
         icon = Icons.Filled.Tv,

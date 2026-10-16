@@ -55,6 +55,8 @@ private fun jobsReady(
 )
 
 /** Every group an admin sees, with services to read out and jobs to run. */
+private fun withBinge(binge: BingeStatus) = SampleSettingsWithApp.copy(app = SampleSettingsWithApp.app?.copy(binge = binge))
+
 private val SampleSettingsFull =
     SampleSettingsWithApp.copy(
         config =
@@ -210,7 +212,7 @@ class TvSettingsScreenshotTest {
     @SeerrTvScreenPreviews
     @Composable
     fun ThisApp() {
-        Sheet(SampleSettingsWithApp, page = appPage(), hub = previewReady(bingeStatus = BingeStatus.Connected))
+        Sheet(withBinge(BingeStatus.Connected), page = appPage())
     }
 
     /** Binge missing: its row opens the Play Store listing. */
@@ -218,7 +220,7 @@ class TvSettingsScreenshotTest {
     @SeerrTvScreenPreviews
     @Composable
     fun ThisAppBingeMissing() {
-        Sheet(SampleSettingsWithApp, page = appPage(), hub = previewReady(bingeStatus = BingeStatus.NotInstalled))
+        Sheet(withBinge(BingeStatus.NotInstalled), page = appPage())
     }
 
     /** The code the phone scans, centred on a page of the sheet. */

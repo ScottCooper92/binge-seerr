@@ -127,7 +127,7 @@ abstract class TvSettingsCroppedText {
                             connection = CONNECTION,
                             server = SERVER,
                             config = ServerConfig(system = SystemInfo(jobs = emptyList())),
-                            app = APP,
+                            app = APP.copy(binge = binge),
                         ),
                     actions =
                         TvSettingsActions(
@@ -146,7 +146,6 @@ abstract class TvSettingsCroppedText {
                         ),
                     onDismissRequest = {},
                     jobs = jobs,
-                    hub = hubWith(binge),
                 )
             }
         }
