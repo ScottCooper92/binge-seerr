@@ -41,10 +41,15 @@ val localProperties =
         if (file.exists()) file.inputStream().use { load(it) }
     }
 
+// Blank is unset: a workflow passes a secret that was never set as an empty string, not a missing one,
+// and an empty host would otherwise win over the default.
 fun telemetryValue(
     key: String,
     default: String = "",
-): String = localProperties.getProperty(key) ?: System.getenv(key) ?: default
+): String =
+    localProperties.getProperty(key)?.takeIf { it.isNotBlank() }
+        ?: System.getenv(key)?.takeIf { it.isNotBlank() }
+        ?: default
 
 // The exported schema is committed: a change to a table is a migration decision made in review.
 room {
