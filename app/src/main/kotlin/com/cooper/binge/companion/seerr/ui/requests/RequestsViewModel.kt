@@ -91,6 +91,9 @@ class RequestsViewModel
         private val countsInFlight = AtomicBoolean(false)
         private val listVersionState = MutableStateFlow(0)
 
+        /** Whether [refreshRowsOnReturn] has seen the first showing, whose rows are the pager's own first load. */
+        private val rowsShown = AtomicBoolean(false)
+
         internal var clock: () -> Long = System::currentTimeMillis
 
         /** The rows' "2 minutes ago" is worded against this, moved on each minute while the list shows (#1239). */
@@ -111,6 +114,14 @@ class RequestsViewModel
         fun listChanged() {
             countsRefresh.value++
             listVersionState.update { it + 1 }
+        }
+
+        /**
+         * TV's Home has no pull to refresh, so its rows are re-read each time it is shown again: on coming back to the
+         * app, or to Home. The first showing bumps nothing, because the pager is loading for the first time anyway (#1607).
+         */
+        fun refreshRowsOnReturn() {
+            if (rowsShown.getAndSet(true)) listVersionState.update { it + 1 }
         }
 
         /** True at most once per version per filter, so a freshly composed, current page does not blank-refresh. */

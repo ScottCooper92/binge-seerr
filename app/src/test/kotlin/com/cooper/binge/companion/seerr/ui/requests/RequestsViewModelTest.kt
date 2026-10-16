@@ -24,6 +24,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
@@ -204,6 +205,22 @@ class RequestsViewModelTest {
             assertTrue(vm.shouldRefresh(RequestFilter.All, after))
             assertFalse(vm.shouldRefresh(RequestFilter.All, after))
             assertTrue(vm.shouldRefresh(RequestFilter.Pending, after))
+        }
+
+    @Test
+    fun `TV's rows are re-read on each return, but not on the first showing`() =
+        runTest {
+            server(ADMIN)
+            val vm = viewModel()
+            val first = vm.awaitReady { it.counts != null }.listVersion
+
+            vm.refreshRowsOnReturn()
+            runCurrent()
+            assertEquals(first, (vm.uiState.value as RequestsUiState.Ready).listVersion)
+
+            vm.refreshRowsOnReturn()
+            val returned = vm.awaitReady { it.listVersion > first }.listVersion
+            assertTrue(vm.shouldRefresh(RequestFilter.Pending, returned))
         }
 
     @Test

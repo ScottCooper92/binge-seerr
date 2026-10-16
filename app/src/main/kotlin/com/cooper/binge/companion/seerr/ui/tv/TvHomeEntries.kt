@@ -9,6 +9,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.cooper.binge.companion.seerr.ui.bingeTitleHandOff
@@ -107,9 +108,12 @@ private fun TvRequestsEntry(
     viewModel: RequestsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    DisposableEffect(viewModel) {
+    // On every resume, not only on entering composition: leaving the app and coming back keeps Home composed, and
+    // TV has no pull to refresh, so this is what re-reads the counts and the rows the server changed meanwhile.
+    LifecycleResumeEffect(viewModel) {
         viewModel.setScreenVisible(true)
-        onDispose { viewModel.setScreenVisible(false) }
+        viewModel.refreshRowsOnReturn()
+        onPauseOrDispose { viewModel.setScreenVisible(false) }
     }
     val ready = state as? RequestsUiState.Ready
     // One pager per filter, each handed down as a count and an accessor: the board never touches LazyPagingItems,
