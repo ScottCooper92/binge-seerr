@@ -5,7 +5,9 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.hub.HubUiState
@@ -82,6 +84,12 @@ internal fun rememberMyRequests(
     val viewModel = accountViewModel(accountId)
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val requests = viewModel.requests.collectAsLazyPagingItems()
+    // The list is a plain pager with no cache behind it, so a return re-reads it here. The first resume finds it still
+    // on its first load and leaves it be. The ViewModel's visibility belongs to the account page that shares it.
+    LifecycleResumeEffect(requests) {
+        if (requests.loadState.refresh !is LoadState.Loading) requests.refresh()
+        onPauseOrDispose {}
+    }
     val count =
         when (val ready = state) {
             is UserDetailUiState.Ready -> ready.detail.item.requestCount
