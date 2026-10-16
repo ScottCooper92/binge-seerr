@@ -951,6 +951,7 @@ app:tv_settings_agent_body  863d7d173a6b
 app:tv_settings_agent_setup_first  424a7f02b01f
 app:tv_settings_agent_unavailable  5a75150b91c2
 app:tv_settings_agents_note  1ef1a45dff37
+app:tv_settings_binge_connect  9c03637e8bb4
 app:tv_settings_binge_install  801a5813f691
 app:tv_settings_cancel_library_scan  8422c5747da3
 app:tv_settings_disconnect_confirm  ff9c95dc28f5

@@ -54,9 +54,9 @@ private fun jobsReady(
     now = FIXED_NOW_MILLIS,
 )
 
-/** Every group an admin sees, with services to read out and jobs to run. */
 private fun withBinge(binge: BingeStatus) = SampleSettingsWithApp.copy(app = SampleSettingsWithApp.app?.copy(binge = binge))
 
+/** Every group an admin sees, with services to read out and jobs to run. */
 private val SampleSettingsFull =
     SampleSettingsWithApp.copy(
         config =
@@ -213,6 +213,14 @@ class TvSettingsScreenshotTest {
     @Composable
     fun ThisApp() {
         Sheet(withBinge(BingeStatus.Connected), page = appPage())
+    }
+
+    /** Binge installed but not connected: its row connects, through Binge's Companions screen. */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun ThisAppBingeNotConnected() {
+        Sheet(withBinge(BingeStatus.NotConnected), page = appPage())
     }
 
     /** Binge missing: its row opens the Play Store listing. */

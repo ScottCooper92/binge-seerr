@@ -12,6 +12,7 @@ import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Healing
 import androidx.compose.material.icons.filled.Insights
+import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.QrCode
 import androidx.compose.material.icons.filled.Tv
 import androidx.compose.runtime.Composable
@@ -92,33 +93,41 @@ internal fun tvAppGroup(
     )
 
 /**
- * Binge, as the row that gets you to it: its Play Store listing when it is missing, its page for this app when it has not
- * connected yet (#1601), else Binge itself. Its option is the
- * action, so the row reads as what pressing it does.
+ * Binge, as the row that gets you to it: its Play Store listing when it is missing, a Connect that opens its page for
+ * this app when it has not connected yet (#1601), else Binge itself. The option's label is the row's supporting line, so
+ * the row reads as what pressing it does.
  */
 @Composable
 private fun bingeRow(
     status: BingeStatus,
     actions: TvAppActions,
 ): TvPaneRow {
-    val missing = status == BingeStatus.NotInstalled
-    val action = stringResource(if (missing) R.string.tv_settings_binge_install else R.string.hub_binge_open)
+    val option =
+        when (status) {
+            BingeStatus.NotInstalled ->
+                TvPaneOption(
+                    label = stringResource(R.string.tv_settings_binge_install),
+                    icon = Icons.Filled.Download,
+                    onSelect = actions.onOpenBingeListing,
+                )
+            BingeStatus.NotConnected ->
+                TvPaneOption(
+                    label = stringResource(R.string.tv_settings_binge_connect),
+                    icon = Icons.Filled.Link,
+                    onSelect = actions.onConnectBinge,
+                )
+            BingeStatus.Connected ->
+                TvPaneOption(
+                    label = stringResource(R.string.hub_binge_open),
+                    icon = Icons.Filled.Tv,
+                    onSelect = actions.onOpenBinge,
+                )
+        }
     return TvPaneRow(
         key = KEY_BINGE,
         label = stringResource(R.string.settings_binge),
-        options =
-            listOf(
-                TvPaneOption(
-                    label = action,
-                    icon = if (missing) Icons.Filled.Download else Icons.Filled.Tv,
-                    onSelect =
-                        when (status) {
-                            BingeStatus.NotInstalled -> actions.onOpenBingeListing
-                            BingeStatus.NotConnected -> actions.onConnectBinge
-                            BingeStatus.Connected -> actions.onOpenBinge
-                        },
-                ),
-            ),
+        body = option.label,
+        options = listOf(option),
         icon = Icons.Filled.Tv,
     )
 }

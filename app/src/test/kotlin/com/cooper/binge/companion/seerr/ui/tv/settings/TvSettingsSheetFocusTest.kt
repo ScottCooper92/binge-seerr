@@ -368,6 +368,7 @@ class TvSettingsSheetFocusTest {
         binge = BingeStatus.NotConnected
         composeTestRule.waitForIdle()
         bingeRow().requestFocus()
+        composeTestRule.onNodeWithText(string(R.string.tv_settings_binge_connect)).assertExists()
         press(Key.DirectionCenter)
         assertEquals(1, connectOpens)
 

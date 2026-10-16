@@ -1042,6 +1042,7 @@
     <!-- The same, for a count the hub could not read; %1$s is the placeholder dash. -->
     <string name="settings_binge">Binge</string>
     <string name="tv_settings_binge_install">Open the Play Store</string>
+    <string name="tv_settings_binge_connect">Connect Binge</string>
     <string name="tv_see_all">See all</string>
     <string name="tv_rail_account">Account</string>
     <string name="tv_account_your_requests">Your requests</string>
