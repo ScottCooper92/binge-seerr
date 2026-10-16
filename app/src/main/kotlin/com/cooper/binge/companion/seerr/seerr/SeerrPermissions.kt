@@ -68,9 +68,19 @@ data class SeerrPermissions(
 
     val canRequest4k: Boolean get() = canRequest4kMovie || canRequest4kTv
 
-    /** Whether some 4K request is open to this user: they hold the permission for a media type the server has 4K on for. */
-    fun canRequest4kOn(settings: SeerrPublicSettings): Boolean =
-        (canRequest4kMovie && settings.movie4kEnabled) || (canRequest4kTv && settings.series4kEnabled)
+    /** Whether some 4K request is open to this user: [mayRequest4k] for either media type. */
+    fun canRequest4kOn(settings: SeerrPublicSettings): Boolean = mayRequest4k(isTv = false, settings) || mayRequest4k(isTv = true, settings)
+
+    /**
+     * Whether this user may request 4K of one media type: they hold the 4K permission for it, and the server has a default
+     * 4K server for it. `movie4kEnabled` and `series4kEnabled` say exactly the second (`settings/index.ts` on both lineages),
+     * and it matters apart from the permission: Seerr accepts a 4K request with no default 4K server for its type and then
+     * never sends it on. Seerr checks the permission per type too, so 4K for movies says nothing about series (#1604).
+     */
+    fun mayRequest4k(
+        isTv: Boolean,
+        settings: SeerrPublicSettings,
+    ): Boolean = if (isTv) canRequest4kTv && settings.series4kEnabled else canRequest4kMovie && settings.movie4kEnabled
 
     /** The server's issue list admits any of the three; `CREATE_ISSUES` alone sees only the user's own. */
     val canSeeIssues: Boolean get() = canManageIssues || canViewIssues || canCreateIssues
