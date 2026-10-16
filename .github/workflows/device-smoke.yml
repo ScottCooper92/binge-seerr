@@ -150,7 +150,8 @@ jobs:
   # one is a mark in the Actions tab that nothing points at. One issue stays open while the
   # scheduled run is red and closes itself on the next green one, so an open one means "still
   # broken", not "old". Scheduled runs only: a push or a manual dispatch already has someone
-  # watching it. The same report as ci.yml's nightly-report, with its own issue.
+  # watching it. The same report as ci.yml's nightly-report, with its own issue. The issue is matched
+  # by its author as well as its title: on a public repository anyone can open one with this title.
   scheduled-report:
     if: ${{ always() && github.event_name == 'schedule' }}
     needs: companion-smoke
@@ -169,7 +170,7 @@ jobs:
             const { owner, repo } = context.repo;
             const open = (await github.paginate(github.rest.issues.listForRepo, {
               owner, repo, state: 'open', per_page: 100,
-            })).find((i) => !i.pull_request && i.title === title);
+            })).find((i) => !i.pull_request && i.title === title && i.user?.login === 'github-actions[bot]');
 
             if (process.env.SMOKE_RESULT === 'success') {
               if (!open) return;
