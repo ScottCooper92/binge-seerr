@@ -197,6 +197,26 @@ class HubViewModelTest {
             assertEquals(12, download.etaMinutes)
         }
 
+    /**
+     * The hub's `auth/me` read refreshes the connection's cached user, so a request or user page opened from the hub
+     * judges its actions by the permissions the hub just showed, not by the ones read at connect (#1606).
+     */
+    @Test
+    fun `a hub read refreshes the connection's cached user`() =
+        runTest {
+            healthyServer(permissions = ADMIN)
+            val vm = viewModel()
+            vm.setScreenVisible(true)
+            vm.awaitReady { it.overview.account?.isAdmin == true }
+            assertEquals(ADMIN, connection.authenticatedUser().permissions)
+
+            serve("/api/v1/auth/me", """{"id":1,"displayName":"Scott","permissions":$REQUEST}""")
+            vm.recheck()
+
+            vm.awaitReady { it.overview.account?.isAdmin == false }
+            assertEquals(REQUEST, connection.authenticatedUser().permissions)
+        }
+
     /** No route honours `MANAGE_SETTINGS`; every route on the admin `/settings` router needs `ADMIN` (#1004). */
     @Test
     fun `manage settings without admin does not open the settings section`() =
