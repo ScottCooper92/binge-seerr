@@ -28,7 +28,7 @@ class HubServerUnavailableException : IOException("The server did not answer")
 
 /**
  * The hub's reads over the saved connection. [load] is the once-per-connect overview: `auth/me`
- * judged, then the quota and the counts each best-effort, gated on the profile and the user's
+ * judged (and refreshed in the connection's cache), then the quota and the counts each best-effort, gated on the profile and the user's
  * permissions so a restricted user never fires a call the server would refuse. [activeDownloads]
  * is the poll's, hydrating each row's title from its own lookup.
  */
@@ -60,7 +60,9 @@ class HubOverviewLoader
         suspend fun load(): HubOverview {
             val api = attempt { connection.api() }.getOrElse { return HubOverview(loaded = true, userLoad = HubUserLoad.Failed) }
             val profile = connection.profile()
-            val user = attempt { api.authenticatedUser() }
+            // Through the connection, not the api: this read refreshes the cached user too, so a request or user page
+            // opened from the hub judges its actions by the same permissions the hub just showed (#1606).
+            val user = attempt { connection.refreshAuthenticatedUser() }
             val userDto =
                 user.getOrNull()
                     ?: return HubOverview(
