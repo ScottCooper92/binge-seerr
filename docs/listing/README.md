@@ -68,6 +68,8 @@ to `privacy.md` and `data-safety.md` in the same PR. The specific claims that mu
 - There is an analytics SDK (PostHog) and a crash reporting SDK (Firebase Crashlytics), both gated
   as above, and no advertising SDK. Check `app/build.gradle.kts` and `telemetry/` before changing
   this claim in either direction.
-- `android:allowBackup="false"`: Android's own backup does not copy the app's data, and uninstalling
-  removes it. Block Store is a separate mechanism, and with the phone-to-TV hand-off (above) one of
+- `android:allowBackup="false"` and `android:dataExtractionRules` (`res/xml/data_extraction_rules.xml`):
+  Android's own backup and device-to-device transfer do not copy the app's data, and uninstalling
+  removes it. `allowBackup` alone does not stop a device-to-device transfer on every Android 12+
+  device, so keep both. Block Store is a separate mechanism, and with the phone-to-TV hand-off (above) one of
   the two ways the connection can leave the device.

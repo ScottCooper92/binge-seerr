@@ -29,7 +29,9 @@ https://github.com/ScottCooper92/binge-seerr.
 - **Your answers about usage data and crash reports**, and whether shaking the phone offers to
   report a bug.
 
-The app sets `allowBackup="false"`, so Android's own backup does not copy any of the above.
+The app turns off Android's own backup (`allowBackup="false"`) and excludes all of its data from both
+cloud backup and device-to-device transfer (`data_extraction_rules.xml`), so neither copies any of the
+above to Google or to a new device. Only the Block Store copy of the connection moves, as described above.
 Uninstalling the app removes it. Disconnecting inside the app removes the address, the secret,
 the cache, the Block Store copy and the short list of addresses you sent to a television.
 
