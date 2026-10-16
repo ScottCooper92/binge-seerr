@@ -182,8 +182,8 @@ class SeerrRequestService(
         reportingFailure("submit_request") {
             // Re-checked here, not trusted to the host. is_4k is a flag on a core rpc, not a gated rpc,
             // so the contract calls it a bad argument (INVALID_ARGUMENT) rather than PERMISSION_DENIED.
-            if (request.is4K && !mayRequest4k()) {
-                throw invalidArgument("is_4k is set, but CAPABILITY_REQUEST_4K was not declared")
+            if (request.is4K && !mayRequest4k(request.media)) {
+                throw invalidArgument("is_4k is set, but 4K requests are not open to this user for this media type")
             }
             val media = request.media
             refuseIfKnownBlocklisted(media)
@@ -200,7 +200,7 @@ class SeerrRequestService(
 
     /**
      * Requires CAPABILITY_ADVANCED_REQUEST_OPTIONS. Every server this user may send this media's
-     * shape to (a 4K one only with CAPABILITY_REQUEST_4K), and the preselected one's
+     * shape to (a 4K one only where they may request 4K of its type), and the preselected one's
      * profile/root-folder choices — the same destination a plain [submitRequest] (never 4K) would
      * have used.
      */
@@ -209,7 +209,7 @@ class SeerrRequestService(
             val isTv = request.media.seerrMediaType().isSeerrTv()
             GetAdvancedRequestOptionsResponse
                 .newBuilder()
-                .setDestination(connection.api().advancedRequestOptions(isTv, allow4k = mayRequest4k()))
+                .setDestination(connection.api().advancedRequestOptions(isTv, allow4k = mayRequest4k(request.media)))
                 .build()
         }
 
@@ -219,7 +219,7 @@ class SeerrRequestService(
             val isTv = request.media.seerrMediaType().isSeerrTv()
             GetDestinationOptionsResponse
                 .newBuilder()
-                .setDestination(connection.api().destinationOptions(isTv, request.serverId, allow4k = mayRequest4k()))
+                .setDestination(connection.api().destinationOptions(isTv, request.serverId, allow4k = mayRequest4k(request.media)))
                 .build()
         }
 
@@ -242,7 +242,7 @@ class SeerrRequestService(
                     request.serverId,
                     request.profileId,
                     request.rootFolderId,
-                    allow4k = mayRequest4k(),
+                    allow4k = mayRequest4k(media),
                 )
             val body =
                 SeerrRequestBody(
@@ -412,13 +412,13 @@ class SeerrRequestService(
      *
      * An issue needs something to report against: the contract answers FAILED_PRECONDITION unless the title is
      * available or partially available, an unrequested one included (#682). The 4K version counts for a user
-     * declared `CAPABILITY_REQUEST_4K` (#704). One details read gives both that and Seerr's own media record id.
+     * who may request 4K of its type (#704, #1604). One details read gives both that and Seerr's own media record id.
      */
     override suspend fun reportIssue(request: ReportIssueRequest): ReportIssueResponse =
         gated("report_issue", Capability.CAPABILITY_REPORT_ISSUE) {
             val info = connection.api().details(request.media).mediaInfo
             val status = info.toRequestStatus(clock())
-            val sees4k = mayRequest4k()
+            val sees4k = mayRequest4k(request.media)
             if (!status.isReportable(sees4k = sees4k)) {
                 // The 4K state is named only to a user who may see it, as withAllowedActions does for every status.
                 val fourK = if (sees4k) " (4K: ${status.version4k().availability})" else ""
@@ -584,7 +584,12 @@ class SeerrRequestService(
     ): RequestStatus {
         val user = connection.authenticatedUser()
         val server = (if (allowCached) cachedStatus(media) else null) ?: fetchStatus(media)
-        return user.toPermissions().withAllowedActions(server, viewerId = user.id, profile = connection.profile())
+        return user.toPermissions().withAllowedActions(
+            server,
+            viewerId = user.id,
+            profile = connection.profile(),
+            isTv = media.seerrMediaType().isSeerrTv(),
+        )
     }
 
     private suspend fun cachedStatus(media: MediaId): CachedStatus? = statusCache.find(media)?.takeIf { freshness.isFresh(it, clock()) }
@@ -665,8 +670,13 @@ class SeerrRequestService(
         declared().requireDeclared(capability)
     }
 
-    /** Whether CAPABILITY_REQUEST_4K is declared, which decides `is_4k` on a submit and the 4K servers on the advanced path. */
-    private suspend fun mayRequest4k(): Boolean = Capability.CAPABILITY_REQUEST_4K in declared()
+    /**
+     * Whether this user may request 4K of [media]'s type, which decides `is_4k` on a submit, the 4K servers on the advanced
+     * path and whether a 4K-only title is reportable. Narrower than the declared CAPABILITY_REQUEST_4K, which holds where
+     * either type is open: see [SeerrPermissions.mayRequest4k].
+     */
+    private suspend fun mayRequest4k(media: MediaId): Boolean =
+        permissions().mayRequest4k(media.seerrMediaType().isSeerrTv(), connection.profile().settings)
 
     private companion object {
         const val OBSERVE_INTERVAL_MILLIS = 15_000L

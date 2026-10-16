@@ -59,8 +59,10 @@ private val REQUEST_SCOPED =
 
 /**
  * The server's status with its allowed actions filled in for the user [viewerId]. Each request carries
- * its own set. The 4K version's entry is left out unless this user is declared `CAPABILITY_REQUEST_4K`, as
- * the contract asks, so it never tells them about a version they cannot request, its downloads included.
+ * its own set. The 4K version's entry is left out unless this user may request 4K of this title's type ([isTv]),
+ * so it never tells them about a version they cannot request, its downloads included. The contract sends the
+ * entry only under `CAPABILITY_REQUEST_4K`, and a host reads it to decide whether to offer a 4K request, so a
+ * type the declared capability does not reach goes without it.
  * The title's set holds a
  * report only against something available in a version they can see, and the block
  * capability either way: it offers a block on a title and an unblock on a blocked one. Its
@@ -71,6 +73,7 @@ fun SeerrPermissions.withAllowedActions(
     server: CachedStatus,
     viewerId: Int,
     profile: SeerrServerProfile,
+    isTv: Boolean,
 ): RequestStatus {
     val declared = toCapabilities(profile)
     val status = server.status
@@ -84,7 +87,7 @@ fun SeerrPermissions.withAllowedActions(
                 .build()
         }
     val requestActions = requests.flatMapTo(mutableSetOf()) { it.allowedActionsList }
-    val sees4k = Capability.CAPABILITY_REQUEST_4K in declared
+    val sees4k = mayRequest4k(isTv, profile.settings)
     val reportable = status.isReportable(sees4k)
     val titleActions =
         declared.filter { capability ->

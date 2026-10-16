@@ -63,6 +63,7 @@ class SeerrAllowedActionsTest {
                 ),
                 viewerId = VIEWER,
                 profile = profile,
+                isTv = false,
             )
 
         assertEquals(listOf(Capability.CAPABILITY_CANCEL), status.actionsOf(4))
@@ -78,6 +79,7 @@ class SeerrAllowedActionsTest {
                 server(request(6, ApprovalState.APPROVAL_STATE_PENDING) to SOMEONE_ELSE),
                 viewerId = VIEWER,
                 profile = profile,
+                isTv = false,
             )
 
         assertFalse(Capability.CAPABILITY_CANCEL in status.allowedActionsList)
@@ -95,6 +97,7 @@ class SeerrAllowedActionsTest {
                 ),
                 viewerId = VIEWER,
                 profile = profile,
+                isTv = false,
             )
 
         assertEquals(
@@ -117,6 +120,7 @@ class SeerrAllowedActionsTest {
                 ),
                 viewerId = VIEWER,
                 profile = profile,
+                isTv = false,
             )
         assertTrue(Capability.CAPABILITY_EDIT_SEASONS in asRequester.actionsOf(4))
         assertFalse("the server answers 409 for anything but pending", Capability.CAPABILITY_EDIT_SEASONS in asRequester.actionsOf(5))
@@ -127,6 +131,7 @@ class SeerrAllowedActionsTest {
                 server(request(6, ApprovalState.APPROVAL_STATE_PENDING, tv) to SOMEONE_ELSE),
                 viewerId = VIEWER,
                 profile = profile,
+                isTv = false,
             )
         assertTrue(Capability.CAPABILITY_EDIT_SEASONS in asModerator.actionsOf(6))
     }
@@ -149,6 +154,7 @@ class SeerrAllowedActionsTest {
                 server(request(4, ApprovalState.APPROVAL_STATE_PENDING, listOf(1)) to VIEWER),
                 viewerId = VIEWER,
                 profile = profile,
+                isTv = true,
             )
 
         assertEquals(listOf(Capability.CAPABILITY_CANCEL), status.actionsOf(4))
@@ -161,6 +167,7 @@ class SeerrAllowedActionsTest {
                 server(request(4, ApprovalState.APPROVAL_STATE_PENDING) to VIEWER),
                 viewerId = VIEWER,
                 profile = profile,
+                isTv = false,
             )
 
         assertFalse(Capability.CAPABILITY_EDIT_SEASONS in status.actionsOf(4))
@@ -181,6 +188,7 @@ class SeerrAllowedActionsTest {
                 ),
                 viewerId = VIEWER,
                 profile = profile,
+                isTv = false,
             )
 
         assertTrue(status.actionsOf(4).isEmpty())
@@ -192,7 +200,7 @@ class SeerrAllowedActionsTest {
         val manager = SeerrPermissions(canManageBlocklist = true)
 
         listOf(Availability.AVAILABILITY_NOT_REQUESTED, Availability.AVAILABILITY_BLOCKLISTED).forEach { availability ->
-            val status = manager.withAllowedActions(server(availability = availability), viewerId = VIEWER, profile = profile)
+            val status = manager.withAllowedActions(server(availability = availability), viewerId = VIEWER, profile = profile, isTv = false)
 
             assertTrue("$availability", Capability.CAPABILITY_BLOCK in status.allowedActionsList)
         }
@@ -209,6 +217,7 @@ class SeerrAllowedActionsTest {
                 ),
                 viewerId = VIEWER,
                 profile = profile,
+                isTv = false,
             )
 
         assertTrue(Capability.CAPABILITY_RETRY in status.allowedActionsList)

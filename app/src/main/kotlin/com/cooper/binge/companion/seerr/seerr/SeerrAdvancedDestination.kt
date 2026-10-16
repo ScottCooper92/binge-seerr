@@ -54,7 +54,8 @@ suspend fun SeerrApi.destinationChoicesFor(
 
 /**
  * The servers this user may send this media's shape to. A 4K server is a 4K request, so it is
- * offered only when [allow4k] is true: the caller holds CAPABILITY_REQUEST_4K. A server left out
+ * offered only when [allow4k] is true: the caller may request 4K of this media type (see
+ * `SeerrPermissions.mayRequest4k`), which is narrower than holding CAPABILITY_REQUEST_4K. A server left out
  * here is one this integration did not offer, and naming it later is INVALID_ARGUMENT, as the
  * contract says for any `server_id` it did not offer.
  */

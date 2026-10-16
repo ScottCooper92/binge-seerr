@@ -1035,6 +1035,40 @@ class SeerrRequestServiceTest {
             assertEquals("90", created.requestId)
         }
 
+    /** Seerr checks 4K per type (`REQUEST_4K_TV` for a series), so a movie 4K permission opens no series 4K (#1604). */
+    @Test
+    fun `a series 4K request from a user who may request 4K movies only is INVALID_ARGUMENT, before it is posted`() =
+        runTest {
+            val stub = connected(permissions = REQUEST or REQUEST_4K_MOVIE, publicSettings = ALL_4K_ENABLED)
+            val before = seerr.requestCount
+
+            val code =
+                stub.code {
+                    submitRequest(
+                        SubmitRequestRequest
+                            .newBuilder()
+                            .setMedia(show)
+                            .setIs4K(true)
+                            .build(),
+                    )
+                }
+
+            assertEquals(Status.Code.INVALID_ARGUMENT, code)
+            assertEquals(before, seerr.requestCount)
+        }
+
+    /** Without a default 4K Sonarr, Seerr accepts a series 4K request and never sends it on, so it is not offered (#1604). */
+    @Test
+    fun `a series reads with no 4K version where the server has 4K on for movies only`() =
+        runTest {
+            val stub = connected(permissions = REQUEST or REQUEST_4K, publicSettings = MOVIE_4K_ENABLED)
+            seerr.enqueue(json(AVAILABLE_ONLY_IN_4K))
+
+            val status = stub.getStatus(GetStatusRequest.newBuilder().setMedia(show).build()).status
+
+            assertEquals(listOf(false), status.versionsList.map { it.is4K })
+        }
+
     @Test
     fun `the advanced-request rpcs are refused for a user without the permission, before any request`() =
         runTest {
