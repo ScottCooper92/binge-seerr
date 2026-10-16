@@ -20,7 +20,8 @@ import kotlin.time.Duration.Companion.seconds
  *
  * Seerr keeps the 4K version's state apart (`status4k`, `downloadStatus4k`), and so does the contract:
  * one `VersionStatus` per version, never folded together (#704, #724). Both entries are always filled
- * here; the service drops the 4K one for a user it does not declare `CAPABILITY_REQUEST_4K` to. Each entry carries its own
+ * here; the service drops the 4K one for a user who may not request 4K of this title's media type
+ * (`SeerrPermissions.mayRequest4k`). Each entry carries its own
  * version's watch link, so a link into the 4K server goes out only with the 4K entry, to a user who may reach it (#1526).
  *
  * `allowed_actions` is not filled here: it is the intersection of what the user may do and what
