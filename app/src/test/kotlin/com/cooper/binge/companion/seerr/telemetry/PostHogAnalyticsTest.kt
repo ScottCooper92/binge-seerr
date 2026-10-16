@@ -153,6 +153,14 @@ class PostHogAnalyticsTest {
         assertFalse(config.captureDeepLinks)
     }
 
+    @Test
+    @Suppress("DEPRECATION")
+    fun `the config fetches neither remote config nor feature flags, so nothing is requested before consent`() {
+        val config = postHogConfig("key", "https://eu.i.posthog.com")
+        assertFalse(config.remoteConfig)
+        assertFalse(config.preloadFeatureFlags)
+    }
+
     /** A real store whose reads are held back until [release], as on a cold start before DataStore answers. */
     private class UnreadDataStore : DataStore<Preferences> {
         private val inner = InMemoryDataStore()

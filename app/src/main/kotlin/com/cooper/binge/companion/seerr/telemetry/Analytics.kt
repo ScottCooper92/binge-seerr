@@ -143,8 +143,15 @@ class PostHogAnalytics
 /**
  * PostHog's config with this app's privacy defaults. It starts opted out, and consent opens it.
  * Screen views are logged by name, so the SDK's own, which would name only the Activity, are off.
- * Deep links are off because a notification's link carries the server's ids.
+ * Deep links are off because a notification's link carries the server's ids. The SDK's lifecycle
+ * events (opened, backgrounded, installed, updated) stay on, and the privacy policy names them.
+ *
+ * Opting out stops what the SDK captures, not what it fetches: at setup it loads its remote config and,
+ * with it, the feature flags for this install, before the user has answered. The app uses neither, so
+ * both are off and the SDK makes no request until consent. `remoteConfig` is deprecated as always on,
+ * but the setup still reads it; the suppression goes when the SDK stops doing so.
  */
+@Suppress("DEPRECATION")
 fun postHogConfig(
     apiKey: String,
     host: String,
@@ -153,4 +160,6 @@ fun postHogConfig(
         optOut = true
         captureScreenViews = false
         captureDeepLinks = false
+        remoteConfig = false
+        preloadFeatureFlags = false
     }
