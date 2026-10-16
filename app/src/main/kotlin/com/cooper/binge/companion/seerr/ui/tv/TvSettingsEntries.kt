@@ -21,6 +21,7 @@ import com.cooper.binge.companion.seerr.ui.SetupViewModel
 import com.cooper.binge.companion.seerr.ui.hub.HubUiState
 import com.cooper.binge.companion.seerr.ui.hub.HubViewModel
 import com.cooper.binge.companion.seerr.ui.hub.openBinge
+import com.cooper.binge.companion.seerr.ui.hub.openBingeCompanions
 import com.cooper.binge.companion.seerr.ui.hub.openBingeOnPlayStore
 import com.cooper.binge.companion.seerr.ui.rememberEnteredEditingGuard
 import com.cooper.binge.companion.seerr.ui.settings.SettingsUiState
@@ -54,9 +55,8 @@ internal fun TvSettingsEntry(
         viewModel.setScreenVisible(true)
         onDispose { viewModel.setScreenVisible(false) }
     }
-    // The hub view model is shared with Home and is `Lazily`, so it re-reads whether Binge is installed and the
-    // pending count only when told it is visible; without this, installing Binge from the Binge row stays stale.
-    // Settings draws no downloads strip, so it leaves the downloads poll off (#837).
+    // The hub view model is shared with Home and is `Lazily`, so it re-reads the server's health for the summary only when
+    // told it is visible. Settings draws no downloads strip, so it leaves the downloads poll off (#837).
     DisposableEffect(hubViewModel) {
         hubViewModel.setScreenVisible(true, downloads = false)
         onDispose { hubViewModel.setScreenVisible(false) }
@@ -67,6 +67,7 @@ internal fun TvSettingsEntry(
             onToggleShareUsageData = viewModel::setShareUsageData,
             onToggleSendCrashReports = viewModel::setSendCrashReports,
             onOpenBinge = { context.openBinge() },
+            onConnectBinge = { context.openBingeCompanions() },
             onOpenBingeListing = { context.openBingeOnPlayStore() },
         )
     // The jobs view model is only stood up once the row it feeds can actually appear — admin-only, same
@@ -107,6 +108,7 @@ private fun TvAdminSettingsSheet(
                 onToggleShareUsageData = actions.onToggleShareUsageData,
                 onToggleSendCrashReports = actions.onToggleSendCrashReports,
                 onOpenBinge = actions.onOpenBinge,
+                onConnectBinge = actions.onConnectBinge,
                 onOpenBingeListing = actions.onOpenBingeListing,
                 household =
                     (general as? ExtrasEditorUiState.Ready)?.let {

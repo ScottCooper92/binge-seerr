@@ -79,7 +79,7 @@ internal fun TvSettingsSheet(
                 val agents =
                     actions.agents?.opening { agent -> nav.push(agentPage(agent), openedBy = "$KEY_AGENT_PREFIX${agent.segment}") }
                 val groups =
-                    tvSettingGroups(ready, actions, tvJobs, hub, onShowBugReport = { nav.push(PAGE_BUG_REPORT, KEY_REPORT_BUG) }, agents)
+                    tvSettingGroups(ready, actions, tvJobs, onShowBugReport = { nav.push(PAGE_BUG_REPORT, KEY_REPORT_BUG) }, agents)
                 val group = groups.firstOrNull { groupPage(it.page.title) == nav.page }
                 if (group != null) {
                     GroupPage(nav, group.page, actions.household)

@@ -27,10 +27,6 @@ import com.binge.designsystem.tv.theme.BingeTvTheme
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.seerr.SeerrVariant
 import com.cooper.binge.companion.seerr.ui.hub.BingeStatus
-import com.cooper.binge.companion.seerr.ui.hub.ConnectionHealth
-import com.cooper.binge.companion.seerr.ui.hub.HubOverview
-import com.cooper.binge.companion.seerr.ui.hub.HubServer
-import com.cooper.binge.companion.seerr.ui.hub.HubUiState
 import com.cooper.binge.companion.seerr.ui.settings.AppSettings
 import com.cooper.binge.companion.seerr.ui.settings.ConnectionSummary
 import com.cooper.binge.companion.seerr.ui.settings.ServerConfig
@@ -88,15 +84,6 @@ internal fun jobsReady(
     failedIds = failed,
 )
 
-internal fun hubWith(binge: BingeStatus) =
-    HubUiState.Ready(
-        server = HubServer("http://seerr.lan:5055", "Seerr", SeerrVariant.Jellyseerr, "2.7.2", updateAvailable = false, commitsBehind = 0),
-        health = ConnectionHealth.Healthy,
-        overview = HubOverview(loaded = true),
-        downloading = emptyList(),
-        bingeStatus = binge,
-    )
-
 internal val APP = AppSettings(bugReportUrl = "https://example.test/issues/new", shakeToReport = false)
 
 /**
@@ -114,7 +101,8 @@ class TvSettingsSheetFocusTest {
     private var jobsState by mutableStateOf<JobsUiState>(jobsReady(scanRunning = false))
     private var bingeOpens = 0
     private var listingOpens = 0
-    private var hub by mutableStateOf<HubUiState?>(null)
+    private var connectOpens = 0
+    private var binge by mutableStateOf(BingeStatus.NotInstalled)
     private var disconnects = 0
     private var dismissals = 0
     private var sharingUsage by mutableStateOf(false)
@@ -366,10 +354,10 @@ class TvSettingsSheetFocusTest {
         row.assert(isSwitch(ToggleableState.On))
     }
 
-    /** Binge leads this app's page: open it when it is installed, else its Play Store listing. */
+    /** Binge leads this app's page: open it when connected, its Companions screen when not, else its Play Store listing. */
     @Test
-    fun bingeLeadsThisAppAndOpensBingeOrItsListing() {
-        hub = hubWith(BingeStatus.Connected)
+    fun bingeLeadsThisAppAndOpensBingeItsCompanionsOrItsListing() {
+        binge = BingeStatus.Connected
         setSheet(config = null, app = APP)
         open(string(R.string.settings_group_app))
 
@@ -377,7 +365,13 @@ class TvSettingsSheetFocusTest {
         press(Key.DirectionCenter)
         assertEquals(1, bingeOpens)
 
-        hub = hubWith(BingeStatus.NotInstalled)
+        binge = BingeStatus.NotConnected
+        composeTestRule.waitForIdle()
+        bingeRow().requestFocus()
+        press(Key.DirectionCenter)
+        assertEquals(1, connectOpens)
+
+        binge = BingeStatus.NotInstalled
         composeTestRule.waitForIdle()
         bingeRow().requestFocus()
         press(Key.DirectionCenter)
@@ -488,12 +482,13 @@ class TvSettingsSheetFocusTest {
                             connection = CONNECTION,
                             server = SERVER,
                             config = config,
-                            app = app?.copy(shareUsageData = sharingUsage),
+                            app = app?.copy(shareUsageData = sharingUsage, binge = binge),
                         ),
                     actions =
                         TvSettingsActions(
                             onOpenBinge = { bingeOpens++ },
                             onOpenBingeListing = { listingOpens++ },
+                            onConnectBinge = { connectOpens++ },
                             onDisconnect = { disconnects++ },
                             jobs = TvJobActions(onRun = { runs += it }, onCancel = { cancels += it }),
                             onToggleShareUsageData = { sharingUsage = it },
@@ -526,7 +521,6 @@ class TvSettingsSheetFocusTest {
                         ),
                     onDismissRequest = { dismissals++ },
                     jobs = if (config != null) jobsState else JobsUiState.Loading,
-                    hub = hub,
                 )
             }
         }

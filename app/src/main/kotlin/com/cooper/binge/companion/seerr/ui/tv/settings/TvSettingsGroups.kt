@@ -15,7 +15,6 @@ import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.tv.template.TvPaneGroup
 import com.binge.designsystem.tv.template.TvPaneRow
 import com.cooper.binge.companion.seerr.R
-import com.cooper.binge.companion.seerr.ui.hub.HubUiState
 import com.cooper.binge.companion.seerr.ui.settings.ServerService
 import com.cooper.binge.companion.seerr.ui.settings.SettingsUiState
 import com.cooper.binge.companion.seerr.ui.settings.server.JobsUiState
@@ -32,6 +31,7 @@ internal class TvSettingsActions(
     val onToggleShareUsageData: (Boolean) -> Unit = {},
     val onToggleSendCrashReports: (Boolean) -> Unit = {},
     val onOpenBinge: () -> Unit = {},
+    val onConnectBinge: () -> Unit = {},
     val onOpenBingeListing: () -> Unit = {},
     /** The household's switches, for an admin; null leaves the group out. */
     val household: TvHousehold? = null,
@@ -54,7 +54,6 @@ internal fun tvSettingGroups(
     state: SettingsUiState.Ready,
     actions: TvSettingsActions,
     jobs: TvJobs,
-    hub: HubUiState?,
     onShowBugReport: () -> Unit,
     agents: TvAgents? = actions.agents,
 ): List<TvSettingsGroup> {
@@ -63,13 +62,14 @@ internal fun tvSettingGroups(
         state.app?.let {
             tvAppGroup(
                 app = it,
-                binge = (hub as? HubUiState.Ready)?.bingeStatus,
+                binge = it.binge,
                 actions =
                     TvAppActions(
                         onShowBugReport = onShowBugReport,
                         onToggleShareUsageData = actions.onToggleShareUsageData,
                         onToggleSendCrashReports = actions.onToggleSendCrashReports,
                         onOpenBinge = actions.onOpenBinge,
+                        onConnectBinge = actions.onConnectBinge,
                         onOpenBingeListing = actions.onOpenBingeListing,
                     ),
             )
