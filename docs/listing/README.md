@@ -40,7 +40,8 @@ Optionally two Android TV frames (1920×1080): Home with the hub board, and a li
 action sheet. The feature graphic (1024×500) is a design asset; it does not exist yet.
 
 **The app name is a maintainer's decision.** `listing.md` proposes one and says why. The
-in-app label stays `Seerr` (`companion_name`), which is what Binge shows for this integration.
+label Binge shows for this integration stays `Seerr` (`companion_label`, which the manifest's
+companion metadata names). The launcher label is `app_label`, "Seerr Companion".
 
 ## Keeping it true
 

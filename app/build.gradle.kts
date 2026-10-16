@@ -18,7 +18,7 @@ plugins {
 
 // Crash reporting needs this app's own Firebase project, whose google-services.json is never
 // committed: release.yml writes it from a secret. Without it neither plugin is applied, so a fork
-// or a local build still builds, and crash reporting is simply off (FirebaseCrashReports).
+// or a local build still builds, and crash reporting is simply off (`telemetry/CrashReporting.kt`).
 if (file("google-services.json").exists()) {
     apply(
         plugin =
@@ -423,6 +423,7 @@ kover {
                     "com.cooper.binge.companion.seerr.SendAddressActivity*",
                     "com.cooper.binge.companion.seerr.ScannedSendAddressActivity*",
                     "com.cooper.binge.companion.seerr.SettingsHandOffActivity*",
+                    "com.cooper.binge.companion.seerr.ViewRequestHandOffActivity*",
                     "com.cooper.binge.companion.seerr.SeerrApp",
                 )
                 annotatedBy("androidx.compose.runtime.Composable")

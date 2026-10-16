@@ -4,19 +4,21 @@ Maps a red CI run to its correct fix. `author-ci-fix.yml` reads this file from
 `main` and works from the table below; it gets exactly one repair attempt per
 commit, so a guess is expensive and stopping is cheap.
 
-CI runs the tasks of `./gradlew build` as four jobs in parallel, then a fifth that
-aggregates them. `.github/workflows/ci.yml` is the source of truth for the split:
+CI runs the tasks of `./gradlew build` as four jobs in parallel, checks the submodule
+pins in a fifth on a PR, then aggregates them all in a last one. `.github/workflows/ci.yml`
+is the source of truth for the split:
 
 | Job | Runs |
 | --- | --- |
-| `checks` | `./gradlew build` minus the tasks the next three jobs own — Kotlin compile, `ktlintCheck`, `detekt`, `checkBaselineStaleness`, Android `lint`, `checkTranslationStaleness`, the debug assemble. On a PR it first checks that every submodule pin is merged upstream |
+| `submodule-pins` | On a PR only: binge-ci's shared check that every submodule pin is merged upstream, unless the PR carries `hold` |
+| `checks` | `./gradlew build` minus the tasks the next three jobs own — Kotlin compile, `ktlintCheck`, `detekt`, `checkBaselineStaleness`, Android `lint`, `checkTranslationStaleness`, `checkTvMaterialSeparation`, `checkGrpcAlignment`, the debug assemble |
 | `tests` | `:app:testDebugUnitTest` and `:app:koverVerify` |
 | `screenshots` | `:app:validateDebugScreenshotTest` |
 | `release` | `:app:assembleRelease` — R8 with this app's keep rules, and lint-vital |
-| `build` | Nothing of its own. Waits on the four, and is green only if all four are. It merges their reports into the one `build-reports` artifact |
+| `build` | Nothing of its own. Waits on the other five, and is green only if all of them are (the pin check also passes by being skipped). It merges the four Gradle jobs' reports into the one `build-reports` artifact |
 
 `build` is the check branch protection requires, and the one `author-ci-fix.yml` reads.
-Its log only says which of the four failed. Read the failing job's log, not
+Its log only says which of the jobs failed. Read the failing job's log, not
 `build`'s: that is where the error is. The reports in `build-reports` come from
 whichever jobs failed.
 
