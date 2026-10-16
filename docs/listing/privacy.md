@@ -59,10 +59,13 @@ two ways described above, and the phone-to-TV hand-off below, which stays on you
   action, which sign-in method, on/off) — never an id, a title, a message, your server's address or
   anyone's name. When a change you make on the server fails, that is reported too: the app's own
   name for the action, the HTTP and gRPC status codes of the failure, and the server's software
-  (Overseerr, Jellyseerr or Seerr) and its version. Nothing is sent until you agree, and turning it
-  off in Settings stops it. PostHog
-  records it against a random identifier for this install, not against you, and derives a rough
-  location from the IP address.
+  (Overseerr, Jellyseerr or Seerr) and its version. PostHog's library also reports when the app
+  is opened, sent to the background, installed or updated, with the app's version. Every event
+  carries what the library reads from the device: its make and model, the Android version, the
+  screen size, the language, the time zone and the type of network (Wi-Fi or mobile, and the mobile
+  carrier's name). Nothing is sent until you agree, and turning it off in Settings stops it. The
+  library does not contact PostHog before then either. PostHog records it against a random
+  identifier for this install, not against you, and derives a rough location from the IP address.
 - **To Google (Firebase Crashlytics)**, when the app crashes: what the app was doing, the device
   model and Android version. "What the app was doing" is a short line from a fixed list ("deleting
   issue", "moderating request: approved") and, where an action is on one record, that record's
@@ -108,7 +111,8 @@ with a remote. It is only ever started by you.
 ## What the app does not do
 
 - No advertising or tracking libraries, and no analytics beyond the screen names, action
-  categories and failed-action details above.
+  categories, failed-action details, app open, background, install and update events, and device
+  details above.
 - No account with the app's author, and no sign-in other than to your own server (and Plex, if you
   choose it).
 - No access of its own to contacts, location, files, the camera, the microphone or the clipboard
