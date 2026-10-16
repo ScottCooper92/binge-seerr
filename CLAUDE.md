@@ -192,9 +192,10 @@ through `ExtrasEditorUiState`.
 `build` pulls in through `check`; `app/build.gradle.kts` is where to confirm it.
 
 CI runs that same set of tasks as four jobs in parallel: `checks` runs `build` minus the tasks the
-other three own, and `tests`, `screenshots` and `release` run those. A fifth job, `build`, waits on
-the four and is green only if all of them are. It is the check branch protection requires, and the
-one the bots read. `ci.yml` explains the split. A gate added to `check` lands in `checks` without
+other three own, and `tests`, `screenshots` and `release` run those. On a PR, `submodule-pins` checks
+that every submodule pin is merged upstream. A last job, `build`, waits on all five and is green only
+if all of them are; the pin check passes by being skipped outside a PR. It is the check branch
+protection requires, and the one the bots read. `ci.yml` explains the split. A gate added to `check` lands in `checks` without
 touching `ci.yml`, because that job excludes tasks rather than listing them.
 
 - Kotlin compilation.

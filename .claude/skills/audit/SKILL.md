@@ -5,8 +5,8 @@ description: Whole-codebase (or package-scoped) sweep of binge-seerr for bugs, c
 
 # Codebase audit
 
-CI runs the tasks of `./gradlew build`, split across four parallel jobs and one aggregate `build`
-job (`.github/workflows/ci.yml`): compile, `:app:test`, ktlint, detekt (type-resolved, zero new
+CI runs the tasks of `./gradlew build`, split across four parallel jobs, a submodule-pin check on a PR and one
+aggregate `build` job (`.github/workflows/ci.yml`): compile, `:app:test`, ktlint, detekt (type-resolved, zero new
 against `detekt-baseline.xml`), Android lint (translation checks and `UnusedResources` pinned to
 error), `checkTranslationStaleness`, `koverVerify` (84%), `validateDebugScreenshotTest` and the R8 release build. Do not
 re-report anything that set decides. The audit's value is what it *doesn't* gate: conventions held
@@ -85,8 +85,8 @@ the exported activities (`AdvancedRequestActivity`, the SETTINGS hand-off).
 - Exported Activities: every Intent extra treated as untrusted input (validate types, ranges,
   ids; no redirection of a received Intent, no `PendingIntent` mutability hazards; see the
   `android-intent-security` skill if available).
-- `android:usesCleartextTraffic="true"` is set: check that plain HTTP is only reachable for a
-  user-chosen server URL, never for Plex.tv / telemetry / update endpoints, and that credentials
+- `res/xml/network_security_config.xml` permits cleartext in its `base-config` and trusts user CAs
+  for every host: check that plain HTTP is only reachable for a user-chosen server URL, never for Plex.tv / telemetry / update endpoints, and that credentials
   are not sent over cleartext without the user having been shown it.
 - Secrets: API keys, session cookies, Plex tokens, server hostnames in logs, analytics, bug
   reports (`feedback/BugReport.kt`), crash keys or committed as literals (including tests); check
@@ -119,8 +119,8 @@ a screen reads the *gate*, not the raw facts. Cross-check `docs/server-compatibi
   "not loaded" (renders as absent, not pending); `MutableStateFlow` refresh/retry triggers that
   nothing increments (dead trigger with `Lazily` = fetched once per ViewModel).
 - **Paging**: `cachedIn` missing/duplicated; `PagingData` re-emitted through a `StateFlow`;
-  `RemoteMediator` (`IssuesRemoteMediator`, `UsersRemoteMediator`) end-of-pagination / refresh /
-  cursor (`PageCursor`) errors; `LazyPagingItems` `items()` without `itemKey`.
+  `RemoteMediator` (`IssuesRemoteMediator`, `UsersRemoteMediator`, over `OffsetRemoteMediator`)
+  end-of-pagination / refresh / cursor errors; `LazyPagingItems` `items()` without `itemKey`.
 - **Compose effects**: `LaunchedEffect(Unit)`/`DisposableEffect(Unit)` reading a changing
   parameter (fix pattern: `rememberUpdatedState`); state that must survive rotation held in
   `remember {}`; un-hoisted lazy-container state where scroll must survive.
@@ -159,8 +159,6 @@ re-hunting them. Hunt what lint cannot see:
 - Unused `internal`/`private`/public non-`@Composable` declarations (exempt `@Preview`, Hilt
   `@Module`/`@Provides`/`@Binds` including multibindings, Room DAOs/entities, manifest-referenced
   and `keepRules/`-referenced classes, `@Serializable`/Moshi DTOs the deserializer builds).
-  Known baseline entries: the two `UnusedPrivateMember` entries for `toCandidate()` in `UserAdmission.kt`
-  are detekt false positives on extension receivers — the functions are used, so do not delete them.
 - Dead enum entries / sealed subtypes; `SeerrApi` endpoints nothing calls; DTO fields never read.
 - Never-mutated `MutableStateFlow`s (check all files); unreachable defaults (scope to construction
   sites of the type, split production from test).

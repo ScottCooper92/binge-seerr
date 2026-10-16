@@ -14,8 +14,9 @@ name: CI
 # a gate added to `check` later lands in `checks` without anyone touching this file.
 #
 # `build` is the job branch protection requires, and the one the bots read through this workflow's
-# conclusion. It runs after the four, passes only if all four passed, and folds their report
-# artifacts back into the one `build-reports` artifact author-ci-fix downloads.
+# conclusion. It runs after the four and `submodule-pins`, passes only if all of them passed (the pin
+# check passes by being skipped outside a PR), and folds the four's report artifacts back into the one
+# `build-reports` artifact author-ci-fix downloads.
 #
 # Deliberately NO paths-ignore, matching binge-companions. bot-review requires a
 # SUCCESSFUL run of this workflow against the head, so a skipped run means a PR that
@@ -205,7 +206,7 @@ jobs:
           retention-days: 1
 
   # The check branch protection requires, and the job the bots read through this workflow's
-  # conclusion. Green only when all four are green; `always()` so a failure upstream still reaches
+  # conclusion. Green only when every job it needs is green; `always()` so a failure upstream still reaches
   # the merge step instead of skipping this job, which would read as "not run" rather than red.
   build:
     if: ${{ always() && (github.event_name != 'pull_request' || github.event.pull_request.draft == false) }}
