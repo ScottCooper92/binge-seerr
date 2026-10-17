@@ -171,8 +171,9 @@ in `values-es` — the Gates section covers what happens if it does not.
 is the signal to split a file by concern, and 400 is too long. Route entries live in `*Entries.kt`
 files by area. There is no automated length gate here. Binge's custom detekt rules are copied per
 repository rather than published (binge-companions#39), and this repository's copy holds only the
-comment rules. `FileLength` has not been shared at all, so length is held in review. The files already past 400
-lines are tracked in #1635.
+comment rules. `FileLength` has not been shared at all, so length is held in review. One file is
+exempt: `seerr/SeerrApi.kt`, the Retrofit interface. It holds one declaration per Seerr endpoint, so
+its length is the server's API. Binge makes the same call with its `FileLength` baseline entry.
 
 **Navigation tests.** Two kinds, and they answer different questions. A stand-in `NavDisplay` with the real
 strategy and metadata (`DetailPaneStackTest`, `HomeRootSwapTest`) pins the pane logic on its own, and is cheap.
