@@ -195,8 +195,9 @@ through `ExtrasEditorUiState`.
 
 CI runs that same set of tasks as four jobs in parallel: `checks` runs `build` minus the tasks the
 other three own, and `tests`, `screenshots` and `release` run those. On a PR, `submodule-pins` checks
-that every submodule pin is merged upstream. A last job, `build`, waits on all five and is green only
-if all of them are; the pin check passes by being skipped outside a PR. It is the check branch
+that every submodule pin is merged upstream, and `actionlint` lints the workflow files. A last job,
+`build`, waits on all six and is green only if all of them are. The pin check passes by being skipped
+outside a PR, and `actionlint` by being skipped on the nightly. It is the check branch
 protection requires, and the one the bots read. `ci.yml` explains the split. A gate added to `check` lands in `checks` without
 touching `ci.yml`, because that job excludes tasks rather than listing them.
 
