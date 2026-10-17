@@ -245,7 +245,12 @@ class UserDetailViewModelTest {
         runTest {
             server(viewerId = 1, permissions = ADMIN)
             val vm = viewModel()
-            assertEquals("Ana", vm.awaitReady().detail.item.name)
+            assertEquals(
+                "Ana",
+                vm
+                    .awaitReady()
+                    .detail.item.name,
+            )
             serve("GET /api/v1/user/8", """{"id":8,"displayName":"Ana B","email":"anab@example.com","permissions":$REQUEST}""")
 
             settingsChanges.changed(8)
@@ -265,7 +270,14 @@ class UserDetailViewModelTest {
 
             settingsChanges.changed(8)
 
-            val updated = vm.uiState.first { (it as? UserDetailUiState.Ready)?.detail?.quota?.movie?.remaining == 17 }
+            val updated =
+                vm.uiState.first {
+                    (it as? UserDetailUiState.Ready)
+                        ?.detail
+                        ?.quota
+                        ?.movie
+                        ?.remaining == 17
+                }
             assertEquals("Ana", (updated as UserDetailUiState.Ready).detail.item.name)
         }
 
