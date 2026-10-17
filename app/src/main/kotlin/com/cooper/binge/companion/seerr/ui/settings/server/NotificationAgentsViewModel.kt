@@ -8,6 +8,7 @@ import com.cooper.binge.companion.seerr.di.IoDispatcher
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -24,22 +25,39 @@ class NotificationAgentsViewModel
     constructor(
         private val connection: SeerrConnection,
         @IoDispatcher private val dispatcher: CoroutineDispatcher,
+        agentChanges: NotificationAgentChanges = NotificationAgentChanges(),
     ) : ViewModel() {
+        // Each read replaces the one before it, so a slow read started earlier cannot land over a later one.
+        private var loading: Job? = null
+
         private val state = MutableStateFlow<AgentsUiState>(AgentsUiState.Loading)
         val uiState: StateFlow<AgentsUiState> = state.asStateFlow()
 
+        init {
+            // Said once an agent's write has landed, so this read goes out after it and sees it (#1556).
+            viewModelScope.launch(dispatcher) { agentChanges.changes.collect { refresh() } }
+        }
+
         fun reload() {
             state.value = AgentsUiState.Loading
-            viewModelScope.launch(dispatcher) {
-                attempt { load() }
-                    .onSuccess { state.value = it }
-                    .onFailure { state.value = AgentsUiState.Error(it.toSeerrError()) }
-            }
+            read { state.value = AgentsUiState.Error(it.toSeerrError()) }
         }
 
         /** Reads again without going back to Loading, for a page that is showing the list while an agent is changed under it. */
-        fun refresh() {
-            viewModelScope.launch(dispatcher) { attempt { load() }.onSuccess { state.value = it } }
+        fun refresh() =
+            read {
+                // A reload this replaced was still loading, and nothing else will answer for it.
+                if (state.value is AgentsUiState.Loading) state.value = AgentsUiState.Error(it.toSeerrError())
+            }
+
+        private fun read(onFailure: (Throwable) -> Unit) {
+            loading?.cancel()
+            loading =
+                viewModelScope.launch(dispatcher) {
+                    attempt { load() }
+                        .onSuccess { state.value = it }
+                        .onFailure(onFailure)
+                }
         }
 
         private suspend fun load(): AgentsUiState.Ready =
