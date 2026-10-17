@@ -66,3 +66,5 @@ includeBuild("design-system") {
 }
 
 include(":app")
+// The binge: detekt comment rules, copied from binge-companions per binge-companions#39 and loaded by :app's detekt run.
+include(":detekt-rules")

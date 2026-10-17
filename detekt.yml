@@ -3,11 +3,11 @@
 # full ruleset dump.
 #
 # Ported from Binge's detekt.yml, which is where the tuning was done and where the reasoning in the
-# comments below comes from. Two things are deliberately NOT carried across:
+# comments below comes from. The `binge:` comment rules are at the end of this file. Two things are
+# deliberately NOT carried across:
 #
-#   - The custom `binge:` ruleset (FileLength, the comment gates). It lives in an unpublished
-#     module in Binge and is loaded by project path, so it cannot be depended on from here;
-#     copying the source would fork a live ruleset. See binge-companions#39.
+#   - The rest of Binge's custom `binge:` ruleset: FileLength, which needs a repo-specific
+#     grandfather list (#1635 tracks the long files here), and the Tv* focus rules.
 #   - The community Compose ruleset, io.nlopez.compose.rules. Binge runs it, but its config there
 #     is tuned per-file to Binge's own code - an allowlist naming BingeNavHost, a CompositionLocal
 #     list, a dozen rules off for reasons that name Binge composables. Adopting it here is a
@@ -236,3 +236,23 @@ style:
     # detekt sees them as unused. Exempt preview annotations (false positives), the
     # same idea as the FunctionNaming Composable exemption above.
     ignoreAnnotated: ['Preview', 'PreviewParameter']
+
+# Binge's comment rules, from this repository's own copy in detekt-rules/ (the gate's
+# `customRulesProject` in app/build.gradle.kts). binge-companions#39 decided each repository copies the
+# rules it wants, as nothing is published, so this gate does not depend on another repository's build.
+# These are the four lexical rules binge-companions carries, at its thresholds.
+binge:
+  BannerComment:
+    active: true
+  ConsecutiveInlineComments:
+    active: true
+    # 2 is the bar's default cap; a subtle invariant may earn a third line, so gate at 4+.
+    threshold: 3
+  DeclarationCommentShouldBeKDoc:
+    active: true
+  KDocLength:
+    active: true
+    # Prose lines only: block tags (@param, @return, ...) are not counted.
+    classThreshold: 6
+    functionThreshold: 6
+    propertyThreshold: 6
