@@ -76,7 +76,7 @@ class TvHomeShellFocusTest {
 
         press(Key.DirectionUp)
 
-        item(R.string.tv_rail_hub).assertIsFocused()
+        item(R.string.tv_home).assertIsFocused()
     }
 
     @Test
@@ -110,7 +110,7 @@ class TvHomeShellFocusTest {
 
         pressBack()
 
-        item(R.string.tv_rail_hub).assertIsFocused()
+        item(R.string.tv_home).assertIsFocused()
         assertEquals(TvDestination.Hub, tab)
     }
 
@@ -124,14 +124,14 @@ class TvHomeShellFocusTest {
         pressBack()
 
         assertEquals(TvDestination.Hub, tab)
-        item(R.string.tv_rail_hub).assertIsFocused()
+        item(R.string.tv_home).assertIsFocused()
     }
 
     @Test
     fun choosingTheCurrentTabAgainIsReportedAsAReselect() {
         setShell(overlay = true)
         press(Key.DirectionUp)
-        item(R.string.tv_rail_hub).assertIsFocused()
+        item(R.string.tv_home).assertIsFocused()
 
         press(Key.Enter)
 
@@ -145,7 +145,7 @@ class TvHomeShellFocusTest {
 
         press(Key.DirectionUp)
 
-        item(R.string.tv_rail_hub).assertIsFocused()
+        item(R.string.tv_home).assertIsFocused()
     }
 
     @Test
@@ -170,7 +170,7 @@ class TvHomeShellFocusTest {
         press(Key.DirectionUp)
 
         content(TvDestination.Hub).assertIsFocused()
-        item(R.string.tv_rail_hub).assertIsNotFocused()
+        item(R.string.tv_home).assertIsNotFocused()
     }
 
     /** With the bar hidden Back cannot move focus anywhere, so it is left to the system and the app can close. */
@@ -189,7 +189,7 @@ class TvHomeShellFocusTest {
         setShell(offered = listOf(BothTabs.first()))
 
         BothTabs.forEach { composeTestRule.onAllNodes(hasContentDescription(string(it.labelRes))).assertCountEquals(0) }
-        item(R.string.tv_rail_account).assertExists()
+        item(R.string.tv_account).assertExists()
         item(R.string.hub_section_settings).assertExists()
     }
 
@@ -199,7 +199,7 @@ class TvHomeShellFocusTest {
 
         pressBack()
 
-        item(R.string.tv_rail_account).assertIsFocused()
+        item(R.string.tv_account).assertIsFocused()
     }
 
     @Test
@@ -208,7 +208,7 @@ class TvHomeShellFocusTest {
 
         press(Key.DirectionUp)
 
-        item(R.string.tv_rail_account).assertIsFocused()
+        item(R.string.tv_account).assertIsFocused()
     }
 
     /** On the avatar of a one-tab bar the user is already on the start tab, so Back leaves the app. */
@@ -216,7 +216,7 @@ class TvHomeShellFocusTest {
     fun withOneTabBackOnTheBarIsNotHandled() {
         setShell(offered = listOf(BothTabs.first()))
         pressBack()
-        item(R.string.tv_rail_account).assertIsFocused()
+        item(R.string.tv_account).assertIsFocused()
 
         val handled = composeTestRule.runOnUiThread { composeTestRule.activity.onBackPressedDispatcher.hasEnabledCallbacks() }
 

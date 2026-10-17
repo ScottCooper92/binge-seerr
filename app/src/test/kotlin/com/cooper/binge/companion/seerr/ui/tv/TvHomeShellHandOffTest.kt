@@ -102,5 +102,5 @@ class TvHomeShellHandOffTest {
     private fun card(title: String) = composeTestRule.onNode(hasContentDescription(title) and isFocusable())
 
     /** Up from Home lands on the current tab. */
-    private fun focusedTopRowButton() = composeTestRule.onNode(hasContentDescription(string(R.string.tv_rail_hub)) and isFocused())
+    private fun focusedTopRowButton() = composeTestRule.onNode(hasContentDescription(string(R.string.tv_home)) and isFocused())
 }
