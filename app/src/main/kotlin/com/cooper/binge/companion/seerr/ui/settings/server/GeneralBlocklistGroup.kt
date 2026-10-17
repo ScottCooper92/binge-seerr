@@ -75,9 +75,6 @@ internal fun BlocklistGroup(
     )
 }
 
-/** [id] added at the end if it is not there, else taken out, keeping the order the server holds the rest in. */
-internal fun List<Int>.toggledIn(id: Int): List<Int> = if (id in this) this - id else this + id
-
 /**
  * How many pages the job takes per tag, as a slider row, as the quota limits are. A stored value past the usual top
  * widens the slider to reach it, so the row reads what is stored and not the slider's clamp.
