@@ -47,3 +47,19 @@ data class SeerrIssueCommentDto(
     @SerialName("updatedAt") val updatedAt: String? = null,
     @SerialName("user") val user: SeerrRequestUserDto? = null,
 )
+
+@Serializable
+data class SeerrIssueCommentBody(
+    @SerialName("message") val message: String,
+)
+
+/**
+ * Body for `POST issue`. [mediaId] is the server's INTERNAL media id (a title's `mediaInfo.id`),
+ * not the TMDB id — the server can only attach an issue to a title it already tracks.
+ */
+@Serializable
+data class SeerrCreateIssueBody(
+    @SerialName("mediaId") val mediaId: Int,
+    @SerialName("issueType") val issueType: SeerrIssueTypeCode,
+    @SerialName("message") val message: String,
+)
