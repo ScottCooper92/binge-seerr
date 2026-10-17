@@ -27,7 +27,7 @@ class NotificationAgentsViewModel
         @IoDispatcher private val dispatcher: CoroutineDispatcher,
         agentChanges: NotificationAgentChanges = NotificationAgentChanges(),
     ) : ViewModel() {
-        // Each read replaces the one before it, so a slow read started earlier cannot land over a later one.
+        /** Each read replaces the one before it, so a slow read started earlier cannot land over a later one. */
         private var loading: Job? = null
 
         private val state = MutableStateFlow<AgentsUiState>(AgentsUiState.Loading)
