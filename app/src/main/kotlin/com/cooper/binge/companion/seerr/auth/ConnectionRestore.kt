@@ -65,12 +65,10 @@ class ConnectionRestore(
     /**
      * Rewrites the carrier when it does not hold what a save of the saved connection would put there.
      *
-     * Only a save writes the carrier, so a connection saved before the carrier held the plain-HTTP opt-in
-     * is carried without it (#721). So is one whose consent was grandfathered in by
-     * [DataStoreCleartextConsent], whose user never saw the opt-in. A new device would refuse to restore
-     * either, so this runs on every start. It reads the carrier first, so a carrier already in step is not
-     * written again. The saved connection is read again before the write, so a connect that lands
-     * meanwhile is not overwritten with the one it replaced.
+     * Only a save writes the carrier, so a connection saved before it held the plain-HTTP opt-in is carried
+     * without it (#721), as is one whose consent [DataStoreCleartextConsent] grandfathered in. A new device
+     * would refuse to restore either, so this runs on every start. A carrier already in step is not written,
+     * and the saved connection is re-read first so a connect that lands meanwhile is not overwritten.
      */
     suspend fun refreshCarrier() {
         val saved = store.credentials.first() ?: return

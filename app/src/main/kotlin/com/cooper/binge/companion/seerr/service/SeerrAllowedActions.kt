@@ -58,16 +58,12 @@ private val REQUEST_SCOPED =
     )
 
 /**
- * The server's status with its allowed actions filled in for the user [viewerId]. Each request carries
- * its own set. The 4K version's entry is left out unless this user may request 4K of this title's type ([isTv]),
- * so it never tells them about a version they cannot request, its downloads included. The contract sends the
- * entry only under `CAPABILITY_REQUEST_4K`, and a host reads it to decide whether to offer a 4K request, so a
- * type the declared capability does not reach goes without it.
- * The title's set holds a
- * report only against something available in a version they can see, and the block
- * capability either way: it offers a block on a title and an unblock on a blocked one. Its
- * request-scoped entries are the union of the requests', so a
- * host that reads only the title-level list is never offered an action that every request refuses.
+ * The server's status with allowed actions filled in for [viewerId], each request carrying its own set.
+ * The 4K entry is dropped unless this user may request 4K of this type ([isTv]): the contract sends it only
+ * under `CAPABILITY_REQUEST_4K`, and a host reads it to decide whether to offer a 4K request.
+ *
+ * The title's set offers a report only on a version they can see, and block or unblock either way. Its
+ * request-scoped entries are the union of the requests', so the title-level list never offers what all refuse.
  */
 fun SeerrPermissions.withAllowedActions(
     server: CachedStatus,

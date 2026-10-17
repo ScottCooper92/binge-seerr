@@ -68,11 +68,9 @@ class MainActivity : ComponentActivity() {
     private var consumedLink: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        // Installed before super.onCreate, per the API's contract, and held until the Block Store
-        // restore has been tried: that answer is what decides setup-versus-hub, so dismissing any
-        // earlier would hand the splash to the loading screen — the frame it exists to replace.
-        // SeerrApp starts the restore and ConnectionRestore settles in a `finally`, so this
-        // condition clears on every path including a failed probe.
+        // Installed before super.onCreate, per the API's contract. Held until the Block Store restore,
+        // which decides setup-versus-hub, has been tried; ConnectionRestore settles in a `finally`,
+        // so this clears on every path, a failed probe included.
         installSplashScreen().setKeepOnScreenCondition { !connectionRestore.settled.value }
         super.onCreate(savedInstanceState)
         // Keyed on the link, not on the saved state: after process death the launch intent is still

@@ -66,12 +66,11 @@ private suspend fun SeerrApi.offeredServers(
 
 /**
  * The full advanced-request destination for a fresh picker: every server this media's shape may go
- * to, and the preselected one's profile/root-folder choices — the same server a plain
- * `SubmitRequest` (never 4K) would have used. Empty when this shape has no server this user may
- * use. A shape with servers but no non-4K default (every instance is 4K-only) still lists them
- * to a user who may request 4K — the servers axis is the whole point of this rpc over the old
- * single-axis hand-off — just with nothing preselected and no profile/root-folder axis to resolve
- * against.
+ * to, and the profile/root-folder choices of the preselected one, the server a plain `SubmitRequest`
+ * (never 4K) would have used. Empty when this shape has no server this user may use.
+ *
+ * A shape whose every instance is 4K-only still lists them to a user who may request 4K, since the
+ * servers axis is the point of this rpc, but with nothing preselected.
  */
 suspend fun SeerrApi.advancedRequestOptions(
     isTv: Boolean,
@@ -109,20 +108,17 @@ data class ResolvedAdvancedDestination(
 
 /**
  * The destination a [com.cooper.binge.companion.seerr.service.SeerrRequestService.submitAdvancedRequest]
- * submits with: an empty axis falls back to the same default [advancedRequestOptions] would have
- * preselected, so a submit with every field untouched is a plain request in every way but its
- * path. An explicit but unrecognised server id is a bad argument, not a silent fall-through to the
- * default — unlike an empty one, it names a choice the picker offered, so a submit against it
- * failing loudly is what tells the host its own picker state is stale. A 4K server named by a
- * user who may not request 4K is the same: it was never offered. A profile id that is not a
- * number is the same, since it can name no profile: it is refused rather than dropped for the
- * server's default. Whether a well-formed profile or root folder is one the server offers is left to
- * Seerr, which refuses it, so a submit carrying both still pays for no extra lookup.
+ * submits with. An empty axis falls back to what [advancedRequestOptions] would have preselected, so an
+ * untouched submit is a plain request in every way but its path.
  *
- * The profile/root-folder details fetch only runs when an axis is actually left empty: a submit
- * that already carries both is the common case, and it pays for none of the two extra round trips
- * this rpc's doc otherwise calls out as the cost of moving the picker out of the companion's own
- * process.
+ * Whether a well-formed profile or root folder is one the server offers is left to Seerr, which refuses it.
+ * The details fetch runs only when an axis is left empty, so the common submit carrying both pays for neither.
+ *
+ * @param serverId An unrecognised id is a bad argument, not a fall-through to the default: it names a choice
+ *   the picker offered, so failing loudly tells the host its picker state is stale. A 4K server named by a
+ *   user who may not request 4K is the same, since it was never offered.
+ * @param profileId One that is not a number can name no profile, so it is refused rather than dropped for
+ *   the server's default.
  */
 suspend fun SeerrApi.resolveAdvancedDestination(
     isTv: Boolean,

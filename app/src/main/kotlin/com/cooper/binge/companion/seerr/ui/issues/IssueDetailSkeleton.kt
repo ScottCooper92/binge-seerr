@@ -36,24 +36,12 @@ private const val REPORT_LINE_COUNT = 2
 private const val REPORT_LAST_LINE_FRACTION = 0.6f
 
 /**
- * Loading placeholder for [IssueDetailScreen]'s [IssueDetailUiState.Ready] arm: the issue header —
- * poster, title, the media-type/year meta line, and the type label plus status chip row — all
- * unconditional on [IssueItem], then the divider, the problem report and the Comments section header.
- *
- * The report is reserved because every issue has one: the server creates an issue together with its
- * opening comment, and that comment is [IssueDetail.report]. Leaving it out sized the skeleton for a
- * page without a report, so the Comments heading jumped down by the whole report on resolve (#572).
- * Its length is the server's, so the placeholder holds two lines and the scroll grows or shrinks from
- * there. The media-server/service link buttons and the thread's own comments are conditional on the
- * server's data ([IssueDetail.mediaServerUrl]/[IssueDetail.serviceUrl] are nullable, and the thread's
- * length is whatever the server returns), so nothing is reserved for them — the same trade
- * [RequestDetailSkeleton] and [UserDetailSkeleton] make (#373).
- *
- * The pinned composer/resolve bar is skipped for a different reason than either of those two skip
- * their own conditional content: its shape itself varies with permissions (a composer alone, a
- * resolve button alone, both, or the bar absent entirely), so a guessed shape would be its own
- * source of reflow rather than avoiding one — unlike [RequestDetailSkeleton]'s single button, which
- * only ever varies in whether it is reserved, never in what it looks like.
+ * Loading placeholder for [IssueDetailScreen]'s [IssueDetailUiState.Ready] arm: the [IssueItem] header, the
+ * divider, the problem report and the Comments heading. Every issue has a report ([IssueDetail.report], its
+ * opening comment), so two lines are held for it and the heading does not jump on resolve (#572). The link
+ * buttons and the thread's comments depend on the server's data, so nothing is reserved for them, the same
+ * trade [RequestDetailSkeleton] and [UserDetailSkeleton] make (#373). The pinned composer/resolve bar is
+ * skipped too: its shape varies with permissions, so a guessed one would cause reflow rather than avoid it.
  */
 @Composable
 internal fun IssueDetailSkeleton(modifier: Modifier = Modifier) {

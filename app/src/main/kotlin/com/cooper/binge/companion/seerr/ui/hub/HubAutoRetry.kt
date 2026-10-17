@@ -17,18 +17,12 @@ private const val MAX_RETRY_DELAY_MS = 30_000L
 private const val MAX_AUTO_RETRIES = 5
 
 /**
- * Heals a transient failure in place: while the hub is on screen and its health is retryable
- * ([ConnectionHealth.Unreachable], [ConnectionHealth.LocalNetworkDenied], [ConnectionHealth.CouldNotLoad] or
- * [ConnectionHealth.Unauthorized]) it re-probes on a bounded
- * exponential backoff, so a network that comes up a moment after launch recovers by itself.
- * `collectLatest` restarts on every change, so leaving the retryable set or the screen cancels the
- * in-flight delay and a later relapse gets a fresh budget.
- *
- * Unauthorized is retried because the hub shows a loading page for it while the app decides (#810). A rejection the
- * server confirms takes the app to sign-in; one it contradicts was a stray answer, and only a reload clears it.
- *
- * Runs on [dispatcher] rather than [scope]'s own, for the same reason `UserAdmission` does (#177/#370):
- * [backoffRetries]'s [retry] call would otherwise resume on `viewModelScope`'s `Dispatchers.Main.immediate`.
+ * Heals a transient failure in place. While the hub is on screen and its health is [ConnectionHealth.Unreachable],
+ * [ConnectionHealth.LocalNetworkDenied], [ConnectionHealth.CouldNotLoad] or [ConnectionHealth.Unauthorized], it
+ * re-probes on a bounded exponential backoff. `collectLatest` restarts on every change, so leaving that set or the
+ * screen cancels the pending delay, and a later relapse gets a fresh budget. Unauthorized is retried because the hub
+ * shows a loading page for it while the app decides (#810); a rejection the server confirms goes to sign-in.
+ * Runs on [dispatcher], as `UserAdmission` does (#177/#370), so [retry] never resumes on `Dispatchers.Main.immediate`.
  */
 class HubAutoRetry(
     scope: CoroutineScope,

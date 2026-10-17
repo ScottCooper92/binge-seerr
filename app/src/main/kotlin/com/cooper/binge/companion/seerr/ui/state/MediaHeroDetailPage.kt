@@ -21,13 +21,13 @@ import com.binge.designsystem.template.HeroDetailScreen
 
 /**
  * A media-hero detail page — a request's, a blocklisted title's — on the design system's
- * [HeroDetailScreen]: the hero runs full-bleed, the bar fades in over it, and [footer] sits below the scroll
- * so the scroll always clears it. What is this app's own is the hero: [DetailHero] with its chrome off,
- * since the template's bar carries back and [topBarActions], the rich backdrop, and the
- * [LayoutAnchors.Detail.HERO] anchor a page's skeleton is checked against (#572).
+ * [HeroDetailScreen]: the hero runs full-bleed, the bar fades in over it, and [footer] sits below the scroll.
+ * This app owns the hero: [DetailHero] with its chrome off, since the template's bar carries back and
+ * [topBarActions], the rich backdrop, and the [LayoutAnchors.Detail.HERO] anchor a page's skeleton is checked
+ * against (#572). The body runs full-width, and the status bar is left to the theme.
  *
- * The body runs full-width, as it always has here, and the status bar is left to the theme. [onBack] is
- * null where the pane beside this one already offers the way back. [inFlight] shows a moderation under way.
+ * @param onBack null where the pane beside this one already offers the way back.
+ * @param inFlight shows a moderation under way.
  */
 @Composable
 internal fun MediaHeroDetailPage(

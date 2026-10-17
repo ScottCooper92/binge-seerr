@@ -32,16 +32,12 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 /**
- * One blocked title's page: [item] and [canManage] arrive from the route already known (see
- * [BlocklistDetailUiState]), so the one thing this fetches for itself is the backdrop and overview —
- * the same best-effort `movieDetails`/`tvDetails` lookup
- * [com.cooper.binge.companion.seerr.ui.requests.RequestDetailViewModel] makes for its own hero —
- * plus the server's web root, for the "open elsewhere" action.
+ * One blocked title's page. [item] and [canManage] arrive from the route (see [BlocklistDetailUiState]),
+ * so it fetches only the backdrop and overview, the best-effort lookup that
+ * [com.cooper.binge.companion.seerr.ui.requests.RequestDetailViewModel] makes, and the server's web root.
  *
- * Unblocking is this screen's own call rather than a delegate back to [BlocklistViewModel]'s: the
- * two live in different navigation entries with independent `ViewModelStore`s, so there is nothing
- * of the list's to call into. [BlocklistViewModel.setScreenVisible] is what picks up a removal made
- * here once the browser is back on screen.
+ * It unblocks for itself: the list lives in another navigation entry with its own `ViewModelStore`, so
+ * there is nothing of [BlocklistViewModel]'s to call. Its [BlocklistViewModel.setScreenVisible] picks up the removal.
  */
 @HiltViewModel(assistedFactory = BlocklistDetailViewModel.Factory::class)
 class BlocklistDetailViewModel

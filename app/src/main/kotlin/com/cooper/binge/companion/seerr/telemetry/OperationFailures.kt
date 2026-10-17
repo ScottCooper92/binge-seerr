@@ -16,23 +16,15 @@ private const val UNAVAILABLE = "none"
 private const val UNKNOWN = "unknown"
 
 /**
- * Reports that [operation] failed against the connected server, so a failure only one server
- * version produces can be found from the field (#539): "400 on `unblock_title`, Jellyseerr 2.x only".
+ * Reports that [operation] failed against the connected server, so a failure only one server version
+ * produces can be found from the field (#539). Only an HTTP answer or an unclassified failure is sent.
+ * Skipped: cancellation, the network, this app's own [StatusException] or `NotConnectedException`, and a
+ * dead session: whatever [toSeerrError] reads as [SeerrError.Unauthorized], a 401 or a 403 that
+ * `SeerrSessionInterceptor` confirmed (#1165). Seerr sends an expired sign-in as that 403 (#689); an
+ * unmarked 403 is a permission refusal and is still sent.
  *
- * Only a failure that can say something about version compatibility is sent. Skipped: cancellation,
- * a dead session (only this app can repair it), a transport failure (the network),
- * and a [io.grpc.StatusException] or `NotConnectedException` (this app refusing, or not connected,
- * before the server was asked). What remains is an HTTP answer the server chose to give, and an
- * unclassified failure, which is usually a body this app could not read.
- *
- * A dead session is whatever [toSeerrError] reads as [SeerrError.Unauthorized]: a 401 or a 403 that
- * `SeerrSessionInterceptor` confirmed, because `auth/me` refused the same credentials (#1165). On Seerr an expired
- * sign-in arrives as that marked 403, so skipping only a 401 would report it (#689). An unmarked 403
- * is a permission refusal and is still sent.
- *
- * Every param is low-cardinality and none is free text: never an id, a title, a URL, a host or a
- * response body, the rule `CrashBreadcrumbs` states for its notes. [operation] must be one of this
- * app's fixed names.
+ * @param operation one of this app's fixed names. Every event param is low-cardinality, never free text:
+ *   no id, title, URL, host or response body, the rule `CrashBreadcrumbs` states for its notes.
  */
 suspend fun Analytics.operationFailed(
     operation: String,

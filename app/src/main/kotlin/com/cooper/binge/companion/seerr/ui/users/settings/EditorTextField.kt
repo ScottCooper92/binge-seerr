@@ -35,25 +35,22 @@ import androidx.compose.ui.text.input.VisualTransformation
 import com.cooper.binge.companion.seerr.R
 
 /**
- * [autoCorrect] is off for a value another system has to match exactly, such as a username.
+ * A settings text field. Any editable field that is not [secret] shows a clear button while it is focused and
+ * non-empty.
  *
- * [prose] opts a free-text field (a name, a title) into starting each sentence capitalised. It is off by
- * default, because a locale, a path or an identifier is case-sensitive and a keyboard would otherwise
- * change what the user typed.
- *
- * [contentType] is null by default because most of these fields hold a server's secret rather than
- * the user's own credential, and a credential provider should only be offered the latter.
- *
- * A [secret] field carries its own reveal toggle, so a long pasted key can be checked before it is
- * saved. It is not optional: a masked field with no way out of it is the thing being fixed.
- *
- * Any other editable field shows a clear button while it is focused and non-empty.
- *
- * [required] marks the label, and is only a mark: the page reports a missing value through [isError] and [supporting].
- *
- * [imeAction] is Next, which moves focus on, so the last field of a form passes Done. Done drops the
- * keyboard and then runs [onDone], where submitting is the sensible next step. A multi-line field
- * keeps the keyboard's Enter, whatever [imeAction] says.
+ * @param autoCorrect off for a value another system has to match exactly, such as a username.
+ * @param prose opts a free-text field (a name, a title) into starting each sentence capitalised. It is off by
+ *   default, because a locale, a path or an identifier is case-sensitive and a keyboard would otherwise
+ *   change what the user typed.
+ * @param contentType null by default because most of these fields hold a server's secret rather than
+ *   the user's own credential, and a credential provider should only be offered the latter.
+ * @param secret gives the field its own reveal toggle, so a long pasted key can be checked before it is
+ *   saved. It is not optional: a masked field with no way out of it is the thing being fixed.
+ * @param required marks the label, and is only a mark: the page reports a missing value through [isError] and
+ *   [supporting].
+ * @param imeAction Next, which moves focus on, so the last field of a form passes Done. Done drops the
+ *   keyboard and then runs [onDone], where submitting is the sensible next step. A multi-line field
+ *   keeps the keyboard's Enter, whatever [imeAction] says.
  */
 @Composable
 internal fun EditorTextField(

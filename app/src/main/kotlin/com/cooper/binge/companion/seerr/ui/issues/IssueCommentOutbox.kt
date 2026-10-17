@@ -84,13 +84,11 @@ internal class IssueCommentOutbox(
     }
 
     /**
-     * The confirmed comment is resolved by diffing the post's answer against what this issue's
-     * comments look like right when this confirmation is applied, not a snapshot taken before the
-     * request went out: a sibling outbox entry that lands first is folded into `detail.comments`
-     * before this one resolves, so it's already "known" and can't be reclaimed here even when both
-     * entries sent identical text. The newest id alone can't be trusted either, because another
-     * comment on the same issue - another user's, another device's, or a second outbox entry - can
-     * arrive between this request and its response and outrank it.
+     * The confirmed comment is resolved by diffing the post's answer against the issue's comments as
+     * they are when this confirmation applies, not a snapshot from before the request. A sibling entry
+     * that landed first is already in `detail.comments`, so it can't be reclaimed here even with
+     * identical text. The newest id alone proves nothing: another user's, another device's or a
+     * sibling's comment can arrive between this request and its response and outrank it.
      */
     private suspend fun send(
         localId: Long,

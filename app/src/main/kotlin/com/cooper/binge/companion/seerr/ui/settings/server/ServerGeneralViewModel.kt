@@ -112,10 +112,9 @@ class ServerGeneralViewModel
          * saved in the same step — the old one stopped working the moment the server answered, so
          * leaving the connection on it would sign the app out.
          *
-         * The regenerate call and the reconnect probe are reported separately: the regenerate call
-         * is what actually invalidates the old key, so its result is adopted into the extras
-         * regardless of whether the follow-up reconnect succeeds. Otherwise a probe failure right
-         * after a successful regenerate would discard the only copy of the new key the app ever saw.
+         * The new key is adopted into the extras whether or not the reconnect probe then succeeds.
+         * The regenerate call is what invalidated the old key, so a probe failure must not discard
+         * the new key: it is the only copy the app ever sees.
          */
         fun regenerateApiKey() {
             if (currentExtras().apiKey.regenerating) return

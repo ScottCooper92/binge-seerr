@@ -24,16 +24,12 @@ private const val LOCAL_NAME = "localhost"
 private val LOCAL_SUFFIXES = listOf(".localhost", ".local", ".lan", ".home.arpa", ".internal", ".ts.net")
 
 /**
- * Loopback, link-local, the RFC 1918 ranges, single-label names and the suffixes reserved or used
- * for home networks (`.local`, `.lan`, `.home.arpa`, `.internal`), and Tailscale-style addresses —
- * the CGNAT range, `.ts.net` MagicDNS names, IPv6 ULA — where a self-hosted server typically
- * speaks plain HTTP over an already-encrypted link.
+ * Loopback, link-local, RFC 1918, single-label names, the home-network suffixes in [LOCAL_SUFFIXES], and
+ * Tailscale-style addresses (CGNAT, `.ts.net`, IPv6 ULA), where a self-hosted server typically speaks plain
+ * HTTP over an already-encrypted link.
  *
- * Judged on the name as typed, never on what it resolves to: a public name that resolves to a LAN
- * address is still public here, because the same name resolves publicly off that LAN.
- *
- * Not the TV-reachability test: `hostLocality` treats the CGNAT and Tailscale ranges as not local,
- * and the two disagree on purpose.
+ * Judged on the name as typed, never on what it resolves to: a public name resolves publicly off the LAN.
+ * Not the TV-reachability test: `hostLocality` treats CGNAT and Tailscale as not local, on purpose.
  */
 internal fun String.isLocalOrPrivateHost(): Boolean =
     this == LOCAL_NAME ||

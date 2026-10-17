@@ -56,18 +56,18 @@ internal enum class TvDestination(
 }
 
 /**
- * The connected app under a bar that stays over every page, as the phone's bottom navigation does: the offered [tabs], the
- * first of them the start tab, and Account and Settings as a [sheet] over whichever tab shows, above the bar. Pages draw
- * under the bar and pad their content by its measured height, through `LocalTvTopInset`. An [overlay] (a detail page, a
- * see-all grid) belongs to the current tab and sits under the bar too. With one tab offered there is nothing to choose
- * between, so the bar shows no tabs, only the avatar and the gear, and the avatar stands where the current tab would.
+ * The connected app under a bar that stays over every page, as the phone's bottom navigation does. Pages draw under the
+ * bar and pad their content by its measured height, through `LocalTvTopInset`. With one tab offered the bar shows no
+ * tabs, only the avatar and the gear, and the avatar stands where the current tab would.
  *
- * A [topLayer] is a title's own page, such as a request: a full screen drawn over everything, the bar included, with no top
- * inset. It traps focus and takes Back itself; when it closes, focus goes back to the card that opened it on the page beneath.
+ * Focus: selecting a tab leaves focus on it, Down enters the page, and Up out of a page's top edge lands on the tab.
+ * Back: a top layer, an overlay or a sheet takes it first; on a page it moves focus to the current tab; on the bar it
+ * leaves any other tab for the start tab, and from the start tab leaves the app.
  *
- * Focus: selecting a tab leaves focus on it, and Down enters the page. Up out of a page's top edge lands on the current tab.
- * Back: a top layer, an overlay or a sheet takes it first; on a page it moves focus to the current tab; on the bar it leaves
- * any other tab for the start tab, and from the start tab leaves the app.
+ * @param sheet Account or Settings, over whichever tab shows, above the bar.
+ * @param overlay a detail page or a see-all grid that belongs to the current tab, drawn under the bar too.
+ * @param topLayer a title's own page, such as a request: a full screen over everything, the bar included, with no top
+ *   inset. It traps focus and takes Back itself; when it closes, focus goes back to the card that opened it.
  */
 @Composable
 internal fun TvHomeShell(

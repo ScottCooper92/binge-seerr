@@ -11,14 +11,11 @@ import com.cooper.binge.companion.seerr.R
 
 /**
  * Marking one instance's state. Its own sheet rather than a group inside Manage media, because the
- * pick was already terminal there — it applied and closed the whole sheet — so this is that mode
- * made visible rather than a new one.
+ * pick was already terminal there: it applied and closed the whole sheet.
  *
  * Sequential, never stacked: each sheet owns a window and a scrim, so the host closes Manage media
- * before opening this. There is nothing to come back to, since picking closes everything anyway.
- *
- * The design system's choice sheet (#1065), so it lists and marks as the pickers beside it do. Its subtitle says
- * which instance is being marked, because a title the server holds twice has two of these sheets.
+ * before opening this. It is the design system's choice sheet (#1065), like the pickers beside it. Its
+ * subtitle names the instance, because a title the server holds twice has two of these sheets.
  */
 @Composable
 internal fun MediaStatusSheet(

@@ -1,20 +1,12 @@
 package com.cooper.binge.companion.seerr.handoff
 
 /**
- * The page's one script (#772), allowed by its hash and nothing else ([PAGE_SCRIPT_HASH]):
+ * The page's one script (#772), allowed by its hash and nothing else ([PAGE_SCRIPT_HASH]). It keeps the key
+ * from the code's URL fragment in session storage, hands it to the app through the "Open Seerr" link, and on
+ * the sign-in step seals what is typed exactly as [HandOffKey.seal] does.
  *
- * - It takes the key from the code's URL fragment, which a browser never sends, and keeps it in this tab's session
- *   storage so it survives the page posting the address and following the TV. It then takes the fragment out of the
- *   address bar: a refresh to a URL with a fragment is a jump within the page, not a reload, so the page would stop
- *   following the TV, and the key has no business in the tab's history.
- * - It puts the key into the "Open Seerr" link, so the app gets it without it crossing the LAN. Without the key, as
- *   on a page opened from the typed URL, the app could not send the PIN, so the PIN step hides the link.
- * - On the TV's sign-in step it shows the server's sign-in fields and seals what is typed exactly as the app does
- *   ([HandOffKey.seal]: AES-256-GCM under an HKDF-SHA256 key, with [HandOffKey.context] as associated data: the token
- *   and the address the TV is signing in to, which the page shows above the form), then follows the TV.
- *
- * The sealing is written out here rather than taken from the browser: a page served over plain HTTP from a LAN
- * address is not a secure context, so the browser's own Web Crypto is not available to it.
+ * The sealing is written out here because a plain-HTTP LAN page is not a secure context, so Web Crypto is not
+ * available to it. See docs/tv-address-hand-off.md.
  */
 internal val PAGE_SCRIPT: String =
     """

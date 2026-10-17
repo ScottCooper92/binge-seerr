@@ -38,16 +38,13 @@ import kotlinx.coroutines.launch
 import java.security.MessageDigest
 
 /**
- * Reads a hand-off link, fills an editable address field with the best address this phone knows for
- * its server — the one it is connected on, the server's Application URL, or one sent before — offers
- * the others as suggestions, and sends what is in the field, only when the user taps Send, to the
- * television that showed the code.
+ * Reads a hand-off link and, only when the user taps Send, sends a server address to the television that
+ * showed the code. The field starts with the best address this phone knows (the connected one, the
+ * Application URL, or one sent before), and offers the others as suggestions.
  *
- * The link is refused unless it names a private IPv4 address on the user's network
- * ([TvHandOffTarget.isOnLan]): a link is just text a web page can write, and this is the check
- * that stops one from pointing the phone anywhere else. What goes is a server address with any user
- * info stripped and, only if the user chose to share it, the Seerr session sealed to that television's key
- * (#772). Never a bare key, cookie or token.
+ * The link must name a private IPv4 address ([TvHandOffTarget.isOnLan]): any web page can write a link, and
+ * this stops one pointing the phone elsewhere. What goes is the address without user info and, only if the
+ * user chose, the Seerr session sealed to that television's key (#772). Never a bare key, cookie or token.
  */
 @HiltViewModel(assistedFactory = SendAddressViewModel.Factory::class)
 class SendAddressViewModel

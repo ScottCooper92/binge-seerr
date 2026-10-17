@@ -170,8 +170,8 @@ in `values-es` — the Gates section covers what happens if it does not.
 **Structure.** A screen composable orchestrates and delegates to focused children. About 300 lines
 is the signal to split a file by concern, and 400 is too long. Route entries live in `*Entries.kt`
 files by area. There is no automated length gate here. Binge's custom detekt rules are copied per
-repository rather than published (binge-companions#39), and this repository has not taken a copy.
-`FileLength` has not been shared at all, so length is held in review. The files already past 400
+repository rather than published (binge-companions#39), and this repository's copy holds only the
+comment rules. `FileLength` has not been shared at all, so length is held in review. The files already past 400
 lines are tracked in #1635.
 
 **Navigation tests.** Two kinds, and they answer different questions. A stand-in `NavDisplay` with the real
@@ -260,8 +260,12 @@ system's and set `SeerrBrand`. Keep a cell's spec the design system's own, so it
 Config is the root `detekt.yml`, with `buildUponDefaultConfig = true`, so it records only
 deviations from detekt's defaults. It is Binge's config minus everything that does not transfer.
 The custom `binge:` rules are not published: each repository that wants them carries its own copy
-(binge-companions#39). This repository has not taken one. The four comment rules sit in the included
-binge-companions build, and are not adopted here yet. The community Compose ruleset is tuned per-file
+(binge-companions#39). This repository's copy is the `detekt-rules` module, taken from binge-companions'
+own, and `detektGate` loads it as `customRulesProject`. It holds the four comment rules, all active:
+`BannerComment` bans ruler comments, `ConsecutiveInlineComments` caps a run of `//` lines at three,
+`DeclarationCommentShouldBeKDoc` makes a declaration's doc a KDoc, and `KDocLength` caps a KDoc at six
+lines of prose, block tags not counted. A longer explanation belongs in `docs/`. A change to a rule is
+made here; it does not follow binge-companions on its own. The community Compose ruleset is tuned per-file
 to Binge's own composables, so adopting it is a measurement pass rather than a port.
 
 detekt is 2.x, the version the shared gate applies, so `detekt.yml` and the baseline use 2.x's rule and key names.

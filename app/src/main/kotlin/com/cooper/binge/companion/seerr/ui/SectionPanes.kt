@@ -53,15 +53,13 @@ internal val DefaultSection: HubSection = HubSection.Requests
 /**
  * The scene strategy for the hub and the detail pane beside it.
  *
- * [PaneBackNavigationBehavior] (design-system, shared with Binge): the library's own default pops
- * until the layout changes, and with the hub at the root of the stack there is no earlier layout to
- * change to, so Back beside the hub would pass every stacked screen and leave the app.
+ * [PaneBackNavigationBehavior] (design-system, shared with Binge): the library's default pops until the
+ * layout changes, and with the hub at the root there is none to change to, so Back would leave the app.
  *
- * [backStack] is read for the one case the library can't see: [DefaultSection] opened beside the hub, where
- * popping it would land on its own placeholder and look like Back did nothing (#815).
- *
- * With [threePane], a landscape tablet's [ThreePaneStrategy] lays the hub out first, with [defaultSection] in the
- * second pane while no section is on the stack (#1110).
+ * @param backStack read for the one case the library can't see: [DefaultSection] opened beside the hub,
+ *   where popping it would land on its own placeholder and look like Back did nothing (#815).
+ * @param threePane a landscape tablet's [ThreePaneStrategy]: the hub first, with [defaultSection] in the
+ *   second pane while no section is on the stack (#1110).
  */
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable

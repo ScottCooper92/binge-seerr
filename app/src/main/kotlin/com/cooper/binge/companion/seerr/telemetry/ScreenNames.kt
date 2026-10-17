@@ -24,15 +24,12 @@ import com.cooper.binge.companion.seerr.ui.UsersRoute
 import com.cooper.binge.companion.seerr.ui.tv.TvDestination
 
 /**
- * The name a screen is reported under. Written out rather than taken from the class, because R8
- * renames classes in a release build, and a route's ids are the server's, so none is in a screen name. (A crash report
- * can carry the id of the record in hand, as a Crashlytics key; `privacy.md` says so.)
+ * The name a screen is reported under. Written out because R8 renames classes in a release build, and
+ * free of ids because a route's ids are the server's (`privacy.md` covers the Crashlytics key).
  *
- * [SeerrRoute]'s debug-only members (`ManageSheetPrototypeRoute`, `RequestCardsPrototypeRoute`) live in
- * `src/debug` (#467) and so cannot be named here, a file common to every variant — [debugScreenName]
- * covers them instead, per variant. This trades the compiler's exhaustiveness check on this `when`
- * for the source-set split: a new common route forgetting a branch here now falls through silently
- * rather than failing the build.
+ * [SeerrRoute]'s debug-only members live in `src/debug` (#467) and cannot be named here; [debugScreenName]
+ * covers them per variant. The cost is the `when`'s exhaustiveness check: a new common route that misses
+ * a branch here falls through silently rather than failing the build.
  */
 fun SeerrRoute.screenName(): String =
     when (this) {

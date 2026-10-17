@@ -35,15 +35,12 @@ private const val TAG_COUNT = 2
 private const val REQUEST_ROW_COUNT = 3
 
 /**
- * Loading placeholder for [UserDetailScreen]'s [UserDetailUiState.Ready] arm: the profile (avatar,
- * name, two meta lines, the role/origin tags every user has), the Requests section header, and a few
- * request-row plates standing in for the paged list. Everything else on the page is conditional on
- * what the server and the user's own history return, so nothing is reserved for it: the stat row,
- * whose one cell is a play count shown only once the server reports watch data, as well as quota,
- * permissions and the two title carousels. It is the same "reserve only what's unconditional" trade
- * [RequestDetailSkeleton] makes, and the one Binge's own `DetailScreenSkeleton` makes for its
- * details band (#373). A user with watch data gets the stat row on resolve, and what sits below it
- * moves down by its height (#687).
+ * Loading placeholder for [UserDetailScreen]'s [UserDetailUiState.Ready] arm: the profile (avatar, name,
+ * two meta lines, the role/origin tags every user has), the Requests section header, and a few request-row plates.
+ * Everything else depends on what the server and the user's history return, so nothing is reserved for it: the
+ * stat row (a play count, shown only with watch data), quota, permissions and the two title carousels. It is the
+ * trade [RequestDetailSkeleton] and Binge's own `DetailScreenSkeleton` make (#373). A user with watch data gets
+ * the stat row on resolve, and what sits below it moves down by its height (#687).
  */
 @Composable
 internal fun UserDetailSkeleton(modifier: Modifier = Modifier) {

@@ -79,16 +79,15 @@ class JobsViewModel
         internal var clock: () -> Long = System::currentTimeMillis
         internal var outcomeMillis = OUTCOME_MILLIS
 
-        // Touched only by runWhenReady, on its caller's thread, not by the coroutines on [dispatcher].
+        /** Touched only by runWhenReady, on its caller's thread, not by the coroutines on [dispatcher]. */
         private var readyWait: Job? = null
         private val awaiting = mutableSetOf<String>()
 
         init {
             reload()
-            // The due-run wait serves a page showing the list. A holder that only runs a job (the TV settings board)
-            // never collects the state, and a page off screen stops collecting it, so neither re-reads the list (#936).
-            // This is a looser signal than the setScreenVisible hook other list roots use: the view model's own
-            // state.first {} in runWhenReady counts as a watcher for a moment, which costs at most one extra read.
+            // The due-run wait serves a page showing the list, so a holder that never collects the state (the TV
+            // settings board) or a page off screen never re-reads it (#936). Looser than the setScreenVisible hook:
+            // runWhenReady's own state.first {} counts as a watcher for a moment, costing at most one extra read.
             viewModelScope.launch(dispatcher) {
                 state.subscriptionCount.map { it > 0 }.distinctUntilChanged().collect { watched ->
                     if (watched) {

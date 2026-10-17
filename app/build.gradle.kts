@@ -320,8 +320,10 @@ dependencies {
 // detekt is binge-ci's gate: production `src/main` only, *PreviewData.kt dropped as preview tooling,
 // type resolution against the debug compilation, and this repository's baseline. Its companion,
 // binge.gates.baseline-staleness, fails `check` on a baseline entry the code no longer produces (#283).
+// The binge: comment rules load from this repository's own copy in :detekt-rules (binge-companions#39).
 detektGate {
     baselineFile = layout.settingsDirectory.file("detekt-baseline.xml")
+    customRulesProject = ":detekt-rules"
 }
 
 /**

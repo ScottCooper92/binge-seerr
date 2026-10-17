@@ -15,13 +15,11 @@ internal val ADMITS_UNVERIFIED_CALLERS: Boolean = BuildConfig.DEBUG
 /**
  * The debug Service's caller check: [policy], plus this app's own uid (#679, #1052).
  *
- * [policy] is the SDK's `HostPolicy.anyCertificateOf`: Binge's package names under any certificate. A debug
- * build can't pin debug Binge's certificate, since each developer signs with their own key, but it can still
- * require Binge's package name, so the debug APK sent to Firebase testers does not hand its Seerr session to
- * any app on the tester's phone.
+ * [policy] is the SDK's `HostPolicy.anyCertificateOf`. Each developer signs debug Binge with their own key,
+ * so its certificate can't be pinned, but its package name can: a debug APK on a tester's phone still keeps
+ * its Seerr session from other apps.
  *
- * The app's own uid is admitted on top, so the device lane's round-trip test can bind from inside the app
- * under test. That uid is this app, so no other app gets in by it. Everything else is the SDK's decision.
+ * Its own uid lets the device lane's round-trip test bind from inside the app under test.
  */
 internal class SelfOrPolicy(
     private val selfUid: Int,

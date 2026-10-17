@@ -27,9 +27,10 @@ import com.binge.designsystem.paneShowsBack
  * built is the value from that frame. So what changes later is read inside the content, where reading the state is
  * what recomposes it.
  *
- * [hubBeside]: the hub is on screen beside the pane. [showBack]: the pane's Back arrow, by the design system's
- * [paneShowsBack], the same rule its `paneBackOrNull` reads (#1083).
- * [threePane]: a landscape tablet's three panes, where what a section opens replaces what it had open (#1110).
+ * @property hubBeside the hub is on screen beside the pane.
+ * @property showBack the pane's Back arrow, by the design system's [paneShowsBack], the same rule its `paneBackOrNull`
+ *   reads (#1083).
+ * @property threePane a landscape tablet's three panes, where what a section opens replaces what it had open (#1110).
  */
 internal class PaneLayout(
     val hubBeside: () -> Boolean,
@@ -71,10 +72,9 @@ internal fun SeerrPaneHost(
     // hubBeside — read here as a provider for the same reason hubBeside is: an entry's metadata is
     // fixed when it is built, so what the stack looks like later has to be read inside the content.
     val showBack = { paneShowsBack(hubBeside.value, backStack.paneDepth()) }
-    // The design system's PaneContent only shares an edge while this is false, and it defaults to true. Read here
-    // from the same hubBeside as the back arrow, so the two agree about whether the hub is beside a section.
-    // Its paneBackOrNull reads the depth beside it, so that is provided from the same stack showBack reads:
-    // left at its default of 1, a stacked screen beside the hub would lose its Back arrow.
+    // PaneContent shares an edge only while LocalIsSinglePaneNav is false (default true); fed the same hubBeside
+    // as the back arrow so the two agree. LocalPaneDepth comes from the stack showBack reads: left at its default
+    // of 1, a stacked screen beside the hub would lose its Back arrow.
     CompositionLocalProvider(
         LocalIsSinglePaneNav provides !hubBeside.value,
         LocalPaneDepth provides backStack.paneDepth(),
