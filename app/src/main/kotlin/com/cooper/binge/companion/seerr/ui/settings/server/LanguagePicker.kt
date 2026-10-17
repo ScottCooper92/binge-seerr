@@ -73,12 +73,13 @@ private val LanguageCodesSaver = Saver<Set<String>, ArrayList<String>>(save = { 
 
 /**
  * A language filter as a list row: the languages chosen, named on the device, so the page needs no list to draw it.
- * The server's list is read only when the sheet opens ([onOpen]). The sheet is a [BingeMultiChoiceSheet]: the
- * chosen languages in a Selected section, the device's and popular ones in Suggested, the rest in All, each marked with
- * its code. Clear and Done sit in the header; Done applies the picks. A user's filter passes [serverDefault], the
- * server's own filter: blank then reads "Default (…)", a Default beside Clear and Done in the header's `actions` goes
- * back to it, and Clear keeps [ALL_LANGUAGES] rather than blank. A list the server cannot send falls back to typing
- * codes on a [PeekingListSheet].
+ * The sheet is a [BingeMultiChoiceSheet]: the chosen languages in Selected, the device's and popular ones in Suggested,
+ * the rest in All, each marked with its code. Clear and Done sit in the header; Done applies the picks. A list the
+ * server cannot send falls back to typing codes on a [PeekingListSheet].
+ *
+ * @param onOpen reads the server's list, only when the sheet opens.
+ * @param serverDefault the server's own filter, passed for a user's filter: blank then reads "Default (…)", a Default
+ *   in the header's `actions` goes back to it, and Clear keeps [ALL_LANGUAGES] rather than blank.
  */
 @Composable
 internal fun languageSettingItem(

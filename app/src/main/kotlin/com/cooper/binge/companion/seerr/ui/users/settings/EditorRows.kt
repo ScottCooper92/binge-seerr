@@ -59,15 +59,19 @@ private const val MULTILINE_MIN = 3
 private const val MULTILINE_MAX = 8
 
 /**
- * A text setting as a list row for an `ItemGroup`: its name, and its value (or [emptyLabel] when blank) as the detail;
- * [shown] replaces that for a value the row shouldn't spell out, such as a key.
- * A tap edits it in the design system's text entry sheet; [check] names what is wrong with a value, which keeps Done
- * off. A [secret] value is edited in a masked field with a reveal toggle and no autocorrect, as an `EditorTextField`
- * does, since the design system's text entry has no way to hide what it shows. A [hint] explains the value and stays
- * in view while it is edited; a [placeholder] is an example of one, shown only while the field is empty. A [required]
- * row left blank, or a value [check] refuses, says so in its detail, in the error colour. [keyboard] is the keyboard the
- * sheet asks for: [NumberKeyboard], [AddressKeyboard] or [VerbatimKeyboard] where the value needs one.
- * The sheet belongs to this call, so a page lists its rows and nothing else.
+ * A text setting as a list row for an `ItemGroup`: its name, and its value as the detail. A tap edits it in the
+ * design system's text entry sheet. The sheet belongs to this call, so a page lists its rows and nothing else.
+ *
+ * @param emptyLabel the detail when the value is blank.
+ * @param shown replaces the value as the detail where the row shouldn't spell it out, such as a key.
+ * @param check names what is wrong with a value, which keeps Done off.
+ * @param secret edits the value in a masked field with a reveal toggle and no autocorrect, as an `EditorTextField`
+ *   does, since the design system's text entry has no way to hide what it shows.
+ * @param hint explains the value and stays in view while it is edited.
+ * @param placeholder an example of a value, shown only while the field is empty.
+ * @param required a required row left blank, or a value [check] refuses, says so in its detail, in the error colour.
+ * @param keyboard the keyboard the sheet asks for: [NumberKeyboard], [AddressKeyboard] or [VerbatimKeyboard] where the
+ *   value needs one.
  */
 @Composable
 internal fun textSettingItem(

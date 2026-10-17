@@ -27,13 +27,14 @@ class ConsecutiveInlineComments(
     override fun visitKtFile(file: KtFile) {
         super.visitKtFile(file)
         val text = file.text
-        val standalone = PsiTreeUtil
-            .collectElementsOfType(file, PsiComment::class.java)
-            .asSequence()
-            .filter { it.tokenType == KtTokens.EOL_COMMENT && isStandalone(it, text) }
-            .map { it to lineOf(text, it.textRange.startOffset) }
-            .sortedBy { it.second }
-            .toList()
+        val standalone =
+            PsiTreeUtil
+                .collectElementsOfType(file, PsiComment::class.java)
+                .asSequence()
+                .filter { it.tokenType == KtTokens.EOL_COMMENT && isStandalone(it, text) }
+                .map { it to lineOf(text, it.textRange.startOffset) }
+                .sortedBy { it.second }
+                .toList()
 
         var anchor: PsiComment? = null
         var runLen = 0
@@ -51,25 +52,35 @@ class ConsecutiveInlineComments(
         flush(anchor, runLen)
     }
 
-    private fun flush(anchor: PsiComment?, runLen: Int) {
+    private fun flush(
+        anchor: PsiComment?,
+        runLen: Int,
+    ) {
         if (anchor != null && runLen > threshold) {
             report(
                 Finding(
                     entity = Entity.from(anchor),
-                    message = "$runLen consecutive // comment lines exceed the $threshold-line cap. " +
-                        "Move the rationale into a KDoc on the enclosing declaration, or restructure.",
+                    message =
+                        "$runLen consecutive // comment lines exceed the $threshold-line cap. " +
+                            "Move the rationale into a KDoc on the enclosing declaration, or restructure.",
                 ),
             )
         }
     }
 
-    private fun isStandalone(comment: PsiComment, text: String): Boolean {
+    private fun isStandalone(
+        comment: PsiComment,
+        text: String,
+    ): Boolean {
         val start = comment.textRange.startOffset
         val lineStart = text.lastIndexOf('\n', start - 1) + 1
         return text.substring(lineStart, start).isBlank()
     }
 
-    private fun lineOf(text: String, offset: Int): Int {
+    private fun lineOf(
+        text: String,
+        offset: Int,
+    ): Int {
         var line = 0
         val end = minOf(offset, text.length)
         for (i in 0 until end) {

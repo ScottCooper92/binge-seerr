@@ -24,9 +24,8 @@ private const val PENDING_LINK = "pendingLink"
  * begins one, [resume] picks up the one a process that has since died left behind, and either ends
  * in [onFinished] with what went wrong or nothing.
  *
- * Every launch below runs on [dispatcher] rather than `scope`'s own - #177's reason applies here
- * too, and it leaves [awaitQuickConnect]'s poll loop's relationship to a test's virtual clock
- * exactly as it already was, since a test still passes the same dispatcher instance it puts on Main.
+ * Every launch runs on [dispatcher] rather than `scope`'s own, for #177's reason, which also keeps a test's
+ * virtual clock driving [awaitQuickConnect]'s poll loop.
  */
 internal class SetupLinks(
     private val scope: CoroutineScope,

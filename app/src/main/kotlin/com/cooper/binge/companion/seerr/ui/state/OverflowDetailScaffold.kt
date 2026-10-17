@@ -24,14 +24,11 @@ import com.binge.designsystem.template.screenOuterPadding
  * with an overflow button that opens a manage sheet, and the `screenOuterPadding()`/`screenInnerPadding()` split
  * every scrolling body under it uses.
  *
- * Deliberately does not own the `Loading`/`Error`/`Ready` dispatch or the overflow sheet itself: the
- * two screens' state types carry genuinely different `Ready` payloads (and even different `Loading`
- * arms — a generic [LoadingScreen] here, a bespoke skeleton there), so each keeps its own exhaustive
- * `when` and its own `if (managing) { ...ManageSheet(...) }` block, wiring [onOverflowClick] to open
- * it. This composable only ever owns the icon button.
+ * It owns only the icon button. The two screens' `Ready` and `Loading` arms differ, so each keeps its own `when`
+ * and its own manage sheet, opened from [onOverflowClick].
  *
- * [leadingActions] draw before the overflow button and [trailingActions] after it. A destructive action goes in
- * [trailingActions], so it is the last thing on the bar (#1531).
+ * @param leadingActions draw before the overflow button.
+ * @param trailingActions draw after it. A destructive action goes here, so it is the last thing on the bar (#1531).
  */
 @Composable
 internal fun OverflowDetailScaffold(

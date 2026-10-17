@@ -29,13 +29,15 @@ interface AddressHandOffSession {
     val pin: String?
 
     /**
-     * Serves the page until cancelled or closed. [progress] is read on every request, so the page follows the
-     * TV; [onAddress] gets each acceptable address a phone posts while [progress] still accepts one, which
-     * is the first, and any sent again after a server that could not be reached. [onCredentials] gets sign-in
-     * credentials a phone app sealed with the key in the code, while the TV is on its sign-in step. Cancellable: the listener
-     * stops within [ACCEPT_POLL_MILLIS] of being cancelled, or once the connection it is answering at the
-     * time has finished. Returns once wrong PINs have locked the code, which then takes nothing more, so its
-     * owner can show a new one (#916).
+     * Serves the page until cancelled or closed, stopping within [ACCEPT_POLL_MILLIS] of a cancel or once the
+     * connection in hand has finished. Returns once wrong PINs have locked the code, so its owner can show a
+     * new one (#916).
+     *
+     * @param progress Read on every request, so the page follows the TV.
+     * @param onAddress Gets each acceptable address a phone posts while [progress] still accepts one: the
+     *   first, and any sent again after a server that could not be reached.
+     * @param onCredentials Gets sign-in credentials sealed with the key in the code, while the TV is on its
+     *   sign-in step.
      */
     suspend fun serve(
         progress: () -> HandOffProgress,
@@ -54,36 +56,12 @@ private const val DRAIN_CHUNK = 4 * 1024
 private const val MAX_DRAIN_BYTES = 64 * 1024
 
 /**
- * The television's side of the hand-off (#323): a tiny HTTP/1.1 listener on the TV's own LAN
- * address that answers exactly one path and accepts an address only while the TV is waiting for one.
+ * The television's side of the hand-off (#323): a tiny HTTP/1.1 listener on the TV's own LAN address.
+ * It answers only `/a/<token>`, `/s/<token>` and `/c/<token>`, and any other path is a bare 404.
  *
- * - **One-time token.** It answers only `/a/<token>` (the page and the address), `/s/<token>` (the TV's status as JSON) and
- *   `/c/<token>` (sealed credentials), where the token is about 40 random bits, short
- *   enough to type, minted for this listener and shown only in the code on screen. That is enough
- *   because the listener is LAN-only, serves one connection at a time, takes an address only while
- *   the TV is waiting for one, and is bounded in time: before an address arrives its port and token are
- *   replaced every five minutes, and after one it stays up for at most the sign-in timeout. Any other path, a wrong token included, is a bare 404 that says
- *   nothing about what is listening. The comparison is constant-time.
- * - **PIN step.** When the TV also shows a PIN, the token alone does not let a client send an address or
- *   credentials. A client proves it by posting the PIN, and the match is bound to that client: the listener
- *   answers it with a random cookie (see `HandOffClients`) and trusts later requests that carry it. A match
- *   does not open the code to anyone else. The app keeps no cookies and sends the PIN with every post. Five
- *   wrong PINs lock the code, and [serve] returns so the owner replaces it.
- * - **LAN only.** The socket is bound to the TV's private IPv4 address on the active Wi-Fi or
- *   Ethernet network, never to every interface.
- * - **Short-lived.** It accepts an address while the TV is waiting for one: the first, and another
- *   after one that named no server. Once an address is in, it only answers status pages, and its
- *   owner keeps it up through the sign-in. It closes on cancel, when the TV reaches Connected (after a
- *   short linger), or after the sign-in timeout. A code nobody uses lapses after a timeout, and the
- *   owner replaces it with a new listener, a new port and a new token, rather than ending.
- * - **Address only.** What it accepts is a server address, checked with [isValidBaseUrl], and
- *   nothing else. Without a sealed session the address waits for the TV's user to go on before
- *   the TV reads that server (#1084); a plain-HTTP public address waits on the opt-in instead (#907). The sign-in
- *   that follows is unchanged.
- *
- * One connection at a time, each bounded by [HandOffLimits]: request size, header count, a read
- * timeout and an overall deadline. Plain HTTP because there is no certificate a TV could present
- * that a phone would trust; what crosses the LAN is the address the user would otherwise type.
+ * The token is short enough to type because the listener is LAN-only, serves one connection at a time,
+ * takes an address only while the TV waits for one, and is short-lived. A PIN beside the code guards
+ * the posts. See docs/tv-address-hand-off.md for the design.
  */
 internal class AddressHandOffListener(
     private val server: ServerSocket,

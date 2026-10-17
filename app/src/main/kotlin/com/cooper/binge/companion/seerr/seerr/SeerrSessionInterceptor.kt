@@ -40,18 +40,12 @@ internal fun isLiveSessionRefusal(
 ): Boolean = code == HTTP_UNAUTHORIZED && headers[SESSION_ALIVE_HEADER] != null
 
 /**
- * Tells a dead session apart from a permission refusal on a 403, once, for every call this client makes
- * (#676). On every lineage `isAuthenticated()` answers 403 both when no user is attached and when the user
- * lacks the permission, so the code alone cannot say which. `auth/me` can: it needs no permission, so its
- * 403 means no user ([rejectsSession]). On a 403 anywhere else that does not name a quota, this asks
- * `auth/me` with the same credentials and, if that is refused too, marks the response with
- * [SESSION_REJECTED_HEADER]. The code stays 403; [toSeerrError] reads the mark as [SeerrError.Unauthorized],
- * so the Service, the screens and the notification poll all see a dead session as one.
- *
- * A 401 is asked about the same way (#997). Seerr answers 401 on a few routes when the user is signed in and
- * the answer is no: deleting a request that is not theirs or no longer pending, and Jellyseerr 2.x's
- * blacklist delete of a title it does not hold (#998). If `auth/me` still answers, the 401 is marked with
- * [SESSION_ALIVE_HEADER], and nothing reads it as a dead session.
+ * Tells a dead session apart from a refusal, once, for every call this client makes (#676). On every lineage
+ * a 403 means either no user or a missing permission, but `auth/me` needs no permission, so its 403 means no user.
+ * On a 403 elsewhere that names no quota, this asks `auth/me`; if that is refused too, it marks the response with
+ * [SESSION_REJECTED_HEADER], which [toSeerrError] reads as [SeerrError.Unauthorized].
+ * A 401 is asked about the same way (#997): Seerr sends one to a signed-in user on a few routes (#998). If
+ * `auth/me` still answers, it is marked with [SESSION_ALIVE_HEADER], and nothing reads it as a dead session.
  */
 class SeerrSessionInterceptor(
     baseUrl: String,

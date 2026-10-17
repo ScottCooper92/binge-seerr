@@ -17,15 +17,12 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 
 /**
- * Gives the screens inside [content] their own view models, which last as long as [content] is shown rather than as
- * long as the activity. The TV shell wraps setup and the connected shell in one each, so disconnecting and signing in
- * again starts both afresh: without it, the hub's view models outlive the connection they were made for and hold the
- * failed state of the session that ended (#789). The sign-in after a rejected session has one on both TV and phone,
- * so each rejection starts its form afresh (#810).
+ * Gives the screens inside [content] view models that last as long as [content] is shown, not the activity.
+ * The TV shell wraps setup and the connected shell in one each, so a hub's view models do not outlive their
+ * connection and hold its failed state (#789). The sign-in after a rejected session has one too (#810).
  *
- * The store is held by a view model in the parent's store, under [key], so it outlives the composition. A
- * configuration change recreates the activity and disposes the composition without ending the scope, so it is kept
- * then and cleared only when the scope really leaves or the parent is cleared.
+ * The store is held by a view model in the parent's store, under [key]. A configuration change disposes
+ * the composition without ending the scope, so the store is cleared only when the scope or parent really goes.
  */
 @Composable
 internal fun ScopedViewModels(

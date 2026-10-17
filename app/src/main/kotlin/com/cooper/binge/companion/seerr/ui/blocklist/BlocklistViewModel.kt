@@ -171,15 +171,13 @@ class BlocklistViewModel
         private val scopeRefresh = MutableStateFlow(0)
 
         /**
-         * Resolved before anything downstream runs: the list's path is the profile's, so a page fetched
-         * against a guessed one would be a request to the wrong place. Re-read on every arrival, since a
-         * permission or a server upgrade is otherwise invisible while this view model lives. A first read
-         * that cannot identify the viewer is [ScopeState.Failed], and a retry shows [ScopeState.Resolving]
-         * again; once resolved, a read that fails keeps the last answer for that part.
+         * Resolved before anything downstream runs: the list's path is the profile's, so a guessed one would
+         * fetch from the wrong place. Re-read on every arrival, since a permission change or a server upgrade is
+         * otherwise invisible. A first read that cannot identify the viewer is [ScopeState.Failed], and a retry
+         * shows [ScopeState.Resolving] again; once resolved, a failed read keeps the last answer for that part.
          *
-         * `flowOn(dispatcher)` for the same reason every `launch` here takes one (#177/#370): without
-         * it, this flow's own suspend calls resume on `viewModelScope`'s `Dispatchers.Main.immediate`,
-         * which can outlive a cleared scope same as a plain `launch` would.
+         * `flowOn(dispatcher)` for the reason every `launch` here takes one (#177/#370): without it, this flow's
+         * suspend calls resume on `Dispatchers.Main.immediate`, which can outlive a cleared scope.
          */
         private val scopeState: StateFlow<ScopeState> =
             scopeRefresh

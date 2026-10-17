@@ -26,8 +26,8 @@ import com.binge.designsystem.template.PagedPhase
  * A pull while any refresh is in flight is dropped: under a skeleton the first load is still running, and a second
  * would only restart it.
  *
- * [contentPadding] is the page's. Its top is the bar and any header over the rows, and the spinner rests below it.
- * [state] is for a still frame, which passes one resting at the threshold; null remembers M3's own.
+ * @param contentPadding the page's. Its top is the bar and any header over the rows, and the spinner rests below it.
+ * @param state for a still frame, which passes one resting at the threshold; null remembers M3's own.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

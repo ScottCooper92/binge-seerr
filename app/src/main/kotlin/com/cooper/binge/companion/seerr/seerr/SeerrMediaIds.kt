@@ -10,12 +10,9 @@ import io.grpc.StatusException
 const val SEERR_MEDIA_TYPE_MOVIE = "movie"
 const val SEERR_MEDIA_TYPE_TV = "tv"
 
-// The translation between the contract's identity — media type + TMDB id — and Seerr's. This is
-// the single most interesting thing a companion does, so it lives in one place: the functions in this file.
-//
-// Seerr keys its request and blocklist endpoints by TMDB id and a `"movie"`/`"tv"` string, which
-// is a rename ([seerrMediaType]). Its issue endpoint keys by the server's OWN media record id, which only exists
-// once the server tracks the title — that is the translation that needs a round trip ([recordIdFor]).
+// The translation between the contract's media type + TMDB id and Seerr's lives here, in one place. Requests
+// and the blocklist key by TMDB id and a `"movie"`/`"tv"` string, a rename ([seerrMediaType]). Issues key by the
+// server's OWN media record id, which exists only once it tracks the title: a round trip ([recordIdFor]).
 
 /** The server's internal id from a title's [SeerrMediaInfoDto], or `NOT_FOUND` when the server does not track [media]. */
 fun SeerrMediaInfoDto?.recordIdFor(media: MediaId): Int =

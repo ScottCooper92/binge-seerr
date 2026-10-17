@@ -78,10 +78,9 @@ private fun EntryProviderScope<NavKey>.homeEntries(
             else -> LoadingScreen()
         }
     }
-    // The placeholder is the default section itself, so a wide window never shows an empty pane. It
-    // is not an entry on the stack, which is what lets Back from it leave the app, and a narrow window
-    // show the hub alone. What it opens puts the section on the stack first (openAboveDefault). A
-    // placeholder gets no entry scope, so its ViewModel belongs to the host.
+    // The placeholder is the default section, so a wide window never shows an empty pane. Off the stack,
+    // Back from it leaves the app and a narrow window shows the hub alone (openAboveDefault stacks it first).
+    // A placeholder gets no entry scope, so its ViewModel belongs to the host.
     entry<HubRoute>(
         metadata = ListDetailSceneStrategy.listPane(detailPlaceholder = { DefaultSectionPane(backStack) }) + ThreePaneHub,
     ) {
@@ -183,10 +182,9 @@ private fun EntryProviderScope<NavKey>.detailEntries(
     debugDetailEntries(backStack, showBack)
     entry<RequestDetailRoute>(metadata = DetailPane) { route ->
         DetailPaneContent {
-            // No showBack: the hero's DetailOverlayTopBar renders its back arrow unconditionally, which a
-            // request page never notices in practice — it is only ever stacked above a section or above
-            // UserDetailEntry, never pushed straight onto [HubRoute], so its pane depth is always > 1.
-            // Gating it for real is a design-system change (DetailOverlayTopBar's onBack is non-nullable).
+            // No showBack: DetailOverlayTopBar always draws its back arrow, and its onBack is non-nullable.
+            // Harmless here: a request page is always stacked above a section or UserDetailEntry, so its
+            // pane depth is always > 1. Gating it for real is a design-system change.
             RequestDetailEntry(
                 route.requestId,
                 onBack = { backStack.removeLastOrNull() },

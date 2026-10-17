@@ -18,14 +18,12 @@ internal const val TV_SAVED_HOLD_MILLIS = 800L
 
 /**
  * What a television page's last action is doing, as the design system's [SaveStatus]: saving, saved, or failed with the
- * attempt kept so Try again can run it once more (#1519). It stands where the action lives, in its sheet or under its row,
- * and stays until the user acts again, so a failure is never a message that times out before a remote can reach it.
+ * attempt kept so Try again can run it once more (#1519). It stays where the action lives until the user acts again, so
+ * a failure is never a message that times out before a remote can reach it.
  *
- * An action [run]s through here. The ViewModel's one-shot answer then [settle]s it: the first answer after a run is that
- * run's, since a ViewModel refuses a second while one is in flight. An answer with nothing running is some other screen's
- * and is ignored. So every action routed through a run must emit exactly one answer: one that returns early without
- * emitting would leave the status at Saving. A surface that owns a run [clear]s it when it goes away, so its status is not
- * the next surface's.
+ * An action [run]s through here and the ViewModel's next one-shot answer [settle]s it, since a ViewModel refuses a second
+ * run while one is in flight. An answer with nothing running is another screen's and is ignored. So every routed action
+ * must emit exactly one answer, or the status stays at Saving. A surface that owns a run [clear]s it when it goes away.
  */
 @Stable
 internal class TvActionRun(

@@ -136,16 +136,12 @@ class RequestsViewModel
         }
 
         /**
-         * The user's permissions decide whether the list is theirs alone, and what they may moderate.
-         * Re-read from the server on becoming visible, since the cached `auth/me` would not show a
-         * permission changed in the web client; a failed re-resolve is [ScopeState.Failed] rather than a
-         * guessed, all-permissive scope, so nothing downstream acts on one. A retry from a failure
-         * shows [ScopeState.Resolving] again. The profile is re-read too, so a server upgraded in place
-         * offers its blocklist without a reconnect (#1074).
-         *
-         * `flowOn(dispatcher)` for the same reason [RequestModeration] takes a dispatcher (#177): without it, this
-         * flow's own suspend calls resume on `viewModelScope`'s `Dispatchers.Main.immediate`, which
-         * can outlive a cleared scope same as a plain `launch` would.
+         * The user's permissions decide whether the list is theirs alone and what they may moderate. Re-read
+         * on becoming visible, since the cached `auth/me` misses a permission changed in the web client, and
+         * the profile too, so a server upgraded in place offers its blocklist without a reconnect (#1074). A
+         * failed re-resolve is [ScopeState.Failed], never a guessed all-permissive scope; a retry shows
+         * [ScopeState.Resolving] again. `flowOn(dispatcher)` for the reason [RequestModeration] takes one (#177):
+         * without it, this flow's suspend calls resume on `Dispatchers.Main.immediate` and can outlive a cleared scope.
          */
         private val scope: StateFlow<ScopeState> =
             refreshTrigger

@@ -70,12 +70,9 @@ class SetupViewModel
                 dispatcher = dispatcher,
                 handOffs = handOffs,
                 onState = { handOff -> draft.update { it.copy(handOff = handOff) } },
-                // An address a phone sent, already checked as a base URL, goes into the field. On its own it then waits
-                // for the TV's user to go on (#1084), because anyone who saw the PIN cross the network could have sent
-                // it; the plain-HTTP opt-in and the sign-in after it are the same as for a typed address. A session
-                // sealed for it proves the sender had the code's key, and is bound to this address (#1029), so that
-                // one goes straight to inspect().
-                // A session sent with the address is held in memory only, for the one inspect() it rides on.
+                // A phone's address, checked as a base URL, fills the field and waits for the TV's user (#1084): anyone
+                // who saw the PIN could have sent it. A session sealed for it proves the sender had the code's key and
+                // is bound to this address (#1029), so it goes straight to inspect(), held in memory for that one call.
                 onAddress = { address, session ->
                     draft.update {
                         it.copy(serverUrl = address, handOff = null, error = null, received = true, handedSession = session)

@@ -9,12 +9,12 @@ import androidx.room.Query
 /**
  * The last status the server gave for one title, and when it was asked.
  *
- * [status] is the contract's `RequestStatus` message, serialised and Base64-encoded, minus its
- * allowed actions — those are what this user may do *now* and are recomputed on every read, against
- * [requesterIds]: `request:user` id pairs, a server fact they need that the message lacks. Storing
- * the message rather than a column per field is deliberate: the contract only ever adds fields, and
- * this table is dropped on a schema change anyway, so a column per field would be migration work
- * for a cache.
+ * The message is stored whole rather than as a column per field: the contract only ever adds fields,
+ * and this table is dropped on a schema change anyway, so columns would be migration work for a cache.
+ *
+ * @property status The contract's `RequestStatus` message, serialised and Base64-encoded, minus its
+ *   allowed actions. Those are what this user may do *now*, so they are recomputed on every read.
+ * @property requesterIds `request:user` id pairs: the server fact that recomputation needs and the message lacks.
  */
 @Entity(tableName = "media_status", primaryKeys = ["mediaType", "tmdbId"])
 data class MediaStatusEntity(

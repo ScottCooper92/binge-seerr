@@ -45,24 +45,20 @@ import kotlinx.coroutines.flow.collectLatest
 import com.binge.designsystem.R as DesR
 
 /**
- * The top-bar/bottom-bar insets a `scrolling = false` [EditorPage] does not itself apply. A
- * `scrolling = true` page folds them into its own [androidx.compose.foundation.verticalScroll], so
- * its content scrolls fully under both transparent bars the way every other screen's does; a page
- * that scrolls itself has to fold them into its *own* scrollable the same way - as that scrollable's
- * content padding, not a [Modifier.padding] wrapping it, or its content can only scroll up to the
- * bars' edge rather than under it. Defaults to zero, so a page that reads it without checking
- * `scrolling` first degrades to no inset rather than an exception.
+ * The top-bar/bottom-bar insets a `scrolling = false` [EditorPage] does not apply itself. A `scrolling = true`
+ * page folds them into its own [androidx.compose.foundation.verticalScroll], so content scrolls under both bars.
+ * A page that scrolls itself must do the same, as its scrollable's content padding rather than a [Modifier.padding]
+ * around it, or its content stops at the bars' edge. Defaults to zero, so a page that reads it without checking
+ * `scrolling` gets no inset rather than an exception.
  */
 internal val LocalEditorPageInsets = compositionLocalOf { PaddingValues() }
 
 /**
- * A page's one primary action, anchored in a `bottomBar` slot rather than scrolling away with the
- * rest of the content - Discover Sliders' Add, a Permissions page's Save, and the Advanced Request
- * hand-off's Request button all use this shape of [BingeActionFooter]: rounded and raised, since a
- * `bottomBar` sits outside the Scaffold's own body and needs its background to extend full-bleed
- * behind the gesture nav bar, which [BingeActionFooter.clearsNavigationBar] leaves to the button
- * alone to clear. Named for [EditorPage.bottomBar], its first call sites, but not tied to
- * [EditorUiState] - any screen with a `bottomBar` slot of the same shape can reach for it.
+ * A page's one primary action, anchored in a `bottomBar` slot rather than scrolling away: Discover Sliders' Add,
+ * a Permissions page's Save, the Advanced Request hand-off's Request. It is a [BingeActionFooter], rounded and
+ * raised, whose background runs full-bleed behind the gesture nav bar, which
+ * [BingeActionFooter.clearsNavigationBar] leaves to the button alone to clear. Named for [EditorPage.bottomBar],
+ * but any screen with a `bottomBar` slot of the same shape can use it.
  */
 @Composable
 internal fun EditorPageActionBar(
@@ -103,21 +99,20 @@ fun <T, X> ExtrasEditorViewModel<T, X>.editorActions(onBack: () -> Unit): Editor
     EditorActions(onBack = onBack, onRetry = ::reload, onEdit = ::edit, onSave = ::save)
 
 /**
- * The frame every per-user settings page shares: the title, a Save action live only while the
- * draft differs from the record and passes [canSave], and a snackbar for the outcome. [scrolling]
- * is off for a body that scrolls itself.
+ * The frame every per-user settings page shares: the title, a Save action live only while the draft differs from the
+ * record and passes [canSave], and a snackbar for the outcome.
  *
- * [extraActions] composes into the same top-bar row as Save, after it - an overflow menu button,
- * say. [bottomBar] is the page's own, passed straight through to [BingeScreenScaffold].
+ * Leaving with a change unsaved, by the top bar's Back, the system Back or Cancel, asks first ([DiscardChangesDialog]).
+ * A page that saves as it changes asks only while a change is held: a change that leaves a valid record failing
+ * [canSave] is not sent (#957), so leaving would drop it (#1447). A record the server sent already failing [canSave]
+ * goes back as it came, so it holds nothing.
  *
- * [footerCommit] puts the commit in that same bottom bar, Cancel beside it, for a page whose commit stays explicit
- * because the server checks what was entered or the fields only make sense together (#941). [commitLabel] names
- * it where Save is not the word: Create for something new, Change password.
- *
- * Leaving a page with a change still unsaved, by the top bar's Back, the system Back or Cancel, asks first
- * ([DiscardChangesDialog]). A page that saves as it changes asks only while its change is held: one that leaves a valid
- * record failing [canSave] is not sent (#957), so leaving would drop it (#1447). A record the server sent already failing
- * [canSave] goes back as it came, so it holds nothing.
+ * @param scrolling off for a body that scrolls itself.
+ * @param extraActions composes into the same top-bar row as Save, after it: an overflow menu button, say.
+ * @param bottomBar the page's own, passed straight through to [BingeScreenScaffold].
+ * @param footerCommit puts the commit in that same bottom bar, Cancel beside it, for a page whose commit stays explicit
+ *   because the server checks what was entered or the fields only make sense together (#941).
+ * @param commitLabel names the commit where Save is not the word: Create for something new, Change password.
  */
 @Composable
 internal fun <T> EditorPage(

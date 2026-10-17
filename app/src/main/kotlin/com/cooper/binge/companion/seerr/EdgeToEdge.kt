@@ -7,13 +7,10 @@ import androidx.activity.enableEdgeToEdge
 /**
  * Draws this Activity's window behind the status and navigation bars, as Binge's does. Every screen
  * then handles the bars' insets itself: a top bar takes the status bar, and a body pads for the
- * navigation bar where its last row or its pinned bar would otherwise sit under it.
+ * navigation bar.
  *
- * The bar icons follow the system's dark mode, which is what the theme follows too. The contrast
- * scrim the system lays over three-button navigation is turned off (API 29+), so a list that scrolls
- * behind the navigation bar shows through it rather than under a translucent band.
- *
- * A television has no system bars, so there this changes nothing.
+ * The bar icons follow the system's dark mode, as the theme does. The three-button navigation scrim
+ * is turned off (API 29+), so a list scrolling behind the bar shows through it. A TV has no bars.
  */
 internal fun ComponentActivity.drawEdgeToEdge() {
     enableEdgeToEdge()

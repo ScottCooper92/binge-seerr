@@ -95,21 +95,15 @@ class NotificationFeeds
         /**
          * The user's own requests, untitled: the caller decides which changed state before titling.
          *
-         * Paged, and unlike a feed not against a cursor. A feed is append-only, so what is new is at
-         * the front and a cursor can stop the walk; a request instead changes state where it already
-         * sits in a list ordered newest-first. Read as one page, a request awaiting approval slides
-         * out of view as the user makes others and its approval is then never seen (#127).
+         * Paged, but not against a cursor as a feed is: a request changes state where it sits in a
+         * newest-first list, so one page would lose a pending request as the user makes others (#127).
          *
-         * [watching] is the ids whose outcome has not been announced yet, and the walk carries on
-         * until each has turned up — so a request stays reachable however many the user makes after
-         * it, which a fixed page count could not promise (#181). A null [watching] is the seed run
-         * and walks the whole list once, to find what was already outstanding before any of this was
-         * being tracked.
+         * The first [MAX_FEED_PAGES] are read whatever is outstanding: the caller rebuilds its dedup sets
+         * from the result, so a shallower walk would prune ids it had not looked at and announce them again.
          *
-         * The first [MAX_FEED_PAGES] are read whatever is outstanding, and that is not laziness: the
-         * caller rebuilds its per-signal deduplication sets from what this returns, so a walk that
-         * stopped shallower than before would prune ids it simply had not looked at and announce
-         * them again next time it went deeper.
+         * @param watching The ids whose outcome has not been announced yet. The walk carries on until each
+         *   has turned up, however many requests the user made after it (#181). Null is the seed run, which
+         *   walks the whole list once to find what was already outstanding.
          */
         suspend fun ownRequests(watching: Set<Int>?): OwnRequestsRead {
             val userId = connection.authenticatedUser().id

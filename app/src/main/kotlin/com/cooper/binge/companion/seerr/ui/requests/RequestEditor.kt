@@ -58,14 +58,12 @@ interface RequestEditorControls {
 }
 
 /**
- * The editor for one request: which of a show's seasons it covers, and, for a user with
- * `REQUEST_ADVANCED`, where it goes. Saving sends the whole new season set and the destination in
- * one `PUT`. The edit's own answer says how it went, not the shared moderation events, which carry
- * every action's on the request (#1541): the editor closes on a success and unlocks again on a failure.
+ * The editor for one request: which of a show's seasons it covers and, with `REQUEST_ADVANCED`, where
+ * it goes. Saving sends the season set and the destination in one `PUT`. The edit's own answer, not
+ * the shared moderation events, says how it went (#1541): the editor closes on a success and unlocks on a failure.
  *
- * Every launch below runs on [dispatcher] rather than `scope`'s own, for the same reason
- * [RequestModeration] does (#177): `loadServers`/`loadChoices` are exactly the "editor's own load"
- * PR #365 found still able to outlive a cleared [scope].
+ * Every launch runs on [dispatcher] rather than `scope`'s own, as in [RequestModeration] (#177):
+ * `loadServers` and `loadChoices` could otherwise outlive a cleared [scope] (PR #365).
  */
 class RequestEditor(
     private val scope: CoroutineScope,

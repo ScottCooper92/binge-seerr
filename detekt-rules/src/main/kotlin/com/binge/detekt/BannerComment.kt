@@ -23,8 +23,9 @@ class BannerComment(
             report(
                 Finding(
                     entity = Entity.from(comment),
-                    message = "This looks like a banner/ruler comment. Remove it and group the code " +
-                        "into a well-named type or file.",
+                    message =
+                        "This looks like a banner/ruler comment. Remove it and group the code " +
+                            "into a well-named type or file.",
                 ),
             )
         }

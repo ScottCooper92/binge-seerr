@@ -63,12 +63,13 @@ internal fun <T, X> ExtrasEditorUiState<T, X>.toEditorUiState(): EditorUiState<T
 /**
  * [EditorViewModel]'s shape for a page whose extras ([X]) are picked from what the server answers
  * beside the draft — the DVR instance and override rule editors, whose choices come from a test
- * reaching the instance. [initialExtras] is what a fresh [reload] starts from, and what [editExtras]
- * called while [load] is still running — before a [ExtrasEditorUiState.Ready] exists to hold it — is
- * applied to; [currentExtras] reads that same value from [write], which runs in the same window.
+ * reaching the instance.
  *
- * [dispatcher] carries [reload] and [save] instead of `viewModelScope`'s own
- * `Dispatchers.Main.immediate` — see `RequestModeration`'s KDoc and #177/#370.
+ * @param initialExtras what a fresh [reload] starts from, and what [editExtras] applies to while [load] is still
+ *   running, before an [ExtrasEditorUiState.Ready] exists to hold it. [currentExtras] reads that same value from
+ *   [write], which runs in the same window.
+ * @param dispatcher carries [reload] and [save] instead of `viewModelScope`'s own
+ *   `Dispatchers.Main.immediate` — see `RequestModeration`'s KDoc and #177/#370.
  */
 abstract class ExtrasEditorViewModel<T, X>(
     initialExtras: X,

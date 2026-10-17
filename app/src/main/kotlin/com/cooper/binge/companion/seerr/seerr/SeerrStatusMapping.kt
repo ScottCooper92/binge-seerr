@@ -15,17 +15,13 @@ import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 /**
- * Seerr's view of a title as the contract's [RequestStatus]. A title the server does not track has
- * no `mediaInfo`, which is the contract's `AVAILABILITY_NOT_REQUESTED` with nothing else set.
+ * Seerr's view of a title as the contract's [RequestStatus]. No `mediaInfo` means `AVAILABILITY_NOT_REQUESTED`.
  *
- * Seerr keeps the 4K version's state apart (`status4k`, `downloadStatus4k`), and so does the contract:
- * one `VersionStatus` per version, never folded together (#704, #724). Both entries are always filled
- * here; the service drops the 4K one for a user who may not request 4K of this title's media type
- * (`SeerrPermissions.mayRequest4k`). Each entry carries its own
- * version's watch link, so a link into the 4K server goes out only with the 4K entry, to a user who may reach it (#1526).
+ * One `VersionStatus` per version, never folded together (#704, #724). Both are always filled here; the
+ * service drops the 4K one unless `SeerrPermissions.mayRequest4k`. Each carries its own watch link, so a
+ * 4K server link goes out only to a user who may reach it (#1526).
  *
- * `allowed_actions` is not filled here: it is the intersection of what the user may do and what
- * the title's state admits, which the service computes with the permissions in hand.
+ * `allowed_actions` is left empty: the service fills it with the permissions in hand.
  */
 fun SeerrMediaInfoDto?.toRequestStatus(nowMillis: Long): RequestStatus {
     val info =

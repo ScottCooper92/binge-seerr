@@ -9,16 +9,12 @@ private const val HTTP_TOO_MANY_REQUESTS = 429
 private const val HTTP_SERVER_ERROR_MIN = 500
 
 /**
- * Reports every saved-server call's outcome to the health monitor and returns the response
- * untouched; it never alters or short-circuits a request.
+ * Reports every saved-server call's outcome to the health monitor and returns the response untouched.
  *
- * The credentials are at fault only when the session is gone: a 401 that `auth/me` agrees with, a 403 that
- * [SeerrSessionInterceptor] marked ([isSessionRejection], the rule [toSeerrError] reads too), or a 403 from
- * `auth/me` itself ([rejectsSession]). A 401 that `auth/me` contradicts is a refusal, not the session (#1165). Any other 403 is a permission, such as a user without `MANAGE_ISSUES` opening the
- * issues list. A transport failure, any 5xx or a 429 (up, but rate-limiting us) is transient. Every other
- * answer, a permission 403 and any other 4xx included, means the server reached us and accepted the
- * credentials.
- *
+ * The credentials are at fault only when the session is gone: a 401 `auth/me` agrees with, a 403
+ * [SeerrSessionInterceptor] marked ([isSessionRejection]), or a 403 from `auth/me` itself ([rejectsSession]).
+ * A 401 `auth/me` contradicts is a refusal (#1165). A transport failure, any 5xx or a 429 is transient. Every
+ * other answer, a permission 403 included, means the server reached us and accepted the credentials.
  * It sits outside [SeerrSessionInterceptor], so the response it reads already carries the mark.
  */
 class SeerrHealthInterceptor(

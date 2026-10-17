@@ -138,12 +138,11 @@ internal fun TvRequestDetailScreen(
 /**
  * The loaded page, laid out as Binge's TV detail pages are: a hero band with the poster, the title over its state
  * and a synopsis, and the actions at its foot; then a row of seasons and a row of what is downloading, each a
- * [TvCardRow] of focusable cards, and the request's facts in the Details footer. [TvDetailPage] owns the scroll: the
- * focused section is pulled to a fixed rest under the hero, so crossing sections never leaves one flush against the
- * bottom edge.
+ * [TvCardRow] of focusable cards, and the request's facts in the Details footer. [TvDetailPage] owns the scroll and
+ * rests the focused section under the hero, so no section is left flush against the bottom edge.
  *
- * Arrival focus lands on the action row; a request this viewer cannot act on and cannot hand to Binge has none, so
- * the synopsis takes focus instead, and the page is never left with nowhere for the D-pad to land.
+ * Arrival focus lands on the action row. A request this viewer cannot act on or hand to Binge has none, so the
+ * synopsis takes focus instead, and the D-pad always has somewhere to land.
  */
 @Composable
 private fun TvRequestDetailContent(

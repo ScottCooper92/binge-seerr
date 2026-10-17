@@ -6,12 +6,11 @@ import javax.inject.Singleton
 
 /**
  * The last good hub read, in memory, so returning to the hub shows the previous overview while the
- * refresh runs instead of a spinner. Not persisted: the overview goes stale quickly. It belongs to
- * one connection, address and sign-in together, because the overview carries the user's account and
- * permissions. So the entry carries the [SeerrCredentials] it was read under and a read hands its
- * own back: another connection's entry is never returned, whatever order a connect and a live
- * screen's reload run in. `SeerrConnection`'s `onServerChanged` also calls [clear] on every connect
- * and disconnect, like the other per-server caches, so nothing outlives the connection it came from.
+ * refresh runs. Not persisted: the overview goes stale quickly. It carries the user's account and
+ * permissions, so the entry keeps the [SeerrCredentials] it was read under and a read hands its own
+ * back: another connection's entry is never returned, whatever order a connect and a reload run in.
+ * `SeerrConnection`'s `onServerChanged` also calls [clear] on every connect and disconnect, like the
+ * other per-server caches.
  */
 @Singleton
 class HubOverviewCache

@@ -82,7 +82,10 @@ private class ThreePaneScene(
     private val itemDepth: Int,
     private val defaultSection: @Composable () -> Unit,
 ) : Scene<NavKey> {
-    // One key for every stack, so opening or closing an item swaps a pane's content rather than animating a new scene in.
+    /**
+     * One key for every stack, so opening or closing an item swaps a pane's content rather than animating a new
+     * scene in.
+     */
     override val key: Any = ThreePaneScene::class
     override val previousEntries: List<NavEntry<NavKey>> = entries.dropLast(1)
 

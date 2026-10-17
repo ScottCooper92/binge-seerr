@@ -47,18 +47,12 @@ private const val CARD_ROW_TITLE_FRACTION = 0.6f
 private const val CARD_ROW_DETAIL_FRACTION = 0.4f
 
 /**
- * Loading placeholder for [RequestDetailPage]: the hero with its title and meta chips, the headline's overview, and
- * a [RequestCard] stand-in: the title row with its chip, one person row and the button. Stats, the
- * info rows, the destination line, "Other requests" and Moderated by are all conditional on what the
- * server returns, so nothing is reserved for them — the scroll grows on resolve rather than
- * reflowing a guess, the same trade Binge's own `DetailScreenSkeleton` makes for its cast rail (#373).
- *
- * There is no primary action footer to pin: the button lives inside the card, and the card
- * placeholder reserves it.
- *
- * Insets mirror [RequestDetailPage] exactly rather than a blanket `safeDrawingPadding()`: the hero
- * runs full-bleed under the status bar on both, and the scroll itself clears the navigation bar —
- * matching that is what keeps the [LayoutAnchors.Detail.HERO] anchor from moving on resolve.
+ * Loading placeholder for [RequestDetailPage]: the hero with its title and meta chips, the headline's overview,
+ * and a [RequestCard] stand-in with its title row, one person row and the button. Everything else is conditional
+ * on the server's data, so nothing is reserved for it and the scroll grows on resolve (#373). The button lives
+ * in the card, so there is no footer to pin. Insets mirror [RequestDetailPage] rather than a blanket
+ * `safeDrawingPadding()`: the hero runs full-bleed under the status bar and the scroll clears the navigation
+ * bar, which keeps the [LayoutAnchors.Detail.HERO] anchor still on resolve.
  */
 @Composable
 internal fun RequestDetailSkeleton(modifier: Modifier = Modifier) {
@@ -111,10 +105,9 @@ private fun HeroSkeleton(modifier: Modifier = Modifier) {
                     ),
             verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
         ) {
-            // The title and meta row only — RequestDetailPage passes no tagline/eyebrow, so those
-            // rows never render and reserving them would leave a gap the resolved hero never fills.
-            // The meta row is RequestHeroMeta's: a media type tag, then the state chip. The 4K tag is
-            // conditional, so nothing is reserved for it.
+            // Title and meta row only: RequestDetailPage passes no tagline or eyebrow, so reserving them
+            // would leave a gap. The meta row is RequestHeroMeta's media type tag, then the state chip;
+            // the 4K tag is conditional, so nothing is reserved for it.
             SkeletonPlate(
                 Modifier
                     .fillMaxWidth(HERO_TITLE_FRACTION)

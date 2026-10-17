@@ -64,14 +64,12 @@ class SlidersActions(
 
 /**
  * The slider list in Discover's order: each with its switch and a drag handle to reorder, a custom
- * one opening its own page. Not part of [EditorPage]'s own scroll - the list scrolls itself so
- * [rememberReorderableLazyListState] can track item positions, hence `scrolling = false`.
+ * one opening its own page. The list scrolls itself, not inside [EditorPage]'s scroll, so
+ * [rememberReorderableLazyListState] can track item positions; hence `scrolling = false`.
  *
- * Add and Reset both need to stay reachable regardless of how far down a long list the user has
- * scrolled: Add is the page's persistent [EditorPage.bottomBar] rather than a floating action
- * button, which would drift over whichever row happens to scroll under it - the last visible row's
- * own switch, say. Reset - the one action here a mis-tap can't easily undo - sits behind the
- * overflow menu instead of beside Add.
+ * Add and Reset stay reachable however far the list scrolls. Add is the persistent [EditorPage.bottomBar],
+ * not a floating button that would drift over a row's switch. Reset, the one action a mis-tap can't easily
+ * undo, sits in the overflow menu.
  */
 @Composable
 fun DiscoverSlidersScreen(
@@ -121,10 +119,9 @@ fun DiscoverSlidersScreen(
                 // reach a viewmodel that indexes straight into `sliders`.
                 sliderActions.onMove(from.index - 1, to.index - 1)
             }
-        // The top/bottom bar insets EditorPage itself leaves unapplied for a scrolling = false page
-        // (see LocalEditorPageInsets) - folded in here as contentPadding rather than a Modifier.padding
-        // around the list, so a row can still scroll fully under both transparent bars instead of
-        // stopping dead at their edge.
+        // EditorPage leaves the bar insets unapplied for a scrolling = false page (see LocalEditorPageInsets).
+        // They go in as contentPadding rather than a Modifier.padding around the list, so a row can still
+        // scroll fully under both transparent bars.
         val insets = LocalEditorPageInsets.current
         LazyColumn(
             state = lazyListState,

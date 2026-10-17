@@ -61,15 +61,13 @@ private const val PERCENT = 100
 
 /**
  * The requests browser as the design system's immersive hub: a row of poster cards per filter over a backdrop that
- * follows focus and describes the focused request. [rowsFor] gives each filter's paged rows; a filter with nothing
- * in it has no row, one whose list could not be read says so in its slot with a retry, and one with more than a row
- * holds ends in a see-all tile that opens the paged grid. OK on a card opens the request's detail page, a page above
- * Home that this board does not own.
+ * follows focus and describes the focused request. OK on a card opens the request's detail page, which this board does
+ * not own. When that page or a see-all grid closes, the shell hands focus back into this board, and the hub's own
+ * memory lands it on the card or tile. The board makes no request of its own, which would race the hand-off (#1509).
  *
- * [mine] adds the signed-in user's own requests as a last row, so what they asked for is on Home rather than a page of its own.
- *
- * When the page or grid a card or tile opened closes, the shell hands focus back into this board, and the hub's own
- * memory lands it on that card or tile. The board makes no request of its own, which would race the hand-off (#1509).
+ * @param rowsFor each filter's paged rows. A filter with nothing in it has no row, one whose list could not be read
+ *   says so in its slot with a retry, and one with more than a row holds ends in a see-all tile that opens the grid.
+ * @param mine adds the signed-in user's own requests as a last row, so what they asked for is on Home.
  */
 @Composable
 internal fun TvRequestsRowsBoard(

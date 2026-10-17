@@ -5,13 +5,11 @@ import kotlinx.serialization.Serializable
 
 /**
  * `user/{id}/settings/main`, read and written in the same shape. [username] is the display name.
- * The `global*` quota fields are the server's defaults, read only; the per-user ones override them.
+ * The `global*` quota fields are the server's read-only defaults; the per-user ones override them.
  *
- * The two lineages name the discovery region differently and the server writes every key it reads,
- * so all three are carried: Overseerr has [region] alone, and the Jellyseerr lineage split it into
- * [discoverRegion] and [streamingRegion] at Jellyseerr 2.2 (#1012). A key left out of the body is the
- * user's setting cleared, not left alone, which is why the one this app does not edit is sent back
- * unchanged.
+ * All three region keys are carried: Overseerr has [region], and Jellyseerr 2.2 split it into
+ * [discoverRegion] and [streamingRegion] (#1012). A key left out of the body clears the setting, so
+ * the one this app does not edit is sent back unchanged.
  */
 @Serializable
 data class SeerrUserMainSettingsDto(

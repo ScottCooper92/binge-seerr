@@ -88,8 +88,10 @@ private fun credentialRequestSemantics(onLogin: (SavedLogin) -> Unit): Modifier 
                         savedLoginFrom(credential.type, credential.data)?.let(current.value)
                     }
 
-                    // A dismissed picker and a provider with nothing saved arrive here alike, and
-                    // both leave the field exactly as the user typed it.
+                    /**
+                     * A dismissed picker and a provider with nothing saved arrive here alike, and
+                     * both leave the field exactly as the user typed it.
+                     */
                     override fun onError(error: GetCredentialException) = Unit
                 },
             )

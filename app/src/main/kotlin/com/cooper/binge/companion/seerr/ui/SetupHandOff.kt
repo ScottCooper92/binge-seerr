@@ -36,17 +36,12 @@ internal val HAND_OFF_LINGER: Duration = 6.seconds
 private const val PROGRESS_POLL_MILLIS = 500L
 
 /**
- * The television's "send the address from your phone" (#323): it opens a listener, shows its code
- * through [onState], and hands the address a phone sends to [onAddress]. Every way out closes the listener:
- * [cancel], the scope ending, a code left unused for [timeout] or locked by wrong PINs (when a new listener and code
- * replace it), or, once an address is in, the sign-in finishing or going [signInTimeout] without.
- *
- * After the address the listener stays up so the phone's page can follow the TV, reading [progress] on each
- * request. A second address is passed on too, if the first named no server the TV could reach.
- *
- * Nothing here is kept in `SavedStateHandle` the way [SetupLinks] keeps a pending sign-in. A listening
- * socket does not outlive its process, so a code restored after process death would point at
- * nothing; the user starts a new one instead.
+ * The television's "send the address from your phone" (#323): it opens a listener, shows its code through
+ * [onState], and hands the address a phone sends to [onAddress]. Every way out closes it: [cancel], the scope
+ * ending, a code unused for [timeout] or locked by wrong PINs (a new one replaces it), or the sign-in finishing
+ * or passing [signInTimeout]. Until then the phone's page follows the TV through [progress], and a second
+ * address is passed on if the first named no server the TV could reach.
+ * Nothing is kept in `SavedStateHandle`: a listening socket dies with its process, so the user starts afresh.
  */
 internal class SetupHandOff(
     private val scope: CoroutineScope,

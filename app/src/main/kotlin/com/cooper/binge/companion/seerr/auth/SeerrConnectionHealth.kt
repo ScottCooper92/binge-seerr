@@ -50,15 +50,12 @@ interface SeerrConnectionHealthReporter {
 private const val UNREACHABLE_FAILURE_THRESHOLD = 2
 
 /**
- * One source of truth for live connection health, fed by every call the cached client makes
- * through [SeerrHealthInterceptor], so a failure anywhere counts. Observe-only: nothing gates a
- * request on it. An auth rejection flips to [SeerrConnectionHealth.Unauthorized] at once; transient
- * failures flip to [SeerrConnectionHealth.Unreachable] only after [UNREACHABLE_FAILURE_THRESHOLD] in
- * a row; any success restores [SeerrConnectionHealth.Healthy] and clears the streak.
+ * Live connection health, fed by every call the cached client makes through [SeerrHealthInterceptor].
+ * Observe-only: nothing gates a request on it. An auth rejection flips to [SeerrConnectionHealth.Unauthorized]
+ * at once, [UNREACHABLE_FAILURE_THRESHOLD] transient failures in a row to [SeerrConnectionHealth.Unreachable],
+ * and any success back to [SeerrConnectionHealth.Healthy].
  *
- * It starts [SeerrConnectionHealth.Unchecked] rather than [SeerrConnectionHealth.NotConnected],
- * because it does not read the store and so cannot know whether anything is saved. Whether a
- * reading means "not connected" is [SeerrConnection]'s to answer, since it holds both.
+ * It starts [SeerrConnectionHealth.Unchecked]: it does not read the store, so "not connected" is [SeerrConnection]'s call.
  */
 class SeerrConnectionHealthMonitor : SeerrConnectionHealthReporter {
     private val lock = Any()

@@ -19,15 +19,13 @@ import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.lifecycle.withCreationCallback
 
 /**
- * The phone's end of the TV address hand-off (#323): the page a television serves links here with
- * `seerr-companion://tv-handoff?to=<ip:port>&token=<token>`, and this fills in the best address it
- * knows for the connected server and sends what the user confirms to that TV, only on their tap.
+ * The phone's end of the TV address hand-off (#323): the TV's page links here with
+ * `seerr-companion://tv-handoff?to=<ip:port>&token=<token>`, and on the user's tap this sends that TV
+ * the best address it knows for the connected server.
  *
- * Exported, and reachable from any browser page, so it trusts nothing in the link: the ViewModel
- * refuses a target that is not a private address on this network, and sends nothing without the
- * user's tap. Its own Activity rather than a route in [MainActivity], so the one link a web page can
- * open is this one, and the notification links stay unexported. The in-app scan (#773) opens
- * [ScannedSendAddressActivity] instead, which no link can reach and which alone may offer the phone's session.
+ * Exported to any browser page, so it trusts nothing in the link: the ViewModel refuses a target that is
+ * not a private address. It is not a route in [MainActivity], so this is the one link a web page can open.
+ * The in-app scan (#773) opens [ScannedSendAddressActivity], which alone may offer the phone's session.
  */
 @AndroidEntryPoint
 open class SendAddressActivity : ComponentActivity() {

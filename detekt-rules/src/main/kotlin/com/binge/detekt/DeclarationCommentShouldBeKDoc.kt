@@ -70,7 +70,10 @@ class DeclarationCommentShouldBeKDoc(
         return (sibling as? PsiComment)?.takeIf { isStandaloneEol(it, text) }
     }
 
-    private fun leadingChildComment(declaration: KtDeclaration, text: String): PsiComment? {
+    private fun leadingChildComment(
+        declaration: KtDeclaration,
+        text: String,
+    ): PsiComment? {
         var child: PsiElement? = declaration.firstChild
         while (child != null) {
             when {
@@ -82,7 +85,10 @@ class DeclarationCommentShouldBeKDoc(
         return null
     }
 
-    private fun isStandaloneEol(comment: PsiComment, text: String): Boolean {
+    private fun isStandaloneEol(
+        comment: PsiComment,
+        text: String,
+    ): Boolean {
         if (comment.tokenType != KtTokens.EOL_COMMENT) return false
         // Ignore a trailing comment on a line that also holds code.
         val start = comment.textRange.startOffset

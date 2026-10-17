@@ -14,18 +14,15 @@ import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.state.SortSheet
 
 /**
- * One line naming the current choice, opening the shared choice sheet with the full list rather than stacking a
- * chip per option. A list a server supplies has no length or
- * label width this app controls, so it is the only shape whose height does not scale with the
- * connected server's config — see #336.
+ * One line naming the current choice, opening the shared choice sheet with the full list rather than a
+ * chip per option. A server-supplied list has no length or label width this app controls, so this is the
+ * only shape whose height does not scale with the server's config (#336).
  *
- * The row is a settings row: [icon] in the tinted box, [title], the current choice as its detail. In the sheet each
+ * A settings row: [icon] in the tinted box, [title], the current choice as its detail. In the sheet each
  * choice carries [choiceIcon]'s icon, or else the row's, as `choiceSettingItem`'s sheet does.
  *
- * [enabled] is what an editor page passes while it saves: off, it dims
- * the row and blocks the tap that opens the sheet. An already-open sheet closes the moment a save
- * starts too, so a pick made mid-save cannot land in a draft the request has already gone out
- * from — the constraint the chip form carried and this one has to keep by a different route.
+ * @param enabled off while an editor page saves: it dims the row and blocks the tap. An open sheet closes
+ *   when a save starts too, so a mid-save pick cannot land in a draft the request has already gone out from.
  */
 @Composable
 fun <T> ChoiceRow(

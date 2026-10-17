@@ -67,12 +67,9 @@ class PostHogClient(
  * PostHog behind the consent gate. [client] is null when no project key was built in, and then
  * every call is a no-op.
  *
- * The client starts opted out, and is closed again here if the gate is shut: PostHog keeps its own
- * opt-in across launches, and the gate never tells a backend to close before the user has answered.
- * Registering after that means a grant opens it, and a later decline closes it.
- *
- * A screen shown before the stored answer is read is held, not dropped: on a cold start the first
- * screen arrives before the read does, and would otherwise go missing on every launch.
+ * The client starts opted out and is closed again here if the gate is shut, because PostHog keeps its own
+ * opt-in across launches. A screen shown before the stored answer is read is held, not dropped: on a cold
+ * start the first screen arrives before the read does.
  */
 @Singleton
 class PostHogAnalytics
@@ -141,15 +138,12 @@ class PostHogAnalytics
     }
 
 /**
- * PostHog's config with this app's privacy defaults. It starts opted out, and consent opens it.
- * Screen views are logged by name, so the SDK's own, which would name only the Activity, are off.
- * Deep links are off because a notification's link carries the server's ids. The SDK's lifecycle
- * events (opened, backgrounded, installed, updated) stay on, and the privacy policy names them.
+ * PostHog's config with this app's privacy defaults: opted out until consent. The SDK's screen views
+ * (Activity names only) are off, and so are deep links, which carry the server's ids. Lifecycle events
+ * stay on, and the privacy policy names them.
  *
- * Opting out stops what the SDK captures, not what it fetches: at setup it loads its remote config and,
- * with it, the feature flags for this install, before the user has answered. The app uses neither, so
- * both are off and the SDK makes no request until consent. `remoteConfig` is deprecated as always on,
- * but the setup still reads it; the suppression goes when the SDK stops doing so.
+ * Opting out does not stop the SDK fetching remote config and feature flags at setup. The app uses neither,
+ * so both are off. `remoteConfig` is deprecated but still read at setup; the suppression goes when it is not.
  */
 @Suppress("DEPRECATION")
 fun postHogConfig(

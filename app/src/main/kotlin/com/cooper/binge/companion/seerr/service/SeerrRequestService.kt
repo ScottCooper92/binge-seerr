@@ -76,17 +76,12 @@ import retrofit2.HttpException
 /**
  * REQUEST v1, served against the connected Seerr server.
  *
- * Capabilities come from the signed-in user's permission bitmask narrowed by what the server has
- * (its lineage and version, `SeerrServerProfile`), so the host offers exactly what this user may
- * do on this server. Every failure leaves as a gRPC status code (`SeerrErrors.kt`), and every
- * gated rpc re-checks its capability rather than trusting the host to have honoured the handshake.
+ * Capabilities are the user's permissions narrowed by `SeerrServerProfile`. Failures leave as gRPC codes
+ * (`SeerrErrors.kt`), and every gated rpc re-checks its capability rather than trusting the handshake.
+ * The function count is suppressed, not reduced: REQUEST v1 has one rpc per function.
  *
- * One function per rpc, which is why the function count is suppressed rather than reduced: REQUEST
- * v1 decides this surface, and a companion that implements fewer of them is a companion that does
- * not implement the contract.
- *
- * This class holds the handshake, the gate each rpc passes and the streams; the bodies live by rpc group in
- * [SeerrRequestRpcs], [SeerrListingRpcs], [SeerrIssueRpcs] and the [SeerrStatusReads] they share.
+ * This class holds the handshake, the gate and the streams; the bodies live in [SeerrRequestRpcs],
+ * [SeerrListingRpcs], [SeerrIssueRpcs] and the [SeerrStatusReads] they share.
  */
 @Suppress("TooManyFunctions")
 class SeerrRequestService(
@@ -108,17 +103,13 @@ class SeerrRequestService(
     private val issues = SeerrIssueRpcs(connection, clock)
 
     /**
-     * The one place a bound Binge client is known to have handed over its identity, successfully.
+     * Decides the capability set, so it re-reads the profile and user rather than the cached copies: a
+     * host that rebinds would otherwise get what the user could do when the process started.
      *
-     * Re-reads the profile and the signed-in user rather than serving the connection's cached copies:
-     * this is where the capability set is decided, and a host that rebinds while the process is alive
-     * would otherwise be told what the user could do when the process started.
-     *
-     * Never UNAUTHENTICATED (binge-companions#106). The host gates every other call on these
-     * capabilities, so with nothing connected or a rejected session this still answers OK, declaring
-     * only [CAPABILITY_ATTENTION][Capability.CAPABILITY_ATTENTION]: that is how the host reaches
-     * `needs_reconnect`, or the UNAUTHENTICATED that sends the user here to connect. Any other
-     * failure, an unreachable server say, keeps its own code.
+     * Never UNAUTHENTICATED (binge-companions#106): the host gates every other call on these capabilities.
+     * With no session it answers OK with only [CAPABILITY_ATTENTION][Capability.CAPABILITY_ATTENTION], which
+     * is how the host reaches `needs_reconnect`, or the UNAUTHENTICATED that sends the user here to connect.
+     * Any other failure, an unreachable server say, keeps its own code.
      */
     override suspend fun handshake(request: HandshakeRequest): HandshakeResponse =
         reportingFailure("handshake") {
@@ -252,15 +243,12 @@ class SeerrRequestService(
         }
 
     /**
-     * [statusCatching], reporting a failure a server version could explain (#539). The failure is
-     * mapped to its [StatusException] first and that is what is thrown, so what is reported and what
-     * the host receives are the same classification.
+     * [statusCatching], reporting a failure a server version could explain (#539). The failure is mapped
+     * to its [StatusException] first, so what is reported and what the host receives match.
+     * A failure ends an `observe*` stream, so a failing server is reported once per stream, not per tick.
      *
-     * An `observe*` poll goes through it per tick, and a failure ends the stream, so a failing server
-     * is reported once per stream rather than once per tick.
-     *
-     * A refusal the user can act on (a spent quota, a blocklisted title) also carries a sentence for them, in the
-     * contract's rich error model (binge-companions#132). The code and description are the same either way.
+     * A refusal the user can act on (a spent quota, a blocklisted title) also carries a sentence for
+     * them, in the contract's rich error model (binge-companions#132).
      */
     @Suppress("TooGenericExceptionCaught")
     private suspend fun <T> reportingFailure(

@@ -52,8 +52,9 @@ class KDocLength(
             report(
                 Finding(
                     entity = Entity.from(declaration),
-                    message = "KDoc on $kind '${declaration.name}' is $lines lines of prose, exceeding the " +
-                        "$threshold-line cap. Move the essay into docs/, or make the code say it.",
+                    message =
+                        "KDoc on $kind '${declaration.name}' is $lines lines of prose, exceeding the " +
+                            "$threshold-line cap. Move the essay into docs/, or make the code say it.",
                 ),
             )
         }

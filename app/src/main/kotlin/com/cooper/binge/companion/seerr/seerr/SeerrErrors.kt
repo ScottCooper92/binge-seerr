@@ -54,13 +54,11 @@ enum class SeerrError {
 
 /**
  * Whether a failure of `GET /auth/me` means the server holds no user for these credentials: the session
- * expired, the API key was rotated, or the user was deleted. The one rule for it, read by the Service and the
- * screens alike, so the two cannot disagree about a rejected session (#672).
+ * expired, the API key was rotated, or the user was deleted. The Service and the screens share it (#672).
  *
- * Every lineage (Overseerr, Jellyseerr, Seerr) guards `auth/me` with `isAuthenticated()` and no permission,
- * and that middleware answers **403** exactly when no user is attached: `hasPermission(0)` is always true.
- * The server itself never sends 401 there; a 401 comes from a proxy in front of it, and means the same.
- * For `auth/me` only: anywhere else a 403 is a real permission refusal, so callers apply this to that call.
+ * Every lineage guards `auth/me` with `isAuthenticated()` and no permission, which answers **403** exactly
+ * when no user is attached. A 401 there comes from a proxy in front, and means the same. For `auth/me`
+ * only: anywhere else a 403 is a real permission refusal.
  */
 val SeerrError.rejectsSession: Boolean
     get() = this == SeerrError.Unauthorized || this == SeerrError.Forbidden
@@ -95,24 +93,12 @@ fun Throwable.toSeerrError(): SeerrError =
     }
 
 /**
- * Seerr's failures as the contract's gRPC status codes — the whole error model on this side,
- * because a response message never carries an error field.
+ * Seerr's failures as the contract's gRPC status codes: the whole error model on this side, because a
+ * response message never carries an error field. [httpStatus] maps the HTTP answers.
  *
- * A 401 is our own session being rejected, which only this app can repair, so it is
- * `UNAUTHENTICATED` and the host sends the user here. A 401 Seerr sent while the session still
- * answers is a refusal instead, `PERMISSION_DENIED`, unless the Service knows that route means
- * something else (#997). A 403 is `PERMISSION_DENIED` unless the
- * body names a quota, which is `RESOURCE_EXHAUSTED` — Seerr returns 403 for both, and the message
- * text is its only signal. A 409 is a target in the wrong state for the action, such as approving a
- * request someone has already approved: `FAILED_PRECONDITION`, so the host refreshes and re-offers (#999).
- * Transport failures and 5xx are `UNAVAILABLE`; any other 4xx is a rejection on the merits,
- * `INVALID_ARGUMENT`.
- *
- * A body this app cannot parse ([SerializationException]) is `UNAVAILABLE` too: the server speaking a shape
- * this app does not expect, which a retry after a server update may fix. Every description here is a fixed
- * string. An exception's own message never crosses to the host, because a serialization failure's message
- * quotes the body it choked on, and that can be the server's secrets (#680). The exception stays on
- * `withCause`, which gRPC never serialises, for local logging.
+ * A body this app cannot parse ([SerializationException]) is `UNAVAILABLE`, since a server update may fix it.
+ * An exception's own message never crosses to the host: a serialization failure's quotes the body, which can
+ * hold the server's secrets (#680). The exception stays on `withCause`, which gRPC never serialises.
  */
 fun Throwable.toStatusException(): StatusException =
     when (this) {
@@ -126,6 +112,12 @@ fun Throwable.toStatusException(): StatusException =
         else -> StatusException(Status.INTERNAL.withDescription(UNHANDLED).withCause(this))
     }
 
+/**
+ * A 401 is our own session rejected, which only this app can repair, so the host sends the user here. A 401
+ * while the session still answers is a refusal, unless the Service reads that route more precisely (#997).
+ * Seerr returns 403 for a refusal and a spent quota alike, and the message is its only signal. A 409 is a
+ * target in the wrong state, such as a request already approved, so the host refreshes and re-offers (#999).
+ */
 private fun HttpException.httpStatus(): Status =
     when {
         rejectsSessionByAnswer() -> Status.UNAUTHENTICATED

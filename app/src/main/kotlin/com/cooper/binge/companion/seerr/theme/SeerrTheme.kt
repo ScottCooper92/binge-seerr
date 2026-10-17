@@ -12,18 +12,13 @@ import com.binge.designsystem.tv.theme.toTvColorScheme
 import androidx.tv.material3.ColorScheme as TvColorScheme
 
 /**
- * This app's own accent: the icon's indigo, not Binge's amber (#281). `ic_launcher_background.xml`
- * already tints the launcher and the TV banner towards it — every screen behind them should agree.
+ * This app's own accent: the icon's indigo, not Binge's amber (#281), matching `ic_launcher_background.xml`.
+ * Only the brand family changes: `primary`/`secondary`/`tertiary` and their containers, `inversePrimary` and
+ * the four fixed roles. Surfaces and `error` are shared meaning and stay [DarkColorScheme]/[LightColorScheme]'s.
  *
- * Every slot but the brand family — `primary`/`secondary`/`tertiary` and their containers,
- * `inversePrimary` and the four fixed roles — is [DarkColorScheme]/[LightColorScheme] unchanged: the
- * neutral surface ramp and `error` are shared meaning, not brand, and stay Binge's.
- *
- * The fixed roles are the same in both schemes, as Material defines them. The design system paints
- * its big fills on them: filled buttons, selected filter chips, switches, the month-year picker
- * header and the hero wash. Left unset, they stay Binge's amber. They follow Binge's own mapping:
- * `primaryFixedDim` is the dark scheme's `primary`, so a dark fill looks as it did on `primary`, and
- * `primaryFixed` is a lighter step of the same hue. `onPrimaryFixed` clears 4.5:1 on both fills.
+ * The fixed roles carry the design system's big fills (filled buttons, selected chips, switches, the hero wash),
+ * so unset they stay amber. As in Binge, `primaryFixedDim` is the dark `primary`, `primaryFixed` a lighter step
+ * of it, and `onPrimaryFixed` clears 4.5:1 on both.
  */
 private val Indigo100 = Color(0xFFE0E7FF)
 private val Indigo200 = Color(0xFFC7D2FE)
