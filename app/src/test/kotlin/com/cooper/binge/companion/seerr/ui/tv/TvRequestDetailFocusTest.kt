@@ -411,7 +411,7 @@ class TvRequestDetailFocusTest {
         composeTestRule.waitForIdle()
     }
 
-    /** The shell hands focus back into the board once the page above the rail has closed. */
+    /** The shell hands focus back into the board once the page above Home has closed. */
     private fun settleFocusRestore() = composeTestRule.settleShellHandOff()
 
     private fun press(key: Key) {

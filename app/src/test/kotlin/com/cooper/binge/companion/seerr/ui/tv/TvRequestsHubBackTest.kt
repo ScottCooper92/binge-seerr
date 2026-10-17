@@ -45,7 +45,7 @@ private const val SEE_ALL_ROW = 1
 
 /**
  * Back from what a hub card or tile opened lands on that card or tile, on any row (#1509). The board sits in the real
- * shell beside the rail, and the page or grid is the shell's overlay: it takes focus while it shows and closes on
+ * shell, and the page or grid is the shell's overlay: it takes focus while it shows and closes on
  * Back, as the real ones do. On the Shield, focus came back to the row above: the board's own restore landed the card,
  * then the shell's hand-off entered the destination again and lost it.
  */
@@ -212,7 +212,7 @@ class TvRequestsHubBackTest {
         )
     }
 
-    private fun homeTab() = composeTestRule.onNode(hasContentDescription(string(R.string.tv_rail_hub)))
+    private fun homeTab() = composeTestRule.onNode(hasContentDescription(string(R.string.tv_home)))
 }
 
 private fun idOf(

@@ -35,7 +35,7 @@ class TvShellClippingTest {
     fun `Home with its top row at 1_3`() =
         rule.assertNoTvClippingAt(
             FONT_SCALE_13,
-            settle = { onNode(hasContentDescription(string(R.string.tv_rail_hub))).requestFocus() },
+            settle = { onNode(hasContentDescription(string(R.string.tv_home))).requestFocus() },
         ) { Shell() }
 }
 

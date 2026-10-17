@@ -992,7 +992,7 @@
     <string name="send_address_sign_in_as_you">Iniciar sesión también con tu cuenta</string>
     <string name="send_address_sign_in_shared">El televisor usa tu sesión</string>
     <string name="setup_error_unreachable_not_local">No se pudo conectar con el servidor. Esa no es una dirección local, así que puede que este televisor no consiga llegar a ella. Prueba con una dirección de tu red doméstica.</string>
-    <string name="tv_rail_hub">Inicio</string>
+    <string name="tv_home">Inicio</string>
     <string name="tv_hub_health_checking">Comprobando el servidor…</string>
     <string name="tv_hub_quota_none_left">No queda ninguna</string>
     <string name="tv_download_percent">%1$d %%</string>
@@ -1006,7 +1006,7 @@
     <string name="tv_settings_binge_install">Abrir Play Store</string>
     <string name="tv_settings_binge_connect">Conectar Binge</string>
     <string name="tv_see_all">Ver todo</string>
-    <string name="tv_rail_account">Cuenta</string>
+    <string name="tv_account">Cuenta</string>
     <string name="tv_account_your_requests">Tus peticiones</string>
     <string name="tv_account_requests_empty">Todavía no has hecho ninguna petición.</string>
     <string name="field_secret_show">Mostrar el valor</string>

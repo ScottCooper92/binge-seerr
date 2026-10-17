@@ -910,6 +910,7 @@ app:state_error_unreachable_message  5ffff6c5878b
 app:state_error_unreachable_title  8884ecffcd27
 app:three_pane_nothing_open_message  99ac963e3b6a
 app:three_pane_nothing_open_title  d957e41014e9
+app:tv_account  7e1b0d5641f2
 app:tv_account_requests_empty  1bea507092bb
 app:tv_account_sign_out  48f0d3d397d4
 app:tv_account_sign_out_message  4035dd486889
@@ -936,6 +937,7 @@ app:tv_handoff_could_not_listen  9b2ceb3a1d16
 app:tv_handoff_no_network  23bbba026c2f
 app:tv_handoff_pin  fc6a3027d709
 app:tv_handoff_pin_description  163786adb97a
+app:tv_home  3a78695388b3
 app:tv_hub_health_checking  86d5ab0a7412
 app:tv_hub_quota_none_left  7d0b2f243290
 app:tv_issue_edit_on_phone  fd2708005f0a
@@ -944,8 +946,6 @@ app:tv_issue_reply_on_phone  41c67f791595
 app:tv_link_plex_body  87fe288ab29e
 app:tv_list_load_failed  718a36e76415
 app:tv_loading  ba3bbbe10d8b
-app:tv_rail_account  7e1b0d5641f2
-app:tv_rail_hub  3a78695388b3
 app:tv_see_all  d7a8c446069a
 app:tv_settings_agent_body  863d7d173a6b
 app:tv_settings_agent_setup_first  424a7f02b01f

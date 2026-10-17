@@ -70,7 +70,7 @@ internal fun TvAccountSheet(
         )
     }
     TvSideSheet(onDismissRequest = onDismissRequest, modifier = modifier) { entryFocus ->
-        TvSideSheetTitle(stringResource(R.string.tv_rail_account))
+        TvSideSheetTitle(stringResource(R.string.tv_account))
         if (item == null) {
             Unresolved(
                 failed = accountFailed || detail is UserDetailUiState.Error,

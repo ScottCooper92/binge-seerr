@@ -49,8 +49,8 @@ internal enum class TvDestination(
     /** Whether the page is a side sheet over the current tab, which draws its own scrim, rather than a tab. */
     val isSheet: Boolean = false,
 ) {
-    Account("account", R.string.tv_rail_account, Icons.Filled.Person, isSheet = true),
-    Hub("hub", R.string.tv_rail_hub, Icons.Filled.Home),
+    Account("account", R.string.tv_account, Icons.Filled.Person, isSheet = true),
+    Hub("hub", R.string.tv_home, Icons.Filled.Home),
     Issues("issues", R.string.hub_section_issues, Icons.Filled.ReportProblem),
     Settings("settings", R.string.hub_section_settings, Icons.Filled.Settings, isSheet = true),
 }
@@ -273,7 +273,7 @@ private fun Modifier.pageTrap(tab: FocusRequester?): Modifier =
     }.focusGroup()
 
 /**
- * A surface whose focus is handed back to it, as the rail's content pane does, when a page or grid above it closes.
+ * A surface whose focus is handed back to it, as Home does, when a page or grid above it closes.
  *
  * Closing disposes the focused node, and Compose parks focus on the first focusable thing left, which is the wrong
  * card, and a request into a group that already holds focus skips its entry routing. So the surface carries a [TvFocusSink]
