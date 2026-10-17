@@ -8,7 +8,8 @@ import javax.inject.Singleton
 
 /**
  * Which user's settings were just saved, for a page that shows what they set but reads it elsewhere (#1540). The user
- * page reads the quota from its own endpoint, and the General page beside it is what changes it, so the save says so here.
+ * page reads the quota and the profile from their own endpoints, and the General page beside it is what changes them, so the
+ * save says so here.
  */
 @Singleton
 class UserSettingsChanges
