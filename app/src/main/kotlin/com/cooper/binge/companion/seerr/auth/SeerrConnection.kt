@@ -1,7 +1,6 @@
 package com.cooper.binge.companion.seerr.auth
 
 import com.binge.companion.sdk.attempt
-import com.cooper.binge.companion.seerr.seerr.HTTP_NOT_FOUND
 import com.cooper.binge.companion.seerr.seerr.SeerrApi
 import com.cooper.binge.companion.seerr.seerr.SeerrApiFactory
 import com.cooper.binge.companion.seerr.seerr.SeerrAuth
@@ -15,7 +14,6 @@ import com.cooper.binge.companion.seerr.seerr.SeerrQuickConnectSecretBody
 import com.cooper.binge.companion.seerr.seerr.SeerrServerProfile
 import com.cooper.binge.companion.seerr.seerr.SeerrUserDto
 import com.cooper.binge.companion.seerr.seerr.SeerrVariant
-import com.cooper.binge.companion.seerr.seerr.hasExplicitPort
 import com.cooper.binge.companion.seerr.seerr.insecurePublicHostOrNull
 import com.cooper.binge.companion.seerr.seerr.inspectProfile
 import com.cooper.binge.companion.seerr.seerr.isValidBaseUrl
@@ -24,7 +22,6 @@ import com.cooper.binge.companion.seerr.seerr.readProfile
 import com.cooper.binge.companion.seerr.seerr.rejectsSession
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
 import com.cooper.binge.companion.seerr.seerr.toTmdbBackdropUrl
-import com.cooper.binge.companion.seerr.seerr.withDefaultSeerrPort
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -35,60 +32,9 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import retrofit2.HttpException
 import java.io.IOException
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
-
-/** The entered address cannot be parsed as a URL even after normalisation. */
-class InvalidServerUrlException : IllegalArgumentException("Invalid Seerr server URL")
-
-/** At-rest encryption of the credentials failed, so nothing was persisted. */
-class CredentialsSaveException : IllegalStateException("Failed to store the Seerr credentials")
-
-/** The login succeeded but the server set no session cookie, so there is nothing to keep. */
-class NoSessionCookieException : IllegalStateException("Seerr login returned no session cookie")
-
-/** No server is connected: the code the contract's `UNAUTHENTICATED` is mapped from. */
-class NotConnectedException : IllegalStateException("No Seerr server is connected")
-
-/** The address answered, but not as a Seerr server: neither profile call came back as one. */
-class NotSeerrServerException(
-    cause: Throwable,
-) : IllegalStateException("The address did not answer as a Seerr server", cause)
-
-/** The Quick Connect code was not approved on the Jellyfin server before it expired. */
-class QuickConnectExpiredException : IllegalStateException("The Quick Connect code expired before it was approved")
-
-/** What an address answered before any credential was typed: the sign-in form is built from this. */
-data class SeerrServerPreview(
-    val baseUrl: String,
-    val profile: SeerrServerProfile,
-    val backdropUrls: List<String>,
-)
-
-/** A Quick Connect session: the [code] the user approves on Jellyfin, the [secret] this app polls with. */
-data class SeerrQuickConnect(
-    val code: String,
-    val secret: String,
-)
-
-/**
- * Runs [probe] against [baseUrl], and, when [baseUrl] carries no explicit port, retries against
- * [String.withDefaultSeerrPort] on any failure — an unreachable address or one that answered but
- * not as wanted. The retry's success wins; if it also fails, the first attempt's failure is what's
- * reported, since that is the address the user actually typed. Free of any dependency on the class
- * below so the retry ordering is unit-testable with no network at all.
- */
-internal suspend fun <T> withPortFallback(
-    baseUrl: String,
-    probe: suspend (String) -> Result<T>,
-): Result<T> {
-    val primary = probe(baseUrl)
-    if (primary.isSuccess || baseUrl.hasExplicitPort()) return primary
-    val fallbackUrl = baseUrl.withDefaultSeerrPort() ?: return primary
-    return probe(fallbackUrl).recoverCatching { primary.getOrThrow() }
-}
 
 /**
  * The one connected server: connecting, logging in, disconnecting, and the API for the saved
@@ -403,13 +349,6 @@ class SeerrConnection(
         healthMonitor.reset()
         onServerChanged()
     }
-
-    private suspend fun SeerrApi.checkQuickConnectApproved(secret: String): Boolean =
-        try {
-            checkQuickConnect(secret).authenticated
-        } catch (e: HttpException) {
-            if (e.code() == HTTP_NOT_FOUND) throw QuickConnectExpiredException() else throw e
-        }
 
     /** The shared tail of every sign-in that ends in a session: run [block] on the capturing client, keep the cookie. */
     private suspend fun logInForSession(

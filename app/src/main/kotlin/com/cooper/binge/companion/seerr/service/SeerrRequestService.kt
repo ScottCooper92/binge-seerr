@@ -3,7 +3,6 @@ package com.cooper.binge.companion.seerr.service
 import com.binge.companion.contracts.request.v1.ApproveRequestRequest
 import com.binge.companion.contracts.request.v1.ApproveRequestResponse
 import com.binge.companion.contracts.request.v1.Attention
-import com.binge.companion.contracts.request.v1.Availability
 import com.binge.companion.contracts.request.v1.BlockTitleRequest
 import com.binge.companion.contracts.request.v1.BlockTitleResponse
 import com.binge.companion.contracts.request.v1.CancelRequestRequest
@@ -33,20 +32,15 @@ import com.binge.companion.contracts.request.v1.ObserveStatusRequest
 import com.binge.companion.contracts.request.v1.ObserveStatusResponse
 import com.binge.companion.contracts.request.v1.ReportIssueRequest
 import com.binge.companion.contracts.request.v1.ReportIssueResponse
-import com.binge.companion.contracts.request.v1.RequestEntry
 import com.binge.companion.contracts.request.v1.RequestServiceGrpcKt
-import com.binge.companion.contracts.request.v1.RequestStatus
 import com.binge.companion.contracts.request.v1.RetryRequestRequest
 import com.binge.companion.contracts.request.v1.RetryRequestResponse
 import com.binge.companion.contracts.request.v1.SubmitAdvancedRequestRequest
 import com.binge.companion.contracts.request.v1.SubmitAdvancedRequestResponse
 import com.binge.companion.contracts.request.v1.SubmitRequestRequest
 import com.binge.companion.contracts.request.v1.SubmitRequestResponse
-import com.binge.companion.contracts.request.v1.TitleStatus
 import com.binge.companion.contracts.request.v1.UnblockTitleRequest
 import com.binge.companion.contracts.request.v1.UnblockTitleResponse
-import com.binge.companion.contracts.v1.MediaId
-import com.binge.companion.sdk.attempt
 import com.binge.companion.sdk.handshakeResponse
 import com.binge.companion.sdk.requireDeclared
 import com.binge.companion.sdk.withUserMessage
@@ -54,62 +48,29 @@ import com.cooper.binge.companion.seerr.auth.BingeConnectionStore
 import com.cooper.binge.companion.seerr.auth.NoBingeConnectionStore
 import com.cooper.binge.companion.seerr.auth.NotConnectedException
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
-import com.cooper.binge.companion.seerr.data.CachedStatus
 import com.cooper.binge.companion.seerr.data.MediaStatusStore
 import com.cooper.binge.companion.seerr.data.NoMediaStatusStore
 import com.cooper.binge.companion.seerr.data.NoRequestStore
 import com.cooper.binge.companion.seerr.data.RequestStore
-import com.cooper.binge.companion.seerr.seerr.BlocklistedTitleException
-import com.cooper.binge.companion.seerr.seerr.HTTP_ACCEPTED
-import com.cooper.binge.companion.seerr.seerr.HTTP_CONFLICT
-import com.cooper.binge.companion.seerr.seerr.SeerrAddToBlocklistBody
-import com.cooper.binge.companion.seerr.seerr.SeerrCreateIssueBody
-import com.cooper.binge.companion.seerr.seerr.SeerrEditRequestBody
 import com.cooper.binge.companion.seerr.seerr.SeerrPermissions
-import com.cooper.binge.companion.seerr.seerr.SeerrRequestBody
-import com.cooper.binge.companion.seerr.seerr.SeerrRequestStatusCode
 import com.cooper.binge.companion.seerr.seerr.SeerrServerProfile
 import com.cooper.binge.companion.seerr.seerr.SeerrVariant
-import com.cooper.binge.companion.seerr.seerr.addToBlocklistOnce
-import com.cooper.binge.companion.seerr.seerr.advancedRequestOptions
-import com.cooper.binge.companion.seerr.seerr.checkHasSeasons
-import com.cooper.binge.companion.seerr.seerr.checkedSeasonNumbers
-import com.cooper.binge.companion.seerr.seerr.destinationOptions
-import com.cooper.binge.companion.seerr.seerr.details
-import com.cooper.binge.companion.seerr.seerr.isSeerrTv
-import com.cooper.binge.companion.seerr.seerr.recordIdFor
-import com.cooper.binge.companion.seerr.seerr.refusedWithLiveSession
 import com.cooper.binge.companion.seerr.seerr.rejectsSession
-import com.cooper.binge.companion.seerr.seerr.requesterIds
-import com.cooper.binge.companion.seerr.seerr.resolveAdvancedDestination
-import com.cooper.binge.companion.seerr.seerr.seerrMediaType
-import com.cooper.binge.companion.seerr.seerr.standardVersion
 import com.cooper.binge.companion.seerr.seerr.statusCatching
-import com.cooper.binge.companion.seerr.seerr.toMediaId
 import com.cooper.binge.companion.seerr.seerr.toPermissions
-import com.cooper.binge.companion.seerr.seerr.toRequestInfo
-import com.cooper.binge.companion.seerr.seerr.toRequestStatus
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
 import com.cooper.binge.companion.seerr.seerr.toStatusException
-import com.cooper.binge.companion.seerr.seerr.updateRequest
 import com.cooper.binge.companion.seerr.seerr.userFacingRefusal
-import com.cooper.binge.companion.seerr.seerr.version4k
 import com.cooper.binge.companion.seerr.telemetry.Analytics
 import com.cooper.binge.companion.seerr.telemetry.NoOpAnalytics
 import com.cooper.binge.companion.seerr.telemetry.operationFailed
-import io.grpc.Status
 import io.grpc.StatusException
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.sync.Semaphore
-import kotlinx.coroutines.sync.withPermit
 import retrofit2.HttpException
 
 /**
@@ -123,6 +84,9 @@ import retrofit2.HttpException
  * One function per rpc, which is why the function count is suppressed rather than reduced: REQUEST
  * v1 decides this surface, and a companion that implements fewer of them is a companion that does
  * not implement the contract.
+ *
+ * This class holds the handshake, the gate each rpc passes and the streams; the bodies live by rpc group in
+ * [SeerrRequestRpcs], [SeerrListingRpcs], [SeerrIssueRpcs] and the [SeerrStatusReads] they share.
  */
 @Suppress("TooManyFunctions")
 class SeerrRequestService(
@@ -138,6 +102,10 @@ class SeerrRequestService(
     private val userMessages: UserMessages = UserMessages.None,
 ) : RequestServiceGrpcKt.RequestServiceCoroutineImplBase() {
     private val freshness = MediaStatusFreshness(observeIntervalMillis)
+    private val statusReads = SeerrStatusReads(connection, statusCache, freshness, clock)
+    private val requests = SeerrRequestRpcs(connection, statusReads, statusCache, requestCache)
+    private val listing = SeerrListingRpcs(connection, statusReads)
+    private val issues = SeerrIssueRpcs(connection, clock)
 
     /**
      * The one place a bound Binge client is known to have handed over its identity, successfully.
@@ -179,118 +147,21 @@ class SeerrRequestService(
         }
 
     override suspend fun submitRequest(request: SubmitRequestRequest): SubmitRequestResponse =
-        reportingFailure("submit_request") {
-            // Re-checked here, not trusted to the host. is_4k is a flag on a core rpc, not a gated rpc,
-            // so the contract calls it a bad argument (INVALID_ARGUMENT) rather than PERMISSION_DENIED.
-            if (request.is4K && !mayRequest4k(request.media)) {
-                throw invalidArgument("is_4k is set, but 4K requests are not open to this user for this media type")
-            }
-            val media = request.media
-            refuseIfKnownBlocklisted(media)
-            val seasons = checkedSubmitSeasons(media, request.seasonNumbersList)
-            val body =
-                SeerrRequestBody(
-                    mediaType = media.seerrMediaType(),
-                    mediaId = media.tmdbId,
-                    seasons = seasons.takeIf { it.isNotEmpty() },
-                    is4k = request.is4K,
-                )
-            submitAndRespond(media, body)
-        }
+        reportingFailure("submit_request") { requests.submitRequest(request) }
 
-    /**
-     * Requires CAPABILITY_ADVANCED_REQUEST_OPTIONS. Every server this user may send this media's
-     * shape to (a 4K one only where they may request 4K of its type), and the preselected one's
-     * profile/root-folder choices — the same destination a plain [submitRequest] (never 4K) would
-     * have used.
-     */
     override suspend fun getAdvancedRequestOptions(request: GetAdvancedRequestOptionsRequest): GetAdvancedRequestOptionsResponse =
         gatedRead("get_advanced_request_options", Capability.CAPABILITY_ADVANCED_REQUEST_OPTIONS) {
-            val isTv = request.media.seerrMediaType().isSeerrTv()
-            GetAdvancedRequestOptionsResponse
-                .newBuilder()
-                .setDestination(connection.api().advancedRequestOptions(isTv, allow4k = mayRequest4k(request.media)))
-                .build()
+            requests.getAdvancedRequestOptions(request)
         }
 
-    /** Requires CAPABILITY_ADVANCED_REQUEST_OPTIONS. Re-resolves the profile/root-folder axes for the request's `server_id`. */
     override suspend fun getDestinationOptions(request: GetDestinationOptionsRequest): GetDestinationOptionsResponse =
-        gatedRead("get_destination_options", Capability.CAPABILITY_ADVANCED_REQUEST_OPTIONS) {
-            val isTv = request.media.seerrMediaType().isSeerrTv()
-            GetDestinationOptionsResponse
-                .newBuilder()
-                .setDestination(connection.api().destinationOptions(isTv, request.serverId, allow4k = mayRequest4k(request.media)))
-                .build()
-        }
+        gatedRead("get_destination_options", Capability.CAPABILITY_ADVANCED_REQUEST_OPTIONS) { requests.getDestinationOptions(request) }
 
-    /**
-     * Requires CAPABILITY_ADVANCED_REQUEST_OPTIONS. An empty axis on the request falls back to
-     * the integration's own default for it — the same one [getAdvancedRequestOptions] preselected
-     * — so a submit that never touched a picker is a plain request in every way but its path.
-     */
     override suspend fun submitAdvancedRequest(request: SubmitAdvancedRequestRequest): SubmitAdvancedRequestResponse =
-        gated("submit_advanced_request", Capability.CAPABILITY_ADVANCED_REQUEST_OPTIONS) {
-            val media = request.media
-            refuseIfKnownBlocklisted(media)
-            val isTv = media.seerrMediaType().isSeerrTv()
-            val seasons = checkedSubmitSeasons(media, request.seasonNumbersList)
-            // 4K here is a property of the server the caller named. A user who may not request 4K is
-            // never offered a 4K server, so naming one is INVALID_ARGUMENT, like any server not offered.
-            val destination =
-                connection.api().resolveAdvancedDestination(
-                    isTv,
-                    request.serverId,
-                    request.profileId,
-                    request.rootFolderId,
-                    allow4k = mayRequest4k(media),
-                )
-            val body =
-                SeerrRequestBody(
-                    mediaType = media.seerrMediaType(),
-                    mediaId = media.tmdbId,
-                    seasons = seasons.takeIf { it.isNotEmpty() },
-                    is4k = destination.server.is4k,
-                    serverId = destination.server.id,
-                    profileId = destination.profileId,
-                    rootFolder = destination.rootFolder,
-                )
-            SubmitAdvancedRequestResponse.newBuilder().setResult(submitAndRespond(media, body)).build()
-        }
-
-    /**
-     * A submit's seasons, refused as INVALID_ARGUMENT before anything is posted if they are malformed or name a season the
-     * show does not have (#1002), the same rule [editRequest] applies. No seasons means the whole show, so nothing is looked up.
-     */
-    private suspend fun checkedSubmitSeasons(
-        media: MediaId,
-        numbers: List<Int>,
-    ): List<Int> {
-        val seasons = numbers.checkedSeasonNumbers()
-        if (seasons.isNotEmpty() && media.seerrMediaType().isSeerrTv()) {
-            connection.api().tvDetails(media.tmdbId).checkHasSeasons(seasons)
-        }
-        return seasons
-    }
-
-    /** The part of a submit that does not depend on where the body came from: post, read the outcome off the status code, attach the fresh status. */
-    private suspend fun submitAndRespond(
-        media: MediaId,
-        body: SeerrRequestBody,
-    ): SubmitRequestResponse {
-        val response = connection.api().requestMedia(body)
-        statusCache.clearAll()
-        val builder = SubmitRequestResponse.newBuilder()
-        when {
-            response.code() == HTTP_ACCEPTED -> Unit
-            response.isSuccessful -> response.body()?.id?.let { builder.setRequestId(it.toString()) }
-            response.code() == HTTP_CONFLICT -> builder.setAlreadyRequested(true)
-            else -> throw HttpException(response)
-        }
-        return builder.setStatus(status(media)).build()
-    }
+        gated("submit_advanced_request", Capability.CAPABILITY_ADVANCED_REQUEST_OPTIONS) { requests.submitAdvancedRequest(request) }
 
     override suspend fun getStatus(request: GetStatusRequest): GetStatusResponse =
-        reportingFailure("get_status") { GetStatusResponse.newBuilder().setStatus(status(request.media)).build() }
+        reportingFailure("get_status") { GetStatusResponse.newBuilder().setStatus(statusReads.status(request.media)).build() }
 
     /**
      * Polls the server on this app's own cadence and pushes a status only when it changed. The
@@ -303,94 +174,27 @@ class SeerrRequestService(
             // the row warm, and a poll answering from the row it wrote would never see the server.
             var fromCache = true
             while (true) {
-                emit(reportingFailure("observe_status") { status(request.media, allowCached = fromCache) })
+                emit(reportingFailure("observe_status") { statusReads.status(request.media, allowCached = fromCache) })
                 fromCache = false
                 delay(observeIntervalMillis)
             }
         }.distinctUntilChanged()
             .map { ObserveStatusResponse.newBuilder().setStatus(it).build() }
 
-    /**
-     * The server answers 401 when this user may not delete the request. Seerr and Jellyseerr refuse a request that is
-     * not theirs or is no longer pending; Overseerr refuses only one that is both. That is not the session, which the interceptor confirms against `auth/me` (#997). The request is read
-     * only then, to tell the contract's two answers apart: FAILED_PRECONDITION for a request past pending, and
-     * PERMISSION_DENIED for one that is pending and someone else's.
-     */
     override suspend fun cancelRequest(request: CancelRequestRequest): CancelRequestResponse =
-        gated("cancel_request", Capability.CAPABILITY_CANCEL) {
-            val api = connection.api()
-            val requestId = request.requestId.toSeerrRequestId()
-            try {
-                api.deleteRequest(requestId)
-            } catch (e: HttpException) {
-                if (!e.refusedWithLiveSession()) throw e
-                // A request with no status is pending, as everywhere else; one that will not read is taken as pending too.
-                val status = attempt { api.request(requestId).status }.getOrNull()
-                val pending = status == null || status == SeerrRequestStatusCode.Pending
-                throw StatusException(
-                    if (pending) {
-                        Status.PERMISSION_DENIED.withDescription("This user may not cancel that request")
-                    } else {
-                        Status.FAILED_PRECONDITION.withDescription("Only a pending request can be cancelled")
-                    },
-                )
-            }
-            requestCache.delete(requestId)
-            CancelRequestResponse.getDefaultInstance()
-        }
+        gated("cancel_request", Capability.CAPABILITY_CANCEL) { requests.cancelRequest(request) }
 
     override suspend fun approveRequest(request: ApproveRequestRequest): ApproveRequestResponse =
-        gated("approve_request", Capability.CAPABILITY_APPROVE) {
-            val requestId = request.requestId.toSeerrRequestId()
-            connection.api().approveRequest(requestId)
-            requestCache.updateStatus(requestId, SeerrRequestStatusCode.Approved.raw)
-            ApproveRequestResponse.getDefaultInstance()
-        }
+        gated("approve_request", Capability.CAPABILITY_APPROVE) { requests.approveRequest(request) }
 
     override suspend fun declineRequest(request: DeclineRequestRequest): DeclineRequestResponse =
-        gated("decline_request", Capability.CAPABILITY_DECLINE) {
-            val requestId = request.requestId.toSeerrRequestId()
-            connection.api().declineRequest(requestId)
-            requestCache.updateStatus(requestId, SeerrRequestStatusCode.Declined.raw)
-            DeclineRequestResponse.getDefaultInstance()
-        }
+        gated("decline_request", Capability.CAPABILITY_DECLINE) { requests.declineRequest(request) }
 
     override suspend fun retryRequest(request: RetryRequestRequest): RetryRequestResponse =
-        gated("retry_request", Capability.CAPABILITY_RETRY) {
-            connection.api().retryRequest(request.requestId.toSeerrRequestId())
-            RetryRequestResponse.getDefaultInstance()
-        }
+        gated("retry_request", Capability.CAPABILITY_RETRY) { requests.retryRequest(request) }
 
-    /**
-     * The request is read first because Seerr's update wants the media type on the body and keeps
-     * nothing else stable across an edit without it; the 4K flag and the destination ride along
-     * unchanged, since the server assigns each of them from the body and clears the ones it does not
-     * find. An empty set or a movie is refused here — the contract's INVALID_ARGUMENT — rather than
-     * sent for the server to reject in its own words.
-     */
     override suspend fun editRequest(request: EditRequestRequest): EditRequestResponse =
-        gated("edit_request", Capability.CAPABILITY_EDIT_SEASONS) {
-            if (request.seasonNumbersList.isEmpty()) throw invalidArgument("a request covers at least one season")
-            val seasons = request.seasonNumbersList.checkedSeasonNumbers()
-            val api = connection.api()
-            val requestId = request.requestId.toSeerrRequestId()
-            val current = api.request(requestId)
-            if (!current.media.mediaType.isSeerrTv()) throw invalidArgument("only a TV request has seasons to edit")
-            // The contract's INVALID_ARGUMENT for "a season the show does not have", which Seerr itself never checks.
-            api.tvDetails(current.media.tmdbId).checkHasSeasons(seasons)
-            val body =
-                SeerrEditRequestBody(
-                    mediaType = current.media.mediaType,
-                    seasons = seasons,
-                    is4k = current.is4k,
-                    serverId = current.serverId,
-                    profileId = current.profileId,
-                    rootFolder = current.rootFolder,
-                    tags = current.tags,
-                )
-            api.updateRequest(requestId, body)
-            EditRequestResponse.getDefaultInstance()
-        }
+        gated("edit_request", Capability.CAPABILITY_EDIT_SEASONS) { requests.editRequest(request) }
 
     override suspend fun getAttention(request: GetAttentionRequest): GetAttentionResponse =
         reportingFailure("get_attention") { GetAttentionResponse.newBuilder().setAttention(attention()).build() }
@@ -407,205 +211,22 @@ class SeerrRequestService(
 
     private suspend fun attention(): Attention = connection.readAttention()
 
-    /**
-     * The one operation that needs Seerr's own id space: the server's media record, not the TMDB id.
-     *
-     * An issue needs something to report against: the contract answers FAILED_PRECONDITION unless the title is
-     * available or partially available, an unrequested one included (#682). The 4K version counts for a user
-     * who may request 4K of its type (#704, #1604). One details read gives both that and Seerr's own media record id.
-     */
     override suspend fun reportIssue(request: ReportIssueRequest): ReportIssueResponse =
-        gated("report_issue", Capability.CAPABILITY_REPORT_ISSUE) {
-            val info = connection.api().details(request.media).mediaInfo
-            val status = info.toRequestStatus(clock())
-            val sees4k = mayRequest4k(request.media)
-            if (!status.isReportable(sees4k = sees4k)) {
-                // The 4K state is named only to a user who may see it, as withAllowedActions does for every status.
-                val fourK = if (sees4k) " (4K: ${status.version4k().availability})" else ""
-                throw StatusException(
-                    Status.FAILED_PRECONDITION.withDescription(
-                        "Nothing to report against: the title is ${status.standardVersion().availability}$fourK",
-                    ),
-                )
-            }
-            val mediaId = info.recordIdFor(request.media)
-            connection.api().createIssue(SeerrCreateIssueBody(mediaId, request.type.toSeerrIssueType(), request.message))
-            ReportIssueResponse.getDefaultInstance()
-        }
+        gated("report_issue", Capability.CAPABILITY_REPORT_ISSUE) { issues.reportIssue(request) }
 
-    /**
-     * A title the cache already knows is blocklisted is refused here, without asking Seerr: FAILED_PRECONDITION, as
-     * the contract says (#682). A cold cache falls through to Seerr, whose own refusal maps the same way.
-     */
-    private suspend fun refuseIfKnownBlocklisted(media: MediaId) {
-        if (cachedStatus(media)?.status?.standardVersion()?.availability == Availability.AVAILABILITY_BLOCKLISTED) {
-            throw BlocklistedTitleException()
-        }
-    }
-
-    /**
-     * A title already on the blocklist is OK and changes nothing, as the contract says (#1000). Seerr refuses the
-     * second add instead, and [addToBlocklistOnce] reads that refusal as done. A cached status could not decide this
-     * up front: a cold cache knows nothing, and the console may have blocked the title a moment ago.
-     */
     override suspend fun blockTitle(request: BlockTitleRequest): BlockTitleResponse =
-        gated("block_title", Capability.CAPABILITY_BLOCK) {
-            val body =
-                SeerrAddToBlocklistBody(
-                    tmdbId = request.media.tmdbId,
-                    mediaType = request.media.seerrMediaType(),
-                    title = request.title,
-                    user = connection.authenticatedUser().id,
-                )
-            connection.api().addToBlocklistOnce(connection.profile().blocklistPath, body)
-            BlockTitleResponse.getDefaultInstance()
-        }
+        gated("block_title", Capability.CAPABILITY_BLOCK) { issues.blockTitle(request) }
 
-    /**
-     * Keyed by TMDB id and media type, as the block was. A title the server has no entry for is NOT_FOUND: Seerr 3
-     * answers 404, and Jellyseerr 2.x's `blacklist` answers 401 with the session still alive (#998).
-     */
     override suspend fun unblockTitle(request: UnblockTitleRequest): UnblockTitleResponse =
-        gated("unblock_title", Capability.CAPABILITY_BLOCK) {
-            try {
-                connection.api().removeFromBlocklist(
-                    connection.profile().blocklistPath,
-                    request.media.tmdbId,
-                    connection.profile().unblockMediaType(request.media.seerrMediaType()),
-                )
-            } catch (e: HttpException) {
-                if (!e.refusedWithLiveSession()) throw e
-                throw StatusException(Status.NOT_FOUND.withDescription("The title is not on the blocklist"))
-            }
-            UnblockTitleResponse.getDefaultInstance()
-        }
+        gated("unblock_title", Capability.CAPABILITY_BLOCK) { issues.unblockTitle(request) }
 
-    /**
-     * Requires CAPABILITY_LIST_REQUESTS. One page of Seerr's `GET /request`, filtered as
-     * [SeerrRequestQuery] describes and paged by [ListRequestsPageToken]. Each entry's status is the
-     * title's, read as [getStatus] reads it, so a title's row in the status cache serves both. A title
-     * listed twice on a page (a standard and a 4K request) is looked up once.
-     *
-     * AWAITING_MODERATION is empty for a user who may not moderate, without asking Seerr: the server
-     * would answer with that user's own pending requests, which are not waiting on them.
-     */
     override suspend fun listRequests(request: ListRequestsRequest): ListRequestsResponse =
-        gatedRead("list_requests", Capability.CAPABILITY_LIST_REQUESTS) {
-            val query = request.filter.toSeerrQuery()
-            val pageSize = request.effectivePageSize()
-            val skip = ListRequestsPageToken.skipOf(request)
-            val user = connection.authenticatedUser()
-            val permissions = user.toPermissions()
-            if (query == SeerrRequestQuery.AwaitingModeration && !permissions.canManageRequests) {
-                ListRequestsResponse.getDefaultInstance()
-            } else {
-                val page =
-                    connection.api().requests(
-                        take = pageSize,
-                        skip = skip,
-                        filter = query.filter,
-                        sort = query.sort,
-                        requestedBy = user.id.takeIf { query.mine },
-                    )
-                val listed = page.results.mapNotNull { dto -> dto.media.toMediaId()?.let { it to dto } }
-                val statuses = statusesOf(listed.map { it.first })
-                val profile = connection.profile()
-                val response = ListRequestsResponse.newBuilder()
-                listed.forEach { (media, dto) ->
-                    val info = permissions.withAllowedActions(dto.toRequestInfo(), own = dto.requestedBy?.id == user.id, profile = profile)
-                    response.addEntries(
-                        RequestEntry
-                            .newBuilder()
-                            .setMedia(media)
-                            .setStatus(statuses.getValue(media))
-                            .setRequest(info),
-                    )
-                }
-                val next = skip + page.results.size
-                if (page.results.isNotEmpty() && next < page.pageInfo.results) {
-                    response.setNextPageToken(ListRequestsPageToken.issue(request, next))
-                }
-                response.build()
-            }
-        }
+        gatedRead("list_requests", Capability.CAPABILITY_LIST_REQUESTS) { listing.listRequests(request) }
 
-    /**
-     * Requires CAPABILITY_BATCH_STATUS. [getStatus] for each title, through the same cache. Every
-     * title is checked before any is looked up, so an unusable one fails the call without a request
-     * to Seerr. A title named twice is looked up once and answered twice, as the contract says.
-     */
     override suspend fun getStatuses(request: GetStatusesRequest): GetStatusesResponse =
-        gatedRead("get_statuses", Capability.CAPABILITY_BATCH_STATUS) {
-            if (request.mediaCount > MAX_STATUSES_PER_CALL) {
-                throw invalidArgument("at most $MAX_STATUSES_PER_CALL titles per call, was ${request.mediaCount}")
-            }
-            request.mediaList.forEach { it.seerrMediaType() }
-            val statuses = statusesOf(request.mediaList)
-            val response = GetStatusesResponse.newBuilder()
-            request.mediaList.forEach { media ->
-                response.addStatuses(
-                    TitleStatus
-                        .newBuilder()
-                        .setMedia(media)
-                        .setStatus(statuses.getValue(media)),
-                )
-            }
-            response.build()
-        }
-
-    /**
-     * Each distinct title's status, looked up side by side. At most [MAX_PARALLEL_LOOKUPS] go to the
-     * server at once, so a cold page does not open fifty connections to it.
-     */
-    private suspend fun statusesOf(media: List<MediaId>): Map<MediaId, RequestStatus> {
-        val lookups = Semaphore(MAX_PARALLEL_LOOKUPS)
-        return coroutineScope {
-            media
-                .distinct()
-                .map { title -> async { title to lookups.withPermit { status(title) } } }
-                .awaitAll()
-                .toMap()
-        }
-    }
+        gatedRead("get_statuses", Capability.CAPABILITY_BATCH_STATUS) { listing.getStatuses(request) }
 
     private suspend fun permissions(): SeerrPermissions = connection.authenticatedUser().toPermissions()
-
-    /**
-     * The title's status, from the cache while it is young enough for where the title is, and from
-     * the server otherwise.
-     *
-     * Allowed actions are never cached and never stored: the contract defines them as what this
-     * user may do right now, so they are recomputed against the live permissions on every read of
-     * the row. What is cached is the server's answer alone.
-     */
-    private suspend fun status(
-        media: MediaId,
-        allowCached: Boolean = true,
-    ): RequestStatus {
-        val user = connection.authenticatedUser()
-        val server = (if (allowCached) cachedStatus(media) else null) ?: fetchStatus(media)
-        return user.toPermissions().withAllowedActions(
-            server,
-            viewerId = user.id,
-            profile = connection.profile(),
-            isTv = media.seerrMediaType().isSeerrTv(),
-        )
-    }
-
-    private suspend fun cachedStatus(media: MediaId): CachedStatus? = statusCache.find(media)?.takeIf { freshness.isFresh(it, clock()) }
-
-    /**
-     * The row carries the download ETA the server's answer was turned into, so a cached one is up
-     * to its own maximum age out of date. That age is the poll interval for anything downloading,
-     * which is the same staleness a host subscribed to [observeStatus] already lives with.
-     */
-    private suspend fun fetchStatus(media: MediaId): CachedStatus {
-        val now = clock()
-        val info = connection.api().details(media).mediaInfo
-        val fetched = CachedStatus(info.toRequestStatus(now), now, info.requesterIds())
-        if (freshness.maxAgeMillis(fetched.status) != null) statusCache.put(media, fetched)
-        return fetched
-    }
 
     private suspend fun <T> gated(
         operation: String,
@@ -665,24 +286,13 @@ class SeerrRequestService(
 
     private suspend fun declared(): Set<Capability> = permissions().toCapabilities(connection.profile())
 
-    /** For a gated rpc only. A flag on a request is a bad argument, not a refused rpc: see [mayRequest4k]. */
+    /** For a gated rpc only. A flag on a request is a bad argument, not a refused rpc: see [SeerrConnection.mayRequest4k]. */
     private suspend fun checkDeclared(capability: Capability) {
         declared().requireDeclared(capability)
     }
 
-    /**
-     * Whether this user may request 4K of [media]'s type, which decides `is_4k` on a submit, the 4K servers on the advanced
-     * path and whether a 4K-only title is reportable. Narrower than the declared CAPABILITY_REQUEST_4K, which holds where
-     * either type is open: see [SeerrPermissions.mayRequest4k].
-     */
-    private suspend fun mayRequest4k(media: MediaId): Boolean =
-        permissions().mayRequest4k(media.seerrMediaType().isSeerrTv(), connection.profile().settings)
-
     private companion object {
         const val OBSERVE_INTERVAL_MILLIS = 15_000L
-
-        /** How many title lookups [statusesOf] sends to the server at once. */
-        const val MAX_PARALLEL_LOOKUPS = 4
 
         /** Coarser than a title's status: the host holds this stream open for as long as it runs. */
         const val ATTENTION_INTERVAL_MILLIS = 60_000L
