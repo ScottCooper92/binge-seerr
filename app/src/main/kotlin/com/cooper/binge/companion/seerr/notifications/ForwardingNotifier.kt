@@ -2,12 +2,10 @@ package com.cooper.binge.companion.seerr.notifications
 
 import com.binge.companion.contracts.v1.ForwardedNotification
 import com.binge.companion.contracts.v1.MediaId
-import com.binge.companion.contracts.v1.MediaType
 import com.binge.companion.contracts.v1.forwardedNotification
-import com.binge.companion.contracts.v1.mediaId
+import com.cooper.binge.companion.seerr.seerr.mediaIdOf
 import com.cooper.binge.companion.seerr.ui.issues.IssueItem
 import com.cooper.binge.companion.seerr.ui.requests.RequestItem
-import com.cooper.binge.companion.seerr.ui.requests.RequestMediaType
 import com.google.protobuf.timestamp
 
 /** The `kind` a forwarded connection notice carries; a signal's carries its own key. */
@@ -104,19 +102,6 @@ class ForwardingNotifier(
     private fun List<IssueItem>.issueBatch() =
         Batch(map { it.id }, mapNotNull { it.title }, singleOrNull()?.let { mediaIdOf(it.mediaType, it.tmdbId) })
 }
-
-private fun mediaIdOf(
-    type: RequestMediaType,
-    tmdb: Int,
-): MediaId? =
-    if (tmdb <= 0) {
-        null
-    } else {
-        mediaId {
-            mediaType = if (type == RequestMediaType.Tv) MediaType.MEDIA_TYPE_TV else MediaType.MEDIA_TYPE_MOVIE
-            tmdbId = tmdb
-        }
-    }
 
 private fun Long.toTimestamp() =
     timestamp {

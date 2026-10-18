@@ -3,6 +3,7 @@ package com.cooper.binge.companion.seerr.seerr
 import com.binge.companion.contracts.v1.MediaId
 import com.binge.companion.contracts.v1.MediaType
 import com.binge.companion.sdk.MAX_SEASON_NUMBERS
+import com.cooper.binge.companion.seerr.ui.requests.RequestMediaType
 import io.grpc.Status
 import io.grpc.StatusException
 
@@ -61,6 +62,24 @@ fun SeerrMediaDetailsDto.checkHasSeasons(seasons: List<Int>) {
         throw StatusException(Status.INVALID_ARGUMENT.withDescription("the show has no season ${unknown.joinToString()}"))
     }
 }
+
+/**
+ * The contract's [MediaId] for a title as this app names it, a [RequestMediaType] and a TMDB id. Null for a TMDB id that is not
+ * positive, which no host can look up: a caller leaves such a title out rather than send it on.
+ */
+fun mediaIdOf(
+    type: RequestMediaType,
+    tmdbId: Int,
+): MediaId? =
+    if (tmdbId <= 0) {
+        null
+    } else {
+        MediaId
+            .newBuilder()
+            .setMediaType(if (type == RequestMediaType.Tv) MediaType.MEDIA_TYPE_TV else MediaType.MEDIA_TYPE_MOVIE)
+            .setTmdbId(tmdbId)
+            .build()
+    }
 
 /**
  * The other direction: the contract's [MediaId] for a title as Seerr's request list names it. Null for a
