@@ -328,6 +328,70 @@ class MarkAsPageDismissTest {
     }
 }
 
+/** Closing the side sheet from the editor page ends the edit, so the editor does not reopen as a bottom sheet (#1654). */
+@RunWith(RobolectricTestRunner::class)
+@Config(qualifiers = "w900dp-h900dp")
+class EditorPageDismissTest {
+    @get:Rule
+    val rule = createSeerrComposeRule()
+
+    private var acting by mutableStateOf(true)
+    private var state by mutableStateOf(RequestDetailUiState.Ready(requestDetail(canEdit = true)))
+    private var editsDismissed = 0
+
+    private val editState =
+        EditState(seasons = listOf(SeasonChoice(1, "Season 1", 8, selected = true, heldStatus = null)), destination = null)
+
+    @Test
+    fun `a scrim tap on the editor page closes the sheet and ends the edit`() {
+        val actions =
+            RequestDetailActions(
+                onBack = {},
+                onRetry = {},
+                onReportIssue = { _, _ -> },
+                onDismissReport = {},
+                onApprove = {},
+                onRetryRequest = {},
+                onDecline = {},
+                onRemove = {},
+                onStartEdit = { state = state.copy(edit = editState) },
+                siblingSheet = {},
+                onOpenUser = {},
+                edit =
+                    EditRequestActions(
+                        onToggleSeason = {},
+                        onSelectAllSeasons = {},
+                        onSelectServer = {},
+                        onSelectProfile = {},
+                        onSelectRootFolder = {},
+                        onToggleTag = {},
+                        onSave = {},
+                        onDismiss = {
+                            editsDismissed++
+                            state = state.copy(edit = null)
+                        },
+                    ),
+                media = ManageMediaActions(onSetStatus = { _, _, _ -> }, onClearData = {}, onDeleteFiles = { _, _ -> }),
+            )
+        rule.setContent {
+            BingeExpressiveTheme(dynamicColor = false) {
+                RequestManagementSheets(state = state, actions = actions, acting = acting, onDismissActing = { acting = false })
+            }
+        }
+        rule.waitForIdle()
+        rule.onNodeWithText(string(R.string.request_edit_title)).performClick()
+        rule.waitForIdle()
+        rule.onNodeWithText(string(R.string.request_edit_save)).assertExists()
+
+        rule.onAllNodes(isRoot()).onLast().performTouchInput { click(Offset(8f, 8f)) }
+        rule.waitForIdle()
+
+        assertEquals(false, acting)
+        assertEquals(1, editsDismissed)
+        rule.onAllNodesWithText(string(R.string.request_edit_save)).assertCountEquals(0)
+    }
+}
+
 /** Below the expanded width the actions sheet stacks no pages, so Mark as is not one of them. */
 @RunWith(RobolectricTestRunner::class)
 @Config(qualifiers = "w400dp-h800dp")
