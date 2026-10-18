@@ -210,6 +210,8 @@ internal fun RequestManagementSheets(
     val item = detail?.item ?: preview?.item
     val media = detail?.media
     val markedInstance = marking?.let { is4k -> media?.instances?.firstOrNull { it.is4k == is4k } }
+    // Where the actions sheet stacks pages the editor and Mark as are pages of it; otherwise each is a sheet of its own.
+    val editsInActions = acting && isExpandedLayout()
     // One sheet from the preview to the loaded detail, so it grows in place rather than closing and reopening.
     if (acting && item != null) {
         RequestActionsSheet(
@@ -220,8 +222,10 @@ internal fun RequestManagementSheets(
             onDecline = actions.onDecline,
             onRemove = actions.onRemove,
             onDismiss = {
-                // Closing the sheet does not step back through its pages, so drop the mark here or it reopens on its own.
+                // Closing the sheet does not step back through its pages, so drop the mark and end the edit here, or
+                // each reopens on its own as a sheet.
                 marking = null
+                if (editsInActions && state?.edit != null) actions.edit.onDismiss()
                 onDismissActing()
             },
             canEdit = detail?.canEdit == true,
@@ -241,12 +245,9 @@ internal fun RequestManagementSheets(
             onMarkDismiss = { marking = null },
         )
     }
-    // Where the actions sheet stacks pages the editor is one of its pages; otherwise it is a sheet of its own.
-    val editsInActions = acting && isExpandedLayout()
     state?.edit?.takeUnless { editsInActions }?.let { edit ->
         EditRequestSheet(item = state.detail.item, edit = edit, actions = actions.edit)
     }
-    // Where the actions sheet stacks pages Mark as is one of its pages; otherwise it is a sheet of its own.
     if (media != null && markedInstance != null && !editsInActions) {
         MediaStatusSheet(
             instance = markedInstance,
