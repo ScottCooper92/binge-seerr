@@ -7,16 +7,21 @@ import com.cooper.binge.companion.seerr.data.FakeRequestStore
 import com.cooper.binge.companion.seerr.seerr.SeerrApiFactory
 import com.cooper.binge.companion.seerr.seerr.SeerrAuth
 import com.cooper.binge.companion.seerr.seerr.SeerrError
+import com.cooper.binge.companion.seerr.seerr.SeerrMediaStatusCode
 import com.cooper.binge.companion.seerr.seerr.SeerrRequestStatusCode
 import com.cooper.binge.companion.seerr.util.PlainCipher
 import com.cooper.binge.companion.seerr.util.RecordingAnalytics
 import com.cooper.binge.companion.seerr.util.RecordingCrashBreadcrumbs
 import com.cooper.binge.companion.seerr.util.awaitEvent
 import com.cooper.binge.companion.seerr.util.requestItem
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import mockwebserver3.Dispatcher
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
@@ -30,6 +35,9 @@ import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.util.concurrent.CopyOnWriteArrayList
 
+private const val SYNC_WAIT_MILLIS = 2_000L
+private const val POLL_MILLIS = 10L
+
 /** The write side over a real connection into a path-scripted Seerr, one that still serves the blocklist at its old path. */
 class RequestModerationTest {
     @get:Rule
@@ -38,6 +46,7 @@ class RequestModerationTest {
     private val seerr = MockWebServer()
     private val received = CopyOnWriteArrayList<RecordedRequest>()
     private val codes = mutableMapOf<String, Int>()
+    private val bodies = mutableMapOf<String, String>()
     private var moderated = 0
     private val cache = FakeRequestStore()
     private val analytics = RecordingAnalytics()
@@ -57,7 +66,7 @@ class RequestModerationTest {
                             "/api/v1/auth/me" -> """{"id":1,"permissions":2}"""
                             "/api/v1/status" -> """{"version":"2.7.0"}"""
                             "/api/v1/settings/public" -> """{"mediaServerType":2}"""
-                            else -> "{}"
+                            else -> bodies[path] ?: "{}"
                         }
                     return MockResponse(code = codes[path] ?: 200, headers = headersOf("Content-Type", "application/json"), body = body)
                 }
@@ -138,6 +147,45 @@ class RequestModerationTest {
             sut.remove(item, blockTitle = false)
             removed.await()
             assertEquals(listOf(12), cache.rows.map { it.id })
+        }
+
+    @Test
+    fun `a 4K request writes the 4K media status into the cache, not the regular one`() =
+        runTest {
+            val row = item.copy(is4k = true, mediaStatus = SeerrMediaStatusCode.Unknown)
+            cache.append("all:added:all", listOf(row.toEntity("all:added:all", 0)), null)
+            val sut = moderation()
+
+            bodies["/api/v1/request/11"] =
+                """{"id":11,"status":2,"is4k":true,"media":{"mediaType":"movie","tmdbId":550,"status":5,"status4k":3}}"""
+            val approved = awaitEvent(sut.events)
+            sut.approve(11)
+            approved.await()
+
+            withContext(Dispatchers.Default) {
+                withTimeout(SYNC_WAIT_MILLIS) {
+                    while (cache.rows.first().mediaStatus != SeerrMediaStatusCode.Processing.raw) delay(POLL_MILLIS)
+                }
+            }
+        }
+
+    @Test
+    fun `a request the server no longer has is dropped from the cache once the action lands, and its counts are re-read`() =
+        runTest {
+            cache.append("all:added:all", listOf(item.toEntity("all:added:all", 0)), null)
+            val sut = moderation()
+
+            codes["/api/v1/request/11"] = 404
+            val cleared = awaitEvent(sut.events)
+            sut.clearMedia(11, 900)
+            cleared.await()
+
+            // The cache sync follows the event on the network, so wait for it in real time.
+            withContext(Dispatchers.Default) {
+                withTimeout(SYNC_WAIT_MILLIS) {
+                    while (cache.rows.isNotEmpty() || received.none { it.url.encodedPath == "/api/v1/request/count" }) delay(POLL_MILLIS)
+                }
+            }
         }
 
     @Test
