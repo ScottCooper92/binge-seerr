@@ -93,8 +93,8 @@ private fun SettingsContent(
                 listOf(
                     ListItem(
                         icon = Icons.Filled.Tv,
-                        label = stringResource(R.string.hub_set_up_tv),
-                        detail = stringResource(R.string.hub_set_up_tv_detail),
+                        label = stringResource(R.string.hub_scan_tv_code),
+                        detail = stringResource(R.string.hub_scan_tv_code_detail),
                         onClick = rememberScanTvCode(),
                     ),
                 ),

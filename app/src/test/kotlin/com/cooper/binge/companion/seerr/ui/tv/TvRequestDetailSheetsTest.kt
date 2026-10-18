@@ -211,7 +211,7 @@ class TvRequestDetailSheetsTest {
 
         pressOk()
 
-        val body = string(R.string.tv_detail_report_on_phone, SERVER_NAME)
+        val body = string(R.string.tv_detail_report_on_phone, SERVER_NAME) + "\n" + string(R.string.tv_detail_report_scan_hint)
         composeTestRule.onNodeWithText(body).assertIsDisplayed()
         composeTestRule.onNode(hasContentDescription(body) and isFocusable()).assertIsFocused()
         composeTestRule.onNode(hasSetTextAction()).assertDoesNotExist()

@@ -170,7 +170,10 @@ class TvRequestManageFocusTest {
         openManage()
         sheetRow(R.string.issue_report_title).requestFocus()
         pressOk()
-        composeTestRule.onNodeWithText(string(R.string.tv_detail_report_on_phone, "Seerr")).assertExists()
+        composeTestRule
+            .onNodeWithText(
+                string(R.string.tv_detail_report_on_phone, "Seerr") + "\n" + string(R.string.tv_detail_report_scan_hint),
+            ).assertExists()
 
         pressBack()
         sheetRow(R.string.issue_report_title).assertIsFocused()

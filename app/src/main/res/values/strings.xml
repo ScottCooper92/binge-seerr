@@ -614,9 +614,9 @@
     <string name="settings_version_behind">%1$s · %2$d commits behind</string>
     <string name="settings_edit_connection">Edit connection</string>
     <string name="settings_edit_connection_caption">Change the server or sign in again</string>
-    <string name="hub_set_up_tv">Set up a TV</string>
-    <string name="hub_set_up_tv_detail">Scan the code on your TV to sign it in</string>
-    <string name="scan_tv_not_a_tv_code">That isn\'t a TV\'s setup code. Scan the code on your TV\'s setup screen.</string>
+    <string name="hub_scan_tv_code">Scan a TV code</string>
+    <string name="hub_scan_tv_code_detail">Sign in a TV or report from its code</string>
+    <string name="scan_tv_not_a_tv_code">That isn\'t a code from a TV. Scan the setup code or a report code shown on your TV.</string>
     <string name="scan_tv_unavailable">The scanner couldn\'t open on this phone. Scan the TV\'s code with your camera instead.</string>
     <string name="settings_value_unknown">Unknown</string>
     <string name="settings_value_on">On</string>
@@ -1139,6 +1139,7 @@
     <string name="tv_detail_info_requested">Requested</string>
     <string name="tv_detail_info_status">Status</string>
     <string name="tv_detail_manage">Manage</string>
+    <string name="tv_detail_report_scan_hint">In Seerr on your phone, open Settings, then Scan a TV code.</string>
     <string name="tv_detail_report_on_phone">Scan with your phone to open this title in %1$s, and report the issue there.</string>
     <string name="tv_detail_details">Details</string>
     <string name="settings_group_server_settings">Server settings</string>

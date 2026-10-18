@@ -1,12 +1,16 @@
 package com.cooper.binge.companion.seerr.ui.settings
 
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Tv
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import com.android.tools.screenshot.PreviewTest
 import com.binge.designsystem.component.ItemGroup
+import com.binge.designsystem.component.ListItem
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.notifications.NotificationSignal
 import com.cooper.binge.companion.seerr.preview.SeerrComponentPreviews
+import com.cooper.binge.companion.seerr.preview.SeerrFontScale13ComponentPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrFontScalePreviews
 import com.cooper.binge.companion.seerr.preview.SeerrScreenPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrScreenStatePreview
@@ -54,6 +58,36 @@ class SettingsScreenshotTest {
 
 /** The row groups on their own, each in the variants that change what a row says. */
 class SettingsGroupsScreenshotTest {
+    /** The scan row at a phone's larger text, where its one-line subtitle must still fit, and in Spanish. */
+    @PreviewTest
+    @SeerrFontScale13ComponentPreviews
+    @Composable
+    fun scanRowLargeText() = ScanRow()
+
+    @PreviewTest
+    @SeerrSpanishPreviews
+    @Composable
+    fun scanRowSpanish() = ScanRow()
+
+    @Composable
+    private fun ScanRow() =
+        ItemGroup(
+            title = null,
+            rows =
+                listOf(
+                    ListItem(
+                        icon = Icons.Filled.Tv,
+                        label =
+                            stringResource(
+                                R.string.hub_scan_tv_code,
+                            ),
+                        detail = stringResource(R.string.hub_scan_tv_code_detail),
+                        onClick = {
+                        },
+                    ),
+                ),
+        )
+
     /** Signed in with an API key, on a server that is current. */
     @PreviewTest
     @SeerrComponentPreviews

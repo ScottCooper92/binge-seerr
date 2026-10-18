@@ -254,7 +254,7 @@ internal fun ColumnScope.TvReportOnPhoneStep(
     TvSideSheetTitle(stringResource(R.string.issue_report_title))
     TvPhoneCode(
         url = webUrl,
-        body = stringResource(R.string.tv_detail_report_on_phone, serverName),
+        body = stringResource(R.string.tv_detail_report_on_phone, serverName) + "\n" + stringResource(R.string.tv_detail_report_scan_hint),
         modifier = Modifier.focusRequester(entryFocus),
     )
     TvSideSheetStepFocus(entryFocus)
