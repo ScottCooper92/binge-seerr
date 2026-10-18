@@ -84,8 +84,9 @@ internal fun rememberMyRequests(
     val viewModel = accountViewModel(accountId)
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val requests = viewModel.requests.collectAsLazyPagingItems()
-    // The list reads the request cache, which a moderation updates; a return still re-reads it here for changes made elsewhere. The first resume finds it still
-    // on its first load and leaves it be. The ViewModel's visibility belongs to the account page that shares it.
+    // The list reads the request cache, which a moderation updates. A return still re-reads it
+    // here for changes made elsewhere; the first resume finds it still on its first load and
+    // leaves it be. The ViewModel's visibility belongs to the account page that shares it.
     LifecycleResumeEffect(requests) {
         if (requests.loadState.refresh !is LoadState.Loading) requests.refresh()
         onPauseOrDispose {}
