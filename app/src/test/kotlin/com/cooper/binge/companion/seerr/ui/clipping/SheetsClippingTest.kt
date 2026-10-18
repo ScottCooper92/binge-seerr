@@ -242,7 +242,17 @@ class SheetsClippingTest {
                 onCancel = {},
             )
             SetupLinkContent(link = LinkFlow.QuickConnect(code = "482913"), onOpenPlex = {}, onCancel = {})
-            MediaServerLinkContent(origin = UserOrigin.Jellyfin, canQuickConnect = true, onQuickConnect = {}, onLink = { _, _ -> })
+            MediaServerLinkContent(
+                origin = UserOrigin.Jellyfin,
+                canQuickConnect = true,
+                username = "",
+                password = "",
+                onUsernameChange = {},
+                onPasswordChange = {},
+                onCredentials = { _, _ -> },
+                onQuickConnect = {},
+                onLink = { _, _ -> },
+            )
         }
     }
 

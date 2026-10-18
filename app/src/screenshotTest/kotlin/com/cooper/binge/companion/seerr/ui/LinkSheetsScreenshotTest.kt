@@ -39,11 +39,17 @@ class LinkSheetsScreenshotTest {
     @Composable
     fun mediaServerWithQuickConnect() =
         SheetFrame {
-            MediaServerLinkContent(origin = UserOrigin.Jellyfin, canQuickConnect = true, onQuickConnect = {}, onLink = {
-                _,
-                _,
-                ->
-            })
+            MediaServerLinkContent(
+                origin = UserOrigin.Jellyfin,
+                canQuickConnect = true,
+                username = "",
+                password = "",
+                onUsernameChange = {},
+                onPasswordChange = {},
+                onCredentials = { _, _ -> },
+                onQuickConnect = {},
+                onLink = { _, _ -> },
+            )
         }
 
     @PreviewTest
@@ -51,12 +57,34 @@ class LinkSheetsScreenshotTest {
     @Composable
     fun mediaServerExpanded() =
         SideSheetFrame {
-            MediaServerLinkContent(origin = UserOrigin.Jellyfin, canQuickConnect = true, onQuickConnect = {}, onLink = { _, _ -> })
+            MediaServerLinkContent(
+                origin = UserOrigin.Jellyfin,
+                canQuickConnect = true,
+                username = "",
+                password = "",
+                onUsernameChange = {},
+                onPasswordChange = {},
+                onCredentials = { _, _ -> },
+                onQuickConnect = {},
+                onLink = { _, _ -> },
+            )
         }
 
     @PreviewTest
     @SeerrComponentPreviews
     @Composable
     fun mediaServerCredentialsOnly() =
-        SheetFrame { MediaServerLinkContent(origin = UserOrigin.Emby, canQuickConnect = false, onQuickConnect = {}, onLink = { _, _ -> }) }
+        SheetFrame {
+            MediaServerLinkContent(
+                origin = UserOrigin.Emby,
+                canQuickConnect = false,
+                username = "",
+                password = "",
+                onUsernameChange = {},
+                onPasswordChange = {},
+                onCredentials = { _, _ -> },
+                onQuickConnect = {},
+                onLink = { _, _ -> },
+            )
+        }
 }
