@@ -70,13 +70,17 @@ internal fun ReportIssueSheet(
     }
 }
 
-/** The report's form, apart from the sheet. [onUnsentChange] says whether the message holds text not yet sent. */
+/**
+ * The report's form, apart from the sheet. [onUnsentChange] says whether the message holds text not yet sent, and [subtitle]
+ * names the title when the sheet was not opened from its own page.
+ */
 @Composable
 internal fun ReportIssueContent(
     report: IssueReport,
     onSend: (IssueType, String) -> Unit,
     modifier: Modifier = Modifier,
     onUnsentChange: (Boolean) -> Unit = {},
+    subtitle: String? = null,
 ) {
     var type by rememberSaveable { mutableStateOf(IssueType.Video) }
     var message by rememberSaveable { mutableStateOf("") }
@@ -92,6 +96,7 @@ internal fun ReportIssueContent(
         verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
     ) {
         Text(stringResource(R.string.issue_report_title), style = MaterialTheme.typography.titleLarge)
+        subtitle?.let { Text(it, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) }
         Row(
             modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
             horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),

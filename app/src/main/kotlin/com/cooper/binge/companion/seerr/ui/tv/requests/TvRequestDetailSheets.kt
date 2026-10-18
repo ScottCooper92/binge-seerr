@@ -27,6 +27,7 @@ import com.binge.designsystem.tv.component.TvSideSheetStepFocus
 import com.binge.designsystem.tv.component.TvSideSheetTitle
 import com.binge.designsystem.tv.focus.TvOverlayCloser
 import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.handoff.TitleReportLinks
 import com.cooper.binge.companion.seerr.ui.requests.EditState
 import com.cooper.binge.companion.seerr.ui.requests.MediaInstance
 import com.cooper.binge.companion.seerr.ui.requests.MediaRecord
@@ -159,7 +160,7 @@ internal fun ColumnScope.TvRequestDetailPage(
                 onDispose { shown(false) }
             }
         }
-        DetailSheet.Report -> TvReportOnPhoneStep(content.webUrl, content.serverName, entryFocus)
+        DetailSheet.Report -> TvReportOnPhoneStep(TitleReportLinks.write(content.webUrl, content.item.is4k), content.serverName, entryFocus)
         DetailSheet.Remove, DetailSheet.Block -> Unit
     }
 }

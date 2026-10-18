@@ -194,6 +194,17 @@
             android:theme="@style/Theme.SeerrSendAddress" />
 
         <!--
+            The report for a title a TV's code named (#1511), started only by this app's own scan, so it is not exported
+            and has no intent filter: no link or other app can open it.
+        -->
+        <activity
+            android:name=".ReportTitleActivity"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:taskAffinity=""
+            android:theme="@style/Theme.SeerrSendAddress" />
+
+        <!--
             exported="true" is the integration surface: the host reaches this Service with
             bindService, and what guards it is the caller policy in SeerrCompanionService, not the
             manifest. android:process is deliberately absent so the Service runs under this app's

@@ -219,6 +219,14 @@
     <string name="issue_report_message">¿Qué falla?</string>
     <string name="issue_report_send">Enviar el aviso</string>
     <string name="issue_report_sent">Enviado</string>
+    <string name="report_title_checking">Comprobando el servidor…</string>
+    <string name="report_title_different_server">Este código es de %1$s, pero este móvil está conectado a %2$s. Una incidencia solo puede ir al servidor en el que este móvil ha iniciado sesión.</string>
+    <string name="report_title_signed_out">Este móvil no ha iniciado sesión en ningún servidor. Inicia sesión y vuelve a escanear el código.</string>
+    <string name="report_title_cannot_report">Esta cuenta no puede informar de incidencias en este servidor.</string>
+    <string name="report_title_not_tracked">%1$s todavía no está en este servidor, así que no hay nada sobre lo que informar.</string>
+    <string name="report_title_open_app">Abrir la app</string>
+    <string name="report_title_close">Cerrar</string>
+    <string name="report_title_version_4k">%1$s · 4K</string>
     <string name="issue_report_failed">No se pudo enviar el aviso. Inténtalo de nuevo.</string>
     <string name="issue_type_video">Vídeo</string>
     <string name="issue_type_audio">Audio</string>
