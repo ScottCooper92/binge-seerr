@@ -26,17 +26,29 @@ internal fun CommentComposerSheet(
     onDismiss: () -> Unit,
 ) {
     BingeAdaptiveSheet(kind = BingeSheetKind.Task, onDismissRequest = onDismiss) {
-        TextEntrySurface(
-            title = stringResource(R.string.issue_comment_title),
-            value = draft,
-            onValueChange = onDraftChange,
-            onSubmit = onSubmit,
-            onCancel = onDismiss,
-            submitLabel = stringResource(R.string.issue_comment_send),
-            hint = stringResource(R.string.issue_comment_hint),
-            modifier = Modifier.imePadding(),
-        )
+        CommentComposerContent(draft = draft, onDraftChange = onDraftChange, onSubmit = onSubmit, onCancel = onDismiss)
     }
+}
+
+/** [CommentComposerSheet]'s body without its window, for a frame. */
+@Composable
+internal fun CommentComposerContent(
+    draft: String,
+    onDraftChange: (String) -> Unit,
+    onSubmit: () -> Unit,
+    onCancel: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    TextEntrySurface(
+        title = stringResource(R.string.issue_comment_title),
+        value = draft,
+        onValueChange = onDraftChange,
+        onSubmit = onSubmit,
+        onCancel = onCancel,
+        submitLabel = stringResource(R.string.issue_comment_send),
+        hint = stringResource(R.string.issue_comment_hint),
+        modifier = modifier.imePadding(),
+    )
 }
 
 /** Editing a comment: Done is live only for a change, and hands it over; the page saves it as it is made (#930). */
@@ -50,17 +62,38 @@ internal fun EditCommentSheet(
     onDismiss: () -> Unit,
 ) {
     BingeAdaptiveSheet(kind = BingeSheetKind.Task, onDismissRequest = onDismiss) {
-        TextEntrySurface(
+        EditCommentContent(
             title = title,
-            value = draft,
-            onValueChange = onDraftChange,
+            draft = draft,
+            original = original,
+            onDraftChange = onDraftChange,
             onSubmit = onSubmit,
             onCancel = onDismiss,
-            submitLabel = stringResource(R.string.editor_done),
-            submitEnabled = draft.isNotBlank() && draft.trim() != original.trim(),
-            modifier = Modifier.imePadding(),
         )
     }
+}
+
+/** [EditCommentSheet]'s body without its window, for a frame. */
+@Composable
+internal fun EditCommentContent(
+    title: String,
+    draft: String,
+    original: String,
+    onDraftChange: (String) -> Unit,
+    onSubmit: () -> Unit,
+    onCancel: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    TextEntrySurface(
+        title = title,
+        value = draft,
+        onValueChange = onDraftChange,
+        onSubmit = onSubmit,
+        onCancel = onCancel,
+        submitLabel = stringResource(R.string.editor_done),
+        submitEnabled = draft.isNotBlank() && draft.trim() != original.trim(),
+        modifier = modifier.imePadding(),
+    )
 }
 
 /** A comment the user may act on: edit, or delete through a confirm. */

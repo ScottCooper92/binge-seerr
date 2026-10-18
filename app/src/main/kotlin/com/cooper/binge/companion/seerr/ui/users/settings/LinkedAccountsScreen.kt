@@ -210,51 +210,79 @@ private fun MediaServerLinkSheet(
     onLink: (String, String) -> Unit,
     onDismiss: () -> Unit,
 ) {
+    // Held above the sheet: it composes its content in a different place across the expanded breakpoint.
     var username by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
     BingeAdaptiveSheet(kind = BingeSheetKind.Task, onDismissRequest = onDismiss) {
-        Column(
-            modifier = Modifier.fillMaxWidth().padding(dimensionResource(DesR.dimen.screen_content_inset)),
-            verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
-        ) {
-            Text(
-                stringResource(R.string.user_settings_link_sheet_title, stringResource(origin.labelRes())),
-                style = MaterialTheme.typography.titleLarge,
-            )
-            if (canQuickConnect) {
-                BingeOutlinedButton(
-                    label = stringResource(R.string.user_settings_link_quick_connect),
-                    onClick = onQuickConnect,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
-            EditorTextField(
-                username,
-                stringResource(R.string.setup_username),
-                modifier =
-                    Modifier.savedLoginRequest { login ->
-                        username = login.id
-                        password = login.password
-                    },
-                keyboardType = VerbatimKeyboard.keyboardType,
-                autoCorrect = VerbatimKeyboard.autoCorrectEnabled ?: true,
-                placeholder = stringResource(R.string.setup_username_placeholder, stringResource(origin.labelRes())),
-                contentType = ContentType.Username,
-            ) { username = it }
-            EditorTextField(
-                password,
-                stringResource(R.string.setup_password),
-                secret = true,
-                contentType = ContentType.Password,
-                imeAction = ImeAction.Done,
-                onDone = { if (username.isNotBlank() && password.isNotBlank()) onLink(username, password) },
-            ) { password = it }
-            BingeFilledButton(
-                label = stringResource(R.string.user_settings_link),
-                onClick = { onLink(username, password) },
-                enabled = username.isNotBlank() && password.isNotBlank(),
+        MediaServerLinkContent(
+            origin = origin,
+            canQuickConnect = canQuickConnect,
+            username = username,
+            password = password,
+            onUsernameChange = { username = it },
+            onPasswordChange = { password = it },
+            onCredentials = { id, secret ->
+                username = id
+                password = secret
+            },
+            onQuickConnect = onQuickConnect,
+            onLink = onLink,
+        )
+    }
+}
+
+/** [MediaServerLinkSheet]'s body without its window, for a frame. The typed credentials are the caller's. */
+@Composable
+internal fun MediaServerLinkContent(
+    origin: UserOrigin,
+    canQuickConnect: Boolean,
+    username: String,
+    password: String,
+    onUsernameChange: (String) -> Unit,
+    onPasswordChange: (String) -> Unit,
+    onCredentials: (String, String) -> Unit,
+    onQuickConnect: () -> Unit,
+    onLink: (String, String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier.fillMaxWidth().padding(dimensionResource(DesR.dimen.screen_content_inset)),
+        verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
+    ) {
+        Text(
+            stringResource(R.string.user_settings_link_sheet_title, stringResource(origin.labelRes())),
+            style = MaterialTheme.typography.titleLarge,
+        )
+        if (canQuickConnect) {
+            BingeOutlinedButton(
+                label = stringResource(R.string.user_settings_link_quick_connect),
+                onClick = onQuickConnect,
                 modifier = Modifier.fillMaxWidth(),
             )
         }
+        EditorTextField(
+            username,
+            stringResource(R.string.setup_username),
+            modifier =
+                Modifier.savedLoginRequest { login -> onCredentials(login.id, login.password) },
+            keyboardType = VerbatimKeyboard.keyboardType,
+            autoCorrect = VerbatimKeyboard.autoCorrectEnabled ?: true,
+            placeholder = stringResource(R.string.setup_username_placeholder, stringResource(origin.labelRes())),
+            contentType = ContentType.Username,
+        ) { onUsernameChange(it) }
+        EditorTextField(
+            password,
+            stringResource(R.string.setup_password),
+            secret = true,
+            contentType = ContentType.Password,
+            imeAction = ImeAction.Done,
+            onDone = { if (username.isNotBlank() && password.isNotBlank()) onLink(username, password) },
+        ) { onPasswordChange(it) }
+        BingeFilledButton(
+            label = stringResource(R.string.user_settings_link),
+            onClick = { onLink(username, password) },
+            enabled = username.isNotBlank() && password.isNotBlank(),
+            modifier = Modifier.fillMaxWidth(),
+        )
     }
 }

@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import com.android.tools.screenshot.PreviewTest
 import com.cooper.binge.companion.seerr.preview.SeerrComponentPreviews
 import com.cooper.binge.companion.seerr.preview.SheetFrame
+import com.cooper.binge.companion.seerr.preview.SideSheetFrame
 
 /**
  * The stateless bodies of the issue and comment action sheets. Modal windows do not capture, so each
@@ -47,4 +48,50 @@ class IssueSheetsScreenshotTest {
     @SeerrComponentPreviews
     @Composable
     fun outboxSending() = SheetFrame { OutboxActionsContent(retryable = false, sending = true, onRetry = {}, onEdit = {}, onDrop = {}) }
+
+    /** The composer's empty draft, with Send off until there is something to send. */
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun commentComposerEmpty() = SheetFrame { CommentComposerContent(draft = "", onDraftChange = {}, onSubmit = {}, onCancel = {}) }
+
+    /** At the expanded width the composer is a side sheet's page. */
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun commentComposerExpanded() =
+        SideSheetFrame {
+            CommentComposerContent(draft = "The subtitles drift two seconds out of sync.", onDraftChange = {}, onSubmit = {}, onCancel = {})
+        }
+
+    /** Editing: Done stays off until the text differs from what was sent. */
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun editCommentChanged() =
+        SheetFrame {
+            EditCommentContent(
+                title = "Edit comment",
+                draft = "Subtitles drift by three seconds.",
+                original = "Subtitles drift by two seconds.",
+                onDraftChange = {},
+                onSubmit = {},
+                onCancel = {},
+            )
+        }
+
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun editCommentExpanded() =
+        SideSheetFrame {
+            EditCommentContent(
+                title = "Edit comment",
+                draft = "Subtitles drift by three seconds.",
+                original = "Subtitles drift by two seconds.",
+                onDraftChange = {},
+                onSubmit = {},
+                onCancel = {},
+            )
+        }
 }

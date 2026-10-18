@@ -10,6 +10,8 @@ import com.cooper.binge.companion.seerr.seerr.SeerrMediaStatusCode
 import com.cooper.binge.companion.seerr.seerr.SeerrSignInMode
 import com.cooper.binge.companion.seerr.ui.Choice
 import com.cooper.binge.companion.seerr.ui.DestinationChoices
+import com.cooper.binge.companion.seerr.ui.LinkFlow
+import com.cooper.binge.companion.seerr.ui.SetupLinkContent
 import com.cooper.binge.companion.seerr.ui.SignInForm
 import com.cooper.binge.companion.seerr.ui.handoff.SendAddressActions
 import com.cooper.binge.companion.seerr.ui.handoff.SendAddressSheetContent
@@ -17,6 +19,8 @@ import com.cooper.binge.companion.seerr.ui.handoff.SendAddressUiState
 import com.cooper.binge.companion.seerr.ui.handoff.SignInOffer
 import com.cooper.binge.companion.seerr.ui.handoff.SignInStep
 import com.cooper.binge.companion.seerr.ui.issues.CommentActionsContent
+import com.cooper.binge.companion.seerr.ui.issues.CommentComposerContent
+import com.cooper.binge.companion.seerr.ui.issues.EditCommentContent
 import com.cooper.binge.companion.seerr.ui.issues.IssueManageContent
 import com.cooper.binge.companion.seerr.ui.issues.OutboxActionsContent
 import com.cooper.binge.companion.seerr.ui.requests.EditRequestActions
@@ -44,6 +48,7 @@ import com.cooper.binge.companion.seerr.ui.users.ImportUsersContent
 import com.cooper.binge.companion.seerr.ui.users.PermissionsEditorContent
 import com.cooper.binge.companion.seerr.ui.users.UserAdmissionActions
 import com.cooper.binge.companion.seerr.ui.users.UserOrigin
+import com.cooper.binge.companion.seerr.ui.users.settings.MediaServerLinkContent
 import com.cooper.binge.companion.seerr.ui.users.settings.TextSettingContent
 import com.cooper.binge.companion.seerr.util.createSeerrComposeRule
 import com.cooper.binge.companion.seerr.util.requestDetail
@@ -80,6 +85,10 @@ class SheetsClippingTest {
     @Test fun `the issue sheets at 1_3`() = rule.assertNoClippingAt(FONT_SCALE_13) { IssueSheets() }
 
     @Test fun `the issue sheets at 2_0`() = rule.assertNoClippingAt(FONT_SCALE_20) { IssueSheets() }
+
+    @Test fun `the link sheets at 1_3`() = rule.assertNoClippingAt(FONT_SCALE_13) { LinkSheets() }
+
+    @Test fun `the link sheets at 2_0`() = rule.assertNoClippingAt(FONT_SCALE_20) { LinkSheets() }
 
     @Test fun `the editor sheets at 1_3`() = rule.assertNoClippingAt(FONT_SCALE_13) { EditorSheets() }
 
@@ -213,6 +222,44 @@ class SheetsClippingTest {
             }, onOpenMediaServer = {}, onOpenService = {})
             CommentActionsContent(onEdit = {}, onDelete = {})
             OutboxActionsContent(retryable = true, onRetry = {}, onEdit = {}, onDrop = {})
+            CommentComposerContent(draft = LONG_NAME, onDraftChange = {}, onSubmit = {}, onCancel = {})
+            EditCommentContent(
+                title = "Edit $LONG_NAME",
+                draft = LONG_NAME,
+                original = "",
+                onDraftChange = {},
+                onSubmit = {},
+                onCancel = {},
+            )
+        }
+    }
+
+    @Composable
+    private fun LinkSheets() {
+        Column {
+            SetupLinkContent(
+                link =
+                    LinkFlow.Plex(
+                        code = "A1B2",
+                        authUrl = "https://app.plex.tv/auth",
+                        launchPending = false,
+                    ),
+                onOpenPlex = {
+                },
+                onCancel = {},
+            )
+            SetupLinkContent(link = LinkFlow.QuickConnect(code = "482913"), onOpenPlex = {}, onCancel = {})
+            MediaServerLinkContent(
+                origin = UserOrigin.Jellyfin,
+                canQuickConnect = true,
+                username = "",
+                password = "",
+                onUsernameChange = {},
+                onPasswordChange = {},
+                onCredentials = { _, _ -> },
+                onQuickConnect = {},
+                onLink = { _, _ -> },
+            )
         }
     }
 
