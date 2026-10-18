@@ -6,9 +6,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Dns
 import androidx.compose.material.icons.filled.LinkOff
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -167,6 +169,9 @@ private fun ColumnScope.GroupPage(
     }
     // Pinned under the rows, not among them, so a long page scrolls under it rather than carrying it out of sight.
     if (household != null && group.isHousehold()) {
+        // A refusal has no timer on a television, so it goes when its page does.
+        val leave by rememberUpdatedState(household.onLeave)
+        DisposableEffect(Unit) { onDispose { leave() } }
         TvSaveStatus(
             status = household.status,
             onRetry = household.onRetry,

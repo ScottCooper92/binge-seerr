@@ -114,9 +114,10 @@ private fun TvAdminSettingsSheet(
                     (general as? ExtrasEditorUiState.Ready)?.let {
                         TvHousehold(
                             settings = it.draft,
-                            status = it.saveStatus,
+                            status = tvSaveStatus(it.saveStatus, it.saveRefusal),
                             onChange = generalViewModel::edit,
                             onRetry = generalViewModel::save,
+                            onLeave = generalViewModel::clearRefusal,
                         )
                     },
                 agents =

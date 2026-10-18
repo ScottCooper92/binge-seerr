@@ -36,6 +36,8 @@ sealed interface ExtrasEditorUiState<out T, out X> {
         val saving: Boolean = false,
         val saveFailed: Boolean = false,
         val saveStatus: SaveStatus = SaveStatus.Idle,
+        /** As [EditorUiState.Ready.saveRefusal]. */
+        val saveRefusal: SeerrError? = null,
     ) : ExtrasEditorUiState<T, X> {
         val dirty: Boolean get() = draft != saved
     }
@@ -56,6 +58,7 @@ internal fun <T, X> ExtrasEditorUiState<T, X>.toEditorUiState(): EditorUiState<T
                 saving = saving,
                 saveFailed = saveFailed,
                 saveStatus = saveStatus,
+                saveRefusal = saveRefusal,
             )
         is ExtrasEditorUiState.Error -> EditorUiState.Error(error)
     }
@@ -136,7 +139,9 @@ abstract class ExtrasEditorViewModel<T, X>(
                 isTransient = { it.toSeerrError().isTransient },
                 refused = { failure ->
                     val error = failure.toSeerrError()
-                    state.update { current -> (current as? ExtrasEditorUiState.Ready<T, X>)?.let { it.copy(draft = it.saved) } ?: current }
+                    state.update { current ->
+                        (current as? ExtrasEditorUiState.Ready<T, X>)?.let { it.copy(draft = it.saved, saveRefusal = error) } ?: current
+                    }
                     eventFlow.emit(EditorEvent.Failed(error))
                 },
             )
@@ -168,10 +173,23 @@ abstract class ExtrasEditorViewModel<T, X>(
         val before = ready()?.draft
         state.update { current ->
             val ready = current as? ExtrasEditorUiState.Ready<T, X> ?: return@update current
-            if (ready.saving) ready else ready.copy(draft = transform(ready.draft))
+            if (ready.saving) {
+                ready
+            } else {
+                val draft = transform(ready.draft)
+                // A change moves past the refusal of the one before it.
+                ready.copy(draft = draft, saveRefusal = ready.saveRefusal.takeIf { draft == ready.draft })
+            }
         }
         if (ready()?.draft != before) saveAsMade?.changed()
         ready()?.let { savedDraft?.keep(it.draft.takeIf { draft -> draft != it.saved }) }
+    }
+
+    /** As [EditorViewModel.clearRefusal]. */
+    fun clearRefusal() {
+        state.update { current ->
+            (current as? ExtrasEditorUiState.Ready<T, X>)?.takeIf { it.saveRefusal != null }?.copy(saveRefusal = null) ?: current
+        }
     }
 
     /** Writes the draft; on a page that saves as it changes, this is the retry after a write that failed. */

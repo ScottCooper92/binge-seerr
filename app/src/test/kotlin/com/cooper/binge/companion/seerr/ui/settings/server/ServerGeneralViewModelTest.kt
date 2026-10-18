@@ -1,9 +1,11 @@
 package com.cooper.binge.companion.seerr.ui.settings.server
 
 import androidx.lifecycle.ViewModelStore
+import com.binge.designsystem.SaveStatus
 import com.binge.designsystem.save.SAVE_AS_MADE_DELAY_MILLIS
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.seerr.SeerrAuth
+import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.seerr.SeerrVariant
 import com.cooper.binge.companion.seerr.ui.users.settings.ADMIN
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorEvent
@@ -259,6 +261,44 @@ class ServerGeneralViewModelTest {
             val saved = vm.awaitReady { !it.saveFailed && !it.dirty }
             assertEquals("Cinema", saved.saved.applicationTitle)
             assertEquals(2, seerr.count("POST", "/api/v1/settings/main"))
+        }
+
+    /** A refusal is kept in the state, as well as sent as an event, so a television page that was not collecting still shows why. */
+    @Test
+    fun `a write the server refuses puts the change back and keeps the reason until the next change`() =
+        runTest {
+            seerr.viewer(id = 1, permissions = ADMIN)
+            seerr.serve("POST /api/v1/settings/main", """{"message":"bad value"}""", code = 400)
+            val vm = viewModel()
+            vm.awaitReady()
+
+            vm.edit { it.copy(applicationTitle = "Cinema") }
+            advanceTimeBy(SAVE_AS_MADE_DELAY_MILLIS + 1)
+
+            val refused = vm.awaitReady { it.saveRefusal != null }
+            assertEquals(SeerrError.Rejected, refused.saveRefusal)
+            assertFalse("a refusal is not kept for retry", refused.saveFailed)
+            assertFalse("back to the saved record", refused.dirty)
+            assertEquals(SaveStatus.Idle, refused.saveStatus)
+
+            vm.edit { it.copy(applicationTitle = "Cinema") }
+            assertNull("the next change moves past it", vm.awaitReady().saveRefusal)
+        }
+
+    @Test
+    fun `leaving the page clears a refusal that has no timer to take it down`() =
+        runTest {
+            seerr.viewer(id = 1, permissions = ADMIN)
+            seerr.serve("POST /api/v1/settings/main", """{"message":"bad value"}""", code = 400)
+            val vm = viewModel()
+            vm.awaitReady()
+            vm.edit { it.copy(applicationTitle = "Cinema") }
+            advanceTimeBy(SAVE_AS_MADE_DELAY_MILLIS + 1)
+            vm.awaitReady { it.saveRefusal != null }
+
+            vm.clearRefusal()
+
+            assertNull(vm.awaitReady().saveRefusal)
         }
 
     /** Leaving the page straight after a change: the change still goes out, on the application's scope. */
