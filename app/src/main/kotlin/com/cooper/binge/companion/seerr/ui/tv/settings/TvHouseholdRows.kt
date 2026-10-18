@@ -30,6 +30,7 @@ import com.cooper.binge.companion.seerr.ui.settings.server.AgentsUiState
 import com.cooper.binge.companion.seerr.ui.settings.server.ServerAgent
 import com.cooper.binge.companion.seerr.ui.settings.server.ServerGeneralSettings
 import com.cooper.binge.companion.seerr.ui.settings.server.labelRes
+import com.cooper.binge.companion.seerr.ui.tv.tvSaveStatus
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorUiState
 
 internal const val KEY_HOUSEHOLD_PREFIX = "household:"
@@ -50,13 +51,15 @@ internal fun String.agentOrNull(): ServerAgent? =
 
 /**
  * The household's server settings, as the sheet edits them: the draft, how its last change stands, and what to do about it.
- * Each toggle is saved as it is pressed, so [status] is the only feedback and [onRetry] its one action.
+ * Each toggle is saved as it is pressed, so [status] is the only feedback and [onRetry] its one action. A refused change
+ * shows as [SaveStatus.Refused], with no Retry, until the next change or until the page is left, which calls [onLeave].
  */
 internal class TvHousehold(
     val settings: ServerGeneralSettings,
     val status: SaveStatus,
     val onChange: ((ServerGeneralSettings) -> ServerGeneralSettings) -> Unit,
     val onRetry: () -> Unit,
+    val onLeave: () -> Unit = {},
 )
 
 /** The notification agents: the list's state, and the page that switches one on or off, supplied by the host that owns its view model. */
@@ -174,7 +177,7 @@ internal fun ColumnScope.TvAgentPage(
                     role = Role.Switch,
                 ) { isFocused -> TvSwitch(checked = form.enabled, isFocused = isFocused) }
             }
-            TvSaveStatus(status = state.saveStatus, onRetry = onRetry)
+            TvSaveStatus(status = tvSaveStatus(state.saveStatus, state.saveRefusal), onRetry = onRetry)
         }
     }
 }

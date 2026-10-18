@@ -31,6 +31,8 @@ sealed interface EditorUiState<out T> {
         /** A page that saves as it changes could not write its last change, which is kept, unsent. */
         val saveFailed: Boolean = false,
         val saveStatus: SaveStatus = SaveStatus.Idle,
+        /** Why the server refused the last change, which was put back. It stays until the next change, or [EditorViewModel.clearRefusal]. */
+        val saveRefusal: SeerrError? = null,
     ) : EditorUiState<T> {
         val dirty: Boolean get() = draft != saved
     }
@@ -134,7 +136,9 @@ abstract class EditorViewModel<T>(
                 isTransient = { it.toSeerrError().isTransient },
                 refused = { failure ->
                     val error = failure.toSeerrError()
-                    state.update { current -> (current as? EditorUiState.Ready<T>)?.let { it.copy(draft = it.saved) } ?: current }
+                    state.update { current ->
+                        (current as? EditorUiState.Ready<T>)?.let { it.copy(draft = it.saved, saveRefusal = error) } ?: current
+                    }
                     eventFlow.emit(EditorEvent.Failed(error))
                 },
             )
@@ -172,10 +176,23 @@ abstract class EditorViewModel<T>(
         val before = ready()?.draft
         state.update { current ->
             val ready = current as? EditorUiState.Ready<T> ?: return@update current
-            if (ready.saving) ready else ready.copy(draft = transform(ready.draft))
+            if (ready.saving) {
+                ready
+            } else {
+                val draft = transform(ready.draft)
+                // A change moves past the refusal of the one before it.
+                ready.copy(draft = draft, saveRefusal = ready.saveRefusal.takeIf { draft == ready.draft })
+            }
         }
         if (ready()?.draft != before) saveAsMade?.changed()
         ready()?.let { savedDraft?.keep(it.draft.takeIf { draft -> draft != it.saved }) }
+    }
+
+    /** Drops the refusal a page was showing, as it is left: a television page shows it in place, with no timer to take it down. */
+    fun clearRefusal() {
+        state.update { current ->
+            (current as? EditorUiState.Ready<T>)?.takeIf { it.saveRefusal != null }?.copy(saveRefusal = null) ?: current
+        }
     }
 
     /** Writes the draft; on a page that saves as it changes, this is the retry after a write that failed. */

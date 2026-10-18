@@ -6,8 +6,10 @@ import com.android.tools.screenshot.PreviewTest
 import com.binge.designsystem.SaveStatus
 import com.binge.designsystem.tv.component.TvConfirmDialogContent
 import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.preview.SeerrTvFontScaleScreenPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrTvScreenPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrTvSpanishScreenPreviews
+import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.ui.FIXED_NOW_MILLIS
 import com.cooper.binge.companion.seerr.ui.hub.BingeStatus
 import com.cooper.binge.companion.seerr.ui.hub.ConnectionHealth
@@ -30,6 +32,7 @@ import com.cooper.binge.companion.seerr.ui.settings.server.PLEX_FULL_SCAN_JOB_ID
 import com.cooper.binge.companion.seerr.ui.settings.server.ServerAgent
 import com.cooper.binge.companion.seerr.ui.settings.server.ServerGeneralSettings
 import com.cooper.binge.companion.seerr.ui.settings.server.ServerJob
+import com.cooper.binge.companion.seerr.ui.state.messageRes
 import com.cooper.binge.companion.seerr.ui.tv.SampleSettings
 import com.cooper.binge.companion.seerr.ui.tv.SampleSettingsAdmin
 import com.cooper.binge.companion.seerr.ui.tv.SampleSettingsWithApp
@@ -263,6 +266,24 @@ class TvSettingsScreenshotTest {
         Sheet(SampleSettingsAdmin, page = householdPage(), actions = householdActions(SaveStatus.Failed))
     }
 
+    /** A switch the server refused: it is back as it was, and the line says why, in the words the phone's snackbar uses, with no Retry. */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun HouseholdRefused() {
+        val refused = SaveStatus.Refused(stringResource(SeerrError.Rejected.messageRes()))
+        Sheet(SampleSettingsAdmin, page = householdPage(), actions = householdActions(refused))
+    }
+
+    /** The longest refusal at a larger text size, which wraps in the sheet's width without being cut. */
+    @PreviewTest
+    @SeerrTvFontScaleScreenPreviews
+    @Composable
+    fun HouseholdRefusedFontScale() {
+        val refused = SaveStatus.Refused(stringResource(SeerrError.Unauthorized.messageRes()))
+        Sheet(SampleSettingsAdmin, page = householdPage(), actions = householdActions(refused))
+    }
+
     /** The notification agents the server offers, each with whether it is on. */
     @PreviewTest
     @SeerrTvScreenPreviews
@@ -277,6 +298,15 @@ class TvSettingsScreenshotTest {
     @Composable
     fun AgentPage() {
         Sheet(SampleSettingsAdmin, page = agentPage(ServerAgent.Discord), actions = agentActions(configured = true))
+    }
+
+    /** An agent's switch the server refused: it is back off, and the page says why with no Retry. */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun AgentPageRefused() {
+        val actions = agentActions(configured = true, refusal = SeerrError.Forbidden)
+        Sheet(SampleSettingsAdmin, page = agentPage(ServerAgent.Discord), actions = actions)
     }
 
     /** An agent that cannot send until a setting is filled in: its switch is out of reach and the page says where to finish. */
@@ -307,36 +337,39 @@ class TvSettingsScreenshotTest {
                 ),
         )
 
-    private fun agentActions(configured: Boolean = true) =
-        TvSettingsActions(
-            agents =
-                TvAgents(
-                    state =
-                        AgentsUiState.Ready(
-                            listOf(
-                                AgentSummary(ServerAgent.Discord, enabled = false),
-                                AgentSummary(ServerAgent.Email, enabled = true),
-                                AgentSummary(ServerAgent.Slack, enabled = null),
-                            ),
+    private fun agentActions(
+        configured: Boolean = true,
+        refusal: SeerrError? = null,
+    ) = TvSettingsActions(
+        agents =
+            TvAgents(
+                state =
+                    AgentsUiState.Ready(
+                        listOf(
+                            AgentSummary(ServerAgent.Discord, enabled = false),
+                            AgentSummary(ServerAgent.Email, enabled = true),
+                            AgentSummary(ServerAgent.Slack, enabled = null),
                         ),
-                    page = { agent, nav ->
-                        val form =
-                            AgentForm(
-                                agent,
-                                enabled = false,
-                                options =
-                                    if (configured) {
-                                        mapOf(
-                                            AgentOption.DiscordWebhookUrl to "https://discord.test/hook",
-                                        )
-                                    } else {
-                                        emptyMap()
-                                    },
-                            )
-                        TvAgentPage(nav, agent, EditorUiState.Ready(draft = form, saved = form, saveStatus = SaveStatus.Saved), {}, {})
-                    },
-                ),
-        )
+                    ),
+                page = { agent, nav ->
+                    val form =
+                        AgentForm(
+                            agent,
+                            enabled = false,
+                            options =
+                                if (configured) {
+                                    mapOf(
+                                        AgentOption.DiscordWebhookUrl to "https://discord.test/hook",
+                                    )
+                                } else {
+                                    emptyMap()
+                                },
+                        )
+                    val ready = EditorUiState.Ready(draft = form, saved = form, saveStatus = SaveStatus.Saved, saveRefusal = refusal)
+                    TvAgentPage(nav, agent, ready, {}, {})
+                },
+            ),
+    )
 
     private fun TvSettingsActions.withAgents() = TvSettingsActions(household = household, agents = agentActions().agents)
 
