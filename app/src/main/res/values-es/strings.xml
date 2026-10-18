@@ -221,6 +221,7 @@
     <string name="issue_report_sent">Enviado</string>
     <string name="report_title_checking">Comprobando el servidor…</string>
     <string name="report_title_different_server">Este código es de %1$s, pero este móvil está conectado a %2$s. Si son el mismo servidor, puedes informar en el servidor de este móvil. Una incidencia solo va al servidor en el que este móvil ha iniciado sesión.</string>
+    <string name="report_title_other_server">Este móvil ha iniciado sesión en otro servidor de Seerr (%2$s), y este código es de %1$s. Una incidencia solo va al servidor en el que este móvil ha iniciado sesión.</string>
     <string name="report_title_anyway">Informar en el servidor de este móvil de todos modos</string>
     <string name="report_title_signed_out">Este móvil no ha iniciado sesión en ningún servidor. Inicia sesión y vuelve a escanear el código.</string>
     <string name="report_title_cannot_report">Esta cuenta no puede informar de incidencias en este servidor.</string>

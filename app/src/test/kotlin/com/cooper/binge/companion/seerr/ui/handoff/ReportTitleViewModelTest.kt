@@ -12,6 +12,7 @@ import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
@@ -111,7 +112,7 @@ class ReportTitleViewModelTest {
             val other = here().copy(serverId = OTHER_ID)
             val vm = viewModel(other)
 
-            assertTrue(vm.settled() is ReportTitleUiState.DifferentServer)
+            assertTrue((vm.settled() as ReportTitleUiState.DifferentServer).confirmed)
             assertEquals(0, seerr.count("GET", "/api/v1/movie/949"))
 
             vm.reportAnyway()
@@ -131,7 +132,7 @@ class ReportTitleViewModelTest {
             val other = TitleReportLink("http://100.103.24.117:30042/", "movie", 949, is4k = false, serverId = OTHER_ID)
             val vm = viewModel(other)
 
-            assertTrue(vm.settled() is ReportTitleUiState.DifferentServer)
+            assertFalse((vm.settled() as ReportTitleUiState.DifferentServer).confirmed)
 
             vm.reportAnyway()
 

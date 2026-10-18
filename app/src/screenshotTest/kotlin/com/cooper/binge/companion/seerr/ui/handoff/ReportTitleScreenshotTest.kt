@@ -56,6 +56,13 @@ class ReportTitleScreenshotTest {
     @PreviewTest
     @SeerrComponentPreviews
     @Composable
+    fun otherServer() =
+        SheetFrame {
+            Body(ReportTitleUiState.DifferentServer(theirs = "192.168.86.38:30042", yours = "100.103.24.117:30042", confirmed = true))
+        }
+
+    @SeerrComponentPreviews
+    @Composable
     fun differentServer() = SheetFrame { Body(ReportTitleUiState.DifferentServer(theirs = "seerr.example", yours = "192.168.1.10:5055")) }
 
     @PreviewTest

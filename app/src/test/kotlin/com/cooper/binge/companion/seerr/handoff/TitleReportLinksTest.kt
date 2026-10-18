@@ -105,6 +105,16 @@ class TitleReportLinksTest {
     }
 
     @Test
+    fun `only two known and different ids make it another server for certain`() {
+        val link = TitleReportLinks.parse("https://seerr.example/movie/900?sid=$ID")!!
+
+        assertTrue(TitleReportLinks.isOtherServerById(link, OTHER_ID))
+        assertFalse(TitleReportLinks.isOtherServerById(link, ID))
+        assertFalse(TitleReportLinks.isOtherServerById(link, null))
+        assertFalse(TitleReportLinks.isOtherServerById(TitleReportLinks.parse("https://seerr.example/movie/900")!!, OTHER_ID))
+    }
+
+    @Test
     fun `with an id on only one side the addresses decide`() {
         val withId = TitleReportLinks.parse("https://seerr.example/movie/900?sid=$ID")!!
         val without = TitleReportLinks.parse("https://seerr.example/movie/900")!!

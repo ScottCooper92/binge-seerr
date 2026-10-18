@@ -62,7 +62,12 @@ internal fun ReportTitleContent(
         is ReportTitleUiState.DifferentServer ->
             Note(
                 modifier,
-                message = stringResource(R.string.report_title_different_server, state.theirs, state.yours),
+                message =
+                    stringResource(
+                        if (state.confirmed) R.string.report_title_other_server else R.string.report_title_different_server,
+                        state.theirs,
+                        state.yours,
+                    ),
                 onReportAnyway = actions.onReportAnyway,
                 onClose = actions.onClose,
             )

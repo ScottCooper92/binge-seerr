@@ -242,6 +242,7 @@
     <string name="issue_report_sent">Reported</string>
     <string name="report_title_checking">Checking the server…</string>
     <string name="report_title_different_server">This code is for %1$s, but this phone is connected to %2$s. If they are the same server, you can report on this phone\'s server instead. A report only ever goes to the server this phone is signed in to.</string>
+    <string name="report_title_other_server">This phone is signed in to a different Seerr server (%2$s), and this code is for %1$s. A report only ever goes to the server this phone is signed in to.</string>
     <string name="report_title_anyway">Report on this phone\'s server anyway</string>
     <string name="report_title_signed_out">This phone isn\'t signed in to a server. Sign in, then scan the code again.</string>
     <string name="report_title_cannot_report">This account can\'t report issues on this server.</string>

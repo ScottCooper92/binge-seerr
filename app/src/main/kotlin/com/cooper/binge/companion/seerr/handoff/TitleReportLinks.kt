@@ -86,5 +86,11 @@ internal object TitleReportLinks {
         return theirs == normaliseServerAddress(connected)
     }
 
+    /** Whether both ends name themselves and the names differ: a different server for certain, not only by address. */
+    fun isOtherServerById(
+        link: TitleReportLink,
+        connectedId: String?,
+    ): Boolean = link.serverId != null && connectedId != null && link.serverId != connectedId
+
     private fun String.isUsableServerId() = length <= SERVER_ID_MAX_LENGTH && SERVER_ID_SHAPE.matches(this)
 }

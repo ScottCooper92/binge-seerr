@@ -46,6 +46,8 @@ sealed interface ReportTitleUiState {
     data class DifferentServer(
         val theirs: String,
         val yours: String,
+        /** Both servers named themselves and the names differ, so this phone is signed in to another server for certain. */
+        val confirmed: Boolean = false,
     ) : ReportTitleUiState
 
     data object SignedOut : ReportTitleUiState
@@ -91,7 +93,11 @@ class ReportTitleViewModel
             // A profile that cannot be read leaves the id unknown, which the addresses then decide.
             val connectedId = attempt { connection.profile().instanceId }.getOrNull()
             if (!TitleReportLinks.isSameServer(link, connected, connectedId)) {
-                return ReportTitleUiState.DifferentServer(theirs = label(link.server), yours = label(connected))
+                return ReportTitleUiState.DifferentServer(
+                    theirs = label(link.server),
+                    yours = label(connected),
+                    confirmed = TitleReportLinks.isOtherServerById(link, connectedId),
+                )
             }
             return lookUp()
         }
