@@ -305,7 +305,7 @@ class RequestModeration(
      */
     private suspend fun syncCache(requestId: Int) {
         attempt { connection.api().request(requestId) }.fold(
-            onSuccess = { cache.updateServerState(requestId, it.status?.raw, it.media.status?.raw) },
+            onSuccess = { cache.updateServerState(requestId, it.status?.raw, it.mediaStatusOfRequestedVersion()?.raw) },
             onFailure = { if ((it as? HttpException)?.code() == HTTP_NOT_FOUND) cache.delete(requestId) },
         )
         attempt { connection.api().requestCount() }.onSuccess {

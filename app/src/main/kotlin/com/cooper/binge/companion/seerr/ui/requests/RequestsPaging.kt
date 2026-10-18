@@ -4,6 +4,7 @@ import com.binge.companion.sdk.paging.OffsetPage
 import com.cooper.binge.companion.seerr.seerr.HydratedTitle
 import com.cooper.binge.companion.seerr.seerr.SeerrApi
 import com.cooper.binge.companion.seerr.seerr.SeerrDownloadStatusDto
+import com.cooper.binge.companion.seerr.seerr.SeerrMediaStatusCode
 import com.cooper.binge.companion.seerr.seerr.SeerrRequestDto
 import com.cooper.binge.companion.seerr.seerr.SeerrRequestsPageDto
 import com.cooper.binge.companion.seerr.seerr.displayString
@@ -61,7 +62,7 @@ suspend fun SeerrRequestDto.toRequestItem(
         requestedByAvatarUrl = requestedBy?.avatar.toAvatarUrl(),
         requestedAtMillis = createdAt?.toEpochMillisOrNull(),
         status = status,
-        mediaStatus = if (is4k) media.status4k else media.status,
+        mediaStatus = mediaStatusOfRequestedVersion(),
         download = statuses.toDownload(nowMillis),
         seasonNumbers = seasons.map { it.seasonNumber },
         is4k = is4k,
@@ -70,6 +71,9 @@ suspend fun SeerrRequestDto.toRequestItem(
         certification = details?.certification,
     )
 }
+
+/** The media's status for the version this request asked for: the 4K one for a 4K request, the regular one otherwise. */
+internal fun SeerrRequestDto.mediaStatusOfRequestedVersion(): SeerrMediaStatusCode? = if (is4k) media.status4k else media.status
 
 private fun List<SeerrDownloadStatusDto>.toDownload(nowMillis: Long): RequestDownload? {
     if (isEmpty()) return null
