@@ -1294,14 +1294,21 @@ class SeerrRequestServiceTest {
             val stub = connected()
             seerr.enqueue(json("{}"))
 
-            stub.declineRequest(DeclineRequestRequest.newBuilder().setRequestId("4").setReason("Out of the budget").build())
+            stub.declineRequest(declineWithReason("Out of the budget"))
 
             val declined = seerr.takeRequest()
             assertEquals("/api/v1/request/4/decline", declined.url.encodedPath)
             assertFalse(declined.bodyText().contains("budget"))
-            val tooLong = DeclineRequestRequest.newBuilder().setRequestId("4").setReason("x".repeat(1001)).build()
+            val tooLong = declineWithReason("x".repeat(1001))
             assertEquals(Status.Code.INVALID_ARGUMENT, stub.code { declineRequest(tooLong) })
         }
+
+    private fun declineWithReason(reason: String) =
+        DeclineRequestRequest
+            .newBuilder()
+            .setRequestId("4")
+            .setReason(reason)
+            .build()
 
     /** The contract: nothing to report against unless the title is available or partially available (#682). */
     @Test
