@@ -6,6 +6,7 @@ import com.binge.companion.contracts.request.v1.Availability
 import com.binge.companion.contracts.request.v1.BlockTitleRequest
 import com.binge.companion.contracts.request.v1.CancelRequestRequest
 import com.binge.companion.contracts.request.v1.Capability
+import com.binge.companion.contracts.request.v1.DeclineRequestRequest
 import com.binge.companion.contracts.request.v1.DestinationChoices
 import com.binge.companion.contracts.request.v1.EditRequestRequest
 import com.binge.companion.contracts.request.v1.GetAdvancedRequestOptionsRequest
@@ -1213,6 +1214,87 @@ class SeerrRequestServiceTest {
                     .orEmpty()
                     .contains("\"issueType\":2"),
             )
+        }
+
+    @Test
+    fun `a report against a season and episode carries both to the server, and a plain one carries neither`() =
+        runTest {
+            val stub = connected()
+            seerr.enqueue(json("""{"mediaInfo":{"id":9,"status":5}}"""))
+            seerr.enqueue(MockResponse(code = 201))
+
+            stub.reportIssue(
+                ReportIssueRequest
+                    .newBuilder()
+                    .setMedia(show)
+                    .setType(IssueType.ISSUE_TYPE_SUBTITLE)
+                    .setSeasonNumber(2)
+                    .setEpisodeNumber(5)
+                    .build(),
+            )
+
+            seerr.takeRequest()
+            val body = seerr.takeRequest().body?.utf8().orEmpty()
+            assertTrue(body, body.contains("\"problemSeason\":2"))
+            assertTrue(body, body.contains("\"problemEpisode\":5"))
+        }
+
+    @Test
+    fun `a report names the 4K version in the message, to a user who may request 4K`() =
+        runTest {
+            val stub = connected(publicSettings = MOVIE_4K_ENABLED, permissions = REQUEST or REQUEST_4K or CREATE_ISSUES)
+            seerr.enqueue(json(AVAILABLE_ONLY_IN_4K))
+            seerr.enqueue(MockResponse(code = 201))
+
+            stub.reportIssue(
+                ReportIssueRequest
+                    .newBuilder()
+                    .setMedia(movie)
+                    .setType(IssueType.ISSUE_TYPE_VIDEO)
+                    .setMessage("blocky")
+                    .setVersionId("4k")
+                    .build(),
+            )
+
+            seerr.takeRequest()
+            val body = seerr.takeRequest().body?.utf8().orEmpty()
+            assertTrue(body, body.contains("blocky\\n\\n(4K version)"))
+        }
+
+    /** The contract's bad arguments are refused before the server is asked anything. */
+    @Test
+    fun `a report with a scope the contract refuses is INVALID_ARGUMENT, and asks the server nothing`() =
+        runTest {
+            val stub = connected()
+            val before = seerr.requestCount
+            val base = ReportIssueRequest.newBuilder().setType(IssueType.ISSUE_TYPE_VIDEO)
+
+            val refused =
+                listOf(
+                    base.clone().setMedia(show).setSeasonNumber(-1),
+                    base.clone().setMedia(movie).setSeasonNumber(1),
+                    base.clone().setMedia(show).setEpisodeNumber(3),
+                    base.clone().setMedia(show).setSeasonNumber(1).setEpisodeNumber(-1),
+                    base.clone().setMedia(movie).setCategoryId("42"),
+                ).map { stub.code { reportIssue(it.build()) } }
+
+            assertEquals(List(5) { Status.Code.INVALID_ARGUMENT }, refused)
+            assertEquals(before, seerr.requestCount)
+        }
+
+    @Test
+    fun `a decline reason is accepted and not sent, and one past 1000 characters is INVALID_ARGUMENT`() =
+        runTest {
+            val stub = connected()
+            seerr.enqueue(json("{}"))
+
+            stub.declineRequest(DeclineRequestRequest.newBuilder().setRequestId("4").setReason("Out of the budget").build())
+
+            val declined = seerr.takeRequest()
+            assertEquals("/api/v1/request/4/decline", declined.url.encodedPath)
+            assertFalse(declined.body?.utf8().orEmpty().contains("budget"))
+            val tooLong = DeclineRequestRequest.newBuilder().setRequestId("4").setReason("x".repeat(1001)).build()
+            assertEquals(Status.Code.INVALID_ARGUMENT, stub.code { declineRequest(tooLong) })
         }
 
     /** The contract: nothing to report against unless the title is available or partially available (#682). */

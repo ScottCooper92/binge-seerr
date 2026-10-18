@@ -48,6 +48,8 @@ import io.grpc.Status
 import io.grpc.StatusException
 import retrofit2.HttpException
 
+private const val MAX_DECLINE_REASON = 1000
+
 /** The REQUEST v1 writes that make, moderate and change a request, and the advanced path's reads. [SeerrRequestService] gates them. */
 internal class SeerrRequestRpcs(
     private val connection: SeerrConnection,
@@ -220,6 +222,10 @@ internal class SeerrRequestRpcs(
     }
 
     suspend fun declineRequest(request: DeclineRequestRequest): DeclineRequestResponse {
+        // Seerr's decline takes no reason, so a valid one is accepted and dropped, as the contract allows.
+        if (request.reason.codePointCount(0, request.reason.length) > MAX_DECLINE_REASON) {
+            throw invalidArgument("reason is longer than $MAX_DECLINE_REASON characters")
+        }
         val requestId = request.requestId.toSeerrRequestId()
         connection.api().declineRequest(requestId)
         requestCache.updateStatus(requestId, SeerrRequestStatusCode.Declined.raw)
