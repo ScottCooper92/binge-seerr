@@ -16,7 +16,6 @@ import com.binge.companion.contracts.request.v1.GetStatusesRequest
 import com.binge.companion.contracts.request.v1.HandshakeRequest
 import com.binge.companion.contracts.request.v1.HandshakeResponse
 import com.binge.companion.contracts.request.v1.IssueType
-import com.binge.companion.contracts.request.v1.ListNotificationsRequest
 import com.binge.companion.contracts.request.v1.ListRequestsRequest
 import com.binge.companion.contracts.request.v1.ListRequestsResponse
 import com.binge.companion.contracts.request.v1.ObserveAttentionRequest
@@ -28,7 +27,6 @@ import com.binge.companion.contracts.request.v1.RetryRequestRequest
 import com.binge.companion.contracts.request.v1.SubmitAdvancedRequestRequest
 import com.binge.companion.contracts.request.v1.SubmitRequestRequest
 import com.binge.companion.contracts.request.v1.UnblockTitleRequest
-import com.binge.companion.contracts.request.v1.setNotificationForwardingRequest
 import com.binge.companion.contracts.v1.MediaId
 import com.binge.companion.contracts.v1.MediaType
 import com.binge.companion.sdk.MAX_SEASON_NUMBERS
@@ -41,8 +39,6 @@ import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.data.CachedStatus
 import com.cooper.binge.companion.seerr.data.MediaStatusStore
 import com.cooper.binge.companion.seerr.data.NoMediaStatusStore
-import com.cooper.binge.companion.seerr.notifications.NotificationForwarding
-import com.cooper.binge.companion.seerr.notifications.NotificationPrefs
 import com.cooper.binge.companion.seerr.seerr.SeerrApiFactory
 import com.cooper.binge.companion.seerr.seerr.SeerrAuth
 import com.cooper.binge.companion.seerr.seerr.SeerrCredentials
@@ -137,12 +133,6 @@ class SeerrRequestServiceTest {
             .setTmdbId(603)
             .build()
 
-    /** Wired as the exported Service wires it, so a handshake declares forwarding as it does in the app. */
-    private fun notificationRpcs(): SeerrNotificationRpcs {
-        val store = PreferenceDataStoreFactory.create { folder.newFile("notifications.preferences_pb") }
-        return SeerrNotificationRpcs(NotificationForwarding(store), NotificationPrefs(store))
-    }
-
     private fun connected(
         permissions: Int = ADMIN,
         version: String = "2.7.0",
@@ -177,7 +167,6 @@ class SeerrRequestServiceTest {
                     bingeConnection = bingeConnection,
                     analytics = analytics,
                     userMessages = userMessages,
-                    notifications = notificationRpcs(),
                 ),
             )
         // One handshake up front consumes the profile's two answers and `auth/me` and caches all
@@ -239,7 +228,6 @@ class SeerrRequestServiceTest {
                     Capability.CAPABILITY_LIST_REQUESTS,
                     Capability.CAPABILITY_LIST_MINE_RECENTLY_AVAILABLE,
                     Capability.CAPABILITY_BATCH_STATUS,
-                    Capability.CAPABILITY_FORWARD_NOTIFICATIONS,
                 ),
                 response.capabilitiesList.toSet(),
             )
@@ -254,11 +242,12 @@ class SeerrRequestServiceTest {
     fun `a rebind is told what the user may do now, not when the process started`() =
         runTest {
             val stub = connected(permissions = REQUEST)
-            assertFalse(Capability.CAPABILITY_REQUEST_4K in stub.handshakeAs(REQUEST).capabilitiesList)
+            assertTrue(stub.handshakeAs(REQUEST).versionsList.isEmpty())
 
             val response = stub.handshakeAs(REQUEST or REQUEST_4K_PERMISSION, publicSettings = MOVIE_4K_ENABLED)
 
-            assertTrue(Capability.CAPABILITY_REQUEST_4K in response.capabilitiesList)
+            assertEquals(listOf("4k"), response.versionsList.map { it.id })
+            assertTrue(response.versionsList.single().highResolution)
         }
 
     @Test
@@ -510,7 +499,7 @@ class SeerrRequestServiceTest {
             seerr.enqueue(MockResponse(code = 409))
             seerr.enqueue(json("""{"mediaInfo":{"status":2}}"""))
             stub.submitRequest(request)
-            assertEquals(Status.Code.INVALID_ARGUMENT, stub.code { submitRequest(request.toBuilder().setIs4K(true).build()) })
+            assertEquals(Status.Code.INVALID_ARGUMENT, stub.code { submitRequest(request.toBuilder().setVersionId("4k").build()) })
             assertEquals(emptyList<Any>(), analytics.events)
 
             seerr.enqueue(MockResponse(code = 500, body = """{"message":"boom 603"}"""))
@@ -655,7 +644,7 @@ class SeerrRequestServiceTest {
                 SubmitRequestRequest
                     .newBuilder()
                     .setMedia(movie)
-                    .setIs4K(true)
+                    .setVersionId("4k")
                     .build()
 
             seerr.enqueue(json("""{"id":77}"""))
@@ -714,7 +703,7 @@ class SeerrRequestServiceTest {
             val destination =
                 stub.getAdvancedRequestOptions(GetAdvancedRequestOptionsRequest.newBuilder().setMedia(movie).build()).destination
 
-            assertEquals(listOf(1 to false, 2 to true), destination.serversList.map { it.id.toInt() to it.is4K })
+            assertEquals(listOf(1 to false, 2 to true), destination.serversList.map { it.id.toInt() to (it.versionId == "4k") })
             assertEquals("1", destination.selectedServerId)
             assertEquals(listOf("4" to "HD", "5" to "UHD"), destination.profilesList.map { it.id to it.label })
             assertEquals("4", destination.selectedProfileId)
@@ -746,7 +735,7 @@ class SeerrRequestServiceTest {
             val destination =
                 stub.getAdvancedRequestOptions(GetAdvancedRequestOptionsRequest.newBuilder().setMedia(movie).build()).destination
 
-            assertEquals(listOf(5 to true), destination.serversList.map { it.id.toInt() to it.is4K })
+            assertEquals(listOf(5 to true), destination.serversList.map { it.id.toInt() to (it.versionId == "4k") })
             assertEquals("", destination.selectedServerId)
             assertTrue(destination.profilesList.isEmpty())
             assertTrue(destination.rootFoldersList.isEmpty())
@@ -769,7 +758,7 @@ class SeerrRequestServiceTest {
             val destination =
                 stub.getAdvancedRequestOptions(GetAdvancedRequestOptionsRequest.newBuilder().setMedia(movie).build()).destination
 
-            assertEquals(listOf(1 to false), destination.serversList.map { it.id.toInt() to it.is4K })
+            assertEquals(listOf(1 to false), destination.serversList.map { it.id.toInt() to (it.versionId == "4k") })
             assertEquals("1", destination.selectedServerId)
         }
 
@@ -924,8 +913,8 @@ class SeerrRequestServiceTest {
     ): Boolean =
         connected(permissions)
             .handshakeAs(permissions, publicSettings = settings)
-            .capabilitiesList
-            .contains(Capability.CAPABILITY_REQUEST_4K)
+            .versionsList
+            .any { it.id == "4k" }
 
     @Test
     fun `4K is declared where the permission and the server's 4K setting for a media type agree`() =
@@ -963,7 +952,7 @@ class SeerrRequestServiceTest {
                         SubmitRequestRequest
                             .newBuilder()
                             .setMedia(movie)
-                            .setIs4K(true)
+                            .setVersionId("4k")
                             .build(),
                     )
                 }
@@ -995,7 +984,7 @@ class SeerrRequestServiceTest {
                         SubmitRequestRequest
                             .newBuilder()
                             .setMedia(movie)
-                            .setIs4K(true)
+                            .setVersionId("4k")
                             .build(),
                     )
                 }
@@ -1040,7 +1029,7 @@ class SeerrRequestServiceTest {
                     SubmitRequestRequest
                         .newBuilder()
                         .setMedia(movie)
-                        .setIs4K(true)
+                        .setVersionId("4k")
                         .build(),
                 )
 
@@ -1060,7 +1049,7 @@ class SeerrRequestServiceTest {
                         SubmitRequestRequest
                             .newBuilder()
                             .setMedia(show)
-                            .setIs4K(true)
+                            .setVersionId("4k")
                             .build(),
                     )
                 }
@@ -1078,7 +1067,7 @@ class SeerrRequestServiceTest {
 
             val status = stub.getStatus(GetStatusRequest.newBuilder().setMedia(show).build()).status
 
-            assertEquals(listOf(false), status.versionsList.map { it.is4K })
+            assertEquals(listOf(false), status.versionsList.map { it.versionId == "4k" })
         }
 
     @Test
@@ -1147,44 +1136,10 @@ class SeerrRequestServiceTest {
         }
 
     /**
-     * Forwarding needs no session (binge-companions#249): what is queued is still Binge's to show after
-     * the session breaks, so it is declared alongside the attention read, and its rpcs answer.
+     * A rejected session still handshakes, declaring only the attention read that reports it as `needs_reconnect`.
      */
     @Test
-    fun `forwarding is declared and served with nothing connected`() =
-        runTest {
-            val store = CredentialStore(PreferenceDataStoreFactory.create { folder.newFile("empty.preferences_pb") }, PlainCipher)
-            val stub =
-                serve(
-                    SeerrRequestService(
-                        SeerrConnection(store, SeerrApiFactory(logRequests = false)),
-                        "0.1.0-test",
-                        notifications = notificationRpcs(),
-                    ),
-                )
-
-            val handshake = stub.handshake(HandshakeRequest.getDefaultInstance())
-            assertEquals(SESSIONLESS, handshake.capabilitiesList)
-            stub.setNotificationForwarding(setNotificationForwardingRequest { enabled = true })
-            assertEquals(0, stub.listNotifications(ListNotificationsRequest.getDefaultInstance()).notificationsCount)
-        }
-
-    @Test
-    fun `forwarding unwired is undeclared, and its rpcs are PERMISSION_DENIED`() =
-        runTest {
-            val store = CredentialStore(PreferenceDataStoreFactory.create { folder.newFile("empty.preferences_pb") }, PlainCipher)
-            val stub = serve(SeerrRequestService(SeerrConnection(store, SeerrApiFactory(logRequests = false)), "0.1.0-test"))
-
-            assertEquals(listOf(Capability.CAPABILITY_ATTENTION), stub.handshake(HandshakeRequest.getDefaultInstance()).capabilitiesList)
-            assertEquals(Status.Code.PERMISSION_DENIED, stub.code { listNotifications(ListNotificationsRequest.getDefaultInstance()) })
-        }
-
-    /**
-     * A rejected session still handshakes, declaring the attention read that reports it as `needs_reconnect`,
-     * and forwarding, which needs no session.
-     */
-    @Test
-    fun `a rejected session handshakes with only the attention read and forwarding`() =
+    fun `a rejected session handshakes with only the attention read`() =
         runTest {
             val stub = connected(permissions = ADMIN)
             seerr.enqueueProfile(json("""{"version":"2.7.0"}"""), json("""{"initialized":true}"""))
@@ -1192,7 +1147,7 @@ class SeerrRequestServiceTest {
 
             val handshake = stub.handshake(HandshakeRequest.getDefaultInstance())
 
-            assertEquals(SESSIONLESS, handshake.capabilitiesList)
+            assertEquals(listOf(Capability.CAPABILITY_ATTENTION), handshake.capabilitiesList)
             assertEquals("Jellyseerr", handshake.providerName)
         }
 
@@ -1329,7 +1284,7 @@ class SeerrRequestServiceTest {
             val status = stub.getStatus(GetStatusRequest.newBuilder().setMedia(movie).build()).status
 
             assertEquals("https://media.local/web/details?id=1", status.standardVersion().watchUrl)
-            assertEquals(listOf(false), status.versionsList.map { it.is4K })
+            assertEquals(listOf(false), status.versionsList.map { it.versionId == "4k" })
             assertFalse(status.versionsList.any { it.watchUrl.contains("media4k") })
         }
 
@@ -1359,7 +1314,7 @@ class SeerrRequestServiceTest {
 
             assertEquals(1_000L, status.standardVersion().download.totalBytes)
             assertEquals(0.5f, status.standardVersion().download.fraction, 0.0001f)
-            assertEquals(listOf(false), status.versionsList.map { it.is4K })
+            assertEquals(listOf(false), status.versionsList.map { it.versionId == "4k" })
         }
 
     @Test
@@ -1387,7 +1342,7 @@ class SeerrRequestServiceTest {
 
             assertEquals("served from the cache", before, seerr.requestCount)
             assertEquals(1_000L, status.standardVersion().download.totalBytes)
-            assertEquals(listOf(false), status.versionsList.map { it.is4K })
+            assertEquals(listOf(false), status.versionsList.map { it.versionId == "4k" })
         }
 
     @Test
@@ -1678,13 +1633,13 @@ class SeerrRequestServiceTest {
         }
 
     @Test
-    fun `a session auth_me refuses with 403 handshakes with only the attention read and forwarding`() =
+    fun `a session auth_me refuses with 403 handshakes with only the attention read`() =
         runTest {
             val stub = connected(permissions = ADMIN)
             seerr.enqueueProfile(json("""{"version":"2.7.0"}"""), json("""{"initialized":true}"""))
             seerr.enqueue(MockResponse(code = 403))
 
-            assertEquals(SESSIONLESS, stub.handshake(HandshakeRequest.getDefaultInstance()).capabilitiesList)
+            assertEquals(listOf(Capability.CAPABILITY_ATTENTION), stub.handshake(HandshakeRequest.getDefaultInstance()).capabilitiesList)
         }
 
     /**
@@ -1954,7 +1909,7 @@ class SeerrRequestServiceTest {
             assertEquals("/api/v1/movie/603", seerr.takeRequest().url.encodedPath)
             assertEquals(2, seerr.requestCount - before)
             assertEquals(listOf(movie, movie), first.entriesList.map { it.media })
-            assertEquals(listOf("4" to false, "5" to true), first.entriesList.map { it.request.id to it.request.is4K })
+            assertEquals(listOf("4" to false, "5" to true), first.entriesList.map { it.request.id to (it.request.versionId == "4k") })
             assertEquals("Neo", first.entriesList[0].request.requestedBy)
             assertEquals(
                 Availability.AVAILABILITY_PENDING,
@@ -2368,6 +2323,3 @@ class SeerrRequestServiceTest {
         }
     }
 }
-
-/** What a handshake declares with no working session, when forwarding is wired as it is in the app. */
-private val SESSIONLESS = listOf(Capability.CAPABILITY_ATTENTION, Capability.CAPABILITY_FORWARD_NOTIFICATIONS)

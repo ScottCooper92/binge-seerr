@@ -58,8 +58,8 @@ class SeerrCompanionService : IntegrationService() {
                 analytics = analytics,
                 requestCache = requests,
                 userMessages = AndroidUserMessages(this),
-                notifications = SeerrNotificationRpcs(forwarding, notificationPrefs),
             ),
+            SeerrNotificationsService(SeerrNotificationRpcs(forwarding, notificationPrefs)),
         )
 
     /**

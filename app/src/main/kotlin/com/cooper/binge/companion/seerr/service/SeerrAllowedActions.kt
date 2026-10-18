@@ -8,6 +8,7 @@ import com.binge.companion.contracts.request.v1.RequestStatus
 import com.cooper.binge.companion.seerr.data.CachedStatus
 import com.cooper.binge.companion.seerr.seerr.SeerrPermissions
 import com.cooper.binge.companion.seerr.seerr.SeerrServerProfile
+import com.cooper.binge.companion.seerr.seerr.VERSION_ID_4K
 import com.cooper.binge.companion.seerr.seerr.requesterIds
 import com.cooper.binge.companion.seerr.seerr.standardVersion
 import com.cooper.binge.companion.seerr.seerr.version4k
@@ -24,7 +25,6 @@ fun SeerrPermissions.toCapabilities(profile: SeerrServerProfile): Set<Capability
         add(Capability.CAPABILITY_OBSERVE_STATUS)
         add(Capability.CAPABILITY_ATTENTION)
         val settings = profile.settings
-        if (canRequest4kOn(settings)) add(Capability.CAPABILITY_REQUEST_4K)
         if (canRequestAdvanced) {
             // Both capabilities are declared together during rollout: a host that only knows the
             // older one keeps getting the Activity hand-off, one that knows the new one gets the
@@ -60,7 +60,7 @@ private val REQUEST_SCOPED =
 /**
  * The server's status with allowed actions filled in for [viewerId], each request carrying its own set.
  * The 4K entry is dropped unless this user may request 4K of this type ([isTv]): the contract sends it only
- * under `CAPABILITY_REQUEST_4K`, and a host reads it to decide whether to offer a 4K request.
+ * where the handshake lists the 4K version, and a host reads it to decide whether to offer a 4K request.
  *
  * The title's set offers a report only on a version they can see, and block or unblock either way. Its
  * request-scoped entries are the union of the requests', so the title-level list never offers what all refuse.
@@ -105,7 +105,7 @@ fun SeerrPermissions.withAllowedActions(
 
 /** Everything about the 4K version, which is all in its own entry. */
 private fun RequestStatus.Builder.leaveOut4k() {
-    val standard = versionsList.filterNot { it.is4K }
+    val standard = versionsList.filterNot { it.versionId == VERSION_ID_4K }
     clearVersions().addAllVersions(standard)
 }
 

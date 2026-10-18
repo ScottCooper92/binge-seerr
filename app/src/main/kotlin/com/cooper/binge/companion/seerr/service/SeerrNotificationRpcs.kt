@@ -1,12 +1,12 @@
 package com.cooper.binge.companion.seerr.service
 
-import com.binge.companion.contracts.request.v1.AcknowledgeNotificationsRequest
-import com.binge.companion.contracts.request.v1.AcknowledgeNotificationsResponse
-import com.binge.companion.contracts.request.v1.ListNotificationsRequest
-import com.binge.companion.contracts.request.v1.ListNotificationsResponse
-import com.binge.companion.contracts.request.v1.SetNotificationForwardingRequest
-import com.binge.companion.contracts.request.v1.SetNotificationForwardingResponse
-import com.binge.companion.contracts.request.v1.listNotificationsResponse
+import com.binge.companion.contracts.notifications.v1.AcknowledgeNotificationsRequest
+import com.binge.companion.contracts.notifications.v1.AcknowledgeNotificationsResponse
+import com.binge.companion.contracts.notifications.v1.ListNotificationsRequest
+import com.binge.companion.contracts.notifications.v1.ListNotificationsResponse
+import com.binge.companion.contracts.notifications.v1.SetNotificationForwardingRequest
+import com.binge.companion.contracts.notifications.v1.SetNotificationForwardingResponse
+import com.binge.companion.contracts.notifications.v1.listNotificationsResponse
 import com.binge.companion.contracts.v1.ForwardedNotification
 import com.cooper.binge.companion.seerr.notifications.NotificationForwarding
 import com.cooper.binge.companion.seerr.notifications.NotificationPrefs
@@ -33,7 +33,7 @@ private val FORWARDING_DEFAULT_SIGNALS =
     listOf(NotificationSignal.RequestAvailable, NotificationSignal.RequestApproved, NotificationSignal.RequestDeclined)
 
 /**
- * `CAPABILITY_FORWARD_NOTIFICATIONS`. None of it needs a session: what is queued is still Binge's
+ * The NOTIFICATIONS rpcs. None of it needs a session: what is queued is still Binge's
  * to show after the session breaks, and turning forwarding on or off is Binge's switch, not the
  * server's. Which kinds are queued stays with [NotificationPrefs], this app's own settings.
  */

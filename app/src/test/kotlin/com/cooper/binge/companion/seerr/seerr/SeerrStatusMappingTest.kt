@@ -105,7 +105,7 @@ class SeerrStatusMappingTest {
         val requests = info.toRequestStatus(NOW).requestsList
 
         assertEquals(listOf("4", "5"), requests.map { it.id })
-        assertEquals(listOf(false, true), requests.map { it.is4K })
+        assertEquals(listOf(false, true), requests.map { it.versionId == VERSION_ID_4K })
     }
 
     @Test
@@ -200,7 +200,7 @@ class SeerrStatusMappingTest {
 
         val status = info.toRequestStatus(NOW)
 
-        assertEquals(listOf(false, true), status.versionsList.map { it.is4K })
+        assertEquals(listOf(false, true), status.versionsList.map { it.versionId == VERSION_ID_4K })
         assertEquals(Availability.AVAILABILITY_NOT_REQUESTED, status.standardVersion().availability)
         assertEquals(Availability.AVAILABILITY_PROCESSING, status.version4k().availability)
         assertEquals(
