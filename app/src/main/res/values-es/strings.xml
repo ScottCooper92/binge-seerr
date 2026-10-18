@@ -593,9 +593,9 @@
     <string name="settings_version_behind">%1$s · %2$d commits por detrás</string>
     <string name="settings_edit_connection">Editar la conexión</string>
     <string name="settings_edit_connection_caption">Cambiar de servidor o iniciar sesión de nuevo</string>
-    <string name="hub_set_up_tv">Configurar un televisor</string>
-    <string name="hub_set_up_tv_detail">Escanea el código de tu televisor</string>
-    <string name="scan_tv_not_a_tv_code">Ese no es un código de configuración de televisor. Escanea el código de la pantalla de configuración del televisor.</string>
+    <string name="hub_scan_tv_code">Escanear código del televisor</string>
+    <string name="hub_scan_tv_code_detail">Inicia sesión o informa con su código</string>
+    <string name="scan_tv_not_a_tv_code">Ese no es un código de un televisor. Escanea el código de configuración o de informe que muestra tu televisor.</string>
     <string name="scan_tv_unavailable">El escáner no se ha podido abrir en este móvil. Escanea el código del televisor con la cámara.</string>
     <string name="settings_value_unknown">Desconocido</string>
     <string name="settings_value_on">Activado</string>
@@ -1080,6 +1080,8 @@
     <string name="tv_detail_info_requested">Solicitado</string>
     <string name="tv_detail_info_status">Estado</string>
     <string name="tv_detail_manage">Gestionar</string>
+    <string name="tv_detail_report_version_4k">Versión 4K</string>
+    <string name="tv_detail_report_scan_hint">En la app de Seerr de tu móvil, abre Ajustes y elige Escanear código del televisor.</string>
     <string name="tv_detail_report_on_phone">Escanea el código con el móvil para abrir este título en %1$s e informar de la incidencia allí.</string>
     <string name="tv_detail_details">Detalles</string>
     <string name="settings_group_server_settings">Ajustes del servidor</string>

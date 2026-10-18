@@ -1,7 +1,12 @@
 package com.cooper.binge.companion.seerr.ui.tv
 
 import androidx.activity.ComponentActivity
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.width
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
@@ -18,6 +23,8 @@ import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performKeyInput
 import androidx.compose.ui.test.pressKey
 import androidx.compose.ui.test.requestFocus
+import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.unit.dp
 import com.binge.designsystem.tv.theme.BingeTvTheme
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.seerr.SeerrError
@@ -30,6 +37,7 @@ import com.cooper.binge.companion.seerr.ui.requests.RequestActions
 import com.cooper.binge.companion.seerr.ui.requests.RequestDetail
 import com.cooper.binge.companion.seerr.ui.requests.RequestDetailUiState
 import com.cooper.binge.companion.seerr.ui.requests.labelRes
+import com.cooper.binge.companion.seerr.ui.tv.requests.TvReportOnPhoneStep
 import com.cooper.binge.companion.seerr.ui.tv.requests.TvRequestDetailActions
 import com.cooper.binge.companion.seerr.ui.tv.requests.TvRequestDetailScreen
 import com.cooper.binge.companion.seerr.util.createSeerrKeyboardAndroidComposeRule
@@ -37,6 +45,7 @@ import com.cooper.binge.companion.seerr.util.requestDetail
 import com.cooper.binge.companion.seerr.util.string
 import kotlinx.coroutines.flow.MutableSharedFlow
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -46,6 +55,8 @@ import com.binge.designsystem.R as DesR
 
 private const val MEDIA_ID = 9
 private const val SERVER_NAME = "Jellyseerr"
+private val SHEET_WIDTH = 360.dp
+private const val LONG_REPEAT = 8
 
 /** The TV request page's sheets for the title (#1036): marking its state, and reporting an issue on the phone. */
 @RunWith(RobolectricTestRunner::class)
@@ -211,7 +222,7 @@ class TvRequestDetailSheetsTest {
 
         pressOk()
 
-        val body = string(R.string.tv_detail_report_on_phone, SERVER_NAME)
+        val body = string(R.string.tv_detail_report_on_phone, SERVER_NAME) + "\n" + string(R.string.tv_detail_report_scan_hint)
         composeTestRule.onNodeWithText(body).assertIsDisplayed()
         composeTestRule.onNode(hasContentDescription(body) and isFocusable()).assertIsFocused()
         composeTestRule.onNode(hasSetTextAction()).assertDoesNotExist()
@@ -220,6 +231,44 @@ class TvRequestDetailSheetsTest {
         composeTestRule.mainClock.advanceTimeByFrame()
         composeTestRule.waitForIdle()
         actionButton(R.string.issue_report_title).assertIsFocused()
+    }
+
+    /** A long title holds to two lines, and the 4K line under it stays on screen. */
+    @Test
+    fun aLongTitleOnTheReportStepLeavesTheFourKVersionVisible() {
+        val title =
+            "The Lord of the Rings: The Rings of Power, Extended Edition with Every Commentary Track and Behind the Scenes " +
+                "Featurettes ".repeat(LONG_REPEAT)
+        val entryFocus = FocusRequester()
+        composeTestRule.setContent {
+            BingeTvTheme {
+                // The side sheet's width, so the title has more than two lines to fill.
+                Column(Modifier.width(SHEET_WIDTH)) {
+                    TvReportOnPhoneStep(
+                        webUrl = "https://seerr.example/tv/95396?is4k=1",
+                        serverName = SERVER_NAME,
+                        title = title,
+                        is4k = true,
+                        entryFocus = entryFocus,
+                    )
+                }
+            }
+        }
+
+        composeTestRule.onNodeWithText(string(R.string.tv_detail_report_version_4k)).assertIsDisplayed()
+        val layouts = mutableListOf<TextLayoutResult>()
+        composeTestRule
+            .onNodeWithText(title)
+            .assertIsDisplayed()
+            .fetchSemanticsNode()
+            .config[SemanticsActions.GetTextLayoutResult]
+            .action
+            ?.invoke(layouts)
+        assertTrue("two lines at most", layouts.single().lineCount <= 2)
+        assertTrue(
+            "and cut short of the whole title",
+            layouts.single().getLineEnd(layouts.single().lineCount - 1, visibleEnd = true) < title.length,
+        )
     }
 
     @Test
