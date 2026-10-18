@@ -3,9 +3,9 @@ package com.cooper.binge.companion.seerr.ui
 import android.content.Context
 import android.content.Intent
 import androidx.core.net.toUri
-import com.binge.companion.contracts.v1.MediaType
 import com.binge.companion.sdk.CompanionManifest
 import com.binge.companion.sdk.attempt
+import com.cooper.binge.companion.seerr.seerr.mediaIdOf
 import com.cooper.binge.companion.seerr.ui.requests.RequestMediaType
 
 /** Where a tapped title goes: Binge's own page for it, or the server's web page when Binge is not there. */
@@ -32,9 +32,8 @@ object BingeHandOff {
         mediaType: RequestMediaType,
         tmdbId: Int,
     ): String? {
-        if (tmdbId <= 0) return null
-        val type = if (mediaType == RequestMediaType.Tv) MediaType.MEDIA_TYPE_TV else MediaType.MEDIA_TYPE_MOVIE
-        return CompanionManifest.hostTitleUri(type, tmdbId)
+        val id = mediaIdOf(mediaType, tmdbId) ?: return null
+        return CompanionManifest.hostTitleUri(id.mediaType, id.tmdbId)
     }
 
     fun target(
