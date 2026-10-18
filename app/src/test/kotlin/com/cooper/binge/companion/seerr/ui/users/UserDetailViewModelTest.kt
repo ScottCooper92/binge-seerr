@@ -239,17 +239,59 @@ class UserDetailViewModelTest {
             assertEquals("Ana", (updated as UserDetailUiState.Ready).detail.item.name)
         }
 
+    /** #1558: the same save brings the header's display name and email up to date. */
+    @Test
+    fun `a save to this user's settings reads the profile again`() =
+        runTest {
+            server(viewerId = 1, permissions = ADMIN)
+            val vm = viewModel()
+            assertEquals(
+                "Ana",
+                vm
+                    .awaitReady()
+                    .detail.item.name,
+            )
+            serve("GET /api/v1/user/8", """{"id":8,"displayName":"Ana B","email":"anab@example.com","permissions":$REQUEST}""")
+
+            settingsChanges.changed(8)
+
+            val updated = vm.uiState.first { (it as? UserDetailUiState.Ready)?.detail?.item?.name == "Ana B" }
+            assertEquals("anab@example.com", (updated as UserDetailUiState.Ready).detail.item.email)
+        }
+
+    @Test
+    fun `a failed profile read after a save leaves the name the page had`() =
+        runTest {
+            server(viewerId = 1, permissions = ADMIN)
+            val vm = viewModel()
+            vm.awaitReady()
+            serve("GET /api/v1/user/8", "{}", code = 500)
+            serve("GET /api/v1/user/8/quota", """{"movie":{"days":7,"limit":20,"used":3,"remaining":17},"tv":{"days":7,"limit":0}}""")
+
+            settingsChanges.changed(8)
+
+            val updated =
+                vm.uiState.first {
+                    (it as? UserDetailUiState.Ready)
+                        ?.detail
+                        ?.quota
+                        ?.movie
+                        ?.remaining == 17
+                }
+            assertEquals("Ana", (updated as UserDetailUiState.Ready).detail.item.name)
+        }
+
     @Test
     fun `a save to another user's settings leaves this page alone`() =
         runTest {
             server(viewerId = 1, permissions = ADMIN)
             val vm = viewModel()
             vm.awaitReady()
-            val reads = received.count { it.url.encodedPath == "/api/v1/user/8/quota" }
+            val reads = received.count { it.url.encodedPath.startsWith("/api/v1/user/8") }
 
             settingsChanges.changed(9)
 
-            assertEquals(reads, received.count { it.url.encodedPath == "/api/v1/user/8/quota" })
+            assertEquals(reads, received.count { it.url.encodedPath.startsWith("/api/v1/user/8") })
         }
 
     /** The server lists a user's requests to that user and to who may see everyone's, so nobody else is shown a failing list (#1015). */

@@ -127,13 +127,18 @@ class UserDetailViewModel
         init {
             reload()
             viewModelScope.launch(dispatcher) {
-                settingsChanges.changes.filter { it == userId }.collect { refreshQuota() }
+                settingsChanges.changes.filter { it == userId }.collect {
+                    coroutineScope {
+                        launch { refreshQuota() }
+                        launch { refreshProfile() }
+                    }
+                }
             }
         }
 
         /**
          * Reads the quota again after this user's settings were saved elsewhere, such as their General page (#1540). The rest
-         * of the page stands, and a read that fails leaves the quota the page had.
+         * of the page stands, and a read that fails leaves the quota the page had. [refreshProfile] reads the profile beside it.
          */
         private suspend fun refreshQuota() {
             val viewer = attempt { connection.authenticatedUser() }.getOrNull()
@@ -142,6 +147,18 @@ class UserDetailViewModel
             state.update { current ->
                 (current as? UserDetailUiState.Ready)?.let { it.copy(detail = it.detail.copy(quota = quota)) }
                     ?: current
+            }
+        }
+
+        /**
+         * Reads the profile again after this user's settings were saved elsewhere, so the header shows a changed display name
+         * and email (#1558). A read that fails leaves the profile the page had.
+         */
+        private suspend fun refreshProfile() {
+            val item = attempt { connection.api().user(userId).toUserItemOrFallback() }.getOrNull() ?: return
+            state.update { current ->
+                // Only the item is copied: General cannot change permissions, so isAdmin and canDelete stand.
+                (current as? UserDetailUiState.Ready)?.let { it.copy(detail = it.detail.copy(item = item)) } ?: current
             }
         }
 
