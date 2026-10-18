@@ -98,42 +98,22 @@ internal fun textSettingItem(
         val submitted = if (secret) draft else draft.trim()
         val problem = check(submitted)
         BingeAdaptiveSheet(kind = BingeSheetKind.Task, onDismissRequest = { open = false }) {
-            if (secret) {
-                SecretEntry(
-                    title = label,
-                    value = draft,
-                    hint = hint,
-                    onValueChange = { draft = it },
-                    submitEnabled = problem == null,
-                    onSubmit = {
-                        onChange(submitted)
-                        open = false
-                    },
-                    onCancel = { open = false },
-                )
-            } else {
-                TextEntrySurface(
-                    title = label,
-                    value = draft,
-                    onValueChange = { draft = it },
-                    onSubmit = {
-                        onChange(submitted)
-                        open = false
-                    },
-                    onCancel = { open = false },
-                    submitLabel = stringResource(R.string.editor_done),
-                    // The surface's own hint is a placeholder, gone once the field holds a value; an explanation
-                    // has to stay readable while the value is edited, so it sits under the title instead.
-                    hint = placeholder,
-                    header = { hint?.let { SheetHint(it) } },
-                    submitEnabled = problem == null,
-                    error = problem.takeIf { draft.isNotEmpty() },
-                    minLines = if (multiline) MULTILINE_MIN else 1,
-                    maxLines = if (multiline) MULTILINE_MAX else 1,
-                    keyboardOptions = keyboard,
-                    modifier = Modifier.imePadding(),
-                )
-            }
+            TextSettingContent(
+                title = label,
+                draft = draft,
+                onDraftChange = { draft = it },
+                secret = secret,
+                hint = hint,
+                placeholder = placeholder,
+                problem = problem,
+                multiline = multiline,
+                keyboard = keyboard,
+                onSubmit = {
+                    onChange(submitted)
+                    open = false
+                },
+                onCancel = { open = false },
+            )
         }
     }
     val rowProblem = rowProblem(value, required, secret, check)
@@ -185,6 +165,58 @@ internal fun GroupMessage(
         ),
 )
 
+/**
+ * [textSettingItem]'s sheet without its window, for a frame: the design system's text entry, or [SecretEntry] for a secret.
+ * [problem] keeps Done off, and is shown under the field once something has been typed.
+ */
+@Composable
+internal fun TextSettingContent(
+    title: String,
+    draft: String,
+    onDraftChange: (String) -> Unit,
+    onSubmit: () -> Unit,
+    onCancel: () -> Unit,
+    modifier: Modifier = Modifier,
+    secret: Boolean = false,
+    hint: String? = null,
+    placeholder: String? = null,
+    problem: String? = null,
+    multiline: Boolean = false,
+    keyboard: KeyboardOptions = KeyboardOptions.Default,
+) {
+    if (secret) {
+        SecretEntry(
+            title = title,
+            value = draft,
+            hint = hint,
+            onValueChange = onDraftChange,
+            submitEnabled = problem == null,
+            onSubmit = onSubmit,
+            onCancel = onCancel,
+            modifier = modifier,
+        )
+    } else {
+        TextEntrySurface(
+            title = title,
+            value = draft,
+            onValueChange = onDraftChange,
+            onSubmit = onSubmit,
+            onCancel = onCancel,
+            submitLabel = stringResource(R.string.editor_done),
+            // The surface's own hint is a placeholder, gone once the field holds a value; an explanation
+            // has to stay readable while the value is edited, so it sits under the title instead.
+            hint = placeholder,
+            header = { hint?.let { SheetHint(it) } },
+            submitEnabled = problem == null,
+            error = problem.takeIf { draft.isNotEmpty() },
+            minLines = if (multiline) MULTILINE_MIN else 1,
+            maxLines = if (multiline) MULTILINE_MAX else 1,
+            keyboardOptions = keyboard,
+            modifier = modifier.imePadding(),
+        )
+    }
+}
+
 /** [textSettingItem]'s sheet for a secret: the title, a masked [EditorTextField], and the same Cancel and Done pair. */
 @Composable
 private fun SecretEntry(
@@ -195,9 +227,10 @@ private fun SecretEntry(
     submitEnabled: Boolean,
     onSubmit: () -> Unit,
     onCancel: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     Column(
-        modifier = Modifier.fillMaxWidth().imePadding().padding(dimensionResource(DesR.dimen.padding_m)),
+        modifier = modifier.fillMaxWidth().imePadding().padding(dimensionResource(DesR.dimen.padding_m)),
         verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
     ) {
         Text(text = title, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurface)

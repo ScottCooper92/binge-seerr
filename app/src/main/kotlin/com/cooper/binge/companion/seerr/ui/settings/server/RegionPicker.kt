@@ -70,13 +70,7 @@ internal fun regionSettingItem(
             BingeChoiceSheet(
                 title = title,
                 choices =
-                    all?.let { codes ->
-                        BingeChoiceList.Ready(
-                            Regions.choices(codes, value, allRegions, defaultLabel).map { (code, label) ->
-                                BingeChoice(code, label, mark = flagOf(code))
-                            },
-                        )
-                    } ?: BingeChoiceList.Loading,
+                    all?.let { codes -> regionChoiceList(codes, value, allRegions, defaultLabel) } ?: BingeChoiceList.Loading,
                 selected = value.trim(),
                 onSelect = pick,
                 onDismissRequest = { open = false },
@@ -104,6 +98,17 @@ internal fun regionSettingItem(
     )
 }
 
+/** The region sheet's choices: [Regions.choices] with each region's flag as its mark. */
+internal fun regionChoiceList(
+    codes: List<String>,
+    value: String,
+    allRegions: String,
+    defaultLabel: String?,
+): BingeChoiceList<String> =
+    BingeChoiceList.Ready(
+        Regions.choices(codes, value, allRegions, defaultLabel).map { (code, label) -> BingeChoice(code, label, mark = flagOf(code)) },
+    )
+
 /**
  * The wait while a list is read, in the sheet that will show it. It is a window tall, as the list will be: a sheet holding
  * only a spinner fits whole, so it would settle fully open and then fill the screen when the list arrived. This tall, it
@@ -128,7 +133,7 @@ internal fun ListLoading() {
 
 /** The server couldn't send its regions: try again, or type the two-letter code as the field used to take it. */
 @Composable
-private fun RegionUnavailable(
+internal fun RegionUnavailable(
     value: String,
     onRetry: () -> Unit,
     onUse: (String) -> Unit,

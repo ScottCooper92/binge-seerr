@@ -35,18 +35,7 @@ internal fun displayLanguageSettingItem(
     var open by rememberSaveable { mutableStateOf(false) }
     LaunchedEffect(enabled) { if (!enabled) open = false }
     if (open) {
-        val listed =
-            remember(choices) {
-                val (default, languages) = choices.partition { it.first.isBlank() }
-                (default + languages.sortedBy { (tag, label) -> deviceName(tag) ?: label }).map { (tag, label) ->
-                    BingeChoice(
-                        value = tag,
-                        label = label,
-                        supportingText = deviceName(tag)?.takeIf { it != label },
-                        mark = tag.substringBefore('-').uppercase().ifEmpty { GLOBE },
-                    )
-                }
-            }
+        val listed = remember(choices) { displayLanguageChoices(choices) }
         BingeChoiceSheet(
             title = title,
             choices = BingeChoiceList.Ready(listed),
@@ -63,6 +52,19 @@ internal fun displayLanguageSettingItem(
         enabled = enabled,
         onClick = { open = true },
     )
+}
+
+/** The display language sheet's choices: the server's default first, then each language by the device's name for it. */
+internal fun displayLanguageChoices(choices: List<Pair<String, String>>): List<BingeChoice<String>> {
+    val (default, languages) = choices.partition { it.first.isBlank() }
+    return (default + languages.sortedBy { (tag, label) -> deviceName(tag) ?: label }).map { (tag, label) ->
+        BingeChoice(
+            value = tag,
+            label = label,
+            supportingText = deviceName(tag)?.takeIf { it != label },
+            mark = tag.substringBefore('-').uppercase().ifEmpty { GLOBE },
+        )
+    }
 }
 
 /** [tag]'s name in the device's language, or null for the server's default. */
