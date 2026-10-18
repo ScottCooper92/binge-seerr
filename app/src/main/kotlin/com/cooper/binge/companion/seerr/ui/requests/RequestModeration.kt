@@ -277,6 +277,7 @@ class RequestModeration(
             onSettled(result.isSuccess)
             result
                 .onSuccess {
+                    cache.markModerated()
                     onModerated()
                     val event =
                         if (blockTitle && item != null) {
@@ -301,7 +302,10 @@ class RequestModeration(
         scope.launch(dispatcher) {
             val blocked = block(item)
             acting.update { it - item.id }
-            if (blocked) onModerated()
+            if (blocked) {
+                cache.markModerated()
+                onModerated()
+            }
             val event = if (blocked) ModerationEvent.Blocked else ModerationEvent.BlockFailed
             analytics.event(AnalyticsEvents.REQUEST_MODERATED, mapOf(AnalyticsEvents.PARAM_ACTION to event.actionLabel()))
             eventFlow.emit(event)

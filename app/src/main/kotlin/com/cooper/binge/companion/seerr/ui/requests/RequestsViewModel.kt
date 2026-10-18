@@ -31,6 +31,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
@@ -111,6 +112,11 @@ class RequestsViewModel
          * A moderation finished in a row's sheet, on that request's own view model: refetch the counts and stale the lists.
          * The list moderates nothing itself, so it has no acting set and no moderation events of its own (#1231).
          */
+        init {
+            // A moderation on a request's own page reaches the list only through the store (#1665).
+            viewModelScope.launch(dispatcher) { store.moderations.drop(1).collect { listChanged() } }
+        }
+
         fun listChanged() {
             countsRefresh.value++
             listVersionState.update { it + 1 }

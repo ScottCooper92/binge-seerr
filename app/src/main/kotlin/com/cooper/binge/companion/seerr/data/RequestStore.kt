@@ -2,6 +2,10 @@ package com.cooper.binge.companion.seerr.data
 
 import androidx.paging.PagingSource
 import com.binge.companion.sdk.paging.OpenPagingSources
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 
 /**
  * The request cache behind a seam, as [IssueStore] is, so the mediator and the browser are tested
@@ -9,6 +13,16 @@ import com.binge.companion.sdk.paging.OpenPagingSources
  * the list's cursor.
  */
 interface RequestStore {
+    /**
+     * Counts the moderations that succeeded, from any screen. A list holds its filters' slices apart, so a row moved to
+     * another status stays in a slice that no longer fits it until the server is asked again: a list collects this and
+     * refreshes (#1665).
+     */
+    val moderations: StateFlow<Int>
+
+    /** Records that a moderation succeeded, so every list that collects [moderations] refreshes. */
+    fun markModerated()
+
     fun pagingSource(listKey: String): PagingSource<Int, RequestEntity>
 
     suspend fun nextSkip(listKey: String): Int?
@@ -48,6 +62,8 @@ class RoomRequestStore(
     private val requests get() = db.requestDao()
     private val keys get() = db.requestRemoteKeyDao()
     private val sources = OpenPagingSources<Int, RequestEntity>()
+    private val moderated = MutableStateFlow(0)
+    override val moderations: StateFlow<Int> = moderated.asStateFlow()
     private val writes =
         PagedWrites(
             db = db,
@@ -58,6 +74,8 @@ class RoomRequestStore(
             clearEverything = { requests.clearAll() },
             clearCursors = { keys.clearAll() },
         )
+
+    override fun markModerated() = moderated.update { it + 1 }
 
     override fun pagingSource(listKey: String): PagingSource<Int, RequestEntity> = sources.track(requests.pagingSource(listKey))
 
@@ -89,6 +107,10 @@ class RoomRequestStore(
 
 /** No cache at all: writes go nowhere. What a build or a test that has not wired one gets. */
 object NoRequestStore : RequestStore {
+    override val moderations: StateFlow<Int> = MutableStateFlow(0)
+
+    override fun markModerated() = Unit
+
     override fun pagingSource(listKey: String): PagingSource<Int, RequestEntity> = error("NoRequestStore holds no rows")
 
     override suspend fun nextSkip(listKey: String): Int? = null

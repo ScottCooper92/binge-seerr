@@ -9,6 +9,7 @@ import com.cooper.binge.companion.seerr.data.FakeRequestStore
 import com.cooper.binge.companion.seerr.seerr.SeerrApiFactory
 import com.cooper.binge.companion.seerr.seerr.SeerrAuth
 import com.cooper.binge.companion.seerr.seerr.SeerrError
+import com.cooper.binge.companion.seerr.seerr.SeerrRequestStatusCode
 import com.cooper.binge.companion.seerr.seerr.TitleCache
 import com.cooper.binge.companion.seerr.ui.Ticker
 import com.cooper.binge.companion.seerr.util.FakeRequest
@@ -17,6 +18,8 @@ import com.cooper.binge.companion.seerr.util.FakeSeerrServer
 import com.cooper.binge.companion.seerr.util.FakeTitleDao
 import com.cooper.binge.companion.seerr.util.MainDispatcherRule
 import com.cooper.binge.companion.seerr.util.PlainCipher
+import com.cooper.binge.companion.seerr.util.awaitEvent
+import com.cooper.binge.companion.seerr.util.requestItem
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.awaitCancellation
@@ -104,7 +107,7 @@ class RequestsViewModelTest {
                         """{"pageInfo":{"pages":1,"results":1},"results":[{"id":11,"status":2,"media":{"tmdbId":100,"mediaType":"movie","status":3}}]}""",
                     )
                 "/api/v1/movie/100" -> json("""{"title":"Heat","posterPath":"/heat.jpg","releaseDate":"1995-12-15"}""")
-                "/api/v1/request/11/approve" -> json("{}")
+                "/api/v1/request/11/approve", "/api/v1/request/11/decline", "/api/v1/request/11" -> json("{}")
                 else -> FakeResponse(code = 404)
             }
         }
@@ -116,8 +119,11 @@ class RequestsViewModelTest {
             override suspend fun await(millis: Long) = awaitCancellation()
         }
 
+    private val store = FakeRequestStore()
+    private lateinit var connection: SeerrConnection
+
     private suspend fun TestScope.viewModel(ticker: Ticker = boundedTicker): RequestsViewModel {
-        val connection =
+        connection =
             SeerrConnection(
                 store =
                     CredentialStore(
@@ -127,7 +133,7 @@ class RequestsViewModelTest {
                 apis = SeerrApiFactory(logRequests = false, testTransport = seerr::interceptor, testDispatcher = seerr::newDispatcher),
             )
         connection.connect(seerr.url("/"), SeerrAuth.ApiKey("k3y")).getOrThrow()
-        val vm = RequestsViewModel(connection, TitleCache(FakeTitleDao()), FakeRequestStore(), mainDispatcherRule.dispatcher, ticker)
+        val vm = RequestsViewModel(connection, TitleCache(FakeTitleDao()), store, mainDispatcherRule.dispatcher, ticker)
         viewModels.put("requests", vm)
         backgroundScope.launch { vm.uiState.collect {} }
         vm.setScreenVisible(true)
@@ -205,6 +211,38 @@ class RequestsViewModelTest {
             assertTrue(vm.shouldRefresh(RequestFilter.All, after))
             assertFalse(vm.shouldRefresh(RequestFilter.All, after))
             assertTrue(vm.shouldRefresh(RequestFilter.Pending, after))
+        }
+
+    /** #1665: the request's own page moderates through a view model of its own, so the list hears of it only through the store. */
+    @Test
+    fun `a moderation on the request's own page stales the lists and re-reads the counts`() =
+        runTest {
+            server(ADMIN)
+            val vm = viewModel()
+            val item = requestItem(id = 11, tmdbId = 100, title = "Heat", status = SeerrRequestStatusCode(1))
+            val page =
+                RequestModeration(
+                    scope = backgroundScope,
+                    dispatcher = mainDispatcherRule.dispatcher,
+                    connection = connection,
+                    cache = store,
+                ) {}
+            val actions =
+                listOf<() -> Unit>(
+                    { page.approve(11) },
+                    { page.decline(item, blockTitle = false) },
+                    { page.remove(item, blockTitle = false) },
+                )
+            actions.forEach { act ->
+                val version = vm.awaitReady { it.counts != null }.listVersion
+                val reads = countReads()
+                val settled = awaitEvent(page.events)
+                act()
+                settled.await()
+
+                vm.awaitReady { it.listVersion > version }
+                withTimeout(REQUEST_WAIT_MILLIS) { while (countReads() <= reads) delay(POLL_MILLIS) }
+            }
         }
 
     @Test

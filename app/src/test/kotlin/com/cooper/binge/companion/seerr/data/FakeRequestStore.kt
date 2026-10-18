@@ -2,6 +2,9 @@ package com.cooper.binge.companion.seerr.data
 
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.update
 
 /**
  * The request cache as a list in memory, paged like the database: every write invalidates the
@@ -14,6 +17,11 @@ class FakeRequestStore : RequestStore {
     private val sources = mutableListOf<PagingSource<Int, RequestEntity>>()
     val refreshed = mutableListOf<Pair<List<RequestEntity>, Int?>>()
     val appended = mutableListOf<Pair<List<RequestEntity>, Int?>>()
+
+    private val moderated = MutableStateFlow(0)
+    override val moderations: StateFlow<Int> = moderated
+
+    override fun markModerated() = moderated.update { it + 1 }
 
     override fun pagingSource(listKey: String): PagingSource<Int, RequestEntity> = ListSource(listKey).also { sources += it }
 

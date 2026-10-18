@@ -105,6 +105,7 @@ class RequestModerationTest {
             assertEquals(ModerationEvent.Approved, approved.await())
             assertEquals("/api/v1/request/11/approve", received.last { it.method == "POST" }.url.encodedPath)
             assertEquals(1, moderated)
+            assertEquals(1, cache.moderations.value)
             assertTrue(sut.actingIds.value.isEmpty())
             assertEquals(listOf("request_moderated" to mapOf("action" to "approved")), analytics.events)
             assertEquals(listOf("moderating request: approved"), crashBreadcrumbs.logs)
