@@ -182,7 +182,7 @@ class ListCacheDaoTest {
 
             assertEquals(listOf(1, 2), dao.pagingSource("pending").rows().map { it.id })
 
-            dao.updateStatus(id = 1, status = 2)
+            dao.updateState(id = 1, status = 2, mediaStatus = null)
 
             assertEquals(
                 listOf(2, 2),
@@ -193,6 +193,58 @@ class ListCacheDaoTest {
                         .first { it.id == 1 }
                         .status
                 },
+            )
+        }
+
+    @Test
+    fun `a server answer keeps what it does not carry, and leaves a status filter only the rows that still fit`() =
+        runBlocking {
+            val store = RoomRequestStore(db)
+            val dao = db.requestDao()
+            dao.upsertAll(
+                listOf(
+                    request("pending:added:all", 1, 0),
+                    request("pending:added:all", 2, 1),
+                    request("all:added:all", 1, 0),
+                    request("approved:added:all", 1, 0, status = 2),
+                ),
+            )
+
+            store.updateServerState(1, status = null, mediaStatus = 3)
+            assertEquals(
+                listOf(1, 1, 2),
+                listOf("pending:added:all", "all:added:all", "approved:added:all").map { key ->
+                    dao
+                        .pagingSource(key)
+                        .rows()
+                        .first { it.id == 1 }
+                        .status
+                },
+            )
+            assertEquals(3, dao.byId(1)?.mediaStatus)
+
+            store.updateServerState(1, status = 2, mediaStatus = null)
+            assertEquals(listOf(2), dao.pagingSource("pending:added:all").rows().map { it.id })
+            assertEquals(3, dao.byId(1)?.mediaStatus)
+            assertEquals(
+                2,
+                dao
+                    .pagingSource("all:added:all")
+                    .rows()
+                    .single()
+                    .status,
+            )
+            assertEquals(listOf(1), dao.pagingSource("approved:added:all").rows().map { it.id })
+
+            store.updateStatus(1, 3)
+            assertEquals(emptyList<Int>(), dao.pagingSource("approved:added:all").rows().map { it.id })
+            assertEquals(
+                3,
+                dao
+                    .pagingSource("all:added:all")
+                    .rows()
+                    .single()
+                    .status,
             )
         }
 

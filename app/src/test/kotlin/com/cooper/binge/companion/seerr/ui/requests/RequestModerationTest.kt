@@ -13,10 +13,14 @@ import com.cooper.binge.companion.seerr.util.RecordingAnalytics
 import com.cooper.binge.companion.seerr.util.RecordingCrashBreadcrumbs
 import com.cooper.binge.companion.seerr.util.awaitEvent
 import com.cooper.binge.companion.seerr.util.requestItem
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import mockwebserver3.Dispatcher
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
@@ -29,6 +33,9 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.util.concurrent.CopyOnWriteArrayList
+
+private const val SYNC_WAIT_MILLIS = 2_000L
+private const val POLL_MILLIS = 10L
 
 /** The write side over a real connection into a path-scripted Seerr, one that still serves the blocklist at its old path. */
 class RequestModerationTest {
@@ -138,6 +145,25 @@ class RequestModerationTest {
             sut.remove(item, blockTitle = false)
             removed.await()
             assertEquals(listOf(12), cache.rows.map { it.id })
+        }
+
+    @Test
+    fun `a request the server no longer has is dropped from the cache once the action lands, and its counts are re-read`() =
+        runTest {
+            cache.append("all:added:all", listOf(item.toEntity("all:added:all", 0)), null)
+            val sut = moderation()
+
+            codes["/api/v1/request/11"] = 404
+            val cleared = awaitEvent(sut.events)
+            sut.clearMedia(11, 900)
+            cleared.await()
+
+            // The cache sync follows the event on the network, so wait for it in real time.
+            withContext(Dispatchers.Default) {
+                withTimeout(SYNC_WAIT_MILLIS) {
+                    while (cache.rows.isNotEmpty() || received.none { it.url.encodedPath == "/api/v1/request/count" }) delay(POLL_MILLIS)
+                }
+            }
         }
 
     @Test

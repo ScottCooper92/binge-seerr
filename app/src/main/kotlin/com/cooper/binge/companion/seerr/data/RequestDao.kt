@@ -18,14 +18,7 @@ interface RequestDao {
     @Upsert
     suspend fun upsertAll(requests: List<RequestEntity>)
 
-    /** No list key: a status change reaches every slice that cached the request. */
-    @Query("UPDATE requests SET status = :status WHERE id = :id")
-    suspend fun updateStatus(
-        id: Int,
-        status: Int,
-    )
-
-    /** The server's answer: a null part is one it did not carry, so the cached value stays. */
+    /** The server's answer, with no list key so it reaches every slice that cached the request; a null part is one it did not carry, so the cached value stays. */
     @Query("UPDATE requests SET status = COALESCE(:status, status), mediaStatus = COALESCE(:mediaStatus, mediaStatus) WHERE id = :id")
     suspend fun updateState(
         id: Int,
