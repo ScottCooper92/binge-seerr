@@ -18,11 +18,19 @@ interface RequestDao {
     @Upsert
     suspend fun upsertAll(requests: List<RequestEntity>)
 
-    /** No list key: a status change reaches every slice that cached the request. */
-    @Query("UPDATE requests SET status = :status WHERE id = :id")
-    suspend fun updateStatus(
+    /** The server's answer, with no list key so it reaches every slice that cached the request; a null part is one it did not carry, so the cached value stays. */
+    @Query("UPDATE requests SET status = COALESCE(:status, status), mediaStatus = COALESCE(:mediaStatus, mediaStatus) WHERE id = :id")
+    suspend fun updateState(
         id: Int,
-        status: Int,
+        status: Int?,
+        mediaStatus: Int?,
+    )
+
+    /** Takes the request out of the slices whose key starts [listKeyPrefix], where it no longer belongs. */
+    @Query("DELETE FROM requests WHERE id = :id AND listKey LIKE :listKeyPrefix")
+    suspend fun dropFromFilter(
+        id: Int,
+        listKeyPrefix: String,
     )
 
     @Query("DELETE FROM requests WHERE id = :id")

@@ -9,6 +9,7 @@ import com.cooper.binge.companion.seerr.data.FakeRequestStore
 import com.cooper.binge.companion.seerr.seerr.SeerrApiFactory
 import com.cooper.binge.companion.seerr.seerr.SeerrAuth
 import com.cooper.binge.companion.seerr.seerr.SeerrError
+import com.cooper.binge.companion.seerr.seerr.SeerrRequestStatusCode
 import com.cooper.binge.companion.seerr.seerr.TitleCache
 import com.cooper.binge.companion.seerr.ui.Ticker
 import com.cooper.binge.companion.seerr.util.FakeRequest
@@ -17,6 +18,8 @@ import com.cooper.binge.companion.seerr.util.FakeSeerrServer
 import com.cooper.binge.companion.seerr.util.FakeTitleDao
 import com.cooper.binge.companion.seerr.util.MainDispatcherRule
 import com.cooper.binge.companion.seerr.util.PlainCipher
+import com.cooper.binge.companion.seerr.util.awaitEvent
+import com.cooper.binge.companion.seerr.util.requestItem
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.awaitCancellation
@@ -104,7 +107,13 @@ class RequestsViewModelTest {
                         """{"pageInfo":{"pages":1,"results":1},"results":[{"id":11,"status":2,"media":{"tmdbId":100,"mediaType":"movie","status":3}}]}""",
                     )
                 "/api/v1/movie/100" -> json("""{"title":"Heat","posterPath":"/heat.jpg","releaseDate":"1995-12-15"}""")
-                "/api/v1/request/11/approve" -> json("{}")
+                "/api/v1/request/11/approve", "/api/v1/request/11/decline" -> json("{}")
+                "/api/v1/request/11" ->
+                    if (request.method == "DELETE") {
+                        json("{}")
+                    } else {
+                        json("""{"id":11,"status":${serverStatus.get()},"media":{"tmdbId":100,"mediaType":"movie","status":3}}""")
+                    }
                 else -> FakeResponse(code = 404)
             }
         }
@@ -116,8 +125,14 @@ class RequestsViewModelTest {
             override suspend fun await(millis: Long) = awaitCancellation()
         }
 
+    private val store = FakeRequestStore()
+
+    /** The status the server currently reports for request 11. */
+    private val serverStatus = AtomicInteger(2)
+    private lateinit var connection: SeerrConnection
+
     private suspend fun TestScope.viewModel(ticker: Ticker = boundedTicker): RequestsViewModel {
-        val connection =
+        connection =
             SeerrConnection(
                 store =
                     CredentialStore(
@@ -127,7 +142,7 @@ class RequestsViewModelTest {
                 apis = SeerrApiFactory(logRequests = false, testTransport = seerr::interceptor, testDispatcher = seerr::newDispatcher),
             )
         connection.connect(seerr.url("/"), SeerrAuth.ApiKey("k3y")).getOrThrow()
-        val vm = RequestsViewModel(connection, TitleCache(FakeTitleDao()), FakeRequestStore(), mainDispatcherRule.dispatcher, ticker)
+        val vm = RequestsViewModel(connection, TitleCache(FakeTitleDao()), store, mainDispatcherRule.dispatcher, ticker)
         viewModels.put("requests", vm)
         backgroundScope.launch { vm.uiState.collect {} }
         vm.setScreenVisible(true)
@@ -205,6 +220,44 @@ class RequestsViewModelTest {
             assertTrue(vm.shouldRefresh(RequestFilter.All, after))
             assertFalse(vm.shouldRefresh(RequestFilter.All, after))
             assertTrue(vm.shouldRefresh(RequestFilter.Pending, after))
+        }
+
+    /** #1665: the request's own page moderates through a view model of its own, so the list can only hear of it through the cache. */
+    @Test
+    fun `a moderation on the request's own page moves the cached lists and the counts`() =
+        runTest {
+            server(ADMIN)
+            val vm = viewModel()
+            vm.awaitReady { it.counts?.total == 3 }
+            val item = requestItem(id = 11, tmdbId = 100, title = "Heat", status = SeerrRequestStatusCode.Pending)
+            store.append("pending:added:all", listOf(item.toEntity("pending:added:all", 0)), null)
+            store.append("all:added:all", listOf(item.toEntity("all:added:all", 0)), null)
+            val page =
+                RequestModeration(
+                    scope = backgroundScope,
+                    dispatcher = mainDispatcherRule.dispatcher,
+                    connection = connection,
+                    cache = store,
+                ) {}
+            val actions =
+                listOf<Triple<Int, Int, () -> Unit>>(
+                    Triple(SeerrRequestStatusCode.Approved.raw, 4, { page.approve(11) }),
+                    Triple(SeerrRequestStatusCode.Declined.raw, 5, { page.decline(item, blockTitle = false) }),
+                    Triple(SeerrRequestStatusCode.Declined.raw, 6, { page.remove(item, blockTitle = false) }),
+                )
+            actions.forEachIndexed { index, (status, total, act) ->
+                serverStatus.set(status)
+                countTotal.set(total)
+                val settled = awaitEvent(page.events)
+                act()
+                settled.await()
+
+                // Nothing is called on the list: it is the cache that moved.
+                assertEquals(total, vm.awaitReady { it.counts?.total == total }.counts?.total)
+                assertTrue("pending slice drops the row", store.rows.none { it.listKey == "pending:added:all" })
+                val inAll = store.rows.filter { it.listKey == "all:added:all" }
+                if (index < 2) assertEquals(listOf(status), inAll.map { it.status }) else assertTrue(inAll.isEmpty())
+            }
         }
 
     @Test

@@ -2,6 +2,12 @@ package com.cooper.binge.companion.seerr.data
 
 import androidx.paging.PagingSource
 import com.binge.companion.sdk.paging.OpenPagingSources
+import com.cooper.binge.companion.seerr.seerr.SeerrRequestStatusCode
+import com.cooper.binge.companion.seerr.ui.requests.RequestCounts
+import com.cooper.binge.companion.seerr.ui.requests.RequestFilter
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 /**
  * The request cache behind a seam, as [IssueStore] is, so the mediator and the browser are tested
@@ -9,6 +15,14 @@ import com.binge.companion.sdk.paging.OpenPagingSources
  * the list's cursor.
  */
 interface RequestStore {
+    /**
+     * The chip counts, which belong to the server rather than to a list, so whoever last read them writes them here and
+     * every screen showing them updates (#1665). Null until a read has landed, and again after [clearAll].
+     */
+    val counts: StateFlow<RequestCounts?>
+
+    fun setCounts(counts: RequestCounts)
+
     fun pagingSource(listKey: String): PagingSource<Int, RequestEntity>
 
     suspend fun nextSkip(listKey: String): Int?
@@ -30,10 +44,21 @@ interface RequestStore {
         nextSkip: Int?,
     )
 
-    /** Moves a request to [status] (a raw `SeerrRequestStatusCode`) in every list that cached it. */
+    /**
+     * Moves a request to [status] (a raw `SeerrRequestStatusCode`) in every list that cached it, and takes it out of
+     * the slices of a filter on that status (see [statusFilters]) that it no longer matches. A slice it newly matches
+     * is left to its next refresh, because where the row sorts there is the server's to say.
+     */
     suspend fun updateStatus(
         requestId: Int,
         status: Int,
+    )
+
+    /** [updateStatus] with the server's own answer: a null part is one the answer did not carry, and is left as cached. */
+    suspend fun updateServerState(
+        requestId: Int,
+        status: Int?,
+        mediaStatus: Int?,
     )
 
     suspend fun delete(requestId: Int)
@@ -48,6 +73,8 @@ class RoomRequestStore(
     private val requests get() = db.requestDao()
     private val keys get() = db.requestRemoteKeyDao()
     private val sources = OpenPagingSources<Int, RequestEntity>()
+    private val cachedCounts = MutableStateFlow<RequestCounts?>(null)
+    override val counts: StateFlow<RequestCounts?> = cachedCounts.asStateFlow()
     private val writes =
         PagedWrites(
             db = db,
@@ -58,6 +85,10 @@ class RoomRequestStore(
             clearEverything = { requests.clearAll() },
             clearCursors = { keys.clearAll() },
         )
+
+    override fun setCounts(counts: RequestCounts) {
+        cachedCounts.value = counts
+    }
 
     override fun pagingSource(listKey: String): PagingSource<Int, RequestEntity> = sources.track(requests.pagingSource(listKey))
 
@@ -80,15 +111,44 @@ class RoomRequestStore(
     override suspend fun updateStatus(
         requestId: Int,
         status: Int,
-    ) = sources.afterWrite { requests.updateStatus(requestId, status) }
+    ) = updateServerState(requestId, status, mediaStatus = null)
+
+    override suspend fun updateServerState(
+        requestId: Int,
+        status: Int?,
+        mediaStatus: Int?,
+    ) = sources.afterWrite {
+        requests.updateState(requestId, status, mediaStatus)
+        if (status == null) return@afterWrite
+        statusFilters.forEach { (filter, wanted) -> if (status != wanted) requests.dropFromFilter(requestId, "$filter:%") }
+    }
 
     override suspend fun delete(requestId: Int) = sources.afterWrite { requests.delete(requestId) }
 
-    override suspend fun clearAll() = writes.clearAll()
+    override suspend fun clearAll() {
+        cachedCounts.value = null
+        writes.clearAll()
+    }
 }
+
+/**
+ * The list filters the server decides by the request's own status alone, as the `filter` of its `GET request`: a row
+ * with another status is not in them. The other filters read the media's status too, which a moderation's answer may
+ * not have settled yet, so they are left to refresh.
+ */
+internal val statusFilters: Map<String, Int> =
+    mapOf(
+        RequestFilter.Pending.apiValue to SeerrRequestStatusCode.Pending.raw,
+        RequestFilter.Approved.apiValue to SeerrRequestStatusCode.Approved.raw,
+        RequestFilter.Failed.apiValue to SeerrRequestStatusCode.Failed.raw,
+    )
 
 /** No cache at all: writes go nowhere. What a build or a test that has not wired one gets. */
 object NoRequestStore : RequestStore {
+    override val counts: StateFlow<RequestCounts?> = MutableStateFlow(null)
+
+    override fun setCounts(counts: RequestCounts) = Unit
+
     override fun pagingSource(listKey: String): PagingSource<Int, RequestEntity> = error("NoRequestStore holds no rows")
 
     override suspend fun nextSkip(listKey: String): Int? = null
@@ -110,6 +170,12 @@ object NoRequestStore : RequestStore {
     override suspend fun updateStatus(
         requestId: Int,
         status: Int,
+    ) = Unit
+
+    override suspend fun updateServerState(
+        requestId: Int,
+        status: Int?,
+        mediaStatus: Int?,
     ) = Unit
 
     override suspend fun delete(requestId: Int) = Unit

@@ -198,33 +198,31 @@ class RequestsViewModel
          * `requestedBy`, so for a viewer whose list is theirs alone it would count requests the list never shows (#977):
          * their chips carry no count, and it is not asked.
          */
-        private val counts: Flow<RequestCounts?> =
+        private val countReads: Flow<Unit> =
             combine(selectedFilter, refreshTrigger, countsRefresh, scope) { _, _, _, scope ->
                 scope is ScopeState.Resolved && scope.scope.requestedBy == null
             }.flatMapLatest { seesEveryRequest ->
                 flow {
-                    emit(
-                        if (seesEveryRequest) {
-                            countsInFlight.whileSet {
-                                attempt { connection.api().requestCount() }
-                                    .getOrNull()
-                                    ?.let { RequestCounts(it.total, it.pending, it.approved, it.processing, it.available) }
-                            }
-                        } else {
-                            null
-                        },
-                    )
+                    if (seesEveryRequest) {
+                        countsInFlight.whileSet {
+                            attempt { connection.api().requestCount() }
+                                .getOrNull()
+                                ?.let { store.setCounts(RequestCounts(it.total, it.pending, it.approved, it.processing, it.available)) }
+                        }
+                    }
+                    emit(Unit)
                 }
             }.flowOn(dispatcher)
-                .onStart { emit(null) }
+                .onStart { emit(Unit) }
 
         val uiState: StateFlow<RequestsUiState> =
             combine(
                 combine(selectedFilter, selectedSort, listVersionState) { filter, sort, version -> Triple(filter, sort, version) },
-                counts,
+                countReads,
+                store.counts,
                 scope,
                 refreshes.latest,
-            ) { (filter, sort, version), counts, scope, refreshes ->
+            ) { (filter, sort, version), _, counts, scope, refreshes ->
                 when (scope) {
                     ScopeState.Resolving -> RequestsUiState.Loading
                     is ScopeState.Failed -> RequestsUiState.Error(scope.error)
@@ -232,7 +230,7 @@ class RequestsViewModel
                         RequestsUiState.Ready(
                             filter = filter,
                             sort = sort,
-                            counts = counts,
+                            counts = counts.takeIf { scope.scope.requestedBy == null },
                             scope = scope.scope.moderation,
                             listVersion = version,
                             refreshes = refreshes,

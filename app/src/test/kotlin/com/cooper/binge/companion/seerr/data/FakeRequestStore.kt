@@ -2,6 +2,9 @@ package com.cooper.binge.companion.seerr.data
 
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
+import com.cooper.binge.companion.seerr.ui.requests.RequestCounts
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 
 /**
  * The request cache as a list in memory, paged like the database: every write invalidates the
@@ -14,6 +17,13 @@ class FakeRequestStore : RequestStore {
     private val sources = mutableListOf<PagingSource<Int, RequestEntity>>()
     val refreshed = mutableListOf<Pair<List<RequestEntity>, Int?>>()
     val appended = mutableListOf<Pair<List<RequestEntity>, Int?>>()
+
+    private val cachedCounts = MutableStateFlow<RequestCounts?>(null)
+    override val counts: StateFlow<RequestCounts?> = cachedCounts
+
+    override fun setCounts(counts: RequestCounts) {
+        cachedCounts.value = counts
+    }
 
     override fun pagingSource(listKey: String): PagingSource<Int, RequestEntity> = ListSource(listKey).also { sources += it }
 
@@ -44,11 +54,26 @@ class FakeRequestStore : RequestStore {
     override suspend fun updateStatus(
         requestId: Int,
         status: Int,
-    ) = write(rows.map { if (it.id == requestId) it.copy(status = status) else it })
+    ) = updateServerState(requestId, status, mediaStatus = null)
+
+    override suspend fun updateServerState(
+        requestId: Int,
+        status: Int?,
+        mediaStatus: Int?,
+    ) = write(
+        rows
+            .map {
+                if (it.id == requestId) it.copy(status = status ?: it.status, mediaStatus = mediaStatus ?: it.mediaStatus) else it
+            }.filterNot { row ->
+                val wanted = statusFilters[row.listKey.substringBefore(':')]
+                row.id == requestId && status != null && wanted != null && wanted != status
+            },
+    )
 
     override suspend fun delete(requestId: Int) = write(rows.filterNot { it.id == requestId })
 
     override suspend fun clearAll() {
+        cachedCounts.value = null
         cursors.clear()
         write(emptyList())
     }
