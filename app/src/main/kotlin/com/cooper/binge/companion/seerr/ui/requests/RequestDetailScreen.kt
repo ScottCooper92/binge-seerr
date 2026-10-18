@@ -219,7 +219,11 @@ internal fun RequestManagementSheets(
             onRetry = actions.onRetryRequest,
             onDecline = actions.onDecline,
             onRemove = actions.onRemove,
-            onDismiss = onDismissActing,
+            onDismiss = {
+                // Closing the sheet does not step back through its pages, so drop the mark here or it reopens on its own.
+                marking = null
+                onDismissActing()
+            },
             canEdit = detail?.canEdit == true,
             onEdit = actions.onStartEdit,
             media = detail?.media,

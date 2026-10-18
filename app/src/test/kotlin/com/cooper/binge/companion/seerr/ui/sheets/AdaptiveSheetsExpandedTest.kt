@@ -3,12 +3,17 @@ package com.cooper.binge.companion.seerr.ui.sheets
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.click
 import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.isRoot
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
+import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTouchInput
 import com.binge.designsystem.theme.BingeExpressiveTheme
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.seerr.SeerrMediaStatusCode
@@ -19,6 +24,9 @@ import com.cooper.binge.companion.seerr.ui.requests.MediaInstance
 import com.cooper.binge.companion.seerr.ui.requests.MediaRecord
 import com.cooper.binge.companion.seerr.ui.requests.MediaStatusChoice
 import com.cooper.binge.companion.seerr.ui.requests.RequestActionsSheet
+import com.cooper.binge.companion.seerr.ui.requests.RequestDetailActions
+import com.cooper.binge.companion.seerr.ui.requests.RequestDetailUiState
+import com.cooper.binge.companion.seerr.ui.requests.RequestManagementSheets
 import com.cooper.binge.companion.seerr.ui.requests.SeasonChoice
 import com.cooper.binge.companion.seerr.ui.users.UserAdmissionActions
 import com.cooper.binge.companion.seerr.ui.users.UserAdmissionSheets
@@ -241,6 +249,82 @@ class MarkAsPageExpandedTest {
         assertEquals(1, markDismissed)
         assertEquals(0, sheetDismissed)
         rule.onAllNodes(backBar()).assertCountEquals(0)
+    }
+}
+
+/** Closing the side sheet from the Mark as page drops the mark, so Mark as does not reopen as a bottom sheet. */
+@RunWith(RobolectricTestRunner::class)
+@Config(qualifiers = "w900dp-h900dp")
+class MarkAsPageDismissTest {
+    @get:Rule
+    val rule = createSeerrComposeRule()
+
+    private var acting by mutableStateOf(true)
+
+    @Test
+    fun `a scrim tap on the Mark as page closes the sheet and leaves no Mark as behind`() {
+        val instance =
+            MediaInstance(is4k = false, status = SeerrMediaStatusCode.Processing, serviceUrl = null, mediaServerUrl = null, watch = null)
+        val detail =
+            requestDetail(
+                media =
+                    MediaRecord(
+                        mediaId = 900,
+                        isTv = false,
+                        instances = listOf(instance),
+                        canSetStatus = true,
+                        canClearData = false,
+                        canDeleteFiles = false,
+                    ),
+            )
+        val editActions =
+            EditRequestActions(
+                onToggleSeason = {},
+                onSelectAllSeasons = {},
+                onSelectServer = {},
+                onSelectProfile = {},
+                onSelectRootFolder = {},
+                onToggleTag = {},
+                onSave = {},
+                onDismiss = {},
+            )
+        val actions =
+            RequestDetailActions(
+                onBack = {},
+                onRetry = {},
+                onReportIssue = { _, _ -> },
+                onDismissReport = {},
+                onApprove = {},
+                onRetryRequest = {},
+                onDecline = {},
+                onRemove = {},
+                onStartEdit = {},
+                siblingSheet = {},
+                onOpenUser = {},
+                edit = editActions,
+                media = ManageMediaActions(onSetStatus = { _, _, _ -> }, onClearData = {}, onDeleteFiles = { _, _ -> }),
+            )
+        rule.setContent {
+            BingeExpressiveTheme(dynamicColor = false) {
+                RequestManagementSheets(
+                    state = RequestDetailUiState.Ready(detail),
+                    actions = actions,
+                    acting = acting,
+                    onDismissActing = { acting = false },
+                )
+            }
+        }
+        rule.waitForIdle()
+        rule.onNodeWithText(string(R.string.media_instance_standard)).performClick()
+        rule.waitForIdle()
+        rule.onNodeWithText(string(R.string.media_mark_as)).assertExists()
+
+        rule.onAllNodes(isRoot()).onLast().performTouchInput { click(Offset(8f, 8f)) }
+        rule.waitForIdle()
+
+        assertEquals(false, acting)
+        rule.onAllNodesWithText(string(R.string.media_mark_as)).assertCountEquals(0)
+        rule.onAllNodesWithText(string(R.string.media_state_available)).assertCountEquals(0)
     }
 }
 
