@@ -210,51 +210,63 @@ private fun MediaServerLinkSheet(
     onLink: (String, String) -> Unit,
     onDismiss: () -> Unit,
 ) {
+    BingeAdaptiveSheet(kind = BingeSheetKind.Task, onDismissRequest = onDismiss) {
+        MediaServerLinkContent(origin = origin, canQuickConnect = canQuickConnect, onQuickConnect = onQuickConnect, onLink = onLink)
+    }
+}
+
+/** [MediaServerLinkSheet]'s body without its window, for a frame. It keeps the typed credentials itself. */
+@Composable
+internal fun MediaServerLinkContent(
+    origin: UserOrigin,
+    canQuickConnect: Boolean,
+    onQuickConnect: () -> Unit,
+    onLink: (String, String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     var username by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
-    BingeAdaptiveSheet(kind = BingeSheetKind.Task, onDismissRequest = onDismiss) {
-        Column(
-            modifier = Modifier.fillMaxWidth().padding(dimensionResource(DesR.dimen.screen_content_inset)),
-            verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
-        ) {
-            Text(
-                stringResource(R.string.user_settings_link_sheet_title, stringResource(origin.labelRes())),
-                style = MaterialTheme.typography.titleLarge,
-            )
-            if (canQuickConnect) {
-                BingeOutlinedButton(
-                    label = stringResource(R.string.user_settings_link_quick_connect),
-                    onClick = onQuickConnect,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
-            EditorTextField(
-                username,
-                stringResource(R.string.setup_username),
-                modifier =
-                    Modifier.savedLoginRequest { login ->
-                        username = login.id
-                        password = login.password
-                    },
-                keyboardType = VerbatimKeyboard.keyboardType,
-                autoCorrect = VerbatimKeyboard.autoCorrectEnabled ?: true,
-                placeholder = stringResource(R.string.setup_username_placeholder, stringResource(origin.labelRes())),
-                contentType = ContentType.Username,
-            ) { username = it }
-            EditorTextField(
-                password,
-                stringResource(R.string.setup_password),
-                secret = true,
-                contentType = ContentType.Password,
-                imeAction = ImeAction.Done,
-                onDone = { if (username.isNotBlank() && password.isNotBlank()) onLink(username, password) },
-            ) { password = it }
-            BingeFilledButton(
-                label = stringResource(R.string.user_settings_link),
-                onClick = { onLink(username, password) },
-                enabled = username.isNotBlank() && password.isNotBlank(),
+    Column(
+        modifier = modifier.fillMaxWidth().padding(dimensionResource(DesR.dimen.screen_content_inset)),
+        verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
+    ) {
+        Text(
+            stringResource(R.string.user_settings_link_sheet_title, stringResource(origin.labelRes())),
+            style = MaterialTheme.typography.titleLarge,
+        )
+        if (canQuickConnect) {
+            BingeOutlinedButton(
+                label = stringResource(R.string.user_settings_link_quick_connect),
+                onClick = onQuickConnect,
                 modifier = Modifier.fillMaxWidth(),
             )
         }
+        EditorTextField(
+            username,
+            stringResource(R.string.setup_username),
+            modifier =
+                Modifier.savedLoginRequest { login ->
+                    username = login.id
+                    password = login.password
+                },
+            keyboardType = VerbatimKeyboard.keyboardType,
+            autoCorrect = VerbatimKeyboard.autoCorrectEnabled ?: true,
+            placeholder = stringResource(R.string.setup_username_placeholder, stringResource(origin.labelRes())),
+            contentType = ContentType.Username,
+        ) { username = it }
+        EditorTextField(
+            password,
+            stringResource(R.string.setup_password),
+            secret = true,
+            contentType = ContentType.Password,
+            imeAction = ImeAction.Done,
+            onDone = { if (username.isNotBlank() && password.isNotBlank()) onLink(username, password) },
+        ) { password = it }
+        BingeFilledButton(
+            label = stringResource(R.string.user_settings_link),
+            onClick = { onLink(username, password) },
+            enabled = username.isNotBlank() && password.isNotBlank(),
+            modifier = Modifier.fillMaxWidth(),
+        )
     }
 }

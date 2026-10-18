@@ -43,35 +43,46 @@ internal fun SetupLinkSheet(
         }
     }
     BingeAdaptiveSheet(kind = BingeSheetKind.Task, onDismissRequest = onCancel) {
-        Column(
-            modifier = Modifier.fillMaxWidth().padding(dimensionResource(DesR.dimen.screen_content_inset)),
-            verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Text(
-                stringResource(if (link is LinkFlow.Plex) R.string.link_plex_title else R.string.link_quick_connect_title),
-                style = MaterialTheme.typography.titleLarge,
-            )
-            Text(
-                stringResource(if (link is LinkFlow.Plex) R.string.link_plex_body else R.string.link_quick_connect_body),
-                style = MaterialTheme.typography.bodyMedium,
-                textAlign = TextAlign.Center,
-            )
-            Text(link.code, style = MaterialTheme.typography.displaySmall, fontFamily = FontFamily.Monospace)
-            BingeLoadingIndicator()
-            Text(
-                stringResource(R.string.link_waiting),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            if (link is LinkFlow.Plex) {
-                BingeFilledButton(
-                    label = stringResource(R.string.link_plex_open),
-                    onClick = { context.openInBrowser(link.authUrl) },
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
-            BingeOutlinedButton(label = stringResource(R.string.link_cancel), onClick = onCancel, modifier = Modifier.fillMaxWidth())
+        SetupLinkContent(
+            link = link,
+            onOpenPlex = { (link as? LinkFlow.Plex)?.let { context.openInBrowser(it.authUrl) } },
+            onCancel = onCancel,
+        )
+    }
+}
+
+/** [SetupLinkSheet]'s body without its window, for a frame; [onOpenPlex] is the button a Plex link offers. */
+@Composable
+internal fun SetupLinkContent(
+    link: LinkFlow,
+    onOpenPlex: () -> Unit,
+    onCancel: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier.fillMaxWidth().padding(dimensionResource(DesR.dimen.screen_content_inset)),
+        verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(
+            stringResource(if (link is LinkFlow.Plex) R.string.link_plex_title else R.string.link_quick_connect_title),
+            style = MaterialTheme.typography.titleLarge,
+        )
+        Text(
+            stringResource(if (link is LinkFlow.Plex) R.string.link_plex_body else R.string.link_quick_connect_body),
+            style = MaterialTheme.typography.bodyMedium,
+            textAlign = TextAlign.Center,
+        )
+        Text(link.code, style = MaterialTheme.typography.displaySmall, fontFamily = FontFamily.Monospace)
+        BingeLoadingIndicator()
+        Text(
+            stringResource(R.string.link_waiting),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        if (link is LinkFlow.Plex) {
+            BingeFilledButton(label = stringResource(R.string.link_plex_open), onClick = onOpenPlex, modifier = Modifier.fillMaxWidth())
         }
+        BingeOutlinedButton(label = stringResource(R.string.link_cancel), onClick = onCancel, modifier = Modifier.fillMaxWidth())
     }
 }
