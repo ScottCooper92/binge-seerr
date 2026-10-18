@@ -1078,7 +1078,8 @@
     <string name="tv_detail_info_requested">Solicitado</string>
     <string name="tv_detail_info_status">Estado</string>
     <string name="tv_detail_manage">Gestionar</string>
-    <string name="tv_detail_report_scan_hint">En Seerr en tu móvil, abre Ajustes y elige Escanear código del televisor.</string>
+    <string name="tv_detail_report_version_4k">Versión 4K</string>
+    <string name="tv_detail_report_scan_hint">En la app de Seerr de tu móvil, abre Ajustes y elige Escanear código del televisor.</string>
     <string name="tv_detail_report_on_phone">Escanea el código con el móvil para abrir este título en %1$s e informar de la incidencia allí.</string>
     <string name="tv_detail_details">Detalles</string>
     <string name="settings_group_server_settings">Ajustes del servidor</string>

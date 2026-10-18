@@ -939,7 +939,8 @@ app:tv_detail_info_status  920e413c7d41
 app:tv_detail_manage  5a23444828db
 app:tv_detail_remove  c3812fc4acb8
 app:tv_detail_report_on_phone  35e2a5389e5b
-app:tv_detail_report_scan_hint  dd7db259859b
+app:tv_detail_report_scan_hint  a1e64b82f599
+app:tv_detail_report_version_4k  0f07082e4214
 app:tv_download_percent  0edb69de9be1
 app:tv_filter_with_count  f7da0939cc40
 app:tv_handoff_body  a05f82f7df9c

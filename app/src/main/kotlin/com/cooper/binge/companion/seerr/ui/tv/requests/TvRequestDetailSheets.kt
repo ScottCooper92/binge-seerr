@@ -15,6 +15,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.tv.material3.MaterialTheme
+import androidx.tv.material3.Text
 import com.binge.designsystem.SaveStatus
 import com.binge.designsystem.tv.component.TvConfirmDialog
 import com.binge.designsystem.tv.component.TvOptionRow
@@ -53,6 +56,8 @@ internal enum class DetailSheet(
     MarkAs(isPage = true),
     Report(isPage = true),
 }
+
+private const val REPORT_TITLE_MAX_LINES = 2
 
 /** What the sheets read from the page: the request, its title's record, the open editor, and the title's page on the server. */
 internal class TvDetailSheetContent(
@@ -160,7 +165,14 @@ internal fun ColumnScope.TvRequestDetailPage(
                 onDispose { shown(false) }
             }
         }
-        DetailSheet.Report -> TvReportOnPhoneStep(TitleReportLinks.write(content.webUrl, content.item.is4k), content.serverName, entryFocus)
+        DetailSheet.Report ->
+            TvReportOnPhoneStep(
+                webUrl = TitleReportLinks.write(content.webUrl, content.item.is4k),
+                serverName = content.serverName,
+                title = content.item.title ?: stringResource(content.item.mediaType.labelRes()),
+                is4k = content.item.is4k,
+                entryFocus = entryFocus,
+            )
         DetailSheet.Remove, DetailSheet.Block -> Unit
     }
 }
@@ -243,15 +255,26 @@ internal fun ColumnScope.TvMarkAsSteps(
 
 /**
  * Reporting an issue needs a keyboard, so the sheet hands it to the phone: the title's page on the server, as a code, where
- * the report is written.
+ * the report is written. It names [title], held to two lines with an ellipsis, and says so on a line of its own when the
+ * request is for the [is4k] version, so a long title never pushes that out of view.
  */
 @Composable
 internal fun ColumnScope.TvReportOnPhoneStep(
     webUrl: String,
     serverName: String,
+    title: String,
+    is4k: Boolean,
     entryFocus: FocusRequester,
 ) {
     TvSideSheetTitle(stringResource(R.string.issue_report_title))
+    Text(
+        text = title,
+        style = MaterialTheme.typography.titleMedium,
+        color = MaterialTheme.colorScheme.onSurface,
+        maxLines = REPORT_TITLE_MAX_LINES,
+        overflow = TextOverflow.Ellipsis,
+    )
+    if (is4k) TvSideSheetBody(stringResource(R.string.tv_detail_report_version_4k))
     TvPhoneCode(
         url = webUrl,
         body = stringResource(R.string.tv_detail_report_on_phone, serverName) + "\n" + stringResource(R.string.tv_detail_report_scan_hint),

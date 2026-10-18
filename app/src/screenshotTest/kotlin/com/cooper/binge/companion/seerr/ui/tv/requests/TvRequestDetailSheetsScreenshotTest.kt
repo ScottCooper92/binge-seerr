@@ -148,7 +148,28 @@ class TvRequestDetailSheetsScreenshotTest {
     @Composable
     fun ReportOnPhone() =
         SheetFrame {
-            TvReportOnPhoneStep(webUrl = "https://seerr.example/movie/900", serverName = "Jellyseerr", entryFocus = FocusRequester())
+            TvReportOnPhoneStep(
+                webUrl = "https://seerr.example/movie/900",
+                serverName = "Jellyseerr",
+                title = "Heat",
+                is4k = false,
+                entryFocus = FocusRequester(),
+            )
+        }
+
+    /** The 4K version of a title long enough to need its two lines: the version stays on a line of its own below it. */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun ReportOnPhoneFourKLongTitle() =
+        SheetFrame {
+            TvReportOnPhoneStep(
+                webUrl = "https://seerr.example/movie/900?is4k=1",
+                serverName = "Jellyseerr",
+                title = "The Lord of the Rings: The Rings of Power, Extended Edition with Every Commentary Track",
+                is4k = true,
+                entryFocus = FocusRequester(),
+            )
         }
 
     /** Manage on a pending request: everything past Approve and Decline, with Block and Remove last, in red. */
