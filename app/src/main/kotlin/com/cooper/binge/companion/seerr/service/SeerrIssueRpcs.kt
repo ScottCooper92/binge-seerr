@@ -2,6 +2,7 @@ package com.cooper.binge.companion.seerr.service
 
 import com.binge.companion.contracts.request.v1.BlockTitleRequest
 import com.binge.companion.contracts.request.v1.BlockTitleResponse
+import com.binge.companion.contracts.request.v1.IssueType
 import com.binge.companion.contracts.request.v1.ReportIssueRequest
 import com.binge.companion.contracts.request.v1.ReportIssueResponse
 import com.binge.companion.contracts.request.v1.UnblockTitleRequest
@@ -109,6 +110,7 @@ private fun ReportIssueRequest.checkScope() {
 private fun ReportIssueRequest.scopeProblem(): String? =
     when {
         categoryId.isNotEmpty() -> "category_id was set, but this integration lists no issue categories"
+        type == IssueType.ISSUE_TYPE_UNSPECIFIED -> "type is unspecified and category_id is empty"
         hasSeasonNumber() && seasonNumber < 0 -> "season_number is below 0"
         hasSeasonNumber() && media.mediaType != MediaType.MEDIA_TYPE_TV -> "season_number is for a series"
         hasEpisodeNumber() && !hasSeasonNumber() -> "episode_number is set without season_number"
@@ -123,7 +125,8 @@ private fun ReportIssueRequest.episodeNumber(): Int = if (hasEpisodeNumber()) ep
 
 /**
  * Seerr stores no version on an issue, so the one the user named travels in the message, where the
- * administrator reads it. Only the 4K version is named, and only to a user who may see it.
+ * administrator reads it. Only the 4K version is named, and only to a user who may see it. The note is English
+ * because it is data for an administrator whose locale the app does not know, not app UI.
  */
 private fun String.namingVersion(
     versionId: String,

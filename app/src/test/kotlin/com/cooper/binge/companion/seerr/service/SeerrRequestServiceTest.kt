@@ -1242,6 +1242,14 @@ class SeerrRequestServiceTest {
             val body = seerr.takeRequest().bodyText()
             assertTrue(body, body.contains("\"problemSeason\":2"))
             assertTrue(body, body.contains("\"problemEpisode\":5"))
+
+            seerr.enqueue(json("""{"mediaInfo":{"id":9,"status":5}}"""))
+            seerr.enqueue(MockResponse(code = 201))
+            stub.reportIssue(plainReport(show))
+            seerr.takeRequest()
+            val plain = seerr.takeRequest().bodyText()
+            assertFalse(plain, plain.contains("problemSeason"))
+            assertFalse(plain, plain.contains("problemEpisode"))
         }
 
     @Test
@@ -1282,9 +1290,10 @@ class SeerrRequestServiceTest {
                         episodeNumber = -1
                     },
                     scopedReport(movie) { categoryId = "42" },
+                    ReportIssueRequest.newBuilder().setMedia(movie).build(),
                 ).map { report -> stub.code { reportIssue(report) } }
 
-            assertEquals(List(5) { Status.Code.INVALID_ARGUMENT }, refused)
+            assertEquals(List(6) { Status.Code.INVALID_ARGUMENT }, refused)
             assertEquals(before, seerr.requestCount)
         }
 
@@ -1302,6 +1311,13 @@ class SeerrRequestServiceTest {
             val tooLong = declineWithReason("x".repeat(1001))
             assertEquals(Status.Code.INVALID_ARGUMENT, stub.code { declineRequest(tooLong) })
         }
+
+    private fun plainReport(media: MediaId) =
+        ReportIssueRequest
+            .newBuilder()
+            .setMedia(media)
+            .setType(IssueType.ISSUE_TYPE_SUBTITLE)
+            .build()
 
     private fun declineWithReason(reason: String) =
         DeclineRequestRequest
