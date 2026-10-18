@@ -104,4 +104,26 @@ class NotificationAgentsViewModelTest {
                 state is AgentsUiState.Ready && state.agents.first { it.agent == ServerAgent.Discord }.enabled == true
             }
         }
+
+    @Test
+    fun `a slow read started earlier does not land over the read that replaced it`() =
+        runTest {
+            seerr.viewer(id = 1, permissions = ADMIN)
+            val held = seerr.serveHeld("GET /api/v1/settings/notifications/discord")
+            val vm = NotificationAgentsViewModel(seerr.connection(this), mainDispatcherRule.dispatcher)
+            vm.reload()
+            seerr.awaitCount("GET", "/api/v1/settings/notifications/discord", moreThan = 0, timeoutMillis = seerr.expectedCallWaitMillis())
+            seerr.serve("GET /api/v1/settings/notifications/discord", """{"enabled":true,"types":0,"options":{}}""")
+
+            vm.refresh()
+            vm.uiState.first { state ->
+                state is AgentsUiState.Ready && state.agents.first { it.agent == ServerAgent.Discord }.enabled == true
+            }
+            held.release(body = """{"enabled":false,"types":0,"options":{}}""")
+            seerr.awaitCallbacks()
+            testScheduler.runCurrent()
+
+            val after = vm.uiState.value as AgentsUiState.Ready
+            assertEquals(true, after.agents.first { it.agent == ServerAgent.Discord }.enabled)
+        }
 }

@@ -34,8 +34,9 @@ class NotificationAgentsViewModel
         val uiState: StateFlow<AgentsUiState> = state.asStateFlow()
 
         init {
-            // Said once an agent's write has landed, so this read goes out after it and sees it (#1556).
-            viewModelScope.launch(dispatcher) { agentChanges.changes.collect { refresh() } }
+            // Said once an agent's write has landed, so this read goes out after it and sees it (#1556). Collected on Main,
+            // where the page calls reload() and refresh() too, so [loading] has one writer at a time; read() moves the network.
+            viewModelScope.launch { agentChanges.changes.collect { refresh() } }
         }
 
         fun reload() {
