@@ -16,8 +16,11 @@ import com.cooper.binge.companion.seerr.data.SeerrCacheDatabase
 import com.cooper.binge.companion.seerr.data.TitleDao
 import com.cooper.binge.companion.seerr.data.UserStore
 import com.cooper.binge.companion.seerr.feedback.FeedbackPrefs
+import com.cooper.binge.companion.seerr.notifications.AndroidNotificationText
 import com.cooper.binge.companion.seerr.notifications.AndroidNotifier
 import com.cooper.binge.companion.seerr.notifications.ApplicationScope
+import com.cooper.binge.companion.seerr.notifications.ForwardingNotifier
+import com.cooper.binge.companion.seerr.notifications.NotificationForwarding
 import com.cooper.binge.companion.seerr.notifications.NotificationPrefs
 import com.cooper.binge.companion.seerr.notifications.NotificationScheduler
 import com.cooper.binge.companion.seerr.notifications.SeerrNotifier
@@ -128,9 +131,17 @@ object SeerrModule {
 
     @Provides
     @Singleton
+    fun notificationForwarding(
+        @ApplicationContext context: Context,
+    ): NotificationForwarding = NotificationForwarding(context.notificationsDataStore)
+
+    /** Posts this app's notices itself, unless Binge is showing them instead. */
+    @Provides
+    @Singleton
     fun notifier(
         @ApplicationContext context: Context,
-    ): SeerrNotifier = AndroidNotifier(context)
+        forwarding: NotificationForwarding,
+    ): SeerrNotifier = ForwardingNotifier(AndroidNotifier(context), forwarding, AndroidNotificationText(context))
 
     @Provides
     fun bingeInstallCheck(

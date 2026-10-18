@@ -628,6 +628,8 @@
     <string name="settings_signal_available">My requests are available</string>
     <string name="settings_signal_approved">My requests are approved</string>
     <string name="settings_signal_declined">My requests are declined</string>
+    <string name="settings_notifications_forwarded">Shown in Binge</string>
+    <string name="settings_notifications_forwarded_caption">Binge shows these notifications instead of this app. Turn them off in Binge to have this app show them again.</string>
     <string name="settings_notifications_blocked">Notifications are blocked</string>
     <string name="settings_notifications_blocked_caption">Allow them in the system settings to be told about any of this</string>
     <string name="settings_notifications_poll">Checked in the background</string>

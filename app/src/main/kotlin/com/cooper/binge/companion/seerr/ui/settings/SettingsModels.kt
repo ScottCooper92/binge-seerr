@@ -100,6 +100,8 @@ data class NotificationSettings(
     val blocked: Boolean,
     val lastRunMillis: Long?,
     val nextRunMillis: Long?,
+    /** Binge shows these notices instead of this app (binge-companions#249). */
+    val forwardedToBinge: Boolean = false,
 )
 
 /**

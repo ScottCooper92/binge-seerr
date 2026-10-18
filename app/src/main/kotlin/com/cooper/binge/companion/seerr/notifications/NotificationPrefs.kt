@@ -79,6 +79,18 @@ class NotificationPrefs(
         }
     }
 
+    /** Turns [signals] on only when no signal is on at all, leaving a choice the user has made alone. */
+    suspend fun enableIfNoneOn(signals: List<NotificationSignal>) {
+        dataStore.edit { prefs ->
+            if (NotificationSignal.entries.none { prefs[it.toggleKey()] == true }) {
+                signals.forEach { signal ->
+                    prefs[signal.toggleKey()] = true
+                    prefs.clearDedup(signal)
+                }
+            }
+        }
+    }
+
     suspend fun cursor(signal: NotificationSignal): Int? = dataStore.data.first()[signal.cursorKey()]
 
     suspend fun setCursor(

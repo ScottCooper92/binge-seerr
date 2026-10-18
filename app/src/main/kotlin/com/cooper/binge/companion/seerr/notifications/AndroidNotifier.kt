@@ -31,26 +31,28 @@ class AndroidNotifier(
      * checked: the feeds can be muted while the connection channel stays on, and the system drops
      * a muted channel's posts itself.
      */
-    override fun canPost(): Boolean =
+    override suspend fun canPost(): Boolean = mayPost()
+
+    private fun mayPost(): Boolean =
         NotificationManagerCompat.from(context).areNotificationsEnabled() &&
             ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
 
-    override fun notifyNewRequests(items: List<RequestItem>) =
+    override suspend fun notifyNewRequests(items: List<RequestItem>) =
         notifyBatch(NotificationSignal.PendingRequests, items.map { it.id }, items.mapNotNull { it.title })
 
-    override fun notifyNewIssues(items: List<IssueItem>) =
+    override suspend fun notifyNewIssues(items: List<IssueItem>) =
         notifyBatch(NotificationSignal.OpenIssues, items.map { it.id }, items.mapNotNull { it.title })
 
-    override fun notifyRequestsAvailable(items: List<RequestItem>) =
+    override suspend fun notifyRequestsAvailable(items: List<RequestItem>) =
         notifyBatch(NotificationSignal.RequestAvailable, items.map { it.id }, items.mapNotNull { it.title })
 
-    override fun notifyRequestsApproved(items: List<RequestItem>) =
+    override suspend fun notifyRequestsApproved(items: List<RequestItem>) =
         notifyBatch(NotificationSignal.RequestApproved, items.map { it.id }, items.mapNotNull { it.title })
 
-    override fun notifyRequestsDeclined(items: List<RequestItem>) =
+    override suspend fun notifyRequestsDeclined(items: List<RequestItem>) =
         notifyBatch(NotificationSignal.RequestDeclined, items.map { it.id }, items.mapNotNull { it.title })
 
-    override fun notifyConnectionProblem() =
+    override suspend fun notifyConnectionProblem() =
         post(
             id = CONNECTION_NOTIFICATION_ID,
             tag = null,
@@ -88,7 +90,7 @@ class AndroidNotifier(
         )
     }
 
-    /** [canPost] guards the permission, but lint follows only a check inlined in the same method. */
+    /** [mayPost] guards the permission, but lint follows only a check inlined in the same method. */
     @SuppressLint("MissingPermission")
     private fun post(
         id: Int,
@@ -98,7 +100,7 @@ class AndroidNotifier(
         body: String?,
         link: String,
     ) {
-        if (!canPost()) return
+        if (!mayPost()) return
         ensureChannel(channel)
         val builder =
             NotificationCompat

@@ -1,5 +1,7 @@
 package com.cooper.binge.companion.seerr.service
 
+import com.binge.companion.contracts.request.v1.AcknowledgeNotificationsRequest
+import com.binge.companion.contracts.request.v1.AcknowledgeNotificationsResponse
 import com.binge.companion.contracts.request.v1.ApproveRequestRequest
 import com.binge.companion.contracts.request.v1.ApproveRequestResponse
 import com.binge.companion.contracts.request.v1.Attention
@@ -24,6 +26,8 @@ import com.binge.companion.contracts.request.v1.GetStatusesRequest
 import com.binge.companion.contracts.request.v1.GetStatusesResponse
 import com.binge.companion.contracts.request.v1.HandshakeRequest
 import com.binge.companion.contracts.request.v1.HandshakeResponse
+import com.binge.companion.contracts.request.v1.ListNotificationsRequest
+import com.binge.companion.contracts.request.v1.ListNotificationsResponse
 import com.binge.companion.contracts.request.v1.ListRequestsRequest
 import com.binge.companion.contracts.request.v1.ListRequestsResponse
 import com.binge.companion.contracts.request.v1.ObserveAttentionRequest
@@ -35,6 +39,8 @@ import com.binge.companion.contracts.request.v1.ReportIssueResponse
 import com.binge.companion.contracts.request.v1.RequestServiceGrpcKt
 import com.binge.companion.contracts.request.v1.RetryRequestRequest
 import com.binge.companion.contracts.request.v1.RetryRequestResponse
+import com.binge.companion.contracts.request.v1.SetNotificationForwardingRequest
+import com.binge.companion.contracts.request.v1.SetNotificationForwardingResponse
 import com.binge.companion.contracts.request.v1.SubmitAdvancedRequestRequest
 import com.binge.companion.contracts.request.v1.SubmitAdvancedRequestResponse
 import com.binge.companion.contracts.request.v1.SubmitRequestRequest
@@ -64,6 +70,7 @@ import com.cooper.binge.companion.seerr.seerr.userFacingRefusal
 import com.cooper.binge.companion.seerr.telemetry.Analytics
 import com.cooper.binge.companion.seerr.telemetry.NoOpAnalytics
 import com.cooper.binge.companion.seerr.telemetry.operationFailed
+import io.grpc.Status
 import io.grpc.StatusException
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
@@ -95,6 +102,7 @@ class SeerrRequestService(
     private val analytics: Analytics = NoOpAnalytics,
     private val requestCache: RequestStore = NoRequestStore,
     private val userMessages: UserMessages = UserMessages.None,
+    private val notifications: SeerrNotificationRpcs? = null,
 ) : RequestServiceGrpcKt.RequestServiceCoroutineImplBase() {
     private val freshness = MediaStatusFreshness(observeIntervalMillis)
     private val statusReads = SeerrStatusReads(connection, statusCache, freshness, clock)
@@ -121,7 +129,7 @@ class SeerrRequestService(
                 }
             val response =
                 handshakeResponse(
-                    capabilities = profile?.let { sessionCapabilities(it) } ?: NO_SESSION_CAPABILITIES,
+                    capabilities = (profile?.let { sessionCapabilities(it) } ?: NO_SESSION_CAPABILITIES) + sessionlessCapabilities(),
                     providerName = (profile?.variant ?: SeerrVariant.Unknown).displayName,
                     companionVersionName = versionName,
                 )
@@ -216,6 +224,24 @@ class SeerrRequestService(
 
     override suspend fun getStatuses(request: GetStatusesRequest): GetStatusesResponse =
         gatedRead("get_statuses", Capability.CAPABILITY_BATCH_STATUS) { listing.getStatuses(request) }
+
+    override suspend fun setNotificationForwarding(request: SetNotificationForwardingRequest): SetNotificationForwardingResponse =
+        reportingFailure("set_notification_forwarding") { forwardingRpcs().setNotificationForwarding(request) }
+
+    override suspend fun listNotifications(request: ListNotificationsRequest): ListNotificationsResponse =
+        reportingFailure("list_notifications") { forwardingRpcs().listNotifications(request) }
+
+    override suspend fun acknowledgeNotifications(request: AcknowledgeNotificationsRequest): AcknowledgeNotificationsResponse =
+        reportingFailure("acknowledge_notifications") { forwardingRpcs().acknowledgeNotifications(request) }
+
+    /** Declared with or without a session, so it is gated on being wired rather than on [declared]. */
+    private fun sessionlessCapabilities(): Set<Capability> =
+        if (notifications != null) setOf(Capability.CAPABILITY_FORWARD_NOTIFICATIONS) else emptySet()
+
+    private fun forwardingRpcs(): SeerrNotificationRpcs =
+        notifications ?: throw StatusException(
+            Status.PERMISSION_DENIED.withDescription("${Capability.CAPABILITY_FORWARD_NOTIFICATIONS} was not declared in the handshake"),
+        )
 
     private suspend fun permissions(): SeerrPermissions = connection.authenticatedUser().toPermissions()
 
