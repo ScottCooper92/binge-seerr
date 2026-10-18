@@ -193,6 +193,13 @@ class SeerrServerProfileTest {
         assertEquals(4, profile.commitsBehind)
     }
 
+    @Test
+    fun `the instance id is the one the server sends, and nothing where it sends none or a blank one`() {
+        assertEquals("3f1c", profile("3.4.0", SeerrPublicSettings(instanceId = "3f1c")).instanceId)
+        assertNull(profile("1.33.2").instanceId)
+        assertNull(profile("3.4.0", SeerrPublicSettings(instanceId = " ")).instanceId)
+    }
+
     private fun profile(
         version: String,
         settings: SeerrPublicSettings = SeerrPublicSettings(),

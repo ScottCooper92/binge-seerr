@@ -61,6 +61,7 @@ internal class TvDetailSheetContent(
     val edit: EditState?,
     val webUrl: String,
     val serverName: String,
+    val serverInstanceId: String? = null,
 )
 
 /** The open sheet, and the requester its closer hands focus back to. */
@@ -160,7 +161,12 @@ internal fun ColumnScope.TvRequestDetailPage(
                 onDispose { shown(false) }
             }
         }
-        DetailSheet.Report -> TvReportOnPhoneStep(TitleReportLinks.write(content.webUrl, content.item.is4k), content.serverName, entryFocus)
+        DetailSheet.Report ->
+            TvReportOnPhoneStep(
+                TitleReportLinks.write(content.webUrl, content.item.is4k, content.serverInstanceId),
+                content.serverName,
+                entryFocus,
+            )
         DetailSheet.Remove, DetailSheet.Block -> Unit
     }
 }

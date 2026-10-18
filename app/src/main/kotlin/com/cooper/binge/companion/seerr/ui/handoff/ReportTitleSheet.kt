@@ -22,10 +22,11 @@ import com.cooper.binge.companion.seerr.ui.requests.UnsentGuardSheet
 import com.cooper.binge.companion.seerr.ui.state.messageRes
 import com.binge.designsystem.R as DesR
 
-/** What the sheet can ask for. Only [onSend] sends anything; [onOpenApp] is for a phone that has to sign in first. */
+/** What the sheet can ask for. Only [onSend] sends anything; [onOpenApp] is for a phone that has to sign in first, and [onReportAnyway] for a code that does not read as this phone's server. */
 internal data class ReportTitleActions(
     val onSend: (IssueType, String) -> Unit = { _, _ -> },
     val onOpenApp: () -> Unit = {},
+    val onReportAnyway: () -> Unit = {},
     val onClose: () -> Unit = {},
 )
 
@@ -62,7 +63,7 @@ internal fun ReportTitleContent(
             Note(
                 modifier,
                 message = stringResource(R.string.report_title_different_server, state.theirs, state.yours),
-                onOpenApp = actions.onOpenApp,
+                onReportAnyway = actions.onReportAnyway,
                 onClose = actions.onClose,
             )
         ReportTitleUiState.SignedOut ->
@@ -86,6 +87,7 @@ private fun Note(
     message: String,
     loading: Boolean = false,
     onOpenApp: (() -> Unit)? = null,
+    onReportAnyway: (() -> Unit)? = null,
     onClose: (() -> Unit)? = null,
 ) {
     Column(
@@ -98,6 +100,9 @@ private fun Note(
         if (loading) BingeLoadingIndicator()
         onOpenApp?.let {
             BingeFilledButton(label = stringResource(R.string.report_title_open_app), onClick = it, modifier = Modifier.fillMaxWidth())
+        }
+        onReportAnyway?.let {
+            BingeFilledButton(label = stringResource(R.string.report_title_anyway), onClick = it, modifier = Modifier.fillMaxWidth())
         }
         onClose?.let {
             BingeOutlinedButton(

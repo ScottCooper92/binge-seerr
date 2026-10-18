@@ -62,18 +62,59 @@ class TitleReportLinksTest {
     fun `two spellings of one server are the same server`() {
         val link = TitleReportLinks.parse("https://Seerr.Example:443/movie/900")!!
 
-        assertTrue(TitleReportLinks.isSameServer(link, "https://seerr.example"))
-        assertTrue(TitleReportLinks.isSameServer(link, "https://seerr.example/"))
+        assertTrue(TitleReportLinks.isSameServer(link, "https://seerr.example", connectedId = null))
+        assertTrue(TitleReportLinks.isSameServer(link, "https://seerr.example/", connectedId = null))
     }
 
     @Test
     fun `another host, port, scheme or path is another server`() {
         val link = TitleReportLinks.parse("https://seerr.example/movie/900")!!
 
-        assertFalse(TitleReportLinks.isSameServer(link, "https://other.example/"))
-        assertFalse(TitleReportLinks.isSameServer(link, "https://seerr.example:8443/"))
-        assertFalse(TitleReportLinks.isSameServer(link, "http://seerr.example/"))
-        assertFalse(TitleReportLinks.isSameServer(link, "https://seerr.example/seerr/"))
-        assertFalse(TitleReportLinks.isSameServer(link, ""))
+        assertFalse(TitleReportLinks.isSameServer(link, "https://other.example/", connectedId = null))
+        assertFalse(TitleReportLinks.isSameServer(link, "https://seerr.example:8443/", connectedId = null))
+        assertFalse(TitleReportLinks.isSameServer(link, "http://seerr.example/", connectedId = null))
+        assertFalse(TitleReportLinks.isSameServer(link, "https://seerr.example/seerr/", connectedId = null))
+        assertFalse(TitleReportLinks.isSameServer(link, "", connectedId = null))
+    }
+
+    @Test
+    fun `the server's id rides in the code and is read back, and a code without one still reads`() {
+        val written = TitleReportLinks.write("https://seerr.example/movie/900", is4k = true, serverId = ID)
+
+        assertEquals(TitleReportLink("https://seerr.example/", "movie", 900, is4k = true, serverId = ID), TitleReportLinks.parse(written))
+        assertEquals("https://seerr.example/movie/900?sid=$ID", TitleReportLinks.write("https://seerr.example/movie/900", false, ID))
+        assertNull(TitleReportLinks.parse("https://seerr.example/movie/900")?.serverId)
+    }
+
+    @Test
+    fun `an id that is not the shape of one is dropped and the code still reads`() {
+        listOf("", "a b", "x".repeat(65), "id;rm", "%E2%9C%93").forEach { bad ->
+            val link = TitleReportLinks.parse("https://seerr.example/movie/900?sid=$bad")
+            assertEquals(bad, 900, link?.tmdbId)
+            assertNull(bad, link?.serverId)
+        }
+        assertEquals("https://seerr.example/movie/900", TitleReportLinks.write("https://seerr.example/movie/900", false, "not an id"))
+    }
+
+    @Test
+    fun `two known ids decide it, whatever the addresses say`() {
+        val link = TitleReportLinks.parse("http://192.168.86.38:30042/movie/900?sid=$ID")!!
+
+        assertTrue(TitleReportLinks.isSameServer(link, "http://100.103.24.117:30042/", ID))
+        assertFalse(TitleReportLinks.isSameServer(link, "http://192.168.86.38:30042/", OTHER_ID))
+    }
+
+    @Test
+    fun `with an id on only one side the addresses decide`() {
+        val withId = TitleReportLinks.parse("https://seerr.example/movie/900?sid=$ID")!!
+        val without = TitleReportLinks.parse("https://seerr.example/movie/900")!!
+
+        assertTrue(TitleReportLinks.isSameServer(withId, "https://seerr.example/", connectedId = null))
+        assertFalse(TitleReportLinks.isSameServer(withId, "https://other.example/", connectedId = null))
+        assertTrue(TitleReportLinks.isSameServer(without, "https://seerr.example/", ID))
+        assertFalse(TitleReportLinks.isSameServer(without, "https://other.example/", ID))
     }
 }
+
+private const val ID = "3f1c2c9e-5a77-4d0e-9d65-0b1f4c2a8e10"
+private const val OTHER_ID = "9a8b7c6d-1111-2222-3333-444455556666"

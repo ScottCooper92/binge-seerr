@@ -20,6 +20,8 @@ import org.junit.rules.TemporaryFolder
 
 private const val REQUEST_ONLY = 32
 private const val MEDIA_ID = 77
+private const val SERVER_ID = "3f1c2c9e-5a77-4d0e-9d65-0b1f4c2a8e10"
+private const val OTHER_ID = "9a8b7c6d-1111-2222-3333-444455556666"
 private const val TITLE = """{"title":"Heat","mediaInfo":{"id":$MEDIA_ID}}"""
 
 /**
@@ -89,6 +91,63 @@ class ReportTitleViewModelTest {
             assertEquals("other.example", (state as ReportTitleUiState.DifferentServer).theirs)
             assertEquals(0, seerr.count("GET", "/api/v1/movie/949"))
             assertEquals(0, seerr.count("POST", "/api/v1/issue"))
+        }
+
+    @Test
+    fun `the same server reached by another address is the same server when both ends name it`() =
+        runTest {
+            seerr.viewer(id = 1, permissions = ADMIN, settings = """{"plexClientIdentifier":"$SERVER_ID"}""")
+            val overTheVpn = TitleReportLink("http://100.103.24.117:30042/", "movie", 949, is4k = false, serverId = SERVER_ID)
+
+            val state = viewModel(overTheVpn).settled()
+
+            assertEquals(ReportTitleUiState.Ready(title = "Heat", is4k = false, mediaId = MEDIA_ID), state)
+        }
+
+    @Test
+    fun `a code naming another server by id is refused, and reporting anyway goes to this phone's own server on the user's tap`() =
+        runTest {
+            seerr.viewer(id = 1, permissions = ADMIN, settings = """{"plexClientIdentifier":"$SERVER_ID"}""")
+            val other = here().copy(serverId = OTHER_ID)
+            val vm = viewModel(other)
+
+            assertTrue(vm.settled() is ReportTitleUiState.DifferentServer)
+            assertEquals(0, seerr.count("GET", "/api/v1/movie/949"))
+
+            vm.reportAnyway()
+
+            assertEquals(
+                ReportTitleUiState.Ready(title = "Heat", is4k = false, mediaId = MEDIA_ID),
+                vm.uiState.first {
+                    it is ReportTitleUiState.Ready
+                },
+            )
+            assertEquals(0, seerr.count("POST", "/api/v1/issue"))
+        }
+
+    @Test
+    fun `a server that names no id and another address leaves the choice to the user`() =
+        runTest {
+            val other = TitleReportLink("http://100.103.24.117:30042/", "movie", 949, is4k = false, serverId = OTHER_ID)
+            val vm = viewModel(other)
+
+            assertTrue(vm.settled() is ReportTitleUiState.DifferentServer)
+
+            vm.reportAnyway()
+
+            assertTrue(vm.uiState.first { it is ReportTitleUiState.Ready } is ReportTitleUiState.Ready)
+        }
+
+    @Test
+    fun `reporting anyway does nothing unless the code was refused`() =
+        runTest {
+            val vm = viewModel(here())
+            vm.settled()
+            val before = seerr.count("GET", "/api/v1/movie/949")
+
+            vm.reportAnyway()
+
+            assertEquals(before, seerr.count("GET", "/api/v1/movie/949"))
         }
 
     @Test

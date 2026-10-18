@@ -88,10 +88,26 @@ class ReportTitleViewModel
         private suspend fun check(): ReportTitleUiState {
             val connected =
                 attempt { connection.current().baseUrl }.getOrElse { return failure(it) }
-            if (!TitleReportLinks.isSameServer(link, connected)) {
+            // A profile that cannot be read leaves the id unknown, which the addresses then decide.
+            val connectedId = attempt { connection.profile().instanceId }.getOrNull()
+            if (!TitleReportLinks.isSameServer(link, connected, connectedId)) {
                 return ReportTitleUiState.DifferentServer(theirs = label(link.server), yours = label(connected))
             }
-            return attempt {
+            return lookUp()
+        }
+
+        /**
+         * The user's answer to [ReportTitleUiState.DifferentServer] when they know better: the title is looked up on this phone's
+         * own server and reported there, still on their tap. Nothing is sent to the code's address, which is never contacted.
+         */
+        fun reportAnyway() {
+            if (state.value !is ReportTitleUiState.DifferentServer) return
+            state.value = ReportTitleUiState.Loading
+            viewModelScope.launch(dispatcher) { state.value = lookUp() }
+        }
+
+        private suspend fun lookUp(): ReportTitleUiState =
+            attempt {
                 val viewer = connection.authenticatedUser().toPermissions()
                 if (!connection.profile().hasIssues || !viewer.canReportIssues) return@attempt ReportTitleUiState.CannotReport
                 val api = connection.api()
@@ -100,7 +116,6 @@ class ReportTitleViewModel
                 details.mediaInfo?.id?.let { ReportTitleUiState.Ready(title = title, is4k = link.is4k, mediaId = it) }
                     ?: ReportTitleUiState.NotTracked(title)
             }.getOrElse { failure(it) }
-        }
 
         private fun failure(cause: Throwable): ReportTitleUiState =
             cause.toSeerrError().let { error ->

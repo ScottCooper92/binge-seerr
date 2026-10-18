@@ -51,6 +51,7 @@ class ReportTitleActivity : ComponentActivity() {
                                 packageManager.getLaunchIntentForPackage(packageName)?.let(::startActivity)
                                 finish()
                             },
+                            onReportAnyway = viewModel::reportAnyway,
                             onClose = ::finish,
                         ),
                 )

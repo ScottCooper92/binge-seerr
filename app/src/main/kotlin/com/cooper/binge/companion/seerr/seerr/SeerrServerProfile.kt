@@ -72,6 +72,9 @@ data class SeerrServerProfile(
     /** False when a call failed, so the lineage or the settings are guesses; an incomplete profile is not cached. */
     val complete: Boolean = true,
 ) {
+    /** A name for this server instance that holds across every address it is reached by; null where the server sends none. */
+    val instanceId: String? get() = settings.instanceId?.takeIf { it.isNotBlank() }
+
     /** An unknown lineage hides nothing, as [unknown] promises: it is taken as the family's latest, never as Overseerr. */
     private val jellyseerrLineage: Boolean get() = variant.isJellyseerrLineage || variant == SeerrVariant.Unknown
 

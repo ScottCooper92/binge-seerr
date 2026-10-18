@@ -39,4 +39,9 @@ data class SeerrPublicSettings(
     @SerialName("discoverRegion") val discoverRegion: String? = null,
     @SerialName("streamingRegion") val streamingRegion: String? = null,
     @SerialName("originalLanguage") val originalLanguage: String? = null,
+    /**
+     * Despite the name, not Plex's: the server fills it from the `clientId` it generated once and keeps in its settings, so
+     * it names this instance whatever address it is reached by. Overseerr 1.x does not send it.
+     */
+    @SerialName("plexClientIdentifier") val instanceId: String? = null,
 )
