@@ -44,7 +44,7 @@ internal class FakeNotifier : SeerrNotifier {
         connectionProblems++
     }
 
-    override fun cancelConnectionProblem() {
+    override suspend fun cancelConnectionProblem() {
         connectionProblemCancels++
     }
 

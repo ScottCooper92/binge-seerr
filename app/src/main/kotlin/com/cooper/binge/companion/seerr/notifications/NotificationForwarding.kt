@@ -84,6 +84,11 @@ class NotificationForwarding(
         dataStore.edit { prefs -> prefs.writeQueue(prefs.readQueue().filterNot { it.id in acknowledged }) }
     }
 
+    /** Drops every queued notice of [kind], for one that has stopped being true before the host read it. */
+    suspend fun dropKind(kind: String) {
+        dataStore.edit { prefs -> prefs.writeQueue(prefs.readQueue().filterNot { it.kind == kind }) }
+    }
+
     private fun MutablePreferences.readQueue(): List<ForwardedNotification> =
         this[FORWARDING_QUEUE]
             .orEmpty()

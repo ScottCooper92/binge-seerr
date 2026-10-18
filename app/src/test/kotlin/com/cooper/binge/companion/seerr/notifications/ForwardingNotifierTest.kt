@@ -104,6 +104,19 @@ class ForwardingNotifierTest {
         }
 
     @Test
+    fun `signing in again drops a connection notice Binge has not read yet`() =
+        runTest {
+            val notifier = notifier()
+            forwarding.setEnabled(true)
+            notifier.notifyConnectionProblem()
+
+            notifier.cancelConnectionProblem()
+
+            assertTrue(forwarding.pending().isEmpty())
+            assertEquals(1, local.connectionProblemCancels)
+        }
+
+    @Test
     fun `can post while forwarding even when this app may not`() =
         runTest {
             val notifier = notifier()

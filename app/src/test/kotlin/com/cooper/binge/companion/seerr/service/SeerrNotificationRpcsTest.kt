@@ -99,6 +99,27 @@ class SeerrNotificationRpcsTest {
         }
 
     @Test
+    fun `acknowledging page one before page two skips nothing that was not acknowledged`() =
+        runTest {
+            val rpcs = rpcs()
+            rpcs.setNotificationForwarding(setNotificationForwardingRequest { enabled = true })
+            repeat(5) { forwarding.enqueue(notice("n$it", it)) }
+
+            val first = rpcs.listNotifications(listNotificationsRequest { pageSize = 2 })
+            rpcs.acknowledgeNotifications(acknowledgeNotificationsRequest { ids += first.notificationsList.map { it.id } })
+            val second =
+                rpcs.listNotifications(
+                    listNotificationsRequest {
+                        pageSize = 2
+                        pageToken = first.nextPageToken
+                    },
+                )
+
+            assertEquals(listOf("n2", "n3"), second.notificationsList.map { it.id })
+            assertTrue(second.nextPageToken.isNotEmpty())
+        }
+
+    @Test
     fun `a token under another page size, or one it never issued, is INVALID_ARGUMENT`() =
         runTest {
             val rpcs = rpcs()

@@ -62,7 +62,7 @@ class AndroidNotifier(
             link = DeepLinks.reconnect(),
         )
 
-    override fun cancelConnectionProblem() = NotificationManagerCompat.from(context).cancel(CONNECTION_NOTIFICATION_ID)
+    override suspend fun cancelConnectionProblem() = NotificationManagerCompat.from(context).cancel(CONNECTION_NOTIFICATION_ID)
 
     override fun cancelActivity() {
         val manager = context.getSystemService(NotificationManager::class.java)

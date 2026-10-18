@@ -56,8 +56,14 @@ class ForwardingNotifier(
         )
     }
 
-    /** A notice already in Binge is Binge's to clear; these clear what this app posted itself. */
-    override fun cancelConnectionProblem() = local.cancelConnectionProblem()
+    /**
+     * A notice already shown in Binge is Binge's to clear. One still waiting in the queue is this app's,
+     * and signing in again makes it stale, so it goes with the one this app posted itself.
+     */
+    override suspend fun cancelConnectionProblem() {
+        forwarding.dropKind(FORWARDED_KIND_CONNECTION)
+        local.cancelConnectionProblem()
+    }
 
     override fun cancelActivity() = local.cancelActivity()
 

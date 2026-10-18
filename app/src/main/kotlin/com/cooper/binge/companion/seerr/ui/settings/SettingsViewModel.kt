@@ -189,11 +189,13 @@ class SettingsViewModel
         private val notifications: Flow<Read<NotificationSettings>> =
             combine(
                 offered,
-                combine(enabled, forwarding.enabled, ::Pair),
+                combine(enabled, forwarding.enabled, now) { enabled, switchedOn, _ -> enabled to switchedOn },
                 blockedTrigger,
                 prefs.lastRunMillis,
                 scheduler.nextRunMillis(),
-            ) { offered, (enabled, forwarded), _, last, next ->
+            ) { offered, (enabled, switchedOn), _, last, next ->
+                // Routing asks isActive(), which also needs a recent poll; the row follows the same rule.
+                val forwarded = switchedOn && forwarding.isActive()
                 when (offered) {
                     Read.Pending -> Read.Pending
                     is Read.Done ->

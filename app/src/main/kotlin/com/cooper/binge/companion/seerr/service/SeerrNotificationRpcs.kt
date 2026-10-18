@@ -7,6 +7,7 @@ import com.binge.companion.contracts.request.v1.ListNotificationsResponse
 import com.binge.companion.contracts.request.v1.SetNotificationForwardingRequest
 import com.binge.companion.contracts.request.v1.SetNotificationForwardingResponse
 import com.binge.companion.contracts.request.v1.listNotificationsResponse
+import com.binge.companion.contracts.v1.ForwardedNotification
 import com.cooper.binge.companion.seerr.notifications.NotificationForwarding
 import com.cooper.binge.companion.seerr.notifications.NotificationPrefs
 import com.cooper.binge.companion.seerr.notifications.NotificationSignal
@@ -16,7 +17,11 @@ private const val DEFAULT_PAGE_SIZE = 50
 private const val MAX_PAGE_SIZE = 100
 private const val MAX_ACKNOWLEDGED = 100
 private const val TOKEN_PREFIX = "n"
-private const val TOKEN_PARTS = 3
+private const val TOKEN_PARTS = 5
+private const val TOKEN_SECONDS = 1
+private const val TOKEN_NANOS = 2
+private const val TOKEN_SIZE = 3
+private const val TOKEN_ID = 4
 
 /**
  * The signals turned on when Binge starts forwarding and none is on yet: the user's own requests,
@@ -43,19 +48,18 @@ class SeerrNotificationRpcs(
     }
 
     /**
-     * Pages the queue by offset. Binge reads every page before it acknowledges, and new notices join
-     * the end, so an offset stays put while it pages; a notice dropped meanwhile can only make one
-     * show twice, which the id dedupes.
+     * Pages the queue by keyset: the token carries the last notice returned, in the queue's own
+     * `(created_at, id)` order, and the next page is what sorts strictly after it. Acknowledging or
+     * pruning between pages cannot shift that position, so no unacknowledged notice is skipped.
      */
     suspend fun listNotifications(request: ListNotificationsRequest): ListNotificationsResponse {
         val pageSize = request.pageSize.takeIf { it > 0 }?.coerceAtMost(MAX_PAGE_SIZE) ?: DEFAULT_PAGE_SIZE
-        val skip = if (request.pageToken.isEmpty()) 0 else decodeToken(request.pageToken, pageSize)
-        val queue = forwarding.pending()
-        val page = queue.drop(skip).take(pageSize)
-        val next = skip + page.size
+        val after = if (request.pageToken.isEmpty()) null else decodeToken(request.pageToken, pageSize)
+        val remaining = forwarding.pending().filter { after == null || it.key > after }
+        val page = remaining.take(pageSize)
         return listNotificationsResponse {
             notifications += page
-            if (next < queue.size) nextPageToken = "$TOKEN_PREFIX:$next:$pageSize"
+            if (remaining.size > page.size) nextPageToken = page.last().key.encode(pageSize)
         }
     }
 
@@ -69,13 +73,30 @@ class SeerrNotificationRpcs(
     private fun decodeToken(
         token: String,
         pageSize: Int,
-    ): Int {
-        val (prefix, skip, issuedSize) =
-            token.split(":").takeIf { it.size == TOKEN_PARTS } ?: throw invalidToken()
-        val offset = skip.toIntOrNull()?.takeIf { it >= 0 }
-        if (prefix != TOKEN_PREFIX || issuedSize.toIntOrNull() != pageSize || offset == null) throw invalidToken()
-        return offset
+    ): NoticeKey {
+        val parts = token.split(":", limit = TOKEN_PARTS).takeIf { it.size == TOKEN_PARTS && it[0] == TOKEN_PREFIX }
+        val key = parts?.takeIf { it[TOKEN_SIZE].toIntOrNull() == pageSize }?.let(::noticeKeyOf)
+        return key ?: throw invalidToken()
     }
 
     private fun invalidToken() = invalidArgument("page_token was not issued by this integration for this page_size")
 }
+
+private fun noticeKeyOf(parts: List<String>): NoticeKey? {
+    val seconds = parts[TOKEN_SECONDS].toLongOrNull() ?: return null
+    val nanos = parts[TOKEN_NANOS].toIntOrNull() ?: return null
+    return NoticeKey(seconds, nanos, parts[TOKEN_ID])
+}
+
+/** A notice's place in the queue, ordered as the queue is: by time, then id. */
+private data class NoticeKey(
+    val seconds: Long,
+    val nanos: Int,
+    val id: String,
+) : Comparable<NoticeKey> {
+    override fun compareTo(other: NoticeKey): Int = compareValuesBy(this, other, NoticeKey::seconds, NoticeKey::nanos, NoticeKey::id)
+
+    fun encode(pageSize: Int) = "$TOKEN_PREFIX:$seconds:$nanos:$pageSize:$id"
+}
+
+private val ForwardedNotification.key get() = NoticeKey(createdAt.seconds, createdAt.nanos, id)

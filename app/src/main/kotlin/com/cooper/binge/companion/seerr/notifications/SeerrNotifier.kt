@@ -27,7 +27,7 @@ interface SeerrNotifier {
     /** The server rejected the saved credentials; the user has to sign in again. */
     suspend fun notifyConnectionProblem()
 
-    fun cancelConnectionProblem()
+    suspend fun cancelConnectionProblem()
 
     /** Every activity notice posted so far, for a disconnect: they would open pages of a server that is gone. */
     fun cancelActivity()
