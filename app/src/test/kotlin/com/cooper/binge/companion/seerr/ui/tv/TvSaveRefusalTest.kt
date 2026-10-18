@@ -1,6 +1,5 @@
 package com.cooper.binge.companion.seerr.ui.tv
 
-import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.test.core.app.ApplicationProvider
 import com.binge.designsystem.SaveStatus
@@ -8,6 +7,7 @@ import com.binge.designsystem.tv.component.TvSaveStatus
 import com.binge.designsystem.tv.theme.BingeTvTheme
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.seerr.SeerrError
+import com.cooper.binge.companion.seerr.util.createSeerrComposeRule
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -17,7 +17,7 @@ import org.robolectric.RobolectricTestRunner
 @RunWith(RobolectricTestRunner::class)
 class TvSaveRefusalTest {
     @get:Rule
-    val composeTestRule = createComposeRule()
+    val composeTestRule = createSeerrComposeRule()
 
     private fun resolved(
         refusal: SeerrError?,
