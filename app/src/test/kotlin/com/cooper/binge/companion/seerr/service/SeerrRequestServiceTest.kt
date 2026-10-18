@@ -267,9 +267,10 @@ class SeerrRequestServiceTest {
             val response = connected(permissions = ADMIN).handshakeAs(ADMIN, publicSettings = ALL_4K_ENABLED)
 
             // In the contract but deliberately not offered: MEDIA_FILE_INFO would need a Radarr key and host (#483).
+            // ISSUE_CATEGORIES arrived with the pin bump and is served in the change that adopts it.
             assertEquals(
                 Capability.entries.toSet() - Capability.UNRECOGNIZED - Capability.CAPABILITY_UNSPECIFIED -
-                    Capability.CAPABILITY_MEDIA_FILE_INFO,
+                    Capability.CAPABILITY_MEDIA_FILE_INFO - Capability.CAPABILITY_ISSUE_CATEGORIES,
                 response.capabilitiesList.toSet(),
             )
         }
