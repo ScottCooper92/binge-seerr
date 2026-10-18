@@ -37,7 +37,13 @@ class SeerrNotificationsServiceTest {
         val store = PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("n.preferences_pb") }
         val service = SeerrNotificationsService(SeerrNotificationRpcs(NotificationForwarding(store), NotificationPrefs(store)))
         val name = InProcessServerBuilder.generateName()
-        server = InProcessServerBuilder.forName(name).directExecutor().addService(service).build().start()
+        server =
+            InProcessServerBuilder
+                .forName(name)
+                .directExecutor()
+                .addService(service)
+                .build()
+                .start()
         channel = InProcessChannelBuilder.forName(name).directExecutor().build()
         return NotificationsServiceGrpcKt.NotificationsServiceCoroutineStub(channel)
     }

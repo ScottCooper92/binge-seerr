@@ -20,7 +20,14 @@ fun versionIdOf(is4k: Boolean): String = if (is4k) VERSION_ID_4K else VERSION_ID
  */
 fun versionsFor(offers4k: Boolean): List<Version> =
     if (offers4k) {
-        listOf(Version.newBuilder().setId(VERSION_ID_4K).setLabel(LABEL_4K).setHighResolution(true).build())
+        listOf(
+            Version
+                .newBuilder()
+                .setId(VERSION_ID_4K)
+                .setLabel(LABEL_4K)
+                .setHighResolution(true)
+                .build(),
+        )
     } else {
         emptyList()
     }
