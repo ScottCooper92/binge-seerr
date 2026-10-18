@@ -52,7 +52,7 @@ class ReportTitleScreenshotTest {
     @Composable
     fun failed() = SheetFrame { Body(readyState(report = IssueReport.Failed(SeerrError.Unreachable))) }
 
-    /** Both servers named themselves and the names differ: this phone is on another server, and the user may report anyway. */
+    /** Both servers named themselves and the ids differ: the sheet says so before offering to report anyway. */
     @PreviewTest
     @SeerrComponentPreviews
     @Composable
@@ -61,7 +61,7 @@ class ReportTitleScreenshotTest {
             Body(ReportTitleUiState.DifferentServer(theirs = "192.168.86.38:30042", yours = "100.103.24.117:30042", confirmed = true))
         }
 
-    /** A code that does not read as this phone's server by address, with no id to settle it: the user decides. */
+    /** The addresses differ and an id is missing: the sheet cannot tell whether it is the same server. */
     @PreviewTest
     @SeerrComponentPreviews
     @Composable
