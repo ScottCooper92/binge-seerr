@@ -12,6 +12,7 @@ import com.cooper.binge.companion.seerr.seerr.HTTP_CONFLICT
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.seerr.SeerrRequestBody
 import com.cooper.binge.companion.seerr.seerr.SeerrServerDto
+import com.cooper.binge.companion.seerr.seerr.VERSION_ID_4K
 import com.cooper.binge.companion.seerr.seerr.arrServer
 import com.cooper.binge.companion.seerr.seerr.arrServers
 import com.cooper.binge.companion.seerr.seerr.forRequest
@@ -76,6 +77,7 @@ class AdvancedRequestViewModel
         val uiState: StateFlow<AdvancedRequestUiState> = _uiState.asStateFlow()
 
         private val isTv = request.mediaType == MediaType.MEDIA_TYPE_TV
+        private val is4k = request.versionId == VERSION_ID_4K
         private var servers: List<SeerrServerDto> = emptyList()
 
         init {
@@ -83,7 +85,7 @@ class AdvancedRequestViewModel
         }
 
         private suspend fun load() {
-            attempt { connection.api().arrServers(isTv).forRequest(request.is4k) }
+            attempt { connection.api().arrServers(isTv).forRequest(is4k) }
                 .onFailure { _uiState.value = AdvancedRequestUiState.Failed(it.toAdvancedRequestError()) }
                 .onSuccess { loaded ->
                     servers = loaded
@@ -161,7 +163,7 @@ class AdvancedRequestViewModel
                         .seerrMediaType(),
                 mediaId = request.tmdbId,
                 seasons = request.seasonNumbers.takeIf { it.isNotEmpty() },
-                is4k = request.is4k,
+                is4k = is4k,
                 serverId = destination.serverId,
                 profileId = destination.profileId,
                 rootFolder = destination.rootFolder,

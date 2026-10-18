@@ -30,7 +30,7 @@ internal const val FORWARDED_MAX_QUEUED = 200
 
 /**
  * Whether Binge shows this app's notices instead of this app, and the queue it reads them from
- * (`CAPABILITY_FORWARD_NOTIFICATIONS`). It is *active* while on and a host has polled within
+ * (the NOTIFICATIONS contract). It is *active* while on and a host has polled within
  * [FORWARDING_LAPSE_MILLIS]; turning it on counts as a poll. A host uninstalled without turning it
  * off stops polling, so the notices come back here rather than queueing for nobody.
  */

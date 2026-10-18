@@ -1,10 +1,10 @@
 package com.cooper.binge.companion.seerr.service
 
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
-import com.binge.companion.contracts.request.v1.ListNotificationsRequest
-import com.binge.companion.contracts.request.v1.acknowledgeNotificationsRequest
-import com.binge.companion.contracts.request.v1.listNotificationsRequest
-import com.binge.companion.contracts.request.v1.setNotificationForwardingRequest
+import com.binge.companion.contracts.notifications.v1.ListNotificationsRequest
+import com.binge.companion.contracts.notifications.v1.acknowledgeNotificationsRequest
+import com.binge.companion.contracts.notifications.v1.listNotificationsRequest
+import com.binge.companion.contracts.notifications.v1.setNotificationForwardingRequest
 import com.binge.companion.contracts.v1.forwardedNotification
 import com.cooper.binge.companion.seerr.notifications.NotificationForwarding
 import com.cooper.binge.companion.seerr.notifications.NotificationPrefs

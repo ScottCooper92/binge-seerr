@@ -152,7 +152,7 @@ enforce them all (for example, it never reads `partialRequestsEnabled` when it t
 it derives the 4K flags from the default 4K instances), so these gates mirror what the server's web
 client offers:
 
-- `CAPABILITY_REQUEST_4K` needs the user to hold the 4K permission for a media type the server has
+- The `4k` version in the handshake needs the user to hold the 4K permission for a media type the server has
   4K on for: `movie4kEnabled` for movies, `series4kEnabled` for series.
 - `CAPABILITY_EDIT_SEASONS` needs `partialRequestsEnabled`. With it off the web client takes a whole
   show; the server itself does not check the setting. A user who may change the destination still

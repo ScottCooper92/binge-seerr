@@ -12,7 +12,7 @@ fun SeerrServerDto.toServerChoice(): ServerChoice =
         .newBuilder()
         .setId(id.toString())
         .setLabel(name)
-        .setIs4K(is4k)
+        .setVersionId(versionIdOf(is4k))
         .build()
 
 fun SeerrProfileDto.toChoice(): Choice =
@@ -55,7 +55,7 @@ suspend fun SeerrApi.destinationChoicesFor(
 /**
  * The servers this user may send this media's shape to. A 4K server is a 4K request, so it is
  * offered only when [allow4k] is true: the caller may request 4K of this media type (see
- * `SeerrPermissions.mayRequest4k`), which is narrower than holding CAPABILITY_REQUEST_4K. A server left out
+ * `SeerrPermissions.mayRequest4k`), which is narrower than the handshake listing the 4K version. A server left out
  * here is one this integration did not offer, and naming it later is INVALID_ARGUMENT, as the
  * contract says for any `server_id` it did not offer.
  */

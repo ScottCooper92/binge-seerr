@@ -54,7 +54,7 @@ private fun watchLink(vararg candidates: String?): String? = candidates.firstOrN
 private fun version(
     is4k: Boolean,
     availability: Availability,
-): VersionStatus.Builder = VersionStatus.newBuilder().setIs4K(is4k).setAvailability(availability)
+): VersionStatus.Builder = VersionStatus.newBuilder().setVersionId(versionIdOf(is4k)).setAvailability(availability)
 
 private fun SeerrSeasonStatusDto.toSeasonAvailability(status: SeerrMediaStatusCode?): SeasonAvailability =
     SeasonAvailability
@@ -113,7 +113,7 @@ private fun SeerrRequestSummaryDto.toRequestInfo(): RequestInfo {
             .setId(id.toString())
             .setState(status.toApprovalState())
             .addAllSeasonNumbers(seasons.map { it.seasonNumber })
-            .setIs4K(is4k)
+            .setVersionId(versionIdOf(is4k))
     requestedBy?.contractName()?.let(builder::setRequestedBy)
     createdAt?.toEpochMillisOrNull()?.let(builder::setRequestedAtEpochMs)
     return builder.build()

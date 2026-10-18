@@ -31,6 +31,8 @@ import com.cooper.binge.companion.seerr.seerr.SeerrEditRequestBody
 import com.cooper.binge.companion.seerr.seerr.SeerrPermissions
 import com.cooper.binge.companion.seerr.seerr.SeerrRequestBody
 import com.cooper.binge.companion.seerr.seerr.SeerrRequestStatusCode
+import com.cooper.binge.companion.seerr.seerr.VERSION_ID_4K
+import com.cooper.binge.companion.seerr.seerr.VERSION_ID_STANDARD
 import com.cooper.binge.companion.seerr.seerr.advancedRequestOptions
 import com.cooper.binge.companion.seerr.seerr.checkHasSeasons
 import com.cooper.binge.companion.seerr.seerr.checkedSeasonNumbers
@@ -54,10 +56,16 @@ internal class SeerrRequestRpcs(
     private val requestCache: RequestStore,
 ) {
     suspend fun submitRequest(request: SubmitRequestRequest): SubmitRequestResponse {
-        // Re-checked here, not trusted to the host. is_4k is a flag on a core rpc, not a gated rpc,
-        // so the contract calls it a bad argument (INVALID_ARGUMENT) rather than PERMISSION_DENIED.
-        if (request.is4K && !connection.mayRequest4k(request.media)) {
-            throw invalidArgument("is_4k is set, but 4K requests are not open to this user for this media type")
+        // Re-checked here, not trusted to the host. version_id is a field on a core rpc, not a gated rpc,
+        // so the contract calls an unlisted one a bad argument (INVALID_ARGUMENT), not PERMISSION_DENIED.
+        val is4k =
+            when (request.versionId) {
+                VERSION_ID_STANDARD -> false
+                VERSION_ID_4K -> true
+                else -> throw invalidArgument("version_id \"${request.versionId}\" is not one this integration listed")
+            }
+        if (is4k && !connection.mayRequest4k(request.media)) {
+            throw invalidArgument("version_id names 4K, but 4K requests are not open to this user for this media type")
         }
         val media = request.media
         refuseIfKnownBlocklisted(media)
@@ -67,7 +75,7 @@ internal class SeerrRequestRpcs(
                 mediaType = media.seerrMediaType(),
                 mediaId = media.tmdbId,
                 seasons = seasons.takeIf { it.isNotEmpty() },
-                is4k = request.is4K,
+                is4k = is4k,
             )
         return submitAndRespond(media, body)
     }
@@ -255,8 +263,8 @@ internal class SeerrRequestRpcs(
 }
 
 /**
- * Whether this user may request 4K of [media]'s type, which decides `is_4k` on a submit, the 4K servers on the advanced
- * path and whether a 4K-only title is reportable. Narrower than the declared CAPABILITY_REQUEST_4K, which holds where
+ * Whether this user may request 4K of [media]'s type, which decides a 4K `version_id` on a submit, the 4K servers on the advanced
+ * path and whether a 4K-only title is reportable. Narrower than the handshake's 4K version, which is listed where
  * either type is open: see [SeerrPermissions.mayRequest4k].
  */
 internal suspend fun SeerrConnection.mayRequest4k(media: MediaId): Boolean =

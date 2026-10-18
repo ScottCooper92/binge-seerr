@@ -208,6 +208,7 @@
             android:exported="true">
             <intent-filter>
                 <action android:name="com.binge.companion.REQUEST" />
+                <action android:name="com.binge.companion.NOTIFICATIONS" />
             </intent-filter>
 
             <meta-data
@@ -217,7 +218,10 @@
                 android:name="com.binge.companion.icon"
                 android:resource="@drawable/ic_companion" />
             <meta-data
-                android:name="com.binge.companion.majors"
+                android:name="com.binge.companion.majors.request"
+                android:value="1" />
+            <meta-data
+                android:name="com.binge.companion.majors.notifications"
                 android:value="1" />
         </service>
     </application>

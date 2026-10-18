@@ -26,8 +26,8 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 
-private val MOVIE = AdvancedRequest(MediaType.MEDIA_TYPE_MOVIE, tmdbId = 603, seasonNumbers = emptyList(), is4k = false)
-private val SHOW = AdvancedRequest(MediaType.MEDIA_TYPE_TV, tmdbId = 1399, seasonNumbers = listOf(1, 2), is4k = false)
+private val MOVIE = AdvancedRequest(MediaType.MEDIA_TYPE_MOVIE, tmdbId = 603, seasonNumbers = emptyList(), versionId = "")
+private val SHOW = AdvancedRequest(MediaType.MEDIA_TYPE_TV, tmdbId = 1399, seasonNumbers = listOf(1, 2), versionId = "")
 
 private const val SERVERS = """[
   {"id":1,"name":"Main","is4k":false,"isDefault":true,"activeProfileId":4,"activeDirectory":"/media"},
@@ -154,6 +154,17 @@ class AdvancedRequestViewModelTest {
             val state = viewModel(MOVIE).uiState.first { it is AdvancedRequestUiState.Failed }
 
             assertEquals(AdvancedRequestError.NoServers, (state as AdvancedRequestUiState.Failed).error)
+        }
+
+    @Test
+    fun `the 4K version id offers only the 4K servers`() =
+        runTest {
+            seerr.enqueue(json(SERVERS))
+            seerr.enqueue(json(DETAILS))
+
+            val state = viewModel(MOVIE.copy(versionId = "4k")).uiState.first { it is AdvancedRequestUiState.Ready }
+
+            assertEquals(3, (state as AdvancedRequestUiState.Ready).destination.serverId)
         }
 
     @Test
