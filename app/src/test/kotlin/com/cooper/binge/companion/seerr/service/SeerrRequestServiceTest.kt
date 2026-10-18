@@ -22,12 +22,14 @@ import com.binge.companion.contracts.request.v1.ListRequestsResponse
 import com.binge.companion.contracts.request.v1.ObserveAttentionRequest
 import com.binge.companion.contracts.request.v1.ObserveStatusRequest
 import com.binge.companion.contracts.request.v1.ReportIssueRequest
+import com.binge.companion.contracts.request.v1.ReportIssueRequestKt
 import com.binge.companion.contracts.request.v1.RequestFilter
 import com.binge.companion.contracts.request.v1.RequestServiceGrpcKt
 import com.binge.companion.contracts.request.v1.RetryRequestRequest
 import com.binge.companion.contracts.request.v1.SubmitAdvancedRequestRequest
 import com.binge.companion.contracts.request.v1.SubmitRequestRequest
 import com.binge.companion.contracts.request.v1.UnblockTitleRequest
+import com.binge.companion.contracts.request.v1.reportIssueRequest
 import com.binge.companion.contracts.v1.MediaId
 import com.binge.companion.contracts.v1.MediaType
 import com.binge.companion.sdk.MAX_SEASON_NUMBERS
@@ -66,6 +68,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
+import mockwebserver3.RecordedRequest
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -1234,7 +1237,7 @@ class SeerrRequestServiceTest {
             )
 
             seerr.takeRequest()
-            val body = seerr.takeRequest().body?.utf8().orEmpty()
+            val body = seerr.takeRequest().bodyText()
             assertTrue(body, body.contains("\"problemSeason\":2"))
             assertTrue(body, body.contains("\"problemEpisode\":5"))
         }
@@ -1257,7 +1260,7 @@ class SeerrRequestServiceTest {
             )
 
             seerr.takeRequest()
-            val body = seerr.takeRequest().body?.utf8().orEmpty()
+            val body = seerr.takeRequest().bodyText()
             assertTrue(body, body.contains("blocky\\n\\n(4K version)"))
         }
 
@@ -1267,16 +1270,17 @@ class SeerrRequestServiceTest {
         runTest {
             val stub = connected()
             val before = seerr.requestCount
-            val base = ReportIssueRequest.newBuilder().setType(IssueType.ISSUE_TYPE_VIDEO)
-
             val refused =
                 listOf(
-                    base.clone().setMedia(show).setSeasonNumber(-1),
-                    base.clone().setMedia(movie).setSeasonNumber(1),
-                    base.clone().setMedia(show).setEpisodeNumber(3),
-                    base.clone().setMedia(show).setSeasonNumber(1).setEpisodeNumber(-1),
-                    base.clone().setMedia(movie).setCategoryId("42"),
-                ).map { stub.code { reportIssue(it.build()) } }
+                    scopedReport(show) { seasonNumber = -1 },
+                    scopedReport(movie) { seasonNumber = 1 },
+                    scopedReport(show) { episodeNumber = 3 },
+                    scopedReport(show) {
+                        seasonNumber = 1
+                        episodeNumber = -1
+                    },
+                    scopedReport(movie) { categoryId = "42" },
+                ).map { report -> stub.code { reportIssue(report) } }
 
             assertEquals(List(5) { Status.Code.INVALID_ARGUMENT }, refused)
             assertEquals(before, seerr.requestCount)
@@ -1292,7 +1296,7 @@ class SeerrRequestServiceTest {
 
             val declined = seerr.takeRequest()
             assertEquals("/api/v1/request/4/decline", declined.url.encodedPath)
-            assertFalse(declined.body?.utf8().orEmpty().contains("budget"))
+            assertFalse(declined.bodyText().contains("budget"))
             val tooLong = DeclineRequestRequest.newBuilder().setRequestId("4").setReason("x".repeat(1001)).build()
             assertEquals(Status.Code.INVALID_ARGUMENT, stub.code { declineRequest(tooLong) })
         }
@@ -2406,3 +2410,19 @@ class SeerrRequestServiceTest {
         }
     }
 }
+
+private fun RecordedRequest.bodyText(): String =
+    body
+        ?.utf8()
+        .orEmpty()
+
+/** A video report of [media], scoped by [configure]: the shapes the contract's bad-argument rules are tested against. */
+private fun scopedReport(
+    media: MediaId,
+    configure: ReportIssueRequestKt.Dsl.() -> Unit,
+): ReportIssueRequest =
+    reportIssueRequest {
+        this.media = media
+        type = IssueType.ISSUE_TYPE_VIDEO
+        configure()
+    }

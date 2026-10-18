@@ -103,12 +103,18 @@ internal class SeerrIssueRpcs(
  * `CAPABILITY_ISSUE_CATEGORIES`, since Seerr's issue types are a fixed four, so naming one is a bad argument.
  */
 private fun ReportIssueRequest.checkScope() {
-    if (categoryId.isNotEmpty()) throw invalidArgument("category_id was set, but this integration lists no issue categories")
-    if (hasSeasonNumber() && seasonNumber < 0) throw invalidArgument("season_number is below 0")
-    if (hasSeasonNumber() && media.mediaType != MediaType.MEDIA_TYPE_TV) throw invalidArgument("season_number is for a series")
-    if (hasEpisodeNumber() && !hasSeasonNumber()) throw invalidArgument("episode_number is set without season_number")
-    if (hasEpisodeNumber() && episodeNumber < 0) throw invalidArgument("episode_number is below 0")
+    scopeProblem()?.let { throw invalidArgument(it) }
 }
+
+private fun ReportIssueRequest.scopeProblem(): String? =
+    when {
+        categoryId.isNotEmpty() -> "category_id was set, but this integration lists no issue categories"
+        hasSeasonNumber() && seasonNumber < 0 -> "season_number is below 0"
+        hasSeasonNumber() && media.mediaType != MediaType.MEDIA_TYPE_TV -> "season_number is for a series"
+        hasEpisodeNumber() && !hasSeasonNumber() -> "episode_number is set without season_number"
+        hasEpisodeNumber() && episodeNumber < 0 -> "episode_number is below 0"
+        else -> null
+    }
 
 /** Seerr's "none" is 0, so an unset season is 0 and so is the specials season: the server cannot tell them apart. */
 private fun ReportIssueRequest.seasonNumber(): Int = if (hasSeasonNumber()) seasonNumber else 0
