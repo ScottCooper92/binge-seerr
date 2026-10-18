@@ -17,6 +17,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
@@ -65,6 +66,7 @@ class NotificationAgentViewModelTest {
     private val seerr = ScriptedSeerr(folder)
     private val viewModels = ViewModelStore()
     private val analytics = RecordingAnalytics()
+    private val agentChanges = NotificationAgentChanges()
 
     @Before
     fun setUp() {
@@ -90,7 +92,15 @@ class NotificationAgentViewModelTest {
     }
 
     private suspend fun TestScope.viewModel(agent: ServerAgent): NotificationAgentViewModel {
-        val vm = NotificationAgentViewModel(seerr.connection(this), mainDispatcherRule.dispatcher, agent, analytics, backgroundScope)
+        val vm =
+            NotificationAgentViewModel(
+                seerr.connection(this),
+                mainDispatcherRule.dispatcher,
+                agent,
+                analytics,
+                backgroundScope,
+                agentChanges = agentChanges,
+            )
         vm.soundsDebounceMillis = 10
         viewModels.put(vm.hashCode().toString(), vm)
         backgroundScope.launch { vm.uiState.collect {} }
@@ -138,6 +148,30 @@ class NotificationAgentViewModelTest {
             val saved = vm.awaitReady { !it.saveFailed && !it.dirty }
             assertEquals(6 xor NotificationType.MediaAvailable.bit, saved.saved.types)
             assertEquals(2, seerr.count("POST", "/api/v1/settings/notifications/email"))
+        }
+
+    /** #1556: the agents list reads again only once the server has taken a write, never on a refused one. */
+    @Test
+    fun `a write the server takes is said to the agents list, and a refused one is not`() =
+        runTest {
+            val said = mutableListOf<ServerAgent>()
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { agentChanges.changes.collect { said += it } }
+            val vm = viewModel(ServerAgent.Email)
+            vm.awaitReady()
+            seerr.serve("POST /api/v1/settings/notifications/email", """{"message":"nope"}""", code = 500)
+
+            vm.toggleType(NotificationType.MediaAvailable.bit)
+            advanceTimeBy(SAVE_AS_MADE_DELAY_MILLIS + 1)
+            vm.awaitReady { it.saveFailed }
+            assertEquals(emptyList<ServerAgent>(), said)
+
+            seerr.serve(
+                "POST /api/v1/settings/notifications/email",
+                EMAIL.replace("\"types\":6", "\"types\":${6 xor NotificationType.MediaAvailable.bit}"),
+            )
+            vm.save()
+            vm.awaitReady { !it.saveFailed && !it.dirty }
+            assertEquals(listOf(ServerAgent.Email), said)
         }
 
     @Test

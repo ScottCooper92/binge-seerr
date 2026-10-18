@@ -46,6 +46,7 @@ class NotificationAgentViewModel
         private val analytics: Analytics = NoOpAnalytics,
         @ApplicationScope appScope: CoroutineScope,
         private val crashBreadcrumbs: CrashBreadcrumbs = NoOpCrashBreadcrumbs,
+        private val agentChanges: NotificationAgentChanges = NotificationAgentChanges(),
     ) : ExtrasEditorViewModel<AgentForm, AgentExtras>(AgentExtras(), dispatcher) {
         internal var soundsDebounceMillis = SOUNDS_DEBOUNCE_MILLIS
 
@@ -69,6 +70,7 @@ class NotificationAgentViewModel
         override suspend fun write(draft: AgentForm): AgentForm {
             crashBreadcrumbs.log("updating ${agent.segment} notification agent")
             val form = connection.api().updateNotificationAgent(agent.segment, draft.toDto()).toForm(agent)
+            agentChanges.changed(agent)
             analytics.event(
                 AnalyticsEvents.NOTIFICATION_AGENT_CHANGED,
                 mapOf(AnalyticsEvents.PARAM_AGENT to agent.segment, AnalyticsEvents.PARAM_ACTION to "updated"),

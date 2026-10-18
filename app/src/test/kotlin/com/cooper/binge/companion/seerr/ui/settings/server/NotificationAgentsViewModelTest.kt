@@ -87,4 +87,21 @@ class NotificationAgentsViewModelTest {
                 }
             assertTrue(after is AgentsUiState.Ready)
         }
+
+    @Test
+    fun `an agent saved on the server reads the list again`() =
+        runTest {
+            seerr.viewer(id = 1, permissions = ADMIN)
+            val changes = NotificationAgentChanges()
+            val vm = NotificationAgentsViewModel(seerr.connection(this), mainDispatcherRule.dispatcher, changes)
+            vm.reload()
+            vm.uiState.first { it is AgentsUiState.Ready }
+            seerr.serve("GET /api/v1/settings/notifications/discord", """{"enabled":true,"types":0,"options":{}}""")
+
+            changes.changed(ServerAgent.Discord)
+
+            vm.uiState.first { state ->
+                state is AgentsUiState.Ready && state.agents.first { it.agent == ServerAgent.Discord }.enabled == true
+            }
+        }
 }
