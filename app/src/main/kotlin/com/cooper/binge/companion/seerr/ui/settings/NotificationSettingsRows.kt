@@ -8,6 +8,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Forward
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Inbox
 import androidx.compose.material.icons.filled.NotificationsOff
@@ -30,8 +31,8 @@ import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.notifications.NotificationSignal
 
 /**
- * The poll's group: a toggle per signal the viewer may use, the blocked state where the system
- * would show nothing, and when the poll ran and runs next. Turning the first signal on asks for
+ * The poll's group: a toggle per signal the viewer may use, a note while Binge shows them instead,
+ * the blocked state where the system would show nothing, and when the poll ran and runs next. Turning the first signal on asks for
  * the notification permission on 13+; what the prompt or the system page decided is re-read on resume.
  */
 @Composable
@@ -62,6 +63,19 @@ internal fun notificationRows(
                     actions.onToggleSignal(signal, !on)
                 },
             )
+        }
+    val forwarded =
+        if (settings.forwardedToBinge) {
+            ListItem(
+                icon = Icons.AutoMirrored.Filled.Forward,
+                iconTint = BingeSentiment.Info.fill(),
+                label = stringResource(R.string.settings_notifications_forwarded),
+                detail = stringResource(R.string.settings_notifications_forwarded_caption),
+                supportingMaxLines = 3,
+                clickable = false,
+            )
+        } else {
+            null
         }
     val blocked =
         if (settings.blocked && settings.enabled.isNotEmpty()) {
@@ -105,7 +119,7 @@ internal fun notificationRows(
         } else {
             null
         }
-    return toggles + listOfNotNull(blocked, schedule)
+    return toggles + listOfNotNull(forwarded, blocked, schedule)
 }
 
 private fun NotificationSignal.icon(): ImageVector =

@@ -10,6 +10,7 @@ import com.cooper.binge.companion.seerr.feedback.BugReportLinks
 import com.cooper.binge.companion.seerr.feedback.FeedbackPrefs
 import com.cooper.binge.companion.seerr.notifications.FakeNotifier
 import com.cooper.binge.companion.seerr.notifications.FakeScheduler
+import com.cooper.binge.companion.seerr.notifications.NotificationForwarding
 import com.cooper.binge.companion.seerr.notifications.NotificationPrefs
 import com.cooper.binge.companion.seerr.notifications.NotificationSignal
 import com.cooper.binge.companion.seerr.seerr.SeerrApiFactory
@@ -68,6 +69,7 @@ class SettingsViewModelTest {
     private val viewModels = ViewModelStore()
     private lateinit var connection: SeerrConnection
     private lateinit var prefs: NotificationPrefs
+    private lateinit var forwarding: NotificationForwarding
     private lateinit var feedbackPrefs: FeedbackPrefs
     private lateinit var telemetryPrefs: TelemetryPrefs
     private val scheduler = FakeScheduler()
@@ -152,7 +154,9 @@ class SettingsViewModelTest {
         } else {
             connection.connect(seerr.url("/"), SeerrAuth.ApiKey("k3y")).getOrThrow()
         }
-        prefs = NotificationPrefs(PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("n.preferences_pb") })
+        val notificationsStore = PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("n.preferences_pb") }
+        prefs = NotificationPrefs(notificationsStore)
+        forwarding = NotificationForwarding(notificationsStore)
         telemetryPrefs = TelemetryPrefs(PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("t.preferences_pb") })
         feedbackPrefs = FeedbackPrefs(PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("f.preferences_pb") })
         val vm =
@@ -171,6 +175,7 @@ class SettingsViewModelTest {
                 minuteTicker = ticker,
                 bingeInstallCheck = bingeInstallCheck,
                 bingeConnection = bingeConnection,
+                forwarding = forwarding,
             )
         viewModels.put("settings", vm)
         backgroundScope.launch { vm.uiState.collect {} }
@@ -320,6 +325,7 @@ class SettingsViewModelTest {
                     telemetryPrefs,
                     BugReportLinks(),
                     mainDispatcherRule.dispatcher,
+                    forwarding = forwarding,
                 )
 
             val first = again.uiState.first { it is SettingsUiState.Ready } as SettingsUiState.Ready
@@ -345,6 +351,7 @@ class SettingsViewModelTest {
                     telemetryPrefs,
                     BugReportLinks(),
                     mainDispatcherRule.dispatcher,
+                    forwarding = forwarding,
                 )
 
             val first = again.uiState.first { it is SettingsUiState.Ready } as SettingsUiState.Ready

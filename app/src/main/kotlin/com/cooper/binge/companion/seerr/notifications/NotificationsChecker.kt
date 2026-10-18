@@ -70,7 +70,7 @@ class NotificationsChecker
             signal: NotificationSignal,
             seed: suspend () -> Int,
             fetch: suspend (sinceId: Int) -> FeedRead<T>,
-            notify: (List<T>) -> Unit,
+            notify: suspend (List<T>) -> Unit,
         ): CheckResult {
             val cursor = prefs.cursor(signal) ?: return seedCursor(signal, seed)
             val read = attempt { fetch(cursor) }.getOrElse { return it.toResult() }

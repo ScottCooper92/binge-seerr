@@ -16,6 +16,7 @@ import com.binge.companion.contracts.request.v1.GetStatusesRequest
 import com.binge.companion.contracts.request.v1.HandshakeRequest
 import com.binge.companion.contracts.request.v1.HandshakeResponse
 import com.binge.companion.contracts.request.v1.IssueType
+import com.binge.companion.contracts.request.v1.ListNotificationsRequest
 import com.binge.companion.contracts.request.v1.ListRequestsRequest
 import com.binge.companion.contracts.request.v1.ListRequestsResponse
 import com.binge.companion.contracts.request.v1.ObserveAttentionRequest
@@ -27,6 +28,7 @@ import com.binge.companion.contracts.request.v1.RetryRequestRequest
 import com.binge.companion.contracts.request.v1.SubmitAdvancedRequestRequest
 import com.binge.companion.contracts.request.v1.SubmitRequestRequest
 import com.binge.companion.contracts.request.v1.UnblockTitleRequest
+import com.binge.companion.contracts.request.v1.setNotificationForwardingRequest
 import com.binge.companion.contracts.v1.MediaId
 import com.binge.companion.contracts.v1.MediaType
 import com.binge.companion.sdk.MAX_SEASON_NUMBERS
@@ -39,6 +41,8 @@ import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.data.CachedStatus
 import com.cooper.binge.companion.seerr.data.MediaStatusStore
 import com.cooper.binge.companion.seerr.data.NoMediaStatusStore
+import com.cooper.binge.companion.seerr.notifications.NotificationForwarding
+import com.cooper.binge.companion.seerr.notifications.NotificationPrefs
 import com.cooper.binge.companion.seerr.seerr.SeerrApiFactory
 import com.cooper.binge.companion.seerr.seerr.SeerrAuth
 import com.cooper.binge.companion.seerr.seerr.SeerrCredentials
@@ -133,6 +137,12 @@ class SeerrRequestServiceTest {
             .setTmdbId(603)
             .build()
 
+    /** Wired as the exported Service wires it, so a handshake declares forwarding as it does in the app. */
+    private fun notificationRpcs(): SeerrNotificationRpcs {
+        val store = PreferenceDataStoreFactory.create { folder.newFile("notifications.preferences_pb") }
+        return SeerrNotificationRpcs(NotificationForwarding(store), NotificationPrefs(store))
+    }
+
     private fun connected(
         permissions: Int = ADMIN,
         version: String = "2.7.0",
@@ -167,6 +177,7 @@ class SeerrRequestServiceTest {
                     bingeConnection = bingeConnection,
                     analytics = analytics,
                     userMessages = userMessages,
+                    notifications = notificationRpcs(),
                 ),
             )
         // One handshake up front consumes the profile's two answers and `auth/me` and caches all
@@ -228,6 +239,7 @@ class SeerrRequestServiceTest {
                     Capability.CAPABILITY_LIST_REQUESTS,
                     Capability.CAPABILITY_LIST_MINE_RECENTLY_AVAILABLE,
                     Capability.CAPABILITY_BATCH_STATUS,
+                    Capability.CAPABILITY_FORWARD_NOTIFICATIONS,
                 ),
                 response.capabilitiesList.toSet(),
             )
@@ -1134,9 +1146,45 @@ class SeerrRequestServiceTest {
             assertEquals(Status.Code.UNAUTHENTICATED, stub.submit(movie))
         }
 
-    /** A rejected session still handshakes, declaring the attention read that reports it as `needs_reconnect`. */
+    /**
+     * Forwarding needs no session (binge-companions#249): what is queued is still Binge's to show after
+     * the session breaks, so it is declared alongside the attention read, and its rpcs answer.
+     */
     @Test
-    fun `a rejected session handshakes with only the attention read`() =
+    fun `forwarding is declared and served with nothing connected`() =
+        runTest {
+            val store = CredentialStore(PreferenceDataStoreFactory.create { folder.newFile("empty.preferences_pb") }, PlainCipher)
+            val stub =
+                serve(
+                    SeerrRequestService(
+                        SeerrConnection(store, SeerrApiFactory(logRequests = false)),
+                        "0.1.0-test",
+                        notifications = notificationRpcs(),
+                    ),
+                )
+
+            val handshake = stub.handshake(HandshakeRequest.getDefaultInstance())
+            assertEquals(SESSIONLESS, handshake.capabilitiesList)
+            stub.setNotificationForwarding(setNotificationForwardingRequest { enabled = true })
+            assertEquals(0, stub.listNotifications(ListNotificationsRequest.getDefaultInstance()).notificationsCount)
+        }
+
+    @Test
+    fun `forwarding unwired is undeclared, and its rpcs are PERMISSION_DENIED`() =
+        runTest {
+            val store = CredentialStore(PreferenceDataStoreFactory.create { folder.newFile("empty.preferences_pb") }, PlainCipher)
+            val stub = serve(SeerrRequestService(SeerrConnection(store, SeerrApiFactory(logRequests = false)), "0.1.0-test"))
+
+            assertEquals(listOf(Capability.CAPABILITY_ATTENTION), stub.handshake(HandshakeRequest.getDefaultInstance()).capabilitiesList)
+            assertEquals(Status.Code.PERMISSION_DENIED, stub.code { listNotifications(ListNotificationsRequest.getDefaultInstance()) })
+        }
+
+    /**
+     * A rejected session still handshakes, declaring the attention read that reports it as `needs_reconnect`,
+     * and forwarding, which needs no session.
+     */
+    @Test
+    fun `a rejected session handshakes with only the attention read and forwarding`() =
         runTest {
             val stub = connected(permissions = ADMIN)
             seerr.enqueueProfile(json("""{"version":"2.7.0"}"""), json("""{"initialized":true}"""))
@@ -1144,7 +1192,7 @@ class SeerrRequestServiceTest {
 
             val handshake = stub.handshake(HandshakeRequest.getDefaultInstance())
 
-            assertEquals(listOf(Capability.CAPABILITY_ATTENTION), handshake.capabilitiesList)
+            assertEquals(SESSIONLESS, handshake.capabilitiesList)
             assertEquals("Jellyseerr", handshake.providerName)
         }
 
@@ -1630,13 +1678,13 @@ class SeerrRequestServiceTest {
         }
 
     @Test
-    fun `a session auth_me refuses with 403 handshakes with only the attention read`() =
+    fun `a session auth_me refuses with 403 handshakes with only the attention read and forwarding`() =
         runTest {
             val stub = connected(permissions = ADMIN)
             seerr.enqueueProfile(json("""{"version":"2.7.0"}"""), json("""{"initialized":true}"""))
             seerr.enqueue(MockResponse(code = 403))
 
-            assertEquals(listOf(Capability.CAPABILITY_ATTENTION), stub.handshake(HandshakeRequest.getDefaultInstance()).capabilitiesList)
+            assertEquals(SESSIONLESS, stub.handshake(HandshakeRequest.getDefaultInstance()).capabilitiesList)
         }
 
     /**
@@ -2320,3 +2368,6 @@ class SeerrRequestServiceTest {
         }
     }
 }
+
+/** What a handshake declares with no working session, when forwarding is wired as it is in the app. */
+private val SESSIONLESS = listOf(Capability.CAPABILITY_ATTENTION, Capability.CAPABILITY_FORWARD_NOTIFICATIONS)

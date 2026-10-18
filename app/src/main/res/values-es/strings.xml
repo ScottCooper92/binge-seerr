@@ -604,6 +604,8 @@
     <string name="settings_signal_available">Mis peticiones están disponibles</string>
     <string name="settings_signal_approved">Mis peticiones se aprueban</string>
     <string name="settings_signal_declined">Mis peticiones se rechazan</string>
+    <string name="settings_notifications_forwarded">Se muestran en Binge</string>
+    <string name="settings_notifications_forwarded_caption">Binge muestra estas notificaciones en lugar de esta app. Desactívalas en Binge para que esta app vuelva a mostrarlas.</string>
     <string name="settings_notifications_blocked">Las notificaciones están bloqueadas</string>
     <string name="settings_notifications_blocked_caption">Permítelas en los ajustes del sistema para enterarte de todo esto</string>
     <string name="settings_notifications_poll">Se comprueba en segundo plano</string>

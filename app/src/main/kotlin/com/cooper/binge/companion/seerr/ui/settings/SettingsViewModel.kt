@@ -9,6 +9,7 @@ import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.di.IoDispatcher
 import com.cooper.binge.companion.seerr.feedback.BugReportLinks
 import com.cooper.binge.companion.seerr.feedback.FeedbackPrefs
+import com.cooper.binge.companion.seerr.notifications.NotificationForwarding
 import com.cooper.binge.companion.seerr.notifications.NotificationPrefs
 import com.cooper.binge.companion.seerr.notifications.NotificationScheduler
 import com.cooper.binge.companion.seerr.notifications.NotificationSignal
@@ -120,6 +121,7 @@ class SettingsViewModel
         private val minuteTicker: Ticker = Ticker(),
         private val bingeInstallCheck: BingeInstallCheck = NoBingeInstallCheck,
         bingeConnection: BingeConnectionStore = NoBingeConnectionStore,
+        forwarding: NotificationForwarding,
     ) : ViewModel() {
         /** Re-read on every arrival, so Binge installed while this screen was away shows on return. */
         private val bingeInstalled = MutableStateFlow(bingeInstallCheck.isInstalled())
@@ -185,7 +187,15 @@ class SettingsViewModel
             ) { it.filterNotNull().toSet() }
 
         private val notifications: Flow<Read<NotificationSettings>> =
-            combine(offered, enabled, blockedTrigger, prefs.lastRunMillis, scheduler.nextRunMillis()) { offered, enabled, _, last, next ->
+            combine(
+                offered,
+                combine(enabled, forwarding.enabled, now) { enabled, switchedOn, _ -> enabled to switchedOn },
+                blockedTrigger,
+                prefs.lastRunMillis,
+                scheduler.nextRunMillis(),
+            ) { offered, (enabled, switchedOn), _, last, next ->
+                // Routing asks isActive(), which also needs a recent poll; the row follows the same rule.
+                val forwarded = switchedOn && forwarding.isActive()
                 when (offered) {
                     Read.Pending -> Read.Pending
                     is Read.Done ->
@@ -197,6 +207,7 @@ class SettingsViewModel
                                     blocked = !notifier.canPost(),
                                     lastRunMillis = last,
                                     nextRunMillis = next,
+                                    forwardedToBinge = forwarded,
                                 )
                             },
                         )

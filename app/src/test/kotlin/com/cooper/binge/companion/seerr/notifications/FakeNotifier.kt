@@ -18,33 +18,33 @@ internal class FakeNotifier : SeerrNotifier {
     var connectionProblemCancels = 0
     var activityCancels = 0
 
-    override fun canPost(): Boolean = canPost
+    override suspend fun canPost(): Boolean = canPost
 
-    override fun notifyNewRequests(items: List<RequestItem>) {
+    override suspend fun notifyNewRequests(items: List<RequestItem>) {
         newRequests += items.map { it.id }
     }
 
-    override fun notifyNewIssues(items: List<IssueItem>) {
+    override suspend fun notifyNewIssues(items: List<IssueItem>) {
         newIssues += items.map { it.id }
     }
 
-    override fun notifyRequestsAvailable(items: List<RequestItem>) {
+    override suspend fun notifyRequestsAvailable(items: List<RequestItem>) {
         available += items.map { it.id }
     }
 
-    override fun notifyRequestsApproved(items: List<RequestItem>) {
+    override suspend fun notifyRequestsApproved(items: List<RequestItem>) {
         approved += items.map { it.id }
     }
 
-    override fun notifyRequestsDeclined(items: List<RequestItem>) {
+    override suspend fun notifyRequestsDeclined(items: List<RequestItem>) {
         declined += items.map { it.id }
     }
 
-    override fun notifyConnectionProblem() {
+    override suspend fun notifyConnectionProblem() {
         connectionProblems++
     }
 
-    override fun cancelConnectionProblem() {
+    override suspend fun cancelConnectionProblem() {
         connectionProblemCancels++
     }
 

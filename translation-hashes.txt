@@ -810,6 +810,8 @@ app:settings_jobs_running  40b9722ed3fa
 app:settings_jobs_scheduled  f2f73ac9d26f
 app:settings_notifications_blocked  8276fc8f3d9a
 app:settings_notifications_blocked_caption  1d84fd334ac3
+app:settings_notifications_forwarded  4ea83511756f
+app:settings_notifications_forwarded_caption  d2591af63823
 app:settings_notifications_last_run  c2fbf9a33a20
 app:settings_notifications_not_yet  881d23f6ba57
 app:settings_notifications_poll  6dddca73fef3

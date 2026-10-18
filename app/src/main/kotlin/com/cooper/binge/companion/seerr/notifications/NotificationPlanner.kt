@@ -39,7 +39,7 @@ class NotificationPlanner
             plans.distinctUntilChanged().onEach(::apply).launchIn(scope)
         }
 
-        private fun apply(plan: Plan) {
+        private suspend fun apply(plan: Plan) {
             if (!plan.connected) notifier.cancelActivity()
             if (!plan.paused) notifier.cancelConnectionProblem()
             if (plan.connected && plan.enabled && !plan.paused) scheduler.schedule() else scheduler.cancel()

@@ -11,6 +11,8 @@ import com.cooper.binge.companion.seerr.auth.BingeConnectionStore
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.data.MediaStatusStore
 import com.cooper.binge.companion.seerr.data.RequestStore
+import com.cooper.binge.companion.seerr.notifications.NotificationForwarding
+import com.cooper.binge.companion.seerr.notifications.NotificationPrefs
 import com.cooper.binge.companion.seerr.telemetry.Analytics
 import dagger.hilt.android.AndroidEntryPoint
 import io.grpc.BindableService
@@ -40,6 +42,12 @@ class SeerrCompanionService : IntegrationService() {
     @Inject
     lateinit var analytics: Analytics
 
+    @Inject
+    lateinit var forwarding: NotificationForwarding
+
+    @Inject
+    lateinit var notificationPrefs: NotificationPrefs
+
     override fun services(): List<BindableService> =
         listOf(
             SeerrRequestService(
@@ -50,6 +58,7 @@ class SeerrCompanionService : IntegrationService() {
                 analytics = analytics,
                 requestCache = requests,
                 userMessages = AndroidUserMessages(this),
+                notifications = SeerrNotificationRpcs(forwarding, notificationPrefs),
             ),
         )
 
