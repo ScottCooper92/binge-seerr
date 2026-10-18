@@ -4,6 +4,7 @@ import androidx.paging.PagingSource
 import com.binge.companion.sdk.paging.OpenPagingSources
 import com.cooper.binge.companion.seerr.seerr.SeerrRequestStatusCode
 import com.cooper.binge.companion.seerr.ui.requests.RequestCounts
+import com.cooper.binge.companion.seerr.ui.requests.RequestFilter
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -118,11 +119,8 @@ class RoomRequestStore(
         mediaStatus: Int?,
     ) = sources.afterWrite {
         requests.updateState(requestId, status, mediaStatus)
-        if (status !=
-            null
-        ) {
-            statusFilters.forEach { (filter, wanted) -> if (status != wanted) requests.dropFromFilter(requestId, "$filter:%") }
-        }
+        if (status == null) return@afterWrite
+        statusFilters.forEach { (filter, wanted) -> if (status != wanted) requests.dropFromFilter(requestId, "$filter:%") }
     }
 
     override suspend fun delete(requestId: Int) = sources.afterWrite { requests.delete(requestId) }
@@ -140,9 +138,9 @@ class RoomRequestStore(
  */
 internal val statusFilters: Map<String, Int> =
     mapOf(
-        "pending" to SeerrRequestStatusCode.Pending.raw,
-        "approved" to SeerrRequestStatusCode.Approved.raw,
-        "failed" to SeerrRequestStatusCode.Failed.raw,
+        RequestFilter.Pending.apiValue to SeerrRequestStatusCode.Pending.raw,
+        RequestFilter.Approved.apiValue to SeerrRequestStatusCode.Approved.raw,
+        RequestFilter.Failed.apiValue to SeerrRequestStatusCode.Failed.raw,
     )
 
 /** No cache at all: writes go nowhere. What a build or a test that has not wired one gets. */
