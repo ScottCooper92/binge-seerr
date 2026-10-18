@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import com.android.tools.screenshot.PreviewTest
 import com.cooper.binge.companion.seerr.preview.SeerrComponentPreviews
 import com.cooper.binge.companion.seerr.preview.SheetFrame
+import com.cooper.binge.companion.seerr.preview.SideSheetFrame
 import com.cooper.binge.companion.seerr.seerr.SeerrMediaStatusCode
 
 /**
@@ -23,6 +24,26 @@ class MediaStatusSheetScreenshotTest {
     @SeerrComponentPreviews
     @Composable
     fun fourK() = Frame(is4k = true, status = SeerrMediaStatusCode.Processing)
+
+    /** At the expanded width Mark as is a page of the actions sheet, under a Back (#1578). */
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun expandedPage() =
+        SideSheetFrame(stacked = true) {
+            MediaStatusSheetContent(
+                instance =
+                    MediaInstance(
+                        is4k = false,
+                        status = SeerrMediaStatusCode.Available,
+                        serviceUrl = null,
+                        mediaServerUrl = null,
+                        watch = null,
+                    ),
+                onSelect = {},
+                dragHandle = false,
+            )
+        }
 }
 
 @Composable

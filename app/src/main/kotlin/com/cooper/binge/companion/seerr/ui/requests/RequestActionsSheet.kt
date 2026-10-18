@@ -63,6 +63,9 @@ internal fun RequestActionsSheet(
     onRetryDetail: () -> Unit = {},
     edit: EditState? = null,
     editActions: EditRequestActions? = null,
+    marking: MediaInstance? = null,
+    onMarkSelect: (MediaStatusChoice) -> Unit = {},
+    onMarkDismiss: () -> Unit = {},
 ) {
     var blockTitle by rememberSaveable { mutableStateOf(false) }
     var pending by rememberSaveable { mutableStateOf<Pending?>(null) }
@@ -70,7 +73,12 @@ internal fun RequestActionsSheet(
         kind = BingeSheetKind.Task,
         onDismissRequest = onDismiss,
         // The editor's state is the view model's, so Back from its page cancels the edit there.
-        onPageBack = { page -> if (page == EDIT_PAGE) editActions?.onDismiss?.invoke() },
+        onPageBack = { page ->
+            when (page) {
+                EDIT_PAGE -> editActions?.onDismiss?.invoke()
+                MARK_PAGE -> onMarkDismiss()
+            }
+        },
     ) { nav ->
         // The page follows the edit, not the tap: an edit begun in a narrow window shows here once it widens.
         val editOpen = nav.stacksPages && editActions != null && edit != null
@@ -78,6 +86,13 @@ internal fun RequestActionsSheet(
         // A stack that survived a narrow window keeps its page, but there the editor is a sheet of its own, not this one.
         if (nav.page == EDIT_PAGE && nav.stacksPages && editActions != null) {
             EditRequestPage(nav = nav, item = item, edit = edit, actions = editActions)
+            return@BingeAdaptiveSheet
+        }
+        // Mark as follows the choice of instance the same way: a page here, its own sheet where this one does not stack pages.
+        val markOpen = nav.stacksPages && marking != null
+        LaunchedEffect(markOpen, nav.page) { if (markOpen && nav.page != MARK_PAGE) nav.push(MARK_PAGE) }
+        if (nav.page == MARK_PAGE && nav.stacksPages && marking != null) {
+            MarkAsPage(nav = nav, instance = marking, onSelect = onMarkSelect)
             return@BingeAdaptiveSheet
         }
         RequestActionsContent(
@@ -148,6 +163,24 @@ internal fun RequestActionsSheet(
 }
 
 private const val EDIT_PAGE = "edit"
+private const val MARK_PAGE = "mark"
+
+/** One instance's state choice as a page of the actions sheet. A pick is applied and the page steps back. */
+@Composable
+private fun MarkAsPage(
+    nav: BingeSheetNav,
+    instance: MediaInstance,
+    onSelect: (MediaStatusChoice) -> Unit,
+) {
+    MediaStatusSheetContent(
+        instance = instance,
+        onSelect = { choice ->
+            onSelect(choice)
+            nav.pop()
+        },
+        dragHandle = false,
+    )
+}
 
 /** The request editor as a page of the actions sheet, closing itself when the edit ends, saved or cancelled. */
 @Composable

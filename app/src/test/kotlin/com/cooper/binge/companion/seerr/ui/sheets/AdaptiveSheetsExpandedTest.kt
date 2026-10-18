@@ -11,8 +11,13 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.binge.designsystem.theme.BingeExpressiveTheme
 import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.seerr.SeerrMediaStatusCode
 import com.cooper.binge.companion.seerr.ui.requests.EditRequestActions
 import com.cooper.binge.companion.seerr.ui.requests.EditState
+import com.cooper.binge.companion.seerr.ui.requests.ManageMediaActions
+import com.cooper.binge.companion.seerr.ui.requests.MediaInstance
+import com.cooper.binge.companion.seerr.ui.requests.MediaRecord
+import com.cooper.binge.companion.seerr.ui.requests.MediaStatusChoice
 import com.cooper.binge.companion.seerr.ui.requests.RequestActionsSheet
 import com.cooper.binge.companion.seerr.ui.requests.SeasonChoice
 import com.cooper.binge.companion.seerr.ui.users.UserAdmissionActions
@@ -140,6 +145,135 @@ class RequestActionsSheetExpandedTest {
 
         rule.onAllNodes(backBar()).assertCountEquals(0)
         rule.onAllNodesWithText(string(R.string.request_edit_save)).assertCountEquals(0)
+    }
+}
+
+/** At the expanded width Mark as is a page of the actions sheet too, and below it stays a sheet of its own (#1578). */
+@RunWith(RobolectricTestRunner::class)
+@Config(qualifiers = "w900dp-h900dp")
+class MarkAsPageExpandedTest {
+    @get:Rule
+    val rule = createSeerrComposeRule()
+
+    private val instance =
+        MediaInstance(is4k = false, status = SeerrMediaStatusCode.Processing, serviceUrl = null, mediaServerUrl = null, watch = null)
+    private var marking by mutableStateOf<MediaInstance?>(null)
+    private val picked = mutableListOf<MediaStatusChoice>()
+    private var markDismissed = 0
+    private var sheetDismissed = 0
+
+    private fun show() {
+        val detail = requestDetail()
+        rule.setContent {
+            BingeExpressiveTheme(dynamicColor = false) {
+                RequestActionsSheet(
+                    item = detail.item,
+                    actions = detail.actions,
+                    onApprove = {},
+                    onRetry = {},
+                    onDecline = {},
+                    onRemove = {},
+                    onDismiss = { sheetDismissed++ },
+                    media =
+                        MediaRecord(
+                            mediaId = 900,
+                            isTv = false,
+                            instances = listOf(instance),
+                            canSetStatus = true,
+                            canClearData = false,
+                            canDeleteFiles = false,
+                        ),
+                    mediaActions = ManageMediaActions(onSetStatus = { _, _, _ -> }, onClearData = {}, onDeleteFiles = { _, _ -> }),
+                    onMarkStatus = { marking = instance },
+                    marking = marking,
+                    onMarkSelect = { picked += it },
+                    onMarkDismiss = {
+                        markDismissed++
+                        marking = null
+                    },
+                )
+            }
+        }
+        rule.waitForIdle()
+    }
+
+    private fun openMarkAs() {
+        rule.onNodeWithText(string(R.string.media_instance_standard)).performClick()
+        rule.waitForIdle()
+    }
+
+    @Test
+    fun `Mark as opens as a page under a Back, in the same sheet`() {
+        show()
+        rule.onAllNodes(backBar()).assertCountEquals(0)
+
+        openMarkAs()
+
+        rule.onAllNodes(backBar()).assertCountEquals(1)
+        rule.onNodeWithText(string(R.string.media_mark_as)).assertExists()
+        rule.onNodeWithText(string(R.string.media_state_available)).assertExists()
+    }
+
+    @Test
+    fun `a pick is applied and the page steps back to the actions`() {
+        show()
+        openMarkAs()
+
+        rule.onNodeWithText(string(R.string.media_state_available)).performClick()
+        rule.waitForIdle()
+
+        assertEquals(listOf(MediaStatusChoice.Available), picked)
+        assertEquals(1, markDismissed)
+        assertEquals(0, sheetDismissed)
+        rule.onAllNodes(backBar()).assertCountEquals(0)
+        rule.onNodeWithText(string(R.string.media_instance_standard)).assertExists()
+    }
+
+    @Test
+    fun `Back from the page picks nothing and returns to the actions`() {
+        show()
+        openMarkAs()
+
+        rule.onAllNodes(backBar()).onFirst().performClick()
+        rule.waitForIdle()
+
+        assertEquals(emptyList<MediaStatusChoice>(), picked)
+        assertEquals(1, markDismissed)
+        assertEquals(0, sheetDismissed)
+        rule.onAllNodes(backBar()).assertCountEquals(0)
+    }
+}
+
+/** Below the expanded width the actions sheet stacks no pages, so Mark as is not one of them. */
+@RunWith(RobolectricTestRunner::class)
+@Config(qualifiers = "w400dp-h800dp")
+class MarkAsPageNarrowTest {
+    @get:Rule
+    val rule = createSeerrComposeRule()
+
+    @Test
+    fun `a bottom sheet shows no page for Mark as`() {
+        val detail = requestDetail()
+        val instance =
+            MediaInstance(is4k = false, status = SeerrMediaStatusCode.Processing, serviceUrl = null, mediaServerUrl = null, watch = null)
+        rule.setContent {
+            BingeExpressiveTheme(dynamicColor = false) {
+                RequestActionsSheet(
+                    item = detail.item,
+                    actions = detail.actions,
+                    onApprove = {},
+                    onRetry = {},
+                    onDecline = {},
+                    onRemove = {},
+                    onDismiss = {},
+                    marking = instance,
+                )
+            }
+        }
+        rule.waitForIdle()
+
+        rule.onAllNodes(backBar()).assertCountEquals(0)
+        rule.onAllNodesWithText(string(R.string.media_state_available)).assertCountEquals(0)
     }
 }
 
