@@ -152,7 +152,7 @@ class LocalNetworkDeniedViewModelsTest {
     @Test
     fun `a user's detail`() =
         runTest {
-            val vm = UserDetailViewModel(denied(), TitleCache(FakeTitleDao()), FakeUserStore(), dispatcher, 8)
+            val vm = UserDetailViewModel(denied(), TitleCache(FakeTitleDao()), FakeUserStore(), FakeRequestStore(), dispatcher, 8)
             backgroundScope.launch { vm.uiState.collect {} }
 
             assertEquals(SeerrError.LocalNetworkDenied, vm.uiState.failure { (it as? UserDetailUiState.Error)?.error })
