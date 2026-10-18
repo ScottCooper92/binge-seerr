@@ -26,7 +26,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 
-/** What the television home shows: setup, the rail, or the sign-in again once the server has rejected the session (#810). */
+/** What the television home shows: setup, the signed-in Home, or the sign-in again once the server has rejected the session (#810). */
 class TvHomeViewModelTest {
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
@@ -75,7 +75,7 @@ class TvHomeViewModelTest {
     }
 
     @Test
-    fun `nothing saved is setup, and a saved server that takes the session is the rail`() =
+    fun `nothing saved is setup, and a saved server that takes the session is Home`() =
         runTest {
             val connection = connection()
             val vm = viewModel(connection)
@@ -87,7 +87,7 @@ class TvHomeViewModelTest {
         }
 
     @Test
-    fun `a rejection auth me confirms is the sign-in again, and a new sign-in brings the rail back`() =
+    fun `a rejection auth me confirms is the sign-in again, and a new sign-in brings Home back`() =
         runTest {
             val connection = connection()
             connection.connectHealthy()
@@ -106,7 +106,7 @@ class TvHomeViewModelTest {
         }
 
     @Test
-    fun `a stray 401 that auth me contradicts keeps the rail`() =
+    fun `a stray 401 that auth me contradicts keeps Home`() =
         runTest {
             val connection = connection()
             connection.connectHealthy()
