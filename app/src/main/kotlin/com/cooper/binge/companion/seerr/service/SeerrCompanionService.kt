@@ -6,6 +6,7 @@ import com.binge.companion.sdk.HostPolicy
 import com.binge.companion.sdk.IntegrationService
 import com.cooper.binge.companion.seerr.ADMITS_UNVERIFIED_CALLERS
 import com.cooper.binge.companion.seerr.BuildConfig
+import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.SelfOrPolicy
 import com.cooper.binge.companion.seerr.auth.BingeConnectionStore
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
@@ -58,6 +59,7 @@ class SeerrCompanionService : IntegrationService() {
                 analytics = analytics,
                 requestCache = requests,
                 userMessages = AndroidUserMessages(this),
+                standardVersionLabel = getString(R.string.version_standard),
             ),
             SeerrNotificationsService(SeerrNotificationRpcs(forwarding, notificationPrefs)),
         )

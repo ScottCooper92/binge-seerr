@@ -15,6 +15,9 @@ import com.cooper.binge.companion.seerr.seerr.statusCatching
  * NOTIFICATIONS v1: the forwarding queue, served apart from REQUEST so a host that never asks for
  * requests can still collect notifications. Needs no Seerr session, so nothing here answers
  * UNAUTHENTICATED, the handshake included. It declares no capabilities yet.
+ *
+ * Failures are not reported to analytics, which only takes a server-version signal and has no server here: a queue
+ * that cannot be read is the app's own storage failing, not a Seerr release to learn about.
  */
 class SeerrNotificationsService(
     private val rpcs: SeerrNotificationRpcs,

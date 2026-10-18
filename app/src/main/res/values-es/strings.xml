@@ -1234,4 +1234,5 @@
     <string name="tv_issue_reply_on_phone">Responder desde el móvil</string>
     <string name="tv_issue_edit_on_phone">Editar desde el móvil</string>
     <string name="tv_issue_phone_body">Escanea el código con el móvil para abrir esta incidencia en %1$s y responder o editar allí.</string>
+    <string name="version_standard">Estándar</string>
 </resources>

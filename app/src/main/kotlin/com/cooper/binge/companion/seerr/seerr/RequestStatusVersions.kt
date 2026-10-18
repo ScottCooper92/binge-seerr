@@ -15,12 +15,20 @@ private const val LABEL_4K = "4K"
 fun versionIdOf(is4k: Boolean): String = if (is4k) VERSION_ID_4K else VERSION_ID_STANDARD
 
 /**
- * The handshake's version list. Standard needs no entry, since an empty list means standard only,
- * so only the 4K version is listed, and only for a user who may request it.
+ * The handshake's version list. An empty list means standard only, so it stays empty when 4K is not offered. A list
+ * with 4K in it names the standard version too, first and with the empty id, so the host has a label for each.
  */
-fun versionsFor(offers4k: Boolean): List<Version> =
+fun versionsFor(
+    offers4k: Boolean,
+    standardLabel: String,
+): List<Version> =
     if (offers4k) {
         listOf(
+            Version
+                .newBuilder()
+                .setId(VERSION_ID_STANDARD)
+                .setLabel(standardLabel)
+                .build(),
             Version
                 .newBuilder()
                 .setId(VERSION_ID_4K)
