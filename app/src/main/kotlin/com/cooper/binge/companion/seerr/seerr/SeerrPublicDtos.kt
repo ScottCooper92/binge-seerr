@@ -44,4 +44,9 @@ data class SeerrPublicSettings(
      * it names this instance whatever address it is reached by. Overseerr 1.x does not send it.
      */
     @SerialName("plexClientIdentifier") val instanceId: String? = null,
+    /**
+     * The web-push public key, which the server generates once and keeps in its settings with nothing that changes it, so
+     * it names the instance on a server too old to send [instanceId] (Jellyseerr 2.7 does not).
+     */
+    @SerialName("vapidPublic") val vapidPublic: String? = null,
 )

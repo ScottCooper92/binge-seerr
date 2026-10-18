@@ -52,7 +52,7 @@ class ReportTitleScreenshotTest {
     @Composable
     fun failed() = SheetFrame { Body(readyState(report = IssueReport.Failed(SeerrError.Unreachable))) }
 
-    /** A code for another server: nothing is sent, and the way forward is the app. */
+    /** Both servers named themselves and the names differ: this phone is on another server, and the user may report anyway. */
     @PreviewTest
     @SeerrComponentPreviews
     @Composable
@@ -61,6 +61,8 @@ class ReportTitleScreenshotTest {
             Body(ReportTitleUiState.DifferentServer(theirs = "192.168.86.38:30042", yours = "100.103.24.117:30042", confirmed = true))
         }
 
+    /** A code that does not read as this phone's server by address, with no id to settle it: the user decides. */
+    @PreviewTest
     @SeerrComponentPreviews
     @Composable
     fun differentServer() = SheetFrame { Body(ReportTitleUiState.DifferentServer(theirs = "seerr.example", yours = "192.168.1.10:5055")) }

@@ -200,6 +200,19 @@ class SeerrServerProfileTest {
         assertNull(profile("3.4.0", SeerrPublicSettings(instanceId = " ")).instanceId)
     }
 
+    @Test
+    fun `a server that sends only its web-push key is named by a short hash of it, the same on every read`() {
+        val settings = SeerrPublicSettings(vapidPublic = "BKey-123")
+
+        val id = profile("2.7.3", settings).instanceId
+        assertEquals(id, profile("2.7.3", settings).instanceId)
+        assertEquals(17, id?.length)
+        assertTrue(id!!.matches(Regex("v[0-9a-f]{16}")))
+        assertTrue(id != profile("2.7.3", SeerrPublicSettings(vapidPublic = "BKey-124")).instanceId)
+        assertEquals("3f1c", profile("3.4.0", SeerrPublicSettings(instanceId = "3f1c", vapidPublic = "BKey-123")).instanceId)
+        assertNull(profile("2.7.3", SeerrPublicSettings(vapidPublic = "")).instanceId)
+    }
+
     private fun profile(
         version: String,
         settings: SeerrPublicSettings = SeerrPublicSettings(),

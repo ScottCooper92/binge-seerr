@@ -2,6 +2,9 @@ package com.cooper.binge.companion.seerr.ui.handoff
 
 import com.cooper.binge.companion.seerr.handoff.TitleReportLink
 import com.cooper.binge.companion.seerr.seerr.SeerrError
+import com.cooper.binge.companion.seerr.seerr.SeerrPublicSettings
+import com.cooper.binge.companion.seerr.seerr.SeerrServerProfile
+import com.cooper.binge.companion.seerr.seerr.SeerrStatusDto
 import com.cooper.binge.companion.seerr.ui.requests.IssueReport
 import com.cooper.binge.companion.seerr.ui.requests.IssueType
 import com.cooper.binge.companion.seerr.ui.users.settings.ADMIN
@@ -103,6 +106,17 @@ class ReportTitleViewModelTest {
             val state = viewModel(overTheVpn).settled()
 
             assertEquals(ReportTitleUiState.Ready(title = "Heat", is4k = false, mediaId = MEDIA_ID), state)
+        }
+
+    @Test
+    fun `a server that names itself only by its web-push key matches by the hash of it`() =
+        runTest {
+            val settings = SeerrPublicSettings(vapidPublic = "BPushKey")
+            seerr.viewer(id = 1, permissions = ADMIN, settings = """{"vapidPublic":"BPushKey"}""")
+            val id = SeerrServerProfile.from(SeerrStatusDto(), settings).instanceId
+            val overTheVpn = TitleReportLink("http://100.103.24.117:30042/", "movie", 949, is4k = false, serverId = id)
+
+            assertEquals(ReportTitleUiState.Ready(title = "Heat", is4k = false, mediaId = MEDIA_ID), viewModel(overTheVpn).settled())
         }
 
     @Test
