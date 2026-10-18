@@ -2,13 +2,16 @@ package com.cooper.binge.companion.seerr.service
 
 import com.binge.companion.contracts.request.v1.BlockTitleRequest
 import com.binge.companion.contracts.request.v1.BlockTitleResponse
+import com.binge.companion.contracts.request.v1.IssueType
 import com.binge.companion.contracts.request.v1.ReportIssueRequest
 import com.binge.companion.contracts.request.v1.ReportIssueResponse
 import com.binge.companion.contracts.request.v1.UnblockTitleRequest
 import com.binge.companion.contracts.request.v1.UnblockTitleResponse
+import com.binge.companion.contracts.v1.MediaType
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.seerr.SeerrAddToBlocklistBody
 import com.cooper.binge.companion.seerr.seerr.SeerrCreateIssueBody
+import com.cooper.binge.companion.seerr.seerr.VERSION_ID_4K
 import com.cooper.binge.companion.seerr.seerr.addToBlocklistOnce
 import com.cooper.binge.companion.seerr.seerr.details
 import com.cooper.binge.companion.seerr.seerr.recordIdFor
@@ -34,6 +37,7 @@ internal class SeerrIssueRpcs(
      * who may request 4K of its type (#704, #1604). One details read gives both that and Seerr's own media record id.
      */
     suspend fun reportIssue(request: ReportIssueRequest): ReportIssueResponse {
+        request.checkScope()
         val info = connection.api().details(request.media).mediaInfo
         val status = info.toRequestStatus(clock())
         val sees4k = connection.mayRequest4k(request.media)
@@ -47,7 +51,15 @@ internal class SeerrIssueRpcs(
             )
         }
         val mediaId = info.recordIdFor(request.media)
-        connection.api().createIssue(SeerrCreateIssueBody(mediaId, request.type.toSeerrIssueType(), request.message))
+        val body =
+            SeerrCreateIssueBody(
+                mediaId = mediaId,
+                issueType = request.type.toSeerrIssueType(),
+                message = request.message.namingVersion(request.versionId, sees4k),
+                problemSeason = request.seasonNumber(),
+                problemEpisode = request.episodeNumber(),
+            )
+        connection.api().createIssue(body)
         return ReportIssueResponse.getDefaultInstance()
     }
 
@@ -86,3 +98,37 @@ internal class SeerrIssueRpcs(
         return UnblockTitleResponse.getDefaultInstance()
     }
 }
+
+/**
+ * The contract's INVALID_ARGUMENTs for an issue's scope, and for a category: this integration declares no
+ * `CAPABILITY_ISSUE_CATEGORIES`, since Seerr's issue types are a fixed four, so naming one is a bad argument.
+ */
+private fun ReportIssueRequest.checkScope() {
+    scopeProblem()?.let { throw invalidArgument(it) }
+}
+
+private fun ReportIssueRequest.scopeProblem(): String? =
+    when {
+        categoryId.isNotEmpty() -> "category_id was set, but this integration lists no issue categories"
+        type == IssueType.ISSUE_TYPE_UNSPECIFIED -> "type is unspecified and category_id is empty"
+        hasSeasonNumber() && seasonNumber < 0 -> "season_number is below 0"
+        hasSeasonNumber() && media.mediaType != MediaType.MEDIA_TYPE_TV -> "season_number is for a series"
+        hasEpisodeNumber() && !hasSeasonNumber() -> "episode_number is set without season_number"
+        hasEpisodeNumber() && episodeNumber < 0 -> "episode_number is below 0"
+        else -> null
+    }
+
+/** Seerr's "none" is 0, so an unset season is 0 and so is the specials season: the server cannot tell them apart. */
+private fun ReportIssueRequest.seasonNumber(): Int = if (hasSeasonNumber()) seasonNumber else 0
+
+private fun ReportIssueRequest.episodeNumber(): Int = if (hasEpisodeNumber()) episodeNumber else 0
+
+/**
+ * Seerr stores no version on an issue, so the one the user named travels in the message, where the
+ * administrator reads it. Only the 4K version is named, and only to a user who may see it. The note is English
+ * because it is data for an administrator whose locale the app does not know, not app UI.
+ */
+private fun String.namingVersion(
+    versionId: String,
+    sees4k: Boolean,
+): String = if (versionId == VERSION_ID_4K && sees4k) "$this\n\n(4K version)" else this

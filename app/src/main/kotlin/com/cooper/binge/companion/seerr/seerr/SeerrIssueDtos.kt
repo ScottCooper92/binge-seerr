@@ -55,11 +55,14 @@ data class SeerrIssueCommentBody(
 
 /**
  * Body for `POST issue`. [mediaId] is the server's INTERNAL media id (a title's `mediaInfo.id`),
- * not the TMDB id — the server can only attach an issue to a title it already tracks.
+ * not the TMDB id — the server can only attach an issue to a title it already tracks. A season or episode of 0
+ * is the server's "none", so it stays off the wire.
  */
 @Serializable
 data class SeerrCreateIssueBody(
     @SerialName("mediaId") val mediaId: Int,
     @SerialName("issueType") val issueType: SeerrIssueTypeCode,
     @SerialName("message") val message: String,
+    @SerialName("problemSeason") val problemSeason: Int = 0,
+    @SerialName("problemEpisode") val problemEpisode: Int = 0,
 )

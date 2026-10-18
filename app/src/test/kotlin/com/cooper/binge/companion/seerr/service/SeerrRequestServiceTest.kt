@@ -6,6 +6,7 @@ import com.binge.companion.contracts.request.v1.Availability
 import com.binge.companion.contracts.request.v1.BlockTitleRequest
 import com.binge.companion.contracts.request.v1.CancelRequestRequest
 import com.binge.companion.contracts.request.v1.Capability
+import com.binge.companion.contracts.request.v1.DeclineRequestRequest
 import com.binge.companion.contracts.request.v1.DestinationChoices
 import com.binge.companion.contracts.request.v1.EditRequestRequest
 import com.binge.companion.contracts.request.v1.GetAdvancedRequestOptionsRequest
@@ -21,12 +22,14 @@ import com.binge.companion.contracts.request.v1.ListRequestsResponse
 import com.binge.companion.contracts.request.v1.ObserveAttentionRequest
 import com.binge.companion.contracts.request.v1.ObserveStatusRequest
 import com.binge.companion.contracts.request.v1.ReportIssueRequest
+import com.binge.companion.contracts.request.v1.ReportIssueRequestKt
 import com.binge.companion.contracts.request.v1.RequestFilter
 import com.binge.companion.contracts.request.v1.RequestServiceGrpcKt
 import com.binge.companion.contracts.request.v1.RetryRequestRequest
 import com.binge.companion.contracts.request.v1.SubmitAdvancedRequestRequest
 import com.binge.companion.contracts.request.v1.SubmitRequestRequest
 import com.binge.companion.contracts.request.v1.UnblockTitleRequest
+import com.binge.companion.contracts.request.v1.reportIssueRequest
 import com.binge.companion.contracts.v1.MediaId
 import com.binge.companion.contracts.v1.MediaType
 import com.binge.companion.sdk.MAX_SEASON_NUMBERS
@@ -65,6 +68,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
+import mockwebserver3.RecordedRequest
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -1217,6 +1221,111 @@ class SeerrRequestServiceTest {
             )
         }
 
+    @Test
+    fun `a report against a season and episode carries both to the server, and a plain one carries neither`() =
+        runTest {
+            val stub = connected()
+            seerr.enqueue(json("""{"mediaInfo":{"id":9,"status":5}}"""))
+            seerr.enqueue(MockResponse(code = 201))
+
+            stub.reportIssue(
+                ReportIssueRequest
+                    .newBuilder()
+                    .setMedia(show)
+                    .setType(IssueType.ISSUE_TYPE_SUBTITLE)
+                    .setSeasonNumber(2)
+                    .setEpisodeNumber(5)
+                    .build(),
+            )
+
+            seerr.takeRequest()
+            val body = seerr.takeRequest().bodyText()
+            assertTrue(body, body.contains("\"problemSeason\":2"))
+            assertTrue(body, body.contains("\"problemEpisode\":5"))
+
+            seerr.enqueue(json("""{"mediaInfo":{"id":9,"status":5}}"""))
+            seerr.enqueue(MockResponse(code = 201))
+            stub.reportIssue(plainReport(show))
+            seerr.takeRequest()
+            val plain = seerr.takeRequest().bodyText()
+            assertFalse(plain, plain.contains("problemSeason"))
+            assertFalse(plain, plain.contains("problemEpisode"))
+        }
+
+    @Test
+    fun `a report names the 4K version in the message, to a user who may request 4K`() =
+        runTest {
+            val stub = connected(publicSettings = MOVIE_4K_ENABLED, permissions = REQUEST or REQUEST_4K or CREATE_ISSUES)
+            seerr.enqueue(json(AVAILABLE_ONLY_IN_4K))
+            seerr.enqueue(MockResponse(code = 201))
+
+            stub.reportIssue(
+                ReportIssueRequest
+                    .newBuilder()
+                    .setMedia(movie)
+                    .setType(IssueType.ISSUE_TYPE_VIDEO)
+                    .setMessage("blocky")
+                    .setVersionId("4k")
+                    .build(),
+            )
+
+            seerr.takeRequest()
+            val body = seerr.takeRequest().bodyText()
+            assertTrue(body, body.contains("blocky\\n\\n(4K version)"))
+        }
+
+    /** The contract's bad arguments are refused before the server is asked anything. */
+    @Test
+    fun `a report with a scope the contract refuses is INVALID_ARGUMENT, and asks the server nothing`() =
+        runTest {
+            val stub = connected()
+            val before = seerr.requestCount
+            val refused =
+                listOf(
+                    scopedReport(show) { seasonNumber = -1 },
+                    scopedReport(movie) { seasonNumber = 1 },
+                    scopedReport(show) { episodeNumber = 3 },
+                    scopedReport(show) {
+                        seasonNumber = 1
+                        episodeNumber = -1
+                    },
+                    scopedReport(movie) { categoryId = "42" },
+                    ReportIssueRequest.newBuilder().setMedia(movie).build(),
+                ).map { report -> stub.code { reportIssue(report) } }
+
+            assertEquals(List(6) { Status.Code.INVALID_ARGUMENT }, refused)
+            assertEquals(before, seerr.requestCount)
+        }
+
+    @Test
+    fun `a decline reason is accepted and not sent, and one past 1000 characters is INVALID_ARGUMENT`() =
+        runTest {
+            val stub = connected()
+            seerr.enqueue(json("{}"))
+
+            stub.declineRequest(declineWithReason("Out of the budget"))
+
+            val declined = seerr.takeRequest()
+            assertEquals("/api/v1/request/4/decline", declined.url.encodedPath)
+            assertFalse(declined.bodyText().contains("budget"))
+            val tooLong = declineWithReason("x".repeat(1001))
+            assertEquals(Status.Code.INVALID_ARGUMENT, stub.code { declineRequest(tooLong) })
+        }
+
+    private fun plainReport(media: MediaId) =
+        ReportIssueRequest
+            .newBuilder()
+            .setMedia(media)
+            .setType(IssueType.ISSUE_TYPE_SUBTITLE)
+            .build()
+
+    private fun declineWithReason(reason: String) =
+        DeclineRequestRequest
+            .newBuilder()
+            .setRequestId("4")
+            .setReason(reason)
+            .build()
+
     /** The contract: nothing to report against unless the title is available or partially available (#682). */
     @Test
     fun `a report against an untracked title is FAILED_PRECONDITION`() =
@@ -2326,3 +2435,19 @@ class SeerrRequestServiceTest {
         }
     }
 }
+
+private fun RecordedRequest.bodyText(): String =
+    body
+        ?.utf8()
+        .orEmpty()
+
+/** A video report of [media], scoped by [configure]: the shapes the contract's bad-argument rules are tested against. */
+private fun scopedReport(
+    media: MediaId,
+    configure: ReportIssueRequestKt.Dsl.() -> Unit,
+): ReportIssueRequest =
+    reportIssueRequest {
+        this.media = media
+        type = IssueType.ISSUE_TYPE_VIDEO
+        configure()
+    }
