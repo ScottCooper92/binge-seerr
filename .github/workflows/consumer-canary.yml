@@ -23,7 +23,7 @@ permissions:
 
 jobs:
   # The same four slices ci.yml runs as parallel jobs, as a matrix: one serial `./gradlew build` outgrew the 30 minutes a
-  # job gets (#1630). Each slice builds the same upstream heads. `canary-report` below reads the matrix's aggregate result.
+  # job gets (#1630). Each slice resolves the upstream heads itself. `canary-report` below reads the matrix's aggregate result.
   canary:
     name: canary (${{ matrix.slice }})
     runs-on: ubuntu-latest
@@ -82,6 +82,7 @@ jobs:
             **/build/reports/ktlint/**
             **/build/reports/detekt/**
             **/build/reports/kover/**
+            **/build/outputs/mapping/**/missing_rules.txt
             **/build/outputs/screenshotTest-results/**/diffs/**
           if-no-files-found: ignore
           retention-days: 7
