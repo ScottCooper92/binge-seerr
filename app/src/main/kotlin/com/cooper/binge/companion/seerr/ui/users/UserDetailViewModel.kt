@@ -2,14 +2,19 @@ package com.cooper.binge.companion.seerr.ui.users
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.paging.ExperimentalPagingApi
 import androidx.paging.LoadState
 import androidx.paging.LoadStates
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
+import androidx.paging.map
 import com.binge.companion.sdk.attempt
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
+import com.cooper.binge.companion.seerr.data.RequestListQuery
+import com.cooper.binge.companion.seerr.data.RequestStore
+import com.cooper.binge.companion.seerr.data.RequestsRemoteMediator
 import com.cooper.binge.companion.seerr.data.UserStore
 import com.cooper.binge.companion.seerr.di.IoDispatcher
 import com.cooper.binge.companion.seerr.seerr.ManageablePermission
@@ -24,6 +29,8 @@ import com.cooper.binge.companion.seerr.ui.hub.toHubQuota
 import com.cooper.binge.companion.seerr.ui.minuteClock
 import com.cooper.binge.companion.seerr.ui.requests.REQUESTS_PAGE_SIZE
 import com.cooper.binge.companion.seerr.ui.requests.RequestItem
+import com.cooper.binge.companion.seerr.ui.requests.toRequestEntity
+import com.cooper.binge.companion.seerr.ui.requests.toRequestItem
 import com.cooper.binge.companion.seerr.ui.requests.toRequestMediaTypeOrNull
 import com.cooper.binge.companion.seerr.ui.users.settings.mayOpenSettings
 import dagger.assisted.Assisted
@@ -47,6 +54,7 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -64,9 +72,10 @@ private const val CAROUSEL_LIMIT = 20
 /**
  * One user as a page. The profile is the page; the quota, the watch data and the watchlist are
  * best-effort, since each is a section the server may not have or the user may not see.
- * The user's own requests are a separate paged stream.
+ * The user's own requests are a separate paged stream, read from the request cache like the browser's so a
+ * moderation anywhere moves them too.
  */
-@OptIn(ExperimentalCoroutinesApi::class)
+@OptIn(ExperimentalCoroutinesApi::class, ExperimentalPagingApi::class)
 @HiltViewModel(assistedFactory = UserDetailViewModel.Factory::class)
 class UserDetailViewModel
     @AssistedInject
@@ -74,6 +83,7 @@ class UserDetailViewModel
         private val connection: SeerrConnection,
         private val titles: TitleCache,
         private val store: UserStore,
+        private val requestStore: RequestStore,
         @IoDispatcher private val dispatcher: CoroutineDispatcher,
         @Assisted private val userId: Int,
         private val minuteTicker: Ticker = Ticker(),
@@ -96,9 +106,16 @@ class UserDetailViewModel
             flow { emit(mayReadRequests()) }
                 .flatMapLatest { allowed ->
                     if (allowed) {
-                        Pager(PagingConfig(pageSize = REQUESTS_PAGE_SIZE)) {
-                            UserRequestsPagingSource(userId = userId, api = connection::api, hydrate = titles::get)
-                        }.flow
+                        val query = RequestListQuery(filter = "all", sort = "added", requestedBy = userId)
+                        Pager(
+                            config = PagingConfig(pageSize = REQUESTS_PAGE_SIZE),
+                            remoteMediator =
+                                RequestsRemoteMediator(query = query, api = connection::api, store = requestStore) { dto, api, key, index ->
+                                    dto.toRequestEntity(api, titles::get, key, index, System.currentTimeMillis())
+                                },
+                        ) { requestStore.pagingSource(query.listKey) }
+                            .flow
+                            .map { data -> data.map { it.toRequestItem() } }
                     } else {
                         flowOf(PagingData.empty<RequestItem>(sourceLoadStates = FINISHED))
                     }

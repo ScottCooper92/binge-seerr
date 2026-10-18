@@ -5,12 +5,14 @@ import androidx.lifecycle.ViewModelStore
 import androidx.paging.testing.asSnapshot
 import com.cooper.binge.companion.seerr.auth.CredentialStore
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
+import com.cooper.binge.companion.seerr.data.FakeRequestStore
 import com.cooper.binge.companion.seerr.data.FakeUserStore
 import com.cooper.binge.companion.seerr.data.UserEntity
 import com.cooper.binge.companion.seerr.seerr.ManageablePermission
 import com.cooper.binge.companion.seerr.seerr.SeerrApiFactory
 import com.cooper.binge.companion.seerr.seerr.SeerrAuth
 import com.cooper.binge.companion.seerr.seerr.SeerrError
+import com.cooper.binge.companion.seerr.seerr.SeerrRequestStatusCode
 import com.cooper.binge.companion.seerr.seerr.TitleCache
 import com.cooper.binge.companion.seerr.ui.hub.HubQuotaBucket
 import com.cooper.binge.companion.seerr.ui.requests.RequestMediaType
@@ -82,6 +84,8 @@ class UserDetailViewModelTest {
         responses[key] = { FakeResponse(code = code, headers = headersOf("Content-Type", "application/json"), body = body) }
     }
 
+    private val requestStore = FakeRequestStore()
+
     private fun server(
         viewerId: Int,
         permissions: Int,
@@ -98,7 +102,7 @@ class UserDetailViewModelTest {
         serve("GET /api/v1/user/8/watch_data", """{"playCount":42,"recentlyWatched":[{"id":1,"tmdbId":100,"mediaType":"movie"}]}""")
         serve("GET /api/v1/user/8/watchlist", """{"page":1,"totalPages":1,"totalResults":1,"results":[{"tmdbId":200,"mediaType":"tv"}]}""")
         serve(
-            "GET /api/v1/user/8/requests",
+            "GET /api/v1/request",
             """{"pageInfo":{"pages":1,"results":1},"results":[{"id":11,"status":2,"media":{"tmdbId":100,"mediaType":"movie","status":3}}]}""",
         )
         serve("GET /api/v1/movie/100", """{"title":"Heat","posterPath":"/heat.jpg","releaseDate":"1995-12-15"}""")
@@ -122,6 +126,7 @@ class UserDetailViewModelTest {
                 connection,
                 TitleCache(FakeTitleDao()),
                 cache,
+                requestStore,
                 mainDispatcherRule.dispatcher,
                 userId,
                 settingsChanges = settingsChanges,
@@ -160,7 +165,19 @@ class UserDetailViewModelTest {
 
             val requests = vm.requests.asSnapshot()
             assertEquals("Heat", requests.single().title)
-            assertEquals("20", received.first { it.url.encodedPath == "/api/v1/user/8/requests" }.url.queryParameter("take"))
+            val asked = received.first { it.url.encodedPath == "/api/v1/request" }.url
+            assertEquals("20", asked.queryParameter("take"))
+            assertEquals("8", asked.queryParameter("requestedBy"))
+
+            // #1667: the list reads the request cache, so a moderation's write reaches it without a refresh.
+            requestStore.updateStatus(11, SeerrRequestStatusCode.Declined.raw)
+            assertEquals(
+                SeerrRequestStatusCode.Declined,
+                vm.requests
+                    .asSnapshot()
+                    .single()
+                    .status,
+            )
         }
 
     /** #1239: "joined" and each request's time age while the page shows, and the clock stops when it leaves. */
@@ -303,7 +320,7 @@ class UserDetailViewModelTest {
 
             assertFalse(vm.awaitReady().detail.canViewRequests)
             assertTrue(vm.requests.asSnapshot().isEmpty())
-            assertTrue(received.none { it.url.encodedPath == "/api/v1/user/8/requests" })
+            assertTrue(received.none { it.url.encodedPath == "/api/v1/request" })
         }
 
     @Test
@@ -330,7 +347,7 @@ class UserDetailViewModelTest {
                     .single()
                     .title,
             )
-            assertTrue(received.any { it.url.encodedPath == "/api/v1/user/8/requests" })
+            assertTrue(received.any { it.url.encodedPath == "/api/v1/request" })
         }
 
     @Test
