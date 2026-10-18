@@ -8,7 +8,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.ReportTitleActivity
 import com.cooper.binge.companion.seerr.SendAddressActivity
+import com.cooper.binge.companion.seerr.handoff.TitleReportLinks
 import com.cooper.binge.companion.seerr.handoff.TvHandOffLinks
 import com.cooper.binge.companion.seerr.seerr.AndroidLocalNetworkPermission
 import com.cooper.binge.companion.seerr.seerr.LOCAL_NETWORK_PERMISSION
@@ -18,8 +20,9 @@ import com.google.mlkit.vision.codescanner.GmsBarcodeScanning
 
 /**
  * The phone's in-app scan of a television's hand-off code (#773): Play Services' own scanner, so the app holds no
- * camera permission, then straight to the send sheet with the code's key, without the browser hop. Text that is
- * not a TV's code is ignored with a line saying so; the sheet still checks the target as it does for a page link.
+ * camera permission, then straight to the send sheet with the code's key, without the browser hop. A code that names a
+ * title (a TV handing off "Report an issue", #1511) opens the report for it. Text that is neither is ignored with a line
+ * saying so; each sheet still checks its target as it does for a page link.
  */
 @Composable
 internal fun rememberScanTvCode(): () -> Unit {
@@ -41,10 +44,11 @@ private fun scanTvCode(context: Context) {
         .startScan()
         .addOnSuccessListener { barcode ->
             val target = TvHandOffLinks.parseCode(barcode.rawValue)
-            if (target == null) {
-                Toast.makeText(context, R.string.scan_tv_not_a_tv_code, Toast.LENGTH_LONG).show()
-            } else {
-                context.startActivity(SendAddressActivity.intent(context, target))
+            val title = if (target == null) TitleReportLinks.parse(barcode.rawValue) else null
+            when {
+                target != null -> context.startActivity(SendAddressActivity.intent(context, target))
+                title != null -> context.startActivity(ReportTitleActivity.intent(context, title))
+                else -> Toast.makeText(context, R.string.scan_tv_not_a_tv_code, Toast.LENGTH_LONG).show()
             }
         }.addOnFailureListener {
             Toast.makeText(context, R.string.scan_tv_unavailable, Toast.LENGTH_LONG).show()
