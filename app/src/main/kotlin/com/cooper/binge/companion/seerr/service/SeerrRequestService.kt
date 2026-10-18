@@ -96,6 +96,7 @@ class SeerrRequestService(
     private val analytics: Analytics = NoOpAnalytics,
     private val requestCache: RequestStore = NoRequestStore,
     private val userMessages: UserMessages = UserMessages.None,
+    private val standardVersionLabel: String = "Standard",
 ) : RequestServiceGrpcKt.RequestServiceCoroutineImplBase() {
     private val freshness = MediaStatusFreshness(observeIntervalMillis)
     private val statusReads = SeerrStatusReads(connection, statusCache, freshness, clock)
@@ -124,7 +125,7 @@ class SeerrRequestService(
             val response =
                 handshakeResponse(
                     capabilities = session.capabilities,
-                    versions = versionsFor(session.offers4k),
+                    versions = versionsFor(session.offers4k, standardVersionLabel),
                     providerName = (profile?.variant ?: SeerrVariant.Unknown).displayName,
                     companionVersionName = versionName,
                 )

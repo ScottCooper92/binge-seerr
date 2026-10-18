@@ -250,8 +250,9 @@ class SeerrRequestServiceTest {
 
             val response = stub.handshakeAs(REQUEST or REQUEST_4K_PERMISSION, publicSettings = MOVIE_4K_ENABLED)
 
-            assertEquals(listOf("4k"), response.versionsList.map { it.id })
-            assertTrue(response.versionsList.single().highResolution)
+            assertEquals(listOf("", "4k"), response.versionsList.map { it.id })
+            assertEquals(listOf(false, true), response.versionsList.map { it.highResolution })
+            assertEquals("Standard", response.versionsList.first().label)
         }
 
     @Test
@@ -271,7 +272,8 @@ class SeerrRequestServiceTest {
             val response = connected(permissions = ADMIN).handshakeAs(ADMIN, publicSettings = ALL_4K_ENABLED)
 
             // In the contract but deliberately not offered: MEDIA_FILE_INFO would need a Radarr key and host (#483).
-            // ISSUE_CATEGORIES arrived with the pin bump and is served in the change that adopts it.
+            // ISSUE_CATEGORIES is deliberately never declared: Seerr's issue types are a fixed four, so there is no
+            // provider-defined category list to offer.
             assertEquals(
                 Capability.entries.toSet() - Capability.UNRECOGNIZED - Capability.CAPABILITY_UNSPECIFIED -
                     Capability.CAPABILITY_MEDIA_FILE_INFO - Capability.CAPABILITY_ISSUE_CATEGORIES,
@@ -1335,7 +1337,7 @@ class SeerrRequestServiceTest {
             assertEquals(Availability.AVAILABILITY_AVAILABLE, status.version4k().availability)
         }
 
-    /** The contract sets the 4K state only under CAPABILITY_REQUEST_4K, so a version they cannot request is not shown. */
+    /** The 4K state is sent only where the handshake lists the 4K version, so a version they cannot request is not shown. */
     @Test
     fun `a user who may not request 4k is told nothing about the 4k version`() =
         runTest {
