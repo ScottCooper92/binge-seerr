@@ -58,6 +58,12 @@ internal fun languageChecklist(
     return all.sortedBy { it.second.lowercase() }
 }
 
+/** The language sheet's choices: [languageChecklist], each marked with its code. */
+internal fun languageChoices(
+    entries: List<ListEntry>,
+    initial: List<String>,
+): List<BingeChoice<String>> = languageChecklist(entries, initial).map { (code, name) -> BingeChoice(code, name, mark = code.uppercase()) }
+
 /**
  * The codes Done saves: [picked], in the list's order when there is one so the saved filter reads the same however the
  * ticks were made. With no list yet (it is still loading) the saved codes stand, so Done cannot wipe them.
@@ -106,11 +112,7 @@ internal fun languageSettingItem(
                 LanguagesUnavailable(value, onRetry = onOpen, onUse = { apply(it.languageCodes()) })
             }
         } else {
-            val listed =
-                (choices as? ListChoices.Ready)?.let { ready ->
-                    languageChecklist(ready.entries, chosen)
-                        .map { (code, name) -> BingeChoice(code, name, mark = code.uppercase()) }
-                }
+            val listed = (choices as? ListChoices.Ready)?.let { ready -> languageChoices(ready.entries, chosen) }
             BingeMultiChoiceSheet(
                 title = title,
                 choices = listed?.let { BingeChoiceList.Ready(it) } ?: BingeChoiceList.Loading,
@@ -150,7 +152,7 @@ internal fun languageSettingItem(
 
 /** The server couldn't send its languages: try again, or type codes joined by `|` as the field used to take them. */
 @Composable
-private fun LanguagesUnavailable(
+internal fun LanguagesUnavailable(
     value: String,
     onRetry: () -> Unit,
     onUse: (String) -> Unit,
