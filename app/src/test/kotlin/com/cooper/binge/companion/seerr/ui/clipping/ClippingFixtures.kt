@@ -34,7 +34,7 @@ import org.junit.Assert.assertTrue
 internal const val LONG_TITLE = "The Lord of the Rings: The Rings of Power, Extended Edition with Every Commentary Track"
 internal const val LONG_NAME = "Alexandria Fitzgerald-Montgomery"
 
-/** [LONG_NAME] with a suffix, for a title, a dialog or the rail, where a name sits in a longer line. */
+/** [LONG_NAME] with a suffix, for a title, a dialog or the signed-in shell's top bar, where a name sits in a longer line. */
 internal const val LONG_ROW_NAME = "$LONG_NAME of the Upstairs Server"
 private const val LONG_TEXT =
     "The subtitles drift out of sync starting around the midpoint of the episode and get progressively worse until the end"
