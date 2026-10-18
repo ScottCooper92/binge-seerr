@@ -208,6 +208,8 @@ internal fun RequestManagementSheets(
     // two apart — and because a Boolean survives process death where MediaInstance would not.
     var marking by rememberSaveable { mutableStateOf<Boolean?>(null) }
     val item = detail?.item ?: preview?.item
+    val media = detail?.media
+    val markedInstance = marking?.let { is4k -> media?.instances?.firstOrNull { it.is4k == is4k } }
     // One sheet from the preview to the loaded detail, so it grows in place rather than closing and reopening.
     if (acting && item != null) {
         RequestActionsSheet(
@@ -217,7 +219,11 @@ internal fun RequestManagementSheets(
             onRetry = actions.onRetryRequest,
             onDecline = actions.onDecline,
             onRemove = actions.onRemove,
-            onDismiss = onDismissActing,
+            onDismiss = {
+                // Closing the sheet does not step back through its pages, so drop the mark here or it reopens on its own.
+                marking = null
+                onDismissActing()
+            },
             canEdit = detail?.canEdit == true,
             onEdit = actions.onStartEdit,
             media = detail?.media,
@@ -230,6 +236,9 @@ internal fun RequestManagementSheets(
             onRetryDetail = onRetryDetail,
             edit = state?.edit,
             editActions = actions.edit,
+            marking = markedInstance,
+            onMarkSelect = { status -> media?.let { actions.media.onSetStatus(it.mediaId, status, marking == true) } },
+            onMarkDismiss = { marking = null },
         )
     }
     // Where the actions sheet stacks pages the editor is one of its pages; otherwise it is a sheet of its own.
@@ -237,17 +246,13 @@ internal fun RequestManagementSheets(
     state?.edit?.takeUnless { editsInActions }?.let { edit ->
         EditRequestSheet(item = state.detail.item, edit = edit, actions = actions.edit)
     }
-    val media = detail?.media
-    if (media != null) {
-        marking?.let { is4k ->
-            media.instances.firstOrNull { it.is4k == is4k }?.let { instance ->
-                MediaStatusSheet(
-                    instance = instance,
-                    onSelect = { status -> actions.media.onSetStatus(media.mediaId, status, is4k) },
-                    onDismiss = { marking = null },
-                )
-            }
-        }
+    // Where the actions sheet stacks pages Mark as is one of its pages; otherwise it is a sheet of its own.
+    if (media != null && markedInstance != null && !editsInActions) {
+        MediaStatusSheet(
+            instance = markedInstance,
+            onSelect = { status -> actions.media.onSetStatus(media.mediaId, status, markedInstance.is4k) },
+            onDismiss = { marking = null },
+        )
     }
 }
 

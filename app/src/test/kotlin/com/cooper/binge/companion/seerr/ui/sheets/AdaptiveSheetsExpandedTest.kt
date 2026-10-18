@@ -3,17 +3,30 @@ package com.cooper.binge.companion.seerr.ui.sheets
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.click
 import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.isRoot
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
+import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTouchInput
 import com.binge.designsystem.theme.BingeExpressiveTheme
 import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.seerr.SeerrMediaStatusCode
 import com.cooper.binge.companion.seerr.ui.requests.EditRequestActions
 import com.cooper.binge.companion.seerr.ui.requests.EditState
+import com.cooper.binge.companion.seerr.ui.requests.ManageMediaActions
+import com.cooper.binge.companion.seerr.ui.requests.MediaInstance
+import com.cooper.binge.companion.seerr.ui.requests.MediaRecord
+import com.cooper.binge.companion.seerr.ui.requests.MediaStatusChoice
 import com.cooper.binge.companion.seerr.ui.requests.RequestActionsSheet
+import com.cooper.binge.companion.seerr.ui.requests.RequestDetailActions
+import com.cooper.binge.companion.seerr.ui.requests.RequestDetailUiState
+import com.cooper.binge.companion.seerr.ui.requests.RequestManagementSheets
 import com.cooper.binge.companion.seerr.ui.requests.SeasonChoice
 import com.cooper.binge.companion.seerr.ui.users.UserAdmissionActions
 import com.cooper.binge.companion.seerr.ui.users.UserAdmissionSheets
@@ -140,6 +153,211 @@ class RequestActionsSheetExpandedTest {
 
         rule.onAllNodes(backBar()).assertCountEquals(0)
         rule.onAllNodesWithText(string(R.string.request_edit_save)).assertCountEquals(0)
+    }
+}
+
+/** At the expanded width Mark as is a page of the actions sheet too, and below it stays a sheet of its own (#1578). */
+@RunWith(RobolectricTestRunner::class)
+@Config(qualifiers = "w900dp-h900dp")
+class MarkAsPageExpandedTest {
+    @get:Rule
+    val rule = createSeerrComposeRule()
+
+    private val instance =
+        MediaInstance(is4k = false, status = SeerrMediaStatusCode.Processing, serviceUrl = null, mediaServerUrl = null, watch = null)
+    private var marking by mutableStateOf<MediaInstance?>(null)
+    private val picked = mutableListOf<MediaStatusChoice>()
+    private var markDismissed = 0
+    private var sheetDismissed = 0
+
+    private fun show() {
+        val detail = requestDetail()
+        rule.setContent {
+            BingeExpressiveTheme(dynamicColor = false) {
+                RequestActionsSheet(
+                    item = detail.item,
+                    actions = detail.actions,
+                    onApprove = {},
+                    onRetry = {},
+                    onDecline = {},
+                    onRemove = {},
+                    onDismiss = { sheetDismissed++ },
+                    media =
+                        MediaRecord(
+                            mediaId = 900,
+                            isTv = false,
+                            instances = listOf(instance),
+                            canSetStatus = true,
+                            canClearData = false,
+                            canDeleteFiles = false,
+                        ),
+                    mediaActions = ManageMediaActions(onSetStatus = { _, _, _ -> }, onClearData = {}, onDeleteFiles = { _, _ -> }),
+                    onMarkStatus = { marking = instance },
+                    marking = marking,
+                    onMarkSelect = { picked += it },
+                    onMarkDismiss = {
+                        markDismissed++
+                        marking = null
+                    },
+                )
+            }
+        }
+        rule.waitForIdle()
+    }
+
+    private fun openMarkAs() {
+        rule.onNodeWithText(string(R.string.media_instance_standard)).performClick()
+        rule.waitForIdle()
+    }
+
+    @Test
+    fun `Mark as opens as a page under a Back, in the same sheet`() {
+        show()
+        rule.onAllNodes(backBar()).assertCountEquals(0)
+
+        openMarkAs()
+
+        rule.onAllNodes(backBar()).assertCountEquals(1)
+        rule.onNodeWithText(string(R.string.media_mark_as)).assertExists()
+        rule.onNodeWithText(string(R.string.media_state_available)).assertExists()
+    }
+
+    @Test
+    fun `a pick is applied and the page steps back to the actions`() {
+        show()
+        openMarkAs()
+
+        rule.onNodeWithText(string(R.string.media_state_available)).performClick()
+        rule.waitForIdle()
+
+        assertEquals(listOf(MediaStatusChoice.Available), picked)
+        assertEquals(1, markDismissed)
+        assertEquals(0, sheetDismissed)
+        rule.onAllNodes(backBar()).assertCountEquals(0)
+        rule.onNodeWithText(string(R.string.media_instance_standard)).assertExists()
+    }
+
+    @Test
+    fun `Back from the page picks nothing and returns to the actions`() {
+        show()
+        openMarkAs()
+
+        rule.onAllNodes(backBar()).onFirst().performClick()
+        rule.waitForIdle()
+
+        assertEquals(emptyList<MediaStatusChoice>(), picked)
+        assertEquals(1, markDismissed)
+        assertEquals(0, sheetDismissed)
+        rule.onAllNodes(backBar()).assertCountEquals(0)
+    }
+}
+
+/** Closing the side sheet from the Mark as page drops the mark, so Mark as does not reopen as a bottom sheet. */
+@RunWith(RobolectricTestRunner::class)
+@Config(qualifiers = "w900dp-h900dp")
+class MarkAsPageDismissTest {
+    @get:Rule
+    val rule = createSeerrComposeRule()
+
+    private var acting by mutableStateOf(true)
+
+    @Test
+    fun `a scrim tap on the Mark as page closes the sheet and leaves no Mark as behind`() {
+        val instance =
+            MediaInstance(is4k = false, status = SeerrMediaStatusCode.Processing, serviceUrl = null, mediaServerUrl = null, watch = null)
+        val detail =
+            requestDetail(
+                media =
+                    MediaRecord(
+                        mediaId = 900,
+                        isTv = false,
+                        instances = listOf(instance),
+                        canSetStatus = true,
+                        canClearData = false,
+                        canDeleteFiles = false,
+                    ),
+            )
+        val editActions =
+            EditRequestActions(
+                onToggleSeason = {},
+                onSelectAllSeasons = {},
+                onSelectServer = {},
+                onSelectProfile = {},
+                onSelectRootFolder = {},
+                onToggleTag = {},
+                onSave = {},
+                onDismiss = {},
+            )
+        val actions =
+            RequestDetailActions(
+                onBack = {},
+                onRetry = {},
+                onReportIssue = { _, _ -> },
+                onDismissReport = {},
+                onApprove = {},
+                onRetryRequest = {},
+                onDecline = {},
+                onRemove = {},
+                onStartEdit = {},
+                siblingSheet = {},
+                onOpenUser = {},
+                edit = editActions,
+                media = ManageMediaActions(onSetStatus = { _, _, _ -> }, onClearData = {}, onDeleteFiles = { _, _ -> }),
+            )
+        rule.setContent {
+            BingeExpressiveTheme(dynamicColor = false) {
+                RequestManagementSheets(
+                    state = RequestDetailUiState.Ready(detail),
+                    actions = actions,
+                    acting = acting,
+                    onDismissActing = { acting = false },
+                )
+            }
+        }
+        rule.waitForIdle()
+        rule.onNodeWithText(string(R.string.media_instance_standard)).performClick()
+        rule.waitForIdle()
+        rule.onNodeWithText(string(R.string.media_mark_as)).assertExists()
+
+        rule.onAllNodes(isRoot()).onLast().performTouchInput { click(Offset(8f, 8f)) }
+        rule.waitForIdle()
+
+        assertEquals(false, acting)
+        rule.onAllNodesWithText(string(R.string.media_mark_as)).assertCountEquals(0)
+        rule.onAllNodesWithText(string(R.string.media_state_available)).assertCountEquals(0)
+    }
+}
+
+/** Below the expanded width the actions sheet stacks no pages, so Mark as is not one of them. */
+@RunWith(RobolectricTestRunner::class)
+@Config(qualifiers = "w400dp-h800dp")
+class MarkAsPageNarrowTest {
+    @get:Rule
+    val rule = createSeerrComposeRule()
+
+    @Test
+    fun `a bottom sheet shows no page for Mark as`() {
+        val detail = requestDetail()
+        val instance =
+            MediaInstance(is4k = false, status = SeerrMediaStatusCode.Processing, serviceUrl = null, mediaServerUrl = null, watch = null)
+        rule.setContent {
+            BingeExpressiveTheme(dynamicColor = false) {
+                RequestActionsSheet(
+                    item = detail.item,
+                    actions = detail.actions,
+                    onApprove = {},
+                    onRetry = {},
+                    onDecline = {},
+                    onRemove = {},
+                    onDismiss = {},
+                    marking = instance,
+                )
+            }
+        }
+        rule.waitForIdle()
+
+        rule.onAllNodes(backBar()).assertCountEquals(0)
+        rule.onAllNodesWithText(string(R.string.media_state_available)).assertCountEquals(0)
     }
 }
 

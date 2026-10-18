@@ -34,12 +34,13 @@ internal fun MediaStatusSheet(
     )
 }
 
-/** [MediaStatusSheet]'s body without its window, for a frame. */
+/** [MediaStatusSheet]'s body without its window, for a frame and for the actions sheet's page, which drops the handle. */
 @Composable
 internal fun MediaStatusSheetContent(
     instance: MediaInstance,
     onSelect: (MediaStatusChoice) -> Unit,
     modifier: Modifier = Modifier,
+    dragHandle: Boolean = true,
 ) {
     BingeChoiceSheetContent(
         title = stringResource(R.string.media_mark_as),
@@ -49,6 +50,7 @@ internal fun MediaStatusSheetContent(
         selected = instance.selectedChoice(),
         onSelect = onSelect,
         modifier = modifier,
+        dragHandle = dragHandle,
     )
 }
 
