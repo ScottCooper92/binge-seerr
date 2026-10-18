@@ -29,6 +29,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import retrofit2.HttpException
 
 /** One-shot feedback for a moderation; the partial cases say the action landed even though the block did not. */
 sealed interface ModerationEvent {
@@ -121,6 +122,8 @@ interface RequestModerationControls {
 
     fun blockTitle(item: RequestItem)
 }
+
+private const val HTTP_NOT_FOUND = 404
 
 /**
  * The write side of a request: approve, decline, retry, remove, each optionally blocking the
@@ -277,7 +280,6 @@ class RequestModeration(
             onSettled(result.isSuccess)
             result
                 .onSuccess {
-                    cache.markModerated()
                     onModerated()
                     val event =
                         if (blockTitle && item != null) {
@@ -287,12 +289,28 @@ class RequestModeration(
                         }
                     analytics.event(AnalyticsEvents.REQUEST_MODERATED, mapOf(AnalyticsEvents.PARAM_ACTION to event.actionLabel()))
                     eventFlow.emit(event)
+                    syncCache(requestId)
                 }.onFailure {
                     analytics.operationFailed("moderate_${done.actionLabel()}", it, connection)
                     eventFlow.emit(ModerationEvent.Failed(it.toSeerrError()))
                 }
         }
         return true
+    }
+
+    /**
+     * Writes what the server now says into the cache every list reads, so each one updates without being told (#1665):
+     * the request's own status, or its removal when the server no longer has it, and the chip counts. Best effort, and after the
+     * result is reported so a slow read holds nothing up: one that fails leaves the optimistic write the action made.
+     */
+    private suspend fun syncCache(requestId: Int) {
+        attempt { connection.api().request(requestId) }.fold(
+            onSuccess = { cache.updateServerState(requestId, it.status?.raw, it.media.status?.raw) },
+            onFailure = { if ((it as? HttpException)?.code() == HTTP_NOT_FOUND) cache.delete(requestId) },
+        )
+        attempt { connection.api().requestCount() }.onSuccess {
+            cache.setCounts(RequestCounts(it.total, it.pending, it.approved, it.processing, it.available))
+        }
     }
 
     /** Blocks the title alone, leaving the request as it is; the owner refreshes what it shows on success. */
@@ -302,13 +320,11 @@ class RequestModeration(
         scope.launch(dispatcher) {
             val blocked = block(item)
             acting.update { it - item.id }
-            if (blocked) {
-                cache.markModerated()
-                onModerated()
-            }
+            if (blocked) onModerated()
             val event = if (blocked) ModerationEvent.Blocked else ModerationEvent.BlockFailed
             analytics.event(AnalyticsEvents.REQUEST_MODERATED, mapOf(AnalyticsEvents.PARAM_ACTION to event.actionLabel()))
             eventFlow.emit(event)
+            if (blocked) syncCache(item.id)
         }
     }
 

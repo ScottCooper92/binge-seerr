@@ -25,6 +25,21 @@ interface RequestDao {
         status: Int,
     )
 
+    /** The server's answer: a null part is one it did not carry, so the cached value stays. */
+    @Query("UPDATE requests SET status = COALESCE(:status, status), mediaStatus = COALESCE(:mediaStatus, mediaStatus) WHERE id = :id")
+    suspend fun updateState(
+        id: Int,
+        status: Int?,
+        mediaStatus: Int?,
+    )
+
+    /** Takes the request out of the slices whose key starts [listKeyPrefix], where it no longer belongs. */
+    @Query("DELETE FROM requests WHERE id = :id AND listKey LIKE :listKeyPrefix")
+    suspend fun dropFromFilter(
+        id: Int,
+        listKeyPrefix: String,
+    )
+
     @Query("DELETE FROM requests WHERE id = :id")
     suspend fun delete(id: Int)
 

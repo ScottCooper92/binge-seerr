@@ -107,7 +107,13 @@ class RequestsViewModelTest {
                         """{"pageInfo":{"pages":1,"results":1},"results":[{"id":11,"status":2,"media":{"tmdbId":100,"mediaType":"movie","status":3}}]}""",
                     )
                 "/api/v1/movie/100" -> json("""{"title":"Heat","posterPath":"/heat.jpg","releaseDate":"1995-12-15"}""")
-                "/api/v1/request/11/approve", "/api/v1/request/11/decline", "/api/v1/request/11" -> json("{}")
+                "/api/v1/request/11/approve", "/api/v1/request/11/decline" -> json("{}")
+                "/api/v1/request/11" ->
+                    if (request.method == "DELETE") {
+                        json("{}")
+                    } else {
+                        json("""{"id":11,"status":${serverStatus.get()},"media":{"tmdbId":100,"mediaType":"movie","status":3}}""")
+                    }
                 else -> FakeResponse(code = 404)
             }
         }
@@ -120,6 +126,9 @@ class RequestsViewModelTest {
         }
 
     private val store = FakeRequestStore()
+
+    /** The status the server currently reports for request 11. */
+    private val serverStatus = AtomicInteger(2)
     private lateinit var connection: SeerrConnection
 
     private suspend fun TestScope.viewModel(ticker: Ticker = boundedTicker): RequestsViewModel {
@@ -213,13 +222,16 @@ class RequestsViewModelTest {
             assertTrue(vm.shouldRefresh(RequestFilter.Pending, after))
         }
 
-    /** #1665: the request's own page moderates through a view model of its own, so the list hears of it only through the store. */
+    /** #1665: the request's own page moderates through a view model of its own, so the list can only hear of it through the cache. */
     @Test
-    fun `a moderation on the request's own page stales the lists and re-reads the counts`() =
+    fun `a moderation on the request's own page moves the cached lists and the counts`() =
         runTest {
             server(ADMIN)
             val vm = viewModel()
-            val item = requestItem(id = 11, tmdbId = 100, title = "Heat", status = SeerrRequestStatusCode(1))
+            vm.awaitReady { it.counts?.total == 3 }
+            val item = requestItem(id = 11, tmdbId = 100, title = "Heat", status = SeerrRequestStatusCode.Pending)
+            store.append("pending:added:all", listOf(item.toEntity("pending:added:all", 0)), null)
+            store.append("all:added:all", listOf(item.toEntity("all:added:all", 0)), null)
             val page =
                 RequestModeration(
                     scope = backgroundScope,
@@ -228,20 +240,23 @@ class RequestsViewModelTest {
                     cache = store,
                 ) {}
             val actions =
-                listOf<() -> Unit>(
-                    { page.approve(11) },
-                    { page.decline(item, blockTitle = false) },
-                    { page.remove(item, blockTitle = false) },
+                listOf<Triple<Int, Int, () -> Unit>>(
+                    Triple(SeerrRequestStatusCode.Approved.raw, 4, { page.approve(11) }),
+                    Triple(SeerrRequestStatusCode.Declined.raw, 5, { page.decline(item, blockTitle = false) }),
+                    Triple(SeerrRequestStatusCode.Declined.raw, 6, { page.remove(item, blockTitle = false) }),
                 )
-            actions.forEach { act ->
-                val version = vm.awaitReady { it.counts != null }.listVersion
-                val reads = countReads()
+            actions.forEachIndexed { index, (status, total, act) ->
+                serverStatus.set(status)
+                countTotal.set(total)
                 val settled = awaitEvent(page.events)
                 act()
                 settled.await()
 
-                vm.awaitReady { it.listVersion > version }
-                withTimeout(REQUEST_WAIT_MILLIS) { while (countReads() <= reads) delay(POLL_MILLIS) }
+                // Nothing is called on the list: it is the cache that moved.
+                assertEquals(total, vm.awaitReady { it.counts?.total == total }.counts?.total)
+                assertTrue("pending slice drops the row", store.rows.none { it.listKey == "pending:added:all" })
+                val inAll = store.rows.filter { it.listKey == "all:added:all" }
+                if (index < 2) assertEquals(listOf(status), inAll.map { it.status }) else assertTrue(inAll.isEmpty())
             }
         }
 
