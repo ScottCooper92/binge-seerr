@@ -9,6 +9,7 @@ import com.cooper.binge.companion.seerr.handoff.TitleReportLink
 import com.cooper.binge.companion.seerr.handoff.TitleReportLinks
 import com.cooper.binge.companion.seerr.seerr.SeerrCreateIssueBody
 import com.cooper.binge.companion.seerr.seerr.SeerrError
+import com.cooper.binge.companion.seerr.seerr.details
 import com.cooper.binge.companion.seerr.seerr.rejectsSession
 import com.cooper.binge.companion.seerr.seerr.toPermissions
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
@@ -94,7 +95,7 @@ class ReportTitleViewModel
                 val viewer = connection.authenticatedUser().toPermissions()
                 if (!connection.profile().hasIssues || !viewer.canReportIssues) return@attempt ReportTitleUiState.CannotReport
                 val api = connection.api()
-                val details = if (link.mediaType == MOVIE) api.movieDetails(link.tmdbId) else api.tvDetails(link.tmdbId)
+                val details = api.details(link.mediaType, link.tmdbId)
                 val title = details.displayTitle.orEmpty()
                 details.mediaInfo?.id?.let { ReportTitleUiState.Ready(title = title, is4k = link.is4k, mediaId = it) }
                     ?: ReportTitleUiState.NotTracked(title)
@@ -132,10 +133,6 @@ class ReportTitleViewModel
         @AssistedFactory
         interface Factory {
             fun create(link: TitleReportLink): ReportTitleViewModel
-        }
-
-        private companion object {
-            const val MOVIE = "movie"
         }
     }
 

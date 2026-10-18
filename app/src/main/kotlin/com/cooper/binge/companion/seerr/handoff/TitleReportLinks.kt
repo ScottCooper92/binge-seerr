@@ -1,10 +1,11 @@
 package com.cooper.binge.companion.seerr.handoff
 
+import com.cooper.binge.companion.seerr.seerr.SEERR_MEDIA_TYPE_MOVIE
+import com.cooper.binge.companion.seerr.seerr.SEERR_MEDIA_TYPE_TV
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 
-private const val MOVIE = "movie"
-private const val TV = "tv"
 private const val IS_4K = "is4k"
+private val MEDIA_TYPES = setOf(SEERR_MEDIA_TYPE_MOVIE, SEERR_MEDIA_TYPE_TV)
 
 /**
  * A title on a server, as a television shows it when it hands "Report an issue" to a phone: the title's own page on the
@@ -49,7 +50,7 @@ internal object TitleReportLinks {
         if (query.any { it != IS_4K }) return null
         val segments = url.pathSegments.filter { it.isNotEmpty() }
         val id = segments.lastOrNull()?.toIntOrNull()?.takeIf { it > 0 } ?: return null
-        val mediaType = segments.getOrNull(segments.lastIndex - 1)?.takeIf { it == MOVIE || it == TV } ?: return null
+        val mediaType = segments.getOrNull(segments.lastIndex - 1)?.takeIf { it in MEDIA_TYPES } ?: return null
         val server =
             url
                 .newBuilder()

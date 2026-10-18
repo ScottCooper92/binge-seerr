@@ -42,9 +42,7 @@ import com.binge.designsystem.R as DesR
 /**
  * Report a problem with a tracked title: the kind, and a message for whoever fixes it.
  *
- * While the message holds text not yet sent, leaving asks first (#941). The sheet locks, so a swipe or a tap outside
- * it cannot close it before the question can be asked, and Back asks "Discard changes?", with Keep editing as the way
- * out that loses nothing. An empty message, or one already sent, closes as any sheet does.
+ * See [UnsentGuardSheet] for what leaving does while the message holds unsent text.
  */
 @Composable
 internal fun ReportIssueSheet(
@@ -52,12 +50,27 @@ internal fun ReportIssueSheet(
     onSend: (IssueType, String) -> Unit,
     onDismiss: () -> Unit,
 ) {
+    UnsentGuardSheet(onDismiss = onDismiss) { onUnsentChange ->
+        ReportIssueContent(report = report, onSend = onSend, onUnsentChange = onUnsentChange)
+    }
+}
+
+/**
+ * A sheet that asks before it loses text not yet sent (#941). While [content] reports unsent text the sheet locks, so a
+ * swipe or a tap outside it cannot close it before the question can be asked, and Back asks "Discard changes?", with
+ * Keep editing as the way out that loses nothing. Without unsent text it closes as any sheet does.
+ */
+@Composable
+internal fun UnsentGuardSheet(
+    onDismiss: () -> Unit,
+    content: @Composable (onUnsentChange: (Boolean) -> Unit) -> Unit,
+) {
     var unsent by remember { mutableStateOf(false) }
     var asking by rememberSaveable { mutableStateOf(false) }
     BingeAdaptiveSheet(kind = BingeSheetKind.Task, onDismissRequest = onDismiss, gesturesEnabled = !unsent) {
         // Inside the sheet, which has a window and a Back of its own; the lock above stops it closing on Back itself.
         BackHandler(enabled = unsent) { asking = true }
-        ReportIssueContent(report = report, onSend = onSend, onUnsentChange = { unsent = it })
+        content { unsent = it }
     }
     if (asking && unsent) {
         DiscardChangesDialog(

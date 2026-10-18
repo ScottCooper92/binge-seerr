@@ -12,14 +12,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
-import com.binge.designsystem.component.BingeAdaptiveSheet
 import com.binge.designsystem.component.BingeFilledButton
 import com.binge.designsystem.component.BingeLoadingIndicator
 import com.binge.designsystem.component.BingeOutlinedButton
-import com.binge.designsystem.component.BingeSheetKind
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.requests.IssueType
 import com.cooper.binge.companion.seerr.ui.requests.ReportIssueContent
+import com.cooper.binge.companion.seerr.ui.requests.UnsentGuardSheet
 import com.cooper.binge.companion.seerr.ui.state.messageRes
 import com.binge.designsystem.R as DesR
 
@@ -30,14 +29,14 @@ internal data class ReportTitleActions(
     val onClose: () -> Unit = {},
 )
 
-/** The report as a sheet; dismissing it is closing it, and nothing is sent. */
+/** The report as a sheet; dismissing it is closing it, and nothing is sent. A typed message is asked about first. */
 @Composable
 internal fun ReportTitleSheet(
     state: ReportTitleUiState,
     actions: ReportTitleActions,
 ) {
-    BingeAdaptiveSheet(kind = BingeSheetKind.Task, onDismissRequest = actions.onClose) {
-        ReportTitleContent(state = state, actions = actions)
+    UnsentGuardSheet(onDismiss = actions.onClose) { onUnsentChange ->
+        ReportTitleContent(state = state, actions = actions, onUnsentChange = onUnsentChange)
     }
 }
 
@@ -47,6 +46,7 @@ internal fun ReportTitleContent(
     state: ReportTitleUiState,
     actions: ReportTitleActions,
     modifier: Modifier = Modifier,
+    onUnsentChange: (Boolean) -> Unit = {},
 ) {
     when (state) {
         ReportTitleUiState.Loading -> Note(modifier, message = stringResource(R.string.report_title_checking), loading = true)
@@ -55,6 +55,7 @@ internal fun ReportTitleContent(
                 report = state.report,
                 onSend = actions.onSend,
                 modifier = modifier,
+                onUnsentChange = onUnsentChange,
                 subtitle = if (state.is4k) stringResource(R.string.report_title_version_4k, state.title) else state.title,
             )
         is ReportTitleUiState.DifferentServer ->
