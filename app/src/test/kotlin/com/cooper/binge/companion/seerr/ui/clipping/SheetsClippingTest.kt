@@ -37,6 +37,8 @@ import com.cooper.binge.companion.seerr.ui.requests.RequestSheetCallbacks
 import com.cooper.binge.companion.seerr.ui.requests.RequestSheetModel
 import com.cooper.binge.companion.seerr.ui.requests.SeasonChoice
 import com.cooper.binge.companion.seerr.ui.requests.rememberRequestOpenLinks
+import com.cooper.binge.companion.seerr.ui.settings.server.LanguagesUnavailable
+import com.cooper.binge.companion.seerr.ui.settings.server.RegionUnavailable
 import com.cooper.binge.companion.seerr.ui.users.AdmissionChoiceContent
 import com.cooper.binge.companion.seerr.ui.users.CreateUserDraft
 import com.cooper.binge.companion.seerr.ui.users.CreateUserSheetContent
@@ -47,6 +49,7 @@ import com.cooper.binge.companion.seerr.ui.users.PermissionsEditorContent
 import com.cooper.binge.companion.seerr.ui.users.UserAdmissionActions
 import com.cooper.binge.companion.seerr.ui.users.UserOrigin
 import com.cooper.binge.companion.seerr.ui.users.settings.MediaServerLinkContent
+import com.cooper.binge.companion.seerr.ui.users.settings.TextSettingContent
 import com.cooper.binge.companion.seerr.util.createSeerrComposeRule
 import com.cooper.binge.companion.seerr.util.requestDetail
 import org.junit.Rule
@@ -86,6 +89,10 @@ class SheetsClippingTest {
     @Test fun `the link sheets at 1_3`() = rule.assertNoClippingAt(FONT_SCALE_13) { LinkSheets() }
 
     @Test fun `the link sheets at 2_0`() = rule.assertNoClippingAt(FONT_SCALE_20) { LinkSheets() }
+
+    @Test fun `the editor sheets at 1_3`() = rule.assertNoClippingAt(FONT_SCALE_13) { EditorSheets() }
+
+    @Test fun `the editor sheets at 2_0`() = rule.assertNoClippingAt(FONT_SCALE_20) { EditorSheets() }
 
     @Test fun `the send address sheet at 1_3`() = rule.assertNoClippingAt(FONT_SCALE_13) { SendAddressSheets() }
 
@@ -253,6 +260,32 @@ class SheetsClippingTest {
                 onQuickConnect = {},
                 onLink = { _, _ -> },
             )
+        }
+    }
+
+    @Composable
+    private fun EditorSheets() {
+        Column {
+            TextSettingContent(
+                title = "Server address for $LONG_NAME",
+                draft = LONG_EMAIL,
+                onDraftChange = {},
+                onSubmit = {},
+                onCancel = {},
+                hint = "$LONG_SERVICE, without a trailing slash and with every path the server answers on.",
+                problem = "$LONG_SERVICE is not an address the server accepts.",
+            )
+            TextSettingContent(
+                title = LONG_NAME,
+                draft = "k3y",
+                onDraftChange = {},
+                onSubmit = {},
+                onCancel = {},
+                secret = true,
+                hint = LONG_SERVICE,
+            )
+            RegionUnavailable(value = "GB", onRetry = {}, onUse = {})
+            LanguagesUnavailable(value = "en|es", onRetry = {}, onUse = {})
         }
     }
 
