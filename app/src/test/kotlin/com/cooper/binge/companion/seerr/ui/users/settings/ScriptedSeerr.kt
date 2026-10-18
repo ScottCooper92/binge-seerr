@@ -20,6 +20,7 @@ import mockwebserver3.SocketEffect
 import okhttp3.Headers.Companion.headersOf
 import org.junit.rules.TemporaryFolder
 import java.net.InetAddress
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
@@ -57,7 +58,8 @@ internal class ScriptedSeerr(
     /** A fresh client dispatcher on this server's drain, for a test that builds its own `SeerrApiFactory`. */
     fun newDispatcher(): okhttp3.Dispatcher = drain.newDispatcher()
 
-    private val responses = mutableMapOf<String, (RecordedRequest) -> MockResponse>()
+    /** Written on the test's thread and read on MockWebServer's connection threads, so it is a concurrent map (#1539). */
+    private val responses = ConcurrentHashMap<String, (RecordedRequest) -> MockResponse>()
     private val holds = CopyOnWriteArrayList<HeldResponse>()
     private var stores = 0
 

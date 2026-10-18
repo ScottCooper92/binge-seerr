@@ -364,14 +364,18 @@ class JobsViewModelTest {
             val returned = launch(start = CoroutineStart.UNDISPATCHED) { vm.uiState.collect {} }
             testScheduler.runCurrent()
             // Holding time: otherwise the plex scan's run, a day ahead, comes due during the wait and reads the list too.
-            assertTrue(
+            val read =
                 seerr.awaitCountHoldingTime(
                     "GET",
                     "/api/v1/settings/jobs",
                     moreThan = reads,
                     timeoutMillis = seerr.expectedCallWaitMillis(),
                     pump = testScheduler::runCurrent,
-                ),
+                )
+            // A miss says what the server saw, so a flake is diagnosable from its log rather than from a bare false (#1539).
+            assertTrue(
+                "no read on the return: baseline $reads, now ${seerr.count("GET", "/api/v1/settings/jobs")}, state ${vm.uiState.value}",
+                read,
             )
             returned.cancel()
         }
