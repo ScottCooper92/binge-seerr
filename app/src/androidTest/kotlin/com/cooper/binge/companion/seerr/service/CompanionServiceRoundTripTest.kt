@@ -85,7 +85,9 @@ class CompanionServiceRoundTripTest {
                 assertTrue("no provider name declared", handshake.providerName.isNotBlank())
 
                 val status = withTimeout(CALL_TIMEOUT_MS) { stub.getStatus(GetStatusRequest.newBuilder().setMedia(MOVIE).build()) }
-                assertEquals(Availability.AVAILABILITY_AVAILABLE, status.status.availability)
+                // Availability is per version: the standard one is the entry with an empty version id.
+                val standard = status.status.versionsList.singleOrNull { it.versionId.isEmpty() }
+                assertEquals("no standard version in $status", Availability.AVAILABILITY_AVAILABLE, standard?.availability)
             } finally {
                 channel.shutdownNow()
             }
