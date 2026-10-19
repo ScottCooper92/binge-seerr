@@ -28,6 +28,7 @@ import com.binge.designsystem.template.screenInnerPadding
 import com.binge.designsystem.template.screenOuterPadding
 import com.binge.designsystem.theme.BingeShapes
 import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.demo.isDemoOrigin
 import com.cooper.binge.companion.seerr.notifications.NotificationSignal
 import com.cooper.binge.companion.seerr.ui.DisconnectButton
 import com.cooper.binge.companion.seerr.ui.handoff.rememberScanTvCode
@@ -121,7 +122,11 @@ private fun SettingsContent(
             )
         }
         Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
-        DisconnectButton(actions.onDisconnect, modifier = Modifier.padding(resolvedContentPadding()))
+        DisconnectButton(
+            actions.onDisconnect,
+            modifier = Modifier.padding(resolvedContentPadding()),
+            demo = state.connection.baseUrl.isDemoOrigin(),
+        )
         Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
     }
 }

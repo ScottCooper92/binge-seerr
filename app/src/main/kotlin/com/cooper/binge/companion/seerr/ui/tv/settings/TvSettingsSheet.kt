@@ -33,6 +33,7 @@ import com.binge.designsystem.tv.component.TvSwitch
 import com.binge.designsystem.tv.template.TvPaneGroup
 import com.binge.designsystem.tv.template.TvPaneRow
 import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.demo.isDemoOrigin
 import com.cooper.binge.companion.seerr.ui.hub.HubUiState
 import com.cooper.binge.companion.seerr.ui.settings.AppSettings
 import com.cooper.binge.companion.seerr.ui.settings.SettingsUiState
@@ -86,7 +87,13 @@ internal fun TvSettingsSheet(
                 if (group != null) {
                     GroupPage(nav, group.page, actions.household)
                 } else {
-                    RootPage(nav, tvSettingsSummary(ready, hub), groups, actions.onDisconnect)
+                    RootPage(
+                        nav,
+                        tvSettingsSummary(ready, hub),
+                        groups,
+                        actions.onDisconnect,
+                        demo = ready.connection.baseUrl.isDemoOrigin(),
+                    )
                 }
             }
         }
@@ -112,13 +119,14 @@ private fun ColumnScope.RootPage(
     summary: TvSettingsSummary,
     groups: List<TvSettingsGroup>,
     onDisconnect: () -> Unit,
+    demo: Boolean,
 ) {
     var confirmingDisconnect by rememberSaveable { mutableStateOf(false) }
     if (confirmingDisconnect) {
         TvConfirmDialog(
-            title = stringResource(R.string.hub_disconnect_confirm_title),
-            message = stringResource(R.string.hub_disconnect_confirm_message),
-            confirmLabel = stringResource(R.string.tv_settings_disconnect_confirm),
+            title = stringResource(if (demo) R.string.hub_demo_exit_confirm_title else R.string.hub_disconnect_confirm_title),
+            message = stringResource(if (demo) R.string.hub_demo_exit_confirm_message else R.string.hub_disconnect_confirm_message),
+            confirmLabel = stringResource(if (demo) R.string.hub_demo_exit else R.string.tv_settings_disconnect_confirm),
             onConfirm = onDisconnect,
             onDismissRequest = { confirmingDisconnect = false },
             destructive = true,
@@ -137,7 +145,7 @@ private fun ColumnScope.RootPage(
             )
         }
         TvSideSheetRow(
-            label = stringResource(R.string.hub_disconnect),
+            label = stringResource(if (demo) R.string.hub_demo_exit else R.string.hub_disconnect),
             icon = Icons.Filled.LinkOff,
             destructive = true,
             onClick = { confirmingDisconnect = true },

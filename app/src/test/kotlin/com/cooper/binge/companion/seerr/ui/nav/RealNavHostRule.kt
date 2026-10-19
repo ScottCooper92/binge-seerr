@@ -9,6 +9,9 @@ import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.navigation3.runtime.NavKey
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
+import androidx.work.Configuration
+import androidx.work.WorkManager
+import com.cooper.binge.companion.seerr.auth.ConnectionRestore
 import com.cooper.binge.companion.seerr.auth.CredentialStore
 import com.cooper.binge.companion.seerr.demo.demoCredentials
 import com.cooper.binge.companion.seerr.seerr.SeerrAuth
@@ -71,6 +74,9 @@ internal class RealNavHostRule(
     /** Saves the connection to the demo server (#1705): canned data answered on the device, so nothing is scripted. */
     fun connectDemo() {
         check(runBlocking { graph().credentials().save(demoCredentials()) }) { "the connection was not saved" }
+        // The application settles the restore at start, and the test host has no application of its own: without it, leaving the
+        // demo would read as a restore still to come.
+        runBlocking { graph().restore().run() }
     }
 
     /** Starts the host on [stack]. A second launch closes the first: a cold start of the app over the same graph. */
@@ -148,6 +154,8 @@ internal class RealNavHostRule(
      */
     private fun registerActivity() {
         val context = ApplicationProvider.getApplicationContext<Context>()
+        // Settings schedules the notification poll, which needs WorkManager running.
+        if (!WorkManager.isInitialized()) WorkManager.initialize(context, Configuration.Builder().build())
         shadowOf(context.packageManager).addOrUpdateActivity(
             ActivityInfo().apply {
                 name = NavHostActivity::class.java.name
@@ -179,5 +187,7 @@ internal class RealNavHostRule(
     @InstallIn(SingletonComponent::class)
     interface NavHostGraph {
         fun credentials(): CredentialStore
+
+        fun restore(): ConnectionRestore
     }
 }

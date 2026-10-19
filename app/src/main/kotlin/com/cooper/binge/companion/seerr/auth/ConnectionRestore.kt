@@ -1,6 +1,7 @@
 package com.cooper.binge.companion.seerr.auth
 
 import com.binge.companion.sdk.attempt
+import com.cooper.binge.companion.seerr.demo.isDemo
 import com.cooper.binge.companion.seerr.seerr.SeerrApiFactory
 import com.cooper.binge.companion.seerr.seerr.insecurePublicHostOrNull
 import com.cooper.binge.companion.seerr.seerr.rejectsSession
@@ -72,6 +73,8 @@ class ConnectionRestore(
      */
     suspend fun refreshCarrier() {
         val saved = store.credentials.first() ?: return
+        // The demo is the same canned data on every device, so there is nothing to carry (#1705).
+        if (saved.isDemo) return
         val expected = cleartext.carriedFor(saved)
         if (carrier.read() == expected) return
         if (store.credentials.first() == saved) carrier.put(expected)
