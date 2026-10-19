@@ -32,6 +32,8 @@ class SetupActions(
      * where that sign-in lands; the typed form's bar has no room for a third button. Null everywhere else.
      */
     val onDisconnect: (() -> Unit)? = null,
+    /** Connects to the demo server (#1705). Defaulted: only the address step offers it. */
+    val onTryDemo: () -> Unit = {},
 )
 
 /**

@@ -180,6 +180,8 @@ sealed interface SetupUiState {
         val code: AddressHandOff.Listening? = null,
         /** Whether [serverUrl] came from a phone rather than the remote. */
         val received: Boolean = false,
+        /** Whether the demo is offered here: on a first connection, never while editing one or when a phone sent an address. */
+        val canTryDemo: Boolean = false,
     ) : SetupUiState {
         val canContinue: Boolean get() = serverUrl.isNotBlank() && !isInspecting && (!insecure || cleartextAllowed)
 

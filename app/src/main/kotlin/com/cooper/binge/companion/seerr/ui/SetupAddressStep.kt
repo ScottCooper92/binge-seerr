@@ -12,6 +12,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import com.binge.designsystem.component.BingeFilledButton
+import com.binge.designsystem.component.BingeTextButton
 import com.binge.designsystem.component.CheckboxRow
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorTextField
@@ -65,6 +66,18 @@ internal fun SetupAddressContent(
         }
         state.error?.let { error ->
             Text(stringResource(error.messageRes()), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)
+        }
+        if (state.canTryDemo) {
+            BingeTextButton(
+                label = stringResource(R.string.setup_try_demo),
+                onClick = actions.onTryDemo,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            Text(
+                stringResource(R.string.setup_try_demo_note),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = MaterialTheme.typography.bodySmall,
+            )
         }
         if (allow != null) {
             // Said before the system prompt, so a permission dialog is never the first the user hears of it.

@@ -35,6 +35,7 @@ import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.resolvedContentPadding
 import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.demo.isDemoOrigin
 import com.cooper.binge.companion.seerr.ui.state.RequestStateChip
 import com.cooper.binge.companion.seerr.ui.state.RequestStateTone
 import com.binge.designsystem.R as DesR
@@ -81,6 +82,9 @@ internal fun ServerCard(
                 modifier = Modifier.size(dimensionResource(R.dimen.hub_server_card_logo)),
             )
             Spacer(Modifier.weight(1f))
+            if (server.baseUrl.isDemoOrigin()) {
+                RequestStateChip(label = stringResource(R.string.demo_indicator), tone = RequestStateTone.Pending)
+            }
             if (server.updateAvailable) {
                 RequestStateChip(label = stringResource(R.string.hub_update_available), tone = RequestStateTone.Pending)
             }

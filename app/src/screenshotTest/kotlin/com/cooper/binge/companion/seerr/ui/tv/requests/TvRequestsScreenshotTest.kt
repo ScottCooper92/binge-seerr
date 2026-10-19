@@ -65,6 +65,21 @@ class TvRequestsScreenshotTest {
         ) { _, _ -> Board() }
     }
 
+    /** The demo server's tag beside Settings in the top bar (#1705). */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun BoardUnderTopBarDemo() {
+        TvHomeShell(
+            tab = TvDestination.Hub,
+            sheet = null,
+            onSelectTab = {},
+            onOpenSheet = {},
+            onCloseSheet = {},
+            account = TvTopBarAccount(name = "Alex", avatarUrl = null, demo = true),
+        ) { _, _ -> Board() }
+    }
+
     @PreviewTest
     @SeerrTvScreenPreviews
     @Composable

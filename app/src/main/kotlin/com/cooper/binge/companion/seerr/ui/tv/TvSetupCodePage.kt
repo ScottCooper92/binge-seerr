@@ -79,11 +79,16 @@ internal fun TvSetupCodePage(
             )
         },
         pinnedAction =
-            signIn?.let {
-                {
-                    TvButton(label = stringResource(R.string.setup_change_server), onClick = actions.onChangeServer)
-                    actions.onDisconnect?.let { TvButton(label = stringResource(R.string.hub_disconnect), onClick = it) }
-                }
+            when {
+                signIn != null ->
+                    (
+                        {
+                            TvButton(label = stringResource(R.string.setup_change_server), onClick = actions.onChangeServer)
+                            actions.onDisconnect?.let { TvButton(label = stringResource(R.string.hub_disconnect), onClick = it) }
+                        }
+                    )
+                address?.canTryDemo == true -> ({ TvTryDemoButton(actions, enabled = !address.isInspecting) })
+                else -> null
             },
     ) {
         TvHandOffContent(handOff = unavailable ?: code, preparing = needsCode)

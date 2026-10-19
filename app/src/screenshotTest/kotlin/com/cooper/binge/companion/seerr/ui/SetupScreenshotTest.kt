@@ -6,6 +6,7 @@ import com.android.tools.screenshot.PreviewTest
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.preview.SeerrScreenPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrScreenStatePreview
+import com.cooper.binge.companion.seerr.preview.SeerrSpanishPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrTabletPanesPreview
 import com.cooper.binge.companion.seerr.seerr.SeerrSignInMode
 import com.cooper.binge.companion.seerr.ui.tv.NoSetupActions
@@ -28,6 +29,17 @@ class SetupScreenshotTest {
     @SeerrScreenPreviews
     @Composable
     fun signInLayout() = SetupScreen(state = previewSignIn(), actions = NoSetupActions)
+
+    /** The address step offering the demo (#1705), across the device matrix and in Spanish, whose labels run longer. */
+    @PreviewTest
+    @SeerrScreenPreviews
+    @Composable
+    fun addressDemoOffered() = SetupScreen(state = previewAddress().copy(canTryDemo = true), actions = NoSetupActions)
+
+    @PreviewTest
+    @SeerrSpanishPreviews
+    @Composable
+    fun addressDemoOfferedSpanish() = SetupScreen(state = previewAddress().copy(canTryDemo = true), actions = NoSetupActions)
 
     @PreviewTest
     @SeerrScreenStatePreview

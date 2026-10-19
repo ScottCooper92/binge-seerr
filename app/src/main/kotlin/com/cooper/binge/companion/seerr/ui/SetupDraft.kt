@@ -58,6 +58,7 @@ internal fun SetupDraft.toUiState(
                 needsLocalNetwork = serverUrl.isBlockedByLocalNetwork(localNetwork),
                 code = code,
                 received = received,
+                canTryDemo = editing == null && !received,
             )
         }
         else ->

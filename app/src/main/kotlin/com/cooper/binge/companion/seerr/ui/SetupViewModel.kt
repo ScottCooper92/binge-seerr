@@ -7,6 +7,7 @@ import com.binge.companion.sdk.attempt
 import com.cooper.binge.companion.seerr.auth.PlexPinFlow
 import com.cooper.binge.companion.seerr.auth.SecretCipher
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
+import com.cooper.binge.companion.seerr.demo.demoCredentials
 import com.cooper.binge.companion.seerr.di.IoDispatcher
 import com.cooper.binge.companion.seerr.handoff.AddressHandOffs
 import com.cooper.binge.companion.seerr.handoff.HAND_OFF_SESSION_MODE
@@ -267,6 +268,19 @@ class SetupViewModel
                     viewModelScope.launch(dispatcher) {
                         connection.signIn(server.baseUrl, current.form)?.let { draft.finish(it.exceptionOrNull(), analytics) }
                     }
+            }
+        }
+
+        /** Connects to the demo server: canned data on this device, no address and no sign-in. Disconnecting leaves it. */
+        val tryDemo: () -> Unit = {
+            val current = draft.value
+            if (!current.busy && current.editing == null) {
+                draft.update { it.copy(busy = true, error = null, notice = null) }
+                crashBreadcrumbs.log("trying the demo")
+                viewModelScope.launch(dispatcher) {
+                    val demo = demoCredentials()
+                    draft.finish(connection.connect(demo.baseUrl, demo.auth).exceptionOrNull(), analytics)
+                }
             }
         }
 

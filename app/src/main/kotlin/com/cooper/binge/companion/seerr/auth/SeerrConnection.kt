@@ -1,6 +1,7 @@
 package com.cooper.binge.companion.seerr.auth
 
 import com.binge.companion.sdk.attempt
+import com.cooper.binge.companion.seerr.demo.isDemo
 import com.cooper.binge.companion.seerr.seerr.SeerrApi
 import com.cooper.binge.companion.seerr.seerr.SeerrApiFactory
 import com.cooper.binge.companion.seerr.seerr.SeerrAuth
@@ -258,7 +259,7 @@ class SeerrConnection(
         if (session.shared) return
         val shared = saved.copy(auth = session.copy(shared = true))
         // The carried copy too, or a device restored from it would end the session on disconnect (#811).
-        if (store.save(shared)) carrier.put(cleartext.carriedFor(shared))
+        if (store.save(shared) && !shared.isDemo) carrier.put(cleartext.carriedFor(shared))
     }
 
     /** Starts a Quick Connect session on the server's Jellyfin; the code is for the user, the secret for [finishQuickConnect]. */
@@ -342,10 +343,12 @@ class SeerrConnection(
             cachedUser = null
             cachedProfile = null
         }
-        if (keepAddress) store.signOut() else store.clear()
+        // The demo has no sign-in to return to, so signing out of it is leaving it.
+        if (keepAddress && saved?.isDemo != true) store.signOut() else store.clear()
         cleartext.retainOnly(null)
         carrier.clear()
         apis.evict()
+        apis.resetDemo()
         healthMonitor.reset()
         onServerChanged()
     }
@@ -381,7 +384,8 @@ class SeerrConnection(
         // public host. Moving the same host to https drops it, and a redirect back down to http is refused (#1034).
         cleartext.retainOnly(baseUrl.insecurePublicHostOrNull())
         // A public plain-HTTP server is only reachable with the opt-in, so a new device needs it too.
-        carrier.put(cleartext.carriedFor(credentials))
+        // The demo has nothing to restore on another device: it is the same canned data everywhere.
+        if (!credentials.isDemo) carrier.put(cleartext.carriedFor(credentials))
         userLock.withLock {
             cachedUser = null
             cachedProfile = (credentials to profile).takeIf { profile.complete }
