@@ -36,11 +36,15 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
+import org.junit.Assert.fail
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 
 private const val TOKEN = "k7m2pqx4"
+private const val MAX_CLOCK_STEPS = 400
+private const val POLL_STEP_MILLIS = 1_500L
+private const val REAL_STEP_MILLIS = 5L
 private const val LINK = "seerr-companion://tv-handoff?to=192.168.86.53:41234&token=$TOKEN"
 
 /**
@@ -95,7 +99,13 @@ class SendAddressViewModelTest {
         var accept = true
         var attempt = 1
 
+        /** How many times the phone has asked, so a test can wait for the poll that carries a change rather than guess at the clock. */
+        val polls =
+            java.util.concurrent.atomic
+                .AtomicInteger()
+
         override suspend fun status(target: TvHandOffTarget): HandOffStatus? {
+            polls.incrementAndGet()
             val status = if (statuses.size > 1) statuses.removeAt(0) else statuses.first()
             return if (status?.state == HandOffStatus.SIGN_IN && status.address == null) status.copy(address = signingInTo()) else status
         }
@@ -526,6 +536,22 @@ class SendAddressViewModelTest {
             )
     }
 
+    /**
+     * Runs the clock until the phone has polled twice, so the second asked after the TV's change was made: the first may have
+     * been under way already. Advancing a fixed time can pass before the poll loop has set its next delay, and then no poll runs.
+     */
+    private suspend fun TestScope.awaitPollsAfterChange() {
+        val before = tv.polls.get()
+        repeat(MAX_CLOCK_STEPS) {
+            if (tv.polls.get() >= before + 2) return
+            advanceTimeBy(POLL_STEP_MILLIS)
+            runCurrent()
+            // The poll loop resumes on a real IO thread after its DataStore reads: give it real time to reach its next delay.
+            Thread.sleep(REAL_STEP_MILLIS)
+        }
+        fail("the phone did not poll twice")
+    }
+
     private suspend fun SendAddressViewModel.form(): SignInStep.Form =
         (
             uiState.first {
@@ -568,6 +594,86 @@ class SendAddressViewModelTest {
             assertFalse(vm.form().confirmingSession)
             vm.answerSessionConfirm(true)
             assertTrue(tv.sentCredentials.isEmpty())
+        }
+
+    @Test
+    fun `a yes seals only for the address the confirm named, and a TV that moved on is offered again at its new one`() =
+        runTest {
+            tvOn("http://192.168.1.5:5055/", serverId = "abc")
+            val vm = viewModel(scannedLink, tailnet, phoneServerId = "abc", scanned = true)
+            vm.form()
+            vm.sendSession()
+            assertEquals("http://192.168.1.5:5055/", vm.form().confirmingAddress)
+
+            // The TV leaves its sign-in step and comes back at another address before the user answers.
+            tvOn("http://192.168.1.77:5055/", serverId = "abc")
+            awaitPollsAfterChange()
+            vm.answerSessionConfirm(true)
+
+            assertTrue("nothing is sealed for an address the user was not shown", tv.sentCredentials.isEmpty())
+            val again = vm.form()
+            assertNull("the question is dropped", again.confirmingAddress)
+            assertEquals("and the offer now names where the TV is", "http://192.168.1.77:5055/", again.sessionOffer?.confirmAddress)
+
+            vm.sendSession()
+            assertEquals("http://192.168.1.77:5055/", vm.form().confirmingAddress)
+            vm.answerSessionConfirm(true)
+            vm.uiState.first { ((it as? SendAddressUiState.SigningIn)?.step as? SignInStep.Form)?.awaiting != null }
+            assertEquals(listOf("http://192.168.1.77:5055/"), tv.sealedFor)
+        }
+
+    @Test
+    fun `a TV that moved on to a server with another id is not offered the session again`() =
+        runTest {
+            tvOn("http://192.168.1.5:5055/", serverId = "abc")
+            val vm = viewModel(scannedLink, tailnet, phoneServerId = "abc", scanned = true)
+            vm.form()
+            vm.sendSession()
+
+            tvOn("http://192.168.1.77:5055/", serverId = "other")
+            awaitPollsAfterChange()
+            vm.answerSessionConfirm(true)
+
+            assertTrue(tv.sentCredentials.isEmpty())
+            assertNull(vm.form().sessionOffer)
+        }
+
+    @Test
+    fun `a TV that moves to a server with another id before the tap is offered nothing and sealed nothing`() =
+        runTest {
+            tvOn("http://192.168.1.5:5055/", serverId = "abc")
+            val vm = viewModel(scannedLink, tailnet, phoneServerId = "abc", scanned = true)
+            vm.form()
+
+            tvOn("http://192.168.1.77:5055/", serverId = "other")
+            awaitPollsAfterChange()
+            assertNull(vm.form().sessionOffer)
+            assertEquals("http://192.168.1.77:5055/", vm.form().address)
+
+            vm.sendSession()
+            vm.answerSessionConfirm(true)
+            assertTrue(tv.sentCredentials.isEmpty())
+        }
+
+    @Test
+    fun `a TV that moves from the phone's own address to the same server elsewhere is asked about first`() =
+        runTest {
+            tvOn("http://seerr.lan:5055/", serverId = "abc")
+            val vm =
+                viewModel(
+                    scannedLink,
+                    SeerrCredentials("http://seerr.lan:5055/", SeerrAuth.Session("s1d", 4)),
+                    phoneServerId = "abc",
+                    scanned = true,
+                )
+            assertNull(vm.form().sessionOffer?.confirmAddress)
+
+            tvOn("http://192.168.1.77:5055/", serverId = "abc")
+            awaitPollsAfterChange()
+            vm.sendSession()
+
+            assertEquals("http://192.168.1.77:5055/", vm.form().confirmingAddress)
+            assertTrue("nothing is sealed before the answer", tv.sentCredentials.isEmpty())
         }
 
     @Test

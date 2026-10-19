@@ -92,7 +92,7 @@ private fun SignInFormContent(
                 textAlign = TextAlign.Center,
             )
         }
-        step.sessionOffer?.confirmAddress?.takeIf { step.confirmingSession }?.let { address ->
+        step.confirmingAddress?.let { address ->
             BingeConfirmDialog(
                 title = stringResource(R.string.send_signin_confirm_title, address),
                 message = stringResource(R.string.send_signin_confirm_message),
