@@ -39,7 +39,7 @@ automatically, so the frames come from the app on a device. Capture, in this ord
 Optionally two Android TV frames (1920×1080): Home with the hub board, and a list with its
 action sheet. The feature graphic (1024×500) is a design asset; it does not exist yet.
 
-**The app name is a maintainer's decision.** `listing.md` proposes one and says why. The
+**The app name is a maintainer's decision.** `listing.md` records it and says why. The
 label Binge shows for this integration stays `Seerr` (`companion_label`, which the manifest's
 companion metadata names). The launcher label is `app_label`, "Seerr Companion".
 
