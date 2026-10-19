@@ -54,8 +54,11 @@ label (`app_label`). The name is a maintainer's decision; see the README.
 > connection to a new device. No adverts, no accounts of its own.
 >
 > Open source, under the Apache 2.0 licence: github.com/ScottCooper92/binge-seerr.
+>
+> Seerr Companion is an independent app. It is not made by or affiliated with the Seerr, Jellyseerr
+> or Overseerr projects.
 
-(2,079 characters)
+(2,202 characters)
 
 ## Category and contact
 
