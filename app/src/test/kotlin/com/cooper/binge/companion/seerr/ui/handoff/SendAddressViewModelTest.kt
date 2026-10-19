@@ -36,11 +36,14 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
+import org.junit.Assert.fail
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 
 private const val TOKEN = "k7m2pqx4"
+private const val MAX_CLOCK_STEPS = 50
+private const val POLL_STEP_MILLIS = 1_500L
 private const val LINK = "seerr-companion://tv-handoff?to=192.168.86.53:41234&token=$TOKEN"
 
 /**
@@ -95,7 +98,13 @@ class SendAddressViewModelTest {
         var accept = true
         var attempt = 1
 
+        /** How many times the phone has asked, so a test can wait for the poll that carries a change rather than guess at the clock. */
+        val polls =
+            java.util.concurrent.atomic
+                .AtomicInteger()
+
         override suspend fun status(target: TvHandOffTarget): HandOffStatus? {
+            polls.incrementAndGet()
             val status = if (statuses.size > 1) statuses.removeAt(0) else statuses.first()
             return if (status?.state == HandOffStatus.SIGN_IN && status.address == null) status.copy(address = signingInTo()) else status
         }
@@ -526,6 +535,20 @@ class SendAddressViewModelTest {
             )
     }
 
+    /**
+     * Runs the clock until the phone has polled twice, so the second asked after the TV's change was made: the first may have
+     * been under way already. Advancing a fixed time can pass before the poll loop has set its next delay, and then no poll runs.
+     */
+    private suspend fun TestScope.awaitPollsAfterChange() {
+        val before = tv.polls.get()
+        repeat(MAX_CLOCK_STEPS) {
+            if (tv.polls.get() >= before + 2) return
+            advanceTimeBy(POLL_STEP_MILLIS)
+            runCurrent()
+        }
+        fail("the phone did not poll twice")
+    }
+
     private suspend fun SendAddressViewModel.form(): SignInStep.Form =
         (
             uiState.first {
@@ -581,8 +604,7 @@ class SendAddressViewModelTest {
 
             // The TV leaves its sign-in step and comes back at another address before the user answers.
             tvOn("http://192.168.1.77:5055/", serverId = "abc")
-            advanceTimeBy(5_000)
-            runCurrent()
+            awaitPollsAfterChange()
             vm.answerSessionConfirm(true)
 
             assertTrue("nothing is sealed for an address the user was not shown", tv.sentCredentials.isEmpty())
@@ -606,8 +628,7 @@ class SendAddressViewModelTest {
             vm.sendSession()
 
             tvOn("http://192.168.1.77:5055/", serverId = "other")
-            advanceTimeBy(5_000)
-            runCurrent()
+            awaitPollsAfterChange()
             vm.answerSessionConfirm(true)
 
             assertTrue(tv.sentCredentials.isEmpty())
