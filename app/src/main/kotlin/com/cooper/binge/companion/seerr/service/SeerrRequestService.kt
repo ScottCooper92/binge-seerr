@@ -136,15 +136,11 @@ class SeerrRequestService(
             response
         }
 
-    /** The fork's name, or the demo's own, so a reviewer sees in Binge's list that this is sample data. */
-    private suspend fun providerNameFor(profile: SeerrServerProfile?): String =
-        if (attempt { connection.current() }.getOrNull()?.isDemo ==
-            true
-        ) {
-            DEMO_PROVIDER_NAME
-        } else {
-            (profile?.variant ?: SeerrVariant.Unknown).displayName
-        }
+    /** The fork's name, or the demo's own, so the host can show that this is sample data. */
+    private suspend fun providerNameFor(profile: SeerrServerProfile?): String {
+        val demo = attempt { connection.current() }.getOrNull()?.isDemo == true
+        return if (demo) DEMO_PROVIDER_NAME else (profile?.variant ?: SeerrVariant.Unknown).displayName
+    }
 
     private suspend fun sessionOffer(profile: SeerrServerProfile): SessionOffer =
         try {

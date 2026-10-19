@@ -12,7 +12,7 @@ import com.cooper.binge.companion.seerr.seerr.SeerrUserDto
 import java.time.Duration
 import java.time.Instant
 
-/** A made-up show has this many seasons, so a request for any of the ones Binge offers is one the show has. */
+/** A made-up show has this many seasons: enough for a request for any ordinary show's seasons. A longer-running one is not checked. */
 private const val MADE_UP_SEASONS = 10
 private const val ADMIN = 2
 private const val LOCAL_USER = 2

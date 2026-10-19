@@ -10,8 +10,8 @@ private const val TV = "tv"
 private const val EPISODES_PER_SEASON = 8
 
 /**
- * One title the demo knows (a title outside [DEMO_TITLES] is made up on first use, with no artwork; see [DemoData.titleFor]): a real TMDB id and poster, so artwork loads from TMDB as it does against a real server,
- * with an overview written for the demo. [mediaId] is the server's own id for it, which issues are filed against.
+ * One title the demo knows: a real TMDB id and poster, so artwork loads from TMDB as it does against a real server,
+ * with an overview written for the demo. A title outside [DEMO_TITLES] is made up on first use; see [DemoData.titleFor]. [mediaId] is the server's own id for it, which issues are filed against.
  */
 internal class DemoTitle(
     val mediaId: Int,

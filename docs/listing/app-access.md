@@ -10,9 +10,9 @@ images.
 > The app is an admin console for a Seerr, Jellyseerr or Overseerr server. No login is needed to review it.
 > On the first screen, tap **Try the demo**. The app then runs every screen on sample data on the device,
 > and a small "Demo server" tag on the home screen says so. Changes you make (approving a request, replying
-> on an issue, blocking a title) stay until you tap **Exit the demo**, which clears them.
-> To see the Binge integration, install Binge, allow this app in Binge's companion settings (it appears as
-> "Seerr (demo)"), then look up or request a title from Binge.
+> on an issue, blocking a title) stay until you tap **Exit the demo**, or close the app, which clears them.
+> To see the Binge integration, install Binge, allow this app in Binge's companion settings, then look up
+> or request a title from Binge.
 
 ## What to try
 
