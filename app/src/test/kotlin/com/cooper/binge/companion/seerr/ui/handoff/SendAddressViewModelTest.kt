@@ -571,6 +571,50 @@ class SendAddressViewModelTest {
         }
 
     @Test
+    fun `a yes seals only for the address the confirm named, and a TV that moved on is offered again at its new one`() =
+        runTest {
+            tvOn("http://192.168.1.5:5055/", serverId = "abc")
+            val vm = viewModel(scannedLink, tailnet, phoneServerId = "abc", scanned = true)
+            vm.form()
+            vm.sendSession()
+            assertEquals("http://192.168.1.5:5055/", vm.form().confirmingAddress)
+
+            // The TV leaves its sign-in step and comes back at another address before the user answers.
+            tvOn("http://192.168.1.77:5055/", serverId = "abc")
+            advanceTimeBy(5_000)
+            runCurrent()
+            vm.answerSessionConfirm(true)
+
+            assertTrue("nothing is sealed for an address the user was not shown", tv.sentCredentials.isEmpty())
+            val again = vm.form()
+            assertNull("the question is dropped", again.confirmingAddress)
+            assertEquals("and the offer now names where the TV is", "http://192.168.1.77:5055/", again.sessionOffer?.confirmAddress)
+
+            vm.sendSession()
+            assertEquals("http://192.168.1.77:5055/", vm.form().confirmingAddress)
+            vm.answerSessionConfirm(true)
+            vm.uiState.first { ((it as? SendAddressUiState.SigningIn)?.step as? SignInStep.Form)?.awaiting != null }
+            assertEquals(listOf("http://192.168.1.77:5055/"), tv.sealedFor)
+        }
+
+    @Test
+    fun `a TV that moved on to a server with another id is not offered the session again`() =
+        runTest {
+            tvOn("http://192.168.1.5:5055/", serverId = "abc")
+            val vm = viewModel(scannedLink, tailnet, phoneServerId = "abc", scanned = true)
+            vm.form()
+            vm.sendSession()
+
+            tvOn("http://192.168.1.77:5055/", serverId = "other")
+            advanceTimeBy(5_000)
+            runCurrent()
+            vm.answerSessionConfirm(true)
+
+            assertTrue(tv.sentCredentials.isEmpty())
+            assertNull(vm.form().sessionOffer)
+        }
+
+    @Test
     fun `the same address keeps the one-tap session with no confirm`() =
         runTest {
             tvOn("http://seerr.lan:5055/", serverId = "abc")

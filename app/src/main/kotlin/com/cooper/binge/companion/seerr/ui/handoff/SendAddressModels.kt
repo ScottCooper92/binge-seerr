@@ -117,8 +117,8 @@ sealed interface SignInStep {
         val sessionOffer: SignInOffer? = null,
         /** Whether the attempt in flight is the session rather than the typed form. */
         val sendingSession: Boolean = false,
-        /** Whether the user is being asked to confirm the TV's address before the session goes ([SignInOffer.confirmAddress]). */
-        val confirmingSession: Boolean = false,
+        /** The address the user is being asked to confirm before the session goes, as it was when they were asked ([SignInOffer.confirmAddress]). */
+        val confirmingAddress: String? = null,
         /**
          * The address the TV says it is signing in to, shown when this phone did not send one (#1085). The server's name
          * comes from the server itself, so this is what tells the user where their password goes.
@@ -126,6 +126,7 @@ sealed interface SignInStep {
         val address: String? = null,
     ) : SignInStep {
         val canSend: Boolean get() = !isSending && form.canSubmit
+        val confirmingSession: Boolean get() = confirmingAddress != null
     }
 
     /** The phone's own session went with the address, and the TV is signing in with it; [awaiting] is the attempt it is. */

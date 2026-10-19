@@ -87,6 +87,10 @@ class SendAddressViewModel
         @Volatile
         private var signingInTo: String? = null
 
+        /** The id the TV's server gave in the same status as [signingInTo]. */
+        @Volatile
+        private var tvServerId: String? = null
+
         init {
             // A code with a key asks for the TV's PIN before anything else (#803): it proves the person holding the
             // phone can see the TV whose key it is, which a link from a web page or a message cannot.
@@ -236,27 +240,31 @@ class SendAddressViewModel
             val step = (_uiState.value as? SendAddressUiState.SigningIn)?.step as? SignInStep.Form ?: return
             if (step.isSending || step.sessionOffer == null) return
             // An address that is not this phone's own is asked about first, and nothing is sealed until it is answered.
-            if (step.sessionOffer.confirmAddress != null) return _uiState.updateForm { it.copy(confirmingSession = true) }
-            sealSessionForTv()
+            val address = signingInTo ?: return
+            if (step.sessionOffer.confirmAddress != null) return _uiState.updateForm { it.copy(confirmingAddress = address) }
+            sealSessionForTv(address)
         }
 
         /**
-         * The user answered the question [sendSession] asked about the TV's address. Only a yes seals the session, and only
-         * once asked; a no goes back to the form with nothing sent.
+         * The user answered the question [sendSession] asked about the TV's address. Only a yes seals the session, only once
+         * asked, and only for the address that was named: if the TV has moved on since, nothing is sealed and the form offers
+         * the session again at the address it is at now. A no goes back to the form with nothing sent.
          */
         fun answerSessionConfirm(confirmed: Boolean) {
             val step = (_uiState.value as? SendAddressUiState.SigningIn)?.step as? SignInStep.Form ?: return
-            if (!step.confirmingSession) return
-            _uiState.updateForm { it.copy(confirmingSession = false) }
-            if (confirmed) sealSessionForTv()
+            val named = step.confirmingAddress ?: return
+            _uiState.updateForm { it.copy(confirmingAddress = null) }
+            val now = signingInTo ?: return
+            if (!confirmed) return
+            if (now == named) return sealSessionForTv(named)
+            _uiState.updateForm { it.copy(sessionOffer = sessionOfferFor(offer, sent != null, now, tvServerId, server, serverIdentity)) }
         }
 
-        private fun sealSessionForTv() {
+        private fun sealSessionForTv(address: String) {
             val target = target ?: return
             val state = _uiState.value as? SendAddressUiState.SigningIn ?: return
             val step = state.step as? SignInStep.Form ?: return
             if (step.isSending || step.sessionOffer == null) return
-            val address = signingInTo ?: return
             _uiState.updateForm { it.copy(isSending = true, sendingSession = true, rejected = false, awaiting = null) }
             viewModelScope.launch(dispatcher) {
                 val attempt =
@@ -309,6 +317,7 @@ class SendAddressViewModel
                         return false
                     }
                     signingInTo = address
+                    tvServerId = status.serverId
                     showSignIn(status, address)
                 }
                 // Nothing to do here: the answer is the TV's, and the sheet follows whatever it is (#912).
