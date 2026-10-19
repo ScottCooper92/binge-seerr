@@ -2,12 +2,11 @@
 
 ## App name
 
-**Seerr Console for Binge** (22 of 30 characters)
+**Seerr Companion** (15 of 30 characters)
 
-Why: it says what the app is (a console for a Seerr server) before what it is for (Binge). A
-listing named only "Seerr" would read as the upstream project's own app, which it is not, and one
-named only for Binge would hide that it is useful with no Binge installed. The name is a
-maintainer's decision; see the README.
+Why: "because it's also a companion for the Seerr server", the maintainer's reason. The app is a
+companion for Binge, and it is a companion for the server it manages. It is also the launcher
+label (`app_label`). The name is a maintainer's decision; see the README.
 
 ## Short description
 

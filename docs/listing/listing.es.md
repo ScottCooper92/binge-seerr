@@ -2,7 +2,7 @@
 
 ## Nombre de la app
 
-**Seerr Console for Binge** (el nombre no se traduce)
+**Seerr Companion** (el nombre no se traduce)
 
 ## Descripción breve
 
