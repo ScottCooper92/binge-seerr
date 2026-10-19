@@ -6,7 +6,6 @@ import com.binge.companion.sdk.attempt
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.di.IoDispatcher
 import com.cooper.binge.companion.seerr.handoff.AddressSender
-import com.cooper.binge.companion.seerr.handoff.AddressSource
 import com.cooper.binge.companion.seerr.handoff.ApplicationUrlReader
 import com.cooper.binge.companion.seerr.handoff.HAND_OFF_SESSION_MODE
 import com.cooper.binge.companion.seerr.handoff.HandOffAddressMemory
@@ -388,26 +387,3 @@ class SendAddressViewModel
             ): SendAddressViewModel
         }
     }
-
-/** Whether two addresses name the same server, however each was written. */
-private fun String.sameServerAs(other: String?): Boolean = other != null && normaliseServerAddress(this) == normaliseServerAddress(other)
-
-/** Anything but the server's own addresses, which are found again without being kept. */
-private fun SendAddressUiState.Ready.isWorthRemembering(address: String): Boolean =
-    candidates.none { it.address == address && it.source != AddressSource.Remembered }
-
-/** Moves a sign-in in progress to [step]; any other state is left as it is. */
-private fun MutableStateFlow<SendAddressUiState>.showStep(step: SignInStep) =
-    update { (it as? SendAddressUiState.SigningIn)?.copy(step = step) ?: it }
-
-/** Changes the sign-in form, while there is one on screen. */
-private fun MutableStateFlow<SendAddressUiState>.updateForm(transform: (SignInStep.Form) -> SignInStep.Form) =
-    update { state ->
-        val signingIn = state as? SendAddressUiState.SigningIn ?: return@update state
-        val form = signingIn.step as? SignInStep.Form ?: return@update state
-        signingIn.copy(step = transform(form))
-    }
-
-/** Changes the address field, while it is on screen. */
-private fun MutableStateFlow<SendAddressUiState>.updateReady(transform: (SendAddressUiState.Ready) -> SendAddressUiState.Ready) =
-    update { state -> (state as? SendAddressUiState.Ready)?.let(transform) ?: state }
