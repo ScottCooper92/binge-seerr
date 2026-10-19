@@ -3,6 +3,7 @@ package com.cooper.binge.companion.seerr.seerr
 import com.binge.companion.sdk.attempt
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import java.security.MessageDigest
 
 /** A release version, `major.minor.patch`; a `develop-<sha>` or `local` build has none. */
 data class SeerrVersion(
@@ -72,6 +73,16 @@ data class SeerrServerProfile(
     /** False when a call failed, so the lineage or the settings are guesses; an incomplete profile is not cached. */
     val complete: Boolean = true,
 ) {
+    /**
+     * A name for this server instance that holds across every address it is reached by; null where the server sends
+     * nothing to name it by. Its own identifier where it sends one, else a short hash of its web-push key, so the same
+     * server reads the same on the TV and the phone and the code stays short.
+     */
+    val instanceId: String?
+        get() =
+            settings.instanceId?.takeIf { it.isNotBlank() }
+                ?: settings.vapidPublic?.takeIf { it.isNotBlank() }?.let { "v" + sha256Hex(it).take(VAPID_ID_LENGTH) }
+
     /** An unknown lineage hides nothing, as [unknown] promises: it is taken as the family's latest, never as Overseerr. */
     private val jellyseerrLineage: Boolean get() = variant.isJellyseerrLineage || variant == SeerrVariant.Unknown
 
@@ -238,3 +249,12 @@ suspend fun SeerrApi.inspectProfile(fallback: SeerrVariant): Result<SeerrServerP
 /** [inspectProfile] for a server that already connected: a profile is always produced, at the lineage's latest. */
 suspend fun SeerrApi.readProfile(fallback: SeerrVariant): SeerrServerProfile =
     inspectProfile(fallback).getOrElse { SeerrServerProfile.unknown(fallback) }
+
+private const val VAPID_ID_LENGTH = 16
+private const val BYTE_MASK = 0xff
+private const val HEX_RADIX = 16
+
+private fun sha256Hex(text: String): String =
+    MessageDigest.getInstance("SHA-256").digest(text.toByteArray()).joinToString("") {
+        (it.toInt() and BYTE_MASK).toString(HEX_RADIX).padStart(2, '0')
+    }

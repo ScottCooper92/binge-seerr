@@ -297,12 +297,14 @@ app:permission_view_requests  47b9133042ef
 app:permission_view_requests_detail  8eb67caa268a
 app:permission_view_watchlists  8cc1d099df19
 app:permission_view_watchlists_detail  e9e7cdc52dbf
+app:report_title_anyway  f58c58d44ba2
 app:report_title_cannot_report  5d65aa1e469e
 app:report_title_checking  86d5ab0a7412
 app:report_title_close  7d9eb7acb13e
-app:report_title_different_server  2fb1d36ce8c3
+app:report_title_different_server  fe73217ea094
 app:report_title_not_tracked  94edbc58fc1b
 app:report_title_open_app  688daef45886
+app:report_title_other_server  abb60107a3e8
 app:report_title_signed_out  0a90d940f85f
 app:report_title_version_4k  fa07fd33f2be
 app:request_action_failed  608e2e521eac

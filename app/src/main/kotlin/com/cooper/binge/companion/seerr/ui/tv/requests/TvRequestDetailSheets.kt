@@ -66,6 +66,7 @@ internal class TvDetailSheetContent(
     val edit: EditState?,
     val webUrl: String,
     val serverName: String,
+    val serverInstanceId: String? = null,
 )
 
 /** The open sheet, and the requester its closer hands focus back to. */
@@ -167,7 +168,7 @@ internal fun ColumnScope.TvRequestDetailPage(
         }
         DetailSheet.Report ->
             TvReportOnPhoneStep(
-                webUrl = TitleReportLinks.write(content.webUrl, content.item.is4k),
+                webUrl = TitleReportLinks.write(content.webUrl, content.item.is4k, content.serverInstanceId),
                 serverName = content.serverName,
                 title = content.item.title ?: stringResource(content.item.mediaType.labelRes()),
                 is4k = content.item.is4k,

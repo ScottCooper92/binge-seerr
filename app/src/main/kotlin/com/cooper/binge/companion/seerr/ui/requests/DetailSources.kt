@@ -112,6 +112,7 @@ internal class DetailSources(
             mediaId = dto.media.id,
             canReportIssue = profile.hasIssues && permissions.canReportIssues && dto.media.id != null,
             webUrl = webRoot + dto.media.mediaType + "/" + dto.media.tmdbId,
+            serverInstanceId = profile.instanceId,
             mediaServerUrl = preferred(dto.media.mediaUrl, dto.media.mediaUrl4k),
             serviceUrl = preferred(dto.media.serviceUrl, dto.media.serviceUrl4k),
             media = dto.mediaRecord(permissions, profile, watch),
