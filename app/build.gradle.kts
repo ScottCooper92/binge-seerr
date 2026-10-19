@@ -390,6 +390,12 @@ tasks.named("check") {
     dependsOn("validateDebugScreenshotTest")
 }
 
+// Nothing in `check` compiles the instrumentation tests, so a contract change that broke one was found
+// only by the device lane, which runs on `main` (#1692). Compiling them is cheap and needs no device.
+tasks.named("check") {
+    dependsOn("compileDebugAndroidTestKotlin")
+}
+
 // The coroutines test API (runTest, advanceUntilIdle, UnconfinedTestDispatcher, Dispatchers.setMain) is
 // experimental, and nearly every test uses it. Opting the test compilations in once keeps the compiler
 // log free of that noise, so a warning that matters stands out. Main sources are not opted in: an
