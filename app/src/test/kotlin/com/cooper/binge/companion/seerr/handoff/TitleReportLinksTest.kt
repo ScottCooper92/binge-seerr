@@ -124,6 +124,46 @@ class TitleReportLinksTest {
         assertTrue(TitleReportLinks.isSameServer(without, "https://seerr.example/", ID))
         assertFalse(TitleReportLinks.isSameServer(without, "https://other.example/", ID))
     }
+
+    private val tvPage = "http://192.168.1.10:5055/movie/900"
+    private val appUrlPage = "https://seerr.tail1234.ts.net/movie/900"
+
+    @Test
+    fun `with no ids, a phone on the TV's own address or on the Application URL is on the same server`() {
+        val link = TitleReportLinks.parse(TitleReportLinks.write(appUrlPage, is4k = false, tvUrl = tvPage))!!
+
+        assertTrue(TitleReportLinks.isSameServer(link, "http://192.168.1.10:5055/", connectedId = null))
+        assertTrue(TitleReportLinks.isSameServer(link, "https://seerr.tail1234.ts.net/", connectedId = null))
+        assertFalse(TitleReportLinks.isSameServer(link, "http://192.168.1.99:5055/", connectedId = null))
+    }
+
+    @Test
+    fun `the TV's own address is written only where it differs, so a plain code is the code it always was`() {
+        assertEquals(
+            "https://seerr.example/movie/900",
+            TitleReportLinks.write("https://seerr.example/movie/900", false, tvUrl = "https://seerr.example/movie/900"),
+        )
+        assertEquals("https://seerr.example/movie/900", TitleReportLinks.write("https://seerr.example/movie/900", false, tvUrl = null))
+        assertEquals(null, TitleReportLinks.parse(TitleReportLinks.write(appUrlPage, false, tvUrl = appUrlPage))?.tvServer)
+    }
+
+    @Test
+    fun `an address in the code that is not a web address is dropped and the code still reads`() {
+        listOf("ftp://192.168.1.10/", "not a url", "http://user:pw@192.168.1.10:5055/").forEach { bad ->
+            val link = TitleReportLinks.parse("$appUrlPage?tv=${java.net.URLEncoder.encode(bad, "UTF-8")}")!!
+
+            assertNull(bad, link.tvServer)
+            assertFalse(bad, TitleReportLinks.isSameServer(link, "http://192.168.1.10:5055/", connectedId = null))
+        }
+    }
+
+    @Test
+    fun `ids still decide, so the TV's address never makes two servers with different ids one`() {
+        val link = TitleReportLinks.parse(TitleReportLinks.write(appUrlPage, false, ID, tvUrl = tvPage))!!
+
+        assertTrue(TitleReportLinks.isSameServer(link, "http://100.64.0.7:5055/", ID))
+        assertFalse(TitleReportLinks.isSameServer(link, "http://192.168.1.10:5055/", OTHER_ID))
+    }
 }
 
 private const val ID = "3f1c2c9e-5a77-4d0e-9d65-0b1f4c2a8e10"
