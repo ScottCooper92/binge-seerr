@@ -33,6 +33,9 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           submodules: recursive
+          # The full history and every tag: the release notes start at the previous version tag, and a shallow
+          # checkout has none to find.
+          fetch-depth: 0
 
       - name: Check the what's new notes
         run: .github/scripts/check-whats-new.sh distribution/whatsnew build/play-whatsnew
@@ -108,14 +111,26 @@ jobs:
           fi
           echo "Bundle is release-signed; mapping present ($(wc -c < "$mapping") bytes)."
 
+      # Generated notes list every commit since the previous release, and with none they list the whole
+      # history, which GitHub refuses over 125000 characters (v0.1.0's first run). So they start at the
+      # previous version tag; the first release has none, and takes the annotated tag's message instead.
       - name: Attach the bundle and mapping to the GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: >
-          gh release create "$GITHUB_REF_NAME"
-          app/build/outputs/bundle/release/app-release.aab
-          app/build/outputs/mapping/release/mapping.txt
-          --title "$GITHUB_REF_NAME" --generate-notes
+        shell: bash
+        run: |
+          set -euo pipefail
+          if previous=$(git describe --tags --abbrev=0 --match 'v*' "${GITHUB_REF_NAME}^" 2>/dev/null); then
+            echo "Release notes start at $previous."
+            notes=(--generate-notes --notes-start-tag "$previous")
+          else
+            echo "No earlier version tag: the release notes are the message of $GITHUB_REF_NAME."
+            notes=(--notes-from-tag)
+          fi
+          gh release create "$GITHUB_REF_NAME" \
+            app/build/outputs/bundle/release/app-release.aab \
+            app/build/outputs/mapping/release/mapping.txt \
+            --title "$GITHUB_REF_NAME" "${notes[@]}"
 
       # The app is not published yet, so Play accepts only a draft (#1695 switches this to `completed`).
       # Last, so a Play failure cannot withhold the bundle from the GitHub Release.
