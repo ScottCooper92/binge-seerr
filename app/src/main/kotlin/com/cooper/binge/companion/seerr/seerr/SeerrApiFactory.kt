@@ -2,6 +2,7 @@ package com.cooper.binge.companion.seerr.seerr
 
 import com.cooper.binge.companion.seerr.auth.CleartextConsent
 import com.cooper.binge.companion.seerr.auth.SeerrConnectionHealthReporter
+import com.cooper.binge.companion.seerr.demo.DemoTransport
 import kotlinx.serialization.json.Json
 import okhttp3.ConnectionPool
 import okhttp3.Cookie
@@ -66,6 +67,9 @@ class SeerrApiFactory(
             explicitNulls = false
         }
 
+    /** Answers the demo server's address from memory, in every client. Inert for any other host. */
+    private val demo = DemoTransport()
+
     private var cached: CachedApi? = null
 
     /** The service for the saved server, rebuilt only when the credentials change. */
@@ -102,6 +106,9 @@ class SeerrApiFactory(
             cached = null
         }
     }
+
+    /** Puts the demo server back to its seed, for the next time someone tries it. */
+    fun resetDemo() = demo.model.reset()
 
     /** A throwaway service for probing candidate credentials, released when [block] returns. */
     suspend fun <T> probe(
@@ -158,7 +165,8 @@ class SeerrApiFactory(
      * retry looks for another route and a single server offers none (#254).
      */
     private fun OkHttpClient.Builder.finish(cookieJar: CookieJar?): OkHttpClient =
-        apply { testTransport?.let { addInterceptor(it(cookieJar ?: CookieJar.NO_COOKIES)) } }
+        addInterceptor(demo)
+            .apply { testTransport?.let { addInterceptor(it(cookieJar ?: CookieJar.NO_COOKIES)) } }
             .apply { testDispatcher?.let { dispatcher(it()) } }
             .apply { testDns?.let { dns(it) } }
             .addNetworkInterceptor(CleartextGuard(cleartext))

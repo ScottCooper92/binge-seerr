@@ -57,6 +57,7 @@ internal fun TvSetupAddressPage(
         icon = Icons.Filled.Dns,
         modifier = modifier,
         buttonBar = true,
+        pinnedAction = if (state.canTryDemo) ({ TvTryDemoButton(actions, enabled = !state.isInspecting) }) else null,
         // Back to the code, in the same place the way here was.
         copyAction = {
             TvButton(

@@ -9,6 +9,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.cooper.binge.companion.seerr.demo.isDemoOrigin
 import com.cooper.binge.companion.seerr.telemetry.LocalAnalytics
 import com.cooper.binge.companion.seerr.telemetry.screenName
 import com.cooper.binge.companion.seerr.ui.ScopedViewModels
@@ -72,7 +73,12 @@ internal fun TvConnectedShell(
         onCloseSheet = { sheet = null },
         tabs = tabs,
         tabsResolved = tabsResolved,
-        account = TvTopBarAccount(name = account?.name.orEmpty(), avatarUrl = account?.avatarUrl),
+        account =
+            TvTopBarAccount(
+                name = account?.name.orEmpty(),
+                avatarUrl = account?.avatarUrl,
+                demo = (hub as? HubUiState.Ready)?.server?.baseUrl?.isDemoOrigin() == true,
+            ),
         showBar = !editingConnection,
         overlay =
             when {

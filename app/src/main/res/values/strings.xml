@@ -880,6 +880,12 @@
     <string name="hub_disconnect">Disconnect</string>
     <string name="hub_disconnect_confirm_title">Disconnect?</string>
     <string name="hub_disconnect_confirm_message">You will need to sign in again to reconnect. Binge stops seeing this server until you do.</string>
+    <string name="hub_demo_exit">Exit the demo</string>
+    <string name="hub_demo_exit_confirm_title">Exit the demo?</string>
+    <string name="hub_demo_exit_confirm_message">The sample data, and anything you changed in it, is cleared.</string>
+    <string name="demo_indicator">Demo server</string>
+    <string name="setup_try_demo">Try the demo</string>
+    <string name="setup_try_demo_note">Explore the app with sample data. No server needed.</string>
     <string name="hub_unreachable_headline">Can\'t reach your server</string>
     <string name="hub_unreachable_body">It did not answer. It may be offline or its address may have changed. Check the server and retry.</string>
     <string name="hub_local_network_headline">Local network access is off</string>

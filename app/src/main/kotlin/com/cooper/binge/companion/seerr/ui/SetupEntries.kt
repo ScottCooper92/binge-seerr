@@ -69,4 +69,5 @@ internal fun SetupViewModel.actions(onDisconnect: (() -> Unit)? = null): SetupAc
         onAllowCleartext = ::allowCleartext,
         onLocalNetworkChanged = ::localNetworkResult,
         onDisconnect = onDisconnect,
+        onTryDemo = tryDemo,
     )

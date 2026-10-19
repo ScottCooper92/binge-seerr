@@ -45,6 +45,7 @@ app:consent_point_shared_detail  271db93ff1bb
 app:consent_point_shared_title  6fa969fe2654
 app:consent_subtitle  fc7be86a848d
 app:consent_title  916d330273e6
+app:demo_indicator  826c4ae04f58
 app:editor_cancel  19766ed6ccb2
 app:editor_create  4759498ac2a7
 app:editor_discard  eb1a70e39274
@@ -108,6 +109,9 @@ app:hub_binge_not_installed_title  d7e27e16cd15
 app:hub_binge_open  f95bbc9b91f4
 app:hub_couldnt_load_body  221fccfe8796
 app:hub_couldnt_load_headline  e12aae2d43bd
+app:hub_demo_exit  6e50516e4c5b
+app:hub_demo_exit_confirm_message  895858733e2d
+app:hub_demo_exit_confirm_title  4904aa80023e
 app:hub_disconnect  acfc5be785a9
 app:hub_disconnect_confirm_message  bc3b6a81f476
 app:hub_disconnect_confirm_title  112cbf2ce097
@@ -900,6 +904,8 @@ app:setup_session_rejected  9aa1bdf525a5
 app:setup_sign_in  bfd402b2f6f3
 app:setup_sign_in_plex  bf7f8a232706
 app:setup_start_quick_connect  b6dbd8215798
+app:setup_try_demo  6e5fe4ca7c07
+app:setup_try_demo_note  f7181f3090f4
 app:setup_username  e3b89e9d33f8
 app:setup_username_placeholder  43c6c81836dc
 app:shake_report_message  e30de55e532d

@@ -20,6 +20,23 @@ import com.cooper.binge.companion.seerr.ui.SignInForm
  * IDE preview and the frame cannot drift.
  */
 class TvSetupScreenshotTest {
+    /** The address step offering the demo (#1705): on the code page, and on the typed form the remote falls back to. */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun addressDemoOfferedOnCodePage() =
+        TvSetupScreen(state = setupAddress().copy(canTryDemo = true), actions = NoSetupActions, offerHandOff = true)
+
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun addressDemoOfferedOnTypedForm() = TvSetupScreen(state = setupAddress().copy(canTryDemo = true), actions = NoSetupActions)
+
+    @PreviewTest
+    @SeerrTvSpanishScreenPreviews
+    @Composable
+    fun addressDemoOfferedOnTypedFormSpanish() = TvSetupScreen(state = setupAddress().copy(canTryDemo = true), actions = NoSetupActions)
+
     @PreviewTest
     @SeerrTvScreenPreviews
     @Composable

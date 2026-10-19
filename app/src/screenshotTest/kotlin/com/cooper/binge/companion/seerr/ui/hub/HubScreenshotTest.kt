@@ -9,6 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.android.tools.screenshot.PreviewTest
 import com.binge.designsystem.LocalPaneWidth
+import com.cooper.binge.companion.seerr.demo.DEMO_ORIGIN
 import com.cooper.binge.companion.seerr.preview.SeerrListPanePreview
 import com.cooper.binge.companion.seerr.preview.SeerrScreenPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrScreenStatePreview
@@ -49,6 +50,19 @@ class HubScreenshotTest {
     @SeerrScreenStatePreview
     @Composable
     fun readySectionOpen() = HubScreen(state = previewReady(), actions = previewActions(), selectedSection = HubSection.Requests)
+
+    /**
+     * The demo server (#1705): the "Demo server" tag in the server card's corner, and the way out named for what it does.
+     * Small by design, so it shows in a screenshot without taking it over.
+     */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun readyDemo() =
+        HubScreen(
+            state = previewReady().let { it.copy(server = it.server.copy(baseUrl = DEMO_ORIGIN, updateAvailable = false)) },
+            actions = previewActions(),
+        )
 
     /** A pull re-reading the dashboard: the spinner rests below the bar, over the server card. */
     @OptIn(ExperimentalMaterial3Api::class)

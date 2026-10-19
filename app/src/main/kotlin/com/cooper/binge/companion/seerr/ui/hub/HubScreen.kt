@@ -33,6 +33,7 @@ import com.binge.designsystem.template.ScreenBar
 import com.binge.designsystem.template.screenInnerPadding
 import com.binge.designsystem.template.screenOuterPadding
 import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.demo.isDemoOrigin
 import com.cooper.binge.companion.seerr.ui.DisconnectButton
 import com.cooper.binge.companion.seerr.ui.rememberAllowLocalNetwork
 import com.cooper.binge.companion.seerr.ui.state.LoadingScreen
@@ -187,7 +188,7 @@ private fun Dashboard(
             verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
         ) {
             BingeTile(state.bingeStatus, state.bingeHintDismissed, actions.onDismissBingeHint)
-            DisconnectButton(actions.onDisconnect)
+            DisconnectButton(actions.onDisconnect, demo = state.server.baseUrl.isDemoOrigin())
         }
         if (actions.developerRows.isNotEmpty()) DeveloperGroup(actions.developerRows, resolvedContentPadding(bottom = inset))
     }

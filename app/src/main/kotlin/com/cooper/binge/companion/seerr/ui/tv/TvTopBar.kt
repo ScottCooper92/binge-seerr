@@ -60,6 +60,8 @@ private const val BAR_SCRIM_TOP_ALPHA = 0.9f
 internal class TvTopBarAccount(
     val name: String,
     val avatarUrl: String?,
+    /** Whether the connected server is the demo (#1705), which the bar says so beside Settings. */
+    val demo: Boolean = false,
 )
 
 /**
@@ -137,14 +139,21 @@ internal fun TvTopBar(
                 )
             }
         }
-        if (TvDestination.Settings in destinations) {
-            TvTopBarItem(
-                label = stringResource(TvDestination.Settings.labelRes),
-                selected = false,
-                onClick = { onSelect(TvDestination.Settings) },
-                modifier = item(TvDestination.Settings).align(Alignment.CenterEnd),
-                icon = TvDestination.Settings.icon,
-            )
+        Row(
+            modifier = Modifier.align(Alignment.CenterEnd),
+            horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            if (account.demo) TvDemoTag()
+            if (TvDestination.Settings in destinations) {
+                TvTopBarItem(
+                    label = stringResource(TvDestination.Settings.labelRes),
+                    selected = false,
+                    onClick = { onSelect(TvDestination.Settings) },
+                    modifier = item(TvDestination.Settings),
+                    icon = TvDestination.Settings.icon,
+                )
+            }
         }
     }
 }
@@ -218,3 +227,20 @@ private fun TvTopBarItem(
         }
     }
 }
+
+/** The demo server's mark: small, and not a control, so the remote passes over it. */
+@Composable
+private fun TvDemoTag() {
+    Text(
+        text = stringResource(R.string.demo_indicator),
+        style = MaterialTheme.typography.labelLarge,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier =
+            Modifier
+                .clip(BingeShapes.Pill)
+                .background(MaterialTheme.colorScheme.onSurface.copy(alpha = DEMO_TAG_ALPHA))
+                .padding(horizontal = dimensionResource(DesR.dimen.padding_m), vertical = dimensionResource(DesR.dimen.padding_xs)),
+    )
+}
+
+private const val DEMO_TAG_ALPHA = 0.12f
