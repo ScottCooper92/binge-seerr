@@ -53,9 +53,8 @@ private fun DemoData.moderate(
 
 private fun DemoData.create(body: String): DemoAnswer {
     val asked = demoJson.decodeFromString<SeerrRequestBody>(body)
-    val title = titleByTmdb(asked.mediaType, asked.mediaId)
+    val title = titleFor(asked.mediaType, asked.mediaId)
     return when {
-        title == null -> demoNotFound
         mediaStatus(title) == SeerrMediaStatusCode.Blocklisted -> demoBlocklisted
         title.isMovie && requests.any { it.title == title } -> demoAlreadyRequested
         else -> {

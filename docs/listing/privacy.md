@@ -48,6 +48,9 @@ two ways described above, and the phone-to-TV hand-off below, which stays on you
   what happens there.
 - **To Google (Play services Block Store)**, if the device has Play services: the connection copy
   described above, handled by Google's own service under your Google account.
+- **To TMDB's image servers** (image.tmdb.org), to show posters and backdrops: as with any web
+  request, your device's IP address and the picture asked for. It happens with your own server and in
+  the demo alike, and carries no account or identifier of the app's.
 - **To a television on your local network**, only when you tap Send in the phone-to-TV hand-off
   described below.
 - **To Binge**, on the same device, when Binge is installed and you allow it: request and status
@@ -82,6 +85,14 @@ two ways described above, and the phone-to-TV hand-off below, which stays on you
   you submit the form yourself, and the issue is public.
 
 The app has no server of its own.
+
+## The demo
+
+On the first screen, **Try the demo** runs the app on sample data built into it, for anyone who has
+no server to connect, such as someone reviewing the app. The demo contacts no server and needs no
+account. What you change in it lives in the app's memory and is gone when you tap **Exit the demo** or
+the app is closed. Its only stored trace is a placeholder connection, kept like any other connection,
+that Exit the demo removes. It is never copied to Block Store. Posters load from TMDB as described above.
 
 ## Phone-to-TV hand-off
 

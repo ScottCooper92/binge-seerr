@@ -41,6 +41,7 @@ import com.binge.companion.contracts.request.v1.SubmitRequestRequest
 import com.binge.companion.contracts.request.v1.SubmitRequestResponse
 import com.binge.companion.contracts.request.v1.UnblockTitleRequest
 import com.binge.companion.contracts.request.v1.UnblockTitleResponse
+import com.binge.companion.sdk.attempt
 import com.binge.companion.sdk.handshakeResponse
 import com.binge.companion.sdk.requireDeclared
 import com.binge.companion.sdk.withUserMessage
@@ -52,6 +53,8 @@ import com.cooper.binge.companion.seerr.data.MediaStatusStore
 import com.cooper.binge.companion.seerr.data.NoMediaStatusStore
 import com.cooper.binge.companion.seerr.data.NoRequestStore
 import com.cooper.binge.companion.seerr.data.RequestStore
+import com.cooper.binge.companion.seerr.demo.DEMO_PROVIDER_NAME
+import com.cooper.binge.companion.seerr.demo.isDemo
 import com.cooper.binge.companion.seerr.seerr.SeerrPermissions
 import com.cooper.binge.companion.seerr.seerr.SeerrServerProfile
 import com.cooper.binge.companion.seerr.seerr.SeerrVariant
@@ -126,11 +129,21 @@ class SeerrRequestService(
                 handshakeResponse(
                     capabilities = session.capabilities,
                     versions = versionsFor(session.offers4k, standardVersionLabel),
-                    providerName = (profile?.variant ?: SeerrVariant.Unknown).displayName,
+                    providerName = providerNameFor(profile),
                     companionVersionName = versionName,
                 )
             bingeConnection.recordHandshake()
             response
+        }
+
+    /** The fork's name, or the demo's own, so a reviewer sees in Binge's list that this is sample data. */
+    private suspend fun providerNameFor(profile: SeerrServerProfile?): String =
+        if (attempt { connection.current() }.getOrNull()?.isDemo ==
+            true
+        ) {
+            DEMO_PROVIDER_NAME
+        } else {
+            (profile?.variant ?: SeerrVariant.Unknown).displayName
         }
 
     private suspend fun sessionOffer(profile: SeerrServerProfile): SessionOffer =

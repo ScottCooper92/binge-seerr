@@ -10,7 +10,7 @@ private const val TV = "tv"
 private const val EPISODES_PER_SEASON = 8
 
 /**
- * One title the demo knows: a real TMDB id and poster, so artwork loads from TMDB as it does against a real server,
+ * One title the demo knows (a title outside [DEMO_TITLES] is made up on first use, with no artwork; see [DemoData.titleFor]): a real TMDB id and poster, so artwork loads from TMDB as it does against a real server,
  * with an overview written for the demo. [mediaId] is the server's own id for it, which issues are filed against.
  */
 internal class DemoTitle(
@@ -32,10 +32,10 @@ internal class DemoTitle(
         mediaInfo = info.copy(id = mediaId, status = status),
         title = title.takeIf { isMovie },
         name = title.takeUnless { isMovie },
-        posterPath = poster,
-        overview = overview,
-        releaseDate = "$year-01-01".takeIf { isMovie },
-        firstAirDate = "$year-01-01".takeUnless { isMovie },
+        posterPath = poster.ifBlank { null },
+        overview = overview.ifBlank { null },
+        releaseDate = "$year-01-01".takeIf { isMovie && year > 0 },
+        firstAirDate = "$year-01-01".takeIf { !isMovie && year > 0 },
         seasons = (1..seasons).map { SeerrSeasonDto(seasonNumber = it, name = "Season $it", episodeCount = EPISODES_PER_SEASON) },
     )
 }
@@ -140,13 +140,6 @@ internal val DEMO_TITLES =
             seasons = 2,
         ),
     )
-
-internal fun titleByTmdb(
-    mediaType: String,
-    tmdbId: Int,
-): DemoTitle? = DEMO_TITLES.firstOrNull { it.tmdbId == tmdbId && it.mediaType == mediaType }
-
-internal fun titleByMediaId(mediaId: Int): DemoTitle? = DEMO_TITLES.firstOrNull { it.mediaId == mediaId }
 
 internal const val TV_TYPE = TV
 internal const val MOVIE_TYPE = MOVIE

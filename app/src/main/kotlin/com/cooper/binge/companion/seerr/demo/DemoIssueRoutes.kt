@@ -58,7 +58,7 @@ private fun DemoData.issuePage(call: DemoCall): SeerrIssuePageDto {
 
 private fun DemoData.createIssue(body: String): DemoAnswer {
     val asked = demoJson.decodeFromString<SeerrCreateIssueBody>(body)
-    val title = titleByMediaId(asked.mediaId) ?: return demoNotFound
+    val title = titleForMedia(asked.mediaId) ?: return demoNotFound
     val issue = addIssue(title, asked.issueType, DEMO_USER_ID, asked.message)
     return ok(toDto(issue))
 }

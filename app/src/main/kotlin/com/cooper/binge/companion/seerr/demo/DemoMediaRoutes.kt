@@ -18,10 +18,10 @@ internal fun DemoData.mediaRoutes(): List<DemoRoute> =
         route("GET", "service", "sonarr", "{}") { _, _ -> ok(demoServerDetails("Demo Sonarr")) },
     )
 
-private fun withMedia(
+private fun DemoData.withMedia(
     id: String,
     block: (DemoTitle) -> DemoAnswer,
-): DemoAnswer = titleByMediaId(id.toInt())?.let(block) ?: demoNotFound
+): DemoAnswer = titleForMedia(id.toInt())?.let(block) ?: demoNotFound
 
 /** The body only names the 4K instance, which the demo does not have, so it is not read. */
 private fun DemoData.markMedia(
@@ -51,7 +51,7 @@ private fun DemoData.details(
     mediaType: String,
     id: String,
 ): DemoAnswer {
-    val title = titleByTmdb(mediaType, id.toInt()) ?: return demoNotFound
+    val title = titleFor(mediaType, id.toInt())
     val info =
         SeerrMediaInfoDto(
             downloadStatus = downloads(title),

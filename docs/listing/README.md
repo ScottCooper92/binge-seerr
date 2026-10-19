@@ -7,6 +7,7 @@ what the app does. Each file maps to one part of the Play Console.
 |---|---|
 | [`listing.md`](listing.md) | Main store listing: app name, short description, full description (English) |
 | [`listing.es.md`](listing.es.md) | The same, for the Spanish listing the app's `values-es/` earns it |
+| [`app-access.md`](app-access.md) | App content > App access: how a reviewer uses the app with no server (the demo) |
 | [`privacy.md`](privacy.md) | The privacy policy the listing links to, published at https://scottcooper92.github.io/binge-seerr/privacy/ (see below) |
 | [`data-safety.md`](data-safety.md) | The answers to the Data safety form, each derived from `privacy.md` and the code it describes |
 

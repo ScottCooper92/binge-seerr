@@ -11,6 +11,8 @@ import com.binge.companion.contracts.v1.HostInfo
 import com.binge.companion.contracts.v1.MediaId
 import com.binge.companion.contracts.v1.MediaType
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
+import com.cooper.binge.companion.seerr.demo.DEMO_PROVIDER_NAME
+import com.cooper.binge.companion.seerr.demo.demoCredentials
 import com.cooper.binge.companion.seerr.seerr.SeerrAuth
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
@@ -93,6 +95,37 @@ class CompanionServiceRoundTripTest {
             }
         }
 
+    /**
+     * The demo (#1705) across the same Binder, with no server at all: no mock is started for it, and the demo's own
+     * title answers the status call, so a pass proves the demo works on the minified build a reviewer installs.
+     */
+    @Test
+    fun theDemoAnswersAcrossTheBinderWithNoServer() =
+        runBlocking {
+            val demo = demoCredentials()
+            val connected = connection.connect(demo.baseUrl, demo.auth)
+            assertTrue("the demo was not accepted as a connection: $connected", connected.isSuccess)
+
+            val channel =
+                BinderChannelBuilder
+                    .forAddress(AndroidComponentAddress.forRemoteComponent(app.packageName, SERVICE_CLASS), app)
+                    .securityPolicy(SecurityPolicies.internalOnly())
+                    .build()
+            try {
+                val stub = RequestServiceGrpcKt.RequestServiceCoroutineStub(channel)
+
+                val handshake = withTimeout(CALL_TIMEOUT_MS) { stub.handshake(handshakeRequest()) }
+                assertEquals(DEMO_PROVIDER_NAME, handshake.providerName)
+
+                val status =
+                    withTimeout(CALL_TIMEOUT_MS) { stub.getStatus(GetStatusRequest.newBuilder().setMedia(DEMO_AVAILABLE_FILM).build()) }
+                val standard = status.status.versionsList.singleOrNull { it.versionId.isEmpty() }
+                assertEquals("no standard version in $status", Availability.AVAILABILITY_AVAILABLE, standard?.availability)
+            } finally {
+                channel.shutdownNow()
+            }
+        }
+
     private fun handshakeRequest(): HandshakeRequest =
         HandshakeRequest
             .newBuilder()
@@ -126,6 +159,14 @@ class CompanionServiceRoundTripTest {
         const val MEDIA_AVAILABLE = 5
         const val HTTP_OK = 200
         const val HTTP_NOT_FOUND = 404
+
+        /** Metropolis, which the demo holds as available. */
+        val DEMO_AVAILABLE_FILM: MediaId =
+            MediaId
+                .newBuilder()
+                .setMediaType(MediaType.MEDIA_TYPE_MOVIE)
+                .setTmdbId(19)
+                .build()
         val MOVIE: MediaId =
             MediaId
                 .newBuilder()

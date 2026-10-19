@@ -36,7 +36,7 @@ private fun DemoData.blocklistPage(call: DemoCall): SeerrBlocklistPageDto {
 
 private fun DemoData.block(body: String): DemoAnswer {
     val asked = demoJson.decodeFromString<SeerrAddToBlocklistBody>(body)
-    val title = titleByTmdb(asked.mediaType, asked.tmdbId) ?: return demoNotFound
+    val title = titleFor(asked.mediaType, asked.tmdbId)
     block(title, asked.user)
     return DemoAnswer(CREATED, "{}")
 }

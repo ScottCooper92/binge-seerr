@@ -36,6 +36,16 @@ chose rather than the app sharing it. It is disclosed in `privacy.md` regardless
 reads it as sharing, the entry would be: *Device or other IDs*, shared, optional, for *account
 management*, with plex.tv as the recipient.
 
+## The demo
+
+**Try the demo** runs the app on sample data built into it, with no server, no account and no
+network call other than poster images. It collects and shares nothing, and the Block Store copy of the
+connection is skipped for it. The poster images are fetched from TMDB's image servers, as they are for
+the user's own server, which is a plain web request carrying the device's IP address. The answers above
+treat that, like the user's own server, as not collection by the developer. If Play's review reads an IP
+address sent to an image host as collection, that is a decision for the maintainer: the entry would be
+*Device or other IDs*, shared with TMDB, for *App functionality*.
+
 ## The phone-to-TV hand-off
 
 On a television the user can send their server's address from their phone. It crosses the user's own

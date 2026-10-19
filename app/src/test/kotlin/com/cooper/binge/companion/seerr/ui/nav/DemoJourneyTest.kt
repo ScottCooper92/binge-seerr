@@ -1,7 +1,9 @@
 package com.cooper.binge.companion.seerr.ui.nav
 
-import androidx.compose.ui.test.hasClickAction
-import androidx.compose.ui.test.hasText
+import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.getOrNull
+import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.onNodeWithText
@@ -49,7 +51,7 @@ class DemoJourneyTest {
         host.awaitShowing(host.string(R.string.requests_filter_processing))
         host.awaitShowing("Big Buck Bunny")
 
-        host.compose.onNode(hasText(host.string(R.string.requests_filter_pending), substring = true) and hasClickAction()).performClick()
+        host.compose.onNode(filterChip(host.string(R.string.requests_filter_pending))).performClick()
         host.awaitShowing("Sintel")
         // The list crossfades between filters, so a row may be drawn twice for a moment.
         host.compose
@@ -150,3 +152,14 @@ class DemoJourneyTest {
         assertFalse(host.isShowing(host.string(R.string.demo_indicator)))
     }
 }
+
+/** The filter chip itself: its label first, then at most a count, and not a row that has "Pending" among its words. */
+private fun filterChip(label: String) =
+    SemanticsMatcher("a chip labelled $label") { node ->
+        val texts =
+            node.config
+                .getOrNull(SemanticsProperties.Text)
+                .orEmpty()
+                .map { it.text.trim('[', ']', ' ') }
+        texts.firstOrNull() == label && texts.size <= 2 && node.config.contains(SemanticsActions.OnClick)
+    }

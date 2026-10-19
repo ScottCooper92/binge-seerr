@@ -12,6 +12,8 @@ import com.cooper.binge.companion.seerr.seerr.SeerrUserDto
 import java.time.Duration
 import java.time.Instant
 
+/** A made-up show has this many seasons, so a request for any of the ones Binge offers is one the show has. */
+private const val MADE_UP_SEASONS = 10
 private const val ADMIN = 2
 private const val LOCAL_USER = 2
 private const val DOWNLOAD_BYTES = 4_300_000_000.0
@@ -63,6 +65,7 @@ internal class DemoData(
     val blocklist = mutableListOf<DemoBlock>()
     val resources = seedResources()
     val jobs = seedJobs().toMutableList()
+    private val madeUp = mutableMapOf<Pair<String, Int>, DemoTitle>()
     private val mediaOverrides = mutableMapOf<Int, SeerrMediaStatusCode>()
     private var nextRequest = 1
     private var nextIssue = 1
@@ -74,6 +77,20 @@ internal class DemoData(
     }
 
     fun now(): Instant = clock()
+
+    /**
+     * The title for a TMDB id. Binge can ask about any film, so one the demo has no data for is made up on first use: named
+     * from a short table of well-known titles, or "Requested title". It then behaves like the rest: it can be requested, and
+     * its status follows its requests.
+     */
+    fun titleFor(
+        mediaType: String,
+        tmdbId: Int,
+    ): DemoTitle =
+        DEMO_TITLES.firstOrNull { it.tmdbId == tmdbId && it.mediaType == mediaType }
+            ?: madeUp.getOrPut(mediaType to tmdbId) { madeUpTitle(resources.nextId(), mediaType, tmdbId) }
+
+    fun titleForMedia(mediaId: Int): DemoTitle? = (DEMO_TITLES + madeUp.values).firstOrNull { it.mediaId == mediaId }
 
     fun user(id: Int?): SeerrRequestUserDto? =
         users.firstOrNull { it.id == id }?.let {
@@ -241,3 +258,21 @@ private fun seedJobs() =
         SeerrJobDto("download-sync", "Download sync", "command", "every minute"),
         SeerrJobDto("image-cache-cleanup", "Image cache cleanup", "process", "daily"),
     )
+
+private fun madeUpTitle(
+    mediaId: Int,
+    mediaType: String,
+    tmdbId: Int,
+): DemoTitle {
+    val known = KNOWN_TITLES.firstOrNull { it.tmdbId == tmdbId && it.mediaType == mediaType }
+    return DemoTitle(
+        mediaId = mediaId,
+        tmdbId = tmdbId,
+        mediaType = mediaType,
+        title = known?.title ?: "Requested title",
+        year = known?.year ?: 0,
+        overview = "",
+        poster = known?.poster.orEmpty(),
+        seasons = if (mediaType == TV_TYPE) MADE_UP_SEASONS else 0,
+    )
+}
