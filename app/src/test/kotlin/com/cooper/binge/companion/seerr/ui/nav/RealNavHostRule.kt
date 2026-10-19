@@ -10,6 +10,7 @@ import androidx.navigation3.runtime.NavKey
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
 import com.cooper.binge.companion.seerr.auth.CredentialStore
+import com.cooper.binge.companion.seerr.demo.demoCredentials
 import com.cooper.binge.companion.seerr.seerr.SeerrAuth
 import com.cooper.binge.companion.seerr.seerr.SeerrCredentials
 import com.cooper.binge.companion.seerr.ui.HomeRoute
@@ -65,6 +66,11 @@ internal class RealNavHostRule(
         seerr.viewer(id = 1, permissions = permissions)
         val saved = runBlocking { graph().credentials().save(SeerrCredentials(seerr.server.url("/").toString(), SeerrAuth.ApiKey("k3y"))) }
         check(saved) { "the connection was not saved" }
+    }
+
+    /** Saves the connection to the demo server (#1705): canned data answered on the device, so nothing is scripted. */
+    fun connectDemo() {
+        check(runBlocking { graph().credentials().save(demoCredentials()) }) { "the connection was not saved" }
     }
 
     /** Starts the host on [stack]. A second launch closes the first: a cold start of the app over the same graph. */
