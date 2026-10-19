@@ -4,6 +4,7 @@ import com.cooper.binge.companion.seerr.seerr.SeerrDownloadStatusDto
 import com.cooper.binge.companion.seerr.seerr.SeerrIssueCommentDto
 import com.cooper.binge.companion.seerr.seerr.SeerrIssueStatusCode
 import com.cooper.binge.companion.seerr.seerr.SeerrIssueTypeCode
+import com.cooper.binge.companion.seerr.seerr.SeerrJobDto
 import com.cooper.binge.companion.seerr.seerr.SeerrMediaStatusCode
 import com.cooper.binge.companion.seerr.seerr.SeerrRequestStatusCode
 import com.cooper.binge.companion.seerr.seerr.SeerrRequestUserDto
@@ -60,6 +61,8 @@ internal class DemoData(
     val requests = mutableListOf<DemoRequest>()
     val issues = mutableListOf<DemoIssue>()
     val blocklist = mutableListOf<DemoBlock>()
+    val resources = seedResources()
+    val jobs = seedJobs().toMutableList()
     private val mediaOverrides = mutableMapOf<Int, SeerrMediaStatusCode>()
     private var nextRequest = 1
     private var nextIssue = 1
@@ -228,4 +231,13 @@ private val SEED_REQUESTS =
         SeedRequest("Spirited Away", by = 1, hoursAgo = 216, status = SeerrRequestStatusCode.Completed),
         SeedRequest("Tears of Steel", by = 3, hoursAgo = 96, status = SeerrRequestStatusCode.Declined),
         SeedRequest("The Matrix", by = 2, hoursAgo = 60, status = SeerrRequestStatusCode.Failed),
+    )
+
+private fun seedJobs() =
+    listOf(
+        SeerrJobDto("jellyfin-recently-added-scan", "Jellyfin recently added scan", "process", "every 5 minutes"),
+        SeerrJobDto("jellyfin-full-scan", "Jellyfin full library scan", "process", "daily"),
+        SeerrJobDto("availability-sync", "Media availability sync", "process", "every 6 hours"),
+        SeerrJobDto("download-sync", "Download sync", "command", "every minute"),
+        SeerrJobDto("image-cache-cleanup", "Image cache cleanup", "process", "daily"),
     )

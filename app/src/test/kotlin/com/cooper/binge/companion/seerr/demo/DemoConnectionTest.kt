@@ -3,6 +3,7 @@ package com.cooper.binge.companion.seerr.demo
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import com.cooper.binge.companion.seerr.auth.CarriedCredentials
 import com.cooper.binge.companion.seerr.auth.ConnectionCarrier
+import com.cooper.binge.companion.seerr.auth.ConnectionRestore
 import com.cooper.binge.companion.seerr.auth.CredentialStore
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.auth.SeerrConnectionHealth
@@ -84,7 +85,7 @@ class DemoConnectionTest {
             val demo = demoCredentials()
             connection.connect(demo.baseUrl, demo.auth).getOrThrow()
 
-            val failure = runCatchingFailure { connection.api().regions() }
+            val failure = runCatchingFailure { connection.api().plexServers() }
 
             assertEquals(SeerrError.Server, failure.toSeerrError())
         }
@@ -97,9 +98,34 @@ class DemoConnectionTest {
             val demo = demoCredentials()
             connection.connect(demo.baseUrl, demo.auth).getOrThrow()
 
-            repeat(3) { runCatchingFailure { connection.api().regions() } }
+            repeat(3) { runCatchingFailure { connection.api().plexServers() } }
 
             assertEquals(SeerrConnectionHealth.Healthy, monitor.health.value)
+        }
+
+    @Test
+    fun `starting the app with the demo saved does not carry it either`() =
+        runTest {
+            val store =
+                CredentialStore(
+                    PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("c.preferences_pb") },
+                    PlainCipher,
+                )
+            store.save(demoCredentials())
+            val carrier =
+                object : ConnectionCarrier {
+                    override suspend fun put(carried: CarriedCredentials) {
+                        this@DemoConnectionTest.carried += carried
+                    }
+
+                    override suspend fun read(): CarriedCredentials? = null
+
+                    override suspend fun clear() = Unit
+                }
+
+            ConnectionRestore(store, SeerrApiFactory(logRequests = false), carrier, backgroundScope).refreshCarrier()
+
+            assertTrue(carried.isEmpty())
         }
 
     @Test

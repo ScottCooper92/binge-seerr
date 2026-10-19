@@ -14,6 +14,7 @@ import com.binge.designsystem.component.ListItemDestination
 import com.binge.designsystem.theme.BingeSentiment
 import com.binge.designsystem.theme.fill
 import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.demo.isDemoOrigin
 import com.cooper.binge.companion.seerr.seerr.isWebUrl
 import com.cooper.binge.companion.seerr.seerr.releaseNotesUrl
 import com.cooper.binge.companion.seerr.ui.openInBrowser
@@ -32,13 +33,15 @@ internal fun connectionRows(
     showAbout: Boolean = true,
 ): List<ListItem> {
     val context = LocalContext.current
+    // The demo's address is not a page: nothing is there to open, and no other server is edited into its place.
+    val demo = connection.baseUrl.isDemoOrigin()
     return listOfNotNull(
         ListItem(
             icon = Icons.Filled.Link,
             iconTint = BingeSentiment.Info.fill(),
             label = stringResource(R.string.settings_server),
             detail = connection.baseUrl,
-            clickable = connection.baseUrl.isWebUrl(),
+            clickable = connection.baseUrl.isWebUrl() && !demo,
             destination = ListItemDestination.External,
             onClick = { context.openInBrowser(connection.baseUrl) },
         ),
@@ -75,7 +78,7 @@ internal fun connectionRows(
             label = stringResource(R.string.settings_edit_connection),
             detail = stringResource(R.string.settings_edit_connection_caption),
             onClick = onEditConnection,
-        ),
+        ).takeUnless { demo },
     )
 }
 

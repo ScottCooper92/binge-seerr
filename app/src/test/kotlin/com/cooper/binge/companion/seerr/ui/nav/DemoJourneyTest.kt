@@ -11,6 +11,7 @@ import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.HomeRoute
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
+import org.junit.Assert.assertFalse
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -99,5 +100,53 @@ class DemoJourneyTest {
             .performClick()
 
         host.awaitShowing("Parasite")
+    }
+
+    @Test
+    fun `the users section lists the accounts and opens one`() {
+        host.connectDemo()
+        host.launch(HomeRoute)
+        host.awaitShowing(host.string(R.string.hub_section_users_desc))
+        host.compose
+            .onNodeWithText(host.string(R.string.hub_section_users_desc), substring = true)
+            .performScrollTo()
+            .performClick()
+        host.awaitShowing("Jordan")
+
+        host.compose.onNodeWithText("Sam", substring = true).performClick()
+        host.awaitShowing("sam@example.com")
+    }
+
+    @Test
+    fun `settings lists the server's pages, and offers no second server to edit into the demo's place`() {
+        host.connectDemo()
+        host.launch(HomeRoute)
+        host.awaitShowing(host.string(R.string.hub_section_settings_desc))
+        host.compose
+            .onNodeWithText(host.string(R.string.hub_section_settings_desc), substring = true)
+            .performScrollTo()
+            .performClick()
+
+        host.awaitShowing(host.string(R.string.settings_about))
+        assertFalse(host.isShowing(host.string(R.string.settings_edit_connection)))
+    }
+
+    @Test
+    fun `exiting the demo asks first, then returns to the address step with nothing kept`() {
+        host.connectDemo()
+        host.launch(HomeRoute)
+        host.awaitShowing(host.string(R.string.hub_demo_exit))
+        host.compose
+            .onNodeWithText(host.string(R.string.hub_demo_exit))
+            .performScrollTo()
+            .performClick()
+        host.awaitShowing(host.string(R.string.hub_demo_exit_confirm_message))
+        host.compose
+            .onAllNodesWithText(host.string(R.string.hub_demo_exit))
+            .onLast()
+            .performClick()
+
+        host.awaitShowing(host.string(R.string.setup_try_demo))
+        assertFalse(host.isShowing(host.string(R.string.demo_indicator)))
     }
 }

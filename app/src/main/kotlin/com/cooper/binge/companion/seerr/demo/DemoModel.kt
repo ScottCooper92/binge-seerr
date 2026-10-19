@@ -1,13 +1,10 @@
 package com.cooper.binge.companion.seerr.demo
 
-import com.cooper.binge.companion.seerr.seerr.SeerrCountProbeDto
-import com.cooper.binge.companion.seerr.seerr.SeerrPageInfoDto
 import com.cooper.binge.companion.seerr.seerr.SeerrPublicSettings
-import com.cooper.binge.companion.seerr.seerr.SeerrQuotaDto
 import com.cooper.binge.companion.seerr.seerr.SeerrStatusDto
 import java.time.Instant
 
-private const val DEMO_VERSION = "3.2.0"
+internal const val DEMO_VERSION = "3.2.0"
 private const val JELLYFIN = 2
 
 /** The artwork behind a sign-in page: stills of the open films in [DEMO_TITLES]. */
@@ -44,7 +41,15 @@ internal class DemoModel(
     fun answer(call: DemoCall): DemoAnswer = routes.answer(call) ?: notInTheDemo
 
     private fun routesFor(data: DemoData): List<DemoRoute> =
-        publicRoutes(data) + data.requestRoutes() + data.mediaRoutes() + data.issueRoutes() + data.blocklistRoutes() + data.userRoutes()
+        publicRoutes(data) +
+            data.requestRoutes() +
+            data.mediaRoutes() +
+            data.issueRoutes() +
+            data.blocklistRoutes() +
+            data.userRoutes() +
+            data.settingsRoutes() +
+            data.maintenanceRoutes() +
+            lookupRoutes()
 
     private fun publicRoutes(data: DemoData): List<DemoRoute> =
         listOf(
@@ -62,10 +67,3 @@ internal class DemoModel(
             jellyfinServerName = "Demo library",
         )
 }
-
-/** The users list's total, read by the hub, and a user's quota. The users screens follow in a later change. */
-private fun DemoData.userRoutes(): List<DemoRoute> =
-    listOf(
-        route("GET", "user") { _, _ -> ok(SeerrCountProbeDto(SeerrPageInfoDto(results = users.size, pages = 1, page = 1))) },
-        route("GET", "user", "{}", "quota") { _, _ -> ok(SeerrQuotaDto()) },
-    )

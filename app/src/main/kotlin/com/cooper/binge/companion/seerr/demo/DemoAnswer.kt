@@ -65,6 +65,15 @@ internal fun route(
     handle: (DemoCall, List<String>) -> DemoAnswer,
 ) = DemoRoute(verb, pattern.toList(), handle)
 
+internal fun route(
+    verb: String,
+    pattern: List<String>,
+    handle: (DemoCall, List<String>) -> DemoAnswer,
+) = DemoRoute(verb, pattern, handle)
+
+/** [body], already JSON, as a successful answer. */
+internal fun rawOk(body: String) = DemoAnswer(HTTP_OK, body)
+
 /** The first route that serves [call], in list order, so a literal path comes before a `{}` that would also match it. */
 internal fun List<DemoRoute>.answer(call: DemoCall): DemoAnswer? =
     firstNotNullOfOrNull { route -> call.match(route.verb, route.pattern)?.let { route.handle(call, it) } }
