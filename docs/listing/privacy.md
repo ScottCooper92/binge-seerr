@@ -1,6 +1,6 @@
 # Privacy policy
 
-*Seerr Console for Binge* ("the app") is an administration console for a Seerr, Jellyseerr or
+*Seerr Companion* ("the app") is an administration console for a Seerr, Jellyseerr or
 Overseerr server that you run. This policy describes what the app stores, where it sends it, and
 what it does not do. It is written to be checked against the source code, which is public at
 https://github.com/ScottCooper92/binge-seerr.

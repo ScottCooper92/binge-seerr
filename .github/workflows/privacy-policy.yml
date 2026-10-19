@@ -80,7 +80,7 @@ jobs:
             --from=gfm \
             --to=html5 \
             --standalone \
-            --metadata pagetitle="Privacy policy - Seerr Console for Binge" \
+            --metadata pagetitle="Privacy policy - Seerr Companion" \
             --metadata lang=en \
             --output=_site/privacy/index.html
           # The point of rendering it here is that the page loads nothing from anywhere else. Fail
