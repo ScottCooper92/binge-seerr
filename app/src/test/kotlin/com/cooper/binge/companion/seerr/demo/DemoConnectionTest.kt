@@ -5,6 +5,8 @@ import com.cooper.binge.companion.seerr.auth.CarriedCredentials
 import com.cooper.binge.companion.seerr.auth.ConnectionCarrier
 import com.cooper.binge.companion.seerr.auth.CredentialStore
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
+import com.cooper.binge.companion.seerr.auth.SeerrConnectionHealth
+import com.cooper.binge.companion.seerr.auth.SeerrConnectionHealthMonitor
 import com.cooper.binge.companion.seerr.seerr.SeerrApiFactory
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.seerr.SeerrVariant
@@ -29,14 +31,14 @@ class DemoConnectionTest {
     private val carried = mutableListOf<CarriedCredentials>()
     private var cleared = 0
 
-    private fun TestScope.connection() =
+    private fun TestScope.connection(apis: SeerrApiFactory = SeerrApiFactory(logRequests = false)) =
         SeerrConnection(
             store =
                 CredentialStore(
                     PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("c.preferences_pb") },
                     PlainCipher,
                 ),
-            apis = SeerrApiFactory(logRequests = false),
+            apis = apis,
             carrier =
                 object : ConnectionCarrier {
                     override suspend fun put(carried: CarriedCredentials) {
@@ -85,6 +87,19 @@ class DemoConnectionTest {
             val failure = runCatchingFailure { connection.api().regions() }
 
             assertEquals(SeerrError.Server, failure.toSeerrError())
+        }
+
+    @Test
+    fun `endpoints the demo does not serve do not mark it unreachable`() =
+        runTest {
+            val monitor = SeerrConnectionHealthMonitor()
+            val connection = connection(SeerrApiFactory(logRequests = false, health = monitor))
+            val demo = demoCredentials()
+            connection.connect(demo.baseUrl, demo.auth).getOrThrow()
+
+            repeat(3) { runCatchingFailure { connection.api().regions() } }
+
+            assertEquals(SeerrConnectionHealth.Healthy, monitor.health.value)
         }
 
     @Test

@@ -18,7 +18,7 @@ private const val LOCAL_USER = 2
 /** `user/{id}/quota`. */
 private const val QUOTA_SEGMENTS = 3
 
-/** The sample titles shown on the sign-in screen's backdrop: public-domain and Creative Commons films. */
+/** One TMDB backdrop path, for the sign-in screen's backdrop. The demo skips that screen, so nothing shows it yet. */
 private val BACKDROPS = listOf("/tCUpMX0CXQhWx6jrJ8sGB3ZwHw3.jpg")
 
 /**
