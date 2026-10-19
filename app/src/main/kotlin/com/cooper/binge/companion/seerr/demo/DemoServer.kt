@@ -17,6 +17,9 @@ const val DEMO_ORIGIN = "https://$DEMO_HOST/"
 internal const val DEMO_COOKIE = "demo"
 internal const val DEMO_USER_ID = 1
 
+/** What the handshake names as the provider on the demo, so Binge lists it as a demo and not as a real server. */
+const val DEMO_PROVIDER_NAME = "Seerr (demo)"
+
 /** The credentials of the demo connection: a session as the demo administrator. */
 fun demoCredentials(): SeerrCredentials = SeerrCredentials(DEMO_ORIGIN, SeerrAuth.Session(DEMO_COOKIE, DEMO_USER_ID))
 

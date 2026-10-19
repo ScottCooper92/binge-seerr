@@ -189,6 +189,23 @@ departures in this file goes stale faster than it is read. There is no standing 
 stream rule: the DVR instance and override rule editors fold their pickers' choices into `uiState`
 through `ExtrasEditorUiState`.
 
+## The demo
+
+**Try the demo** on the sign-in screen runs the whole app on canned data with no server, so a reviewer with none can use
+every part of it (`docs/listing/app-access.md`). It is the `demo` package: `DemoTransport` answers every call to the reserved
+address `demo.seerr.invalid` from an in-memory `DemoModel`, before the network, in every client `SeerrApiFactory` builds. The
+screens and the exported Service call the real `SeerrApi` and cannot tell. Rules that keep it honest:
+
+- **The data is hand-authored from the app's own DTOs.** None of it is recorded from a real server, so it holds no real name,
+  address or content. A change to a DTO breaks the demo at compile time, which is the point.
+- **A write changes a later read**, until the demo is exited or the process ends. Nothing is stored. Exit is Disconnect: it clears
+  the model and the credentials.
+- **The demo is never carried off the device.** The Block Store carrier skips it, at the save and at every start.
+- **An endpoint the demo does not serve says so**: a 501 the screens already show as a server error, and that never counts against
+  the connection's health. Add a route when a screen needs one; do not make a screen special-case the demo.
+- **Nothing in the app asks "is this the demo"** except to say so: the tag, the exit wording, the Settings rows that make no sense
+  without a server, and the handshake's provider name. Behaviour does not fork.
+
 ## Gates
 
 `./gradlew build` is the whole gate, and everything below turns it red. The list is the checks

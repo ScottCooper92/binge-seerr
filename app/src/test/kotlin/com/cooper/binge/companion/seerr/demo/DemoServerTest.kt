@@ -104,7 +104,7 @@ class DemoServerTest {
         }
 
     @Test
-    fun `a title reads its status, and an unknown one is not found`() =
+    fun `a title reads its status, and one the demo has no data for is made up and can be requested`() =
         demo { api ->
             assertEquals(SeerrMediaStatusCode.Available, api.movieDetails(METROPOLIS).mediaInfo?.status)
             assertEquals(
@@ -115,7 +115,11 @@ class DemoServerTest {
                     ?.requests
                     ?.size,
             )
-            assertEquals(404, code { api.movieDetails(1) })
+            val unknown = api.movieDetails(MADE_UP)
+            assertEquals("Demo title $MADE_UP", unknown.title)
+            assertEquals(SeerrMediaStatusCode.Unknown, unknown.mediaInfo?.status)
+            api.requestMedia(SeerrRequestBody("movie", MADE_UP))
+            assertEquals(SeerrMediaStatusCode.Processing, api.movieDetails(MADE_UP).mediaInfo?.status)
         }
 
     @Test
@@ -166,5 +170,6 @@ class DemoServerTest {
         const val PARASITE = 496243
         const val METROPOLIS = 19
         const val EXPANSE = 63639
+        const val MADE_UP = 27205
     }
 }
