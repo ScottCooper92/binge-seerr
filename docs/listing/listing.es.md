@@ -53,3 +53,6 @@
 > llevar tu conexión a un dispositivo nuevo. Sin anuncios, sin cuentas propias.
 >
 > Código abierto, con licencia Apache 2.0: github.com/ScottCooper92/binge-seerr.
+>
+> Seerr Companion es una aplicación independiente. No ha sido creada por los proyectos Seerr,
+> Jellyseerr u Overseerr ni está afiliada a ellos.
