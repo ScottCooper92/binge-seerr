@@ -1003,6 +1003,10 @@
     <string name="send_address_sign_in_as">Iniciar sesión también como %1$s</string>
     <string name="send_address_sign_in_as_you">Iniciar sesión también con tu cuenta</string>
     <string name="send_address_sign_in_shared">El televisor usa tu sesión</string>
+    <string name="send_signin_confirm_title">¿Iniciar sesión en el televisor en %1$s?</string>
+    <string name="send_signin_confirm_message">El televisor llega a tu servidor por una dirección que este teléfono no usa. Continúa solo si la reconoces. El televisor usará tu sesión.</string>
+    <string name="send_signin_confirm_action">Iniciar sesión en el televisor</string>
+    <string name="send_signin_confirm_dismiss">Cancelar</string>
     <string name="setup_error_unreachable_not_local">No se pudo conectar con el servidor. Esa no es una dirección local, así que puede que este televisor no consiga llegar a ella. Prueba con una dirección de tu red doméstica.</string>
     <string name="tv_home">Inicio</string>
     <string name="tv_hub_health_checking">Comprobando el servidor…</string>

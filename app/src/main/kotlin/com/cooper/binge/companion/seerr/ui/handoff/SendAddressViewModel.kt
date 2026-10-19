@@ -13,6 +13,7 @@ import com.cooper.binge.companion.seerr.handoff.HandOffAddressMemory
 import com.cooper.binge.companion.seerr.handoff.HandOffCredentials
 import com.cooper.binge.companion.seerr.handoff.HandOffSignInModes
 import com.cooper.binge.companion.seerr.handoff.HandOffStatus
+import com.cooper.binge.companion.seerr.handoff.ServerIdReader
 import com.cooper.binge.companion.seerr.handoff.TvHandOffLinks
 import com.cooper.binge.companion.seerr.handoff.TvHandOffTarget
 import com.cooper.binge.companion.seerr.handoff.TvSignInClient
@@ -54,6 +55,7 @@ class SendAddressViewModel
         private val sender: AddressSender,
         private val tv: TvSignInClient,
         private val applicationUrl: ApplicationUrlReader,
+        private val serverId: ServerIdReader,
         private val memory: HandOffAddressMemory,
         @IoDispatcher private val dispatcher: CoroutineDispatcher,
         @Assisted link: String?,
@@ -74,6 +76,9 @@ class SendAddressViewModel
 
         /** The connected server's own address, which is also what the remembered addresses are filed under. */
         private var server: String? = null
+
+        /** The connected server's own name for itself, read with [server]: what tells two addresses of one server from two servers. */
+        private var serverIdentity: String? = null
 
         /** The address this phone sent the TV, if it sent one: the TV has to report the same one before anything sealed goes to it (#1029). */
         @Volatile
@@ -124,6 +129,7 @@ class SendAddressViewModel
             // is the point, so it does not need this phone to be signed in anywhere.
             if (connected == null && target.key == null) return _uiState.update { SendAddressUiState.NotConnected }
             server = connected
+            serverIdentity = if (connected != null) serverId.read() else null
             // Only for a code this app scanned: a link a web page can fire carries a key of its own choosing, and the
             // session must not go to whoever wrote it.
             offer = if (connected != null && scanned) signInOffer(target) else null
@@ -228,6 +234,25 @@ class SendAddressViewModel
 
         /** Seals this phone's session for the TV on its sign-in step and sends it: the one-tap way to carry on there. */
         fun sendSession() {
+            val step = (_uiState.value as? SendAddressUiState.SigningIn)?.step as? SignInStep.Form ?: return
+            if (step.isSending || step.sessionOffer == null) return
+            // An address that is not this phone's own is asked about first, and nothing is sealed until it is answered.
+            if (step.sessionOffer.confirmAddress != null) return _uiState.updateForm { it.copy(confirmingSession = true) }
+            sealSessionForTv()
+        }
+
+        /**
+         * The user answered the question [sendSession] asked about the TV's address. Only a yes seals the session, and only
+         * once asked; a no goes back to the form with nothing sent.
+         */
+        fun answerSessionConfirm(confirmed: Boolean) {
+            val step = (_uiState.value as? SendAddressUiState.SigningIn)?.step as? SignInStep.Form ?: return
+            if (!step.confirmingSession) return
+            _uiState.updateForm { it.copy(confirmingSession = false) }
+            if (confirmed) sealSessionForTv()
+        }
+
+        private fun sealSessionForTv() {
             val target = target ?: return
             val state = _uiState.value as? SendAddressUiState.SigningIn ?: return
             val step = state.step as? SignInStep.Form ?: return
@@ -335,15 +360,18 @@ class SendAddressViewModel
             _uiState.update { state ->
                 val signingIn = state as? SendAddressUiState.SigningIn ?: return@update state
                 val current = signingIn.step as? SignInStep.Form
-                signingIn.copy(step = current.followedTo(status, server, modes, sessionOfferFor(address), shown))
+                signingIn.copy(
+                    step =
+                        current.followedTo(
+                            status,
+                            server,
+                            modes,
+                            sessionOfferFor(offer, sent != null, address, status.serverId, this.server, serverIdentity),
+                            shown,
+                        ),
+                )
             }
         }
-
-        /**
-         * This phone's session goes only to a TV signing in where this phone sent it, or, for a TV that had its address
-         * already, to this phone's own server (#1029). Anywhere else the session is no use, and would reach whoever runs it.
-         */
-        private fun sessionOfferFor(address: String): SignInOffer? = offer?.takeIf { sent != null || address.sameServerAs(server) }
 
         private companion object {
             /** States a TV can be in that mean the address is done with: a scan then carries on rather than starting over. */

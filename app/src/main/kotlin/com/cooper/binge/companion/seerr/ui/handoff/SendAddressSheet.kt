@@ -54,6 +54,7 @@ internal data class SendAddressActions(
     val onEditSignIn: ((SignInForm.() -> SignInForm) -> Unit) = {},
     val onSendSignIn: () -> Unit = {},
     val onSendSession: () -> Unit = {},
+    val onAnswerSessionConfirm: (Boolean) -> Unit = {},
     val onClose: () -> Unit = {},
 )
 

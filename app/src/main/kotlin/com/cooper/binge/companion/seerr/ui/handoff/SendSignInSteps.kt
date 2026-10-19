@@ -5,6 +5,7 @@ import com.cooper.binge.companion.seerr.handoff.HandOffCredentials
 import com.cooper.binge.companion.seerr.handoff.HandOffKey
 import com.cooper.binge.companion.seerr.handoff.HandOffStatus
 import com.cooper.binge.companion.seerr.handoff.TvHandOffTarget
+import com.cooper.binge.companion.seerr.handoff.normaliseServerAddress
 import com.cooper.binge.companion.seerr.seerr.SeerrSignInMode
 import com.cooper.binge.companion.seerr.ui.SignInForm
 import kotlinx.serialization.encodeToString
@@ -70,3 +71,28 @@ internal fun TvHandOffTarget.sealSession(
         Json.encodeToString(HandOffCredentials(mode = HAND_OFF_SESSION_MODE, session = session)).toByteArray(Charsets.UTF_8),
         context = HandOffKey.context(token, address),
     )
+
+/**
+ * This phone's session goes only to a TV signing in where this phone sent it ([sentByThisPhone]), or, for a TV that had its
+ * address already, to this phone's own server (#1029). Anywhere else the session is no use, and would reach whoever runs it.
+ *
+ * A server's id is its own word for itself, which anyone who can reach it can read and another server can repeat, so it never
+ * decides alone. Ids that differ withhold the session whatever the addresses say. The same address needs no more. The same id
+ * at another address (a home network against a VPN) is offered only with the user's confirm of the TV's address, and sealed
+ * after it. Without an id on both sides, the addresses decide.
+ */
+internal fun sessionOfferFor(
+    offer: SignInOffer?,
+    sentByThisPhone: Boolean,
+    address: String,
+    tvServerId: String?,
+    server: String?,
+    serverId: String?,
+): SignInOffer? {
+    if (offer == null) return null
+    if (sentByThisPhone) return offer
+    val theirs = tvServerId?.takeIf { it.isNotBlank() }
+    if (theirs != null && serverId != null && theirs != serverId) return null
+    if (server != null && normaliseServerAddress(address) == normaliseServerAddress(server)) return offer
+    return offer.takeIf { theirs != null && theirs == serverId }?.copy(confirmAddress = address)
+}

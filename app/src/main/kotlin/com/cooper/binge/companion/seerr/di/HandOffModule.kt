@@ -13,6 +13,8 @@ import com.cooper.binge.companion.seerr.handoff.LanAddressHandOffs
 import com.cooper.binge.companion.seerr.handoff.OkHttpAddressSender
 import com.cooper.binge.companion.seerr.handoff.OkHttpTvSignInClient
 import com.cooper.binge.companion.seerr.handoff.ProfileApplicationUrlReader
+import com.cooper.binge.companion.seerr.handoff.ProfileServerIdReader
+import com.cooper.binge.companion.seerr.handoff.ServerIdReader
 import com.cooper.binge.companion.seerr.handoff.TvSignInClient
 import dagger.Binds
 import dagger.Module
@@ -39,6 +41,9 @@ internal abstract class HandOffModule {
 
     @Binds
     abstract fun signIn(impl: OkHttpTvSignInClient): TvSignInClient
+
+    @Binds
+    abstract fun serverId(impl: ProfileServerIdReader): ServerIdReader
 
     @Binds
     abstract fun applicationUrl(impl: ProfileApplicationUrlReader): ApplicationUrlReader

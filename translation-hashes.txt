@@ -417,6 +417,10 @@ app:send_pin_label  b92942282245
 app:send_pin_wrong  0a80fb522a2e
 app:send_signin_address  d498da823c43
 app:send_signin_confirm  b36b97b9ea5e
+app:send_signin_confirm_action  5f62f40a9df9
+app:send_signin_confirm_dismiss  19766ed6ccb2
+app:send_signin_confirm_message  2cd256d0b9e7
+app:send_signin_confirm_title  a9a3fa735a5b
 app:send_signin_connected  fa1da6d9b5d6
 app:send_signin_continue_as  8c3ac09ff743
 app:send_signin_continue_as_you  69d7ffc62e45

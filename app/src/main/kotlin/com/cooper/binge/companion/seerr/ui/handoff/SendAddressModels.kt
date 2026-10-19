@@ -75,6 +75,11 @@ sealed interface SendAddressUiState {
 /** Who the TV would be signed in as: [userName] is null when the server didn't say, and the copy says "you" instead. */
 data class SignInOffer(
     val userName: String?,
+    /**
+     * Set when the TV reaches this phone's server by another address (a home network against a VPN): the TV's address as
+     * it reports it, which the user must confirm before the session is sealed for it (#1029).
+     */
+    val confirmAddress: String? = null,
 )
 
 /** Where the TV is, as the phone's sign-in sheet shows it. */
@@ -112,6 +117,8 @@ sealed interface SignInStep {
         val sessionOffer: SignInOffer? = null,
         /** Whether the attempt in flight is the session rather than the typed form. */
         val sendingSession: Boolean = false,
+        /** Whether the user is being asked to confirm the TV's address before the session goes ([SignInOffer.confirmAddress]). */
+        val confirmingSession: Boolean = false,
         /**
          * The address the TV says it is signing in to, shown when this phone did not send one (#1085). The server's name
          * comes from the server itself, so this is what tells the user where their password goes.

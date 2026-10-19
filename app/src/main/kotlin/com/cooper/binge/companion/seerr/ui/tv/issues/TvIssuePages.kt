@@ -117,7 +117,7 @@ internal fun ColumnScope.TvIssuePhonePage(
     nav: TvSideSheetNav,
 ) {
     TvSideSheetTitle(detail.item.title ?: stringResource(detail.item.mediaType.mediaTypeLabelRes()))
-    TvPhoneCode(url = detail.webUrl, body = stringResource(R.string.tv_issue_phone_body, detail.serverName), modifier = nav.row(KEY_CODE))
+    TvPhoneCode(url = detail.phoneUrl, body = stringResource(R.string.tv_issue_phone_body, detail.serverName), modifier = nav.row(KEY_CODE))
 }
 
 private val PARAGRAPH = Regex("\n\\s*\n")

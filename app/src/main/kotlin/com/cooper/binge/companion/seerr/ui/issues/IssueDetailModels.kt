@@ -34,6 +34,8 @@ data class IssueDetail(
     val canDelete: Boolean,
     /** The issue in the server's web client, for the hand-off. */
     val webUrl: String,
+    /** The same page written for another device to open, as the television's code is: see `phoneWebRoot`. */
+    val phoneUrl: String = webUrl,
     val mediaServerUrl: String?,
     val serviceUrl: String?,
     /** The connected user's name, which a pending comment is shown under. */

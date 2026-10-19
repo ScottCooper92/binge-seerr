@@ -120,6 +120,7 @@ class SendAddressViewModelTest {
         link: String?,
         saved: SeerrCredentials? = null,
         applicationUrl: String? = null,
+        phoneServerId: String? = null,
         scanned: Boolean = false,
         // A keyed link asks for the TV's PIN first; most tests are about what comes after, so they get past it here.
         enterPin: Boolean = true,
@@ -136,6 +137,7 @@ class SendAddressViewModelTest {
                 sender = sender,
                 tv = tv,
                 applicationUrl = { applicationUrl },
+                serverId = { phoneServerId },
                 memory = memory,
                 dispatcher = mainDispatcherRule.dispatcher,
                 link = link,
@@ -510,6 +512,110 @@ class SendAddressViewModelTest {
             vm.uiState.first { ((it as? SendAddressUiState.SigningIn)?.step as? SignInStep.Form)?.awaiting != null }
             assertEquals(listOf(HandOffCredentials(mode = HAND_OFF_SESSION_MODE, session = "s1d")), tv.sentCredentials)
             assertEquals(listOf("http://seerr.lan:5055/"), tv.sealedFor)
+        }
+
+    private val tailnet = SeerrCredentials("https://seerr.tail1234.ts.net/", SeerrAuth.Session("s1d", 4))
+
+    private fun tvOn(
+        address: String,
+        serverId: String?,
+    ) {
+        tv.statuses =
+            mutableListOf(
+                HandOffStatus(HandOffStatus.SIGN_IN, "Living room", listOf("Local"), address = address, serverId = serverId),
+            )
+    }
+
+    private suspend fun SendAddressViewModel.form(): SignInStep.Form =
+        (
+            uiState.first {
+                it is SendAddressUiState.SigningIn && it.step is SignInStep.Form
+            } as SendAddressUiState.SigningIn
+        ).step as SignInStep.Form
+
+    @Test
+    fun `the same server by another address is offered the session, after a confirm naming the TV's address`() =
+        runTest {
+            tvOn("http://192.168.1.5:5055/", serverId = "abc")
+            val vm = viewModel(scannedLink, tailnet, phoneServerId = "abc", scanned = true)
+
+            assertEquals("http://192.168.1.5:5055/", vm.form().sessionOffer?.confirmAddress)
+
+            vm.sendSession()
+            assertTrue("the tap asks first", vm.form().confirmingSession)
+            assertTrue("nothing is sealed before the answer", tv.sentCredentials.isEmpty())
+
+            vm.answerSessionConfirm(true)
+            vm.uiState.first { ((it as? SendAddressUiState.SigningIn)?.step as? SignInStep.Form)?.awaiting != null }
+            assertEquals(listOf(HandOffCredentials(mode = HAND_OFF_SESSION_MODE, session = "s1d")), tv.sentCredentials)
+            assertEquals(listOf("http://192.168.1.5:5055/"), tv.sealedFor)
+        }
+
+    @Test
+    fun `a session to an address that is not the phone's own never seals without the confirm`() =
+        runTest {
+            tvOn("http://192.168.1.5:5055/", serverId = "abc")
+            val vm = viewModel(scannedLink, tailnet, phoneServerId = "abc", scanned = true)
+            vm.form()
+
+            // Confirming before being asked is nothing, and neither is asking twice.
+            vm.answerSessionConfirm(true)
+            vm.sendSession()
+            vm.sendSession()
+            assertTrue(tv.sentCredentials.isEmpty())
+
+            vm.answerSessionConfirm(false)
+            assertFalse(vm.form().confirmingSession)
+            vm.answerSessionConfirm(true)
+            assertTrue(tv.sentCredentials.isEmpty())
+        }
+
+    @Test
+    fun `the same address keeps the one-tap session with no confirm`() =
+        runTest {
+            tvOn("http://seerr.lan:5055/", serverId = "abc")
+            val vm =
+                viewModel(
+                    scannedLink,
+                    SeerrCredentials("http://seerr.lan:5055/", SeerrAuth.Session("s1d", 4)),
+                    phoneServerId = "abc",
+                    scanned = true,
+                )
+
+            assertNull(vm.form().sessionOffer?.confirmAddress)
+            vm.sendSession()
+            vm.uiState.first { ((it as? SendAddressUiState.SigningIn)?.step as? SignInStep.Form)?.awaiting != null }
+            assertEquals(1, tv.sentCredentials.size)
+        }
+
+    @Test
+    fun `two ids that differ withhold the session, whatever the addresses say`() =
+        runTest {
+            listOf("http://192.168.1.5:5055/", "http://seerr.lan:5055/").forEach { address ->
+                tvOn(address, serverId = "other")
+                val vm =
+                    viewModel(
+                        scannedLink,
+                        SeerrCredentials("http://seerr.lan:5055/", SeerrAuth.Session("s1d", 4)),
+                        phoneServerId = "abc",
+                        scanned = true,
+                    )
+
+                assertNull(address, vm.form().sessionOffer)
+                vm.sendSession()
+                vm.answerSessionConfirm(true)
+                assertTrue(address, tv.sentCredentials.isEmpty())
+            }
+        }
+
+    @Test
+    fun `an id known to one side only leaves the addresses to decide`() =
+        runTest {
+            tvOn("http://192.168.1.5:5055/", serverId = null)
+            assertNull(viewModel(scannedLink, tailnet, phoneServerId = "abc", scanned = true).form().sessionOffer)
+
+            tvOn("http://192.168.1.5:5055/", serverId = "abc")
+            assertNull(viewModel(scannedLink, tailnet, phoneServerId = null, scanned = true).form().sessionOffer)
         }
 
     @Test

@@ -64,6 +64,7 @@ internal fun SetupUiState.toHandOffProgress(
                 modes = server.modes.filter { it in HandOffSignInModes }.map { it.name },
                 failed = failed,
                 attempt = attempts,
+                serverId = server.instanceId,
             )
         is SetupUiState.Connected -> HandOffProgress.Connected
     }
@@ -80,6 +81,7 @@ internal fun SeerrServerPreview.toSetupServer(): SetupServer {
         modes = modes,
         canResetPassword = settings.emailEnabled && SeerrSignInMode.Local in modes,
         backdropUrl = backdropUrls.firstOrNull(),
+        instanceId = profile.instanceId,
     )
 }
 
