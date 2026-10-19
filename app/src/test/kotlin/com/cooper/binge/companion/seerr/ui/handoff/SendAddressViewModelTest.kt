@@ -677,6 +677,23 @@ class SendAddressViewModelTest {
         }
 
     @Test
+    fun `a question about the address the TV left is dropped when it moves`() =
+        runTest {
+            tvOn("http://192.168.1.5:5055/", serverId = "abc")
+            val vm = viewModel(scannedLink, tailnet, phoneServerId = "abc", scanned = true)
+            vm.form()
+            vm.sendSession()
+            assertEquals("http://192.168.1.5:5055/", vm.form().confirmingAddress)
+
+            tvOn("http://192.168.1.77:5055/", serverId = "abc")
+            awaitPollsAfterChange()
+
+            assertNull(vm.form().confirmingAddress)
+            assertEquals("http://192.168.1.77:5055/", vm.form().address)
+            assertEquals("http://192.168.1.77:5055/", vm.form().sessionOffer?.confirmAddress)
+        }
+
+    @Test
     fun `the same address keeps the one-tap session with no confirm`() =
         runTest {
             tvOn("http://seerr.lan:5055/", serverId = "abc")
