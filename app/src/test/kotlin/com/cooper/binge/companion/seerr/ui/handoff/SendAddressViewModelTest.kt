@@ -42,8 +42,9 @@ import org.junit.Test
 import org.junit.rules.TemporaryFolder
 
 private const val TOKEN = "k7m2pqx4"
-private const val MAX_CLOCK_STEPS = 50
+private const val MAX_CLOCK_STEPS = 400
 private const val POLL_STEP_MILLIS = 1_500L
+private const val REAL_STEP_MILLIS = 5L
 private const val LINK = "seerr-companion://tv-handoff?to=192.168.86.53:41234&token=$TOKEN"
 
 /**
@@ -545,6 +546,8 @@ class SendAddressViewModelTest {
             if (tv.polls.get() >= before + 2) return
             advanceTimeBy(POLL_STEP_MILLIS)
             runCurrent()
+            // The poll loop resumes on a real IO thread after its DataStore reads: give it real time to reach its next delay.
+            Thread.sleep(REAL_STEP_MILLIS)
         }
         fail("the phone did not poll twice")
     }
@@ -633,6 +636,44 @@ class SendAddressViewModelTest {
 
             assertTrue(tv.sentCredentials.isEmpty())
             assertNull(vm.form().sessionOffer)
+        }
+
+    @Test
+    fun `a TV that moves to a server with another id before the tap is offered nothing and sealed nothing`() =
+        runTest {
+            tvOn("http://192.168.1.5:5055/", serverId = "abc")
+            val vm = viewModel(scannedLink, tailnet, phoneServerId = "abc", scanned = true)
+            vm.form()
+
+            tvOn("http://192.168.1.77:5055/", serverId = "other")
+            awaitPollsAfterChange()
+            assertNull(vm.form().sessionOffer)
+            assertEquals("http://192.168.1.77:5055/", vm.form().address)
+
+            vm.sendSession()
+            vm.answerSessionConfirm(true)
+            assertTrue(tv.sentCredentials.isEmpty())
+        }
+
+    @Test
+    fun `a TV that moves from the phone's own address to the same server elsewhere is asked about first`() =
+        runTest {
+            tvOn("http://seerr.lan:5055/", serverId = "abc")
+            val vm =
+                viewModel(
+                    scannedLink,
+                    SeerrCredentials("http://seerr.lan:5055/", SeerrAuth.Session("s1d", 4)),
+                    phoneServerId = "abc",
+                    scanned = true,
+                )
+            assertNull(vm.form().sessionOffer?.confirmAddress)
+
+            tvOn("http://192.168.1.77:5055/", serverId = "abc")
+            awaitPollsAfterChange()
+            vm.sendSession()
+
+            assertEquals("http://192.168.1.77:5055/", vm.form().confirmingAddress)
+            assertTrue("nothing is sealed before the answer", tv.sentCredentials.isEmpty())
         }
 
     @Test

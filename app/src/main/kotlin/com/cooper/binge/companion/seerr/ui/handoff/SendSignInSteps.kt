@@ -22,7 +22,7 @@ import kotlinx.serialization.json.Json
 
 /**
  * The form for the TV's sign-in step, from the one on screen ([this], null if none): a fresh one, this one marked
- * refused once the TV has turned down what it sent, or this one as it is.
+ * refused once the TV has turned down what it sent, this one moved to the address the TV is at now, or this one as it is.
  */
 internal fun SignInStep.Form?.followedTo(
     status: HandOffStatus,
@@ -42,6 +42,9 @@ internal fun SignInStep.Form?.followedTo(
                 // A session the TV turned down won't do better a second time.
                 sessionOffer = this.sessionOffer.takeUnless { sendingSession },
             )
+        // The TV moved to another address: what the form names and the session it offers are for the address it is at now.
+        address != null && address != this.address && !isSending ->
+            copy(address = address, sessionOffer = sessionOffer, confirmingAddress = null)
         else -> this
     }
 

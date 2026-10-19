@@ -168,15 +168,7 @@ class SendAddressViewModel
         private suspend fun sharedSession(): String? = (attempt { connection.current() }.getOrNull()?.auth as? SeerrAuth.Session)?.cookie
 
         fun chooseSignIn(chosen: Boolean) =
-            _uiState.updateReady {
-                if (it.isSending ||
-                    it.signIn == null
-                ) {
-                    it
-                } else {
-                    it.copy(signInChosen = chosen)
-                }
-            }
+            _uiState.updateReady { if (it.isSending || it.signIn == null) it else it.copy(signInChosen = chosen) }
 
         /** The field changed, by typing or by a suggestion; the note under it follows. */
         fun editAddress(value: String) = _uiState.updateReady { if (it.isSending) it else it.copy(address = value, failed = false) }
@@ -241,7 +233,9 @@ class SendAddressViewModel
             if (step.isSending || step.sessionOffer == null) return
             // An address that is not this phone's own is asked about first, and nothing is sealed until it is answered.
             val address = signingInTo ?: return
-            if (step.sessionOffer.confirmAddress != null) return _uiState.updateForm { it.copy(confirmingAddress = address) }
+            // Worked out for the address being sealed now, not the one the form first showed: the TV may have moved since.
+            val offered = sessionOfferFor(offer, sent != null, address, tvServerId, server, serverIdentity) ?: return
+            if (offered.confirmAddress != null) return _uiState.updateForm { it.copy(confirmingAddress = address) }
             sealSessionForTv(address)
         }
 
