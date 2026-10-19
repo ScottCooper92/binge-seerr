@@ -79,26 +79,16 @@ internal class DemoData(
     fun now(): Instant = clock()
 
     /**
-     * The title for a TMDB id. Binge can ask about any film, so one the demo has no data for is made up on first use, named
-     * for its id and with no artwork, and then behaves like the rest: it can be requested, and its status follows its requests.
+     * The title for a TMDB id. Binge can ask about any film, so one the demo has no data for is made up on first use: named
+     * from a short table of well-known titles, or "Requested title". It then behaves like the rest: it can be requested, and
+     * its status follows its requests.
      */
     fun titleFor(
         mediaType: String,
         tmdbId: Int,
     ): DemoTitle =
         DEMO_TITLES.firstOrNull { it.tmdbId == tmdbId && it.mediaType == mediaType }
-            ?: madeUp.getOrPut(mediaType to tmdbId) {
-                DemoTitle(
-                    resources.nextId(),
-                    tmdbId,
-                    mediaType,
-                    "Demo title $tmdbId",
-                    year = 0,
-                    overview = "",
-                    poster = "",
-                    seasons = if (mediaType == TV_TYPE) MADE_UP_SEASONS else 0,
-                )
-            }
+            ?: madeUp.getOrPut(mediaType to tmdbId) { madeUpTitle(resources.nextId(), mediaType, tmdbId) }
 
     fun titleForMedia(mediaId: Int): DemoTitle? = (DEMO_TITLES + madeUp.values).firstOrNull { it.mediaId == mediaId }
 
@@ -268,3 +258,21 @@ private fun seedJobs() =
         SeerrJobDto("download-sync", "Download sync", "command", "every minute"),
         SeerrJobDto("image-cache-cleanup", "Image cache cleanup", "process", "daily"),
     )
+
+private fun madeUpTitle(
+    mediaId: Int,
+    mediaType: String,
+    tmdbId: Int,
+): DemoTitle {
+    val known = KNOWN_TITLES.firstOrNull { it.tmdbId == tmdbId && it.mediaType == mediaType }
+    return DemoTitle(
+        mediaId = mediaId,
+        tmdbId = tmdbId,
+        mediaType = mediaType,
+        title = known?.title ?: "Requested title",
+        year = known?.year ?: 0,
+        overview = "",
+        poster = known?.poster.orEmpty(),
+        seasons = if (mediaType == TV_TYPE) MADE_UP_SEASONS else 0,
+    )
+}

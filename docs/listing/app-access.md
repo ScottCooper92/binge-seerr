@@ -33,8 +33,8 @@ On a television the same screens run with the remote, and **Try the demo** is at
 - It does not reach any server, so signing in with Plex or Jellyfin and linking a Plex or Jellyfin account
   are not in it, and a download server or notification agent "test" always passes. A screen that needs
   something the demo lacks says it is not available in the demo.
-- Titles outside the sample set can still be requested from Binge. They are named for their id and have no
-  poster.
+- Titles outside the sample set can still be requested from Binge. A well-known one keeps its name and
+  poster from a short built-in list; any other is called "Requested title" and has no poster.
 - Nothing is stored beyond the session: the sample data is rebuilt each time the demo starts.
 
 ## Keeping it true

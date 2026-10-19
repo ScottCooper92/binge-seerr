@@ -116,7 +116,8 @@ class DemoServerTest {
                     ?.size,
             )
             val unknown = api.movieDetails(MADE_UP)
-            assertEquals("Demo title $MADE_UP", unknown.title)
+            assertEquals("Inception", unknown.title)
+            assertEquals("Requested title", api.movieDetails(NOT_A_TITLE).title)
             assertEquals(SeerrMediaStatusCode.Unknown, unknown.mediaInfo?.status)
             api.requestMedia(SeerrRequestBody("movie", MADE_UP))
             assertEquals(SeerrMediaStatusCode.Processing, api.movieDetails(MADE_UP).mediaInfo?.status)
@@ -171,5 +172,6 @@ class DemoServerTest {
         const val METROPOLIS = 19
         const val EXPANSE = 63639
         const val MADE_UP = 27205
+        const val NOT_A_TITLE = 1
     }
 }
