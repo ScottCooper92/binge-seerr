@@ -112,7 +112,7 @@ class DemoCompanionTest {
         }
 
     @Test
-    fun `a pending request is approved through the contract, and a report is filed`() =
+    fun `a pending request is approved through the contract, and a report on an available title is accepted`() =
         runTest {
             val stub = demoStub()
             val pending = stub.getStatus(GetStatusRequest.newBuilder().setMedia(movie(SINTEL)).build()).status
