@@ -217,6 +217,9 @@ touching `ci.yml`, because that job excludes tasks rather than listing them.
   PNG. The screenshot plugin does not wire itself into `check` the way ktlint and AGP's lint do, so
   `app/build.gradle.kts` does it by hand; a local `build` and a CI build therefore ask the same
   question.
+- `compileDebugAndroidTestKotlin` — the instrumentation tests no longer compile against the code and the
+  contracts. The device lane runs them on `main`, so without this a break there is found five commits late.
+  It compiles them and runs none.
 - `checkGrpcAlignment` — an `io.grpc` module on the release or unit-test runtime classpath that
   resolved to a version other than the catalog's `grpc`. The SDK brings `grpc-binder` at
   binge-companions' catalog version, so a `grpc` bump here needs the `binge-companions` submodule
