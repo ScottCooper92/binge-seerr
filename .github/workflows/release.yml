@@ -1,14 +1,20 @@
 name: Release
 
-# Pushing a version tag (`git tag v0.2.0 && git push origin v0.2.0`) builds a signed release bundle
-# and attaches it, with the R8 mapping, to a GitHub Release for that tag. Publishing to Play is a
-# separate step that arrives with the Play Console app and its service account; until then the
-# bundle is uploaded by hand.
+# Pushing a version tag (`git tag v0.2.0 && git push origin v0.2.0`) builds a signed release bundle,
+# attaches it, with the R8 mapping, to a GitHub Release for that tag, and uploads it to Play's
+# internal track as a draft.
+#
+# The upload is a draft because the app is not published yet, and Play's API refuses any other status
+# for an unpublished app. Once the first review has passed, switch `status` to `completed` (#1695).
+#
+# Play's "what's new" notes live in distribution/whatsnew/. A note over Play's 500-character limit
+# fails the run at the start, by .github/scripts/check-whats-new.sh, before anything is built.
 #
 # The keystore is the upload key, held in secrets and never in the repository:
 #   RELEASE_KEYSTORE_BASE64  base64 -w0 release.keystore
 #   RELEASE_STORE_PASSWORD, RELEASE_KEY_ALIAS, RELEASE_KEY_PASSWORD
-# app/build.gradle.kts reads the four RELEASE_* values from the environment.
+# app/build.gradle.kts reads the four RELEASE_* values from the environment. The Play upload reads the
+# service account's key from PLAY_SERVICE_ACCOUNT_JSON.
 
 on:
   push:
@@ -28,6 +34,9 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Check the what's new notes
+        run: .github/scripts/check-whats-new.sh distribution/whatsnew build/play-whatsnew
+
       - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
         with:
           distribution: temurin
@@ -35,8 +44,11 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6
 
+      # The screenshot comparison is left out: ci.yml has already run it on the tagged commit, and on a
+      # hosted runner it runs out of memory (v0.1.0's run was cancelled in :app:validateDebugScreenshotTest).
+      # Lint, the unit tests, coverage and the instrumentation-test compile stay.
       - name: Verify
-        run: ./gradlew build
+        run: ./gradlew build -x :app:validateDebugScreenshotTest
 
       - name: Derive the version from the tag
         shell: bash
@@ -104,3 +116,16 @@ jobs:
           app/build/outputs/bundle/release/app-release.aab
           app/build/outputs/mapping/release/mapping.txt
           --title "$GITHUB_REF_NAME" --generate-notes
+
+      # The app is not published yet, so Play accepts only a draft (#1695 switches this to `completed`).
+      # Last, so a Play failure cannot withhold the bundle from the GitHub Release.
+      - name: Upload to Play's internal track
+        uses: r0adkll/upload-google-play@e738b9dd8f2476ea806d921b64aacd24f34515a5 # v1.1.5
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: com.cooper.binge.companion.seerr
+          releaseFiles: app/build/outputs/bundle/release/app-release.aab
+          mappingFile: app/build/outputs/mapping/release/mapping.txt
+          whatsNewDirectory: build/play-whatsnew
+          tracks: internal
+          status: draft
