@@ -46,6 +46,8 @@ data class SetupServer(
     val modes: List<SeerrSignInMode>,
     val canResetPassword: Boolean,
     val backdropUrl: String?,
+    /** [com.cooper.binge.companion.seerr.seerr.SeerrServerProfile.instanceId]: what names this server whatever address reaches it. */
+    val instanceId: String? = null,
 )
 
 /** The sign-in step's fields. Secrets live here only until the attempt finishes. */

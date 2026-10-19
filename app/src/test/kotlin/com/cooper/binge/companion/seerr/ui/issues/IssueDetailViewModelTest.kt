@@ -174,6 +174,29 @@ class IssueDetailViewModelTest {
         }
 
     @Test
+    fun `the code for a phone is written under the application url, and the page's own link stays on the address in use`() =
+        runTest {
+            server(ADMIN)
+            serve("* /api/v1/settings/public", """{"mediaServerType":2,"applicationUrl":"https://seerr.tail1234.ts.net/"}""")
+            val vm = viewModel()
+
+            val detail = vm.awaitReady().detail
+
+            assertEquals(seerr.url("/") + "issues/31", detail.webUrl)
+            assertEquals("https://seerr.tail1234.ts.net/issues/31", detail.phoneUrl)
+        }
+
+    @Test
+    fun `the code for a phone falls back to the address in use when the application url is blank or malformed`() =
+        runTest {
+            server(ADMIN)
+            serve("* /api/v1/settings/public", """{"mediaServerType":2,"applicationUrl":"seerr.example.com"}""")
+            val vm = viewModel()
+
+            assertEquals(seerr.url("/") + "issues/31", vm.awaitReady().detail.phoneUrl)
+        }
+
+    @Test
     fun `the page reads as the title, the report, the thread with its authors, and what a manager may do`() =
         runTest {
             server(ADMIN)

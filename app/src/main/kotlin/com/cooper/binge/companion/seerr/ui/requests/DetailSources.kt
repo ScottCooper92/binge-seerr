@@ -19,6 +19,7 @@ import com.cooper.binge.companion.seerr.seerr.displayString
 import com.cooper.binge.companion.seerr.seerr.downloadFraction
 import com.cooper.binge.companion.seerr.seerr.etaMinutes
 import com.cooper.binge.companion.seerr.seerr.isWebUrl
+import com.cooper.binge.companion.seerr.seerr.phoneWebRoot
 import com.cooper.binge.companion.seerr.seerr.toAvatarUrl
 import com.cooper.binge.companion.seerr.seerr.toEpochMillisOrNull
 import com.cooper.binge.companion.seerr.seerr.toTmdbBackdropUrl
@@ -112,6 +113,7 @@ internal class DetailSources(
             mediaId = dto.media.id,
             canReportIssue = profile.hasIssues && permissions.canReportIssues && dto.media.id != null,
             webUrl = webRoot + dto.media.mediaType + "/" + dto.media.tmdbId,
+            phoneUrl = profile.phoneWebRoot(webRoot) + dto.media.mediaType + "/" + dto.media.tmdbId,
             serverInstanceId = profile.instanceId,
             mediaServerUrl = preferred(dto.media.mediaUrl, dto.media.mediaUrl4k),
             serviceUrl = preferred(dto.media.serviceUrl, dto.media.serviceUrl4k),

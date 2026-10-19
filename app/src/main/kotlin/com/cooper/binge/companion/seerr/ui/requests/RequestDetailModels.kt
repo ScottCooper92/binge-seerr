@@ -174,6 +174,8 @@ data class RequestDetail(
     val canReportIssue: Boolean,
     /** The title in the server's web client, for the hand-off until Binge's own arrives. */
     val webUrl: String,
+    /** The same page written for another device to open, as the television's code is: see `phoneWebRoot`. */
+    val phoneUrl: String = webUrl,
     /** The server's own name for itself (see [com.cooper.binge.companion.seerr.seerr.SeerrServerProfile.instanceId]), for the code a phone scans. */
     val serverInstanceId: String? = null,
     val mediaServerUrl: String?,

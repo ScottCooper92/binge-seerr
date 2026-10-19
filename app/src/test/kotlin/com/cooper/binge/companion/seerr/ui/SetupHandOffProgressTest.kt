@@ -3,8 +3,12 @@ package com.cooper.binge.companion.seerr.ui
 import com.cooper.binge.companion.seerr.handoff.HandOffProgress
 import com.cooper.binge.companion.seerr.handoff.HandOffStatus
 import com.cooper.binge.companion.seerr.handoff.toStatus
+import com.cooper.binge.companion.seerr.seerr.SeerrVariant
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Test
 
 /** What the phone's page hears about an address that waits on the TV: its plain-HTTP opt-in (#907), or its user going on (#1084). */
@@ -40,5 +44,34 @@ class SetupHandOffProgressTest {
         val failed = lan.copy(error = SetupError.Unreachable)
         assertFalse(failed.awaitingConfirm)
         assertEquals(HandOffProgress.Failed, failed.toHandOffProgress(received = true, failed = true, attempts = 0))
+    }
+
+    @Test
+    fun `a TV on its sign-in step tells the phone which server it is, by the id and not only the address`() {
+        val server =
+            SetupServer("http://192.168.1.5:5055/", "Seerr", SeerrVariant.Seerr, null, null, emptyList(), false, null, instanceId = "abc")
+        val signIn =
+            SetupUiState.SignIn(
+                server = server,
+                form = SignInForm(),
+                isConnecting = false,
+                link = null,
+                error = null,
+                notice = null,
+            )
+
+        val status = signIn.toHandOffProgress(received = false, failed = false, attempts = 0).toStatus()
+
+        assertEquals("abc", status.serverId)
+        assertEquals("http://192.168.1.5:5055/", status.address)
+    }
+
+    @Test
+    fun `a status from a TV build that predates the id still reads, with none`() {
+        val status = Json.decodeFromString<HandOffStatus>("""{"state":"signin","server":"Seerr","address":"http://192.168.1.5:5055/"}""")
+
+        assertNull(status.serverId)
+        assertEquals(status, Json.decodeFromString<HandOffStatus>(Json.encodeToString(status)))
+        assertEquals("abc", Json.decodeFromString<HandOffStatus>(Json.encodeToString(status.copy(serverId = "abc"))).serverId)
     }
 }

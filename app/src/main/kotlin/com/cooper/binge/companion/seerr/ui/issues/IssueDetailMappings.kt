@@ -7,6 +7,7 @@ import com.cooper.binge.companion.seerr.seerr.SeerrServerProfile
 import com.cooper.binge.companion.seerr.seerr.SeerrUserDto
 import com.cooper.binge.companion.seerr.seerr.displayString
 import com.cooper.binge.companion.seerr.seerr.isWebUrl
+import com.cooper.binge.companion.seerr.seerr.phoneWebRoot
 import com.cooper.binge.companion.seerr.seerr.toEpochMillisOrNull
 import com.cooper.binge.companion.seerr.seerr.toPermissions
 import com.cooper.binge.companion.seerr.ui.mediaServerItem
@@ -33,6 +34,7 @@ internal fun SeerrIssueDto.toDetail(
         canResolve = permissions.canManageIssues || (permissions.canCreateIssues && isReporter),
         canDelete = mayDeleteIssue(permissions, isReporter, comments.size),
         webUrl = baseUrl + "issues/" + id,
+        phoneUrl = profile.phoneWebRoot(baseUrl) + "issues/" + id,
         mediaServerUrl = media?.mediaUrl?.takeIf { it.isWebUrl() },
         serviceUrl = media?.serviceUrl?.takeIf { it.isWebUrl() },
         serverName = profile.variant.displayName,

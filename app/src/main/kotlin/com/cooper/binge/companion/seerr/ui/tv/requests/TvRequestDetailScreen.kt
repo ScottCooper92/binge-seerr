@@ -242,7 +242,7 @@ private fun TvRequestDetailContent(
     val pageHost =
         TvDetailPageHost(
             actions = actions,
-            content = TvDetailSheetContent(detail.item, detail.media, edit, detail.webUrl, detail.serverName, detail.serverInstanceId),
+            content = detail.toSheetContent(edit),
             run = run,
             isActing = isActing,
             onMarkAsShown = { markAsShown = it },

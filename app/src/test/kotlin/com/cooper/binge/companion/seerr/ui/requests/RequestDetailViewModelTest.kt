@@ -247,6 +247,26 @@ class RequestDetailViewModelTest {
     ): RequestDetailUiState.Ready = uiState.first { it is RequestDetailUiState.Ready && match(it) } as RequestDetailUiState.Ready
 
     @Test
+    fun `the code for a phone is written under the application url, and the page's own link stays on the address in use`() =
+        runTest {
+            server(ADMIN)
+            serve("/api/v1/settings/public", """{"mediaServerType":2,"applicationUrl":"https://seerr.tail1234.ts.net"}""")
+            val detail = viewModel().awaitReady().detail
+
+            assertEquals(seerr.url("/") + "tv/200", detail.webUrl)
+            assertEquals("https://seerr.tail1234.ts.net/tv/200", detail.phoneUrl)
+        }
+
+    @Test
+    fun `the code for a phone falls back to the address in use when the application url is malformed`() =
+        runTest {
+            server(ADMIN)
+            serve("/api/v1/settings/public", """{"mediaServerType":2,"applicationUrl":"not a url"}""")
+
+            assertEquals(seerr.url("/") + "tv/200", viewModel().awaitReady().detail.phoneUrl)
+        }
+
+    @Test
     fun `a show's request reads as its title, history, seasons, destination and downloads`() =
         runTest {
             server(ADMIN)

@@ -33,6 +33,7 @@ sealed interface HandOffProgress {
         val modes: List<String> = emptyList(),
         val failed: Boolean = false,
         val attempt: Int = 0,
+        val serverId: String? = null,
     ) : HandOffProgress
 
     /** Signed in: nothing left to do on the phone. */

@@ -13,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import com.binge.designsystem.component.BingeConfirmDialog
 import com.binge.designsystem.component.BingeFilledButton
 import com.binge.designsystem.component.BingeLoadingIndicator
 import com.binge.designsystem.component.BingeOutlinedButton
@@ -89,6 +90,16 @@ private fun SignInFormContent(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
+            )
+        }
+        step.sessionOffer?.confirmAddress?.takeIf { step.confirmingSession }?.let { address ->
+            BingeConfirmDialog(
+                title = stringResource(R.string.send_signin_confirm_title, address),
+                message = stringResource(R.string.send_signin_confirm_message),
+                confirmLabel = stringResource(R.string.send_signin_confirm_action),
+                dismissLabel = stringResource(R.string.send_signin_confirm_dismiss),
+                onConfirm = { actions.onAnswerSessionConfirm(true) },
+                onDismissRequest = { actions.onAnswerSessionConfirm(false) },
             )
         }
         step.sessionOffer?.let { offer ->

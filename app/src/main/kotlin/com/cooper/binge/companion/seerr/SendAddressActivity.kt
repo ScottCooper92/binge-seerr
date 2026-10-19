@@ -54,6 +54,7 @@ open class SendAddressActivity : ComponentActivity() {
                             onEditSignIn = viewModel::editSignIn,
                             onSendSignIn = viewModel::sendSignIn,
                             onSendSession = viewModel::sendSession,
+                            onAnswerSessionConfirm = viewModel::answerSessionConfirm,
                             onClose = ::finish,
                         ),
                 )

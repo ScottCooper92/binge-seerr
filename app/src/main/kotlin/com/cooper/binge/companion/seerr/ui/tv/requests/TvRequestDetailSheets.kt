@@ -35,6 +35,7 @@ import com.cooper.binge.companion.seerr.ui.requests.EditState
 import com.cooper.binge.companion.seerr.ui.requests.MediaInstance
 import com.cooper.binge.companion.seerr.ui.requests.MediaRecord
 import com.cooper.binge.companion.seerr.ui.requests.MediaStatusChoice
+import com.cooper.binge.companion.seerr.ui.requests.RequestDetail
 import com.cooper.binge.companion.seerr.ui.requests.RequestItem
 import com.cooper.binge.companion.seerr.ui.requests.icon
 import com.cooper.binge.companion.seerr.ui.requests.labelRes
@@ -67,7 +68,13 @@ internal class TvDetailSheetContent(
     val webUrl: String,
     val serverName: String,
     val serverInstanceId: String? = null,
+    /** The title's page at the address this TV uses, for the report code to name beside [webUrl] where they differ. */
+    val tvUrl: String? = null,
 )
+
+/** What the sheets read from [this] page: the code a phone scans is written under the Application URL, naming this TV's own address too. */
+internal fun RequestDetail.toSheetContent(edit: EditState?) =
+    TvDetailSheetContent(item, media, edit, phoneUrl, serverName, serverInstanceId, tvUrl = webUrl)
 
 /** The open sheet, and the requester its closer hands focus back to. */
 internal class TvDetailSheetHost(
@@ -168,7 +175,7 @@ internal fun ColumnScope.TvRequestDetailPage(
         }
         DetailSheet.Report ->
             TvReportOnPhoneStep(
-                webUrl = TitleReportLinks.write(content.webUrl, content.item.is4k, content.serverInstanceId),
+                webUrl = TitleReportLinks.write(content.webUrl, content.item.is4k, content.serverInstanceId, content.tvUrl),
                 serverName = content.serverName,
                 title = content.item.title ?: stringResource(content.item.mediaType.labelRes()),
                 is4k = content.item.is4k,

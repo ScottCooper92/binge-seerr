@@ -47,6 +47,8 @@ data class HandOffStatus(
     val failed: Boolean = false,
     val attempt: Int = 0,
     val address: String? = null,
+    /** The server's own name for itself, as the TV's server sent it, or null for a server that sends none or a build that predates it. */
+    val serverId: String? = null,
 ) {
     companion object {
         const val WAITING = "waiting"
@@ -80,6 +82,7 @@ internal fun HandOffProgress.toStatus(): HandOffStatus =
                 failed = failed,
                 attempt = attempt,
                 address = address,
+                serverId = serverId,
             )
         HandOffProgress.Connected -> HandOffStatus(HandOffStatus.CONNECTED)
     }

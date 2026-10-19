@@ -1,12 +1,16 @@
 package com.cooper.binge.companion.seerr.ui.handoff
 
+import com.cooper.binge.companion.seerr.handoff.AddressSource
 import com.cooper.binge.companion.seerr.handoff.HAND_OFF_SESSION_MODE
 import com.cooper.binge.companion.seerr.handoff.HandOffCredentials
 import com.cooper.binge.companion.seerr.handoff.HandOffKey
 import com.cooper.binge.companion.seerr.handoff.HandOffStatus
 import com.cooper.binge.companion.seerr.handoff.TvHandOffTarget
+import com.cooper.binge.companion.seerr.handoff.normaliseServerAddress
 import com.cooper.binge.companion.seerr.seerr.SeerrSignInMode
 import com.cooper.binge.companion.seerr.ui.SignInForm
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
@@ -70,3 +74,51 @@ internal fun TvHandOffTarget.sealSession(
         Json.encodeToString(HandOffCredentials(mode = HAND_OFF_SESSION_MODE, session = session)).toByteArray(Charsets.UTF_8),
         context = HandOffKey.context(token, address),
     )
+
+/**
+ * This phone's session goes only to a TV signing in where this phone sent it ([sentByThisPhone]), or, for a TV that had its
+ * address already, to this phone's own server (#1029). Anywhere else the session is no use, and would reach whoever runs it.
+ *
+ * A server's id is its own word for itself, which anyone who can reach it can read and another server can repeat, so it never
+ * decides alone. Ids that differ withhold the session whatever the addresses say. The same address needs no more. The same id
+ * at another address (a home network against a VPN) is offered only with the user's confirm of the TV's address, and sealed
+ * after it. Without an id on both sides, the addresses decide.
+ */
+internal fun sessionOfferFor(
+    offer: SignInOffer?,
+    sentByThisPhone: Boolean,
+    address: String,
+    tvServerId: String?,
+    server: String?,
+    serverId: String?,
+): SignInOffer? {
+    if (offer == null) return null
+    if (sentByThisPhone) return offer
+    val theirs = tvServerId?.takeIf { it.isNotBlank() }
+    if (theirs != null && serverId != null && theirs != serverId) return null
+    if (server != null && normaliseServerAddress(address) == normaliseServerAddress(server)) return offer
+    return offer.takeIf { theirs != null && theirs == serverId }?.copy(confirmAddress = address)
+}
+
+/** Whether two addresses name the same server, however each was written. */
+internal fun String.sameServerAs(other: String?): Boolean = other != null && normaliseServerAddress(this) == normaliseServerAddress(other)
+
+/** Anything but the server's own addresses, which are found again without being kept. */
+internal fun SendAddressUiState.Ready.isWorthRemembering(address: String): Boolean =
+    candidates.none { it.address == address && it.source != AddressSource.Remembered }
+
+/** Moves a sign-in in progress to [step]; any other state is left as it is. */
+internal fun MutableStateFlow<SendAddressUiState>.showStep(step: SignInStep) =
+    update { (it as? SendAddressUiState.SigningIn)?.copy(step = step) ?: it }
+
+/** Changes the sign-in form, while there is one on screen. */
+internal fun MutableStateFlow<SendAddressUiState>.updateForm(transform: (SignInStep.Form) -> SignInStep.Form) =
+    update { state ->
+        val signingIn = state as? SendAddressUiState.SigningIn ?: return@update state
+        val form = signingIn.step as? SignInStep.Form ?: return@update state
+        signingIn.copy(step = transform(form))
+    }
+
+/** Changes the address field, while it is on screen. */
+internal fun MutableStateFlow<SendAddressUiState>.updateReady(transform: (SendAddressUiState.Ready) -> SendAddressUiState.Ready) =
+    update { state -> (state as? SendAddressUiState.Ready)?.let(transform) ?: state }
