@@ -60,7 +60,7 @@ jobs:
     permissions:
       contents: read
       pull-requests: read
-    uses: ScottCooper92/binge-ci/.github/workflows/submodule-pins.yml@0c5177c6b9f591bf2d4c87a2d0d48d2680b4c398 # v1
+    uses: ScottCooper92/binge-ci/.github/workflows/submodule-pins.yml@8dbeef89712a7fcfffad14e9503b60aa4c6518a8 # v1
 
   # `build` minus what the three jobs below own. Everything else `check` pulls in lands here:
   # compile, lint, detekt and its baseline-staleness check, ktlint, the translation, tv-material and gRPC gates,
@@ -90,7 +90,7 @@ jobs:
           distribution: temurin
           java-version: '21'
 
-      - uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6
+      - uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6
 
       # --continue surfaces every failure in one run rather than stopping at the first,
       # which matters most to author-ci-fix: it gets exactly one repair attempt per
@@ -102,7 +102,7 @@ jobs:
 
       - name: Upload reports
         if: ${{ failure() }}
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: build-reports-checks
           path: |
@@ -125,7 +125,7 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
-      - uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6
+      - uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6
 
       - name: Unit tests and coverage
         run: ./gradlew :app:testDebugUnitTest :app:koverVerify --continue
@@ -138,7 +138,7 @@ jobs:
 
       - name: Upload reports
         if: ${{ failure() }}
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: build-reports-tests
           path: |
@@ -161,14 +161,14 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
-      - uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6
+      - uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6
 
       - name: Validate screenshots
         run: ./gradlew :app:validateDebugScreenshotTest --continue
 
       - name: Upload reports
         if: ${{ failure() }}
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: build-reports-screenshots
           path: |
@@ -190,14 +190,14 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
-      - uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6
+      - uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6
 
       - name: Assemble the release build
         run: ./gradlew :app:assembleRelease --continue
 
       - name: Upload reports
         if: ${{ failure() }}
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: build-reports-release
           path: |
@@ -219,7 +219,7 @@ jobs:
       # must be unique within a run, so each job uploads its own and they are merged here.
       - name: Merge reports
         if: ${{ contains(needs.*.result, 'failure') }}
-        uses: actions/upload-artifact/merge@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact/merge@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: build-reports
           pattern: build-reports-*
@@ -257,7 +257,7 @@ jobs:
 
       # binge-ci's shared step: a pinned release verified against its published checksum, with
       # shellcheck at warning severity.
-      - uses: ScottCooper92/binge-ci/.github/actions/actionlint@0c5177c6b9f591bf2d4c87a2d0d48d2680b4c398 # v1
+      - uses: ScottCooper92/binge-ci/.github/actions/actionlint@8dbeef89712a7fcfffad14e9503b60aa4c6518a8 # v1
 
   # A red nightly has no PR or push to carry it, so without this it is a red mark in the
   # Actions tab that nothing points at. One issue stays open while the canary is red and
@@ -272,7 +272,7 @@ jobs:
     permissions:
       issues: write
     steps:
-      - uses: ScottCooper92/binge-ci/.github/actions/nightly-report@0c5177c6b9f591bf2d4c87a2d0d48d2680b4c398 # v1
+      - uses: ScottCooper92/binge-ci/.github/actions/nightly-report@8dbeef89712a7fcfffad14e9503b60aa4c6518a8 # v1
         with:
           result: ${{ needs.build.result }}
           title: Nightly CI is failing on main
