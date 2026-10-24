@@ -11,6 +11,7 @@ import com.cooper.binge.companion.seerr.handoff.AddressHandOffs
 import com.cooper.binge.companion.seerr.handoff.HandOffOpening
 import com.cooper.binge.companion.seerr.seerr.PlexClientIdentity
 import com.cooper.binge.companion.seerr.seerr.SeerrApiFactory
+import com.cooper.binge.companion.seerr.ui.tv.tvActions
 import com.cooper.binge.companion.seerr.util.MainDispatcherRule
 import com.cooper.binge.companion.seerr.util.PlainCipher
 import kotlinx.coroutines.flow.first
@@ -88,6 +89,18 @@ class SetupViewModelDemoTest {
             assertEquals(DEMO_ORIGIN, connected.credentials.baseUrl)
             assertEquals(DEMO_ORIGIN, connection.credentials.first()?.baseUrl)
             assertEquals(2, connection.authenticatedUser().permissions)
+        }
+
+    @Test
+    fun `the television's actions run the demo`() =
+        runTest {
+            val vm = viewModel()
+            vm.uiState.first { it is SetupUiState.Address }
+
+            vm.tvActions().onTryDemo()
+            val connected = vm.uiState.first { it is SetupUiState.Connected } as SetupUiState.Connected
+
+            assertEquals(DEMO_ORIGIN, connected.credentials.baseUrl)
         }
 
     @Test

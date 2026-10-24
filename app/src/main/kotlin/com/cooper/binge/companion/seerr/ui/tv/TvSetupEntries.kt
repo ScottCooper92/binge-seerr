@@ -50,4 +50,5 @@ internal fun SetupViewModel.tvActions(onDisconnect: (() -> Unit)? = null): Setup
         onOfferSignInCode = { showHandOff(true) },
         onLocalNetworkChanged = ::localNetworkResult,
         onDisconnect = onDisconnect,
+        onTryDemo = tryDemo,
     )

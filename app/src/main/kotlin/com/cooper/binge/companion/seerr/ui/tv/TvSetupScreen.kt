@@ -116,6 +116,7 @@ private fun SetupActions.withStartHandOff(start: () -> Unit) =
         onCancelHandOff = onCancelHandOff,
         onOfferSignInCode = onOfferSignInCode,
         onLocalNetworkChanged = onLocalNetworkChanged,
+        onTryDemo = onTryDemo,
     )
 
 /**
