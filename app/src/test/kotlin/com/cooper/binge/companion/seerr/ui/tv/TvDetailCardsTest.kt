@@ -16,7 +16,7 @@ import com.cooper.binge.companion.seerr.ui.requests.MediaRecord
 import com.cooper.binge.companion.seerr.ui.requests.RequestDestination
 import com.cooper.binge.companion.seerr.ui.requests.RequestDetail
 import com.cooper.binge.companion.seerr.ui.requests.SeasonState
-import com.cooper.binge.companion.seerr.ui.state.labelRes
+import com.cooper.binge.companion.seerr.ui.state.DownloadActivity
 import com.cooper.binge.companion.seerr.ui.tv.hub.quotaLine
 import com.cooper.binge.companion.seerr.ui.tv.requests.TvDownloadCard
 import com.cooper.binge.companion.seerr.ui.tv.requests.TvSeasonCard
@@ -85,8 +85,30 @@ class TvDetailCardsTest {
             )
         val groups = infoGroups(requestDetail(media = media))
 
-        assertEquals(string(SeerrMediaStatusCode.Available.labelRes()), groups.labelled(R.string.media_instance_standard)?.value)
+        assertEquals(string(R.string.media_state_available), groups.labelled(R.string.media_instance_standard)?.value)
         assertNull(groups.labelled(R.string.settings_service_4k))
+    }
+
+    /** A processing version reads Downloading only while its queue transfers (#1719). */
+    @Test
+    fun aProcessingVersionWithNothingQueuedIsNotDownloading() {
+        val media =
+            MediaRecord(
+                mediaId = 9,
+                isTv = false,
+                instances =
+                    listOf(
+                        instance(is4k = false, status = SeerrMediaStatusCode.Processing),
+                        instance(is4k = true, status = SeerrMediaStatusCode.Processing).copy(download = DownloadActivity.Downloading),
+                    ),
+                canSetStatus = false,
+                canClearData = false,
+                canDeleteFiles = false,
+            )
+        val groups = infoGroups(requestDetail(media = media))
+
+        assertEquals(string(R.string.media_state_not_downloading), groups.labelled(R.string.media_instance_standard)?.value)
+        assertEquals(string(R.string.media_state_downloading), groups.labelled(R.string.settings_service_4k)?.value)
     }
 
     @Test

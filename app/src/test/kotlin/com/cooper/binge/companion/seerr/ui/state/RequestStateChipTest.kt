@@ -20,23 +20,50 @@ class RequestStateChipTest {
 
     @Test
     fun `a title's tone follows its media status`() {
-        assertEquals(RequestStateTone.Pending, SeerrMediaStatusCode.Pending.tone())
-        assertEquals(RequestStateTone.Active, SeerrMediaStatusCode.Processing.tone())
-        assertEquals(RequestStateTone.Success, SeerrMediaStatusCode.PartiallyAvailable.tone())
-        assertEquals(RequestStateTone.Success, SeerrMediaStatusCode.Available.tone())
-        assertEquals(RequestStateTone.Blocked, SeerrMediaStatusCode.Blocklisted.tone())
+        assertEquals(RequestStateTone.Pending, SeerrMediaStatusCode.Pending.stateLabel(DownloadActivity.None).tone)
+        assertEquals(RequestStateTone.Success, SeerrMediaStatusCode.PartiallyAvailable.stateLabel(DownloadActivity.None).tone)
+        assertEquals(RequestStateTone.Blocked, SeerrMediaStatusCode.Blocklisted.stateLabel(DownloadActivity.None).tone)
+    }
+
+    @Test
+    fun `processing reads downloading only while something transfers`() {
+        assertEquals(
+            MediaStateLabel(R.string.media_state_downloading, RequestStateTone.Active),
+            SeerrMediaStatusCode.Processing.stateLabel(DownloadActivity.Downloading),
+        )
+        assertEquals(
+            MediaStateLabel(R.string.request_state_queued, RequestStateTone.Pending),
+            SeerrMediaStatusCode.Processing.stateLabel(DownloadActivity.Queued),
+        )
+        assertEquals(
+            MediaStateLabel(R.string.media_state_not_downloading, RequestStateTone.Pending),
+            SeerrMediaStatusCode.Processing.stateLabel(DownloadActivity.None),
+        )
+    }
+
+    @Test
+    fun `a download never changes a state that is not processing`() {
+        DownloadActivity.entries.forEach { download ->
+            assertEquals(
+                MediaStateLabel(R.string.media_state_available, RequestStateTone.Success),
+                SeerrMediaStatusCode.Available.stateLabel(download),
+            )
+        }
     }
 
     @Test
     fun `a deleted title reads as deleted and blocked, not as pending`() {
-        assertEquals(RequestStateTone.Blocked, SeerrMediaStatusCode.Deleted.tone())
-        assertEquals(R.string.media_state_deleted, SeerrMediaStatusCode.Deleted.labelRes())
-        assertNotEquals(R.string.request_state_pending, SeerrMediaStatusCode.Deleted.labelRes())
+        val state = SeerrMediaStatusCode.Deleted.stateLabel(DownloadActivity.None)
+        assertEquals(RequestStateTone.Blocked, state.tone)
+        assertEquals(R.string.media_state_deleted, state.labelRes)
+        assertNotEquals(R.string.request_state_pending, state.labelRes)
     }
 
     @Test
     fun `a media status past the ones we model still falls back to pending`() {
-        assertEquals(RequestStateTone.Pending, SeerrMediaStatusCode(99).tone())
-        assertEquals(R.string.request_state_pending, SeerrMediaStatusCode(99).labelRes())
+        assertEquals(
+            MediaStateLabel(R.string.request_state_pending, RequestStateTone.Pending),
+            SeerrMediaStatusCode(99).stateLabel(DownloadActivity.None),
+        )
     }
 }

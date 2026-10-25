@@ -110,6 +110,12 @@ class RequestDetailScreenshotTest {
     @Composable
     fun partiallyAvailablePendingSeason() = Frame(partiallyAvailablePendingSeasonDetail())
 
+    /** Approved with nothing downloading (#1719): the chip, the explanation under the hero, and the season row. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun approvedNotDownloading() = Frame(notDownloadingDetail())
+
     /** A row a list already had, before the fetch lands (#1053): its hero over the loading body. */
     @PreviewTest
     @SeerrScreenStatePreview
