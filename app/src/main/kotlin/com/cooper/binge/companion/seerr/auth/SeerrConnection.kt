@@ -35,6 +35,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.io.IOException
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 /**
@@ -53,6 +54,8 @@ class SeerrConnection(
     private val onServerChanged: suspend () -> Unit = {},
     /** Public hosts agreed to over plain HTTP. Narrowed to the saved server whenever it changes. */
     private val cleartext: CleartextConsent = CleartextConsent.None,
+    /** What [recentAuthenticatedUser] ages the cached user against. */
+    private val clock: () -> Long = System::currentTimeMillis,
 ) {
     private val profileReads = ProfileReads()
 
@@ -91,7 +94,7 @@ class SeerrConnection(
             }.distinctUntilChanged()
 
     private val userLock = Mutex()
-    private var cachedUser: Pair<SeerrCredentials, SeerrUserDto>? = null
+    private var cachedUser: CachedUser? = null
     private var cachedProfile: Pair<SeerrCredentials, SeerrServerProfile>? = null
 
     /** The API for the saved server, or [NotConnectedException] when nothing is saved. */
@@ -108,11 +111,24 @@ class SeerrConnection(
      * unchanged. A failed fetch is not cached, so a transient `auth/me` failure cannot pin "no
      * permissions" for the rest of the connection.
      */
-    suspend fun authenticatedUser(): SeerrUserDto {
+    suspend fun authenticatedUser(): SeerrUserDto = readUser(maxAge = null)
+
+    /**
+     * [authenticatedUser], re-read when the cached copy is older than [maxAge], so a permission changed on the server
+     * shows on the next look without a poll (#1722). A failed re-read leaves the older copy cached.
+     */
+    suspend fun recentAuthenticatedUser(maxAge: Duration = USER_MAX_AGE): SeerrUserDto = readUser(maxAge)
+
+    private suspend fun readUser(maxAge: Duration?): SeerrUserDto {
         val saved = current()
         return userLock.withLock {
-            cachedUser?.takeIf { it.first == saved }?.second
-                ?: apis.cached(saved.baseUrl, saved.auth).authenticatedUser().also { cachedUser = saved to it }
+            cachedUser
+                ?.takeIf { it.credentials == saved && (maxAge == null || clock() - it.readAt < maxAge.inWholeMilliseconds) }
+                ?.user
+                ?: apis
+                    .cached(saved.baseUrl, saved.auth)
+                    .authenticatedUser()
+                    .also { cachedUser = CachedUser(saved, it, clock()) }
         }
     }
 
@@ -395,3 +411,13 @@ class SeerrConnection(
         return credentials
     }
 }
+
+/** How long [SeerrConnection.recentAuthenticatedUser] trusts the cached `auth/me` (#1722). */
+internal val USER_MAX_AGE: Duration = 1.minutes
+
+/** One `auth/me` answer, with the credentials it was read for and when. */
+private class CachedUser(
+    val credentials: SeerrCredentials,
+    val user: SeerrUserDto,
+    val readAt: Long,
+)

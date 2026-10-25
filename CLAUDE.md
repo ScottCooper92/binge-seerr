@@ -161,7 +161,8 @@ subscribed by the time it returns.
 A `Lazily` list root without the hook never refreshes on return. And a hook that re-reads
 `connection.authenticatedUser()` or `connection.profile()` re-reads nothing: both are cached for the
 life of the connection, so a scope that must see a server-side change asks for
-`refreshAuthenticatedUser()` or `refreshProfile()` instead.
+`refreshAuthenticatedUser()` or `refreshProfile()` instead. Where a user read up to a minute old will
+do, as on returning to the app or opening a Manage sheet, `recentAuthenticatedUser()` saves the round trip.
 
 **Resources.** Every dp comes from `res/values/dimens.xml` through `dimensionResource`; no `.dp`
 literals in production code. Every user-visible string comes from `strings.xml`, with its Spanish

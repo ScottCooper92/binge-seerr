@@ -14,6 +14,7 @@ import com.cooper.binge.companion.seerr.auth.CredentialStore
 import com.cooper.binge.companion.seerr.auth.DataStoreBingeConnectionStore
 import com.cooper.binge.companion.seerr.auth.DataStoreCleartextConsent
 import com.cooper.binge.companion.seerr.auth.DeviceIdentityStore
+import com.cooper.binge.companion.seerr.auth.ForegroundUserRefresh
 import com.cooper.binge.companion.seerr.auth.PlexPinFlow
 import com.cooper.binge.companion.seerr.auth.SecretCipher
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
@@ -136,6 +137,13 @@ object AuthModule {
         cleartext: CleartextConsent,
         @ApplicationScope scope: CoroutineScope,
     ): ConnectionRestore = ConnectionRestore(store, apis, carrier, scope, cleartext)
+
+    @Provides
+    @Singleton
+    fun foregroundUserRefresh(
+        connection: SeerrConnection,
+        @ApplicationScope scope: CoroutineScope,
+    ): ForegroundUserRefresh = ForegroundUserRefresh(connection, scope)
 
     /** The caches keyed to one server are cleared when the server changes, so nothing of the last one shows. */
     @Provides
