@@ -52,7 +52,8 @@ jobs:
   # #421: a submodule pin can be a commit that only exists on an unmerged branch of its own repo, which
   # is deliberate while `hold` gates the merge on it and a trap once `hold` comes off. binge-ci's shared
   # workflow fails a PR whose pin is not an ancestor of its submodule's default branch, unless the PR
-  # carries `hold`. It does nothing outside a pull request, and `build` needs it so a red pin fails
+  # carries `hold`. It also fails a PR that moves a pin backwards from the base branch's, which is how a
+  # stale checkout in an author bot's push would roll a submodule back. It does nothing outside a pull request, and `build` needs it so a red pin fails
   # the gate rather than reporting beside it. The caller grants `pull-requests: read`, which the
   # shared workflow reads the label with: a reusable workflow cannot hold more than its caller.
   submodule-pins:
