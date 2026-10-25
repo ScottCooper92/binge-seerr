@@ -359,7 +359,7 @@ internal fun ModerationEvent.messageRes(): Int? =
             ModerationEvent.MediaCleared -> R.string.media_cleared
             ModerationEvent.MediaFilesDeleted -> R.string.media_files_deleted
             is ModerationEvent.MediaFilesAndRequestsDeleted -> R.string.media_files_and_requests_deleted
-            ModerationEvent.MediaFilesDeletedRequestsKept -> R.string.media_files_deleted_requests_kept
+            is ModerationEvent.MediaFilesDeletedRequestsKept -> R.string.media_files_deleted_requests_kept
             ModerationEvent.MediaFilesNoDefaultServer -> null
             ModerationEvent.Declined -> R.string.request_declined
             ModerationEvent.DeclinedAndBlocked -> R.string.request_declined_and_blocked
@@ -382,6 +382,6 @@ internal fun ModerationEvent.isError(): Boolean =
     this is ModerationEvent.Failed ||
         this == ModerationEvent.DeclinedButBlockFailed ||
         this == ModerationEvent.RemovedButBlockFailed ||
-        this == ModerationEvent.MediaFilesDeletedRequestsKept ||
+        this is ModerationEvent.MediaFilesDeletedRequestsKept ||
         this == ModerationEvent.MediaFilesNoDefaultServer ||
         this == ModerationEvent.BlockFailed

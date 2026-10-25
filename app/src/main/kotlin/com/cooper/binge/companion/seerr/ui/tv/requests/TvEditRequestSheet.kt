@@ -33,7 +33,7 @@ import com.cooper.binge.companion.seerr.ui.requests.EditState
 import com.cooper.binge.companion.seerr.ui.requests.RequestEditorControls
 import com.cooper.binge.companion.seerr.ui.requests.RequestItem
 import com.cooper.binge.companion.seerr.ui.requests.SeasonChoice
-import com.cooper.binge.companion.seerr.ui.state.labelRes
+import com.cooper.binge.companion.seerr.ui.state.stateLabel
 
 /** What the sheet shows: the form, or one destination field's choices in its place. */
 internal enum class EditStep { Form, Server, Profile, RootFolder }
@@ -147,7 +147,7 @@ private fun TvSeasonCheckbox(
         icon = Icons.Filled.Tv,
         supportingText =
             if (held != null) {
-                stringResource(held.labelRes())
+                stringResource(held.stateLabel(season.heldDownload).labelRes)
             } else {
                 pluralStringResource(R.plurals.request_episodes, season.episodeCount, season.episodeCount)
             },

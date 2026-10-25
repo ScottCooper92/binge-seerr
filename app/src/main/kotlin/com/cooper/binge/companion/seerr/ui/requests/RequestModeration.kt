@@ -172,6 +172,7 @@ class RequestModeration(
         onFiles: (FilesDeletion) -> Unit,
     ) {
         var allRemoved = true
+        var removedThisRequest = false
         act(
             requestId = requestId,
             refusal = { failure ->
@@ -184,15 +185,14 @@ class RequestModeration(
                 if (removeRequestIds.isEmpty()) {
                     ModerationEvent.MediaFilesDeleted
                 } else {
-                    ModerationEvent.MediaFilesAndRequestsDeleted(
-                        false,
-                    )
+                    // Only a label for the breadcrumb and failure log; the outcome below is the event sent.
+                    ModerationEvent.MediaFilesAndRequestsDeleted(false)
                 },
             outcome = {
                 when {
                     removeRequestIds.isEmpty() -> ModerationEvent.MediaFilesDeleted
-                    allRemoved -> ModerationEvent.MediaFilesAndRequestsDeleted(removedThisRequest = requestId in removeRequestIds)
-                    else -> ModerationEvent.MediaFilesDeletedRequestsKept
+                    allRemoved -> ModerationEvent.MediaFilesAndRequestsDeleted(removedThisRequest)
+                    else -> ModerationEvent.MediaFilesDeletedRequestsKept(removedThisRequest)
                 }
             },
         ) {
@@ -202,6 +202,7 @@ class RequestModeration(
             removeRequestIds.forEach { id ->
                 attempt { api.deleteRequest(id) }
                     .onSuccess { cache.delete(id) }
+                    .onSuccess { removedThisRequest = removedThisRequest || id == requestId }
                     .onFailure {
                         allRemoved = false
                         analytics.operationFailed("moderate_remove_with_files", it, connection)

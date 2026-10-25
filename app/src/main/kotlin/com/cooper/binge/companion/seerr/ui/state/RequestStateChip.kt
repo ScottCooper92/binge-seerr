@@ -42,20 +42,45 @@ fun SeerrRequestStatusCode.labelRes(): Int =
         else -> R.string.request_state_pending
     }
 
-/** A title's media status, as a row that tracks the media rather than one request shows it. */
-fun SeerrMediaStatusCode.tone(): RequestStateTone =
+/** What the download client is doing for one version of a title, as far as Seerr's queue reports it. */
+enum class DownloadActivity {
+    None,
+    Queued,
+    Downloading,
+}
+
+/** A title's state as every surface names it: the label and its tone. */
+data class MediaStateLabel(
+    @param:StringRes val labelRes: Int,
+    val tone: RequestStateTone,
+)
+
+/**
+ * The one mapping from a title's media status to its label, read by the list, the title's badge, Manage media and TV.
+ * `Processing` reads Downloading only while something transfers: Seerr leaves a title processing after its files are
+ * deleted, or when nothing was ever grabbed, so with nothing in the queue it reads "Approved · not downloading" (#1719).
+ */
+fun SeerrMediaStatusCode.stateLabel(download: DownloadActivity): MediaStateLabel =
+    if (this == SeerrMediaStatusCode.Processing) {
+        when (download) {
+            DownloadActivity.Downloading -> MediaStateLabel(R.string.media_state_downloading, RequestStateTone.Active)
+            DownloadActivity.Queued -> MediaStateLabel(R.string.request_state_queued, RequestStateTone.Pending)
+            DownloadActivity.None -> MediaStateLabel(R.string.media_state_not_downloading, RequestStateTone.Pending)
+        }
+    } else {
+        MediaStateLabel(labelRes(), tone())
+    }
+
+private fun SeerrMediaStatusCode.tone(): RequestStateTone =
     when (this) {
-        SeerrMediaStatusCode.Processing -> RequestStateTone.Active
         SeerrMediaStatusCode.PartiallyAvailable, SeerrMediaStatusCode.Available -> RequestStateTone.Success
         SeerrMediaStatusCode.Blocklisted, SeerrMediaStatusCode.Deleted -> RequestStateTone.Blocked
-        SeerrMediaStatusCode.Unknown -> RequestStateTone.Pending
         else -> RequestStateTone.Pending
     }
 
 @StringRes
-fun SeerrMediaStatusCode.labelRes(): Int =
+private fun SeerrMediaStatusCode.labelRes(): Int =
     when (this) {
-        SeerrMediaStatusCode.Processing -> R.string.media_state_processing
         SeerrMediaStatusCode.PartiallyAvailable -> R.string.media_state_partially_available
         SeerrMediaStatusCode.Available -> R.string.media_state_available
         SeerrMediaStatusCode.Blocklisted -> R.string.media_state_blocklisted
@@ -75,9 +100,11 @@ fun RequestStateChip(
 @Composable
 fun MediaStateChip(
     status: SeerrMediaStatusCode,
+    download: DownloadActivity,
     modifier: Modifier = Modifier,
 ) {
-    RequestStateChip(label = stringResource(status.labelRes()), tone = status.tone(), modifier = modifier)
+    val state = status.stateLabel(download)
+    RequestStateChip(label = stringResource(state.labelRes), tone = state.tone, modifier = modifier)
 }
 
 /** A status pill: the design system's [StatusChip], with this app's tone mapped onto its sentiment. */

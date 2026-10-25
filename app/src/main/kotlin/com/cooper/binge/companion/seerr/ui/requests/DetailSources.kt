@@ -38,6 +38,18 @@ private fun SeerrRequestSummaryDto.toSummary(): RequestSummary =
         seasonNumbers = seasons.map { it.seasonNumber },
     )
 
+/**
+ * Whether the server approved this request as it was made, rather than a moderator later. Seerr names the requester in
+ * `modifiedBy` when their own permissions approve the request at creation, and afterwards only approve, decline and retry
+ * change it. `updatedAt` cannot tell: completing or failing the request moves it as well.
+ */
+internal fun SeerrRequestDto.approvedAutomatically(): Boolean =
+    modifiedBy?.id != null &&
+        modifiedBy.id == requestedBy?.id &&
+        status != null &&
+        status != SeerrRequestStatusCode.Pending &&
+        status != SeerrRequestStatusCode.Declined
+
 private fun SeerrWatchStatsDto.toWatchStats(): WatchStats =
     WatchStats(
         playCount = playCount,
@@ -94,6 +106,8 @@ internal class DetailSources(
                 "Unrenderable media type"
             }
         val own = dto.requestedBy?.id != null && dto.requestedBy.id == user?.id
+        val automatic = dto.approvedAutomatically()
+        val moderator = dto.modifiedBy?.takeUnless { automatic }
         return RequestDetail(
             item = item,
             actions = item.actions(scope),
@@ -101,9 +115,10 @@ internal class DetailSources(
             canEditDestination = canEditDestination,
             backdropUrl = details?.backdropPath?.toTmdbBackdropUrl(),
             overview = details?.overview?.takeIf { it.isNotBlank() },
-            modifiedBy = dto.modifiedBy?.displayString(),
-            modifiedByAvatarUrl = dto.modifiedBy?.avatar.toAvatarUrl(),
-            modifiedById = dto.modifiedBy?.id,
+            modifiedBy = moderator?.displayString(),
+            modifiedByAvatarUrl = moderator?.avatar.toAvatarUrl(),
+            modifiedById = moderator?.id,
+            approvedAutomatically = automatic,
             viewerId = user?.id,
             canManageUsers = permissions.canManageUsers,
             updatedAtMillis = dto.updatedAt?.toEpochMillisOrNull(),
@@ -132,11 +147,13 @@ internal class DetailSources(
     }
 
     /** The season the request asked for, named from the title's own list where that loaded. */
-    private fun seasons(): List<SeasonState> =
-        dto.seasons.map { requested ->
+    private fun seasons(): List<SeasonState> {
+        val download = (if (dto.is4k) dto.media.downloadStatus4k else dto.media.downloadStatus).downloadActivity()
+        return dto.seasons.map { requested ->
             val season = details?.seasons?.firstOrNull { it.seasonNumber == requested.seasonNumber }
-            SeasonState(requested.seasonNumber, season?.name, season?.episodeCount, requested.status)
+            SeasonState(requested.seasonNumber, season?.name, season?.episodeCount, requested.status, download)
         }
+    }
 
     private fun downloads(): List<DetailDownload> {
         val statuses = if (dto.is4k) dto.media.downloadStatus4k else dto.media.downloadStatus
@@ -178,6 +195,7 @@ private fun SeerrRequestDto.mediaRecord(
                     media.serviceUrl?.takeIf { it.isWebUrl() },
                     media.mediaUrl?.takeIf { it.isWebUrl() },
                     watch?.data?.toWatchStats(),
+                    download = media.downloadStatus.downloadActivity(),
                 ),
                 MediaInstance(
                     true,
@@ -185,6 +203,7 @@ private fun SeerrRequestDto.mediaRecord(
                     media.serviceUrl4k?.takeIf { it.isWebUrl() },
                     media.mediaUrl4k?.takeIf { it.isWebUrl() },
                     watch?.data4k?.toWatchStats(),
+                    download = media.downloadStatus4k.downloadActivity(),
                 ).takeIf { has4k },
             ),
         canSetStatus = permissions.canManageRequests,

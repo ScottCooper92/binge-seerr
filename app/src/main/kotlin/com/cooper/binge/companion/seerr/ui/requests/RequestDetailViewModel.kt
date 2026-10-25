@@ -11,6 +11,7 @@ import com.cooper.binge.companion.seerr.seerr.SEERR_MEDIA_TYPE_MOVIE
 import com.cooper.binge.companion.seerr.seerr.SeerrApi
 import com.cooper.binge.companion.seerr.seerr.SeerrCreateIssueBody
 import com.cooper.binge.companion.seerr.seerr.SeerrRequestDto
+import com.cooper.binge.companion.seerr.seerr.SeerrUserDto
 import com.cooper.binge.companion.seerr.seerr.arrServer
 import com.cooper.binge.companion.seerr.seerr.arrServers
 import com.cooper.binge.companion.seerr.seerr.details
@@ -133,6 +134,9 @@ class RequestDetailViewModel
 
         private var editSource: EditSource? = null
 
+        /** The `auth/me` answer the page was last built from; null when that read failed. */
+        @Volatile private var loadedUser: SeerrUserDto? = null
+
         init {
             reload()
         }
@@ -145,6 +149,19 @@ class RequestDetailViewModel
             ticker?.cancel()
             ticker = null
             if (visible) ticker = viewModelScope.launch(dispatcher) { minuteClock(clock, minuteTicker).collect { now.value = it } }
+        }
+
+        /**
+         * A Manage sheet opened: re-read `auth/me` if the cached copy is over a minute old, and rebuild the page if the
+         * permissions moved, so the sheet offers what the server now allows (#1722). A page still loading reads it itself.
+         */
+        fun onManageOpened() {
+            if (state.value !is RequestDetailUiState.Ready) return
+            viewModelScope.launch(dispatcher) {
+                val user = attempt { connection.recentAuthenticatedUser() }.getOrNull() ?: return@launch
+                val loaded = loadedUser
+                if (loaded == null || user.permissions != loaded.permissions) reload()
+            }
         }
 
         fun startEdit() {
@@ -218,6 +235,7 @@ class RequestDetailViewModel
 
         private suspend fun load(): RequestDetail {
             val sources = fetchSources()
+            loadedUser = sources.user
             editSource =
                 EditSource(
                     request = sources.dto,
@@ -237,7 +255,7 @@ class RequestDetailViewModel
             coroutineScope {
                 val api = connection.api()
                 val profile = async { connection.profile() }
-                val user = async { attempt { connection.authenticatedUser() }.getOrNull() }
+                val user = async { attempt { connection.recentAuthenticatedUser() }.getOrNull() }
                 val permissions = async { user.await().toPermissions() }
                 val dto = api.request(requestId)
                 val details = async { attempt { api.details(dto.media.mediaType, dto.media.tmdbId) }.getOrNull() }

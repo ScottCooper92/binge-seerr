@@ -11,6 +11,7 @@ import com.cooper.binge.companion.seerr.seerr.etaMinutes
 import com.cooper.binge.companion.seerr.seerr.isDownloading
 import com.cooper.binge.companion.seerr.seerr.toAvatarUrl
 import com.cooper.binge.companion.seerr.seerr.toEpochMillisOrNull
+import com.cooper.binge.companion.seerr.ui.state.DownloadActivity
 
 const val REQUESTS_PAGE_SIZE = 20
 
@@ -47,6 +48,14 @@ suspend fun SeerrRequestDto.toRequestItem(
 
 /** The media's status for the version this request asked for: the 4K one for a 4K request, the regular one otherwise. */
 internal fun SeerrRequestDto.mediaStatusOfRequestedVersion(): SeerrMediaStatusCode? = if (is4k) media.status4k else media.status
+
+/** What the download client is doing for one version, from the queue Seerr reports for it. */
+internal fun List<SeerrDownloadStatusDto>.downloadActivity(): DownloadActivity =
+    when {
+        isEmpty() -> DownloadActivity.None
+        isDownloading(downloadFraction()) -> DownloadActivity.Downloading
+        else -> DownloadActivity.Queued
+    }
 
 private fun List<SeerrDownloadStatusDto>.toDownload(nowMillis: Long): RequestDownload? {
     if (isEmpty()) return null

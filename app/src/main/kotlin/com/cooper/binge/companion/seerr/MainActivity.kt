@@ -18,6 +18,7 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.rememberNavBackStack
 import com.cooper.binge.companion.seerr.auth.ConnectionRestore
+import com.cooper.binge.companion.seerr.auth.ForegroundUserRefresh
 import com.cooper.binge.companion.seerr.feedback.BugReportLinks
 import com.cooper.binge.companion.seerr.feedback.FeedbackPrefs
 import com.cooper.binge.companion.seerr.feedback.ShakeToReportPrompt
@@ -64,6 +65,9 @@ class MainActivity : ComponentActivity() {
 
     @Inject
     lateinit var analytics: Analytics
+
+    @Inject
+    lateinit var userRefresh: ForegroundUserRefresh
 
     private var consumedLink: String? = null
 
@@ -115,6 +119,12 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    /** Coming back to the app re-reads a stale `auth/me`, so a permission changed meanwhile shows (#1722). */
+    override fun onStart() {
+        super.onStart()
+        userRefresh.onForeground()
     }
 
     override fun onNewIntent(intent: Intent) {

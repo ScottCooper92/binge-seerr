@@ -29,7 +29,8 @@ class ModerationEventTest {
                 ModerationEvent.MediaFilesDeleted,
                 ModerationEvent.MediaFilesAndRequestsDeleted(removedThisRequest = false),
                 ModerationEvent.MediaFilesAndRequestsDeleted(removedThisRequest = true),
-                ModerationEvent.MediaFilesDeletedRequestsKept,
+                ModerationEvent.MediaFilesDeletedRequestsKept(removedThisRequest = false),
+                ModerationEvent.MediaFilesDeletedRequestsKept(removedThisRequest = true),
                 ModerationEvent.MediaFilesNoDefaultServer,
                 ModerationEvent.Failed(SeerrError.Server),
             ).filter { it.removesTheRequest }
@@ -41,6 +42,7 @@ class ModerationEventTest {
                 ModerationEvent.RemovedButBlockFailed,
                 ModerationEvent.MediaCleared,
                 ModerationEvent.MediaFilesAndRequestsDeleted(removedThisRequest = true),
+                ModerationEvent.MediaFilesDeletedRequestsKept(removedThisRequest = true),
             ),
             removing,
         )

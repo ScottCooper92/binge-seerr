@@ -16,9 +16,9 @@ sealed interface ModerationEvent {
             when (this) {
                 Removed, RemovedAndBlocked, RemovedButBlockFailed, MediaCleared -> true
                 is MediaFilesAndRequestsDeleted -> removedThisRequest
+                is MediaFilesDeletedRequestsKept -> removedThisRequest
                 Approved, Retried, Edited, Declined, DeclinedAndBlocked, DeclinedButBlockFailed,
-                Blocked, BlockFailed, MediaStatusSet, MediaFilesDeleted, MediaFilesDeletedRequestsKept, MediaFilesNoDefaultServer,
-                is Failed,
+                Blocked, BlockFailed, MediaStatusSet, MediaFilesDeleted, MediaFilesNoDefaultServer, is Failed,
                 -> false
             }
 
@@ -56,8 +56,10 @@ sealed interface ModerationEvent {
         val removedThisRequest: Boolean,
     ) : ModerationEvent
 
-    /** The files went, but at least one of the requests asked to go with them did not. */
-    data object MediaFilesDeletedRequestsKept : ModerationEvent
+    /** The files went, but at least one of the requests asked to go with them did not; [removedThisRequest] when the page's own did. */
+    data class MediaFilesDeletedRequestsKept(
+        val removedThisRequest: Boolean,
+    ) : ModerationEvent
 
     /**
      * Seerr refused to delete the files because no Radarr or Sonarr server is its default for the version: a setting to
@@ -88,7 +90,7 @@ internal fun ModerationEvent.actionLabel(): String =
         ModerationEvent.MediaCleared -> "media_cleared"
         ModerationEvent.MediaFilesDeleted -> "media_files_deleted"
         is ModerationEvent.MediaFilesAndRequestsDeleted -> "media_files_and_requests_deleted"
-        ModerationEvent.MediaFilesDeletedRequestsKept -> "media_files_deleted_requests_kept"
+        is ModerationEvent.MediaFilesDeletedRequestsKept -> "media_files_deleted_requests_kept"
         ModerationEvent.MediaFilesNoDefaultServer -> "media_files_no_default_server"
         is ModerationEvent.Failed -> "failed"
     }

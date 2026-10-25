@@ -6,13 +6,18 @@ import com.cooper.binge.companion.seerr.seerr.SeerrMediaStatusCode
 import com.cooper.binge.companion.seerr.seerr.SeerrRequestStatusCode
 import com.cooper.binge.companion.seerr.ui.DestinationChoices
 import com.cooper.binge.companion.seerr.ui.MediaServerItem
+import com.cooper.binge.companion.seerr.ui.state.DownloadActivity
 
-/** One season of a requested show: the request asked for it, and this is where the server has it. */
+/**
+ * One season of a requested show: the request asked for it, and this is where the server has it. [download] is the
+ * version's own queue, which Seerr does not split by season.
+ */
 data class SeasonState(
     val number: Int,
     val name: String?,
     val episodeCount: Int?,
     val status: SeerrMediaStatusCode?,
+    val download: DownloadActivity = DownloadActivity.None,
 )
 
 /** Where the request was sent, named where the server's service lists still know the ids. */
@@ -57,6 +62,8 @@ data class SeasonChoice(
     val episodeCount: Int,
     val selected: Boolean,
     val heldStatus: SeerrMediaStatusCode? = null,
+    /** The version's download queue, which is what a held `Processing` season's chip reads. */
+    val heldDownload: DownloadActivity = DownloadActivity.None,
 ) {
     val locked: Boolean get() = heldStatus != null
 }
@@ -119,6 +126,7 @@ data class MediaInstance(
     val watch: WatchStats?,
     /** What deleting the instance's files from this page came to; null until it was tried. */
     val filesDeletion: FilesDeletion? = null,
+    val download: DownloadActivity = DownloadActivity.None,
 )
 
 /** How a deletion of an instance's files from the page ended, shown in place of its delete row while the page stays. */
@@ -175,6 +183,8 @@ data class RequestDetail(
     val modifiedBy: String?,
     val modifiedById: Int?,
     val modifiedByAvatarUrl: String? = null,
+    /** Approved by the server as it was made, so no one moderated it and [modifiedBy] is null. */
+    val approvedAutomatically: Boolean = false,
     /** The viewer's own id, and whether `MANAGE_USERS` lets them open anyone else's — what a name gates on before it links. */
     val viewerId: Int?,
     val canManageUsers: Boolean,

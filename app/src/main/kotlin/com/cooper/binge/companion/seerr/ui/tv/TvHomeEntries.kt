@@ -205,6 +205,7 @@ internal fun TvRequestDetailOverlay(
                     viewModel.moderation.setMediaStatus(requestId, mediaId, status, is4k, detail?.seasons?.map { it.number }.orEmpty())
                 },
                 edit = TvRequestEditActions(onStart = viewModel::startEdit, controls = viewModel.editor),
+                onManageOpened = viewModel::onManageOpened,
             ),
     )
 }
