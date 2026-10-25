@@ -15,6 +15,7 @@ import com.binge.designsystem.tv.component.TvSideSheetRows
 import com.binge.designsystem.tv.component.TvSideSheetStack
 import com.binge.designsystem.tv.component.TvSideSheetTitle
 import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.ui.requests.RequestItem
 
 /** Manage's own page, the stack's root. The pages it opens are named for their [DetailSheet]. */
 internal const val MANAGE_PAGE_ROOT = "manage"
@@ -27,6 +28,7 @@ internal const val MANAGE_PAGE_ROOT = "manage"
  */
 @Composable
 internal fun TvRequestManageSheet(
+    item: RequestItem,
     managed: List<TvRequestActionItem>,
     actions: TvRequestDetailActions,
     onOpenPage: (DetailSheet) -> Unit,
@@ -59,6 +61,7 @@ internal fun TvRequestManageSheet(
     confirming?.let { step ->
         TvRequestConfirm(
             step = step,
+            item = item,
             actions = actions,
             onDone = { confirmed ->
                 confirming = null
