@@ -6,7 +6,6 @@ import com.cooper.binge.companion.seerr.data.NoRequestStore
 import com.cooper.binge.companion.seerr.data.RequestStore
 import com.cooper.binge.companion.seerr.seerr.SeerrAddToBlocklistBody
 import com.cooper.binge.companion.seerr.seerr.SeerrEditRequestBody
-import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.seerr.SeerrMediaStatusBody
 import com.cooper.binge.companion.seerr.seerr.SeerrMediaStatusSeasonBody
 import com.cooper.binge.companion.seerr.seerr.SeerrRequestStatusCode
@@ -31,57 +30,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import retrofit2.HttpException
 
-/** One-shot feedback for a moderation; the partial cases say the action landed even though the block did not. */
-sealed interface ModerationEvent {
-    /**
-     * The request is gone from the server afterwards, so a page showing it has nothing left to show.
-     * Clearing the media record takes the request with it, which is why it counts.
-     *
-     * Exhaustive rather than a set, so a new event is a compile error until it says which it is.
-     */
-    val removesTheRequest: Boolean
-        get() =
-            when (this) {
-                Removed, RemovedAndBlocked, RemovedButBlockFailed, MediaCleared -> true
-                Approved, Retried, Edited, Declined, DeclinedAndBlocked, DeclinedButBlockFailed,
-                Blocked, BlockFailed, MediaStatusSet, MediaFilesDeleted, is Failed,
-                -> false
-            }
-
-    data object Approved : ModerationEvent
-
-    data object Retried : ModerationEvent
-
-    data object Edited : ModerationEvent
-
-    data object Declined : ModerationEvent
-
-    data object DeclinedAndBlocked : ModerationEvent
-
-    data object DeclinedButBlockFailed : ModerationEvent
-
-    data object Removed : ModerationEvent
-
-    data object RemovedAndBlocked : ModerationEvent
-
-    data object RemovedButBlockFailed : ModerationEvent
-
-    /** The title alone was blocked; the request is left as it was. */
-    data object Blocked : ModerationEvent
-
-    data object BlockFailed : ModerationEvent
-
-    data object MediaStatusSet : ModerationEvent
-
-    data object MediaCleared : ModerationEvent
-
-    data object MediaFilesDeleted : ModerationEvent
-
-    data class Failed(
-        val error: SeerrError,
-    ) : ModerationEvent
-}
-
 /**
  * What a screen may ask of a [RequestModeration]: its actions, and none of its flows. A ViewModel that holds one keeps it
  * private and exposes this, with the events as its own (#1048), so the one-state, one-events shape is the one a reader sees.
@@ -104,10 +52,15 @@ interface RequestModerationControls {
         mediaId: Int,
     )
 
+    /**
+     * Deletes one instance's files through Radarr or Sonarr, then removes [removeRequestIds]: the server keeps a title's
+     * requests when its files go, so removing them is what lets it be requested again.
+     */
     fun deleteMediaFiles(
         requestId: Int,
         mediaId: Int,
         is4k: Boolean,
+        removeRequestIds: List<Int> = emptyList(),
     )
 
     fun decline(
@@ -202,34 +155,86 @@ class RequestModeration(
         requestId: Int,
         mediaId: Int,
         is4k: Boolean,
-    ) = moderate(requestId, ModerationEvent.MediaFilesDeleted) { connection.api().deleteMediaFiles(mediaId, is4k) }
+        removeRequestIds: List<Int>,
+    ) = deleteMediaFiles(requestId, mediaId, is4k, removeRequestIds, onFilesDeleted = {})
+
+    /**
+     * [onFilesDeleted] hears that the files went before any request is removed, so a page can say so even when a removal
+     * then fails. The removals run inside the action, so the reload that follows sees them.
+     */
+    fun deleteMediaFiles(
+        requestId: Int,
+        mediaId: Int,
+        is4k: Boolean,
+        removeRequestIds: List<Int>,
+        onFilesDeleted: () -> Unit,
+    ) {
+        var allRemoved = true
+        var removedThisRequest = false
+        act(
+            requestId = requestId,
+            done =
+                if (removeRequestIds.isEmpty()) {
+                    ModerationEvent.MediaFilesDeleted
+                } else {
+                    // Only a label for the breadcrumb and failure log; the outcome below is the event sent.
+                    ModerationEvent.MediaFilesAndRequestsDeleted(false)
+                },
+            outcome = {
+                when {
+                    removeRequestIds.isEmpty() -> ModerationEvent.MediaFilesDeleted
+                    allRemoved -> ModerationEvent.MediaFilesAndRequestsDeleted(removedThisRequest)
+                    else -> ModerationEvent.MediaFilesDeletedRequestsKept(removedThisRequest)
+                }
+            },
+        ) {
+            val api = connection.api()
+            api.deleteMediaFiles(mediaId, is4k)
+            onFilesDeleted()
+            removeRequestIds.forEach { id ->
+                attempt { api.deleteRequest(id) }
+                    .onSuccess { cache.delete(id) }
+                    .onSuccess { removedThisRequest = removedThisRequest || id == requestId }
+                    .onFailure {
+                        allRemoved = false
+                        analytics.operationFailed("moderate_remove_with_files", it, connection)
+                    }
+            }
+        }
+    }
 
     override fun decline(
         item: RequestItem,
         blockTitle: Boolean,
-    ) = actThenMaybeBlock(
-        item,
-        blockTitle,
-        ModerationEvent.Declined,
-        ModerationEvent.DeclinedAndBlocked,
-        ModerationEvent.DeclinedButBlockFailed,
     ) {
-        connection.api().declineRequest(it)
-        cache.updateStatus(it, SeerrRequestStatusCode.Declined.raw)
+        actThenMaybeBlock(
+            item,
+            item.id,
+            blockTitle,
+            ModerationEvent.Declined,
+            ModerationEvent.DeclinedAndBlocked,
+            ModerationEvent.DeclinedButBlockFailed,
+        ) {
+            connection.api().declineRequest(it)
+            cache.updateStatus(it, SeerrRequestStatusCode.Declined.raw)
+        }
     }
 
     override fun remove(
         item: RequestItem,
         blockTitle: Boolean,
-    ) = actThenMaybeBlock(
-        item,
-        blockTitle,
-        ModerationEvent.Removed,
-        ModerationEvent.RemovedAndBlocked,
-        ModerationEvent.RemovedButBlockFailed,
     ) {
-        connection.api().deleteRequest(it)
-        cache.delete(it)
+        actThenMaybeBlock(
+            item,
+            item.id,
+            blockTitle,
+            ModerationEvent.Removed,
+            ModerationEvent.RemovedAndBlocked,
+            ModerationEvent.RemovedButBlockFailed,
+        ) {
+            connection.api().deleteRequest(it)
+            cache.delete(it)
+        }
     }
 
     private fun moderate(
@@ -241,26 +246,6 @@ class RequestModeration(
     }
 
     private fun actThenMaybeBlock(
-        item: RequestItem,
-        blockTitle: Boolean,
-        done: ModerationEvent,
-        doneAndBlocked: ModerationEvent,
-        blockFailed: ModerationEvent,
-        action: suspend (Int) -> Unit,
-    ) {
-        actThenMaybeBlock(item, item.id, blockTitle, done, doneAndBlocked, blockFailed, action = action)
-    }
-
-    /**
-     * Acting is raised before the launch so a second tap is swallowed at once, and cleared as soon
-     * as the action settles, before the refresh and the longer block follow-up. False when an action on the request is
-     * already in flight, so this one was not started; [onSettled] hears how a started one went, before the event does.
-     *
-     * Launched on [dispatcher] rather than inheriting `scope`'s own, so [onModerated]'s reload and
-     * this launch's own state updates never touch `Dispatchers.Main` - including the tail end of a
-     * call still in flight after the owning screen is gone (#177).
-     */
-    private fun actThenMaybeBlock(
         item: RequestItem?,
         requestId: Int,
         blockTitle: Boolean,
@@ -268,6 +253,35 @@ class RequestModeration(
         doneAndBlocked: ModerationEvent,
         blockFailed: ModerationEvent,
         onSettled: (succeeded: Boolean) -> Unit = {},
+        action: suspend (Int) -> Unit,
+    ): Boolean =
+        act(
+            requestId = requestId,
+            done = done,
+            onSettled = onSettled,
+            outcome = {
+                if (blockTitle && item != null) {
+                    if (block(item)) doneAndBlocked else blockFailed
+                } else {
+                    done
+                }
+            },
+            action = action,
+        )
+
+    /**
+     * Acting is raised before the launch so a second tap is swallowed at once, and cleared as soon as the action settles,
+     * before the refresh and [outcome]'s follow-up. False when an action on the request is already in flight, so this one
+     * was not started; [onSettled] hears how a started one went, before the event does. [done] names the action in logs.
+     *
+     * Launched on [dispatcher] rather than inheriting `scope`'s own, so [onModerated]'s reload and this launch's own state
+     * updates never touch `Dispatchers.Main` - including the tail end of a call still in flight after the screen is gone (#177).
+     */
+    private fun act(
+        requestId: Int,
+        done: ModerationEvent,
+        onSettled: (succeeded: Boolean) -> Unit = {},
+        outcome: suspend () -> ModerationEvent,
         action: suspend (Int) -> Unit,
     ): Boolean {
         if (requestId in acting.value) return false
@@ -281,12 +295,7 @@ class RequestModeration(
             result
                 .onSuccess {
                     onModerated()
-                    val event =
-                        if (blockTitle && item != null) {
-                            if (block(item)) doneAndBlocked else blockFailed
-                        } else {
-                            done
-                        }
+                    val event = outcome()
                     analytics.event(AnalyticsEvents.REQUEST_MODERATED, mapOf(AnalyticsEvents.PARAM_ACTION to event.actionLabel()))
                     eventFlow.emit(event)
                     syncCache(requestId)
@@ -339,23 +348,3 @@ class RequestModeration(
         }.onFailure { analytics.operationFailed("block_title", it, connection) }
             .isSuccess
 }
-
-/** The [AnalyticsEvents.PARAM_ACTION] value for [AnalyticsEvents.REQUEST_MODERATED]; [ModerationEvent.Failed] never reaches this. */
-private fun ModerationEvent.actionLabel(): String =
-    when (this) {
-        ModerationEvent.Approved -> "approved"
-        ModerationEvent.Retried -> "retried"
-        ModerationEvent.Edited -> "edited"
-        ModerationEvent.Declined -> "declined"
-        ModerationEvent.DeclinedAndBlocked -> "declined_and_blocked"
-        ModerationEvent.DeclinedButBlockFailed -> "declined_block_failed"
-        ModerationEvent.Removed -> "removed"
-        ModerationEvent.RemovedAndBlocked -> "removed_and_blocked"
-        ModerationEvent.RemovedButBlockFailed -> "removed_block_failed"
-        ModerationEvent.Blocked -> "blocked"
-        ModerationEvent.BlockFailed -> "block_failed"
-        ModerationEvent.MediaStatusSet -> "media_status_set"
-        ModerationEvent.MediaCleared -> "media_cleared"
-        ModerationEvent.MediaFilesDeleted -> "media_files_deleted"
-        is ModerationEvent.Failed -> "failed"
-    }

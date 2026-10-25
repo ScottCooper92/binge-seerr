@@ -191,7 +191,7 @@ class MarkAsPageExpandedTest {
                             canClearData = false,
                             canDeleteFiles = false,
                         ),
-                    mediaActions = ManageMediaActions(onSetStatus = { _, _, _ -> }, onClearData = {}, onDeleteFiles = { _, _ -> }),
+                    mediaActions = ManageMediaActions(onSetStatus = { _, _, _ -> }, onClearData = {}, onDeleteFiles = { _, _, _ -> }),
                     onMarkStatus = { marking = instance },
                     marking = marking,
                     onMarkSelect = { picked += it },
@@ -302,7 +302,7 @@ class MarkAsPageDismissTest {
                 siblingSheet = {},
                 onOpenUser = {},
                 edit = editActions,
-                media = ManageMediaActions(onSetStatus = { _, _, _ -> }, onClearData = {}, onDeleteFiles = { _, _ -> }),
+                media = ManageMediaActions(onSetStatus = { _, _, _ -> }, onClearData = {}, onDeleteFiles = { _, _, _ -> }),
             )
         rule.setContent {
             BingeExpressiveTheme(dynamicColor = false) {
@@ -371,7 +371,7 @@ class EditorPageDismissTest {
                             state = state.copy(edit = null)
                         },
                     ),
-                media = ManageMediaActions(onSetStatus = { _, _, _ -> }, onClearData = {}, onDeleteFiles = { _, _ -> }),
+                media = ManageMediaActions(onSetStatus = { _, _, _ -> }, onClearData = {}, onDeleteFiles = { _, _, _ -> }),
             )
         rule.setContent {
             BingeExpressiveTheme(dynamicColor = false) {

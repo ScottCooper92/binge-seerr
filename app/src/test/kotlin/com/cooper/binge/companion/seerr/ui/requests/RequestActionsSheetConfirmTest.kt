@@ -11,6 +11,7 @@ import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.seerr.SeerrMediaStatusCode
 import com.cooper.binge.companion.seerr.seerr.SeerrRequestStatusCode
 import com.cooper.binge.companion.seerr.util.createSeerrComposeRule
+import com.cooper.binge.companion.seerr.util.plural
 import com.cooper.binge.companion.seerr.util.requestItem
 import com.cooper.binge.companion.seerr.util.string
 import org.junit.Assert.assertEquals
@@ -24,7 +25,7 @@ private const val MEDIA_ID = 42
 
 /**
  * The request sheet's second step (#1054): declining asks only when it also blocks the title, removing always asks,
- * and deleting files asks twice, the second time naming the client the files leave.
+ * and deleting files asks once, naming the client, with the title's open requests offered alongside (#1720).
  */
 @RunWith(RobolectricTestRunner::class)
 class RequestActionsSheetConfirmTest {
@@ -33,7 +34,7 @@ class RequestActionsSheetConfirmTest {
 
     private val declined = mutableListOf<Boolean>()
     private val removed = mutableListOf<Boolean>()
-    private val deleted = mutableListOf<Pair<Int, Boolean>>()
+    private val deleted = mutableListOf<Triple<Int, Boolean, List<Int>>>()
     private var dismissed = 0
 
     @Test
@@ -76,23 +77,73 @@ class RequestActionsSheetConfirmTest {
     }
 
     @Test
-    fun `deleting files asks twice, the second time naming Radarr, then deletes`() {
+    fun `deleting a movie's files asks once, in Radarr's words, and the sheet stays to show the result`() {
         setSheet()
 
         click(R.string.media_delete_files)
-        composeTestRule.onNodeWithText(string(R.string.media_delete_files_confirm_title)).assertExists()
-        confirm(R.string.media_delete_files)
-
         val radarr = string(R.string.media_client_radarr)
-        composeTestRule.onNodeWithText(string(R.string.media_delete_files_second_title, radarr)).assertExists()
-        assertEquals(emptyList<Pair<Int, Boolean>>(), deleted)
+        composeTestRule.onNodeWithText(string(R.string.media_delete_files_confirm_title, radarr)).assertExists()
+        composeTestRule.onNodeWithText(string(R.string.media_delete_files_confirm_movie, radarr)).assertExists()
         confirm(R.string.media_delete_files)
 
-        assertEquals(listOf(MEDIA_ID to false), deleted)
-        assertEquals(1, dismissed)
+        assertEquals(listOf(Triple(MEDIA_ID, false, emptyList<Int>())), deleted)
+        assertEquals(0, dismissed)
+        composeTestRule.onNodeWithText(string(R.string.media_delete_files_confirm_title, radarr)).assertDoesNotExist()
     }
 
-    private fun setSheet() {
+    @Test
+    fun `a show's confirm names Sonarr and says every season goes`() {
+        setSheet(isTv = true)
+
+        click(R.string.media_delete_files)
+
+        val sonarr = string(R.string.media_client_sonarr)
+        composeTestRule.onNodeWithText(string(R.string.media_delete_files_confirm_title, sonarr)).assertExists()
+        composeTestRule.onNodeWithText(string(R.string.media_delete_files_confirm_tv, sonarr)).assertExists()
+    }
+
+    @Test
+    fun `with no open request on the instance the confirm offers nothing to remove`() {
+        setSheet(requests = listOf(summary(id = 11, status = SeerrRequestStatusCode.Declined), summary(id = 12, is4k = true)))
+
+        click(R.string.media_delete_files)
+
+        composeTestRule.onNodeWithText(plural(R.plurals.media_delete_files_remove_requests, 1)).assertDoesNotExist()
+    }
+
+    @Test
+    fun `ticking the requests box deletes the files and removes the instance's open requests`() {
+        setSheet(
+            requests =
+                listOf(
+                    summary(id = 11),
+                    summary(id = 12, status = SeerrRequestStatusCode.Approved),
+                    summary(id = 13, status = SeerrRequestStatusCode.Declined),
+                    summary(id = 14, is4k = true),
+                ),
+        )
+
+        click(R.string.media_delete_files)
+        composeTestRule.onNodeWithText(plural(R.plurals.media_delete_files_remove_requests, 2)).performClick()
+        composeTestRule.waitForIdle()
+        confirm(R.string.media_delete_files_and_requests)
+
+        assertEquals(listOf(Triple(MEDIA_ID, false, listOf(11, 12))), deleted)
+    }
+
+    @Test
+    fun `an instance whose files went says so in place of its delete row`() {
+        setSheet(filesDeleted = true)
+
+        composeTestRule.onNodeWithText(string(R.string.media_files_deleted)).assertExists()
+        composeTestRule.onNodeWithText(string(R.string.media_delete_files)).assertDoesNotExist()
+    }
+
+    private fun setSheet(
+        isTv: Boolean = false,
+        requests: List<RequestSummary> = emptyList(),
+        filesDeleted: Boolean = false,
+    ) {
         composeTestRule.setContent {
             BingeExpressiveTheme(dynamicColor = false) {
                 RequestActionsSheet(
@@ -106,7 +157,7 @@ class RequestActionsSheetConfirmTest {
                     media =
                         MediaRecord(
                             mediaId = MEDIA_ID,
-                            isTv = false,
+                            isTv = isTv,
                             instances =
                                 listOf(
                                     MediaInstance(
@@ -115,6 +166,7 @@ class RequestActionsSheetConfirmTest {
                                         serviceUrl = null,
                                         mediaServerUrl = null,
                                         watch = null,
+                                        filesDeleted = filesDeleted,
                                     ),
                                 ),
                             canSetStatus = false,
@@ -125,8 +177,9 @@ class RequestActionsSheetConfirmTest {
                         ManageMediaActions(
                             onSetStatus = { _, _, _ -> },
                             onClearData = {},
-                            onDeleteFiles = { id, is4k -> deleted += id to is4k },
+                            onDeleteFiles = { id, is4k, requestIds -> deleted += Triple(id, is4k, requestIds) },
                         ),
+                    requests = requests,
                 )
             }
         }
@@ -138,6 +191,12 @@ class RequestActionsSheetConfirmTest {
         composeTestRule.onNodeWithText(string(label)).performSemanticsAction(SemanticsActions.OnClick)
         composeTestRule.waitForIdle()
     }
+
+    private fun summary(
+        id: Int,
+        status: SeerrRequestStatusCode = SeerrRequestStatusCode.Pending,
+        is4k: Boolean = false,
+    ) = RequestSummary(id = id, status = status, requestedBy = null, requestedAtMillis = null, is4k = is4k, seasonNumbers = emptyList())
 
     /** The dialog's confirm shares its label with the row that opened it; the dialog's is the last drawn. */
     private fun confirm(label: Int) {

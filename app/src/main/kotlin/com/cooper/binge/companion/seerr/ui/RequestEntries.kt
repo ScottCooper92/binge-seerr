@@ -150,7 +150,9 @@ private fun RequestDetailViewModel.toActions(
                     moderation.setMediaStatus(requestId, mediaId, status, is4k, seasons)
                 },
                 onClearData = { mediaId -> moderation.clearMedia(requestId, mediaId) },
-                onDeleteFiles = { mediaId, is4k -> moderation.deleteMediaFiles(requestId, mediaId, is4k) },
+                onDeleteFiles = { mediaId, is4k, removeRequestIds ->
+                    moderation.deleteMediaFiles(requestId, mediaId, is4k, removeRequestIds)
+                },
             ),
         onManageOpened = ::onManageOpened,
     )

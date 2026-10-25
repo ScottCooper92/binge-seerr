@@ -856,6 +856,23 @@ class RequestDetailViewModelTest {
         }
 
     @Test
+    fun `deleting files marks the instance in place, though the server leaves its status as it was`() =
+        runTest {
+            server(ADMIN)
+            serve("/api/v1/media/900/file", "{}")
+            val vm = viewModel()
+            assertFalse(checkNotNull(vm.awaitReady().detail.media).instances.single().filesDeleted)
+
+            val deleted = awaitEvent(vm.events) { it == ModerationEvent.MediaFilesDeleted }
+            vm.moderation.deleteMediaFiles(11, 900, is4k = false)
+            deleted.await()
+
+            val instance = checkNotNull(vm.awaitReady { !it.isActing }.detail.media).instances.single()
+            assertTrue(instance.filesDeleted)
+            assertEquals(SeerrMediaStatusCode.PartiallyAvailable, instance.status)
+        }
+
+    @Test
     fun `the page reads as acting from the action through the reload that shows its result, and not after`() =
         runTest {
             server(REQUEST or ADMIN)

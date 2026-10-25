@@ -124,6 +124,8 @@ data class MediaInstance(
     val serviceUrl: String?,
     val mediaServerUrl: String?,
     val watch: WatchStats?,
+    /** This page deleted the instance's files; the server's status may not say so (Jellyseerr 2.x leaves it as it was). */
+    val filesDeleted: Boolean = false,
     val download: DownloadActivity = DownloadActivity.None,
 )
 
@@ -261,5 +263,6 @@ sealed interface RequestDetailUiState {
 class ManageMediaActions(
     val onSetStatus: (mediaId: Int, status: MediaStatusChoice, is4k: Boolean) -> Unit,
     val onClearData: (mediaId: Int) -> Unit,
-    val onDeleteFiles: (mediaId: Int, is4k: Boolean) -> Unit,
+    /** [removeRequestIds] are the requests to remove once the files are gone; empty deletes the files alone. */
+    val onDeleteFiles: (mediaId: Int, is4k: Boolean, removeRequestIds: List<Int>) -> Unit,
 )

@@ -194,7 +194,7 @@ private fun SeerrRequestDto.mediaRecord(
                     media.serviceUrl?.takeIf { it.isWebUrl() },
                     media.mediaUrl?.takeIf { it.isWebUrl() },
                     watch?.data?.toWatchStats(),
-                    media.downloadStatus.downloadActivity(),
+                    download = media.downloadStatus.downloadActivity(),
                 ),
                 MediaInstance(
                     true,
@@ -202,7 +202,7 @@ private fun SeerrRequestDto.mediaRecord(
                     media.serviceUrl4k?.takeIf { it.isWebUrl() },
                     media.mediaUrl4k?.takeIf { it.isWebUrl() },
                     watch?.data4k?.toWatchStats(),
-                    media.downloadStatus4k.downloadActivity(),
+                    download = media.downloadStatus4k.downloadActivity(),
                 ).takeIf { has4k },
             ),
         canSetStatus = permissions.canManageRequests,

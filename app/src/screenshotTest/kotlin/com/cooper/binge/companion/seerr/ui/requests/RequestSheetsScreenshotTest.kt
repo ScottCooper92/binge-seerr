@@ -1,7 +1,10 @@
 package com.cooper.binge.companion.seerr.ui.requests
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.stringResource
 import com.android.tools.screenshot.PreviewTest
+import com.binge.designsystem.component.BingeConfirmDialogContent
+import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.preview.SeerrComponentPreviews
 import com.cooper.binge.companion.seerr.preview.SheetFrame
 import com.cooper.binge.companion.seerr.preview.SideSheetFrame
@@ -29,6 +32,29 @@ class RequestSheetsScreenshotTest {
     @SeerrComponentPreviews
     @Composable
     fun actionsSettled() = SheetFrame { ActionsContent(settledDetail()) }
+
+    /** Files deleted from the sheet (#1720): the row that ran it says so in place, whatever the status now reads. */
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun actionsFilesDeleted() =
+        SheetFrame {
+            val detail = settledDetail()
+            val media = checkNotNull(detail.media)
+            ActionsContent(detail.copy(media = media.copy(instances = media.instances.map { it.copy(filesDeleted = true) })))
+        }
+
+    /** The one confirm for a movie with no open request: what Radarr does, and that a running download carries on. */
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun deleteFilesConfirmMovie() = DeleteFilesConfirmFrame(isTv = false, openRequests = 0, removeRequests = false)
+
+    /** A show with open requests, the box ticked: Sonarr's words, and the confirm names both things it does. */
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun deleteFilesConfirmShowWithRequests() = DeleteFilesConfirmFrame(isTv = true, openRequests = 2, removeRequests = true)
 
     /** A 4K request: the header's 4K label beside the status chip, with the season count under it (#479). */
     @PreviewTest
@@ -71,6 +97,30 @@ class RequestSheetsScreenshotTest {
         SheetFrame {
             RequestOpenSheetContent(links = rememberRequestOpenLinks(pendingDetail()), onOpen = {})
         }
+}
+
+/** The confirm is a modal window, which does not capture, so the frame renders its stateless content with the same copy. */
+@Composable
+private fun DeleteFilesConfirmFrame(
+    isTv: Boolean,
+    openRequests: Int,
+    removeRequests: Boolean,
+) {
+    val client = stringResource(if (isTv) R.string.media_client_sonarr else R.string.media_client_radarr)
+    BingeConfirmDialogContent(
+        title = stringResource(R.string.media_delete_files_confirm_title, client),
+        message = deleteFilesMessage(isTv),
+        confirmLabel = stringResource(if (removeRequests) R.string.media_delete_files_and_requests else R.string.media_delete_files),
+        destructive = true,
+        onConfirm = {},
+        onDismissRequest = {},
+        extraContent =
+            if (openRequests > 0) {
+                { RemoveRequestsCheckbox(count = openRequests, checked = removeRequests, onCheckedChange = {}) }
+            } else {
+                null
+            },
+    )
 }
 
 @Composable

@@ -235,6 +235,7 @@ internal fun RequestManagementSheets(
             onEdit = actions.onStartEdit,
             media = detail?.media,
             mediaActions = actions.media,
+            requests = detail?.summaries().orEmpty(),
             onMarkStatus = { is4k -> marking = is4k },
             onOpenUser = actions.onOpenUser,
             viewerId = detail?.viewerId,

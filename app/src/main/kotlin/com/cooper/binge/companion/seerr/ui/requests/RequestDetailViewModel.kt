@@ -88,6 +88,12 @@ class RequestDetailViewModel
                 onModerated = ::reloadAfterAction,
             )
 
+        /**
+         * The instances, by `is4k`, whose files this page deleted. Jellyseerr 2.x leaves the status as it was afterwards, so
+         * the reload alone would not show it; this marks the instance until the page goes.
+         */
+        private val filesDeleted = MutableStateFlow<Set<Boolean>>(emptySet())
+
         /** The editor rides the page's state while it is open; it closes itself on the save landing. */
         private val requestEditor =
             RequestEditor(scope = viewModelScope, dispatcher = dispatcher, connection = connection, moderation = moderator)
@@ -96,15 +102,31 @@ class RequestDetailViewModel
          * What the screen may ask of the moderation and the editor: their actions only. Their flows are folded into
          * [uiState], and the moderation's events are [events] (#1048).
          */
-        val moderation: RequestModerationControls = moderator
+        val moderation: RequestModerationControls =
+            object : RequestModerationControls by moderator {
+                override fun deleteMediaFiles(
+                    requestId: Int,
+                    mediaId: Int,
+                    is4k: Boolean,
+                    removeRequestIds: List<Int>,
+                ) = moderator.deleteMediaFiles(requestId, mediaId, is4k, removeRequestIds) { filesDeleted.update { it + is4k } }
+            }
         val editor: RequestEditorControls = requestEditor
 
         /** How a moderation or an edit went, for the screen's snackbar. */
         val events: SharedFlow<ModerationEvent> = moderator.events
 
         val uiState: StateFlow<RequestDetailUiState> =
-            combine(state, requestEditor.state, moderator.actingIds, reloadingAfterAction) { page, edit, acting, reloading ->
-                (page as? RequestDetailUiState.Ready)?.copy(edit = edit, isActing = requestId in acting || reloading) ?: page
+            combine(
+                state,
+                requestEditor.state,
+                moderator.actingIds,
+                reloadingAfterAction,
+                filesDeleted,
+            ) { page, edit, acting, reloading, deleted ->
+                (page as? RequestDetailUiState.Ready)
+                    ?.copy(detail = page.detail.withFilesDeleted(deleted), edit = edit, isActing = requestId in acting || reloading)
+                    ?: page
             }.combine(now) { page, now -> (page as? RequestDetailUiState.Ready)?.copy(now = now) ?: page }
                 .stateIn(viewModelScope, SharingStarted.Lazily, RequestDetailUiState.Loading)
 
@@ -278,4 +300,12 @@ class RequestDetailViewModel
         interface Factory {
             fun create(requestId: Int): RequestDetailViewModel
         }
+    }
+
+/** Marks the instances whose files were deleted from this page, so the row says so whatever the server's status now reads. */
+private fun RequestDetail.withFilesDeleted(deleted: Set<Boolean>): RequestDetail =
+    if (deleted.isEmpty()) {
+        this
+    } else {
+        copy(media = media?.copy(instances = media.instances.map { it.copy(filesDeleted = it.is4k in deleted) }))
     }
