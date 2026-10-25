@@ -14,7 +14,9 @@ internal const val DEMO_HD_PROFILE_ID = 2
 
 /** The one download server of a kind, so the advanced request has something to offer. It is a name only: nothing downloads. */
 internal fun demoServers(name: String) =
-    listOf(SeerrServerDto(id = DEMO_SERVER_ID, name = name, isDefault = true, activeProfileId = DEMO_PROFILE_ID, activeDirectory = "/media"))
+    listOf(
+        SeerrServerDto(id = DEMO_SERVER_ID, name = name, isDefault = true, activeProfileId = DEMO_PROFILE_ID, activeDirectory = "/media"),
+    )
 
 internal fun demoServerDetails(name: String) =
     SeerrServerDetailsDto(

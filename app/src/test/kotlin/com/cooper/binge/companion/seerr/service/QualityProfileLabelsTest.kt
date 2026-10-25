@@ -27,7 +27,8 @@ private const val RADARR_ONE = "/api/v1/service/radarr/1"
 private const val HOUR_MILLIS = 60 * 60 * 1000L
 private const val MINUTE_MILLIS = 60 * 1000L
 
-private const val RADARR_ONE_PROFILES = """{"server":{"id":1,"name":"Radarr"},"profiles":[{"id":4,"name":"HD-1080p"},{"id":7,"name":"HD-720p"}]}"""
+private const val RADARR_ONE_PROFILES =
+    """{"server":{"id":1,"name":"Radarr"},"profiles":[{"id":4,"name":"HD-1080p"},{"id":7,"name":"HD-720p"}]}"""
 
 class QualityProfileLabelsTest {
     @get:Rule
@@ -36,6 +37,7 @@ class QualityProfileLabelsTest {
     private val answers = mutableMapOf<String, () -> MockResponse>()
     private val hits = mutableListOf<String>()
     private var now = 0L
+    private var stores = 0
 
     private val seerr =
         MockWebServer().apply {
@@ -44,11 +46,18 @@ class QualityProfileLabelsTest {
                     override fun dispatch(request: RecordedRequest): MockResponse {
                         val path = request.url.encodedPath
                         hits += path
-                        return answers[path]?.invoke() ?: MockResponse.Builder().code(404).body("{}").build()
+                        return answers[path]?.invoke() ?: MockResponse
+                            .Builder()
+                            .code(404)
+                            .body("{}")
+                            .build()
                     }
                 }
             start()
         }
+
+    /** Reads of the one server's profile list; a refused call may also make the connection re-check the session. */
+    private fun profileReads() = hits.count { it == RADARR_ONE }
 
     @After
     fun tearDown() = seerr.close()
@@ -56,7 +65,7 @@ class QualityProfileLabelsTest {
     private fun labels(): QualityProfileLabels {
         val store =
             CredentialStore(
-                dataStore = PreferenceDataStoreFactory.create { folder.newFile() },
+                dataStore = PreferenceDataStoreFactory.create { folder.newFile("creds${stores++}.preferences_pb") },
                 cipher = PlainCipher,
             )
         runBlocking { store.save(SeerrCredentials(seerr.url("/").toString(), SeerrAuth.ApiKey("k3y"), SeerrVariant.fromVersion("2.7.0"))) }
@@ -68,7 +77,14 @@ class QualityProfileLabelsTest {
         code: Int = 200,
         body: String = "{}",
     ) {
-        answers[path] = { MockResponse.Builder().code(code).addHeader("Content-Type", "application/json").body(body).build() }
+        answers[path] = {
+            MockResponse
+                .Builder()
+                .code(code)
+                .addHeader("Content-Type", "application/json")
+                .body(body)
+                .build()
+        }
     }
 
     private fun QualityLabels.of(
@@ -148,7 +164,7 @@ class QualityProfileLabelsTest {
 
             assertEquals(listOf("HD-1080p", "HD-720p"), listOf(first.of(4), first.of(7)))
             assertEquals("HD-720p", second.of(7))
-            assertEquals(listOf(RADARR_ONE), hits)
+            assertEquals(1, profileReads())
         }
 
     @Test
@@ -171,12 +187,12 @@ class QualityProfileLabelsTest {
 
             now = 2 * HOUR_MILLIS
             labels.forDestinations(listOf(destination(7)))
-            assertEquals(1, hits.size)
+            assertEquals(1, profileReads())
 
             answer(RADARR_ONE, body = """{"profiles":[{"id":7,"name":"Renamed"}]}""")
             now = 4 * HOUR_MILLIS
             assertEquals("Renamed", labels.forDestinations(listOf(destination(7))).of(7))
-            assertEquals(2, hits.size)
+            assertEquals(2, profileReads())
         }
 
     @Test
@@ -188,11 +204,11 @@ class QualityProfileLabelsTest {
             labels.forDestinations(listOf(destination(7)))
             now = MINUTE_MILLIS
             labels.forDestinations(listOf(destination(7)))
-            assertEquals(1, hits.size)
+            assertEquals(1, profileReads())
 
             answer(RADARR_ONE, body = RADARR_ONE_PROFILES)
             now = 10 * MINUTE_MILLIS
             assertEquals("HD-720p", labels.forDestinations(listOf(destination(7))).of(7))
-            assertEquals(2, hits.size)
+            assertEquals(2, profileReads())
         }
 }

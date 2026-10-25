@@ -53,14 +53,25 @@ internal class QualityProfileLabels(
             val now = clock()
             cache[key]?.takeIf { now - it.readAtMillis in 0 until it.maxAgeMillis }?.let { return it.names }
             val read = readProfiles(server)
-            val profiles = if (read != null) Profiles(read, now, PROFILES_MAX_AGE_MILLIS) else Profiles(emptyMap(), now, MISS_MAX_AGE_MILLIS)
+            val profiles =
+                if (read !=
+                    null
+                ) {
+                    Profiles(read, now, PROFILES_MAX_AGE_MILLIS)
+                } else {
+                    Profiles(emptyMap(), now, MISS_MAX_AGE_MILLIS)
+                }
             cache[key] = profiles
             profiles.names
         }
 
     private suspend fun readProfiles(server: ServerKey): Map<Int, String>? =
         try {
-            connection.api().arrServer(server.isTv, server.serverId).profiles.associate { it.id to it.name }
+            connection
+                .api()
+                .arrServer(server.isTv, server.serverId)
+                .profiles
+                .associate { it.id to it.name }
         } catch (_: HttpException) {
             null
         } catch (_: IOException) {

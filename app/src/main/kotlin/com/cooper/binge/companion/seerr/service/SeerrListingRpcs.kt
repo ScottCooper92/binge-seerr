@@ -51,7 +51,12 @@ internal class SeerrListingRpcs(
             val labels = qualityLabels.forDestinations(page.results.map { it.destination() })
             val response = ListRequestsResponse.newBuilder()
             listed.forEach { (media, dto) ->
-                val info = permissions.withAllowedActions(dto.toRequestInfo(labels), own = dto.requestedBy?.id == user.id, profile = profile)
+                val info =
+                    permissions.withAllowedActions(
+                        dto.toRequestInfo(labels),
+                        own = dto.requestedBy?.id == user.id,
+                        profile = profile,
+                    )
                 response.addEntries(
                     RequestEntry
                         .newBuilder()
