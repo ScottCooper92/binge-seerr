@@ -312,7 +312,7 @@ class RequestModerationTest {
             assertEquals(listOf("/api/v1/request/11/decline", "/api/v1/blacklist"), posts.takeLast(2))
             val block =
                 received
-                    .last()
+                    .last { it.method == "POST" }
                     .body
                     ?.utf8()
                     .orEmpty()
