@@ -95,29 +95,10 @@ internal fun TvSetupScreen(
                 modifier = modifier,
             )
         state is SetupUiState.Address ->
-            TvSetupAddressPage(state, actions.withStartHandOff(scanInstead), modifier, initialFocus)
+            TvSetupAddressPage(state, actions, modifier, initialFocus, onScan = scanInstead)
         state is SetupUiState.SignIn -> TvSetupSignInStep(state, actions, modifier, initialFocus, onScan = { manual = false })
     }
 }
-
-/** [this], with the typed form's "Scan a QR" also leaving the fallback for the code page. */
-private fun SetupActions.withStartHandOff(start: () -> Unit) =
-    SetupActions(
-        onEditAddress = onEditAddress,
-        onInspect = onInspect,
-        onChangeServer = onChangeServer,
-        onEditForm = onEditForm,
-        onConnect = onConnect,
-        onPlexLaunched = onPlexLaunched,
-        onCancelLink = onCancelLink,
-        onRequestPasswordReset = onRequestPasswordReset,
-        onAllowCleartext = onAllowCleartext,
-        onStartHandOff = start,
-        onCancelHandOff = onCancelHandOff,
-        onOfferSignInCode = onOfferSignInCode,
-        onLocalNetworkChanged = onLocalNetworkChanged,
-        onTryDemo = onTryDemo,
-    )
 
 /**
  * The sign-ins a remote can finish — which, now, is all of them. A key or an account typed on
