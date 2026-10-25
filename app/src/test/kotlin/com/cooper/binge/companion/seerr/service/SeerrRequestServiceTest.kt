@@ -1744,6 +1744,18 @@ class SeerrRequestServiceTest {
             assertTrue(stub.getAttention(GetAttentionRequest.getDefaultInstance()).attention.needsReconnect)
         }
 
+    /** Seerr 3.x answers 403 for a dead session everywhere, `auth/me` included, and a status read fetches the user first. */
+    @Test
+    fun `a status read whose session auth_me refuses with 403 is UNAUTHENTICATED, not PERMISSION_DENIED`() =
+        runTest {
+            val stub = connected(permissions = ADMIN, warm = false)
+            seerr.enqueue(
+                MockResponse(code = 403, body = """{"status":403,"error":"You do not have permission to access this endpoint"}"""),
+            )
+
+            assertEquals(Status.Code.UNAUTHENTICATED, stub.status(movie))
+        }
+
     @Test
     fun `a session auth_me refuses with 403 handshakes with only the attention read`() =
         runTest {
