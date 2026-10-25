@@ -58,15 +58,14 @@ internal fun noPrimaryActionDetail(): RequestDetail =
     )
 
 /**
- * Settled with no attributed moderator: Seerr bumps `updatedAt` on a save that doesn't always set
- * `modifiedBy` (an auto-approved request, say), so the "This request" section falls back to an
- * "Updated" row with no name rather than dropping the timestamp entirely.
+ * Settled with no attributed moderator: Seerr clears `modifiedBy` when the moderator's account is deleted, so the
+ * "This request" section falls back to an "Updated" row with no name rather than dropping the timestamp entirely.
  *
  * Trimmed of the overview and the destination/watch facts [detail] carries, the same way
  * [detailWithSiblings] is — with those in, "This request" falls below the single `phone`-height
  * frame this state takes, and the fallback row this fixture exists to cover would never render.
  */
-internal fun autoApprovedDetail(): RequestDetail =
+internal fun unattributedDetail(): RequestDetail =
     detail(
         actions = RequestActions(canRemove = true, canBlock = true),
         status = SeerrRequestStatusCode.Approved,
@@ -79,6 +78,9 @@ internal fun autoApprovedDetail(): RequestDetail =
         seasons = emptyList(),
         overview = null,
     )
+
+/** The same request approved by the requester's own permissions as it was made: "Approved automatically", no moderator (#1723). */
+internal fun autoApprovedDetail(): RequestDetail = unattributedDetail().copy(approvedAutomatically = true)
 
 /**
  * Partly available in 4K: the longest availability label plus a third chip on the headline row —

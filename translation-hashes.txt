@@ -314,8 +314,10 @@ app:report_title_other_server  abb60107a3e8
 app:report_title_signed_out  0a90d940f85f
 app:report_title_version_4k  fa07fd33f2be
 app:request_action_failed  608e2e521eac
+app:request_approval  147fb813a251
 app:request_approve  9ed200aeb78c
 app:request_approved  b07efc4b3f44
+app:request_approved_automatically  be7c9d411e97
 app:request_block_caption  4eb7e63b4423
 app:request_block_confirm_message  68a4a9d1b6d1
 app:request_block_confirm_title  96f4fc8962f2

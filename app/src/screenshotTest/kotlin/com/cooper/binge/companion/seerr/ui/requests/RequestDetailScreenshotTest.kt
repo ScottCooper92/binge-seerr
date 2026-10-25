@@ -73,11 +73,17 @@ class RequestDetailScreenshotTest {
     @Composable
     fun noPrimaryAction() = Frame(noPrimaryActionDetail())
 
-    /** No attributed moderator: the "Updated" row stands on its own rather than the timestamp vanishing. */
+    /** Approved as it was made: "Approved automatically" in place of a moderator row (#1723). */
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
     fun autoApproved() = Frame(autoApprovedDetail())
+
+    /** No attributed moderator: the "Updated" row stands on its own rather than the timestamp vanishing. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun unattributed() = Frame(unattributedDetail())
 
     /**
      * Pending, in a pane narrower than the window (#343): the footer spans the pane it sits in rather

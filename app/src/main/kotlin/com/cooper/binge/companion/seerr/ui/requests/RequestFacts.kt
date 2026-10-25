@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Dns
+import androidx.compose.material.icons.filled.DoneAll
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.HighQuality
@@ -68,7 +69,7 @@ internal fun RequestStats(detail: RequestDetail) {
     FactList(facts)
 }
 
-/** Who asked and who last changed it, each with when. */
+/** Who asked and who last changed it, each with when; a request the server approved as it was made names no one. */
 @Composable
 internal fun requestPeopleFacts(
     detail: RequestDetail,
@@ -93,23 +94,36 @@ internal fun requestPeopleFacts(
             person = true,
             avatarUrl = item.requestedByAvatarUrl,
         ),
-        detail.modifiedBy?.let {
+        approvalFact(detail, updatedText, onOpenUser),
+    )
+}
+
+/** Who answered the request: the server itself, a moderator, or, where the server named no one, just when it changed. */
+@Composable
+private fun approvalFact(
+    detail: RequestDetail,
+    updatedText: String?,
+    onOpenUser: (Int) -> Unit,
+): Fact? {
+    val moderator = detail.modifiedBy
+    return when {
+        detail.approvedAutomatically ->
+            Fact(
+                icon = Icons.Filled.DoneAll,
+                label = stringResource(R.string.request_approval),
+                primary = stringResource(R.string.request_approved_automatically),
+            )
+        moderator != null ->
             Fact(
                 icon = Icons.Filled.ThumbsUpDown,
                 label = stringResource(R.string.request_modified_by),
-                primary = linkedOrPlain(it, detail.modifiedById, detail.viewerId, detail.canManageUsers, onOpenUser),
+                primary = linkedOrPlain(moderator, detail.modifiedById, detail.viewerId, detail.canManageUsers, onOpenUser),
                 secondary = updatedText,
                 person = true,
                 avatarUrl = detail.modifiedByAvatarUrl,
             )
-        } ?: updatedText?.let {
-            Fact(
-                icon = Icons.Filled.Update,
-                label = stringResource(R.string.request_updated_at),
-                primary = it,
-            )
-        },
-    )
+        else -> updatedText?.let { Fact(icon = Icons.Filled.Update, label = stringResource(R.string.request_updated_at), primary = it) }
+    }
 }
 
 /** Where it was sent: server, quality profile and root folder. Tags are [RequestDestination.tagsLabel]. */

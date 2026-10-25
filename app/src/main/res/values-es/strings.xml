@@ -142,6 +142,8 @@
     <string name="request_requested_by">Solicitado por</string>
     <string name="request_modified_by">Moderado por</string>
     <string name="request_updated_at">Actualizado</string>
+    <string name="request_approval">Aprobación</string>
+    <string name="request_approved_automatically">Aprobada automáticamente</string>
     <string name="request_server">Servidor</string>
     <string name="request_profile">Perfil de calidad</string>
     <string name="request_root_folder">Carpeta raíz</string>

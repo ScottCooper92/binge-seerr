@@ -335,6 +335,26 @@ class RequestDetailViewModelTest {
         }
 
     @Test
+    fun `a request the requester's own permissions approved reads as approved automatically, not moderated by them`() =
+        runTest {
+            server(ADMIN)
+            serve(
+                "/api/v1/request/11",
+                """{"id":11,"status":5,"createdAt":"2026-06-01T10:00:00.000Z","updatedAt":"2026-06-03T10:00:00.000Z",
+                   "requestedBy":{"id":7,"displayName":"scott"},"modifiedBy":{"id":7,"displayName":"scott"},
+                   "seasons":[{"seasonNumber":1,"status":5}],
+                   "media":{"id":900,"tmdbId":200,"mediaType":"tv","status":5}}""",
+            )
+            val vm = viewModel()
+
+            val detail = vm.awaitReady().detail
+
+            assertTrue(detail.approvedAutomatically)
+            assertNull(detail.modifiedBy)
+            assertNull(detail.modifiedById)
+        }
+
+    @Test
     fun `a plain viewer who did not make the request reads their own id, but not MANAGE_USERS, off the page`() =
         runTest {
             server(REQUEST)
