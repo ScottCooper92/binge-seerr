@@ -214,6 +214,7 @@ app:local_network_allow  b97c4592cdf4
 app:local_network_allow_short  e87c3e4e4316
 app:local_network_open_settings  ca381c1e76e6
 app:media_4k_files_deleted  97381da5b68d
+app:media_4k_files_not_deleted  4a60e7858757
 app:media_clear_confirm_message  a64b36050151
 app:media_clear_confirm_title  9ff8d543b40a
 app:media_clear_data  a45086979c4a
@@ -231,6 +232,9 @@ app:media_delete_files_remove_requests_detail  021fc2f7db4d
 app:media_files_and_requests_deleted  d75ef6656c9a
 app:media_files_deleted  dad1dd4af3f4
 app:media_files_deleted_requests_kept  bfdd40171056
+app:media_files_no_default_server  ae7cbc036bc8
+app:media_files_no_default_server_4k  ce9081cf5206
+app:media_files_not_deleted  b3e8cf018061
 app:media_instance_standard  ef6691545d2c
 app:media_mark_as  74fc19463b2e
 app:media_mark_as_scope_caption  0e7a1f06ebe3

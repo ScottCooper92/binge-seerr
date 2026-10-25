@@ -345,9 +345,9 @@ internal fun List<RequestSummary>.openRequestIds(is4k: Boolean): List<Int> =
     filter { it.is4k == is4k && it.status != SeerrRequestStatusCode.Declined && it.status != SeerrRequestStatusCode.Completed }
         .map { it.id }
 
-/** The snackbar line for a moderation's outcome. */
+/** The snackbar line for a moderation's outcome; null for one the sheet shows in place, which needs no snackbar. */
 @StringRes
-internal fun ModerationEvent.messageRes(): Int =
+internal fun ModerationEvent.messageRes(): Int? =
     (
         when (this) {
             ModerationEvent.Approved -> R.string.request_approved
@@ -360,6 +360,7 @@ internal fun ModerationEvent.messageRes(): Int =
             ModerationEvent.MediaFilesDeleted -> R.string.media_files_deleted
             is ModerationEvent.MediaFilesAndRequestsDeleted -> R.string.media_files_and_requests_deleted
             ModerationEvent.MediaFilesDeletedRequestsKept -> R.string.media_files_deleted_requests_kept
+            ModerationEvent.MediaFilesNoDefaultServer -> null
             ModerationEvent.Declined -> R.string.request_declined
             ModerationEvent.DeclinedAndBlocked -> R.string.request_declined_and_blocked
             ModerationEvent.DeclinedButBlockFailed -> R.string.request_declined_block_failed
@@ -382,4 +383,5 @@ internal fun ModerationEvent.isError(): Boolean =
         this == ModerationEvent.DeclinedButBlockFailed ||
         this == ModerationEvent.RemovedButBlockFailed ||
         this == ModerationEvent.MediaFilesDeletedRequestsKept ||
+        this == ModerationEvent.MediaFilesNoDefaultServer ||
         this == ModerationEvent.BlockFailed

@@ -25,14 +25,17 @@ private const val UNKNOWN = "unknown"
  *
  * @param operation one of this app's fixed names. Every event param is low-cardinality, never free text:
  *   no id, title, URL, host or response body, the rule `CrashBreadcrumbs` states for its notes.
+ * @param reason one of this app's fixed names for a failure the screen read more precisely than its status, such as
+ *   [AnalyticsEvents.REASON_NO_DEFAULT_SERVICE]; omitted when null.
  */
 suspend fun Analytics.operationFailed(
     operation: String,
     failure: Throwable,
     connection: SeerrConnection,
+    reason: String? = null,
 ) {
     if (!failure.isVersionSignal()) return
-    operationFailed(operation, failure, attempt { connection.profile() }.getOrNull())
+    operationFailed(operation, failure, attempt { connection.profile() }.getOrNull(), reason)
 }
 
 /** As above, with the [profile] already in hand; null when it could not be read. */
@@ -40,6 +43,7 @@ fun Analytics.operationFailed(
     operation: String,
     failure: Throwable,
     profile: SeerrServerProfile?,
+    reason: String? = null,
 ) {
     if (!failure.isVersionSignal()) return
     val http = (failure as? HttpException)?.code()?.toString() ?: UNAVAILABLE
@@ -54,7 +58,7 @@ fun Analytics.operationFailed(
                     .status.code.name,
             AnalyticsEvents.PARAM_SERVER_LINEAGE to (profile?.variant?.name?.lowercase() ?: UNKNOWN),
             AnalyticsEvents.PARAM_SERVER_VERSION to (profile?.version?.label ?: UNKNOWN),
-        ),
+        ) + listOfNotNull(reason?.let { AnalyticsEvents.PARAM_REASON to it }),
     )
 }
 

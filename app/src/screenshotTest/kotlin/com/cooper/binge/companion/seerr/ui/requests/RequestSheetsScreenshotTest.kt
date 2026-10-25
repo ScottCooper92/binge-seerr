@@ -41,7 +41,21 @@ class RequestSheetsScreenshotTest {
         SheetFrame {
             val detail = settledDetail()
             val media = checkNotNull(detail.media)
-            ActionsContent(detail.copy(media = media.copy(instances = media.instances.map { it.copy(filesDeleted = true) })))
+            val deleted = media.instances.map { it.copy(filesDeletion = FilesDeletion.Deleted) }
+            ActionsContent(detail.copy(media = media.copy(instances = deleted)))
+        }
+
+    /** Seerr refused for want of a default server (#1726): the row says what to set in Seerr, and opens it for an admin. */
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun actionsFilesNoDefaultServer() =
+        SheetFrame {
+            val detail = settledDetail()
+            val media = checkNotNull(detail.media)
+            val refused = media.instances.map { it.copy(filesDeletion = FilesDeletion.NoDefaultServer) }
+            val services = "https://seerr.example/settings/services"
+            ActionsContent(detail.copy(media = media.copy(instances = refused, servicesSettingsUrl = services)))
         }
 
     /** The one confirm for a movie with no open request: what Radarr does, and that a running download carries on. */

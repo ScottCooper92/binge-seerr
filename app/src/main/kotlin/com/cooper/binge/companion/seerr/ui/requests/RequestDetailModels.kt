@@ -117,9 +117,18 @@ data class MediaInstance(
     val serviceUrl: String?,
     val mediaServerUrl: String?,
     val watch: WatchStats?,
-    /** This page deleted the instance's files; the server's status may not say so (Jellyseerr 2.x leaves it as it was). */
-    val filesDeleted: Boolean = false,
+    /** What deleting the instance's files from this page came to; null until it was tried. */
+    val filesDeletion: FilesDeletion? = null,
 )
+
+/** How a deletion of an instance's files from the page ended, shown in place of its delete row while the page stays. */
+enum class FilesDeletion {
+    /** The files went. The server's status may not say so: Jellyseerr 2.x leaves it as it was. */
+    Deleted,
+
+    /** Seerr has no Radarr or Sonarr server set as default for the version, so it could not delete them. */
+    NoDefaultServer,
+}
 
 /**
  * The server's record of the request's title, and what the connected user may do to it: mark its
@@ -132,6 +141,8 @@ data class MediaRecord(
     val canSetStatus: Boolean,
     val canClearData: Boolean,
     val canDeleteFiles: Boolean,
+    /** Seerr's Services settings in its web client, where a default server is set; null for a user who cannot open them. */
+    val servicesSettingsUrl: String? = null,
 ) {
     val canManage: Boolean get() = canSetStatus || canClearData || canDeleteFiles || instances.any { it.watch != null }
 }

@@ -11,7 +11,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DeleteForever
-import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.LinearProgressIndicator
@@ -301,29 +300,9 @@ private fun mediaRows(
         }
         // Every picker comes before the first delete, so the destructive rows run together at the end.
         if (media.canDeleteFiles) {
-            // A deletion's result stays in place: the row that ran it now says the files are gone, and offers nothing more.
-            media.instances.filter { it.filesDeleted }.forEach { instance ->
-                add(
-                    ListItem(
-                        icon = Icons.Filled.DeleteSweep,
-                        label = stringResource(if (instance.is4k) R.string.media_4k_files_deleted else R.string.media_files_deleted),
-                        clickable = false,
-                        trailingContent = {},
-                    ),
-                )
-            }
-            media.instances.filter { !it.filesDeleted && it.status.hasFiles() }.forEach { instance ->
-                add(
-                    ListItem(
-                        icon = Icons.Filled.DeleteSweep,
-                        iconTint = error,
-                        label = stringResource(if (instance.is4k) R.string.media_delete_4k_files else R.string.media_delete_files),
-                        detail = stringResource(R.string.media_delete_files_detail, client),
-                        trailingContent = {},
-                        destination = ListItemDestination.Action,
-                        onClick = { callbacks.onDeleteFiles(instance.is4k) },
-                    ),
-                )
+            // A deletion's result stays in place: the row that ran it says how it went, and offers it no more.
+            media.instances.filter { it.filesDeletion != null || it.status.hasFiles() }.forEach { instance ->
+                add(deleteFilesRow(instance, media, client, callbacks))
             }
         }
         if (media.canClearData) {

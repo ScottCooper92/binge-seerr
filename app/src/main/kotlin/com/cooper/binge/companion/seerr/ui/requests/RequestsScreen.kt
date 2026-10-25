@@ -191,7 +191,7 @@ private fun RequestsPage(
     )
 }
 
-/** Each moderation outcome as a snackbar; a newer one supersedes the one still showing. */
+/** Each moderation outcome as a snackbar, but for one shown in place; a newer one supersedes the one still showing. */
 @Composable
 internal fun ModerationSnackbarEffect(
     events: Flow<ModerationEvent>,
@@ -200,9 +200,10 @@ internal fun ModerationSnackbarEffect(
     val resources = LocalResources.current
     LaunchedEffect(events) {
         events.collectLatest { event ->
+            val message = event.messageRes() ?: return@collectLatest
             snackbarHostState.currentSnackbarData?.dismiss()
             snackbarHostState.showSnackbar(
-                message = resources.getString(event.messageRes()),
+                message = resources.getString(message),
                 kind = if (event.isError()) SnackbarMessageKind.Error else SnackbarMessageKind.Confirmation,
             )
         }

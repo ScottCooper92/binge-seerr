@@ -41,6 +41,7 @@ import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.CountDownLatch
 
 private const val ADMIN = 2
+private const val MANAGE_REQUESTS = 16
 private const val REQUEST = 32
 private const val REQUEST_ADVANCED = 1 shl 13
 private const val MANAGE_ISSUES = 1 shl 20
@@ -806,15 +807,42 @@ class RequestDetailViewModelTest {
             server(ADMIN)
             serve("/api/v1/media/900/file", "{}")
             val vm = viewModel()
-            assertFalse(checkNotNull(vm.awaitReady().detail.media).instances.single().filesDeleted)
+            assertNull(checkNotNull(vm.awaitReady().detail.media).instances.single().filesDeletion)
 
             val deleted = awaitEvent(vm.events) { it == ModerationEvent.MediaFilesDeleted }
             vm.moderation.deleteMediaFiles(11, 900, is4k = false)
             deleted.await()
 
             val instance = checkNotNull(vm.awaitReady { !it.isActing }.detail.media).instances.single()
-            assertTrue(instance.filesDeleted)
+            assertEquals(FilesDeletion.Deleted, instance.filesDeletion)
             assertEquals(SeerrMediaStatusCode.PartiallyAvailable, instance.status)
+        }
+
+    /** Seerr's 409 for want of a default server changes nothing there, so only the page can say so, in place (#1726). */
+    @Test
+    fun `a delete Seerr refuses for want of a default server marks the instance, and opens Services for an admin`() =
+        runTest {
+            server(ADMIN)
+            responses["/api/v1/media/900/file"] = {
+                FakeResponse(
+                    code = 409,
+                    headers = headersOf("Content-Type", "application/json"),
+                    body = """{"message":"No Sonarr server configured to delete media files"}""",
+                )
+            }
+            val vm = viewModel()
+            val media = checkNotNull(vm.awaitReady().detail.media)
+            assertTrue(checkNotNull(media.servicesSettingsUrl).endsWith("/settings/services"))
+
+            val refused = awaitEvent(vm.events) { it == ModerationEvent.MediaFilesNoDefaultServer }
+            vm.moderation.deleteMediaFiles(11, 900, is4k = false)
+            refused.await()
+
+            val instance = checkNotNull(vm.awaitReady { !it.isActing }.detail.media).instances.single()
+            assertEquals(FilesDeletion.NoDefaultServer, instance.filesDeletion)
+
+            serve("/api/v1/auth/me", """{"id":8,"permissions":$MANAGE_REQUESTS}""")
+            assertNull(checkNotNull(viewModel().awaitReady().detail.media).servicesSettingsUrl)
         }
 
     @Test

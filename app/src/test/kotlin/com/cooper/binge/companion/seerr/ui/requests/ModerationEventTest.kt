@@ -2,6 +2,9 @@ package com.cooper.binge.companion.seerr.ui.requests
 
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /** Which outcomes leave the request page with nothing to show, so it closes (#1054). */
@@ -27,6 +30,7 @@ class ModerationEventTest {
                 ModerationEvent.MediaFilesAndRequestsDeleted(removedThisRequest = false),
                 ModerationEvent.MediaFilesAndRequestsDeleted(removedThisRequest = true),
                 ModerationEvent.MediaFilesDeletedRequestsKept,
+                ModerationEvent.MediaFilesNoDefaultServer,
                 ModerationEvent.Failed(SeerrError.Server),
             ).filter { it.removesTheRequest }
 
@@ -40,5 +44,13 @@ class ModerationEventTest {
             ),
             removing,
         )
+    }
+
+    /** Seerr's refusal for want of a default server shows in place of the delete row, so it raises no snackbar (#1726). */
+    @Test
+    fun `only the refusal shown in place has no snackbar line`() {
+        assertNull(ModerationEvent.MediaFilesNoDefaultServer.messageRes())
+        assertTrue(ModerationEvent.MediaFilesNoDefaultServer.isError())
+        assertNotNull(ModerationEvent.Failed(SeerrError.Rejected).messageRes())
     }
 }

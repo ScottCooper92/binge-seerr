@@ -15,6 +15,7 @@ import com.cooper.binge.companion.seerr.util.plural
 import com.cooper.binge.companion.seerr.util.requestItem
 import com.cooper.binge.companion.seerr.util.string
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -133,16 +134,28 @@ class RequestActionsSheetConfirmTest {
 
     @Test
     fun `an instance whose files went says so in place of its delete row`() {
-        setSheet(filesDeleted = true)
+        setSheet(filesDeletion = FilesDeletion.Deleted)
 
         composeTestRule.onNodeWithText(string(R.string.media_files_deleted)).assertExists()
         composeTestRule.onNodeWithText(string(R.string.media_delete_files)).assertDoesNotExist()
     }
 
+    /** Seerr's 409 for want of a default server is a setting to change, so the row says which and offers no delete (#1726). */
+    @Test
+    fun `an instance Seerr has no default server for says what to set, in place of its delete row`() {
+        setSheet(isTv = true, filesDeletion = FilesDeletion.NoDefaultServer)
+
+        composeTestRule.onNodeWithText(string(R.string.media_files_not_deleted)).assertExists()
+        val sonarr = string(R.string.media_client_sonarr)
+        composeTestRule.onNodeWithText(string(R.string.media_files_no_default_server, sonarr)).assertExists()
+        composeTestRule.onNodeWithText(string(R.string.media_delete_files)).assertDoesNotExist()
+        assertTrue("no delete is offered again", deleted.isEmpty())
+    }
+
     private fun setSheet(
         isTv: Boolean = false,
         requests: List<RequestSummary> = emptyList(),
-        filesDeleted: Boolean = false,
+        filesDeletion: FilesDeletion? = null,
     ) {
         composeTestRule.setContent {
             BingeExpressiveTheme(dynamicColor = false) {
@@ -166,7 +179,7 @@ class RequestActionsSheetConfirmTest {
                                         serviceUrl = null,
                                         mediaServerUrl = null,
                                         watch = null,
-                                        filesDeleted = filesDeleted,
+                                        filesDeletion = filesDeletion,
                                     ),
                                 ),
                             canSetStatus = false,

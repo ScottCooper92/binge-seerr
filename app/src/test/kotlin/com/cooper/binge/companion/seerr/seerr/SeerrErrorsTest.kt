@@ -10,6 +10,7 @@ import okhttp3.ResponseBody.Companion.toResponseBody
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertThrows
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import retrofit2.HttpException
 import retrofit2.Response
@@ -69,6 +70,16 @@ class SeerrErrorsTest {
         val notPending = http(409, """{"message":"Only pending requests can be approved or declined."}""")
         assertEquals(Status.Code.FAILED_PRECONDITION, codeOf(notPending))
         assertEquals(Status.Code.INTERNAL, codeOf(IllegalStateException("bug")))
+    }
+
+    /** Seerr's own words from `DELETE /media/:id/file` when no default Radarr or Sonarr serves the version (#1726). */
+    @Test
+    fun `only Seerr's no-server 409 reads as a delete refused for want of a default server`() {
+        assertTrue(http(409, """{"message":"No Radarr server configured to delete media files"}""").isNoDefaultServerRefusal())
+        assertTrue(http(409, """{"message":"No 4K Sonarr server configured to delete media files"}""").isNoDefaultServerRefusal())
+        assertFalse(http(409, """{"message":"Only pending requests can be approved or declined."}""").isNoDefaultServerRefusal())
+        assertFalse(http(409).isNoDefaultServerRefusal())
+        assertFalse(http(500, """{"message":"No Radarr server configured to delete media files"}""").isNoDefaultServerRefusal())
     }
 
     /** The screens' classification reads the same facts as the contract's, so the two never disagree. */
