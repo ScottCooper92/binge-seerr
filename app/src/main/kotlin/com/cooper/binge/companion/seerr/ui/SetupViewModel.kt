@@ -279,7 +279,8 @@ class SetupViewModel
                 crashBreadcrumbs.log("trying the demo")
                 viewModelScope.launch(dispatcher) {
                     val demo = demoCredentials()
-                    draft.finish(connection.connect(demo.baseUrl, demo.auth).exceptionOrNull(), analytics)
+                    // Reported as the demo, not as whichever sign-in tab happened to be selected (#1715).
+                    draft.finish(connection.connect(demo.baseUrl, demo.auth).exceptionOrNull(), analytics, AnalyticsEvents.METHOD_DEMO)
                 }
             }
         }
