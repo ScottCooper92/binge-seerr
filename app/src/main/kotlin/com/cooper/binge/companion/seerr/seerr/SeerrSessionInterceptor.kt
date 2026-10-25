@@ -24,8 +24,8 @@ internal fun authMeUrl(baseUrl: String): HttpUrl? = baseUrl.toHttpUrl().resolve(
  * Whether an answer means the session is gone, not a permission: a 401 [SeerrSessionInterceptor] did not find the
  * session alive behind, or a 403 it marked after `auth/me` refused the same credentials. [toSeerrError] reads it as
  * [SeerrError.Unauthorized], and the health monitor and telemetry read the same rule, so none of them treats a plain
- * 403 as a dead session (#689), nor a 401 that Seerr meant as a refusal (#997). A 403 from `auth/me` itself is never
- * marked; a caller that sees one applies [rejectsSession]. A client without the interceptor, such as setup's probe of
+ * 403 as a dead session (#689), nor a 401 that Seerr meant as a refusal (#997). A 403 from `auth/me` itself is marked
+ * without a probe, since `auth/me` needs no permission. A client without the interceptor, such as setup's probe of
  * candidate credentials, marks nothing, so its 401 is the credentials, as before.
  */
 internal fun isSessionRejection(
@@ -43,7 +43,7 @@ internal fun isLiveSessionRefusal(
  * Tells a dead session apart from a refusal, once, for every call this client makes (#676). On every lineage
  * a 403 means either no user or a missing permission, but `auth/me` needs no permission, so its 403 means no user.
  * On a 403 elsewhere that names no quota, this asks `auth/me`; if that is refused too, it marks the response with
- * [SESSION_REJECTED_HEADER], which [toSeerrError] reads as [SeerrError.Unauthorized].
+ * [SESSION_REJECTED_HEADER], which [toSeerrError] reads as [SeerrError.Unauthorized]; so is a 403 from `auth/me` itself.
  * A 401 is asked about the same way (#997): Seerr sends one to a signed-in user on a few routes (#998). If
  * `auth/me` still answers, it is marked with [SESSION_ALIVE_HEADER], and nothing reads it as a dead session.
  */
@@ -56,7 +56,8 @@ class SeerrSessionInterceptor(
         val request = chain.request()
         val response = chain.proceed(request)
         val authMe = authMe
-        if (request.url == authMe || authMe == null) return response
+        if (authMe == null) return response
+        if (request.url == authMe) return if (response.code == HTTP_FORBIDDEN) response.markRejected() else response
         return when (response.code) {
             HTTP_UNAUTHORIZED -> checkUnauthorized(chain, request, response, authMe)
             HTTP_FORBIDDEN -> checkForbidden(chain, request, response, authMe)
@@ -76,7 +77,7 @@ class SeerrSessionInterceptor(
         val buffered = response.buffered()
         if (buffered.peekBody(Long.MAX_VALUE).string().namesQuota()) return buffered
         val rejected = attempt { rejectsSession(chain, request, authMe) }.getOrDefault(false)
-        return if (rejected) buffered.newBuilder().header(SESSION_REJECTED_HEADER, "true").build() else buffered
+        return if (rejected) buffered.markRejected() else buffered
     }
 
     /**
@@ -116,6 +117,8 @@ class SeerrSessionInterceptor(
                     .build(),
             ).use(read)
 }
+
+private fun Response.markRejected(): Response = newBuilder().header(SESSION_REJECTED_HEADER, "true").build()
 
 /** [this] with its body read into memory, or emptied if it will not read, so it can be returned after a probe. */
 private fun Response.buffered(): Response {

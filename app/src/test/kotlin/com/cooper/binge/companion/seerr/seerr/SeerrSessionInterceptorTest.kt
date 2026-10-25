@@ -61,11 +61,20 @@ class SeerrSessionInterceptorTest {
     }
 
     @Test
-    fun `auth_me itself is not probed`() {
-        server.enqueue(MockResponse(code = 403))
+    fun `auth_me itself is not probed, and its 403 is the session`() {
+        server.enqueue(MockResponse(code = 403, body = SEERR_NO_USER_BODY))
 
-        assertEquals(SeerrError.Forbidden, classify("/api/v1/auth/me"))
+        assertEquals(SeerrError.Unauthorized, classify("/api/v1/auth/me"))
         assertEquals(1, server.requestCount)
+    }
+
+    @Test
+    fun `auth_me answering the user is not marked`() {
+        server.enqueue(MockResponse(code = 200, body = """{"id":1,"permissions":2}"""))
+
+        val response = client.newCall(Request.Builder().url(server.url("/api/v1/auth/me")).build()).execute()
+
+        assertEquals(null, response.header(SESSION_REJECTED_HEADER))
     }
 
     @Test
@@ -110,5 +119,10 @@ class SeerrSessionInterceptorTest {
 
         assertEquals(SeerrError.Unauthorized, classify("/api/v1/auth/me"))
         assertEquals(1, server.requestCount)
+    }
+
+    private companion object {
+        /** What Seerr 3.5.1's `isAuthenticated()` sends when no user is attached, on `auth/me` as on every route. */
+        const val SEERR_NO_USER_BODY = """{"status":403,"error":"You do not have permission to access this endpoint"}"""
     }
 }
