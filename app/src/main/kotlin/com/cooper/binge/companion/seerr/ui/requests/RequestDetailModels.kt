@@ -170,6 +170,8 @@ data class RequestDetail(
     val modifiedBy: String?,
     val modifiedById: Int?,
     val modifiedByAvatarUrl: String? = null,
+    /** Approved by the server as it was made, so no one moderated it and [modifiedBy] is null. */
+    val approvedAutomatically: Boolean = false,
     /** The viewer's own id, and whether `MANAGE_USERS` lets them open anyone else's — what a name gates on before it links. */
     val viewerId: Int?,
     val canManageUsers: Boolean,

@@ -68,6 +68,11 @@ internal fun requestInfoGroups(
         }
     val handled =
         listOfNotNull(
+            if (detail.approvedAutomatically) {
+                TvInfoGroup(stringResource(R.string.request_approval), stringResource(R.string.request_approved_automatically))
+            } else {
+                null
+            },
             detail.modifiedBy?.let { moderator ->
                 TvInfoGroup(
                     stringResource(R.string.request_modified_by),
