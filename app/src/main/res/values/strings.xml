@@ -237,6 +237,10 @@
     <string name="media_cleared">Media data cleared</string>
     <string name="media_files_deleted">Files deleted</string>
     <string name="media_4k_files_deleted">4K files deleted</string>
+    <string name="media_files_not_deleted">Files not deleted</string>
+    <string name="media_4k_files_not_deleted">4K files not deleted</string>
+    <string name="media_files_no_default_server">Seerr has no default %1$s server for standard, so it can\'t delete the files. Mark one as default in Seerr\'s settings (Services).</string>
+    <string name="media_files_no_default_server_4k">Seerr has no default %1$s server for 4K, so it can\'t delete the files. Mark one as default in Seerr\'s settings (Services).</string>
     <string name="media_files_and_requests_deleted">Files deleted and requests removed</string>
     <string name="media_files_deleted_requests_kept">Files deleted, but the requests could not be removed</string>
     <string name="request_declined">Request declined</string>

@@ -35,4 +35,10 @@ object AnalyticsEvents {
     const val PARAM_GRPC_STATUS = "grpc_status"
     const val PARAM_SERVER_LINEAGE = "server_lineage"
     const val PARAM_SERVER_VERSION = "server_version"
+
+    /** Why an operation failed, where the screen tells it apart from what its status alone would say. */
+    const val PARAM_REASON = "reason"
+
+    /** Seerr has no Radarr or Sonarr server set as default for the version, so it cannot delete the files. */
+    const val REASON_NO_DEFAULT_SERVICE = "no_default_service"
 }

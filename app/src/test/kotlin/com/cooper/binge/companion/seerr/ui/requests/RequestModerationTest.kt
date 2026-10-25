@@ -173,6 +173,64 @@ class RequestModerationTest {
             assertEquals(3, received.count { it.method == "DELETE" && it.url.encodedPath == "/api/v1/request/12" })
         }
 
+    /**
+     * Seerr answers 409 when no Radarr or Sonarr is its default for the version (#1726): a setting, not a stale target. The
+     * page hears it in place, nothing is removed or reloaded, and the report names the reason. A 409 on approve is unchanged.
+     */
+    @Test
+    fun `a 409 for want of a default server is its own refusal, and a 409 on approve is still a rejection`() =
+        runTest {
+            codes["/api/v1/media/900/file"] = 409
+            bodies["/api/v1/media/900/file"] = """{"message":"No 4K Radarr server configured to delete media files"}"""
+            val sut = moderation()
+            val heard = mutableListOf<FilesDeletion>()
+
+            val refused = awaitEvent(sut.events)
+            sut.deleteMediaFiles(11, 900, is4k = true, removeRequestIds = listOf(11)) { heard += it }
+
+            assertEquals(ModerationEvent.MediaFilesNoDefaultServer, refused.await())
+            assertEquals(listOf(FilesDeletion.NoDefaultServer), heard)
+            assertEquals(listOf("/api/v1/media/900/file"), received.filter { it.method == "DELETE" }.map { it.url.encodedPath })
+            assertEquals(0, moderated)
+            assertTrue(sut.actingIds.value.isEmpty())
+
+            codes["/api/v1/request/12/approve"] = 409
+            bodies["/api/v1/request/12/approve"] = """{"message":"Only pending requests can be approved or declined."}"""
+            val rejected = awaitEvent(sut.events)
+            sut.approve(12)
+            assertEquals(ModerationEvent.Failed(SeerrError.Rejected), rejected.await())
+
+            fun failure(
+                operation: String,
+                reason: String? = null,
+            ) = "request_operation_failed" to
+                mapOf(
+                    "operation" to operation,
+                    "http_status" to "409",
+                    "grpc_status" to "FAILED_PRECONDITION",
+                    "server_lineage" to "jellyseerr",
+                    "server_version" to "2.7.0",
+                ) + listOfNotNull(reason?.let { "reason" to it })
+            assertEquals(
+                listOf(failure("moderate_media_files_and_requests_deleted", "no_default_service"), failure("moderate_approved")),
+                analytics.events,
+            )
+        }
+
+    @Test
+    fun `a 409 on delete files without Seerr's words is the plain failure`() =
+        runTest {
+            codes["/api/v1/media/900/file"] = 409
+            val sut = moderation()
+            val heard = mutableListOf<FilesDeletion>()
+
+            val failed = awaitEvent(sut.events)
+            sut.deleteMediaFiles(11, 900, is4k = false, removeRequestIds = emptyList()) { heard += it }
+
+            assertEquals(ModerationEvent.Failed(SeerrError.Rejected), failed.await())
+            assertTrue(heard.isEmpty())
+        }
+
     @Test
     fun `approving, declining and removing move the cached row, and a failed write leaves it`() =
         runTest {
@@ -254,7 +312,7 @@ class RequestModerationTest {
             assertEquals(listOf("/api/v1/request/11/decline", "/api/v1/blacklist"), posts.takeLast(2))
             val block =
                 received
-                    .last()
+                    .last { it.method == "POST" }
                     .body
                     ?.utf8()
                     .orEmpty()

@@ -10,6 +10,7 @@ import com.cooper.binge.companion.seerr.seerr.SeerrMediaStatusBody
 import com.cooper.binge.companion.seerr.seerr.SeerrMediaStatusSeasonBody
 import com.cooper.binge.companion.seerr.seerr.SeerrRequestStatusCode
 import com.cooper.binge.companion.seerr.seerr.addToBlocklistOnce
+import com.cooper.binge.companion.seerr.seerr.isNoDefaultServerRefusal
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
 import com.cooper.binge.companion.seerr.seerr.updateRequest
 import com.cooper.binge.companion.seerr.telemetry.Analytics
@@ -156,23 +157,30 @@ class RequestModeration(
         mediaId: Int,
         is4k: Boolean,
         removeRequestIds: List<Int>,
-    ) = deleteMediaFiles(requestId, mediaId, is4k, removeRequestIds, onFilesDeleted = {})
+    ) = deleteMediaFiles(requestId, mediaId, is4k, removeRequestIds, onFiles = {})
 
     /**
-     * [onFilesDeleted] hears that the files went before any request is removed, so a page can say so even when a removal
-     * then fails. The removals run inside the action, so the reload that follows sees them.
+     * [onFiles] hears that the files went before any request is removed, so a page can say so even when a removal then
+     * fails, and hears Seerr's refusal for want of a default server, which the page shows in place (#1726). The removals
+     * run inside the action, so the reload that follows sees them.
      */
     fun deleteMediaFiles(
         requestId: Int,
         mediaId: Int,
         is4k: Boolean,
         removeRequestIds: List<Int>,
-        onFilesDeleted: () -> Unit,
+        onFiles: (FilesDeletion) -> Unit,
     ) {
         var allRemoved = true
         var removedThisRequest = false
         act(
             requestId = requestId,
+            refusal = { failure ->
+                failure.takeIf { it.isNoDefaultServerRefusal() }?.let {
+                    onFiles(FilesDeletion.NoDefaultServer)
+                    ModerationEvent.MediaFilesNoDefaultServer
+                }
+            },
             done =
                 if (removeRequestIds.isEmpty()) {
                     ModerationEvent.MediaFilesDeleted
@@ -190,7 +198,7 @@ class RequestModeration(
         ) {
             val api = connection.api()
             api.deleteMediaFiles(mediaId, is4k)
-            onFilesDeleted()
+            onFiles(FilesDeletion.Deleted)
             removeRequestIds.forEach { id ->
                 attempt { api.deleteRequest(id) }
                     .onSuccess { cache.delete(id) }
@@ -276,11 +284,13 @@ class RequestModeration(
      *
      * Launched on [dispatcher] rather than inheriting `scope`'s own, so [onModerated]'s reload and this launch's own state
      * updates never touch `Dispatchers.Main` - including the tail end of a call still in flight after the screen is gone (#177).
+     * [refusal] names a failure the action reads more precisely than [ModerationEvent.Failed]; null leaves it to that.
      */
     private fun act(
         requestId: Int,
         done: ModerationEvent,
         onSettled: (succeeded: Boolean) -> Unit = {},
+        refusal: (Throwable) -> ModerationEvent? = { null },
         outcome: suspend () -> ModerationEvent,
         action: suspend (Int) -> Unit,
     ): Boolean {
@@ -300,8 +310,9 @@ class RequestModeration(
                     eventFlow.emit(event)
                     syncCache(requestId)
                 }.onFailure {
-                    analytics.operationFailed("moderate_${done.actionLabel()}", it, connection)
-                    eventFlow.emit(ModerationEvent.Failed(it.toSeerrError()))
+                    val refused = refusal(it)
+                    analytics.operationFailed("moderate_${done.actionLabel()}", it, connection, refused?.failureReason())
+                    eventFlow.emit(refused ?: ModerationEvent.Failed(it.toSeerrError()))
                 }
         }
         return true
@@ -348,3 +359,7 @@ class RequestModeration(
         }.onFailure { analytics.operationFailed("block_title", it, connection) }
             .isSuccess
 }
+
+/** The [AnalyticsEvents.PARAM_REASON] a refusal adds to its failure report, so it reads apart from a real conflict. */
+private fun ModerationEvent.failureReason(): String? =
+    AnalyticsEvents.REASON_NO_DEFAULT_SERVICE.takeIf { this == ModerationEvent.MediaFilesNoDefaultServer }

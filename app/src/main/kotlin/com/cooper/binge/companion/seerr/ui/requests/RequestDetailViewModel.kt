@@ -89,10 +89,10 @@ class RequestDetailViewModel
             )
 
         /**
-         * The instances, by `is4k`, whose files this page deleted. Jellyseerr 2.x leaves the status as it was afterwards, so
-         * the reload alone would not show it; this marks the instance until the page goes.
+         * How deleting each instance's files went, by `is4k`. Jellyseerr 2.x leaves the status as it was afterwards, and a
+         * refusal changes nothing on the server, so the reload alone would show neither; this marks the instance until the page goes.
          */
-        private val filesDeleted = MutableStateFlow<Set<Boolean>>(emptySet())
+        private val filesDeleted = MutableStateFlow<Map<Boolean, FilesDeletion>>(emptyMap())
 
         /** The editor rides the page's state while it is open; it closes itself on the save landing. */
         private val requestEditor =
@@ -109,7 +109,9 @@ class RequestDetailViewModel
                     mediaId: Int,
                     is4k: Boolean,
                     removeRequestIds: List<Int>,
-                ) = moderator.deleteMediaFiles(requestId, mediaId, is4k, removeRequestIds) { filesDeleted.update { it + is4k } }
+                ) = moderator.deleteMediaFiles(requestId, mediaId, is4k, removeRequestIds) { outcome ->
+                    filesDeleted.update { it + (is4k to outcome) }
+                }
             }
         val editor: RequestEditorControls = requestEditor
 
@@ -302,10 +304,10 @@ class RequestDetailViewModel
         }
     }
 
-/** Marks the instances whose files were deleted from this page, so the row says so whatever the server's status now reads. */
-private fun RequestDetail.withFilesDeleted(deleted: Set<Boolean>): RequestDetail =
+/** Marks how deleting each instance's files from this page went, so the row says so whatever the server's status now reads. */
+private fun RequestDetail.withFilesDeleted(deleted: Map<Boolean, FilesDeletion>): RequestDetail =
     if (deleted.isEmpty()) {
         this
     } else {
-        copy(media = media?.copy(instances = media.instances.map { it.copy(filesDeleted = it.is4k in deleted) }))
+        copy(media = media?.copy(instances = media.instances.map { it.copy(filesDeletion = deleted[it.is4k]) }))
     }

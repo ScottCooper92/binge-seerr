@@ -132,7 +132,7 @@ internal class DetailSources(
             serverInstanceId = profile.instanceId,
             mediaServerUrl = preferred(dto.media.mediaUrl, dto.media.mediaUrl4k),
             serviceUrl = preferred(dto.media.serviceUrl, dto.media.serviceUrl4k),
-            media = dto.mediaRecord(permissions, profile, watch),
+            media = dto.mediaRecord(permissions, profile, watch, webRoot),
             serverName = profile.variant.displayName,
             mediaServerName = profile.mediaServerName(),
             mediaServerItem = profile.mediaServerItem(dto.media.jellyfinMediaId),
@@ -180,6 +180,7 @@ private fun SeerrRequestDto.mediaRecord(
     permissions: SeerrPermissions,
     profile: SeerrServerProfile,
     watch: SeerrWatchDataDto?,
+    webRoot: String,
 ): MediaRecord? {
     val mediaId = media.id ?: return null
     val has4k = is4k || (media.status4k != null && media.status4k != SeerrMediaStatusCode.Unknown)
@@ -208,5 +209,10 @@ private fun SeerrRequestDto.mediaRecord(
         canSetStatus = permissions.canManageRequests,
         canClearData = permissions.canManageRequests,
         canDeleteFiles = permissions.canManageRequests && profile.hasDeleteMediaFiles,
+        // The admin settings router needs ADMIN on every lineage (#1004).
+        servicesSettingsUrl = (webRoot + SERVICES_SETTINGS_PATH).takeIf { permissions.isAdmin },
     )
 }
+
+/** Seerr's page for its Radarr and Sonarr servers, the same on every lineage, under the web root. */
+private const val SERVICES_SETTINGS_PATH = "settings/services"

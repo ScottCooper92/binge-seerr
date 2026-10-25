@@ -192,6 +192,14 @@ internal fun Throwable.userFacingRefusal(code: Status.Code): UserFacingRefusal? 
         else -> null
     }
 
+/**
+ * Seerr's refusal to delete a title's files when no Radarr or Sonarr server serves that version: a 409 whose message is
+ * "No [4K ]Radarr|Sonarr server configured to delete media files" (`DELETE /media/:id/file` in `server/routes/media.ts`,
+ * from 3.4.1). A configuration problem, not a stale target, so sending it again cannot succeed.
+ */
+internal fun Throwable.isNoDefaultServerRefusal(): Boolean =
+    this is HttpException && code() == HTTP_CONFLICT && peekedBody().contains("server configured to delete media files", ignoreCase = true)
+
 /** Seerr's only signal for a quota breach is the word in its 403 body. */
 private fun HttpException.mentionsQuota(): Boolean = peekedBody().namesQuota()
 
