@@ -52,6 +52,8 @@ class RequestDetailActions(
     val onOpenUser: (Int) -> Unit,
     val edit: EditRequestActions,
     val media: ManageMediaActions,
+    /** The request's own Manage sheet opened, so its permissions are worth a fresh look (#1722). */
+    val onManageOpened: () -> Unit = {},
 )
 
 /**
@@ -150,6 +152,7 @@ private fun Ready(
         onOpenRequest = { id ->
             if (id == detail.item.id) {
                 acting = true
+                actions.onManageOpened()
             } else {
                 other = id
                 otherOpen = true
