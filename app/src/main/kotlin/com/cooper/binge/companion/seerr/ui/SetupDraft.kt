@@ -74,15 +74,19 @@ internal fun SetupDraft.toUiState(
     }
 }
 
-/** Every attempt ends here: the secret leaves the form once it is stored encrypted, or the failure is shown. */
+/**
+ * Every attempt ends here: the secret leaves the form once it is stored encrypted, or the failure is shown. The
+ * `sign_in` event names [method], the form's mode unless the attempt was not a sign-in at all, as the demo is not.
+ */
 internal fun MutableStateFlow<SetupDraft>.finish(
     failure: Throwable?,
     analytics: Analytics,
+    method: String = value.form.mode.name,
 ) {
     if (failure is CancellationException) return
     analytics.event(
         AnalyticsEvents.SIGN_IN,
-        mapOf(AnalyticsEvents.PARAM_METHOD to value.form.mode.name, AnalyticsEvents.PARAM_SUCCESS to (failure == null)),
+        mapOf(AnalyticsEvents.PARAM_METHOD to method, AnalyticsEvents.PARAM_SUCCESS to (failure == null)),
     )
     update { current ->
         if (failure == null) {

@@ -36,6 +36,9 @@ object AnalyticsEvents {
     const val PARAM_SERVER_LINEAGE = "server_lineage"
     const val PARAM_SERVER_VERSION = "server_version"
 
+    /** `sign_in`'s [PARAM_METHOD] for Try the demo, which connects to canned data and signs in to nothing. */
+    const val METHOD_DEMO = "Demo"
+
     /** Why an operation failed, where the screen tells it apart from what its status alone would say. */
     const val PARAM_REASON = "reason"
 

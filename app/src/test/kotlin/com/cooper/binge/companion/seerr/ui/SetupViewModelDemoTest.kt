@@ -11,9 +11,12 @@ import com.cooper.binge.companion.seerr.handoff.AddressHandOffs
 import com.cooper.binge.companion.seerr.handoff.HandOffOpening
 import com.cooper.binge.companion.seerr.seerr.PlexClientIdentity
 import com.cooper.binge.companion.seerr.seerr.SeerrApiFactory
+import com.cooper.binge.companion.seerr.seerr.SeerrSignInMode
+import com.cooper.binge.companion.seerr.telemetry.AnalyticsEvents
 import com.cooper.binge.companion.seerr.ui.tv.tvActions
 import com.cooper.binge.companion.seerr.util.MainDispatcherRule
 import com.cooper.binge.companion.seerr.util.PlainCipher
+import com.cooper.binge.companion.seerr.util.RecordingAnalytics
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
@@ -40,6 +43,7 @@ class SetupViewModelDemoTest {
     fun tearDown() = viewModels.clear()
 
     private lateinit var connection: SeerrConnection
+    private val analytics = RecordingAnalytics()
 
     private fun TestScope.viewModel(): SetupViewModel {
         connection =
@@ -63,6 +67,7 @@ class SetupViewModelDemoTest {
                 cipher = PlainCipher,
                 handOffs = AddressHandOffs { HandOffOpening.NoLocalNetwork },
                 dispatcher = mainDispatcherRule.dispatcher,
+                analytics = analytics,
             )
         viewModels.put(vm.hashCode().toString(), vm)
         backgroundScope.launch { vm.uiState.collect {} }
@@ -89,6 +94,21 @@ class SetupViewModelDemoTest {
             assertEquals(DEMO_ORIGIN, connected.credentials.baseUrl)
             assertEquals(DEMO_ORIGIN, connection.credentials.first()?.baseUrl)
             assertEquals(2, connection.authenticatedUser().permissions)
+        }
+
+    /** Not the form's mode, which defaults to an API key and follows whichever tab was last selected (#1715). */
+    @Test
+    fun `the demo reports one sign_in as the demo, whatever tab was selected`() =
+        runTest {
+            val vm = viewModel()
+            vm.uiState.first { it is SetupUiState.Address }
+            vm.editForm { copy(mode = SeerrSignInMode.Local) }
+
+            vm.tryDemo()
+            vm.uiState.first { it is SetupUiState.Connected }
+
+            val signIn = mapOf(AnalyticsEvents.PARAM_METHOD to AnalyticsEvents.METHOD_DEMO, AnalyticsEvents.PARAM_SUCCESS to true)
+            assertEquals(listOf(AnalyticsEvents.SIGN_IN to signIn), analytics.events.filter { it.first == AnalyticsEvents.SIGN_IN })
         }
 
     @Test
