@@ -109,6 +109,39 @@ class SeerrStatusMappingTest {
     }
 
     @Test
+    fun `a request carries the quality profile name its destination resolves to, and none when it does not`() {
+        val info =
+            SeerrMediaInfoDto(
+                requests =
+                    listOf(
+                        SeerrRequestSummaryDto(id = 4, serverId = 1, profileId = 7),
+                        SeerrRequestSummaryDto(id = 5, serverId = 1, profileId = 99),
+                        SeerrRequestSummaryDto(id = 6),
+                    ),
+            )
+        val labels = QualityLabels { if (it == SeerrDestination(isTv = true, serverId = 1, profileId = 7)) "HD-720p" else null }
+
+        val requests = info.toRequestStatus(NOW, isTv = true, qualityLabels = labels).requestsList
+
+        assertEquals(listOf("HD-720p", "", ""), requests.map { it.qualityLabel })
+    }
+
+    @Test
+    fun `a listed request is labelled from its own ids and its own type`() {
+        val request =
+            SeerrRequestDto(
+                id = 4,
+                media = SeerrRequestMediaDto(tmdbId = 603, mediaType = "movie"),
+                serverId = 1,
+                profileId = 7,
+            )
+        val labels = QualityLabels { if (it == SeerrDestination(isTv = false, serverId = 1, profileId = 7)) "HD-720p" else null }
+
+        assertEquals("HD-720p", request.toRequestInfo(labels).qualityLabel)
+        assertEquals("", request.toRequestInfo().qualityLabel)
+    }
+
+    @Test
     fun `downloads aggregate into one bar with the slowest eta`() {
         val downloads =
             listOf(

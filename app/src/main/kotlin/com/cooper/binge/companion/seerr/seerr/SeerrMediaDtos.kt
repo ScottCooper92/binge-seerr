@@ -113,6 +113,9 @@ data class SeerrRequestSummaryDto(
     @SerialName("is4k") val is4k: Boolean = false,
     /** The seasons this request covers; empty for movie requests. */
     @SerialName("seasons") val seasons: List<SeerrSeasonStatusDto> = emptyList(),
+    /** The destination the request was sent with; ids into the `service/{radarr,sonarr}` lists. */
+    @SerialName("serverId") val serverId: Int? = null,
+    @SerialName("profileId") val profileId: Int? = null,
 )
 
 /** Whichever of these the server filled in names the requester. */

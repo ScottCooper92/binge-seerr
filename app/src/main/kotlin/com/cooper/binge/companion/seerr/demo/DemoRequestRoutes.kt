@@ -58,7 +58,7 @@ private fun DemoData.create(body: String): DemoAnswer {
         mediaStatus(title) == SeerrMediaStatusCode.Blocklisted -> demoBlocklisted
         title.isMovie && requests.any { it.title == title } -> demoAlreadyRequested
         else -> {
-            val request = add(title, DEMO_USER_ID, seasons = asked.seasons.orEmpty())
+            val request = add(title, DEMO_USER_ID, seasons = asked.seasons.orEmpty(), profileId = asked.profileId ?: DEMO_PROFILE_ID)
             // An administrator's request needs no approval, as on a real server.
             moderate(request, "approve")
             ok(SeerrRequestResultDto(request.id))
@@ -142,6 +142,8 @@ private fun DemoData.toDto(request: DemoRequest) =
         requestedBy = user(request.requestedBy),
         modifiedBy = user(request.modifiedBy),
         seasons = seasonsOf(request),
+        serverId = DEMO_SERVER_ID,
+        profileId = request.profileId,
     )
 
 internal fun DemoData.toSummary(request: DemoRequest) =
@@ -151,4 +153,6 @@ internal fun DemoData.toSummary(request: DemoRequest) =
         createdAt = request.createdAt.toString(),
         requestedBy = user(request.requestedBy),
         seasons = seasonsOf(request),
+        serverId = DEMO_SERVER_ID,
+        profileId = request.profileId,
     )
