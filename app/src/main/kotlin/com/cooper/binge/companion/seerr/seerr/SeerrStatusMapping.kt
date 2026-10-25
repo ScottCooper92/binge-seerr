@@ -21,9 +21,14 @@ import kotlin.time.Duration.Companion.seconds
  * service drops the 4K one unless `SeerrPermissions.mayRequest4k`. Each carries its own watch link, so a
  * 4K server link goes out only to a user who may reach it (#1526).
  *
- * `allowed_actions` is left empty: the service fills it with the permissions in hand.
+ * `allowed_actions` is left empty: the service fills it with the permissions in hand. [isTv] says which
+ * *arr a request's ids point into, which [qualityLabels] needs to name its quality profile.
  */
-fun SeerrMediaInfoDto?.toRequestStatus(nowMillis: Long): RequestStatus {
+fun SeerrMediaInfoDto?.toRequestStatus(
+    nowMillis: Long,
+    isTv: Boolean = false,
+    qualityLabels: QualityLabels = QualityLabels.None,
+): RequestStatus {
     val info =
         this ?: return RequestStatus
             .newBuilder()
@@ -44,7 +49,7 @@ fun SeerrMediaInfoDto?.toRequestStatus(nowMillis: Long): RequestStatus {
         .newBuilder()
         .addVersions(standard)
         .addVersions(fourK)
-        .addAllRequests(info.requests.map { it.toRequestInfo() })
+        .addAllRequests(info.requests.map { it.toRequestInfo(qualityLabels.labelOf(it.destination(isTv))) })
         .build()
 }
 
@@ -102,11 +107,11 @@ fun SeerrRequestStatusCode?.toApprovalState(): ApprovalState =
     }
 
 /** One request as the request list serves it, without `allowed_actions`: as for a status, the service fills those in. */
-fun SeerrRequestDto.toRequestInfo(): RequestInfo =
+fun SeerrRequestDto.toRequestInfo(qualityLabels: QualityLabels = QualityLabels.None): RequestInfo =
     SeerrRequestSummaryDto(id = id, status = status, createdAt = createdAt, requestedBy = requestedBy, is4k = is4k, seasons = seasons)
-        .toRequestInfo()
+        .toRequestInfo(qualityLabels.labelOf(destination()))
 
-private fun SeerrRequestSummaryDto.toRequestInfo(): RequestInfo {
+private fun SeerrRequestSummaryDto.toRequestInfo(qualityLabel: String?): RequestInfo {
     val builder =
         RequestInfo
             .newBuilder()
@@ -116,6 +121,7 @@ private fun SeerrRequestSummaryDto.toRequestInfo(): RequestInfo {
             .setVersionId(versionIdOf(is4k))
     requestedBy?.contractName()?.let(builder::setRequestedBy)
     createdAt?.toEpochMillisOrNull()?.let(builder::setRequestedAtEpochMs)
+    qualityLabel?.let(builder::setQualityLabel)
     return builder.build()
 }
 

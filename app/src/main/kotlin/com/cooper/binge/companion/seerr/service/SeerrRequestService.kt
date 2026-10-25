@@ -102,9 +102,10 @@ class SeerrRequestService(
     private val standardVersionLabel: String = "Standard",
 ) : RequestServiceGrpcKt.RequestServiceCoroutineImplBase() {
     private val freshness = MediaStatusFreshness(observeIntervalMillis)
-    private val statusReads = SeerrStatusReads(connection, statusCache, freshness, clock)
+    private val qualityLabels = QualityProfileLabels(connection, clock)
+    private val statusReads = SeerrStatusReads(connection, statusCache, freshness, qualityLabels, clock)
     private val requests = SeerrRequestRpcs(connection, statusReads, statusCache, requestCache)
-    private val listing = SeerrListingRpcs(connection, statusReads)
+    private val listing = SeerrListingRpcs(connection, statusReads, qualityLabels)
     private val issues = SeerrIssueRpcs(connection, clock)
 
     /**

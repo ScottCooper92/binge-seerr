@@ -5,6 +5,7 @@ import com.binge.companion.contracts.v1.MediaId
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.data.CachedStatus
 import com.cooper.binge.companion.seerr.data.MediaStatusStore
+import com.cooper.binge.companion.seerr.seerr.destination
 import com.cooper.binge.companion.seerr.seerr.details
 import com.cooper.binge.companion.seerr.seerr.isSeerrTv
 import com.cooper.binge.companion.seerr.seerr.requesterIds
@@ -22,6 +23,7 @@ internal class SeerrStatusReads(
     private val connection: SeerrConnection,
     private val statusCache: MediaStatusStore,
     private val freshness: MediaStatusFreshness,
+    private val qualityLabels: QualityProfileLabels,
     private val clock: () -> Long,
 ) {
     /**
@@ -71,7 +73,9 @@ internal class SeerrStatusReads(
     private suspend fun fetchStatus(media: MediaId): CachedStatus {
         val now = clock()
         val info = connection.api().details(media).mediaInfo
-        val fetched = CachedStatus(info.toRequestStatus(now), now, info.requesterIds())
+        val isTv = media.seerrMediaType().isSeerrTv()
+        val labels = qualityLabels.forDestinations(info?.requests.orEmpty().map { it.destination(isTv) })
+        val fetched = CachedStatus(info.toRequestStatus(now, isTv, labels), now, info.requesterIds())
         if (freshness.maxAgeMillis(fetched.status) != null) statusCache.put(media, fetched)
         return fetched
     }

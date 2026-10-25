@@ -6,16 +6,19 @@ import com.cooper.binge.companion.seerr.seerr.SeerrServerDetailsDto
 import com.cooper.binge.companion.seerr.seerr.SeerrServerDto
 import com.cooper.binge.companion.seerr.seerr.SeerrServerRefDto
 
-private const val SERVER_ID = 1
-private const val PROFILE_ID = 1
+internal const val DEMO_SERVER_ID = 1
+internal const val DEMO_PROFILE_ID = 1
+
+/** The second profile the demo's *arr offers; a few requests are for it so the labels differ. */
+internal const val DEMO_HD_PROFILE_ID = 2
 
 /** The one download server of a kind, so the advanced request has something to offer. It is a name only: nothing downloads. */
 internal fun demoServers(name: String) =
-    listOf(SeerrServerDto(id = SERVER_ID, name = name, isDefault = true, activeProfileId = PROFILE_ID, activeDirectory = "/media"))
+    listOf(SeerrServerDto(id = DEMO_SERVER_ID, name = name, isDefault = true, activeProfileId = DEMO_PROFILE_ID, activeDirectory = "/media"))
 
 internal fun demoServerDetails(name: String) =
     SeerrServerDetailsDto(
-        server = SeerrServerRefDto(SERVER_ID, name),
-        profiles = listOf(SeerrProfileDto(PROFILE_ID, "Any"), SeerrProfileDto(2, "HD-1080p")),
+        server = SeerrServerRefDto(DEMO_SERVER_ID, name),
+        profiles = listOf(SeerrProfileDto(DEMO_PROFILE_ID, "Any"), SeerrProfileDto(DEMO_HD_PROFILE_ID, "HD-1080p")),
         rootFolders = listOf(SeerrRootFolderDto(1, "/media")),
     )

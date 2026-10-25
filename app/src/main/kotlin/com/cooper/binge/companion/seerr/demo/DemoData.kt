@@ -31,6 +31,7 @@ internal class DemoRequest(
     var seasons: List<Int> = emptyList(),
     var download: Boolean = false,
     var modifiedBy: Int? = null,
+    val profileId: Int = DEMO_PROFILE_ID,
 )
 
 internal class DemoIssue(
@@ -103,9 +104,10 @@ internal class DemoData(
         status: SeerrRequestStatusCode = SeerrRequestStatusCode.Pending,
         seasons: List<Int> = emptyList(),
         agoHours: Long = 0,
+        profileId: Int = DEMO_PROFILE_ID,
     ): DemoRequest {
         val at = now().minus(Duration.ofHours(agoHours))
-        return DemoRequest(nextRequest++, title, status, by, at, at, seasons).also { requests += it }
+        return DemoRequest(nextRequest++, title, status, by, at, at, seasons, profileId = profileId).also { requests += it }
     }
 
     fun addIssue(
@@ -194,7 +196,7 @@ internal class DemoData(
 
     private fun seed() {
         SEED_REQUESTS.forEach { seed ->
-            val request = add(title(seed.title), seed.by, seed.status, seed.seasons, seed.hoursAgo)
+            val request = add(title(seed.title), seed.by, seed.status, seed.seasons, seed.hoursAgo, seed.profileId)
             if (seed.status == SeerrRequestStatusCode.Approved) {
                 request.modifiedBy = DEMO_USER_ID
                 request.download = true
@@ -234,15 +236,23 @@ private class SeedRequest(
     val hoursAgo: Long,
     val status: SeerrRequestStatusCode = SeerrRequestStatusCode.Pending,
     val seasons: List<Int> = emptyList(),
+    val profileId: Int = DEMO_PROFILE_ID,
 )
 
 private val SEED_REQUESTS =
     listOf(
         SeedRequest("Sintel", by = 2, hoursAgo = 26),
-        SeedRequest("Nosferatu", by = 3, hoursAgo = 3),
+        SeedRequest("Nosferatu", by = 3, hoursAgo = 3, profileId = DEMO_HD_PROFILE_ID),
         SeedRequest("Severance", by = 3, hoursAgo = 7, seasons = listOf(1)),
         SeedRequest("Big Buck Bunny", by = 2, hoursAgo = 50, status = SeerrRequestStatusCode.Approved),
-        SeedRequest("The Expanse", by = 3, hoursAgo = 30, status = SeerrRequestStatusCode.Approved, seasons = listOf(1, 2)),
+        SeedRequest(
+            "The Expanse",
+            by = 3,
+            hoursAgo = 30,
+            status = SeerrRequestStatusCode.Approved,
+            seasons = listOf(1, 2),
+            profileId = DEMO_HD_PROFILE_ID,
+        ),
         SeedRequest("Metropolis", by = 1, hoursAgo = 120, status = SeerrRequestStatusCode.Completed),
         SeedRequest("Night of the Living Dead", by = 2, hoursAgo = 144, status = SeerrRequestStatusCode.Completed),
         SeedRequest("Spirited Away", by = 1, hoursAgo = 216, status = SeerrRequestStatusCode.Completed),

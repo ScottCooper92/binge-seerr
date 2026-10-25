@@ -7,6 +7,7 @@ import com.binge.companion.contracts.request.v1.ListRequestsResponse
 import com.binge.companion.contracts.request.v1.RequestEntry
 import com.binge.companion.contracts.request.v1.TitleStatus
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
+import com.cooper.binge.companion.seerr.seerr.destination
 import com.cooper.binge.companion.seerr.seerr.seerrMediaType
 import com.cooper.binge.companion.seerr.seerr.toMediaId
 import com.cooper.binge.companion.seerr.seerr.toPermissions
@@ -16,6 +17,7 @@ import com.cooper.binge.companion.seerr.seerr.toRequestInfo
 internal class SeerrListingRpcs(
     private val connection: SeerrConnection,
     private val statusReads: SeerrStatusReads,
+    private val qualityLabels: QualityProfileLabels,
 ) {
     /**
      * Requires CAPABILITY_LIST_REQUESTS. One page of Seerr's `GET /request`, filtered as
@@ -46,9 +48,10 @@ internal class SeerrListingRpcs(
             val listed = page.results.mapNotNull { dto -> dto.media.toMediaId()?.let { it to dto } }
             val statuses = statusReads.statusesOf(listed.map { it.first })
             val profile = connection.profile()
+            val labels = qualityLabels.forDestinations(page.results.map { it.destination() })
             val response = ListRequestsResponse.newBuilder()
             listed.forEach { (media, dto) ->
-                val info = permissions.withAllowedActions(dto.toRequestInfo(), own = dto.requestedBy?.id == user.id, profile = profile)
+                val info = permissions.withAllowedActions(dto.toRequestInfo(labels), own = dto.requestedBy?.id == user.id, profile = profile)
                 response.addEntries(
                     RequestEntry
                         .newBuilder()
