@@ -46,7 +46,7 @@ class SeerrHealthInterceptorTest {
     private val client =
         OkHttpClient
             .Builder()
-            .addInterceptor(SeerrHealthInterceptor(reporter, baseUrl))
+            .addInterceptor(SeerrHealthInterceptor(reporter))
             .addInterceptor(SeerrSessionInterceptor(baseUrl))
             .build()
 
@@ -163,7 +163,7 @@ class SeerrHealthInterceptorTest {
         closed.start()
         val url = closed.url("/")
         closed.close()
-        val client = OkHttpClient.Builder().addInterceptor(SeerrHealthInterceptor(reporter, url.toString())).build()
+        val client = OkHttpClient.Builder().addInterceptor(SeerrHealthInterceptor(reporter)).build()
         runCatching { client.newCall(Request.Builder().url(url).build()).execute().close() }
         assertEquals(listOf("network"), reporter.calls)
     }

@@ -14,18 +14,15 @@ private const val HTTP_SERVER_ERROR_MIN = 500
 /**
  * Reports every saved-server call's outcome to the health monitor and returns the response untouched.
  *
- * The credentials are at fault only when the session is gone: a 401 `auth/me` agrees with, a 403
- * [SeerrSessionInterceptor] marked ([isSessionRejection]), or a 403 from `auth/me` itself ([rejectsSession]).
+ * The credentials are at fault only when the session is gone: a 401 `auth/me` agrees with, or a 403
+ * [SeerrSessionInterceptor] marked ([isSessionRejection]), a 403 from `auth/me` itself included.
  * A 401 `auth/me` contradicts is a refusal (#1165). A transport failure, a 429 or a 5xx (bar an [isArrProxyRoute] 500) is transient.
  * Every other answer, a permission 403 included, means the server reached us and accepted the credentials. The demo
  * is always reached: its 501 is an answer, not an outage. This sits outside [SeerrSessionInterceptor].
  */
 class SeerrHealthInterceptor(
     private val reporter: SeerrConnectionHealthReporter,
-    baseUrl: String,
 ) : Interceptor {
-    private val authMe = authMeUrl(baseUrl)
-
     override fun intercept(chain: Interceptor.Chain): Response {
         val request = chain.request()
         val response =
@@ -38,7 +35,6 @@ class SeerrHealthInterceptor(
         when {
             request.url.isDemo() -> reporter.reportSuccess()
             isSessionRejection(response.code, response.headers) -> reporter.reportAuthFailure()
-            response.code == HTTP_FORBIDDEN && request.url == authMe -> reporter.reportAuthFailure()
             response.code == HTTP_INTERNAL_SERVER_ERROR && request.url.isArrProxyRoute() -> reporter.reportSuccess()
             response.code == HTTP_TOO_MANY_REQUESTS || response.code >= HTTP_SERVER_ERROR_MIN -> reporter.reportNetworkFailure()
             else -> reporter.reportSuccess()
