@@ -301,7 +301,18 @@ private fun mediaRows(
         }
         // Every picker comes before the first delete, so the destructive rows run together at the end.
         if (media.canDeleteFiles) {
-            media.instances.filter { it.status.hasFiles() }.forEach { instance ->
+            // A deletion's result stays in place: the row that ran it now says the files are gone, and offers nothing more.
+            media.instances.filter { it.filesDeleted }.forEach { instance ->
+                add(
+                    ListItem(
+                        icon = Icons.Filled.DeleteSweep,
+                        label = stringResource(if (instance.is4k) R.string.media_4k_files_deleted else R.string.media_files_deleted),
+                        clickable = false,
+                        trailingContent = {},
+                    ),
+                )
+            }
+            media.instances.filter { !it.filesDeleted && it.status.hasFiles() }.forEach { instance ->
                 add(
                     ListItem(
                         icon = Icons.Filled.DeleteSweep,

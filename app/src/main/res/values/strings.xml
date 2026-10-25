@@ -220,15 +220,23 @@
     <string name="media_clear_confirm_title">Clear media data?</string>
     <string name="media_clear_confirm_message">The server forgets this title: its status and every request for it. Anyone can request it again.</string>
     <string name="media_delete_files">Delete files</string>
-    <string name="media_delete_files_confirm_title">Delete the files?</string>
-    <string name="media_delete_files_confirm_message">The downloaded files are removed from the download client, and the title is marked unknown for every request against it.</string>
-    <string name="media_delete_files_second_title">Delete from %1$s?</string>
-    <string name="media_delete_files_second_message">%1$s deletes the files from disk. This cannot be undone.</string>
+    <string name="media_delete_files_confirm_title">Delete files from %1$s?</string>
+    <string name="media_delete_files_confirm_movie">%1$s removes the movie and deletes the files it has imported. A download that\'s still running isn\'t stopped.</string>
+    <string name="media_delete_files_confirm_tv">%1$s removes the show and deletes the files it has imported, for every season. A download that\'s still running isn\'t stopped.</string>
+    <plurals name="media_delete_files_remove_requests">
+        <item quantity="one">Also remove its request</item>
+        <item quantity="other">Also remove its %1$d requests</item>
+    </plurals>
+    <string name="media_delete_files_remove_requests_detail">So the title can be requested again</string>
+    <string name="media_delete_files_and_requests">Delete files and remove requests</string>
     <string name="media_client_radarr" translatable="false">Radarr</string>
     <string name="media_client_sonarr" translatable="false">Sonarr</string>
     <string name="media_status_set">Media status updated</string>
     <string name="media_cleared">Media data cleared</string>
     <string name="media_files_deleted">Files deleted</string>
+    <string name="media_4k_files_deleted">4K files deleted</string>
+    <string name="media_files_and_requests_deleted">Files deleted and requests removed</string>
+    <string name="media_files_deleted_requests_kept">Files deleted, but the requests could not be removed</string>
     <string name="request_declined">Request declined</string>
     <string name="request_declined_and_blocked">Request declined and title blocked</string>
     <string name="request_declined_block_failed">Declined, but the title could not be blocked</string>

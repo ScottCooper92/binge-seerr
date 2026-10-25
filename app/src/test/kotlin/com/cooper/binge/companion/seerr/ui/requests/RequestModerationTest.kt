@@ -121,6 +121,53 @@ class RequestModerationTest {
         }
 
     @Test
+    fun `deleting files with requests deletes the files first, then removes each request and its cached row`() =
+        runTest {
+            cache.append("all:added:all", listOf(item.toEntity("all:added:all", 0), item.copy(id = 12).toEntity("all:added:all", 1)), null)
+            val sut = moderation()
+            var filesHeard = 0
+
+            val done = awaitEvent(sut.events)
+            sut.deleteMediaFiles(11, 900, is4k = false, removeRequestIds = listOf(11, 12)) { filesHeard++ }
+
+            val event = done.await()
+            assertEquals(ModerationEvent.MediaFilesAndRequestsDeleted(removedThisRequest = true), event)
+            assertTrue(event.removesTheRequest)
+            val deletes = received.filter { it.method == "DELETE" }.map { it.url.encodedPath }
+            assertEquals(listOf("/api/v1/media/900/file", "/api/v1/request/11", "/api/v1/request/12"), deletes)
+            assertEquals(1, filesHeard)
+            assertEquals(1, moderated)
+            assertTrue(cache.rows.isEmpty())
+        }
+
+    @Test
+    fun `files deleted with only another request removed leave the page, and a removal that fails says so`() =
+        runTest {
+            val sut = moderation()
+
+            val sibling = awaitEvent(sut.events)
+            sut.deleteMediaFiles(11, 900, is4k = true, removeRequestIds = listOf(12))
+            val event = sibling.await()
+            assertEquals(ModerationEvent.MediaFilesAndRequestsDeleted(removedThisRequest = false), event)
+            assertTrue(!event.removesTheRequest)
+            assertEquals("true", received.first { it.url.encodedPath == "/api/v1/media/900/file" }.url.queryParameter("is4k"))
+
+            codes["/api/v1/request/12"] = 500
+            var filesHeard = 0
+            val kept = awaitEvent(sut.events)
+            sut.deleteMediaFiles(11, 900, is4k = false, removeRequestIds = listOf(12)) { filesHeard++ }
+            assertEquals(ModerationEvent.MediaFilesDeletedRequestsKept, kept.await())
+            assertEquals(1, filesHeard)
+
+            codes["/api/v1/media/900/file"] = 500
+            val failed = awaitEvent(sut.events)
+            sut.deleteMediaFiles(11, 900, is4k = false, removeRequestIds = listOf(12)) { filesHeard++ }
+            assertTrue(failed.await() is ModerationEvent.Failed)
+            assertEquals("a refused deletion removes no request", 1, filesHeard)
+            assertEquals(2, received.count { it.method == "DELETE" && it.url.encodedPath == "/api/v1/request/12" })
+        }
+
+    @Test
     fun `approving, declining and removing move the cached row, and a failed write leaves it`() =
         runTest {
             cache.append("all:added:all", listOf(item.toEntity("all:added:all", 0), item.copy(id = 12).toEntity("all:added:all", 1)), null)

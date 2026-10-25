@@ -172,7 +172,7 @@ private fun SeededFrame(state: RequestDetailUiState.Seeded) {
                         onSave = {},
                         onDismiss = {},
                     ),
-                media = ManageMediaActions(onSetStatus = { _, _, _ -> }, onClearData = {}, onDeleteFiles = { _, _ -> }),
+                media = ManageMediaActions(onSetStatus = { _, _, _ -> }, onClearData = {}, onDeleteFiles = { _, _, _ -> }),
             ),
     )
 }

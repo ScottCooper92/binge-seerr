@@ -1,19 +1,24 @@
 package com.cooper.binge.companion.seerr.ui.requests
 
 import androidx.annotation.StringRes
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.PlaylistRemove
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.BingeAdaptiveSheet
 import com.binge.designsystem.component.BingeConfirmDialog
 import com.binge.designsystem.component.BingeSheetKind
 import com.binge.designsystem.component.BingeSheetNav
+import com.binge.designsystem.component.CheckboxRow
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.seerr.SeerrError
+import com.cooper.binge.companion.seerr.seerr.SeerrRequestStatusCode
 
 /**
  * Everything that changes something, in one sheet, behind the page's one button.
@@ -29,10 +34,10 @@ private sealed interface Pending : java.io.Serializable {
 
     data object ClearData : Pending
 
-    /** Deleting files asks twice, the second time naming the client the files leave. */
+    /** One instance's files, and whether its open requests go with them. */
     data class DeleteFiles(
         val is4k: Boolean,
-        val second: Boolean = false,
+        val removeRequests: Boolean = false,
     ) : Pending
 }
 
@@ -55,6 +60,7 @@ internal fun RequestActionsSheet(
     onEdit: () -> Unit = {},
     media: MediaRecord? = null,
     mediaActions: ManageMediaActions? = null,
+    requests: List<RequestSummary> = emptyList(),
     onMarkStatus: (is4k: Boolean) -> Unit = {},
     onOpenUser: ((Int) -> Unit)? = null,
     viewerId: Int? = null,
@@ -150,6 +156,7 @@ internal fun RequestActionsSheet(
             step = step,
             media = media,
             mediaActions = mediaActions,
+            requests = requests,
             blockTitle = blockTitle,
             onStep = { pending = it },
             onDone = {
@@ -203,6 +210,7 @@ private fun PendingConfirm(
     step: Pending,
     media: MediaRecord?,
     mediaActions: ManageMediaActions?,
+    requests: List<RequestSummary>,
     blockTitle: Boolean,
     onStep: (Pending?) -> Unit,
     onDone: () -> Unit,
@@ -230,7 +238,10 @@ private fun PendingConfirm(
                 },
                 onDismissRequest = { onStep(null) },
             )
-        is Pending.DeleteFiles -> DeleteFilesConfirm(step, media, mediaActions, onStep, onDone)
+        is Pending.DeleteFiles ->
+            DeleteFilesConfirm(step, media, requests.openRequestIds(step.is4k), onStep) { removeRequestIds ->
+                media?.mediaId?.let { mediaActions?.onDeleteFiles?.invoke(it, step.is4k, removeRequestIds) }
+            }
     }
 }
 
@@ -262,42 +273,77 @@ private fun RequestConfirm(
     )
 }
 
-/** Two steps, the second naming the client the files leave — deleting them is not undone by a re-request. */
+/**
+ * One confirm, worded from what the server does: Radarr or Sonarr removes the title and the files it imported, and a
+ * download still running is not stopped. The title's requests stay unless the box is ticked, so where it has open ones
+ * the confirm offers to remove them too. The sheet stays open, and its row says the files are gone.
+ */
 @Composable
 private fun DeleteFilesConfirm(
     step: Pending.DeleteFiles,
     media: MediaRecord?,
-    mediaActions: ManageMediaActions?,
+    openRequestIds: List<Int>,
     onStep: (Pending?) -> Unit,
-    onDone: () -> Unit,
+    onConfirm: (removeRequestIds: List<Int>) -> Unit,
 ) {
-    val client = stringResource(if (media?.isTv == true) R.string.media_client_sonarr else R.string.media_client_radarr)
+    val removing = step.removeRequests && openRequestIds.isNotEmpty()
     BingeConfirmDialog(
-        title =
-            if (step.second) {
-                stringResource(R.string.media_delete_files_second_title, client)
-            } else {
-                stringResource(R.string.media_delete_files_confirm_title)
-            },
-        message =
-            if (step.second) {
-                stringResource(R.string.media_delete_files_second_message, client)
-            } else {
-                stringResource(R.string.media_delete_files_confirm_message)
-            },
-        confirmLabel = stringResource(R.string.media_delete_files),
+        title = stringResource(R.string.media_delete_files_confirm_title, stringResource(media.clientRes())),
+        message = deleteFilesMessage(isTv = media?.isTv == true),
+        confirmLabel = stringResource(if (removing) R.string.media_delete_files_and_requests else R.string.media_delete_files),
         destructive = true,
         onConfirm = {
-            if (step.second) {
-                media?.mediaId?.let { mediaActions?.onDeleteFiles?.invoke(it, step.is4k) }
-                onDone()
-            } else {
-                onStep(step.copy(second = true))
-            }
+            onConfirm(if (removing) openRequestIds else emptyList())
+            onStep(null)
         },
         onDismissRequest = { onStep(null) },
+        extraContent =
+            openRequestIds.takeIf { it.isNotEmpty() }?.let { ids ->
+                {
+                    RemoveRequestsCheckbox(
+                        count = ids.size,
+                        checked = step.removeRequests,
+                        onCheckedChange = { onStep(step.copy(removeRequests = it)) },
+                    )
+                }
+            },
     )
 }
+
+/** The confirm's body for a movie or a show: what Radarr or Sonarr removes, and that a running download carries on. */
+@Composable
+internal fun deleteFilesMessage(isTv: Boolean): String =
+    if (isTv) {
+        stringResource(R.string.media_delete_files_confirm_tv, stringResource(R.string.media_client_sonarr))
+    } else {
+        stringResource(R.string.media_delete_files_confirm_movie, stringResource(R.string.media_client_radarr))
+    }
+
+/** The choice to remove the instance's open requests with its files, so the title can be requested again. */
+@Composable
+internal fun RemoveRequestsCheckbox(
+    count: Int,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+) {
+    CheckboxRow(
+        label = pluralStringResource(R.plurals.media_delete_files_remove_requests, count, count),
+        supportingText = stringResource(R.string.media_delete_files_remove_requests_detail),
+        checked = checked,
+        onCheckedChange = onCheckedChange,
+        icon = Icons.Filled.PlaylistRemove,
+    )
+}
+
+private fun MediaRecord?.clientRes(): Int = if (this?.isTv == true) R.string.media_client_sonarr else R.string.media_client_radarr
+
+/**
+ * The ids of the requests that keep [is4k]'s instance requested: every one on it but those declined or completed, which
+ * the server no longer counts against the title.
+ */
+internal fun List<RequestSummary>.openRequestIds(is4k: Boolean): List<Int> =
+    filter { it.is4k == is4k && it.status != SeerrRequestStatusCode.Declined && it.status != SeerrRequestStatusCode.Completed }
+        .map { it.id }
 
 /** The snackbar line for a moderation's outcome. */
 @StringRes
@@ -312,6 +358,8 @@ internal fun ModerationEvent.messageRes(): Int =
             ModerationEvent.MediaStatusSet -> R.string.media_status_set
             ModerationEvent.MediaCleared -> R.string.media_cleared
             ModerationEvent.MediaFilesDeleted -> R.string.media_files_deleted
+            is ModerationEvent.MediaFilesAndRequestsDeleted -> R.string.media_files_and_requests_deleted
+            ModerationEvent.MediaFilesDeletedRequestsKept -> R.string.media_files_deleted_requests_kept
             ModerationEvent.Declined -> R.string.request_declined
             ModerationEvent.DeclinedAndBlocked -> R.string.request_declined_and_blocked
             ModerationEvent.DeclinedButBlockFailed -> R.string.request_declined_block_failed
@@ -333,4 +381,5 @@ internal fun ModerationEvent.isError(): Boolean =
     this is ModerationEvent.Failed ||
         this == ModerationEvent.DeclinedButBlockFailed ||
         this == ModerationEvent.RemovedButBlockFailed ||
+        this == ModerationEvent.MediaFilesDeletedRequestsKept ||
         this == ModerationEvent.BlockFailed

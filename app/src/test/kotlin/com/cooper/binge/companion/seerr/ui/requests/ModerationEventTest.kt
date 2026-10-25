@@ -7,7 +7,7 @@ import org.junit.Test
 /** Which outcomes leave the request page with nothing to show, so it closes (#1054). */
 class ModerationEventTest {
     @Test
-    fun `a removal, with or without its block, and clearing the media remove the request`() {
+    fun `a removal, with or without its block, clearing the media, and deleting files with this request remove it`() {
         val removing =
             listOf(
                 ModerationEvent.Approved,
@@ -24,6 +24,9 @@ class ModerationEventTest {
                 ModerationEvent.MediaStatusSet,
                 ModerationEvent.MediaCleared,
                 ModerationEvent.MediaFilesDeleted,
+                ModerationEvent.MediaFilesAndRequestsDeleted(removedThisRequest = false),
+                ModerationEvent.MediaFilesAndRequestsDeleted(removedThisRequest = true),
+                ModerationEvent.MediaFilesDeletedRequestsKept,
                 ModerationEvent.Failed(SeerrError.Server),
             ).filter { it.removesTheRequest }
 
@@ -33,6 +36,7 @@ class ModerationEventTest {
                 ModerationEvent.RemovedAndBlocked,
                 ModerationEvent.RemovedButBlockFailed,
                 ModerationEvent.MediaCleared,
+                ModerationEvent.MediaFilesAndRequestsDeleted(removedThisRequest = true),
             ),
             removing,
         )
