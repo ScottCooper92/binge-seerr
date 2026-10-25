@@ -7,6 +7,8 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 private const val HTTP_OK = 200
@@ -14,6 +16,7 @@ private const val HTTP_UNAUTHORIZED = 401
 private const val HTTP_FORBIDDEN = 403
 private const val HTTP_NOT_FOUND = 404
 private const val HTTP_TOO_MANY_REQUESTS = 429
+private const val HTTP_BAD_GATEWAY = 502
 private const val HTTP_SERVER_ERROR = 500
 
 /**
@@ -108,6 +111,50 @@ class SeerrHealthInterceptorTest {
         assertEquals(listOf("network"), report(MockResponse(code = HTTP_TOO_MANY_REQUESTS, body = "{}")))
         reporter.calls.clear()
         assertEquals(listOf("network"), report(MockResponse(code = HTTP_SERVER_ERROR, body = "{}")))
+    }
+
+    @Test
+    fun `a 500 from a route that asks an arr live is the arr being down, not Seerr`() {
+        val profiles = "/api/v1/service/radarr/1"
+        report(MockResponse(code = HTTP_SERVER_ERROR, body = "{}"), path = profiles)
+        report(MockResponse(code = HTTP_SERVER_ERROR, body = "{}"), path = profiles)
+
+        assertEquals(listOf("success", "success"), reporter.calls)
+    }
+
+    @Test
+    fun `two 500s from a route Seerr answers itself still report network failures`() {
+        report(MockResponse(code = HTTP_SERVER_ERROR, body = "{}"), path = "/api/v1/request")
+        report(MockResponse(code = HTTP_SERVER_ERROR, body = "{}"), path = "/api/v1/service/radarr")
+
+        assertEquals(listOf("network", "network"), reporter.calls)
+    }
+
+    @Test
+    fun `a gateway error or a 429 on an arr route still counts against Seerr`() {
+        val profiles = "/api/v1/service/sonarr/1"
+        report(MockResponse(code = HTTP_BAD_GATEWAY, body = "{}"), path = profiles)
+        report(MockResponse(code = HTTP_TOO_MANY_REQUESTS, body = "{}"), path = profiles)
+
+        assertEquals(listOf("network", "network"), reporter.calls)
+    }
+
+    @Test
+    fun `the routes that ask an arr live are the ones Seerr's service and settings routers send there`() {
+        fun isArr(path: String) = server.url(path).isArrProxyRoute()
+
+        assertTrue(isArr("/api/v1/service/radarr/2"))
+        assertTrue(isArr("/api/v1/service/sonarr/2"))
+        assertTrue(isArr("/api/v1/service/sonarr/lookup/603"))
+        assertTrue(isArr("/api/v1/settings/radarr/test"))
+        assertTrue(isArr("/api/v1/settings/sonarr/test"))
+        assertTrue(isArr("/api/v1/settings/radarr/1/profiles"))
+        assertTrue(isArr("/seerr/api/v1/service/radarr/2"))
+        assertFalse(isArr("/api/v1/service/radarr"))
+        assertFalse(isArr("/api/v1/settings/radarr"))
+        assertFalse(isArr("/api/v1/settings/radarr/1"))
+        assertFalse(isArr("/api/v1/request/1"))
+        assertFalse(isArr("/service/radarr/2"))
     }
 
     @Test

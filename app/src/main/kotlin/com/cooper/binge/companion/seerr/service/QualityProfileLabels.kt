@@ -34,34 +34,24 @@ internal class QualityProfileLabels(
 
     /** The lookup for these destinations, with every server they need already read, so the mapping stays plain code. */
     suspend fun forDestinations(destinations: Collection<SeerrDestination>): QualityLabels {
-        val wanted = destinations.filter { it.isResolvable }.mapNotNull { it.serverId?.let { id -> ServerKey(it.isTv, id) } }.distinct()
-        if (wanted.isEmpty()) return QualityLabels.None
         val baseUrl = connection.current().baseUrl
-        val names = wanted.associateWith { profileNames(baseUrl, it) }
-        return QualityLabels { destination ->
-            val key = destination.serverId?.let { ServerKey(destination.isTv, it) }
-            names[key]?.get(destination.profileId)
-        }
+        val wanted = destinations.mapNotNull { it.serverKey(baseUrl) }.distinct()
+        if (wanted.isEmpty()) return QualityLabels.None
+        val names = wanted.associateWith { profileNames(it) }
+        return QualityLabels { destination -> names[destination.serverKey(baseUrl)]?.get(destination.profileId) }
     }
 
-    private suspend fun profileNames(
-        baseUrl: String,
-        server: ServerKey,
-    ): Map<Int, String> =
+    /** Null where either id is missing, since there is then nothing to look a name up by. */
+    private fun SeerrDestination.serverKey(baseUrl: String): ServerKey? =
+        if (profileId == null) null else serverId?.let { ServerKey(baseUrl, isTv, it) }
+
+    private suspend fun profileNames(server: ServerKey): Map<Int, String> =
         lock.withLock {
-            val key = server.copy(baseUrl = baseUrl)
             val now = clock()
-            cache[key]?.takeIf { now - it.readAtMillis in 0 until it.maxAgeMillis }?.let { return it.names }
+            cache[server]?.takeIf { now - it.readAtMillis in 0 until it.maxAgeMillis }?.let { return it.names }
             val read = readProfiles(server)
-            val profiles =
-                if (read !=
-                    null
-                ) {
-                    Profiles(read, now, PROFILES_MAX_AGE_MILLIS)
-                } else {
-                    Profiles(emptyMap(), now, MISS_MAX_AGE_MILLIS)
-                }
-            cache[key] = profiles
+            val profiles = read?.let { Profiles(it, now, PROFILES_MAX_AGE_MILLIS) } ?: Profiles(emptyMap(), now, MISS_MAX_AGE_MILLIS)
+            cache[server] = profiles
             profiles.names
         }
 
@@ -80,10 +70,11 @@ internal class QualityProfileLabels(
             null
         }
 
+    /** One *arr on one Seerr server: the ids mean nothing without the address they were read from. */
     private data class ServerKey(
+        val baseUrl: String,
         val isTv: Boolean,
         val serverId: Int,
-        val baseUrl: String = "",
     )
 
     private class Profiles(
