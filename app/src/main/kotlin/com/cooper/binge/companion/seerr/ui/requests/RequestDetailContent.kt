@@ -79,6 +79,13 @@ internal fun RequestHeadline(
     initiallyOverflowing: Boolean = false,
 ) {
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m))) {
+        if (detail.item.isProcessingWithoutDownload) {
+            Text(
+                stringResource(R.string.media_state_not_downloading_detail),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
         if (detail.seasons.isNotEmpty()) {
             Text(
                 stringResource(R.string.request_title_status_caption),
@@ -129,7 +136,7 @@ internal fun SeasonRow(season: SeasonState) {
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.weight(1f, fill = false),
             )
-            season.status?.let { MediaStateChip(status = it) }
+            season.status?.let { MediaStateChip(status = it, download = season.download) }
         }
         season.episodeCount?.let {
             Text(

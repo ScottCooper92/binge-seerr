@@ -918,7 +918,9 @@
     <string name="request_state_completed">Completada</string>
     <string name="request_state_declined">Rechazada</string>
     <string name="request_state_failed">Fallida</string>
-    <string name="media_state_processing">Descargando</string>
+    <string name="media_state_downloading">Descargando</string>
+    <string name="media_state_not_downloading">Aprobada · sin descargar</string>
+    <string name="media_state_not_downloading_detail">Todavía no se está descargando nada. Si se eliminaron sus archivos, elimina la petición o vuelve a solicitarlo.</string>
     <string name="media_state_partially_available">Parcialmente disponible</string>
     <string name="media_state_available">Disponible</string>
     <string name="media_state_blocklisted">Bloqueado</string>

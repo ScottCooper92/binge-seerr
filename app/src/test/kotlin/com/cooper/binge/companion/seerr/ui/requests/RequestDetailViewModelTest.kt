@@ -15,6 +15,7 @@ import com.cooper.binge.companion.seerr.seerr.SeerrMediaServer
 import com.cooper.binge.companion.seerr.seerr.SeerrMediaStatusCode
 import com.cooper.binge.companion.seerr.seerr.SeerrRequestStatusCode
 import com.cooper.binge.companion.seerr.ui.MediaServerItem
+import com.cooper.binge.companion.seerr.ui.state.DownloadActivity
 import com.cooper.binge.companion.seerr.util.FakeRequest
 import com.cooper.binge.companion.seerr.util.FakeResponse
 import com.cooper.binge.companion.seerr.util.FakeSeerrServer
@@ -44,6 +45,7 @@ private const val ADMIN = 2
 private const val REQUEST = 32
 private const val REQUEST_ADVANCED = 1 shl 13
 private const val MANAGE_ISSUES = 1 shl 20
+private const val MANAGE_REQUESTS = 1 shl 4
 
 /** The request page over an in-memory connection into a path-scripted Seerr. */
 class RequestDetailViewModelTest {
@@ -106,7 +108,7 @@ class RequestDetailViewModelTest {
         serve("/api/v1/issue", """{"id":5}""")
     }
 
-    private suspend fun TestScope.connection(): SeerrConnection {
+    private suspend fun TestScope.connection(clock: () -> Long = System::currentTimeMillis): SeerrConnection {
         val connection =
             SeerrConnection(
                 store =
@@ -115,6 +117,7 @@ class RequestDetailViewModelTest {
                         PlainCipher,
                     ),
                 apis = SeerrApiFactory(logRequests = false, testTransport = seerr::interceptor, testDispatcher = seerr::newDispatcher),
+                clock = clock,
             )
         connection.connect(seerr.url("/"), SeerrAuth.ApiKey("k3y")).getOrThrow()
         return connection
@@ -154,6 +157,38 @@ class RequestDetailViewModelTest {
             is4k = true,
             orderIndex = id,
         )
+
+    /** #1722: permissions widened on the server between two openings of the Manage sheet show on the second. */
+    @Test
+    fun `a Manage sheet opened again after a minute shows the permissions the server now grants`() =
+        runTest {
+            server(REQUEST)
+            val pending = responses.getValue("/api/v1/request/11")().body.replace("\"id\":11,\"status\":2", "\"id\":11,\"status\":1")
+            serve("/api/v1/request/11", pending)
+            var now = 1_789_275_660_000L
+            val vm = viewModel(connection(clock = { now }))
+            val first = vm.awaitReady()
+            vm.onManageOpened()
+            assertFalse(first.detail.actions.canApprove)
+            assertFalse(checkNotNull(first.detail.media).canClearData)
+
+            serve("/api/v1/auth/me", """{"id":7,"displayName":"Scott","permissions":${REQUEST or MANAGE_REQUESTS}}""")
+
+            fun meReads() = received.count { it.url.encodedPath == "/api/v1/auth/me" }
+            val readsBefore = meReads()
+            now += 30_000L
+            vm.onManageOpened()
+            testScheduler.advanceUntilIdle()
+            assertEquals("a copy under a minute old is trusted", readsBefore, meReads())
+
+            now += 31_000L
+            vm.onManageOpened()
+            val second = vm.awaitReady { it.detail.actions.canApprove }
+            val media = checkNotNull(second.detail.media)
+            assertTrue(media.canClearData)
+            assertTrue(media.canSetStatus)
+            assertEquals(readsBefore + 1, meReads())
+        }
 
     /** #1239: the page's "2 minutes ago" ages while it shows, and the clock stops when it leaves. */
     @Test
@@ -282,8 +317,8 @@ class RequestDetailViewModelTest {
             assertEquals(7, detail.item.requestedById)
             assertEquals(
                 listOf(
-                    SeasonState(1, "Season 1", 9, SeerrMediaStatusCode.Available),
-                    SeasonState(2, "Season 2", 10, SeerrMediaStatusCode.Processing),
+                    SeasonState(1, "Season 1", 9, SeerrMediaStatusCode.Available, DownloadActivity.Downloading),
+                    SeasonState(2, "Season 2", 10, SeerrMediaStatusCode.Processing, DownloadActivity.Downloading),
                 ),
                 detail.seasons,
             )

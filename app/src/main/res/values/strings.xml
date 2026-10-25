@@ -943,7 +943,9 @@
     <string name="request_state_completed">Completed</string>
     <string name="request_state_declined">Declined</string>
     <string name="request_state_failed">Failed</string>
-    <string name="media_state_processing">Downloading</string>
+    <string name="media_state_downloading">Downloading</string>
+    <string name="media_state_not_downloading">Approved · not downloading</string>
+    <string name="media_state_not_downloading_detail">Nothing is downloading yet. If its files were deleted, remove the request or request it again.</string>
     <string name="media_state_partially_available">Partly available</string>
     <string name="media_state_available">Available</string>
     <string name="media_state_blocklisted">Blocked</string>

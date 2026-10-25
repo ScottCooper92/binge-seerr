@@ -70,6 +70,8 @@ internal data class TvRequestDetailActions(
     val onSetMediaStatus: (mediaId: Int, status: MediaStatusChoice, is4k: Boolean) -> Unit,
     /** Null hides Edit: a surface with no editor behind it has nothing to open. */
     val edit: TvRequestEditActions? = null,
+    /** Manage opened, so the viewer's permissions are worth a fresh look (#1722). */
+    val onManageOpened: () -> Unit = {},
 )
 
 /** Opening the request's editor, and what its sheet may ask of it once open. */
@@ -194,7 +196,10 @@ private fun TvRequestDetailContent(
                 openPage(it)
                 sheet = it
             },
-            onOpenManage = { manageOpen = true },
+            onOpenManage = {
+                manageOpen = true
+                actions.onManageOpened()
+            },
             sheetFocus = sheetFocus,
             manageFocus = manageFocus,
         )

@@ -1,6 +1,7 @@
 package com.cooper.binge.companion.seerr.auth
 
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import com.binge.companion.sdk.attempt
 import com.cooper.binge.companion.seerr.seerr.SeerrApiFactory
 import com.cooper.binge.companion.seerr.seerr.SeerrAuth
 import com.cooper.binge.companion.seerr.seerr.SeerrLoginRequest
@@ -37,7 +38,10 @@ class SeerrConnectionTest {
     private val server = MockWebServer().routeProfiles().apply { start() }
     private val baseUrl = server.url("/").toString()
 
-    private fun connection(scope: CoroutineScope): SeerrConnection =
+    private fun connection(
+        scope: CoroutineScope,
+        clock: () -> Long = System::currentTimeMillis,
+    ): SeerrConnection =
         SeerrConnection(
             store =
                 CredentialStore(
@@ -45,6 +49,7 @@ class SeerrConnectionTest {
                     cipher = ReversingCipher,
                 ),
             apis = SeerrApiFactory(logRequests = false),
+            clock = clock,
         )
 
     @After
@@ -198,6 +203,56 @@ class SeerrConnectionTest {
             assertEquals(first, second)
             assertEquals(4, server.requestCount)
             assertEquals("connect.sid=s3ss10n", server.takeRequest().headers["Cookie"])
+        }
+
+    /** #1722: the cached user is trusted for a minute, then re-read; a failed re-read keeps the older copy. */
+    @Test
+    fun `a recent read re-reads auth me only once the cached copy is over a minute old`() =
+        runTest {
+            server.enqueue(json("""{"id":1,"permissions":32}"""))
+            server.enqueueProfile(json("""{"version":"3.1.0"}"""), json("""{"initialized":true}"""))
+            var now = 1_789_275_660_000L
+            val sut = connection(backgroundScope, clock = { now })
+            sut.connect(baseUrl, SeerrAuth.ApiKey("k3y")).getOrThrow()
+            server.enqueue(json("""{"id":1,"permissions":32}"""))
+            assertEquals(32, sut.recentAuthenticatedUser().permissions)
+            val reads = server.requestCount
+
+            now += 59_000L
+            assertEquals(32, sut.recentAuthenticatedUser().permissions)
+            assertEquals(reads, server.requestCount)
+
+            now += 2_000L
+            server.enqueue(json("""{"id":1,"permissions":48}"""))
+            assertEquals(48, sut.recentAuthenticatedUser().permissions)
+            assertEquals(48, sut.authenticatedUser().permissions)
+            assertEquals(reads + 1, server.requestCount)
+
+            now += 61_000L
+            server.enqueue(MockResponse.Builder().code(500).build())
+            assertTrue(attempt { sut.recentAuthenticatedUser() }.isFailure)
+            assertEquals(48, sut.authenticatedUser().permissions)
+        }
+
+    @Test
+    fun `coming back to the app re-reads a stale auth me, and reads nothing with no server saved`() =
+        runTest {
+            val idle = connection(backgroundScope)
+            ForegroundUserRefresh(idle, backgroundScope).onForeground()
+            testScheduler.advanceUntilIdle()
+            assertEquals(0, server.requestCount)
+
+            server.enqueue(json("""{"id":1,"permissions":32}"""))
+            server.enqueueProfile(json("""{"version":"3.1.0"}"""), json("""{"initialized":true}"""))
+            idle.connect(baseUrl, SeerrAuth.ApiKey("k3y")).getOrThrow()
+            val connected = server.requestCount
+            server.enqueue(json("""{"id":1,"permissions":48}"""))
+            ForegroundUserRefresh(idle, this).onForeground()
+            testScheduler.advanceUntilIdle()
+
+            // The refresh holds the user lock while it reads, so this waits for it and is served its answer.
+            assertEquals(48, idle.authenticatedUser().permissions)
+            assertEquals(connected + 1, server.requestCount)
         }
 
     @Test

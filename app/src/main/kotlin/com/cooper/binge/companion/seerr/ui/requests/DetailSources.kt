@@ -132,11 +132,13 @@ internal class DetailSources(
     }
 
     /** The season the request asked for, named from the title's own list where that loaded. */
-    private fun seasons(): List<SeasonState> =
-        dto.seasons.map { requested ->
+    private fun seasons(): List<SeasonState> {
+        val download = (if (dto.is4k) dto.media.downloadStatus4k else dto.media.downloadStatus).downloadActivity()
+        return dto.seasons.map { requested ->
             val season = details?.seasons?.firstOrNull { it.seasonNumber == requested.seasonNumber }
-            SeasonState(requested.seasonNumber, season?.name, season?.episodeCount, requested.status)
+            SeasonState(requested.seasonNumber, season?.name, season?.episodeCount, requested.status, download)
         }
+    }
 
     private fun downloads(): List<DetailDownload> {
         val statuses = if (dto.is4k) dto.media.downloadStatus4k else dto.media.downloadStatus
@@ -177,6 +179,7 @@ private fun SeerrRequestDto.mediaRecord(
                     media.serviceUrl?.takeIf { it.isWebUrl() },
                     media.mediaUrl?.takeIf { it.isWebUrl() },
                     watch?.data?.toWatchStats(),
+                    media.downloadStatus.downloadActivity(),
                 ),
                 MediaInstance(
                     true,
@@ -184,6 +187,7 @@ private fun SeerrRequestDto.mediaRecord(
                     media.serviceUrl4k?.takeIf { it.isWebUrl() },
                     media.mediaUrl4k?.takeIf { it.isWebUrl() },
                     watch?.data4k?.toWatchStats(),
+                    media.downloadStatus4k.downloadActivity(),
                 ).takeIf { has4k },
             ),
         canSetStatus = permissions.canManageRequests,

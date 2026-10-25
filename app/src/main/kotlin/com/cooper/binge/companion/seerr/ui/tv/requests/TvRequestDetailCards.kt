@@ -31,8 +31,7 @@ import com.cooper.binge.companion.seerr.ui.requests.labelRes
 import com.cooper.binge.companion.seerr.ui.requests.pluralStringResourceEpisodes
 import com.cooper.binge.companion.seerr.ui.requests.statusChip
 import com.cooper.binge.companion.seerr.ui.state.formatFileSize
-import com.cooper.binge.companion.seerr.ui.state.labelRes
-import com.cooper.binge.companion.seerr.ui.state.tone
+import com.cooper.binge.companion.seerr.ui.state.stateLabel
 import com.cooper.binge.companion.seerr.ui.tv.tvColor
 import com.binge.designsystem.R as DesR
 import com.binge.designsystem.tv.R as TvR
@@ -64,7 +63,7 @@ internal fun requestInfoGroups(
         detail.media?.instances.orEmpty().mapNotNull { instance ->
             instance.status?.let { status ->
                 val version = instance.labelRes()
-                TvInfoGroup(stringResource(version), stringResource(status.labelRes()))
+                TvInfoGroup(stringResource(version), stringResource(status.stateLabel(instance.download).labelRes))
             }
         }
     val handled =
@@ -135,8 +134,8 @@ internal fun TvSeasonCard(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        season.status?.let { status ->
-            Text(text = stringResource(status.labelRes()), style = MaterialTheme.typography.labelLarge, color = status.tone().tvColor())
+        season.status?.stateLabel(season.download)?.let { state ->
+            Text(text = stringResource(state.labelRes), style = MaterialTheme.typography.labelLarge, color = state.tone.tvColor())
         }
     }
 }

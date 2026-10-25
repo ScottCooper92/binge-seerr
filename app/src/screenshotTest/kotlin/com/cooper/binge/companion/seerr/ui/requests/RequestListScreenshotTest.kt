@@ -18,7 +18,7 @@ import com.cooper.binge.companion.seerr.ui.FIXED_NOW_MILLIS
  * same label sharing the media-type/year line with a 4K badge, and the optional season-list line.
  */
 class RequestListScreenshotTest {
-    /** "Partly available" is the longest chip label in the set — the chip alone must not overflow the row. */
+    /** "Partly available", a long chip label — the chip alone must not overflow the row. */
     @PreviewTest
     @SeerrComponentPreviews
     @Composable
@@ -29,6 +29,12 @@ class RequestListScreenshotTest {
     @SeerrComponentPreviews
     @Composable
     fun fourKAndLongStatus() = Frame(fourKLongStatusRow())
+
+    /** Approved with nothing downloading (#1719): "Approved · not downloading", not "Downloading". */
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun approvedNotDownloading() = Frame(notDownloadingRow())
 
     /** A TV request with specific seasons exercises the optional season-list line. */
     @PreviewTest

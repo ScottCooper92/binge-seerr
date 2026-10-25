@@ -107,6 +107,19 @@ internal fun partiallyAvailablePendingSeasonDetail(): RequestDetail =
     )
 
 /**
+ * Approved, but processing with nothing in the queue (#1719): the chip reads "Approved · not downloading" and the headline
+ * says why it may be stuck. Trimmed of the watch facts so the season row stays in the frame.
+ */
+internal fun notDownloadingDetail(): RequestDetail =
+    detail(
+        actions = RequestActions(canRemove = true, canBlock = true),
+        status = SeerrRequestStatusCode.Approved,
+        mediaStatus = SeerrMediaStatusCode.Processing,
+        canEdit = false,
+        watch = null,
+    )
+
+/**
  * The settled request with two siblings against the same title: one declined, one completed in 4K.
  *
  * Trimmed of the destination and watch-data facts [detail] carries — with those in, the "Also

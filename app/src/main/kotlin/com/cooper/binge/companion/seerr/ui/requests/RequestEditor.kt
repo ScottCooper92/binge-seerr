@@ -213,6 +213,7 @@ private fun SeerrRequestDto.destination(): DestinationChoices =
 private fun EditSource.seasonChoices(): List<SeasonChoice> {
     val details = details ?: return emptyList()
     val requested = request.seasons.map { it.seasonNumber }.toSet()
+    val download = (if (request.is4k) request.media.downloadStatus4k else request.media.downloadStatus).downloadActivity()
     return details.seasons
         .filter { it.seasonNumber >= FIRST_SEASON && it.episodeCount > 0 }
         .map { season ->
@@ -222,6 +223,7 @@ private fun EditSource.seasonChoices(): List<SeasonChoice> {
                 episodeCount = season.episodeCount,
                 selected = season.seasonNumber in requested,
                 heldStatus = details.heldStatus(season.seasonNumber, request.id, request.is4k),
+                heldDownload = download,
             )
         }
 }

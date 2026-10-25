@@ -76,6 +76,8 @@ private fun SiblingRequestSheet(
             if (event.removesTheRequest) current.onDismiss()
         }
     }
+    // Each opening, not only the first: the view model outlives a closed sheet, and with it the permissions it read (#1722).
+    LaunchedEffect(viewModel, sheet.open) { if (sheet.open) viewModel.onManageOpened() }
     val page = state
     if (page is RequestDetailUiState.Ready || sheet.preview != null) {
         RequestManagementSheets(
@@ -152,6 +154,7 @@ private fun RequestDetailViewModel.toActions(
                     moderation.deleteMediaFiles(requestId, mediaId, is4k, removeRequestIds)
                 },
             ),
+        onManageOpened = ::onManageOpened,
     )
 
 @Composable

@@ -2,9 +2,11 @@ package com.cooper.binge.companion.seerr.ui.requests
 
 import com.binge.designsystem.component.MediaTypeTagType
 import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.seerr.SeerrDownloadStatusDto
 import com.cooper.binge.companion.seerr.seerr.SeerrMediaStatusCode
 import com.cooper.binge.companion.seerr.seerr.SeerrPermissions
 import com.cooper.binge.companion.seerr.seerr.SeerrRequestStatusCode
+import com.cooper.binge.companion.seerr.ui.state.DownloadActivity
 import com.cooper.binge.companion.seerr.ui.state.RequestStateTone
 import com.cooper.binge.companion.seerr.util.requestItem
 import org.junit.Assert.assertEquals
@@ -92,7 +94,7 @@ class RequestMappingsTest {
             approved(SeerrMediaStatusCode.Pending),
         )
         assertEquals(
-            RequestRowChip(R.string.media_state_processing, RequestStateTone.Active, StatusGlyphs.Processing),
+            RequestRowChip(R.string.media_state_not_downloading, RequestStateTone.Pending, StatusGlyphs.Approved),
             approved(SeerrMediaStatusCode.Processing),
         )
         assertEquals(
@@ -125,17 +127,35 @@ class RequestMappingsTest {
         val queuedDownload = RequestDownload(fraction = 0f, etaMinutes = null, downloading = false)
 
         assertEquals(
-            RequestRowChip(R.string.media_state_processing, RequestStateTone.Active, StatusGlyphs.Processing),
+            RequestRowChip(R.string.media_state_downloading, RequestStateTone.Active, StatusGlyphs.Processing),
             item(SeerrRequestStatusCode.Approved, SeerrMediaStatusCode.Processing, activeDownload).statusChip(),
         )
         assertEquals(
             RequestRowChip(R.string.request_state_queued, RequestStateTone.Pending, StatusGlyphs.Queued),
             item(SeerrRequestStatusCode.Approved, SeerrMediaStatusCode.Processing, queuedDownload).statusChip(),
         )
+        // Processing with nothing in the queue: files deleted, or never grabbed (#1719).
         assertEquals(
-            RequestRowChip(R.string.media_state_processing, RequestStateTone.Active, StatusGlyphs.Processing),
+            RequestRowChip(R.string.media_state_not_downloading, RequestStateTone.Pending, StatusGlyphs.Approved),
             item(SeerrRequestStatusCode.Approved, SeerrMediaStatusCode.Processing).statusChip(),
         )
+        assertTrue(item(SeerrRequestStatusCode.Approved, SeerrMediaStatusCode.Processing).isProcessingWithoutDownload)
+        assertFalse(item(SeerrRequestStatusCode.Approved, SeerrMediaStatusCode.Processing, queuedDownload).isProcessingWithoutDownload)
+        assertFalse(item(SeerrRequestStatusCode.Approved, SeerrMediaStatusCode.Available).isProcessingWithoutDownload)
+    }
+
+    @Test
+    fun `a version's queue reads as nothing, queued or downloading`() {
+        assertEquals(DownloadActivity.None, emptyList<SeerrDownloadStatusDto>().downloadActivity())
+        assertEquals(
+            DownloadActivity.Queued,
+            listOf(SeerrDownloadStatusDto(size = 10.0, sizeLeft = 10.0, status = "queued")).downloadActivity(),
+        )
+        assertEquals(
+            DownloadActivity.Downloading,
+            listOf(SeerrDownloadStatusDto(size = 10.0, sizeLeft = 4.0, status = "downloading")).downloadActivity(),
+        )
+        assertEquals(DownloadActivity.None, (null as RequestDownload?).activity())
     }
 
     @Test
