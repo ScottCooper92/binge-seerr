@@ -284,6 +284,7 @@ private fun ManageStack(
     onDismiss: () -> Unit,
 ) {
     TvRequestManageSheet(
+        item = pageHost.content.item,
         managed = managed,
         actions = pageHost.actions,
         onOpenPage = openPage,

@@ -39,6 +39,7 @@ import com.cooper.binge.companion.seerr.ui.requests.RequestDetail
 import com.cooper.binge.companion.seerr.ui.requests.RequestItem
 import com.cooper.binge.companion.seerr.ui.requests.icon
 import com.cooper.binge.companion.seerr.ui.requests.labelRes
+import com.cooper.binge.companion.seerr.ui.requests.removeConfirmMessage
 import com.cooper.binge.companion.seerr.ui.tv.ScopedTo
 import com.cooper.binge.companion.seerr.ui.tv.TvActionRun
 import com.cooper.binge.companion.seerr.ui.tv.TvPhoneCode
@@ -106,21 +107,30 @@ internal fun TvRequestDetailSheet(
             TvRequestDetailPage(host.step, page, entryFocus, onEditClosed = closer::close)
         }
     } else {
-        TvRequestConfirm(host.step, page.actions, onDone = { closer.close() })
+        TvRequestConfirm(host.step, page.content.item, page.actions, onDone = { closer.close() })
     }
 }
 
-/** Remove's or Block's confirm. [onDone] closes it, and says whether it was answered: the action has run if so. */
+/**
+ * Remove's or Block's confirm, for [item]. [onDone] closes it, and says whether it was answered: the action has run if so.
+ * The TV offers no Delete files, so Remove's note that files stay names no way to delete them.
+ */
 @Composable
 internal fun TvRequestConfirm(
     step: DetailSheet,
+    item: RequestItem,
     actions: TvRequestDetailActions,
     onDone: (confirmed: Boolean) -> Unit,
 ) {
     val remove = step == DetailSheet.Remove
     TvConfirmDialog(
         title = stringResource(if (remove) R.string.request_remove_confirm_title else R.string.request_block_confirm_title),
-        message = stringResource(if (remove) R.string.request_remove_confirm_message else R.string.request_block_confirm_message),
+        message =
+            if (remove) {
+                removeConfirmMessage(item, blockTitle = false, offersDeleteFiles = false)
+            } else {
+                stringResource(R.string.request_block_confirm_message)
+            },
         confirmLabel = stringResource(if (remove) R.string.request_remove else R.string.tv_detail_block),
         onConfirm = {
             if (remove) actions.onRemove(false) else actions.onBlock()

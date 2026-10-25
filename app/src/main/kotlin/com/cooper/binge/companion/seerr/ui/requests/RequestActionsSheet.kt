@@ -154,15 +154,13 @@ internal fun RequestActionsSheet(
     pending?.let { step ->
         PendingConfirm(
             step = step,
+            item = item,
             media = media,
             mediaActions = mediaActions,
             requests = requests,
             blockTitle = blockTitle,
             onStep = { pending = it },
-            onDone = {
-                pending = null
-                onDismiss()
-            },
+            onDismiss = onDismiss,
             onDecline = onDecline,
             onRemove = onRemove,
         )
@@ -208,20 +206,25 @@ private fun EditRequestPage(
 @Composable
 private fun PendingConfirm(
     step: Pending,
+    item: RequestItem,
     media: MediaRecord?,
     mediaActions: ManageMediaActions?,
     requests: List<RequestSummary>,
     blockTitle: Boolean,
     onStep: (Pending?) -> Unit,
-    onDone: () -> Unit,
+    onDismiss: () -> Unit,
     onDecline: (Boolean) -> Unit,
     onRemove: (Boolean) -> Unit,
 ) {
+    val onDone = {
+        onStep(null)
+        onDismiss()
+    }
     when (step) {
         Pending.Decline, Pending.Remove ->
             RequestConfirm(
                 removing = step == Pending.Remove,
-                blockTitle = blockTitle,
+                removeMessage = removeConfirmMessage(item, blockTitle, media.offersDeleteFiles(item)),
                 onConfirm = { if (step == Pending.Remove) onRemove(blockTitle) else onDecline(blockTitle) },
                 onStep = onStep,
                 onDone = onDone,
@@ -248,21 +251,14 @@ private fun PendingConfirm(
 @Composable
 private fun RequestConfirm(
     removing: Boolean,
-    blockTitle: Boolean,
+    removeMessage: String,
     onConfirm: () -> Unit,
     onStep: (Pending?) -> Unit,
     onDone: () -> Unit,
 ) {
     BingeConfirmDialog(
         title = stringResource(if (removing) R.string.request_remove_confirm_title else R.string.request_decline_block_confirm_title),
-        message =
-            stringResource(
-                when {
-                    removing && blockTitle -> R.string.request_remove_block_confirm_message
-                    removing -> R.string.request_remove_confirm_message
-                    else -> R.string.request_decline_block_confirm_message
-                },
-            ),
+        message = if (removing) removeMessage else stringResource(R.string.request_decline_block_confirm_message),
         confirmLabel = stringResource(if (removing) R.string.request_remove else R.string.request_decline),
         destructive = true,
         onConfirm = {

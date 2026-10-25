@@ -186,6 +186,8 @@
     <string name="request_block_caption">Stops it being requested again</string>
     <string name="request_remove_confirm_title">Remove this request?</string>
     <string name="request_remove_confirm_message">The request is deleted from the server. Anyone can request the title again.</string>
+    <string name="request_remove_files_stay">Anything already downloading or downloaded stays on your server.</string>
+    <string name="request_remove_files_stay_delete">Anything already downloading or downloaded stays on your server. Use Delete files to remove it.</string>
     <string name="request_remove_block_confirm_message">The request is deleted and the title is blocked from being requested again.</string>
     <string name="request_decline_block_confirm_title">Decline and block?</string>
     <string name="request_decline_block_confirm_message">The request is declined and the title is blocked from being requested again.</string>

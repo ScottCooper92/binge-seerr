@@ -25,8 +25,8 @@ import com.binge.designsystem.R as DesR
 private const val MEDIA_ID = 42
 
 /**
- * The request sheet's second step (#1054): declining asks only when it also blocks the title, removing always asks,
- * and deleting files asks once, naming the client, with the title's open requests offered alongside (#1720).
+ * The request sheet's second step (#1054): declining asks only when it also blocks the title, removing always asks and
+ * says when a download or files stay (#1721), and deleting files asks once, naming the client, with the title's open requests offered alongside (#1720).
  */
 @RunWith(RobolectricTestRunner::class)
 class RequestActionsSheetConfirmTest {
@@ -75,6 +75,47 @@ class RequestActionsSheetConfirmTest {
 
         assertEquals(emptyList<Boolean>(), removed)
         composeTestRule.onNodeWithText(string(R.string.request_remove_confirm_title)).assertDoesNotExist()
+    }
+
+    @Test
+    fun `removing a request with nothing downloading or downloaded keeps the copy as it was`() {
+        setSheet()
+
+        click(R.string.request_remove)
+
+        composeTestRule.onNodeWithText(string(R.string.request_remove_confirm_message)).assertExists()
+    }
+
+    /** Seerr's request delete never calls Radarr or Sonarr, so a running download carries on (#1721). */
+    @Test
+    fun `removing a request mid-download says the download stays, and points at Delete files beside it`() {
+        setSheet(item = heat(download = RequestDownload(fraction = 0.4f, etaMinutes = 10, downloading = true)))
+
+        click(R.string.request_remove)
+
+        val note = string(R.string.request_remove_files_stay_delete)
+        composeTestRule.onNodeWithText("${string(R.string.request_remove_confirm_message)} $note").assertExists()
+    }
+
+    @Test
+    fun `removing a request whose files are on disk, where the sheet has no Delete files, only says they stay`() {
+        setSheet(item = heat(mediaStatus = SeerrMediaStatusCode.Available), canDeleteFiles = false)
+
+        click(R.string.request_remove)
+
+        val note = string(R.string.request_remove_files_stay)
+        composeTestRule.onNodeWithText("${string(R.string.request_remove_confirm_message)} $note").assertExists()
+    }
+
+    @Test
+    fun `removing and blocking a downloaded title says the files stay too`() {
+        setSheet(item = heat(mediaStatus = SeerrMediaStatusCode.PartiallyAvailable))
+
+        click(R.string.request_block_title)
+        click(R.string.request_remove_and_block)
+
+        val note = string(R.string.request_remove_files_stay_delete)
+        composeTestRule.onNodeWithText("${string(R.string.request_remove_block_confirm_message)} $note").assertExists()
     }
 
     @Test
@@ -152,15 +193,29 @@ class RequestActionsSheetConfirmTest {
         assertTrue("no delete is offered again", deleted.isEmpty())
     }
 
+    private fun heat(
+        mediaStatus: SeerrMediaStatusCode? = null,
+        download: RequestDownload? = null,
+    ) = requestItem(
+        id = 11,
+        tmdbId = 949,
+        title = "Heat",
+        status = SeerrRequestStatusCode.Pending,
+        mediaStatus = mediaStatus,
+        download = download,
+    )
+
     private fun setSheet(
         isTv: Boolean = false,
         requests: List<RequestSummary> = emptyList(),
         filesDeletion: FilesDeletion? = null,
+        item: RequestItem = heat(),
+        canDeleteFiles: Boolean = true,
     ) {
         composeTestRule.setContent {
             BingeExpressiveTheme(dynamicColor = false) {
                 RequestActionsSheet(
-                    item = requestItem(id = 11, tmdbId = 949, title = "Heat", status = SeerrRequestStatusCode.Pending),
+                    item = item,
                     actions = RequestActions(canApprove = true, canDecline = true, canRemove = true, canBlock = true),
                     onApprove = {},
                     onRetry = {},
@@ -184,7 +239,7 @@ class RequestActionsSheetConfirmTest {
                                 ),
                             canSetStatus = false,
                             canClearData = false,
-                            canDeleteFiles = true,
+                            canDeleteFiles = canDeleteFiles,
                         ),
                     mediaActions =
                         ManageMediaActions(

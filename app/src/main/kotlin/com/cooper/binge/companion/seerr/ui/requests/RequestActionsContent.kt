@@ -356,5 +356,5 @@ private val MediaInstance.isProcessingWithoutDownload: Boolean
  * delete at all; this is what there currently is to delete. `Processing` counts as a download
  * already in flight, and a null status (the server has nothing for this instance) does not.
  */
-private fun SeerrMediaStatusCode?.hasFiles(): Boolean =
+internal fun SeerrMediaStatusCode?.hasFiles(): Boolean =
     this == SeerrMediaStatusCode.Processing || this == SeerrMediaStatusCode.PartiallyAvailable || this == SeerrMediaStatusCode.Available

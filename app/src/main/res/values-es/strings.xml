@@ -168,6 +168,8 @@
     <string name="request_block_caption">Impide que se vuelva a solicitar</string>
     <string name="request_remove_confirm_title">¿Eliminar esta petición?</string>
     <string name="request_remove_confirm_message">La petición se borra del servidor. Cualquiera puede volver a solicitar el título.</string>
+    <string name="request_remove_files_stay">Lo que ya se esté descargando o se haya descargado se queda en tu servidor.</string>
+    <string name="request_remove_files_stay_delete">Lo que ya se esté descargando o se haya descargado se queda en tu servidor. Usa Eliminar los archivos para quitarlo.</string>
     <string name="request_remove_block_confirm_message">La petición se borra y el título queda bloqueado para que no se vuelva a solicitar.</string>
     <string name="request_decline_block_confirm_title">¿Rechazar y bloquear?</string>
     <string name="request_decline_block_confirm_message">La petición se rechaza y el título queda bloqueado para que no se vuelva a solicitar.</string>

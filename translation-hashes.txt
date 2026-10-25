@@ -362,6 +362,8 @@ app:request_remove_block_detail  6eb8a3b8216e
 app:request_remove_confirm_message  dea4e31b115f
 app:request_remove_confirm_title  745b69be78ea
 app:request_remove_detail  6731e1ce71ae
+app:request_remove_files_stay  48b7910ad559
+app:request_remove_files_stay_delete  740f3dc67f88
 app:request_removed  1f55775c6ffc
 app:request_removed_and_blocked  efcbe6fcadf9
 app:request_removed_block_failed  b6a4ec9720bd
