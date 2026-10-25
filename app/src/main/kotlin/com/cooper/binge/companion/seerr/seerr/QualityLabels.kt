@@ -5,10 +5,7 @@ data class SeerrDestination(
     val isTv: Boolean,
     val serverId: Int?,
     val profileId: Int?,
-) {
-    /** Whether both ids are there to look a profile name up by. */
-    val isResolvable: Boolean get() = serverId != null && profileId != null
-}
+)
 
 /** The quality profile name for a request's destination, or null where it is not known. Display only; the contract never carries an id. */
 fun interface QualityLabels {
