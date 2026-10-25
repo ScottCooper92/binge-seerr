@@ -156,15 +156,21 @@ class RequestModerationTest {
             var filesHeard = 0
             val kept = awaitEvent(sut.events)
             sut.deleteMediaFiles(11, 900, is4k = false, removeRequestIds = listOf(12)) { filesHeard++ }
-            assertEquals(ModerationEvent.MediaFilesDeletedRequestsKept, kept.await())
+            assertEquals(ModerationEvent.MediaFilesDeletedRequestsKept(removedThisRequest = false), kept.await())
             assertEquals(1, filesHeard)
+
+            val own = awaitEvent(sut.events)
+            sut.deleteMediaFiles(11, 900, is4k = false, removeRequestIds = listOf(11, 12))
+            val ownEvent = own.await()
+            assertEquals(ModerationEvent.MediaFilesDeletedRequestsKept(removedThisRequest = true), ownEvent)
+            assertTrue(ownEvent.removesTheRequest)
 
             codes["/api/v1/media/900/file"] = 500
             val failed = awaitEvent(sut.events)
             sut.deleteMediaFiles(11, 900, is4k = false, removeRequestIds = listOf(12)) { filesHeard++ }
             assertTrue(failed.await() is ModerationEvent.Failed)
             assertEquals("a refused deletion removes no request", 1, filesHeard)
-            assertEquals(2, received.count { it.method == "DELETE" && it.url.encodedPath == "/api/v1/request/12" })
+            assertEquals(3, received.count { it.method == "DELETE" && it.url.encodedPath == "/api/v1/request/12" })
         }
 
     @Test

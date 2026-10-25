@@ -16,8 +16,9 @@ sealed interface ModerationEvent {
             when (this) {
                 Removed, RemovedAndBlocked, RemovedButBlockFailed, MediaCleared -> true
                 is MediaFilesAndRequestsDeleted -> removedThisRequest
+                is MediaFilesDeletedRequestsKept -> removedThisRequest
                 Approved, Retried, Edited, Declined, DeclinedAndBlocked, DeclinedButBlockFailed,
-                Blocked, BlockFailed, MediaStatusSet, MediaFilesDeleted, MediaFilesDeletedRequestsKept, is Failed,
+                Blocked, BlockFailed, MediaStatusSet, MediaFilesDeleted, is Failed,
                 -> false
             }
 
@@ -55,8 +56,10 @@ sealed interface ModerationEvent {
         val removedThisRequest: Boolean,
     ) : ModerationEvent
 
-    /** The files went, but at least one of the requests asked to go with them did not. */
-    data object MediaFilesDeletedRequestsKept : ModerationEvent
+    /** The files went, but at least one of the requests asked to go with them did not; [removedThisRequest] when the page's own did. */
+    data class MediaFilesDeletedRequestsKept(
+        val removedThisRequest: Boolean,
+    ) : ModerationEvent
 
     data class Failed(
         val error: SeerrError,
@@ -81,6 +84,6 @@ internal fun ModerationEvent.actionLabel(): String =
         ModerationEvent.MediaCleared -> "media_cleared"
         ModerationEvent.MediaFilesDeleted -> "media_files_deleted"
         is ModerationEvent.MediaFilesAndRequestsDeleted -> "media_files_and_requests_deleted"
-        ModerationEvent.MediaFilesDeletedRequestsKept -> "media_files_deleted_requests_kept"
+        is ModerationEvent.MediaFilesDeletedRequestsKept -> "media_files_deleted_requests_kept"
         is ModerationEvent.Failed -> "failed"
     }
