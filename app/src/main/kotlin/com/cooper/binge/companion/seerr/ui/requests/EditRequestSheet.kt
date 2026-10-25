@@ -289,6 +289,6 @@ private fun SeasonToggleRow(
         enabled = enabled && !season.locked,
         showDivider = showDivider,
         leadingContent = { RowIconBox(Icons.Filled.Tv) },
-        trailingContent = season.heldStatus?.let { status -> { MediaStateChip(status = status) } },
+        trailingContent = season.heldStatus?.let { status -> { MediaStateChip(status = status, download = season.heldDownload) } },
     )
 }

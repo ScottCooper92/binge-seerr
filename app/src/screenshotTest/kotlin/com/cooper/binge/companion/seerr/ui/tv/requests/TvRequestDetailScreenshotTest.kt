@@ -17,9 +17,11 @@ import com.cooper.binge.companion.seerr.ui.requests.RequestActions
 import com.cooper.binge.companion.seerr.ui.requests.RequestDestination
 import com.cooper.binge.companion.seerr.ui.requests.RequestDetail
 import com.cooper.binge.companion.seerr.ui.requests.RequestDetailUiState
+import com.cooper.binge.companion.seerr.ui.requests.RequestDownload
 import com.cooper.binge.companion.seerr.ui.requests.RequestItem
 import com.cooper.binge.companion.seerr.ui.requests.RequestMediaType
 import com.cooper.binge.companion.seerr.ui.requests.SeasonState
+import com.cooper.binge.companion.seerr.ui.state.DownloadActivity
 import com.cooper.binge.companion.seerr.ui.tv.ConfirmDialogFrame
 import kotlinx.coroutines.flow.emptyFlow
 
@@ -44,7 +46,7 @@ private fun seriesDetail(): RequestDetail =
                 requestedAtMillis = REQUESTED_AT_MILLIS,
                 status = SeerrRequestStatusCode.Approved,
                 mediaStatus = SeerrMediaStatusCode.Processing,
-                download = null,
+                download = RequestDownload(fraction = 0.42f, etaMinutes = 18, downloading = true),
                 seasonNumbers = listOf(1, 2),
                 is4k = true,
             ),
@@ -61,7 +63,13 @@ private fun seriesDetail(): RequestDetail =
         seasons =
             listOf(
                 SeasonState(number = 1, name = null, episodeCount = 8, status = SeerrMediaStatusCode.Available),
-                SeasonState(number = 2, name = null, episodeCount = SEASON_TWO_EPISODES, status = SeerrMediaStatusCode.Processing),
+                SeasonState(
+                    number = 2,
+                    name = null,
+                    episodeCount = SEASON_TWO_EPISODES,
+                    status = SeerrMediaStatusCode.Processing,
+                    download = DownloadActivity.Downloading,
+                ),
             ),
         destination =
             RequestDestination(serverName = "Sonarr", profileName = "HD-1080p", rootFolder = "/tv", tags = listOf("kids", "4k-hdr")),
@@ -74,6 +82,19 @@ private fun seriesDetail(): RequestDetail =
         media = null,
         siblings = emptyList(),
     )
+
+/**
+ * The same show approved with nothing downloading (#1719): its files were deleted, or nothing was ever grabbed. The hero and
+ * the season read "Approved · not downloading", not Downloading.
+ */
+private fun notDownloadingDetail(): RequestDetail =
+    seriesDetail().let { series ->
+        series.copy(
+            item = series.item.copy(download = null),
+            seasons = series.seasons.map { it.copy(download = DownloadActivity.None) },
+            downloads = emptyList(),
+        )
+    }
 
 /** A film: no seasons, no downloads, already available, and nothing for this viewer to moderate. */
 private fun filmDetail(): RequestDetail =
@@ -145,6 +166,18 @@ class TvRequestDetailScreenshotTest {
     fun Series() {
         TvRequestDetailScreen(
             state = RequestDetailUiState.Ready(seriesDetail()),
+            events = emptyFlow(),
+            actions = actions(onOpenInBinge = {}),
+        )
+    }
+
+    /** Processing with nothing in the queue: the hero's state and season two's card say so (#1719). */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun ApprovedNotDownloading() {
+        TvRequestDetailScreen(
+            state = RequestDetailUiState.Ready(notDownloadingDetail()),
             events = emptyFlow(),
             actions = actions(onOpenInBinge = {}),
         )

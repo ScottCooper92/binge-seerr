@@ -38,10 +38,12 @@ import com.binge.designsystem.formatRanges
 import com.binge.designsystem.formatRelativeOrAbsolute
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.seerr.SeerrMediaStatusCode
+import com.cooper.binge.companion.seerr.ui.state.DownloadActivity
 import com.cooper.binge.companion.seerr.ui.state.MediaStateChip
 import com.cooper.binge.companion.seerr.ui.state.RequestStateChip
 import com.cooper.binge.companion.seerr.ui.state.labelRes
 import com.cooper.binge.companion.seerr.ui.state.messageRes
+import com.cooper.binge.companion.seerr.ui.state.stateLabel
 import com.binge.designsystem.R as DesR
 
 /**
@@ -343,11 +345,21 @@ private fun instanceRow(
         label = stringResource(instance.labelRes()),
         // Where the status can be set the row is a picker, so its detail is its current value. Where it cannot, the
         // status is only information and keeps its chip.
-        detail = instance.status?.takeIf { canSetStatus }?.let { stringResource(it.labelRes()) },
+        detail =
+            if (canSetStatus) {
+                instance.status?.let { stringResource(it.stateLabel(instance.download).labelRes) }
+            } else {
+                stringResource(R.string.media_state_not_downloading_detail).takeIf { instance.isProcessingWithoutDownload }
+            },
         clickable = canSetStatus,
-        trailingContent = instance.status?.takeIf { !canSetStatus }?.let { status -> { MediaStateChip(status = status) } },
+        trailingContent =
+            instance.status?.takeIf { !canSetStatus }?.let { status -> { MediaStateChip(status = status, download = instance.download) } },
         onClick = onMarkStatus,
     )
+
+/** Processing with nothing in the queue: a read-only row says why that may be. A picker's detail is its value. */
+private val MediaInstance.isProcessingWithoutDownload: Boolean
+    get() = status == SeerrMediaStatusCode.Processing && download == DownloadActivity.None
 
 /**
  * Whether an instance in this state has files to delete. [MediaRecord.canDeleteFiles] is who may

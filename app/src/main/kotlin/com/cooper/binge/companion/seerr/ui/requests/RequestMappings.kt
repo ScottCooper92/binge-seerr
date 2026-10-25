@@ -22,9 +22,9 @@ import com.binge.designsystem.component.MediaTypeTagType
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.seerr.SeerrMediaStatusCode
 import com.cooper.binge.companion.seerr.seerr.SeerrRequestStatusCode
+import com.cooper.binge.companion.seerr.ui.state.DownloadActivity
 import com.cooper.binge.companion.seerr.ui.state.RequestStateTone
-import com.cooper.binge.companion.seerr.ui.state.labelRes
-import com.cooper.binge.companion.seerr.ui.state.tone
+import com.cooper.binge.companion.seerr.ui.state.stateLabel
 
 @StringRes
 internal fun RequestFilter.labelRes(): Int =
@@ -133,20 +133,42 @@ fun RequestItem.statusChip(): RequestRowChip =
         mediaStatus == SeerrMediaStatusCode.PartiallyAvailable ->
             RequestRowChip(R.string.media_state_partially_available, RequestStateTone.Success, StatusGlyphs.PartiallyAvailable)
         mediaStatus == SeerrMediaStatusCode.Blocklisted ->
-            RequestRowChip(SeerrMediaStatusCode.Blocklisted.labelRes(), SeerrMediaStatusCode.Blocklisted.tone(), StatusGlyphs.Blocked)
+            SeerrMediaStatusCode.Blocklisted.blockedChip()
         mediaStatus == SeerrMediaStatusCode.Deleted ->
-            RequestRowChip(SeerrMediaStatusCode.Deleted.labelRes(), SeerrMediaStatusCode.Deleted.tone(), StatusGlyphs.Blocked)
-        mediaStatus == SeerrMediaStatusCode.Processing && download?.downloading == true ->
-            RequestRowChip(R.string.media_state_processing, RequestStateTone.Active, StatusGlyphs.Processing)
-        mediaStatus == SeerrMediaStatusCode.Processing && download != null ->
-            RequestRowChip(R.string.request_state_queued, RequestStateTone.Pending, StatusGlyphs.Queued)
+            SeerrMediaStatusCode.Deleted.blockedChip()
         mediaStatus == SeerrMediaStatusCode.Processing ->
-            RequestRowChip(SeerrMediaStatusCode.Processing.labelRes(), SeerrMediaStatusCode.Processing.tone(), StatusGlyphs.Processing)
+            download.activity().let { activity ->
+                val state = SeerrMediaStatusCode.Processing.stateLabel(activity)
+                RequestRowChip(state.labelRes, state.tone, activity.glyph())
+            }
         (status == SeerrRequestStatusCode.Approved || status == SeerrRequestStatusCode.Completed) &&
             (mediaStatus == null || mediaStatus == SeerrMediaStatusCode.Unknown) ->
             RequestRowChip(R.string.request_state_approved, RequestStateTone.Success, StatusGlyphs.Approved)
         else -> RequestRowChip(R.string.request_state_pending, RequestStateTone.Pending, StatusGlyphs.Pending)
     }
+
+private fun SeerrMediaStatusCode.blockedChip(): RequestRowChip =
+    stateLabel(DownloadActivity.None).let { RequestRowChip(it.labelRes, it.tone, StatusGlyphs.Blocked) }
+
+/** What the download client is doing for this request's version: nothing, a queued grab, or a transfer. */
+internal fun RequestDownload?.activity(): DownloadActivity =
+    when {
+        this == null -> DownloadActivity.None
+        downloading -> DownloadActivity.Downloading
+        else -> DownloadActivity.Queued
+    }
+
+/** A processing title's glyph: the download arrow only while it transfers, the approval tick while nothing does. */
+private fun DownloadActivity.glyph(): ImageVector =
+    when (this) {
+        DownloadActivity.Downloading -> StatusGlyphs.Processing
+        DownloadActivity.Queued -> StatusGlyphs.Queued
+        DownloadActivity.None -> StatusGlyphs.Approved
+    }
+
+/** Approved, but with nothing downloading: the state whose detail line says why it may be stuck. */
+internal val RequestItem.isProcessingWithoutDownload: Boolean
+    get() = mediaStatus == SeerrMediaStatusCode.Processing && download.activity() == DownloadActivity.None
 
 /**
  * The server's own rules for one request: approve, decline and retry are `MANAGE_REQUESTS`;
@@ -174,7 +196,7 @@ internal fun MediaStatusChoice.labelRes(): Int =
     when (this) {
         MediaStatusChoice.Available -> R.string.media_state_available
         MediaStatusChoice.PartiallyAvailable -> R.string.media_state_partially_available
-        MediaStatusChoice.Processing -> R.string.media_state_processing
+        MediaStatusChoice.Processing -> R.string.media_state_downloading
         MediaStatusChoice.Pending -> R.string.request_state_pending
         MediaStatusChoice.Unknown -> R.string.media_state_unknown
     }

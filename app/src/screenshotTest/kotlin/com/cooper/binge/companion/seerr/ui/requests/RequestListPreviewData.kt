@@ -12,7 +12,7 @@ private const val REQUESTED_AT_MILLIS = 1_759_000_000_000L
 private const val MOVIE_TMDB_ID = 545_611
 private const val TV_TMDB_ID = 95_396
 
-/** A movie whose media is partially available — the longest chip label in the set — with no 4K or seasons. */
+/** A movie whose media is partially available — a long chip label — with no 4K or seasons. */
 internal fun longStatusRow(): RequestItem =
     RequestItem(
         id = 1,
@@ -34,6 +34,10 @@ internal fun longStatusRow(): RequestItem =
 /** The same long label, now sharing the media-type/year line with a 4K badge — the #346 regression risk. */
 internal fun fourKLongStatusRow(): RequestItem =
     longStatusRow().copy(id = 2, title = "Dune: Part Two", requestedBy = "Marcus", requestedById = 5, is4k = true)
+
+/** Approved but processing with nothing in the queue (#1719): the longest chip label, "Approved · not downloading". */
+internal fun notDownloadingRow(): RequestItem =
+    longStatusRow().copy(id = 8, title = "Oppenheimer", year = "2023", mediaStatus = SeerrMediaStatusCode.Processing)
 
 /** A TV request with specific seasons, exercising the optional season-list line. */
 internal fun seasonListRow(): RequestItem =

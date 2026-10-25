@@ -15,6 +15,7 @@ import com.cooper.binge.companion.seerr.seerr.SeerrMediaServer
 import com.cooper.binge.companion.seerr.seerr.SeerrMediaStatusCode
 import com.cooper.binge.companion.seerr.seerr.SeerrRequestStatusCode
 import com.cooper.binge.companion.seerr.ui.MediaServerItem
+import com.cooper.binge.companion.seerr.ui.state.DownloadActivity
 import com.cooper.binge.companion.seerr.util.FakeRequest
 import com.cooper.binge.companion.seerr.util.FakeResponse
 import com.cooper.binge.companion.seerr.util.FakeSeerrServer
@@ -282,8 +283,8 @@ class RequestDetailViewModelTest {
             assertEquals(7, detail.item.requestedById)
             assertEquals(
                 listOf(
-                    SeasonState(1, "Season 1", 9, SeerrMediaStatusCode.Available),
-                    SeasonState(2, "Season 2", 10, SeerrMediaStatusCode.Processing),
+                    SeasonState(1, "Season 1", 9, SeerrMediaStatusCode.Available, DownloadActivity.Downloading),
+                    SeasonState(2, "Season 2", 10, SeerrMediaStatusCode.Processing, DownloadActivity.Downloading),
                 ),
                 detail.seasons,
             )
