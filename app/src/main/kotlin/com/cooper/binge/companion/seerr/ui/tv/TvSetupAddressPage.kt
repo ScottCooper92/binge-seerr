@@ -40,6 +40,8 @@ import com.binge.designsystem.tv.R as TvR
 /**
  * The address typed with the remote: the fallback from the code page ([TvSetupCodePage]) for a network where the
  * phone can't reach the TV. Its left pane is the code page's, so stepping between them moves nothing there.
+ * [onScan] is "Scan a QR", which leaves the fallback as well as starting the hand-off. It is a parameter rather than a
+ * rebuilt [actions], so every other action reaches the page as the entry passed it (#1718).
  */
 @Composable
 internal fun TvSetupAddressPage(
@@ -47,6 +49,7 @@ internal fun TvSetupAddressPage(
     actions: SetupActions,
     modifier: Modifier,
     initialFocus: TvSetupFocus?,
+    onScan: () -> Unit,
 ) {
     val arrival = rememberTvArrivalFocus()
     TvArrivalFocusEffect(arrival)
@@ -62,7 +65,7 @@ internal fun TvSetupAddressPage(
         copyAction = {
             TvButton(
                 label = stringResource(R.string.tv_setup_send_from_phone),
-                onClick = actions.onStartHandOff,
+                onClick = onScan,
                 enabled = !state.isInspecting,
             )
         },
