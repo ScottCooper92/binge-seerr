@@ -1,6 +1,7 @@
 package com.cooper.binge.companion.seerr
 
 import com.cooper.binge.companion.seerr.di.FlagsModule
+import com.cooper.binge.companion.seerr.flags.ComponentSwitch
 import com.cooper.binge.companion.seerr.flags.FeatureFlags
 import com.cooper.binge.companion.seerr.flags.FixedFeatureFlags
 import com.cooper.binge.companion.seerr.flags.FlagOverrides
@@ -28,6 +29,10 @@ object FlagsTestModule {
     @Provides
     @Singleton
     fun flagOverrides(): FlagOverrides = NoFlagOverrides
+
+    @Provides
+    @Singleton
+    fun serviceSwitch(): ComponentSwitch = ComponentSwitch {}
 
     @Provides
     @Singleton

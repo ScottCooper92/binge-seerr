@@ -5,16 +5,25 @@ Two flags decide what this app says to, and does for, Binge. Both are off until 
 | Flag | Remote Config key | Off means |
 | --- | --- | --- |
 | `BINGE_PROMOTION` | `binge_promotion_enabled` | No prompt to install or open Binge. Titles open on the server's own page. |
-| `REQUEST_COMPANIONS` | `request_companions_enabled` | The REQUEST service answers the handshake with no capabilities and refuses every rpc. The hand-off Activities finish at once. Notification forwarding cannot be switched on and is never active. |
+| `REQUEST_COMPANIONS` | `request_companions_enabled` | The exported Service is disabled, so a host cannot find or bind it. A host that bound earlier gets an empty handshake and `PERMISSION_DENIED` for every REQUEST rpc. The hand-off Activities finish at once. Notification forwarding cannot be switched on and is never active. |
 
 Anything about *connecting* to Binge needs both flags: the hub tile and settings row once Binge is installed,
 the setup intro and the disconnect confirmation. `Flags.bingeConnectPromotion` holds that rule.
 
-## What stays served
+## The exported Service
 
-The NOTIFICATIONS service is not switched off. `ListNotifications`, `AcknowledgeNotifications` and turning forwarding
-*off* still work, so a queue left from before the flag flipped can drain or be cleared. Only turning forwarding *on* is
-refused, and forwarding is never active while the flag is off, so nothing new is queued.
+The REQUEST contract's core (Handshake, SubmitRequest, GetStatus) cannot be served with the flag off, and a service
+that cannot serve it must not export the REQUEST action. So `ExportedServiceGate` disables the Service component with
+the package manager while the flag is off, and puts it back when the flag turns on. It applies the cached value as the
+app starts and again after each fetch. The NOTIFICATIONS action lives on the same component and goes with it; forwarding
+is never active while the flag is off, so nothing is lost.
+
+A host that bound before the component was disabled is covered by the Service's own checks: an empty handshake,
+`PERMISSION_DENIED` for every REQUEST rpc, and forwarding that cannot be switched on. `ListNotifications`,
+`AcknowledgeNotifications` and turning forwarding off still answer such a host, so a queue left from before the flip can drain.
+
+A host that already listed this app keeps the entry until it looks again. Turning the flag back on needs this app's
+process to run, which the notification poll does every 15 minutes while it is scheduled, or the user opening the app.
 
 ## How a value arrives
 

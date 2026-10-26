@@ -5,14 +5,17 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
 import com.cooper.binge.companion.seerr.BuildConfig
+import com.cooper.binge.companion.seerr.flags.ComponentSwitch
 import com.cooper.binge.companion.seerr.flags.DataStoreFlagOverrides
 import com.cooper.binge.companion.seerr.flags.FeatureFlags
 import com.cooper.binge.companion.seerr.flags.FirebaseRemoteFlagSource
 import com.cooper.binge.companion.seerr.flags.FlagOverrides
 import com.cooper.binge.companion.seerr.flags.NoFlagOverrides
+import com.cooper.binge.companion.seerr.flags.PackageManagerComponentSwitch
 import com.cooper.binge.companion.seerr.flags.RemoteFeatureFlags
 import com.cooper.binge.companion.seerr.flags.RemoteFlagSource
 import com.cooper.binge.companion.seerr.notifications.ApplicationScope
+import com.cooper.binge.companion.seerr.service.SeerrCompanionService
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -40,6 +43,12 @@ abstract class FlagsModule {
         fun flagOverrides(
             @ApplicationContext context: Context,
         ): FlagOverrides = if (BuildConfig.DEBUG) DataStoreFlagOverrides(context.flagOverridesDataStore) else NoFlagOverrides
+
+        @Provides
+        @Singleton
+        fun serviceSwitch(
+            @ApplicationContext context: Context,
+        ): ComponentSwitch = PackageManagerComponentSwitch(context, SeerrCompanionService::class.java)
 
         @Provides
         @Singleton
