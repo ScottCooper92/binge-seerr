@@ -42,7 +42,7 @@ datastore = "1.2.1"
 firebaseBom = "34.18.0"
 firebaseCrashlytics = "3.0.8"
 googleServices = "4.5.0"
-posthog = "3.55.2"
+posthog = "3.72.8"
 # Play Services, for Block Store only: it is the one carrier that survives a device transfer,
 # and the app degrades to "sign in again" wherever Play Services is not there.
 blockstore = "16.4.0"
