@@ -32,6 +32,29 @@ app, and every flag stays off. Remote Config keeps the last activated values on 
 before the first fetch lands. The app fetches at start and each time `MainActivity` comes to the foreground; Remote
 Config itself throttles that to once an hour.
 
+### The saved connection is decrypted off the main thread
+
+The phone and TV home screens collect `CredentialStore.credentials` on the main thread, and its first value decrypts
+the saved secret through the Android Keystore, which reads from disk. A cold start used to do that on the main
+thread. `credentials` now decrypts on an injected IO dispatcher (`flowOn`), so the home screen stays on its spinner
+until the value arrives. A lost Keystore key still reads as not connected.
+
+We measured it on 2026-10-26, signed in to a Jellyseerr server:
+
+- Device: Pixel 10 Pro XL, Android 16 (`CP1A.260505.005`).
+- Build: debug, at `cbc82895a` plus this change, without a `google-services.json`.
+- Method: a StrictMode thread policy with `detectDiskReads().penaltyLog()` set before `super.onCreate()`. Then five
+  cold starts: `am force-stop`, then `am start -W` of `MainActivity`. The instrumentation was not committed.
+
+| | Before (#1750's runs) | After |
+| --- | --- | --- |
+| `KeystoreSecretCipher.decrypt` main-thread disk reads | 1 per start, 3–9 ms | none in 5 starts |
+| StrictMode disk-read violations of any kind | 1 per start | none in 5 starts |
+| `am start -W` TotalTime, median | — | 807 ms |
+
+As a control, the same instrumented build without the `flowOn` reported the decrypt violation on both of its two
+cold starts. Each cold start showed the hub, connected.
+
 A debug build adds a **Feature flags** row to the hub's developer section. Tapping a flag cycles its local override:
 Remote Config's value, on, off. A release build never reads overrides.
 

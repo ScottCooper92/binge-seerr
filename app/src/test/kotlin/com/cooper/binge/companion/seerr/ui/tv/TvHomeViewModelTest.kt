@@ -3,11 +3,14 @@ package com.cooper.binge.companion.seerr.ui.tv
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.lifecycle.ViewModelStore
 import com.cooper.binge.companion.seerr.auth.CredentialStore
+import com.cooper.binge.companion.seerr.auth.SecretCipher
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.auth.SeerrConnectionHealth
 import com.cooper.binge.companion.seerr.auth.SeerrConnectionHealthMonitor
 import com.cooper.binge.companion.seerr.seerr.SeerrApiFactory
 import com.cooper.binge.companion.seerr.seerr.SeerrAuth
+import com.cooper.binge.companion.seerr.seerr.SeerrCredentials
+import com.cooper.binge.companion.seerr.util.LostKeyCipher
 import com.cooper.binge.companion.seerr.util.MainDispatcherRule
 import com.cooper.binge.companion.seerr.util.OkHttpDrain
 import com.cooper.binge.companion.seerr.util.PlainCipher
@@ -48,14 +51,13 @@ class TvHomeViewModelTest {
         server.close()
     }
 
-    private fun TestScope.connection(): SeerrConnection {
+    private fun TestScope.store(cipher: SecretCipher = PlainCipher) =
+        CredentialStore(PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("tv.preferences_pb") }, cipher)
+
+    private fun TestScope.connection(store: CredentialStore = store()): SeerrConnection {
         val monitor = SeerrConnectionHealthMonitor()
         return SeerrConnection(
-            store =
-                CredentialStore(
-                    PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("tv.preferences_pb") },
-                    PlainCipher,
-                ),
+            store = store,
             apis = SeerrApiFactory(logRequests = false, health = monitor, testDispatcher = drain::newDispatcher),
             healthMonitor = monitor,
         )
@@ -79,11 +81,34 @@ class TvHomeViewModelTest {
         runTest {
             val connection = connection()
             val vm = viewModel(connection)
+            assertEquals(TvHomeUiState.Loading, vm.uiState.value)
             assertEquals(TvHomeUiState.Setup, vm.uiState.first { it != TvHomeUiState.Loading })
 
             connection.connectHealthy()
 
             assertEquals(TvHomeUiState.Connected, vm.uiState.first { it == TvHomeUiState.Connected })
+        }
+
+    @Test
+    fun `a saved server whose key is lost is setup, not Home`() =
+        runTest {
+            val store = store(LostKeyCipher)
+            store.save(SeerrCredentials(baseUrl, SeerrAuth.ApiKey("k3y")))
+            val vm = viewModel(connection(store))
+
+            assertEquals(TvHomeUiState.Loading, vm.uiState.value)
+            assertEquals(TvHomeUiState.Setup, vm.uiState.first { it != TvHomeUiState.Loading })
+        }
+
+    @Test
+    fun `a saved server that decrypts is Home`() =
+        runTest {
+            val store = store()
+            store.save(SeerrCredentials(baseUrl, SeerrAuth.ApiKey("k3y")))
+            val vm = viewModel(connection(store))
+
+            assertEquals(TvHomeUiState.Loading, vm.uiState.value)
+            assertEquals(TvHomeUiState.Connected, vm.uiState.first { it != TvHomeUiState.Loading })
         }
 
     @Test

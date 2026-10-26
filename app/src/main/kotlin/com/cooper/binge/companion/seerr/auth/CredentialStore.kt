@@ -10,8 +10,11 @@ import com.binge.companion.sdk.attempt
 import com.cooper.binge.companion.seerr.seerr.SeerrAuth
 import com.cooper.binge.companion.seerr.seerr.SeerrCredentials
 import com.cooper.binge.companion.seerr.seerr.SeerrVariant
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 
 private const val AUTH_TYPE_API_KEY = "api_key"
@@ -21,18 +24,21 @@ private const val AUTH_TYPE_SESSION = "session"
  * The saved connection. The base URL and the auth kind are stored in the clear; the secret — the
  * API key or the session cookie — goes through [SecretCipher]. A row is only reported as
  * credentials when the URL is present and the secret decrypts, so a lost Keystore key reads as
- * "not connected" rather than as a connection that fails every call.
+ * "not connected" rather than as a connection that fails every call. The decrypt runs on [io]: the
+ * first screen collects [credentials] on the main thread, and a Keystore decrypt reads from disk.
  */
 class CredentialStore(
     private val dataStore: DataStore<Preferences>,
     private val cipher: SecretCipher,
+    private val io: CoroutineDispatcher = Dispatchers.IO,
 ) {
     val credentials: Flow<SeerrCredentials?> =
         dataStore.data
             .map { prefs ->
                 val baseUrl = prefs[Keys.BASE_URL]
                 if (baseUrl.isNullOrBlank()) null else prefs.toAuth()?.let { SeerrCredentials(baseUrl, it, prefs.toVariant()) }
-            }.distinctUntilChanged()
+            }.flowOn(io)
+            .distinctUntilChanged()
 
     /**
      * The server the user signed out of, while nothing is saved, so setup can open on its sign-in. A new connection or a

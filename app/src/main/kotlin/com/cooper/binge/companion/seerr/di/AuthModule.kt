@@ -34,6 +34,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -61,7 +62,8 @@ object AuthModule {
     fun credentialStore(
         @ApplicationContext context: Context,
         cipher: SecretCipher,
-    ): CredentialStore = CredentialStore(context.credentialsDataStore, cipher)
+        @IoDispatcher io: CoroutineDispatcher,
+    ): CredentialStore = CredentialStore(context.credentialsDataStore, cipher, io)
 
     @Provides
     @Singleton

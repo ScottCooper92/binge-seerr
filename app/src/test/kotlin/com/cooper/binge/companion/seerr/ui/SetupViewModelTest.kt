@@ -28,6 +28,7 @@ import com.cooper.binge.companion.seerr.util.ReversingCipher
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.Interceptor
@@ -108,6 +109,7 @@ class SetupViewModelTest {
                         CredentialStore(
                             PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("c.preferences_pb") },
                             PlainCipher,
+                            UnconfinedTestDispatcher(testScheduler),
                         ),
                     apis = SeerrApiFactory(logRequests = false, testTransport = ::transport, testDispatcher = seerr::newDispatcher),
                     quickConnectPollInterval = 10.milliseconds,
