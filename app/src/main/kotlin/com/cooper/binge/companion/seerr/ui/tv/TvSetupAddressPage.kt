@@ -12,6 +12,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Dns
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.focusProperties
@@ -27,6 +32,7 @@ import com.binge.designsystem.tv.component.TvTextField
 import com.binge.designsystem.tv.focus.TvArrivalFocus
 import com.binge.designsystem.tv.focus.TvArrivalFocusEffect
 import com.binge.designsystem.tv.focus.rememberTvArrivalFocus
+import com.binge.designsystem.tv.focus.restoreTvOverlayFocus
 import com.binge.designsystem.tv.focus.tvArrivalTarget
 import com.binge.designsystem.tv.theme.TvButtonStyle
 import com.cooper.binge.companion.seerr.R
@@ -53,6 +59,7 @@ internal fun TvSetupAddressPage(
 ) {
     val arrival = rememberTvArrivalFocus()
     TvArrivalFocusEffect(arrival)
+    InspectionEndFocusEffect(state.isInspecting, arrival)
     TvFormPage(
         headline = stringResource(R.string.tv_setup_headline),
         // The code page's body, so leaving it for this form changes nothing on the left.
@@ -71,6 +78,26 @@ internal fun TvSetupAddressPage(
         },
     ) {
         TvSetupAddressFields(state, actions, initialFocus, arrival)
+    }
+}
+
+/**
+ * Puts the remote back where the page lands once an inspection ends on this page, as a failure does (#1044). The field
+ * can't hold focus while it is disabled, and a disabled button that picks focus up keeps it when it is enabled again.
+ */
+@Composable
+private fun InspectionEndFocusEffect(
+    isInspecting: Boolean,
+    arrival: TvArrivalFocus,
+) {
+    var inspected by remember { mutableStateOf(false) }
+    LaunchedEffect(isInspecting) {
+        if (isInspecting) {
+            inspected = true
+        } else if (inspected) {
+            inspected = false
+            restoreTvOverlayFocus(arrival.requester)
+        }
     }
 }
 
