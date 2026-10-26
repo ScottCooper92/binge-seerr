@@ -59,13 +59,13 @@ class TvActionSheetScreenshotTest {
             TvSideSheetRow(label = "Already approved", onClick = {}, enabled = false)
         }
 
-    /** The confirm step with nothing focused yet: the destructive confirm above Cancel. */
+    /** The confirm step with nothing focused yet: Cancel first, the destructive confirm last. */
     @PreviewTest
     @SeerrTvScreenPreviews
     @Composable
     fun ConfirmAtRest() = ConfirmFrame(cancelFocused = false)
 
-    /** The confirm step as it lands, with focus on Cancel. */
+    /** The confirm step as it lands, with focus on Cancel, the first row. */
     @PreviewTest
     @SeerrTvScreenPreviews
     @Composable
