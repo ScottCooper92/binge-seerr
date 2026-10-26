@@ -187,7 +187,10 @@ internal fun TvRequestDetailOverlay(
     val context = LocalContext.current
     val promoted = LocalFlags.current.bingePromotion
     val detail = (state as? RequestDetailUiState.Ready)?.detail
-    val onOpenInBinge = remember(context, detail, promoted) { detail?.let { context.bingeTitleHandOff(promoted, it.item.mediaType, it.item.tmdbId) } }
+    val onOpenInBinge =
+        remember(context, detail, promoted) {
+            detail?.let { context.bingeTitleHandOff(promoted, it.item.mediaType, it.item.tmdbId) }
+        }
     val onOpenInMediaServer = remember(context, detail) { context.mediaServerHandOff(detail?.mediaServerItem) }
     TvRequestDetailScreen(
         state = state,

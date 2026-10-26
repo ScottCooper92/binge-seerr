@@ -331,8 +331,7 @@ class SeerrRequestService(
         return status.withUserMessage(refusal.reason, sentence.message, sentence.locale)
     }
 
-    private suspend fun declared(): Set<Capability> =
-        if (enabled()) permissions().toCapabilities(connection.profile()) else emptySet()
+    private suspend fun declared(): Set<Capability> = if (enabled()) permissions().toCapabilities(connection.profile()) else emptySet()
 
     /** For a gated rpc only. A flag on a request is a bad argument, not a refused rpc: see [SeerrConnection.mayRequest4k]. */
     private suspend fun checkDeclared(capability: Capability) {

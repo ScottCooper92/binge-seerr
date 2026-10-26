@@ -99,7 +99,9 @@ class MainActivity : ComponentActivity() {
             // back stack, so of the links it follows only a request's, opening its page over Home.
             if (LocalConfiguration.current.isTelevision()) {
                 val linkedRequests = remember { deepLinks.backStacks.mapNotNull { it.linkedRequestId() } }
-                CompositionLocalProvider(LocalAnalytics provides analytics, LocalFlags provides flags) { TvSeerrShell(linkedRequests = linkedRequests) }
+                CompositionLocalProvider(LocalAnalytics provides analytics, LocalFlags provides flags) {
+                    TvSeerrShell(linkedRequests = linkedRequests)
+                }
                 return@setContent
             }
             val backStack = rememberNavBackStack(HomeRoute)

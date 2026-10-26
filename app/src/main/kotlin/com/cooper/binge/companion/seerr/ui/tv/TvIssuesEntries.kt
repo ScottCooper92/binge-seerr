@@ -109,7 +109,9 @@ internal fun TvIssueSheetEntry(
     // As on the request page: offered only where Binge would answer the link, since there is no browser to fall back to.
     val title = detail?.item
     val onOpenInBinge =
-        remember(context, promoted, title?.mediaType, title?.tmdbId) { title?.let { context.bingeTitleHandOff(promoted, it.mediaType, it.tmdbId) } }
+        remember(context, promoted, title?.mediaType, title?.tmdbId) {
+            title?.let { context.bingeTitleHandOff(promoted, it.mediaType, it.tmdbId) }
+        }
     TvIssueSheet(
         state = state,
         events = viewModel.events,
