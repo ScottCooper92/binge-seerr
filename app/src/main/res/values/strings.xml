@@ -8,6 +8,7 @@
     <!-- The installed app's own name, in the launcher and in system settings. Not the name Binge shows. -->
     <string name="app_label" translatable="false">Seerr Companion</string>
 
+    <string name="setup_intro_plain">Connect your Seerr, Jellyseerr or Overseerr server.</string>
     <string name="setup_intro">Connect your Seerr, Jellyseerr or Overseerr server. Binge will find this app and, once you allow it there, request titles through it.</string>
     <string name="setup_server_url">Server address</string>
     <string name="setup_insecure_warning">This address uses plain HTTP on a public host, so your key or password would cross the internet unencrypted. Use https:// if the server supports it.</string>
@@ -895,6 +896,7 @@
     <string name="hub_retry">Retry</string>
     <string name="hub_disconnect">Disconnect</string>
     <string name="hub_disconnect_confirm_title">Disconnect?</string>
+    <string name="hub_disconnect_confirm_message_plain">You will need to sign in again to reconnect.</string>
     <string name="hub_disconnect_confirm_message">You will need to sign in again to reconnect. Binge stops seeing this server until you do.</string>
     <string name="hub_demo_exit">Exit the demo</string>
     <string name="hub_demo_exit_confirm_title">Exit the demo?</string>

@@ -10,6 +10,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.compose.collectAsLazyPagingItems
+import com.cooper.binge.companion.seerr.flags.LocalFlags
 import com.cooper.binge.companion.seerr.ui.bingeTitleHandOff
 import com.cooper.binge.companion.seerr.ui.issues.IssueDetailEvent
 import com.cooper.binge.companion.seerr.ui.issues.IssueDetailUiState
@@ -102,12 +103,13 @@ internal fun TvIssueSheetEntry(
         }
     }
     val context = LocalContext.current
+    val promoted = LocalFlags.current.bingePromotion
     val detail = (state as? IssueDetailUiState.Ready)?.detail
     val onOpenInMediaServer = remember(context, detail?.mediaServerItem) { context.mediaServerHandOff(detail?.mediaServerItem) }
     // As on the request page: offered only where Binge would answer the link, since there is no browser to fall back to.
     val title = detail?.item
     val onOpenInBinge =
-        remember(context, title?.mediaType, title?.tmdbId) { title?.let { context.bingeTitleHandOff(it.mediaType, it.tmdbId) } }
+        remember(context, promoted, title?.mediaType, title?.tmdbId) { title?.let { context.bingeTitleHandOff(promoted, it.mediaType, it.tmdbId) } }
     TvIssueSheet(
         state = state,
         events = viewModel.events,

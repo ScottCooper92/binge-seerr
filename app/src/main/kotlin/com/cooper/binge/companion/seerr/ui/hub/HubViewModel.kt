@@ -9,6 +9,8 @@ import com.cooper.binge.companion.seerr.auth.NoBingeConnectionStore
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.auth.SeerrConnectionHealth
 import com.cooper.binge.companion.seerr.di.IoDispatcher
+import com.cooper.binge.companion.seerr.flags.FeatureFlags
+import com.cooper.binge.companion.seerr.flags.FixedFeatureFlags
 import com.cooper.binge.companion.seerr.seerr.LocalNetworkPermission
 import com.cooper.binge.companion.seerr.seerr.SeerrCredentials
 import com.cooper.binge.companion.seerr.seerr.isBlockedByLocalNetwork
@@ -53,6 +55,7 @@ class HubViewModel
         private val installCheck: BingeInstallCheck = NoBingeInstallCheck,
         private val bingeConnection: BingeConnectionStore = NoBingeConnectionStore,
         private val localNetwork: LocalNetworkPermission = LocalNetworkPermission.AlwaysGranted,
+        featureFlags: FeatureFlags = FixedFeatureFlags(),
     ) : ViewModel() {
         private val recheckTrigger = MutableStateFlow(0)
         private val isProbing = MutableStateFlow(false)
@@ -151,10 +154,10 @@ class HubViewModel
             )
 
         private val bingeStatus: Flow<BingeStatus> =
-            combine(installedTrigger, bingeConnection.hasConnected, ::bingeStatusOf)
+            combine(installedTrigger, bingeConnection.hasConnected, featureFlags.flags, ::bingeStatusOf)
 
         private val bingeHintDismissed: Flow<Boolean> =
-            combine(bingeStatus, bingeConnection.dismissedHints) { status, dismissed -> status.hint() in dismissed }
+            combine(bingeStatus, bingeConnection.dismissedHints) { status, dismissed -> status.hint()?.let { it in dismissed } ?: false }
 
         /** Folded together rather than added as more arguments: [combine] has no overload past five flows. */
         private val extras: Flow<HubExtras> = combine(downloadsPoller.downloading, bingeStatus, bingeHintDismissed, pulling, ::HubExtras)
@@ -272,7 +275,7 @@ class HubViewModel
 
         /** Closes the hint the tile is showing; the other state's hint, if the user reaches it later, is still shown. */
         fun dismissBingeHint() {
-            viewModelScope.launch(dispatcher) { bingeConnection.dismissHint(bingeStatus.first().hint()) }
+            viewModelScope.launch(dispatcher) { bingeStatus.first().hint()?.let { bingeConnection.dismissHint(it) } }
         }
 
         fun disconnect() {
@@ -299,11 +302,12 @@ private sealed interface ServerRead {
     data object Failed : ServerRead
 }
 
-private fun BingeStatus.hint(): BingeHint =
+private fun BingeStatus.hint(): BingeHint? =
     when (this) {
         BingeStatus.NotInstalled -> BingeHint.NotInstalled
         BingeStatus.NotConnected -> BingeHint.NotConnected
         BingeStatus.Connected -> BingeHint.Connected
+        BingeStatus.Hidden -> null
     }
 
 /**

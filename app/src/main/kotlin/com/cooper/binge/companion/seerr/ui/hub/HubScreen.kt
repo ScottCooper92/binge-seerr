@@ -207,6 +207,7 @@ internal fun BingeTile(
     if (hintDismissed) return
     val context = LocalContext.current
     when (status) {
+        BingeStatus.Hidden -> Unit
         BingeStatus.NotInstalled ->
             HintCard(
                 text = "${stringResource(

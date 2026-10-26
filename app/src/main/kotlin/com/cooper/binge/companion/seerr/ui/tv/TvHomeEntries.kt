@@ -12,6 +12,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.compose.collectAsLazyPagingItems
+import com.cooper.binge.companion.seerr.flags.LocalFlags
 import com.cooper.binge.companion.seerr.ui.bingeTitleHandOff
 import com.cooper.binge.companion.seerr.ui.hub.ConnectionHealth
 import com.cooper.binge.companion.seerr.ui.hub.HubUiState
@@ -184,8 +185,9 @@ internal fun TvRequestDetailOverlay(
         onDispose { viewModel.setScreenVisible(false) }
     }
     val context = LocalContext.current
+    val promoted = LocalFlags.current.bingePromotion
     val detail = (state as? RequestDetailUiState.Ready)?.detail
-    val onOpenInBinge = remember(context, detail) { detail?.let { context.bingeTitleHandOff(it.item.mediaType, it.item.tmdbId) } }
+    val onOpenInBinge = remember(context, detail, promoted) { detail?.let { context.bingeTitleHandOff(promoted, it.item.mediaType, it.item.tmdbId) } }
     val onOpenInMediaServer = remember(context, detail) { context.mediaServerHandOff(detail?.mediaServerItem) }
     TvRequestDetailScreen(
         state = state,

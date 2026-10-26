@@ -14,6 +14,7 @@ import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.BingeAdaptiveSheet
 import com.binge.designsystem.component.BingeSheetKind
 import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.flags.LocalFlags
 import com.cooper.binge.companion.seerr.seerr.SeerrMediaServer
 import com.cooper.binge.companion.seerr.seerr.SeerrServerProfile
 import com.cooper.binge.companion.seerr.ui.bingeAnswersTitleLink
@@ -41,17 +42,18 @@ internal class RequestOpenLink(
 internal fun rememberRequestOpenLinks(detail: RequestDetail): List<RequestOpenLink> {
     val context = LocalContext.current
     val resources = LocalResources.current
-    return remember(context, resources, detail) {
+    val promoted = LocalFlags.current.bingePromotion
+    return remember(context, resources, detail, promoted) {
         // The title row names where it goes: Binge where it answers, the server's own page where it doesn't.
         val titleLabel =
-            if (context.bingeAnswersTitleLink(detail.item.mediaType, detail.item.tmdbId)) {
+            if (context.bingeAnswersTitleLink(promoted, detail.item.mediaType, detail.item.tmdbId)) {
                 resources.getString(R.string.request_open_binge)
             } else {
                 resources.getString(R.string.open_in_named, detail.serverName)
             }
         listOfNotNull(
             RequestOpenLink(titleLabel, Icons.AutoMirrored.Filled.OpenInNew) {
-                context.openTitle(detail.item.mediaType, detail.item.tmdbId, detail.webUrl)
+                context.openTitle(promoted, detail.item.mediaType, detail.item.tmdbId, detail.webUrl)
             },
             detail.mediaServerUrl?.let { url ->
                 val label =

@@ -9,6 +9,8 @@ import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.di.IoDispatcher
 import com.cooper.binge.companion.seerr.feedback.BugReportLinks
 import com.cooper.binge.companion.seerr.feedback.FeedbackPrefs
+import com.cooper.binge.companion.seerr.flags.FeatureFlags
+import com.cooper.binge.companion.seerr.flags.FixedFeatureFlags
 import com.cooper.binge.companion.seerr.notifications.NotificationForwarding
 import com.cooper.binge.companion.seerr.notifications.NotificationPrefs
 import com.cooper.binge.companion.seerr.notifications.NotificationScheduler
@@ -122,6 +124,7 @@ class SettingsViewModel
         private val bingeInstallCheck: BingeInstallCheck = NoBingeInstallCheck,
         bingeConnection: BingeConnectionStore = NoBingeConnectionStore,
         forwarding: NotificationForwarding,
+        featureFlags: FeatureFlags = FixedFeatureFlags(),
     ) : ViewModel() {
         /** Re-read on every arrival, so Binge installed while this screen was away shows on return. */
         private val bingeInstalled = MutableStateFlow(bingeInstallCheck.isInstalled())
@@ -219,7 +222,7 @@ class SettingsViewModel
                 feedbackPrefs.shakeToReport,
                 telemetryPrefs.analyticsConsent,
                 telemetryPrefs.crashReportingEnabled,
-                combine(bingeInstalled, bingeConnection.hasConnected, ::bingeStatusOf),
+                combine(bingeInstalled, bingeConnection.hasConnected, featureFlags.flags, ::bingeStatusOf),
             ) { shake, consent, crashes, binge ->
                 AppSettings(
                     bugReportUrl = bugReportLinks.url(),
