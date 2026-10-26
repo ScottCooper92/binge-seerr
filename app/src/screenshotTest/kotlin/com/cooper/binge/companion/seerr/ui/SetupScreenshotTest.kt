@@ -241,6 +241,10 @@ class SetupScreenshotTest {
 private fun SetupFrame(
     state: SetupUiState,
     actions: SetupActions,
+    title: String? = null,
+    onBack: (() -> Unit)? = null,
 ) {
-    CompositionLocalProvider(LocalFlags provides Flags.AllOn) { SetupScreen(state = state, actions = actions) }
+    CompositionLocalProvider(LocalFlags provides Flags.AllOn) {
+        SetupScreen(state = state, actions = actions, title = title, onBack = onBack)
+    }
 }
