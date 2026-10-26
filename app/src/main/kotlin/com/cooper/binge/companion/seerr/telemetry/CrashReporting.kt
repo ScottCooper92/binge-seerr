@@ -46,6 +46,12 @@ interface CrashBreadcrumbs {
         name: String,
         value: String,
     )
+
+    /** A failure the app survived, for when the crash report would otherwise never exist. No-op by default. */
+    fun nonFatal(
+        message: String,
+        cause: Throwable,
+    ) = Unit
 }
 
 /** Records nothing — the default for a call site (a test, a preview) with no telemetry wired in. */
@@ -75,6 +81,17 @@ class FirebaseCrashBreadcrumbs
         ) {
             if (FirebaseApp.getApps(context).isEmpty()) return
             FirebaseCrashlytics.getInstance().setCustomKey(name, value)
+        }
+
+        override fun nonFatal(
+            message: String,
+            cause: Throwable,
+        ) {
+            if (FirebaseApp.getApps(context).isEmpty()) return
+            FirebaseCrashlytics.getInstance().apply {
+                log(message)
+                recordException(cause)
+            }
         }
     }
 

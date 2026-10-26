@@ -7,7 +7,10 @@ import androidx.work.NetworkType
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
+import com.binge.companion.sdk.attempt
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import java.util.concurrent.TimeUnit
 
@@ -41,9 +44,18 @@ class WorkManagerNotificationScheduler(
         WorkManager.getInstance(context).cancelUniqueWork(WORK_NAME)
     }
 
+    /** Null as well when WorkManager cannot start on this device, which the planner records; Settings just shows no run. */
     override fun nextRunMillis(): Flow<Long?> =
-        WorkManager
-            .getInstance(context)
-            .getWorkInfosForUniqueWorkFlow(WORK_NAME)
-            .map { infos -> infos.firstOrNull { it.state == WorkInfo.State.ENQUEUED }?.nextScheduleTimeMillis }
+        flow {
+            val manager = attempt { WorkManager.getInstance(context) }.getOrNull()
+            if (manager == null) {
+                emit(null)
+            } else {
+                emitAll(
+                    manager
+                        .getWorkInfosForUniqueWorkFlow(WORK_NAME)
+                        .map { infos -> infos.firstOrNull { it.state == WorkInfo.State.ENQUEUED }?.nextScheduleTimeMillis },
+                )
+            }
+        }
 }

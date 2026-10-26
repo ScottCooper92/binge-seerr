@@ -1,6 +1,9 @@
 package com.cooper.binge.companion.seerr.notifications
 
+import com.binge.companion.sdk.attempt
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
+import com.cooper.binge.companion.seerr.telemetry.CrashBreadcrumbs
+import com.cooper.binge.companion.seerr.telemetry.NoOpCrashBreadcrumbs
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -26,6 +29,7 @@ class NotificationPlanner
         private val scheduler: NotificationScheduler,
         private val notifier: SeerrNotifier,
         @ApplicationScope private val scope: CoroutineScope,
+        private val breadcrumbs: CrashBreadcrumbs = NoOpCrashBreadcrumbs,
     ) {
         fun start() {
             val plans =
@@ -42,7 +46,16 @@ class NotificationPlanner
         private suspend fun apply(plan: Plan) {
             if (!plan.connected) notifier.cancelActivity()
             if (!plan.paused) notifier.cancelConnectionProblem()
-            if (plan.connected && plan.enabled && !plan.paused) scheduler.schedule() else scheduler.cancel()
+            val wanted = plan.connected && plan.enabled && !plan.paused
+            attempt { if (wanted) scheduler.schedule() else scheduler.cancel() }.onFailure(::schedulerUnavailable)
+        }
+
+        /**
+         * WorkManager can fail to start on a device (a missing platform method, say), and that must not take the app
+         * with it: background notifications are off there, the failure is recorded, and the planner keeps running.
+         */
+        private fun schedulerUnavailable(cause: Throwable) {
+            breadcrumbs.nonFatal("notification poll scheduling failed", cause)
         }
 
         /** [credentials] is carried so a change of server or sign-in re-plans even when nothing else moved. */
