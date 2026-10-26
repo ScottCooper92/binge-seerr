@@ -11,6 +11,7 @@ import com.cooper.binge.companion.seerr.auth.SeerrConnectionHealth
 import com.cooper.binge.companion.seerr.di.IoDispatcher
 import com.cooper.binge.companion.seerr.flags.FeatureFlags
 import com.cooper.binge.companion.seerr.flags.FixedFeatureFlags
+import com.cooper.binge.companion.seerr.flags.Flags
 import com.cooper.binge.companion.seerr.seerr.LocalNetworkPermission
 import com.cooper.binge.companion.seerr.seerr.SeerrCredentials
 import com.cooper.binge.companion.seerr.seerr.isBlockedByLocalNetwork
@@ -55,7 +56,7 @@ class HubViewModel
         private val installCheck: BingeInstallCheck = NoBingeInstallCheck,
         private val bingeConnection: BingeConnectionStore = NoBingeConnectionStore,
         private val localNetwork: LocalNetworkPermission = LocalNetworkPermission.AlwaysGranted,
-        featureFlags: FeatureFlags = FixedFeatureFlags(),
+        featureFlags: FeatureFlags = FixedFeatureFlags(Flags.AllOn),
     ) : ViewModel() {
         private val recheckTrigger = MutableStateFlow(0)
         private val isProbing = MutableStateFlow(false)

@@ -12,7 +12,10 @@ import kotlin.coroutines.resume
 
 /** Where flag values come from, as far as [RemoteFeatureFlags] is concerned. */
 interface RemoteFlagSource {
-    /** The last values this device activated, every flag false where it has none. Never blocks. */
+    /**
+     * The last values this device activated, every flag false where it has none. Reads Remote Config's cache from
+     * disk, so the first call may wait on it.
+     */
     fun current(): Flags
 
     /** Fetches and activates, then returns the new values; null when nothing could be fetched. */

@@ -10,6 +10,7 @@ import com.binge.companion.contracts.notifications.v1.listNotificationsResponse
 import com.binge.companion.contracts.v1.ForwardedNotification
 import com.cooper.binge.companion.seerr.flags.FeatureFlags
 import com.cooper.binge.companion.seerr.flags.FixedFeatureFlags
+import com.cooper.binge.companion.seerr.flags.Flags
 import com.cooper.binge.companion.seerr.notifications.NotificationForwarding
 import com.cooper.binge.companion.seerr.notifications.NotificationPrefs
 import com.cooper.binge.companion.seerr.notifications.NotificationSignal
@@ -44,7 +45,7 @@ private val FORWARDING_DEFAULT_SIGNALS =
 class SeerrNotificationRpcs(
     private val forwarding: NotificationForwarding,
     private val prefs: NotificationPrefs,
-    private val featureFlags: FeatureFlags = FixedFeatureFlags(),
+    private val featureFlags: FeatureFlags = FixedFeatureFlags(Flags.AllOn),
 ) {
     /** Turning forwarding off is always accepted; turning it on is refused while `request_companions_enabled` is off. */
     suspend fun setNotificationForwarding(request: SetNotificationForwardingRequest): SetNotificationForwardingResponse {

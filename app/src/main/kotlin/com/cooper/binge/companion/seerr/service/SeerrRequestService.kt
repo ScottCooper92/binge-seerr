@@ -57,6 +57,7 @@ import com.cooper.binge.companion.seerr.demo.DEMO_PROVIDER_NAME
 import com.cooper.binge.companion.seerr.demo.isDemo
 import com.cooper.binge.companion.seerr.flags.FeatureFlags
 import com.cooper.binge.companion.seerr.flags.FixedFeatureFlags
+import com.cooper.binge.companion.seerr.flags.Flags
 import com.cooper.binge.companion.seerr.seerr.SeerrPermissions
 import com.cooper.binge.companion.seerr.seerr.SeerrServerProfile
 import com.cooper.binge.companion.seerr.seerr.SeerrVariant
@@ -103,7 +104,7 @@ class SeerrRequestService(
     private val requestCache: RequestStore = NoRequestStore,
     private val userMessages: UserMessages = UserMessages.None,
     private val standardVersionLabel: String = "Standard",
-    private val featureFlags: FeatureFlags = FixedFeatureFlags(),
+    private val featureFlags: FeatureFlags = FixedFeatureFlags(Flags.AllOn),
 ) : RequestServiceGrpcKt.RequestServiceCoroutineImplBase() {
     private val freshness = MediaStatusFreshness(observeIntervalMillis)
     private val qualityLabels = QualityProfileLabels(connection, clock)

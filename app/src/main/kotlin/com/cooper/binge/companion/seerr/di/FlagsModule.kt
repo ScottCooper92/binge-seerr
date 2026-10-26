@@ -20,6 +20,8 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 import javax.inject.Singleton
 
 private val Context.flagOverridesDataStore: DataStore<Preferences> by preferencesDataStore(name = "flag_overrides")
@@ -45,6 +47,10 @@ abstract class FlagsModule {
             source: RemoteFlagSource,
             overrides: FlagOverrides,
             @ApplicationScope scope: CoroutineScope,
-        ): FeatureFlags = RemoteFeatureFlags(source, overrides, scope)
+        ): FeatureFlags {
+            // A debug build waits for its stored overrides once, so a hand-off at cold start sees them.
+            val initial = if (BuildConfig.DEBUG) runBlocking { overrides.values.first() } else emptyMap()
+            return RemoteFeatureFlags(source, overrides, scope, initial)
+        }
     }
 }

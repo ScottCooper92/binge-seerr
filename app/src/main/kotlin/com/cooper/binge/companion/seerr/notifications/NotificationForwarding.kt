@@ -10,6 +10,7 @@ import androidx.datastore.preferences.core.stringSetPreferencesKey
 import com.binge.companion.contracts.v1.ForwardedNotification
 import com.cooper.binge.companion.seerr.flags.FeatureFlags
 import com.cooper.binge.companion.seerr.flags.FixedFeatureFlags
+import com.cooper.binge.companion.seerr.flags.Flags
 import com.google.protobuf.InvalidProtocolBufferException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -39,7 +40,7 @@ internal const val FORWARDED_MAX_QUEUED = 200
  */
 class NotificationForwarding(
     private val dataStore: DataStore<Preferences>,
-    private val featureFlags: FeatureFlags = FixedFeatureFlags(),
+    private val featureFlags: FeatureFlags = FixedFeatureFlags(Flags.AllOn),
     private val clock: () -> Long = System::currentTimeMillis,
 ) {
     val enabled: Flow<Boolean> = dataStore.data.map { it[FORWARDING_ENABLED] ?: false }.distinctUntilChanged()

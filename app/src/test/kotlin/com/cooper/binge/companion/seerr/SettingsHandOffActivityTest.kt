@@ -41,7 +41,7 @@ class SettingsHandOffActivityTest {
     @Test
     fun `a host that started it for a result is handed on to the hub`() {
         val controller = Robolectric.buildActivity(SettingsHandOffActivity::class.java)
-        controller.get().featureFlags = { FixedFeatureFlags() }
+        controller.get().featureFlags = { FixedFeatureFlags(Flags.AllOn) }
         shadowOf(controller.get()).setCallingPackage(BingeHosts.DEBUG_PACKAGE_NAME)
 
         controller.create()
@@ -55,7 +55,7 @@ class SettingsHandOffActivityTest {
     @Test
     fun `a caller that is not Binge opens nothing`() {
         val controller = Robolectric.buildActivity(SettingsHandOffActivity::class.java)
-        controller.get().featureFlags = { FixedFeatureFlags() }
+        controller.get().featureFlags = { FixedFeatureFlags(Flags.AllOn) }
         shadowOf(controller.get()).setCallingPackage("com.example.other")
 
         controller.create()
@@ -67,7 +67,7 @@ class SettingsHandOffActivityTest {
     @Test
     fun `a start with no calling package opens nothing`() {
         val controller = Robolectric.buildActivity(SettingsHandOffActivity::class.java)
-        controller.get().featureFlags = { FixedFeatureFlags() }
+        controller.get().featureFlags = { FixedFeatureFlags(Flags.AllOn) }
 
         controller.create()
 

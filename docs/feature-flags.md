@@ -24,3 +24,10 @@ Remote Config's value, on, off. A release build never reads overrides.
 
 The Service stays bindable. Binge already handles a companion that declares nothing, so refusing the bind would only
 turn a quiet state into an error. The handshake is not recorded, so "Connected to Binge" never advances.
+
+## Building from source
+
+A build that was not given a `google-services.json` has no Remote Config, so both flags stay off and the Service
+declares nothing. That is inside the contract: an OK handshake with an empty capability set, and `PERMISSION_DENIED`
+for every rpc. To use the integration from a source build, either point it at your own Firebase project and set the two
+keys to `true`, or use the debug build's **Feature flags** row to switch them on locally.

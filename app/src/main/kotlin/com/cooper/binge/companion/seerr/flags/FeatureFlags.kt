@@ -4,7 +4,7 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
-/** A switch in this app that Binge's rollout decides, with the Remote Config key that carries it. */
+/** A switch for the Binge-facing surfaces, with the Remote Config key that carries it. Set in whichever Firebase project the build uses. */
 enum class Flag(
     val key: String,
 ) {
@@ -45,9 +45,9 @@ interface FeatureFlags {
     suspend fun refresh()
 }
 
-/** Fixed flags — what a test, a preview or an Activity with no graph is given. */
+/** Fixed flags, for a test or a constructor default. It has no default of its own: the caller says which. */
 class FixedFeatureFlags(
-    value: Flags = Flags.AllOn,
+    value: Flags,
 ) : FeatureFlags {
     override val flags: StateFlow<Flags> = MutableStateFlow(value)
 
