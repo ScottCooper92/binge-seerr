@@ -150,7 +150,7 @@ fun postHogConfig(
     apiKey: String,
     host: String,
 ): PostHogAndroidConfig =
-    PostHogAndroidConfig(apiKey = apiKey, host = host).apply {
+    PostHogAndroidConfig(projectToken = apiKey, host = host).apply {
         optOut = true
         captureScreenViews = false
         captureDeepLinks = false
