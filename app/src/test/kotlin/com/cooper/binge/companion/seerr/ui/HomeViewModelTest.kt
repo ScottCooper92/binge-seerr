@@ -5,11 +5,13 @@ import androidx.lifecycle.ViewModelStore
 import com.cooper.binge.companion.seerr.auth.ConnectionRestore
 import com.cooper.binge.companion.seerr.auth.CredentialStore
 import com.cooper.binge.companion.seerr.auth.NoConnectionCarrier
+import com.cooper.binge.companion.seerr.auth.SecretCipher
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.auth.SeerrConnectionHealthMonitor
 import com.cooper.binge.companion.seerr.seerr.SeerrApiFactory
 import com.cooper.binge.companion.seerr.seerr.SeerrAuth
 import com.cooper.binge.companion.seerr.seerr.SeerrCredentials
+import com.cooper.binge.companion.seerr.util.LostKeyCipher
 import com.cooper.binge.companion.seerr.util.MainDispatcherRule
 import com.cooper.binge.companion.seerr.util.OkHttpDrain
 import com.cooper.binge.companion.seerr.util.ReversingCipher
@@ -51,10 +53,10 @@ class HomeViewModelTest {
     @After
     fun tearDown() = viewModels.clear()
 
-    private fun TestScope.store() =
+    private fun TestScope.store(cipher: SecretCipher = ReversingCipher) =
         CredentialStore(
             dataStore = PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("creds.preferences_pb") },
-            cipher = ReversingCipher,
+            cipher = cipher,
         )
 
     private fun TestScope.viewModel(
@@ -96,6 +98,7 @@ class HomeViewModelTest {
             val restore = restore(store)
             val vm = viewModel(store, restore)
 
+            assertEquals(HomeUiState.Resolving, vm.uiState.value)
             restore.run()
 
             assertEquals(HomeUiState.Setup, withContext(Dispatchers.Default) { vm.uiState.first { it != HomeUiState.Resolving } })
@@ -109,7 +112,22 @@ class HomeViewModelTest {
 
             val vm = viewModel(store, restore(store))
 
+            assertEquals(HomeUiState.Resolving, vm.uiState.value)
             assertEquals(HomeUiState.Connected, withContext(Dispatchers.Default) { vm.uiState.first { it != HomeUiState.Resolving } })
+        }
+
+    @Test
+    fun `a saved connection whose key is lost is the setup screen, not the hub`() =
+        runTest {
+            val store = store(LostKeyCipher)
+            store.save(SeerrCredentials("https://seerr.example/", SeerrAuth.ApiKey("k3y")))
+            val restore = restore(store)
+            val vm = viewModel(store, restore)
+
+            assertEquals(HomeUiState.Resolving, vm.uiState.value)
+            restore.run()
+
+            assertEquals(HomeUiState.Setup, withContext(Dispatchers.Default) { vm.uiState.first { it != HomeUiState.Resolving } })
         }
 
     @Test

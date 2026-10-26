@@ -22,6 +22,7 @@ import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import okhttp3.Headers.Companion.headersOf
@@ -138,6 +139,7 @@ class HubViewModelTest {
                     CredentialStore(
                         PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("h.preferences_pb") },
                         PlainCipher,
+                        UnconfinedTestDispatcher(testScheduler),
                     ),
                 apis =
                     SeerrApiFactory(
@@ -258,6 +260,7 @@ class HubViewModelTest {
                     CredentialStore(
                         PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("h.preferences_pb") },
                         PlainCipher,
+                        UnconfinedTestDispatcher(testScheduler),
                     ),
                 apis =
                     SeerrApiFactory(
