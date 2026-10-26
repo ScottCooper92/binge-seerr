@@ -36,13 +36,10 @@ class PackageManagerComponentSwitch(
 
 /**
  * Keeps the exported Service out of a host's discovery unless `request_companions_enabled` is on. The REQUEST contract's
- * core (Handshake, SubmitRequest, GetStatus) cannot be served otherwise, and a service that cannot serve it must not
- * export the REQUEST action. The manifest declares the component disabled, so a fresh install is off; this enables it
- * when the flag is on. The one component also carries NOTIFICATIONS, which goes with it; forwarding is never active
- * while the flag is off, so nothing is lost.
- *
- * Applied from the cached value as the app starts and again whenever the flag changes. A host that had already bound
- * when the flag turned off is covered by the Service's own flag checks.
+ * core cannot be served otherwise, and a service that cannot serve it must not export the REQUEST action. The manifest
+ * ships the component disabled, so a fresh install is off; this enables it with the flag. NOTIFICATIONS shares the
+ * component and goes with it. Applied from the cached value at start and on every change; `docs/feature-flags.md` has
+ * the rest.
  */
 class ExportedServiceGate
     @Inject
