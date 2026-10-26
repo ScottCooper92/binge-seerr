@@ -50,6 +50,7 @@ import com.binge.designsystem.template.FormSaveFailureSnackbar
 import com.binge.designsystem.template.FormSaveStatus
 import com.binge.designsystem.template.FormSaveStatusText
 import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.flags.LocalFlags
 import com.cooper.binge.companion.seerr.ui.openTitle
 import com.cooper.binge.companion.seerr.ui.requests.labelRes
 import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
@@ -201,6 +202,7 @@ private fun Ready(
     val modals = rememberSaveable(saver = IssueModalState.Saver) { IssueModalState() }
     val detail = state.detail
     val context = LocalContext.current
+    val promoted = LocalFlags.current.bingePromotion
     val inset = resolvedContentInset()
     val sides = resolvedContentPadding()
     // The thread scrolls under the top bar. The navigation bar's inset goes under the pinned bar where there is one, and into
@@ -219,7 +221,7 @@ private fun Ready(
             IssueHeader(
                 detail.item,
                 // The title opens in Binge where Binge answers, as on the request page; else the issue's own web page, as before.
-                onOpen = { context.openTitle(detail.item.mediaType, detail.item.tmdbId, detail.webUrl) },
+                onOpen = { context.openTitle(promoted, detail.item.mediaType, detail.item.tmdbId, detail.webUrl) },
                 modifier = Modifier.padding(resolvedContentPadding(vertical = inset)),
             )
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, modifier = Modifier.padding(sides))

@@ -12,6 +12,7 @@ import com.cooper.binge.companion.seerr.auth.BingeConnectionStore
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.data.MediaStatusStore
 import com.cooper.binge.companion.seerr.data.RequestStore
+import com.cooper.binge.companion.seerr.flags.FeatureFlags
 import com.cooper.binge.companion.seerr.notifications.NotificationForwarding
 import com.cooper.binge.companion.seerr.notifications.NotificationPrefs
 import com.cooper.binge.companion.seerr.telemetry.Analytics
@@ -44,6 +45,9 @@ class SeerrCompanionService : IntegrationService() {
     lateinit var analytics: Analytics
 
     @Inject
+    lateinit var featureFlags: FeatureFlags
+
+    @Inject
     lateinit var forwarding: NotificationForwarding
 
     @Inject
@@ -60,8 +64,9 @@ class SeerrCompanionService : IntegrationService() {
                 requestCache = requests,
                 userMessages = AndroidUserMessages(this),
                 standardVersionLabel = getString(R.string.version_standard),
+                featureFlags = featureFlags,
             ),
-            SeerrNotificationsService(SeerrNotificationRpcs(forwarding, notificationPrefs)),
+            SeerrNotificationsService(SeerrNotificationRpcs(forwarding, notificationPrefs, featureFlags)),
         )
 
     /**

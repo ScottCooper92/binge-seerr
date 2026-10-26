@@ -11,6 +11,7 @@ import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.BingeConfirmDialog
 import com.binge.designsystem.component.BingeTextButton
 import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.flags.LocalFlags
 
 /**
  * Disconnecting drops the saved server, so it asks first. The hub and Settings share it. On the demo server it is
@@ -23,6 +24,7 @@ internal fun DisconnectButton(
     demo: Boolean = false,
 ) {
     var confirming by rememberSaveable { mutableStateOf(false) }
+    val connectPromoted = LocalFlags.current.bingeConnectPromotion
     BingeTextButton(
         label = stringResource(if (demo) R.string.hub_demo_exit else R.string.hub_disconnect),
         onClick = { confirming = true },
@@ -32,7 +34,14 @@ internal fun DisconnectButton(
     if (confirming) {
         BingeConfirmDialog(
             title = stringResource(if (demo) R.string.hub_demo_exit_confirm_title else R.string.hub_disconnect_confirm_title),
-            message = stringResource(if (demo) R.string.hub_demo_exit_confirm_message else R.string.hub_disconnect_confirm_message),
+            message =
+                stringResource(
+                    when {
+                        demo -> R.string.hub_demo_exit_confirm_message
+                        connectPromoted -> R.string.hub_disconnect_confirm_message
+                        else -> R.string.hub_disconnect_confirm_message_plain
+                    },
+                ),
             confirmLabel = stringResource(if (demo) R.string.hub_demo_exit else R.string.hub_disconnect),
             destructive = true,
             onConfirm = {

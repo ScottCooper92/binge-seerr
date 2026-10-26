@@ -60,7 +60,7 @@ internal fun tvAppGroup(
     TvPaneGroup(
         title = stringResource(R.string.settings_group_app),
         rows =
-            listOf(
+            listOfNotNull(
                 bingeRow(binge, actions),
                 TvPaneRow(
                     key = KEY_REPORT_BUG,
@@ -101,7 +101,7 @@ internal fun tvAppGroup(
 private fun bingeRow(
     status: BingeStatus,
     actions: TvAppActions,
-): TvPaneRow {
+): TvPaneRow? {
     val option =
         when (status) {
             BingeStatus.NotInstalled ->
@@ -122,6 +122,7 @@ private fun bingeRow(
                     icon = Icons.Filled.Tv,
                     onSelect = actions.onOpenBinge,
                 )
+            BingeStatus.Hidden -> return null
         }
     return TvPaneRow(
         key = KEY_BINGE,

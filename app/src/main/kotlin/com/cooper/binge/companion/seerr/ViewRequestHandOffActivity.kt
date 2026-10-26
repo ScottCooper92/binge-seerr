@@ -5,6 +5,8 @@ import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import com.binge.companion.sdk.CompanionManifest
+import com.cooper.binge.companion.seerr.flags.FeatureFlags
+import com.cooper.binge.companion.seerr.flags.appFeatureFlags
 import com.cooper.binge.companion.seerr.ui.DeepLinks
 
 /**
@@ -16,9 +18,12 @@ import com.cooper.binge.companion.seerr.ui.DeepLinks
  * Its own Activity rather than a filter on [MainActivity], for the reason [SettingsHandOffActivity] gives.
  */
 class ViewRequestHandOffActivity : ComponentActivity() {
+    /** The graph's flags; a test sets its own, since its Application is not the Hilt one. */
+    internal var featureFlags: () -> FeatureFlags = { appFeatureFlags() }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        if (bingeHandOffPolicy().permits(callingPackage)) {
+        if (bingeHandOffPolicy(featureFlags()).permits(callingPackage)) {
             startActivity(
                 Intent(
                     this,

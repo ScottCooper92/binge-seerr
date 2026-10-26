@@ -57,6 +57,7 @@ import com.binge.designsystem.layout.layoutAnchor
 import com.binge.designsystem.resolvedContentInset
 import com.binge.designsystem.resolvedContentPadding
 import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.flags.LocalFlags
 import com.cooper.binge.companion.seerr.seerr.ManageablePermission
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.ui.hub.QuotaSection
@@ -326,6 +327,7 @@ private fun TitleCarousel(
     serverRoot: String,
 ) {
     val context = LocalContext.current
+    val promoted = LocalFlags.current.bingePromotion
     MediaCarousel(title = title, items = items, itemKey = { it.mediaType.name + it.tmdbId }, onMoreClick = null) { _, item ->
         MediaCard(
             posterUrl = item.posterUrl,
@@ -335,7 +337,7 @@ private fun TitleCarousel(
             rating = null,
             onClick = {
                 val path = if (item.mediaType == RequestMediaType.Tv) "tv/" else "movie/"
-                context.openTitle(item.mediaType, item.tmdbId, serverRoot + path + item.tmdbId)
+                context.openTitle(promoted, item.mediaType, item.tmdbId, serverRoot + path + item.tmdbId)
             },
         )
     }

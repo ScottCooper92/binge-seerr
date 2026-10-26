@@ -44,22 +44,28 @@ object BingeHandOff {
     ): TitleTarget = titleUri(mediaType, tmdbId)?.takeIf { bingeAnswers }?.let(TitleTarget::Binge) ?: TitleTarget.Web(webUrl)
 }
 
-/** Whether Binge is installed and would answer the title hand-off link, per the manifest's `queries`. */
+/**
+ * Whether Binge is installed and would answer the title hand-off link, per the manifest's `queries`. False
+ * while [promoted] is false, so the title opens on the server's own page.
+ */
 fun Context.bingeAnswersTitleLink(
+    promoted: Boolean,
     mediaType: RequestMediaType,
     tmdbId: Int,
 ): Boolean {
+    if (!promoted) return false
     val uri = BingeHandOff.titleUri(mediaType, tmdbId) ?: return false
     return Intent(Intent.ACTION_VIEW, uri.toUri()).resolveActivity(packageManager) != null
 }
 
 /** Opens a title in Binge where it is installed and answers, else at [webUrl] on the server. */
 fun Context.openTitle(
+    promoted: Boolean,
     mediaType: RequestMediaType,
     tmdbId: Int,
     webUrl: String,
 ) {
-    val answers = bingeAnswersTitleLink(mediaType, tmdbId)
+    val answers = bingeAnswersTitleLink(promoted, mediaType, tmdbId)
     when (val target = BingeHandOff.target(answers, mediaType, tmdbId, webUrl)) {
         is TitleTarget.Binge ->
             attempt {
@@ -85,6 +91,7 @@ fun Context.openTitleInBinge(
 
 /** Opening a title in Binge on a television, or null where Binge would not answer: the caller hides the affordance then. */
 fun Context.bingeTitleHandOff(
+    promoted: Boolean,
     mediaType: RequestMediaType,
     tmdbId: Int,
-): (() -> Unit)? = { openTitleInBinge(mediaType, tmdbId) }.takeIf { bingeAnswersTitleLink(mediaType, tmdbId) }
+): (() -> Unit)? = { openTitleInBinge(mediaType, tmdbId) }.takeIf { bingeAnswersTitleLink(promoted, mediaType, tmdbId) }

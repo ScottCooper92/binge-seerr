@@ -10,6 +10,10 @@ data object ManageSheetPrototypeRoute : SeerrRoute
 @Serializable
 data object BingeHintPrototypeRoute : SeerrRoute
 
+/** Debug builds only: the feature flags, each with a local override over Remote Config. */
+@Serializable
+data object FlagOverridesRoute : SeerrRoute
+
 /** Debug builds only: the request detail's proposed "This request" and "Other requests" cards. */
 @Serializable
 data object RequestCardsPrototypeRoute : SeerrRoute

@@ -33,7 +33,7 @@ internal fun appRows(
     onToggleSendCrashReports: (Boolean) -> Unit,
 ): List<ListItem> {
     val context = LocalContext.current
-    return listOf(
+    return listOfNotNull(
         bingeRow(app.binge, onOpen = context::openBinge, onConnect = context::openBingeCompanions, onGet = context::openBingeOnPlayStore),
         ListItem(
             icon = Icons.Filled.BugReport,
@@ -79,27 +79,23 @@ private fun bingeRow(
     onOpen: () -> Unit,
     onConnect: () -> Unit,
     onGet: () -> Unit,
-): ListItem =
-    ListItem(
+): ListItem? {
+    val (detail, onClick) =
+        when (status) {
+            BingeStatus.NotInstalled -> R.string.hub_binge_not_installed_detail to onGet
+            BingeStatus.NotConnected -> R.string.hub_binge_connect_hint to onConnect
+            BingeStatus.Connected -> R.string.hub_binge_connected_hint to onOpen
+            BingeStatus.Hidden -> return null
+        }
+    return ListItem(
         icon = Icons.Filled.Tv,
         iconTint = BingeSentiment.Info.fill(),
         label = stringResource(R.string.settings_binge),
-        detail =
-            stringResource(
-                when (status) {
-                    BingeStatus.NotInstalled -> R.string.hub_binge_not_installed_detail
-                    BingeStatus.NotConnected -> R.string.hub_binge_connect_hint
-                    BingeStatus.Connected -> R.string.hub_binge_connected_hint
-                },
-            ),
+        detail = stringResource(detail),
         supportingMaxLines = BINGE_DETAIL_MAX_LINES,
         destination = ListItemDestination.External,
-        onClick =
-            when (status) {
-                BingeStatus.NotInstalled -> onGet
-                BingeStatus.NotConnected -> onConnect
-                BingeStatus.Connected -> onOpen
-            },
+        onClick = onClick,
     )
+}
 
 private const val BINGE_DETAIL_MAX_LINES = 2

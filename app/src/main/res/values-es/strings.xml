@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="setup_intro_plain">Conecta tu servidor Seerr, Jellyseerr u Overseerr.</string>
     <string name="setup_intro">Conecta tu servidor Seerr, Jellyseerr u Overseerr. Binge encontrará esta app y, cuando la permitas allí, solicitará títulos a través de ella.</string>
     <string name="setup_server_url">Dirección del servidor</string>
     <string name="setup_insecure_warning">Esta dirección usa HTTP sin cifrar en un host público, así que tu clave o contraseña cruzaría internet sin cifrar. Usa https:// si el servidor lo admite.</string>
@@ -873,6 +874,7 @@
     <string name="hub_retry">Reintentar</string>
     <string name="hub_disconnect">Desconectar</string>
     <string name="hub_disconnect_confirm_title">¿Desconectar?</string>
+    <string name="hub_disconnect_confirm_message_plain">Tendrás que iniciar sesión de nuevo para reconectar.</string>
     <string name="hub_disconnect_confirm_message">Tendrás que iniciar sesión de nuevo para reconectar. Binge deja de ver este servidor hasta que lo hagas.</string>
     <string name="hub_demo_exit">Salir de la demo</string>
     <string name="hub_demo_exit_confirm_title">¿Salir de la demo?</string>

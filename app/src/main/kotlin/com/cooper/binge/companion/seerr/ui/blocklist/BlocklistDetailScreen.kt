@@ -40,6 +40,7 @@ import com.binge.designsystem.resolvedContentPadding
 import com.binge.designsystem.theme.BingeShapes
 import com.binge.designsystem.theme.BingeTheme
 import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.flags.LocalFlags
 import com.cooper.binge.companion.seerr.ui.openTitle
 import com.cooper.binge.companion.seerr.ui.requests.labelRes
 import com.cooper.binge.companion.seerr.ui.state.MediaHeroDetailPage
@@ -116,6 +117,7 @@ internal fun BlocklistDetailPage(
     val item = state.item
     val title = item.title ?: stringResource(item.mediaType.labelRes())
     val context = LocalContext.current
+    val promoted = LocalFlags.current.bingePromotion
     val footer: (@Composable () -> Unit)? =
         if (state.canManage) {
             { BlocklistUnblockAction(unblocking = state.unblocking, onClick = onPrimary) }
@@ -133,7 +135,7 @@ internal fun BlocklistDetailPage(
         topBarActions = {
             if (state.webUrl.isNotEmpty()) {
                 ExpressiveIconButton(
-                    onClick = { context.openTitle(item.mediaType, item.tmdbId, state.webUrl) },
+                    onClick = { context.openTitle(promoted, item.mediaType, item.tmdbId, state.webUrl) },
                     icon = Icons.AutoMirrored.Filled.OpenInNew,
                     contentDescription = stringResource(R.string.request_open_elsewhere),
                     tint = BingeTheme.colors.onScrim,

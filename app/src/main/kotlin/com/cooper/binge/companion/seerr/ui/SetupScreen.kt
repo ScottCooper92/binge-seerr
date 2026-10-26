@@ -6,6 +6,7 @@ import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.template.StepFlowScreen
 import com.binge.designsystem.template.StepHeading
 import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.flags.LocalFlags
 
 /** Everything the setup screen can ask of its ViewModel, in one place so the entry stays a wiring. */
 class SetupActions(
@@ -69,7 +70,10 @@ fun SetupScreen(
                 ADDRESS_STEP ->
                     StepHeading(
                         title = stringResource(R.string.tv_setup_headline),
-                        subtitle = stringResource(R.string.setup_intro),
+                        subtitle =
+                            stringResource(
+                                if (LocalFlags.current.bingeConnectPromotion) R.string.setup_intro else R.string.setup_intro_plain,
+                            ),
                     )
                 else -> signIn?.let { SetupServerHeading(it.server) }
             }

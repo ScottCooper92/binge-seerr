@@ -1,5 +1,6 @@
 package com.cooper.binge.companion.seerr.ui.hub
 
+import com.cooper.binge.companion.seerr.flags.Flags
 import com.cooper.binge.companion.seerr.seerr.SeerrPermissions
 import com.cooper.binge.companion.seerr.seerr.SeerrVariant
 import com.cooper.binge.companion.seerr.ui.users.settings.UserRole
@@ -91,15 +92,22 @@ data class HubOverview(
 )
 
 /** Binge's relationship to this device, for the Hub's contextual tile (#469). */
-enum class BingeStatus { NotInstalled, NotConnected, Connected }
+enum class BingeStatus { NotInstalled, NotConnected, Connected, Hidden }
 
-/** Not installed always wins; otherwise "connected" is whether Binge has ever handshaken this server. */
+/**
+ * What to say about Binge, behind the flags: nothing without [Flags.bingePromotion], the install prompt where Binge is
+ * missing, and nothing about connecting unless [Flags.bingeConnectPromotion]. Past that, "connected" is whether Binge
+ * has ever handshaken this server.
+ */
 fun bingeStatusOf(
     installed: Boolean,
     connected: Boolean,
+    flags: Flags,
 ): BingeStatus =
     when {
+        !flags.bingePromotion -> BingeStatus.Hidden
         !installed -> BingeStatus.NotInstalled
+        !flags.bingeConnectPromotion -> BingeStatus.Hidden
         connected -> BingeStatus.Connected
         else -> BingeStatus.NotConnected
     }

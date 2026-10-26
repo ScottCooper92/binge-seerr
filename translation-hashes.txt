@@ -114,6 +114,7 @@ app:hub_demo_exit_confirm_message  895858733e2d
 app:hub_demo_exit_confirm_title  4904aa80023e
 app:hub_disconnect  acfc5be785a9
 app:hub_disconnect_confirm_message  bc3b6a81f476
+app:hub_disconnect_confirm_message_plain  6682aac26cc1
 app:hub_disconnect_confirm_title  112cbf2ce097
 app:hub_download_untitled  f59ab8d1331b
 app:hub_downloading_now  1d3b711d58b7
@@ -905,6 +906,7 @@ app:setup_error_unreachable_not_local  7f8e5f56c5a4
 app:setup_forgot_password  30c1d8d3e912
 app:setup_insecure_warning  6b61e71b49b9
 app:setup_intro  eea68d8997e4
+app:setup_intro_plain  7a6036b0c055
 app:setup_local_network_explanation  3abb48eef323
 app:setup_mode_api_key  16f0ee47f993
 app:setup_mode_local  871e019bee76

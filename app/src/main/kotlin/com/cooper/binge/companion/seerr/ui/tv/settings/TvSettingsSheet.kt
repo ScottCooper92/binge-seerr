@@ -34,6 +34,7 @@ import com.binge.designsystem.tv.template.TvPaneGroup
 import com.binge.designsystem.tv.template.TvPaneRow
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.demo.isDemoOrigin
+import com.cooper.binge.companion.seerr.flags.LocalFlags
 import com.cooper.binge.companion.seerr.ui.hub.HubUiState
 import com.cooper.binge.companion.seerr.ui.settings.AppSettings
 import com.cooper.binge.companion.seerr.ui.settings.SettingsUiState
@@ -122,10 +123,18 @@ private fun ColumnScope.RootPage(
     demo: Boolean,
 ) {
     var confirmingDisconnect by rememberSaveable { mutableStateOf(false) }
+    val connectPromoted = LocalFlags.current.bingeConnectPromotion
     if (confirmingDisconnect) {
         TvConfirmDialog(
             title = stringResource(if (demo) R.string.hub_demo_exit_confirm_title else R.string.hub_disconnect_confirm_title),
-            message = stringResource(if (demo) R.string.hub_demo_exit_confirm_message else R.string.hub_disconnect_confirm_message),
+            message =
+                stringResource(
+                    when {
+                        demo -> R.string.hub_demo_exit_confirm_message
+                        connectPromoted -> R.string.hub_disconnect_confirm_message
+                        else -> R.string.hub_disconnect_confirm_message_plain
+                    },
+                ),
             confirmLabel = stringResource(if (demo) R.string.hub_demo_exit else R.string.tv_settings_disconnect_confirm),
             onConfirm = onDisconnect,
             onDismissRequest = { confirmingDisconnect = false },

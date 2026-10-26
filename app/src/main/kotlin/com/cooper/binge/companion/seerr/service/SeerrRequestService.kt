@@ -55,6 +55,9 @@ import com.cooper.binge.companion.seerr.data.NoRequestStore
 import com.cooper.binge.companion.seerr.data.RequestStore
 import com.cooper.binge.companion.seerr.demo.DEMO_PROVIDER_NAME
 import com.cooper.binge.companion.seerr.demo.isDemo
+import com.cooper.binge.companion.seerr.flags.FeatureFlags
+import com.cooper.binge.companion.seerr.flags.FixedFeatureFlags
+import com.cooper.binge.companion.seerr.flags.Flags
 import com.cooper.binge.companion.seerr.seerr.SeerrPermissions
 import com.cooper.binge.companion.seerr.seerr.SeerrServerProfile
 import com.cooper.binge.companion.seerr.seerr.SeerrVariant
@@ -68,6 +71,7 @@ import com.cooper.binge.companion.seerr.seerr.versionsFor
 import com.cooper.binge.companion.seerr.telemetry.Analytics
 import com.cooper.binge.companion.seerr.telemetry.NoOpAnalytics
 import com.cooper.binge.companion.seerr.telemetry.operationFailed
+import io.grpc.Status
 import io.grpc.StatusException
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
@@ -100,6 +104,7 @@ class SeerrRequestService(
     private val requestCache: RequestStore = NoRequestStore,
     private val userMessages: UserMessages = UserMessages.None,
     private val standardVersionLabel: String = "Standard",
+    private val featureFlags: FeatureFlags = FixedFeatureFlags(Flags.AllOn),
 ) : RequestServiceGrpcKt.RequestServiceCoroutineImplBase() {
     private val freshness = MediaStatusFreshness(observeIntervalMillis)
     private val qualityLabels = QualityProfileLabels(connection, clock)
@@ -119,6 +124,7 @@ class SeerrRequestService(
      */
     override suspend fun handshake(request: HandshakeRequest): HandshakeResponse =
         reportingFailure("handshake") {
+            if (!enabled()) return@reportingFailure disabledHandshake()
             val profile =
                 try {
                     connection.refreshProfile()
@@ -137,6 +143,26 @@ class SeerrRequestService(
             response
         }
 
+    /**
+     * What `request_companions_enabled` off answers: OK with no capabilities at all, and no record of a handshake, so the
+     * host shows nothing to do rather than a failed bind. Not [SessionOffer.NONE], whose attention read would send the host
+     * to `needs_reconnect`.
+     */
+    private suspend fun disabledHandshake(): HandshakeResponse =
+        handshakeResponse(
+            capabilities = emptySet(),
+            versions = emptyList(),
+            providerName = providerNameFor(null),
+            companionVersionName = versionName,
+        )
+
+    private fun enabled(): Boolean = featureFlags.flags.value.requestCompanions
+
+    /** For the rpcs that need no capability of their own: with the flag off none of them is served either. */
+    private fun requireEnabled() {
+        if (!enabled()) throw StatusException(Status.PERMISSION_DENIED.withDescription("request companions are not enabled"))
+    }
+
     /** The fork's name, or the demo's own, so the host can show that this is sample data. */
     private suspend fun providerNameFor(profile: SeerrServerProfile?): String {
         val demo = attempt { connection.current() }.getOrNull()?.isDemo == true
@@ -153,7 +179,10 @@ class SeerrRequestService(
         }
 
     override suspend fun submitRequest(request: SubmitRequestRequest): SubmitRequestResponse =
-        reportingFailure("submit_request") { requests.submitRequest(request) }
+        reportingFailure("submit_request") {
+            requireEnabled()
+            requests.submitRequest(request)
+        }
 
     override suspend fun getAdvancedRequestOptions(request: GetAdvancedRequestOptionsRequest): GetAdvancedRequestOptionsResponse =
         gatedRead("get_advanced_request_options", Capability.CAPABILITY_ADVANCED_REQUEST_OPTIONS) {
@@ -167,7 +196,10 @@ class SeerrRequestService(
         gated("submit_advanced_request", Capability.CAPABILITY_ADVANCED_REQUEST_OPTIONS) { requests.submitAdvancedRequest(request) }
 
     override suspend fun getStatus(request: GetStatusRequest): GetStatusResponse =
-        reportingFailure("get_status") { GetStatusResponse.newBuilder().setStatus(statusReads.status(request.media)).build() }
+        reportingFailure("get_status") {
+            requireEnabled()
+            GetStatusResponse.newBuilder().setStatus(statusReads.status(request.media)).build()
+        }
 
     /**
      * Polls the server on this app's own cadence and pushes a status only when it changed. The
@@ -180,7 +212,12 @@ class SeerrRequestService(
             // the row warm, and a poll answering from the row it wrote would never see the server.
             var fromCache = true
             while (true) {
-                emit(reportingFailure("observe_status") { statusReads.status(request.media, allowCached = fromCache) })
+                emit(
+                    reportingFailure("observe_status") {
+                        requireEnabled()
+                        statusReads.status(request.media, allowCached = fromCache)
+                    },
+                )
                 fromCache = false
                 delay(observeIntervalMillis)
             }
@@ -203,13 +240,21 @@ class SeerrRequestService(
         gated("edit_request", Capability.CAPABILITY_EDIT_SEASONS) { requests.editRequest(request) }
 
     override suspend fun getAttention(request: GetAttentionRequest): GetAttentionResponse =
-        reportingFailure("get_attention") { GetAttentionResponse.newBuilder().setAttention(attention()).build() }
+        reportingFailure("get_attention") {
+            requireEnabled()
+            GetAttentionResponse.newBuilder().setAttention(attention()).build()
+        }
 
     /** Polled on this app's own cadence, like [observeStatus]; a push only when the value changed. */
     override fun observeAttention(request: ObserveAttentionRequest): Flow<ObserveAttentionResponse> =
         flow {
             while (true) {
-                emit(reportingFailure("observe_attention") { attention() })
+                emit(
+                    reportingFailure("observe_attention") {
+                        requireEnabled()
+                        attention()
+                    },
+                )
                 delay(attentionIntervalMillis)
             }
         }.distinctUntilChanged()
@@ -287,7 +332,7 @@ class SeerrRequestService(
         return status.withUserMessage(refusal.reason, sentence.message, sentence.locale)
     }
 
-    private suspend fun declared(): Set<Capability> = permissions().toCapabilities(connection.profile())
+    private suspend fun declared(): Set<Capability> = if (enabled()) permissions().toCapabilities(connection.profile()) else emptySet()
 
     /** For a gated rpc only. A flag on a request is a bad argument, not a refused rpc: see [SeerrConnection.mayRequest4k]. */
     private suspend fun checkDeclared(capability: Capability) {

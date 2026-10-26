@@ -80,6 +80,12 @@ two ways described above, and the phone-to-TV hand-off below, which stays on you
   write and cannot promise are free of an address. This is
   on unless you turn it off in Settings. No user identifier is set, and the app does not forward its
   logs.
+- **To Google (Firebase Remote Config)**, each time the app starts or comes to the foreground, and
+  no more than about once an hour: a Firebase installation id that identifies this install, the
+  app's package name and version, the Android version, and the device's language, country and time
+  zone. It reads two on/off settings the developer controls. It sends no account, server address,
+  title or request data. It happens whether or not you agree to share usage data, and there is no
+  switch for it in Settings.
 - **To GitHub**, only when you choose to report a bug: the app opens a new issue form in your
   browser with the app version, the device and the Android version filled in. Nothing is sent until
   you submit the form yourself, and the issue is public.
