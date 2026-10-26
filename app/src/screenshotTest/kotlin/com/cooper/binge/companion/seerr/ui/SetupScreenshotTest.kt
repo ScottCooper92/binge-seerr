@@ -1,9 +1,12 @@
 package com.cooper.binge.companion.seerr.ui
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.res.stringResource
 import com.android.tools.screenshot.PreviewTest
 import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.flags.Flags
+import com.cooper.binge.companion.seerr.flags.LocalFlags
 import com.cooper.binge.companion.seerr.preview.SeerrScreenPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrScreenStatePreview
 import com.cooper.binge.companion.seerr.preview.SeerrSpanishPreviews
@@ -23,46 +26,46 @@ class SetupScreenshotTest {
     @PreviewTest
     @SeerrScreenPreviews
     @Composable
-    fun addressLayout() = SetupScreen(state = previewAddress(), actions = NoSetupActions)
+    fun addressLayout() = SetupFrame(state = previewAddress(), actions = NoSetupActions)
 
     @PreviewTest
     @SeerrScreenPreviews
     @Composable
-    fun signInLayout() = SetupScreen(state = previewSignIn(), actions = NoSetupActions)
+    fun signInLayout() = SetupFrame(state = previewSignIn(), actions = NoSetupActions)
 
     /** The address step offering the demo (#1705), across the device matrix and in Spanish, whose labels run longer. */
     @PreviewTest
     @SeerrScreenPreviews
     @Composable
-    fun addressDemoOffered() = SetupScreen(state = previewAddress().copy(canTryDemo = true), actions = NoSetupActions)
+    fun addressDemoOffered() = SetupFrame(state = previewAddress().copy(canTryDemo = true), actions = NoSetupActions)
 
     @PreviewTest
     @SeerrSpanishPreviews
     @Composable
-    fun addressDemoOfferedSpanish() = SetupScreen(state = previewAddress().copy(canTryDemo = true), actions = NoSetupActions)
+    fun addressDemoOfferedSpanish() = SetupFrame(state = previewAddress().copy(canTryDemo = true), actions = NoSetupActions)
 
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
-    fun loading() = SetupScreen(state = SetupUiState.Loading, actions = NoSetupActions)
+    fun loading() = SetupFrame(state = SetupUiState.Loading, actions = NoSetupActions)
 
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
-    fun addressTyped() = SetupScreen(state = previewAddress(serverUrl = "http://seerr.lan:5055"), actions = NoSetupActions)
+    fun addressTyped() = SetupFrame(state = previewAddress(serverUrl = "http://seerr.lan:5055"), actions = NoSetupActions)
 
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
     fun addressInsecure() =
-        SetupScreen(state = previewAddress(serverUrl = "http://seerr.example.com", insecure = true), actions = NoSetupActions)
+        SetupFrame(state = previewAddress(serverUrl = "http://seerr.example.com", insecure = true), actions = NoSetupActions)
 
     /** The same address once the user has opted in to plain HTTP for it: Continue is enabled. */
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
     fun addressInsecureAllowed() =
-        SetupScreen(
+        SetupFrame(
             state = previewAddress(serverUrl = "http://seerr.example.com", insecure = true, cleartextAllowed = true),
             actions = NoSetupActions,
         )
@@ -72,14 +75,14 @@ class SetupScreenshotTest {
     @SeerrScreenStatePreview
     @Composable
     fun addressNeedsLocalNetwork() =
-        SetupScreen(state = previewAddress(serverUrl = "http://192.168.1.20:5055", needsLocalNetwork = true), actions = NoSetupActions)
+        SetupFrame(state = previewAddress(serverUrl = "http://192.168.1.20:5055", needsLocalNetwork = true), actions = NoSetupActions)
 
     /** The read failed while the permission is refused: the permission is named, not the server. */
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
     fun addressLocalNetworkDenied() =
-        SetupScreen(
+        SetupFrame(
             state =
                 previewAddress(
                     serverUrl = "http://192.168.1.20:5055",
@@ -93,19 +96,19 @@ class SetupScreenshotTest {
     @SeerrScreenStatePreview
     @Composable
     fun addressNotSeerr() =
-        SetupScreen(state = previewAddress(serverUrl = "http://nas.lan:9000", error = SetupError.NotSeerr), actions = NoSetupActions)
+        SetupFrame(state = previewAddress(serverUrl = "http://nas.lan:9000", error = SetupError.NotSeerr), actions = NoSetupActions)
 
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
     fun addressInspecting() =
-        SetupScreen(state = previewAddress(serverUrl = "http://seerr.lan:5055", isInspecting = true), actions = NoSetupActions)
+        SetupFrame(state = previewAddress(serverUrl = "http://seerr.lan:5055", isInspecting = true), actions = NoSetupActions)
 
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
     fun signInApiKey() =
-        SetupScreen(
+        SetupFrame(
             state = previewSignIn(form = SignInForm(mode = SeerrSignInMode.ApiKey, apiKey = PREVIEW_API_KEY)),
             actions = NoSetupActions,
         )
@@ -115,7 +118,7 @@ class SetupScreenshotTest {
     @SeerrScreenStatePreview
     @Composable
     fun signInLocal() =
-        SetupScreen(
+        SetupFrame(
             state = previewSignIn(form = SignInForm(mode = SeerrSignInMode.Local, email = "scott@example.com", password = "hunter2")),
             actions = NoSetupActions,
         )
@@ -124,7 +127,7 @@ class SetupScreenshotTest {
     @SeerrScreenStatePreview
     @Composable
     fun signInRejected() =
-        SetupScreen(
+        SetupFrame(
             state =
                 previewSignIn(
                     form = SignInForm(mode = SeerrSignInMode.Local, email = "scott@example.com", password = "hunter2"),
@@ -137,7 +140,7 @@ class SetupScreenshotTest {
     @SeerrScreenStatePreview
     @Composable
     fun signInResetEmailSent() =
-        SetupScreen(
+        SetupFrame(
             state =
                 previewSignIn(
                     form = SignInForm(mode = SeerrSignInMode.Local, email = "scott@example.com"),
@@ -151,7 +154,7 @@ class SetupScreenshotTest {
     @SeerrScreenStatePreview
     @Composable
     fun reconnect() =
-        SetupScreen(
+        SetupFrame(
             state = previewSignIn(notice = SetupNotice.SessionRejected),
             actions = SetupActions({}, {}, {}, {}, {}, {}, {}, {}, onDisconnect = {}),
         )
@@ -160,7 +163,7 @@ class SetupScreenshotTest {
     @SeerrScreenStatePreview
     @Composable
     fun signInConnecting() =
-        SetupScreen(
+        SetupFrame(
             state = previewSignIn(form = SignInForm(mode = SeerrSignInMode.ApiKey, apiKey = PREVIEW_API_KEY), isConnecting = true),
             actions = NoSetupActions,
         )
@@ -169,7 +172,7 @@ class SetupScreenshotTest {
     @SeerrScreenStatePreview
     @Composable
     fun signInPlex() =
-        SetupScreen(
+        SetupFrame(
             state =
                 previewSignIn(
                     form = SignInForm(mode = SeerrSignInMode.Plex),
@@ -182,7 +185,7 @@ class SetupScreenshotTest {
     @SeerrScreenStatePreview
     @Composable
     fun signInQuickConnect() =
-        SetupScreen(
+        SetupFrame(
             state =
                 previewSignIn(
                     form = SignInForm(mode = SeerrSignInMode.QuickConnect),
@@ -194,24 +197,24 @@ class SetupScreenshotTest {
     @PreviewTest
     @SeerrTabletPanesPreview
     @Composable
-    fun addressTabletLand() = SetupScreen(state = previewAddress(serverUrl = "http://seerr.lan:5055"), actions = NoSetupActions)
+    fun addressTabletLand() = SetupFrame(state = previewAddress(serverUrl = "http://seerr.lan:5055"), actions = NoSetupActions)
 
     @PreviewTest
     @SeerrTabletPanesPreview
     @Composable
     fun addressNeedsLocalNetworkTabletLand() =
-        SetupScreen(state = previewAddress(serverUrl = "http://192.168.1.20:5055", needsLocalNetwork = true), actions = NoSetupActions)
+        SetupFrame(state = previewAddress(serverUrl = "http://192.168.1.20:5055", needsLocalNetwork = true), actions = NoSetupActions)
 
     @PreviewTest
     @SeerrTabletPanesPreview
     @Composable
-    fun signInTabletLand() = SetupScreen(state = previewSignIn(), actions = NoSetupActions)
+    fun signInTabletLand() = SetupFrame(state = previewSignIn(), actions = NoSetupActions)
 
     @PreviewTest
     @SeerrTabletPanesPreview
     @Composable
     fun signInRejectedTabletLand() =
-        SetupScreen(
+        SetupFrame(
             state =
                 previewSignIn(
                     form = SignInForm(mode = SeerrSignInMode.Local, email = "scott@example.com", password = "hunter2"),
@@ -225,10 +228,19 @@ class SetupScreenshotTest {
     @SeerrScreenStatePreview
     @Composable
     fun editConnection() =
-        SetupScreen(
+        SetupFrame(
             state = previewSignIn(),
             actions = NoSetupActions,
             title = stringResource(R.string.settings_edit_connection),
             onBack = {},
         )
+}
+
+/** The setup screen with Binge's connect wording on, so these frames keep showing the intro that mentions Binge. */
+@Composable
+private fun SetupFrame(
+    state: SetupUiState,
+    actions: SetupActions,
+) {
+    CompositionLocalProvider(LocalFlags provides Flags.AllOn) { SetupScreen(state = state, actions = actions) }
 }
