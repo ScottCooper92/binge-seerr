@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.pm.PackageManager
 import com.binge.companion.sdk.attempt
 import com.cooper.binge.companion.seerr.notifications.ApplicationScope
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
