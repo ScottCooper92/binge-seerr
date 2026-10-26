@@ -39,8 +39,8 @@ internal const val FORWARDED_MAX_QUEUED = 200
  */
 class NotificationForwarding(
     private val dataStore: DataStore<Preferences>,
-    private val clock: () -> Long = System::currentTimeMillis,
     private val featureFlags: FeatureFlags = FixedFeatureFlags(),
+    private val clock: () -> Long = System::currentTimeMillis,
 ) {
     val enabled: Flow<Boolean> = dataStore.data.map { it[FORWARDING_ENABLED] ?: false }.distinctUntilChanged()
 
