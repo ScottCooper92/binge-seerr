@@ -3,6 +3,8 @@ package com.cooper.binge.companion.seerr
 import android.content.Intent
 import com.binge.companion.sdk.BingeHosts
 import com.binge.companion.sdk.CompanionManifest
+import com.cooper.binge.companion.seerr.flags.FixedFeatureFlags
+import com.cooper.binge.companion.seerr.flags.Flags
 import com.cooper.binge.companion.seerr.ui.DeepLinks
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -27,8 +29,10 @@ class ViewRequestHandOffActivityTest {
     private fun start(
         requestId: String?,
         callingPackage: String? = BingeHosts.DEBUG_PACKAGE_NAME,
+        flags: Flags = Flags.AllOn,
     ): Intent? {
         val controller = Robolectric.buildActivity(ViewRequestHandOffActivity::class.java, handOff(requestId))
+        controller.get().featureFlags = { FixedFeatureFlags(flags) }
         callingPackage?.let { shadowOf(controller.get()).setCallingPackage(it) }
         controller.create()
         assertTrue(controller.get().isFinishing)
@@ -72,5 +76,10 @@ class ViewRequestHandOffActivityTest {
     @Test
     fun `a start with no calling package opens nothing`() {
         assertNull(start(requestId = "42", callingPackage = null))
+    }
+
+    @Test
+    fun `with request companions off even Binge opens nothing`() {
+        assertNull(start("7", flags = Flags(bingePromotion = true)))
     }
 }

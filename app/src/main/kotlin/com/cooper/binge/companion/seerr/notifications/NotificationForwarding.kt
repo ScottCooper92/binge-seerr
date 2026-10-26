@@ -8,6 +8,8 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import com.binge.companion.contracts.v1.ForwardedNotification
+import com.cooper.binge.companion.seerr.flags.FeatureFlags
+import com.cooper.binge.companion.seerr.flags.FixedFeatureFlags
 import com.google.protobuf.InvalidProtocolBufferException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -32,15 +34,18 @@ internal const val FORWARDED_MAX_QUEUED = 200
  * Whether Binge shows this app's notices instead of this app, and the queue it reads them from
  * (the NOTIFICATIONS contract). It is *active* while on and a host has polled within
  * [FORWARDING_LAPSE_MILLIS]; turning it on counts as a poll. A host uninstalled without turning it
- * off stops polling, so the notices come back here rather than queueing for nobody.
+ * off stops polling, so the notices come back here rather than queueing for nobody. It is never active while
+ * `request_companions_enabled` is off, so this app shows its own notices then.
  */
 class NotificationForwarding(
     private val dataStore: DataStore<Preferences>,
     private val clock: () -> Long = System::currentTimeMillis,
+    private val featureFlags: FeatureFlags = FixedFeatureFlags(),
 ) {
     val enabled: Flow<Boolean> = dataStore.data.map { it[FORWARDING_ENABLED] ?: false }.distinctUntilChanged()
 
     suspend fun isActive(): Boolean {
+        if (!featureFlags.flags.value.requestCompanions) return false
         val prefs = dataStore.data.first()
         val lastPoll = prefs[FORWARDING_LAST_POLL] ?: return false
         return prefs[FORWARDING_ENABLED] == true && clock() - lastPoll <= FORWARDING_LAPSE_MILLIS
