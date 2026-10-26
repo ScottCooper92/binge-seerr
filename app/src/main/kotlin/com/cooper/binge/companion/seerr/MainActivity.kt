@@ -16,12 +16,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation3.runtime.rememberNavBackStack
 import com.cooper.binge.companion.seerr.auth.ConnectionRestore
 import com.cooper.binge.companion.seerr.auth.ForegroundUserRefresh
 import com.cooper.binge.companion.seerr.feedback.BugReportLinks
 import com.cooper.binge.companion.seerr.feedback.FeedbackPrefs
 import com.cooper.binge.companion.seerr.feedback.ShakeToReportPrompt
+import com.cooper.binge.companion.seerr.flags.FeatureFlags
+import com.cooper.binge.companion.seerr.flags.LocalFlags
 import com.cooper.binge.companion.seerr.telemetry.Analytics
 import com.cooper.binge.companion.seerr.telemetry.LocalAnalytics
 import com.cooper.binge.companion.seerr.telemetry.screenName
@@ -38,6 +41,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 private const val KEY_CONSUMED_LINK = "consumed_link"
@@ -69,6 +73,9 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var userRefresh: ForegroundUserRefresh
 
+    @Inject
+    lateinit var featureFlags: FeatureFlags
+
     private var consumedLink: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -87,11 +94,12 @@ class MainActivity : ComponentActivity() {
         }
         drawEdgeToEdge()
         setContent {
+            val flags by featureFlags.flags.collectAsStateWithLifecycle()
             // A television gets the D-pad shell, as Binge's MainActivity selects its own at runtime. It has no
             // back stack, so of the links it follows only a request's, opening its page over Home.
             if (LocalConfiguration.current.isTelevision()) {
                 val linkedRequests = remember { deepLinks.backStacks.mapNotNull { it.linkedRequestId() } }
-                CompositionLocalProvider(LocalAnalytics provides analytics) { TvSeerrShell(linkedRequests = linkedRequests) }
+                CompositionLocalProvider(LocalAnalytics provides analytics, LocalFlags provides flags) { TvSeerrShell(linkedRequests = linkedRequests) }
                 return@setContent
             }
             val backStack = rememberNavBackStack(HomeRoute)
@@ -109,13 +117,15 @@ class MainActivity : ComponentActivity() {
             }
             // Phone only: a television has no accelerometer, and reports a bug from Settings instead.
             val shakeToReport by feedbackPrefs.shakeToReport.collectAsStateWithLifecycle(initialValue = false)
-            SeerrTheme {
-                ShakeToReportPrompt(enabled = shakeToReport, bugReportUrl = bugReportLinks::url)
-                // The window's own background (the platform default, since Theme.Seerr sets none)
-                // doesn't match this, so a two-pane gutter would otherwise show through as a
-                // different colour than the panes it sits between.
-                Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                    ConsentGate { SeerrNavHost(backStack = backStack) }
+            CompositionLocalProvider(LocalFlags provides flags) {
+                SeerrTheme {
+                    ShakeToReportPrompt(enabled = shakeToReport, bugReportUrl = bugReportLinks::url)
+                    // The window's own background (the platform default, since Theme.Seerr sets none)
+                    // doesn't match this, so a two-pane gutter would otherwise show through as a
+                    // different colour than the panes it sits between.
+                    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+                        ConsentGate { SeerrNavHost(backStack = backStack) }
+                    }
                 }
             }
         }
@@ -125,6 +135,7 @@ class MainActivity : ComponentActivity() {
     override fun onStart() {
         super.onStart()
         userRefresh.onForeground()
+        lifecycleScope.launch { featureFlags.refresh() }
     }
 
     override fun onNewIntent(intent: Intent) {

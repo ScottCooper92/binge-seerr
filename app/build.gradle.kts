@@ -257,6 +257,7 @@ dependencies {
     implementation(libs.okhttp.logging.interceptor)
     implementation(libs.datastore.preferences)
     implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.config)
     implementation(libs.firebase.crashlytics)
     implementation(libs.posthog.android)
     implementation(platform(libs.compose.bom))

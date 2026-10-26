@@ -16,6 +16,12 @@
     <string name="proto_binge_hint_not_installed" translatable="false">Binge not installed</string>
     <string name="proto_binge_hint_not_connected" translatable="false">Binge installed, not connected</string>
     <string name="proto_binge_hint_connected" translatable="false">Binge connected</string>
+    <string name="proto_flags_title" translatable="false">Feature flags</string>
+    <string name="proto_flags_detail" translatable="false">Override Remote Config for Binge promotion and request companions</string>
+    <string name="proto_flag_default_on" translatable="false">Remote Config: on. Tap to override.</string>
+    <string name="proto_flag_default_off" translatable="false">Remote Config: off. Tap to override.</string>
+    <string name="proto_flag_forced_on" translatable="false">Override: on. Tap to cycle.</string>
+    <string name="proto_flag_forced_off" translatable="false">Override: off. Tap to cycle.</string>
     <string name="proto_open_as_sheet" translatable="false">Open as a sheet</string>
     <string name="proto_tapped" translatable="false">Tapped: %1$s</string>
     <string name="proto_scenario_pending" translatable="false">Pending</string>

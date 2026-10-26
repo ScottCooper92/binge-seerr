@@ -4,10 +4,14 @@ import android.app.Application
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
 import com.cooper.binge.companion.seerr.auth.ConnectionRestore
+import com.cooper.binge.companion.seerr.flags.FeatureFlags
+import com.cooper.binge.companion.seerr.notifications.ApplicationScope
 import com.cooper.binge.companion.seerr.notifications.NotificationPlanner
 import com.cooper.binge.companion.seerr.telemetry.Analytics
 import com.cooper.binge.companion.seerr.telemetry.CrashReportingSwitch
 import dagger.hilt.android.HiltAndroidApp
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 /**
@@ -36,6 +40,14 @@ class SeerrApp :
     @Inject
     lateinit var analytics: Analytics
 
+    /** Injected so it is built at start, and fetched once here because the exported Service can start this process alone. */
+    @Inject
+    lateinit var featureFlags: FeatureFlags
+
+    @Inject
+    @field:ApplicationScope
+    lateinit var scope: CoroutineScope
+
     override val workManagerConfiguration: Configuration
         get() = Configuration.Builder().setWorkerFactory(workerFactory).build()
 
@@ -44,5 +56,6 @@ class SeerrApp :
         crashReporting.start()
         connectionRestore.start()
         planner.start()
+        scope.launch { featureFlags.refresh() }
     }
 }
