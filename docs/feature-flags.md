@@ -5,7 +5,7 @@ Two flags decide what this app says to, and does for, Binge. Both are off until 
 | Flag | Remote Config key | Off means |
 | --- | --- | --- |
 | `BINGE_PROMOTION` | `binge_promotion_enabled` | No prompt to install or open Binge. Titles open on the server's own page. |
-| `REQUEST_COMPANIONS` | `request_companions_enabled` | The exported Service is disabled, so a host cannot find or bind it. A host that bound earlier gets an empty handshake and `PERMISSION_DENIED` for every REQUEST rpc. The hand-off Activities finish at once. Notification forwarding cannot be switched on and is never active. |
+| `REQUEST_COMPANIONS` | `request_companions_enabled` | The exported Service is disabled (the manifest ships it that way), so a host cannot find or bind it. A host that bound earlier gets an empty handshake and `PERMISSION_DENIED` for every REQUEST rpc. The hand-off Activities finish at once. Notification forwarding cannot be switched on and is never active. |
 
 Anything about *connecting* to Binge needs both flags: the hub tile and settings row once Binge is installed,
 the setup intro and the disconnect confirmation. `Flags.bingeConnectPromotion` holds that rule.
@@ -13,8 +13,8 @@ the setup intro and the disconnect confirmation. `Flags.bingeConnectPromotion` h
 ## The exported Service
 
 The REQUEST contract's core (Handshake, SubmitRequest, GetStatus) cannot be served with the flag off, and a service
-that cannot serve it must not export the REQUEST action. So `ExportedServiceGate` disables the Service component with
-the package manager while the flag is off, and puts it back when the flag turns on. It applies the cached value as the
+that cannot serve it must not export the REQUEST action. The manifest ships the Service component disabled, and `ExportedServiceGate` enables it with
+the package manager only while the flag is on, and returns it to the manifest's state when the flag turns off. It applies the cached value as the
 app starts and again after each fetch. The NOTIFICATIONS action lives on the same component and goes with it; forwarding
 is never active while the flag is off, so nothing is lost.
 
@@ -35,14 +35,9 @@ Config itself throttles that to once an hour.
 A debug build adds a **Feature flags** row to the hub's developer section. Tapping a flag cycles its local override:
 Remote Config's value, on, off. A release build never reads overrides.
 
-## Off for the Service
-
-The Service stays bindable. Binge already handles a companion that declares nothing, so refusing the bind would only
-turn a quiet state into an error. The handshake is not recorded, so "Connected to Binge" never advances.
-
 ## Building from source
 
-A build that was not given a `google-services.json` has no Remote Config, so both flags stay off and the Service
-declares nothing. That is inside the contract: an OK handshake with an empty capability set, and `PERMISSION_DENIED`
-for every REQUEST rpc. To use the integration from a source build, either point it at your own Firebase project and set the two
-keys to `true`, or use the debug build's **Feature flags** row to switch them on locally.
+A build that was not given a `google-services.json` has no Remote Config, so both flags stay off. The manifest ships
+the Service disabled, so such a build has no Service for a host to find. To use the integration from a source build,
+either point it at your own Firebase project and set the two keys to `true`, or use the debug build's **Feature flags**
+row to switch them on locally. The Service is enabled once the app has run with the flag on.

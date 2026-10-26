@@ -17,8 +17,8 @@ fun interface ComponentSwitch {
 }
 
 /**
- * Switches one manifest component on or off with the package manager. On goes back to the manifest's own default
- * rather than forcing the component on, and the process is not killed either way.
+ * Switches one manifest component with the package manager, without killing the process. On enables it. Off goes back
+ * to the manifest's own value, which for the Service is disabled, rather than forcing a state of its own.
  */
 class PackageManagerComponentSwitch(
     private val context: Context,
@@ -26,7 +26,7 @@ class PackageManagerComponentSwitch(
 ) : ComponentSwitch {
     override fun setEnabled(enabled: Boolean) {
         val state =
-            if (enabled) PackageManager.COMPONENT_ENABLED_STATE_DEFAULT else PackageManager.COMPONENT_ENABLED_STATE_DISABLED
+            if (enabled) PackageManager.COMPONENT_ENABLED_STATE_ENABLED else PackageManager.COMPONENT_ENABLED_STATE_DEFAULT
         // A refused change leaves the component as it was, which the Service's own flag checks still cover.
         attempt {
             context.packageManager.setComponentEnabledSetting(ComponentName(context, component), state, PackageManager.DONT_KILL_APP)
@@ -35,13 +35,14 @@ class PackageManagerComponentSwitch(
 }
 
 /**
- * Keeps the exported Service out of a host's discovery while `request_companions_enabled` is off. The REQUEST contract's
- * core (Handshake, SubmitRequest, GetStatus) cannot be served then, and a service that cannot serve it must not export
- * the REQUEST action. The one component also carries NOTIFICATIONS, which goes with it; forwarding is never active
+ * Keeps the exported Service out of a host's discovery unless `request_companions_enabled` is on. The REQUEST contract's
+ * core (Handshake, SubmitRequest, GetStatus) cannot be served otherwise, and a service that cannot serve it must not
+ * export the REQUEST action. The manifest declares the component disabled, so a fresh install is off; this enables it
+ * when the flag is on. The one component also carries NOTIFICATIONS, which goes with it; forwarding is never active
  * while the flag is off, so nothing is lost.
  *
- * Applied from the cached value as the app starts and again whenever the flag changes, so a fetch that turns it on
- * puts the Service back. A host that had already bound is covered by the Service's own flag checks.
+ * Applied from the cached value as the app starts and again whenever the flag changes. A host that had already bound
+ * when the flag turned off is covered by the Service's own flag checks.
  */
 class ExportedServiceGate
     @Inject

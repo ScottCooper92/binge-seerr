@@ -210,12 +210,17 @@
             manifest. android:process is deliberately absent so the Service runs under this app's
             own uid, which is what the host's certificate check verifies.
 
+            android:enabled="false": the Service is not there for a host to find until this app's process has read
+            request_companions_enabled and ExportedServiceGate has enabled the component. A fresh install is therefore
+            off, as the flag's default is.
+
             The meta-data is read by the host WITHOUT binding, so it can list this app and decide
             whether the two can parse each other before any process of ours starts. The keys are
             CompanionManifest's; a typo here reads as "declares no contract".
         -->
         <service
             android:name=".service.SeerrCompanionService"
+            android:enabled="false"
             android:exported="true">
             <intent-filter>
                 <action android:name="com.binge.companion.REQUEST" />
