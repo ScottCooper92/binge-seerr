@@ -154,7 +154,7 @@ class DemoJourneyTest {
 }
 
 /** The filter chip itself: its label first, then at most a count, and not a row that has "Pending" among its words. */
-private fun filterChip(label: String) =
+internal fun filterChip(label: String) =
     SemanticsMatcher("a chip labelled $label") { node ->
         val texts =
             node.config

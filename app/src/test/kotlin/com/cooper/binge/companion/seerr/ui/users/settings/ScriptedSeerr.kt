@@ -88,12 +88,16 @@ internal class ScriptedSeerr(
         server.close()
     }
 
+    /** Answers [key] with [body]; [setCookie] adds a `Set-Cookie`, as a sign-in's answer carries the session. */
     fun serve(
         key: String,
         body: String = "{}",
         code: Int = 200,
+        setCookie: String? = null,
     ) {
-        responses[key] = { MockResponse(code = code, headers = headersOf("Content-Type", "application/json"), body = body) }
+        val json = arrayOf("Content-Type", "application/json")
+        val headers = if (setCookie == null) headersOf(*json) else headersOf(*json, "Set-Cookie", setCookie)
+        responses[key] = { MockResponse(code = code, headers = headers, body = body) }
     }
 
     /**

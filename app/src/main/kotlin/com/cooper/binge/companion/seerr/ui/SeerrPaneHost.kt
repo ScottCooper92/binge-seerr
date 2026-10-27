@@ -7,6 +7,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -20,6 +21,7 @@ import androidx.navigation3.ui.NavDisplay
 import com.binge.designsystem.LocalIsSinglePaneNav
 import com.binge.designsystem.LocalPaneDepth
 import com.binge.designsystem.paneShowsBack
+import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * What an entry asks of the layout it is in, as providers rather than values. Navigation 3 builds an entry once for its
@@ -37,27 +39,32 @@ internal class PaneLayout(
     val showBack: () -> Boolean,
     val threePane: () -> Boolean,
 ) {
-    /** Opens [route] from a section's list or the hub: in place of the open item in three panes, else above it. */
+    /** Opens [route] from a section's list or the hub: in place of the open item in three panes, else by [push]. */
     fun open(
         backStack: NavBackStack<NavKey>,
         route: NavKey,
-    ) = if (threePane()) backStack.openBeside(route) else backStack.add(route)
+    ) = if (threePane()) backStack.openBeside(route) else backStack.push(route)
 }
 
 /**
  * The [NavDisplay] and the pane locals around it, apart from the entries that fill it. [SeerrNavHost] passes the real
  * entries; [entries] is a parameter so a test can pin the panes with stand-ins,
  * cheaply and on their own. [defaultSection] is the section a wide window shows while none is open.
+ *
+ * Back that finds only the root calls [onExit], at most once: a second Back in the same frame reaches the scene from
+ * before the first, which still claims it (#1760). Back at a settled root is not claimed, so the system takes it.
  */
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
 internal fun SeerrPaneHost(
     backStack: NavBackStack<NavKey>,
     connected: Boolean?,
+    onExit: () -> Unit,
     modifier: Modifier = Modifier,
     defaultSection: @Composable () -> Unit = {},
     entries: EntryProviderScope<NavKey>.(panes: PaneLayout) -> Unit,
 ) {
+    val exit = rememberExitOnce(onExit)
     // One directive for both the strategy and the back-arrow decision, so the two cannot disagree
     // about whether the hub is on screen beside a section.
     val directive = calculatePaneScaffoldDirective(currentWindowAdaptiveInfoV2())
@@ -82,7 +89,7 @@ internal fun SeerrPaneHost(
         NavDisplay(
             backStack = backStack,
             modifier = modifier,
-            onBack = { backStack.removeLastOrNull() },
+            onBack = { if (!backStack.pop()) exit() },
             sceneStrategies = listOf(rememberSeerrPaneStrategy(directive, backStack, threePane.value, defaultSection)),
             entryDecorators =
                 listOf(
@@ -92,4 +99,12 @@ internal fun SeerrPaneHost(
             entryProvider = entryProvider { entries(PaneLayout({ hubBeside.value }, showBack, { threePane.value })) },
         )
     }
+}
+
+/** [onExit] as a call that runs once for this composition: the activity it finishes has only one exit to take. */
+@Composable
+internal fun rememberExitOnce(onExit: () -> Unit): () -> Unit {
+    val current by rememberUpdatedState(onExit)
+    val exited = remember { AtomicBoolean(false) }
+    return { if (exited.compareAndSet(false, true)) current() }
 }
