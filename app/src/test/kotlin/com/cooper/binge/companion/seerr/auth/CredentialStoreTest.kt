@@ -7,6 +7,8 @@ import com.cooper.binge.companion.seerr.seerr.SeerrVariant
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withContext
 import org.junit.Assert.assertEquals
@@ -28,13 +30,11 @@ class CredentialStoreTest {
 
     private val cipher = FakeCipher()
 
-    private fun store(
+    private fun TestScope.store(
         scope: kotlinx.coroutines.CoroutineScope,
-        io: CoroutineDispatcher? = null,
-    ): CredentialStore {
-        val dataStore = PreferenceDataStoreFactory.create(scope = scope) { folder.newFile("creds.preferences_pb") }
-        return if (io == null) CredentialStore(dataStore, cipher) else CredentialStore(dataStore, cipher, io)
-    }
+        io: CoroutineDispatcher = UnconfinedTestDispatcher(testScheduler),
+    ): CredentialStore =
+        CredentialStore(PreferenceDataStoreFactory.create(scope = scope) { folder.newFile("creds.preferences_pb") }, cipher, io)
 
     @Test
     fun `the secret is decrypted on the io dispatcher, never on the collector's main thread`() =

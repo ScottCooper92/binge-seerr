@@ -10,6 +10,7 @@ import com.cooper.binge.companion.seerr.util.PlainCipher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import mockwebserver3.Dispatcher
@@ -245,6 +246,7 @@ internal class ScriptedSeerr(
                     CredentialStore(
                         PreferenceDataStoreFactory.create(scope = scope.backgroundScope) { folder.newFile("d${stores++}.preferences_pb") },
                         PlainCipher,
+                        UnconfinedTestDispatcher(scope.testScheduler),
                     ),
                 apis = apis,
                 quickConnectPollInterval = quickConnectPollInterval,

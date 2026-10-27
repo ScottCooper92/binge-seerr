@@ -15,6 +15,7 @@ import com.cooper.binge.companion.seerr.seerr.toSeerrError
 import com.cooper.binge.companion.seerr.util.PlainCipher
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -38,6 +39,7 @@ class DemoConnectionTest {
                 CredentialStore(
                     PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("c.preferences_pb") },
                     PlainCipher,
+                    UnconfinedTestDispatcher(testScheduler),
                 ),
             apis = apis,
             carrier =
@@ -110,6 +112,7 @@ class DemoConnectionTest {
                 CredentialStore(
                     PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("c.preferences_pb") },
                     PlainCipher,
+                    UnconfinedTestDispatcher(testScheduler),
                 )
             store.save(demoCredentials())
             val carrier =

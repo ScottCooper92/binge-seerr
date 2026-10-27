@@ -10,6 +10,7 @@ import com.cooper.binge.companion.seerr.seerr.SeerrCredentials
 import com.cooper.binge.companion.seerr.seerr.SeerrDestination
 import com.cooper.binge.companion.seerr.seerr.SeerrVariant
 import com.cooper.binge.companion.seerr.util.PlainCipher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import mockwebserver3.Dispatcher
@@ -67,6 +68,7 @@ class QualityProfileLabelsTest {
             CredentialStore(
                 dataStore = PreferenceDataStoreFactory.create { folder.newFile("creds${stores++}.preferences_pb") },
                 cipher = PlainCipher,
+                io = Dispatchers.Unconfined,
             )
         runBlocking { store.save(SeerrCredentials(seerr.url("/").toString(), SeerrAuth.ApiKey("k3y"), SeerrVariant.fromVersion("2.7.0"))) }
         return QualityProfileLabels(SeerrConnection(store, SeerrApiFactory(logRequests = false)), clock = { now })

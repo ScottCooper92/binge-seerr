@@ -26,6 +26,7 @@ import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
@@ -139,6 +140,7 @@ class SendAddressViewModelTest {
             CredentialStore(
                 PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("c${stores++}.preferences_pb") },
                 PlainCipher,
+                UnconfinedTestDispatcher(testScheduler),
             )
         saved?.let { store.save(it) }
         val vm =
