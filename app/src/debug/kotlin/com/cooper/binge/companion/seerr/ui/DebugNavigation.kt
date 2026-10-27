@@ -37,15 +37,15 @@ internal fun EntryProviderScope<NavKey>.debugDetailEntries(
     showBack: () -> Boolean,
 ) {
     entry<ManageSheetPrototypeRoute>(metadata = DetailPane) {
-        DetailPaneContent { ManageSheetPrototypeScreen(onBack = { backStack.removeLastOrNull() }) }
+        DetailPaneContent { ManageSheetPrototypeScreen(onBack = { backStack.pop() }) }
     }
     entry<FlagOverridesRoute>(metadata = DetailPane) {
-        DetailPaneContent { FlagOverridesScreen(onBack = { backStack.removeLastOrNull() }) }
+        DetailPaneContent { FlagOverridesScreen(onBack = { backStack.pop() }) }
     }
     entry<BingeHintPrototypeRoute>(metadata = DetailPane) {
-        DetailPaneContent { BingeHintPrototypeScreen(onBack = { backStack.removeLastOrNull() }) }
+        DetailPaneContent { BingeHintPrototypeScreen(onBack = { backStack.pop() }) }
     }
     entry<RequestCardsPrototypeRoute>(metadata = DetailPane) {
-        DetailPaneContent { RequestCardsPrototypeScreen(onBack = { backStack.removeLastOrNull() }) }
+        DetailPaneContent { RequestCardsPrototypeScreen(onBack = { backStack.pop() }) }
     }
 }

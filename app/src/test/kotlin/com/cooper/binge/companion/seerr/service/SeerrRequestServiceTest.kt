@@ -61,6 +61,7 @@ import io.grpc.Status
 import io.grpc.StatusException
 import io.grpc.inprocess.InProcessChannelBuilder
 import io.grpc.inprocess.InProcessServerBuilder
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.flow.toList
@@ -152,6 +153,7 @@ class SeerrRequestServiceTest {
             CredentialStore(
                 dataStore = PreferenceDataStoreFactory.create { folder.newFile("creds.preferences_pb") },
                 cipher = PlainCipher,
+                io = Dispatchers.Unconfined,
             )
         runBlocking { store.save(SeerrCredentials(seerr.url("/").toString(), SeerrAuth.ApiKey("k3y"), SeerrVariant.fromVersion(version))) }
         val connection = SeerrConnection(store, SeerrApiFactory(logRequests = false))
@@ -1131,7 +1133,12 @@ class SeerrRequestServiceTest {
     @Test
     fun `nothing connected is UNAUTHENTICATED everywhere but the handshake`() =
         runTest {
-            val store = CredentialStore(PreferenceDataStoreFactory.create { folder.newFile("empty.preferences_pb") }, PlainCipher)
+            val store =
+                CredentialStore(
+                    PreferenceDataStoreFactory.create { folder.newFile("empty.preferences_pb") },
+                    PlainCipher,
+                    Dispatchers.Unconfined,
+                )
             val stub = serve(SeerrRequestService(SeerrConnection(store, SeerrApiFactory(logRequests = false)), "0.1.0-test"))
 
             val handshake = stub.handshake(HandshakeRequest.getDefaultInstance())
