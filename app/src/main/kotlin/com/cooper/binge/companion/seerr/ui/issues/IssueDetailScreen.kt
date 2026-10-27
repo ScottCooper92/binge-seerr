@@ -28,6 +28,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -94,10 +95,11 @@ fun IssueDetailScreen(
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     val resources = LocalResources.current
+    val currentOnBack by rememberUpdatedState(actions.onBack)
     LaunchedEffect(events) {
         events.collectLatest { event ->
             if (event == IssueDetailEvent.IssueDeleted) {
-                actions.onBack()
+                currentOnBack()
                 return@collectLatest
             }
             snackbarHostState.currentSnackbarData?.dismiss()

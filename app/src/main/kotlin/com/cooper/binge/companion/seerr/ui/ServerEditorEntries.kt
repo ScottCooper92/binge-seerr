@@ -3,6 +3,7 @@ package com.cooper.binge.companion.seerr.ui
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.cooper.binge.companion.seerr.ui.settings.ServiceType
@@ -143,5 +144,7 @@ private fun LeaveOnDeleted(
     events: Flow<EditorEvent>,
     onBack: () -> Unit,
 ) {
-    LaunchedEffect(events) { events.collect { event -> if (event == EditorEvent.Deleted) onBack() } }
+    // The current onBack, not the one first composed: a later one may close over a different route.
+    val currentOnBack by rememberUpdatedState(onBack)
+    LaunchedEffect(events) { events.collect { event -> if (event == EditorEvent.Deleted) currentOnBack() } }
 }
