@@ -48,7 +48,10 @@ interface CrashBreadcrumbs {
         value: String,
     )
 
-    /** A failure the app survived, for when the crash report would otherwise never exist. No-op by default. */
+    /**
+     * A failure the app survived, for when the crash report would otherwise never exist. No-op by default. The
+     * throwable's own message is sent too, so keep [message] and the cause free of ids, addresses and free text.
+     */
     fun nonFatal(
         message: String,
         cause: Throwable,
