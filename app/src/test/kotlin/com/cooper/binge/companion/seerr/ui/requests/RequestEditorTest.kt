@@ -115,6 +115,7 @@ class RequestEditorTest {
                     CredentialStore(
                         PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("e.preferences_pb") },
                         PlainCipher,
+                        UnconfinedTestDispatcher(testScheduler),
                     ),
                 apis = SeerrApiFactory(logRequests = false),
             )

@@ -8,6 +8,8 @@ import com.cooper.binge.companion.seerr.util.InMemoryDataStore
 import com.cooper.binge.companion.seerr.util.ReversingCipher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
@@ -38,10 +40,11 @@ class ConnectionRestoreTest {
     @After
     fun tearDown() = server.close()
 
-    private fun store(scope: CoroutineScope) =
+    private fun TestScope.store(scope: CoroutineScope) =
         CredentialStore(
             dataStore = PreferenceDataStoreFactory.create(scope = scope) { folder.newFile("creds.preferences_pb") },
             cipher = ReversingCipher,
+            io = UnconfinedTestDispatcher(testScheduler),
         )
 
     /** Real consent, shared by the factory's guard and the restore, as the app wires them. */

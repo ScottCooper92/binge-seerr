@@ -31,6 +31,14 @@ class HomeRootTest {
         assertEquals(listOf(HomeRoute), stack.toList())
     }
 
+    /** What the hub had open belonged to the server just left; left there, it would cover setup (#1760). */
+    @Test
+    fun `a disconnect from the hub takes everything above it too`() {
+        val stack = backStack(HubRoute, RequestsRoute, RequestDetailRoute(7))
+        stack.settleHome(connected = false)
+        assertEquals(listOf<NavKey>(HomeRoute), stack.toList())
+    }
+
     /**
      * Unresolved is home, not "leave it alone": the hub is the list pane, so a spinner left there
      * renders beside the detail placeholder. A saved server restores the hub at the root before the

@@ -6,6 +6,7 @@ import com.cooper.binge.companion.seerr.seerr.SeerrAuth
 import com.cooper.binge.companion.seerr.seerr.SessionCookieJar
 import com.cooper.binge.companion.seerr.util.InMemoryDataStore
 import com.cooper.binge.companion.seerr.util.PlainCipher
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Interceptor
@@ -61,6 +62,7 @@ class CleartextConsentPerOriginTest {
                         CredentialStore(
                             PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("c.preferences_pb") },
                             PlainCipher,
+                            UnconfinedTestDispatcher(testScheduler),
                         ),
                     apis = SeerrApiFactory(logRequests = false, cleartext = cleartext, testTransport = server),
                     cleartext = cleartext,

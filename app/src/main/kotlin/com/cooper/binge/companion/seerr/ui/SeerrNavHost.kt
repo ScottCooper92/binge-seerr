@@ -28,6 +28,7 @@ import com.cooper.binge.companion.seerr.ui.state.LoadingScreen
 @Composable
 fun SeerrNavHost(
     backStack: NavBackStack<NavKey>,
+    onExit: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
@@ -44,8 +45,10 @@ fun SeerrNavHost(
     // rooted on HomeRoute, and it can arrive after the connection has already resolved.
     val root = backStack.firstOrNull()
     LaunchedEffect(connected, root) { backStack.settleHome(connected) }
-    SeerrPaneHost(backStack, connected, modifier, defaultSection = { DefaultSectionPane(backStack) }) { panes ->
-        homeEntries(backStack, connected = { connectedState.value }, panes = panes)
+    // The default section is off the stack, so Back from it leaves; the host's own Back shares the once-only exit.
+    val exit = rememberExitOnce(onExit)
+    SeerrPaneHost(backStack, connected, exit, modifier, defaultSection = { DefaultSectionPane(backStack, exit) }) { panes ->
+        homeEntries(backStack, connected = { connectedState.value }, panes = panes, onExit = exit)
         sectionEntries(backStack, panes)
         detailEntries(backStack, showBack = panes.showBack)
         serverSettingsEntries(backStack)
@@ -70,6 +73,7 @@ private fun EntryProviderScope<NavKey>.homeEntries(
     backStack: NavBackStack<NavKey>,
     connected: () -> Boolean?,
     panes: PaneLayout,
+    onExit: () -> Unit,
 ) {
     entry<HomeRoute> {
         // Connected shows the spinner for a frame at most, while settleHome swaps the hub in.
@@ -82,7 +86,7 @@ private fun EntryProviderScope<NavKey>.homeEntries(
     // Back from it leaves the app and a narrow window shows the hub alone (openAboveDefault stacks it first).
     // A placeholder gets no entry scope, so its ViewModel belongs to the host.
     entry<HubRoute>(
-        metadata = ListDetailSceneStrategy.listPane(detailPlaceholder = { DefaultSectionPane(backStack) }) + ThreePaneHub,
+        metadata = ListDetailSceneStrategy.listPane(detailPlaceholder = { DefaultSectionPane(backStack, onExit) }) + ThreePaneHub,
     ) {
         PaneContent(innerEdge = PaneEdge.End) {
             // And the other way: after a disconnect, settleHome is already swapping setup back in.
@@ -130,12 +134,16 @@ private fun EntryProviderScope<NavKey>.sectionEntries(
  * It is not an entry, so it gets no entry scope, and its ViewModel belongs to the host.
  */
 @Composable
-private fun DefaultSectionPane(backStack: NavBackStack<NavKey>) =
-    DetailPaneContent { SectionContent(DefaultSection, backStack, showBack = false, open = backStack::openAboveDefault) }
+private fun DefaultSectionPane(
+    backStack: NavBackStack<NavKey>,
+    onExit: () -> Unit,
+) = DetailPaneContent {
+    SectionContent(DefaultSection, backStack, showBack = false, open = backStack::openAboveDefault, onBack = onExit)
+}
 
 /**
  * One section's screen, whether it is on the stack or standing in as the default beside the hub. [open] pushes what
- * its rows open.
+ * its rows open, and [onBack] leaves: a pop for a section on the stack, the activity's exit for the stand-in.
  */
 @Composable
 private fun SectionContent(
@@ -143,8 +151,8 @@ private fun SectionContent(
     backStack: NavBackStack<NavKey>,
     showBack: Boolean,
     open: (NavKey) -> Unit = backStack::add,
+    onBack: () -> Unit = { backStack.pop() },
 ) {
-    val onBack: () -> Unit = { backStack.removeLastOrNull() }
     when (section) {
         HubSection.Requests ->
             RequestsEntry(
@@ -163,7 +171,7 @@ private fun SectionContent(
             )
         HubSection.Users ->
             UsersEntry(onBack = onBack, showBack = showBack, onOpen = { id -> open(UserDetailRoute(id)) })
-        HubSection.Settings -> SettingsEntry(backStack, showBack = showBack, open = open)
+        HubSection.Settings -> SettingsEntry(backStack, showBack = showBack, open = open, onBack = onBack)
     }
 }
 
@@ -180,6 +188,8 @@ private fun EntryProviderScope<NavKey>.detailEntries(
     showBack: () -> Boolean,
 ) {
     debugDetailEntries(backStack, showBack)
+    // Each page leaves through popIfTop with its own key, for its back arrow and for leaving on its own (a delete, a
+    // save) alike: a late call from a page already on its way out never takes the one now on top.
     entry<RequestDetailRoute>(metadata = DetailPane) { route ->
         DetailPaneContent {
             // No showBack: DetailOverlayTopBar always draws its back arrow, and its onBack is non-nullable.
@@ -187,26 +197,26 @@ private fun EntryProviderScope<NavKey>.detailEntries(
             // pane depth is always > 1. Gating it for real is a design-system change.
             RequestDetailEntry(
                 route.requestId,
-                onBack = { backStack.removeLastOrNull() },
+                onBack = { backStack.popIfTop(route) },
                 onOpenUser = { id -> backStack.add(UserDetailRoute(id)) },
             )
         }
     }
     entry<IssueDetailRoute>(metadata = DetailPane) { route ->
-        DetailPaneContent { IssueDetailEntry(route.issueId, onBack = { backStack.removeLastOrNull() }, showBack = showBack()) }
+        DetailPaneContent { IssueDetailEntry(route.issueId, onBack = { backStack.popIfTop(route) }, showBack = showBack()) }
     }
     entry<BlocklistDetailRoute>(metadata = DetailPane) { route ->
         DetailPaneContent {
             // No showBack: like RequestDetailRoute, this is only ever stacked above BlocklistRoute, so
             // its pane depth is always > 1 and the hero's DetailOverlayTopBar back arrow is never redundant.
-            BlocklistDetailEntry(route.item, route.canManage, onBack = { backStack.removeLastOrNull() })
+            BlocklistDetailEntry(route.item, route.canManage, onBack = { backStack.popIfTop(route) })
         }
     }
     entry<UserDetailRoute>(metadata = DetailPane) { route ->
         DetailPaneContent {
             UserDetailEntry(
                 route.userId,
-                onBack = { backStack.removeLastOrNull() },
+                onBack = { backStack.popIfTop(route) },
                 showBack = showBack(),
                 onOpenRequest = { id -> backStack.add(RequestDetailRoute(id)) },
                 onOpenSettings = { backStack.add(UserSettingsRoute(route.userId)) },
@@ -217,7 +227,7 @@ private fun EntryProviderScope<NavKey>.detailEntries(
         DetailPaneContent {
             UserSettingsEntry(
                 route.userId,
-                onBack = { backStack.removeLastOrNull() },
+                onBack = { backStack.popIfTop(route) },
                 showBack = showBack(),
                 onOpenPage = { page -> backStack.add(UserSettingsPageRoute(route.userId, page)) },
             )
@@ -227,11 +237,11 @@ private fun EntryProviderScope<NavKey>.detailEntries(
         DetailPaneContent {
             // No showBack: every page here is stacked above UserSettingsRoute, which is itself never
             // pushed straight onto [HubRoute] (only from UserDetailEntry), so pane depth is always > 1.
-            UserSettingsPageEntry(route.userId, route.page, onBack = { backStack.removeLastOrNull() })
+            UserSettingsPageEntry(route.userId, route.page, onBack = { backStack.popIfTop(route) })
         }
     }
-    entry<EditConnectionRoute>(metadata = DetailPane) {
-        DetailPaneContent { EditConnectionEntry(onDone = { backStack.removeLastOrNull() }, showBack = showBack()) }
+    entry<EditConnectionRoute>(metadata = DetailPane) { route ->
+        DetailPaneContent { EditConnectionEntry(onDone = { backStack.popIfTop(route) }, showBack = showBack()) }
     }
 }
 
@@ -246,7 +256,7 @@ private fun EntryProviderScope<NavKey>.serverSettingsEntries(backStack: NavBackS
         DetailPaneContent {
             ServerSettingsPageEntry(
                 page = route.page,
-                onBack = { backStack.removeLastOrNull() },
+                onBack = { backStack.popIfTop(route) },
                 onOpenPage = { page -> backStack.add(ServerSettingsPageRoute(page)) },
                 onOpenInstance = { type, id -> backStack.add(DvrInstanceRoute(type, id)) },
                 onOpenRule = { id -> backStack.add(OverrideRuleRoute(id)) },
@@ -256,15 +266,15 @@ private fun EntryProviderScope<NavKey>.serverSettingsEntries(backStack: NavBackS
         }
     }
     entry<DiscoverSliderRoute>(metadata = DetailPane) { route ->
-        DetailPaneContent { DiscoverSliderEntry(route.id, onBack = { backStack.removeLastOrNull() }) }
+        DetailPaneContent { DiscoverSliderEntry(route.id, onBack = { backStack.popIfTop(route) }) }
     }
     entry<NotificationAgentRoute>(metadata = DetailPane) { route ->
-        DetailPaneContent { NotificationAgentEntry(route.agent, onBack = { backStack.removeLastOrNull() }) }
+        DetailPaneContent { NotificationAgentEntry(route.agent, onBack = { backStack.popIfTop(route) }) }
     }
     entry<DvrInstanceRoute>(metadata = DetailPane) { route ->
-        DetailPaneContent { DvrInstanceEntry(route.type, route.id, onBack = { backStack.removeLastOrNull() }) }
+        DetailPaneContent { DvrInstanceEntry(route.type, route.id, onBack = { backStack.popIfTop(route) }) }
     }
     entry<OverrideRuleRoute>(metadata = DetailPane) { route ->
-        DetailPaneContent { OverrideRuleEntry(route.id, onBack = { backStack.removeLastOrNull() }) }
+        DetailPaneContent { OverrideRuleEntry(route.id, onBack = { backStack.popIfTop(route) }) }
     }
 }
