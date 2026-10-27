@@ -19,6 +19,7 @@ import com.cooper.binge.companion.seerr.seerr.SeerrApiFactory
 import com.cooper.binge.companion.seerr.util.PlainCipher
 import io.grpc.Status
 import io.grpc.StatusException
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -44,7 +45,12 @@ class RequestCompanionsFlagTest {
     private val binge = CountingBingeStore()
 
     private fun service(flags: Flags): SeerrRequestService {
-        val store = CredentialStore(PreferenceDataStoreFactory.create { folder.newFile("creds.preferences_pb") }, PlainCipher)
+        val store =
+            CredentialStore(
+                PreferenceDataStoreFactory.create { folder.newFile("creds.preferences_pb") },
+                PlainCipher,
+                Dispatchers.Unconfined,
+            )
         return SeerrRequestService(
             SeerrConnection(store, SeerrApiFactory(logRequests = false)),
             versionName = "0.1.0-test",

@@ -14,6 +14,7 @@ import com.cooper.binge.companion.seerr.util.routeProfiles
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
@@ -38,7 +39,7 @@ class SeerrConnectionTest {
     private val server = MockWebServer().routeProfiles().apply { start() }
     private val baseUrl = server.url("/").toString()
 
-    private fun connection(
+    private fun TestScope.connection(
         scope: CoroutineScope,
         clock: () -> Long = System::currentTimeMillis,
     ): SeerrConnection =
@@ -47,6 +48,7 @@ class SeerrConnectionTest {
                 CredentialStore(
                     dataStore = PreferenceDataStoreFactory.create(scope = scope) { folder.newFile("creds.preferences_pb") },
                     cipher = ReversingCipher,
+                    io = UnconfinedTestDispatcher(testScheduler),
                 ),
             apis = SeerrApiFactory(logRequests = false),
             clock = clock,
@@ -275,6 +277,7 @@ class SeerrConnectionTest {
                         CredentialStore(
                             PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("h.preferences_pb") },
                             ReversingCipher,
+                            UnconfinedTestDispatcher(testScheduler),
                         ),
                     apis = SeerrApiFactory(logRequests = false, health = monitor),
                     healthMonitor = monitor,
@@ -339,6 +342,7 @@ class SeerrConnectionTest {
                     CredentialStore(
                         PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("$name.preferences_pb") },
                         ReversingCipher,
+                        UnconfinedTestDispatcher(testScheduler),
                     ),
                 apis = SeerrApiFactory(logRequests = false, health = monitor),
                 healthMonitor = monitor,
@@ -356,6 +360,7 @@ class SeerrConnectionTest {
                 CredentialStore(
                     PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("cold.preferences_pb") },
                     ReversingCipher,
+                    UnconfinedTestDispatcher(testScheduler),
                 )
             SeerrConnection(store = store, apis = SeerrApiFactory(logRequests = false))
                 .connect(baseUrl, SeerrAuth.ApiKey("k3y"))
@@ -438,6 +443,7 @@ class SeerrConnectionTest {
                         CredentialStore(
                             PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("qc.preferences_pb") },
                             ReversingCipher,
+                            UnconfinedTestDispatcher(testScheduler),
                         ),
                     apis = SeerrApiFactory(logRequests = false),
                     quickConnectPollInterval = 10.milliseconds,
