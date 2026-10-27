@@ -33,9 +33,10 @@ class FirebaseCrashCollection
     }
 
 /**
- * App-authored context attached to whatever crash report follows — scoped to breadcrumbs
- * ([log]/[key]), not manual exception recording: Crashlytics already captures the crash itself, and
- * recording it a second time here would double-report it. A no-op wherever Firebase isn't wired up.
+ * App-authored context for crash reports. [log] and [key] are breadcrumbs attached to whatever crash follows; they
+ * never record an exception, because Crashlytics already captures the crash itself. [nonFatal] is for a failure the
+ * app survives, where no crash report would otherwise exist. Never pass it a throwable that will still crash: that
+ * would double-report it. A no-op wherever Firebase isn't wired up.
  */
 interface CrashBreadcrumbs {
     /** A short, fixed-shape note on what was happening, e.g. "approving request". No ids or free text. */
@@ -64,7 +65,10 @@ object NoOpCrashBreadcrumbs : CrashBreadcrumbs {
     ) = Unit
 }
 
-/** [CrashBreadcrumbs] over Crashlytics directly: breadcrumbs are cheap and always recorded, independent of the collection switch. */
+/**
+ * [CrashBreadcrumbs] over Crashlytics directly. Breadcrumbs are cheap and always recorded, independent of the
+ * collection switch; [nonFatal] records an exception, so it follows the switch like a crash report does.
+ */
 class FirebaseCrashBreadcrumbs
     @Inject
     constructor(
