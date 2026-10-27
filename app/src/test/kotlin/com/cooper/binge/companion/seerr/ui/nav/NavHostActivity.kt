@@ -33,6 +33,10 @@ class NavHostActivity : ComponentActivity() {
     /** Cleared before the activity closes, so the composition is taken down while the looper is live (#663). */
     internal var shown by mutableStateOf(true)
 
+    /** How many times the host asked to leave, as `MainActivity` does by finishing. */
+    internal var exits = 0
+        private set
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -41,10 +45,15 @@ class NavHostActivity : ComponentActivity() {
             backStack = stack
             SeerrTheme {
                 Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                    SeerrNavHost(backStack = stack)
+                    SeerrNavHost(backStack = stack, onExit = ::leave)
                 }
             }
         }
+    }
+
+    private fun leave() {
+        exits++
+        finish()
     }
 
     companion object {

@@ -35,6 +35,7 @@ import com.cooper.binge.companion.seerr.ui.SeerrNavHost
 import com.cooper.binge.companion.seerr.ui.SeerrRoute
 import com.cooper.binge.companion.seerr.ui.consent.ConsentGate
 import com.cooper.binge.companion.seerr.ui.linkedRequestId
+import com.cooper.binge.companion.seerr.ui.replaceAll
 import com.cooper.binge.companion.seerr.ui.tv.TvSeerrShell
 import com.cooper.binge.companion.seerr.ui.tv.isTelevision
 import dagger.hilt.android.AndroidEntryPoint
@@ -112,10 +113,7 @@ class MainActivity : ComponentActivity() {
                     .collect { analytics.screen(it.screenName()) }
             }
             LaunchedEffect(backStack) {
-                deepLinks.backStacks.collect { routes ->
-                    backStack.clear()
-                    backStack.addAll(routes)
-                }
+                deepLinks.backStacks.collect { routes -> backStack.replaceAll(routes) }
             }
             // Phone only: a television has no accelerometer, and reports a bug from Settings instead.
             val shakeToReport by feedbackPrefs.shakeToReport.collectAsStateWithLifecycle(initialValue = false)
@@ -126,7 +124,7 @@ class MainActivity : ComponentActivity() {
                     // doesn't match this, so a two-pane gutter would otherwise show through as a
                     // different colour than the panes it sits between.
                     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                        ConsentGate { SeerrNavHost(backStack = backStack) }
+                        ConsentGate { SeerrNavHost(backStack = backStack, onExit = ::finish) }
                     }
                 }
             }

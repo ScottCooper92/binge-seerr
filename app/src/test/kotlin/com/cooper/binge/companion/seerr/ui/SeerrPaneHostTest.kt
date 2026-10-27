@@ -1,5 +1,8 @@
 package com.cooper.binge.companion.seerr.ui
 
+import androidx.activity.BackEventCompat
+import androidx.activity.OnBackPressedDispatcher
+import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy
 import androidx.compose.runtime.Composable
@@ -33,6 +36,9 @@ private const val SUBPAGE = "server settings subpage"
 /** A landscape tablet: past the design system's expanded-rail line, so the host lays out three panes (#1110). */
 private const val TABLET = "w1280dp-h800dp"
 
+/** A phone: one pane, so a section on the hub claims Back. */
+private const val PHONE = "w400dp-h800dp"
+
 /**
  * [SeerrPaneHost] in a two-pane window, with the pane locals it provides read the way the design system reads them:
  * [LocalPaneInnerEdge] through [PaneContent], the Back arrow through [paneBackOrNull]. [PaneBackLocalsTest] and the
@@ -56,12 +62,15 @@ class SeerrPaneHostTest {
     )
 
     private val panes = mutableMapOf<String, Pane>()
+    private var exits = 0
+    private lateinit var dispatcher: OnBackPressedDispatcher
 
     private fun show(vararg keys: NavKey): NavBackStack<NavKey> {
         lateinit var backStack: NavBackStack<NavKey>
         rule.setContent {
             backStack = remember { NavBackStack(mutableStateListOf(*keys)) }
-            SeerrPaneHost(backStack, connected = true, defaultSection = { DetailPaneContent { Record(DEFAULT) } }) {
+            dispatcher = checkNotNull(LocalOnBackPressedDispatcherOwner.current).onBackPressedDispatcher
+            SeerrPaneHost(backStack, connected = true, onExit = { exits++ }, defaultSection = { DetailPaneContent { Record(DEFAULT) } }) {
                 entry<HubRoute>(
                     metadata =
                         ListDetailSceneStrategy.listPane(detailPlaceholder = { DetailPaneContent { Record(DEFAULT) } }) + ThreePaneHub,
@@ -144,5 +153,81 @@ class SeerrPaneHostTest {
 
         assertEquals(Pane(PaneEdge.Start, showsBack = false), panes.getValue(SETTINGS))
         assertEquals(Pane(PaneEdge.Start, showsBack = true), panes.getValue(SUBPAGE))
+    }
+
+    /**
+     * Two Backs in one frame, as a quick double tap or a key repeat sends them: the second reaches the scene from before
+     * the first, which still claims Back, and once popped an empty stack (#1760). The root stays, and the app leaves once.
+     */
+    @Test
+    @Config(qualifiers = PHONE)
+    fun `two Backs in one frame from a section leave the hub, and the app leaves once`() {
+        val backStack = show(HubRoute, RequestsRoute)
+
+        rule.runOnUiThread {
+            dispatcher.onBackPressed()
+            dispatcher.onBackPressed()
+        }
+        rule.waitForIdle()
+
+        assertEquals(listOf<NavKey>(HubRoute), backStack.toList())
+        assertEquals(1, exits)
+
+        rule.runOnUiThread { dispatcher.onBackPressed() }
+        rule.waitForIdle()
+        assertEquals("the app was asked to leave twice", 1, exits)
+        assertEquals(listOf<NavKey>(HubRoute), backStack.toList())
+    }
+
+    /** At a settled root the scene claims no Back: a predictive gesture is the system's, and the app is not asked too. */
+    @Test
+    @Config(qualifiers = PHONE)
+    fun `a predictive Back at the root is left to the system and asks the app nothing`() {
+        val backStack = show(HubRoute)
+
+        rule.runOnUiThread {
+            dispatcher.dispatchOnBackStarted(BackEventCompat(0f, 0f, 0f, BackEventCompat.EDGE_LEFT))
+            dispatcher.dispatchOnBackProgressed(BackEventCompat(0f, 0f, 0.5f, BackEventCompat.EDGE_LEFT))
+            dispatcher.onBackPressed()
+        }
+        rule.waitForIdle()
+
+        assertEquals(0, exits)
+        assertEquals(listOf<NavKey>(HubRoute), backStack.toList())
+    }
+
+    /** A gesture from a section that completes while a second Back arrives: the hub stays, and the app leaves once. */
+    @Test
+    @Config(qualifiers = PHONE)
+    fun `a predictive Back from a section with a second Back behind it leaves the app once`() {
+        val backStack = show(HubRoute, RequestsRoute)
+
+        rule.runOnUiThread {
+            dispatcher.dispatchOnBackStarted(BackEventCompat(0f, 0f, 0f, BackEventCompat.EDGE_LEFT))
+            dispatcher.dispatchOnBackProgressed(BackEventCompat(0f, 0f, 0.5f, BackEventCompat.EDGE_LEFT))
+        }
+        rule.waitForIdle()
+        rule.runOnUiThread {
+            dispatcher.onBackPressed()
+            dispatcher.onBackPressed()
+            dispatcher.onBackPressed()
+        }
+        rule.waitForIdle()
+
+        assertEquals(listOf<NavKey>(HubRoute), backStack.toList())
+        assertEquals(1, exits)
+    }
+
+    /** Three panes keep the default section on the stack beside the hub, and Back from there is the system's (#815). */
+    @Test
+    @Config(qualifiers = TABLET)
+    fun `in three panes, Back from the default section is left to the system`() {
+        val backStack = show(HubRoute)
+
+        rule.runOnUiThread { dispatcher.onBackPressed() }
+        rule.waitForIdle()
+
+        assertEquals(0, exits)
+        assertEquals(listOf<NavKey>(HubRoute, RequestsRoute), backStack.toList())
     }
 }
