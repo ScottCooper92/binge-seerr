@@ -36,6 +36,17 @@ class BackStackOpsTest {
     }
 
     @Test
+    fun `replacing the stack keeps the instance of a route that is equal, so its page can still leave`() {
+        val kept = UserDetailRoute(5)
+        val stack = stackOf(HubRoute, UsersRoute, kept)
+
+        stack.replaceAll(listOf(HubRoute, UsersRoute, UserDetailRoute(5)))
+
+        assertSame(kept, stack.last())
+        assertTrue(stack.popIfTop(kept))
+    }
+
+    @Test
     fun `replacing the stack with nothing is refused, and the stack is kept`() {
         val stack = stackOf(HubRoute, SettingsRoute)
 
@@ -95,5 +106,19 @@ class BackStackOpsTest {
         assertTrue(stack.popIfTop(EditConnectionRoute))
         assertFalse(stack.popIfTop(EditConnectionRoute))
         assertEquals(listOf(HubRoute, SettingsRoute), stack.toList())
+    }
+
+    @Test
+    fun `in three panes, opening what is already open keeps its instance, so its removal still closes it`() {
+        val panes = PaneLayout(hubBeside = { true }, showBack = { false }, threePane = { true })
+        val open = RequestDetailRoute(5)
+        val stack = stackOf(HubRoute, RequestsRoute, open)
+
+        panes.open(stack, RequestDetailRoute(5))
+
+        assertSame(open, stack.last())
+        assertEquals(3, stack.size)
+        assertTrue(stack.popIfTop(open))
+        assertEquals(listOf(HubRoute, RequestsRoute), stack.toList())
     }
 }

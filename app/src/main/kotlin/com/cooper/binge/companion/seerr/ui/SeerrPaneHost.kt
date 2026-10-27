@@ -39,11 +39,20 @@ internal class PaneLayout(
     val showBack: () -> Boolean,
     val threePane: () -> Boolean,
 ) {
-    /** Opens [route] from a section's list or the hub: in place of the open item in three panes, else by [push]. */
+    /**
+     * Opens [route] from a section's list or the hub: in place of the open item in three panes, else by [push]. What is
+     * already open is left as it is, so the page on screen keeps the key instance it leaves by.
+     */
     fun open(
         backStack: NavBackStack<NavKey>,
         route: NavKey,
-    ) = if (threePane()) backStack.openBeside(route) else backStack.push(route)
+    ) {
+        if (!threePane()) {
+            backStack.push(route)
+        } else if (backStack.lastOrNull() != route) {
+            backStack.openBeside(route)
+        }
+    }
 }
 
 /**

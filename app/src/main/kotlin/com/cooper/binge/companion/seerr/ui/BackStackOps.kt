@@ -12,8 +12,15 @@ import androidx.navigation3.runtime.NavKey
 internal fun NavBackStack<NavKey>.replaceAll(routes: List<NavKey>) {
     require(routes.isNotEmpty()) { "a back stack needs a root" }
     // One snapshot, written over in place: no reader sees the stack empty, or half of the old one under the new root.
+    // An equal route keeps its instance: a page still on screen holds that instance for its own popIfTop.
     Snapshot.withMutableSnapshot {
-        routes.forEachIndexed { index, route -> if (index < size) set(index, route) else add(route) }
+        routes.forEachIndexed { index, route ->
+            if (index >= size) {
+                add(route)
+            } else if (this[index] != route) {
+                set(index, route)
+            }
+        }
         while (size > routes.size) removeAt(lastIndex)
     }
 }
