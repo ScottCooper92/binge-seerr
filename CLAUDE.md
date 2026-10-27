@@ -24,14 +24,15 @@ The contracts live in that repository and are authoritative there. **Nothing in 
 repository defines a contract.** A change to the wire format is a PR against
 binge-companions, and this repository consumes the result.
 
-Status is pre-alpha, at contract parity: the exported Service serves every REQUEST v1
-operation against the connected server, the capability set is derived from the signed-in
-user's permissions and the server's profile, the console covers the server end to end, release
-builds are shrunk, signed from a tag and proven on a device lane, and the app ships in English
-and Spanish. A release build admits Binge through its published Play App Signing certificate. Not
-yet released: the on-device check of that handshake is still open (#85), and the Play listing under
-`docs/listing/` waits on its screenshots.
-
+Status is pre-alpha, at contract parity when `request_companions_enabled` is enabled: the
+exported Service serves every REQUEST v1 operation against the connected server, and the
+capability set is derived from the signed-in user's permissions and the server's profile. See
+[docs/feature-flags.md](docs/feature-flags.md) for feature-flag configuration. The console
+covers the server end to end, release builds are shrunk, signed from a tag and proven on a
+device lane, and the app ships in English and Spanish. A release build admits Binge through
+its published Play App Signing certificate. Not yet released: the on-device check of that
+handshake is still open (#85), and the Play listing under `docs/listing/` waits on its
+screenshots.
 The contracts and the SDK are consumed as source: `binge-companions/` is a git
 submodule of the binge-companions repository, and `settings.gradle.kts` includes it as a composite build. So is the
 shared design system, `design-system/` (binge-design-system): the screens are built
@@ -64,6 +65,7 @@ rather than a private arrangement.
 - **Feature detection never uses version numbers.** A peer discovers what the other
   end can do from the handshake's capability set, and ignores enum values it does
   not know. Version numbers answer "can we parse each other?" and nothing else.
+- **The REQUEST Service is feature-flagged.** `request_companions_enabled` gates the exported Service and its hand-off Activities. See [docs/feature-flags.md](docs/feature-flags.md) for how the flag is configured.
 - **Errors are gRPC status codes**, never fields on a response message. Map Seerr's
   failures onto the codes the contract documents rather than inventing a shape.
 - **Page every list, and send artwork as a URL rather than bytes.** The Binder
