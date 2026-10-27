@@ -16,6 +16,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -69,10 +70,11 @@ fun BlocklistDetailScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val resources = LocalResources.current
     var confirming by rememberSaveable { mutableStateOf(false) }
+    val currentOnBack by rememberUpdatedState(actions.onBack)
     LaunchedEffect(events) {
         events.collectLatest { event ->
             when (event) {
-                BlocklistDetailEvent.Removed -> actions.onBack()
+                BlocklistDetailEvent.Removed -> currentOnBack()
                 is BlocklistDetailEvent.Failed -> {
                     snackbarHostState.currentSnackbarData?.dismiss()
                     snackbarHostState.showSnackbar(resources.getString(event.error.messageRes()), SnackbarMessageKind.Error)
