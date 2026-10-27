@@ -2,10 +2,13 @@ package com.cooper.binge.companion.seerr.notifications
 
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import com.cooper.binge.companion.seerr.seerr.SeerrAuth
+import com.cooper.binge.companion.seerr.telemetry.CrashBreadcrumbs
 import com.cooper.binge.companion.seerr.ui.users.settings.ADMIN
 import com.cooper.binge.companion.seerr.ui.users.settings.ScriptedSeerr
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withContext
@@ -18,6 +21,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
+import java.util.Collections
 
 private const val WAIT_MILLIS = 5_000L
 private const val POLL_MILLIS = 10L
@@ -124,4 +128,52 @@ class NotificationPlannerTest {
             awaitConnectionProblemCancels(cancelsWhilePaused + 1)
             assertTrue(notifier.activityCancels >= 1)
         }
+
+    /** WorkManager's failure on some devices: the platform method it calls is not there. */
+    private class FailingScheduler : NotificationScheduler {
+        override fun schedule(): Unit = throw NoSuchMethodError("JobScheduler.forNamespace")
+
+        override fun cancel(): Unit = throw NoSuchMethodError("JobScheduler.forNamespace")
+
+        override fun nextRunMillis(): Flow<Long?> = emptyFlow()
+    }
+
+    private class RecordingBreadcrumbs : CrashBreadcrumbs {
+        val failures: MutableList<Throwable> = Collections.synchronizedList(mutableListOf())
+
+        override fun log(message: String) = Unit
+
+        override fun key(
+            name: String,
+            value: String,
+        ) = Unit
+
+        override fun nonFatal(
+            message: String,
+            cause: Throwable,
+        ) {
+            failures += cause
+        }
+    }
+
+    @Test
+    fun `a scheduler that cannot start is recorded and the planner keeps planning`() =
+        runTest {
+            val prefs = NotificationPrefs(PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("p.preferences_pb") })
+            val breadcrumbs = RecordingBreadcrumbs()
+            NotificationPlanner(seerr.connection(this), prefs, FailingScheduler(), notifier, backgroundScope, breadcrumbs).start()
+            awaitFailures(breadcrumbs, 1)
+
+            prefs.setEnabled(NotificationSignal.PendingRequests, true)
+            awaitFailures(breadcrumbs, 2)
+
+            prefs.setEnabled(NotificationSignal.PendingRequests, false)
+            awaitFailures(breadcrumbs, 3)
+            assertTrue(breadcrumbs.failures.all { it is NoSuchMethodError })
+        }
+
+    private suspend fun awaitFailures(
+        breadcrumbs: RecordingBreadcrumbs,
+        expected: Int,
+    ) = withContext(Dispatchers.Default) { withTimeout(WAIT_MILLIS) { while (breadcrumbs.failures.size < expected) delay(POLL_MILLIS) } }
 }

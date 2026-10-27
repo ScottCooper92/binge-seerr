@@ -71,8 +71,9 @@ two ways described above, and the phone-to-TV hand-off below, which stays on you
   carrier's name). Nothing is sent until you agree, and turning it off in Settings stops it. The
   library does not contact PostHog before then either. PostHog records it against a random
   identifier for this install, not against you, and derives a rough location from the IP address.
-- **To Google (Firebase Crashlytics)**, when the app crashes: what the app was doing, the device
-  model and Android version. "What the app was doing" is a short line from a fixed list ("deleting
+- **To Google (Firebase Crashlytics)**, when the app crashes, or when it records a failure it
+  recovered from (for example, a device where background notifications cannot start): what the app
+  was doing, the device model and Android version. "What the app was doing" is a short line from a fixed list ("deleting
   issue", "moderating request: approved") and, where an action is on one record, that record's
   number on your server: the number of an issue, request, comment, title (its TMDB id), collection,
   DVR instance or override rule. The app attaches no title, name, message or server address. A crash
