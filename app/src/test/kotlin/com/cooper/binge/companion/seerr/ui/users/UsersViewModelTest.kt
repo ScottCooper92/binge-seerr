@@ -20,6 +20,7 @@ import com.cooper.binge.companion.seerr.util.awaitEvent
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import okhttp3.Headers.Companion.headersOf
 import org.junit.After
@@ -104,6 +105,7 @@ class UsersViewModelTest {
                     CredentialStore(
                         PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("u.preferences_pb") },
                         PlainCipher,
+                        UnconfinedTestDispatcher(testScheduler),
                     ),
                 apis = SeerrApiFactory(logRequests = false, testTransport = seerr::interceptor, testDispatcher = seerr::newDispatcher),
             )

@@ -19,6 +19,7 @@ import com.cooper.binge.companion.seerr.util.routeProfiles
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
@@ -52,7 +53,11 @@ class TvHomeViewModelTest {
     }
 
     private fun TestScope.store(cipher: SecretCipher = PlainCipher) =
-        CredentialStore(PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("tv.preferences_pb") }, cipher)
+        CredentialStore(
+            PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("tv.preferences_pb") },
+            cipher,
+            UnconfinedTestDispatcher(testScheduler),
+        )
 
     private fun TestScope.connection(store: CredentialStore = store()): SeerrConnection {
         val monitor = SeerrConnectionHealthMonitor()

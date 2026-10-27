@@ -26,6 +26,7 @@ import io.grpc.Server
 import io.grpc.inprocess.InProcessChannelBuilder
 import io.grpc.inprocess.InProcessServerBuilder
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -68,6 +69,7 @@ class DemoCompanionTest {
             CredentialStore(
                 PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("c.preferences_pb") },
                 PlainCipher,
+                UnconfinedTestDispatcher(testScheduler),
             )
         val connection = SeerrConnection(store, SeerrApiFactory(logRequests = false))
         demoCredentials().let { connection.connect(it.baseUrl, it.auth).getOrThrow() }
