@@ -61,6 +61,8 @@ jobs:
           java-version: '21'
 
       - uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6
+        with:
+          cache-read-only: true
 
       - name: Build the ${{ matrix.slice }} slice
         run: ${{ matrix.command }}
@@ -98,7 +100,7 @@ jobs:
     permissions:
       issues: write
     steps:
-      - uses: ScottCooper92/binge-ci/.github/actions/nightly-report@9de74a880f7bfeef9e75a31cc72e790eb05f6511 # v1
+      - uses: ScottCooper92/binge-ci/.github/actions/nightly-report@494e473b01f083178315f3f723383fefba23c937 # v1
         with:
           result: ${{ needs.canary.result }}
           title: 'Consumer canary: main no longer builds against upstream heads'

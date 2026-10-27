@@ -5,6 +5,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -96,10 +97,12 @@ internal fun TvIssueSheetEntry(
         viewModel.setScreenVisible(true)
         onDispose { viewModel.setScreenVisible(false) }
     }
+    val currentOnIssueChanged by rememberUpdatedState(onIssueChanged)
+    val currentOnDone by rememberUpdatedState(onDone)
     LaunchedEffect(viewModel) {
         viewModel.events.collect { event ->
-            if (event.changesTheIssue()) onIssueChanged()
-            if (event == IssueDetailEvent.IssueDeleted) onDone()
+            if (event.changesTheIssue()) currentOnIssueChanged()
+            if (event == IssueDetailEvent.IssueDeleted) currentOnDone()
         }
     }
     val context = LocalContext.current

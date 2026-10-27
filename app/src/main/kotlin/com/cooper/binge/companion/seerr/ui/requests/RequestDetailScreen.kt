@@ -13,6 +13,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -92,8 +93,9 @@ fun RequestDetailScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     ModerationSnackbarEffect(events, snackbarHostState)
     // A removed request has no page to stay on.
+    val currentOnBack by rememberUpdatedState(actions.onBack)
     LaunchedEffect(events) {
-        events.collect { if (it.removesTheRequest) actions.onBack() }
+        events.collect { if (it.removesTheRequest) currentOnBack() }
     }
     when (state) {
         RequestDetailUiState.Loading -> MediaHeroDetailPlaceholder { RequestDetailSkeleton() }

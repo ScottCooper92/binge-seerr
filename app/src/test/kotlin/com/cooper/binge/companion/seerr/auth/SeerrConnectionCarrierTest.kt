@@ -10,6 +10,7 @@ import com.cooper.binge.companion.seerr.util.PlainCipher
 import com.cooper.binge.companion.seerr.util.enqueueProfile
 import com.cooper.binge.companion.seerr.util.routeProfiles
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
@@ -44,6 +45,7 @@ class SeerrConnectionCarrierTest {
                 CredentialStore(
                     PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("c.preferences_pb") },
                     PlainCipher,
+                    UnconfinedTestDispatcher(testScheduler),
                 ),
             apis = SeerrApiFactory(logRequests = false, cleartext = cleartext, testDns = { listOf(InetAddress.getLoopbackAddress()) }),
             carrier =

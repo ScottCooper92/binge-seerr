@@ -12,6 +12,7 @@ import com.cooper.binge.companion.seerr.util.MainDispatcherRule
 import com.cooper.binge.companion.seerr.util.PlainCipher
 import kotlinx.coroutines.async
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import okhttp3.Headers.Companion.headersOf
 import org.junit.After
@@ -73,6 +74,7 @@ class HubProfileProbeTest {
                     CredentialStore(
                         PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("p.preferences_pb") },
                         PlainCipher,
+                        UnconfinedTestDispatcher(testScheduler),
                     ),
                 apis =
                     SeerrApiFactory(

@@ -78,6 +78,7 @@ class RequestModerationTest {
                     CredentialStore(
                         PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("m.preferences_pb") },
                         PlainCipher,
+                        UnconfinedTestDispatcher(testScheduler),
                     ),
                 apis = SeerrApiFactory(logRequests = false),
             )

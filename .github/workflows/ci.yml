@@ -61,7 +61,7 @@ jobs:
     permissions:
       contents: read
       pull-requests: read
-    uses: ScottCooper92/binge-ci/.github/workflows/submodule-pins.yml@9de74a880f7bfeef9e75a31cc72e790eb05f6511 # v1
+    uses: ScottCooper92/binge-ci/.github/workflows/submodule-pins.yml@494e473b01f083178315f3f723383fefba23c937 # v1
 
   # `build` minus what the three jobs below own. Everything else `check` pulls in lands here:
   # compile, lint, detekt and its baseline-staleness check, ktlint, the translation, tv-material and gRPC gates,
@@ -92,6 +92,10 @@ jobs:
           java-version: '21'
 
       - uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6
+        # The one job that saves the Gradle cache. The jobs below restore it, so a push writes one copy of
+        # the Gradle home (1 to 3.5 GB) rather than one per job.
+        with:
+          cache-cleanup: on-success
 
       # --continue surfaces every failure in one run rather than stopping at the first,
       # which matters most to author-ci-fix: it gets exactly one repair attempt per
@@ -127,6 +131,8 @@ jobs:
           distribution: temurin
           java-version: '21'
       - uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6
+        with:
+          cache-read-only: true
 
       - name: Unit tests and coverage
         run: ./gradlew :app:testDebugUnitTest :app:koverVerify --continue
@@ -163,9 +169,17 @@ jobs:
           distribution: temurin
           java-version: '21'
       - uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6
+        with:
+          cache-read-only: true
+
+      # With no Gradle cache, a cold compile and the screenshot render shared one VM and ran it out of memory.
+      - name: Compile screenshot sources
+        run: ./gradlew :app:compileDebugScreenshotTestKotlin --max-workers=2
 
       - name: Validate screenshots
-        run: ./gradlew :app:validateDebugScreenshotTest --continue
+        run: |
+          ./gradlew --stop
+          ./gradlew :app:validateDebugScreenshotTest --continue
 
       - name: Upload reports
         if: ${{ failure() }}
@@ -192,6 +206,8 @@ jobs:
           distribution: temurin
           java-version: '21'
       - uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6
+        with:
+          cache-read-only: true
 
       - name: Assemble the release build
         run: ./gradlew :app:assembleRelease --continue
@@ -258,7 +274,7 @@ jobs:
 
       # binge-ci's shared step: a pinned release verified against its published checksum, with
       # shellcheck at warning severity.
-      - uses: ScottCooper92/binge-ci/.github/actions/actionlint@9de74a880f7bfeef9e75a31cc72e790eb05f6511 # v1
+      - uses: ScottCooper92/binge-ci/.github/actions/actionlint@494e473b01f083178315f3f723383fefba23c937 # v1
 
   # A red nightly has no PR or push to carry it, so without this it is a red mark in the
   # Actions tab that nothing points at. One issue stays open while the canary is red and
@@ -273,7 +289,7 @@ jobs:
     permissions:
       issues: write
     steps:
-      - uses: ScottCooper92/binge-ci/.github/actions/nightly-report@9de74a880f7bfeef9e75a31cc72e790eb05f6511 # v1
+      - uses: ScottCooper92/binge-ci/.github/actions/nightly-report@494e473b01f083178315f3f723383fefba23c937 # v1
         with:
           result: ${{ needs.build.result }}
           title: Nightly CI is failing on main

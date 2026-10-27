@@ -33,9 +33,10 @@ class FirebaseCrashCollection
     }
 
 /**
- * App-authored context attached to whatever crash report follows — scoped to breadcrumbs
- * ([log]/[key]), not manual exception recording: Crashlytics already captures the crash itself, and
- * recording it a second time here would double-report it. A no-op wherever Firebase isn't wired up.
+ * App-authored context for crash reports. [log] and [key] are breadcrumbs attached to whatever crash follows; they
+ * never record an exception, because Crashlytics already captures the crash itself. [nonFatal] is for a failure the
+ * app survives, where no crash report would otherwise exist. Never pass it a throwable that will still crash: that
+ * would double-report it. A no-op wherever Firebase isn't wired up.
  */
 interface CrashBreadcrumbs {
     /** A short, fixed-shape note on what was happening, e.g. "approving request". No ids or free text. */
@@ -46,6 +47,15 @@ interface CrashBreadcrumbs {
         name: String,
         value: String,
     )
+
+    /**
+     * A failure the app survived, for when the crash report would otherwise never exist. No-op by default. The
+     * throwable's own message is sent too, so keep [message] and the cause free of ids, addresses and free text.
+     */
+    fun nonFatal(
+        message: String,
+        cause: Throwable,
+    ) = Unit
 }
 
 /** Records nothing — the default for a call site (a test, a preview) with no telemetry wired in. */
@@ -58,7 +68,10 @@ object NoOpCrashBreadcrumbs : CrashBreadcrumbs {
     ) = Unit
 }
 
-/** [CrashBreadcrumbs] over Crashlytics directly: breadcrumbs are cheap and always recorded, independent of the collection switch. */
+/**
+ * [CrashBreadcrumbs] over Crashlytics directly. Breadcrumbs are cheap and always recorded, independent of the
+ * collection switch; [nonFatal] records an exception, so it follows the switch like a crash report does.
+ */
 class FirebaseCrashBreadcrumbs
     @Inject
     constructor(
@@ -75,6 +88,17 @@ class FirebaseCrashBreadcrumbs
         ) {
             if (FirebaseApp.getApps(context).isEmpty()) return
             FirebaseCrashlytics.getInstance().setCustomKey(name, value)
+        }
+
+        override fun nonFatal(
+            message: String,
+            cause: Throwable,
+        ) {
+            if (FirebaseApp.getApps(context).isEmpty()) return
+            FirebaseCrashlytics.getInstance().apply {
+                log(message)
+                recordException(cause)
+            }
         }
     }
 

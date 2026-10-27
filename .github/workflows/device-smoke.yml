@@ -71,6 +71,8 @@ jobs:
           java-version: '21'
 
       - uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6
+        with:
+          cache-read-only: true
 
       - name: Accept the SDK licences the system image needs
         run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
@@ -97,7 +99,7 @@ jobs:
 
       # A miss is not a failure: the setup step below falls back to the full download and boot.
       - name: Restore AVD cache
-        uses: ScottCooper92/binge-ci/.github/actions/restore-avd-cache@9de74a880f7bfeef9e75a31cc72e790eb05f6511 # v1
+        uses: ScottCooper92/binge-ci/.github/actions/restore-avd-cache@494e473b01f083178315f3f723383fefba23c937 # v1
         with:
           device: smokeAtdApi34
           api-level: '34'
@@ -126,7 +128,7 @@ jobs:
         if: >
           !cancelled() && github.event_name == 'push' &&
           steps.setup-device.outcome == 'success'
-        uses: ScottCooper92/binge-ci/.github/actions/save-avd-cache@9de74a880f7bfeef9e75a31cc72e790eb05f6511 # v1
+        uses: ScottCooper92/binge-ci/.github/actions/save-avd-cache@494e473b01f083178315f3f723383fefba23c937 # v1
         with:
           device: smokeAtdApi34
           api-level: '34'

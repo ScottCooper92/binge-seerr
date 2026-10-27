@@ -16,6 +16,7 @@ import com.cooper.binge.companion.seerr.util.PlainCipher
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import okhttp3.Headers.Companion.headersOf
 import org.junit.After
@@ -191,6 +192,7 @@ class AdvancedRequestViewModelTest {
             CredentialStore(
                 PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("c.preferences_pb") },
                 PlainCipher,
+                UnconfinedTestDispatcher(testScheduler),
             )
         if (connected) store.save(SeerrCredentials(seerr.url("/"), SeerrAuth.ApiKey("k3y"), SeerrVariant.Seerr))
         val vm =
