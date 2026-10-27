@@ -59,6 +59,7 @@ internal fun SettingsEntry(
     backStack: NavBackStack<NavKey>,
     showBack: Boolean,
     open: (NavKey) -> Unit = backStack::add,
+    onBack: () -> Unit = { backStack.pop() },
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -66,10 +67,6 @@ internal fun SettingsEntry(
     DisposableEffect(viewModel) {
         viewModel.setScreenVisible(true)
         onDispose { viewModel.setScreenVisible(false) }
-    }
-    val onBack = {
-        backStack.removeLastOrNull()
-        Unit
     }
     val actions =
         SettingsActions(
@@ -81,10 +78,11 @@ internal fun SettingsEntry(
             onToggleShakeToReport = viewModel::setShakeToReport,
             onToggleShareUsageData = viewModel::setShareUsageData,
             onToggleSendCrashReports = viewModel::setSendCrashReports,
-            // The home swaps to setup on the credentials clearing; leaving Settings is what lets it show.
+            // The home swaps to setup on the credentials clearing; leaving Settings is what lets it show. Only Settings
+            // itself is taken off: a second tap while it leaves finds something else on top and takes nothing.
             onDisconnect = {
                 viewModel.disconnect()
-                onBack()
+                backStack.popIfTop(SettingsRoute)
             },
         )
     SettingsScreen(state = state, showBack = showBack, actions = actions)

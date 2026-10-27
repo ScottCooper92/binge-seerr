@@ -172,8 +172,14 @@ jobs:
         with:
           cache-read-only: true
 
+      # With no Gradle cache, a cold compile and the screenshot render shared one VM and ran it out of memory.
+      - name: Compile screenshot sources
+        run: ./gradlew :app:compileDebugScreenshotTestKotlin --max-workers=2
+
       - name: Validate screenshots
-        run: ./gradlew :app:validateDebugScreenshotTest --continue
+        run: |
+          ./gradlew --stop
+          ./gradlew :app:validateDebugScreenshotTest --continue
 
       - name: Upload reports
         if: ${{ failure() }}

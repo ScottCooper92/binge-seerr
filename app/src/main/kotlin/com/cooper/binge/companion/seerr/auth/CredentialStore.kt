@@ -11,7 +11,6 @@ import com.cooper.binge.companion.seerr.seerr.SeerrAuth
 import com.cooper.binge.companion.seerr.seerr.SeerrCredentials
 import com.cooper.binge.companion.seerr.seerr.SeerrVariant
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOn
@@ -30,7 +29,7 @@ private const val AUTH_TYPE_SESSION = "session"
 class CredentialStore(
     private val dataStore: DataStore<Preferences>,
     private val cipher: SecretCipher,
-    private val io: CoroutineDispatcher = Dispatchers.IO,
+    private val io: CoroutineDispatcher,
 ) {
     val credentials: Flow<SeerrCredentials?> =
         dataStore.data

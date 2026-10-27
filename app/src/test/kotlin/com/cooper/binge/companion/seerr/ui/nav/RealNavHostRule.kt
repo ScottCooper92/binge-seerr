@@ -110,10 +110,18 @@ internal class RealNavHostRule(
      */
     private fun settled(): ComposeTestRule = compose.also { it.waitForIdle() }
 
-    /** System Back, as a gesture or the key delivers it: through the activity's dispatcher. */
-    fun back() {
-        compose.runOnUiThread { activity.onBackPressedDispatcher.onBackPressed() }
+    /** System Back, as a gesture or the key delivers it: through the activity's dispatcher. [times] Backs land in one frame. */
+    fun back(times: Int = 1) {
+        compose.runOnUiThread { repeat(times) { activity.onBackPressedDispatcher.onBackPressed() } }
         compose.waitForIdle()
+    }
+
+    /** The back stack as it stands, read on the main thread. */
+    fun stack(): List<NavKey> = compose.runOnIdle { activity.backStack.toList() }
+
+    /** Saves [credentials] over the connection, as a sign-in's own save does, so the connection emits again. */
+    fun save(credentials: SeerrCredentials) {
+        check(runBlocking { graph().credentials().save(credentials) }) { "the connection was not saved" }
     }
 
     /** Waits, in real time, for [text]: what the screens show next comes from the server, over real sockets. */

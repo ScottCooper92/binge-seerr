@@ -9,10 +9,15 @@ import androidx.navigation3.runtime.NavKey
  * placeholder and reads as half loaded, while [HomeRoute] takes the window. A saved server restores
  * [HubRoute] before the answer arrives, so this is a state users meet, not a frame.
  *
- * Only a home root is swapped, so a notification's link opened on [HomeRoute] keeps its routes above it.
+ * Only a home root is swapped, so a notification's link opened on [HomeRoute] keeps its routes above it. A sign-out
+ * from the hub takes the whole stack back to [HomeRoute].
  */
 internal fun NavBackStack<NavKey>.settleHome(connected: Boolean?) {
     val home = if (connected == true) HubRoute else HomeRoute
     val root = firstOrNull()
-    if ((root == HomeRoute || root == HubRoute) && root != home) set(0, home)
+    when {
+        // Signed out from the hub: what it had open belongs to the server just left, and would cover setup (#1760).
+        root == HubRoute && connected == false -> replaceAll(listOf(HomeRoute))
+        (root == HomeRoute || root == HubRoute) && root != home -> set(0, home)
+    }
 }

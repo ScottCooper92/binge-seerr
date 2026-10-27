@@ -28,6 +28,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.selects.select
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withTimeout
 import okhttp3.Headers.Companion.headersOf
@@ -74,6 +75,7 @@ class SetupViewModelHandOffTest {
                     CredentialStore(
                         PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("c${stores++}.preferences_pb") },
                         PlainCipher,
+                        UnconfinedTestDispatcher(testScheduler),
                     ),
                 apis =
                     SeerrApiFactory(
