@@ -26,6 +26,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextAlign
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.binge.designsystem.tv.nav.LocalTvTopInset
@@ -211,10 +212,12 @@ internal fun TvFormNote(
     text: String,
     modifier: Modifier = Modifier,
     tone: TvFormNoteTone = TvFormNoteTone.Neutral,
+    centered: Boolean = false,
 ) {
     Text(
         text = text,
         style = MaterialTheme.typography.bodyLarge,
+        textAlign = if (centered) TextAlign.Center else TextAlign.Start,
         color =
             when (tone) {
                 TvFormNoteTone.Neutral -> MaterialTheme.colorScheme.onSurfaceVariant

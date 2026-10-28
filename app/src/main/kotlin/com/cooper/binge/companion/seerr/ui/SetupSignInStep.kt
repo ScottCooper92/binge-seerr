@@ -185,7 +185,7 @@ internal fun ModeFields(
                 BingeTextButton(
                     label = stringResource(R.string.setup_forgot_password),
                     onClick = onRequestPasswordReset,
-                    enabled = form.canRequestReset && !state.isConnecting,
+                    enabled = form.canRequestReset && !state.isConnecting && !state.resetCoolingDown,
                 )
             }
         }

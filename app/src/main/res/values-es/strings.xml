@@ -22,7 +22,6 @@
     <string name="setup_plex_hint">Aprobarás esta app en plex.tv desde tu navegador y después volverás aquí.</string>
     <string name="setup_quick_connect_hint">Recibirás un código para aprobarlo en cualquier app de Jellyfin en la que ya tengas la sesión iniciada.</string>
     <string name="setup_forgot_password">¿Has olvidado la contraseña?</string>
-    <string name="tv_setup_send_reset_link">Enviar enlace</string>
     <string name="setup_session_rejected">El servidor rechazó el inicio de sesión guardado.</string>
     <string name="setup_reset_email_sent">Si esa dirección pertenece a una cuenta, ya va de camino un enlace para restablecerla.</string>
     <string name="setup_error_invalid_url">Eso no es una dirección de servidor.</string>
@@ -938,15 +937,13 @@
     <string name="tv_setup_headline">Conectar con tu servidor</string>
     <string name="tv_setup_checking">Comprobando el servidor…</string>
     <string name="tv_setup_code_headline">Configura Seerr</string>
-    <string name="tv_setup_code_body">Escanea el código con la cámara del móvil o con la app Seerr. Allí elegirás tu servidor e iniciarás sesión.</string>
-    <string name="tv_setup_enter_manually">Introducirlo con el mando</string>
+    <string name="tv_setup_type_address">Escribir la dirección</string>
     <string name="tv_setup_status_preparing">Preparando un código…</string>
     <string name="tv_setup_status_waiting">Esperando a tu móvil…</string>
     <string name="tv_setup_status_checking">Comprobando el servidor…</string>
     <string name="tv_setup_status_found">Encontrado %1$s. Inicia sesión en tu móvil.</string>
-    <string name="tv_setup_status_found_on_tv">Encontrado %1$s. Su inicio de sesión termina en este televisor: elige Introducirlo con el mando.</string>
+    <string name="tv_setup_status_found_on_tv">Encontrado %1$s. Su inicio de sesión termina en este televisor: abre la pestaña Escribir la dirección.</string>
     <string name="tv_setup_status_signing_in">Iniciando sesión en %1$s…</string>
-    <string name="tv_setup_sign_in_scan_body">Escanea el código con la app Seerr del móvil para iniciar sesión con tus datos actuales, o escríbelos con el mando.</string>
     <string name="tv_setup_mode_title">Iniciar sesión con</string>
     <string name="tv_setup_no_modes_here">Este servidor no tiene ningún inicio de sesión que este televisor reconozca. Conéctalo desde la app del móvil.</string>
     <string name="tv_link_plex_body">En tu móvil u ordenador, ve a plex.tv/link e introduce este código.</string>
@@ -954,7 +951,6 @@
     <string name="tv_loading">Cargando…</string>
     <string name="tv_advanced_submitting">Enviando la petición…</string>
     <string name="tv_setup_send_from_phone">Escanear un QR</string>
-    <string name="tv_handoff_body">Usa el código QR o la URL para conectarte desde otro dispositivo de la misma red, o usa la app móvil de Seerr para iniciar sesión con tus datos actuales.</string>
     <string name="tv_setup_confirm_sent_address">Un móvil envió esta dirección. Comprueba que es tu servidor y continúa.</string>
     <string name="tv_handoff_code_description">Código para escanear con el móvil</string>
     <string name="tv_handoff_pin">PIN  %1$s</string>

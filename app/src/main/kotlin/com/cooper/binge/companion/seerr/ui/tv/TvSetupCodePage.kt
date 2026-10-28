@@ -1,8 +1,7 @@
 package com.cooper.binge.companion.seerr.ui.tv
 
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Tv
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
@@ -12,16 +11,10 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
-import com.binge.designsystem.tv.component.TvButton
-import com.binge.designsystem.tv.focus.TvArrivalFocusEffect
-import com.binge.designsystem.tv.focus.rememberTvArrivalFocus
-import com.binge.designsystem.tv.focus.tvArrivalTarget
-import com.binge.designsystem.tv.theme.TvButtonStyle
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.handoff.HandOffSignInModes
 import com.cooper.binge.companion.seerr.ui.AddressHandOff
 import com.cooper.binge.companion.seerr.ui.SetupActions
-import com.cooper.binge.companion.seerr.ui.SetupNotice
 import com.cooper.binge.companion.seerr.ui.SetupUiState
 import com.cooper.binge.companion.seerr.ui.messageRes
 
@@ -29,80 +22,31 @@ import com.cooper.binge.companion.seerr.ui.messageRes
 private const val STATUS_LINES = 2
 
 /**
- * Setup on a television as one screen: a code for the phone, and a line under it saying where things are. The server
+ * The server step's code tab: the code for the phone, and a line under it saying where things are. The server
  * address and the sign-in both happen on the phone, in the Seerr app or the page the code opens; the TV only shows the
- * code and follows along. The same page serves both steps, so the TV doesn't change screens under the user while they
- * look at their phone.
- *
- * Typing with the remote is the fallback, for a network where the phone can't reach the TV: [onManual] opens the forms.
+ * code and follows along.
  */
 @Composable
-internal fun TvSetupCodePage(
-    state: SetupUiState,
+internal fun ColumnScope.TvAddressCodeContent(
+    state: SetupUiState.Address,
     actions: SetupActions,
-    onManual: () -> Unit,
-    modifier: Modifier = Modifier,
 ) {
-    val address = state as? SetupUiState.Address
-    val signIn = state as? SetupUiState.SignIn
-    // The address step's code ends when the app goes to the background; bring one back when the page is shown again.
-    val needsCode = address != null && address.code == null && address.handOff !is AddressHandOff.Unavailable && !address.isInspecting
+    // The code ends when the app goes to the background; bring one back when the page is shown again.
+    val needsCode = state.code == null && state.handOff !is AddressHandOff.Unavailable && !state.isInspecting
     LaunchedEffect(needsCode) { if (needsCode) actions.onStartHandOff() }
-    // The sign-in step keeps the address's code, or opens one if the address was typed.
-    LaunchedEffect(signIn != null) { if (signIn != null) actions.onOfferSignInCode() }
-    // Leaving the app stops the address step's listener; coming back brings a fresh code (above).
-    LifecycleEventEffect(Lifecycle.Event.ON_STOP) { if (address != null) actions.onCancelHandOff() }
-    val unavailable = address?.handOff as? AddressHandOff.Unavailable
-    val code = address?.code ?: signIn?.code
-    val arrival = rememberTvArrivalFocus()
-    TvArrivalFocusEffect(arrival)
-    TvFormPage(
-        // Put up by the app itself when the server rejected the session (#810): it says so, then the same code.
-        headline =
-            stringResource(
-                if (signIn?.notice == SetupNotice.SessionRejected) R.string.hub_unauthorized_headline else R.string.tv_setup_code_headline,
-            ),
-        body = stringResource(R.string.tv_setup_code_body),
-        icon = Icons.Filled.Tv,
-        modifier = modifier,
-        actionScrolls = false,
-        buttonBar = true,
-        // Under the code, which is centred in its pane.
-        pinnedCentered = true,
-        copyAction = {
-            TvButton(
-                label = stringResource(R.string.tv_setup_enter_manually),
-                onClick = onManual,
-                // The way out when the phone can't reach the TV, so it leads only when there's no code to scan.
-                style = if (unavailable != null) TvButtonStyle.Primary else TvButtonStyle.Secondary,
-                modifier = Modifier.tvArrivalTarget(arrival),
-            )
-        },
-        pinnedAction =
-            when {
-                signIn != null ->
-                    (
-                        {
-                            TvButton(label = stringResource(R.string.setup_change_server), onClick = actions.onChangeServer)
-                            actions.onDisconnect?.let { TvButton(label = stringResource(R.string.hub_disconnect), onClick = it) }
-                        }
-                    )
-                address?.canTryDemo == true -> ({ TvTryDemoButton(actions, enabled = !address.isInspecting) })
-                else -> null
-            },
-    ) {
-        TvHandOffContent(handOff = unavailable ?: code, preparing = needsCode)
-        val (status, isError) = codeStatus(address, signIn, hasCode = code != null)
-        Text(
-            text = status,
-            style = MaterialTheme.typography.titleMedium,
-            color = if (isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center,
-            minLines = STATUS_LINES,
-            maxLines = STATUS_LINES,
-            modifier = Modifier.fillMaxWidth(),
-        )
-    }
+    LifecycleEventEffect(Lifecycle.Event.ON_STOP) { actions.onCancelHandOff() }
+    val unavailable = state.handOff as? AddressHandOff.Unavailable
+    TvHandOffContent(handOff = unavailable ?: state.code, preparing = needsCode)
+    val (status, isError) = codeStatus(state, null, hasCode = state.code != null)
+    Text(
+        text = status,
+        style = MaterialTheme.typography.titleMedium,
+        color = if (isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+        textAlign = TextAlign.Center,
+        minLines = STATUS_LINES,
+        maxLines = STATUS_LINES,
+        modifier = Modifier.fillMaxWidth(),
+    )
 }
 
 /** What the line under the code says, and whether it is a problem. */
@@ -131,3 +75,24 @@ private fun codeStatus(
         !hasCode -> "" to false
         else -> stringResource(R.string.tv_setup_status_waiting) to false
     }
+
+/** The sign-in step's code tab: the code for the phone and the line under it, with no page around them. */
+@Composable
+internal fun ColumnScope.TvSignInCodeContent(
+    state: SetupUiState.SignIn,
+    actions: SetupActions,
+) {
+    // The sign-in step keeps the address's code, or opens one if the address was typed.
+    LaunchedEffect(Unit) { actions.onOfferSignInCode() }
+    TvHandOffContent(handOff = state.code, preparing = false)
+    val (status, isError) = codeStatus(address = null, signIn = state, hasCode = state.code != null)
+    Text(
+        text = status,
+        style = MaterialTheme.typography.titleMedium,
+        color = if (isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+        textAlign = TextAlign.Center,
+        minLines = STATUS_LINES,
+        maxLines = STATUS_LINES,
+        modifier = Modifier.fillMaxWidth(),
+    )
+}

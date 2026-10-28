@@ -9,6 +9,10 @@ import com.cooper.binge.companion.seerr.telemetry.AnalyticsEvents
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
+import kotlin.time.Duration.Companion.seconds
+
+/** How long Forgot password? waits after a reset link went out before it will ask for another. */
+internal val RESET_COOLDOWN = 60.seconds
 
 /** Everything [SetupViewModel] holds between the user's steps, from which [toUiState] builds what the screen shows. */
 internal data class SetupDraft(
@@ -35,6 +39,8 @@ internal data class SetupDraft(
     val attempts: Int = 0,
     /** Bumped when the local-network permission may have changed, so the state is built again from the live answer. */
     val permissionReads: Int = 0,
+    /** A reset link went out less than [RESET_COOLDOWN] ago, so another is not asked for yet. */
+    val resetCoolingDown: Boolean = false,
 )
 
 /** What the screen shows for this draft, with [saved] the connection already stored. */
@@ -70,6 +76,7 @@ internal fun SetupDraft.toUiState(
                 error = error,
                 notice = notice,
                 code = code,
+                resetCoolingDown = resetCoolingDown,
             )
     }
 }

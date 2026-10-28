@@ -1,66 +1,49 @@
 package com.cooper.binge.companion.seerr.ui.tv
 
-import androidx.activity.compose.BackHandler
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.PhoneAndroid
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.style.TextAlign
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
-import com.binge.designsystem.tv.component.TvButton
-import com.binge.designsystem.tv.focus.TvArrivalFocusEffect
-import com.binge.designsystem.tv.focus.rememberTvArrivalFocus
-import com.binge.designsystem.tv.focus.tvArrivalTarget
-import com.binge.designsystem.tv.theme.TvButtonStyle
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.LinkFlow
 
 /**
- * A sign-in that finishes somewhere else, on a television: the code to enter, and the wait.
+ * A sign-in that finishes somewhere else, on a television: the code to enter, and the wait, in the tab that asked for
+ * it, as the code tab shows its own.
  *
- * The polling is the ViewModel's and is the same the phone drives, so this is only the code on
- * screen and a way out. Cancel takes the arrival focus because it is the one control here — a remote
- * that lands on nothing cannot leave the page.
+ * The polling is the ViewModel's and is the same the phone drives, so this is only the code on screen. There is no
+ * button: Back, or moving to another tab, abandons it.
  */
 @Composable
-internal fun TvSetupLinkPlate(
-    link: LinkFlow,
-    onCancel: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val arrival = rememberTvArrivalFocus()
-    TvArrivalFocusEffect(arrival)
-    // Back abandons the code, as Cancel does, rather than leaving the app with the link still open.
-    BackHandler(onBack = onCancel)
-    TvFormPage(
-        headline = stringResource(link.titleRes()),
-        body = stringResource(link.bodyRes()),
-        icon = Icons.Filled.PhoneAndroid,
-        modifier = modifier,
-    ) {
-        // Monospace so a remote-read code cannot be mistaken a character at a time across the room.
-        Text(
-            text = link.code,
-            style = MaterialTheme.typography.displayMedium,
-            fontFamily = FontFamily.Monospace,
-        )
-        TvFormNote(stringResource(R.string.link_waiting))
-        TvButton(
-            label = stringResource(R.string.link_cancel),
-            onClick = onCancel,
-            style = TvButtonStyle.Primary,
-            modifier = Modifier.tvArrivalTarget(arrival),
-        )
-    }
+internal fun ColumnScope.TvSetupLinkContent(link: LinkFlow) {
+    Text(
+        text = stringResource(link.bodyRes()),
+        style = MaterialTheme.typography.titleMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        textAlign = TextAlign.Center,
+        modifier = Modifier.width(dimensionResource(R.dimen.tv_form_field_width)),
+    )
+    // Monospace so a remote-read code cannot be mistaken a character at a time across the room. Set in the page's own
+    // colour: the default is dark, which is unreadable here.
+    Text(
+        text = link.code,
+        style = MaterialTheme.typography.displayMedium,
+        color = MaterialTheme.colorScheme.onSurface,
+        fontFamily = FontFamily.Monospace,
+    )
+    Text(
+        text = stringResource(R.string.link_waiting),
+        style = MaterialTheme.typography.bodyLarge,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        textAlign = TextAlign.Center,
+    )
 }
-
-private fun LinkFlow.titleRes(): Int =
-    when (this) {
-        is LinkFlow.Plex -> R.string.link_plex_title
-        is LinkFlow.QuickConnect -> R.string.link_quick_connect_title
-    }
 
 /** Plex's body is the television's own, not the phone sheet's: no browser opens here to hand the code to. */
 private fun LinkFlow.bodyRes(): Int =

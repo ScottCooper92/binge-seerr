@@ -1,21 +1,17 @@
 package com.cooper.binge.companion.seerr.ui.tv
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.material.icons.filled.Dns
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -27,7 +23,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.Constraints
 import com.binge.designsystem.tv.component.TvButton
 import com.binge.designsystem.tv.component.TvCheckboxRow
-import com.binge.designsystem.tv.component.TvIconButton
+import com.binge.designsystem.tv.component.TvTabRow
+import com.binge.designsystem.tv.component.TvTabUi
 import com.binge.designsystem.tv.component.TvTextField
 import com.binge.designsystem.tv.focus.TvArrivalFocus
 import com.binge.designsystem.tv.focus.TvArrivalFocusEffect
@@ -40,14 +37,12 @@ import com.cooper.binge.companion.seerr.ui.SetupActions
 import com.cooper.binge.companion.seerr.ui.SetupUiState
 import com.cooper.binge.companion.seerr.ui.messageRes
 import com.cooper.binge.companion.seerr.ui.rememberAllowLocalNetwork
-import com.binge.designsystem.R as DesR
 import com.binge.designsystem.tv.R as TvR
 
 /**
- * The address typed with the remote: the fallback from the code page ([TvSetupCodePage]) for a network where the
- * phone can't reach the TV. Its left pane is the code page's, so stepping between them moves nothing there.
- * [onScan] is "Scan a QR", which leaves the fallback as well as starting the hand-off. It is a parameter rather than a
- * rebuilt [actions], so every other action reaches the page as the entry passed it (#1718).
+ * The server step on a television: the same tabs as the sign-in's, with the code first and the address typed with the
+ * remote as the fallback for a network where the phone can't reach the TV. [onScan] is null when no code is on offer,
+ * which leaves the typed address alone on the page; [onType] leaves the code for the fallback.
  */
 @Composable
 internal fun TvSetupAddressPage(
@@ -55,31 +50,63 @@ internal fun TvSetupAddressPage(
     actions: SetupActions,
     modifier: Modifier,
     initialFocus: TvSetupFocus?,
-    onScan: () -> Unit,
+    scanSelected: Boolean,
+    onScan: (() -> Unit)?,
+    onType: () -> Unit,
 ) {
     val arrival = rememberTvArrivalFocus()
     TvArrivalFocusEffect(arrival)
     InspectionEndFocusEffect(state.isInspecting, arrival)
-    TvFormPage(
-        headline = stringResource(R.string.tv_setup_headline),
-        // The code page's body, so leaving it for this form changes nothing on the left.
-        body = stringResource(R.string.tv_handoff_body),
-        icon = Icons.Filled.Dns,
+    // The demo is a third tab for a viewer with no server to point at; it has no state of the setup's own.
+    var demoSelected by rememberSaveable { mutableStateOf(false) }
+    val tabsOffered = onScan != null || state.canTryDemo
+    TvSignInTabsPage(
+        headline = stringResource(R.string.tv_setup_code_headline),
         modifier = modifier,
-        buttonBar = true,
-        pinnedAction = if (state.canTryDemo) ({ TvTryDemoButton(actions, enabled = !state.isInspecting) }) else null,
-        // Back to the code, in the same place the way here was.
-        copyAction = {
-            TvButton(
-                label = stringResource(R.string.tv_setup_send_from_phone),
-                onClick = onScan,
-                enabled = !state.isInspecting,
-            )
+        tabs = {
+            if (tabsOffered) {
+                TvTabRow(
+                    tabs =
+                        listOfNotNull(
+                            onScan?.let { TvTabUi(key = SCAN_KEY, label = stringResource(R.string.tv_setup_send_from_phone)) },
+                            TvTabUi(key = ADDRESS_KEY, label = stringResource(R.string.tv_setup_type_address)),
+                            if (state.canTryDemo) TvTabUi(key = DEMO_KEY, label = stringResource(R.string.setup_try_demo)) else null,
+                        ),
+                    selectedKey =
+                        when {
+                            demoSelected -> DEMO_KEY
+                            scanSelected -> SCAN_KEY
+                            else -> ADDRESS_KEY
+                        },
+                    onSelect = { key ->
+                        demoSelected = key == DEMO_KEY
+                        when (key) {
+                            SCAN_KEY -> onScan?.invoke()
+                            ADDRESS_KEY -> onType()
+                            else -> actions.onCancelHandOff()
+                        }
+                    },
+                    arrival = arrival.takeIf { scanSelected && !demoSelected },
+                )
+            }
         },
     ) {
-        TvSetupAddressFields(state, actions, initialFocus, arrival)
+        when {
+            demoSelected -> TvDemoContent(actions, enabled = !state.isInspecting)
+            scanSelected -> TvAddressCodeContent(state, actions)
+            else ->
+                // The sign-in fields' width, so the two steps' columns line up.
+                Column(
+                    modifier = Modifier.width(dimensionResource(R.dimen.tv_form_field_width)),
+                    verticalArrangement = Arrangement.spacedBy(dimensionResource(TvR.dimen.tv_two_pane_action_gap)),
+                ) { TvSetupAddressFields(state, actions, initialFocus, arrival) }
+        }
     }
 }
+
+private const val SCAN_KEY = "scan"
+private const val ADDRESS_KEY = "address"
+private const val DEMO_KEY = "demo"
 
 /**
  * Puts the remote back where the page lands once an inspection ends on this page, as a failure does (#1044). The field
@@ -112,33 +139,28 @@ private fun ColumnScope.TvSetupAddressFields(
     val allow = if (state.needsLocalNetwork) rememberAllowLocalNetwork(actions.onLocalNetworkChanged) else null
     // An address a phone sent waits for the user to go on, so the page lands on the way on, not the keyboard (#1084).
     val wayOn = if (state.awaitingConfirm && !state.awaitingCleartextConsent) Modifier.tvArrivalTarget(arrival) else Modifier
-    // The way on sits beside the field, as tall as it, so the address and what to do with it read as one row.
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
-        verticalAlignment = Alignment.Bottom,
-    ) {
-        TvTextField(
-            value = state.serverUrl,
-            onValueChange = actions.onEditAddress,
-            label = stringResource(R.string.setup_server_url),
-            enabled = !state.isInspecting,
-            keyboardType = KeyboardType.Uri,
-            fillWidth = true,
-            modifier = Modifier.weight(1f),
-            placeholder = stringResource(R.string.placeholder_server_url),
-            initiallyFocused = initialFocus == TvSetupFocus.Address,
-            // Where the page lands: the remote came here to type, and the keyboard waits for select. An address a phone sent
-            // lands on the way on instead, or on the opt-in when it waits on that (#907, #1084).
-            arrival = arrival.takeUnless { state.awaitingConfirm || state.awaitingCleartextConsent },
-            onImeAction = {
-                if (allow != null) {
-                    allow.run()
-                } else if (state.canContinue) {
-                    actions.onInspect()
-                }
-            },
-        )
+    TvTextField(
+        value = state.serverUrl,
+        onValueChange = actions.onEditAddress,
+        label = stringResource(R.string.setup_server_url),
+        enabled = !state.isInspecting,
+        keyboardType = KeyboardType.Uri,
+        fillWidth = true,
+        placeholder = stringResource(R.string.placeholder_server_url),
+        initiallyFocused = initialFocus == TvSetupFocus.Address,
+        // Where the page lands: the remote came here to type, and the keyboard waits for select. An address a phone sent
+        // lands on the way on instead, or on the opt-in when it waits on that (#907, #1084).
+        arrival = arrival.takeUnless { state.awaitingConfirm || state.awaitingCleartextConsent },
+        onImeAction = {
+            if (allow != null) {
+                allow.run()
+            } else if (state.canContinue) {
+                actions.onInspect()
+            }
+        },
+    )
+    // The way on sits centred under the field it acts on, as a button with a word on it.
+    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
         if (allow != null) {
             TvButton(
                 label = stringResource(allow.shortLabel),
@@ -154,7 +176,7 @@ private fun ColumnScope.TvSetupAddressFields(
     TvSetupAddressNotes(state, actions, arrival)
 }
 
-/** Continue, beside the field and as tall as it. */
+/** Continue, under the field. */
 @Composable
 private fun TvContinueButton(
     state: SetupUiState.Address,
@@ -162,20 +184,14 @@ private fun TvContinueButton(
     initialFocus: TvSetupFocus?,
     modifier: Modifier,
 ) {
-    TvIconButton(
-        icon = Icons.AutoMirrored.Filled.ArrowForward,
+    TvButton(
         label = stringResource(if (state.isInspecting) R.string.tv_setup_checking else R.string.setup_continue),
         onClick = actions.onInspect,
         style = TvButtonStyle.Primary,
         enabled = state.canContinue,
         initiallyFocused = initialFocus == TvSetupFocus.Continue,
         // Disabled, it is not a stop: the remote skips it until there is an address to continue with.
-        modifier =
-            modifier
-                .focusProperties { canFocus = state.canContinue }
-                .height(
-                    dimensionResource(R.dimen.tv_form_field_height),
-                ).widthIn(min = dimensionResource(R.dimen.tv_form_field_height)),
+        modifier = modifier.focusProperties { canFocus = state.canContinue },
     )
 }
 
