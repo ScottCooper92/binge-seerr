@@ -101,17 +101,18 @@ class TvSetupFocusTest {
         composeTestRule.onNodeWithText(string(R.string.tv_setup_status_preparing)).assertIsDisplayed()
     }
 
+    /** The code tab is where the page lands, on its own tab; the address tab is one press along, with nothing to confirm. */
     @Test
-    fun theCodePageLandsOnTheRemoteFallbackAndOkOpensTheForm() {
+    fun theCodeTabLandsOnItsTabAndRightOpensTheAddressTab() {
         val code = AddressHandOff.Listening("http://192.168.1.20:41234/a/k7m2pqx4")
         setScreen(address("").copy(handOff = code, code = code), offerHandOff = true)
 
         composeTestRule.onNodeWithText(string(R.string.tv_setup_status_waiting)).assertIsDisplayed()
-        button(R.string.tv_setup_enter_manually).assertIsFocused()
-        pressOk()
+        tab(R.string.tv_setup_send_from_phone).assertIsFocused()
+        pressRight()
 
         assertEquals(1, cancelledHandOff)
-        addressField().assertIsFocused()
+        addressField().assertIsDisplayed()
     }
 
     /** #907: a phone's plain-HTTP public address waits on the opt-in, so the TV leaves its code page for it. */
@@ -143,27 +144,28 @@ class TvSetupFocusTest {
     fun backFromTheTypedAddressReturnsToTheCode() {
         val code = AddressHandOff.Listening("http://192.168.1.20:41234/a/k7m2pqx4")
         setScreen(address("").copy(handOff = code, code = code), offerHandOff = true)
-        pressOk()
-        addressField().assertIsFocused()
+        pressRight()
+        addressField().assertIsDisplayed()
 
         pressBack()
 
         assertEquals(1, startedHandOff)
         addressField().assertDoesNotExist()
-        button(R.string.tv_setup_enter_manually).assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.tv_setup_status_waiting)).assertIsDisplayed()
     }
 
     @Test
     fun backFromTheTypedSignInReturnsToTheCode() {
         val code = AddressHandOff.Listening("http://192.168.1.20:41234/a/k7m2pqx4")
         setScreen(signIn(modes = listOf(SeerrSignInMode.Local)).copy(code = code), offerHandOff = true)
-        button(R.string.tv_setup_enter_manually).assertIsFocused()
-        pressOk()
-        button(R.string.tv_setup_enter_manually).assertDoesNotExist()
+        tab(R.string.tv_setup_send_from_phone).assertIsFocused()
+        pressRight()
+        field(R.string.setup_email).assertIsDisplayed()
 
         pressBack()
 
-        button(R.string.tv_setup_enter_manually).assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.tv_setup_status_found, "Living room")).assertIsDisplayed()
+        field(R.string.setup_email).assertDoesNotExist()
     }
 
     /** A screen reader on the editable node reads the label with the value, not "edit box" and the value alone (#1040). */
@@ -197,10 +199,10 @@ class TvSetupFocusTest {
     }
 
     @Test
-    fun rightFromTheFieldReachesContinueAndOkInspects() {
+    fun downFromTheFieldReachesContinueAndOkInspects() {
         setScreen(address("http://seerr.lan:5055"))
 
-        pressRight()
+        pressDown()
         continueButton().assertIsFocused()
         pressOk()
 
@@ -208,11 +210,11 @@ class TvSetupFocusTest {
     }
 
     @Test
-    fun leftFromContinueReachesTheField() {
+    fun upFromContinueReachesTheField() {
         setScreen(address("http://seerr.lan:5055"))
 
-        pressRight()
-        pressLeft()
+        pressDown()
+        pressUp()
 
         addressField().assertIsFocused()
     }
@@ -244,7 +246,7 @@ class TvSetupFocusTest {
             BingeTvTheme { TvSetupScreen(state = state, actions = actions) }
         }
         composeTestRule.waitForIdle()
-        pressRight()
+        pressDown()
         continueButton().assertIsFocused()
 
         state = SetupUiState.Address(serverUrl = "http://seerr.lan:5055", insecure = false, isInspecting = true, error = null)
@@ -261,7 +263,7 @@ class TvSetupFocusTest {
     fun anEmptyAddressLeavesContinueOutOfReach() {
         setScreen(address(""))
 
-        pressRight()
+        pressDown()
         continueButton().assertIsNotFocused()
         assertEquals("a blank address must not be inspected", 0, inspected)
     }
@@ -321,8 +323,9 @@ class TvSetupFocusTest {
         composeTestRule.onNodeWithText(string(R.string.tv_link_plex_body)).assertIsDisplayed()
     }
 
+    /** A waiting code has no button of its own: Back, or another tab, is the way out. */
     @Test
-    fun theLinkPlateLandsOnCancelSoARemoteCanBackOut() {
+    fun aWaitingCodeHasNoButtonOfItsOwn() {
         setScreen(
             signIn(
                 modes = listOf(SeerrSignInMode.QuickConnect),
@@ -330,10 +333,7 @@ class TvSetupFocusTest {
             ),
         )
 
-        button(R.string.link_cancel).assertIsFocused()
-        pressOk()
-
-        assertEquals(1, cancelledLink)
+        button(R.string.link_cancel).assertDoesNotExist()
     }
 
     @Test
@@ -464,9 +464,9 @@ class TvSetupFocusTest {
         composeTestRule.onAllNodes(hasText(string(R.string.setup_forgot_password))).assertCountEquals(0)
     }
 
-    /** OK is the commit: moving across the modes changes nothing, so a typed field is never dropped by a stray D-pad press. */
+    /** The tabs follow focus, as tabs do: moving onto one selects it, with nothing to press. */
     @Test
-    fun movingAcrossTheModesChangesNothingUntilOkCommitsOne() {
+    fun movingAcrossTheTabsSelectsEachOne() {
         setScreen(
             signIn(
                 modes = listOf(SeerrSignInMode.Local, SeerrSignInMode.ApiKey),
@@ -477,8 +477,6 @@ class TvSetupFocusTest {
         modeRow(R.string.setup_mode_api_key).assertIsFocused()
         pressLeft()
         modeRow(R.string.setup_mode_local).assertIsFocused()
-        assertTrue("focus alone must not switch the mode", formEdits.isEmpty())
-        pressOk()
 
         val applied = formEdits.fold(SignInForm(mode = SeerrSignInMode.ApiKey)) { form, edit -> form.edit() }
         assertEquals(SeerrSignInMode.Local, applied.mode)
@@ -580,8 +578,9 @@ class TvSetupFocusTest {
 
     private fun modeRow(label: Int) = composeTestRule.onNode(hasText(string(label)) and isFocusable())
 
-    /** The way on is an icon button: its label is its description, never a text node while resting. */
-    private fun continueButton() = composeTestRule.onNode(hasContentDescription(string(R.string.setup_continue)) and isFocusable())
+    private fun tab(label: Int) = modeRow(label)
+
+    private fun continueButton() = composeTestRule.onNode(hasText(string(R.string.setup_continue)) and isFocusable())
 
     private fun pressUp() {
         composeTestRule.onRoot().performKeyInput { pressKey(Key.DirectionUp) }

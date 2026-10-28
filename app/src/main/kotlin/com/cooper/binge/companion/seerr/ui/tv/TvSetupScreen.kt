@@ -1,35 +1,27 @@
 package com.cooper.binge.companion.seerr.ui.tv
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Bolt
-import androidx.compose.material.icons.filled.Key
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.PlayCircle
-import androidx.compose.material.icons.filled.VideoLibrary
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import com.binge.designsystem.DISABLED_ALPHA
 import com.binge.designsystem.tv.component.TvButton
 import com.binge.designsystem.tv.component.TvCheckboxRow
-import com.binge.designsystem.tv.component.TvChoiceRow
-import com.binge.designsystem.tv.component.TvChoiceUi
+import com.binge.designsystem.tv.component.TvTabRow
+import com.binge.designsystem.tv.component.TvTabUi
 import com.binge.designsystem.tv.component.TvTextField
 import com.binge.designsystem.tv.focus.TvArrivalFocus
 import com.binge.designsystem.tv.focus.TvArrivalFocusEffect
@@ -46,6 +38,8 @@ import com.cooper.binge.companion.seerr.ui.SignInForm
 import com.cooper.binge.companion.seerr.ui.label
 import com.cooper.binge.companion.seerr.ui.messageRes
 import com.cooper.binge.companion.seerr.ui.submitLabelRes
+import kotlinx.coroutines.delay
+import com.binge.designsystem.R as DesR
 
 /** The control a preview seeds as focused; production passes null and the page lands where it lands. */
 internal enum class TvSetupFocus { Address, Continue, Credential, Connect }
@@ -81,22 +75,29 @@ internal fun TvSetupScreen(
     when {
         // The home swaps to the connected plate on the credentials landing; this is the frame in between.
         state == SetupUiState.Loading || state is SetupUiState.Connected -> TvLoadingPlate(modifier = modifier)
-        // A link flow takes the whole page: the code is the only thing to read, and the only thing to do
-        // is wait or back out.
-        state is SetupUiState.SignIn && state.link != null -> TvSetupLinkPlate(state.link, actions.onCancelLink, modifier)
-        !manual ->
-            TvSetupCodePage(
+        state is SetupUiState.SignIn ->
+            TvSetupSignInStep(
                 state = state,
                 actions = actions,
-                onManual = {
+                modifier = modifier,
+                initialFocus = initialFocus,
+                scanSelected = offerHandOff && !manual,
+                onScan = if (offerHandOff) ({ manual = false }) else null,
+                onType = { manual = true },
+            )
+        state is SetupUiState.Address ->
+            TvSetupAddressPage(
+                state = state,
+                actions = actions,
+                modifier = modifier,
+                initialFocus = initialFocus,
+                scanSelected = offerHandOff && !manual,
+                onScan = if (offerHandOff) ({ manual = false }) else null,
+                onType = {
                     manual = true
                     actions.onCancelHandOff()
                 },
-                modifier = modifier,
             )
-        state is SetupUiState.Address ->
-            TvSetupAddressPage(state, actions, modifier, initialFocus, onScan = scanInstead)
-        state is SetupUiState.SignIn -> TvSetupSignInStep(state, actions, modifier, initialFocus, onScan = { manual = false })
     }
 }
 
@@ -119,7 +120,9 @@ private fun TvSetupSignInStep(
     actions: SetupActions,
     modifier: Modifier,
     initialFocus: TvSetupFocus?,
-    onScan: () -> Unit = {},
+    scanSelected: Boolean = false,
+    onScan: (() -> Unit)? = null,
+    onType: () -> Unit = {},
 ) {
     val offered = state.server.modes.filter { it.finishableOnTv }
     // The form opens on the server's first mode, which may be one this surface cannot finish.
@@ -129,46 +132,92 @@ private fun TvSetupSignInStep(
     }
     val arrival = rememberTvArrivalFocus()
     TvArrivalFocusEffect(arrival)
-    val commit = remember { FocusRequester() }
-    val canCommit =
-        !state.isConnecting && state.link == null && if (state.resetting) state.form.canRequestReset else state.form.canSubmit
-    TvFormPage(
-        headline = state.server.title,
-        // The code page's copy, so stepping between it and this form moves nothing on the left.
-        body = stringResource(R.string.tv_setup_sign_in_scan_body),
-        icon = Icons.Filled.Lock,
+    val typing = !scanSelected && offered.isNotEmpty()
+    // A tab that finishes on another device asks for its code once it has been rested on, not as the remote passes over it.
+    val mintsCode = !scanSelected && state.form.mode in CodeModes
+    LaunchedEffect(mintsCode, state.form.mode) {
+        if (mintsCode) {
+            delay(CODE_REQUEST_DELAY_MILLIS)
+            actions.onConnect()
+        }
+    }
+    // Back abandons a code that is waiting, as Cancel does, rather than leaving the app with the link still open.
+    BackHandler(enabled = state.link != null, onBack = actions.onCancelLink)
+    TvSignInTabsPage(
+        // Put up by the app itself when the server rejected the session (#810): it says so, then the same tabs.
+        headline =
+            if (state.notice == SetupNotice.SessionRejected) stringResource(R.string.hub_unauthorized_headline) else state.server.title,
         modifier = modifier,
-        buttonBar = true,
-        // Down from the fields lands on the commit while it can be pressed, and on Change server while it can't.
-        pinnedEntry = commit.takeIf { canCommit && offered.isNotEmpty() },
-        pinnedAction = {
-            TvSignInButtons(state, actions, offered.isNotEmpty(), canCommit, commit, arrival.takeIf { offered.isEmpty() }, initialFocus)
-        },
-        // Back to the code page, where a phone can finish this.
-        copyAction = { TvButton(label = stringResource(R.string.tv_setup_send_from_phone), onClick = onScan) },
-        // Held at the top of the column, so the fields and notes under them have its height (#1302).
-        formHeader =
-            if (offered.isEmpty()) {
-                null
-            } else {
-                {
-                    // OK commits a mode, so moving across the row changes nothing under the user's hands; the page lands
-                    // here, since the first thing to choose is how to sign in.
-                    TvChoiceRow(
-                        choices = offered.map { mode -> TvChoiceUi(key = mode.name, label = mode.label(state.server), icon = mode.icon()) },
-                        selectedKey = state.form.mode.name,
-                        onSelect = { key ->
-                            offered.firstOrNull { it.name == key }?.let { mode -> actions.onEditForm { copy(mode = mode) } }
-                        },
-                        arrival = arrival,
-                    )
+        // Where Change server is on every tab, so the remote finds it without looking.
+        footer = {
+            Row(horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m))) {
+                TvChangeServerButton(actions, leads = !typing && onScan == null, arrival = arrival.takeIf { !typing && onScan == null })
+                // Leaving the server altogether is only offered where the app put this page up for a session the server rejected.
+                actions.onDisconnect?.let { disconnect ->
+                    TvButton(label = stringResource(R.string.hub_disconnect), onClick = disconnect, style = TvButtonStyle.TextDestructive)
                 }
-            },
+            }
+        },
+        tabs = { TvSignInTabs(state, actions, offered, scanSelected, onScan, onType, arrival) },
     ) {
-        if (offered.isEmpty()) {
-            // Change server is in the button bar, the one way on from a server this TV can't sign in to.
-            TvFormNote(stringResource(R.string.tv_setup_no_modes_here))
-        } else {
+        TvSignInBody(state, actions, offered, scanSelected, mintsCode, initialFocus)
+    }
+}
+
+/**
+ * Text tabs, selection following focus: the selected tab is the filled one, so it needs neither a glyph nor a tick, and
+ * five of them fit a line. The page lands here, since the first thing to choose is how to sign in.
+ */
+@Composable
+private fun TvSignInTabs(
+    state: SetupUiState.SignIn,
+    actions: SetupActions,
+    offered: List<SeerrSignInMode>,
+    scanSelected: Boolean,
+    onScan: (() -> Unit)?,
+    onType: () -> Unit,
+    arrival: TvArrivalFocus,
+) {
+    TvTabRow(
+        tabs =
+            listOfNotNull(onScan?.let { TvTabUi(key = SCAN_KEY, label = stringResource(R.string.tv_setup_send_from_phone)) }) +
+                offered.map { mode -> TvTabUi(key = mode.name, label = mode.label(state.server)) },
+        selectedKey = if (scanSelected) SCAN_KEY else state.form.mode.name,
+        onSelect = { key ->
+            // Leaving a tab leaves its waiting code behind.
+            if (state.link != null) actions.onCancelLink()
+            if (key == SCAN_KEY) {
+                onScan?.invoke()
+            } else {
+                offered.firstOrNull { it.name == key }?.let { mode ->
+                    onType()
+                    actions.onEditForm { copy(mode = mode) }
+                }
+            }
+        },
+        arrival = arrival,
+    )
+}
+
+/** What the chosen tab shows: its waiting code, the code for the phone, or the fields it needs and the commit under them. */
+@Composable
+private fun ColumnScope.TvSignInBody(
+    state: SetupUiState.SignIn,
+    actions: SetupActions,
+    offered: List<SeerrSignInMode>,
+    scanSelected: Boolean,
+    mintsCode: Boolean,
+    initialFocus: TvSetupFocus?,
+) {
+    when {
+        state.link != null -> TvSetupLinkContent(state.link)
+        scanSelected -> {
+            state.notice?.let { notice -> TvFormNote(stringResource(notice.messageRes()), tone = notice.tone, centered = true) }
+            TvSignInCodeContent(state, actions)
+        }
+        offered.isEmpty() -> TvFormNote(stringResource(R.string.tv_setup_no_modes_here))
+        mintsCode && state.error == null -> TvFormNote(stringResource(R.string.tv_setup_connecting), centered = true)
+        else -> {
             TvModeFields(
                 form = state.form,
                 server = state.server,
@@ -179,9 +228,19 @@ private fun TvSetupSignInStep(
             )
             state.error?.let { error -> TvFormNote(stringResource(error.messageRes()), tone = TvFormNoteTone.Error) }
             state.notice?.let { notice -> TvFormNote(stringResource(notice.messageRes()), tone = notice.tone) }
+            // A code tab has no button until a request has failed: then there is a message and one way to try again.
+            if (!mintsCode || state.error != null) TvSignInCommit(state, actions, state.canCommit, initialFocus)
         }
     }
 }
+
+/** Whether the commit can be pressed: nothing is in flight, and the form has what the mode needs. */
+private val SetupUiState.SignIn.canCommit: Boolean
+    get() = !isConnecting && link == null && if (resetting) form.canRequestReset else form.canSubmit
+
+private const val SCAN_KEY = "scan"
+private const val CODE_REQUEST_DELAY_MILLIS = 500L
+private val CodeModes = setOf(SeerrSignInMode.QuickConnect, SeerrSignInMode.Plex)
 
 /**
  * Whether the form is asking for a reset link rather than signing in: the Forgot password? toggle, ticked on a local
@@ -190,47 +249,51 @@ private fun TvSetupSignInStep(
 private val SetupUiState.SignIn.resetting: Boolean
     get() = form.forgotPassword && form.mode == SeerrSignInMode.Local && server.canResetPassword
 
-/**
- * The sign-in step's commit and its way back, on the right of the button bar where the remote ends up after the
- * fields. The commit is Sign in, or Send reset link while the form is [resetting]. With no mode this TV can finish,
- * Change server is the only way on, so it leads and the page lands on it.
- */
+/** The sign-in step's commit: Sign in, or Send reset link while the form is [resetting]. */
 @Composable
-private fun TvSignInButtons(
+private fun TvSignInCommit(
     state: SetupUiState.SignIn,
     actions: SetupActions,
-    hasModes: Boolean,
     canCommit: Boolean,
-    commit: FocusRequester,
-    arrival: TvArrivalFocus?,
     initialFocus: TvSetupFocus?,
 ) {
-    if (hasModes) {
-        val label =
-            when {
-                state.resetting -> R.string.tv_setup_send_reset_link
-                state.isConnecting -> R.string.tv_setup_connecting
-                else -> state.form.mode.submitLabelRes()
-            }
-        TvButton(
-            label = stringResource(label),
-            onClick = if (state.resetting) actions.onRequestPasswordReset else actions.onConnect,
-            style = TvButtonStyle.Primary,
-            enabled = canCommit,
-            initiallyFocused = initialFocus == TvSetupFocus.Connect,
-            // Dimmed as a whole, so it can't be read as the outlined button beside it, and one width for every mode's
-            // label, so Change server beside it stays where it is.
-            modifier =
-                Modifier
-                    .focusRequester(commit)
-                    .widthIn(min = dimensionResource(R.dimen.tv_form_commit_min_width))
-                    .alpha(if (canCommit) 1f else DISABLED_ALPHA),
-        )
-    }
+    val label =
+        when {
+            state.resetting -> R.string.tv_setup_send_reset_link
+            state.isConnecting -> R.string.tv_setup_connecting
+            // The code tabs show this button only after a failure, when what it does is ask again.
+            state.form.mode in CodeModes -> R.string.action_try_again
+            else -> state.form.mode.submitLabelRes()
+        }
+    TvButton(
+        label = stringResource(label),
+        onClick = if (state.resetting) actions.onRequestPasswordReset else actions.onConnect,
+        style = TvButtonStyle.Primary,
+        enabled = canCommit,
+        initiallyFocused = initialFocus == TvSetupFocus.Connect,
+        // Dimmed as a whole, so it can't be read as the outlined button it replaces, and one width for every mode's label.
+        modifier =
+            Modifier
+                .widthIn(min = dimensionResource(R.dimen.tv_form_commit_min_width))
+                .alpha(if (canCommit) 1f else DISABLED_ALPHA),
+    )
+}
+
+/**
+ * The way back to the address, pinned at the foot of the page. A label alone, in the destructive colour: it drops the
+ * server and what was set up on it. With no mode this TV can finish and no code tab it is the only way on, so it
+ * [leads] and the page lands on it.
+ */
+@Composable
+private fun TvChangeServerButton(
+    actions: SetupActions,
+    leads: Boolean,
+    arrival: TvArrivalFocus?,
+) {
     TvButton(
         label = stringResource(R.string.setup_change_server),
         onClick = actions.onChangeServer,
-        style = if (hasModes) TvButtonStyle.Secondary else TvButtonStyle.Primary,
+        style = if (leads) TvButtonStyle.Primary else TvButtonStyle.TextDestructive,
         modifier = arrival?.let { Modifier.tvArrivalTarget(it) } ?: Modifier,
     )
 }
@@ -329,13 +392,3 @@ private val SetupNotice.tone: TvFormNoteTone
             SetupNotice.ResetEmailSent -> TvFormNoteTone.Success
             SetupNotice.SessionRejected -> TvFormNoteTone.Neutral
         }
-
-/** Each way in has a glyph of its own: a key, a person, a play button for Plex, the media server's library, a bolt for the quick one. */
-private fun SeerrSignInMode.icon(): ImageVector =
-    when (this) {
-        SeerrSignInMode.ApiKey -> Icons.Filled.Key
-        SeerrSignInMode.Local -> Icons.Filled.Person
-        SeerrSignInMode.Plex -> Icons.Filled.PlayCircle
-        SeerrSignInMode.Jellyfin, SeerrSignInMode.Emby -> Icons.Filled.VideoLibrary
-        SeerrSignInMode.QuickConnect -> Icons.Filled.Bolt
-    }

@@ -16,7 +16,6 @@
     <dimen name="issue_send_indicator_size">16dp</dimen>
     <!-- The television surface: the two-pane form page, its text fields and option rows. -->
     <dimen name="tv_form_field_width">520dp</dimen>
-    <dimen name="tv_form_field_height">56dp</dimen>
     <!-- TvCheckboxRow: the box, and its outline -->
     <!-- The television shell: boards, list rows, the action sheet and the list/pane board. -->
     <dimen name="tv_list_row_poster_width">40dp</dimen>

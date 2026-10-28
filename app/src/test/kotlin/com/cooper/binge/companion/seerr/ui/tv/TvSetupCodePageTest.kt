@@ -79,7 +79,7 @@ class TvSetupCodePageTest {
     fun aSignInTheAppDidNotPutUpOffersNoDisconnect() {
         setPage(signIn().copy(code = code))
 
-        composeTestRule.onNodeWithText(string(R.string.tv_setup_code_headline)).assertExists()
+        composeTestRule.onNodeWithText(SERVER).assertExists()
         button(R.string.hub_disconnect).assertDoesNotExist()
     }
 

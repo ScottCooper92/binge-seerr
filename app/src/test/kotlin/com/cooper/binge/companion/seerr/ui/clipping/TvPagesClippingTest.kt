@@ -47,7 +47,6 @@ import com.cooper.binge.companion.seerr.ui.tv.NoSetupActions
 import com.cooper.binge.companion.seerr.ui.tv.TvAdvancedRequestScreen
 import com.cooper.binge.companion.seerr.ui.tv.TvConsentScreen
 import com.cooper.binge.companion.seerr.ui.tv.TvSeerrErrorPage
-import com.cooper.binge.companion.seerr.ui.tv.TvSetupLinkPlate
 import com.cooper.binge.companion.seerr.ui.tv.TvSetupScreen
 import com.cooper.binge.companion.seerr.ui.tv.issues.ISSUE_PAGE_PHONE
 import com.cooper.binge.companion.seerr.ui.tv.issues.ISSUE_PAGE_THREAD
@@ -64,6 +63,7 @@ import com.cooper.binge.companion.seerr.ui.tv.settings.PAGE_SETTINGS
 import com.cooper.binge.companion.seerr.ui.tv.settings.TvSettingsActions
 import com.cooper.binge.companion.seerr.ui.tv.settings.TvSettingsSheet
 import com.cooper.binge.companion.seerr.ui.tv.settings.groupPage
+import com.cooper.binge.companion.seerr.ui.tv.setupSignIn
 import com.cooper.binge.companion.seerr.util.createSeerrKeyboardComposeRule
 import com.cooper.binge.companion.seerr.util.requestDetail
 import kotlinx.coroutines.flow.emptyFlow
@@ -133,7 +133,10 @@ class TvPagesClippingTest {
 
     @Test fun `the quick connect plate at 1_3`() =
         rule.assertNoTvClippingAt(FONT_SCALE_13) {
-            TvSetupLinkPlate(LinkFlow.QuickConnect(code = "472913"), onCancel = {})
+            TvSetupScreen(
+                state = setupSignIn(form = SignInForm(mode = SeerrSignInMode.QuickConnect), link = LinkFlow.QuickConnect(code = "472913")),
+                actions = NoSetupActions,
+            )
         }
 
     @Test fun `the mark as sheet at 1_3`() = rule.assertNoTvClippingAt(FONT_SCALE_13) { Sheet { MarkAs() } }

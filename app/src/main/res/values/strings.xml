@@ -965,15 +965,13 @@
     <string name="tv_setup_headline">Connect to your server</string>
     <string name="tv_setup_checking">Checking the server…</string>
     <string name="tv_setup_code_headline">Set up Seerr</string>
-    <string name="tv_setup_code_body">Scan the code with your phone\'s camera or the Seerr app. You\'ll choose your server and sign in there.</string>
-    <string name="tv_setup_enter_manually">Enter it with the remote</string>
+    <string name="tv_setup_type_address">Type the address</string>
     <string name="tv_setup_status_preparing">Getting a code ready…</string>
     <string name="tv_setup_status_waiting">Waiting for your phone…</string>
     <string name="tv_setup_status_checking">Checking the server…</string>
     <string name="tv_setup_status_found">Found %1$s. Sign in on your phone.</string>
     <string name="tv_setup_status_found_on_tv">Found %1$s. Its sign-in finishes on this TV: choose Enter it with the remote.</string>
     <string name="tv_setup_status_signing_in">Signing in to %1$s…</string>
-    <string name="tv_setup_sign_in_scan_body">Scan the code with the Seerr app on your phone to sign in with your existing details, or type them with the remote.</string>
     <string name="tv_setup_mode_title">Sign in with</string>
     <string name="tv_setup_no_modes_here">This server has no sign-in this television recognises. Connect it from the phone app.</string>
     <string name="tv_link_plex_body">On your phone or computer, go to plex.tv/link and enter this code.</string>
@@ -983,7 +981,6 @@
 
     <!-- The television's hand-off from a phone (#323): the plate with its code, and the page it serves. -->
     <string name="tv_setup_send_from_phone">Scan a QR</string>
-    <string name="tv_handoff_body">Use the QR or URL to connect from another device on the same network, or use the Seerr mobile app to sign in with your existing details.</string>
     <string name="tv_setup_confirm_sent_address">A phone sent this address. Check it is your server, then continue.</string>
     <string name="tv_handoff_code_description">Code to scan with your phone</string>
     <string name="tv_handoff_pin">PIN  %1$s</string>

@@ -4,7 +4,8 @@ import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isFocusable
-import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.binge.designsystem.tv.theme.BingeTvTheme
 import com.cooper.binge.companion.seerr.R
@@ -49,7 +50,10 @@ class TvSetupAddressPageTest {
     fun tryTheDemoRunsTheEntrysDemo() {
         setPage()
 
-        button(R.string.setup_try_demo).performClick()
+        // The demo is a tab, and its page has the one button that starts it: the same words, so the button is the second.
+        composeTestRule.onAllNodesWithText(string(R.string.setup_try_demo))[0].performClick()
+        composeTestRule.waitForIdle()
+        composeTestRule.onAllNodesWithText(string(R.string.setup_try_demo))[1].performClick()
         composeTestRule.waitForIdle()
 
         assertEquals(listOf("demo"), calls)
@@ -59,27 +63,29 @@ class TvSetupAddressPageTest {
     fun continueRunsTheEntrysInspect() {
         setPage()
 
-        composeTestRule.onNodeWithContentDescription(string(R.string.setup_continue)).performClick()
+        button(R.string.setup_continue).performClick()
         composeTestRule.waitForIdle()
 
         assertEquals(listOf("inspect"), calls)
     }
 
     @Test
-    fun scanAQrStartsTheEntrysHandOffAndLeavesTheForm() {
-        setPage()
+    fun theCodeTabStartsTheEntrysHandOffAndTheAddressTabLeavesIt() {
+        setPage(offerHandOff = true)
 
-        button(R.string.tv_setup_send_from_phone).performClick()
+        // The code tab asks for a code as it appears, and has no address field.
+        assertEquals("handOff", calls.first())
+        button(R.string.setup_continue).assertDoesNotExist()
+
+        composeTestRule.onNodeWithText(string(R.string.tv_setup_type_address)).performClick()
         composeTestRule.waitForIdle()
 
-        // The code page it opens asks for a code of its own as well, so the first call is the button's.
-        assertEquals("handOff", calls.first())
-        composeTestRule.onNodeWithContentDescription(string(R.string.setup_continue)).assertDoesNotExist()
+        button(R.string.setup_continue).assertExists()
     }
 
-    private fun setPage() {
+    private fun setPage(offerHandOff: Boolean = false) {
         val state = SetupUiState.Address("http://seerr.lan:5055", insecure = false, isInspecting = false, error = null, canTryDemo = true)
-        composeTestRule.setContent { BingeTvTheme { TvSetupScreen(state = state, actions = actions) } }
+        composeTestRule.setContent { BingeTvTheme { TvSetupScreen(state = state, actions = actions, offerHandOff = offerHandOff) } }
         composeTestRule.waitForIdle()
     }
 

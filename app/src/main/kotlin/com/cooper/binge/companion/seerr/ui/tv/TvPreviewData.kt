@@ -8,6 +8,7 @@ import com.cooper.binge.companion.seerr.ui.AdvancedRequestError
 import com.cooper.binge.companion.seerr.ui.AdvancedRequestUiState
 import com.cooper.binge.companion.seerr.ui.Choice
 import com.cooper.binge.companion.seerr.ui.DestinationChoices
+import com.cooper.binge.companion.seerr.ui.LinkFlow
 import com.cooper.binge.companion.seerr.ui.SetupActions
 import com.cooper.binge.companion.seerr.ui.SetupError
 import com.cooper.binge.companion.seerr.ui.SetupNotice
@@ -52,7 +53,8 @@ internal fun setupSignIn(
     isConnecting: Boolean = false,
     error: SetupError? = null,
     notice: SetupNotice? = null,
-) = SetupUiState.SignIn(server = server, form = form, isConnecting = isConnecting, link = null, error = error, notice = notice)
+    link: LinkFlow? = null,
+) = SetupUiState.SignIn(server = server, form = form, isConnecting = isConnecting, link = link, error = error, notice = notice)
 
 /**
  * [singleChoices] offers one choice per group, so the rows are short enough that the note and the buttons
