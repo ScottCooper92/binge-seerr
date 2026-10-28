@@ -969,7 +969,7 @@
     <string name="tv_setup_status_waiting">Waiting for your phone…</string>
     <string name="tv_setup_status_checking">Checking the server…</string>
     <string name="tv_setup_status_found">Found %1$s. Sign in on your phone.</string>
-    <string name="tv_setup_status_found_on_tv">Found %1$s. Its sign-in finishes on this TV: choose Enter it with the remote.</string>
+    <string name="tv_setup_status_found_on_tv">Found %1$s. Its sign-in finishes on this TV: open the Type the address tab.</string>
     <string name="tv_setup_status_signing_in">Signing in to %1$s…</string>
     <string name="tv_setup_mode_title">Sign in with</string>
     <string name="tv_setup_no_modes_here">This server has no sign-in this television recognises. Connect it from the phone app.</string>

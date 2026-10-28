@@ -1019,7 +1019,7 @@ app:tv_setup_no_modes_here  972f8dfe0600
 app:tv_setup_send_from_phone  1ab32bb4c551
 app:tv_setup_status_checking  86d5ab0a7412
 app:tv_setup_status_found  c2720b373a4d
-app:tv_setup_status_found_on_tv  387ce4e0ab24
+app:tv_setup_status_found_on_tv  239aff9ab127
 app:tv_setup_status_preparing  dacdeffbb5dd
 app:tv_setup_status_signing_in  b2344a820268
 app:tv_setup_status_waiting  3c5ba65f33ad

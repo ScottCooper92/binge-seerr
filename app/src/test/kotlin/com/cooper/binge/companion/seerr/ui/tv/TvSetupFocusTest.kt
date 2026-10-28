@@ -62,6 +62,7 @@ class TvSetupFocusTest {
     private var connected = 0
     private var changedServer = 0
     private var cancelledLink = 0
+    private var whenLinkCancelled: () -> Unit = {}
     private var startedHandOff = 0
     private var cancelledHandOff = 0
     private var resetRequests = 0
@@ -74,7 +75,10 @@ class TvSetupFocusTest {
             onEditForm = { formEdits += it },
             onConnect = { connected++ },
             onPlexLaunched = {},
-            onCancelLink = { cancelledLink++ },
+            onCancelLink = {
+                cancelledLink++
+                whenLinkCancelled()
+            },
             onRequestPasswordReset = { resetRequests++ },
             onStartHandOff = { startedHandOff++ },
             onCancelHandOff = { cancelledHandOff++ },
@@ -345,6 +349,31 @@ class TvSetupFocusTest {
         pressBack()
 
         assertEquals(1, cancelledLink)
+    }
+
+    /** Back leaves the tab with nothing in flight and no error: it offers the way to ask again, not a stale Connecting. */
+    @Test
+    fun backOnAWaitingCodeOffersTryAgainRatherThanConnecting() {
+        var state by mutableStateOf<SetupUiState>(
+            signIn(
+                modes = listOf(SeerrSignInMode.QuickConnect),
+                link = LinkFlow.QuickConnect(code = "A1B2C3"),
+            ),
+        )
+        whenLinkCancelled = { state = (state as SetupUiState.SignIn).copy(link = null) }
+        composeTestRule.setContent {
+            BingeTvTheme { TvSetupScreen(state = state, actions = actions, offerHandOff = false) }
+        }
+        composeTestRule.waitForIdle()
+
+        // The code is asked for once the tab has been rested on; Back comes after that.
+        composeTestRule.mainClock.advanceTimeBy(1_000)
+        pressBack()
+        composeTestRule.mainClock.advanceTimeBy(1_000)
+        composeTestRule.waitForIdle()
+
+        button(R.string.action_try_again).assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.tv_setup_connecting)).assertDoesNotExist()
     }
 
     @Test

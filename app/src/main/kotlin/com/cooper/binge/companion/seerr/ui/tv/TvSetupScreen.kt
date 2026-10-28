@@ -9,6 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -134,9 +135,11 @@ private fun TvSetupSignInStep(
     val typing = !scanSelected && offered.isNotEmpty()
     // A tab that finishes on another device asks for its code once it has been rested on, not as the remote passes over it.
     val mintsCode = !scanSelected && state.form.mode in CodeModes
+    var requested by remember(mintsCode, state.form.mode) { mutableStateOf(false) }
     LaunchedEffect(mintsCode, state.form.mode) {
         if (mintsCode) {
             delay(CODE_REQUEST_DELAY_MILLIS)
+            requested = true
             actions.onConnect()
         }
     }
@@ -159,7 +162,7 @@ private fun TvSetupSignInStep(
         },
         tabs = { TvSignInTabs(state, actions, offered, scanSelected, onScan, onType, arrival) },
     ) {
-        TvSignInBody(state, actions, offered, scanSelected, mintsCode, initialFocus)
+        TvSignInBody(state, actions, offered, scanSelected, mintsCode, requested, initialFocus)
     }
 }
 
@@ -206,8 +209,11 @@ private fun ColumnScope.TvSignInBody(
     offered: List<SeerrSignInMode>,
     scanSelected: Boolean,
     mintsCode: Boolean,
+    requested: Boolean,
     initialFocus: TvSetupFocus?,
 ) {
+    // Connecting while the request is pending or in flight; a code abandoned with Back is neither, so it gets the commit.
+    val connecting = mintsCode && state.error == null && (!requested || state.isConnecting)
     when {
         state.link != null -> TvSetupLinkContent(state.link)
         scanSelected -> {
@@ -215,7 +221,7 @@ private fun ColumnScope.TvSignInBody(
             TvSignInCodeContent(state, actions)
         }
         offered.isEmpty() -> TvFormNote(stringResource(R.string.tv_setup_no_modes_here))
-        mintsCode && state.error == null -> TvFormNote(stringResource(R.string.tv_setup_connecting), centered = true)
+        connecting -> TvFormNote(stringResource(R.string.tv_setup_connecting), centered = true)
         else -> {
             TvModeFields(
                 form = state.form,
@@ -224,8 +230,8 @@ private fun ColumnScope.TvSignInBody(
                 credentialFocused = initialFocus == TvSetupFocus.Credential,
                 onDone = actions.onConnect,
             )
-            // A code tab has no button until a request has failed: then there is a message and one way to try again.
-            if (!mintsCode || state.error != null) TvSignInActions(state, actions, initialFocus)
+            // A code tab has no button while its code is on the way: after a failure or a Back there is one way to try again.
+            if (!connecting) TvSignInActions(state, actions, initialFocus)
             // Under the buttons, so Sign in stays where it is when a message comes and goes.
             state.error?.let { error -> TvFormNote(stringResource(error.messageRes()), tone = TvFormNoteTone.Error) }
             state.notice?.let { notice -> TvFormNote(stringResource(notice.messageRes()), tone = notice.tone) }

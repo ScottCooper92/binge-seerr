@@ -942,7 +942,7 @@
     <string name="tv_setup_status_waiting">Esperando a tu móvil…</string>
     <string name="tv_setup_status_checking">Comprobando el servidor…</string>
     <string name="tv_setup_status_found">Encontrado %1$s. Inicia sesión en tu móvil.</string>
-    <string name="tv_setup_status_found_on_tv">Encontrado %1$s. Su inicio de sesión termina en este televisor: elige Introducirlo con el mando.</string>
+    <string name="tv_setup_status_found_on_tv">Encontrado %1$s. Su inicio de sesión termina en este televisor: abre la pestaña Escribir la dirección.</string>
     <string name="tv_setup_status_signing_in">Iniciando sesión en %1$s…</string>
     <string name="tv_setup_mode_title">Iniciar sesión con</string>
     <string name="tv_setup_no_modes_here">Este servidor no tiene ningún inicio de sesión que este televisor reconozca. Conéctalo desde la app del móvil.</string>

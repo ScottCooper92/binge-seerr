@@ -12,7 +12,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
 import androidx.tv.material3.MaterialTheme
 import com.binge.designsystem.tv.component.TvPairingCard
 import com.binge.designsystem.tv.component.TvPairingCardLoading
@@ -43,7 +42,7 @@ internal fun ColumnScope.TvHandOffContent(
     // lines and padding come out of the height first, so a short pane shrinks the code rather than cutting off the PIN.
     val chrome = pairingCardChrome()
     BoxWithConstraints(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
-        val qrSize = minOf(maxWidth * QR_FILL, (maxHeight - chrome).coerceAtLeast(0.dp))
+        val qrSize = minOf(maxWidth * QR_FILL, maxOf(maxHeight - chrome, Dp.Hairline))
         if (handOff is AddressHandOff.Listening) {
             TvHandOffCodeCard(handOff, qrSize)
         } else if (preparing) {
