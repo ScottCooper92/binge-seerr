@@ -19,7 +19,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import com.binge.designsystem.DISABLED_ALPHA
 import com.binge.designsystem.tv.component.TvButton
-import com.binge.designsystem.tv.component.TvCheckboxRow
 import com.binge.designsystem.tv.component.TvTabRow
 import com.binge.designsystem.tv.component.TvTabUi
 import com.binge.designsystem.tv.component.TvTextField
@@ -222,34 +221,53 @@ private fun ColumnScope.TvSignInBody(
                 form = state.form,
                 server = state.server,
                 onEdit = actions.onEditForm,
-                resetting = state.resetting,
                 credentialFocused = initialFocus == TvSetupFocus.Credential,
                 onDone = actions.onConnect,
             )
+            // A code tab has no button until a request has failed: then there is a message and one way to try again.
+            if (!mintsCode || state.error != null) TvSignInActions(state, actions, initialFocus)
+            // Under the buttons, so Sign in stays where it is when a message comes and goes.
             state.error?.let { error -> TvFormNote(stringResource(error.messageRes()), tone = TvFormNoteTone.Error) }
             state.notice?.let { notice -> TvFormNote(stringResource(notice.messageRes()), tone = notice.tone) }
-            // A code tab has no button until a request has failed: then there is a message and one way to try again.
-            if (!mintsCode || state.error != null) TvSignInCommit(state, actions, state.canCommit, initialFocus)
         }
     }
 }
 
 /** Whether the commit can be pressed: nothing is in flight, and the form has what the mode needs. */
 private val SetupUiState.SignIn.canCommit: Boolean
-    get() = !isConnecting && link == null && if (resetting) form.canRequestReset else form.canSubmit
+    get() = !isConnecting && link == null && form.canSubmit
 
 private const val SCAN_KEY = "scan"
 private const val CODE_REQUEST_DELAY_MILLIS = 500L
 private val CodeModes = setOf(SeerrSignInMode.QuickConnect, SeerrSignInMode.Plex)
 
 /**
- * Whether the form is asking for a reset link rather than signing in: the Forgot password? toggle, ticked on a local
- * account of a server that can mail one (#1037, #1302). The phone offers the same request as a button of its own.
+ * The sign-in step's buttons, centred under the fields: the commit, and beside it Forgot password? on a local account of
+ * a server that can mail a reset link (#1037). That one asks for the link at once for the email typed, as the phone's
+ * button does.
  */
-private val SetupUiState.SignIn.resetting: Boolean
-    get() = form.forgotPassword && form.mode == SeerrSignInMode.Local && server.canResetPassword
+@Composable
+private fun TvSignInActions(
+    state: SetupUiState.SignIn,
+    actions: SetupActions,
+    initialFocus: TvSetupFocus?,
+) {
+    Row(horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m))) {
+        TvSignInCommit(state, actions, state.canCommit, initialFocus)
+        if (state.form.mode == SeerrSignInMode.Local && state.server.canResetPassword) {
+            val canReset = state.form.canRequestReset && !state.isConnecting && state.link == null && !state.resetCoolingDown
+            TvButton(
+                label = stringResource(R.string.setup_forgot_password),
+                onClick = actions.onRequestPasswordReset,
+                style = TvButtonStyle.Secondary,
+                enabled = canReset,
+                modifier = Modifier.alpha(if (canReset) 1f else DISABLED_ALPHA),
+            )
+        }
+    }
+}
 
-/** The sign-in step's commit: Sign in, or Send reset link while the form is [resetting]. */
+/** The sign-in step's commit: Sign in, or Try again on a code tab after a failure. */
 @Composable
 private fun TvSignInCommit(
     state: SetupUiState.SignIn,
@@ -259,7 +277,6 @@ private fun TvSignInCommit(
 ) {
     val label =
         when {
-            state.resetting -> R.string.tv_setup_send_reset_link
             state.isConnecting -> R.string.tv_setup_connecting
             // The code tabs show this button only after a failure, when what it does is ask again.
             state.form.mode in CodeModes -> R.string.action_try_again
@@ -267,7 +284,7 @@ private fun TvSignInCommit(
         }
     TvButton(
         label = stringResource(label),
-        onClick = if (state.resetting) actions.onRequestPasswordReset else actions.onConnect,
+        onClick = actions.onConnect,
         style = TvButtonStyle.Primary,
         enabled = canCommit,
         initiallyFocused = initialFocus == TvSetupFocus.Connect,
@@ -298,16 +315,12 @@ private fun TvChangeServerButton(
     )
 }
 
-/**
- * The fields the chosen mode needs, and only those: a key, or an identity and a password. A local account [resetting]
- * its password needs only the email.
- */
+/** The fields the chosen mode needs, and only those: a key, or an identity and a password. */
 @Composable
 private fun TvModeFields(
     form: SignInForm,
     server: SetupServer,
     onEdit: (SignInForm.() -> SignInForm) -> Unit,
-    resetting: Boolean,
     credentialFocused: Boolean,
     onDone: () -> Unit = {},
 ) {
@@ -340,16 +353,7 @@ private fun TvModeFields(
                 contentType = ContentType.EmailAddress + ContentType.Username,
                 initiallyFocused = credentialFocused,
             )
-            if (!resetting) TvPasswordField(form, onEdit, onDone)
-            // As on the phone: the server mails the reset link, so it is offered only where it can (#1037). A toggle, as
-            // the address step's opt-in is, so the bar keeps one commit and the remote finds it where Sign in was (#1302).
-            if (server.canResetPassword) {
-                TvCheckboxRow(
-                    label = stringResource(R.string.setup_forgot_password),
-                    checked = form.forgotPassword,
-                    onCheckedChange = { checked -> onEdit { copy(forgotPassword = checked) } },
-                )
-            }
+            TvPasswordField(form, onEdit, onDone)
         }
         SeerrSignInMode.Jellyfin, SeerrSignInMode.Emby -> {
             TvTextField(

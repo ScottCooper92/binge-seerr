@@ -22,6 +22,7 @@ import com.cooper.binge.companion.seerr.telemetry.NoOpAnalytics
 import com.cooper.binge.companion.seerr.telemetry.NoOpCrashBreadcrumbs
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -299,14 +300,21 @@ class SetupViewModel
         fun requestPasswordReset() {
             val current = draft.value
             val server = current.server ?: return
-            if (!current.form.canRequestReset || current.busy) return
+            if (!current.form.canRequestReset || current.busy || current.resetCoolingDown) return
             draft.update { it.copy(busy = true, error = null, notice = null) }
             crashBreadcrumbs.log("requesting password reset")
             viewModelScope.launch(dispatcher) {
                 connection
                     .requestPasswordReset(server.baseUrl, current.form.email.trim())
-                    .onSuccess { draft.update { it.copy(notice = SetupNotice.ResetEmailSent) } }
-                    .onFailure { failure -> draft.update { it.copy(error = failure.toSetupError()) } }
+                    .onSuccess {
+                        // Seerr sends a new link on every request and voids the one before (it has no limit of its own), so a
+                        // second press would break the email the user is about to open. Hold the button for a minute.
+                        draft.update { it.copy(notice = SetupNotice.ResetEmailSent, resetCoolingDown = true) }
+                        viewModelScope.launch(dispatcher) {
+                            delay(RESET_COOLDOWN)
+                            draft.update { it.copy(resetCoolingDown = false) }
+                        }
+                    }.onFailure { failure -> draft.update { it.copy(error = failure.toSetupError()) } }
                     .also { result ->
                         analytics.event(
                             AnalyticsEvents.PASSWORD_RESET_REQUESTED,

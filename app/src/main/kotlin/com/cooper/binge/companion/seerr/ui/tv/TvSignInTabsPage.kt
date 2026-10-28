@@ -62,9 +62,11 @@ internal fun TvSignInTabsPage(
                     .weight(1f)
                     .fillMaxWidth()
                     .verticalScroll(rememberScrollState())
-                    .padding(top = gap * 2),
+                    .padding(top = gap),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(gap),
+            // Tighter than the two-pane gap, so a local account's email, password, Forgot password? and Sign in fit
+            // under the tabs at 1080p without scrolling.
+            verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
             content = content,
         )
         footer?.let { TvSignInFooter(it) }

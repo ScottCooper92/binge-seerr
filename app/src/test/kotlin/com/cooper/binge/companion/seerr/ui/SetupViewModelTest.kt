@@ -29,6 +29,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runTest
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.Interceptor
@@ -46,6 +47,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * The setup screen's two steps over an in-memory connection: DataStore in a temp file, HTTP into a
@@ -149,6 +151,16 @@ class SetupViewModelTest {
 
     private suspend fun SetupViewModel.awaitSignIn(match: (SetupUiState.SignIn) -> Boolean = { true }): SetupUiState.SignIn =
         uiState.first { it is SetupUiState.SignIn && match(it) } as SetupUiState.SignIn
+
+    /** [awaitSignIn] without suspending, so the test scheduler cannot advance virtual time while it waits. */
+    private fun SetupViewModel.blockUntilSignIn(match: (SetupUiState.SignIn) -> Boolean): SetupUiState.SignIn {
+        val deadline = System.nanoTime() + 5.seconds.inWholeNanoseconds
+        while (System.nanoTime() < deadline) {
+            (uiState.value as? SetupUiState.SignIn)?.takeIf(match)?.let { return it }
+            Thread.sleep(5)
+        }
+        throw AssertionError("sign-in state never matched; last was ${uiState.value}")
+    }
 
     private suspend fun SetupViewModel.awaitConnected(): SetupUiState.Connected =
         uiState.first { it is SetupUiState.Connected } as SetupUiState.Connected
@@ -503,6 +515,34 @@ class SetupViewModelTest {
             assertEquals("/api/v1/auth/reset-password", reset.url.encodedPath)
             assertTrue(reset.body.contains("s@example.com"))
             assertEquals(listOf("password_reset_requested" to mapOf("success" to true)), analytics.events)
+        }
+
+    /** Each request voids the last link, so a second press within the minute would break the email on its way. */
+    @Test
+    fun `forgot password waits a minute before it will send another link`() =
+        runTest {
+            val vm = viewModel()
+            vm.inspect("""{"version":"1.33.2"}""", """{"localLogin":true,"emailEnabled":true}""")
+            vm.editForm { copy(mode = SeerrSignInMode.Local, email = "s@example.com") }
+            repeat(3) { seerr.takeRequest() }
+            seerr.enqueue(json("""{"status":"ok"}"""))
+            seerr.enqueue(json("""{"status":"ok"}"""))
+
+            vm.requestPasswordReset()
+            // Blocked rather than suspended, here and up to the end of the minute: a test suspended on real I/O lets the
+            // scheduler skip virtual time, and the cooldown's delay, armed from OkHttp's thread, can be skipped before
+            // the test sees it began.
+            assertTrue(vm.blockUntilSignIn { it.notice != null }.resetCoolingDown)
+            vm.requestPasswordReset()
+            advanceTimeBy(RESET_COOLDOWN - 1.seconds)
+            assertTrue(vm.awaitSignIn().resetCoolingDown)
+            assertEquals(1, analytics.events.size)
+
+            advanceTimeBy(2.seconds)
+            vm.awaitSignIn { !it.resetCoolingDown }
+            vm.requestPasswordReset()
+            vm.awaitSignIn { analytics.events.size == 2 }
+            repeat(2) { assertEquals("/api/v1/auth/reset-password", seerr.takeRequest().url.encodedPath) }
         }
 
     @Test

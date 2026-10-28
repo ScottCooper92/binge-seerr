@@ -11,14 +11,11 @@ import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsNotFocused
-import androidx.compose.ui.test.assertIsOff
-import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isFocusable
-import androidx.compose.ui.test.isToggleable
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performKeyInput
@@ -370,15 +367,15 @@ class TvSetupFocusTest {
     }
 
     /**
-     * A server that can mail a reset link offers it, as the phone does (#1037), as a toggle under the password (#1302):
-     * ticking it hides the password, and the commit ↓ lands on becomes Send reset link.
+     * A server that can mail a reset link offers it, as the phone does (#1037): a button beside Sign in that asks for the
+     * link at once, for the email typed.
      */
     @Test
-    fun forgotPasswordTicksIntoAResetRequestInSignInsPlace() {
+    fun forgotPasswordSitsBesideSignInAndAsksForTheLink() {
         setLiveScreen(
             signIn(
                 modes = listOf(SeerrSignInMode.Local),
-                form = SignInForm(mode = SeerrSignInMode.Local, email = "a@example.com"),
+                form = SignInForm(mode = SeerrSignInMode.Local, email = "a@example.com", password = "secret"),
                 canResetPassword = true,
             ),
         )
@@ -389,53 +386,26 @@ class TvSetupFocusTest {
         pressDown()
         field(R.string.setup_password).assertIsFocused()
         pressDown()
-        toggle().assertIsFocused().assertIsOff()
-        pressOk()
-
-        toggle().assertIsFocused().assertIsOn()
-        composeTestRule.onAllNodes(hasContentDescription(string(R.string.setup_password))).assertCountEquals(0)
-        pressDown()
-        button(R.string.tv_setup_send_reset_link).assertIsFocused()
+        button(R.string.setup_sign_in).assertIsFocused()
+        pressRight()
+        button(R.string.setup_forgot_password).assertIsFocused()
         pressOk()
 
         assertEquals(1, resetRequests)
         assertEquals(0, connected)
     }
 
-    /** Ticked off again, the password is back and the commit signs in. */
     @Test
-    fun forgotPasswordUntickedSignsInAgain() {
-        setLiveScreen(
-            signIn(
-                modes = listOf(SeerrSignInMode.Local),
-                form = SignInForm(mode = SeerrSignInMode.Local, email = "a@example.com", password = "secret", forgotPassword = true),
-                canResetPassword = true,
-            ),
-        )
-
-        toggle().requestFocus()
-        composeTestRule.waitForIdle()
-        pressOk()
-
-        field(R.string.setup_password).assertExists()
-        button(R.string.setup_sign_in).requestFocus()
-        composeTestRule.waitForIdle()
-        pressOk()
-        assertEquals(1, connected)
-        assertEquals(0, resetRequests)
-    }
-
-    @Test
-    fun sendResetLinkWithoutAnEmailIsInert() {
+    fun forgotPasswordWithoutAnEmailIsInert() {
         setScreen(
             signIn(
                 modes = listOf(SeerrSignInMode.Local),
-                form = SignInForm(mode = SeerrSignInMode.Local, forgotPassword = true),
+                form = SignInForm(mode = SeerrSignInMode.Local),
                 canResetPassword = true,
             ),
         )
 
-        button(R.string.tv_setup_send_reset_link).requestFocus()
+        button(R.string.setup_forgot_password).requestFocus()
         composeTestRule.waitForIdle()
         pressOk()
 
@@ -448,7 +418,7 @@ class TvSetupFocusTest {
         setScreen(
             signIn(
                 modes = listOf(SeerrSignInMode.Jellyfin, SeerrSignInMode.Local),
-                form = SignInForm(mode = SeerrSignInMode.Jellyfin, forgotPassword = true),
+                form = SignInForm(mode = SeerrSignInMode.Jellyfin),
                 canResetPassword = true,
             ),
         )
@@ -569,8 +539,6 @@ class TvSetupFocusTest {
 
     // A disabled button is a focusable surface over its own text node rather than one merged node, so the
     // label may sit a level below the node that carries focus.
-    private fun toggle() = composeTestRule.onNode(hasText(string(R.string.setup_forgot_password)) and isToggleable())
-
     private fun button(label: Int) =
         composeTestRule.onNode(
             (hasText(string(label)) or hasAnyDescendant(hasText(string(label)))) and isFocusable(),

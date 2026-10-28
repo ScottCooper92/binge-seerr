@@ -123,7 +123,7 @@ class TvSetupScreenshotTest {
     @Composable
     fun signInJellyfin() = TvSetupScreen(state = setupSignIn(), actions = NoSetupActions, initialFocus = TvSetupFocus.Credential)
 
-    /** A local account on a server that mails resets: the Forgot password? toggle under the fields, off, and Sign in (#1037, #1302). */
+    /** A local account on a server that mails resets: Sign in, still dimmed, with Forgot password? beside it (#1037). */
     @PreviewTest
     @SeerrTvScreenPreviews
     @Composable
@@ -134,7 +134,7 @@ class TvSetupScreenshotTest {
             initialFocus = TvSetupFocus.Credential,
         )
 
-    /** A server that cannot mail a reset: no Forgot password? toggle, and the form is the fields alone (#1302). */
+    /** A server that cannot mail a reset: no Forgot password?, and Sign in alone under the fields. */
     @PreviewTest
     @SeerrTvScreenPreviews
     @Composable
@@ -148,7 +148,7 @@ class TvSetupScreenshotTest {
             actions = NoSetupActions,
         )
 
-    /** Forgot password? ticked: the password is gone, and the commit is Send reset link (#1302). */
+    /** Email and password typed: Sign in and Forgot password? both live, side by side. */
     @PreviewTest
     @SeerrTvScreenPreviews
     @Composable
@@ -158,7 +158,7 @@ class TvSetupScreenshotTest {
             actions = NoSetupActions,
         )
 
-    /** The same in Spanish, whose toggle label runs longest (#1302). */
+    /** The same in Spanish, whose Forgot password? label runs longest. */
     @PreviewTest
     @SeerrTvSpanishScreenPreviews
     @Composable
@@ -250,17 +250,17 @@ class TvSetupScreenshotTest {
             initialFocus = TvSetupFocus.Credential,
         )
 
-    /** A reset email went out: the notice says so under the toggle, still ticked. */
+    /** A reset email went out: the notice says so under the buttons, and Forgot password? waits out its minute. */
     @PreviewTest
     @SeerrTvScreenPreviews
     @Composable
     fun resetEmailSent() =
         TvSetupScreen(
-            state = setupSignIn(form = ForgotForm, notice = SetupNotice.ResetEmailSent),
+            state = setupSignIn(form = ForgotForm, notice = SetupNotice.ResetEmailSent).copy(resetCoolingDown = true),
             actions = NoSetupActions,
         )
 
-    /** The reset request failed: the error says why, and Send reset link is there to try again. */
+    /** The reset request failed: the error says why under the buttons, and Forgot password? is there to try again. */
     @PreviewTest
     @SeerrTvScreenPreviews
     @Composable
@@ -271,6 +271,6 @@ class TvSetupScreenshotTest {
         )
 }
 
-private val ForgotForm = SignInForm(mode = SeerrSignInMode.Local, email = "scott@example.com", forgotPassword = true)
+private val ForgotForm = SignInForm(mode = SeerrSignInMode.Local, email = "scott@example.com", password = "hunter22")
 
 private val ReconnectActions = SetupActions({}, {}, {}, {}, {}, {}, {}, {}, onDisconnect = {})
