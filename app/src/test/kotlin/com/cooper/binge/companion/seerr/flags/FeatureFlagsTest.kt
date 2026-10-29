@@ -67,17 +67,10 @@ class FeatureFlagsTest {
     fun `an override wins over the remote value and clearing it gives the remote value back`() =
         runTest {
             val overrides = FakeOverrides()
-            val flags = flags(FakeSource(cached = Flags(requestCompanions = true)), overrides)
-            overrides.set(Flag.RequestCompanions, false)
-            assertFalse(flags.flags.first { !it.requestCompanions }.requestCompanions)
-            overrides.set(Flag.RequestCompanions, null)
-            assertTrue(flags.flags.first { it.requestCompanions }.requestCompanions)
+            val flags = flags(FakeSource(cached = Flags(bingePromotion = true)), overrides)
+            overrides.set(Flag.BingePromotion, false)
+            assertFalse(flags.flags.first { !it.bingePromotion }.bingePromotion)
+            overrides.set(Flag.BingePromotion, null)
+            assertTrue(flags.flags.first { it.bingePromotion }.bingePromotion)
         }
-
-    @Test
-    fun `connecting to Binge needs both flags and installing needs only promotion`() {
-        assertFalse(Flags(bingePromotion = true).bingeConnectPromotion)
-        assertFalse(Flags(requestCompanions = true).bingeConnectPromotion)
-        assertTrue(Flags.AllOn.bingeConnectPromotion)
-    }
 }

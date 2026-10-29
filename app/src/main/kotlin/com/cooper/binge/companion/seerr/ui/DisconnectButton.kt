@@ -24,7 +24,7 @@ internal fun DisconnectButton(
     demo: Boolean = false,
 ) {
     var confirming by rememberSaveable { mutableStateOf(false) }
-    val connectPromoted = LocalFlags.current.bingeConnectPromotion
+    val connectPromoted = LocalFlags.current.bingePromotion
     BingeTextButton(
         label = stringResource(if (demo) R.string.hub_demo_exit else R.string.hub_disconnect),
         onClick = { confirming = true },

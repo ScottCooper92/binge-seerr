@@ -34,6 +34,5 @@ class RemoteFeatureFlags(
         local: Map<Flag, Boolean>,
     ) = Flags(
         bingePromotion = local[Flag.BingePromotion] ?: remote.bingePromotion,
-        requestCompanions = local[Flag.RequestCompanions] ?: remote.requestCompanions,
     )
 }

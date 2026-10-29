@@ -10,7 +10,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.binge.companion.sdk.toAdvancedRequest
-import com.cooper.binge.companion.seerr.flags.FeatureFlags
 import com.cooper.binge.companion.seerr.theme.SeerrTheme
 import com.cooper.binge.companion.seerr.ui.AdvancedRequestScreen
 import com.cooper.binge.companion.seerr.ui.AdvancedRequestUiState
@@ -20,7 +19,6 @@ import com.cooper.binge.companion.seerr.ui.tv.TvAdvancedRequestShell
 import com.cooper.binge.companion.seerr.ui.tv.isTelevision
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.lifecycle.withCreationCallback
-import javax.inject.Inject
 
 /**
  * The Activity behind `CAPABILITY_ADVANCED_OPTIONS`: Binge starts it for a result with a title,
@@ -32,9 +30,6 @@ import javax.inject.Inject
  */
 @AndroidEntryPoint
 class AdvancedRequestActivity : ComponentActivity() {
-    @Inject
-    lateinit var featureFlags: FeatureFlags
-
     private val viewModel: AdvancedRequestViewModel by viewModels(
         extrasProducer = {
             defaultViewModelCreationExtras.withCreationCallback<AdvancedRequestViewModel.Factory> {
@@ -45,7 +40,7 @@ class AdvancedRequestActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        if (!bingeHandOffPolicy(featureFlags).permits(callingPackage) || intent.toAdvancedRequest() == null) {
+        if (!bingeHandOffPolicy().permits(callingPackage) || intent.toAdvancedRequest() == null) {
             setResult(RESULT_CANCELED)
             finish()
             return

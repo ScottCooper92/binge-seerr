@@ -123,7 +123,7 @@ private fun ColumnScope.RootPage(
     demo: Boolean,
 ) {
     var confirmingDisconnect by rememberSaveable { mutableStateOf(false) }
-    val connectPromoted = LocalFlags.current.bingeConnectPromotion
+    val connectPromoted = LocalFlags.current.bingePromotion
     if (confirmingDisconnect) {
         TvConfirmDialog(
             title = stringResource(if (demo) R.string.hub_demo_exit_confirm_title else R.string.hub_disconnect_confirm_title),

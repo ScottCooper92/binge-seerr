@@ -95,9 +95,8 @@ data class HubOverview(
 enum class BingeStatus { NotInstalled, NotConnected, Connected, Hidden }
 
 /**
- * What to say about Binge, behind the flags: nothing without [Flags.bingePromotion], the install prompt where Binge is
- * missing, and nothing about connecting unless [Flags.bingeConnectPromotion]. Past that, "connected" is whether Binge
- * has ever handshaken this server.
+ * What to say about Binge: nothing without [Flags.bingePromotion], else the install prompt where Binge is missing, and
+ * past that whether Binge has ever handshaken this server.
  */
 fun bingeStatusOf(
     installed: Boolean,
@@ -107,7 +106,6 @@ fun bingeStatusOf(
     when {
         !flags.bingePromotion -> BingeStatus.Hidden
         !installed -> BingeStatus.NotInstalled
-        !flags.bingeConnectPromotion -> BingeStatus.Hidden
         connected -> BingeStatus.Connected
         else -> BingeStatus.NotConnected
     }

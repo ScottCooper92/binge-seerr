@@ -3,8 +3,6 @@ package com.cooper.binge.companion.seerr
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
-import com.cooper.binge.companion.seerr.flags.FeatureFlags
-import com.cooper.binge.companion.seerr.flags.appFeatureFlags
 
 /**
  * The Activity behind the host's "manage" affordance. Binge starts it for a result it discards, so
@@ -15,12 +13,9 @@ import com.cooper.binge.companion.seerr.flags.appFeatureFlags
  * below would refuse every host.
  */
 class SettingsHandOffActivity : ComponentActivity() {
-    /** The graph's flags; a test sets its own, since its Application is not the Hilt one. */
-    internal var featureFlags: () -> FeatureFlags = { appFeatureFlags() }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        if (bingeHandOffPolicy(featureFlags()).permits(callingPackage)) {
+        if (bingeHandOffPolicy().permits(callingPackage)) {
             startActivity(Intent(this, MainActivity::class.java))
         }
         finish()
