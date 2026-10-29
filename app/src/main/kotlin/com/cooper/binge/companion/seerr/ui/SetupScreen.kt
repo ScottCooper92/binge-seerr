@@ -72,7 +72,7 @@ fun SetupScreen(
                         title = stringResource(R.string.tv_setup_headline),
                         subtitle =
                             stringResource(
-                                if (LocalFlags.current.bingeConnectPromotion) R.string.setup_intro else R.string.setup_intro_plain,
+                                if (LocalFlags.current.bingePromotion) R.string.setup_intro else R.string.setup_intro_plain,
                             ),
                     )
                 else -> signIn?.let { SetupServerHeading(it.server) }

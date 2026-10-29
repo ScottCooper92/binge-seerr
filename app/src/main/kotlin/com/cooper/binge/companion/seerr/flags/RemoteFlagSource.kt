@@ -63,7 +63,6 @@ class FirebaseRemoteFlagSource
         private fun read(remote: FirebaseRemoteConfig) =
             Flags(
                 bingePromotion = remote.getBoolean(Flag.BingePromotion.key),
-                requestCompanions = remote.getBoolean(Flag.RequestCompanions.key),
             )
 
         private companion object {

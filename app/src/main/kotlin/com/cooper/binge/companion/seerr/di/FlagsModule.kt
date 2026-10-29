@@ -5,17 +5,14 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
 import com.cooper.binge.companion.seerr.BuildConfig
-import com.cooper.binge.companion.seerr.flags.ComponentSwitch
 import com.cooper.binge.companion.seerr.flags.DataStoreFlagOverrides
 import com.cooper.binge.companion.seerr.flags.FeatureFlags
 import com.cooper.binge.companion.seerr.flags.FirebaseRemoteFlagSource
 import com.cooper.binge.companion.seerr.flags.FlagOverrides
 import com.cooper.binge.companion.seerr.flags.NoFlagOverrides
-import com.cooper.binge.companion.seerr.flags.PackageManagerComponentSwitch
 import com.cooper.binge.companion.seerr.flags.RemoteFeatureFlags
 import com.cooper.binge.companion.seerr.flags.RemoteFlagSource
 import com.cooper.binge.companion.seerr.notifications.ApplicationScope
-import com.cooper.binge.companion.seerr.service.SeerrCompanionService
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -46,18 +43,12 @@ abstract class FlagsModule {
 
         @Provides
         @Singleton
-        fun serviceSwitch(
-            @ApplicationContext context: Context,
-        ): ComponentSwitch = PackageManagerComponentSwitch(context, SeerrCompanionService::class.java)
-
-        @Provides
-        @Singleton
         fun featureFlags(
             source: RemoteFlagSource,
             overrides: FlagOverrides,
             @ApplicationScope scope: CoroutineScope,
         ): FeatureFlags {
-            // A debug build waits for its stored overrides once, so a hand-off at cold start sees them. This blocks the
+            // A debug build waits for its stored overrides once, so the first screen at cold start sees them. This blocks the
             // main thread, so it must stay behind BuildConfig.DEBUG and never move into a release path.
             val initial = if (BuildConfig.DEBUG) runBlocking { overrides.values.first() } else emptyMap()
             return RemoteFeatureFlags(source, overrides, scope, initial)

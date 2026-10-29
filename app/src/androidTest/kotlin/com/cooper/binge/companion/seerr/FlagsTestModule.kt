@@ -1,7 +1,6 @@
 package com.cooper.binge.companion.seerr
 
 import com.cooper.binge.companion.seerr.di.FlagsModule
-import com.cooper.binge.companion.seerr.flags.ComponentSwitch
 import com.cooper.binge.companion.seerr.flags.FeatureFlags
 import com.cooper.binge.companion.seerr.flags.FixedFeatureFlags
 import com.cooper.binge.companion.seerr.flags.FlagOverrides
@@ -16,8 +15,8 @@ import dagger.hilt.testing.TestInstallIn
 import javax.inject.Singleton
 
 /**
- * The device lane has no Firebase app, so the real flags would all be off and the Service would declare nothing.
- * The lane tests the integration, so it runs with both flags on.
+ * The device lane has no Firebase app, so the real flag would be off. The lane runs with it on, so the Binge prompts
+ * it reaches are the ones a release shows.
  */
 @Module
 @TestInstallIn(components = [SingletonComponent::class], replaces = [FlagsModule::class])
@@ -29,10 +28,6 @@ object FlagsTestModule {
     @Provides
     @Singleton
     fun flagOverrides(): FlagOverrides = NoFlagOverrides
-
-    @Provides
-    @Singleton
-    fun serviceSwitch(): ComponentSwitch = ComponentSwitch {}
 
     @Provides
     @Singleton

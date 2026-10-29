@@ -10,30 +10,22 @@ enum class Flag(
 ) {
     /** Anything that asks the user to install, open or connect Binge. */
     BingePromotion("binge_promotion_enabled"),
-
-    /** Anything that only works if Binge's REQUEST companions are on: the Service, its hand-offs, notice forwarding. */
-    RequestCompanions("request_companions_enabled"),
 }
 
-/** Every flag at once. Both default off: a build that cannot reach a flag service behaves as if Binge were absent. */
+/**
+ * Every flag at once. Off by default: a build that cannot reach a flag service says nothing about Binge. The REQUEST
+ * Service is not flagged; a host that finds it can always use it.
+ */
 data class Flags(
     val bingePromotion: Boolean = false,
-    val requestCompanions: Boolean = false,
 ) {
-    /**
-     * Whether to talk about *connecting* to Binge. It needs both flags: never advertise a connection the
-     * integration cannot make. Installing and opening Binge need only [bingePromotion].
-     */
-    val bingeConnectPromotion: Boolean get() = bingePromotion && requestCompanions
-
     operator fun get(flag: Flag): Boolean =
         when (flag) {
             Flag.BingePromotion -> bingePromotion
-            Flag.RequestCompanions -> requestCompanions
         }
 
     companion object {
-        val AllOn = Flags(bingePromotion = true, requestCompanions = true)
+        val AllOn = Flags(bingePromotion = true)
     }
 }
 

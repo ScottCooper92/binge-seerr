@@ -4,7 +4,6 @@ import android.app.Application
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
 import com.cooper.binge.companion.seerr.auth.ConnectionRestore
-import com.cooper.binge.companion.seerr.flags.ExportedServiceGate
 import com.cooper.binge.companion.seerr.flags.FeatureFlags
 import com.cooper.binge.companion.seerr.notifications.ApplicationScope
 import com.cooper.binge.companion.seerr.notifications.NotificationPlanner
@@ -46,9 +45,6 @@ class SeerrApp :
     lateinit var featureFlags: FeatureFlags
 
     @Inject
-    lateinit var exportedServiceGate: ExportedServiceGate
-
-    @Inject
     @field:ApplicationScope
     lateinit var scope: CoroutineScope
 
@@ -60,7 +56,6 @@ class SeerrApp :
         crashReporting.start()
         connectionRestore.start()
         planner.start()
-        exportedServiceGate.start()
         scope.launch { featureFlags.refresh() }
     }
 }

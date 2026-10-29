@@ -3,8 +3,6 @@ package com.cooper.binge.companion.seerr
 import android.content.Intent
 import com.binge.companion.sdk.BingeHosts
 import com.binge.companion.sdk.CompanionManifest
-import com.cooper.binge.companion.seerr.flags.FixedFeatureFlags
-import com.cooper.binge.companion.seerr.flags.Flags
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -41,7 +39,6 @@ class SettingsHandOffActivityTest {
     @Test
     fun `a host that started it for a result is handed on to the hub`() {
         val controller = Robolectric.buildActivity(SettingsHandOffActivity::class.java)
-        controller.get().featureFlags = { FixedFeatureFlags(Flags.AllOn) }
         shadowOf(controller.get()).setCallingPackage(BingeHosts.DEBUG_PACKAGE_NAME)
 
         controller.create()
@@ -55,7 +52,6 @@ class SettingsHandOffActivityTest {
     @Test
     fun `a caller that is not Binge opens nothing`() {
         val controller = Robolectric.buildActivity(SettingsHandOffActivity::class.java)
-        controller.get().featureFlags = { FixedFeatureFlags(Flags.AllOn) }
         shadowOf(controller.get()).setCallingPackage("com.example.other")
 
         controller.create()
@@ -67,19 +63,6 @@ class SettingsHandOffActivityTest {
     @Test
     fun `a start with no calling package opens nothing`() {
         val controller = Robolectric.buildActivity(SettingsHandOffActivity::class.java)
-        controller.get().featureFlags = { FixedFeatureFlags(Flags.AllOn) }
-
-        controller.create()
-
-        assertNull(shadowOf(controller.get()).nextStartedActivity)
-        assertTrue(controller.get().isFinishing)
-    }
-
-    @Test
-    fun `with request companions off even Binge opens nothing`() {
-        val controller = Robolectric.buildActivity(SettingsHandOffActivity::class.java)
-        controller.get().featureFlags = { FixedFeatureFlags(Flags(bingePromotion = true)) }
-        shadowOf(controller.get()).setCallingPackage(BingeHosts.DEBUG_PACKAGE_NAME)
 
         controller.create()
 

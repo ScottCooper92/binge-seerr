@@ -1,8 +1,6 @@
 package com.cooper.binge.companion.seerr.service
 
-import android.content.ComponentName
 import android.content.Context
-import android.content.pm.PackageManager
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.binge.companion.contracts.request.v1.Availability
@@ -60,12 +58,6 @@ class CompanionServiceRoundTripTest {
     @Before
     fun setUp() {
         hilt.inject()
-        // The manifest ships the Service disabled and ExportedServiceGate enables it, which this lane's Application never runs.
-        app.packageManager.setComponentEnabledSetting(
-            ComponentName(app.packageName, SERVICE_CLASS),
-            PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
-            PackageManager.DONT_KILL_APP,
-        )
         seerr.dispatcher = FakeSeerr
         seerr.start()
     }
