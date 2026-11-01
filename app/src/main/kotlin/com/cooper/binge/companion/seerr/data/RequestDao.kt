@@ -36,6 +36,13 @@ interface RequestDao {
     @Query("DELETE FROM requests WHERE id = :id")
     suspend fun delete(id: Int)
 
+    /** Every cached request for one title, in every slice: what the server removes with the title's data. */
+    @Query("DELETE FROM requests WHERE tmdbId = :tmdbId AND mediaType = :mediaType")
+    suspend fun deleteTitle(
+        tmdbId: Int,
+        mediaType: String,
+    )
+
     @Query("DELETE FROM requests WHERE listKey = :listKey")
     suspend fun clear(listKey: String)
 

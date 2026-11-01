@@ -94,6 +94,9 @@ class RequestDetailViewModel
          */
         private val filesDeleted = MutableStateFlow<Map<Boolean, FilesDeletion>>(emptyMap())
 
+        /** Clearing the title's data is running; the page does not close until the server has answered. */
+        private val clearing = MutableStateFlow(false)
+
         /** The editor rides the page's state while it is open; it closes itself on the save landing. */
         private val requestEditor =
             RequestEditor(scope = viewModelScope, dispatcher = dispatcher, connection = connection, moderation = moderator)
@@ -109,8 +112,24 @@ class RequestDetailViewModel
                     mediaId: Int,
                     is4k: Boolean,
                     removeRequestIds: List<Int>,
-                ) = moderator.deleteMediaFiles(requestId, mediaId, is4k, removeRequestIds) { outcome ->
-                    filesDeleted.update { it + (is4k to outcome) }
+                ) {
+                    val before = filesDeleted.value[is4k]
+                    filesDeleted.update { it + (is4k to FilesDeletion.Running) }
+                    val started =
+                        moderator.deleteMediaFiles(requestId, mediaId, is4k, removeRequestIds) { outcome ->
+                            filesDeleted.update { it + (is4k to outcome) }
+                        }
+                    // Another action on the request is running, so nothing was sent: the row is as it was.
+                    if (!started) filesDeleted.update { if (before == null) it - is4k else it + (is4k to before) }
+                }
+
+                override fun clearMedia(
+                    requestId: Int,
+                    mediaId: Int,
+                ) {
+                    clearing.value = true
+                    val started = moderator.clearMedia(requestId, mediaId) { succeeded -> if (!succeeded) clearing.value = false }
+                    if (!started) clearing.value = false
                 }
             }
         val editor: RequestEditorControls = requestEditor
@@ -125,9 +144,14 @@ class RequestDetailViewModel
                 moderator.actingIds,
                 reloadingAfterAction,
                 filesDeleted,
-            ) { page, edit, acting, reloading, deleted ->
+                clearing,
+            ) { page, edit, acting, reloading, deleted, clearingData ->
                 (page as? RequestDetailUiState.Ready)
-                    ?.copy(detail = page.detail.withFilesDeleted(deleted), edit = edit, isActing = requestId in acting || reloading)
+                    ?.copy(
+                        detail = page.detail.withFilesDeleted(deleted).withClearing(clearingData),
+                        edit = edit,
+                        isActing = requestId in acting || reloading,
+                    )
                     ?: page
             }.combine(now) { page, now -> (page as? RequestDetailUiState.Ready)?.copy(now = now) ?: page }
                 .stateIn(viewModelScope, SharingStarted.Lazily, RequestDetailUiState.Loading)
@@ -303,6 +327,10 @@ class RequestDetailViewModel
             fun create(requestId: Int): RequestDetailViewModel
         }
     }
+
+/** Marks the title's data as being cleared, so its row shows the progress until the page closes or the clear fails. */
+private fun RequestDetail.withClearing(clearing: Boolean): RequestDetail =
+    if (clearing) copy(media = media?.copy(clearing = true)) else this
 
 /** Marks how deleting each instance's files from this page went, so the row says so whatever the server's status now reads. */
 private fun RequestDetail.withFilesDeleted(deleted: Map<Boolean, FilesDeletion>): RequestDetail =

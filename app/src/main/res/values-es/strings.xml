@@ -221,6 +221,10 @@
     <string name="media_4k_files_deleted">Archivos 4K eliminados</string>
     <string name="media_files_not_deleted">Archivos no eliminados</string>
     <string name="media_4k_files_not_deleted">Archivos 4K no eliminados</string>
+    <string name="media_deleting_files">Eliminando los archivos…</string>
+    <string name="media_deleting_4k_files">Eliminando los archivos 4K…</string>
+    <string name="media_files_delete_failed_detail">Algo salió mal. Toca para volver a intentarlo.</string>
+    <string name="media_clearing_data">Borrando los datos…</string>
     <string name="media_files_no_default_server">Seerr no tiene ningún servidor de %1$s predeterminado para la versión estándar, así que no puede eliminar los archivos. Marca uno como predeterminado en los ajustes de Seerr (Services).</string>
     <string name="media_files_no_default_server_4k">Seerr no tiene ningún servidor de %1$s predeterminado para 4K, así que no puede eliminar los archivos. Marca uno como predeterminado en los ajustes de Seerr (Services).</string>
     <string name="media_files_and_requests_deleted">Archivos y peticiones eliminados</string>

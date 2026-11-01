@@ -221,6 +221,7 @@ app:media_clear_confirm_title  9ff8d543b40a
 app:media_clear_data  a45086979c4a
 app:media_clear_detail  82875927b817
 app:media_cleared  e7884daadd4a
+app:media_clearing_data  cb74a1e73492
 app:media_delete_4k_files  c5f534674352
 app:media_delete_files  d3146291f128
 app:media_delete_files_and_requests  c977fc7be5d2
@@ -230,7 +231,10 @@ app:media_delete_files_confirm_tv  2a13a1e596fb
 app:media_delete_files_detail  42b344e85112
 app:media_delete_files_remove_requests  aa7bfb5978df
 app:media_delete_files_remove_requests_detail  021fc2f7db4d
+app:media_deleting_4k_files  1d70d67eff96
+app:media_deleting_files  02ab6348e1ba
 app:media_files_and_requests_deleted  d75ef6656c9a
+app:media_files_delete_failed_detail  44e32bbfc4d6
 app:media_files_deleted  dad1dd4af3f4
 app:media_files_deleted_requests_kept  bfdd40171056
 app:media_files_no_default_server  ae7cbc036bc8

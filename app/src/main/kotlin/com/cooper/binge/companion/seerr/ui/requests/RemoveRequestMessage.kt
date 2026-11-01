@@ -32,4 +32,6 @@ internal fun removeConfirmMessage(
 internal fun MediaRecord?.offersDeleteFiles(item: RequestItem): Boolean =
     this != null &&
         canDeleteFiles &&
-        instances.any { it.is4k == item.is4k && it.filesDeletion == null && it.status.hasFiles() }
+        instances.any {
+            it.is4k == item.is4k && (it.filesDeletion == null || it.filesDeletion == FilesDeletion.Failed) && it.status.hasFiles()
+        }

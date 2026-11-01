@@ -45,6 +45,40 @@ class RequestSheetsScreenshotTest {
             ActionsContent(detail.copy(media = media.copy(instances = deleted)))
         }
 
+    /** The delete is running (#1776): the row that was pressed shows its own spinner and takes no taps, and the sheet stays put. */
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun actionsFilesDeleting() =
+        SheetFrame {
+            val detail = settledDetail()
+            val media = checkNotNull(detail.media)
+            val running = media.instances.map { it.copy(filesDeletion = FilesDeletion.Running) }
+            ActionsContent(detail.copy(media = media.copy(instances = running)))
+        }
+
+    /** The delete failed (#1776): the row says so in place and offers it again. */
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun actionsFilesDeleteFailed() =
+        SheetFrame {
+            val detail = settledDetail()
+            val media = checkNotNull(detail.media)
+            val failed = media.instances.map { it.copy(filesDeletion = FilesDeletion.Failed) }
+            ActionsContent(detail.copy(media = media.copy(instances = failed)))
+        }
+
+    /** Clearing the title's data is running (#1776): its row shows the spinner until the page closes. */
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun actionsClearingData() =
+        SheetFrame {
+            val detail = settledDetail()
+            ActionsContent(detail.copy(media = checkNotNull(detail.media).copy(clearing = true)))
+        }
+
     /** Seerr refused for want of a default server (#1726): the row says what to set in Seerr, and opens it for an admin. */
     @PreviewTest
     @SeerrComponentPreviews

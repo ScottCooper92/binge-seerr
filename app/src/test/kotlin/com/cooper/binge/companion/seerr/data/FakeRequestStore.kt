@@ -72,6 +72,11 @@ class FakeRequestStore : RequestStore {
 
     override suspend fun delete(requestId: Int) = write(rows.filterNot { it.id == requestId })
 
+    override suspend fun deleteTitleOf(requestId: Int) {
+        val row = rows.firstOrNull { it.id == requestId } ?: return
+        write(rows.filterNot { it.tmdbId == row.tmdbId && it.mediaType == row.mediaType })
+    }
+
     override suspend fun clearAll() {
         cachedCounts.value = null
         cursors.clear()

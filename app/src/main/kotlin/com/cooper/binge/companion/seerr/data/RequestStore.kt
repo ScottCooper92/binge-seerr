@@ -63,6 +63,9 @@ interface RequestStore {
 
     suspend fun delete(requestId: Int)
 
+    /** Takes every cached request for the title [requestId] is for out of every list; nothing when it was never cached. */
+    suspend fun deleteTitleOf(requestId: Int)
+
     /** Every list's rows and cursors: the saved server changed, so none of it is this server's. */
     suspend fun clearAll()
 }
@@ -125,6 +128,11 @@ class RoomRequestStore(
 
     override suspend fun delete(requestId: Int) = sources.afterWrite { requests.delete(requestId) }
 
+    override suspend fun deleteTitleOf(requestId: Int) {
+        val row = requests.byId(requestId) ?: return
+        sources.afterWrite { requests.deleteTitle(row.tmdbId, row.mediaType) }
+    }
+
     override suspend fun clearAll() {
         cachedCounts.value = null
         writes.clearAll()
@@ -179,6 +187,8 @@ object NoRequestStore : RequestStore {
     ) = Unit
 
     override suspend fun delete(requestId: Int) = Unit
+
+    override suspend fun deleteTitleOf(requestId: Int) = Unit
 
     override suspend fun clearAll() = Unit
 }

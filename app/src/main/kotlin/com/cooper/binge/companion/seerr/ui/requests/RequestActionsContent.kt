@@ -312,10 +312,12 @@ private fun mediaRows(
                 ListItem(
                     icon = Icons.Filled.DeleteForever,
                     iconTint = error,
-                    label = stringResource(R.string.media_clear_data),
+                    label = stringResource(if (media.clearing) R.string.media_clearing_data else R.string.media_clear_data),
                     detail = stringResource(R.string.media_clear_detail),
                     trailingContent = {},
                     destination = ListItemDestination.Action,
+                    clickable = !media.clearing,
+                    loading = media.clearing,
                     onClick = callbacks.onClearData,
                 ),
             )

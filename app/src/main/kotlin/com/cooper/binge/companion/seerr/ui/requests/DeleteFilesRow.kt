@@ -50,6 +50,28 @@ internal fun deleteFilesRow(
                 onClick = { url?.let(context::openInBrowser) },
             )
         }
+        // The call is running: the row shows it in place and takes no taps, so the page around it stays put.
+        FilesDeletion.Running ->
+            ListItem(
+                icon = Icons.Filled.DeleteSweep,
+                iconTint = error,
+                label = stringResource(if (instance.is4k) R.string.media_deleting_4k_files else R.string.media_deleting_files),
+                detail = stringResource(R.string.media_delete_files_detail, client),
+                clickable = false,
+                loading = true,
+            )
+        // Anything but a missing default server: the call may well work the next time, so the row offers it again.
+        FilesDeletion.Failed ->
+            ListItem(
+                icon = Icons.Filled.ErrorOutline,
+                iconTint = error,
+                label = stringResource(if (instance.is4k) R.string.media_4k_files_not_deleted else R.string.media_files_not_deleted),
+                detail = stringResource(R.string.media_files_delete_failed_detail),
+                detailColor = error,
+                trailingContent = {},
+                destination = ListItemDestination.Action,
+                onClick = { callbacks.onDeleteFiles(instance.is4k) },
+            )
         null ->
             ListItem(
                 icon = Icons.Filled.DeleteSweep,
