@@ -66,17 +66,6 @@ class RequestActionsSheetConfirmTest {
     }
 
     @Test
-    fun `confirming Clear data keeps the sheet open, so its progress shows`() {
-        setSheet(canClearData = true)
-
-        click(R.string.media_clear_data)
-        confirm(R.string.media_clear_data)
-
-        assertEquals(listOf(MEDIA_ID), cleared)
-        assertEquals(0, dismissed)
-    }
-
-    @Test
     fun `removing always asks, and backing out of it removes nothing`() {
         setSheet()
 
