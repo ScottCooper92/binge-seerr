@@ -31,6 +31,14 @@
         android:required="false" />
 
     <!--
+        The ML Kit code scanner's activity is locked to portrait, and Play reads that as a
+        requirement for a portrait screen, which no television has. The scan is a phone-only route.
+    -->
+    <uses-feature
+        android:name="android.hardware.screen.portrait"
+        android:required="false" />
+
+    <!--
         Package visibility: whether Binge answers the title link the SDK builds
         (CompanionManifest.hostTitleUri, scheme HOST_TITLE_SCHEME), and
         whether Binge is installed at all (the Hub tile, #469) — a plain getPackageInfo() on its
