@@ -136,6 +136,12 @@ enum class FilesDeletion {
 
     /** Seerr has no Radarr or Sonarr server set as default for the version, so it could not delete them. */
     NoDefaultServer,
+
+    /** The call is running: the row shows its progress and takes no taps until it ends. */
+    Running,
+
+    /** The call failed for any other reason, so the row says so and offers it again. */
+    Failed,
 }
 
 /**
@@ -149,6 +155,8 @@ data class MediaRecord(
     val canSetStatus: Boolean,
     val canClearData: Boolean,
     val canDeleteFiles: Boolean,
+    /** Clearing the title's data is running, so its row shows the progress and takes no taps. */
+    val clearing: Boolean = false,
     /** Seerr's Services settings in its web client, where a default server is set; null for a user who cannot open them. */
     val servicesSettingsUrl: String? = null,
 ) {

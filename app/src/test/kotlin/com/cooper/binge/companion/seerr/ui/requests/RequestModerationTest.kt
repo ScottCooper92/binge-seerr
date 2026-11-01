@@ -4,6 +4,7 @@ import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import com.cooper.binge.companion.seerr.auth.CredentialStore
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.data.FakeRequestStore
+import com.cooper.binge.companion.seerr.data.RequestEntity
 import com.cooper.binge.companion.seerr.seerr.SeerrApiFactory
 import com.cooper.binge.companion.seerr.seerr.SeerrAuth
 import com.cooper.binge.companion.seerr.seerr.SeerrError
@@ -170,7 +171,7 @@ class RequestModerationTest {
             val failed = awaitEvent(sut.events)
             sut.deleteMediaFiles(11, 900, is4k = false, removeRequestIds = listOf(12)) { filesHeard++ }
             assertTrue(failed.await() is ModerationEvent.Failed)
-            assertEquals("a refused deletion removes no request", 1, filesHeard)
+            assertEquals("a failed deletion is heard as failed, and removes no request", 2, filesHeard)
             assertEquals(3, received.count { it.method == "DELETE" && it.url.encodedPath == "/api/v1/request/12" })
         }
 
@@ -229,7 +230,7 @@ class RequestModerationTest {
             sut.deleteMediaFiles(11, 900, is4k = false, removeRequestIds = emptyList()) { heard += it }
 
             assertEquals(ModerationEvent.Failed(SeerrError.Rejected), failed.await())
-            assertTrue(heard.isEmpty())
+            assertEquals(listOf(FilesDeletion.Failed), heard)
         }
 
     @Test
@@ -298,6 +299,35 @@ class RequestModerationTest {
                     while (cache.rows.isNotEmpty() || received.none { it.url.encodedPath == "/api/v1/request/count" }) delay(POLL_MILLIS)
                 }
             }
+        }
+
+    /** The page leaves on the event, so the list it returns to must already be right (#1777). */
+    @Test
+    fun `clearing a title's data takes its rows out of every list before the event, though the server cannot be asked`() =
+        runTest {
+            cache.append("all:added:all", listOf(item.toEntity("all:added:all", 0)), null)
+            cache.append("pending:added:all", listOf(item.toEntity("pending:added:all", 0)), null)
+            val sut = moderation()
+
+            codes["/api/v1/request/11"] = 500
+            val cleared = awaitEvent(sut.events)
+            sut.clearMedia(11, 900)
+            cleared.await()
+
+            assertEquals(emptyList<RequestEntity>(), cache.rows)
+        }
+
+    @Test
+    fun `the cache is read from the server before a files deletion is reported`() =
+        runTest {
+            val sut = moderation()
+
+            val deleted = awaitEvent(sut.events)
+            sut.deleteMediaFiles(11, 900, is4k = false, removeRequestIds = emptyList())
+            deleted.await()
+
+            assertTrue(received.any { it.method == "GET" && it.url.encodedPath == "/api/v1/request/11" })
+            assertTrue(received.any { it.url.encodedPath == "/api/v1/request/count" })
         }
 
     @Test

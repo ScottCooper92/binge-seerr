@@ -150,14 +150,38 @@ class RequestModeration(
     override fun clearMedia(
         requestId: Int,
         mediaId: Int,
-    ) = moderate(requestId, ModerationEvent.MediaCleared) { connection.api().deleteMedia(mediaId) }
+    ) {
+        clearMedia(requestId, mediaId, onSettled = {})
+    }
+
+    /** [onSettled] hears how the clear went. False when another action on the request is in flight: nothing was started. */
+    fun clearMedia(
+        requestId: Int,
+        mediaId: Int,
+        onSettled: (succeeded: Boolean) -> Unit,
+    ): Boolean =
+        actThenMaybeBlock(
+            item = null,
+            requestId = requestId,
+            blockTitle = false,
+            done = ModerationEvent.MediaCleared,
+            doneAndBlocked = ModerationEvent.MediaCleared,
+            blockFailed = ModerationEvent.MediaCleared,
+            onSettled = onSettled,
+            syncFirst = true,
+        ) {
+            connection.api().deleteMedia(mediaId)
+            cache.deleteTitleOf(it)
+        }
 
     override fun deleteMediaFiles(
         requestId: Int,
         mediaId: Int,
         is4k: Boolean,
         removeRequestIds: List<Int>,
-    ) = deleteMediaFiles(requestId, mediaId, is4k, removeRequestIds, onFiles = {})
+    ) {
+        deleteMediaFiles(requestId, mediaId, is4k, removeRequestIds, onFiles = {})
+    }
 
     /**
      * [onFiles] hears that the files went before any request is removed, so a page can say so even when a removal then
@@ -170,15 +194,19 @@ class RequestModeration(
         is4k: Boolean,
         removeRequestIds: List<Int>,
         onFiles: (FilesDeletion) -> Unit,
-    ) {
+    ): Boolean {
         var allRemoved = true
         var removedThisRequest = false
-        act(
+        return act(
             requestId = requestId,
+            syncFirst = true,
             refusal = { failure ->
                 failure.takeIf { it.isNoDefaultServerRefusal() }?.let {
                     onFiles(FilesDeletion.NoDefaultServer)
                     ModerationEvent.MediaFilesNoDefaultServer
+                } ?: run {
+                    onFiles(FilesDeletion.Failed)
+                    null
                 }
             },
             done =
@@ -261,12 +289,14 @@ class RequestModeration(
         doneAndBlocked: ModerationEvent,
         blockFailed: ModerationEvent,
         onSettled: (succeeded: Boolean) -> Unit = {},
+        syncFirst: Boolean = false,
         action: suspend (Int) -> Unit,
     ): Boolean =
         act(
             requestId = requestId,
             done = done,
             onSettled = onSettled,
+            syncFirst = syncFirst,
             outcome = {
                 if (blockTitle && item != null) {
                     if (block(item)) doneAndBlocked else blockFailed
@@ -278,18 +308,17 @@ class RequestModeration(
         )
 
     /**
-     * Acting is raised before the launch so a second tap is swallowed at once, and cleared as soon as the action settles,
-     * before the refresh and [outcome]'s follow-up. False when an action on the request is already in flight, so this one
-     * was not started; [onSettled] hears how a started one went, before the event does. [done] names the action in logs.
-     *
-     * Launched on [dispatcher] rather than inheriting `scope`'s own, so [onModerated]'s reload and this launch's own state
-     * updates never touch `Dispatchers.Main` - including the tail end of a call still in flight after the screen is gone (#177).
-     * [refusal] names a failure the action reads more precisely than [ModerationEvent.Failed]; null leaves it to that.
+     * Acting is raised before the launch so a second tap is swallowed at once, and cleared as soon as the action settles.
+     * False when an action on the request is already in flight; [onSettled] hears how a started one went, before the event.
+     * Launched on [dispatcher] so [onModerated]'s reload never touches `Dispatchers.Main` (#177). [done] names the action
+     * in logs; [refusal] names a failure more precisely than [ModerationEvent.Failed]. [syncFirst] reads the server's state
+     * into the cache before the event, for an action that takes the user back to a list (#1777).
      */
     private fun act(
         requestId: Int,
         done: ModerationEvent,
         onSettled: (succeeded: Boolean) -> Unit = {},
+        syncFirst: Boolean = false,
         refusal: (Throwable) -> ModerationEvent? = { null },
         outcome: suspend () -> ModerationEvent,
         action: suspend (Int) -> Unit,
@@ -307,8 +336,9 @@ class RequestModeration(
                     onModerated()
                     val event = outcome()
                     analytics.event(AnalyticsEvents.REQUEST_MODERATED, mapOf(AnalyticsEvents.PARAM_ACTION to event.actionLabel()))
+                    if (syncFirst) connection.syncInto(cache, requestId)
                     eventFlow.emit(event)
-                    syncCache(requestId)
+                    if (!syncFirst) connection.syncInto(cache, requestId)
                 }.onFailure {
                     val refused = refusal(it)
                     analytics.operationFailed("moderate_${done.actionLabel()}", it, connection, refused?.failureReason())
@@ -316,21 +346,6 @@ class RequestModeration(
                 }
         }
         return true
-    }
-
-    /**
-     * Writes what the server now says into the cache every list reads, so each one updates without being told (#1665):
-     * the request's own status, or its removal when the server no longer has it, and the chip counts. Best effort, and after the
-     * result is reported so a slow read holds nothing up: one that fails leaves the optimistic write the action made.
-     */
-    private suspend fun syncCache(requestId: Int) {
-        attempt { connection.api().request(requestId) }.fold(
-            onSuccess = { cache.updateServerState(requestId, it.status?.raw, it.mediaStatusOfRequestedVersion()?.raw) },
-            onFailure = { if ((it as? HttpException)?.code() == HTTP_NOT_FOUND) cache.delete(requestId) },
-        )
-        attempt { connection.api().requestCount() }.onSuccess {
-            cache.setCounts(RequestCounts(it.total, it.pending, it.approved, it.processing, it.available))
-        }
     }
 
     /** Blocks the title alone, leaving the request as it is; the owner refreshes what it shows on success. */
@@ -344,7 +359,7 @@ class RequestModeration(
             val event = if (blocked) ModerationEvent.Blocked else ModerationEvent.BlockFailed
             analytics.event(AnalyticsEvents.REQUEST_MODERATED, mapOf(AnalyticsEvents.PARAM_ACTION to event.actionLabel()))
             eventFlow.emit(event)
-            if (blocked) syncCache(item.id)
+            if (blocked) connection.syncInto(cache, item.id)
         }
     }
 
@@ -363,3 +378,21 @@ class RequestModeration(
 /** The [AnalyticsEvents.PARAM_REASON] a refusal adds to its failure report, so it reads apart from a real conflict. */
 private fun ModerationEvent.failureReason(): String? =
     AnalyticsEvents.REASON_NO_DEFAULT_SERVICE.takeIf { this == ModerationEvent.MediaFilesNoDefaultServer }
+
+/**
+ * Writes what the server now says into the cache every list reads, so each one updates without being told (#1665):
+ * the request's own status, or its removal when the server no longer has it, and the chip counts. Best effort, and
+ * after the result is reported so a slow read holds nothing up.
+ */
+private suspend fun SeerrConnection.syncInto(
+    cache: RequestStore,
+    requestId: Int,
+) {
+    attempt { api().request(requestId) }.fold(
+        onSuccess = { cache.updateServerState(requestId, it.status?.raw, it.mediaStatusOfRequestedVersion()?.raw) },
+        onFailure = { if ((it as? HttpException)?.code() == HTTP_NOT_FOUND) cache.delete(requestId) },
+    )
+    attempt { api().requestCount() }.onSuccess {
+        cache.setCounts(RequestCounts(it.total, it.pending, it.approved, it.processing, it.available))
+    }
+}

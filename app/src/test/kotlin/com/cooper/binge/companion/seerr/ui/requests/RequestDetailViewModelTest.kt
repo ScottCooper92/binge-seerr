@@ -902,6 +902,86 @@ class RequestDetailViewModelTest {
         }
 
     @Test
+    fun `the instance reads as running while its files are being deleted, and as deleted once they are`() =
+        runTest {
+            server(ADMIN)
+            val gate = CountDownLatch(1)
+            responses["/api/v1/media/900/file"] = {
+                gate.await()
+                FakeResponse(code = 200, headers = headersOf("Content-Type", "application/json"), body = "{}")
+            }
+            val vm = viewModel()
+            assertNull(checkNotNull(vm.awaitReady().detail.media).instances.single().filesDeletion)
+
+            vm.moderation.deleteMediaFiles(11, 900, is4k = false)
+            val running =
+                checkNotNull(
+                    vm
+                        .awaitReady {
+                            it.detail.media
+                                ?.instances
+                                ?.single()
+                                ?.filesDeletion == FilesDeletion.Running
+                        }.detail.media,
+                )
+            assertEquals(FilesDeletion.Running, running.instances.single().filesDeletion)
+
+            val deleted = awaitEvent(vm.events) { it == ModerationEvent.MediaFilesDeleted }
+            gate.countDown()
+            deleted.await()
+            assertEquals(FilesDeletion.Deleted, checkNotNull(vm.awaitReady { !it.isActing }.detail.media).instances.single().filesDeletion)
+        }
+
+    @Test
+    fun `a delete that fails marks the instance failed in place, and trying again can still land`() =
+        runTest {
+            server(ADMIN)
+            responses["/api/v1/media/900/file"] = {
+                FakeResponse(code = 500, headers = headersOf("Content-Type", "application/json"), body = "{}")
+            }
+            val vm = viewModel()
+            vm.awaitReady()
+
+            val failed = awaitEvent(vm.events) { it is ModerationEvent.Failed }
+            vm.moderation.deleteMediaFiles(11, 900, is4k = false)
+            failed.await()
+            assertEquals(
+                FilesDeletion.Failed,
+                checkNotNull(vm.awaitReady { !it.isActing }.detail.media).instances.single().filesDeletion,
+            )
+
+            serve("/api/v1/media/900/file", "{}")
+            val deleted = awaitEvent(vm.events) { it == ModerationEvent.MediaFilesDeleted }
+            vm.moderation.deleteMediaFiles(11, 900, is4k = false)
+            deleted.await()
+            assertEquals(
+                FilesDeletion.Deleted,
+                checkNotNull(vm.awaitReady { !it.isActing }.detail.media).instances.single().filesDeletion,
+            )
+        }
+
+    @Test
+    fun `clearing the data reads as running until the server answers, and stops reading so when it fails`() =
+        runTest {
+            server(ADMIN)
+            val gate = CountDownLatch(1)
+            responses["/api/v1/media/900"] = {
+                gate.await()
+                FakeResponse(code = 500, headers = headersOf("Content-Type", "application/json"), body = "{}")
+            }
+            val vm = viewModel()
+            assertFalse(checkNotNull(vm.awaitReady().detail.media).clearing)
+
+            val failed = awaitEvent(vm.events) { it is ModerationEvent.Failed }
+            vm.moderation.clearMedia(11, 900)
+            assertTrue(checkNotNull(vm.awaitReady { it.detail.media?.clearing == true }.detail.media).clearing)
+            gate.countDown()
+            failed.await()
+
+            assertFalse(checkNotNull(vm.awaitReady { it.detail.media?.clearing == false }.detail.media).clearing)
+        }
+
+    @Test
     fun `the page reads as acting from the action through the reload that shows its result, and not after`() =
         runTest {
             server(REQUEST or ADMIN)
