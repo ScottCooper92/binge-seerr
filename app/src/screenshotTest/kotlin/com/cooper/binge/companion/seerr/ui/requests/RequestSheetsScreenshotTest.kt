@@ -49,6 +49,19 @@ class RequestSheetsScreenshotTest {
     @Composable
     fun actionsDeclineRunning() = SheetFrame { ActionsContent(pendingDetail(), progress = ActionProgress(RequestAction.Decline)) }
 
+    /** Marking the title's state is running: its instance row keeps its place and shows the spinner where the chevron was. */
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun actionsMarkRunning() = SheetFrame { ActionsContent(settledDetail(), progress = ActionProgress(RequestAction.MarkAs, attempt = 1)) }
+
+    /** Marking failed: the same row, its subtitle saying so in place of the status, with Try again trailing. */
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun actionsMarkFailed() =
+        SheetFrame { ActionsContent(settledDetail(), progress = ActionProgress(RequestAction.MarkAs, failed = true, attempt = 1)) }
+
     /** Settled: the media half leads, and the request half is what is left of it. */
     @PreviewTest
     @SeerrComponentPreviews

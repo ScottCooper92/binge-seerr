@@ -135,6 +135,16 @@ class RequestDetailViewModel
                     if (!started) clearing.value = false
                 }
 
+                override fun setMediaStatus(
+                    requestId: Int,
+                    mediaId: Int,
+                    status: MediaStatusChoice,
+                    is4k: Boolean,
+                    seasonNumbers: List<Int>,
+                ) = tracked(RequestAction.MarkAs, is4k) { settled ->
+                    moderator.setMediaStatus(requestId, mediaId, status, is4k, seasonNumbers, settled)
+                }
+
                 override fun decline(
                     item: RequestItem,
                     blockTitle: Boolean,
@@ -145,21 +155,23 @@ class RequestDetailViewModel
                     blockTitle: Boolean,
                 ) = tracked(RequestAction.Remove) { settled -> moderator.remove(item, blockTitle, settled) }
 
-                /** The sheet closes when [ActionTrack.landed] grows; a failure keeps it open, on the control that failed. */
+                /** The sheet closes when [ActionTrack.landed] grows, which Decline and Remove do; a failure keeps it open on its control. */
                 private fun tracked(
                     action: RequestAction,
+                    is4k: Boolean = false,
                     start: (settled: (Boolean) -> Unit) -> Boolean,
                 ) {
                     val before = track.value
                     val attempt = before.attempts + 1
-                    track.value = before.copy(progress = ActionProgress(action, attempt = attempt), attempts = attempt)
+                    track.value = before.copy(progress = ActionProgress(action, attempt = attempt, is4k = is4k), attempts = attempt)
+                    val closes = if (action.closesSheet) 1 else 0
                     val started =
                         start { succeeded ->
                             track.update {
                                 if (succeeded) {
-                                    it.copy(progress = null, landed = it.landed + 1)
+                                    it.copy(progress = null, landed = it.landed + closes)
                                 } else {
-                                    it.copy(progress = ActionProgress(action, failed = true, attempt = attempt))
+                                    it.copy(progress = ActionProgress(action, failed = true, attempt = attempt, is4k = is4k))
                                 }
                             }
                         }
@@ -380,10 +392,3 @@ private fun RequestDetail.withFilesDeleted(deleted: Map<Boolean, FilesDeletion>)
     } else {
         copy(media = media?.copy(instances = media.instances.map { it.copy(filesDeletion = deleted[it.is4k]) }))
     }
-
-/** Which Decline or Remove is running or failed, how many tries have been numbered, and how many have landed. */
-private data class ActionTrack(
-    val progress: ActionProgress? = null,
-    val attempts: Int = 0,
-    val landed: Int = 0,
-)
