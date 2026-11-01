@@ -296,6 +296,11 @@ It runs on production `src/main` only, and **with type resolution** — `binge.g
 the compile classpath onto the task. Without that classpath `UnsafeCallOnNullableType`, the `!!` ban,
 loads and silently never fires.
 
+Type resolution cannot see what a compiler plugin generates. Write `serializer<Foo>()`, not `Foo.serializer()`: the second is
+unresolved in detekt's analysis, and every expression built on it loses its type, so a `!!` or `runCatching` there is not
+flagged (#1813). `./gradlew detekt` prints "N compiler errors found during analysis". N is 3 today, the symbols that live in
+`src/debug`; a higher number means a rule has gone blind somewhere, and its messages need `detekt { debug = true }` to read.
+
 `runCatching` is banned in `app/src/main` by `ForbiddenMethodCall`: the SDK's `attempt` (`com.binge.companion.sdk`) is the one
 idiom, because `runCatching` also catches the cancellation a cancelled scope sends. The rule sees into the stdlib
 through the same type resolution.

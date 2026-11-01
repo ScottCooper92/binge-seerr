@@ -23,6 +23,7 @@ import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.launch
+import kotlinx.serialization.serializer
 
 /**
  * One Radarr or Sonarr instance, new ([id] null) or existing: the connection is typed, then a
@@ -46,7 +47,7 @@ class DvrInstanceViewModel
         override val savedDraft =
             SavedDraft(
                 savedState,
-                DvrForm.serializer(),
+                serializer<DvrForm>(),
                 scrub = { it.copy(apiKey = "") },
                 restore = { kept, loaded -> kept.copy(apiKey = loaded.apiKey) },
             )
