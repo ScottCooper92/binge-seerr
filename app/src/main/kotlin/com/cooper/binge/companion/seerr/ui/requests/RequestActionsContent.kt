@@ -1,5 +1,6 @@
 package com.cooper.binge.companion.seerr.ui.requests
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -75,7 +76,7 @@ internal fun RequestActionsContent(
                 callbacks.onOpenUser != null && canOpenUser(it, model.viewerId, model.canManageUsers)
             }
         RequestSheetHeader(model.item, showRequester = requesterId == null)
-        DecisionBar(model.actions, blockTitle, callbacks)
+        DecisionBar(model.actions, blockTitle, model.progress, callbacks)
         val requestRows =
             listOfNotNull(requesterId?.let { id -> requesterRow(model.item) { callbacks.onOpenUser?.invoke(id) } }) +
                 requestRows(model, blockTitle, onBlockTitleChange, callbacks)
@@ -217,6 +218,7 @@ private fun requesterRow(
 private fun DecisionBar(
     actions: RequestActions,
     blockTitle: Boolean,
+    progress: ActionProgress?,
     callbacks: RequestSheetCallbacks,
 ) {
     when {
@@ -233,6 +235,7 @@ private fun DecisionBar(
                         label = stringResource(if (blockTitle) R.string.request_decline_and_block else R.string.request_decline),
                         onClick = callbacks.onDecline,
                         destructive = true,
+                        loading = progress?.action == RequestAction.Decline && !progress.failed,
                         modifier = Modifier.weight(1f),
                     )
                 }
@@ -253,7 +256,6 @@ private fun requestRows(
     callbacks: RequestSheetCallbacks,
 ): List<ListItem> {
     val actions = model.actions
-    val error = MaterialTheme.colorScheme.error
     return buildList {
         if (model.canEdit) {
             add(ListItem(icon = Icons.Filled.Edit, label = stringResource(R.string.request_edit_title), onClick = callbacks.onEdit))
@@ -269,21 +271,54 @@ private fun requestRows(
                 ),
             )
         }
-        if (actions.canRemove) {
-            add(
-                ListItem(
-                    icon = Icons.Filled.Delete,
-                    iconTint = error,
-                    label = stringResource(if (blockTitle) R.string.request_remove_and_block else R.string.request_remove),
-                    detail = stringResource(if (blockTitle) R.string.request_remove_block_detail else R.string.request_remove_detail),
-                    trailingContent = {},
-                    destination = ListItemDestination.Action,
-                    onClick = callbacks.onRemove,
-                ),
-            )
-        }
+        if (actions.canRemove) add(removeRow(model.progress, blockTitle, callbacks))
     }
 }
+
+/**
+ * The Remove row through idle, running and failed. It keeps its label, height and place in all three, so nothing around
+ * it moves. The trailing slot goes from nothing to the loading indicator to a Try again hint. Failed, the subtitle says
+ * what happened in place of what Remove does, and a retry brings the usual one back.
+ */
+@Composable
+private fun removeRow(
+    progress: ActionProgress?,
+    blockTitle: Boolean,
+    callbacks: RequestSheetCallbacks,
+): ListItem {
+    val error = MaterialTheme.colorScheme.error
+    val mine = progress?.takeIf { it.action == RequestAction.Remove }
+    val running = mine != null && !mine.failed
+    val failed = mine?.failed == true
+    return ListItem(
+        icon = Icons.Filled.Delete,
+        iconTint = error,
+        label = stringResource(if (blockTitle) R.string.request_remove_and_block else R.string.request_remove),
+        detail = stringResource(removeDetailRes(blockTitle, failed)),
+        detailColor = error.takeIf { failed },
+        loading = running,
+        clickable = !running,
+        trailingContent =
+            if (failed) {
+                ({ Text(text = stringResource(R.string.action_try_again), style = MaterialTheme.typography.labelLarge, color = error) })
+            } else {
+                ({})
+            },
+        destination = ListItemDestination.Action,
+        onClick = callbacks.onRemove,
+    )
+}
+
+@StringRes
+private fun removeDetailRes(
+    blockTitle: Boolean,
+    failed: Boolean,
+): Int =
+    when {
+        failed -> R.string.request_remove_failed_detail
+        blockTitle -> R.string.request_remove_block_detail
+        else -> R.string.request_remove_detail
+    }
 
 /**
  * Each instance is one row carrying its state; where the status can be set the row opens the picker,

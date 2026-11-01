@@ -271,6 +271,10 @@ sealed interface RequestDetailUiState {
         val isActing: Boolean = false,
         /** What the page's relative times are worded against: moved on each minute while the page shows (#1239). */
         val now: Long = System.currentTimeMillis(),
+        /** The Decline or Remove that is running or failed, for its control to show in place. */
+        val progress: ActionProgress? = null,
+        /** How many Declines and Removes have landed. Only ever grows, so a sheet that was open for one cannot miss it. */
+        val actionsLanded: Int = 0,
     ) : RequestDetailUiState
 
     data class Error(

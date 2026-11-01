@@ -16,6 +16,20 @@ internal class RequestSheetModel(
     val viewerId: Int? = null,
     val canManageUsers: Boolean = false,
     val detailLoad: SheetDetailLoad = SheetDetailLoad.Loaded,
+    val progress: ActionProgress? = null,
+)
+
+/** The request actions that keep the sheet open while they run, each shown on the control that started it. */
+enum class RequestAction { Decline, Remove }
+
+/**
+ * [action] is running, or, with [failed], did not go through and may be tried again. [attempt] numbers the tries, so a sheet
+ * opened after a failure can tell that failure from one of its own.
+ */
+data class ActionProgress(
+    val action: RequestAction,
+    val failed: Boolean = false,
+    val attempt: Int = 0,
 )
 
 /**

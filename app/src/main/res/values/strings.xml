@@ -218,6 +218,7 @@
     <string name="request_sheet_loading">Loading request details</string>
     <string name="request_remove_detail">The title can be requested again</string>
     <string name="request_remove_block_detail">The title can\'t be requested again</string>
+    <string name="request_remove_failed_detail">Couldn\'t remove the request</string>
     <string name="media_delete_4k_files">Delete 4K files</string>
     <string name="media_delete_files_detail">Deletes the downloaded files from %1$s</string>
     <string name="media_clear_detail">Forgets the title and its requests</string>

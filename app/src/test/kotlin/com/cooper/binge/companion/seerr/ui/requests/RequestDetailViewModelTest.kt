@@ -982,6 +982,37 @@ class RequestDetailViewModelTest {
         }
 
     @Test
+    fun `a decline reads as running until the server answers, as failed when it fails, and clears when it lands`() =
+        runTest {
+            server(REQUEST or ADMIN)
+            val gate = CountDownLatch(1)
+            responses["/api/v1/request/11/decline"] = {
+                gate.await()
+                FakeResponse(code = 500, headers = headersOf("Content-Type", "application/json"), body = "{}")
+            }
+            val vm = viewModel()
+            val item = vm.awaitReady().detail.item
+            assertNull(vm.awaitReady().progress)
+
+            val failed = awaitEvent(vm.events) { it is ModerationEvent.Failed }
+            vm.moderation.decline(item, blockTitle = false)
+            assertEquals(ActionProgress(RequestAction.Decline, attempt = 1), vm.awaitReady { it.progress != null }.progress)
+            gate.countDown()
+            failed.await()
+            val failure = vm.awaitReady { it.progress?.failed == true }
+            assertEquals(ActionProgress(RequestAction.Decline, failed = true, attempt = 1), failure.progress)
+            assertEquals(0, failure.actionsLanded)
+
+            serve("/api/v1/request/11/decline", "{}")
+            val declined = awaitEvent(vm.events) { it == ModerationEvent.Declined }
+            vm.moderation.decline(item, blockTitle = false)
+            declined.await()
+            val landed = vm.awaitReady { it.progress == null }
+            assertNull(landed.progress)
+            assertEquals(1, landed.actionsLanded)
+        }
+
+    @Test
     fun `the page reads as acting from the action through the reload that shows its result, and not after`() =
         runTest {
             server(REQUEST or ADMIN)

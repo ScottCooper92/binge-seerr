@@ -1,35 +1,19 @@
 package com.cooper.binge.companion.seerr.ui.requests
 
-import com.binge.companion.sdk.attempt
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.data.NoRequestStore
 import com.cooper.binge.companion.seerr.data.RequestStore
-import com.cooper.binge.companion.seerr.seerr.SeerrAddToBlocklistBody
 import com.cooper.binge.companion.seerr.seerr.SeerrEditRequestBody
-import com.cooper.binge.companion.seerr.seerr.SeerrMediaStatusBody
-import com.cooper.binge.companion.seerr.seerr.SeerrMediaStatusSeasonBody
 import com.cooper.binge.companion.seerr.seerr.SeerrRequestStatusCode
-import com.cooper.binge.companion.seerr.seerr.addToBlocklistOnce
-import com.cooper.binge.companion.seerr.seerr.isNoDefaultServerRefusal
-import com.cooper.binge.companion.seerr.seerr.toSeerrError
 import com.cooper.binge.companion.seerr.seerr.updateRequest
 import com.cooper.binge.companion.seerr.telemetry.Analytics
-import com.cooper.binge.companion.seerr.telemetry.AnalyticsEvents
 import com.cooper.binge.companion.seerr.telemetry.CrashBreadcrumbs
 import com.cooper.binge.companion.seerr.telemetry.NoOpAnalytics
 import com.cooper.binge.companion.seerr.telemetry.NoOpCrashBreadcrumbs
-import com.cooper.binge.companion.seerr.telemetry.operationFailed
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
-import retrofit2.HttpException
 
 /**
  * What a screen may ask of a [RequestModeration]: its actions, and none of its flows. A ViewModel that holds one keeps it
@@ -77,8 +61,6 @@ interface RequestModerationControls {
     fun blockTitle(item: RequestItem)
 }
 
-private const val HTTP_NOT_FOUND = 404
-
 /**
  * The write side of a request: approve, decline, retry, remove, each optionally blocking the
  * title after a decline or removal, and [blockTitle] to block the title on its own. The server
@@ -86,28 +68,28 @@ private const val HTTP_NOT_FOUND = 404
  * events; [onModerated] fires after a success so the owner can refresh what it shows.
  */
 class RequestModeration(
-    private val scope: CoroutineScope,
-    private val dispatcher: CoroutineDispatcher,
+    scope: CoroutineScope,
+    dispatcher: CoroutineDispatcher,
     private val connection: SeerrConnection,
-    private val analytics: Analytics = NoOpAnalytics,
-    private val crashBreadcrumbs: CrashBreadcrumbs = NoOpCrashBreadcrumbs,
+    analytics: Analytics = NoOpAnalytics,
+    crashBreadcrumbs: CrashBreadcrumbs = NoOpCrashBreadcrumbs,
     /** The cached list rows, moved with a success so the list agrees before its refresh lands. */
     private val cache: RequestStore = NoRequestStore,
-    private val onModerated: () -> Unit,
+    onModerated: () -> Unit,
 ) : RequestModerationControls {
-    private val acting = MutableStateFlow<Set<Int>>(emptySet())
-    val actingIds: StateFlow<Set<Int>> = acting.asStateFlow()
+    private val runner = ModerationRunner(scope, dispatcher, connection, analytics, crashBreadcrumbs, cache, onModerated)
+    private val media = MediaModeration(runner, connection, cache, analytics)
 
-    private val eventFlow = MutableSharedFlow<ModerationEvent>(extraBufferCapacity = 1)
-    val events: SharedFlow<ModerationEvent> = eventFlow.asSharedFlow()
+    val actingIds: StateFlow<Set<Int>> = runner.actingIds
+    val events: SharedFlow<ModerationEvent> = runner.events
 
     override fun approve(requestId: Int) =
-        moderate(requestId, ModerationEvent.Approved) {
+        runner.moderate(requestId, ModerationEvent.Approved) {
             connection.api().approveRequest(it)
             cache.updateStatus(it, SeerrRequestStatusCode.Approved.raw)
         }
 
-    override fun retry(requestId: Int) = moderate(requestId, ModerationEvent.Retried) { connection.api().retryRequest(it) }
+    override fun retry(requestId: Int) = runner.moderate(requestId, ModerationEvent.Retried) { connection.api().retryRequest(it) }
 
     /**
      * An edit answers its caller directly through [onSettled], as well as on [events], because the events are shared: the
@@ -119,7 +101,7 @@ class RequestModeration(
         body: SeerrEditRequestBody,
         onSettled: (succeeded: Boolean) -> Unit,
     ): Boolean =
-        actThenMaybeBlock(
+        runner.actThenMaybeBlock(
             item = null,
             requestId = requestId,
             blockTitle = false,
@@ -129,29 +111,19 @@ class RequestModeration(
             onSettled = onSettled,
         ) { connection.api().updateRequest(it, body) }
 
-    /**
-     * [seasonNumbers] is this request's own seasons - what marking *this* title available should
-     * mean here, rather than every season the show has. The server only reads it for
-     * [MediaStatusChoice.Available] on a TV title, so it is sent only then.
-     */
     override fun setMediaStatus(
         requestId: Int,
         mediaId: Int,
         status: MediaStatusChoice,
         is4k: Boolean,
         seasonNumbers: List<Int>,
-    ) = moderate(requestId, ModerationEvent.MediaStatusSet) {
-        val seasons =
-            seasonNumbers.map { SeerrMediaStatusSeasonBody(it) }.takeIf { status == MediaStatusChoice.Available && it.isNotEmpty() }
-        connection.api().setMediaStatus(mediaId, status.path, SeerrMediaStatusBody(is4k, seasons))
-    }
+    ) = media.setMediaStatus(requestId, mediaId, status, is4k, seasonNumbers)
 
-    /** The server removes every request for the title along with its record, this one included. */
     override fun clearMedia(
         requestId: Int,
         mediaId: Int,
     ) {
-        clearMedia(requestId, mediaId, onSettled = {})
+        media.clearMedia(requestId, mediaId, onSettled = {})
     }
 
     /** [onSettled] hears how the clear went. False when another action on the request is in flight: nothing was started. */
@@ -159,20 +131,7 @@ class RequestModeration(
         requestId: Int,
         mediaId: Int,
         onSettled: (succeeded: Boolean) -> Unit,
-    ): Boolean =
-        actThenMaybeBlock(
-            item = null,
-            requestId = requestId,
-            blockTitle = false,
-            done = ModerationEvent.MediaCleared,
-            doneAndBlocked = ModerationEvent.MediaCleared,
-            blockFailed = ModerationEvent.MediaCleared,
-            onSettled = onSettled,
-            syncFirst = true,
-        ) {
-            connection.api().deleteMedia(mediaId)
-            cache.deleteTitleOf(it)
-        }
+    ): Boolean = media.clearMedia(requestId, mediaId, onSettled)
 
     override fun deleteMediaFiles(
         requestId: Int,
@@ -180,219 +139,70 @@ class RequestModeration(
         is4k: Boolean,
         removeRequestIds: List<Int>,
     ) {
-        deleteMediaFiles(requestId, mediaId, is4k, removeRequestIds, onFiles = {})
+        media.deleteMediaFiles(requestId, mediaId, is4k, removeRequestIds, onFiles = {})
     }
 
-    /**
-     * [onFiles] hears that the files went before any request is removed, so a page can say so even when a removal then
-     * fails, and hears Seerr's refusal for want of a default server, which the page shows in place (#1726). The removals
-     * run inside the action, so the reload that follows sees them.
-     */
+    /** See [MediaModeration.deleteMediaFiles]: [onFiles] hears the files go, and Seerr's refusal for want of a default server. */
     fun deleteMediaFiles(
         requestId: Int,
         mediaId: Int,
         is4k: Boolean,
         removeRequestIds: List<Int>,
         onFiles: (FilesDeletion) -> Unit,
-    ): Boolean {
-        var allRemoved = true
-        var removedThisRequest = false
-        return act(
-            requestId = requestId,
-            syncFirst = true,
-            refusal = { failure ->
-                failure.takeIf { it.isNoDefaultServerRefusal() }?.let {
-                    onFiles(FilesDeletion.NoDefaultServer)
-                    ModerationEvent.MediaFilesNoDefaultServer
-                } ?: run {
-                    onFiles(FilesDeletion.Failed)
-                    null
-                }
-            },
-            done =
-                if (removeRequestIds.isEmpty()) {
-                    ModerationEvent.MediaFilesDeleted
-                } else {
-                    // Only a label for the breadcrumb and failure log; the outcome below is the event sent.
-                    ModerationEvent.MediaFilesAndRequestsDeleted(false)
-                },
-            outcome = {
-                when {
-                    removeRequestIds.isEmpty() -> ModerationEvent.MediaFilesDeleted
-                    allRemoved -> ModerationEvent.MediaFilesAndRequestsDeleted(removedThisRequest)
-                    else -> ModerationEvent.MediaFilesDeletedRequestsKept(removedThisRequest)
-                }
-            },
-        ) {
-            val api = connection.api()
-            api.deleteMediaFiles(mediaId, is4k)
-            onFiles(FilesDeletion.Deleted)
-            removeRequestIds.forEach { id ->
-                attempt { api.deleteRequest(id) }
-                    .onSuccess { cache.delete(id) }
-                    .onSuccess { removedThisRequest = removedThisRequest || id == requestId }
-                    .onFailure {
-                        allRemoved = false
-                        analytics.operationFailed("moderate_remove_with_files", it, connection)
-                    }
-            }
-        }
-    }
+    ): Boolean = media.deleteMediaFiles(requestId, mediaId, is4k, removeRequestIds, onFiles)
 
     override fun decline(
         item: RequestItem,
         blockTitle: Boolean,
     ) {
-        actThenMaybeBlock(
+        decline(item, blockTitle, onSettled = {})
+    }
+
+    /** [onSettled] hears how the decline went. False when another action on the request is in flight: nothing was started. */
+    fun decline(
+        item: RequestItem,
+        blockTitle: Boolean,
+        onSettled: (succeeded: Boolean) -> Unit,
+    ): Boolean =
+        runner.actThenMaybeBlock(
             item,
             item.id,
             blockTitle,
             ModerationEvent.Declined,
             ModerationEvent.DeclinedAndBlocked,
             ModerationEvent.DeclinedButBlockFailed,
+            onSettled = onSettled,
         ) {
             connection.api().declineRequest(it)
             cache.updateStatus(it, SeerrRequestStatusCode.Declined.raw)
         }
-    }
 
     override fun remove(
         item: RequestItem,
         blockTitle: Boolean,
     ) {
-        actThenMaybeBlock(
+        remove(item, blockTitle, onSettled = {})
+    }
+
+    /** [onSettled] hears how the removal went. False when another action on the request is in flight: nothing was started. */
+    fun remove(
+        item: RequestItem,
+        blockTitle: Boolean,
+        onSettled: (succeeded: Boolean) -> Unit,
+    ): Boolean =
+        runner.actThenMaybeBlock(
             item,
             item.id,
             blockTitle,
             ModerationEvent.Removed,
             ModerationEvent.RemovedAndBlocked,
             ModerationEvent.RemovedButBlockFailed,
+            onSettled = onSettled,
         ) {
             connection.api().deleteRequest(it)
             cache.delete(it)
         }
-    }
-
-    private fun moderate(
-        requestId: Int,
-        success: ModerationEvent,
-        action: suspend (Int) -> Unit,
-    ) {
-        actThenMaybeBlock(null, requestId, false, success, success, success, action = action)
-    }
-
-    private fun actThenMaybeBlock(
-        item: RequestItem?,
-        requestId: Int,
-        blockTitle: Boolean,
-        done: ModerationEvent,
-        doneAndBlocked: ModerationEvent,
-        blockFailed: ModerationEvent,
-        onSettled: (succeeded: Boolean) -> Unit = {},
-        syncFirst: Boolean = false,
-        action: suspend (Int) -> Unit,
-    ): Boolean =
-        act(
-            requestId = requestId,
-            done = done,
-            onSettled = onSettled,
-            syncFirst = syncFirst,
-            outcome = {
-                if (blockTitle && item != null) {
-                    if (block(item)) doneAndBlocked else blockFailed
-                } else {
-                    done
-                }
-            },
-            action = action,
-        )
-
-    /**
-     * Acting is raised before the launch so a second tap is swallowed at once, and cleared as soon as the action settles.
-     * False when an action on the request is already in flight; [onSettled] hears how a started one went, before the event.
-     * Launched on [dispatcher] so [onModerated]'s reload never touches `Dispatchers.Main` (#177). [done] names the action
-     * in logs; [refusal] names a failure more precisely than [ModerationEvent.Failed]. [syncFirst] reads the server's state
-     * into the cache before the event, for an action that takes the user back to a list (#1777).
-     */
-    private fun act(
-        requestId: Int,
-        done: ModerationEvent,
-        onSettled: (succeeded: Boolean) -> Unit = {},
-        syncFirst: Boolean = false,
-        refusal: (Throwable) -> ModerationEvent? = { null },
-        outcome: suspend () -> ModerationEvent,
-        action: suspend (Int) -> Unit,
-    ): Boolean {
-        if (requestId in acting.value) return false
-        acting.update { it + requestId }
-        crashBreadcrumbs.key("request_id", requestId.toString())
-        crashBreadcrumbs.log("moderating request: ${done.actionLabel()}")
-        scope.launch(dispatcher) {
-            val result = attempt { action(requestId) }
-            acting.update { it - requestId }
-            onSettled(result.isSuccess)
-            result
-                .onSuccess {
-                    onModerated()
-                    val event = outcome()
-                    analytics.event(AnalyticsEvents.REQUEST_MODERATED, mapOf(AnalyticsEvents.PARAM_ACTION to event.actionLabel()))
-                    if (syncFirst) connection.syncInto(cache, requestId)
-                    eventFlow.emit(event)
-                    if (!syncFirst) connection.syncInto(cache, requestId)
-                }.onFailure {
-                    val refused = refusal(it)
-                    analytics.operationFailed("moderate_${done.actionLabel()}", it, connection, refused?.failureReason())
-                    eventFlow.emit(refused ?: ModerationEvent.Failed(it.toSeerrError()))
-                }
-        }
-        return true
-    }
 
     /** Blocks the title alone, leaving the request as it is; the owner refreshes what it shows on success. */
-    override fun blockTitle(item: RequestItem) {
-        if (item.id in acting.value) return
-        acting.update { it + item.id }
-        scope.launch(dispatcher) {
-            val blocked = block(item)
-            acting.update { it - item.id }
-            if (blocked) onModerated()
-            val event = if (blocked) ModerationEvent.Blocked else ModerationEvent.BlockFailed
-            analytics.event(AnalyticsEvents.REQUEST_MODERATED, mapOf(AnalyticsEvents.PARAM_ACTION to event.actionLabel()))
-            eventFlow.emit(event)
-            if (blocked) connection.syncInto(cache, item.id)
-        }
-    }
-
-    private suspend fun block(item: RequestItem): Boolean =
-        attempt {
-            val mediaType = item.mediaType.seerrMediaType()
-            val user = connection.authenticatedUser().id
-            connection.api().addToBlocklistOnce(
-                connection.profile().blocklistPath,
-                SeerrAddToBlocklistBody(item.tmdbId, mediaType, item.title.orEmpty(), user),
-            )
-        }.onFailure { analytics.operationFailed("block_title", it, connection) }
-            .isSuccess
-}
-
-/** The [AnalyticsEvents.PARAM_REASON] a refusal adds to its failure report, so it reads apart from a real conflict. */
-private fun ModerationEvent.failureReason(): String? =
-    AnalyticsEvents.REASON_NO_DEFAULT_SERVICE.takeIf { this == ModerationEvent.MediaFilesNoDefaultServer }
-
-/**
- * Writes what the server now says into the cache every list reads, so each one updates without being told (#1665):
- * the request's own status, or its removal when the server no longer has it, and the chip counts. Best effort. It runs
- * before or after the result is reported, as the caller's `syncFirst` says.
- */
-private suspend fun SeerrConnection.syncInto(
-    cache: RequestStore,
-    requestId: Int,
-) {
-    attempt { api().request(requestId) }.fold(
-        onSuccess = { cache.updateServerState(requestId, it.status?.raw, it.mediaStatusOfRequestedVersion()?.raw) },
-        onFailure = { if ((it as? HttpException)?.code() == HTTP_NOT_FOUND) cache.delete(requestId) },
-    )
-    attempt { api().requestCount() }.onSuccess {
-        cache.setCounts(RequestCounts(it.total, it.pending, it.approved, it.processing, it.available))
-    }
+    override fun blockTitle(item: RequestItem) = runner.blockTitle(item)
 }

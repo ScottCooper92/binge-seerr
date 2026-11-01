@@ -1,5 +1,8 @@
 package com.cooper.binge.companion.seerr.ui.requests
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onLast
@@ -38,15 +41,17 @@ class RequestActionsSheetConfirmTest {
     private val deleted = mutableListOf<Triple<Int, Boolean, List<Int>>>()
     private val cleared = mutableListOf<Int>()
     private var dismissed = 0
+    private var progress by mutableStateOf<ActionProgress?>(null)
+    private var landed by mutableStateOf(0)
 
     @Test
-    fun `declining without blocking the title declines at once`() {
+    fun `declining without blocking the title declines at once, and the sheet stays while it runs`() {
         setSheet()
 
         click(R.string.request_decline)
 
         assertEquals(listOf(false), declined)
-        assertEquals(1, dismissed)
+        assertEquals(0, dismissed)
         composeTestRule.onNodeWithText(string(R.string.request_decline_block_confirm_title)).assertDoesNotExist()
     }
 
@@ -62,7 +67,74 @@ class RequestActionsSheetConfirmTest {
         confirm(R.string.request_decline)
 
         assertEquals(listOf(true), declined)
+        assertEquals(0, dismissed)
+    }
+
+    @Test
+    fun `the sheet stays when an action fails, and closes when one lands`() {
+        setSheet()
+
+        composeTestRule.runOnIdle { progress = ActionProgress(RequestAction.Remove, failed = true, attempt = 1) }
+        composeTestRule.waitForIdle()
+        assertEquals(0, dismissed)
+
+        composeTestRule.runOnIdle { landed = 1 }
+        composeTestRule.waitForIdle()
         assertEquals(1, dismissed)
+    }
+
+    @Test
+    fun `the sheet closes for an action that lands between two frames, with no running state ever drawn`() {
+        setSheet()
+
+        composeTestRule.runOnIdle {
+            progress = ActionProgress(RequestAction.Decline, attempt = 1)
+            progress = null
+            landed = 1
+        }
+        composeTestRule.waitForIdle()
+
+        assertEquals(1, dismissed)
+    }
+
+    @Test
+    fun `a failed remove says what failed in place of its subtitle, and a retry brings the subtitle back`() {
+        setSheet()
+        composeTestRule.onNodeWithText(string(R.string.request_remove_detail)).assertExists()
+
+        composeTestRule.runOnIdle { progress = ActionProgress(RequestAction.Remove, failed = true, attempt = 1) }
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithText(string(R.string.request_remove_failed_detail)).assertExists()
+        composeTestRule.onNodeWithText(string(R.string.request_remove_detail)).assertDoesNotExist()
+
+        composeTestRule.runOnIdle { progress = ActionProgress(RequestAction.Remove, attempt = 2) }
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithText(string(R.string.request_remove_detail)).assertExists()
+        composeTestRule.onNodeWithText(string(R.string.request_remove_failed_detail)).assertDoesNotExist()
+    }
+
+    @Test
+    fun `a failure from before the sheet opened is not shown on it, and one of its own tries is`() {
+        progress = ActionProgress(RequestAction.Remove, failed = true, attempt = 1)
+        setSheet()
+        composeTestRule.onNodeWithText(string(R.string.action_try_again)).assertDoesNotExist()
+
+        composeTestRule.runOnIdle { progress = ActionProgress(RequestAction.Remove, failed = true, attempt = 2) }
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText(string(R.string.action_try_again)).assertExists()
+    }
+
+    @Test
+    fun `a failed remove says Try again in the row's trailing slot, and a tap asks to remove again`() {
+        setSheet()
+        composeTestRule.runOnIdle { progress = ActionProgress(RequestAction.Remove, failed = true, attempt = 1) }
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText(string(R.string.action_try_again)).assertExists()
+        click(R.string.request_remove)
+
+        composeTestRule.onNodeWithText(string(R.string.request_remove_confirm_title)).assertExists()
     }
 
     @Test
@@ -263,6 +335,8 @@ class RequestActionsSheetConfirmTest {
                             onDeleteFiles = { id, is4k, requestIds -> deleted += Triple(id, is4k, requestIds) },
                         ),
                     requests = requests,
+                    progress = progress,
+                    actionsLanded = landed,
                 )
             }
         }
