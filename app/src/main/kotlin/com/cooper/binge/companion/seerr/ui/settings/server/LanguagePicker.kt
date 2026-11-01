@@ -167,8 +167,7 @@ internal fun LanguagesUnavailable(
         submitLabel = stringResource(R.string.server_settings_list_use),
         cancelLabel = stringResource(R.string.action_try_again),
         submitEnabled = languageEntryUsable(typed),
-        minLines = 1,
-        maxLines = 1,
+        singleLine = true,
         header = {
             Text(
                 stringResource(R.string.server_settings_languages_unavailable),

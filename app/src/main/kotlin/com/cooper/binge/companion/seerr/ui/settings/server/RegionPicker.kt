@@ -148,8 +148,7 @@ internal fun RegionUnavailable(
         submitLabel = stringResource(R.string.server_settings_list_use),
         cancelLabel = stringResource(R.string.action_try_again),
         submitEnabled = typed.trim().let { it.isEmpty() || (it.length == REGION_CODE_LENGTH && it.all(Char::isLetter)) },
-        minLines = 1,
-        maxLines = 1,
+        singleLine = true,
         header = {
             Text(
                 stringResource(R.string.server_settings_regions_unavailable),
