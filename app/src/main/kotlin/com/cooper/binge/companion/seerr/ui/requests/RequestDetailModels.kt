@@ -288,4 +288,6 @@ class ManageMediaActions(
     val onClearData: (mediaId: Int) -> Unit,
     /** [removeRequestIds] are the requests to remove once the files are gone; empty deletes the files alone. */
     val onDeleteFiles: (mediaId: Int, is4k: Boolean, removeRequestIds: List<Int>) -> Unit,
+    /** Opens the app's own Services settings, where a default server is set; null where the screen has no route to it. */
+    val onOpenServices: (() -> Unit)? = null,
 )

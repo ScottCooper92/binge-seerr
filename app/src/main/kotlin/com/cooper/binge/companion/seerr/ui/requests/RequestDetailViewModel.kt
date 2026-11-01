@@ -95,6 +95,14 @@ class RequestDetailViewModel
          */
         private val filesDeleted = MutableStateFlow<Map<Boolean, FilesDeletion>>(emptyMap())
 
+        /**
+         * Forgets that deleting files was refused for want of a default server, because the admin is on their way to set
+         * one (#1736). The row is then Delete files again when they are back; if they set nothing, the next try is refused again.
+         */
+        fun forgetNoDefaultServer() {
+            filesDeleted.update { marks -> marks.filterValues { it != FilesDeletion.NoDefaultServer } }
+        }
+
         /** Clearing the title's data is running; the page does not close until the server has answered. */
         private val clearing = MutableStateFlow(false)
 

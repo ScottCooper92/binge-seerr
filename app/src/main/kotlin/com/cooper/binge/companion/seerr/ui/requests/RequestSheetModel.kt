@@ -74,5 +74,6 @@ internal class RequestSheetCallbacks(
     val onDeleteFiles: (is4k: Boolean) -> Unit = {},
     val onClearData: () -> Unit = {},
     val onOpenUser: ((Int) -> Unit)? = null,
+    val onOpenServices: (() -> Unit)? = null,
     val onRetryDetail: () -> Unit = {},
 )

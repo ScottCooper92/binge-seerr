@@ -901,6 +901,33 @@ class RequestDetailViewModelTest {
             assertNull(checkNotNull(viewModel().awaitReady().detail.media).servicesSettingsUrl)
         }
 
+    /** The admin is on their way to set one (#1736): coming back, the row is Delete files again, not the stale refusal. */
+    @Test
+    fun `forgetting the missing default server brings Delete files back, and keeps any other result`() =
+        runTest {
+            server(ADMIN)
+            responses["/api/v1/media/900/file"] = {
+                FakeResponse(
+                    code = 409,
+                    headers = headersOf("Content-Type", "application/json"),
+                    body = """{"message":"No Sonarr server configured to delete media files"}""",
+                )
+            }
+            val vm = viewModel()
+            vm.awaitReady()
+            val refused = awaitEvent(vm.events) { it == ModerationEvent.MediaFilesNoDefaultServer }
+            vm.moderation.deleteMediaFiles(11, 900, is4k = false)
+            refused.await()
+            assertEquals(
+                FilesDeletion.NoDefaultServer,
+                checkNotNull(vm.awaitReady { !it.isActing }.detail.media).instances.single().filesDeletion,
+            )
+
+            vm.forgetNoDefaultServer()
+
+            assertNull(checkNotNull(vm.awaitReady { !it.isActing }.detail.media).instances.single().filesDeletion)
+        }
+
     @Test
     fun `the instance reads as running while its files are being deleted, and as deleted once they are`() =
         runTest {
