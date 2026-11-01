@@ -181,13 +181,14 @@ class SeerrApiFactory(
      * jar attaches downstream of application interceptors — and can redact it. Headers only, never
      * bodies, on every client (#1031). The credentials are headers, and redacting [REDACTED_HEADERS]
      * masks them, but plenty of bodies carry secrets too: the server's own API key on its settings,
-     * each service's key, notification agents' tokens, and every password a form sends. A debug build
-     * goes to testers, and anything that can read the device log would read those.
+     * each service's key, notification agents' tokens, and every password a form sends. The request line
+     * is logged too, so the Quick Connect `secret` and a Pushover `token` query parameter are masked.
      */
     private fun loggingInterceptor(): HttpLoggingInterceptor =
         HttpLoggingInterceptor(testLogger ?: HttpLoggingInterceptor.Logger.DEFAULT).apply {
             level = if (logRequests) HttpLoggingInterceptor.Level.HEADERS else HttpLoggingInterceptor.Level.NONE
             REDACTED_HEADERS.forEach(::redactHeader)
+            redactQueryParams("secret", "token")
         }
 
     private fun retrofit(
