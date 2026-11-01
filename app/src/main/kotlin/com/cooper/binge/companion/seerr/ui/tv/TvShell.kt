@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.tv.material3.MaterialTheme
 import com.binge.companion.sdk.attempt
 import com.binge.designsystem.tv.focus.TvFocusSink
+import com.binge.designsystem.tv.focus.TvOverlayCloser
 import com.binge.designsystem.tv.focus.rememberTvOverlayCloser
 import com.binge.designsystem.tv.focus.tvExitFocusGroup
 import com.binge.designsystem.tv.nav.LocalTvHostedAsOverlay
@@ -142,7 +143,7 @@ internal fun TvHomeShell(
         )
         topLayer?.let { TvShellTopLayer(it) }
         if (sheet != null) {
-            TvShellSheet(overlayOpen = overlay != null, onClose = sheetCloser::close) { content(sheet, sheetCloser::close) }
+            TvShellSheet(overlayOpen = overlay != null, closer = sheetCloser) { content(sheet, sheetCloser::close) }
         }
     }
 }
@@ -245,10 +246,11 @@ private fun TvShellTopLayer(content: @Composable () -> Unit) {
 @Composable
 private fun TvShellSheet(
     overlayOpen: Boolean,
-    onClose: () -> Unit,
+    closer: TvOverlayCloser,
     content: @Composable () -> Unit,
 ) {
-    BackHandler(enabled = !overlayOpen, onBack = onClose)
+    closer.ReportDisposal()
+    BackHandler(enabled = !overlayOpen, onBack = closer::close)
     CompositionLocalProvider(LocalTvHostedAsOverlay provides true) {
         HandBackHost(entry = remember { FocusRequester() }, active = true, modifier = Modifier.tvExitFocusGroup(), content = content)
     }
