@@ -101,6 +101,7 @@ private fun dvr(
     activeProfileName = "Any",
     activeDirectory = directory,
     isDefault = true,
+    syncEnabled = true,
 )
 
 private fun seedSliders(): MutableList<kotlinx.serialization.json.JsonObject> =
