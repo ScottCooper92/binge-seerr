@@ -19,13 +19,16 @@ internal fun rememberOwnProgress(progress: ActionProgress?): ActionProgress? {
  * Decline and Remove keep the sheet open while they run, so their control can show it. The sheet goes when one lands:
  * [landed] grew since the sheet first had one. A count, because the running state can come and go between two frames;
  * null while the page is not `Ready`, which is no count at all, never a 0 to compare against (#1788).
+ * [landedNow] is the view model's own count, read as the sheet opens, so a Decline this sheet sent over a page that was
+ * not `Ready` still counts when the page catches up; null where there is no view model, and the first [landed] stands in.
  */
 @Composable
 internal fun CloseWhenActionLands(
     landed: Int?,
+    landedNow: () -> Int?,
     onDismiss: () -> Unit,
 ) {
-    var openedAt by remember { mutableStateOf<Int?>(null) }
+    var openedAt by remember { mutableStateOf(landedNow()) }
     val currentDismiss by rememberUpdatedState(onDismiss)
     LaunchedEffect(landed) {
         val count = landed ?: return@LaunchedEffect

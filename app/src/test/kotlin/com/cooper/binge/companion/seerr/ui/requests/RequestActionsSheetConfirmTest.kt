@@ -43,6 +43,7 @@ class RequestActionsSheetConfirmTest {
     private var dismissed = 0
     private var progress by mutableStateOf<ActionProgress?>(null)
     private var landed by mutableStateOf<Int?>(0)
+    private var landedNow: Int? = null
 
     @Test
     fun `declining without blocking the title declines at once, and the sheet stays while it runs`() {
@@ -109,6 +110,30 @@ class RequestActionsSheetConfirmTest {
         composeTestRule.runOnIdle { landed = 2 }
         composeTestRule.waitForIdle()
         assertEquals(1, dismissed)
+    }
+
+    @Test
+    fun `a decline this sheet sent before the page was ready closes it when the page catches up`() {
+        landed = null
+        landedNow = 0
+        setSheet()
+
+        composeTestRule.runOnIdle { landed = 1 }
+        composeTestRule.waitForIdle()
+
+        assertEquals(1, dismissed)
+    }
+
+    @Test
+    fun `a count the view model already held when the sheet opened does not close it when the page catches up`() {
+        landed = null
+        landedNow = 1
+        setSheet()
+
+        composeTestRule.runOnIdle { landed = 1 }
+        composeTestRule.waitForIdle()
+
+        assertEquals(0, dismissed)
     }
 
     @Test
@@ -351,6 +376,7 @@ class RequestActionsSheetConfirmTest {
                     requests = requests,
                     progress = progress,
                     actionsLanded = landed,
+                    actionsLandedNow = { landedNow },
                 )
             }
         }

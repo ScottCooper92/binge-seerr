@@ -74,10 +74,11 @@ internal fun RequestActionsSheet(
     onMarkDismiss: () -> Unit = {},
     progress: ActionProgress? = null,
     actionsLanded: Int? = null,
+    actionsLandedNow: () -> Int? = { null },
 ) {
     var blockTitle by rememberSaveable { mutableStateOf(false) }
     var pending by rememberSaveable { mutableStateOf<Pending?>(null) }
-    CloseWhenActionLands(actionsLanded, onDismiss)
+    CloseWhenActionLands(actionsLanded, actionsLandedNow, onDismiss)
     val shown = rememberOwnProgress(progress)
     BingeAdaptiveSheet(
         kind = BingeSheetKind.Task,
