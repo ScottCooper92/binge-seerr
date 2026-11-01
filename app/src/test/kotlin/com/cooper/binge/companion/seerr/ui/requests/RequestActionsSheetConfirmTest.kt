@@ -145,6 +145,19 @@ class RequestActionsSheetConfirmTest {
         composeTestRule.onNodeWithText(string(R.string.media_delete_files_confirm_title, radarr)).assertDoesNotExist()
     }
 
+    /** The sheet stays open so the Clear data row can show its spinner; the page leaving closes it (#1776). */
+    @Test
+    fun `confirming Clear data clears once and keeps the sheet open`() {
+        setSheet(canClearData = true)
+
+        click(R.string.media_clear_data)
+        confirm(R.string.media_clear_data)
+
+        assertEquals(listOf(MEDIA_ID), cleared)
+        assertEquals(0, dismissed)
+        composeTestRule.onNodeWithText(string(R.string.media_clear_confirm_title)).assertDoesNotExist()
+    }
+
     @Test
     fun `a show's confirm names Sonarr and says every season goes`() {
         setSheet(isTv = true)
