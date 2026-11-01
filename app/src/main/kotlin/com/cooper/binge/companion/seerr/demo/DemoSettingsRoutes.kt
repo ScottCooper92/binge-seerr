@@ -7,7 +7,6 @@ import com.cooper.binge.companion.seerr.seerr.SeerrLibraryDto
 import com.cooper.binge.companion.seerr.seerr.SeerrMetadataTestResultDto
 import com.cooper.binge.companion.seerr.seerr.SeerrMetadataTestsDto
 import com.cooper.binge.companion.seerr.seerr.SeerrProfileDto
-import com.cooper.binge.companion.seerr.seerr.SeerrRootFolderDto
 import com.cooper.binge.companion.seerr.seerr.SeerrScanStatusDto
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
@@ -49,7 +48,7 @@ private fun DemoResources.serviceRoutes(service: String): List<DemoRoute> =
             ok(
                 SeerrDvrTestResultDto(
                     profiles = listOf(SeerrProfileDto(1, "Any"), SeerrProfileDto(2, "HD-1080p")),
-                    rootFolders = listOf(SeerrRootFolderDto(1, "/media")),
+                    rootFolders = demoRootFolders(service),
                 ),
             )
         }

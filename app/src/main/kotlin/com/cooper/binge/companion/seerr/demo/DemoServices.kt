@@ -14,6 +14,11 @@ internal const val DEMO_PROFILE_ID = 1
 /** The second profile the demo's *arr offers; a few requests are for it so the labels differ. */
 internal const val DEMO_HD_PROFILE_ID = 2
 
+/** Where each kind's demo server keeps its media; the seed sets the server to this folder, so what it is set to is always offered. */
+internal fun demoRootFolder(service: String) = if (service == "radarr") "/media/movies" else "/media/tv"
+
+internal fun demoRootFolders(service: String) = listOf(SeerrRootFolderDto(1, demoRootFolder(service)))
+
 /**
  * The download servers of a kind, read from the settings pages' own list, so a server the user added, renamed or
  * un-defaulted there is the one the advanced request offers (#1820). Nothing downloads: they are names and defaults.
@@ -39,7 +44,7 @@ internal fun DemoData.demoServerDetails(
         SeerrServerDetailsDto(
             server = SeerrServerRefDto(id, it.name.orEmpty()),
             profiles = listOf(SeerrProfileDto(DEMO_PROFILE_ID, "Any"), SeerrProfileDto(DEMO_HD_PROFILE_ID, "HD-1080p")),
-            rootFolders = listOf(SeerrRootFolderDto(1, "/media")),
+            rootFolders = demoRootFolders(service),
         )
     }
 
