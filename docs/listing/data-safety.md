@@ -69,7 +69,7 @@ app holds no camera permission (`ui/handoff/ScanTvCode.kt`).
 
 | Practice | Answer | Why |
 |---|---|---|
-| Data is encrypted in transit | Yes | Both SDKs use HTTPS. The user's own server is not collection. |
+| Data is encrypted in transit | Yes | All three SDKs use HTTPS. The user's own server is not collection. |
 | You can request that data be deleted | No | Nothing collected is linked to a person. Disconnect or uninstall removes what is on the device. |
 | Committed to the Play Families policy | No | Not a children's app. |
 | Independent security review | No | |
