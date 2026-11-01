@@ -155,6 +155,15 @@ class RequestModeration(
         item: RequestItem,
         blockTitle: Boolean,
     ) {
+        decline(item, blockTitle, onSettled = {})
+    }
+
+    /** [onSettled] hears how the decline went. False when another action on the request is in flight: nothing was started. */
+    fun decline(
+        item: RequestItem,
+        blockTitle: Boolean,
+        onSettled: (succeeded: Boolean) -> Unit,
+    ): Boolean =
         runner.actThenMaybeBlock(
             item,
             item.id,
@@ -162,16 +171,25 @@ class RequestModeration(
             ModerationEvent.Declined,
             ModerationEvent.DeclinedAndBlocked,
             ModerationEvent.DeclinedButBlockFailed,
+            onSettled = onSettled,
         ) {
             connection.api().declineRequest(it)
             cache.updateStatus(it, SeerrRequestStatusCode.Declined.raw)
         }
-    }
 
     override fun remove(
         item: RequestItem,
         blockTitle: Boolean,
     ) {
+        remove(item, blockTitle, onSettled = {})
+    }
+
+    /** [onSettled] hears how the removal went. False when another action on the request is in flight: nothing was started. */
+    fun remove(
+        item: RequestItem,
+        blockTitle: Boolean,
+        onSettled: (succeeded: Boolean) -> Unit,
+    ): Boolean =
         runner.actThenMaybeBlock(
             item,
             item.id,
@@ -179,11 +197,11 @@ class RequestModeration(
             ModerationEvent.Removed,
             ModerationEvent.RemovedAndBlocked,
             ModerationEvent.RemovedButBlockFailed,
+            onSettled = onSettled,
         ) {
             connection.api().deleteRequest(it)
             cache.delete(it)
         }
-    }
 
     /** Blocks the title alone, leaving the request as it is; the owner refreshes what it shows on success. */
     override fun blockTitle(item: RequestItem) = runner.blockTitle(item)

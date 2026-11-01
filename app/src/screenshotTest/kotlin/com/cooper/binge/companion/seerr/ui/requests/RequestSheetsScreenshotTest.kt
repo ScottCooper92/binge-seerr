@@ -27,6 +27,28 @@ class RequestSheetsScreenshotTest {
     @Composable
     fun actionsExpanded() = SideSheetFrame { ActionsContent(pendingDetail()) }
 
+    /**
+     * Remove is running: the row keeps its label, detail and height, and only its trailing slot changes, to the spinner.
+     * Compare with [actionsPending], where the same row is idle.
+     */
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun actionsRemoveRunning() = SheetFrame { ActionsContent(pendingDetail(), progress = ActionProgress(RequestAction.Remove)) }
+
+    /** Remove failed: the same row again, with Try again in its trailing slot and its detail line in the error colour. */
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun actionsRemoveFailed() =
+        SheetFrame { ActionsContent(pendingDetail(), progress = ActionProgress(RequestAction.Remove, failed = true)) }
+
+    /** Decline is running: its button keeps its size and shows the spinner in place of the label. */
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun actionsDeclineRunning() = SheetFrame { ActionsContent(pendingDetail(), progress = ActionProgress(RequestAction.Decline)) }
+
     /** Settled: the media half leads, and the request half is what is left of it. */
     @PreviewTest
     @SeerrComponentPreviews
@@ -175,6 +197,7 @@ private fun DeleteFilesConfirmFrame(
 private fun ActionsContent(
     detail: RequestDetail,
     detailLoad: SheetDetailLoad = SheetDetailLoad.Loaded,
+    progress: ActionProgress? = null,
 ) {
     RequestActionsContent(
         model =
@@ -184,6 +207,7 @@ private fun ActionsContent(
                 canEdit = detail.canEdit,
                 media = detail.media.takeIf { detailLoad == SheetDetailLoad.Loaded },
                 detailLoad = detailLoad,
+                progress = progress,
             ),
         callbacks = RequestSheetCallbacks(onApprove = {}, onRetry = {}, onDecline = {}, onRemove = {}),
         blockTitle = false,

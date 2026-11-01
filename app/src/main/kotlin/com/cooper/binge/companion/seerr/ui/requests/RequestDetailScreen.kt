@@ -249,6 +249,7 @@ internal fun RequestManagementSheets(
             marking = markedInstance,
             onMarkSelect = { status -> media?.let { actions.media.onSetStatus(it.mediaId, status, marking == true) } },
             onMarkDismiss = { marking = null },
+            progress = state?.progress,
         )
     }
     state?.edit?.takeUnless { editsInActions }?.let { edit ->

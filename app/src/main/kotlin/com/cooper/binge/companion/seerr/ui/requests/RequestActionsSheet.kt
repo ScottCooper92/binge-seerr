@@ -7,6 +7,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.pluralStringResource
@@ -72,9 +74,11 @@ internal fun RequestActionsSheet(
     marking: MediaInstance? = null,
     onMarkSelect: (MediaStatusChoice) -> Unit = {},
     onMarkDismiss: () -> Unit = {},
+    progress: ActionProgress? = null,
 ) {
     var blockTitle by rememberSaveable { mutableStateOf(false) }
     var pending by rememberSaveable { mutableStateOf<Pending?>(null) }
+    CloseWhenActionLands(progress, onDismiss)
     BingeAdaptiveSheet(
         kind = BingeSheetKind.Task,
         onDismissRequest = onDismiss,
@@ -111,6 +115,7 @@ internal fun RequestActionsSheet(
                     viewerId = viewerId,
                     canManageUsers = canManageUsers,
                     detailLoad = detailLoad,
+                    progress = progress,
                 ),
             callbacks =
                 RequestSheetCallbacks(
@@ -123,12 +128,7 @@ internal fun RequestActionsSheet(
                         onDismiss()
                     },
                     onDecline = {
-                        if (blockTitle) {
-                            pending = Pending.Decline
-                        } else {
-                            onDecline(false)
-                            onDismiss()
-                        }
+                        if (blockTitle) pending = Pending.Decline else onDecline(false)
                     },
                     onRemove = { pending = Pending.Remove },
                     // Stacked, as Binge's advanced-options picker opens over its request sheet: this sheet
@@ -160,7 +160,6 @@ internal fun RequestActionsSheet(
             requests = requests,
             blockTitle = blockTitle,
             onStep = { pending = it },
-            onDismiss = onDismiss,
             onDecline = onDecline,
             onRemove = onRemove,
         )
@@ -212,14 +211,9 @@ private fun PendingConfirm(
     requests: List<RequestSummary>,
     blockTitle: Boolean,
     onStep: (Pending?) -> Unit,
-    onDismiss: () -> Unit,
     onDecline: (Boolean) -> Unit,
     onRemove: (Boolean) -> Unit,
 ) {
-    val onDone = {
-        onStep(null)
-        onDismiss()
-    }
     when (step) {
         Pending.Decline, Pending.Remove ->
             RequestConfirm(
@@ -227,7 +221,6 @@ private fun PendingConfirm(
                 removeMessage = removeConfirmMessage(item, blockTitle, media.offersDeleteFiles(item)),
                 onConfirm = { if (step == Pending.Remove) onRemove(blockTitle) else onDecline(blockTitle) },
                 onStep = onStep,
-                onDone = onDone,
             )
         Pending.ClearData ->
             BingeConfirmDialog(
@@ -254,7 +247,6 @@ private fun RequestConfirm(
     removeMessage: String,
     onConfirm: () -> Unit,
     onStep: (Pending?) -> Unit,
-    onDone: () -> Unit,
 ) {
     BingeConfirmDialog(
         title = stringResource(if (removing) R.string.request_remove_confirm_title else R.string.request_decline_block_confirm_title),
@@ -263,10 +255,27 @@ private fun RequestConfirm(
         destructive = true,
         onConfirm = {
             onConfirm()
-            onDone()
+            onStep(null)
         },
         onDismissRequest = { onStep(null) },
     )
+}
+
+/**
+ * Decline and Remove keep the sheet open while they run, so their control can show it. The sheet goes when the action
+ * lands, which is [progress] clearing after it was running; a failure leaves it open on the control that failed.
+ */
+@Composable
+private fun CloseWhenActionLands(
+    progress: ActionProgress?,
+    onDismiss: () -> Unit,
+) {
+    var wasRunning by remember { mutableStateOf(false) }
+    val currentDismiss by rememberUpdatedState(onDismiss)
+    LaunchedEffect(progress) {
+        if (wasRunning && progress == null) currentDismiss()
+        wasRunning = progress != null && !progress.failed
+    }
 }
 
 /**

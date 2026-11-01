@@ -97,6 +97,9 @@ class RequestDetailViewModel
         /** Clearing the title's data is running; the page does not close until the server has answered. */
         private val clearing = MutableStateFlow(false)
 
+        /** The Decline or Remove that is running or failed; the sheet stays open and its control shows it. */
+        private val progress = MutableStateFlow<ActionProgress?>(null)
+
         /** The editor rides the page's state while it is open; it closes itself on the save landing. */
         private val requestEditor =
             RequestEditor(scope = viewModelScope, dispatcher = dispatcher, connection = connection, moderation = moderator)
@@ -131,6 +134,28 @@ class RequestDetailViewModel
                     val started = moderator.clearMedia(requestId, mediaId) { succeeded -> if (!succeeded) clearing.value = false }
                     if (!started) clearing.value = false
                 }
+
+                override fun decline(
+                    item: RequestItem,
+                    blockTitle: Boolean,
+                ) = tracked(RequestAction.Decline) { settled -> moderator.decline(item, blockTitle, settled) }
+
+                override fun remove(
+                    item: RequestItem,
+                    blockTitle: Boolean,
+                ) = tracked(RequestAction.Remove) { settled -> moderator.remove(item, blockTitle, settled) }
+
+                /** The sheet closes when [progress] clears; a failure keeps it, on the control that failed. */
+                private fun tracked(
+                    action: RequestAction,
+                    start: (settled: (Boolean) -> Unit) -> Boolean,
+                ) {
+                    val before = progress.value
+                    progress.value = ActionProgress(action)
+                    val started = start { succeeded -> progress.value = if (succeeded) null else ActionProgress(action, failed = true) }
+                    // Another action on the request is running, so nothing was sent: the control is as it was.
+                    if (!started) progress.value = before
+                }
             }
         val editor: RequestEditorControls = requestEditor
 
@@ -154,6 +179,8 @@ class RequestDetailViewModel
                     ?: page
             }.combine(clearing) { page, clearingData ->
                 (page as? RequestDetailUiState.Ready)?.copy(detail = page.detail.withClearing(clearingData)) ?: page
+            }.combine(progress) { page, running ->
+                (page as? RequestDetailUiState.Ready)?.copy(progress = running) ?: page
             }.combine(now) { page, now -> (page as? RequestDetailUiState.Ready)?.copy(now = now) ?: page }
                 .stateIn(viewModelScope, SharingStarted.Lazily, RequestDetailUiState.Loading)
 
