@@ -255,7 +255,6 @@ private fun requestRows(
     callbacks: RequestSheetCallbacks,
 ): List<ListItem> {
     val actions = model.actions
-    val error = MaterialTheme.colorScheme.error
     return buildList {
         if (model.canEdit) {
             add(ListItem(icon = Icons.Filled.Edit, label = stringResource(R.string.request_edit_title), onClick = callbacks.onEdit))
