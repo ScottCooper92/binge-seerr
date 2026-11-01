@@ -127,6 +127,19 @@ class RequestSheetsScreenshotTest {
             ActionsContent(detail.copy(media = media.copy(instances = refused, servicesSettingsUrl = services)))
         }
 
+    /** The same refusal where the app has the page itself (#1736): the row opens Settings > Services in the app, so it is a chevron, not an external link. */
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun actionsFilesNoDefaultServerInApp() =
+        SheetFrame {
+            val detail = settledDetail()
+            val media = checkNotNull(detail.media)
+            val refused = media.instances.map { it.copy(filesDeletion = FilesDeletion.NoDefaultServer) }
+            val services = "https://seerr.example/settings/services"
+            ActionsContent(detail.copy(media = media.copy(instances = refused, servicesSettingsUrl = services)), onOpenServices = {})
+        }
+
     /** The one confirm for a movie with no open request: what Radarr does, and that a running download carries on. */
     @PreviewTest
     @SeerrComponentPreviews
@@ -211,6 +224,7 @@ private fun ActionsContent(
     detail: RequestDetail,
     detailLoad: SheetDetailLoad = SheetDetailLoad.Loaded,
     progress: ActionProgress? = null,
+    onOpenServices: (() -> Unit)? = null,
 ) {
     RequestActionsContent(
         model =
@@ -222,7 +236,7 @@ private fun ActionsContent(
                 detailLoad = detailLoad,
                 progress = progress,
             ),
-        callbacks = RequestSheetCallbacks(onApprove = {}, onRetry = {}, onDecline = {}, onRemove = {}),
+        callbacks = RequestSheetCallbacks(onApprove = {}, onRetry = {}, onDecline = {}, onRemove = {}, onOpenServices = onOpenServices),
         blockTitle = false,
         onBlockTitleChange = {},
     )

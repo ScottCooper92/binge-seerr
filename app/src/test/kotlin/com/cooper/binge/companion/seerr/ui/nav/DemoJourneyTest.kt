@@ -3,14 +3,23 @@ package com.cooper.binge.companion.seerr.ui.nav
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
+import androidx.compose.ui.test.ComposeTimeoutException
 import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performSemanticsAction
+import androidx.navigation3.runtime.NavKey
 import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.ui.DvrInstanceRoute
 import com.cooper.binge.companion.seerr.ui.HomeRoute
+import com.cooper.binge.companion.seerr.ui.ServerSettingsPageRoute
+import com.cooper.binge.companion.seerr.ui.SettingsRoute
+import com.cooper.binge.companion.seerr.ui.settings.server.ServerSettingsPage
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
 import org.junit.Assert.assertFalse
@@ -22,6 +31,8 @@ import org.robolectric.annotation.Config
 
 /** Two panes: wide enough for the hub beside a section. */
 private const val WIDE = "w900dp-h800dp"
+
+private const val AWAIT_SERVICES_MILLIS = 10_000L
 
 /**
  * The demo server through the app's real screens (#1705): the hub, a list read through the cache, a request page, and a
@@ -69,6 +80,115 @@ class DemoJourneyTest {
         // The server took the approval, and the page now reads the request as approved and downloading.
         host.awaitShowing(host.string(R.string.request_approved))
         host.awaitShowing("4.0 GB")
+    }
+
+    /**
+     * A refused delete walked through the real screens (#1736). The demo refuses once its Radarr is no longer the default; the
+     * test un-defaults it through the same route the Default switch calls, then follows what an admin does from there.
+     */
+    @Test
+    fun `a delete refused for want of a default server opens Services in the app, and Back brings Delete files back`() {
+        host.connectDemo()
+        host.launch(HomeRoute)
+        host.awaitShowing("Big Buck Bunny")
+        turnOffTheDefaultRadarr()
+        host.compose
+            .onAllNodesWithText(host.string(R.string.hub_section_requests))
+            .onLast()
+            .performClick()
+        host.awaitShowing("Big Buck Bunny")
+
+        host.compose
+            .onAllNodesWithText("Big Buck Bunny")
+            .onLast()
+            .performClick()
+        openManageSheet()
+        host.compose
+            .onAllNodesWithText(host.string(R.string.media_delete_files))
+            .onLast()
+            .performClick()
+        // The confirm dialog's own button reads the same as the row, and is the last one on screen.
+        host.awaitShowing(host.string(R.string.media_delete_files_confirm_title, host.string(R.string.media_client_radarr)))
+        host.compose
+            .onAllNodesWithText(host.string(R.string.media_delete_files))
+            .onLast()
+            .performClick()
+        host.awaitShowing(host.string(R.string.media_files_not_deleted))
+
+        host.compose.onNodeWithText(host.string(R.string.media_files_not_deleted)).performSemanticsAction(SemanticsActions.OnClick)
+        awaitOnTop("Services") { it == ServerSettingsPageRoute(ServerSettingsPage.Services) }
+        assertFalse("the sheet closed on the way", host.isShowing(host.string(R.string.media_files_not_deleted)))
+
+        host.back()
+        openManageSheet()
+        host.awaitShowing(host.string(R.string.media_delete_files))
+        assertFalse("the stale refusal is gone", host.isShowing(host.string(R.string.media_files_not_deleted)))
+    }
+
+    /** What an admin does: Settings, Services, the Radarr, its Default switch off, Save. Seerr would refuse for the only one; the demo does not. */
+    private fun turnOffTheDefaultRadarr() {
+        // The hub's Settings row names Services too, so Settings is waited for by what only its own page shows.
+        host.compose
+            .onAllNodes(hasText(host.string(R.string.hub_section_settings)))
+            .onLast()
+            .performScrollTo()
+            .performClick()
+        awaitOnTop("Settings") { it == SettingsRoute }
+        host.awaitShowing("Demo Radarr")
+        tapWhenShown("Demo Radarr")
+        awaitOnTop("Services") { it == ServerSettingsPageRoute(ServerSettingsPage.Services) }
+        host.awaitShowing("Demo Radarr")
+        tapWhenShown("Demo Radarr")
+        awaitOnTop("the instance page") { it is DvrInstanceRoute }
+        host.awaitShowing(host.string(R.string.server_settings_dvr_default))
+        host.compose
+            .onAllNodesWithText(host.string(R.string.server_settings_dvr_default))
+            .onLast()
+            .performClick()
+        host.compose
+            .onAllNodesWithText(host.string(R.string.user_settings_save))
+            .onLast()
+            .performClick()
+        // What the switch and Save did, read from the server the screens read: Demo Radarr is no longer the default.
+        host.compose.waitUntil(timeoutMillis = AWAIT_SERVICES_MILLIS) { !host.api { it.radarrSettings().first().isDefault } }
+    }
+
+    /** Taps the first node whose text includes [text], once there is one: a Settings row names its services in a joined line, and an override rule names its Radarr after the instances. */
+    private fun tapWhenShown(text: String) {
+        host.compose.waitUntil(timeoutMillis = AWAIT_SERVICES_MILLIS) {
+            try {
+                host.compose
+                    .onAllNodesWithText(text, substring = true)
+                    .onFirst()
+                    .performSemanticsAction(SemanticsActions.OnClick)
+                true
+            } catch (missing: AssertionError) {
+                false
+            }
+        }
+    }
+
+    private fun awaitOnTop(
+        what: String,
+        matches: (NavKey) -> Boolean,
+    ) {
+        try {
+            host.compose.waitUntil(timeoutMillis = AWAIT_SERVICES_MILLIS) { host.stack().lastOrNull()?.let(matches) == true }
+        } catch (timeout: ComposeTimeoutException) {
+            throw ComposeTimeoutException("${timeout.message}: waiting for $what; back stack ${host.stack()}")
+        }
+        host.compose.waitForIdle()
+    }
+
+    private fun openManageSheet() {
+        host.awaitShowing(host.string(R.string.request_primary_manage))
+        // The hub's own Manage row reads the same, so the page's button is the last one.
+        host.compose
+            .onAllNodesWithText(host.string(R.string.request_primary_manage))
+            .onLast()
+            .performScrollTo()
+            .performClick()
+        host.awaitShowing(host.string(R.string.media_delete_files))
     }
 
     @Test

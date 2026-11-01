@@ -41,6 +41,7 @@ class RequestActionsSheetConfirmTest {
     private val deleted = mutableListOf<Triple<Int, Boolean, List<Int>>>()
     private val cleared = mutableListOf<Int>()
     private var dismissed = 0
+    private var servicesOpened = 0
     private var progress by mutableStateOf<ActionProgress?>(null)
     private var landed by mutableStateOf<Int?>(0)
     private var landedNow: Int? = null
@@ -318,6 +319,31 @@ class RequestActionsSheetConfirmTest {
         assertTrue("no delete is offered again", deleted.isEmpty())
     }
 
+    /** An admin's row opens the app's own Services settings, where the default switch is, and leaves the sheet (#1736). */
+    @Test
+    fun `the no default server row opens this app's Services settings for an admin, and closes the sheet`() {
+        setSheet(
+            filesDeletion = FilesDeletion.NoDefaultServer,
+            servicesSettingsUrl = "https://seerr.example/settings/services",
+            servicesRoute = true,
+        )
+
+        composeTestRule.onNodeWithText(string(R.string.media_files_not_deleted)).performSemanticsAction(SemanticsActions.OnClick)
+
+        assertEquals(1, servicesOpened)
+        assertEquals(1, dismissed)
+    }
+
+    @Test
+    fun `a viewer who cannot open Services settings gets no way out from the row`() {
+        setSheet(filesDeletion = FilesDeletion.NoDefaultServer, servicesSettingsUrl = null, servicesRoute = true)
+
+        composeTestRule.onNodeWithText(string(R.string.media_files_not_deleted)).performSemanticsAction(SemanticsActions.OnClick)
+
+        assertEquals(0, servicesOpened)
+        assertEquals(0, dismissed)
+    }
+
     private fun heat(
         mediaStatus: SeerrMediaStatusCode? = null,
         download: RequestDownload? = null,
@@ -337,6 +363,8 @@ class RequestActionsSheetConfirmTest {
         item: RequestItem = heat(),
         canDeleteFiles: Boolean = true,
         canClearData: Boolean = false,
+        servicesSettingsUrl: String? = null,
+        servicesRoute: Boolean = false,
     ) {
         composeTestRule.setContent {
             BingeExpressiveTheme(dynamicColor = false) {
@@ -366,12 +394,14 @@ class RequestActionsSheetConfirmTest {
                             canSetStatus = false,
                             canClearData = canClearData,
                             canDeleteFiles = canDeleteFiles,
+                            servicesSettingsUrl = servicesSettingsUrl,
                         ),
                     mediaActions =
                         ManageMediaActions(
                             onSetStatus = { _, _, _ -> },
                             onClearData = { cleared += it },
                             onDeleteFiles = { id, is4k, requestIds -> deleted += Triple(id, is4k, requestIds) },
+                            onOpenServices = if (servicesRoute) ({ servicesOpened++ }) else null,
                         ),
                     requests = requests,
                     progress = progress,

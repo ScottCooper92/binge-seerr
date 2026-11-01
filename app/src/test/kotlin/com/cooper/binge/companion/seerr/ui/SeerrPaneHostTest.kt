@@ -32,6 +32,7 @@ private const val SETTINGS = "settings"
 private const val PAGE = "server settings page"
 private const val REQUESTS = "requests"
 private const val SUBPAGE = "server settings subpage"
+private const val REQUEST = "request"
 
 /** A landscape tablet: past the design system's expanded-rail line, so the host lays out three panes (#1110). */
 private const val TABLET = "w1280dp-h800dp"
@@ -77,6 +78,7 @@ class SeerrPaneHostTest {
                 ) { PaneContent(innerEdge = PaneEdge.End) { Record(HUB) } }
                 entry<RequestsRoute>(metadata = DetailPane + ThreePaneSection) { DetailPaneContent { Record(REQUESTS) } }
                 entry<SettingsRoute>(metadata = DetailPane + ThreePaneSection) { DetailPaneContent { Record(SETTINGS) } }
+                entry<RequestDetailRoute>(metadata = DetailPane) { DetailPaneContent { Record(REQUEST) } }
                 entry<ServerSettingsPageRoute>(metadata = DetailPane) { route ->
                     DetailPaneContent { Record(if (route.page == ServerSettingsPage.General) PAGE else SUBPAGE) }
                 }
@@ -119,6 +121,20 @@ class SeerrPaneHostTest {
         show(HubRoute, SettingsRoute, ServerSettingsPageRoute(ServerSettingsPage.General))
 
         assertEquals(Pane(PaneEdge.Start, showsBack = true), panes.getValue(PAGE))
+    }
+
+    /** The Delete files row leaves a request for Settings > Services (#1736): the page keeps its Back arrow, and Back returns to the request. */
+    @Test
+    fun `beside the hub, the Services page opened from a request keeps its Back arrow, and Back returns to the request`() {
+        val backStack = show(HubRoute, RequestsRoute, RequestDetailRoute(1), ServerSettingsPageRoute(ServerSettingsPage.Services))
+
+        assertEquals(Pane(PaneEdge.Start, showsBack = true), panes.getValue(SUBPAGE))
+
+        rule.runOnUiThread { dispatcher.onBackPressed() }
+        rule.waitForIdle()
+
+        assertEquals(listOf<NavKey>(HubRoute, RequestsRoute, RequestDetailRoute(1)), backStack.toList())
+        assertEquals(Pane(PaneEdge.Start, showsBack = true), panes.getValue(REQUEST))
     }
 
     /** The default section goes on the stack, so its list keeps its state when it opens something; Back still leaves (#815). */

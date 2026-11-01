@@ -119,6 +119,7 @@ internal fun RequestActionsSheet(
                                 open(id)
                             }
                         },
+                    onOpenServices = mediaActions?.onOpenServices.afterDismissing(onDismiss),
                 ),
             blockTitle = blockTitle,
             onBlockTitleChange = { blockTitle = it },
@@ -211,3 +212,12 @@ internal fun ModerationEvent.isError(): Boolean =
         this is ModerationEvent.MediaFilesDeletedRequestsKept ||
         this == ModerationEvent.MediaFilesNoDefaultServer ||
         this == ModerationEvent.BlockFailed
+
+/** [this] as a callback that first closes the sheet, as leaving it for another page does; null where there is no such page. */
+private fun (() -> Unit)?.afterDismissing(onDismiss: () -> Unit): (() -> Unit)? =
+    this?.let { open ->
+        {
+            onDismiss()
+            open()
+        }
+    }

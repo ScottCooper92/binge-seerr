@@ -242,6 +242,14 @@ class RequestDetailViewModel
             }
         }
 
+        /**
+         * Forgets that deleting files was refused for want of a default server, because the admin is on their way to set
+         * one (#1736). The row is then Delete files again when they are back; if they set nothing, the next try is refused again.
+         */
+        fun forgetNoDefaultServer() {
+            filesDeleted.update { marks -> marks.filterValues { it != FilesDeletion.NoDefaultServer } }
+        }
+
         fun startEdit() {
             val ready = state.value as? RequestDetailUiState.Ready ?: return
             if (ready.detail.canEdit) editSource?.let(requestEditor::start)

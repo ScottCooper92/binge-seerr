@@ -16,7 +16,9 @@ import androidx.work.Configuration
 import androidx.work.WorkManager
 import com.cooper.binge.companion.seerr.auth.ConnectionRestore
 import com.cooper.binge.companion.seerr.auth.CredentialStore
+import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.demo.demoCredentials
+import com.cooper.binge.companion.seerr.seerr.SeerrApi
 import com.cooper.binge.companion.seerr.seerr.SeerrAuth
 import com.cooper.binge.companion.seerr.seerr.SeerrCredentials
 import com.cooper.binge.companion.seerr.ui.HomeRoute
@@ -85,6 +87,13 @@ internal class RealNavHostRule(
         runBlocking { graph().restore().run() }
     }
 
+    /**
+     * Runs [block] against the connected server's own API, the one the screens use, so a change made here is what they
+     * read next. For the demo that is its model: a test can set the state a journey needs through the same routes a settings
+     * screen's switch calls, without walking the screens to it.
+     */
+    fun <T> api(block: suspend (SeerrApi) -> T): T = runBlocking { block(graph().connection().api()) }
+
     /** Starts the host on [stack]. A second launch closes the first: a cold start of the app over the same graph. */
     fun launch(vararg stack: NavKey) {
         close()
@@ -95,7 +104,8 @@ internal class RealNavHostRule(
 
     fun string(
         @StringRes id: Int,
-    ): String = ApplicationProvider.getApplicationContext<Context>().getString(id)
+        vararg formatArgs: Any,
+    ): String = ApplicationProvider.getApplicationContext<Context>().getString(id, *formatArgs)
 
     /**
      * Whether a node reading [text] is on screen now. By default a merged node whose text only includes it counts too, as
@@ -228,6 +238,8 @@ internal class RealNavHostRule(
     @InstallIn(SingletonComponent::class)
     interface NavHostGraph {
         fun credentials(): CredentialStore
+
+        fun connection(): SeerrConnection
 
         fun restore(): ConnectionRestore
     }

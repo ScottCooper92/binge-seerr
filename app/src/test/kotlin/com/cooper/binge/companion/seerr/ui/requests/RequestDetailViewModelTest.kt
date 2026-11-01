@@ -901,6 +901,59 @@ class RequestDetailViewModelTest {
             assertNull(checkNotNull(viewModel().awaitReady().detail.media).servicesSettingsUrl)
         }
 
+    /** The admin is on their way to set one (#1736): coming back, the row is Delete files again, not the stale refusal. */
+    @Test
+    fun `forgetting the missing default server brings Delete files back`() =
+        runTest {
+            server(ADMIN)
+            responses["/api/v1/media/900/file"] = {
+                FakeResponse(
+                    code = 409,
+                    headers = headersOf("Content-Type", "application/json"),
+                    body = """{"message":"No Sonarr server configured to delete media files"}""",
+                )
+            }
+            val vm = viewModel()
+            vm.awaitReady()
+            val refused = awaitEvent(vm.events) { it == ModerationEvent.MediaFilesNoDefaultServer }
+            vm.moderation.deleteMediaFiles(11, 900, is4k = false)
+            refused.await()
+            assertEquals(
+                FilesDeletion.NoDefaultServer,
+                checkNotNull(vm.awaitReady { !it.isActing }.detail.media).instances.single().filesDeletion,
+            )
+
+            vm.forgetNoDefaultServer()
+
+            assertNull(checkNotNull(vm.awaitReady { !it.isActing }.detail.media).instances.single().filesDeletion)
+        }
+
+    /** Only the refusal is forgotten: a delete that went through is still shown as done (#1736). */
+    @Test
+    fun `forgetting the missing default server keeps a delete that went through`() =
+        runTest {
+            server(ADMIN)
+            responses["/api/v1/media/900/file"] = {
+                FakeResponse(code = 200, headers = headersOf("Content-Type", "application/json"), body = "{}")
+            }
+            val vm = viewModel()
+            vm.awaitReady()
+            val deleted = awaitEvent(vm.events) { it == ModerationEvent.MediaFilesDeleted }
+            vm.moderation.deleteMediaFiles(11, 900, is4k = false)
+            deleted.await()
+            assertEquals(
+                FilesDeletion.Deleted,
+                checkNotNull(vm.awaitReady { !it.isActing }.detail.media).instances.single().filesDeletion,
+            )
+
+            vm.forgetNoDefaultServer()
+
+            assertEquals(
+                FilesDeletion.Deleted,
+                checkNotNull(vm.awaitReady { !it.isActing }.detail.media).instances.single().filesDeletion,
+            )
+        }
+
     @Test
     fun `the instance reads as running while its files are being deleted, and as deleted once they are`() =
         runTest {
