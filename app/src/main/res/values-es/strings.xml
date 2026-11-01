@@ -199,6 +199,7 @@
     <string name="request_sheet_loading">Cargando los detalles de la petición</string>
     <string name="request_remove_detail">Se puede volver a solicitar</string>
     <string name="request_remove_block_detail">No se podrá volver a solicitar</string>
+    <string name="request_remove_failed_detail">No se pudo quitar. Revisa la conexión.</string>
     <string name="media_delete_4k_files">Eliminar los archivos 4K</string>
     <string name="media_delete_files_detail">Elimina los archivos descargados de %1$s</string>
     <string name="media_clear_detail">Olvida el título y sus peticiones</string>

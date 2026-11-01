@@ -98,6 +98,22 @@ class RequestActionsSheetConfirmTest {
     }
 
     @Test
+    fun `a failed remove says what failed in place of its subtitle, and a retry brings the subtitle back`() {
+        setSheet()
+        composeTestRule.onNodeWithText(string(R.string.request_remove_detail)).assertExists()
+
+        composeTestRule.runOnIdle { progress = ActionProgress(RequestAction.Remove, failed = true, attempt = 1) }
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithText(string(R.string.request_remove_failed_detail)).assertExists()
+        composeTestRule.onNodeWithText(string(R.string.request_remove_detail)).assertDoesNotExist()
+
+        composeTestRule.runOnIdle { progress = ActionProgress(RequestAction.Remove, attempt = 2) }
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithText(string(R.string.request_remove_detail)).assertExists()
+        composeTestRule.onNodeWithText(string(R.string.request_remove_failed_detail)).assertDoesNotExist()
+    }
+
+    @Test
     fun `a failure from before the sheet opened is not shown on it, and one of its own tries is`() {
         progress = ActionProgress(RequestAction.Remove, failed = true, attempt = 1)
         setSheet()

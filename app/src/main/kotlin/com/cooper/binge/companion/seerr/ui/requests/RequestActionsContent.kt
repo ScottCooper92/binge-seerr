@@ -1,5 +1,6 @@
 package com.cooper.binge.companion.seerr.ui.requests
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -275,8 +276,9 @@ private fun requestRows(
 }
 
 /**
- * The Remove row through idle, running and failed. It keeps its label, detail, height and place in all three: only the
- * trailing slot changes, from nothing to the loading indicator to a Try again hint, so nothing around it moves.
+ * The Remove row through idle, running and failed. It keeps its label, height and place in all three, so nothing around
+ * it moves. The trailing slot goes from nothing to the loading indicator to a Try again hint. Failed, the subtitle says
+ * what happened in place of what Remove does, and a retry brings the usual one back.
  */
 @Composable
 private fun removeRow(
@@ -292,7 +294,7 @@ private fun removeRow(
         icon = Icons.Filled.Delete,
         iconTint = error,
         label = stringResource(if (blockTitle) R.string.request_remove_and_block else R.string.request_remove),
-        detail = stringResource(if (blockTitle) R.string.request_remove_block_detail else R.string.request_remove_detail),
+        detail = stringResource(removeDetailRes(blockTitle, failed)),
         detailColor = error.takeIf { failed },
         loading = running,
         clickable = !running,
@@ -306,6 +308,17 @@ private fun removeRow(
         onClick = callbacks.onRemove,
     )
 }
+
+@StringRes
+private fun removeDetailRes(
+    blockTitle: Boolean,
+    failed: Boolean,
+): Int =
+    when {
+        failed -> R.string.request_remove_failed_detail
+        blockTitle -> R.string.request_remove_block_detail
+        else -> R.string.request_remove_detail
+    }
 
 /**
  * Each instance is one row carrying its state; where the status can be set the row opens the picker,
