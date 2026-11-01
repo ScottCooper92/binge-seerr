@@ -126,6 +126,7 @@ private fun RequestDetailViewModel.toActions(
         },
         onStartEdit = ::startEdit,
         siblingSheet = siblingSheet,
+        actionsLandedNow = ::actionsLandedNow,
         onOpenUser = onOpenUser,
         edit =
             EditRequestActions(

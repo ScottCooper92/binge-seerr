@@ -55,6 +55,8 @@ class RequestDetailActions(
     val media: ManageMediaActions,
     /** The request's own Manage sheet opened, so its permissions are worth a fresh look (#1722). */
     val onManageOpened: () -> Unit = {},
+    /** How many Declines and Removes have landed, whatever state the page is in: the count a sheet measures from. */
+    val actionsLandedNow: () -> Int? = { null },
 )
 
 /**
@@ -250,7 +252,8 @@ internal fun RequestManagementSheets(
             onMarkSelect = { status -> media?.let { actions.media.onSetStatus(it.mediaId, status, marking == true) } },
             onMarkDismiss = { marking = null },
             progress = state?.progress,
-            actionsLanded = state?.actionsLanded ?: 0,
+            actionsLanded = state?.actionsLanded,
+            actionsLandedNow = actions.actionsLandedNow,
         )
     }
     state?.edit?.takeUnless { editsInActions }?.let { edit ->

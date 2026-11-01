@@ -194,6 +194,9 @@ class RequestDetailViewModel
             }.combine(now) { page, now -> (page as? RequestDetailUiState.Ready)?.copy(now = now) ?: page }
                 .stateIn(viewModelScope, SharingStarted.Lazily, RequestDetailUiState.Loading)
 
+        /** [ActionTrack.landed] as it stands, for a sheet that opens over a page that is not `Ready`. */
+        fun actionsLandedNow(): Int = track.value.landed
+
         private var editSource: EditSource? = null
 
         /** The `auth/me` answer the page was last built from; null when that read failed. */
