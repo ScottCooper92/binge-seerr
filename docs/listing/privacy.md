@@ -100,6 +100,8 @@ no server to connect, such as someone reviewing the app. The demo contacts no se
 account. What you change in it lives in the app's memory and is gone when you tap **Exit the demo** or
 the app is closed. Its only stored trace is a placeholder connection, kept like any other connection,
 that Exit the demo removes. It is never copied to Block Store. Posters load from TMDB as described above.
+If you have agreed to share usage data, the screens and actions in the demo are reported like any other,
+with one added detail, `demo`, so they can be told apart from real use. It carries nothing about you.
 
 ## Phone-to-TV hand-off
 
