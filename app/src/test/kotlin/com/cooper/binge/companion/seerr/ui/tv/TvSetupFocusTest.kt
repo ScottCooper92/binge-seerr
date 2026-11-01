@@ -34,6 +34,7 @@ import com.cooper.binge.companion.seerr.ui.SetupServer
 import com.cooper.binge.companion.seerr.ui.SetupUiState
 import com.cooper.binge.companion.seerr.ui.SignInForm
 import com.cooper.binge.companion.seerr.util.createSeerrKeyboardAndroidComposeRule
+import com.cooper.binge.companion.seerr.util.isFocusableLeaf
 import com.cooper.binge.companion.seerr.util.string
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -562,7 +563,10 @@ class TvSetupFocusTest {
      * The field's frame, which the remote lands on and which names the field; the text input inside edits only on OK, and
      * names the field too, so the frame is the one that cannot take text.
      */
-    private fun field(label: Int) = composeTestRule.onNode(hasContentDescription(string(label)) and isFocusable() and !hasSetTextAction())
+    private fun field(label: Int) =
+        composeTestRule.onNode(
+            hasContentDescription(string(label)) and isFocusable() and !hasSetTextAction(),
+        )
 
     private fun textInput() = composeTestRule.onNode(hasSetTextAction())
 
@@ -570,14 +574,14 @@ class TvSetupFocusTest {
     // label may sit a level below the node that carries focus.
     private fun button(label: Int) =
         composeTestRule.onNode(
-            (hasText(string(label)) or hasAnyDescendant(hasText(string(label)))) and isFocusable(),
+            (hasText(string(label)) or hasAnyDescendant(hasText(string(label)))) and isFocusableLeaf(),
         )
 
-    private fun modeRow(label: Int) = composeTestRule.onNode(hasText(string(label)) and isFocusable())
+    private fun modeRow(label: Int) = composeTestRule.onNode(hasText(string(label)) and isFocusableLeaf())
 
     private fun tab(label: Int) = modeRow(label)
 
-    private fun continueButton() = composeTestRule.onNode(hasText(string(R.string.setup_continue)) and isFocusable())
+    private fun continueButton() = composeTestRule.onNode(hasText(string(R.string.setup_continue)) and isFocusableLeaf())
 
     private fun pressUp() {
         composeTestRule.onRoot().performKeyInput { pressKey(Key.DirectionUp) }

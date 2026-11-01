@@ -5,7 +5,6 @@ import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasText
-import androidx.compose.ui.test.isFocusable
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performKeyInput
 import androidx.compose.ui.test.pressKey
@@ -16,6 +15,7 @@ import com.cooper.binge.companion.seerr.ui.AdvancedRequestUiState
 import com.cooper.binge.companion.seerr.ui.Choice
 import com.cooper.binge.companion.seerr.ui.DestinationChoices
 import com.cooper.binge.companion.seerr.util.createSeerrKeyboardComposeRule
+import com.cooper.binge.companion.seerr.util.isFocusableLeaf
 import com.cooper.binge.companion.seerr.util.string
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -167,13 +167,13 @@ class TvAdvancedRequestFocusTest {
         composeTestRule.waitForIdle()
     }
 
-    private fun row(label: String) = composeTestRule.onNode(hasText(label) and isFocusable())
+    private fun row(label: String) = composeTestRule.onNode(hasText(label) and isFocusableLeaf())
 
     // A disabled button is a focusable surface over its own text node rather than one merged node, so the
     // label may sit a level below the node that carries focus.
     private fun button(label: Int) =
         composeTestRule.onNode(
-            (hasText(string(label)) or hasAnyDescendant(hasText(string(label)))) and isFocusable(),
+            (hasText(string(label)) or hasAnyDescendant(hasText(string(label)))) and isFocusableLeaf(),
         )
 
     private fun pressDown() {

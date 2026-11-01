@@ -10,7 +10,6 @@ import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
-import androidx.compose.ui.test.isFocusable
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
@@ -30,6 +29,7 @@ import com.cooper.binge.companion.seerr.ui.requests.RequestDetailUiState
 import com.cooper.binge.companion.seerr.ui.tv.requests.TvRequestDetailActions
 import com.cooper.binge.companion.seerr.ui.tv.requests.TvRequestDetailScreen
 import com.cooper.binge.companion.seerr.util.createSeerrKeyboardAndroidComposeRule
+import com.cooper.binge.companion.seerr.util.isFocusableLeaf
 import com.cooper.binge.companion.seerr.util.requestDetail
 import com.cooper.binge.companion.seerr.util.string
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -153,7 +153,7 @@ class TvRequestManageFocusTest {
         pressOk()
 
         composeTestRule
-            .onAllNodes(hasText(string(R.string.tv_detail_block)) and isFocusable())
+            .onAllNodes(hasText(string(R.string.tv_detail_block)) and isFocusableLeaf())
             .filterToOne(hasAnyAncestor(isDialog()))
             .performClick()
         settle()
@@ -269,12 +269,12 @@ class TvRequestManageFocusTest {
 
     private fun rowButton(label: String) =
         composeTestRule.onNode(
-            isFocusable() and (hasContentDescription(label) or hasText(label) or hasAnyDescendant(hasText(label))),
+            isFocusableLeaf() and (hasContentDescription(label) or hasText(label) or hasAnyDescendant(hasText(label))),
         )
 
     private fun sheetRow(label: Int) =
         composeTestRule.onNode(
-            isFocusable() and (hasText(string(label)) or hasAnyDescendant(hasText(string(label)))),
+            isFocusableLeaf() and (hasText(string(label)) or hasAnyDescendant(hasText(string(label)))),
         )
 
     private fun pressOk() {

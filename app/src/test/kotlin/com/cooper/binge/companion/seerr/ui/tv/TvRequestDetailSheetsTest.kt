@@ -16,7 +16,6 @@ import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
-import androidx.compose.ui.test.isFocusable
 import androidx.compose.ui.test.isSelected
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
@@ -41,6 +40,7 @@ import com.cooper.binge.companion.seerr.ui.tv.requests.TvReportOnPhoneStep
 import com.cooper.binge.companion.seerr.ui.tv.requests.TvRequestDetailActions
 import com.cooper.binge.companion.seerr.ui.tv.requests.TvRequestDetailScreen
 import com.cooper.binge.companion.seerr.util.createSeerrKeyboardAndroidComposeRule
+import com.cooper.binge.companion.seerr.util.isFocusableLeaf
 import com.cooper.binge.companion.seerr.util.requestDetail
 import com.cooper.binge.companion.seerr.util.string
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -133,7 +133,7 @@ class TvRequestDetailSheetsTest {
         composeTestRule.onNode(isSelected() and hasText(string(MediaStatusChoice.Processing.labelRes()))).assertExists()
         composeTestRule.onNode(isSelected() and hasText(string(MediaStatusChoice.Available.labelRes()))).assertDoesNotExist()
 
-        composeTestRule.onNode(hasText(string(DesR.string.save_status_retry)) and isFocusable()).requestFocus()
+        composeTestRule.onNode(hasText(string(DesR.string.save_status_retry)) and isFocusableLeaf()).requestFocus()
         pressOk()
 
         assertEquals(2, marked.size)
@@ -206,7 +206,7 @@ class TvRequestDetailSheetsTest {
             ),
         )
         pressOk()
-        composeTestRule.onNode(hasText(string(R.string.settings_service_4k)) and isFocusable()).requestFocus()
+        composeTestRule.onNode(hasText(string(R.string.settings_service_4k)) and isFocusableLeaf()).requestFocus()
         composeTestRule.waitForIdle()
         pressOk()
         pressOk()
@@ -224,7 +224,7 @@ class TvRequestDetailSheetsTest {
 
         val body = string(R.string.tv_detail_report_on_phone, SERVER_NAME) + "\n" + string(R.string.tv_detail_report_scan_hint)
         composeTestRule.onNodeWithText(body).assertIsDisplayed()
-        composeTestRule.onNode(hasContentDescription(body) and isFocusable()).assertIsFocused()
+        composeTestRule.onNode(hasContentDescription(body) and isFocusableLeaf()).assertIsFocused()
         composeTestRule.onNode(hasSetTextAction()).assertDoesNotExist()
 
         composeTestRule.runOnUiThread { composeTestRule.activity.onBackPressedDispatcher.onBackPressed() }
@@ -279,7 +279,7 @@ class TvRequestDetailSheetsTest {
         actionButton(R.string.issue_report_title).assertDoesNotExist()
     }
 
-    private fun option(choice: MediaStatusChoice) = composeTestRule.onNode(hasText(string(choice.labelRes())) and isFocusable())
+    private fun option(choice: MediaStatusChoice) = composeTestRule.onNode(hasText(string(choice.labelRes())) and isFocusableLeaf())
 
     private fun media(vararg instances: MediaInstance) =
         MediaRecord(
@@ -327,7 +327,7 @@ class TvRequestDetailSheetsTest {
     /** A resting icon button names itself by description and a labelled one by text; either way the surface is the focusable node. */
     private fun actionButton(label: Int) =
         composeTestRule.onNode(
-            isFocusable() and
+            isFocusableLeaf() and
                 (hasContentDescription(string(label)) or hasText(string(label)) or hasAnyDescendant(hasText(string(label)))),
         )
 

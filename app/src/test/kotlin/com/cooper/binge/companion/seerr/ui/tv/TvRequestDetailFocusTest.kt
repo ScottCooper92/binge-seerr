@@ -14,7 +14,6 @@ import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
-import androidx.compose.ui.test.isFocusable
 import androidx.compose.ui.test.isFocused
 import androidx.compose.ui.test.isRoot
 import androidx.compose.ui.test.onLast
@@ -39,6 +38,7 @@ import com.cooper.binge.companion.seerr.ui.tv.requests.TvRequestDetailScreen
 import com.cooper.binge.companion.seerr.ui.tv.requests.TvRequestsActions
 import com.cooper.binge.companion.seerr.ui.tv.requests.TvRequestsRowsBoard
 import com.cooper.binge.companion.seerr.util.createSeerrKeyboardAndroidComposeRule
+import com.cooper.binge.companion.seerr.util.isFocusableLeaf
 import com.cooper.binge.companion.seerr.util.requestDetail
 import com.cooper.binge.companion.seerr.util.requestItem
 import com.cooper.binge.companion.seerr.util.string
@@ -252,7 +252,7 @@ class TvRequestDetailFocusTest {
         }
         composeTestRule.waitForIdle()
 
-        composeTestRule.onNode(hasText(string(DesR.string.error_kind_retry)) and isFocusable()).assertIsFocused()
+        composeTestRule.onNode(hasText(string(DesR.string.error_kind_retry)) and isFocusableLeaf()).assertIsFocused()
         pressOk()
         assertEquals(1, retries)
     }
@@ -363,12 +363,12 @@ class TvRequestDetailFocusTest {
         composeTestRule.waitForIdle()
     }
 
-    private fun row(title: String) = composeTestRule.onNode(hasContentDescription(title) and isFocusable())
+    private fun row(title: String) = composeTestRule.onNode(hasContentDescription(title) and isFocusableLeaf())
 
     /** A resting icon button names itself by description and a labelled one by text; either way the surface is the focusable node. */
     private fun actionButton(label: Int) =
         composeTestRule.onNode(
-            isFocusable() and
+            isFocusableLeaf() and
                 (hasContentDescription(string(label)) or hasText(string(label)) or hasAnyDescendant(hasText(string(label)))),
         )
 
@@ -393,7 +393,7 @@ class TvRequestDetailFocusTest {
 
     /** Block in the confirm dialog. */
     private fun confirmBlock() {
-        composeTestRule.onAllNodes(hasText(string(R.string.tv_detail_block)) and isFocusable()).onLast().requestFocus()
+        composeTestRule.onAllNodes(hasText(string(R.string.tv_detail_block)) and isFocusableLeaf()).onLast().requestFocus()
         composeTestRule.waitForIdle()
         pressOk()
     }
