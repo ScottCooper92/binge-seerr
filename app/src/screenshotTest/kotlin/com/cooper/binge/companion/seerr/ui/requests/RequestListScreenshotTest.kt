@@ -36,6 +36,12 @@ class RequestListScreenshotTest {
     @Composable
     fun approvedNotDownloading() = Frame(notDownloadingRow())
 
+    /** The same row where the queue may not be tracked (#1733): plain "Approved". */
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun approvedUntracked() = Frame(untrackedRow())
+
     /** A TV request with specific seasons exercises the optional season-list line. */
     @PreviewTest
     @SeerrComponentPreviews

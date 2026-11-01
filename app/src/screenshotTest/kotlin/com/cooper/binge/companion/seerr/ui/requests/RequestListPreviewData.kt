@@ -36,7 +36,10 @@ internal fun fourKLongStatusRow(): RequestItem =
     longStatusRow().copy(id = 2, title = "Dune: Part Two", requestedBy = "Marcus", requestedById = 5, is4k = true)
 
 /** Approved but processing with nothing in the queue (#1719): the longest chip label, "Approved · not downloading". */
-internal fun notDownloadingRow(): RequestItem =
+internal fun notDownloadingRow(): RequestItem = untrackedRow().copy(queueTracked = true)
+
+/** The same row where the queue may not be tracked (#1733): it reads plain "Approved", not "not downloading". */
+internal fun untrackedRow(): RequestItem =
     longStatusRow().copy(id = 8, title = "Oppenheimer", year = "2023", mediaStatus = SeerrMediaStatusCode.Processing)
 
 /** A TV request with specific seasons, exercising the optional season-list line. */

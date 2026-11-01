@@ -137,7 +137,7 @@ fun RequestItem.statusChip(): RequestRowChip =
         mediaStatus == SeerrMediaStatusCode.Deleted ->
             SeerrMediaStatusCode.Deleted.blockedChip()
         mediaStatus == SeerrMediaStatusCode.Processing ->
-            download.activity().let { activity ->
+            downloadActivity().let { activity ->
                 val state = SeerrMediaStatusCode.Processing.stateLabel(activity)
                 RequestRowChip(state.labelRes, state.tone, activity.glyph())
             }
@@ -150,11 +150,14 @@ fun RequestItem.statusChip(): RequestRowChip =
 private fun SeerrMediaStatusCode.blockedChip(): RequestRowChip =
     stateLabel(DownloadActivity.None).let { RequestRowChip(it.labelRes, it.tone, StatusGlyphs.Blocked) }
 
-/** What the download client is doing for this request's version: nothing, a queued grab, or a transfer. */
-internal fun RequestDownload?.activity(): DownloadActivity =
+/**
+ * What the download client is doing for this request's version: a queued grab, a transfer, or, with nothing in the
+ * queue, nothing when [RequestItem.queueTracked] says the queue is one to trust and no claim when it does not.
+ */
+internal fun RequestItem.downloadActivity(): DownloadActivity =
     when {
-        this == null -> DownloadActivity.None
-        downloading -> DownloadActivity.Downloading
+        download == null -> if (queueTracked) DownloadActivity.None else DownloadActivity.Untracked
+        download.downloading -> DownloadActivity.Downloading
         else -> DownloadActivity.Queued
     }
 
@@ -163,12 +166,12 @@ private fun DownloadActivity.glyph(): ImageVector =
     when (this) {
         DownloadActivity.Downloading -> StatusGlyphs.Processing
         DownloadActivity.Queued -> StatusGlyphs.Queued
-        DownloadActivity.None -> StatusGlyphs.Approved
+        DownloadActivity.None, DownloadActivity.Untracked -> StatusGlyphs.Approved
     }
 
 /** Approved, but with nothing downloading: the state whose detail line says why it may be stuck. */
 internal val RequestItem.isProcessingWithoutDownload: Boolean
-    get() = mediaStatus == SeerrMediaStatusCode.Processing && download.activity() == DownloadActivity.None
+    get() = mediaStatus == SeerrMediaStatusCode.Processing && downloadActivity() == DownloadActivity.None
 
 /**
  * The server's own rules for one request: approve, decline and retry are `MANAGE_REQUESTS`;

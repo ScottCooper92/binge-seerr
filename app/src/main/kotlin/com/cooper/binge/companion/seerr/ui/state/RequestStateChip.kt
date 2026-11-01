@@ -42,8 +42,13 @@ fun SeerrRequestStatusCode.labelRes(): Int =
         else -> R.string.request_state_pending
     }
 
-/** What the download client is doing for one version of a title, as far as Seerr's queue reports it. */
+/**
+ * What the download client is doing for one version of a title, as far as Seerr's queue reports it.
+ * [None] is an empty queue that can be trusted to be empty; [Untracked] is an empty queue that says nothing,
+ * because Seerr does not poll the download client unless Enable Scan is on, or the app cannot tell (#1733).
+ */
 enum class DownloadActivity {
+    Untracked,
     None,
     Queued,
     Downloading,
@@ -58,7 +63,8 @@ data class MediaStateLabel(
 /**
  * The one mapping from a title's media status to its label, read by the list, the title's badge, Manage media and TV.
  * `Processing` reads Downloading only while something transfers: Seerr leaves a title processing after its files are
- * deleted, or when nothing was ever grabbed, so with nothing in the queue it reads "Approved · not downloading" (#1719).
+ * deleted, or when nothing was ever grabbed, so with nothing in a queue known to be tracked it reads
+ * "Approved · not downloading" (#1719). With a queue that may not be tracked it reads plain "Approved" (#1733).
  */
 fun SeerrMediaStatusCode.stateLabel(download: DownloadActivity): MediaStateLabel =
     if (this == SeerrMediaStatusCode.Processing) {
@@ -66,6 +72,7 @@ fun SeerrMediaStatusCode.stateLabel(download: DownloadActivity): MediaStateLabel
             DownloadActivity.Downloading -> MediaStateLabel(R.string.media_state_downloading, RequestStateTone.Active)
             DownloadActivity.Queued -> MediaStateLabel(R.string.request_state_queued, RequestStateTone.Pending)
             DownloadActivity.None -> MediaStateLabel(R.string.media_state_not_downloading, RequestStateTone.Pending)
+            DownloadActivity.Untracked -> MediaStateLabel(R.string.request_state_approved, RequestStateTone.Pending)
         }
     } else {
         MediaStateLabel(labelRes(), tone())

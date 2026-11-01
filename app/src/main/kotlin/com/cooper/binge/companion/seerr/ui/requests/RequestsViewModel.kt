@@ -81,6 +81,7 @@ class RequestsViewModel
         private val store: RequestStore,
         @IoDispatcher private val dispatcher: CoroutineDispatcher,
         private val minuteTicker: Ticker = Ticker(),
+        private val queueGates: DownloadQueueGates = DownloadQueueGates(connection),
     ) : ViewModel() {
         private val selectedFilter = MutableStateFlow(RequestFilter.All)
         private val selectedSort = MutableStateFlow(RequestSort.Added)
@@ -187,7 +188,7 @@ class RequestsViewModel
                                     dto.toRequestEntity(api, titles::get, key, index, System.currentTimeMillis())
                                 },
                         ) { store.pagingSource(query.listKey) }.flow
-                    }.map { data -> data.map { it.toRequestItem() } }
+                    }.map { data -> data.map { it.toRequestItem().withQueueFrom(queueGates) } }
                     .cachedIn(viewModelScope)
             }
 
