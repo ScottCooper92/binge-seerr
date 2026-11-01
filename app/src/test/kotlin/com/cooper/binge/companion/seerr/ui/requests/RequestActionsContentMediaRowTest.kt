@@ -1,5 +1,6 @@
 package com.cooper.binge.companion.seerr.ui.requests
 
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import com.binge.designsystem.theme.BingeExpressiveTheme
@@ -46,6 +47,36 @@ class RequestActionsContentMediaRowTest {
         assertEquals(0, count(R.string.media_state_not_downloading_detail))
     }
 
+    @Test
+    fun `a failed mark says what failed in place of the status, with Try again, and a retry brings the status back`() {
+        val marking = mutableStateOf<ActionProgress?>(null)
+        setContent(instance(DownloadActivity.None), canSetStatus = true, progress = { marking.value })
+        composeTestRule.onNodeWithText(string(R.string.media_state_not_downloading)).assertExists()
+
+        composeTestRule.runOnIdle { marking.value = ActionProgress(RequestAction.MarkAs, failed = true, attempt = 1) }
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithText(string(R.string.media_mark_failed_detail)).assertExists()
+        composeTestRule.onNodeWithText(string(R.string.action_try_again)).assertExists()
+        assertEquals(0, count(R.string.media_state_not_downloading))
+
+        composeTestRule.runOnIdle { marking.value = ActionProgress(RequestAction.MarkAs, attempt = 2) }
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithText(string(R.string.media_state_not_downloading)).assertExists()
+        assertEquals(0, count(R.string.media_mark_failed_detail))
+    }
+
+    @Test
+    fun `a mark on the other instance leaves this row alone`() {
+        setContent(
+            instance(DownloadActivity.None),
+            canSetStatus = true,
+            progress = { ActionProgress(RequestAction.MarkAs, failed = true, attempt = 1, is4k = true) },
+        )
+
+        composeTestRule.onNodeWithText(string(R.string.media_state_not_downloading)).assertExists()
+        assertEquals(0, count(R.string.media_mark_failed_detail))
+    }
+
     private fun count(id: Int): Int = composeTestRule.onAllNodesWithText(string(id)).fetchSemanticsNodes().size
 
     private fun instance(download: DownloadActivity) =
@@ -61,6 +92,7 @@ class RequestActionsContentMediaRowTest {
     private fun setContent(
         instance: MediaInstance,
         canSetStatus: Boolean,
+        progress: () -> ActionProgress? = { null },
     ) {
         composeTestRule.setContent {
             BingeExpressiveTheme {
@@ -79,6 +111,7 @@ class RequestActionsContentMediaRowTest {
                                     canClearData = true,
                                     canDeleteFiles = false,
                                 ),
+                            progress = progress(),
                         ),
                     callbacks = RequestSheetCallbacks(onApprove = {}, onRetry = {}, onDecline = {}, onRemove = {}, onDeleteFiles = {}),
                     blockTitle = false,

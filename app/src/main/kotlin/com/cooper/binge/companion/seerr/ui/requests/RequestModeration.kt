@@ -117,7 +117,19 @@ class RequestModeration(
         status: MediaStatusChoice,
         is4k: Boolean,
         seasonNumbers: List<Int>,
-    ) = media.setMediaStatus(requestId, mediaId, status, is4k, seasonNumbers)
+    ) {
+        setMediaStatus(requestId, mediaId, status, is4k, seasonNumbers, onSettled = {})
+    }
+
+    /** [onSettled] hears how marking went. False when another action on the request is in flight: nothing was started. */
+    fun setMediaStatus(
+        requestId: Int,
+        mediaId: Int,
+        status: MediaStatusChoice,
+        is4k: Boolean,
+        seasonNumbers: List<Int>,
+        onSettled: (succeeded: Boolean) -> Unit,
+    ): Boolean = media.setMediaStatus(requestId, mediaId, status, is4k, seasonNumbers, onSettled)
 
     override fun clearMedia(
         requestId: Int,

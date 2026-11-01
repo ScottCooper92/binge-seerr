@@ -78,7 +78,7 @@ internal fun RequestActionsContent(
         val mediaRows =
             model.media
                 ?.takeIf { it.canManage }
-                ?.let { mediaRows(it, callbacks) }
+                ?.let { mediaRows(it, model.progress, callbacks) }
                 .orEmpty()
         if (requestRows.isNotEmpty()) ItemGroup(title = stringResource(R.string.request_sheet_group_request), rows = requestRows)
         if (mediaRows.isNotEmpty()) ItemGroup(title = stringResource(R.string.request_sheet_group_media), rows = mediaRows)

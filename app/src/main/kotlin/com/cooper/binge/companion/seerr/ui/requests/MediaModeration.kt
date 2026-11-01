@@ -31,11 +31,21 @@ internal class MediaModeration(
         status: MediaStatusChoice,
         is4k: Boolean,
         seasonNumbers: List<Int>,
-    ) = runner.moderate(requestId, ModerationEvent.MediaStatusSet) {
-        val seasons =
-            seasonNumbers.map { SeerrMediaStatusSeasonBody(it) }.takeIf { status == MediaStatusChoice.Available && it.isNotEmpty() }
-        connection.api().setMediaStatus(mediaId, status.path, SeerrMediaStatusBody(is4k, seasons))
-    }
+        onSettled: (succeeded: Boolean) -> Unit,
+    ): Boolean =
+        runner.actThenMaybeBlock(
+            item = null,
+            requestId = requestId,
+            blockTitle = false,
+            done = ModerationEvent.MediaStatusSet,
+            doneAndBlocked = ModerationEvent.MediaStatusSet,
+            blockFailed = ModerationEvent.MediaStatusSet,
+            onSettled = onSettled,
+        ) {
+            val seasons =
+                seasonNumbers.map { SeerrMediaStatusSeasonBody(it) }.takeIf { status == MediaStatusChoice.Available && it.isNotEmpty() }
+            connection.api().setMediaStatus(mediaId, status.path, SeerrMediaStatusBody(is4k, seasons))
+        }
 
     /** [onSettled] hears how the clear went. False when another action on the request is in flight: nothing was started. */
     fun clearMedia(

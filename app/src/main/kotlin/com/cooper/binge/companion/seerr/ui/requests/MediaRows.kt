@@ -3,6 +3,7 @@ package com.cooper.binge.companion.seerr.ui.requests
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.ListItem
@@ -21,13 +22,15 @@ import com.cooper.binge.companion.seerr.ui.state.stateLabel
 @Composable
 internal fun mediaRows(
     media: MediaRecord,
+    progress: ActionProgress?,
     callbacks: RequestSheetCallbacks,
 ): List<ListItem> {
     val error = MaterialTheme.colorScheme.error
     val client = stringResource(if (media.isTv) R.string.media_client_sonarr else R.string.media_client_radarr)
     return buildList {
         media.instances.forEach { instance ->
-            add(instanceRow(instance, media.isTv, media.canSetStatus) { callbacks.onMarkStatus(instance.is4k) })
+            val marking = progress?.takeIf { it.action == RequestAction.MarkAs && it.is4k == instance.is4k }
+            add(instanceRow(instance, media.isTv, media.canSetStatus, marking) { callbacks.onMarkStatus(instance.is4k) })
         }
         // Every picker comes before the first delete, so the destructive rows run together at the end.
         if (media.canDeleteFiles) {
@@ -54,29 +57,53 @@ internal fun mediaRows(
     }
 }
 
+/**
+ * One instance's row. Marking it keeps the row's label, height and place: running, the trailing slot is the loading indicator
+ * and the row takes no taps; failed, the subtitle says what happened in place of the status, with Try again trailing, and a
+ * tap opens the picker again.
+ */
 @Composable
 private fun instanceRow(
     instance: MediaInstance,
     isTv: Boolean,
     canSetStatus: Boolean,
+    marking: ActionProgress?,
     onMarkStatus: () -> Unit,
-): ListItem =
-    ListItem(
+): ListItem {
+    val running = marking != null && !marking.failed
+    val failed = marking?.failed == true
+    val error = MaterialTheme.colorScheme.error
+    return ListItem(
         icon = instance.icon(isTv),
         label = stringResource(instance.labelRes()),
         // Where the status can be set the row is a picker, so its detail is its current value. Where it cannot, the
         // status is only information and keeps its chip.
         detail =
-            if (canSetStatus) {
-                instance.status?.let { stringResource(it.stateLabel(instance.download).labelRes) }
-            } else {
-                stringResource(R.string.media_state_not_downloading_detail).takeIf { instance.isProcessingWithoutDownload }
+            when {
+                failed -> stringResource(R.string.media_mark_failed_detail)
+                canSetStatus -> instance.status?.let { stringResource(it.stateLabel(instance.download).labelRes) }
+                else -> stringResource(R.string.media_state_not_downloading_detail).takeIf { instance.isProcessingWithoutDownload }
             },
-        clickable = canSetStatus,
+        detailColor = error.takeIf { failed },
+        loading = running,
+        clickable = canSetStatus && !running,
         trailingContent =
-            instance.status?.takeIf { !canSetStatus }?.let { status -> { MediaStateChip(status = status, download = instance.download) } },
+            when {
+                failed -> (
+                    {
+                        Text(
+                            text = stringResource(R.string.action_try_again),
+                            style = MaterialTheme.typography.labelLarge,
+                            color = error,
+                        )
+                    }
+                )
+                canSetStatus -> null
+                else -> instance.status?.let { status -> { MediaStateChip(status = status, download = instance.download) } }
+            },
         onClick = onMarkStatus,
     )
+}
 
 /** Processing with nothing in the queue: a read-only row says why that may be. A picker's detail is its value. */
 private val MediaInstance.isProcessingWithoutDownload: Boolean

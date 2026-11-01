@@ -1013,6 +1013,36 @@ class RequestDetailViewModelTest {
         }
 
     @Test
+    fun `marking the status reads as running, then failed, then clear, and never counts as closing the sheet`() =
+        runTest {
+            server(ADMIN)
+            val gate = CountDownLatch(1)
+            responses["/api/v1/media/900/available"] = {
+                gate.await()
+                FakeResponse(code = 500, headers = headersOf("Content-Type", "application/json"), body = "{}")
+            }
+            val vm = viewModel()
+            vm.awaitReady()
+
+            val failed = awaitEvent(vm.events) { it is ModerationEvent.Failed }
+            vm.moderation.setMediaStatus(11, 900, MediaStatusChoice.Available, is4k = false)
+            val running = vm.awaitReady { it.progress != null }.progress
+            assertEquals(ActionProgress(RequestAction.MarkAs, attempt = 1), running)
+            gate.countDown()
+            failed.await()
+            val failure = vm.awaitReady { it.progress?.failed == true }
+            assertEquals(ActionProgress(RequestAction.MarkAs, failed = true, attempt = 1), failure.progress)
+
+            serve("/api/v1/media/900/available", "{}")
+            val marked = awaitEvent(vm.events) { it == ModerationEvent.MediaStatusSet }
+            vm.moderation.setMediaStatus(11, 900, MediaStatusChoice.Available, is4k = false)
+            marked.await()
+            val landed = vm.awaitReady { it.progress == null }
+            assertNull(landed.progress)
+            assertEquals("Marking leaves the actions sheet open", 0, landed.actionsLanded)
+        }
+
+    @Test
     fun `the page reads as acting from the action through the reload that shows its result, and not after`() =
         runTest {
             server(REQUEST or ADMIN)
