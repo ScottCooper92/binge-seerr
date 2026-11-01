@@ -7,6 +7,7 @@ import com.cooper.binge.companion.seerr.ui.users.settings.EditorViewModel
 import com.cooper.binge.companion.seerr.ui.users.settings.SavedDraft
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.serialization.serializer
 import javax.inject.Inject
 
 /**
@@ -25,7 +26,7 @@ class TautulliViewModel
         override val savedDraft =
             SavedDraft(
                 savedState,
-                TautulliForm.serializer(),
+                serializer<TautulliForm>(),
                 scrub = { it.copy(apiKey = "") },
                 restore = { kept, loaded -> kept.copy(apiKey = loaded.apiKey) },
             )
