@@ -176,7 +176,7 @@ private fun LogsBody(
     }
 }
 
-/** One line as the design system's [DesLogRow]: [LogEntry] is mapped to its model here, and a long press copies [LogEntry.copyText]'s line via [onCopy]. */
+/** One line as the design system's [DesLogRow]: [LogEntry] is mapped to its model here, and a long press calls [onCopy]. */
 @Composable
 internal fun LogRow(
     entry: LogEntry,
