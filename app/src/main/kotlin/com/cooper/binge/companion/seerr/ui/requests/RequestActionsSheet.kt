@@ -237,7 +237,7 @@ private fun PendingConfirm(
                 destructive = true,
                 onConfirm = {
                     media?.mediaId?.let { mediaActions?.onClearData?.invoke(it) }
-                    onDone()
+                    onStep(null)
                 },
                 onDismissRequest = { onStep(null) },
             )

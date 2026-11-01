@@ -36,6 +36,7 @@ class RequestActionsSheetConfirmTest {
     private val declined = mutableListOf<Boolean>()
     private val removed = mutableListOf<Boolean>()
     private val deleted = mutableListOf<Triple<Int, Boolean, List<Int>>>()
+    private val cleared = mutableListOf<Int>()
     private var dismissed = 0
 
     @Test
@@ -62,6 +63,17 @@ class RequestActionsSheetConfirmTest {
 
         assertEquals(listOf(true), declined)
         assertEquals(1, dismissed)
+    }
+
+    @Test
+    fun `confirming Clear data keeps the sheet open, so its progress shows`() {
+        setSheet(canClearData = true)
+
+        click(R.string.media_clear_data)
+        confirm(R.string.media_clear_data)
+
+        assertEquals(listOf(MEDIA_ID), cleared)
+        assertEquals(0, dismissed)
     }
 
     @Test
@@ -211,6 +223,7 @@ class RequestActionsSheetConfirmTest {
         filesDeletion: FilesDeletion? = null,
         item: RequestItem = heat(),
         canDeleteFiles: Boolean = true,
+        canClearData: Boolean = false,
     ) {
         composeTestRule.setContent {
             BingeExpressiveTheme(dynamicColor = false) {
@@ -238,13 +251,13 @@ class RequestActionsSheetConfirmTest {
                                     ),
                                 ),
                             canSetStatus = false,
-                            canClearData = false,
+                            canClearData = canClearData,
                             canDeleteFiles = canDeleteFiles,
                         ),
                     mediaActions =
                         ManageMediaActions(
                             onSetStatus = { _, _, _ -> },
-                            onClearData = {},
+                            onClearData = { cleared += it },
                             onDeleteFiles = { id, is4k, requestIds -> deleted += Triple(id, is4k, requestIds) },
                         ),
                     requests = requests,
