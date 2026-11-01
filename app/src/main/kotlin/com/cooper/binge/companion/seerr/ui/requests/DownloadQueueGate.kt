@@ -10,6 +10,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * Whether an empty download queue means nothing is downloading. Seerr fills the queue only from a Radarr or
@@ -47,7 +48,9 @@ data class DownloadQueueGate(
 
 /**
  * The [DownloadQueueGate] for the connected server, read from its services settings and kept for a minute so a
- * list and a detail page opened together ask once. A different server, or a read that failed, is not kept.
+ * list and a detail page opened together ask once. A read that failed is kept for a few seconds as "unknown", so a
+ * list of rows, each asking in turn, is one failed read and not one per row. A different server is never answered
+ * from what was kept for another.
  */
 @Singleton
 class DownloadQueueGates
@@ -62,6 +65,7 @@ class DownloadQueueGates
             val server: String,
             val at: Long,
             val gate: DownloadQueueGate,
+            val maxAge: Duration,
         )
 
         @Volatile
@@ -71,7 +75,7 @@ class DownloadQueueGates
             val admin = attempt { connection.recentAuthenticatedUser() }.getOrNull().toPermissions().isAdmin
             if (!admin) return DownloadQueueGate.Unknown
             val server = attempt { connection.current().baseUrl }.getOrNull() ?: return DownloadQueueGate.Unknown
-            kept?.takeIf { it.server == server && clock() - it.at < MAX_AGE.inWholeMilliseconds }?.let { return it.gate }
+            kept?.takeIf { it.server == server && clock() - it.at < it.maxAge.inWholeMilliseconds }?.let { return it.gate }
             val read =
                 attempt {
                     val api = connection.api()
@@ -81,13 +85,14 @@ class DownloadQueueGates
                         DownloadQueueGate.from(radarr.await(), sonarr.await())
                     }
                 }
-            return read
-                .onSuccess { kept = Kept(server, clock(), it) }
-                .getOrDefault(DownloadQueueGate.Unknown)
+            val gate = read.getOrDefault(DownloadQueueGate.Unknown)
+            kept = Kept(server, clock(), gate, if (read.isSuccess) MAX_AGE else FAILURE_MAX_AGE)
+            return gate
         }
 
         private companion object {
             val MAX_AGE: Duration = 1.minutes
+            val FAILURE_MAX_AGE: Duration = 15.seconds
         }
     }
 
