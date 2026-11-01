@@ -39,7 +39,10 @@ interface AnalyticsClient {
 
     fun optOut()
 
-    fun screen(name: String)
+    fun screen(
+        name: String,
+        properties: Map<String, Any> = emptyMap(),
+    )
 
     fun event(
         name: String,
@@ -55,7 +58,10 @@ class PostHogClient(
 
     override fun optOut() = postHog.optOut()
 
-    override fun screen(name: String) = postHog.screen(name)
+    override fun screen(
+        name: String,
+        properties: Map<String, Any>,
+    ) = postHog.screen(name, properties.ifEmpty { null })
 
     override fun event(
         name: String,
@@ -77,6 +83,7 @@ class PostHogAnalytics
     constructor(
         private val client: AnalyticsClient?,
         private val gate: AnalyticsConsentGate,
+        private val demo: DemoSession,
         @ApplicationScope scope: CoroutineScope,
     ) : Analytics {
         private val lock = Any()
@@ -89,6 +96,7 @@ class PostHogAnalytics
             if (client != null) {
                 scope.launch {
                     gate.awaitRead()
+                    demo.awaitRead()
                     release()
                 }
             }
@@ -115,7 +123,7 @@ class PostHogAnalytics
             properties: Map<String, Any>,
         ) {
             if (client == null || !gate.isGranted) return
-            client.event(name, properties)
+            client.event(name, marked(properties))
         }
 
         private fun release() {
@@ -128,12 +136,17 @@ class PostHogAnalytics
         }
 
         private fun send(name: String) {
-            if (gate.isGranted) client?.screen(name)
+            if (gate.isGranted) client?.screen(name, marked(emptyMap()))
         }
+
+        /** Adds [DEMO_PROPERTY] while the saved connection is the demo, so analytics can leave those sessions out. */
+        private fun marked(properties: Map<String, Any>): Map<String, Any> =
+            if (demo.isDemo) properties + (DEMO_PROPERTY to true) else properties
 
         private companion object {
             /** A cold start shows one or two screens before the read lands; this only bounds a stuck read. */
             const val MAX_HELD_SCREENS = 10
+            const val DEMO_PROPERTY = "demo"
         }
     }
 

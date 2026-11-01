@@ -6,10 +6,12 @@ import com.cooper.binge.companion.seerr.telemetry.Analytics
 import com.cooper.binge.companion.seerr.telemetry.AnalyticsClient
 import com.cooper.binge.companion.seerr.telemetry.CrashBreadcrumbs
 import com.cooper.binge.companion.seerr.telemetry.CrashCollection
+import com.cooper.binge.companion.seerr.telemetry.DemoSession
 import com.cooper.binge.companion.seerr.telemetry.FirebaseCrashBreadcrumbs
 import com.cooper.binge.companion.seerr.telemetry.FirebaseCrashCollection
 import com.cooper.binge.companion.seerr.telemetry.PostHogAnalytics
 import com.cooper.binge.companion.seerr.telemetry.PostHogClient
+import com.cooper.binge.companion.seerr.telemetry.SavedConnectionDemoSession
 import com.cooper.binge.companion.seerr.telemetry.postHogConfig
 import com.posthog.android.PostHogAndroid
 import com.posthog.android.PostHogAndroidConfig
@@ -27,6 +29,9 @@ import javax.inject.Singleton
 abstract class TelemetryModule {
     @Binds
     abstract fun analytics(impl: PostHogAnalytics): Analytics
+
+    @Binds
+    abstract fun demoSession(impl: SavedConnectionDemoSession): DemoSession
 
     @Binds
     abstract fun crashCollection(impl: FirebaseCrashCollection): CrashCollection
