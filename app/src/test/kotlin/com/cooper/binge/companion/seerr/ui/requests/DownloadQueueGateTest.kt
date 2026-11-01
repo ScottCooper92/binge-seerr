@@ -113,13 +113,16 @@ class DownloadQueueGateTest {
         }
 
     @Test
-    fun `a failed read is unknown and is asked again`() =
+    fun `a failed read is unknown, kept for a few seconds so a list asks once, and then asked again`() =
         runTest {
             settingsStatus = 500
-            val gates = gates()
-            assertEquals(DownloadQueueGate.Unknown, gates.current())
+            var now = 0L
+            val gates = gates().also { it.clock = { now } }
+            repeat(5) { assertEquals(DownloadQueueGate.Unknown, gates.current()) }
+            assertEquals("five rows ask once", 1, settingsReads())
 
             settingsStatus = 200
+            now += 16_000
             assertEquals(DownloadQueueGate(movies = true, tv = true), gates.current())
         }
 
