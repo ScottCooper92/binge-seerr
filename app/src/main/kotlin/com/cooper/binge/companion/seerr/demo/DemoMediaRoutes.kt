@@ -13,11 +13,16 @@ internal fun DemoData.mediaRoutes(): List<DemoRoute> =
         route("DELETE", "media", "{}") { _, (id) -> withMedia(id) { forget(it).let { done } } },
         route("DELETE", "media", "{}", "file") { _, (id) -> withMedia(id) { deleteFiles(it) } },
         route("GET", "media", "{}", "watch_data") { _, _ -> demoNotFound },
-        route("GET", "service", "radarr") { _, _ -> ok(demoServers("Demo Radarr")) },
-        route("GET", "service", "sonarr") { _, _ -> ok(demoServers("Demo Sonarr")) },
-        route("GET", "service", "radarr", "{}") { _, _ -> ok(demoServerDetails("Demo Radarr")) },
-        route("GET", "service", "sonarr", "{}") { _, _ -> ok(demoServerDetails("Demo Sonarr")) },
+        route("GET", "service", "radarr") { _, _ -> ok(demoServers("radarr")) },
+        route("GET", "service", "sonarr") { _, _ -> ok(demoServers("sonarr")) },
+        route("GET", "service", "radarr", "{}") { _, (id) -> serverDetails("radarr", id) },
+        route("GET", "service", "sonarr", "{}") { _, (id) -> serverDetails("sonarr", id) },
     )
+
+private fun DemoData.serverDetails(
+    service: String,
+    id: String,
+): DemoAnswer = id.toIntOrNull()?.let { demoServerDetails(service, it) }?.let { ok(it) } ?: demoNotFound
 
 private fun DemoData.withMedia(
     id: String,
