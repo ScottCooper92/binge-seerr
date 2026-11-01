@@ -252,12 +252,7 @@ private fun TvShellSheet(
     closer.ReportDisposal()
     BackHandler(enabled = !overlayOpen, onBack = closer::close)
     CompositionLocalProvider(LocalTvHostedAsOverlay provides true) {
-        HandBackHost(
-            entry = remember { FocusRequester() },
-            active = true,
-            modifier = Modifier.tvExitFocusGroup { closer.trapping },
-            content = content,
-        )
+        HandBackHost(entry = remember { FocusRequester() }, active = true, modifier = Modifier.tvExitFocusGroup(), content = content)
     }
 }
 
