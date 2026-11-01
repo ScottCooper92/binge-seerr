@@ -152,8 +152,8 @@ private fun ModerationEvent.failureReason(): String? =
 
 /**
  * Writes what the server now says into the cache every list reads, so each one updates without being told (#1665):
- * the request's own status, or its removal when the server no longer has it, and the chip counts. Best effort, and
- * after the result is reported so a slow read holds nothing up.
+ * the request's own status, or its removal when the server no longer has it, and the chip counts. Best effort. It runs
+ * before or after the result is reported, as the caller's `syncFirst` says.
  */
 private suspend fun SeerrConnection.syncInto(
     cache: RequestStore,
