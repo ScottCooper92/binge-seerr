@@ -49,10 +49,13 @@ suspend fun SeerrRequestDto.toRequestItem(
 /** The media's status for the version this request asked for: the 4K one for a 4K request, the regular one otherwise. */
 internal fun SeerrRequestDto.mediaStatusOfRequestedVersion(): SeerrMediaStatusCode? = if (is4k) media.status4k else media.status
 
-/** What the download client is doing for one version, from the queue Seerr reports for it. */
-internal fun List<SeerrDownloadStatusDto>.downloadActivity(): DownloadActivity =
+/**
+ * What the download client is doing for one version, from the queue Seerr reports for it. [queueTracked] is whether
+ * an empty queue can be trusted to be empty; without it, an empty queue claims nothing.
+ */
+internal fun List<SeerrDownloadStatusDto>.downloadActivity(queueTracked: Boolean = false): DownloadActivity =
     when {
-        isEmpty() -> DownloadActivity.None
+        isEmpty() -> if (queueTracked) DownloadActivity.None else DownloadActivity.Untracked
         isDownloading(downloadFraction()) -> DownloadActivity.Downloading
         else -> DownloadActivity.Queued
     }

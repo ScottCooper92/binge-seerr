@@ -17,7 +17,7 @@ data class SeasonState(
     val name: String?,
     val episodeCount: Int?,
     val status: SeerrMediaStatusCode?,
-    val download: DownloadActivity = DownloadActivity.None,
+    val download: DownloadActivity = DownloadActivity.Untracked,
 )
 
 /** Where the request was sent, named where the server's service lists still know the ids. */
@@ -63,7 +63,7 @@ data class SeasonChoice(
     val selected: Boolean,
     val heldStatus: SeerrMediaStatusCode? = null,
     /** The version's download queue, which is what a held `Processing` season's chip reads. */
-    val heldDownload: DownloadActivity = DownloadActivity.None,
+    val heldDownload: DownloadActivity = DownloadActivity.Untracked,
 ) {
     val locked: Boolean get() = heldStatus != null
 }
@@ -126,7 +126,7 @@ data class MediaInstance(
     val watch: WatchStats?,
     /** What deleting the instance's files from this page came to; null until it was tried. */
     val filesDeletion: FilesDeletion? = null,
-    val download: DownloadActivity = DownloadActivity.None,
+    val download: DownloadActivity = DownloadActivity.Untracked,
 )
 
 /** How a deletion of an instance's files from the page ended, shown in place of its delete row while the page stays. */

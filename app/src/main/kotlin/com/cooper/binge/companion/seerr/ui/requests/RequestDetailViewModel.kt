@@ -60,6 +60,7 @@ class RequestDetailViewModel
         private val crashBreadcrumbs: CrashBreadcrumbs = NoOpCrashBreadcrumbs,
         private val cache: RequestStore = NoRequestStore,
         private val minuteTicker: Ticker = Ticker(),
+        private val queueGates: DownloadQueueGates = DownloadQueueGates(connection),
     ) : ViewModel() {
         private val state = MutableStateFlow<RequestDetailUiState>(RequestDetailUiState.Loading)
 
@@ -319,6 +320,7 @@ class RequestDetailViewModel
                     details = sources.details,
                     canEditDestination = sources.canEditDestination,
                     seasonsEditable = sources.seasonsEditable,
+                    queueGate = sources.queueGate,
                 )
             return sources.toDetail()
         }
@@ -337,6 +339,7 @@ class RequestDetailViewModel
                 val dto = api.request(requestId)
                 val details = async { attempt { api.details(dto.media.mediaType, dto.media.tmdbId) }.getOrNull() }
                 val destination = async { dto.destination(api) }
+                val queueGate = async { queueGates.current() }
                 val watch =
                     async {
                         val mediaId = dto.media.id
@@ -356,6 +359,7 @@ class RequestDetailViewModel
                     destination = destination.await(),
                     watch = watch.await(),
                     webRoot = connection.current().baseUrl,
+                    queueGate = queueGate.await(),
                 )
             }
 

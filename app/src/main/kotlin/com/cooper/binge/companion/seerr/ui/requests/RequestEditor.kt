@@ -36,6 +36,7 @@ class EditSource(
     val details: SeerrMediaDetailsDto?,
     val canEditDestination: Boolean,
     val seasonsEditable: Boolean = true,
+    val queueGate: DownloadQueueGate = DownloadQueueGate.Unknown,
 )
 
 /** What a screen may ask of a [RequestEditor]: its actions, and none of its flows (#1048). */
@@ -213,7 +214,9 @@ private fun SeerrRequestDto.destination(): DestinationChoices =
 private fun EditSource.seasonChoices(): List<SeasonChoice> {
     val details = details ?: return emptyList()
     val requested = request.seasons.map { it.seasonNumber }.toSet()
-    val download = (if (request.is4k) request.media.downloadStatus4k else request.media.downloadStatus).downloadActivity()
+    val download =
+        (if (request.is4k) request.media.downloadStatus4k else request.media.downloadStatus)
+            .downloadActivity(queueGate.sees(request.media.mediaType))
     return details.seasons
         .filter { it.seasonNumber >= FIRST_SEASON && it.episodeCount > 0 }
         .map { season ->

@@ -122,6 +122,12 @@ class RequestDetailScreenshotTest {
     @Composable
     fun approvedNotDownloading() = Frame(notDownloadingDetail())
 
+    /** The same title where Seerr's queue may not be tracked (#1733): plain "Approved", and no advice about stuck downloads. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun approvedUntracked() = Frame(untrackedDetail())
+
     /** A row a list already had, before the fetch lands (#1053): its hero over the loading body. */
     @PreviewTest
     @SeerrScreenStatePreview

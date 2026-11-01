@@ -41,6 +41,15 @@ class RequestStateChipTest {
         )
     }
 
+    /** With Enable Scan off Seerr's queue is always empty, so an empty queue is no reason to say nothing is downloading (#1733). */
+    @Test
+    fun `a processing title whose queue may not be tracked reads plain approved`() {
+        assertEquals(
+            MediaStateLabel(R.string.request_state_approved, RequestStateTone.Pending),
+            SeerrMediaStatusCode.Processing.stateLabel(DownloadActivity.Untracked),
+        )
+    }
+
     @Test
     fun `a download never changes a state that is not processing`() {
         DownloadActivity.entries.forEach { download ->

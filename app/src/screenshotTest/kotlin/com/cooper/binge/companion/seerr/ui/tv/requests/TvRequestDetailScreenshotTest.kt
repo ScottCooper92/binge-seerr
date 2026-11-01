@@ -84,14 +84,23 @@ private fun seriesDetail(): RequestDetail =
     )
 
 /**
- * The same show approved with nothing downloading (#1719): its files were deleted, or nothing was ever grabbed. The hero and
- * the season read "Approved · not downloading", not Downloading.
+ * The same show approved with nothing downloading (#1719), in a queue known to be tracked: its files were deleted, or nothing
+ * was ever grabbed. The hero and the season read "Approved · not downloading", not Downloading.
  */
 private fun notDownloadingDetail(): RequestDetail =
+    untrackedDetail().let { untracked ->
+        untracked.copy(
+            item = untracked.item.copy(queueTracked = true),
+            seasons = untracked.seasons.map { it.copy(download = DownloadActivity.None) },
+        )
+    }
+
+/** The same show where the queue may not be tracked (#1733): the hero and the season read plain "Approved". */
+private fun untrackedDetail(): RequestDetail =
     seriesDetail().let { series ->
         series.copy(
             item = series.item.copy(download = null),
-            seasons = series.seasons.map { it.copy(download = DownloadActivity.None) },
+            seasons = series.seasons.map { it.copy(download = DownloadActivity.Untracked) },
             downloads = emptyList(),
         )
     }
@@ -178,6 +187,18 @@ class TvRequestDetailScreenshotTest {
     fun ApprovedNotDownloading() {
         TvRequestDetailScreen(
             state = RequestDetailUiState.Ready(notDownloadingDetail()),
+            events = emptyFlow(),
+            actions = actions(onOpenInBinge = {}),
+        )
+    }
+
+    /** Processing where the queue may not be tracked (#1733): the hero and season two's card read plain "Approved". */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun ApprovedUntracked() {
+        TvRequestDetailScreen(
+            state = RequestDetailUiState.Ready(untrackedDetail()),
             events = emptyFlow(),
             actions = actions(onOpenInBinge = {}),
         )

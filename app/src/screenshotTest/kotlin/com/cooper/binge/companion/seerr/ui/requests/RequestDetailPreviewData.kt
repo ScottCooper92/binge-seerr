@@ -2,6 +2,7 @@ package com.cooper.binge.companion.seerr.ui.requests
 
 import com.cooper.binge.companion.seerr.seerr.SeerrMediaStatusCode
 import com.cooper.binge.companion.seerr.seerr.SeerrRequestStatusCode
+import com.cooper.binge.companion.seerr.ui.state.DownloadActivity
 
 private const val REQUESTED_AT_MILLIS = 1_759_000_000_000L
 private const val UPDATED_AT_MILLIS = 1_759_500_000_000L
@@ -109,10 +110,22 @@ internal fun partiallyAvailablePendingSeasonDetail(): RequestDetail =
     )
 
 /**
- * Approved, but processing with nothing in the queue (#1719): the chip reads "Approved · not downloading" and the headline
- * says why it may be stuck. Trimmed of the watch facts so the season row stays in the frame.
+ * Approved, but processing with nothing in a queue known to be tracked (#1719): the chip reads "Approved · not downloading"
+ * and the headline says why it may be stuck. Trimmed of the watch facts so the season row stays in the frame.
  */
 internal fun notDownloadingDetail(): RequestDetail =
+    untrackedDetail().let { untracked ->
+        untracked.copy(
+            item = untracked.item.copy(queueTracked = true),
+            seasons = untracked.seasons.map { it.copy(download = DownloadActivity.None) },
+        )
+    }
+
+/**
+ * The same title where the queue may not be tracked (#1733): Enable Scan is off, or the viewer cannot read it. The chip reads
+ * plain "Approved" and there is no advice line, because an empty queue says nothing about downloads.
+ */
+internal fun untrackedDetail(): RequestDetail =
     detail(
         actions = RequestActions(canRemove = true, canBlock = true),
         status = SeerrRequestStatusCode.Approved,

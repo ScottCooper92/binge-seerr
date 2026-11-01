@@ -27,11 +27,13 @@ import com.cooper.binge.companion.seerr.seerr.toSeerrError
 import com.cooper.binge.companion.seerr.ui.Ticker
 import com.cooper.binge.companion.seerr.ui.hub.toHubQuota
 import com.cooper.binge.companion.seerr.ui.minuteClock
+import com.cooper.binge.companion.seerr.ui.requests.DownloadQueueGates
 import com.cooper.binge.companion.seerr.ui.requests.REQUESTS_PAGE_SIZE
 import com.cooper.binge.companion.seerr.ui.requests.RequestItem
 import com.cooper.binge.companion.seerr.ui.requests.toRequestEntity
 import com.cooper.binge.companion.seerr.ui.requests.toRequestItem
 import com.cooper.binge.companion.seerr.ui.requests.toRequestMediaTypeOrNull
+import com.cooper.binge.companion.seerr.ui.requests.withQueueFrom
 import com.cooper.binge.companion.seerr.ui.users.settings.mayOpenSettings
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
@@ -88,6 +90,7 @@ class UserDetailViewModel
         @Assisted private val userId: Int,
         private val minuteTicker: Ticker = Ticker(),
         private val settingsChanges: UserSettingsChanges = UserSettingsChanges(),
+        private val queueGates: DownloadQueueGates = DownloadQueueGates(connection),
     ) : ViewModel() {
         private val state = MutableStateFlow<UserDetailUiState>(UserDetailUiState.Loading)
         val uiState: StateFlow<UserDetailUiState> = state.asStateFlow()
@@ -115,7 +118,7 @@ class UserDetailViewModel
                                 },
                         ) { requestStore.pagingSource(query.listKey) }
                             .flow
-                            .map { data -> data.map { it.toRequestItem() } }
+                            .map { data -> data.map { it.toRequestItem().withQueueFrom(queueGates) } }
                     } else {
                         flowOf(PagingData.empty<RequestItem>(sourceLoadStates = FINISHED))
                     }
