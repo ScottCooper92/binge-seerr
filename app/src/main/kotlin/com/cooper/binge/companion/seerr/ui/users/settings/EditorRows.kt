@@ -209,8 +209,9 @@ internal fun TextSettingContent(
             header = { hint?.let { SheetHint(it) } },
             submitEnabled = problem == null,
             error = problem.takeIf { draft.isNotEmpty() },
-            minLines = if (multiline) MULTILINE_MIN else 1,
-            maxLines = if (multiline) MULTILINE_MAX else 1,
+            singleLine = !multiline,
+            minLines = MULTILINE_MIN,
+            maxLines = MULTILINE_MAX,
             keyboardOptions = keyboard,
             modifier = modifier.imePadding(),
         )
