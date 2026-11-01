@@ -366,6 +366,19 @@ class TvRequestDetailScreenshotTest {
         )
     }
 
+    /** A Remove or Decline in flight (#1784): the line under the row says it is working, and the row above does not move. */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun ActionSaving() {
+        TvRequestDetailScreen(
+            state = RequestDetailUiState.Ready(seriesDetail()),
+            events = emptyFlow(),
+            actions = actions(onOpenInBinge = {}),
+            initialStatus = SaveStatus.Saving,
+        )
+    }
+
     /** An approval that landed: "Saved" under the action row, which clears once it has been read (#1519). */
     @PreviewTest
     @SeerrTvScreenPreviews
