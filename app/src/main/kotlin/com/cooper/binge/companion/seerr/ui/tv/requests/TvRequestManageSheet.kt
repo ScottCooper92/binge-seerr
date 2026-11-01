@@ -14,6 +14,7 @@ import com.binge.designsystem.tv.component.TvSideSheetRow
 import com.binge.designsystem.tv.component.TvSideSheetRows
 import com.binge.designsystem.tv.component.TvSideSheetStack
 import com.binge.designsystem.tv.component.TvSideSheetTitle
+import com.binge.designsystem.tv.focus.TvOverlayCloser
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.requests.RequestItem
 
@@ -32,11 +33,12 @@ internal fun TvRequestManageSheet(
     managed: List<TvRequestActionItem>,
     actions: TvRequestDetailActions,
     onOpenPage: (DetailSheet) -> Unit,
-    onDismiss: () -> Unit,
+    closer: TvOverlayCloser,
     page: @Composable ColumnScope.(step: DetailSheet, entryFocus: FocusRequester, pop: () -> Unit) -> Unit,
 ) {
+    val onDismiss = closer::close
     var confirming by rememberSaveable { mutableStateOf<DetailSheet?>(null) }
-    TvSideSheetStack(root = MANAGE_PAGE_ROOT, onDismissRequest = onDismiss) { nav ->
+    TvSideSheetStack(root = MANAGE_PAGE_ROOT, onDismissRequest = onDismiss, closer = closer) { nav ->
         val step = DetailSheet.entries.firstOrNull { it.name == nav.page }
         if (step == null) {
             TvRequestManageStep(managed, rowModifier = { nav.row(it.name) }) { item ->

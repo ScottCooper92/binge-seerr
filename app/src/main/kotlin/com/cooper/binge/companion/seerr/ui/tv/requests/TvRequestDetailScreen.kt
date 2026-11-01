@@ -18,6 +18,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.tv.material3.MaterialTheme
 import com.binge.designsystem.SaveStatus
 import com.binge.designsystem.tv.component.TvCardRow
+import com.binge.designsystem.tv.focus.TvOverlayCloser
 import com.binge.designsystem.tv.focus.rememberTvOverlayCloser
 import com.binge.designsystem.tv.template.TvDetailPage
 import com.binge.designsystem.tv.template.TvPageHosting
@@ -239,7 +240,7 @@ private fun TvRequestDetailContent(
     val open = sheet
     when {
         open != null -> TvRequestDetailSheet(TvDetailSheetHost(open, closers.getValue(open)), pageHost)
-        manageOpen -> ManageStack(plan.managed, pageHost, openPage, manageCloser::close)
+        manageOpen -> ManageStack(plan.managed, pageHost, openPage, manageCloser)
     }
 }
 
@@ -265,14 +266,14 @@ private fun ManageStack(
     managed: List<TvRequestActionItem>,
     pageHost: TvDetailPageHost,
     openPage: (DetailSheet) -> Unit,
-    onDismiss: () -> Unit,
+    closer: TvOverlayCloser,
 ) {
     TvRequestManageSheet(
         item = pageHost.content.item,
         managed = managed,
         actions = pageHost.actions,
         onOpenPage = openPage,
-        onDismiss = onDismiss,
+        closer = closer,
     ) { step, entryFocus, pop ->
         TvRequestDetailPage(step, pageHost, entryFocus, onEditClosed = pop)
     }
