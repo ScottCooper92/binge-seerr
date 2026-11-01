@@ -18,13 +18,6 @@ interface DemoSession {
     suspend fun awaitRead()
 }
 
-/** For a call site with no connection to read: never the demo, and already read. */
-object NoDemoSession : DemoSession {
-    override val isDemo: Boolean = false
-
-    override suspend fun awaitRead() = Unit
-}
-
 /** [DemoSession] followed from the saved connection. */
 @Singleton
 class SavedConnectionDemoSession
