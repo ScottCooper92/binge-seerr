@@ -3,7 +3,6 @@ package com.cooper.binge.companion.seerr.ui.tv
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasText
-import androidx.compose.ui.test.isFocusable
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -12,6 +11,7 @@ import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.SetupActions
 import com.cooper.binge.companion.seerr.ui.SetupUiState
 import com.cooper.binge.companion.seerr.util.createSeerrKeyboardAndroidComposeRule
+import com.cooper.binge.companion.seerr.util.isFocusableLeaf
 import com.cooper.binge.companion.seerr.util.string
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -90,5 +90,5 @@ class TvSetupAddressPageTest {
     }
 
     private fun button(label: Int) =
-        composeTestRule.onNode((hasText(string(label)) or hasAnyDescendant(hasText(string(label)))) and isFocusable())
+        composeTestRule.onNode((hasText(string(label)) or hasAnyDescendant(hasText(string(label)))) and isFocusableLeaf())
 }

@@ -7,7 +7,6 @@ import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
-import androidx.compose.ui.test.isFocusable
 import androidx.compose.ui.test.performKeyInput
 import androidx.compose.ui.test.pressKey
 import androidx.compose.ui.test.requestFocus
@@ -18,6 +17,7 @@ import com.cooper.binge.companion.seerr.ui.requests.RequestDetailUiState
 import com.cooper.binge.companion.seerr.ui.tv.requests.TvRequestDetailActions
 import com.cooper.binge.companion.seerr.ui.tv.requests.TvRequestDetailScreen
 import com.cooper.binge.companion.seerr.util.createSeerrKeyboardAndroidComposeRule
+import com.cooper.binge.companion.seerr.util.isFocusableLeaf
 import com.cooper.binge.companion.seerr.util.requestDetail
 import com.cooper.binge.companion.seerr.util.string
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -77,7 +77,9 @@ class TvRequestDetailMediaServerTest {
 
         val label = openIn("Jellyfin")
         val button =
-            composeTestRule.onNode(isFocusable() and (hasContentDescription(label) or hasText(label) or hasAnyDescendant(hasText(label))))
+            composeTestRule.onNode(
+                isFocusableLeaf() and (hasContentDescription(label) or hasText(label) or hasAnyDescendant(hasText(label))),
+            )
         button.requestFocus()
         button.assertIsFocused()
         button.performKeyInput { pressKey(Key.DirectionCenter) }

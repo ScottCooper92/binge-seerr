@@ -14,7 +14,6 @@ import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
-import androidx.compose.ui.test.isFocusable
 import androidx.compose.ui.test.performKeyInput
 import androidx.compose.ui.test.pressKey
 import androidx.compose.ui.test.requestFocus
@@ -30,6 +29,7 @@ import com.cooper.binge.companion.seerr.ui.tv.issues.TvIssueSheet
 import com.cooper.binge.companion.seerr.ui.tv.issues.TvIssueSheetActions
 import com.cooper.binge.companion.seerr.ui.tv.issues.sampleIssueSheetState
 import com.cooper.binge.companion.seerr.util.createSeerrKeyboardAndroidComposeRule
+import com.cooper.binge.companion.seerr.util.isFocusableLeaf
 import com.cooper.binge.companion.seerr.util.string
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -322,23 +322,23 @@ class TvIssueSheetFocusTest {
 
     private fun card(text: String) =
         composeTestRule.onNode(
-            isFocusable() and hasText(text, substring = true) and !hasAnyAncestor(isDialog()),
+            isFocusableLeaf() and hasText(text, substring = true) and !hasAnyAncestor(isDialog()),
         )
 
     private fun row(label: Int) =
         composeTestRule.onNode(
-            isFocusable() and (hasText(string(label)) or hasAnyDescendant(hasText(string(label)))),
+            isFocusableLeaf() and (hasText(string(label)) or hasAnyDescendant(hasText(string(label)))),
         )
 
     private fun button(label: Int) = button(string(label))
 
     private fun button(label: String) =
-        composeTestRule.onNode(isFocusable() and (hasContentDescription(label) or hasText(label) or hasAnyDescendant(hasText(label))))
+        composeTestRule.onNode(isFocusableLeaf() and (hasContentDescription(label) or hasText(label) or hasAnyDescendant(hasText(label))))
 
     /** Presses the confirm answer on the open dialog, not the row or button of the same name that opened it. */
     private fun confirm(label: Int) {
         composeTestRule
-            .onAllNodes(hasText(string(label)) and isFocusable())
+            .onAllNodes(hasText(string(label)) and isFocusableLeaf())
             .filterToOne(hasAnyAncestor(isDialog()))
             .requestFocus()
             .performKeyInput { pressKey(Key.DirectionCenter) }

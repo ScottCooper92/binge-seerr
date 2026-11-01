@@ -5,7 +5,6 @@ import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
-import androidx.compose.ui.test.isFocusable
 import androidx.compose.ui.test.isRoot
 import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.onNodeWithText
@@ -25,6 +24,7 @@ import com.cooper.binge.companion.seerr.ui.requests.RequestDetailUiState
 import com.cooper.binge.companion.seerr.ui.tv.requests.TvRequestDetailActions
 import com.cooper.binge.companion.seerr.ui.tv.requests.TvRequestDetailScreen
 import com.cooper.binge.companion.seerr.util.createSeerrKeyboardAndroidComposeRule
+import com.cooper.binge.companion.seerr.util.isFocusableLeaf
 import com.cooper.binge.companion.seerr.util.requestDetail
 import com.cooper.binge.companion.seerr.util.string
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -94,7 +94,7 @@ class TvRequestDetailActionStatusTest {
 
     private fun actionButton(label: Int) =
         composeTestRule.onNode(
-            isFocusable() and
+            isFocusableLeaf() and
                 (hasContentDescription(string(label)) or hasText(string(label)) or hasAnyDescendant(hasText(string(label)))),
         )
 
@@ -105,7 +105,7 @@ class TvRequestDetailActionStatusTest {
 
     private fun pressRetryOnTheLine() {
         // The line comes after the action row, and an action may share the word.
-        composeTestRule.onAllNodes(hasText(string(DesR.string.save_status_retry)) and isFocusable()).onLast().requestFocus()
+        composeTestRule.onAllNodes(hasText(string(DesR.string.save_status_retry)) and isFocusableLeaf()).onLast().requestFocus()
         composeTestRule.waitForIdle()
         press()
     }
@@ -125,7 +125,7 @@ class TvRequestDetailActionStatusTest {
         composeTestRule.waitForIdle()
         press()
         if (confirmLabel != null) {
-            composeTestRule.onAllNodes(hasText(string(confirmLabel)) and isFocusable()).onLast().requestFocus()
+            composeTestRule.onAllNodes(hasText(string(confirmLabel)) and isFocusableLeaf()).onLast().requestFocus()
             composeTestRule.waitForIdle()
             press()
         }
