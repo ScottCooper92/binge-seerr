@@ -21,6 +21,7 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.Constraints
+import com.binge.companion.sdk.attempt
 import com.binge.designsystem.tv.component.TvButton
 import com.binge.designsystem.tv.component.TvCheckboxRow
 import com.binge.designsystem.tv.component.TvTabRow
@@ -29,7 +30,6 @@ import com.binge.designsystem.tv.component.TvTextField
 import com.binge.designsystem.tv.focus.TvArrivalFocus
 import com.binge.designsystem.tv.focus.TvArrivalFocusEffect
 import com.binge.designsystem.tv.focus.rememberTvArrivalFocus
-import com.binge.designsystem.tv.focus.restoreTvOverlayFocus
 import com.binge.designsystem.tv.focus.tvArrivalTarget
 import com.binge.designsystem.tv.theme.TvButtonStyle
 import com.cooper.binge.companion.seerr.R
@@ -123,7 +123,7 @@ private fun InspectionEndFocusEffect(
             inspected = true
         } else if (inspected) {
             inspected = false
-            restoreTvOverlayFocus(arrival.requester)
+            attempt { arrival.requester.requestFocus() }
         }
     }
 }

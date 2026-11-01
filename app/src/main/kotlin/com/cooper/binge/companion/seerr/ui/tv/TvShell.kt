@@ -32,9 +32,9 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.tv.material3.MaterialTheme
+import com.binge.companion.sdk.attempt
 import com.binge.designsystem.tv.focus.TvFocusSink
 import com.binge.designsystem.tv.focus.rememberTvOverlayCloser
-import com.binge.designsystem.tv.focus.restoreTvOverlayFocus
 import com.binge.designsystem.tv.focus.tvExitFocusGroup
 import com.binge.designsystem.tv.nav.LocalTvHostedAsOverlay
 import com.binge.designsystem.tv.nav.LocalTvTabHosted
@@ -210,7 +210,7 @@ private fun TvShellPages(
             }
         }
     }
-    LaunchedEffect(handOffToStart) { if (handOffToStart) restoreTvOverlayFocus(entries.getValue(start)) }
+    LaunchedEffect(handOffToStart) { if (handOffToStart) attempt { entries.getValue(start).requestFocus() } }
     // The overlay hands focus back as a tab page does, so a page closed over it returns to the overlay rather than the tab.
     overlay?.let {
         HandBackHost(entry = overlayEntry, active = !sheetOpen, modifier = Modifier.pageTrap(upToBar)) {
@@ -302,6 +302,6 @@ private fun HandBackHost(
     }
     val sinkHoldsFocus = active && hostHasFocus && !contentHasFocus
     LaunchedEffect(sinkHoldsFocus) {
-        if (sinkHoldsFocus) restoreTvOverlayFocus(entry)
+        if (sinkHoldsFocus) attempt { entry.requestFocus() }
     }
 }
