@@ -38,10 +38,10 @@ import androidx.tv.material3.Icon
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import coil3.compose.AsyncImage
+import com.binge.companion.sdk.attempt
 import com.binge.designsystem.template.ScreenAction
 import com.binge.designsystem.theme.BingeShapes
 import com.binge.designsystem.theme.BingeTheme
-import com.binge.designsystem.tv.focus.restoreTvOverlayFocus
 import com.binge.designsystem.tv.focus.tvClickable
 import com.binge.designsystem.tv.focus.tvFocusIndicator
 import com.binge.designsystem.tv.template.TvHubRowFailure
@@ -245,7 +245,7 @@ internal fun <T : Any> TvPagedGridScreen(
             detailWasOpen = true
         } else if (detailWasOpen) {
             detailWasOpen = false
-            restoreTvOverlayFocus(restoreFocus)
+            attempt { restoreFocus.requestFocus() }
         }
     }
     if (rows.count > 0) {
