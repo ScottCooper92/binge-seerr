@@ -144,15 +144,16 @@ class RequestDetailViewModel
                 moderator.actingIds,
                 reloadingAfterAction,
                 filesDeleted,
-                clearing,
-            ) { page, edit, acting, reloading, deleted, clearingData ->
+            ) { page, edit, acting, reloading, deleted ->
                 (page as? RequestDetailUiState.Ready)
                     ?.copy(
-                        detail = page.detail.withFilesDeleted(deleted).withClearing(clearingData),
+                        detail = page.detail.withFilesDeleted(deleted),
                         edit = edit,
                         isActing = requestId in acting || reloading,
                     )
                     ?: page
+            }.combine(clearing) { page, clearingData ->
+                (page as? RequestDetailUiState.Ready)?.copy(detail = page.detail.withClearing(clearingData)) ?: page
             }.combine(now) { page, now -> (page as? RequestDetailUiState.Ready)?.copy(now = now) ?: page }
                 .stateIn(viewModelScope, SharingStarted.Lazily, RequestDetailUiState.Loading)
 
