@@ -80,9 +80,7 @@ internal fun RequestActionsSheet(
     var blockTitle by rememberSaveable { mutableStateOf(false) }
     var pending by rememberSaveable { mutableStateOf<Pending?>(null) }
     CloseWhenActionLands(actionsLanded, onDismiss)
-    // A failure from before this sheet opened is not this sheet's to show; one of its own tries is.
-    val openedAfter = remember { progress?.takeIf { it.failed }?.attempt }
-    val shown = progress?.takeUnless { it.failed && it.attempt == openedAfter }
+    val shown = rememberOwnProgress(progress)
     BingeAdaptiveSheet(
         kind = BingeSheetKind.Task,
         onDismissRequest = onDismiss,
@@ -263,6 +261,13 @@ private fun RequestConfirm(
         },
         onDismissRequest = { onStep(null) },
     )
+}
+
+/** [progress] without a failure from before this sheet opened: that one is not this sheet's to show, but its own tries are. */
+@Composable
+private fun rememberOwnProgress(progress: ActionProgress?): ActionProgress? {
+    val staleAttempt = remember { progress?.takeIf { it.failed }?.attempt }
+    return progress?.takeUnless { it.failed && it.attempt == staleAttempt }
 }
 
 /**
