@@ -230,7 +230,7 @@ class RequestModerationTest {
             sut.deleteMediaFiles(11, 900, is4k = false, removeRequestIds = emptyList()) { heard += it }
 
             assertEquals(ModerationEvent.Failed(SeerrError.Rejected), failed.await())
-            assertTrue(heard.isEmpty())
+            assertEquals(listOf(FilesDeletion.Failed), heard)
         }
 
     @Test

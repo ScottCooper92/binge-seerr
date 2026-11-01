@@ -308,15 +308,11 @@ class RequestModeration(
         )
 
     /**
-     * Acting is raised before the launch so a second tap is swallowed at once, and cleared as soon as the action settles,
-     * before the refresh and [outcome]'s follow-up. False when an action on the request is already in flight, so this one
-     * was not started; [onSettled] hears how a started one went, before the event does. [done] names the action in logs.
-     *
-     * Launched on [dispatcher] rather than inheriting `scope`'s own, so [onModerated]'s reload and this launch's own state
-     * updates never touch `Dispatchers.Main` - including the tail end of a call still in flight after the screen is gone (#177).
-     * [refusal] names a failure the action reads more precisely than [ModerationEvent.Failed]; null leaves it to that.
-     * [syncFirst] reads the server's state into the cache before the event, for an action whose event takes the user back
-     * to a list, so the list shows the row as it now is (#1777).
+     * Acting is raised before the launch so a second tap is swallowed at once, and cleared as soon as the action settles.
+     * False when an action on the request is already in flight; [onSettled] hears how a started one went, before the event.
+     * Launched on [dispatcher] so [onModerated]'s reload never touches `Dispatchers.Main` (#177). [done] names the action
+     * in logs; [refusal] names a failure more precisely than [ModerationEvent.Failed]. [syncFirst] reads the server's state
+     * into the cache before the event, for an action that takes the user back to a list (#1777).
      */
     private fun act(
         requestId: Int,
@@ -340,9 +336,9 @@ class RequestModeration(
                     onModerated()
                     val event = outcome()
                     analytics.event(AnalyticsEvents.REQUEST_MODERATED, mapOf(AnalyticsEvents.PARAM_ACTION to event.actionLabel()))
-                    if (syncFirst) syncCache(requestId)
+                    if (syncFirst) connection.syncInto(cache, requestId)
                     eventFlow.emit(event)
-                    if (!syncFirst) syncCache(requestId)
+                    if (!syncFirst) connection.syncInto(cache, requestId)
                 }.onFailure {
                     val refused = refusal(it)
                     analytics.operationFailed("moderate_${done.actionLabel()}", it, connection, refused?.failureReason())
@@ -350,21 +346,6 @@ class RequestModeration(
                 }
         }
         return true
-    }
-
-    /**
-     * Writes what the server now says into the cache every list reads, so each one updates without being told (#1665):
-     * the request's own status, or its removal when the server no longer has it, and the chip counts. Best effort, and after the
-     * result is reported so a slow read holds nothing up: one that fails leaves the optimistic write the action made.
-     */
-    private suspend fun syncCache(requestId: Int) {
-        attempt { connection.api().request(requestId) }.fold(
-            onSuccess = { cache.updateServerState(requestId, it.status?.raw, it.mediaStatusOfRequestedVersion()?.raw) },
-            onFailure = { if ((it as? HttpException)?.code() == HTTP_NOT_FOUND) cache.delete(requestId) },
-        )
-        attempt { connection.api().requestCount() }.onSuccess {
-            cache.setCounts(RequestCounts(it.total, it.pending, it.approved, it.processing, it.available))
-        }
     }
 
     /** Blocks the title alone, leaving the request as it is; the owner refreshes what it shows on success. */
@@ -378,7 +359,7 @@ class RequestModeration(
             val event = if (blocked) ModerationEvent.Blocked else ModerationEvent.BlockFailed
             analytics.event(AnalyticsEvents.REQUEST_MODERATED, mapOf(AnalyticsEvents.PARAM_ACTION to event.actionLabel()))
             eventFlow.emit(event)
-            if (blocked) syncCache(item.id)
+            if (blocked) connection.syncInto(cache, item.id)
         }
     }
 
@@ -397,3 +378,21 @@ class RequestModeration(
 /** The [AnalyticsEvents.PARAM_REASON] a refusal adds to its failure report, so it reads apart from a real conflict. */
 private fun ModerationEvent.failureReason(): String? =
     AnalyticsEvents.REASON_NO_DEFAULT_SERVICE.takeIf { this == ModerationEvent.MediaFilesNoDefaultServer }
+
+/**
+ * Writes what the server now says into the cache every list reads, so each one updates without being told (#1665):
+ * the request's own status, or its removal when the server no longer has it, and the chip counts. Best effort, and
+ * after the result is reported so a slow read holds nothing up.
+ */
+private suspend fun SeerrConnection.syncInto(
+    cache: RequestStore,
+    requestId: Int,
+) {
+    attempt { api().request(requestId) }.fold(
+        onSuccess = { cache.updateServerState(requestId, it.status?.raw, it.mediaStatusOfRequestedVersion()?.raw) },
+        onFailure = { if ((it as? HttpException)?.code() == HTTP_NOT_FOUND) cache.delete(requestId) },
+    )
+    attempt { api().requestCount() }.onSuccess {
+        cache.setCounts(RequestCounts(it.total, it.pending, it.approved, it.processing, it.available))
+    }
+}
