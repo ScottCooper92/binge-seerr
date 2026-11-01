@@ -54,7 +54,28 @@ class SeerrApiFactoryLoggingTest {
         assertFalse("the credential header is redacted", logged.any { CLIENT_KEY in it })
     }
 
+    @Test
+    fun `the Quick Connect secret and a Pushover token never reach the request line`() {
+        val baseUrl = seerr.url("/").toString()
+        val json = headersOf("Content-Type", "application/json")
+        seerr.enqueue(MockResponse(code = 200, headers = json, body = """{"authenticated":false}"""))
+        seerr.enqueue(MockResponse(code = 200, headers = json, body = "[]"))
+
+        runBlocking {
+            factory.anonymous(baseUrl) { it.checkQuickConnect(QC_SECRET) }
+            factory.cached(baseUrl, SeerrAuth.ApiKey(CLIENT_KEY)).pushoverSounds(PUSHOVER_TOKEN)
+        }
+
+        val text = logged.joinToString("\n")
+        assertTrue(text, "quickconnect/check" in text && "pushover/sounds" in text)
+        assertFalse(text, QC_SECRET in text)
+        assertFalse(text, PUSHOVER_TOKEN in text)
+    }
+
     private companion object {
+        const val QC_SECRET = "qc-secret-91ab"
+        const val PUSHOVER_TOKEN = "pushover-token-5d2e"
+
         /** One for each client the factory builds: cached, probe, login and anonymous. */
         const val SETTINGS_READS = 4
     }
