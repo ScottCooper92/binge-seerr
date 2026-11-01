@@ -7,8 +7,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.pluralStringResource
@@ -75,7 +73,7 @@ internal fun RequestActionsSheet(
     onMarkSelect: (MediaStatusChoice) -> Unit = {},
     onMarkDismiss: () -> Unit = {},
     progress: ActionProgress? = null,
-    actionsLanded: Int = 0,
+    actionsLanded: Int? = null,
 ) {
     var blockTitle by rememberSaveable { mutableStateOf(false) }
     var pending by rememberSaveable { mutableStateOf<Pending?>(null) }
@@ -261,27 +259,6 @@ private fun RequestConfirm(
         },
         onDismissRequest = { onStep(null) },
     )
-}
-
-/** [progress] without a failure from before this sheet opened: that one is not this sheet's to show, but its own tries are. */
-@Composable
-private fun rememberOwnProgress(progress: ActionProgress?): ActionProgress? {
-    val staleAttempt = remember { progress?.takeIf { it.failed }?.attempt }
-    return progress?.takeUnless { it.failed && it.attempt == staleAttempt }
-}
-
-/**
- * Decline and Remove keep the sheet open while they run, so their control can show it. The sheet goes when one lands:
- * [landed] grew since the sheet opened. A count, because the running state can come and go between two frames.
- */
-@Composable
-private fun CloseWhenActionLands(
-    landed: Int,
-    onDismiss: () -> Unit,
-) {
-    val openedAt = remember { landed }
-    val currentDismiss by rememberUpdatedState(onDismiss)
-    LaunchedEffect(landed) { if (landed != openedAt) currentDismiss() }
 }
 
 /**
