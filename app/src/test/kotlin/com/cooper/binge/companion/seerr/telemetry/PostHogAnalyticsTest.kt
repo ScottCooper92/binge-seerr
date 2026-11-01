@@ -57,7 +57,7 @@ class PostHogAnalyticsTest {
     private fun TestScope.analytics(
         client: AnalyticsClient? = this@PostHogAnalyticsTest.client,
         gate: AnalyticsConsentGate = gate(),
-        demo: DemoSession = NoDemoSession,
+        demo: DemoSession = FixedDemoSession(isDemo = false),
     ) = PostHogAnalytics(client, gate, demo, scope())
 
     private class FixedDemoSession(

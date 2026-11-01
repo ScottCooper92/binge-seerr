@@ -33,10 +33,10 @@ internal fun TvRequestManageSheet(
     managed: List<TvRequestActionItem>,
     actions: TvRequestDetailActions,
     onOpenPage: (DetailSheet) -> Unit,
-    onDismiss: () -> Unit,
     closer: TvOverlayCloser,
     page: @Composable ColumnScope.(step: DetailSheet, entryFocus: FocusRequester, pop: () -> Unit) -> Unit,
 ) {
+    val onDismiss = closer::close
     var confirming by rememberSaveable { mutableStateOf<DetailSheet?>(null) }
     TvSideSheetStack(root = MANAGE_PAGE_ROOT, onDismissRequest = onDismiss, closer = closer) { nav ->
         val step = DetailSheet.entries.firstOrNull { it.name == nav.page }

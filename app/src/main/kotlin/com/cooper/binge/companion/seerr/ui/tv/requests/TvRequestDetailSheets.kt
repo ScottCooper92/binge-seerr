@@ -107,6 +107,7 @@ internal fun TvRequestDetailSheet(
             TvRequestDetailPage(host.step, page, entryFocus, onEditClosed = closer::close)
         }
     } else {
+        closer.ReportDisposal()
         TvRequestConfirm(host.step, page.content.item, page.actions, onDone = { closer.close() })
     }
 }

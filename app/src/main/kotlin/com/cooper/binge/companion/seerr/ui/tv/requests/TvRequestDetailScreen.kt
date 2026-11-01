@@ -273,7 +273,6 @@ private fun ManageStack(
         managed = managed,
         actions = pageHost.actions,
         onOpenPage = openPage,
-        onDismiss = closer::close,
         closer = closer,
     ) { step, entryFocus, pop ->
         TvRequestDetailPage(step, pageHost, entryFocus, onEditClosed = pop)

@@ -14,6 +14,7 @@ import com.cooper.binge.companion.seerr.seerr.SeerrOverrideRuleDto
 import com.cooper.binge.companion.seerr.seerr.SeerrServiceSettingsDto
 import com.cooper.binge.companion.seerr.seerr.SeerrUserMainSettingsDto
 import com.cooper.binge.companion.seerr.seerr.SeerrUserPermissionsBody
+import com.cooper.binge.companion.seerr.ui.requests.DownloadQueueGate
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -98,6 +99,18 @@ class DemoSettingsTest {
 
             assertFalse(api.mediaLibraries("jellyfin").first { it.id == "shows" }.enabled)
             assertEquals("custom", api.jobs().first { it.id == job.id }.interval)
+        }
+
+    /** Scan on is what lets the app trust an empty queue, so it is what lets the demo show "Approved · not downloading" (#1807). */
+    @Test
+    fun `the demo's download servers scan, so the app can trust their queues`() =
+        demo { api ->
+            assertTrue(api.radarrSettings().single().syncEnabled)
+            assertTrue(api.sonarrSettings().single().syncEnabled)
+            assertEquals(
+                DownloadQueueGate(movies = true, tv = true),
+                DownloadQueueGate.from(api.radarrSettings(), api.sonarrSettings()),
+            )
         }
 
     @Test

@@ -249,8 +249,8 @@ private fun TvShellSheet(
     closer: TvOverlayCloser,
     content: @Composable () -> Unit,
 ) {
-    BackHandler(enabled = !overlayOpen, onBack = closer::close)
     closer.ReportDisposal()
+    BackHandler(enabled = !overlayOpen, onBack = closer::close)
     CompositionLocalProvider(LocalTvHostedAsOverlay provides true) {
         HandBackHost(
             entry = remember { FocusRequester() },
