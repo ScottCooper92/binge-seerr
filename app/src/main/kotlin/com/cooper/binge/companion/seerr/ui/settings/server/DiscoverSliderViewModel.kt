@@ -18,6 +18,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.serializer
 
 /**
  * One custom slider, new ([id] null) or existing: its title, its kind, and what it queries. Keywords are picked by
@@ -38,7 +39,7 @@ class DiscoverSliderViewModel
          * A new slider's form, kept across the process being killed (#1246). It holds no credential. An existing slider
          * saves as it changes, so it has no unsaved draft to keep.
          */
-        override val savedDraft = SavedDraft(savedState, SliderForm.serializer()).takeIf { id == null }
+        override val savedDraft = SavedDraft(savedState, serializer<SliderForm>()).takeIf { id == null }
 
         /**
          * An existing slider saves as it changes (#930), each write the saved slider with the change in it. A change that

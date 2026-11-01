@@ -21,6 +21,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.serialization.serializer
 import retrofit2.HttpException
 import java.io.IOException
 import javax.inject.Inject
@@ -48,7 +49,7 @@ class MediaServerViewModel
         override val savedDraft =
             SavedDraft(
                 savedState,
-                MediaServerForm.serializer(),
+                serializer<MediaServerForm>(),
                 scrub = { it.copy(apiKey = it.apiKey?.let { "" }) },
                 restore = { kept, loaded -> if (kept.kind == loaded.kind) kept.copy(apiKey = loaded.apiKey) else loaded },
             )

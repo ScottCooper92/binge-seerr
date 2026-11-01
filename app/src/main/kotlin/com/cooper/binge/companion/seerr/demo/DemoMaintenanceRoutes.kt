@@ -12,6 +12,7 @@ import com.cooper.binge.companion.seerr.seerr.SeerrLogPageDto
 import com.cooper.binge.companion.seerr.seerr.SeerrNotificationAgentDto
 import com.cooper.binge.companion.seerr.seerr.SeerrPushoverSoundDto
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.serializer
 import java.time.Duration
 import java.time.Instant
 
@@ -57,7 +58,7 @@ private fun DemoData.reschedule(
 private const val RESCHEDULE_MINUTES = 5L
 
 private fun DemoData.agentOf(agent: String): SeerrNotificationAgentDto =
-    resources.objects["agent-$agent"]?.let { demoJson.decodeFromJsonElement(SeerrNotificationAgentDto.serializer(), it) }
+    resources.objects["agent-$agent"]?.let { demoJson.decodeFromJsonElement(serializer<SeerrNotificationAgentDto>(), it) }
         ?: SeerrNotificationAgentDto()
 
 private fun DemoData.saveAgent(
