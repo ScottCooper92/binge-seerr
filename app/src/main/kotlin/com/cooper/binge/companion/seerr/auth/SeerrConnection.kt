@@ -9,7 +9,6 @@ import com.cooper.binge.companion.seerr.seerr.SeerrCredentials
 import com.cooper.binge.companion.seerr.seerr.SeerrJellyfinLoginBody
 import com.cooper.binge.companion.seerr.seerr.SeerrLocalLoginBody
 import com.cooper.binge.companion.seerr.seerr.SeerrLoginRequest
-import com.cooper.binge.companion.seerr.seerr.SeerrPasswordResetBody
 import com.cooper.binge.companion.seerr.seerr.SeerrPlexLoginBody
 import com.cooper.binge.companion.seerr.seerr.SeerrQuickConnectSecretBody
 import com.cooper.binge.companion.seerr.seerr.SeerrServerProfile
@@ -24,7 +23,6 @@ import com.cooper.binge.companion.seerr.seerr.rejectsSession
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
 import com.cooper.binge.companion.seerr.seerr.toTmdbBackdropUrl
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -58,6 +56,7 @@ class SeerrConnection(
     private val clock: () -> Long = System::currentTimeMillis,
 ) {
     private val profileReads = ProfileReads()
+    private val preSignIn = SeerrPreSignIn(apis, quickConnectPollInterval)
 
     val credentials: Flow<SeerrCredentials?> get() = store.credentials
 
@@ -279,17 +278,9 @@ class SeerrConnection(
     }
 
     /** Starts a Quick Connect session on the server's Jellyfin; the code is for the user, the secret for [finishQuickConnect]. */
-    suspend fun startQuickConnect(rawBaseUrl: String): Result<SeerrQuickConnect> {
-        if (!rawBaseUrl.isValidBaseUrl()) return Result.failure(InvalidServerUrlException())
-        val baseUrl = rawBaseUrl.normaliseBaseUrl()
-        return attempt { apis.anonymous(baseUrl) { api -> api.initiateQuickConnect() } }
-            .map { SeerrQuickConnect(code = it.code, secret = it.secret) }
-    }
+    suspend fun startQuickConnect(rawBaseUrl: String): Result<SeerrQuickConnect> = preSignIn.startQuickConnect(rawBaseUrl)
 
-    /**
-     * Polls until the user approves the code on Jellyfin, then signs in as them and keeps the
-     * session. A 404 from the check is Jellyfin having expired the code, [QuickConnectExpiredException].
-     */
+    /** Polls until the user approves the code on Jellyfin, then signs in as them; a 404 is [QuickConnectExpiredException]. */
     suspend fun finishQuickConnect(
         rawBaseUrl: String,
         session: SeerrQuickConnect,
@@ -301,23 +292,11 @@ class SeerrConnection(
         }
     }
 
-    /**
-     * Polls until the user approves the code on Jellyfin, and nothing more: the caller decides
-     * whether the approval signs in ([finishQuickConnect]) or links the account to the signed-in
-     * user. A 404 from the check is Jellyfin having expired the code, [QuickConnectExpiredException].
-     */
+    /** Polls until the user approves the code, for a caller that links the account instead of signing in. */
     suspend fun awaitQuickConnect(
         rawBaseUrl: String,
         session: SeerrQuickConnect,
-    ): Result<Unit> {
-        if (!rawBaseUrl.isValidBaseUrl()) return Result.failure(InvalidServerUrlException())
-        val baseUrl = rawBaseUrl.normaliseBaseUrl()
-        return attempt {
-            apis.anonymous(baseUrl) { api ->
-                while (!api.checkQuickConnectApproved(session.secret)) delay(quickConnectPollInterval)
-            }
-        }
-    }
+    ): Result<Unit> = preSignIn.awaitQuickConnect(rawBaseUrl, session)
 
     /** Whether the user has opted in to plain HTTP to the public [host]. */
     suspend fun allowsCleartextTo(host: String): Boolean = cleartext.allows(host)
@@ -332,11 +311,7 @@ class SeerrConnection(
     suspend fun requestPasswordReset(
         rawBaseUrl: String,
         email: String,
-    ): Result<Unit> {
-        if (!rawBaseUrl.isValidBaseUrl()) return Result.failure(InvalidServerUrlException())
-        val baseUrl = rawBaseUrl.normaliseBaseUrl()
-        return attempt { apis.anonymous(baseUrl) { api -> api.requestPasswordReset(SeerrPasswordResetBody(email)) } }
-    }
+    ): Result<Unit> = preSignIn.requestPasswordReset(rawBaseUrl, email)
 
     /**
      * Forgets the connection. A session sign-in is also ended on the server, best-effort: the local
