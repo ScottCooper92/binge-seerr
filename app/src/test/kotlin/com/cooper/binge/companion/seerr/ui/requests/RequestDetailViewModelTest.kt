@@ -996,16 +996,20 @@ class RequestDetailViewModelTest {
 
             val failed = awaitEvent(vm.events) { it is ModerationEvent.Failed }
             vm.moderation.decline(item, blockTitle = false)
-            assertEquals(ActionProgress(RequestAction.Decline), vm.awaitReady { it.progress != null }.progress)
+            assertEquals(ActionProgress(RequestAction.Decline, attempt = 1), vm.awaitReady { it.progress != null }.progress)
             gate.countDown()
             failed.await()
-            assertEquals(ActionProgress(RequestAction.Decline, failed = true), vm.awaitReady { it.progress?.failed == true }.progress)
+            val failure = vm.awaitReady { it.progress?.failed == true }
+            assertEquals(ActionProgress(RequestAction.Decline, failed = true, attempt = 1), failure.progress)
+            assertEquals(0, failure.actionsLanded)
 
             serve("/api/v1/request/11/decline", "{}")
             val declined = awaitEvent(vm.events) { it == ModerationEvent.Declined }
             vm.moderation.decline(item, blockTitle = false)
             declined.await()
-            assertNull(vm.awaitReady { it.progress == null }.progress)
+            val landed = vm.awaitReady { it.progress == null }
+            assertNull(landed.progress)
+            assertEquals(1, landed.actionsLanded)
         }
 
     @Test

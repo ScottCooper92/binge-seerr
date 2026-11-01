@@ -42,6 +42,7 @@ class RequestActionsSheetConfirmTest {
     private val cleared = mutableListOf<Int>()
     private var dismissed = 0
     private var progress by mutableStateOf<ActionProgress?>(null)
+    private var landed by mutableStateOf(0)
 
     @Test
     fun `declining without blocking the title declines at once, and the sheet stays while it runs`() {
@@ -70,26 +71,48 @@ class RequestActionsSheetConfirmTest {
     }
 
     @Test
-    fun `the sheet closes when a running action lands, and stays when it fails`() {
+    fun `the sheet stays when an action fails, and closes when one lands`() {
         setSheet()
 
-        composeTestRule.runOnIdle { progress = ActionProgress(RequestAction.Remove) }
-        composeTestRule.waitForIdle()
-        composeTestRule.runOnIdle { progress = ActionProgress(RequestAction.Remove, failed = true) }
+        composeTestRule.runOnIdle { progress = ActionProgress(RequestAction.Remove, failed = true, attempt = 1) }
         composeTestRule.waitForIdle()
         assertEquals(0, dismissed)
 
-        composeTestRule.runOnIdle { progress = ActionProgress(RequestAction.Remove) }
-        composeTestRule.waitForIdle()
-        composeTestRule.runOnIdle { progress = null }
+        composeTestRule.runOnIdle { landed = 1 }
         composeTestRule.waitForIdle()
         assertEquals(1, dismissed)
     }
 
     @Test
+    fun `the sheet closes for an action that lands between two frames, with no running state ever drawn`() {
+        setSheet()
+
+        composeTestRule.runOnIdle {
+            progress = ActionProgress(RequestAction.Decline, attempt = 1)
+            progress = null
+            landed = 1
+        }
+        composeTestRule.waitForIdle()
+
+        assertEquals(1, dismissed)
+    }
+
+    @Test
+    fun `a failure from before the sheet opened is not shown on it, and one of its own tries is`() {
+        progress = ActionProgress(RequestAction.Remove, failed = true, attempt = 1)
+        setSheet()
+        composeTestRule.onNodeWithText(string(R.string.action_try_again)).assertDoesNotExist()
+
+        composeTestRule.runOnIdle { progress = ActionProgress(RequestAction.Remove, failed = true, attempt = 2) }
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText(string(R.string.action_try_again)).assertExists()
+    }
+
+    @Test
     fun `a failed remove says Try again in the row's trailing slot, and a tap asks to remove again`() {
         setSheet()
-        composeTestRule.runOnIdle { progress = ActionProgress(RequestAction.Remove, failed = true) }
+        composeTestRule.runOnIdle { progress = ActionProgress(RequestAction.Remove, failed = true, attempt = 1) }
         composeTestRule.waitForIdle()
 
         composeTestRule.onNodeWithText(string(R.string.action_try_again)).assertExists()
@@ -297,6 +320,7 @@ class RequestActionsSheetConfirmTest {
                         ),
                     requests = requests,
                     progress = progress,
+                    actionsLanded = landed,
                 )
             }
         }

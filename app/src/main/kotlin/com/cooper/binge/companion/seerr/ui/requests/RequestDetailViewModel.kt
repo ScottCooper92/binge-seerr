@@ -98,7 +98,7 @@ class RequestDetailViewModel
         private val clearing = MutableStateFlow(false)
 
         /** The Decline or Remove that is running or failed; the sheet stays open and its control shows it. */
-        private val progress = MutableStateFlow<ActionProgress?>(null)
+        private val track = MutableStateFlow(ActionTrack())
 
         /** The editor rides the page's state while it is open; it closes itself on the save landing. */
         private val requestEditor =
@@ -145,16 +145,26 @@ class RequestDetailViewModel
                     blockTitle: Boolean,
                 ) = tracked(RequestAction.Remove) { settled -> moderator.remove(item, blockTitle, settled) }
 
-                /** The sheet closes when [progress] clears; a failure keeps it, on the control that failed. */
+                /** The sheet closes when [ActionTrack.landed] grows; a failure keeps it open, on the control that failed. */
                 private fun tracked(
                     action: RequestAction,
                     start: (settled: (Boolean) -> Unit) -> Boolean,
                 ) {
-                    val before = progress.value
-                    progress.value = ActionProgress(action)
-                    val started = start { succeeded -> progress.value = if (succeeded) null else ActionProgress(action, failed = true) }
+                    val before = track.value
+                    val attempt = before.attempts + 1
+                    track.value = before.copy(progress = ActionProgress(action, attempt = attempt), attempts = attempt)
+                    val started =
+                        start { succeeded ->
+                            track.update {
+                                if (succeeded) {
+                                    it.copy(progress = null, landed = it.landed + 1)
+                                } else {
+                                    it.copy(progress = ActionProgress(action, failed = true, attempt = attempt))
+                                }
+                            }
+                        }
                     // Another action on the request is running, so nothing was sent: the control is as it was.
-                    if (!started) progress.value = before
+                    if (!started) track.update { it.copy(progress = before.progress, attempts = before.attempts) }
                 }
             }
         val editor: RequestEditorControls = requestEditor
@@ -179,8 +189,8 @@ class RequestDetailViewModel
                     ?: page
             }.combine(clearing) { page, clearingData ->
                 (page as? RequestDetailUiState.Ready)?.copy(detail = page.detail.withClearing(clearingData)) ?: page
-            }.combine(progress) { page, running ->
-                (page as? RequestDetailUiState.Ready)?.copy(progress = running) ?: page
+            }.combine(track) { page, ongoing ->
+                (page as? RequestDetailUiState.Ready)?.copy(progress = ongoing.progress, actionsLanded = ongoing.landed) ?: page
             }.combine(now) { page, now -> (page as? RequestDetailUiState.Ready)?.copy(now = now) ?: page }
                 .stateIn(viewModelScope, SharingStarted.Lazily, RequestDetailUiState.Loading)
 
@@ -367,3 +377,10 @@ private fun RequestDetail.withFilesDeleted(deleted: Map<Boolean, FilesDeletion>)
     } else {
         copy(media = media?.copy(instances = media.instances.map { it.copy(filesDeletion = deleted[it.is4k]) }))
     }
+
+/** Which Decline or Remove is running or failed, how many tries have been numbered, and how many have landed. */
+private data class ActionTrack(
+    val progress: ActionProgress? = null,
+    val attempts: Int = 0,
+    val landed: Int = 0,
+)

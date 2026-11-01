@@ -75,10 +75,14 @@ internal fun RequestActionsSheet(
     onMarkSelect: (MediaStatusChoice) -> Unit = {},
     onMarkDismiss: () -> Unit = {},
     progress: ActionProgress? = null,
+    actionsLanded: Int = 0,
 ) {
     var blockTitle by rememberSaveable { mutableStateOf(false) }
     var pending by rememberSaveable { mutableStateOf<Pending?>(null) }
-    CloseWhenActionLands(progress, onDismiss)
+    CloseWhenActionLands(actionsLanded, onDismiss)
+    // A failure from before this sheet opened is not this sheet's to show; one of its own tries is.
+    val openedAfter = remember { progress?.takeIf { it.failed }?.attempt }
+    val shown = progress?.takeUnless { it.failed && it.attempt == openedAfter }
     BingeAdaptiveSheet(
         kind = BingeSheetKind.Task,
         onDismissRequest = onDismiss,
@@ -115,7 +119,7 @@ internal fun RequestActionsSheet(
                     viewerId = viewerId,
                     canManageUsers = canManageUsers,
                     detailLoad = detailLoad,
-                    progress = progress,
+                    progress = shown,
                 ),
             callbacks =
                 RequestSheetCallbacks(
@@ -262,20 +266,17 @@ private fun RequestConfirm(
 }
 
 /**
- * Decline and Remove keep the sheet open while they run, so their control can show it. The sheet goes when the action
- * lands, which is [progress] clearing after it was running; a failure leaves it open on the control that failed.
+ * Decline and Remove keep the sheet open while they run, so their control can show it. The sheet goes when one lands:
+ * [landed] grew since the sheet opened. A count, because the running state can come and go between two frames.
  */
 @Composable
 private fun CloseWhenActionLands(
-    progress: ActionProgress?,
+    landed: Int,
     onDismiss: () -> Unit,
 ) {
-    var wasRunning by remember { mutableStateOf(false) }
+    val openedAt = remember { landed }
     val currentDismiss by rememberUpdatedState(onDismiss)
-    LaunchedEffect(progress) {
-        if (wasRunning && progress == null) currentDismiss()
-        wasRunning = progress != null && !progress.failed
-    }
+    LaunchedEffect(landed) { if (landed != openedAt) currentDismiss() }
 }
 
 /**
