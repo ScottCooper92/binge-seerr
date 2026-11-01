@@ -2,6 +2,7 @@ package com.cooper.binge.companion.seerr.demo
 
 import com.cooper.binge.companion.seerr.seerr.SeerrApi
 import com.cooper.binge.companion.seerr.seerr.SeerrApiFactory
+import com.cooper.binge.companion.seerr.seerr.SeerrDvrTestBody
 import com.cooper.binge.companion.seerr.seerr.SeerrServiceSettingsDto
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -71,7 +72,6 @@ class DemoServicesTest {
             val details = api.radarrServer(SERVER_ID)
 
             assertEquals(listOf("Any", "HD-1080p"), details.profiles.map { it.name })
-            assertEquals(listOf("/media"), details.rootFolders.map { it.path })
             val missing =
                 try {
                     api.radarrServer(NO_SUCH_SERVER)
@@ -80,6 +80,28 @@ class DemoServicesTest {
                     failure
                 }
             assertEquals(404, missing?.code())
+        }
+
+    @Test
+    fun `each kind's active directory is one of the folders its details offer, as on a real server`() =
+        demo { api ->
+            val radarr = api.radarrServers().single()
+            val sonarr = api.sonarrServers().single()
+
+            assertTrue(radarr.activeDirectory in api.radarrServer(radarr.id).rootFolders.map { it.path })
+            assertTrue(sonarr.activeDirectory in api.sonarrServer(sonarr.id).rootFolders.map { it.path })
+        }
+
+    @Test
+    fun `the settings page's connection test offers the folder each kind's server is set to`() =
+        demo { api ->
+            val body = SeerrDvrTestBody(hostname = "demo.invalid", port = 1, useSsl = false, apiKey = "demo")
+
+            val radarr = api.radarrSettings().single().activeDirectory
+            val sonarr = api.sonarrSettings().single().activeDirectory
+
+            assertTrue(radarr in api.testDvr("radarr", body).rootFolders.map { it.path })
+            assertTrue(sonarr in api.testDvr("sonarr", body).rootFolders.map { it.path })
         }
 }
 
