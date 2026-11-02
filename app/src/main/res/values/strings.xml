@@ -901,6 +901,7 @@
     <string name="hub_disconnect_confirm_message">You will need to sign in again to reconnect. Binge stops seeing this server until you do.</string>
     <string name="hub_demo_exit">Exit the demo</string>
     <string name="hub_demo_exit_confirm_title">Exit the demo?</string>
+    <string name="settings_demo_note">Demo: sample data. Changes reset when you exit.</string>
     <string name="hub_demo_exit_confirm_message">The sample data, and anything you changed in it, is cleared.</string>
     <string name="demo_indicator">Demo server</string>
     <string name="setup_try_demo">Try the demo</string>
