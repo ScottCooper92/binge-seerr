@@ -283,6 +283,25 @@ class RequestDetailViewModelTest {
         },
     ): RequestDetailUiState.Ready = uiState.first { it is RequestDetailUiState.Ready && match(it) } as RequestDetailUiState.Ready
 
+    /**
+     * The page once its instance reads [expected], not merely once it is idle. The page is a `combine` of the moderation state
+     * into a `stateIn`, so a mark set a moment ago reaches it on the view model's own dispatcher: reading the state at once
+     * can still return the one before (#1794).
+     */
+    private suspend fun RequestDetailViewModel.awaitInstance(expected: FilesDeletion?) =
+        checkNotNull(
+            awaitReady {
+                !it.isActing &&
+                    it.detail.media
+                        ?.instances
+                        ?.singleOrNull()
+                        ?.filesDeletion == expected
+            }.detail.media,
+        ).instances.single()
+
+    private suspend fun RequestDetailViewModel.awaitFilesDeletion(expected: FilesDeletion?): FilesDeletion? =
+        awaitInstance(expected).filesDeletion
+
     @Test
     fun `the code for a phone is written under the application url, and the page's own link stays on the address in use`() =
         runTest {
@@ -869,7 +888,7 @@ class RequestDetailViewModelTest {
             vm.moderation.deleteMediaFiles(11, 900, is4k = false)
             deleted.await()
 
-            val instance = checkNotNull(vm.awaitReady { !it.isActing }.detail.media).instances.single()
+            val instance = vm.awaitInstance(FilesDeletion.Deleted)
             assertEquals(FilesDeletion.Deleted, instance.filesDeletion)
             assertEquals(SeerrMediaStatusCode.PartiallyAvailable, instance.status)
         }
@@ -894,7 +913,7 @@ class RequestDetailViewModelTest {
             vm.moderation.deleteMediaFiles(11, 900, is4k = false)
             refused.await()
 
-            val instance = checkNotNull(vm.awaitReady { !it.isActing }.detail.media).instances.single()
+            val instance = vm.awaitInstance(FilesDeletion.NoDefaultServer)
             assertEquals(FilesDeletion.NoDefaultServer, instance.filesDeletion)
 
             serve("/api/v1/auth/me", """{"id":8,"permissions":$MANAGE_REQUESTS}""")
@@ -918,14 +937,11 @@ class RequestDetailViewModelTest {
             val refused = awaitEvent(vm.events) { it == ModerationEvent.MediaFilesNoDefaultServer }
             vm.moderation.deleteMediaFiles(11, 900, is4k = false)
             refused.await()
-            assertEquals(
-                FilesDeletion.NoDefaultServer,
-                checkNotNull(vm.awaitReady { !it.isActing }.detail.media).instances.single().filesDeletion,
-            )
+            assertEquals(FilesDeletion.NoDefaultServer, vm.awaitFilesDeletion(FilesDeletion.NoDefaultServer))
 
             vm.forgetNoDefaultServer()
 
-            assertNull(checkNotNull(vm.awaitReady { !it.isActing }.detail.media).instances.single().filesDeletion)
+            assertNull(vm.awaitFilesDeletion(null))
         }
 
     /** Only the refusal is forgotten: a delete that went through is still shown as done (#1736). */
@@ -941,17 +957,11 @@ class RequestDetailViewModelTest {
             val deleted = awaitEvent(vm.events) { it == ModerationEvent.MediaFilesDeleted }
             vm.moderation.deleteMediaFiles(11, 900, is4k = false)
             deleted.await()
-            assertEquals(
-                FilesDeletion.Deleted,
-                checkNotNull(vm.awaitReady { !it.isActing }.detail.media).instances.single().filesDeletion,
-            )
+            assertEquals(FilesDeletion.Deleted, vm.awaitFilesDeletion(FilesDeletion.Deleted))
 
             vm.forgetNoDefaultServer()
 
-            assertEquals(
-                FilesDeletion.Deleted,
-                checkNotNull(vm.awaitReady { !it.isActing }.detail.media).instances.single().filesDeletion,
-            )
+            assertEquals(FilesDeletion.Deleted, vm.awaitFilesDeletion(FilesDeletion.Deleted))
         }
 
     @Test
@@ -982,7 +992,7 @@ class RequestDetailViewModelTest {
             val deleted = awaitEvent(vm.events) { it == ModerationEvent.MediaFilesDeleted }
             gate.countDown()
             deleted.await()
-            assertEquals(FilesDeletion.Deleted, checkNotNull(vm.awaitReady { !it.isActing }.detail.media).instances.single().filesDeletion)
+            assertEquals(FilesDeletion.Deleted, vm.awaitFilesDeletion(FilesDeletion.Deleted))
         }
 
     @Test
@@ -998,19 +1008,13 @@ class RequestDetailViewModelTest {
             val failed = awaitEvent(vm.events) { it is ModerationEvent.Failed }
             vm.moderation.deleteMediaFiles(11, 900, is4k = false)
             failed.await()
-            assertEquals(
-                FilesDeletion.Failed,
-                checkNotNull(vm.awaitReady { !it.isActing }.detail.media).instances.single().filesDeletion,
-            )
+            assertEquals(FilesDeletion.Failed, vm.awaitFilesDeletion(FilesDeletion.Failed))
 
             serve("/api/v1/media/900/file", "{}")
             val deleted = awaitEvent(vm.events) { it == ModerationEvent.MediaFilesDeleted }
             vm.moderation.deleteMediaFiles(11, 900, is4k = false)
             deleted.await()
-            assertEquals(
-                FilesDeletion.Deleted,
-                checkNotNull(vm.awaitReady { !it.isActing }.detail.media).instances.single().filesDeletion,
-            )
+            assertEquals(FilesDeletion.Deleted, vm.awaitFilesDeletion(FilesDeletion.Deleted))
         }
 
     @Test
