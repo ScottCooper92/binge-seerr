@@ -1,9 +1,5 @@
 package com.cooper.binge.companion.seerr.ui.users.settings
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
@@ -19,15 +15,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import com.binge.designsystem.component.BingeAdaptiveSheet
 import com.binge.designsystem.component.BingeChoice
 import com.binge.designsystem.component.BingeChoiceList
-import com.binge.designsystem.component.BingeFilledButton
-import com.binge.designsystem.component.BingeOutlinedButton
 import com.binge.designsystem.component.BingeSheetKind
-import com.binge.designsystem.component.BingeTextField
 import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.component.ListItemConnector
 import com.binge.designsystem.component.TextEntrySurface
@@ -66,8 +58,8 @@ private const val MULTILINE_MAX = 8
  * @param emptyLabel the detail when the value is blank.
  * @param shown replaces the value as the detail where the row shouldn't spell it out, such as a key.
  * @param check names what is wrong with a value, which keeps Done off.
- * @param secret edits the value in a masked field with a reveal toggle and no autocorrect, as an `EditorTextField`
- *   does, since the design system's text entry has no way to hide what it shows.
+ * @param secret edits the value in the text entry's secret mode: masked, with a reveal toggle, the password keyboard and no
+ *   autocorrect.
  * @param hint explains the value and stays in view while it is edited.
  * @param placeholder an example of a value, shown only while the field is empty.
  * @param required a required row left blank, or a value [check] refuses, says so in its detail, in the error colour.
@@ -167,7 +159,7 @@ internal fun GroupMessage(
 )
 
 /**
- * [textSettingItem]'s sheet without its window, for a frame: the design system's text entry, or [SecretEntry] for a secret.
+ * [textSettingItem]'s sheet without its window, for a frame: the design system's text entry, masked with a reveal toggle for a secret.
  * [problem] keeps Done off, and is shown under the field once something has been typed.
  */
 @Composable
@@ -185,77 +177,26 @@ internal fun TextSettingContent(
     multiline: Boolean = false,
     keyboard: KeyboardOptions = KeyboardOptions.Default,
 ) {
-    if (secret) {
-        SecretEntry(
-            title = title,
-            value = draft,
-            hint = hint,
-            onValueChange = onDraftChange,
-            submitEnabled = problem == null,
-            onSubmit = onSubmit,
-            onCancel = onCancel,
-            modifier = modifier,
-        )
-    } else {
-        TextEntrySurface(
-            title = title,
-            value = draft,
-            onValueChange = onDraftChange,
-            onSubmit = onSubmit,
-            onCancel = onCancel,
-            submitLabel = stringResource(R.string.editor_done),
-            // The surface's own hint is a placeholder, gone once the field holds a value; an explanation
-            // has to stay readable while the value is edited, so it sits under the title instead.
-            hint = placeholder,
-            header = { hint?.let { SheetHint(it) } },
-            submitEnabled = problem == null,
-            error = problem.takeIf { draft.isNotEmpty() },
-            singleLine = !multiline,
-            minLines = MULTILINE_MIN,
-            maxLines = MULTILINE_MAX,
-            keyboardOptions = keyboard,
-            modifier = modifier.imePadding(),
-        )
-    }
-}
-
-/** [textSettingItem]'s sheet for a secret: the title, a masked [BingeTextField], and the same Cancel and Done pair. */
-@Composable
-private fun SecretEntry(
-    title: String,
-    value: String,
-    hint: String?,
-    onValueChange: (String) -> Unit,
-    submitEnabled: Boolean,
-    onSubmit: () -> Unit,
-    onCancel: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Column(
-        modifier = modifier.fillMaxWidth().imePadding().padding(dimensionResource(DesR.dimen.padding_m)),
-        verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
-    ) {
-        Text(text = title, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurface)
-        BingeTextField(
-            value = value,
-            label = title,
-            secret = true,
-            autoCorrect = false,
-            supporting = hint,
-            imeAction = ImeAction.Done,
-            onDone = { if (submitEnabled) onSubmit() },
-            onValueChange = onValueChange,
-        )
-        Row(horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s))) {
-            BingeOutlinedButton(label = stringResource(R.string.editor_cancel), onClick = onCancel, modifier = Modifier.weight(1f))
-            BingeFilledButton(
-                label = stringResource(R.string.editor_done),
-                onClick = onSubmit,
-                enabled = submitEnabled,
-                modifier = Modifier.weight(1f),
-            )
-        }
-    }
+    TextEntrySurface(
+        title = title,
+        value = draft,
+        onValueChange = onDraftChange,
+        onSubmit = onSubmit,
+        onCancel = onCancel,
+        submitLabel = stringResource(R.string.editor_done),
+        // The surface's own hint is a placeholder, gone once the field holds a value; an explanation
+        // has to stay readable while the value is edited, so it sits under the title instead.
+        hint = placeholder,
+        header = { hint?.let { SheetHint(it) } },
+        submitEnabled = problem == null,
+        error = problem.takeIf { draft.isNotEmpty() },
+        singleLine = !multiline,
+        secret = secret,
+        minLines = MULTILINE_MIN,
+        maxLines = MULTILINE_MAX,
+        keyboardOptions = keyboard,
+        modifier = modifier.imePadding(),
+    )
 }
 
 /** An explanation under a text sheet's title, readable while the field holds a value. */

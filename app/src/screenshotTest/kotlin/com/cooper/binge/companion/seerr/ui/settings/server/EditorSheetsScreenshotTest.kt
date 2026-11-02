@@ -44,7 +44,7 @@ class EditorSheetsScreenshotTest {
     fun textEntryExpanded() =
         SideSheetFrame { Text(draft = "https://seerr.lan", hint = "Where the server answers, without a trailing slash.") }
 
-    /** A secret edits in a masked field with a reveal toggle. */
+    /** A secret edits in the text entry's secret mode: masked, with a reveal toggle. */
     @PreviewTest
     @SeerrComponentPreviews
     @Composable
@@ -52,6 +52,12 @@ class EditorSheetsScreenshotTest {
         SheetFrame {
             Text(draft = "k3y-a-rather-long-secret", secret = true, hint = "Found under the server's General settings.")
         }
+
+    /** A secret the row's own check refuses: Done is off and the reason is under the field. */
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun secretEntryRefused() = SheetFrame { Text(draft = "short", secret = true, problem = "At least 8 characters.") }
 
     @PreviewTest
     @SeerrComponentPreviews
