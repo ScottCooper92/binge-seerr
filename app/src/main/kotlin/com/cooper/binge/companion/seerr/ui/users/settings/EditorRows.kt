@@ -27,6 +27,7 @@ import com.binge.designsystem.component.BingeChoiceList
 import com.binge.designsystem.component.BingeFilledButton
 import com.binge.designsystem.component.BingeOutlinedButton
 import com.binge.designsystem.component.BingeSheetKind
+import com.binge.designsystem.component.BingeTextField
 import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.component.ListItemConnector
 import com.binge.designsystem.component.TextEntrySurface
@@ -218,7 +219,7 @@ internal fun TextSettingContent(
     }
 }
 
-/** [textSettingItem]'s sheet for a secret: the title, a masked [EditorTextField], and the same Cancel and Done pair. */
+/** [textSettingItem]'s sheet for a secret: the title, a masked [BingeTextField], and the same Cancel and Done pair. */
 @Composable
 private fun SecretEntry(
     title: String,
@@ -235,7 +236,7 @@ private fun SecretEntry(
         verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
     ) {
         Text(text = title, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurface)
-        EditorTextField(
+        BingeTextField(
             value = value,
             label = title,
             secret = true,

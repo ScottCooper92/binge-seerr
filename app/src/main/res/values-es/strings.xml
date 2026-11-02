@@ -1051,9 +1051,6 @@
     <string name="tv_account">Cuenta</string>
     <string name="tv_account_your_requests">Tus peticiones</string>
     <string name="tv_account_requests_empty">Todavía no has hecho ninguna petición.</string>
-    <string name="field_secret_show">Mostrar el valor</string>
-    <string name="field_secret_hide">Ocultar el valor</string>
-    <string name="field_clear">Borrar el valor</string>
     <string name="setup_username_placeholder">Tu nombre de usuario de %1$s</string>
     <string name="setup_api_key_hint">Lo encontrarás en Seerr, en Ajustes → General.</string>
     <string name="setup_api_key_admin_note">Una clave de API inicia sesión como administrador del servidor. Cualquier app a la que permitas usar esta app complementaria puede actuar con ese acceso.</string>

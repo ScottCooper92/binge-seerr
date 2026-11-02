@@ -13,9 +13,9 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import com.binge.designsystem.component.BingeFilledButton
 import com.binge.designsystem.component.BingeTextButton
+import com.binge.designsystem.component.BingeTextField
 import com.binge.designsystem.component.CheckboxRow
 import com.cooper.binge.companion.seerr.R
-import com.cooper.binge.companion.seerr.ui.users.settings.EditorTextField
 import com.binge.designsystem.R as DesR
 
 /**
@@ -34,9 +34,9 @@ internal fun SetupAddressContent(
         verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
     ) {
         // Done submits, as Continue does: the address is the step's only field.
-        EditorTextField(
-            state.serverUrl,
-            stringResource(R.string.setup_server_url),
+        BingeTextField(
+            value = state.serverUrl,
+            label = stringResource(R.string.setup_server_url),
             placeholder = stringResource(R.string.placeholder_server_url),
             enabled = !state.isInspecting,
             keyboardType = KeyboardType.Uri,

@@ -26,11 +26,11 @@ import coil3.compose.AsyncImage
 import com.binge.designsystem.component.BingeFilledButton
 import com.binge.designsystem.component.BingeFilterChip
 import com.binge.designsystem.component.BingeTextButton
+import com.binge.designsystem.component.BingeTextField
 import com.binge.designsystem.template.StepHeading
 import com.binge.designsystem.theme.BingeShapes
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.seerr.SeerrSignInMode
-import com.cooper.binge.companion.seerr.ui.users.settings.EditorTextField
 import com.binge.designsystem.R as DesR
 
 /** Step two's aside: the server's own artwork, where it has some. */
@@ -140,15 +140,16 @@ internal fun ModeFields(
         // No content type: the key is the server's, not an account credential, and offering to save
         // it as this user's password is how a password manager ends up holding the wrong secret.
         SeerrSignInMode.ApiKey -> {
-            EditorTextField(
-                form.apiKey,
-                stringResource(R.string.setup_api_key),
+            BingeTextField(
+                value = form.apiKey,
+                label = stringResource(R.string.setup_api_key),
                 secret = true,
                 // Supporting rather than a placeholder: it has to stay readable while the user goes to fetch the key.
                 supporting = stringResource(R.string.setup_api_key_hint),
                 imeAction = ImeAction.Done,
                 onDone = submit,
-            ) { value -> onEdit { copy(apiKey = value) } }
+                onValueChange = { value -> onEdit { copy(apiKey = value) } },
+            )
             // An API key is the server's own, so it carries the administrator's reach to every host this
             // companion admits; the user is told before they hand it over (#684).
             Text(
@@ -173,14 +174,15 @@ internal fun ModeFields(
                         .semantics { contentType = ContentType.EmailAddress + ContentType.Username }
                         .savedLoginRequest { login -> onEdit { copy(email = login.id, password = login.password) } },
             )
-            EditorTextField(
-                form.password,
-                stringResource(R.string.setup_password),
+            BingeTextField(
+                value = form.password,
+                label = stringResource(R.string.setup_password),
                 secret = true,
                 contentType = ContentType.Password,
                 imeAction = ImeAction.Done,
                 onDone = submit,
-            ) { value -> onEdit { copy(password = value) } }
+                onValueChange = { value -> onEdit { copy(password = value) } },
+            )
             if (state.server.canResetPassword) {
                 BingeTextButton(
                     label = stringResource(R.string.setup_forgot_password),
@@ -204,14 +206,15 @@ internal fun ModeFields(
                         .semantics { contentType = ContentType.Username }
                         .savedLoginRequest { login -> onEdit { copy(username = login.id, password = login.password) } },
             )
-            EditorTextField(
-                form.password,
-                stringResource(R.string.setup_password),
+            BingeTextField(
+                value = form.password,
+                label = stringResource(R.string.setup_password),
                 secret = true,
                 contentType = ContentType.Password,
                 imeAction = ImeAction.Done,
                 onDone = submit,
-            ) { value -> onEdit { copy(password = value) } }
+                onValueChange = { value -> onEdit { copy(password = value) } },
+            )
         }
         SeerrSignInMode.Plex -> Text(stringResource(R.string.setup_plex_hint), style = MaterialTheme.typography.bodyMedium)
         SeerrSignInMode.QuickConnect -> Text(stringResource(R.string.setup_quick_connect_hint), style = MaterialTheme.typography.bodyMedium)
