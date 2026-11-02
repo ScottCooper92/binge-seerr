@@ -33,15 +33,14 @@ import com.binge.designsystem.component.BingeLoadingIndicator
 import com.binge.designsystem.component.BingeSheetKind
 import com.binge.designsystem.component.BingeSheetNav
 import com.binge.designsystem.component.BingeTextButton
+import com.binge.designsystem.component.BingeTextField
 import com.binge.designsystem.component.CheckboxRow
 import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.isExpandedLayout
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.state.ActionSheetGroup
 import com.cooper.binge.companion.seerr.ui.state.EmptyScreen
-import com.cooper.binge.companion.seerr.ui.users.settings.EditorTextField
 import com.cooper.binge.companion.seerr.ui.users.settings.PasswordSettings
-import com.cooper.binge.companion.seerr.ui.users.settings.imeActionIf
 import com.binge.designsystem.R as DesR
 
 class UserAdmissionActions(
@@ -223,29 +222,31 @@ internal fun CreateUserSheetContent(
         verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
     ) {
         Text(stringResource(R.string.users_create_title), style = MaterialTheme.typography.titleLarge)
-        EditorTextField(
-            draft.email,
-            stringResource(R.string.setup_email),
+        BingeTextField(
+            value = draft.email,
+            label = stringResource(R.string.setup_email),
             enabled = !saving,
             keyboardType = KeyboardType.Email,
             placeholder = stringResource(R.string.placeholder_email),
             supporting = stringResource(R.string.user_settings_email_invalid).takeIf { draft.emailInvalid },
             isError = draft.emailInvalid,
-        ) { value ->
-            onEditDraft { it.copy(email = value) }
-        }
-        EditorTextField(
-            draft.username,
-            stringResource(R.string.setup_username),
+            onValueChange = { value ->
+                onEditDraft { it.copy(email = value) }
+            },
+        )
+        BingeTextField(
+            value = draft.username,
+            label = stringResource(R.string.setup_username),
             enabled = !saving,
             autoCorrect = false,
             placeholder = stringResource(R.string.users_create_username_placeholder),
             imeAction = imeActionIf(last = draft.generatePassword),
-        ) { value ->
-            onEditDraft { it.copy(username = value) }
-        }
+            onValueChange = { value ->
+                onEditDraft { it.copy(username = value) }
+            },
+        )
         if (!draft.generatePassword) {
-            EditorTextField(
+            BingeTextField(
                 value = draft.password,
                 label = stringResource(R.string.setup_password),
                 enabled = !saving,
@@ -253,7 +254,8 @@ internal fun CreateUserSheetContent(
                 supporting = stringResource(R.string.user_settings_password_hint, PasswordSettings.MIN_PASSWORD_LENGTH),
                 isError = draft.passwordTooShort,
                 imeAction = ImeAction.Done,
-            ) { value -> onEditDraft { it.copy(password = value) } }
+                onValueChange = { value -> onEditDraft { it.copy(password = value) } },
+            )
         }
         CheckboxRow(
             label = stringResource(R.string.users_create_generate),
@@ -368,3 +370,5 @@ private fun CandidateRow(
         },
     )
 }
+
+private fun imeActionIf(last: Boolean): ImeAction = if (last) ImeAction.Done else ImeAction.Next

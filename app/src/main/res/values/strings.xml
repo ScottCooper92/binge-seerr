@@ -577,7 +577,6 @@
     <string name="editor_cancel">Cancel</string>
     <string name="editor_field_required">Required</string>
     <!-- Format-only: a field's label and the mark that it is required. -->
-    <string name="editor_field_required_label" translatable="false">%1$s *</string>
     <string name="editor_error_port">Enter a port between 1 and 65535.</string>
     <string name="editor_error_web_url">Enter a web address that starts with http:// or https://.</string>
     <string name="editor_error_web_url_no_slash">Enter a web address that starts with http:// or https://, with no slash at the end.</string>
@@ -1089,9 +1088,6 @@
     <string name="tv_account_your_requests">Your requests</string>
     <string name="tv_account_requests_empty">You have not made any requests yet.</string>
     <!-- The eye in a masked field. The description names the tap's effect, so it changes with the state. -->
-    <string name="field_secret_show">Show the value</string>
-    <string name="field_secret_hide">Hide the value</string>
-    <string name="field_clear">Clear the value</string>
     <!-- Example values shown while a connection field is empty; an address, a port or a path a translator cannot localise. -->
     <string name="placeholder_host" translatable="false">192.168.1.10</string>
     <string name="placeholder_port_plex" translatable="false">32400</string>

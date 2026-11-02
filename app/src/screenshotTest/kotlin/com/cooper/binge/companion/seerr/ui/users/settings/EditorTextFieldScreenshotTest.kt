@@ -7,6 +7,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import com.android.tools.screenshot.PreviewTest
+import com.binge.designsystem.component.BingeTextField
 import com.cooper.binge.companion.seerr.preview.SeerrComponentPreviews
 import com.binge.designsystem.R as DesR
 
@@ -15,7 +16,7 @@ import com.binge.designsystem.R as DesR
  * judged beside the plain one it sits next to.
  *
  * Only the masked state is framed. Whether it is revealed is the field's own `remember`, which a
- * preview cannot seed; `EditorTextFieldRevealTest` covers the flip.
+ * preview cannot seed; ``BingeTextFieldTest` in the design system` covers the flip.
  */
 class EditorTextFieldScreenshotTest {
     @PreviewTest
@@ -26,9 +27,9 @@ class EditorTextFieldScreenshotTest {
             modifier = Modifier.padding(dimensionResource(DesR.dimen.padding_m)),
             verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
         ) {
-            EditorTextField(value = "seerr.example.com", label = "Hostname", onValueChange = {})
-            EditorTextField(value = "b4d455k3y", label = "API key", secret = true, onValueChange = {})
-            EditorTextField(value = "b4d455k3y", label = "API key", secret = true, enabled = false, onValueChange = {})
+            BingeTextField(value = "seerr.example.com", label = "Hostname", onValueChange = {})
+            BingeTextField(value = "b4d455k3y", label = "API key", secret = true, onValueChange = {})
+            BingeTextField(value = "b4d455k3y", label = "API key", secret = true, enabled = false, onValueChange = {})
         }
     }
 }

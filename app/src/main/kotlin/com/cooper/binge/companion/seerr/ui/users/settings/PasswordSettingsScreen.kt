@@ -9,6 +9,7 @@ import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
+import com.binge.designsystem.component.BingeTextField
 import com.binge.designsystem.component.ItemGroup
 import com.cooper.binge.companion.seerr.R
 import kotlinx.coroutines.flow.Flow
@@ -60,34 +61,37 @@ private fun PasswordFields(
         verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
     ) {
         if (draft.currentRequired) {
-            EditorTextField(
-                draft.current,
-                stringResource(R.string.user_settings_password_current),
+            BingeTextField(
+                value = draft.current,
+                label = stringResource(R.string.user_settings_password_current),
                 enabled = enabled,
                 secret = true,
                 contentType = ContentType.Password,
-            ) { value ->
-                onEdit { it.copy(current = value) }
-            }
+                onValueChange = { value ->
+                    onEdit { it.copy(current = value) }
+                },
+            )
         }
         // NewPassword on both halves of the pair: it is what tells a password manager to offer a
         // generated one and then to update the entry it already holds rather than add a second.
-        EditorTextField(
-            draft.new,
-            stringResource(R.string.user_settings_password_new),
+        BingeTextField(
+            value = draft.new,
+            label = stringResource(R.string.user_settings_password_new),
             enabled = enabled,
             secret = true,
             supporting = stringResource(R.string.user_settings_password_hint, PasswordSettings.MIN_PASSWORD_LENGTH),
             contentType = ContentType.NewPassword,
-        ) { value -> onEdit { it.copy(new = value) } }
-        EditorTextField(
-            draft.confirm,
-            stringResource(R.string.user_settings_password_confirm),
+            onValueChange = { value -> onEdit { it.copy(new = value) } },
+        )
+        BingeTextField(
+            value = draft.confirm,
+            label = stringResource(R.string.user_settings_password_confirm),
             enabled = enabled,
             secret = true,
             isError = mismatch,
             contentType = ContentType.NewPassword,
             imeAction = ImeAction.Done,
-        ) { value -> onEdit { it.copy(confirm = value) } }
+            onValueChange = { value -> onEdit { it.copy(confirm = value) } },
+        )
     }
 }

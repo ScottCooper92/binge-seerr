@@ -59,9 +59,6 @@ app:editor_error_whole_number  e24f56c429cd
 app:editor_field_required  4850b174b713
 app:editor_keep_editing  e76fd2add010
 app:editor_test_and_save  be8494fb38fe
-app:field_clear  a8ff550536c7
-app:field_secret_hide  ad5caeb74e49
-app:field_secret_show  ff5a856d1a08
 app:handoff_page_app_body  0b96fefd29b5
 app:handoff_page_body  b851c25a5cc6
 app:handoff_page_confirm_body  823d58f7f34c

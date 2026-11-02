@@ -35,6 +35,7 @@ import com.binge.designsystem.component.BingeConfirmDialog
 import com.binge.designsystem.component.BingeFilledButton
 import com.binge.designsystem.component.BingeOutlinedButton
 import com.binge.designsystem.component.BingeSheetKind
+import com.binge.designsystem.component.BingeTextField
 import com.binge.designsystem.component.ExpressiveIconButton
 import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
@@ -260,24 +261,26 @@ internal fun MediaServerLinkContent(
                 modifier = Modifier.fillMaxWidth(),
             )
         }
-        EditorTextField(
-            username,
-            stringResource(R.string.setup_username),
+        BingeTextField(
+            value = username,
+            label = stringResource(R.string.setup_username),
             modifier =
                 Modifier.savedLoginRequest { login -> onCredentials(login.id, login.password) },
             keyboardType = VerbatimKeyboard.keyboardType,
             autoCorrect = VerbatimKeyboard.autoCorrectEnabled ?: true,
             placeholder = stringResource(R.string.setup_username_placeholder, stringResource(origin.labelRes())),
             contentType = ContentType.Username,
-        ) { onUsernameChange(it) }
-        EditorTextField(
-            password,
-            stringResource(R.string.setup_password),
+            onValueChange = { onUsernameChange(it) },
+        )
+        BingeTextField(
+            value = password,
+            label = stringResource(R.string.setup_password),
             secret = true,
             contentType = ContentType.Password,
             imeAction = ImeAction.Done,
             onDone = { if (username.isNotBlank() && password.isNotBlank()) onLink(username, password) },
-        ) { onPasswordChange(it) }
+            onValueChange = { onPasswordChange(it) },
+        )
         BingeFilledButton(
             label = stringResource(R.string.user_settings_link),
             onClick = { onLink(username, password) },

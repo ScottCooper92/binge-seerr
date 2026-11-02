@@ -37,6 +37,7 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import com.binge.designsystem.component.BingeConfirmDialog
+import com.binge.designsystem.component.BingeTextField
 import com.binge.designsystem.component.ExpressiveIconButton
 import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.formatRelativeOrAbsolute
@@ -45,7 +46,6 @@ import com.binge.designsystem.theme.accent
 import com.binge.designsystem.theme.fill
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.ChoiceRow
-import com.cooper.binge.companion.seerr.ui.users.settings.EditorTextField
 import com.binge.designsystem.R as DesR
 
 class JobsActions(
@@ -173,13 +173,14 @@ internal fun ScheduleDialog(
                     onSelect = onConfirm,
                     choiceIcon = { c -> presets.firstOrNull { it.cron == c }?.unit?.icon() },
                 )
-                EditorTextField(
-                    cron,
-                    stringResource(R.string.server_settings_job_cron),
+                BingeTextField(
+                    value = cron,
+                    label = stringResource(R.string.server_settings_job_cron),
                     supporting = stringResource(R.string.server_settings_job_cron_hint),
                     imeAction = ImeAction.Done,
                     onDone = { applyTyped() },
-                ) { cron = it }
+                    onValueChange = { cron = it },
+                )
             }
         },
     )
