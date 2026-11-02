@@ -1,8 +1,10 @@
 package com.cooper.binge.companion.seerr.ui.tv
 
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
@@ -26,9 +28,10 @@ internal fun ColumnScope.TvHandOffContent(
         TvFormNote(stringResource(handOff.reason.messageRes()), tone = TvFormNoteTone.Error)
         return
     }
-    // The pane's room sizes the code; the card is measured and then fits the height, so a short pane shrinks the code
-    // rather than cutting off the PIN.
-    FitQrCard(modifier = Modifier.weight(1f).fillMaxWidth()) { qrSize ->
+    // The pane's room sizes the code: it asks for a share of the pane's width, and the card shrinks it to the height it
+    // has left, so a short pane shrinks the code rather than cutting off the PIN.
+    BoxWithConstraints(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
+        val qrSize = maxWidth * QR_FILL
         if (handOff is AddressHandOff.Listening) {
             TvHandOffCodeCard(handOff, qrSize)
         } else if (preparing) {
@@ -36,6 +39,9 @@ internal fun ColumnScope.TvHandOffContent(
         }
     }
 }
+
+/** How much of the pane's width the code asks for: a little under all of it, so it sits in the card rather than against it. */
+private const val QR_FILL = 0.6f
 
 /**
  * The code and its address together, as Binge's TV sign-in sets its code: the address is the fallback for a phone
