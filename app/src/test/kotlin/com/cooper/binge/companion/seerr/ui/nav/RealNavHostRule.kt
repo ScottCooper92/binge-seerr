@@ -5,9 +5,12 @@ import android.content.pm.ActivityInfo
 import androidx.annotation.StringRes
 import androidx.compose.ui.test.ComposeTimeoutException
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isDisplayed
 import androidx.compose.ui.test.isRoot
 import androidx.compose.ui.test.junit4.ComposeTestRule
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.printToString
 import androidx.navigation3.runtime.NavKey
 import androidx.test.core.app.ActivityScenario
@@ -115,6 +118,33 @@ internal class RealNavHostRule(
         text: String,
         exactly: Boolean = false,
     ): Boolean = settled().onAllNodes(hasText(text, substring = !exactly)).fetchSemanticsNodes().isNotEmpty()
+
+    /**
+     * Clicks a node reading [text] that is on screen until [outcome] shows. [awaitShowing] is satisfied by a node anywhere
+     * in the tree, and a pager keeps its neighbouring page composed beside the visible one, so a click on a match can land
+     * off screen and do nothing. A list can also swap under the click as its filter reloads, so one visible match is not
+     * one that is still there a moment later: the click is tried again until the screen has moved on (#1794).
+     */
+    fun clickUntilShowing(
+        text: String,
+        outcome: String,
+        timeoutMillis: Long = AWAIT_MILLIS,
+    ) {
+        fun clickOneOnScreen() {
+            val matches = settled().onAllNodesWithText(text, substring = true)
+            (0 until matches.fetchSemanticsNodes().size)
+                .map { matches[it] }
+                .firstOrNull { it.isDisplayed() }
+                ?.performClick()
+        }
+        try {
+            compose.waitUntil("\"$outcome\" on screen after clicking \"$text\"", timeoutMillis) {
+                isShowing(outcome).also { reached -> if (!reached) clickOneOnScreen() }
+            }
+        } catch (timeout: ComposeTimeoutException) {
+            throw ComposeTimeoutException("${timeout.message}\n${describeScreen()}")
+        }
+    }
 
     /** How many nodes read [text] now, counting a merged node whose text only includes it, as [isShowing] does. */
     fun count(text: String): Int = settled().onAllNodes(hasText(text, substring = true)).fetchSemanticsNodes().size
