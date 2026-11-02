@@ -946,6 +946,7 @@
     <string name="state_error_server_message">The server hit an error.</string>
     <string name="state_error_rejected_title">Request refused</string>
     <string name="state_error_rejected_message">The server would not accept that.</string>
+    <string name="state_error_rejected_detail">The server would not accept that: %1$s</string>
     <string name="state_error_unknown_title">Something went wrong</string>
     <string name="state_error_unknown_message">Try again.</string>
 

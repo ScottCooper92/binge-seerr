@@ -6,6 +6,9 @@ import io.grpc.Status
 import io.grpc.StatusException
 import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.SerializationException
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.Headers
 import retrofit2.HttpException
 import java.io.IOException
@@ -199,6 +202,33 @@ internal fun Throwable.userFacingRefusal(code: Status.Code): UserFacingRefusal? 
  */
 internal fun Throwable.isNoDefaultServerRefusal(): Boolean =
     this is HttpException && code() == HTTP_CONFLICT && peekedBody().contains("server configured to delete media files", ignoreCase = true)
+
+/** The most of a server's `message` a screen shows. */
+const val MAX_DETAIL_CHARS = 160
+
+/**
+ * What the server says it refused, for a screen to show beside "The server would not accept that" (#1821): the `message`
+ * of a rejection on the merits (a 4xx that is none of the others), as one short line. Nothing else of the body is read,
+ * so a field it echoes back, an API key included, never reaches the screen or a log, and a body that is not JSON with a
+ * text `message` gives null. Any other failure gives null as well.
+ */
+fun Throwable.rejectionDetail(): String? {
+    if (this !is HttpException || toSeerrError() != SeerrError.Rejected) return null
+    val message =
+        attempt {
+            (Json.parseToJsonElement(peekedBody()) as? JsonObject)
+                ?.get("message")
+                ?.jsonPrimitive
+                ?.takeIf { it.isString }
+                ?.content
+        }.getOrNull() ?: return null
+    return message
+        .split(Regex("\\s+"))
+        .filter { it.isNotEmpty() }
+        .joinToString(" ")
+        .take(MAX_DETAIL_CHARS)
+        .takeIf { it.isNotBlank() }
+}
 
 /** Seerr's only signal for a quota breach is the word in its 403 body. */
 private fun HttpException.mentionsQuota(): Boolean = peekedBody().namesQuota()

@@ -2,6 +2,7 @@ package com.cooper.binge.companion.seerr.ui.settings.server
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModelStore
+import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.ui.settings.ServiceType
 import com.cooper.binge.companion.seerr.ui.users.settings.ADMIN
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorEvent
@@ -242,6 +243,20 @@ class DvrInstanceViewModelTest {
             assertFalse("id is read-only to a validating server, and would be refused", "id" in sent)
             assertEquals("false", sent.getValue("isDefault").jsonPrimitive.content)
             assertEquals("Main", sent.getValue("name").jsonPrimitive.content)
+        }
+
+    @Test
+    fun `a save the server rejects says why, in the server's own words`() =
+        runTest {
+            seerr.serve("PUT /api/v1/settings/sonarr/3", """{"message":"request/body/port must be integer"}""", code = 400)
+            val vm = viewModel(ServiceType.Sonarr, id = 3)
+            vm.awaitReady()
+            vm.edit { it.copy(isDefault = false) }
+            val failed = awaitEvent(vm.events) { it is EditorEvent.Failed }
+            vm.save()
+            val event = failed.await() as EditorEvent.Failed
+            assertEquals(SeerrError.Rejected, event.error)
+            assertEquals("request/body/port must be integer", event.detail)
         }
 
     @Test
