@@ -210,7 +210,7 @@ abstract class ExtrasEditorViewModel<T, X>(
                     eventFlow.emit(EditorEvent.Saved)
                 }.onFailure { failure ->
                     state.update { current -> (current as? ExtrasEditorUiState.Ready<T, X>)?.copy(saving = false) ?: current }
-                    eventFlow.emit(EditorEvent.Failed(failure.toSeerrError(), failure.rejectionDetail()))
+                    eventFlow.emit(EditorEvent.Failed.from(failure))
                 }
         }
     }

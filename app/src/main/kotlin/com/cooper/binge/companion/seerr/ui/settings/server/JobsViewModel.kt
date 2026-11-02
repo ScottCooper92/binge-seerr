@@ -213,7 +213,7 @@ class JobsViewModel
                 // effect, so anything reacting to one sees the job already released rather than a
                 // state that still says busy for however long the emitting coroutine takes to resume.
                 state.update { current -> (current as? JobsUiState.Ready)?.releasing(id, failed = outcome.isFailure) ?: current }
-                outcome.onFailure { failure -> eventFlow.emit(EditorEvent.Failed(failure.toSeerrError())) }
+                outcome.onFailure { failure -> eventFlow.emit(EditorEvent.Failed.from(failure)) }
             }
         }
 
