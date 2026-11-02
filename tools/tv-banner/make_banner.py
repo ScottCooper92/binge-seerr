@@ -24,7 +24,6 @@ BRAND = {
     "line2": "Companion",
     "name_colour": "#818CF8",
     "sub_colour": "#A5ABD6",
-    "mark_comment": "the indigo disc with the ring cut out of it",
     "backdrop": ("#FF13121F", "#FF07060E"),
     "tile": ("#FF2A2948", "#FF1C1B33", "#FF121124"),
     "arc": ("#FF818CF8", "#FF4F46E5"),
@@ -136,7 +135,7 @@ def main():
         android:translateY="38.7">
         <path
             android:pathData="M54,22 A32,32 0 1,0 54,86 A32,32 0 1,0 54,22 Z"
-            android:strokeColor="{a1}"
+            android:strokeColor="{BRAND["disc"]}"
             android:strokeAlpha="0.16"
             android:strokeWidth="6"/>
         <path
@@ -177,4 +176,6 @@ def main():
     print("wrote", OUT, "line1 %.1fpx line2 %.1fpx" % (s1, s2), file=sys.stderr)
 
 
-main()
+
+if __name__ == "__main__":
+    main()
