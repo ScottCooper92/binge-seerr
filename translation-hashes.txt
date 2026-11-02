@@ -826,6 +826,7 @@ app:settings_agent_webhook  4814f62c108d
 app:settings_application_url  96884337d874
 app:settings_binge  b914ef32a2e1
 app:settings_choices_filter  638e249f4a15
+app:settings_demo_note  f064b6ca2aa7
 app:settings_display_language  11a045e402c3
 app:settings_edit_connection  047f9f951500
 app:settings_edit_connection_caption  bc5acad237f1

@@ -20,6 +20,7 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
+import com.binge.designsystem.component.PageIntro
 import com.binge.designsystem.component.SkeletonPlate
 import com.binge.designsystem.resolvedContentPadding
 import com.binge.designsystem.template.BingeScreenScaffold
@@ -88,6 +89,7 @@ private fun SettingsContent(
 ) {
     val config = state.config
     Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(contentPadding)) {
+        if (state.connection.baseUrl.isDemoOrigin()) DemoNote()
         ItemGroup(
             title = null,
             rows =
@@ -129,6 +131,12 @@ private fun SettingsContent(
         )
         Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
     }
+}
+
+/** Says the demo is the demo, the one thing a visitor to its full admin console cannot otherwise tell. */
+@Composable
+internal fun DemoNote() {
+    PageIntro(stringResource(R.string.settings_demo_note), Modifier.padding(resolvedContentPadding()))
 }
 
 /** One plate where the admin groups will land, so the groups below make room once rather than jumping as each arrives. */
