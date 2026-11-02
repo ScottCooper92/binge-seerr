@@ -1,10 +1,15 @@
 package com.cooper.binge.companion.seerr.ui.tv
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.test.assertIsFocused
+import androidx.compose.ui.test.assertIsNotFocused
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isFocused
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performKeyInput
 import androidx.compose.ui.test.pressKey
@@ -160,6 +165,27 @@ class TvAdvancedRequestFocusTest {
         assertEquals(1, closed)
     }
 
+    /**
+     * The arrival guard on the real root: the picker opens with no server rows yet, the user presses Down and focus lands on
+     * a button, and then the choices arrive. The arrival's target attaches late, and it must not pull focus back from where the
+     * user went. Without `TvUserMovesHost` around the shell nothing notes the press and the arrival claims. The first press only
+     * gives focus a place to start, with nothing focused for the host to see it through; the second is the one that is noted.
+     */
+    @Test
+    fun aDirectionPressBeforeTheChoicesArriveIsNotUndoneWhenTheyDo() {
+        var state by mutableStateOf<AdvancedRequestUiState>(ready(withChoices = false))
+        composeTestRule.setContent { TvAdvancedRequestShell(state = state, actions = actions) }
+        composeTestRule.waitForIdle()
+
+        pressDown()
+        pressDown()
+        composeTestRule.onNode(isFocused()).assertExists()
+        state = ready()
+        composeTestRule.waitForIdle()
+
+        row("Radarr").assertIsNotFocused()
+    }
+
     private fun setScreen(state: AdvancedRequestUiState) {
         composeTestRule.setContent {
             BingeTvTheme { TvAdvancedRequestScreen(state = state, actions = actions) }
@@ -186,19 +212,21 @@ class TvAdvancedRequestFocusTest {
         composeTestRule.waitForIdle()
     }
 
-    private fun ready(isLoadingChoices: Boolean = false) =
-        AdvancedRequestUiState.Ready(
-            destination =
-                DestinationChoices(
-                    servers = listOf(Choice(1, "Radarr"), Choice(2, "Radarr 4K")),
-                    serverId = 1,
-                    profiles = listOf(Choice(10, "HD-1080p"), Choice(20, "Ultra-HD")),
-                    profileId = 10,
-                    rootFolders = listOf("/data/media/movies", "/data/media/kids"),
-                    rootFolder = "/data/media/movies",
-                    loadingChoices = isLoadingChoices,
-                ),
-            isSubmitting = false,
-            error = null,
-        )
+    private fun ready(
+        isLoadingChoices: Boolean = false,
+        withChoices: Boolean = true,
+    ) = AdvancedRequestUiState.Ready(
+        destination =
+            DestinationChoices(
+                servers = if (withChoices) listOf(Choice(1, "Radarr"), Choice(2, "Radarr 4K")) else emptyList(),
+                serverId = 1.takeIf { withChoices },
+                profiles = if (withChoices) listOf(Choice(10, "HD-1080p"), Choice(20, "Ultra-HD")) else emptyList(),
+                profileId = 10.takeIf { withChoices },
+                rootFolders = if (withChoices) listOf("/data/media/movies", "/data/media/kids") else emptyList(),
+                rootFolder = "/data/media/movies".takeIf { withChoices },
+                loadingChoices = isLoadingChoices,
+            ),
+        isSubmitting = false,
+        error = null,
+    )
 }
