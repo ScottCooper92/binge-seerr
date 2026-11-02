@@ -2,6 +2,7 @@ package com.cooper.binge.companion.seerr.ui.requests
 
 import com.binge.companion.sdk.attempt
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
+import com.cooper.binge.companion.seerr.seerr.SeerrRequestMediaDto
 import com.cooper.binge.companion.seerr.seerr.SeerrServiceSettingsDto
 import com.cooper.binge.companion.seerr.seerr.toPermissions
 import kotlinx.coroutines.async
@@ -17,13 +18,22 @@ import kotlin.time.Duration.Companion.seconds
  * Sonarr instance with Enable Scan on, so with it off an empty queue says nothing (#1733). Only an
  * administrator can read that setting, so the answer is "unknown" for anyone else and wherever a read failed.
  *
- * A type is seen only when every instance of it scans, because the media a screen holds does not say which
- * instance a version lives on. A mixed setup reads neutral, never wrong.
+ * A list of requests cannot say which instance a version lives on, so it sees a type only when every instance of
+ * it scans. A page that holds the media can name the instance, and asks [sees] with it: a mixed setup then reads
+ * right for the version on the scanning instance. An instance the settings do not list reads neutral, never wrong.
  */
 data class DownloadQueueGate(
     val movies: Boolean = false,
     val tv: Boolean = false,
+    val scanning: Set<ScanningInstance> = emptySet(),
 ) {
+    /** One Radarr or Sonarr instance with Enable Scan on. */
+    data class ScanningInstance(
+        val type: RequestMediaType,
+        val is4k: Boolean,
+        val id: Int,
+    )
+
     fun sees(type: RequestMediaType): Boolean =
         when (type) {
             RequestMediaType.Movie -> movies
@@ -32,6 +42,19 @@ data class DownloadQueueGate(
 
     /** For a media type string off a DTO; a type this app does not render is never seen. */
     fun sees(mediaType: String): Boolean = mediaType.toRequestMediaTypeOrNull()?.let(::sees) == true
+
+    /**
+     * For the [is4k] version of [media]: its own instance's scan where Seerr names the instance, else the type's
+     * answer as a list gives it.
+     */
+    fun sees(
+        media: SeerrRequestMediaDto,
+        is4k: Boolean,
+    ): Boolean {
+        val type = media.mediaType.toRequestMediaTypeOrNull() ?: return false
+        val id = media.serviceIdFor(is4k) ?: return sees(type)
+        return ScanningInstance(type, is4k, id) in scanning
+    }
 
     companion object {
         val Unknown = DownloadQueueGate()
@@ -42,7 +65,12 @@ data class DownloadQueueGate(
         ) = DownloadQueueGate(
             movies = radarr.isNotEmpty() && radarr.all { it.syncEnabled },
             tv = sonarr.isNotEmpty() && sonarr.all { it.syncEnabled },
+            scanning =
+                radarr.scanning(RequestMediaType.Movie) + sonarr.scanning(RequestMediaType.Tv),
         )
+
+        private fun List<SeerrServiceSettingsDto>.scanning(type: RequestMediaType): Set<ScanningInstance> =
+            mapNotNull { dto -> dto.id?.takeIf { dto.syncEnabled }?.let { ScanningInstance(type, dto.is4k, it) } }.toSet()
     }
 }
 

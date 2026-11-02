@@ -15,6 +15,7 @@ import com.cooper.binge.companion.seerr.seerr.SeerrServiceSettingsDto
 import com.cooper.binge.companion.seerr.seerr.SeerrUserMainSettingsDto
 import com.cooper.binge.companion.seerr.seerr.SeerrUserPermissionsBody
 import com.cooper.binge.companion.seerr.ui.requests.DownloadQueueGate
+import com.cooper.binge.companion.seerr.ui.requests.RequestMediaType
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -108,7 +109,15 @@ class DemoSettingsTest {
             assertTrue(api.radarrSettings().single().syncEnabled)
             assertTrue(api.sonarrSettings().single().syncEnabled)
             assertEquals(
-                DownloadQueueGate(movies = true, tv = true),
+                DownloadQueueGate(
+                    movies = true,
+                    tv = true,
+                    scanning =
+                        setOf(
+                            DownloadQueueGate.ScanningInstance(RequestMediaType.Movie, is4k = false, id = 1),
+                            DownloadQueueGate.ScanningInstance(RequestMediaType.Tv, is4k = false, id = 1),
+                        ),
+                ),
                 DownloadQueueGate.from(api.radarrSettings(), api.sonarrSettings()),
             )
         }

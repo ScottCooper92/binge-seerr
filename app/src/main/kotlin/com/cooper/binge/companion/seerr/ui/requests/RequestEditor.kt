@@ -216,7 +216,7 @@ private fun EditSource.seasonChoices(): List<SeasonChoice> {
     val requested = request.seasons.map { it.seasonNumber }.toSet()
     val download =
         (if (request.is4k) request.media.downloadStatus4k else request.media.downloadStatus)
-            .downloadActivity(queueGate.sees(request.media.mediaType))
+            .downloadActivity(queueGate.sees(request.media, request.is4k))
     return details.seasons
         .filter { it.seasonNumber >= FIRST_SEASON && it.episodeCount > 0 }
         .map { season ->
