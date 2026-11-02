@@ -147,7 +147,7 @@ abstract class EditorViewModel<T>(
                     state.update { current ->
                         (current as? EditorUiState.Ready<T>)?.let { it.copy(draft = it.saved, saveRefusal = error) } ?: current
                     }
-                    eventFlow.emit(EditorEvent.Failed(error, failure.rejectionDetail()))
+                    eventFlow.emit(EditorEvent.Failed.from(failure))
                 },
             )
         }

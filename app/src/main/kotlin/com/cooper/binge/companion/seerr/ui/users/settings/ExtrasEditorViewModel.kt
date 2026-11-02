@@ -7,7 +7,6 @@ import com.binge.designsystem.SaveStatus
 import com.binge.designsystem.save.SaveAsMade
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.seerr.isTransient
-import com.cooper.binge.companion.seerr.seerr.rejectionDetail
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -143,7 +142,7 @@ abstract class ExtrasEditorViewModel<T, X>(
                     state.update { current ->
                         (current as? ExtrasEditorUiState.Ready<T, X>)?.let { it.copy(draft = it.saved, saveRefusal = error) } ?: current
                     }
-                    eventFlow.emit(EditorEvent.Failed(error, failure.rejectionDetail()))
+                    eventFlow.emit(EditorEvent.Failed.from(failure))
                 },
             )
         }
