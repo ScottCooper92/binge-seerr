@@ -78,7 +78,8 @@ class DvrInstanceViewModel
 
         override suspend fun write(draft: DvrForm): DvrForm {
             val api = connection.api()
-            val body = draft.toDto(currentExtras().choices)
+            // The id is in the path. The spec marks it read-only in the body, and a validating server refuses a body that has it.
+            val body = draft.toDto(currentExtras().choices).copy(id = null)
             val creating = draft.id == null
             crashBreadcrumbs.log("${if (creating) "creating" else "updating"} ${type.apiSegment} instance")
             val answered = if (creating) api.createDvr(type.apiSegment, body) else api.updateDvr(type.apiSegment, draft.id, body)

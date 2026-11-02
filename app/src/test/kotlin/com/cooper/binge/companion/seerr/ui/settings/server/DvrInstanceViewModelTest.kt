@@ -229,6 +229,22 @@ class DvrInstanceViewModelTest {
         }
 
     @Test
+    fun `a save to an existing instance leaves the id out of the body, since the path carries it`() =
+        runTest {
+            seerr.serve("PUT /api/v1/settings/sonarr/3", SONARR.trim().removePrefix("[").removeSuffix("]"))
+            val vm = viewModel(ServiceType.Sonarr, id = 3)
+            vm.awaitReady()
+            vm.edit { it.copy(isDefault = false) }
+            val saved = awaitEvent(vm.events) { it is EditorEvent.Saved }
+            vm.save()
+            assertEquals(EditorEvent.Saved, saved.await())
+            val sent = Json.parseToJsonElement(seerr.body("PUT", "/api/v1/settings/sonarr/3")).jsonObject
+            assertFalse("id is read-only to a validating server, and would be refused", "id" in sent)
+            assertEquals("false", sent.getValue("isDefault").jsonPrimitive.content)
+            assertEquals("Main", sent.getValue("name").jsonPrimitive.content)
+        }
+
+    @Test
     fun `a new sonarr defaults to monitoring all new seasons, matching the web client`() =
         runTest {
             seerr.serve(
