@@ -34,11 +34,11 @@ import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.resolvedContentPadding
+import com.binge.designsystem.template.formSaveStatus
 import com.binge.designsystem.theme.BingeSentiment
 import com.binge.designsystem.theme.fill
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.seerr.SeerrError
-import com.cooper.binge.companion.seerr.ui.state.formSaveStatus
 import com.cooper.binge.companion.seerr.ui.state.messageRes
 import com.cooper.binge.companion.seerr.ui.state.titleRes
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorEvent
