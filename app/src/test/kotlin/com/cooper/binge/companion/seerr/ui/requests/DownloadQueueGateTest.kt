@@ -5,6 +5,7 @@ import com.cooper.binge.companion.seerr.auth.CredentialStore
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.seerr.SeerrApiFactory
 import com.cooper.binge.companion.seerr.seerr.SeerrAuth
+import com.cooper.binge.companion.seerr.seerr.SeerrRequestMediaDto
 import com.cooper.binge.companion.seerr.seerr.SeerrServiceSettingsDto
 import com.cooper.binge.companion.seerr.util.FakeRequest
 import com.cooper.binge.companion.seerr.util.FakeResponse
@@ -30,6 +31,27 @@ private const val MANAGE_REQUESTS = 1 shl 4
 private fun json(body: String) = FakeResponse(code = 200, headers = headersOf("Content-Type", "application/json"), body = body)
 
 private fun service(syncEnabled: Boolean) = SeerrServiceSettingsDto(id = 0, syncEnabled = syncEnabled)
+
+private fun instance(
+    id: Int,
+    syncEnabled: Boolean,
+    is4k: Boolean = false,
+) = SeerrServiceSettingsDto(id = id, syncEnabled = syncEnabled, is4k = is4k)
+
+private fun tv(id: Int) = DownloadQueueGate.ScanningInstance(RequestMediaType.Tv, is4k = false, id = id)
+
+/** What the default fixtures read as: Radarr 0, and Sonarr 0 and 1, all scanning. */
+private val scanningEverywhere =
+    DownloadQueueGate(
+        movies = true,
+        tv = true,
+        scanning = setOf(DownloadQueueGate.ScanningInstance(RequestMediaType.Movie, is4k = false, id = 0), tv(0), tv(1)),
+    )
+
+private fun movie(
+    serviceId: Int? = null,
+    serviceId4k: Int? = null,
+) = SeerrRequestMediaDto(tmdbId = 1, mediaType = "movie", serviceId = serviceId, serviceId4k = serviceId4k)
 
 class DownloadQueueGateTest {
     @get:Rule
@@ -74,6 +96,48 @@ class DownloadQueueGateTest {
     private fun settingsReads() = received.count { it.url.encodedPath.startsWith("/api/v1/settings/radarr") }
 
     @Test
+    fun `a version is seen by its own instance, so a mixed setup reads right on the scanning one`() {
+        val gate =
+            DownloadQueueGate.from(
+                radarr = listOf(instance(1, syncEnabled = true), instance(2, syncEnabled = false, is4k = true)),
+                sonarr = emptyList(),
+            )
+
+        assertFalse(gate.sees(RequestMediaType.Movie))
+        assertTrue(gate.sees(movie(serviceId = 1, serviceId4k = 2), is4k = false))
+        assertFalse(gate.sees(movie(serviceId = 1, serviceId4k = 2), is4k = true))
+    }
+
+    @Test
+    fun `an instance the settings do not list reads neutral, and so does a version sent nowhere`() {
+        val gate =
+            DownloadQueueGate.from(
+                radarr = listOf(instance(1, syncEnabled = true), instance(2, syncEnabled = false)),
+                sonarr = emptyList(),
+            )
+
+        assertFalse(gate.sees(movie(serviceId = 9), is4k = false))
+        assertFalse(gate.sees(movie(serviceId = 2), is4k = false))
+        assertFalse(gate.sees(movie(), is4k = false))
+    }
+
+    @Test
+    fun `a 4K instance is not mistaken for a standard one with the same id`() {
+        val gate = DownloadQueueGate.from(radarr = listOf(instance(1, syncEnabled = true, is4k = true)), sonarr = emptyList())
+
+        assertTrue(gate.sees(movie(serviceId4k = 1), is4k = true))
+        assertFalse(gate.sees(movie(serviceId = 1), is4k = false))
+    }
+
+    @Test
+    fun `no instance id falls back to the type's answer, and an unknown gate sees nothing`() {
+        val all = DownloadQueueGate.from(radarr = listOf(instance(1, syncEnabled = true)), sonarr = emptyList())
+
+        assertTrue(all.sees(movie(), is4k = false))
+        assertFalse(DownloadQueueGate.Unknown.sees(movie(serviceId = 1), is4k = false))
+    }
+
+    @Test
     fun `a type is seen only when every one of its instances scans`() {
         val gate = DownloadQueueGate.from(radarr = listOf(service(true)), sonarr = listOf(service(true), service(false)))
 
@@ -94,14 +158,14 @@ class DownloadQueueGateTest {
     @Test
     fun `an administrator reads the gate from the services settings`() =
         runTest {
-            assertEquals(DownloadQueueGate(movies = true, tv = true), gates().current())
+            assertEquals(scanningEverywhere, gates().current())
         }
 
     @Test
     fun `a scan that is off is not seen`() =
         runTest {
             radarr = """[{"id":0,"syncEnabled":false}]"""
-            assertEquals(DownloadQueueGate(movies = false, tv = true), gates().current())
+            assertEquals(DownloadQueueGate(movies = false, tv = true, scanning = setOf(tv(0), tv(1))), gates().current())
         }
 
     @Test
@@ -123,7 +187,7 @@ class DownloadQueueGateTest {
 
             settingsStatus = 200
             now += 16_000
-            assertEquals(DownloadQueueGate(movies = true, tv = true), gates.current())
+            assertEquals(scanningEverywhere, gates.current())
         }
 
     @Test

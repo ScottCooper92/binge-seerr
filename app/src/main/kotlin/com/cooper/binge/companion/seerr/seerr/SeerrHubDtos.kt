@@ -62,7 +62,14 @@ data class SeerrRequestMediaDto(
     @SerialName("jellyfinMediaId") val jellyfinMediaId: String? = null,
     @SerialName("mediaUrl4k") val mediaUrl4k: String? = null,
     @SerialName("serviceUrl4k") val serviceUrl4k: String? = null,
-)
+    /** The Radarr or Sonarr instance the standard version was sent to: an id in `settings/radarr` or `settings/sonarr`. */
+    @SerialName("serviceId") val serviceId: Int? = null,
+    /** The instance the 4K version was sent to; 4K instances are listed apart from [serviceId]'s. */
+    @SerialName("serviceId4k") val serviceId4k: Int? = null,
+) {
+    /** The instance holding the [is4k] version, or null where the server has not sent that version anywhere. */
+    fun serviceIdFor(is4k: Boolean): Int? = if (is4k) serviceId4k else serviceId
+}
 
 /** `media/{id}/watch_data`: Tautulli's counts per instance; an instance without plays is absent. */
 @Serializable
