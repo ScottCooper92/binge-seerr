@@ -35,6 +35,36 @@ class SeerrErrorsTest {
         assertFalse(http(400).toSeerrError().isTransient)
     }
 
+    /** What the server says it refused, for the user to read (#1821): only a rejection's own `message`, never the body. */
+    @Test
+    fun `a rejection's message is what the server says, trimmed to one short line`() {
+        assertEquals(
+            "request/body/id is read-only",
+            http(400, """{"message":"request/body/id is read-only","errors":[{"path":"/body/id"}]}""").rejectionDetail(),
+        )
+        assertEquals("a b c", http(400, """{"message":"  a\n b   c "}""").rejectionDetail())
+        assertEquals(MAX_DETAIL_CHARS, http(400, """{"message":"${"x".repeat(MAX_DETAIL_CHARS * 2)}"}""").rejectionDetail()?.length)
+    }
+
+    @Test
+    fun `no detail comes from anything but a rejection with a message`() {
+        assertEquals(null, http(400, "{}").rejectionDetail())
+        assertEquals(null, http(400, """{"message":"   "}""").rejectionDetail())
+        assertEquals(null, http(400, """{"message":["not","text"]}""").rejectionDetail())
+        assertEquals(null, http(400, "<html>Bad Request</html>").rejectionDetail())
+        assertEquals(null, http(500, """{"message":"boom"}""").rejectionDetail())
+        assertEquals(null, http(404, """{"message":"gone"}""").rejectionDetail())
+        assertEquals(null, IOException("down").rejectionDetail())
+    }
+
+    @Test
+    fun `reading the detail leaves the body for the next reader`() {
+        val failure = http(400, """{"message":"request/body/id is read-only"}""")
+        assertEquals("request/body/id is read-only", failure.rejectionDetail())
+        assertEquals("request/body/id is read-only", failure.rejectionDetail())
+        assertEquals(SeerrError.Rejected, failure.toSeerrError())
+    }
+
     @Test
     fun `a call refused for the local network is its own error, and the contract's UNAVAILABLE`() {
         val refused = LocalNetworkDeniedException("seerr.lan")

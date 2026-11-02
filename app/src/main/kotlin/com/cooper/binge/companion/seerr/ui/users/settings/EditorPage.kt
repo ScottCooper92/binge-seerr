@@ -241,7 +241,11 @@ internal fun EditorEventSnackbarEffect(
                 EditorEvent.Saved ->
                     snackbarHostState.showSnackbar(resources.getString(R.string.user_settings_saved), SnackbarMessageKind.Confirmation)
                 is EditorEvent.Failed ->
-                    snackbarHostState.showSnackbar(resources.getString(event.error.messageRes()), SnackbarMessageKind.Error)
+                    snackbarHostState.showSnackbar(
+                        event.detail?.let { resources.getString(R.string.state_error_rejected_detail, it) }
+                            ?: resources.getString(event.error.messageRes()),
+                        SnackbarMessageKind.Error,
+                    )
                 is EditorEvent.Notice ->
                     snackbarHostState.showSnackbar(resources.getString(event.messageRes), SnackbarMessageKind.Confirmation)
                 is EditorEvent.Undoable -> {

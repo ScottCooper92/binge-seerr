@@ -8,6 +8,7 @@ import com.binge.designsystem.SaveStatus
 import com.binge.designsystem.save.SaveAsMade
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.seerr.isTransient
+import com.cooper.binge.companion.seerr.seerr.rejectionDetail
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -50,6 +51,8 @@ sealed interface EditorEvent {
 
     data class Failed(
         val error: SeerrError,
+        /** What the server said it refused, when it rejected the save on the merits and said why. */
+        val detail: String? = null,
     ) : EditorEvent
 
     /** An action beside the form succeeded; [messageRes] says which. */
@@ -139,7 +142,7 @@ abstract class EditorViewModel<T>(
                     state.update { current ->
                         (current as? EditorUiState.Ready<T>)?.let { it.copy(draft = it.saved, saveRefusal = error) } ?: current
                     }
-                    eventFlow.emit(EditorEvent.Failed(error))
+                    eventFlow.emit(EditorEvent.Failed(error, failure.rejectionDetail()))
                 },
             )
         }
@@ -212,7 +215,7 @@ abstract class EditorViewModel<T>(
                     eventFlow.emit(EditorEvent.Saved)
                 }.onFailure { failure ->
                     state.update { current -> (current as? EditorUiState.Ready<T>)?.copy(saving = false) ?: current }
-                    eventFlow.emit(EditorEvent.Failed(failure.toSeerrError()))
+                    eventFlow.emit(EditorEvent.Failed(failure.toSeerrError(), failure.rejectionDetail()))
                 }
         }
     }

@@ -923,6 +923,7 @@
     <string name="state_error_server_message">El servidor devolvió un error.</string>
     <string name="state_error_rejected_title">Solicitud no aceptada</string>
     <string name="state_error_rejected_message">El servidor no aceptó eso.</string>
+    <string name="state_error_rejected_detail">El servidor no aceptó eso: %1$s</string>
     <string name="state_error_unknown_title">Algo ha salido mal</string>
     <string name="state_error_unknown_message">Inténtalo de nuevo.</string>
     <string name="request_state_pending">Pendiente</string>

@@ -937,6 +937,7 @@ app:state_error_not_found_message  54984c3571cc
 app:state_error_not_found_title  e3ebaa16dd9d
 app:state_error_quota_message  0237326bb5b0
 app:state_error_quota_title  d1a96903ebb9
+app:state_error_rejected_detail  9aec21acbf92
 app:state_error_rejected_message  6539464c0d2b
 app:state_error_rejected_title  d4b4a45100ea
 app:state_error_server_message  ccef1c5a5a60

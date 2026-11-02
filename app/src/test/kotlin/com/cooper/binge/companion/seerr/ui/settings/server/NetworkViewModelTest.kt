@@ -139,7 +139,7 @@ class NetworkViewModelTest {
             vm.edit { it.copy(trustProxy = false) }
             advanceTimeBy(SAVE_AS_MADE_DELAY_MILLIS + 1)
 
-            assertEquals(EditorEvent.Failed(SeerrError.Rejected), refused.await())
+            assertEquals(EditorEvent.Failed(SeerrError.Rejected, "bad value"), refused.await())
             val ready = vm.awaitReady { !it.dirty && it.saveStatus == SaveStatus.Idle }
             assertFalse(ready.saveFailed)
             assertTrue("back to the saved record", ready.draft.trustProxy)
