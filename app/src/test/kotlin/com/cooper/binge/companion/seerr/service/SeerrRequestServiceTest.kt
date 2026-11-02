@@ -590,14 +590,17 @@ class SeerrRequestServiceTest {
             seerr.enqueue(json("""{"mediaInfo":{"status":2}}"""))
             seerr.enqueue(json("""{"mediaInfo":{"status":2}}"""))
             seerr.enqueue(MockResponse(code = 500))
-            val reportedAtEmission = mutableListOf<Int>()
+            var emissions = 0
             assertEquals(
                 Status.Code.UNAVAILABLE,
-                stub.code { stub.observeStatus(request).onEach { reportedAtEmission += analytics.events.size }.toList() },
+                stub.code { stub.observeStatus(request).onEach { emissions++ }.toList() },
             )
 
-            // The healthy polls reported nothing; the second repeats the first, so the stream emits once.
-            assertEquals(listOf(0), reportedAtEmission)
+            // The second healthy poll repeats the first, so the stream emits once. Whether it was reported before or after the
+            // client read that emission is not asserted: the server polls every millisecond on its own thread, so under load
+            // the failure can be reported before the first emission arrives (#1794).
+            assertEquals(1, emissions)
+            // And the healthy polls reported nothing: the failed poll's is the only event there is.
             assertEquals("observe_status", failedOperation(analytics)["operation"])
         }
 
