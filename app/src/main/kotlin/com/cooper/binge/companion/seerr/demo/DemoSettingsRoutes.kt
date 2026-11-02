@@ -43,7 +43,7 @@ private fun metadataTest() = SeerrMetadataTestResultDto(success = true, tests = 
 
 /** A download server's list and its edits, and the connection test, which always finds the demo's one profile and folder. */
 private fun DemoResources.serviceRoutes(service: String): List<DemoRoute> =
-    listRoutes(service, "settings", service) +
+    listRoutes(service, "settings", service, readOnlyId = true) +
         route("POST", "settings", service, "test") { _, _ ->
             ok(
                 SeerrDvrTestResultDto(

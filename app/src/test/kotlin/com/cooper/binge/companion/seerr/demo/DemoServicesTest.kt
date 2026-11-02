@@ -83,6 +83,22 @@ class DemoServicesTest {
         }
 
     @Test
+    fun `a server's update that carries the id is refused, as a validating Seerr refuses it`() =
+        demo { api ->
+            val refused =
+                try {
+                    api.updateDvr("radarr", SERVER_ID, SeerrServiceSettingsDto(id = SERVER_ID, name = "Same", isDefault = true))
+                    null
+                } catch (failure: HttpException) {
+                    failure
+                }
+            assertEquals(400, refused?.code())
+            assertEquals("Demo Radarr", api.radarrServers().single().name)
+            api.updateDvr("radarr", SERVER_ID, SeerrServiceSettingsDto(name = "Renamed", isDefault = true))
+            assertEquals("Renamed", api.radarrServers().single().name)
+        }
+
+    @Test
     fun `each kind's active directory is one of the folders its details offer, as on a real server`() =
         demo { api ->
             val radarr = api.radarrServers().single()
