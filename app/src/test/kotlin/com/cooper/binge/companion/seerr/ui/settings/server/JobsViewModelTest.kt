@@ -513,7 +513,7 @@ class JobsViewModelTest {
 
             vm.schedule("download-sync", "0 */15 * *")
 
-            assertEquals(EditorEvent.Failed(SeerrError.Rejected), event.await())
+            assertEquals(EditorEvent.Failed(SeerrError.Rejected, "Invalid job schedule."), event.await())
             val settled = vm.uiState.first { it is JobsUiState.Ready && it.busyIds.isEmpty() } as JobsUiState.Ready
             assertEquals(null, settled.unsentSchedule)
             assertEquals(SaveStatus.Idle, settled.scheduleStatus)

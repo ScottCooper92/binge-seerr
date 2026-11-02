@@ -164,8 +164,8 @@ class JobsViewModel
             viewModelScope.launch(dispatcher) {
                 val outcome = attempt { connection.api().scheduleJob(id, SeerrJobScheduleBody(cron.trim())).toServerJob() }
                 outcome.onSuccess { updated -> setJobs(jobs().map { if (it.id == updated.id) updated else it }) }
-                val error = outcome.exceptionOrNull()?.toSeerrError()
-                val retryable = error?.isTransient == true
+                val failure = outcome.exceptionOrNull()
+                val retryable = failure?.toSeerrError()?.isTransient == true
                 state.update { current ->
                     (current as? JobsUiState.Ready)?.copy(
                         busyIds = current.busyIds - id,
@@ -178,7 +178,7 @@ class JobsViewModel
                             },
                     ) ?: current
                 }
-                if (error != null && !retryable) eventFlow.emit(EditorEvent.Failed(error))
+                if (failure != null && !retryable) eventFlow.emit(EditorEvent.Failed.from(failure))
             }
         }
 
