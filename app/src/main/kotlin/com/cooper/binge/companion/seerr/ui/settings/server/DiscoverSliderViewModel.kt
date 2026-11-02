@@ -6,7 +6,6 @@ import com.binge.companion.sdk.attempt
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.di.IoDispatcher
 import com.cooper.binge.companion.seerr.notifications.ApplicationScope
-import com.cooper.binge.companion.seerr.seerr.toSeerrError
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorEvent
 import com.cooper.binge.companion.seerr.ui.users.settings.ExtrasEditorViewModel
 import com.cooper.binge.companion.seerr.ui.users.settings.SavedDraft
@@ -183,7 +182,7 @@ class DiscoverSliderViewModel
                 withContext(dispatcher) { attempt { connection.api().deleteDiscoverSlider(existing) } }
                     .onSuccess { notify(EditorEvent.Deleted) }
                     .onFailure { failure ->
-                        notify(EditorEvent.Failed(failure.toSeerrError()))
+                        notify(EditorEvent.Failed.from(failure))
                         // The slider is still there, so the change discarded above is owed to it again: sent now, and kept for a
                         // retry if that fails too.
                         if (ready()?.dirty == true) save()
