@@ -2,6 +2,7 @@ package com.cooper.binge.companion.seerr.seerr
 
 import com.binge.companion.sdk.attempt
 import com.cooper.binge.companion.seerr.auth.NotConnectedException
+import com.cooper.binge.companion.seerr.ui.users.settings.EditorEvent
 import io.grpc.Status
 import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.SerializationException
@@ -63,6 +64,17 @@ class SeerrErrorsTest {
         assertEquals("request/body/id is read-only", failure.rejectionDetail())
         assertEquals("request/body/id is read-only", failure.rejectionDetail())
         assertEquals(SeerrError.Rejected, failure.toSeerrError())
+    }
+
+    /** The one way an editor builds its failure from a throwable, so no call site can leave the reason out (#1841). */
+    @Test
+    fun `an editor failure carries the error and, for a rejection, the server's reason`() {
+        assertEquals(
+            EditorEvent.Failed(SeerrError.Rejected, "name is taken"),
+            EditorEvent.Failed.from(http(400, """{"message":"name is taken"}""")),
+        )
+        assertEquals(EditorEvent.Failed(SeerrError.Server, null), EditorEvent.Failed.from(http(500, """{"message":"boom"}""")))
+        assertEquals(EditorEvent.Failed(SeerrError.Unreachable, null), EditorEvent.Failed.from(IOException("down")))
     }
 
     @Test

@@ -8,7 +8,6 @@ import com.cooper.binge.companion.seerr.di.IoDispatcher
 import com.cooper.binge.companion.seerr.notifications.ApplicationScope
 import com.cooper.binge.companion.seerr.seerr.SeerrMetadataTestResultDto
 import com.cooper.binge.companion.seerr.seerr.peekedBody
-import com.cooper.binge.companion.seerr.seerr.toSeerrError
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorEvent
 import com.cooper.binge.companion.seerr.ui.users.settings.ExtrasEditorViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -60,7 +59,7 @@ class MetadataViewModel
                 }
                 outcome
                     .onSuccess { notify(EditorEvent.Notice(R.string.server_settings_metadata_tested)) }
-                    .onFailure { failure -> notify(EditorEvent.Failed(failure.toSeerrError())) }
+                    .onFailure { failure -> notify(EditorEvent.Failed.from(failure)) }
             }
         }
     }

@@ -7,7 +7,6 @@ import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.di.IoDispatcher
 import com.cooper.binge.companion.seerr.notifications.ApplicationScope
 import com.cooper.binge.companion.seerr.seerr.SeerrAuth
-import com.cooper.binge.companion.seerr.seerr.toSeerrError
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorEvent
 import com.cooper.binge.companion.seerr.ui.users.settings.ExtrasEditorViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -131,14 +130,14 @@ class ServerGeneralViewModel
                     val current = connection.current()
                     if (current.auth is SeerrAuth.ApiKey && key.isNotEmpty()) {
                         connection.connect(current.baseUrl, SeerrAuth.ApiKey(key)).onFailure { failure ->
-                            notify(EditorEvent.Failed(failure.toSeerrError()))
+                            notify(EditorEvent.Failed.from(failure))
                             return@launch
                         }
                     }
                     notify(EditorEvent.Notice(R.string.server_settings_api_key_regenerated))
                 }.onFailure { failure ->
                     editExtras { it.copy(apiKey = it.apiKey.copy(regenerating = false)) }
-                    notify(EditorEvent.Failed(failure.toSeerrError()))
+                    notify(EditorEvent.Failed.from(failure))
                 }
             }
         }

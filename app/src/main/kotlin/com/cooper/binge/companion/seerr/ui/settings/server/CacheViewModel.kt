@@ -67,7 +67,7 @@ class CacheViewModel
                     eventFlow.emit(EditorEvent.Notice(R.string.server_settings_cache_flushed))
                 }.onFailure { failure ->
                     state.update { current -> (current as? CacheUiState.Ready)?.copy(busyIds = current.busyIds - key) ?: current }
-                    eventFlow.emit(EditorEvent.Failed(failure.toSeerrError()))
+                    eventFlow.emit(EditorEvent.Failed.from(failure))
                 }
             }
         }
