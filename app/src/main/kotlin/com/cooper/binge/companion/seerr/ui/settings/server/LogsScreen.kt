@@ -14,10 +14,13 @@ import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.pulltorefresh.PullToRefreshState
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -28,6 +31,7 @@ import androidx.paging.PagingData
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
+import com.binge.designsystem.component.BingePullToRefresh
 import com.binge.designsystem.component.BingeSearchField
 import com.binge.designsystem.component.FilterChipItem
 import com.binge.designsystem.component.LogRowEntry
@@ -41,7 +45,9 @@ import com.cooper.binge.companion.seerr.ui.requests.PagedAppendState
 import com.cooper.binge.companion.seerr.ui.requests.PagedRefreshError
 import com.cooper.binge.companion.seerr.ui.state.EmptyScreen
 import com.cooper.binge.companion.seerr.ui.state.LoadingScreen
+import com.cooper.binge.companion.seerr.ui.state.PullableMessage
 import com.cooper.binge.companion.seerr.ui.state.filteredPagePadding
+import com.cooper.binge.companion.seerr.ui.state.refreshInFlight
 import com.cooper.binge.companion.seerr.ui.state.rememberPagedPhase
 import kotlinx.coroutines.flow.Flow
 import com.binge.designsystem.R as DesR
@@ -68,6 +74,7 @@ fun LogsScreen(
     entriesFor: (LogLevel) -> Flow<PagingData<LogEntry>>,
     events: Flow<LogsEvent>,
     actions: LogsActions,
+    pullState: PullToRefreshState? = null,
 ) {
     val focusManager = LocalFocusManager.current
     FilteredListScreen(
@@ -101,6 +108,7 @@ fun LogsScreen(
             events = events,
             actions = actions,
             contentPadding = contentPadding,
+            pullState = pullState,
         )
     }
 }
@@ -120,6 +128,7 @@ private fun LogsPage(
     events: Flow<LogsEvent>,
     actions: LogsActions,
     contentPadding: PaddingValues,
+    pullState: PullToRefreshState?,
 ) {
     val lazyItems = entriesFor(level).collectAsLazyPagingItems()
     val listState = rememberLazyListState()
@@ -135,7 +144,24 @@ private fun LogsPage(
             }
         }
     }
-    LogsBody(lazyItems, listState, actions, Modifier.fillMaxSize(), contentPadding)
+    // Only a pull shows the spinner: following re-reads this list on its own interval, and a spinner on each would blink.
+    var pulled by remember { mutableStateOf(false) }
+    val refreshing = lazyItems.loadState.refreshInFlight()
+    LaunchedEffect(refreshing) { if (!refreshing) pulled = false }
+    BingePullToRefresh(
+        isRefreshing = pulled && refreshing,
+        onRefresh = {
+            if (!refreshing) {
+                pulled = true
+                lazyItems.refresh()
+            }
+        },
+        modifier = Modifier.fillMaxSize(),
+        indicatorTopInset = contentPadding.calculateTopPadding(),
+        state = pullState ?: rememberPullToRefreshState(),
+    ) {
+        LogsBody(lazyItems, listState, actions, Modifier.fillMaxSize(), contentPadding)
+    }
 }
 
 @Composable
@@ -168,11 +194,13 @@ private fun LogsBody(
                 modifier = modifier.padding(contentPadding),
             )
         PagedPhase.Empty ->
-            EmptyScreen(
-                message = stringResource(R.string.server_settings_logs_empty),
-                modifier = modifier.padding(contentPadding),
-                icon = Icons.AutoMirrored.Filled.Article,
-            )
+            PullableMessage(modifier) { fill ->
+                EmptyScreen(
+                    message = stringResource(R.string.server_settings_logs_empty),
+                    modifier = fill.padding(contentPadding),
+                    icon = Icons.AutoMirrored.Filled.Article,
+                )
+            }
     }
 }
 

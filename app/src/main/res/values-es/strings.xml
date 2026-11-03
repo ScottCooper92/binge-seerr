@@ -699,6 +699,11 @@
     <string name="server_settings_about_total_media">Títulos</string>
     <string name="server_settings_about_timezone">Zona horaria</string>
     <string name="server_settings_about_data_directory">Directorio de datos</string>
+    <string name="server_settings_about_totals_failed">No se pudieron leer los totales ni la zona horaria</string>
+    <string name="server_settings_about_totals_stale">Los totales y la zona horaria pueden estar desactualizados</string>
+    <string name="server_settings_about_data_failed">No se pudo leer el directorio de datos</string>
+    <string name="server_settings_about_data_stale">El directorio de datos puede estar desactualizado</string>
+    <string name="server_settings_about_read_retry">Toca para volver a intentarlo</string>
     <string name="server_settings_about_data_not_mounted">%1$s no está montado: se pierden los datos</string>
     <string name="server_settings_about_data_not_writable">El servidor no puede escribir en %1$s</string>
     <string name="server_settings_about_support">Obtener ayuda</string>

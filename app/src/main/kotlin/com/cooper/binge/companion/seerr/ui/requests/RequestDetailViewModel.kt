@@ -261,7 +261,8 @@ class RequestDetailViewModel
 
         /**
          * A pull: re-reads the page and swaps it in, keeping what is showing until then. A failed read leaves the page as it
-         * is and says so in the usual message, where [reload] would replace it with the error.
+         * is and says so in the usual message. [reload] does the same for a page already showing; it differs on a first load
+         * or a seeded page, which it replaces with the error.
          */
         fun refresh() {
             if (state.value !is RequestDetailUiState.Ready) return
@@ -289,13 +290,23 @@ class RequestDetailViewModel
                 val result = attempt { load() }
                 state.update { current ->
                     result.fold(
-                        { RequestDetailUiState.Ready(it) },
+                        // A page already showing keeps its own fields: a report still being sent keeps its re-entrancy guard.
+                        { detail -> (current as? RequestDetailUiState.Ready)?.copy(detail = detail) ?: RequestDetailUiState.Ready(detail) },
                         { failure ->
-                            // A seeded page keeps its header and reports the failure beside it.
-                            (current as? RequestDetailUiState.Seeded)?.copy(error = failure.toSeerrError())
+                            // A page already showing stays as it is; a seeded one keeps its header and reports the failure beside it.
+                            current as? RequestDetailUiState.Ready
+                                ?: (current as? RequestDetailUiState.Seeded)?.copy(error = failure.toSeerrError())
                                 ?: RequestDetailUiState.Error(failure.toSeerrError())
                         },
                     )
+                }
+                // The page that stayed says so in the usual message, where a first load shows the error screen. After a
+                // moderation the action's own event is the message, so a failed follow-up read stays quiet.
+                val afterAction = reloadingAfterAction.value
+                result.exceptionOrNull()?.let { failure ->
+                    if (!afterAction && state.value is RequestDetailUiState.Ready) {
+                        moderator.announce(ModerationEvent.Failed(failure.toSeerrError()))
+                    }
                 }
                 reloadingAfterAction.value = false
             }
