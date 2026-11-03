@@ -1,5 +1,6 @@
 package com.cooper.binge.companion.seerr.ui.settings.server
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -93,7 +94,7 @@ fun AboutScreen(
                         onRefresh = onRefresh,
                         indicatorTopInset = inner.calculateTopPadding(),
                         state = pullState ?: rememberPullToRefreshState(),
-                    ) { AboutContent(state.info, onOpenUrl, contentPadding = inner) }
+                    ) { AboutContent(state.info, onOpenUrl, onRefresh, contentPadding = inner) }
             }
         }
     }
@@ -103,6 +104,7 @@ fun AboutScreen(
 private fun AboutContent(
     info: AboutInfo,
     onOpenUrl: (String) -> Unit,
+    onRefresh: () -> Unit,
     contentPadding: PaddingValues,
 ) {
     val sides = resolvedContentPadding()
@@ -110,7 +112,7 @@ private fun AboutContent(
         Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
         ItemGroup(
             title = stringResource(R.string.server_settings_about_title, info.variant.displayName),
-            rows = versionRows(info, onOpenUrl) + serverRows(info),
+            rows = versionRows(info, onOpenUrl) + serverRows(info, onRefresh),
             modifier = Modifier.padding(sides),
         )
         Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
@@ -179,7 +181,10 @@ private fun versionRows(
     )
 
 @Composable
-private fun serverRows(info: AboutInfo): List<ListItem> =
+private fun serverRows(
+    info: AboutInfo,
+    onRetry: () -> Unit,
+): List<ListItem> =
     listOfNotNull(
         info.totalMediaItems?.let { count ->
             ListItem(
@@ -223,7 +228,33 @@ private fun serverRows(info: AboutInfo): List<ListItem> =
                 clickable = false,
             )
         },
+        readMarker(info.aboutRead, R.string.server_settings_about_totals_failed, R.string.server_settings_about_totals_stale, onRetry),
+        readMarker(info.appDataRead, R.string.server_settings_about_data_failed, R.string.server_settings_about_data_stale, onRetry),
     )
+
+/** The row that says a source did not read: nothing for a read that went, or that the user may not do; Retry for the rest. */
+@Composable
+private fun readMarker(
+    read: AboutRead,
+    @StringRes failed: Int,
+    @StringRes stale: Int,
+    onRetry: () -> Unit,
+): ListItem? {
+    val label =
+        when (read) {
+            AboutRead.Failed -> failed
+            AboutRead.Stale -> stale
+            AboutRead.Read, AboutRead.Unavailable -> return null
+        }
+    return ListItem(
+        icon = Icons.Filled.Warning,
+        iconTint = BingeSentiment.Caution.fill(),
+        label = stringResource(label),
+        detail = stringResource(R.string.server_settings_about_read_retry),
+        destination = ListItemDestination.Action,
+        onClick = onRetry,
+    )
+}
 
 @Composable
 private fun supportRows(

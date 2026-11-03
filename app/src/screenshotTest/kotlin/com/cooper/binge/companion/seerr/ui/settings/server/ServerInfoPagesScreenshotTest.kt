@@ -33,6 +33,23 @@ class AboutScreenshotTest {
     @Composable
     fun dataVolumeWarning() = AboutFrame(AboutUiState.Ready(aboutInfo(appDataMounted = false)))
 
+    /** The totals read failed and nothing earlier is kept: what read stays, and a row says what did not. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun totalsFailed() =
+        AboutFrame(
+            AboutUiState.Ready(
+                aboutInfo().copy(totalRequests = null, totalMediaItems = null, timezone = null, aboutRead = AboutRead.Failed),
+            ),
+        )
+
+    /** A pull failed on both reads and the earlier values are kept: the rows say they may be out of date. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun readsStale() = AboutFrame(AboutUiState.Ready(aboutInfo().copy(aboutRead = AboutRead.Stale, appDataRead = AboutRead.Stale)))
+
     /** An Overseerr the user may read only the profile of: no totals, no server facts. */
     @PreviewTest
     @SeerrScreenStatePreview
