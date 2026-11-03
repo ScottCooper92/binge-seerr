@@ -20,6 +20,7 @@ import com.binge.designsystem.tv.component.TvSideSheetRow
 import com.binge.designsystem.tv.component.TvSideSheetRows
 import com.binge.designsystem.tv.component.TvSideSheetStack
 import com.binge.designsystem.tv.component.TvSideSheetTitle
+import com.binge.designsystem.tv.focus.TvOverlayCloser
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.issues.IssueDetailEvent
 import com.cooper.binge.companion.seerr.ui.issues.IssueDetailUiState
@@ -64,6 +65,7 @@ internal fun TvIssueSheet(
     events: Flow<IssueDetailEvent> = emptyFlow(),
     initialPage: String = ISSUE_PAGE_THREAD,
     initialStatus: SaveStatus = SaveStatus.Idle,
+    closer: TvOverlayCloser? = null,
 ) {
     // A write's answer stands under the action that sent it until the user acts again (#1519).
     val run = rememberTvActionRun(events, initialStatus) { settle(failed = it is IssueDetailEvent.Failed) }
@@ -79,7 +81,13 @@ internal fun TvIssueSheet(
             failed -> PAGE_FAILED
             else -> PAGE_LOADING
         }
-    TvSideSheetStack(root = root, onDismissRequest = actions.onDismiss, modifier = modifier, toBottomEdge = true) { nav ->
+    TvSideSheetStack(
+        root = root,
+        onDismissRequest = actions.onDismiss,
+        modifier = modifier,
+        toBottomEdge = true,
+        closer = closer,
+    ) { nav ->
         when {
             state is IssueDetailUiState.Ready -> IssuePages(state, nav, actions, run, afterDelete) { afterDelete = it }
             failed -> Failed(nav, actions.onRetry)

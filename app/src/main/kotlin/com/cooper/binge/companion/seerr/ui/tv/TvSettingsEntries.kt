@@ -16,6 +16,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.tv.material3.MaterialTheme
 import com.binge.designsystem.tv.component.TvSideSheetNav
+import com.binge.designsystem.tv.focus.TvOverlayCloser
 import com.cooper.binge.companion.seerr.ui.ScopedViewModels
 import com.cooper.binge.companion.seerr.ui.SetupViewModel
 import com.cooper.binge.companion.seerr.ui.hub.HubUiState
@@ -44,6 +45,7 @@ import com.cooper.binge.companion.seerr.ui.users.settings.toEditorUiState
 @Composable
 internal fun TvSettingsEntry(
     onDismissRequest: () -> Unit,
+    closer: TvOverlayCloser? = null,
     viewModel: SettingsViewModel = hiltViewModel(),
     hubViewModel: HubViewModel = hiltViewModel(),
 ) {
@@ -73,9 +75,9 @@ internal fun TvSettingsEntry(
     // The jobs view model is only stood up once the row it feeds can actually appear — admin-only, same
     // gate as the row itself — so a non-admin viewer never pays for a `/settings/jobs` fetch they cannot use.
     if ((state as? SettingsUiState.Ready)?.config != null) {
-        TvAdminSettingsSheet(state = state, actions = actions, hub = hub, onDismissRequest = onDismissRequest)
+        TvAdminSettingsSheet(state = state, actions = actions, hub = hub, onDismissRequest = onDismissRequest, closer = closer)
     } else {
-        TvSettingsSheet(state = state, actions = actions, onDismissRequest = onDismissRequest, hub = hub)
+        TvSettingsSheet(state = state, actions = actions, onDismissRequest = onDismissRequest, hub = hub, closer = closer)
     }
 }
 
@@ -85,6 +87,7 @@ private fun TvAdminSettingsSheet(
     actions: TvSettingsActions,
     hub: HubUiState,
     onDismissRequest: () -> Unit,
+    closer: TvOverlayCloser?,
     jobsViewModel: JobsViewModel = hiltViewModel(),
     generalViewModel: ServerGeneralViewModel = hiltViewModel(),
     agentsViewModel: NotificationAgentsViewModel = hiltViewModel(),
@@ -129,6 +132,7 @@ private fun TvAdminSettingsSheet(
         onDismissRequest = onDismissRequest,
         jobs = jobs,
         hub = hub,
+        closer = closer,
     )
 }
 

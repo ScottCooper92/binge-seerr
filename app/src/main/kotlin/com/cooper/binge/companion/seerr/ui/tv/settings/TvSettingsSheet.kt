@@ -30,6 +30,7 @@ import com.binge.designsystem.tv.component.TvSideSheetRows
 import com.binge.designsystem.tv.component.TvSideSheetStack
 import com.binge.designsystem.tv.component.TvSideSheetTitle
 import com.binge.designsystem.tv.component.TvSwitch
+import com.binge.designsystem.tv.focus.TvOverlayCloser
 import com.binge.designsystem.tv.template.TvPaneGroup
 import com.binge.designsystem.tv.template.TvPaneRow
 import com.cooper.binge.companion.seerr.R
@@ -68,11 +69,18 @@ internal fun TvSettingsSheet(
     jobs: JobsUiState = JobsUiState.Loading,
     hub: HubUiState? = null,
     initialPage: String = PAGE_SETTINGS,
+    closer: TvOverlayCloser? = null,
 ) {
     val ready = state as? SettingsUiState.Ready
     // Held for as long as the sheet is open, so a job pressed on Maintenance still says what came of it on a return.
     val presses = remember { TvJobPresses() }
-    TvSideSheetStack(root = initialPage, onDismissRequest = onDismissRequest, modifier = modifier, toBottomEdge = true) { nav ->
+    TvSideSheetStack(
+        root = initialPage,
+        onDismissRequest = onDismissRequest,
+        modifier = modifier,
+        toBottomEdge = true,
+        closer = closer,
+    ) { nav ->
         when {
             ready == null -> LoadingPage(nav)
             nav.page.agentOrNull() != null && actions.agents != null ->

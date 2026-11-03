@@ -62,7 +62,7 @@ class TvRequestsScreenshotTest {
             onOpenSheet = {},
             onCloseSheet = {},
             account = TvTopBarAccount(name = "Scott Cooper", avatarUrl = null),
-        ) { _, _ -> Board() }
+        ) { _, _, _ -> Board() }
     }
 
     /** The demo server's tag beside Settings in the top bar (#1705). */
@@ -77,7 +77,7 @@ class TvRequestsScreenshotTest {
             onOpenSheet = {},
             onCloseSheet = {},
             account = TvTopBarAccount(name = "Alex", avatarUrl = null, demo = true),
-        ) { _, _ -> Board() }
+        ) { _, _, _ -> Board() }
     }
 
     @PreviewTest

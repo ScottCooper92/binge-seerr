@@ -9,6 +9,7 @@ import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
+import com.binge.designsystem.tv.focus.TvOverlayCloser
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.hub.HubUiState
 import com.cooper.binge.companion.seerr.ui.hub.HubViewModel
@@ -26,6 +27,7 @@ import com.cooper.binge.companion.seerr.ui.users.UserDetailViewModel
 internal fun TvAccountEntry(
     hubViewModel: HubViewModel,
     onDismissRequest: () -> Unit,
+    closer: TvOverlayCloser? = null,
     onSignOut: (() -> Unit)? = null,
 ) {
     val hub by hubViewModel.uiState.collectAsStateWithLifecycle()
@@ -43,10 +45,11 @@ internal fun TvAccountEntry(
             accountFailed = hub !is HubUiState.Loading,
             onRetry = hubViewModel::recheck,
             onDismissRequest = onDismissRequest,
+            closer = closer,
         )
         return
     }
-    TvAccountContent(accountId = account.id, onDismissRequest = onDismissRequest, onSignOut = onSignOut)
+    TvAccountContent(accountId = account.id, onDismissRequest = onDismissRequest, closer = closer, onSignOut = onSignOut)
 }
 
 /** The account's own sheet: the same [UserDetailViewModel] as the phone's user page, bound to the signed-in user. */
@@ -54,6 +57,7 @@ internal fun TvAccountEntry(
 private fun TvAccountContent(
     accountId: Int,
     onDismissRequest: () -> Unit,
+    closer: TvOverlayCloser?,
     onSignOut: (() -> Unit)?,
     viewModel: UserDetailViewModel = accountViewModel(accountId),
 ) {
@@ -67,6 +71,7 @@ private fun TvAccountContent(
         accountFailed = false,
         onRetry = viewModel::reload,
         onDismissRequest = onDismissRequest,
+        closer = closer,
         onSignOut = onSignOut,
     )
 }

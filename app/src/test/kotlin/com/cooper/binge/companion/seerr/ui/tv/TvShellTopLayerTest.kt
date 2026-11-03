@@ -76,7 +76,7 @@ class TvShellTopLayerTest {
                         } else {
                             null
                         },
-                ) { shown, _ ->
+                ) { shown, _, _ ->
                     if (shown == TvDestination.Hub) {
                         boardInset = LocalTvTopInset.current
                         Column {

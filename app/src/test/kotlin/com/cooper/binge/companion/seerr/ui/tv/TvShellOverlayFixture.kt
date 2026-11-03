@@ -17,6 +17,7 @@ import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performKeyInput
 import androidx.compose.ui.test.pressKey
 import com.binge.designsystem.testing.TakeDownAndroidComposeRule
+import com.binge.designsystem.tv.focus.TvOverlayCloser
 
 /** The test tag on [ShellWithOverlay]'s stand-in page under the bar. */
 internal const val OVERLAY_TAG = "shell-overlay"
@@ -54,7 +55,8 @@ internal fun ShellWithOverlay(
 internal fun BoardInShell(
     destination: TvDestination,
     overlay: (@Composable BoxScope.() -> Unit)?,
-    topLayer: (@Composable () -> Unit)? = null,
+    topLayer: (@Composable (TvOverlayCloser) -> Unit)? = null,
+    onCloseTopLayer: () -> Unit = {},
     board: @Composable () -> Unit,
 ) {
     TvHomeShell(
@@ -65,7 +67,8 @@ internal fun BoardInShell(
         onCloseSheet = {},
         overlay = overlay,
         topLayer = topLayer,
-    ) { shown, _ ->
+        onCloseTopLayer = onCloseTopLayer,
+    ) { shown, _, _ ->
         if (shown == destination) board()
     }
 }
