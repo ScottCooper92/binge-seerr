@@ -1194,6 +1194,27 @@ class RequestDetailViewModelTest {
         }
 
     @Test
+    fun `an approval whose follow-up read fails says Approved and not that the update failed`() =
+        runTest {
+            server(REQUEST or ADMIN)
+            val vm = viewModel()
+            vm.awaitReady()
+            responses["/api/v1/request/11/approve"] = {
+                FakeResponse(code = 200, headers = headersOf("Content-Type", "application/json"), body = "{}")
+            }
+            responses["/api/v1/request/11"] = { FakeResponse(code = 404) }
+
+            val approved = awaitEvent(vm.events) { it == ModerationEvent.Approved }
+            val failed = awaitEvent(vm.events) { it is ModerationEvent.Failed }
+            vm.moderation.approve(11)
+            approved.await()
+            vm.awaitReady { !it.isActing }
+
+            assertFalse("the action's own event is the message", failed.isCompleted)
+            failed.cancel()
+        }
+
+    @Test
     fun `the page reads as acting from the action through the reload that shows its result, and not after`() =
         runTest {
             server(REQUEST or ADMIN)
