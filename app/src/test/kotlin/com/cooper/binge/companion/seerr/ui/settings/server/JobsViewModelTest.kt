@@ -518,4 +518,25 @@ class JobsViewModelTest {
             assertEquals(null, settled.unsentSchedule)
             assertEquals(SaveStatus.Idle, settled.scheduleStatus)
         }
+
+    @Test
+    fun `a pull swaps in the new list, and a failed one keeps the list and says so`() =
+        runTest {
+            val vm = viewModel()
+            vm.awaitReady()
+            seerr.serve("GET /api/v1/settings/jobs", """[${job("plex-full-scan", running = false)},${job("extra", running = false)}]""")
+
+            vm.refresh()
+
+            val fresh = vm.uiState.first { it is JobsUiState.Ready && it.jobs.size == 2 } as JobsUiState.Ready
+            assertFalse(fresh.isRefreshing)
+
+            seerr.serve("GET /api/v1/settings/jobs", code = 503)
+            val failed = awaitEvent(vm.events) { it is EditorEvent.Failed }
+            vm.refresh()
+
+            failed.await()
+            val kept = vm.uiState.first { it is JobsUiState.Ready && !it.isRefreshing } as JobsUiState.Ready
+            assertEquals(2, kept.jobs.size)
+        }
 }

@@ -13,6 +13,7 @@ import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -112,5 +113,25 @@ class CacheViewModelTest {
             vm.flush("tmdb")
             assertTrue(failed.await() is EditorEvent.Failed)
             assertTrue(vm.awaitReady().busyIds.isEmpty())
+        }
+
+    @Test
+    fun `a pull swaps in the new counts, and a failed one keeps them and says so`() =
+        runTest {
+            seerr.viewer(id = 1, permissions = ADMIN)
+            seerr.serve("GET /api/v1/settings/cache", SEERR_CACHE)
+            val vm = viewModel()
+            vm.awaitReady()
+
+            vm.refresh()
+            seerr.awaitCount("GET", "/api/v1/settings/cache", moreThan = 1, timeoutMillis = seerr.expectedCallWaitMillis())
+            assertFalse(vm.uiState.first { it is CacheUiState.Ready && !it.isRefreshing }.let { (it as CacheUiState.Ready).isRefreshing })
+
+            seerr.serve("GET /api/v1/settings/cache", code = 503)
+            val failed = awaitEvent(vm.events) { it is EditorEvent.Failed }
+            vm.refresh()
+
+            failed.await()
+            assertEquals(2, (vm.uiState.first { it is CacheUiState.Ready && !it.isRefreshing } as CacheUiState.Ready).apiCaches.size)
         }
 }

@@ -104,6 +104,21 @@ class JobsViewModel
             }
         }
 
+        /** A pull: re-reads the list and swaps it in, keeping what shows until then. A failed read leaves the list as it is. */
+        fun refresh() {
+            val ready = state.value as? JobsUiState.Ready ?: return
+            if (ready.isRefreshing) return
+            state.update { current -> (current as? JobsUiState.Ready)?.copy(isRefreshing = true) ?: current }
+            viewModelScope.launch(dispatcher) {
+                attempt { connection.api().jobs().map { it.toServerJob() } }
+                    .onSuccess { jobs -> setJobs(jobs) }
+                    .onFailure { failure ->
+                        state.update { current -> (current as? JobsUiState.Ready)?.copy(isRefreshing = false) ?: current }
+                        eventFlow.emit(EditorEvent.Failed.from(failure))
+                    }
+            }
+        }
+
         fun reload() {
             state.value = JobsUiState.Loading
             viewModelScope.launch(dispatcher) {
