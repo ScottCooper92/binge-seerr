@@ -635,6 +635,26 @@ class RequestDetailViewModelTest {
         }
 
     @Test
+    fun `a failed reload keeps the page that is showing and says so, where a first load shows the error screen`() =
+        runTest {
+            server(ADMIN)
+            val vm = viewModel()
+            vm.awaitReady()
+            responses["/api/v1/request/11"] = { FakeResponse(code = 503) }
+
+            val failed = awaitEvent(vm.events) { it is ModerationEvent.Failed }
+            vm.reload()
+
+            assertEquals(SeerrError.Server, (failed.await() as ModerationEvent.Failed).error)
+            assertEquals(
+                "Severance",
+                vm
+                    .awaitReady { !it.isActing }
+                    .detail.item.title,
+            )
+        }
+
+    @Test
     fun `a request the server no longer has reads as not found, and one whose destination is gone still shows`() =
         runTest {
             server(ADMIN)
