@@ -45,6 +45,7 @@ import com.cooper.binge.companion.seerr.ui.requests.PagedAppendState
 import com.cooper.binge.companion.seerr.ui.requests.PagedRefreshError
 import com.cooper.binge.companion.seerr.ui.state.EmptyScreen
 import com.cooper.binge.companion.seerr.ui.state.LoadingScreen
+import com.cooper.binge.companion.seerr.ui.state.PullableMessage
 import com.cooper.binge.companion.seerr.ui.state.filteredPagePadding
 import com.cooper.binge.companion.seerr.ui.state.refreshInFlight
 import com.cooper.binge.companion.seerr.ui.state.rememberPagedPhase
@@ -193,11 +194,13 @@ private fun LogsBody(
                 modifier = modifier.padding(contentPadding),
             )
         PagedPhase.Empty ->
-            EmptyScreen(
-                message = stringResource(R.string.server_settings_logs_empty),
-                modifier = modifier.padding(contentPadding),
-                icon = Icons.AutoMirrored.Filled.Article,
-            )
+            PullableMessage(modifier) { fill ->
+                EmptyScreen(
+                    message = stringResource(R.string.server_settings_logs_empty),
+                    modifier = fill.padding(contentPadding),
+                    icon = Icons.AutoMirrored.Filled.Article,
+                )
+            }
     }
 }
 
