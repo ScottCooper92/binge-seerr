@@ -1,13 +1,18 @@
 package com.cooper.binge.companion.seerr.ui.requests
 
 import androidx.compose.foundation.ScrollState
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.ReportProblem
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.pulltorefresh.PullToRefreshState
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -19,6 +24,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
+import com.binge.designsystem.component.BingePullToRefresh
 import com.binge.designsystem.component.ExpressiveIconButton
 import com.binge.designsystem.component.IconButtonTone
 import com.binge.designsystem.isExpandedLayout
@@ -37,6 +43,7 @@ import com.binge.designsystem.R as DesR
 class RequestDetailActions(
     val onBack: () -> Unit,
     val onRetry: () -> Unit,
+    val onRefresh: () -> Unit = {},
     val onReportIssue: (IssueType, String) -> Unit,
     val onDismissReport: () -> Unit,
     val onApprove: () -> Unit,
@@ -166,6 +173,8 @@ private fun Ready(
         snackbarHostState = snackbarHostState,
         isActing = state.isActing,
         now = state.now,
+        isRefreshing = state.isRefreshing,
+        onRefresh = actions.onRefresh,
     )
     RequestManagementSheets(state = state, actions = actions, acting = acting, onDismissActing = { acting = false })
     other?.let { id ->
@@ -290,55 +299,65 @@ internal fun RequestDetailPage(
     initiallyOverflowing: Boolean = false,
     isActing: Boolean = false,
     now: Long = System.currentTimeMillis(),
+    isRefreshing: Boolean = false,
+    onRefresh: () -> Unit = {},
+    pullState: PullToRefreshState? = null,
 ) {
     val item = detail.item
     val title = item.title ?: stringResource(item.mediaType.labelRes())
-    MediaHeroDetailPage(
-        title = title,
-        backdropUrl = detail.backdropUrl,
-        metaText = "",
-        metaContent = { RequestHeroMeta(item) },
-        inFlight = isActing,
-        onBack = onBack,
+    BingePullToRefresh(
+        isRefreshing = isRefreshing,
+        onRefresh = onRefresh,
         modifier = modifier,
-        scrollState = scrollState,
-        snackbarHostState = snackbarHostState,
-        topBarActions = {
-            onOpen?.let {
-                ExpressiveIconButton(
-                    onClick = it,
-                    icon = Icons.AutoMirrored.Filled.OpenInNew,
-                    contentDescription = stringResource(R.string.request_open_elsewhere),
-                    tint = BingeTheme.colors.onScrim,
-                    tone = IconButtonTone.Glass,
-                    size = dimensionResource(DesR.dimen.top_bar_icon_size),
+        indicatorTopInset = WindowInsets.safeDrawing.asPaddingValues().calculateTopPadding(),
+        state = pullState ?: rememberPullToRefreshState(),
+    ) {
+        MediaHeroDetailPage(
+            title = title,
+            backdropUrl = detail.backdropUrl,
+            metaText = "",
+            metaContent = { RequestHeroMeta(item) },
+            inFlight = isActing,
+            onBack = onBack,
+            scrollState = scrollState,
+            snackbarHostState = snackbarHostState,
+            topBarActions = {
+                onOpen?.let {
+                    ExpressiveIconButton(
+                        onClick = it,
+                        icon = Icons.AutoMirrored.Filled.OpenInNew,
+                        contentDescription = stringResource(R.string.request_open_elsewhere),
+                        tint = BingeTheme.colors.onScrim,
+                        tone = IconButtonTone.Glass,
+                        size = dimensionResource(DesR.dimen.top_bar_icon_size),
+                    )
+                }
+                onReport?.let {
+                    ExpressiveIconButton(
+                        onClick = it,
+                        icon = Icons.Filled.ReportProblem,
+                        contentDescription = stringResource(R.string.issue_report_title),
+                        tint = BingeTheme.colors.onScrim,
+                        tone = IconButtonTone.Glass,
+                        size = dimensionResource(DesR.dimen.top_bar_icon_size),
+                    )
+                }
+            },
+            body = {
+                RequestHeadline(
+                    detail,
+                    Modifier
+                        .padding(
+                            resolvedContentPadding(vertical = resolvedContentInset()),
+                        ).layoutAnchor(LayoutAnchors.section(LayoutAnchors.Detail.OVERVIEW)),
+                    initiallyOverflowing,
                 )
-            }
-            onReport?.let {
-                ExpressiveIconButton(
-                    onClick = it,
-                    icon = Icons.Filled.ReportProblem,
-                    contentDescription = stringResource(R.string.issue_report_title),
-                    tint = BingeTheme.colors.onScrim,
-                    tone = IconButtonTone.Glass,
-                    size = dimensionResource(DesR.dimen.top_bar_icon_size),
-                )
-            }
-        },
-        body = {
-            RequestHeadline(
-                detail,
-                Modifier
-                    .padding(
-                        resolvedContentPadding(vertical = resolvedContentInset()),
-                    ).layoutAnchor(LayoutAnchors.section(LayoutAnchors.Detail.OVERVIEW)),
-                initiallyOverflowing,
-            )
-            RequestStats(detail)
-            RequestCardSection(detail, onOpenRequest = onOpenRequest, onOpenUser = onOpenUser, isActing = isActing, now = now)
-            RequestSections(detail)
-        },
-    )
+                RequestStats(detail)
+                RequestCardSection(detail, onOpenRequest = onOpenRequest, onOpenUser = onOpenUser, isActing = isActing, now = now)
+                RequestSections(detail)
+            },
+        )
+    }
 }
 
 /** A sibling request's row as a request item, so its sheet opens with its header before its own detail loads. */

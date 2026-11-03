@@ -459,10 +459,13 @@ app:server_settings_about_behind  16813cfc29da
 app:server_settings_about_commit  82a9c46ffa47
 app:server_settings_about_contribute  39abd3a3e9d9
 app:server_settings_about_data_directory  5e6050c24c42
+app:server_settings_about_data_failed  3b2b2c040852
 app:server_settings_about_data_not_mounted  6e3ecb1b13d9
 app:server_settings_about_data_not_writable  483fdb74b215
+app:server_settings_about_data_stale  3241fb6407a3
 app:server_settings_about_discussions  55a9fbca48de
 app:server_settings_about_docs  c205924de0fe
+app:server_settings_about_read_retry  d3879c6bc557
 app:server_settings_about_release_notes  1254829bd999
 app:server_settings_about_support  e88b4eae1c7b
 app:server_settings_about_support_project  ccf3d6417858
@@ -470,6 +473,8 @@ app:server_settings_about_timezone  b9fe1464783e
 app:server_settings_about_title  e9ff9e541d9e
 app:server_settings_about_total_media  3b23a123fa00
 app:server_settings_about_total_requests  ada27592c957
+app:server_settings_about_totals_failed  69be5f93d315
+app:server_settings_about_totals_stale  fb49e41c1c75
 app:server_settings_about_up_to_date  ce29b7f85b9e
 app:server_settings_about_update  ff8b555d818f
 app:server_settings_agent_access_token  9a911b08feb9
@@ -826,6 +831,7 @@ app:settings_agent_webhook  4814f62c108d
 app:settings_application_url  96884337d874
 app:settings_binge  b914ef32a2e1
 app:settings_choices_filter  638e249f4a15
+app:settings_demo_note  f064b6ca2aa7
 app:settings_display_language  11a045e402c3
 app:settings_edit_connection  047f9f951500
 app:settings_edit_connection_caption  bc5acad237f1

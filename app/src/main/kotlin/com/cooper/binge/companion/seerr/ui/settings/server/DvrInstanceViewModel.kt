@@ -7,7 +7,6 @@ import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.di.IoDispatcher
 import com.cooper.binge.companion.seerr.seerr.SeerrServiceSettingsDto
-import com.cooper.binge.companion.seerr.seerr.toSeerrError
 import com.cooper.binge.companion.seerr.telemetry.Analytics
 import com.cooper.binge.companion.seerr.telemetry.AnalyticsEvents
 import com.cooper.binge.companion.seerr.telemetry.CrashBreadcrumbs
@@ -113,7 +112,7 @@ class DvrInstanceViewModel
                         notify(EditorEvent.Notice(R.string.server_settings_dvr_tested))
                     }.onFailure { failure ->
                         editExtras { it.copy(testing = false) }
-                        notify(EditorEvent.Failed(failure.toSeerrError()))
+                        notify(EditorEvent.Failed.from(failure))
                     }
             }
         }
@@ -130,7 +129,7 @@ class DvrInstanceViewModel
                             mapOf(AnalyticsEvents.PARAM_TYPE to type.apiSegment, AnalyticsEvents.PARAM_ACTION to "deleted"),
                         )
                         notify(EditorEvent.Deleted)
-                    }.onFailure { failure -> notify(EditorEvent.Failed(failure.toSeerrError())) }
+                    }.onFailure { failure -> notify(EditorEvent.Failed.from(failure)) }
             }
         }
 

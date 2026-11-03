@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.material3.pulltorefresh.PullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -13,6 +14,7 @@ import com.cooper.binge.companion.seerr.preview.PHONE_WIDTH
 import com.cooper.binge.companion.seerr.preview.SeerrComponentPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrScreenPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrScreenStatePreview
+import com.cooper.binge.companion.seerr.ui.state.RestingPull
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flowOf
 
@@ -26,6 +28,17 @@ class LogsScreenshotTest {
     @SeerrScreenPreviews
     @Composable
     fun chromeLayout() = LogsFrame(LogsUiState())
+
+    /** A pull on the lines: the spinner rests under the search field and the level chips. Paged lines do not load under a still frame, so the page behind it reads as loading. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun pulling() =
+        LogsFrame(
+            LogsUiState(),
+            entries = listOf(entry(level = LogLevel.Info, label = null, message = "Server started"), entry(level = LogLevel.Warn)),
+            pullState = RestingPull,
+        )
 
     /** A level picked and a search typed: the chip moves and the field holds the text. */
     @PreviewTest
@@ -106,10 +119,14 @@ private fun RowsFrame(content: @Composable () -> Unit) {
 }
 
 @Composable
-private fun LogsFrame(state: LogsUiState) =
-    LogsScreen(
-        state = state,
-        entriesFor = { flowOf(PagingData.from(emptyList())) },
-        events = emptyFlow(),
-        actions = LogsActions(onBack = {}, onLevelChange = {}, onSearchChange = {}, onFollowingChange = {}, onCopy = {}),
-    )
+private fun LogsFrame(
+    state: LogsUiState,
+    entries: List<LogEntry> = emptyList(),
+    pullState: PullToRefreshState? = null,
+) = LogsScreen(
+    state = state,
+    entriesFor = { flowOf(PagingData.from(entries)) },
+    events = emptyFlow(),
+    actions = LogsActions(onBack = {}, onLevelChange = {}, onSearchChange = {}, onFollowingChange = {}, onCopy = {}),
+    pullState = pullState,
+)

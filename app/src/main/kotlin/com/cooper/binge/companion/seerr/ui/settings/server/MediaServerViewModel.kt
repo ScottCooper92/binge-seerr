@@ -143,7 +143,7 @@ class MediaServerViewModel
                             },
                         )
                     }
-                result.onFailure { failure -> notify(EditorEvent.Failed(failure.toSeerrError())) }
+                result.onFailure { failure -> notify(EditorEvent.Failed.from(failure)) }
                 // Libraries and busyLibraryIds must land in the same emission: a collector observing
                 // libraries updated but the id still busy (or vice versa) is an inconsistent state.
                 editExtras {
@@ -192,7 +192,7 @@ class MediaServerViewModel
                 }.onSuccess { libraries ->
                     setLibraries(libraries)
                     notify(EditorEvent.Notice(R.string.server_settings_libraries_synced))
-                }.onFailure { failure -> notify(EditorEvent.Failed(failure.toSeerrError())) }
+                }.onFailure { failure -> notify(EditorEvent.Failed.from(failure)) }
                 editExtras { it.copy(syncingLibraries = false) }
             }
         }
@@ -205,7 +205,7 @@ class MediaServerViewModel
             viewModelScope.launch(dispatcher) {
                 attempt { connection.api().scan(kind.apiSegment, body).toScan() }
                     .onSuccess { applyScan(it) }
-                    .onFailure { failure -> notify(EditorEvent.Failed(failure.toSeerrError())) }
+                    .onFailure { failure -> notify(EditorEvent.Failed.from(failure)) }
             }
         }
 

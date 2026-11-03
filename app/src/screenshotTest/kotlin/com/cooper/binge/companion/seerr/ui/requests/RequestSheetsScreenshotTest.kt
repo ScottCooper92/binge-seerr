@@ -212,7 +212,7 @@ private fun DeleteFilesConfirmFrame(
         onDismissRequest = {},
         extraContent =
             if (openRequests > 0) {
-                { RemoveRequestsCheckbox(count = openRequests, checked = removeRequests, onCheckedChange = {}) }
+                { RemoveRequestsSwitch(count = openRequests, checked = removeRequests, onCheckedChange = {}) }
             } else {
                 null
             },

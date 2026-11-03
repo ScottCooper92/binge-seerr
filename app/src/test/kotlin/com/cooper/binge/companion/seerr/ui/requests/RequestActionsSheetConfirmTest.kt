@@ -280,7 +280,7 @@ class RequestActionsSheetConfirmTest {
     }
 
     @Test
-    fun `ticking the requests box deletes the files and removes the instance's open requests`() {
+    fun `turning on the requests switch deletes the files and removes the instance's open requests`() {
         setSheet(
             requests =
                 listOf(

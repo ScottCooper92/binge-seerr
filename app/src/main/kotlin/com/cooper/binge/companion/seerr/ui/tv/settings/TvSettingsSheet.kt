@@ -142,6 +142,7 @@ private fun ColumnScope.RootPage(
         )
     }
     TvSideSheetTitle(stringResource(R.string.hub_section_settings))
+    if (demo) TvSideSheetBody(stringResource(R.string.settings_demo_note))
     TvSideSheetRows {
         TvInfoCard(title = summary.title, lines = summary.lines, icon = Icons.Filled.Dns, modifier = nav.row(KEY_SUMMARY))
         groups.forEach { group ->

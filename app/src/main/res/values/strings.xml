@@ -720,6 +720,11 @@
     <string name="server_settings_about_total_media">Titles</string>
     <string name="server_settings_about_timezone">Time zone</string>
     <string name="server_settings_about_data_directory">Data directory</string>
+    <string name="server_settings_about_totals_failed">Couldn\'t read the totals and timezone</string>
+    <string name="server_settings_about_totals_stale">Totals and timezone may be out of date</string>
+    <string name="server_settings_about_data_failed">Couldn\'t read the data directory</string>
+    <string name="server_settings_about_data_stale">Data directory may be out of date</string>
+    <string name="server_settings_about_read_retry">Tap to try again</string>
     <string name="server_settings_about_data_not_mounted">%1$s isn\'t mounted, so settings are lost</string>
     <string name="server_settings_about_data_not_writable">%1$s is not writable by the server</string>
     <string name="server_settings_about_support">Getting support</string>
@@ -901,6 +906,7 @@
     <string name="hub_disconnect_confirm_message">You will need to sign in again to reconnect. Binge stops seeing this server until you do.</string>
     <string name="hub_demo_exit">Exit the demo</string>
     <string name="hub_demo_exit_confirm_title">Exit the demo?</string>
+    <string name="settings_demo_note">Demo: sample data. Changes reset when you exit.</string>
     <string name="hub_demo_exit_confirm_message">The sample data, and anything you changed in it, is cleared.</string>
     <string name="demo_indicator">Demo server</string>
     <string name="setup_try_demo">Try the demo</string>

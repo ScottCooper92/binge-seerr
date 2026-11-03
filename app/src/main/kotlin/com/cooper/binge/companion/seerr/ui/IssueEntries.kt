@@ -69,6 +69,7 @@ internal fun IssueDetailEntry(
             IssueDetailActions(
                 onBack = onBack,
                 onRetry = viewModel::reload,
+                onRefresh = viewModel::refresh,
                 onDraftChange = viewModel::setDraft,
                 onPostComment = viewModel::postComment,
                 onRetryOutbox = viewModel::retryOutbox,

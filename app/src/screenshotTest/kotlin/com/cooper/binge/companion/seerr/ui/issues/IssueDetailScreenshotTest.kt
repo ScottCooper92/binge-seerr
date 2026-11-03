@@ -6,6 +6,7 @@ import com.binge.designsystem.SaveStatus
 import com.cooper.binge.companion.seerr.preview.SeerrScreenPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrScreenStatePreview
 import com.cooper.binge.companion.seerr.seerr.SeerrError
+import com.cooper.binge.companion.seerr.ui.state.RestingPull
 import kotlinx.coroutines.flow.emptyFlow
 
 /**
@@ -49,6 +50,12 @@ class IssueDetailScreenshotTest {
     @SeerrScreenStatePreview
     @Composable
     fun savingEdit() = Frame(IssueDetailUiState.Ready(detail = openIssueWithActionsDetail(), editStatus = SaveStatus.Saving))
+
+    /** A pull re-reading the issue: the spinner under the top bar, over the thread, which stays as it was. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun refreshing() = Frame(IssueDetailUiState.Ready(detail = openIssueWithActionsDetail(), isRefreshing = true))
 }
 
 @Composable
@@ -58,6 +65,7 @@ private fun Frame(detail: IssueDetail) = Frame(IssueDetailUiState.Ready(detail =
 private fun Frame(state: IssueDetailUiState) {
     IssueDetailScreen(
         state = state,
+        pullState = RestingPull.takeIf { (state as? IssueDetailUiState.Ready)?.isRefreshing == true },
         events = emptyFlow(),
         actions =
             IssueDetailActions(

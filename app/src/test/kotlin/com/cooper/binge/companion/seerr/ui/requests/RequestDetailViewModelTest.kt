@@ -244,6 +244,36 @@ class RequestDetailViewModelTest {
         }
 
     @Test
+    fun `a pull swaps the page in place and is refreshing only while the read runs`() =
+        runTest {
+            server(ADMIN)
+            val vm = viewModel()
+            vm.awaitReady()
+            serve("/api/v1/tv/200", """{"name":"Severance (renamed)","seasons":[]}""")
+
+            vm.refresh()
+
+            val renamed = vm.awaitReady { it.detail.item.title == "Severance (renamed)" }
+            assertFalse(renamed.isRefreshing)
+        }
+
+    @Test
+    fun `a failed pull keeps the page and says so, where a reload would replace it with the error`() =
+        runTest {
+            server(ADMIN)
+            val vm = viewModel()
+            vm.awaitReady()
+            responses["/api/v1/request/11"] = { FakeResponse(code = 503) }
+
+            val failed = awaitEvent(vm.events) { it is ModerationEvent.Failed }
+            vm.refresh()
+
+            assertEquals(SeerrError.Server, (failed.await() as ModerationEvent.Failed).error)
+            val kept = vm.awaitReady { !it.isRefreshing }
+            assertEquals("Severance", kept.detail.item.title)
+        }
+
+    @Test
     fun `a failed refresh keeps the seeded hero and reports the error`() =
         runTest {
             server(ADMIN)
@@ -558,6 +588,70 @@ class RequestDetailViewModelTest {
 
             assertEquals(IssueReport.Sent, vm.awaitReady { it.report == IssueReport.Sent }.report)
             assertEquals(1, received.count { it.url.encodedPath == "/api/v1/issue" })
+        }
+
+    @Test
+    fun `a pull while a report is being sent keeps it Sending, so the guard against a second POST holds`() =
+        runTest {
+            server(ADMIN)
+            val release = CountDownLatch(1)
+            responses["/api/v1/issue"] = {
+                release.await()
+                FakeResponse(code = 200, headers = headersOf("Content-Type", "application/json"), body = """{"id":5}""")
+            }
+            val vm = viewModel()
+            vm.awaitReady()
+            vm.reportIssue(IssueType.Subtitles, "Missing subs")
+            vm.awaitReady { it.report == IssueReport.Sending }
+            serve("/api/v1/tv/200", """{"name":"Severance (renamed)","seasons":[]}""")
+
+            vm.refresh()
+
+            assertEquals(IssueReport.Sending, vm.awaitReady { it.detail.item.title == "Severance (renamed)" }.report)
+            release.countDown()
+            assertEquals(IssueReport.Sent, vm.awaitReady { it.report == IssueReport.Sent }.report)
+        }
+
+    @Test
+    fun `a reload while a report is being sent keeps it Sending, so the guard against a second POST holds`() =
+        runTest {
+            server(ADMIN)
+            val release = CountDownLatch(1)
+            responses["/api/v1/issue"] = {
+                release.await()
+                FakeResponse(code = 200, headers = headersOf("Content-Type", "application/json"), body = """{"id":5}""")
+            }
+            val vm = viewModel()
+            vm.awaitReady()
+            vm.reportIssue(IssueType.Subtitles, "Missing subs")
+            vm.awaitReady { it.report == IssueReport.Sending }
+            serve("/api/v1/tv/200", """{"name":"Severance (renamed)","seasons":[]}""")
+
+            vm.reload()
+
+            assertEquals(IssueReport.Sending, vm.awaitReady { it.detail.item.title == "Severance (renamed)" }.report)
+            release.countDown()
+            assertEquals(IssueReport.Sent, vm.awaitReady { it.report == IssueReport.Sent }.report)
+        }
+
+    @Test
+    fun `a failed reload keeps the page that is showing and says so, where a first load shows the error screen`() =
+        runTest {
+            server(ADMIN)
+            val vm = viewModel()
+            vm.awaitReady()
+            responses["/api/v1/request/11"] = { FakeResponse(code = 503) }
+
+            val failed = awaitEvent(vm.events) { it is ModerationEvent.Failed }
+            vm.reload()
+
+            assertEquals(SeerrError.Server, (failed.await() as ModerationEvent.Failed).error)
+            assertEquals(
+                "Severance",
+                vm
+                    .awaitReady { !it.isActing }
+                    .detail.item.title,
+            )
         }
 
     @Test
@@ -1097,6 +1191,27 @@ class RequestDetailViewModelTest {
             val landed = vm.awaitReady { it.progress == null }
             assertNull(landed.progress)
             assertEquals("Marking leaves the actions sheet open", 0, landed.actionsLanded)
+        }
+
+    @Test
+    fun `an approval whose follow-up read fails says Approved and not that the update failed`() =
+        runTest {
+            server(REQUEST or ADMIN)
+            val vm = viewModel()
+            vm.awaitReady()
+            responses["/api/v1/request/11/approve"] = {
+                FakeResponse(code = 200, headers = headersOf("Content-Type", "application/json"), body = "{}")
+            }
+            responses["/api/v1/request/11"] = { FakeResponse(code = 404) }
+
+            val approved = awaitEvent(vm.events) { it == ModerationEvent.Approved }
+            val failed = awaitEvent(vm.events) { it is ModerationEvent.Failed }
+            vm.moderation.approve(11)
+            approved.await()
+            vm.awaitReady { !it.isActing }
+
+            assertFalse("the action's own event is the message", failed.isCompleted)
+            failed.cancel()
         }
 
     @Test

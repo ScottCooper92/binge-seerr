@@ -185,6 +185,20 @@ retry. A rotation there is a real activity recreate, so the back stack comes bac
 
 **Where a screen's commit goes.** A filled primary button pinned in the footer (`FormActionPlacement.Footer`) when the action is the reason the screen exists and finishes it: connect, send, request, create, report. Editing an existing setting saves as it is made, with no button. A top-bar text "Save" (`FormActionPlacement.TopBar`) is only for a multi-field edit that must apply together, and stays disabled until something changes. A single toggle or choice applies at once. One primary per screen; a top-bar action is a verb, never an icon alone; a destructive action sits in an overflow menu or behind a confirm.
 
+**Messages: a snackbar for a result, a dialog for a cause and a next step.** (The phone. The TV shows results in place and
+has no snackbars.) The design system's `docs/messages.md` has the worked example.
+
+- **Snackbar:** the outcome of a tap, one short sentence that reads in full at 1.3x font. It may carry one action
+  (Retry, Undo) and goes away by itself.
+- **Message dialog** (`BingeMessageDialog`): any message that explains why something failed **and** what the user can do
+  about it, however short. A title says what happened, the body gives the cause and the next step, and one OK acknowledges
+  it. It does not go away by itself. It is an acknowledgement, not a confirmation, so it has exactly one action; a choice is
+  `BingeConfirmDialog`.
+- **In place:** a failed load stays an error screen with Retry.
+- **A snackbar never carries text the user must read to act.** Text the server supplies, such as a rejection's reason, has
+  no length bound, so it belongs in a dialog. Do not turn every message into a dialog: a short result, or a refusal with
+  nothing to act on, stays a snackbar.
+
 **Where the code does not follow this**, it is an open issue rather than a line here: a list of
 departures in this file goes stale faster than it is read. There is no standing exception to the
 stream rule: the DVR instance and override rule editors fold their pickers' choices into `uiState`

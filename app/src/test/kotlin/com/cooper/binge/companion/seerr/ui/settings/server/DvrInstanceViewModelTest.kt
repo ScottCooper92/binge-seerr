@@ -348,6 +348,17 @@ class DvrInstanceViewModelTest {
         }
 
     @Test
+    fun `a delete the server rejects says why, as a rejected save does`() =
+        runTest {
+            seerr.serve("DELETE /api/v1/settings/sonarr/3", """{"message":"instance is in use"}""", code = 400)
+            val vm = viewModel(ServiceType.Sonarr, id = 3)
+            vm.awaitReady()
+            val failed = awaitEvent(vm.events)
+            vm.delete()
+            assertEquals(EditorEvent.Failed(SeerrError.Rejected, "instance is in use"), failed.await())
+        }
+
+    @Test
     fun `deleting a just-created instance uses the id the server just assigned, not the still-null constructor id`() =
         runTest {
             seerr.serve(

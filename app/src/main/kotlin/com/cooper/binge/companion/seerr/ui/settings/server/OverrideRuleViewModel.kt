@@ -8,7 +8,6 @@ import com.cooper.binge.companion.seerr.di.IoDispatcher
 import com.cooper.binge.companion.seerr.notifications.ApplicationScope
 import com.cooper.binge.companion.seerr.seerr.SeerrServiceSettingsDto
 import com.cooper.binge.companion.seerr.seerr.displayString
-import com.cooper.binge.companion.seerr.seerr.toSeerrError
 import com.cooper.binge.companion.seerr.telemetry.Analytics
 import com.cooper.binge.companion.seerr.telemetry.AnalyticsEvents
 import com.cooper.binge.companion.seerr.telemetry.CrashBreadcrumbs
@@ -188,7 +187,7 @@ class OverrideRuleViewModel
                         // An existing rule saves as made, so the change discarded above is gone: read the rule again rather
                         // than show a draft that looks unsent. A rule created here has nothing discarded and no id to read.
                         if (id != null) reload()
-                        notify(EditorEvent.Failed(failure.toSeerrError()))
+                        notify(EditorEvent.Failed.from(failure))
                     }
             }
         }

@@ -6,6 +6,7 @@ import com.android.tools.screenshot.PreviewTest
 import com.binge.designsystem.SaveStatus
 import com.binge.designsystem.tv.component.TvConfirmDialogContent
 import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.demo.DEMO_ORIGIN
 import com.cooper.binge.companion.seerr.preview.SeerrTvFontScaleScreenPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrTvScreenPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrTvSpanishScreenPreviews
@@ -74,6 +75,8 @@ private val SampleSettingsFull =
             ),
     )
 
+private fun demoSettings() = SampleSettingsFull.copy(connection = SampleSettingsFull.connection.copy(baseUrl = DEMO_ORIGIN))
+
 /**
  * The television settings sheet: its first page, the server at a glance over the groups with Disconnect last, then a page
  * for each kind of group: the media server with its library scan and services, the maintenance jobs, this app with Binge
@@ -94,6 +97,30 @@ class TvSettingsScreenshotTest {
     @Composable
     fun RootAdmin() {
         Sheet(SampleSettingsFull, hub = previewReady(), jobs = jobsReady(), actions = householdActions(SaveStatus.Idle).withAgents())
+    }
+
+    /** In the demo, a line under the title says the data is sample data; it is plain text, so the first row stays the first stop. */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun RootDemo() {
+        Sheet(demoSettings(), hub = previewReady(), jobs = jobsReady(), actions = householdActions(SaveStatus.Idle).withAgents())
+    }
+
+    /** The demo's line in Spanish, which runs longer. */
+    @PreviewTest
+    @SeerrTvSpanishScreenPreviews
+    @Composable
+    fun RootDemoSpanish() {
+        Sheet(demoSettings(), hub = previewReady(), jobs = jobsReady(), actions = householdActions(SaveStatus.Idle).withAgents())
+    }
+
+    /** The demo's line at a larger font scale: it wraps, and the rows below it are still reachable. */
+    @PreviewTest
+    @SeerrTvFontScaleScreenPreviews
+    @Composable
+    fun RootDemoLargeFont() {
+        Sheet(demoSettings(), hub = previewReady(), jobs = jobsReady(), actions = householdActions(SaveStatus.Idle).withAgents())
     }
 
     /** The admin's first page in Spanish, where every group name is longer. */

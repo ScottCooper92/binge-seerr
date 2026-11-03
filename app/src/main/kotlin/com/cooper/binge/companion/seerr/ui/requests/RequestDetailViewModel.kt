@@ -3,6 +3,7 @@ package com.cooper.binge.companion.seerr.ui.requests
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.binge.companion.sdk.attempt
+import com.binge.designsystem.refresh.RefreshTracker
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.data.NoRequestStore
 import com.cooper.binge.companion.seerr.data.RequestStore
@@ -69,6 +70,7 @@ class RequestDetailViewModel
         /** The page's "2 minutes ago" is worded against this, moved on each minute while the page shows (#1239). */
         private val now = MutableStateFlow(clock())
         private var ticker: Job? = null
+        private val refreshTracker = RefreshTracker()
 
         /**
          * Raised when a moderation succeeds and held until the reload it triggers has written its result.
@@ -205,7 +207,9 @@ class RequestDetailViewModel
             }.combine(track) { page, ongoing ->
                 (page as? RequestDetailUiState.Ready)?.copy(progress = ongoing.progress, actionsLanded = ongoing.landed) ?: page
             }.combine(now) { page, now -> (page as? RequestDetailUiState.Ready)?.copy(now = now) ?: page }
-                .stateIn(viewModelScope, SharingStarted.Lazily, RequestDetailUiState.Loading)
+                .combine(refreshTracker.isRefreshing) { page, refreshing ->
+                    (page as? RequestDetailUiState.Ready)?.copy(isRefreshing = refreshing) ?: page
+                }.stateIn(viewModelScope, SharingStarted.Lazily, RequestDetailUiState.Loading)
 
         /** [ActionTrack.landed] as it stands, for a sheet that opens over a page that is not `Ready`. */
         fun actionsLandedNow(): Int = track.value.landed
@@ -255,6 +259,24 @@ class RequestDetailViewModel
             if (ready.detail.canEdit) editSource?.let(requestEditor::start)
         }
 
+        /**
+         * A pull: re-reads the page and swaps it in, keeping what is showing until then. A failed read leaves the page as it
+         * is and says so in the usual message. [reload] does the same for a page already showing; it differs on a first load
+         * or a seeded page, which it replaces with the error.
+         */
+        fun refresh() {
+            if (state.value !is RequestDetailUiState.Ready) return
+            viewModelScope.launch(dispatcher) {
+                attempt { refreshTracker.track { load() } }.fold(
+                    { detail ->
+                        // The page's own fields stay: a report still being sent keeps its re-entrancy guard.
+                        state.update { current -> (current as? RequestDetailUiState.Ready)?.copy(detail = detail) ?: current }
+                    },
+                    { failure -> moderator.announce(ModerationEvent.Failed(failure.toSeerrError())) },
+                )
+            }
+        }
+
         fun reload() {
             state.update { current ->
                 when (current) {
@@ -268,13 +290,23 @@ class RequestDetailViewModel
                 val result = attempt { load() }
                 state.update { current ->
                     result.fold(
-                        { RequestDetailUiState.Ready(it) },
+                        // A page already showing keeps its own fields: a report still being sent keeps its re-entrancy guard.
+                        { detail -> (current as? RequestDetailUiState.Ready)?.copy(detail = detail) ?: RequestDetailUiState.Ready(detail) },
                         { failure ->
-                            // A seeded page keeps its header and reports the failure beside it.
-                            (current as? RequestDetailUiState.Seeded)?.copy(error = failure.toSeerrError())
+                            // A page already showing stays as it is; a seeded one keeps its header and reports the failure beside it.
+                            current as? RequestDetailUiState.Ready
+                                ?: (current as? RequestDetailUiState.Seeded)?.copy(error = failure.toSeerrError())
                                 ?: RequestDetailUiState.Error(failure.toSeerrError())
                         },
                     )
+                }
+                // The page that stayed says so in the usual message, where a first load shows the error screen. After a
+                // moderation the action's own event is the message, so a failed follow-up read stays quiet.
+                val afterAction = reloadingAfterAction.value
+                result.exceptionOrNull()?.let { failure ->
+                    if (!afterAction && state.value is RequestDetailUiState.Ready) {
+                        moderator.announce(ModerationEvent.Failed(failure.toSeerrError()))
+                    }
                 }
                 reloadingAfterAction.value = false
             }

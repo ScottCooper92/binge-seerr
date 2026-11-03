@@ -51,9 +51,14 @@ sealed interface EditorEvent {
 
     data class Failed(
         val error: SeerrError,
-        /** What the server said it refused, when it rejected the save on the merits and said why. */
+        /** What the server said it refused, when it rejected the action on the merits and said why. */
         val detail: String? = null,
-    ) : EditorEvent
+    ) : EditorEvent {
+        companion object {
+            /** The failure of [failure], with the server's own reason where it gave one: the one way to build it from a throwable. */
+            fun from(failure: Throwable) = Failed(failure.toSeerrError(), failure.rejectionDetail())
+        }
+    }
 
     /** An action beside the form succeeded; [messageRes] says which. */
     data class Notice(
@@ -142,7 +147,7 @@ abstract class EditorViewModel<T>(
                     state.update { current ->
                         (current as? EditorUiState.Ready<T>)?.let { it.copy(draft = it.saved, saveRefusal = error) } ?: current
                     }
-                    eventFlow.emit(EditorEvent.Failed(error, failure.rejectionDetail()))
+                    eventFlow.emit(EditorEvent.Failed.from(failure))
                 },
             )
         }
@@ -215,7 +220,7 @@ abstract class EditorViewModel<T>(
                     eventFlow.emit(EditorEvent.Saved)
                 }.onFailure { failure ->
                     state.update { current -> (current as? EditorUiState.Ready<T>)?.copy(saving = false) ?: current }
-                    eventFlow.emit(EditorEvent.Failed(failure.toSeerrError(), failure.rejectionDetail()))
+                    eventFlow.emit(EditorEvent.Failed.from(failure))
                 }
         }
     }
