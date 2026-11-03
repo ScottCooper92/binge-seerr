@@ -106,8 +106,8 @@ internal fun TvHomeShell(
     val sheetCloser = rememberTvOverlayCloser(restoreTo = opener.getValue(sheet ?: tab), onClose = onCloseSheet)
     // The page beneath returns focus itself, through its sink once the layer is gone, and lands the card that opened the layer. A
     // request from the closer into the page's entry while the layer is still up lands its first card instead, so the closer asks for
-    // nothing: it releases the trap as the close starts and reports the disposal, and the sink does the restore.
-    val topLayerCloser = rememberTvOverlayCloser(restoreTo = remember { FocusRequester() }, onClose = onCloseTopLayer)
+    // nothing (null): it releases the trap as the close starts and reports the disposal, and the sink does the restore.
+    val topLayerCloser = rememberTvOverlayCloser(restoreTo = null, onClose = onCloseTopLayer)
     val start = tabs.first()
     // Where the bar is reached from a page: the current tab, or the avatar when the bar has no tabs to show.
     val barStop = opener.getValue(if (tabs.size > 1) tab else TvDestination.Account)
