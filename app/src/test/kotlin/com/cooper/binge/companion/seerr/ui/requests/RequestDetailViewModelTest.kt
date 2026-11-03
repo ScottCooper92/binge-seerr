@@ -613,6 +613,48 @@ class RequestDetailViewModelTest {
         }
 
     @Test
+    fun `a reload while a report is being sent keeps it Sending, so the guard against a second POST holds`() =
+        runTest {
+            server(ADMIN)
+            val release = CountDownLatch(1)
+            responses["/api/v1/issue"] = {
+                release.await()
+                FakeResponse(code = 200, headers = headersOf("Content-Type", "application/json"), body = """{"id":5}""")
+            }
+            val vm = viewModel()
+            vm.awaitReady()
+            vm.reportIssue(IssueType.Subtitles, "Missing subs")
+            vm.awaitReady { it.report == IssueReport.Sending }
+            serve("/api/v1/tv/200", """{"name":"Severance (renamed)","seasons":[]}""")
+
+            vm.reload()
+
+            assertEquals(IssueReport.Sending, vm.awaitReady { it.detail.item.title == "Severance (renamed)" }.report)
+            release.countDown()
+            assertEquals(IssueReport.Sent, vm.awaitReady { it.report == IssueReport.Sent }.report)
+        }
+
+    @Test
+    fun `a failed reload keeps the page that is showing and says so, where a first load shows the error screen`() =
+        runTest {
+            server(ADMIN)
+            val vm = viewModel()
+            vm.awaitReady()
+            responses["/api/v1/request/11"] = { FakeResponse(code = 503) }
+
+            val failed = awaitEvent(vm.events) { it is ModerationEvent.Failed }
+            vm.reload()
+
+            assertEquals(SeerrError.Server, (failed.await() as ModerationEvent.Failed).error)
+            assertEquals(
+                "Severance",
+                vm
+                    .awaitReady { !it.isActing }
+                    .detail.item.title,
+            )
+        }
+
+    @Test
     fun `a request the server no longer has reads as not found, and one whose destination is gone still shows`() =
         runTest {
             server(ADMIN)
@@ -1149,6 +1191,27 @@ class RequestDetailViewModelTest {
             val landed = vm.awaitReady { it.progress == null }
             assertNull(landed.progress)
             assertEquals("Marking leaves the actions sheet open", 0, landed.actionsLanded)
+        }
+
+    @Test
+    fun `an approval whose follow-up read fails says Approved and not that the update failed`() =
+        runTest {
+            server(REQUEST or ADMIN)
+            val vm = viewModel()
+            vm.awaitReady()
+            responses["/api/v1/request/11/approve"] = {
+                FakeResponse(code = 200, headers = headersOf("Content-Type", "application/json"), body = "{}")
+            }
+            responses["/api/v1/request/11"] = { FakeResponse(code = 404) }
+
+            val approved = awaitEvent(vm.events) { it == ModerationEvent.Approved }
+            val failed = awaitEvent(vm.events) { it is ModerationEvent.Failed }
+            vm.moderation.approve(11)
+            approved.await()
+            vm.awaitReady { !it.isActing }
+
+            assertFalse("the action's own event is the message", failed.isCompleted)
+            failed.cancel()
         }
 
     @Test
