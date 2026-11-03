@@ -119,6 +119,7 @@ private fun RequestDetailViewModel.toActions(
     RequestDetailActions(
         onBack = onBack,
         onRetry = ::reload,
+        onRefresh = ::refresh,
         onReportIssue = ::reportIssue,
         onDismissReport = ::dismissReport,
         onApprove = { moderation.approve(requestId) },

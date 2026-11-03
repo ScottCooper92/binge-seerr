@@ -176,6 +176,44 @@ class IssueDetailViewModelTest {
         }
 
     @Test
+    fun `a pull brings in the new thread and keeps the draft being typed`() =
+        runTest {
+            server(ADMIN)
+            val vm = viewModel()
+            vm.awaitReady()
+            vm.setDraft("Checking now")
+            serve(
+                "GET /api/v1/issue/31",
+                issueJson(
+                    comments = """[{"id":1,"message":"Audio out of sync","user":{"id":8,"displayName":"ana"}},
+                {"id":3,"message":"Fixed upstream","user":{"id":9,"displayName":"bo"}}]""",
+                ),
+            )
+
+            vm.refresh()
+
+            val fresh = vm.awaitReady { it.detail.comments.any { comment -> comment.message == "Fixed upstream" } }
+            assertEquals("Checking now", fresh.draft)
+            assertFalse(fresh.isRefreshing)
+        }
+
+    @Test
+    fun `a failed pull keeps the page and says so`() =
+        runTest {
+            server(ADMIN)
+            val vm = viewModel()
+            vm.awaitReady()
+            serve("GET /api/v1/issue/31", "", code = 503)
+
+            val failed = awaitEvent(vm.events) { it is IssueDetailEvent.Failed }
+            vm.refresh()
+
+            assertEquals(SeerrError.Server, (failed.await() as IssueDetailEvent.Failed).error)
+            val kept = vm.awaitReady { !it.isRefreshing }
+            assertEquals(1, kept.detail.comments.size)
+        }
+
+    @Test
     fun `the code for a phone is written under the application url, and the page's own link stays on the address in use`() =
         runTest {
             server(ADMIN)

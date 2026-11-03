@@ -44,6 +44,11 @@ internal class ModerationRunner(
     private val eventFlow = MutableSharedFlow<ModerationEvent>(extraBufferCapacity = 1)
     val events: SharedFlow<ModerationEvent> = eventFlow.asSharedFlow()
 
+    /** Says [event] to whoever shows this stream, for an outcome the page itself produced, such as a failed pull. */
+    fun announce(event: ModerationEvent) {
+        eventFlow.tryEmit(event)
+    }
+
     fun moderate(
         requestId: Int,
         success: ModerationEvent,

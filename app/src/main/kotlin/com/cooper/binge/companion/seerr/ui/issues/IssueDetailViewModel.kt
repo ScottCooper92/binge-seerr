@@ -99,6 +99,23 @@ class IssueDetailViewModel
                 }
         }
 
+        /**
+         * A pull: re-reads the issue and swaps it in, keeping the draft, the outbox and any edit not yet sent. A failed read
+         * leaves the page as it is and says so in the usual message, where [reload] on a showing page says nothing.
+         */
+        fun refresh() {
+            if ((state.value as? IssueDetailUiState.Ready)?.isRefreshing != false) return
+            state.updateReady { it.copy(isRefreshing = true) }
+            viewModelScope.launch(dispatcher) {
+                val result = attempt { connection.issueDetail(issueId, titles) }
+                state.updateReady { ready ->
+                    val fresh = result.getOrNull()?.let { detail -> ready.unsentEdits.fold(detail) { shown, edit -> shown.withEdit(edit) } }
+                    ready.copy(detail = fresh ?: ready.detail, isRefreshing = false)
+                }
+                result.exceptionOrNull()?.let { eventFlow.tryEmit(IssueDetailEvent.Failed(it.toSeerrError())) }
+            }
+        }
+
         fun reload() {
             state.update { current ->
                 when (current) {
@@ -171,7 +188,7 @@ class IssueDetailViewModel
 
         /** Resolves an open issue or reopens a resolved one; the cached row moves with it, so the browser agrees at once. */
         fun toggleStatus() {
-            val ready = ready() ?: return
+            val ready = state.value as? IssueDetailUiState.Ready ?: return
             if (ready.action != IssueAction.None || ready.commentAction != CommentAction.None || !ready.detail.canResolve) return
             val resolving = ready.detail.item.status == IssueStatus.Open
             state.value = ready.copy(action = IssueAction.UpdatingStatus)
@@ -200,7 +217,7 @@ class IssueDetailViewModel
 
         /** Removes the report and its whole thread; the page has nothing left to show, so it pops. */
         fun deleteIssue() {
-            val ready = ready() ?: return
+            val ready = state.value as? IssueDetailUiState.Ready ?: return
             if (ready.action != IssueAction.None || ready.commentAction != CommentAction.None || !ready.detail.canDelete) return
             state.value = ready.copy(action = IssueAction.Deleting)
             crashBreadcrumbs.key("issue_id", issueId.toString())
@@ -220,7 +237,7 @@ class IssueDetailViewModel
         }
 
         fun deleteComment(commentId: Int) {
-            val ready = ready() ?: return
+            val ready = state.value as? IssueDetailUiState.Ready ?: return
             if (ready.commentAction != CommentAction.None || ready.action != IssueAction.None) return
             state.value = ready.copy(commentAction = CommentAction.Deleting(commentId))
             crashBreadcrumbs.key("issue_id", issueId.toString())
@@ -261,8 +278,6 @@ class IssueDetailViewModel
             }
             return result.exceptionOrNull()
         }
-
-        private fun ready(): IssueDetailUiState.Ready? = state.value as? IssueDetailUiState.Ready
 
         @AssistedFactory
         interface Factory {
