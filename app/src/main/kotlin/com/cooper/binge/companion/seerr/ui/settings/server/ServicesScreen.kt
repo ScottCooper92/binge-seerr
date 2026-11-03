@@ -34,13 +34,13 @@ import com.binge.designsystem.template.screenOuterPadding
 import com.binge.designsystem.theme.BingeSentiment
 import com.binge.designsystem.theme.fill
 import com.cooper.binge.companion.seerr.R
-import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.ui.settings.ServiceType
 import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
 import com.cooper.binge.companion.seerr.ui.state.LoadingScreen
 import com.cooper.binge.companion.seerr.ui.state.ReloadFailureSnackbar
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.map
 import com.binge.designsystem.R as DesR
 
 class ServicesActions(
@@ -56,11 +56,19 @@ class ServicesActions(
 fun ServicesScreen(
     state: ServicesUiState,
     actions: ServicesActions,
-    reloadFailed: Flow<SeerrError> = emptyFlow(),
+    events: Flow<ServicesEvent> = emptyFlow(),
     pullState: PullToRefreshState? = null,
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
-    ReloadFailureSnackbar(reloadFailed, snackbarHostState)
+    val failures =
+        remember(events) {
+            events.map { event ->
+                when (event) {
+                    is ServicesEvent.RefreshFailed -> event.error
+                }
+            }
+        }
+    ReloadFailureSnackbar(failures, snackbarHostState)
     BingeScreenScaffold(
         bar = ScreenBar.Small,
         title = stringResource(R.string.settings_group_services),

@@ -1,5 +1,6 @@
 package com.cooper.binge.companion.seerr.ui.settings.server
 
+import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.seerr.SeerrVariant
 import com.cooper.binge.companion.seerr.seerr.contributeUrl
 import com.cooper.binge.companion.seerr.seerr.discordUrl
@@ -107,10 +108,10 @@ class AboutViewModelTest {
 
             seerr.serve("GET /api/v1/status", code = 503)
             seerr.serve("GET /api/v1/settings/public", code = 503)
-            val failed = awaitEvent(vm.reloadFailed)
+            val failed = awaitEvent(vm.events)
             vm.refresh()
 
-            failed.await()
+            assertEquals(AboutEvent.RefreshFailed(SeerrError.Server), failed.await())
             val kept = vm.uiState.first { it is AboutUiState.Ready && !it.isRefreshing } as AboutUiState.Ready
             assertEquals(43, kept.info.totalRequests)
         }

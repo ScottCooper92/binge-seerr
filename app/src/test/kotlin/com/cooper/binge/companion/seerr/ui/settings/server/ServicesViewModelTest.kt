@@ -94,10 +94,10 @@ class ServicesViewModelTest {
             vm.uiState.first { it is ServicesUiState.Ready }
             seerr.serve("GET /api/v1/settings/radarr", code = 503)
 
-            val failed = awaitEvent(vm.reloadFailed)
+            val failed = awaitEvent(vm.events)
             vm.refresh()
 
-            assertEquals(SeerrError.Server, failed.await())
+            assertEquals(ServicesEvent.RefreshFailed(SeerrError.Server), failed.await())
             val kept = vm.uiState.first { it is ServicesUiState.Ready && !it.isRefreshing } as ServicesUiState.Ready
             assertEquals(2, kept.instances.size)
         }

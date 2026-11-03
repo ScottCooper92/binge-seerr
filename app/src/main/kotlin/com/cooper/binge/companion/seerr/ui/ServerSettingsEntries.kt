@@ -98,7 +98,7 @@ private fun AboutPage(onBack: () -> Unit) {
         onRetry = viewModel::reload,
         onOpenUrl = { url -> context.openInBrowser(url) },
         onRefresh = viewModel::refresh,
-        reloadFailed = viewModel.reloadFailed,
+        events = viewModel.events,
     )
 }
 
@@ -226,7 +226,7 @@ private fun ServicesPage(
     LaunchedEffect(viewModel) { viewModel.reload() }
     ServicesScreen(
         state = state,
-        reloadFailed = viewModel.reloadFailed,
+        events = viewModel.events,
         actions =
             ServicesActions(
                 onBack = onBack,

@@ -57,6 +57,14 @@ sealed interface AboutUiState {
     ) : AboutUiState
 }
 
+/** What the about page tells its screen beside its state. */
+sealed interface AboutEvent {
+    /** A pull could not re-read the page, which stays as it was. */
+    data class RefreshFailed(
+        val error: SeerrError,
+    ) : AboutEvent
+}
+
 /** The about page: the profile for everyone, the totals and the data volume where the admin's reads are allowed. */
 @HiltViewModel
 class AboutViewModel
@@ -68,16 +76,14 @@ class AboutViewModel
         private val state = MutableStateFlow<AboutUiState>(AboutUiState.Loading)
         val uiState: StateFlow<AboutUiState> = state.asStateFlow()
 
-        private val failures = MutableSharedFlow<SeerrError>(extraBufferCapacity = 1)
-
-        /** One event per failed pull, for the screen's usual message. */
-        val reloadFailed: SharedFlow<SeerrError> = failures.asSharedFlow()
+        private val eventFlow = MutableSharedFlow<AboutEvent>(extraBufferCapacity = 1)
+        val events: SharedFlow<AboutEvent> = eventFlow.asSharedFlow()
 
         init {
             reload()
         }
 
-        /** A pull: re-reads the page and swaps it in, keeping what shows until then. A failed read leaves the page as it is. */
+        /** A pull: re-reads the page and swaps it in, keeping what shows until then. A pull whose profile read fails leaves the page as it is. */
         fun refresh() {
             val ready = state.value as? AboutUiState.Ready ?: return
             if (ready.isRefreshing) return
@@ -87,7 +93,7 @@ class AboutViewModel
                     .onSuccess { state.value = AboutUiState.Ready(it) }
                     .onFailure {
                         state.update { current -> (current as? AboutUiState.Ready)?.copy(isRefreshing = false) ?: current }
-                        failures.tryEmit(it.toSeerrError())
+                        eventFlow.tryEmit(AboutEvent.RefreshFailed(it.toSeerrError()))
                     }
             }
         }

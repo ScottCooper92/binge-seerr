@@ -42,7 +42,6 @@ import com.binge.designsystem.template.screenOuterPadding
 import com.binge.designsystem.theme.BingeSentiment
 import com.binge.designsystem.theme.fill
 import com.cooper.binge.companion.seerr.R
-import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.seerr.contributeUrl
 import com.cooper.binge.companion.seerr.seerr.discordUrl
 import com.cooper.binge.companion.seerr.seerr.discussionsUrl
@@ -53,6 +52,7 @@ import com.cooper.binge.companion.seerr.ui.state.LoadingScreen
 import com.cooper.binge.companion.seerr.ui.state.ReloadFailureSnackbar
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.map
 import com.binge.designsystem.R as DesR
 
 /** The about page: the edition and its update state, the totals, the server's own facts, and the fork's support links. */
@@ -63,11 +63,19 @@ fun AboutScreen(
     onRetry: () -> Unit,
     onOpenUrl: (String) -> Unit,
     onRefresh: () -> Unit = {},
-    reloadFailed: Flow<SeerrError> = emptyFlow(),
+    events: Flow<AboutEvent> = emptyFlow(),
     pullState: PullToRefreshState? = null,
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
-    ReloadFailureSnackbar(reloadFailed, snackbarHostState)
+    val failures =
+        remember(events) {
+            events.map { event ->
+                when (event) {
+                    is AboutEvent.RefreshFailed -> event.error
+                }
+            }
+        }
+    ReloadFailureSnackbar(failures, snackbarHostState)
     BingeScreenScaffold(
         bar = ScreenBar.Small,
         title = stringResource(R.string.settings_about),

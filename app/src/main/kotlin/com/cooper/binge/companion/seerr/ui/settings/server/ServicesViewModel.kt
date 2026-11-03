@@ -23,6 +23,14 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+/** What the services page tells its screen beside its state. */
+sealed interface ServicesEvent {
+    /** A pull could not re-read the page, which stays as it was. */
+    data class RefreshFailed(
+        val error: SeerrError,
+    ) : ServicesEvent
+}
+
 /**
  * The services page: every Radarr and Sonarr instance, and the override rules where the server has
  * them. Read on every arrival, since an instance or a rule is edited on a page of its own.
@@ -37,10 +45,8 @@ class ServicesViewModel
         private val state = MutableStateFlow<ServicesUiState>(ServicesUiState.Loading)
         val uiState: StateFlow<ServicesUiState> = state.asStateFlow()
 
-        private val failures = MutableSharedFlow<SeerrError>(extraBufferCapacity = 1)
-
-        /** One event per failed pull, for the screen's usual message. */
-        val reloadFailed: SharedFlow<SeerrError> = failures.asSharedFlow()
+        private val eventFlow = MutableSharedFlow<ServicesEvent>(extraBufferCapacity = 1)
+        val events: SharedFlow<ServicesEvent> = eventFlow.asSharedFlow()
 
         /** A pull: re-reads the page and swaps it in, keeping what shows until then. A failed read leaves the page as it is. */
         fun refresh() {
@@ -52,7 +58,7 @@ class ServicesViewModel
                     .onSuccess { state.value = it }
                     .onFailure {
                         state.update { current -> (current as? ServicesUiState.Ready)?.copy(isRefreshing = false) ?: current }
-                        failures.tryEmit(it.toSeerrError())
+                        eventFlow.tryEmit(ServicesEvent.RefreshFailed(it.toSeerrError()))
                     }
             }
         }
