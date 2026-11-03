@@ -268,9 +268,8 @@ class RequestDetailViewModel
             viewModelScope.launch(dispatcher) {
                 attempt { refreshTracker.track { load() } }.fold(
                     { detail ->
-                        state.update { current ->
-                            if (current is RequestDetailUiState.Ready) RequestDetailUiState.Ready(detail) else current
-                        }
+                        // The page's own fields stay: a report still being sent keeps its re-entrancy guard.
+                        state.update { current -> (current as? RequestDetailUiState.Ready)?.copy(detail = detail) ?: current }
                     },
                     { failure -> moderator.announce(ModerationEvent.Failed(failure.toSeerrError())) },
                 )
