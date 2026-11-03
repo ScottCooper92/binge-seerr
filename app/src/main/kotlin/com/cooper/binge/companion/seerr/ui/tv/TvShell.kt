@@ -239,8 +239,8 @@ private class TabPageFocus {
 /**
  * A title's own page over everything, the bar included: it fills the screen, so it takes no top inset. It draws its own
  * background, a page an opaque one and a side sheet its scrim, so a sheet can show the board through. Focus is trapped in
- * it; Back is the page's own, and it closes through [closer], which lets focus go as the exit starts and hands it back to the
- * page beneath.
+ * it; Back is the page's own, and it closes through [closer], which lets focus go as the exit starts.
+ * The page beneath takes focus back through its own hand-off.
  */
 @Composable
 private fun TvShellTopLayer(
