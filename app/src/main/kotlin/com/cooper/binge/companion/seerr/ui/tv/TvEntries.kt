@@ -9,6 +9,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.binge.designsystem.tv.focus.TvOverlayCloser
 import com.cooper.binge.companion.seerr.demo.isDemoOrigin
 import com.cooper.binge.companion.seerr.telemetry.LocalAnalytics
 import com.cooper.binge.companion.seerr.telemetry.screenName
@@ -89,12 +90,14 @@ internal fun TvConnectedShell(
                 else -> tabPages(tab, pages, seeAllAccountId = account?.id)
             },
         topLayer = detailPage(tab, pages[tab], onIssueChanged = issuesViewModel::refreshCounts).takeUnless { editingConnection },
-    ) { destination, close ->
+        onCloseTopLayer = { pages[tab].detailId = null },
+    ) { destination, close, closer ->
         when (destination) {
             TvDestination.Account ->
                 TvAccountEntry(
                     hubViewModel = hubViewModel,
                     onDismissRequest = close,
+                    closer = closer,
                     // Only a session sign-in has a session to end; a server's API key has nothing to sign out of.
                     onSignOut = settingsViewModel::signOut.takeIf { settings.signsInWithSession() },
                 )
@@ -111,7 +114,7 @@ internal fun TvConnectedShell(
                     onOpenIssue = { pages[TvDestination.Issues].detailId = it },
                     onSeeAll = { pages[TvDestination.Issues].seeAll = it.name },
                 )
-            TvDestination.Settings -> TvSettingsEntry(onDismissRequest = close, viewModel = settingsViewModel)
+            TvDestination.Settings -> TvSettingsEntry(onDismissRequest = close, closer = closer, viewModel = settingsViewModel)
         }
     }
 }
@@ -192,15 +195,18 @@ private fun detailPage(
     tab: TvDestination,
     pages: TvTabPages,
     onIssueChanged: () -> Unit,
-): (@Composable () -> Unit)? {
+): (@Composable (TvOverlayCloser) -> Unit)? {
     val id = pages.detailId ?: return null
-    val close = { pages.detailId = null }
     return when (tab) {
         TvDestination.Hub -> {
-            { ScopedViewModels("request-detail-$id") { TvRequestDetailOverlay(requestId = id, onDone = close) } }
+            { closer -> ScopedViewModels("request-detail-$id") { TvRequestDetailOverlay(requestId = id, onDone = closer::close) } }
         }
         TvDestination.Issues -> {
-            { ScopedViewModels("issue-detail-$id") { TvIssueSheetEntry(issueId = id, onDone = close, onIssueChanged = onIssueChanged) } }
+            { closer ->
+                ScopedViewModels("issue-detail-$id") {
+                    TvIssueSheetEntry(issueId = id, onDone = closer::close, onIssueChanged = onIssueChanged, closer = closer)
+                }
+            }
         }
         TvDestination.Account, TvDestination.Settings -> null
     }

@@ -50,7 +50,7 @@ private fun Content() {
 
 @Composable
 private fun Shell() {
-    TvHomeShell(tab = TvDestination.Hub, sheet = null, onSelectTab = {}, onOpenSheet = {}, onCloseSheet = {}) { _, _ ->
+    TvHomeShell(tab = TvDestination.Hub, sheet = null, onSelectTab = {}, onOpenSheet = {}, onCloseSheet = {}) { _, _, _ ->
         Content()
     }
 }

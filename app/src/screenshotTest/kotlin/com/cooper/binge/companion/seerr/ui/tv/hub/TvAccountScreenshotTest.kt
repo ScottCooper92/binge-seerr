@@ -129,7 +129,7 @@ class TvAccountScreenshotTest {
             onOpenSheet = {},
             onCloseSheet = {},
             account = PreviewBarAccount,
-        ) { _, _ ->
+        ) { _, _, _ ->
             Box(modifier = Modifier.fillMaxSize())
         }
     }
@@ -147,7 +147,7 @@ class TvAccountScreenshotTest {
             onCloseSheet = {},
             tabs = listOf(TvDestination.Hub),
             account = PreviewBarAccount,
-        ) { _, _ ->
+        ) { _, _, _ ->
             Box(modifier = Modifier.fillMaxSize())
         }
     }
