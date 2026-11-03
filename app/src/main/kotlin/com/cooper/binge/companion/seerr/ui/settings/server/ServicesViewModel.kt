@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.binge.companion.sdk.attempt
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.di.IoDispatcher
+import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.seerr.SeerrOverrideRuleDto
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
 import com.cooper.binge.companion.seerr.ui.settings.ServiceType
@@ -12,11 +13,23 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+
+/** What the services page tells its screen beside its state. */
+sealed interface ServicesEvent {
+    /** A pull could not re-read the page, which stays as it was. */
+    data class RefreshFailed(
+        val error: SeerrError,
+    ) : ServicesEvent
+}
 
 /**
  * The services page: every Radarr and Sonarr instance, and the override rules where the server has
@@ -31,6 +44,24 @@ class ServicesViewModel
     ) : ViewModel() {
         private val state = MutableStateFlow<ServicesUiState>(ServicesUiState.Loading)
         val uiState: StateFlow<ServicesUiState> = state.asStateFlow()
+
+        private val eventFlow = MutableSharedFlow<ServicesEvent>(extraBufferCapacity = 1)
+        val events: SharedFlow<ServicesEvent> = eventFlow.asSharedFlow()
+
+        /** A pull: re-reads the page and swaps it in, keeping what shows until then. A failed read leaves the page as it is. */
+        fun refresh() {
+            val ready = state.value as? ServicesUiState.Ready ?: return
+            if (ready.isRefreshing) return
+            state.value = ready.copy(isRefreshing = true)
+            viewModelScope.launch(dispatcher) {
+                attempt { load() }
+                    .onSuccess { state.value = it }
+                    .onFailure {
+                        state.update { current -> (current as? ServicesUiState.Ready)?.copy(isRefreshing = false) ?: current }
+                        eventFlow.tryEmit(ServicesEvent.RefreshFailed(it.toSeerrError()))
+                    }
+            }
+        }
 
         fun reload() {
             state.value = ServicesUiState.Loading

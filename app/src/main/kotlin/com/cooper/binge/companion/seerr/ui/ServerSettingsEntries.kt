@@ -92,7 +92,14 @@ private fun AboutPage(onBack: () -> Unit) {
     val viewModel = hiltViewModel<AboutViewModel>()
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
-    AboutScreen(state = state, onBack = onBack, onRetry = viewModel::reload, onOpenUrl = { url -> context.openInBrowser(url) })
+    AboutScreen(
+        state = state,
+        onBack = onBack,
+        onRetry = viewModel::reload,
+        onOpenUrl = { url -> context.openInBrowser(url) },
+        onRefresh = viewModel::refresh,
+        events = viewModel.events,
+    )
 }
 
 /** The server's log, with the copy the page offers wired to the clipboard. */
@@ -140,6 +147,10 @@ private fun CachePage(onBack: () -> Unit) {
                 onBack = onBack,
                 onRetry = viewModel::reload,
                 onRetryJobs = jobsViewModel::reload,
+                onRefresh = {
+                    viewModel.refresh()
+                    jobsViewModel.refresh()
+                },
                 onFlush = viewModel::flush,
                 onFlushDnsEntry = viewModel::flushDnsEntry,
             ),
@@ -219,10 +230,12 @@ private fun ServicesPage(
     LaunchedEffect(viewModel) { viewModel.reload() }
     ServicesScreen(
         state = state,
+        events = viewModel.events,
         actions =
             ServicesActions(
                 onBack = onBack,
                 onRetry = viewModel::reload,
+                onRefresh = viewModel::refresh,
                 onOpenInstance = onOpenInstance,
                 onOpenRule = onOpenRule,
             ),

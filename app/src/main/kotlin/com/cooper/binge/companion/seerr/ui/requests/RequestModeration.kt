@@ -83,6 +83,8 @@ class RequestModeration(
     val actingIds: StateFlow<Set<Int>> = runner.actingIds
     val events: SharedFlow<ModerationEvent> = runner.events
 
+    fun announce(event: ModerationEvent) = runner.announce(event)
+
     override fun approve(requestId: Int) =
         runner.moderate(requestId, ModerationEvent.Approved) {
             connection.api().approveRequest(it)

@@ -97,6 +97,8 @@ sealed interface JobsUiState {
         val now: Long = System.currentTimeMillis(),
         val scheduleStatus: SaveStatus = SaveStatus.Idle,
         val unsentSchedule: UnsentSchedule? = null,
+        /** A pull is re-reading the list; the last list stays in place meanwhile. */
+        val isRefreshing: Boolean = false,
     ) : JobsUiState
 }
 
@@ -150,6 +152,8 @@ sealed interface CacheUiState {
         val imageCaches: List<ImageCache>,
         val dns: DnsCache?,
         val busyIds: Set<String> = emptySet(),
+        /** A pull is re-reading the caches; the last counts stay in place meanwhile. */
+        val isRefreshing: Boolean = false,
     ) : CacheUiState
 }
 

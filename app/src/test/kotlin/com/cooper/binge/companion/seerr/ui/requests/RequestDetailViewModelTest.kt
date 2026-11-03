@@ -244,6 +244,36 @@ class RequestDetailViewModelTest {
         }
 
     @Test
+    fun `a pull swaps the page in place and is refreshing only while the read runs`() =
+        runTest {
+            server(ADMIN)
+            val vm = viewModel()
+            vm.awaitReady()
+            serve("/api/v1/tv/200", """{"name":"Severance (renamed)","seasons":[]}""")
+
+            vm.refresh()
+
+            val renamed = vm.awaitReady { it.detail.item.title == "Severance (renamed)" }
+            assertFalse(renamed.isRefreshing)
+        }
+
+    @Test
+    fun `a failed pull keeps the page and says so, where a reload would replace it with the error`() =
+        runTest {
+            server(ADMIN)
+            val vm = viewModel()
+            vm.awaitReady()
+            responses["/api/v1/request/11"] = { FakeResponse(code = 503) }
+
+            val failed = awaitEvent(vm.events) { it is ModerationEvent.Failed }
+            vm.refresh()
+
+            assertEquals(SeerrError.Server, (failed.await() as ModerationEvent.Failed).error)
+            val kept = vm.awaitReady { !it.isRefreshing }
+            assertEquals("Severance", kept.detail.item.title)
+        }
+
+    @Test
     fun `a failed refresh keeps the seeded hero and reports the error`() =
         runTest {
             server(ADMIN)
@@ -558,6 +588,28 @@ class RequestDetailViewModelTest {
 
             assertEquals(IssueReport.Sent, vm.awaitReady { it.report == IssueReport.Sent }.report)
             assertEquals(1, received.count { it.url.encodedPath == "/api/v1/issue" })
+        }
+
+    @Test
+    fun `a pull while a report is being sent keeps it Sending, so the guard against a second POST holds`() =
+        runTest {
+            server(ADMIN)
+            val release = CountDownLatch(1)
+            responses["/api/v1/issue"] = {
+                release.await()
+                FakeResponse(code = 200, headers = headersOf("Content-Type", "application/json"), body = """{"id":5}""")
+            }
+            val vm = viewModel()
+            vm.awaitReady()
+            vm.reportIssue(IssueType.Subtitles, "Missing subs")
+            vm.awaitReady { it.report == IssueReport.Sending }
+            serve("/api/v1/tv/200", """{"name":"Severance (renamed)","seasons":[]}""")
+
+            vm.refresh()
+
+            assertEquals(IssueReport.Sending, vm.awaitReady { it.detail.item.title == "Severance (renamed)" }.report)
+            release.countDown()
+            assertEquals(IssueReport.Sent, vm.awaitReady { it.report == IssueReport.Sent }.report)
         }
 
     @Test
