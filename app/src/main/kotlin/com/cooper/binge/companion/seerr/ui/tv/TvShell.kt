@@ -68,8 +68,9 @@ internal enum class TvDestination(
  * @param sheet Account or Settings, over whichever tab shows, above the bar.
  * @param overlay a detail page or a see-all grid that belongs to the current tab, drawn under the bar too.
  * @param topLayer a title's own page, such as a request: a full screen over everything, the bar included, with no top
- *   inset. It traps focus and takes Back itself; it closes through the closer it is given, which hands focus back to the page
- *   it was opened over (the see-all page when there is one, else the tab), where that page's memory lands the card that opened it.
+ *   inset. It traps focus and takes Back itself; it closes through the closer it is given, which releases the trap as the close
+ *   starts and reports the disposal. It restores no focus itself: the page beneath does, through its own hand-off, which lands
+ *   the card that opened the layer.
  * @param onCloseTopLayer disposes the top layer, the closer's [TvOverlayCloser] `onClose`.
  */
 @Composable
