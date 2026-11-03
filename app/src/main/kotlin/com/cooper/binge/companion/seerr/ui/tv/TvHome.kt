@@ -21,7 +21,7 @@ internal fun TvSeerrShell(
     linkedRequests: Flow<Int> = emptyFlow(),
 ) {
     SeerrTvTheme {
-        // The one wrapper that notes the user's D-pad presses, so an arrival whose target attaches late (the consent, setup and
+        // The one wrapper that notes the user's D-pad presses, so an arrival whose target attaches late (the setup and
         // home pages each have one) never pulls focus back from where the user has moved.
         TvUserMovesHost {
             TvConsentGate {
