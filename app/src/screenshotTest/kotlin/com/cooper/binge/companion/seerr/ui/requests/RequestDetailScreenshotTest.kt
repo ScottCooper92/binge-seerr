@@ -14,6 +14,7 @@ import com.cooper.binge.companion.seerr.preview.SeerrListPanePreview
 import com.cooper.binge.companion.seerr.preview.SeerrScreenPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrScreenStatePreview
 import com.cooper.binge.companion.seerr.seerr.SeerrError
+import com.cooper.binge.companion.seerr.ui.state.RestingPull
 import kotlinx.coroutines.flow.emptyFlow
 
 /**
@@ -50,6 +51,12 @@ class RequestDetailScreenshotTest {
     @SeerrScreenStatePreview
     @Composable
     fun acting() = Frame(pendingDetail(), isActing = true)
+
+    /** A pull re-reading the page: the spinner over the content, which stays as it was. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun refreshing() = Frame(pendingDetail(), isRefreshing = true)
 
     /** A title with a second request against it: the "Requests for this title" list, this request first. */
     @PreviewTest
@@ -146,6 +153,7 @@ private fun Frame(
     detail: RequestDetail,
     scrollState: ScrollState = rememberScrollState(),
     isActing: Boolean = false,
+    isRefreshing: Boolean = false,
 ) {
     RequestDetailPage(
         detail = detail,
@@ -157,6 +165,8 @@ private fun Frame(
         onOpenUser = {},
         initiallyOverflowing = true,
         isActing = isActing,
+        isRefreshing = isRefreshing,
+        pullState = RestingPull.takeIf { isRefreshing },
     )
 }
 

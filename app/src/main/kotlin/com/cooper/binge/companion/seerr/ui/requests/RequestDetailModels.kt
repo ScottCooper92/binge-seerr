@@ -275,6 +275,8 @@ sealed interface RequestDetailUiState {
         val progress: ActionProgress? = null,
         /** How many Declines and Removes have landed. Only ever grows, so a sheet that was open for one cannot miss it. */
         val actionsLanded: Int = 0,
+        /** A pull is re-reading the page; the last content stays in place meanwhile. */
+        val isRefreshing: Boolean = false,
     ) : RequestDetailUiState
 
     data class Error(

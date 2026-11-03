@@ -3,6 +3,7 @@ package com.cooper.binge.companion.seerr.ui.requests
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.binge.companion.sdk.attempt
+import com.binge.designsystem.refresh.RefreshTracker
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.data.NoRequestStore
 import com.cooper.binge.companion.seerr.data.RequestStore
@@ -69,6 +70,7 @@ class RequestDetailViewModel
         /** The page's "2 minutes ago" is worded against this, moved on each minute while the page shows (#1239). */
         private val now = MutableStateFlow(clock())
         private var ticker: Job? = null
+        private val refreshTracker = RefreshTracker()
 
         /**
          * Raised when a moderation succeeds and held until the reload it triggers has written its result.
@@ -205,7 +207,9 @@ class RequestDetailViewModel
             }.combine(track) { page, ongoing ->
                 (page as? RequestDetailUiState.Ready)?.copy(progress = ongoing.progress, actionsLanded = ongoing.landed) ?: page
             }.combine(now) { page, now -> (page as? RequestDetailUiState.Ready)?.copy(now = now) ?: page }
-                .stateIn(viewModelScope, SharingStarted.Lazily, RequestDetailUiState.Loading)
+                .combine(refreshTracker.isRefreshing) { page, refreshing ->
+                    (page as? RequestDetailUiState.Ready)?.copy(isRefreshing = refreshing) ?: page
+                }.stateIn(viewModelScope, SharingStarted.Lazily, RequestDetailUiState.Loading)
 
         /** [ActionTrack.landed] as it stands, for a sheet that opens over a page that is not `Ready`. */
         fun actionsLandedNow(): Int = track.value.landed
@@ -253,6 +257,24 @@ class RequestDetailViewModel
         fun startEdit() {
             val ready = state.value as? RequestDetailUiState.Ready ?: return
             if (ready.detail.canEdit) editSource?.let(requestEditor::start)
+        }
+
+        /**
+         * A pull: re-reads the page and swaps it in, keeping what is showing until then. A failed read leaves the page as it
+         * is and says so in the usual message, where [reload] would replace it with the error.
+         */
+        fun refresh() {
+            if (state.value !is RequestDetailUiState.Ready) return
+            viewModelScope.launch(dispatcher) {
+                attempt { refreshTracker.track { load() } }.fold(
+                    { detail ->
+                        state.update { current ->
+                            if (current is RequestDetailUiState.Ready) RequestDetailUiState.Ready(detail) else current
+                        }
+                    },
+                    { failure -> moderator.announce(ModerationEvent.Failed(failure.toSeerrError())) },
+                )
+            }
         }
 
         fun reload() {
