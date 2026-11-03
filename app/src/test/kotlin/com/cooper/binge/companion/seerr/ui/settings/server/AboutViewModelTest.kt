@@ -10,6 +10,7 @@ import com.cooper.binge.companion.seerr.ui.users.settings.ADMIN
 import com.cooper.binge.companion.seerr.ui.users.settings.REQUEST
 import com.cooper.binge.companion.seerr.ui.users.settings.ScriptedSeerr
 import com.cooper.binge.companion.seerr.util.MainDispatcherRule
+import com.cooper.binge.companion.seerr.util.awaitEvent
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
@@ -88,5 +89,29 @@ class AboutViewModelTest {
             assertEquals("https://discord.gg/overseerr", info.variant.discordUrl())
             assertEquals("https://github.com/sct/overseerr", info.variant.githubUrl())
             assertEquals("https://github.com/sponsors/sct", info.variant.contributeUrl())
+        }
+
+    @Test
+    fun `a pull swaps in the new page, and a failed one keeps the page and says so`() =
+        runTest {
+            seerr.viewer(id = 1, permissions = ADMIN)
+            seerr.serve("GET /api/v1/settings/about", """{"version":"3.4.0","totalRequests":42}""")
+            val vm = AboutViewModel(seerr.connection(this), mainDispatcherRule.dispatcher)
+            vm.uiState.first { it is AboutUiState.Ready }
+            seerr.serve("GET /api/v1/settings/about", """{"version":"3.4.0","totalRequests":43}""")
+
+            vm.refresh()
+
+            val fresh = vm.uiState.first { it is AboutUiState.Ready && it.info.totalRequests == 43 } as AboutUiState.Ready
+            assertFalse(fresh.isRefreshing)
+
+            seerr.serve("GET /api/v1/status", code = 503)
+            seerr.serve("GET /api/v1/settings/public", code = 503)
+            val failed = awaitEvent(vm.reloadFailed)
+            vm.refresh()
+
+            failed.await()
+            val kept = vm.uiState.first { it is AboutUiState.Ready && !it.isRefreshing } as AboutUiState.Ready
+            assertEquals(43, kept.info.totalRequests)
         }
 }

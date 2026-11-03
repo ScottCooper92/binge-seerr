@@ -54,6 +54,8 @@ sealed interface ServicesUiState {
     data class Ready(
         val instances: List<DvrSummary>,
         val rules: List<OverrideRuleSummary>?,
+        /** A pull is re-reading the page; the last content stays in place meanwhile. */
+        val isRefreshing: Boolean = false,
     ) : ServicesUiState
 }
 

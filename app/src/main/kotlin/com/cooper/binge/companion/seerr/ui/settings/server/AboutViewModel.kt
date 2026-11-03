@@ -12,9 +12,13 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -48,6 +52,8 @@ sealed interface AboutUiState {
 
     data class Ready(
         val info: AboutInfo,
+        /** A pull is re-reading the page; the last content stays in place meanwhile. */
+        val isRefreshing: Boolean = false,
     ) : AboutUiState
 }
 
@@ -62,8 +68,28 @@ class AboutViewModel
         private val state = MutableStateFlow<AboutUiState>(AboutUiState.Loading)
         val uiState: StateFlow<AboutUiState> = state.asStateFlow()
 
+        private val failures = MutableSharedFlow<SeerrError>(extraBufferCapacity = 1)
+
+        /** One event per failed pull, for the screen's usual message. */
+        val reloadFailed: SharedFlow<SeerrError> = failures.asSharedFlow()
+
         init {
             reload()
+        }
+
+        /** A pull: re-reads the page and swaps it in, keeping what shows until then. A failed read leaves the page as it is. */
+        fun refresh() {
+            val ready = state.value as? AboutUiState.Ready ?: return
+            if (ready.isRefreshing) return
+            state.value = ready.copy(isRefreshing = true)
+            viewModelScope.launch(dispatcher) {
+                attempt { load(freshProfile = true) }
+                    .onSuccess { state.value = AboutUiState.Ready(it) }
+                    .onFailure {
+                        state.update { current -> (current as? AboutUiState.Ready)?.copy(isRefreshing = false) ?: current }
+                        failures.tryEmit(it.toSeerrError())
+                    }
+            }
         }
 
         fun reload() {
@@ -75,12 +101,13 @@ class AboutViewModel
             }
         }
 
-        private suspend fun load(): AboutInfo =
+        /** [freshProfile] re-reads the server's profile, which is otherwise held for the life of the connection: a pull wants its update state. */
+        private suspend fun load(freshProfile: Boolean = false): AboutInfo =
             coroutineScope {
                 val api = connection.api()
                 val about = async { attempt { api.about() }.getOrNull() }
                 val appData = async { attempt { api.appData() }.getOrNull() }
-                val profile = connection.profile()
+                val profile = if (freshProfile) connection.refreshProfileOrFail().getOrThrow() else connection.profile()
                 val aboutDto = about.await()
                 val appDataDto = appData.await()
                 AboutInfo(

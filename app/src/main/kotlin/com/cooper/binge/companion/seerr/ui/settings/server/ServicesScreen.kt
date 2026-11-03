@@ -14,11 +14,16 @@ import androidx.compose.material.icons.automirrored.filled.Rule
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.Tv
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.pulltorefresh.PullToRefreshState
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import com.binge.designsystem.component.BingePullToRefresh
 import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.resolvedContentPadding
@@ -29,14 +34,19 @@ import com.binge.designsystem.template.screenOuterPadding
 import com.binge.designsystem.theme.BingeSentiment
 import com.binge.designsystem.theme.fill
 import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.ui.settings.ServiceType
 import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
 import com.cooper.binge.companion.seerr.ui.state.LoadingScreen
+import com.cooper.binge.companion.seerr.ui.state.ReloadFailureSnackbar
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 import com.binge.designsystem.R as DesR
 
 class ServicesActions(
     val onBack: () -> Unit,
     val onRetry: () -> Unit,
+    val onRefresh: () -> Unit = {},
     val onOpenInstance: (ServiceType, Int?) -> Unit,
     val onOpenRule: (Int?) -> Unit,
 )
@@ -46,18 +56,29 @@ class ServicesActions(
 fun ServicesScreen(
     state: ServicesUiState,
     actions: ServicesActions,
+    reloadFailed: Flow<SeerrError> = emptyFlow(),
+    pullState: PullToRefreshState? = null,
 ) {
+    val snackbarHostState = remember { SnackbarHostState() }
+    ReloadFailureSnackbar(reloadFailed, snackbarHostState)
     BingeScreenScaffold(
         bar = ScreenBar.Small,
         title = stringResource(R.string.settings_group_services),
         onBack = actions.onBack,
+        snackbarHostState = snackbarHostState,
     ) { padding ->
         Box(modifier = Modifier.fillMaxSize().padding(padding.screenOuterPadding())) {
             val inner = padding.screenInnerPadding()
             when (state) {
                 ServicesUiState.Loading -> LoadingScreen(Modifier.padding(inner))
                 is ServicesUiState.Error -> ErrorScreen(error = state.error, modifier = Modifier.padding(inner), onRetry = actions.onRetry)
-                is ServicesUiState.Ready -> ServicesContent(state, actions, contentPadding = inner)
+                is ServicesUiState.Ready ->
+                    BingePullToRefresh(
+                        isRefreshing = state.isRefreshing,
+                        onRefresh = actions.onRefresh,
+                        indicatorTopInset = inner.calculateTopPadding(),
+                        state = pullState ?: rememberPullToRefreshState(),
+                    ) { ServicesContent(state, actions, contentPadding = inner) }
             }
         }
     }

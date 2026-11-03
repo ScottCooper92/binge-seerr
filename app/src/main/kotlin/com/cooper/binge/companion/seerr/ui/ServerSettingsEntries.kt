@@ -92,7 +92,14 @@ private fun AboutPage(onBack: () -> Unit) {
     val viewModel = hiltViewModel<AboutViewModel>()
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
-    AboutScreen(state = state, onBack = onBack, onRetry = viewModel::reload, onOpenUrl = { url -> context.openInBrowser(url) })
+    AboutScreen(
+        state = state,
+        onBack = onBack,
+        onRetry = viewModel::reload,
+        onOpenUrl = { url -> context.openInBrowser(url) },
+        onRefresh = viewModel::refresh,
+        reloadFailed = viewModel.reloadFailed,
+    )
 }
 
 /** The server's log, with the copy the page offers wired to the clipboard. */
@@ -219,10 +226,12 @@ private fun ServicesPage(
     LaunchedEffect(viewModel) { viewModel.reload() }
     ServicesScreen(
         state = state,
+        reloadFailed = viewModel.reloadFailed,
         actions =
             ServicesActions(
                 onBack = onBack,
                 onRetry = viewModel::reload,
+                onRefresh = viewModel::refresh,
                 onOpenInstance = onOpenInstance,
                 onOpenRule = onOpenRule,
             ),

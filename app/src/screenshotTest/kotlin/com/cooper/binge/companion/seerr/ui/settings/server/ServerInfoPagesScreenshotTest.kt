@@ -7,6 +7,7 @@ import com.cooper.binge.companion.seerr.preview.SeerrScreenPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrScreenStatePreview
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.seerr.SeerrVariant
+import com.cooper.binge.companion.seerr.ui.state.RestingPull
 import kotlinx.coroutines.flow.emptyFlow
 
 /**
@@ -19,6 +20,12 @@ class AboutScreenshotTest {
     @SeerrScreenPreviews
     @Composable
     fun readyLayout() = AboutFrame(AboutUiState.Ready(aboutInfo()))
+
+    /** A pull re-reading the page: the spinner over the content, which stays as it was. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun refreshing() = AboutFrame(AboutUiState.Ready(aboutInfo(), isRefreshing = true))
 
     /** The data volume is unmounted or read-only: the warning row. */
     @PreviewTest
@@ -159,7 +166,14 @@ private fun dnsCache() =
     )
 
 @Composable
-private fun AboutFrame(state: AboutUiState) = AboutScreen(state = state, onBack = {}, onRetry = {}, onOpenUrl = {})
+private fun AboutFrame(state: AboutUiState) =
+    AboutScreen(
+        state = state,
+        onBack = {},
+        onRetry = {},
+        onOpenUrl = {},
+        pullState = RestingPull.takeIf { (state as? AboutUiState.Ready)?.isRefreshing == true },
+    )
 
 @Composable
 private fun CacheFrame(

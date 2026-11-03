@@ -20,6 +20,7 @@ import com.cooper.binge.companion.seerr.preview.SeerrTallComponentPreviews
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.ui.Choice
 import com.cooper.binge.companion.seerr.ui.settings.ServiceType
+import com.cooper.binge.companion.seerr.ui.state.RestingPull
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorActions
 import com.cooper.binge.companion.seerr.ui.users.settings.ExtrasEditorUiState
 import kotlinx.coroutines.flow.emptyFlow
@@ -36,6 +37,12 @@ class ServicesScreenshotTest {
     @SeerrScreenPreviews
     @Composable
     fun readyLayout() = ServicesFrame(ServicesUiState.Ready(instances = instances(), rules = rules()))
+
+    /** A pull re-reading the page: the spinner over the list, which stays as it was. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun refreshing() = ServicesFrame(ServicesUiState.Ready(instances = instances(), rules = rules(), isRefreshing = true))
 
     /** Overseerr and early Jellyseerr have no override rules, so the group is absent rather than empty. */
     @PreviewTest
@@ -375,6 +382,7 @@ private fun PartFrame(content: @Composable ColumnScope.() -> Unit) {
 private fun ServicesFrame(state: ServicesUiState) =
     ServicesScreen(
         state = state,
+        pullState = RestingPull.takeIf { (state as? ServicesUiState.Ready)?.isRefreshing == true },
         actions = ServicesActions(onBack = {}, onRetry = {}, onOpenInstance = { _, _ -> }, onOpenRule = {}),
     )
 

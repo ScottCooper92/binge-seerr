@@ -1,13 +1,16 @@
 package com.cooper.binge.companion.seerr.ui.settings.server
 
+import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.ui.settings.ServiceType
 import com.cooper.binge.companion.seerr.ui.users.settings.ADMIN
 import com.cooper.binge.companion.seerr.ui.users.settings.ScriptedSeerr
 import com.cooper.binge.companion.seerr.util.MainDispatcherRule
+import com.cooper.binge.companion.seerr.util.awaitEvent
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Rule
@@ -62,5 +65,40 @@ class ServicesViewModelTest {
             val ready = vm.uiState.first { it is ServicesUiState.Ready } as ServicesUiState.Ready
             assertNull(ready.rules)
             assertEquals(0, seerr.count("GET", "/api/v1/overrideRule"))
+        }
+
+    @Test
+    fun `a pull swaps in the new list, and is refreshing only while the read runs`() =
+        runTest {
+            seerr.viewer(id = 1, permissions = ADMIN)
+            val vm = ServicesViewModel(seerr.connection(this), mainDispatcherRule.dispatcher)
+            vm.reload()
+            vm.uiState.first { it is ServicesUiState.Ready }
+            seerr.serve(
+                "GET /api/v1/settings/radarr",
+                """[{"id":1,"name":"Movies","hostname":"radarr.local","port":7878},{"id":2,"name":"Films 4K","hostname":"r4k.local","port":7878}]""",
+            )
+
+            vm.refresh()
+
+            val fresh = vm.uiState.first { it is ServicesUiState.Ready && it.instances.size == 3 } as ServicesUiState.Ready
+            assertFalse(fresh.isRefreshing)
+        }
+
+    @Test
+    fun `a failed pull keeps the list and says so, where a reload would replace it with the error`() =
+        runTest {
+            seerr.viewer(id = 1, permissions = ADMIN)
+            val vm = ServicesViewModel(seerr.connection(this), mainDispatcherRule.dispatcher)
+            vm.reload()
+            vm.uiState.first { it is ServicesUiState.Ready }
+            seerr.serve("GET /api/v1/settings/radarr", code = 503)
+
+            val failed = awaitEvent(vm.reloadFailed)
+            vm.refresh()
+
+            assertEquals(SeerrError.Server, failed.await())
+            val kept = vm.uiState.first { it is ServicesUiState.Ready && !it.isRefreshing } as ServicesUiState.Ready
+            assertEquals(2, kept.instances.size)
         }
 }
