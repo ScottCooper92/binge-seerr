@@ -83,6 +83,16 @@ class CacheScreenshotTest {
             jobs = JobsUiState.Ready(cacheJobs(), busyIds = setOf("download-sync"), scheduleStatus = SaveStatus.Saving),
         )
 
+    /** A pull re-reading the jobs and the caches: the spinner over the page, which stays as it was. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun refreshing() =
+        CacheFrame(
+            CacheUiState.Ready(apiCaches(), imageCaches(), dnsCache(), isRefreshing = true),
+            jobs = JobsUiState.Ready(cacheJobs(), isRefreshing = true),
+        )
+
     /** One flush in flight: its row is busy. */
     @PreviewTest
     @SeerrScreenStatePreview
@@ -185,6 +195,7 @@ private fun CacheFrame(
     actions = CacheActions(onBack = {}, onRetry = {}, onRetryJobs = {}, onFlush = {}, onFlushDnsEntry = {}),
     jobs = jobs,
     jobActions = JobsActions(onRun = {}, onCancel = {}, onSchedule = { _, _ -> }),
+    pullState = RestingPull.takeIf { (state as? CacheUiState.Ready)?.isRefreshing == true },
 )
 
 /** The page's jobs, above its caches as the web client's Jobs & Cache page lists them. */

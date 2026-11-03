@@ -147,6 +147,10 @@ private fun CachePage(onBack: () -> Unit) {
                 onBack = onBack,
                 onRetry = viewModel::reload,
                 onRetryJobs = jobsViewModel::reload,
+                onRefresh = {
+                    viewModel.refresh()
+                    jobsViewModel.refresh()
+                },
                 onFlush = viewModel::flush,
                 onFlushDnsEntry = viewModel::flushDnsEntry,
             ),
