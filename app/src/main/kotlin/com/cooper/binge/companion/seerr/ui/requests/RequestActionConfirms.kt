@@ -1,14 +1,12 @@
 package com.cooper.binge.companion.seerr.ui.requests
 
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.PlaylistRemove
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.BingeConfirmDialog
-import com.binge.designsystem.component.CheckboxRow
+import com.binge.designsystem.component.SwitchRow
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.seerr.SeerrRequestStatusCode
 
@@ -98,7 +96,7 @@ private fun RequestConfirm(
 
 /**
  * One confirm, worded from what the server does: Radarr or Sonarr removes the title and the files it imported, and a
- * download still running is not stopped. The title's requests stay unless the box is ticked, so where it has open ones
+ * download still running is not stopped. The title's requests stay unless the switch is on, so where it has open ones
  * the confirm offers to remove them too. The sheet stays open, and its row says the files are gone.
  */
 @Composable
@@ -123,7 +121,7 @@ private fun DeleteFilesConfirm(
         extraContent =
             openRequestIds.takeIf { it.isNotEmpty() }?.let { ids ->
                 {
-                    RemoveRequestsCheckbox(
+                    RemoveRequestsSwitch(
                         count = ids.size,
                         checked = step.removeRequests,
                         onCheckedChange = { onStep(step.copy(removeRequests = it)) },
@@ -142,19 +140,19 @@ internal fun deleteFilesMessage(isTv: Boolean): String =
         stringResource(R.string.media_delete_files_confirm_movie, stringResource(R.string.media_client_radarr))
     }
 
-/** The choice to remove the instance's open requests with its files, so the title can be requested again. */
+/** The switch to remove the instance's open requests with its files, so the title can be requested again. */
 @Composable
-internal fun RemoveRequestsCheckbox(
+internal fun RemoveRequestsSwitch(
     count: Int,
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
 ) {
-    CheckboxRow(
+    SwitchRow(
         label = pluralStringResource(R.plurals.media_delete_files_remove_requests, count, count),
         supportingText = stringResource(R.string.media_delete_files_remove_requests_detail),
         checked = checked,
         onCheckedChange = onCheckedChange,
-        icon = Icons.Filled.PlaylistRemove,
+        supportingMaxLines = 3,
     )
 }
 
