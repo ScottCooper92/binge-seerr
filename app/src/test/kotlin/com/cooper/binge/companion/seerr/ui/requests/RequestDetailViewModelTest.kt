@@ -613,6 +613,28 @@ class RequestDetailViewModelTest {
         }
 
     @Test
+    fun `a reload while a report is being sent keeps it Sending, so the guard against a second POST holds`() =
+        runTest {
+            server(ADMIN)
+            val release = CountDownLatch(1)
+            responses["/api/v1/issue"] = {
+                release.await()
+                FakeResponse(code = 200, headers = headersOf("Content-Type", "application/json"), body = """{"id":5}""")
+            }
+            val vm = viewModel()
+            vm.awaitReady()
+            vm.reportIssue(IssueType.Subtitles, "Missing subs")
+            vm.awaitReady { it.report == IssueReport.Sending }
+            serve("/api/v1/tv/200", """{"name":"Severance (renamed)","seasons":[]}""")
+
+            vm.reload()
+
+            assertEquals(IssueReport.Sending, vm.awaitReady { it.detail.item.title == "Severance (renamed)" }.report)
+            release.countDown()
+            assertEquals(IssueReport.Sent, vm.awaitReady { it.report == IssueReport.Sent }.report)
+        }
+
+    @Test
     fun `a request the server no longer has reads as not found, and one whose destination is gone still shows`() =
         runTest {
             server(ADMIN)

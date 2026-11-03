@@ -289,7 +289,8 @@ class RequestDetailViewModel
                 val result = attempt { load() }
                 state.update { current ->
                     result.fold(
-                        { RequestDetailUiState.Ready(it) },
+                        // A page already showing keeps its own fields: a report still being sent keeps its re-entrancy guard.
+                        { detail -> (current as? RequestDetailUiState.Ready)?.copy(detail = detail) ?: RequestDetailUiState.Ready(detail) },
                         { failure ->
                             // A seeded page keeps its header and reports the failure beside it.
                             (current as? RequestDetailUiState.Seeded)?.copy(error = failure.toSeerrError())
