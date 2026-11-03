@@ -39,6 +39,10 @@ data class AboutInfo(
     val appDataPath: String?,
     val appDataMounted: Boolean?,
     val appDataWritable: Boolean?,
+    /** How the totals and timezone read went. */
+    val aboutRead: AboutRead = AboutRead.Read,
+    /** How the data directory read went. */
+    val appDataRead: AboutRead = AboutRead.Read,
 ) {
     val appDataWarning: Boolean get() = appDataMounted == false || appDataWritable == false
 }
@@ -89,7 +93,7 @@ class AboutViewModel
             if (ready.isRefreshing) return
             state.value = ready.copy(isRefreshing = true)
             viewModelScope.launch(dispatcher) {
-                attempt { load(freshProfile = true) }
+                attempt { load(earlier = ready.info, freshProfile = true) }
                     .onSuccess { state.value = AboutUiState.Ready(it) }
                     .onFailure {
                         state.update { current -> (current as? AboutUiState.Ready)?.copy(isRefreshing = false) ?: current }
@@ -108,14 +112,19 @@ class AboutViewModel
         }
 
         /** [freshProfile] re-reads the server's profile, which is otherwise held for the life of the connection: a pull wants its update state. */
-        private suspend fun load(freshProfile: Boolean = false): AboutInfo =
+        private suspend fun load(
+            earlier: AboutInfo? = null,
+            freshProfile: Boolean = false,
+        ): AboutInfo =
             coroutineScope {
                 val api = connection.api()
-                val about = async { attempt { api.about() }.getOrNull() }
-                val appData = async { attempt { api.appData() }.getOrNull() }
+                val about = async { attempt { api.about() } }
+                val appData = async { attempt { api.appData() } }
                 val profile = if (freshProfile) connection.refreshProfileOrFail().getOrThrow() else connection.profile()
-                val aboutDto = about.await()
-                val appDataDto = appData.await()
+                val aboutResult = about.await()
+                val appDataResult = appData.await()
+                val aboutDto = aboutResult.getOrNull()
+                val appDataDto = appDataResult.getOrNull()
                 AboutInfo(
                     variant = profile.variant,
                     versionLabel = profile.version?.label ?: aboutDto?.version?.takeIf { it.isNotBlank() },
@@ -128,6 +137,8 @@ class AboutViewModel
                     appDataPath = (appDataDto?.appDataPath ?: aboutDto?.appDataPath)?.takeIf { it.isNotBlank() },
                     appDataMounted = appDataDto?.appData,
                     appDataWritable = appDataDto?.appDataPermissions,
-                )
+                    aboutRead = aboutResult.toAboutRead(),
+                    appDataRead = appDataResult.toAboutRead(),
+                ).keepingEarlier(earlier)
             }
     }
