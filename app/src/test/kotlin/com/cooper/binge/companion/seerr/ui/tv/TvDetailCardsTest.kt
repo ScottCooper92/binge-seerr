@@ -98,7 +98,7 @@ class TvDetailCardsTest {
                 isTv = false,
                 instances =
                     listOf(
-                        instance(is4k = false, status = SeerrMediaStatusCode.Processing),
+                        instance(is4k = false, status = SeerrMediaStatusCode.Processing).copy(download = DownloadActivity.None),
                         instance(is4k = true, status = SeerrMediaStatusCode.Processing).copy(download = DownloadActivity.Downloading),
                     ),
                 canSetStatus = false,

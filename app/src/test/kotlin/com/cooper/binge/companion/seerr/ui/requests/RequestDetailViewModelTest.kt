@@ -244,6 +244,36 @@ class RequestDetailViewModelTest {
         }
 
     @Test
+    fun `a pull swaps the page in place and is refreshing only while the read runs`() =
+        runTest {
+            server(ADMIN)
+            val vm = viewModel()
+            vm.awaitReady()
+            serve("/api/v1/tv/200", """{"name":"Severance (renamed)","seasons":[]}""")
+
+            vm.refresh()
+
+            val renamed = vm.awaitReady { it.detail.item.title == "Severance (renamed)" }
+            assertFalse(renamed.isRefreshing)
+        }
+
+    @Test
+    fun `a failed pull keeps the page and says so, where a reload would replace it with the error`() =
+        runTest {
+            server(ADMIN)
+            val vm = viewModel()
+            vm.awaitReady()
+            responses["/api/v1/request/11"] = { FakeResponse(code = 503) }
+
+            val failed = awaitEvent(vm.events) { it is ModerationEvent.Failed }
+            vm.refresh()
+
+            assertEquals(SeerrError.Server, (failed.await() as ModerationEvent.Failed).error)
+            val kept = vm.awaitReady { !it.isRefreshing }
+            assertEquals("Severance", kept.detail.item.title)
+        }
+
+    @Test
     fun `a failed refresh keeps the seeded hero and reports the error`() =
         runTest {
             server(ADMIN)
@@ -282,6 +312,25 @@ class RequestDetailViewModelTest {
             true
         },
     ): RequestDetailUiState.Ready = uiState.first { it is RequestDetailUiState.Ready && match(it) } as RequestDetailUiState.Ready
+
+    /**
+     * The page once its instance reads [expected], not merely once it is idle. The page is a `combine` of the moderation state
+     * into a `stateIn`, so a mark set a moment ago reaches it on the view model's own dispatcher: reading the state at once
+     * can still return the one before (#1794).
+     */
+    private suspend fun RequestDetailViewModel.awaitInstance(expected: FilesDeletion?) =
+        checkNotNull(
+            awaitReady {
+                !it.isActing &&
+                    it.detail.media
+                        ?.instances
+                        ?.singleOrNull()
+                        ?.filesDeletion == expected
+            }.detail.media,
+        ).instances.single()
+
+    private suspend fun RequestDetailViewModel.awaitFilesDeletion(expected: FilesDeletion?): FilesDeletion? =
+        awaitInstance(expected).filesDeletion
 
     @Test
     fun `the code for a phone is written under the application url, and the page's own link stays on the address in use`() =
@@ -539,6 +588,70 @@ class RequestDetailViewModelTest {
 
             assertEquals(IssueReport.Sent, vm.awaitReady { it.report == IssueReport.Sent }.report)
             assertEquals(1, received.count { it.url.encodedPath == "/api/v1/issue" })
+        }
+
+    @Test
+    fun `a pull while a report is being sent keeps it Sending, so the guard against a second POST holds`() =
+        runTest {
+            server(ADMIN)
+            val release = CountDownLatch(1)
+            responses["/api/v1/issue"] = {
+                release.await()
+                FakeResponse(code = 200, headers = headersOf("Content-Type", "application/json"), body = """{"id":5}""")
+            }
+            val vm = viewModel()
+            vm.awaitReady()
+            vm.reportIssue(IssueType.Subtitles, "Missing subs")
+            vm.awaitReady { it.report == IssueReport.Sending }
+            serve("/api/v1/tv/200", """{"name":"Severance (renamed)","seasons":[]}""")
+
+            vm.refresh()
+
+            assertEquals(IssueReport.Sending, vm.awaitReady { it.detail.item.title == "Severance (renamed)" }.report)
+            release.countDown()
+            assertEquals(IssueReport.Sent, vm.awaitReady { it.report == IssueReport.Sent }.report)
+        }
+
+    @Test
+    fun `a reload while a report is being sent keeps it Sending, so the guard against a second POST holds`() =
+        runTest {
+            server(ADMIN)
+            val release = CountDownLatch(1)
+            responses["/api/v1/issue"] = {
+                release.await()
+                FakeResponse(code = 200, headers = headersOf("Content-Type", "application/json"), body = """{"id":5}""")
+            }
+            val vm = viewModel()
+            vm.awaitReady()
+            vm.reportIssue(IssueType.Subtitles, "Missing subs")
+            vm.awaitReady { it.report == IssueReport.Sending }
+            serve("/api/v1/tv/200", """{"name":"Severance (renamed)","seasons":[]}""")
+
+            vm.reload()
+
+            assertEquals(IssueReport.Sending, vm.awaitReady { it.detail.item.title == "Severance (renamed)" }.report)
+            release.countDown()
+            assertEquals(IssueReport.Sent, vm.awaitReady { it.report == IssueReport.Sent }.report)
+        }
+
+    @Test
+    fun `a failed reload keeps the page that is showing and says so, where a first load shows the error screen`() =
+        runTest {
+            server(ADMIN)
+            val vm = viewModel()
+            vm.awaitReady()
+            responses["/api/v1/request/11"] = { FakeResponse(code = 503) }
+
+            val failed = awaitEvent(vm.events) { it is ModerationEvent.Failed }
+            vm.reload()
+
+            assertEquals(SeerrError.Server, (failed.await() as ModerationEvent.Failed).error)
+            assertEquals(
+                "Severance",
+                vm
+                    .awaitReady { !it.isActing }
+                    .detail.item.title,
+            )
         }
 
     @Test
@@ -869,7 +982,7 @@ class RequestDetailViewModelTest {
             vm.moderation.deleteMediaFiles(11, 900, is4k = false)
             deleted.await()
 
-            val instance = checkNotNull(vm.awaitReady { !it.isActing }.detail.media).instances.single()
+            val instance = vm.awaitInstance(FilesDeletion.Deleted)
             assertEquals(FilesDeletion.Deleted, instance.filesDeletion)
             assertEquals(SeerrMediaStatusCode.PartiallyAvailable, instance.status)
         }
@@ -894,11 +1007,55 @@ class RequestDetailViewModelTest {
             vm.moderation.deleteMediaFiles(11, 900, is4k = false)
             refused.await()
 
-            val instance = checkNotNull(vm.awaitReady { !it.isActing }.detail.media).instances.single()
+            val instance = vm.awaitInstance(FilesDeletion.NoDefaultServer)
             assertEquals(FilesDeletion.NoDefaultServer, instance.filesDeletion)
 
             serve("/api/v1/auth/me", """{"id":8,"permissions":$MANAGE_REQUESTS}""")
             assertNull(checkNotNull(viewModel().awaitReady().detail.media).servicesSettingsUrl)
+        }
+
+    /** The admin is on their way to set one (#1736): coming back, the row is Delete files again, not the stale refusal. */
+    @Test
+    fun `forgetting the missing default server brings Delete files back`() =
+        runTest {
+            server(ADMIN)
+            responses["/api/v1/media/900/file"] = {
+                FakeResponse(
+                    code = 409,
+                    headers = headersOf("Content-Type", "application/json"),
+                    body = """{"message":"No Sonarr server configured to delete media files"}""",
+                )
+            }
+            val vm = viewModel()
+            vm.awaitReady()
+            val refused = awaitEvent(vm.events) { it == ModerationEvent.MediaFilesNoDefaultServer }
+            vm.moderation.deleteMediaFiles(11, 900, is4k = false)
+            refused.await()
+            assertEquals(FilesDeletion.NoDefaultServer, vm.awaitFilesDeletion(FilesDeletion.NoDefaultServer))
+
+            vm.forgetNoDefaultServer()
+
+            assertNull(vm.awaitFilesDeletion(null))
+        }
+
+    /** Only the refusal is forgotten: a delete that went through is still shown as done (#1736). */
+    @Test
+    fun `forgetting the missing default server keeps a delete that went through`() =
+        runTest {
+            server(ADMIN)
+            responses["/api/v1/media/900/file"] = {
+                FakeResponse(code = 200, headers = headersOf("Content-Type", "application/json"), body = "{}")
+            }
+            val vm = viewModel()
+            vm.awaitReady()
+            val deleted = awaitEvent(vm.events) { it == ModerationEvent.MediaFilesDeleted }
+            vm.moderation.deleteMediaFiles(11, 900, is4k = false)
+            deleted.await()
+            assertEquals(FilesDeletion.Deleted, vm.awaitFilesDeletion(FilesDeletion.Deleted))
+
+            vm.forgetNoDefaultServer()
+
+            assertEquals(FilesDeletion.Deleted, vm.awaitFilesDeletion(FilesDeletion.Deleted))
         }
 
     @Test
@@ -929,7 +1086,7 @@ class RequestDetailViewModelTest {
             val deleted = awaitEvent(vm.events) { it == ModerationEvent.MediaFilesDeleted }
             gate.countDown()
             deleted.await()
-            assertEquals(FilesDeletion.Deleted, checkNotNull(vm.awaitReady { !it.isActing }.detail.media).instances.single().filesDeletion)
+            assertEquals(FilesDeletion.Deleted, vm.awaitFilesDeletion(FilesDeletion.Deleted))
         }
 
     @Test
@@ -945,19 +1102,13 @@ class RequestDetailViewModelTest {
             val failed = awaitEvent(vm.events) { it is ModerationEvent.Failed }
             vm.moderation.deleteMediaFiles(11, 900, is4k = false)
             failed.await()
-            assertEquals(
-                FilesDeletion.Failed,
-                checkNotNull(vm.awaitReady { !it.isActing }.detail.media).instances.single().filesDeletion,
-            )
+            assertEquals(FilesDeletion.Failed, vm.awaitFilesDeletion(FilesDeletion.Failed))
 
             serve("/api/v1/media/900/file", "{}")
             val deleted = awaitEvent(vm.events) { it == ModerationEvent.MediaFilesDeleted }
             vm.moderation.deleteMediaFiles(11, 900, is4k = false)
             deleted.await()
-            assertEquals(
-                FilesDeletion.Deleted,
-                checkNotNull(vm.awaitReady { !it.isActing }.detail.media).instances.single().filesDeletion,
-            )
+            assertEquals(FilesDeletion.Deleted, vm.awaitFilesDeletion(FilesDeletion.Deleted))
         }
 
     @Test
@@ -1010,6 +1161,57 @@ class RequestDetailViewModelTest {
             val landed = vm.awaitReady { it.progress == null }
             assertNull(landed.progress)
             assertEquals(1, landed.actionsLanded)
+        }
+
+    @Test
+    fun `marking the status reads as running, then failed, then clear, and never counts as closing the sheet`() =
+        runTest {
+            server(ADMIN)
+            val gate = CountDownLatch(1)
+            responses["/api/v1/media/900/available"] = {
+                gate.await()
+                FakeResponse(code = 500, headers = headersOf("Content-Type", "application/json"), body = "{}")
+            }
+            val vm = viewModel()
+            vm.awaitReady()
+
+            val failed = awaitEvent(vm.events) { it is ModerationEvent.Failed }
+            vm.moderation.setMediaStatus(11, 900, MediaStatusChoice.Available, is4k = false)
+            val running = vm.awaitReady { it.progress != null }.progress
+            assertEquals(ActionProgress(RequestAction.MarkAs, attempt = 1), running)
+            gate.countDown()
+            failed.await()
+            val failure = vm.awaitReady { it.progress?.failed == true }
+            assertEquals(ActionProgress(RequestAction.MarkAs, failed = true, attempt = 1), failure.progress)
+
+            serve("/api/v1/media/900/available", "{}")
+            val marked = awaitEvent(vm.events) { it == ModerationEvent.MediaStatusSet }
+            vm.moderation.setMediaStatus(11, 900, MediaStatusChoice.Available, is4k = false)
+            marked.await()
+            val landed = vm.awaitReady { it.progress == null }
+            assertNull(landed.progress)
+            assertEquals("Marking leaves the actions sheet open", 0, landed.actionsLanded)
+        }
+
+    @Test
+    fun `an approval whose follow-up read fails says Approved and not that the update failed`() =
+        runTest {
+            server(REQUEST or ADMIN)
+            val vm = viewModel()
+            vm.awaitReady()
+            responses["/api/v1/request/11/approve"] = {
+                FakeResponse(code = 200, headers = headersOf("Content-Type", "application/json"), body = "{}")
+            }
+            responses["/api/v1/request/11"] = { FakeResponse(code = 404) }
+
+            val approved = awaitEvent(vm.events) { it == ModerationEvent.Approved }
+            val failed = awaitEvent(vm.events) { it is ModerationEvent.Failed }
+            vm.moderation.approve(11)
+            approved.await()
+            vm.awaitReady { !it.isActing }
+
+            assertFalse("the action's own event is the message", failed.isCompleted)
+            failed.cancel()
         }
 
     @Test

@@ -13,7 +13,6 @@ import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertWidthIsEqualTo
 import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasText
-import androidx.compose.ui.test.isFocusable
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
@@ -26,6 +25,7 @@ import com.binge.designsystem.tv.component.TvChoiceRow
 import com.binge.designsystem.tv.component.TvOptionGroup
 import com.binge.designsystem.tv.theme.BingeTvTheme
 import com.cooper.binge.companion.seerr.util.createSeerrKeyboardComposeRule
+import com.cooper.binge.companion.seerr.util.isFocusableLeaf
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -81,7 +81,7 @@ class TvInputsTest {
         }
 
         composeTestRule.onNodeWithText("Root folder").assertDoesNotExist()
-        composeTestRule.onAllNodes(isFocusable()).assertCountEquals(0)
+        composeTestRule.onAllNodes(isFocusableLeaf()).assertCountEquals(0)
         composeTestRule.onNodeWithTag(TABS).assertWidthIsEqualTo(0.dp).assertHeightIsEqualTo(0.dp)
     }
 
@@ -95,7 +95,7 @@ class TvInputsTest {
     }
 
     // A disabled row is a bare focusable, which does not merge its label in, so the label may sit a level below it.
-    private fun checkbox() = composeTestRule.onNode((hasText(AGREE) or hasAnyDescendant(hasText(AGREE))) and isFocusable())
+    private fun checkbox() = composeTestRule.onNode((hasText(AGREE) or hasAnyDescendant(hasText(AGREE))) and isFocusableLeaf())
 
     private fun press(key: Key) {
         composeTestRule.onRoot().performKeyInput { pressKey(key) }

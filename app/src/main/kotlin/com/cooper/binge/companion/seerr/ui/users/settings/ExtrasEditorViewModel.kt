@@ -142,7 +142,7 @@ abstract class ExtrasEditorViewModel<T, X>(
                     state.update { current ->
                         (current as? ExtrasEditorUiState.Ready<T, X>)?.let { it.copy(draft = it.saved, saveRefusal = error) } ?: current
                     }
-                    eventFlow.emit(EditorEvent.Failed(error))
+                    eventFlow.emit(EditorEvent.Failed.from(failure))
                 },
             )
         }
@@ -209,7 +209,7 @@ abstract class ExtrasEditorViewModel<T, X>(
                     eventFlow.emit(EditorEvent.Saved)
                 }.onFailure { failure ->
                     state.update { current -> (current as? ExtrasEditorUiState.Ready<T, X>)?.copy(saving = false) ?: current }
-                    eventFlow.emit(EditorEvent.Failed(failure.toSeerrError()))
+                    eventFlow.emit(EditorEvent.Failed.from(failure))
                 }
         }
     }

@@ -1,7 +1,9 @@
 package com.cooper.binge.companion.seerr.seerr
 
 import com.binge.companion.sdk.attempt
+import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.auth.NotConnectedException
+import com.cooper.binge.companion.seerr.ui.users.settings.EditorEvent
 import io.grpc.Status
 import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.SerializationException
@@ -9,6 +11,7 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.ResponseBody.Companion.toResponseBody
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -33,6 +36,55 @@ class SeerrErrorsTest {
         assertEquals(setOf(SeerrError.Unreachable, SeerrError.LocalNetworkDenied, SeerrError.Server, SeerrError.Unknown), transient)
         assertEquals(SeerrError.Rejected, http(400).toSeerrError())
         assertFalse(http(400).toSeerrError().isTransient)
+    }
+
+    /** What the server says it refused, for the user to read (#1821): only a rejection's own `message`, never the body. */
+    @Test
+    fun `a rejection's message is what the server says, trimmed to one short line`() {
+        assertEquals(
+            "request/body/id is read-only",
+            http(400, """{"message":"request/body/id is read-only","errors":[{"path":"/body/id"}]}""").rejectionDetail(),
+        )
+        assertEquals("a b c", http(400, """{"message":"  a\n b   c "}""").rejectionDetail())
+        assertEquals(MAX_DETAIL_CHARS, http(400, """{"message":"${"x".repeat(MAX_DETAIL_CHARS * 2)}"}""").rejectionDetail()?.length)
+    }
+
+    @Test
+    fun `no detail comes from anything but a rejection with a message`() {
+        assertEquals(null, http(400, "{}").rejectionDetail())
+        assertEquals(null, http(400, """{"message":"   "}""").rejectionDetail())
+        assertEquals(null, http(400, """{"message":["not","text"]}""").rejectionDetail())
+        assertEquals(null, http(400, "<html>Bad Request</html>").rejectionDetail())
+        assertEquals(null, http(500, """{"message":"boom"}""").rejectionDetail())
+        assertEquals(null, http(404, """{"message":"gone"}""").rejectionDetail())
+        assertEquals(null, IOException("down").rejectionDetail())
+    }
+
+    @Test
+    fun `reading the detail leaves the body for the next reader`() {
+        val failure = http(400, """{"message":"request/body/id is read-only"}""")
+        assertEquals("request/body/id is read-only", failure.rejectionDetail())
+        assertEquals("request/body/id is read-only", failure.rejectionDetail())
+        assertEquals(SeerrError.Rejected, failure.toSeerrError())
+    }
+
+    @Test
+    fun `a media server that cannot be reached is named, not blamed on the server (#1880)`() {
+        val failed = EditorEvent.Failed.from(http(502, """{"errorMessage":"INVALID_URL","status":502}"""))
+        assertEquals(SeerrError.Server, failed.error)
+        assertEquals(R.string.server_settings_media_server_unreachable, failed.messageRes)
+        assertNull(EditorEvent.Failed.from(http(502)).messageRes)
+    }
+
+    /** The one way an editor builds its failure from a throwable, so no call site can leave the reason out (#1841). */
+    @Test
+    fun `an editor failure carries the error and, for a rejection, the server's reason`() {
+        assertEquals(
+            EditorEvent.Failed(SeerrError.Rejected, "name is taken"),
+            EditorEvent.Failed.from(http(400, """{"message":"name is taken"}""")),
+        )
+        assertEquals(EditorEvent.Failed(SeerrError.Server, null), EditorEvent.Failed.from(http(500, """{"message":"boom"}""")))
+        assertEquals(EditorEvent.Failed(SeerrError.Unreachable, null), EditorEvent.Failed.from(IOException("down")))
     }
 
     @Test

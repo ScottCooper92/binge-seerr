@@ -7,6 +7,7 @@ import com.cooper.binge.companion.seerr.preview.SeerrScreenPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrScreenStatePreview
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.seerr.SeerrVariant
+import com.cooper.binge.companion.seerr.ui.state.RestingPull
 import kotlinx.coroutines.flow.emptyFlow
 
 /**
@@ -20,11 +21,34 @@ class AboutScreenshotTest {
     @Composable
     fun readyLayout() = AboutFrame(AboutUiState.Ready(aboutInfo()))
 
+    /** A pull re-reading the page: the spinner over the content, which stays as it was. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun refreshing() = AboutFrame(AboutUiState.Ready(aboutInfo(), isRefreshing = true))
+
     /** The data volume is unmounted or read-only: the warning row. */
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
     fun dataVolumeWarning() = AboutFrame(AboutUiState.Ready(aboutInfo(appDataMounted = false)))
+
+    /** The totals read failed and nothing earlier is kept: what read stays, and a row says what did not. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun totalsFailed() =
+        AboutFrame(
+            AboutUiState.Ready(
+                aboutInfo().copy(totalRequests = null, totalMediaItems = null, timezone = null, aboutRead = AboutRead.Failed),
+            ),
+        )
+
+    /** A pull failed on both reads and the earlier values are kept: the rows say they may be out of date. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun readsStale() = AboutFrame(AboutUiState.Ready(aboutInfo().copy(aboutRead = AboutRead.Stale, appDataRead = AboutRead.Stale)))
 
     /** An Overseerr the user may read only the profile of: no totals, no server facts. */
     @PreviewTest
@@ -74,6 +98,16 @@ class CacheScreenshotTest {
         CacheFrame(
             CacheUiState.Ready(apiCaches(), imageCaches(), dns = null),
             jobs = JobsUiState.Ready(cacheJobs(), busyIds = setOf("download-sync"), scheduleStatus = SaveStatus.Saving),
+        )
+
+    /** A pull re-reading the jobs and the caches: the spinner over the page, which stays as it was. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun refreshing() =
+        CacheFrame(
+            CacheUiState.Ready(apiCaches(), imageCaches(), dnsCache(), isRefreshing = true),
+            jobs = JobsUiState.Ready(cacheJobs(), isRefreshing = true),
         )
 
     /** One flush in flight: its row is busy. */
@@ -159,7 +193,14 @@ private fun dnsCache() =
     )
 
 @Composable
-private fun AboutFrame(state: AboutUiState) = AboutScreen(state = state, onBack = {}, onRetry = {}, onOpenUrl = {})
+private fun AboutFrame(state: AboutUiState) =
+    AboutScreen(
+        state = state,
+        onBack = {},
+        onRetry = {},
+        onOpenUrl = {},
+        pullState = RestingPull.takeIf { (state as? AboutUiState.Ready)?.isRefreshing == true },
+    )
 
 @Composable
 private fun CacheFrame(
@@ -171,6 +212,7 @@ private fun CacheFrame(
     actions = CacheActions(onBack = {}, onRetry = {}, onRetryJobs = {}, onFlush = {}, onFlushDnsEntry = {}),
     jobs = jobs,
     jobActions = JobsActions(onRun = {}, onCancel = {}, onSchedule = { _, _ -> }),
+    pullState = RestingPull.takeIf { (state as? CacheUiState.Ready)?.isRefreshing == true },
 )
 
 /** The page's jobs, above its caches as the web client's Jobs & Cache page lists them. */

@@ -10,6 +10,7 @@ import androidx.compose.ui.unit.dp
 import com.android.tools.screenshot.PreviewTest
 import com.binge.designsystem.LocalPaneWidth
 import com.cooper.binge.companion.seerr.demo.DEMO_ORIGIN
+import com.cooper.binge.companion.seerr.preview.SeerrFontScalePreviews
 import com.cooper.binge.companion.seerr.preview.SeerrListPanePreview
 import com.cooper.binge.companion.seerr.preview.SeerrScreenPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrScreenStatePreview
@@ -25,6 +26,7 @@ class HubScreenshotTest {
     /** The canonical layout: an administrator, every manage row, the downloading strip. */
     @PreviewTest
     @SeerrScreenPreviews
+    @SeerrFontScalePreviews
     @Composable
     fun ready() = HubScreen(state = previewReady(), actions = previewActions())
 

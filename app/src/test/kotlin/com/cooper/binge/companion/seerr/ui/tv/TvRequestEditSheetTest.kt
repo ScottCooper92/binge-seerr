@@ -10,7 +10,6 @@ import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
-import androidx.compose.ui.test.isFocusable
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performKeyInput
@@ -28,6 +27,7 @@ import com.cooper.binge.companion.seerr.ui.tv.requests.TvRequestDetailActions
 import com.cooper.binge.companion.seerr.ui.tv.requests.TvRequestDetailScreen
 import com.cooper.binge.companion.seerr.ui.tv.requests.TvRequestEditActions
 import com.cooper.binge.companion.seerr.util.createSeerrKeyboardAndroidComposeRule
+import com.cooper.binge.companion.seerr.util.isFocusableLeaf
 import com.cooper.binge.companion.seerr.util.requestDetail
 import com.cooper.binge.companion.seerr.util.string
 import kotlinx.coroutines.flow.emptyFlow
@@ -61,7 +61,7 @@ class TvRequestEditSheetTest {
         assertEquals(1, editor.starts)
         option(R.string.advanced_server).assertIsFocused()
         pressOk()
-        composeTestRule.onNode(hasText("Spare") and isFocusable()).requestFocus()
+        composeTestRule.onNode(hasText("Spare") and isFocusableLeaf()).requestFocus()
         pressOk()
 
         assertEquals(listOf(SPARE), editor.servers)
@@ -107,7 +107,7 @@ class TvRequestEditSheetTest {
         pressOk()
 
         composeTestRule.onNodeWithText(string(DesR.string.save_status_failed), substring = true).assertIsDisplayed()
-        composeTestRule.onNode(hasText(string(R.string.request_edit_save)) and isFocusable()).requestFocus()
+        composeTestRule.onNode(hasText(string(R.string.request_edit_save)) and isFocusableLeaf()).requestFocus()
         pressOk()
         assertTrue(editor.saves > 0)
     }
@@ -155,13 +155,13 @@ class TvRequestEditSheetTest {
 
     private fun actionButton(label: Int) =
         composeTestRule.onNode(
-            isFocusable() and
+            isFocusableLeaf() and
                 (hasContentDescription(string(label)) or hasText(string(label)) or hasAnyDescendant(hasText(string(label)))),
         )
 
     private fun option(label: Int) =
         composeTestRule.onNode(
-            isFocusable() and (hasText(string(label)) or hasAnyDescendant(hasText(string(label)))),
+            isFocusableLeaf() and (hasText(string(label)) or hasAnyDescendant(hasText(string(label)))),
         )
 
     private fun pressOk() {

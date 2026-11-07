@@ -54,6 +54,8 @@ sealed interface ServicesUiState {
     data class Ready(
         val instances: List<DvrSummary>,
         val rules: List<OverrideRuleSummary>?,
+        /** A pull is re-reading the page; the last content stays in place meanwhile. */
+        val isRefreshing: Boolean = false,
     ) : ServicesUiState
 }
 
@@ -268,14 +270,15 @@ internal fun DvrForm.toDto(choices: DvrChoices?): SeerrServiceSettingsDto =
         port = port.trim().toInt(),
         apiKey = apiKey.trim(),
         useSsl = useSsl,
-        baseUrl = baseUrl.trim().takeIf { it.isNotEmpty() },
+        // A blank URL goes as "", as the web client sends it and as the server holds it, not as an absent field (#1881).
+        baseUrl = baseUrl.trim(),
         activeProfileId = profileId,
         activeProfileName = choices?.profiles?.firstOrNull { it.id == profileId }?.label ?: profileName,
         activeDirectory = rootFolder,
         tags = tagIds.toList(),
         is4k = is4k,
         isDefault = isDefault,
-        externalUrl = externalUrl.trim().takeIf { it.isNotEmpty() },
+        externalUrl = externalUrl.trim(),
         syncEnabled = syncEnabled,
         preventSearch = preventSearch,
         tagRequests = tagRequests,

@@ -162,6 +162,8 @@ fun DiscoverSlidersScreen(
             destructive = true,
             onConfirm = {
                 confirmingReset = false
+                // The menu stays behind the confirmation so Cancel returns to it; the reset itself closes it.
+                showOverflow = false
                 sliderActions.onReset()
             },
             onDismissRequest = { confirmingReset = false },

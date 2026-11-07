@@ -21,6 +21,8 @@ import androidx.compose.material.icons.filled.Storage
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.pulltorefresh.PullToRefreshState
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -31,14 +33,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
+import com.binge.designsystem.component.BingePullToRefresh
 import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.resolvedContentPadding
+import com.binge.designsystem.template.formSaveStatus
 import com.binge.designsystem.theme.BingeSentiment
 import com.binge.designsystem.theme.fill
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.seerr.SeerrError
-import com.cooper.binge.companion.seerr.ui.state.formSaveStatus
 import com.cooper.binge.companion.seerr.ui.state.messageRes
 import com.cooper.binge.companion.seerr.ui.state.titleRes
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorEvent
@@ -49,6 +52,7 @@ class CacheActions(
     val onBack: () -> Unit,
     val onRetry: () -> Unit,
     val onRetryJobs: () -> Unit,
+    val onRefresh: () -> Unit = {},
     val onFlush: (String) -> Unit,
     val onFlushDnsEntry: (String) -> Unit,
 )
@@ -66,6 +70,7 @@ fun CacheScreen(
     actions: CacheActions,
     jobs: JobsUiState,
     jobActions: JobsActions,
+    pullState: PullToRefreshState? = null,
 ) {
     val readyJobs = jobs as? JobsUiState.Ready
     ServerActionPage(
@@ -85,26 +90,33 @@ fun CacheScreen(
     ) { contentPadding ->
         val sides = resolvedContentPadding()
         var scheduling by rememberSaveable { mutableStateOf<String?>(null) }
-        Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(contentPadding)) {
-            JobsSection(jobs, jobActions, sides, actions.onRetryJobs) { scheduling = it }
-            when (state) {
-                CacheUiState.Loading ->
-                    Box(
-                        modifier = Modifier.fillMaxWidth().padding(dimensionResource(DesR.dimen.padding_l)),
-                        contentAlignment = Alignment.Center,
-                    ) { CircularProgressIndicator() }
-                is CacheUiState.Error -> {
-                    Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
-                    SectionError(
-                        error = state.error,
-                        title = stringResource(R.string.server_settings_api_caches),
-                        sides = sides,
-                        onRetry = actions.onRetry,
-                    )
+        BingePullToRefresh(
+            isRefreshing = (jobs as? JobsUiState.Ready)?.isRefreshing == true || (state as? CacheUiState.Ready)?.isRefreshing == true,
+            onRefresh = actions.onRefresh,
+            indicatorTopInset = contentPadding.calculateTopPadding(),
+            state = pullState ?: rememberPullToRefreshState(),
+        ) {
+            Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(contentPadding)) {
+                JobsSection(jobs, jobActions, sides, actions.onRetryJobs) { scheduling = it }
+                when (state) {
+                    CacheUiState.Loading ->
+                        Box(
+                            modifier = Modifier.fillMaxWidth().padding(dimensionResource(DesR.dimen.padding_l)),
+                            contentAlignment = Alignment.Center,
+                        ) { CircularProgressIndicator() }
+                    is CacheUiState.Error -> {
+                        Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
+                        SectionError(
+                            error = state.error,
+                            title = stringResource(R.string.server_settings_api_caches),
+                            sides = sides,
+                            onRetry = actions.onRetry,
+                        )
+                    }
+                    is CacheUiState.Ready -> CacheSections(state, actions, sides)
                 }
-                is CacheUiState.Ready -> CacheSections(state, actions, sides)
+                Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
             }
-            Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
         }
         (jobs as? JobsUiState.Ready)?.jobs?.firstOrNull { it.id == scheduling }?.let { job ->
             ScheduleDialog(

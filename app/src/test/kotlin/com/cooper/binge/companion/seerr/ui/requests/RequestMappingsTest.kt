@@ -94,7 +94,7 @@ class RequestMappingsTest {
             approved(SeerrMediaStatusCode.Pending),
         )
         assertEquals(
-            RequestRowChip(R.string.media_state_not_downloading, RequestStateTone.Pending, StatusGlyphs.Approved),
+            RequestRowChip(R.string.request_state_approved, RequestStateTone.Pending, StatusGlyphs.Approved),
             approved(SeerrMediaStatusCode.Processing),
         )
         assertEquals(
@@ -134,19 +134,28 @@ class RequestMappingsTest {
             RequestRowChip(R.string.request_state_queued, RequestStateTone.Pending, StatusGlyphs.Queued),
             item(SeerrRequestStatusCode.Approved, SeerrMediaStatusCode.Processing, queuedDownload).statusChip(),
         )
-        // Processing with nothing in the queue: files deleted, or never grabbed (#1719).
+        // Processing with nothing in a queue known to be tracked: files deleted, or never grabbed (#1719).
+        val tracked = item(SeerrRequestStatusCode.Approved, SeerrMediaStatusCode.Processing).copy(queueTracked = true)
         assertEquals(
             RequestRowChip(R.string.media_state_not_downloading, RequestStateTone.Pending, StatusGlyphs.Approved),
-            item(SeerrRequestStatusCode.Approved, SeerrMediaStatusCode.Processing).statusChip(),
+            tracked.statusChip(),
         )
-        assertTrue(item(SeerrRequestStatusCode.Approved, SeerrMediaStatusCode.Processing).isProcessingWithoutDownload)
+        assertTrue(tracked.isProcessingWithoutDownload)
+        // The same title where the queue may not be tracked says nothing about downloads, and gives no advice (#1733).
+        val untracked = item(SeerrRequestStatusCode.Approved, SeerrMediaStatusCode.Processing)
+        assertEquals(
+            RequestRowChip(R.string.request_state_approved, RequestStateTone.Pending, StatusGlyphs.Approved),
+            untracked.statusChip(),
+        )
+        assertFalse(untracked.isProcessingWithoutDownload)
         assertFalse(item(SeerrRequestStatusCode.Approved, SeerrMediaStatusCode.Processing, queuedDownload).isProcessingWithoutDownload)
         assertFalse(item(SeerrRequestStatusCode.Approved, SeerrMediaStatusCode.Available).isProcessingWithoutDownload)
     }
 
     @Test
     fun `a version's queue reads as nothing, queued or downloading`() {
-        assertEquals(DownloadActivity.None, emptyList<SeerrDownloadStatusDto>().downloadActivity())
+        assertEquals(DownloadActivity.None, emptyList<SeerrDownloadStatusDto>().downloadActivity(queueTracked = true))
+        assertEquals(DownloadActivity.Untracked, emptyList<SeerrDownloadStatusDto>().downloadActivity())
         assertEquals(
             DownloadActivity.Queued,
             listOf(SeerrDownloadStatusDto(size = 10.0, sizeLeft = 10.0, status = "queued")).downloadActivity(),
@@ -155,7 +164,8 @@ class RequestMappingsTest {
             DownloadActivity.Downloading,
             listOf(SeerrDownloadStatusDto(size = 10.0, sizeLeft = 4.0, status = "downloading")).downloadActivity(),
         )
-        assertEquals(DownloadActivity.None, (null as RequestDownload?).activity())
+        assertEquals(DownloadActivity.Untracked, item().downloadActivity())
+        assertEquals(DownloadActivity.None, item().copy(queueTracked = true).downloadActivity())
     }
 
     @Test

@@ -8,6 +8,7 @@ import com.android.tools.screenshot.PreviewTest
 import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
 import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.demo.DEMO_ORIGIN
 import com.cooper.binge.companion.seerr.notifications.NotificationSignal
 import com.cooper.binge.companion.seerr.preview.SeerrComponentPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrFontScale13ComponentPreviews
@@ -48,6 +49,30 @@ class SettingsScreenshotTest {
     @SeerrScreenStatePreview
     @Composable
     fun loading() = SettingsFrame(SettingsUiState.Loading)
+
+    /** In the demo, one line at the top says the data is sample data and that changes go when the demo is exited. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun demo() = SettingsFrame(demoState())
+
+    /** The demo's line at the two larger font scales, where it wraps and the first group moves down with it. */
+    @PreviewTest
+    @SeerrFontScalePreviews
+    @Composable
+    fun demoLargeFont() = SettingsFrame(demoState())
+
+    /** The demo's line at 1.3x, the size a phone's own larger-text setting commonly lands on. */
+    @PreviewTest
+    @SeerrFontScale13ComponentPreviews
+    @Composable
+    fun demoNoteFont13() = DemoNote()
+
+    /** The demo's line in Spanish, which runs longer. */
+    @PreviewTest
+    @SeerrSpanishPreviews
+    @Composable
+    fun demoSpanish() = SettingsFrame(demoState())
 
     /** Ready while the server's own sections are still on their way (#1053): the groups so far, then the placeholder. */
     @PreviewTest
@@ -267,6 +292,8 @@ private fun adminState() =
         notifications = notifications(),
         app = AppSettings(bugReportUrl = "https://github.com/ScottCooper92/binge-seerr/issues/new", shakeToReport = true),
     )
+
+private fun demoState() = adminState().copy(connection = connection(SignInKind.ApiKey).copy(baseUrl = DEMO_ORIGIN))
 
 private fun noActions() =
     SettingsActions(

@@ -103,10 +103,11 @@ internal fun TvRequestDetailSheet(
     // The two confirms are a question and nothing else, so each is a dialog; the rest carry a list, a form or a code, so
     // they are pages of a sheet.
     if (host.step.isPage) {
-        TvSideSheet(onDismissRequest = closer::close) { entryFocus ->
+        TvSideSheet(onDismissRequest = closer::close, closer = closer) { entryFocus ->
             TvRequestDetailPage(host.step, page, entryFocus, onEditClosed = closer::close)
         }
     } else {
+        closer.ReportDisposal()
         TvRequestConfirm(host.step, page.content.item, page.actions, onDone = { closer.close() })
     }
 }

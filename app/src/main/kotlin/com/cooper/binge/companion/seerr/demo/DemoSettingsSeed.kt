@@ -27,8 +27,8 @@ internal fun seedResources(): DemoResources =
         objects["tautulli"] = toJson(SeerrTautulliSettingsDto(hostname = "", port = 8181, useSsl = false))
         objects["network"] = toJson(SeerrNetworkSettingsDto(csrfProtection = false, trustProxy = false, forceIpv4First = false))
         objects["metadatas"] = toJson(SeerrMetadataSettingsDto(tv = "tvdb", anime = "tvdb"))
-        lists["radarr"] = mutableListOf(toJson(dvr(1, "Demo Radarr", RADARR_PORT, "/media/movies")))
-        lists["sonarr"] = mutableListOf(toJson(dvr(1, "Demo Sonarr", SONARR_PORT, "/media/tv")))
+        lists["radarr"] = mutableListOf(toJson(dvr(1, "Demo Radarr", RADARR_PORT, demoRootFolder("radarr"))))
+        lists["sonarr"] = mutableListOf(toJson(dvr(1, "Demo Sonarr", SONARR_PORT, demoRootFolder("sonarr"))))
         lists["rules"] = mutableListOf(toJson(SeerrOverrideRuleDto(id = 1, radarrServiceId = 1, genre = "16", profileId = 2)))
         lists["sliders"] = seedSliders()
     }
@@ -101,6 +101,7 @@ private fun dvr(
     activeProfileName = "Any",
     activeDirectory = directory,
     isDefault = true,
+    syncEnabled = true,
 )
 
 private fun seedSliders(): MutableList<kotlinx.serialization.json.JsonObject> =

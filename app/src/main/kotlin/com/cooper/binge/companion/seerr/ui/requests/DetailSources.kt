@@ -72,6 +72,7 @@ internal class DetailSources(
     val destination: RequestDestination?,
     val watch: SeerrWatchDataDto?,
     val webRoot: String,
+    val queueGate: DownloadQueueGate = DownloadQueueGate.Unknown,
 ) {
     val scope: ModerationScope
         get() = ModerationScope(permissions, currentUserId = user?.id, hasBlocklist = profile.hasBlocklist)
@@ -104,7 +105,7 @@ internal class DetailSources(
         val item =
             checkNotNull(dto.toRequestItem(api, { _, _, _ -> hydrated }, System.currentTimeMillis())) {
                 "Unrenderable media type"
-            }
+            }.copy(queueTracked = queueGate.sees(dto.media, dto.is4k))
         val own = dto.requestedBy?.id != null && dto.requestedBy.id == user?.id
         val automatic = dto.approvedAutomatically()
         val moderator = dto.modifiedBy?.takeUnless { automatic }
@@ -132,7 +133,7 @@ internal class DetailSources(
             serverInstanceId = profile.instanceId,
             mediaServerUrl = preferred(dto.media.mediaUrl, dto.media.mediaUrl4k),
             serviceUrl = preferred(dto.media.serviceUrl, dto.media.serviceUrl4k),
-            media = dto.mediaRecord(permissions, profile, watch, webRoot),
+            media = dto.mediaRecord(permissions, profile, watch, webRoot, queueGate),
             serverName = profile.variant.displayName,
             mediaServerName = profile.mediaServerName(),
             mediaServerItem = profile.mediaServerItem(dto.media.jellyfinMediaId),
@@ -148,7 +149,9 @@ internal class DetailSources(
 
     /** The season the request asked for, named from the title's own list where that loaded. */
     private fun seasons(): List<SeasonState> {
-        val download = (if (dto.is4k) dto.media.downloadStatus4k else dto.media.downloadStatus).downloadActivity()
+        val download =
+            (if (dto.is4k) dto.media.downloadStatus4k else dto.media.downloadStatus)
+                .downloadActivity(queueGate.sees(dto.media, dto.is4k))
         return dto.seasons.map { requested ->
             val season = details?.seasons?.firstOrNull { it.seasonNumber == requested.seasonNumber }
             SeasonState(requested.seasonNumber, season?.name, season?.episodeCount, requested.status, download)
@@ -181,6 +184,7 @@ private fun SeerrRequestDto.mediaRecord(
     profile: SeerrServerProfile,
     watch: SeerrWatchDataDto?,
     webRoot: String,
+    queueGate: DownloadQueueGate,
 ): MediaRecord? {
     val mediaId = media.id ?: return null
     val has4k = is4k || (media.status4k != null && media.status4k != SeerrMediaStatusCode.Unknown)
@@ -195,7 +199,7 @@ private fun SeerrRequestDto.mediaRecord(
                     media.serviceUrl?.takeIf { it.isWebUrl() },
                     media.mediaUrl?.takeIf { it.isWebUrl() },
                     watch?.data?.toWatchStats(),
-                    download = media.downloadStatus.downloadActivity(),
+                    download = media.downloadStatus.downloadActivity(queueGate.sees(media, is4k = false)),
                 ),
                 MediaInstance(
                     true,
@@ -203,7 +207,7 @@ private fun SeerrRequestDto.mediaRecord(
                     media.serviceUrl4k?.takeIf { it.isWebUrl() },
                     media.mediaUrl4k?.takeIf { it.isWebUrl() },
                     watch?.data4k?.toWatchStats(),
-                    download = media.downloadStatus4k.downloadActivity(),
+                    download = media.downloadStatus4k.downloadActivity(queueGate.sees(media, is4k = true)),
                 ).takeIf { has4k },
             ),
         canSetStatus = permissions.canManageRequests,

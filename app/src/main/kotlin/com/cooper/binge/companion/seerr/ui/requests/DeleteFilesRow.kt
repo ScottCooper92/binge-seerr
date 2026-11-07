@@ -29,27 +29,7 @@ internal fun deleteFilesRow(
                 clickable = false,
                 trailingContent = {},
             )
-        // A setting in Seerr, so sending it again cannot help: the row says what to change, and opens it for an admin.
-        FilesDeletion.NoDefaultServer -> {
-            val context = LocalContext.current
-            val url = media.servicesSettingsUrl
-            ListItem(
-                icon = Icons.Filled.ErrorOutline,
-                iconTint = error,
-                label = stringResource(if (instance.is4k) R.string.media_4k_files_not_deleted else R.string.media_files_not_deleted),
-                detail =
-                    stringResource(
-                        if (instance.is4k) R.string.media_files_no_default_server_4k else R.string.media_files_no_default_server,
-                        client,
-                    ),
-                detailColor = error,
-                supportingMaxLines = NO_DEFAULT_SERVER_LINES,
-                clickable = url != null,
-                destination = ListItemDestination.External,
-                trailingContent = if (url == null) ({}) else null,
-                onClick = { url?.let(context::openInBrowser) },
-            )
-        }
+        FilesDeletion.NoDefaultServer -> noDefaultServerRow(instance, media, client, callbacks)
         // The call is running: the row shows it in place and takes no taps, so the page around it stays put.
         FilesDeletion.Running ->
             ListItem(
@@ -83,6 +63,39 @@ internal fun deleteFilesRow(
                 onClick = { callbacks.onDeleteFiles(instance.is4k) },
             )
     }
+}
+
+/**
+ * A setting in Seerr, so sending it again cannot help: the row says what to change, and opens it for an admin, in this
+ * app's own Services settings where the screen can reach them and in Seerr's web client where it cannot (#1736).
+ */
+@Composable
+private fun noDefaultServerRow(
+    instance: MediaInstance,
+    media: MediaRecord,
+    client: String,
+    callbacks: RequestSheetCallbacks,
+): ListItem {
+    val error = MaterialTheme.colorScheme.error
+    val context = LocalContext.current
+    val url = media.servicesSettingsUrl
+    val openServices = callbacks.onOpenServices.takeIf { url != null }
+    return ListItem(
+        icon = Icons.Filled.ErrorOutline,
+        iconTint = error,
+        label = stringResource(if (instance.is4k) R.string.media_4k_files_not_deleted else R.string.media_files_not_deleted),
+        detail =
+            stringResource(
+                if (instance.is4k) R.string.media_files_no_default_server_4k else R.string.media_files_no_default_server,
+                client,
+            ),
+        detailColor = error,
+        supportingMaxLines = NO_DEFAULT_SERVER_LINES,
+        clickable = url != null,
+        destination = if (openServices != null) ListItemDestination.InApp else ListItemDestination.External,
+        trailingContent = if (url == null) ({}) else null,
+        onClick = { openServices?.invoke() ?: url?.let(context::openInBrowser) },
+    )
 }
 
 /** The refusal's explanation is read in full, so its line runs as long as it needs at the largest font. */

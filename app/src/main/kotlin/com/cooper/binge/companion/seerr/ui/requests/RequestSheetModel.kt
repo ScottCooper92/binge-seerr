@@ -19,17 +19,34 @@ internal class RequestSheetModel(
     val progress: ActionProgress? = null,
 )
 
-/** The request actions that keep the sheet open while they run, each shown on the control that started it. */
-enum class RequestAction { Decline, Remove }
+/**
+ * The actions whose progress shows on the control that started them. [closesSheet] is whether the actions sheet goes when
+ * one lands: Decline and Remove end the sheet's business with the request, Mark as leaves it open on the new status.
+ */
+enum class RequestAction(
+    val closesSheet: Boolean,
+) {
+    Decline(closesSheet = true),
+    Remove(closesSheet = true),
+    MarkAs(closesSheet = false),
+}
 
 /**
  * [action] is running, or, with [failed], did not go through and may be tried again. [attempt] numbers the tries, so a sheet
- * opened after a failure can tell that failure from one of its own.
+ * opened after a failure can tell that failure from one of its own. [is4k] names the instance a Mark as is acting on.
  */
 data class ActionProgress(
     val action: RequestAction,
     val failed: Boolean = false,
     val attempt: Int = 0,
+    val is4k: Boolean = false,
+)
+
+/** Which action is running or failed, how many tries have been numbered, and how many have landed and closed the sheet. */
+internal data class ActionTrack(
+    val progress: ActionProgress? = null,
+    val attempts: Int = 0,
+    val landed: Int = 0,
 )
 
 /**
@@ -57,5 +74,6 @@ internal class RequestSheetCallbacks(
     val onDeleteFiles: (is4k: Boolean) -> Unit = {},
     val onClearData: () -> Unit = {},
     val onOpenUser: ((Int) -> Unit)? = null,
+    val onOpenServices: (() -> Unit)? = null,
     val onRetryDetail: () -> Unit = {},
 )

@@ -104,6 +104,21 @@ class JobsViewModel
             }
         }
 
+        /** A pull: re-reads the list and swaps it in, keeping what shows until then. A failed read leaves the list as it is. */
+        fun refresh() {
+            val ready = state.value as? JobsUiState.Ready ?: return
+            if (ready.isRefreshing) return
+            state.update { current -> (current as? JobsUiState.Ready)?.copy(isRefreshing = true) ?: current }
+            viewModelScope.launch(dispatcher) {
+                attempt { connection.api().jobs().map { it.toServerJob() } }
+                    .onSuccess { jobs -> setJobs(jobs) }
+                    .onFailure { failure ->
+                        state.update { current -> (current as? JobsUiState.Ready)?.copy(isRefreshing = false) ?: current }
+                        eventFlow.emit(EditorEvent.Failed.from(failure))
+                    }
+            }
+        }
+
         fun reload() {
             state.value = JobsUiState.Loading
             viewModelScope.launch(dispatcher) {
@@ -164,8 +179,8 @@ class JobsViewModel
             viewModelScope.launch(dispatcher) {
                 val outcome = attempt { connection.api().scheduleJob(id, SeerrJobScheduleBody(cron.trim())).toServerJob() }
                 outcome.onSuccess { updated -> setJobs(jobs().map { if (it.id == updated.id) updated else it }) }
-                val error = outcome.exceptionOrNull()?.toSeerrError()
-                val retryable = error?.isTransient == true
+                val failure = outcome.exceptionOrNull()
+                val retryable = failure?.toSeerrError()?.isTransient == true
                 state.update { current ->
                     (current as? JobsUiState.Ready)?.copy(
                         busyIds = current.busyIds - id,
@@ -178,7 +193,7 @@ class JobsViewModel
                             },
                     ) ?: current
                 }
-                if (error != null && !retryable) eventFlow.emit(EditorEvent.Failed(error))
+                if (failure != null && !retryable) eventFlow.emit(EditorEvent.Failed.from(failure))
             }
         }
 
@@ -213,7 +228,7 @@ class JobsViewModel
                 // effect, so anything reacting to one sees the job already released rather than a
                 // state that still says busy for however long the emitting coroutine takes to resume.
                 state.update { current -> (current as? JobsUiState.Ready)?.releasing(id, failed = outcome.isFailure) ?: current }
-                outcome.onFailure { failure -> eventFlow.emit(EditorEvent.Failed(failure.toSeerrError())) }
+                outcome.onFailure { failure -> eventFlow.emit(EditorEvent.Failed.from(failure)) }
             }
         }
 

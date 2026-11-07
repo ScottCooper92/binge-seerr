@@ -3,6 +3,7 @@ package com.cooper.binge.companion.seerr.ui.requests
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.binge.companion.sdk.attempt
+import com.binge.designsystem.refresh.RefreshTracker
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.data.NoRequestStore
 import com.cooper.binge.companion.seerr.data.RequestStore
@@ -60,6 +61,7 @@ class RequestDetailViewModel
         private val crashBreadcrumbs: CrashBreadcrumbs = NoOpCrashBreadcrumbs,
         private val cache: RequestStore = NoRequestStore,
         private val minuteTicker: Ticker = Ticker(),
+        private val queueGates: DownloadQueueGates = DownloadQueueGates(connection),
     ) : ViewModel() {
         private val state = MutableStateFlow<RequestDetailUiState>(RequestDetailUiState.Loading)
 
@@ -68,6 +70,7 @@ class RequestDetailViewModel
         /** The page's "2 minutes ago" is worded against this, moved on each minute while the page shows (#1239). */
         private val now = MutableStateFlow(clock())
         private var ticker: Job? = null
+        private val refreshTracker = RefreshTracker()
 
         /**
          * Raised when a moderation succeeds and held until the reload it triggers has written its result.
@@ -135,6 +138,16 @@ class RequestDetailViewModel
                     if (!started) clearing.value = false
                 }
 
+                override fun setMediaStatus(
+                    requestId: Int,
+                    mediaId: Int,
+                    status: MediaStatusChoice,
+                    is4k: Boolean,
+                    seasonNumbers: List<Int>,
+                ) = tracked(RequestAction.MarkAs, is4k) { settled ->
+                    moderator.setMediaStatus(requestId, mediaId, status, is4k, seasonNumbers, settled)
+                }
+
                 override fun decline(
                     item: RequestItem,
                     blockTitle: Boolean,
@@ -145,21 +158,23 @@ class RequestDetailViewModel
                     blockTitle: Boolean,
                 ) = tracked(RequestAction.Remove) { settled -> moderator.remove(item, blockTitle, settled) }
 
-                /** The sheet closes when [ActionTrack.landed] grows; a failure keeps it open, on the control that failed. */
+                /** The sheet closes when [ActionTrack.landed] grows, which Decline and Remove do; a failure keeps it open on its control. */
                 private fun tracked(
                     action: RequestAction,
+                    is4k: Boolean = false,
                     start: (settled: (Boolean) -> Unit) -> Boolean,
                 ) {
                     val before = track.value
                     val attempt = before.attempts + 1
-                    track.value = before.copy(progress = ActionProgress(action, attempt = attempt), attempts = attempt)
+                    track.value = before.copy(progress = ActionProgress(action, attempt = attempt, is4k = is4k), attempts = attempt)
+                    val closes = if (action.closesSheet) 1 else 0
                     val started =
                         start { succeeded ->
                             track.update {
                                 if (succeeded) {
-                                    it.copy(progress = null, landed = it.landed + 1)
+                                    it.copy(progress = null, landed = it.landed + closes)
                                 } else {
-                                    it.copy(progress = ActionProgress(action, failed = true, attempt = attempt))
+                                    it.copy(progress = ActionProgress(action, failed = true, attempt = attempt, is4k = is4k))
                                 }
                             }
                         }
@@ -192,7 +207,9 @@ class RequestDetailViewModel
             }.combine(track) { page, ongoing ->
                 (page as? RequestDetailUiState.Ready)?.copy(progress = ongoing.progress, actionsLanded = ongoing.landed) ?: page
             }.combine(now) { page, now -> (page as? RequestDetailUiState.Ready)?.copy(now = now) ?: page }
-                .stateIn(viewModelScope, SharingStarted.Lazily, RequestDetailUiState.Loading)
+                .combine(refreshTracker.isRefreshing) { page, refreshing ->
+                    (page as? RequestDetailUiState.Ready)?.copy(isRefreshing = refreshing) ?: page
+                }.stateIn(viewModelScope, SharingStarted.Lazily, RequestDetailUiState.Loading)
 
         /** [ActionTrack.landed] as it stands, for a sheet that opens over a page that is not `Ready`. */
         fun actionsLandedNow(): Int = track.value.landed
@@ -229,9 +246,35 @@ class RequestDetailViewModel
             }
         }
 
+        /**
+         * Forgets that deleting files was refused for want of a default server, because the admin is on their way to set
+         * one (#1736). The row is then Delete files again when they are back; if they set nothing, the next try is refused again.
+         */
+        fun forgetNoDefaultServer() {
+            filesDeleted.update { marks -> marks.filterValues { it != FilesDeletion.NoDefaultServer } }
+        }
+
         fun startEdit() {
             val ready = state.value as? RequestDetailUiState.Ready ?: return
             if (ready.detail.canEdit) editSource?.let(requestEditor::start)
+        }
+
+        /**
+         * A pull: re-reads the page and swaps it in, keeping what is showing until then. A failed read leaves the page as it
+         * is and says so in the usual message. [reload] does the same for a page already showing; it differs on a first load
+         * or a seeded page, which it replaces with the error.
+         */
+        fun refresh() {
+            if (state.value !is RequestDetailUiState.Ready) return
+            viewModelScope.launch(dispatcher) {
+                attempt { refreshTracker.track { load() } }.fold(
+                    { detail ->
+                        // The page's own fields stay: a report still being sent keeps its re-entrancy guard.
+                        state.update { current -> (current as? RequestDetailUiState.Ready)?.copy(detail = detail) ?: current }
+                    },
+                    { failure -> moderator.announce(ModerationEvent.Failed(failure.toSeerrError())) },
+                )
+            }
         }
 
         fun reload() {
@@ -247,13 +290,23 @@ class RequestDetailViewModel
                 val result = attempt { load() }
                 state.update { current ->
                     result.fold(
-                        { RequestDetailUiState.Ready(it) },
+                        // A page already showing keeps its own fields: a report still being sent keeps its re-entrancy guard.
+                        { detail -> (current as? RequestDetailUiState.Ready)?.copy(detail = detail) ?: RequestDetailUiState.Ready(detail) },
                         { failure ->
-                            // A seeded page keeps its header and reports the failure beside it.
-                            (current as? RequestDetailUiState.Seeded)?.copy(error = failure.toSeerrError())
+                            // A page already showing stays as it is; a seeded one keeps its header and reports the failure beside it.
+                            current as? RequestDetailUiState.Ready
+                                ?: (current as? RequestDetailUiState.Seeded)?.copy(error = failure.toSeerrError())
                                 ?: RequestDetailUiState.Error(failure.toSeerrError())
                         },
                     )
+                }
+                // The page that stayed says so in the usual message, where a first load shows the error screen. After a
+                // moderation the action's own event is the message, so a failed follow-up read stays quiet.
+                val afterAction = reloadingAfterAction.value
+                result.exceptionOrNull()?.let { failure ->
+                    if (!afterAction && state.value is RequestDetailUiState.Ready) {
+                        moderator.announce(ModerationEvent.Failed(failure.toSeerrError()))
+                    }
                 }
                 reloadingAfterAction.value = false
             }
@@ -307,6 +360,7 @@ class RequestDetailViewModel
                     details = sources.details,
                     canEditDestination = sources.canEditDestination,
                     seasonsEditable = sources.seasonsEditable,
+                    queueGate = sources.queueGate,
                 )
             return sources.toDetail()
         }
@@ -325,6 +379,7 @@ class RequestDetailViewModel
                 val dto = api.request(requestId)
                 val details = async { attempt { api.details(dto.media.mediaType, dto.media.tmdbId) }.getOrNull() }
                 val destination = async { dto.destination(api) }
+                val queueGate = async { queueGates.current() }
                 val watch =
                     async {
                         val mediaId = dto.media.id
@@ -344,6 +399,7 @@ class RequestDetailViewModel
                     destination = destination.await(),
                     watch = watch.await(),
                     webRoot = connection.current().baseUrl,
+                    queueGate = queueGate.await(),
                 )
             }
 
@@ -380,10 +436,3 @@ private fun RequestDetail.withFilesDeleted(deleted: Map<Boolean, FilesDeletion>)
     } else {
         copy(media = media?.copy(instances = media.instances.map { it.copy(filesDeletion = deleted[it.is4k]) }))
     }
-
-/** Which Decline or Remove is running or failed, how many tries have been numbered, and how many have landed. */
-private data class ActionTrack(
-    val progress: ActionProgress? = null,
-    val attempts: Int = 0,
-    val landed: Int = 0,
-)

@@ -10,6 +10,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.serializer
 
 const val LOGS_PAGE_SIZE = 25
 
@@ -82,8 +83,8 @@ private val json =
 
 internal fun JsonElement.toLogPage(): SeerrLogPageDto =
     when (this) {
-        is JsonObject -> json.decodeFromJsonElement(SeerrLogPageDto.serializer(), this)
-        is JsonArray -> SeerrLogPageDto(results = map { json.decodeFromJsonElement(SeerrLogEntryDto.serializer(), it) })
+        is JsonObject -> json.decodeFromJsonElement(serializer<SeerrLogPageDto>(), this)
+        is JsonArray -> SeerrLogPageDto(results = map { json.decodeFromJsonElement(serializer<SeerrLogEntryDto>(), it) })
         else -> SeerrLogPageDto()
     }
 
@@ -95,5 +96,5 @@ internal fun SeerrLogEntryDto.toLogEntry(index: Int): LogEntry =
         level = LogLevel.fromApi(level),
         label = label?.takeIf { it.isNotBlank() },
         message = message.orEmpty(),
-        data = data?.takeIf { it !is JsonObject || it.isNotEmpty() }?.let { json.encodeToString(JsonElement.serializer(), it) },
+        data = data?.takeIf { it !is JsonObject || it.isNotEmpty() }?.let { json.encodeToString(serializer<JsonElement>(), it) },
     )

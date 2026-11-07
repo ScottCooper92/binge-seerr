@@ -6,8 +6,11 @@ import androidx.lifecycle.viewModelScope
 import com.binge.companion.sdk.attempt
 import com.binge.designsystem.SaveStatus
 import com.binge.designsystem.save.SaveAsMade
+import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.seerr.SeerrError
+import com.cooper.binge.companion.seerr.seerr.isMediaServerUnreachable
 import com.cooper.binge.companion.seerr.seerr.isTransient
+import com.cooper.binge.companion.seerr.seerr.rejectionDetail
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -50,7 +53,21 @@ sealed interface EditorEvent {
 
     data class Failed(
         val error: SeerrError,
-    ) : EditorEvent
+        /** What the server said it refused, when it rejected the action on the merits and said why. */
+        val detail: String? = null,
+        /** A sentence of the app's own for a failure the generic one for [error] would misname; it replaces that one. */
+        @StringRes val messageRes: Int? = null,
+    ) : EditorEvent {
+        companion object {
+            /** The failure of [failure], with the server's own reason where it gave one: the one way to build it from a throwable. */
+            fun from(failure: Throwable) =
+                Failed(
+                    failure.toSeerrError(),
+                    failure.rejectionDetail(),
+                    R.string.server_settings_media_server_unreachable.takeIf { failure.isMediaServerUnreachable() },
+                )
+        }
+    }
 
     /** An action beside the form succeeded; [messageRes] says which. */
     data class Notice(
@@ -139,7 +156,7 @@ abstract class EditorViewModel<T>(
                     state.update { current ->
                         (current as? EditorUiState.Ready<T>)?.let { it.copy(draft = it.saved, saveRefusal = error) } ?: current
                     }
-                    eventFlow.emit(EditorEvent.Failed(error))
+                    eventFlow.emit(EditorEvent.Failed.from(failure))
                 },
             )
         }
@@ -212,7 +229,7 @@ abstract class EditorViewModel<T>(
                     eventFlow.emit(EditorEvent.Saved)
                 }.onFailure { failure ->
                     state.update { current -> (current as? EditorUiState.Ready<T>)?.copy(saving = false) ?: current }
-                    eventFlow.emit(EditorEvent.Failed(failure.toSeerrError()))
+                    eventFlow.emit(EditorEvent.Failed.from(failure))
                 }
         }
     }

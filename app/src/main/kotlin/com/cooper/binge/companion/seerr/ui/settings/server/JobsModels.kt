@@ -13,6 +13,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.serializer
 
 /** How often a job runs by design: [Fixed] ones keep the server's own interval and offer no schedule. */
 enum class JobInterval { Short, Long, Fixed }
@@ -96,6 +97,8 @@ sealed interface JobsUiState {
         val now: Long = System.currentTimeMillis(),
         val scheduleStatus: SaveStatus = SaveStatus.Idle,
         val unsentSchedule: UnsentSchedule? = null,
+        /** A pull is re-reading the list; the last list stays in place meanwhile. */
+        val isRefreshing: Boolean = false,
     ) : JobsUiState
 }
 
@@ -149,6 +152,8 @@ sealed interface CacheUiState {
         val imageCaches: List<ImageCache>,
         val dns: DnsCache?,
         val busyIds: Set<String> = emptySet(),
+        /** A pull is re-reading the caches; the last counts stay in place meanwhile. */
+        val isRefreshing: Boolean = false,
     ) : CacheUiState
 }
 
@@ -192,7 +197,7 @@ private fun JsonElement?.toDnsEntries(): List<DnsEntry> {
     val json = Json { ignoreUnknownKeys = true }
 
     fun JsonObject.entry(hostname: String?): DnsEntry? {
-        val dto = attempt { json.decodeFromJsonElement(SeerrDnsEntryDto.serializer(), this) }.getOrNull() ?: return null
+        val dto = attempt { json.decodeFromJsonElement(serializer<SeerrDnsEntryDto>(), this) }.getOrNull() ?: return null
         val host = hostname ?: dto.hostname ?: return null
         return DnsEntry(hostname = host, activeAddress = dto.activeAddress, ttlSeconds = dto.ttl, hits = dto.hits, misses = dto.misses)
     }

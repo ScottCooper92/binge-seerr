@@ -21,6 +21,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.serialization.serializer
 import retrofit2.HttpException
 import java.io.IOException
 import javax.inject.Inject
@@ -48,7 +49,7 @@ class MediaServerViewModel
         override val savedDraft =
             SavedDraft(
                 savedState,
-                MediaServerForm.serializer(),
+                serializer<MediaServerForm>(),
                 scrub = { it.copy(apiKey = it.apiKey?.let { "" }) },
                 restore = { kept, loaded -> if (kept.kind == loaded.kind) kept.copy(apiKey = loaded.apiKey) else loaded },
             )
@@ -142,7 +143,7 @@ class MediaServerViewModel
                             },
                         )
                     }
-                result.onFailure { failure -> notify(EditorEvent.Failed(failure.toSeerrError())) }
+                result.onFailure { failure -> notify(EditorEvent.Failed.from(failure)) }
                 // Libraries and busyLibraryIds must land in the same emission: a collector observing
                 // libraries updated but the id still busy (or vice versa) is an inconsistent state.
                 editExtras {
@@ -191,7 +192,7 @@ class MediaServerViewModel
                 }.onSuccess { libraries ->
                     setLibraries(libraries)
                     notify(EditorEvent.Notice(R.string.server_settings_libraries_synced))
-                }.onFailure { failure -> notify(EditorEvent.Failed(failure.toSeerrError())) }
+                }.onFailure { failure -> notify(EditorEvent.Failed.from(failure)) }
                 editExtras { it.copy(syncingLibraries = false) }
             }
         }
@@ -204,7 +205,7 @@ class MediaServerViewModel
             viewModelScope.launch(dispatcher) {
                 attempt { connection.api().scan(kind.apiSegment, body).toScan() }
                     .onSuccess { applyScan(it) }
-                    .onFailure { failure -> notify(EditorEvent.Failed(failure.toSeerrError())) }
+                    .onFailure { failure -> notify(EditorEvent.Failed.from(failure)) }
             }
         }
 

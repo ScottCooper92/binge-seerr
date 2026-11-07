@@ -23,6 +23,8 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshState
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -39,6 +41,7 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import com.binge.designsystem.component.BingeConfirmDialog
+import com.binge.designsystem.component.BingePullToRefresh
 import com.binge.designsystem.component.ListRowPoster
 import com.binge.designsystem.component.SectionHeader
 import com.binge.designsystem.component.SnackbarMessageKind
@@ -50,6 +53,7 @@ import com.binge.designsystem.resolvedContentPadding
 import com.binge.designsystem.template.FormSaveFailureSnackbar
 import com.binge.designsystem.template.FormSaveStatus
 import com.binge.designsystem.template.FormSaveStatusText
+import com.binge.designsystem.template.formSaveStatus
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.flags.LocalFlags
 import com.cooper.binge.companion.seerr.ui.openTitle
@@ -57,7 +61,6 @@ import com.cooper.binge.companion.seerr.ui.requests.labelRes
 import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
 import com.cooper.binge.companion.seerr.ui.state.OverflowDetailScaffold
 import com.cooper.binge.companion.seerr.ui.state.RequestStateChip
-import com.cooper.binge.companion.seerr.ui.state.formSaveStatus
 import com.cooper.binge.companion.seerr.ui.state.messageRes
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
@@ -66,6 +69,7 @@ import com.binge.designsystem.R as DesR
 class IssueDetailActions(
     val onBack: () -> Unit,
     val onRetry: () -> Unit,
+    val onRefresh: () -> Unit = {},
     val onDraftChange: (String) -> Unit,
     val onPostComment: () -> Unit,
     val onRetryOutbox: (Long) -> Unit,
@@ -92,6 +96,7 @@ fun IssueDetailScreen(
     events: Flow<IssueDetailEvent>,
     actions: IssueDetailActions,
     showBack: Boolean = true,
+    pullState: PullToRefreshState? = null,
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     val resources = LocalResources.current
@@ -147,7 +152,7 @@ fun IssueDetailScreen(
             is IssueDetailUiState.Seeded -> Seeded(state, actions, contentPadding = inner)
             is IssueDetailUiState.Error ->
                 ErrorScreen(error = state.error, modifier = Modifier.padding(inner), onRetry = actions.onRetry)
-            is IssueDetailUiState.Ready -> Ready(state, actions, contentPadding = inner)
+            is IssueDetailUiState.Ready -> Ready(state, actions, contentPadding = inner, pullState = pullState)
         }
     }
     if (managing && ready != null) {
@@ -200,12 +205,10 @@ private fun Ready(
     state: IssueDetailUiState.Ready,
     actions: IssueDetailActions,
     contentPadding: PaddingValues,
+    pullState: PullToRefreshState?,
 ) {
     val modals = rememberSaveable(saver = IssueModalState.Saver) { IssueModalState() }
     val detail = state.detail
-    val context = LocalContext.current
-    val promoted = LocalFlags.current.bingePromotion
-    val inset = resolvedContentInset()
     val sides = resolvedContentPadding()
     // The thread scrolls under the top bar. The navigation bar's inset goes under the pinned bar where there is one, and into
     // the thread's scroll where there is not.
@@ -213,54 +216,14 @@ private fun Ready(
     val writeIdle = state.commentAction == CommentAction.None && state.action == IssueAction.None
     val pinnedBar = detail.canComment || detail.canResolve
     Column(modifier = Modifier.fillMaxSize()) {
-        Column(
-            modifier =
-                Modifier
-                    .weight(1f)
-                    .verticalScroll(rememberScrollState())
-                    .padding(if (pinnedBar) PaddingValues(top = contentPadding.calculateTopPadding()) else contentPadding),
+        BingePullToRefresh(
+            isRefreshing = state.isRefreshing,
+            onRefresh = actions.onRefresh,
+            modifier = Modifier.weight(1f),
+            indicatorTopInset = contentPadding.calculateTopPadding(),
+            state = pullState ?: rememberPullToRefreshState(),
         ) {
-            IssueHeader(
-                detail.item,
-                // The title opens in Binge where Binge answers, as on the request page; else the issue's own web page, as before.
-                onOpen = { context.openTitle(promoted, detail.item.mediaType, detail.item.tmdbId, detail.webUrl) },
-                modifier = Modifier.padding(resolvedContentPadding(vertical = inset)),
-            )
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, modifier = Modifier.padding(sides))
-            detail.report?.let { report ->
-                Column(modifier = Modifier.layoutAnchor(LayoutAnchors.section(LayoutAnchors.Detail.OVERVIEW))) {
-                    SectionHeader(title = stringResource(R.string.issue_problem))
-                    Text(
-                        text = report.message,
-                        style = MaterialTheme.typography.bodyLarge,
-                        modifier =
-                            Modifier
-                                .fillMaxWidth()
-                                .then(
-                                    if (detail.canActOn(report) && writeIdle) {
-                                        Modifier.combinedClickable(
-                                            onClick = { modals.openEdit(report) },
-                                            onLongClick = { modals.actingOnCommentId = report.id },
-                                            onLongClickLabel = stringResource(R.string.issue_comment_actions_cd),
-                                        )
-                                    } else {
-                                        Modifier
-                                    },
-                                ).padding(sides),
-                    )
-                }
-            }
-            SectionHeader(title = stringResource(R.string.issue_comments_title))
-            IssueThread(
-                thread = state.thread,
-                detail = detail,
-                commentAction = state.commentAction,
-                issueActionRunning = state.action != IssueAction.None,
-                now = state.now,
-                onActOn = { comment -> modals.actingOnCommentId = comment.id },
-                onTapOutbox = { entry -> modals.outboxActionId = entry.localId },
-                modifier = Modifier.padding(sides).padding(bottom = dimensionResource(DesR.dimen.padding_l)),
-            )
+            IssueThreadScroll(state, modals, contentPadding, pinnedBar, writeIdle)
         }
         if (pinnedBar) {
             ActionBar(
@@ -287,6 +250,72 @@ private fun Ready(
         )
     }
     IssueModals(state, actions, modals)
+}
+
+/** The issue's header, report and thread in one scroll, under the top bar. */
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun IssueThreadScroll(
+    state: IssueDetailUiState.Ready,
+    modals: IssueModalState,
+    contentPadding: PaddingValues,
+    pinnedBar: Boolean,
+    writeIdle: Boolean,
+) {
+    val detail = state.detail
+    val context = LocalContext.current
+    val promoted = LocalFlags.current.bingePromotion
+    val inset = resolvedContentInset()
+    val sides = resolvedContentPadding()
+    Column(
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(if (pinnedBar) PaddingValues(top = contentPadding.calculateTopPadding()) else contentPadding),
+    ) {
+        IssueHeader(
+            detail.item,
+            // The title opens in Binge where Binge answers, as on the request page; else the issue's own web page, as before.
+            onOpen = { context.openTitle(promoted, detail.item.mediaType, detail.item.tmdbId, detail.webUrl) },
+            modifier = Modifier.padding(resolvedContentPadding(vertical = inset)),
+        )
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, modifier = Modifier.padding(sides))
+        detail.report?.let { report ->
+            Column(modifier = Modifier.layoutAnchor(LayoutAnchors.section(LayoutAnchors.Detail.OVERVIEW))) {
+                SectionHeader(title = stringResource(R.string.issue_problem))
+                Text(
+                    text = report.message,
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .then(
+                                if (detail.canActOn(report) && writeIdle) {
+                                    Modifier.combinedClickable(
+                                        onClick = { modals.openEdit(report) },
+                                        onLongClick = { modals.actingOnCommentId = report.id },
+                                        onLongClickLabel = stringResource(R.string.issue_comment_actions_cd),
+                                    )
+                                } else {
+                                    Modifier
+                                },
+                            ).padding(sides),
+                )
+            }
+        }
+        SectionHeader(title = stringResource(R.string.issue_comments_title))
+        IssueThread(
+            thread = state.thread,
+            detail = detail,
+            commentAction = state.commentAction,
+            issueActionRunning = state.action != IssueAction.None,
+            now = state.now,
+            onActOn = { comment -> modals.actingOnCommentId = comment.id },
+            onTapOutbox = { entry -> modals.outboxActionId = entry.localId },
+            modifier = Modifier.padding(sides).padding(bottom = dimensionResource(DesR.dimen.padding_l)),
+        )
+    }
 }
 
 /** The title it is about: poster, title, what it affects, and the type and state; tapping opens the server's page. */

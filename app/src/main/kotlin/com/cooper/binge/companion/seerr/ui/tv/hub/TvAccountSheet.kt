@@ -24,6 +24,7 @@ import com.binge.designsystem.tv.component.TvSideSheetRow
 import com.binge.designsystem.tv.component.TvSideSheetRows
 import com.binge.designsystem.tv.component.TvSideSheetStepFocus
 import com.binge.designsystem.tv.component.TvSideSheetTitle
+import com.binge.designsystem.tv.focus.TvOverlayCloser
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.ui.hub.HubQuota
@@ -50,6 +51,7 @@ internal fun TvAccountSheet(
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier,
     onSignOut: (() -> Unit)? = null,
+    closer: TvOverlayCloser? = null,
 ) {
     val item =
         when (detail) {
@@ -69,7 +71,7 @@ internal fun TvAccountSheet(
             destructive = true,
         )
     }
-    TvSideSheet(onDismissRequest = onDismissRequest, modifier = modifier) { entryFocus ->
+    TvSideSheet(onDismissRequest = onDismissRequest, modifier = modifier, closer = closer) { entryFocus ->
         TvSideSheetTitle(stringResource(R.string.tv_account))
         if (item == null) {
             Unresolved(

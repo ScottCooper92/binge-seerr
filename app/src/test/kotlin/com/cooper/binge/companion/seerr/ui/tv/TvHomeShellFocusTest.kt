@@ -269,7 +269,7 @@ class TvHomeShellFocusTest {
                     tabs = tabs,
                     tabsResolved = tabsResolved,
                     overlay = if (overlayShown) ({ Claiming(OVERLAY) }) else null,
-                ) { destination, _ ->
+                ) { destination, _, _ ->
                     // A tab's page leaves focus on its tab, as the boards do under LocalTvTabHosted.
                     Claiming(tag(destination), claims = destination != TvDestination.Issues)
                 }

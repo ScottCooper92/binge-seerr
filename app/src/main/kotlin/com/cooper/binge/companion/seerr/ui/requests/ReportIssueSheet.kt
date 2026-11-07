@@ -32,11 +32,11 @@ import com.binge.designsystem.component.BingeActionFooter
 import com.binge.designsystem.component.BingeAdaptiveSheet
 import com.binge.designsystem.component.BingeFilterChip
 import com.binge.designsystem.component.BingeSheetKind
+import com.binge.designsystem.component.BingeTextField
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.state.RequestStateChip
 import com.cooper.binge.companion.seerr.ui.state.RequestStateTone
 import com.cooper.binge.companion.seerr.ui.users.settings.DiscardChangesDialog
-import com.cooper.binge.companion.seerr.ui.users.settings.EditorTextField
 import com.binge.designsystem.R as DesR
 
 /**
@@ -118,9 +118,9 @@ internal fun ReportIssueContent(
                 BingeFilterChip(label = stringResource(candidate.labelRes()), selected = candidate == type, onClick = { type = candidate })
             }
         }
-        EditorTextField(
-            message,
-            stringResource(R.string.issue_report_message),
+        BingeTextField(
+            value = message,
+            label = stringResource(R.string.issue_report_message),
             placeholder = stringResource(R.string.issue_message_placeholder),
             enabled = report != IssueReport.Sending,
             singleLine = false,

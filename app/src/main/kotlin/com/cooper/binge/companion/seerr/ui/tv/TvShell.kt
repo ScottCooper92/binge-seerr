@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.tv.material3.MaterialTheme
 import com.binge.companion.sdk.attempt
 import com.binge.designsystem.tv.focus.TvFocusSink
+import com.binge.designsystem.tv.focus.TvOverlayCloser
 import com.binge.designsystem.tv.focus.rememberTvOverlayCloser
 import com.binge.designsystem.tv.focus.tvExitFocusGroup
 import com.binge.designsystem.tv.nav.LocalTvHostedAsOverlay
@@ -67,7 +68,10 @@ internal enum class TvDestination(
  * @param sheet Account or Settings, over whichever tab shows, above the bar.
  * @param overlay a detail page or a see-all grid that belongs to the current tab, drawn under the bar too.
  * @param topLayer a title's own page, such as a request: a full screen over everything, the bar included, with no top
- *   inset. It traps focus and takes Back itself; when it closes, focus goes back to the card that opened it.
+ *   inset. It traps focus and takes Back itself; it closes through the closer it is given, which releases the trap as the close
+ *   starts and reports the disposal. It restores no focus itself: the page beneath does, through its own hand-off, which lands
+ *   the card that opened the layer.
+ * @param onCloseTopLayer disposes the top layer, the closer's [TvOverlayCloser] `onClose`.
  */
 @Composable
 internal fun TvHomeShell(
@@ -85,9 +89,13 @@ internal fun TvHomeShell(
     account: TvTopBarAccount = TvTopBarAccount(name = "", avatarUrl = null),
     /** False while a full-screen task (editing the connection) is up: the bar hides and pages take no inset. */
     showBar: Boolean = true,
-    topLayer: (@Composable () -> Unit)? = null,
-    /** [content] draws a destination; its `close` returns to the start tab, so there it is a reselect and clears its pages. */
-    content: @Composable (destination: TvDestination, close: () -> Unit) -> Unit,
+    topLayer: (@Composable (closer: TvOverlayCloser) -> Unit)? = null,
+    onCloseTopLayer: () -> Unit = {},
+    /**
+     * [content] draws a destination; its `close` returns to the start tab, so there it is a reselect and clears its pages. For a
+     * sheet, `closer` is what closes it, and `close` is the same close; it is null on a tab page.
+     */
+    content: @Composable (destination: TvDestination, close: () -> Unit, closer: TvOverlayCloser?) -> Unit,
 ) {
     val density = LocalDensity.current
     var barHeightPx by remember { mutableIntStateOf(0) }
@@ -97,6 +105,10 @@ internal fun TvHomeShell(
     val overlayEntry = remember { FocusRequester() }
     // Held here, not in the sheet: it hands focus back after the sheet has gone.
     val sheetCloser = rememberTvOverlayCloser(restoreTo = opener.getValue(sheet ?: tab), onClose = onCloseSheet)
+    // The page beneath returns focus itself, through its sink once the layer is gone, and lands the card that opened the layer. A
+    // request from the closer into the page's entry while the layer is still up lands its first card instead, so the closer asks for
+    // nothing (null): it releases the trap as the close starts and reports the disposal, and the sink does the restore.
+    val topLayerCloser = rememberTvOverlayCloser(restoreTo = null, onClose = onCloseTopLayer)
     val start = tabs.first()
     // Where the bar is reached from a page: the current tab, or the avatar when the bar has no tabs to show.
     val barStop = opener.getValue(if (tabs.size > 1) tab else TvDestination.Account)
@@ -126,7 +138,7 @@ internal fun TvHomeShell(
                 entries = entries,
                 overlayEntry = overlayEntry,
                 upToBar = if (barUp) barStop else null,
-                content = { destination -> content(destination) { onSelectTab(start) } },
+                content = { destination -> content(destination, { onSelectTab(start) }, null) },
             )
         }
         TvTopBar(
@@ -140,9 +152,9 @@ internal fun TvHomeShell(
             onSelect = { if (it.isSheet) onOpenSheet(it) else onSelectTab(it) },
             modifier = Modifier.align(Alignment.TopCenter).onSizeChanged { barHeightPx = it.height },
         )
-        topLayer?.let { TvShellTopLayer(it) }
+        topLayer?.let { TvShellTopLayer(topLayerCloser, it) }
         if (sheet != null) {
-            TvShellSheet(overlayOpen = overlay != null, onClose = sheetCloser::close) { content(sheet, sheetCloser::close) }
+            TvShellSheet(overlayOpen = overlay != null, closer = sheetCloser) { content(sheet, sheetCloser::close, sheetCloser) }
         }
     }
 }
@@ -227,17 +239,21 @@ private class TabPageFocus {
 /**
  * A title's own page over everything, the bar included: it fills the screen, so it takes no top inset. It draws its own
  * background, a page an opaque one and a side sheet its scrim, so a sheet can show the board through. Focus is trapped in
- * it; Back is the page's own, and closing it hands focus back to the page beneath.
+ * it; Back is the page's own, and it closes through [closer], which lets focus go as the exit starts.
+ * The page beneath takes focus back through its own hand-off.
  */
 @Composable
-private fun TvShellTopLayer(content: @Composable () -> Unit) {
+private fun TvShellTopLayer(
+    closer: TvOverlayCloser,
+    content: @Composable (TvOverlayCloser) -> Unit,
+) {
+    closer.ReportDisposal()
     CompositionLocalProvider(LocalTvTopInset provides Dp.Hairline, LocalTvHostedAsOverlay provides true) {
         HandBackHost(
             entry = remember { FocusRequester() },
             active = true,
-            modifier = Modifier.tvExitFocusGroup(),
-            content = content,
-        )
+            modifier = Modifier.tvExitFocusGroup { closer.trapping },
+        ) { content(closer) }
     }
 }
 
@@ -245,12 +261,18 @@ private fun TvShellTopLayer(content: @Composable () -> Unit) {
 @Composable
 private fun TvShellSheet(
     overlayOpen: Boolean,
-    onClose: () -> Unit,
+    closer: TvOverlayCloser,
     content: @Composable () -> Unit,
 ) {
-    BackHandler(enabled = !overlayOpen, onBack = onClose)
+    closer.ReportDisposal()
+    BackHandler(enabled = !overlayOpen, onBack = closer::close)
     CompositionLocalProvider(LocalTvHostedAsOverlay provides true) {
-        HandBackHost(entry = remember { FocusRequester() }, active = true, modifier = Modifier.tvExitFocusGroup(), content = content)
+        HandBackHost(
+            entry = remember { FocusRequester() },
+            active = true,
+            modifier = Modifier.tvExitFocusGroup { closer.trapping },
+            content = content,
+        )
     }
 }
 

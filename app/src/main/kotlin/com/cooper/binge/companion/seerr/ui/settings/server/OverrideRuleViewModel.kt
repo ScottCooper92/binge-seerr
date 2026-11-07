@@ -8,7 +8,6 @@ import com.cooper.binge.companion.seerr.di.IoDispatcher
 import com.cooper.binge.companion.seerr.notifications.ApplicationScope
 import com.cooper.binge.companion.seerr.seerr.SeerrServiceSettingsDto
 import com.cooper.binge.companion.seerr.seerr.displayString
-import com.cooper.binge.companion.seerr.seerr.toSeerrError
 import com.cooper.binge.companion.seerr.telemetry.Analytics
 import com.cooper.binge.companion.seerr.telemetry.AnalyticsEvents
 import com.cooper.binge.companion.seerr.telemetry.CrashBreadcrumbs
@@ -30,6 +29,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.serializer
 
 /** Matches `UserAdmission`'s `ALL_USERS_TAKE`: the "requested by" picker needs every user, not one page of them. */
 private const val USERS_PAGE = 1000
@@ -59,7 +59,7 @@ class OverrideRuleViewModel
          * A new rule's form, kept across the process being killed (#1246). It holds no credential. An existing rule saves
          * as it changes, so it has no unsaved draft to keep.
          */
-        override val savedDraft = SavedDraft(savedState, OverrideRuleForm.serializer()).takeIf { id == null }
+        override val savedDraft = SavedDraft(savedState, serializer<OverrideRuleForm>()).takeIf { id == null }
 
         override val saveAsMadeScope: CoroutineScope? = appScope.takeIf { id != null }
 
@@ -187,7 +187,7 @@ class OverrideRuleViewModel
                         // An existing rule saves as made, so the change discarded above is gone: read the rule again rather
                         // than show a draft that looks unsent. A rule created here has nothing discarded and no id to read.
                         if (id != null) reload()
-                        notify(EditorEvent.Failed(failure.toSeerrError()))
+                        notify(EditorEvent.Failed.from(failure))
                     }
             }
         }

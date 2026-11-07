@@ -7,7 +7,6 @@ import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.di.IoDispatcher
 import com.cooper.binge.companion.seerr.seerr.SeerrServiceSettingsDto
-import com.cooper.binge.companion.seerr.seerr.toSeerrError
 import com.cooper.binge.companion.seerr.telemetry.Analytics
 import com.cooper.binge.companion.seerr.telemetry.AnalyticsEvents
 import com.cooper.binge.companion.seerr.telemetry.CrashBreadcrumbs
@@ -23,6 +22,7 @@ import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.launch
+import kotlinx.serialization.serializer
 
 /**
  * One Radarr or Sonarr instance, new ([id] null) or existing: the connection is typed, then a
@@ -46,7 +46,7 @@ class DvrInstanceViewModel
         override val savedDraft =
             SavedDraft(
                 savedState,
-                DvrForm.serializer(),
+                serializer<DvrForm>(),
                 scrub = { it.copy(apiKey = "") },
                 restore = { kept, loaded -> kept.copy(apiKey = loaded.apiKey) },
             )
@@ -77,7 +77,8 @@ class DvrInstanceViewModel
 
         override suspend fun write(draft: DvrForm): DvrForm {
             val api = connection.api()
-            val body = draft.toDto(currentExtras().choices)
+            // The id is in the path. The spec marks it read-only in the body, and a validating server refuses a body that has it.
+            val body = draft.toDto(currentExtras().choices).copy(id = null)
             val creating = draft.id == null
             crashBreadcrumbs.log("${if (creating) "creating" else "updating"} ${type.apiSegment} instance")
             val answered = if (creating) api.createDvr(type.apiSegment, body) else api.updateDvr(type.apiSegment, draft.id, body)
@@ -111,7 +112,7 @@ class DvrInstanceViewModel
                         notify(EditorEvent.Notice(R.string.server_settings_dvr_tested))
                     }.onFailure { failure ->
                         editExtras { it.copy(testing = false) }
-                        notify(EditorEvent.Failed(failure.toSeerrError()))
+                        notify(EditorEvent.Failed.from(failure))
                     }
             }
         }
@@ -128,7 +129,7 @@ class DvrInstanceViewModel
                             mapOf(AnalyticsEvents.PARAM_TYPE to type.apiSegment, AnalyticsEvents.PARAM_ACTION to "deleted"),
                         )
                         notify(EditorEvent.Deleted)
-                    }.onFailure { failure -> notify(EditorEvent.Failed(failure.toSeerrError())) }
+                    }.onFailure { failure -> notify(EditorEvent.Failed.from(failure)) }
             }
         }
 

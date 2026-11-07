@@ -6,7 +6,6 @@ import com.binge.companion.sdk.attempt
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.di.IoDispatcher
 import com.cooper.binge.companion.seerr.notifications.ApplicationScope
-import com.cooper.binge.companion.seerr.seerr.toSeerrError
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorEvent
 import com.cooper.binge.companion.seerr.ui.users.settings.ExtrasEditorViewModel
 import com.cooper.binge.companion.seerr.ui.users.settings.SavedDraft
@@ -18,6 +17,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.serializer
 
 /**
  * One custom slider, new ([id] null) or existing: its title, its kind, and what it queries. Keywords are picked by
@@ -38,7 +38,7 @@ class DiscoverSliderViewModel
          * A new slider's form, kept across the process being killed (#1246). It holds no credential. An existing slider
          * saves as it changes, so it has no unsaved draft to keep.
          */
-        override val savedDraft = SavedDraft(savedState, SliderForm.serializer()).takeIf { id == null }
+        override val savedDraft = SavedDraft(savedState, serializer<SliderForm>()).takeIf { id == null }
 
         /**
          * An existing slider saves as it changes (#930), each write the saved slider with the change in it. A change that
@@ -182,7 +182,7 @@ class DiscoverSliderViewModel
                 withContext(dispatcher) { attempt { connection.api().deleteDiscoverSlider(existing) } }
                     .onSuccess { notify(EditorEvent.Deleted) }
                     .onFailure { failure ->
-                        notify(EditorEvent.Failed(failure.toSeerrError()))
+                        notify(EditorEvent.Failed.from(failure))
                         // The slider is still there, so the change discarded above is owed to it again: sent now, and kept for a
                         // retry if that fails too.
                         if (ready()?.dirty == true) save()

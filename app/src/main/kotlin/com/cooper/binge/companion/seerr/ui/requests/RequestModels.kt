@@ -99,6 +99,8 @@ data class RequestItem(
     val backdropUrl: String? = null,
     val overview: String? = null,
     val certification: String? = null,
+    /** Whether an empty [download] means nothing is downloading; see [DownloadQueueGate]. Set by whoever holds the gate. */
+    val queueTracked: Boolean = false,
 )
 
 /** What the connected user may do to one request, from the server's own rules. */

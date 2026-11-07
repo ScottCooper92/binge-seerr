@@ -37,11 +37,11 @@ import com.binge.designsystem.component.BingeTag
 import com.binge.designsystem.template.FormScreen
 import com.binge.designsystem.template.MessageScreen
 import com.binge.designsystem.template.ScreenBar
+import com.binge.designsystem.template.formSaveStatus
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
 import com.cooper.binge.companion.seerr.ui.state.LoadingScreen
 import com.cooper.binge.companion.seerr.ui.state.SearchResultRow
-import com.cooper.binge.companion.seerr.ui.state.formSaveStatus
 import com.binge.designsystem.R as DesR
 
 /** What the blocklisted tags page asks of its view model. */

@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.binge.designsystem.tv.focus.TvUserMovesHost
 import com.cooper.binge.companion.seerr.theme.SeerrTvTheme
 import com.cooper.binge.companion.seerr.ui.AdvancedRequestUiState
 import com.cooper.binge.companion.seerr.ui.ScopedViewModels
@@ -20,14 +21,18 @@ internal fun TvSeerrShell(
     linkedRequests: Flow<Int> = emptyFlow(),
 ) {
     SeerrTvTheme {
-        TvConsentGate {
-            val state by viewModel.uiState.collectAsStateWithLifecycle()
-            when (state) {
-                TvHomeUiState.Loading -> TvLoadingPlate()
-                // Each in its own view-model scope: a new connection gets new screens, not the last one's.
-                TvHomeUiState.Setup -> ScopedViewModels("setup") { TvSetupEntry() }
-                TvHomeUiState.Reconnect -> ScopedViewModels("reconnect") { TvReconnectEntry(onDisconnect = viewModel::disconnect) }
-                TvHomeUiState.Connected -> ScopedViewModels("connected") { TvConnectedShell(linkedRequests = linkedRequests) }
+        // The one wrapper that notes the user's D-pad presses, so an arrival whose target attaches late (the setup and
+        // home pages each have one) never pulls focus back from where the user has moved.
+        TvUserMovesHost {
+            TvConsentGate {
+                val state by viewModel.uiState.collectAsStateWithLifecycle()
+                when (state) {
+                    TvHomeUiState.Loading -> TvLoadingPlate()
+                    // Each in its own view-model scope: a new connection gets new screens, not the last one's.
+                    TvHomeUiState.Setup -> ScopedViewModels("setup") { TvSetupEntry() }
+                    TvHomeUiState.Reconnect -> ScopedViewModels("reconnect") { TvReconnectEntry(onDisconnect = viewModel::disconnect) }
+                    TvHomeUiState.Connected -> ScopedViewModels("connected") { TvConnectedShell(linkedRequests = linkedRequests) }
+                }
             }
         }
     }
@@ -40,6 +45,6 @@ internal fun TvAdvancedRequestShell(
     actions: TvAdvancedRequestActions,
 ) {
     SeerrTvTheme {
-        TvAdvancedRequestScreen(state = state, actions = actions)
+        TvUserMovesHost { TvAdvancedRequestScreen(state = state, actions = actions) }
     }
 }

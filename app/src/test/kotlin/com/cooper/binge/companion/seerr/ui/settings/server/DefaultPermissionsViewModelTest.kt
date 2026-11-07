@@ -1,17 +1,17 @@
 package com.cooper.binge.companion.seerr.ui.settings.server
 
 import androidx.lifecycle.ViewModelStore
+import com.binge.designsystem.save.SAVE_AS_MADE_DELAY_MILLIS
 import com.cooper.binge.companion.seerr.seerr.ManageablePermission
 import com.cooper.binge.companion.seerr.ui.users.settings.ADMIN
-import com.cooper.binge.companion.seerr.ui.users.settings.EditorEvent
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorUiState
 import com.cooper.binge.companion.seerr.ui.users.settings.PermissionSettings
 import com.cooper.binge.companion.seerr.ui.users.settings.ScriptedSeerr
 import com.cooper.binge.companion.seerr.util.MainDispatcherRule
-import com.cooper.binge.companion.seerr.util.awaitEvent
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
@@ -50,7 +50,7 @@ class DefaultPermissionsViewModelTest {
     }
 
     private suspend fun TestScope.viewModel(): DefaultPermissionsViewModel {
-        val vm = DefaultPermissionsViewModel(seerr.connection(this), mainDispatcherRule.dispatcher)
+        val vm = DefaultPermissionsViewModel(seerr.connection(this), mainDispatcherRule.dispatcher, backgroundScope)
         viewModels.put(vm.hashCode().toString(), vm)
         backgroundScope.launch { vm.uiState.collect {} }
         return vm
@@ -71,15 +71,15 @@ class DefaultPermissionsViewModelTest {
         }
 
     @Test
-    fun `saving sends only the default permission bits, and adopts the server's`() =
+    fun `a switch is saved as it is moved, sending only the default permission bits, and adopts the server's`() =
         runTest {
             val vm = viewModel()
             vm.awaitReady()
 
             vm.toggle(ManageablePermission.ManageRequests)
-            val saved = awaitEvent(vm.events)
-            vm.save()
-            assertEquals(EditorEvent.Saved, saved.await())
+            // No save() call: the screen has no Save button, so the change must go out on its own (#1877).
+            advanceTimeBy(SAVE_AS_MADE_DELAY_MILLIS + 1)
+            vm.uiState.first { it is EditorUiState.Ready && !it.dirty }
 
             val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/settings/main")).jsonObject
             assertEquals("48", sent.getValue("defaultPermissions").jsonPrimitive.content)

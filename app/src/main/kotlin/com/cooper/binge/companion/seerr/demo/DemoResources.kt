@@ -9,6 +9,7 @@ import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonPrimitive
 
 private const val FIRST_ID = 100
+private const val HTTP_BAD_REQUEST = 400
 
 /**
  * The server's settings pages as JSON the demo keeps: a page is an object a write merges its fields into, and a list
@@ -50,6 +51,7 @@ internal fun DemoResources.objectRoutes(
 internal fun DemoResources.listRoutes(
     key: String,
     vararg path: String,
+    readOnlyId: Boolean = false,
 ): List<DemoRoute> {
     val base = path.toList()
     val item = base + "{}"
@@ -60,10 +62,15 @@ internal fun DemoResources.listRoutes(
             lists.getValue(key) += added
             jsonAnswer(added)
         },
-        route("PUT", item) { call, (id) -> edit(key, id.toInt(), call.body) },
+        route("PUT", item) { call, (id) ->
+            if (readOnlyId && "id" in parseObject(call.body)) demoIdReadOnly else edit(key, id.toInt(), call.body)
+        },
         route("DELETE", item) { _, (id) -> if (lists.getValue(key).removeAll { it.id() == id.toInt() }) done else demoNotFound },
     )
 }
+
+/** What a validating server answers to a body that carries a read-only `id`, so a screen that echoes it back fails here too. */
+private val demoIdReadOnly = message(HTTP_BAD_REQUEST, "request/body/id is read-only")
 
 private fun DemoResources.edit(
     key: String,

@@ -1,6 +1,7 @@
 package com.cooper.binge.companion.seerr.ui.tv
 
 import androidx.activity.ComponentActivity
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -10,20 +11,26 @@ import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.isFocusable
 import androidx.compose.ui.test.isFocused
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.requestFocus
+import com.binge.designsystem.tv.focus.TvOverlayCloser
 import com.binge.designsystem.tv.theme.BingeTvTheme
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.seerr.SeerrPermissions
 import com.cooper.binge.companion.seerr.seerr.SeerrRequestStatusCode
+import com.cooper.binge.companion.seerr.ui.issues.IssueDetailUiState
 import com.cooper.binge.companion.seerr.ui.requests.ModerationScope
 import com.cooper.binge.companion.seerr.ui.requests.RequestCounts
 import com.cooper.binge.companion.seerr.ui.requests.RequestFilter
 import com.cooper.binge.companion.seerr.ui.requests.RequestSort
 import com.cooper.binge.companion.seerr.ui.requests.RequestsUiState
+import com.cooper.binge.companion.seerr.ui.tv.issues.TvIssueSheet
+import com.cooper.binge.companion.seerr.ui.tv.issues.TvIssueSheetActions
 import com.cooper.binge.companion.seerr.ui.tv.requests.TvRequestsActions
 import com.cooper.binge.companion.seerr.ui.tv.requests.TvRequestsRowsBoard
 import com.cooper.binge.companion.seerr.util.createSeerrKeyboardAndroidComposeRule
 import com.cooper.binge.companion.seerr.util.string
+import org.junit.Assert.assertFalse
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -40,6 +47,54 @@ class TvHomeShellHandOffTest {
     @get:Rule
     val composeTestRule = createSeerrKeyboardAndroidComposeRule<ComponentActivity>()
 
+    private var topLayerOpen by mutableStateOf(false)
+
+    @Test
+    fun theRequestPageClosingThroughItsCloserReturnsToTheCardTheUserLeft() {
+        setHomeWithRequests(topLayer = { closer -> StandInPage(onClose = closer::close, tag = TOP_LAYER_TAG) })
+        card(BEAR).requestFocus()
+        composeTestRule.waitForIdle()
+        topLayerOpen = true
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithTag(TOP_LAYER_TAG).assertIsFocused()
+
+        composeTestRule.pressBack()
+        composeTestRule.settleShellHandOff()
+
+        assertFalse(topLayerOpen)
+        card(BEAR).assertIsFocused()
+    }
+
+    @Test
+    fun theIssueSheetClosingThroughItsCloserReturnsToTheCardTheUserLeft() {
+        setHomeWithRequests(
+            topLayer = { closer ->
+                TvIssueSheet(
+                    state = IssueDetailUiState.Loading,
+                    actions =
+                        TvIssueSheetActions(
+                            onDismiss = closer::close,
+                            onRetry = {},
+                            onToggleStatus = {},
+                            onDeleteIssue = {},
+                            onDeleteComment = {},
+                        ),
+                    closer = closer,
+                )
+            },
+        )
+        card(BEAR).requestFocus()
+        composeTestRule.waitForIdle()
+        topLayerOpen = true
+        composeTestRule.waitForIdle()
+
+        composeTestRule.pressBack()
+        composeTestRule.settleShellHandOff()
+
+        assertFalse(topLayerOpen)
+        card(BEAR).assertIsFocused()
+    }
+
     @Test
     fun downFromTheTopRowReturnsToTheCardTheUserCameFrom() {
         setHomeWithRequests()
@@ -53,7 +108,7 @@ class TvHomeShellHandOffTest {
         card(HEAT).assertIsFocused()
     }
 
-    private fun setHomeWithRequests() {
+    private fun setHomeWithRequests(topLayer: (@Composable (TvOverlayCloser) -> Unit)? = null) {
         val requests = listOf(request(1, HEAT, SeerrRequestStatusCode.Pending), request(2, BEAR, SeerrRequestStatusCode.Approved))
         composeTestRule.setContent {
             BingeTvTheme {
@@ -65,7 +120,9 @@ class TvHomeShellHandOffTest {
                     onSelectTab = { tab = it },
                     onOpenSheet = { sheet = it },
                     onCloseSheet = { sheet = null },
-                ) { shown, _ ->
+                    topLayer = if (topLayerOpen) topLayer else null,
+                    onCloseTopLayer = { topLayerOpen = false },
+                ) { shown, _, _ ->
                     if (shown == TvDestination.Hub) {
                         TvRequestsRowsBoard(
                             state =

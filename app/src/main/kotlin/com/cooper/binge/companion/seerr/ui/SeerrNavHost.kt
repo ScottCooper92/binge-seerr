@@ -18,6 +18,7 @@ import androidx.navigation3.ui.NavDisplay
 import com.binge.designsystem.PaneContent
 import com.binge.designsystem.PaneEdge
 import com.cooper.binge.companion.seerr.ui.hub.HubSection
+import com.cooper.binge.companion.seerr.ui.settings.server.ServerSettingsPage
 import com.cooper.binge.companion.seerr.ui.state.LoadingScreen
 
 /**
@@ -160,6 +161,7 @@ private fun SectionContent(
                 showBack = showBack,
                 onOpen = { id -> open(RequestDetailRoute(id)) },
                 onOpenUser = { id -> open(UserDetailRoute(id)) },
+                onOpenServices = { open(ServerSettingsPageRoute(ServerSettingsPage.Services)) },
             )
         HubSection.Issues ->
             IssuesEntry(onBack = onBack, showBack = showBack, onOpen = { id -> open(IssueDetailRoute(id)) })
@@ -199,6 +201,7 @@ private fun EntryProviderScope<NavKey>.detailEntries(
                 route.requestId,
                 onBack = { backStack.popIfTop(route) },
                 onOpenUser = { id -> backStack.add(UserDetailRoute(id)) },
+                onOpenServices = { backStack.add(ServerSettingsPageRoute(ServerSettingsPage.Services)) },
             )
         }
     }

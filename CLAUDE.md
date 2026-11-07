@@ -185,6 +185,20 @@ retry. A rotation there is a real activity recreate, so the back stack comes bac
 
 **Where a screen's commit goes.** A filled primary button pinned in the footer (`FormActionPlacement.Footer`) when the action is the reason the screen exists and finishes it: connect, send, request, create, report. Editing an existing setting saves as it is made, with no button. A top-bar text "Save" (`FormActionPlacement.TopBar`) is only for a multi-field edit that must apply together, and stays disabled until something changes. A single toggle or choice applies at once. One primary per screen; a top-bar action is a verb, never an icon alone; a destructive action sits in an overflow menu or behind a confirm.
 
+**Messages: a snackbar for a result, a dialog for a cause and a next step.** (The phone. The TV shows results in place and
+has no snackbars.) The design system's `docs/messages.md` has the worked example.
+
+- **Snackbar:** the outcome of a tap, one short sentence that reads in full at 1.3x font. It may carry one action
+  (Retry, Undo) and goes away by itself.
+- **Message dialog** (`BingeMessageDialog`): any message that explains why something failed **and** what the user can do
+  about it, however short. A title says what happened, the body gives the cause and the next step, and one OK acknowledges
+  it. It does not go away by itself. It is an acknowledgement, not a confirmation, so it has exactly one action; a choice is
+  `BingeConfirmDialog`.
+- **In place:** a failed load stays an error screen with Retry.
+- **A snackbar never carries text the user must read to act.** Text the server supplies, such as a rejection's reason, has
+  no length bound, so it belongs in a dialog. Do not turn every message into a dialog: a short result, or a refusal with
+  nothing to act on, stays a snackbar.
+
 **Where the code does not follow this**, it is an open issue rather than a line here: a list of
 departures in this file goes stale faster than it is read. There is no standing exception to the
 stream rule: the DVR instance and override rule editors fold their pickers' choices into `uiState`
@@ -205,7 +219,8 @@ screens and the exported Service call the real `SeerrApi` and cannot tell. Rules
 - **An endpoint the demo does not serve says so**: a 501 the screens already show as a server error, and that never counts against
   the connection's health. Add a route when a screen needs one; do not make a screen special-case the demo.
 - **Nothing in the app asks "is this the demo"** except to say so: the tag, the exit wording, the Settings rows that make no sense
-  without a server, and the handshake's provider name. Behaviour does not fork.
+  without a server, the handshake's provider name, and the `demo` property on analytics (`DemoSession`, read in the one `PostHogAnalytics`, so no call
+  site asks). Behaviour does not fork.
 
 ## Gates
 
@@ -294,6 +309,11 @@ detekt is 2.x, the version the shared gate applies, so `detekt.yml` and the base
 It runs on production `src/main` only, and **with type resolution** — `binge.gates.detekt` wires
 the compile classpath onto the task. Without that classpath `UnsafeCallOnNullableType`, the `!!` ban,
 loads and silently never fires.
+
+Type resolution cannot see what a compiler plugin generates. Write `serializer<Foo>()`, not `Foo.serializer()`: the second is
+unresolved in detekt's analysis, and every expression built on it loses its type, so a `!!` or `runCatching` there is not
+flagged (#1813). `./gradlew detekt` prints "N compiler errors found during analysis". N is 3 today, the symbols that live in
+`src/debug`; a higher number means a rule has gone blind somewhere, and its messages need `detekt { debug = true }` to read.
 
 `runCatching` is banned in `app/src/main` by `ForbiddenMethodCall`: the SDK's `attempt` (`com.binge.companion.sdk`) is the one
 idiom, because `runCatching` also catches the cancellation a cancelled scope sends. The rule sees into the stdlib

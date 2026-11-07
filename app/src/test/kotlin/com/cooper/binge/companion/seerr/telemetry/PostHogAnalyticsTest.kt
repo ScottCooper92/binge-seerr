@@ -3,6 +3,7 @@ package com.cooper.binge.companion.seerr.telemetry
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import com.cooper.binge.companion.seerr.util.InMemoryDataStore
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -29,8 +30,11 @@ class PostHogAnalyticsTest {
             calls += "optOut"
         }
 
-        override fun screen(name: String) {
-            calls += "screen:$name"
+        override fun screen(
+            name: String,
+            properties: Map<String, Any>,
+        ) {
+            calls += if (properties.isEmpty()) "screen:$name" else "screen:$name:$properties"
         }
 
         override fun event(
@@ -53,7 +57,15 @@ class PostHogAnalyticsTest {
     private fun TestScope.analytics(
         client: AnalyticsClient? = this@PostHogAnalyticsTest.client,
         gate: AnalyticsConsentGate = gate(),
-    ) = PostHogAnalytics(client, gate, scope())
+        demo: DemoSession = FixedDemoSession(isDemo = false),
+    ) = PostHogAnalytics(client, gate, demo, scope())
+
+    private class FixedDemoSession(
+        override val isDemo: Boolean,
+        private val read: CompletableDeferred<Unit> = CompletableDeferred(Unit),
+    ) : DemoSession {
+        override suspend fun awaitRead() = read.await()
+    }
 
     @Test
     fun `nothing is sent while undecided, and the client is closed against any opt-in it kept`() =
@@ -174,4 +186,39 @@ class PostHogAnalyticsTest {
 
         override suspend fun updateData(transform: suspend (t: Preferences) -> Preferences): Preferences = inner.updateData(transform)
     }
+
+    @Test
+    fun `a demo session marks its events and screens, and a real one does not`() =
+        runTest {
+            prefs.setAnalyticsGranted(true)
+            val demo = analytics(demo = FixedDemoSession(isDemo = true))
+            demo.screen("requests")
+            demo.event("request_moderated", mapOf("action" to "approve"))
+            assertEquals(
+                listOf(
+                    "screen:requests:{demo=true}",
+                    "event:request_moderated:{action=approve, demo=true}",
+                ),
+                client.calls.drop(1),
+            )
+
+            val real = RecordingClient()
+            analytics(client = real, demo = FixedDemoSession(isDemo = false)).apply {
+                screen("requests")
+                event("request_moderated", mapOf("action" to "approve"))
+            }
+            assertEquals(listOf("screen:requests", "event:request_moderated:{action=approve}"), real.calls.drop(1))
+        }
+
+    @Test
+    fun `a screen held from a cold start waits for the connection to be read before it is marked`() =
+        runTest {
+            prefs.setAnalyticsGranted(true)
+            val read = CompletableDeferred<Unit>()
+            analytics(demo = FixedDemoSession(isDemo = true, read = read)).screen("hub")
+            assertFalse(client.calls.any { it.startsWith("screen:") })
+
+            read.complete(Unit)
+            assertEquals("screen:hub:{demo=true}", client.calls.last())
+        }
 }

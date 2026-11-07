@@ -7,7 +7,6 @@ import com.cooper.binge.companion.seerr.seerr.SeerrLibraryDto
 import com.cooper.binge.companion.seerr.seerr.SeerrMetadataTestResultDto
 import com.cooper.binge.companion.seerr.seerr.SeerrMetadataTestsDto
 import com.cooper.binge.companion.seerr.seerr.SeerrProfileDto
-import com.cooper.binge.companion.seerr.seerr.SeerrRootFolderDto
 import com.cooper.binge.companion.seerr.seerr.SeerrScanStatusDto
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
@@ -44,12 +43,12 @@ private fun metadataTest() = SeerrMetadataTestResultDto(success = true, tests = 
 
 /** A download server's list and its edits, and the connection test, which always finds the demo's one profile and folder. */
 private fun DemoResources.serviceRoutes(service: String): List<DemoRoute> =
-    listRoutes(service, "settings", service) +
+    listRoutes(service, "settings", service, readOnlyId = true) +
         route("POST", "settings", service, "test") { _, _ ->
             ok(
                 SeerrDvrTestResultDto(
                     profiles = listOf(SeerrProfileDto(1, "Any"), SeerrProfileDto(2, "HD-1080p")),
-                    rootFolders = listOf(SeerrRootFolderDto(1, "/media")),
+                    rootFolders = demoRootFolders(service),
                 ),
             )
         }

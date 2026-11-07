@@ -46,6 +46,21 @@ class CacheViewModel
             viewModelScope.launch(dispatcher) { state.value = read() }
         }
 
+        /** A pull: re-reads the caches and swaps them in, keeping what shows until then. A failed read leaves them as they are. */
+        fun refresh() {
+            val ready = state.value as? CacheUiState.Ready ?: return
+            if (ready.isRefreshing) return
+            state.update { current -> (current as? CacheUiState.Ready)?.copy(isRefreshing = true) ?: current }
+            viewModelScope.launch(dispatcher) {
+                attempt { connection.api().caches().toReady() }
+                    .onSuccess { fresh -> state.value = fresh.copy(busyIds = busy()) }
+                    .onFailure { failure ->
+                        state.update { current -> (current as? CacheUiState.Ready)?.copy(isRefreshing = false) ?: current }
+                        eventFlow.emit(EditorEvent.Failed.from(failure))
+                    }
+            }
+        }
+
         fun flush(cacheId: String) = flushing(cacheId) { api -> api.flushCache(cacheId) }
 
         fun flushDnsEntry(hostname: String) = flushing("dns:$hostname") { api -> api.flushDnsEntry(hostname) }
@@ -67,7 +82,7 @@ class CacheViewModel
                     eventFlow.emit(EditorEvent.Notice(R.string.server_settings_cache_flushed))
                 }.onFailure { failure ->
                     state.update { current -> (current as? CacheUiState.Ready)?.copy(busyIds = current.busyIds - key) ?: current }
-                    eventFlow.emit(EditorEvent.Failed(failure.toSeerrError()))
+                    eventFlow.emit(EditorEvent.Failed.from(failure))
                 }
             }
         }

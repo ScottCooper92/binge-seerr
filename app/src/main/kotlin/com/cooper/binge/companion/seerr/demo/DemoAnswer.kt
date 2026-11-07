@@ -52,6 +52,9 @@ internal val demoNotFound = message(HTTP_NOT_FOUND, "Not found.")
 internal val demoBlocklisted = message(HTTP_FORBIDDEN, "This title is blocklisted.")
 internal val demoAlreadyRequested = message(HTTP_CONFLICT, "Request for this media already exists.")
 
+/** Seerr's refusal to delete a title's files when none of its [client] servers is the default (the wording the app reads, #1726). */
+internal fun demoNoDefaultServer(client: String) = message(HTTP_CONFLICT, "No $client server configured to delete media files")
+
 /** One call the demo serves: its method and path, where `{}` matches any one segment, and what answers it. */
 internal class DemoRoute(
     val verb: String,

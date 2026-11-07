@@ -132,6 +132,8 @@ sealed interface IssueDetailUiState {
         val editStatus: SaveStatus = SaveStatus.Idle,
         /** Edits whose write failed, one per comment, kept on the page and sent again by Retry, in turn, until each lands. */
         val unsentEdits: List<CommentEdit> = emptyList(),
+        /** A pull is re-reading the page; the last content stays in place meanwhile. */
+        val isRefreshing: Boolean = false,
     ) : IssueDetailUiState {
         val thread: List<ThreadEntry>
             get() = detail.comments.map { ThreadEntry.Server(it) } + outbox.map { ThreadEntry.Pending(it) }

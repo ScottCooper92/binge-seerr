@@ -11,6 +11,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.compose.collectAsLazyPagingItems
+import com.binge.designsystem.tv.focus.TvOverlayCloser
 import com.cooper.binge.companion.seerr.flags.LocalFlags
 import com.cooper.binge.companion.seerr.ui.bingeTitleHandOff
 import com.cooper.binge.companion.seerr.ui.issues.IssueDetailEvent
@@ -89,6 +90,7 @@ internal fun TvIssueSheetEntry(
     issueId: Int,
     onDone: () -> Unit,
     onIssueChanged: () -> Unit,
+    closer: TvOverlayCloser? = null,
     viewModel: IssueDetailViewModel =
         hiltViewModel<IssueDetailViewModel, IssueDetailViewModel.Factory>(creationCallback = { factory -> factory.create(issueId) }),
 ) {
@@ -128,6 +130,7 @@ internal fun TvIssueSheetEntry(
                 onOpenInMediaServer = onOpenInMediaServer,
                 onOpenInBinge = onOpenInBinge,
             ),
+        closer = closer,
     )
 }
 

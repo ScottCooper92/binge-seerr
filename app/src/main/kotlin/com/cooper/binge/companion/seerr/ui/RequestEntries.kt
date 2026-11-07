@@ -28,6 +28,7 @@ internal fun RequestDetailEntry(
     requestId: Int,
     onBack: () -> Unit,
     onOpenUser: (Int) -> Unit,
+    onOpenServices: () -> Unit,
     viewModel: RequestDetailViewModel =
         hiltViewModel<RequestDetailViewModel, RequestDetailViewModel.Factory>(creationCallback = { factory -> factory.create(requestId) }),
 ) {
@@ -45,7 +46,8 @@ internal fun RequestDetailEntry(
                 state = state,
                 onBack = onBack,
                 onOpenUser = onOpenUser,
-                siblingSheet = { sheet -> SiblingRequestSheet(sheet, onOpenUser) },
+                onOpenServices = onOpenServices,
+                siblingSheet = { sheet -> SiblingRequestSheet(sheet, onOpenUser, onOpenServices) },
             ),
     )
 }
@@ -61,6 +63,7 @@ internal fun RequestDetailEntry(
 private fun SiblingRequestSheet(
     sheet: SiblingSheet,
     onOpenUser: (Int) -> Unit,
+    onOpenServices: () -> Unit,
 ) {
     val viewModel =
         hiltViewModel<RequestDetailViewModel, RequestDetailViewModel.Factory>(
@@ -88,6 +91,7 @@ private fun SiblingRequestSheet(
                     state = page,
                     onBack = sheet.onDismiss,
                     onOpenUser = onOpenUser,
+                    onOpenServices = onOpenServices,
                     siblingSheet = {},
                     fallbackItem = sheet.preview?.item,
                 ),
@@ -108,12 +112,14 @@ private fun RequestDetailViewModel.toActions(
     state: RequestDetailUiState,
     onBack: () -> Unit,
     onOpenUser: (Int) -> Unit,
+    onOpenServices: () -> Unit,
     siblingSheet: @Composable (SiblingSheet) -> Unit,
     fallbackItem: RequestItem? = null,
 ): RequestDetailActions =
     RequestDetailActions(
         onBack = onBack,
         onRetry = ::reload,
+        onRefresh = ::refresh,
         onReportIssue = ::reportIssue,
         onDismissReport = ::dismissReport,
         onApprove = { moderation.approve(requestId) },
@@ -154,6 +160,10 @@ private fun RequestDetailViewModel.toActions(
                 onDeleteFiles = { mediaId, is4k, removeRequestIds ->
                     moderation.deleteMediaFiles(requestId, mediaId, is4k, removeRequestIds)
                 },
+                onOpenServices = {
+                    forgetNoDefaultServer()
+                    onOpenServices()
+                },
             ),
         onManageOpened = ::onManageOpened,
     )
@@ -164,6 +174,7 @@ internal fun RequestsEntry(
     showBack: Boolean,
     onOpen: (Int) -> Unit,
     onOpenUser: (Int) -> Unit,
+    onOpenServices: () -> Unit,
     viewModel: RequestsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -186,7 +197,7 @@ internal fun RequestsEntry(
                 onRetryLoad = viewModel::retry,
                 onRefreshCounts = viewModel::refreshCounts,
                 onChanged = viewModel::listChanged,
-                detailSheet = { sheet -> SiblingRequestSheet(sheet, onOpenUser) },
+                detailSheet = { sheet -> SiblingRequestSheet(sheet, onOpenUser, onOpenServices) },
             ),
     )
 }

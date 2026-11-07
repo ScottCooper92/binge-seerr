@@ -3,9 +3,15 @@ package com.cooper.binge.companion.seerr.ui.nav
 import android.content.Context
 import android.content.pm.ActivityInfo
 import androidx.annotation.StringRes
+import androidx.compose.ui.test.ComposeTimeoutException
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isDisplayed
+import androidx.compose.ui.test.isRoot
 import androidx.compose.ui.test.junit4.ComposeTestRule
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.printToString
 import androidx.navigation3.runtime.NavKey
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
@@ -13,7 +19,9 @@ import androidx.work.Configuration
 import androidx.work.WorkManager
 import com.cooper.binge.companion.seerr.auth.ConnectionRestore
 import com.cooper.binge.companion.seerr.auth.CredentialStore
+import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.demo.demoCredentials
+import com.cooper.binge.companion.seerr.seerr.SeerrApi
 import com.cooper.binge.companion.seerr.seerr.SeerrAuth
 import com.cooper.binge.companion.seerr.seerr.SeerrCredentials
 import com.cooper.binge.companion.seerr.ui.HomeRoute
@@ -35,6 +43,9 @@ import org.robolectric.Shadows.shadowOf
 
 /** Long enough for a cold start's first reads; a pass takes a fraction of it. */
 private const val AWAIT_MILLIS = 10_000L
+
+/** What a timeout prints of the screen: enough to read, small enough that a CI log stays readable. */
+private const val MAX_TREE_LINES = 300
 
 /**
  * Hosts the real [com.cooper.binge.companion.seerr.ui.SeerrNavHost] on the JVM, against the app's
@@ -79,6 +90,13 @@ internal class RealNavHostRule(
         runBlocking { graph().restore().run() }
     }
 
+    /**
+     * Runs [block] against the connected server's own API, the one the screens use, so a change made here is what they
+     * read next. For the demo that is its model: a test can set the state a journey needs through the same routes a settings
+     * screen's switch calls, without walking the screens to it.
+     */
+    fun <T> api(block: suspend (SeerrApi) -> T): T = runBlocking { block(graph().connection().api()) }
+
     /** Starts the host on [stack]. A second launch closes the first: a cold start of the app over the same graph. */
     fun launch(vararg stack: NavKey) {
         close()
@@ -89,7 +107,8 @@ internal class RealNavHostRule(
 
     fun string(
         @StringRes id: Int,
-    ): String = ApplicationProvider.getApplicationContext<Context>().getString(id)
+        vararg formatArgs: Any,
+    ): String = ApplicationProvider.getApplicationContext<Context>().getString(id, *formatArgs)
 
     /**
      * Whether a node reading [text] is on screen now. By default a merged node whose text only includes it counts too, as
@@ -99,6 +118,33 @@ internal class RealNavHostRule(
         text: String,
         exactly: Boolean = false,
     ): Boolean = settled().onAllNodes(hasText(text, substring = !exactly)).fetchSemanticsNodes().isNotEmpty()
+
+    /**
+     * Clicks a node reading [text] that is on screen until [outcome] shows. [awaitShowing] is satisfied by a node anywhere
+     * in the tree, and a pager keeps its neighbouring page composed beside the visible one, so a click on a match can land
+     * off screen and do nothing. A list can also swap under the click as its filter reloads, so one visible match is not
+     * one that is still there a moment later: the click is tried again until the screen has moved on (#1794).
+     */
+    fun clickUntilShowing(
+        text: String,
+        outcome: String,
+        timeoutMillis: Long = AWAIT_MILLIS,
+    ) {
+        fun clickOneOnScreen() {
+            val matches = settled().onAllNodesWithText(text, substring = true)
+            (0 until matches.fetchSemanticsNodes().size)
+                .map { matches[it] }
+                .firstOrNull { it.isDisplayed() }
+                ?.performClick()
+        }
+        try {
+            compose.waitUntil("\"$outcome\" on screen after clicking \"$text\"", timeoutMillis) {
+                isShowing(outcome).also { reached -> if (!reached) clickOneOnScreen() }
+            }
+        } catch (timeout: ComposeTimeoutException) {
+            throw ComposeTimeoutException("${timeout.message}\n${describeScreen()}")
+        }
+    }
 
     /** How many nodes read [text] now, counting a merged node whose text only includes it, as [isShowing] does. */
     fun count(text: String): Int = settled().onAllNodes(hasText(text, substring = true)).fetchSemanticsNodes().size
@@ -124,8 +170,35 @@ internal class RealNavHostRule(
         check(runBlocking { graph().credentials().save(credentials) }) { "the connection was not saved" }
     }
 
-    /** Waits, in real time, for [text]: what the screens show next comes from the server, over real sockets. */
-    fun awaitShowing(text: String) = compose.waitUntil("\"$text\" on screen", AWAIT_MILLIS) { isShowing(text) }
+    /**
+     * Waits, in real time, for [text]: what the screens show next comes from the server, over real sockets. A timeout
+     * says what the screen was showing instead, so a failure that only happens in a full run names its cause (#1794).
+     */
+    fun awaitShowing(
+        text: String,
+        timeoutMillis: Long = AWAIT_MILLIS,
+    ) {
+        try {
+            compose.waitUntil("\"$text\" on screen", timeoutMillis) { isShowing(text) }
+        } catch (timeout: ComposeTimeoutException) {
+            throw ComposeTimeoutException("${timeout.message}\n${describeScreen()}")
+        }
+    }
+
+    /** The back stack and the semantics tree, capped at [MAX_TREE_LINES] lines. Never throws: it runs while a failure is already in flight. */
+    private fun describeScreen(): String =
+        try {
+            val stack = activityBackStack()
+            val roots = compose.onAllNodes(isRoot(), useUnmergedTree = true)
+            val tree =
+                (0 until roots.fetchSemanticsNodes().size)
+                    .joinToString("\n") { roots[it].printToString(maxDepth = Int.MAX_VALUE) }
+            "Back stack: $stack\nOn screen:\n${tree.cappedAt(MAX_TREE_LINES)}"
+        } catch (failure: RuntimeException) {
+            "(could not describe the screen: $failure)"
+        }
+
+    private fun activityBackStack(): List<NavKey> = compose.runOnUiThread { activity.backStack.toList() }
 
     /** A rotation as a device has one: the window's [qualifiers] change and the activity is recreated. */
     fun rotate(qualifiers: String) {
@@ -196,6 +269,15 @@ internal class RealNavHostRule(
     interface NavHostGraph {
         fun credentials(): CredentialStore
 
+        fun connection(): SeerrConnection
+
         fun restore(): ConnectionRestore
     }
+}
+
+/** The first [max] lines of [this], and how many more there were, so a long tree does not flood a CI log. */
+internal fun String.cappedAt(max: Int): String {
+    val all = lines()
+    val omitted = all.size - max
+    return if (omitted > 0) all.take(max).joinToString("\n") + "\n... $omitted more lines" else this
 }

@@ -1,5 +1,6 @@
 package com.cooper.binge.companion.seerr.ui.settings.server
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -22,10 +23,15 @@ import androidx.compose.material.icons.filled.QuestionAnswer
 import androidx.compose.material.icons.filled.RequestPage
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.pulltorefresh.PullToRefreshState
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
+import com.binge.designsystem.component.BingePullToRefresh
 import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.component.ListItemDestination
@@ -44,6 +50,10 @@ import com.cooper.binge.companion.seerr.seerr.docsUrl
 import com.cooper.binge.companion.seerr.seerr.releaseNotesUrl
 import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
 import com.cooper.binge.companion.seerr.ui.state.LoadingScreen
+import com.cooper.binge.companion.seerr.ui.state.ReloadFailureSnackbar
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.map
 import com.binge.designsystem.R as DesR
 
 /** The about page: the edition and its update state, the totals, the server's own facts, and the fork's support links. */
@@ -53,14 +63,38 @@ fun AboutScreen(
     onBack: () -> Unit,
     onRetry: () -> Unit,
     onOpenUrl: (String) -> Unit,
+    onRefresh: () -> Unit = {},
+    events: Flow<AboutEvent> = emptyFlow(),
+    pullState: PullToRefreshState? = null,
 ) {
-    BingeScreenScaffold(bar = ScreenBar.Small, title = stringResource(R.string.settings_about), onBack = onBack) { padding ->
+    val snackbarHostState = remember { SnackbarHostState() }
+    val failures =
+        remember(events) {
+            events.map { event ->
+                when (event) {
+                    is AboutEvent.RefreshFailed -> event.error
+                }
+            }
+        }
+    ReloadFailureSnackbar(failures, snackbarHostState)
+    BingeScreenScaffold(
+        bar = ScreenBar.Small,
+        title = stringResource(R.string.settings_about),
+        onBack = onBack,
+        snackbarHostState = snackbarHostState,
+    ) { padding ->
         Box(modifier = Modifier.fillMaxSize().padding(padding.screenOuterPadding())) {
             val inner = padding.screenInnerPadding()
             when (state) {
                 AboutUiState.Loading -> LoadingScreen(Modifier.padding(inner))
                 is AboutUiState.Error -> ErrorScreen(error = state.error, modifier = Modifier.padding(inner), onRetry = onRetry)
-                is AboutUiState.Ready -> AboutContent(state.info, onOpenUrl, contentPadding = inner)
+                is AboutUiState.Ready ->
+                    BingePullToRefresh(
+                        isRefreshing = state.isRefreshing,
+                        onRefresh = onRefresh,
+                        indicatorTopInset = inner.calculateTopPadding(),
+                        state = pullState ?: rememberPullToRefreshState(),
+                    ) { AboutContent(state.info, onOpenUrl, onRefresh, contentPadding = inner) }
             }
         }
     }
@@ -70,6 +104,7 @@ fun AboutScreen(
 private fun AboutContent(
     info: AboutInfo,
     onOpenUrl: (String) -> Unit,
+    onRefresh: () -> Unit,
     contentPadding: PaddingValues,
 ) {
     val sides = resolvedContentPadding()
@@ -77,7 +112,7 @@ private fun AboutContent(
         Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
         ItemGroup(
             title = stringResource(R.string.server_settings_about_title, info.variant.displayName),
-            rows = versionRows(info, onOpenUrl) + serverRows(info),
+            rows = versionRows(info, onOpenUrl) + serverRows(info, onRefresh),
             modifier = Modifier.padding(sides),
         )
         Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
@@ -146,7 +181,10 @@ private fun versionRows(
     )
 
 @Composable
-private fun serverRows(info: AboutInfo): List<ListItem> =
+private fun serverRows(
+    info: AboutInfo,
+    onRetry: () -> Unit,
+): List<ListItem> =
     listOfNotNull(
         info.totalMediaItems?.let { count ->
             ListItem(
@@ -190,7 +228,33 @@ private fun serverRows(info: AboutInfo): List<ListItem> =
                 clickable = false,
             )
         },
+        readMarker(info.aboutRead, R.string.server_settings_about_totals_failed, R.string.server_settings_about_totals_stale, onRetry),
+        readMarker(info.appDataRead, R.string.server_settings_about_data_failed, R.string.server_settings_about_data_stale, onRetry),
     )
+
+/** The row that says a source did not read: nothing for a read that went, or that the user may not do; Retry for the rest. */
+@Composable
+private fun readMarker(
+    read: AboutRead,
+    @StringRes failed: Int,
+    @StringRes stale: Int,
+    onRetry: () -> Unit,
+): ListItem? {
+    val label =
+        when (read) {
+            AboutRead.Failed -> failed
+            AboutRead.Stale -> stale
+            AboutRead.Read, AboutRead.Unavailable -> return null
+        }
+    return ListItem(
+        icon = Icons.Filled.Warning,
+        iconTint = BingeSentiment.Caution.fill(),
+        label = stringResource(label),
+        detail = stringResource(R.string.server_settings_about_read_retry),
+        destination = ListItemDestination.Action,
+        onClick = onRetry,
+    )
+}
 
 @Composable
 private fun supportRows(
