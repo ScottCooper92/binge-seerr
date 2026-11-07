@@ -521,6 +521,7 @@
     <string name="server_settings_api_key_regenerated">API key regenerated</string>
     <string name="server_settings_media_server">Media server</string>
     <string name="server_settings_media_server_caption">Address, libraries and scans</string>
+    <string name="server_settings_media_server_unreachable_title">Couldn\u2019t reach the media server</string>
     <string name="server_settings_media_server_unreachable">Seerr could not reach that media server. Check its host, port and SSL setting.</string>
     <string name="server_settings_plex_pick">Choose from your Plex servers</string>
     <string name="server_settings_plex_none">plex.tv lists no server of yours.</string>

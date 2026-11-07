@@ -68,7 +68,6 @@ class SeerrErrorsTest {
         assertEquals(SeerrError.Rejected, failure.toSeerrError())
     }
 
-    /** The one way an editor builds its failure from a throwable, so no call site can leave the reason out (#1841). */
     @Test
     fun `a media server that cannot be reached is named, not blamed on the server (#1880)`() {
         val failed = EditorEvent.Failed.from(http(502, """{"errorMessage":"INVALID_URL","status":502}"""))
@@ -77,6 +76,7 @@ class SeerrErrorsTest {
         assertNull(EditorEvent.Failed.from(http(502)).messageRes)
     }
 
+    /** The one way an editor builds its failure from a throwable, so no call site can leave the reason out (#1841). */
     @Test
     fun `an editor failure carries the error and, for a rejection, the server's reason`() {
         assertEquals(

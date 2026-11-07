@@ -206,7 +206,8 @@ internal fun Throwable.isNoDefaultServerRefusal(): Boolean =
 /**
  * Seerr's answer when the media server it was asked to test or save cannot be reached at the address it was given: a 502
  * whose body names `INVALID_URL` (`POST settings/jellyfin`). The generic "server error" would blame Seerr, so the
- * media-server page says what to check instead (#1880).
+ * media-server page says what to check instead (#1880). Only the Jellyfin and Emby settings endpoints answer this way, so
+ * "media server" names it correctly wherever it is read.
  */
 fun Throwable.isMediaServerUnreachable(): Boolean =
     this is HttpException && code() == HTTP_BAD_GATEWAY && peekedBody().contains("INVALID_URL")
