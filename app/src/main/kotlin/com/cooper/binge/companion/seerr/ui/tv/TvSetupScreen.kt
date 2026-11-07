@@ -152,7 +152,11 @@ private fun TvSetupSignInStep(
                 TvChangeServerButton(actions, leads = !typing && onScan == null, arrival = arrival.takeIf { !typing && onScan == null })
                 // Leaving the server altogether is only offered where the app put this page up for a session the server rejected.
                 actions.onDisconnect?.let { disconnect ->
-                    TvCompactButton(label = stringResource(R.string.hub_disconnect), onClick = disconnect, style = TvButtonStyle.TextDestructive)
+                    TvCompactButton(
+                        label = stringResource(R.string.hub_disconnect),
+                        onClick = disconnect,
+                        style = TvButtonStyle.TextDestructive,
+                    )
                 }
             }
         },

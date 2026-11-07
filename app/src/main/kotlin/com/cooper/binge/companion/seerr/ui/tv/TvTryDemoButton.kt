@@ -28,5 +28,10 @@ internal fun ColumnScope.TvDemoContent(
         alignment = Alignment.CenterHorizontally,
         modifier = Modifier.width(dimensionResource(R.dimen.tv_form_field_width)),
     )
-    TvCompactButton(label = stringResource(R.string.setup_try_demo), onClick = actions.onTryDemo, style = TvButtonStyle.Primary, enabled = enabled)
+    TvCompactButton(
+        label = stringResource(R.string.setup_try_demo),
+        onClick = actions.onTryDemo,
+        style = TvButtonStyle.Primary,
+        enabled = enabled,
+    )
 }
