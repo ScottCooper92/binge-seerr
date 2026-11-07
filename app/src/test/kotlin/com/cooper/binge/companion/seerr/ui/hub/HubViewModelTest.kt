@@ -40,10 +40,12 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicReference
 
 private const val ADMIN = 2
 private const val REQUEST = 32
 private const val LATCH_SECONDS = 5L
+private const val HELD_ANSWER_LIMIT_SECONDS = 20L
 
 /**
  * The hub over an in-memory connection, scripted by path, because the overview fans its calls out
@@ -73,9 +75,26 @@ class HubViewModelTest {
     /** The network gone, as with Tailscale off: every call fails with an [IOException] before any answer. */
     private val serverDown = AtomicBoolean(false)
 
+    /**
+     * When set, the server holds every answer until it is counted down. A re-check's `rechecking` state lasts only as long as
+     * its probe is out, and an in-process server answers in microseconds, so a test that waits to see it must hold the answer.
+     */
+    private val held = AtomicReference<CountDownLatch?>(null)
+
+    /** Holds the server's answers from now; the returned function lets them go. */
+    private fun holdServer(): () -> Unit {
+        val latch = CountDownLatch(1)
+        held.set(latch)
+        return {
+            held.set(null)
+            latch.countDown()
+        }
+    }
+
     @Before
     fun setUp() {
         seerr.dispatcher = { request ->
+            held.get()?.await(HELD_ANSWER_LIMIT_SECONDS, TimeUnit.SECONDS)
             if (serverDown.get()) throw IOException("unreachable")
             responses[request.url.encodedPath]?.invoke() ?: FakeResponse(code = 404)
         }
@@ -83,6 +102,7 @@ class HubViewModelTest {
 
     @After
     fun tearDown() {
+        held.getAndSet(null)?.countDown()
         viewModels.clear()
         seerr.awaitIdle()
     }
@@ -383,8 +403,10 @@ class HubViewModelTest {
             val states = mutableListOf<HubUiState>()
             backgroundScope.launch(start = CoroutineStart.UNDISPATCHED) { vm.uiState.collect { states += it } }
 
+            val release = holdServer()
             vm.recheck()
             vm.uiState.first { (it as? HubUiState.Ready)?.rechecking == true }
+            release()
             vm.awaitReady { !it.rechecking && it.health == ConnectionHealth.Unreachable }
 
             assertTrue(states.filterIsInstance<HubUiState.Ready>().all { it.health.isProblem() })
@@ -406,8 +428,10 @@ class HubViewModelTest {
             val states = mutableListOf<HubUiState>()
             backgroundScope.launch(start = CoroutineStart.UNDISPATCHED) { vm.uiState.collect { states += it } }
 
+            val release = holdServer()
             vm.recheck()
             vm.uiState.first { (it as? HubUiState.Ready)?.rechecking == true }
+            release()
             vm.awaitReady { !it.rechecking && it.health == ConnectionHealth.CouldNotLoad }
 
             assertTrue("$states", states.filterIsInstance<HubUiState.Ready>().all { it.health.isProblem() })
