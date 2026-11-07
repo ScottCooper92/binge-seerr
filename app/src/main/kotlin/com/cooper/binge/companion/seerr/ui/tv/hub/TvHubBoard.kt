@@ -8,7 +8,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.ErrorKind
-import com.binge.designsystem.tv.component.TvCompactButton
+import com.binge.designsystem.tv.component.TvButton
 import com.binge.designsystem.tv.component.TvErrorPlate
 import com.binge.designsystem.tv.focus.TvArrivalFocusEffect
 import com.binge.designsystem.tv.focus.rememberTvArrivalFocus
@@ -115,15 +115,15 @@ private fun TvHubProblem(
         modifier = modifier.tvArrivalObserver(arrival),
         extraActions = {
             if (denied) {
-                TvCompactButton(
+                TvButton(
                     label = stringResource(allow.shortLabel),
                     onClick = allow.run,
                     style = TvButtonStyle.Primary,
                     modifier = Modifier.focusRequester(arrival.requester),
                 )
             }
-            TvCompactButton(label = stringResource(R.string.settings_edit_connection), onClick = actions.onReconnect)
-            TvCompactButton(label = stringResource(R.string.hub_disconnect), onClick = actions.onDisconnect)
+            TvButton(label = stringResource(R.string.settings_edit_connection), onClick = actions.onReconnect)
+            TvButton(label = stringResource(R.string.hub_disconnect), onClick = actions.onDisconnect)
         },
     )
 }
