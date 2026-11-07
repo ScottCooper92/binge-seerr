@@ -1,5 +1,6 @@
 package com.cooper.binge.companion.seerr.ui.requests
 
+import android.content.res.Resources
 import androidx.annotation.StringRes
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -11,7 +12,9 @@ import com.binge.designsystem.component.BingeAdaptiveSheet
 import com.binge.designsystem.component.BingeSheetKind
 import com.binge.designsystem.component.BingeSheetNav
 import com.cooper.binge.companion.seerr.R
-import com.cooper.binge.companion.seerr.seerr.SeerrError
+import com.cooper.binge.companion.seerr.ui.state.DialogMessage
+import com.cooper.binge.companion.seerr.ui.state.dialogMessage
+import com.cooper.binge.companion.seerr.ui.state.needsDialog
 
 /**
  * A request's actions, and — where the caller has one — the server's media record beside them.
@@ -190,20 +193,33 @@ internal fun ModerationEvent.messageRes(): Int? =
             ModerationEvent.MediaFilesNoDefaultServer -> null
             ModerationEvent.Declined -> R.string.request_declined
             ModerationEvent.DeclinedAndBlocked -> R.string.request_declined_and_blocked
-            ModerationEvent.DeclinedButBlockFailed -> R.string.request_declined_block_failed
+            ModerationEvent.DeclinedButBlockFailed -> null
             ModerationEvent.Removed -> R.string.request_removed
             ModerationEvent.RemovedAndBlocked -> R.string.request_removed_and_blocked
-            ModerationEvent.RemovedButBlockFailed -> R.string.request_removed_block_failed
-            is ModerationEvent.Failed ->
-                if (error ==
-                    SeerrError.Unauthorized
-                ) {
-                    R.string.hub_unauthorized_body
-                } else {
-                    R.string.request_action_failed
-                }
+            ModerationEvent.RemovedButBlockFailed -> null
+            is ModerationEvent.Failed -> if (error.needsDialog()) null else R.string.request_action_failed
         }
     )
+
+/**
+ * The dialog for an outcome that gives a cause and a next step, so the user must read it to act; null for one that is a
+ * snackbar line or shown in place. A half-done block and a sign-in the server rejected both qualify.
+ */
+internal fun ModerationEvent.dialogMessage(resources: Resources): DialogMessage? =
+    when (this) {
+        ModerationEvent.DeclinedButBlockFailed ->
+            DialogMessage(
+                resources.getString(R.string.request_declined_block_failed_title),
+                resources.getString(R.string.request_declined_block_failed_body),
+            )
+        ModerationEvent.RemovedButBlockFailed ->
+            DialogMessage(
+                resources.getString(R.string.request_removed_block_failed_title),
+                resources.getString(R.string.request_removed_block_failed_body),
+            )
+        is ModerationEvent.Failed -> error.takeIf { it.needsDialog() }?.dialogMessage(resources)
+        else -> null
+    }
 
 internal fun ModerationEvent.isError(): Boolean =
     this is ModerationEvent.Failed ||

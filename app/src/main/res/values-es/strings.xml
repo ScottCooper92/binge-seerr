@@ -233,10 +233,12 @@
     <string name="media_files_deleted_requests_kept">Archivos eliminados, pero las peticiones no se pudieron eliminar</string>
     <string name="request_declined">Petición rechazada</string>
     <string name="request_declined_and_blocked">Petición rechazada y título bloqueado</string>
-    <string name="request_declined_block_failed">Rechazada, pero el título no se pudo bloquear</string>
+    <string name="request_declined_block_failed_title">Rechazada, sin bloquear</string>
+    <string name="request_declined_block_failed_body">La petición se rechazó, pero el servidor no quiso bloquear el título. Vuelve a intentar bloquearlo desde las acciones de la petición.</string>
     <string name="request_removed">Petición eliminada</string>
     <string name="request_removed_and_blocked">Petición eliminada y título bloqueado</string>
-    <string name="request_removed_block_failed">Eliminada, pero el título no se pudo bloquear</string>
+    <string name="request_removed_block_failed_title">Eliminada, sin bloquear</string>
+    <string name="request_removed_block_failed_body">La petición se eliminó, pero el servidor no quiso bloquear el título. Vuelve a intentar bloquearlo desde la página del título.</string>
     <string name="request_action_failed">No se pudo actualizar la petición. Inténtalo de nuevo.</string>
     <string name="issue_report_title">Informar de una incidencia</string>
     <string name="issue_report_message">¿Qué falla?</string>
@@ -331,7 +333,7 @@
     <string name="users_import_select_none">Desmarcar todo</string>
     <string name="users_import_empty">Todas las cuentas ya están aquí.</string>
     <string name="users_import_failed">No se pudieron leer las cuentas del servidor multimedia.</string>
-    <string name="users_imported_none">Nada nuevo que importar; las cuentas existentes se han actualizado.</string>
+    <string name="users_imported_none">Nada nuevo que importar.</string>
     <plurals name="users_import_submit">
         <item quantity="one">Importar %1$d usuario</item>
         <item quantity="many">Importar %1$d usuarios</item>
@@ -897,7 +899,6 @@
     <string name="hub_local_network_headline">El acceso a la red local está desactivado</string>
     <string name="hub_local_network_body">Android impide que esta aplicación llegue a tu servidor en tu red local. Permite el acceso a la red local y se volverá a conectar.</string>
     <string name="hub_unauthorized_headline">Hay que reconectar</string>
-    <string name="hub_unauthorized_body">El servidor rechazó el inicio de sesión guardado. Inicia sesión de nuevo para continuar.</string>
     <string name="hub_couldnt_load_headline">Todavía conectando…</string>
     <string name="hub_couldnt_load_body">El servidor respondió, pero el panel aún no se pudo cargar. Puede pasar en el primer arranque mientras la conexión se asienta. Reintentando automáticamente.</string>
     <string name="advanced_title">Pedir con opciones</string>
