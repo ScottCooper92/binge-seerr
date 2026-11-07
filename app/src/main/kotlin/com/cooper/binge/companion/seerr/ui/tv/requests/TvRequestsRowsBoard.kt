@@ -32,6 +32,7 @@ import com.cooper.binge.companion.seerr.ui.tv.TvPagedRows
 import com.cooper.binge.companion.seerr.ui.tv.TvPosterCard
 import com.cooper.binge.companion.seerr.ui.tv.TvRowsFallback
 import com.cooper.binge.companion.seerr.ui.tv.hubFailure
+import com.cooper.binge.companion.seerr.ui.tv.rememberRowsRevealed
 import com.cooper.binge.companion.seerr.ui.tv.tvColor
 import com.binge.designsystem.tv.R as TvR
 
@@ -83,6 +84,10 @@ internal fun TvRequestsRowsBoard(
         return
     }
     val perFilter = RequestRowFilters.map { it to rowsFor(it) }
+    if (!rememberRowsRevealed(perFilter.map { it.second } + listOfNotNull(mine?.rows))) {
+        TvHubLoading(modifier)
+        return
+    }
     if (perFilter.none { (_, rows) -> rows.count > 0 } && (mine?.rows?.count ?: 0) == 0) {
         TvRowsFallback(
             rows = perFilter.map { it.second } + listOfNotNull(mine?.rows),
