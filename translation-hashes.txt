@@ -341,7 +341,7 @@ app:request_decline_block_confirm_message  bd8633b8508d
 app:request_decline_block_confirm_title  caa71bdec8da
 app:request_declined  1df48b2da038
 app:request_declined_and_blocked  c8b8ff9ee2e5
-app:request_declined_block_failed_body  7befd62236bf
+app:request_declined_block_failed_body  773038122a21
 app:request_declined_block_failed_title  c20fdf673329
 app:request_downloads  37b345555d7e
 app:request_edit_save  dd0ae7a5cbcf
@@ -370,7 +370,7 @@ app:request_remove_files_stay  48b7910ad559
 app:request_remove_files_stay_delete  740f3dc67f88
 app:request_removed  1f55775c6ffc
 app:request_removed_and_blocked  efcbe6fcadf9
-app:request_removed_block_failed_body  6f6ad0684b44
+app:request_removed_block_failed_body  3fed42ed5f20
 app:request_removed_block_failed_title  55371ebb0f56
 app:request_requested_by  9199a054972b
 app:request_retried  14fef0857e6c

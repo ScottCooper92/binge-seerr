@@ -234,11 +234,11 @@
     <string name="request_declined">Petición rechazada</string>
     <string name="request_declined_and_blocked">Petición rechazada y título bloqueado</string>
     <string name="request_declined_block_failed_title">Rechazada, sin bloquear</string>
-    <string name="request_declined_block_failed_body">La petición se rechazó, pero el servidor no quiso bloquear el título. Vuelve a intentar bloquearlo desde las acciones de la petición.</string>
+    <string name="request_declined_block_failed_body">La petición se rechazó, pero el servidor no quiso bloquear el título. Puedes bloquearlo desde el cliente web del servidor.</string>
     <string name="request_removed">Petición eliminada</string>
     <string name="request_removed_and_blocked">Petición eliminada y título bloqueado</string>
     <string name="request_removed_block_failed_title">Eliminada, sin bloquear</string>
-    <string name="request_removed_block_failed_body">La petición se eliminó, pero el servidor no quiso bloquear el título. Vuelve a intentar bloquearlo desde la página del título.</string>
+    <string name="request_removed_block_failed_body">La petición se eliminó, pero el servidor no quiso bloquear el título. Puedes bloquearlo desde el cliente web del servidor.</string>
     <string name="request_action_failed">No se pudo actualizar la petición. Inténtalo de nuevo.</string>
     <string name="issue_report_title">Informar de una incidencia</string>
     <string name="issue_report_message">¿Qué falla?</string>
