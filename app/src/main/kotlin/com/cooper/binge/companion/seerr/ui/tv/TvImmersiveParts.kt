@@ -19,6 +19,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -52,6 +53,7 @@ import com.binge.designsystem.tv.template.TvPageHosting
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.ui.state.messageRes
+import kotlinx.coroutines.delay
 
 private const val POSTER_ASPECT_RATIO = 2f / 3f
 private const val CHIP_SCRIM_ALPHA = 0.7f
@@ -283,4 +285,29 @@ internal fun <T : Any> TvPagedGridScreen(
 @Composable
 internal fun TvHubLoading(modifier: Modifier = Modifier) {
     TvImmersiveHubSkeleton(modifier = modifier, description = stringResource(R.string.tv_loading))
+}
+
+/** How long a hub holds its loading page for rows that have nothing yet, before it shows what it has. */
+internal const val TV_ROWS_REVEAL_TIMEOUT_MS = 4_000L
+
+/** A row with nothing to show and a load in flight: it may yet hold items, or turn out empty. */
+internal fun TvPagedRows<*>.isUnresolved(): Boolean = count == 0 && refresh is TvLoadPhase.Loading
+
+/**
+ * Whether a hub may show its rows: false until every row has items, or has finished loading (empty or failed), or
+ * [TV_ROWS_REVEAL_TIMEOUT_MS] has passed. Rows that arrive one by one would otherwise lay out above the card focus had
+ * already landed on, leaving the user several rows down. Rows with items cached count as settled, so a
+ * return visit does not wait. Once true it stays true: a later refresh never brings the loading page back.
+ */
+@Composable
+internal fun rememberRowsRevealed(rows: List<TvPagedRows<*>>): Boolean {
+    var revealed by rememberSaveable { mutableStateOf(false) }
+    if (!revealed && rows.none { it.isUnresolved() }) revealed = true
+    if (!revealed) {
+        LaunchedEffect(Unit) {
+            delay(TV_ROWS_REVEAL_TIMEOUT_MS)
+            revealed = true
+        }
+    }
+    return revealed
 }

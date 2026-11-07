@@ -36,6 +36,7 @@ import com.cooper.binge.companion.seerr.ui.tv.TvPagedRows
 import com.cooper.binge.companion.seerr.ui.tv.TvPosterCard
 import com.cooper.binge.companion.seerr.ui.tv.TvRowsFallback
 import com.cooper.binge.companion.seerr.ui.tv.hubFailure
+import com.cooper.binge.companion.seerr.ui.tv.rememberRowsRevealed
 import com.cooper.binge.companion.seerr.ui.tv.tvColor
 import com.binge.designsystem.tv.R as TvR
 import com.cooper.binge.companion.seerr.ui.requests.labelRes as mediaTypeLabelRes
@@ -105,6 +106,10 @@ private fun TvIssuesRows(
     now: Long,
 ) {
     val perFilter = IssueRowFilters.map { it to rowsFor(it) }
+    if (!rememberRowsRevealed(perFilter.map { it.second })) {
+        TvHubLoading()
+        return
+    }
     if (perFilter.none { (_, rows) -> rows.count > 0 }) {
         TvRowsFallback(
             rows = perFilter.map { it.second },
