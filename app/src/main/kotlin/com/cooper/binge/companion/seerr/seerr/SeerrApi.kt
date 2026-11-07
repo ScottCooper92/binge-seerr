@@ -1,5 +1,6 @@
 package com.cooper.binge.companion.seerr.seerr
 
+import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import retrofit2.Response
 import retrofit2.http.Body
@@ -597,7 +598,7 @@ interface SeerrApi {
     /** Replaces the whole list: the order, and each slider's enabled state. */
     @POST("api/v1/settings/discover")
     suspend fun updateDiscoverSliders(
-        @Body body: List<SeerrDiscoverSliderDto>,
+        @Body body: JsonArray,
     ): List<SeerrDiscoverSliderDto>
 
     @POST("api/v1/settings/discover/add")

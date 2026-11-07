@@ -4,6 +4,10 @@ import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 
 /**
  * One discover slider (`settings/discover`): the web client's Discover row, built-in or the
@@ -20,6 +24,26 @@ data class SeerrDiscoverSliderDto(
     @EncodeDefault @SerialName("enabled") val enabled: Boolean = true,
     @SerialName("data") val data: String? = null,
 )
+
+/**
+ * The body `POST settings/discover` takes: every slider with all of its keys. The client drops a null field, but Seerr 3.5.1
+ * rejects a built-in slider (which has no title) unless `title` is there as null, so this list is built by hand.
+ */
+fun List<SeerrDiscoverSliderDto>.toWireBody(): JsonArray =
+    JsonArray(
+        map { slider ->
+            JsonObject(
+                buildMap {
+                    slider.id?.let { put("id", JsonPrimitive(it)) }
+                    put("type", JsonPrimitive(slider.type))
+                    put("title", slider.title?.let(::JsonPrimitive) ?: JsonNull)
+                    put("isBuiltIn", JsonPrimitive(slider.isBuiltIn))
+                    put("enabled", JsonPrimitive(slider.enabled))
+                    put("data", slider.data?.let(::JsonPrimitive) ?: JsonNull)
+                },
+            )
+        },
+    )
 
 /** `POST settings/discover/add` and `PUT settings/discover/{id}`: a custom slider's title, type and data. */
 @Serializable
