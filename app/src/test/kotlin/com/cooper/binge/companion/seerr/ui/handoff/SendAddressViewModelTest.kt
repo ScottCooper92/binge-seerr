@@ -41,6 +41,8 @@ import org.junit.Assert.fail
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
+import org.junit.rules.Timeout
+import java.util.concurrent.TimeUnit
 
 private const val TOKEN = "k7m2pqx4"
 private const val MAX_CLOCK_STEPS = 400
@@ -54,6 +56,15 @@ private const val LINK = "seerr-companion://tv-handoff?to=192.168.86.53:41234&to
  * of the session — only when asked to.
  */
 class SendAddressViewModelTest {
+    // Diagnostic for #1837: a hang fails after two minutes with the stuck thread's stack, instead of eating the job.
+    @get:Rule(order = 0)
+    val hangDump: Timeout =
+        Timeout
+            .builder()
+            .withTimeout(2, TimeUnit.MINUTES)
+            .withLookingForStuckThread(true)
+            .build()
+
     @get:Rule
     val folder = TemporaryFolder()
 
