@@ -2,6 +2,7 @@ package com.cooper.binge.companion.seerr.ui.settings.server
 
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.di.IoDispatcher
+import com.cooper.binge.companion.seerr.notifications.ApplicationScope
 import com.cooper.binge.companion.seerr.seerr.ManageablePermission
 import com.cooper.binge.companion.seerr.seerr.SeerrMainSettingsUpdateBody
 import com.cooper.binge.companion.seerr.seerr.permissionScope
@@ -11,6 +12,7 @@ import com.cooper.binge.companion.seerr.ui.users.settings.PermissionSettings
 import com.cooper.binge.companion.seerr.ui.users.settings.lockedFor
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import javax.inject.Inject
@@ -26,7 +28,14 @@ class DefaultPermissionsViewModel
     constructor(
         private val connection: SeerrConnection,
         @IoDispatcher dispatcher: CoroutineDispatcher,
+        @ApplicationScope appScope: CoroutineScope,
     ) : EditorViewModel<PermissionSettings>(dispatcher) {
+        /**
+         * The page saves as it changes, as a user's own permissions do (#930): its screen hides Save, so without this a
+         * switch moved on it was never sent (#1877).
+         */
+        override val saveAsMadeScope: CoroutineScope = appScope
+
         init {
             reload()
         }
