@@ -16,7 +16,7 @@ import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
-import com.binge.designsystem.tv.component.TvButton
+import com.binge.designsystem.tv.component.TvCompactButton
 import com.binge.designsystem.tv.component.TvTabRow
 import com.binge.designsystem.tv.component.TvTabUi
 import com.binge.designsystem.tv.component.TvTextField
@@ -152,7 +152,7 @@ private fun TvSetupSignInStep(
                 TvChangeServerButton(actions, leads = !typing && onScan == null, arrival = arrival.takeIf { !typing && onScan == null })
                 // Leaving the server altogether is only offered where the app put this page up for a session the server rejected.
                 actions.onDisconnect?.let { disconnect ->
-                    TvButton(label = stringResource(R.string.hub_disconnect), onClick = disconnect, style = TvButtonStyle.TextDestructive)
+                    TvCompactButton(label = stringResource(R.string.hub_disconnect), onClick = disconnect, style = TvButtonStyle.TextDestructive)
                 }
             }
         },
@@ -249,7 +249,7 @@ private fun TvChangeServerButton(
     leads: Boolean,
     arrival: TvArrivalFocus?,
 ) {
-    TvButton(
+    TvCompactButton(
         label = stringResource(R.string.setup_change_server),
         onClick = actions.onChangeServer,
         style = if (leads) TvButtonStyle.Primary else TvButtonStyle.TextDestructive,
