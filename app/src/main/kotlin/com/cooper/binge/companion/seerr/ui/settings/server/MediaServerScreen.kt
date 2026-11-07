@@ -19,9 +19,16 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
+import com.binge.designsystem.component.BingeMessageDialog
 import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.component.ListItemDestination
@@ -39,6 +46,7 @@ import com.cooper.binge.companion.seerr.ui.users.settings.editorToggle
 import com.cooper.binge.companion.seerr.ui.users.settings.textSettingItem
 import com.cooper.binge.companion.seerr.ui.users.settings.toEditorUiState
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.filterNot
 import com.binge.designsystem.R as DesR
 
 /** What the page does beside the form: the libraries, the scan, the Plex picker, and the way to Tautulli. */
@@ -65,11 +73,16 @@ fun MediaServerScreen(
     actions: EditorActions<MediaServerForm>,
     serverActions: MediaServerActions,
 ) {
+    var unreachable by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(events) {
+        events.collect { event -> if (event is EditorEvent.Failed && event.messageRes != null) unreachable = true }
+    }
+    val snackbarEvents = remember(events) { events.filterNot { it is EditorEvent.Failed && it.messageRes != null } }
     val extras = (state as? ExtrasEditorUiState.Ready<MediaServerForm, MediaServerExtras>)?.extras ?: MediaServerExtras()
     EditorPage(
         title = stringResource(R.string.server_settings_media_server),
         state = state.toEditorUiState(),
-        events = events,
+        events = snackbarEvents,
         actions = actions,
         canSave = { it.valid },
         footerCommit = true,
@@ -98,6 +111,14 @@ fun MediaServerScreen(
         }
     }
     extras.picker?.let { picker -> PlexServerSheet(picker, serverActions) }
+    // A cause and a next step, so a dialog the user acknowledges rather than a snackbar that goes away by itself.
+    if (unreachable) {
+        BingeMessageDialog(
+            title = stringResource(R.string.server_settings_media_server_unreachable_title),
+            message = stringResource(R.string.server_settings_media_server_unreachable),
+            onDismiss = { unreachable = false },
+        )
+    }
 }
 
 /** How the server is reached, and the links users are sent to, in the web client's field order. */
