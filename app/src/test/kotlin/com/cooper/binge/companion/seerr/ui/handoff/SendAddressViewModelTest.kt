@@ -22,9 +22,7 @@ import com.cooper.binge.companion.seerr.util.InMemoryDataStore
 import com.cooper.binge.companion.seerr.util.MainDispatcherRule
 import com.cooper.binge.companion.seerr.util.PlainCipher
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
@@ -157,22 +155,28 @@ class SendAddressViewModelTest {
             )
         viewModels.put(vm.hashCode().toString(), vm)
         if (enterPin) TvHandOffLinks.parse(link)?.key?.let { vm.enterPin(it.pin()) }
-        // Cleared when the test body ends, before the virtual clock is run out: a poll left running would turn it for ever.
-        backgroundScope.launch {
+        return vm
+    }
+
+    /**
+     * [runTest] that clears every ViewModel when the body ends, before the virtual clock is run out: a poll left running would
+     * turn it for ever. The clearing is the body's own `finally`, not a hook on [TestScope.backgroundScope], whose cancellation
+     * is not ordered ahead of that drain (#1837).
+     */
+    private fun runViewModelTest(body: suspend TestScope.() -> Unit) =
+        runTest {
             try {
-                awaitCancellation()
+                body()
             } finally {
                 viewModels.clear()
             }
         }
-        return vm
-    }
 
     private suspend fun SendAddressViewModel.settled(): SendAddressUiState = uiState.first { it != SendAddressUiState.Loading }
 
     @Test
     fun `a link to a public address, a name or this phone is refused, and nothing is sent`() =
-        runTest {
+        runViewModelTest {
             val saved = SeerrCredentials("http://seerr.lan:5055/", SeerrAuth.ApiKey("secret"))
             listOf(
                 "seerr-companion://tv-handoff?to=8.8.8.8:80&token=$TOKEN",
@@ -188,13 +192,13 @@ class SendAddressViewModelTest {
 
     @Test
     fun `a phone with no server says there is nothing to send`() =
-        runTest {
+        runViewModelTest {
             assertEquals(SendAddressUiState.NotConnected, viewModel(LINK).settled())
         }
 
     @Test
     fun `the confirmation names the address and the TV, and sends only the address`() =
-        runTest {
+        runViewModelTest {
             val saved = SeerrCredentials("http://admin:hunter2@seerr.lan:5055/?x=1#y", SeerrAuth.ApiKey("secret-key"))
             val vm = viewModel(LINK, saved)
 
@@ -214,7 +218,7 @@ class SendAddressViewModelTest {
 
     @Test
     fun `a TV that does not take it says so, and the user can try again`() =
-        runTest {
+        runViewModelTest {
             val vm = viewModel(LINK, SeerrCredentials("https://seerr.example.com/", SeerrAuth.ApiKey("k")))
             vm.settled()
             sender.accept = CompletableDeferred()
@@ -235,7 +239,7 @@ class SendAddressViewModelTest {
 
     @Test
     fun `the field starts with a local Application URL, and the phone's own address is a suggestion`() =
-        runTest {
+        runViewModelTest {
             val vm = viewModel(LINK, SeerrCredentials("https://seerr.example.com/", SeerrAuth.ApiKey("k")), "http://192.168.1.10:5055")
 
             val ready = vm.settled() as SendAddressUiState.Ready
@@ -246,7 +250,7 @@ class SendAddressViewModelTest {
 
     @Test
     fun `an Application URL that is the phone's own address is not offered twice`() =
-        runTest {
+        runViewModelTest {
             val vm = viewModel(LINK, SeerrCredentials("http://192.168.1.10:5055/", SeerrAuth.ApiKey("k")), "HTTP://192.168.1.10:5055")
 
             val ready = vm.settled() as SendAddressUiState.Ready
@@ -256,7 +260,7 @@ class SendAddressViewModelTest {
 
     @Test
     fun `editing the field re-reads it, and a suggestion fills it`() =
-        runTest {
+        runViewModelTest {
             val vm = viewModel(LINK, SeerrCredentials("http://100.101.102.103:5055/", SeerrAuth.ApiKey("k")), "https://seerr.example.com")
             val ready = vm.settled() as SendAddressUiState.Ready
             assertEquals("https://seerr.example.com/", ready.address)
@@ -277,7 +281,7 @@ class SendAddressViewModelTest {
 
     @Test
     fun `an entry that is not an address is flagged and cannot be sent, and a blank one cannot either`() =
-        runTest {
+        runViewModelTest {
             val vm = viewModel(LINK, SeerrCredentials("http://192.168.1.10:5055/", SeerrAuth.ApiKey("k")))
             vm.settled()
 
@@ -298,7 +302,7 @@ class SendAddressViewModelTest {
 
     @Test
     fun `a typed address is sent only on the tap, and comes first next time`() =
-        runTest {
+        runViewModelTest {
             val saved = SeerrCredentials("http://100.101.102.103:5055/", SeerrAuth.ApiKey("k"))
             val vm = viewModel(LINK, saved)
             vm.settled()
@@ -319,7 +323,7 @@ class SendAddressViewModelTest {
 
     @Test
     fun `the server's own addresses are not remembered, and neither is one the TV refused`() =
-        runTest {
+        runViewModelTest {
             val saved = SeerrCredentials("http://192.168.1.10:5055/", SeerrAuth.ApiKey("k"))
             val vm = viewModel(LINK, saved, applicationUrl = "https://seerr.example.com")
             vm.settled()
@@ -347,7 +351,7 @@ class SendAddressViewModelTest {
 
     @Test
     fun `a typed address and a link without a key end at Sent, as before`() =
-        runTest {
+        runViewModelTest {
             val vm = viewModel(LINK, SeerrCredentials("http://seerr.lan:5055/", SeerrAuth.ApiKey("k")))
             vm.settled()
 
@@ -358,7 +362,7 @@ class SendAddressViewModelTest {
 
     @Test
     fun `a scanned code takes a phone with no server to the address field, empty`() =
-        runTest {
+        runViewModelTest {
             val ready = viewModel(scannedLink).settled() as SendAddressUiState.Ready
 
             assertEquals("", ready.address)
@@ -368,7 +372,7 @@ class SendAddressViewModelTest {
 
     @Test
     fun `after the address the sheet follows the TV to its sign-in form, and sends what is typed, sealed by the client`() =
-        runTest {
+        runViewModelTest {
             tv.statuses =
                 mutableListOf(
                     HandOffStatus(HandOffStatus.CHECKING),
@@ -397,7 +401,7 @@ class SendAddressViewModelTest {
 
     @Test
     fun `a TV signing in to another address than the one sent gets nothing more, and the sheet says why`() =
-        runTest {
+        runViewModelTest {
             tv.statuses =
                 mutableListOf(
                     HandOffStatus(HandOffStatus.WAITING),
@@ -418,7 +422,7 @@ class SendAddressViewModelTest {
 
     @Test
     fun `the same server written another way is not a redirect`() =
-        runTest {
+        runViewModelTest {
             tv.statuses =
                 mutableListOf(
                     HandOffStatus(HandOffStatus.WAITING),
@@ -441,7 +445,7 @@ class SendAddressViewModelTest {
 
     @Test
     fun `with the switch on, the phone's session goes with the address, sealed for this TV, and is marked shared`() =
-        runTest {
+        runViewModelTest {
             val key = HandOffKey.generate()
             // Waiting when the sheet opens; checking once the address is in.
             tv.statuses = mutableListOf(HandOffStatus(HandOffStatus.WAITING), HandOffStatus(HandOffStatus.CHECKING))
@@ -474,7 +478,7 @@ class SendAddressViewModelTest {
 
     @Test
     fun `a link a web page could have fired never offers the session, however it is dressed`() =
-        runTest {
+        runViewModelTest {
             val saved = SeerrCredentials("http://seerr.lan:5055/", SeerrAuth.Session("s1d", 4))
             val ready = viewModel(scannedLink, saved).settled() as SendAddressUiState.Ready
             assertEquals(null, ready.signIn)
@@ -492,7 +496,7 @@ class SendAddressViewModelTest {
 
     @Test
     fun `with the switch off, or an API key connection, nothing of the session is sent or offered`() =
-        runTest {
+        runViewModelTest {
             val key = HandOffKey.generate()
             val link = "$LINK&k=${key.encoded()}"
             val off = viewModel(link, SeerrCredentials("http://seerr.lan:5055/", SeerrAuth.Session("s1d", 4)), scanned = true)
@@ -512,7 +516,7 @@ class SendAddressViewModelTest {
 
     @Test
     fun `a TV already on its sign-in step skips the address and offers the session as one tap`() =
-        runTest {
+        runViewModelTest {
             tv.statuses = mutableListOf(HandOffStatus(HandOffStatus.SIGN_IN, "Living room", listOf("Local")))
             val vm = viewModel(scannedLink, SeerrCredentials("http://seerr.lan:5055/", SeerrAuth.Session("s1d", 4)), scanned = true)
 
@@ -563,7 +567,7 @@ class SendAddressViewModelTest {
 
     @Test
     fun `the same server by another address is offered the session, after a confirm naming the TV's address`() =
-        runTest {
+        runViewModelTest {
             tvOn("http://192.168.1.5:5055/", serverId = "abc")
             val vm = viewModel(scannedLink, tailnet, phoneServerId = "abc", scanned = true)
 
@@ -581,7 +585,7 @@ class SendAddressViewModelTest {
 
     @Test
     fun `a session to an address that is not the phone's own never seals without the confirm`() =
-        runTest {
+        runViewModelTest {
             tvOn("http://192.168.1.5:5055/", serverId = "abc")
             val vm = viewModel(scannedLink, tailnet, phoneServerId = "abc", scanned = true)
             vm.form()
@@ -600,7 +604,7 @@ class SendAddressViewModelTest {
 
     @Test
     fun `a yes seals only for the address the confirm named, and a TV that moved on is offered again at its new one`() =
-        runTest {
+        runViewModelTest {
             tvOn("http://192.168.1.5:5055/", serverId = "abc")
             val vm = viewModel(scannedLink, tailnet, phoneServerId = "abc", scanned = true)
             vm.form()
@@ -626,7 +630,7 @@ class SendAddressViewModelTest {
 
     @Test
     fun `a TV that moved on to a server with another id is not offered the session again`() =
-        runTest {
+        runViewModelTest {
             tvOn("http://192.168.1.5:5055/", serverId = "abc")
             val vm = viewModel(scannedLink, tailnet, phoneServerId = "abc", scanned = true)
             vm.form()
@@ -642,7 +646,7 @@ class SendAddressViewModelTest {
 
     @Test
     fun `a TV that moves to a server with another id before the tap is offered nothing and sealed nothing`() =
-        runTest {
+        runViewModelTest {
             tvOn("http://192.168.1.5:5055/", serverId = "abc")
             val vm = viewModel(scannedLink, tailnet, phoneServerId = "abc", scanned = true)
             vm.form()
@@ -659,7 +663,7 @@ class SendAddressViewModelTest {
 
     @Test
     fun `a TV that moves from the phone's own address to the same server elsewhere is asked about first`() =
-        runTest {
+        runViewModelTest {
             tvOn("http://seerr.lan:5055/", serverId = "abc")
             val vm =
                 viewModel(
@@ -680,7 +684,7 @@ class SendAddressViewModelTest {
 
     @Test
     fun `a question about the address the TV left is dropped when it moves`() =
-        runTest {
+        runViewModelTest {
             tvOn("http://192.168.1.5:5055/", serverId = "abc")
             val vm = viewModel(scannedLink, tailnet, phoneServerId = "abc", scanned = true)
             vm.form()
@@ -697,7 +701,7 @@ class SendAddressViewModelTest {
 
     @Test
     fun `the same address keeps the one-tap session with no confirm`() =
-        runTest {
+        runViewModelTest {
             tvOn("http://seerr.lan:5055/", serverId = "abc")
             val vm =
                 viewModel(
@@ -715,7 +719,7 @@ class SendAddressViewModelTest {
 
     @Test
     fun `two ids that differ withhold the session, whatever the addresses say`() =
-        runTest {
+        runViewModelTest {
             listOf("http://192.168.1.5:5055/", "http://seerr.lan:5055/").forEach { address ->
                 tvOn(address, serverId = "other")
                 val vm =
@@ -735,7 +739,7 @@ class SendAddressViewModelTest {
 
     @Test
     fun `an id known to one side only leaves the addresses to decide`() =
-        runTest {
+        runViewModelTest {
             tvOn("http://192.168.1.5:5055/", serverId = null)
             assertNull(viewModel(scannedLink, tailnet, phoneServerId = "abc", scanned = true).form().sessionOffer)
 
@@ -745,7 +749,7 @@ class SendAddressViewModelTest {
 
     @Test
     fun `a TV already signing in to some other server is never offered the session`() =
-        runTest {
+        runViewModelTest {
             tv.statuses =
                 mutableListOf(HandOffStatus(HandOffStatus.SIGN_IN, "Living room", listOf("Local"), address = "http://192.168.1.66:5055/"))
             val vm = viewModel(scannedLink, SeerrCredentials("http://seerr.lan:5055/", SeerrAuth.Session("s1d", 4)), scanned = true)
@@ -761,7 +765,7 @@ class SendAddressViewModelTest {
 
     @Test
     fun `the TV saying no brings the form back with its fields, and saying yes ends on Connected`() =
-        runTest {
+        runViewModelTest {
             tv.statuses = mutableListOf(HandOffStatus(HandOffStatus.SIGN_IN, "Home", listOf("Jellyfin")))
             val vm = viewModel(scannedLink, SeerrCredentials("http://seerr.lan:5055/", SeerrAuth.ApiKey("k")))
             vm.settled()
@@ -790,7 +794,7 @@ class SendAddressViewModelTest {
     /** #912: a public plain-HTTP address puts the TV on its opt-in, which is not the TV checking the server. */
     @Test
     fun `a TV asking its user about plain HTTP says so, and the session that went with the address comes back after`() =
-        runTest {
+        runViewModelTest {
             val key = HandOffKey.generate()
             tv.statuses = mutableListOf(HandOffStatus(HandOffStatus.WAITING), HandOffStatus(HandOffStatus.CONFIRM))
             val vm =
@@ -813,7 +817,7 @@ class SendAddressViewModelTest {
     /** The TV can answer the confirm and refuse the session between two polls, so the sheet never sees `checking`. */
     @Test
     fun `a session the TV turns down straight after its confirm is not offered again`() =
-        runTest {
+        runViewModelTest {
             val key = HandOffKey.generate()
             tv.statuses = mutableListOf(HandOffStatus(HandOffStatus.WAITING), HandOffStatus(HandOffStatus.CONFIRM))
             val vm =
@@ -836,7 +840,7 @@ class SendAddressViewModelTest {
 
     @Test
     fun `a TV that goes from its confirm to its sign-in step with no refusal brings a fresh form with the session offer`() =
-        runTest {
+        runViewModelTest {
             val key = HandOffKey.generate()
             tv.statuses = mutableListOf(HandOffStatus(HandOffStatus.WAITING), HandOffStatus(HandOffStatus.CONFIRM))
             val vm =
@@ -859,7 +863,7 @@ class SendAddressViewModelTest {
 
     @Test
     fun `a code scanned while the TV waits on its user carries on there, and sends no address`() =
-        runTest {
+        runViewModelTest {
             tv.statuses = mutableListOf(HandOffStatus(HandOffStatus.CONFIRM))
             val vm = viewModel(scannedLink, SeerrCredentials("http://seerr.lan:5055/", SeerrAuth.ApiKey("k")), scanned = true)
 
@@ -873,7 +877,7 @@ class SendAddressViewModelTest {
     /** Back on the TV from its sign-in step: the form goes too, rather than send to a step the TV has left (#804). */
     @Test
     fun `the TV going back to its address step takes the sheet back to waiting, and its sign-in step brings the form again`() =
-        runTest {
+        runViewModelTest {
             tv.statuses = mutableListOf(HandOffStatus(HandOffStatus.SIGN_IN, "Home", listOf("Jellyfin")))
             val vm = viewModel(scannedLink, SeerrCredentials("http://seerr.lan:5055/", SeerrAuth.ApiKey("k")))
             vm.settled()
@@ -891,7 +895,7 @@ class SendAddressViewModelTest {
 
     @Test
     fun `a failed left over from the last attempt is not the refusal of a retry until the TV has counted the retry`() =
-        runTest {
+        runViewModelTest {
             val stale = HandOffStatus(HandOffStatus.SIGN_IN, "Home", listOf("Jellyfin"), failed = true, attempt = 1)
             tv.statuses = mutableListOf(stale)
             val vm = viewModel(scannedLink, SeerrCredentials("http://seerr.lan:5055/", SeerrAuth.ApiKey("k")))
@@ -919,7 +923,7 @@ class SendAddressViewModelTest {
 
     @Test
     fun `a TV that could not use the address returns the sheet to the field, and one that goes quiet is lost`() =
-        runTest {
+        runViewModelTest {
             tv.statuses = mutableListOf(HandOffStatus(HandOffStatus.FAILED))
             val vm = viewModel(scannedLink, SeerrCredentials("http://seerr.lan:5055/", SeerrAuth.ApiKey("k")))
             vm.settled()
@@ -941,7 +945,7 @@ class SendAddressViewModelTest {
 
     @Test
     fun `a TV that offers only sign-ins finished on its own screen says so, and a refused send shows the form again`() =
-        runTest {
+        runViewModelTest {
             tv.statuses = mutableListOf(HandOffStatus(HandOffStatus.SIGN_IN, "Home", listOf("Plex", "QuickConnect")))
             val onTv = viewModel(scannedLink, SeerrCredentials("http://seerr.lan:5055/", SeerrAuth.ApiKey("k")))
             onTv.settled()
@@ -978,7 +982,7 @@ class SendAddressViewModelTest {
 
     @Test
     fun `a keyed link asks for the TV's PIN before anything, and sends nothing until it matches`() =
-        runTest {
+        runViewModelTest {
             val key = HandOffKey.generate()
             val vm =
                 viewModel("$LINK&k=${key.encoded()}", SeerrCredentials("http://seerr.lan:5055/", SeerrAuth.ApiKey("k")), enterPin = false)
@@ -999,7 +1003,7 @@ class SendAddressViewModelTest {
 
     @Test
     fun `a link without a key has no PIN to ask for`() =
-        runTest {
+        runViewModelTest {
             val vm = viewModel(LINK, SeerrCredentials("http://seerr.lan:5055/", SeerrAuth.ApiKey("k")), enterPin = false)
             assertTrue(vm.settled() is SendAddressUiState.Ready)
         }
