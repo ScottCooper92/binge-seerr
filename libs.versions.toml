@@ -35,7 +35,7 @@ navigation3 = "1.1.7"
 # 1.1.7 above wins the resolution and the scene API it compiles against (androidx.navigation3.scene)
 # is unchanged there. Pinned to the stable line rather than 1.4.0-alpha, which buys nothing here.
 material3Adaptive = "1.3.0"
-kotlinxSerializationJson = "1.11.0"
+kotlinxSerializationJson = "1.12.0"
 retrofit = "3.0.0"
 okhttp = "5.5.1"
 datastore = "1.2.1"
