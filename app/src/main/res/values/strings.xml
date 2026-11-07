@@ -253,10 +253,12 @@
     <string name="media_files_deleted_requests_kept">Files deleted, but the requests could not be removed</string>
     <string name="request_declined">Request declined</string>
     <string name="request_declined_and_blocked">Request declined and title blocked</string>
-    <string name="request_declined_block_failed">Declined, but the title could not be blocked</string>
+    <string name="request_declined_block_failed_title">Declined, not blocked</string>
+    <string name="request_declined_block_failed_body">The request was declined, but the server would not block the title. You can block it from the server\'s web client.</string>
     <string name="request_removed">Request removed</string>
     <string name="request_removed_and_blocked">Request removed and title blocked</string>
-    <string name="request_removed_block_failed">Removed, but the title could not be blocked</string>
+    <string name="request_removed_block_failed_title">Removed, not blocked</string>
+    <string name="request_removed_block_failed_body">The request was removed, but the server would not block the title. You can block it from the server\'s web client.</string>
     <string name="request_action_failed">The request could not be updated. Try again.</string>
     <string name="issue_report_title">Report an issue</string>
     <string name="issue_report_message">What is wrong?</string>
@@ -350,7 +352,7 @@
     <string name="users_import_select_none">Clear</string>
     <string name="users_import_empty">Every account is already here.</string>
     <string name="users_import_failed">The accounts could not be read from the media server.</string>
-    <string name="users_imported_none">Nothing new to import; the existing accounts were refreshed.</string>
+    <string name="users_imported_none">Nothing new to import.</string>
     <plurals name="users_import_submit">
         <item quantity="one">Import %1$d user</item>
         <item quantity="other">Import %1$d users</item>
@@ -918,7 +920,6 @@
     <string name="hub_local_network_headline">Local network access is off</string>
     <string name="hub_local_network_body">Android is blocking this app from reaching your server on your local network. Allow local network access and it will reconnect.</string>
     <string name="hub_unauthorized_headline">Reconnect needed</string>
-    <string name="hub_unauthorized_body">The server rejected the saved sign-in. Sign in again to carry on.</string>
     <string name="hub_couldnt_load_headline">Still connecting…</string>
     <string name="hub_couldnt_load_body">The server answered but the dashboard could not load yet. This can happen on first launch while the connection settles. Retrying automatically.</string>
 

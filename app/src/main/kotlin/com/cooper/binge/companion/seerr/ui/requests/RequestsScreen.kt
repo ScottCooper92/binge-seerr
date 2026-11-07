@@ -29,8 +29,10 @@ import com.binge.designsystem.component.showSnackbar
 import com.binge.designsystem.template.FilteredListScreen
 import com.binge.designsystem.template.ScreenBar
 import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.ui.state.DialogMessage
 import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
 import com.cooper.binge.companion.seerr.ui.state.LoadingScreen
+import com.cooper.binge.companion.seerr.ui.state.MessageDialogHost
 import com.cooper.binge.companion.seerr.ui.state.SortSheet
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
@@ -191,15 +193,25 @@ private fun RequestsPage(
     )
 }
 
-/** Each moderation outcome as a snackbar, but for one shown in place; a newer one supersedes the one still showing. */
+/**
+ * Each moderation outcome as a snackbar, but for one shown in place; a newer one supersedes the one still showing.
+ * An outcome that explains a cause and a next step is a dialog instead (see [ModerationEvent.dialogMessage]).
+ */
 @Composable
 internal fun ModerationSnackbarEffect(
     events: Flow<ModerationEvent>,
     snackbarHostState: SnackbarHostState,
 ) {
     val resources = LocalResources.current
+    var dialog by remember { mutableStateOf<DialogMessage?>(null) }
+    MessageDialogHost(dialog) { dialog = null }
     LaunchedEffect(events) {
         events.collectLatest { event ->
+            event.dialogMessage(resources)?.let {
+                snackbarHostState.currentSnackbarData?.dismiss()
+                dialog = it
+                return@collectLatest
+            }
             val message = event.messageRes() ?: return@collectLatest
             snackbarHostState.currentSnackbarData?.dismiss()
             snackbarHostState.showSnackbar(

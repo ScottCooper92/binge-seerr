@@ -37,9 +37,13 @@ import com.binge.designsystem.template.ScreenBar
 import com.binge.designsystem.template.formSaveStatus
 import com.binge.designsystem.theme.BingeShapes
 import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.ui.state.DialogMessage
 import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
 import com.cooper.binge.companion.seerr.ui.state.LoadingScreen
+import com.cooper.binge.companion.seerr.ui.state.MessageDialogHost
+import com.cooper.binge.companion.seerr.ui.state.dialogMessage
 import com.cooper.binge.companion.seerr.ui.state.messageRes
+import com.cooper.binge.companion.seerr.ui.state.needsDialog
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
 import com.binge.designsystem.R as DesR
@@ -227,25 +231,41 @@ internal fun DiscardChangesDialog(
     )
 }
 
-/** Each editor outcome as a snackbar; a newer one supersedes the one still showing. */
+/**
+ * Each editor outcome as a snackbar; a newer one supersedes the one still showing. A refusal the server explained, a rejected
+ * sign-in and a blocked local network are dialogs: the user must read them to act.
+ */
 @Composable
 internal fun EditorEventSnackbarEffect(
     events: Flow<EditorEvent>,
     snackbarHostState: SnackbarHostState,
 ) {
     val resources = LocalResources.current
+    var dialog by remember { mutableStateOf<DialogMessage?>(null) }
+    MessageDialogHost(dialog) { dialog = null }
     LaunchedEffect(events) {
         events.collectLatest { event ->
             snackbarHostState.currentSnackbarData?.dismiss()
+            if (event is EditorEvent.Failed) {
+                val detail = event.detail
+                if (detail != null) {
+                    dialog =
+                        DialogMessage(
+                            resources.getString(R.string.state_error_rejected_title),
+                            resources.getString(R.string.state_error_rejected_detail, detail),
+                        )
+                    return@collectLatest
+                }
+                if (event.error.needsDialog()) {
+                    dialog = event.error.dialogMessage(resources)
+                    return@collectLatest
+                }
+            }
             when (event) {
                 EditorEvent.Saved ->
                     snackbarHostState.showSnackbar(resources.getString(R.string.user_settings_saved), SnackbarMessageKind.Confirmation)
                 is EditorEvent.Failed ->
-                    snackbarHostState.showSnackbar(
-                        event.detail?.let { resources.getString(R.string.state_error_rejected_detail, it) }
-                            ?: resources.getString(event.error.messageRes()),
-                        SnackbarMessageKind.Error,
-                    )
+                    snackbarHostState.showSnackbar(resources.getString(event.error.messageRes()), SnackbarMessageKind.Error)
                 is EditorEvent.Notice ->
                     snackbarHostState.showSnackbar(resources.getString(event.messageRes), SnackbarMessageKind.Confirmation)
                 is EditorEvent.Undoable -> {
