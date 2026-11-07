@@ -43,7 +43,11 @@ internal fun DvrInstanceEntry(
     )
 }
 
-/** The custom slider editor; leaves on its own once the slider is deleted. */
+/**
+ * The custom slider editor; leaves on its own once the slider is deleted, and once a new one is created. A created slider
+ * is edited from the list, where the page opens for it with saving as it changes: this one was opened without an id, and
+ * staying on it would show an Edit page whose edits and Delete go nowhere.
+ */
 @Composable
 internal fun DiscoverSliderEntry(
     id: Int?,
@@ -52,7 +56,7 @@ internal fun DiscoverSliderEntry(
     val viewModel =
         hiltViewModel<DiscoverSliderViewModel, DiscoverSliderViewModel.Factory>(creationCallback = { factory -> factory.create(id) })
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    LeaveOnDeleted(viewModel.events, onBack)
+    LeaveOnDeleted(viewModel.events, onBack, alsoOnSaved = id == null)
     DiscoverSliderScreen(
         state = state,
         events = viewModel.events,
@@ -143,8 +147,13 @@ internal fun OverrideRuleEntry(
 private fun LeaveOnDeleted(
     events: Flow<EditorEvent>,
     onBack: () -> Unit,
+    alsoOnSaved: Boolean = false,
 ) {
     // The current onBack, not the one first composed: a later one may close over a different route.
     val currentOnBack by rememberUpdatedState(onBack)
-    LaunchedEffect(events) { events.collect { event -> if (event == EditorEvent.Deleted) currentOnBack() } }
+    LaunchedEffect(events) {
+        events.collect { event ->
+            if (event == EditorEvent.Deleted || (alsoOnSaved && event == EditorEvent.Saved)) currentOnBack()
+        }
+    }
 }

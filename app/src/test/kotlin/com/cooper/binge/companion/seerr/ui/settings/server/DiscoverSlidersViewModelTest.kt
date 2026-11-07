@@ -16,6 +16,7 @@ import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -110,6 +111,9 @@ class DiscoverSlidersViewModelTest {
             assertEquals("10051,9882", sent[0].getValue("data").jsonPrimitive.content)
             assertEquals("99", sent[3].getValue("type").jsonPrimitive.content)
             assertEquals("true", sent[3].getValue("isBuiltIn").jsonPrimitive.content)
+            // Seerr 3.5.1 refuses a built-in slider whose title key is missing: it must go as an explicit null (#1876).
+            assertEquals(JsonNull, sent[1].getValue("title"))
+            assertEquals(JsonNull, sent[1].getValue("data"))
         }
 
     @Test
