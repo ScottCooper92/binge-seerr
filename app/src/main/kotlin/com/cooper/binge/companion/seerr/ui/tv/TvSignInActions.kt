@@ -9,7 +9,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.DISABLED_ALPHA
-import com.binge.designsystem.tv.component.TvButton
+import com.binge.designsystem.tv.component.TvCompactButton
 import com.binge.designsystem.tv.theme.TvButtonStyle
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.seerr.SeerrSignInMode
@@ -39,7 +39,7 @@ internal fun TvSignInActions(
         TvSignInCommit(state, actions, state.canCommit, initialFocus)
         if (state.form.mode == SeerrSignInMode.Local && state.server.canResetPassword) {
             val canReset = state.form.canRequestReset && !state.isConnecting && state.link == null && !state.resetCoolingDown
-            TvButton(
+            TvCompactButton(
                 label = stringResource(R.string.setup_forgot_password),
                 onClick = actions.onRequestPasswordReset,
                 style = TvButtonStyle.Secondary,
@@ -65,7 +65,7 @@ private fun TvSignInCommit(
             state.form.mode in CodeModes -> R.string.action_try_again
             else -> state.form.mode.submitLabelRes()
         }
-    TvButton(
+    TvCompactButton(
         label = stringResource(label),
         onClick = actions.onConnect,
         style = TvButtonStyle.Primary,

@@ -9,7 +9,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
-import com.binge.designsystem.tv.component.TvButton
+import com.binge.designsystem.tv.component.TvCompactButton
 import com.binge.designsystem.tv.template.TvTwoPaneCopy
 import com.binge.designsystem.tv.theme.TvButtonStyle
 import com.cooper.binge.companion.seerr.R
@@ -28,5 +28,10 @@ internal fun ColumnScope.TvDemoContent(
         alignment = Alignment.CenterHorizontally,
         modifier = Modifier.width(dimensionResource(R.dimen.tv_form_field_width)),
     )
-    TvButton(label = stringResource(R.string.setup_try_demo), onClick = actions.onTryDemo, style = TvButtonStyle.Primary, enabled = enabled)
+    TvCompactButton(
+        label = stringResource(R.string.setup_try_demo),
+        onClick = actions.onTryDemo,
+        style = TvButtonStyle.Primary,
+        enabled = enabled,
+    )
 }

@@ -10,7 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.template.ScreenAction
-import com.binge.designsystem.tv.component.TvButton
+import com.binge.designsystem.tv.component.TvCompactButton
 import com.binge.designsystem.tv.component.TvOptionGroup
 import com.binge.designsystem.tv.focus.TvArrivalFocusEffect
 import com.binge.designsystem.tv.focus.rememberTvArrivalFocus
@@ -108,14 +108,14 @@ private fun TvOptionsForm(
         // Stacked, not side by side: ↓ from the last option row would otherwise land on whichever button sits
         // nearer the row's centre, and a walk down a column of rows should end on Request.
         Column(verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s))) {
-            TvButton(
+            TvCompactButton(
                 label = stringResource(if (state.isSubmitting) R.string.tv_advanced_submitting else R.string.advanced_submit),
                 onClick = actions.onSubmit,
                 style = TvButtonStyle.Primary,
                 enabled = state.canSubmit,
                 initiallyFocused = initialSubmitFocused,
             )
-            TvButton(label = stringResource(R.string.advanced_close), onClick = actions.onClose)
+            TvCompactButton(label = stringResource(R.string.advanced_close), onClick = actions.onClose)
         }
     }
 }

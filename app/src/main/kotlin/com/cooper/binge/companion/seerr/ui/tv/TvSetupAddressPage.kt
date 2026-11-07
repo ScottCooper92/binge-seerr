@@ -22,8 +22,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.Constraints
 import com.binge.companion.sdk.attempt
-import com.binge.designsystem.tv.component.TvButton
 import com.binge.designsystem.tv.component.TvCheckboxRow
+import com.binge.designsystem.tv.component.TvCompactButton
 import com.binge.designsystem.tv.component.TvTabRow
 import com.binge.designsystem.tv.component.TvTabUi
 import com.binge.designsystem.tv.component.TvTextField
@@ -162,7 +162,7 @@ private fun ColumnScope.TvSetupAddressFields(
     // The way on sits centred under the field it acts on, as a button with a word on it.
     Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
         if (allow != null) {
-            TvButton(
+            TvCompactButton(
                 label = stringResource(allow.shortLabel),
                 onClick = allow.run,
                 style = TvButtonStyle.Primary,
@@ -184,7 +184,7 @@ private fun TvContinueButton(
     initialFocus: TvSetupFocus?,
     modifier: Modifier,
 ) {
-    TvButton(
+    TvCompactButton(
         label = stringResource(if (state.isInspecting) R.string.tv_setup_checking else R.string.setup_continue),
         onClick = actions.onInspect,
         style = TvButtonStyle.Primary,
