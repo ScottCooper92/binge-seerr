@@ -181,6 +181,9 @@ class DvrInstanceViewModelTest {
             assertEquals("false", sent.getValue("useSsl").jsonPrimitive.content)
             assertEquals("false", sent.getValue("isDefault").jsonPrimitive.content)
             assertNull(sent["seriesType"])
+            // A blank URL goes as the empty string the server holds, not as a missing field (#1881).
+            assertEquals("", sent.getValue("baseUrl").jsonPrimitive.content)
+            assertEquals("", sent.getValue("externalUrl").jsonPrimitive.content)
             val ready = vm.awaitReady()
             assertEquals(7, ready.saved.id)
             assertFalse(ready.dirty)

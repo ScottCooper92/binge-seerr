@@ -203,6 +203,16 @@ internal fun Throwable.userFacingRefusal(code: Status.Code): UserFacingRefusal? 
 internal fun Throwable.isNoDefaultServerRefusal(): Boolean =
     this is HttpException && code() == HTTP_CONFLICT && peekedBody().contains("server configured to delete media files", ignoreCase = true)
 
+/**
+ * Seerr's answer when the media server it was asked to test or save cannot be reached at the address it was given: a 502
+ * whose body names `INVALID_URL` (`POST settings/jellyfin`). The generic "server error" would blame Seerr, so the
+ * media-server page says what to check instead (#1880).
+ */
+fun Throwable.isMediaServerUnreachable(): Boolean =
+    this is HttpException && code() == HTTP_BAD_GATEWAY && peekedBody().contains("INVALID_URL")
+
+private const val HTTP_BAD_GATEWAY = 502
+
 /** The most of a server's `message` a screen shows. */
 const val MAX_DETAIL_CHARS = 160
 

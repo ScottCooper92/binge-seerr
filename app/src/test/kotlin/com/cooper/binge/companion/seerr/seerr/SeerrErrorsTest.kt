@@ -1,6 +1,7 @@
 package com.cooper.binge.companion.seerr.seerr
 
 import com.binge.companion.sdk.attempt
+import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.auth.NotConnectedException
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorEvent
 import io.grpc.Status
@@ -10,6 +11,7 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.ResponseBody.Companion.toResponseBody
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -67,6 +69,14 @@ class SeerrErrorsTest {
     }
 
     /** The one way an editor builds its failure from a throwable, so no call site can leave the reason out (#1841). */
+    @Test
+    fun `a media server that cannot be reached is named, not blamed on the server (#1880)`() {
+        val failed = EditorEvent.Failed.from(http(502, """{"errorMessage":"INVALID_URL","status":502}"""))
+        assertEquals(SeerrError.Server, failed.error)
+        assertEquals(R.string.server_settings_media_server_unreachable, failed.messageRes)
+        assertNull(EditorEvent.Failed.from(http(502)).messageRes)
+    }
+
     @Test
     fun `an editor failure carries the error and, for a rejection, the server's reason`() {
         assertEquals(
