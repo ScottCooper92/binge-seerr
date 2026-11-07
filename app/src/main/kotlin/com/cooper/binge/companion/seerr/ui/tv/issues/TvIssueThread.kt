@@ -28,8 +28,8 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.formatRelativeOrAbsolute
+import com.binge.designsystem.tv.component.TvCompactIconButton
 import com.binge.designsystem.tv.component.TvConfirmDialog
-import com.binge.designsystem.tv.component.TvIconButton
 import com.binge.designsystem.tv.component.TvSaveStatus
 import com.binge.designsystem.tv.component.TvSideSheetNav
 import com.binge.designsystem.tv.component.TvSideSheetRow
@@ -155,7 +155,7 @@ private fun IssueButtons(
     ) {
         if (detail.canResolve) {
             val resolving = detail.item.status == IssueStatus.Open
-            TvIconButton(
+            TvCompactIconButton(
                 icon = if (resolving) Icons.Filled.CheckCircle else Icons.Filled.Refresh,
                 label = stringResource(if (resolving) R.string.issue_action_resolve else R.string.issue_action_reopen),
                 onClick = onToggle,
@@ -166,10 +166,15 @@ private fun IssueButtons(
         }
         val onOpenInMediaServer = actions.onOpenInMediaServer
         if (onOpenInMediaServer != null && openLabel != null) {
-            TvIconButton(icon = Icons.Filled.PlayArrow, label = openLabel, onClick = onOpenInMediaServer, modifier = nav.row(KEY_OPEN))
+            TvCompactIconButton(
+                icon = Icons.Filled.PlayArrow,
+                label = openLabel,
+                onClick = onOpenInMediaServer,
+                modifier = nav.row(KEY_OPEN),
+            )
         }
         actions.onOpenInBinge?.let { open ->
-            TvIconButton(
+            TvCompactIconButton(
                 icon = Icons.AutoMirrored.Filled.OpenInNew,
                 label = stringResource(R.string.request_open_binge),
                 onClick = open,
@@ -177,7 +182,7 @@ private fun IssueButtons(
             )
         }
         if (detail.canDelete) {
-            TvIconButton(
+            TvCompactIconButton(
                 icon = Icons.Filled.Delete,
                 label = stringResource(R.string.issue_delete),
                 onClick = onDelete,
