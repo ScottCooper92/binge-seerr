@@ -41,8 +41,8 @@ label (`app_label`). The name is a maintainer's decision; see the README.
 >
 > **Binge.** Install Binge alongside and this app becomes its request integration: a title page in
 > Binge gains a Request button, Binge shows each title's request state, and an advanced request
-> opens here with the server, profile and folder choices. Binge is optional; everything above
-> works without it.
+> offers the server, profile and folder choices, which Binge shows itself from this app's answers.
+> Binge is optional; everything above works without it.
 >
 > **Android TV.** Home with requests, and Account, Issues and Settings above it, driven from the remote.
 >
