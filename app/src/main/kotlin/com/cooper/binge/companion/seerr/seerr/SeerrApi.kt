@@ -119,7 +119,7 @@ interface SeerrApi {
     @GET("api/v1/service/sonarr")
     suspend fun sonarrServers(): List<SeerrServerDto>
 
-    /** One server's quality profiles and root folders — the advanced-options picker's choices. */
+    /** One server's quality profiles and root folders — the choices behind the advanced-request RPCs and the request editor. */
     @GET("api/v1/service/radarr/{serverId}")
     suspend fun radarrServer(
         @Path("serverId") serverId: Int,

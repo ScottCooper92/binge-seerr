@@ -59,7 +59,7 @@ internal val LocalEditorPageInsets = compositionLocalOf { PaddingValues() }
 
 /**
  * A page's one primary action, anchored in a `bottomBar` slot rather than scrolling away: Discover Sliders' Add,
- * a Permissions page's Save, the Advanced Request hand-off's Request. It is a [BingeActionFooter], rounded and
+ * a Permissions page's Save. It is a [BingeActionFooter], rounded and
  * raised, whose background runs full-bleed behind the gesture nav bar, which
  * [BingeActionFooter.clearsNavigationBar] leaves to the button alone to clear. Named for [EditorPage.bottomBar],
  * but any screen with a `bottomBar` slot of the same shape can use it.
