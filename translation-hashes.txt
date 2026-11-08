@@ -2,19 +2,9 @@
 # pass silently while a translation still carries the old wording. Generated -
 # run ./gradlew updateTranslationHashes after re-reading the translations it names.
 app:action_try_again  d8b8392e2c54
-app:advanced_close  7d9eb7acb13e
-app:advanced_error_no_servers  32fbf90ad3c0
-app:advanced_error_not_connected  0d680abeb96f
-app:advanced_error_rejected  b9aadd9162a8
-app:advanced_error_unknown  f817de456585
-app:advanced_error_unreachable  9b1e57798eee
-app:advanced_intro  ca395a28aa10
-app:advanced_open_setup  06f1795b3ea6
 app:advanced_profile  ad759e52e8aa
 app:advanced_root_folder  6d92528b34e3
 app:advanced_server  aef7de28d529
-app:advanced_submit  59f03d642b41
-app:advanced_title  141004a1a7d0
 app:blocklist_blocked_by  befc4ea207f8
 app:blocklist_collection_blocked  c9e10308d004
 app:blocklist_collection_unblocked  03327b0a424a
@@ -965,7 +955,6 @@ app:tv_account_sign_out  48f0d3d397d4
 app:tv_account_sign_out_message  4035dd486889
 app:tv_account_sign_out_title  c1c084addfcc
 app:tv_account_your_requests  4c64a2a1c581
-app:tv_advanced_submitting  5d7513c4aa39
 app:tv_consent_point_change_title  4a8011b9ca93
 app:tv_consent_reassurance  0fbad9c02c52
 app:tv_detail_approve  6007acbe30b2

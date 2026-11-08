@@ -25,13 +25,8 @@ fun SeerrPermissions.toCapabilities(profile: SeerrServerProfile): Set<Capability
         add(Capability.CAPABILITY_OBSERVE_STATUS)
         add(Capability.CAPABILITY_ATTENTION)
         val settings = profile.settings
-        if (canRequestAdvanced) {
-            // Both capabilities are declared together during rollout: a host that only knows the
-            // older one keeps getting the Activity hand-off, one that knows the new one gets the
-            // native picker. Neither is dropped until the cutover (Binge#2882, scope item 7).
-            add(Capability.CAPABILITY_ADVANCED_OPTIONS)
-            add(Capability.CAPABILITY_ADVANCED_REQUEST_OPTIONS)
-        }
+        // The host renders the picker itself from the three advanced-request RPCs.
+        if (canRequestAdvanced) add(Capability.CAPABILITY_ADVANCED_REQUEST_OPTIONS)
         if (canManageRequests) addAll(listOf(Capability.CAPABILITY_APPROVE, Capability.CAPABILITY_DECLINE, Capability.CAPABILITY_RETRY))
         // A requester may cancel their own pending request, and a moderator anyone's. Seasons belong only to a
         // series, so the edit is offered only to a user who may request one.

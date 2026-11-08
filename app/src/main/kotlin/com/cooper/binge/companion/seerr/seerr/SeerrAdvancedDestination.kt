@@ -34,7 +34,7 @@ fun SeerrRootFolderDto.toChoice(): Choice =
  * The chosen server's profile/root-folder axes as the contract shape, with Seerr's own `active*`
  * fields resolved to the choice they still match — or the server's first, where they no longer
  * do — the same "preselect, fall back to first" rule [com.cooper.binge.companion.seerr.ui.DestinationChoices.withChoices]
- * applies for the in-app hand-off.
+ * applies for the request editor.
  */
 suspend fun SeerrApi.destinationChoicesFor(
     isTv: Boolean,

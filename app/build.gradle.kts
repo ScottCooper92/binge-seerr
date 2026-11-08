@@ -433,7 +433,6 @@ kover {
                     // The Android entry points: an Activity's onCreate and the Application class.
                     // Their content is `setContent { … }` and Hilt's own initialisation.
                     "com.cooper.binge.companion.seerr.MainActivity*",
-                    "com.cooper.binge.companion.seerr.AdvancedRequestActivity*",
                     "com.cooper.binge.companion.seerr.SendAddressActivity*",
                     "com.cooper.binge.companion.seerr.ScannedSendAddressActivity*",
                     "com.cooper.binge.companion.seerr.SettingsHandOffActivity*",

@@ -11,7 +11,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * The two rules the advanced picker and the request editor now share. Both decide which profile and
+ * The two rules the request editor uses to choose a destination. Both decide which profile and
  * folder a request is sent against, so each case here is a destination a user could end up with.
  */
 class DestinationChoicesTest {

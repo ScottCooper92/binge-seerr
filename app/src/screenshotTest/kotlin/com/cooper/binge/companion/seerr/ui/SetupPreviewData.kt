@@ -42,22 +42,3 @@ internal fun previewSignIn(
     error: SetupError? = null,
     notice: SetupNotice? = null,
 ) = SetupUiState.SignIn(server = server, form = form, isConnecting = isConnecting, link = null, error = error, notice = notice)
-
-internal fun previewAdvancedReady(
-    isLoadingChoices: Boolean = false,
-    isSubmitting: Boolean = false,
-    error: AdvancedRequestError? = null,
-) = AdvancedRequestUiState.Ready(
-    destination =
-        DestinationChoices(
-            servers = listOf(Choice(1, "Radarr"), Choice(2, "Radarr 4K")),
-            serverId = 1,
-            profiles = listOf(Choice(10, "HD-1080p"), Choice(20, "Ultra-HD")),
-            profileId = 10,
-            rootFolders = listOf("/data/media/movies", "/data/media/kids"),
-            rootFolder = "/data/media/movies",
-            loadingChoices = isLoadingChoices,
-        ),
-    isSubmitting = isSubmitting,
-    error = error,
-)

@@ -15,10 +15,6 @@ import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.seerr.SeerrMediaStatusCode
 import com.cooper.binge.companion.seerr.seerr.SeerrSignInMode
 import com.cooper.binge.companion.seerr.seerr.SeerrVariant
-import com.cooper.binge.companion.seerr.ui.AdvancedRequestError
-import com.cooper.binge.companion.seerr.ui.AdvancedRequestUiState
-import com.cooper.binge.companion.seerr.ui.Choice
-import com.cooper.binge.companion.seerr.ui.DestinationChoices
 import com.cooper.binge.companion.seerr.ui.LinkFlow
 import com.cooper.binge.companion.seerr.ui.SetupError
 import com.cooper.binge.companion.seerr.ui.SetupNotice
@@ -42,9 +38,7 @@ import com.cooper.binge.companion.seerr.ui.settings.ServerSummary
 import com.cooper.binge.companion.seerr.ui.settings.ServiceType
 import com.cooper.binge.companion.seerr.ui.settings.SettingsUiState
 import com.cooper.binge.companion.seerr.ui.settings.SignInKind
-import com.cooper.binge.companion.seerr.ui.tv.NoAdvancedActions
 import com.cooper.binge.companion.seerr.ui.tv.NoSetupActions
-import com.cooper.binge.companion.seerr.ui.tv.TvAdvancedRequestScreen
 import com.cooper.binge.companion.seerr.ui.tv.TvConsentScreen
 import com.cooper.binge.companion.seerr.ui.tv.TvSeerrErrorPage
 import com.cooper.binge.companion.seerr.ui.tv.TvSetupScreen
@@ -85,7 +79,7 @@ private const val PHONE_PAGE_TEXTS = 2
 /**
  * The television's pages with long text and every optional part present, at font scales 1.3 and 2.0, through the design
  * system's `assertNoTextClipped`: the request page, the issue sheet's pages, the settings board, the setup flow, the consent
- * question, the options hand-off and the error page. A page that scrolls is checked on its first screen.
+ * question and the error page. A page that scrolls is checked on its first screen.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(qualifiers = "w960dp-h540dp-television-xhdpi")
@@ -123,8 +117,6 @@ class TvPagesClippingTest {
         }
 
     @Test fun `the consent question at 1_3`() = rule.assertNoTvClippingAt(FONT_SCALE_13) { TvConsentScreen(onChoice = {}) }
-
-    @Test fun `the options hand-off at 1_3`() = rule.assertNoTvClippingAt(FONT_SCALE_13) { Options(rejectedOptions) }
 
     @Test fun `the error page at 1_3`() =
         rule.assertNoTvClippingAt(
@@ -347,19 +339,4 @@ class TvPagesClippingTest {
             ),
         actions = NoSetupActions,
     )
-
-    private val rejectedOptions = AdvancedRequestUiState.Ready(destination(), false, AdvancedRequestError.Rejected)
-
-    private fun destination() =
-        DestinationChoices(
-            servers = listOf(Choice(1, "Radarr 4K Remux Library on the Upstairs Server"), Choice(2, "Radarr")),
-            serverId = 1,
-            profiles = listOf(Choice(10, "Ultra-HD Remux with Lossless Audio and Subtitles")),
-            profileId = 10,
-            rootFolders = listOf("/mnt/storage/media/movies/4k-remux-collection"),
-            rootFolder = "/mnt/storage/media/movies/4k-remux-collection",
-        )
-
-    @Composable
-    private fun Options(state: AdvancedRequestUiState) = TvAdvancedRequestScreen(state = state, actions = NoAdvancedActions)
 }

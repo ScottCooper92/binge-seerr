@@ -10,8 +10,8 @@ import com.cooper.binge.companion.seerr.seerr.SeerrServerDto
 
 /**
  * Where a request goes: the instances it may go to, and the chosen one's profiles, root folders and
- * tags. Shared by the advanced-options hand-off and the request editor, which sequence the two
- * fetches the same way and differ only in what they do with a failure.
+ * tags. The request editor sequences the two fetches with [onServer] and [withChoices]; the advanced-request
+ * RPCs apply the same rule on their own side, in `destinationChoicesFor`.
  *
  * [loadingChoices] is true while the chosen instance is being read, so a screen can hold the submit.
  */

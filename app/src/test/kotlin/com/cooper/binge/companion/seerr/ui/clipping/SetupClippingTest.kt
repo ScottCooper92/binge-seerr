@@ -3,11 +3,6 @@ package com.cooper.binge.companion.seerr.ui.clipping
 import androidx.compose.runtime.Composable
 import com.cooper.binge.companion.seerr.seerr.SeerrSignInMode
 import com.cooper.binge.companion.seerr.seerr.SeerrVariant
-import com.cooper.binge.companion.seerr.ui.AdvancedRequestError
-import com.cooper.binge.companion.seerr.ui.AdvancedRequestScreen
-import com.cooper.binge.companion.seerr.ui.AdvancedRequestUiState
-import com.cooper.binge.companion.seerr.ui.Choice
-import com.cooper.binge.companion.seerr.ui.DestinationChoices
 import com.cooper.binge.companion.seerr.ui.SetupError
 import com.cooper.binge.companion.seerr.ui.SetupNotice
 import com.cooper.binge.companion.seerr.ui.SetupScreen
@@ -28,7 +23,7 @@ private const val LONG_ADDRESS = "https://a-rather-long-hostname.living-room.hom
 private const val LONG_SERVER = "Alexandria Fitzgerald-Montgomery's Front Room Jellyseerr"
 
 /**
- * The setup flow, the consent question and the options hand-off with a long address and server, each error and notice
+ * The setup flow, the consent question with a long address and server, each error and notice
  * the flow can say, and every sign-in mode, at font scales 1.3 and 2.0, through the design system's
  * `assertNoTextClipped`.
  */
@@ -86,19 +81,6 @@ class SetupClippingTest {
     @Test fun `the consent question at 1_3`() = rule.assertNoClippingAt(FONT_SCALE_13) { ConsentScreen(onChoice = {}) }
 
     @Test fun `the consent question at 2_0`() = rule.assertNoClippingAt(FONT_SCALE_20) { ConsentScreen(onChoice = {}) }
-
-    @Test fun `the options hand-off at 1_3`() =
-        rule.assertNoClippingAt(FONT_SCALE_13) {
-            Options(AdvancedRequestUiState.Ready(destination(), false, null))
-        }
-
-    @Test fun `the options hand-off at 2_0`() =
-        rule.assertNoClippingAt(FONT_SCALE_20) {
-            Options(AdvancedRequestUiState.Ready(destination(), false, AdvancedRequestError.Rejected))
-        }
-
-    @Test fun `the options hand-off not connected at 2_0`() =
-        rule.assertNoClippingAt(FONT_SCALE_20) { Options(AdvancedRequestUiState.Failed(AdvancedRequestError.NotConnected)) }
 
     @Composable
     private fun Address(
@@ -158,26 +140,4 @@ class SetupClippingTest {
             ),
         actions = NoSetupActions,
     )
-
-    private fun destination() =
-        DestinationChoices(
-            servers = listOf(Choice(1, "Radarr 4K Remux Library on the Upstairs Server"), Choice(2, "Radarr")),
-            serverId = 1,
-            profiles = listOf(Choice(10, "Ultra-HD Remux with Lossless Audio and Subtitles")),
-            profileId = 10,
-            rootFolders = listOf("/mnt/storage/media/movies/4k-remux-collection"),
-            rootFolder = "/mnt/storage/media/movies/4k-remux-collection",
-        )
-
-    @Composable
-    private fun Options(state: AdvancedRequestUiState) =
-        AdvancedRequestScreen(
-            state = state,
-            onSelectServer = {},
-            onSelectProfile = {},
-            onSelectRootFolder = {},
-            onSubmit = {},
-            onOpenSetup = {},
-            onClose = {},
-        )
 }

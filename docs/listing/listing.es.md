@@ -39,8 +39,9 @@
 >
 > **Binge.** Instala Binge al lado y esta app se convierte en su integración de peticiones: la
 > página de un título en Binge gana un botón de Pedir, Binge muestra el estado de cada título, y
-> una petición avanzada se abre aquí con la elección de servidor, perfil y carpeta. Binge es
-> opcional; todo lo anterior funciona sin él.
+> una petición avanzada ofrece la elección de servidor, perfil y carpeta, que Binge presenta por
+> su cuenta a partir de las respuestas de esta app. Binge es opcional; todo lo anterior funciona
+> sin él.
 >
 > **Android TV.** Un carril con el inicio, las peticiones, las incidencias y los ajustes, manejado
 > desde el mando.

@@ -136,6 +136,17 @@ class SeerrAllowedActionsTest {
         assertTrue(Capability.CAPABILITY_EDIT_SEASONS in asModerator.actionsOf(6))
     }
 
+    /** The host renders the picker itself, so only the inline capability is declared, and only to a user who may use it. */
+    @Test
+    fun `a user with advanced requests is offered the inline options and not the retired hand-off capability`() {
+        val advanced = SeerrPermissions(canRequestMovie = true, canRequestAdvanced = true).toCapabilities(profile)
+        assertTrue(Capability.CAPABILITY_ADVANCED_REQUEST_OPTIONS in advanced)
+        assertFalse(Capability.CAPABILITY_ADVANCED_OPTIONS in advanced)
+
+        val plain = SeerrPermissions(canRequestMovie = true).toCapabilities(profile)
+        assertFalse(Capability.CAPABILITY_ADVANCED_REQUEST_OPTIONS in plain)
+    }
+
     /** #897: seasons belong only to a series, which a Request Movies user cannot ask for. */
     @Test
     fun `a user who may request only movies is offered cancel but no season edit`() {
