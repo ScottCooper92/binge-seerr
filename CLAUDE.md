@@ -17,8 +17,8 @@ As a companion, it is what Binge talks to. Binge ships as a plain TMDB client wi
 bundled providers; a companion app is a separate APK that exports a bound Android Service
 implementing a contract from
 [binge-companions](https://github.com/ScottCooper92/binge-companions). This one implements
-REQUEST v1 against the connected server, and `AdvancedRequestActivity` is the SDK's hand-off,
-the Activity Binge starts with a title.
+REQUEST v1 against the connected server, including the advanced-request options (server, profile and
+folder) that Binge renders itself over the same service.
 
 The contracts live in that repository and are authoritative there. **Nothing in this
 repository defines a contract.** A change to the wire format is a PR against

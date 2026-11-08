@@ -78,7 +78,7 @@ The repo is read as documentation; anything wrong here is copied by third partie
 ## Dimension 3 — the exported Service and other attack surface
 
 Read `AndroidManifest.xml`, `service/SeerrCompanionService.kt`, `SeerrRequestService.kt` and
-the exported activities (`AdvancedRequestActivity`, the SETTINGS hand-off).
+the exported activities (the SETTINGS and VIEW_REQUEST hand-offs).
 
 - The guard (handshake, `SecurityPolicy`) must not be loosened, optional, or bypassable by a
   code path (e.g. an rpc that skips the check, caller identity taken from a parameter).

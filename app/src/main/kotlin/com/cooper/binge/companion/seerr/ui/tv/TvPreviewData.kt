@@ -4,10 +4,6 @@ import androidx.compose.runtime.Composable
 import com.binge.designsystem.tv.preview.TvPreviewsOnBlack
 import com.cooper.binge.companion.seerr.seerr.SeerrSignInMode
 import com.cooper.binge.companion.seerr.seerr.SeerrVariant
-import com.cooper.binge.companion.seerr.ui.AdvancedRequestError
-import com.cooper.binge.companion.seerr.ui.AdvancedRequestUiState
-import com.cooper.binge.companion.seerr.ui.Choice
-import com.cooper.binge.companion.seerr.ui.DestinationChoices
 import com.cooper.binge.companion.seerr.ui.LinkFlow
 import com.cooper.binge.companion.seerr.ui.SetupActions
 import com.cooper.binge.companion.seerr.ui.SetupError
@@ -25,8 +21,6 @@ import com.cooper.binge.companion.seerr.ui.SignInForm
 
 /** The setup screens' actions, none of which does anything: a frame is a still. Shared with the screenshot frames. */
 internal val NoSetupActions = SetupActions({}, {}, {}, {}, {}, {}, {}, {})
-
-internal val NoAdvancedActions = TvAdvancedRequestActions({}, {}, {}, {}, {}, {})
 
 internal val SampleSetupServer =
     SetupServer(
@@ -55,30 +49,6 @@ internal fun setupSignIn(
     notice: SetupNotice? = null,
     link: LinkFlow? = null,
 ) = SetupUiState.SignIn(server = server, form = form, isConnecting = isConnecting, link = link, error = error, notice = notice)
-
-/**
- * [singleChoices] offers one choice per group, so the rows are short enough that the note and the buttons
- * below them stay inside a 1080p frame.
- */
-internal fun advancedReady(
-    isLoadingChoices: Boolean = false,
-    isSubmitting: Boolean = false,
-    error: AdvancedRequestError? = null,
-    singleChoices: Boolean = false,
-) = AdvancedRequestUiState.Ready(
-    destination =
-        DestinationChoices(
-            servers = listOf(Choice(1, "Radarr"), Choice(2, "Radarr 4K")).take(if (singleChoices) 1 else 2),
-            serverId = 1,
-            profiles = listOf(Choice(10, "HD-1080p"), Choice(20, "Ultra-HD")).take(if (singleChoices) 1 else 2),
-            profileId = 10,
-            rootFolders = listOf("/data/media/movies", "/data/media/kids").take(if (singleChoices) 1 else 2),
-            rootFolder = "/data/media/movies",
-            loadingChoices = isLoadingChoices,
-        ),
-    isSubmitting = isSubmitting,
-    error = error,
-)
 
 @TvPreviewsOnBlack
 @Composable
@@ -165,52 +135,4 @@ internal fun TvSetupSignInNothingTypedPreview() {
 @Composable
 internal fun TvSetupLoadingPreview() {
     TvSetupScreen(state = SetupUiState.Loading, actions = NoSetupActions)
-}
-
-@TvPreviewsOnBlack
-@Composable
-internal fun TvAdvancedRequestReadyPreview() {
-    TvAdvancedRequestScreen(state = advancedReady(), actions = NoAdvancedActions, initialFocusedLabel = "Radarr")
-}
-
-@TvPreviewsOnBlack
-@Composable
-internal fun TvAdvancedRequestSubmitFocusedPreview() {
-    TvAdvancedRequestScreen(state = advancedReady(), actions = NoAdvancedActions, initialSubmitFocused = true)
-}
-
-@TvPreviewsOnBlack
-@Composable
-internal fun TvAdvancedRequestLoadingChoicesPreview() {
-    TvAdvancedRequestScreen(state = advancedReady(isLoadingChoices = true), actions = NoAdvancedActions)
-}
-
-@TvPreviewsOnBlack
-@Composable
-internal fun TvAdvancedRequestRejectedPreview() {
-    TvAdvancedRequestScreen(state = advancedReady(error = AdvancedRequestError.Rejected), actions = NoAdvancedActions)
-}
-
-@TvPreviewsOnBlack
-@Composable
-internal fun TvAdvancedRequestSubmittingPreview() {
-    TvAdvancedRequestScreen(state = advancedReady(isSubmitting = true), actions = NoAdvancedActions)
-}
-
-@TvPreviewsOnBlack
-@Composable
-internal fun TvAdvancedRequestNotConnectedPreview() {
-    TvAdvancedRequestScreen(state = AdvancedRequestUiState.Failed(AdvancedRequestError.NotConnected), actions = NoAdvancedActions)
-}
-
-@TvPreviewsOnBlack
-@Composable
-internal fun TvAdvancedRequestUnreachablePreview() {
-    TvAdvancedRequestScreen(state = AdvancedRequestUiState.Failed(AdvancedRequestError.Unreachable), actions = NoAdvancedActions)
-}
-
-@TvPreviewsOnBlack
-@Composable
-internal fun TvAdvancedRequestLoadingPreview() {
-    TvAdvancedRequestScreen(state = AdvancedRequestUiState.Loading, actions = NoAdvancedActions)
 }

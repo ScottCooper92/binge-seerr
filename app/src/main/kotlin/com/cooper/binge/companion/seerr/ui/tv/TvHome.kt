@@ -6,7 +6,6 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.binge.designsystem.tv.focus.TvUserMovesHost
 import com.cooper.binge.companion.seerr.theme.SeerrTvTheme
-import com.cooper.binge.companion.seerr.ui.AdvancedRequestUiState
 import com.cooper.binge.companion.seerr.ui.ScopedViewModels
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
@@ -35,16 +34,5 @@ internal fun TvSeerrShell(
                 }
             }
         }
-    }
-}
-
-/** The hand-off's television shell: the same state and callbacks as the phone's picker, under the TV theme. */
-@Composable
-internal fun TvAdvancedRequestShell(
-    state: AdvancedRequestUiState,
-    actions: TvAdvancedRequestActions,
-) {
-    SeerrTvTheme {
-        TvUserMovesHost { TvAdvancedRequestScreen(state = state, actions = actions) }
     }
 }

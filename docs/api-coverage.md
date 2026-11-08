@@ -80,11 +80,11 @@ How each gate is applied is in [`server-compatibility.md`](server-compatibility.
 | `PUT /request/{requestId}` | Update MediaRequest | v1.17.0 | v1.0.0 | yes | Edit request: the season set and, with `REQUEST_ADVANCED`, the destination; also the host's `EditRequest`. |
 | `POST /request/{requestId}/retry` | Retry failed request | v1.14.0 | v1.0.0 | yes |  |
 | `POST /request/{requestId}/{status}` | Update a request's status | v1.20.0 | v1.0.0 | yes |  |
-| `GET /service/radarr` | Get non-sensitive Radarr server list | v1.17.0 | v1.0.0 | yes | Advanced picker (in place) and the edit-request modal. |
-| `GET /service/radarr/{radarrId}` | Get Radarr server quality profiles and root folders | v1.17.0 | v1.0.0 | yes | Advanced picker (in place), the edit-request modal, and the exported Service's quality label on a request. |
-| `GET /service/sonarr` | Get non-sensitive Sonarr server list | v1.17.0 | v1.0.0 | yes | Advanced picker (in place) and the edit-request modal. |
-| `GET /service/sonarr/lookup/{tmdbId}` | Get series from Sonarr | v1.18.0 | v1.0.0 |  | Advanced picker (in place) and the edit-request modal. |
-| `GET /service/sonarr/{sonarrId}` | Get Sonarr server quality profiles and root folders | v1.17.0 | v1.0.0 | yes | Advanced picker (in place), the edit-request modal, and the exported Service's quality label on a request. |
+| `GET /service/radarr` | Get non-sensitive Radarr server list | v1.17.0 | v1.0.0 | yes | The advanced-request RPCs and the edit-request modal. |
+| `GET /service/radarr/{radarrId}` | Get Radarr server quality profiles and root folders | v1.17.0 | v1.0.0 | yes | The advanced-request RPCs, the edit-request modal, and the exported Service's quality label on a request. |
+| `GET /service/sonarr` | Get non-sensitive Sonarr server list | v1.17.0 | v1.0.0 | yes | The advanced-request RPCs and the edit-request modal. |
+| `GET /service/sonarr/lookup/{tmdbId}` | Get series from Sonarr | v1.18.0 | v1.0.0 |  | The advanced-request RPCs and the edit-request modal. |
+| `GET /service/sonarr/{sonarrId}` | Get Sonarr server quality profiles and root folders | v1.17.0 | v1.0.0 | yes | The advanced-request RPCs, the edit-request modal, and the exported Service's quality label on a request. |
 
 ### Phase 3 — issues
 

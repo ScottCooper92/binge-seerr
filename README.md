@@ -28,8 +28,9 @@ gates rather than guessing; [`docs/server-compatibility.md`](docs/server-compati
 list, and [`docs/api-coverage.md`](docs/api-coverage.md) every endpoint the app uses.
 
 **With Binge installed**, this app also becomes Binge's request integration: a title page in Binge
-gains a Request button, Binge shows each title's request state, and an advanced request opens here
-with the server, profile and folder choices. Binge is optional; everything above works without it.
+gains a Request button, Binge shows each title's request state, and an advanced request offers the
+server, profile and folder choices, which Binge renders itself from this app's answers. Binge is
+optional; everything above works without it.
 
 **It is not a discovery client.** Browsing and searching for titles is Binge's job, or the
 server's own web client; this app manages what has already been asked for.
@@ -89,8 +90,6 @@ The pieces to read, in order:
 3. `seerr/SeerrMediaIds.kt`: the translation from the contract's media identity (media type plus
    TMDB id, and season or episode) into the server's own id space. It is the single most
    interesting thing a companion demonstrates, so it lives in one place.
-4. `AdvancedRequestActivity.kt`: the SDK's hand-off, the Activity Binge starts with a title so the
-   companion can show its own request options.
 
 The platform's decisions are in Binge's `docs/companion-platform-architecture.md`
 and the wire contract in binge-companions' `contracts/`; this app's own roadmap is
