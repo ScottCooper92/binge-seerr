@@ -72,7 +72,7 @@ private fun SiblingRequestSheet(
         )
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val current by rememberUpdatedState(sheet)
-    ModerationSnackbarEffect(viewModel.events, sheet.snackbarHostState, viewModel.moderation::blockTitle)
+    ModerationSnackbarEffect(viewModel.events, sheet.snackbarHostState, viewModel.moderation::blockTitle, onNotNow = {})
     LaunchedEffect(viewModel) {
         viewModel.events.collect { event ->
             current.onChanged()

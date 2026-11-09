@@ -197,13 +197,15 @@ private fun RequestsPage(
 /**
  * Each moderation outcome as a snackbar, but for one shown in place; a newer one supersedes the one still showing.
  * An outcome that explains a cause and a next step is a dialog instead (see [ModerationEvent.dialogMessage]), and a
- * half-done block offers [onRetryBlock] there, since only the block is left to do.
+ * half-done block offers [onRetryBlock] there, since only the block is left to do. [onNotNow] hears that the offer
+ * was turned down, so a page that was kept open for the answer can leave.
  */
 @Composable
 internal fun ModerationSnackbarEffect(
     events: Flow<ModerationEvent>,
     snackbarHostState: SnackbarHostState,
     onRetryBlock: (RequestItem) -> Unit,
+    onNotNow: () -> Unit,
 ) {
     val resources = LocalResources.current
     var dialog by remember { mutableStateOf<DialogMessage?>(null) }
@@ -219,7 +221,10 @@ internal fun ModerationSnackbarEffect(
                 retry = null
                 onRetryBlock(pending.item)
             },
-            onDismissRequest = { retry = null },
+            onDismissRequest = {
+                retry = null
+                onNotNow()
+            },
         )
     }
     LaunchedEffect(events) {

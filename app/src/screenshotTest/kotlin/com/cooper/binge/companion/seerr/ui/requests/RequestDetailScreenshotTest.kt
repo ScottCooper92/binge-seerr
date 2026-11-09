@@ -186,6 +186,7 @@ private fun SeededFrame(state: RequestDetailUiState.Seeded) {
                 onRetryRequest = {},
                 onDecline = {},
                 onRemove = {},
+                onBlockTitle = {},
                 onStartEdit = {},
                 siblingSheet = {},
                 onOpenUser = {},

@@ -34,7 +34,7 @@ class MessageDialogEffectsTest {
     fun `a half-done decline offers to try the block again, and Not now leaves it`() {
         val events = MutableSharedFlow<ModerationEvent>(extraBufferCapacity = 1)
         val retried = mutableListOf<RequestItem>()
-        rule.setContent { SeerrTheme { ModerationSnackbarEffect(events, remember { SnackbarHostState() }, { retried += it }) } }
+        rule.setContent { SeerrTheme { ModerationSnackbarEffect(events, remember { SnackbarHostState() }, { retried += it }, {}) } }
         rule.waitForIdle()
 
         events.tryEmit(ModerationEvent.DeclinedButBlockFailed(requestItem(id = 4)))
@@ -52,7 +52,7 @@ class MessageDialogEffectsTest {
         val events = MutableSharedFlow<ModerationEvent>(extraBufferCapacity = 1)
         val retried = mutableListOf<RequestItem>()
         val removed = requestItem(id = 9, title = "Sintel")
-        rule.setContent { SeerrTheme { ModerationSnackbarEffect(events, remember { SnackbarHostState() }, { retried += it }) } }
+        rule.setContent { SeerrTheme { ModerationSnackbarEffect(events, remember { SnackbarHostState() }, { retried += it }, {}) } }
         rule.waitForIdle()
 
         events.tryEmit(ModerationEvent.RemovedButBlockFailed(removed))
@@ -67,7 +67,7 @@ class MessageDialogEffectsTest {
     @Test
     fun `a rejected sign-in on a moderation is a dialog`() {
         val events = MutableSharedFlow<ModerationEvent>(extraBufferCapacity = 1)
-        rule.setContent { SeerrTheme { ModerationSnackbarEffect(events, remember { SnackbarHostState() }, {}) } }
+        rule.setContent { SeerrTheme { ModerationSnackbarEffect(events, remember { SnackbarHostState() }, {}, {}) } }
         rule.waitForIdle()
 
         events.tryEmit(ModerationEvent.Failed(SeerrError.Unauthorized))
