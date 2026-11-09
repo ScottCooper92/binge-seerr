@@ -482,7 +482,7 @@ class HubViewModelTest {
             serve("/api/v1/request/count", """{"total":0,"movie":0,"tv":0,"pending":0,"processing":0}""")
             connection.connect(seerr.url("/"), SeerrAuth.ApiKey("k3y-2")).getOrThrow()
 
-            val ready = vm.awaitReady { it.server.title == "Second Home" }
+            val ready = vm.awaitReady { it.server.title == "Second Home" && it.overview.movieRequestCount != null }
 
             assertEquals(0, ready.overview.movieRequestCount)
         }
