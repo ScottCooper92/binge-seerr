@@ -103,7 +103,7 @@ internal fun TvRequestsRowsBoard(
     val filterRows =
         perFilter.map { (filter, rows) ->
             val label = stringResource(filter.labelRes())
-            val count = ready.counts?.countFor(filter)
+            val count = ready.counts?.countFor(filter).consistentWith(rows.count)
             TvHubRow(
                 key = filter.name,
                 title = if (count != null) stringResource(R.string.tv_filter_with_count, label, count) else label,
@@ -140,14 +140,22 @@ internal fun TvRequestsRowsBoard(
 @Composable
 private fun myRequestsRow(mine: TvMyRequests): TvHubRow<RequestItem> {
     val label = stringResource(R.string.tv_account_your_requests)
+    val count = mine.count.consistentWith(mine.rows.count)
     return TvHubRow(
         key = KEY_MY_REQUESTS,
-        title = if (mine.count != null) stringResource(R.string.tv_filter_with_count, label, mine.count) else label,
+        title = if (count != null) stringResource(R.string.tv_filter_with_count, label, count) else label,
         items = (0 until minOf(mine.rows.count, TV_ROW_ITEM_CAP)).mapNotNull { mine.rows.at(it) },
-        onSeeAll = mine.onSeeAll.takeIf { (mine.count ?: mine.rows.count) > TV_ROW_ITEM_CAP },
+        onSeeAll = mine.onSeeAll.takeIf { (count ?: mine.rows.count) > TV_ROW_ITEM_CAP },
         failure = mine.rows.hubFailure(mine.onRetry),
     )
 }
+
+/**
+ * A heading's count, held back while it contradicts the row under it. The count is the server's tally, read apart from the
+ * row's own pages, so right after sign-in it can still be zero or stale beside a card that has already loaded. A heading
+ * then reads without a number rather than "Available (0)" over a card; the number comes back once it covers the row (#1907).
+ */
+internal fun Int?.consistentWith(loaded: Int): Int? = this?.takeIf { it >= loaded }
 
 /** What the board shows before the requests are known: the loading page, or that they could not be read, with a retry. */
 @Composable
