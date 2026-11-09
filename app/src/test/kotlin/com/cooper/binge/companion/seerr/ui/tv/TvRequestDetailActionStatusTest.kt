@@ -26,6 +26,7 @@ import com.cooper.binge.companion.seerr.ui.tv.requests.TvRequestDetailScreen
 import com.cooper.binge.companion.seerr.util.createSeerrKeyboardAndroidComposeRule
 import com.cooper.binge.companion.seerr.util.isFocusableLeaf
 import com.cooper.binge.companion.seerr.util.requestDetail
+import com.cooper.binge.companion.seerr.util.requestItem
 import com.cooper.binge.companion.seerr.util.string
 import kotlinx.coroutines.flow.MutableSharedFlow
 import org.junit.Assert.assertEquals
@@ -237,7 +238,7 @@ class TvRequestDetailActionStatusTest {
     fun aDeclineThatCouldNotBlockRetriesTheBlock() {
         setContent(RequestActions(canDecline = true, canBlock = true))
         take(R.string.tv_detail_decline)
-        events.tryEmit(ModerationEvent.DeclinedButBlockFailed)
+        events.tryEmit(ModerationEvent.DeclinedButBlockFailed(requestItem()))
         composeTestRule.waitForIdle()
 
         composeTestRule.onNodeWithText(string(DesR.string.save_status_failed)).assertExists()

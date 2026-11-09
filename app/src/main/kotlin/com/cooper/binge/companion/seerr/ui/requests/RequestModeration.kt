@@ -109,7 +109,7 @@ class RequestModeration(
             blockTitle = false,
             done = ModerationEvent.Edited,
             doneAndBlocked = ModerationEvent.Edited,
-            blockFailed = ModerationEvent.Edited,
+            blockFailed = { ModerationEvent.Edited },
             onSettled = onSettled,
         ) { connection.api().updateRequest(it, body) }
 
@@ -184,7 +184,7 @@ class RequestModeration(
             blockTitle,
             ModerationEvent.Declined,
             ModerationEvent.DeclinedAndBlocked,
-            ModerationEvent.DeclinedButBlockFailed,
+            ModerationEvent::DeclinedButBlockFailed,
             onSettled = onSettled,
         ) {
             connection.api().declineRequest(it)
@@ -210,7 +210,7 @@ class RequestModeration(
             blockTitle,
             ModerationEvent.Removed,
             ModerationEvent.RemovedAndBlocked,
-            ModerationEvent.RemovedButBlockFailed,
+            ModerationEvent::RemovedButBlockFailed,
             onSettled = onSettled,
         ) {
             connection.api().deleteRequest(it)

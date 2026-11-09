@@ -54,7 +54,7 @@ internal class ModerationRunner(
         success: ModerationEvent,
         action: suspend (Int) -> Unit,
     ) {
-        actThenMaybeBlock(null, requestId, false, success, success, success, action = action)
+        actThenMaybeBlock(null, requestId, false, success, success, { success }, action = action)
     }
 
     fun actThenMaybeBlock(
@@ -63,7 +63,7 @@ internal class ModerationRunner(
         blockTitle: Boolean,
         done: ModerationEvent,
         doneAndBlocked: ModerationEvent,
-        blockFailed: ModerationEvent,
+        blockFailed: (RequestItem) -> ModerationEvent,
         onSettled: (succeeded: Boolean) -> Unit = {},
         syncFirst: Boolean = false,
         action: suspend (Int) -> Unit,
@@ -75,7 +75,7 @@ internal class ModerationRunner(
             syncFirst = syncFirst,
             outcome = {
                 if (blockTitle && item != null) {
-                    if (block(item)) doneAndBlocked else blockFailed
+                    if (block(item)) doneAndBlocked else blockFailed(item)
                 } else {
                     done
                 }

@@ -193,10 +193,10 @@ internal fun ModerationEvent.messageRes(): Int? =
             ModerationEvent.MediaFilesNoDefaultServer -> null
             ModerationEvent.Declined -> R.string.request_declined
             ModerationEvent.DeclinedAndBlocked -> R.string.request_declined_and_blocked
-            ModerationEvent.DeclinedButBlockFailed -> null
+            is ModerationEvent.DeclinedButBlockFailed -> null
             ModerationEvent.Removed -> R.string.request_removed
             ModerationEvent.RemovedAndBlocked -> R.string.request_removed_and_blocked
-            ModerationEvent.RemovedButBlockFailed -> null
+            is ModerationEvent.RemovedButBlockFailed -> null
             is ModerationEvent.Failed -> if (error.needsDialog()) null else R.string.request_action_failed
         }
     )
@@ -207,12 +207,12 @@ internal fun ModerationEvent.messageRes(): Int? =
  */
 internal fun ModerationEvent.dialogMessage(resources: Resources): DialogMessage? =
     when (this) {
-        ModerationEvent.DeclinedButBlockFailed ->
+        is ModerationEvent.DeclinedButBlockFailed ->
             DialogMessage(
                 resources.getString(R.string.request_declined_block_failed_title),
                 resources.getString(R.string.request_declined_block_failed_body),
             )
-        ModerationEvent.RemovedButBlockFailed ->
+        is ModerationEvent.RemovedButBlockFailed ->
             DialogMessage(
                 resources.getString(R.string.request_removed_block_failed_title),
                 resources.getString(R.string.request_removed_block_failed_body),
@@ -223,8 +223,8 @@ internal fun ModerationEvent.dialogMessage(resources: Resources): DialogMessage?
 
 internal fun ModerationEvent.isError(): Boolean =
     this is ModerationEvent.Failed ||
-        this == ModerationEvent.DeclinedButBlockFailed ||
-        this == ModerationEvent.RemovedButBlockFailed ||
+        this is ModerationEvent.DeclinedButBlockFailed ||
+        this is ModerationEvent.RemovedButBlockFailed ||
         this is ModerationEvent.MediaFilesDeletedRequestsKept ||
         this == ModerationEvent.MediaFilesNoDefaultServer ||
         this == ModerationEvent.BlockFailed

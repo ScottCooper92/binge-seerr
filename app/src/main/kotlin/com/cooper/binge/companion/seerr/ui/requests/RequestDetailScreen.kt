@@ -50,6 +50,8 @@ class RequestDetailActions(
     val onRetryRequest: () -> Unit,
     val onDecline: (Boolean) -> Unit,
     val onRemove: (Boolean) -> Unit,
+    /** Blocks the title alone, as the retry of a block that failed after a decline or removal. */
+    val onBlockTitle: (RequestItem) -> Unit = {},
     val onStartEdit: () -> Unit,
     /**
      * Shows another request's actions, over this page. A slot rather than a callback because its view
@@ -100,7 +102,7 @@ fun RequestDetailScreen(
     actions: RequestDetailActions,
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
-    ModerationSnackbarEffect(events, snackbarHostState)
+    ModerationSnackbarEffect(events, snackbarHostState, actions.onBlockTitle)
     // A removed request has no page to stay on.
     val currentOnBack by rememberUpdatedState(actions.onBack)
     LaunchedEffect(events) {

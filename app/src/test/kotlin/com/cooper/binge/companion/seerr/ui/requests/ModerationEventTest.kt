@@ -1,6 +1,7 @@
 package com.cooper.binge.companion.seerr.ui.requests
 
 import com.cooper.binge.companion.seerr.seerr.SeerrError
+import com.cooper.binge.companion.seerr.util.requestItem
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -18,10 +19,10 @@ class ModerationEventTest {
                 ModerationEvent.Edited,
                 ModerationEvent.Declined,
                 ModerationEvent.DeclinedAndBlocked,
-                ModerationEvent.DeclinedButBlockFailed,
+                ModerationEvent.DeclinedButBlockFailed(requestItem()),
                 ModerationEvent.Removed,
                 ModerationEvent.RemovedAndBlocked,
-                ModerationEvent.RemovedButBlockFailed,
+                ModerationEvent.RemovedButBlockFailed(requestItem()),
                 ModerationEvent.Blocked,
                 ModerationEvent.BlockFailed,
                 ModerationEvent.MediaStatusSet,
@@ -39,7 +40,7 @@ class ModerationEventTest {
             listOf(
                 ModerationEvent.Removed,
                 ModerationEvent.RemovedAndBlocked,
-                ModerationEvent.RemovedButBlockFailed,
+                ModerationEvent.RemovedButBlockFailed(requestItem()),
                 ModerationEvent.MediaCleared,
                 ModerationEvent.MediaFilesAndRequestsDeleted(removedThisRequest = true),
                 ModerationEvent.MediaFilesDeletedRequestsKept(removedThisRequest = true),

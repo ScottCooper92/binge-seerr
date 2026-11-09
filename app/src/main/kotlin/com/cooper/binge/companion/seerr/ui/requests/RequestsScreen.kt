@@ -23,6 +23,7 @@ import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.paging.PagingData
 import androidx.paging.compose.collectAsLazyPagingItems
+import com.binge.designsystem.component.BingeConfirmDialog
 import com.binge.designsystem.component.FilterChipItem
 import com.binge.designsystem.component.SnackbarMessageKind
 import com.binge.designsystem.component.showSnackbar
@@ -195,21 +196,38 @@ private fun RequestsPage(
 
 /**
  * Each moderation outcome as a snackbar, but for one shown in place; a newer one supersedes the one still showing.
- * An outcome that explains a cause and a next step is a dialog instead (see [ModerationEvent.dialogMessage]).
+ * An outcome that explains a cause and a next step is a dialog instead (see [ModerationEvent.dialogMessage]), and a
+ * half-done block offers [onRetryBlock] there, since only the block is left to do.
  */
 @Composable
 internal fun ModerationSnackbarEffect(
     events: Flow<ModerationEvent>,
     snackbarHostState: SnackbarHostState,
+    onRetryBlock: (RequestItem) -> Unit,
 ) {
     val resources = LocalResources.current
     var dialog by remember { mutableStateOf<DialogMessage?>(null) }
+    var retry by remember { mutableStateOf<BlockRetry?>(null) }
     MessageDialogHost(dialog) { dialog = null }
+    retry?.let { pending ->
+        BingeConfirmDialog(
+            title = pending.message.title,
+            message = pending.message.body,
+            confirmLabel = stringResource(R.string.action_try_again),
+            dismissLabel = stringResource(R.string.action_not_now),
+            onConfirm = {
+                retry = null
+                onRetryBlock(pending.item)
+            },
+            onDismissRequest = { retry = null },
+        )
+    }
     LaunchedEffect(events) {
         events.collectLatest { event ->
-            event.dialogMessage(resources)?.let {
+            event.dialogMessage(resources)?.let { message ->
                 snackbarHostState.currentSnackbarData?.dismiss()
-                dialog = it
+                val item = event.blockToRetry()
+                if (item != null) retry = BlockRetry(item, message) else dialog = message
                 return@collectLatest
             }
             val message = event.messageRes() ?: return@collectLatest
@@ -221,3 +239,17 @@ internal fun ModerationSnackbarEffect(
         }
     }
 }
+
+/** A block that failed after its decline or removal landed, and the title a retry would block. */
+private class BlockRetry(
+    val item: RequestItem,
+    val message: DialogMessage,
+)
+
+/** The request to block again for a half-done decline or removal; null for any other outcome. */
+internal fun ModerationEvent.blockToRetry(): RequestItem? =
+    when (this) {
+        is ModerationEvent.DeclinedButBlockFailed -> item
+        is ModerationEvent.RemovedButBlockFailed -> item
+        else -> null
+    }
