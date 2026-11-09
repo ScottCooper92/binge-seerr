@@ -64,12 +64,8 @@ class DemoJourneyTest {
 
         host.compose.onNode(filterChip(host.string(R.string.requests_filter_pending))).performClick()
         host.awaitShowing("Sintel")
-        // The list crossfades between filters, so a row may be drawn twice for a moment.
-        host.compose
-            .onAllNodesWithText("Sintel")
-            .onLast()
-            .performClick()
-        host.awaitShowing(host.string(R.string.request_primary_review))
+        // The list swaps under the click as the filter reloads, so a click can land on a row that is gone a moment later (#1901).
+        host.clickUntilShowing("Sintel", host.string(R.string.request_primary_review))
         host.compose
             .onNodeWithText(host.string(R.string.request_primary_review))
             .performScrollTo()
