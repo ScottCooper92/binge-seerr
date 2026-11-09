@@ -9,7 +9,7 @@
 # binge-companions build compiles the contracts and SDK with; a mismatch fails as "compiled with
 # an incompatible version of Kotlin" on every SDK class.
 [versions]
-agp = "9.4.1"
+agp = "9.5.1"
 kotlin = "2.4.21"
 coreKtx = "1.19.1"
 junit = "4.13.2"
