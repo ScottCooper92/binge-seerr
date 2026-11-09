@@ -95,7 +95,7 @@ private fun TvDetailCard(
     modifier: Modifier,
     content: @Composable () -> Unit,
 ) {
-    val shape = BingeShapes.AccountCard
+    val shape = BingeShapes.TvListItem
     Column(
         modifier =
             modifier
@@ -109,7 +109,7 @@ private fun TvDetailCard(
                 .padding(dimensionResource(DesR.dimen.padding_m)),
         verticalArrangement =
             Arrangement.spacedBy(
-                dimensionResource(DesR.dimen.padding_xxs),
+                dimensionResource(DesR.dimen.padding_xs),
                 androidx.compose.ui.Alignment.CenterVertically,
             ),
     ) {
@@ -135,7 +135,7 @@ internal fun TvSeasonCard(
         season.episodeCount?.let {
             Text(
                 text = pluralStringResourceEpisodes(it),
-                style = MaterialTheme.typography.bodySmall,
+                style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
@@ -182,7 +182,7 @@ internal fun TvDownloadCard(
         if (detailLine.isNotEmpty()) {
             Text(
                 text = detailLine,
-                style = MaterialTheme.typography.bodySmall,
+                style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1,
             )

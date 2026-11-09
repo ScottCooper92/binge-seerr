@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -15,7 +14,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
@@ -23,6 +21,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.binge.designsystem.formatRelativeOrAbsolute
+import com.binge.designsystem.theme.BingeShapes
 import com.binge.designsystem.tv.component.BingeTvInitialsAvatar
 import com.binge.designsystem.tv.focus.tvClickable
 import com.binge.designsystem.tv.focus.tvFocusContentColor
@@ -62,9 +61,8 @@ internal fun commentCard(
 
 /**
  * A report or a comment as a card: the author's avatar and "name · age", the report's kind in the accent, and the text,
- * held to [maxLines]. The user's own are tinted and squared at the top end, everyone else's squared at the top start, as
- * the phone's bubbles are; the meta line stays at the start either way. Focus fills it, as it fills a row. [onClick] opens
- * the card's own page; a card with none is still focusable, so the D-pad can read down a page.
+ * held to [maxLines]. Every card is the same small rounded rectangle; the user's own are tinted. Focus fills it, as it fills a
+ * row. [onClick] opens the card's own page; a card with none is still focusable, so the D-pad can read down a page.
  */
 @Composable
 internal fun TvIssueCard(
@@ -76,7 +74,7 @@ internal fun TvIssueCard(
 ) {
     var focused by remember { mutableStateOf(initiallyFocused) }
     val scheme = MaterialTheme.colorScheme
-    val shape = issueCardShape(card.isMine)
+    val shape = BingeShapes.TvListItem
     val resting = if (card.isMine) scheme.onPrimaryContainer else scheme.onSurface
     Column(
         modifier =
@@ -120,17 +118,4 @@ internal fun TvIssueCard(
             overflow = TextOverflow.Ellipsis,
         )
     }
-}
-
-/** The phone's bubble shape: rounded, with the corner nearest the author squared, top end for the user's own. */
-@Composable
-private fun issueCardShape(isMine: Boolean): Shape {
-    val rounded = dimensionResource(R.dimen.issue_bubble_corner)
-    val pointer = dimensionResource(R.dimen.issue_bubble_pointer_corner)
-    return RoundedCornerShape(
-        topStart = if (isMine) rounded else pointer,
-        topEnd = if (isMine) pointer else rounded,
-        bottomEnd = rounded,
-        bottomStart = rounded,
-    )
 }
