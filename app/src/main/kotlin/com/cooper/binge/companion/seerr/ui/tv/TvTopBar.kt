@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
@@ -50,7 +49,7 @@ import com.binge.designsystem.tv.R as TvR
 private const val TAB_RESTING_SCALE = 0.8f
 private const val TAB_SCALE_MILLIS = 150
 
-/** The current tab's pill while focus is elsewhere: there, but quieter than a focused item's. */
+/** The current tab's fill while focus is elsewhere: there, but quieter than a focused item's. */
 private const val CURRENT_TAB_ALPHA = 0.2f
 
 /** The scrim under the bar, from nearly opaque at the top edge to clear, so a page's art shows through below it. */
@@ -66,7 +65,7 @@ internal class TvTopBarAccount(
 
 /**
  * The bar over every page: the signed-in user's avatar at the start, the tabs centred, and Settings as a gear at the end.
- * A focused item is a light pill with dark text, and the [current] tab keeps a faint pill while focus is elsewhere. Only the
+ * A focused item is a light rounded rectangle with dark text, and the [current] tab keeps a faint one while focus is elsewhere. Only the
  * tabs scale, from [TAB_RESTING_SCALE] at rest to full size while the bar holds focus, so the two ends stay pinned.
  *
  * Until [visible] (the server has said which tabs this account gets) the bar is drawn clear and takes no focus, so it never
@@ -108,7 +107,7 @@ internal fun TvTopBar(
                 }.background(Brush.verticalGradient(listOf(background.copy(alpha = BAR_SCRIM_TOP_ALPHA), Color.Transparent)))
                 .padding(
                     top = dimensionResource(TvR.dimen.tv_overscan_vertical),
-                    bottom = dimensionResource(DesR.dimen.padding_m),
+                    bottom = dimensionResource(DesR.dimen.padding_s),
                     start = dimensionResource(TvR.dimen.tv_overscan_horizontal),
                     end = dimensionResource(TvR.dimen.tv_overscan_horizontal),
                 ),
@@ -158,7 +157,7 @@ internal fun TvTopBar(
     }
 }
 
-/** The signed-in user's picture, or their initials, ringed in the focused pill's colour when focused. */
+/** The signed-in user's picture, or their initials, ringed in the focused tab's colour when focused. */
 @Composable
 private fun TvTopBarAvatar(
     label: String,
@@ -167,7 +166,7 @@ private fun TvTopBarAvatar(
     modifier: Modifier = Modifier,
 ) {
     var focused by remember { mutableStateOf(false) }
-    val diameter = dimensionResource(TvR.dimen.tv_icon_button_diameter)
+    val diameter = dimensionResource(R.dimen.tv_top_bar_avatar_size)
     val ring = dimensionResource(R.dimen.tv_top_bar_avatar_ring)
     Box(
         modifier =
@@ -184,7 +183,7 @@ private fun TvTopBarAvatar(
     }
 }
 
-/** A tab as a text pill, or, given an [icon], as that icon alone; named for a screen reader either way. */
+/** A tab as a small-radius rounded rectangle, or, given an [icon], as that icon alone; named for a screen reader either way. */
 @Composable
 private fun TvTopBarItem(
     label: String,
@@ -202,17 +201,19 @@ private fun TvTopBarItem(
             else -> Color.Transparent
         }
     val content = if (focused) scheme.surface else scheme.onSurface
+    val shape = MaterialTheme.shapes.small
+    val horizontalPadding =
+        dimensionResource(if (icon != null) R.dimen.tv_top_bar_item_padding_horizontal_icon else R.dimen.tv_top_bar_item_padding_horizontal)
     Row(
         modifier =
             modifier
-                .heightIn(min = dimensionResource(TvR.dimen.tv_icon_button_diameter))
-                .clip(BingeShapes.Pill)
+                .clip(shape)
                 .background(container)
                 .tvClickable(role = Role.Button, onFocusChanged = { focused = it }, onClick = onClick)
                 .clearAndSetSemantics {
                     contentDescription = label
                     this.selected = selected
-                }.padding(horizontal = dimensionResource(R.dimen.tv_top_bar_item_padding_horizontal)),
+                }.padding(horizontal = horizontalPadding, vertical = dimensionResource(R.dimen.tv_top_bar_item_padding_vertical)),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (icon != null) {
