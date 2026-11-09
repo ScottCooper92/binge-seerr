@@ -83,6 +83,15 @@ data class SeerrServerProfile(
             settings.instanceId?.takeIf { it.isNotBlank() }
                 ?: settings.vapidPublic?.takeIf { it.isNotBlank() }?.let { "v" + sha256Hex(it).take(VAPID_ID_LENGTH) }
 
+    /**
+     * What the user calls this server: the title its administrator set, else the edition's name, else null for an
+     * edition not recognised (#1913). A name for the user to read, so never a version or an address.
+     */
+    val serverTitle: String?
+        get() =
+            settings.applicationTitle?.trim()?.takeIf { it.isNotEmpty() }
+                ?: variant.takeUnless { it == SeerrVariant.Unknown }?.displayName
+
     /** An unknown lineage hides nothing, as [unknown] promises: it is taken as the family's latest, never as Overseerr. */
     private val jellyseerrLineage: Boolean get() = variant.isJellyseerrLineage || variant == SeerrVariant.Unknown
 

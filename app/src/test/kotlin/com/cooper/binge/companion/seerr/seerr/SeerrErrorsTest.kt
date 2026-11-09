@@ -108,9 +108,9 @@ class SeerrErrorsTest {
     }
 
     @Test
-    fun `transport failures and 5xx are UNAVAILABLE`() {
+    fun `transport failures and 5xx are UNAVAILABLE, and a timeout is a deadline`() {
         assertEquals(Status.Code.UNAVAILABLE, codeOf(IOException("reset")))
-        assertEquals(Status.Code.UNAVAILABLE, codeOf(SocketTimeoutException("timeout")))
+        assertEquals(Status.Code.DEADLINE_EXCEEDED, codeOf(SocketTimeoutException("timeout")))
         assertEquals(Status.Code.UNAVAILABLE, codeOf(http(502)))
     }
 

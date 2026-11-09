@@ -24,6 +24,8 @@ fun SeerrPermissions.toCapabilities(profile: SeerrServerProfile): Set<Capability
     buildSet {
         add(Capability.CAPABILITY_OBSERVE_STATUS)
         add(Capability.CAPABILITY_ATTENTION)
+        // Any call to Seerr can fail because it did not answer, whoever is signed in and whatever they may do.
+        add(Capability.CAPABILITY_SERVER_UNREACHABLE)
         val settings = profile.settings
         // The host renders the picker itself from the three advanced-request RPCs.
         if (canRequestAdvanced) add(Capability.CAPABILITY_ADVANCED_REQUEST_OPTIONS)
