@@ -14,10 +14,10 @@ sealed interface ModerationEvent {
     val removesTheRequest: Boolean
         get() =
             when (this) {
-                Removed, RemovedAndBlocked, RemovedButBlockFailed, MediaCleared -> true
+                Removed, RemovedAndBlocked, is RemovedButBlockFailed, MediaCleared -> true
                 is MediaFilesAndRequestsDeleted -> removedThisRequest
                 is MediaFilesDeletedRequestsKept -> removedThisRequest
-                Approved, Retried, Edited, Declined, DeclinedAndBlocked, DeclinedButBlockFailed,
+                Approved, Retried, Edited, Declined, DeclinedAndBlocked, is DeclinedButBlockFailed,
                 Blocked, BlockFailed, MediaStatusSet, MediaFilesDeleted, MediaFilesNoDefaultServer, is Failed,
                 -> false
             }
@@ -32,13 +32,19 @@ sealed interface ModerationEvent {
 
     data object DeclinedAndBlocked : ModerationEvent
 
-    data object DeclinedButBlockFailed : ModerationEvent
+    /** The request was declined, but the title was not blocked; [item] is what a retry blocks. */
+    data class DeclinedButBlockFailed(
+        val item: RequestItem,
+    ) : ModerationEvent
 
     data object Removed : ModerationEvent
 
     data object RemovedAndBlocked : ModerationEvent
 
-    data object RemovedButBlockFailed : ModerationEvent
+    /** The request was removed, but the title was not blocked; [item] is what a retry blocks, since the request is gone. */
+    data class RemovedButBlockFailed(
+        val item: RequestItem,
+    ) : ModerationEvent
 
     /** The title alone was blocked; the request is left as it was. */
     data object Blocked : ModerationEvent
@@ -80,10 +86,10 @@ internal fun ModerationEvent.actionLabel(): String =
         ModerationEvent.Edited -> "edited"
         ModerationEvent.Declined -> "declined"
         ModerationEvent.DeclinedAndBlocked -> "declined_and_blocked"
-        ModerationEvent.DeclinedButBlockFailed -> "declined_block_failed"
+        is ModerationEvent.DeclinedButBlockFailed -> "declined_block_failed"
         ModerationEvent.Removed -> "removed"
         ModerationEvent.RemovedAndBlocked -> "removed_and_blocked"
-        ModerationEvent.RemovedButBlockFailed -> "removed_block_failed"
+        is ModerationEvent.RemovedButBlockFailed -> "removed_block_failed"
         ModerationEvent.Blocked -> "blocked"
         ModerationEvent.BlockFailed -> "block_failed"
         ModerationEvent.MediaStatusSet -> "media_status_set"

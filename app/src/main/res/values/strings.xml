@@ -254,11 +254,11 @@
     <string name="request_declined">Request declined</string>
     <string name="request_declined_and_blocked">Request declined and title blocked</string>
     <string name="request_declined_block_failed_title">Declined, not blocked</string>
-    <string name="request_declined_block_failed_body">The request was declined, but the server would not block the title. You can block it from the server\'s web client.</string>
+    <string name="request_declined_block_failed_body">The request was declined, but the server would not block the title. Try again, or block it from the server\'s web client.</string>
     <string name="request_removed">Request removed</string>
     <string name="request_removed_and_blocked">Request removed and title blocked</string>
     <string name="request_removed_block_failed_title">Removed, not blocked</string>
-    <string name="request_removed_block_failed_body">The request was removed, but the server would not block the title. You can block it from the server\'s web client.</string>
+    <string name="request_removed_block_failed_body">The request was removed, but the server would not block the title. Try again, or block it from the server\'s web client.</string>
     <string name="request_action_failed">The request could not be updated. Try again.</string>
     <string name="issue_report_title">Report an issue</string>
     <string name="issue_report_message">What is wrong?</string>
@@ -929,6 +929,7 @@
 
     <string name="state_empty_title">Nothing here yet</string>
     <string name="action_try_again">Try again</string>
+    <string name="action_not_now">Not now</string>
     <string name="state_error_not_connected_title">No server connected</string>
     <string name="state_error_not_connected_message">Connect a server to see this.</string>
     <string name="state_error_unauthorized_title">Signed out</string>

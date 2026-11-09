@@ -1,6 +1,7 @@
 # The hash of every source string a locale translates, so an edit to the source cannot
 # pass silently while a translation still carries the old wording. Generated -
 # run ./gradlew updateTranslationHashes after re-reading the translations it names.
+app:action_not_now  a0e63d7c7125
 app:action_try_again  d8b8392e2c54
 app:advanced_profile  ad759e52e8aa
 app:advanced_root_folder  6d92528b34e3
@@ -331,7 +332,7 @@ app:request_decline_block_confirm_message  bd8633b8508d
 app:request_decline_block_confirm_title  caa71bdec8da
 app:request_declined  1df48b2da038
 app:request_declined_and_blocked  c8b8ff9ee2e5
-app:request_declined_block_failed_body  773038122a21
+app:request_declined_block_failed_body  58a95e37bd00
 app:request_declined_block_failed_title  c20fdf673329
 app:request_downloads  37b345555d7e
 app:request_edit_save  dd0ae7a5cbcf
@@ -360,7 +361,7 @@ app:request_remove_files_stay  48b7910ad559
 app:request_remove_files_stay_delete  740f3dc67f88
 app:request_removed  1f55775c6ffc
 app:request_removed_and_blocked  efcbe6fcadf9
-app:request_removed_block_failed_body  3fed42ed5f20
+app:request_removed_block_failed_body  a5bc41a16dc2
 app:request_removed_block_failed_title  55371ebb0f56
 app:request_requested_by  9199a054972b
 app:request_retried  14fef0857e6c

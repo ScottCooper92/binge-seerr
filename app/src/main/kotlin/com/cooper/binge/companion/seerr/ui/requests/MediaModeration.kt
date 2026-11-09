@@ -39,7 +39,7 @@ internal class MediaModeration(
             blockTitle = false,
             done = ModerationEvent.MediaStatusSet,
             doneAndBlocked = ModerationEvent.MediaStatusSet,
-            blockFailed = ModerationEvent.MediaStatusSet,
+            blockFailed = { ModerationEvent.MediaStatusSet },
             onSettled = onSettled,
         ) {
             val seasons =
@@ -59,7 +59,7 @@ internal class MediaModeration(
             blockTitle = false,
             done = ModerationEvent.MediaCleared,
             doneAndBlocked = ModerationEvent.MediaCleared,
-            blockFailed = ModerationEvent.MediaCleared,
+            blockFailed = { ModerationEvent.MediaCleared },
             onSettled = onSettled,
             syncFirst = true,
         ) {
