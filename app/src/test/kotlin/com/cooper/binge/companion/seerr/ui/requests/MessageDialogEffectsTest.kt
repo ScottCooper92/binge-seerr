@@ -13,15 +13,16 @@ import com.cooper.binge.companion.seerr.theme.SeerrTheme
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorEvent
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorEventSnackbarEffect
 import com.cooper.binge.companion.seerr.util.createSeerrComposeRule
+import com.cooper.binge.companion.seerr.util.requestItem
 import kotlinx.coroutines.flow.MutableSharedFlow
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
-import com.binge.designsystem.R as DesR
 
-/** A message the user must read to act is a dialog with one OK, not a snackbar that is cut off or goes away (#1848). */
+/** A message the user must read to act is a dialog, not a snackbar that is cut off or goes away (#1848); a half-done block offers a retry (#1890). */
 @RunWith(RobolectricTestRunner::class)
 class MessageDialogEffectsTest {
     @get:Rule
@@ -30,24 +31,43 @@ class MessageDialogEffectsTest {
     private val context: Context = ApplicationProvider.getApplicationContext()
 
     @Test
-    fun `a half-done decline is a dialog with the next step, dismissed by OK`() {
+    fun `a half-done decline offers to try the block again, and Not now leaves it`() {
         val events = MutableSharedFlow<ModerationEvent>(extraBufferCapacity = 1)
-        rule.setContent { SeerrTheme { ModerationSnackbarEffect(events, remember { SnackbarHostState() }) } }
+        val retried = mutableListOf<RequestItem>()
+        rule.setContent { SeerrTheme { ModerationSnackbarEffect(events, remember { SnackbarHostState() }, { retried += it }, {}) } }
         rule.waitForIdle()
 
-        events.tryEmit(ModerationEvent.DeclinedButBlockFailed)
+        events.tryEmit(ModerationEvent.DeclinedButBlockFailed(requestItem(id = 4)))
         rule.waitForIdle()
 
         rule.onNodeWithText(context.getString(R.string.request_declined_block_failed_title)).assertIsDisplayed()
         rule.onNodeWithText(context.getString(R.string.request_declined_block_failed_body)).assertIsDisplayed()
-        rule.onNodeWithText(context.getString(DesR.string.action_ok)).performClick()
+        rule.onNodeWithText(context.getString(R.string.action_not_now)).performClick()
         rule.onNodeWithText(context.getString(R.string.request_declined_block_failed_title)).assertDoesNotExist()
+        assertEquals(emptyList<RequestItem>(), retried)
+    }
+
+    @Test
+    fun `trying again after a half-done removal blocks the removed request's title`() {
+        val events = MutableSharedFlow<ModerationEvent>(extraBufferCapacity = 1)
+        val retried = mutableListOf<RequestItem>()
+        val removed = requestItem(id = 9, title = "Sintel")
+        rule.setContent { SeerrTheme { ModerationSnackbarEffect(events, remember { SnackbarHostState() }, { retried += it }, {}) } }
+        rule.waitForIdle()
+
+        events.tryEmit(ModerationEvent.RemovedButBlockFailed(removed))
+        rule.waitForIdle()
+
+        rule.onNodeWithText(context.getString(R.string.request_removed_block_failed_title)).assertIsDisplayed()
+        rule.onNodeWithText(context.getString(R.string.action_try_again)).performClick()
+        rule.onNodeWithText(context.getString(R.string.request_removed_block_failed_title)).assertDoesNotExist()
+        assertEquals(listOf(removed), retried)
     }
 
     @Test
     fun `a rejected sign-in on a moderation is a dialog`() {
         val events = MutableSharedFlow<ModerationEvent>(extraBufferCapacity = 1)
-        rule.setContent { SeerrTheme { ModerationSnackbarEffect(events, remember { SnackbarHostState() }) } }
+        rule.setContent { SeerrTheme { ModerationSnackbarEffect(events, remember { SnackbarHostState() }, {}, {}) } }
         rule.waitForIdle()
 
         events.tryEmit(ModerationEvent.Failed(SeerrError.Unauthorized))

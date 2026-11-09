@@ -406,7 +406,7 @@ class RequestModerationTest {
 
             val removedButBlockFailed = awaitEvent(sut.events)
             sut.remove(item, blockTitle = true)
-            assertEquals(ModerationEvent.RemovedButBlockFailed, removedButBlockFailed.await())
+            assertEquals(ModerationEvent.RemovedButBlockFailed(item), removedButBlockFailed.await())
             assertEquals("DELETE", received.first { it.url.encodedPath == "/api/v1/request/11" }.method)
             assertEquals(1, moderated)
 

@@ -153,7 +153,7 @@ private fun TvRequestDetailContent(
     // decline or a block of its own is retried as a block. TV's Decline never blocks, so the decline case is defensive.
     val run =
         rememberTvActionRun(events, initialStatus) { event ->
-            val blockFailed = event == ModerationEvent.DeclinedButBlockFailed || event == ModerationEvent.BlockFailed
+            val blockFailed = event is ModerationEvent.DeclinedButBlockFailed || event == ModerationEvent.BlockFailed
             settle(failed = event.isError(), retry = if (blockFailed) given.onBlock else null)
         }
     val actions = remember(given, run, isActing) { given.markingRefocus { refocusRow = true }.running(run, isActing) }
