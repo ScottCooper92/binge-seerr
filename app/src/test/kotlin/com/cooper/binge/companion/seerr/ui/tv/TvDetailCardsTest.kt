@@ -2,8 +2,10 @@ package com.cooper.binge.companion.seerr.ui.tv
 
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
+import androidx.compose.ui.test.getBoundsInRoot
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onRoot
 import androidx.tv.material3.Text
 import com.binge.designsystem.tv.component.TvInfoGroup
 import com.binge.designsystem.tv.theme.BingeTvTheme
@@ -26,6 +28,7 @@ import com.cooper.binge.companion.seerr.util.requestDetail
 import com.cooper.binge.companion.seerr.util.string
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -124,6 +127,26 @@ class TvDetailCardsTest {
         }
 
         composeTestRule.onNodeWithText(string(R.string.request_season_number, 2)).assertExists()
+    }
+
+    /** A season that says everything it can keeps all three lines inside the card, whose height is fixed. */
+    @Test
+    fun aSeasonWithEveryLineFitsItsCard() {
+        composeTestRule.setContent {
+            BingeTvTheme {
+                TvSeasonCard(
+                    SeasonState(number = 1, name = "Season 1", episodeCount = 8, status = SeerrMediaStatusCode.Available),
+                    isFocused = false,
+                    onFocusChanged = {},
+                )
+            }
+        }
+
+        val card = composeTestRule.onRoot().getBoundsInRoot()
+        val state = composeTestRule.onNodeWithText(string(R.string.media_state_available), useUnmergedTree = true).getBoundsInRoot()
+        val title = composeTestRule.onNodeWithText("Season 1", useUnmergedTree = true).getBoundsInRoot()
+        assertTrue("the title starts inside the card", title.top >= card.top)
+        assertTrue("the state line ends inside the card", state.bottom <= card.bottom)
     }
 
     /** With neither a size nor an ETA, the card is the title and its bar, with no empty line under them. */
