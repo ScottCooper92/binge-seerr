@@ -157,7 +157,7 @@ internal fun TvTopBar(
     }
 }
 
-/** The signed-in user's picture, or their initials, ringed in the focused pill's colour when focused. */
+/** The signed-in user's picture, or their initials, ringed in the focused tab's colour when focused. */
 @Composable
 private fun TvTopBarAvatar(
     label: String,
