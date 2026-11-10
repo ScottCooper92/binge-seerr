@@ -25,7 +25,10 @@ import java.net.SocketException
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
 import java.net.UnknownServiceException
+import java.security.cert.CertificateException
+import javax.net.ssl.SSLException
 import javax.net.ssl.SSLHandshakeException
+import javax.net.ssl.SSLPeerUnverifiedException
 
 /** The contract's error model, from this side: every Seerr failure becomes one of its documented codes. */
 class SeerrErrorsTest {
@@ -116,11 +119,35 @@ class SeerrErrorsTest {
 
     @Test
     fun `a certificate or cleartext refusal is UNAVAILABLE without the unreachable detail`() {
-        listOf(SSLHandshakeException("untrusted"), UnknownServiceException("cleartext")).forEach {
+        listOf(
+            SSLHandshakeException("untrusted").apply { initCause(CertificateException("no trust anchor")) },
+            SSLPeerUnverifiedException("Hostname seerr.lan not verified"),
+            UnknownServiceException("cleartext"),
+        ).forEach {
             assertEquals(Status.Code.UNAVAILABLE, codeOf(it))
             assertNull(serverUnreachableOf(it.toStatusException()))
             assertEquals(SeerrError.Unknown, it.toSeerrError())
         }
+    }
+
+    /** Conscrypt reports a connection the server dropped as an SSLException, and that is the server failing to answer (#1933). */
+    @Test
+    fun `a handshake the server closed and a read it reset are still unreachable`() {
+        listOf(
+            SSLHandshakeException("Connection closed by peer"),
+            SSLException("Read error: ssl=0x1: I/O error", SocketException("Connection reset by peer")),
+        ).forEach {
+            assertEquals(ServerUnreachable("Seerr"), serverUnreachableOf(it.toStatusException("Seerr")))
+            assertEquals(SeerrError.Unreachable, it.toSeerrError())
+        }
+    }
+
+    @Test
+    fun `a certificate buried in the cause chain still makes it a refusal`() {
+        val failure = SSLException("handshake failed", RuntimeException("wrapped", CertificateException("expired")))
+
+        assertNull(serverUnreachableOf(failure.toStatusException("Seerr")))
+        assertEquals(Status.Code.UNAVAILABLE, codeOf(failure))
     }
 
     @Test
