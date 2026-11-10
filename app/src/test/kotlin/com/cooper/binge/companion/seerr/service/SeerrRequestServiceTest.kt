@@ -277,11 +277,10 @@ class SeerrRequestServiceTest {
             // In the contract but deliberately not offered: MEDIA_FILE_INFO would need a Radarr key and host (#483).
             // ISSUE_CATEGORIES is deliberately never declared: Seerr's issue types are a fixed four, so there is no
             // provider-defined category list to offer. ADVANCED_OPTIONS was the Activity hand-off, which is gone.
-            // DELETE_FILES (#1914) is in the contract but not served yet.
             assertEquals(
                 Capability.entries.toSet() - Capability.UNRECOGNIZED - Capability.CAPABILITY_UNSPECIFIED -
                     Capability.CAPABILITY_MEDIA_FILE_INFO - Capability.CAPABILITY_ISSUE_CATEGORIES -
-                    Capability.CAPABILITY_ADVANCED_OPTIONS - Capability.CAPABILITY_DELETE_FILES,
+                    Capability.CAPABILITY_ADVANCED_OPTIONS,
                 response.capabilitiesList.toSet(),
             )
         }

@@ -10,6 +10,8 @@ import com.binge.companion.contracts.request.v1.CancelRequestResponse
 import com.binge.companion.contracts.request.v1.Capability
 import com.binge.companion.contracts.request.v1.DeclineRequestRequest
 import com.binge.companion.contracts.request.v1.DeclineRequestResponse
+import com.binge.companion.contracts.request.v1.DeleteFilesRequest
+import com.binge.companion.contracts.request.v1.DeleteFilesResponse
 import com.binge.companion.contracts.request.v1.EditRequestRequest
 import com.binge.companion.contracts.request.v1.EditRequestResponse
 import com.binge.companion.contracts.request.v1.GetAdvancedRequestOptionsRequest
@@ -223,6 +225,9 @@ class SeerrRequestService(
 
     override suspend fun blockTitle(request: BlockTitleRequest): BlockTitleResponse =
         gated("block_title", Capability.CAPABILITY_BLOCK) { issues.blockTitle(request) }
+
+    override suspend fun deleteFiles(request: DeleteFilesRequest): DeleteFilesResponse =
+        gated("delete_files", Capability.CAPABILITY_DELETE_FILES) { requests.deleteFiles(request) }
 
     override suspend fun unblockTitle(request: UnblockTitleRequest): UnblockTitleResponse =
         gated("unblock_title", Capability.CAPABILITY_BLOCK) { issues.unblockTitle(request) }

@@ -189,3 +189,17 @@ clear (`auth/CleartextConsent.kt`). Builds before that opt-in only warned.
 (`hasBlocklist`, `blocklistPath`, `hasOverrideRules`, `hasQuickConnect`, `signInModes`, and so
 on), and a screen or the Service asks for the capability. The same rule the contracts follow
 applies here: a version answers "can we parse each other", and never "is this feature there".
+
+## Deleting a title's files
+
+`DELETE /media/{id}/file` removes a title's files through Radarr or Sonarr. It needs `MANAGE_REQUESTS`
+and Jellyseerr 1.5 or later; Overseerr has no such route. The REQUEST contract's `CAPABILITY_DELETE_FILES`
+is declared only where both hold, which is the console's own gate for its Delete files row.
+
+Deletion is per version, so the capability travels on a version's `allowed_actions` and never on the
+title's or a request's. A version offers it while it has files to delete: available, partly available or
+still processing, the same states the console offers its row for. `DeleteFiles` deletes the files for that
+version, then withdraws the version's open requests, which are those not declined or completed. It leaves
+a withdrawal that then fails unreported, because the contract never answers an error after files are gone.
+A version with a request and no files is withdrawn without a file call. A server with no default Radarr or
+Sonarr for that version answers `409`, which is `FAILED_PRECONDITION`.
