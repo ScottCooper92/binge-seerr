@@ -1,6 +1,9 @@
 package com.cooper.binge.companion.seerr.seerr
 
+import androidx.datastore.core.CorruptionException
+import com.binge.companion.sdk.ServerUnreachable
 import com.binge.companion.sdk.attempt
+import com.binge.companion.sdk.serverUnreachableOf
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.auth.NotConnectedException
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorEvent
@@ -18,7 +21,11 @@ import org.junit.Test
 import retrofit2.HttpException
 import retrofit2.Response
 import java.io.IOException
+import java.net.SocketException
 import java.net.SocketTimeoutException
+import java.net.UnknownHostException
+import java.net.UnknownServiceException
+import javax.net.ssl.SSLHandshakeException
 
 /** The contract's error model, from this side: every Seerr failure becomes one of its documented codes. */
 class SeerrErrorsTest {
@@ -105,6 +112,32 @@ class SeerrErrorsTest {
     fun `a 403 is a permission refusal unless the body names a quota`() {
         assertEquals(Status.Code.PERMISSION_DENIED, codeOf(http(403, """{"message":"You do not have permission"}""")))
         assertEquals(Status.Code.RESOURCE_EXHAUSTED, codeOf(http(403, """{"message":"Movie Quota exceeded"}""")))
+    }
+
+    @Test
+    fun `a certificate or cleartext refusal is UNAVAILABLE without the unreachable detail`() {
+        listOf(SSLHandshakeException("untrusted"), UnknownServiceException("cleartext")).forEach {
+            assertEquals(Status.Code.UNAVAILABLE, codeOf(it))
+            assertNull(serverUnreachableOf(it.toStatusException()))
+            assertEquals(SeerrError.Unknown, it.toSeerrError())
+        }
+    }
+
+    @Test
+    fun `a corrupt local store is INTERNAL, not a server that did not answer`() {
+        val failure = CorruptionException("unreadable")
+
+        assertEquals(Status.Code.INTERNAL, codeOf(failure))
+        assertNull(serverUnreachableOf(failure.toStatusException()))
+        assertEquals(SeerrError.Unknown, failure.toSeerrError())
+    }
+
+    @Test
+    fun `a reset connection and an unresolved name are still unreachable`() {
+        listOf(SocketException("Connection reset"), UnknownHostException("seerr.invalid")).forEach {
+            assertEquals(ServerUnreachable("Seerr"), serverUnreachableOf(it.toStatusException("Seerr")))
+            assertEquals(SeerrError.Unreachable, it.toSeerrError())
+        }
     }
 
     @Test
