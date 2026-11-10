@@ -42,6 +42,8 @@ fun SeerrPermissions.toCapabilities(profile: SeerrServerProfile): Set<Capability
         add(Capability.CAPABILITY_BATCH_STATUS)
         if (canReportIssues && profile.hasIssues) add(Capability.CAPABILITY_REPORT_ISSUE)
         if (canManageBlocklist && profile.hasBlocklist) add(Capability.CAPABILITY_BLOCK)
+        // Seerr's file deletion needs MANAGE_REQUESTS and a lineage that has the route, as the console's own gate does.
+        if (canManageRequests && profile.hasDeleteMediaFiles) add(Capability.CAPABILITY_DELETE_FILES)
     }
 
 /** The capabilities that act on one existing request, and so travel on that request's own `allowed_actions`. */
@@ -87,18 +89,47 @@ fun SeerrPermissions.withAllowedActions(
             when (capability) {
                 in REQUEST_SCOPED -> capability in requestActions
                 Capability.CAPABILITY_REPORT_ISSUE -> reportable
+                // Deletion is per version, so it rides on a version's list only (see offerDeleteFiles).
+                Capability.CAPABILITY_DELETE_FILES -> false
                 else -> true
             }
         }
     return status
         .toBuilder()
-        .apply { if (!sees4k) leaveOut4k() }
-        .clearRequests()
+        .apply {
+            if (!sees4k) leaveOut4k()
+            if (Capability.CAPABILITY_DELETE_FILES in declared) offerDeleteFiles()
+        }.clearRequests()
         .addAllRequests(requests)
         .clearAllowedActions()
         .addAllAllowedActions(titleActions)
         .build()
 }
+
+/**
+ * `CAPABILITY_DELETE_FILES` on each version that has files to delete, and on no other: the contract carries it only
+ * on a version's own list. A version in flight counts, as it does for the console's Delete files row.
+ */
+private fun RequestStatus.Builder.offerDeleteFiles() {
+    val offered =
+        versionsList.map { version ->
+            if (version.availability.hasFiles()) {
+                version
+                    .toBuilder()
+                    .clearAllowedActions()
+                    .addAllowedActions(Capability.CAPABILITY_DELETE_FILES)
+                    .build()
+            } else {
+                version
+            }
+        }
+    clearVersions().addAllVersions(offered)
+}
+
+private fun Availability.hasFiles(): Boolean =
+    this == Availability.AVAILABILITY_PROCESSING ||
+        this == Availability.AVAILABILITY_PARTIALLY_AVAILABLE ||
+        this == Availability.AVAILABILITY_AVAILABLE
 
 /** Everything about the 4K version, which is all in its own entry. */
 private fun RequestStatus.Builder.leaveOut4k() {

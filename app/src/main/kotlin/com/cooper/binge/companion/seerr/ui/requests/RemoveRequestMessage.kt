@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.seerr.SeerrMediaStatusCode
+import com.cooper.binge.companion.seerr.seerr.hasFiles
 
 /**
  * Whether the request's version has a download running or files on disk. Removing a request leaves both: Seerr's
