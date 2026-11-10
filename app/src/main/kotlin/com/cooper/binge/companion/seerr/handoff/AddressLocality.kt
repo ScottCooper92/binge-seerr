@@ -1,8 +1,8 @@
 package com.cooper.binge.companion.seerr.handoff
 
-import com.cooper.binge.companion.seerr.seerr.AddressRange
-import com.cooper.binge.companion.seerr.seerr.ipLiteralBytes
-import com.cooper.binge.companion.seerr.seerr.isIn
+import com.binge.companion.kit.AddressRange
+import com.binge.companion.kit.ipLiteralBytes
+import com.binge.companion.kit.isIn
 import com.cooper.binge.companion.seerr.seerr.normaliseBaseUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 
