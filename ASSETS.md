@@ -5,7 +5,7 @@ Those are all rights reserved, Copyright (c) Scott Cooper.
 
 ## What this covers
 
-- The app's name, "Seerr Companion", and the name of this repository.
+- The app's name, "Seerr Companion".
 - The launcher icon, its ring animation, the monochrome icon and the notification icon:
   `app/src/main/res/drawable/ic_launcher_*.xml`, `avd_launcher_ring.xml`, `ic_notification.xml`,
   `ic_companion.xml`, and `app/src/main/res/mipmap-anydpi-v26/`.
