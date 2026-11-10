@@ -11,6 +11,7 @@ import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.preview.SeerrTvScreenPreviews
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.ui.FIXED_NOW_MILLIS
+import com.cooper.binge.companion.seerr.ui.hub.HubAccount
 import com.cooper.binge.companion.seerr.ui.hub.HubQuota
 import com.cooper.binge.companion.seerr.ui.hub.HubQuotaBucket
 import com.cooper.binge.companion.seerr.ui.tv.TvDestination
@@ -59,18 +60,19 @@ private fun detail(
 private val PreviewBarAccount = TvTopBarAccount(name = "Scott Cooper", avatarUrl = null)
 
 /**
- * The television account sheet: the profile as one card with a line per request quota (one spent, one part used; or both
- * unlimited) over Sign out, and none for a key connection; the confirm Sign out asks; the sheets before the account is
- * known; and the top bar over Home: the avatar, the Home
- * and Issues tabs, and the Settings gear, or the avatar and the gear alone when only one tab is offered. The user's own requests are a row on Home, framed on `TvRequestsScreenshotTest`.
+ * The television account menu (#1916), drawn open from the avatar: the header, the contact line and a line per request quota
+ * (one spent, one part used; or both unlimited) over Sign out, and none for a key connection; the confirm Sign out asks;
+ * the menu before the account is known and after it failed; and the top bar over Home: the Home and Issues tabs, the avatar
+ * and the Settings gear, or the avatar and the gear alone when only one tab is offered. The user's own requests are a row on
+ * Home, framed on `TvRequestsScreenshotTest`.
  */
 
 class TvAccountScreenshotTest {
     @PreviewTest
     @SeerrTvScreenPreviews
     @Composable
-    fun Sheet() {
-        Sheet(
+    fun Menu() {
+        Menu(
             detail(
                 HubQuota(
                     movie = HubQuotaBucket(limit = 5, remaining = 0, days = 7),
@@ -84,7 +86,7 @@ class TvAccountScreenshotTest {
     @SeerrTvScreenPreviews
     @Composable
     fun UnlimitedQuota() {
-        Sheet(detail(HubQuota(movie = null, tv = null)))
+        Menu(detail(HubQuota(movie = null, tv = null)))
     }
 
     /** User 1 is the server's owner: the role line reads Owner, not Admin (#1236). */
@@ -92,21 +94,21 @@ class TvAccountScreenshotTest {
     @SeerrTvScreenPreviews
     @Composable
     fun Owner() {
-        Sheet(detail(HubQuota(movie = null, tv = null), id = 1))
+        Menu(detail(HubQuota(movie = null, tv = null), id = 1))
     }
 
     @PreviewTest
     @SeerrTvScreenPreviews
     @Composable
     fun Loading() {
-        Sheet(detail = null)
+        Menu(detail = null)
     }
 
     @PreviewTest
     @SeerrTvScreenPreviews
     @Composable
     fun Failed() {
-        Sheet(detail = UserDetailUiState.Error(SeerrError.Unreachable))
+        Menu(detail = UserDetailUiState.Error(SeerrError.Unreachable))
     }
 
     /** The cached profile before the account loads (#1053): the quota lines hold their place without guessing the numbers. */
@@ -114,10 +116,10 @@ class TvAccountScreenshotTest {
     @SeerrTvScreenPreviews
     @Composable
     fun Seeded() {
-        Sheet(UserDetailUiState.Seeded(detail(quota = null).detail.item))
+        Menu(UserDetailUiState.Seeded(detail(quota = null).detail.item))
     }
 
-    /** Home's top row: the Account, Issues and Settings buttons in the top-right corner. */
+    /** Home's top row: the Home and Issues tabs, and the avatar and Settings gear in the top-right corner. */
     @PreviewTest
     @SeerrTvScreenPreviews
     @Composable
@@ -157,10 +159,10 @@ class TvAccountScreenshotTest {
     @SeerrTvScreenPreviews
     @Composable
     fun ApiKey() {
-        Sheet(detail(HubQuota(movie = null, tv = null)), canSignOut = false)
+        Menu(detail(HubQuota(movie = null, tv = null)), canSignOut = false)
     }
 
-    /** Sign out asks first, in a dialog over the sheet: what it means, then Sign out in the error colour, and Cancel. */
+    /** Sign out asks first, in a dialog over the menu: what it means, then Sign out in the error colour, and Cancel. */
     @PreviewTest
     @SeerrTvScreenPreviews
     @Composable
@@ -177,17 +179,31 @@ class TvAccountScreenshotTest {
         )
     }
 
+    /** The bar over an empty Home, with the account menu drawn open from the avatar: [detail] is what the account's read has said. */
     @Composable
-    private fun Sheet(
+    private fun Menu(
         detail: UserDetailUiState?,
         canSignOut: Boolean = true,
     ) {
-        TvAccountSheet(
-            detail = detail,
-            accountFailed = detail is UserDetailUiState.Error,
-            onRetry = {},
-            onDismissRequest = {},
-            onSignOut = if (canSignOut) ({}) else null,
-        )
+        val item = (detail as? UserDetailUiState.Ready)?.detail?.item ?: (detail as? UserDetailUiState.Seeded)?.item
+        TvHomeShell(
+            tab = TvDestination.Hub,
+            sheet = null,
+            onSelectTab = {},
+            onOpenSheet = {},
+            onCloseSheet = {},
+            account =
+                tvAccountMenu(
+                    account = HubAccount(id = item?.id ?: 7, name = item?.name ?: "Scott", isAdmin = true, avatarUrl = null),
+                    detail = detail,
+                    accountFailed = detail is UserDetailUiState.Error,
+                    onRetry = {},
+                    onSignOut = if (canSignOut) ({}) else null,
+                    demo = false,
+                    initiallyOpen = true,
+                ),
+        ) { _, _, _ ->
+            Box(modifier = Modifier.fillMaxSize())
+        }
     }
 }

@@ -39,7 +39,7 @@ private const val TITLE = "Heat.1995.2160p"
 
 /**
  * The TV detail and account cards' own rules (#1054): which facts a request page lists, a season and a download
- * with less to say, and the account sheet's quota line in each of its states.
+ * with less to say, and the account menu's quota line in each of its states.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(qualifiers = "w960dp-h540dp-television-xhdpi")

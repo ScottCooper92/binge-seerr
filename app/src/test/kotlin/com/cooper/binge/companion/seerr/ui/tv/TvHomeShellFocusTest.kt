@@ -200,19 +200,22 @@ class TvHomeShellFocusTest {
         content(TvDestination.Hub).assertIsFocused()
     }
 
+    /** The avatar's menu opens in place, not as a sheet: Back closes it and nothing else, and the next Back is the shell's own. */
     @Test
-    fun aSheetOpensFromTheAvatarAndBackReturnsFocusToIt() {
+    fun backClosesOnlyTheAccountMenu() {
         setShell()
         press(Key.DirectionUp)
         repeat(2) { press(Key.DirectionRight) }
         item(R.string.tv_account).assertIsFocused()
+        assertNull(sheet)
 
-        press(Key.Enter)
-        content(TvDestination.Account).assertIsFocused()
         pressBack()
 
-        assertNull(sheet)
         item(R.string.tv_account).assertIsFocused()
+        assertEquals(TvDestination.Hub, tab)
+        // On the start tab the shell does not handle Back, so the app can close: the menu took the first one, and only the first.
+        val handled = composeTestRule.runOnUiThread { composeTestRule.activity.onBackPressedDispatcher.hasEnabledCallbacks() }
+        assertEquals(false, handled)
     }
 
     @Test
@@ -263,10 +266,15 @@ class TvHomeShellFocusTest {
         item(R.string.tv_account).assertIsFocused()
     }
 
-    /** On the avatar of a one-tab bar the user is already on the start tab, so Back leaves the app. */
+    /**
+     * On the avatar of a one-tab bar the user is already on the start tab, so Back leaves the app. The avatar's menu opens with
+     * focus and takes the first Back, as it does anywhere; the one after it is the shell's, and is not handled.
+     */
     @Test
     fun withOneTabBackOnTheBarIsNotHandled() {
         setShell(offered = listOf(BothTabs.first()))
+        pressBack()
+        item(R.string.tv_account).assertIsFocused()
         pressBack()
         item(R.string.tv_account).assertIsFocused()
 

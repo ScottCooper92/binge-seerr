@@ -75,10 +75,12 @@ internal fun TvConnectedShell(
         tabs = tabs,
         tabsResolved = tabsResolved,
         account =
-            TvTopBarAccount(
-                name = account?.name.orEmpty(),
-                avatarUrl = account?.avatarUrl,
+            rememberTvAccount(
+                hubViewModel = hubViewModel,
+                hub = hub,
                 demo = (hub as? HubUiState.Ready)?.server?.baseUrl?.isDemoOrigin() == true,
+                // Only a session sign-in has a session to end; a server's API key has nothing to sign out of.
+                onSignOut = settingsViewModel::signOut.takeIf { settings.signsInWithSession() },
             ),
         showBar = !editingConnection,
         overlay =
@@ -93,14 +95,6 @@ internal fun TvConnectedShell(
         onCloseTopLayer = { pages[tab].detailId = null },
     ) { destination, close, closer ->
         when (destination) {
-            TvDestination.Account ->
-                TvAccountEntry(
-                    hubViewModel = hubViewModel,
-                    onDismissRequest = close,
-                    closer = closer,
-                    // Only a session sign-in has a session to end; a server's API key has nothing to sign out of.
-                    onSignOut = settingsViewModel::signOut.takeIf { settings.signsInWithSession() },
-                )
             // Home is what needs attention: the requests as rows over a backdrop, once the server answers.
             TvDestination.Hub ->
                 TvHomeEntry(
@@ -208,7 +202,7 @@ private fun detailPage(
                 }
             }
         }
-        TvDestination.Account, TvDestination.Settings -> null
+        TvDestination.Settings -> null
     }
 }
 
@@ -235,7 +229,7 @@ private fun tabPages(
         TvDestination.Issues -> {
             { TvIssuesPages(pages[tab]) }
         }
-        TvDestination.Account, TvDestination.Settings -> null
+        TvDestination.Settings -> null
     }
 
 /** The tabs [TabRules] offers for what the server has said of this account; the start tab alone while it has said nothing. */

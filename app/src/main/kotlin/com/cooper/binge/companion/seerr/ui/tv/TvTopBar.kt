@@ -1,71 +1,68 @@
 package com.cooper.binge.companion.seerr.ui.tv
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.clearAndSetSemantics
-import androidx.compose.ui.semantics.contentDescription
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.binge.designsystem.theme.BingeShapes
-import com.binge.designsystem.tv.component.BingeTvInitialsAvatar
 import com.binge.designsystem.tv.component.TvIconButton
-import com.binge.designsystem.tv.focus.tvClickable
 import com.binge.designsystem.tv.nav.BingeTvTopBar
+import com.binge.designsystem.tv.nav.TvAccountMenu
+import com.binge.designsystem.tv.nav.TvAccountMenuRow
 import com.binge.designsystem.tv.nav.TvNavItem
 import com.cooper.binge.companion.seerr.R
 import com.binge.designsystem.R as DesR
-import com.binge.designsystem.tv.R as TvR
 
-/** Who is signed in, for the avatar at the bar's end. */
+/**
+ * Who is signed in, for the avatar at the bar's end and the menu that opens from it. [detail] is the line under the
+ * name; [extraContent] sits under the header (the quota, say) and is composed only while the menu is open; [rows] are
+ * the menu's actions. [initiallyOpen] draws the menu open until focus first reaches it, for a screenshot.
+ */
 internal class TvTopBarAccount(
     val name: String,
     val avatarUrl: String?,
-    /** Whether the connected server is the demo (#1705), which the bar says so beside Settings. */
+    /** Whether the connected server is the demo (#1705), which the bar says so beside the avatar. */
     val demo: Boolean = false,
+    val detail: String? = null,
+    val rows: List<TvAccountMenuRow> = emptyList(),
+    val extraContent: (@Composable ColumnScope.() -> Unit)? = null,
+    val initiallyOpen: Boolean = false,
 )
 
 /**
- * The shell's bar, which the design system draws ([BingeTvTopBar]): [destinations] without a sheet are the tabs, and the
- * trailing slot holds the demo tag, the signed-in user's avatar and the Settings gear. The shell reaches each through its
- * [opener] requester, and Down from any of them lands on [down], the current page's own entry.
+ * The shell's bar, which the design system draws ([BingeTvTopBar]): [tabs] are its items, and the trailing slot holds the demo
+ * tag, the account menu ([TvAccountMenu]) and the Settings gear. The shell reaches each through its requester ([opener] for a tab
+ * and the gear, [accountOpener] for the avatar), and Down from any of them lands on [down], the current page's own entry.
  *
  * Until [visible] (the server has said which tabs this account gets) the bar is drawn clear and takes no focus.
  */
 @Composable
 internal fun TvTopBar(
-    destinations: List<TvDestination>,
+    tabs: List<TvDestination>,
     current: TvDestination,
     opener: Map<TvDestination, FocusRequester>,
+    accountOpener: FocusRequester,
     down: FocusRequester,
     visible: Boolean,
     account: TvTopBarAccount,
     onFocusedChange: (Boolean) -> Unit,
     onSelect: (TvDestination) -> Unit,
+    onOpenSettings: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val tabs = destinations.filterNot { it.isSheet }
     val labels = tabs.associateWith { stringResource(it.labelRes) }
     val items = tabs.map { TvNavItem(key = it, label = labels.getValue(it), icon = it.icon) }
     val settingsLabel = stringResource(TvDestination.Settings.labelRes)
-    // Down from the avatar and the gear is the caller's to name, as the bar's own tabs get it.
+    // Down from the gear is the caller's to name, as the bar's own tabs get it.
     val below = Modifier.focusProperties { this.down = down }
     BingeTvTopBar(
         header = null,
@@ -80,52 +77,27 @@ internal fun TvTopBar(
         visible = visible,
         trailing = {
             if (account.demo) TvDemoTag()
-            if (TvDestination.Account in destinations) {
-                TvTopBarAvatar(
-                    label = stringResource(TvDestination.Account.labelRes),
-                    account = account,
-                    onClick = { onSelect(TvDestination.Account) },
-                    modifier = below.focusRequester(opener.getValue(TvDestination.Account)),
-                )
-            }
-            if (TvDestination.Settings in destinations) {
-                TvIconButton(
-                    icon = TvDestination.Settings.icon,
-                    label = settingsLabel,
-                    onClick = { onSelect(TvDestination.Settings) },
-                    modifier = below.focusRequester(opener.getValue(TvDestination.Settings)),
-                    // Stays a circle on focus: the bar lays the tabs out around this slot, so it must not change size.
-                    expandOnFocus = false,
-                )
-            }
+            TvAccountMenu(
+                avatarLabel = stringResource(R.string.tv_account),
+                name = account.name,
+                avatarUrl = account.avatarUrl,
+                detail = account.detail,
+                rows = account.rows,
+                down = down,
+                modifier = Modifier.focusRequester(accountOpener),
+                extraContent = account.extraContent,
+                initiallyOpen = account.initiallyOpen,
+            )
+            TvIconButton(
+                icon = TvDestination.Settings.icon,
+                label = settingsLabel,
+                onClick = onOpenSettings,
+                modifier = below.focusRequester(opener.getValue(TvDestination.Settings)),
+                // Stays a circle on focus: the bar lays the tabs out around this slot, so it must not change size.
+                expandOnFocus = false,
+            )
         },
     )
-}
-
-/** The signed-in user's picture, or their initials, ringed in the focused tab's colour when focused. */
-@Composable
-private fun TvTopBarAvatar(
-    label: String,
-    account: TvTopBarAccount,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    var focused by remember { mutableStateOf(false) }
-    val diameter = dimensionResource(TvR.dimen.tv_icon_button_diameter)
-    val ring = dimensionResource(R.dimen.tv_top_bar_avatar_ring)
-    Box(
-        modifier =
-            modifier
-                .size(diameter)
-                .clip(BingeShapes.Pill)
-                .border(ring, if (focused) MaterialTheme.colorScheme.onSurface else Color.Transparent, BingeShapes.Pill)
-                .tvClickable(role = Role.Button, onFocusChanged = { focused = it }, onClick = onClick)
-                .clearAndSetSemantics { contentDescription = label }
-                .padding(ring),
-        contentAlignment = Alignment.Center,
-    ) {
-        BingeTvInitialsAvatar(name = account.name, size = diameter - ring * 2, avatarUrl = account.avatarUrl)
-    }
 }
 
 /** The demo server's mark: small, and not a control, so the remote passes over it. */
