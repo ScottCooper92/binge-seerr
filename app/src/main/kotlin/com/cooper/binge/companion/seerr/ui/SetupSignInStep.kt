@@ -115,6 +115,8 @@ internal fun ModeTabs(
         tabs = server.modes.map { it.label(server) },
         selectedIndex = server.modes.indexOf(selected),
         onSelect = { index -> onSelect(server.modes[index]) },
+        // The fields below already sit inside the screen's gutter, so the row takes none of its own.
+        edgePadding = dimensionResource(R.dimen.setup_mode_tabs_edge_padding),
     )
 }
 
