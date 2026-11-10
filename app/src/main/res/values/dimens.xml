@@ -56,10 +56,6 @@
     <dimen name="search_result_min_height">64dp</dimen>
     <dimen name="search_result_icon_container">40dp</dimen>
     <dimen name="search_result_toggle">36dp</dimen>
-    <!-- The TV top bar: the avatar's size and the ring a focused one shows, and a tab's padding around its label -->
+    <!-- The TV top bar: the ring a focused avatar shows -->
     <dimen name="tv_top_bar_avatar_ring">2dp</dimen>
-    <dimen name="tv_top_bar_item_padding_horizontal">14dp</dimen>
-    <dimen name="tv_top_bar_item_padding_horizontal_icon">8dp</dimen>
-    <dimen name="tv_top_bar_item_padding_vertical">8dp</dimen>
-    <dimen name="tv_top_bar_avatar_size">36dp</dimen>
 </resources>

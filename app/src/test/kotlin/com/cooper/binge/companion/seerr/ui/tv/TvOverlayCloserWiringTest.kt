@@ -95,7 +95,8 @@ class TvOverlayCloserWiringTest {
         setShell()
         composeTestRule.onNodeWithTag(FIRST).requestFocus()
         composeTestRule.press(Key.DirectionUp)
-        composeTestRule.press(Key.DirectionLeft)
+        // The avatar is at the bar's end, after the two tabs: Home, Issues, then the avatar.
+        repeat(2) { composeTestRule.press(Key.DirectionRight) }
         opener(TvDestination.Account).assertIsFocused()
 
         composeTestRule.press(Key.Enter)

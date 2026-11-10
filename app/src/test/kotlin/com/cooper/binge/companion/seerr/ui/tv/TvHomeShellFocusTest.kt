@@ -163,6 +163,58 @@ class TvHomeShellFocusTest {
         item(R.string.hub_section_settings).assertIsFocused()
     }
 
+    /** The avatar and the gear are the design system's trailing slot, so the remote walks the tabs, then the avatar, then the gear. */
+    @Test
+    fun theRemoteWalksTheTabsThenTheAvatarThenTheGear() {
+        setShell()
+        press(Key.DirectionUp)
+        item(R.string.tv_home).assertIsFocused()
+
+        press(Key.DirectionRight)
+        item(R.string.hub_section_issues).assertIsFocused()
+        press(Key.DirectionRight)
+        item(R.string.tv_account).assertIsFocused()
+        press(Key.DirectionRight)
+        item(R.string.hub_section_settings).assertIsFocused()
+
+        press(Key.DirectionLeft)
+        item(R.string.tv_account).assertIsFocused()
+        press(Key.DirectionLeft)
+        item(R.string.hub_section_issues).assertIsFocused()
+    }
+
+    @Test
+    fun downFromTheAvatarAndFromTheGearEntersThePage() {
+        setShell()
+        press(Key.DirectionUp)
+        repeat(2) { press(Key.DirectionRight) }
+        item(R.string.tv_account).assertIsFocused()
+
+        press(Key.DirectionDown)
+        content(TvDestination.Hub).assertIsFocused()
+
+        press(Key.DirectionUp)
+        repeat(TvDestination.entries.size) { press(Key.DirectionRight) }
+        item(R.string.hub_section_settings).assertIsFocused()
+        press(Key.DirectionDown)
+        content(TvDestination.Hub).assertIsFocused()
+    }
+
+    @Test
+    fun aSheetOpensFromTheAvatarAndBackReturnsFocusToIt() {
+        setShell()
+        press(Key.DirectionUp)
+        repeat(2) { press(Key.DirectionRight) }
+        item(R.string.tv_account).assertIsFocused()
+
+        press(Key.Enter)
+        content(TvDestination.Account).assertIsFocused()
+        pressBack()
+
+        assertNull(sheet)
+        item(R.string.tv_account).assertIsFocused()
+    }
+
     @Test
     fun theBarTakesNoFocusUntilTheTabsResolve() {
         setShell(tabsResolved = false)
