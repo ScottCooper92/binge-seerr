@@ -94,7 +94,7 @@ class TvAccountMenuTest {
         composeTestRule.onNode(hasText(string(R.string.hub_quota_unlimited), substring = true)).assertExists()
     }
 
-    /** The lines are only composed while the menu is open, which is when the quota is asked for. */
+    /** The hook for what is marked visible only while the menu is open is composed then, and not before. */
     @Test
     fun whileOpenIsComposedOnlyWhileTheMenuIsOpen() {
         setBar(detail = UserDetailUiState.Ready(detail()))
