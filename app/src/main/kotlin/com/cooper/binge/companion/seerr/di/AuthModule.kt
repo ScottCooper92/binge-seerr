@@ -5,6 +5,7 @@ import android.os.Build
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
+import com.binge.companion.kit.SecretCipher
 import com.cooper.binge.companion.seerr.BuildConfig
 import com.cooper.binge.companion.seerr.auth.BingeConnectionStore
 import com.cooper.binge.companion.seerr.auth.CleartextConsent
@@ -16,7 +17,6 @@ import com.cooper.binge.companion.seerr.auth.DataStoreCleartextConsent
 import com.cooper.binge.companion.seerr.auth.DeviceIdentityStore
 import com.cooper.binge.companion.seerr.auth.ForegroundUserRefresh
 import com.cooper.binge.companion.seerr.auth.PlexPinFlow
-import com.cooper.binge.companion.seerr.auth.SecretCipher
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.auth.SeerrConnectionHealthMonitor
 import com.cooper.binge.companion.seerr.data.MediaStatusStore

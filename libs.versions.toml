@@ -81,7 +81,7 @@ junit = { module = "junit:junit", version.ref = "junit" }
 # The binge: comment rules in detekt-rules/ compile against detekt's API and are tested with its harness.
 detekt-api = { module = "dev.detekt:detekt-api", version.ref = "detekt" }
 detekt-test = { module = "dev.detekt:detekt-test", version.ref = "detekt" }
-# Version-less on purpose: both resolve to projects of the included binge-companions build.
+# Version-less on purpose: each resolves to a project of the included binge-companions build.
 binge-companion-contracts = { module = "io.github.scottcooper92:binge-companion-contracts" }
 binge-companion-sdk = { module = "io.github.scottcooper92:binge-companion-sdk" }
 binge-companion-kit = { module = "io.github.scottcooper92:binge-companion-kit" }

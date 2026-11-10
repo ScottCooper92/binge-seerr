@@ -47,7 +47,7 @@ other traffic.
 The app holds one secret: an API key, or a session cookie from a password or Plex sign-in. It keeps
 two copies, each guarding against something different:
 
-- **On the device**, encrypted with an Android Keystore key (`CredentialStore`, `SecretCipher`). The
+- **On the device**, encrypted with an Android Keystore key (`CredentialStore`, and `SecretCipher` from the companion kit). The
   key never leaves the Keystore, so the stored copy is useless off this device or without this app.
 - **In Google Play's Block Store** (`BlockStoreConnectionCarrier`), so a new device or a reinstall can
   reconnect without signing in again. It is written as JSON, backed up to the cloud only when the

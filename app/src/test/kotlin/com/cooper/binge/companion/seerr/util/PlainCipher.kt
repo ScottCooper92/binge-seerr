@@ -1,6 +1,6 @@
 package com.cooper.binge.companion.seerr.util
 
-import com.cooper.binge.companion.seerr.auth.SecretCipher
+import com.binge.companion.kit.SecretCipher
 
 /**
  * The cipher every test that stores credentials uses: it hands back what it is given, so a test reads what it wrote

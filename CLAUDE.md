@@ -32,7 +32,7 @@ and Spanish. A release build admits Binge through its published Play App Signing
 yet released: the on-device check of that handshake is still open (#85), and the Play listing under
 `docs/listing/` waits on its screenshots.
 
-The contracts and the SDK are consumed as source: `binge-companions/` is a git
+The contracts, the SDK and the companion kit are consumed as source: `binge-companions/` is a git
 submodule of the binge-companions repository, and `settings.gradle.kts` includes it as a composite build. So is the
 shared design system, `design-system/` (binge-design-system): the screens are built
 from its theme and components, which is what makes this app read as part of Binge's
