@@ -1,12 +1,9 @@
 package com.cooper.binge.companion.seerr.ui
 
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -24,7 +21,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import coil3.compose.AsyncImage
 import com.binge.designsystem.component.BingeFilledButton
-import com.binge.designsystem.component.BingeFilterChip
+import com.binge.designsystem.component.BingeTabRow
 import com.binge.designsystem.component.BingeTextButton
 import com.binge.designsystem.component.BingeTextField
 import com.binge.designsystem.template.StepHeading
@@ -72,7 +69,7 @@ internal fun SetupSignInContent(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
     ) {
-        ModeChips(state.server, state.form.mode) { mode -> actions.onEditForm { copy(mode = mode) } }
+        ModeTabs(state.server, state.form.mode) { mode -> actions.onEditForm { copy(mode = mode) } }
         ModeFields(state, actions.onEditForm, actions.onRequestPasswordReset, actions.onConnect)
         state.error?.let { error ->
             Text(
@@ -107,24 +104,20 @@ internal fun SetupSignInFooter(
     actions.onDisconnect?.let { DisconnectButton(it) }
 }
 
+/** The sign-in modes the server accepts, as tabs: each shows different fields below, so this switches content rather than narrowing a list. */
 @Composable
-internal fun ModeChips(
+internal fun ModeTabs(
     server: SetupServer,
     selected: SeerrSignInMode,
     onSelect: (SeerrSignInMode) -> Unit,
 ) {
-    Row(
-        modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-        horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
-    ) {
-        server.modes.forEach { mode ->
-            BingeFilterChip(
-                label = mode.label(server),
-                selected = mode == selected,
-                onClick = { onSelect(mode) },
-            )
-        }
-    }
+    BingeTabRow(
+        tabs = server.modes.map { it.label(server) },
+        selectedIndex = server.modes.indexOf(selected),
+        onSelect = { index -> onSelect(server.modes[index]) },
+        // The fields below already sit inside the screen's gutter, so the row takes none of its own.
+        edgePadding = dimensionResource(R.dimen.setup_mode_tabs_edge_padding),
+    )
 }
 
 @Composable
