@@ -1,11 +1,11 @@
 package com.cooper.binge.companion.seerr.ui
 
 import androidx.lifecycle.SavedStateHandle
+import com.binge.companion.kit.SecretCipher
 import com.binge.companion.sdk.attempt
 import com.cooper.binge.companion.seerr.auth.CredentialStore
 import com.cooper.binge.companion.seerr.auth.PlexPin
 import com.cooper.binge.companion.seerr.auth.PlexPinFlow
-import com.cooper.binge.companion.seerr.auth.SecretCipher
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.auth.SeerrQuickConnect
 import kotlinx.coroutines.CancellationException
