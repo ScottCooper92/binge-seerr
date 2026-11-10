@@ -53,7 +53,7 @@ label (`app_label`). The name is a maintainer's decision; see the README.
 > Crashlytics unless you turn them off in Settings. Google Play's Block Store can carry your
 > connection to a new device. No adverts, no accounts of its own.
 >
-> Open source, under the Apache 2.0 licence: github.com/ScottCooper92/binge-seerr.
+> Open source, under the GPL-3.0-or-later licence: github.com/ScottCooper92/binge-seerr.
 >
 > Seerr Companion is an independent app. It is not made by or affiliated with the Seerr, Jellyseerr
 > or Overseerr projects.
