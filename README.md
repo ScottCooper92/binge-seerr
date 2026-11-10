@@ -165,4 +165,18 @@ CI triage table those workflows work from.
 
 ## Licence
 
-Apache 2.0. See [LICENSE](LICENSE).
+Copyright (c) Scott Cooper, and the Claude and bot identities that authored commits in this
+repository.
+
+This app is free software under the GNU General Public License, version 3 or (at your option) any
+later version. See [LICENSE](LICENSE).
+
+[LICENSE-EXCEPTION.md](LICENSE-EXCEPTION.md) adds a permission under section 7 for the Google Play
+services and Firebase libraries this app links.
+
+The app's name and artwork are not under the GPL. They are all rights reserved: see
+[ASSETS.md](ASSETS.md) and [TRADEMARKS.md](TRADEMARKS.md). A fork needs a different name and
+different artwork.
+
+The contracts and SDK in `binge-companions` stay under Apache 2.0, so anyone can write a companion
+without taking on the GPL.

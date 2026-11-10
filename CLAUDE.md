@@ -43,6 +43,10 @@ still read as two products at a glance. `.gitmodules` is an agent-governed path,
 bot's commit can revert a change to it — bump a submodule in a commit of its own,
 and check both pins after any bot push.
 
+This app is GPL-3.0-or-later, with a section-7 permission for the Google libraries it links
+(`LICENSE-EXCEPTION.md`); its name and artwork are all rights reserved (`ASSETS.md`,
+`TRADEMARKS.md`). The contracts in binge-companions stay Apache-2.0.
+
 ## The one rule everything else serves
 
 **This repository is read as documentation.**
