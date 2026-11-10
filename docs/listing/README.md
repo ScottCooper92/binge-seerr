@@ -50,7 +50,7 @@ The listing describes behaviour, so a change to what the app stores, sends or as
 to `privacy.md` and `data-safety.md` in the same PR. The specific claims that must stay true:
 
 - The one secret (an API key or a session cookie) is encrypted with an Android Keystore key
-  (`auth/SecretCipher.kt`) and stored on the device. A copy of the connection (address and secret)
+  (`KeystoreSecretCipher` from the companion kit, built in `di/DeviceKeysModule.kt`) and stored on the device. A copy of the connection (address and secret)
   also goes to Google Play's Block Store (`auth/BlockStoreConnectionCarrier.kt`), which survives a
   device-to-device transfer and, where end-to-end encryption is available, a cloud restore.
   Disconnecting clears both. So it is **not** true that the secret never leaves the device.
