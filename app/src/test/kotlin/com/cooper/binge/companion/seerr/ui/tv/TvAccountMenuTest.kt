@@ -186,9 +186,34 @@ class TvAccountMenuTest {
         composeTestRule.onNodeWithTag(PAGE).assertIsFocused()
     }
 
+    /** The menu is open while the avatar is focused, with no Select: the remote's arrival alone opens it, as in the other TV app. */
+    @Test
+    fun arrivingOnTheAvatarFromTheGearOpensTheMenu() {
+        setBar(detail = UserDetailUiState.Ready(detail()))
+        val gear = composeTestRule.onNode(hasContentDescription(string(TvDestination.Settings.labelRes)) and isFocusable())
+        gear.requestFocus()
+        composeTestRule.waitForIdle()
+        press(Key.DirectionLeft)
+
+        avatar().assertIsFocused()
+        composeTestRule.onNodeWithText("Scott", useUnmergedTree = true).assertExists()
+    }
+
+    @Test
+    fun arrivingOnTheAvatarFromTheLastTabOpensTheMenu() {
+        setBar(detail = UserDetailUiState.Ready(detail()), tabs = listOf(TvDestination.Hub, TvDestination.Issues))
+        composeTestRule.onNode(hasContentDescription(string(TvDestination.Issues.labelRes)) and isFocusable()).requestFocus()
+        composeTestRule.waitForIdle()
+        press(Key.DirectionRight)
+
+        avatar().assertIsFocused()
+        composeTestRule.onNodeWithText("Scott", useUnmergedTree = true).assertExists()
+    }
+
     private fun setBar(
         detail: UserDetailUiState?,
         canSignOut: Boolean = true,
+        tabs: List<TvDestination> = emptyList(),
     ) {
         this.detail = detail
         composeTestRule.setContent {
@@ -204,7 +229,7 @@ class TvAccountMenuTest {
                             .testTag(PAGE),
                     )
                     TvTopBar(
-                        tabs = emptyList(),
+                        tabs = tabs,
                         current = TvDestination.Hub,
                         opener = remember { TvDestination.entries.associateWith { FocusRequester() } },
                         accountOpener = remember { FocusRequester() },
