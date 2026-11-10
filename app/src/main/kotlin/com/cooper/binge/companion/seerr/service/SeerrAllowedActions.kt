@@ -126,6 +126,7 @@ private fun RequestStatus.Builder.offerDeleteFiles() {
     clearVersions().addAllVersions(offered)
 }
 
+/** The contract-side twin of `SeerrMediaStatusCode.hasFiles()` in `seerr/`: the two rules must agree. */
 private fun Availability.hasFiles(): Boolean =
     this == Availability.AVAILABILITY_PROCESSING ||
         this == Availability.AVAILABILITY_PARTIALLY_AVAILABLE ||

@@ -64,3 +64,9 @@ value class SeerrIssueTypeCode(
  */
 fun SeerrMediaStatusCode?.hasFiles(): Boolean =
     this == SeerrMediaStatusCode.Processing || this == SeerrMediaStatusCode.PartiallyAvailable || this == SeerrMediaStatusCode.Available
+
+/**
+ * Whether a request in this state still keeps its version requested. The server no longer counts a declined or completed
+ * one against the title, so withdrawing the open ones is what stops anything requesting it again.
+ */
+fun SeerrRequestStatusCode?.isOpen(): Boolean = this != SeerrRequestStatusCode.Declined && this != SeerrRequestStatusCode.Completed

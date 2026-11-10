@@ -107,7 +107,7 @@ class SeerrRequestService(
     private val freshness = MediaStatusFreshness(observeIntervalMillis)
     private val qualityLabels = QualityProfileLabels(connection, clock)
     private val statusReads = SeerrStatusReads(connection, statusCache, freshness, qualityLabels, clock)
-    private val requests = SeerrRequestRpcs(connection, statusReads, statusCache, requestCache)
+    private val requests = SeerrRequestRpcs(connection, statusReads, statusCache, requestCache, analytics)
     private val listing = SeerrListingRpcs(connection, statusReads, qualityLabels)
     private val issues = SeerrIssueRpcs(connection, clock)
 

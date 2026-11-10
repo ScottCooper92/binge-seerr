@@ -8,7 +8,7 @@ import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.BingeConfirmDialog
 import com.binge.designsystem.component.SwitchRow
 import com.cooper.binge.companion.seerr.R
-import com.cooper.binge.companion.seerr.seerr.SeerrRequestStatusCode
+import com.cooper.binge.companion.seerr.seerr.isOpen
 
 /**
  * Everything that changes something, in one sheet, behind the page's one button.
@@ -163,5 +163,5 @@ private fun MediaRecord?.clientRes(): Int = if (this?.isTv == true) R.string.med
  * the server no longer counts against the title.
  */
 internal fun List<RequestSummary>.openRequestIds(is4k: Boolean): List<Int> =
-    filter { it.is4k == is4k && it.status != SeerrRequestStatusCode.Declined && it.status != SeerrRequestStatusCode.Completed }
+    filter { it.is4k == is4k && it.status.isOpen() }
         .map { it.id }

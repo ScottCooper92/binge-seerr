@@ -41,6 +41,7 @@ import com.cooper.binge.companion.seerr.seerr.checkedSeasonNumbers
 import com.cooper.binge.companion.seerr.seerr.destinationOptions
 import com.cooper.binge.companion.seerr.seerr.details
 import com.cooper.binge.companion.seerr.seerr.hasFiles
+import com.cooper.binge.companion.seerr.seerr.isOpen
 import com.cooper.binge.companion.seerr.seerr.isSeerrTv
 import com.cooper.binge.companion.seerr.seerr.recordIdFor
 import com.cooper.binge.companion.seerr.seerr.refusedWithLiveSession
@@ -49,6 +50,8 @@ import com.cooper.binge.companion.seerr.seerr.seerrMediaType
 import com.cooper.binge.companion.seerr.seerr.standardVersion
 import com.cooper.binge.companion.seerr.seerr.toPermissions
 import com.cooper.binge.companion.seerr.seerr.updateRequest
+import com.cooper.binge.companion.seerr.telemetry.Analytics
+import com.cooper.binge.companion.seerr.telemetry.operationFailed
 import io.grpc.Status
 import io.grpc.StatusException
 import retrofit2.HttpException
@@ -69,6 +72,7 @@ internal class SeerrRequestRpcs(
     private val statusReads: SeerrStatusReads,
     private val statusCache: MediaStatusStore,
     private val requestCache: RequestStore,
+    private val analytics: Analytics,
 ) {
     suspend fun submitRequest(request: SubmitRequestRequest): SubmitRequestResponse {
         // Re-checked here, not trusted to the host. version_id is a field on a core rpc, not a gated rpc,
@@ -108,16 +112,16 @@ internal class SeerrRequestRpcs(
         val recordId = info.recordIdFor(media)
         val withFiles = (if (is4k) info?.status4k else info?.status).hasFiles()
         val open =
-            info?.requests.orEmpty().filter {
-                it.is4k == is4k &&
-                    it.status != SeerrRequestStatusCode.Declined &&
-                    it.status != SeerrRequestStatusCode.Completed
-            }
+            info?.requests.orEmpty().filter { it.is4k == is4k && it.status.isOpen() }
         if (!withFiles && open.isEmpty()) {
             throw StatusException(Status.NOT_FOUND.withDescription("Seerr has no files or request left for that version"))
         }
         if (withFiles) api.deleteMediaFiles(recordId, is4k)
-        open.forEach { pending -> attempt { api.deleteRequest(pending.id) }.onSuccess { requestCache.delete(pending.id) } }
+        open.forEach { pending ->
+            attempt { api.deleteRequest(pending.id) }
+                .onSuccess { requestCache.delete(pending.id) }
+                .onFailure { analytics.operationFailed("delete_files_withdraw_request", it, connection) }
+        }
         return DeleteFilesResponse.getDefaultInstance()
     }
 
