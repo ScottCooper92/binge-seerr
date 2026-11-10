@@ -96,7 +96,7 @@ class TvAccountMenuTest {
 
     /** The lines are only composed while the menu is open, which is when the quota is asked for. */
     @Test
-    fun theQuotaIsAskedForOnlyWhileTheMenuIsOpen() {
+    fun whileOpenIsComposedOnlyWhileTheMenuIsOpen() {
         setBar(detail = UserDetailUiState.Ready(detail()))
         assertEquals(0, opened)
 

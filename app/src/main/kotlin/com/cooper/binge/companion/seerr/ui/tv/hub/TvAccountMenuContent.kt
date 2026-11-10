@@ -29,7 +29,7 @@ import com.cooper.binge.companion.seerr.ui.users.labelRes as originLabelRes
  * account's own read has it. The rows are Retry when the account could not be read, and Sign out last when [onSignOut] is given
  * (a session sign-in has a session to end; a server's API key has nothing to sign out of), asking first.
  *
- * [whileOpen] is composed with the menu's lines, so only while the menu is open: a place to ask for the quota only then.
+ * [whileOpen] is composed with the menu's lines, so only while the menu is open: a place to mark the account's ViewModel visible.
  */
 @Composable
 internal fun tvAccountMenu(

@@ -20,7 +20,8 @@ import com.cooper.binge.companion.seerr.ui.users.UserDetailViewModel
 
 /**
  * Who is signed in, as the bar's account menu (#1916): the hub's account for the header, and the account's own detail once it has an
- * id (the same [UserDetailViewModel] as Home's own-requests row), asked for only while the menu is open. [onSignOut] is null for a
+ * id (the same [UserDetailViewModel] as Home's own-requests row). The detail and the quota are read when that ViewModel is created;
+ * the menu being open only marks it visible, which runs its minute clock. [onSignOut] is null for a
  * connection with no session to end.
  */
 @Composable
