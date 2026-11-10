@@ -39,6 +39,7 @@ import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.net.SocketTimeoutException
 import java.util.concurrent.atomic.AtomicBoolean
+import javax.net.ssl.SSLHandshakeException
 
 private const val PROFILE = """{"version":"2.7.0"}"""
 private const val SETTINGS = """{"initialized":true}"""
@@ -54,6 +55,7 @@ class SeerrServerUnreachableTest {
 
     private val seerr = MockWebServer().routeProfiles().apply { start() }
     private val timingOut = AtomicBoolean(false)
+    private val untrusted = AtomicBoolean(false)
     private lateinit var server: Server
     private lateinit var channel: ManagedChannel
 
@@ -93,6 +95,15 @@ class SeerrServerUnreachableTest {
 
             assertEquals(Status.Code.DEADLINE_EXCEEDED, failure.status.code)
             assertEquals(ServerUnreachable("Movie Night"), serverUnreachableOf(failure))
+        }
+
+    @Test
+    fun `a certificate the device will not trust is retryable but not unreachable`() =
+        runTest {
+            val stub = connected()
+            untrusted.set(true)
+
+            assertAnswered(Status.Code.UNAVAILABLE, stub.failure())
         }
 
     @Test
@@ -241,7 +252,11 @@ class SeerrServerUnreachableTest {
         runBlocking { store.save(SeerrCredentials(seerr.url("/").toString(), SeerrAuth.ApiKey("k3y"), SeerrVariant.fromVersion("2.7.0"))) }
         val transport =
             Interceptor { chain ->
-                if (timingOut.get()) throw SocketTimeoutException("timeout") else chain.proceed(chain.request())
+                when {
+                    timingOut.get() -> throw SocketTimeoutException("timeout")
+                    untrusted.get() -> throw SSLHandshakeException("untrusted certificate")
+                    else -> chain.proceed(chain.request())
+                }
             }
         val connection = SeerrConnection(store, SeerrApiFactory(logRequests = false, testTransport = { transport }))
         val settings = if (title == null) """{"initialized":true}""" else """{"initialized":true,"applicationTitle":"$title"}"""

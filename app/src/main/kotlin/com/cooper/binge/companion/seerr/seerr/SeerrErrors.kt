@@ -92,7 +92,7 @@ fun Throwable.toSeerrError(): SeerrError =
                 code() >= HTTP_SERVER_ERROR_MIN -> SeerrError.Server
                 else -> SeerrError.Rejected
             }
-        is IOException -> SeerrError.Unreachable
+        is IOException -> if (isServerUnreachable()) SeerrError.Unreachable else SeerrError.Unknown
         else -> SeerrError.Unknown
     }
 
@@ -117,7 +117,12 @@ fun Throwable.toStatusException(serverName: String? = null): StatusException =
             } else {
                 StatusException(httpStatus().withDescription("Seerr answered HTTP ${code()}"))
             }
-        is IOException -> serverUnreachable(serverName, timedOut = isTimeout())
+        is IOException ->
+            when {
+                isServerUnreachable() -> serverUnreachable(serverName, timedOut = isTimeout())
+                isTransportRefusal() -> StatusException(Status.UNAVAILABLE.withDescription(TRANSPORT_REFUSED).withCause(this))
+                else -> StatusException(Status.INTERNAL.withDescription(UNHANDLED).withCause(this))
+            }
         is SerializationException -> StatusException(Status.UNAVAILABLE.withDescription(UNREADABLE).withCause(this))
         else -> StatusException(Status.INTERNAL.withDescription(UNHANDLED).withCause(this))
     }
@@ -275,5 +280,6 @@ suspend inline fun <T> statusCatching(block: () -> T): T =
 
 private const val UNREADABLE = "Seerr returned something this companion could not read"
 private const val UNHANDLED = "The companion failed to handle this request"
+private const val TRANSPORT_REFUSED = "The connection to Seerr was refused by its certificate or this device's network policy"
 private const val BLOCKLISTED = "The title is blocklisted"
 private const val NOTHING_LEFT_TO_REQUEST = "Seerr has nothing left to request for those seasons"
