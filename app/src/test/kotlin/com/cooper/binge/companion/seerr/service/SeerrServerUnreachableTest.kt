@@ -38,6 +38,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.net.SocketTimeoutException
+import java.security.cert.CertificateException
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.net.ssl.SSLHandshakeException
 
@@ -56,6 +57,7 @@ class SeerrServerUnreachableTest {
     private val seerr = MockWebServer().routeProfiles().apply { start() }
     private val timingOut = AtomicBoolean(false)
     private val untrusted = AtomicBoolean(false)
+    private val closedByPeer = AtomicBoolean(false)
     private lateinit var server: Server
     private lateinit var channel: ManagedChannel
 
@@ -104,6 +106,15 @@ class SeerrServerUnreachableTest {
             untrusted.set(true)
 
             assertAnswered(Status.Code.UNAVAILABLE, stub.failure())
+        }
+
+    @Test
+    fun `a connection the server closed during the handshake is unreachable`() =
+        runTest {
+            val stub = connected(title = "Movie Night")
+            closedByPeer.set(true)
+
+            assertEquals(ServerUnreachable("Movie Night"), serverUnreachableOf(stub.failure()))
         }
 
     @Test
@@ -254,7 +265,10 @@ class SeerrServerUnreachableTest {
             Interceptor { chain ->
                 when {
                     timingOut.get() -> throw SocketTimeoutException("timeout")
-                    untrusted.get() -> throw SSLHandshakeException("untrusted certificate")
+                    closedByPeer.get() -> throw SSLHandshakeException("Connection closed by peer")
+                    untrusted.get() -> throw SSLHandshakeException(
+                        "untrusted certificate",
+                    ).apply { initCause(CertificateException("no trust anchor")) }
                     else -> chain.proceed(chain.request())
                 }
             }
