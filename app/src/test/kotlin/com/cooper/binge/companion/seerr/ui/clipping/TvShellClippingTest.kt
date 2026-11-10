@@ -20,10 +20,15 @@ import androidx.compose.ui.unit.dp
 import com.binge.designsystem.testing.assertNoTextClipped
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.theme.SeerrTvTheme
+import com.cooper.binge.companion.seerr.ui.hub.HubAccount
+import com.cooper.binge.companion.seerr.ui.hub.HubQuota
+import com.cooper.binge.companion.seerr.ui.hub.HubQuotaBucket
 import com.cooper.binge.companion.seerr.ui.tv.TvDestination
 import com.cooper.binge.companion.seerr.ui.tv.TvHomeShell
 import com.cooper.binge.companion.seerr.ui.tv.TvTopBar
-import com.cooper.binge.companion.seerr.ui.tv.TvTopBarAccount
+import com.cooper.binge.companion.seerr.ui.tv.hub.tvAccountMenu
+import com.cooper.binge.companion.seerr.ui.users.UserDetail
+import com.cooper.binge.companion.seerr.ui.users.UserDetailUiState
 import com.cooper.binge.companion.seerr.util.createSeerrKeyboardComposeRule
 import com.cooper.binge.companion.seerr.util.string
 import org.junit.Assert.assertTrue
@@ -67,16 +72,20 @@ class TvTopBarFitClippingTest {
     @get:Rule
     val rule = createSeerrKeyboardComposeRule()
 
-    private fun check(fontScale: Float) {
+    private fun check(
+        fontScale: Float,
+        open: Boolean = false,
+    ) {
         rule.setContent {
             val density = LocalDensity.current
             CompositionLocalProvider(LocalDensity provides Density(density.density, fontScale = fontScale)) {
-                SeerrTvTheme { FullBar() }
+                SeerrTvTheme { FullBar(open) }
             }
         }
         rule.waitForIdle()
         // Focused, so the tabs are at full size: at rest they are drawn at 0.8, which the check would read as clipping.
-        rule.onNode(hasContentDescription(string(R.string.tv_home))).requestFocus()
+        // Focus on the avatar opens its menu, as it does in the app, and holds the bar at full size; otherwise Home takes focus.
+        rule.onNode(hasContentDescription(string(if (open) R.string.tv_account else R.string.tv_home))).requestFocus()
         rule.waitForIdle()
         val checked = rule.assertNoTextClipped()
         assertTrue("only $checked text nodes were checked", checked >= BAR_TEXT_NODES)
@@ -87,12 +96,19 @@ class TvTopBarFitClippingTest {
     @Test fun `the fullest bar at 1_3`() = check(FONT_SCALE_13)
 
     @Test fun `the fullest bar at 2_0`() = check(FONT_SCALE_20)
+
+    /** The account menu open over the bar's avatar, with the worst-case account: its header and each line, whole. */
+    @Test fun `the open account menu at 1x`() = check(1f, open = true)
+
+    @Test fun `the open account menu at 1_3`() = check(FONT_SCALE_13, open = true)
+
+    @Test fun `the open account menu at 2_0`() = check(FONT_SCALE_20, open = true)
 }
 
 private const val BAR_TEXT_NODES = 3
 
 @Composable
-private fun FullBar() {
+private fun FullBar(open: Boolean) {
     val tabs = listOf(TvDestination.Hub, TvDestination.Issues)
     val opener = remember { TvDestination.entries.associateWith { FocusRequester() } }
     val entry = remember { FocusRequester() }
@@ -105,18 +121,43 @@ private fun FullBar() {
                 .focusable(),
         )
         TvTopBar(
-            destinations = listOf(TvDestination.Account) + tabs + TvDestination.Settings,
+            tabs = tabs,
             current = TvDestination.Hub,
             opener = opener,
+            accountOpener = remember { FocusRequester() },
             down = entry,
             visible = true,
-            account = TvTopBarAccount(name = LONG_ROW_NAME, avatarUrl = null, demo = true),
+            account =
+                tvAccountMenu(
+                    account = HubAccount(id = 1, name = LONG_ROW_NAME, isAdmin = true, avatarUrl = null),
+                    detail = UserDetailUiState.Ready(worstCaseAccountDetail()),
+                    accountFailed = false,
+                    onRetry = {},
+                    onSignOut = {},
+                    demo = true,
+                ),
             onFocusedChange = {},
             onSelect = {},
+            onOpenSettings = {},
             modifier = Modifier.align(Alignment.TopCenter),
         )
     }
 }
+
+/** The signed-in user at their worst: a long name, email and handle, and a metered quota on both types. */
+internal fun worstCaseAccountDetail(): UserDetail =
+    UserDetail(
+        item = worstCaseUser(),
+        permissions = emptySet(),
+        quota = HubQuota(HubQuotaBucket(10_000, 0, 365), HubQuotaBucket(8_000, 5_000, 365)),
+        watch = null,
+        watchlist = emptyList(),
+        isSelf = true,
+        canEditSettings = true,
+        canDelete = false,
+        serverUrl = "http://seerr.lan:5055",
+        webUrl = "http://seerr.lan:5055/users/7",
+    )
 
 @Composable
 private fun Content() {

@@ -56,8 +56,6 @@
     <dimen name="search_result_min_height">64dp</dimen>
     <dimen name="search_result_icon_container">40dp</dimen>
     <dimen name="search_result_toggle">36dp</dimen>
-    <!-- The TV top bar: the ring a focused avatar shows -->
-    <dimen name="tv_top_bar_avatar_ring">2dp</dimen>
     <!-- The sign-in mode tabs sit inside the step's own gutter, so the row adds none: its first tab starts at the fields' edge -->
     <dimen name="setup_mode_tabs_edge_padding">0dp</dimen>
 </resources>

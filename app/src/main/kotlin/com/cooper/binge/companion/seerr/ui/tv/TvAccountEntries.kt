@@ -9,75 +9,60 @@ import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
-import com.binge.designsystem.tv.focus.TvOverlayCloser
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.hub.HubUiState
 import com.cooper.binge.companion.seerr.ui.hub.HubViewModel
-import com.cooper.binge.companion.seerr.ui.tv.hub.TvAccountSheet
+import com.cooper.binge.companion.seerr.ui.tv.hub.tvAccountMenu
 import com.cooper.binge.companion.seerr.ui.tv.requests.TvMyRequests
 import com.cooper.binge.companion.seerr.ui.tv.requests.TvRequestsGridContent
 import com.cooper.binge.companion.seerr.ui.users.UserDetailUiState
 import com.cooper.binge.companion.seerr.ui.users.UserDetailViewModel
 
 /**
- * Who is signed in: the sheet reads the same hub state Home's top row does, and the account's own detail once it has an id.
- * [onSignOut] is null for a connection with no session to end.
+ * Who is signed in, as the bar's account menu (#1916): the hub's account for the header, and the account's own detail once it has an
+ * id (the same [UserDetailViewModel] as Home's own-requests row). The detail and the quota are read when that ViewModel is created;
+ * the menu being open only marks it visible, which runs its minute clock. [onSignOut] is null for a
+ * connection with no session to end.
  */
 @Composable
-internal fun TvAccountEntry(
+internal fun rememberTvAccount(
     hubViewModel: HubViewModel,
-    onDismissRequest: () -> Unit,
-    closer: TvOverlayCloser? = null,
-    onSignOut: (() -> Unit)? = null,
-) {
-    val hub by hubViewModel.uiState.collectAsStateWithLifecycle()
-    // The hub is `Lazily` and only auto-retries while it is visible, so this sheet says so, as Home and Settings do.
-    DisposableEffect(hubViewModel) {
-        // It reads the account and nothing of the dashboard's, so no downloads poll and no counts (#827).
-        hubViewModel.setScreenVisible(true, dashboard = false)
-        onDispose { hubViewModel.setScreenVisible(false) }
-    }
+    hub: HubUiState,
+    demo: Boolean,
+    onSignOut: (() -> Unit)?,
+): TvTopBarAccount {
     val account = (hub as? HubUiState.Ready)?.overview?.account
     if (account == null) {
         // Still loading while the hub is, failed once it has answered without an account.
-        TvAccountSheet(
+        return tvAccountMenu(
+            account = null,
             detail = null,
             accountFailed = hub !is HubUiState.Loading,
             onRetry = hubViewModel::recheck,
-            onDismissRequest = onDismissRequest,
-            closer = closer,
+            onSignOut = null,
+            demo = demo,
         )
-        return
     }
-    TvAccountContent(accountId = account.id, onDismissRequest = onDismissRequest, closer = closer, onSignOut = onSignOut)
-}
-
-/** The account's own sheet: the same [UserDetailViewModel] as the phone's user page, bound to the signed-in user. */
-@Composable
-private fun TvAccountContent(
-    accountId: Int,
-    onDismissRequest: () -> Unit,
-    closer: TvOverlayCloser?,
-    onSignOut: (() -> Unit)?,
-    viewModel: UserDetailViewModel = accountViewModel(accountId),
-) {
+    val viewModel = accountViewModel(account.id)
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    DisposableEffect(viewModel) {
-        viewModel.setScreenVisible(true)
-        onDispose { viewModel.setScreenVisible(false) }
-    }
-    TvAccountSheet(
+    return tvAccountMenu(
+        account = account,
         detail = state,
         accountFailed = false,
         onRetry = viewModel::reload,
-        onDismissRequest = onDismissRequest,
-        closer = closer,
         onSignOut = onSignOut,
+        demo = demo,
+        whileOpen = {
+            DisposableEffect(viewModel) {
+                viewModel.setScreenVisible(true)
+                onDispose { viewModel.setScreenVisible(false) }
+            }
+        },
     )
 }
 
 /**
- * The signed-in user's own requests as a Home row, on the one [UserDetailViewModel] the account sheet and the see-all grid share.
+ * The signed-in user's own requests as a Home row, on the one [UserDetailViewModel] the account menu and the see-all grid share.
  * Null while the account is unknown, which leaves Home to the server's filters.
  */
 @Composable

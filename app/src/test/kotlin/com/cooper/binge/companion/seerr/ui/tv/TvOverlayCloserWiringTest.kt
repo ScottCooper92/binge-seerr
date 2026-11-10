@@ -24,7 +24,6 @@ import androidx.compose.ui.test.requestFocus
 import androidx.compose.ui.unit.dp
 import com.binge.designsystem.tv.theme.BingeTvTheme
 import com.cooper.binge.companion.seerr.ui.settings.SettingsUiState
-import com.cooper.binge.companion.seerr.ui.tv.hub.TvAccountSheet
 import com.cooper.binge.companion.seerr.ui.tv.settings.TvSettingsActions
 import com.cooper.binge.companion.seerr.ui.tv.settings.TvSettingsSheet
 import com.cooper.binge.companion.seerr.util.createSeerrKeyboardAndroidComposeRule
@@ -41,7 +40,7 @@ private const val SECOND = "second-card"
 private val BELOW_BAR = 240.dp
 
 /**
- * **Account, Settings and the issue sheet close through the shell's closer, and focus lands on what opened them.** Each sheet is
+ * **Settings and the issue sheet close through the shell's closer, and focus lands on what opened them.** Each sheet is
  * the real one, given the closer the shell hands it, in the real shell, and returns to the bar button that opened it. The issue
  * sheet is a top layer, and returns to the board cell the user left: that is `TvHomeShellHandOffTest`'s, on the real board.
  */
@@ -64,14 +63,6 @@ class TvOverlayCloserWiringTest {
                     onCloseSheet = { sheet = null },
                 ) { shown, close, closer ->
                     when (shown) {
-                        TvDestination.Account ->
-                            TvAccountSheet(
-                                null,
-                                accountFailed = true,
-                                onRetry = {},
-                                onDismissRequest = close,
-                                closer = closer,
-                            )
                         TvDestination.Settings ->
                             TvSettingsSheet(SettingsUiState.Loading, TvSettingsActions(), onDismissRequest = close, closer = closer)
                         else ->
@@ -89,23 +80,6 @@ class TvOverlayCloserWiringTest {
 
     private fun opener(destination: TvDestination) =
         composeTestRule.onNode(hasContentDescription(string(destination.labelRes)) and isFocusable())
-
-    @Test
-    fun `the account sheet closes through the closer and focus returns to the avatar`() {
-        setShell()
-        composeTestRule.onNodeWithTag(FIRST).requestFocus()
-        composeTestRule.press(Key.DirectionUp)
-        // The avatar is at the bar's end, after the two tabs: Home, Issues, then the avatar.
-        repeat(2) { composeTestRule.press(Key.DirectionRight) }
-        opener(TvDestination.Account).assertIsFocused()
-
-        composeTestRule.press(Key.Enter)
-        composeTestRule.pressBack()
-        composeTestRule.settleShellHandOff()
-
-        assertNull(sheet)
-        opener(TvDestination.Account).assertIsFocused()
-    }
 
     @Test
     fun `the settings sheet closes through the closer and focus returns to the gear`() {
