@@ -18,6 +18,7 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation3.runtime.rememberNavBackStack
+import com.binge.companion.kit.isTelevision
 import com.cooper.binge.companion.seerr.auth.ConnectionRestore
 import com.cooper.binge.companion.seerr.auth.ForegroundUserRefresh
 import com.cooper.binge.companion.seerr.feedback.BugReportLinks
@@ -37,7 +38,6 @@ import com.cooper.binge.companion.seerr.ui.consent.ConsentGate
 import com.cooper.binge.companion.seerr.ui.linkedRequestId
 import com.cooper.binge.companion.seerr.ui.replaceAll
 import com.cooper.binge.companion.seerr.ui.tv.TvSeerrShell
-import com.cooper.binge.companion.seerr.ui.tv.isTelevision
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
