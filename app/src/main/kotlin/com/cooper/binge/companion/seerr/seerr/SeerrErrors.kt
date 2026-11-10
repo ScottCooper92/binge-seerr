@@ -1,6 +1,7 @@
 package com.cooper.binge.companion.seerr.seerr
 
 import com.binge.companion.sdk.attempt
+import com.binge.companion.sdk.serverUnreachable
 import com.cooper.binge.companion.seerr.auth.NotConnectedException
 import io.grpc.Status
 import io.grpc.StatusException
@@ -99,18 +100,24 @@ fun Throwable.toSeerrError(): SeerrError =
  * Seerr's failures as the contract's gRPC status codes: the whole error model on this side, because a
  * response message never carries an error field. [httpStatus] maps the HTTP answers.
  *
- * A body this app cannot parse ([SerializationException]) is `UNAVAILABLE`, since a server update may fix it.
+ * A server that does not answer is the SDK's `serverUnreachable` (#1913), named [serverName] where the caller has it.
+ * A body this app cannot parse ([SerializationException]) is a plain `UNAVAILABLE`: the server did answer.
  * An exception's own message never crosses to the host: a serialization failure's quotes the body, which can
  * hold the server's secrets (#680). The exception stays on `withCause`, which gRPC never serialises.
  */
-fun Throwable.toStatusException(): StatusException =
+fun Throwable.toStatusException(serverName: String? = null): StatusException =
     when (this) {
         is StatusException -> this
         is NotConnectedException -> StatusException(Status.UNAUTHENTICATED.withDescription(message))
         is NothingLeftToRequestException -> StatusException(Status.FAILED_PRECONDITION.withDescription(NOTHING_LEFT_TO_REQUEST))
         is BlocklistedTitleException -> StatusException(Status.FAILED_PRECONDITION.withDescription(BLOCKLISTED))
-        is HttpException -> StatusException(httpStatus().withDescription("Seerr answered HTTP ${code()}"))
-        is IOException -> StatusException(Status.UNAVAILABLE.withDescription("Seerr could not be reached").withCause(this))
+        is HttpException ->
+            if (isServerFailure()) {
+                serverUnreachable(serverName)
+            } else {
+                StatusException(httpStatus().withDescription("Seerr answered HTTP ${code()}"))
+            }
+        is IOException -> serverUnreachable(serverName, timedOut = isTimeout())
         is SerializationException -> StatusException(Status.UNAVAILABLE.withDescription(UNREADABLE).withCause(this))
         else -> StatusException(Status.INTERNAL.withDescription(UNHANDLED).withCause(this))
     }

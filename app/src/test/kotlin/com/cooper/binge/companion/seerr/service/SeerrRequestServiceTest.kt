@@ -234,6 +234,7 @@ class SeerrRequestServiceTest {
                     Capability.CAPABILITY_LIST_REQUESTS,
                     Capability.CAPABILITY_LIST_MINE_RECENTLY_AVAILABLE,
                     Capability.CAPABILITY_BATCH_STATUS,
+                    Capability.CAPABILITY_SERVER_UNREACHABLE,
                 ),
                 response.capabilitiesList.toSet(),
             )
@@ -276,12 +277,11 @@ class SeerrRequestServiceTest {
             // In the contract but deliberately not offered: MEDIA_FILE_INFO would need a Radarr key and host (#483).
             // ISSUE_CATEGORIES is deliberately never declared: Seerr's issue types are a fixed four, so there is no
             // provider-defined category list to offer. ADVANCED_OPTIONS was the Activity hand-off, which is gone.
-            // SERVER_UNREACHABLE (#1913) and DELETE_FILES (#1914) are in the contract but not served yet.
+            // DELETE_FILES (#1914) is in the contract but not served yet.
             assertEquals(
                 Capability.entries.toSet() - Capability.UNRECOGNIZED - Capability.CAPABILITY_UNSPECIFIED -
                     Capability.CAPABILITY_MEDIA_FILE_INFO - Capability.CAPABILITY_ISSUE_CATEGORIES -
-                    Capability.CAPABILITY_ADVANCED_OPTIONS - Capability.CAPABILITY_SERVER_UNREACHABLE -
-                    Capability.CAPABILITY_DELETE_FILES,
+                    Capability.CAPABILITY_ADVANCED_OPTIONS - Capability.CAPABILITY_DELETE_FILES,
                 response.capabilitiesList.toSet(),
             )
         }

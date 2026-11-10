@@ -58,6 +58,7 @@ import com.cooper.binge.companion.seerr.demo.isDemo
 import com.cooper.binge.companion.seerr.seerr.SeerrPermissions
 import com.cooper.binge.companion.seerr.seerr.SeerrServerProfile
 import com.cooper.binge.companion.seerr.seerr.SeerrVariant
+import com.cooper.binge.companion.seerr.seerr.isServerUnreachable
 import com.cooper.binge.companion.seerr.seerr.rejectsSession
 import com.cooper.binge.companion.seerr.seerr.statusCatching
 import com.cooper.binge.companion.seerr.seerr.toPermissions
@@ -277,6 +278,7 @@ class SeerrRequestService(
                 throw e
             } catch (e: Exception) {
                 analytics.operationFailed(operation, e, connection)
+                if (e.isServerUnreachable()) throw e.toStatusException(connection.unreachableName())
                 throw e.toStatusException().withSentenceFor(e)
             }
         }

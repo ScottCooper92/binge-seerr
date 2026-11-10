@@ -150,6 +150,17 @@ class SeerrConnection(
     }
 
     /**
+     * The saved server's name for a message saying it did not answer (#1913), read from what is already cached and
+     * never from the network: asking an unreachable server for its profile would only wait out a second timeout.
+     * With no cached profile it is the edition the credentials recorded, or null when that is not known.
+     */
+    suspend fun unreachableName(): String? {
+        val saved = attempt { current() }.getOrNull() ?: return null
+        val cached = cachedProfile?.takeIf { it.first == saved }?.second
+        return cached?.serverTitle ?: saved.variant.takeUnless { it == SeerrVariant.Unknown }?.displayName
+    }
+
+    /**
      * Re-reads `auth/me` rather than serving the cached copy. The cache is per connection, so a
      * permission granted or revoked on the server is otherwise invisible until the app reconnects;
      * a screen that re-resolves its scope on entry has to ask for this explicitly.
