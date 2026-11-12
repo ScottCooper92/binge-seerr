@@ -25,8 +25,10 @@ fun Throwable.isServerUnreachable(): Boolean =
 /**
  * A certificate the platform will not trust, or cleartext its policy refuses: the server answered, or we declined to ask.
  * An `SSLException` counts only when it is about the certificate: a hostname that does not match, or a cause that is a
- * [CertificateException] (Conscrypt's trust manager wraps an expired or untrusted one so). Any other `SSLException` is a
- * connection the server dropped, which Conscrypt also reports that way, and stays unreachable (#1933).
+ * [CertificateException] (Conscrypt's trust manager wraps an expired or untrusted one so). Any other `SSLException`,
+ * including a connection the server dropped, which Conscrypt also reports that way, stays unreachable (#1933). That
+ * deliberately includes a failed negotiation with a server that did answer, such as an `https://` address pointed at
+ * a plain-HTTP port (`SSLProtocolException`) or a protocol-version alert: the user's fix is the address either way (#1936).
  */
 internal fun Throwable.isTransportRefusal(): Boolean =
     this is UnknownServiceException || this is SSLPeerUnverifiedException || (this is SSLException && hasCertificateCause())
