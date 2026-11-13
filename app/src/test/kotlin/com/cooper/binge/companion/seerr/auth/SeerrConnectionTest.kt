@@ -12,7 +12,10 @@ import com.cooper.binge.companion.seerr.util.ReversingCipher
 import com.cooper.binge.companion.seerr.util.enqueueProfile
 import com.cooper.binge.companion.seerr.util.routeProfiles
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
@@ -29,6 +32,7 @@ import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import retrofit2.HttpException
 import java.io.IOException
+import java.util.concurrent.TimeUnit
 import kotlin.time.Duration.Companion.milliseconds
 
 /** Connecting, logging in and the cached user, against a real HTTP server on the JVM. */
@@ -571,6 +575,42 @@ class SeerrConnectionTest {
 
             assertTrue(sut.adoptSession(baseUrl, "st4l3").isFailure)
             assertNull(sut.credentials.first())
+        }
+
+    @Test
+    fun `a disconnect is reported as under way while the server is still asked to end the session`() =
+        runTest {
+            server.enqueue(json("""{"id":42}""", headersOf("Set-Cookie", "connect.sid=s3ss10n; Path=/")))
+            server.enqueueProfile(json("""{"version":"3.1.0"}"""), json("""{"initialized":true}"""))
+            server.enqueue(json("""{"status":"ok"}""").newBuilder().headersDelay(30, TimeUnit.SECONDS).build())
+            val sut = connection(backgroundScope)
+            sut.logIn(baseUrl, SeerrLoginRequest.Local("s@example.com", "pw")).getOrThrow()
+            repeat(3) { server.takeRequest() }
+            assertEquals(false, sut.disconnecting.value)
+
+            val disconnecting = launch(Dispatchers.IO) { sut.disconnect() }
+            // The logout has reached the server and is unanswered: a slow server. The saved connection is still there,
+            // so the flag is what tells the review prompt not to ask over a user who is leaving (#1956).
+            assertEquals("/api/v1/auth/logout", server.takeRequest(5, TimeUnit.SECONDS)?.url?.encodedPath)
+            assertEquals(true, sut.disconnecting.value)
+            assertTrue(sut.credentials.first() != null)
+            disconnecting.cancelAndJoin()
+
+            assertEquals(false, sut.disconnecting.value)
+        }
+
+    @Test
+    fun `disconnecting is false before an API key disconnect and after it finishes`() =
+        runTest {
+            server.enqueue(json("""{"id":1,"permissions":2}"""))
+            server.enqueueProfile(json("""{"version":"3.1.0"}"""), json("""{"initialized":true}"""))
+            val sut = connection(backgroundScope)
+            sut.connect(baseUrl, SeerrAuth.ApiKey("k3y")).getOrThrow()
+            assertEquals(false, sut.disconnecting.value)
+
+            sut.disconnect()
+
+            assertEquals(false, sut.disconnecting.value)
         }
 
     @Test

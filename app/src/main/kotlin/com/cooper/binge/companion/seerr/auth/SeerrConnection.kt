@@ -24,6 +24,9 @@ import com.cooper.binge.companion.seerr.seerr.toSeerrError
 import com.cooper.binge.companion.seerr.seerr.toTmdbBackdropUrl
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
@@ -59,6 +62,16 @@ class SeerrConnection(
     private val preSignIn = SeerrPreSignIn(apis, quickConnectPollInterval)
 
     val credentials: Flow<SeerrCredentials?> get() = store.credentials
+
+    private val forgetting = MutableStateFlow(false)
+
+    /**
+     * True from the moment [disconnect] or [signOut] starts until it has finished, so while the server is still being
+     * asked to end the session. The saved credentials only go after that answer, so [credentials] alone still says
+     * connected for as long as a slow or unreachable server takes. Anything that must not treat that as a connection,
+     * such as the review prompt, reads this too (#1956).
+     */
+    val disconnecting: StateFlow<Boolean> get() = forgetting.asStateFlow()
 
     /** The server the user signed out of, while nothing is saved; see [signOut]. */
     val signedOutServer: Flow<String?> get() = store.signedOutServer
@@ -338,6 +351,15 @@ class SeerrConnection(
     suspend fun signOut() = forget(keepAddress = true)
 
     private suspend fun forget(keepAddress: Boolean) {
+        forgetting.value = true
+        try {
+            forgetNow(keepAddress)
+        } finally {
+            forgetting.value = false
+        }
+    }
+
+    private suspend fun forgetNow(keepAddress: Boolean) {
         val saved = store.credentials.first()
         val auth = saved?.auth
         if (auth is SeerrAuth.Session && !auth.shared) attempt { apis.cached(saved.baseUrl, auth).logOut() }
