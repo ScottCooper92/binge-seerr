@@ -959,7 +959,7 @@ app:state_error_unreachable_title  8884ecffcd27
 app:three_pane_nothing_open_message  99ac963e3b6a
 app:three_pane_nothing_open_title  d957e41014e9
 app:tip_amount  441cf7f0a6f3
-app:tip_body  ccf3d7ca10c8
+app:tip_body  9049a1b331ff
 app:tip_failed_body  08cdb58c479a
 app:tip_failed_title  3f6e748dd871
 app:tip_give  130572423ad5
