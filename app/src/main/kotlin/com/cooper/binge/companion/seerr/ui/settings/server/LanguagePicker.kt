@@ -76,9 +76,9 @@ internal fun pickedInOrder(
 /**
  * A language filter as a list row: the languages chosen, named on the device, so the page needs no list to draw it.
  * The sheet is a [BingeMultiChoiceSheet]: the chosen languages in Selected, the device's and popular ones in Suggested,
- * the rest in All, each marked with its code. Each tick and Clear apply at once and the sheet stays open, with no Done:
- * a language filter is a setting that saves as it changes, so the page's own save-as-made batches a burst of ticks into
- * one write. A list the server cannot send falls back to typing codes on a [PeekingListSheet].
+ * the rest in All, each marked with its code. Each tick and Clear apply at once, with no Done: a language filter is a
+ * setting that saves as it changes, so the page's own save-as-made batches a burst of ticks into one write. The sheet
+ * closes when that save starts, so a pick cannot land in a draft that has already gone out. A list the server cannot send falls back to typing codes on a [PeekingListSheet].
  *
  * @param onOpen reads the server's list, only when the sheet opens.
  * @param serverDefault the server's own filter, passed for a user's filter: blank then reads "Default (…)", a Default
@@ -109,7 +109,9 @@ internal fun languageSettingItem(
                 LanguagesUnavailable(value, onRetry = onOpen, onUse = { apply(it.languageCodes(), true) })
             }
         } else {
-            val listed = (choices as? ListChoices.Ready)?.let { ready -> languageChoices(ready.entries, chosen) }
+            // The codes saved when the sheet opened, so an off-list row does not vanish under the finger when unticked.
+            val openedWith = remember { chosen }
+            val listed = (choices as? ListChoices.Ready)?.let { ready -> languageChoices(ready.entries, openedWith) }
             BingeMultiChoiceSheet(
                 title = title,
                 choices = listed?.let { BingeChoiceList.Ready(it) } ?: BingeChoiceList.Loading,
