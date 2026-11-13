@@ -48,6 +48,9 @@ class HomeViewModel
                 }
             }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), HomeUiState.Resolving)
 
+        /** True while a disconnect is still ending the session on the server; the connection is as good as gone. */
+        val disconnecting: StateFlow<Boolean> = connection.disconnecting
+
         /** Leaves a server that rejected the session, for one that is gone or that the user no longer uses. */
         fun disconnect() {
             viewModelScope.launch { connection.disconnect() }
