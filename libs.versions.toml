@@ -59,6 +59,7 @@ lifecycle = "2.11.0"
 browser = "1.10.0"
 # Backports the API 31 splash to API 21+, which is what gets a television one at all.
 coreSplashscreen = "1.2.0"
+playBilling = "9.1.0"
 # The in-app review card; the system draws it. kotlinx-coroutines-play-services awaits its Tasks.
 playReview = "2.0.2"
 # Data only: the plugin writes the licence list of the shipped dependencies, the core library parses it.
@@ -120,6 +121,7 @@ compose-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview"
 compose-ui-tooling = { module = "androidx.compose.ui:ui-tooling" }
 compose-material3 = { module = "androidx.compose.material3:material3", version.ref = "material3" }
 activity-compose = { module = "androidx.activity:activity-compose", version.ref = "activityCompose" }
+play-billing-ktx = { module = "com.android.billingclient:billing-ktx", version.ref = "playBilling" }
 aboutlibraries-core = { module = "com.mikepenz:aboutlibraries-core", version.ref = "aboutLibraries" }
 play-review = { module = "com.google.android.play:review", version.ref = "playReview" }
 androidx-core-splashscreen = { module = "androidx.core:core-splashscreen", version.ref = "coreSplashscreen" }

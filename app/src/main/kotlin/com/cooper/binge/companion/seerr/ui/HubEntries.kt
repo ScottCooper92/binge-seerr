@@ -1,5 +1,6 @@
 package com.cooper.binge.companion.seerr.ui
 
+import androidx.activity.compose.LocalActivity
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
@@ -8,6 +9,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import com.cooper.binge.companion.seerr.ADMITS_UNVERIFIED_CALLERS
+import com.cooper.binge.companion.seerr.tip.TipViewModel
 import com.cooper.binge.companion.seerr.ui.hub.DeveloperRow
 import com.cooper.binge.companion.seerr.ui.hub.HubActions
 import com.cooper.binge.companion.seerr.ui.hub.HubScreen
@@ -61,8 +63,11 @@ internal fun SettingsEntry(
     open: (NavKey) -> Unit = backStack::add,
     onBack: () -> Unit = { backStack.pop() },
     viewModel: SettingsViewModel = hiltViewModel(),
+    tipViewModel: TipViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val tip by tipViewModel.uiState.collectAsStateWithLifecycle()
+    val activity = LocalActivity.current
     // Refetched on every arrival, so returning from Edit connection shows the new server.
     DisposableEffect(viewModel) {
         viewModel.setScreenVisible(true)
@@ -86,5 +91,12 @@ internal fun SettingsEntry(
                 backStack.popIfTop(SettingsRoute)
             },
         )
-    SettingsScreen(state = state, showBack = showBack, actions = actions)
+    SettingsScreen(
+        state = state,
+        showBack = showBack,
+        actions = actions,
+        tip = tip,
+        tipEvents = tipViewModel.events,
+        onGiveTip = { step -> activity?.let { tipViewModel.give(it, step) } },
+    )
 }

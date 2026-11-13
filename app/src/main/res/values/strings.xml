@@ -1265,14 +1265,15 @@
     <string name="server_settings_about_title">About %1$s</string>
     <string name="server_settings_about_discussions">GitHub Discussions</string>
     <string name="server_settings_about_support_project">Support %1$s</string>
-    <!-- PROTOTYPE tip jar: English only until approved. -->
     <string name="tip_row">Buy me a coffee</string>
     <string name="tip_title">Buy me a coffee</string>
-    <string name="tip_body">This app is free and open source. If it\'s useful to you, a tip helps keep it going. Thank you!</string>
+    <string name="tip_body">Seerr Companion is free and open source. If it\'s useful to you, a tip helps keep it going. Thank you!</string>
     <string name="tip_amount">Tip amount</string>
-    <!-- Stands in for the product price Play will return; goes with the Billing layer. -->
-    <string name="tip_price_placeholder" translatable="false">£%1$d</string>
     <string name="tip_give">Give %1$s</string>
+    <string name="tip_thanks">Thank you! Your tip means a lot.</string>
+    <string name="tip_pending">Your tip is waiting for Google Play to confirm it.</string>
+    <string name="tip_failed_title">The tip didn\'t go through</string>
+    <string name="tip_failed_body">Google Play couldn\'t finish the payment. Try again in a moment, and check your Google Play order history if you see a charge.</string>
     <string name="server_settings_about_contribute">Make a contribution</string>
     <string name="server_settings_hide_blocklisted">Hide blocklisted titles</string>
     <string name="server_settings_hide_blocklisted_detail">Removes them from Discover for blocklist managers</string>
