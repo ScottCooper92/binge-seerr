@@ -46,7 +46,7 @@ private val Context.cleartextConsentDataStore: DataStore<Preferences> by prefere
 private val Context.bingeConnectionDataStore: DataStore<Preferences> by preferencesDataStore(name = "binge_connection")
 
 /** The name plex.tv lists this app under on the user's authorised devices. A brand name, never translated. */
-private const val PLEX_PRODUCT_NAME = "Binge Seerr"
+private const val PLEX_PRODUCT_NAME = "Seerr Companion"
 
 /**
  * Everything that reaches the server: the saved connection and the clients that speak to it. What

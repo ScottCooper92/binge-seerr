@@ -91,7 +91,14 @@ class SetupViewModelHandOffTest {
                 connection = connection,
                 plex =
                     PlexPinFlow(
-                        identity = { PlexClientIdentity(identifier = "cid", product = "Binge Seerr", version = "0.1.0", device = "TV") },
+                        identity = {
+                            PlexClientIdentity(
+                                identifier = "cid",
+                                product = "Seerr Companion",
+                                version = "0.1.0",
+                                device = "TV",
+                            )
+                        },
                         apis = { plexTvApi(it, "http://plex.invalid/") },
                         pollInterval = 10.milliseconds,
                     ),

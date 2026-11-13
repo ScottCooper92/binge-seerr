@@ -9,7 +9,8 @@ import org.junit.Test
  * `http` (#1033). A redirect that stays on one scheme is still followed.
  */
 class PlexTvClientTest {
-    private val client = plexTvClient(PlexClientIdentity(identifier = "cid", product = "Binge Seerr", version = "0.1.0", device = "Pixel"))
+    private val client =
+        plexTvClient(PlexClientIdentity(identifier = "cid", product = "Seerr Companion", version = "0.1.0", device = "Pixel"))
 
     @Test
     fun `the plex tv client never follows a redirect from https to http`() {
