@@ -1,5 +1,6 @@
 package com.cooper.binge.companion.seerr.ui
 
+import android.app.Activity
 import androidx.activity.compose.LocalActivity
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -13,23 +14,33 @@ import com.cooper.binge.companion.seerr.review.ReviewPromptViewModel
 
 /**
  * Asks for a Play review when the user comes back to the root after leaving it, so never mid-task and never over a
- * screen of their own making. Whether to show anything is the prompt's to decide.
+ * screen of their own making. Whether to show anything is the prompt's to decide. Only a real navigation away from a
+ * connected root counts as leaving: starting the app, or signing in, passes through states that are not the root.
  */
 @Composable
 internal fun ReviewPromptOnReturnToRoot(
-    atRoot: Boolean,
+    connected: Boolean?,
+    stackDepth: Int,
     viewModel: ReviewPromptViewModel = hiltViewModel(),
+) = ReturnToRootEffect(connected, stackDepth, viewModel::onReturnedToRoot)
+
+@Composable
+internal fun ReturnToRootEffect(
+    connected: Boolean?,
+    stackDepth: Int,
+    onReturned: (Activity) -> Unit,
 ) {
     val activity = LocalActivity.current
     var hasLeftRoot by rememberSaveable { mutableStateOf(false) }
-    val onReturned by rememberUpdatedState { activity?.let(viewModel::onReturnedToRoot) }
-    LaunchedEffect(atRoot) {
-        if (!atRoot) {
+    val ask by rememberUpdatedState { activity?.let(onReturned) }
+    val connectedRoot = connected == true && stackDepth <= 1
+    val deeper = connected == true && stackDepth > 1
+    LaunchedEffect(connectedRoot, deeper) {
+        if (deeper) {
             hasLeftRoot = true
-            return@LaunchedEffect
+        } else if (connectedRoot && hasLeftRoot) {
+            hasLeftRoot = false
+            ask()
         }
-        if (!hasLeftRoot) return@LaunchedEffect
-        hasLeftRoot = false
-        onReturned?.invoke()
     }
 }
