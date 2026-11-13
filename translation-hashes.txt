@@ -952,8 +952,12 @@ app:three_pane_nothing_open_message  99ac963e3b6a
 app:three_pane_nothing_open_title  d957e41014e9
 app:tip_amount  441cf7f0a6f3
 app:tip_body  ccf3d7ca10c8
+app:tip_failed_body  08cdb58c479a
+app:tip_failed_title  3f6e748dd871
 app:tip_give  130572423ad5
+app:tip_pending  9b8bfabf5e5c
 app:tip_row  f65a6e40cbc4
+app:tip_thanks  c28777de06d7
 app:tip_title  f65a6e40cbc4
 app:tv_account  7e1b0d5641f2
 app:tv_account_requests_empty  1bea507092bb
