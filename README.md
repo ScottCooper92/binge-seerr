@@ -172,7 +172,7 @@ This app is free software under the GNU General Public License, version 3 or (at
 later version. See [LICENSE](LICENSE).
 
 [LICENSE-EXCEPTION.md](LICENSE-EXCEPTION.md) adds a permission under section 7 for the Google Play
-services and Firebase libraries this app links.
+services, Play Billing, Play in-app review and Firebase libraries this app links.
 
 The app's name and artwork are not under the GPL. They are all rights reserved: see
 [ASSETS.md](ASSETS.md) and [TRADEMARKS.md](TRADEMARKS.md). A fork needs a different name and
