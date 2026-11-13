@@ -950,6 +950,11 @@ app:state_error_unreachable_message  5ffff6c5878b
 app:state_error_unreachable_title  8884ecffcd27
 app:three_pane_nothing_open_message  99ac963e3b6a
 app:three_pane_nothing_open_title  d957e41014e9
+app:tip_amount  441cf7f0a6f3
+app:tip_body  ccf3d7ca10c8
+app:tip_give  130572423ad5
+app:tip_row  f65a6e40cbc4
+app:tip_title  f65a6e40cbc4
 app:tv_account  7e1b0d5641f2
 app:tv_account_requests_empty  1bea507092bb
 app:tv_account_sign_out  48f0d3d397d4
