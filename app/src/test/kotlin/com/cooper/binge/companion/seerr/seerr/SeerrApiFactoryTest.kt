@@ -36,6 +36,17 @@ class SeerrApiFactoryTest {
     }
 
     @Test
+    fun `evict hands the pool to the releaser and closes nothing on the caller's thread (#1943)`() {
+        val handed = mutableListOf<Runnable>()
+        val releasing = SeerrApiFactory(logRequests = false, poolReleaser = { handed += it })
+        releasing.cached(BASE_URL, auth)
+
+        releasing.evict()
+
+        assertEquals(1, handed.size)
+    }
+
+    @Test
     fun `every client fails a dark host in five seconds but still waits fifteen for a slow read`() {
         val seen = mutableListOf<Pair<Int, Int>>()
         val recording =

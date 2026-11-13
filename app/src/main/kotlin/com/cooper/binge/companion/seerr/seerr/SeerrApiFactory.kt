@@ -17,7 +17,9 @@ import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.kotlinx.serialization.asConverterFactory
+import java.util.concurrent.Executor
 import java.util.concurrent.TimeUnit
+import kotlin.concurrent.thread
 
 /**
  * Builds a [SeerrApi] for a user-supplied server. The base URL is only known once the user has
@@ -56,6 +58,11 @@ class SeerrApiFactory(
     internal val testDns: Dns? = null,
     /** Where the request log goes when [logRequests] is on, when set. Test-only (#1031): it is how a test reads what is logged. */
     internal val testLogger: HttpLoggingInterceptor.Logger? = null,
+    /**
+     * Where a released client's pool is closed. Closing a pooled TLS socket writes a close_notify, which is network I/O,
+     * and callers such as disconnecting run on the main thread (#1943). Test-only: a test reads what was handed over.
+     */
+    internal val poolReleaser: Executor = Executor { task -> thread(name = "seerr-pool-release", isDaemon = true) { task.run() } },
 ) {
     /**
      * `explicitNulls = false` so an omitted field (`seasons` on a movie request) is dropped from the body, not sent as null.
@@ -236,7 +243,7 @@ class SeerrApiFactory(
 
     private fun OkHttpClient.release() {
         dispatcher.executorService.shutdown()
-        connectionPool.evictAll()
+        poolReleaser.execute { connectionPool.evictAll() }
     }
 
     private class CachedApi(

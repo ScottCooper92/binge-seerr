@@ -1,6 +1,8 @@
 package com.cooper.binge.companion.seerr.ui.handoff
 
 import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -37,7 +39,20 @@ internal fun rememberScanTvCode(): () -> Unit {
     }
 }
 
+private const val SCAN_ACTION = "com.google.android.gms.mlkit.ACTION_SCAN_BARCODE"
+private const val PLAY_SERVICES = "com.google.android.gms"
+
+/**
+ * Whether Play Services' scanner activity can be started here. Where it cannot, ML Kit's own delegate activity throws
+ * `ActivityNotFoundException` from its `onCreate`, which no listener on the scan sees (#1944).
+ */
+internal fun PackageManager.canOpenScanner(): Boolean = resolveActivity(Intent(SCAN_ACTION).setPackage(PLAY_SERVICES), 0) != null
+
 private fun scanTvCode(context: Context) {
+    if (!context.packageManager.canOpenScanner()) {
+        Toast.makeText(context, R.string.scan_tv_unavailable, Toast.LENGTH_LONG).show()
+        return
+    }
     val options = GmsBarcodeScannerOptions.Builder().setBarcodeFormats(Barcode.FORMAT_QR_CODE).build()
     GmsBarcodeScanning
         .getClient(context, options)
