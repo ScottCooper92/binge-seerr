@@ -25,6 +25,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.boolean
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import org.junit.After
@@ -35,7 +36,6 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
-import java.util.Base64
 
 private const val EMAIL =
     """{"enabled":true,"types":6,"options":{"emailFrom":"seerr@example.com","senderName":"Seerr","smtpHost":"smtp.example.com",
@@ -495,16 +495,12 @@ class NotificationAgentViewModelTest {
         }
 
     @Test
-    fun `the webhook template is shown decoded and stored as the web client stores it`() =
+    fun `the webhook template is sent as typed, since the server checks it parses and stores it encoded itself`() =
         runTest {
             val template = "{\n  \"subject\": \"{{subject}}\"\n}"
-            val stored =
-                Base64.getEncoder().encodeToString(
-                    Json.encodeToString(template).toByteArray(),
-                )
             seerr.serve(
                 "GET /api/v1/settings/notifications/webhook",
-                """{"enabled":false,"types":0,"options":{"webhookUrl":"","jsonPayload":"$stored"}}""",
+                """{"enabled":false,"types":0,"options":{"webhookUrl":"","jsonPayload":${Json.encodeToString(template)}}}""",
             )
             seerr.serve("POST /api/v1/settings/notifications/webhook", """{"enabled":false,"types":0,"options":{}}""")
             val vm = viewModel(ServerAgent.Webhook)
@@ -519,7 +515,24 @@ class NotificationAgentViewModelTest {
                     .jsonObject
                     .getValue("jsonPayload")
                     .jsonPrimitive.content
-            assertEquals("\"{\\\"event\\\": \\\"{{event}}\\\"}\"", String(Base64.getDecoder().decode(payload)))
+            assertEquals("{\"event\": \"{{event}}\"}", payload)
+        }
+
+    @Test
+    fun `an agent's embedPoster goes back as it was read, though no page shows it`() =
+        runTest {
+            seerr.serve(
+                "GET /api/v1/settings/notifications/slack",
+                """{"enabled":false,"embedPoster":true,"types":0,"options":{"webhookUrl":"","locale":"en"}}""",
+            )
+            seerr.serve("POST /api/v1/settings/notifications/slack", """{"enabled":false,"types":0,"options":{}}""")
+            val vm = viewModel(ServerAgent.Slack)
+            vm.awaitReady()
+
+            vm.setOption(AgentOption.SlackWebhookUrl, "https://hooks.example/x")
+            awaitWritten(vm)
+            val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/settings/notifications/slack")).jsonObject
+            assertEquals(true, sent.getValue("embedPoster").jsonPrimitive.boolean)
         }
 
     @Test

@@ -1,18 +1,14 @@
 package com.cooper.binge.companion.seerr.ui.settings.server
 
-import com.binge.companion.sdk.attempt
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.seerr.SeerrNotificationAgentDto
 import com.cooper.binge.companion.seerr.seerr.SeerrPushoverSoundDto
 import com.cooper.binge.companion.seerr.seerr.SeerrServerProfile
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.contentOrNull
-import java.util.Base64
 
 /** The server's notification agents; [segment] is the path the server keys each on. */
 enum class ServerAgent(
@@ -231,6 +227,8 @@ data class AgentForm(
     val types: Int = 0,
     val options: Map<AgentOption, String> = emptyMap(),
     val raw: JsonObject = JsonObject(emptyMap()),
+    /** Not shown on any page, but the server drops it from an agent saved without it, so it goes back as it came (#1961). */
+    val embedPoster: Boolean? = null,
 ) {
     /** An agent that is off may be saved half-typed; one that is on needs what it cannot send without. */
     val valid: Boolean
@@ -292,10 +290,10 @@ internal fun SeerrNotificationAgentDto.toForm(agent: ServerAgent): AgentForm =
         types = types,
         options =
             AgentOption.of(agent).associateWith { option ->
-                val value = (options[option.key] as? JsonPrimitive)?.contentOrNull.orEmpty()
-                if (option == AgentOption.WebhookJsonPayload) value.decodePayload() else value
+                (options[option.key] as? JsonPrimitive)?.contentOrNull.orEmpty()
             },
         raw = options,
+        embedPoster = embedPoster,
     )
 
 /**
@@ -306,6 +304,7 @@ internal fun SeerrNotificationAgentDto.toForm(agent: ServerAgent): AgentForm =
 internal fun AgentForm.toDto(): SeerrNotificationAgentDto =
     SeerrNotificationAgentDto(
         enabled = enabled,
+        embedPoster = embedPoster,
         types = types,
         options =
             JsonObject(
@@ -319,7 +318,8 @@ internal fun AgentForm.toDto(): SeerrNotificationAgentDto =
                                 else ->
                                     JsonPrimitive(
                                         when {
-                                            option == AgentOption.WebhookJsonPayload -> value.encodePayload()
+                                            // As typed: the server checks it parses, and stores it encoded itself.
+                                            option == AgentOption.WebhookJsonPayload -> value
                                             option.password -> value
                                             else -> value.trim()
                                         },
@@ -330,15 +330,3 @@ internal fun AgentForm.toDto(): SeerrNotificationAgentDto =
     )
 
 internal fun SeerrPushoverSoundDto.toSound(): PushoverSound = PushoverSound(name = name, description = description ?: name)
-
-/**
- * The webhook template is stored as the web client stores it: the text JSON-encoded as one string,
- * then base64. A value that is not in that shape — a server storing the text plainly — is shown as is.
- */
-internal fun String.decodePayload(): String =
-    attempt {
-        val decoded = String(Base64.getDecoder().decode(trim()), Charsets.UTF_8)
-        Json.decodeFromString<String>(decoded)
-    }.getOrDefault(this)
-
-internal fun String.encodePayload(): String = Base64.getEncoder().encodeToString(Json.encodeToString(this).toByteArray(Charsets.UTF_8))
