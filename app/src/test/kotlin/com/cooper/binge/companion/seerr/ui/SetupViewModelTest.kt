@@ -123,7 +123,14 @@ class SetupViewModelTest {
                 connection = connection,
                 plex =
                     PlexPinFlow(
-                        identity = { PlexClientIdentity(identifier = "cid", product = "Binge Seerr", version = "0.1.0", device = "Pixel") },
+                        identity = {
+                            PlexClientIdentity(
+                                identifier = "cid",
+                                product = "Seerr Companion",
+                                version = "0.1.0",
+                                device = "Pixel",
+                            )
+                        },
                         apis = {
                             plexTvApi(
                                 it,
