@@ -49,6 +49,9 @@ private const val REQUESTED_NO_FILES = """{"mediaInfo":{"id":9,"status":2,"reque
 
 private const val AVAILABLE_IN_4K = """{"mediaInfo":{"id":9,"status":1,"status4k":5,"requests":[{"id":45,"status":2,"is4k":true}]}}"""
 
+/** Downloaded, so the request is Completed: Seerr leaves it behind when the files are deleted (#1939). */
+private const val AVAILABLE_COMPLETED_REQUEST = """{"mediaInfo":{"id":9,"status":5,"requests":[{"id":2,"status":5,"is4k":false}]}}"""
+
 private const val NOTHING_LEFT = """{"mediaInfo":{"id":9,"status":1,"requests":[]}}"""
 
 /**
@@ -96,6 +99,21 @@ class SeerrDeleteFilesTest {
                     "DELETE /api/v1/request/44",
                 ),
                 taken(5),
+            )
+        }
+
+    @Test
+    fun `a completed request is withdrawn along with the files`() =
+        runTest {
+            val stub = connected()
+            seerr.enqueue(json(AVAILABLE_COMPLETED_REQUEST))
+            repeat(2) { seerr.enqueue(answer(204)) }
+
+            stub.deleteFiles(deleteFiles())
+
+            assertEquals(
+                listOf("GET /api/v1/movie/603", "DELETE /api/v1/media/9/file?is4k=false", "DELETE /api/v1/request/2"),
+                taken(3),
             )
         }
 
