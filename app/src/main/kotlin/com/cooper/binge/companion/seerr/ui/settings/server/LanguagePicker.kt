@@ -7,7 +7,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -47,7 +46,7 @@ internal fun languageName(
 
 /**
  * What a language filter's sheet offers: the list's entries named on the device, by name, plus any saved code the list
- * lacks (so Done never quietly drops it). Leading the chosen ones is the sheet's job.
+ * lacks (so a pick never quietly drops it). Leading the chosen ones is the sheet's job.
  */
 internal fun languageChecklist(
     entries: List<ListEntry>,
@@ -65,8 +64,8 @@ internal fun languageChoices(
 ): List<BingeChoice<String>> = languageChecklist(entries, initial).map { (code, name) -> BingeChoice(code, name, mark = code.uppercase()) }
 
 /**
- * The codes Done saves: [picked], in the list's order when there is one so the saved filter reads the same however the
- * ticks were made. With no list yet (it is still loading) the saved codes stand, so Done cannot wipe them.
+ * The codes a pick saves: [picked], in the list's order when there is one so the saved filter reads the same however the
+ * ticks were made. With no list yet (it is still loading) the saved codes stand, so a pick cannot wipe them.
  */
 internal fun pickedInOrder(
     listed: List<String>?,
@@ -74,14 +73,12 @@ internal fun pickedInOrder(
     picked: Set<String>,
 ): List<String> = (listed ?: saved).filter { it in picked }
 
-/** The language sheet's unsaved ticks, as the codes they are. */
-private val LanguageCodesSaver = Saver<Set<String>, ArrayList<String>>(save = { ArrayList(it) }, restore = { it.toSet() })
-
 /**
  * A language filter as a list row: the languages chosen, named on the device, so the page needs no list to draw it.
  * The sheet is a [BingeMultiChoiceSheet]: the chosen languages in Selected, the device's and popular ones in Suggested,
- * the rest in All, each marked with its code. Clear and Done sit in the header; Done applies the picks. A list the
- * server cannot send falls back to typing codes on a [PeekingListSheet].
+ * the rest in All, each marked with its code. Each tick and Clear apply at once and the sheet stays open, with no Done:
+ * a language filter is a setting that saves as it changes, so the page's own save-as-made batches a burst of ticks into
+ * one write. A list the server cannot send falls back to typing codes on a [PeekingListSheet].
  *
  * @param onOpen reads the server's list, only when the sheet opens.
  * @param serverDefault the server's own filter, passed for a user's filter: blank then reads "Default (…)", a Default
@@ -103,13 +100,13 @@ internal fun languageSettingItem(
     val chosen = value.languageCodes()
     val user = serverDefault != null
     if (open) {
-        val apply = { codes: List<String> ->
+        val apply = { codes: List<String>, close: Boolean ->
             onSelect(if (codes.isEmpty() && user) ALL_LANGUAGES else codes.joinToString("|"))
-            open = false
+            if (close) open = false
         }
         if (choices == ListChoices.Failed) {
             PeekingListSheet(title = title, onDismiss = { open = false }) {
-                LanguagesUnavailable(value, onRetry = onOpen, onUse = { apply(it.languageCodes()) })
+                LanguagesUnavailable(value, onRetry = onOpen, onUse = { apply(it.languageCodes(), true) })
             }
         } else {
             val listed = (choices as? ListChoices.Ready)?.let { ready -> languageChoices(ready.entries, chosen) }
@@ -117,13 +114,12 @@ internal fun languageSettingItem(
                 title = title,
                 choices = listed?.let { BingeChoiceList.Ready(it) } ?: BingeChoiceList.Loading,
                 selected = chosen.toSet(),
-                onDone = { picked -> apply(pickedInOrder(listed?.map { it.value }, chosen, picked)) },
+                onDone = { picked -> apply(pickedInOrder(listed?.map { it.value }, chosen, picked), false) },
                 onDismissRequest = { open = false },
                 doneLabel = stringResource(R.string.editor_done),
                 clearLabel = stringResource(R.string.server_settings_list_clear),
                 suggested = remember { suggestedLanguages() },
-                // The ticks survive a rotation with the sheet, which is restored open (#949).
-                draftSaver = LanguageCodesSaver,
+                applyAsPicked = true,
                 actions = {
                     if (user) {
                         BingeTextButton(
