@@ -7,6 +7,8 @@ import com.binge.companion.sdk.attempt
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.data.IssueStore
 import com.cooper.binge.companion.seerr.di.IoDispatcher
+import com.cooper.binge.companion.seerr.review.NoReviewSignals
+import com.cooper.binge.companion.seerr.review.ReviewSignalSink
 import com.cooper.binge.companion.seerr.seerr.TitleCache
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
 import com.cooper.binge.companion.seerr.telemetry.Analytics
@@ -52,6 +54,7 @@ class IssueDetailViewModel
         private val crashBreadcrumbs: CrashBreadcrumbs = NoOpCrashBreadcrumbs,
         private val savedState: SavedStateHandle = SavedStateHandle(),
         private val minuteTicker: Ticker = Ticker(),
+        private val reviewSignals: ReviewSignalSink = NoReviewSignals,
     ) : ViewModel() {
         internal var clock: () -> Long = System::currentTimeMillis
 
@@ -200,10 +203,7 @@ class IssueDetailViewModel
                     store.updateStatus(issueId, (if (resolving) IssueStatus.Resolved else IssueStatus.Open).name)
                 }.onSuccess {
                     val reloadFailure = reloadAfterWrite()
-                    if (reloadFailure == null) {
-                        val action = if (resolving) "resolved" else "reopened"
-                        analytics.event(AnalyticsEvents.ISSUE_MODERATED, mapOf(AnalyticsEvents.PARAM_ACTION to action))
-                    }
+                    if (reloadFailure == null) reportStatusChange(analytics, reviewSignals, resolving)
                     eventFlow.emit(
                         reloadFailure?.let { IssueDetailEvent.Failed(it.toSeerrError()) }
                             ?: (if (resolving) IssueDetailEvent.IssueResolved else IssueDetailEvent.IssueReopened),
@@ -304,3 +304,13 @@ private suspend fun SeerrConnection.issueDetail(
         val item = checkNotNull(dto.toIssueItem(api, titles::get)) { "Unrenderable media type" }
         dto.toDetail(item, user.await(), current().baseUrl, profile())
     }
+
+/** Says a resolve or a reopen landed; only a resolve is something the user finished, so only it counts for the review prompt. */
+private fun reportStatusChange(
+    analytics: Analytics,
+    reviewSignals: ReviewSignalSink,
+    resolving: Boolean,
+) {
+    analytics.event(AnalyticsEvents.ISSUE_MODERATED, mapOf(AnalyticsEvents.PARAM_ACTION to if (resolving) "resolved" else "reopened"))
+    if (resolving) reviewSignals.recordPositiveAction()
+}

@@ -7,6 +7,7 @@ import com.cooper.binge.companion.seerr.auth.ConnectionRestore
 import com.cooper.binge.companion.seerr.flags.FeatureFlags
 import com.cooper.binge.companion.seerr.notifications.ApplicationScope
 import com.cooper.binge.companion.seerr.notifications.NotificationPlanner
+import com.cooper.binge.companion.seerr.review.ReviewPrompt
 import com.cooper.binge.companion.seerr.telemetry.Analytics
 import com.cooper.binge.companion.seerr.telemetry.CrashReportingSwitch
 import dagger.hilt.android.HiltAndroidApp
@@ -44,6 +45,10 @@ class SeerrApp :
     @Inject
     lateinit var featureFlags: FeatureFlags
 
+    /** Injected so it is built at start, which is when the first launch is stamped. */
+    @Inject
+    lateinit var reviewPrompt: ReviewPrompt
+
     @Inject
     @field:ApplicationScope
     lateinit var scope: CoroutineScope
@@ -56,6 +61,7 @@ class SeerrApp :
         crashReporting.start()
         connectionRestore.start()
         planner.start()
+        reviewPrompt.start()
         scope.launch { featureFlags.refresh() }
     }
 }
