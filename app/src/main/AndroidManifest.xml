@@ -49,6 +49,10 @@
             <action android:name="android.intent.action.VIEW" />
             <data android:scheme="binge" />
         </intent>
+        <!-- Play Services' scanner, so the scan can check it is there before starting it (#1944). -->
+        <intent>
+            <action android:name="com.google.android.gms.mlkit.ACTION_SCAN_BARCODE" />
+        </intent>
         <package android:name="com.cooper.binge.app" />
         <!-- The media servers' TV apps, so a TV page can offer to open a title in the one installed. -->
         <package android:name="org.jellyfin.androidtv" />
