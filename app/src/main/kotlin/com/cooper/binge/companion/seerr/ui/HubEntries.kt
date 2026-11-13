@@ -83,6 +83,7 @@ internal fun SettingsEntry(
             onToggleShakeToReport = viewModel::setShakeToReport,
             onToggleShareUsageData = viewModel::setShareUsageData,
             onToggleSendCrashReports = viewModel::setSendCrashReports,
+            onOpenLicences = { open(LicencesRoute) },
             // The home swaps to setup on the credentials clearing; leaving Settings is what lets it show. Only Settings
             // itself is taken off: a second tap while it leaves finds something else on top and takes nothing.
             onDisconnect = {

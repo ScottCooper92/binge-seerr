@@ -6,6 +6,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
+    alias(libs.plugins.aboutlibraries.android)
     alias(libs.plugins.room)
     alias(libs.plugins.ktlint)
     id("binge.gates.detekt")
@@ -269,6 +270,8 @@ dependencies {
     implementation(libs.androidx.core.splashscreen)
     // Tips are sold through Google Play; see tip/PlayTipBilling.
     implementation(libs.play.billing.ktx)
+    // The licences page reads the list the AboutLibraries plugin writes at build time.
+    implementation(libs.aboutlibraries.core)
     implementation(libs.lifecycle.viewmodel.compose)
     implementation(libs.lifecycle.viewmodel.savedstate)
     implementation(libs.lifecycle.runtime.compose)

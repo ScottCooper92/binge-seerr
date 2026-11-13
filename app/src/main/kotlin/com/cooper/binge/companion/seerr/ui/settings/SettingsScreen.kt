@@ -62,6 +62,7 @@ class SettingsActions(
     val onToggleShareUsageData: (Boolean) -> Unit,
     val onToggleSendCrashReports: (Boolean) -> Unit,
     val onDisconnect: () -> Unit,
+    val onOpenLicences: () -> Unit = {},
 )
 
 /**
@@ -163,6 +164,7 @@ private fun SettingsContent(
                 ),
             )
         }
+        Group(stringResource(R.string.settings_group_about), aboutRows(actions.onOpenLicences))
         Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
         DisconnectButton(
             actions.onDisconnect,
