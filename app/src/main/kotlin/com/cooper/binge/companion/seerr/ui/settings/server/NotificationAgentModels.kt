@@ -329,4 +329,15 @@ internal fun AgentForm.toDto(): SeerrNotificationAgentDto =
             ),
     )
 
+/**
+ * A save's response is the stored record, where the webhook template is encoded (a read decodes it, a save does not).
+ * The template stays as [draft] had it, so the next write sends text rather than the server's encoding.
+ */
+internal fun AgentForm.withPayloadOf(draft: AgentForm): AgentForm =
+    if (AgentOption.WebhookJsonPayload in options) {
+        copy(options = options + (AgentOption.WebhookJsonPayload to draft.option(AgentOption.WebhookJsonPayload)))
+    } else {
+        this
+    }
+
 internal fun SeerrPushoverSoundDto.toSound(): PushoverSound = PushoverSound(name = name, description = description ?: name)

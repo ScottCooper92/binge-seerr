@@ -36,6 +36,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
+import java.util.Base64
 
 private const val EMAIL =
     """{"enabled":true,"types":6,"options":{"emailFrom":"seerr@example.com","senderName":"Seerr","smtpHost":"smtp.example.com",
@@ -502,7 +503,11 @@ class NotificationAgentViewModelTest {
                 "GET /api/v1/settings/notifications/webhook",
                 """{"enabled":false,"types":0,"options":{"webhookUrl":"","jsonPayload":${Json.encodeToString(template)}}}""",
             )
-            seerr.serve("POST /api/v1/settings/notifications/webhook", """{"enabled":false,"types":0,"options":{}}""")
+            val stored = Base64.getEncoder().encodeToString(Json.encodeToString("{\"event\": \"{{event}}\"}").toByteArray())
+            seerr.serve(
+                "POST /api/v1/settings/notifications/webhook",
+                """{"enabled":false,"types":0,"options":{"webhookUrl":"","jsonPayload":"$stored"}}""",
+            )
             val vm = viewModel(ServerAgent.Webhook)
             assertEquals(template, vm.awaitReady().draft.option(AgentOption.WebhookJsonPayload))
 
@@ -516,6 +521,20 @@ class NotificationAgentViewModelTest {
                     .getValue("jsonPayload")
                     .jsonPrimitive.content
             assertEquals("{\"event\": \"{{event}}\"}", payload)
+
+            // The response holds the server's encoding; the form keeps the text, so the next write sends text.
+            assertEquals("{\"event\": \"{{event}}\"}", vm.awaitReady().draft.option(AgentOption.WebhookJsonPayload))
+            vm.setOption(AgentOption.WebhookUrl, "https://hooks.example/x")
+            awaitWritten(vm)
+            val again = Json.parseToJsonElement(seerr.body("POST", "/api/v1/settings/notifications/webhook")).jsonObject
+            assertEquals(
+                "{\"event\": \"{{event}}\"}",
+                again
+                    .getValue("options")
+                    .jsonObject
+                    .getValue("jsonPayload")
+                    .jsonPrimitive.content,
+            )
         }
 
     @Test
