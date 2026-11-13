@@ -50,8 +50,8 @@ fun SeerrNavHost(
     // The default section is off the stack, so Back from it leaves; the host's own Back shares the once-only exit.
     val exit = rememberExitOnce(onExit)
     // A disconnect still waiting on the server is not a connection to ask a review of: its card would show as the user leaves.
-    val disconnecting by viewModel.disconnecting.collectAsStateWithLifecycle()
-    ReviewPromptOnReturnToRoot(connected = if (disconnecting) false else connected, stackDepth = backStack.size)
+    val askable = remember(state) { derivedStateOf { if (state.value == HomeUiState.Disconnecting) false else state.value.connected() } }
+    ReviewPromptOnReturnToRoot(connected = askable.value, stackDepth = backStack.size)
     SeerrPaneHost(backStack, connected, exit, modifier, defaultSection = { DefaultSectionPane(backStack, exit) }) { panes ->
         homeEntries(backStack, connected = { connectedState.value }, panes = panes, onExit = exit)
         sectionEntries(backStack, panes)
@@ -64,7 +64,7 @@ private fun HomeUiState.connected(): Boolean? =
     when (this) {
         HomeUiState.Resolving -> null
         HomeUiState.Setup -> false
-        HomeUiState.Connected, HomeUiState.Reconnect -> true
+        HomeUiState.Connected, HomeUiState.Disconnecting, HomeUiState.Reconnect -> true
     }
 
 /**

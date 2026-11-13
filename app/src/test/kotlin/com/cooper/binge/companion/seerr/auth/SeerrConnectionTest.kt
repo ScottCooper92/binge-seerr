@@ -600,7 +600,7 @@ class SeerrConnectionTest {
         }
 
     @Test
-    fun `disconnecting is not set for a connection that is only being used`() =
+    fun `disconnecting is false before an API key disconnect and after it finishes`() =
         runTest {
             server.enqueue(json("""{"id":1,"permissions":2}"""))
             server.enqueueProfile(json("""{"version":"3.1.0"}"""), json("""{"initialized":true}"""))

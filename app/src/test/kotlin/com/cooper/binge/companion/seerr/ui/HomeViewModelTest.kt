@@ -18,6 +18,7 @@ import com.cooper.binge.companion.seerr.util.ReversingCipher
 import com.cooper.binge.companion.seerr.util.enqueueProfile
 import com.cooper.binge.companion.seerr.util.routeProfiles
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
@@ -168,6 +169,46 @@ class HomeViewModelTest {
 
                 signIn()
                 assertEquals(HomeUiState.Connected, withContext(Dispatchers.Default) { vm.uiState.first { it == HomeUiState.Connected } })
+            } finally {
+                viewModels.clear()
+                drain.awaitIdle()
+                server.close()
+            }
+        }
+
+    @Test
+    fun `a disconnect still waiting on the server is its own state, and the flag clears when it ends`() =
+        runTest {
+            val server = MockWebServer().routeProfiles().apply { start() }
+            val drain = OkHttpDrain()
+            try {
+                val monitor = SeerrConnectionHealthMonitor()
+                val store = store()
+                val connection =
+                    SeerrConnection(
+                        store = store,
+                        apis = SeerrApiFactory(logRequests = false, health = monitor, testDispatcher = drain::newDispatcher),
+                        healthMonitor = monitor,
+                    )
+                server.enqueue(json("""{"id":42}""").newBuilder().addHeader("Set-Cookie", "connect.sid=s3ss10n; Path=/").build())
+                server.enqueueProfile(json("""{"version":"3.1.0"}"""), json("""{"initialized":true}"""))
+                server.enqueue(json("""{"status":"ok"}""").newBuilder().headersDelay(30, java.util.concurrent.TimeUnit.SECONDS).build())
+                connection
+                    .logIn(
+                        server.url("/").toString(),
+                        com.cooper.binge.companion.seerr.seerr.SeerrLoginRequest
+                            .Local("s@example.com", "pw"),
+                    ).getOrThrow()
+                val vm = HomeViewModel(connection, restore(store))
+                viewModels.put("home", vm)
+                backgroundScope.launch { vm.uiState.collect {} }
+                withContext(Dispatchers.Default) { vm.uiState.first { it == HomeUiState.Connected } }
+
+                val disconnecting = launch(Dispatchers.IO) { connection.disconnect() }
+                withContext(Dispatchers.Default) { vm.uiState.first { it == HomeUiState.Disconnecting } }
+                disconnecting.cancelAndJoin()
+
+                withContext(Dispatchers.Default) { vm.uiState.first { it != HomeUiState.Disconnecting } }
             } finally {
                 viewModels.clear()
                 drain.awaitIdle()

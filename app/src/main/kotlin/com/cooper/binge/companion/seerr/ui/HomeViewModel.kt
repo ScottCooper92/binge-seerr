@@ -24,6 +24,9 @@ sealed interface HomeUiState {
 
     data object Connected : HomeUiState
 
+    /** Connected as far as the screens go, but a disconnect is still ending the session on the server: nothing to ask a review of. */
+    data object Disconnecting : HomeUiState
+
     /** A server is saved but has rejected the session (#810): the sign-in takes the window in place of the screens. */
     data object Reconnect : HomeUiState
 }
@@ -37,19 +40,22 @@ class HomeViewModel
         restore: ConnectionRestore,
     ) : ViewModel() {
         val uiState: StateFlow<HomeUiState> =
-            combine(connection.credentials, restore.settled, connection.sessionRejected) { saved, settled, rejected ->
+            combine(
+                connection.credentials,
+                restore.settled,
+                connection.sessionRejected,
+                connection.disconnecting,
+            ) { saved, settled, rejected, disconnecting ->
                 // Nothing saved is only an answer once a restore has been tried. A device that has
                 // just been transferred has a connection coming, and setup would ask for it again.
                 when {
                     rejected -> HomeUiState.Reconnect
+                    saved != null && disconnecting -> HomeUiState.Disconnecting
                     saved != null -> HomeUiState.Connected
                     settled -> HomeUiState.Setup
                     else -> HomeUiState.Resolving
                 }
             }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), HomeUiState.Resolving)
-
-        /** True while a disconnect is still ending the session on the server; the connection is as good as gone. */
-        val disconnecting: StateFlow<Boolean> = connection.disconnecting
 
         /** Leaves a server that rejected the session, for one that is gone or that the user no longer uses. */
         fun disconnect() {
