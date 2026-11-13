@@ -34,5 +34,6 @@ class RemoteFeatureFlags(
         local: Map<Flag, Boolean>,
     ) = Flags(
         bingePromotion = local[Flag.BingePromotion] ?: remote.bingePromotion,
+        reviewPrompt = local[Flag.ReviewPrompt] ?: remote.reviewPrompt,
     )
 }
