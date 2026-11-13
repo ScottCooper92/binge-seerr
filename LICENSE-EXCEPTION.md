@@ -4,8 +4,9 @@ This program is licensed under the GNU General Public License, version 3 or (at 
 later version. See [LICENSE](LICENSE).
 
 As a special exception, the copyright holders give you permission to link or combine this program
-with the Google Play services libraries and the Firebase libraries (or with modified versions of
-those libraries that are under the same licence), and to convey the resulting work. You must obey
+with the Google Play services libraries, the Google Play Billing Library, the Google Play in-app
+review library and the Firebase libraries (or with modified versions of those libraries that are
+under the same licence), and to convey the resulting work. You must obey
 the GNU General Public License in all respects for all of the code used other than those libraries.
 The Corresponding Source for the resulting work need not include the source code of those
 libraries. If you modify this program, you may extend this exception to your version, but you are
@@ -16,7 +17,9 @@ from it.
 ## What the libraries are
 
 This app links them. The Google Play services libraries include Block Store
-(`play-services-auth-blockstore`) and the code scanner (`play-services-code-scanner`). The Firebase
-libraries include Remote Config and Crashlytics.
+(`play-services-auth-blockstore`) and the code scanner (`play-services-code-scanner`). The Google
+Play Billing Library is `com.android.billingclient` (`billing-ktx`), and the Google Play in-app
+review library is `com.google.android.play:review`. The Firebase libraries include Remote Config
+and Crashlytics.
 
 This is a plain-language note and not part of the permission above.
