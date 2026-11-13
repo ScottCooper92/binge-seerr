@@ -14,6 +14,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Tv
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
@@ -29,11 +31,13 @@ import com.binge.designsystem.template.screenInnerPadding
 import com.binge.designsystem.template.screenOuterPadding
 import com.binge.designsystem.theme.BingeShapes
 import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.TIP_JAR_AVAILABLE
 import com.cooper.binge.companion.seerr.demo.isDemoOrigin
 import com.cooper.binge.companion.seerr.notifications.NotificationSignal
 import com.cooper.binge.companion.seerr.ui.DisconnectButton
 import com.cooper.binge.companion.seerr.ui.handoff.rememberScanTvCode
 import com.cooper.binge.companion.seerr.ui.settings.server.ServerSettingsPage
+import com.cooper.binge.companion.seerr.ui.settings.server.TipSheet
 import com.cooper.binge.companion.seerr.ui.state.LoadingScreen
 import com.binge.designsystem.R as DesR
 
@@ -88,6 +92,9 @@ private fun SettingsContent(
     contentPadding: PaddingValues,
 ) {
     val config = state.config
+    var tipOpen by remember { mutableStateOf(false) }
+    if (tipOpen && TIP_JAR_AVAILABLE) TipSheet(onDismiss = { tipOpen = false })
+    val openTip: (() -> Unit)? = if (TIP_JAR_AVAILABLE) ({ tipOpen = true }) else null
     Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(contentPadding)) {
         if (state.connection.baseUrl.isDemoOrigin()) DemoNote()
         ItemGroup(
@@ -120,7 +127,13 @@ private fun SettingsContent(
         state.app?.let {
             Group(
                 stringResource(R.string.settings_group_app),
-                appRows(it, actions.onToggleShakeToReport, actions.onToggleShareUsageData, actions.onToggleSendCrashReports),
+                appRows(
+                    it,
+                    actions.onToggleShakeToReport,
+                    actions.onToggleShareUsageData,
+                    actions.onToggleSendCrashReports,
+                    onOpenTip = openTip,
+                ),
             )
         }
         Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))

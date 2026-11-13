@@ -1089,6 +1089,11 @@
     <string name="consent_point_change_detail">Cambia de opinión cuando quieras en Ajustes, en Esta aplicación.</string>
     <string name="consent_accept">Compartir datos de uso</string>
     <string name="consent_decline">Ahora no</string>
+    <string name="tip_row">Invítame a un café</string>
+    <string name="tip_title">Invítame a un café</string>
+    <string name="tip_body">Esta app es gratuita y de código abierto. Si te resulta útil, una propina ayuda a mantenerla. ¡Gracias!</string>
+    <string name="tip_amount">Importe de la propina</string>
+    <string name="tip_give">Dar %1$s</string>
     <string name="settings_share_usage_data">Compartir datos de uso</string>
     <string name="settings_share_usage_data_caption">Envía qué pantallas y acciones usas</string>
     <string name="settings_send_crash_reports">Enviar informes de fallos</string>
