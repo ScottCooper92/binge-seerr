@@ -41,15 +41,16 @@ class ReviewPrompt
             suppressed = true
         }
 
-        /** Asks if the flag is on, nothing suppresses it, and the user has earned it. */
-        fun maybeAsk(activity: Activity) {
+        /**
+         * Asks if the flag is on, nothing suppresses it, and the user has earned it. It runs in the caller's scope, so
+         * a caller that leaves the root cancels the ask before the card is launched.
+         */
+        suspend fun maybeAsk(activity: Activity) {
             if (suppressed || !featureFlags.flags.value.reviewPrompt) return
-            scope.launch {
-                val now = clock()
-                if (!ReviewPromptEligibility.isEligible(store.signals(), ReviewPromptThresholds(), now)) return@launch
-                store.recordPromptRequested(now)
-                launcher.launch(activity)
-            }
+            val now = clock()
+            if (!ReviewPromptEligibility.isEligible(store.signals(), ReviewPromptThresholds(), now)) return
+            store.recordPromptRequested(now)
+            launcher.launch(activity)
         }
 
         /** Asks at once, whatever has been earned: for a debug build to see the card. */

@@ -12,7 +12,7 @@ class ReviewPromptViewModel
     constructor(
         private val prompt: ReviewPrompt,
     ) : ViewModel() {
-        fun onReturnedToRoot(activity: Activity) = prompt.maybeAsk(activity)
+        suspend fun onReturnedToRoot(activity: Activity) = prompt.maybeAsk(activity)
 
         fun askNow(activity: Activity) = prompt.askNow(activity)
     }

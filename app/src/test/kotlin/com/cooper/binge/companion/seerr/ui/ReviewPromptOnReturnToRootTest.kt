@@ -4,6 +4,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.cooper.binge.companion.seerr.util.createSeerrComposeRule
+import kotlinx.coroutines.awaitCancellation
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -54,5 +55,38 @@ class ReviewPromptOnReturnToRootTest {
         depth = 1
         composeTestRule.waitForIdle()
         assertEquals(1, asked)
+    }
+
+    @Test
+    fun `losing the connection while the ask is in flight cancels it`() {
+        var launched = false
+        connected = true
+        depth = 2
+        composeTestRule.setContent {
+            ReturnToRootEffect(connected, depth) {
+                awaitCancellation()
+                launched = true
+            }
+        }
+        composeTestRule.waitForIdle()
+        depth = 1
+        composeTestRule.waitForIdle()
+        connected = false
+        composeTestRule.waitForIdle()
+        assertEquals(false, launched)
+    }
+
+    @Test
+    fun `signing in again after losing the connection while deep is not a return`() {
+        connected = true
+        depth = 2
+        host()
+        composeTestRule.waitForIdle()
+        connected = false
+        depth = 1
+        composeTestRule.waitForIdle()
+        connected = true
+        composeTestRule.waitForIdle()
+        assertEquals(0, asked)
     }
 }
