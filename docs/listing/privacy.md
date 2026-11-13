@@ -48,6 +48,9 @@ two ways described above, and the phone-to-TV hand-off below, which stays on you
   what happens there.
 - **To Google (Play services Block Store)**, if the device has Play services: the connection copy
   described above, handled by Google's own service under your Google account.
+- **To Google (Play Billing)**, only if you choose to leave a tip: the tip is bought and consumed
+  through Google Play under your Google account, and Google takes the payment. The app keeps no
+  payment or purchase data and sends none anywhere else.
 - **To TMDB's image servers** (image.tmdb.org), to show posters and backdrops: as with any web
   request, your device's IP address and the picture asked for. It happens with your own server and in
   the demo alike, and carries no account or identifier of the app's.
@@ -163,6 +166,9 @@ beyond what this policy describes:
   survive a restart and run reliably.
 - **Biometric** and **fingerprint**, declared by the `androidx.biometric` library that a
   dependency brings in. The app never asks for biometrics.
+- **Billing** (`com.android.vending.BILLING`), declared by the Google Play Billing library: it lets
+  the app offer a tip through Google Play. Nothing is bought unless you confirm it in Google's own
+  purchase screen.
 - A signature-level permission named after the app, added by `androidx.core` to protect the app's
   own broadcast receivers. No other app can hold it.
 

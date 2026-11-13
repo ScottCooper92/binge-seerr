@@ -67,7 +67,7 @@ internal fun appRows(
             toggled = app.sendCrashReports,
             onClick = { onToggleSendCrashReports(!app.sendCrashReports) },
         ),
-        // The tip jar's row: only where the caller can open it (see TIP_JAR_AVAILABLE).
+        // The tip jar's row: only once Play has priced every step (see `TipUiState.Ready`).
         onOpenTip?.let {
             ListItem(
                 icon = Icons.Filled.Coffee,

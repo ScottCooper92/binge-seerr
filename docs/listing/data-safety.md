@@ -93,6 +93,15 @@ feature under the user's own Google account, not the developer receiving data, s
 collection by the developer. It is disclosed in `privacy.md` regardless. Whether the form should
 list it is a question for the maintainer and Play's review; record the answer here once it is known.
 
+## Google Play Billing
+
+A tip is bought and consumed through Google Play under the user's own Google account
+(`tip/PlayTipBilling.kt`). Play takes the payment. The app receives no card or payment details and
+keeps no purchase history. It sends nothing about a purchase to the developer or anyone else. This is
+Google's platform feature, not collection by the developer, so the Financial info and Purchase history
+answers stay as they are. As with the Block Store copy, whether the form should list it is a question
+for the maintainer and Play's review; record the answer here once it is known.
+
 ## Permissions declared
 
 The app's own manifest declares `INTERNET`, `POST_NOTIFICATIONS`, `ACCESS_NETWORK_STATE` (a television
@@ -108,6 +117,7 @@ release manifest, which also carries (checked against
 | `ACCESS_NETWORK_STATE` | The app itself (the hand-off), and also WorkManager and PostHog |
 | `WAKE_LOCK`, `RECEIVE_BOOT_COMPLETED`, `FOREGROUND_SERVICE` | WorkManager |
 | `USE_BIOMETRIC`, `USE_FINGERPRINT` | `androidx.biometric` (transitive; the app never uses biometrics) |
+| `com.android.vending.BILLING` | `com.android.billingclient:billing` (via `billing-ktx`; the tip purchase, with Google's own purchase activity) |
 | `<applicationId>.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION` | `androidx.core` (signature-level, the app's own) |
 
 They are listed in `privacy.md`. Re-check the merged manifest whenever a dependency changes.
