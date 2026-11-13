@@ -1,6 +1,7 @@
 package com.cooper.binge.companion.seerr.telemetry
 
 import com.cooper.binge.companion.seerr.ui.HubRoute
+import com.cooper.binge.companion.seerr.ui.LicencesRoute
 import com.cooper.binge.companion.seerr.ui.RequestDetailRoute
 import com.cooper.binge.companion.seerr.ui.SettingsRoute
 import com.cooper.binge.companion.seerr.ui.tv.TvDestination
@@ -13,6 +14,7 @@ class ScreenNamesTest {
     fun `a screen is reported by its fixed name, never with the server's id`() {
         assertEquals("hub", HubRoute.screenName())
         assertEquals("settings", SettingsRoute.screenName())
+        assertEquals("licences", LicencesRoute.screenName())
         assertEquals("request_detail", RequestDetailRoute(requestId = 4812).screenName())
     }
 

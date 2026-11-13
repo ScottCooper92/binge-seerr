@@ -10,6 +10,7 @@ import com.cooper.binge.companion.seerr.ui.HomeRoute
 import com.cooper.binge.companion.seerr.ui.HubRoute
 import com.cooper.binge.companion.seerr.ui.IssueDetailRoute
 import com.cooper.binge.companion.seerr.ui.IssuesRoute
+import com.cooper.binge.companion.seerr.ui.LicencesRoute
 import com.cooper.binge.companion.seerr.ui.NotificationAgentRoute
 import com.cooper.binge.companion.seerr.ui.OverrideRuleRoute
 import com.cooper.binge.companion.seerr.ui.RequestDetailRoute
@@ -52,6 +53,7 @@ fun SeerrRoute.screenName(): String =
         is OverrideRuleRoute -> "override_rule"
         SettingsRoute -> "settings"
         EditConnectionRoute -> "edit_connection"
+        LicencesRoute -> "licences"
         else -> debugScreenName(this)
     }
 

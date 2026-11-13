@@ -114,6 +114,10 @@ data class RequestDetailRoute(
 @Serializable
 data object SettingsRoute : SeerrRoute
 
+/** The open-source licences of the libraries the app ships, opened from Settings. */
+@Serializable
+data object LicencesRoute : SeerrRoute
+
 /** The setup form on the live connection; pops itself once new credentials are saved. */
 @Serializable
 data object EditConnectionRoute : SeerrRoute
