@@ -6,6 +6,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
+    alias(libs.plugins.aboutlibraries.android)
     alias(libs.plugins.room)
     alias(libs.plugins.ktlint)
     id("binge.gates.detekt")
@@ -267,6 +268,8 @@ dependencies {
     implementation(libs.compose.material3)
     implementation(libs.activity.compose)
     implementation(libs.androidx.core.splashscreen)
+    // The licences page reads the list the AboutLibraries plugin writes at build time.
+    implementation(libs.aboutlibraries.core)
     implementation(libs.lifecycle.viewmodel.compose)
     implementation(libs.lifecycle.viewmodel.savedstate)
     implementation(libs.lifecycle.runtime.compose)

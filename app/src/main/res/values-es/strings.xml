@@ -1279,4 +1279,12 @@
     <string name="tv_issue_edit_on_phone">Editar desde el móvil</string>
     <string name="tv_issue_phone_body">Escanea el código con el móvil para abrir esta incidencia en %1$s y responder o editar allí.</string>
     <string name="version_standard">Estándar</string>
+    <string name="settings_group_about">Acerca de</string>
+    <string name="about_app_version">Versión de la app</string>
+    <string name="about_privacy_policy">Política de privacidad</string>
+    <string name="about_join_beta">Unirse a la beta</string>
+    <string name="licences_title">Licencias de código abierto</string>
+    <string name="licences_unspecified">Licencia no especificada</string>
+    <string name="licences_empty">No hay licencias que mostrar.</string>
+    <string name="licences_unreadable">No se pudo leer la lista de licencias.</string>
 </resources>

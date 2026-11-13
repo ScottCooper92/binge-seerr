@@ -1337,4 +1337,14 @@
     <string name="tv_issue_edit_on_phone">Edit on your phone</string>
     <string name="tv_issue_phone_body">Scan with your phone to open this issue in %1$s, and reply or edit there.</string>
     <string name="version_standard">Standard</string>
+    <string name="settings_group_about">About</string>
+    <string name="about_app_version">App version</string>
+    <string name="about_version_format" translatable="false">v%1$s</string>
+    <string name="about_privacy_policy">Privacy Policy</string>
+    <string name="about_join_beta">Join the beta</string>
+    <string name="licences_title">Open-source licences</string>
+    <string name="licences_detail_format" translatable="false">%1$s · %2$s</string>
+    <string name="licences_unspecified">Licence not specified</string>
+    <string name="licences_empty">There are no licences to list.</string>
+    <string name="licences_unreadable">The licence list couldn\'t be read.</string>
 </resources>

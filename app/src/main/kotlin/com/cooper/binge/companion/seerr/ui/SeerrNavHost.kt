@@ -18,6 +18,7 @@ import androidx.navigation3.ui.NavDisplay
 import com.binge.designsystem.PaneContent
 import com.binge.designsystem.PaneEdge
 import com.cooper.binge.companion.seerr.ui.hub.HubSection
+import com.cooper.binge.companion.seerr.ui.settings.licences.LicencesEntry
 import com.cooper.binge.companion.seerr.ui.settings.server.ServerSettingsPage
 import com.cooper.binge.companion.seerr.ui.state.LoadingScreen
 
@@ -267,6 +268,9 @@ private fun EntryProviderScope<NavKey>.serverSettingsEntries(backStack: NavBackS
                 onOpenSlider = { id -> backStack.add(DiscoverSliderRoute(id)) },
             )
         }
+    }
+    entry<LicencesRoute>(metadata = DetailPane) { route ->
+        DetailPaneContent { LicencesEntry(onBack = { backStack.popIfTop(route) }) }
     }
     entry<DiscoverSliderRoute>(metadata = DetailPane) { route ->
         DetailPaneContent { DiscoverSliderEntry(route.id, onBack = { backStack.popIfTop(route) }) }
