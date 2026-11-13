@@ -5,6 +5,8 @@ import com.cooper.binge.companion.seerr.auth.CredentialStore
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.data.FakeRequestStore
 import com.cooper.binge.companion.seerr.data.RequestEntity
+import com.cooper.binge.companion.seerr.review.NoReviewSignals
+import com.cooper.binge.companion.seerr.review.ReviewSignalSink
 import com.cooper.binge.companion.seerr.seerr.SeerrApiFactory
 import com.cooper.binge.companion.seerr.seerr.SeerrAuth
 import com.cooper.binge.companion.seerr.seerr.SeerrError
@@ -56,7 +58,7 @@ class RequestModerationTest {
     @After
     fun tearDown() = seerr.close()
 
-    private suspend fun TestScope.moderation(): RequestModeration {
+    private suspend fun TestScope.moderation(reviewSignals: ReviewSignalSink = NoReviewSignals): RequestModeration {
         seerr.dispatcher =
             object : Dispatcher() {
                 override fun dispatch(request: RecordedRequest): MockResponse {
@@ -91,6 +93,7 @@ class RequestModerationTest {
             analytics = analytics,
             crashBreadcrumbs = crashBreadcrumbs,
             cache = cache,
+            reviewSignals = reviewSignals,
         ) { moderated++ }
     }
 
@@ -260,6 +263,34 @@ class RequestModerationTest {
             sut.remove(item, blockTitle = false)
             removed.await()
             assertEquals(listOf(12), cache.rows.map { it.id })
+        }
+
+    @Test
+    fun `an approval or a decline counts towards the review prompt, a removal or a failure does not`() =
+        runTest {
+            var counted = 0
+            val sut = moderation { counted++ }
+
+            val approved = awaitEvent(sut.events)
+            sut.approve(11)
+            approved.await()
+            assertEquals(1, counted)
+
+            val declined = awaitEvent(sut.events)
+            sut.decline(item, blockTitle = false)
+            declined.await()
+            assertEquals(2, counted)
+
+            val removed = awaitEvent(sut.events)
+            sut.remove(item, blockTitle = false)
+            removed.await()
+            assertEquals(2, counted)
+
+            codes["/api/v1/request/11/approve"] = 500
+            val failed = awaitEvent(sut.events)
+            sut.approve(11)
+            failed.await()
+            assertEquals(2, counted)
         }
 
     @Test

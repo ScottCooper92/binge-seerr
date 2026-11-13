@@ -8,6 +8,8 @@ import com.cooper.binge.companion.seerr.auth.CredentialStore
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.data.FakeIssueStore
 import com.cooper.binge.companion.seerr.data.IssueEntity
+import com.cooper.binge.companion.seerr.review.NoReviewSignals
+import com.cooper.binge.companion.seerr.review.ReviewSignalSink
 import com.cooper.binge.companion.seerr.seerr.SeerrApiFactory
 import com.cooper.binge.companion.seerr.seerr.SeerrAuth
 import com.cooper.binge.companion.seerr.seerr.SeerrError
@@ -106,7 +108,10 @@ class IssueDetailViewModelTest {
         serve("* /api/v1/movie/100", """{"title":"Heat","posterPath":"/heat.jpg","releaseDate":"1995-12-15"}""")
     }
 
-    private suspend fun TestScope.viewModel(savedState: SavedStateHandle = SavedStateHandle()): IssueDetailViewModel {
+    private suspend fun TestScope.viewModel(
+        savedState: SavedStateHandle = SavedStateHandle(),
+        reviewSignals: ReviewSignalSink = NoReviewSignals,
+    ): IssueDetailViewModel {
         val connection =
             SeerrConnection(
                 store =
@@ -128,6 +133,7 @@ class IssueDetailViewModelTest {
                 analytics,
                 crashBreadcrumbs,
                 savedState,
+                reviewSignals = reviewSignals,
             )
         viewModels.put(vm.hashCode().toString(), vm)
         backgroundScope.launch { vm.uiState.collect {} }
@@ -763,6 +769,34 @@ class IssueDetailViewModelTest {
                 ),
                 analytics.events,
             )
+        }
+
+    @Test
+    fun `a resolve counts towards the review prompt and a reopen does not`() =
+        runTest {
+            server(ADMIN)
+            responses["POST /api/v1/issue/31/resolved"] = {
+                serve("GET /api/v1/issue/31", issueJson().replace("\"status\":1", "\"status\":2"))
+                json("{}")
+            }
+            responses["POST /api/v1/issue/31/open"] = {
+                serve("GET /api/v1/issue/31", issueJson())
+                json("{}")
+            }
+            var counted = 0
+            val vm = viewModel(reviewSignals = { counted++ })
+            vm.awaitReady()
+
+            val issueResolved = awaitEvent(vm.events)
+            vm.toggleStatus()
+            assertEquals(IssueDetailEvent.IssueResolved, issueResolved.await())
+            assertEquals(1, counted)
+
+            vm.awaitReady { it.action == IssueAction.None && it.detail.item.status == IssueStatus.Resolved }
+            val issueReopened = awaitEvent(vm.events)
+            vm.toggleStatus()
+            assertEquals(IssueDetailEvent.IssueReopened, issueReopened.await())
+            assertEquals(1, counted)
         }
 
     @Test

@@ -3,6 +3,8 @@ package com.cooper.binge.companion.seerr.ui.requests
 import com.binge.companion.sdk.attempt
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.data.RequestStore
+import com.cooper.binge.companion.seerr.review.NoReviewSignals
+import com.cooper.binge.companion.seerr.review.ReviewSignalSink
 import com.cooper.binge.companion.seerr.seerr.SeerrAddToBlocklistBody
 import com.cooper.binge.companion.seerr.seerr.addToBlocklistOnce
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
@@ -37,6 +39,7 @@ internal class ModerationRunner(
     private val crashBreadcrumbs: CrashBreadcrumbs,
     private val cache: RequestStore,
     private val onModerated: () -> Unit,
+    private val reviewSignals: ReviewSignalSink = NoReviewSignals,
 ) {
     private val acting = MutableStateFlow<Set<Int>>(emptySet())
     val actingIds: StateFlow<Set<Int>> = acting.asStateFlow()
@@ -111,6 +114,7 @@ internal class ModerationRunner(
                 .onSuccess {
                     onModerated()
                     val event = outcome()
+                    if (event.countsAsPositiveAction) reviewSignals.recordPositiveAction()
                     analytics.event(AnalyticsEvents.REQUEST_MODERATED, mapOf(AnalyticsEvents.PARAM_ACTION to event.actionLabel()))
                     if (syncFirst) connection.syncInto(cache, requestId)
                     eventFlow.emit(event)

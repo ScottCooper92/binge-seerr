@@ -28,6 +28,10 @@ https://github.com/ScottCooper92/binge-seerr.
   that this install appears once, not once per sign-in, in the devices list on your Plex account.
 - **Your answers about usage data and crash reports**, and whether shaking the phone offers to
   report a bug.
+- **Three numbers for the rating prompt**: when you first opened the app, how many requests you
+  approved or declined and issues you resolved, and when you were last asked to rate the app.
+  They never leave the device. When you have used the app for a while, Google Play may offer to let you
+  rate it; Play draws that card and tells the app nothing about what you do with it.
 
 The app turns off Android's own backup (`allowBackup="false"`) and excludes all of its data from both
 cloud backup and device-to-device transfer (`data_extraction_rules.xml`), so neither copies any of the
