@@ -102,7 +102,7 @@ private fun bingeRow(
     return ListItem(
         icon = Icons.Filled.Tv,
         iconTint = BingeSentiment.Info.fill(),
-        label = stringResource(R.string.settings_binge),
+        label = stringResource(R.string.settings_binge_preferences),
         detail = stringResource(detail),
         supportingMaxLines = BINGE_DETAIL_MAX_LINES,
         destination = ListItemDestination.External,

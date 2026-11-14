@@ -19,7 +19,6 @@ import com.cooper.binge.companion.seerr.notifications.NotificationSignal
 import com.cooper.binge.companion.seerr.notifications.SeerrNotifier
 import com.cooper.binge.companion.seerr.seerr.SeerrAuth
 import com.cooper.binge.companion.seerr.telemetry.Analytics
-import com.cooper.binge.companion.seerr.telemetry.AnalyticsConsent
 import com.cooper.binge.companion.seerr.telemetry.AnalyticsEvents
 import com.cooper.binge.companion.seerr.telemetry.CrashBreadcrumbs
 import com.cooper.binge.companion.seerr.telemetry.NoOpAnalytics
@@ -28,7 +27,6 @@ import com.cooper.binge.companion.seerr.telemetry.TelemetryPrefs
 import com.cooper.binge.companion.seerr.ui.Ticker
 import com.cooper.binge.companion.seerr.ui.hub.BingeInstallCheck
 import com.cooper.binge.companion.seerr.ui.hub.NoBingeInstallCheck
-import com.cooper.binge.companion.seerr.ui.hub.bingeStatusOf
 import com.cooper.binge.companion.seerr.ui.minuteClock
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
@@ -115,20 +113,30 @@ class SettingsViewModel
         private val prefs: NotificationPrefs,
         scheduler: NotificationScheduler,
         private val notifier: SeerrNotifier,
-        private val feedbackPrefs: FeedbackPrefs,
-        private val telemetryPrefs: TelemetryPrefs,
+        feedbackPrefs: FeedbackPrefs,
+        telemetryPrefs: TelemetryPrefs,
         bugReportLinks: BugReportLinks,
         @IoDispatcher private val dispatcher: CoroutineDispatcher,
         private val analytics: Analytics = NoOpAnalytics,
         private val crashBreadcrumbs: CrashBreadcrumbs = NoOpCrashBreadcrumbs,
         private val minuteTicker: Ticker = Ticker(),
-        private val bingeInstallCheck: BingeInstallCheck = NoBingeInstallCheck,
+        bingeInstallCheck: BingeInstallCheck = NoBingeInstallCheck,
         bingeConnection: BingeConnectionStore = NoBingeConnectionStore,
         forwarding: NotificationForwarding,
         featureFlags: FeatureFlags = FixedFeatureFlags(Flags.AllOn),
     ) : ViewModel() {
-        /** Re-read on every arrival, so Binge installed while this screen was away shows on return. */
-        private val bingeInstalled = MutableStateFlow(bingeInstallCheck.isInstalled())
+        private val appSource =
+            AppSettingsSource(
+                feedbackPrefs,
+                telemetryPrefs,
+                bugReportLinks,
+                bingeInstallCheck,
+                bingeConnection,
+                featureFlags,
+                analytics,
+                viewModelScope,
+                dispatcher,
+            )
 
         private val fetchTrigger = MutableStateFlow(0)
 
@@ -218,21 +226,7 @@ class SettingsViewModel
                 }
             }
 
-        private val app: Flow<AppSettings> =
-            combine(
-                feedbackPrefs.shakeToReport,
-                telemetryPrefs.analyticsConsent,
-                telemetryPrefs.crashReportingEnabled,
-                combine(bingeInstalled, bingeConnection.hasConnected, featureFlags.flags, ::bingeStatusOf),
-            ) { shake, consent, crashes, binge ->
-                AppSettings(
-                    bugReportUrl = bugReportLinks.url(),
-                    shakeToReport = shake,
-                    shareUsageData = consent == AnalyticsConsent.GRANTED,
-                    sendCrashReports = crashes,
-                    binge = binge,
-                )
-            }
+        private val app: Flow<AppSettings> = appSource.settings
 
         /** False until [SETTLE_MILLIS] have passed: the admin groups get that long to answer before the screen paints without them. */
         private val settled: Flow<Boolean> =
@@ -267,7 +261,7 @@ class SettingsViewModel
             ticker?.cancel()
             ticker = null
             if (visible) {
-                bingeInstalled.value = bingeInstallCheck.isInstalled()
+                appSource.recheckBinge()
                 fetchTrigger.value++
                 blockedTrigger.value++
                 // The jobs' and the poll's "next run in 20 minutes" count down while the screen shows them, and no longer.
@@ -291,18 +285,11 @@ class SettingsViewModel
             viewModelScope.launch(dispatcher) { prefs.setEnabled(signal, value) }
         }
 
-        fun setShakeToReport(enabled: Boolean) {
-            analytics.event(AnalyticsEvents.SHAKE_TO_REPORT_CHANGED, mapOf(AnalyticsEvents.PARAM_ENABLED to enabled))
-            viewModelScope.launch(dispatcher) { feedbackPrefs.setShakeToReport(enabled) }
-        }
+        fun setShakeToReport(enabled: Boolean) = appSource.setShakeToReport(enabled)
 
-        fun setShareUsageData(enabled: Boolean) {
-            viewModelScope.launch(dispatcher) { telemetryPrefs.setAnalyticsGranted(enabled) }
-        }
+        fun setShareUsageData(enabled: Boolean) = appSource.setShareUsageData(enabled)
 
-        fun setSendCrashReports(enabled: Boolean) {
-            viewModelScope.launch(dispatcher) { telemetryPrefs.setCrashReportingEnabled(enabled) }
-        }
+        fun setSendCrashReports(enabled: Boolean) = appSource.setSendCrashReports(enabled)
 
         fun disconnect() {
             analytics.event(AnalyticsEvents.SERVER_DISCONNECTED)

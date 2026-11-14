@@ -18,6 +18,9 @@ import com.cooper.binge.companion.seerr.ui.hub.HubViewModel
 import com.cooper.binge.companion.seerr.ui.settings.SettingsActions
 import com.cooper.binge.companion.seerr.ui.settings.SettingsScreen
 import com.cooper.binge.companion.seerr.ui.settings.SettingsViewModel
+import com.cooper.binge.companion.seerr.ui.settings.ThisAppActions
+import com.cooper.binge.companion.seerr.ui.settings.ThisAppScreen
+import com.cooper.binge.companion.seerr.ui.settings.ThisAppViewModel
 
 @Composable
 internal fun HubEntry(
@@ -63,11 +66,8 @@ internal fun SettingsEntry(
     open: (NavKey) -> Unit = backStack::add,
     onBack: () -> Unit = { backStack.pop() },
     viewModel: SettingsViewModel = hiltViewModel(),
-    tipViewModel: TipViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    val tip by tipViewModel.uiState.collectAsStateWithLifecycle()
-    val activity = LocalActivity.current
     // Refetched on every arrival, so returning from Edit connection shows the new server.
     DisposableEffect(viewModel) {
         viewModel.setScreenVisible(true)
@@ -80,10 +80,6 @@ internal fun SettingsEntry(
             onOpenPage = { page -> open(ServerSettingsPageRoute(page)) },
             onToggleSignal = viewModel::setSignal,
             onNotificationAccessChanged = viewModel::recheckNotificationAccess,
-            onToggleShakeToReport = viewModel::setShakeToReport,
-            onToggleShareUsageData = viewModel::setShareUsageData,
-            onToggleSendCrashReports = viewModel::setSendCrashReports,
-            onOpenLicences = { open(LicencesRoute) },
             // The home swaps to setup on the credentials clearing; leaving Settings is what lets it show. Only Settings
             // itself is taken off: a second tap while it leaves finds something else on top and takes nothing.
             onDisconnect = {
@@ -92,6 +88,37 @@ internal fun SettingsEntry(
             },
         )
     SettingsScreen(
+        state = state,
+        showBack = showBack,
+        actions = actions,
+    )
+}
+
+@Composable
+internal fun ThisAppEntry(
+    showBack: Boolean,
+    open: (NavKey) -> Unit,
+    onBack: () -> Unit,
+    viewModel: ThisAppViewModel = hiltViewModel(),
+    tipViewModel: TipViewModel = hiltViewModel(),
+) {
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val tip by tipViewModel.uiState.collectAsStateWithLifecycle()
+    val activity = LocalActivity.current
+    // Re-read on every arrival, so Binge installed while this page was away shows on return.
+    DisposableEffect(viewModel) {
+        viewModel.setScreenVisible(true)
+        onDispose { viewModel.setScreenVisible(false) }
+    }
+    val actions =
+        ThisAppActions(
+            onBack = onBack,
+            onToggleShakeToReport = viewModel::setShakeToReport,
+            onToggleShareUsageData = viewModel::setShareUsageData,
+            onToggleSendCrashReports = viewModel::setSendCrashReports,
+            onOpenLicences = { open(LicencesRoute) },
+        )
+    ThisAppScreen(
         state = state,
         showBack = showBack,
         actions = actions,

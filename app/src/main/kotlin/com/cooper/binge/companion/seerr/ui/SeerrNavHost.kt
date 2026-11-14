@@ -132,6 +132,9 @@ private fun EntryProviderScope<NavKey>.sectionEntries(
     entry<SettingsRoute>(
         metadata = section,
     ) { DetailPaneContent { SectionContent(HubSection.Settings, backStack, panes.showBack(), open) } }
+    entry<ThisAppRoute>(
+        metadata = section,
+    ) { DetailPaneContent { SectionContent(HubSection.ThisApp, backStack, panes.showBack(), open) } }
 }
 
 /**
@@ -178,6 +181,7 @@ private fun SectionContent(
         HubSection.Users ->
             UsersEntry(onBack = onBack, showBack = showBack, onOpen = { id -> open(UserDetailRoute(id)) })
         HubSection.Settings -> SettingsEntry(backStack, showBack = showBack, open = open, onBack = onBack)
+        HubSection.ThisApp -> ThisAppEntry(showBack = showBack, open = open, onBack = onBack)
     }
 }
 

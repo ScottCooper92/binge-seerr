@@ -140,6 +140,7 @@ internal fun HubSection.route(): SeerrRoute =
         HubSection.Users -> UsersRoute
         HubSection.Blocklist -> BlocklistRoute
         HubSection.Settings -> SettingsRoute
+        HubSection.ThisApp -> ThisAppRoute
     }
 
 /** The hub section this route is, or null for a route that is not one of them. */
@@ -150,6 +151,7 @@ internal fun NavKey.hubSection(): HubSection? =
         UsersRoute -> HubSection.Users
         BlocklistRoute -> HubSection.Blocklist
         SettingsRoute -> HubSection.Settings
+        ThisAppRoute -> HubSection.ThisApp
         else -> null
     }
 
