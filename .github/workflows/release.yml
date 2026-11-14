@@ -145,3 +145,6 @@ jobs:
           whatsNewDirectory: build/play-whatsnew
           tracks: beta
           status: draft
+          # Play will not send this app's changes for review through the API (v0.3.0's upload failed on it), so the
+          # edit is committed unsent and the release is sent for review from the Play Console.
+          changesNotSentForReview: true
