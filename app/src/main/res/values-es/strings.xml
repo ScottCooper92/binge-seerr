@@ -1089,7 +1089,7 @@
     <string name="consent_point_never_title">Privado por diseño</string>
     <string name="consent_point_never_detail">Pantallas que abres, acciones que haces y si funcionaron. Nunca la dirección de tu servidor, tus peticiones, sus títulos ni el nombre de nadie.</string>
     <string name="consent_point_change_title">Se desactiva con un toque</string>
-    <string name="consent_point_change_detail">Cambia de opinión cuando quieras en Ajustes, en Esta aplicación.</string>
+    <string name="consent_point_change_detail">Cambia de opinión cuando quieras en Esta aplicación.</string>
     <string name="consent_accept">Compartir datos de uso</string>
     <string name="consent_decline">Ahora no</string>
     <string name="tip_row">Invítame a un café</string>
@@ -1106,6 +1106,7 @@
     <string name="settings_send_crash_reports">Enviar informes de fallos</string>
     <string name="consent_kicker">Privacidad</string>
     <string name="tv_consent_point_change_title">Se desactiva con una pulsación</string>
+    <string name="tv_consent_point_change_detail">Cambia de opinión cuando quieras en Ajustes, en Esta aplicación.</string>
     <string name="tv_consent_reassurance">No se recoge nada a menos que elijas Compartir datos de uso.</string>
     <string name="tv_detail_approve">Aprobar</string>
     <string name="tv_detail_edit">Editar</string>
