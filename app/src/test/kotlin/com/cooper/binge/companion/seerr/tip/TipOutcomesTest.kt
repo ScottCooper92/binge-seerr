@@ -41,16 +41,18 @@ class TipOutcomesTest {
     @Test
     fun `one missing or blank step makes the whole set unavailable`() {
         val formatted = TIP_STEPS.associate { tipProductId(it) to "£$it.00" }
-        assertNull(pricesOf(formatted - tipProductId(7)))
-        assertNull(pricesOf(formatted + (tipProductId(7) to " ")))
-        assertNull(pricesOf(formatted + (tipProductId(7) to null)))
+        assertNull(pricesOf(formatted - tipProductId(10)))
+        assertNull(pricesOf(formatted + (tipProductId(10) to " ")))
+        assertNull(pricesOf(formatted + (tipProductId(10) to null)))
         assertNull(pricesOf(emptyMap()))
     }
 
     @Test
     fun `a product id maps back to its step, and a stranger maps to none`() {
-        assertEquals(12, stepOf(tipProductId(12)))
-        assertNull(stepOf("tip_21"))
+        assertEquals(10, stepOf(tipProductId(10)))
+        assertEquals("donation_10", tipProductId(10))
+        assertNull(stepOf("donation_7"))
+        assertNull(stepOf("tip_10"))
         assertNull(stepOf("remove_ads"))
     }
 }
