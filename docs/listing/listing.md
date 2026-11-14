@@ -50,7 +50,7 @@ label (`app_label`). The name is a maintainer's decision; see the README.
 > Quick Connect where the server offers it). The key or session is encrypted with an Android
 > Keystore key. The app talks to the server you entered and, if you choose to sign in with Plex, to
 > plex.tv. Usage data goes to PostHog only if you agree, and crash reports go to Firebase
-> Crashlytics unless you turn them off in Settings. Google Play's Block Store can carry your
+> Crashlytics unless you turn them off in This app (Settings on Android TV). Google Play's Block Store can carry your
 > connection to a new device. No adverts, no accounts of its own.
 >
 > Open source, under the GPL-3.0-or-later licence: github.com/ScottCooper92/binge-seerr.

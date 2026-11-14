@@ -65,7 +65,7 @@ two ways described above, and the phone-to-TV hand-off below, which stays on you
   device. Binge cannot read the server address or the secret.
 
 - **To PostHog**, only if you agree to share usage data when the app first asks, or later in
-  Settings: which of the app's screens you open, and which action you take (approving a request,
+  This app (Settings on Android TV): which of the app's screens you open, and which action you take (approving a request,
   resolving an issue, saving a DVR instance, and so on). Both are the app's own fixed names
   ("requests", "request_moderated"), with at most a fixed category as a detail (which kind of
   action, which sign-in method, on/off) — never an id, a title, a message, your server's address or
@@ -75,7 +75,7 @@ two ways described above, and the phone-to-TV hand-off below, which stays on you
   is opened, sent to the background, installed or updated, with the app's version. Every event
   carries what the library reads from the device: its make and model, the Android version, the
   screen size, the language, the time zone and the type of network (Wi-Fi or mobile, and the mobile
-  carrier's name). Nothing is sent until you agree, and turning it off in Settings stops it. The
+  carrier's name). Nothing is sent until you agree, and turning it off in This app (Settings on Android TV) stops it. The
   library does not contact PostHog before then either. PostHog records it against a random
   identifier for this install, not against you, and derives a rough location from the IP address.
 - **To Google (Firebase Crashlytics)**, when the app crashes, or when it records a failure it
@@ -86,7 +86,7 @@ two ways described above, and the phone-to-TV hand-off below, which stays on you
   DVR instance or override rule. The app attaches no title, name, message or server address. A crash
   report also carries the crash's own stack trace and exception message, which the app does not
   write and cannot promise are free of an address. This is
-  on unless you turn it off in Settings. No user identifier is set, and the app does not forward its
+  on unless you turn it off in This app (Settings on Android TV). No user identifier is set, and the app does not forward its
   logs.
 - **To Google (Firebase Remote Config)**, each time the app starts or comes to the foreground, and
   no more than about once an hour: a Firebase installation id that identifies this install, the

@@ -285,8 +285,6 @@ class SettingsViewModel
             viewModelScope.launch(dispatcher) { prefs.setEnabled(signal, value) }
         }
 
-        fun setShakeToReport(enabled: Boolean) = appSource.setShakeToReport(enabled)
-
         fun setShareUsageData(enabled: Boolean) = appSource.setShareUsageData(enabled)
 
         fun setSendCrashReports(enabled: Boolean) = appSource.setSendCrashReports(enabled)

@@ -258,7 +258,7 @@ private fun EntryProviderScope<NavKey>.detailEntries(
 
 /**
  * The server's own settings pages and the editors they open. They stack in the detail pane too, and
- * every one of them is reached by way of [SettingsRoute] first, so pane depth here is always > 1 and
+ * every one of them is reached by way of [SettingsRoute] first (or [ThisAppRoute], for licences), so pane depth here is always > 1 and
  * none of them take [showBack] — unlike [detailEntries], where two routes are reachable straight off
  * the hub. Wire a future route in here the same way [detailEntries] wires those two, if it changes that.
  */
