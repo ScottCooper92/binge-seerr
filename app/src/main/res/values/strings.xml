@@ -1083,7 +1083,7 @@
     <!-- The TV settings Requests row: each count with its own words, so a translator can reorder or pluralise them (#1042). -->
     <!-- The same, for a count the hub could not read; %1$s is the placeholder dash. -->
     <string name="settings_binge">Binge</string>
-    <string name="settings_binge_preferences">Binge preferences</string>
+    <string name="settings_binge_preferences">Preferences</string>
     <string name="tv_settings_binge_install">Open the Play Store</string>
     <string name="tv_settings_binge_connect">Connect Binge</string>
     <string name="tv_see_all">See all</string>
