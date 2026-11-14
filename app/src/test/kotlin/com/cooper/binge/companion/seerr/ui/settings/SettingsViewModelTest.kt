@@ -8,11 +8,6 @@ import com.cooper.binge.companion.seerr.auth.NoBingeConnectionStore
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.feedback.BugReportLinks
 import com.cooper.binge.companion.seerr.feedback.FeedbackPrefs
-import com.cooper.binge.companion.seerr.notifications.FakeNotifier
-import com.cooper.binge.companion.seerr.notifications.FakeScheduler
-import com.cooper.binge.companion.seerr.notifications.NotificationForwarding
-import com.cooper.binge.companion.seerr.notifications.NotificationPrefs
-import com.cooper.binge.companion.seerr.notifications.NotificationSignal
 import com.cooper.binge.companion.seerr.seerr.SeerrApiFactory
 import com.cooper.binge.companion.seerr.seerr.SeerrAuth
 import com.cooper.binge.companion.seerr.seerr.SeerrDefaultAccess
@@ -69,13 +64,9 @@ class SettingsViewModelTest {
     private val responses = mutableMapOf<String, () -> FakeResponse>()
     private val viewModels = ViewModelStore()
     private lateinit var connection: SeerrConnection
-    private lateinit var prefs: NotificationPrefs
-    private lateinit var forwarding: NotificationForwarding
     private lateinit var feedbackPrefs: FeedbackPrefs
     private lateinit var telemetryPrefs: TelemetryPrefs
-    private val scheduler = FakeScheduler()
     private val analytics = RecordingAnalytics()
-    private val notifier = FakeNotifier()
     private val cache = SettingsReadCache()
 
     @Before
@@ -156,9 +147,6 @@ class SettingsViewModelTest {
         } else {
             connection.connect(seerr.url("/"), SeerrAuth.ApiKey("k3y")).getOrThrow()
         }
-        val notificationsStore = PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("n.preferences_pb") }
-        prefs = NotificationPrefs(notificationsStore)
-        forwarding = NotificationForwarding(notificationsStore)
         telemetryPrefs = TelemetryPrefs(PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("t.preferences_pb") })
         feedbackPrefs = FeedbackPrefs(PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("f.preferences_pb") })
         val vm =
@@ -166,9 +154,6 @@ class SettingsViewModelTest {
                 connection,
                 SettingsLoader(connection),
                 cache,
-                prefs,
-                scheduler,
-                notifier,
                 feedbackPrefs,
                 telemetryPrefs,
                 BugReportLinks(),
@@ -177,7 +162,6 @@ class SettingsViewModelTest {
                 minuteTicker = ticker,
                 bingeInstallCheck = bingeInstallCheck,
                 bingeConnection = bingeConnection,
-                forwarding = forwarding,
             )
         viewModels.put("settings", vm)
         backgroundScope.launch { vm.uiState.collect {} }
@@ -320,14 +304,10 @@ class SettingsViewModelTest {
                     connection,
                     SettingsLoader(connection),
                     cache,
-                    prefs,
-                    scheduler,
-                    notifier,
                     feedbackPrefs,
                     telemetryPrefs,
                     BugReportLinks(),
                     mainDispatcherRule.dispatcher,
-                    forwarding = forwarding,
                 )
 
             val first = again.uiState.first { it is SettingsUiState.Ready } as SettingsUiState.Ready
@@ -346,14 +326,10 @@ class SettingsViewModelTest {
                     connection,
                     SettingsLoader(connection),
                     cache,
-                    prefs,
-                    scheduler,
-                    notifier,
                     feedbackPrefs,
                     telemetryPrefs,
                     BugReportLinks(),
                     mainDispatcherRule.dispatcher,
-                    forwarding = forwarding,
                 )
 
             val first = again.uiState.first { it is SettingsUiState.Ready } as SettingsUiState.Ready
@@ -477,60 +453,5 @@ class SettingsViewModelTest {
             vm.setSendCrashReports(false)
             vm.awaitReady { it.app?.sendCrashReports == false }
             assertFalse(telemetryPrefs.crashReportingEnabled.first())
-        }
-
-    @Test
-    fun `the poll's toggles are offered by permission, written to the prefs, and read with the blocked state and the schedule`() =
-        runTest {
-            server(REQUEST)
-            notifier.canPost = false
-            scheduler.nextRun.value = 4_000L
-            val vm = viewModel(session = true)
-
-            val offered = checkNotNull(vm.awaitReady { it.notifications != null }.notifications)
-            assertEquals(
-                listOf(NotificationSignal.RequestAvailable, NotificationSignal.RequestApproved, NotificationSignal.RequestDeclined),
-                offered.offered,
-            )
-            assertTrue(offered.enabled.isEmpty())
-            assertTrue(offered.blocked)
-            assertEquals(4_000L, offered.nextRunMillis)
-
-            vm.setSignal(NotificationSignal.RequestApproved, true)
-            val on = checkNotNull(vm.awaitReady { it.notifications?.enabled?.isNotEmpty() == true }.notifications)
-            assertEquals(setOf(NotificationSignal.RequestApproved), on.enabled)
-            assertTrue(prefs.isEnabled(NotificationSignal.RequestApproved))
-            assertEquals(
-                listOf("notification_signal_changed" to mapOf("signal" to "RequestApproved", "enabled" to true)),
-                analytics.events,
-            )
-
-            notifier.canPost = true
-            vm.recheckNotificationAccess()
-            assertTrue(vm.awaitReady { it.notifications?.blocked == false }.notifications != null)
-        }
-
-    @Test
-    fun `a signal left enabled in prefs from before a permission downgrade is not reported as enabled`() =
-        runTest {
-            server(REQUEST)
-            val vm = viewModel(session = true)
-            vm.awaitReady { it.notifications != null }
-            prefs.setEnabled(NotificationSignal.PendingRequests, true)
-
-            val ready = vm.awaitReady { it.notifications != null }
-            val notifications = checkNotNull(ready.notifications)
-
-            assertTrue(NotificationSignal.PendingRequests !in notifications.offered)
-            assertTrue(notifications.enabled.isEmpty())
-            assertTrue(notifications.enabled.none { it == NotificationSignal.PendingRequests })
-        }
-
-    @Test
-    fun `a moderator is offered the feeds too`() =
-        runTest {
-            server(ADMIN)
-            val vm = viewModel()
-            assertEquals(NotificationSignal.entries, checkNotNull(vm.awaitReady { it.notifications != null }.notifications).offered)
         }
 }

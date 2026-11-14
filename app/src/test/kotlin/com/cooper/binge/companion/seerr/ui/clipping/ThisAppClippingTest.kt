@@ -1,7 +1,9 @@
 package com.cooper.binge.companion.seerr.ui.clipping
 
+import com.cooper.binge.companion.seerr.notifications.NotificationSignal
 import com.cooper.binge.companion.seerr.ui.hub.BingeStatus
 import com.cooper.binge.companion.seerr.ui.settings.AppSettings
+import com.cooper.binge.companion.seerr.ui.settings.NotificationSettings
 import com.cooper.binge.companion.seerr.ui.settings.ThisAppActions
 import com.cooper.binge.companion.seerr.ui.settings.ThisAppScreen
 import com.cooper.binge.companion.seerr.ui.settings.ThisAppUiState
@@ -16,8 +18,8 @@ import org.robolectric.annotation.GraphicsMode
 private const val LONG_URL = "https://a-rather-long-hostname.living-room.home.example.org:5055/requests/with/a/path"
 
 /**
- * The This app page at its worst: Binge connected, every toggle on and a long bug-report address, with the About group
- * below, at font scales 1.3 and 2.0, through the design system's `assertNoTextClipped`.
+ * The This app page at its worst: Binge connected, every toggle on, every notification signal on and blocked, and a long
+ * bug-report address, with the About group below, at font scales 1.3 and 2.0, through the design system's `assertNoTextClipped`.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(qualifiers = "w412dp-h12000dp")
@@ -41,6 +43,15 @@ class ThisAppClippingTest {
                 sendCrashReports = true,
                 binge = BingeStatus.Connected,
             ),
+            notifications =
+                NotificationSettings(
+                    offered = NotificationSignal.entries,
+                    enabled = NotificationSignal.entries.toSet(),
+                    blocked = true,
+                    lastRunMillis = null,
+                    nextRunMillis = null,
+                    forwardedToBinge = true,
+                ),
         )
 
     private fun noActions() =

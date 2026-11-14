@@ -134,7 +134,7 @@ app:hub_section_requests_desc  6064d2ed7fa6
 app:hub_section_settings  74a883a037bc
 app:hub_section_settings_desc  db15887ef2b0
 app:hub_section_this_app  0982cb1775e6
-app:hub_section_this_app_desc  d1f1831c8d0d
+app:hub_section_this_app_desc  9a3ec87a79f6
 app:hub_section_users  6b0cc904d081
 app:hub_section_users_desc  4ddc631cf60c
 app:hub_stat_pending  331551b0de41

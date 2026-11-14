@@ -12,11 +12,6 @@ import com.cooper.binge.companion.seerr.feedback.FeedbackPrefs
 import com.cooper.binge.companion.seerr.flags.FeatureFlags
 import com.cooper.binge.companion.seerr.flags.FixedFeatureFlags
 import com.cooper.binge.companion.seerr.flags.Flags
-import com.cooper.binge.companion.seerr.notifications.NotificationForwarding
-import com.cooper.binge.companion.seerr.notifications.NotificationPrefs
-import com.cooper.binge.companion.seerr.notifications.NotificationScheduler
-import com.cooper.binge.companion.seerr.notifications.NotificationSignal
-import com.cooper.binge.companion.seerr.notifications.SeerrNotifier
 import com.cooper.binge.companion.seerr.seerr.SeerrAuth
 import com.cooper.binge.companion.seerr.telemetry.Analytics
 import com.cooper.binge.companion.seerr.telemetry.AnalyticsEvents
@@ -41,7 +36,6 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.onStart
@@ -83,8 +77,6 @@ class SettingsReadCache
 
         @Volatile var config: Read<ServerConfig>? = null
 
-        @Volatile var offered: Read<List<NotificationSignal>>? = null
-
         @Synchronized
         fun adopt(identity: Pair<String, SeerrAuth>?) {
             if (identity == this.identity) return
@@ -92,13 +84,12 @@ class SettingsReadCache
             summary = null
             server = null
             config = null
-            offered = null
         }
     }
 
 /**
- * Settings: the connection, the server, the poll's toggles, the admin's read-only view of the
- * server's configuration, and this app's own bug reporting. Every fetch re-runs on the screen becoming visible, so returning from
+ * Settings: the connection, the server and the admin's read-only view of the server's configuration. It also carries
+ * this app's own settings, which the TV sheet reads. Every fetch re-runs on the screen becoming visible, so returning from
  * Edit connection shows the new server; each flow's null seed holds the previous value while a
  * refetch is in flight rather than blanking its rows.
  */
@@ -110,9 +101,6 @@ class SettingsViewModel
         private val connection: SeerrConnection,
         private val loader: SettingsLoader,
         private val cache: SettingsReadCache,
-        private val prefs: NotificationPrefs,
-        scheduler: NotificationScheduler,
-        private val notifier: SeerrNotifier,
         feedbackPrefs: FeedbackPrefs,
         telemetryPrefs: TelemetryPrefs,
         bugReportLinks: BugReportLinks,
@@ -122,7 +110,6 @@ class SettingsViewModel
         private val minuteTicker: Ticker = Ticker(),
         bingeInstallCheck: BingeInstallCheck = NoBingeInstallCheck,
         bingeConnection: BingeConnectionStore = NoBingeConnectionStore,
-        forwarding: NotificationForwarding,
         featureFlags: FeatureFlags = FixedFeatureFlags(Flags.AllOn),
     ) : ViewModel() {
         private val appSource =
@@ -145,9 +132,6 @@ class SettingsViewModel
         /** What [SettingsUiState.Ready.now] reads: moved on each minute by [ticker], which runs while the screen is showing. */
         private val now = MutableStateFlow(clock())
         private var ticker: Job? = null
-
-        /** Re-read on every arrival and after the system's notification page: what it allows is not observable. */
-        private val blockedTrigger = MutableStateFlow(0)
 
         /**
          * The trigger, after the signed-in user has been re-read. Refreshed here once rather than in each
@@ -185,47 +169,6 @@ class SettingsViewModel
                 .onEach { cache.config = it }
                 .onStart { emit(seeded().config ?: Read.Pending) }
 
-        private val offered: Flow<Read<List<NotificationSignal>>> =
-            viewerRefreshed
-                .flatMapLatest { flow<Read<List<NotificationSignal>>> { emit(Read.Done(loader.notificationSignals())) } }
-                .onEach { cache.offered = it }
-                .onStart { emit(seeded().offered ?: Read.Pending) }
-
-        private val enabled: Flow<Set<NotificationSignal>> =
-            combine(
-                NotificationSignal.entries.map { signal ->
-                    prefs.enabled(signal).map { on -> signal.takeIf { on } }
-                },
-            ) { it.filterNotNull().toSet() }
-
-        private val notifications: Flow<Read<NotificationSettings>> =
-            combine(
-                offered,
-                combine(enabled, forwarding.enabled, now) { enabled, switchedOn, _ -> enabled to switchedOn },
-                blockedTrigger,
-                prefs.lastRunMillis,
-                scheduler.nextRunMillis(),
-            ) { offered, (enabled, switchedOn), _, last, next ->
-                // Routing asks isActive(), which also needs a recent poll; the row follows the same rule.
-                val forwarded = switchedOn && forwarding.isActive()
-                when (offered) {
-                    Read.Pending -> Read.Pending
-                    is Read.Done ->
-                        Read.Done(
-                            offered.value?.let {
-                                NotificationSettings(
-                                    offered = it,
-                                    enabled = enabled.filterTo(mutableSetOf()) { signal -> signal in it },
-                                    blocked = !notifier.canPost(),
-                                    lastRunMillis = last,
-                                    nextRunMillis = next,
-                                    forwardedToBinge = forwarded,
-                                )
-                            },
-                        )
-                }
-            }
-
         private val app: Flow<AppSettings> = appSource.settings
 
         /** False until [SETTLE_MILLIS] have passed: the admin groups get that long to answer before the screen paints without them. */
@@ -237,7 +180,7 @@ class SettingsViewModel
             }
 
         val uiState: StateFlow<SettingsUiState> =
-            combine(summary, server, config, notifications, app) { summary, server, config, notifications, app ->
+            combine(summary, server, config, app) { summary, server, config, app ->
                 if (summary == null || server == null) {
                     SettingsUiState.Loading
                 } else {
@@ -245,9 +188,8 @@ class SettingsViewModel
                         summary,
                         server,
                         config.valueOrNull,
-                        notifications.valueOrNull,
                         app,
-                        pending = config is Read.Pending || notifications is Read.Pending,
+                        pending = config is Read.Pending,
                     )
                 }
             }.combine(settled) { state, settled ->
@@ -263,26 +205,9 @@ class SettingsViewModel
             if (visible) {
                 appSource.recheckBinge()
                 fetchTrigger.value++
-                blockedTrigger.value++
-                // The jobs' and the poll's "next run in 20 minutes" count down while the screen shows them, and no longer.
+                // The jobs' "next run in 20 minutes" counts down while the screen shows them, and no longer.
                 ticker = viewModelScope.launch(dispatcher) { minuteClock(clock, minuteTicker).collect { now.value = it } }
             }
-        }
-
-        /** After the system's notification page or the permission prompt: what they decided is only readable, not observable. */
-        fun recheckNotificationAccess() {
-            blockedTrigger.value++
-        }
-
-        fun setSignal(
-            signal: NotificationSignal,
-            value: Boolean,
-        ) {
-            analytics.event(
-                AnalyticsEvents.NOTIFICATION_SIGNAL_CHANGED,
-                mapOf(AnalyticsEvents.PARAM_SIGNAL to signal.name, AnalyticsEvents.PARAM_ENABLED to value),
-            )
-            viewModelScope.launch(dispatcher) { prefs.setEnabled(signal, value) }
         }
 
         fun setShareUsageData(enabled: Boolean) = appSource.setShareUsageData(enabled)

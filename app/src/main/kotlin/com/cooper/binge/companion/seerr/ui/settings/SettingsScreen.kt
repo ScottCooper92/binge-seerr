@@ -32,7 +32,6 @@ import com.binge.designsystem.template.screenOuterPadding
 import com.binge.designsystem.theme.BingeShapes
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.demo.isDemoOrigin
-import com.cooper.binge.companion.seerr.notifications.NotificationSignal
 import com.cooper.binge.companion.seerr.ui.DisconnectButton
 import com.cooper.binge.companion.seerr.ui.handoff.rememberScanTvCode
 import com.cooper.binge.companion.seerr.ui.settings.server.ServerSettingsPage
@@ -48,8 +47,6 @@ class SettingsActions(
     val onBack: () -> Unit,
     val onEditConnection: () -> Unit,
     val onOpenPage: (ServerSettingsPage) -> Unit,
-    val onToggleSignal: (NotificationSignal, Boolean) -> Unit,
-    val onNotificationAccessChanged: () -> Unit,
     val onDisconnect: () -> Unit,
 )
 
@@ -117,7 +114,6 @@ private fun SettingsContent(
             // About is a server section above when this viewer can read the server's settings, so it isn't said twice.
             connectionRows(state.connection, state.server, actions.onEditConnection, actions.onOpenPage, showAbout = config == null),
         )
-        state.notifications?.let { Group(stringResource(R.string.settings_group_notify_me), notificationRows(it, actions, state.now)) }
         Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
         DisconnectButton(
             actions.onDisconnect,

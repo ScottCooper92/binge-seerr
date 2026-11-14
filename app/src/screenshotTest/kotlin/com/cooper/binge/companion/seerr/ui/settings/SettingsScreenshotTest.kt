@@ -9,7 +9,6 @@ import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.demo.DEMO_ORIGIN
-import com.cooper.binge.companion.seerr.notifications.NotificationSignal
 import com.cooper.binge.companion.seerr.preview.SeerrComponentPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrFontScale13ComponentPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrFontScalePreviews
@@ -170,19 +169,6 @@ class SettingsGroupsScreenshotTest {
     @SeerrSpanishPreviews
     @Composable
     fun jobStatesSpanish() = JobStatesGroup()
-
-    /** The system would show nothing, so the row that says so sits between the toggles and the schedule. */
-    @PreviewTest
-    @SeerrComponentPreviews
-    @Composable
-    fun notificationsBlocked() =
-        Group(R.string.settings_group_notify_me, notificationRows(notifications().copy(blocked = true), noActions(), now = 0L))
-
-    @PreviewTest
-    @SeerrComponentPreviews
-    @Composable
-    fun notificationsOff() =
-        Group(R.string.settings_group_notify_me, notificationRows(notifications().copy(enabled = emptySet()), noActions(), now = 0L))
 }
 
 @Composable
@@ -268,15 +254,6 @@ private fun systemInfo() =
             ),
     )
 
-private fun notifications() =
-    NotificationSettings(
-        offered = NotificationSignal.entries,
-        enabled = setOf(NotificationSignal.PendingRequests, NotificationSignal.RequestAvailable),
-        blocked = false,
-        lastRunMillis = null,
-        nextRunMillis = null,
-    )
-
 private fun adminState() =
     SettingsUiState.Ready(
         connection = connection(SignInKind.ApiKey),
@@ -289,7 +266,6 @@ private fun adminState() =
                 system = systemInfo(),
                 services = services().take(2),
             ),
-        notifications = notifications(),
         app = AppSettings(bugReportUrl = "https://github.com/ScottCooper92/binge-seerr/issues/new", shakeToReport = true),
     )
 
@@ -300,8 +276,6 @@ private fun noActions() =
         onBack = {},
         onEditConnection = {},
         onOpenPage = {},
-        onToggleSignal = { _, _ -> },
-        onNotificationAccessChanged = {},
         onDisconnect = {},
     )
 
