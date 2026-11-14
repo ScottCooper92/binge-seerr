@@ -250,14 +250,14 @@ class HubViewModelTest {
         }
 
     @Test
-    fun `a plain requester sees only the requests row, and no count the server would refuse`() =
+    fun `a plain requester sees only the requests row and This app, and no count the server would refuse`() =
         runTest {
             healthyServer(permissions = REQUEST)
             val vm = viewModel()
 
             val ready = vm.awaitReady()
 
-            assertEquals(listOf(HubSection.Requests), ready.overview.visibleSections())
+            assertEquals(listOf(HubSection.Requests, HubSection.ThisApp), ready.overview.visibleSections())
             assertNull(ready.overview.userCount)
             assertNull(ready.overview.blocklistCount)
             assertNull(ready.overview.openIssueCount)
@@ -326,7 +326,7 @@ class HubViewModelTest {
             val ready = vm.awaitReady()
 
             assertEquals(ConnectionHealth.CouldNotLoad, ready.health)
-            assertEquals(listOf(HubSection.Requests), ready.overview.visibleSections())
+            assertEquals(listOf(HubSection.Requests, HubSection.ThisApp), ready.overview.visibleSections())
         }
 
     @Test
@@ -548,7 +548,7 @@ class HubViewModelTest {
                 release.countDown()
             }
             val ready = returnToHub().awaitReady { it.overview.account?.name == "Other" }
-            assertEquals(listOf(HubSection.Requests), ready.overview.visibleSections())
+            assertEquals(listOf(HubSection.Requests, HubSection.ThisApp), ready.overview.visibleSections())
         }
 
     @Test

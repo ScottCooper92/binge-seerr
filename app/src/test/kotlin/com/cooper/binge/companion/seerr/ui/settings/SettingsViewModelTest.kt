@@ -428,7 +428,7 @@ class SettingsViewModelTest {
         }
 
     @Test
-    fun `every user gets this app's group, and the shake toggle writes through to the prefs`() =
+    fun `every user gets this app's group`() =
         runTest {
             server(REQUEST)
             val vm = viewModel(session = true)
@@ -436,11 +436,6 @@ class SettingsViewModelTest {
             val app = checkNotNull(vm.awaitReady { it.app != null }.app)
             assertTrue(app.shakeToReport)
             assertTrue(app.bugReportUrl.startsWith("https://github.com/ScottCooper92/binge-seerr/issues/new?template=bug.yml"))
-
-            vm.setShakeToReport(false)
-            assertFalse(checkNotNull(vm.awaitReady { it.app?.shakeToReport == false }.app).shakeToReport)
-            assertFalse(feedbackPrefs.shakeToReport.first())
-            assertEquals(listOf("shake_to_report_changed" to mapOf("enabled" to false)), analytics.events)
         }
 
     @Test

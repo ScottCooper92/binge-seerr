@@ -61,10 +61,13 @@ internal fun TvConsentScreen(
     )
 }
 
-/** The phone's three points, the last reworded because a remote is a press, not a tap. */
+/** The phone's three points, the last reworded because a remote is a press, not a tap, and
+ * because the TV keeps these switches in Settings. */
 @Composable
 private fun tvConsentPoints(): List<DecisionPoint> =
     ConsentPoints.mapIndexed { index, point ->
-        val title = if (index == ConsentPoints.lastIndex) R.string.tv_consent_point_change_title else point.titleRes
-        DecisionPoint(icon = point.icon, title = stringResource(title), detail = stringResource(point.detailRes))
+        val last = index == ConsentPoints.lastIndex
+        val title = if (last) R.string.tv_consent_point_change_title else point.titleRes
+        val detail = if (last) R.string.tv_consent_point_change_detail else point.detailRes
+        DecisionPoint(icon = point.icon, title = stringResource(title), detail = stringResource(detail))
     }

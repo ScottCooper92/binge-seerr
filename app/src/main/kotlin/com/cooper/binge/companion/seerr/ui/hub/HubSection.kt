@@ -5,6 +5,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.Inbox
 import androidx.compose.material.icons.filled.People
+import androidx.compose.material.icons.filled.PhoneAndroid
 import androidx.compose.material.icons.filled.ReportProblem
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.MaterialTheme
@@ -65,12 +66,18 @@ enum class HubSection(
         // The admin settings router needs ADMIN on every lineage; MANAGE_SETTINGS opens none of its routes (#1004).
         isVisible = { it.permissions.isAdmin },
     ),
+    ThisApp(
+        titleRes = R.string.hub_section_this_app,
+        descriptionRes = R.string.hub_section_this_app_desc,
+        icon = Icons.Filled.PhoneAndroid,
+        // About the app, not the server, so it is the one section every viewer has.
+    ),
 }
 
 /** The sections the overview admits, in order. */
 fun HubOverview.visibleSections(): List<HubSection> = HubSection.entries.filter { it.isVisible(this) }
 
-/** Each section reads as its own accent: amber, red, blue, purple, teal. */
+/** Each section reads as its own accent: amber, red, blue, grey, purple, green. */
 @Composable
 internal fun HubSection.iconTint(): Color =
     when (this) {
@@ -79,6 +86,7 @@ internal fun HubSection.iconTint(): Color =
         HubSection.Users -> BingeSentiment.Info.fill()
         HubSection.Blocklist -> BingeSentiment.Neutral.fill()
         HubSection.Settings -> MaterialTheme.colorScheme.tertiary
+        HubSection.ThisApp -> BingeSentiment.Positive.fill()
     }
 
 /** The badge's tint: Caution for the actionable backlogs, Neutral for plain totals. */

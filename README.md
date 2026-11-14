@@ -39,7 +39,7 @@ The store listing and the privacy policy are under [`docs/listing/`](docs/listin
 version: the one secret (your API key or session) is encrypted with an Android Keystore key and
 stored on the device, and Google Play's Block Store can carry it to a new device; the app talks to
 the server you entered and, if you choose to sign in with Plex, to plex.tv. Usage data (PostHog,
-only if you agree) and crash reports (Firebase Crashlytics, switchable in Settings) are the only
+only if you agree) and crash reports (Firebase Crashlytics, switchable in This app, or in Settings on TV) are the only
 other traffic.
 
 ### Where the secret lives

@@ -114,7 +114,11 @@ data class RequestDetailRoute(
 @Serializable
 data object SettingsRoute : SeerrRoute
 
-/** The open-source licences of the libraries the app ships, opened from Settings. */
+/** This app's own page: Binge, feedback, what it reports, and About. The one section every viewer has. */
+@Serializable
+data object ThisAppRoute : SeerrRoute
+
+/** The open-source licences of the libraries the app ships, opened from This app. */
 @Serializable
 data object LicencesRoute : SeerrRoute
 

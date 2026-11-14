@@ -4,6 +4,7 @@ import com.cooper.binge.companion.seerr.ui.HubRoute
 import com.cooper.binge.companion.seerr.ui.LicencesRoute
 import com.cooper.binge.companion.seerr.ui.RequestDetailRoute
 import com.cooper.binge.companion.seerr.ui.SettingsRoute
+import com.cooper.binge.companion.seerr.ui.ThisAppRoute
 import com.cooper.binge.companion.seerr.ui.tv.TvDestination
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -15,6 +16,7 @@ class ScreenNamesTest {
         assertEquals("hub", HubRoute.screenName())
         assertEquals("settings", SettingsRoute.screenName())
         assertEquals("licences", LicencesRoute.screenName())
+        assertEquals("this_app", ThisAppRoute.screenName())
         assertEquals("request_detail", RequestDetailRoute(requestId = 4812).screenName())
     }
 

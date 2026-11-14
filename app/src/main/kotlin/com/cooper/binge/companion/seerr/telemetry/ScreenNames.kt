@@ -18,6 +18,7 @@ import com.cooper.binge.companion.seerr.ui.RequestsRoute
 import com.cooper.binge.companion.seerr.ui.SeerrRoute
 import com.cooper.binge.companion.seerr.ui.ServerSettingsPageRoute
 import com.cooper.binge.companion.seerr.ui.SettingsRoute
+import com.cooper.binge.companion.seerr.ui.ThisAppRoute
 import com.cooper.binge.companion.seerr.ui.UserDetailRoute
 import com.cooper.binge.companion.seerr.ui.UserSettingsPageRoute
 import com.cooper.binge.companion.seerr.ui.UserSettingsRoute
@@ -54,6 +55,7 @@ fun SeerrRoute.screenName(): String =
         SettingsRoute -> "settings"
         EditConnectionRoute -> "edit_connection"
         LicencesRoute -> "licences"
+        ThisAppRoute -> "this_app"
         else -> debugScreenName(this)
     }
 
