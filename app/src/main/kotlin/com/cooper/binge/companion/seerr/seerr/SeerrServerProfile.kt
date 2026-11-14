@@ -146,6 +146,12 @@ data class SeerrServerProfile(
     /** A Telegram topic, per user and on the server's agent: Jellyseerr 2.2 added one, and Overseerr never had it. */
     val hasTelegramTopics: Boolean get() = jellyseerrLineage && atLeast(2, 2)
 
+    /**
+     * The webhook template goes up as typed from Seerr 3.3 (seerr-team/seerr#2641). Before that, and on Overseerr,
+     * the server base64-encodes the string it is sent, so the template must arrive JSON-encoded as one string.
+     */
+    val sendsWebhookPayloadRaw: Boolean get() = jellyseerrLineage && atLeast(3, 3)
+
     /** Pushover's sound list: Overseerr 1.34, and the Jellyseerr lineage from 1.8. */
     val hasPushoverSounds: Boolean get() = if (jellyseerrLineage) atLeast(1, 8) else atLeast(1, 34)
 

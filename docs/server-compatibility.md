@@ -79,6 +79,7 @@ endpoint, is in [`api-coverage.md`](api-coverage.md). The gates that change what
 | Combined RT and IMDb ratings | 1.34 | Jellyseerr 1.7 |
 | Pushover sounds, read by any signed-in user (the route sits ahead of the admin-only `/settings` router) | 1.34 | Jellyseerr 1.8 |
 | Telegram topic, `messageThreadId`, on a user and on the Telegram agent | never | Jellyseerr 2.2 |
+| Webhook template sent as typed, not JSON-encoded first (seerr-team/seerr#2641) | never | Seerr 3.3 |
 | Issues, comments | 1.28 | always |
 | Issue and request counts | 1.30 | always |
 
