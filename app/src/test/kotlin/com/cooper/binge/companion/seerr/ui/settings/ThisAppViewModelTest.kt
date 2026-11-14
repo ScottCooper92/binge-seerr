@@ -8,6 +8,8 @@ import com.cooper.binge.companion.seerr.auth.NoBingeConnectionStore
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.feedback.BugReportLinks
 import com.cooper.binge.companion.seerr.feedback.FeedbackPrefs
+import com.cooper.binge.companion.seerr.notifications.DEFAULT_POLL_INTERVAL_MINUTES
+import com.cooper.binge.companion.seerr.notifications.FakeBackgroundAccess
 import com.cooper.binge.companion.seerr.notifications.FakeNotifier
 import com.cooper.binge.companion.seerr.notifications.FakeScheduler
 import com.cooper.binge.companion.seerr.notifications.NotificationForwarding
@@ -61,6 +63,7 @@ class ThisAppViewModelTest {
     private val analytics = RecordingAnalytics()
     private val scheduler = FakeScheduler()
     private val notifier = FakeNotifier()
+    private val background = FakeBackgroundAccess()
     private lateinit var connection: SeerrConnection
     private lateinit var feedbackPrefs: FeedbackPrefs
     private lateinit var telemetryPrefs: TelemetryPrefs
@@ -136,6 +139,7 @@ class ThisAppViewModelTest {
                 scheduler,
                 notifier,
                 NotificationForwarding(notificationsStore),
+                background,
                 mainDispatcherRule.dispatcher,
                 analytics,
                 bingeInstallCheck = bingeInstallCheck,
@@ -236,6 +240,37 @@ class ThisAppViewModelTest {
             notifier.canPost = true
             vm.recheckNotificationAccess()
             assertNotNull(vm.awaitReady { it.notifications?.blocked == false }.notifications)
+        }
+
+    @Test
+    fun `the poll's interval starts at the default, is changed by the page, and reads back from the prefs`() =
+        runTest {
+            server(REQUEST)
+            val vm = viewModel()
+
+            assertEquals(
+                DEFAULT_POLL_INTERVAL_MINUTES,
+                checkNotNull(vm.awaitReady { it.notifications != null }.notifications).intervalMinutes,
+            )
+
+            vm.setPollInterval(60)
+            assertEquals(60, checkNotNull(vm.awaitReady { it.notifications?.intervalMinutes == 60 }.notifications).intervalMinutes)
+            assertEquals(60, prefs.pollIntervalMinutes.first())
+        }
+
+    @Test
+    fun `an app Android holds back is reported as restricted, and as unrestricted again once the user changes it`() =
+        runTest {
+            server(REQUEST)
+            background.unrestricted = false
+            val vm = viewModel()
+
+            assertFalse(checkNotNull(vm.awaitReady { it.notifications != null }.notifications).unrestricted)
+
+            // What the user decided in Android's settings is read when they come back to the page.
+            background.unrestricted = true
+            vm.recheckNotificationAccess()
+            assertTrue(checkNotNull(vm.awaitReady { it.notifications?.unrestricted == true }.notifications).unrestricted)
         }
 
     @Test

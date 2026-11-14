@@ -63,7 +63,24 @@ class ThisAppScreenshotTest {
     fun notificationsBlocked() =
         ItemGroup(
             title = stringResource(R.string.settings_group_notify_me),
-            rows = notificationRows(notifications().copy(blocked = true), { _, _ -> }, {}, now = 0L),
+            rows = notificationRows(notifications().copy(blocked = true), { _, _ -> }, {}, onOpenInterval = {}, now = 0L),
+        )
+
+    /** Android holds the poll back and the interval is long: the interval row, then the row that says why checks run late. */
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun notificationsRestricted() =
+        ItemGroup(
+            title = stringResource(R.string.settings_group_notify_me),
+            rows =
+                notificationRows(
+                    notifications().copy(unrestricted = false, intervalMinutes = 120),
+                    { _, _ -> },
+                    {},
+                    onOpenInterval = {},
+                    now = 0L,
+                ),
         )
 
     @PreviewTest
@@ -72,7 +89,7 @@ class ThisAppScreenshotTest {
     fun notificationsOff() =
         ItemGroup(
             title = stringResource(R.string.settings_group_notify_me),
-            rows = notificationRows(notifications().copy(enabled = emptySet()), { _, _ -> }, {}, now = 0L),
+            rows = notificationRows(notifications().copy(enabled = emptySet()), { _, _ -> }, {}, onOpenInterval = {}, now = 0L),
         )
 
     @PreviewTest

@@ -9,6 +9,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -26,12 +28,14 @@ import com.binge.designsystem.template.screenInnerPadding
 import com.binge.designsystem.template.screenOuterPadding
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.notifications.NotificationSignal
+import com.cooper.binge.companion.seerr.notifications.POLL_INTERVAL_CHOICES
 import com.cooper.binge.companion.seerr.tip.TipEvent
 import com.cooper.binge.companion.seerr.tip.TipUiState
 import com.cooper.binge.companion.seerr.ui.settings.server.TipSheet
 import com.cooper.binge.companion.seerr.ui.state.DialogMessage
 import com.cooper.binge.companion.seerr.ui.state.LoadingScreen
 import com.cooper.binge.companion.seerr.ui.state.MessageDialogHost
+import com.cooper.binge.companion.seerr.ui.state.SortSheet
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import com.binge.designsystem.R as DesR
@@ -44,6 +48,7 @@ class ThisAppActions(
     val onToggleSendCrashReports: (Boolean) -> Unit,
     val onToggleSignal: (NotificationSignal, Boolean) -> Unit = { _, _ -> },
     val onNotificationAccessChanged: () -> Unit = {},
+    val onSetPollInterval: (Int) -> Unit = {},
     val onOpenLicences: () -> Unit = {},
 )
 
@@ -93,6 +98,7 @@ private fun ThisAppContent(
     contentPadding: PaddingValues,
 ) {
     var tipOpen by remember { mutableStateOf(false) }
+    var intervalOpen by remember { mutableStateOf(false) }
     val prices = (tip as? TipUiState.Ready)?.prices
     if (tipOpen && prices != null) {
         TipSheet(
@@ -103,6 +109,22 @@ private fun ThisAppContent(
             },
             onDismiss = { tipOpen = false },
         )
+    }
+    state.notifications?.let { notifications ->
+        if (intervalOpen) {
+            SortSheet(
+                choices = POLL_INTERVAL_CHOICES,
+                selected = notifications.intervalMinutes,
+                label = { stringResource(it.intervalLabelRes()) },
+                onSelect = {
+                    intervalOpen = false
+                    actions.onSetPollInterval(it)
+                },
+                onDismiss = { intervalOpen = false },
+                title = stringResource(R.string.settings_notifications_interval),
+                icon = { Icons.Filled.Timer },
+            )
+        }
     }
     val openTip: (() -> Unit)? = if (prices != null) ({ tipOpen = true }) else null
     Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(contentPadding)) {
@@ -122,7 +144,14 @@ private fun ThisAppContent(
             Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
             ItemGroup(
                 title = stringResource(R.string.settings_group_notify_me),
-                rows = notificationRows(notifications, actions.onToggleSignal, actions.onNotificationAccessChanged, state.now),
+                rows =
+                    notificationRows(
+                        notifications,
+                        actions.onToggleSignal,
+                        actions.onNotificationAccessChanged,
+                        onOpenInterval = { intervalOpen = true },
+                        now = state.now,
+                    ),
                 modifier = Modifier.padding(resolvedContentPadding()),
             )
         }

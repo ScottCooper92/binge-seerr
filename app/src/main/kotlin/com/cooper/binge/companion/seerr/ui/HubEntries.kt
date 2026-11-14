@@ -116,6 +116,7 @@ internal fun ThisAppEntry(
             onToggleSendCrashReports = viewModel::setSendCrashReports,
             onToggleSignal = viewModel::setSignal,
             onNotificationAccessChanged = viewModel::recheckNotificationAccess,
+            onSetPollInterval = viewModel::setPollInterval,
             onOpenLicences = { open(LicencesRoute) },
         )
     ThisAppScreen(

@@ -10,6 +10,7 @@ import com.cooper.binge.companion.seerr.feedback.FeedbackPrefs
 import com.cooper.binge.companion.seerr.flags.FeatureFlags
 import com.cooper.binge.companion.seerr.flags.FixedFeatureFlags
 import com.cooper.binge.companion.seerr.flags.Flags
+import com.cooper.binge.companion.seerr.notifications.BackgroundAccess
 import com.cooper.binge.companion.seerr.notifications.NotificationForwarding
 import com.cooper.binge.companion.seerr.notifications.NotificationPrefs
 import com.cooper.binge.companion.seerr.notifications.NotificationScheduler
@@ -64,6 +65,7 @@ class ThisAppViewModel
         scheduler: NotificationScheduler,
         notifier: SeerrNotifier,
         forwarding: NotificationForwarding,
+        background: BackgroundAccess,
         @IoDispatcher private val dispatcher: CoroutineDispatcher,
         analytics: Analytics = NoOpAnalytics,
         bingeInstallCheck: BingeInstallCheck = NoBingeInstallCheck,
@@ -91,7 +93,7 @@ class ThisAppViewModel
             )
 
         private val poll =
-            PollNotificationsSource(loader, prefs, scheduler, notifier, forwarding, analytics, viewModelScope, dispatcher, now)
+            PollNotificationsSource(loader, prefs, scheduler, notifier, forwarding, background, analytics, viewModelScope, dispatcher, now)
 
         val uiState: StateFlow<ThisAppUiState> =
             combine(source.settings, poll.settings.onStart { emit(null) }, now) { app, notifications, now ->
@@ -117,6 +119,8 @@ class ThisAppViewModel
             signal: NotificationSignal,
             value: Boolean,
         ) = poll.setSignal(signal, value)
+
+        fun setPollInterval(minutes: Int) = poll.setInterval(minutes)
 
         fun setShakeToReport(enabled: Boolean) = source.setShakeToReport(enabled)
 

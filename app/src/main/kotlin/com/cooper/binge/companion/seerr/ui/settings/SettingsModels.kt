@@ -1,5 +1,6 @@
 package com.cooper.binge.companion.seerr.ui.settings
 
+import com.cooper.binge.companion.seerr.notifications.DEFAULT_POLL_INTERVAL_MINUTES
 import com.cooper.binge.companion.seerr.notifications.NotificationSignal
 import com.cooper.binge.companion.seerr.seerr.SeerrDefaultAccess
 import com.cooper.binge.companion.seerr.seerr.SeerrMediaServer
@@ -102,6 +103,10 @@ data class NotificationSettings(
     val nextRunMillis: Long?,
     /** Binge shows these notices instead of this app (binge-companions#249). */
     val forwardedToBinge: Boolean = false,
+    /** How often the poll is asked to run; Android may run it less often. */
+    val intervalMinutes: Int = DEFAULT_POLL_INTERVAL_MINUTES,
+    /** Android does not hold this app's background work back; false is what delays the poll. */
+    val unrestricted: Boolean = true,
 )
 
 /**

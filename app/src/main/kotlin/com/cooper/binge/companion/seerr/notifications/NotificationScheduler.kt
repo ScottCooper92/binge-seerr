@@ -14,13 +14,12 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import java.util.concurrent.TimeUnit
 
-/** WorkManager's floor for periodic work; Doze stretches it further. */
-private const val POLL_INTERVAL_MINUTES = 15L
 private const val WORK_NAME = "seerr_notifications"
 
 /** Schedules or cancels the periodic poll; seamed so the planner and the reactor are tested against a fake. */
 interface NotificationScheduler {
-    fun schedule()
+    /** Runs the poll about every [intervalMinutes], or moves a poll already scheduled to that interval. Android may run it less often. */
+    fun schedule(intervalMinutes: Int)
 
     fun cancel()
 
@@ -32,9 +31,9 @@ interface NotificationScheduler {
 class WorkManagerNotificationScheduler(
     private val context: Context,
 ) : NotificationScheduler {
-    override fun schedule() {
+    override fun schedule(intervalMinutes: Int) {
         val request =
-            PeriodicWorkRequestBuilder<NotificationWorker>(POLL_INTERVAL_MINUTES, TimeUnit.MINUTES)
+            PeriodicWorkRequestBuilder<NotificationWorker>(intervalMinutes.toLong(), TimeUnit.MINUTES)
                 .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
                 .build()
         WorkManager.getInstance(context).enqueueUniquePeriodicWork(WORK_NAME, ExistingPeriodicWorkPolicy.UPDATE, request)

@@ -51,6 +51,8 @@ class ThisAppClippingTest {
                     lastRunMillis = null,
                     nextRunMillis = null,
                     forwardedToBinge = true,
+                    intervalMinutes = 360,
+                    unrestricted = false,
                 ),
         )
 

@@ -672,6 +672,14 @@
     <string name="settings_notifications_poll">Checked in the background</string>
     <string name="settings_notifications_last_run">Last checked %1$s</string>
     <string name="settings_notifications_not_yet">Not checked yet</string>
+    <string name="settings_notifications_interval">Check every</string>
+    <string name="settings_notifications_interval_15">15 minutes</string>
+    <string name="settings_notifications_interval_30">30 minutes</string>
+    <string name="settings_notifications_interval_60">1 hour</string>
+    <string name="settings_notifications_interval_120">2 hours</string>
+    <string name="settings_notifications_interval_360">6 hours</string>
+    <string name="settings_notifications_battery">Allow background checks</string>
+    <string name="settings_notifications_battery_caption">Android may delay checks to save battery. Open this app\'s settings and set Battery to Unrestricted.</string>
     <string name="notif_channel_requests_name">New requests</string>
     <string name="notif_channel_requests_description">Requests waiting for your approval</string>
     <string name="notif_channel_issues_name">New issues</string>
