@@ -2,10 +2,10 @@ package com.cooper.binge.companion.seerr.tip
 
 import android.app.Activity
 
-/** The tip amounts, in whole pounds: one Play product per step, `tip_1` to `tip_20`. */
-internal val TIP_STEPS: IntRange = 1..20
+/** The tip amounts, in whole pounds: one Play product per step, `donation_3`, `donation_5`, `donation_10` and `donation_20`. */
+internal val TIP_STEPS: List<Int> = listOf(3, 5, 10, 20)
 
-internal fun tipProductId(step: Int): String = "tip_$step"
+internal fun tipProductId(step: Int): String = "donation_$step"
 
 /** How a tip ended, as far as the user needs to hear. A cancel is the user's own choice and says nothing. */
 internal enum class TipOutcome { Thanks, Pending, Cancelled, Failed }
