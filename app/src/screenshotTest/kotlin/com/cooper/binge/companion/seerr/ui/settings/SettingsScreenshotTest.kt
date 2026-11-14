@@ -302,9 +302,6 @@ private fun noActions() =
         onOpenPage = {},
         onToggleSignal = { _, _ -> },
         onNotificationAccessChanged = {},
-        onToggleShakeToReport = {},
-        onToggleShareUsageData = {},
-        onToggleSendCrashReports = {},
         onDisconnect = {},
     )
 

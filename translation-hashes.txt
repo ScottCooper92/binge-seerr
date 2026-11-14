@@ -31,7 +31,7 @@ app:companion_refusal_quota  2d262170429f
 app:consent_accept  30b4f3d19026
 app:consent_decline  a0e63d7c7125
 app:consent_kicker  54a57c3147c4
-app:consent_point_change_detail  89bcc634a88a
+app:consent_point_change_detail  8e1070d99f8d
 app:consent_point_change_title  6b4afbef99d2
 app:consent_point_never_detail  f03b70bd8317
 app:consent_point_never_title  485ca594ccc9
@@ -133,6 +133,8 @@ app:hub_section_requests  ada27592c957
 app:hub_section_requests_desc  6064d2ed7fa6
 app:hub_section_settings  74a883a037bc
 app:hub_section_settings_desc  db15887ef2b0
+app:hub_section_this_app  0982cb1775e6
+app:hub_section_this_app_desc  d1f1831c8d0d
 app:hub_section_users  6b0cc904d081
 app:hub_section_users_desc  4ddc631cf60c
 app:hub_stat_pending  331551b0de41
@@ -831,6 +833,7 @@ app:settings_agent_email  969ccbd3cf63
 app:settings_agent_webhook  4814f62c108d
 app:settings_application_url  96884337d874
 app:settings_binge  b914ef32a2e1
+app:settings_binge_preferences  2f344a3b2787
 app:settings_choices_filter  638e249f4a15
 app:settings_demo_note  f064b6ca2aa7
 app:settings_display_language  11a045e402c3
@@ -973,6 +976,7 @@ app:tv_account_sign_out  48f0d3d397d4
 app:tv_account_sign_out_message  4035dd486889
 app:tv_account_sign_out_title  c1c084addfcc
 app:tv_account_your_requests  4c64a2a1c581
+app:tv_consent_point_change_detail  89bcc634a88a
 app:tv_consent_point_change_title  4a8011b9ca93
 app:tv_consent_reassurance  0fbad9c02c52
 app:tv_detail_approve  6007acbe30b2

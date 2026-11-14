@@ -127,9 +127,6 @@ class SettingsClippingTest {
             onOpenPage = {},
             onToggleSignal = { _, _ -> },
             onNotificationAccessChanged = {},
-            onToggleShakeToReport = {},
-            onToggleShareUsageData = {},
-            onToggleSendCrashReports = {},
             onDisconnect = {},
         )
 }
