@@ -1,5 +1,6 @@
 package com.cooper.binge.companion.seerr.ui.settings
 
+import com.cooper.binge.companion.seerr.notifications.BackgroundAccess
 import com.cooper.binge.companion.seerr.notifications.NotificationForwarding
 import com.cooper.binge.companion.seerr.notifications.NotificationPrefs
 import com.cooper.binge.companion.seerr.notifications.NotificationScheduler
@@ -20,7 +21,8 @@ import kotlinx.coroutines.launch
 
 /**
  * This app's own poll, as the This app page shows it: the signals this viewer may turn on, which are on, whether the system
- * would show anything, whether Binge shows them instead, and when the poll ran and runs next. The signals offered are read
+ * would show anything, whether Binge shows them instead, how often it runs and whether Android holds it back, and when the poll
+ * ran and runs next. The signals offered are read
  * from the server on each arrival, because they follow the viewer's permissions; everything else is on the device.
  *
  * @param now moves on each minute while the page shows, so [forwarding]'s recent-poll rule and the schedule are re-read.
@@ -32,6 +34,7 @@ internal class PollNotificationsSource(
     scheduler: NotificationScheduler,
     private val notifier: SeerrNotifier,
     private val forwarding: NotificationForwarding,
+    private val background: BackgroundAccess,
     private val analytics: Analytics,
     private val scope: CoroutineScope,
     private val dispatcher: CoroutineDispatcher,
@@ -61,11 +64,13 @@ internal class PollNotificationsSource(
     val settings: Flow<NotificationSettings?> =
         combine(
             offered,
-            combine(enabled, forwarding.enabled, now) { enabled, switchedOn, _ -> enabled to switchedOn },
+            combine(enabled, forwarding.enabled, prefs.pollIntervalMinutes, now) { enabled, switchedOn, interval, _ ->
+                Triple(enabled, switchedOn, interval)
+            },
             blockedTrigger,
             prefs.lastRunMillis,
             scheduler.nextRunMillis(),
-        ) { offered, (enabled, switchedOn), _, last, next ->
+        ) { offered, (enabled, switchedOn, interval), _, last, next ->
             // Routing asks isActive(), which also needs a recent poll; the row follows the same rule.
             NotificationSettings(
                 offered = offered,
@@ -74,6 +79,8 @@ internal class PollNotificationsSource(
                 lastRunMillis = last,
                 nextRunMillis = next,
                 forwardedToBinge = switchedOn && forwarding.isActive(),
+                intervalMinutes = interval,
+                unrestricted = background.isUnrestricted(),
             )
         }
 
@@ -86,6 +93,10 @@ internal class PollNotificationsSource(
     /** After the system's notification page or the permission prompt: what they decided is only readable, not observable. */
     fun recheckAccess() {
         blockedTrigger.value++
+    }
+
+    fun setInterval(minutes: Int) {
+        scope.launch(dispatcher) { prefs.setPollIntervalMinutes(minutes) }
     }
 
     fun setSignal(

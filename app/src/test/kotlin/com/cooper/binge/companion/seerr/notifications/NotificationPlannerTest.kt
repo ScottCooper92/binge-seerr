@@ -82,6 +82,37 @@ class NotificationPlannerTest {
         }
 
     @Test
+    fun `a changed interval moves the schedule in place, and the first schedule asks for the default`() =
+        runTest {
+            val prefs = NotificationPrefs(PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("p.preferences_pb") })
+            val connection = seerr.connection(this)
+            NotificationPlanner(connection, prefs, scheduler, notifier, backgroundScope).start()
+            awaitCalls(listOf("cancel"))
+
+            prefs.setEnabled(NotificationSignal.PendingRequests, true)
+            awaitCalls(listOf("cancel", "schedule"))
+            assertEquals(listOf(DEFAULT_POLL_INTERVAL_MINUTES), scheduler.intervals)
+
+            prefs.setPollIntervalMinutes(120)
+            awaitCalls(listOf("cancel", "schedule", "schedule"))
+            assertEquals(listOf(DEFAULT_POLL_INTERVAL_MINUTES, 120), scheduler.intervals)
+        }
+
+    @Test
+    fun `an interval the settings do not offer is refused, and one stored by a later version reads as the default`() =
+        runTest {
+            val store = PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("p.preferences_pb") }
+            val prefs = NotificationPrefs(store)
+            assertEquals(DEFAULT_POLL_INTERVAL_MINUTES, prefs.pollIntervalMinutes.first())
+
+            prefs.setPollIntervalMinutes(360)
+            assertEquals(360, prefs.pollIntervalMinutes.first())
+
+            assertTrue(runCatching { prefs.setPollIntervalMinutes(7) }.isFailure)
+            assertEquals(360, prefs.pollIntervalMinutes.first())
+        }
+
+    @Test
     fun `a same-key reconnect after a rejected credential still re-arms the poll the reactor paused`() =
         runTest {
             val prefs = NotificationPrefs(PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("p.preferences_pb") })
@@ -131,7 +162,7 @@ class NotificationPlannerTest {
 
     /** WorkManager's failure on some devices: the platform method it calls is not there. */
     private class FailingScheduler : NotificationScheduler {
-        override fun schedule(): Unit = throw NoSuchMethodError("JobScheduler.forNamespace")
+        override fun schedule(intervalMinutes: Int): Unit = throw NoSuchMethodError("JobScheduler.forNamespace")
 
         override fun cancel(): Unit = throw NoSuchMethodError("JobScheduler.forNamespace")
 

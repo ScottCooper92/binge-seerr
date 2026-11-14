@@ -58,8 +58,12 @@ internal class FakeScheduler : NotificationScheduler {
     val calls: MutableList<String> = Collections.synchronizedList(mutableListOf())
     val nextRun = MutableStateFlow<Long?>(null)
 
-    override fun schedule() {
+    /** The interval each [schedule] asked for, in order. */
+    val intervals: MutableList<Int> = Collections.synchronizedList(mutableListOf())
+
+    override fun schedule(intervalMinutes: Int) {
         calls += "schedule"
+        intervals += intervalMinutes
     }
 
     override fun cancel() {
@@ -67,4 +71,11 @@ internal class FakeScheduler : NotificationScheduler {
     }
 
     override fun nextRunMillis(): Flow<Long?> = nextRun
+}
+
+/** Whether Android holds this app's background work back, set by a test. */
+internal class FakeBackgroundAccess(
+    var unrestricted: Boolean = true,
+) : BackgroundAccess {
+    override fun isUnrestricted(): Boolean = unrestricted
 }

@@ -13,7 +13,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Keeps the poll's schedule in step with the connection and the toggles: scheduled while a server
+ * Keeps the poll's schedule in step with the connection, the toggles and the interval: scheduled while a server
  * is connected, any signal is on, and the last poll's credentials were not rejected; cancelled
  * otherwise. Keyed on the credentials themselves, so signing in again after a rejection re-arms a
  * poll the reactor paused, and a disconnect clears the notices that would open pages of a server
@@ -37,8 +37,15 @@ class NotificationPlanner
                     connection.credentials,
                     prefs.anyEnabled,
                     prefs.pausedForAuthFailure,
-                ) { credentials, enabled, paused ->
-                    Plan(connected = credentials != null, enabled = enabled, paused = paused, credentials = credentials)
+                    prefs.pollIntervalMinutes,
+                ) { credentials, enabled, paused, interval ->
+                    Plan(
+                        connected = credentials != null,
+                        enabled = enabled,
+                        paused = paused,
+                        credentials = credentials,
+                        interval = interval,
+                    )
                 }
             plans.distinctUntilChanged().onEach(::apply).launchIn(scope)
         }
@@ -47,7 +54,7 @@ class NotificationPlanner
             if (!plan.connected) notifier.cancelActivity()
             if (!plan.paused) notifier.cancelConnectionProblem()
             val wanted = plan.connected && plan.enabled && !plan.paused
-            attempt { if (wanted) scheduler.schedule() else scheduler.cancel() }.onFailure(::schedulerUnavailable)
+            attempt { if (wanted) scheduler.schedule(plan.interval) else scheduler.cancel() }.onFailure(::schedulerUnavailable)
         }
 
         /**
@@ -64,5 +71,6 @@ class NotificationPlanner
             val enabled: Boolean,
             val paused: Boolean,
             val credentials: Any?,
+            val interval: Int,
         )
     }
