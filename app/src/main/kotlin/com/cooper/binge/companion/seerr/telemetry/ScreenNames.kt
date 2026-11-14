@@ -30,8 +30,9 @@ import com.cooper.binge.companion.seerr.ui.tv.TvDestination
  * free of ids because a route's ids are the server's (`privacy.md` covers the Crashlytics key).
  *
  * [SeerrRoute]'s debug-only members live in `src/debug` (#467) and cannot be named here; [debugScreenName]
- * covers them per variant. The cost is the `when`'s exhaustiveness check: a new common route that misses
- * a branch here falls through silently rather than failing the build.
+ * covers them per variant. The cost is the `when`'s exhaustiveness check: a new common route that misses a branch here
+ * reaches [debugScreenName], which throws in a debug build and reports a generic name in a release one. The build does not
+ * fail, so `ScreenNamesTest` walks every route and asks for its name (#1969).
  */
 fun SeerrRoute.screenName(): String =
     when (this) {
