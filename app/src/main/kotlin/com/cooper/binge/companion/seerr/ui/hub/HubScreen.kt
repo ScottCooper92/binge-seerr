@@ -176,6 +176,8 @@ private fun Dashboard(
                         iconTint = section.iconTint(),
                         label = stringResource(section.titleRes),
                         detail = stringResource(section.descriptionRes),
+                        // Two lines, so a longer description (This app's) is read in full rather than cut after its third word.
+                        supportingMaxLines = 2,
                         badgeCount = section.badgeCount(state.overview),
                         badgeTint = section.badgeTint(),
                         selected = section == selectedSection,

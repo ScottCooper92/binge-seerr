@@ -38,14 +38,15 @@ import com.cooper.binge.companion.seerr.notifications.NotificationSignal
 @Composable
 internal fun notificationRows(
     settings: NotificationSettings,
-    actions: SettingsActions,
+    onToggleSignal: (NotificationSignal, Boolean) -> Unit,
+    onAccessChanged: () -> Unit,
     /** What the poll's last and next runs are worded against (#989). */
     now: Long,
 ): List<ListItem> {
     val context = LocalContext.current
-    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { actions.onNotificationAccessChanged() }
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { onAccessChanged() }
     val askPermission =
-        rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { actions.onNotificationAccessChanged() }
+        rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { onAccessChanged() }
     val toggles =
         settings.offered.map { signal ->
             val on = signal in settings.enabled
@@ -60,7 +61,7 @@ internal fun notificationRows(
                     ) {
                         askPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
                     }
-                    actions.onToggleSignal(signal, !on)
+                    onToggleSignal(signal, !on)
                 },
             )
         }

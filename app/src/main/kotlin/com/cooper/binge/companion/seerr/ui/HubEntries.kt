@@ -78,8 +78,6 @@ internal fun SettingsEntry(
             onBack = onBack,
             onEditConnection = { open(EditConnectionRoute) },
             onOpenPage = { page -> open(ServerSettingsPageRoute(page)) },
-            onToggleSignal = viewModel::setSignal,
-            onNotificationAccessChanged = viewModel::recheckNotificationAccess,
             // The home swaps to setup on the credentials clearing; leaving Settings is what lets it show. Only Settings
             // itself is taken off: a second tap while it leaves finds something else on top and takes nothing.
             onDisconnect = {
@@ -116,6 +114,8 @@ internal fun ThisAppEntry(
             onToggleShakeToReport = viewModel::setShakeToReport,
             onToggleShareUsageData = viewModel::setShareUsageData,
             onToggleSendCrashReports = viewModel::setSendCrashReports,
+            onToggleSignal = viewModel::setSignal,
+            onNotificationAccessChanged = viewModel::recheckNotificationAccess,
             onOpenLicences = { open(LicencesRoute) },
         )
     ThisAppScreen(

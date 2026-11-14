@@ -25,6 +25,7 @@ import com.binge.designsystem.template.ScreenBar
 import com.binge.designsystem.template.screenInnerPadding
 import com.binge.designsystem.template.screenOuterPadding
 import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.notifications.NotificationSignal
 import com.cooper.binge.companion.seerr.tip.TipEvent
 import com.cooper.binge.companion.seerr.tip.TipUiState
 import com.cooper.binge.companion.seerr.ui.settings.server.TipSheet
@@ -41,12 +42,15 @@ class ThisAppActions(
     val onToggleShakeToReport: (Boolean) -> Unit,
     val onToggleShareUsageData: (Boolean) -> Unit,
     val onToggleSendCrashReports: (Boolean) -> Unit,
+    val onToggleSignal: (NotificationSignal, Boolean) -> Unit = { _, _ -> },
+    val onNotificationAccessChanged: () -> Unit = {},
     val onOpenLicences: () -> Unit = {},
 )
 
 /**
- * This app: Binge, bug reporting, what the app may report on its own, the tip jar, then About. It is about the app and not the
- * server, so every viewer has it, where Settings is the administrator's.
+ * This app: Binge, bug reporting, what the app may report on its own and the tip jar, then its own notifications once the
+ * signals on offer are known, then About. It is about the app and not the server, so every viewer has it, where Settings is
+ * the administrator's.
  *
  * @param showBack false when the hub is showing beside this pane, where a back arrow to it is redundant.
  * @param tip the tip jar: its row shows only once every step is priced. [tipEvents] says how a tip ended.
@@ -74,7 +78,7 @@ fun ThisAppScreen(
             val inner = padding.screenInnerPadding()
             when (state) {
                 ThisAppUiState.Loading -> LoadingScreen(Modifier.padding(inner))
-                is ThisAppUiState.Ready -> ThisAppContent(state.app, actions, tip, onGiveTip, contentPadding = inner)
+                is ThisAppUiState.Ready -> ThisAppContent(state, actions, tip, onGiveTip, contentPadding = inner)
             }
         }
     }
@@ -82,7 +86,7 @@ fun ThisAppScreen(
 
 @Composable
 private fun ThisAppContent(
-    app: AppSettings,
+    state: ThisAppUiState.Ready,
     actions: ThisAppActions,
     tip: TipUiState,
     onGiveTip: (Int) -> Unit,
@@ -106,7 +110,7 @@ private fun ThisAppContent(
             title = null,
             rows =
                 appRows(
-                    app,
+                    state.app,
                     actions.onToggleShakeToReport,
                     actions.onToggleShareUsageData,
                     actions.onToggleSendCrashReports,
@@ -114,6 +118,14 @@ private fun ThisAppContent(
                 ),
             modifier = Modifier.padding(resolvedContentPadding()),
         )
+        state.notifications?.let { notifications ->
+            Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
+            ItemGroup(
+                title = stringResource(R.string.settings_group_notify_me),
+                rows = notificationRows(notifications, actions.onToggleSignal, actions.onNotificationAccessChanged, state.now),
+                modifier = Modifier.padding(resolvedContentPadding()),
+            )
+        }
         Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
         ItemGroup(
             title = stringResource(R.string.settings_group_about),
