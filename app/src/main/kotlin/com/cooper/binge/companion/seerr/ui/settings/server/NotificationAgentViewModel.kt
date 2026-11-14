@@ -68,7 +68,7 @@ class NotificationAgentViewModel
 
         override suspend fun write(draft: AgentForm): AgentForm {
             crashBreadcrumbs.log("updating ${agent.segment} notification agent")
-            val saved = connection.api().updateNotificationAgent(agent.segment, draft.toDto()).toForm(agent)
+            val saved = connection.api().updateNotificationAgent(agent.segment, draft.toDto(connection.profile())).toForm(agent)
             val form = saved.withPayloadOf(draft)
             agentChanges.changed(agent)
             analytics.event(
@@ -111,7 +111,7 @@ class NotificationAgentViewModel
             viewModelScope.launch(dispatcher) {
                 val outcome =
                     attempt {
-                        val response = connection.api().testNotificationAgent(agent.segment, draft.toDto())
+                        val response = connection.api().testNotificationAgent(agent.segment, draft.toDto(connection.profile()))
                         if (!response.isSuccessful) throw HttpException(response)
                     }
                 editExtras { it.copy(testing = false) }

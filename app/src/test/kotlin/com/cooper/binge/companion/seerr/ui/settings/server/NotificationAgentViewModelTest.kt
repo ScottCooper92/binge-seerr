@@ -538,6 +538,38 @@ class NotificationAgentViewModelTest {
         }
 
     @Test
+    fun `Overseerr and Seerr before 3_3 get the webhook template JSON-encoded, on save and on test`() =
+        runTest {
+            seerr.viewer(id = 1, permissions = ADMIN, version = "1.35.0", settings = "{}")
+            seerr.serve(
+                "GET /api/v1/settings/notifications/webhook",
+                """{"enabled":false,"types":0,"options":{"webhookUrl":"","jsonPayload":"{}"}}""",
+            )
+            seerr.serve("POST /api/v1/settings/notifications/webhook", """{"enabled":false,"types":0,"options":{}}""")
+            seerr.serve("POST /api/v1/settings/notifications/webhook/test", "{}")
+            val vm = viewModel(ServerAgent.Webhook)
+            vm.awaitReady()
+            val template = "{\"event\": \"{{event}}\"}"
+
+            vm.setOption(AgentOption.WebhookJsonPayload, template)
+            awaitWritten(vm)
+
+            fun payload(path: String) =
+                Json
+                    .parseToJsonElement(seerr.body("POST", path))
+                    .jsonObject
+                    .getValue("options")
+                    .jsonObject
+                    .getValue("jsonPayload")
+                    .jsonPrimitive.content
+            assertEquals(Json.encodeToString(template), payload("/api/v1/settings/notifications/webhook"))
+
+            vm.test()
+            vm.awaitReady { !it.extras.testing }
+            assertEquals(Json.encodeToString(template), payload("/api/v1/settings/notifications/webhook/test"))
+        }
+
+    @Test
     fun `an agent's embedPoster goes back as it was read, though no page shows it`() =
         runTest {
             seerr.serve(

@@ -5,6 +5,7 @@ import com.cooper.binge.companion.seerr.seerr.SeerrNotificationAgentDto
 import com.cooper.binge.companion.seerr.seerr.SeerrPushoverSoundDto
 import com.cooper.binge.companion.seerr.seerr.SeerrServerProfile
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
@@ -300,8 +301,9 @@ internal fun SeerrNotificationAgentDto.toForm(agent: ServerAgent): AgentForm =
  * The known options overlay what the server sent, each typed as the server stores it; a blank one
  * is sent as empty, except a [OptionKind.Number] one, which has no empty-string reading and is
  * sent as `null` instead — required ones can't reach here unparsed, [AgentForm.valid] blocks that.
+ * The webhook template follows [SeerrServerProfile.sendsWebhookPayloadRaw].
  */
-internal fun AgentForm.toDto(): SeerrNotificationAgentDto =
+internal fun AgentForm.toDto(profile: SeerrServerProfile): SeerrNotificationAgentDto =
     SeerrNotificationAgentDto(
         enabled = enabled,
         embedPoster = embedPoster,
@@ -318,8 +320,9 @@ internal fun AgentForm.toDto(): SeerrNotificationAgentDto =
                                 else ->
                                     JsonPrimitive(
                                         when {
-                                            // As typed: the server checks it parses, and stores it encoded itself.
-                                            option == AgentOption.WebhookJsonPayload -> value
+                                            // The server checks it parses and stores it encoded; older ones want it encoded once already.
+                                            option == AgentOption.WebhookJsonPayload ->
+                                                if (profile.sendsWebhookPayloadRaw) value else Json.encodeToString(value)
                                             option.password -> value
                                             else -> value.trim()
                                         },
