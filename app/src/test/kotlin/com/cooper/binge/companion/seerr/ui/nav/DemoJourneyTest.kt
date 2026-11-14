@@ -97,7 +97,7 @@ class DemoJourneyTest {
         host.compose
             .onAllNodesWithText("Big Buck Bunny")
             .onLast()
-            .performClick()
+            .performSemanticsAction(SemanticsActions.OnClick)
         openManageSheet()
         host.compose
             .onAllNodesWithText(host.string(R.string.media_delete_files))

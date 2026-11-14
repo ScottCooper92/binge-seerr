@@ -160,11 +160,12 @@ private fun Dashboard(
                 modifier = Modifier.padding(sides).padding(bottom = dimensionResource(DesR.dimen.padding_m)),
             )
         }
-        ServerCard(server = state.server, overview = state.overview, sides = sides)
+        // First, while anything is downloading: it is the part of this page that changes while the user watches.
         if (state.downloading.isNotEmpty()) {
             SectionHeader(title = stringResource(R.string.hub_downloading_now, state.downloading.size))
             DownloadingStrip(state.downloading, onClick = { actions.onOpenRequest(it.requestId) }, sides = sides)
         }
+        ServerCard(server = state.server, overview = state.overview, sides = sides)
         SectionHeader(title = stringResource(R.string.hub_manage))
         ItemGroup(
             title = null,
