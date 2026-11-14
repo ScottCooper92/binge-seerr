@@ -2,8 +2,8 @@ name: Release
 
 # Pushing a version tag (`git tag v0.2.0 && git push origin v0.2.0`) builds a signed release bundle,
 # attaches it, with the R8 mapping, to a GitHub Release for that tag, and uploads it to Play's
-# open testing track (`beta`) as a draft. Open testing is public opt-in from the Play listing and never
-# reaches production on its own.
+# internal testing track (`internal`) as a draft. Internal testing reaches only the testers listed in the
+# Play Console and never reaches production on its own. Moving a release on to open testing is done there.
 #
 # The upload is a draft because the app is not published yet, and Play's API refuses any other status
 # for an unpublished app. Once the first review has passed, switch `status` to `completed` (#1695).
@@ -135,7 +135,7 @@ jobs:
 
       # The app is not published yet, so Play accepts only a draft (#1695 switches this to `completed`).
       # Last, so a Play failure cannot withhold the bundle from the GitHub Release.
-      - name: Upload to Play's open testing track
+      - name: Upload to Play's internal testing track
         uses: r0adkll/upload-google-play@e738b9dd8f2476ea806d921b64aacd24f34515a5 # v1.1.5
         with:
           serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
@@ -143,5 +143,8 @@ jobs:
           releaseFiles: app/build/outputs/bundle/release/app-release.aab
           mappingFile: app/build/outputs/mapping/release/mapping.txt
           whatsNewDirectory: build/play-whatsnew
-          tracks: beta
+          tracks: internal
           status: draft
+          # Play will not send this app's changes for review through the API (v0.3.0's upload failed on it), so the
+          # edit is committed unsent and the release is sent for review from the Play Console.
+          changesNotSentForReview: true
