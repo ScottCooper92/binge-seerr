@@ -69,6 +69,11 @@ sealed interface EditorEvent {
         }
     }
 
+    /** A test the server could not carry out, and why: a dialog, since the reason is the server's and has no length bound. */
+    data class TestFailed(
+        val reason: String,
+    ) : EditorEvent
+
     /** An action beside the form succeeded; [messageRes] says which. */
     data class Notice(
         @StringRes val messageRes: Int,

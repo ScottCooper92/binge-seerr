@@ -246,6 +246,14 @@ internal fun EditorEventSnackbarEffect(
     LaunchedEffect(events) {
         events.collectLatest { event ->
             snackbarHostState.currentSnackbarData?.dismiss()
+            if (event is EditorEvent.TestFailed) {
+                dialog =
+                    DialogMessage(
+                        resources.getString(R.string.server_settings_agent_test_failed_title),
+                        resources.getString(R.string.server_settings_agent_test_failed_body, event.reason),
+                    )
+                return@collectLatest
+            }
             if (event is EditorEvent.Failed) {
                 val detail = event.detail
                 if (detail != null) {
@@ -266,6 +274,7 @@ internal fun EditorEventSnackbarEffect(
                     snackbarHostState.showSnackbar(resources.getString(R.string.user_settings_saved), SnackbarMessageKind.Confirmation)
                 is EditorEvent.Failed ->
                     snackbarHostState.showSnackbar(resources.getString(event.error.messageRes()), SnackbarMessageKind.Error)
+                is EditorEvent.TestFailed -> Unit
                 is EditorEvent.Notice ->
                     snackbarHostState.showSnackbar(resources.getString(event.messageRes), SnackbarMessageKind.Confirmation)
                 is EditorEvent.Undoable -> {

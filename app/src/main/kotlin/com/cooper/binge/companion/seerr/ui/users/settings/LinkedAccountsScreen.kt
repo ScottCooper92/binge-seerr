@@ -50,8 +50,10 @@ import com.binge.designsystem.template.screenOuterPadding
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.SetupLinkSheet
 import com.cooper.binge.companion.seerr.ui.savedLoginRequest
+import com.cooper.binge.companion.seerr.ui.state.DialogMessage
 import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
 import com.cooper.binge.companion.seerr.ui.state.LoadingScreen
+import com.cooper.binge.companion.seerr.ui.state.MessageDialogHost
 import com.cooper.binge.companion.seerr.ui.state.messageRes
 import com.cooper.binge.companion.seerr.ui.users.UserOrigin
 import com.cooper.binge.companion.seerr.ui.users.icon
@@ -85,11 +87,25 @@ fun LinkedAccountsScreen(
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     val resources = LocalResources.current
+    var dialog by remember { mutableStateOf<DialogMessage?>(null) }
+    MessageDialogHost(dialog) { dialog = null }
     LaunchedEffect(events) {
         events.collectLatest { event ->
             snackbarHostState.currentSnackbarData?.dismiss()
             val (message, kind) =
                 when (event) {
+                    is LinkedAccountsEvent.UnlinkRefused -> {
+                        dialog =
+                            DialogMessage(
+                                resources.getString(R.string.user_settings_unlink_refused_title),
+                                if (event.offerCredentialsStep) {
+                                    resources.getString(R.string.user_settings_unlink_refused_body, event.reason)
+                                } else {
+                                    event.reason
+                                },
+                            )
+                        return@collectLatest
+                    }
                     LinkedAccountsEvent.Linked -> R.string.user_settings_linked_done to SnackbarMessageKind.Confirmation
                     LinkedAccountsEvent.Unlinked -> R.string.user_settings_unlinked_done to SnackbarMessageKind.Confirmation
                     LinkedAccountsEvent.LinkExpired -> R.string.setup_error_link_expired to SnackbarMessageKind.Error

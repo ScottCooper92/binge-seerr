@@ -235,8 +235,15 @@ const val MAX_DETAIL_CHARS = 160
  * so a field it echoes back, an API key included, never reaches the screen or a log, and a body that is not JSON with a
  * text `message` gives null. Any other failure gives null as well.
  */
-fun Throwable.rejectionDetail(): String? {
-    if (this !is HttpException || toSeerrError() != SeerrError.Rejected) return null
+fun Throwable.rejectionDetail(): String? = if (this is HttpException && toSeerrError() == SeerrError.Rejected) serverMessage() else null
+
+/**
+ * The server's own `message` for any failed call, as one short line, or null. It reads the `message` field and nothing
+ * else of the body, for the same reason as [rejectionDetail]. A screen uses it where the failure is a 5xx that names
+ * its cause, as the agent test does.
+ */
+fun Throwable.serverMessage(): String? {
+    if (this !is HttpException) return null
     val message =
         attempt {
             (Json.parseToJsonElement(peekedBody()) as? JsonObject)
