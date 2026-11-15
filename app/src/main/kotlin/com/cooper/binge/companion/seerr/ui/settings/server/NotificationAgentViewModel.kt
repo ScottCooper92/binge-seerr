@@ -6,6 +6,7 @@ import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.di.IoDispatcher
 import com.cooper.binge.companion.seerr.notifications.ApplicationScope
+import com.cooper.binge.companion.seerr.seerr.serverMessage
 import com.cooper.binge.companion.seerr.telemetry.Analytics
 import com.cooper.binge.companion.seerr.telemetry.AnalyticsEvents
 import com.cooper.binge.companion.seerr.telemetry.CrashBreadcrumbs
@@ -122,7 +123,9 @@ class NotificationAgentViewModel
                             mapOf(AnalyticsEvents.PARAM_AGENT to agent.segment, AnalyticsEvents.PARAM_ACTION to "tested"),
                         )
                         notify(EditorEvent.Notice(R.string.server_settings_agent_tested))
-                    }.onFailure { failure -> notify(EditorEvent.Failed.from(failure)) }
+                    }.onFailure { failure ->
+                        notify(failure.serverMessage()?.let(EditorEvent::TestFailed) ?: EditorEvent.Failed.from(failure))
+                    }
             }
         }
 

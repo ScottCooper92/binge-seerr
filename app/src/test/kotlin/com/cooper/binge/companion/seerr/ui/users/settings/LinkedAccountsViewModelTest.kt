@@ -5,6 +5,7 @@ import com.cooper.binge.companion.seerr.auth.PlexPinFlow
 import com.cooper.binge.companion.seerr.seerr.PlexClientIdentity
 import com.cooper.binge.companion.seerr.seerr.PlexPinDto
 import com.cooper.binge.companion.seerr.seerr.PlexTvApi
+import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.ui.LinkFlow
 import com.cooper.binge.companion.seerr.ui.users.UserOrigin
 import com.cooper.binge.companion.seerr.util.MainDispatcherRule
@@ -162,5 +163,33 @@ class LinkedAccountsViewModelTest {
             assertEquals(LinkedAccountsEvent.Unlinked, unlinked.await())
             assertEquals(1, seerr.count("DELETE", "/api/v1/user/8/settings/linked-accounts/jellyfin"))
             assertFalse(vm.awaitReady().mediaServer?.linked == true)
+        }
+
+    @Test
+    fun `an unlink the server refuses keeps its reason`() =
+        runTest {
+            seerr.serve(
+                "DELETE /api/v1/user/8/settings/linked-accounts/jellyfin",
+                """{"message":"User does not have a local email or password set."}""",
+                code = 400,
+            )
+            val vm = viewModel()
+            vm.awaitReady()
+
+            val refused = awaitEvent(vm.events)
+            vm.unlinkMediaServer()
+            assertEquals(LinkedAccountsEvent.UnlinkRefused("User does not have a local email or password set."), refused.await())
+        }
+
+    @Test
+    fun `an unlink that fails without a reason is an ordinary failure`() =
+        runTest {
+            seerr.serve("DELETE /api/v1/user/8/settings/linked-accounts/jellyfin", "", code = 500)
+            val vm = viewModel()
+            vm.awaitReady()
+
+            val failed = awaitEvent(vm.events)
+            vm.unlinkMediaServer()
+            assertEquals(LinkedAccountsEvent.Failed(SeerrError.Server), failed.await())
         }
 }

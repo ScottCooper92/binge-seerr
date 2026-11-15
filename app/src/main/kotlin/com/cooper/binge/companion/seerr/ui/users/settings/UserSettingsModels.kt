@@ -354,4 +354,9 @@ sealed interface LinkedAccountsEvent {
     data class Failed(
         val error: SeerrError,
     ) : LinkedAccountsEvent
+
+    /** The server refused to unlink and said why: a dialog, since the user must read it to act. */
+    data class UnlinkRefused(
+        val reason: String,
+    ) : LinkedAccountsEvent
 }

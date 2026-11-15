@@ -529,6 +529,8 @@ app:server_settings_agent_sound  46124e023603
 app:server_settings_agent_tags  1331275bc537
 app:server_settings_agent_telegram_bot_username_hint  a1d6c1f9fb15
 app:server_settings_agent_test  ae6de6b78417
+app:server_settings_agent_test_failed_body  2bf13ad5c118
+app:server_settings_agent_test_failed_title  52bb9dfa7f47
 app:server_settings_agent_tested  f9a81943ac0f
 app:server_settings_agent_topic  7e61847d61d6
 app:server_settings_agent_topic_hint  acb69c332574
@@ -1146,6 +1148,8 @@ app:user_settings_type_media_pending  1dd991961f09
 app:user_settings_undo  a8283ade3185
 app:user_settings_unlink  b90108da0bd2
 app:user_settings_unlink_message  344fb73cd02f
+app:user_settings_unlink_refused_body  9e708d302b16
+app:user_settings_unlink_refused_title  6b1a75ea8667
 app:user_settings_unlink_title  5ad31591bf4f
 app:user_settings_unlinked_done  33f1cdf22cb6
 app:user_settings_watchlist_movies  555533a147fe

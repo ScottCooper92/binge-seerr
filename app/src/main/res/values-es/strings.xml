@@ -1303,4 +1303,8 @@
     <string name="licences_unspecified">Licencia no especificada</string>
     <string name="licences_empty">No hay licencias que mostrar.</string>
     <string name="licences_unreadable">No se pudo leer la lista de licencias.</string>
+    <string name="user_settings_unlink_refused_title">No se pudo desvincular</string>
+    <string name="user_settings_unlink_refused_body">%1$s\n\nDefine un correo y una contraseña para esta cuenta y vuelve a desvincularla.</string>
+    <string name="server_settings_agent_test_failed_title">Falló la notificación de prueba</string>
+    <string name="server_settings_agent_test_failed_body">%1$s\n\nRevisa los ajustes de este agente y vuelve a enviar la prueba.</string>
 </resources>

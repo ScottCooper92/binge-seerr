@@ -13,6 +13,7 @@ import com.cooper.binge.companion.seerr.seerr.SeerrLinkJellyfinBody
 import com.cooper.binge.companion.seerr.seerr.SeerrLinkPlexBody
 import com.cooper.binge.companion.seerr.seerr.SeerrLinkQuickConnectBody
 import com.cooper.binge.companion.seerr.seerr.SeerrMediaServer
+import com.cooper.binge.companion.seerr.seerr.rejectionDetail
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
 import com.cooper.binge.companion.seerr.ui.LinkFlow
 import com.cooper.binge.companion.seerr.ui.users.UserOrigin
@@ -87,9 +88,9 @@ class LinkedAccountsViewModel
             password: String,
         ) = startLink { api -> api.linkJellyfinAccount(userId, SeerrLinkJellyfinBody(username.trim(), password)) }
 
-        fun unlinkPlex() = run(LinkedAccountsEvent.Unlinked) { api -> api.unlinkPlexAccount(userId) }
+        fun unlinkPlex() = run(LinkedAccountsEvent.Unlinked, Throwable::toUnlinkEvent) { api -> api.unlinkPlexAccount(userId) }
 
-        fun unlinkMediaServer() = run(LinkedAccountsEvent.Unlinked) { api -> api.unlinkJellyfinAccount(userId) }
+        fun unlinkMediaServer() = run(LinkedAccountsEvent.Unlinked, Throwable::toUnlinkEvent) { api -> api.unlinkJellyfinAccount(userId) }
 
         fun plexLaunched() =
             state.update { current ->
@@ -105,12 +106,13 @@ class LinkedAccountsViewModel
         }
 
         private fun startLink(block: suspend (SeerrApi) -> Unit) {
-            linkJob = run(LinkedAccountsEvent.Linked, block)
+            linkJob = run(LinkedAccountsEvent.Linked, block = block)
         }
 
         /** One server action while the page is idle; success re-reads the page, since the server's record is the truth. */
         private fun run(
             done: LinkedAccountsEvent,
+            failed: (Throwable) -> LinkedAccountsEvent = Throwable::toEvent,
             block: suspend (SeerrApi) -> Unit,
         ): Job? {
             val ready = state.value as? LinkedAccountsUiState.Ready ?: return null
@@ -125,7 +127,7 @@ class LinkedAccountsViewModel
                         eventFlow.emit(done)
                     }.onFailure { failure ->
                         state.update { current -> (current as? LinkedAccountsUiState.Ready)?.copy(busy = false, link = null) ?: current }
-                        eventFlow.emit(failure.toEvent())
+                        eventFlow.emit(failed(failure))
                     }
             }
         }
@@ -163,5 +165,8 @@ private fun Throwable.toEvent(): LinkedAccountsEvent =
         is PlexPinExpiredException, is QuickConnectExpiredException -> LinkedAccountsEvent.LinkExpired
         else -> LinkedAccountsEvent.Failed(toSeerrError())
     }
+
+/** An unlink the server refused with a reason is [LinkedAccountsEvent.UnlinkRefused]; anything else reads as any other failure. */
+private fun Throwable.toUnlinkEvent(): LinkedAccountsEvent = rejectionDetail()?.let(LinkedAccountsEvent::UnlinkRefused) ?: toEvent()
 
 private fun String?.orNull(): String? = this?.takeIf { it.isNotBlank() }
