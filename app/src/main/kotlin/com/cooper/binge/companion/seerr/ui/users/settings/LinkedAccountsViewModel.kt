@@ -88,9 +88,9 @@ class LinkedAccountsViewModel
             password: String,
         ) = startLink { api -> api.linkJellyfinAccount(userId, SeerrLinkJellyfinBody(username.trim(), password)) }
 
-        fun unlinkPlex() = run(LinkedAccountsEvent.Unlinked, Throwable::toUnlinkEvent) { api -> api.unlinkPlexAccount(userId) }
+        fun unlinkPlex() = run(LinkedAccountsEvent.Unlinked, ::unlinkFailure) { api -> api.unlinkPlexAccount(userId) }
 
-        fun unlinkMediaServer() = run(LinkedAccountsEvent.Unlinked, Throwable::toUnlinkEvent) { api -> api.unlinkJellyfinAccount(userId) }
+        fun unlinkMediaServer() = run(LinkedAccountsEvent.Unlinked, ::unlinkFailure) { api -> api.unlinkJellyfinAccount(userId) }
 
         fun plexLaunched() =
             state.update { current ->
@@ -132,6 +132,15 @@ class LinkedAccountsViewModel
             }
         }
 
+        /**
+         * An unlink the server refused with a reason is [LinkedAccountsEvent.UnlinkRefused]; anything else reads as any other
+         * failure. The server answers the primary administrator (user 1) before it checks credentials, so setting them is
+         * no way out there.
+         */
+        private fun unlinkFailure(failure: Throwable): LinkedAccountsEvent =
+            failure.rejectionDetail()?.let { LinkedAccountsEvent.UnlinkRefused(it, offerCredentialsStep = userId != PRIMARY_ADMIN_ID) }
+                ?: failure.toEvent()
+
         private fun showLink(link: LinkFlow) =
             state.update { current -> (current as? LinkedAccountsUiState.Ready)?.copy(busy = false, link = link) ?: current }
 
@@ -160,13 +169,12 @@ class LinkedAccountsViewModel
         }
     }
 
+private const val PRIMARY_ADMIN_ID = 1
+
 private fun Throwable.toEvent(): LinkedAccountsEvent =
     when (this) {
         is PlexPinExpiredException, is QuickConnectExpiredException -> LinkedAccountsEvent.LinkExpired
         else -> LinkedAccountsEvent.Failed(toSeerrError())
     }
-
-/** An unlink the server refused with a reason is [LinkedAccountsEvent.UnlinkRefused]; anything else reads as any other failure. */
-private fun Throwable.toUnlinkEvent(): LinkedAccountsEvent = rejectionDetail()?.let(LinkedAccountsEvent::UnlinkRefused) ?: toEvent()
 
 private fun String?.orNull(): String? = this?.takeIf { it.isNotBlank() }

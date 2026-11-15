@@ -358,5 +358,7 @@ sealed interface LinkedAccountsEvent {
     /** The server refused to unlink and said why: a dialog, since the user must read it to act. */
     data class UnlinkRefused(
         val reason: String,
+        /** Whether setting an email and password is the way out; it is not for the primary administrator, whom the server refuses outright. */
+        val offerCredentialsStep: Boolean,
     ) : LinkedAccountsEvent
 }

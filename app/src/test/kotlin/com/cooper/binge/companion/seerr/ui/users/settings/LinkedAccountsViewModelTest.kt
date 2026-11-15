@@ -57,14 +57,14 @@ class LinkedAccountsViewModelTest {
         seerr.close()
     }
 
-    private suspend fun TestScope.viewModel(): LinkedAccountsViewModel {
+    private suspend fun TestScope.viewModel(userId: Int = 8): LinkedAccountsViewModel {
         val plex =
             PlexPinFlow(
                 identity = { PlexClientIdentity(identifier = "cid", product = "Seerr Companion", version = "0.1.0", device = "Pixel") },
                 apis = { plexTv },
                 pollInterval = 10.milliseconds,
             )
-        val vm = LinkedAccountsViewModel(seerr.connection(this), plex, mainDispatcherRule.dispatcher, 8)
+        val vm = LinkedAccountsViewModel(seerr.connection(this), plex, mainDispatcherRule.dispatcher, userId)
         viewModels.put(vm.hashCode().toString(), vm)
         backgroundScope.launch { vm.uiState.collect {} }
         return vm
@@ -178,7 +178,33 @@ class LinkedAccountsViewModelTest {
 
             val refused = awaitEvent(vm.events)
             vm.unlinkMediaServer()
-            assertEquals(LinkedAccountsEvent.UnlinkRefused("User does not have a local email or password set."), refused.await())
+            assertEquals(
+                LinkedAccountsEvent.UnlinkRefused("User does not have a local email or password set.", offerCredentialsStep = true),
+                refused.await(),
+            )
+        }
+
+    @Test
+    fun `the primary administrator is refused outright, with no credentials step to offer`() =
+        runTest {
+            seerr.serve(
+                "DELETE /api/v1/user/1/settings/linked-accounts/jellyfin",
+                """{"message":"Cannot unlink media server accounts for the primary administrator."}""",
+                code = 400,
+            )
+            seerr.serve("GET /api/v1/user/1", """{"id":1,"displayName":"Admin","userType":3}""")
+            val vm = viewModel(userId = 1)
+            vm.awaitReady()
+
+            val refused = awaitEvent(vm.events)
+            vm.unlinkMediaServer()
+            assertEquals(
+                LinkedAccountsEvent.UnlinkRefused(
+                    "Cannot unlink media server accounts for the primary administrator.",
+                    offerCredentialsStep = false,
+                ),
+                refused.await(),
+            )
         }
 
     @Test

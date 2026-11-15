@@ -98,7 +98,11 @@ fun LinkedAccountsScreen(
                         dialog =
                             DialogMessage(
                                 resources.getString(R.string.user_settings_unlink_refused_title),
-                                resources.getString(R.string.user_settings_unlink_refused_body, event.reason),
+                                if (event.offerCredentialsStep) {
+                                    resources.getString(R.string.user_settings_unlink_refused_body, event.reason)
+                                } else {
+                                    event.reason
+                                },
                             )
                         return@collectLatest
                     }
