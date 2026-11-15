@@ -2,11 +2,12 @@ name: Release
 
 # Pushing a version tag (`git tag v0.2.0 && git push origin v0.2.0`) builds a signed release bundle,
 # attaches it, with the R8 mapping, to a GitHub Release for that tag, and uploads it to Play's
-# internal testing track (`internal`) as a draft. Internal testing reaches only the testers listed in the
-# Play Console and never reaches production on its own. Moving a release on to open testing is done there.
+# internal testing track (`internal`) and rolls it out to the testers listed there. Internal testing never reaches
+# production on its own, and moving a release on to open testing is done in the Play Console.
 #
-# The upload is a draft because the app is not published yet, and Play's API refuses any other status
-# for an unpublished app. Once the first review has passed, switch `status` to `completed` (#1695).
+# The release is `completed`, so it reaches the internal testers without a step in the Console. Play's API accepted only a
+# draft while the app had no release rolled out (v0.3.1 and v0.4.0 were drafts), so if an upload is refused for that reason,
+# put `status: draft` back and roll the release out in the Console (#1695).
 #
 # Play's "what's new" notes live in distribution/whatsnew/. A note over Play's 500-character limit
 # fails the run at the start, by .github/scripts/check-whats-new.sh, before anything is built.
@@ -133,7 +134,6 @@ jobs:
             app/build/outputs/mapping/release/mapping.txt \
             --title "$GITHUB_REF_NAME" "${notes[@]}"
 
-      # The app is not published yet, so Play accepts only a draft (#1695 switches this to `completed`).
       # Last, so a Play failure cannot withhold the bundle from the GitHub Release.
       - name: Upload to Play's internal testing track
         uses: r0adkll/upload-google-play@e738b9dd8f2476ea806d921b64aacd24f34515a5 # v1.1.5
@@ -144,7 +144,7 @@ jobs:
           mappingFile: app/build/outputs/mapping/release/mapping.txt
           whatsNewDirectory: build/play-whatsnew
           tracks: internal
-          status: draft
+          status: completed
           # Play will not send this app's changes for review through the API (v0.3.0's upload failed on it), so the
           # edit is committed unsent and the release is sent for review from the Play Console.
           changesNotSentForReview: true
