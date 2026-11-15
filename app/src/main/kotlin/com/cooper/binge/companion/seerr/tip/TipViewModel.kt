@@ -3,6 +3,7 @@ package com.cooper.binge.companion.seerr.tip
 import android.app.Activity
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.cooper.binge.companion.seerr.review.ReviewPrompt
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -33,12 +34,13 @@ sealed interface TipEvent {
     data object Failed : TipEvent
 }
 
-/** Reads the tip prices once and runs one purchase at a time. */
+/** Reads the tip prices once and runs one purchase at a time. A tip given, or one still pending, ends the review prompt for the session. */
 @HiltViewModel
 internal class TipViewModel
     @Inject
     constructor(
         private val billing: TipBilling,
+        private val reviewPrompt: ReviewPrompt,
     ) : ViewModel() {
         private val _uiState = MutableStateFlow<TipUiState>(TipUiState.Loading)
         val uiState: StateFlow<TipUiState> = _uiState.asStateFlow()
@@ -63,8 +65,15 @@ internal class TipViewModel
             viewModelScope.launch {
                 try {
                     when (billing.give(activity, step)) {
-                        TipOutcome.Thanks -> _events.emit(TipEvent.Thanks)
-                        TipOutcome.Pending -> _events.emit(TipEvent.Pending)
+                        TipOutcome.Thanks -> {
+                            reviewPrompt.suppressForThisSession()
+                            _events.emit(TipEvent.Thanks)
+                        }
+                        TipOutcome.Pending -> {
+                            // Play may still complete it, and a rating must not follow a tip.
+                            reviewPrompt.suppressForThisSession()
+                            _events.emit(TipEvent.Pending)
+                        }
                         TipOutcome.Failed -> _events.emit(TipEvent.Failed)
                         TipOutcome.Cancelled -> Unit
                     }
