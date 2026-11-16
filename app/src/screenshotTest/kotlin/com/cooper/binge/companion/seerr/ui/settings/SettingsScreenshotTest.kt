@@ -266,7 +266,7 @@ private fun adminState() =
                 system = systemInfo(),
                 services = services().take(2),
             ),
-        app = AppSettings(bugReportUrl = "https://github.com/ScottCooper92/binge-seerr/issues/new", shakeToReport = true),
+        app = AppSettings(bugReportUrl = "https://github.com/ScottCooper92/app-feedback/issues/new", shakeToReport = true),
     )
 
 private fun demoState() = adminState().copy(connection = connection(SignInKind.ApiKey).copy(baseUrl = DEMO_ORIGIN))

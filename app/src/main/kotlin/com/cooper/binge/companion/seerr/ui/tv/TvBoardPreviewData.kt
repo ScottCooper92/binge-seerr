@@ -214,7 +214,7 @@ internal val SampleSettingsWithApp =
     SampleSettings.copy(
         app =
             AppSettings(
-                bugReportUrl = "https://github.com/ScottCooper92/binge-seerr/issues/new?template=bug.yml&app-version=0.1.0+%281%29",
+                bugReportUrl = "https://github.com/ScottCooper92/app-feedback/issues/new?template=seerr-bug.yml&app-version=0.1.0+%281%29",
                 shakeToReport = true,
             ),
     )

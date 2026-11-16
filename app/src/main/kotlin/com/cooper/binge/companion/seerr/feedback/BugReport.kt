@@ -6,12 +6,12 @@ import java.net.URLEncoder
 import javax.inject.Inject
 
 /**
- * Where a bug in this app is reported: a new issue on this repository, through the form in
- * `.github/ISSUE_TEMPLATE/bug.yml`. A fork points this at its own repository.
+ * Where a bug in this app is reported: a new issue on the public app-feedback repository, through its
+ * `seerr-bug.yml` form, which labels the issue for this app. A fork points this at its own repository.
  */
-const val BUG_REPORT_REPOSITORY = "https://github.com/ScottCooper92/binge-seerr"
+const val BUG_REPORT_REPOSITORY = "https://github.com/ScottCooper92/app-feedback"
 
-private const val BUG_TEMPLATE = "bug.yml"
+private const val BUG_TEMPLATE = "seerr-bug.yml"
 
 /**
  * The facts a report is prefilled with. Only the app and the device: never the server's address or
