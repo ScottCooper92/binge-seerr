@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import com.android.tools.screenshot.PreviewTest
 import com.cooper.binge.companion.seerr.preview.SeerrScreenPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrScreenStatePreview
+import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.seerr.SeerrServerProfile
 import com.cooper.binge.companion.seerr.seerr.SeerrVariant
 
@@ -44,5 +45,5 @@ class SettingsSearchScreenshotTest {
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
-    fun error() = SettingsSearchScreen(SettingsSearchUiState.Error, onRetry = {}, open = {}, onBack = {})
+    fun error() = SettingsSearchScreen(SettingsSearchUiState.Error(SeerrError.Unreachable), onRetry = {}, open = {}, onBack = {})
 }
