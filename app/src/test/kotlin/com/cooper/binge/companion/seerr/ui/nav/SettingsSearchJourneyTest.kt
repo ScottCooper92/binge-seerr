@@ -68,6 +68,23 @@ class SettingsSearchJourneyTest {
     }
 
     @Test
+    fun `a result opened is remembered, and Disconnect forgets it`() {
+        openSearchFromHub()
+        host.compose.onNode(hasSetTextAction()).performTextInput("logs")
+        host.awaitShowing(host.string(R.string.server_settings_logs))
+        host.compose.onNodeWithText(host.string(R.string.server_settings_logs)).performClick()
+        host.compose.waitUntil("the Logs page on the back stack", 10_000) {
+            host.stack().lastOrNull() == ServerSettingsPageRoute(ServerSettingsPage.Logs)
+        }
+
+        assertEquals(listOf("server.Logs|"), host.recentSearches())
+
+        host.disconnect()
+
+        assertEquals(emptyList<String>(), host.recentSearches())
+    }
+
+    @Test
     fun `Back from the search leaves it, and the hub is what is left`() {
         openSearchFromHub()
 

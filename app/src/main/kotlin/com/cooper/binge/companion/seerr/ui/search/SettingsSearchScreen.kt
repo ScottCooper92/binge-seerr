@@ -3,11 +3,16 @@ package com.cooper.binge.companion.seerr.ui.search
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -15,11 +20,14 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import com.binge.designsystem.component.BingeSearchField
 import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
@@ -46,13 +54,14 @@ internal fun SettingsSearchScreen(
     open: (SettingEntry) -> Unit,
     onBack: () -> Unit,
     initialQuery: String = "",
+    onClearRecent: () -> Unit = {},
 ) {
     BingeScreenScaffold(title = stringResource(R.string.search_title), bar = ScreenBar.Small, onBack = onBack) { padding ->
         ScreenBody(padding) { inner ->
             when (state) {
                 SettingsSearchUiState.Loading -> LoadingScreen(Modifier.padding(inner))
                 is SettingsSearchUiState.Error -> ErrorScreen(state.error, Modifier.padding(inner), onRetry)
-                is SettingsSearchUiState.Ready -> SearchBody(state.access, open, inner, initialQuery)
+                is SettingsSearchUiState.Ready -> SearchBody(state.access, state.recent, open, onClearRecent, inner, initialQuery)
             }
         }
     }
@@ -61,7 +70,9 @@ internal fun SettingsSearchScreen(
 @Composable
 private fun SearchBody(
     access: SearchAccess,
+    recent: List<SettingEntry>,
     open: (SettingEntry) -> Unit,
+    onClearRecent: () -> Unit,
     inner: PaddingValues,
     initialQuery: String,
 ) {
@@ -86,6 +97,7 @@ private fun SearchBody(
             modifier = Modifier.padding(resolvedContentPadding(vertical = dimensionResource(DesR.dimen.padding_s))),
         )
         when {
+            query.isBlank() && recent.isNotEmpty() -> Recent(recent, open, onClearRecent, Modifier.weight(1f))
             query.isBlank() ->
                 EmptyScreen(
                     stringResource(R.string.search_prompt),
@@ -101,6 +113,32 @@ private fun SearchBody(
                 )
             else -> Results(found, open, Modifier.weight(1f))
         }
+    }
+}
+
+/** "Recent" and its Clear, over the entries the viewer last opened from here. */
+@Composable
+private fun Recent(
+    recent: List<SettingEntry>,
+    open: (SettingEntry) -> Unit,
+    onClear: () -> Unit,
+    modifier: Modifier,
+) {
+    Column(modifier) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(resolvedContentPadding()),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                stringResource(R.string.search_recent),
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.weight(1f).semantics { heading() },
+            )
+            TextButton(onClick = onClear) { Text(stringResource(R.string.search_recent_clear)) }
+        }
+        Results(recent, open, Modifier.weight(1f))
     }
 }
 

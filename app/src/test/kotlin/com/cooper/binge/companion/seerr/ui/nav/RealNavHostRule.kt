@@ -25,6 +25,7 @@ import com.cooper.binge.companion.seerr.seerr.SeerrApi
 import com.cooper.binge.companion.seerr.seerr.SeerrAuth
 import com.cooper.binge.companion.seerr.seerr.SeerrCredentials
 import com.cooper.binge.companion.seerr.ui.HomeRoute
+import com.cooper.binge.companion.seerr.ui.search.RecentSearches
 import com.cooper.binge.companion.seerr.ui.users.settings.ADMIN
 import com.cooper.binge.companion.seerr.ui.users.settings.ScriptedSeerr
 import dagger.hilt.EntryPoint
@@ -32,6 +33,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.components.SingletonComponent
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.rules.RuleChain
 import org.junit.rules.TemporaryFolder
@@ -162,6 +164,12 @@ internal class RealNavHostRule(
         compose.waitForIdle()
     }
 
+    /** The settings search's recents as the app's own store holds them, newest first. */
+    fun recentSearches(): List<String> = runBlocking { graph().recentSearches().ids.first() }
+
+    /** Disconnects as the Disconnect button does, so everything keyed to the server is cleared. */
+    fun disconnect() = runBlocking { graph().connection().disconnect() }
+
     /** The back stack as it stands, read on the main thread. */
     fun stack(): List<NavKey> = compose.runOnIdle { activity.backStack.toList() }
 
@@ -272,6 +280,8 @@ internal class RealNavHostRule(
         fun connection(): SeerrConnection
 
         fun restore(): ConnectionRestore
+
+        fun recentSearches(): RecentSearches
     }
 }
 
