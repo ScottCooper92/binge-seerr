@@ -11,6 +11,7 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
@@ -23,6 +24,8 @@ import com.binge.designsystem.resolvedContentPadding
 import com.binge.designsystem.theme.BingeSentiment
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.demo.isDemoOrigin
+import com.cooper.binge.companion.seerr.seerr.releaseNotesUrl
+import com.cooper.binge.companion.seerr.ui.openInBrowser
 import com.binge.designsystem.component.ServerCard as DesServerCard
 
 /** The hero: the design system's [ServerCard], fed this server's name, fork, version, address, health and totals. */
@@ -35,10 +38,18 @@ internal fun ServerCard(
 ) {
     val demo = stringResource(R.string.demo_indicator)
     val updateAvailable = stringResource(R.string.hub_update_available)
+    val context = LocalContext.current
+    val releaseNotes = stringResource(R.string.hub_update_release_notes_description)
     val flags =
         listOfNotNull(
             ServerCardChip(demo, BingeSentiment.Caution).takeIf { server.baseUrl.isDemoOrigin() },
-            ServerCardChip(updateAvailable, BingeSentiment.Caution).takeIf { server.updateAvailable },
+            // The one chip that is a button: it opens the project's release notes, in the browser the user's tap opens.
+            ServerCardChip(
+                label = updateAvailable,
+                sentiment = BingeSentiment.Caution,
+                onClick = { context.openInBrowser(server.variant.releaseNotesUrl()) },
+                contentDescription = releaseNotes,
+            ).takeIf { server.updateAvailable },
         )
     DesServerCard(
         title = server.title,

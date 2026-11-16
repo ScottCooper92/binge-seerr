@@ -29,12 +29,14 @@ fun String.toTmdbPosterUrl(): String = TMDB_POSTER_BASE + withLeadingSlash()
 
 private fun String.withLeadingSlash(): String = if (startsWith("/")) this else "/$this"
 
-/** Where each fork publishes its releases: the "update available" row's destination. */
+/**
+ * Where each fork publishes its releases: the "update available" destination, in the chip, the Version row and the TV's code.
+ * Jellyseerr's project moved into Seerr's, and its old releases address redirects there, so both open Seerr's.
+ */
 fun SeerrVariant.releaseNotesUrl(): String =
     when (this) {
         SeerrVariant.Overseerr -> "https://github.com/sct/overseerr/releases"
-        SeerrVariant.Jellyseerr -> "https://github.com/fallenbagel/jellyseerr/releases"
-        SeerrVariant.Seerr, SeerrVariant.Unknown -> "https://github.com/seerr-team/seerr/releases"
+        SeerrVariant.Jellyseerr, SeerrVariant.Seerr, SeerrVariant.Unknown -> "https://github.com/seerr-team/seerr/releases"
     }
 
 /** Each fork's documentation. */

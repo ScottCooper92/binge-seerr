@@ -65,6 +65,9 @@ class HubViewModel
         /** A pull's re-read is running; a second pull meanwhile is dropped. */
         private val pulling = MutableStateFlow(false)
 
+        /** Bumped by a pull so the server's card is read again: its name and version can change on the server while the hub is open. */
+        private val serverPulls = MutableStateFlow(0)
+
         /** Re-read on every arrival: installing Binge while this screen is backgrounded should flip the tile unprompted. */
         private val installedTrigger = MutableStateFlow(installCheck.isInstalled())
 
@@ -85,7 +88,7 @@ class HubViewModel
          * Failure is its own value rather than null, because a null cannot say "still reading" from "gave up".
          */
         private val server: Flow<ServerRead> =
-            reloadTrigger
+            combine(reloadTrigger, serverPulls) { credentials, _ -> credentials }
                 .flatMapLatest { credentials ->
                     flow {
                         val remembered = cache.serverFor(credentials)
@@ -238,11 +241,12 @@ class HubViewModel
 
         /**
          * The dashboard's pull: re-reads what becoming visible does, the pending count and whether Binge is installed,
-         * and the downloads now rather than on the poll's next tick. A pull while one is running is dropped.
+         * the downloads now rather than on the poll's next tick, and the server's card (its title and version). A pull while one is running is dropped.
          */
         fun refresh() {
             if (!pulling.compareAndSet(expect = false, update = true)) return
             installedTrigger.value = installCheck.isInstalled()
+            serverPulls.value++
             viewModelScope.launch(dispatcher) {
                 try {
                     coroutineScope {
