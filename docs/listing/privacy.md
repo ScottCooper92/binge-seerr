@@ -94,8 +94,8 @@ two ways described above, and the phone-to-TV hand-off below, which stays on you
   zone. It reads two on/off settings the developer controls. It sends no account, server address,
   title or request data. It happens whether or not you agree to share usage data, and there is no
   switch for it in Settings.
-- **To GitHub**, only when you choose to report a bug: the app opens a new issue form in your
-  browser with the app version, the device and the Android version filled in. Nothing is sent until
+- **To GitHub**, only when you choose to report a bug: the app opens a new issue form on the
+  public app-feedback repository in your browser with the app version, the device and the Android version filled in. Nothing is sent until
   you submit the form yourself, and the issue is public.
 
 The app has no server of its own.
@@ -187,4 +187,5 @@ repository's history.
 
 ## Contact
 
-Open an issue at https://github.com/ScottCooper92/binge-seerr/issues.
+Report a bug at https://github.com/ScottCooper92/app-feedback/issues/new?template=seerr-bug.yml, or
+suggest a feature at https://github.com/ScottCooper92/app-feedback/issues/new?template=seerr-feature.yml.

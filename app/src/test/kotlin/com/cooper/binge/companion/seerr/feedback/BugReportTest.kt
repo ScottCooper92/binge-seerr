@@ -7,9 +7,9 @@ class BugReportTest {
     private val report = DeviceReport(appVersion = "0.1.0 (1)", device = "Google Pixel 8", androidVersion = "15 (API 35)")
 
     @Test
-    fun `the link opens the bug form on this repository, each field prefilled by its id and encoded`() {
+    fun `the link opens the Seerr bug form on the app-feedback repository, each field prefilled by its id and encoded`() {
         assertEquals(
-            "https://github.com/ScottCooper92/binge-seerr/issues/new?template=bug.yml" +
+            "https://github.com/ScottCooper92/app-feedback/issues/new?template=seerr-bug.yml" +
                 "&app-version=0.1.0+%281%29&device=Google+Pixel+8&android-version=15+%28API+35%29",
             bugReportUrl(report),
         )

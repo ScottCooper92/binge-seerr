@@ -165,7 +165,7 @@ class ThisAppViewModelTest {
             assertTrue(app.shakeToReport)
             assertFalse(app.shareUsageData)
             assertTrue(app.sendCrashReports)
-            assertTrue(app.bugReportUrl.startsWith("https://github.com/ScottCooper92/binge-seerr/issues/new?template=bug.yml"))
+            assertTrue(app.bugReportUrl.startsWith("https://github.com/ScottCooper92/app-feedback/issues/new?template=seerr-bug.yml"))
         }
 
     @Test
