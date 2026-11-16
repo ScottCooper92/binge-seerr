@@ -41,10 +41,13 @@ passes the design system's `BingeExpressiveTheme`/`BingeTvTheme` this app's own 
 `BingeBrand` in place of Binge's amber (#281), so the two apps share every component and
 still read as two products at a glance. `.gitmodules` is an agent-governed path, so an author
 bot's commit can revert a change to it — bump a submodule in a commit of its own,
-and check both pins after any bot push.
+and check every pin after any bot push.
 
-This app is GPL-3.0-or-later, with a section-7 permission for the Google libraries it links
-(`LICENSE-EXCEPTION.md`); its name and artwork are all rights reserved (`ASSETS.md`,
+A third included build, `homelab-core/`, is private: it provides `com.cooper.homelab:app-services` (the bug-report link
+and the shake filter). CI fetches it through a minted read-only token, and a checkout without access to it fails to build.
+
+This app is GPL-3.0-or-later, with a section-7 permission for the Google libraries and the
+homelab-core libraries it links (`LICENSE-EXCEPTION.md`); its name and artwork are all rights reserved (`ASSETS.md`,
 `TRADEMARKS.md`). The contracts in binge-companions stay Apache-2.0.
 
 ## The one rule everything else serves

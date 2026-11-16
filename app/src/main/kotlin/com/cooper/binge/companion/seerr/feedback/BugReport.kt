@@ -8,7 +8,7 @@ import javax.inject.Inject
 
 /**
  * Where a bug in this app is reported: a new issue on the public app-feedback repository, through its
- * `seerr-bug.yml` form, which labels the issue for this app. A fork points this at its own repository.
+ * `seerr-bug.yml` form, which labels the issue for this app.
  */
 const val BUG_REPORT_REPOSITORY = "https://github.com/ScottCooper92/app-feedback"
 
