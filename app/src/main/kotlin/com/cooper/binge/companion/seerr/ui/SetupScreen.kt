@@ -55,10 +55,9 @@ fun SetupScreen(
 ) {
     // A step keeps drawing itself while it slides out, after the state has moved on, so each draws the last state it had.
     val address = rememberLatest(state as? SetupUiState.Address)
-    val signIn = rememberLatest(state as? SetupUiState.SignIn)
-    val notSetUp = rememberLatest(state as? SetupUiState.NotSetUp)
-    // The current state decides which of the two second-step states is drawn; the remembered one only fills a step sliding out.
-    val server = if (state is SetupUiState.NotSetUp) notSetUp?.server else signIn?.server
+    val secondStep = rememberLatest(state.takeIf { it is SetupUiState.SignIn || it is SetupUiState.NotSetUp })
+    // The latest second-step state, not the current one, is drawn: a step sliding out must keep what it showed.
+    val server = (secondStep as? SetupUiState.NotSetUp)?.server ?: (secondStep as? SetupUiState.SignIn)?.server
     // While the address waits on the local-network permission, asking for it is the way on: Continue could only fail (#1099).
     val allow = if (address?.needsLocalNetwork == true) rememberAllowLocalNetwork(actions.onLocalNetworkChanged) else null
     StepFlowScreen(
@@ -86,13 +85,13 @@ fun SetupScreen(
         footer = { step ->
             when (step) {
                 ADDRESS_STEP -> address?.let { SetupAddressFooter(it, allow, actions.onInspect) }
-                else -> SetupSecondStepFooter(state, signIn, notSetUp, actions)
+                else -> SetupSecondStepFooter(secondStep, actions)
             }
         },
     ) { step ->
         when (step) {
             ADDRESS_STEP -> address?.let { SetupAddressContent(it, allow, actions) }
-            else -> SetupSecondStepContent(state, signIn, notSetUp, actions)
+            else -> SetupSecondStepContent(secondStep, actions)
         }
     }
     (state as? SetupUiState.SignIn)?.link?.let { link -> SetupLinkSheet(link, actions.onPlexLaunched, actions.onCancelLink) }

@@ -66,30 +66,25 @@ internal fun SetupNotSetUpFooter(
 /** Step two's content: the sign-in for a server that is set up, the message for one that is not. */
 @Composable
 internal fun SetupSecondStepContent(
-    state: SetupUiState,
-    signIn: SetupUiState.SignIn?,
-    notSetUp: SetupUiState.NotSetUp?,
+    step: SetupUiState?,
     actions: SetupActions,
 ) {
-    if (state is SetupUiState.NotSetUp) notSetUp?.let { SetupNotSetUpContent(it) } else signIn?.let { SetupSignInContent(it, actions) }
+    when (step) {
+        is SetupUiState.NotSetUp -> SetupNotSetUpContent(step)
+        is SetupUiState.SignIn -> SetupSignInContent(step, actions)
+        else -> Unit
+    }
 }
 
 /** Step two's footer, chosen the same way as [SetupSecondStepContent]. */
 @Composable
 internal fun SetupSecondStepFooter(
-    state: SetupUiState,
-    signIn: SetupUiState.SignIn?,
-    notSetUp: SetupUiState.NotSetUp?,
+    step: SetupUiState?,
     actions: SetupActions,
 ) {
-    if (state is SetupUiState.NotSetUp) {
-        notSetUp?.let {
-            SetupNotSetUpFooter(
-                it,
-                actions,
-            )
-        }
-    } else {
-        signIn?.let { SetupSignInFooter(it, actions) }
+    when (step) {
+        is SetupUiState.NotSetUp -> SetupNotSetUpFooter(step, actions)
+        is SetupUiState.SignIn -> SetupSignInFooter(step, actions)
+        else -> Unit
     }
 }
