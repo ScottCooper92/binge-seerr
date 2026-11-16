@@ -44,6 +44,22 @@ class SetupScreenshotTest {
     @Composable
     fun addressDemoOfferedSpanish() = SetupFrame(state = previewAddress().copy(canTryDemo = true), actions = NoSetupActions)
 
+    /** A server that has not finished its first-run setup: the message and Check again, in place of the sign-in (#1982). */
+    @PreviewTest
+    @SeerrScreenPreviews
+    @Composable
+    fun notSetUp() = SetupFrame(state = previewNotSetUp(), actions = NoSetupActions)
+
+    @PreviewTest
+    @SeerrSpanishPreviews
+    @Composable
+    fun notSetUpSpanish() = SetupFrame(state = previewNotSetUp(), actions = NoSetupActions)
+
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun notSetUpChecking() = SetupFrame(state = previewNotSetUp(isChecking = true), actions = NoSetupActions)
+
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable

@@ -67,6 +67,7 @@ internal fun SetupDraft.toUiState(
                 canTryDemo = editing == null && !received,
             )
         }
+        !server.setUp -> SetupUiState.NotSetUp(server = server, isChecking = busy, error = error)
         else ->
             SetupUiState.SignIn(
                 server = server,

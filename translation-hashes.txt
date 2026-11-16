@@ -942,6 +942,7 @@ app:setup_api_key  16f0ee47f993
 app:setup_api_key_admin_note  e07e8b5ee904
 app:setup_api_key_hint  f1235e7994db
 app:setup_change_server  b7ee1dabf9b9
+app:setup_check_again  fb7099ad8e81
 app:setup_connect  1a2303ede074
 app:setup_continue  31fbef162594
 app:setup_email  969ccbd3cf63
@@ -962,6 +963,8 @@ app:setup_local_network_explanation  3abb48eef323
 app:setup_mode_api_key  16f0ee47f993
 app:setup_mode_local  871e019bee76
 app:setup_mode_quick_connect  d15125b20094
+app:setup_not_encrypted  9ba1b2d1d68e
+app:setup_not_set_up_message  91f971110759
 app:setup_password  e7cf3ef4f17c
 app:setup_plex_hint  9419a8d16a74
 app:setup_quick_connect_hint  a48d0c1f99a4

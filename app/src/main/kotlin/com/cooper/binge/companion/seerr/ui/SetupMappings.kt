@@ -66,6 +66,8 @@ internal fun SetupUiState.toHandOffProgress(
                 attempt = attempts,
                 serverId = server.instanceId,
             )
+        // The phone has nothing to send to a server that is not set up, so for its page the attempt has failed.
+        is SetupUiState.NotSetUp -> HandOffProgress.Failed
         is SetupUiState.Connected -> HandOffProgress.Connected
     }
 
@@ -82,6 +84,7 @@ internal fun SeerrServerPreview.toSetupServer(): SetupServer {
         canResetPassword = settings.emailEnabled && SeerrSignInMode.Local in modes,
         backdropUrl = backdropUrls.firstOrNull(),
         instanceId = profile.instanceId,
+        setUp = profile.isSetUp,
     )
 }
 

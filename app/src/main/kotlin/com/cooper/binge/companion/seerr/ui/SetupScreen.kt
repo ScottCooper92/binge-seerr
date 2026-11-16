@@ -35,6 +35,8 @@ class SetupActions(
     val onDisconnect: (() -> Unit)? = null,
     /** Connects to the demo server (#1705). Defaulted: only the address step offers it. */
     val onTryDemo: () -> Unit = {},
+    /** Reads a server again that said it was not set up. Defaulted: only that state offers it. */
+    val onCheckAgain: () -> Unit = {},
 )
 
 /**
@@ -53,7 +55,9 @@ fun SetupScreen(
 ) {
     // A step keeps drawing itself while it slides out, after the state has moved on, so each draws the last state it had.
     val address = rememberLatest(state as? SetupUiState.Address)
-    val signIn = rememberLatest(state as? SetupUiState.SignIn)
+    val secondStep = rememberLatest(state.takeIf { it is SetupUiState.SignIn || it is SetupUiState.NotSetUp })
+    // The latest second-step state, not the current one, is drawn: a step sliding out must keep what it showed.
+    val server = (secondStep as? SetupUiState.NotSetUp)?.server ?: (secondStep as? SetupUiState.SignIn)?.server
     // While the address waits on the local-network permission, asking for it is the way on: Continue could only fail (#1099).
     val allow = if (address?.needsLocalNetwork == true) rememberAllowLocalNetwork(actions.onLocalNetworkChanged) else null
     StepFlowScreen(
@@ -64,7 +68,7 @@ fun SetupScreen(
         onExit = onBack,
         // The home swaps to the hub on the credentials landing; Connected is the frame in between.
         loading = state is SetupUiState.Loading || state is SetupUiState.Connected,
-        aside = { step -> if (step == SIGN_IN_STEP) signIn?.let { SetupServerBackdrop(it.server) } },
+        aside = { step -> if (step == SIGN_IN_STEP) server?.let { SetupServerBackdrop(it) } },
         heading = { step ->
             when (step) {
                 ADDRESS_STEP ->
@@ -75,19 +79,19 @@ fun SetupScreen(
                                 if (LocalFlags.current.bingePromotion) R.string.setup_intro else R.string.setup_intro_plain,
                             ),
                     )
-                else -> signIn?.let { SetupServerHeading(it.server) }
+                else -> server?.let { SetupServerHeading(it) }
             }
         },
         footer = { step ->
             when (step) {
                 ADDRESS_STEP -> address?.let { SetupAddressFooter(it, allow, actions.onInspect) }
-                else -> signIn?.let { SetupSignInFooter(it, actions) }
+                else -> SetupSecondStepFooter(secondStep, actions)
             }
         },
     ) { step ->
         when (step) {
             ADDRESS_STEP -> address?.let { SetupAddressContent(it, allow, actions) }
-            else -> signIn?.let { SetupSignInContent(it, actions) }
+            else -> SetupSecondStepContent(secondStep, actions)
         }
     }
     (state as? SetupUiState.SignIn)?.link?.let { link -> SetupLinkSheet(link, actions.onPlexLaunched, actions.onCancelLink) }
