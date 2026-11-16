@@ -5,11 +5,11 @@ later version. See [LICENSE](LICENSE).
 
 As a special exception, the copyright holders give you permission to link or combine this program
 with the Google Play services libraries, the Google Play Billing Library, the Google Play in-app
-review library and the Firebase libraries (or with modified versions of those libraries that are
-under the same licence), and to convey the resulting work. You must obey
-the GNU General Public License in all respects for all of the code used other than those libraries.
-The Corresponding Source for the resulting work need not include the source code of those
-libraries. If you modify this program, you may extend this exception to your version, but you are
+review library, the Firebase libraries and the homelab-core libraries by Scott Cooper (or with
+modified versions of those libraries that are under the same licence), and to convey the resulting
+work. You must obey the GNU General Public License in all respects for all of the code used other
+than those libraries. The Corresponding Source for the resulting work need not include the source
+code of those libraries. If you modify this program, you may extend this exception to your version, but you are
 not obliged to. If you do not wish to, delete this exception statement from your version. Under
 section 7 of the GPL, anyone who conveys a modified version may remove this additional permission
 from it.
@@ -20,6 +20,7 @@ This app links them. The Google Play services libraries include Block Store
 (`play-services-auth-blockstore`) and the code scanner (`play-services-code-scanner`). The Google
 Play Billing Library is `com.android.billingclient` (`billing-ktx`), and the Google Play in-app
 review library is `com.google.android.play:review`. The Firebase libraries include Remote Config
-and Crashlytics.
+and Crashlytics. The homelab-core libraries are the author's own shared libraries, linked as a
+git submodule and built with the app. They are not published under an open licence.
 
 This is a plain-language note and not part of the permission above.

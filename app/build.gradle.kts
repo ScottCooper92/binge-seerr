@@ -244,6 +244,7 @@ dependencies {
     // The television surface in ui/tv: tv-material and the phone's Material 3 are never mixed in one
     // file, so that package imports only this module's theme and units.
     implementation(libs.binge.designsystem.tv)
+    implementation(libs.homelab.appservices)
     implementation(libs.hilt.android)
     ksp(libs.hilt.android.compiler)
     implementation(libs.hilt.lifecycle.viewmodel.compose)
