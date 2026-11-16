@@ -68,6 +68,16 @@ class SettingsIndexTest {
     }
 
     @Test
+    fun `every entry has an id of its own, and it is not a label or a resource number`() {
+        val ids = settingsIndex.map { it.id }
+
+        assertEquals("two entries share an id", ids.size, ids.toSet().size)
+        assertTrue(ids.all { it.matches(Regex("[a-z.A-Z-]+")) })
+        assertEquals("server.Logs", settingsIndex.single { it.target == SearchTarget.Server(ServerSettingsPage.Logs) }.id)
+        assertEquals("this-app", settingsIndex.single { it.target == SearchTarget.ThisApp }.id)
+    }
+
+    @Test
     fun `an admin is offered the server's settings`() {
         assertTrue(admin.opens(SearchTarget.Server(ServerSettingsPage.Services)))
         assertTrue(admin.opens(SearchTarget.Server(ServerSettingsPage.Cache)))

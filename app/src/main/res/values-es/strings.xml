@@ -1339,4 +1339,6 @@
     <string name="tv_settings_release_notes">Notas de la versión</string>
     <string name="tv_settings_release_notes_scan">Escanéalo con la cámara del móvil para ver qué cambia en la nueva versión, o ve a %1$s</string>
     <string name="tv_settings_release_notes_code_description">Código QR que abre las notas de la versión del servidor</string>
+    <string name="search_recent">Recientes</string>
+    <string name="search_recent_clear">Borrar</string>
 </resources>

@@ -1396,4 +1396,6 @@
     <string name="tv_settings_release_notes">Release notes</string>
     <string name="tv_settings_release_notes_scan">Scan it with your phone\'s camera to read what the new version changes, or go to %1$s</string>
     <string name="tv_settings_release_notes_code_description">QR code that opens the server\'s release notes</string>
+    <string name="search_recent">Recent</string>
+    <string name="search_recent_clear">Clear</string>
 </resources>

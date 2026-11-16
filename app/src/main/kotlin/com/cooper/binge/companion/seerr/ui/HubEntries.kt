@@ -150,8 +150,12 @@ internal fun SettingsSearchEntry(
         onRetry = viewModel::retry,
         open = { entry ->
             val access = (state as? SettingsSearchUiState.Ready)?.access
-            if (access != null) onOpen(entry.target.route(access.userId))
+            if (access != null) {
+                viewModel.remember(entry)
+                onOpen(entry.target.route(access.userId))
+            }
         },
         onBack = onBack,
+        onClearRecent = viewModel::clearRecent,
     )
 }

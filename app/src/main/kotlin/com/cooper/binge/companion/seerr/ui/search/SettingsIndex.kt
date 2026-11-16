@@ -102,6 +102,23 @@ internal class SettingEntry(
     val shown: (SearchAccess) -> Boolean = { true },
 )
 
+/** A name for the target that holds across builds, unlike a resource's number: the enum's own name. */
+private val SearchTarget.key: String
+    get() =
+        when (this) {
+            is SearchTarget.Server -> "server.${page.name}"
+            is SearchTarget.Agent -> "agent.${agent.name}"
+            is SearchTarget.Account -> "account.${page.name}"
+            SearchTarget.ThisApp -> "this-app"
+            SearchTarget.Licences -> "licences"
+        }
+
+/**
+ * A stable name for an entry, to remember it by: its target. Never a label, which is translated, and never a resource's number, which
+ * changes from build to build. An entry that is a setting on a page will add its row here; a test holds that every id is the one entry's.
+ */
+internal val SettingEntry.id: String get() = target.key
+
 /** Whether the search may offer this entry: its page is one this viewer can open, and its own gate passes. */
 internal fun SettingEntry.available(access: SearchAccess): Boolean = target.opensFor(access) && shown(access)
 

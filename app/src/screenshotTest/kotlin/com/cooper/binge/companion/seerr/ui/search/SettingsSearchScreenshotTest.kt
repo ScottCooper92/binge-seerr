@@ -7,6 +7,8 @@ import com.cooper.binge.companion.seerr.preview.SeerrScreenStatePreview
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.seerr.SeerrServerProfile
 import com.cooper.binge.companion.seerr.seerr.SeerrVariant
+import com.cooper.binge.companion.seerr.ui.settings.server.ServerSettingsPage
+import com.cooper.binge.companion.seerr.ui.users.settings.UserSettingsPage
 
 private val admin = SearchAccess(userId = 1, isAdmin = true, profile = SeerrServerProfile(SeerrVariant.Seerr, version = null))
 
@@ -17,6 +19,26 @@ class SettingsSearchScreenshotTest {
     @SeerrScreenPreviews
     @Composable
     fun prompt() = SettingsSearchScreen(SettingsSearchUiState.Ready(admin), onRetry = {}, open = {}, onBack = {})
+
+    /** The page as it opens once something has been opened from it: the recents lead, with Clear. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun recent() =
+        SettingsSearchScreen(
+            SettingsSearchUiState.Ready(
+                admin,
+                recent =
+                    listOf(
+                        settingsIndex.single { it.target == SearchTarget.Server(ServerSettingsPage.Logs) },
+                        settingsIndex.single { it.target == SearchTarget.Account(UserSettingsPage.Password) },
+                        settingsIndex.single { it.target == SearchTarget.ThisApp },
+                    ),
+            ),
+            onRetry = {},
+            open = {},
+            onBack = {},
+        )
 
     /** A query that finds pages on both sides of the server's settings and the viewer's own. */
     @PreviewTest
