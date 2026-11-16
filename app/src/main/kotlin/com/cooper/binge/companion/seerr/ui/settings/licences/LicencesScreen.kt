@@ -20,6 +20,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.component.ListItemDestination
+import com.binge.designsystem.paneBackOrNull
 import com.binge.designsystem.resolvedContentPadding
 import com.binge.designsystem.template.BingeScreenScaffold
 import com.binge.designsystem.template.ScreenBar
@@ -55,7 +56,11 @@ internal fun LicencesScreen(
     onBack: () -> Unit,
     onOpenWebsite: (String) -> Unit,
 ) {
-    BingeScreenScaffold(bar = ScreenBar.Small, title = stringResource(R.string.licences_title), onBack = onBack) { padding ->
+    BingeScreenScaffold(
+        bar = ScreenBar.Small,
+        title = stringResource(R.string.licences_title),
+        onBack = paneBackOrNull(onBack),
+    ) { padding ->
         Box(modifier = Modifier.fillMaxSize().padding(padding.screenOuterPadding())) {
             val inner = padding.screenInnerPadding()
             when (state) {

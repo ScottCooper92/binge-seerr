@@ -41,6 +41,7 @@ import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.component.SnackbarMessageKind
 import com.binge.designsystem.component.showSnackbar
+import com.binge.designsystem.paneBackOrNull
 import com.binge.designsystem.resolvedContentInset
 import com.binge.designsystem.resolvedContentPadding
 import com.binge.designsystem.template.BingeScreenScaffold
@@ -117,7 +118,7 @@ fun LinkedAccountsScreen(
     BingeScreenScaffold(
         bar = ScreenBar.Small,
         title = stringResource(R.string.user_settings_page_linked),
-        onBack = actions.onBack,
+        onBack = paneBackOrNull(actions.onBack),
         snackbarHostState = snackbarHostState,
     ) { padding ->
         Box(modifier = Modifier.fillMaxSize().padding(padding.screenOuterPadding())) {

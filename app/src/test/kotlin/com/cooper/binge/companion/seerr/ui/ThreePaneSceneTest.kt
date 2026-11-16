@@ -25,6 +25,7 @@ import androidx.navigationevent.NavigationEventDispatcher
 import androidx.navigationevent.NavigationEventDispatcherOwner
 import androidx.navigationevent.compose.LocalNavigationEventDispatcherOwner
 import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.ui.settings.server.ServerSettingsPage
 import com.cooper.binge.companion.seerr.util.createSeerrComposeRule
 import com.cooper.binge.companion.seerr.util.string
 import org.junit.Assert.assertEquals
@@ -93,6 +94,7 @@ class ThreePaneSceneTest {
                             entry<RequestsRoute>(metadata = DetailPane + ThreePaneSection) { Text(REQUESTS) }
                             entry<RequestDetailRoute>(metadata = DetailPane) { route -> Text("request ${route.requestId}") }
                             entry<UserDetailRoute>(metadata = DetailPane) { route -> Text("user ${route.userId}") }
+                            entry<ServerSettingsPageRoute>(metadata = DetailPane) { route -> Text("settings page ${route.page}") }
                         },
                 )
             }
@@ -108,7 +110,7 @@ class ThreePaneSceneTest {
     }
 
     private fun onScreen(): List<String> =
-        listOf(HUB, DEFAULT, ISSUES, REQUESTS, "issue 3", "issue 4", "request 7", "user 2", nothingOpen).filter {
+        listOf(HUB, DEFAULT, ISSUES, REQUESTS, "issue 3", "issue 4", "request 7", "user 2", "settings page Logs", nothingOpen).filter {
             rule.onAllNodes(hasText(it)).fetchSemanticsNodes().isNotEmpty()
         }
 
@@ -117,6 +119,30 @@ class ThreePaneSceneTest {
         show(HubRoute)
 
         assertEquals(listOf(HUB, DEFAULT, nothingOpen), onScreen())
+    }
+
+    /**
+     * What the settings search opens (#1985): a page straight above the hub, with no section on the stack. It takes the third
+     * pane, the default section stays beside the hub, and the page is at depth 1 there, so the design system's Back rule gives
+     * it no arrow.
+     */
+    @Test
+    fun `a page straight above the hub takes the third pane, with the default section beside the hub`() {
+        val backStack = show(HubRoute, ServerSettingsPageRoute(ServerSettingsPage.Logs))
+
+        assertEquals(listOf(HUB, DEFAULT, "settings page Logs"), onScreen())
+
+        back()
+
+        assertEquals(listOf<NavKey>(HubRoute), backStack.toList())
+        assertEquals(listOf(HUB, DEFAULT, nothingOpen), onScreen())
+    }
+
+    @Test
+    fun `a page opened beside the open section takes the third pane, and the section stays`() {
+        show(HubRoute, RequestsRoute, ServerSettingsPageRoute(ServerSettingsPage.Logs))
+
+        assertEquals(listOf(HUB, REQUESTS, "settings page Logs"), onScreen())
     }
 
     @Test

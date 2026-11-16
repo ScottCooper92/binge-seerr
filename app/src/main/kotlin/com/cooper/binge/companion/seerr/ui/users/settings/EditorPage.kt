@@ -28,6 +28,7 @@ import com.binge.designsystem.component.BingeActionFooter
 import com.binge.designsystem.component.BingeConfirmDialog
 import com.binge.designsystem.component.SnackbarMessageKind
 import com.binge.designsystem.component.showSnackbar
+import com.binge.designsystem.paneBackOrNull
 import com.binge.designsystem.resolvedContentInset
 import com.binge.designsystem.template.BingeScreenScaffold
 import com.binge.designsystem.template.FormAction
@@ -146,7 +147,7 @@ internal fun <T> EditorPage(
     val onBack = rememberDiscardGuard(guarded = guarded, onLeave = actions.onBack)
     FormScreen(
         title = title,
-        onBack = onBack,
+        onBack = paneBackOrNull(onBack),
         bar = ScreenBar.Small,
         snackbarHostState = snackbarHostState,
         placement = if (footerCommit) FormActionPlacement.Footer else FormActionPlacement.TopBar,
