@@ -3,7 +3,9 @@ package com.cooper.binge.companion.seerr.tip
 import android.app.Activity
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.cooper.binge.companion.seerr.review.ReviewPrompt
+import com.cooper.homelab.core.review.ReviewPrompt
+import com.cooper.homelab.core.tip.TipBilling
+import com.cooper.homelab.core.tip.TipOutcome
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow

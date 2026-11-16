@@ -245,6 +245,7 @@ dependencies {
     // file, so that package imports only this module's theme and units.
     implementation(libs.binge.designsystem.tv)
     implementation(libs.homelab.appservices)
+    testImplementation(libs.homelab.testing)
     implementation(libs.hilt.android)
     ksp(libs.hilt.android.compiler)
     implementation(libs.hilt.lifecycle.viewmodel.compose)

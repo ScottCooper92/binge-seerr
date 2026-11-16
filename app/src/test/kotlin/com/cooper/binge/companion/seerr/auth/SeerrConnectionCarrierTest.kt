@@ -5,10 +5,10 @@ import com.cooper.binge.companion.seerr.seerr.SeerrApiFactory
 import com.cooper.binge.companion.seerr.seerr.SeerrAuth
 import com.cooper.binge.companion.seerr.seerr.SeerrCredentials
 import com.cooper.binge.companion.seerr.seerr.SeerrLoginRequest
-import com.cooper.binge.companion.seerr.util.InMemoryDataStore
 import com.cooper.binge.companion.seerr.util.PlainCipher
 import com.cooper.binge.companion.seerr.util.enqueueProfile
 import com.cooper.binge.companion.seerr.util.routeProfiles
+import com.cooper.homelab.core.testing.InMemoryDataStore
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest

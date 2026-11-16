@@ -2,6 +2,7 @@ package com.cooper.binge.companion.seerr.review
 
 import android.app.Activity
 import androidx.lifecycle.ViewModel
+import com.cooper.homelab.core.review.ReviewPrompt
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 
