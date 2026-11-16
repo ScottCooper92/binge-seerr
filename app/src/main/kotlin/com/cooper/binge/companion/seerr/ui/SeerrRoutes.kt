@@ -114,6 +114,10 @@ data class RequestDetailRoute(
 @Serializable
 data object SettingsRoute : SeerrRoute
 
+/** The settings search: the whole window, over the hub, until a result opens its page. */
+@Serializable
+data object SettingsSearchRoute : SeerrRoute
+
 /** This app's own page: Binge, feedback, what it reports, and About. The one section every viewer has. */
 @Serializable
 data object ThisAppRoute : SeerrRoute

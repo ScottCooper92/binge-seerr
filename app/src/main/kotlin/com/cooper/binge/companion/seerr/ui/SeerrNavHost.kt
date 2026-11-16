@@ -55,6 +55,7 @@ fun SeerrNavHost(
     SeerrPaneHost(backStack, connected, exit, modifier, defaultSection = { DefaultSectionPane(backStack, exit) }) { panes ->
         homeEntries(backStack, connected = { connectedState.value }, panes = panes, onExit = exit)
         sectionEntries(backStack, panes)
+        searchEntries(backStack, panes)
         detailEntries(backStack, showBack = panes.showBack)
         serverSettingsEntries(backStack)
     }
@@ -100,6 +101,7 @@ private fun EntryProviderScope<NavKey>.homeEntries(
                     selectedSection = backStack.selectedSection(defaultShowing = panes.hubBeside()),
                     onOpenSection = { section -> backStack.openSection(section) },
                     onOpenAccount = { id -> panes.open(backStack, UserDetailRoute(id)) },
+                    onOpenSearch = { backStack.push(SettingsSearchRoute) },
                     onOpenRequest = { id -> panes.open(backStack, RequestDetailRoute(id)) },
                     onReconnect = { panes.open(backStack, EditConnectionRoute) },
                     developerRows = debugDeveloperRows(backStack),
@@ -108,6 +110,25 @@ private fun EntryProviderScope<NavKey>.homeEntries(
                 LoadingScreen()
             }
         }
+    }
+}
+
+/**
+ * The settings search, over the whole window: it has no pane metadata, so it covers the hub and whatever is open beside it. A
+ * result leaves the search first and opens its page the way a hub row does, so Back from the page does not return here.
+ */
+private fun EntryProviderScope<NavKey>.searchEntries(
+    backStack: NavBackStack<NavKey>,
+    panes: PaneLayout,
+) {
+    entry<SettingsSearchRoute> { route ->
+        SettingsSearchEntry(
+            onOpen = { target ->
+                backStack.popIfTop(route)
+                panes.open(backStack, target)
+            },
+            onBack = { backStack.popIfTop(route) },
+        )
     }
 }
 
