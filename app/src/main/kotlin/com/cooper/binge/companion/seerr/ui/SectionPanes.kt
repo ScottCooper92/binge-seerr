@@ -169,6 +169,16 @@ internal fun NavBackStack<NavKey>.openSection(section: HubSection) {
 }
 
 /**
+ * Opens [route] in the detail pane in place of whatever the hub has open: everything above the hub goes, so Back from [route]
+ * leaves it and the pane shows the default section again. What a settings search result does on a window with the hub beside
+ * the pane (#1985).
+ */
+internal fun NavBackStack<NavKey>.openAtHub(route: NavKey) {
+    while (size > 1) removeLastOrNull()
+    add(route)
+}
+
+/**
  * Opens [route] from the [DefaultSection] standing in as the placeholder beside the hub. The section goes on the stack
  * beneath it first, so Back, and a narrower window, return to the list it was opened from rather than to the hub (#815).
  */

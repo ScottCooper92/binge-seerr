@@ -26,6 +26,7 @@ import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.BingePullToRefresh
 import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
+import com.binge.designsystem.paneBackOrNull
 import com.binge.designsystem.resolvedContentPadding
 import com.binge.designsystem.template.BingeScreenScaffold
 import com.binge.designsystem.template.ScreenBar
@@ -72,7 +73,7 @@ fun ServicesScreen(
     BingeScreenScaffold(
         bar = ScreenBar.Small,
         title = stringResource(R.string.settings_group_services),
-        onBack = actions.onBack,
+        onBack = paneBackOrNull(actions.onBack),
         snackbarHostState = snackbarHostState,
     ) { padding ->
         Box(modifier = Modifier.fillMaxSize().padding(padding.screenOuterPadding())) {

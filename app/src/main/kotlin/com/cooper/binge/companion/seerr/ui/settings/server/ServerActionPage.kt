@@ -9,6 +9,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import com.binge.designsystem.paneBackOrNull
 import com.binge.designsystem.template.BingeScreenScaffold
 import com.binge.designsystem.template.FormSaveFailureSnackbar
 import com.binge.designsystem.template.FormSaveStatus
@@ -43,7 +44,7 @@ internal fun ServerActionPage(
     BingeScreenScaffold(
         bar = ScreenBar.Small,
         title = title,
-        onBack = onBack,
+        onBack = paneBackOrNull(onBack),
         snackbarHostState = snackbarHostState,
         actions = { saveStatus?.let { FormSaveStatusText(it) } },
     ) { padding ->

@@ -34,6 +34,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.Dp
 import com.binge.designsystem.component.BingeLoadingIndicator
 import com.binge.designsystem.component.BingeTag
+import com.binge.designsystem.paneBackOrNull
 import com.binge.designsystem.template.FormScreen
 import com.binge.designsystem.template.MessageScreen
 import com.binge.designsystem.template.ScreenBar
@@ -68,7 +69,7 @@ fun BlocklistTagsScreen(
     val ready = state as? BlocklistTagsUiState.Ready
     FormScreen(
         title = stringResource(R.string.server_settings_blocklist_tags),
-        onBack = actions.onBack,
+        onBack = paneBackOrNull(actions.onBack),
         bar = ScreenBar.Small,
         snackbarHostState = snackbar,
         scrolling = false,
