@@ -170,7 +170,10 @@ private fun Dashboard(
         }
         SettingsSearchEntryField(
             onClick = actions.onOpenSearch,
-            modifier = Modifier.padding(sides).padding(bottom = dimensionResource(DesR.dimen.padding_m)),
+            modifier =
+                Modifier
+                    .padding(sides)
+                    .padding(vertical = dimensionResource(DesR.dimen.padding_m)),
         )
         ServerCard(server = state.server, overview = state.overview, sides = sides)
         SectionHeader(title = stringResource(R.string.hub_manage))
