@@ -38,7 +38,7 @@ jobs:
     uses: ScottCooper92/binge-ci/.github/workflows/author-retarget.yml@3e2474893ae086da95307d7f19633c9b388c5007 # v1
     with:
       author_bot_id: ${{ vars.AUTHOR_BOT_ID }}
-      private_submodules: homelab-core
+      private_submodules: homelab-core,binge-design-system,binge-ci
     secrets:
       AUTHOR_APP_ID: ${{ secrets.AUTHOR_APP_ID }}
       AUTHOR_APP_PRIVATE_KEY: ${{ secrets.AUTHOR_APP_PRIVATE_KEY }}

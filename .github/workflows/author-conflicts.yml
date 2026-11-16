@@ -37,7 +37,7 @@ jobs:
     with:
       dispatched: ${{ github.event_name == 'workflow_dispatch' }}
       author_bot_id: ${{ vars.AUTHOR_BOT_ID }}
-      private_submodules: homelab-core
+      private_submodules: homelab-core,binge-design-system,binge-ci
       conflict_rules: |
         Three kinds of file are never yours to arbitrate.
 
