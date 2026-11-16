@@ -46,9 +46,14 @@ data class SetupServer(
     val modes: List<SeerrSignInMode>,
     val canResetPassword: Boolean,
     val backdropUrl: String?,
+    /** False when the server reports that it has not finished its first-run setup, so there is nothing to sign in to yet. */
+    val setUp: Boolean = true,
     /** [com.cooper.binge.companion.seerr.seerr.SeerrServerProfile.instanceId]: what names this server whatever address reaches it. */
     val instanceId: String? = null,
 )
+
+/** Whether this server's address sends everything it carries in the clear, which a page marks beside the address. */
+internal val SetupServer.notEncrypted: Boolean get() = baseUrl.startsWith("http://", ignoreCase = true)
 
 /** The sign-in step's fields. Secrets live here only until the attempt finishes. */
 data class SignInForm(
@@ -206,6 +211,16 @@ sealed interface SetupUiState {
         val code: AddressHandOff.Listening? = null,
         /** A reset link went out in the last minute: Forgot password? waits, as each new link voids the last. */
         val resetCoolingDown: Boolean = false,
+    ) : SetupUiState
+
+    /**
+     * The server was found but has not finished its first-run setup, so the sign-in is replaced by a message and a way to
+     * read the server again ([isChecking] while it does). [error] is why the last read failed.
+     */
+    data class NotSetUp(
+        val server: SetupServer,
+        val isChecking: Boolean,
+        val error: SetupError?,
     ) : SetupUiState
 
     /** The credentials landed; the home swaps to the hub on the next frame. */

@@ -233,7 +233,8 @@ class SeerrConnection(
                     api.inspectProfile(SeerrVariant.Unknown).getOrElse { failure ->
                         throw if (failure is IOException) failure else NotSeerrServerException(failure)
                     }
-                val backdrops = attempt { api.backdrops() }.getOrDefault(emptyList())
+                // A server that is not set up has no session to give: nothing past its two public reads is sent to it.
+                val backdrops = if (profile.isSetUp) attempt { api.backdrops() }.getOrDefault(emptyList()) else emptyList()
                 SeerrServerPreview(baseUrl, profile, backdrops.map { it.toTmdbBackdropUrl() })
             }
         }

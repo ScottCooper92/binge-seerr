@@ -18,6 +18,11 @@ data class SeerrStatusDto(
  */
 @Serializable
 data class SeerrPublicSettings(
+    /**
+     * Whether the server has finished its first-run setup. Optional on purpose: a server that does not send it (older
+     * releases, forks) is taken to be set up, so only an explicit `false` means it is not. See [SeerrServerProfile.isSetUp].
+     */
+    @SerialName("initialized") val initialized: Boolean? = null,
     @SerialName("applicationTitle") val applicationTitle: String? = null,
     @SerialName("applicationUrl") val applicationUrl: String? = null,
     @SerialName("localLogin") val localLogin: Boolean = true,

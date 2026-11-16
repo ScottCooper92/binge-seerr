@@ -39,6 +39,7 @@ internal fun SetupViewModel.tvActions(onDisconnect: (() -> Unit)? = null): Setup
         onEditAddress = ::editAddress,
         onInspect = ::inspect,
         onChangeServer = ::changeServer,
+        onCheckAgain = ::inspect,
         onEditForm = ::editForm,
         onConnect = { connect(forLink = true) },
         onPlexLaunched = ::plexLaunched,

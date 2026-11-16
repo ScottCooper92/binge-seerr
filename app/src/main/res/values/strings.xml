@@ -1360,6 +1360,9 @@
     <string name="licences_unspecified">Licence not specified</string>
     <string name="licences_empty">There are no licences to list.</string>
     <string name="licences_unreadable">The licence list couldn\'t be read.</string>
+    <string name="setup_not_set_up_message">This server isn\'t set up yet. Finish setting it up in Seerr\'s web page, then check again.</string>
+    <string name="setup_check_again">Check again</string>
+    <string name="setup_not_encrypted">Not encrypted</string>
     <string name="user_settings_unlink_refused_title">Could not unlink</string>
     <string name="user_settings_unlink_refused_body">%1$s\n\nSet an email and password for this account, then unlink again.</string>
     <string name="server_settings_agent_test_failed_title">Test notification failed</string>

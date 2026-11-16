@@ -25,6 +25,11 @@ the raw facts behind it.
    `series4kEnabled`, `partialRequestsEnabled`, `enableSpecialEpisodes`, `hideAvailable`,
    `emailEnabled` and the rest.
 
+   `initialized` is the one field that says the server has no first-run setup behind it. Only an
+   explicit `false` means "not set up", and the app then shows a message in place of the sign-in,
+   because the server has no accounts to sign in to. A server that omits it (older releases, forks)
+   is taken to be set up.
+
 A feature is offered when all three say yes. The server's own `401`, `403` and `404` stay the
 backstop, and a screen that meets one of them shows it rather than retrying.
 

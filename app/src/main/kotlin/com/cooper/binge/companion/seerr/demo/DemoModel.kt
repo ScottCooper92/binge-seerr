@@ -62,6 +62,7 @@ internal class DemoModel(
 
     private fun publicSettings() =
         SeerrPublicSettings(
+            initialized = true,
             applicationTitle = "Seerr demo",
             mediaServerType = JELLYFIN,
             jellyfinServerName = "Demo library",
