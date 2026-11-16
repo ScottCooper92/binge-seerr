@@ -1392,6 +1392,11 @@
     <string name="search_kw_about">version update status</string>
     <string name="search_kw_this_app">preferences binge feedback bug report privacy</string>
     <string name="search_kw_licences">open source libraries</string>
+    <string name="search_path" translatable="false">%1$s › %2$s</string>
+    <string name="search_kw_address">domain link web</string>
+    <string name="search_kw_api_key">token secret</string>
+    <string name="search_kw_proxy">reverse proxy forwarded</string>
+    <string name="search_kw_sign_in">login password accounts</string>
     <string name="hub_update_release_notes_description">Update available, open the release notes</string>
     <string name="tv_settings_release_notes">Release notes</string>
     <string name="tv_settings_release_notes_scan">Scan it with your phone\'s camera to read what the new version changes, or go to %1$s</string>

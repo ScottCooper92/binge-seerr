@@ -10,6 +10,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.binge.designsystem.component.ProvideRowFocus
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.openInBrowser
 import com.cooper.binge.companion.seerr.ui.settings.ServiceType
@@ -61,13 +62,14 @@ import kotlinx.coroutines.flow.merge
 @Composable
 internal fun ServerSettingsPageEntry(
     page: ServerSettingsPage,
+    row: String?,
     onBack: () -> Unit,
     onOpenPage: (ServerSettingsPage) -> Unit,
     onOpenInstance: (ServiceType, Int?) -> Unit,
     onOpenRule: (Int?) -> Unit,
     onOpenAgent: (ServerAgent) -> Unit,
     onOpenSlider: (Int?) -> Unit,
-) {
+) = ProvideRowFocus(row) {
     when (page) {
         ServerSettingsPage.About -> AboutPage(onBack)
         ServerSettingsPage.Logs -> LogsPage(onBack)

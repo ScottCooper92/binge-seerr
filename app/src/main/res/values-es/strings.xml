@@ -1335,6 +1335,10 @@
     <string name="search_kw_about">versión actualización estado</string>
     <string name="search_kw_this_app">preferencias binge comentarios error informe privacidad</string>
     <string name="search_kw_licences">código abierto bibliotecas</string>
+    <string name="search_kw_address">dominio enlace web</string>
+    <string name="search_kw_api_key">token secreto</string>
+    <string name="search_kw_proxy">proxy inverso reenviado</string>
+    <string name="search_kw_sign_in">acceso contraseña cuentas</string>
     <string name="hub_update_release_notes_description">Actualización disponible, abrir las notas de la versión</string>
     <string name="tv_settings_release_notes">Notas de la versión</string>
     <string name="tv_settings_release_notes_scan">Escanéalo con la cámara del móvil para ver qué cambia en la nueva versión, o ve a %1$s</string>

@@ -152,7 +152,7 @@ internal fun SettingsSearchEntry(
             val access = (state as? SettingsSearchUiState.Ready)?.access
             if (access != null) {
                 viewModel.remember(entry)
-                onOpen(entry.target.route(access.userId))
+                onOpen(entry.target.route(access.userId, entry.row))
             }
         },
         onBack = onBack,

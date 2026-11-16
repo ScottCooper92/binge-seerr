@@ -77,7 +77,7 @@ class SettingsSearchJourneyTest {
             host.stack().lastOrNull() == ServerSettingsPageRoute(ServerSettingsPage.Logs)
         }
 
-        assertEquals(listOf("server.Logs"), host.recentSearches())
+        assertEquals(listOf("server.Logs|"), host.recentSearches())
 
         host.disconnect()
 
