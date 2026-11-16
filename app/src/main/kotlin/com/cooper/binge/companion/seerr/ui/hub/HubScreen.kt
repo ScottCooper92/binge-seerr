@@ -36,12 +36,15 @@ import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.demo.isDemoOrigin
 import com.cooper.binge.companion.seerr.ui.DisconnectButton
 import com.cooper.binge.companion.seerr.ui.rememberAllowLocalNetwork
+import com.cooper.binge.companion.seerr.ui.search.SettingsSearchEntryField
 import com.cooper.binge.companion.seerr.ui.state.LoadingScreen
 import com.binge.designsystem.R as DesR
 
 class HubActions(
     val onOpenSection: (HubSection) -> Unit,
     val onOpenAccount: (userId: Int) -> Unit,
+    /** The settings search: its field at the top of the dashboard opens it. */
+    val onOpenSearch: () -> Unit = {},
     val onOpenRequest: (requestId: Int) -> Unit,
     val onRetry: () -> Unit,
     /** The sign-in form on the saved server, to correct an address that no longer answers. */
@@ -165,6 +168,10 @@ private fun Dashboard(
             SectionHeader(title = stringResource(R.string.hub_downloading_now, state.downloading.size))
             DownloadingStrip(state.downloading, onClick = { actions.onOpenRequest(it.requestId) }, sides = sides)
         }
+        SettingsSearchEntryField(
+            onClick = actions.onOpenSearch,
+            modifier = Modifier.padding(sides).padding(bottom = dimensionResource(DesR.dimen.padding_m)),
+        )
         ServerCard(server = state.server, overview = state.overview, sides = sides)
         SectionHeader(title = stringResource(R.string.hub_manage))
         ItemGroup(

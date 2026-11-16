@@ -15,6 +15,9 @@ import com.cooper.binge.companion.seerr.ui.hub.HubActions
 import com.cooper.binge.companion.seerr.ui.hub.HubScreen
 import com.cooper.binge.companion.seerr.ui.hub.HubSection
 import com.cooper.binge.companion.seerr.ui.hub.HubViewModel
+import com.cooper.binge.companion.seerr.ui.search.SettingsSearchScreen
+import com.cooper.binge.companion.seerr.ui.search.SettingsSearchUiState
+import com.cooper.binge.companion.seerr.ui.search.SettingsSearchViewModel
 import com.cooper.binge.companion.seerr.ui.settings.SettingsActions
 import com.cooper.binge.companion.seerr.ui.settings.SettingsScreen
 import com.cooper.binge.companion.seerr.ui.settings.SettingsViewModel
@@ -27,6 +30,7 @@ internal fun HubEntry(
     selectedSection: HubSection?,
     onOpenSection: (HubSection) -> Unit,
     onOpenAccount: (Int) -> Unit,
+    onOpenSearch: () -> Unit,
     onOpenRequest: (Int) -> Unit,
     onReconnect: () -> Unit,
     developerRows: List<DeveloperRow>,
@@ -48,6 +52,7 @@ internal fun HubEntry(
             HubActions(
                 onOpenSection = onOpenSection,
                 onOpenAccount = onOpenAccount,
+                onOpenSearch = onOpenSearch,
                 onOpenRequest = onOpenRequest,
                 onRetry = viewModel::recheck,
                 onReconnect = onReconnect,
@@ -126,5 +131,27 @@ internal fun ThisAppEntry(
         tip = tip,
         tipEvents = tipViewModel.events,
         onGiveTip = { step -> activity?.let { tipViewModel.give(it, step) } },
+    )
+}
+
+/**
+ * The settings search over the whole window. A result opens its page above the hub: the search leaves the stack first, so Back
+ * from the page returns to the hub, not to the search.
+ */
+@Composable
+internal fun SettingsSearchEntry(
+    onOpen: (SeerrRoute) -> Unit,
+    onBack: () -> Unit,
+    viewModel: SettingsSearchViewModel = hiltViewModel(),
+) {
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    SettingsSearchScreen(
+        state = state,
+        onRetry = viewModel::retry,
+        open = { entry ->
+            val access = (state as? SettingsSearchUiState.Ready)?.access
+            if (access != null) onOpen(entry.target.route(access.userId))
+        },
+        onBack = onBack,
     )
 }
