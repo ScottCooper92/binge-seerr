@@ -1364,4 +1364,8 @@
     <string name="user_settings_unlink_refused_body">%1$s\n\nSet an email and password for this account, then unlink again.</string>
     <string name="server_settings_agent_test_failed_title">Test notification failed</string>
     <string name="server_settings_agent_test_failed_body">%1$s\n\nCheck this agent\'s settings, then send the test again.</string>
+    <string name="hub_update_release_notes_description">Update available, open the release notes</string>
+    <string name="tv_settings_release_notes">Release notes</string>
+    <string name="tv_settings_release_notes_scan">Scan it with your phone\'s camera to read what the new version changes, or go to %1$s</string>
+    <string name="tv_settings_release_notes_code_description">QR code that opens the server\'s release notes</string>
 </resources>

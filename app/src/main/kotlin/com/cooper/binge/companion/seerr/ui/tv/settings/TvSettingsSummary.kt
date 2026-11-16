@@ -14,6 +14,8 @@ import com.cooper.binge.companion.seerr.ui.settings.SignInKind
 internal class TvSettingsSummary(
     val title: String,
     val lines: List<String>,
+    /** Whether the server reports an update, so the page offers its release notes. */
+    val updateAvailable: Boolean = false,
 )
 
 /**
@@ -28,6 +30,7 @@ internal fun tvSettingsSummary(
 ): TvSettingsSummary =
     TvSettingsSummary(
         title = state.server.versionLine(),
+        updateAvailable = state.server.updateAvailable,
         lines =
             listOfNotNull(
                 state.connection.baseUrl,

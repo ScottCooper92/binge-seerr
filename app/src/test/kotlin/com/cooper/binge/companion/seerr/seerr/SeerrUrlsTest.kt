@@ -90,4 +90,12 @@ class SeerrUrlsTest {
         assertEquals("https://opencollective.com/seerr", SeerrVariant.Seerr.contributeUrl())
         assertEquals("https://github.com/sponsors/sct", SeerrVariant.Overseerr.contributeUrl())
     }
+
+    @Test
+    fun `each project's release notes are its own releases page, Jellyseerr's now Seerr's`() {
+        assertEquals("https://github.com/seerr-team/seerr/releases", SeerrVariant.Seerr.releaseNotesUrl())
+        assertEquals("https://github.com/seerr-team/seerr/releases", SeerrVariant.Jellyseerr.releaseNotesUrl())
+        assertEquals("https://github.com/sct/overseerr/releases", SeerrVariant.Overseerr.releaseNotesUrl())
+        assertEquals("https://github.com/seerr-team/seerr/releases", SeerrVariant.Unknown.releaseNotesUrl())
+    }
 }
