@@ -70,6 +70,18 @@ class SeerrErrorsTest {
         assertEquals(null, IOException("down").rejectionDetail())
     }
 
+    /** A 5xx that names its cause (the agent test's) is read by [serverMessage], which a rejection's detail is not. */
+    @Test
+    fun `the server's message is read from any failed call and nothing else`() {
+        assertEquals(
+            "Failed to send Telegram notification.",
+            http(500, """{"message":"Failed to send Telegram notification."}""").serverMessage(),
+        )
+        assertEquals("a b", http(400, """{"message":" a\n b "}""").serverMessage())
+        assertEquals(null, http(500, "<html>boom</html>").serverMessage())
+        assertEquals(null, IOException("down").serverMessage())
+    }
+
     @Test
     fun `reading the detail leaves the body for the next reader`() {
         val failure = http(400, """{"message":"request/body/id is read-only"}""")

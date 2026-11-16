@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModelStore
 import com.binge.designsystem.SaveStatus
 import com.binge.designsystem.save.SAVE_AS_MADE_DELAY_MILLIS
 import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.ui.users.settings.ADMIN
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorEvent
 import com.cooper.binge.companion.seerr.ui.users.settings.ExtrasEditorUiState
@@ -441,12 +442,23 @@ class NotificationAgentViewModelTest {
             seerr.serve("POST /api/v1/settings/notifications/email/test", """{"message":"boom"}""", code = 500)
             val failed = awaitEvent(vm.events)
             vm.test()
-            assertTrue(failed.await() is EditorEvent.Failed)
+            assertEquals("the server's reason, not a generic failure", EditorEvent.TestFailed("boom"), failed.await())
             // `test()` reports the outcome before it clears `testing`, so await the flag rather
             // than sampling it the moment the event lands.
             assertFalse(vm.awaitReady { !it.extras.testing }.extras.testing)
             // The failed test above must not have added an event of its own.
             assertEquals(2, analytics.events.size)
+        }
+
+    @Test
+    fun `a failed test with no reason from the server stays the generic failure`() =
+        runTest {
+            val vm = viewModel(ServerAgent.Email)
+            vm.awaitReady()
+            seerr.serve("POST /api/v1/settings/notifications/email/test", "", code = 500)
+            val failed = awaitEvent(vm.events)
+            vm.test()
+            assertEquals(EditorEvent.Failed(SeerrError.Server), failed.await())
         }
 
     @Test
