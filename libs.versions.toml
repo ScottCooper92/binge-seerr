@@ -93,6 +93,7 @@ binge-companion-kit = { module = "io.github.scottcooper92:binge-companion-kit" }
 # Version-less for the same reason: resolves to the included binge-design-system build.
 binge-designsystem = { module = "com.binge:designsystem" }
 binge-designsystem-tv = { module = "com.binge:designsystem-tv" }
+homelab-appservices = { module = "com.cooper.homelab:app-services" }
 hilt-android = { module = "com.google.dagger:hilt-android", version.ref = "hilt" }
 hilt-android-compiler = { module = "com.google.dagger:hilt-android-compiler", version.ref = "hilt" }
 hilt-android-testing = { module = "com.google.dagger:hilt-android-testing", version.ref = "hilt" }

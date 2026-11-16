@@ -122,6 +122,10 @@ git clone --recurse-submodules https://github.com/ScottCooper92/binge-seerr
 ./gradlew build
 ```
 
+The app also links a private library of the author's, `homelab-core`, through the same kind of submodule. Its source is not
+public, so **only the author's own CI and machines can build this app**. A fork can read the code and review a pull request,
+but cannot compile it, and a reproducible build from source is not possible. The licence exception below covers the link.
+
 That is the whole gate: the checks `CLAUDE.md` lists under Gates, from the Kotlin compile to the
 screenshot suite. JDK 21, then a `jvmTarget` of 17, `compileSdk` 37, `minSdk` 26 and the AGP in `libs.versions.toml`, matching Binge,
 so the extraction is a code move rather than a toolchain negotiation. The object graph is Hilt's,
@@ -172,14 +176,14 @@ CI triage table those workflows work from.
 
 ## Licence
 
-Copyright (c) Scott Cooper, and the Claude and bot identities that authored commits in this
-repository.
+Copyright (c) Scott Cooper.
 
 This app is free software under the GNU General Public License, version 3 or (at your option) any
 later version. See [LICENSE](LICENSE).
 
 [LICENSE-EXCEPTION.md](LICENSE-EXCEPTION.md) adds a permission under section 7 for the Google Play
-services, Play Billing, Play in-app review and Firebase libraries this app links.
+services, Play Billing, Play in-app review and Firebase libraries, and the `homelab-core` libraries by Scott Cooper, that this
+app links.
 
 The app's name and artwork are not under the GPL. They are all rights reserved: see
 [ASSETS.md](ASSETS.md) and [TRADEMARKS.md](TRADEMARKS.md). A fork needs a different name and
