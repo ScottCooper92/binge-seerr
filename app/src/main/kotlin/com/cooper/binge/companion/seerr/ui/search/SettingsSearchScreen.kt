@@ -28,7 +28,6 @@ import com.binge.designsystem.template.BingeScreenScaffold
 import com.binge.designsystem.template.ScreenBar
 import com.binge.designsystem.template.ScreenBody
 import com.cooper.binge.companion.seerr.R
-import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.ui.state.EmptyScreen
 import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
 import com.cooper.binge.companion.seerr.ui.state.LoadingScreen
@@ -52,7 +51,7 @@ internal fun SettingsSearchScreen(
         ScreenBody(padding) { inner ->
             when (state) {
                 SettingsSearchUiState.Loading -> LoadingScreen(Modifier.padding(inner))
-                SettingsSearchUiState.Error -> ErrorScreen(SeerrError.Unreachable, Modifier.padding(inner), onRetry)
+                is SettingsSearchUiState.Error -> ErrorScreen(state.error, Modifier.padding(inner), onRetry)
                 is SettingsSearchUiState.Ready -> SearchBody(state.access, open, inner, initialQuery)
             }
         }

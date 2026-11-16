@@ -6,6 +6,7 @@ import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.auth.SeerrConnectionHealthMonitor
 import com.cooper.binge.companion.seerr.seerr.SeerrApiFactory
 import com.cooper.binge.companion.seerr.seerr.SeerrAuth
+import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.util.FakeResponse
 import com.cooper.binge.companion.seerr.util.FakeSeerrServer
 import com.cooper.binge.companion.seerr.util.MainDispatcherRule
@@ -106,7 +107,7 @@ class SettingsSearchViewModelTest {
         runTest {
             val connection = connection()
             val viewModel = SettingsSearchViewModel(connection)
-            assertEquals(SettingsSearchUiState.Error, viewModel.settled())
+            assertEquals(SettingsSearchUiState.Error(SeerrError.NotConnected), viewModel.settled())
 
             connection.connect(seerr.url("/"), SeerrAuth.ApiKey("k3y")).getOrThrow()
             viewModel.retry()
