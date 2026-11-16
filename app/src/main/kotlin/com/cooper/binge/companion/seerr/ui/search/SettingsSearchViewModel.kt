@@ -4,7 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.binge.companion.sdk.attempt
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
+import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.seerr.toPermissions
+import com.cooper.binge.companion.seerr.seerr.toSeerrError
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -20,7 +22,9 @@ internal sealed interface SettingsSearchUiState {
         val access: SearchAccess,
     ) : SettingsSearchUiState
 
-    data object Error : SettingsSearchUiState
+    data class Error(
+        val error: SeerrError,
+    ) : SettingsSearchUiState
 }
 
 /**
@@ -47,14 +51,11 @@ internal class SettingsSearchViewModel
 
         private fun load() {
             viewModelScope.launch {
-                val user = attempt { connection.recentAuthenticatedUser() }.getOrNull()
-                val profile = attempt { connection.profile() }.getOrNull()
-                state.value =
-                    if (user == null || profile == null) {
-                        SettingsSearchUiState.Error
-                    } else {
-                        SettingsSearchUiState.Ready(SearchAccess(user.id, user.toPermissions().isAdmin, profile))
-                    }
+                attempt {
+                    val user = connection.recentAuthenticatedUser()
+                    SearchAccess(user.id, user.toPermissions().isAdmin, connection.profile())
+                }.onSuccess { state.value = SettingsSearchUiState.Ready(it) }
+                    .onFailure { state.value = SettingsSearchUiState.Error(it.toSeerrError()) }
             }
         }
     }
