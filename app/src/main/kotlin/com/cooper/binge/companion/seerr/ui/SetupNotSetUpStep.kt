@@ -14,9 +14,6 @@ import com.binge.designsystem.component.BingeTextButton
 import com.cooper.binge.companion.seerr.R
 import com.binge.designsystem.R as DesR
 
-/** Whether [this] address sends everything it carries in the clear, which the page marks beside the address. */
-internal val SetupServer.notEncrypted: Boolean get() = baseUrl.startsWith("http://", ignoreCase = true)
-
 /**
  * Step two for a server that has not finished its first-run setup: which server it is, and that there is nothing to sign in
  * to yet. No field is offered, because no credential could work.

@@ -59,7 +59,7 @@ private fun ColumnScope.NotSetUpBody(
     TvCompactButton(
         label = stringResource(R.string.setup_check_again),
         onClick = actions.onCheckAgain,
-        enabled = !state.isChecking,
+        loading = state.isChecking,
         style = TvButtonStyle.Primary,
         modifier = checkModifier,
     )

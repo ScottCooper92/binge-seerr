@@ -52,6 +52,9 @@ data class SetupServer(
     val instanceId: String? = null,
 )
 
+/** Whether this server's address sends everything it carries in the clear, which a page marks beside the address. */
+internal val SetupServer.notEncrypted: Boolean get() = baseUrl.startsWith("http://", ignoreCase = true)
+
 /** The sign-in step's fields. Secrets live here only until the attempt finishes. */
 data class SignInForm(
     val mode: SeerrSignInMode = SeerrSignInMode.ApiKey,
