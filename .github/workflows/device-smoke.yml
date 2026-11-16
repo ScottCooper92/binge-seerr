@@ -52,9 +52,20 @@ jobs:
       contents: read
       actions: write
     steps:
+      # The submodules are private to the author: the default token reads this repository only. This one is read-only.
+      - name: Mint a read-only token for the submodules
+        id: submodule_token
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349 # v2
+        with:
+          app-id: ${{ secrets.REVIEWER_APP_ID }}
+          private-key: ${{ secrets.REVIEWER_APP_PRIVATE_KEY }}
+          repositories: binge-seerr,homelab-core,binge-design-system,binge-ci
+          permission-contents: read
+
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           submodules: recursive
+          token: ${{ steps.submodule_token.outputs.token }}
           ref: ${{ github.event.inputs.ref || github.sha }}
 
       - name: Free disk space for the emulator
@@ -99,7 +110,7 @@ jobs:
 
       # A miss is not a failure: the setup step below falls back to the full download and boot.
       - name: Restore AVD cache
-        uses: ScottCooper92/binge-ci/.github/actions/restore-avd-cache@41179b5c9b9a67d67c4e33d790ea8e44aa165ac9 # v1
+        uses: ScottCooper92/binge-ci/.github/actions/restore-avd-cache@3e2474893ae086da95307d7f19633c9b388c5007 # v1
         with:
           device: smokeAtdApi34
           api-level: '34'
@@ -128,7 +139,7 @@ jobs:
         if: >
           !cancelled() && github.event_name == 'push' &&
           steps.setup-device.outcome == 'success'
-        uses: ScottCooper92/binge-ci/.github/actions/save-avd-cache@41179b5c9b9a67d67c4e33d790ea8e44aa165ac9 # v1
+        uses: ScottCooper92/binge-ci/.github/actions/save-avd-cache@3e2474893ae086da95307d7f19633c9b388c5007 # v1
         with:
           device: smokeAtdApi34
           api-level: '34'
