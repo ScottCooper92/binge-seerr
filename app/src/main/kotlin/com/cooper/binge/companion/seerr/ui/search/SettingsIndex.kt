@@ -53,44 +53,62 @@ internal data class SearchAccess(
  * app would not.
  */
 internal sealed interface SearchTarget {
-    /** The route this target opens for the viewer [userId]. */
-    fun route(userId: Int): SeerrRoute
+    /** The route this target opens for the viewer [userId], on the row with key [row] where the page has it; null opens the page at the top. */
+    fun route(
+        userId: Int,
+        row: String? = null,
+    ): SeerrRoute
 
     /** One of the server's settings pages, which the admin settings router lets only an admin open. */
     data class Server(
         val page: ServerSettingsPage,
     ) : SearchTarget {
-        override fun route(userId: Int): SeerrRoute = ServerSettingsPageRoute(page)
+        override fun route(
+            userId: Int,
+            row: String?,
+        ): SeerrRoute = ServerSettingsPageRoute(page, row)
     }
 
     /** One notification agent's page. */
     data class Agent(
         val agent: ServerAgent,
     ) : SearchTarget {
-        override fun route(userId: Int): SeerrRoute = NotificationAgentRoute(agent)
+        override fun route(
+            userId: Int,
+            row: String?,
+        ): SeerrRoute = NotificationAgentRoute(agent)
     }
 
     /** One of the signed-in user's own settings pages. */
     data class Account(
         val page: UserSettingsPage,
     ) : SearchTarget {
-        override fun route(userId: Int): SeerrRoute = UserSettingsPageRoute(userId, page)
+        override fun route(
+            userId: Int,
+            row: String?,
+        ): SeerrRoute = UserSettingsPageRoute(userId, page, row)
     }
 
     /** The This app page. */
     data object ThisApp : SearchTarget {
-        override fun route(userId: Int): SeerrRoute = ThisAppRoute
+        override fun route(
+            userId: Int,
+            row: String?,
+        ): SeerrRoute = ThisAppRoute
     }
 
     /** The open-source licences, which This app opens. */
     data object Licences : SearchTarget {
-        override fun route(userId: Int): SeerrRoute = LicencesRoute
+        override fun route(
+            userId: Int,
+            row: String?,
+        ): SeerrRoute = LicencesRoute
     }
 }
 
 /**
- * One thing the search can take the user to. [keywords] is one string of other words people look for it by, translated with the rest.
- * Opening an entry opens its page at the top; scrolling to a setting on it is a later slice.
+ * One thing the search can take the user to: a page, or one setting on it ([row]). [keywords] is one string of other words people look
+ * for it by, translated with the rest. Opening an entry opens its page, scrolled to and washing the row where it names one.
  */
 internal class SettingEntry(
     val target: SearchTarget,
@@ -98,6 +116,10 @@ internal class SettingEntry(
     val icon: ImageVector,
     @param:StringRes val section: Int,
     @param:StringRes val keywords: Int? = null,
+    /** The page a setting is on, for its path in the results; null for an entry that is the page itself. */
+    @param:StringRes val pageLabel: Int? = null,
+    /** The row to scroll to and wash on the page, by its [SettingRows] key; null opens the page at the top. */
+    val row: String? = null,
     /** A gate of the entry's own, for a page the server has only on some versions or media servers; the target's own gate applies besides. */
     val shown: (SearchAccess) -> Boolean = { true },
 )
@@ -108,9 +130,21 @@ internal fun SettingEntry.available(access: SearchAccess): Boolean = target.open
 /** The page-level gate: the server's own settings need an admin, the viewer's own pages need nothing more than signing in. */
 private fun SearchTarget.opensFor(access: SearchAccess): Boolean =
     when (this) {
-        is SearchTarget.Server, is SearchTarget.Agent -> access.isAdmin
+        is SearchTarget.Server -> access.isAdmin && page.shownFor(access)
+        is SearchTarget.Agent -> access.isAdmin
         is SearchTarget.Account -> page.opensFor(access)
         SearchTarget.ThisApp, SearchTarget.Licences -> true
+    }
+
+/** What the connected server has: a page of a feature only some servers have is offered, with every setting on it, only where this passes. */
+private fun ServerSettingsPage.shownFor(access: SearchAccess): Boolean =
+    when (this) {
+        ServerSettingsPage.BlocklistTags -> access.profile.hasBlocklistFilters
+        ServerSettingsPage.Tautulli -> access.profile.mediaServer == SeerrMediaServer.Plex
+        ServerSettingsPage.DiscoverSliders -> access.profile.hasDiscoverSliders
+        ServerSettingsPage.Network -> access.profile.hasNetworkSettings
+        ServerSettingsPage.Metadata -> access.profile.hasMetadataSettings
+        else -> true
     }
 
 /** The viewer's own pages, by the rules [com.cooper.binge.companion.seerr.ui.users.settings.settingsPagesFor] applies to oneself. */
@@ -128,7 +162,7 @@ private fun server(
     icon: ImageVector,
     @StringRes keywords: Int? = null,
     shown: (SearchAccess) -> Boolean = { true },
-) = SettingEntry(SearchTarget.Server(page), label, icon, R.string.hub_section_settings, keywords, shown)
+) = SettingEntry(SearchTarget.Server(page), label, icon, R.string.hub_section_settings, keywords, shown = shown)
 
 private fun account(
     page: UserSettingsPage,
@@ -162,7 +196,7 @@ internal val settingsIndex: List<SettingEntry> =
                 R.string.server_settings_blocklist_tags,
                 Icons.Filled.Block,
                 R.string.search_kw_blocklist_tags,
-            ) { it.profile.hasBlocklistFilters },
+            ),
         )
         add(server(ServerSettingsPage.Users, R.string.hub_section_users, Icons.Filled.Group, R.string.search_kw_users))
         add(
@@ -187,7 +221,7 @@ internal val settingsIndex: List<SettingEntry> =
                 R.string.server_settings_tautulli,
                 Icons.Filled.Insights,
                 R.string.search_kw_tautulli,
-            ) { it.profile.mediaServer == SeerrMediaServer.Plex },
+            ),
         )
         add(server(ServerSettingsPage.Services, R.string.settings_section_services, Icons.Filled.Hub, R.string.search_kw_services))
         add(
@@ -205,7 +239,7 @@ internal val settingsIndex: List<SettingEntry> =
                 R.string.server_settings_sliders,
                 Icons.Filled.ViewCarousel,
                 R.string.search_kw_sliders,
-            ) { it.profile.hasDiscoverSliders },
+            ),
         )
         add(
             server(
@@ -213,7 +247,7 @@ internal val settingsIndex: List<SettingEntry> =
                 R.string.server_settings_network,
                 Icons.Filled.Dns,
                 R.string.search_kw_network,
-            ) { it.profile.hasNetworkSettings },
+            ),
         )
         add(
             server(
@@ -221,11 +255,12 @@ internal val settingsIndex: List<SettingEntry> =
                 R.string.server_settings_metadata,
                 Icons.Filled.Public,
                 R.string.search_kw_metadata,
-            ) { it.profile.hasMetadataSettings },
+            ),
         )
         add(server(ServerSettingsPage.Cache, R.string.server_settings_cache, Icons.Filled.Cached, R.string.search_kw_cache))
         add(server(ServerSettingsPage.Logs, R.string.server_settings_logs, Icons.AutoMirrored.Filled.Article, R.string.search_kw_logs))
         add(server(ServerSettingsPage.About, R.string.settings_about, Icons.Filled.Info, R.string.search_kw_about))
+        addAll(settingRowEntries)
         add(
             SettingEntry(
                 SearchTarget.ThisApp,

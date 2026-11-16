@@ -119,7 +119,7 @@ private fun Results(
                         ListItem(
                             icon = entry.icon,
                             label = stringResource(entry.label),
-                            detail = stringResource(entry.section),
+                            detail = entry.path(),
                             onClick = { open(entry) },
                         )
                     },
@@ -128,3 +128,12 @@ private fun Results(
         }
     }
 }
+
+/** Where an entry is: its section, and for a setting its page too. */
+@Composable
+private fun SettingEntry.path(): String =
+    if (pageLabel == null) {
+        stringResource(section)
+    } else {
+        stringResource(R.string.search_path, stringResource(section), stringResource(pageLabel))
+    }

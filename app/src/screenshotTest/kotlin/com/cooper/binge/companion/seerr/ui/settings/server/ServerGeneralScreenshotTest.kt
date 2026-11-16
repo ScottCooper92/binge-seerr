@@ -9,6 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.android.tools.screenshot.PreviewTest
+import com.binge.designsystem.component.ProvideRowFocus
 import com.cooper.binge.companion.seerr.preview.PHONE_WIDTH
 import com.cooper.binge.companion.seerr.preview.SeerrComponentPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrFontScalePreviews
@@ -17,6 +18,7 @@ import com.cooper.binge.companion.seerr.preview.SeerrScreenStatePreview
 import com.cooper.binge.companion.seerr.preview.SeerrSpanishPreviews
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.seerr.SeerrVariant
+import com.cooper.binge.companion.seerr.ui.search.SettingRows
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorActions
 import com.cooper.binge.companion.seerr.ui.users.settings.ExtrasEditorUiState
 import kotlinx.coroutines.flow.emptyFlow
@@ -43,6 +45,13 @@ class ServerGeneralScreenshotTest {
     @SeerrSpanishPreviews
     @Composable
     fun spanish() = GeneralFrame(generalReady(jellyseerrSettings()))
+
+    /** Opened from the settings search on one setting: its row washed, as the search leaves it. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun openedOnRow() =
+        ProvideRowFocus(key = SettingRows.GENERAL_URL, showAtPeak = true) { GeneralFrame(generalReady(jellyseerrSettings())) }
 
     /** At 1.5x and 2x text the pinned Cancel and Save bar must still fit. */
     @PreviewTest

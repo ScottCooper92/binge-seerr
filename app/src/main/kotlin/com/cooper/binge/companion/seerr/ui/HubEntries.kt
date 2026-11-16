@@ -150,7 +150,7 @@ internal fun SettingsSearchEntry(
         onRetry = viewModel::retry,
         open = { entry ->
             val access = (state as? SettingsSearchUiState.Ready)?.access
-            if (access != null) onOpen(entry.target.route(access.userId))
+            if (access != null) onOpen(entry.target.route(access.userId, entry.row))
         },
         onBack = onBack,
     )

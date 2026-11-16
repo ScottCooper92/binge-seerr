@@ -267,9 +267,9 @@ private fun EntryProviderScope<NavKey>.detailEntries(
     }
     entry<UserSettingsPageRoute>(metadata = DetailPane) { route ->
         DetailPaneContent {
-            // No showBack: every page here is stacked above UserSettingsRoute, which is itself never
-            // pushed straight onto [HubRoute] (only from UserDetailEntry), so pane depth is always > 1.
-            UserSettingsPageEntry(route.userId, route.page, onBack = { backStack.popIfTop(route) })
+            // No showBack. Stacked above UserSettingsRoute the pane depth is > 1, but the settings search opens a page
+            // straight over the hub too, where the arrow shows beside the hub: #1985 slice 4 settles that.
+            UserSettingsPageEntry(route.userId, route.page, route.row, onBack = { backStack.popIfTop(route) })
         }
     }
     entry<EditConnectionRoute>(metadata = DetailPane) { route ->
@@ -279,15 +279,16 @@ private fun EntryProviderScope<NavKey>.detailEntries(
 
 /**
  * The server's own settings pages and the editors they open. They stack in the detail pane too, and
- * every one of them is reached by way of [SettingsRoute] first (or [ThisAppRoute], for licences), so pane depth here is always > 1 and
- * none of them take [showBack] — unlike [detailEntries], where two routes are reachable straight off
- * the hub. Wire a future route in here the same way [detailEntries] wires those two, if it changes that.
+ * every one of them is reached by way of [SettingsRoute] first (or [ThisAppRoute], for licences), so pane depth is > 1 and none of them
+ * take [showBack] — except from the settings search, which opens a page straight over the hub, where the arrow shows beside it until
+ * #1985 slice 4 wires these the way [detailEntries] wires its two.
  */
 private fun EntryProviderScope<NavKey>.serverSettingsEntries(backStack: NavBackStack<NavKey>) {
     entry<ServerSettingsPageRoute>(metadata = DetailPane) { route ->
         DetailPaneContent {
             ServerSettingsPageEntry(
                 page = route.page,
+                row = route.row,
                 onBack = { backStack.popIfTop(route) },
                 onOpenPage = { page -> backStack.add(ServerSettingsPageRoute(page)) },
                 onOpenInstance = { type, id -> backStack.add(DvrInstanceRoute(type, id)) },

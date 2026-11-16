@@ -16,6 +16,8 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.io.File
+import java.lang.reflect.Modifier
 
 /** What the settings search offers, per viewer and per server: the gate of every entry is the gate of its page. */
 class SettingsIndexTest {
@@ -26,7 +28,7 @@ class SettingsIndexTest {
 
     private fun offered(access: SearchAccess) = settingsIndex.filter { it.available(access) }
 
-    private fun SearchAccess.opens(target: SearchTarget) = offered(this).any { it.target == target }
+    private fun SearchAccess.opens(target: SearchTarget) = offered(this).any { it.target == target && it.row == null }
 
     @Test
     fun `every server settings page has an entry`() {
@@ -62,9 +64,86 @@ class SettingsIndexTest {
     }
 
     @Test
-    fun `no two entries open the same page under the same label`() {
-        val keys = settingsIndex.map { it.target to it.label }
+    fun `no two entries open the same page, label and row`() {
+        val keys = settingsIndex.map { Triple(it.target, it.label, it.row) }
         assertEquals(keys.size, keys.toSet().size)
+    }
+
+    private val rowConstants: Map<String, String> =
+        SettingRows::class.java.declaredFields
+            .filter { Modifier.isStatic(it.modifiers) && it.type == String::class.java }
+            .associate { it.name to it.get(null) as String }
+
+    @Test
+    fun `every row an entry names is a key SettingRows declares, and every key is named`() {
+        val named = settingsIndex.mapNotNull { it.row }.toSet()
+        assertTrue(rowConstants.isNotEmpty())
+        assertEquals("a key no entry names", emptySet<String>(), rowConstants.values.toSet() - named)
+        assertEquals("a row no key declares", emptySet<String>(), named - rowConstants.values.toSet())
+    }
+
+    /**
+     * The key an entry names has to be carried by a row, or the search opens a page and finds nothing to wash. Each page's rows are built
+     * in its screen file, so each key must be given to a row there: a row the page drops, or a key the screen never uses, fails here.
+     */
+    @Test
+    fun `every key an entry names is given to a row in its page's screen`() {
+        val screens =
+            mapOf(
+                "general." to "settings/server/ServerGeneralScreen.kt",
+                "network." to "settings/server/NetworkScreen.kt",
+                "users." to "settings/server/ServerUsersScreen.kt",
+                "metadata." to "settings/server/MetadataScreen.kt",
+                "account." to "users/settings/GeneralSettingsScreen.kt",
+            )
+        val root = File("src/main/kotlin/com/cooper/binge/companion/seerr/ui")
+        rowConstants.forEach { (name, key) ->
+            val file = screens.entries.single { key.startsWith(it.key) }.value
+            val given = Regex("key = SettingRows\\.$name\\b").containsMatchIn(File(root, file).readText())
+            assertTrue("$key is not given to a row in $file", given)
+        }
+    }
+
+    @Test
+    fun `an entry on a row opens its page with that row, and a page entry opens at the top`() {
+        val url = settingsIndex.single { it.row == SettingRows.GENERAL_URL }
+        assertEquals(ServerSettingsPageRoute(ServerSettingsPage.General, SettingRows.GENERAL_URL), url.target.route(7, url.row))
+        assertEquals(ServerSettingsPageRoute(ServerSettingsPage.Cache), SearchTarget.Server(ServerSettingsPage.Cache).route(7))
+        val name = settingsIndex.single { it.row == SettingRows.ACCOUNT_DISPLAY_NAME }
+        assertEquals(UserSettingsPageRoute(7, UserSettingsPage.General, SettingRows.ACCOUNT_DISPLAY_NAME), name.target.route(7, name.row))
+    }
+
+    private fun generalRowShown(
+        access: SearchAccess,
+        row: String,
+    ) = settingsIndex.single { it.target == SearchTarget.Server(ServerSettingsPage.General) && it.row == row }.available(access)
+
+    @Test
+    fun `a setting a page hides on some servers has the same gate as the page does`() {
+        val old = SearchAccess(1, isAdmin = true, profile = overseerr)
+
+        assertTrue(generalRowShown(admin, SettingRows.GENERAL_STREAMING_REGION))
+        assertFalse(generalRowShown(old, SettingRows.GENERAL_STREAMING_REGION))
+        assertFalse(generalRowShown(old, SettingRows.GENERAL_SPECIAL_EPISODES))
+        assertTrue(generalRowShown(old, SettingRows.GENERAL_TRUST_PROXY))
+        assertFalse(generalRowShown(admin, SettingRows.GENERAL_TRUST_PROXY))
+    }
+
+    @Test
+    fun `a setting on a page the server lacks is not offered either`() {
+        val old = SearchAccess(1, isAdmin = true, profile = overseerr)
+
+        assertTrue(offered(admin).any { it.row == SettingRows.NETWORK_CSRF })
+        assertTrue(offered(admin).any { it.row == SettingRows.METADATA_TV })
+        assertTrue(offered(old).none { it.row == SettingRows.NETWORK_CSRF })
+        assertTrue(offered(old).none { it.row == SettingRows.METADATA_TV })
+    }
+
+    @Test
+    fun `a viewer who is not an admin is offered the settings on their own page, not the server's`() {
+        val rows = offered(member).mapNotNull { it.row }
+        assertTrue(SettingRows.ACCOUNT_EMAIL in rows)
+        assertTrue(rows.none { it.startsWith("general.") || it.startsWith("network.") })
     }
 
     @Test
