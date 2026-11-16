@@ -53,7 +53,8 @@ internal class SettingsSearchViewModel
             viewModelScope.launch {
                 attempt {
                     val user = connection.recentAuthenticatedUser()
-                    SearchAccess(user.id, user.toPermissions().isAdmin, connection.profile())
+                    val profile = connection.profile()
+                    SearchAccess(user.id, user.toPermissions().isAdmin, profile)
                 }.onSuccess { state.value = SettingsSearchUiState.Ready(it) }
                     .onFailure { state.value = SettingsSearchUiState.Error(it.toSeerrError()) }
             }
