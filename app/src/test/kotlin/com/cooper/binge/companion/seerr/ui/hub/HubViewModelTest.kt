@@ -808,6 +808,23 @@ class HubViewModelTest {
             assertEquals(countReads + 1, reads("/api/v1/request/count"))
         }
 
+    /** The server's title is the card's name; renaming the server and pulling shows the new one without reconnecting. */
+    @Test
+    fun `a pull re-reads the server's card, so a renamed server shows its new title`() =
+        runTest {
+            healthyServer()
+            val vm = viewModel()
+            vm.setScreenVisible(true)
+            vm.awaitReady { it.server.title == "Family" }
+            seerr.awaitIdle()
+            serve("/api/v1/settings/public", """{"applicationTitle":"Home Server","mediaServerType":2}""")
+
+            vm.refresh()
+            val ready = vm.awaitReady { it.server.title == "Home Server" && !it.refreshing }
+
+            assertEquals("Home Server", ready.server.title)
+        }
+
     /** A pull is the spinner until its reads answer, and a second pull meanwhile reads nothing more. */
     @Test
     fun `a pull while one is running starts no second`() =
