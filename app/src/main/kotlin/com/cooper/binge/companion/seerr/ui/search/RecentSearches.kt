@@ -1,12 +1,15 @@
 package com.cooper.binge.companion.seerr.ui.search
 
 import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.MutablePreferences
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.withContext
 
 private val RECENT = stringPreferencesKey("recent_entries")
 
@@ -27,16 +30,24 @@ class RecentSearches(
     internal val ids: Flow<List<String>> =
         dataStore.data.map { it[RECENT].orEmpty().split(SEPARATOR).filter(String::isNotBlank) }.distinctUntilChanged()
 
-    /** [id] becomes the newest; one already there moves up rather than twice, and only the last [MAX_RECENT] stay. */
+    /**
+     * [id] becomes the newest; one already there moves up rather than twice, and only the last [MAX_RECENT] stay. Opening a result
+     * calls this and leaves the search at once, which clears the ViewModel it was launched from, so the write is not cancellable:
+     * DataStore runs an edit in its caller's context, and a cancelled caller drops it.
+     */
     internal suspend fun remember(id: String) {
         if (id.isBlank()) return
-        dataStore.edit { prefs ->
+        write { prefs ->
             val kept = prefs[RECENT].orEmpty().split(SEPARATOR).filter { it.isNotBlank() && it != id }
             prefs[RECENT] = (listOf(id) + kept).take(MAX_RECENT).joinToString(SEPARATOR)
         }
     }
 
     suspend fun clear() {
-        dataStore.edit { it.remove(RECENT) }
+        write { it.remove(RECENT) }
+    }
+
+    private suspend fun write(edit: (MutablePreferences) -> Unit) {
+        withContext(NonCancellable) { dataStore.edit(edit) }
     }
 }

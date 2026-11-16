@@ -1,8 +1,15 @@
 package com.cooper.binge.companion.seerr.ui.search
 
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -58,7 +65,25 @@ class RecentSearchesTest {
             recents.remember("")
             recents.remember("  ")
 
-            assertEquals(emptyList<String>(), recents.ids.first().filter { it.isEmpty() })
+            assertEquals(emptyList<String>(), recents.ids.first())
+        }
+
+    /**
+     * Opening a result remembers it and leaves the search at once, which clears the ViewModel the write was launched from. The write
+     * has to land anyway: the screen is gone, the entry was opened.
+     */
+    @Test
+    fun `an entry is remembered even when the screen that opened it is closed at once`() =
+        runTest {
+            val recents = recents()
+            val screen = CoroutineScope(Job() + StandardTestDispatcher(testScheduler))
+
+            val write = screen.launch(start = CoroutineStart.UNDISPATCHED) { recents.remember("a") }
+            screen.cancel()
+            write.join()
+            advanceUntilIdle()
+
+            assertEquals(listOf("a"), recents.ids.first())
         }
 
     @Test
