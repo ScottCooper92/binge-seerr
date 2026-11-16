@@ -276,7 +276,7 @@ class TvPagesClippingTest {
                     ),
                 app =
                     AppSettings(
-                        bugReportUrl = "$LONG_ADDRESS/issues/new?template=bug.yml&app-version=0.1.0+%281%29",
+                        bugReportUrl = "$LONG_ADDRESS/issues/new?template=seerr-bug.yml&app-version=0.1.0+%281%29",
                         shakeToReport = true,
                     ),
             ),

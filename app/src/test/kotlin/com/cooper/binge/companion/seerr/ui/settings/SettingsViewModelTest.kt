@@ -411,7 +411,7 @@ class SettingsViewModelTest {
 
             val app = checkNotNull(vm.awaitReady { it.app != null }.app)
             assertTrue(app.shakeToReport)
-            assertTrue(app.bugReportUrl.startsWith("https://github.com/ScottCooper92/binge-seerr/issues/new?template=bug.yml"))
+            assertTrue(app.bugReportUrl.startsWith("https://github.com/ScottCooper92/app-feedback/issues/new?template=seerr-bug.yml"))
         }
 
     @Test

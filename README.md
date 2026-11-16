@@ -95,6 +95,13 @@ The platform's decisions are in Binge's `docs/companion-platform-architecture.md
 and the wire contract in binge-companions' `contracts/`; this app's own roadmap is
 [#26](https://github.com/ScottCooper92/binge-seerr/issues/26).
 
+## Feedback
+
+[Report a bug](https://github.com/ScottCooper92/app-feedback/issues/new?template=seerr-bug.yml) or
+[suggest a feature](https://github.com/ScottCooper92/app-feedback/issues/new?template=seerr-feature.yml)
+on the public app-feedback repository. The app's own "Report a bug" row opens the same form with
+your app version and device filled in.
+
 ## Status
 
 **Pre-alpha, at contract parity.** The exported Service serves every REQUEST v1 operation against
