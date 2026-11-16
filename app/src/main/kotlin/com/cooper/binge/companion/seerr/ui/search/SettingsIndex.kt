@@ -3,46 +3,27 @@ package com.cooper.binge.companion.seerr.ui.search
 import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Article
-import androidx.compose.material.icons.automirrored.filled.Login
-import androidx.compose.material.icons.filled.Badge
 import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.Cached
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Dns
-import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.Event
 import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.Hub
-import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Insights
-import androidx.compose.material.icons.filled.Language
-import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.filled.Link
-import androidx.compose.material.icons.filled.LiveTv
-import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Password
 import androidx.compose.material.icons.filled.PhoneAndroid
-import androidx.compose.material.icons.filled.PlayCircle
 import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.Security
-import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.Storage
-import androidx.compose.material.icons.filled.Title
-import androidx.compose.material.icons.filled.Translate
 import androidx.compose.material.icons.filled.Tune
-import androidx.compose.material.icons.filled.Tv
 import androidx.compose.material.icons.filled.ViewCarousel
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
-import androidx.compose.material.icons.filled.VpnKey
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.seerr.SeerrMediaServer
 import com.cooper.binge.companion.seerr.seerr.SeerrServerProfile
-import com.cooper.binge.companion.seerr.seerr.SeerrVariant
-import com.cooper.binge.companion.seerr.seerr.isJellyseerrLineage
 import com.cooper.binge.companion.seerr.ui.LicencesRoute
 import com.cooper.binge.companion.seerr.ui.NotificationAgentRoute
 import com.cooper.binge.companion.seerr.ui.SeerrRoute
@@ -198,34 +179,6 @@ private fun agent(agent: ServerAgent) =
         R.string.search_kw_agent,
     )
 
-private fun setting(
-    page: ServerSettingsPage,
-    @StringRes label: Int,
-    icon: ImageVector,
-    row: String,
-    @StringRes keywords: Int? = null,
-    @StringRes pageLabel: Int = page.label(),
-    shown: (SearchAccess) -> Boolean = { true },
-) = SettingEntry(SearchTarget.Server(page), label, icon, R.string.hub_section_settings, keywords, pageLabel, row, shown)
-
-private fun setting(
-    page: UserSettingsPage,
-    @StringRes label: Int,
-    icon: ImageVector,
-    row: String,
-) = SettingEntry(SearchTarget.Account(page), label, icon, R.string.search_section_account, null, page.titleRes(), row)
-
-/** The page's title as its own entry shows it. */
-@StringRes
-private fun ServerSettingsPage.label(): Int =
-    when (this) {
-        ServerSettingsPage.General -> R.string.settings_group_general
-        ServerSettingsPage.Users -> R.string.hub_section_users
-        ServerSettingsPage.Network -> R.string.server_settings_network
-        ServerSettingsPage.Metadata -> R.string.server_settings_metadata
-        else -> error("$this has no setting entries yet")
-    }
-
 /**
  * Everything the search knows: each page of the console the signed-in user can open, once, with where it is. A new page adds its
  * line, and a test holds that every page an enum lists has one. An entry shows only where [available] says its page does.
@@ -307,194 +260,7 @@ internal val settingsIndex: List<SettingEntry> =
         add(server(ServerSettingsPage.Cache, R.string.server_settings_cache, Icons.Filled.Cached, R.string.search_kw_cache))
         add(server(ServerSettingsPage.Logs, R.string.server_settings_logs, Icons.AutoMirrored.Filled.Article, R.string.search_kw_logs))
         add(server(ServerSettingsPage.About, R.string.settings_about, Icons.Filled.Info, R.string.search_kw_about))
-        // Settings on the pages above, each opening its page on the row. A row the server's reply decides (Network's DNS cache, say) is not here.
-        add(setting(ServerSettingsPage.General, R.string.server_settings_application_title, Icons.Filled.Title, SettingRows.GENERAL_TITLE))
-        add(
-            setting(
-                ServerSettingsPage.General,
-                R.string.settings_application_url,
-                Icons.Filled.Link,
-                SettingRows.GENERAL_URL,
-                R.string.search_kw_address,
-            ),
-        )
-        add(
-            setting(
-                ServerSettingsPage.General,
-                R.string.settings_display_language,
-                Icons.Filled.Translate,
-                SettingRows.GENERAL_LANGUAGE,
-            ),
-        )
-        add(
-            setting(
-                ServerSettingsPage.General,
-                R.string.server_settings_api_key,
-                Icons.Filled.VpnKey,
-                SettingRows.GENERAL_API_KEY,
-                R.string.search_kw_api_key,
-            ),
-        )
-        add(
-            setting(
-                ServerSettingsPage.General,
-                R.string.server_settings_discover_region,
-                Icons.Filled.Public,
-                SettingRows.GENERAL_DISCOVER_REGION,
-            ),
-        )
-        add(
-            setting(
-                ServerSettingsPage.General,
-                R.string.server_settings_streaming_region,
-                Icons.Filled.LiveTv,
-                SettingRows.GENERAL_STREAMING_REGION,
-                shown = { it.profile.hasStreamingRegion },
-            ),
-        )
-        add(
-            setting(
-                ServerSettingsPage.General,
-                R.string.server_settings_discover_language,
-                Icons.Filled.Language,
-                SettingRows.GENERAL_DISCOVER_LANGUAGE,
-            ),
-        )
-        add(
-            setting(
-                ServerSettingsPage.General,
-                R.string.settings_hide_available,
-                Icons.Filled.Visibility,
-                SettingRows.GENERAL_HIDE_AVAILABLE,
-            ),
-        )
-        add(
-            setting(
-                ServerSettingsPage.General,
-                R.string.server_settings_hide_requested,
-                Icons.Filled.VisibilityOff,
-                SettingRows.GENERAL_HIDE_REQUESTED,
-                shown = { it.profile.variant.isJellyseerrLineage },
-            ),
-        )
-        add(
-            setting(
-                ServerSettingsPage.General,
-                R.string.server_settings_partial_requests,
-                Icons.Filled.Layers,
-                SettingRows.GENERAL_PARTIAL_REQUESTS,
-            ),
-        )
-        add(
-            setting(
-                ServerSettingsPage.General,
-                R.string.server_settings_special_episodes,
-                Icons.Filled.Event,
-                SettingRows.GENERAL_SPECIAL_EPISODES,
-                shown = { it.profile.variant.isJellyseerrLineage },
-            ),
-        )
-        add(
-            setting(
-                ServerSettingsPage.General,
-                R.string.server_settings_cache_images,
-                Icons.Filled.Image,
-                SettingRows.GENERAL_CACHE_IMAGES,
-            ),
-        )
-        add(
-            setting(
-                ServerSettingsPage.General,
-                R.string.server_settings_youtube_url,
-                Icons.Filled.PlayCircle,
-                SettingRows.GENERAL_YOUTUBE_URL,
-                shown = { it.profile.variant.isJellyseerrLineage },
-            ),
-        )
-        // Overseerr keeps these two on General; the forks moved them to Network.
-        add(
-            setting(
-                ServerSettingsPage.General,
-                R.string.server_settings_trust_proxy,
-                Icons.Filled.Shield,
-                SettingRows.GENERAL_TRUST_PROXY,
-                R.string.search_kw_proxy,
-                shown = { it.profile.variant == SeerrVariant.Overseerr },
-            ),
-        )
-        add(
-            setting(
-                ServerSettingsPage.General,
-                R.string.server_settings_csrf,
-                Icons.Filled.Lock,
-                SettingRows.GENERAL_CSRF,
-                shown = { it.profile.variant == SeerrVariant.Overseerr },
-            ),
-        )
-        add(
-            setting(
-                ServerSettingsPage.Network,
-                R.string.server_settings_trust_proxy,
-                Icons.Filled.Shield,
-                SettingRows.NETWORK_TRUST_PROXY,
-                R.string.search_kw_proxy,
-            ),
-        )
-        add(setting(ServerSettingsPage.Network, R.string.server_settings_csrf, Icons.Filled.Lock, SettingRows.NETWORK_CSRF))
-        add(
-            setting(
-                ServerSettingsPage.Users,
-                R.string.server_settings_local_login,
-                Icons.AutoMirrored.Filled.Login,
-                SettingRows.USERS_LOCAL_LOGIN,
-                R.string.search_kw_sign_in,
-            ),
-        )
-        add(
-            setting(
-                ServerSettingsPage.Users,
-                R.string.server_settings_default_permissions,
-                Icons.Filled.Security,
-                SettingRows.USERS_DEFAULT_PERMISSIONS,
-            ),
-        )
-        add(
-            setting(
-                ServerSettingsPage.Metadata,
-                R.string.server_settings_metadata_tv,
-                Icons.Filled.Tv,
-                SettingRows.METADATA_TV,
-                R.string.search_kw_metadata,
-            ),
-        )
-        add(
-            setting(
-                ServerSettingsPage.Metadata,
-                R.string.server_settings_metadata_anime,
-                Icons.Filled.Tv,
-                SettingRows.METADATA_ANIME,
-                R.string.search_kw_metadata,
-            ),
-        )
-        add(setting(UserSettingsPage.General, R.string.user_settings_display_name, Icons.Filled.Badge, SettingRows.ACCOUNT_DISPLAY_NAME))
-        add(setting(UserSettingsPage.General, R.string.user_settings_email, Icons.Filled.Email, SettingRows.ACCOUNT_EMAIL))
-        add(setting(UserSettingsPage.General, R.string.settings_display_language, Icons.Filled.Translate, SettingRows.ACCOUNT_LANGUAGE))
-        add(
-            setting(
-                UserSettingsPage.General,
-                R.string.server_settings_discover_region,
-                Icons.Filled.Public,
-                SettingRows.ACCOUNT_DISCOVER_REGION,
-            ),
-        )
-        add(
-            setting(
-                UserSettingsPage.General,
-                R.string.server_settings_discover_language,
-                Icons.Filled.Language,
-                SettingRows.ACCOUNT_DISCOVER_LANGUAGE,
-            ),
-        )
+        addAll(settingRowEntries)
         add(
             SettingEntry(
                 SearchTarget.ThisApp,
