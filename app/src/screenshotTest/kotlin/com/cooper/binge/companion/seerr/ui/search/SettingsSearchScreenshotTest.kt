@@ -23,6 +23,13 @@ class SettingsSearchScreenshotTest {
     @Composable
     fun results() = SettingsSearchScreen(SettingsSearchUiState.Ready(admin), onRetry = {}, open = {}, onBack = {}, initialQuery = "notif")
 
+    /** A query that finds settings: each result says which page it is on. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun settingResults() =
+        SettingsSearchScreen(SettingsSearchUiState.Ready(admin), onRetry = {}, open = {}, onBack = {}, initialQuery = "region")
+
     /** A viewer who is not an admin finds only what they may open. */
     @PreviewTest
     @SeerrScreenStatePreview
