@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.binge.designsystem.component.ProvideRowFocus
 import com.cooper.binge.companion.seerr.ui.users.settings.GeneralSettingsScreen
 import com.cooper.binge.companion.seerr.ui.users.settings.GeneralSettingsViewModel
 import com.cooper.binge.companion.seerr.ui.users.settings.LinkedAccountsActions
@@ -44,8 +45,9 @@ internal fun UserSettingsEntry(
 internal fun UserSettingsPageEntry(
     userId: Int,
     page: UserSettingsPage,
+    row: String?,
     onBack: () -> Unit,
-) {
+) = ProvideRowFocus(row) {
     when (page) {
         UserSettingsPage.General -> {
             val viewModel =

@@ -269,7 +269,7 @@ private fun EntryProviderScope<NavKey>.detailEntries(
         DetailPaneContent {
             // No showBack: every page here is stacked above UserSettingsRoute, which is itself never
             // pushed straight onto [HubRoute] (only from UserDetailEntry), so pane depth is always > 1.
-            UserSettingsPageEntry(route.userId, route.page, onBack = { backStack.popIfTop(route) })
+            UserSettingsPageEntry(route.userId, route.page, route.row, onBack = { backStack.popIfTop(route) })
         }
     }
     entry<EditConnectionRoute>(metadata = DetailPane) { route ->
@@ -288,6 +288,7 @@ private fun EntryProviderScope<NavKey>.serverSettingsEntries(backStack: NavBackS
         DetailPaneContent {
             ServerSettingsPageEntry(
                 page = route.page,
+                row = route.row,
                 onBack = { backStack.popIfTop(route) },
                 onOpenPage = { page -> backStack.add(ServerSettingsPageRoute(page)) },
                 onOpenInstance = { type, id -> backStack.add(DvrInstanceRoute(type, id)) },

@@ -23,6 +23,7 @@ import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
 import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.ui.search.SettingRows
 import com.cooper.binge.companion.seerr.ui.users.settings.AddressKeyboard
 import com.cooper.binge.companion.seerr.ui.users.settings.DecimalKeyboard
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorActions
@@ -71,7 +72,7 @@ fun NetworkScreen(
                         detail = stringResource(R.string.server_settings_trust_proxy_detail),
                     ) { on ->
                         actions.onEdit { it.copy(trustProxy = on) }
-                    },
+                    }.copy(key = SettingRows.NETWORK_TRUST_PROXY),
                     editorToggle(
                         Icons.Filled.Lock,
                         stringResource(R.string.server_settings_csrf),
@@ -80,7 +81,7 @@ fun NetworkScreen(
                         detail = stringResource(R.string.server_settings_csrf_detail),
                     ) { on ->
                         actions.onEdit { it.copy(csrfProtection = on) }
-                    },
+                    }.copy(key = SettingRows.NETWORK_CSRF),
                     draft.forceIpv4First?.let { prefer ->
                         editorToggle(Icons.Filled.Public, stringResource(R.string.server_settings_force_ipv4), prefer, enabled) { on ->
                             actions.onEdit { it.copy(forceIpv4First = on) }

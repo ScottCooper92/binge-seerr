@@ -12,6 +12,7 @@ import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.component.ListItemDestination
 import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.ui.search.SettingRows
 import com.cooper.binge.companion.seerr.ui.state.RequestStateChip
 import com.cooper.binge.companion.seerr.ui.state.RequestStateTone
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorActions
@@ -72,7 +73,7 @@ fun MetadataScreen(
                         choiceIcon = { it.icon() },
                     ) { provider ->
                         actions.onEdit { it.copy(tv = provider) }
-                    },
+                    }.copy(key = SettingRows.METADATA_TV),
                     choiceSettingItem(
                         Icons.Filled.Animation,
                         stringResource(R.string.server_settings_metadata_anime),
@@ -80,7 +81,7 @@ fun MetadataScreen(
                         draft.anime,
                         enabled,
                         choiceIcon = { it.icon() },
-                    ) { provider -> actions.onEdit { it.copy(anime = provider) } },
+                    ) { provider -> actions.onEdit { it.copy(anime = provider) } }.copy(key = SettingRows.METADATA_ANIME),
                 ),
         )
     }

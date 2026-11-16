@@ -1389,4 +1389,9 @@
     <string name="search_kw_about">version update status</string>
     <string name="search_kw_this_app">preferences binge feedback bug report privacy</string>
     <string name="search_kw_licences">open source libraries</string>
+    <string name="search_path" translatable="false">%1$s › %2$s</string>
+    <string name="search_kw_address">domain link web</string>
+    <string name="search_kw_api_key">token secret</string>
+    <string name="search_kw_proxy">reverse proxy forwarded</string>
+    <string name="search_kw_sign_in">login password accounts</string>
 </resources>

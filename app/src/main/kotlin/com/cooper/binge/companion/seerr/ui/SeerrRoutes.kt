@@ -71,12 +71,16 @@ data class UserSettingsRoute(
 data class UserSettingsPageRoute(
     val userId: Int,
     val page: UserSettingsPage,
+    /** The row to scroll to and wash, by [com.cooper.binge.companion.seerr.ui.search.SettingRows] key; null opens the page at the top. */
+    val row: String? = null,
 ) : SeerrRoute
 
 /** One of the server's own settings pages, for a user who manages settings. */
 @Serializable
 data class ServerSettingsPageRoute(
     val page: ServerSettingsPage,
+    /** The row to scroll to and wash, by [com.cooper.binge.companion.seerr.ui.search.SettingRows] key; null opens the page at the top. */
+    val row: String? = null,
 ) : SeerrRoute
 
 /** One Radarr or Sonarr instance; a null [id] is a new one. */
