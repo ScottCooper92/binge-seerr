@@ -143,6 +143,7 @@ app:hub_unreachable_body  4bb14008686e
 app:hub_unreachable_headline  4da010bad62f
 app:hub_unverified_callers  cdf5a058f8b8
 app:hub_update_available  ff8b555d818f
+app:hub_update_release_notes_description  a96fe628e3c5
 app:issue_action_reopen  a886d1dc4f12
 app:issue_action_resolve  c8f193b315c8
 app:issue_affected_episode  28a528818045
@@ -1034,6 +1035,9 @@ app:tv_settings_job_failed_short  1a97d93e7f6e
 app:tv_settings_job_stopped  1a4f630ac1b6
 app:tv_settings_job_working  5474eef8d0f1
 app:tv_settings_open_job  ed077f3d8125
+app:tv_settings_release_notes  1254829bd999
+app:tv_settings_release_notes_code_description  6d82d868bb87
+app:tv_settings_release_notes_scan  36e7f0eb7df0
 app:tv_settings_report_bug_code_description  f9ec3a4be5c3
 app:tv_settings_report_bug_scan  788e6d3aaded
 app:tv_settings_report_bug_show_code  c9eab29c97b9
