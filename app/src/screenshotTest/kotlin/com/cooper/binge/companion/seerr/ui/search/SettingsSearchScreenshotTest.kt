@@ -21,8 +21,7 @@ class SettingsSearchScreenshotTest {
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
-    fun results() =
-        SettingsSearchScreen(SettingsSearchUiState.Ready(admin), onRetry = {}, open = {}, onBack = {}, initialQuery = "notif")
+    fun results() = SettingsSearchScreen(SettingsSearchUiState.Ready(admin), onRetry = {}, open = {}, onBack = {}, initialQuery = "notif")
 
     /** A viewer who is not an admin finds only what they may open. */
     @PreviewTest
@@ -40,8 +39,7 @@ class SettingsSearchScreenshotTest {
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
-    fun noMatch() =
-        SettingsSearchScreen(SettingsSearchUiState.Ready(admin), onRetry = {}, open = {}, onBack = {}, initialQuery = "zzzz")
+    fun noMatch() = SettingsSearchScreen(SettingsSearchUiState.Ready(admin), onRetry = {}, open = {}, onBack = {}, initialQuery = "zzzz")
 
     @PreviewTest
     @SeerrScreenStatePreview
