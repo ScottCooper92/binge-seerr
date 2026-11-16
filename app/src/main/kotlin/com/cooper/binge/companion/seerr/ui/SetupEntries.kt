@@ -61,6 +61,7 @@ internal fun SetupViewModel.actions(onDisconnect: (() -> Unit)? = null): SetupAc
         onEditAddress = ::editAddress,
         onInspect = ::inspect,
         onChangeServer = ::changeServer,
+        onCheckAgain = ::inspect,
         onEditForm = ::editForm,
         onConnect = ::connect,
         onPlexLaunched = ::plexLaunched,

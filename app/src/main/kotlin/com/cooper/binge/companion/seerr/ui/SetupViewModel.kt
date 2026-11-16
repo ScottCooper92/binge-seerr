@@ -178,7 +178,7 @@ class SetupViewModel
                         val server = preview.toSetupServer()
                         // With the phone's session, straight in: the sign-in form is shown only if the server turns it down.
                         val session = draft.value.handedSession
-                        if (session == null) {
+                        if (session == null || !server.setUp) {
                             draft.update { it.copy(server = server, form = SignInForm(mode = server.modes.first())) }
                         } else {
                             // The server decides: a session it doesn't answer to is dropped, never kept, and the sign-in step

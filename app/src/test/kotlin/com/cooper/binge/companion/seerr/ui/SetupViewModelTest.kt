@@ -921,6 +921,84 @@ class SetupViewModelTest {
             assertEquals(SeerrAuth.ApiKey("n3w"), editor.awaitConnected().credentials.auth)
         }
 
+    private suspend fun SetupViewModel.awaitNotSetUp(match: (SetupUiState.NotSetUp) -> Boolean = { true }): SetupUiState.NotSetUp =
+        uiState.first { it is SetupUiState.NotSetUp && match(it) } as SetupUiState.NotSetUp
+
+    @Test
+    fun `a server that says it is not set up gets a message instead of a sign-in, and nothing needing a session`() =
+        runTest {
+            val vm = viewModel()
+            seerr.enqueueProfile(json("""{"version":"3.5.1"}"""), json("""{"initialized":false,"mediaServerType":null}"""))
+            vm.awaitAddress()
+            vm.editAddress(seerr.url("/"))
+            vm.inspect()
+
+            val notSetUp = vm.awaitNotSetUp()
+
+            assertFalse(notSetUp.server.setUp)
+            assertEquals(seerr.url("/"), notSetUp.server.baseUrl)
+            assertFalse(notSetUp.isChecking)
+            assertNull(notSetUp.error)
+            // Only the two public reads: not the artwork either, which is the one other call the step makes.
+            assertEquals(
+                setOf("/api/v1/status", "/api/v1/settings/public"),
+                seerr.requests.map { it.url.encodedPath }.toSet(),
+            )
+        }
+
+    @Test
+    fun `a server that says it is set up offers its sign-in as before`() =
+        runTest {
+            val signIn =
+                viewModel().inspect(status = """{"version":"3.5.1"}""", settings = """{"initialized":true,"mediaServerType":2}""")
+            assertTrue(signIn.server.setUp)
+        }
+
+    @Test
+    fun `a server that says nothing about it, as an older one does, is taken to be set up`() =
+        runTest {
+            val signIn = viewModel().inspect(status = """{"version":"3.4.0"}""", settings = """{"mediaServerType":2}""")
+            assertTrue(signIn.server.setUp)
+        }
+
+    @Test
+    fun `checking again reads the server once more, and the sign-in appears once it is set up`() =
+        runTest {
+            val vm = viewModel()
+            seerr.enqueueProfile(json("""{"version":"3.5.1"}"""), json("""{"initialized":false}"""))
+            vm.awaitAddress()
+            vm.editAddress(seerr.url("/"))
+            vm.inspect()
+            vm.awaitNotSetUp()
+
+            // Still not set up: the same message, read again.
+            seerr.enqueueProfile(json("""{"version":"3.5.1"}"""), json("""{"initialized":false}"""))
+            vm.inspect()
+            // Settled: read twice by now and no longer checking.
+            vm.awaitNotSetUp { !it.isChecking && seerr.requests.count { r -> r.url.encodedPath == "/api/v1/settings/public" } == 2 }
+
+            // The administrator finishes setup in the web page.
+            seerr.enqueueProfile(json("""{"version":"3.5.1"}"""), json("""{"initialized":true,"mediaServerType":2}"""))
+            seerr.enqueue(json("[]"))
+            vm.inspect()
+            assertTrue(vm.awaitSignIn().server.setUp)
+        }
+
+    @Test
+    fun `changing server from the not-set-up message goes back to the address`() =
+        runTest {
+            val vm = viewModel()
+            seerr.enqueueProfile(json("""{"version":"3.5.1"}"""), json("""{"initialized":false}"""))
+            vm.awaitAddress()
+            vm.editAddress(seerr.url("/"))
+            vm.inspect()
+            vm.awaitNotSetUp()
+
+            vm.changeServer()
+
+            vm.awaitAddress()
+        }
+
     private fun json(
         body: String,
         headers: okhttp3.Headers = headersOf(),

@@ -42,3 +42,8 @@ internal fun previewSignIn(
     error: SetupError? = null,
     notice: SetupNotice? = null,
 ) = SetupUiState.SignIn(server = server, form = form, isConnecting = isConnecting, link = null, error = error, notice = notice)
+
+internal fun previewNotSetUp(
+    isChecking: Boolean = false,
+    error: SetupError? = null,
+) = SetupUiState.NotSetUp(server = previewSetupServer().copy(setUp = false), isChecking = isChecking, error = error)

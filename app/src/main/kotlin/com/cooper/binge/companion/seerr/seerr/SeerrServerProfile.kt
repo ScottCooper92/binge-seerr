@@ -92,6 +92,13 @@ data class SeerrServerProfile(
             settings.applicationTitle?.trim()?.takeIf { it.isNotEmpty() }
                 ?: variant.takeUnless { it == SeerrVariant.Unknown }?.displayName
 
+    /**
+     * False only when the server says it has not finished its first-run setup: it has no accounts and no media server, so
+     * there is nothing to sign in to. A server that does not say, as older releases and forks do not, is set up. This is
+     * the server's own answer and never a version comparison.
+     */
+    val isSetUp: Boolean get() = settings.initialized != false
+
     /** An unknown lineage hides nothing, as [unknown] promises: it is taken as the family's latest, never as Overseerr. */
     private val jellyseerrLineage: Boolean get() = variant.isJellyseerrLineage || variant == SeerrVariant.Unknown
 
