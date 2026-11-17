@@ -108,9 +108,9 @@ class SettingsSearchHostTest {
             connection.connect(seerr.url("/"), SeerrAuth.ApiKey("k3y")).getOrThrow()
             val host = host(connection)
 
-            val state = host.ready() as SettingsSearchState.Ready
+            val state = host.ready() as SettingsSearchState.Ready<SeerrSearchTarget, SearchAccess>
 
-            assertEquals(7, host.userId)
+            assertEquals(7, state.viewer.userId)
             assertTrue(state.available(host.entry(logsId)))
         }
 
@@ -122,7 +122,7 @@ class SettingsSearchHostTest {
             connection.connect(seerr.url("/"), SeerrAuth.ApiKey("k3y")).getOrThrow()
             val host = host(connection)
 
-            val state = host.ready() as SettingsSearchState.Ready
+            val state = host.ready() as SettingsSearchState.Ready<SeerrSearchTarget, SearchAccess>
 
             assertFalse(state.available(host.entry(logsId)))
             assertTrue(state.available(host.entry(passwordId)))
@@ -152,7 +152,7 @@ class SettingsSearchHostTest {
             recents.remember(passwordId)
             recents.remember("a.page.the.app.dropped")
 
-            val ready = host(connection, recents).ready() as SettingsSearchState.Ready
+            val ready = host(connection, recents).ready() as SettingsSearchState.Ready<SeerrSearchTarget, SearchAccess>
 
             assertEquals(
                 "the server's Logs is an admin's, and the dropped id names nothing",
