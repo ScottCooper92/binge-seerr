@@ -22,8 +22,8 @@ import com.cooper.homelab.core.server.connection.CredentialStore as LoginStore
  * login store. The old file is only read and stays for one release, so a rollback still works. The secret is copied as the
  * blob it is, so nothing is decrypted: one that no longer decrypts imports as a saved server that is signed out, as does a
  * server the user had signed out of. [marker] makes it run once, so a user who signs out is not signed back in from the old
- * file. The server is saved under [serverId], so it has the id the rest of the app already keys by. The old keys are written here and
- * nowhere else.
+ * file. The server is saved under [serverId], so it has the id the rest of the app already keys by. This class only reads the old keys,
+ * which the legacy store spells too.
  */
 class LegacyCredentialImport(
     private val legacy: DataStore<Preferences>,
