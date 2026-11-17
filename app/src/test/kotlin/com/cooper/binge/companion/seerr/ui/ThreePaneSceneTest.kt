@@ -122,7 +122,7 @@ class ThreePaneSceneTest {
     }
 
     /**
-     * What the settings search opens (#1985): a page straight above the hub, with no section on the stack. It takes the third
+     * A page straight above the hub, with no section on the stack. It takes the third
      * pane, the default section stays beside the hub, and the page is at depth 1 there, so the design system's Back rule gives
      * it no arrow.
      */

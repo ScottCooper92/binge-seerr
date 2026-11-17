@@ -135,8 +135,8 @@ internal fun ThisAppEntry(
 }
 
 /**
- * The settings search over the whole window. A result opens its page above the hub: the search leaves the stack first, so Back
- * from the page returns to the hub, not to the search.
+ * The settings search over the whole window. A result opens its page above the search, which stays on the stack, so Back from
+ * the page returns to the search.
  */
 @Composable
 internal fun SettingsSearchEntry(

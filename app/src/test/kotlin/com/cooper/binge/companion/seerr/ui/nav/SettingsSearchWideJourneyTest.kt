@@ -30,7 +30,7 @@ private const val EMPTY_PAGE = """{"pageInfo":{"pages":0,"results":0},"results":
 
 /**
  * The settings search on a window with the hub beside the detail pane, through the real nav host (#1985): the search covers the
- * whole window, a result opens in the right pane in place of what was open, it has no Back arrow, and Back is the hub.
+ * whole window, a result opens in the right pane above the search, which stays on the stack, and Back returns to the search.
  */
 @HiltAndroidTest
 @RunWith(RobolectricTestRunner::class)
