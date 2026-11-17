@@ -189,6 +189,52 @@ class RegistryCredentialStoreTest {
         }
 
     @Test
+    fun `a failed save over a signed out server leaves it signed out on the same address`() =
+        runTest {
+            val install = install()
+            install.store.save(apiKey)
+            install.store.signOut()
+            cipher.encryptFails = true
+
+            assertFalse(install.store.save(session))
+
+            assertEquals(apiKey.baseUrl, install.store.signedOutServer.first())
+            assertEquals(
+                1,
+                install.registry
+                    .current()
+                    .servers.size,
+            )
+        }
+
+    @Test
+    fun `a failed save while signed in keeps the saved connection as it was`() =
+        runTest {
+            val install = install()
+            install.store.save(apiKey)
+            cipher.encryptFails = true
+
+            assertFalse(install.store.save(session))
+
+            assertEquals(apiKey, install.store.credentials.first())
+        }
+
+    @Test
+    fun `the address reads back in the shared library's canonical form`() =
+        runTest {
+            val install = install()
+
+            install.store.save(SeerrCredentials("https://Seerr.Example.com:443/", SeerrAuth.ApiKey("k3y")))
+
+            assertEquals(
+                "https://seerr.example.com/",
+                install.store.credentials
+                    .first()
+                    ?.baseUrl,
+            )
+        }
+
+    @Test
     fun `an address that is not one is not saved`() =
         runTest {
             val install = install()

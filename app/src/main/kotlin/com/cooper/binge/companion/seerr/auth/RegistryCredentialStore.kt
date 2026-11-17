@@ -62,21 +62,22 @@ class RegistryCredentialStore(
     override suspend fun save(credentials: SeerrCredentials): Boolean {
         ready()
         val address = ServerAddress.parse(credentials.baseUrl) ?: return false
-        val login = SeerrLogin(credentials.auth, credentials.variant)
         val existing = registry.current().activeServer
-        val server =
-            existing?.copy(address = address)?.also { registry.update(it) }
-                ?: SavedServer(serverId.currentServerId(), address, address.host, SEERR_KIND).also { registry.restore(it) }
-        return try {
-            logins.save(server.id, login)
-            true
+        val id = existing?.id ?: serverId.currentServerId()
+        // The login goes first. It encrypts before it writes, so a keymaster that throws leaves the registry exactly as it was.
+        try {
+            logins.save(id, SeerrLogin(credentials.auth, credentials.variant))
         } catch (cancelled: CancellationException) {
             throw cancelled
         } catch (_: Exception) {
-            // A keymaster that throws leaves nothing half-written: a server added for this attempt goes again.
-            if (existing == null) registry.remove(server.id)
-            false
+            return false
         }
+        if (existing != null) {
+            registry.update(existing.copy(address = address))
+        } else {
+            registry.restore(SavedServer(id, address, address.host, SEERR_KIND))
+        }
+        return true
     }
 
     override suspend fun clear() {
