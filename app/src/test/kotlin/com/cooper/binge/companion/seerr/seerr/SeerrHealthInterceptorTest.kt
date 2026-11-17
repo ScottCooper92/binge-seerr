@@ -1,6 +1,9 @@
 package com.cooper.binge.companion.seerr.seerr
 
-import com.cooper.binge.companion.seerr.auth.SeerrConnectionHealthReporter
+import com.cooper.binge.companion.seerr.auth.SeerrHealthReporter
+import com.cooper.homelab.core.server.connection.CallOutcome
+import com.cooper.homelab.core.server.connection.CallResult
+import com.cooper.homelab.core.server.connection.SeerrClassifier
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import okhttp3.OkHttpClient
@@ -24,19 +27,18 @@ private const val HTTP_SERVER_ERROR = 500
  * the way [toSeerrError] reads it, with the mark already on it (#689).
  */
 class SeerrHealthInterceptorTest {
-    private class RecordingReporter : SeerrConnectionHealthReporter {
+    /** Records what the shared classifier makes of each reported call, in the words these expectations have always used. */
+    private class RecordingReporter : SeerrHealthReporter {
         val calls = mutableListOf<String>()
+        private val classifier = SeerrClassifier(::isArrProxyRoute)
 
-        override fun reportSuccess() {
-            calls += "success"
-        }
-
-        override fun reportAuthFailure() {
-            calls += "auth"
-        }
-
-        override fun reportNetworkFailure() {
-            calls += "network"
+        override fun report(result: CallResult) {
+            when (classifier.classify(result)) {
+                CallOutcome.Answered -> calls += "success"
+                CallOutcome.AuthRejected -> calls += "auth"
+                CallOutcome.NoAnswer -> calls += "network"
+                CallOutcome.Ignore -> Unit
+            }
         }
     }
 

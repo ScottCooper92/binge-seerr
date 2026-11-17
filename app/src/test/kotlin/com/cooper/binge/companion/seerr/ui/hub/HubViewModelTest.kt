@@ -7,7 +7,7 @@ import com.cooper.binge.companion.seerr.auth.BingeHint
 import com.cooper.binge.companion.seerr.auth.DataStoreBingeConnectionStore
 import com.cooper.binge.companion.seerr.auth.LegacyCredentialStore
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
-import com.cooper.binge.companion.seerr.auth.SeerrConnectionHealthMonitor
+import com.cooper.binge.companion.seerr.auth.SeerrHealth
 import com.cooper.binge.companion.seerr.seerr.SeerrApiFactory
 import com.cooper.binge.companion.seerr.seerr.SeerrAuth
 import com.cooper.binge.companion.seerr.seerr.SeerrVariant
@@ -152,7 +152,7 @@ class HubViewModelTest {
                 PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("binge_connection.preferences_pb") },
             ),
     ): HubViewModel {
-        val monitor = SeerrConnectionHealthMonitor()
+        val monitor = SeerrHealth.standalone()
         connection =
             SeerrConnection(
                 store =
@@ -273,7 +273,7 @@ class HubViewModelTest {
         turn: () -> Unit,
     ): HubViewModel {
         healthyServer()
-        val monitor = SeerrConnectionHealthMonitor()
+        val monitor = SeerrHealth.standalone()
         connection =
             SeerrConnection(
                 store =

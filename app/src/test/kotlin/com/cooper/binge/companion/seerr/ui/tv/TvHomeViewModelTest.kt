@@ -7,7 +7,7 @@ import com.cooper.binge.companion.seerr.auth.CredentialStore
 import com.cooper.binge.companion.seerr.auth.LegacyCredentialStore
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.auth.SeerrConnectionHealth
-import com.cooper.binge.companion.seerr.auth.SeerrConnectionHealthMonitor
+import com.cooper.binge.companion.seerr.auth.SeerrHealth
 import com.cooper.binge.companion.seerr.seerr.SeerrApiFactory
 import com.cooper.binge.companion.seerr.seerr.SeerrAuth
 import com.cooper.binge.companion.seerr.seerr.SeerrCredentials
@@ -61,7 +61,7 @@ class TvHomeViewModelTest {
         )
 
     private fun TestScope.connection(store: CredentialStore = store()): SeerrConnection {
-        val monitor = SeerrConnectionHealthMonitor()
+        val monitor = SeerrHealth.standalone()
         return SeerrConnection(
             store = store,
             apis = SeerrApiFactory(logRequests = false, health = monitor, testDispatcher = drain::newDispatcher),

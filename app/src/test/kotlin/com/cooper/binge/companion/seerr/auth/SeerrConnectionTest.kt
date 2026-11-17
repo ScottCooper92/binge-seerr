@@ -274,7 +274,7 @@ class SeerrConnectionTest {
         runTest {
             server.enqueue(json("""{"id":1,"permissions":2}"""))
             server.enqueueProfile(json("""{"version":"3.1.0"}"""), json("""{"initialized":true}"""))
-            val monitor = SeerrConnectionHealthMonitor()
+            val monitor = SeerrHealth.standalone()
             val sut =
                 SeerrConnection(
                     store =
@@ -339,7 +339,7 @@ class SeerrConnectionTest {
     private suspend fun TestScope.healthyConnection(name: String): SeerrConnection {
         server.enqueue(json("""{"id":1,"permissions":2}"""))
         server.enqueueProfile(json("""{"version":"3.1.0"}"""), json("""{"initialized":true}"""))
-        val monitor = SeerrConnectionHealthMonitor()
+        val monitor = SeerrHealth.standalone()
         val sut =
             SeerrConnection(
                 store =

@@ -48,7 +48,7 @@ import kotlin.time.Duration.Companion.seconds
 class SeerrConnection(
     private val store: CredentialStore,
     private val apis: SeerrApiFactory,
-    private val healthMonitor: SeerrConnectionHealthMonitor = SeerrConnectionHealthMonitor(),
+    private val healthMonitor: SeerrHealth = SeerrHealth.standalone(),
     private val quickConnectPollInterval: Duration = 2.seconds,
     /** The off-device copy, kept in step with the store so a new device has something to restore from. */
     private val carrier: ConnectionCarrier = NoConnectionCarrier,
@@ -88,7 +88,7 @@ class SeerrConnection(
      */
     val health: Flow<SeerrConnectionHealth> =
         combine(store.credentials, healthMonitor.health) { saved, reported ->
-            if (saved == null) SeerrConnectionHealth.NotConnected else reported
+            if (saved == null) SeerrConnectionHealth.NotConnected else reported.toSeerr()
         }.distinctUntilChanged()
 
     /**
