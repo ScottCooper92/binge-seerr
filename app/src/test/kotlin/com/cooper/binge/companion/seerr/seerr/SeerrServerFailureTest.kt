@@ -10,6 +10,7 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.ResponseBody.Companion.toResponseBody
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import retrofit2.HttpException
@@ -22,6 +23,9 @@ import javax.net.ssl.SSLHandshakeException
 
 /** The shared library's failure for each answer `toSeerrError` classifies, so a screen can move over without its behaviour changing. */
 class SeerrServerFailureTest {
+    /** `Refused` compares by type alone, so a test reads the reason itself. */
+    private fun ServerFailure.reason(): String? = (this as ServerFailure.Refused).reason
+
     private fun http(
         code: Int,
         body: String = "{}",
@@ -38,7 +42,7 @@ class SeerrServerFailureTest {
     fun `a 403 that names no quota is a permission and a quota 403 is a refusal`() =
         runTest {
             assertEquals(ServerFailure.NotPermitted, http(403, """{"message":"No permission"}""").toServerFailure())
-            assertEquals(ServerFailure.Refused("Quota exceeded"), http(403, """{"message":"Quota exceeded"}""").toServerFailure())
+            assertEquals("Quota exceeded", http(403, """{"message":"Quota exceeded"}""").toServerFailure().reason())
             assertFalse(http(403, """{"message":"Quota exceeded"}""").toServerFailure().rejectsSession)
         }
 
@@ -47,8 +51,8 @@ class SeerrServerFailureTest {
         runTest {
             assertEquals(ServerFailure.NotFound, http(404).toServerFailure())
             assertEquals(ServerFailure.ServerError, http(502).toServerFailure())
-            assertEquals(ServerFailure.Refused("read-only"), http(400, """{"message":" read-only "}""").toServerFailure())
-            assertEquals(ServerFailure.Refused(null), http(409, "{}").toServerFailure())
+            assertEquals("read-only", http(400, """{"message":" read-only "}""").toServerFailure().reason())
+            assertNull(http(409, "{}").toServerFailure().reason())
         }
 
     @Test
@@ -56,9 +60,9 @@ class SeerrServerFailureTest {
         runTest {
             assertEquals(ServerFailure.NotConnected, NotConnectedException().toServerFailure())
             assertEquals(ServerFailure.LocalNetworkDenied, LocalNetworkDeniedException("192.168.1.2").toServerFailure())
-            assertEquals(ServerFailure.Unreachable(timedOut = true), SocketTimeoutException().toServerFailure())
-            assertEquals(ServerFailure.Unreachable(), UnknownHostException("nas").toServerFailure())
-            assertEquals(ServerFailure.Unreachable(), IOException("reset").toServerFailure())
+            assertTrue((SocketTimeoutException().toServerFailure() as ServerFailure.Unreachable).timedOut)
+            assertFalse((UnknownHostException("nas").toServerFailure() as ServerFailure.Unreachable).timedOut)
+            assertFalse((IOException("reset").toServerFailure() as ServerFailure.Unreachable).timedOut)
         }
 
     @Test

@@ -27,7 +27,7 @@ suspend fun Throwable.toServerFailure(): ServerFailure =
         else -> FailureMapper(SeerrTransport).fromThrowable(this)
     }
 
-/** Whether a failure of `GET /auth/me` means the server holds no user for these credentials; the same rule as [rejectsSession]. */
+/** Whether a failure of `GET /auth/me` means the server holds no user for these credentials; the same rule as [SeerrError.rejectsSession]. */
 val ServerFailure.rejectsSession: Boolean
     get() = this == ServerFailure.SessionRejected || this == ServerFailure.NotPermitted
 
@@ -47,9 +47,7 @@ private class SeerrAnswer(
             http.refusedWithLiveSession() -> ServerFailure.NotPermitted
             status == HTTP_FORBIDDEN ->
                 if (body.text().namesQuota()) {
-                    ServerFailure.Refused(
-                        http.serverMessage(),
-                    )
+                    ServerFailure.Refused(http.serverMessage())
                 } else {
                     ServerFailure.NotPermitted
                 }
