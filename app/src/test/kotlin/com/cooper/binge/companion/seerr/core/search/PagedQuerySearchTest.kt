@@ -161,7 +161,8 @@ class PagedQuerySearchTest {
             scope().launch { search.state.collect {} }
             search.setQuery("alien")
             advanceUntilIdle()
-            assertEquals(QuerySearchState.Failed("alien"), search.state.value)
+            assertEquals("alien", (search.state.value as QuerySearchState.Failed).query)
+            assertTrue((search.state.value as QuerySearchState.Failed).cause is IOException)
             fail = false
             search.retry()
             advanceUntilIdle()

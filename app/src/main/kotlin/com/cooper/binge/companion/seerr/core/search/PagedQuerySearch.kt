@@ -86,7 +86,7 @@ class PagedQuerySearch<T>(
         } else {
             flow {
                 emit(QuerySearchState.Loading(query))
-                val first = attempt { fetch(query, 1) }.getOrElse { return@flow emit(QuerySearchState.Failed(query)) }
+                val first = attempt { fetch(query, 1) }.getOrElse { return@flow emit(QuerySearchState.Failed(query, it)) }
                 if (first.items.isEmpty()) return@flow emit(QuerySearchState.NoResults(query))
                 attempt { history.remember(query) }
                 var shown = QuerySearchState.Results(query, first.items, first.hasMore)

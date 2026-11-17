@@ -113,6 +113,27 @@
     <string name="shell_tab_search">Buscar</string>
     <string name="shell_tab_settings">Ajustes</string>
     <string name="shell_placeholder_message">Esta parte de la app llegará en una próxima actualización.</string>
+    <!-- The Search tab: title search. -->
+    <string name="title_search_placeholder">Buscar películas, series y personas</string>
+    <string name="title_search_idle_title">Encuentra algo para ver</string>
+    <string name="title_search_idle_message">Busca por título o nombre. Los resultados vienen de tu servidor.</string>
+    <string name="title_search_none_title">Sin resultados</string>
+    <string name="title_search_none_message">Nada coincide con “%1$s”. Revisa la ortografía o prueba con menos palabras.</string>
+    <string name="title_search_more_failed">No se pudo cargar más. Toca para reintentar</string>
+    <string name="title_search_recent">Búsquedas recientes</string>
+    <string name="title_search_recent_clear">Borrar</string>
+    <string name="title_search_recent_clear_title">¿Borrar las búsquedas recientes?</string>
+    <string name="title_search_recent_clear_message">Se quitan las búsquedas guardadas en este dispositivo. Tu servidor no cambia.</string>
+    <string name="title_search_kind_year">%1$s · %2$s</string>
+    <string name="title_kind_movie">Película</string>
+    <string name="title_kind_series">Serie</string>
+    <string name="title_kind_person">Persona</string>
+    <string name="title_kind_collection">Colección</string>
+    <string name="title_status_pending">Solicitada</string>
+    <string name="title_status_processing">En proceso</string>
+    <string name="title_status_partial">Disponible en parte</string>
+    <string name="title_status_available">Disponible</string>
+    <string name="title_status_blocklisted">En la lista de bloqueo</string>
     <string name="hub_section_settings_desc">Servicios, notificaciones y tareas</string>
     <string name="hub_section_this_app">Esta aplicación</string>
     <string name="hub_section_this_app_desc">Preferencias, notificaciones, comentarios y más</string>

@@ -35,8 +35,10 @@ sealed interface QuerySearchState<out T> {
         val query: String,
     ) : QuerySearchState<Nothing>
 
+    /** [cause] is what the source threw, for the caller to word. */
     data class Failed(
         val query: String,
+        val cause: Throwable,
     ) : QuerySearchState<Nothing>
 }
 
