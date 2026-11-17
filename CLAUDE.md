@@ -43,8 +43,8 @@ still read as two products at a glance. `.gitmodules` is an agent-governed path,
 bot's commit can revert a change to it — bump a submodule in a commit of its own,
 and check every pin after any bot push.
 
-A third included build, `homelab-core/`, is private: it provides `com.cooper.homelab:app-services` (the bug-report link
-and the shake filter). CI fetches it through a minted read-only token, and a checkout without access to it fails to build.
+A third included build, `homelab-core/`, is private: it provides `com.cooper.homelab:app-services` (the bug-report link,
+the shake filter, the review prompt and the tip billing) and `com.cooper.homelab:testing` for tests. CI fetches it through a minted read-only token, and a checkout without access to it fails to build.
 
 This app is GPL-3.0-or-later, with a section-7 permission for the Google libraries and the
 homelab-core libraries it links (`LICENSE-EXCEPTION.md`); its name and artwork are all rights reserved (`ASSETS.md`,

@@ -70,6 +70,7 @@ includeBuild("design-system") {
 includeBuild("homelab-core") {
     dependencySubstitution {
         substitute(module("com.cooper.homelab:app-services")).using(project(":app-services"))
+        substitute(module("com.cooper.homelab:testing")).using(project(":testing"))
     }
 }
 

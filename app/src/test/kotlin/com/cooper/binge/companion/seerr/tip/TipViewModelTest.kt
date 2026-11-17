@@ -1,13 +1,16 @@
 package com.cooper.binge.companion.seerr.tip
 
 import android.app.Activity
-import com.cooper.binge.companion.seerr.flags.FixedFeatureFlags
-import com.cooper.binge.companion.seerr.flags.Flags
-import com.cooper.binge.companion.seerr.review.ReviewPrompt
-import com.cooper.binge.companion.seerr.review.ReviewSignalStore
-import com.cooper.binge.companion.seerr.util.InMemoryDataStore
 import com.cooper.binge.companion.seerr.util.MainDispatcherRule
 import com.cooper.binge.companion.seerr.util.awaitEvent
+import com.cooper.homelab.core.foundation.Clock
+import com.cooper.homelab.core.review.ReviewPrompt
+import com.cooper.homelab.core.review.ReviewSignalStore
+import com.cooper.homelab.core.testing.FakeTipBilling
+import com.cooper.homelab.core.testing.InMemoryDataStore
+import com.cooper.homelab.core.tip.TIP_STEPS
+import com.cooper.homelab.core.tip.TipBilling
+import com.cooper.homelab.core.tip.TipOutcome
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -20,23 +23,7 @@ import org.junit.runner.RunWith
 import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
 import kotlin.time.Duration.Companion.days
-
-private class FakeTipBilling(
-    private val prices: Map<Int, String>?,
-    var outcome: CompletableDeferred<TipOutcome> = CompletableDeferred(TipOutcome.Thanks),
-) : TipBilling {
-    val given = mutableListOf<Int>()
-
-    override suspend fun prices(): Map<Int, String>? = prices
-
-    override suspend fun give(
-        activity: Activity,
-        step: Int,
-    ): TipOutcome {
-        given += step
-        return outcome.await()
-    }
-}
+import kotlin.time.Instant
 
 private const val NOW = 1_800_000_000_000L
 
@@ -51,8 +38,13 @@ class TipViewModelTest {
     private val store = ReviewSignalStore(InMemoryDataStore())
     private val asked = mutableListOf<Activity>()
     private val reviewPrompt =
-        ReviewPrompt(store, { asked += it }, FixedFeatureFlags(Flags(reviewPrompt = true)), TestScope(UnconfinedTestDispatcher()))
-            .apply { clock = { NOW } }
+        ReviewPrompt(
+            store,
+            { asked += it as Activity },
+            { true },
+            TestScope(UnconfinedTestDispatcher()),
+            Clock { Instant.fromEpochMilliseconds(NOW) },
+        )
 
     private fun viewModel(billing: TipBilling) = TipViewModel(billing, reviewPrompt)
 

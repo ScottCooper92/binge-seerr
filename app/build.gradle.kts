@@ -245,6 +245,7 @@ dependencies {
     // file, so that package imports only this module's theme and units.
     implementation(libs.binge.designsystem.tv)
     implementation(libs.homelab.appservices)
+    testImplementation(libs.homelab.testing)
     implementation(libs.hilt.android)
     ksp(libs.hilt.android.compiler)
     implementation(libs.hilt.lifecycle.viewmodel.compose)
@@ -269,10 +270,6 @@ dependencies {
     implementation(libs.compose.material3)
     implementation(libs.activity.compose)
     implementation(libs.androidx.core.splashscreen)
-    // Tips are sold through Google Play; see tip/PlayTipBilling.
-    implementation(libs.play.billing.ktx)
-    // Play's in-app review card; see review/PlayReviewPromptLauncher.
-    implementation(libs.play.review)
     // The licences page reads the list the AboutLibraries plugin writes at build time.
     implementation(libs.aboutlibraries.core)
     implementation(libs.lifecycle.viewmodel.compose)
