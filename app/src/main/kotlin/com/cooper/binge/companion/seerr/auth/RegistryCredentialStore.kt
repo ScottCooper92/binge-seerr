@@ -1,10 +1,10 @@
 package com.cooper.binge.companion.seerr.auth
 
+import com.binge.companion.sdk.attempt
 import com.cooper.binge.companion.seerr.seerr.SeerrCredentials
 import com.cooper.homelab.core.server.address.ServerAddress
 import com.cooper.homelab.core.server.connection.SavedServer
 import com.cooper.homelab.core.server.connection.ServerRegistry
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -58,20 +58,13 @@ class RegistryCredentialStore(
             .flowOn(io)
             .distinctUntilChanged()
 
-    @Suppress("TooGenericExceptionCaught")
     override suspend fun save(credentials: SeerrCredentials): Boolean {
         ready()
         val address = ServerAddress.parse(credentials.baseUrl) ?: return false
         val existing = registry.current().activeServer
         val id = existing?.id ?: serverId.currentServerId()
         // The login goes first. It encrypts before it writes, so a keymaster that throws leaves the registry exactly as it was.
-        try {
-            logins.save(id, SeerrLogin(credentials.auth, credentials.variant))
-        } catch (cancelled: CancellationException) {
-            throw cancelled
-        } catch (_: Exception) {
-            return false
-        }
+        if (attempt { logins.save(id, SeerrLogin(credentials.auth, credentials.variant)) }.isFailure) return false
         if (existing != null) {
             registry.update(existing.copy(address = address))
         } else {
