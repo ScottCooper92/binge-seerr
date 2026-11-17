@@ -79,6 +79,18 @@ private suspend fun SeerrApi.fetch(
             } else {
                 discoverMoviesByLanguage(source.language, page)
             }
+        is TitleSource.ByKeywords -> {
+            val keywords = source.keywordIds.joinToString(",")
+            if (source.kind == TitleKind.Series) discoverTv(page, keywords = keywords) else discoverMovies(page, keywords = keywords)
+        }
+        is TitleSource.ByStreaming -> {
+            val providers = source.providerIds.joinToString("|")
+            if (source.kind == TitleKind.Series) {
+                discoverTv(page, watchRegion = source.region, watchProviders = providers)
+            } else {
+                discoverMovies(page, watchRegion = source.region, watchProviders = providers)
+            }
+        }
         is TitleSource.ByKeyword ->
             if (source.kind == TitleKind.Series) {
                 discoverTv(page, keywords = source.keywordId.toString())

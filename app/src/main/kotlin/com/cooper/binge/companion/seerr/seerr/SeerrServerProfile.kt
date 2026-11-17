@@ -154,6 +154,12 @@ data class SeerrServerProfile(
 
     val hasGenreSliders: Boolean get() = jellyseerrLineage || atLeast(1, 22)
 
+    /** `media` filtered to what is in the library, newest first: Overseerr 1.18 and the Jellyseerr lineage from the start. */
+    val hasRecentlyAdded: Boolean get() = jellyseerrLineage || atLeast(1, 18)
+
+    /** The streaming service filter on `discover/{movies,tv}` (`watchRegion` and `watchProviders`), which arrived with the sliders. */
+    val hasWatchProviderDiscover: Boolean get() = hasDiscoverSliders
+
     /** The Plex watchlist; whether the signed-in user may use it is a permission, not this. */
     val hasDiscoverWatchlist: Boolean get() = if (jellyseerrLineage) atLeast(1, 2) else atLeast(1, 30)
 
