@@ -5,6 +5,9 @@ import androidx.lifecycle.viewModelScope
 import com.cooper.binge.companion.seerr.flags.DISCOVERY_FLAG_KEY
 import com.cooper.binge.companion.seerr.flags.DiscoveryFlag
 import com.cooper.binge.companion.seerr.flags.DiscoveryFlagOverride
+import com.cooper.binge.companion.seerr.flags.SEARCH_TOGGLES_FLAG_KEY
+import com.cooper.binge.companion.seerr.flags.SearchTogglesFlag
+import com.cooper.binge.companion.seerr.flags.SearchTogglesOverride
 import com.cooper.homelab.core.flags.FeatureFlags
 import com.cooper.homelab.core.flags.Flag
 import com.cooper.homelab.core.flags.FlagOverrides
@@ -20,7 +23,7 @@ import javax.inject.Inject
 /** One flag on the developer screen: what it resolves to now, and the override behind that, if any. */
 data class FlagRow(
     val key: String,
-    /** The shared flag this row is, or null for the app's own discovery flag. */
+    /** The shared flag this row is, or null for one of the app's own. */
     val flag: Flag?,
     val effective: Boolean,
     val override: Boolean?,
@@ -43,15 +46,19 @@ class FlagOverridesViewModel
         private val overrides: FlagOverrides,
         private val discoveryFlag: DiscoveryFlag,
         private val discoveryOverride: DiscoveryFlagOverride,
+        private val searchTogglesFlag: SearchTogglesFlag,
+        private val searchTogglesOverride: SearchTogglesOverride,
     ) : ViewModel() {
         val uiState: StateFlow<FlagOverridesUiState> =
             combine(
                 combine(featureFlags.flags, overrides.values, ::Pair),
                 combine(discoveryFlag.enabled, discoveryOverride.value, ::Pair),
-            ) { (flags, local), (discovery, discoveryLocal) ->
+                combine(searchTogglesFlag.enabled, searchTogglesOverride.value, ::Pair),
+            ) { (flags, local), (discovery, discoveryLocal), (toggles, togglesLocal) ->
                 FlagOverridesUiState.Ready(
                     Flag.entries.map { FlagRow(it.key, it, flags[it], local[it]) } +
-                        FlagRow(DISCOVERY_FLAG_KEY, null, discovery, discoveryLocal),
+                        listOf(FlagRow(DISCOVERY_FLAG_KEY, null, discovery, discoveryLocal)) +
+                        listOf(FlagRow(SEARCH_TOGGLES_FLAG_KEY, null, toggles, togglesLocal)),
                 )
             }.map<FlagOverridesUiState.Ready, FlagOverridesUiState> { it }
                 .stateIn(viewModelScope, SharingStarted.Lazily, FlagOverridesUiState.Loading)
@@ -65,7 +72,11 @@ class FlagOverridesViewModel
                     false -> null
                 }
             viewModelScope.launch {
-                if (row.flag == null) discoveryOverride.set(next) else overrides.set(row.flag, next)
+                when {
+                    row.flag != null -> overrides.set(row.flag, next)
+                    row.key == SEARCH_TOGGLES_FLAG_KEY -> searchTogglesOverride.set(next)
+                    else -> discoveryOverride.set(next)
+                }
             }
         }
     }

@@ -1,13 +1,21 @@
 package com.cooper.binge.companion.seerr.ui
 
 import androidx.activity.compose.LocalActivity
+import androidx.compose.foundation.layout.Box
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
+import com.binge.designsystem.component.BingeSnackbarHost
 import com.cooper.binge.companion.seerr.ADMITS_UNVERIFIED_CALLERS
 import com.cooper.binge.companion.seerr.tip.TipHost
 import com.cooper.binge.companion.seerr.ui.hub.DeveloperRow
@@ -16,6 +24,9 @@ import com.cooper.binge.companion.seerr.ui.hub.HubScreen
 import com.cooper.binge.companion.seerr.ui.hub.HubSection
 import com.cooper.binge.companion.seerr.ui.hub.HubViewModel
 import com.cooper.binge.companion.seerr.ui.search.SettingsSearchHost
+import com.cooper.binge.companion.seerr.ui.search.SwitchPage
+import com.cooper.binge.companion.seerr.ui.search.SwitchPageEvents
+import com.cooper.binge.companion.seerr.ui.search.searchToggle
 import com.cooper.binge.companion.seerr.ui.settings.SettingsActions
 import com.cooper.binge.companion.seerr.ui.settings.SettingsScreen
 import com.cooper.binge.companion.seerr.ui.settings.SettingsViewModel
@@ -145,16 +156,29 @@ internal fun SettingsSearchEntry(
     host: SettingsSearchHost = hiltViewModel(),
 ) {
     val state by host.model.state.collectAsStateWithLifecycle()
-    SettingsSearchScreen(
-        state = state,
-        entries = host.entries,
-        icon = { it.target.icon },
-        onOpen = { entry, viewer ->
-            host.model.remember(entry)
-            onOpen(entry.target.target.route(viewer.userId, entry.row))
-        },
-        onBack = onBack,
-        onRetry = host.model::retry,
-        onClearRecent = host.model::clearRecent,
-    )
+    val switches by host.searchTogglesEnabled.collectAsStateWithLifecycle()
+    val snackbar = remember { SnackbarHostState() }
+    var inUse by remember { mutableStateOf(emptySet<SwitchPage>()) }
+    Box {
+        SettingsSearchScreen(
+            state = state,
+            entries = host.entries,
+            icon = { it.target.icon },
+            onOpen = { entry, viewer ->
+                host.model.remember(entry)
+                onOpen(entry.target.target.route(viewer.userId, entry.row))
+            },
+            onBack = onBack,
+            onRetry = host.model::retry,
+            onClearRecent = host.model::clearRecent,
+            toggle =
+                if (switches) {
+                    { entry, viewer -> searchToggle(entry, viewer.isAdmin) { page -> inUse = inUse + page } }
+                } else {
+                    null
+                },
+        )
+        inUse.forEach { SwitchPageEvents(it, snackbar) }
+        BingeSnackbarHost(snackbar, Modifier.align(Alignment.BottomCenter))
+    }
 }
