@@ -3,7 +3,7 @@ package com.cooper.binge.companion.seerr.ui.hub
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import com.cooper.binge.companion.seerr.auth.LegacyCredentialStore
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
-import com.cooper.binge.companion.seerr.auth.SeerrConnectionHealthMonitor
+import com.cooper.binge.companion.seerr.auth.SeerrHealth
 import com.cooper.binge.companion.seerr.seerr.SeerrApiFactory
 import com.cooper.binge.companion.seerr.seerr.SeerrAuth
 import com.cooper.binge.companion.seerr.util.FakeResponse
@@ -67,7 +67,7 @@ class HubProfileProbeTest {
     }
 
     private suspend fun TestScope.loader(): HubOverviewLoader {
-        val monitor = SeerrConnectionHealthMonitor()
+        val monitor = SeerrHealth.standalone()
         val connection =
             SeerrConnection(
                 store =

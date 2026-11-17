@@ -6,7 +6,7 @@ import com.binge.companion.contracts.request.v1.GetStatusRequest
 import com.binge.companion.contracts.v1.MediaId
 import com.binge.companion.contracts.v1.MediaType
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
-import com.cooper.binge.companion.seerr.auth.SeerrConnectionHealthMonitor
+import com.cooper.binge.companion.seerr.auth.SeerrHealth
 import com.cooper.binge.companion.seerr.data.CachedStatus
 import com.cooper.binge.companion.seerr.data.MediaStatusStore
 import com.cooper.binge.companion.seerr.di.dropStatusesOnWrite
@@ -93,7 +93,7 @@ class ConsoleWritesDropStatusCacheTest {
             apis =
                 SeerrApiFactory(
                     logRequests = false,
-                    health = SeerrConnectionHealthMonitor(),
+                    health = SeerrHealth.standalone(),
                     onWrite = dropStatusesOnWrite(statuses, backgroundScope),
                     testDispatcher = seerr::newDispatcher,
                 ),

@@ -1,6 +1,6 @@
 package com.cooper.binge.companion.seerr.seerr
 
-import com.cooper.binge.companion.seerr.auth.SeerrConnectionHealthReporter
+import com.cooper.binge.companion.seerr.auth.SeerrHealthReporter
 import com.cooper.binge.companion.seerr.demo.DemoTransport
 import com.cooper.homelab.core.server.network.CleartextConsent
 import com.cooper.homelab.core.server.network.CleartextGate
@@ -36,7 +36,7 @@ import kotlin.concurrent.thread
 class SeerrApiFactory(
     private val logRequests: Boolean,
     /** Fed by the cached client only: a probe's candidate credentials never speak for the saved server. */
-    private val health: SeerrConnectionHealthReporter = SeerrConnectionHealthReporter.NoOp,
+    private val health: SeerrHealthReporter = SeerrHealthReporter.NoOp,
     /** Called on the cached client only, whenever the saved server accepts a write. */
     private val onWrite: () -> Unit = {},
     /** The public hosts the user agreed to reach over plain HTTP. Every client this factory builds enforces it. */

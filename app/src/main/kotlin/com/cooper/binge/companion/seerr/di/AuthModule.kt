@@ -20,11 +20,12 @@ import com.cooper.binge.companion.seerr.auth.LegacyCredentialStore
 import com.cooper.binge.companion.seerr.auth.PlexPinFlow
 import com.cooper.binge.companion.seerr.auth.RegistryCredentialStore
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
-import com.cooper.binge.companion.seerr.auth.SeerrConnectionHealthMonitor
+import com.cooper.binge.companion.seerr.auth.SeerrHealth
 import com.cooper.binge.companion.seerr.auth.SeerrLogin
 import com.cooper.binge.companion.seerr.auth.SeerrLoginCodec
 import com.cooper.binge.companion.seerr.auth.ServerIdentity
 import com.cooper.binge.companion.seerr.auth.forLibrary
+import com.cooper.binge.companion.seerr.auth.seerrHealthMonitor
 import com.cooper.binge.companion.seerr.data.MediaStatusStore
 import com.cooper.binge.companion.seerr.handoff.HandOffAddressMemory
 import com.cooper.binge.companion.seerr.notifications.ApplicationScope
@@ -154,7 +155,7 @@ object AuthModule {
 
     @Provides
     @Singleton
-    fun healthMonitor(): SeerrConnectionHealthMonitor = SeerrConnectionHealthMonitor()
+    fun healthMonitor(identity: ServerIdentity): SeerrHealth = SeerrHealth(seerrHealthMonitor(), identity::currentServerId)
 
     /**
      * The write hook drops the title-status cache. It covers this app's own pages, which reach the
@@ -164,7 +165,7 @@ object AuthModule {
     @Provides
     @Singleton
     fun apiFactory(
-        health: SeerrConnectionHealthMonitor,
+        health: SeerrHealth,
         statuses: MediaStatusStore,
         cleartext: CleartextConsent,
         localNetwork: LocalNetworkPermission,
@@ -234,7 +235,7 @@ object AuthModule {
     fun connection(
         store: CredentialStore,
         apis: SeerrApiFactory,
-        health: SeerrConnectionHealthMonitor,
+        health: SeerrHealth,
         carrier: ConnectionCarrier,
         caches: ServerScopedCaches,
         titles: TitleCache,
