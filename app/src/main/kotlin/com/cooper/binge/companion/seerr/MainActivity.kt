@@ -24,6 +24,7 @@ import com.cooper.binge.companion.seerr.auth.ForegroundUserRefresh
 import com.cooper.binge.companion.seerr.feedback.BugReportLinks
 import com.cooper.binge.companion.seerr.feedback.FeedbackPrefs
 import com.cooper.binge.companion.seerr.feedback.ShakeToReportPrompt
+import com.cooper.binge.companion.seerr.flags.DiscoveryFlag
 import com.cooper.binge.companion.seerr.flags.LocalFlags
 import com.cooper.binge.companion.seerr.telemetry.LocalAnalytics
 import com.cooper.binge.companion.seerr.telemetry.screenName
@@ -76,6 +77,9 @@ class MainActivity : ComponentActivity() {
 
     @Inject
     lateinit var featureFlags: FeatureFlags
+
+    @Inject
+    lateinit var discoveryFlag: DiscoveryFlag
 
     private var consumedLink: String? = null
 
@@ -136,6 +140,7 @@ class MainActivity : ComponentActivity() {
         super.onStart()
         userRefresh.onForeground()
         lifecycleScope.launch { featureFlags.refresh() }
+        lifecycleScope.launch { discoveryFlag.refresh() }
     }
 
     override fun onNewIntent(intent: Intent) {

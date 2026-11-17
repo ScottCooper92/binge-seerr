@@ -46,7 +46,7 @@ internal fun FlagOverridesScreen(
                     rows.map { row ->
                         ListItem(
                             icon = Icons.Filled.Flag,
-                            label = row.flag.key,
+                            label = row.key,
                             detail =
                                 stringResource(
                                     when (row.override) {

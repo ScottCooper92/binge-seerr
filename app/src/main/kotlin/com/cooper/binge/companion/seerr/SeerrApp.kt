@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
 import com.cooper.binge.companion.seerr.auth.ConnectionRestore
+import com.cooper.binge.companion.seerr.flags.DiscoveryFlag
 import com.cooper.binge.companion.seerr.notifications.ApplicationScope
 import com.cooper.binge.companion.seerr.notifications.NotificationPlanning
 import com.cooper.homelab.core.flags.FeatureFlags
@@ -45,6 +46,9 @@ class SeerrApp :
     @Inject
     lateinit var featureFlags: FeatureFlags
 
+    @Inject
+    lateinit var discoveryFlag: DiscoveryFlag
+
     /** Injected so it is built at start, which is when the first launch is stamped. */
     @Inject
     lateinit var reviewPrompt: ReviewPrompt
@@ -63,5 +67,6 @@ class SeerrApp :
         planner.start()
         reviewPrompt.start()
         scope.launch { featureFlags.refresh() }
+        scope.launch { discoveryFlag.refresh() }
     }
 }
