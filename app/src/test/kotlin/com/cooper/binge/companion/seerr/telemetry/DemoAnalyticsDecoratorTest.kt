@@ -35,7 +35,7 @@ class DemoAnalyticsDecoratorTest {
         client: FakeAnalyticsClient = this@DemoAnalyticsDecoratorTest.client,
     ) = GatedAnalytics(
         client,
-        AnalyticsConsentGate(prefs, scope(), Logger { _, _, _ -> }),
+        AnalyticsConsentGate(prefs, scope(), Logger { _, _, _, _, _ -> }),
         DemoAnalyticsDecorator(demo),
         scope(),
     )
