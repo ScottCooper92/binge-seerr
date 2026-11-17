@@ -8,19 +8,20 @@ what the app does. Each file maps to one part of the Play Console.
 | [`listing.md`](listing.md) | Main store listing: app name, short description, full description (English) |
 | [`listing.es.md`](listing.es.md) | The same, for the Spanish listing the app's `values-es/` earns it |
 | [`app-access.md`](app-access.md) | App content > App access: how a reviewer uses the app with no server (the demo) |
-| [`privacy.md`](privacy.md) | The privacy policy the listing links to, published at https://scottcooper92.github.io/binge-seerr/privacy/ (see below) |
+| [`privacy.md`](privacy.md) | The privacy policy the listing links to, published at https://scottcooper92.github.io/app-feedback/seerr/privacy/ (see below) |
 | [`data-safety.md`](data-safety.md) | The answers to the Data safety form, each derived from `privacy.md` and the code it describes |
 
 ## Where the privacy policy is published
 
 Play needs the policy at a public URL. It is published at
-https://scottcooper92.github.io/binge-seerr/privacy/, and that is the URL to give the Play Console.
+https://scottcooper92.github.io/app-feedback/seerr/privacy/, and that is the URL to give the Play Console and the one the app's
+privacy row opens. The page lives in the public app-feedback repository, because this repository is private.
 
-The `privacy-policy.yml` workflow publishes it to GitHub Pages. It runs when a change to
-`privacy.md` reaches `main`, renders the file to one HTML page, and deploys it, so a merged policy
-change goes live with no further step. It publishes that one page, not the rest of `docs/`. The
-page loads nothing from any other site, and its last-updated date is the date of the last commit
-to `privacy.md`. To publish again without a change, run the workflow by hand from the Actions tab.
+`privacy.md` here is the source of the policy, and it is reviewed with the code. The `privacy-policy.yml` workflow runs when a change to
+`privacy.md` reaches `main` and opens a pull request on app-feedback that replaces the body of `docs/seerr/privacy/index.md`. The page's
+front matter and its last-updated line are kept, and the date in that line is the date of the last commit to `privacy.md`. The policy goes
+live when that pull request merges. A second change before then updates the same pull request. To sync again without a change, run the
+workflow by hand from the Actions tab.
 
 ## What is not here
 

@@ -70,9 +70,9 @@ Binge ships as a plain TMDB client with zero bundled providers. A companion app 
 that exports a bound Android Service implementing a contract from
 [binge-companions](https://github.com/ScottCooper92/binge-companions); only data crosses the
 IPC boundary, over gRPC on Binder, and there is no dynamic code loading. This app implements
-REQUEST v1, and it is the **reference** companion: the worked example a third-party author reads
-to learn what a companion looks like. Whatever is here will be copied, so the bar is not "does it
-work" but "is this worth copying".
+REQUEST v1, and it is the **reference** companion: the worked example the contract in
+binge-companions is checked against. So the bar is not "does it work" but "is this the
+implementation we would point to as right".
 
 It has no privileged relationship with Binge. It talks through the same public contract and the
 same handshake as anyone else's companion would; if something only worked because both ends share

@@ -74,6 +74,11 @@ annotation class SeerrLandscapePanesPreview
 @Preview(name = "tablet-land", device = TABLET_LANDSCAPE_SPEC, uiMode = UI_MODE_NIGHT_YES, locale = SOURCE_LOCALE)
 annotation class SeerrTabletPanesPreview
 
+/** A phone window at font scale 1.3, where a phone's own "larger text" setting commonly lands, between the 1.0 cell and the 1.5 and 2.0 ones. */
+@PreviewWrapper(SeerrScreenshotThemeWrapper::class)
+@Preview(name = "font13", device = PHONE_PORTRAIT_SPEC, fontScale = 1.3f, uiMode = UI_MODE_NIGHT_YES, locale = SOURCE_LOCALE)
+annotation class SeerrFontScale13Previews
+
 /** A phone window at the two larger font scales, 1.5 and 2.0; the 1.0 cell is the screen's own frame. */
 @PreviewWrapper(SeerrScreenshotThemeWrapper::class)
 @Preview(name = "font15", device = PHONE_PORTRAIT_SPEC, fontScale = 1.5f, uiMode = UI_MODE_NIGHT_YES, locale = SOURCE_LOCALE)

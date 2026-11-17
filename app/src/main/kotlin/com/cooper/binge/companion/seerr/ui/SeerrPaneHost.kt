@@ -55,19 +55,14 @@ internal class PaneLayout(
     }
 
     /**
-     * Opens [route] for a settings search result, which leaves the search first. With the hub beside the pane it replaces what is
-     * open, so Back from it leaves it and the hub is what is left ([openAtHub]); in three panes it opens beside the open section as
-     * [open] does, in the right pane; in one pane it stacks above the hub, so Back is the hub.
+     * Opens [route] for a settings search result, above the search, which stays on the stack: Back from the page returns to the
+     * search with its query and results as they were, in every kind of window.
      */
     fun openFromSearch(
         backStack: NavBackStack<NavKey>,
         route: NavKey,
     ) {
-        when {
-            threePane() -> open(backStack, route)
-            hubBeside() -> backStack.openAtHub(route)
-            else -> backStack.push(route)
-        }
+        backStack.push(route)
     }
 }
 

@@ -58,12 +58,12 @@ Apache-2.0.
 
 ## The one rule everything else serves
 
-**This repository is read as documentation.**
+**This app is the reference implementation of a companion, and it behaves like any other.**
 
-It is public and it is called the reference companion. A third-party author writing
-their own companion will read this code to learn what a companion looks like, and
-will copy what they find. That makes "it works" insufficient on its own — the
-question is whether the thing being copied is the thing you would want copied.
+The repository is all rights reserved, whether or not it is public: it grants no licence to copy it. It is still
+called the reference companion, because the contract in binge-companions is public and this
+app is the worked example the contract is checked against. That makes "it works" insufficient
+on its own — the question is whether this is the implementation you would point to as the right one.
 
 The practical consequence: no shortcut that depends on being first-party. This
 companion has no privileged relationship with Binge, gets no special-cased
@@ -357,7 +357,7 @@ do not set `abortOnError = false`, do not exclude a source set from `check`, and
 add to `detekt-baseline.xml`.
 Formatting failures are the cheapest class of failure to fix properly. A lint
 baseline is worse than it looks: it silences the finding permanently and silently,
-in a repository whose whole purpose is to be copied.
+in a repository that is meant to be the reference implementation.
 
 ## Follow-ups
 
@@ -393,8 +393,8 @@ label.
 
 **That label is maintainers-only.** Applying it grants an agent code execution with
 this repository's secrets in scope. Do not apply it to a PR you have not read, and
-never to one from a fork — the workflows already refuse fork PRs, and on a public
-repository that guard is the load-bearing control rather than a formality.
+never to one from a fork — the workflows already refuse fork PRs, and that guard is the
+control, not a formality, whether the repository is public or private.
 
 **Add `hold` only when a human must do the merging.** `hold` withholds the bot's merge: the PR is
 still reviewed and kept current, but a maintainer lands it. Add it alongside `agent` only when the PR

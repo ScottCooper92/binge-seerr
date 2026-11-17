@@ -22,6 +22,13 @@ data object HomeRoute : SeerrRoute
 @Serializable
 data object HubRoute : SeerrRoute
 
+/**
+ * The tab bar over each tab root, for a connected phone with the discovery flag on. It stands in for [HubRoute] at the root
+ * (see [settleHome]), and what a tab opens goes on the stack above it, so it covers the bar.
+ */
+@Serializable
+data object ShellRoute : SeerrRoute
+
 /** The requests browser. */
 @Serializable
 data object RequestsRoute : SeerrRoute
@@ -118,7 +125,7 @@ data class RequestDetailRoute(
 @Serializable
 data object SettingsRoute : SeerrRoute
 
-/** The settings search: the whole window, over the hub, until a result opens its page. */
+/** The settings search: the whole window, over the hub. A result opens its page above the search, which stays beneath it. */
 @Serializable
 data object SettingsSearchRoute : SeerrRoute
 

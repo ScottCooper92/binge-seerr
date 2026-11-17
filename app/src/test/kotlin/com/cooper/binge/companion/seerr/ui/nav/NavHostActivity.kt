@@ -6,6 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -13,9 +14,11 @@ import androidx.compose.ui.Modifier
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.rememberNavBackStack
+import com.cooper.binge.companion.seerr.flags.LocalDiscoveryEnabled
 import com.cooper.binge.companion.seerr.theme.SeerrTheme
 import com.cooper.binge.companion.seerr.ui.HomeRoute
 import com.cooper.binge.companion.seerr.ui.SeerrNavHost
+import com.cooper.binge.companion.seerr.ui.shell.rememberSeerrTabs
 import dagger.hilt.android.AndroidEntryPoint
 
 /**
@@ -43,9 +46,12 @@ class NavHostActivity : ComponentActivity() {
             if (!shown) return@setContent
             val stack = rememberNavBackStack(*firstStack.toTypedArray())
             backStack = stack
+            val tabs = rememberSeerrTabs()
             SeerrTheme {
-                Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                    SeerrNavHost(backStack = stack, onExit = ::leave)
+                CompositionLocalProvider(LocalDiscoveryEnabled provides discoveryEnabled) {
+                    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+                        SeerrNavHost(backStack = stack, onExit = ::leave, tabs = tabs)
+                    }
                 }
             }
         }
@@ -59,5 +65,8 @@ class NavHostActivity : ComponentActivity() {
     companion object {
         /** The stack the next launch starts on. Saved state wins over it on a recreate, as it should. */
         internal var firstStack: List<NavKey> = listOf(HomeRoute)
+
+        /** Whether the discovery flag is on for the next launch; off, as the app ships it. */
+        internal var discoveryEnabled: Boolean = false
     }
 }
