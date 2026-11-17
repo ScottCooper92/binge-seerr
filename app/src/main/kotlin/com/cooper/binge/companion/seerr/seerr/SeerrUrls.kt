@@ -3,6 +3,7 @@ package com.cooper.binge.companion.seerr.seerr
 import com.cooper.homelab.core.server.address.AddressScheme
 import com.cooper.homelab.core.server.address.ServerAddress
 import com.cooper.homelab.core.server.network.isPublicCleartext
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 
 /**
  * A user-entered address as the base URL Retrofit needs: a scheme added where it was left off (`http` for a local or private
@@ -66,11 +67,13 @@ fun SeerrVariant.contributeUrl(): String =
 /**
  * The host, when [this] explicitly asks for plain HTTP to a PUBLIC one: an `http://` scheme whose host is not loopback,
  * private, LAN or tailnet. The secret would cross the network unencrypted, so setup refuses it unless the user opts in for
- * that host (see `CleartextConsent`). Null for anything else.
+ * that host (see `CleartextConsent`). Null for anything else. The host is OkHttp's spelling of it (punycode, compressed IPv6),
+ * because that is the one the cleartext guard sees on the request and so the one a consent is keyed on.
  */
 fun String.insecurePublicHostOrNull(): String? {
     if (!trim().startsWith("http://", ignoreCase = true)) return null
-    return ServerAddress.parse(this)?.takeIf { isPublicCleartext(it.scheme == AddressScheme.Https, it.host) }?.host
+    val address = ServerAddress.parse(this)?.takeIf { isPublicCleartext(it.scheme == AddressScheme.Https, it.host) } ?: return null
+    return address.url.toHttpUrlOrNull()?.host
 }
 
 /** Only an `http(s)` address is handed to a browser. */

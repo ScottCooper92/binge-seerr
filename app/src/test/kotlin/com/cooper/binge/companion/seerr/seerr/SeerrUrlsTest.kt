@@ -30,6 +30,13 @@ class SeerrUrlsTest {
     }
 
     @Test
+    fun `the insecure host is in the spelling the cleartext guard sees on the request`() {
+        assertEquals("xn--caf-dma.example", "http://café.example".insecurePublicHostOrNull())
+        assertEquals("2001:4860::8888", "http://[2001:4860:0:0::8888]".insecurePublicHostOrNull())
+        assertEquals("8.8.8.8", "http://[::ffff:8.8.8.8]".insecurePublicHostOrNull())
+    }
+
+    @Test
     fun `home network names, loopback and link-local are local, and lookalikes are not`() {
         listOf(
             "seerr.lan",
