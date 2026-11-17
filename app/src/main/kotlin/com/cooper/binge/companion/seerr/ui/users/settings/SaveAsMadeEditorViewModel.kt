@@ -120,6 +120,9 @@ abstract class SaveAsMadeEditorViewModel<T>(
 
     protected fun ready(): EditorUiState.Ready<T>? = uiState.value as? EditorUiState.Ready<T>
 
+    /** For a page's own actions beside the form, which report through the same snackbar as a save. */
+    protected suspend fun notify(event: EditorEvent) = eventFlow.emit(event)
+
     override fun onCleared() = engine.close()
 
     private fun EditorState<T>.toUiState(): EditorUiState<T> =

@@ -36,10 +36,7 @@ class PermissionsViewModel
         @IoDispatcher dispatcher: CoroutineDispatcher,
         @ApplicationScope appScope: CoroutineScope,
         @Assisted private val userId: Int,
-    ) : EditorViewModel<PermissionSettings>(dispatcher) {
-        /** A user's permissions save as they change (#930): each switch is small and can be flipped back. */
-        override val saveAsMadeScope: CoroutineScope = appScope
-
+    ) : SaveAsMadeEditorViewModel<PermissionSettings>(dispatcher, appScope) {
         init {
             reload()
         }
