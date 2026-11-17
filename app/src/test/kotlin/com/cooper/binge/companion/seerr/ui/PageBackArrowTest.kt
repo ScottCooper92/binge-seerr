@@ -23,8 +23,8 @@ import org.robolectric.RobolectricTestRunner
 import com.binge.designsystem.R as DesR
 
 /**
- * A page the settings search opens straight beside the hub is at depth 1, where the hub is the way back, so it draws no arrow
- * (#1998); stacked deeper, or alone in the window, it keeps it. Two screens stand for the two shapes of page: the shared editor
+ * A page straight beside the hub is at depth 1, where the hub is the way back, so it draws no arrow;
+ * stacked deeper, or alone in the window, it keeps it. Two screens stand for the two shapes of page: the shared editor
  * frame, which most pages use, and a screen that builds its own scaffold.
  */
 @RunWith(RobolectricTestRunner::class)

@@ -11,6 +11,7 @@ import com.cooper.binge.companion.seerr.ui.HomeRoute
 import com.cooper.binge.companion.seerr.ui.HubRoute
 import com.cooper.binge.companion.seerr.ui.IssuesRoute
 import com.cooper.binge.companion.seerr.ui.ServerSettingsPageRoute
+import com.cooper.binge.companion.seerr.ui.SettingsSearchRoute
 import com.cooper.binge.companion.seerr.ui.settings.server.ServerSettingsPage
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
@@ -29,7 +30,7 @@ private const val EMPTY_PAGE = """{"pageInfo":{"pages":0,"results":0},"results":
 
 /**
  * The settings search on a window with the hub beside the detail pane, through the real nav host (#1985): the search covers the
- * whole window, a result opens in the right pane in place of what was open, it has no Back arrow, and Back is the hub.
+ * whole window, a result opens in the right pane above the search, which stays on the stack, and Back returns to the search.
  */
 @HiltAndroidTest
 @RunWith(RobolectricTestRunner::class)
@@ -47,7 +48,7 @@ class SettingsSearchWideJourneyTest {
             .size
 
     @Test
-    fun `a result replaces the open section beside the hub, has no arrow, and Back shows the default section`() {
+    fun `a result opens above the search, and Back returns to the search with its query, then to the open section`() {
         host.connect()
         host.seerr.serve("GET /api/v1/request", EMPTY_PAGE)
         host.seerr.serve("GET /api/v1/issue", EMPTY_PAGE)
@@ -71,13 +72,20 @@ class SettingsSearchWideJourneyTest {
         host.compose.onNodeWithText(host.string(R.string.server_settings_logs)).performClick()
         host.compose.waitUntil("the Logs page on the back stack", 10_000) { host.stack().lastOrNull() == logs }
 
-        assertEquals("the open section is replaced, not stacked under", listOf(HubRoute, logs), host.stack())
-        assertTrue("the hub is beside the page", host.isShowing(host.string(R.string.hub_section_issues_desc)))
-        assertEquals("no Back arrow beside the hub", 0, backArrows())
+        assertEquals("the search stays under the page", listOf(HubRoute, IssuesRoute, SettingsSearchRoute, logs), host.stack())
+        assertEquals("the page has its own Back, to the search", 1, backArrows())
+        assertTrue("the page is over the whole window, hub included", !host.isShowing(host.string(R.string.hub_section_issues_desc)))
 
         host.back()
 
-        assertEquals(listOf(HubRoute), host.stack())
-        host.awaitShowing(host.string(R.string.requests_filter_processing))
+        assertEquals("Back is the search, full window, with its query", listOf(HubRoute, IssuesRoute, SettingsSearchRoute), host.stack())
+        host.awaitShowing(host.string(R.string.server_settings_logs))
+        assertTrue("the search covers the whole window, hub included", !host.isShowing(host.string(R.string.hub_section_issues_desc)))
+        assertTrue("the query is kept", host.isShowing("logs"))
+
+        host.back()
+
+        assertEquals("Back from the search is what was open", listOf(HubRoute, IssuesRoute), host.stack())
+        host.awaitShowing(host.string(R.string.issues_filter_resolved))
     }
 }
