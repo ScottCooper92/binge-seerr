@@ -5,8 +5,8 @@ import com.binge.companion.sdk.attempt
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.di.IoDispatcher
+import com.cooper.binge.companion.seerr.discover.sliders.DiscoverSliderRepository
 import com.cooper.binge.companion.seerr.notifications.ApplicationScope
-import com.cooper.binge.companion.seerr.seerr.toWireBody
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorEvent
 import com.cooper.binge.companion.seerr.ui.users.settings.SaveAsMadeEditorWithExtrasViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -14,7 +14,6 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import retrofit2.HttpException
 import javax.inject.Inject
 
 /**
@@ -28,6 +27,7 @@ class DiscoverSlidersViewModel
     @Inject
     constructor(
         private val connection: SeerrConnection,
+        private val sliders: DiscoverSliderRepository,
         @IoDispatcher private val dispatcher: CoroutineDispatcher,
         @ApplicationScope appScope: CoroutineScope,
     ) : SaveAsMadeEditorWithExtrasViewModel<List<DiscoverSlider>, SliderNames>(SliderNames(), dispatcher, appScope) {
@@ -41,15 +41,9 @@ class DiscoverSlidersViewModel
             )
 
         /** The list, and then, in the background, the names of what its custom sliders hold, for their captions. */
-        override suspend fun load(): List<DiscoverSlider> =
-            connection
-                .api()
-                .discoverSliders()
-                .mapNotNull { it.toSlider() }
-                .also(names::name)
+        override suspend fun load(): List<DiscoverSlider> = sliders.refresh().also(names::name)
 
-        override suspend fun write(draft: List<DiscoverSlider>): List<DiscoverSlider> =
-            connection.api().updateDiscoverSliders(draft.map { it.toDto() }.toWireBody()).mapNotNull { it.toSlider() }
+        override suspend fun write(draft: List<DiscoverSlider>): List<DiscoverSlider> = sliders.save(draft)
 
         /** Moves the slider at [from] to [to] - a drag can cross more than one position in a gesture. */
         fun move(
@@ -71,12 +65,7 @@ class DiscoverSlidersViewModel
             discardUnsent()
             viewModelScope.launch {
                 val result =
-                    withContext(dispatcher) {
-                        attempt {
-                            val response = connection.api().resetDiscoverSliders()
-                            if (!response.isSuccessful) throw HttpException(response)
-                        }
-                    }
+                    withContext(dispatcher) { attempt { sliders.reset() } }
                 reload()
                 result
                     .onSuccess { notify(EditorEvent.Notice(R.string.server_settings_sliders_reset_done)) }
