@@ -442,6 +442,7 @@
     <string name="user_settings_password_description">Esta contraseña es para el formulario de inicio de sesión propio del servidor. Es distinta de la contraseña del servidor multimedia.</string>
     <string name="user_settings_linked_group">Cuentas externas</string>
     <string name="user_settings_linked_hint">Estas cuentas externas están vinculadas a esta cuenta.</string>
+    <string name="user_settings_unlink_primary_admin">Los inicios de sesión de Plex y del servidor multimedia del administrador principal no se pueden desvincular.</string>
     <string name="user_settings_password_none">Esta cuenta aún no tiene contraseña. Ponerle una le permite iniciar sesión localmente.</string>
     <string name="user_settings_password_current">Contraseña actual</string>
     <string name="user_settings_password_new">Contraseña nueva</string>

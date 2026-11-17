@@ -143,9 +143,12 @@ private fun LinkedAccountsContent(
     var linkingMediaServer by rememberSaveable { mutableStateOf(false) }
     val rows =
         listOfNotNull(
-            accountRow(state.plex, state.busy, onLink = actions.onLinkPlex, onUnlink = { unlinking = UserOrigin.Plex }),
+            accountRow(state.plex, state.busy, state.canUnlink, onLink = actions.onLinkPlex, onUnlink = { unlinking = UserOrigin.Plex }),
             state.mediaServer?.let { account ->
-                accountRow(account, state.busy, onLink = { linkingMediaServer = true }, onUnlink = { unlinking = account.origin })
+                accountRow(account, state.busy, state.canUnlink, onLink = { linkingMediaServer = true }, onUnlink = {
+                    unlinking =
+                        account.origin
+                })
             },
         )
     Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(contentPadding)) {
@@ -153,7 +156,13 @@ private fun LinkedAccountsContent(
             title = stringResource(R.string.user_settings_linked_group),
             rows = rows,
             modifier = Modifier.padding(resolvedContentPadding(vertical = resolvedContentInset())),
-            belowRows = { GroupMessage(stringResource(R.string.user_settings_linked_hint), error = false) },
+            belowRows = {
+                GroupMessage(stringResource(R.string.user_settings_linked_hint), error = false)
+                // A linked account with no Unlink beside it says why, rather than looking like a control that went missing.
+                if (!state.canUnlink && (state.plex.linked || state.mediaServer?.linked == true)) {
+                    GroupMessage(stringResource(R.string.user_settings_unlink_primary_admin), error = false)
+                }
+            },
         )
     }
     unlinking?.let { origin ->
@@ -192,6 +201,7 @@ private fun LinkedAccountsContent(
 private fun accountRow(
     account: LinkedAccount,
     busy: Boolean,
+    canUnlink: Boolean,
     onLink: () -> Unit,
     onUnlink: () -> Unit,
 ): ListItem =
@@ -205,18 +215,27 @@ private fun accountRow(
                 else -> stringResource(R.string.user_settings_linked)
             },
         clickable = false,
-        trailingContent = {
-            // One button for both directions, so the tone follows which one it currently is. The icon
-            // takes an explicit tint, which the disabled colour never reaches, so a busy row dims it here.
-            val tone = if (account.linked) MaterialTheme.colorScheme.error else LocalContentColor.current
-            ExpressiveIconButton(
-                onClick = if (account.linked) onUnlink else onLink,
-                icon = if (account.linked) Icons.Filled.LinkOff else Icons.Filled.Link,
-                contentDescription = stringResource(if (account.linked) R.string.user_settings_unlink else R.string.user_settings_link),
-                enabled = !busy,
-                tint = if (busy) tone.copy(alpha = DISABLED_ALPHA) else tone,
-            )
-        },
+        // The server always refuses to unlink the primary administrator, so a linked account there has no button to offer.
+        trailingContent =
+            if (account.linked && !canUnlink) {
+                null
+            } else {
+                {
+                    // One button for both directions, so the tone follows which one it currently is. The icon
+                    // takes an explicit tint, which the disabled colour never reaches, so a busy row dims it here.
+                    val tone = if (account.linked) MaterialTheme.colorScheme.error else LocalContentColor.current
+                    ExpressiveIconButton(
+                        onClick = if (account.linked) onUnlink else onLink,
+                        icon = if (account.linked) Icons.Filled.LinkOff else Icons.Filled.Link,
+                        contentDescription =
+                            stringResource(
+                                if (account.linked) R.string.user_settings_unlink else R.string.user_settings_link,
+                            ),
+                        enabled = !busy,
+                        tint = if (busy) tone.copy(alpha = DISABLED_ALPHA) else tone,
+                    )
+                }
+            },
     )
 
 /** How to link the media server's account: its own credentials, or Quick Connect where the server has it. */

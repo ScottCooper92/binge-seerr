@@ -208,6 +208,14 @@ class LinkedAccountsViewModelTest {
         }
 
     @Test
+    fun `only the primary administrator is held back from unlinking`() =
+        runTest {
+            seerr.serve("GET /api/v1/user/1", """{"id":1,"displayName":"Admin","userType":3}""")
+            assertFalse(viewModel(userId = 1).awaitReady().canUnlink)
+            assertTrue(viewModel().awaitReady().canUnlink)
+        }
+
+    @Test
     fun `an unlink that fails without a reason is an ordinary failure`() =
         runTest {
             seerr.serve("DELETE /api/v1/user/8/settings/linked-accounts/jellyfin", "", code = 500)
