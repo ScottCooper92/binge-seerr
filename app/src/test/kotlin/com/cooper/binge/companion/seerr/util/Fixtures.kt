@@ -1,7 +1,7 @@
 package com.cooper.binge.companion.seerr.util
 
-import com.cooper.binge.companion.seerr.telemetry.Analytics
-import com.cooper.binge.companion.seerr.telemetry.CrashBreadcrumbs
+import com.cooper.homelab.core.telemetry.Analytics
+import com.cooper.homelab.core.telemetry.CrashBreadcrumbs
 
 /** Records every [event] call in order, so a test can say which action fired and with what params. */
 class RecordingAnalytics : Analytics {

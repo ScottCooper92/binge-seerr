@@ -64,12 +64,13 @@ to `privacy.md` and `data-safety.md` in the same PR. The specific claims that mu
   and the listener stays up through that step. The scanner is Google Play services', so the app holds no camera permission.
   The addresses it remembers (`handoff/HandOffAddressMemory.kt`) are cleared on disconnect and on
   connecting to a server (`onServerChanged` in `di/AuthModule.kt`).
-- A crash or recovered-failure report carries the ids of the record in hand (`telemetry/CrashReporting.kt`), a fixed action
+- A crash or recovered-failure report carries the ids of the record in hand (attached at the `crashBreadcrumbs.key(...)` call sites, for example in `ui/issues/IssueDetailViewModel.kt`, through the shared `CrashBreadcrumbs`), a fixed action
   line, the device model and the Android version. The app attaches no title, name, message or address; the crash's own stack trace
   and exception message are Crashlytics's and are not filtered.
 - There is an analytics SDK (PostHog) and a crash reporting SDK (Firebase Crashlytics), both gated
-  as above, and no advertising SDK. Check `app/build.gradle.kts` and `telemetry/` before changing
-  this claim in either direction.
+  as above, and no advertising SDK. Check `app/build.gradle.kts` (the `app-services-posthog` and
+  `app-services-firebase` dependencies and the Crashlytics plugin) and `di/TelemetryModule.kt` before changing this claim in
+  either direction.
 - `android:allowBackup="false"` and `android:dataExtractionRules` (`res/xml/data_extraction_rules.xml`):
   Android's own backup and device-to-device transfer do not copy the app's data, and uninstalling
   removes it. `allowBackup` alone does not stop a device-to-device transfer on every Android 12+

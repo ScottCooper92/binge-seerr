@@ -25,6 +25,8 @@ import com.cooper.binge.companion.seerr.ui.UserSettingsPageRoute
 import com.cooper.binge.companion.seerr.ui.UserSettingsRoute
 import com.cooper.binge.companion.seerr.ui.UsersRoute
 import com.cooper.binge.companion.seerr.ui.tv.TvDestination
+import com.cooper.homelab.core.telemetry.Analytics
+import com.cooper.homelab.core.telemetry.NoOpAnalytics
 
 /**
  * The name a screen is reported under. Written out because R8 renames classes in a release build, and

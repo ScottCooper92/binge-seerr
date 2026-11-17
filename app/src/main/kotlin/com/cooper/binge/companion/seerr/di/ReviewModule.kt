@@ -4,8 +4,8 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
-import com.cooper.binge.companion.seerr.flags.FeatureFlags
 import com.cooper.binge.companion.seerr.notifications.ApplicationScope
+import com.cooper.homelab.core.flags.FeatureFlags
 import com.cooper.homelab.core.foundation.AppDispatchers
 import com.cooper.homelab.core.foundation.Clock
 import com.cooper.homelab.core.review.PlayReviewPromptLauncher

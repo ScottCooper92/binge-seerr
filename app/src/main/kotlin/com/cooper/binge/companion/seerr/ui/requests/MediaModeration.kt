@@ -6,8 +6,8 @@ import com.cooper.binge.companion.seerr.data.RequestStore
 import com.cooper.binge.companion.seerr.seerr.SeerrMediaStatusBody
 import com.cooper.binge.companion.seerr.seerr.SeerrMediaStatusSeasonBody
 import com.cooper.binge.companion.seerr.seerr.isNoDefaultServerRefusal
-import com.cooper.binge.companion.seerr.telemetry.Analytics
 import com.cooper.binge.companion.seerr.telemetry.operationFailed
+import com.cooper.homelab.core.telemetry.Analytics
 
 /**
  * The moderation actions that act on a title's media record rather than on one request: marking it, clearing its data and
