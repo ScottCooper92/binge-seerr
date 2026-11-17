@@ -76,6 +76,7 @@ includeBuild("homelab-core") {
         substitute(module("com.cooper.homelab:server")).using(project(":server"))
         substitute(module("com.cooper.homelab:binge-bridge")).using(project(":binge-bridge"))
         substitute(module("com.cooper.homelab:presentation")).using(project(":presentation"))
+        substitute(module("com.cooper.homelab:ui-android")).using(project(":ui-android"))
         substitute(module("com.cooper.homelab:testing")).using(project(":testing"))
     }
 }
