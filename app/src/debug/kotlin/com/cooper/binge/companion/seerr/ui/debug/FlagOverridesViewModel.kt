@@ -2,6 +2,9 @@ package com.cooper.binge.companion.seerr.ui.debug
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.cooper.binge.companion.seerr.flags.DISCOVERY_FLAG_KEY
+import com.cooper.binge.companion.seerr.flags.DiscoveryFlag
+import com.cooper.binge.companion.seerr.flags.DiscoveryFlagOverride
 import com.cooper.homelab.core.flags.FeatureFlags
 import com.cooper.homelab.core.flags.Flag
 import com.cooper.homelab.core.flags.FlagOverrides
@@ -16,7 +19,9 @@ import javax.inject.Inject
 
 /** One flag on the developer screen: what it resolves to now, and the override behind that, if any. */
 data class FlagRow(
-    val flag: Flag,
+    val key: String,
+    /** The shared flag this row is, or null for the app's own discovery flag. */
+    val flag: Flag?,
     val effective: Boolean,
     val override: Boolean?,
 )
@@ -36,10 +41,15 @@ class FlagOverridesViewModel
     constructor(
         private val featureFlags: FeatureFlags,
         private val overrides: FlagOverrides,
+        private val discoveryFlag: DiscoveryFlag,
+        private val discoveryOverride: DiscoveryFlagOverride,
     ) : ViewModel() {
         val uiState: StateFlow<FlagOverridesUiState> =
-            combine(featureFlags.flags, overrides.values) { flags, local ->
-                FlagOverridesUiState.Ready(Flag.entries.map { FlagRow(it, flags[it], local[it]) })
+            combine(featureFlags.flags, overrides.values, discoveryFlag.enabled, discoveryOverride.value) { flags, local, discovery, discoveryLocal ->
+                FlagOverridesUiState.Ready(
+                    Flag.entries.map { FlagRow(it.key, it, flags[it], local[it]) } +
+                        FlagRow(DISCOVERY_FLAG_KEY, null, discovery, discoveryLocal),
+                )
             }.map<FlagOverridesUiState.Ready, FlagOverridesUiState> { it }
                 .stateIn(viewModelScope, SharingStarted.Lazily, FlagOverridesUiState.Loading)
 
@@ -51,6 +61,8 @@ class FlagOverridesViewModel
                     true -> false
                     false -> null
                 }
-            viewModelScope.launch { overrides.set(row.flag, next) }
+            viewModelScope.launch {
+                if (row.flag == null) discoveryOverride.set(next) else overrides.set(row.flag, next)
+            }
         }
     }

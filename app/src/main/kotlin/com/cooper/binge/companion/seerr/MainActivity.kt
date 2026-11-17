@@ -36,6 +36,7 @@ import com.cooper.binge.companion.seerr.ui.consent.ConsentGate
 import com.cooper.binge.companion.seerr.ui.linkedRequestId
 import com.cooper.binge.companion.seerr.ui.replaceAll
 import com.cooper.binge.companion.seerr.ui.tv.TvSeerrShell
+import com.cooper.binge.companion.seerr.flags.DiscoveryFlag
 import com.cooper.homelab.core.flags.FeatureFlags
 import com.cooper.homelab.core.telemetry.Analytics
 import dagger.hilt.android.AndroidEntryPoint
@@ -76,6 +77,9 @@ class MainActivity : ComponentActivity() {
 
     @Inject
     lateinit var featureFlags: FeatureFlags
+
+    @Inject
+    lateinit var discoveryFlag: DiscoveryFlag
 
     private var consumedLink: String? = null
 
@@ -136,6 +140,7 @@ class MainActivity : ComponentActivity() {
         super.onStart()
         userRefresh.onForeground()
         lifecycleScope.launch { featureFlags.refresh() }
+        lifecycleScope.launch { discoveryFlag.refresh() }
     }
 
     override fun onNewIntent(intent: Intent) {

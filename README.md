@@ -32,8 +32,7 @@ gains a Request button, Binge shows each title's request state, and an advanced 
 server, profile and folder choices, which Binge renders itself from this app's answers. Binge is
 optional; everything above works without it.
 
-**It is not a discovery client.** Browsing and searching for titles is Binge's job, or the
-server's own web client; this app manages what has already been asked for.
+**It is also a discovery client, on the phone.** Behind a feature flag that is off for now, it browses Movies and TV, searches for titles, and opens title, person and collection pages, all from your own server's API, with requesting as the main action. Binge remains the richer browsing app; this one reaches the same titles through the server you already run.
 
 The store listing and the privacy policy are under [`docs/listing/`](docs/listing/). The short
 version: the one secret (your API key or session) is encrypted with an Android Keystore key and

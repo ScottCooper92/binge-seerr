@@ -5,6 +5,13 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
 import com.cooper.binge.companion.seerr.BuildConfig
+import com.cooper.binge.companion.seerr.flags.DataStoreDiscoveryFlagOverride
+import com.cooper.binge.companion.seerr.flags.DiscoveryFlag
+import com.cooper.binge.companion.seerr.flags.DiscoveryFlagOverride
+import com.cooper.binge.companion.seerr.flags.DiscoveryFlagSource
+import com.cooper.binge.companion.seerr.flags.FirebaseDiscoveryFlagSource
+import com.cooper.binge.companion.seerr.flags.NoDiscoveryFlagOverride
+import com.cooper.binge.companion.seerr.flags.RemoteDiscoveryFlag
 import com.cooper.binge.companion.seerr.notifications.ApplicationScope
 import com.cooper.homelab.core.flags.DataStoreFlagOverrides
 import com.cooper.homelab.core.flags.FeatureFlags
@@ -56,5 +63,31 @@ object FlagsModule {
         // cache read, `seedFromCache` below, is measured in docs/feature-flags.md.)
         val initial = if (BuildConfig.DEBUG) runBlocking { overrides.values.first() } else emptyMap()
         return RemoteFeatureFlags(source, overrides, scope, io, initial, seedFromCache = true)
+    }
+
+    @Provides
+    @Singleton
+    fun discoveryFlagSource(
+        @ApplicationContext context: Context,
+    ): DiscoveryFlagSource = FirebaseDiscoveryFlagSource(context)
+
+    /** Only a debug build reads the override, so nothing a shipped build holds can switch the flag on. */
+    @Provides
+    @Singleton
+    fun discoveryFlagOverride(
+        @ApplicationContext context: Context,
+    ): DiscoveryFlagOverride = if (BuildConfig.DEBUG) DataStoreDiscoveryFlagOverride(context.flagOverridesDataStore) else NoDiscoveryFlagOverride
+
+    @Provides
+    @Singleton
+    fun discoveryFlag(
+        source: DiscoveryFlagSource,
+        override: DiscoveryFlagOverride,
+        @ApplicationScope scope: CoroutineScope,
+        @IoDispatcher io: CoroutineDispatcher,
+    ): DiscoveryFlag {
+        // Debug only, for the same reason as the shared flags above: it blocks the main thread once.
+        val initial = if (BuildConfig.DEBUG) runBlocking { override.value.first() } else null
+        return RemoteDiscoveryFlag(source, override, scope, io, initial)
     }
 }
