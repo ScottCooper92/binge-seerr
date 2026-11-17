@@ -274,6 +274,7 @@ app:notif_requests_approved  88772da0efcf
 app:notif_requests_available  ede6f4e6a280
 app:notif_requests_declined  0800d53535ab
 app:open_in_named  db1257f4fa5c
+app:overflow_menu  bc79cdffbaa8
 app:permission_admin  c1c224b03cd9
 app:permission_admin_detail  8044128cf051
 app:permission_auto_approve  9323d903f85b
@@ -315,6 +316,7 @@ app:permission_view_requests  47b9133042ef
 app:permission_view_requests_detail  8eb67caa268a
 app:permission_view_watchlists  8cc1d099df19
 app:permission_view_watchlists_detail  e9e7cdc52dbf
+app:report_problem  53de38dec81e
 app:report_title_anyway  f58c58d44ba2
 app:report_title_cannot_report  5d65aa1e469e
 app:report_title_checking  86d5ab0a7412
