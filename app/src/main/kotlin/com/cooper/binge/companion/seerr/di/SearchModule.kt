@@ -4,7 +4,9 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
-import com.cooper.binge.companion.seerr.ui.search.RecentSearches
+import com.cooper.binge.companion.seerr.auth.ServerIdentity
+import com.cooper.binge.companion.seerr.ui.search.ServerRecentSearches
+import com.cooper.homelab.core.presentation.search.RecentSearches
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -22,5 +24,6 @@ object SearchModule {
     @Singleton
     fun recentSearches(
         @ApplicationContext context: Context,
-    ): RecentSearches = RecentSearches(context.searchDataStore)
+        identity: ServerIdentity,
+    ): RecentSearches = ServerRecentSearches(context.searchDataStore, identity::currentServerId)
 }
