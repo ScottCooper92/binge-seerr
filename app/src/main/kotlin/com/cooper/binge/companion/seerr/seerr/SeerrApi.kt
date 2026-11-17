@@ -591,6 +591,101 @@ interface SeerrApi {
         @Body body: SeerrMetadataTestBody,
     ): SeerrMetadataTestResultDto
 
+    /** Trending movies and shows together. */
+    @GET("api/v1/discover/trending")
+    suspend fun discoverTrending(
+        @Query("page") page: Int = 1,
+    ): SeerrTitlePageDto
+
+    /** Popular movies; [keywords] is a TMDB id or a comma-separated list. */
+    @GET("api/v1/discover/movies")
+    suspend fun discoverMovies(
+        @Query("page") page: Int = 1,
+        @Query("sortBy") sortBy: String? = null,
+        @Query("keywords") keywords: String? = null,
+    ): SeerrTitlePageDto
+
+    /** Popular shows; [keywords] is a TMDB id or a comma-separated list. */
+    @GET("api/v1/discover/tv")
+    suspend fun discoverTv(
+        @Query("page") page: Int = 1,
+        @Query("sortBy") sortBy: String? = null,
+        @Query("keywords") keywords: String? = null,
+    ): SeerrTitlePageDto
+
+    @GET("api/v1/discover/movies/upcoming")
+    suspend fun discoverUpcomingMovies(
+        @Query("page") page: Int = 1,
+    ): SeerrTitlePageDto
+
+    @GET("api/v1/discover/tv/upcoming")
+    suspend fun discoverUpcomingTv(
+        @Query("page") page: Int = 1,
+    ): SeerrTitlePageDto
+
+    @GET("api/v1/discover/movies/genre/{genreId}")
+    suspend fun discoverMoviesByGenre(
+        @Path("genreId") genreId: Int,
+        @Query("page") page: Int = 1,
+    ): SeerrTitlePageDto
+
+    @GET("api/v1/discover/tv/genre/{genreId}")
+    suspend fun discoverTvByGenre(
+        @Path("genreId") genreId: Int,
+        @Query("page") page: Int = 1,
+    ): SeerrTitlePageDto
+
+    @GET("api/v1/discover/movies/studio/{studioId}")
+    suspend fun discoverMoviesByStudio(
+        @Path("studioId") studioId: Int,
+        @Query("page") page: Int = 1,
+    ): SeerrTitlePageDto
+
+    @GET("api/v1/discover/tv/network/{networkId}")
+    suspend fun discoverTvByNetwork(
+        @Path("networkId") networkId: Int,
+        @Query("page") page: Int = 1,
+    ): SeerrTitlePageDto
+
+    /** [language] is an ISO 639-1 code, the original language of the titles. */
+    @GET("api/v1/discover/movies/language/{language}")
+    suspend fun discoverMoviesByLanguage(
+        @Path("language") language: String,
+        @Query("page") page: Int = 1,
+    ): SeerrTitlePageDto
+
+    @GET("api/v1/discover/tv/language/{language}")
+    suspend fun discoverTvByLanguage(
+        @Path("language") language: String,
+        @Query("page") page: Int = 1,
+    ): SeerrTitlePageDto
+
+    @GET("api/v1/discover/keyword/{keywordId}/movies")
+    suspend fun discoverMoviesByKeyword(
+        @Path("keywordId") keywordId: Int,
+        @Query("page") page: Int = 1,
+    ): SeerrTitlePageDto
+
+    /** The genres with a backdrop each, for the genre row. */
+    @GET("api/v1/discover/genreslider/movie")
+    suspend fun movieGenreSlider(): List<SeerrGenreSliderDto>
+
+    @GET("api/v1/discover/genreslider/tv")
+    suspend fun tvGenreSlider(): List<SeerrGenreSliderDto>
+
+    /** The signed-in user's Plex watchlist. */
+    @GET("api/v1/discover/watchlist")
+    suspend fun discoverWatchlist(
+        @Query("page") page: Int = 1,
+    ): SeerrTitlePageDto
+
+    /** Movies, shows and people matching [query]. Retrofit encodes the query, which the server needs as `%20` and not `+`. */
+    @GET("api/v1/search")
+    suspend fun searchTitles(
+        @Query("query") query: String,
+        @Query("page") page: Int = 1,
+    ): SeerrTitlePageDto
+
     /** The discover sliders in the order the web client shows them, Overseerr 1.32 and the Jellyseerr lineage from 1.4. */
     @GET("api/v1/settings/discover")
     suspend fun discoverSliders(): List<SeerrDiscoverSliderDto>

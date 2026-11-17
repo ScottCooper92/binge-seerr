@@ -240,21 +240,21 @@ Each row is ticked in "Today" by the PR that covers it.
 | `GET /certifications/movie` | Get movie certifications | — | v2.6.0 |  | Planned under the discovery epic (#2039). |
 | `GET /certifications/tv` | Get TV certifications | — | v2.6.0 |  | Planned under the discovery epic (#2039). |
 | `GET /collection/{collectionId}` | Get collection details | v1.14.0 | v1.0.0 |  | Planned under the discovery epic (#2039). |
-| `GET /discover/genreslider/movie` | Get genre slider data for movies | v1.22.0 | v1.0.0 |  | Planned under the discovery epic (#2039). |
-| `GET /discover/genreslider/tv` | Get genre slider data for TV series | v1.22.0 | v1.0.0 |  | Planned under the discovery epic (#2039). |
-| `GET /discover/keyword/{keywordId}/movies` | Get movies from keyword | v1.9.0 | v1.0.0 |  | Planned under the discovery epic (#2039). |
-| `GET /discover/movies` | Discover movies | v1.0.0 | v1.0.0 |  | Planned under the discovery epic (#2039). |
-| `GET /discover/movies/genre/{genreId}` | Discover movies by genre | v1.21.0 | v1.0.0 |  | Planned under the discovery epic (#2039). |
-| `GET /discover/movies/language/{language}` | Discover movies by original language | v1.21.0 | v1.0.0 |  | Planned under the discovery epic (#2039). |
-| `GET /discover/movies/studio/{studioId}` | Discover movies by studio | v1.21.0 | v1.0.0 |  | Planned under the discovery epic (#2039). |
-| `GET /discover/movies/upcoming` | Upcoming movies | v1.0.0 | v1.0.0 |  | Planned under the discovery epic (#2039). |
-| `GET /discover/trending` | Trending movies and TV | v1.0.0 | v1.0.0 |  | Planned under the discovery epic (#2039). |
-| `GET /discover/tv` | Discover TV shows | v1.0.0 | v1.0.0 |  | Planned under the discovery epic (#2039). |
-| `GET /discover/tv/genre/{genreId}` | Discover TV shows by genre | v1.21.0 | v1.0.0 |  | Planned under the discovery epic (#2039). |
-| `GET /discover/tv/language/{language}` | Discover TV shows by original language | v1.21.0 | v1.0.0 |  | Planned under the discovery epic (#2039). |
-| `GET /discover/tv/network/{networkId}` | Discover TV shows by network | v1.21.0 | v1.0.0 |  | Planned under the discovery epic (#2039). |
-| `GET /discover/tv/upcoming` | Discover Upcoming TV shows | v1.20.0 | v1.0.0 |  | Planned under the discovery epic (#2039). |
-| `GET /discover/watchlist` | Get the Plex watchlist. | v1.30.0 | v1.2.0 |  | Planned under the discovery epic (#2039). |
+| `GET /discover/genreslider/movie` | Get genre slider data for movies | v1.22.0 | v1.0.0 | yes | The shared title lists: hubs, the grid and search. |
+| `GET /discover/genreslider/tv` | Get genre slider data for TV series | v1.22.0 | v1.0.0 | yes | The shared title lists: hubs, the grid and search. |
+| `GET /discover/keyword/{keywordId}/movies` | Get movies from keyword | v1.9.0 | v1.0.0 | yes | The shared title lists: hubs, the grid and search. |
+| `GET /discover/movies` | Discover movies | v1.0.0 | v1.0.0 | yes | The shared title lists: hubs, the grid and search. |
+| `GET /discover/movies/genre/{genreId}` | Discover movies by genre | v1.21.0 | v1.0.0 | yes | The shared title lists: hubs, the grid and search. |
+| `GET /discover/movies/language/{language}` | Discover movies by original language | v1.21.0 | v1.0.0 | yes | The shared title lists: hubs, the grid and search. |
+| `GET /discover/movies/studio/{studioId}` | Discover movies by studio | v1.21.0 | v1.0.0 | yes | The shared title lists: hubs, the grid and search. |
+| `GET /discover/movies/upcoming` | Upcoming movies | v1.0.0 | v1.0.0 | yes | The shared title lists: hubs, the grid and search. |
+| `GET /discover/trending` | Trending movies and TV | v1.0.0 | v1.0.0 | yes | The shared title lists: hubs, the grid and search. |
+| `GET /discover/tv` | Discover TV shows | v1.0.0 | v1.0.0 | yes | The shared title lists: hubs, the grid and search. |
+| `GET /discover/tv/genre/{genreId}` | Discover TV shows by genre | v1.21.0 | v1.0.0 | yes | The shared title lists: hubs, the grid and search. |
+| `GET /discover/tv/language/{language}` | Discover TV shows by original language | v1.21.0 | v1.0.0 | yes | The shared title lists: hubs, the grid and search. |
+| `GET /discover/tv/network/{networkId}` | Discover TV shows by network | v1.21.0 | v1.0.0 | yes | The shared title lists: hubs, the grid and search. |
+| `GET /discover/tv/upcoming` | Discover Upcoming TV shows | v1.20.0 | v1.0.0 | yes | The shared title lists: hubs, the grid and search. |
+| `GET /discover/watchlist` | Get the Plex watchlist. | v1.30.0 | v1.2.0 | yes | The shared title lists: hubs, the grid and search. |
 | `GET /media` | Get media | v1.0.0 | v1.0.0 |  | Planned under the discovery epic (#2039). |
 | `GET /movie/{movieId}/ratings` | Get movie ratings | v1.0.0 | v1.0.0 |  | Planned under the discovery epic (#2039). |
 | `GET /movie/{movieId}/ratingscombined` | Get RT and IMDB movie ratings combined | v1.34.0 | v1.7.0 |  | Planned under the discovery epic (#2039). |
@@ -262,7 +262,7 @@ Each row is ticked in "Today" by the PR that covers it.
 | `GET /movie/{movieId}/similar` | Get similar movies | v1.0.0 | v1.0.0 |  | Planned under the discovery epic (#2039). |
 | `GET /person/{personId}` | Get person details | v1.0.0 | v1.0.0 |  | Planned under the discovery epic (#2039). |
 | `GET /person/{personId}/combined_credits` | Get combined credits | v1.0.0 | v1.0.0 |  | Planned under the discovery epic (#2039). |
-| `GET /search` | Search for movies, TV shows, or people | v1.0.0 | v1.0.0 |  | Planned under the discovery epic (#2039). |
+| `GET /search` | Search for movies, TV shows, or people | v1.0.0 | v1.0.0 | yes | The shared title lists: hubs, the grid and search. |
 | `GET /tv/{tvId}/ratings` | Get TV ratings | v1.0.0 | v1.0.0 |  | Planned under the discovery epic (#2039). |
 | `GET /tv/{tvId}/recommendations` | Get recommended TV series | v1.0.0 | v1.0.0 |  | Planned under the discovery epic (#2039). |
 | `GET /tv/{tvId}/season/{seasonNumber}` | Get season details and episode list | v1.0.0 | v1.0.0 |  | Planned under the discovery epic (#2039). |

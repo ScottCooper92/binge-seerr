@@ -122,6 +122,7 @@ internal fun ThisAppEntry(
             onNotificationAccessChanged = viewModel::recheckNotificationAccess,
             onSetPollInterval = viewModel::setPollInterval,
             onOpenLicences = { open(LicencesRoute) },
+            onOpenDiagnostics = { open(DiagnosticsRoute) },
         )
     ThisAppScreen(
         state = state,
