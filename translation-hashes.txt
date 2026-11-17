@@ -416,6 +416,7 @@ app:search_kw_api_key  a2f73b74b9d4
 app:search_kw_blocklist_tags  0366a3a3ba68
 app:search_kw_cache  3a705bfecd88
 app:search_kw_default_permissions  175d7b3717ac
+app:search_kw_diagnostics  3cdd25ff613c
 app:search_kw_general  058f3d7eb66f
 app:search_kw_licences  383059691144
 app:search_kw_linked  aa557df6f567
