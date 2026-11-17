@@ -85,6 +85,8 @@ class HubViewModelTest {
     }
 
     private object NoMedia : HubMediaSource {
+        override suspend fun serverUrl() = "https://s/"
+
         override suspend fun recentlyAdded() = emptyList<SeerrRequestMediaDto>()
 
         override suspend fun recentRequests() = emptyList<SeerrRequestMediaDto>()
@@ -106,14 +108,14 @@ class HubViewModelTest {
         titles: TitleListRepository = Titles(),
     ) = HubViewModel(sliders, HubCardLoader(titles, NoMedia), dispatcher, HubTab.Movies)
 
-    private suspend fun HubViewModel.settled() = uiState.first { it !is HubUiState.Loading }
+    private suspend fun HubViewModel.settled() = uiState.first { it !is DiscoverHubUiState.Loading }
 
     @Test
     fun `the hub shows the rows of the servers sliders that have titles`() =
         runTest {
             val sliders = FakeSliders(SliderListState.Ready(listOf(slider(1, TRENDING), slider(2, TRENDING, enabled = false))))
             val state = vm(sliders).settled()
-            val ready = state as HubUiState.Ready
+            val ready = state as DiscoverHubUiState.Ready
             assertEquals(listOf(1), ready.rows.map { it.row.sliderId })
             assertEquals(
                 "One",
@@ -139,16 +141,16 @@ class HubViewModelTest {
     fun `a list that failed to load is an error`() =
         runTest {
             val sliders = FakeSliders(SliderListState.Failed(IllegalStateException("x")))
-            assertTrue(vm(sliders).settled() is HubUiState.Error)
+            assertTrue(vm(sliders).settled() is DiscoverHubUiState.Error)
         }
 
     @Test
     fun `every row failing is an error and no rows at all is empty`() =
         runTest {
             val failing = vm(FakeSliders(SliderListState.Ready(listOf(slider(1, TRENDING)))), Titles(fail = true))
-            assertTrue(failing.settled() is HubUiState.Error)
+            assertTrue(failing.settled() is DiscoverHubUiState.Error)
             val none = vm(FakeSliders(SliderListState.Ready(emptyList())))
-            assertEquals(HubUiState.Empty, none.settled())
+            assertEquals(DiscoverHubUiState.Empty, none.settled())
         }
 
     @Test
@@ -158,7 +160,7 @@ class HubViewModelTest {
             val model = vm(sliders)
             model.settled()
             sliders.state.value = SliderListState.Ready(listOf(slider(1, TRENDING), slider(3, WATCHLIST)))
-            val ready = model.uiState.first { it is HubUiState.Ready && it.rows.size == 2 } as HubUiState.Ready
+            val ready = model.uiState.first { it is DiscoverHubUiState.Ready && it.rows.size == 2 } as DiscoverHubUiState.Ready
             assertEquals(listOf(1, 3), ready.rows.map { it.row.sliderId })
         }
 }

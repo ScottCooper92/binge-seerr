@@ -28,22 +28,22 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 /** What a hub shows. */
-sealed interface HubUiState {
-    data object Loading : HubUiState
+sealed interface DiscoverHubUiState {
+    data object Loading : DiscoverHubUiState
 
     /** [pending] rows are still loading and fill in below; [refreshing] is a pull to refresh in flight. */
     data class Ready(
         val rows: List<HubRowUi>,
         val pending: Int,
         val refreshing: Boolean,
-    ) : HubUiState
+    ) : DiscoverHubUiState
 
     /** No row has anything to show: every slider is off, or the library is empty. */
-    data object Empty : HubUiState
+    data object Empty : DiscoverHubUiState
 
     data class Error(
         val error: SeerrError,
-    ) : HubUiState
+    ) : DiscoverHubUiState
 }
 
 /** One poster row. [row] says which slider it is, so the screen can title a built-in one in the user's language. */
@@ -67,9 +67,9 @@ class HubViewModel
     ) : ViewModel() {
         private val loader = HubLoader<HubRow, HubCard>(viewModelScope, dispatcher) { cards.load(it) }
 
-        val uiState: StateFlow<HubUiState> =
+        val uiState: StateFlow<DiscoverHubUiState> =
             combine(sliders.sliders, loader.state, loader.refreshing) { list, rows, refreshing -> toUiState(list, rows, refreshing) }
-                .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), HubUiState.Loading)
+                .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), DiscoverHubUiState.Loading)
 
         init {
             viewModelScope.launch {
@@ -102,15 +102,15 @@ private fun toUiState(
     list: SliderListState,
     rows: HubState<HubRow, HubCard>,
     refreshing: Boolean,
-): HubUiState =
+): DiscoverHubUiState =
     when (list) {
-        SliderListState.Loading -> HubUiState.Loading
-        is SliderListState.Failed -> HubUiState.Error(list.error.toSeerrError())
+        SliderListState.Loading -> DiscoverHubUiState.Loading
+        is SliderListState.Failed -> DiscoverHubUiState.Error(list.error.toSeerrError())
         is SliderListState.Ready ->
             when (rows) {
-                HubState.Loading -> HubUiState.Loading
-                HubState.Empty -> HubUiState.Empty
-                is HubState.Failed -> HubUiState.Error(rows.error.toSeerrError())
-                is HubState.Ready -> HubUiState.Ready(rows.rows.map { HubRowUi(it.key, it.items) }, rows.pending, refreshing)
+                HubState.Loading -> DiscoverHubUiState.Loading
+                HubState.Empty -> DiscoverHubUiState.Empty
+                is HubState.Failed -> DiscoverHubUiState.Error(rows.error.toSeerrError())
+                is HubState.Ready -> DiscoverHubUiState.Ready(rows.rows.map { HubRowUi(it.key, it.items) }, rows.pending, refreshing)
             }
     }

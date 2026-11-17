@@ -17,7 +17,10 @@ class SeerrHubMediaSource(
     private val profile: suspend () -> SeerrServerProfile,
     private val titles: TitleCache,
     private val io: CoroutineDispatcher,
+    private val serverUrl: suspend () -> String,
 ) : HubMediaSource {
+    override suspend fun serverUrl(): String = serverUrl.invoke()
+
     override suspend fun recentlyAdded(): List<SeerrRequestMediaDto> {
         if (!profile().hasRecentlyAdded) return emptyList()
         return withContext(io) { api().mediaList(filter = "allavailable", take = MEDIA_WINDOW, sort = "mediaAdded").results }

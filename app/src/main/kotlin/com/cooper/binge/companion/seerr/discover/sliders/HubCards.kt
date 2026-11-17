@@ -22,12 +22,24 @@ data class HubCard(
     val year: String?,
     val artworkUrl: String?,
     val availability: TitleAvailability,
+    /** The title's page on the server, where it opens when Binge is not there to take it. */
+    val webUrl: String,
 )
 
-internal fun TitleResult.toCard(): HubCard = HubCard(kind, tmdbId, name, year, artworkPath?.toTmdbPosterUrl(), availability)
+internal fun TitleResult.toCard(serverUrl: String): HubCard =
+    HubCard(kind, tmdbId, name, year, artworkPath?.toTmdbPosterUrl(), availability, webUrl(serverUrl, kind, tmdbId))
+
+private fun webUrl(
+    serverUrl: String,
+    kind: TitleKind,
+    tmdbId: Int,
+): String = serverUrl + (if (kind == TitleKind.Series) "tv/" else "movie/") + tmdbId
 
 /** The server's media list and request list, as the two rows that are not a title list read them. */
 interface HubMediaSource {
+    /** The server's address with its trailing slash, for a title's link on it. */
+    suspend fun serverUrl(): String
+
     /** The newest titles in the library, both kinds, newest first. */
     suspend fun recentlyAdded(): List<SeerrRequestMediaDto>
 
@@ -52,11 +64,12 @@ class HubCardLoader(
         return when {
             source != null ->
                 if (titles.supports(source)) {
+                    val serverUrl = media.serverUrl()
                     titles
                         .load(source, 1)
                         .results
                         .forHub(tab)
-                        .map { it.toCard() }
+                        .map { it.toCard(serverUrl) }
                 } else {
                     emptyList()
                 }
@@ -71,10 +84,11 @@ class HubCardLoader(
         tab: HubTab,
     ): List<HubCard> {
         val type = if (tab == HubTab.Movies) SEERR_MEDIA_TYPE_MOVIE else SEERR_MEDIA_TYPE_TV
+        val serverUrl = media.serverUrl()
         val own = refs.filter { it.mediaType == type }.distinctBy { it.tmdbId }.take(HUB_ROW_CARDS)
         return coroutineScope {
             own
-                .map { ref -> async { media.hydrate(type, ref.tmdbId)?.let { ref.toCard(tab, it) } } }
+                .map { ref -> async { media.hydrate(type, ref.tmdbId)?.let { ref.toCard(tab, it, serverUrl) } } }
                 .awaitAll()
                 .filterNotNull()
         }
@@ -84,9 +98,18 @@ class HubCardLoader(
 private fun SeerrRequestMediaDto.toCard(
     tab: HubTab,
     title: HydratedTitle,
+    serverUrl: String,
 ): HubCard? =
     title.title?.let {
-        HubCard(tab.titleKind(), tmdbId, it, title.year, title.posterUrl, status.toAvailability())
+        HubCard(
+            tab.titleKind(),
+            tmdbId,
+            it,
+            title.year,
+            title.posterUrl,
+            status.toAvailability(),
+            webUrl(serverUrl, tab.titleKind(), tmdbId),
+        )
     }
 
 private fun HubRow.cardTab(): HubTab? =

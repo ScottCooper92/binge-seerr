@@ -44,6 +44,8 @@ class HubCardLoaderTest {
         val requested: List<SeerrRequestMediaDto> = emptyList(),
         val missing: Set<Int> = emptySet(),
     ) : HubMediaSource {
+        override suspend fun serverUrl() = "https://s/"
+
         override suspend fun recentlyAdded() = added
 
         override suspend fun recentRequests() = requested
@@ -72,6 +74,7 @@ class HubCardLoaderTest {
                     .orEmpty()
                     .endsWith("/p1.jpg"),
             )
+            assertEquals("https://s/movie/1", cards.single().webUrl)
             assertEquals(TitleSource.Trending, titles.loaded)
         }
 
@@ -94,6 +97,7 @@ class HubCardLoaderTest {
             val cards = HubCardLoader(FakeTitles(emptyList()), media).load(HubRow.RecentlyAdded(1, null, HubTab.Movies))
             assertEquals(listOf(1, 4), cards.map { it.tmdbId })
             assertEquals("n1", cards.first().name)
+            assertEquals("https://s/movie/4", cards.last().webUrl)
         }
 
     @Test
