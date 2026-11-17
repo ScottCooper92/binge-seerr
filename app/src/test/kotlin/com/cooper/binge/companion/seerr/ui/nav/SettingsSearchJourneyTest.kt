@@ -77,7 +77,8 @@ class SettingsSearchJourneyTest {
             host.stack().lastOrNull() == ServerSettingsPageRoute(ServerSettingsPage.Logs)
         }
 
-        assertEquals(listOf("server.Logs|"), host.recentSearches())
+        // Remembering is written off the main thread, after the page has opened, so the list arrives a moment later.
+        host.compose.waitUntil("the opened result remembered", 10_000) { host.recentSearches() == listOf("server.Logs|") }
 
         host.disconnect()
 
