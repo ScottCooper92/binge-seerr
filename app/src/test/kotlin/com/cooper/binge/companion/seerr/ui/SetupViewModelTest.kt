@@ -5,12 +5,10 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModelStore
 import com.binge.companion.kit.SecretCipher
 import com.cooper.binge.companion.seerr.auth.CredentialStore
-import com.cooper.binge.companion.seerr.auth.DataStoreCleartextConsent
 import com.cooper.binge.companion.seerr.auth.PlexPinFlow
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.handoff.AddressHandOffs
 import com.cooper.binge.companion.seerr.handoff.HandOffOpening
-import com.cooper.binge.companion.seerr.seerr.LocalNetworkPermission
 import com.cooper.binge.companion.seerr.seerr.PlexClientIdentity
 import com.cooper.binge.companion.seerr.seerr.SeerrApiFactory
 import com.cooper.binge.companion.seerr.seerr.SeerrAuth
@@ -24,6 +22,8 @@ import com.cooper.binge.companion.seerr.util.MainDispatcherRule
 import com.cooper.binge.companion.seerr.util.PlainCipher
 import com.cooper.binge.companion.seerr.util.RecordingAnalytics
 import com.cooper.binge.companion.seerr.util.ReversingCipher
+import com.cooper.homelab.core.server.network.DataStoreCleartextConsent
+import com.cooper.homelab.core.server.network.LocalNetworkPermission
 import com.cooper.homelab.core.testing.InMemoryDataStore
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch

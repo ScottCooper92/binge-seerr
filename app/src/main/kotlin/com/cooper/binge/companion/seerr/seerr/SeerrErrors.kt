@@ -3,6 +3,7 @@ package com.cooper.binge.companion.seerr.seerr
 import com.binge.companion.sdk.attempt
 import com.binge.companion.sdk.serverUnreachable
 import com.cooper.binge.companion.seerr.auth.NotConnectedException
+import com.cooper.homelab.core.server.network.LocalNetworkDeniedException
 import io.grpc.Status
 import io.grpc.StatusException
 import kotlinx.coroutines.CancellationException

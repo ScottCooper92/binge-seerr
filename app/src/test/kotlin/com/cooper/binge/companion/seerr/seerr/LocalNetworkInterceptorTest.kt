@@ -1,5 +1,8 @@
 package com.cooper.binge.companion.seerr.seerr
 
+import com.cooper.homelab.core.server.network.LocalNetworkDeniedException
+import com.cooper.homelab.core.server.network.LocalNetworkInterceptor
+import com.cooper.homelab.core.server.network.LocalNetworkPermission
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
@@ -18,7 +21,7 @@ class LocalNetworkInterceptorTest {
     private fun client(permission: LocalNetworkPermission): OkHttpClient =
         OkHttpClient
             .Builder()
-            .addInterceptor(SeerrLocalNetworkInterceptor(permission))
+            .addInterceptor(LocalNetworkInterceptor(permission))
             .addInterceptor(
                 Interceptor { chain ->
                     reached.incrementAndGet()

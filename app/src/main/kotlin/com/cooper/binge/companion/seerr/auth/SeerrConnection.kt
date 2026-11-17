@@ -22,6 +22,7 @@ import com.cooper.binge.companion.seerr.seerr.readProfile
 import com.cooper.binge.companion.seerr.seerr.rejectsSession
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
 import com.cooper.binge.companion.seerr.seerr.toTmdbBackdropUrl
+import com.cooper.homelab.core.server.network.CleartextConsent
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow

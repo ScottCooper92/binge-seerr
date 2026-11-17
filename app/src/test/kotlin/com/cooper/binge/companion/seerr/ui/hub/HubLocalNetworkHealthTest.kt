@@ -1,6 +1,6 @@
 package com.cooper.binge.companion.seerr.ui.hub
 
-import com.cooper.binge.companion.seerr.seerr.LocalNetworkPermission
+import com.cooper.homelab.core.server.network.LocalNetworkPermission
 import org.junit.Assert.assertEquals
 import org.junit.Test
 

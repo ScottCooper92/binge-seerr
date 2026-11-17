@@ -245,6 +245,7 @@ dependencies {
     // file, so that package imports only this module's theme and units.
     implementation(libs.binge.designsystem.tv)
     implementation(libs.homelab.appservices)
+    implementation(libs.homelab.server)
     // The vendor adapters behind it: Google Play (the review card and the tip jar), PostHog and Firebase.
     implementation(libs.homelab.appservices.play)
     implementation(libs.homelab.appservices.posthog)

@@ -7,6 +7,7 @@ import com.binge.companion.sdk.serverUnreachableOf
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.auth.NotConnectedException
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorEvent
+import com.cooper.homelab.core.server.network.LocalNetworkDeniedException
 import io.grpc.Status
 import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.SerializationException

@@ -1,5 +1,6 @@
 package com.cooper.binge.companion.seerr.seerr
 
+import com.cooper.homelab.core.server.network.isLocalOrPrivateHost
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -41,7 +42,7 @@ class SeerrUrlsTest {
             "fd7a:115c:a1e0::1",
             "10.0.0.2",
             "nas",
-        ).forEach { assertTrue(it, it.isLocalOrPrivateHost()) }
+        ).forEach { assertTrue(it, isLocalOrPrivateHost(it)) }
         listOf(
             "127.example.com",
             "169.254.example.com",
@@ -51,7 +52,7 @@ class SeerrUrlsTest {
             "100.64.example.com",
             "seerr.lan.example.com",
             "internal.example.com",
-        ).forEach { assertFalse(it, it.isLocalOrPrivateHost()) }
+        ).forEach { assertFalse(it, isLocalOrPrivateHost(it)) }
     }
 
     @Test

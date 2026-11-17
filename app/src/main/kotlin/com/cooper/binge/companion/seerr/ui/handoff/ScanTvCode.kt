@@ -14,8 +14,8 @@ import com.cooper.binge.companion.seerr.ReportTitleActivity
 import com.cooper.binge.companion.seerr.SendAddressActivity
 import com.cooper.binge.companion.seerr.handoff.TitleReportLinks
 import com.cooper.binge.companion.seerr.handoff.TvHandOffLinks
-import com.cooper.binge.companion.seerr.seerr.AndroidLocalNetworkPermission
-import com.cooper.binge.companion.seerr.seerr.LOCAL_NETWORK_PERMISSION
+import com.cooper.homelab.core.server.network.AndroidLocalNetworkPermission
+import com.cooper.homelab.core.server.network.LOCAL_NETWORK_PERMISSION
 import com.google.mlkit.vision.barcode.common.Barcode
 import com.google.mlkit.vision.codescanner.GmsBarcodeScannerOptions
 import com.google.mlkit.vision.codescanner.GmsBarcodeScanning
