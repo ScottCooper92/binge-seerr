@@ -1,6 +1,8 @@
 package com.cooper.binge.companion.seerr.ui
 
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
+import androidx.compose.material3.adaptive.layout.calculatePaneScaffoldDirective
 import androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -17,10 +19,14 @@ import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.ui.NavDisplay
 import com.binge.designsystem.PaneContent
 import com.binge.designsystem.PaneEdge
+import com.cooper.binge.companion.seerr.flags.LocalDiscoveryEnabled
 import com.cooper.binge.companion.seerr.ui.hub.HubSection
 import com.cooper.binge.companion.seerr.ui.settings.diagnostics.DiagnosticsEntry
 import com.cooper.binge.companion.seerr.ui.settings.licences.LicencesEntry
 import com.cooper.binge.companion.seerr.ui.settings.server.ServerSettingsPage
+import com.cooper.binge.companion.seerr.ui.shell.SeerrTab
+import com.cooper.binge.companion.seerr.ui.shell.SeerrTabShell
+import com.cooper.binge.companion.seerr.ui.shell.TabShellState
 import com.cooper.binge.companion.seerr.ui.state.LoadingScreen
 
 /**
@@ -28,11 +34,13 @@ import com.cooper.binge.companion.seerr.ui.state.LoadingScreen
  * entry its own store, so a screen's ViewModel lives and dies with its place on the stack rather
  * than with the Activity.
  */
+@OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
 fun SeerrNavHost(
     backStack: NavBackStack<NavKey>,
     onExit: () -> Unit,
     modifier: Modifier = Modifier,
+    tabs: TabShellState<SeerrTab>? = null,
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val state = viewModel.uiState.collectAsStateWithLifecycle()
@@ -47,14 +55,17 @@ fun SeerrNavHost(
     // Keyed on the root as well as the connection: a notification's link replaces the stack with one
     // rooted on HomeRoute, and it can arrive after the connection has already resolved.
     val root = backStack.firstOrNull()
-    LaunchedEffect(connected, root) { backStack.settleHome(connected) }
+    // The tab bar is for a phone-width window with the flag on. A wider window keeps the hub beside its sections as it is today.
+    val compact = calculatePaneScaffoldDirective(currentWindowAdaptiveInfoV2()).maxHorizontalPartitions <= 1
+    val shell = tabs != null && LocalDiscoveryEnabled.current && compact
+    LaunchedEffect(connected, root, shell) { backStack.settleHome(connected, shell) }
     // The default section is off the stack, so Back from it leaves; the host's own Back shares the once-only exit.
     val exit = rememberExitOnce(onExit)
     // A disconnect still waiting on the server is not a connection to ask a review of: its card would show as the user leaves.
     val askable = remember(state) { derivedStateOf { if (state.value == HomeUiState.Disconnecting) false else state.value.connected() } }
     ReviewPromptOnReturnToRoot(connected = askable.value, stackDepth = backStack.size)
     SeerrPaneHost(backStack, connected, exit, modifier, defaultSection = { DefaultSectionPane(backStack, exit) }) { panes ->
-        homeEntries(backStack, connected = { connectedState.value }, panes = panes, onExit = exit)
+        homeEntries(backStack, connected = { connectedState.value }, panes = panes, onExit = exit, tabs = tabs)
         sectionEntries(backStack, panes)
         searchEntries(backStack, panes)
         detailEntries(backStack, showBack = panes.showBack)
@@ -81,7 +92,19 @@ private fun EntryProviderScope<NavKey>.homeEntries(
     connected: () -> Boolean?,
     panes: PaneLayout,
     onExit: () -> Unit,
+    tabs: TabShellState<SeerrTab>?,
 ) {
+    val hub: @Composable (selectedSection: HubSection?) -> Unit = { selectedSection ->
+        HubEntry(
+            selectedSection = selectedSection,
+            onOpenSection = { section -> backStack.openSection(section) },
+            onOpenAccount = { id -> panes.open(backStack, UserDetailRoute(id)) },
+            onOpenSearch = { backStack.push(SettingsSearchRoute) },
+            onOpenRequest = { id -> panes.open(backStack, RequestDetailRoute(id)) },
+            onReconnect = { panes.open(backStack, EditConnectionRoute) },
+            developerRows = debugDeveloperRows(backStack),
+        )
+    }
     entry<HomeRoute> {
         // Connected shows the spinner for a frame at most, while settleHome swaps the hub in.
         when (connected()) {
@@ -98,19 +121,15 @@ private fun EntryProviderScope<NavKey>.homeEntries(
         PaneContent(innerEdge = PaneEdge.End) {
             // And the other way: after a disconnect, settleHome is already swapping setup back in.
             if (connected() == true) {
-                HubEntry(
-                    selectedSection = backStack.selectedSection(defaultShowing = panes.hubBeside()),
-                    onOpenSection = { section -> backStack.openSection(section) },
-                    onOpenAccount = { id -> panes.open(backStack, UserDetailRoute(id)) },
-                    onOpenSearch = { backStack.push(SettingsSearchRoute) },
-                    onOpenRequest = { id -> panes.open(backStack, RequestDetailRoute(id)) },
-                    onReconnect = { panes.open(backStack, EditConnectionRoute) },
-                    developerRows = debugDeveloperRows(backStack),
-                )
+                hub(backStack.selectedSection(defaultShowing = panes.hubBeside()))
             } else {
                 LoadingScreen()
             }
         }
+    }
+    // No pane metadata: the shell takes the whole window, and what a tab opens covers it from above.
+    entry<ShellRoute> {
+        if (connected() == true && tabs != null) SeerrTabShell(tabs) { hub(null) } else LoadingScreen()
     }
 }
 

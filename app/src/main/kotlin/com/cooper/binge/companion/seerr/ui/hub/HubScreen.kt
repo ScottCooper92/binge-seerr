@@ -26,6 +26,7 @@ import com.binge.designsystem.component.HintCard
 import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.component.SectionHeader
+import com.binge.designsystem.navOverlayPadding
 import com.binge.designsystem.resolvedContentInset
 import com.binge.designsystem.resolvedContentPadding
 import com.binge.designsystem.template.BingeScreenScaffold
@@ -94,7 +95,8 @@ fun HubScreen(
         },
     ) { padding ->
         Box(modifier = Modifier.fillMaxSize().padding(padding.screenOuterPadding())) {
-            val inner = padding.screenInnerPadding()
+            // Inside the tab bar shell the floating pill covers the last row, so the content pads by what the pill publishes.
+            val inner = navOverlayPadding(padding.screenInnerPadding())
             when {
                 // A rejected session is the app's to answer, by going to sign-in (#810): nothing to offer here meanwhile.
                 ready?.health == ConnectionHealth.Unauthorized -> LoadingScreen(Modifier.padding(inner))
