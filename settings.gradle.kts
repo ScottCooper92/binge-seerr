@@ -74,6 +74,7 @@ includeBuild("homelab-core") {
         substitute(module("com.cooper.homelab:app-services-posthog")).using(project(":app-services-posthog"))
         substitute(module("com.cooper.homelab:app-services-firebase")).using(project(":app-services-firebase"))
         substitute(module("com.cooper.homelab:server")).using(project(":server"))
+        substitute(module("com.cooper.homelab:binge-bridge")).using(project(":binge-bridge"))
         substitute(module("com.cooper.homelab:testing")).using(project(":testing"))
     }
 }

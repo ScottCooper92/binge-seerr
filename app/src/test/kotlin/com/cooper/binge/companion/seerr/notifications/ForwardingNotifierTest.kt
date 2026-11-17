@@ -19,11 +19,11 @@ class ForwardingNotifierTest {
 
     private val local = FakeNotifier()
     private var now = NOW
-    private lateinit var forwarding: NotificationForwarding
+    private lateinit var forwarding: SeerrForwarding
 
     private fun TestScope.notifier(): ForwardingNotifier {
         forwarding =
-            NotificationForwarding(
+            seerrForwarding(
                 PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("f.preferences_pb") },
             ) { NOW }
         return ForwardingNotifier(local, forwarding, FakeText) { now++ }

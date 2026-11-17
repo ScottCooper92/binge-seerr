@@ -38,7 +38,7 @@ class AddressRangesTest {
         assertEquals(AddressLocality.Local, hostLocality(mapped))
         assertTrue(isLocalNetworkHost(mapped))
         assertTrue(isLocalOrPrivateHost(mapped))
-        // OkHttp itself writes the mapped literal as the IPv4 address.
-        assertEquals("192.168.1.2", "http://[::ffff:192.168.1.2]:5055".localNetworkHostOrNull())
+        // The shared address parser keeps the literal as typed, where OkHttp wrote it as the IPv4 address; it is local either way.
+        assertEquals("::ffff:192.168.1.2", "http://[::ffff:192.168.1.2]:5055".localNetworkHostOrNull())
     }
 }
