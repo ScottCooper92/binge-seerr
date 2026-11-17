@@ -2,7 +2,7 @@ package com.cooper.binge.companion.seerr.telemetry
 
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
-import com.cooper.binge.companion.seerr.util.InMemoryDataStore
+import com.cooper.homelab.core.testing.InMemoryDataStore
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow

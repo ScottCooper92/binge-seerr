@@ -5,8 +5,6 @@ import com.cooper.binge.companion.seerr.auth.CredentialStore
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.data.FakeRequestStore
 import com.cooper.binge.companion.seerr.data.RequestEntity
-import com.cooper.binge.companion.seerr.review.NoReviewSignals
-import com.cooper.binge.companion.seerr.review.ReviewSignalSink
 import com.cooper.binge.companion.seerr.seerr.SeerrApiFactory
 import com.cooper.binge.companion.seerr.seerr.SeerrAuth
 import com.cooper.binge.companion.seerr.seerr.SeerrError
@@ -17,6 +15,8 @@ import com.cooper.binge.companion.seerr.util.RecordingAnalytics
 import com.cooper.binge.companion.seerr.util.RecordingCrashBreadcrumbs
 import com.cooper.binge.companion.seerr.util.awaitEvent
 import com.cooper.binge.companion.seerr.util.requestItem
+import com.cooper.homelab.core.review.NoReviewSignals
+import com.cooper.homelab.core.review.ReviewSignalSink
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first

@@ -1,6 +1,6 @@
 package com.cooper.binge.companion.seerr.auth
 
-import com.cooper.binge.companion.seerr.util.InMemoryDataStore
+import com.cooper.homelab.core.testing.InMemoryDataStore
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse

@@ -336,6 +336,8 @@ sealed interface LinkedAccountsUiState {
         val canQuickConnect: Boolean,
         val link: LinkFlow? = null,
         val busy: Boolean = false,
+        /** False for the primary administrator, whose media-server sign-ins the server always refuses to unlink. */
+        val canUnlink: Boolean = true,
     ) : LinkedAccountsUiState
 
     data class Error(

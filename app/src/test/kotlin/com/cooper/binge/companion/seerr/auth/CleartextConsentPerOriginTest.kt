@@ -4,8 +4,8 @@ import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import com.cooper.binge.companion.seerr.seerr.SeerrApiFactory
 import com.cooper.binge.companion.seerr.seerr.SeerrAuth
 import com.cooper.binge.companion.seerr.seerr.SessionCookieJar
-import com.cooper.binge.companion.seerr.util.InMemoryDataStore
 import com.cooper.binge.companion.seerr.util.PlainCipher
+import com.cooper.homelab.core.testing.InMemoryDataStore
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import okhttp3.HttpUrl.Companion.toHttpUrl

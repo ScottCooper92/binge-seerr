@@ -96,7 +96,7 @@ list it is a question for the maintainer and Play's review; record the answer he
 ## Google Play Billing
 
 A tip is bought and consumed through Google Play under the user's own Google account
-(`tip/PlayTipBilling.kt`). Play takes the payment. The app receives no card or payment details and
+(homelab-core's `PlayTipBilling`, wired in `app/src/release/kotlin/com/cooper/binge/companion/seerr/di/TipBillingModule.kt`). Play takes the payment. The app receives no card or payment details and
 keeps no purchase history. It sends nothing about a purchase to the developer or anyone else. This is
 Google's platform feature, not collection by the developer, so the Financial info and Purchase history
 answers stay as they are. As with the Block Store copy, whether the form should list it is a question
