@@ -9,7 +9,7 @@ import com.cooper.binge.companion.seerr.notifications.ApplicationScope
 import com.cooper.binge.companion.seerr.seerr.SeerrMetadataTestResultDto
 import com.cooper.binge.companion.seerr.seerr.peekedBody
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorEvent
-import com.cooper.binge.companion.seerr.ui.users.settings.ExtrasEditorViewModel
+import com.cooper.binge.companion.seerr.ui.users.settings.SaveAsMadeEditorWithExtrasViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -27,10 +27,7 @@ class MetadataViewModel
         private val connection: SeerrConnection,
         @IoDispatcher private val dispatcher: CoroutineDispatcher,
         @ApplicationScope appScope: CoroutineScope,
-    ) : ExtrasEditorViewModel<MetadataForm, MetadataExtras>(MetadataExtras(), dispatcher) {
-        /** Metadata saves as it changes (#930): it is two provider choices, and Test is an action beside them. */
-        override val saveAsMadeScope: CoroutineScope = appScope
-
+    ) : SaveAsMadeEditorWithExtrasViewModel<MetadataForm, MetadataExtras>(MetadataExtras(), dispatcher, appScope) {
         init {
             reload()
         }
