@@ -3,7 +3,7 @@ package com.cooper.binge.companion.seerr.ui.settings.server
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.di.IoDispatcher
 import com.cooper.binge.companion.seerr.notifications.ApplicationScope
-import com.cooper.binge.companion.seerr.ui.users.settings.EditorViewModel
+import com.cooper.binge.companion.seerr.ui.users.settings.SaveAsMadeEditorViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -21,9 +21,7 @@ class NetworkViewModel
         private val connection: SeerrConnection,
         @IoDispatcher dispatcher: CoroutineDispatcher,
         @ApplicationScope appScope: CoroutineScope,
-    ) : EditorViewModel<NetworkForm>(dispatcher) {
-        override val saveAsMadeScope: CoroutineScope = appScope
-
+    ) : SaveAsMadeEditorViewModel<NetworkForm>(dispatcher, appScope) {
         init {
             reload()
         }
