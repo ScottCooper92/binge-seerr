@@ -16,7 +16,7 @@ internal fun SeerrTitlePageDto.toTitlePage(defaultKind: TitleKind?): TitlePage =
 
 internal fun SeerrTitleResultDto.toTitleResult(defaultKind: TitleKind?): TitleResult? {
     val kind = mediaType?.let(::kindOf) ?: defaultKind ?: return null
-    val tmdbId = id ?: tmdbId ?: return null
+    val tmdbId = tmdbId ?: id ?: return null
     val name = (if (kind == TitleKind.Movie) title else name) ?: title ?: name ?: return null
     val date = releaseDate ?: firstAirDate
     return TitleResult(

@@ -13,10 +13,10 @@ data class SeerrTitlePageDto(
 )
 
 /**
- * One row of a mixed result. [mediaType] is `movie`, `tv`, `person` or `collection` on trending, search and the watchlist, and
- * absent from the lists that hold one kind only. A movie has [title] and [releaseDate], a show [name] and [firstAirDate], a
- * person [name] and [profilePath]. [mediaInfo] is what the server knows of the title, so a card shows its status without
- * another call. The watchlist names the title by [tmdbId] where the other lists use [id].
+ * One row of a mixed result. [mediaType] is `movie`, `tv`, `person` or `collection`; every server sets it on a movie or a show.
+ * A movie has [title] and [releaseDate], a show [name] and [firstAirDate], a person [name] and [profilePath]. [mediaInfo] is
+ * what the server knows of the title, so a card shows its status without another call. A watchlist row carries [tmdbId], and
+ * for a user with no Plex account its [id] is the server's own row id, so [tmdbId] is read first.
  */
 @Serializable
 data class SeerrTitleResultDto(

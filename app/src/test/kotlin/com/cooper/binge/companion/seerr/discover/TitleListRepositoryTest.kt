@@ -29,13 +29,17 @@ private const val MIXED_PAGE = """{"page":1,"totalPages":3,"totalResults":57,"re
 {"id":2344,"mediaType":"collection","title":"The Matrix Collection","posterPath":"/c.jpg"},
 {"id":9,"mediaType":"company","name":"A studio"}]}"""
 
-/** `discover/movies` and the other lists of one kind carry no media type. */
+/** A row with no media type, which no server sends, still takes its kind from the source that asked for it. */
 private const val MOVIES_PAGE = """{"page":2,"totalPages":2,"totalResults":21,"results":[
 {"id":27205,"title":"Inception","posterPath":"/i.jpg","releaseDate":"2010-07-15","voteAverage":8.4,"genreIds":[28,878],"originalLanguage":"en"}]}"""
 
-/** The Plex watchlist names the title by `tmdbId` and carries no artwork. */
-private const val WATCHLIST_PAGE = """{"page":1,"totalPages":1,"totalResults":1,"results":[
-{"ratingKey":"abc","title":"Dune","mediaType":"movie","tmdbId":438631}]}"""
+/**
+ * The watchlist carries no artwork. A Plex user's rows repeat the TMDB id as `id`; a user with no Plex account gets the server's
+ * own rows, where `id` is the row's number.
+ */
+private const val WATCHLIST_PAGE = """{"page":1,"totalPages":1,"totalResults":2,"results":[
+{"id":438631,"ratingKey":"abc","title":"Dune","mediaType":"movie","tmdbId":438631},
+{"id":7,"ratingKey":"def","title":"Severance","mediaType":"tv","tmdbId":95396}]}"""
 
 private const val GENRE_SLIDER = """[{"id":28,"name":"Action","backdrops":["/a.jpg","/b.jpg"]},{"id":35,"name":"Comedy","backdrops":[]}]"""
 
@@ -143,13 +147,22 @@ class TitleListRepositoryTest {
     }
 
     @Test
-    fun `the watchlist names a title by its tmdb id`() {
+    fun `the watchlist names a title by its tmdb id and not by a row number`() {
         answer(WATCHLIST_PAGE)
-        val title = withRepository { it.load(TitleSource.Watchlist, page = 1) }.results.single()
+        val titles = withRepository { it.load(TitleSource.Watchlist, page = 1) }.results
 
-        assertEquals(438631, title.tmdbId)
-        assertEquals(TitleKind.Movie, title.kind)
-        assertNull(title.artworkPath)
+        assertEquals(listOf(438631, 95396), titles.map { it.tmdbId })
+        assertEquals(listOf(TitleKind.Movie, TitleKind.Series), titles.map { it.kind })
+        assertTrue(titles.all { it.artworkPath == null })
+    }
+
+    @Test
+    fun `a search with no query is answered without asking the server`() {
+        val page = withRepository { it.load(TitleSource.Search("  "), page = 1) }
+
+        assertTrue(page.results.isEmpty())
+        assertFalse(page.hasMore)
+        assertEquals(0, seerr.requestCount)
     }
 
     @Test
@@ -206,4 +219,3 @@ class TitleListRepositoryTest {
         assertTrue(jellyseerr.hasGenreSliders && jellyseerr.hasDiscoverByCategory && jellyseerr.hasKeywordDiscover)
     }
 }
-

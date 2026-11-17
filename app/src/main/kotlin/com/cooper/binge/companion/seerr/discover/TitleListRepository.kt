@@ -38,6 +38,8 @@ class SeerrTitleListRepository(
         page: Int,
     ): TitlePage {
         require(supports(source)) { "The server has no such list" }
+        // Without a query the server fails the call instead of answering an empty page.
+        if (source is TitleSource.Search && source.query.isBlank()) return TitlePage(emptyList(), page = 1, totalPages = 1)
         return withContext(io) { api().fetch(source, page).toTitlePage(source.defaultKind) }
     }
 

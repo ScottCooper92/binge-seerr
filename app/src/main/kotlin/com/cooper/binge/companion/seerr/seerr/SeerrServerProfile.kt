@@ -142,8 +142,8 @@ data class SeerrServerProfile(
     val hasDiscoverSliders: Boolean get() = if (jellyseerrLineage) atLeast(1, 4) else atLeast(1, 32)
 
     /**
-     * The discover variants that arrived after the base calls. The versions come from the endpoint table in
-     * `docs/api-coverage.md`, which lists when each one appeared; they have not been checked against a server's source.
+     * The discover variants that arrived after the base calls. Each version is the first release tag whose
+     * `server/routes/discover.ts` registers the route, in Overseerr and in Jellyseerr; `docs/server-compatibility.md` has them.
      */
     val hasUpcomingTv: Boolean get() = jellyseerrLineage || atLeast(1, 20)
 

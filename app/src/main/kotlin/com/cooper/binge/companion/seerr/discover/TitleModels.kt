@@ -43,7 +43,7 @@ data class GenreTile(
 
 /** Where a list of titles comes from. Each source is one call, and [supportedBy] is whether the server has it. */
 sealed interface TitleSource {
-    /** The kind of a row the server sends without a media type, which is the case for every list of one kind. */
+    /** The kind of every row of a list of one kind, for a row that arrives without a media type; the servers do set it. */
     val defaultKind: TitleKind?
 
     fun supportedBy(profile: SeerrServerProfile): Boolean = true

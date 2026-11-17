@@ -38,10 +38,18 @@ class DemoDiscoverTest {
     }
 
     @Test
-    fun `the lists of one kind carry no media type and the mixed ones do`() {
+    fun `every row carries its media type as the servers send it`() {
         demo { api ->
-            assertTrue(api.discoverMovies().results.all { it.mediaType == null })
-            assertEquals(setOf("movie", "tv"), api.discoverTrending().results.mapNotNull { it.mediaType }.toSet())
+            assertTrue(api.discoverMovies().results.all { it.mediaType == "movie" })
+            assertTrue(api.discoverTv().results.all { it.mediaType == "tv" })
+            assertEquals(
+                setOf("movie", "tv"),
+                api
+                    .discoverTrending()
+                    .results
+                    .mapNotNull { it.mediaType }
+                    .toSet(),
+            )
         }
     }
 

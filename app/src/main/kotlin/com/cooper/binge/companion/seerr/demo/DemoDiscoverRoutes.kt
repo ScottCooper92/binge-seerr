@@ -12,9 +12,13 @@ private const val TV_TYPE_NAME = "tv"
  * The discover lists and search, over the demo's own titles with the status their requests give them. The demo has no genre,
  * studio, network, language or keyword data, so each of those lists is the whole movie or show list.
  */
-internal fun DemoData.discoverRoutes(): List<DemoRoute> {
-    return listOf(
-        route("GET", "discover", "trending") { call, _ -> page(call, titles(movie = true).interleave(titles(movie = false)), typed = true) },
+internal fun DemoData.discoverRoutes(): List<DemoRoute> =
+    listOf(
+        route(
+            "GET",
+            "discover",
+            "trending",
+        ) { call, _ -> page(call, titles(movie = true).interleave(titles(movie = false))) },
         route("GET", "discover", "movies") { call, _ -> page(call, titles(movie = true)) },
         route("GET", "discover", "tv") { call, _ -> page(call, titles(movie = false)) },
         route("GET", "discover", "movies", "upcoming") { call, _ -> page(call, titles(movie = true)) },
@@ -27,10 +31,9 @@ internal fun DemoData.discoverRoutes(): List<DemoRoute> {
         route("GET", "discover", "tv", "language", "{}") { call, _ -> page(call, titles(movie = false)) },
         route("GET", "discover", "keyword", "{}", "movies") { call, _ -> page(call, titles(movie = true)) },
         route("GET", "discover", "genreslider", "{}") { _, _ -> ok(GENRE_TILES) },
-        route("GET", "discover", "watchlist") { call, _ -> page(call, titles(movie = true).take(WATCHLIST_SIZE), typed = true) },
-        route("GET", "search") { call, _ -> page(call, found(call), typed = true) },
+        route("GET", "discover", "watchlist") { call, _ -> page(call, titles(movie = true).take(WATCHLIST_SIZE)) },
+        route("GET", "search") { call, _ -> page(call, found(call)) },
     )
-}
 
 private const val WATCHLIST_SIZE = 3
 
@@ -52,25 +55,21 @@ private fun found(call: DemoCall): List<DemoTitle> {
 private fun <T> List<T>.interleave(other: List<T>): List<T> =
     (0 until maxOf(size, other.size)).flatMap { listOfNotNull(getOrNull(it), other.getOrNull(it)) }
 
-/** One page of [all]; [typed] adds the media type the mixed lists carry and the one-kind lists leave out. */
+/** One page of [all], each row with the media type every server sends. */
 private fun DemoData.page(
     call: DemoCall,
     all: List<DemoTitle>,
-    typed: Boolean = false,
 ): DemoAnswer {
     val page = call.intQuery("page", 1).coerceAtLeast(1)
     val pages = ((all.size + DISCOVER_PAGE_SIZE - 1) / DISCOVER_PAGE_SIZE).coerceAtLeast(1)
-    val rows = all.drop((page - 1) * DISCOVER_PAGE_SIZE).take(DISCOVER_PAGE_SIZE).map { it.toResult(typed) }
+    val rows = all.drop((page - 1) * DISCOVER_PAGE_SIZE).take(DISCOVER_PAGE_SIZE).map { toResult(it) }
     return ok(SeerrTitlePageDto(page = page, totalPages = pages, totalResults = all.size, results = rows))
 }
 
-private fun DemoData.toResult(
-    title: DemoTitle,
-    typed: Boolean,
-): SeerrTitleResultDto =
+private fun DemoData.toResult(title: DemoTitle): SeerrTitleResultDto =
     SeerrTitleResultDto(
         id = title.tmdbId,
-        mediaType = (if (title.isMovie) "movie" else TV_TYPE_NAME).takeIf { typed },
+        mediaType = if (title.isMovie) "movie" else TV_TYPE_NAME,
         title = title.title.takeIf { title.isMovie },
         name = title.title.takeUnless { title.isMovie },
         posterPath = title.poster.ifBlank { null },
