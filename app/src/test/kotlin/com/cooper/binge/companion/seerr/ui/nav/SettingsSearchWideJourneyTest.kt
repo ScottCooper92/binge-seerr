@@ -29,8 +29,9 @@ private const val WIDE = "w900dp-h800dp"
 private const val EMPTY_PAGE = """{"pageInfo":{"pages":0,"results":0},"results":[]}"""
 
 /**
- * The settings search on a window with the hub beside the detail pane, through the real nav host (#1985): the search covers the
- * whole window, a result opens in the right pane above the search, which stays on the stack, and Back returns to the search.
+ * The settings search on a window with the hub beside the detail pane, through the real nav host: the search covers the whole
+ * window, a result opens above it over the whole window with its own Back arrow, the search stays on the stack, and Back returns to
+ * the search with its query. A second Back is what was open before the search.
  */
 @HiltAndroidTest
 @RunWith(RobolectricTestRunner::class)
