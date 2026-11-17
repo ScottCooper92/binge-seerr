@@ -60,7 +60,7 @@ Apache-2.0.
 
 **This app is the reference implementation of a companion, and it behaves like any other.**
 
-The repository is private and all rights reserved: nobody is meant to copy it. It is still
+The repository is all rights reserved, whether or not it is public: nobody is meant to copy it. It is still
 called the reference companion, because the contract in binge-companions is public and this
 app is the worked example the contract is checked against. That makes "it works" insufficient
 on its own — the question is whether this is the implementation you would point to as the right one.

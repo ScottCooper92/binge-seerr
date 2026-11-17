@@ -86,8 +86,8 @@ jobs:
         exclude a source set from `check`.
 
         A lint baseline is worse than it looks here: it silences the finding
-        permanently and silently, in a repository whose whole purpose is to
-        be copied.
+        permanently and silently, in a repository meant to be the
+        reference implementation.
 
         Screenshot baselines have three cases, and only the first is
         silencing:

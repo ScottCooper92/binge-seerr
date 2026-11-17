@@ -59,7 +59,7 @@ repos and audits) and `build/`.
 
 ## Dimension 2 — the reference-companion rule and the host boundary
 
-The repo is read as documentation; anything wrong here is copied by third parties.
+The repo is the reference implementation of a companion; anything wrong here is what the public contract is checked against.
 
 - **Contract redefinition**: any `.proto`, hand-written message class or constant re-stating a
   contract value (the contract lives in binge-companions). Anything relying on a private

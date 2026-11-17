@@ -25,7 +25,7 @@ Green is necessary and not sufficient. Everything below is ungated.
 None is machine-checkable, and they are roughly in order of how expensive they are
 to get wrong.
 
-**This code is the reference implementation.** The repository is private and is called the
+**This code is the reference implementation.** The repository is all rights reserved, whether or not it is public, and is called the
 reference companion: the contract in binge-companions is public, and this app is the worked
 example it is checked against. So the question is never only "does this work" but "is
 this the version of it we would point to as right". A clever shortcut that works is a worse
@@ -102,7 +102,7 @@ missed nit, which costs almost nothing. The asymmetry is deliberate.
 
 **"It is only the reference app" is not a licence.** It is the opposite. Nothing
 ships against this yet, and that is exactly why the example should be right before
-anyone copies it.
+anything depends on it.
 
 **But do not review a placeholder as though it were the finished feature.** The app is
 pre-alpha at contract parity: the console and the REQUEST v1 service are built, and what is
