@@ -201,12 +201,13 @@ class BackStackNeverEmptyTest {
     /** Settings' Exit the demo, then the confirm's: Settings leaves, and setup takes the root. */
     private fun exitTheDemo() {
         val exit = host.string(R.string.hub_demo_exit)
+        // In three panes the hub and Settings both show the button, and a click that lands as the panes settle opens no
+        // confirm (#2002): scroll the last one into view, then click until the confirm is up.
         host.compose
             .onAllNodesWithText(exit)
             .onLast()
             .performScrollTo()
-            .performClick()
-        host.awaitShowing(host.string(R.string.hub_demo_exit_confirm_message))
+        host.clickUntilShowing(exit, host.string(R.string.hub_demo_exit_confirm_message))
         host.compose
             .onAllNodesWithText(exit)
             .onLast()
