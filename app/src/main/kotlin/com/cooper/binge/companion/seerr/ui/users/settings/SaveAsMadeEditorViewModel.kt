@@ -5,7 +5,6 @@ import androidx.lifecycle.viewModelScope
 import com.binge.companion.sdk.attempt
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
-import com.cooper.binge.companion.seerr.seerr.toServerFailure
 import com.cooper.homelab.core.foundation.ServerFailure
 import com.cooper.homelab.core.presentation.editor.EditorState
 import com.cooper.homelab.core.presentation.editor.SettingsEditorViewModel
@@ -18,8 +17,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import com.binge.designsystem.SaveStatus as UiSaveStatus
-import com.cooper.homelab.core.presentation.editor.SaveStatus as EngineSaveStatus
 
 /**
  * A settings page that saves as it changes, on the shared library's engine, shown through the same [uiState] and [events] as
@@ -79,7 +76,7 @@ abstract class SaveAsMadeEditorViewModel<T>(
 
     private suspend fun classify(failure: Throwable): ServerFailure {
         lastFailure = failure
-        return if (failure.toSeerrError() == SeerrError.LocalNetworkDenied) ServerFailure.Unreachable() else failure.toServerFailure()
+        return failure.toEngineFailure()
     }
 
     /** Reads the record again, sending a change still waiting first. */
@@ -138,12 +135,5 @@ abstract class SaveAsMadeEditorViewModel<T>(
                     saveStatus = saveStatus.toUi(),
                     saveRefusal = refusal?.let { lastFailure?.toSeerrError() },
                 )
-        }
-
-    private fun EngineSaveStatus.toUi(): UiSaveStatus =
-        when (this) {
-            EngineSaveStatus.Idle -> UiSaveStatus.Idle
-            EngineSaveStatus.Saving -> UiSaveStatus.Saving
-            EngineSaveStatus.Saved -> UiSaveStatus.Saved
         }
 }
