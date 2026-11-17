@@ -22,8 +22,8 @@ import java.util.concurrent.TimeUnit
 private const val DEFAULT_TAKE_TIMEOUT_MILLIS = 5_000L
 
 /**
- * An explicit port matters, not just a syntactically valid URL: [String.hasExplicitPort] is what a
- * portless address retries against [String.withDefaultSeerrPort] on, same as a real MockWebServer's
+ * An explicit port matters, not just a syntactically valid URL: `ServerAddress.hasExplicitPort` is what a
+ * portless address retries against `PortDefaults.SEERR` on, same as a real MockWebServer's
  * URL (bound to a real, explicit, random port) never triggered.
  *
  * A `.lan` host, as most self-hosted servers are: plain HTTP to a public host needs the user's

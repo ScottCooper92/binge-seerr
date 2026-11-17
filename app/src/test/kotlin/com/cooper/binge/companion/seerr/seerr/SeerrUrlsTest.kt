@@ -70,22 +70,6 @@ class SeerrUrlsTest {
     }
 
     @Test
-    fun `a normalised url carries an explicit port only when one was typed`() {
-        assertFalse("http://192.168.1.10/".hasExplicitPort())
-        assertFalse("https://seerr.example.com/base/".hasExplicitPort())
-        assertFalse("http://[::1]/".hasExplicitPort())
-        assertTrue("http://192.168.1.10:5055/".hasExplicitPort())
-        assertTrue("https://seerr.example.com:8443/base/".hasExplicitPort())
-        assertTrue("http://[::1]:8080/".hasExplicitPort())
-    }
-
-    @Test
-    fun `the default Seerr port is added to a portless normalised url`() {
-        assertEquals("http://192.168.1.10:5055/", "http://192.168.1.10/".withDefaultSeerrPort())
-        assertEquals("https://seerr.example.com:5055/base/", "https://seerr.example.com/base/".withDefaultSeerrPort())
-    }
-
-    @Test
     fun `each fork's contribute link matches its own About page`() {
         assertEquals("https://github.com/sponsors/sct", SeerrVariant.Jellyseerr.contributeUrl())
         assertEquals("https://opencollective.com/seerr", SeerrVariant.Seerr.contributeUrl())

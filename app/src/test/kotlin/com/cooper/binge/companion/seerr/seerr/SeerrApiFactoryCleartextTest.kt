@@ -1,6 +1,7 @@
 package com.cooper.binge.companion.seerr.seerr
 
 import com.cooper.homelab.core.server.network.CleartextConsent
+import com.cooper.homelab.core.server.network.CleartextRefusedException
 import kotlinx.coroutines.runBlocking
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
