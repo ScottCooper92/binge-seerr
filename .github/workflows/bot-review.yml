@@ -17,8 +17,8 @@ run-name: >-
 
 # Thin caller. The workflow itself lives in ScottCooper92/binge-ci.
 #
-# PUBLIC repository, and the reference companion app: what lands on main is read
-# and copied by people writing their own companions. `./gradlew build` cannot
+# All rights reserved, and the reference companion app: what lands on main is what
+# other companions are measured against. `./gradlew build` cannot
 # check the thing that makes this repository worth anything - whether the example
 # is one worth following - so auto_merge stayed off until the extraction had
 # landed and the review had a track record here. It has both now (#12 through
