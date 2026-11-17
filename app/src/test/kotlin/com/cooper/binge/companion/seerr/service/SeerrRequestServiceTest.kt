@@ -36,7 +36,7 @@ import com.binge.companion.sdk.MAX_SEASON_NUMBERS
 import com.binge.companion.sdk.UserMessage
 import com.binge.companion.sdk.userMessageOf
 import com.cooper.binge.companion.seerr.auth.BingeConnectionStore
-import com.cooper.binge.companion.seerr.auth.CredentialStore
+import com.cooper.binge.companion.seerr.auth.LegacyCredentialStore
 import com.cooper.binge.companion.seerr.auth.NoBingeConnectionStore
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.data.CachedStatus
@@ -150,7 +150,7 @@ class SeerrRequestServiceTest {
         userMessages: UserMessages = UserMessages.None,
     ): RequestServiceGrpcKt.RequestServiceCoroutineStub {
         val store =
-            CredentialStore(
+            LegacyCredentialStore(
                 dataStore = PreferenceDataStoreFactory.create { folder.newFile("creds.preferences_pb") },
                 cipher = PlainCipher,
                 io = Dispatchers.Unconfined,
@@ -1139,7 +1139,7 @@ class SeerrRequestServiceTest {
     fun `nothing connected is UNAUTHENTICATED everywhere but the handshake`() =
         runTest {
             val store =
-                CredentialStore(
+                LegacyCredentialStore(
                     PreferenceDataStoreFactory.create { folder.newFile("empty.preferences_pb") },
                     PlainCipher,
                     Dispatchers.Unconfined,

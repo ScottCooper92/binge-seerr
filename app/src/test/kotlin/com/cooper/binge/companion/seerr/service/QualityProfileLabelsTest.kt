@@ -1,7 +1,7 @@
 package com.cooper.binge.companion.seerr.service
 
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
-import com.cooper.binge.companion.seerr.auth.CredentialStore
+import com.cooper.binge.companion.seerr.auth.LegacyCredentialStore
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.seerr.QualityLabels
 import com.cooper.binge.companion.seerr.seerr.SeerrApiFactory
@@ -65,7 +65,7 @@ class QualityProfileLabelsTest {
 
     private fun labels(): QualityProfileLabels {
         val store =
-            CredentialStore(
+            LegacyCredentialStore(
                 dataStore = PreferenceDataStoreFactory.create { folder.newFile("creds${stores++}.preferences_pb") },
                 cipher = PlainCipher,
                 io = Dispatchers.Unconfined,

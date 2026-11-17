@@ -1,7 +1,7 @@
 package com.cooper.binge.companion.seerr.ui.users.settings
 
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
-import com.cooper.binge.companion.seerr.auth.CredentialStore
+import com.cooper.binge.companion.seerr.auth.LegacyCredentialStore
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.seerr.SeerrApiFactory
 import com.cooper.binge.companion.seerr.seerr.SeerrAuth
@@ -247,7 +247,7 @@ internal class ScriptedSeerr(
         val connection =
             SeerrConnection(
                 store =
-                    CredentialStore(
+                    LegacyCredentialStore(
                         PreferenceDataStoreFactory.create(scope = scope.backgroundScope) { folder.newFile("d${stores++}.preferences_pb") },
                         PlainCipher,
                         UnconfinedTestDispatcher(scope.testScheduler),

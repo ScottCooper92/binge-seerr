@@ -44,7 +44,7 @@ class ConnectionRestoreTest {
     fun tearDown() = server.close()
 
     private fun TestScope.store(scope: CoroutineScope) =
-        CredentialStore(
+        LegacyCredentialStore(
             dataStore = PreferenceDataStoreFactory.create(scope = scope) { folder.newFile("creds.preferences_pb") },
             cipher = ReversingCipher,
             io = UnconfinedTestDispatcher(testScheduler),

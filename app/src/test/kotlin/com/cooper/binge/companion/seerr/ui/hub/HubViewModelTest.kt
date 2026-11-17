@@ -4,8 +4,8 @@ import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.lifecycle.ViewModelStore
 import com.cooper.binge.companion.seerr.auth.BingeConnectionStore
 import com.cooper.binge.companion.seerr.auth.BingeHint
-import com.cooper.binge.companion.seerr.auth.CredentialStore
 import com.cooper.binge.companion.seerr.auth.DataStoreBingeConnectionStore
+import com.cooper.binge.companion.seerr.auth.LegacyCredentialStore
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.auth.SeerrConnectionHealthMonitor
 import com.cooper.binge.companion.seerr.seerr.SeerrApiFactory
@@ -156,7 +156,7 @@ class HubViewModelTest {
         connection =
             SeerrConnection(
                 store =
-                    CredentialStore(
+                    LegacyCredentialStore(
                         PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("h.preferences_pb") },
                         PlainCipher,
                         UnconfinedTestDispatcher(testScheduler),
@@ -277,7 +277,7 @@ class HubViewModelTest {
         connection =
             SeerrConnection(
                 store =
-                    CredentialStore(
+                    LegacyCredentialStore(
                         PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("h.preferences_pb") },
                         PlainCipher,
                         UnconfinedTestDispatcher(testScheduler),

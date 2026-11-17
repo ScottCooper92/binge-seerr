@@ -3,7 +3,7 @@ package com.cooper.binge.companion.seerr.ui
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModelStore
-import com.cooper.binge.companion.seerr.auth.CredentialStore
+import com.cooper.binge.companion.seerr.auth.LegacyCredentialStore
 import com.cooper.binge.companion.seerr.auth.PlexPinFlow
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.handoff.AddressHandOffSession
@@ -72,7 +72,7 @@ class SetupViewModelHandOffTest {
         val connection =
             SeerrConnection(
                 store =
-                    CredentialStore(
+                    LegacyCredentialStore(
                         PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("c${stores++}.preferences_pb") },
                         PlainCipher,
                         UnconfinedTestDispatcher(testScheduler),
