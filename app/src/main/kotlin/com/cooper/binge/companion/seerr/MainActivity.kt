@@ -11,7 +11,6 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
@@ -28,12 +27,11 @@ import com.cooper.binge.companion.seerr.flags.DiscoveryFlag
 import com.cooper.binge.companion.seerr.flags.LocalDiscoveryEnabled
 import com.cooper.binge.companion.seerr.flags.LocalFlags
 import com.cooper.binge.companion.seerr.telemetry.LocalAnalytics
-import com.cooper.binge.companion.seerr.telemetry.screenName
+import com.cooper.binge.companion.seerr.telemetry.screenNames
 import com.cooper.binge.companion.seerr.theme.SeerrTheme
 import com.cooper.binge.companion.seerr.ui.DeepLinkNavigator
 import com.cooper.binge.companion.seerr.ui.HomeRoute
 import com.cooper.binge.companion.seerr.ui.SeerrNavHost
-import com.cooper.binge.companion.seerr.ui.SeerrRoute
 import com.cooper.binge.companion.seerr.ui.consent.ConsentGate
 import com.cooper.binge.companion.seerr.ui.linkedRequestId
 import com.cooper.binge.companion.seerr.ui.shell.openLink
@@ -42,8 +40,6 @@ import com.cooper.binge.companion.seerr.ui.tv.TvSeerrShell
 import com.cooper.homelab.core.flags.FeatureFlags
 import com.cooper.homelab.core.telemetry.Analytics
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -112,14 +108,11 @@ class MainActivity : ComponentActivity() {
                 return@setContent
             }
             val backStack = rememberNavBackStack(HomeRoute)
+            val tabs = rememberSeerrTabs()
             LaunchedEffect(backStack) {
-                snapshotFlow { backStack.lastOrNull() as? SeerrRoute }
-                    .filterNotNull()
-                    .distinctUntilChanged()
-                    .collect { analytics.screen(it.screenName()) }
+                screenNames(backStack, selectedTab = { tabs.selected }).collect { analytics.screen(it) }
             }
             // A link replaces the app's stack and puts Settings under it, whichever tab was showing.
-            val tabs = rememberSeerrTabs()
             LaunchedEffect(backStack) {
                 deepLinks.backStacks.collect { routes -> tabs.openLink(backStack, routes) }
             }
