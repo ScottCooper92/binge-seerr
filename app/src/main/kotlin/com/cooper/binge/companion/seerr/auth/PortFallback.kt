@@ -16,6 +16,11 @@ internal suspend fun <T> withPortFallback(
 ): Result<T> {
     val primary = probe(baseUrl)
     if (primary.isSuccess) return primary
-    val fallback = ServerAddress.parse(baseUrl)?.candidates(httpPort = PortDefaults.SEERR)?.drop(1)?.firstOrNull() ?: return primary
+    val fallback =
+        ServerAddress
+            .parse(baseUrl)
+            ?.candidates(httpPort = PortDefaults.SEERR)
+            ?.drop(1)
+            ?.firstOrNull() ?: return primary
     return probe(fallback.url).recoverCatching { primary.getOrThrow() }
 }
