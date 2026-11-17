@@ -5,8 +5,8 @@ import com.cooper.binge.companion.seerr.BuildConfig
 import com.cooper.binge.companion.seerr.notifications.ApplicationScope
 import com.cooper.binge.companion.seerr.telemetry.DemoAnalyticsDecorator
 import com.cooper.binge.companion.seerr.telemetry.DemoSession
-import com.cooper.binge.companion.seerr.telemetry.LogcatLogger
 import com.cooper.binge.companion.seerr.telemetry.SavedConnectionDemoSession
+import com.cooper.homelab.core.foundation.Logger
 import com.cooper.homelab.core.telemetry.Analytics
 import com.cooper.homelab.core.telemetry.AnalyticsClient
 import com.cooper.homelab.core.telemetry.AnalyticsConsentGate
@@ -45,7 +45,8 @@ abstract class TelemetryModule {
         fun consentGate(
             prefs: TelemetryPrefs,
             @ApplicationScope scope: CoroutineScope,
-        ): AnalyticsConsentGate = AnalyticsConsentGate(prefs, scope, LogcatLogger)
+            logger: Logger,
+        ): AnalyticsConsentGate = AnalyticsConsentGate(prefs, scope, logger)
 
         @Provides
         @Singleton
