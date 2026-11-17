@@ -9,9 +9,9 @@ import com.cooper.binge.companion.seerr.ui.SetupScreen
 import com.cooper.binge.companion.seerr.ui.SetupServer
 import com.cooper.binge.companion.seerr.ui.SetupUiState
 import com.cooper.binge.companion.seerr.ui.SignInForm
-import com.cooper.binge.companion.seerr.ui.consent.ConsentScreen
 import com.cooper.binge.companion.seerr.ui.tv.NoSetupActions
 import com.cooper.binge.companion.seerr.util.createSeerrComposeRule
+import com.cooper.homelab.core.uiandroid.consent.ConsentScreen
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith

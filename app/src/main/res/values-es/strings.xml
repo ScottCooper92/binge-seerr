@@ -1098,24 +1098,13 @@
     <string name="tv_settings_report_bug_scan">Escanéalo con la cámara del móvil. El informe se abre con la versión de la aplicación y los datos de este televisor ya rellenados.</string>
     <string name="tv_settings_report_bug_code_description">Código QR que abre un informe de error de esta aplicación en GitHub</string>
     <string name="tv_sheet_close">Cerrar</string>
-    <string name="consent_title">Ayuda a mejorar esta aplicación</string>
-    <string name="consent_subtitle">Comparte datos de uso para que veamos qué partes de la aplicación se usan y qué falla.</string>
-    <string name="consent_point_shared_title">Decide qué se arregla</string>
-    <string name="consent_point_shared_detail">Vemos qué pantallas se usan, para dedicar el trabajo a lo que importa.</string>
-    <string name="consent_point_never_title">Privado por diseño</string>
-    <string name="consent_point_never_detail">Pantallas que abres, acciones que haces y si funcionaron. Nunca la dirección de tu servidor, tus peticiones, sus títulos ni el nombre de nadie.</string>
-    <string name="consent_point_change_title">Se desactiva con un toque</string>
-    <string name="consent_point_change_detail">Cambia de opinión cuando quieras en Esta aplicación.</string>
-    <string name="consent_accept">Compartir datos de uso</string>
-    <string name="consent_decline">Ahora no</string>
     <string name="tip_row">Invítame a un café</string>
     <string name="settings_share_usage_data">Compartir datos de uso</string>
     <string name="settings_share_usage_data_caption">Envía qué pantallas y acciones usas</string>
     <string name="settings_send_crash_reports">Enviar informes de fallos</string>
-    <string name="consent_kicker">Privacidad</string>
     <string name="tv_consent_point_change_title">Se desactiva con una pulsación</string>
     <string name="tv_consent_point_change_detail">Cambia de opinión cuando quieras en Ajustes, en Esta aplicación.</string>
-    <string name="tv_consent_reassurance">No se recoge nada a menos que elijas Compartir datos de uso.</string>
+    <string name="tv_consent_reassurance">No se recoge nada a menos que elijas Compartir.</string>
     <string name="tv_detail_approve">Aprobar</string>
     <string name="tv_detail_edit">Editar</string>
     <string name="tv_detail_decline">Rechazar</string>
@@ -1307,10 +1296,6 @@
     <string name="user_settings_unlink_refused_body">%1$s\n\nDefine un correo y una contraseña para esta cuenta y vuelve a desvincularla.</string>
     <string name="server_settings_agent_test_failed_title">Falló la notificación de prueba</string>
     <string name="server_settings_agent_test_failed_body">%1$s\n\nRevisa los ajustes de este agente y vuelve a enviar la prueba.</string>
-    <string name="search_title">Buscar ajustes</string>
-    <string name="search_prompt">Escribe el nombre de una página para abrirla.</string>
-    <string name="search_no_match_title">Sin resultados</string>
-    <string name="search_no_match">Ninguna página coincide. Prueba con otra palabra.</string>
     <string name="search_section_account">Tu cuenta</string>
     <string name="search_kw_account">perfil nombre correo discord cuota lista</string>
     <string name="search_kw_password">contraseña clave acceso inicio sesión</string>
@@ -1340,6 +1325,4 @@
     <string name="tv_settings_release_notes">Notas de la versión</string>
     <string name="tv_settings_release_notes_scan">Escanéalo con la cámara del móvil para ver qué cambia en la nueva versión, o ve a %1$s</string>
     <string name="tv_settings_release_notes_code_description">Código QR que abre las notas de la versión del servidor</string>
-    <string name="search_recent">Recientes</string>
-    <string name="search_recent_clear">Borrar</string>
 </resources>

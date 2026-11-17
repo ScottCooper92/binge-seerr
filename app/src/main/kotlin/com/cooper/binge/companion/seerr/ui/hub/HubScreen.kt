@@ -37,8 +37,8 @@ import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.demo.isDemoOrigin
 import com.cooper.binge.companion.seerr.ui.DisconnectButton
 import com.cooper.binge.companion.seerr.ui.rememberAllowLocalNetwork
-import com.cooper.binge.companion.seerr.ui.search.SettingsSearchEntryField
 import com.cooper.binge.companion.seerr.ui.state.LoadingScreen
+import com.cooper.homelab.core.uiandroid.search.SettingsSearchEntry
 import com.binge.designsystem.R as DesR
 
 class HubActions(
@@ -170,7 +170,7 @@ private fun Dashboard(
             SectionHeader(title = stringResource(R.string.hub_downloading_now, state.downloading.size))
             DownloadingStrip(state.downloading, onClick = { actions.onOpenRequest(it.requestId) }, sides = sides)
         }
-        SettingsSearchEntryField(
+        SettingsSearchEntry(
             onClick = actions.onOpenSearch,
             modifier =
                 Modifier

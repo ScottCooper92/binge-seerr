@@ -15,15 +15,14 @@ import com.cooper.binge.companion.seerr.ui.hub.HubActions
 import com.cooper.binge.companion.seerr.ui.hub.HubScreen
 import com.cooper.binge.companion.seerr.ui.hub.HubSection
 import com.cooper.binge.companion.seerr.ui.hub.HubViewModel
-import com.cooper.binge.companion.seerr.ui.search.SettingsSearchScreen
-import com.cooper.binge.companion.seerr.ui.search.SettingsSearchUiState
-import com.cooper.binge.companion.seerr.ui.search.SettingsSearchViewModel
+import com.cooper.binge.companion.seerr.ui.search.SettingsSearchHost
 import com.cooper.binge.companion.seerr.ui.settings.SettingsActions
 import com.cooper.binge.companion.seerr.ui.settings.SettingsScreen
 import com.cooper.binge.companion.seerr.ui.settings.SettingsViewModel
 import com.cooper.binge.companion.seerr.ui.settings.ThisAppActions
 import com.cooper.binge.companion.seerr.ui.settings.ThisAppScreen
 import com.cooper.binge.companion.seerr.ui.settings.ThisAppViewModel
+import com.cooper.homelab.core.uiandroid.search.SettingsSearchScreen
 
 @Composable
 internal fun HubEntry(
@@ -123,6 +122,7 @@ internal fun ThisAppEntry(
             onNotificationAccessChanged = viewModel::recheckNotificationAccess,
             onSetPollInterval = viewModel::setPollInterval,
             onOpenLicences = { open(LicencesRoute) },
+            onOpenDiagnostics = { open(DiagnosticsRoute) },
         )
     ThisAppScreen(
         state = state,
@@ -142,20 +142,19 @@ internal fun ThisAppEntry(
 internal fun SettingsSearchEntry(
     onOpen: (SeerrRoute) -> Unit,
     onBack: () -> Unit,
-    viewModel: SettingsSearchViewModel = hiltViewModel(),
+    host: SettingsSearchHost = hiltViewModel(),
 ) {
-    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val state by host.model.state.collectAsStateWithLifecycle()
     SettingsSearchScreen(
         state = state,
-        onRetry = viewModel::retry,
-        open = { entry ->
-            val access = (state as? SettingsSearchUiState.Ready)?.access
-            if (access != null) {
-                viewModel.remember(entry)
-                onOpen(entry.target.route(access.userId, entry.row))
-            }
+        entries = host.entries,
+        icon = { it.target.icon },
+        onOpen = { entry ->
+            host.model.remember(entry)
+            onOpen(entry.target.target.route(host.userId, entry.row))
         },
         onBack = onBack,
-        onClearRecent = viewModel::clearRecent,
+        onRetry = host.model::retry,
+        onClearRecent = host.model::clearRecent,
     )
 }

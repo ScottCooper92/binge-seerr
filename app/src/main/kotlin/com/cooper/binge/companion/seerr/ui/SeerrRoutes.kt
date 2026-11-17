@@ -137,6 +137,10 @@ data object ThisAppRoute : SeerrRoute
 @Serializable
 data object LicencesRoute : SeerrRoute
 
+/** The app's own log, with Copy and Share, opened from This app. */
+@Serializable
+data object DiagnosticsRoute : SeerrRoute
+
 /** The setup form on the live connection; pops itself once new credentials are saved. */
 @Serializable
 data object EditConnectionRoute : SeerrRoute

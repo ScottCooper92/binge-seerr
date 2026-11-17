@@ -4,19 +4,28 @@ import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.seerr.SeerrServerProfile
 import com.cooper.binge.companion.seerr.seerr.SeerrVariant
 import com.cooper.binge.companion.seerr.util.string
+import com.cooper.homelab.core.foundation.UiText
+import com.cooper.homelab.core.presentation.search.searchSettings
+import com.cooper.homelab.core.uiandroid.resolve
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 
-/** How a query finds an entry, in English and in Spanish, with the app's own strings. */
+/** How a query finds an entry in the app's index, in English and in Spanish, through the shared matcher and the app's own strings. */
 @RunWith(RobolectricTestRunner::class)
 class SettingsSearchTest {
     private val access = SearchAccess(1, isAdmin = true, profile = SeerrServerProfile(SeerrVariant.Seerr, version = null))
 
-    private fun find(query: String) = searchSettings(query, settingsIndex, { it.available(access) }, ::string).map { string(it.label) }
+    private val context get() = RuntimeEnvironment.getApplication()
+    private val index get() = sharedSettingsIndex(context.resources)
+
+    private fun text(text: UiText) = text.resolve(context)
+
+    private fun find(query: String) = searchSettings(query, index, { it.target.available(access) }, ::text).map { text(it.label) }
 
     @Test
     fun `a label's first word finds it first`() {
@@ -48,8 +57,8 @@ class SettingsSearchTest {
     @Test
     fun `a page the viewer cannot open is not found`() {
         val member = access.copy(userId = 7, isAdmin = false)
-        val found = searchSettings("services", settingsIndex, { it.available(member) }, ::string)
-        assertEquals(emptyList<SettingEntry>(), found)
+        val found = searchSettings("services", index, { it.target.available(member) }, ::text)
+        assertEquals(emptyList<String>(), found.map { it.id })
     }
 
     @Test
@@ -67,10 +76,10 @@ class SettingsSearchTest {
 
     @Test
     fun `every entry's label and keywords are written`() {
-        settingsIndex.forEach { entry ->
-            assertTrue(string(entry.label).isNotBlank())
-            assertTrue(string(entry.section).isNotBlank())
-            entry.keywords?.let { assertTrue(string(it).isNotBlank()) }
+        index.forEach { entry ->
+            assertTrue(text(entry.label).isNotBlank())
+            assertTrue(text(entry.section).isNotBlank())
+            entry.keywords?.let { assertTrue(text(it).isNotBlank()) }
         }
     }
 }

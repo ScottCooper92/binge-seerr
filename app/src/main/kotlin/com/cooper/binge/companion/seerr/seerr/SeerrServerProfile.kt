@@ -141,6 +141,22 @@ data class SeerrServerProfile(
     /** The slider routes arrived with Overseerr 1.32 and with Jellyseerr 1.4; Jellyseerr 1.0 to 1.3 answer 404. */
     val hasDiscoverSliders: Boolean get() = if (jellyseerrLineage) atLeast(1, 4) else atLeast(1, 32)
 
+    /**
+     * The discover variants that arrived after the base calls. Each version is the first release tag whose
+     * `server/routes/discover.ts` registers the route, in Overseerr and in Jellyseerr; `docs/server-compatibility.md` has them.
+     */
+    val hasUpcomingTv: Boolean get() = jellyseerrLineage || atLeast(1, 20)
+
+    /** `discover/{movies,tv}` by genre, language, studio and network. */
+    val hasDiscoverByCategory: Boolean get() = jellyseerrLineage || atLeast(1, 21)
+
+    val hasKeywordDiscover: Boolean get() = jellyseerrLineage || atLeast(1, 9)
+
+    val hasGenreSliders: Boolean get() = jellyseerrLineage || atLeast(1, 22)
+
+    /** The Plex watchlist; whether the signed-in user may use it is a permission, not this. */
+    val hasDiscoverWatchlist: Boolean get() = if (jellyseerrLineage) atLeast(1, 2) else atLeast(1, 30)
+
     /** The ntfy agent arrived with Jellyseerr 2.6; Overseerr never had it. */
     val hasNtfy: Boolean get() = jellyseerrLineage && atLeast(2, 6)
 

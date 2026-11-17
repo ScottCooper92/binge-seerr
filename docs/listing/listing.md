@@ -50,20 +50,17 @@ label (`app_label`). The name is a maintainer's decision; see the README.
 > Quick Connect where the server offers it). The key or session is encrypted with an Android
 > Keystore key. The app talks to the server you entered and, if you choose to sign in with Plex, to
 > plex.tv. Usage data goes to PostHog only if you agree, and crash reports go to Firebase
-> Crashlytics unless you turn them off in This app (Settings on Android TV). Google Play's Block Store can carry your
+> Crashlytics only if you agree, which you can change in This app (Settings on Android TV). Google Play's Block Store can carry your
 > connection to a new device. No adverts, no accounts of its own.
->
-> Open source, under the GPL-3.0-or-later licence: github.com/ScottCooper92/binge-seerr.
 >
 > Seerr Companion is an independent app. It is not made by or affiliated with the Seerr, Jellyseerr
 > or Overseerr projects.
 
-(2,202 characters)
+(2,114 characters)
 
 ## Category and contact
 
 - Category: Tools
 - Tags: media server, self-hosted, requests
 - Contact email: the maintainer's
-- Website: https://github.com/ScottCooper92/binge-seerr
 - Privacy policy: the published `privacy.md`

@@ -6,14 +6,12 @@ import com.cooper.homelab.core.review.ReviewPrompt
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 
-/** Gives the navigation host the one call it needs of [ReviewPrompt]. */
+/** Holds the [ReviewPrompt] for the navigation host's return-to-root ask and the debug "ask now". */
 @HiltViewModel
 class ReviewPromptViewModel
     @Inject
     constructor(
-        private val prompt: ReviewPrompt,
+        val prompt: ReviewPrompt,
     ) : ViewModel() {
-        suspend fun onReturnedToRoot(activity: Activity) = prompt.maybeAsk(activity)
-
         fun askNow(activity: Activity) = prompt.askNow(activity)
     }
