@@ -60,7 +60,7 @@ internal fun TvConsentScreen(
         accept = ScreenAction(stringResource(CoreR.string.consent_accept), onClick = { onChoice(true) }),
         decline = ScreenAction(stringResource(CoreR.string.consent_decline), onClick = { onChoice(false) }),
         modifier = modifier,
-        // A gate before setup and Home, so the page places its own first focus on Share usage data.
+        // A gate before setup and Home, so the page places its own first focus on Share.
         hosting = TvPageHosting.PreShell,
     )
 }

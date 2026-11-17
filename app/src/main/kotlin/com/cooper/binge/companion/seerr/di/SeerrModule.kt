@@ -55,7 +55,7 @@ annotation class IoDispatcher
 
 internal val Context.notificationsDataStore: DataStore<Preferences> by preferencesDataStore(name = "seerr_notifications")
 
-internal val Context.telemetryDataStore: DataStore<Preferences> by preferencesDataStore(
+private val Context.telemetryDataStore: DataStore<Preferences> by preferencesDataStore(
     name = "seerr_telemetry",
     produceMigrations = { listOf(CrashReportingMigration) },
 )
