@@ -35,7 +35,7 @@ class CredentialStoreTest {
         scope: kotlinx.coroutines.CoroutineScope,
         io: CoroutineDispatcher = UnconfinedTestDispatcher(testScheduler),
     ): CredentialStore =
-        CredentialStore(PreferenceDataStoreFactory.create(scope = scope) { folder.newFile("creds.preferences_pb") }, cipher, io)
+        LegacyCredentialStore(PreferenceDataStoreFactory.create(scope = scope) { folder.newFile("creds.preferences_pb") }, cipher, io)
 
     @Test
     fun `the secret is decrypted on the io dispatcher, never on the collector's main thread`() =

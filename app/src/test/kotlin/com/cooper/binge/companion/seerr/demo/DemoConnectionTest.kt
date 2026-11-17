@@ -4,7 +4,7 @@ import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import com.cooper.binge.companion.seerr.auth.CarriedCredentials
 import com.cooper.binge.companion.seerr.auth.ConnectionCarrier
 import com.cooper.binge.companion.seerr.auth.ConnectionRestore
-import com.cooper.binge.companion.seerr.auth.CredentialStore
+import com.cooper.binge.companion.seerr.auth.LegacyCredentialStore
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.auth.SeerrConnectionHealth
 import com.cooper.binge.companion.seerr.auth.SeerrConnectionHealthMonitor
@@ -36,7 +36,7 @@ class DemoConnectionTest {
     private fun TestScope.connection(apis: SeerrApiFactory = SeerrApiFactory(logRequests = false)) =
         SeerrConnection(
             store =
-                CredentialStore(
+                LegacyCredentialStore(
                     PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("c.preferences_pb") },
                     PlainCipher,
                     UnconfinedTestDispatcher(testScheduler),
@@ -109,7 +109,7 @@ class DemoConnectionTest {
     fun `starting the app with the demo saved does not carry it either`() =
         runTest {
             val store =
-                CredentialStore(
+                LegacyCredentialStore(
                     PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("c.preferences_pb") },
                     PlainCipher,
                     UnconfinedTestDispatcher(testScheduler),

@@ -43,7 +43,7 @@ class SeerrConnectionCarrierTest {
     private fun TestScope.connection() =
         SeerrConnection(
             store =
-                CredentialStore(
+                LegacyCredentialStore(
                     PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("c.preferences_pb") },
                     PlainCipher,
                     UnconfinedTestDispatcher(testScheduler),

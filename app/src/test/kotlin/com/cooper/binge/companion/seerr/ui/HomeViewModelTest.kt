@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModelStore
 import com.binge.companion.kit.SecretCipher
 import com.cooper.binge.companion.seerr.auth.ConnectionRestore
 import com.cooper.binge.companion.seerr.auth.CredentialStore
+import com.cooper.binge.companion.seerr.auth.LegacyCredentialStore
 import com.cooper.binge.companion.seerr.auth.NoConnectionCarrier
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.auth.SeerrConnectionHealthMonitor
@@ -56,7 +57,7 @@ class HomeViewModelTest {
     fun tearDown() = viewModels.clear()
 
     private fun TestScope.store(cipher: SecretCipher = ReversingCipher) =
-        CredentialStore(
+        LegacyCredentialStore(
             dataStore = PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("creds.preferences_pb") },
             cipher = cipher,
             io = UnconfinedTestDispatcher(testScheduler),

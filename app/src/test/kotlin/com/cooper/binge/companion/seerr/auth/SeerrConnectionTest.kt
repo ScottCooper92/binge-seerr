@@ -49,7 +49,7 @@ class SeerrConnectionTest {
     ): SeerrConnection =
         SeerrConnection(
             store =
-                CredentialStore(
+                LegacyCredentialStore(
                     dataStore = PreferenceDataStoreFactory.create(scope = scope) { folder.newFile("creds.preferences_pb") },
                     cipher = ReversingCipher,
                     io = UnconfinedTestDispatcher(testScheduler),
@@ -278,7 +278,7 @@ class SeerrConnectionTest {
             val sut =
                 SeerrConnection(
                     store =
-                        CredentialStore(
+                        LegacyCredentialStore(
                             PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("h.preferences_pb") },
                             ReversingCipher,
                             UnconfinedTestDispatcher(testScheduler),
@@ -343,7 +343,7 @@ class SeerrConnectionTest {
         val sut =
             SeerrConnection(
                 store =
-                    CredentialStore(
+                    LegacyCredentialStore(
                         PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("$name.preferences_pb") },
                         ReversingCipher,
                         UnconfinedTestDispatcher(testScheduler),
@@ -361,7 +361,7 @@ class SeerrConnectionTest {
             server.enqueue(json("""{"id":1,"permissions":2}"""))
             server.enqueueProfile(json("""{"version":"3.1.0"}"""), json("""{"initialized":true}"""))
             val store =
-                CredentialStore(
+                LegacyCredentialStore(
                     PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("cold.preferences_pb") },
                     ReversingCipher,
                     UnconfinedTestDispatcher(testScheduler),
@@ -444,7 +444,7 @@ class SeerrConnectionTest {
             val sut =
                 SeerrConnection(
                     store =
-                        CredentialStore(
+                        LegacyCredentialStore(
                             PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("qc.preferences_pb") },
                             ReversingCipher,
                             UnconfinedTestDispatcher(testScheduler),

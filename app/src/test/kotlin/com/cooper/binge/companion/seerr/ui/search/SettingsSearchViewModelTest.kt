@@ -1,7 +1,7 @@
 package com.cooper.binge.companion.seerr.ui.search
 
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
-import com.cooper.binge.companion.seerr.auth.CredentialStore
+import com.cooper.binge.companion.seerr.auth.LegacyCredentialStore
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.auth.SeerrConnectionHealthMonitor
 import com.cooper.binge.companion.seerr.seerr.SeerrApiFactory
@@ -71,7 +71,7 @@ class SettingsSearchViewModelTest {
         val monitor = SeerrConnectionHealthMonitor()
         return SeerrConnection(
             store =
-                CredentialStore(
+                LegacyCredentialStore(
                     PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("p.preferences_pb") },
                     PlainCipher,
                     UnconfinedTestDispatcher(testScheduler),
