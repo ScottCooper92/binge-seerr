@@ -39,3 +39,6 @@ const val HUB_ROW_CARDS = 10
  * kind too), at most [HUB_ROW_CARDS].
  */
 fun List<TitleResult>.forHub(tab: HubTab): List<TitleResult> = filter { it.kind == tab.titleKind() }.take(HUB_ROW_CARDS)
+
+/** Whether a row is a row of poster cards, as against a tile row, which a later change adds. */
+fun HubRow.isCardRow(): Boolean = this !is HubRow.Genres && this !is HubRow.Studios && this !is HubRow.Networks
