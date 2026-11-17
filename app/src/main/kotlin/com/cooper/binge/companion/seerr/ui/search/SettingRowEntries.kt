@@ -35,7 +35,7 @@ import com.cooper.binge.companion.seerr.ui.users.settings.titleRes
  * The per-row entries of [settingsIndex]: each setting on a page, opening its page on the row. A row the server's reply decides
  * (Network's DNS cache, say) is not here.
  */
-internal val settingRowEntries: List<SettingEntry> =
+internal val settingRowEntries: List<IndexEntry> =
     buildList {
         add(setting(ServerSettingsPage.General, R.string.server_settings_application_title, Icons.Filled.Title, SettingRows.GENERAL_TITLE))
         add(
@@ -234,14 +234,14 @@ private fun setting(
     @StringRes keywords: Int? = null,
     @StringRes pageLabel: Int = page.label(),
     shown: (SearchAccess) -> Boolean = { true },
-) = SettingEntry(SearchTarget.Server(page), label, icon, R.string.hub_section_settings, keywords, pageLabel, row, shown)
+) = IndexEntry(SearchTarget.Server(page), label, icon, R.string.hub_section_settings, keywords, pageLabel, row, shown)
 
 private fun setting(
     page: UserSettingsPage,
     @StringRes label: Int,
     icon: ImageVector,
     row: String,
-) = SettingEntry(SearchTarget.Account(page), label, icon, R.string.search_section_account, null, page.titleRes(), row)
+) = IndexEntry(SearchTarget.Account(page), label, icon, R.string.search_section_account, null, page.titleRes(), row)
 
 /** The page's title as its own entry shows it. */
 @StringRes

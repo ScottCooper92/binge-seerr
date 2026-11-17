@@ -43,10 +43,10 @@ class SettingsSearchJourneyTest {
         host.launch(HomeRoute)
         host.awaitShowing(host.string(R.string.hub_section_requests_desc))
         host.compose
-            .onNodeWithText(host.string(R.string.search_title))
+            .onNodeWithText(host.string(com.cooper.homelab.core.uiandroid.R.string.search_title))
             .performScrollTo()
             .performClick()
-        host.awaitShowing(host.string(R.string.search_prompt))
+        host.awaitShowing(host.string(com.cooper.homelab.core.uiandroid.R.string.search_prompt))
         assertEquals(SettingsSearchRoute, host.stack().last())
     }
 
@@ -77,7 +77,8 @@ class SettingsSearchJourneyTest {
             host.stack().lastOrNull() == ServerSettingsPageRoute(ServerSettingsPage.Logs)
         }
 
-        assertEquals(listOf("server.Logs|"), host.recentSearches())
+        // Remembering is written off the main thread, after the page has opened, so the list arrives a moment later.
+        host.compose.waitUntil("the opened result remembered", 10_000) { host.recentSearches() == listOf("server.Logs|") }
 
         host.disconnect()
 
@@ -91,6 +92,6 @@ class SettingsSearchJourneyTest {
         host.back()
 
         assertEquals(listOf(HubRoute), host.stack())
-        assertFalse(host.isShowing(host.string(R.string.search_prompt)))
+        assertFalse(host.isShowing(host.string(com.cooper.homelab.core.uiandroid.R.string.search_prompt)))
     }
 }

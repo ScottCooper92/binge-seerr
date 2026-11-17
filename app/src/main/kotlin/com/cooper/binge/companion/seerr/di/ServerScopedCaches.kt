@@ -4,7 +4,7 @@ import com.cooper.binge.companion.seerr.data.IssueStore
 import com.cooper.binge.companion.seerr.data.MediaStatusStore
 import com.cooper.binge.companion.seerr.data.RequestStore
 import com.cooper.binge.companion.seerr.data.UserStore
-import com.cooper.binge.companion.seerr.ui.search.RecentSearches
+import com.cooper.homelab.core.presentation.search.RecentSearches
 import javax.inject.Inject
 
 /**
