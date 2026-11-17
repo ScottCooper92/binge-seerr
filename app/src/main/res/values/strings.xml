@@ -1397,7 +1397,7 @@
     <string name="hubs_card_available">Available</string>
     <string name="hubs_card_requested">Requested</string>
     <string name="hubs_card_processing">Processing</string>
-    <string name="hubs_card_partial">Partly available</string>
+    <string name="hubs_card_partial">Partial</string>
     <string name="hubs_card_blocklisted">Blocklisted</string>
     <string name="hubs_loading_row">Loading a row</string>
 </resources>

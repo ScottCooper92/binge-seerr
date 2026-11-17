@@ -1340,7 +1340,7 @@
     <string name="hubs_card_available">Disponible</string>
     <string name="hubs_card_requested">Solicitada</string>
     <string name="hubs_card_processing">En proceso</string>
-    <string name="hubs_card_partial">Parcialmente disponible</string>
+    <string name="hubs_card_partial">Parcial</string>
     <string name="hubs_card_blocklisted">En la lista de bloqueo</string>
     <string name="hubs_loading_row">Cargando una fila</string>
 </resources>
