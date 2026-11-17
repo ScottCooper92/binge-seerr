@@ -133,6 +133,18 @@ class SearchSwitchTest {
     }
 
     @Test
+    fun `local login cannot be switched off while media server sign in is off`() {
+        val switch = usersSwitches.getValue(SettingRows.USERS_LOCAL_LOGIN)
+        val stuck = ServerUsersSettings(localLogin = true, mediaServerLogin = false)
+        val free = ServerUsersSettings(localLogin = true, mediaServerLogin = true)
+
+        assertFalse("the page would refuse to save it", nonNull(switch.toggle(stuck, saving = false, mayChange = true) {}).enabled)
+        assertTrue(nonNull(switch.toggle(free, saving = false, mayChange = true) {}).enabled)
+        val off = stuck.copy(localLogin = false)
+        assertTrue("turning it back on is always allowed", nonNull(switch.toggle(off, saving = false, mayChange = true) {}).enabled)
+    }
+
+    @Test
     fun `a setting the server does not have gets no switch`() {
         val without = ServerGeneralSettings(hideRequested = null, trustProxy = null)
         assertNull(generalSwitches.getValue(SettingRows.GENERAL_HIDE_REQUESTED).toggle(without, false, true) {})
