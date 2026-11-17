@@ -87,4 +87,20 @@ class PortFallbackTest {
 
             assertEquals(listOf("https://seerr.example.com/media/", "https://seerr.example.com:5055/media/"), attempts)
         }
+
+    @Test
+    fun `withPortFallback treats a typed default port as no port, so a failed probe retries at the Seerr port`() =
+        runTest {
+            val attempts = mutableListOf<String>()
+
+            val result =
+                withPortFallback("https://seerr.example.com:443/") { candidate ->
+                    attempts += candidate
+                    Result.failure<Unit>(IOException("refused"))
+                }
+
+            assertTrue(result.isFailure)
+            assertEquals(2, attempts.size)
+            assertTrue(attempts.last().contains(":5055"))
+        }
 }
