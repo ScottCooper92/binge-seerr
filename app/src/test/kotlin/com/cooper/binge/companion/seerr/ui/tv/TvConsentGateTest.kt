@@ -11,7 +11,6 @@ import androidx.compose.ui.test.pressKey
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.tv.material3.Text
 import com.binge.designsystem.tv.theme.BingeTvTheme
-import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.consent.ConsentViewModel
 import com.cooper.binge.companion.seerr.util.createSeerrKeyboardComposeRule
 import com.cooper.binge.companion.seerr.util.string
@@ -31,6 +30,7 @@ import org.junit.rules.TemporaryFolder
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import com.cooper.homelab.core.uiandroid.R as CoreR
 
 private const val CONTENT = "Setup goes on"
 private const val WAIT_MILLIS = 5_000L
@@ -58,7 +58,7 @@ class TvConsentGateTest {
         composeTestRule.setContent { BingeTvTheme { TvConsentScreen(onChoice = { choices += it }) } }
         composeTestRule.waitForIdle()
 
-        answer(R.string.consent_accept).assertIsFocused()
+        answer(CoreR.string.consent_accept).assertIsFocused()
         press(Key.DirectionCenter)
 
         assertEquals(listOf(true), choices)
@@ -71,7 +71,7 @@ class TvConsentGateTest {
         composeTestRule.waitForIdle()
 
         press(Key.DirectionRight)
-        answer(R.string.consent_decline).assertIsFocused()
+        answer(CoreR.string.consent_decline).assertIsFocused()
         press(Key.DirectionCenter)
 
         assertEquals(listOf(false), choices)
@@ -83,18 +83,19 @@ class TvConsentGateTest {
         val prefs =
             TelemetryPrefs(
                 PreferenceDataStoreFactory.create(scope = scope) { folder.newFile("t.preferences_pb") },
-                crashReportingDefault = true,
+                crashReportingDefault = false,
             )
         val viewModel = ConsentViewModel(prefs, Dispatchers.IO)
         composeTestRule.setContent { BingeTvTheme { TvConsentGate(viewModel = viewModel) { Text(CONTENT) } } }
 
-        composeTestRule.waitUntil(WAIT_MILLIS) { answerExists(R.string.consent_decline) }
+        composeTestRule.waitUntil(WAIT_MILLIS) { answerExists(CoreR.string.consent_decline) }
         composeTestRule.onNodeWithText(CONTENT).assertDoesNotExist()
         press(Key.DirectionRight)
         press(Key.DirectionCenter)
 
         composeTestRule.waitUntil(WAIT_MILLIS) { composeTestRule.onAllNodes(hasText(CONTENT)).fetchSemanticsNodes().isNotEmpty() }
         assertEquals(AnalyticsConsent.DENIED, runBlocking { prefs.analyticsConsent.first() })
+        assertEquals(false, runBlocking { prefs.crashReportingEnabled.first() })
     }
 
     private fun answer(id: Int) = composeTestRule.onNode(hasText(string(id)) and isFocusable())

@@ -9,23 +9,14 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-/** Whether the app still has to ask about usage data before anything else is shown. */
-sealed interface ConsentUiState {
-    data object Loading : ConsentUiState
-
-    data object Asking : ConsentUiState
-
-    data object Decided : ConsentUiState
-}
-
 /**
- * The question asked once, before setup and before the hub: may this app share usage data. It
- * asks while the answer is undecided, so an install that updates into it is asked too.
+ * The question asked once, before setup and before the hub: may this app share usage data and crash reports. [consent] is null while
+ * the stored answer is read, and [AnalyticsConsent.UNDECIDED] asks. An install that already answered is not asked again, so one that
+ * updates into the combined question keeps what it has (see `CrashReportingMigration`). One answer records both, in one write.
  */
 @HiltViewModel
 class ConsentViewModel
@@ -34,13 +25,11 @@ class ConsentViewModel
         private val prefs: TelemetryPrefs,
         @IoDispatcher private val dispatcher: CoroutineDispatcher,
     ) : ViewModel() {
-        val uiState: StateFlow<ConsentUiState> =
-            prefs.analyticsConsent
-                .map { if (it == AnalyticsConsent.UNDECIDED) ConsentUiState.Asking else ConsentUiState.Decided }
-                .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), ConsentUiState.Loading)
+        val consent: StateFlow<AnalyticsConsent?> =
+            prefs.analyticsConsent.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), null)
 
         fun answer(granted: Boolean) {
-            viewModelScope.launch(dispatcher) { prefs.setAnalyticsGranted(granted) }
+            viewModelScope.launch(dispatcher) { prefs.answerFirstRun(granted) }
         }
 
         private companion object {

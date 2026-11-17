@@ -1,5 +1,9 @@
 package com.cooper.binge.companion.seerr.ui.tv
 
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.BarChart
+import androidx.compose.material.icons.filled.ToggleOff
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -12,9 +16,9 @@ import com.binge.designsystem.template.ScreenAction
 import com.binge.designsystem.tv.template.TvDecisionPage
 import com.binge.designsystem.tv.template.TvPageHosting
 import com.cooper.binge.companion.seerr.R
-import com.cooper.binge.companion.seerr.ui.consent.ConsentPoints
-import com.cooper.binge.companion.seerr.ui.consent.ConsentUiState
 import com.cooper.binge.companion.seerr.ui.consent.ConsentViewModel
+import com.cooper.homelab.core.telemetry.AnalyticsConsent
+import com.cooper.homelab.core.uiandroid.R as CoreR
 
 /** The phone's consent gate on a television: the same question, before setup and Home. */
 @Composable
@@ -22,11 +26,11 @@ internal fun TvConsentGate(
     viewModel: ConsentViewModel = hiltViewModel(),
     content: @Composable () -> Unit,
 ) {
-    val state by viewModel.uiState.collectAsStateWithLifecycle()
-    when (state) {
-        ConsentUiState.Loading -> TvLoadingPlate()
-        ConsentUiState.Asking -> TvConsentScreen(onChoice = viewModel::answer)
-        ConsentUiState.Decided -> content()
+    val consent by viewModel.consent.collectAsStateWithLifecycle()
+    when (consent) {
+        null -> TvLoadingPlate()
+        AnalyticsConsent.UNDECIDED -> TvConsentScreen(onChoice = viewModel::answer)
+        AnalyticsConsent.GRANTED, AnalyticsConsent.DENIED -> content()
     }
 }
 
@@ -47,27 +51,40 @@ internal fun TvConsentScreen(
     TvDecisionPage(
         copy =
             DecisionCopy(
-                title = stringResource(R.string.consent_title),
-                subtitle = stringResource(R.string.consent_subtitle),
-                kicker = stringResource(R.string.consent_kicker),
+                title = stringResource(CoreR.string.consent_title),
+                subtitle = stringResource(CoreR.string.consent_subtitle),
+                kicker = stringResource(CoreR.string.consent_kicker),
                 note = stringResource(R.string.tv_consent_reassurance),
             ),
         points = tvConsentPoints(),
-        accept = ScreenAction(stringResource(R.string.consent_accept), onClick = { onChoice(true) }),
-        decline = ScreenAction(stringResource(R.string.consent_decline), onClick = { onChoice(false) }),
+        accept = ScreenAction(stringResource(CoreR.string.consent_accept), onClick = { onChoice(true) }),
+        decline = ScreenAction(stringResource(CoreR.string.consent_decline), onClick = { onChoice(false) }),
         modifier = modifier,
         // A gate before setup and Home, so the page places its own first focus on Share usage data.
         hosting = TvPageHosting.PreShell,
     )
 }
 
-/** The phone's three points, the last reworded because a remote is a press, not a tap, and
- * because the TV keeps these switches in Settings. */
+/**
+ * The shared question's three points, the last in this app's own television wording, because a remote is a press, not a tap, and
+ * because the TV keeps these switches in Settings.
+ */
 @Composable
 private fun tvConsentPoints(): List<DecisionPoint> =
-    ConsentPoints.mapIndexed { index, point ->
-        val last = index == ConsentPoints.lastIndex
-        val title = if (last) R.string.tv_consent_point_change_title else point.titleRes
-        val detail = if (last) R.string.tv_consent_point_change_detail else point.detailRes
-        DecisionPoint(icon = point.icon, title = stringResource(title), detail = stringResource(detail))
-    }
+    listOf(
+        DecisionPoint(
+            Icons.Filled.BarChart,
+            stringResource(CoreR.string.consent_point_shared_title),
+            stringResource(CoreR.string.consent_point_shared_detail),
+        ),
+        DecisionPoint(
+            Icons.Filled.VisibilityOff,
+            stringResource(CoreR.string.consent_point_never_title),
+            stringResource(CoreR.string.consent_point_never_detail),
+        ),
+        DecisionPoint(
+            Icons.Filled.ToggleOff,
+            stringResource(R.string.tv_consent_point_change_title),
+            stringResource(R.string.tv_consent_point_change_detail),
+        ),
+    )
