@@ -12,9 +12,9 @@ import com.cooper.binge.companion.seerr.notifications.DEFAULT_POLL_INTERVAL_MINU
 import com.cooper.binge.companion.seerr.notifications.FakeBackgroundAccess
 import com.cooper.binge.companion.seerr.notifications.FakeNotifier
 import com.cooper.binge.companion.seerr.notifications.FakeScheduler
-import com.cooper.binge.companion.seerr.notifications.NotificationForwarding
 import com.cooper.binge.companion.seerr.notifications.NotificationPrefs
 import com.cooper.binge.companion.seerr.notifications.NotificationSignal
+import com.cooper.binge.companion.seerr.notifications.seerrForwarding
 import com.cooper.binge.companion.seerr.seerr.SeerrApiFactory
 import com.cooper.binge.companion.seerr.seerr.SeerrLoginRequest
 import com.cooper.binge.companion.seerr.ui.Ticker
@@ -144,7 +144,7 @@ class ThisAppViewModelTest {
                 prefs,
                 scheduler,
                 notifier,
-                NotificationForwarding(notificationsStore),
+                seerrForwarding(notificationsStore),
                 background,
                 mainDispatcherRule.dispatcher,
                 analytics,
