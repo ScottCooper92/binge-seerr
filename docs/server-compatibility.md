@@ -81,6 +81,11 @@ endpoint, is in [`api-coverage.md`](api-coverage.md). The gates that change what
 | Media-server watchlist add and remove | never | Jellyseerr 1.6 |
 | LunaSea notification agent | always | never |
 | Discover sliders, watch providers, keyword and company search | 1.32 | Jellyseerr 1.4 |
+| Discover keyword lists | 1.9 | always |
+| Upcoming shows | 1.20 | always |
+| Discover by genre, language, studio and network | 1.21 | always |
+| Genre slider backdrops | 1.22 | always |
+| Plex watchlist list (`discover/watchlist`) | 1.30 | Jellyseerr 1.2 |
 | Combined RT and IMDb ratings | 1.34 | Jellyseerr 1.7 |
 | Pushover sounds, read by any signed-in user (the route sits ahead of the admin-only `/settings` router) | 1.34 | Jellyseerr 1.8 |
 | Telegram topic, `messageThreadId`, on a user and on the Telegram agent | never | Jellyseerr 2.2 |
