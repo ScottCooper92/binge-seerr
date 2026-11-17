@@ -21,7 +21,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.runBlocking
 import javax.inject.Qualifier
 import com.cooper.homelab.core.notifications.CheckResult as SharedCheckResult
 import com.cooper.homelab.core.notifications.PollOutcome as SharedPollOutcome
@@ -106,20 +105,17 @@ class SharedPlanning(
     }
 }
 
-/**
- * The shared library's notices, posted through this app's [SeerrNotifier]. That is suspend where the library's is not, because
- * a forwarded notice is queued in a DataStore, so each call here waits for it: they are quick, and none runs on the main thread.
- */
+/** The shared library's notices, posted through this app's [SeerrNotifier]: a forwarded notice is queued in a DataStore, so each call suspends. */
 class SeerrPollNotifier(
     private val notifier: SeerrNotifier,
 ) : PollNotifier {
     override suspend fun canPost(): Boolean = notifier.canPost()
 
-    override fun notifyConnectionProblem(server: ServerId) = runBlocking { notifier.notifyConnectionProblem() }
+    override suspend fun notifyConnectionProblem(server: ServerId) = notifier.notifyConnectionProblem()
 
-    override fun cancelConnectionProblem(server: ServerId) = runBlocking { notifier.cancelConnectionProblem() }
+    override suspend fun cancelConnectionProblem(server: ServerId) = notifier.cancelConnectionProblem()
 
-    override fun cancelNotices(server: ServerId) = notifier.cancelActivity()
+    override suspend fun cancelNotices(server: ServerId) = notifier.cancelActivity()
 }
 
 /** The pause flag where it has always been, so a one-server install keeps its key. */
