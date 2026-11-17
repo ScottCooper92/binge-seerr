@@ -5,13 +5,18 @@ this file from `main` and treat it as the source of truth; so should you.
 
 ## What this repository is
 
-An Android admin console for a Seerr, Jellyseerr or Overseerr server, and the reference
+An Android client and admin console for a Seerr, Jellyseerr or Overseerr server, and the reference
 companion app for [Binge](https://github.com/ScottCooper92). Those are its two jobs, in that
 order for the person installing it and in the other order for the person reading it.
 
-As a console, it manages the server the user already runs: requests, issues, users, the
-blocklist, the server's settings pages and its notifications, on a phone and on Android TV. It
-is not a discovery client; browsing for titles is Binge's job or the server's web client's.
+As a client and console, it works with the server the user already runs. It manages requests,
+issues, users, the blocklist, the server's settings pages and its notifications, on a phone and on
+Android TV. It is also becoming a discovery client on the phone: Movies and TV hubs, title search,
+and title, person and collection pages, with requesting as the primary action on every title page.
+Seerr's API is the only data source for it. An earlier decision said browsing for titles was
+Binge's job or the server's web client's (#26, and the closed #34). That decision was reversed on
+purpose, because this app is used more than Binge is; the epic is #2039. Until the discovery
+feature flag is on, the app is exactly as it was.
 
 As a companion, it is what Binge talks to. Binge ships as a plain TMDB client with zero
 bundled providers; a companion app is a separate APK that exports a bound Android Service

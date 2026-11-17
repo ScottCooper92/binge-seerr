@@ -29,13 +29,12 @@ import com.binge.designsystem.template.screenOuterPadding
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.notifications.NotificationSignal
 import com.cooper.binge.companion.seerr.notifications.POLL_INTERVAL_CHOICES
-import com.cooper.binge.companion.seerr.tip.TipEvent
-import com.cooper.binge.companion.seerr.tip.TipUiState
-import com.cooper.binge.companion.seerr.ui.settings.server.TipSheet
-import com.cooper.binge.companion.seerr.ui.state.DialogMessage
 import com.cooper.binge.companion.seerr.ui.state.LoadingScreen
-import com.cooper.binge.companion.seerr.ui.state.MessageDialogHost
 import com.cooper.binge.companion.seerr.ui.state.SortSheet
+import com.cooper.homelab.core.presentation.tip.TipEvent
+import com.cooper.homelab.core.presentation.tip.TipState
+import com.cooper.homelab.core.uiandroid.tip.TipResults
+import com.cooper.homelab.core.uiandroid.tip.TipSheet
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import com.binge.designsystem.R as DesR
@@ -65,14 +64,12 @@ fun ThisAppScreen(
     state: ThisAppUiState,
     actions: ThisAppActions,
     showBack: Boolean = true,
-    tip: TipUiState = TipUiState.Unavailable,
+    tip: TipState = TipState.Unavailable,
     tipEvents: Flow<TipEvent> = emptyFlow(),
     onGiveTip: (Int) -> Unit = {},
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
-    var dialog by remember { mutableStateOf<DialogMessage?>(null) }
-    TipResults(tipEvents, snackbarHostState, onFailed = { dialog = it })
-    MessageDialogHost(dialog, onDismiss = { dialog = null })
+    TipResults(tipEvents, snackbarHostState)
     BingeScreenScaffold(
         bar = ScreenBar.Small,
         title = stringResource(R.string.hub_section_this_app),
@@ -93,15 +90,16 @@ fun ThisAppScreen(
 private fun ThisAppContent(
     state: ThisAppUiState.Ready,
     actions: ThisAppActions,
-    tip: TipUiState,
+    tip: TipState,
     onGiveTip: (Int) -> Unit,
     contentPadding: PaddingValues,
 ) {
     var tipOpen by remember { mutableStateOf(false) }
     var intervalOpen by remember { mutableStateOf(false) }
-    val prices = (tip as? TipUiState.Ready)?.prices
+    val prices = (tip as? TipState.Ready)?.prices
     if (tipOpen && prices != null) {
         TipSheet(
+            appName = stringResource(R.string.app_label),
             prices = prices,
             onGive = {
                 tipOpen = false
