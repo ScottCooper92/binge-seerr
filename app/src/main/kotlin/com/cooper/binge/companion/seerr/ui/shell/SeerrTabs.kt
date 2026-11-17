@@ -93,7 +93,7 @@ internal fun seerrTabItems(): List<BingeNavSuiteItem> =
 
 /**
  * The tab bar over each tab's root: the Settings tab is the hub, [settings], Movies and TV are the discovery hubs, [discover],
- * and Search is a placeholder until its screen lands. Only a root is drawn here. What a tab opens is an entry on the app's stack above this one, so it takes the
+ * and Search is [search]. Only a root is drawn here. What a tab opens is an entry on the app's stack above this one, so it takes the
  * whole window and the bar is hidden until Back pops it. Back at another tab's root returns to the start tab, and Back at the
  * start tab's root leaves the app.
  */
@@ -102,6 +102,7 @@ internal fun SeerrTabShell(
     tabs: TabShellState<SeerrTab>,
     modifier: Modifier = Modifier,
     discover: @Composable (HubTab) -> Unit,
+    search: @Composable () -> Unit = { TabPlaceholder(SeerrTab.Search) },
     settings: @Composable () -> Unit,
 ) {
     TabShell(
@@ -112,10 +113,10 @@ internal fun SeerrTabShell(
         modifier = modifier,
     ) { tab ->
         when (tab) {
+            SeerrTab.Search -> search()
             SeerrTab.Settings -> settings()
             SeerrTab.Movies -> discover(HubTab.Movies)
             SeerrTab.Tv -> discover(HubTab.Series)
-            SeerrTab.Search -> TabPlaceholder(tab)
         }
     }
 }
