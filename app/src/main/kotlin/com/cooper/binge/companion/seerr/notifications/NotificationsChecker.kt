@@ -31,6 +31,7 @@ class NotificationsChecker
         private val connection: SeerrConnection,
         private val feeds: NotificationFeeds,
         private val notifier: SeerrNotifier,
+        private val cursorFeeds: CursorFeeds,
     ) {
         suspend fun check(): CheckResult {
             if (!prefs.anyEnabled.first()) return CheckResult.Ok
@@ -38,11 +39,13 @@ class NotificationsChecker
             if (!notifier.canPost()) return CheckResult.Ok
             val viewer = attempt { connection.authenticatedUser() }.getOrElse { return it.toResult() }
             val permissions = viewer.toPermissions()
+            val userId = viewer.id
             val hasIssues = attempt { connection.profile().hasIssues }.getOrDefault(false)
             val requests =
                 if (permissions.canManageRequests && prefs.isEnabled(NotificationSignal.PendingRequests)) {
-                    checkFeed(
+                    cursorFeeds.check(
                         NotificationSignal.PendingRequests,
+                        userId,
                         feeds::seedPendingRequests,
                         feeds::pendingRequests,
                         notifier::notifyNewRequests,
@@ -52,41 +55,17 @@ class NotificationsChecker
                 }
             val issues =
                 if (permissions.canManageIssues && hasIssues && prefs.isEnabled(NotificationSignal.OpenIssues)) {
-                    checkFeed(NotificationSignal.OpenIssues, feeds::seedOpenIssues, feeds::openIssues, notifier::notifyNewIssues)
+                    cursorFeeds.check(
+                        NotificationSignal.OpenIssues,
+                        userId,
+                        feeds::seedOpenIssues,
+                        feeds::openIssues,
+                        notifier::notifyNewIssues,
+                    )
                 } else {
                     CheckResult.Ok
                 }
             return worstOf(worstOf(requests, issues), checkOwnRequests())
-        }
-
-        /**
-         * A feed: fetch what is newer than the cursor, announce it, advance. A seed run takes the
-         * separate [seed] read, which titles nothing because it announces nothing; an empty feed
-         * seeds to 0, a real cursor, so the first row to arrive is announced rather than seeding
-         * again. After that the cursor follows the newest **raw** id the server offered, not the
-         * newest announced row, so a row titling drops cannot hold it back.
-         */
-        private suspend fun <T> checkFeed(
-            signal: NotificationSignal,
-            seed: suspend () -> Int,
-            fetch: suspend (sinceId: Int) -> FeedRead<T>,
-            notify: suspend (List<T>) -> Unit,
-        ): CheckResult {
-            val cursor = prefs.cursor(signal) ?: return seedCursor(signal, seed)
-            val read = attempt { fetch(cursor) }.getOrElse { return it.toResult() }
-            if (read.rows.isNotEmpty()) notify(read.rows)
-            if (read.newestId > cursor) prefs.setCursor(signal, read.newestId)
-            return CheckResult.Ok
-        }
-
-        /** A seed announces nothing, so it titles nothing: it reads the newest id and stores that. */
-        private suspend fun seedCursor(
-            signal: NotificationSignal,
-            seed: suspend () -> Int,
-        ): CheckResult {
-            val newest = attempt { seed() }.getOrElse { return it.toResult() }
-            prefs.setCursor(signal, newest)
-            return CheckResult.Ok
         }
 
         /**
@@ -173,7 +152,7 @@ private fun SeerrRequestDto.isIn(signal: NotificationSignal): Boolean =
         NotificationSignal.PendingRequests, NotificationSignal.OpenIssues -> false
     }
 
-private fun Throwable.toResult(): CheckResult =
+internal fun Throwable.toResult(): CheckResult =
     if (toSeerrError() == SeerrError.Unauthorized) CheckResult.AuthFailure else CheckResult.TransientFailure
 
 private fun worstOf(
