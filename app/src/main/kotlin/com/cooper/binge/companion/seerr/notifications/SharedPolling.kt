@@ -147,8 +147,9 @@ class PollUserStore(
 ) {
     suspend fun get(): String? = dataStore.data.first()[KEY]
 
+    /** Writes only when the user changed, since the poll calls this for every feed it checks. */
     suspend fun set(userId: String) {
-        dataStore.edit { it[KEY] = userId }
+        if (get() != userId) dataStore.edit { it[KEY] = userId }
     }
 
     private companion object {
