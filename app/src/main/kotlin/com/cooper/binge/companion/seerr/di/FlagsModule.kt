@@ -52,7 +52,8 @@ object FlagsModule {
         @IoDispatcher io: CoroutineDispatcher,
     ): FeatureFlags {
         // A debug build waits for its stored overrides once, so the first screen at cold start sees them. This blocks the
-        // main thread, so it must stay behind BuildConfig.DEBUG and never move into a release path.
+        // main thread, so it must stay behind BuildConfig.DEBUG and never move into a release path. (The release path's own
+        // cache read, `seedFromCache` below, is measured in docs/feature-flags.md.)
         val initial = if (BuildConfig.DEBUG) runBlocking { overrides.values.first() } else emptyMap()
         return RemoteFeatureFlags(source, overrides, scope, io, initial, seedFromCache = true)
     }

@@ -19,7 +19,7 @@ plugins {
 
 // Crash reporting needs this app's own Firebase project, whose google-services.json is never
 // committed: release.yml writes it from a secret. Without it neither plugin is applied, so a fork
-// or a local build still builds, and crash reporting is simply off (`telemetry/CrashReporting.kt`).
+// or a local build still builds, and crash reporting is simply off (the Crashlytics adapters in the shared `app-services-firebase` module do nothing without a Firebase app).
 if (file("google-services.json").exists()) {
     apply(
         plugin =
@@ -265,6 +265,8 @@ dependencies {
     implementation(libs.okhttp.logging.interceptor)
     implementation(libs.datastore.preferences)
     implementation(platform(libs.firebase.bom))
+    // Crashlytics stays on the app on purpose: its Gradle plugin instruments this runtime. The adapters over it are the shared
+    // `app-services-firebase` module's.
     implementation(libs.firebase.crashlytics)
     implementation(libs.posthog.android)
     implementation(platform(libs.compose.bom))
