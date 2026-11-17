@@ -1,7 +1,9 @@
 package com.cooper.binge.companion.seerr.handoff
 
 import com.binge.companion.sdk.attempt
-import com.cooper.binge.companion.seerr.logWarning
+import com.cooper.homelab.core.foundation.LogField
+import com.cooper.homelab.core.foundation.Logger
+import com.cooper.homelab.core.foundation.warn
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -43,10 +45,10 @@ interface TvSignInClient {
 internal class OkHttpTvSignInClient(
     private val client: OkHttpClient,
     private val dispatcher: CoroutineDispatcher = Dispatchers.IO,
-    private val warn: (String) -> Unit = {},
+    private val logger: Logger,
 ) : TvSignInClient {
     @Inject
-    constructor() : this(handOffHttpClient(), warn = logWarning(TAG))
+    constructor(logger: Logger) : this(handOffHttpClient(), logger = logger)
 
     override suspend fun status(target: TvHandOffTarget): HandOffStatus? =
         withContext(dispatcher) {
@@ -59,14 +61,14 @@ internal class OkHttpTvSignInClient(
             try {
                 client.newCall(request).execute().use { response ->
                     if (response.code != HttpStatus.Ok.code) {
-                        warn("The TV answered ${response.code} for its status")
+                        logger.warn(TAG, "the TV refused the status read", listOf(LogField.Status("status", response.code)))
                         null
                     } else {
                         attempt { JSON.decodeFromString<HandOffStatus>(response.body.string()) }.getOrNull()
                     }
                 }
             } catch (e: IOException) {
-                warn("Reading the TV's status failed: ${e.javaClass.simpleName}")
+                logger.warn(TAG, "reading the TV status failed", error = e)
                 null
             }
         }
@@ -96,14 +98,14 @@ internal class OkHttpTvSignInClient(
                 client.newCall(request).execute().use { response ->
                     // The status code only: the body says nothing a failure's reason would help with, and logging it is never worth the risk.
                     if (response.code != HttpStatus.Ok.code) {
-                        warn("The TV answered ${response.code} to the credentials")
+                        logger.warn(TAG, "the TV refused the credentials", listOf(LogField.Status("status", response.code)))
                         null
                     } else {
                         attempt { JSON.decodeFromString<HandOffTaken>(response.body.string()).attempt }.getOrNull()
                     }
                 }
             } catch (e: IOException) {
-                warn("Sending the credentials failed: ${e.javaClass.simpleName}")
+                logger.warn(TAG, "sending the credentials failed", error = e)
                 null
             }
         }

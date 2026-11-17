@@ -1,5 +1,6 @@
 package com.cooper.binge.companion.seerr.handoff
 
+import com.cooper.binge.companion.seerr.telemetry.DiscardLogger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -37,7 +38,7 @@ class HandOffSignInEndToEndTest {
             key = key,
         )
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
-    private val client = OkHttpTvSignInClient(OkHttpClient())
+    private val client = OkHttpTvSignInClient(OkHttpClient(), logger = DiscardLogger)
 
     @Volatile
     private var progress: HandOffProgress = HandOffProgress.Waiting

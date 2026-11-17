@@ -13,13 +13,13 @@ internal const val FORWARDED_KIND_CONNECTION = "connection"
 
 /**
  * Routes each notice: queued for Binge while it forwards this app's notices
- * ([NotificationForwarding.isActive]), posted by [local] otherwise, never both. Binge's switch decides
+ * ([SeerrForwarding.isActive]), posted by [local] otherwise, never both. Binge's switch decides
  * who shows them; this app's own settings still decide which kinds there are. A batch of one names
  * its title, so a tap in Binge opens it; a larger one names none, and opens this app's page there.
  */
 class ForwardingNotifier(
     private val local: SeerrNotifier,
-    private val forwarding: NotificationForwarding,
+    private val forwarding: SeerrForwarding,
     private val words: NotificationText,
     private val clock: () -> Long = System::currentTimeMillis,
 ) : SeerrNotifier {

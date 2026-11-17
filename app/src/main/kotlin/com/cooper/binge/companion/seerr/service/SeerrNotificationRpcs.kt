@@ -8,9 +8,9 @@ import com.binge.companion.contracts.notifications.v1.SetNotificationForwardingR
 import com.binge.companion.contracts.notifications.v1.SetNotificationForwardingResponse
 import com.binge.companion.contracts.notifications.v1.listNotificationsResponse
 import com.binge.companion.contracts.v1.ForwardedNotification
-import com.cooper.binge.companion.seerr.notifications.NotificationForwarding
 import com.cooper.binge.companion.seerr.notifications.NotificationPrefs
 import com.cooper.binge.companion.seerr.notifications.NotificationSignal
+import com.cooper.binge.companion.seerr.notifications.SeerrForwarding
 import kotlinx.coroutines.flow.first
 
 private const val DEFAULT_PAGE_SIZE = 50
@@ -38,7 +38,7 @@ private val FORWARDING_DEFAULT_SIGNALS =
  * server's. Which kinds are queued stays with [NotificationPrefs], this app's own settings.
  */
 class SeerrNotificationRpcs(
-    private val forwarding: NotificationForwarding,
+    private val forwarding: SeerrForwarding,
     private val prefs: NotificationPrefs,
 ) {
     suspend fun setNotificationForwarding(request: SetNotificationForwardingRequest): SetNotificationForwardingResponse {
