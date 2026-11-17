@@ -150,7 +150,7 @@ private fun HttpException.httpStatus(): Status =
  * A 401 the session was not found alive behind, or a 403 [SeerrSessionInterceptor] confirmed against `auth/me`:
  * the session, not a permission.
  */
-private fun HttpException.rejectsSessionByAnswer(): Boolean = isSessionRejection(code(), response()?.headers() ?: Headers.headersOf())
+internal fun HttpException.rejectsSessionByAnswer(): Boolean = isSessionRejection(code(), response()?.headers() ?: Headers.headersOf())
 
 /** A 401 Seerr sent although `auth/me` still answers: a refusal, which a route may read more precisely (#997, #998). */
 internal fun HttpException.refusedWithLiveSession(): Boolean = isLiveSessionRefusal(code(), response()?.headers() ?: Headers.headersOf())
