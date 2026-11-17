@@ -149,9 +149,9 @@ internal fun SettingsSearchEntry(
         state = state,
         entries = host.entries,
         icon = { it.target.icon },
-        onOpen = { entry ->
+        onOpen = { entry, viewer ->
             host.model.remember(entry)
-            onOpen(entry.target.target.route(host.userId, entry.row))
+            onOpen(entry.target.target.route(viewer.userId, entry.row))
         },
         onBack = onBack,
         onRetry = host.model::retry,
