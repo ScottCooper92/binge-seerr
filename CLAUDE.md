@@ -60,7 +60,7 @@ Apache-2.0.
 
 **This app is the reference implementation of a companion, and it behaves like any other.**
 
-The repository is all rights reserved, whether or not it is public: nobody is meant to copy it. It is still
+The repository is all rights reserved, whether or not it is public: it grants no licence to copy it. It is still
 called the reference companion, because the contract in binge-companions is public and this
 app is the worked example the contract is checked against. That makes "it works" insufficient
 on its own — the question is whether this is the implementation you would point to as the right one.
@@ -393,8 +393,8 @@ label.
 
 **That label is maintainers-only.** Applying it grants an agent code execution with
 this repository's secrets in scope. Do not apply it to a PR you have not read, and
-never to one from a fork — the workflows already refuse fork PRs, and that guard stays
-in place whether the repository is public or private.
+never to one from a fork — the workflows already refuse fork PRs, and that guard is the
+control, not a formality, whether the repository is public or private.
 
 **Add `hold` only when a human must do the merging.** `hold` withholds the bot's merge: the PR is
 still reviewed and kept current, but a maintainer lands it. Add it alongside `agent` only when the PR
