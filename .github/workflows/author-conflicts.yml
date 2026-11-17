@@ -10,8 +10,8 @@ run-name: >-
 
 # Thin caller. The workflow itself lives in ScottCooper92/binge-ci.
 #
-# PUBLIC repository: the fork filter inside the scan is the control here, not a
-# formality. The `agent` label stays maintainers-only.
+# The fork filter inside the scan is the control here, whether the repository is
+# public or private. The `agent` label stays maintainers-only.
 on:
   workflow_run:
     workflows: ["CI"]
@@ -61,8 +61,8 @@ jobs:
         human's call. Leave it unresolved and say so in note.md rather than
         guessing.
 
-        Beyond those files, this is the reference companion, and its code is
-        read and copied. A conflict resolved into something that merely
+        Beyond those files, this is the reference companion, and what it shows is
+        what other companions are measured against. A conflict resolved into something that merely
         compiles is a worse outcome here than one handed back - if the two
         sides disagree about how the example should read, that is a human's
         call. Leave it unresolved and say so in note.md.
