@@ -20,7 +20,7 @@ import javax.inject.Singleton
 private const val REDACTOR_TAG = "Redactor"
 
 /**
- * The shared [Logger]: an in-memory [RingLog] that the Diagnostics page will read. Nothing is written to disk. A debug build also
+ * The shared [Logger]: an in-memory [RingLog] that the Diagnostics page reads. Nothing is written to disk. A debug build also
  * forwards each redacted entry to Logcat, and says so when the redactor had to replace something (a call site is wrong then).
  */
 @Module
