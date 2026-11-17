@@ -21,10 +21,7 @@ import com.cooper.binge.companion.seerr.notifications.AndroidNotifier
 import com.cooper.binge.companion.seerr.notifications.ApplicationScope
 import com.cooper.binge.companion.seerr.notifications.ForwardingNotifier
 import com.cooper.binge.companion.seerr.notifications.NotificationForwarding
-import com.cooper.binge.companion.seerr.notifications.NotificationPrefs
-import com.cooper.binge.companion.seerr.notifications.NotificationScheduler
 import com.cooper.binge.companion.seerr.notifications.SeerrNotifier
-import com.cooper.binge.companion.seerr.notifications.WorkManagerNotificationScheduler
 import com.cooper.binge.companion.seerr.ui.hub.BingeInstallCheck
 import com.cooper.binge.companion.seerr.ui.hub.PackageManagerBingeInstallCheck
 import com.cooper.homelab.core.telemetry.TelemetryPrefs
@@ -51,7 +48,7 @@ import javax.inject.Singleton
 @Retention(AnnotationRetention.RUNTIME)
 annotation class IoDispatcher
 
-private val Context.notificationsDataStore: DataStore<Preferences> by preferencesDataStore(name = "seerr_notifications")
+internal val Context.notificationsDataStore: DataStore<Preferences> by preferencesDataStore(name = "seerr_notifications")
 
 private val Context.telemetryDataStore: DataStore<Preferences> by preferencesDataStore(name = "seerr_telemetry")
 
@@ -107,12 +104,6 @@ object SeerrModule {
 
     @Provides
     @Singleton
-    fun notificationPrefs(
-        @ApplicationContext context: Context,
-    ): NotificationPrefs = NotificationPrefs(context.notificationsDataStore)
-
-    @Provides
-    @Singleton
     fun telemetryPrefs(
         @ApplicationContext context: Context,
     ): TelemetryPrefs = TelemetryPrefs(context.telemetryDataStore, crashReportingDefault = true)
@@ -122,12 +113,6 @@ object SeerrModule {
     fun feedbackPrefs(
         @ApplicationContext context: Context,
     ): FeedbackPrefs = FeedbackPrefs(context.feedbackDataStore)
-
-    @Provides
-    @Singleton
-    fun notificationScheduler(
-        @ApplicationContext context: Context,
-    ): NotificationScheduler = WorkManagerNotificationScheduler(context)
 
     @Provides
     @Singleton

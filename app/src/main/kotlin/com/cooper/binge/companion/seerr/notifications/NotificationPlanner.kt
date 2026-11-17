@@ -30,8 +30,8 @@ class NotificationPlanner
         private val notifier: SeerrNotifier,
         @ApplicationScope private val scope: CoroutineScope,
         private val breadcrumbs: CrashBreadcrumbs = NoOpCrashBreadcrumbs,
-    ) {
-        fun start() {
+    ) : NotificationPlanning {
+        override fun start() {
             val plans =
                 combine(
                     connection.credentials,

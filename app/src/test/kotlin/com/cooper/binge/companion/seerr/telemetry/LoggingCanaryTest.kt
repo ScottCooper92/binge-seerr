@@ -39,7 +39,8 @@ private const val USER = "alice-the-requester"
 @OptIn(ExperimentalCoroutinesApi::class)
 class LoggingCanaryTest {
     private val redactor = Redactor()
-    private val ring = RingLog(Clock { Instant.fromEpochMilliseconds(0) }, redactor, serverOrder = { emptyList() })
+    private val ring =
+        RingLog(Clock { Instant.fromEpochMilliseconds(0) }, redactor, serverOrder = { emptyList() }, ownPackages = listOf("com.cooper."))
 
     /** A client whose every call fails the way a real one can: with a message that quotes what it was sent. */
     private val failing =

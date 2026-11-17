@@ -72,7 +72,13 @@ class NotificationsCheckerTest {
     ): NotificationsChecker {
         on.forEach { prefs.setEnabled(it, true) }
         val connection = seerr.connection(this)
-        return NotificationsChecker(prefs, connection, NotificationFeeds(connection, TitleCache(FakeTitleDao()), DiscardLogger), notifier)
+        return NotificationsChecker(
+            prefs,
+            connection,
+            NotificationFeeds(connection, TitleCache(FakeTitleDao()), DiscardLogger),
+            notifier,
+            PrefsCursorFeeds(prefs),
+        )
     }
 
     @Test

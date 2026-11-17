@@ -5,7 +5,7 @@ import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
 import com.cooper.binge.companion.seerr.auth.ConnectionRestore
 import com.cooper.binge.companion.seerr.notifications.ApplicationScope
-import com.cooper.binge.companion.seerr.notifications.NotificationPlanner
+import com.cooper.binge.companion.seerr.notifications.NotificationPlanning
 import com.cooper.homelab.core.flags.FeatureFlags
 import com.cooper.homelab.core.review.ReviewPrompt
 import com.cooper.homelab.core.telemetry.Analytics
@@ -29,7 +29,7 @@ class SeerrApp :
     lateinit var workerFactory: HiltWorkerFactory
 
     @Inject
-    lateinit var planner: NotificationPlanner
+    lateinit var planner: NotificationPlanning
 
     @Inject
     lateinit var connectionRestore: ConnectionRestore

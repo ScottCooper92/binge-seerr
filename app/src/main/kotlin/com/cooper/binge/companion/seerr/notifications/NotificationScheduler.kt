@@ -14,8 +14,6 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import java.util.concurrent.TimeUnit
 
-private const val WORK_NAME = "seerr_notifications"
-
 /** Schedules or cancels the periodic poll; seamed so the planner and the reactor are tested against a fake. */
 interface NotificationScheduler {
     /** Runs the poll about every [intervalMinutes], or moves a poll already scheduled to that interval. Android may run it less often. */
@@ -36,11 +34,11 @@ class WorkManagerNotificationScheduler(
             PeriodicWorkRequestBuilder<NotificationWorker>(intervalMinutes.toLong(), TimeUnit.MINUTES)
                 .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
                 .build()
-        WorkManager.getInstance(context).enqueueUniquePeriodicWork(WORK_NAME, ExistingPeriodicWorkPolicy.UPDATE, request)
+        WorkManager.getInstance(context).enqueueUniquePeriodicWork(NOTIFICATION_WORK_NAME, ExistingPeriodicWorkPolicy.UPDATE, request)
     }
 
     override fun cancel() {
-        WorkManager.getInstance(context).cancelUniqueWork(WORK_NAME)
+        WorkManager.getInstance(context).cancelUniqueWork(NOTIFICATION_WORK_NAME)
     }
 
     /** Null as well when WorkManager cannot start on this device, which the planner records; Settings just shows no run. */
@@ -52,7 +50,7 @@ class WorkManagerNotificationScheduler(
             } else {
                 emitAll(
                     manager
-                        .getWorkInfosForUniqueWorkFlow(WORK_NAME)
+                        .getWorkInfosForUniqueWorkFlow(NOTIFICATION_WORK_NAME)
                         .map { infos -> infos.firstOrNull { it.state == WorkInfo.State.ENQUEUED }?.nextScheduleTimeMillis },
                 )
             }

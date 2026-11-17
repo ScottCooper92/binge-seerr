@@ -55,6 +55,8 @@ private val WATCHED_REQUEST_IDS = stringSetPreferencesKey("own_requests_watching
  */
 class NotificationPrefs(
     private val dataStore: DataStore<Preferences>,
+    /** Starts a signal's cursor over wherever the cursors are kept; [CursorReset.None] while they are the preferences below. */
+    private val cursorReset: CursorReset = CursorReset.None,
 ) {
     fun enabled(signal: NotificationSignal): Flow<Boolean> = dataStore.data.map { it[signal.toggleKey()] ?: false }.distinctUntilChanged()
 
@@ -84,18 +86,22 @@ class NotificationPrefs(
             prefs[signal.toggleKey()] = value
             if (value) prefs.clearDedup(signal)
         }
+        if (value) cursorReset.reset(signal)
     }
 
     /** Turns [signals] on only when no signal is on at all, leaving a choice the user has made alone. */
     suspend fun enableIfNoneOn(signals: List<NotificationSignal>) {
+        var turnedOn = false
         dataStore.edit { prefs ->
             if (NotificationSignal.entries.none { prefs[it.toggleKey()] == true }) {
+                turnedOn = true
                 signals.forEach { signal ->
                     prefs[signal.toggleKey()] = true
                     prefs.clearDedup(signal)
                 }
             }
         }
+        if (turnedOn) signals.forEach { cursorReset.reset(it) }
     }
 
     suspend fun cursor(signal: NotificationSignal): Int? = dataStore.data.first()[signal.cursorKey()]
@@ -158,6 +164,7 @@ class NotificationPrefs(
             prefs.remove(WATCHED_REQUEST_IDS)
             prefs.remove(PAUSED_FOR_AUTH_FAILURE)
         }
+        cursorReset.resetAll()
     }
 }
 
