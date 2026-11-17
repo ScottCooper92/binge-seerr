@@ -44,6 +44,8 @@ object LoggingModule {
             // One saved server: no entry carries a server field today, so there is no order to label.
             serverOrder = { emptyList() },
             forward = LogcatLogger.takeIf { BuildConfig.DEBUG },
+            // The frames kept in a logged throwable are this app's own, named here so the library holds no default.
+            ownPackages = listOf("com.cooper.binge."),
         )
 
     @Provides
