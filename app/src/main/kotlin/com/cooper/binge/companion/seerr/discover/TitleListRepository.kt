@@ -79,18 +79,8 @@ private suspend fun SeerrApi.fetch(
             } else {
                 discoverMoviesByLanguage(source.language, page)
             }
-        is TitleSource.ByKeywords -> {
-            val keywords = source.keywordIds.joinToString(",")
-            if (source.kind == TitleKind.Series) discoverTv(page, keywords = keywords) else discoverMovies(page, keywords = keywords)
-        }
-        is TitleSource.ByStreaming -> {
-            val providers = source.providerIds.joinToString("|")
-            if (source.kind == TitleKind.Series) {
-                discoverTv(page, watchRegion = source.region, watchProviders = providers)
-            } else {
-                discoverMovies(page, watchRegion = source.region, watchProviders = providers)
-            }
-        }
+        is TitleSource.ByKeywords -> discoverByKeywords(source, page)
+        is TitleSource.ByStreaming -> discoverByStreaming(source, page)
         is TitleSource.ByKeyword ->
             if (source.kind == TitleKind.Series) {
                 discoverTv(page, keywords = source.keywordId.toString())
@@ -98,3 +88,23 @@ private suspend fun SeerrApi.fetch(
                 discoverMoviesByKeyword(source.keywordId, page)
             }
     }
+
+private suspend fun SeerrApi.discoverByKeywords(
+    source: TitleSource.ByKeywords,
+    page: Int,
+): SeerrTitlePageDto {
+    val keywords = source.keywordIds.joinToString(",")
+    return if (source.kind == TitleKind.Series) discoverTv(page, keywords = keywords) else discoverMovies(page, keywords = keywords)
+}
+
+private suspend fun SeerrApi.discoverByStreaming(
+    source: TitleSource.ByStreaming,
+    page: Int,
+): SeerrTitlePageDto {
+    val providers = source.providerIds.joinToString("|")
+    return if (source.kind == TitleKind.Series) {
+        discoverTv(page, watchRegion = source.region, watchProviders = providers)
+    } else {
+        discoverMovies(page, watchRegion = source.region, watchProviders = providers)
+    }
+}
