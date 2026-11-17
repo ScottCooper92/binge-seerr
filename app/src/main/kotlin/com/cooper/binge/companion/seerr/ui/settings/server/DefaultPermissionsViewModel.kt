@@ -7,8 +7,8 @@ import com.cooper.binge.companion.seerr.seerr.ManageablePermission
 import com.cooper.binge.companion.seerr.seerr.SeerrMainSettingsUpdateBody
 import com.cooper.binge.companion.seerr.seerr.permissionScope
 import com.cooper.binge.companion.seerr.ui.users.OWNER_USER_ID
-import com.cooper.binge.companion.seerr.ui.users.settings.EditorViewModel
 import com.cooper.binge.companion.seerr.ui.users.settings.PermissionSettings
+import com.cooper.binge.companion.seerr.ui.users.settings.SaveAsMadeEditorViewModel
 import com.cooper.binge.companion.seerr.ui.users.settings.lockedFor
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
@@ -29,13 +29,7 @@ class DefaultPermissionsViewModel
         private val connection: SeerrConnection,
         @IoDispatcher dispatcher: CoroutineDispatcher,
         @ApplicationScope appScope: CoroutineScope,
-    ) : EditorViewModel<PermissionSettings>(dispatcher) {
-        /**
-         * The page saves as it changes, as a user's own permissions do (#930): its screen hides Save, so without this a
-         * switch moved on it was never sent (#1877).
-         */
-        override val saveAsMadeScope: CoroutineScope = appScope
-
+    ) : SaveAsMadeEditorViewModel<PermissionSettings>(dispatcher, appScope) {
         init {
             reload()
         }

@@ -247,6 +247,7 @@ dependencies {
     implementation(libs.homelab.appservices)
     implementation(libs.homelab.server)
     implementation(libs.homelab.bridge)
+    implementation(libs.homelab.presentation)
     // The vendor adapters behind it: Google Play (the review card and the tip jar), PostHog and Firebase.
     implementation(libs.homelab.appservices.play)
     implementation(libs.homelab.appservices.posthog)
