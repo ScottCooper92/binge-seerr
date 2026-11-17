@@ -2,6 +2,7 @@ package com.cooper.binge.companion.seerr.ui.users.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.binge.companion.sdk.attempt
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
 import com.cooper.binge.companion.seerr.seerr.toServerFailure
@@ -22,10 +23,10 @@ import com.cooper.homelab.core.presentation.editor.SaveStatus as EngineSaveStatu
 
 /**
  * A settings page that saves as it changes, on the shared library's engine, shown through the same [uiState] and [events] as
- * any other editor here, so nothing changes on screen. A refusal is said through [EditorEvent.Failed] with the server's own
- * reason, as [EditorViewModel] does: this app's rule (a dialog for any reason the server gave) is kept, not the library's
- * 40-character rule. A write the local-network permission blocked is kept unsent, with a retry, as it always was here: the
- * library counts it a refusal, so [classify] reports it as unreachable.
+ * any other editor here. A refusal is said through [EditorEvent.Failed] with the server's own reason, as [EditorViewModel]
+ * does: this app's rule (a dialog for any reason) is kept, not the library's 40-character one. A write the local-network
+ * permission blocked is kept unsent with a retry, as before, so [classify] reports it as unreachable. A write that fails on
+ * cleartext or a client certificate is now put back and reported, not kept: it cannot follow a load that worked.
  */
 abstract class SaveAsMadeEditorViewModel<T>(
     private val dispatcher: CoroutineDispatcher,
@@ -42,18 +43,7 @@ abstract class SaveAsMadeEditorViewModel<T>(
             scope = viewModelScope,
             appScope = appScope,
             dispatcher = dispatcher,
-            load = {
-                try {
-                    load()
-                } catch (e: kotlin.coroutines.cancellation.CancellationException) {
-                    throw e
-                } catch (
-                    @Suppress("TooGenericExceptionCaught") e: Throwable,
-                ) {
-                    lastLoadFailure = e
-                    throw e
-                }
-            },
+            load = { attempt { load() }.onFailure { lastLoadFailure = it }.getOrThrow() },
             write = ::write,
             classify = ::classify,
             canSave = ::canSave,
@@ -117,7 +107,12 @@ abstract class SaveAsMadeEditorViewModel<T>(
 
     /** Shows the engine's state as it is now, so a page that acts and reads back sees its own action. */
     private fun sync() {
-        ui.value = engine.state.value.toUiState()
+        // Two threads can call this at once (the page, and the collector below), so a write that finds the engine has moved on
+        // since it read redoes itself: the last one to finish always shows the latest state.
+        do {
+            val state = engine.state.value
+            ui.value = state.toUiState()
+        } while (state !== engine.state.value)
     }
 
     /** Drops a change not yet on the server instead of sending it: the page is about to replace the record from elsewhere. */

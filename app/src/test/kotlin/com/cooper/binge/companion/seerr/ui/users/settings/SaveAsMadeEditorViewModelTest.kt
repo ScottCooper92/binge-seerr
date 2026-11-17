@@ -5,6 +5,7 @@ import com.binge.designsystem.save.SAVE_AS_MADE_DELAY_MILLIS
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.util.MainDispatcherRule
 import com.cooper.homelab.core.server.network.LocalNetworkDeniedException
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.TestScope
@@ -19,10 +20,7 @@ import org.junit.Rule
 import org.junit.Test
 import java.io.IOException
 
-/**
- * What the base presents from the shared library's engine, on a page of one number. A refusal and a write that cannot reach the
- * server are covered on real pages, such as `NetworkViewModelTest`.
- */
+/** What the base presents from the shared library's engine, on a page of one number: a failed load, and a write the local-network permission blocked. A refusal is covered on real pages, such as `NetworkViewModelTest`. */
 class SaveAsMadeEditorViewModelTest {
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
@@ -34,7 +32,7 @@ class SaveAsMadeEditorViewModelTest {
 
     private class Page(
         scope: CoroutineScope,
-        dispatcher: kotlinx.coroutines.CoroutineDispatcher,
+        dispatcher: CoroutineDispatcher,
         private val onLoad: suspend () -> Int,
         private val onWrite: suspend (Int) -> Int,
     ) : SaveAsMadeEditorViewModel<Int>(dispatcher, scope) {
