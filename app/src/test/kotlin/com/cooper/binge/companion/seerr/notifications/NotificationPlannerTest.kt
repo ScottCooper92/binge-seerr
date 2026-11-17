@@ -2,9 +2,9 @@ package com.cooper.binge.companion.seerr.notifications
 
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import com.cooper.binge.companion.seerr.seerr.SeerrAuth
-import com.cooper.binge.companion.seerr.telemetry.CrashBreadcrumbs
 import com.cooper.binge.companion.seerr.ui.users.settings.ADMIN
 import com.cooper.binge.companion.seerr.ui.users.settings.ScriptedSeerr
+import com.cooper.homelab.core.telemetry.CrashBreadcrumbs
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow

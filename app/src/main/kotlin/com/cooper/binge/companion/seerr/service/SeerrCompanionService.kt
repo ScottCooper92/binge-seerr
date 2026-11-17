@@ -14,7 +14,7 @@ import com.cooper.binge.companion.seerr.data.MediaStatusStore
 import com.cooper.binge.companion.seerr.data.RequestStore
 import com.cooper.binge.companion.seerr.notifications.NotificationForwarding
 import com.cooper.binge.companion.seerr.notifications.NotificationPrefs
-import com.cooper.binge.companion.seerr.telemetry.Analytics
+import com.cooper.homelab.core.telemetry.Analytics
 import dagger.hilt.android.AndroidEntryPoint
 import io.grpc.BindableService
 import io.grpc.binder.SecurityPolicy

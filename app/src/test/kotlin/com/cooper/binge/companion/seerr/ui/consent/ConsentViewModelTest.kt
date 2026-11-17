@@ -2,9 +2,9 @@ package com.cooper.binge.companion.seerr.ui.consent
 
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.lifecycle.ViewModelStore
-import com.cooper.binge.companion.seerr.telemetry.AnalyticsConsent
-import com.cooper.binge.companion.seerr.telemetry.TelemetryPrefs
 import com.cooper.binge.companion.seerr.util.MainDispatcherRule
+import com.cooper.homelab.core.telemetry.AnalyticsConsent
+import com.cooper.homelab.core.telemetry.TelemetryPrefs
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
@@ -29,7 +29,13 @@ class ConsentViewModelTest {
     fun tearDown() = viewModels.clear()
 
     private fun TestScope.viewModel(): ConsentViewModel {
-        prefs = TelemetryPrefs(PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("t.preferences_pb") })
+        prefs =
+            TelemetryPrefs(
+                PreferenceDataStoreFactory.create(scope = backgroundScope) {
+                    folder.newFile("t.preferences_pb")
+                },
+                crashReportingDefault = true,
+            )
         val vm = ConsentViewModel(prefs, mainDispatcherRule.dispatcher)
         viewModels.put("consent", vm)
         backgroundScope.launch { vm.uiState.collect {} }

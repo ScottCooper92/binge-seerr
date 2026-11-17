@@ -25,9 +25,9 @@ import com.cooper.binge.companion.seerr.notifications.NotificationPrefs
 import com.cooper.binge.companion.seerr.notifications.NotificationScheduler
 import com.cooper.binge.companion.seerr.notifications.SeerrNotifier
 import com.cooper.binge.companion.seerr.notifications.WorkManagerNotificationScheduler
-import com.cooper.binge.companion.seerr.telemetry.TelemetryPrefs
 import com.cooper.binge.companion.seerr.ui.hub.BingeInstallCheck
 import com.cooper.binge.companion.seerr.ui.hub.PackageManagerBingeInstallCheck
+import com.cooper.homelab.core.telemetry.TelemetryPrefs
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -115,7 +115,7 @@ object SeerrModule {
     @Singleton
     fun telemetryPrefs(
         @ApplicationContext context: Context,
-    ): TelemetryPrefs = TelemetryPrefs(context.telemetryDataStore)
+    ): TelemetryPrefs = TelemetryPrefs(context.telemetryDataStore, crashReportingDefault = true)
 
     @Provides
     @Singleton

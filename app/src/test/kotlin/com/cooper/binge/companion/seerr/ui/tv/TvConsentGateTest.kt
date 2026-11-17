@@ -12,11 +12,11 @@ import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.tv.material3.Text
 import com.binge.designsystem.tv.theme.BingeTvTheme
 import com.cooper.binge.companion.seerr.R
-import com.cooper.binge.companion.seerr.telemetry.AnalyticsConsent
-import com.cooper.binge.companion.seerr.telemetry.TelemetryPrefs
 import com.cooper.binge.companion.seerr.ui.consent.ConsentViewModel
 import com.cooper.binge.companion.seerr.util.createSeerrKeyboardComposeRule
 import com.cooper.binge.companion.seerr.util.string
+import com.cooper.homelab.core.telemetry.AnalyticsConsent
+import com.cooper.homelab.core.telemetry.TelemetryPrefs
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -80,7 +80,11 @@ class TvConsentGateTest {
     /** An unanswered install is asked before setup, and the answer is kept: what the gate holds back comes next. */
     @Test
     fun theGateAsksOnceThenLetsSetupThrough() {
-        val prefs = TelemetryPrefs(PreferenceDataStoreFactory.create(scope = scope) { folder.newFile("t.preferences_pb") })
+        val prefs =
+            TelemetryPrefs(
+                PreferenceDataStoreFactory.create(scope = scope) { folder.newFile("t.preferences_pb") },
+                crashReportingDefault = true,
+            )
         val viewModel = ConsentViewModel(prefs, Dispatchers.IO)
         composeTestRule.setContent { BingeTvTheme { TvConsentGate(viewModel = viewModel) { Text(CONTENT) } } }
 

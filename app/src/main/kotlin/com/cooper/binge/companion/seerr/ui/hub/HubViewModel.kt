@@ -9,13 +9,13 @@ import com.cooper.binge.companion.seerr.auth.NoBingeConnectionStore
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.auth.SeerrConnectionHealth
 import com.cooper.binge.companion.seerr.di.IoDispatcher
-import com.cooper.binge.companion.seerr.flags.FeatureFlags
-import com.cooper.binge.companion.seerr.flags.FixedFeatureFlags
-import com.cooper.binge.companion.seerr.flags.Flags
 import com.cooper.binge.companion.seerr.seerr.LocalNetworkPermission
 import com.cooper.binge.companion.seerr.seerr.SeerrCredentials
 import com.cooper.binge.companion.seerr.seerr.isBlockedByLocalNetwork
 import com.cooper.binge.companion.seerr.ui.Ticker
+import com.cooper.homelab.core.flags.FeatureFlags
+import com.cooper.homelab.core.flags.FixedFeatureFlags
+import com.cooper.homelab.core.flags.Flags
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi

@@ -3,8 +3,8 @@ package com.cooper.binge.companion.seerr.ui.consent
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.cooper.binge.companion.seerr.di.IoDispatcher
-import com.cooper.binge.companion.seerr.telemetry.AnalyticsConsent
-import com.cooper.binge.companion.seerr.telemetry.TelemetryPrefs
+import com.cooper.homelab.core.telemetry.AnalyticsConsent
+import com.cooper.homelab.core.telemetry.TelemetryPrefs
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.SharingStarted

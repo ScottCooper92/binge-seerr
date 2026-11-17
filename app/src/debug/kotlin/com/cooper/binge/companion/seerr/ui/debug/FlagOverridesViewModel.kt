@@ -2,9 +2,9 @@ package com.cooper.binge.companion.seerr.ui.debug
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.cooper.binge.companion.seerr.flags.FeatureFlags
-import com.cooper.binge.companion.seerr.flags.Flag
-import com.cooper.binge.companion.seerr.flags.FlagOverrides
+import com.cooper.homelab.core.flags.FeatureFlags
+import com.cooper.homelab.core.flags.Flag
+import com.cooper.homelab.core.flags.FlagOverrides
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
