@@ -54,6 +54,6 @@ object FlagsModule {
         // A debug build waits for its stored overrides once, so the first screen at cold start sees them. This blocks the
         // main thread, so it must stay behind BuildConfig.DEBUG and never move into a release path.
         val initial = if (BuildConfig.DEBUG) runBlocking { overrides.values.first() } else emptyMap()
-        return RemoteFeatureFlags(source, overrides, scope, io, initial)
+        return RemoteFeatureFlags(source, overrides, scope, io, initial, seedFromCache = true)
     }
 }

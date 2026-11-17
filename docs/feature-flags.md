@@ -19,8 +19,8 @@ Config itself throttles that to once an hour.
 
 ### The first read is on the main thread
 
-Hilt builds `RemoteFeatureFlags` while it injects `SeerrApp`, so `source.current()` runs on the main thread in
-`Application.onCreate`. That call creates the Remote Config instance and reads the flag, which may wait for Remote
+Hilt builds `RemoteFeatureFlags` while it injects `SeerrApp`, and `FlagsModule` passes `seedFromCache = true`, so
+`source.current()` runs on the main thread in `Application.onCreate`. That call creates the Remote Config instance and reads the flag, which may wait for Remote
 Config's cache to load from disk. It stays there on purpose: a value that arrived late would show a screen without Binge and then with it.
 
 We measured it on 2026-10-26 and it is cheap enough to keep:
