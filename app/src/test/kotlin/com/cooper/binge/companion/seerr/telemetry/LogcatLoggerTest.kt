@@ -39,4 +39,11 @@ class LogcatLoggerTest {
 
         assertEquals("event failure=NotFound path=/api/v1/user", line)
     }
+
+    @Test
+    fun `a numeric path segment is an id and a fragment is dropped`() {
+        val line = logcatLine("event", listOf(LogField.Path("https://host.example/api/v1/user/42/settings/main?a=1#frag")), null)
+
+        assertEquals("event path=/api/v1/user/{id}/settings/main", line)
+    }
 }

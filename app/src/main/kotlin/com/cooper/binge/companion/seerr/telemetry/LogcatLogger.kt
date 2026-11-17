@@ -20,7 +20,8 @@ private fun LogLevel.priority(): Int =
 
 /**
  * One Logcat line: the constant [event], each field's kept value, and the throwable's class name. Never the throwable's
- * message, which can quote a body or an address.
+ * message, which can quote a body or an address. A path keeps no id, query or fragment. A server is the constant `saved`
+ * on purpose: the library's registry-ordered label needs state this sink does not have.
  */
 internal fun logcatLine(
     event: String,
@@ -45,7 +46,10 @@ private fun LogField.keptValue(): String =
             url
                 .substringAfter("://")
                 .substringAfter('/', "")
+                .substringBefore('#')
                 .substringBefore('?')
+                .split('/')
+                .joinToString("/") { if (it.isNotEmpty() && it.all(Char::isDigit)) "{id}" else it }
                 .let { "/$it" }
         is LogField.Version -> value.toString()
         is LogField.Text -> value
