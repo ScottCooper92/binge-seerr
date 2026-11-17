@@ -6,12 +6,17 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
 import com.cooper.binge.companion.seerr.BuildConfig
 import com.cooper.binge.companion.seerr.flags.DataStoreDiscoveryFlagOverride
+import com.cooper.binge.companion.seerr.flags.DataStoreSearchTogglesOverride
 import com.cooper.binge.companion.seerr.flags.DiscoveryFlag
 import com.cooper.binge.companion.seerr.flags.DiscoveryFlagOverride
 import com.cooper.binge.companion.seerr.flags.DiscoveryFlagSource
 import com.cooper.binge.companion.seerr.flags.FirebaseDiscoveryFlagSource
+import com.cooper.binge.companion.seerr.flags.LocalSearchTogglesFlag
 import com.cooper.binge.companion.seerr.flags.NoDiscoveryFlagOverride
+import com.cooper.binge.companion.seerr.flags.NoSearchTogglesOverride
 import com.cooper.binge.companion.seerr.flags.RemoteDiscoveryFlag
+import com.cooper.binge.companion.seerr.flags.SearchTogglesFlag
+import com.cooper.binge.companion.seerr.flags.SearchTogglesOverride
 import com.cooper.binge.companion.seerr.notifications.ApplicationScope
 import com.cooper.homelab.core.flags.DataStoreFlagOverrides
 import com.cooper.homelab.core.flags.FeatureFlags
@@ -90,5 +95,24 @@ object FlagsModule {
         // Debug only, for the same reason as the shared flags above: it blocks the main thread once.
         val initial = if (BuildConfig.DEBUG) runBlocking { override.value.first() } else null
         return RemoteDiscoveryFlag(source, override, scope, io, initial)
+    }
+
+    /** Only a debug build reads the override, so nothing a shipped build holds can switch the flag on. */
+    @Provides
+    @Singleton
+    fun searchTogglesOverride(
+        @ApplicationContext context: Context,
+    ): SearchTogglesOverride =
+        if (BuildConfig.DEBUG) DataStoreSearchTogglesOverride(context.flagOverridesDataStore) else NoSearchTogglesOverride
+
+    @Provides
+    @Singleton
+    fun searchTogglesFlag(
+        override: SearchTogglesOverride,
+        @ApplicationScope scope: CoroutineScope,
+    ): SearchTogglesFlag {
+        // Debug only, for the same reason as the flags above: it blocks the main thread once.
+        val initial = if (BuildConfig.DEBUG) runBlocking { override.value.first() } else null
+        return LocalSearchTogglesFlag(override, scope, initial)
     }
 }

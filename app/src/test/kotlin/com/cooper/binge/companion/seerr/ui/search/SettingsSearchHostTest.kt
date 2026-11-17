@@ -5,6 +5,8 @@ import androidx.test.core.app.ApplicationProvider
 import com.cooper.binge.companion.seerr.auth.LegacyCredentialStore
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.auth.SeerrHealth
+import com.cooper.binge.companion.seerr.flags.LocalSearchTogglesFlag
+import com.cooper.binge.companion.seerr.flags.NoSearchTogglesOverride
 import com.cooper.binge.companion.seerr.seerr.SeerrApiFactory
 import com.cooper.binge.companion.seerr.seerr.SeerrAuth
 import com.cooper.binge.companion.seerr.ui.settings.server.ServerSettingsPage
@@ -90,6 +92,7 @@ class SettingsSearchHostTest {
         context = ApplicationProvider.getApplicationContext(),
         connection = connection,
         recents = recents,
+        flag = LocalSearchTogglesFlag(NoSearchTogglesOverride, backgroundScope),
         appScope = backgroundScope,
         dispatcher = UnconfinedTestDispatcher(testScheduler),
     )
@@ -126,6 +129,13 @@ class SettingsSearchHostTest {
 
             assertFalse(state.available(host.entry(logsId)))
             assertTrue(state.available(host.entry(passwordId)))
+        }
+
+    @Test
+    fun `the search offers no switches unless the flag is on`() =
+        runTest {
+            val off = host(connection())
+            assertFalse(off.searchTogglesEnabled.value)
         }
 
     @Test
