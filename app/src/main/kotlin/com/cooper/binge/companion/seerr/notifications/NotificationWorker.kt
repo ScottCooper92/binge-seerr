@@ -1,10 +1,11 @@
 package com.cooper.binge.companion.seerr.notifications
 
 import android.content.Context
-import android.util.Log
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
+import com.cooper.homelab.core.foundation.Logger
+import com.cooper.homelab.core.foundation.error
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.CancellationException
@@ -25,6 +26,7 @@ class NotificationWorker
         private val checker: NotificationsChecker,
         private val reactor: PollReactor,
         private val prefs: NotificationPrefs,
+        private val logger: Logger,
     ) : CoroutineWorker(context, params) {
         override suspend fun doWork(): Result =
             try {
@@ -39,7 +41,7 @@ class NotificationWorker
             } catch (
                 @Suppress("TooGenericExceptionCaught") e: Exception,
             ) {
-                Log.e(TAG, "The notification poll threw; retrying", e)
+                logger.error(TAG, "the notification poll threw and will retry", error = e)
                 Result.retry()
             }
     }

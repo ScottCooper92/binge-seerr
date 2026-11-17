@@ -1,6 +1,5 @@
 package com.cooper.binge.companion.seerr
 
-import android.util.Log
 import io.grpc.Status
 import io.grpc.binder.SecurityPolicy
 
@@ -32,5 +31,3 @@ internal class SelfOrPolicy(
 internal fun interface HandOffGate {
     fun permits(callingPackage: String?): Boolean
 }
-
-internal fun logWarning(tag: String): (String) -> Unit = { message -> Log.w(tag, message) }

@@ -1,6 +1,5 @@
 package com.cooper.binge.companion.seerr.notifications
 
-import android.util.Log
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.seerr.SeerrIssueDto
 import com.cooper.binge.companion.seerr.seerr.SeerrPageInfoDto
@@ -11,6 +10,9 @@ import com.cooper.binge.companion.seerr.ui.issues.toIssueItem
 import com.cooper.binge.companion.seerr.ui.requests.REQUESTS_PAGE_SIZE
 import com.cooper.binge.companion.seerr.ui.requests.RequestItem
 import com.cooper.binge.companion.seerr.ui.requests.toRequestItem
+import com.cooper.homelab.core.foundation.LogField
+import com.cooper.homelab.core.foundation.Logger
+import com.cooper.homelab.core.foundation.warn
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -61,6 +63,7 @@ class NotificationFeeds
     constructor(
         private val connection: SeerrConnection,
         private val titles: TitleCache,
+        private val logger: Logger,
     ) {
         private val now: () -> Long = System::currentTimeMillis
 
@@ -119,7 +122,14 @@ class NotificationFeeds
                 if (page.results.isEmpty() || lastPage) return OwnRequestsRead(rows.distinctBy { it.id }, emptySet())
                 if (!seeding && pageIndex + 1 >= MAX_FEED_PAGES && outstanding.isEmpty()) break
                 if (pageIndex + 1 == MAX_OWN_REQUEST_PAGES) {
-                    Log.w(TAG, "Own requests run past $MAX_OWN_REQUEST_PAGES pages; ${outstanding.size} still unaccounted for")
+                    logger.warn(
+                        TAG,
+                        "own requests run past the page backstop",
+                        listOf(
+                            LogField.Count("pages", MAX_OWN_REQUEST_PAGES.toLong()),
+                            LogField.Count("unaccounted", outstanding.size.toLong()),
+                        ),
+                    )
                 }
             }
             return OwnRequestsRead(rows.distinctBy { it.id }, outstanding)
@@ -182,7 +192,7 @@ class NotificationFeeds
                 val lastPage = pageInfo.pages > 0 && pageIndex + 1 >= pageInfo.pages
                 if (results.isEmpty() || lastPage || doneAfter(results)) break
                 if (pageIndex + 1 == MAX_FEED_PAGES) {
-                    Log.w(TAG, "A list wider than $MAX_FEED_PAGES pages; the older rows are not read")
+                    logger.warn(TAG, "a list is wider than the feed page limit", listOf(LogField.Count("pages", MAX_FEED_PAGES.toLong())))
                 }
             }
             return FeedRead(rows.distinctBy(idOf), newestId)
