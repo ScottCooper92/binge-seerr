@@ -597,7 +597,7 @@ interface SeerrApi {
         @Query("page") page: Int = 1,
     ): SeerrTitlePageDto
 
-    /** Popular movies; [genre], [studio] and [keywords] are single TMDB ids or comma-separated lists. */
+    /** Popular movies; [keywords] is a TMDB id or a comma-separated list. */
     @GET("api/v1/discover/movies")
     suspend fun discoverMovies(
         @Query("page") page: Int = 1,
