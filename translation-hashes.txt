@@ -197,10 +197,7 @@ app:issues_filter_all  a52ace420f21
 app:issues_filter_open  ed077f3d8125
 app:issues_filter_resolved  5be3c2c8354e
 app:issues_refresh_failed  ead984271020
-app:licences_empty  dbfbd5cd500d
 app:licences_title  e33c2431b4dc
-app:licences_unreadable  a5adf1af2109
-app:licences_unspecified  344fcdefca87
 app:link_cancel  19766ed6ccb2
 app:link_plex_body  15289fb2fb9e
 app:link_plex_open  94b39a44eb3d
