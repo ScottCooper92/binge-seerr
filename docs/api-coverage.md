@@ -154,7 +154,7 @@ How each gate is applied is in [`server-compatibility.md`](server-compatibility.
 | `GET /settings/cache` | Get a list of active caches | v1.19.0 | v1.0.0 | yes | The Jobs & cache page. |
 | `POST /settings/cache/dns/{dnsEntry}/flush` | Flush a specific DNS cache entry | — | v3.0.0 | yes | Flush on a DNS entry, on the Jobs & cache page. |
 | `POST /settings/cache/{cacheId}/flush` | Flush a specific cache | v1.20.0 | v1.0.0 | yes | Flush on an API cache, on the Jobs & cache page. |
-| `GET /settings/discover` | Get all discover sliders | v1.32.0 | v1.4.0 | yes | The slider list. |
+| `GET /settings/discover` | Get all discover sliders | v1.32.0 | v1.4.0 | yes | The slider list, and the one copy of it the editor and the discovery hubs share. A server without it gets the web client's default set. |
 | `POST /settings/discover` | Batch update all sliders. | v1.32.0 | v1.4.0 | yes | Save on the slider list: the order and each switch, as one batch. |
 | `POST /settings/discover/add` | Add a new slider | v1.32.0 | v1.4.0 | yes | Add a custom slider, on its own page. |
 | `GET /settings/discover/reset` | Reset all discover sliders | v1.32.0 | v1.4.0 | yes | Reset to defaults on the slider list, behind a confirmation. |

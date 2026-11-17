@@ -19,8 +19,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation3.runtime.rememberNavBackStack
 import com.binge.companion.kit.isTelevision
+import com.binge.companion.sdk.attempt
 import com.cooper.binge.companion.seerr.auth.ConnectionRestore
 import com.cooper.binge.companion.seerr.auth.ForegroundUserRefresh
+import com.cooper.binge.companion.seerr.discover.sliders.DiscoverSliderRepository
 import com.cooper.binge.companion.seerr.feedback.BugReportLinks
 import com.cooper.binge.companion.seerr.feedback.FeedbackPrefs
 import com.cooper.binge.companion.seerr.feedback.ShakeToReportPrompt
@@ -80,6 +82,9 @@ class MainActivity : ComponentActivity() {
 
     @Inject
     lateinit var discoveryFlag: DiscoveryFlag
+
+    @Inject
+    lateinit var discoverSliders: DiscoverSliderRepository
 
     private var consumedLink: String? = null
 
@@ -141,6 +146,8 @@ class MainActivity : ComponentActivity() {
         userRefresh.onForeground()
         lifecycleScope.launch { featureFlags.refresh() }
         lifecycleScope.launch { discoveryFlag.refresh() }
+        // The slider list is read again on a return, to pick up a change made in the web client. Only the discovery hubs use it.
+        if (discoveryFlag.enabled.value) lifecycleScope.launch { attempt { discoverSliders.refresh() } }
     }
 
     override fun onNewIntent(intent: Intent) {
