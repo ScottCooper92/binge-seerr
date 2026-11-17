@@ -19,6 +19,7 @@ permissions:
 
 jobs:
   bump:
+    # binge-ci v1.0.44, where this workflow first ships. The other callers are still on v1.0.43 until #2025.
     uses: ScottCooper92/binge-ci/.github/workflows/submodule-bump.yml@1b8bfc7cd36efacdcd204aa0808fdb8afad1c546 # v1
     with:
       submodule_path: homelab-core
