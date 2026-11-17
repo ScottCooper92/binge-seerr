@@ -32,10 +32,10 @@ import com.cooper.binge.companion.seerr.telemetry.screenName
 import com.cooper.binge.companion.seerr.theme.SeerrTheme
 import com.cooper.binge.companion.seerr.ui.DeepLinkNavigator
 import com.cooper.binge.companion.seerr.ui.HomeRoute
+import com.cooper.binge.companion.seerr.ui.SeerrNavHost
 import com.cooper.binge.companion.seerr.ui.SeerrRoute
 import com.cooper.binge.companion.seerr.ui.consent.ConsentGate
 import com.cooper.binge.companion.seerr.ui.linkedRequestId
-import com.cooper.binge.companion.seerr.ui.shell.SeerrRoot
 import com.cooper.binge.companion.seerr.ui.shell.openLink
 import com.cooper.binge.companion.seerr.ui.shell.rememberSeerrTabs
 import com.cooper.binge.companion.seerr.ui.tv.TvSeerrShell
@@ -118,10 +118,10 @@ class MainActivity : ComponentActivity() {
                     .distinctUntilChanged()
                     .collect { analytics.screen(it.screenName()) }
             }
-            // The Settings tab's stack is this one, so a link opens in Settings whichever tab was showing.
-            val tabs = rememberSeerrTabs(backStack)
+            // A link replaces the app's stack and puts Settings under it, whichever tab was showing.
+            val tabs = rememberSeerrTabs()
             LaunchedEffect(backStack) {
-                deepLinks.backStacks.collect { routes -> tabs.openLink(routes) }
+                deepLinks.backStacks.collect { routes -> tabs.openLink(backStack, routes) }
             }
             // Phone only: a television has no accelerometer, and reports a bug from Settings instead.
             val shakeToReport by feedbackPrefs.shakeToReport.collectAsStateWithLifecycle(initialValue = false)
@@ -133,7 +133,7 @@ class MainActivity : ComponentActivity() {
                     // doesn't match this, so a two-pane gutter would otherwise show through as a
                     // different colour than the panes it sits between.
                     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                        ConsentGate { SeerrRoot(settingsStack = backStack, tabs = tabs, onExit = ::finish) }
+                        ConsentGate { SeerrNavHost(backStack = backStack, onExit = ::finish, tabs = tabs) }
                     }
                 }
             }

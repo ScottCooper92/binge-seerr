@@ -3,9 +3,9 @@ package com.cooper.binge.companion.seerr.ui.shell
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
-import com.cooper.binge.companion.seerr.ui.HubRoute
 import com.cooper.binge.companion.seerr.ui.RequestDetailRoute
 import com.cooper.binge.companion.seerr.ui.RequestsRoute
+import com.cooper.binge.companion.seerr.ui.ShellRoute
 import com.cooper.binge.companion.seerr.ui.pop
 import com.cooper.binge.companion.seerr.ui.push
 import org.junit.Assert.assertEquals
@@ -105,19 +105,17 @@ class TabShellStateTest {
     }
 
     @Test
-    fun `a link opens in Settings whichever tab was showing and Back is the hub`() {
-        val settings = NavBackStack<NavKey>(HubRoute)
-        val stacks = SeerrTab.entries.associateWith { if (it == SeerrTab.Settings) settings else NavBackStack<NavKey>(MoviesRoot) }
+    fun `a link replaces the app stack and shows Settings whichever tab was showing`() {
+        val stacks = SeerrTab.entries.associateWith { NavBackStack<NavKey>(MoviesRoot) }
         val shell = TabShellState(SeerrTab.entries, mutableIntStateOf(SeerrTab.Tv.ordinal), stacks)
-        stacks.getValue(SeerrTab.Tv).push(RequestsRoute)
+        val appStack = NavBackStack<NavKey>(ShellRoute, RequestsRoute)
 
-        shell.openLink(listOf(HubRoute, RequestsRoute, RequestDetailRoute(7)))
+        shell.openLink(appStack, listOf(ShellRoute, RequestsRoute, RequestDetailRoute(7)))
 
         assertEquals(SeerrTab.Settings, shell.selected)
-        assertEquals(listOf(HubRoute, RequestsRoute, RequestDetailRoute(7)), settings.toList())
-        assertEquals("the other tab keeps what it had", 2, stacks.getValue(SeerrTab.Tv).size)
-        settings.pop()
-        settings.pop()
-        assertEquals(listOf(HubRoute), settings.toList())
+        assertEquals(listOf(ShellRoute, RequestsRoute, RequestDetailRoute(7)), appStack.toList())
+        appStack.pop()
+        appStack.pop()
+        assertEquals("Back walks the link and lands on the shell", listOf<NavKey>(ShellRoute), appStack.toList())
     }
 }

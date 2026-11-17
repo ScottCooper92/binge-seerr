@@ -19,6 +19,7 @@ import com.cooper.binge.companion.seerr.ui.SeerrRoute
 import com.cooper.binge.companion.seerr.ui.ServerSettingsPageRoute
 import com.cooper.binge.companion.seerr.ui.SettingsRoute
 import com.cooper.binge.companion.seerr.ui.SettingsSearchRoute
+import com.cooper.binge.companion.seerr.ui.ShellRoute
 import com.cooper.binge.companion.seerr.ui.ThisAppRoute
 import com.cooper.binge.companion.seerr.ui.UserDetailRoute
 import com.cooper.binge.companion.seerr.ui.UserSettingsPageRoute
@@ -41,6 +42,7 @@ fun SeerrRoute.screenName(): String =
     when (this) {
         HomeRoute -> "home"
         HubRoute -> "hub"
+        ShellRoute -> "shell"
         RequestsRoute -> "requests"
         is RequestDetailRoute -> "request_detail"
         IssuesRoute -> "issues"
