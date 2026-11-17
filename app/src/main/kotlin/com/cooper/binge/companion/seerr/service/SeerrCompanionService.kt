@@ -12,8 +12,8 @@ import com.cooper.binge.companion.seerr.auth.BingeConnectionStore
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.data.MediaStatusStore
 import com.cooper.binge.companion.seerr.data.RequestStore
-import com.cooper.binge.companion.seerr.notifications.NotificationForwarding
 import com.cooper.binge.companion.seerr.notifications.NotificationPrefs
+import com.cooper.binge.companion.seerr.notifications.SeerrForwarding
 import com.cooper.homelab.core.telemetry.Analytics
 import dagger.hilt.android.AndroidEntryPoint
 import io.grpc.BindableService
@@ -44,7 +44,7 @@ class SeerrCompanionService : IntegrationService() {
     lateinit var analytics: Analytics
 
     @Inject
-    lateinit var forwarding: NotificationForwarding
+    lateinit var forwarding: SeerrForwarding
 
     @Inject
     lateinit var notificationPrefs: NotificationPrefs

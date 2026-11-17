@@ -31,13 +31,7 @@ class NotificationsViewModel
         @IoDispatcher dispatcher: CoroutineDispatcher,
         @ApplicationScope appScope: CoroutineScope,
         @Assisted private val userId: Int,
-    ) : EditorViewModel<NotificationSettings>(dispatcher) {
-        /**
-         * A user's notifications save as they change (#930): the switches at once, an id or token on its sheet's Done. The
-         * endpoint assigns every field it is sent, so each write carries the whole record.
-         */
-        override val saveAsMadeScope: CoroutineScope = appScope
-
+    ) : SaveAsMadeEditorViewModel<NotificationSettings>(dispatcher, appScope) {
         init {
             reload()
         }
@@ -69,6 +63,7 @@ class NotificationsViewModel
                 .map { PushoverSoundChoice(name = it.name, description = it.description ?: it.name) }
         }
 
+        /** The endpoint assigns every field it is sent, so each write carries the whole record (#930). */
         override suspend fun write(draft: NotificationSettings): NotificationSettings {
             connection.api().updateUserNotificationSettings(userId, draft.toDto())
             return load()

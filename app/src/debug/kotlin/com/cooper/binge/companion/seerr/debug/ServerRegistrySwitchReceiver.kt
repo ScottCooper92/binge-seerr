@@ -13,7 +13,9 @@ import kotlinx.coroutines.launch
 
 /**
  * Debug builds only. Writes the switch that says whether the saved connection lives in the shared library's per-server stores.
- * The choice is read once when the process starts, so it takes effect on the next launch. `--ez enabled false` turns it back off,
+ * The broadcast must name the package (`-p <app id>`): from Android 8 a manifest receiver is not reached without it. The write is
+ * asynchronous, so wait a couple of seconds before stopping the app. The choice is read once when the process starts, so it takes
+ * effect on the next launch. `--ez enabled false` turns it back off,
  * and no `enabled` extra clears the override. The old file is never touched, so a flip back finds the connection as it was left
  * in the old file, and loses what was changed in the new stores.
  */

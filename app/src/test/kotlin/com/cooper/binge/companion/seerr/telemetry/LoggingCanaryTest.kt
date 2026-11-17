@@ -40,7 +40,12 @@ private const val USER = "alice-the-requester"
 class LoggingCanaryTest {
     private val redactor = Redactor()
     private val ring =
-        RingLog(Clock { Instant.fromEpochMilliseconds(0) }, redactor, serverOrder = { emptyList() }, ownPackages = listOf("com.cooper."))
+        RingLog(
+            Clock { Instant.fromEpochMilliseconds(0) },
+            redactor,
+            serverOrder = { emptyList() },
+            ownPackages = listOf("com.cooper.binge."),
+        )
 
     /** A client whose every call fails the way a real one can: with a message that quotes what it was sent. */
     private val failing =

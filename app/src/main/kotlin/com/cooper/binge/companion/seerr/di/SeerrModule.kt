@@ -19,11 +19,15 @@ import com.cooper.binge.companion.seerr.feedback.FeedbackPrefs
 import com.cooper.binge.companion.seerr.notifications.AndroidNotificationText
 import com.cooper.binge.companion.seerr.notifications.AndroidNotifier
 import com.cooper.binge.companion.seerr.notifications.ApplicationScope
+import com.cooper.binge.companion.seerr.notifications.ForwardedNotificationCodec
 import com.cooper.binge.companion.seerr.notifications.ForwardingNotifier
-import com.cooper.binge.companion.seerr.notifications.NotificationForwarding
+import com.cooper.binge.companion.seerr.notifications.SeerrForwarding
+import com.cooper.binge.companion.seerr.notifications.SeerrForwardingKeys
 import com.cooper.binge.companion.seerr.notifications.SeerrNotifier
 import com.cooper.binge.companion.seerr.ui.hub.BingeInstallCheck
 import com.cooper.binge.companion.seerr.ui.hub.PackageManagerBingeInstallCheck
+import com.cooper.homelab.core.bridge.NotificationForwarding
+import com.cooper.homelab.core.foundation.Clock
 import com.cooper.homelab.core.telemetry.TelemetryPrefs
 import dagger.Module
 import dagger.Provides
@@ -118,14 +122,15 @@ object SeerrModule {
     @Singleton
     fun notificationForwarding(
         @ApplicationContext context: Context,
-    ): NotificationForwarding = NotificationForwarding(context.notificationsDataStore)
+    ): SeerrForwarding =
+        NotificationForwarding(context.notificationsDataStore, SeerrForwardingKeys, ForwardedNotificationCodec, Clock.system())
 
     /** Posts this app's notices itself, unless Binge is showing them instead. */
     @Provides
     @Singleton
     fun notifier(
         @ApplicationContext context: Context,
-        forwarding: NotificationForwarding,
+        forwarding: SeerrForwarding,
     ): SeerrNotifier = ForwardingNotifier(AndroidNotifier(context), forwarding, AndroidNotificationText(context))
 
     @Provides

@@ -8,10 +8,10 @@ import com.cooper.binge.companion.seerr.di.IoDispatcher
 import com.cooper.binge.companion.seerr.feedback.BugReportLinks
 import com.cooper.binge.companion.seerr.feedback.FeedbackPrefs
 import com.cooper.binge.companion.seerr.notifications.BackgroundAccess
-import com.cooper.binge.companion.seerr.notifications.NotificationForwarding
 import com.cooper.binge.companion.seerr.notifications.NotificationPrefs
 import com.cooper.binge.companion.seerr.notifications.NotificationScheduler
 import com.cooper.binge.companion.seerr.notifications.NotificationSignal
+import com.cooper.binge.companion.seerr.notifications.SeerrForwarding
 import com.cooper.binge.companion.seerr.notifications.SeerrNotifier
 import com.cooper.binge.companion.seerr.ui.Ticker
 import com.cooper.binge.companion.seerr.ui.hub.BingeInstallCheck
@@ -64,7 +64,7 @@ class ThisAppViewModel
         prefs: NotificationPrefs,
         scheduler: NotificationScheduler,
         notifier: SeerrNotifier,
-        forwarding: NotificationForwarding,
+        forwarding: SeerrForwarding,
         background: BackgroundAccess,
         @IoDispatcher private val dispatcher: CoroutineDispatcher,
         analytics: Analytics = NoOpAnalytics,

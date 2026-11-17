@@ -6,9 +6,10 @@ import com.binge.companion.contracts.notifications.v1.acknowledgeNotificationsRe
 import com.binge.companion.contracts.notifications.v1.listNotificationsRequest
 import com.binge.companion.contracts.notifications.v1.setNotificationForwardingRequest
 import com.binge.companion.contracts.v1.forwardedNotification
-import com.cooper.binge.companion.seerr.notifications.NotificationForwarding
 import com.cooper.binge.companion.seerr.notifications.NotificationPrefs
 import com.cooper.binge.companion.seerr.notifications.NotificationSignal
+import com.cooper.binge.companion.seerr.notifications.SeerrForwarding
+import com.cooper.binge.companion.seerr.notifications.seerrForwarding
 import com.google.protobuf.timestamp
 import io.grpc.Status
 import io.grpc.StatusException
@@ -27,12 +28,12 @@ class SeerrNotificationRpcsTest {
     val folder = TemporaryFolder()
 
     private lateinit var prefs: NotificationPrefs
-    private lateinit var forwarding: NotificationForwarding
+    private lateinit var forwarding: SeerrForwarding
 
     private fun TestScope.rpcs(): SeerrNotificationRpcs {
         val store = PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("n.preferences_pb") }
         prefs = NotificationPrefs(store)
-        forwarding = NotificationForwarding(store) { NOW }
+        forwarding = seerrForwarding(store) { NOW }
         return SeerrNotificationRpcs(forwarding, prefs)
     }
 
