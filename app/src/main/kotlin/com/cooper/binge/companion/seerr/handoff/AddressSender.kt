@@ -1,6 +1,8 @@
 package com.cooper.binge.companion.seerr.handoff
 
-import com.cooper.binge.companion.seerr.logWarning
+import com.cooper.homelab.core.foundation.LogField
+import com.cooper.homelab.core.foundation.Logger
+import com.cooper.homelab.core.foundation.warn
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -33,11 +35,11 @@ fun interface AddressSender {
 internal class OkHttpAddressSender(
     private val client: OkHttpClient,
     private val dispatcher: CoroutineDispatcher = Dispatchers.IO,
-    /** Why a send failed, for the device log; a no-op where there is no Android log (unit tests). */
-    private val warn: (String) -> Unit = {},
+    /** Why a send failed: a constant event and typed fields, never the exception's message. */
+    private val logger: Logger,
 ) : AddressSender {
     @Inject
-    constructor() : this(handOffHttpClient(), warn = logWarning(TAG))
+    constructor(logger: Logger) : this(handOffHttpClient(), logger = logger)
 
     override suspend fun send(
         target: TvHandOffTarget,
@@ -57,11 +59,13 @@ internal class OkHttpAddressSender(
                     .build()
             try {
                 client.newCall(request).execute().use { response ->
-                    if (response.code != HttpStatus.Ok.code) warn("The TV answered ${response.code}")
+                    if (response.code != HttpStatus.Ok.code) {
+                        logger.warn(TAG, "the TV refused the address", listOf(LogField.Status("status", response.code)))
+                    }
                     response.code == HttpStatus.Ok.code
                 }
             } catch (e: IOException) {
-                warn("Sending the address failed: ${e.javaClass.simpleName}: ${e.message}")
+                logger.warn(TAG, "sending the address failed", error = e)
                 false
             }
         }
