@@ -98,7 +98,7 @@ class DiscoveryShellJourneyTest {
         host.launch(HomeRoute)
         host.awaitShowing(host.string(R.string.hub_section_requests))
 
-        host.compose.onNodeWithTag("tab_movies").performClick()
+        host.compose.onNodeWithTag("tab_search").performClick()
         host.awaitShowing(host.string(R.string.shell_placeholder_message))
         assertEquals(listOf<NavKey>(ShellRoute), host.stack())
 
