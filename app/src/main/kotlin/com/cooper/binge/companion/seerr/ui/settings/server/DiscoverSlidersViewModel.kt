@@ -20,7 +20,8 @@ import javax.inject.Inject
 /**
  * The slider list: the order and each slider's switch are the draft, saved as one batch, since that is how the server
  * takes them. The names of what its custom sliders hold are read beside it, for their captions. A custom slider's own
- * fields are edited on a page of its own; reset asks the server for its defaults and reads the list again.
+ * fields are edited on a page of its own; reset asks the server for its defaults and reads the list again. It saves as
+ * made: a drag is one write once it settles.
  */
 @HiltViewModel
 class DiscoverSlidersViewModel

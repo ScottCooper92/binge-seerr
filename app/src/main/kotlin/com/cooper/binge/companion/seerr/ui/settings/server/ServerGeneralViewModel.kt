@@ -21,7 +21,8 @@ import javax.inject.Inject
  * The server's general settings: the main form as an editor over `settings/main`, with the API key, the fork (for
  * its display languages) and the server's region and language lists beside it, each list read only when its picker
  * opens. The server answers a write with the whole record, which is what is adopted; the key lives in the extras
- * rather than the draft because regenerating it is not an edit to save.
+ * rather than the draft because regenerating it is not an edit to save. It saves as made: every setting stands alone,
+ * and `settings/main` merges what it is sent.
  */
 @HiltViewModel
 class ServerGeneralViewModel
