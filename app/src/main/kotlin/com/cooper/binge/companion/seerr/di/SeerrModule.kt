@@ -24,6 +24,7 @@ import com.cooper.binge.companion.seerr.notifications.ForwardingNotifier
 import com.cooper.binge.companion.seerr.notifications.SeerrForwarding
 import com.cooper.binge.companion.seerr.notifications.SeerrForwardingKeys
 import com.cooper.binge.companion.seerr.notifications.SeerrNotifier
+import com.cooper.binge.companion.seerr.telemetry.CrashReportingMigration
 import com.cooper.binge.companion.seerr.ui.hub.BingeInstallCheck
 import com.cooper.binge.companion.seerr.ui.hub.PackageManagerBingeInstallCheck
 import com.cooper.homelab.core.bridge.NotificationForwarding
@@ -54,7 +55,10 @@ annotation class IoDispatcher
 
 internal val Context.notificationsDataStore: DataStore<Preferences> by preferencesDataStore(name = "seerr_notifications")
 
-private val Context.telemetryDataStore: DataStore<Preferences> by preferencesDataStore(name = "seerr_telemetry")
+private val Context.telemetryDataStore: DataStore<Preferences> by preferencesDataStore(
+    name = "seerr_telemetry",
+    produceMigrations = { listOf(CrashReportingMigration) },
+)
 
 private val Context.feedbackDataStore: DataStore<Preferences> by preferencesDataStore(name = "seerr_feedback")
 
@@ -110,7 +114,7 @@ object SeerrModule {
     @Singleton
     fun telemetryPrefs(
         @ApplicationContext context: Context,
-    ): TelemetryPrefs = TelemetryPrefs(context.telemetryDataStore, crashReportingDefault = true)
+    ): TelemetryPrefs = TelemetryPrefs(context.telemetryDataStore, crashReportingDefault = false)
 
     @Provides
     @Singleton
