@@ -44,6 +44,12 @@ class SettingsSearchTest {
     }
 
     @Test
+    fun `Diagnostics is found by its name and by a keyword`() {
+        assertTrue("Diagnostics" in find("diagnostics"))
+        assertTrue("Diagnostics" in find("support"))
+    }
+
+    @Test
     fun `every word of the query must match`() {
         assertEquals(emptyList<String>(), find("logs radarr"))
     }

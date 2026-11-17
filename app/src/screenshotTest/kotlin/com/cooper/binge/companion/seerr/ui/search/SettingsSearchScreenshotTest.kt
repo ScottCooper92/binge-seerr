@@ -22,14 +22,14 @@ private fun Search(
     access: SearchAccess = admin,
     recent: (List<SettingEntry<SeerrSearchTarget>>) -> List<SettingEntry<SeerrSearchTarget>> = { emptyList() },
     initialQuery: String = "",
-    state: ((List<SettingEntry<SeerrSearchTarget>>) -> SettingsSearchState<SeerrSearchTarget>)? = null,
+    state: ((List<SettingEntry<SeerrSearchTarget>>) -> SettingsSearchState<SeerrSearchTarget, SearchAccess>)? = null,
 ) {
     val entries = sharedSettingsIndex(LocalContext.current.resources)
     SettingsSearchScreen(
-        state = state?.invoke(entries) ?: SettingsSearchState.Ready({ it.target.available(access) }, recent(entries)),
+        state = state?.invoke(entries) ?: SettingsSearchState.Ready({ it.target.available(access) }, recent(entries), access),
         entries = entries,
         icon = { it.target.icon },
-        onOpen = {},
+        onOpen = { _, _ -> },
         onBack = {},
         onRetry = {},
         onClearRecent = {},

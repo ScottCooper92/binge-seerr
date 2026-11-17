@@ -4,6 +4,7 @@ import com.cooper.binge.companion.seerr.seerr.SeerrPublicSettings
 import com.cooper.binge.companion.seerr.seerr.SeerrServerProfile
 import com.cooper.binge.companion.seerr.seerr.SeerrVariant
 import com.cooper.binge.companion.seerr.seerr.SeerrVersion
+import com.cooper.binge.companion.seerr.ui.DiagnosticsRoute
 import com.cooper.binge.companion.seerr.ui.LicencesRoute
 import com.cooper.binge.companion.seerr.ui.NotificationAgentRoute
 import com.cooper.binge.companion.seerr.ui.ServerSettingsPageRoute
@@ -170,6 +171,7 @@ class SettingsIndexTest {
         assertTrue(targets.none { it is SearchTarget.Server || it is SearchTarget.Agent })
         assertTrue(member.opens(SearchTarget.ThisApp))
         assertTrue(member.opens(SearchTarget.Licences))
+        assertTrue(member.opens(SearchTarget.Diagnostics))
         assertTrue(member.opens(SearchTarget.Account(UserSettingsPage.General)))
     }
 
@@ -212,5 +214,6 @@ class SettingsIndexTest {
         assertEquals(UserSettingsPageRoute(7, UserSettingsPage.General), SearchTarget.Account(UserSettingsPage.General).route(7))
         assertEquals(ThisAppRoute, SearchTarget.ThisApp.route(7))
         assertEquals(LicencesRoute, SearchTarget.Licences.route(7))
+        assertEquals(DiagnosticsRoute, SearchTarget.Diagnostics.route(7))
     }
 }

@@ -1374,6 +1374,7 @@
     <string name="search_kw_about">version update status</string>
     <string name="search_kw_this_app">preferences binge feedback bug report privacy</string>
     <string name="search_kw_licences">open source libraries</string>
+    <string name="search_kw_diagnostics">log support copy share report</string>
     <string name="search_kw_address">domain link web</string>
     <string name="search_kw_api_key">token secret</string>
     <string name="search_kw_proxy">reverse proxy forwarded</string>
