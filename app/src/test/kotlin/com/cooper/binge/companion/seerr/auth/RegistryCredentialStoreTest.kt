@@ -53,6 +53,8 @@ class RegistryCredentialStoreTest {
         val legacyFile = file("seerr_credentials")
         val registryFile = file("seerr_servers")
         val loginsFile = file("seerr_server_logins")
+        val deviceFile = file("seerr_device")
+        val serverId = ServerIdentity(deviceFile)
         val legacy = LegacyCredentialStore(legacyFile, cipher, UnconfinedTestDispatcher(testScope.testScheduler))
         val registry = ServerRegistry(registryFile, "registry", { "server-${++ids}" }, Logger { _, _, _, _, _ -> })
         val logins = LoginStore(loginsFile, SeerrLoginCodec, cipher.forLibrary(), Logger { _, _, _, _, _ -> })
@@ -62,7 +64,7 @@ class RegistryCredentialStoreTest {
                 registry,
                 logins,
                 registryFile,
-                { "server-${++ids}" },
+                serverId,
                 Logger {
                     _,
                     _,
@@ -72,7 +74,7 @@ class RegistryCredentialStoreTest {
                     ->
                 },
             )
-        val store = RegistryCredentialStore(registry, logins, importer, UnconfinedTestDispatcher(testScope.testScheduler))
+        val store = RegistryCredentialStore(registry, logins, importer, serverId, UnconfinedTestDispatcher(testScope.testScheduler))
     }
 
     private fun TestScope.install() = Install(backgroundScope, this)
@@ -126,7 +128,7 @@ class RegistryCredentialStoreTest {
             assertNull(install.store.credentials.first())
             assertEquals(apiKey.baseUrl, install.store.signedOutServer.first())
             assertNull(
-                install.logins.parts(
+                install.logins.get(
                     install.registry
                         .current()
                         .servers

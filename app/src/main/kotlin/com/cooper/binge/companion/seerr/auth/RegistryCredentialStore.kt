@@ -32,6 +32,7 @@ class RegistryCredentialStore(
     private val registry: ServerRegistry,
     private val logins: LoginStore<SeerrLogin>,
     private val importer: LegacyCredentialImport,
+    private val serverId: ServerIdentity,
     private val io: CoroutineDispatcher,
 ) : CredentialStore {
     private val importing = Mutex()
@@ -63,7 +64,9 @@ class RegistryCredentialStore(
         val address = ServerAddress.parse(credentials.baseUrl) ?: return false
         val login = SeerrLogin(credentials.auth, credentials.variant)
         val existing = registry.current().activeServer
-        val server = existing?.copy(address = address)?.also { registry.update(it) } ?: registry.add(address, address.host, SEERR_KIND)
+        val server =
+            existing?.copy(address = address)?.also { registry.update(it) }
+                ?: SavedServer(serverId.currentServerId(), address, address.host, SEERR_KIND).also { registry.restore(it) }
         return try {
             logins.save(server.id, login)
             true

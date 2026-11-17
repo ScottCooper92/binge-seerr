@@ -23,6 +23,7 @@ import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.auth.SeerrConnectionHealthMonitor
 import com.cooper.binge.companion.seerr.auth.SeerrLogin
 import com.cooper.binge.companion.seerr.auth.SeerrLoginCodec
+import com.cooper.binge.companion.seerr.auth.ServerIdentity
 import com.cooper.binge.companion.seerr.auth.forLibrary
 import com.cooper.binge.companion.seerr.data.MediaStatusStore
 import com.cooper.binge.companion.seerr.handoff.HandOffAddressMemory
@@ -110,6 +111,12 @@ object AuthModule {
 
     @Provides
     @Singleton
+    fun currentServerId(
+        @ApplicationContext context: Context,
+    ): ServerIdentity = ServerIdentity(context.deviceDataStore)
+
+    @Provides
+    @Singleton
     fun credentialStore(
         @ApplicationContext context: Context,
         cipher: SecretCipher,
@@ -117,6 +124,7 @@ object AuthModule {
         @ServerRegistryEnabled useRegistry: Boolean,
         registry: dagger.Lazy<ServerRegistry>,
         logins: dagger.Lazy<LoginStore<SeerrLogin>>,
+        currentServerId: ServerIdentity,
     ): CredentialStore {
         val legacy = LegacyCredentialStore(context.credentialsDataStore, cipher, io)
         if (!useRegistry) return legacy
@@ -126,10 +134,10 @@ object AuthModule {
                 registry = registry.get(),
                 logins = logins.get(),
                 marker = context.serverRegistryDataStore,
-                newId = { UUID.randomUUID().toString() },
+                serverId = currentServerId,
                 logger = LogcatLogger,
             )
-        return RegistryCredentialStore(registry.get(), logins.get(), importer, io)
+        return RegistryCredentialStore(registry.get(), logins.get(), importer, currentServerId, io)
     }
 
     @Provides

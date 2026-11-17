@@ -56,12 +56,14 @@ class LegacyCredentialImportTest {
         val legacyFile = file("seerr_credentials")
         val registryFile = file("seerr_servers")
         val loginsFile = file("seerr_server_logins")
+        val deviceFile = file("seerr_device")
+        val serverId = ServerIdentity(deviceFile)
         val io = UnconfinedTestDispatcher(testScope.testScheduler)
         val released = LegacyCredentialStore(legacyFile, cipher, io)
         val registry = ServerRegistry(registryFile, "registry", { "server-${++ids}" }, logger)
         val logins = LoginStore(loginsFile, SeerrLoginCodec, cipher.forLibrary(), logger)
-        val importer = LegacyCredentialImport(legacyFile, registry, logins, registryFile, { "server-${++ids}" }, logger)
-        val store = RegistryCredentialStore(registry, logins, importer, io)
+        val importer = LegacyCredentialImport(legacyFile, registry, logins, registryFile, serverId, logger)
+        val store = RegistryCredentialStore(registry, logins, importer, serverId, io)
     }
 
     private fun TestScope.phone() = Phone(backgroundScope, this)

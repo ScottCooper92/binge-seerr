@@ -8,7 +8,6 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.cooper.homelab.core.foundation.LogField
 import com.cooper.homelab.core.foundation.Logger
-import com.cooper.homelab.core.foundation.ServerId
 import com.cooper.homelab.core.foundation.info
 import com.cooper.homelab.core.foundation.warn
 import com.cooper.homelab.core.server.address.ServerAddress
@@ -23,14 +22,15 @@ import com.cooper.homelab.core.server.connection.CredentialStore as LoginStore
  * login store. The old file is only read and stays for one release, so a rollback still works. The secret is copied as the
  * blob it is, so nothing is decrypted: one that no longer decrypts imports as a saved server that is signed out, as does a
  * server the user had signed out of. [marker] makes it run once, so a user who signs out is not signed back in from the old
- * file. The old keys are written here and nowhere else.
+ * file. The server is saved under [serverId], so it has the id the rest of the app already keys by. The old keys are written here and
+ * nowhere else.
  */
 class LegacyCredentialImport(
     private val legacy: DataStore<Preferences>,
     private val registry: ServerRegistry,
     private val logins: LoginStore<SeerrLogin>,
     private val marker: DataStore<Preferences>,
-    private val newId: () -> String,
+    private val serverId: ServerIdentity,
     private val logger: Logger,
 ) {
     suspend fun importOnce() {
@@ -46,7 +46,7 @@ class LegacyCredentialImport(
             logger.warn(TAG, "legacy-address-unreadable")
             return
         }
-        val id = ServerId(newId())
+        val id = serverId.currentServerId()
         val signedIn = old[BASE_URL]?.isNotBlank() == true
         val fields = if (signedIn) old.fields() else null
         val secret = old[SECRET]?.takeIf { it.isNotBlank() }
