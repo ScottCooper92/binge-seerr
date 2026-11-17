@@ -67,7 +67,7 @@ internal fun appRows(
             toggled = app.sendCrashReports,
             onClick = { onToggleSendCrashReports(!app.sendCrashReports) },
         ),
-        // The tip jar's row: only once Play has priced every step (see `TipUiState.Ready`).
+        // The tip jar's row: only once Play has priced every step (see `TipState.Ready`).
         onOpenTip?.let {
             ListItem(
                 icon = Icons.Filled.Coffee,

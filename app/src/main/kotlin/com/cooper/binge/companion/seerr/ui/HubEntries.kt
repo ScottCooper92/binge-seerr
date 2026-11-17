@@ -9,7 +9,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import com.cooper.binge.companion.seerr.ADMITS_UNVERIFIED_CALLERS
-import com.cooper.binge.companion.seerr.tip.TipViewModel
+import com.cooper.binge.companion.seerr.tip.TipHost
 import com.cooper.binge.companion.seerr.ui.hub.DeveloperRow
 import com.cooper.binge.companion.seerr.ui.hub.HubActions
 import com.cooper.binge.companion.seerr.ui.hub.HubScreen
@@ -103,10 +103,10 @@ internal fun ThisAppEntry(
     open: (NavKey) -> Unit,
     onBack: () -> Unit,
     viewModel: ThisAppViewModel = hiltViewModel(),
-    tipViewModel: TipViewModel = hiltViewModel(),
+    tipHost: TipHost = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    val tip by tipViewModel.uiState.collectAsStateWithLifecycle()
+    val tip by tipHost.model.state.collectAsStateWithLifecycle()
     val activity = LocalActivity.current
     // Re-read on every arrival, so Binge installed while this page was away shows on return.
     DisposableEffect(viewModel) {
@@ -130,8 +130,8 @@ internal fun ThisAppEntry(
         showBack = showBack,
         actions = actions,
         tip = tip,
-        tipEvents = tipViewModel.events,
-        onGiveTip = { step -> activity?.let { tipViewModel.give(it, step) } },
+        tipEvents = tipHost.model.events,
+        onGiveTip = { step -> activity?.let { tipHost.model.give(it, step) } },
     )
 }
 
