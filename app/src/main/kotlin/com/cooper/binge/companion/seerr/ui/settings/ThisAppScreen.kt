@@ -50,6 +50,7 @@ class ThisAppActions(
     val onNotificationAccessChanged: () -> Unit = {},
     val onSetPollInterval: (Int) -> Unit = {},
     val onOpenLicences: () -> Unit = {},
+    val onOpenDiagnostics: () -> Unit = {},
 )
 
 /**
@@ -158,7 +159,7 @@ private fun ThisAppContent(
         Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
         ItemGroup(
             title = stringResource(R.string.settings_group_about),
-            rows = aboutRows(actions.onOpenLicences),
+            rows = aboutRows(actions.onOpenLicences, actions.onOpenDiagnostics),
             modifier = Modifier.padding(resolvedContentPadding()),
         )
         Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
