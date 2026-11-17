@@ -1,5 +1,6 @@
 package com.cooper.binge.companion.seerr.seerr
 
+import com.cooper.homelab.core.server.network.isLocalOrPrivateHost
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 
 /**
@@ -103,5 +104,5 @@ internal fun String.withDefaultSeerrPort(): String? =
 private fun String.isLocalHostAddress(): Boolean {
     // Prefixing a scheme lets HttpUrl extract the host — it handles ports, paths and bracketed IPv6.
     val host = "http://$this".toHttpUrlOrNull()?.host ?: return false
-    return host.isLocalOrPrivateHost()
+    return isLocalOrPrivateHost(host)
 }

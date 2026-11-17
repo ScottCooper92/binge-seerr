@@ -5,6 +5,7 @@ import com.cooper.binge.companion.seerr.seerr.SeerrApiFactory
 import com.cooper.binge.companion.seerr.seerr.SeerrAuth
 import com.cooper.binge.companion.seerr.seerr.SessionCookieJar
 import com.cooper.binge.companion.seerr.util.PlainCipher
+import com.cooper.homelab.core.server.network.DataStoreCleartextConsent
 import com.cooper.homelab.core.testing.InMemoryDataStore
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest

@@ -3,7 +3,6 @@ package com.cooper.binge.companion.seerr.ui.clipping
 import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.Composable
 import com.cooper.binge.companion.seerr.handoff.AddressCandidate
-import com.cooper.binge.companion.seerr.handoff.AddressLocality
 import com.cooper.binge.companion.seerr.handoff.AddressSource
 import com.cooper.binge.companion.seerr.seerr.ManageablePermission
 import com.cooper.binge.companion.seerr.seerr.SeerrMediaStatusCode
@@ -52,6 +51,7 @@ import com.cooper.binge.companion.seerr.ui.users.settings.MediaServerLinkContent
 import com.cooper.binge.companion.seerr.ui.users.settings.TextSettingContent
 import com.cooper.binge.companion.seerr.util.createSeerrComposeRule
 import com.cooper.binge.companion.seerr.util.requestDetail
+import com.cooper.homelab.core.server.network.AddressLocality
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith

@@ -11,11 +11,11 @@ import com.cooper.binge.companion.seerr.demo.demoCredentials
 import com.cooper.binge.companion.seerr.di.IoDispatcher
 import com.cooper.binge.companion.seerr.handoff.AddressHandOffs
 import com.cooper.binge.companion.seerr.handoff.HAND_OFF_SESSION_MODE
-import com.cooper.binge.companion.seerr.seerr.LocalNetworkPermission
 import com.cooper.binge.companion.seerr.seerr.SeerrSignInMode
 import com.cooper.binge.companion.seerr.seerr.insecurePublicHostOrNull
 import com.cooper.binge.companion.seerr.seerr.isBlockedByLocalNetwork
 import com.cooper.binge.companion.seerr.telemetry.AnalyticsEvents
+import com.cooper.homelab.core.server.network.LocalNetworkPermission
 import com.cooper.homelab.core.telemetry.Analytics
 import com.cooper.homelab.core.telemetry.CrashBreadcrumbs
 import com.cooper.homelab.core.telemetry.NoOpAnalytics

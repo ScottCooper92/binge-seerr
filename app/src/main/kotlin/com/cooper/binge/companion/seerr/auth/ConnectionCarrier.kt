@@ -5,6 +5,7 @@ import com.cooper.binge.companion.seerr.seerr.SeerrAuth
 import com.cooper.binge.companion.seerr.seerr.SeerrCredentials
 import com.cooper.binge.companion.seerr.seerr.SeerrVariant
 import com.cooper.binge.companion.seerr.seerr.insecurePublicHostOrNull
+import com.cooper.homelab.core.server.network.CleartextConsent
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json

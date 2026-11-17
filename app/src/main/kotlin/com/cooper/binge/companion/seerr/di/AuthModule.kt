@@ -8,12 +8,10 @@ import androidx.datastore.preferences.preferencesDataStore
 import com.binge.companion.kit.SecretCipher
 import com.cooper.binge.companion.seerr.BuildConfig
 import com.cooper.binge.companion.seerr.auth.BingeConnectionStore
-import com.cooper.binge.companion.seerr.auth.CleartextConsent
 import com.cooper.binge.companion.seerr.auth.ConnectionCarrier
 import com.cooper.binge.companion.seerr.auth.ConnectionRestore
 import com.cooper.binge.companion.seerr.auth.CredentialStore
 import com.cooper.binge.companion.seerr.auth.DataStoreBingeConnectionStore
-import com.cooper.binge.companion.seerr.auth.DataStoreCleartextConsent
 import com.cooper.binge.companion.seerr.auth.DeviceIdentityStore
 import com.cooper.binge.companion.seerr.auth.ForegroundUserRefresh
 import com.cooper.binge.companion.seerr.auth.PlexPinFlow
@@ -23,12 +21,15 @@ import com.cooper.binge.companion.seerr.data.MediaStatusStore
 import com.cooper.binge.companion.seerr.handoff.HandOffAddressMemory
 import com.cooper.binge.companion.seerr.notifications.ApplicationScope
 import com.cooper.binge.companion.seerr.notifications.NotificationPrefs
-import com.cooper.binge.companion.seerr.seerr.AndroidLocalNetworkPermission
-import com.cooper.binge.companion.seerr.seerr.LocalNetworkPermission
 import com.cooper.binge.companion.seerr.seerr.PlexClientIdentity
 import com.cooper.binge.companion.seerr.seerr.SeerrApiFactory
 import com.cooper.binge.companion.seerr.seerr.TitleCache
+import com.cooper.binge.companion.seerr.seerr.insecurePublicHostOrNull
 import com.cooper.binge.companion.seerr.ui.hub.HubOverviewCache
+import com.cooper.homelab.core.server.network.AndroidLocalNetworkPermission
+import com.cooper.homelab.core.server.network.CleartextConsent
+import com.cooper.homelab.core.server.network.DataStoreCleartextConsent
+import com.cooper.homelab.core.server.network.LocalNetworkPermission
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -108,7 +109,13 @@ object AuthModule {
     fun cleartextConsent(
         @ApplicationContext context: Context,
         store: CredentialStore,
-    ): CleartextConsent = DataStoreCleartextConsent(context.cleartextConsentDataStore) { store.credentials.first()?.baseUrl }
+    ): CleartextConsent =
+        DataStoreCleartextConsent(context.cleartextConsentDataStore) {
+            store.credentials
+                .first()
+                ?.baseUrl
+                ?.insecurePublicHostOrNull()
+        }
 
     @Provides
     @Singleton

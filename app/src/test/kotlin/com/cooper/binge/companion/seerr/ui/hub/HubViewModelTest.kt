@@ -8,7 +8,6 @@ import com.cooper.binge.companion.seerr.auth.CredentialStore
 import com.cooper.binge.companion.seerr.auth.DataStoreBingeConnectionStore
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.auth.SeerrConnectionHealthMonitor
-import com.cooper.binge.companion.seerr.seerr.LocalNetworkPermission
 import com.cooper.binge.companion.seerr.seerr.SeerrApiFactory
 import com.cooper.binge.companion.seerr.seerr.SeerrAuth
 import com.cooper.binge.companion.seerr.seerr.SeerrVariant
@@ -17,6 +16,7 @@ import com.cooper.binge.companion.seerr.util.FakeResponse
 import com.cooper.binge.companion.seerr.util.FakeSeerrServer
 import com.cooper.binge.companion.seerr.util.MainDispatcherRule
 import com.cooper.binge.companion.seerr.util.PlainCipher
+import com.cooper.homelab.core.server.network.LocalNetworkPermission
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.first

@@ -7,13 +7,11 @@ import com.cooper.binge.companion.seerr.auth.PlexPinExpiredException
 import com.cooper.binge.companion.seerr.auth.QuickConnectExpiredException
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.auth.SeerrServerPreview
-import com.cooper.binge.companion.seerr.handoff.AddressLocality
 import com.cooper.binge.companion.seerr.handoff.HAND_OFF_SESSION_MODE
 import com.cooper.binge.companion.seerr.handoff.HandOffCredentials
 import com.cooper.binge.companion.seerr.handoff.HandOffProgress
 import com.cooper.binge.companion.seerr.handoff.HandOffSignInModes
 import com.cooper.binge.companion.seerr.handoff.addressLocality
-import com.cooper.binge.companion.seerr.seerr.LocalNetworkPermission
 import com.cooper.binge.companion.seerr.seerr.SeerrAuth
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.seerr.SeerrLoginRequest
@@ -21,6 +19,8 @@ import com.cooper.binge.companion.seerr.seerr.SeerrSignInMode
 import com.cooper.binge.companion.seerr.seerr.isBlockedByLocalNetwork
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
 import com.cooper.binge.companion.seerr.telemetry.AnalyticsEvents
+import com.cooper.homelab.core.server.network.AddressLocality
+import com.cooper.homelab.core.server.network.LocalNetworkPermission
 import com.cooper.homelab.core.telemetry.Analytics
 import com.cooper.homelab.core.telemetry.CrashBreadcrumbs
 

@@ -187,7 +187,8 @@ installed, the TLS handshake fails and the address step says the server could no
 Plain HTTP is still allowed, because a LAN Seerr at a private IP is usually served that way and the
 config file cannot express IP ranges. The app refuses an `http://` address that names a public host
 until the user ticks a consent in setup, since the key would otherwise cross the internet in the
-clear (`auth/CleartextConsent.kt`). Builds before that opt-in only warned.
+clear (the consent store is the shared library's `CleartextConsent`, wired in `di/AuthModule.kt`; the guard is `seerr/Cleartext.kt`). Builds
+before that opt-in only warned.
 
 ## Where this lives
 

@@ -1,9 +1,7 @@
 package com.cooper.binge.companion.seerr.seerr
 
-import com.binge.companion.kit.AddressRange
-import com.binge.companion.kit.ipLiteralBytes
-import com.binge.companion.kit.isIn
-import com.cooper.binge.companion.seerr.auth.CleartextConsent
+import com.cooper.homelab.core.server.network.CleartextConsent
+import com.cooper.homelab.core.server.network.isLocalOrPrivateHost
 import kotlinx.coroutines.runBlocking
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
@@ -19,32 +17,7 @@ import java.io.IOException
 fun String.insecurePublicHostOrNull(): String? = trim().toHttpUrlOrNull()?.takeIf { it.isCleartextToPublicHost() }?.host
 
 /** Plain `http` to a host that is not loopback, private, LAN or tailnet: what needs the user's opt-in. */
-internal fun HttpUrl.isCleartextToPublicHost(): Boolean = !isHttps && !host.isLocalOrPrivateHost()
-
-private const val LOCAL_NAME = "localhost"
-
-/** `.localhost` and `.home.arpa` are reserved for this; `.local` is mDNS; `.lan` and `.internal` are what routers hand out. */
-private val LOCAL_SUFFIXES = listOf(".localhost", ".local", ".lan", ".home.arpa", ".internal", ".ts.net")
-
-/**
- * Loopback, link-local, RFC 1918, single-label names, the home-network suffixes in [LOCAL_SUFFIXES], and
- * Tailscale-style addresses (CGNAT, `.ts.net`, IPv6 ULA), where a self-hosted server typically speaks plain
- * HTTP over an already-encrypted link.
- *
- * Judged on the name as typed, never on what it resolves to: a public name resolves publicly off the LAN.
- * Not the TV-reachability test: `hostLocality` treats CGNAT and Tailscale as not local, on purpose.
- */
-internal fun String.isLocalOrPrivateHost(): Boolean =
-    this == LOCAL_NAME ||
-        LOCAL_SUFFIXES.any { endsWith(it) } ||
-        ipLiteralBytes(this)?.isIn(
-            AddressRange.Loopback,
-            AddressRange.LinkLocal,
-            AddressRange.Private,
-            AddressRange.Cgnat,
-            AddressRange.UniqueLocal,
-        ) == true ||
-        (!contains('.') && !contains(':'))
+internal fun HttpUrl.isCleartextToPublicHost(): Boolean = !isHttps && !isLocalOrPrivateHost(host)
 
 /** A request this app refused to send: plain HTTP to a public host the user has not opted in for. */
 class CleartextRefusedException(

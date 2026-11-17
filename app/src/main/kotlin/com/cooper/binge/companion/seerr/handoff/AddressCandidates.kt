@@ -3,6 +3,7 @@ package com.cooper.binge.companion.seerr.handoff
 import com.cooper.binge.companion.seerr.seerr.SeerrPublicSettings
 import com.cooper.binge.companion.seerr.seerr.isValidBaseUrl
 import com.cooper.binge.companion.seerr.seerr.normaliseBaseUrl
+import com.cooper.homelab.core.server.network.AddressLocality
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 
 /** Where an address the phone could send to a television came from. */

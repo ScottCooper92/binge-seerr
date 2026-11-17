@@ -3,6 +3,8 @@ package com.cooper.binge.companion.seerr.seerr
 import android.Manifest
 import android.app.Application
 import androidx.test.core.app.ApplicationProvider
+import com.cooper.homelab.core.server.network.AndroidLocalNetworkPermission
+import com.cooper.homelab.core.server.network.LocalNetworkPermission
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull

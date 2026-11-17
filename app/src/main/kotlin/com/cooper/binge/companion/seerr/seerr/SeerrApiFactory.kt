@@ -1,8 +1,10 @@
 package com.cooper.binge.companion.seerr.seerr
 
-import com.cooper.binge.companion.seerr.auth.CleartextConsent
 import com.cooper.binge.companion.seerr.auth.SeerrConnectionHealthReporter
 import com.cooper.binge.companion.seerr.demo.DemoTransport
+import com.cooper.homelab.core.server.network.CleartextConsent
+import com.cooper.homelab.core.server.network.LocalNetworkInterceptor
+import com.cooper.homelab.core.server.network.LocalNetworkPermission
 import kotlinx.serialization.json.Json
 import okhttp3.ConnectionPool
 import okhttp3.Cookie
@@ -94,7 +96,7 @@ class SeerrApiFactory(
                     OkHttpClient
                         .Builder()
                         .addInterceptor(SeerrHealthInterceptor(health))
-                        .addInterceptor(SeerrLocalNetworkInterceptor(localNetwork))
+                        .addInterceptor(LocalNetworkInterceptor(localNetwork))
                         .addInterceptor(SeerrWriteInterceptor(onWrite))
                         .addInterceptor(SeerrSessionInterceptor(baseUrl))
                         .applyAuth(auth, baseUrl)

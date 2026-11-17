@@ -1,6 +1,6 @@
 package com.cooper.binge.companion.seerr.seerr
 
-import com.cooper.binge.companion.seerr.auth.CleartextConsent
+import com.cooper.homelab.core.server.network.CleartextConsent
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
