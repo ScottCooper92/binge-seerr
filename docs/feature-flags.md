@@ -1,10 +1,11 @@
 # Feature flags
 
-Two flags. `BINGE_PROMOTION` decides what this app says about Binge, and `discovery_enabled` decides whether the discovery surfaces show (#2039). Both are off until Remote Config turns them on.
+Three flags. `BINGE_PROMOTION` decides what this app says about Binge, `REVIEW_PROMPT` decides whether it may ask for a Play review, and `discovery_enabled` decides whether the discovery surfaces show (#2039). Each is off until Remote Config turns it on.
 
 | Flag | Remote Config key | Off means |
 | --- | --- | --- |
 | `BINGE_PROMOTION` | `binge_promotion_enabled` | Nothing about Binge: no prompt to install or open it, no hub tile or settings row, Binge-free wording in the setup intro and the disconnect confirmation. Titles open on the server's own page. |
+| `REVIEW_PROMPT` | `review_prompt_enabled` | The app never asks the platform to show its review card. |
 | `DiscoveryFlag` | `discovery_enabled` | The app is exactly as it was before the discovery epic: no bottom navigation, no Movies, TV or Search tabs, no title, person or collection pages. Nothing reads it yet. |
 
 The `BINGE_PROMOTION` flag is about not pushing anyone to install an app they cannot connect to. It does not gate the integration
