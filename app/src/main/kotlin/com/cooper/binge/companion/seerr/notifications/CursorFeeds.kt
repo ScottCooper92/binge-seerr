@@ -41,15 +41,20 @@ class PrefsCursorFeeds(
         fetch: suspend (sinceId: Int) -> FeedRead<T>,
         notify: suspend (List<T>) -> Unit,
     ): CheckResult {
-        val cursor = prefs.cursor(signal)
-        if (cursor == null) {
-            val newest = attempt { seed() }.getOrElse { return it.toResult() }
-            prefs.setCursor(signal, newest)
-            return CheckResult.Ok
-        }
+        val cursor = prefs.cursor(signal) ?: return seed(signal, seed)
         val read = attempt { fetch(cursor) }.getOrElse { return it.toResult() }
         if (read.rows.isNotEmpty()) notify(read.rows)
         if (read.newestId > cursor) prefs.setCursor(signal, read.newestId)
+        return CheckResult.Ok
+    }
+
+    /** A seed announces nothing, so it titles nothing: it reads the newest id and keeps that. */
+    private suspend fun seed(
+        signal: NotificationSignal,
+        seed: suspend () -> Int,
+    ): CheckResult {
+        val newest = attempt { seed() }.getOrElse { return it.toResult() }
+        prefs.setCursor(signal, newest)
         return CheckResult.Ok
     }
 }
