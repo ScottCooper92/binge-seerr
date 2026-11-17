@@ -108,11 +108,12 @@ abstract class SaveAsMadeEditorViewModel<T>(
     /** Shows the engine's state as it is now, so a page that acts and reads back sees its own action. */
     private fun sync() {
         // Two threads can call this at once (the page, and the collector below), so a write that finds the engine has moved on
-        // since it read redoes itself: the last one to finish always shows the latest state.
+        // since it read redoes itself: the last one to finish always shows the latest state. Compared by value: the library's plain
+        // editor builds its state afresh on every read, so identity would never settle.
         do {
             val state = engine.state.value
             ui.value = state.toUiState()
-        } while (state !== engine.state.value)
+        } while (state != engine.state.value)
     }
 
     /** Drops a change not yet on the server instead of sending it: the page is about to replace the record from elsewhere. */
