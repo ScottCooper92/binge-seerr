@@ -8,6 +8,7 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Tv
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
@@ -53,11 +54,12 @@ internal fun rememberSeerrTabs(): TabShellState<SeerrTab> {
     val tv = rememberNavBackStack(TvRoot)
     val search = rememberNavBackStack(SearchRoot)
     val settings = rememberNavBackStack(SettingsRoot)
-    return rememberTabShellState(
-        tabs = SeerrTab.entries,
-        initial = SeerrTab.Settings,
-        stacks = mapOf(SeerrTab.Movies to movies, SeerrTab.Tv to tv, SeerrTab.Search to search, SeerrTab.Settings to settings),
-    )
+    val stacks =
+        remember(movies, tv, search, settings) {
+            mapOf(SeerrTab.Movies to movies, SeerrTab.Tv to tv, SeerrTab.Search to search, SeerrTab.Settings to settings)
+        }
+    // Settings is the start tab while the others are placeholders; it becomes the first tab once the Movies hub lands.
+    return rememberTabShellState(tabs = SeerrTab.entries, initial = SeerrTab.Settings, stacks = stacks)
 }
 
 /**
@@ -91,7 +93,8 @@ internal fun seerrTabItems(): List<BingeNavSuiteItem> =
 /**
  * The tab bar over each tab's root: the Settings tab is the hub, [settings], and the others are placeholders until their
  * screens land. Only a root is drawn here. What a tab opens is an entry on the app's stack above this one, so it takes the
- * whole window and the bar is hidden until Back pops it. Back from any tab's root leaves the app.
+ * whole window and the bar is hidden until Back pops it. Back at another tab's root returns to the start tab, and Back at the
+ * start tab's root leaves the app.
  */
 @Composable
 internal fun SeerrTabShell(

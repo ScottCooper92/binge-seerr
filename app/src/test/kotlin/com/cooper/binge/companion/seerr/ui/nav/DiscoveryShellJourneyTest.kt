@@ -92,7 +92,7 @@ class DiscoveryShellJourneyTest {
     }
 
     @Test
-    fun `another tab shows its placeholder and Back from it leaves the app`() {
+    fun `back from another tab returns to the start tab and only back from that leaves the app`() {
         NavHostActivity.discoveryEnabled = true
         host.connectDemo()
         host.launch(HomeRoute)
@@ -101,9 +101,14 @@ class DiscoveryShellJourneyTest {
         host.compose.onNodeWithTag("tab_movies").performClick()
         host.awaitShowing(host.string(R.string.shell_placeholder_message))
         assertEquals(listOf<NavKey>(ShellRoute), host.stack())
-        host.back()
 
-        assertTrue("Back from another tab leaves the app", host.activity.isFinishing)
+        host.back()
+        host.awaitShowing(host.string(R.string.hub_section_requests))
+        assertFalse("Back from another tab stays in the app", host.activity.isFinishing)
+        bar().assertIsDisplayed()
+
+        host.back()
+        assertTrue("Back from the start tab leaves the app", host.activity.isFinishing)
     }
 
     @Test

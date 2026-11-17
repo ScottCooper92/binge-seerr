@@ -1,9 +1,11 @@
 package com.cooper.binge.companion.seerr.ui.shell
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableIntState
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.ui.Modifier
@@ -22,13 +24,15 @@ import com.cooper.binge.companion.seerr.ui.replaceAll
 
 /**
  * Which tab is showing, and each tab's own back stack. [tabs] are in the order the bar shows them. A tab keeps its stack
- * when another is selected, so coming back finds it as it was left.
+ * when another is selected, so coming back finds it as it was left. [startTab] is the one the app opens on, and the one Back
+ * returns to: only Back at its root leaves the app.
  */
 @Stable
 class TabShellState<T : Any>(
     val tabs: List<T>,
     private val selectedIndex: MutableIntState,
     private val stacks: Map<T, NavBackStack<NavKey>>,
+    val startTab: T = tabs.first(),
 ) {
     init {
         require(tabs.isNotEmpty() && tabs.all { it in stacks }) { "every tab needs a stack" }
@@ -43,6 +47,13 @@ class TabShellState<T : Any>(
         selectedIndex.intValue = tabs.indexOf(tab).coerceAtLeast(0)
     }
 
+    /** Back at a tab's root: any other tab goes to the [startTab]. False at the start tab, where the caller leaves the app. */
+    fun back(): Boolean {
+        if (selected == startTab) return false
+        show(startTab)
+        return true
+    }
+
     /** A tap on the bar: another tab shows as it was left, and the tab already showing goes back to its root. */
     fun select(tab: T) {
         if (tab == selected) stack(tab).popToRoot() else show(tab)
@@ -55,8 +66,8 @@ internal fun NavBackStack<NavKey>.popToRoot() {
 }
 
 /**
- * The state of a shell over [tabs], starting on [initial]. The selected tab survives the process being recreated; the
- * stacks are the caller's [stacks], saved by whoever made them.
+ * The state of a shell over [tabs], starting on [initial], which is also its start tab. The selected tab survives the process
+ * being recreated; the stacks are the caller's [stacks], saved by whoever made them.
  */
 @Composable
 fun <T : Any> rememberTabShellState(
@@ -65,7 +76,7 @@ fun <T : Any> rememberTabShellState(
     stacks: Map<T, NavBackStack<NavKey>>,
 ): TabShellState<T> {
     val index = rememberSaveable { mutableIntStateOf(tabs.indexOf(initial).coerceAtLeast(0)) }
-    return TabShellState(tabs, index, stacks)
+    return remember(tabs, stacks, index, initial) { TabShellState(tabs, index, stacks, startTab = initial) }
 }
 
 /**
@@ -81,6 +92,7 @@ fun <T : Any> TabShell(
     content: @Composable (T) -> Unit,
 ) {
     val saveable = rememberSaveableStateHolder()
+    BackHandler(enabled = state.selected != state.startTab) { state.back() }
     BingeNavSuiteShell(
         items = items,
         selectedKey = state.selected,

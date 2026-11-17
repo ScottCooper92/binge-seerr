@@ -12,6 +12,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertThrows
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 private enum class Tab { One, Two, Three }
@@ -93,10 +94,28 @@ class TabShellStateTest {
     }
 
     @Test
-    fun `back from a root has nothing to pop so the caller leaves`() {
-        assertFalse(one.pop())
-        one.push(Page(10))
-        assertEquals(true, one.pop())
+    fun `back on another tab shows the start tab and is handled`() {
+        val shell =
+            TabShellState(Tab.entries, mutableIntStateOf(2), mapOf(Tab.One to one, Tab.Two to two, Tab.Three to three), startTab = Tab.Two)
+
+        assertTrue(shell.back())
+
+        assertEquals(Tab.Two, shell.selected)
+    }
+
+    @Test
+    fun `back on the start tab is not handled so the app leaves`() {
+        val shell =
+            TabShellState(Tab.entries, mutableIntStateOf(1), mapOf(Tab.One to one, Tab.Two to two, Tab.Three to three), startTab = Tab.Two)
+
+        assertFalse(shell.back())
+
+        assertEquals(Tab.Two, shell.selected)
+    }
+
+    @Test
+    fun `the first tab is the start tab unless the caller says otherwise`() {
+        assertEquals(Tab.One, state().startTab)
     }
 
     @Test
