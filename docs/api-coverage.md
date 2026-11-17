@@ -255,7 +255,7 @@ Each row is ticked in "Today" by the PR that covers it.
 | `GET /discover/tv/network/{networkId}` | Discover TV shows by network | v1.21.0 | v1.0.0 | yes | The shared title lists: hubs, the grid and search. |
 | `GET /discover/tv/upcoming` | Discover Upcoming TV shows | v1.20.0 | v1.0.0 | yes | The shared title lists: hubs, the grid and search. |
 | `GET /discover/watchlist` | Get the Plex watchlist. | v1.30.0 | v1.2.0 | yes | The shared title lists: hubs, the grid and search. |
-| `GET /media` | Get media | v1.0.0 | v1.0.0 |  | Planned under the discovery epic (#2039). |
+| `GET /media` | Get media | v1.0.0 | v1.0.0 | yes | The hubs' Recently Added row (`filter=allavailable`, sorted by `mediaAdded`), where the server has it. |
 | `GET /movie/{movieId}/ratings` | Get movie ratings | v1.0.0 | v1.0.0 |  | Planned under the discovery epic (#2039). |
 | `GET /movie/{movieId}/ratingscombined` | Get RT and IMDB movie ratings combined | v1.34.0 | v1.7.0 |  | Planned under the discovery epic (#2039). |
 | `GET /movie/{movieId}/recommendations` | Get recommended movies | v1.0.0 | v1.0.0 |  | Planned under the discovery epic (#2039). |
