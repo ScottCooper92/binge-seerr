@@ -3,6 +3,8 @@ package com.cooper.binge.companion.seerr.seerr
 import com.cooper.binge.companion.seerr.auth.SeerrConnectionHealthReporter
 import com.cooper.binge.companion.seerr.demo.DemoTransport
 import com.cooper.homelab.core.server.network.CleartextConsent
+import com.cooper.homelab.core.server.network.CleartextGate
+import com.cooper.homelab.core.server.network.CleartextGuard
 import com.cooper.homelab.core.server.network.LocalNetworkInterceptor
 import com.cooper.homelab.core.server.network.LocalNetworkPermission
 import kotlinx.serialization.json.Json
@@ -178,7 +180,7 @@ class SeerrApiFactory(
             .apply { testTransport?.let { addInterceptor(it(cookieJar ?: CookieJar.NO_COOKIES)) } }
             .apply { testDispatcher?.let { dispatcher(it()) } }
             .apply { testDns?.let { dns(it) } }
-            .addNetworkInterceptor(CleartextGuard(cleartext))
+            .addNetworkInterceptor(CleartextGuard(CleartextGate(cleartext, publicCleartextAvailable = true)))
             .addNetworkInterceptor(loggingInterceptor())
             .connectionPool(ConnectionPool(MAX_IDLE_CONNECTIONS, IDLE_TIMEOUT_SECONDS, TimeUnit.SECONDS))
             .connectTimeout(CONNECT_TIMEOUT_SECONDS, TimeUnit.SECONDS)

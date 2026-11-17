@@ -74,4 +74,17 @@ class PortFallbackTest {
 
             assertEquals(primaryFailure, result.exceptionOrNull())
         }
+
+    @Test
+    fun `withPortFallback keeps the scheme and base path on the retry`() =
+        runTest {
+            val attempts = mutableListOf<String>()
+
+            withPortFallback("https://seerr.example.com/media/") { candidate ->
+                attempts += candidate
+                Result.failure<Unit>(IOException("refused"))
+            }
+
+            assertEquals(listOf("https://seerr.example.com/media/", "https://seerr.example.com:5055/media/"), attempts)
+        }
 }
