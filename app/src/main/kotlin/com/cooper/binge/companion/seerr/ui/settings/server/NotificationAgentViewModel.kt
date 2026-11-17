@@ -12,7 +12,7 @@ import com.cooper.binge.companion.seerr.seerr.toSeerrError
 import com.cooper.binge.companion.seerr.telemetry.AnalyticsEvents
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorEvent
 import com.cooper.binge.companion.seerr.ui.users.settings.ExtrasEditorUiState
-import com.cooper.binge.companion.seerr.ui.users.settings.ExtrasEditorViewModel
+import com.cooper.binge.companion.seerr.ui.users.settings.SaveAsMadeEditorWithExtrasViewModel
 import com.cooper.homelab.core.telemetry.Analytics
 import com.cooper.homelab.core.telemetry.CrashBreadcrumbs
 import com.cooper.homelab.core.telemetry.NoOpAnalytics
@@ -49,10 +49,8 @@ class NotificationAgentViewModel
         @ApplicationScope appScope: CoroutineScope,
         private val crashBreadcrumbs: CrashBreadcrumbs = NoOpCrashBreadcrumbs,
         private val agentChanges: NotificationAgentChanges = NotificationAgentChanges(),
-    ) : ExtrasEditorViewModel<AgentForm, AgentExtras>(AgentExtras(), dispatcher) {
+    ) : SaveAsMadeEditorWithExtrasViewModel<AgentForm, AgentExtras>(AgentExtras(), dispatcher, appScope) {
         internal var soundsDebounceMillis = SOUNDS_DEBOUNCE_MILLIS
-
-        override val saveAsMadeScope: CoroutineScope = appScope
 
         init {
             reload()
