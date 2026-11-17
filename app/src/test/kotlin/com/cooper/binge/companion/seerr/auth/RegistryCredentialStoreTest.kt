@@ -235,6 +235,24 @@ class RegistryCredentialStoreTest {
         }
 
     @Test
+    fun `a new address on the saved server renames it to the new host`() =
+        runTest {
+            val install = install()
+            install.store.save(apiKey)
+
+            install.store.save(session)
+
+            assertEquals(
+                "192.168.1.5",
+                install.registry
+                    .current()
+                    .servers
+                    .single()
+                    .name,
+            )
+        }
+
+    @Test
     fun `an address that is not one is not saved`() =
         runTest {
             val install = install()

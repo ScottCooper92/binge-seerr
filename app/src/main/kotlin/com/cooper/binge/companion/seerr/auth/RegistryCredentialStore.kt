@@ -36,6 +36,8 @@ class RegistryCredentialStore(
     private val io: CoroutineDispatcher,
 ) : CredentialStore {
     private val importing = Mutex()
+
+    @Volatile
     private var imported = false
 
     private fun activeLogin(): Flow<Pair<SavedServer, SeerrLogin?>?> =
@@ -66,7 +68,7 @@ class RegistryCredentialStore(
         // The login goes first. It encrypts before it writes, so a keymaster that throws leaves the registry exactly as it was.
         if (attempt { logins.save(id, SeerrLogin(credentials.auth, credentials.variant)) }.isFailure) return false
         if (existing != null) {
-            registry.update(existing.copy(address = address))
+            registry.update(existing.copy(address = address, name = address.host))
         } else {
             registry.restore(SavedServer(id, address, address.host, SEERR_KIND))
         }
