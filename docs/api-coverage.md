@@ -21,10 +21,10 @@ How each gate is applied is in [`server-compatibility.md`](server-compatibility.
 - A few lookups that sit beside discovery are used anyway, because a settings picker needs them:
   the region, language and streaming region lists, the two keyword calls behind the blocklist
   settings and the override rule's keyword condition, and the two genre lists behind its genre condition. The table marks each one with what uses it.
-- "Not planned" is three things. Discovery, search, title, person, collection, studio, network,
-  and watchlist calls: this app is the companion and an admin console, not a discovery client, and
-  a title opens in Binge or the web client (#26, and the closed #34). Web push, which is the PWA's
-  transport. And the first-run wizard, which stays the web client's.
+- "Not planned" is two things. Web push, which is the PWA's transport. And the first-run wizard, which stays the web client's.
+  Discovery, search, title, person, collection, studio, network and watchlist calls were here once, as "not a discovery
+  client" (#26, and the closed #34). That decision was reversed: they are planned under the discovery epic (#2039), in
+  their own table below.
 - Phase 9 (#36) is closed and deferred: one server done well comes first, and nothing in Phases 0
   to 8 depends on more than one.
 
@@ -231,56 +231,63 @@ How each gate is applied is in [`server-compatibility.md`](server-compatibility.
 | `POST /settings/tautulli` | Update Tautulli settings | v1.29.0 | v1.1.0 | yes | The Tautulli page's save. |
 | `GET /status/appdata` | Get application data volume status | v1.19.0 | v1.0.0 | yes | The data directory on the about page, with the warning where it is not a mounted volume. |
 
+### Planned: the discovery epic (#2039)
+
+Each row is ticked in "Today" by the PR that covers it.
+
+| Endpoint | What it does | Overseerr since | Jellyseerr / Seerr since | Today | Note |
+|---|---|---|---|---|---|
+| `GET /certifications/movie` | Get movie certifications | — | v2.6.0 |  | Planned under the discovery epic (#2039). |
+| `GET /certifications/tv` | Get TV certifications | — | v2.6.0 |  | Planned under the discovery epic (#2039). |
+| `GET /collection/{collectionId}` | Get collection details | v1.14.0 | v1.0.0 |  | Planned under the discovery epic (#2039). |
+| `GET /discover/genreslider/movie` | Get genre slider data for movies | v1.22.0 | v1.0.0 |  | Planned under the discovery epic (#2039). |
+| `GET /discover/genreslider/tv` | Get genre slider data for TV series | v1.22.0 | v1.0.0 |  | Planned under the discovery epic (#2039). |
+| `GET /discover/keyword/{keywordId}/movies` | Get movies from keyword | v1.9.0 | v1.0.0 |  | Planned under the discovery epic (#2039). |
+| `GET /discover/movies` | Discover movies | v1.0.0 | v1.0.0 |  | Planned under the discovery epic (#2039). |
+| `GET /discover/movies/genre/{genreId}` | Discover movies by genre | v1.21.0 | v1.0.0 |  | Planned under the discovery epic (#2039). |
+| `GET /discover/movies/language/{language}` | Discover movies by original language | v1.21.0 | v1.0.0 |  | Planned under the discovery epic (#2039). |
+| `GET /discover/movies/studio/{studioId}` | Discover movies by studio | v1.21.0 | v1.0.0 |  | Planned under the discovery epic (#2039). |
+| `GET /discover/movies/upcoming` | Upcoming movies | v1.0.0 | v1.0.0 |  | Planned under the discovery epic (#2039). |
+| `GET /discover/trending` | Trending movies and TV | v1.0.0 | v1.0.0 |  | Planned under the discovery epic (#2039). |
+| `GET /discover/tv` | Discover TV shows | v1.0.0 | v1.0.0 |  | Planned under the discovery epic (#2039). |
+| `GET /discover/tv/genre/{genreId}` | Discover TV shows by genre | v1.21.0 | v1.0.0 |  | Planned under the discovery epic (#2039). |
+| `GET /discover/tv/language/{language}` | Discover TV shows by original language | v1.21.0 | v1.0.0 |  | Planned under the discovery epic (#2039). |
+| `GET /discover/tv/network/{networkId}` | Discover TV shows by network | v1.21.0 | v1.0.0 |  | Planned under the discovery epic (#2039). |
+| `GET /discover/tv/upcoming` | Discover Upcoming TV shows | v1.20.0 | v1.0.0 |  | Planned under the discovery epic (#2039). |
+| `GET /discover/watchlist` | Get the Plex watchlist. | v1.30.0 | v1.2.0 |  | Planned under the discovery epic (#2039). |
+| `GET /media` | Get media | v1.0.0 | v1.0.0 |  | Planned under the discovery epic (#2039). |
+| `GET /movie/{movieId}/ratings` | Get movie ratings | v1.0.0 | v1.0.0 |  | Planned under the discovery epic (#2039). |
+| `GET /movie/{movieId}/ratingscombined` | Get RT and IMDB movie ratings combined | v1.34.0 | v1.7.0 |  | Planned under the discovery epic (#2039). |
+| `GET /movie/{movieId}/recommendations` | Get recommended movies | v1.0.0 | v1.0.0 |  | Planned under the discovery epic (#2039). |
+| `GET /movie/{movieId}/similar` | Get similar movies | v1.0.0 | v1.0.0 |  | Planned under the discovery epic (#2039). |
+| `GET /person/{personId}` | Get person details | v1.0.0 | v1.0.0 |  | Planned under the discovery epic (#2039). |
+| `GET /person/{personId}/combined_credits` | Get combined credits | v1.0.0 | v1.0.0 |  | Planned under the discovery epic (#2039). |
+| `GET /search` | Search for movies, TV shows, or people | v1.0.0 | v1.0.0 |  | Planned under the discovery epic (#2039). |
+| `GET /tv/{tvId}/ratings` | Get TV ratings | v1.0.0 | v1.0.0 |  | Planned under the discovery epic (#2039). |
+| `GET /tv/{tvId}/recommendations` | Get recommended TV series | v1.0.0 | v1.0.0 |  | Planned under the discovery epic (#2039). |
+| `GET /tv/{tvId}/season/{seasonNumber}` | Get season details and episode list | v1.0.0 | v1.0.0 |  | Planned under the discovery epic (#2039). |
+| `GET /tv/{tvId}/similar` | Get similar TV series | v1.0.0 | v1.0.0 |  | Planned under the discovery epic (#2039). |
+| `POST /watchlist` | Add media to watchlist | — | v1.6.0 |  | Planned under the discovery epic (#2039). |
+| `DELETE /watchlist/{tmdbId}` | Delete watchlist item | — | v1.6.0 |  | Planned under the discovery epic (#2039). |
+
 ### Not planned
 
 | Endpoint | What it does | Overseerr since | Jellyseerr / Seerr since | Today | Note |
 |---|---|---|---|---|---|
-| `GET /certifications/movie` | Get movie certifications | — | v2.6.0 |  | Discovery is Binge's surface. |
-| `GET /certifications/tv` | Get TV certifications | — | v2.6.0 |  | Discovery is Binge's surface. |
-| `GET /collection/{collectionId}` | Get collection details | v1.14.0 | v1.0.0 |  | Discovery is Binge's surface. |
-| `GET /discover/genreslider/movie` | Get genre slider data for movies | v1.22.0 | v1.0.0 |  | Discovery is Binge's surface. |
-| `GET /discover/genreslider/tv` | Get genre slider data for TV series | v1.22.0 | v1.0.0 |  | Discovery is Binge's surface. |
-| `GET /discover/keyword/{keywordId}/movies` | Get movies from keyword | v1.9.0 | v1.0.0 |  | Discovery is Binge's surface. |
-| `GET /discover/movies` | Discover movies | v1.0.0 | v1.0.0 |  | Discovery is Binge's surface. |
-| `GET /discover/movies/genre/{genreId}` | Discover movies by genre | v1.21.0 | v1.0.0 |  | Discovery is Binge's surface. |
-| `GET /discover/movies/language/{language}` | Discover movies by original language | v1.21.0 | v1.0.0 |  | Discovery is Binge's surface. |
-| `GET /discover/movies/studio/{studioId}` | Discover movies by studio | v1.21.0 | v1.0.0 |  | Discovery is Binge's surface. |
-| `GET /discover/movies/upcoming` | Upcoming movies | v1.0.0 | v1.0.0 |  | Discovery is Binge's surface. |
-| `GET /discover/trending` | Trending movies and TV | v1.0.0 | v1.0.0 |  | Discovery is Binge's surface. |
-| `GET /discover/tv` | Discover TV shows | v1.0.0 | v1.0.0 |  | Discovery is Binge's surface. |
-| `GET /discover/tv/genre/{genreId}` | Discover TV shows by genre | v1.21.0 | v1.0.0 |  | Discovery is Binge's surface. |
-| `GET /discover/tv/language/{language}` | Discover TV shows by original language | v1.21.0 | v1.0.0 |  | Discovery is Binge's surface. |
-| `GET /discover/tv/network/{networkId}` | Discover TV shows by network | v1.21.0 | v1.0.0 |  | Discovery is Binge's surface. |
-| `GET /discover/tv/upcoming` | Discover Upcoming TV shows | v1.20.0 | v1.0.0 |  | Discovery is Binge's surface. |
-| `GET /discover/watchlist` | Get the Plex watchlist. | v1.30.0 | v1.2.0 |  | Discovery is Binge's surface. |
 | `GET /genres/movie` | Get list of official TMDB movie genres | v1.21.0 | v1.0.0 | yes | Names the genres of a Radarr override rule's condition. |
 | `GET /genres/tv` | Get list of official TMDB movie genres | v1.21.0 | v1.0.0 | yes | Names the genres of a Sonarr override rule's condition. |
 | `GET /keyword/{keywordId}` | Get keyword | v1.32.0 | v1.4.0 | yes | Names a blocklisted tag on the General settings page, and a keyword of an override rule. |
 | `GET /languages` | Languages supported by TMDB | v1.20.0 | v1.0.0 | yes | The General settings page's language pickers: discover languages and blocklisted languages. |
-| `GET /media` | Get media | v1.0.0 | v1.0.0 |  | Recently-added is a discovery slider. |
-| `GET /movie/{movieId}/ratings` | Get movie ratings | v1.0.0 | v1.0.0 |  | Title pages are Binge's surface; the movie/tv lookups the app already makes stay for status. |
-| `GET /movie/{movieId}/ratingscombined` | Get RT and IMDB movie ratings combined | v1.34.0 | v1.7.0 |  | Title pages are Binge's surface; the movie/tv lookups the app already makes stay for status. |
-| `GET /movie/{movieId}/recommendations` | Get recommended movies | v1.0.0 | v1.0.0 |  | Title pages are Binge's surface; the movie/tv lookups the app already makes stay for status. |
-| `GET /movie/{movieId}/similar` | Get similar movies | v1.0.0 | v1.0.0 |  | Title pages are Binge's surface; the movie/tv lookups the app already makes stay for status. |
 | `GET /network/{networkId}` | Get TV network details | v1.21.0 | v1.0.0 | yes | Names the network a Discover slider holds as an id. |
-| `GET /person/{personId}` | Get person details | v1.0.0 | v1.0.0 |  | Title pages are Binge's surface; the movie/tv lookups the app already makes stay for status. |
-| `GET /person/{personId}/combined_credits` | Get combined credits | v1.0.0 | v1.0.0 |  | Title pages are Binge's surface; the movie/tv lookups the app already makes stay for status. |
 | `GET /regions` | Regions supported by TMDB | v1.20.0 | v1.0.0 | yes | The General settings page's region pickers: discover region and blocklisted regions. |
-| `GET /search` | Search for movies, TV shows, or people | v1.0.0 | v1.0.0 |  | Discovery is Binge's surface. |
 | `GET /search/company` | Search for companies | v1.32.0 | v1.4.0 | yes | Finds the studio of a Discover slider. |
 | `GET /search/keyword` | Search for keywords | v1.32.0 | v1.4.0 | yes | Finds tags to blocklist on the General settings page, and keywords for an override rule's condition. |
 | `POST /settings/initialize` | Initialize application | v1.20.0 | v1.0.0 |  | The first-run wizard stays the web client's. |
 | `GET /studio/{studioId}` | Get movie studio details | v1.21.0 | v1.0.0 | yes | Names the studio a Discover slider holds as an id. |
-| `GET /tv/{tvId}/ratings` | Get TV ratings | v1.0.0 | v1.0.0 |  | Title pages are Binge's surface; the movie/tv lookups the app already makes stay for status. |
-| `GET /tv/{tvId}/recommendations` | Get recommended TV series | v1.0.0 | v1.0.0 |  | Title pages are Binge's surface; the movie/tv lookups the app already makes stay for status. |
-| `GET /tv/{tvId}/season/{seasonNumber}` | Get season details and episode list | v1.0.0 | v1.0.0 |  | Title pages are Binge's surface; the movie/tv lookups the app already makes stay for status. |
-| `GET /tv/{tvId}/similar` | Get similar TV series | v1.0.0 | v1.0.0 |  | Title pages are Binge's surface; the movie/tv lookups the app already makes stay for status. |
 | `POST /user/registerPushSubscription` | Register a web push /user/registerPushSubscription | v1.24.0 | v1.0.0 |  | Web push is the PWA's transport; this app polls (Phase 5). |
 | `DELETE /user/{userId}/pushSubscription/{endpoint}` | Delete user push subscription by key | v1.35.0 | v2.7.0 |  | Web push is the PWA's transport; this app polls (Phase 5). |
 | `GET /user/{userId}/pushSubscription/{endpoint}` | Get web push notification settings for a user | v1.35.0 | v2.7.0 |  | Web push is the PWA's transport; this app polls (Phase 5). |
 | `GET /user/{userId}/pushSubscriptions` | Get all web push notification settings for a user | v1.34.0 | v2.5.2 |  | Web push is the PWA's transport; this app polls (Phase 5). |
-| `POST /watchlist` | Add media to watchlist | — | v1.6.0 |  | A title-page action; title pages are Binge's. |
-| `DELETE /watchlist/{tmdbId}` | Delete watchlist item | — | v1.6.0 |  | A title-page action; title pages are Binge's. |
 | `GET /watchproviders/movies` | Get watch provider movies | v1.32.0 | v1.4.0 | yes | The streaming providers a Discover movie slider picks from. |
 | `GET /watchproviders/regions` | Get watch provider regions | v1.32.0 | v1.4.0 | yes | The General settings page's streaming region picker. |
 | `GET /watchproviders/tv` | Get watch provider series | v1.32.0 | v1.4.0 | yes | The streaming providers a Discover TV slider picks from. |
