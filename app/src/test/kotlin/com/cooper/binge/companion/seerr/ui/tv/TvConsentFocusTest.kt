@@ -18,6 +18,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
+import com.cooper.homelab.core.uiandroid.R as CoreR
 
 /**
  * At a large font the consent page is taller than the window (#1258). The answer still takes the arrival focus and is
@@ -35,9 +36,9 @@ class TvConsentFocusTest {
         composeTestRule.setContent { BingeTvTheme { TvConsentScreen(onChoice = {}) } }
         composeTestRule.waitForIdle()
 
-        focusable(R.string.consent_accept).assertIsFocused().assertIsDisplayed()
+        focusable(CoreR.string.consent_accept).assertIsFocused().assertIsDisplayed()
 
-        listOf(R.string.tv_consent_point_change_title, R.string.consent_point_never_title, R.string.consent_point_shared_title)
+        listOf(R.string.tv_consent_point_change_title, CoreR.string.consent_point_never_title, CoreR.string.consent_point_shared_title)
             .forEach { title ->
                 press(Key.DirectionUp)
                 focusable(title).assertIsFocused().assertIsDisplayed()

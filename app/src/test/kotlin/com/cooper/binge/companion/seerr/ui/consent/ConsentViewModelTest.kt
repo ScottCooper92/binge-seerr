@@ -34,27 +34,43 @@ class ConsentViewModelTest {
                 PreferenceDataStoreFactory.create(scope = backgroundScope) {
                     folder.newFile("t.preferences_pb")
                 },
-                crashReportingDefault = true,
+                crashReportingDefault = false,
             )
         val vm = ConsentViewModel(prefs, mainDispatcherRule.dispatcher)
         viewModels.put("consent", vm)
-        backgroundScope.launch { vm.uiState.collect {} }
+        backgroundScope.launch { vm.consent.collect {} }
         return vm
     }
 
     @Test
-    fun `an unanswered install is asked, and either answer is kept and ends the question`() =
+    fun `an unanswered install is asked`() =
         runTest {
             val vm = viewModel()
-            vm.uiState.first { it == ConsentUiState.Asking }
+            vm.consent.first { it == AnalyticsConsent.UNDECIDED }
+        }
 
-            vm.answer(false)
-            vm.uiState.first { it == ConsentUiState.Decided }
-            assertEquals(AnalyticsConsent.DENIED, prefs.analyticsConsent.first())
+    @Test
+    fun `agreeing turns usage data and crash reports on in one answer`() =
+        runTest {
+            val vm = viewModel()
+            vm.consent.first { it == AnalyticsConsent.UNDECIDED }
 
             vm.answer(true)
-            prefs.analyticsConsent.first { it == AnalyticsConsent.GRANTED }
-            assertEquals(ConsentUiState.Decided, vm.uiState.value)
+
+            vm.consent.first { it == AnalyticsConsent.GRANTED }
+            assertEquals(true, prefs.crashReportingEnabled.first())
+        }
+
+    @Test
+    fun `not now turns both off, and crash reports stay off`() =
+        runTest {
+            val vm = viewModel()
+            vm.consent.first { it == AnalyticsConsent.UNDECIDED }
+
+            vm.answer(false)
+
+            vm.consent.first { it == AnalyticsConsent.DENIED }
+            assertEquals(false, prefs.crashReportingEnabled.first())
         }
 
     @Test
@@ -62,6 +78,6 @@ class ConsentViewModelTest {
         runTest {
             val vm = viewModel()
             prefs.setAnalyticsGranted(true)
-            vm.uiState.first { it == ConsentUiState.Decided }
+            vm.consent.first { it == AnalyticsConsent.GRANTED }
         }
 }
