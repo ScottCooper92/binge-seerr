@@ -1147,23 +1147,12 @@
     <string name="tv_settings_report_bug_scan">Scan it with your phone\'s camera. The report opens with this app\'s version and this TV\'s details filled in.</string>
     <string name="tv_settings_report_bug_code_description">QR code that opens a bug report for this app on GitHub</string>
     <string name="tv_sheet_close">Close</string>
-    <string name="consent_title">Help make this app better</string>
-    <string name="consent_subtitle">Share usage data so we can see which parts of the app get used and what breaks.</string>
-    <string name="consent_point_shared_title">Shapes what gets fixed</string>
-    <string name="consent_point_shared_detail">We see which screens get used, so the work goes where it matters.</string>
-    <string name="consent_point_never_title">Private by design</string>
-    <string name="consent_point_never_detail">Screens you open, actions you take and whether they worked. Never your server\'s address, your requests, its titles or anyone\'s name.</string>
-    <string name="consent_point_change_title">Off with one tap</string>
-    <string name="consent_point_change_detail">Change your mind any time under This app.</string>
-    <string name="consent_accept">Share usage data</string>
-    <string name="consent_decline">Not now</string>
     <string name="settings_share_usage_data">Share usage data</string>
     <string name="settings_share_usage_data_caption">Sends which screens and actions you use</string>
     <string name="settings_send_crash_reports">Send crash reports</string>
-    <string name="consent_kicker">Privacy</string>
     <string name="tv_consent_point_change_title">Off with one press</string>
     <string name="tv_consent_point_change_detail">Change your mind any time in Settings, under This app.</string>
-    <string name="tv_consent_reassurance">Nothing is collected unless you choose Share usage data.</string>
+    <string name="tv_consent_reassurance">Nothing is collected unless you choose Share.</string>
 
     <!-- Debug builds only: the hub's entry point into developer options. Read from every variant
          (the row's label/detail), so it stays here rather than in src/debug's strings.xml — its
