@@ -43,10 +43,10 @@ class SettingsSearchJourneyTest {
         host.launch(HomeRoute)
         host.awaitShowing(host.string(R.string.hub_section_requests_desc))
         host.compose
-            .onNodeWithText(host.string(R.string.search_title))
+            .onNodeWithText(host.string(com.cooper.homelab.core.uiandroid.R.string.search_title))
             .performScrollTo()
             .performClick()
-        host.awaitShowing(host.string(R.string.search_prompt))
+        host.awaitShowing(host.string(com.cooper.homelab.core.uiandroid.R.string.search_prompt))
         assertEquals(SettingsSearchRoute, host.stack().last())
     }
 
@@ -91,6 +91,6 @@ class SettingsSearchJourneyTest {
         host.back()
 
         assertEquals(listOf(HubRoute), host.stack())
-        assertFalse(host.isShowing(host.string(R.string.search_prompt)))
+        assertFalse(host.isShowing(host.string(com.cooper.homelab.core.uiandroid.R.string.search_prompt)))
     }
 }

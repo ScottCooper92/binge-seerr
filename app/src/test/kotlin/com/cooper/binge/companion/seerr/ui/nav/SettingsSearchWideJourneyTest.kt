@@ -61,10 +61,10 @@ class SettingsSearchWideJourneyTest {
         assertEquals(listOf(HubRoute, IssuesRoute), host.stack())
 
         host.compose
-            .onNodeWithText(host.string(R.string.search_title))
+            .onNodeWithText(host.string(com.cooper.homelab.core.uiandroid.R.string.search_title))
             .performScrollTo()
             .performClick()
-        host.awaitShowing(host.string(R.string.search_prompt))
+        host.awaitShowing(host.string(com.cooper.homelab.core.uiandroid.R.string.search_prompt))
         assertTrue("the search covers the whole window, hub included", !host.isShowing(host.string(R.string.hub_section_requests_desc)))
         host.compose.onNode(hasSetTextAction()).performTextInput("logs")
         host.awaitShowing(host.string(R.string.server_settings_logs))

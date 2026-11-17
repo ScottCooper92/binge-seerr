@@ -110,7 +110,7 @@ internal sealed interface SearchTarget {
  * One thing the search can take the user to: a page, or one setting on it ([row]). [keywords] is one string of other words people look
  * for it by, translated with the rest. Opening an entry opens its page, scrolled to and washing the row where it names one.
  */
-internal class SettingEntry(
+internal class IndexEntry(
     val target: SearchTarget,
     @param:StringRes val label: Int,
     val icon: ImageVector,
@@ -139,13 +139,13 @@ private val SearchTarget.key: String
  * A stable name for an entry, to remember it by: its target and, for a setting, its row. Never a label, which is translated, and never
  * a resource's number, which changes from build to build. A test holds that every id is the one entry's.
  */
-internal val SettingEntry.id: String get() = "${target.key}|${row.orEmpty()}"
+internal val IndexEntry.id: String get() = "${target.key}|${row.orEmpty()}"
 
 /** Whether the search may offer this entry: its page is one this viewer can open, and its own gate passes. */
-internal fun SettingEntry.available(access: SearchAccess): Boolean = target.opensFor(access) && shown(access)
+internal fun IndexEntry.available(access: SearchAccess): Boolean = target.opensFor(access) && shown(access)
 
 /** The page-level gate: the server's own settings need an admin, the viewer's own pages need nothing more than signing in. */
-private fun SearchTarget.opensFor(access: SearchAccess): Boolean =
+internal fun SearchTarget.opensFor(access: SearchAccess): Boolean =
     when (this) {
         is SearchTarget.Server -> access.isAdmin && page.shownFor(access)
         is SearchTarget.Agent -> access.isAdmin
@@ -179,16 +179,16 @@ private fun server(
     icon: ImageVector,
     @StringRes keywords: Int? = null,
     shown: (SearchAccess) -> Boolean = { true },
-) = SettingEntry(SearchTarget.Server(page), label, icon, R.string.hub_section_settings, keywords, shown = shown)
+) = IndexEntry(SearchTarget.Server(page), label, icon, R.string.hub_section_settings, keywords, shown = shown)
 
 private fun account(
     page: UserSettingsPage,
     icon: ImageVector,
     @StringRes keywords: Int? = null,
-) = SettingEntry(SearchTarget.Account(page), page.titleRes(), icon, R.string.search_section_account, keywords)
+) = IndexEntry(SearchTarget.Account(page), page.titleRes(), icon, R.string.search_section_account, keywords)
 
 private fun agent(agent: ServerAgent) =
-    SettingEntry(
+    IndexEntry(
         SearchTarget.Agent(agent),
         agent.labelRes(),
         agent.icon(),
@@ -200,7 +200,7 @@ private fun agent(agent: ServerAgent) =
  * Everything the search knows: each page of the console the signed-in user can open, once, with where it is. A new page adds its
  * line, and a test holds that every page an enum lists has one. An entry shows only where [available] says its page does.
  */
-internal val settingsIndex: List<SettingEntry> =
+internal val settingsIndex: List<IndexEntry> =
     buildList {
         add(account(UserSettingsPage.General, Icons.Filled.Tune, R.string.search_kw_account))
         add(account(UserSettingsPage.Password, Icons.Filled.Password, R.string.search_kw_password))
@@ -279,7 +279,7 @@ internal val settingsIndex: List<SettingEntry> =
         add(server(ServerSettingsPage.About, R.string.settings_about, Icons.Filled.Info, R.string.search_kw_about))
         addAll(settingRowEntries)
         add(
-            SettingEntry(
+            IndexEntry(
                 SearchTarget.ThisApp,
                 R.string.settings_group_app,
                 Icons.Filled.PhoneAndroid,
@@ -288,7 +288,7 @@ internal val settingsIndex: List<SettingEntry> =
             ),
         )
         add(
-            SettingEntry(
+            IndexEntry(
                 SearchTarget.Licences,
                 R.string.licences_title,
                 Icons.Filled.Description,
