@@ -18,8 +18,8 @@ internal const val RECENT_ENTRIES_KEY = "recent_entries"
 
 /**
  * The recents of this app's one server, in the shared library's per-server store. The server's id is read on first use, because
- * it is a DataStore read, and the list a released version kept under the bare key ([RECENT_ENTRIES_KEY]) is copied to the server's
- * key once, so what the user last opened is still offered. The old key is left where it is.
+ * it is a DataStore read, and the list a released version kept under the bare key ([RECENT_ENTRIES_KEY]) is moved to the server's
+ * key, so what the user last opened is still offered and a later clear cannot bring the old list back.
  */
 internal class ServerRecentSearches(
     private val dataStore: DataStore<Preferences>,
@@ -37,7 +37,11 @@ internal class ServerRecentSearches(
         val id = server()
         val old = stringPreferencesKey(RECENT_ENTRIES_KEY)
         val current = stringPreferencesKey("$RECENT_ENTRIES_KEY.${id.value}")
-        dataStore.edit { prefs -> if (prefs[current] == null) prefs[old]?.let { prefs[current] = it } }
+        dataStore.edit { prefs ->
+            val legacy = prefs[old] ?: return@edit
+            if (prefs[current] == null) prefs[current] = legacy
+            prefs.remove(old)
+        }
         return DataStoreRecentSearches(dataStore, id, RECENT_ENTRIES_KEY)
     }
 

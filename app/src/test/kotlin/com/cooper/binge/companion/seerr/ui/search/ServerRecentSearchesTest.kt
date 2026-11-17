@@ -15,7 +15,7 @@ import org.junit.rules.TemporaryFolder
 
 /**
  * The recents of the one server in the shared per-server store, over the list a released version kept under the bare
- * `recent_entries` key: it is copied to the server's key once, and the old key is left where it is.
+ * `recent_entries` key: it is moved to the server's key, so a clear stays cleared across launches.
  */
 class ServerRecentSearchesTest {
     @get:Rule
@@ -45,11 +45,11 @@ class ServerRecentSearchesTest {
 
             assertEquals(listOf("server.Logs|", "account.Password|", "this-app|"), recents.ids.first())
             assertEquals("server.Logs|\naccount.Password|\nthis-app|", data.data.first()[keyed])
-            assertEquals("server.Logs|\naccount.Password|\nthis-app|", data.data.first()[legacy])
+            assertNull(data.data.first()[legacy])
         }
 
     @Test
-    fun `what is remembered goes to the server's key and the old one is not touched`() =
+    fun `what is remembered goes to the server's key and the old one is gone`() =
         runTest {
             val data = dataStore()
             data.edit { it[legacy] = "this-app|" }
@@ -58,7 +58,7 @@ class ServerRecentSearchesTest {
             recents.remember("licences|")
 
             assertEquals(listOf("licences|", "this-app|"), recents.ids.first())
-            assertEquals("this-app|", data.data.first()[legacy])
+            assertNull(data.data.first()[legacy])
         }
 
     @Test
@@ -73,5 +73,27 @@ class ServerRecentSearchesTest {
 
             assertEquals(emptyList<String>(), recents.ids.first())
             assertNull(data.data.first()[keyed])
+        }
+
+    @Test
+    fun `a clear stays cleared when the app is reopened`() =
+        runTest {
+            val data = dataStore()
+            data.edit { it[legacy] = "this-app|" }
+            val first = recents(data)
+            first.ids.first()
+            first.clear()
+
+            assertEquals(emptyList<String>(), recents(data).ids.first())
+        }
+
+    @Test
+    fun `a clear before the first read, as a server change does, is not undone on the next launch`() =
+        runTest {
+            val data = dataStore()
+            data.edit { it[legacy] = "this-app|" }
+            recents(data).clear()
+
+            assertEquals(emptyList<String>(), recents(data).ids.first())
         }
 }
