@@ -17,32 +17,16 @@ app, and the flag stays off. Remote Config keeps the last activated values on di
 before the first fetch lands. The app fetches at start and each time `MainActivity` comes to the foreground; Remote
 Config itself throttles that to once an hour.
 
-### The first read is on the main thread
+### The first read is off the main thread
 
-Hilt builds `RemoteFeatureFlags` while it injects `SeerrApp`, so `source.current()` runs on the main thread in
-`Application.onCreate`. That call creates the Remote Config instance and reads the flag, which may wait for Remote
-Config's cache to load from disk. It stays there on purpose: a value that arrived late would show a screen without Binge and then with it.
+`RemoteFeatureFlags` does no Remote Config work while Hilt builds it. Its first `refresh()` reads the activated values
+on the IO dispatcher, so `Application.onCreate` never waits on Remote Config's cache.
 
-We measured it on 2026-10-26 and it is cheap enough to keep:
-
-- Device: Pixel 10 Pro XL, Android 16 (`CP1A.260505.005`).
-- Build: debug, at `cbc82895a`, with the debug app's own `google-services.json`, so Firebase was live.
-- Method: `SystemClock.elapsedRealtimeNanos()` around `source.current()`, and a StrictMode thread policy with
-  `detectDiskReads().penaltyLog()` set before `super.onCreate()`. One launch first, so the activated config was on
-  disk. Then five cold starts: `am force-stop`, then `am start -W` of `MainActivity`. The instrumentation was not
-  committed.
-
-| | Median | Max |
-| --- | --- | --- |
-| `source.current()` on the main thread | 0.75 ms | 0.78 ms |
-| of which creating the Remote Config instance | 0.59 ms | 0.62 ms |
-| of which the two `getBoolean` reads (two flags at the time) | 0.11 ms | 0.12 ms |
-| `am start -W` TotalTime | 860 ms | 885 ms |
-
-StrictMode reported no disk read from Remote Config, `RemoteFlagSource` or `RemoteFeatureFlags` in any run. The very
-first launch after install, with no cache yet, took 0.94 ms. The activated config held no keys at the time, so a
-template with the flag adds only a few bytes to the file it reads. If the read ever costs more than about 5 ms,
-move it to a background dispatcher and make the first frame of the Binge-facing surfaces wait for the first value, with a bound.
+The trade-off is the first moments after launch. Until that read lands, the flags hold the local overrides alone, so
+the flag is off. A cold start whose activated config has `binge_promotion_enabled = true` composes its first frame
+without Binge, and the Binge tile and wording appear once the read lands. A debug build avoids this for overrides by
+reading them once at construction. Tracked in #2018, where the fix is a seed from homelab-core or a bounded wait on
+the first frame.
 
 A debug build adds a **Feature flags** row to the hub's developer section. Tapping a flag cycles its local override:
 Remote Config's value, on, off. A release build never reads overrides.
