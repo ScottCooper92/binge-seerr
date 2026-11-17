@@ -160,6 +160,7 @@ class LinkedAccountsViewModel
                         LinkedAccount(it, linked = !user.jellyfinUserId.isNullOrBlank(), linkedAs = user.jellyfinUsername.orNull())
                     },
                 canQuickConnect = profile.hasQuickConnect && mediaServerOrigin == UserOrigin.Jellyfin,
+                canUnlink = userId != PRIMARY_ADMIN_ID,
             )
         }
 
