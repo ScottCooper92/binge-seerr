@@ -1137,6 +1137,8 @@
     <string name="server_settings_agent_profile_name_hint">Only needed where the server does not use the default profile.</string>
     <string name="settings_group_app">This app</string>
     <string name="settings_report_bug">Report a bug</string>
+    <string name="overflow_menu">More options</string>
+    <string name="report_problem">Report a problem</string>
     <string name="settings_report_bug_caption">Opens GitHub with your device details filled in</string>
     <string name="settings_shake_to_report">Shake to report</string>
     <string name="shake_report_title">Report a bug?</string>

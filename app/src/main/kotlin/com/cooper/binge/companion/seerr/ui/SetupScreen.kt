@@ -44,7 +44,8 @@ class SetupActions(
  * Back from the sign-in, the arrow or the gesture, is changing server, so it returns to the address.
  *
  * Edit connection passes a [title] and its [onBack]: it opens as a pane of its own, so the flow's bar carries the title,
- * and Back on the address leaves the pane. Setup and reconnect have neither; the step's heading says where the user is.
+ * and Back on the address leaves the pane. Setup and reconnect have neither; the step's heading says where the user is. They pass
+ * [onReportProblem], which puts a menu with that one item on the bar: a user who cannot connect has no Settings to reach.
  */
 @Composable
 fun SetupScreen(
@@ -52,6 +53,7 @@ fun SetupScreen(
     actions: SetupActions,
     title: String? = null,
     onBack: (() -> Unit)? = null,
+    onReportProblem: (() -> Unit)? = null,
 ) {
     // A step keeps drawing itself while it slides out, after the state has moved on, so each draws the last state it had.
     val address = rememberLatest(state as? SetupUiState.Address)
@@ -66,6 +68,8 @@ fun SetupScreen(
         onBack = actions.onChangeServer,
         title = title,
         onExit = onBack,
+        // Before a server is connected Settings is out of reach, so a problem can still be reported from the bar.
+        actions = { if (onReportProblem != null) ReportProblemAction(onReportProblem) },
         // The home swaps to the hub on the credentials landing; Connected is the frame in between.
         loading = state is SetupUiState.Loading || state is SetupUiState.Connected,
         aside = { step -> if (step == SIGN_IN_STEP) server?.let { SetupServerBackdrop(it) } },

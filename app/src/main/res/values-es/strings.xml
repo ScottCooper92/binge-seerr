@@ -1083,6 +1083,8 @@
     <string name="server_settings_agent_profile_name_hint">Solo hace falta si el servidor no usa el perfil predeterminado.</string>
     <string name="settings_group_app">Esta aplicación</string>
     <string name="settings_report_bug">Informar de un error</string>
+    <string name="overflow_menu">Más opciones</string>
+    <string name="report_problem">Informar de un problema</string>
     <string name="settings_report_bug_caption">Abre GitHub con los datos de tu dispositivo ya rellenados</string>
     <string name="settings_shake_to_report">Agitar para informar</string>
     <string name="shake_report_title">¿Informar de un error?</string>

@@ -48,10 +48,17 @@ class SetupStepFlowTest {
         state: SetupUiState,
         actions: SetupActions = actions(),
         title: String? = null,
+        onReportProblem: (() -> Unit)? = null,
     ) = rule.setContent {
         dispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
         BingeExpressiveTheme(dynamicColor = false) {
-            SetupScreen(state = state, actions = actions, title = title, onBack = { left += 1 }.takeIf { title != null })
+            SetupScreen(
+                state = state,
+                actions = actions,
+                title = title,
+                onBack = { left += 1 }.takeIf { title != null },
+                onReportProblem = onReportProblem,
+            )
         }
     }
 
@@ -123,6 +130,31 @@ class SetupStepFlowTest {
             assertEquals(1, disconnected)
             assertEquals(0, changedServer)
         }
+    }
+
+    @Test
+    fun `the address step has a menu that reports a problem`() {
+        var reported = 0
+        show(address(), onReportProblem = { reported++ })
+
+        rule.onNodeWithContentDescription("More options").performClick()
+        rule.onNodeWithText("Report a problem").performClick()
+
+        rule.runOnIdle { assertEquals(1, reported) }
+    }
+
+    @Test
+    fun `the sign-in step has the menu too`() {
+        show(signIn(), onReportProblem = {})
+
+        rule.onNodeWithContentDescription("More options").assertExists()
+    }
+
+    @Test
+    fun `a step with no way to report has no menu, as edit connection does`() {
+        show(address(), title = "Edit connection")
+
+        rule.onAllNodesWithContentDescription("More options").assertCountEquals(0)
     }
 
     private fun address() = SetupUiState.Address(serverUrl = "http://seerr.lan:5055", insecure = false, isInspecting = false, error = null)
