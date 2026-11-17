@@ -13,7 +13,7 @@ import com.cooper.binge.companion.seerr.seerr.etaMinutes
 import com.cooper.binge.companion.seerr.seerr.rejectsSession
 import com.cooper.binge.companion.seerr.seerr.toAvatarUrl
 import com.cooper.binge.companion.seerr.seerr.toPermissions
-import com.cooper.binge.companion.seerr.seerr.toSeerrError
+import com.cooper.binge.companion.seerr.seerr.toServerFailure
 import com.cooper.binge.companion.seerr.seerr.toTmdbPosterUrl
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -152,8 +152,8 @@ class HubOverviewLoader
         }
     }
 
-private fun Throwable?.toUserLoad(): HubUserLoad =
-    if (this?.toSeerrError()?.rejectsSession == true) HubUserLoad.Rejected else HubUserLoad.Failed
+private suspend fun Throwable?.toUserLoad(): HubUserLoad =
+    if (this?.toServerFailure()?.rejectsSession == true) HubUserLoad.Rejected else HubUserLoad.Failed
 
 private fun SeerrUserDto.toAccount(isAdmin: Boolean): HubAccount =
     HubAccount(
