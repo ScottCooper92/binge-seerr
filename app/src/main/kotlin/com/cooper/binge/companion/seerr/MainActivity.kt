@@ -24,6 +24,7 @@ import com.cooper.binge.companion.seerr.auth.ForegroundUserRefresh
 import com.cooper.binge.companion.seerr.feedback.BugReportLinks
 import com.cooper.binge.companion.seerr.feedback.FeedbackPrefs
 import com.cooper.binge.companion.seerr.feedback.ShakeToReportPrompt
+import com.cooper.binge.companion.seerr.flags.DiscoveryFlag
 import com.cooper.binge.companion.seerr.flags.LocalFlags
 import com.cooper.binge.companion.seerr.telemetry.LocalAnalytics
 import com.cooper.binge.companion.seerr.telemetry.screenName
@@ -36,7 +37,6 @@ import com.cooper.binge.companion.seerr.ui.consent.ConsentGate
 import com.cooper.binge.companion.seerr.ui.linkedRequestId
 import com.cooper.binge.companion.seerr.ui.replaceAll
 import com.cooper.binge.companion.seerr.ui.tv.TvSeerrShell
-import com.cooper.binge.companion.seerr.flags.DiscoveryFlag
 import com.cooper.homelab.core.flags.FeatureFlags
 import com.cooper.homelab.core.telemetry.Analytics
 import dagger.hilt.android.AndroidEntryPoint

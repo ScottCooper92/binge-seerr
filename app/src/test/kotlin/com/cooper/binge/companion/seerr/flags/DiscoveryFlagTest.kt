@@ -1,11 +1,12 @@
 package com.cooper.binge.companion.seerr.flags
 
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.toList
-import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -17,6 +18,7 @@ import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.io.File
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class DiscoveryFlagTest {
     @get:Rule
     val folder = TemporaryFolder()
@@ -45,7 +47,13 @@ class DiscoveryFlagTest {
         source: DiscoveryFlagSource,
         override: DiscoveryFlagOverride = NoDiscoveryFlagOverride,
         initialOverride: Boolean? = null,
-    ) = RemoteDiscoveryFlag(source, override, backgroundScope, StandardTestDispatcher(testScheduler), initialOverride)
+    ) = RemoteDiscoveryFlag(
+        source,
+        override,
+        TestScope(UnconfinedTestDispatcher(testScheduler)),
+        UnconfinedTestDispatcher(testScheduler),
+        initialOverride,
+    )
 
     @Test
     fun `the flag is off with nothing cached and nothing fetched`() =
@@ -128,7 +136,13 @@ class DiscoveryFlagTest {
         runTest {
             val store = PreferenceDataStoreFactory.create(scope = backgroundScope) { File(folder.root, "flags2.preferences_pb") }
             DataStoreDiscoveryFlagOverride(store).set(true)
-            assertEquals(setOf("override_$DISCOVERY_FLAG_KEY"), store.data.first().asMap().keys.map { it.name }.toSet())
+            val names =
+                store.data
+                    .first()
+                    .asMap()
+                    .keys
+                    .map { it.name }
+                    .toSet()
+            assertEquals(setOf("override_$DISCOVERY_FLAG_KEY"), names)
         }
 }
-

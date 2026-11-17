@@ -76,7 +76,8 @@ object FlagsModule {
     @Singleton
     fun discoveryFlagOverride(
         @ApplicationContext context: Context,
-    ): DiscoveryFlagOverride = if (BuildConfig.DEBUG) DataStoreDiscoveryFlagOverride(context.flagOverridesDataStore) else NoDiscoveryFlagOverride
+    ): DiscoveryFlagOverride =
+        if (BuildConfig.DEBUG) DataStoreDiscoveryFlagOverride(context.flagOverridesDataStore) else NoDiscoveryFlagOverride
 
     @Provides
     @Singleton
