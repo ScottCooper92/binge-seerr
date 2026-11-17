@@ -45,7 +45,10 @@ class FlagOverridesViewModel
         private val discoveryOverride: DiscoveryFlagOverride,
     ) : ViewModel() {
         val uiState: StateFlow<FlagOverridesUiState> =
-            combine(featureFlags.flags, overrides.values, discoveryFlag.enabled, discoveryOverride.value) { flags, local, discovery, discoveryLocal ->
+            combine(
+                combine(featureFlags.flags, overrides.values, ::Pair),
+                combine(discoveryFlag.enabled, discoveryOverride.value, ::Pair),
+            ) { (flags, local), (discovery, discoveryLocal) ->
                 FlagOverridesUiState.Ready(
                     Flag.entries.map { FlagRow(it.key, it, flags[it], local[it]) } +
                         FlagRow(DISCOVERY_FLAG_KEY, null, discovery, discoveryLocal),
