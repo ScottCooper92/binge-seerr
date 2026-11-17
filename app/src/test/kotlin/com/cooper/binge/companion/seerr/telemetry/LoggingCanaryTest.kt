@@ -29,6 +29,7 @@ import kotlin.time.Instant
 
 private const val ADDRESS = "https://seerr.home.example:5055"
 private const val HOST = "seerr.home.example:5055"
+private const val BARE_HOST = "seerr.home.example"
 private const val API_KEY = "k3y-0123456789abcdef"
 private const val USER = "alice-the-requester"
 
@@ -114,9 +115,34 @@ class LoggingCanaryTest {
             assertEquals("https://other.example", redactor.redact("https://other.example"))
         }
 
+    @Test
+    fun `a short host name is redacted as a whole token only, bare or with its port`() =
+        runTest {
+            val credentials = MutableStateFlow<SeerrCredentials?>(SeerrCredentials("http://jellyfin:5055/", SeerrAuth.ApiKey(API_KEY)))
+            redactor.followCredentials(credentials, CoroutineScope(UnconfinedTestDispatcher(testScheduler)))
+
+            assertEquals("[redacted] timed out", redactor.redact("jellyfin timed out"))
+            assertEquals("to [redacted] failed", redactor.redact("to jellyfin:5055 failed"))
+            assertEquals("JellyfinSetup and mediajellyfin", redactor.redact("JellyfinSetup and mediajellyfin"))
+
+            credentials.value = null
+            assertEquals("jellyfin timed out", redactor.redact("jellyfin timed out"))
+        }
+
+    @Test
+    fun `the bare host of a saved address does not reach the log`() =
+        runTest {
+            seedRedactor()
+
+            ring.warn("t", "failed", listOf(LogField.Text("note", "could not reach $BARE_HOST just now")))
+
+            assertClean()
+            assertTrue(ring.render().contains("could not reach [redacted] just now"))
+        }
+
     private fun assertClean() {
         val shared = ring.render()
-        listOf(ADDRESS, HOST, API_KEY, USER).forEach { secret ->
+        listOf(ADDRESS, HOST, BARE_HOST, API_KEY, USER).forEach { secret ->
             assertFalse("$secret reached the log", shared.contains(secret, ignoreCase = true))
         }
     }
