@@ -965,6 +965,11 @@ app:setup_username  e3b89e9d33f8
 app:setup_username_placeholder  43c6c81836dc
 app:shake_report_message  e30de55e532d
 app:shake_report_title  0ea0e0de374e
+app:shell_placeholder_message  d428420b0878
+app:shell_tab_movies  dff924b69f96
+app:shell_tab_search  49c266baaaa7
+app:shell_tab_settings  74a883a037bc
+app:shell_tab_tv  ca62d5e073f5
 app:sort_title  c9129025bd3f
 app:state_empty_title  49abaf804ab3
 app:state_error_forbidden_message  f70b28bf6c5c
