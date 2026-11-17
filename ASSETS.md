@@ -1,7 +1,7 @@
 # Name and artwork
 
-The GNU General Public License covers this app's code. It does not cover its name or artwork.
-Those are all rights reserved, Copyright (c) Scott Cooper.
+This app's name and artwork are all rights reserved, Copyright (c) 2025-2026 Scott Cooper, like its code
+(see [LICENSE](LICENSE)).
 
 ## What this covers
 
@@ -16,12 +16,8 @@ Those are all rights reserved, Copyright (c) Scott Cooper.
 
 ## What you may do
 
-You may redistribute these files unmodified, inside an unmodified copy of the app.
-
-## What you may not do
-
-A fork, or any modified copy of the app, must replace all of them. See
-[TRADEMARKS.md](TRADEMARKS.md) for the name.
+They are distributed inside the app as published. No licence is granted to copy, modify or
+redistribute them. See [TRADEMARKS.md](TRADEMARKS.md) for the name.
 
 ## What this does not cover
 
