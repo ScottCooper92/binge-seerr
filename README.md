@@ -122,8 +122,7 @@ git clone --recurse-submodules https://github.com/ScottCooper92/binge-seerr
 ```
 
 The app also links a private library of the author's, `homelab-core`, through the same kind of submodule. Its source is not
-public, so **only the author's own CI and machines can build this app**. A fork can read the code and review a pull request,
-but cannot compile it, and a reproducible build from source is not possible. The licence exception below covers the link.
+public, so **only the author's own CI and machines can build this app**, and a reproducible build from source is not possible.
 
 That is the whole gate: the checks `CLAUDE.md` lists under Gates, from the Kotlin compile to the
 screenshot suite. JDK 21, then a `jvmTarget` of 17, `compileSdk` 37, `minSdk` 26 and the AGP in `libs.versions.toml`, matching Binge,
@@ -175,18 +174,11 @@ CI triage table those workflows work from.
 
 ## Licence
 
-Copyright (c) Scott Cooper.
+Copyright (c) 2025-2026 Scott Cooper. All rights reserved. See [LICENSE](LICENSE): no licence is granted
+to copy, modify or distribute this code. The app's name and artwork are covered too: see
+[ASSETS.md](ASSETS.md) and [TRADEMARKS.md](TRADEMARKS.md).
 
-This app is free software under the GNU General Public License, version 3 or (at your option) any
-later version. See [LICENSE](LICENSE).
+Third-party libraries keep their own licences, which the app lists on its Open-source licences page.
+Versions of the app that were released before this notice stay under the licence they shipped with.
 
-[LICENSE-EXCEPTION.md](LICENSE-EXCEPTION.md) adds a permission under section 7 for the Google Play
-services, Play Billing, Play in-app review and Firebase libraries, and the `homelab-core` libraries by Scott Cooper, that this
-app links.
-
-The app's name and artwork are not under the GPL. They are all rights reserved: see
-[ASSETS.md](ASSETS.md) and [TRADEMARKS.md](TRADEMARKS.md). A fork needs a different name and
-different artwork.
-
-The contracts and SDK in `binge-companions` stay under Apache 2.0, so anyone can write a companion
-without taking on the GPL.
+The contracts and SDK in `binge-companions` stay under Apache 2.0, so anyone can write a companion.

@@ -51,9 +51,10 @@ and check every pin after any bot push.
 A third included build, `homelab-core/`, is private: it provides `com.cooper.homelab:app-services` (the bug-report link,
 the shake filter, the review prompt and the tip billing) and `com.cooper.homelab:testing` for tests. CI fetches it through a minted read-only token, and a checkout without access to it fails to build.
 
-This app is GPL-3.0-or-later, with a section-7 permission for the Google libraries and the
-homelab-core libraries it links (`LICENSE-EXCEPTION.md`); its name and artwork are all rights reserved (`ASSETS.md`,
-`TRADEMARKS.md`). The contracts in binge-companions stay Apache-2.0.
+This app is all rights reserved (`LICENSE`): no licence is granted to copy, modify or distribute its code, name or
+artwork (`ASSETS.md`, `TRADEMARKS.md`). Versions released earlier stay under the licence they shipped with. Third-party
+libraries keep their own licences, listed on the app's Open-source licences page. The contracts in binge-companions stay
+Apache-2.0.
 
 ## The one rule everything else serves
 

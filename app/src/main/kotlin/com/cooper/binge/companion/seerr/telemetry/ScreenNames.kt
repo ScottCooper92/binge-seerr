@@ -3,6 +3,7 @@ package com.cooper.binge.companion.seerr.telemetry
 import androidx.compose.runtime.staticCompositionLocalOf
 import com.cooper.binge.companion.seerr.ui.BlocklistDetailRoute
 import com.cooper.binge.companion.seerr.ui.BlocklistRoute
+import com.cooper.binge.companion.seerr.ui.DiagnosticsRoute
 import com.cooper.binge.companion.seerr.ui.DiscoverSliderRoute
 import com.cooper.binge.companion.seerr.ui.DvrInstanceRoute
 import com.cooper.binge.companion.seerr.ui.EditConnectionRoute
@@ -60,6 +61,7 @@ fun SeerrRoute.screenName(): String =
         SettingsSearchRoute -> "settings_search"
         EditConnectionRoute -> "edit_connection"
         LicencesRoute -> "licences"
+        DiagnosticsRoute -> "diagnostics"
         ThisAppRoute -> "this_app"
         else -> debugScreenName(this)
     }
