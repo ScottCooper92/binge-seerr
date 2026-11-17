@@ -44,13 +44,7 @@ class GeneralSettingsViewModel
         @ApplicationScope appScope: CoroutineScope,
         @Assisted private val userId: Int,
         private val settingsChanges: UserSettingsChanges = UserSettingsChanges(),
-    ) : ExtrasEditorViewModel<GeneralSettings, UserGeneralExtras>(UserGeneralExtras(), dispatcher) {
-        /**
-         * A user's General saves as it changes (#930). Its endpoint assigns every field it is sent, so each write carries the
-         * whole record as saved plus the change, never the change alone.
-         */
-        override val saveAsMadeScope: CoroutineScope = appScope
-
+    ) : SaveAsMadeEditorWithExtrasViewModel<GeneralSettings, UserGeneralExtras>(UserGeneralExtras(), dispatcher, appScope) {
         init {
             reload()
         }

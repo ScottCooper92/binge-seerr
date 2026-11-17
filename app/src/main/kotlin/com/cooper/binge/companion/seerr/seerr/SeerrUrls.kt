@@ -6,9 +6,10 @@ import com.cooper.homelab.core.server.network.isPublicCleartext
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 
 /**
- * A user-entered address as the base URL Retrofit needs: a scheme added where it was left off (`http` for a local or private
- * host, `https` otherwise), a trailing slash, and nothing else changed. The parsing is the shared library's
- * ([ServerAddress.parse]). An address that is not one comes back as it was typed: check [isValidBaseUrl] first.
+ * A user-entered address as the base URL Retrofit needs, in the shared library's form ([ServerAddress.parse]): a scheme added
+ * where it was left off (`http` for a local or private host, `https` otherwise), the scheme and host lowercased, a default port,
+ * user info, query and fragment dropped, dot segments resolved and a trailing slash. An address that is not one comes back as
+ * it was typed: check [isValidBaseUrl] first.
  */
 fun String.normaliseBaseUrl(): String = ServerAddress.parse(this)?.url ?: trim()
 
