@@ -6,7 +6,7 @@ import com.cooper.homelab.core.server.address.ServerAddress
 /**
  * Runs [probe] against [baseUrl], and, when [baseUrl] carries no explicit port, retries against the same address on
  * [PortDefaults.SEERR] on any failure ([ServerAddress.candidates]) — an unreachable address or one that answered but not
- * as wanted. The retry's success wins; if it also fails, the first attempt's failure is what's reported, since that is the
+ * as wanted. A typed default port (`:443` on https, `:80` on http) counts as no port. The retry's success wins; if it also fails, the first attempt's failure is what's reported, since that is the
  * address the user actually typed. Free of any dependency on [SeerrConnection] so the retry ordering is unit-testable with
  * no network at all.
  */
