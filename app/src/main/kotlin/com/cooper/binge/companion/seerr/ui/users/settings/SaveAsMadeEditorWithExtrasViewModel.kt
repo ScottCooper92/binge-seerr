@@ -5,8 +5,6 @@ import androidx.lifecycle.viewModelScope
 import com.binge.companion.sdk.attempt
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
-import com.cooper.binge.companion.seerr.seerr.toServerFailure
-import com.cooper.homelab.core.foundation.ServerFailure
 import com.cooper.homelab.core.presentation.editor.ExtrasEditorState
 import com.cooper.homelab.core.presentation.editor.SettingsEditorWithExtras
 import kotlinx.coroutines.CoroutineDispatcher
@@ -18,8 +16,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import com.binge.designsystem.SaveStatus as UiSaveStatus
-import com.cooper.homelab.core.presentation.editor.SaveStatus as EngineSaveStatus
 
 /**
  * [SaveAsMadeEditorViewModel] for a page that shows more than the record it edits: [X] sits beside the draft in
@@ -49,7 +45,7 @@ abstract class SaveAsMadeEditorWithExtrasViewModel<T, X>(
             write = ::write,
             classify = { failure ->
                 lastFailure = failure
-                if (failure.toSeerrError() == SeerrError.LocalNetworkDenied) ServerFailure.Unreachable() else failure.toServerFailure()
+                failure.toEngineFailure()
             },
             canSave = ::canSave,
         )
@@ -159,11 +155,4 @@ private fun <T, X> ExtrasEditorState<T, X>.toUiState(
                 saveStatus = saveStatus.toUi(),
                 saveRefusal = refusal?.let { refusedWith?.toSeerrError() },
             )
-    }
-
-private fun EngineSaveStatus.toUi(): UiSaveStatus =
-    when (this) {
-        EngineSaveStatus.Idle -> UiSaveStatus.Idle
-        EngineSaveStatus.Saving -> UiSaveStatus.Saving
-        EngineSaveStatus.Saved -> UiSaveStatus.Saved
     }

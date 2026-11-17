@@ -8,7 +8,7 @@ import com.cooper.binge.companion.seerr.di.IoDispatcher
 import com.cooper.binge.companion.seerr.notifications.ApplicationScope
 import com.cooper.binge.companion.seerr.seerr.toWireBody
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorEvent
-import com.cooper.binge.companion.seerr.ui.users.settings.ExtrasEditorViewModel
+import com.cooper.binge.companion.seerr.ui.users.settings.SaveAsMadeEditorWithExtrasViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -29,10 +29,7 @@ class DiscoverSlidersViewModel
         private val connection: SeerrConnection,
         @IoDispatcher private val dispatcher: CoroutineDispatcher,
         @ApplicationScope appScope: CoroutineScope,
-    ) : ExtrasEditorViewModel<List<DiscoverSlider>, SliderNames>(SliderNames(), dispatcher) {
-        /** The slider list saves as it changes (#930): order and on/off are small and easy to undo, and a drag is one write once it settles. */
-        override val saveAsMadeScope: CoroutineScope = appScope
-
+    ) : SaveAsMadeEditorWithExtrasViewModel<List<DiscoverSlider>, SliderNames>(SliderNames(), dispatcher, appScope) {
         private val names =
             SliderNameLoader(
                 scope = viewModelScope,

@@ -6,6 +6,7 @@ import com.cooper.homelab.core.server.connection.CallResult
 import com.cooper.homelab.core.server.connection.SeerrClassifier
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
+import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.junit.After
@@ -13,6 +14,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.io.IOException
 
 private const val HTTP_OK = 200
 private const val HTTP_UNAUTHORIZED = 401
@@ -168,5 +170,49 @@ class SeerrHealthInterceptorTest {
         val client = OkHttpClient.Builder().addInterceptor(SeerrHealthInterceptor(reporter)).build()
         runCatching { client.newCall(Request.Builder().url(url).build()).execute().close() }
         assertEquals(listOf("network"), reporter.calls)
+    }
+
+    @Test
+    fun `a call its caller cancelled says nothing about the server`() {
+        val cancelling =
+            OkHttpClient
+                .Builder()
+                .addInterceptor(SeerrHealthInterceptor(reporter))
+                .addInterceptor(
+                    Interceptor { chain ->
+                        chain.call().cancel()
+                        throw IOException("Canceled")
+                    },
+                ).build()
+        val url = server.url("/api/v1/request")
+
+        repeat(2) { runCatching { cancelling.newCall(Request.Builder().url(url).build()).execute().close() } }
+
+        assertEquals(emptyList<String>(), reporter.calls)
+    }
+
+    @Test
+    fun `a cancelled call between two real failures neither hides nor adds one`() {
+        val closed = MockWebServer()
+        closed.start()
+        val url = closed.url("/")
+        closed.close()
+        val failing = OkHttpClient.Builder().addInterceptor(SeerrHealthInterceptor(reporter)).build()
+        val cancelling =
+            OkHttpClient
+                .Builder()
+                .addInterceptor(SeerrHealthInterceptor(reporter))
+                .addInterceptor(
+                    Interceptor { chain ->
+                        chain.call().cancel()
+                        throw IOException("Canceled")
+                    },
+                ).build()
+
+        runCatching { failing.newCall(Request.Builder().url(url).build()).execute().close() }
+        runCatching { cancelling.newCall(Request.Builder().url(url).build()).execute().close() }
+        runCatching { failing.newCall(Request.Builder().url(url).build()).execute().close() }
+
+        assertEquals(listOf("network", "network"), reporter.calls)
     }
 }

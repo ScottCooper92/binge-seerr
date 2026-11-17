@@ -25,7 +25,8 @@ class SeerrHealthInterceptor(
             try {
                 chain.proceed(request)
             } catch (e: IOException) {
-                reporter.report(CallResult.TransportFailure())
+                // A call its caller gave up on (a screen left mid-load) says nothing about the server, so it is not a failure to count.
+                reporter.report(CallResult.TransportFailure(cancelled = chain.call().isCanceled()))
                 throw e
             }
         reporter.report(
