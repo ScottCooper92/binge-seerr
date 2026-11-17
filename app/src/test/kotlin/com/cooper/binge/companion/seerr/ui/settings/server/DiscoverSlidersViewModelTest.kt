@@ -3,6 +3,9 @@ package com.cooper.binge.companion.seerr.ui.settings.server
 import androidx.lifecycle.ViewModelStore
 import com.binge.designsystem.save.SAVE_AS_MADE_DELAY_MILLIS
 import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.discover.sliders.DiscoverSliderRepository
+import com.cooper.binge.companion.seerr.discover.sliders.SeerrDiscoverSliderRepository
+import com.cooper.binge.companion.seerr.discover.sliders.SliderListState
 import com.cooper.binge.companion.seerr.ui.users.settings.ADMIN
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorEvent
 import com.cooper.binge.companion.seerr.ui.users.settings.ExtrasEditorUiState
@@ -35,6 +38,13 @@ private const val SLIDERS =
         {"id":3,"type":13,"title":"Heist films","isBuiltIn":false,"enabled":true,"data":"10051,9882"},
         {"id":4,"type":99,"title":"Newer kind","isBuiltIn":true,"enabled":true,"data":null}]"""
 
+/** The server's answer to a save that moved the third slider up. */
+private const val REORDERED =
+    """[{"id":1,"type":1,"title":null,"isBuiltIn":true,"enabled":true,"data":null},
+        {"id":3,"type":13,"title":"Heist films","isBuiltIn":false,"enabled":true,"data":"10051,9882"},
+        {"id":2,"type":4,"title":null,"isBuiltIn":true,"enabled":false,"data":null},
+        {"id":4,"type":99,"title":"Newer kind","isBuiltIn":true,"enabled":true,"data":null}]"""
+
 class DiscoverSlidersViewModelTest {
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
@@ -44,6 +54,9 @@ class DiscoverSlidersViewModelTest {
 
     private val seerr = ScriptedSeerr(folder)
     private val viewModels = ViewModelStore()
+
+    /** The list the editor under test uses, which another screen would observe too. */
+    private lateinit var sharedList: DiscoverSliderRepository
 
     @Before
     fun setUp() {
@@ -61,7 +74,17 @@ class DiscoverSlidersViewModelTest {
     }
 
     private suspend fun TestScope.viewModel(): DiscoverSlidersViewModel {
-        val vm = DiscoverSlidersViewModel(seerr.connection(this), mainDispatcherRule.dispatcher, backgroundScope)
+        val connection = seerr.connection(this)
+        val sliders =
+            SeerrDiscoverSliderRepository(
+                connection::api,
+                connection::profile,
+                connection.credentials,
+                backgroundScope,
+                mainDispatcherRule.dispatcher,
+            )
+        sharedList = sliders
+        val vm = DiscoverSlidersViewModel(connection, sliders, mainDispatcherRule.dispatcher, backgroundScope)
         viewModels.put(vm.hashCode().toString(), vm)
         backgroundScope.launch { vm.uiState.collect {} }
         vm.reload()
@@ -114,6 +137,22 @@ class DiscoverSlidersViewModelTest {
             // Seerr 3.5.1 refuses a built-in slider whose title key is missing: it must go as an explicit null (#1876).
             assertEquals(JsonNull, sent[1].getValue("title"))
             assertEquals(JsonNull, sent[1].getValue("data"))
+        }
+
+    @Test
+    fun `a save in the editor reaches another observer of the list from the server's answer`() =
+        runTest {
+            val vm = viewModel()
+            vm.awaitReady()
+            val otherScreen = sharedList.sliders
+            assertEquals(listOf(1, 2, 3, 4), (otherScreen.value as SliderListState.Ready).sliders.map { it.id })
+            seerr.serve("POST /api/v1/settings/discover", REORDERED)
+
+            vm.move(from = 2, to = 1)
+            advanceTimeBy(SAVE_AS_MADE_DELAY_MILLIS + 1)
+            vm.uiState.first { it is ExtrasEditorUiState.Ready && !it.dirty }
+
+            assertEquals(listOf(1, 3, 2, 4), (otherScreen.value as SliderListState.Ready).sliders.map { it.id })
         }
 
     @Test

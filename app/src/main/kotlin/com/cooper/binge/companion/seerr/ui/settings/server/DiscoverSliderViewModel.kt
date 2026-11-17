@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.binge.companion.sdk.attempt
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.di.IoDispatcher
+import com.cooper.binge.companion.seerr.discover.sliders.DiscoverSliderRepository
 import com.cooper.binge.companion.seerr.notifications.ApplicationScope
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorEvent
 import com.cooper.binge.companion.seerr.ui.users.settings.ExtrasEditorViewModel
@@ -28,6 +29,7 @@ class DiscoverSliderViewModel
     @AssistedInject
     constructor(
         private val connection: SeerrConnection,
+        private val sliders: DiscoverSliderRepository,
         private val listCatalog: ServerListCatalog,
         @IoDispatcher private val dispatcher: CoroutineDispatcher,
         @Assisted private val id: Int?,
@@ -94,29 +96,15 @@ class DiscoverSliderViewModel
                 if (id == null) {
                     SliderForm()
                 } else {
-                    connection
-                        .api()
-                        .discoverSliders()
-                        .firstOrNull { it.id == id }
-                        ?.toForm() ?: throw NoSuchElementException("slider $id")
+                    sliders.refresh().firstOrNull { it.id == id }?.toForm() ?: throw NoSuchElementException("slider $id")
                 }
             // What the page will show is the kept draft where there is one, so it is the draft that is named and offered.
             readers.readFor(savedDraft?.restoreOver(form) ?: form)
             return form
         }
 
-        override suspend fun write(draft: SliderForm): SliderForm {
-            val api = connection.api()
-            val answered =
-                if (draft.id ==
-                    null
-                ) {
-                    api.addDiscoverSlider(draft.toBody())
-                } else {
-                    api.updateDiscoverSlider(draft.id, draft.toBody())
-                }
-            return answered.toForm()
-        }
+        override suspend fun write(draft: SliderForm): SliderForm =
+            if (draft.id == null) sliders.add(draft) else sliders.update(draft.id, draft)
 
         override fun canSave(draft: SliderForm): Boolean = draft.valid
 
@@ -179,7 +167,7 @@ class DiscoverSliderViewModel
             discardUnsent()
             // On the main thread, as save-as-made needs: only the request hops to the dispatcher.
             viewModelScope.launch {
-                withContext(dispatcher) { attempt { connection.api().deleteDiscoverSlider(existing) } }
+                withContext(dispatcher) { attempt { sliders.delete(existing) } }
                     .onSuccess { notify(EditorEvent.Deleted) }
                     .onFailure { failure ->
                         notify(EditorEvent.Failed.from(failure))
