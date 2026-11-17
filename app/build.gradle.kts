@@ -272,6 +272,8 @@ dependencies {
     // Crashlytics stays on the app on purpose: its Gradle plugin instruments this runtime. The adapters over it are the shared
     // `app-services-firebase` module's.
     implementation(libs.firebase.crashlytics)
+    // The discovery flag reads Remote Config itself, because the shared flag registry is closed to an app's own flags.
+    implementation(libs.firebase.config)
     implementation(libs.posthog.android)
     implementation(platform(libs.compose.bom))
     implementation(libs.compose.ui)
