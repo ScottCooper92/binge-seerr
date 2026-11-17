@@ -1312,6 +1312,7 @@
     <string name="search_kw_about">versión actualización estado</string>
     <string name="search_kw_this_app">preferencias binge comentarios error informe privacidad</string>
     <string name="search_kw_licences">código abierto bibliotecas</string>
+    <string name="search_kw_diagnostics">registro soporte copiar compartir informe</string>
     <string name="search_kw_address">dominio enlace web</string>
     <string name="search_kw_api_key">token secreto</string>
     <string name="search_kw_proxy">proxy inverso reenviado</string>

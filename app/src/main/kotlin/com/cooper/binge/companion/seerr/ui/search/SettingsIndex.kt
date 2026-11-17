@@ -4,6 +4,7 @@ import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Article
 import androidx.compose.material.icons.filled.Block
+import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.Cached
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Dns
@@ -24,6 +25,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.seerr.SeerrMediaServer
 import com.cooper.binge.companion.seerr.seerr.SeerrServerProfile
+import com.cooper.binge.companion.seerr.ui.DiagnosticsRoute
 import com.cooper.binge.companion.seerr.ui.LicencesRoute
 import com.cooper.binge.companion.seerr.ui.NotificationAgentRoute
 import com.cooper.binge.companion.seerr.ui.SeerrRoute
@@ -36,6 +38,7 @@ import com.cooper.binge.companion.seerr.ui.settings.server.icon
 import com.cooper.binge.companion.seerr.ui.settings.server.labelRes
 import com.cooper.binge.companion.seerr.ui.users.settings.UserSettingsPage
 import com.cooper.binge.companion.seerr.ui.users.settings.titleRes
+import com.cooper.homelab.core.uiandroid.R as CoreR
 
 /**
  * What the search needs to know about the viewer to decide what to offer: who they are, whether the server lets them administer it,
@@ -97,6 +100,14 @@ internal sealed interface SearchTarget {
         ): SeerrRoute = ThisAppRoute
     }
 
+    /** The Diagnostics page, which This app opens. */
+    data object Diagnostics : SearchTarget {
+        override fun route(
+            userId: Int,
+            row: String?,
+        ): SeerrRoute = DiagnosticsRoute
+    }
+
     /** The open-source licences, which This app opens. */
     data object Licences : SearchTarget {
         override fun route(
@@ -133,6 +144,7 @@ private val SearchTarget.key: String
             is SearchTarget.Account -> "account.${page.name}"
             SearchTarget.ThisApp -> "this-app"
             SearchTarget.Licences -> "licences"
+            SearchTarget.Diagnostics -> "diagnostics"
         }
 
 /**
@@ -150,7 +162,7 @@ internal fun SearchTarget.opensFor(access: SearchAccess): Boolean =
         is SearchTarget.Server -> access.isAdmin && page.shownFor(access)
         is SearchTarget.Agent -> access.isAdmin
         is SearchTarget.Account -> page.opensFor(access)
-        SearchTarget.ThisApp, SearchTarget.Licences -> true
+        SearchTarget.ThisApp, SearchTarget.Licences, SearchTarget.Diagnostics -> true
     }
 
 /** What the connected server has: a page of a feature only some servers have is offered, with every setting on it, only where this passes. */
@@ -294,6 +306,15 @@ internal val settingsIndex: List<IndexEntry> =
                 Icons.Filled.Description,
                 R.string.settings_group_app,
                 R.string.search_kw_licences,
+            ),
+        )
+        add(
+            IndexEntry(
+                SearchTarget.Diagnostics,
+                CoreR.string.diagnostics_title,
+                Icons.Filled.BugReport,
+                R.string.settings_group_app,
+                R.string.search_kw_diagnostics,
             ),
         )
     }
