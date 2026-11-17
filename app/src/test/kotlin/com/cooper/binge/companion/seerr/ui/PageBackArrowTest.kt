@@ -7,13 +7,13 @@ import androidx.compose.ui.test.onAllNodesWithContentDescription
 import com.binge.designsystem.LocalIsSinglePaneNav
 import com.binge.designsystem.LocalPaneDepth
 import com.cooper.binge.companion.seerr.theme.SeerrTheme
-import com.cooper.binge.companion.seerr.ui.settings.licences.LicencesScreen
-import com.cooper.binge.companion.seerr.ui.settings.licences.LicencesUiState
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorActions
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorPage
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorUiState
 import com.cooper.binge.companion.seerr.util.createSeerrComposeRule
 import com.cooper.binge.companion.seerr.util.string
+import com.cooper.homelab.core.presentation.appsettings.LicencesState
+import com.cooper.homelab.core.uiandroid.appsettings.LicencesScreen
 import kotlinx.coroutines.flow.emptyFlow
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -55,7 +55,7 @@ class PageBackArrowTest {
         ) { _, _ -> }
     }
 
-    private val licences: @Composable () -> Unit = { LicencesScreen(LicencesUiState.Loading, onBack = {}, onOpenWebsite = {}) }
+    private val licences: @Composable () -> Unit = { LicencesScreen(LicencesState.Loading, onBack = {}, onOpenWebsite = {}) }
 
     @Test
     fun `an editor page straight beside the hub has no arrow`() = assertEquals(0, arrows(hubBeside = true, paneDepth = 1, page = editor))
