@@ -60,6 +60,6 @@ bump in `libs.versions.toml` here, in the same submodule-bump commit.
 
 ## What not to write here
 
-This repository is public and the library is not. Name it as `CLAUDE.md` and the build files already
+The library is private, and a PR or issue here may be seen by people who cannot see it. Name it as `CLAUDE.md` and the build files already
 do. Do not paste its source, its documentation or its plans into a PR, an issue, a commit message or
 a comment here. Describe a change by what this app does differently.

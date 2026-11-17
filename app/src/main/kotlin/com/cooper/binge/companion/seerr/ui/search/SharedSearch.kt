@@ -21,6 +21,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import javax.inject.Inject
+import com.cooper.homelab.core.presentation.search.SearchAccess as SharedSearchAccess
 
 /**
  * What a shared search entry opens, in this app's terms: where it goes ([target]), the glyph the page draws beside it ([icon]), and the
@@ -58,7 +59,8 @@ internal fun sharedSettingsIndex(resources: Resources): List<SettingEntry<SeerrS
 /**
  * The shared settings search for the page: its view model over this app's index, made once and kept across a rotation. What it
  * reads is the signed-in user, from the connection's own copy so a user read up to a minute old is reused, and the server's profile;
- * nothing is fetched that the hub has not already read. [userId] is who the entries were offered to, which a result's route needs.
+ * nothing is fetched that the hub has not already read. The viewer the entries were offered to travels with the page's state, which is
+ * what a result's route is built from.
  */
 @HiltViewModel
 internal class SettingsSearchHost
@@ -70,10 +72,6 @@ internal class SettingsSearchHost
         @ApplicationScope appScope: CoroutineScope,
         @IoDispatcher dispatcher: CoroutineDispatcher,
     ) : ViewModel() {
-        @Volatile
-        var userId: Int = 0
-            private set
-
         val entries: List<SettingEntry<SeerrSearchTarget>> = sharedSettingsIndex(context.resources)
 
         val model =
@@ -85,8 +83,7 @@ internal class SettingsSearchHost
                 loadAvailability = {
                     val user = connection.recentAuthenticatedUser()
                     val access = SearchAccess(user.id, user.toPermissions().isAdmin, connection.profile())
-                    userId = access.userId
-                    ({ entry -> entry.target.available(access) })
+                    SharedSearchAccess({ entry -> entry.target.available(access) }, viewer = access)
                 },
                 recents = recents,
                 classify = { it.toServerFailure() },

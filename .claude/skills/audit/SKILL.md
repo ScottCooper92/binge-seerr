@@ -11,7 +11,7 @@ against `detekt-baseline.xml`), Android lint (translation checks and `UnusedReso
 error), `checkTranslationStaleness`, `koverVerify` (84%), `validateDebugScreenshotTest` and the R8 release build. Do not
 re-report anything that set decides. The audit's value is what it *doesn't* gate: conventions held
 "in review or nowhere" (`CLAUDE.md` > Screens and ViewModels), the one-rule-everything-serves
-("this repository is read as documentation"), server-gating, the exported Service, and doc drift.
+("this app is the reference implementation of a companion"), server-gating, the exported Service, and doc drift.
 
 Scope to the whole repo or named packages under `app/src/main/kotlin/com/cooper/binge/companion/seerr/`
 (`ui/`, `ui/tv/`, `seerr/`, `service/`, `auth/`, `data/`, `notifications/`, `feedback/`,
@@ -59,7 +59,7 @@ repos and audits) and `build/`.
 
 ## Dimension 2 — the reference-companion rule and the host boundary
 
-The repo is read as documentation; anything wrong here is copied by third parties.
+The repo is the reference implementation of a companion; anything wrong here is what the public contract is checked against.
 
 - **Contract redefinition**: any `.proto`, hand-written message class or constant re-stating a
   contract value (the contract lives in binge-companions). Anything relying on a private
