@@ -182,8 +182,7 @@ The app is a server administration tool and is not directed at children.
 
 ## Changes
 
-This policy changes when the app's behaviour changes, in the same change, and its history is the
-repository's history.
+This policy changes when the app's behaviour changes, and its history is this page's change history (linked at the top).
 
 ## Contact
 

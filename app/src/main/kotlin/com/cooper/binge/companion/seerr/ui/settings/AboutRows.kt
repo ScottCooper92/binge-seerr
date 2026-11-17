@@ -20,7 +20,7 @@ import com.cooper.binge.companion.seerr.ui.openPlayStoreListing
 import com.cooper.binge.companion.seerr.ui.openTestingOptIn
 import com.cooper.homelab.core.uiandroid.R as CoreR
 
-private const val PRIVACY_POLICY_URL = "https://scottcooper92.github.io/binge-seerr/privacy/"
+private const val PRIVACY_POLICY_URL = "https://scottcooper92.github.io/app-feedback/seerr/privacy/"
 
 /**
  * The About group: the app's own version (a tap opens its Play listing, which is where a rating is left), the
