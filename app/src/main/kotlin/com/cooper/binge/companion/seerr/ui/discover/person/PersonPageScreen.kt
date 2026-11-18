@@ -111,7 +111,6 @@ private fun ColumnScope.PersonBody(
     val gap = dimensionResource(DesR.dimen.padding_m)
     Column(verticalArrangement = Arrangement.spacedBy(gap), modifier = Modifier.padding(bottom = gap)) {
         PersonProfile(person, Modifier.padding(horizontal = margin))
-        PersonLinksRow(person.links(), actions.onOpenUrl, Modifier.padding(horizontal = margin))
         person.biography?.let { biography ->
             Column(
                 Modifier.padding(horizontal = margin),
@@ -122,6 +121,15 @@ private fun ColumnScope.PersonBody(
             }
         }
         CreditsSection(state.credits, actions)
+        person.links().takeIf { it.isNotEmpty() }?.let { links ->
+            Column(
+                Modifier.padding(horizontal = margin),
+                verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
+            ) {
+                Text(stringResource(R.string.person_page_links), style = MaterialTheme.typography.titleMedium)
+                PersonLinksRow(links, actions.onOpenUrl)
+            }
+        }
     }
 }
 
