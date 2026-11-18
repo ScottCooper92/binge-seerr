@@ -18,12 +18,13 @@ class DiscoverGridScreenshotTest {
     @Composable
     fun filtered() = Frame(readyGridState())
 
-    /** The filter cleared: only the order chip is left. */
+    /** The same grid at tablet width, in more columns. */
     @PreviewTest
     @SeerrTabletPanesPreview
     @Composable
     fun filteredTablet() = Frame(readyGridState())
 
+    /** The filter cleared: only the order chip is left. */
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
