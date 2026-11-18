@@ -1,13 +1,19 @@
 package com.cooper.binge.companion.seerr.ui.search.title
 
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.unit.dp
 import com.android.tools.screenshot.PreviewTest
+import com.binge.designsystem.LocalNavOverlayInsets
 import com.cooper.binge.companion.seerr.preview.SeerrFontScale13Previews
 import com.cooper.binge.companion.seerr.preview.SeerrFontScalePreviews
 import com.cooper.binge.companion.seerr.preview.SeerrScreenPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrScreenStatePreview
 import com.cooper.binge.companion.seerr.preview.SeerrSpanishPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrTabletPanesPreview
+
+private val RAIL = 80.dp
 
 /** The Search tab: idle with recents, results, no results and a failure, at the sizes and in the languages the app ships. */
 class TitleSearchScreenshotTest {
@@ -16,6 +22,13 @@ class TitleSearchScreenshotTest {
     @SeerrScreenPreviews
     @Composable
     fun idleWithRecents() = Frame(idleWithRecentsState())
+
+    /** A landscape tablet, where the navigation rail overlays the start edge: the recents and the rails clear it once, side by side. */
+    @PreviewTest
+    @SeerrTabletPanesPreview
+    @Composable
+    fun idleWithRecentsRail() =
+        CompositionLocalProvider(LocalNavOverlayInsets provides PaddingValues(start = RAIL)) { Frame(idleWithRecentsState()) }
 
     /** The trending rails still on their way under the recents. */
     @PreviewTest

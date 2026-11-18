@@ -87,7 +87,7 @@ internal fun TitleSearchScreen(
                         IdleBody(
                             state,
                             actions,
-                            navOverlayPadding(PaddingValues()),
+                            navOverlayPadding(PaddingValues(), bleedStart = true),
                         )
                     is TitleSearchUiState.Loading -> LoadingScreen()
                     is TitleSearchUiState.Ready ->

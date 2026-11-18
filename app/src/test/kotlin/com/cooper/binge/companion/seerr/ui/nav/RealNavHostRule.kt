@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.pm.ActivityInfo
 import androidx.annotation.StringRes
 import androidx.compose.ui.test.ComposeTimeoutException
+import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDisplayed
 import androidx.compose.ui.test.isRoot
@@ -147,6 +148,30 @@ internal class RealNavHostRule(
             compose.waitUntil("\"$outcome\" on screen after clicking \"$text\"", timeoutMillis) {
                 isShowing(outcome).also { reached -> if (!reached) clickOneOnScreen() }
             }
+        } catch (timeout: ComposeTimeoutException) {
+            throw ComposeTimeoutException("${timeout.message}\n${describeScreen()}")
+        }
+    }
+
+    /**
+     * Clicks [target] on each poll until [reached], for a control whose click can be lost to a recomposition or a list swapping under
+     * it, as [clickUntilShowing] does for text. A timeout says what the screen showed, so a failure on a slow runner names its cause.
+     */
+    fun clickUntil(
+        what: String,
+        timeoutMillis: Long = AWAIT_MILLIS,
+        target: () -> SemanticsNodeInteraction,
+        reached: () -> Boolean,
+    ) = await(what, timeoutMillis) { reached().also { done -> if (!done) target().performClick() } }
+
+    /** Waits for [condition], and a timeout says what the screen was showing, as [awaitShowing] does. */
+    fun await(
+        what: String,
+        timeoutMillis: Long = AWAIT_MILLIS,
+        condition: () -> Boolean,
+    ) {
+        try {
+            compose.waitUntil(what, timeoutMillis, condition)
         } catch (timeout: ComposeTimeoutException) {
             throw ComposeTimeoutException("${timeout.message}\n${describeScreen()}")
         }
