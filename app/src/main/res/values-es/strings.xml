@@ -111,6 +111,7 @@
     <string name="hub_section_settings">Ajustes</string>
     <string name="shell_tab_movies">Películas</string>
     <string name="shell_tab_tv">Series</string>
+    <string name="shell_tab_discover">Descubrir</string>
     <string name="shell_tab_search">Buscar</string>
     <string name="shell_tab_settings">Ajustes</string>
     <string name="shell_placeholder_message">Esta parte de la app llegará en una próxima actualización.</string>
