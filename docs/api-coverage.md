@@ -274,8 +274,8 @@ Each row is ticked in "Today" by the PR that covers it.
 
 | Endpoint | What it does | Overseerr since | Jellyseerr / Seerr since | Today | Note |
 |---|---|---|---|---|---|
-| `GET /genres/movie` | Get list of official TMDB movie genres | v1.21.0 | v1.0.0 | yes | Names the genres of a Radarr override rule's condition. |
-| `GET /genres/tv` | Get list of official TMDB movie genres | v1.21.0 | v1.0.0 | yes | Names the genres of a Sonarr override rule's condition. |
+| `GET /genres/movie` | Get list of official TMDB movie genres | v1.21.0 | v1.0.0 | yes | Names the genres of a Radarr override rule's condition, and of a search result in the Search tab. |
+| `GET /genres/tv` | Get list of official TMDB movie genres | v1.21.0 | v1.0.0 | yes | Names the genres of a Sonarr override rule's condition, and of a search result in the Search tab. |
 | `GET /keyword/{keywordId}` | Get keyword | v1.32.0 | v1.4.0 | yes | Names a blocklisted tag on the General settings page, and a keyword of an override rule. |
 | `GET /languages` | Languages supported by TMDB | v1.20.0 | v1.0.0 | yes | The General settings page's language pickers: discover languages and blocklisted languages. |
 | `GET /network/{networkId}` | Get TV network details | v1.21.0 | v1.0.0 | yes | Names the network a Discover slider holds as an id. |
