@@ -136,6 +136,25 @@ class DiscoverWhereRegionPagesTest {
     }
 
     @Test
+    fun `a region whose services could not be read says so, not that it has none`() {
+        rule.setContent {
+            SeerrTheme {
+                WherePage(
+                    DiscoverFilters(),
+                    WORDS.copy(providers = emptyMap(), providersFailed = setOf("GB")),
+                    Modifier,
+                    NO_LOADS,
+                    {},
+                    {},
+                )
+            }
+        }
+
+        rule.onNodeWithText("Couldn't load the streaming services. Reopen this page to try again.").assertExists()
+        rule.onAllNodesWithText("No streaming services listed for this region.").assertCountEquals(0)
+    }
+
+    @Test
     fun `a region with no services says so`() {
         rule.setContent {
             SeerrTheme { WherePage(DiscoverFilters(), WORDS.copy(providers = mapOf("GB" to emptyList())), Modifier, NO_LOADS, {}, {}) }

@@ -49,6 +49,8 @@ internal fun WherePage(
         when {
             region == null || providers?.isEmpty() == true ->
                 Text(stringResource(R.string.grid_filter_providers_none), style = MaterialTheme.typography.bodyMedium, modifier = inset)
+            region in vocabulary.providersFailed ->
+                Text(stringResource(R.string.grid_filter_providers_failed), style = MaterialTheme.typography.bodyMedium, modifier = inset)
             providers == null ->
                 WatchProviderGridSkeleton(
                     modifier = inset,

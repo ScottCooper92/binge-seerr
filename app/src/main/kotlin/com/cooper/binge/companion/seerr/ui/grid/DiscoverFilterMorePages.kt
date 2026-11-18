@@ -107,6 +107,7 @@ internal fun KeywordsPage(
 ) {
     var query by rememberSaveable { mutableStateOf("") }
     LaunchedEffect(chosen) { loads.onNameKeywords(chosen) }
+    LaunchedEffect(Unit) { loads.onKeywordQuery(query) }
     Column(verticalArrangement = chipGap) {
         BingeSearchField(
             query = query,

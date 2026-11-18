@@ -28,6 +28,7 @@ import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -389,9 +390,13 @@ class DiscoverGridViewModelTest {
             lookups.failProviders = true
             vm.onProvidersNeeded("US")
             advanceUntilIdle()
+            val failed = (vm.uiState.value as DiscoverGridUiState.Ready).controls.vocabulary
+            assertEquals("a failed read is a failure, not an empty region", setOf("US"), failed.providersFailed)
+            assertFalse("US" in failed.providers)
             lookups.failProviders = false
             vm.onProvidersNeeded("US")
             advanceUntilIdle()
+            assertEquals(emptySet<String>(), (vm.uiState.value as DiscoverGridUiState.Ready).controls.vocabulary.providersFailed)
             assertEquals(
                 listOf("8"),
                 (vm.uiState.value as DiscoverGridUiState.Ready)

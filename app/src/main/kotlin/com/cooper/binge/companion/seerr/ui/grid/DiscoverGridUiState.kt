@@ -43,6 +43,8 @@ data class FilterVocabulary(
     val regions: List<FilterOption> = emptyList(),
     val defaultRegion: String? = null,
     val providers: Map<String, List<FilterOption>> = emptyMap(),
+    /** The regions whose providers could not be read; a region in neither map is still loading, and the page asks again when reopened. */
+    val providersFailed: Set<String> = emptySet(),
     val certifications: Map<String, List<String>> = emptyMap(),
     val keywordResults: List<FilterOption>? = null,
     val keywordsFailed: Boolean = false,

@@ -201,6 +201,7 @@
     <string name="grid_filter_keywords_exclude">Palabras clave excluidas</string>
     <string name="grid_filter_providers_search">Buscar servicios de streaming</string>
     <string name="grid_filter_providers_loading">Cargando servicios de streaming</string>
+    <string name="grid_filter_providers_failed">No se pudieron cargar los servicios de streaming. Vuelve a abrir esta página para intentarlo de nuevo.</string>
     <string name="grid_filter_language_search">Buscar idiomas</string>
     <string name="grid_filter_region_search">Buscar países</string>
     <string name="grid_filter_search_none">Nada coincide con esa búsqueda.</string>
