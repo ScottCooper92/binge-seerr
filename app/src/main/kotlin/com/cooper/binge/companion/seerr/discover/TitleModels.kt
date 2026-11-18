@@ -54,7 +54,6 @@ sealed interface TitleSource {
 
     data class Popular(
         val kind: TitleKind,
-        val sortBy: String? = null,
     ) : TitleSource {
         override val defaultKind: TitleKind = kind
     }

@@ -20,8 +20,8 @@ class DemoDiscoverTest {
             demo { api ->
                 listOf(
                     api.discoverTrending(),
-                    api.discoverMovies(),
-                    api.discoverTv(),
+                    api.discoverMoviesFiltered(emptyMap()),
+                    api.discoverTvFiltered(emptyMap()),
                     api.discoverUpcomingMovies(),
                     api.discoverUpcomingTv(),
                     api.discoverMoviesByGenre(28),
@@ -40,8 +40,8 @@ class DemoDiscoverTest {
     @Test
     fun `every row carries its media type as the servers send it`() {
         demo { api ->
-            assertTrue(api.discoverMovies().results.all { it.mediaType == "movie" })
-            assertTrue(api.discoverTv().results.all { it.mediaType == "tv" })
+            assertTrue(api.discoverMoviesFiltered(emptyMap()).results.all { it.mediaType == "movie" })
+            assertTrue(api.discoverTvFiltered(emptyMap()).results.all { it.mediaType == "tv" })
             assertEquals(
                 setOf("movie", "tv"),
                 api
@@ -75,7 +75,7 @@ class DemoDiscoverTest {
 
     @Test
     fun `a title carries the server id and a status the repository can map`() {
-        val rows = demo { it.discoverMovies().results }
+        val rows = demo { it.discoverMoviesFiltered(emptyMap()).results }
         val mapped = rows.mapNotNull { it.toTitleResult(TitleKind.Movie) }
         assertEquals(rows.size, mapped.size)
         assertTrue(mapped.all { it.mediaId != null && it.artworkPath != null })
@@ -113,13 +113,16 @@ class DemoDiscoverTest {
     @Test
     fun `the discover lists can be put in order by title and by year`() {
         demo { api ->
-            val titles = api.discoverMovies(sortBy = "original_title.asc").results.mapNotNull { it.title }
+            val titles = api.discoverMoviesFiltered(mapOf("sortBy" to "original_title.asc")).results.mapNotNull { it.title }
             assertEquals(titles.sortedBy { it.lowercase() }, titles)
-            val newest = api.discoverMovies(sortBy = "primary_release_date.desc").results.mapNotNull { it.releaseDate?.take(4)?.toInt() }
+            val newest =
+                api.discoverMoviesFiltered(mapOf("sortBy" to "primary_release_date.desc")).results.mapNotNull {
+                    it.releaseDate?.take(4)?.toInt()
+                }
             assertEquals(newest.sortedDescending(), newest)
-            val popular = api.discoverMovies(sortBy = "popularity.desc").results.mapNotNull { it.id }
-            assertEquals(popular.reversed(), api.discoverMovies(sortBy = "popularity.asc").results.mapNotNull { it.id })
-            val names = api.discoverTv(sortBy = "original_name.desc").results.mapNotNull { it.name }
+            val popular = api.discoverMoviesFiltered(mapOf("sortBy" to "popularity.desc")).results.mapNotNull { it.id }
+            assertEquals(popular.reversed(), api.discoverMoviesFiltered(mapOf("sortBy" to "popularity.asc")).results.mapNotNull { it.id })
+            val names = api.discoverTvFiltered(mapOf("sortBy" to "original_name.desc")).results.mapNotNull { it.name }
             assertEquals(names.sortedByDescending { it.lowercase() }, names)
         }
     }
