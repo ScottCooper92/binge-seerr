@@ -80,7 +80,9 @@ class WideShellJourneyTest {
         host.connectDemo()
         host.launch(HomeRoute, RequestsRoute)
         host.compose.waitUntil(WAIT_MILLIS) { host.settingsStack() == listOf(HubRoute, RequestsRoute) }
+        host.compose.waitUntil(WAIT_MILLIS) { host.stack() == listOf<NavKey>(ShellRoute) }
 
+        host.compose.waitUntil(WAIT_MILLIS) { host.stack() == listOf<NavKey>(ShellRoute) }
         assertEquals(listOf<NavKey>(ShellRoute), host.stack())
         bar().assertIsDisplayed()
         host.awaitShowing(host.string(R.string.hub_section_issues_desc))
@@ -96,6 +98,7 @@ class WideShellJourneyTest {
         host.openLink(HomeRoute, RequestsRoute)
 
         host.compose.waitUntil(WAIT_MILLIS) { host.settingsStack() == listOf(HubRoute, RequestsRoute) }
+        host.compose.waitUntil(WAIT_MILLIS) { host.stack() == listOf<NavKey>(ShellRoute) }
         assertEquals(listOf<NavKey>(ShellRoute), host.stack())
         bar().assertIsDisplayed()
     }
@@ -130,6 +133,7 @@ class WideShellJourneyTest {
 
         host.rotate(WIDE)
         host.compose.waitUntil(WAIT_MILLIS) { host.settingsStack() == listOf(HubRoute, RequestsRoute) }
+        host.compose.waitUntil(WAIT_MILLIS) { host.stack() == listOf<NavKey>(ShellRoute) }
         assertEquals(listOf<NavKey>(ShellRoute), host.stack())
         bar().assertIsDisplayed()
     }
