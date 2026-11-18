@@ -31,3 +31,9 @@ private fun Context.openOnPlay(url: String) {
         }
     if (viaPlay.isFailure) attempt { startActivity(Intent(Intent.ACTION_VIEW, url.toUri()).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
 }
+
+/** Offers [url] to the share sheet, as a plain-text link. */
+fun Context.shareLink(url: String) {
+    val send = Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, url)
+    attempt { startActivity(Intent.createChooser(send, null).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
+}

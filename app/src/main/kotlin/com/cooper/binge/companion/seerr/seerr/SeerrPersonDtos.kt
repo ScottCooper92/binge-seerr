@@ -18,6 +18,11 @@ data class SeerrPersonDetailsDto(
     @SerialName("alsoKnownAs") val alsoKnownAs: List<String> = emptyList(),
     @SerialName("placeOfBirth") val placeOfBirth: String? = null,
     @SerialName("profilePath") val profilePath: String? = null,
+    /** TMDB's code: 0 unknown, 1 female, 2 male, 3 non-binary. */
+    @SerialName("gender") val gender: Int? = null,
+    @SerialName("popularity") val popularity: Double? = null,
+    @SerialName("imdbId") val imdbId: String? = null,
+    @SerialName("homepage") val homepage: String? = null,
 )
 
 /** `GET person/{id}/combined_credits`: the titles a person is in, as cast and as crew. The server drops adult titles. */
@@ -37,6 +42,7 @@ data class SeerrPersonCreditDto(
     @SerialName("releaseDate") val releaseDate: String? = null,
     @SerialName("firstAirDate") val firstAirDate: String? = null,
     @SerialName("posterPath") val posterPath: String? = null,
+    @SerialName("voteAverage") val voteAverage: Double? = null,
     @SerialName("character") val character: String? = null,
     @SerialName("job") val job: String? = null,
     @SerialName("mediaInfo") val mediaInfo: SeerrMediaInfoDto? = null,

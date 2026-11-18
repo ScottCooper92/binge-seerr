@@ -7,8 +7,9 @@ import com.cooper.binge.companion.seerr.discover.person.PersonCredits
 import com.cooper.binge.companion.seerr.discover.person.PersonDetails
 import com.cooper.binge.companion.seerr.discover.person.PersonRepository
 import com.cooper.binge.companion.seerr.util.MainDispatcherRule
+import com.cooper.binge.companion.seerr.util.awaitEvent
+import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -24,14 +25,19 @@ internal fun personFixture() =
         deathday = null,
         placeOfBirth = "Demo City",
         alsoKnownAs = listOf("S."),
+        gender = null,
+        popularity = null,
+        imdbId = null,
+        homepage = null,
         photoUrl = null,
+        webUrl = "https://seerr.example/person/5",
     )
 
 internal fun creditFixture(
     kind: TitleKind,
     id: Int,
     title: String = "Title $id",
-) = PersonCredit(kind, id, title, "2020-01-01", null, "Role", TitleAvailability.None)
+) = PersonCredit(kind, id, title, 7.5f, null, "Role", TitleAvailability.None)
 
 private class FakePeople(
     var person: PersonDetails = personFixture(),
@@ -59,7 +65,8 @@ class PersonPageViewModelTest {
         val vm = PersonPageViewModel(FakePeople(), 5)
 
         assertEquals("Sam Example", vm.ready().person.name)
-        assertEquals(3, vm.ready().visible?.let { it.cast.size + it.crew.size })
+        val credits = (vm.ready().credits as PersonCreditsState.Ready).credits
+        assertEquals(3, credits.cast.size + credits.crew.size)
     }
 
     @Test
@@ -81,7 +88,6 @@ class PersonPageViewModelTest {
 
         assertEquals("Sam Example", vm.ready().person.name)
         assertTrue(vm.ready().credits is PersonCreditsState.Error)
-        assertNull(vm.ready().visible)
 
         repository.failCredits = null
         vm.retryCredits()
@@ -90,59 +96,46 @@ class PersonPageViewModelTest {
     }
 
     @Test
-    fun `the chips narrow both lists to films or series`() {
-        val vm = PersonPageViewModel(FakePeople(), 5)
+    fun `a pull reads the page again and keeps it while it does`() =
+        runTest {
+            val repository = FakePeople()
+            val vm = PersonPageViewModel(repository, 5)
+            repository.person = personFixture().copy(name = "Renamed")
 
-        vm.setFilter(CreditsFilter.Movies)
-        assertEquals(
-            listOf(1),
-            vm
-                .ready()
-                .visible
-                ?.cast
-                ?.map { it.tmdbId },
-        )
-        assertEquals(
-            listOf(3),
-            vm
-                .ready()
-                .visible
-                ?.crew
-                ?.map { it.tmdbId },
-        )
+            vm.refresh()
 
-        vm.setFilter(CreditsFilter.Series)
-        assertEquals(
-            listOf(2),
-            vm
-                .ready()
-                .visible
-                ?.cast
-                ?.map { it.tmdbId },
-        )
-        assertTrue(
-            vm
-                .ready()
-                .visible
-                ?.crew
-                ?.isEmpty() == true,
-        )
+            assertEquals("Renamed", vm.ready().person.name)
+            assertEquals(false, vm.ready().refreshing)
+        }
 
-        vm.setFilter(CreditsFilter.All)
-        assertEquals(
-            2,
-            vm
-                .ready()
-                .visible
-                ?.cast
-                ?.size,
-        )
+    @Test
+    fun `a pull that fails keeps the page and says so`() =
+        runTest {
+            val repository = FakePeople()
+            val vm = PersonPageViewModel(repository, 5)
+            repository.failDetails = IOException("down")
+            val event = awaitEvent(vm.events)
+
+            vm.refresh()
+
+            assertEquals(PersonPageEvent.RefreshFailed, event.await())
+            assertEquals("Sam Example", vm.ready().person.name)
+            assertEquals(false, vm.ready().refreshing)
+        }
+
+    @Test
+    fun `a pull before the page has loaded does nothing`() {
+        val vm = PersonPageViewModel(FakePeople(failDetails = IOException("down")), 5)
+
+        vm.refresh()
+
+        assertTrue(vm.uiState.value is PersonPageUiState.Error)
     }
 
     @Test
     fun `a person with no credits is ready with empty lists`() {
         val vm = PersonPageViewModel(FakePeople(credits = PersonCredits(emptyList(), emptyList())), 5)
 
-        assertTrue(vm.ready().visible?.isEmpty == true)
+        assertTrue((vm.ready().credits as PersonCreditsState.Ready).credits.isEmpty)
     }
 }

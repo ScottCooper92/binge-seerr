@@ -5,6 +5,7 @@ import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.person.PersonCredit
 import com.cooper.binge.companion.seerr.discover.person.PersonCredits
 import com.cooper.binge.companion.seerr.discover.person.PersonDetails
+import com.cooper.binge.companion.seerr.discover.person.PersonGender
 import com.cooper.binge.companion.seerr.ui.discover.person.PersonCreditsState
 import com.cooper.binge.companion.seerr.ui.discover.person.PersonPageActions
 import com.cooper.binge.companion.seerr.ui.discover.person.PersonPageScreen
@@ -32,11 +33,16 @@ private fun worstCase(): PersonPageUiState.Ready {
             deathday = "2020-12-24",
             placeOfBirth = "Llanfairpwllgwyngyllgogerychwyrndrobwllllantysiliogogogoch, Wales, United Kingdom",
             alsoKnownAs = listOf("Alexandria Montgomery-Fitzgerald", "A. W. Montgomery", "Lex Wolfe"),
+            gender = PersonGender.NonBinary,
+            popularity = 123.456,
+            imdbId = "nm0000123",
+            homepage = "https://a-very-long-homepage-address.example.com/people/alexandria",
             photoUrl = null,
+            webUrl = "https://seerr.example/person/5",
         )
     val credits =
         (1..PERSON_CREDITS).map {
-            PersonCredit(TitleKind.Movie, it, PERSON_LONG_TITLE, "2020-01-01", null, PERSON_LONG_ROLE, TitleAvailability.Processing)
+            PersonCredit(TitleKind.Movie, it, PERSON_LONG_TITLE, 7.5f, null, PERSON_LONG_ROLE, TitleAvailability.Processing)
         }
     return PersonPageUiState.Ready(
         person,
@@ -54,7 +60,7 @@ private fun worstCase(): PersonPageUiState.Ready {
     )
 }
 
-private val NO_ACTIONS = PersonPageActions({}, {}, {}, {}, { _, _ -> })
+private val NO_ACTIONS = PersonPageActions({}, {}, {}, {}, {}, {}, { _, _ -> })
 
 /** The person page with the longest names, a long biography and a credit in every row, at font scales 1.3 and 2.0. */
 @RunWith(RobolectricTestRunner::class)

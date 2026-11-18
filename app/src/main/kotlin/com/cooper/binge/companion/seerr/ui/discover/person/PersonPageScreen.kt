@@ -1,171 +1,162 @@
 package com.cooper.binge.companion.seerr.ui.discover.person
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.GridItemSpan
-import androidx.compose.foundation.lazy.grid.LazyGridScope
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Apps
-import androidx.compose.material.icons.filled.Movie
-import androidx.compose.material.icons.filled.Tv
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.layout
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
-import com.binge.designsystem.component.BingeFilterChipRow
-import com.binge.designsystem.component.FilterChipItem
+import com.binge.designsystem.component.ExpandableOverview
+import com.binge.designsystem.component.ExpressiveIconButton
+import com.binge.designsystem.component.IconButtonTone
 import com.binge.designsystem.component.MediaCard
-import com.binge.designsystem.component.SectionHeader
-import com.binge.designsystem.template.BingeScreenScaffold
-import com.binge.designsystem.template.ScreenBar
-import com.binge.designsystem.template.screenInnerPadding
-import com.binge.designsystem.template.screenOuterPadding
+import com.binge.designsystem.component.MediaCarousel
+import com.binge.designsystem.template.HeroDetailScreen
+import com.binge.designsystem.template.HeroPullIndicator
+import com.binge.designsystem.template.LocalHeroReadingMargin
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.person.PersonCredit
-import com.cooper.binge.companion.seerr.discover.person.PersonCredits
 import com.cooper.binge.companion.seerr.ui.discover.title.cardStatus
 import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
-import com.cooper.binge.companion.seerr.ui.state.LoadingScreen
 import com.binge.designsystem.R as DesR
 
-/** What the person page does: read again, narrow the credits, and open a title. */
+/** What the person page does: read again, share, open a title and open a link. */
 class PersonPageActions(
     val onBack: () -> Unit,
     val onRetry: () -> Unit,
     val onRetryCredits: () -> Unit,
-    val onFilter: (CreditsFilter) -> Unit,
+    val onRefresh: () -> Unit,
+    val onShare: (url: String) -> Unit,
+    val onOpenUrl: (url: String) -> Unit,
     val onOpenTitle: (kind: TitleKind, tmdbId: Int) -> Unit,
 )
 
-/** A person: their profile, then the titles they are in as cast and as crew, one chip row narrowing both. */
+/**
+ * A person under a floating bar, with no image: the portrait and facts, the biography, and the titles they are in as cast and
+ * as crew. Loading and a failed load keep the bar, so Back is always there.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun PersonPageScreen(
     state: PersonPageUiState,
     actions: PersonPageActions,
     modifier: Modifier = Modifier,
+    snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
 ) {
-    val title = (state as? PersonPageUiState.Ready)?.person?.name.orEmpty()
-    BingeScreenScaffold(title = title, modifier = modifier, bar = ScreenBar.Small, onBack = actions.onBack) { padding ->
-        Box(Modifier.fillMaxSize().padding(padding.screenOuterPadding())) {
-            val inner = padding.screenInnerPadding()
-            when (state) {
-                PersonPageUiState.Loading -> LoadingScreen(Modifier.padding(inner))
-                is PersonPageUiState.Error -> ErrorScreen(state.error, Modifier.padding(inner), actions.onRetry)
-                is PersonPageUiState.Ready -> PersonGrid(state, actions, inner)
+    val ready = state as? PersonPageUiState.Ready
+    val shareLabel = stringResource(R.string.person_share)
+    HeroDetailScreen(
+        title = ready?.person?.name.orEmpty(),
+        onBack = actions.onBack,
+        modifier = modifier,
+        snackbarHostState = snackbarHostState,
+        contentMaxWidth = Dp.Infinity,
+        onRefresh = actions.onRefresh.takeIf { ready != null },
+        isRefreshing = ready?.refreshing == true,
+        pullIndicator = HeroPullIndicator.InBar,
+        actions = { glassAlpha ->
+            if (ready != null) {
+                ExpressiveIconButton(
+                    onClick = { actions.onShare(ready.person.webUrl) },
+                    icon = Icons.Filled.Share,
+                    contentDescription = shareLabel,
+                    tone = IconButtonTone.Glass,
+                    glassBackgroundAlpha = glassAlpha,
+                )
             }
+        },
+        hero = {
+            Spacer(
+                Modifier.windowInsetsPadding(WindowInsets.safeDrawing).height(dimensionResource(DesR.dimen.person_profile_top_bar_offset)),
+            )
+        },
+    ) {
+        when (state) {
+            PersonPageUiState.Loading -> PersonSkeleton()
+            is PersonPageUiState.Error ->
+                ErrorScreen(
+                    state.error,
+                    Modifier.padding(dimensionResource(DesR.dimen.padding_m)),
+                    actions.onRetry,
+                )
+            is PersonPageUiState.Ready -> PersonBody(state, actions)
         }
     }
 }
 
 @Composable
-private fun PersonGrid(
+private fun ColumnScope.PersonBody(
     state: PersonPageUiState.Ready,
     actions: PersonPageActions,
-    contentPadding: PaddingValues,
 ) {
+    val person = state.person
+    val margin = LocalHeroReadingMargin.current + dimensionResource(DesR.dimen.padding_m)
     val gap = dimensionResource(DesR.dimen.padding_m)
-    LazyVerticalGrid(
-        columns = GridCells.Adaptive(dimensionResource(DesR.dimen.card_width)),
-        modifier = Modifier.fillMaxSize(),
-        contentPadding =
-            PaddingValues(
-                start = gap,
-                end = gap,
-                top = contentPadding.calculateTopPadding(),
-                bottom = contentPadding.calculateBottomPadding(),
-            ),
-        horizontalArrangement = Arrangement.spacedBy(gap),
-        verticalArrangement = Arrangement.spacedBy(gap),
-    ) {
-        full("profile") { PersonProfile(state.person) }
-        when (val credits = state.credits) {
-            PersonCreditsState.Loading -> full("loading") { LoadingScreen() }
-            is PersonCreditsState.Error -> full("error") { ErrorScreen(credits.error, onRetry = actions.onRetryCredits) }
-            is PersonCreditsState.Ready -> creditSections(state, credits.credits, actions)
+    Column(verticalArrangement = Arrangement.spacedBy(gap), modifier = Modifier.padding(bottom = gap)) {
+        PersonProfile(person, Modifier.padding(horizontal = margin))
+        PersonLinksRow(person.links(), actions.onOpenUrl, Modifier.padding(horizontal = margin))
+        person.biography?.let { biography ->
+            Column(
+                Modifier.padding(horizontal = margin),
+                verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
+            ) {
+                Text(stringResource(R.string.person_page_biography), style = MaterialTheme.typography.titleMedium)
+                ExpandableOverview(text = biography)
+            }
         }
+        CreditsSection(state.credits, actions)
     }
 }
 
-private fun LazyGridScope.creditSections(
-    state: PersonPageUiState.Ready,
-    all: PersonCredits,
+@Composable
+private fun CreditsSection(
+    state: PersonCreditsState,
     actions: PersonPageActions,
 ) {
-    if (all.isEmpty) return
-    full("filters") { FilterChips(state.filter, actions.onFilter) }
-    val visible = state.visible ?: return
-    if (visible.isEmpty) {
-        full("none") {
-            Text(stringResource(R.string.person_credits_filtered_empty), style = MaterialTheme.typography.bodyMedium)
+    when (state) {
+        PersonCreditsState.Loading -> CreditsSkeleton()
+        is PersonCreditsState.Error ->
+            ErrorScreen(state.error, Modifier.padding(dimensionResource(DesR.dimen.padding_m)), actions.onRetryCredits)
+        is PersonCreditsState.Ready -> {
+            CreditRail(stringResource(R.string.person_page_known_for), state.credits.cast, actions.onOpenTitle)
+            CreditRail(stringResource(R.string.title_page_crew), state.credits.crew, actions.onOpenTitle)
         }
     }
-    creditSection("cast", R.string.title_page_cast, visible.cast, actions.onOpenTitle)
-    creditSection("crew", R.string.title_page_crew, visible.crew, actions.onOpenTitle)
 }
 
-private fun LazyGridScope.creditSection(
-    tag: String,
-    title: Int,
+@Composable
+private fun CreditRail(
+    title: String,
     credits: List<PersonCredit>,
     onOpen: (TitleKind, Int) -> Unit,
 ) {
     if (credits.isEmpty()) return
-    full("$tag-header") { SectionHeader(stringResource(title), horizontalPadding = dimensionResource(DesR.dimen.zero)) }
-    items(credits, key = { "$tag-${it.key}" }) { credit ->
+    MediaCarousel(title = title, items = credits, itemKey = { it.key }, onEndTileClick = null) { _, credit ->
         MediaCard(
             posterUrl = credit.posterUrl,
             title = credit.title,
-            rating = null,
+            rating = credit.rating,
             onClick = { onOpen(credit.kind, credit.tmdbId) },
+            modifier = Modifier.width(dimensionResource(DesR.dimen.card_width)),
             status = credit.availability.cardStatus(),
             subtitle = credit.role,
         )
     }
 }
-
-@Composable
-private fun FilterChips(
-    selected: CreditsFilter,
-    onSelect: (CreditsFilter) -> Unit,
-) {
-    val items =
-        listOf(
-            FilterChipItem(stringResource(R.string.person_filter_all), icon = Icons.Filled.Apps),
-            FilterChipItem(stringResource(R.string.person_filter_movies), icon = Icons.Filled.Movie),
-            FilterChipItem(stringResource(R.string.person_filter_series), icon = Icons.Filled.Tv),
-        )
-    BingeFilterChipRow(items, selectedIndex = selected.ordinal, onSelect = {
-        onSelect(CreditsFilter.entries[it])
-    }, modifier = Modifier.bleedInto(dimensionResource(DesR.dimen.padding_m)))
-}
-
-private fun LazyGridScope.full(
-    key: String,
-    content: @Composable () -> Unit,
-) = item(key = key, span = { GridItemSpan(maxLineSpan) }) { content() }
-
-/** The grid pads its content by [padding]; a row with an inset of its own would sit that much too far in, so it spans the padding too. */
-private fun Modifier.bleedInto(padding: Dp): Modifier =
-    layout { measurable, constraints ->
-        val bleed = padding.roundToPx()
-        val placeable =
-            measurable.measure(
-                constraints.copy(
-                    maxWidth = constraints.maxWidth + 2 * bleed,
-                    minWidth =
-                        constraints.maxWidth + 2 * bleed,
-                ),
-            )
-        layout(constraints.maxWidth, placeable.height) { placeable.place(-bleed, 0) }
-    }

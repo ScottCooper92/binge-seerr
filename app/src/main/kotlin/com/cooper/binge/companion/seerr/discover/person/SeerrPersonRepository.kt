@@ -10,17 +10,22 @@ import com.cooper.binge.companion.seerr.seerr.toTmdbPosterUrl
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 
-/** [PersonRepository] over the Seerr API. [io] is the dispatcher the calls run on; it has no default. */
+/**
+ * [PersonRepository] over the Seerr API. [serverUrl] is the server's address with its trailing slash, for the person's page on it.
+ * [io] is the dispatcher the calls run on; it has no default.
+ */
 class SeerrPersonRepository(
     private val api: suspend () -> SeerrApi,
+    private val serverUrl: suspend () -> String,
     private val io: CoroutineDispatcher,
 ) : PersonRepository {
-    override suspend fun details(personId: Int): PersonDetails = withContext(io) { api().personDetails(personId).toPersonDetails() }
+    override suspend fun details(personId: Int): PersonDetails =
+        withContext(io) { api().personDetails(personId).toPersonDetails(webUrl = serverUrl() + "person/" + personId) }
 
     override suspend fun credits(personId: Int): PersonCredits = withContext(io) { api().personCredits(personId).toPersonCredits() }
 }
 
-internal fun SeerrPersonDetailsDto.toPersonDetails() =
+internal fun SeerrPersonDetailsDto.toPersonDetails(webUrl: String) =
     PersonDetails(
         personId = id,
         name = name,
@@ -30,14 +35,31 @@ internal fun SeerrPersonDetailsDto.toPersonDetails() =
         deathday = deathday?.takeIf { it.isNotBlank() },
         placeOfBirth = placeOfBirth?.takeIf { it.isNotBlank() },
         alsoKnownAs = alsoKnownAs.filter { it.isNotBlank() },
+        gender = gender.toPersonGender(),
+        popularity = popularity?.takeIf { it > 0.0 },
+        imdbId = imdbId?.takeIf { it.isNotBlank() },
+        homepage = homepage?.takeIf { it.isNotBlank() },
         photoUrl = profilePath?.toTmdbPosterUrl(),
+        webUrl = webUrl,
     )
+
+private const val TMDB_FEMALE = 1
+private const val TMDB_MALE = 2
+private const val TMDB_NON_BINARY = 3
+
+private fun Int?.toPersonGender(): PersonGender? =
+    when (this) {
+        TMDB_FEMALE -> PersonGender.Female
+        TMDB_MALE -> PersonGender.Male
+        TMDB_NON_BINARY -> PersonGender.NonBinary
+        else -> null
+    }
 
 internal fun SeerrPersonCreditsDto.toPersonCredits() = PersonCredits(cast.toCredits { it.character }, crew.toCredits { it.job })
 
 /**
- * Each title once. TMDB lists a title again for every role, so a list keyed on the title would throw on the repeat: the roles are
- * joined under the first listing. Newest first, a title with no date last, then by name so the order does not move between reads.
+ * Each title once, in the order the server listed them, which is TMDB's. TMDB lists a title again for every role, so a list keyed on the
+ * title would throw on the repeat: the roles are joined under the first listing.
  */
 private fun List<SeerrPersonCreditDto>.toCredits(role: (SeerrPersonCreditDto) -> String?): List<PersonCredit> =
     mapNotNull { credit -> credit.kind()?.let { it to credit } }
@@ -49,7 +71,7 @@ private fun List<SeerrPersonCreditDto>.toCredits(role: (SeerrPersonCreditDto) ->
                 kind = kind,
                 tmdbId = first.id,
                 title = (if (kind == TitleKind.Movie) first.title else first.name).orEmpty(),
-                date = (if (kind == TitleKind.Movie) first.releaseDate else first.firstAirDate)?.takeIf { it.isNotBlank() },
+                rating = first.voteAverage?.toFloat()?.takeIf { it > 0f },
                 posterUrl = first.posterPath?.toTmdbPosterUrl(),
                 role =
                     listings
@@ -60,7 +82,7 @@ private fun List<SeerrPersonCreditDto>.toCredits(role: (SeerrPersonCreditDto) ->
                         .ifEmpty { null },
                 availability = first.mediaInfo?.status.toAvailability(),
             )
-        }.sortedWith(compareBy<PersonCredit> { it.date == null }.thenByDescending { it.date }.thenBy { it.title })
+        }
 
 private fun SeerrPersonCreditDto.kind(): TitleKind? =
     when (mediaType) {

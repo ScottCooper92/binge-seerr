@@ -5,8 +5,10 @@ import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.person.PersonCredit
 import com.cooper.binge.companion.seerr.discover.person.PersonCredits
 import com.cooper.binge.companion.seerr.discover.person.PersonDetails
+import com.cooper.binge.companion.seerr.discover.person.PersonGender
 
 private const val FIRST_YEAR = 2024
+private const val RATING_DIVISOR = 270f
 private const val CAST_COUNT = 8
 private const val CREW_COUNT = 3
 private const val LONG_TITLE = "The Chronicles of the Extraordinarily Long-Winded Winter Kingdom and Its Many Peculiar Inhabitants"
@@ -27,11 +29,35 @@ internal fun fullPerson() =
         deathday = null,
         placeOfBirth = "Demo City, Exampleland",
         alsoKnownAs = listOf("The Demo", "S. Example"),
+        gender = PersonGender.Female,
+        popularity = 12.4,
+        imdbId = "nm0000123",
+        homepage = "https://sam.example.com",
         photoUrl = null,
+        webUrl = "https://seerr.example/person/5",
     )
 
 /** A person of whom the server knows only the name. */
-internal fun sparsePerson() = PersonDetails(5, "Sam Example", null, null, null, null, null, emptyList(), null)
+internal fun sparsePerson() =
+    PersonDetails(
+        personId = 5,
+        name = "Sam Example",
+        knownFor = null,
+        biography = null,
+        birthday = null,
+        deathday = null,
+        placeOfBirth = null,
+        alsoKnownAs = emptyList(),
+        gender = null,
+        popularity = null,
+        imdbId = null,
+        homepage = null,
+        photoUrl = null,
+        webUrl = "https://seerr.example/person/5",
+    )
+
+/** A person who has died, with no links, so the died-aged stat and the missing links row both show. */
+internal fun lateWithoutLinks() = fullPerson().copy(deathday = "2020-12-24", imdbId = null, homepage = null)
 
 /** The longest names the page has to hold. */
 internal fun longPerson() =
@@ -51,7 +77,7 @@ private fun credit(
     kind = kind,
     tmdbId = index,
     title = if (longNames) LONG_TITLE else "Title $index",
-    date = "${FIRST_YEAR - index}-01-01",
+    rating = (FIRST_YEAR - index) / RATING_DIVISOR,
     posterUrl = null,
     role = if (longNames) LONG_ROLE else "Role $index",
     availability = availability,
@@ -83,5 +109,5 @@ internal fun fullCredits(longNames: Boolean = false): PersonCredits {
 internal fun readyPerson(
     person: PersonDetails = fullPerson(),
     credits: PersonCreditsState = PersonCreditsState.Ready(fullCredits()),
-    filter: CreditsFilter = CreditsFilter.All,
-) = PersonPageUiState.Ready(person, credits, filter)
+    refreshing: Boolean = false,
+) = PersonPageUiState.Ready(person, credits, refreshing)

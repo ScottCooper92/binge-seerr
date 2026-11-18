@@ -8,6 +8,11 @@ import com.cooper.binge.companion.seerr.seerr.SeerrPersonDetailsDto
 private const val FIRST_CAST_ID = 9001
 private const val CAST_TITLES = 5
 private const val CREW_TITLES = 2
+private const val FIRST_CREW_ID = 9101
+private const val DEMO_GENDER_FEMALE = 1
+private const val DEMO_GENDER_MALE = 2
+private const val DEMO_POPULARITY = 12.4
+private const val DEMO_VOTE_AVERAGE = 7.4
 
 /** The people the demo's title pages list and its search finds, so a tap on any of them opens a page under their own name. Any other id is a made-up person. */
 private val DEMO_PEOPLE =
@@ -37,8 +42,12 @@ private fun demoPerson(id: Int) =
         biography = "A made-up person, with nothing real behind them. They have appeared in a handful of the demo's titles.",
         birthday = "1980-02-14",
         placeOfBirth = "Demo City",
-        knownForDepartment = if (id >= FIRST_CAST_ID + 100) "Directing" else "Acting",
+        knownForDepartment = if (id in FIRST_CREW_ID until SEARCH_PERSON_FIRST) "Directing" else "Acting",
         alsoKnownAs = listOf("The Demo"),
+        gender = if (id % 2 == 0) DEMO_GENDER_FEMALE else DEMO_GENDER_MALE,
+        popularity = DEMO_POPULARITY,
+        imdbId = "nm0000$id",
+        homepage = "https://demo.example.com/people/$id",
     )
 
 /** Every demo person is in the same few titles: nothing real is behind any of them, and a tap opens a demo page either way. */
@@ -64,6 +73,7 @@ private fun DemoData.credit(
     releaseDate = "${title.year}-01-01".takeIf { title.isMovie },
     firstAirDate = "${title.year}-01-01".takeUnless { title.isMovie },
     posterPath = title.poster.ifBlank { null },
+    voteAverage = DEMO_VOTE_AVERAGE,
     character = character,
     job = job,
     mediaInfo = SeerrMediaInfoDto(id = title.mediaId, status = mediaStatus(title)),

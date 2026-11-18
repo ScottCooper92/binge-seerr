@@ -3,7 +3,6 @@ package com.cooper.binge.companion.seerr.ui.discover.person
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.binge.companion.sdk.attempt
-import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.person.PersonCredits
 import com.cooper.binge.companion.seerr.discover.person.PersonDetails
 import com.cooper.binge.companion.seerr.discover.person.PersonRepository
@@ -15,20 +14,14 @@ import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-
-/** Which credits the page shows: all of them, or only films or only series. */
-enum class CreditsFilter(
-    val kind: TitleKind?,
-) {
-    All(null),
-    Movies(TitleKind.Movie),
-    Series(TitleKind.Series),
-}
 
 /** The credits as the page holds them. They load apart from the profile, so a failure leaves the profile on screen. */
 sealed interface PersonCreditsState {
@@ -43,6 +36,7 @@ sealed interface PersonCreditsState {
     ) : PersonCreditsState
 }
 
+/** [refreshing] shows the pull's spinner while the page, kept as it is, is read again. */
 sealed interface PersonPageUiState {
     data object Loading : PersonPageUiState
 
@@ -53,11 +47,13 @@ sealed interface PersonPageUiState {
     data class Ready(
         val person: PersonDetails,
         val credits: PersonCreditsState = PersonCreditsState.Loading,
-        val filter: CreditsFilter = CreditsFilter.All,
-    ) : PersonPageUiState {
-        /** The credits the chips leave in; null while they are not read. */
-        val visible: PersonCredits? get() = (credits as? PersonCreditsState.Ready)?.credits?.only(filter.kind)
-    }
+        val refreshing: Boolean = false,
+    ) : PersonPageUiState
+}
+
+sealed interface PersonPageEvent {
+    /** A pull to refresh failed: the page stays as it was, and the screen says so. */
+    data object RefreshFailed : PersonPageEvent
 }
 
 /** The person page. Detail keyed on an id, so it shares [Lazily][kotlinx.coroutines.flow.SharingStarted.Lazily] with the other detail pages: it loads once. */
@@ -76,6 +72,9 @@ class PersonPageViewModel
         private val state = MutableStateFlow<PersonPageUiState>(PersonPageUiState.Loading)
         val uiState: StateFlow<PersonPageUiState> = state.asStateFlow()
 
+        private val eventFlow = MutableSharedFlow<PersonPageEvent>(extraBufferCapacity = 1)
+        val events: SharedFlow<PersonPageEvent> = eventFlow.asSharedFlow()
+
         init {
             load()
         }
@@ -83,38 +82,51 @@ class PersonPageViewModel
         fun load() {
             state.value = PersonPageUiState.Loading
             viewModelScope.launch {
-                coroutineScope {
-                    val credits = async { attempt { repository.credits(personId) } }
-                    attempt { repository.details(personId) }.fold(
-                        onSuccess = { person ->
-                            state.value = PersonPageUiState.Ready(person)
-                            setCredits(credits.await())
-                        },
-                        onFailure = {
-                            credits.cancel()
-                            state.value = PersonPageUiState.Error(it.toSeerrError())
-                        },
+                val (details, credits) = read()
+                state.value =
+                    details.fold(
+                        onSuccess = { PersonPageUiState.Ready(it, credits.toState()) },
+                        onFailure = { PersonPageUiState.Error(it.toSeerrError()) },
                     )
-                }
+            }
+        }
+
+        /** Reads both again under the pull's spinner, keeping the page as it is; a failed read keeps it and says so. */
+        fun refresh() {
+            if ((state.value as? PersonPageUiState.Ready)?.refreshing != false) return
+            updateReady { it.copy(refreshing = true) }
+            viewModelScope.launch {
+                val (details, credits) = read()
+                details.fold(
+                    onSuccess = { person -> updateReady { it.copy(person = person, credits = credits.toState(), refreshing = false) } },
+                    onFailure = {
+                        updateReady { it.copy(refreshing = false) }
+                        eventFlow.tryEmit(PersonPageEvent.RefreshFailed)
+                    },
+                )
             }
         }
 
         /** Reads the credits again after they failed; the profile stays. */
         fun retryCredits() {
             updateReady { it.copy(credits = PersonCreditsState.Loading) }
-            viewModelScope.launch { setCredits(attempt { repository.credits(personId) }) }
+            viewModelScope.launch {
+                val credits = attempt { repository.credits(personId) }
+                updateReady { it.copy(credits = credits.toState()) }
+            }
         }
 
-        fun setFilter(filter: CreditsFilter) = updateReady { it.copy(filter = filter) }
+        private suspend fun read(): Pair<Result<PersonDetails>, Result<PersonCredits>> =
+            coroutineScope {
+                val credits = async { attempt { repository.credits(personId) } }
+                attempt { repository.details(personId) } to credits.await()
+            }
 
-        private fun setCredits(result: Result<PersonCredits>) {
-            val credits =
-                result.fold(
-                    onSuccess = { PersonCreditsState.Ready(it) },
-                    onFailure = { PersonCreditsState.Error(it.toSeerrError()) },
-                )
-            updateReady { it.copy(credits = credits) }
-        }
+        private fun Result<PersonCredits>.toState(): PersonCreditsState =
+            fold(
+                onSuccess = { PersonCreditsState.Ready(it) },
+                onFailure = { PersonCreditsState.Error(it.toSeerrError()) },
+            )
 
         private fun updateReady(transform: (PersonPageUiState.Ready) -> PersonPageUiState.Ready) =
             state.update { (it as? PersonPageUiState.Ready)?.let(transform) ?: it }

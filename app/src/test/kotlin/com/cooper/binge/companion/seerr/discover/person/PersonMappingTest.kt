@@ -38,20 +38,34 @@ class PersonMappingTest {
     ) = SeerrPersonCreditDto(id = id, mediaType = "tv", name = name, firstAirDate = date, character = character)
 
     @Test
-    fun `credits come newest first with an undated title last`() {
+    fun `credits keep the order the server gave them`() {
         val credits =
             SeerrPersonCreditsDto(
                 cast =
                     listOf(
-                        movie(1, "Old", "1999-03-30"),
-                        movie(2, "Undated", ""),
-                        movie(3, "New", "2021-12-01"),
-                        show(4, "Mid", "2010-04-17"),
+                        movie(1, "First", "1999-03-30"),
+                        movie(2, "Second", ""),
+                        movie(3, "Third", "2021-12-01"),
+                        show(4, "Fourth", "2010-04-17"),
                     ),
             ).toPersonCredits()
 
-        assertEquals(listOf("New", "Mid", "Old", "Undated"), credits.cast.map { it.title })
-        assertNull(credits.cast.last().date)
+        assertEquals(listOf("First", "Second", "Third", "Fourth"), credits.cast.map { it.title })
+    }
+
+    @Test
+    fun `a rating is the vote average, and none where the server gave zero or nothing`() {
+        val credits =
+            SeerrPersonCreditsDto(
+                cast =
+                    listOf(
+                        movie(1, "Rated", null).copy(voteAverage = 7.5),
+                        movie(2, "Zero", null).copy(voteAverage = 0.0),
+                        movie(3, "Missing", null),
+                    ),
+            ).toPersonCredits()
+
+        assertEquals(listOf(7.5f, null, null), credits.cast.map { it.rating })
     }
 
     @Test
@@ -115,11 +129,47 @@ class PersonMappingTest {
                 birthday = "",
                 knownForDepartment = " ",
                 alsoKnownAs = listOf("", "S."),
-            ).toPersonDetails()
+            ).toPersonDetails("u")
 
         assertNull(details.biography)
         assertNull(details.birthday)
         assertNull(details.knownFor)
         assertEquals(listOf("S."), details.alsoKnownAs)
+    }
+
+    @Test
+    fun `the gender code, links and popularity map and the share address is the server's page`() {
+        val details =
+            SeerrPersonDetailsDto(
+                id = 5,
+                name = "Sam",
+                gender = 3,
+                popularity = 0.0,
+                imdbId = "nm123",
+                homepage = "https://sam.example",
+            ).toPersonDetails("https://seerr.example/person/5")
+
+        assertEquals(PersonGender.NonBinary, details.gender)
+        assertNull(details.popularity)
+        assertEquals("nm123", details.imdbId)
+        assertEquals("https://seerr.example/person/5", details.webUrl)
+        assertNull(SeerrPersonDetailsDto(id = 6, gender = 0).toPersonDetails("u").gender)
+        assertEquals(PersonGender.Female, SeerrPersonDetailsDto(id = 6, gender = 1).toPersonDetails("u").gender)
+        assertEquals(PersonGender.Male, SeerrPersonDetailsDto(id = 6, gender = 2).toPersonDetails("u").gender)
+    }
+
+    @Test
+    fun `age at death comes from the two dates and is none where either is missing or backwards`() {
+        fun age(
+            born: String?,
+            died: String?,
+        ) = SeerrPersonDetailsDto(id = 1, birthday = born, deathday = died).toPersonDetails("u").ageAtDeath
+
+        assertEquals(70, age("1950-06-15", "2021-06-14"))
+        assertEquals(72, age("1950-06-15", "2022-06-15"))
+        assertNull(age("1950-06-15", null))
+        assertNull(age(null, "2022-06-15"))
+        assertNull(age("2022-06-15", "1950-06-15"))
+        assertNull(age("not a date", "2022-06-15"))
     }
 }

@@ -17,5 +17,5 @@ object PersonModule {
     fun personRepository(
         connection: SeerrConnection,
         @IoDispatcher io: CoroutineDispatcher,
-    ): PersonRepository = SeerrPersonRepository(api = connection::api, io = io)
+    ): PersonRepository = SeerrPersonRepository(api = connection::api, serverUrl = { connection.current().baseUrl }, io = io)
 }

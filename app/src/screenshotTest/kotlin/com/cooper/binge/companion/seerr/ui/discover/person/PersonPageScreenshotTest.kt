@@ -9,7 +9,7 @@ import com.cooper.binge.companion.seerr.preview.SeerrScreenStatePreview
 import com.cooper.binge.companion.seerr.preview.SeerrSpanishPreviews
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 
-private val NO_ACTIONS = PersonPageActions({}, {}, {}, {}, { _, _ -> })
+private val NO_ACTIONS = PersonPageActions({}, {}, {}, {}, {}, {}, { _, _ -> })
 
 @Composable
 private fun Frame(state: PersonPageUiState) = PersonPageScreen(state, NO_ACTIONS)
@@ -21,40 +21,23 @@ class PersonPageScreenshotTest {
     @Composable
     fun full() = Frame(readyPerson())
 
-    /** The chips on Series: both lists narrowed. */
-    @PreviewTest
-    @SeerrScreenStatePreview
-    @Composable
-    fun seriesOnly() = Frame(readyPerson(filter = CreditsFilter.Series))
-
     /** The server knows only the name and the person has no credits: no empty section is drawn. */
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
     fun sparse() = Frame(readyPerson(sparsePerson(), PersonCreditsState.Ready(PersonCredits(emptyList(), emptyList()))))
 
-    /** The chips on a kind the person has no credits of. */
+    /** A person who has died, with no links: the age is stated, and no links row is drawn. */
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
-    fun filteredEmpty() =
-        Frame(
-            readyPerson(
-                credits =
-                    PersonCreditsState.Ready(
-                        fullCredits().let {
-                            it.copy(
-                                cast =
-                                    it.cast.filter { c ->
-                                        c.kind.name == "Movie"
-                                    },
-                                crew = it.crew,
-                            )
-                        },
-                    ),
-                filter = CreditsFilter.Series,
-            ),
-        )
+    fun diedNoLinks() = Frame(readyPerson(lateWithoutLinks()))
+
+    /** A pull in flight: the spinner sits in the bar, clear of the name. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun refreshing() = Frame(readyPerson(refreshing = true))
 
     @PreviewTest
     @SeerrScreenStatePreview
