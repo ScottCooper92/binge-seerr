@@ -48,7 +48,7 @@ check "the data module's manifest"  "true true true"    data/src/main/AndroidMan
 check "the data module's build file" "true true true"   data/build.gradle.kts
 check "the design system pin"      "true true true"    design-system
 check "the homelab-core pin"      "true true true"    homelab-core
-check "the companions pin"         "true false true"   binge-companions
+check "the companions pin"         "true true true"   binge-companions
 check "docs with a screen"         "true true false"   CLAUDE.md "$K/ui/hub/HubScreen.kt"
 
 check "a UI-only change skips R8" "true true false" "$K/ui/hub/HubScreen.kt" app/src/main/res/values/strings.xml

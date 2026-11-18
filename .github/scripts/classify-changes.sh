@@ -48,7 +48,7 @@ no_frames() {
     # seerr only: this app's package.
     app/src/main/kotlin/com/cooper/binge/companion/seerr/service/*) return 0 ;;
     app/src/main/kotlin/com/cooper/binge/companion/seerr/review/*) return 0 ;;
-    translation-hashes.txt | detekt.yml | .editorconfig | binge-companions | binge-ci) return 0 ;;
+    translation-hashes.txt | detekt.yml | .editorconfig | binge-ci) return 0 ;;
   esac
   return 1
 }
