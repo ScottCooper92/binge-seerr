@@ -15,6 +15,7 @@ import kotlinx.coroutines.runBlocking
 import okhttp3.Headers.Companion.headersOf
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -31,6 +32,8 @@ private const val RT = """{"title":"A Show","criticsScore":91,"audienceScore":88
 class SeerrSeriesRepositoryTest {
     private val seerr = FakeSeerrServer()
     private val factory = SeerrApiFactory(logRequests = false, testTransport = seerr::interceptor, testDispatcher = seerr::newDispatcher)
+    private var version = SeerrVersion(3, 2, 0)
+    private var variant = SeerrVariant.Seerr
     private var ratings = FakeResponse(headers = JSON, body = RT)
 
     @After
@@ -41,6 +44,7 @@ class SeerrSeriesRepositoryTest {
 
     private fun route(request: FakeRequest): FakeResponse =
         when (request.url.encodedPath) {
+            "/api/v1/tv/1399" -> FakeResponse(headers = JSON, body = """{"id":1399,"name":"A Show"}""")
             "/api/v1/tv/1399/season/2" -> FakeResponse(headers = JSON, body = SEASON)
             "/api/v1/tv/1399/ratings" -> ratings
             "/api/v1/tv/1399/recommendations" ->
@@ -58,7 +62,7 @@ class SeerrSeriesRepositoryTest {
         return runBlocking {
             factory.anonymous(seerr.url()) { api ->
                 val profile =
-                    SeerrServerProfile(variant = SeerrVariant.Seerr, version = SeerrVersion(3, 2, 0), settings = SeerrPublicSettings())
+                    SeerrServerProfile(variant = variant, version = version, settings = SeerrPublicSettings())
                 block(
                     SeerrSeriesRepository(
                         api = { api },
@@ -70,6 +74,14 @@ class SeerrSeriesRepositoryTest {
                 )
             }
         }
+    }
+
+    @Test
+    fun `networks may be links only where the server can list what a network made`() {
+        assertTrue(withRepository { it.series(1399) }.companiesOpen)
+        variant = SeerrVariant.Overseerr
+        version = SeerrVersion(1, 20, 0)
+        assertFalse(withRepository { it.series(1399) }.companiesOpen)
     }
 
     @Test

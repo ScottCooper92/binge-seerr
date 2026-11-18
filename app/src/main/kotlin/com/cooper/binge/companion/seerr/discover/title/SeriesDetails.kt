@@ -52,6 +52,8 @@ data class SeriesDetails(
     val seasonCount: Int?,
     val episodeCount: Int?,
     val nextEpisode: NextEpisode?,
+    /** Whether the server can list what a network made, so the networks may be links; set from its profile. */
+    val companiesOpen: Boolean = false,
     val seasons: List<SeasonInfo>,
     val cast: List<TitlePerson>,
     val keyCrew: List<TitlePerson>,

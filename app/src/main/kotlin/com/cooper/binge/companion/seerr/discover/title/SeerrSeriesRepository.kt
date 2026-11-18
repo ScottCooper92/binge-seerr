@@ -54,13 +54,14 @@ class SeerrSeriesRepository(
             val profile = profile()
             val dto = api.tvFullDetails(tmdbId)
             val permissions = user.toPermissions()
-            dto.toSeriesDetails(
-                region = streamingRegion(api, user, profile),
-                mayRequest = permissions.canRequestSeries,
-                mayRequest4k = permissions.mayRequest4k(isTv = true, profile.settings),
-                settings = profile.settings,
-                webUrl = serverUrl() + "tv/" + tmdbId,
-            )
+            dto
+                .toSeriesDetails(
+                    region = streamingRegion(api, user, profile),
+                    mayRequest = permissions.canRequestSeries,
+                    mayRequest4k = permissions.mayRequest4k(isTv = true, profile.settings),
+                    settings = profile.settings,
+                    webUrl = serverUrl() + "tv/" + tmdbId,
+                ).copy(companiesOpen = profile.hasDiscoverByCategory)
         }
 
     override suspend fun season(

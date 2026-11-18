@@ -163,6 +163,16 @@ class SeerrTitleDetailsRepositoryTest {
     }
 
     @Test
+    fun `studios may be links only where the server can list what a studio made`() {
+        assertTrue(withRepository { it.movie(603) }.companiesOpen)
+        variant = SeerrVariant.Overseerr
+        version = SeerrVersion(1, 20, 0)
+        assertFalse(withRepository { it.movie(603) }.companiesOpen)
+        version = SeerrVersion(1, 21, 0)
+        assertTrue(withRepository { it.movie(603) }.companiesOpen)
+    }
+
+    @Test
     fun `a title the server holds nothing of in a version can be requested in it`() {
         val admin = withRepository { it.movie(603) }
         assertEquals(TitleAvailability.Available, admin.standard.availability)

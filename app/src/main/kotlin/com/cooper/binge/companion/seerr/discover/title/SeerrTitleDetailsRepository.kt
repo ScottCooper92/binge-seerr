@@ -46,12 +46,13 @@ class SeerrTitleDetailsRepository(
             val dto = api.movieFullDetails(tmdbId)
             val region = streamingRegion(api, user, profile)
             val permissions = user.toPermissions()
-            dto.toMovieDetails(
-                region = region,
-                mayRequest = permissions.canRequestMovie,
-                mayRequest4k = permissions.mayRequest4k(isTv = false, profile.settings),
-                webUrl = serverUrl() + "movie/" + tmdbId,
-            )
+            dto
+                .toMovieDetails(
+                    region = region,
+                    mayRequest = permissions.canRequestMovie,
+                    mayRequest4k = permissions.mayRequest4k(isTv = false, profile.settings),
+                    webUrl = serverUrl() + "movie/" + tmdbId,
+                ).copy(companiesOpen = profile.hasDiscoverByCategory)
         }
 
     override suspend fun collectionParts(collectionId: Int): List<TitleResult> =

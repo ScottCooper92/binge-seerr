@@ -95,6 +95,8 @@ data class MovieDetails(
     val mediaId: Int?,
     val webUrl: String,
     val releaseDate: String? = null,
+    /** Whether the server can list what a studio made, so the studios may be links; set from its profile, never from a version here. */
+    val companiesOpen: Boolean = false,
 )
 
 /** The sections that load apart from the page, so one that fails leaves only itself out. */

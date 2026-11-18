@@ -128,7 +128,7 @@ class TitlePageScreenshotTest {
     @Composable
     fun factsLinked() =
         TitlePageScreen(
-            TitlePageUiState.Ready(fullMovie(), fullExtras()),
+            TitlePageUiState.Ready(fullMovie().copy(companiesOpen = true), fullExtras()),
             emptyFlow(),
             LINKED_ACTIONS,
             scrollState = rememberScrollState(initial = FACTS_PX),
@@ -140,7 +140,7 @@ class TitlePageScreenshotTest {
     @Composable
     fun factsLinkedLargeFonts() =
         TitlePageScreen(
-            TitlePageUiState.Ready(longMovie(), fullExtras()),
+            TitlePageUiState.Ready(longMovie().copy(companiesOpen = true), fullExtras()),
             emptyFlow(),
             LINKED_ACTIONS,
             scrollState = rememberScrollState(initial = FACTS_LARGE_FONT_PX),

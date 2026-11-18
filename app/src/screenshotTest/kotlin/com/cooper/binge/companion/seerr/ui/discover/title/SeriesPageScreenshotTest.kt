@@ -103,7 +103,7 @@ class SeriesPageScreenshotTest {
     @Composable
     fun factsLinked() =
         SeriesPageScreen(
-            SeriesPageUiState.Ready(fullSeries(), seriesExtras()),
+            SeriesPageUiState.Ready(fullSeries().copy(companiesOpen = true), seriesExtras()),
             emptyFlow(),
             LINKED_ACTIONS,
             NO_SEASON_ACTIONS,
