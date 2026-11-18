@@ -151,12 +151,12 @@ data class TitleCreditsRoute(
     val tmdbId: Int,
 ) : SeerrRoute
 
-/** Every episode of one season of a show, opened from the show's page. [seasonName] is the name the page showed, which may be blank. */
+/** Every episode of every season of a show, opened from the show's page at [seasonNumber], the season it had chosen. [seriesName] is the show's name for the bar. */
 @Serializable
-data class SeasonEpisodesRoute(
+data class SeriesEpisodesRoute(
     val tmdbId: Int,
+    val seriesName: String,
     val seasonNumber: Int,
-    val seasonName: String,
 ) : SeerrRoute
 
 /** Settings: the connection and the admin's read-only view of the server. */

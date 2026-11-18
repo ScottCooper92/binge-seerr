@@ -26,6 +26,7 @@ import com.cooper.binge.companion.seerr.ui.discover.title.toDisplayDate
 import com.binge.designsystem.R as DesR
 
 private const val NAME_LINES = 2
+private const val SYNOPSIS_LINES = 3
 
 /**
  * An episode as Binge draws it: its still, the number above the title, then the rating and air date. It does not open anything,
@@ -35,6 +36,7 @@ private const val NAME_LINES = 2
 internal fun EpisodeRow(
     episode: SeasonEpisode,
     modifier: Modifier = Modifier,
+    showOverview: Boolean = false,
 ) {
     val locale = LocalConfiguration.current.locales[0]
     ListRow(
@@ -62,8 +64,21 @@ internal fun EpisodeRow(
                 overflow = TextOverflow.Ellipsis,
             )
             EpisodeMeta(episode.rating, episode.airDate.toDisplayDate(locale))
+            if (showOverview) episode.overview?.takeIf { it.isNotBlank() }?.let { Synopsis(it) }
         }
     }
+}
+
+/** An episode's synopsis under its title, three lines. */
+@Composable
+private fun Synopsis(text: String) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        maxLines = SYNOPSIS_LINES,
+        overflow = TextOverflow.Ellipsis,
+    )
 }
 
 /** The rating with its star, then the air date, whichever the server gave. */
