@@ -42,12 +42,14 @@ import com.binge.designsystem.template.BingeScreenScaffold
 import com.binge.designsystem.template.ScreenBar
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.TitleKind
+import com.cooper.binge.companion.seerr.discover.grid.DiscoverFilters
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverSort
 import com.cooper.binge.companion.seerr.discover.sliders.HubCard
 import com.cooper.binge.companion.seerr.ui.hubs.toStatus
 import com.cooper.binge.companion.seerr.ui.state.EmptyScreen
 import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
 import com.cooper.binge.companion.seerr.ui.state.LoadingScreen
+import java.time.LocalDate
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import com.binge.designsystem.R as DesR
@@ -55,11 +57,11 @@ import com.binge.designsystem.R as DesR
 /** What the screen does with what the user does; the entry wires each to the view model. */
 internal class DiscoverGridActions(
     val onBack: () -> Unit,
-    val onSort: (DiscoverSort) -> Unit,
     val onClearFilter: () -> Unit,
     val onRetry: () -> Unit,
     val onLoadMore: () -> Unit,
     val onOpenTitle: (HubCard) -> Unit,
+    val onApply: (DiscoverSort, DiscoverFilters) -> Unit = { _, _ -> },
 )
 
 private const val LOAD_MORE_AHEAD = 6
@@ -113,8 +115,10 @@ private fun FiltersButton(
     if (open && controls.sort != null) {
         DiscoverFilterSheet(
             sort = controls.sort,
+            filters = controls.filters,
             sortChoices = controls.sortChoices,
-            onSort = actions.onSort,
+            today = remember { LocalDate.now() },
+            onApply = actions.onApply,
             onDismiss = { open = false },
         )
     }

@@ -48,11 +48,11 @@ internal fun DiscoverGridEntry(
         actions =
             DiscoverGridActions(
                 onBack = onBack,
-                onSort = model::onSort,
                 onClearFilter = model::onClearFilter,
                 onRetry = model::onRetry,
                 onLoadMore = model::onLoadMore,
                 onOpenTitle = model::onOpenTitle,
+                onApply = model::onApply,
             ),
     )
 }

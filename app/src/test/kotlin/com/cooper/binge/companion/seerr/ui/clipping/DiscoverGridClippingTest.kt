@@ -50,7 +50,7 @@ private val STATES: List<DiscoverGridUiState> =
         DiscoverGridUiState.Error(CONTROLS, SeerrError.Unreachable),
     )
 
-private val NO_ACTIONS = DiscoverGridActions({}, {}, {}, {}, {}, {})
+private val NO_ACTIONS = DiscoverGridActions({}, {}, {}, {}, {})
 
 /** The grid at its worst, at font scales 1.3 and 2.0, through the design system's `assertNoTextClipped`. */
 @RunWith(RobolectricTestRunner::class)

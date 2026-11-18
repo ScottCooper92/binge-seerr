@@ -1,6 +1,7 @@
 package com.cooper.binge.companion.seerr.ui.grid
 
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverFilters
+import com.cooper.binge.companion.seerr.discover.grid.DiscoverFilters
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverSort
 import com.cooper.binge.companion.seerr.discover.sliders.HubCard
 import com.cooper.binge.companion.seerr.seerr.SeerrError
