@@ -11,7 +11,7 @@ import kotlinx.serialization.json.JsonPrimitive
 internal fun DemoData.mediaRoutes(): List<DemoRoute> =
     listOf(
         route("GET", "movie", "{}") { _, (id) -> movieDetails(id) },
-        route("GET", "tv", "{}") { _, (id) -> details("tv", id) },
+        route("GET", "tv", "{}") { _, (id) -> tvDetails(id) },
         route("POST", "media", "{}", "{}") { _, (id, status) -> withMedia(id) { markMedia(it, status) } },
         route("DELETE", "media", "{}") { _, (id) -> withMedia(id) { forget(it).let { done } } },
         route("DELETE", "media", "{}", "file") { _, (id) -> withMedia(id) { deleteFiles(it) } },

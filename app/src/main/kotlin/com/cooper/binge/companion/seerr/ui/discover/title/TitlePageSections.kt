@@ -39,6 +39,8 @@ import com.cooper.binge.companion.seerr.discover.TitleResult
 import com.cooper.binge.companion.seerr.discover.title.MovieDetails
 import com.cooper.binge.companion.seerr.discover.title.TitlePerson
 import com.cooper.binge.companion.seerr.discover.title.TitleRatings
+import com.cooper.binge.companion.seerr.discover.title.TitleVideo
+import com.cooper.binge.companion.seerr.discover.title.VersionState
 import com.cooper.binge.companion.seerr.seerr.toTmdbPosterUrl
 import com.binge.designsystem.R as DesR
 
@@ -61,8 +63,8 @@ internal fun TitlePageBody(
     val movie = state.movie
     val gap = dimensionResource(DesR.dimen.padding_m)
     Column(verticalArrangement = Arrangement.spacedBy(gap)) {
-        StatusRow(movie)
-        StatsRow(movie, state.extras?.ratings)
+        StatusRow(movie.standard, movie.fourK)
+        StatsRow(movie.voteAverage, state.extras?.ratings)
         movie.tagline?.let { Text(it, Modifier.padding(horizontal = gap), style = MaterialTheme.typography.titleSmall) }
         movie.overview?.let { ExpandableOverview(text = it, modifier = Modifier.padding(horizontal = gap)) }
         if (movie.genres.isNotEmpty()) TagRow(movie.genres)
@@ -73,7 +75,7 @@ internal fun TitlePageBody(
         )
         PeopleRow(stringResource(R.string.title_page_cast), movie.cast, actions.onOpenPerson, actions.onOpenCredits)
         PeopleRow(stringResource(R.string.title_page_crew), movie.keyCrew, actions.onOpenPerson, actions.onOpenCredits)
-        VideosGroup(movie, actions.onOpenUrl)
+        VideosGroup(movie.videos, actions.onOpenUrl)
         movie.providers?.takeIf { it.streaming.isNotEmpty() }?.let { providers ->
             SectionHeader(stringResource(R.string.title_page_where_to_watch))
             TagRow(providers.streaming.map { it.name })
@@ -105,9 +107,12 @@ internal fun TitlePageBody(
 }
 
 @Composable
-private fun StatusRow(movie: MovieDetails) {
-    val standard = movie.standard.availability.label()
-    val fourK = movie.fourK?.availability?.label()
+internal fun StatusRow(
+    standardVersion: VersionState,
+    fourKVersion: VersionState?,
+) {
+    val standard = standardVersion.availability.label()
+    val fourK = fourKVersion?.availability?.label()
     if (standard == null && fourK == null) return
     Row(
         Modifier.padding(horizontal = dimensionResource(DesR.dimen.padding_m)),
@@ -119,14 +124,14 @@ private fun StatusRow(movie: MovieDetails) {
 }
 
 @Composable
-private fun StatsRow(
-    movie: MovieDetails,
+internal fun StatsRow(
+    voteAverage: Double?,
     ratings: TitleRatings?,
 ) {
     val locale = LocalConfiguration.current.locales[0]
     val stats =
         listOfNotNull(
-            movie.voteAverage?.let {
+            voteAverage?.let {
                 DetailStat(Icons.Filled.Star, "%.1f".format(locale, it), stringResource(R.string.title_page_stat_rating))
             },
             ratings?.criticsPercent?.let { DetailStat(Icons.Filled.Verified, "$it%", stringResource(R.string.title_page_stat_critics)) },
@@ -140,14 +145,14 @@ private fun StatsRow(
 }
 
 @Composable
-private fun TagRow(labels: List<String>) {
+internal fun TagRow(labels: List<String>) {
     WrappingRow(Modifier.padding(horizontal = dimensionResource(DesR.dimen.padding_m))) {
         labels.forEach { BingeTag(label = it, uppercase = false) }
     }
 }
 
 @Composable
-private fun PeopleRow(
+internal fun PeopleRow(
     title: String,
     people: List<TitlePerson>,
     onOpen: (Int) -> Unit,
@@ -165,16 +170,16 @@ private fun PeopleRow(
 }
 
 @Composable
-private fun VideosGroup(
-    movie: MovieDetails,
+internal fun VideosGroup(
+    videos: List<TitleVideo>,
     onOpenUrl: (String) -> Unit,
 ) {
-    if (movie.videos.isEmpty()) return
+    if (videos.isEmpty()) return
     ItemGroup(
         title = stringResource(R.string.title_page_videos),
         modifier = Modifier.padding(horizontal = dimensionResource(DesR.dimen.padding_m)),
         rows =
-            movie.videos.map { video ->
+            videos.map { video ->
                 ListItem(
                     icon = Icons.Filled.PlayCircle,
                     label = video.name,
@@ -186,7 +191,7 @@ private fun VideosGroup(
 }
 
 @Composable
-private fun TitleRow(
+internal fun TitleRow(
     title: String,
     titles: List<TitleResult>,
     onOpen: (TitleResult) -> Unit,

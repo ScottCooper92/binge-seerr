@@ -107,6 +107,7 @@ internal fun SeerrTvDetailsDto.toSeriesDetails(
         posterUrl = posterPath?.toTmdbPosterUrl(),
         backdropUrl = backdropPath?.toTmdbBackdropUrl(),
         firstAirYear = firstAirDate.toReleaseYear(),
+        firstAirDate = firstAirDate?.takeIf { it.isNotBlank() },
         lastAirDate = lastAirDate?.takeIf { it.isNotBlank() },
         episodeRuntimeMinutes = episodeRunTime.firstOrNull { it > 0 },
         certification = certificationFor(region),

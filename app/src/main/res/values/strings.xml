@@ -1503,4 +1503,22 @@
         <item quantity="one">%1$d episode</item>
         <item quantity="other">%1$d episodes</item>
     </plurals>
+    <string name="series_page_seasons">Seasons</string>
+    <string name="series_page_runtime">%1$d min</string>
+    <plurals name="series_page_season_count">
+        <item quantity="one">%1$d season</item>
+        <item quantity="other">%1$d seasons</item>
+    </plurals>
+    <string name="series_fact_networks">Networks</string>
+    <string name="series_fact_creators">Created by</string>
+    <string name="series_fact_first_aired">First aired</string>
+    <string name="series_fact_last_aired">Last aired</string>
+    <string name="series_fact_episodes">Episodes</string>
+    <string name="series_fact_next_episode">Next episode</string>
+    <string name="series_fact_next_airs">Next episode airs</string>
+    <string name="series_next_episode">%1$s (season %2$d, episode %3$d)</string>
+    <string name="series_status_returning">Returning series</string>
+    <string name="series_status_ended">Ended</string>
+    <string name="series_status_pilot">Pilot</string>
+    <string name="series_season_subtitle" translatable="false">%1$s · %2$s</string>
 </resources>

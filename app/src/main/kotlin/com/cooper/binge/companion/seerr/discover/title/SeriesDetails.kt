@@ -35,6 +35,7 @@ data class SeriesDetails(
     val posterUrl: String?,
     val backdropUrl: String?,
     val firstAirYear: String?,
+    val firstAirDate: String?,
     val lastAirDate: String?,
     val episodeRuntimeMinutes: Int?,
     val certification: String?,

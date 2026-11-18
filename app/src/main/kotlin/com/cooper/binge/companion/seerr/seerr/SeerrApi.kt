@@ -132,13 +132,6 @@ interface SeerrApi {
         @Path("tmdbId") tmdbId: Int,
     ): SeerrTvDetailsDto
 
-    /** One season with its episodes, for the series page's season list. */
-    @GET("api/v1/tv/{tmdbId}/season/{seasonNumber}")
-    suspend fun tvSeason(
-        @Path("tmdbId") tmdbId: Int,
-        @Path("seasonNumber") seasonNumber: Int,
-    ): SeerrSeasonDetailsDto
-
     @GET("api/v1/tv/{tmdbId}/recommendations")
     suspend fun tvRecommendations(
         @Path("tmdbId") tmdbId: Int,
