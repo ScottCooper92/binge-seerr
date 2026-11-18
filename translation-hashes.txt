@@ -1008,6 +1008,7 @@ app:setup_check_again  fb7099ad8e81
 app:setup_connect  1a2303ede074
 app:setup_continue  31fbef162594
 app:setup_email  969ccbd3cf63
+app:setup_error_client_certificate  8d9f8d329adf
 app:setup_error_handoff_session_rejected  75c101ff8976
 app:setup_error_invalid_url  683de0c44578
 app:setup_error_link_expired  4699845e44ee

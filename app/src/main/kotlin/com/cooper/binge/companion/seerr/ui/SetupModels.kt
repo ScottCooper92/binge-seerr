@@ -15,6 +15,9 @@ enum class SetupError {
     /** [Unreachable], for an address a phone sent that is an IP literal off the home network. */
     UnreachableNotLocal,
     LocalNetworkDenied,
+
+    /** The server asked for a client certificate during the handshake, which the app cannot send; it did answer (#2150). */
+    ClientCertificateNeeded,
     Unknown,
     LinkExpired,
 

@@ -29,6 +29,7 @@
     <string name="setup_error_rejected">El servidor rechazó las credenciales.</string>
     <string name="setup_error_unreachable">No se pudo conectar con el servidor.</string>
     <string name="setup_error_local_network_denied">Android está bloqueando el acceso a tu red local. Permítelo para esta aplicación y vuelve a intentarlo.</string>
+    <string name="setup_error_client_certificate">Este servidor pide un certificado de cliente y esta aplicación todavía no puede enviarlo. Conéctate por una dirección que no lo pida, por ejemplo en tu red doméstica, o consulta a quien administra el servidor.</string>
     <string name="setup_local_network_explanation">Este servidor está en tu red local. Android pide tu permiso antes de que una aplicación pueda acceder a otros dispositivos de ella.</string>
     <string name="local_network_allow">Permitir acceso a la red local</string>
     <string name="local_network_allow_short">Permitir acceso</string>
