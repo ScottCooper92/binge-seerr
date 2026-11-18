@@ -152,7 +152,7 @@ private fun CardRow(
         MediaCard(
             posterUrl = card.artworkUrl,
             title = card.name,
-            rating = null,
+            rating = card.rating,
             onClick = { onOpenTitle(card) },
             modifier = Modifier.width(dimensionResource(DesR.dimen.card_width)),
             status = card.availability.toStatus(),
