@@ -29,10 +29,14 @@ import com.binge.designsystem.theme.BingeSentiment
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.TitleAvailability
 import com.cooper.binge.companion.seerr.discover.TitleResult
+import com.cooper.binge.companion.seerr.discover.title.MovieDetails
 import com.cooper.binge.companion.seerr.discover.title.TitlePerson
 import com.cooper.binge.companion.seerr.discover.title.trailerUrl
 import com.cooper.binge.companion.seerr.seerr.toTmdbPosterUrl
+import com.cooper.binge.companion.seerr.ui.discover.request.joinMeta
 import com.binge.designsystem.R as DesR
+
+private const val MINUTES_PER_HOUR = 60
 
 /** What the page says below its hero. A section the server gave nothing for is not drawn. */
 @Composable
@@ -82,6 +86,13 @@ internal fun Modifier.readingMargin(): Modifier = padding(horizontal = LocalHero
 /** The inset a rail starts at: the screen's, plus the reading margin, so its first card lines up with the column and it still bleeds. */
 @Composable
 private fun railInset() = dimensionResource(DesR.dimen.padding_m) + LocalHeroReadingMargin.current
+
+/** The line under the title in the request sheet: release year and runtime, whichever the server gave. */
+@Composable
+internal fun MovieDetails.requestMeta(): String? {
+    val runtime = runtimeMinutes?.let { stringResource(R.string.title_page_runtime, it / MINUTES_PER_HOUR, it % MINUTES_PER_HOUR) }
+    return joinMeta(listOf(year, runtime), stringResource(R.string.request_sheet_meta_separator))
+}
 
 /** The "Overview" heading over the synopsis, as Binge's pages have it. */
 @Composable

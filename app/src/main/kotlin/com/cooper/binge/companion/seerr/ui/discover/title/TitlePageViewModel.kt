@@ -48,6 +48,9 @@ sealed interface TitlePageEvent {
     data class Requested(
         val result: RequestResult,
     ) : TitlePageEvent
+
+    /** The read after a request failed: the page keeps what it had, and the screen offers to try again. */
+    data object ReloadFailed : TitlePageEvent
 }
 
 /** The film page. Detail keyed on an id, so it shares [Lazily][kotlinx.coroutines.flow.SharingStarted.Lazily] with the other detail pages: it loads once. */
@@ -92,8 +95,16 @@ class TitlePageViewModel
         /** Closing the sheet reads the title again, since a refused send may mean the server's state moved under the page. */
         fun closeRequestSheet() {
             updateReady { it.copy(requestSheetOpen = false) }
+            reload()
+        }
+
+        /** Reads the title again where the page stands: a failure keeps what it shows and says so, rather than dropping to the loading page. */
+        fun reload() {
             viewModelScope.launch {
-                attempt { repository.movie(tmdbId) }.onSuccess { movie -> updateReady { it.copy(movie = movie) } }
+                attempt { repository.movie(tmdbId) }.fold(
+                    onSuccess = { movie -> updateReady { it.copy(movie = movie) } },
+                    onFailure = { eventFlow.tryEmit(TitlePageEvent.ReloadFailed) },
+                )
             }
         }
 

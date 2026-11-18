@@ -3,40 +3,28 @@ package com.cooper.binge.companion.seerr.ui.discover.request
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Download
-import androidx.compose.material.icons.filled.Hd
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
-import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.binge.designsystem.component.BingeActionFooter
 import com.binge.designsystem.component.BingeAdaptiveSheet
-import com.binge.designsystem.component.BingeIconPlate
+import com.binge.designsystem.component.BingeConfirmDialog
 import com.binge.designsystem.component.BingeSheetKind
-import com.binge.designsystem.component.SwitchRow
 import com.cooper.binge.companion.seerr.R
-import com.cooper.binge.companion.seerr.discover.request.RequestQuota
 import com.cooper.binge.companion.seerr.discover.request.RequestResult
-import com.cooper.binge.companion.seerr.ui.ChoiceField
 import com.cooper.binge.companion.seerr.ui.DestinationIcons
 import com.cooper.binge.companion.seerr.ui.requests.DestinationPickerPanel
 import com.cooper.binge.companion.seerr.ui.state.DialogMessage
@@ -77,14 +65,20 @@ fun RequestSheet(
             actions =
                 RequestSheetActions(
                     onUse4k = viewModel::setUse4k,
-                    onSeason = viewModel::toggleSeason,
-                    onAllSeasons = viewModel::toggleAllSeasons,
+                    onSeason = viewModel::toggleSeasons,
+                    onAllSeasons = { viewModel.toggleSeasons(null) },
+                    onAdvancedExpanded = viewModel::setAdvancedExpanded,
                     onServer = viewModel::selectServer,
                     onProfile = viewModel::selectProfile,
                     onRootFolder = viewModel::selectRootFolder,
                     onSubmit = viewModel::submit,
                     onRetry = viewModel::load,
+                    onRetryQuota = { viewModel.retry(RequestRead.Quota) },
+                    onRetryServers = { viewModel.retry(RequestRead.Servers) },
+                    onRetryChoices = { viewModel.retry(RequestRead.Choices) },
                     onDismissProblem = viewModel::dismissProblem,
+                    onOpenFailure = viewModel::openFailure,
+                    onDismissFailure = viewModel::dismissFailure,
                 ),
         )
     }
@@ -94,16 +88,22 @@ class RequestSheetActions(
     val onUse4k: (Boolean) -> Unit,
     val onSeason: (Int) -> Unit,
     val onAllSeasons: () -> Unit,
+    val onAdvancedExpanded: (Boolean) -> Unit,
     val onServer: (Int) -> Unit,
     val onProfile: (Int) -> Unit,
     val onRootFolder: (String) -> Unit,
     val onSubmit: () -> Unit,
     val onRetry: () -> Unit,
+    val onRetryQuota: () -> Unit,
+    val onRetryServers: () -> Unit,
+    val onRetryChoices: () -> Unit,
     val onDismissProblem: () -> Unit,
+    val onOpenFailure: () -> Unit,
+    val onDismissFailure: () -> Unit,
 )
 
-/** Which destination field's picker is swapped in for the form; see [DestinationPickerPanel]. */
-private enum class PickerField { Server, Profile, RootFolder }
+/** A page of the sheet: the form, or one of the lists it opens. */
+private enum class SheetPage { Form, Seasons, Server, Profile, RootFolder }
 
 @Composable
 internal fun RequestSheetContent(
@@ -124,177 +124,129 @@ private fun ReadyContent(
     actions: RequestSheetActions,
     modifier: Modifier,
 ) {
-    var picker by rememberSaveable { mutableStateOf<PickerField?>(null) }
-    val pick = state.pick
-    if (picker != null && pick != null) {
-        BackHandler(onBack = { picker = null })
-        PickerFor(picker, state, actions) { picker = null }
+    var page by rememberSaveable { mutableStateOf(SheetPage.Form) }
+    if (page != SheetPage.Form) {
+        BackHandler(onBack = { page = SheetPage.Form })
+        PageFor(page, state, actions) { page = SheetPage.Form }
         return
     }
-    Column(
-        modifier =
-            modifier
-                .fillMaxWidth()
-                .padding(horizontal = dimensionResource(DesR.dimen.padding_m))
-                .padding(bottom = dimensionResource(DesR.dimen.padding_l)),
-        verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
-    ) {
-        Text(stringResource(R.string.request_sheet_title), style = MaterialTheme.typography.titleMedium)
-        Text(state.target.title, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m))) {
         Column(
-            modifier = Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
+            modifier =
+                Modifier
+                    .weight(
+                        1f,
+                        fill = false,
+                    ).verticalScroll(rememberScrollState())
+                    .padding(horizontal = dimensionResource(DesR.dimen.padding_m)),
+            verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
         ) {
-            if (state.options.may4k && state.target.fourKOpen) FourKRow(state, actions)
-            state.seasons?.let { SeasonStep(it, enabled = !state.submitting, actions) }
-            if (pick != null) DestinationFields(state, pick) { picker = it }
+            RequestHeader(state.target)
+            RequestOptionsGroup(state, actions, onOpenSeasons = { page = SheetPage.Seasons })
+            RequestAdvancedOptions(state, actions, onOpen = { page = it.toPage() })
         }
-        state.options.quota?.let { QuotaRow(it) }
-        BingeActionFooter(
-            label = stringResource(R.string.request_sheet_submit),
-            onClick = actions.onSubmit,
-            enabled = state.canSubmit,
-            loading = state.submitting,
-        )
+        RequestFooter(state, actions)
     }
     val resources = LocalContext.current.resources
-    MessageDialogHost(
-        message = state.problem?.toDialogMessage(resources::getString),
-        onDismiss = actions.onDismissProblem,
+    MessageDialogHost(message = state.problem?.toDialogMessage(resources::getString), onDismiss = actions.onDismissProblem)
+    state.failure?.takeIf { state.failureDialog }?.let { failure ->
+        val message = failure.toDialogMessage(resources::getString)
+        BingeConfirmDialog(
+            title = message.title,
+            message = message.body,
+            confirmLabel = stringResource(R.string.action_try_again),
+            onConfirm = {
+                actions.onDismissFailure()
+                actions.onSubmit()
+            },
+            onDismissRequest = actions.onDismissFailure,
+        )
+    }
+}
+
+private fun DestinationField.toPage() =
+    when (this) {
+        DestinationField.Server -> SheetPage.Server
+        DestinationField.Profile -> SheetPage.Profile
+        DestinationField.RootFolder -> SheetPage.RootFolder
+    }
+
+/** The pinned button. It reads "Request in 4K" for 4K, and turns red with a short reason after a send that got no answer. */
+@Composable
+private fun RequestFooter(
+    state: RequestSheetUiState.Ready,
+    actions: RequestSheetActions,
+) {
+    val failed = state.footerFailed && state.failure != null
+    val label =
+        when {
+            failed && state.failure?.cause == RequestProblemCause.Unreachable -> stringResource(R.string.request_sheet_failed_unreachable)
+            failed -> stringResource(R.string.request_sheet_failed_other)
+            state.use4k -> stringResource(R.string.request_sheet_submit_4k)
+            else -> stringResource(R.string.request_sheet_submit)
+        }
+    BingeActionFooter(
+        label = label,
+        onClick = if (failed) actions.onOpenFailure else actions.onSubmit,
+        enabled = state.canSubmit || failed,
+        loading = state.submitting,
+        failed = failed,
     )
 }
 
 @Composable
-private fun FourKRow(
-    state: RequestSheetUiState.Ready,
-    actions: RequestSheetActions,
-) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
-    ) {
-        BingeIconPlate(Icons.Filled.Hd)
-        SwitchRow(
-            label = stringResource(R.string.request_sheet_4k),
-            checked = state.use4k,
-            onCheckedChange = actions.onUse4k,
-            enabled = state.canToggle4k,
-        )
-    }
-}
-
-@Composable
-private fun DestinationFields(
-    state: RequestSheetUiState.Ready,
-    pick: DestinationPick,
-    onOpen: (PickerField) -> Unit,
-) {
-    val enabled = !state.submitting
-    ChoiceField(
-        icon = DestinationIcons.server,
-        title = stringResource(R.string.advanced_server),
-        choices = state.servers.map { it.id to it.name },
-        selected = pick.serverId,
-        enabled = enabled,
-    ) { onOpen(PickerField.Server) }
-    pick.choices?.let { choices ->
-        ChoiceField(
-            icon = DestinationIcons.profile,
-            title = stringResource(R.string.advanced_profile),
-            choices = choices.profiles.map { it.id to it.label },
-            selected = pick.profileId,
-            enabled = enabled,
-        ) { onOpen(PickerField.Profile) }
-        ChoiceField(
-            icon = DestinationIcons.rootFolder,
-            title = stringResource(R.string.advanced_root_folder),
-            choices = choices.rootFolders.map { it to it },
-            selected = pick.rootFolder,
-            enabled = enabled,
-        ) { onOpen(PickerField.RootFolder) }
-    }
-}
-
-@Composable
-private fun PickerFor(
-    field: PickerField?,
+private fun PageFor(
+    page: SheetPage,
     state: RequestSheetUiState.Ready,
     actions: RequestSheetActions,
     onBack: () -> Unit,
 ) {
-    val pick = state.pick ?: return
-    when (field) {
-        PickerField.Server ->
-            DestinationPickerPanel(
-                icon = DestinationIcons.server,
-                title = stringResource(R.string.advanced_server),
-                choices = state.servers.map { it.id to it.name },
-                selected = pick.serverId,
-                onSelect = {
-                    actions.onServer(it)
-                    onBack()
-                },
-                onBack = onBack,
-            )
-        PickerField.Profile ->
-            DestinationPickerPanel(
-                icon = DestinationIcons.profile,
-                title = stringResource(R.string.advanced_profile),
-                choices =
-                    pick.choices
-                        ?.profiles
-                        .orEmpty()
-                        .map { it.id to it.label },
-                selected = pick.profileId,
-                onSelect = {
-                    actions.onProfile(it)
-                    onBack()
-                },
-                onBack = onBack,
-            )
-        PickerField.RootFolder ->
-            DestinationPickerPanel(
-                icon = DestinationIcons.rootFolder,
-                title = stringResource(R.string.advanced_root_folder),
-                choices =
-                    pick.choices
-                        ?.rootFolders
-                        .orEmpty()
-                        .map { it to it },
-                selected = pick.rootFolder,
-                onSelect = {
-                    actions.onRootFolder(it)
-                    onBack()
-                },
-                onBack = onBack,
-            )
-        null -> Unit
-    }
-}
-
-/** How much of the quota is left, in the words the hub's quota card uses; a spent quota says what that means for this request. */
-@Composable
-private fun QuotaRow(quota: RequestQuota) {
-    val left = pluralStringResource(R.plurals.hub_quota_remaining, quota.remaining, quota.remaining, quota.limit)
-    val period = quota.days?.let { pluralStringResource(R.plurals.hub_quota_period, it, it) }
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
-    ) {
-        Icon(Icons.Filled.Download, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
-        Column {
-            Text(
-                text = listOfNotNull(left, period).joinToString(" · "),
-                style = MaterialTheme.typography.bodyMedium,
-            )
-            if (quota.spent) {
-                Text(
-                    text = stringResource(R.string.request_sheet_quota_spent),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.error,
+    val pick = state.pick
+    when (page) {
+        SheetPage.Seasons -> state.seasons?.let { RequestSeasonPage(it, !state.submitting, actions, onBack) }
+        SheetPage.Server ->
+            pick?.let {
+                DestinationPickerPanel(
+                    icon = DestinationIcons.server,
+                    title = stringResource(R.string.advanced_server),
+                    choices = state.servers4k.map { it.id to it.name },
+                    selected = it.serverId,
+                    onSelect = { id ->
+                        actions.onServer(id)
+                        onBack()
+                    },
+                    onBack = onBack,
                 )
             }
-        }
+        SheetPage.Profile ->
+            (pick?.choices as? ChoicesState.Ready)?.let { ready ->
+                DestinationPickerPanel(
+                    icon = DestinationIcons.profile,
+                    title = stringResource(R.string.advanced_profile),
+                    choices = ready.choices.profiles.map { it.id to it.label },
+                    selected = pick.profileId,
+                    onSelect = { id ->
+                        actions.onProfile(id)
+                        onBack()
+                    },
+                    onBack = onBack,
+                )
+            }
+        SheetPage.RootFolder ->
+            (pick?.choices as? ChoicesState.Ready)?.let { ready ->
+                DestinationPickerPanel(
+                    icon = DestinationIcons.rootFolder,
+                    title = stringResource(R.string.advanced_root_folder),
+                    choices = ready.choices.rootFolders.map { it to it },
+                    selected = pick.rootFolder,
+                    onSelect = { path ->
+                        actions.onRootFolder(path)
+                        onBack()
+                    },
+                    onBack = onBack,
+                )
+            }
+        SheetPage.Form -> Unit
     }
 }
 
@@ -312,7 +264,6 @@ private fun RequestProblemCause.bodyRes(): Int =
         RequestProblemCause.Quota -> R.string.request_problem_quota
         RequestProblemCause.NotAllowed -> R.string.request_problem_not_allowed
         RequestProblemCause.Unreachable -> R.string.request_problem_unreachable
-        RequestProblemCause.AlreadyThere -> R.string.request_problem_already_there
         RequestProblemCause.Other -> R.string.request_problem_other
     }
 
