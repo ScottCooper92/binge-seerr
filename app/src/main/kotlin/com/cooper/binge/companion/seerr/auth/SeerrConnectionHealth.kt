@@ -7,6 +7,7 @@ import com.cooper.homelab.core.server.connection.ConnectionHealth
 import com.cooper.homelab.core.server.connection.ConnectionHealthMonitor
 import com.cooper.homelab.core.server.connection.SeerrClassifier
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.runBlocking
@@ -30,6 +31,12 @@ enum class SeerrConnectionHealth {
 
     /** Server reached but the credentials rejected; needs reconnecting. */
     Unauthorized,
+
+    /**
+     * Server unreachable the way [Unreachable] is, except that it answered the handshake by asking for a client certificate, which
+     * the app cannot send (#2156). Only ever a refinement of [Unreachable]: it takes the same two failures to get here.
+     */
+    ClientCertificateNeeded,
 }
 
 /**
@@ -38,6 +45,12 @@ enum class SeerrConnectionHealth {
  */
 fun interface SeerrHealthReporter {
     fun report(result: CallResult)
+
+    /**
+     * Whether the last call that failed to connect failed because the server asked for a client certificate. Said before the
+     * failure is reported, so the verdict that follows already knows. An answered call says false; a cancelled one says nothing.
+     */
+    fun reportClientCertificate(needed: Boolean) = Unit
 
     object NoOp : SeerrHealthReporter {
         override fun report(result: CallResult) = Unit
@@ -64,13 +77,28 @@ class SeerrHealth(
 
     val health: Flow<ConnectionHealth> = flow { emitAll(monitor.health(server())) }
 
+    private val clientCertificate = MutableStateFlow(false)
+
+    /** Whether the failures that make the server read as unreachable were the server asking for a client certificate. */
+    val clientCertificateNeeded: Flow<Boolean> = clientCertificate
+
     override fun report(result: CallResult) = monitor.report(id, result)
 
+    override fun reportClientCertificate(needed: Boolean) {
+        clientCertificate.value = needed
+    }
+
     /** A connection was just validated against the server: start clean at healthy. */
-    suspend fun onConnected() = monitor.onConnected(server())
+    suspend fun onConnected() {
+        clientCertificate.value = false
+        monitor.onConnected(server())
+    }
 
     /** The credentials were cleared: whatever the last call said no longer describes anything. */
-    suspend fun reset() = monitor.reset(server())
+    suspend fun reset() {
+        clientCertificate.value = false
+        monitor.reset(server())
+    }
 
     companion object {
         /** Health for a connection that has no saved identity to key it by, such as a test's: one server, named here. */
@@ -85,4 +113,12 @@ internal fun ConnectionHealth.toSeerr(): SeerrConnectionHealth =
         ConnectionHealth.Healthy -> SeerrConnectionHealth.Healthy
         ConnectionHealth.Unreachable -> SeerrConnectionHealth.Unreachable
         ConnectionHealth.Unauthorized -> SeerrConnectionHealth.Unauthorized
+    }
+
+/** The monitor's verdict, with an unreachable server told apart when it asked for a client certificate. */
+internal fun ConnectionHealth.toSeerr(clientCertificateNeeded: Boolean): SeerrConnectionHealth =
+    if (this == ConnectionHealth.Unreachable && clientCertificateNeeded) {
+        SeerrConnectionHealth.ClientCertificateNeeded
+    } else {
+        toSeerr()
     }

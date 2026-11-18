@@ -179,7 +179,7 @@ class HubViewModel
                 // Requests alone — a settled-looking menu that then grows rows under a finger.
                 when {
                     server is ServerRead.Failed ->
-                        HubUiState.Error(health.takeIf { it == ConnectionHealth.LocalNetworkDenied } ?: ConnectionHealth.Unreachable)
+                        HubUiState.Error(health.takeIf { it.namesItsOwnCause() } ?: ConnectionHealth.Unreachable)
                     server !is ServerRead.Loaded || !overview.loaded -> HubUiState.Loading
                     else ->
                         HubUiState.Ready(
@@ -334,11 +334,16 @@ private fun effectiveHealth(
         }
     }
 
+/** A problem the hub can say more about than "unreachable", which a failed read of the server must not flatten back into it. */
+private fun ConnectionHealth.namesItsOwnCause(): Boolean =
+    this == ConnectionHealth.LocalNetworkDenied || this == ConnectionHealth.ClientCertificateNeeded
+
 internal fun SeerrConnectionHealth.toConnectionHealth(): ConnectionHealth =
     when (this) {
         SeerrConnectionHealth.Healthy -> ConnectionHealth.Healthy
         SeerrConnectionHealth.Unreachable -> ConnectionHealth.Unreachable
         SeerrConnectionHealth.Unauthorized -> ConnectionHealth.Unauthorized
+        SeerrConnectionHealth.ClientCertificateNeeded -> ConnectionHealth.ClientCertificateNeeded
         // Unchecked is every cold start: the credentials are saved and the overview has not landed
         // yet. NotConnected means they vanished mid-check, and the shell swaps to setup on it.
         SeerrConnectionHealth.Unchecked, SeerrConnectionHealth.NotConnected -> ConnectionHealth.Checking

@@ -13,7 +13,7 @@ import com.cooper.homelab.core.flags.Flags
  * unreachable server on the user's own network while Android refuses this app that network: the
  * permission, not the server, so the way out is Settings rather than a retry.
  */
-enum class ConnectionHealth { Checking, Healthy, Unreachable, LocalNetworkDenied, CouldNotLoad, Unauthorized }
+enum class ConnectionHealth { Checking, Healthy, Unreachable, LocalNetworkDenied, ClientCertificateNeeded, CouldNotLoad, Unauthorized }
 
 /** The outcome of the overview's `auth/me`, kept apart from its data so a failed load is never read as a restricted user. */
 enum class HubUserLoad { Pending, Loaded, Failed, Rejected }
