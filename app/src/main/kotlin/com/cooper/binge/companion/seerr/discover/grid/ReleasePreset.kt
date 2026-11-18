@@ -1,6 +1,7 @@
 package com.cooper.binge.companion.seerr.discover.grid
 
 import java.time.LocalDate
+import java.time.temporal.TemporalAdjusters
 
 /** The release windows the filter sheet offers beside a custom range, as Binge's year chips do. */
 enum class ReleasePreset {
@@ -15,7 +16,7 @@ enum class ReleasePreset {
         when (this) {
             AnyYear -> null to null
             Upcoming -> today.plusDays(1).toString() to null
-            ThisYear -> LocalDate.of(today.year, 1, 1).toString() to LocalDate.of(today.year, 12, 31).toString()
+            ThisYear -> today.withDayOfYear(1).toString() to today.with(TemporalAdjusters.lastDayOfYear()).toString()
             LastFiveYears -> today.minusYears(LAST_YEARS).toString() to today.toString()
         }
 
