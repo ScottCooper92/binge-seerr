@@ -5,7 +5,6 @@ import com.cooper.binge.companion.seerr.seerr.SeerrPersonCreditDto
 import com.cooper.binge.companion.seerr.seerr.SeerrPersonCreditsDto
 import com.cooper.binge.companion.seerr.seerr.SeerrPersonDetailsDto
 
-private const val FIRST_CAST_ID = 9001
 private const val CAST_TITLES = 5
 private const val CREW_TITLES = 2
 private const val FIRST_CREW_ID = 9101
