@@ -154,12 +154,14 @@ private fun SeerrMediaStatusCode.blockedChip(): RequestRowChip =
  * What the download client is doing for this request's version: a queued grab, a transfer, or, with nothing in the
  * queue, nothing when [RequestItem.queueTracked] says the queue is one to trust and no claim when it does not.
  */
-internal fun RequestItem.downloadActivity(): DownloadActivity =
-    when {
+internal fun RequestItem.downloadActivity(): DownloadActivity {
+    val download = download
+    return when {
         download == null -> if (queueTracked) DownloadActivity.None else DownloadActivity.Untracked
         download.downloading -> DownloadActivity.Downloading
         else -> DownloadActivity.Queued
     }
+}
 
 /** A processing title's glyph: the download arrow only while it transfers, the approval tick while nothing does. */
 private fun DownloadActivity.glyph(): ImageVector =
