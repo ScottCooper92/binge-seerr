@@ -1437,6 +1437,9 @@
     <string name="title_page_cast">Reparto</string>
     <string name="title_page_crew">Equipo principal</string>
     <string name="title_page_where_to_watch">Dónde verla</string>
+    <string name="title_page_watch_stream">Streaming</string>
+    <string name="title_page_watch_buy">Comprar</string>
+    <string name="title_page_justwatch">Datos proporcionados por JustWatch</string>
     <string name="title_page_collection">Colección</string>
     <string name="title_page_keywords">Palabras clave</string>
     <string name="title_page_fact_status">Estado</string>
