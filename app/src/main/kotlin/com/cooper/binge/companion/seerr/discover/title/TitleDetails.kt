@@ -111,6 +111,9 @@ data class TitleExtras(
 interface TitleDetailsRepository {
     suspend fun movie(tmdbId: Int): MovieDetails
 
+    /** The films of a collection, in release order. Any signed-in user may read them; a failed read throws. */
+    suspend fun collectionParts(collectionId: Int): List<TitleResult>
+
     /** Ratings, recommendations and similar titles. Each part that fails or that the server lacks is empty. */
     suspend fun extras(
         kind: TitleKind,

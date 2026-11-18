@@ -20,6 +20,7 @@ private const val CRITICS = 83
 private const val AUDIENCE = 85
 private const val IMDB = 8.7
 private const val VOTES = 24_000
+private const val RATING = 7.8
 
 private fun person(
     id: Int,
@@ -31,7 +32,7 @@ private fun related(
     id: Int,
     name: String,
     availability: TitleAvailability,
-) = TitleResult(TitleKind.Movie, id, name, "2003", null, null, null, null, availability, null)
+) = TitleResult(TitleKind.Movie, id, name, "2003", null, null, null, RATING, availability, null)
 
 /** A film with everything the server gives, standard requestable and 4K held. */
 internal fun fullMovie(
@@ -82,6 +83,14 @@ internal fun fullExtras() =
         similar = listOf(related(606, "Dark City", TitleAvailability.Pending)),
     )
 
+/** The other films of the film's collection: one held, one asked for and one still open. */
+internal fun collectionFilms() =
+    listOf(
+        related(601, "The Matrix Resurrections", TitleAvailability.Available),
+        related(604, "The Matrix Reloaded", TitleAvailability.Pending),
+        related(605, "The Matrix Revolutions", TitleAvailability.None),
+    )
+
 /** A film the server knows almost nothing about. */
 internal fun sparseMovie() =
     fullMovie("Untitled").copy(
@@ -113,3 +122,7 @@ internal fun longMovie() =
         genres = listOf("Adventure", "Fantasy", "Action", "Epic Historical Drama"),
         cast = listOf(person(1, "Elijah Wood-Montgomery-Fitzgerald", "Frodo Baggins of the Shire, bearer of the one ring")),
     )
+
+/** A film whose collection has the longest name the server might give. */
+internal fun longCollectionMovie() =
+    fullMovie().copy(collection = TitleCollection(2344, "The Extended Special Collector's Edition Matrix Collection of Films", null))
