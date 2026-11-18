@@ -110,9 +110,9 @@ internal fun TitlePageBody(
 
 /** The line under the title in the request sheet: release year and runtime, whichever the server gave. */
 @Composable
-internal fun MovieDetails.requestMeta(): String {
+internal fun MovieDetails.requestMeta(): String? {
     val runtime = runtimeMinutes?.let { stringResource(R.string.title_page_runtime, it / MINUTES_PER_HOUR, it % MINUTES_PER_HOUR) }
-    return listOfNotNull(year, runtime).joinToString(stringResource(R.string.request_sheet_meta_separator))
+    return listOfNotNull(year, runtime).joinToString(stringResource(R.string.request_sheet_meta_separator)).ifEmpty { null }
 }
 
 /** The movie's stats: rating with its votes, release year, runtime and certification, then the server's other ratings. */

@@ -21,6 +21,7 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -263,9 +264,12 @@ class RequestSheetViewModel
 
         fun dismissFailure() = store.update { it.copy(failureDialog = false, failure = null, footerFailed = false) }
 
+        private var footerTimer: Job? = null
+
         fun submit() {
             val current = store.ready() ?: return
             if (!current.canSubmit) return
+            footerTimer?.cancel()
             store.set(current.copy(submitting = true, problem = null, failure = null, footerFailed = false, failureDialog = false))
             val destination = current.pick?.takeIf { current.advancedExpanded && current.showAdvanced }
             val submission =
@@ -295,10 +299,12 @@ class RequestSheetViewModel
                 return
             }
             store.update { it.copy(submitting = false, failure = problem, footerFailed = true) }
-            viewModelScope.launch {
-                delay(FOOTER_FAILURE_MILLIS)
-                store.update { if (it.failure == problem && !it.failureDialog) it.copy(footerFailed = false) else it }
-            }
+            footerTimer?.cancel()
+            footerTimer =
+                viewModelScope.launch {
+                    delay(FOOTER_FAILURE_MILLIS)
+                    store.update { if (it.failure == problem && !it.failureDialog) it.copy(footerFailed = false) else it }
+                }
         }
     }
 

@@ -299,6 +299,23 @@ class RequestSheetViewModelTest {
         }
 
     @Test
+    fun `an earlier failure's timer does not cut a later equal failure's red footer short`() =
+        runTest {
+            val vm = viewModel(FakeRepository(PLAIN, failSubmit = java.net.UnknownHostException("x")))
+            vm.submit()
+            advanceTimeBy(FOOTER_RED_MILLIS - 1_000)
+            vm.dismissFailure()
+            vm.submit()
+
+            advanceTimeBy(1_500)
+
+            assertTrue(vm.ready().footerFailed)
+            advanceTimeBy(FOOTER_RED_MILLIS)
+            main.dispatcher.scheduler.advanceUntilIdle()
+            assertFalse(vm.ready().footerFailed)
+        }
+
+    @Test
     fun `a tap on the red footer opens the dialog, and its Retry sends again`() {
         val repository = FakeRepository(PLAIN, failSubmit = java.net.UnknownHostException("x"))
         val vm = viewModel(repository)
