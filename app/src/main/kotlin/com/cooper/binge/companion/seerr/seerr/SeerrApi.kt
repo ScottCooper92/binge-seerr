@@ -10,6 +10,7 @@ import retrofit2.http.POST
 import retrofit2.http.PUT
 import retrofit2.http.Path
 import retrofit2.http.Query
+import retrofit2.http.QueryMap
 
 /**
  * The slice of Seerr's `/api/v1` this companion needs: who we are, what a title's state is, and
@@ -614,6 +615,18 @@ interface SeerrApi {
         @Query("keywords") keywords: String? = null,
         @Query("watchRegion") watchRegion: String? = null,
         @Query("watchProviders") watchProviders: String? = null,
+    ): SeerrTitlePageDto
+
+    /** Movies narrowed and ordered by [query], the parameters the server's `discover/movies` route takes; see `DiscoverFilters`. */
+    @GET("api/v1/discover/movies")
+    suspend fun discoverMoviesFiltered(
+        @QueryMap query: Map<String, String>,
+    ): SeerrTitlePageDto
+
+    /** Shows narrowed and ordered by [query], the parameters the server's `discover/tv` route takes; see `DiscoverFilters`. */
+    @GET("api/v1/discover/tv")
+    suspend fun discoverTvFiltered(
+        @QueryMap query: Map<String, String>,
     ): SeerrTitlePageDto
 
     /** Popular shows; [keywords] is a TMDB id or a comma-separated list. */

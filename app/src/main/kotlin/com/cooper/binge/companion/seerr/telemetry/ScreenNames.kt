@@ -6,6 +6,7 @@ import androidx.navigation3.runtime.NavKey
 import com.cooper.binge.companion.seerr.ui.BlocklistDetailRoute
 import com.cooper.binge.companion.seerr.ui.BlocklistRoute
 import com.cooper.binge.companion.seerr.ui.DiagnosticsRoute
+import com.cooper.binge.companion.seerr.ui.DiscoverGridRoute
 import com.cooper.binge.companion.seerr.ui.DiscoverSliderRoute
 import com.cooper.binge.companion.seerr.ui.DvrInstanceRoute
 import com.cooper.binge.companion.seerr.ui.EditConnectionRoute
@@ -63,6 +64,7 @@ fun SeerrRoute.screenName(): String =
         is ServerSettingsPageRoute -> "server_settings_page"
         is DvrInstanceRoute -> "dvr_instance"
         is DiscoverSliderRoute -> "discover_slider"
+        is DiscoverGridRoute -> "discover_grid"
         is NotificationAgentRoute -> "notification_agent"
         is OverrideRuleRoute -> "override_rule"
         SettingsRoute -> "settings"

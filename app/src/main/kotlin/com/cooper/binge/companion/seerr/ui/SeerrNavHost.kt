@@ -20,6 +20,7 @@ import androidx.navigation3.ui.NavDisplay
 import com.binge.designsystem.PaneContent
 import com.binge.designsystem.PaneEdge
 import com.cooper.binge.companion.seerr.flags.LocalDiscoveryEnabled
+import com.cooper.binge.companion.seerr.ui.grid.discoverGridEntries
 import com.cooper.binge.companion.seerr.ui.hub.HubSection
 import com.cooper.binge.companion.seerr.ui.hubs.DiscoverHubEntry
 import com.cooper.binge.companion.seerr.ui.search.title.TitleSearchEntry
@@ -72,6 +73,7 @@ fun SeerrNavHost(
         searchEntries(backStack, panes)
         detailEntries(backStack, showBack = panes.showBack)
         serverSettingsEntries(backStack)
+        discoverGridEntries(backStack)
     }
 }
 
