@@ -32,6 +32,8 @@ data class TitlePage(
     val results: List<TitleResult>,
     val page: Int,
     val totalPages: Int,
+    /** The server's count of every result for the query, where it gave one. */
+    val total: Int? = null,
 ) {
     val hasMore: Boolean get() = page < totalPages
 }
