@@ -74,7 +74,7 @@ How each gate is applied is in [`server-compatibility.md`](server-compatibility.
 | `GET /media/{mediaId}/watch_data` | Get watch data | v1.29.0 | v1.1.0 | yes | Watch data on the request page's Manage media sheet, for admins, where Tautulli answers. |
 | `POST /media/{mediaId}/{status}` | Update media status | v1.20.0 | v1.0.0 | yes | Mark as on the request page's Manage media sheet, per instance. |
 | `GET /request` | Get all requests | v1.0.0 | v1.0.0 | yes |  |
-| `POST /request` | Create new request | v1.0.0 | v1.0.0 | yes |  |
+| `POST /request` | Create new request | v1.0.0 | v1.0.0 | yes | The host's `SubmitRequest` and `SubmitAdvancedRequest`, and the in-app request sheet (the discovery title pages). Both read the status code through one function: 202 is nothing left to request, 409 is already requested. |
 | `DELETE /request/{requestId}` | Delete request | v1.0.0 | v1.0.0 | yes |  |
 | `GET /request/{requestId}` | Get MediaRequest | v1.0.0 | v1.0.0 | yes | The request page, including its destination and tags, on phone and TV. |
 | `PUT /request/{requestId}` | Update MediaRequest | v1.17.0 | v1.0.0 | yes | Edit request: the season set and, with `REQUEST_ADVANCED`, the destination; also the host's `EditRequest`. |

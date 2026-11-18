@@ -249,7 +249,7 @@ private fun DestinationPickerFor(
  * on top of it would be two windows and two scrims for what a pick closes right back out of — see #336.
  */
 @Composable
-private fun <T> DestinationPickerPanel(
+internal fun <T> DestinationPickerPanel(
     icon: ImageVector,
     title: String,
     choices: List<Pair<T, String>>,
