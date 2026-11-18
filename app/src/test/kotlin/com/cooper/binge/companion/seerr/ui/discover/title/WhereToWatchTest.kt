@@ -77,6 +77,13 @@ class WhereToWatchTest {
     }
 
     @Test
+    fun `a provider the server lists twice in a kind is shown once`() {
+        show(providers(listOf(provider(1, "Stream One"), provider(1, "Stream One")), emptyList()))
+
+        rule.onAllNodesWithText("Stream One").assertCountEquals(1)
+    }
+
+    @Test
     fun `a title that can only be bought shows only the Buy chip`() {
         show(providers(emptyList(), listOf(provider(2, "Store One"))))
 

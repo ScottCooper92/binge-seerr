@@ -80,7 +80,7 @@ internal fun fullSeries(
     keyCrew = listOf(person(10, "Riley Director", "Executive Producer"), person(11, "Casey Writer", "Writer")),
     otherCrew = emptyList(),
     videos = listOf(TitleVideo("Official Trailer", "https://www.youtube.com/watch?v=demo", isTrailer = true)),
-    providers = TitleProviders("US", null, listOf(TitleProvider(1, "Demo Stream", null)), emptyList()),
+    providers = TitleProviders("US", null, listOf(TitleProvider(1, "Demo Stream", null)), listOf(TitleProvider(2, "Demo Store", null))),
     standard = standard,
     fourK = null,
     partialRequests = true,
