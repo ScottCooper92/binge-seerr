@@ -339,6 +339,8 @@ dependencies {
 detektGate {
     baselineFile = layout.settingsDirectory.file("detekt-baseline.xml")
     customRulesProject = ":detekt-rules"
+    // detekt 2.0.0-alpha.6 crashed twice with an array index error in its per-file futures (#2179); one file at a time.
+    parallel = false
 }
 
 /**

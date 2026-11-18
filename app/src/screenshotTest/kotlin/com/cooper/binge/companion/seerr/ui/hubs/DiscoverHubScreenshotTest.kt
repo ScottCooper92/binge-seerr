@@ -228,6 +228,7 @@ private fun hero(
     name: String,
     availability: TitleAvailability,
     genres: List<String> = listOf("Action", "Adventure"),
+    rating: Float? = null,
 ) = HubHero(
     TitleKind.Movie,
     id,
@@ -238,12 +239,13 @@ private fun hero(
     "https://server.example/movie/$id",
     genres,
     rank = id,
+    rating = rating,
 )
 
 private val HEROES =
     listOf(
-        hero(1, "The Long Way Home", TitleAvailability.Available),
-        hero(2, "Northern Lights", TitleAvailability.Pending),
+        hero(1, "The Long Way Home", TitleAvailability.Available, rating = 7.9f),
+        hero(2, "Northern Lights", TitleAvailability.Pending, rating = 6.4f),
         hero(3, "A Quiet Harbour", TitleAvailability.None),
     )
 
@@ -253,4 +255,5 @@ private val LONG_HERO =
         "The Extraordinarily Long Title of a Film That Keeps Going: Part Two, the Return of the Seven Rivers",
         TitleAvailability.PartiallyAvailable,
         genres = listOf("Science Fiction & Fantasy", "Adventure", "Action"),
+        rating = 8.1f,
     )

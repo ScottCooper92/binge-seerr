@@ -24,6 +24,8 @@ data class HubHero(
     val genres: List<String> = emptyList(),
     /** The title's place in the trending list for the hub's kind, 1 for the top. */
     val rank: Int? = null,
+    /** The title's vote average, as a poster card shows it; null where the server has none or it is zero. */
+    val rating: Float? = null,
 )
 
 /**
@@ -66,6 +68,7 @@ private fun TitleResult.toHero(
             hubWebUrl(serverUrl, kind, tmdbId),
             genreIds.mapNotNull { id -> genreNames[id] },
             rank,
+            rating?.toFloat()?.takeIf { rating -> rating > 0f },
         )
     }
 
