@@ -258,9 +258,20 @@ screens and the exported Service call the real `SeerrApi` and cannot tell. Rules
 `build` pulls in through `check`; `app/build.gradle.kts` is where to confirm it.
 
 CI runs that same set of tasks as four jobs in parallel: `checks` runs `build` minus the tasks the
-other three own, and `tests`, `screenshots` and `release` run those. On a PR, `submodule-pins` checks
-that every submodule pin is merged upstream, and `actionlint` lints the workflow files. A last job,
-`build`, waits on all six and is green only if all of them are. The pin check passes by being skipped
+other three own, and `tests`, `screenshots` and `release` run those. `screenshots` is a matrix of three
+shards, each rendering a share of the test classes chosen by `.github/scripts/shard-screenshots.sh`, and its
+result is the shards' together. On a PR, `submodule-pins` checks
+that every submodule pin is merged upstream, and `actionlint` lints the workflow files. A first job, `changes`,
+decides which of the four a PR can affect: a docs-only diff skips every Gradle job, a diff that cannot move a frame
+skips `screenshots`, and `release` runs on a PR only when a build file, the version catalog, `gradle/`,
+`gradle.properties`, a keep rule or `.pro` file, the manifest, `res/xml`, `res/raw`, assets, the release source set,
+`.gitmodules`, a submodule pin or a workflow file changes (Binge builds release only on a tag).
+The rules are the lists in `.github/scripts/classify-changes.sh`, tested by `classify-changes.test.sh`. For the Gradle
+jobs and `screenshots` a path in no skip list runs the job. `release` is the reverse, an allow-list: a path runs it only
+if `release_input` names it, so a new R8 input (a new build file or keep-rule directory) is added there or the PR skips
+R8. A push to `main` and the nightly run everything, so a break the filter missed shows right after the merge. A last job,
+`build`, waits on all of them and is green only if each ran or was skipped exactly as `changes` said; a skipped job
+counts as passed, so branch protection still sees one result. The pin check passes by being skipped
 outside a PR, and `actionlint` by being skipped on the nightly. It is the check branch
 protection requires, and the one the bots read. `ci.yml` explains the split. A gate added to `check` lands in `checks` without
 touching `ci.yml`, because that job excludes tasks rather than listing them.

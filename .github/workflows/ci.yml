@@ -19,10 +19,12 @@ name: CI
 # nightly), and folds the four's report artifacts back into the one `build-reports` artifact
 # author-ci-fix downloads.
 #
-# Deliberately NO paths-ignore, matching binge-companions. bot-review requires a
-# SUCCESSFUL run of this workflow against the head, so a skipped run means a PR that
-# is never reviewed. .ai/ holds the rules the bots themselves read, so a docs filter
-# would bypass review on exactly the changes that most need it.
+# Deliberately NO paths-ignore. bot-review requires a SUCCESSFUL run of this workflow against the head,
+# so a skipped run means a PR that is never reviewed. .ai/ holds the rules the bots themselves read, so a
+# docs filter would bypass review on exactly the changes that most need it. A `changes` job decides
+# instead which of the jobs a pull request can affect: the workflow always runs, the jobs it says cannot
+# matter are skipped, and `build` checks each was skipped exactly as `changes` said. A push to main and
+# the nightly run everything.
 on:
   push:
     branches: [main]
@@ -68,6 +70,93 @@ jobs:
       REVIEWER_APP_ID: ${{ secrets.REVIEWER_APP_ID }}
       REVIEWER_APP_PRIVATE_KEY: ${{ secrets.REVIEWER_APP_PRIVATE_KEY }}
 
+  # Decides which of the jobs below a pull request can affect, so a docs-only diff, a test-only one or a
+  # follow-up that moves no frame does not pay for the whole suite. The jobs it gates are skipped
+  # outright, and `build` reads this job's answers to know a skip is deliberate. There is still no
+  # `paths-ignore`: the required check and the bots see a green `build` either way. Push and the nightly
+  # run everything, so a wrong skip is found at the next merge, never lies dormant. The rules are in
+  # .github/scripts/classify-changes.sh, which this job tests before it uses it.
+  changes:
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      actions: read
+    outputs:
+      product: ${{ steps.classify.outputs.product }}
+      screens: ${{ steps.classify.outputs.screens }}
+      release: ${{ steps.classify.outputs.release }}
+    steps:
+      # The whole history, no submodules: the diff needs a merge base, and nothing here builds.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Test the scripts
+        run: |
+          .github/scripts/classify-changes.test.sh
+          .github/scripts/shard-screenshots.test.sh
+
+      - name: Classify the diff
+        id: classify
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT: ${{ github.event_name }}
+          BASE_REF: ${{ github.base_ref }}
+          HEAD_REF: ${{ github.head_ref }}
+          SAME_REPO: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
+        run: |
+          set -o pipefail
+          all() {
+            printf 'product=true\nscreens=true\nrelease=true\n' >> "$GITHUB_OUTPUT"
+            echo "$1: running everything." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          }
+          [ "$EVENT" = pull_request ] || all "Not a pull request"
+
+          head="$(git rev-parse HEAD)"
+          # The last commit of this PR that a whole run passed on. What changed since is all a run has to
+          # vouch for: it is sound because each skip it makes is of a delta that cannot reach the job. A
+          # fork's branch name is not ours, so a fork PR never borrows a green run. Without one, or when it
+          # is not an ancestor of this head (a force push), the baseline is the merge base with the base
+          # branch, which is the PR's own files. `head` is GitHub's merge commit, so the delta also holds what
+          # the base branch gained since the fork point. That is deliberate: it covers a semantic merge
+          # conflict. Do not switch to the PR head SHA to save runs.
+          base=""
+          if [ "$SAME_REPO" = true ]; then
+            green="$(gh run list --workflow ci.yml --branch "$HEAD_REF" --event pull_request --status success --limit 5 \
+              --json headSha,databaseId -q '.[] | "\(.headSha) \(.databaseId)"' 2>/dev/null || true)"
+            while read -r sha run_id; do
+              [ -n "$sha" ] || continue
+              # A draft's run skips every job, `build` too, and may still conclude success: only a run
+              # whose `build` job itself succeeded vouches for its commit.
+              built="$(gh api "repos/${{ github.repository }}/actions/runs/$run_id/jobs" \
+                -q '[.jobs[] | select(.name == "build" and .conclusion == "success")] | length' 2>/dev/null || echo 0)"
+              [ "$built" -gt 0 ] || continue
+              if [ "$sha" != "$head" ] && git cat-file -e "$sha^{commit}" 2>/dev/null && git merge-base --is-ancestor "$sha" "$head"; then
+                base="$sha"; label="its last green run ($sha)"; break
+              fi
+            done <<< "$green"
+          fi
+          if [ -z "$base" ]; then
+            git fetch --no-tags origin "$BASE_REF" 2>/dev/null || true
+            base="$(git merge-base "origin/$BASE_REF" "$head" 2>/dev/null || true)"
+            label="the merge base ($base)"
+          fi
+          [ -n "$base" ] || all "No baseline to diff against"
+
+          # NUL-separated and with no rename detection: a path git would quote (a non-ASCII character, a tab) is
+          # printed as itself, and a rename lists both its paths, so a source file moved into docs is not docs-only.
+          git diff -z --no-renames --name-only "$base" "$head" > "$RUNNER_TEMP/changed.txt" || all "The diff could not be read"
+          .github/scripts/classify-changes.sh "$RUNNER_TEMP/changed.txt" | tee -a "$GITHUB_OUTPUT"
+          {
+            echo "Diff against $label:"
+            echo '```'
+            tr '\0' '\n' < "$RUNNER_TEMP/changed.txt"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
   # `build` minus what the three jobs below own. Everything else `check` pulls in lands here:
   # compile, lint, detekt and its baseline-staleness check, ktlint, the translation, tv-material and gRPC gates,
   # and the debug assemble.
@@ -76,7 +165,8 @@ jobs:
     # without each queued run preempting the last. Push events to main always run — `pull_request`
     # is null there. Every job below carries the same condition, so a draft's `build` reports
     # "skipped", which author-ci-fix and bot-review both already treat as "not green".
-    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
+    needs: changes
+    if: ${{ !cancelled() && needs.changes.result == 'success' && needs.changes.outputs.product == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -99,11 +189,6 @@ jobs:
           submodules: recursive
           token: ${{ steps.submodule_token.outputs.token }}
 
-      # The screenshot shards below take their classes from this script. Its test proves every class lands in
-      # exactly one shard, so a dropped or doubled class is a red run here and not a frame nothing validates.
-      - name: Test the screenshot sharding
-        run: .github/scripts/shard-screenshots.test.sh
-
       # JDK 21, matching binge-ci's ci-setup. The JDK runs the build and nothing else:
       # `jvmTarget` 17 in app/build.gradle.kts decides the bytecode, so this does not move what
       # runs on a device.
@@ -123,7 +208,9 @@ jobs:
       # commit, and a log showing only the first of three failures spends that attempt
       # fixing a third of the problem. Each -x names a task another job runs, with no project in front of it so it
       # drops that task in every module, :data's included; -x also drops whatever only that task needed, which is the
-      # point for assembleRelease's R8.
+      # point for assembleRelease's R8. The `release` job that runs it is skipped on a pull request that changes
+      # none of those, and runs on every push to main; `build` counts a skipped job
+      # as passed, so branch protection still sees it.
       - name: Build and lint, less what the other jobs run
         run: ./gradlew build --continue -x testDebugUnitTest -x koverVerify -x validateDebugScreenshotTest -x assembleRelease
 
@@ -141,7 +228,8 @@ jobs:
 
   # The unit tests and the coverage floor read from them.
   tests:
-    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
+    needs: changes
+    if: ${{ !cancelled() && needs.changes.result == 'success' && needs.changes.outputs.product == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -195,7 +283,8 @@ jobs:
   # `screenshots`. A shard normally takes about 5 minutes; one that has not finished in 20 has stalled. Only :app has
   # frames, so this is the one task still named with its project.
   screenshots:
-    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
+    needs: changes
+    if: ${{ !cancelled() && needs.changes.result == 'success' && needs.changes.outputs.screens == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:
@@ -253,10 +342,15 @@ jobs:
           if-no-files-found: ignore
           retention-days: 1
 
-  # The release build: R8 with this app's keep rules, and lint-vital. A keep rule that no longer
-  # compiles fails here on the PR, not on the next tag.
+  # The release build: R8 with this app's keep rules, and lint-vital. On a pull request it runs only when a
+  # build file, the version catalog, `gradle/`, `gradle.properties`, a keep rule or `.pro` file, the manifest,
+  # `res/xml`, `res/raw`, assets, the release source set, `.gitmodules`, a submodule pin or a workflow file
+  # changes (classify-changes.sh): Binge builds release only on a tag. It always runs on a push to main and
+  # the nightly, so a break the filter missed turns main red right after the merge, not at the next tag.
+  # A skipped job counts as passed in `build`, as `changes` decided.
   release:
-    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
+    needs: changes
+    if: ${{ !cancelled() && needs.changes.result == 'success' && needs.changes.outputs.release == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -301,7 +395,7 @@ jobs:
   # the merge step instead of skipping this job, which would read as "not run" rather than red.
   build:
     if: ${{ always() && (github.event_name != 'pull_request' || github.event.pull_request.draft == false) }}
-    needs: [submodule-pins, actionlint, checks, tests, screenshots, release]
+    needs: [submodule-pins, actionlint, changes, checks, tests, screenshots, release]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -317,20 +411,40 @@ jobs:
           retention-days: ${{ github.event_name == 'schedule' && 7 || 1 }}
         continue-on-error: true
 
-      # The pin check is skipped outside a pull request, and actionlint on the nightly, so a skip
-      # passes for those two alone.
+      # The pin check is skipped outside a pull request, and actionlint on the nightly schedule, so
+      # a skip passes for those two alone. `changes` must have passed: without its answers a skipped
+      # job could be a failure to classify, not a decision. A job `changes` said to run must have
+      # succeeded; one it said to skip must have been skipped.
       - name: Fail unless every job passed
         env:
           PINS: ${{ needs.submodule-pins.result }}
           ACTIONLINT: ${{ needs.actionlint.result }}
-          RESULTS: ${{ needs.checks.result }} ${{ needs.tests.result }} ${{ needs.screenshots.result }} ${{ needs.release.result }}
+          CHANGES: ${{ needs.changes.result }}
+          CHECKS: ${{ needs.checks.result }}
+          TESTS: ${{ needs.tests.result }}
+          SCREENSHOTS: ${{ needs.screenshots.result }}
+          RELEASE: ${{ needs.release.result }}
+          RUN_PRODUCT: ${{ needs.changes.outputs.product }}
+          RUN_SCREENS: ${{ needs.changes.outputs.screens }}
+          RUN_RELEASE: ${{ needs.changes.outputs.release }}
         run: |
-          echo "submodule-pins: $PINS; actionlint: $ACTIONLINT; checks, tests, screenshots, release: $RESULTS"
+          echo "submodule-pins: $PINS; actionlint: $ACTIONLINT; changes: $CHANGES (product $RUN_PRODUCT, screens $RUN_SCREENS, release $RUN_RELEASE)"
+          echo "checks: $CHECKS; tests: $TESTS; screenshots: $SCREENSHOTS; release: $RELEASE"
           [ "$PINS" = success ] || [ "$PINS" = skipped ] || exit 1
           [ "$ACTIONLINT" = success ] || [ "$ACTIONLINT" = skipped ] || exit 1
-          for result in $RESULTS; do
-            [ "$result" = success ] || exit 1
+          [ "$CHANGES" = success ] || exit 1
+          # An empty or odd answer is a classifier that failed, not a deliberate skip.
+          for answer in "$RUN_PRODUCT" "$RUN_SCREENS" "$RUN_RELEASE"; do
+            [ "$answer" = true ] || [ "$answer" = false ] || exit 1
           done
+          # wanted <result> <whether changes said to run it>
+          wanted() {
+            if [ "$2" = true ]; then [ "$1" = success ]; else [ "$1" = skipped ]; fi
+          }
+          wanted "$CHECKS" "$RUN_PRODUCT" || exit 1
+          wanted "$TESTS" "$RUN_PRODUCT" || exit 1
+          wanted "$SCREENSHOTS" "$RUN_SCREENS" || exit 1
+          wanted "$RELEASE" "$RUN_RELEASE" || exit 1
 
   # Lints the workflow files, which is where a typo turns into a silent startup_failure. It lives
   # in this workflow rather than its own so there is still one required check to keep in sync with

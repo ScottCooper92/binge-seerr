@@ -38,7 +38,7 @@ jobs:
           - slice: tests
             timeout: 30
             command: ./gradlew testDebugUnitTest koverVerify --continue
-          # The screenshots slice gets the 45 minutes ci.yml gives its own job: a slow runner has taken twice the usual 11 to 16.
+          # The screenshots slice runs every frame in one JVM, where ci.yml shards them in three jobs of 20 minutes each, so it keeps 45: a slow runner has taken twice the usual 11 to 16.
           - slice: screenshots
             timeout: 45
             command: ./gradlew :app:validateDebugScreenshotTest --continue

@@ -18,8 +18,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -56,6 +54,7 @@ import com.binge.designsystem.template.formSaveStatus
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.discover.title.LocalOpenTitle
 import com.cooper.binge.companion.seerr.ui.requests.labelRes
+import com.cooper.binge.companion.seerr.ui.state.BarIconAction
 import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
 import com.cooper.binge.companion.seerr.ui.state.OverflowDetailScaffold
 import com.cooper.binge.companion.seerr.ui.state.RequestStateChip
@@ -138,11 +137,9 @@ fun IssueDetailScreen(
             FormSaveStatusText(saveStatus)
         },
         // After the overflow button: a destructive action is the last on the bar.
-        trailingActions = {
+        trailingActions = { glassBackgroundAlpha ->
             if (ready?.detail?.canDelete == true) {
-                IconButton(onClick = { confirmingDelete = true }) {
-                    Icon(Icons.Filled.Delete, contentDescription = stringResource(R.string.issue_delete))
-                }
+                BarIconAction(Icons.Filled.Delete, stringResource(R.string.issue_delete), glassBackgroundAlpha) { confirmingDelete = true }
             }
         },
     ) { inner ->

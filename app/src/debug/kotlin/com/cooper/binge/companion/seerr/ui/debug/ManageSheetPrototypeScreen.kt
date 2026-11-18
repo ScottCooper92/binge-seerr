@@ -27,7 +27,6 @@ import com.binge.designsystem.component.BingeTextButton
 import com.binge.designsystem.component.FilterChipItem
 import com.binge.designsystem.resolvedContentInset
 import com.binge.designsystem.template.BingeScreenScaffold
-import com.binge.designsystem.template.ScreenBar
 import com.binge.designsystem.template.screenInnerPadding
 import com.binge.designsystem.template.screenOuterPadding
 import com.binge.designsystem.theme.BingeShapes
@@ -57,7 +56,6 @@ internal fun ManageSheetPrototypeScreen(onBack: () -> Unit) {
     }
 
     BingeScreenScaffold(
-        bar = ScreenBar.Small,
         title = stringResource(R.string.proto_manage_sheet_title),
         onBack = onBack,
         snackbarHostState = snackbar,

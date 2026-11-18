@@ -9,7 +9,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.binge.designsystem.template.FormScreen
-import com.binge.designsystem.template.ScreenBar
 import com.cooper.binge.companion.seerr.R
 
 /**
@@ -27,7 +26,7 @@ internal fun KeywordPickerDialog(
 ) {
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
         Surface(modifier = Modifier.fillMaxSize()) {
-            FormScreen(title = title, onBack = onDismiss, scrolling = false, bar = ScreenBar.Small) { inner ->
+            FormScreen(title = title, onBack = onDismiss, scrolling = false) { inner ->
                 Column(modifier = Modifier.fillMaxSize()) {
                     TagSearchPanel(
                         chosen = chosen,
