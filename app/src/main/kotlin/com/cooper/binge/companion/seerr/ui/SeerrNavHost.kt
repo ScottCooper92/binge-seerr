@@ -5,12 +5,14 @@ import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.material3.adaptive.layout.calculatePaneScaffoldDirective
 import androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.EntryProviderScope
@@ -19,10 +21,15 @@ import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.ui.NavDisplay
 import com.binge.designsystem.PaneContent
 import com.binge.designsystem.PaneEdge
+import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.flags.LocalDiscoveryEnabled
+import com.cooper.binge.companion.seerr.flags.LocalFlags
+import com.cooper.binge.companion.seerr.ui.discover.title.LocalOpenTitle
+import com.cooper.binge.companion.seerr.ui.discover.title.TitleDetailEntry
 import com.cooper.binge.companion.seerr.ui.grid.discoverGridEntries
 import com.cooper.binge.companion.seerr.ui.hub.HubSection
 import com.cooper.binge.companion.seerr.ui.hubs.DiscoverHubEntry
+import com.cooper.binge.companion.seerr.ui.requests.RequestMediaType
 import com.cooper.binge.companion.seerr.ui.search.title.TitleSearchEntry
 import com.cooper.binge.companion.seerr.ui.settings.diagnostics.DiagnosticsEntry
 import com.cooper.binge.companion.seerr.ui.settings.licences.LicencesEntry
@@ -67,13 +74,15 @@ fun SeerrNavHost(
     // A disconnect still waiting on the server is not a connection to ask a review of: its card would show as the user leaves.
     val askable = remember(state) { derivedStateOf { if (state.value == HomeUiState.Disconnecting) false else state.value.connected() } }
     ReviewPromptOnReturnToRoot(connected = askable.value, stackDepth = backStack.size)
-    SeerrPaneHost(backStack, connected, exit, modifier, defaultSection = { DefaultSectionPane(backStack, exit) }) { panes ->
-        homeEntries(backStack, connected = { connectedState.value }, panes = panes, onExit = exit, tabs = tabs)
-        sectionEntries(backStack, panes)
-        searchEntries(backStack, panes)
-        detailEntries(backStack, showBack = panes.showBack)
-        serverSettingsEntries(backStack)
-        discoverGridEntries(backStack)
+    CompositionLocalProvider(LocalOpenTitle provides rememberOpenTitle(backStack)) {
+        SeerrPaneHost(backStack, connected, exit, modifier, defaultSection = { DefaultSectionPane(backStack, exit) }) { panes ->
+            homeEntries(backStack, connected = { connectedState.value }, panes = panes, onExit = exit, tabs = tabs)
+            sectionEntries(backStack, panes)
+            searchEntries(backStack, panes)
+            detailEntries(backStack, showBack = panes.showBack)
+            serverSettingsEntries(backStack)
+            discoverGridEntries(backStack)
+        }
     }
 }
 
@@ -260,6 +269,9 @@ private fun EntryProviderScope<NavKey>.detailEntries(
             )
         }
     }
+    entry<TitleDetailRoute>(metadata = DetailPane) { route ->
+        DetailPaneContent { TitleDetailEntry(route.kind, route.tmdbId, onBack = { backStack.popIfTop(route) }) }
+    }
     entry<IssueDetailRoute>(metadata = DetailPane) { route ->
         DetailPaneContent { IssueDetailEntry(route.issueId, onBack = { backStack.popIfTop(route) }, showBack = showBack()) }
     }
@@ -341,5 +353,23 @@ private fun EntryProviderScope<NavKey>.serverSettingsEntries(backStack: NavBackS
     }
     entry<OverrideRuleRoute>(metadata = DetailPane) { route ->
         DetailPaneContent { OverrideRuleEntry(route.id, onBack = { backStack.popIfTop(route) }) }
+    }
+}
+
+/** The title hand-off: a film's page with the discovery flag on, and Binge or the server's own page as before otherwise. */
+@Composable
+private fun rememberOpenTitle(backStack: NavBackStack<NavKey>): (TitleKind, Int, String) -> Unit {
+    val discovery = LocalDiscoveryEnabled.current
+    val promoted = LocalFlags.current.bingePromotion
+    val context = LocalContext.current
+    return remember(backStack, discovery, promoted, context) {
+        { kind, id, webUrl ->
+            // Only a film has a page so far; a series opens as it did until its own page lands.
+            if (discovery && kind == TitleKind.Movie) {
+                backStack.add(TitleDetailRoute(kind, id))
+            } else {
+                context.openTitle(promoted, if (kind == TitleKind.Series) RequestMediaType.Tv else RequestMediaType.Movie, id, webUrl)
+            }
+        }
     }
 }

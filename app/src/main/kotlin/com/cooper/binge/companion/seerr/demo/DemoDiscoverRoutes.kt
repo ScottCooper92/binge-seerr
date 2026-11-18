@@ -98,7 +98,7 @@ private fun <T> List<T>.interleave(other: List<T>): List<T> =
     (0 until maxOf(size, other.size)).flatMap { listOfNotNull(getOrNull(it), other.getOrNull(it)) }
 
 /** One page of [all], each row with the media type every server sends. */
-private fun DemoData.page(
+internal fun DemoData.page(
     call: DemoCall,
     all: List<DemoTitle>,
 ): DemoAnswer {
@@ -108,7 +108,7 @@ private fun DemoData.page(
     return ok(SeerrTitlePageDto(page = page, totalPages = pages, totalResults = all.size, results = rows))
 }
 
-private fun DemoData.toResult(title: DemoTitle): SeerrTitleResultDto =
+internal fun DemoData.toResult(title: DemoTitle): SeerrTitleResultDto =
     SeerrTitleResultDto(
         id = title.tmdbId,
         mediaType = if (title.isMovie) "movie" else TV_TYPE_NAME,

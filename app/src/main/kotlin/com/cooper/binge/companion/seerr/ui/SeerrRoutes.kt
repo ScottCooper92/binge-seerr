@@ -123,6 +123,13 @@ data class RequestDetailRoute(
     val requestId: Int,
 ) : SeerrRoute
 
+/** A title as a page, opened from a card in the discovery tabs. Only a film has a page so far. */
+@Serializable
+data class TitleDetailRoute(
+    val kind: TitleKind,
+    val tmdbId: Int,
+) : SeerrRoute
+
 /** Settings: the connection and the admin's read-only view of the server. */
 @Serializable
 data object SettingsRoute : SeerrRoute

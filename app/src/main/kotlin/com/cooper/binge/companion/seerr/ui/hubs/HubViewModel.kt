@@ -7,6 +7,8 @@ import com.cooper.binge.companion.seerr.di.IoDispatcher
 import com.cooper.binge.companion.seerr.discover.sliders.DiscoverSliderRepository
 import com.cooper.binge.companion.seerr.discover.sliders.HubCard
 import com.cooper.binge.companion.seerr.discover.sliders.HubCardLoader
+import com.cooper.binge.companion.seerr.discover.sliders.HubHero
+import com.cooper.binge.companion.seerr.discover.sliders.HubHeroLoader
 import com.cooper.binge.companion.seerr.discover.sliders.HubRow
 import com.cooper.binge.companion.seerr.discover.sliders.HubTab
 import com.cooper.binge.companion.seerr.discover.sliders.SliderListState
@@ -21,6 +23,7 @@ import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -36,6 +39,8 @@ sealed interface DiscoverHubUiState {
         val rows: List<HubRowUi>,
         val pending: Int,
         val refreshing: Boolean,
+        /** The carousel above the rows; empty where the server has no trending list or it failed. */
+        val hero: List<HubHero> = emptyList(),
     ) : DiscoverHubUiState
 
     /** No row has anything to show: every slider is off, or the library is empty. */
@@ -62,14 +67,18 @@ class HubViewModel
     constructor(
         private val sliders: DiscoverSliderRepository,
         cards: HubCardLoader,
+        private val heroes: HubHeroLoader,
         @IoDispatcher dispatcher: CoroutineDispatcher,
         @Assisted private val tab: HubTab,
     ) : ViewModel() {
         private val loader = HubLoader<HubRow, HubCard>(viewModelScope, dispatcher) { cards.load(it) }
 
+        private val hero = MutableStateFlow<List<HubHero>>(emptyList())
+
         val uiState: StateFlow<DiscoverHubUiState> =
-            combine(sliders.sliders, loader.state, loader.refreshing) { list, rows, refreshing -> toUiState(list, rows, refreshing) }
-                .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), DiscoverHubUiState.Loading)
+            combine(sliders.sliders, loader.state, loader.refreshing, hero) { list, rows, refreshing, hero ->
+                toUiState(list, rows, refreshing, hero)
+            }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), DiscoverHubUiState.Loading)
 
         init {
             viewModelScope.launch {
@@ -80,7 +89,7 @@ class HubViewModel
             load()
         }
 
-        /** Reads the slider list and every row again, as a pull to refresh does. */
+        /** Reads the slider list, the hero and every row again, as a pull to refresh does. */
         fun refresh() {
             load()
             loader.refresh()
@@ -88,6 +97,8 @@ class HubViewModel
 
         private fun load() {
             viewModelScope.launch { attempt { sliders.refresh() } }
+            // A failed hero leaves the last one, or none: it never holds the rows.
+            viewModelScope.launch { attempt { heroes.load(tab) }.onSuccess { hero.value = it } }
         }
 
         @AssistedFactory
@@ -102,6 +113,7 @@ private fun toUiState(
     list: SliderListState,
     rows: HubState<HubRow, HubCard>,
     refreshing: Boolean,
+    hero: List<HubHero>,
 ): DiscoverHubUiState =
     when (list) {
         SliderListState.Loading -> DiscoverHubUiState.Loading
@@ -111,6 +123,6 @@ private fun toUiState(
                 HubState.Loading -> DiscoverHubUiState.Loading
                 HubState.Empty -> DiscoverHubUiState.Empty
                 is HubState.Failed -> DiscoverHubUiState.Error(rows.error.toSeerrError())
-                is HubState.Ready -> DiscoverHubUiState.Ready(rows.rows.map { HubRowUi(it.key, it.items) }, rows.pending, refreshing)
+                is HubState.Ready -> DiscoverHubUiState.Ready(rows.rows.map { HubRowUi(it.key, it.items) }, rows.pending, refreshing, hero)
             }
     }

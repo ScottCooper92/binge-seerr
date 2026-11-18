@@ -131,7 +131,7 @@ fun IssueDetailScreen(
         title = ready?.detail?.item?.title ?: seeded?.item?.title ?: stringResource(R.string.issue_detail_title),
         onBack = actions.onBack.takeIf { showBack },
         snackbarHostState = snackbarHostState,
-        showOverflow = ready != null,
+        showOverflow = ready?.detail?.hasOpenableLink() == true,
         overflowContentDescription = stringResource(R.string.issue_manage_cd),
         onOverflowClick = { managing = true },
         overflowIcon = Icons.AutoMirrored.Filled.OpenInNew,

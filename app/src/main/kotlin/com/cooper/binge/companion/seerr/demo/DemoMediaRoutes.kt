@@ -10,7 +10,7 @@ import kotlinx.serialization.json.JsonPrimitive
 /** `media`, the title lookups and the download servers: what a request page reads about the title and where it goes. */
 internal fun DemoData.mediaRoutes(): List<DemoRoute> =
     listOf(
-        route("GET", "movie", "{}") { _, (id) -> details("movie", id) },
+        route("GET", "movie", "{}") { _, (id) -> movieDetails(id) },
         route("GET", "tv", "{}") { _, (id) -> details("tv", id) },
         route("POST", "media", "{}", "{}") { _, (id, status) -> withMedia(id) { markMedia(it, status) } },
         route("DELETE", "media", "{}") { _, (id) -> withMedia(id) { forget(it).let { done } } },
@@ -68,7 +68,7 @@ private fun mediaStatusFor(path: String): SeerrMediaStatusCode? =
         else -> null
     }
 
-private fun DemoData.details(
+internal fun DemoData.details(
     mediaType: String,
     id: String,
 ): DemoAnswer {

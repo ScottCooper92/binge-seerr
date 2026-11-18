@@ -2,39 +2,63 @@ package com.cooper.binge.companion.seerr.ui.hubs
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.paneTitle
+import androidx.compose.ui.semantics.semantics
 import com.binge.designsystem.component.BingePullToRefresh
 import com.binge.designsystem.component.CarouselSkeleton
+import com.binge.designsystem.component.DarkStatusBarEffect
+import com.binge.designsystem.component.HeroCarousel
+import com.binge.designsystem.component.HeroItem
 import com.binge.designsystem.component.MediaCard
 import com.binge.designsystem.component.MediaCardStatus
 import com.binge.designsystem.component.MediaCarousel
+import com.binge.designsystem.component.StatusBarScrim
+import com.binge.designsystem.component.StatusChip
 import com.binge.designsystem.navOverlayPadding
-import com.binge.designsystem.template.BingeScreenScaffold
-import com.binge.designsystem.template.ScreenBar
 import com.binge.designsystem.theme.BingeSentiment
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.TitleAvailability
 import com.cooper.binge.companion.seerr.discover.sliders.HubCard
+import com.cooper.binge.companion.seerr.discover.sliders.HubHero
 import com.cooper.binge.companion.seerr.discover.sliders.HubRow
 import com.cooper.binge.companion.seerr.discover.sliders.HubTab
+import com.cooper.binge.companion.seerr.discover.sliders.toCard
 import com.cooper.binge.companion.seerr.ui.state.EmptyScreen
 import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
 import com.binge.designsystem.R as DesR
 
 private const val SKELETON_ROWS = 3
+private const val HERO_KEY = "hero"
 
 /**
  * One discovery hub, Movies or TV: the server's rows of posters, each loading on its own. [onOpenTitle] gets the card the user
  * tapped.
+ *
+ * The hub has no title bar: the tab bar says where you are, and the hero runs edge to edge from the top of the screen, under the
+ * status bar, whose icons stay light over the backdrop with a dark wash at the top edge for when the rows scroll up under it.
+ * Without a hero the rows start below the status bar instead. The hub's name is its pane title, for a screen reader.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -44,21 +68,23 @@ fun DiscoverHubScreen(
     onRefresh: () -> Unit,
     onOpenTitle: (HubCard) -> Unit,
 ) {
-    BingeScreenScaffold(
-        bar = ScreenBar.Small,
-        title = stringResource(if (tab == HubTab.Movies) R.string.hubs_title_movies else R.string.hubs_title_tv),
-    ) { padding ->
-        Box(modifier = Modifier.fillMaxSize().padding(padding)) {
-            val inner = navOverlayPadding(PaddingValues())
-            when (state) {
-                DiscoverHubUiState.Loading -> HubSkeleton(inner)
-                DiscoverHubUiState.Empty -> EmptyScreen(stringResource(R.string.hubs_empty_message), Modifier.padding(inner))
-                is DiscoverHubUiState.Error -> ErrorScreen(state.error, Modifier.padding(inner), onRetry = onRefresh)
-                is DiscoverHubUiState.Ready ->
-                    BingePullToRefresh(isRefreshing = state.refreshing, onRefresh = onRefresh) {
-                        HubRows(tab, state, inner, onOpenTitle)
-                    }
-            }
+    val title = stringResource(if (tab == HubTab.Movies) R.string.hubs_title_movies else R.string.hubs_title_tv)
+    val hasHero = (state as? DiscoverHubUiState.Ready)?.hero?.isNotEmpty() == true
+    val statusBar = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+    val inner = navOverlayPadding(if (hasHero) PaddingValues() else PaddingValues(top = statusBar))
+    Box(modifier = Modifier.fillMaxSize().semantics { paneTitle = title }) {
+        when (state) {
+            DiscoverHubUiState.Loading -> HubSkeleton(inner)
+            DiscoverHubUiState.Empty -> EmptyScreen(stringResource(R.string.hubs_empty_message), Modifier.padding(inner))
+            is DiscoverHubUiState.Error -> ErrorScreen(state.error, Modifier.padding(inner), onRetry = onRefresh)
+            is DiscoverHubUiState.Ready ->
+                BingePullToRefresh(isRefreshing = state.refreshing, onRefresh = onRefresh, indicatorTopInset = statusBar) {
+                    HubRows(tab, state, inner, onOpenTitle)
+                }
+        }
+        if (hasHero) {
+            DarkStatusBarEffect()
+            StatusBarScrim()
         }
     }
 }
@@ -77,7 +103,10 @@ private fun HubRows(
     contentPadding: PaddingValues,
     onOpenTitle: (HubCard) -> Unit,
 ) {
-    LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = contentPadding) {
+    val listState = rememberLazyListState()
+    ShowHeroWhenItArrives(listState, hasHero = state.hero.isNotEmpty())
+    LazyColumn(state = listState, modifier = Modifier.fillMaxSize(), contentPadding = contentPadding) {
+        if (state.hero.isNotEmpty()) item(key = HERO_KEY) { Hero(state.hero, onOpenTitle) }
         items(state.rows, key = { it.row.sliderId }) { row ->
             MediaCarousel(
                 title = row.row.title(tab),
@@ -96,6 +125,52 @@ private fun HubRows(
         }
         // A row still loading is a skeleton below the ones that landed, so the page does not jump when it arrives.
         items(state.pending) { CarouselSkeleton(description = stringResource(R.string.hubs_loading_row)) }
+    }
+}
+
+@Composable
+private fun Hero(
+    hero: List<HubHero>,
+    onOpenTitle: (HubCard) -> Unit,
+) {
+    val items = hero.map { HeroItem(id = it.tmdbId, imageUrl = it.backdropUrl, title = it.name, rating = it.rating, year = it.year) }
+    HeroCarousel(
+        items = items,
+        onItemClick = { id -> hero.firstOrNull { it.tmdbId == id }?.let { onOpenTitle(it.toCard()) } },
+        heroActions = { item ->
+            hero
+                .firstOrNull { it.tmdbId == item.id }
+                ?.availability
+                ?.toStatus()
+                ?.let { StatusChip(it.label, it.sentiment) }
+        },
+    )
+}
+
+/**
+ * The hero loads apart from the rows and can land after them. A list keeps the item it shows first in place when something is
+ * inserted above it, so a hub sitting at its very top would stay on its first row with the new hero out of sight above. A hero
+ * that arrives while the list was at its top takes the top; one that arrives while the user has scrolled leaves them where they
+ * are. The position is read before the hero is in, since inserting it is what moves the list, and a pull to refresh at the top
+ * does not leave the top. A hub restored with its hero already there is left alone.
+ */
+@Composable
+private fun ShowHeroWhenItArrives(
+    listState: LazyListState,
+    hasHero: Boolean,
+) {
+    val heroNow by rememberUpdatedState(hasHero)
+    var atTopBeforeHero by remember { mutableStateOf(true) }
+    LaunchedEffect(listState) {
+        snapshotFlow { listState.firstVisibleItemIndex == 0 && listState.firstVisibleItemScrollOffset == 0 }
+            .collect { atTop -> if (!heroNow) atTopBeforeHero = atTop }
+    }
+    // Only a hero that arrives while this composition is watching counts. A hub composed again with its hero already there (a
+    // rotation, a restore) has a list state that came back with its own position, which is not this one's to reset.
+    var heroSeen by remember { mutableStateOf(hasHero) }
+    LaunchedEffect(hasHero) {
+        if (hasHero && !heroSeen && atTopBeforeHero) listState.scrollToItem(0)
+        heroSeen = hasHero
     }
 }
 

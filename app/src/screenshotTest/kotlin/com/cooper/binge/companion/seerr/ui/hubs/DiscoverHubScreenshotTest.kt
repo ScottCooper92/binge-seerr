@@ -2,9 +2,11 @@ package com.cooper.binge.companion.seerr.ui.hubs
 
 import androidx.compose.runtime.Composable
 import com.android.tools.screenshot.PreviewTest
+import com.binge.designsystem.preview.PreviewSystemBarInsets
 import com.cooper.binge.companion.seerr.discover.TitleAvailability
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.sliders.HubCard
+import com.cooper.binge.companion.seerr.discover.sliders.HubHero
 import com.cooper.binge.companion.seerr.discover.sliders.HubRow
 import com.cooper.binge.companion.seerr.discover.sliders.HubTab
 import com.cooper.binge.companion.seerr.preview.SeerrFontScale13Previews
@@ -15,8 +17,9 @@ import com.cooper.binge.companion.seerr.preview.SeerrSpanishPreviews
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 
 /**
- * The Movies and TV hubs: rows of posters with the state each card carries, a row still loading below the ones that landed, and
- * the loading, empty and error pages. The Spanish frame carries the longest row titles and the large-text frames the headers
+ * The Movies and TV hubs under a synthetic status bar and navigation bar, which the renderer reports as zero and the hub reads:
+ * the hero edge to edge under the status bar, the rows below a status bar when there is no hero, a row still loading, and the
+ * loading, empty and error pages. The Spanish frame carries the longest row titles, and the large-text frames a long hero title
  * at 1.3x, 1.5x and 2x.
  */
 class DiscoverHubScreenshotTest {
@@ -39,6 +42,31 @@ class DiscoverHubScreenshotTest {
     @SeerrScreenStatePreview
     @Composable
     fun series() = Frame(readyState(), tab = HubTab.Series)
+
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun withHero() = Frame(readyState(hero = HEROES))
+
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun withHeroLongTitle() = Frame(readyState(hero = listOf(LONG_HERO)))
+
+    @PreviewTest
+    @SeerrSpanishPreviews
+    @Composable
+    fun withHeroSpanish() = Frame(readyState(hero = HEROES))
+
+    @PreviewTest
+    @SeerrFontScale13Previews
+    @Composable
+    fun withHeroLargeText13() = Frame(readyState(hero = listOf(LONG_HERO)))
+
+    @PreviewTest
+    @SeerrFontScalePreviews
+    @Composable
+    fun withHeroLargeText() = Frame(readyState(hero = listOf(LONG_HERO)))
 
     @PreviewTest
     @SeerrScreenStatePreview
@@ -75,7 +103,7 @@ class DiscoverHubScreenshotTest {
 private fun Frame(
     state: DiscoverHubUiState,
     tab: HubTab = HubTab.Movies,
-) = DiscoverHubScreen(tab = tab, state = state, onRefresh = {}, onOpenTitle = {})
+) = PreviewSystemBarInsets { DiscoverHubScreen(tab = tab, state = state, onRefresh = {}, onOpenTitle = {}) }
 
 private fun card(
     id: Int,
@@ -96,6 +124,7 @@ private val SAMPLE_CARDS =
 private fun readyState(
     pending: Int = 0,
     refreshing: Boolean = false,
+    hero: List<HubHero> = emptyList(),
 ) = DiscoverHubUiState.Ready(
     rows =
         listOf(
@@ -105,4 +134,34 @@ private fun readyState(
         ),
     pending = pending,
     refreshing = refreshing,
+    hero = hero,
 )
+
+private fun hero(
+    id: Int,
+    name: String,
+    availability: TitleAvailability,
+) = HubHero(
+    TitleKind.Movie,
+    id,
+    name,
+    "https://image.tmdb.org/t/p/w1280/none$id.jpg",
+    "2021",
+    7.8f,
+    availability,
+    "https://server.example/movie/$id",
+)
+
+private val HEROES =
+    listOf(
+        hero(1, "The Long Way Home", TitleAvailability.Available),
+        hero(2, "Northern Lights", TitleAvailability.Pending),
+        hero(3, "A Quiet Harbour", TitleAvailability.None),
+    )
+
+private val LONG_HERO =
+    hero(
+        4,
+        "The Extraordinarily Long Title of a Film That Keeps Going: Part Two, the Return of the Seven Rivers",
+        TitleAvailability.PartiallyAvailable,
+    )

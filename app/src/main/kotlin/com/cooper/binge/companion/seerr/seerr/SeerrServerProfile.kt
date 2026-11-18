@@ -152,6 +152,9 @@ data class SeerrServerProfile(
 
     val hasKeywordDiscover: Boolean get() = jellyseerrLineage || atLeast(1, 9)
 
+    /** `movie/{id}/ratingscombined`: Rotten Tomatoes and IMDb in one call, from Jellyseerr 1.7 and Overseerr 1.34 (its `v1.33.2` tag has no such route). */
+    val hasCombinedRatings: Boolean get() = if (jellyseerrLineage) atLeast(1, 7) else atLeast(1, 34)
+
     val hasGenreSliders: Boolean get() = jellyseerrLineage || atLeast(1, 22)
 
     /** `media` filtered to what is in the library, newest first: Overseerr 1.18 and the Jellyseerr lineage from the start. */
