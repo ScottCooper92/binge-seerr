@@ -33,7 +33,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
@@ -53,15 +52,14 @@ import com.binge.designsystem.template.FormSaveStatus
 import com.binge.designsystem.template.FormSaveStatusText
 import com.binge.designsystem.template.formSaveStatus
 import com.cooper.binge.companion.seerr.R
-import com.cooper.binge.companion.seerr.flags.LocalFlags
-import com.cooper.binge.companion.seerr.flags.bingePromotion
-import com.cooper.binge.companion.seerr.ui.openTitle
+import com.cooper.binge.companion.seerr.ui.discover.title.LocalOpenTitle
 import com.cooper.binge.companion.seerr.ui.requests.labelRes
 import com.cooper.binge.companion.seerr.ui.state.BarIconAction
 import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
 import com.cooper.binge.companion.seerr.ui.state.OverflowDetailScaffold
 import com.cooper.binge.companion.seerr.ui.state.RequestStateChip
 import com.cooper.binge.companion.seerr.ui.state.messageRes
+import com.cooper.binge.companion.seerr.ui.toTitleKind
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
 import com.binge.designsystem.R as DesR
@@ -261,8 +259,7 @@ private fun IssueThreadScroll(
     writeIdle: Boolean,
 ) {
     val detail = state.detail
-    val context = LocalContext.current
-    val promoted = LocalFlags.current.bingePromotion
+    val openTitle = LocalOpenTitle.current
     val inset = resolvedContentInset()
     val sides = resolvedContentPadding()
     Column(
@@ -274,8 +271,8 @@ private fun IssueThreadScroll(
     ) {
         IssueHeader(
             detail.item,
-            // The title opens in Binge where Binge answers, as on the request page; else the issue's own web page, as before.
-            onOpen = { context.openTitle(promoted, detail.item.mediaType, detail.item.tmdbId, detail.webUrl) },
+            // The title opens its own page with discovery on; with it off, in Binge where Binge answers, else the issue's web page.
+            onOpen = { openTitle(detail.item.mediaType.toTitleKind(), detail.item.tmdbId, detail.webUrl) },
             modifier = Modifier.padding(resolvedContentPadding(vertical = inset)),
         )
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, modifier = Modifier.padding(sides))

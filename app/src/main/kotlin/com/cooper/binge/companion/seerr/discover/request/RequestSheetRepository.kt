@@ -1,5 +1,6 @@
 package com.cooper.binge.companion.seerr.discover.request
 
+import com.binge.companion.sdk.attempt
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.seerr.RequestPostOutcome
 import com.cooper.binge.companion.seerr.seerr.SEERR_MEDIA_TYPE_MOVIE
@@ -69,7 +70,17 @@ data class RequestSubmission(
 )
 
 /** What a submit did. A refusal is not here: it is thrown as the network call throws it. */
-enum class RequestResult { Created, NothingToRequest, AlreadyRequested }
+enum class RequestResult { Created, NothingToRequest, AlreadyRequested, PartiallyCreated }
+
+/**
+ * What sending several requests did: how many the server made, how many it already had, and the first refusal, which is
+ * null when every one went through. A later request is still sent after an earlier one is refused.
+ */
+data class RequestAllResult(
+    val created: Int,
+    val alreadyThere: Int,
+    val failure: Throwable?,
+)
 
 /**
  * What the request sheet reads and writes. It knows nothing of Retrofit, so a view model holds this and a test holds a fake.
@@ -91,6 +102,9 @@ interface RequestSheetRepository {
     ): RequestChoices
 
     suspend fun submit(submission: RequestSubmission): RequestResult
+
+    /** One request per submission, in order. A refusal is reported in the result, not thrown. */
+    suspend fun submitAll(submissions: List<RequestSubmission>): RequestAllResult
 }
 
 /** [RequestSheetRepository] over the Seerr API, on the same server rules the exported Service applies. */
@@ -153,6 +167,19 @@ class SeerrRequestSheetRepository(
                 RequestPostOutcome.AlreadyRequested -> RequestResult.AlreadyRequested
             }
         }
+
+    override suspend fun submitAll(submissions: List<RequestSubmission>): RequestAllResult {
+        var created = 0
+        var already = 0
+        var failure: Throwable? = null
+        for (submission in submissions) {
+            attempt { submit(submission) }.fold(
+                onSuccess = { if (it == RequestResult.Created) created++ else already++ },
+                onFailure = { if (failure == null) failure = it },
+            )
+        }
+        return RequestAllResult(created, already, failure)
+    }
 }
 
 private fun SeerrServerDto.toRequestServer() = RequestServer(id, name, is4k, isDefault, activeProfileId, activeDirectory)

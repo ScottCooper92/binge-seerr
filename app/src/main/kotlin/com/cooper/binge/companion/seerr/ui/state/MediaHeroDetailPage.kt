@@ -93,7 +93,7 @@ internal fun MediaHeroDetailPage(
             } else {
                 DetailHero(
                     title = title,
-                    backdropUrl = backdropUrl,
+                    backdropUrl = singleColumnBackdrop(backdropUrl, wideHeader?.posterUrl),
                     tagline = tagline,
                     genres = genres,
                     metaText = metaText,
@@ -108,6 +108,15 @@ internal fun MediaHeroDetailPage(
         content = body,
     )
 }
+
+/**
+ * The image behind the single-column hero: the title's own backdrop, or its poster where it has none, so the hero is never
+ * bare. The expanded header draws the poster itself beside the title, so it takes the backdrop alone and never shows it twice.
+ */
+internal fun singleColumnBackdrop(
+    backdropUrl: String?,
+    posterUrl: String?,
+): String? = backdropUrl ?: posterUrl
 
 /** Where a hero page's skeleton or its failure sits before there is a page: the theme's background, full window. */
 @Composable
