@@ -53,5 +53,9 @@ private fun ShellFrame(selected: SeerrTab) {
             selectedIndex = mutableIntStateOf(selected.ordinal),
             stacks = SeerrTab.entries.associateWith { NavBackStack<NavKey>(MoviesRoot) },
         )
-    SeerrTabShell(state, discover = { TabPlaceholder(SeerrTab.Movies) }) { HubScreen(state = previewReady(), actions = previewActions()) }
+    SeerrTabShell(
+        state,
+        discover = { TabPlaceholder(SeerrTab.Movies) },
+        settings = { HubScreen(state = previewReady(), actions = previewActions()) },
+    )
 }

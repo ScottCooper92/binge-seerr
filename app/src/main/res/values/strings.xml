@@ -131,6 +131,22 @@
     <string name="shell_tab_search">Search</string>
     <string name="shell_tab_settings">Settings</string>
     <string name="shell_placeholder_message">This part of the app arrives in a later update.</string>
+    <!-- The Search tab: title search. -->
+    <string name="title_search_placeholder">Search movies, series and people</string>
+    <string name="title_search_idle_title">Find something to watch</string>
+    <string name="title_search_idle_message">Search by title or name. Results come from your server.</string>
+    <string name="title_search_none_title">No results</string>
+    <string name="title_search_none_message">Nothing matched “%1$s”. Check the spelling or try fewer words.</string>
+    <string name="title_search_more_failed">Couldn’t load more. Tap to try again</string>
+    <string name="title_search_recent">Recent searches</string>
+    <string name="title_search_recent_clear">Clear</string>
+    <string name="title_search_recent_clear_title">Clear recent searches?</string>
+    <string name="title_search_recent_clear_message">The searches saved on this device are removed. Your server is not changed.</string>
+    <string name="title_search_kind_year">%1$s · %2$s</string>
+    <string name="title_kind_movie">Movie</string>
+    <string name="title_kind_series">Series</string>
+    <string name="title_kind_person">Person</string>
+    <string name="title_kind_collection">Collection</string>
     <string name="hub_section_settings_desc">Services, notifications and jobs</string>
     <string name="hub_section_this_app">This app</string>
     <string name="hub_section_this_app_desc">Preferences, notifications, feedback and more</string>
