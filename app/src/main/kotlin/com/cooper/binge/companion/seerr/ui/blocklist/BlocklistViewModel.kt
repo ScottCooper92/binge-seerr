@@ -60,7 +60,6 @@ data class BlocklistScope(
     val path: String = "blocklist",
     val hasFilters: Boolean = false,
     val canManage: Boolean = false,
-    val canBlockCollections: Boolean = false,
 )
 
 /** What one arrival's reads returned; null is a read that failed, and [viewerError] says why the viewer's did. */
@@ -90,7 +89,6 @@ private fun BlocklistScope.readWith(read: ScopeRead): BlocklistScope {
         path = read.profile?.blocklistPath ?: path,
         hasFilters = read.profile?.hasBlocklistFilters ?: hasFilters,
         canManage = canManage,
-        canBlockCollections = (read.profile?.canBlockCollections ?: canBlockCollections) && canManage,
     )
 }
 
@@ -269,7 +267,6 @@ class BlocklistViewModel
                             listVersion = listVersion,
                             hasFilters = scopeState.scope.hasFilters,
                             canManage = scopeState.scope.canManage,
-                            canBlockCollections = scopeState.scope.canBlockCollections,
                             actingTmdbIds = acting,
                         )
                 }

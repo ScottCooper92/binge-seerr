@@ -10,7 +10,10 @@ data class CollectionDetails(
     val name: String,
     val overview: String?,
     val backdropUrl: String?,
+    val posterUrl: String?,
     val parts: List<TitleResult>,
+    /** What the server holds of each film's 4K version, by TMDB id: a film's [TitleResult.availability] is the standard one. */
+    val parts4k: Map<Int, TitleAvailability> = emptyMap(),
 ) {
     /** The server has no collection flag to read: a collection is blocked when every film in it is. */
     val blocked: Boolean get() = parts.isNotEmpty() && parts.all { it.availability == TitleAvailability.Blocklisted }
@@ -29,6 +32,9 @@ data class CollectionDetails(
 /** Reads a collection from the connected server, and blocks or unblocks it for a viewer who may. */
 interface CollectionRepository {
     suspend fun collection(id: Int): CollectionDetails
+
+    /** Whether the viewer may request films: the Request button is not drawn for one who may not. */
+    suspend fun mayRequest(): Boolean
 
     /** Whether the viewer may block collections here: the server must have the endpoint and the account must manage the blocklist. */
     suspend fun mayBlock(): Boolean
