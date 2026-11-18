@@ -383,7 +383,7 @@ private fun rememberOpenTitle(backStack: NavBackStack<NavKey>): (TitleKind, Int,
     val context = LocalContext.current
     return remember(backStack, discovery, promoted, context) {
         { kind, id, webUrl ->
-            // A person and a collection open as they did until their own pages land.
+            // A collection opens as it did until its own page lands.
             if (discovery && kind == TitleKind.Person) {
                 backStack.add(PersonDetailRoute(id))
             } else if (discovery && (kind == TitleKind.Movie || kind == TitleKind.Series)) {

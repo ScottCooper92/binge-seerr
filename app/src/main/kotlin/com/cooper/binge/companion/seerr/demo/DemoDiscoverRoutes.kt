@@ -72,12 +72,15 @@ private fun found(call: DemoCall): List<DemoTitle> {
     return DEMO_TITLES.filter { query.isNotEmpty() && it.title.contains(query, ignoreCase = true) }
 }
 
+/** Their ids are their own, apart from the cast the title pages list, so a person opened from search is the person searched for. */
+internal const val SEARCH_PERSON_FIRST = 9201
+
 /** The people the demo's search can find: invented names with no photo, since the demo holds no real person. */
 private val DEMO_PEOPLE =
     listOf(
-        SeerrTitleResultDto(id = 9001, mediaType = "person", name = "Marlowe Quinn"),
-        SeerrTitleResultDto(id = 9002, mediaType = "person", name = "Ines Valdemar"),
-        SeerrTitleResultDto(id = 9003, mediaType = "person", name = "Tobias Hallworth"),
+        SeerrTitleResultDto(id = SEARCH_PERSON_FIRST, mediaType = "person", name = "Marlowe Quinn"),
+        SeerrTitleResultDto(id = SEARCH_PERSON_FIRST + 1, mediaType = "person", name = "Ines Valdemar"),
+        SeerrTitleResultDto(id = SEARCH_PERSON_FIRST + 2, mediaType = "person", name = "Tobias Hallworth"),
     )
 
 /** Search pages are short, so a broad query in the demo has a second page to load. */

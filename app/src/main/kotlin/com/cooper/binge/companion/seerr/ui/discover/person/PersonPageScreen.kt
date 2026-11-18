@@ -104,7 +104,7 @@ private fun LazyGridScope.creditSections(
 ) {
     if (all.isEmpty) return
     full("filters") { FilterChips(state.filter, actions.onFilter) }
-    val visible = all.only(state.filter.kind)
+    val visible = state.visible ?: return
     if (visible.isEmpty) {
         full("none") {
             Text(stringResource(R.string.person_credits_filtered_empty), style = MaterialTheme.typography.bodyMedium)

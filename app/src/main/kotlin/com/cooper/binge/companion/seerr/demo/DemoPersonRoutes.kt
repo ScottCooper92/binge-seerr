@@ -9,7 +9,7 @@ private const val FIRST_CAST_ID = 9001
 private const val CAST_TITLES = 5
 private const val CREW_TITLES = 2
 
-/** The people the demo's title pages list, so a tap on any of them opens a page. Any other id is a made-up person. */
+/** The people the demo's title pages list and its search finds, so a tap on any of them opens a page under their own name. Any other id is a made-up person. */
 private val DEMO_PEOPLE =
     mapOf(
         9001 to "Alex Sample",
@@ -18,6 +18,9 @@ private val DEMO_PEOPLE =
         9101 to "Riley Director",
         9102 to "Casey Writer",
         9103 to "Morgan Composer",
+        SEARCH_PERSON_FIRST to "Marlowe Quinn",
+        SEARCH_PERSON_FIRST + 1 to "Ines Valdemar",
+        SEARCH_PERSON_FIRST + 2 to "Tobias Hallworth",
     )
 
 /** `person/{id}` and its credits, hand-authored: the credits are titles the demo has, so a tap opens a real demo page. */
