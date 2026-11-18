@@ -13,10 +13,12 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.navigation3.runtime.NavKey
 import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.ui.HomeRoute
 import com.cooper.binge.companion.seerr.ui.IssuesRoute
 import com.cooper.binge.companion.seerr.ui.RequestsRoute
 import com.cooper.binge.companion.seerr.ui.ShellRoute
+import com.cooper.binge.companion.seerr.ui.TitleDetailRoute
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
 import org.junit.After
@@ -34,6 +36,9 @@ private const val WIDE = "w900dp-h800dp"
 private const val PHONE = "w400dp-h800dp"
 
 private const val WAIT_MILLIS = 5_000L
+
+/** A film the demo server knows. */
+private const val DEMO_FILM_ID = 10378
 
 /**
  * The tab bar on a window wide enough for two panes, through the real nav host. A section stays on the app's stack at every
@@ -85,7 +90,21 @@ class WideShellJourneyTest {
         host.launch(HomeRoute, RequestsRoute)
         host.awaitShowing(host.string(R.string.requests_filter_processing))
 
-        assertEquals(listOf<NavKey>(ShellRoute, RequestsRoute), host.stack())
+        host.compose.waitUntil(WAIT_MILLIS) { host.stack() == listOf<NavKey>(ShellRoute, RequestsRoute) }
+        bar().assertIsDisplayed()
+        host.awaitShowing(host.string(R.string.hub_section_issues_desc))
+    }
+
+    @Test
+    fun `a link over a stack of the same size still lands beside the hub`() {
+        NavHostActivity.discoveryEnabled = true
+        host.connectDemo()
+        host.launch(HomeRoute, TitleDetailRoute(TitleKind.Movie, DEMO_FILM_ID))
+        host.compose.waitUntil(WAIT_MILLIS) { host.stack() == listOf(ShellRoute, TitleDetailRoute(TitleKind.Movie, DEMO_FILM_ID)) }
+
+        host.openLink(HomeRoute, RequestsRoute)
+
+        host.compose.waitUntil(WAIT_MILLIS) { host.stack() == listOf<NavKey>(ShellRoute, RequestsRoute) }
         bar().assertIsDisplayed()
         host.awaitShowing(host.string(R.string.hub_section_issues_desc))
     }
