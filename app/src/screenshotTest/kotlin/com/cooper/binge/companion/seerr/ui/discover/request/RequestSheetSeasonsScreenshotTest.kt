@@ -130,13 +130,13 @@ class RequestSheetSeasonsScreenshotTest {
     @Composable
     fun quotaTooSmall() = SeasonPage(state(partial = false, quota = RequestQuota(QUOTA_LIMIT, 1, QUOTA_DAYS)))
 
-    /** A long season name on the season page at font scales 1.5 and 2. */
+    /** A long season name on the season page at font scale 2. */
     @PreviewTest
     @SeerrFontScalePreviews
     @Composable
     fun longLargeFonts() = SeasonPage(state(picked = setOf(4), longName = true), WORST_HEIGHT)
 
-    /** The form for a show at font scales 1.5 and 2. */
+    /** The form for a show at font scale 2. */
     @PreviewTest
     @SeerrFontScalePreviews
     @Composable

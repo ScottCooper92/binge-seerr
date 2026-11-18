@@ -68,7 +68,7 @@ class CollectionPageScreenshotTest {
     @Composable
     fun error() = Frame(CollectionPageUiState.Error(SeerrError.Unreachable))
 
-    /** The longest names at font scales 1.5 and 2. */
+    /** The longest names at font scale 2. */
     @PreviewTest
     @SeerrFontScalePreviews
     @Composable

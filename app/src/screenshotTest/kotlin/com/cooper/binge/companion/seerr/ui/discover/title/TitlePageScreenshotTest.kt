@@ -132,7 +132,7 @@ class TitlePageScreenshotTest {
     @Composable
     fun loadingLargeFonts() = Frame(TitlePageUiState.Loading)
 
-    /** The longest title, tagline and names at font scales 1.5 and 2. */
+    /** The longest title, tagline and names at font scale 2. */
     @PreviewTest
     @SeerrFontScalePreviews
     @Composable
@@ -251,7 +251,7 @@ class TitlePageScreenshotTest {
             scrollState = rememberScrollState(initial = COLLECTION_PX),
         )
 
-    /** The rail with See all, under a long collection name, at font scales 1.5 and 2. */
+    /** The rail with See all, under a long collection name, at font scale 2. */
     @PreviewTest
     @SeerrFontScalePreviews
     @Composable
