@@ -1,7 +1,5 @@
 package com.cooper.binge.companion.seerr.ui
 
-import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.material3.adaptive.layout.calculatePaneScaffoldDirective
@@ -13,7 +11,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.Dp
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavBackStack
@@ -85,7 +82,6 @@ internal fun SeerrPaneHost(
     onExit: () -> Unit,
     modifier: Modifier = Modifier,
     defaultSection: @Composable () -> Unit = {},
-    inShell: Boolean = false,
     entries: EntryProviderScope<NavKey>.(panes: PaneLayout) -> Unit,
 ) {
     val exit = rememberExitOnce(onExit)
@@ -110,22 +106,18 @@ internal fun SeerrPaneHost(
         LocalIsSinglePaneNav provides !hubBeside.value,
         LocalPaneDepth provides backStack.paneDepth(),
     ) {
-        val display: @Composable (Modifier, Dp?) -> Unit = { displayModifier, room ->
-            NavDisplay(
-                backStack = backStack,
-                modifier = displayModifier,
-                onBack = { if (!backStack.pop()) exit() },
-                sceneStrategies = listOf(rememberSeerrPaneStrategy(directive, backStack, threePane.value, defaultSection, room)),
-                entryDecorators =
-                    listOf(
-                        rememberSaveableStateHolderNavEntryDecorator(),
-                        rememberViewModelStoreNavEntryDecorator(),
-                    ),
-                entryProvider = entryProvider { entries(PaneLayout({ hubBeside.value }, showBack, { threePane.value })) },
-            )
-        }
-        // Inside the tab bar's content the panes share what the bar leaves, not the window.
-        if (inShell) BoxWithConstraints(modifier) { display(Modifier.fillMaxSize(), maxWidth) } else display(modifier, null)
+        NavDisplay(
+            backStack = backStack,
+            modifier = modifier,
+            onBack = { if (!backStack.pop()) exit() },
+            sceneStrategies = listOf(rememberSeerrPaneStrategy(directive, backStack, threePane.value, defaultSection, hubBeside.value)),
+            entryDecorators =
+                listOf(
+                    rememberSaveableStateHolderNavEntryDecorator(),
+                    rememberViewModelStoreNavEntryDecorator(),
+                ),
+            entryProvider = entryProvider { entries(PaneLayout({ hubBeside.value }, showBack, { threePane.value })) },
+        )
     }
 }
 
