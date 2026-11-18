@@ -56,6 +56,7 @@ import com.binge.designsystem.template.FormSaveStatusText
 import com.binge.designsystem.template.formSaveStatus
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.flags.LocalFlags
+import com.cooper.binge.companion.seerr.flags.bingePromotion
 import com.cooper.binge.companion.seerr.ui.openTitle
 import com.cooper.binge.companion.seerr.ui.requests.labelRes
 import com.cooper.binge.companion.seerr.ui.state.ErrorScreen

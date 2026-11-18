@@ -7,6 +7,7 @@ import com.binge.designsystem.template.StepFlowScreen
 import com.binge.designsystem.template.StepHeading
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.flags.LocalFlags
+import com.cooper.binge.companion.seerr.flags.bingePromotion
 
 /** Everything the setup screen can ask of its ViewModel, in one place so the entry stays a wiring. */
 class SetupActions(
