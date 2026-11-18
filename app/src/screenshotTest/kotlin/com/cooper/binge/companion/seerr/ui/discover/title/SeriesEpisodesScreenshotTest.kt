@@ -40,7 +40,10 @@ class SeriesEpisodesScreenshotTest {
     @Composable
     fun ready() = Frame(SeriesEpisodesUiState.Ready(listOf(section(1, loaded()), section(2, loaded()), section(3, loaded()))))
 
-    /** The page opened at the second season, long enough to scroll, with the one before it already read and the one after it not. */
+    /**
+     * The page opened at the second season, long enough to scroll, with the one before it already read and the one after it not.
+     * The preview draws the bar expanded, since it never measures it; `SeriesEpisodesScreenTest` holds that it opens collapsed.
+     */
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable

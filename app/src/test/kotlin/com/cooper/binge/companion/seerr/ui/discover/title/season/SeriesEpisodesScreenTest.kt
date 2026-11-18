@@ -3,9 +3,14 @@ package com.cooper.binge.companion.seerr.ui.discover.title.season
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
+import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipeDown
+import androidx.compose.ui.test.swipeUp
 import com.cooper.binge.companion.seerr.discover.title.SeasonEpisode
 import com.cooper.binge.companion.seerr.theme.SeerrTheme
 import com.cooper.binge.companion.seerr.ui.discover.title.seasonFixture
@@ -83,6 +88,32 @@ class SeriesEpisodesScreenTest {
     }
 
     @Test
+    @Config(qualifiers = "w400dp-h800dp")
+    fun `the bar stays pinned with its Back control as the list scrolls from the opening position`() {
+        val seasons =
+            SeriesEpisodesUiState.Ready(
+                listOf(
+                    SeasonSection(seasonFixture(1), SeasonEpisodesState.Loaded(episodes(30))),
+                    SeasonSection(seasonFixture(2), SeasonEpisodesState.Loaded(episodes(30))),
+                ),
+            )
+        show(seasons, openAt = 2)
+        compose.onNodeWithContentDescription("Back").assertIsDisplayed()
+        compose.waitForIdle()
+        val back = compose.onNodeWithContentDescription("Back").getUnclippedBoundsInRoot()
+        val title = compose.onNodeWithText("A Show").getUnclippedBoundsInRoot()
+        assertTrue("the title is in the Back button's row, so the bar opened collapsed", title.top < back.bottom)
+
+        repeat(SCROLLS) { compose.onNode(hasScrollAction()).performTouchInput { swipeUp() } }
+        compose.waitForIdle()
+        compose.onNodeWithContentDescription("Back").assertIsDisplayed()
+
+        repeat(SCROLLS) { compose.onNode(hasScrollAction()).performTouchInput { swipeDown() } }
+        compose.waitForIdle()
+        compose.onNodeWithContentDescription("Back").assertIsDisplayed()
+    }
+
+    @Test
     fun `an episode shows its synopsis`() {
         show(state(perSeason = 1), openAt = 1)
 
@@ -91,3 +122,5 @@ class SeriesEpisodesScreenTest {
 
     private fun ComposeContentTestRule.onAllNodesWithTextCount(text: String) = onAllNodesWithText(text).fetchSemanticsNodes().size
 }
+
+private const val SCROLLS = 3
