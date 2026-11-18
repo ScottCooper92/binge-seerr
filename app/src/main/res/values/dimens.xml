@@ -4,8 +4,6 @@
     <dimen name="setup_backdrop_height">220dp</dimen>
     <!-- The height a request's actions sheet holds while its request loads or fails to. -->
     <dimen name="request_sheet_placeholder_height">280dp</dimen>
-    <!-- The height of the Browse all row, which the hub's skeleton holds above its first rail. -->
-    <dimen name="hub_entry_skeleton_height">64dp</dimen>
     <!-- The hub's dashboard cards and the downloading strip. -->
     <dimen name="hub_download_card_width">248dp</dimen>
     <dimen name="hub_download_card_poster_width">52dp</dimen>

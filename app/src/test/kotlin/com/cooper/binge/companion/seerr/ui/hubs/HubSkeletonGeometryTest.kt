@@ -1,5 +1,8 @@
 package com.cooper.binge.companion.seerr.ui.hubs
 
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Density
 import com.binge.designsystem.layout.LayoutAnchors
 import com.binge.designsystem.testing.assertSkeletonReservesGeometry
 import com.cooper.binge.companion.seerr.discover.TitleAvailability
@@ -45,18 +48,34 @@ class HubSkeletonGeometryTest {
     @Config(qualifiers = TABLET)
     fun `on a tablet the skeleton holds a rail without See all where it lands`() = check(HubRow.RecentlyAdded(1, null, HubTab.Movies))
 
-    private fun check(row: HubRow) {
+    @Test
+    @Config(qualifiers = PHONE)
+    fun `at a larger font the skeleton still holds the first rail where it lands`() =
+        check(HubRow.Trending(1, null, HubTab.Movies), LARGE_FONT)
+
+    @Test
+    @Config(qualifiers = PHONE)
+    fun `at the largest font the skeleton still holds the first rail where it lands`() =
+        check(HubRow.Trending(1, null, HubTab.Movies), LARGEST_FONT)
+
+    private fun check(
+        row: HubRow,
+        fontScale: Float = 1f,
+    ) {
         val anchors = listOf(LayoutAnchors.Hub.DISCOVER_ENTRY, LayoutAnchors.Hub.FIRST_CAROUSEL).map(LayoutAnchors::section)
         rule.assertSkeletonReservesGeometry(anchors = anchors, checkSize = true) { resolved ->
-            SeerrTheme {
-                DiscoverHubScreen(
-                    tab = HubTab.Movies,
-                    state = if (resolved) ready(row) else DiscoverHubUiState.Loading,
-                    onRefresh = {},
-                    onOpenTitle = {},
-                    onOpenGrid = { _, _ -> },
-                    onOpenRequests = {},
-                )
+            val density = LocalDensity.current
+            CompositionLocalProvider(LocalDensity provides Density(density.density, fontScale)) {
+                SeerrTheme {
+                    DiscoverHubScreen(
+                        tab = HubTab.Movies,
+                        state = if (resolved) ready(row) else DiscoverHubUiState.Loading,
+                        onRefresh = {},
+                        onOpenTitle = {},
+                        onOpenGrid = { _, _ -> },
+                        onOpenRequests = {},
+                    )
+                }
             }
         }
     }
@@ -75,5 +94,7 @@ class HubSkeletonGeometryTest {
         const val PHONE = "w411dp-h891dp-xhdpi"
         const val TABLET = "w840dp-h1280dp-xhdpi"
         const val CARDS = 6
+        const val LARGE_FONT = 1.3f
+        const val LARGEST_FONT = 2f
     }
 }

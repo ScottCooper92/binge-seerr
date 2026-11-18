@@ -5,8 +5,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
@@ -28,8 +26,10 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.paneTitle
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.Dp
 import com.binge.designsystem.component.BackdropTile
 import com.binge.designsystem.component.BingePullToRefresh
 import com.binge.designsystem.component.CarouselSkeleton
@@ -41,11 +41,11 @@ import com.binge.designsystem.component.LogoTile
 import com.binge.designsystem.component.MediaCard
 import com.binge.designsystem.component.MediaCardStatus
 import com.binge.designsystem.component.MediaCarousel
-import com.binge.designsystem.component.SkeletonPlate
 import com.binge.designsystem.component.StatusBarScrim
 import com.binge.designsystem.component.StatusChip
 import com.binge.designsystem.layout.LayoutAnchors
 import com.binge.designsystem.layout.layoutAnchor
+import com.binge.designsystem.modifier.skeleton
 import com.binge.designsystem.navOverlayEnd
 import com.binge.designsystem.navOverlayPadding
 import com.binge.designsystem.navOverlayStart
@@ -69,6 +69,7 @@ import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
 import com.binge.designsystem.R as DesR
 
 private const val SKELETON_ROWS = 3
+private const val BLANK = " "
 private const val HERO_KEY = "hero"
 private const val BROWSE_ALL_KEY = "browse_all"
 
@@ -121,17 +122,26 @@ private fun HubSkeleton(contentPadding: PaddingValues) {
     }
 }
 
-/** The Browse all row the loaded hub puts above its rails, so the first rail lands where its plate stood. */
+/**
+ * The Browse all row the loaded hub puts above its rails, drawn as the row itself with blank text under the skeleton plate, so its
+ * height follows the font as the real row's does and the first rail lands where its plate stood.
+ */
 @Composable
 private fun BrowseAllSkeleton() {
-    SkeletonPlate(
-        Modifier
-            .fillMaxWidth()
-            .padding(start = resolvedContentInset() + navOverlayStart(), end = resolvedContentInset() + navOverlayEnd())
-            .height(dimensionResource(R.dimen.hub_entry_skeleton_height))
-            .layoutAnchor(LayoutAnchors.section(LayoutAnchors.Hub.DISCOVER_ENTRY)),
-        shape = MaterialTheme.shapes.large,
-    )
+    Box(Modifier.padding(start = resolvedContentInset() + navOverlayStart(), end = resolvedContentInset() + navOverlayEnd())) {
+        DiscoverEntryRow(
+            title = BLANK,
+            subtitle = BLANK,
+            onClick = {},
+            modifier =
+                Modifier
+                    .layoutAnchor(LayoutAnchors.section(LayoutAnchors.Hub.DISCOVER_ENTRY))
+                    .skeleton(visible = true, shape = MaterialTheme.shapes.large)
+                    .clearAndSetSemantics { },
+            startPadding = Dp.Hairline,
+            endPadding = Dp.Hairline,
+        )
+    }
 }
 
 /** Marks the leading carousel, skeleton or loaded, so the geometry test can check the first row lands where its plate stood. */
