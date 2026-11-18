@@ -36,6 +36,17 @@ data class SeerrTitleResultDto(
     @SerialName("mediaInfo") val mediaInfo: SeerrMediaInfoDto? = null,
 )
 
+/** A TMDB collection: its [parts] are movies in release order, each a result row with the server's own status for it. */
+@Serializable
+data class SeerrCollectionDto(
+    @SerialName("id") val id: Int,
+    @SerialName("name") val name: String = "",
+    @SerialName("overview") val overview: String? = null,
+    @SerialName("posterPath") val posterPath: String? = null,
+    @SerialName("backdropPath") val backdropPath: String? = null,
+    @SerialName("parts") val parts: List<SeerrTitleResultDto> = emptyList(),
+)
+
 /** A genre slider tile: the genre and the backdrops TMDB holds for it. */
 @Serializable
 data class SeerrGenreSliderDto(
