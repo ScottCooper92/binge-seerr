@@ -181,7 +181,9 @@ class DiscoverHubScreenTest {
         compose.onNodeWithText("Browse all shows").performClick()
         compose.onNodeWithText("Filter by genre, network, year and rating").assertExists()
         assertEquals(listOf(HubGrid(TitleKind.Series, GridPreset.Popular) to "Popular series"), opened)
+    }
 
+    @Test
     fun `a rated card shows its score and an unrated card shows none`() {
         val rated = HubCard(TitleKind.Movie, 7, "Paper Moons", "2020", null, TitleAvailability.None, "https://s/movie/7", rating = 7.7f)
         val unrated = HubCard(TitleKind.Movie, 8, "Quiet Harbour", "2020", null, TitleAvailability.None, "https://s/movie/8")
