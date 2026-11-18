@@ -64,6 +64,12 @@ fun DiscoverFilters.clearedKeeping(
             FilterGroup.Language -> cleared.copy(language = base.language)
             FilterGroup.Where -> cleared.copy(providers = base.providers, region = base.region)
             FilterGroup.Keywords -> cleared.copy(keywords = base.keywords)
-            else -> cleared
+            FilterGroup.Rating,
+            FilterGroup.Runtime,
+            FilterGroup.Votes,
+            FilterGroup.Certification,
+            FilterGroup.ExcludedKeywords,
+            FilterGroup.Status,
+            -> cleared
         }
     }

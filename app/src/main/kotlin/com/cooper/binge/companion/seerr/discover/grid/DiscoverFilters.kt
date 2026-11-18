@@ -45,7 +45,10 @@ fun DiscoverFilters.keeps(preset: DiscoverFilters): Boolean =
         (preset.region == null || region == preset.region) &&
         (preset.releaseFrom == null || releaseFrom == preset.releaseFrom)
 
-/** These filters without the ones a [preset] set, so what the user added on top stays. */
+/**
+ * These filters without the ones a [preset] set, so what the user added on top stays. A region stays while a service added
+ * on top remains, as a service means nothing without the region it was picked in.
+ */
 fun DiscoverFilters.without(preset: DiscoverFilters): DiscoverFilters =
     copy(
         genres = genres - preset.genres,
@@ -53,7 +56,7 @@ fun DiscoverFilters.without(preset: DiscoverFilters): DiscoverFilters =
         providers = providers - preset.providers,
         company = company.takeUnless { it == preset.company },
         language = language.takeUnless { it == preset.language },
-        region = region.takeUnless { it == preset.region },
+        region = region.takeUnless { it == preset.region && (providers - preset.providers).isEmpty() },
         releaseFrom = releaseFrom.takeUnless { it == preset.releaseFrom },
     )
 

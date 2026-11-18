@@ -508,4 +508,32 @@ class DiscoverGridViewModelTest {
             assertEquals("keyword 9", vm.uiState.value.controls.vocabulary.keywordNames[9])
             collector.cancel()
         }
+
+    @Test
+    fun `clearing a service row's own chip keeps the service added and its region`() =
+        runTest {
+            val vm =
+                DiscoverGridViewModel(
+                    grid,
+                    lookups,
+                    media,
+                    TitleKind.Movie,
+                    GridPreset.Provider(8, "GB"),
+                    "Netflix",
+                    "2026-11-19",
+                    null,
+                    null,
+                )
+            val collector = launch(UnconfinedTestDispatcher(testScheduler)) { vm.uiState.collect {} }
+            advanceUntilIdle()
+            vm.onApply(DiscoverSort.PopularityDesc, DiscoverFilters(providers = setOf(8, 337), region = "GB"))
+            advanceUntilIdle()
+            assertEquals("GB", vm.uiState.value.controls.added.region)
+            vm.onClearFilter()
+            advanceUntilIdle()
+            val filters = vm.uiState.value.controls.filters
+            assertEquals(setOf(337), filters.providers)
+            assertEquals("GB", filters.region)
+            collector.cancel()
+        }
 }

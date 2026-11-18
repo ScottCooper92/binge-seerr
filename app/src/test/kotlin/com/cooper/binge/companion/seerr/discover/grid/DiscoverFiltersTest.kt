@@ -183,4 +183,20 @@ class DiscoverFiltersTest {
         assertTrue(DiscoverFilters(genresAny = true).isEmpty)
         assertFalse(DiscoverFilters(genres = setOf(18), genresAny = true).isEmpty)
     }
+
+    @Test
+    fun `a service added to a service row keeps the region it was picked in`() {
+        val preset = DiscoverFilters(providers = setOf(8), region = "GB")
+        val added = DiscoverFilters(providers = setOf(8, 337), region = "GB").without(preset)
+
+        assertEquals(setOf(337), added.providers)
+        assertEquals("GB", added.region)
+    }
+
+    @Test
+    fun `the region goes with the row's own service when nothing was added`() {
+        val preset = DiscoverFilters(providers = setOf(8), region = "GB")
+
+        assertEquals(null, DiscoverFilters(providers = setOf(8), region = "GB").without(preset).region)
+    }
 }
