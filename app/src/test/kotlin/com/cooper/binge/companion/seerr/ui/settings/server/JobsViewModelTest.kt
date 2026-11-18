@@ -427,11 +427,13 @@ class JobsViewModelTest {
                 testScheduler.runCurrent()
                 val reads = seerr.count("GET", "/api/v1/settings/jobs")
 
-                // A hundred polls' worth of virtual time. A poll left running would start a read in each, so it would count
-                // far past the one read the cancelled poll may still have on the wire, whose arrival a slow runner can delay.
-                testScheduler.advanceTimeBy(100 * vm.runningRefreshMillis)
-                testScheduler.runCurrent()
-                seerr.awaitCallbacks()
+                // One poll's worth of virtual time at a time, draining each read's real-time callback between steps. A poll
+                // left running reads in each step, so it counts well past the one read a cancelled poll may still have on the wire.
+                repeat(5) {
+                    testScheduler.advanceTimeBy(vm.runningRefreshMillis)
+                    testScheduler.runCurrent()
+                    seerr.awaitCallbacks()
+                }
                 val after = seerr.count("GET", "/api/v1/settings/jobs")
                 assertTrue("the poll kept reading while the page was away: $reads reads, then $after", after - reads <= 1)
 
