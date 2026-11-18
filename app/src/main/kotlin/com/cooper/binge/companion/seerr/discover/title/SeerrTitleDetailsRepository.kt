@@ -48,12 +48,13 @@ class SeerrTitleDetailsRepository(
             val dto = api.movieFullDetails(tmdbId)
             val region = streamingRegion(api, user, profile, deviceRegion())
             val permissions = user.toPermissions()
-            dto.toMovieDetails(
-                region = region,
-                mayRequest = permissions.canRequestMovie,
-                mayRequest4k = permissions.mayRequest4k(isTv = false, profile.settings),
-                webUrl = serverUrl() + "movie/" + tmdbId,
-            )
+            dto
+                .toMovieDetails(
+                    region = region,
+                    mayRequest = permissions.canRequestMovie,
+                    mayRequest4k = permissions.mayRequest4k(isTv = false, profile.settings),
+                    webUrl = serverUrl() + "movie/" + tmdbId,
+                ).copy(companiesOpen = profile.hasDiscoverByCategory)
         }
 
     override suspend fun collectionParts(collectionId: Int): List<TitleResult> =
@@ -126,7 +127,7 @@ internal fun SeerrMovieDetailsDto.toMovieDetails(
         status = status?.takeIf { it.isNotBlank() },
         originalLanguage = originalLanguage,
         spokenLanguageCodes = spokenLanguages.mapNotNull { it.code?.takeIf(String::isNotBlank) },
-        studios = productionCompanies.map { it.name },
+        studios = productionCompanies.map { TitleCompany(it.id, it.name) },
         budget = budget?.takeIf { it > 0 },
         revenue = revenue?.takeIf { it > 0 },
         cast =

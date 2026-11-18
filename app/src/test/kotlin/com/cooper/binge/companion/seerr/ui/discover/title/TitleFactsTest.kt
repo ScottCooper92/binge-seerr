@@ -2,10 +2,12 @@ package com.cooper.binge.companion.seerr.ui.discover.title
 
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
+import com.binge.designsystem.component.InfoValue
 import com.cooper.binge.companion.seerr.discover.TitleAvailability
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.TitleResult
 import com.cooper.binge.companion.seerr.discover.title.MovieDetails
+import com.cooper.binge.companion.seerr.discover.title.TitleCompany
 import com.cooper.binge.companion.seerr.discover.title.TitleExtras
 import com.cooper.binge.companion.seerr.discover.title.TitlePerson
 import com.cooper.binge.companion.seerr.discover.title.TitleRatings
@@ -41,7 +43,7 @@ class TitleFactsTest {
         status = "Released",
         originalLanguage = "en",
         spokenLanguageCodes = emptyList(),
-        studios = listOf("One Studio", "Another"),
+        studios = listOf(TitleCompany(1, "One Studio"), TitleCompany(2, "Another")),
         budget = null,
         revenue = null,
         cast = emptyList(),
@@ -70,6 +72,28 @@ class TitleFactsTest {
         val facts =
             movie(listOf(person("Ann Writer", "Writer"), person("Bo Director", "Director, Writer"))).factEntries(resources, Locale.US, null)
         assertEquals("Bo Director", facts.valueOf("Directed by"))
+    }
+
+    @Test
+    fun `studios are links that name their company where the page can open one`() {
+        val opened = mutableListOf<TitleCompany>()
+        val facts = movie(emptyList()).factEntries(resources, Locale.US, null) { opened += it }
+        val links = (facts.first { it.label == "Studios" }.value as InfoValue.Links).links
+        assertEquals(listOf("One Studio", "Another"), links.map { it.text })
+        links.last().onClick()
+        assertEquals(listOf(TitleCompany(2, "Another")), opened)
+    }
+
+    @Test
+    fun `studios stay plain text where the page cannot open a company`() {
+        val facts = movie(emptyList()).factEntries(resources, Locale.US, null)
+        assertEquals(InfoValue.Plain("One Studio, Another"), facts.first { it.label == "Studios" }.value)
+    }
+
+    @Test
+    fun `a film with no studios has no studio links`() {
+        val facts = movie(emptyList()).copy(studios = emptyList()).factEntries(resources, Locale.US, null) { }
+        assertEquals("", facts.valueOf("Studios"))
     }
 
     @Test

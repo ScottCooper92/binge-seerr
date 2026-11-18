@@ -4,6 +4,7 @@ import android.content.res.Resources
 import com.binge.designsystem.component.InfoRowEntry
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.title.MovieDetails
+import com.cooper.binge.companion.seerr.discover.title.TitleCompany
 import com.cooper.binge.companion.seerr.discover.title.TitlePerson
 import com.cooper.binge.companion.seerr.discover.title.TitleRatings
 import java.text.NumberFormat
@@ -18,6 +19,7 @@ internal fun MovieDetails.factEntries(
     resources: Resources,
     locale: Locale,
     ratings: TitleRatings?,
+    onOpenCompany: ((TitleCompany) -> Unit)? = null,
 ): List<InfoRowEntry> {
     fun entry(
         label: Int,
@@ -34,7 +36,7 @@ internal fun MovieDetails.factEntries(
         entry(R.string.title_page_fact_release_date, releaseDate.toDisplayDate(locale)),
         entry(R.string.title_page_fact_original_language, originalLanguage?.let { languageName(it, locale) }),
         entry(R.string.title_page_fact_spoken_languages, spokenLanguageCodes.joinToString(", ") { languageName(it, locale) }),
-        entry(R.string.title_page_fact_studios, studios.joinToString(", ")),
+        companyEntry(resources.getString(R.string.title_page_fact_studios), studios, onOpenCompany),
         entry(R.string.title_page_collection, collection?.name),
         entry(R.string.title_page_fact_status, status?.let { statusLabelRes(it)?.let(resources::getString) ?: it }),
         entry(R.string.title_page_fact_budget, budget?.let(money::format)),
