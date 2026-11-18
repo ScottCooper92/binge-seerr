@@ -43,7 +43,7 @@ How each gate is applied is in [`server-compatibility.md`](server-compatibility.
 | `GET /movie/{movieId}/similar` | Get similar movies | v1.0.0 | v1.0.0 | yes | The film page's "More like this" rail, after the recommendations. |
 | `GET /settings/public` | Get public settings | v1.0.0 | v1.0.0 | yes | Server profile: variant, version, media server, sign-in modes, permissions; "what a visitor sees" on the general settings page. |
 | `GET /status` | Get Seerr status | v1.15.0 | v1.0.0 | yes | Server profile: variant, version, media server, sign-in modes, permissions. |
-| `GET /tv/{tvId}` | Get TV details | v1.0.0 | v1.0.0 | yes | The status lookup the Service makes, and the whole series page: seasons with their status per version, facts, people, the trailer, providers, next episode. |
+| `GET /tv/{tvId}` | Get TV details | v1.0.0 | v1.0.0 | yes | The status lookup the Service makes, and the whole series page: seasons with their status per version, facts, people, the trailer, next episode, and Where to watch: the streaming and buy providers for the user's region, with their logos, in the server's order. |
 | `GET /tv/{tvId}/ratings` | Get TV ratings | v1.0.0 | v1.0.0 | yes | The Rotten Tomatoes score on the series page, on every lineage; a 404 means the server has none. |
 | `GET /tv/{tvId}/season/{seasonNumber}` | Get season details and episode list | v1.0.0 | v1.0.0 | yes | The selected season's first episodes on the series page, and the whole season on its own page. |
 | `GET /tv/{tvId}/recommendations` | Get recommended TV series | v1.0.0 | v1.0.0 | yes | The series page's "More like this" rail, first: recommendations, then similar titles, each title once. |
