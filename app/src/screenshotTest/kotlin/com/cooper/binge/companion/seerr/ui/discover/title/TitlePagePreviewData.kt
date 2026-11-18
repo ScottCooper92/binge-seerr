@@ -5,6 +5,7 @@ import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.TitleResult
 import com.cooper.binge.companion.seerr.discover.title.MovieDetails
 import com.cooper.binge.companion.seerr.discover.title.TitleCollection
+import com.cooper.binge.companion.seerr.discover.title.TitleCompany
 import com.cooper.binge.companion.seerr.discover.title.TitleExtras
 import com.cooper.binge.companion.seerr.discover.title.TitlePerson
 import com.cooper.binge.companion.seerr.discover.title.TitleProvider
@@ -56,7 +57,7 @@ internal fun fullMovie(
     status = "Released",
     originalLanguage = "en",
     spokenLanguageCodes = listOf("en", "es"),
-    studios = listOf("Warner Bros.", "Village Roadshow Pictures"),
+    studios = listOf(TitleCompany(174, "Warner Bros."), TitleCompany(79, "Village Roadshow Pictures")),
     budget = BUDGET,
     revenue = REVENUE,
     cast = listOf(person(1, "Keanu Reeves", "Neo"), person(2, "Carrie-Anne Moss", "Trinity"), person(3, "Laurence Fishburne", "Morpheus")),
@@ -118,7 +119,13 @@ internal fun sparseMovie() =
 internal fun longMovie() =
     fullMovie("The Lord of the Rings: The Fellowship of the Ring (Extended Director's Cut Special Edition)").copy(
         tagline = "One ring to rule them all, one ring to find them, one ring to bring them all and in the darkness bind them",
-        studios = listOf("New Line Cinema", "WingNut Films", "The Saul Zaentz Company", "Another Very Long Production Company Name"),
+        studios =
+            listOf(
+                TitleCompany(1, "New Line Cinema"),
+                TitleCompany(2, "WingNut Films"),
+                TitleCompany(3, "The Saul Zaentz Company"),
+                TitleCompany(4, "Another Very Long Production Company Name"),
+            ),
         genres = listOf("Adventure", "Fantasy", "Action", "Epic Historical Drama"),
         cast = listOf(person(1, "Elijah Wood-Montgomery-Fitzgerald", "Frodo Baggins of the Shire, bearer of the one ring")),
     )

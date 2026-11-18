@@ -124,7 +124,7 @@ internal fun SeerrMovieDetailsDto.toMovieDetails(
         status = status?.takeIf { it.isNotBlank() },
         originalLanguage = originalLanguage,
         spokenLanguageCodes = spokenLanguages.mapNotNull { it.code?.takeIf(String::isNotBlank) },
-        studios = productionCompanies.map { it.name },
+        studios = productionCompanies.map { TitleCompany(it.id, it.name) },
         budget = budget?.takeIf { it > 0 },
         revenue = revenue?.takeIf { it > 0 },
         cast =

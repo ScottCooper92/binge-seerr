@@ -81,7 +81,7 @@ data class MovieDetails(
     val status: String?,
     val originalLanguage: String?,
     val spokenLanguageCodes: List<String>,
-    val studios: List<String>,
+    val studios: List<TitleCompany>,
     val budget: Long?,
     val revenue: Long?,
     val cast: List<TitlePerson>,
@@ -120,3 +120,9 @@ interface TitleDetailsRepository {
         tmdbId: Int,
     ): TitleExtras
 }
+
+/** A studio (film) or a network (series) behind a title: its TMDB id opens the grid of what else it made. */
+data class TitleCompany(
+    val id: Int,
+    val name: String,
+)

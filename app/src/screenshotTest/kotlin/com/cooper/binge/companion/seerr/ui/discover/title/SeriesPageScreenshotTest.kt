@@ -20,6 +20,9 @@ private val NO_ACTIONS = TitlePageActions({}, {}, {}, {}, {}, {}, {}, {}, {}, {}
 
 private val NO_SEASON_ACTIONS = SeasonActions({}, {}, { _, _ -> })
 
+/** As [NO_ACTIONS], but a network opens its grid, so the networks are links in the accent colour. */
+private val LINKED_ACTIONS = TitlePageActions({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, onOpenCompany = {})
+
 @Composable
 private fun Frame(state: SeriesPageUiState) = SeriesPageScreen(state, emptyFlow(), NO_ACTIONS, NO_SEASON_ACTIONS)
 
@@ -92,6 +95,19 @@ class SeriesPageScreenshotTest {
             NO_ACTIONS,
             NO_SEASON_ACTIONS,
             scrollState = rememberScrollState(initial = LARGE_FONT_EPISODES_PX),
+        )
+
+    /** The facts with the networks as links, in the accent colour. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun factsLinked() =
+        SeriesPageScreen(
+            SeriesPageUiState.Ready(fullSeries(), seriesExtras()),
+            emptyFlow(),
+            LINKED_ACTIONS,
+            NO_SEASON_ACTIONS,
+            scrollState = rememberScrollState(initial = FACTS_PX),
         )
 
     /** Every season held or asked for: no Request button. */

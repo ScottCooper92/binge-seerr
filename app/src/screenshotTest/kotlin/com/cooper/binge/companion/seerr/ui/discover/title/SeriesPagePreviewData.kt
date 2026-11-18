@@ -7,6 +7,7 @@ import com.cooper.binge.companion.seerr.discover.title.NextEpisode
 import com.cooper.binge.companion.seerr.discover.title.SeasonEpisode
 import com.cooper.binge.companion.seerr.discover.title.SeasonInfo
 import com.cooper.binge.companion.seerr.discover.title.SeriesDetails
+import com.cooper.binge.companion.seerr.discover.title.TitleCompany
 import com.cooper.binge.companion.seerr.discover.title.TitleExtras
 import com.cooper.binge.companion.seerr.discover.title.TitlePerson
 import com.cooper.binge.companion.seerr.discover.title.TitleProvider
@@ -70,7 +71,7 @@ internal fun fullSeries(
     inProduction = true,
     originalLanguage = "en",
     spokenLanguageCodes = listOf("en", "es"),
-    networks = listOf("Demo Network"),
+    networks = listOf(TitleCompany(1, "Demo Network")),
     creators = listOf("Riley Director"),
     seasonCount = seasons.size,
     episodeCount = seasons.sumOf { it.episodeCount },
@@ -119,7 +120,11 @@ internal fun longSeries() =
                 if (index == 0) season.copy(name = "The Extended Special Collector's Edition Season With A Very Long Name") else season
             },
     ).copy(
-        networks = listOf("A Very Long Premium Cable Network", "Another Streaming Service Of Considerable Length"),
+        networks =
+            listOf(
+                TitleCompany(1, "A Very Long Premium Cable Network"),
+                TitleCompany(2, "Another Streaming Service Of Considerable Length"),
+            ),
         creators = listOf("Christopher Montgomery-Fitzgerald", "Alexandria Wolfeschlegelsteinhausen"),
     )
 
