@@ -13,6 +13,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.binge.designsystem.tv.focus.TvOverlayCloser
 import com.cooper.binge.companion.seerr.flags.LocalFlags
+import com.cooper.binge.companion.seerr.flags.bingePromotion
 import com.cooper.binge.companion.seerr.ui.bingeTitleHandOff
 import com.cooper.binge.companion.seerr.ui.issues.IssueDetailEvent
 import com.cooper.binge.companion.seerr.ui.issues.IssueDetailUiState

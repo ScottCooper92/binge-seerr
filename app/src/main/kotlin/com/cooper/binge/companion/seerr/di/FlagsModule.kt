@@ -25,6 +25,7 @@ import com.cooper.homelab.core.flags.FlagOverrides
 import com.cooper.homelab.core.flags.NoFlagOverrides
 import com.cooper.homelab.core.flags.RemoteFeatureFlags
 import com.cooper.homelab.core.flags.RemoteFlagSource
+import com.cooper.homelab.core.flags.SharedFlags
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -46,7 +47,7 @@ object FlagsModule {
     @Singleton
     fun remoteFlagSource(
         @ApplicationContext context: Context,
-    ): RemoteFlagSource = FirebaseRemoteFlagSource(context)
+    ): RemoteFlagSource = FirebaseRemoteFlagSource(context, SharedFlags.all)
 
     /** Only a debug build reads overrides, so nothing a shipped build holds can switch a flag on. */
     @Provides
