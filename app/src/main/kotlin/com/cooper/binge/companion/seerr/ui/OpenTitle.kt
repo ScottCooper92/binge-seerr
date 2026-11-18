@@ -67,7 +67,7 @@ fun isOpenableSite(url: String): Boolean = url.toHttpUrlOrNull()?.host?.let { it
 
 /**
  * Opens a title in Binge where it is installed and answers, else at [webUrl] on the server. A [webUrl] that cannot be a real
- * site (see [isOpenableSite]) opens nothing: the title has no page to go to.
+ * site (see [isOpenableSite]) opens nothing, Binge included: the address says there is no server to show the title from.
  */
 fun Context.openTitle(
     promoted: Boolean,

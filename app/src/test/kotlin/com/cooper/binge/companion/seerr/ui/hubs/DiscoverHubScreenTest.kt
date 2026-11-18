@@ -42,7 +42,7 @@ class DiscoverHubScreenTest {
     }
 
     @Test
-    fun `a tap on a card opens its title on a real server`() {
+    fun `a tap on a card opens its title`() {
         val opened = mutableListOf<HubCard>()
         show("https://server.example/", opened)
         compose.onNodeWithText("Paper Moons").performClick()
