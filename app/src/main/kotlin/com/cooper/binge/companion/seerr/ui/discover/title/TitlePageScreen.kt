@@ -33,7 +33,7 @@ class TitlePageActions(
     val onRequested: (com.cooper.binge.companion.seerr.discover.request.RequestResult) -> Unit,
     val onOpenTitle: (TitleResult) -> Unit,
     val onOpenPerson: (Int) -> Unit,
-    val onOpenCollection: (Int) -> Unit,
+    val onOpenCollection: ((Int) -> Unit)?,
     val onOpenUrl: (String) -> Unit,
     val onOpenCredits: () -> Unit,
     /** Reads the page again where it stands, for the snackbar after a request whose reload failed. */

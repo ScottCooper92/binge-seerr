@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.binge.companion.sdk.attempt
 import com.cooper.binge.companion.seerr.discover.TitleKind
+import com.cooper.binge.companion.seerr.discover.TitleResult
 import com.cooper.binge.companion.seerr.discover.request.RequestResult
 import com.cooper.binge.companion.seerr.discover.title.MovieDetails
 import com.cooper.binge.companion.seerr.discover.title.TitleDetailsRepository
@@ -35,6 +36,7 @@ sealed interface TitlePageUiState {
         val movie: MovieDetails,
         val extras: TitleExtras? = null,
         val requestSheetOpen: Boolean = false,
+        val collectionParts: List<TitleResult> = emptyList(),
     ) : TitlePageUiState {
         /** The Request button shows while either version can still be asked for. */
         val mayRequest: Boolean get() = movie.standard.mayRequest || movie.fourK?.mayRequest == true
@@ -80,6 +82,7 @@ class TitlePageViewModel
                 attempt { repository.movie(tmdbId) }.fold(
                     onSuccess = { movie ->
                         state.value = TitlePageUiState.Ready(movie)
+                        movie.collection?.let { loadCollection(it.id) }
                         loadExtras()
                     },
                     onFailure = { state.value = TitlePageUiState.Error(it.toSeerrError()) },
@@ -109,6 +112,14 @@ class TitlePageViewModel
         fun requested(result: RequestResult) {
             eventFlow.tryEmit(TitlePageEvent.Requested(result))
             closeRequestSheet()
+        }
+
+        /** The other films of the film's collection, where it has one; a failed read leaves the rail out, as it does any extra. */
+        private fun loadCollection(collectionId: Int) {
+            viewModelScope.launch {
+                val parts = attempt { repository.collectionParts(collectionId) }.getOrNull() ?: return@launch
+                updateReady { it.copy(collectionParts = parts.filterNot { part -> part.tmdbId == tmdbId }) }
+            }
         }
 
         private fun loadExtras() {
