@@ -18,6 +18,7 @@ import com.cooper.binge.companion.seerr.ui.IssuesRoute
 import com.cooper.binge.companion.seerr.ui.LicencesRoute
 import com.cooper.binge.companion.seerr.ui.NotificationAgentRoute
 import com.cooper.binge.companion.seerr.ui.OverrideRuleRoute
+import com.cooper.binge.companion.seerr.ui.PersonDetailRoute
 import com.cooper.binge.companion.seerr.ui.RequestDetailRoute
 import com.cooper.binge.companion.seerr.ui.RequestsRoute
 import com.cooper.binge.companion.seerr.ui.SeasonEpisodesRoute
@@ -60,6 +61,7 @@ fun SeerrRoute.screenName(): String =
         is TitleDetailRoute -> "title_detail"
         is CollectionRoute -> "collection_detail"
         is TitleCreditsRoute -> "title_credits"
+        is PersonDetailRoute -> "person_detail"
         is SeasonEpisodesRoute -> "season_episodes"
         IssuesRoute -> "issues"
         is IssueDetailRoute -> "issue_detail"

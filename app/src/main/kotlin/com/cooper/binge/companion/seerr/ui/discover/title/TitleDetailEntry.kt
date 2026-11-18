@@ -83,7 +83,7 @@ private fun SeriesPageEntry(
     )
 }
 
-/** The page's actions with the links a title page shares: another title, a web page. A collection opens its page, which gives the film's collection rail its See all. A person opens nowhere yet. */
+/** The page's actions with the links a title page shares: another title, a web page. A person and a collection open their own pages, which gives the film's collection rail its See all. */
 @Composable
 private fun rememberTitlePageActions(
     onBack: () -> Unit,
@@ -102,7 +102,7 @@ private fun rememberTitlePageActions(
         onCloseRequest = onCloseRequest,
         onRequested = onRequested,
         onOpenTitle = { result: TitleResult -> openTitle(result.kind, result.tmdbId, "") },
-        onOpenPerson = {},
+        onOpenPerson = { openTitle(TitleKind.Person, it, "") },
         onOpenCollection = { id -> openTitle(TitleKind.Collection, id, "") },
         onOpenUrl = context::openInBrowser,
         onOpenCredits = onOpenCredits,
