@@ -20,7 +20,8 @@ class HubHeroLoaderTest {
         kind: TitleKind,
         id: Int,
         backdrop: String? = "/b$id.jpg",
-    ) = TitleResult(kind, id, "t$id", "2021", "/p$id.jpg", backdrop, null, 7.5, TitleAvailability.Available, null)
+        rating: Double? = 7.5,
+    ) = TitleResult(kind, id, "t$id", "2021", "/p$id.jpg", backdrop, null, rating, TitleAvailability.Available, null)
 
     private class Titles(
         private val results: List<TitleResult>,
@@ -58,6 +59,21 @@ class HubHeroLoaderTest {
             tmdbId: Int,
         ): HydratedTitle? = null
     }
+
+    @Test
+    fun `a hero carries its vote average, and none where it is zero or missing`() =
+        runTest {
+            val titles =
+                Titles(
+                    listOf(
+                        title(TitleKind.Movie, 1, rating = 6.4),
+                        title(TitleKind.Movie, 2, rating = 0.0),
+                        title(TitleKind.Movie, 3, rating = null),
+                    ),
+                )
+            val hero = HubHeroLoader(titles, Media()).load(HubTab.Movies)
+            assertEquals(listOf(6.4f, null, null), hero.map { it.rating })
+        }
 
     @Test
     fun `the hero is the first five trending titles of the hubs kind that have a backdrop`() =

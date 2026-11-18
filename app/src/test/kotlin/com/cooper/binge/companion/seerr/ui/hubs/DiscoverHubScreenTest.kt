@@ -253,8 +253,35 @@ class DiscoverHubScreenTest {
         compose.onAllNodesWithText("See all", substring = true, ignoreCase = true, useUnmergedTree = true).assertCountEquals(0)
     }
 
-    private fun hero(server: String) =
-        HubHero(TitleKind.Movie, 9, "Seven Rivers", "https://img/b.jpg", "2021", TitleAvailability.Available, server + "movie/9")
+    private fun hero(
+        server: String,
+        rating: Float? = null,
+    ) = HubHero(
+        TitleKind.Movie,
+        9,
+        "Seven Rivers",
+        "https://img/b.jpg",
+        "2021",
+        TitleAvailability.Available,
+        server + "movie/9",
+        rating = rating,
+    )
+
+    @Test
+    fun `a rated hero shows its rating and an unrated one does not`() {
+        val server = "https://server.example/"
+        show(server, mutableListOf(), hero = listOf(hero(server, rating = 6.4f)))
+        compose.onNodeWithText("6.4", substring = true, useUnmergedTree = true).assertExists()
+    }
+
+    @Test
+    fun `a hero with no rating shows no score`() {
+        val server = "https://server.example/"
+        show(server, mutableListOf(), hero = listOf(hero(server)))
+        compose.onNodeWithText("Seven Rivers", substring = true, useUnmergedTree = true).assertExists()
+        compose.onAllNodesWithText("6.4", substring = true, useUnmergedTree = true).assertCountEquals(0)
+        compose.onAllNodesWithText("0.0", substring = true, useUnmergedTree = true).assertCountEquals(0)
+    }
 
     @Test
     fun `the hero shows above the rows and a tap on it opens its title`() {
