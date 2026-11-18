@@ -213,6 +213,7 @@
     <string name="grid_filter_genres">Genres</string>
     <string name="grid_filter_where">Where to watch</string>
     <string name="grid_filter_region">Region</string>
+    <string name="grid_filter_providers_failed">Couldn’t load streaming services. Reopen this page to try again.</string>
     <string name="grid_filter_providers_none">No streaming services listed for this region.</string>
     <string name="grid_filter_cert">Content rating</string>
     <string name="grid_filter_cert_country">Country</string>
@@ -221,7 +222,6 @@
     <string name="grid_filter_keywords_exclude">Excluded keywords</string>
     <string name="grid_filter_providers_search">Search streaming services</string>
     <string name="grid_filter_providers_loading">Loading streaming services</string>
-    <string name="grid_filter_providers_failed">Couldn\'t load the streaming services. Reopen this page to try again.</string>
     <string name="grid_filter_language_search">Search languages</string>
     <string name="grid_filter_region_search">Search countries</string>
     <string name="grid_filter_search_none">Nothing matches that search.</string>

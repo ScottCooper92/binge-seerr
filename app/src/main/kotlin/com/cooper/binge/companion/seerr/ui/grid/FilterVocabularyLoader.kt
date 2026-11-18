@@ -68,13 +68,16 @@ internal class FilterVocabularyLoader(
 
     private suspend fun providersFor(region: String) {
         if (!regionsRequested.add(region)) return
-        state.update { it.copy(providersFailed = it.providersFailed - region) }
         val providers = attempt { lookups.providers(kind, region) }
-        providers.onFailure {
-            regionsRequested.remove(region)
-            state.update { it.copy(providersFailed = it.providersFailed + region) }
+        val found = providers.getOrNull()
+        if (found == null) regionsRequested.remove(region)
+        state.update {
+            if (found == null) {
+                it.copy(providersFailed = it.providersFailed + region)
+            } else {
+                it.copy(providers = it.providers + (region to found), providersFailed = it.providersFailed - region)
+            }
         }
-        providers.onSuccess { found -> state.update { it.copy(providers = it.providers + (region to found)) } }
     }
 
     /** Searches the keywords for [query]; a newer one replaces it, and blank clears the results. */

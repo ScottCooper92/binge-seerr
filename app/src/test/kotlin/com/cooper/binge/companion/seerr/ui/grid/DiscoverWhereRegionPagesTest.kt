@@ -150,7 +150,7 @@ class DiscoverWhereRegionPagesTest {
             }
         }
 
-        rule.onNodeWithText("Couldn't load the streaming services. Reopen this page to try again.").assertExists()
+        rule.onNodeWithText("Couldn’t load streaming services. Reopen this page to try again.").assertExists()
         rule.onAllNodesWithText("No streaming services listed for this region.").assertCountEquals(0)
     }
 
