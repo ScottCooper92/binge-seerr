@@ -11,8 +11,6 @@ import com.cooper.binge.companion.seerr.preview.SeerrScreenStatePreview
 import com.cooper.binge.companion.seerr.preview.SeerrSpanishPreviews
 import kotlinx.coroutines.flow.emptyFlow
 
-private const val SEASONS_SCROLLED_PX = 900
-private const val LARGE_FONT_SEASONS_PX = 2300
 private const val EPISODES_PX = 1900
 private const val LARGE_FONT_EPISODES_PX = 4300
 
@@ -31,18 +29,11 @@ class SeriesPageScreenshotTest {
     @Composable
     fun requestable() = Frame(SeriesPageUiState.Ready(fullSeries(), seriesExtras()))
 
-    /** The season list reached by scrolling: one season in each state, the status beside the ones the server holds. */
+    /** The season picker sheet's content: one season in each state, the status beside the ones the server holds, the shown one checked. */
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
-    fun seasonList() =
-        SeriesPageScreen(
-            SeriesPageUiState.Ready(fullSeries(), seriesExtras()),
-            emptyFlow(),
-            NO_ACTIONS,
-            NO_SEASON_ACTIONS,
-            scrollState = rememberScrollState(initial = SEASONS_SCROLLED_PX),
-        )
+    fun seasonPicker() = SeasonPickerContent(fullSeries().seasons, selected = 1, onSelect = {})
 
     /** The first season selected: its first five episodes, then the row that opens the rest, reached by scrolling. */
     @PreviewTest
@@ -139,18 +130,11 @@ class SeriesPageScreenshotTest {
     @Composable
     fun longLargeFonts() = Frame(SeriesPageUiState.Ready(longSeries(), seriesExtras()))
 
-    /** The season list under the longest names at font scales 1.5 and 2, reached by scrolling. */
+    /** The season picker under the longest names at font scales 1.5 and 2. */
     @PreviewTest
     @SeerrFontScalePreviews
     @Composable
-    fun seasonsLargeFonts() =
-        SeriesPageScreen(
-            SeriesPageUiState.Ready(longSeries(), seriesExtras()),
-            emptyFlow(),
-            NO_ACTIONS,
-            NO_SEASON_ACTIONS,
-            scrollState = rememberScrollState(initial = LARGE_FONT_SEASONS_PX),
-        )
+    fun seasonPickerLargeFonts() = SeasonPickerContent(longSeries().seasons, selected = 2, onSelect = {})
 
     @PreviewTest
     @SeerrSpanishPreviews

@@ -78,6 +78,7 @@ private fun worstCase(): SeriesPageUiState.Ready {
                 "An overview that runs on for a good while. ".repeat(OVERVIEW_REPEATS),
                 "2020-01-01",
                 null,
+                8.5f,
             )
         }
     return SeriesPageUiState.Ready(series, extras, selectedSeason = 1, episodes = mapOf(1 to EpisodesState.Ready(episodes)))

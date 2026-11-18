@@ -1506,7 +1506,6 @@
         <item quantity="one">%1$d episode</item>
         <item quantity="other">%1$d episodes</item>
     </plurals>
-    <string name="series_page_seasons">Seasons</string>
     <string name="series_page_runtime">%1$d min</string>
     <plurals name="series_page_season_count">
         <item quantity="one">%1$d season</item>
@@ -1522,13 +1521,14 @@
     <string name="series_status_returning">Returning series</string>
     <string name="series_status_ended">Ended</string>
     <string name="series_status_pilot">Pilot</string>
+    <string name="series_season_separator" translatable="false">" · "</string>
     <string name="series_season_subtitle" translatable="false">%1$s · %2$s</string>
     <plurals name="request_sheet_seasons_limit">
         <item quantity="one">Your quota allows %1$d more season</item>
         <item quantity="other">Your quota allows %1$d more seasons</item>
     </plurals>
     <string name="request_sheet_seasons_over">Your quota has less room than the %1$d seasons still open, so this series cannot be requested now</string>
-    <string name="series_page_episodes_of">Episodes · %1$s</string>
+    <string name="series_page_episodes">Episodes</string>
     <string name="series_page_view_all_episodes">View all episodes</string>
     <string name="season_episodes_empty">No episodes listed for this season yet</string>
 </resources>

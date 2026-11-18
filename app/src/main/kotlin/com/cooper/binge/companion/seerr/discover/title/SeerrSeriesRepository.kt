@@ -75,6 +75,7 @@ class SeerrSeriesRepository(
                     overview = it.overview?.takeIf(String::isNotBlank),
                     airDate = it.airDate?.takeIf(String::isNotBlank),
                     stillUrl = it.stillPath?.toTmdbBackdropUrl(),
+                    rating = it.voteAverage?.toFloat()?.takeIf { rating -> rating > 0f },
                 )
             }
         }

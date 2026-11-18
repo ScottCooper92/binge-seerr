@@ -71,4 +71,5 @@ data class SeerrEpisodeDto(
     @SerialName("episodeNumber") val episodeNumber: Int = 0,
     @SerialName("seasonNumber") val seasonNumber: Int = 0,
     @SerialName("stillPath") val stillPath: String? = null,
+    @SerialName("voteAverage") val voteAverage: Double? = null,
 )

@@ -82,7 +82,7 @@ private class FakeSeries(
     ): List<SeasonEpisode> {
         seasonReads += seasonNumber
         failSeasons?.let { throw it }
-        return listOf(SeasonEpisode(1, "Pilot $seasonNumber", null, "2011-04-17", null))
+        return listOf(SeasonEpisode(1, "Pilot $seasonNumber", null, "2011-04-17", null, null))
     }
 
     override suspend fun series(tmdbId: Int): SeriesDetails = failSeries?.let { throw it } ?: series

@@ -542,10 +542,9 @@ app:series_fact_last_aired  784b4f6e33cc
 app:series_fact_networks  ab2c47c3c77f
 app:series_fact_next_episode  a38c4e18c73d
 app:series_next_episode  1d2e64f42f1b
-app:series_page_episodes_of  7fe843e95d41
+app:series_page_episodes  83f9722d9bb2
 app:series_page_runtime  3122a2f3e04b
 app:series_page_season_count  ca6962b2801b
-app:series_page_seasons  c15527b19b99
 app:series_page_view_all_episodes  5972b1cef594
 app:series_status_ended  7cdc804e6996
 app:series_status_pilot  383e2d946278

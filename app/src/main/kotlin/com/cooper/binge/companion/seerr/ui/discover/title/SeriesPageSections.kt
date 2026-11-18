@@ -2,13 +2,9 @@ package com.cooper.binge.companion.seerr.ui.discover.title
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Event
-import androidx.compose.material.icons.filled.Tv
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -24,9 +20,7 @@ import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.component.SectionHeader
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.title.NextEpisode
-import com.cooper.binge.companion.seerr.discover.title.SeasonInfo
 import com.cooper.binge.companion.seerr.discover.title.SeriesDetails
-import com.cooper.binge.companion.seerr.ui.discover.request.seasonLabel
 import com.binge.designsystem.R as DesR
 
 private const val MINUTES_PER_HOUR = 60
@@ -55,7 +49,6 @@ internal fun SeriesPageBody(
         series.overview?.let { ExpandableOverview(text = it, modifier = Modifier.padding(horizontal = gap)) }
         if (series.genres.isNotEmpty()) TagRow(series.genres)
         NextEpisodeRow(series.nextEpisode)
-        SeasonsGroup(series.seasons, state.selectedSeason, seasonActions.onSelect)
         EpisodesSection(state, seasonActions)
         ItemGroup(
             title = null,
@@ -99,57 +92,6 @@ private fun NextEpisodeRow(next: NextEpisode?) {
                     clickable = false,
                 ),
             ),
-        modifier = Modifier.padding(horizontal = dimensionResource(DesR.dimen.padding_m)),
-    )
-}
-
-/**
- * Each season with its episode count, year and, where the server holds or has been asked for it, its status. The status is
- * text in the detail line rather than a chip, so a long name at a large font still has the row's width. A tap selects the
- * season whose episodes show below; the selected one carries a check, not a chevron, since nothing opens.
- */
-@Composable
-private fun SeasonsGroup(
-    seasons: List<SeasonInfo>,
-    selected: Int?,
-    onSelect: (Int) -> Unit,
-) {
-    if (seasons.isEmpty()) return
-    val rows =
-        seasons.map { season ->
-            val isSelected = season.number == selected
-            val status = season.standard.label()?.first
-            val episodes = pluralStringResource(R.plurals.season_episodes, season.episodeCount, season.episodeCount)
-            val detail =
-                listOfNotNull(
-                    season.airYear,
-                    status,
-                ).fold(episodes) { text, part -> stringResource(R.string.series_season_subtitle, text, part) }
-            ListItem(
-                icon = Icons.Filled.Tv,
-                label = seasonLabel(season.number, season.name),
-                detail = detail,
-                supportingMaxLines = 3,
-                selected = isSelected,
-                onClick = { onSelect(season.number) },
-                trailingContent =
-                    if (isSelected) {
-                        (
-                            {
-                                Icon(
-                                    Icons.Filled.CheckCircle,
-                                    contentDescription = null,
-                                )
-                            }
-                        )
-                    } else {
-                        ({ Spacer(Modifier) })
-                    },
-            )
-        }
-    ItemGroup(
-        title = stringResource(R.string.series_page_seasons),
-        rows = rows,
         modifier = Modifier.padding(horizontal = dimensionResource(DesR.dimen.padding_m)),
     )
 }

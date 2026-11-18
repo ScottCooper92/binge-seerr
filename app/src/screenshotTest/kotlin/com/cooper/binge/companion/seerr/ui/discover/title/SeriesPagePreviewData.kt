@@ -151,8 +151,11 @@ internal fun episodes(
         overview = "A made-up episode, in which a family keeps a border town alive for one more night.".takeIf { _ -> it != 2 },
         airDate = if (it < UNAIRED_FROM) "2020-0$it-01" else "2099-01-0${it - UNAIRED_FROM + 1}",
         stillUrl = null,
+        rating = (RATING_BASE + it).takeIf { _ -> it != 2 },
     )
 }
+
+private const val RATING_BASE = 6.5f
 
 /** The first season selected with its episodes read. */
 internal fun readyWithEpisodes(

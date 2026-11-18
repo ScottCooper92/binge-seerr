@@ -80,4 +80,5 @@ data class SeasonEpisode(
     val overview: String?,
     val airDate: String?,
     val stillUrl: String?,
+    val rating: Float?,
 )

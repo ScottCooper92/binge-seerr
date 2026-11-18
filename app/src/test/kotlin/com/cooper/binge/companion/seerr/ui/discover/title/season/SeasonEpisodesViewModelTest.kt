@@ -13,7 +13,8 @@ import java.io.IOException
 
 private class FakeSeason(
     var fail: Throwable? = null,
-    val episodes: List<SeasonEpisode> = listOf(SeasonEpisode(1, "Pilot", null, null, null), SeasonEpisode(2, "Second", null, null, null)),
+    val episodes: List<SeasonEpisode> =
+        listOf(SeasonEpisode(1, "Pilot", null, null, null, null), SeasonEpisode(2, "Second", null, null, null, 8.1f)),
 ) : SeriesDetailsRepository {
     val reads = mutableListOf<Pair<Int, Int>>()
 
