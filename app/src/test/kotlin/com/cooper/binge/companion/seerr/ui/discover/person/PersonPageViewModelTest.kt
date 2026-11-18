@@ -124,6 +124,36 @@ class PersonPageViewModelTest {
         }
 
     @Test
+    fun `a pull whose credits fail keeps the credits already shown and says so`() =
+        runTest {
+            val repository = FakePeople()
+            val vm = PersonPageViewModel(repository, 5)
+            val shown = vm.ready().credits
+            assertTrue(shown is PersonCreditsState.Ready)
+            repository.failCredits = IOException("down")
+            val event = awaitEvent(vm.events)
+
+            vm.refresh()
+
+            assertEquals(PersonPageEvent.RefreshFailed, event.await())
+            assertEquals(shown, vm.ready().credits)
+            assertEquals(false, vm.ready().refreshing)
+        }
+
+    @Test
+    fun `a pull whose credits fail after they had failed leaves them failed without a failure event`() =
+        runTest {
+            val repository = FakePeople(failCredits = IOException("down"))
+            val vm = PersonPageViewModel(repository, 5)
+            assertTrue(vm.ready().credits is PersonCreditsState.Error)
+
+            vm.refresh()
+
+            assertTrue(vm.ready().credits is PersonCreditsState.Error)
+            assertEquals(false, vm.ready().refreshing)
+        }
+
+    @Test
     fun `a pull before the page has loaded does nothing`() {
         val vm = PersonPageViewModel(FakePeople(failDetails = IOException("down")), 5)
 

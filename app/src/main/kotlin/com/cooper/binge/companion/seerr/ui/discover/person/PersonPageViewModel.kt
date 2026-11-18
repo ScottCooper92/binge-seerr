@@ -98,7 +98,18 @@ class PersonPageViewModel
             viewModelScope.launch {
                 val (details, credits) = read()
                 details.fold(
-                    onSuccess = { person -> updateReady { it.copy(person = person, credits = credits.toState(), refreshing = false) } },
+                    onSuccess = { person ->
+                        val keptCredits =
+                            credits.isFailure && (state.value as? PersonPageUiState.Ready)?.credits is PersonCreditsState.Ready
+                        updateReady {
+                            it.copy(
+                                person = person,
+                                credits = if (keptCredits) it.credits else credits.toState(),
+                                refreshing = false,
+                            )
+                        }
+                        if (keptCredits) eventFlow.tryEmit(PersonPageEvent.RefreshFailed)
+                    },
                     onFailure = {
                         updateReady { it.copy(refreshing = false) }
                         eventFlow.tryEmit(PersonPageEvent.RefreshFailed)
