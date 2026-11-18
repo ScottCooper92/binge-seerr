@@ -9,9 +9,17 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
@@ -38,6 +46,7 @@ import com.cooper.binge.companion.seerr.discover.sliders.HubTab
 import com.cooper.binge.companion.seerr.discover.sliders.toCard
 import com.cooper.binge.companion.seerr.ui.state.EmptyScreen
 import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
+import kotlinx.coroutines.flow.first
 import com.binge.designsystem.R as DesR
 
 private const val SKELETON_ROWS = 3
@@ -94,7 +103,9 @@ private fun HubRows(
     contentPadding: PaddingValues,
     onOpenTitle: (HubCard) -> Unit,
 ) {
-    LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = contentPadding) {
+    val listState = rememberLazyListState()
+    ShowHeroWhenItArrives(listState, hasHero = state.hero.isNotEmpty())
+    LazyColumn(state = listState, modifier = Modifier.fillMaxSize(), contentPadding = contentPadding) {
         if (state.hero.isNotEmpty()) item(key = HERO_KEY) { Hero(state.hero, onOpenTitle) }
         items(state.rows, key = { it.row.sliderId }) { row ->
             MediaCarousel(
@@ -134,6 +145,26 @@ private fun Hero(
                 ?.let { StatusChip(it.label, it.sentiment) }
         },
     )
+}
+
+/**
+ * The hero loads apart from the rows and can land after them. A list keeps the item it shows first in place when something is
+ * inserted above it, so a hub nobody has scrolled would stay on its first row with the new hero out of sight above. Until the
+ * user scrolls, a hero that arrives takes the top of the list.
+ */
+@Composable
+private fun ShowHeroWhenItArrives(
+    listState: LazyListState,
+    hasHero: Boolean,
+) {
+    var scrolled by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(listState) {
+        snapshotFlow { listState.isScrollInProgress }.first { it }
+        scrolled = true
+    }
+    LaunchedEffect(hasHero) {
+        if (hasHero && !scrolled) listState.scrollToItem(0)
+    }
 }
 
 /** A custom slider's own title, else the built-in row's name in the user's language. */

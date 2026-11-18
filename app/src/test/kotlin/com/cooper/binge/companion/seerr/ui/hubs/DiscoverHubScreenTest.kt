@@ -1,11 +1,17 @@
 package com.cooper.binge.companion.seerr.ui.hubs
 
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
+import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipeUp
 import com.cooper.binge.companion.seerr.discover.TitleAvailability
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.sliders.HubCard
@@ -69,5 +75,48 @@ class DiscoverHubScreenTest {
         compose
             .onNode(SemanticsMatcher.expectValue(SemanticsProperties.PaneTitle, "Movies"))
             .assertExists()
+    }
+
+    @Test
+    fun `a hero that arrives after the rows shows at the top of a hub nobody has scrolled`() {
+        val server = "https://server.example/"
+        val rows =
+            (1..4).map { id ->
+                val card = HubCard(TitleKind.Movie, id, "Title $id", "2020", null, TitleAvailability.None, server + "movie/$id")
+                HubRowUi(HubRow.Trending(id, null, HubTab.Movies), listOf(card))
+            }
+        val state = mutableStateOf(DiscoverHubUiState.Ready(rows, pending = 0, refreshing = false))
+        compose.setContent {
+            SeerrTheme { DiscoverHubScreen(HubTab.Movies, state.value, onRefresh = {}, onOpenTitle = {}) }
+        }
+        compose.onNodeWithText("Title 1").assertIsDisplayed()
+
+        state.value = state.value.copy(hero = listOf(hero(server)))
+        compose.waitForIdle()
+
+        compose.onNodeWithContentDescription("Seven Rivers", substring = true).assertIsDisplayed()
+    }
+
+    @Test
+    fun `a hero that arrives after the user has scrolled does not pull the hub back to the top`() {
+        val server = "https://server.example/"
+        val rows =
+            (1..12).map { id ->
+                val card = HubCard(TitleKind.Movie, id, "Title $id", "2020", null, TitleAvailability.None, server + "movie/$id")
+                HubRowUi(HubRow.Trending(id, null, HubTab.Movies), listOf(card))
+            }
+        val state = mutableStateOf(DiscoverHubUiState.Ready(rows, pending = 0, refreshing = false))
+        compose.setContent {
+            SeerrTheme { DiscoverHubScreen(HubTab.Movies, state.value, onRefresh = {}, onOpenTitle = {}) }
+        }
+        compose.onAllNodes(hasScrollAction()).onFirst().performTouchInput { swipeUp() }
+        compose.waitForIdle()
+        compose.onNodeWithText("Title 1").assertDoesNotExist()
+
+        state.value = state.value.copy(hero = listOf(hero(server)))
+        compose.waitForIdle()
+
+        compose.onNodeWithContentDescription("Seven Rivers", substring = true).assertDoesNotExist()
+        compose.onNodeWithText("Title 1").assertDoesNotExist()
     }
 }
