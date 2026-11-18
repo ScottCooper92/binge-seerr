@@ -8,6 +8,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.BingeActionFooter
@@ -112,6 +113,7 @@ private fun RuntimePage(
     filters: DiscoverFilters,
     onChange: (DiscoverFilters) -> Unit,
 ) {
+    val resources = LocalContext.current.resources
     val start = (filters.runtimeMin ?: 0).toFloat()
     val end = (filters.runtimeMax ?: RUNTIME_MAX).toFloat()
     BingeRangeSlider(
@@ -126,7 +128,7 @@ private fun RuntimePage(
         },
         valueRange = 0f..RUNTIME_MAX.toFloat(),
         steps = RUNTIME_MAX / RUNTIME_STEP - 1,
-        valueLabel = { stringResource(R.string.grid_filter_minutes, it.toInt()) },
+        valueLabel = { resources.getString(R.string.grid_filter_minutes, it.toInt()) },
         startThumbDescription = stringResource(R.string.grid_filter_runtime_start),
         endThumbDescription = stringResource(R.string.grid_filter_runtime_end),
         openEndLabel = stringResource(R.string.grid_filter_any),
