@@ -23,6 +23,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import com.binge.designsystem.component.BingeAdaptiveSheet
 import com.binge.designsystem.component.BingeSheetKind
 import com.binge.designsystem.component.ItemGroup
@@ -46,7 +47,7 @@ internal fun SeasonDropdown(
                 .widthIn(max = dimensionResource(R.dimen.season_dropdown_max_width))
                 .clip(BingeShapes.Chip)
                 .background(MaterialTheme.colorScheme.surfaceContainerHigh)
-                .clickable(onClick = onClick)
+                .clickable(role = Role.Button, onClick = onClick)
                 .padding(
                     start = dimensionResource(DesR.dimen.chip_padding_h),
                     end = dimensionResource(DesR.dimen.padding_xs),
