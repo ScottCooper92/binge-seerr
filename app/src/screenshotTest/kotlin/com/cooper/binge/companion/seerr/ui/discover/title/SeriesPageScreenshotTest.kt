@@ -13,6 +13,8 @@ import kotlinx.coroutines.flow.emptyFlow
 
 private const val SEASONS_SCROLLED_PX = 900
 private const val LARGE_FONT_SEASONS_PX = 2300
+private const val FACTS_PX = 1800
+private const val FACTS_LARGE_FONT_PX = 3600
 
 private val NO_ACTIONS = TitlePageActions({}, {}, {}, {}, {}, {}, {}, {}, {}, {})
 
@@ -93,4 +95,28 @@ class SeriesPageScreenshotTest {
     @SeerrSpanishPreviews
     @Composable
     fun longSpanish() = Frame(SeriesPageUiState.Ready(longSeries(), seriesExtras()))
+
+    /** The facts list at font scales 1.5 and 2, below the seasons. */
+    @PreviewTest
+    @SeerrFontScalePreviews
+    @Composable
+    fun factsLargeFonts() =
+        SeriesPageScreen(
+            SeriesPageUiState.Ready(longSeries(), seriesExtras()),
+            emptyFlow(),
+            NO_ACTIONS,
+            scrollState = rememberScrollState(initial = FACTS_LARGE_FONT_PX),
+        )
+
+    /** The facts list in Spanish: the labels, the dates and the next episode. */
+    @PreviewTest
+    @SeerrSpanishPreviews
+    @Composable
+    fun factsSpanish() =
+        SeriesPageScreen(
+            SeriesPageUiState.Ready(longSeries(), seriesExtras()),
+            emptyFlow(),
+            NO_ACTIONS,
+            scrollState = rememberScrollState(initial = FACTS_PX),
+        )
 }
