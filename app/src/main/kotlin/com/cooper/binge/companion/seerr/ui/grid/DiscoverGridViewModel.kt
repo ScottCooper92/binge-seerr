@@ -78,13 +78,16 @@ class DiscoverGridViewModel
                 )
 
         init {
-            viewModelScope.launch { refinable.value = attempt { grid.canRefine(preset) }.getOrDefault(false) }
             viewModelScope.launch {
-                vocabulary.value =
-                    FilterVocabulary(
-                        genres = attempt { grid.genres(kind) }.getOrDefault(emptyList()),
-                        languages = attempt { grid.languages() }.getOrDefault(emptyList()),
-                    )
+                val canRefine = attempt { grid.canRefine(preset) }.getOrDefault(false)
+                refinable.value = canRefine
+                if (canRefine) {
+                    vocabulary.value =
+                        FilterVocabulary(
+                            genres = attempt { grid.genres(kind) }.getOrDefault(emptyList()),
+                            languages = attempt { grid.languages() }.getOrDefault(emptyList()),
+                        )
+                }
             }
         }
 
@@ -105,7 +108,6 @@ class DiscoverGridViewModel
         ): GridControls =
             GridControls(
                 sort = query.sort.takeIf { canRefine },
-                sortChoices = if (canRefine) DiscoverSort.sheetChoices(kind) else emptyList(),
                 filters = query.filters,
                 vocabulary = words,
                 chip = if (canRefine && !starting.isEmpty && query.filters.keeps(starting)) preset.toChip(title) else null,

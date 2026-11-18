@@ -102,7 +102,6 @@ class DiscoverGridViewModelTest {
             assertEquals(DiscoverSort.PopularityDesc, request.sort)
             assertEquals(ActiveFilterChip(ChipKind.Genre, "Drama"), state.controls.chip)
             assertEquals(DiscoverSort.PopularityDesc, state.controls.sort)
-            assertEquals(DiscoverSort.sheetChoices(TitleKind.Movie), state.controls.sortChoices)
         }
 
     @Test
@@ -229,7 +228,7 @@ class DiscoverGridViewModelTest {
                     .single()
                     .first.sort,
             )
-            assertTrue(DiscoverSort.RevenueDesc !in vm.uiState.value.controls.sortChoices)
+            assertTrue(DiscoverSort.RevenueDesc !in DiscoverSort.sheetChoices(TitleKind.Movie))
         }
 
     @Test
@@ -239,7 +238,7 @@ class DiscoverGridViewModelTest {
             val controls = vm.uiState.value.controls
             assertNull(controls.sort)
             assertNull(controls.chip)
-            assertTrue(controls.sortChoices.isEmpty())
+            assertNull(controls.sort)
         }
     }
 

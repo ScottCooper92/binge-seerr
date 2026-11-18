@@ -21,7 +21,6 @@ enum class ChipKind { Upcoming, Genre, Company, Language, Keyword, Provider }
 /** What the bar above the grid offers. [sort] is null where the list takes no order, and then no sort chip is shown. */
 data class GridControls(
     val sort: DiscoverSort?,
-    val sortChoices: List<DiscoverSort>,
     val chip: ActiveFilterChip?,
     val filters: DiscoverFilters = DiscoverFilters(),
     val vocabulary: FilterVocabulary = FilterVocabulary(),

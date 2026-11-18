@@ -29,9 +29,9 @@ internal fun gridCards(): List<HubCard> =
 
 private val DRAMA = ActiveFilterChip(ChipKind.Genre, "Drama")
 
-private val SORTED = GridControls(DiscoverSort.PopularityDesc, DiscoverSort.forKind(TitleKind.Movie), DRAMA)
+private val SORTED = GridControls(DiscoverSort.PopularityDesc, DRAMA)
 
-private val UNFILTERED = GridControls(DiscoverSort.RatingDesc, DiscoverSort.forKind(TitleKind.Movie), null)
+private val UNFILTERED = GridControls(DiscoverSort.RatingDesc, null)
 
 internal fun readyGridState() = DiscoverGridUiState.Ready(SORTED, gridCards(), hasMore = true, appending = false, appendFailed = false)
 
@@ -51,7 +51,7 @@ internal fun failedGridState() = DiscoverGridUiState.Error(SORTED, SeerrError.Un
 internal fun loadingGridState() = DiscoverGridUiState.Loading(SORTED)
 
 internal fun plainGridState() =
-    DiscoverGridUiState.Ready(GridControls(null, emptyList(), null), gridCards(), hasMore = false, appending = false, appendFailed = false)
+    DiscoverGridUiState.Ready(GridControls(null, null), gridCards(), hasMore = false, appending = false, appendFailed = false)
 
 /** Few enough cards that the footer is on screen. */
 private const val FEW = 2

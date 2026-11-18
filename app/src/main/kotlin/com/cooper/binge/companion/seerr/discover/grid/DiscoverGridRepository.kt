@@ -8,7 +8,6 @@ import com.cooper.binge.companion.seerr.seerr.SeerrApi
 import com.cooper.binge.companion.seerr.seerr.SeerrServerProfile
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
-import java.util.Locale
 
 /** What the grid asks for: [preset] is where it was opened from, and [filters] and [sort] are what the user has made of it. */
 data class GridRequest(
@@ -56,12 +55,7 @@ class SeerrDiscoverGridRepository(
     override suspend fun canRefine(preset: GridPreset): Boolean = preset.isFilterable && profile().hasDiscoverFilters
 
     override suspend fun genres(kind: TitleKind): List<FilterOption> =
-        withContext(io) {
-            val type = if (kind == TitleKind.Series) "tv" else "movie"
-            api().genres(type, Locale.getDefault().toLanguageTag()).mapNotNull { genre ->
-                genre.name?.takeIf { it.isNotBlank() }?.let { FilterOption(genre.id.toString(), it) }
-            }
-        }
+        titles.genreNames(kind).filterValues { it.isNotBlank() }.map { (id, name) -> FilterOption(id.toString(), name) }
 
     override suspend fun languages(): List<FilterOption> =
         withContext(io) {

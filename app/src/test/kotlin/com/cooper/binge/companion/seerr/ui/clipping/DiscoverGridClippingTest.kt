@@ -28,7 +28,6 @@ private fun card(
 private val CONTROLS =
     GridControls(
         DiscoverSort.RevenueDesc,
-        DiscoverSort.forKind(TitleKind.Movie),
         ActiveFilterChip(ChipKind.Genre, "A genre with a name long enough to need the whole row"),
     )
 

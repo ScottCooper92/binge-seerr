@@ -11,10 +11,6 @@ import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import com.cooper.binge.companion.seerr.discover.TitleKind
-import com.cooper.binge.companion.seerr.discover.grid.DiscoverFilters
-import com.cooper.binge.companion.seerr.discover.grid.DiscoverSort
-import com.cooper.binge.companion.seerr.discover.grid.carriedTo
-import com.cooper.binge.companion.seerr.discover.grid.carriedToOtherKind
 import com.cooper.binge.companion.seerr.ui.DiscoverGridRoute
 import com.cooper.binge.companion.seerr.ui.discover.title.LocalOpenTitle
 import com.cooper.binge.companion.seerr.ui.popIfTop
@@ -65,14 +61,4 @@ internal fun DiscoverGridEntry(
                 },
             ),
     )
-}
-
-/** The route for the other kind: the preset and the title stay only where the preset is not one kind's own id. */
-private fun DiscoverGridRoute.carriedTo(
-    kind: TitleKind,
-    sort: DiscoverSort,
-    filters: DiscoverFilters,
-): DiscoverGridRoute {
-    val carried = preset.carriedToOtherKind()
-    return DiscoverGridRoute(kind, carried, title.takeIf { carried == preset }, filters.carriedToOtherKind(), sort.carriedTo(kind))
 }
