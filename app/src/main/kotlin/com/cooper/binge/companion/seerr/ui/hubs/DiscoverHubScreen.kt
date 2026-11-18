@@ -14,9 +14,12 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.BingePullToRefresh
 import com.binge.designsystem.component.CarouselSkeleton
+import com.binge.designsystem.component.HeroCarousel
+import com.binge.designsystem.component.HeroItem
 import com.binge.designsystem.component.MediaCard
 import com.binge.designsystem.component.MediaCardStatus
 import com.binge.designsystem.component.MediaCarousel
+import com.binge.designsystem.component.StatusChip
 import com.binge.designsystem.navOverlayPadding
 import com.binge.designsystem.template.BingeScreenScaffold
 import com.binge.designsystem.template.ScreenBar
@@ -24,13 +27,16 @@ import com.binge.designsystem.theme.BingeSentiment
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.TitleAvailability
 import com.cooper.binge.companion.seerr.discover.sliders.HubCard
+import com.cooper.binge.companion.seerr.discover.sliders.HubHero
 import com.cooper.binge.companion.seerr.discover.sliders.HubRow
 import com.cooper.binge.companion.seerr.discover.sliders.HubTab
+import com.cooper.binge.companion.seerr.discover.sliders.toCard
 import com.cooper.binge.companion.seerr.ui.state.EmptyScreen
 import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
 import com.binge.designsystem.R as DesR
 
 private const val SKELETON_ROWS = 3
+private const val HERO_KEY = "hero"
 
 /**
  * One discovery hub, Movies or TV: the server's rows of posters, each loading on its own. [onOpenTitle] gets the card the user
@@ -78,6 +84,7 @@ private fun HubRows(
     onOpenTitle: (HubCard) -> Unit,
 ) {
     LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = contentPadding) {
+        if (state.hero.isNotEmpty()) item(key = HERO_KEY) { Hero(state.hero, onOpenTitle) }
         items(state.rows, key = { it.row.sliderId }) { row ->
             MediaCarousel(
                 title = row.row.title(tab),
@@ -97,6 +104,25 @@ private fun HubRows(
         // A row still loading is a skeleton below the ones that landed, so the page does not jump when it arrives.
         items(state.pending) { CarouselSkeleton(description = stringResource(R.string.hubs_loading_row)) }
     }
+}
+
+@Composable
+private fun Hero(
+    hero: List<HubHero>,
+    onOpenTitle: (HubCard) -> Unit,
+) {
+    val items = hero.map { HeroItem(id = it.tmdbId, imageUrl = it.backdropUrl, title = it.name, rating = it.rating, year = it.year) }
+    HeroCarousel(
+        items = items,
+        onItemClick = { id -> hero.firstOrNull { it.tmdbId == id }?.let { onOpenTitle(it.toCard()) } },
+        heroActions = { item ->
+            hero
+                .firstOrNull { it.tmdbId == item.id }
+                ?.availability
+                ?.toStatus()
+                ?.let { StatusChip(it.label, it.sentiment) }
+        },
+    )
 }
 
 /** A custom slider's own title, else the built-in row's name in the user's language. */

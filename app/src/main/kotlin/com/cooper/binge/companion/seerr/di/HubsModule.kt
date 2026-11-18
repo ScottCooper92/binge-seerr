@@ -4,6 +4,7 @@ import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.discover.SeerrTitleListRepository
 import com.cooper.binge.companion.seerr.discover.TitleListRepository
 import com.cooper.binge.companion.seerr.discover.sliders.HubCardLoader
+import com.cooper.binge.companion.seerr.discover.sliders.HubHeroLoader
 import com.cooper.binge.companion.seerr.discover.sliders.HubMediaSource
 import com.cooper.binge.companion.seerr.discover.sliders.SeerrHubMediaSource
 import com.cooper.binge.companion.seerr.seerr.TitleCache
@@ -41,4 +42,10 @@ object HubsModule {
         titles: TitleListRepository,
         media: HubMediaSource,
     ): HubCardLoader = HubCardLoader(titles, media)
+
+    @Provides
+    fun hubHeroLoader(
+        titles: TitleListRepository,
+        media: HubMediaSource,
+    ): HubHeroLoader = HubHeroLoader(titles, media)
 }

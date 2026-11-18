@@ -9,6 +9,7 @@ import com.cooper.binge.companion.seerr.discover.TitleResult
 import com.cooper.binge.companion.seerr.discover.TitleSource
 import com.cooper.binge.companion.seerr.discover.sliders.DiscoverSliderRepository
 import com.cooper.binge.companion.seerr.discover.sliders.HubCardLoader
+import com.cooper.binge.companion.seerr.discover.sliders.HubHeroLoader
 import com.cooper.binge.companion.seerr.discover.sliders.HubMediaSource
 import com.cooper.binge.companion.seerr.discover.sliders.HubTab
 import com.cooper.binge.companion.seerr.discover.sliders.SliderListState
@@ -77,7 +78,7 @@ class HubViewModelTest {
             page: Int,
         ): TitlePage {
             if (fail) error("down")
-            val movie = TitleResult(TitleKind.Movie, 1, "One", "2020", null, null, null, null, TitleAvailability.None, null)
+            val movie = TitleResult(TitleKind.Movie, 1, "One", "2020", null, "/b.jpg", null, null, TitleAvailability.None, null)
             return TitlePage(listOf(movie), 1, 1)
         }
 
@@ -106,7 +107,7 @@ class HubViewModelTest {
     private fun vm(
         sliders: FakeSliders,
         titles: TitleListRepository = Titles(),
-    ) = HubViewModel(sliders, HubCardLoader(titles, NoMedia), dispatcher, HubTab.Movies)
+    ) = HubViewModel(sliders, HubCardLoader(titles, NoMedia), HubHeroLoader(titles, NoMedia), dispatcher, HubTab.Movies)
 
     private suspend fun HubViewModel.settled() = uiState.first { it !is DiscoverHubUiState.Loading }
 
@@ -162,6 +163,25 @@ class HubViewModelTest {
             sliders.state.value = SliderListState.Ready(listOf(slider(1, TRENDING), slider(3, WATCHLIST)))
             val ready = model.uiState.first { it is DiscoverHubUiState.Ready && it.rows.size == 2 } as DiscoverHubUiState.Ready
             assertEquals(listOf(1, 3), ready.rows.map { it.row.sliderId })
+        }
+
+    @Test
+    fun `the hero rides with the rows and a failing hero never holds them`() =
+        runTest {
+            val ready = vm(FakeSliders(SliderListState.Ready(listOf(slider(1, TRENDING))))).settled() as DiscoverHubUiState.Ready
+            assertEquals(listOf(1), ready.hero.map { it.tmdbId })
+            val titles = Titles()
+            val failingHero =
+                HubViewModel(
+                    FakeSliders(SliderListState.Ready(listOf(slider(1, TRENDING)))),
+                    HubCardLoader(titles, NoMedia),
+                    HubHeroLoader(Titles(fail = true), NoMedia),
+                    dispatcher,
+                    HubTab.Movies,
+                )
+            val state = failingHero.uiState.first { it !is DiscoverHubUiState.Loading }
+            assertTrue((state as DiscoverHubUiState.Ready).hero.isEmpty())
+            assertEquals(listOf(1), state.rows.map { it.row.sliderId })
         }
 }
 
