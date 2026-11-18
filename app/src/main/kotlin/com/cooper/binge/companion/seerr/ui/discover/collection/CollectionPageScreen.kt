@@ -8,32 +8,49 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import com.binge.designsystem.component.BingeActionFooter
 import com.binge.designsystem.component.ExpandableOverview
 import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.TitleResult
 import com.cooper.binge.companion.seerr.discover.collection.CollectionDetails
+import com.cooper.binge.companion.seerr.discover.request.RequestResult
+import com.cooper.binge.companion.seerr.ui.discover.request.RequestFilm
+import com.cooper.binge.companion.seerr.ui.discover.request.RequestSheet
+import com.cooper.binge.companion.seerr.ui.discover.request.RequestSheetTarget
+import com.cooper.binge.companion.seerr.ui.discover.request.filmsSubmitLabel
+import com.cooper.binge.companion.seerr.ui.discover.request.messageRes
 import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
 import com.cooper.binge.companion.seerr.ui.state.LoadingScreen
 import com.cooper.binge.companion.seerr.ui.state.MediaHeroDetailPage
 import com.cooper.binge.companion.seerr.ui.state.MediaHeroDetailPlaceholder
+import kotlinx.coroutines.flow.Flow
 import com.binge.designsystem.R as DesR
 
 class CollectionPageActions(
     val onBack: () -> Unit,
     val onRetry: () -> Unit,
     val onOpenTitle: (TitleResult) -> Unit,
+    val onRequest: () -> Unit,
+    val onCloseRequest: () -> Unit,
+    val onRequested: (RequestResult) -> Unit,
 )
 
 /** The collection page: a hero with its count, the story, then every film as a row that opens the film's page. */
 @Composable
 internal fun CollectionPageScreen(
     state: CollectionPageUiState,
+    events: Flow<CollectionPageEvent>,
     actions: CollectionPageActions,
     modifier: Modifier = Modifier,
     scrollState: ScrollState = rememberScrollState(),
@@ -41,24 +58,36 @@ internal fun CollectionPageScreen(
     when (state) {
         CollectionPageUiState.Loading -> MediaHeroDetailPlaceholder { LoadingScreen() }
         is CollectionPageUiState.Error -> MediaHeroDetailPlaceholder { ErrorScreen(state.error, onRetry = actions.onRetry) }
-        is CollectionPageUiState.Ready -> ReadyPage(state.collection, actions, modifier, scrollState)
+        is CollectionPageUiState.Ready -> ReadyPage(state, events, actions, modifier, scrollState)
     }
 }
 
 @Composable
 private fun ReadyPage(
-    collection: CollectionDetails,
+    state: CollectionPageUiState.Ready,
+    events: Flow<CollectionPageEvent>,
     actions: CollectionPageActions,
     modifier: Modifier,
     scrollState: ScrollState,
 ) {
+    val collection = state.collection
+    val snackbar = remember { SnackbarHostState() }
+    val resources = LocalResources.current
+    LaunchedEffect(events) {
+        events.collect { event ->
+            if (event is CollectionPageEvent.Requested) snackbar.showSnackbar(resources.getString(event.result.messageRes()))
+        }
+    }
+    val mayRequest = state.mayRequest && collection.toRequest > 0
     MediaHeroDetailPage(
         title = collection.name,
         backdropUrl = collection.backdropUrl,
-        metaText = collection.metaText(),
+        metaText = collection.metaText(state.mayRequest),
         onBack = actions.onBack,
         modifier = modifier,
         scrollState = scrollState,
+        snackbarHostState = snackbar,
+        footer = if (mayRequest) ({ RequestAllFooter(collection.toRequest, actions.onRequest) }) else null,
     ) {
         Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
         collection.overview?.let { overview ->
@@ -77,10 +106,33 @@ private fun ReadyPage(
         }
         Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_l)))
     }
+    if (state.requestSheetOpen) {
+        RequestSheet(target = collection.toRequestTarget(), onDismiss = actions.onCloseRequest, onResult = actions.onRequested)
+    }
 }
 
+/** The pinned Request button: the page's one primary, naming how many films it would ask for. */
 @Composable
-private fun CollectionDetails.metaText(): String {
+private fun RequestAllFooter(
+    count: Int,
+    onRequest: () -> Unit,
+) {
+    BingeActionFooter(label = filmsSubmitLabel(count), onClick = onRequest)
+}
+
+/** The request sheet's target for a collection: its films in release order, standard version only. */
+private fun CollectionDetails.toRequestTarget() =
+    RequestSheetTarget(
+        kind = TitleKind.Movie,
+        tmdbId = id,
+        title = name,
+        fourKOpen = false,
+        posterUrl = posterUrl,
+        films = parts.map { RequestFilm(it.tmdbId, it.name, it.year, it.availability) },
+    )
+
+@Composable
+private fun CollectionDetails.metaText(mayRequest: Boolean): String {
     val films = pluralStringResource(R.plurals.collection_page_films, parts.size, parts.size)
-    return if (toRequest > 0) stringResource(R.string.collection_page_meta, films, toRequest) else films
+    return if (mayRequest && toRequest > 0) stringResource(R.string.collection_page_meta, films, toRequest) else films
 }

@@ -9,6 +9,7 @@ data class CollectionDetails(
     val name: String,
     val overview: String?,
     val backdropUrl: String?,
+    val posterUrl: String?,
     val parts: List<TitleResult>,
 ) {
     /** The films nothing has been asked for or added of yet: the ones the page can still offer to request. */
@@ -18,4 +19,7 @@ data class CollectionDetails(
 /** Reads a collection from the connected server. */
 interface CollectionRepository {
     suspend fun collection(id: Int): CollectionDetails
+
+    /** Whether the viewer may request films: the Request button is not drawn for one who may not. */
+    suspend fun mayRequest(): Boolean
 }

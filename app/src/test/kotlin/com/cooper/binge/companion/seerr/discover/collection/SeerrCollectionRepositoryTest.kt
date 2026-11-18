@@ -1,7 +1,9 @@
 package com.cooper.binge.companion.seerr.discover.collection
 
 import com.cooper.binge.companion.seerr.discover.TitleAvailability
+import com.cooper.binge.companion.seerr.seerr.PERMISSION_ADMIN
 import com.cooper.binge.companion.seerr.seerr.SeerrApiFactory
+import com.cooper.binge.companion.seerr.seerr.SeerrUserDto
 import com.cooper.binge.companion.seerr.util.FakeRequest
 import com.cooper.binge.companion.seerr.util.FakeResponse
 import com.cooper.binge.companion.seerr.util.FakeSeerrServer
@@ -25,6 +27,7 @@ class SeerrCollectionRepositoryTest {
     private val seerr = FakeSeerrServer()
     private val factory = SeerrApiFactory(logRequests = false, testTransport = seerr::interceptor, testDispatcher = seerr::newDispatcher)
     private var body = COLLECTION
+    private var permissions = PERMISSION_ADMIN
 
     @After
     fun tearDown() {
@@ -38,7 +41,11 @@ class SeerrCollectionRepositoryTest {
     private fun read(): CollectionDetails {
         seerr.dispatcher = ::route
         return runBlocking {
-            factory.anonymous(seerr.url()) { api -> SeerrCollectionRepository({ api }, Dispatchers.Unconfined).collection(2344) }
+            factory.anonymous(seerr.url()) { api ->
+                SeerrCollectionRepository({
+                    api
+                }, { SeerrUserDto(id = 9, permissions = permissions) }, Dispatchers.Unconfined).collection(2344)
+            }
         }
     }
 

@@ -4,16 +4,16 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.binge.companion.sdk.attempt
 import com.cooper.binge.companion.seerr.discover.TitleKind
+import com.cooper.binge.companion.seerr.discover.request.ItemSelection
 import com.cooper.binge.companion.seerr.discover.request.RequestAccess
-import com.cooper.binge.companion.seerr.discover.request.RequestChoices
 import com.cooper.binge.companion.seerr.discover.request.RequestDestination
 import com.cooper.binge.companion.seerr.discover.request.RequestQuota
 import com.cooper.binge.companion.seerr.discover.request.RequestResult
 import com.cooper.binge.companion.seerr.discover.request.RequestServer
 import com.cooper.binge.companion.seerr.discover.request.RequestSheetRepository
 import com.cooper.binge.companion.seerr.discover.request.RequestSubmission
-import com.cooper.binge.companion.seerr.discover.request.SeasonChoices
 import com.cooper.binge.companion.seerr.discover.request.SeasonSelection
+import com.cooper.binge.companion.seerr.discover.request.SelectableItem
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.seerr.serverMessage
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
@@ -28,82 +28,6 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
-
-/**
- * The title a request sheet is for. [seasons] is empty for a movie, and for a series means the whole show. [standardOpen] and
- * [fourKOpen] say which versions the server holds nothing of, so the sheet never offers one that is already requested.
- * [seasonChoices] is a show's seasons per version, and [partialRequests] is the server's setting for sending only some.
- * [posterUrl] and [meta] ("2023 · 2h 1m") head the sheet.
- */
-data class RequestSheetTarget(
-    val kind: TitleKind,
-    val tmdbId: Int,
-    val title: String,
-    val seasons: List<Int> = emptyList(),
-    val standardOpen: Boolean = true,
-    val fourKOpen: Boolean = true,
-    val seasonChoices: SeasonChoices? = null,
-    val partialRequests: Boolean = true,
-    val posterUrl: String? = null,
-    val meta: String? = null,
-)
-
-/** Why a send failed, in the terms the dialog explains. [detail] is the server's own sentence, where it gave one. */
-data class RequestProblem(
-    val cause: RequestProblemCause,
-    val detail: String?,
-)
-
-enum class RequestProblemCause { Quota, NotAllowed, Unreachable, Other }
-
-/** The quota read. [Known] holds null where the server does not meter this kind of title, which is no row at all. */
-sealed interface QuotaState {
-    data object Loading : QuotaState
-
-    data class Known(
-        val quota: RequestQuota?,
-    ) : QuotaState
-
-    data object Failed : QuotaState
-}
-
-/** The servers the user may choose between, read once and kept. */
-sealed interface ServersState {
-    data object Loading : ServersState
-
-    data class Ready(
-        val servers: List<RequestServer>,
-    ) : ServersState
-
-    data object Failed : ServersState
-}
-
-/** The chosen server's profiles and folders. While they are not [Ready] the sheet will not send what it cannot show. */
-sealed interface ChoicesState {
-    data object Loading : ChoicesState
-
-    data class Ready(
-        val choices: RequestChoices,
-    ) : ChoicesState
-
-    data object Failed : ChoicesState
-}
-
-/** Where the request goes when the user opened Advanced options and chose a destination. */
-data class DestinationPick(
-    val serverId: Int,
-    val profileId: Int?,
-    val rootFolder: String?,
-    val choices: ChoicesState,
-) {
-    /** The lists the chosen server gave, with the current pick kept where it still offers it, else its first. */
-    fun withChoices(loaded: RequestChoices): DestinationPick =
-        copy(
-            choices = ChoicesState.Ready(loaded),
-            profileId = loaded.profiles.firstOrNull { it.id == profileId }?.id ?: loaded.profiles.firstOrNull()?.id ?: profileId,
-            rootFolder = loaded.rootFolders.firstOrNull { it == rootFolder } ?: loaded.rootFolders.firstOrNull() ?: rootFolder,
-        )
-}
 
 /**
  * [problem] is a refusal with a cause and a next step, shown in a dialog with one OK. [failure] is a send that did not get an
@@ -131,6 +55,7 @@ sealed interface RequestSheetUiState {
         val footerFailed: Boolean = false,
         val failureDialog: Boolean = false,
         val pickedSeasons: Set<Int> = emptySet(),
+        val pickedFilms: Set<Int>? = null,
     ) : RequestSheetUiState {
         val knownQuota: RequestQuota? get() = (quota as? QuotaState.Known)?.quota
 
@@ -139,6 +64,17 @@ sealed interface RequestSheetUiState {
             get() =
                 target.seasonChoices?.let {
                     SeasonSelection(it.of(use4k), target.partialRequests, pickedSeasons, limit = knownQuota?.remaining)
+                }
+
+        /**
+         * A collection's films with what the user ticked, or what is ticked before they touch it ([pickedFilms] null): every open film
+         * where the quota covers them all, none where it cannot. Null for a film or a show.
+         */
+        val films: ItemSelection?
+            get() =
+                target.films.takeIf { it.isNotEmpty() }?.let { films ->
+                    val base = ItemSelection(films.map { SelectableItem(it.tmdbId, it.open) }, limit = knownQuota?.remaining)
+                    pickedFilms?.let { base.copy(picked = it) } ?: base.preselected()
                 }
 
         /** The servers of the chosen version: 4K is a property of a server, so the 4K switch narrows this list. */
@@ -156,7 +92,12 @@ sealed interface RequestSheetUiState {
         val advancedBlocking: Boolean
             get() = advancedExpanded && showAdvanced && (servers !is ServersState.Ready || pick?.choices !is ChoicesState.Ready)
 
-        val canSubmit: Boolean get() = !submitting && !quotaSpent && !advancedBlocking && (seasons?.canSubmit ?: true)
+        val canSubmit: Boolean get() =
+            !submitting &&
+                !quotaSpent &&
+                !advancedBlocking &&
+                (seasons?.canSubmit ?: true) &&
+                (films?.canSubmit ?: true)
     }
 }
 
@@ -242,6 +183,12 @@ class RequestSheetViewModel
 
         fun setAdvancedExpanded(expanded: Boolean) = store.update { it.copy(advancedExpanded = expanded) }
 
+        /** Flips one film of a collection, or every open one for `null`. */
+        fun toggleFilms(id: Int?) =
+            store.update { current ->
+                current.films?.let { current.copy(pickedFilms = (id?.let(it::toggle) ?: it.toggleAll()).picked) } ?: current
+            }
+
         /** Flips one season, or every open one for `null`. */
         fun toggleSeasons(number: Int?) =
             store.update { current ->
@@ -273,6 +220,7 @@ class RequestSheetViewModel
             footerTimer?.cancel()
             store.set(current.copy(submitting = true, problem = null, failure = null, footerFailed = false, failureDialog = false))
             val destination = current.pick?.takeIf { current.advancedExpanded && current.showAdvanced }
+            current.films?.let { return submitFilms(it, destination) }
             val submission =
                 RequestSubmission(
                     kind = target.kind,
@@ -290,6 +238,40 @@ class RequestSheetViewModel
                     },
                     onFailure = { error -> onSendFailed(error.toProblem()) },
                 )
+            }
+        }
+
+        /** A collection goes as one request per ticked film; the answer says how many the server made and the first refusal. */
+        private fun submitFilms(
+            selection: ItemSelection,
+            destination: DestinationPick?,
+        ) {
+            val submissions =
+                selection.requestIds.map { id ->
+                    RequestSubmission(
+                        kind = TitleKind.Movie,
+                        tmdbId = id,
+                        seasons = emptyList(),
+                        is4k = false,
+                        destination = destination?.let { RequestDestination(it.serverId, it.profileId, it.rootFolder) },
+                    )
+                }
+            viewModelScope.launch {
+                val answer = repository.submitAll(submissions)
+                val failure = answer.failure
+                when {
+                    failure != null && answer.created == 0 -> onSendFailed(failure.toProblem())
+                    else -> {
+                        val result =
+                            when {
+                                failure != null -> RequestResult.PartiallyCreated
+                                answer.created > 0 -> RequestResult.Created
+                                else -> RequestResult.AlreadyRequested
+                            }
+                        eventFlow.tryEmit(RequestSheetEvent.Done(result))
+                        load()
+                    }
+                }
             }
         }
 

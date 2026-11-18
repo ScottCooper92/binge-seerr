@@ -7,11 +7,12 @@ import com.cooper.binge.companion.seerr.preview.SeerrScreenPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrScreenStatePreview
 import com.cooper.binge.companion.seerr.preview.SeerrSpanishPreviews
 import com.cooper.binge.companion.seerr.seerr.SeerrError
+import kotlinx.coroutines.flow.emptyFlow
 
-private val NO_ACTIONS = CollectionPageActions({}, {}, {})
+private val NO_ACTIONS = CollectionPageActions({}, {}, {}, {}, {}, {})
 
 @Composable
-private fun Frame(state: CollectionPageUiState) = CollectionPageScreen(state, NO_ACTIONS)
+private fun Frame(state: CollectionPageUiState) = CollectionPageScreen(state, emptyFlow(), NO_ACTIONS)
 
 /** The collection page: the layout once across the device matrix, then each state of it on the phone. */
 class CollectionPageScreenshotTest {
@@ -20,6 +21,12 @@ class CollectionPageScreenshotTest {
     @SeerrScreenPreviews
     @Composable
     fun mixed() = Frame(CollectionPageUiState.Ready(mixedCollection()))
+
+    /** A viewer who may request: the pinned button names how many films it would ask for. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun requestable() = Frame(CollectionPageUiState.Ready(mixedCollection(), mayRequest = true))
 
     /** Every film already on the server: the count says no more to request. */
     @PreviewTest
