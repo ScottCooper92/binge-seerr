@@ -36,6 +36,7 @@ fun TitleSearchEntry(
                 onRecent = viewModel::onRecent,
                 onForgetRecents = viewModel::onForgetRecents,
                 onOpenTitle = viewModel::onOpenTitle,
+                onType = viewModel::onType,
             ),
         modifier = modifier,
     )

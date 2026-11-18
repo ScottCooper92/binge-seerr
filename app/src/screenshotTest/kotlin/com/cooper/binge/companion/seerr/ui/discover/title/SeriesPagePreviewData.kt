@@ -72,7 +72,7 @@ internal fun fullSeries(
     originalLanguage = "en",
     spokenLanguageCodes = listOf("en", "es"),
     networks = listOf(TitleCompany(1, "Demo Network")),
-    creators = listOf("Riley Director"),
+    creators = listOf(TitlePerson(12, "Riley Director", null, null)),
     seasonCount = seasons.size,
     episodeCount = seasons.sumOf { it.episodeCount },
     nextEpisode = NextEpisode(NEXT_SEASON, 1, "The Thaw", "2099-01-01"),
@@ -125,7 +125,11 @@ internal fun longSeries() =
                 TitleCompany(1, "A Very Long Premium Cable Network"),
                 TitleCompany(2, "Another Streaming Service Of Considerable Length"),
             ),
-        creators = listOf("Christopher Montgomery-Fitzgerald", "Alexandria Wolfeschlegelsteinhausen"),
+        creators =
+            listOf(
+                TitlePerson(1, "Christopher Montgomery-Fitzgerald", null, null),
+                TitlePerson(2, "Alexandria Wolfeschlegelsteinhausen", null, null),
+            ),
     )
 
 internal fun seriesExtras() =

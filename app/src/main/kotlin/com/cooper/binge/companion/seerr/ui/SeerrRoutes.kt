@@ -132,6 +132,12 @@ data class TitleDetailRoute(
     val tmdbId: Int,
 ) : SeerrRoute
 
+/** A collection of films as a page, opened from the collection rail on a film's page. */
+@Serializable
+data class CollectionRoute(
+    val id: Int,
+) : SeerrRoute
+
 /** A person: their profile and the titles they are in, opened from a title page, the cast list or a search result. */
 @Serializable
 data class PersonDetailRoute(

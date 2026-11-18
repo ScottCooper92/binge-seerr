@@ -9,6 +9,7 @@ import com.cooper.binge.companion.seerr.discover.title.SeriesDetails
 import com.cooper.binge.companion.seerr.discover.title.SeriesDetailsRepository
 import com.cooper.binge.companion.seerr.discover.title.TitleCompany
 import com.cooper.binge.companion.seerr.discover.title.TitleExtras
+import com.cooper.binge.companion.seerr.discover.title.TitlePerson
 import com.cooper.binge.companion.seerr.discover.title.TitleRatings
 import com.cooper.binge.companion.seerr.discover.title.VersionState
 import com.cooper.binge.companion.seerr.util.MainDispatcherRule
@@ -56,7 +57,7 @@ internal fun seriesFixture(
     originalLanguage = "en",
     spokenLanguageCodes = emptyList(),
     networks = listOf(TitleCompany(1, "A Network")),
-    creators = listOf("A Creator"),
+    creators = listOf(TitlePerson(1, "A Creator", null, null)),
     seasonCount = seasons.size,
     episodeCount = seasons.sumOf { it.episodeCount },
     nextEpisode = NextEpisode(seasons.size, 1, "The Next One", "2099-01-01"),

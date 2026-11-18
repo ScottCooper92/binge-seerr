@@ -48,7 +48,7 @@ data class SeriesDetails(
     val originalLanguage: String?,
     val spokenLanguageCodes: List<String>,
     val networks: List<TitleCompany>,
-    val creators: List<String>,
+    val creators: List<TitlePerson>,
     val seasonCount: Int?,
     val episodeCount: Int?,
     val nextEpisode: NextEpisode?,
