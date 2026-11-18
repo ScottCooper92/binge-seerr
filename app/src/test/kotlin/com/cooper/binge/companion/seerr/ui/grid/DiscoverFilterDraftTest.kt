@@ -5,7 +5,9 @@ import com.cooper.binge.companion.seerr.discover.grid.DiscoverFilters
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverSort
 import com.cooper.binge.companion.seerr.discover.grid.RATING_SORT_VOTE_FLOOR
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class DiscoverFilterDraftTest {
@@ -27,5 +29,24 @@ class DiscoverFilterDraftTest {
     @Test
     fun `an order that is not by rating sets no floor`() {
         assertNull(popular.withSort(DiscoverSort.VotesDesc).filters.voteCountMin)
+    }
+
+    @Test
+    fun `a draft with no filter and the default order is the default one`() {
+        assertTrue(DiscoverFilterDraft(TitleKind.Movie, DiscoverSort.PopularityDesc, DiscoverFilters()).isDefault)
+    }
+
+    @Test
+    fun `a filter or another order makes it differ`() {
+        assertFalse(DiscoverFilterDraft(TitleKind.Movie, DiscoverSort.PopularityDesc, DiscoverFilters(language = "ja")).isDefault)
+        assertFalse(DiscoverFilterDraft(TitleKind.Movie, DiscoverSort.RatingDesc, DiscoverFilters()).isDefault)
+    }
+
+    @Test
+    fun `clearing resets the filters and the order and keeps the kind`() {
+        val cleared = DiscoverFilterDraft(TitleKind.Series, DiscoverSort.RatingDesc, DiscoverFilters(language = "ja")).cleared()
+
+        assertTrue(cleared.isDefault)
+        assertEquals(TitleKind.Series, cleared.kind)
     }
 }

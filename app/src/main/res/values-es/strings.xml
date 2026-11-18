@@ -148,6 +148,11 @@
     <string name="grid_filters_sort">Ordenar por</string>
     <string name="grid_filters_show_results">Ver resultados</string>
     <string name="grid_filters_filter_by">Filtrar por</string>
+    <plurals name="grid_filters_applied">
+        <item quantity="one">%d aplicado</item>
+        <item quantity="many">%d aplicados</item>
+        <item quantity="other">%d aplicados</item>
+    </plurals>
     <string name="grid_filters_clear_all">Borrar todo</string>
     <string name="grid_filters_clear">Borrar</string>
     <string name="grid_filters_done">Hecho</string>

@@ -167,6 +167,10 @@
     <string name="grid_subtitle" translatable="false">%1$s · %2$s</string>
     <string name="grid_filters_show_results">Show results</string>
     <string name="grid_filters_filter_by">Filter by</string>
+    <plurals name="grid_filters_applied">
+        <item quantity="one">%d applied</item>
+        <item quantity="other">%d applied</item>
+    </plurals>
     <string name="grid_filters_clear_all">Clear all</string>
     <string name="grid_filters_clear">Clear</string>
     <string name="grid_filters_done">Done</string>

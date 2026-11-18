@@ -2,7 +2,7 @@ package com.cooper.binge.companion.seerr.ui.grid
 
 import android.text.format.DateFormat
 import androidx.annotation.StringRes
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -22,7 +22,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import com.binge.designsystem.component.BingeSheetDockingHeader
+import com.binge.designsystem.component.BingeSheetTopBar
 import com.binge.designsystem.component.BingeTextButton
 import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
@@ -56,20 +59,47 @@ internal enum class DiscoverFilterSection(
         }
 }
 
-/** The header of the sheet: its title, and Clear all once a filter is set. */
+/**
+ * The header of the sheet, as Binge's: the drag handle over the title with how many filters are applied and Clear all while
+ * the sheet floats, and a top bar with the same once it fills the screen. Clear all is off when nothing differs from default.
+ */
 @Composable
 internal fun FilterSheetHeader(
-    showClear: Boolean,
+    appliedCount: Int,
+    canClear: Boolean,
     onClearAll: () -> Unit,
 ) {
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = dimensionResource(DesR.dimen.padding_m)),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween,
-    ) {
-        Text(text = stringResource(R.string.grid_filters_title), style = MaterialTheme.typography.titleLarge)
-        if (showClear) BingeTextButton(label = stringResource(R.string.grid_filters_clear_all), onClick = onClearAll)
-    }
+    val applied = if (appliedCount > 0) pluralStringResource(R.plurals.grid_filters_applied, appliedCount, appliedCount) else null
+    val title = stringResource(R.string.grid_filters_title)
+    val clearAll = stringResource(R.string.grid_filters_clear_all)
+    BingeSheetDockingHeader(
+        header = {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = dimensionResource(DesR.dimen.padding_m)),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(text = title, style = MaterialTheme.typography.titleLarge)
+                    applied?.let {
+                        Text(
+                            text = it,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+                BingeTextButton(label = clearAll, onClick = onClearAll, enabled = canClear)
+            }
+        },
+        dockedTopBar = { onClose ->
+            BingeSheetTopBar(
+                title = title,
+                subtitle = applied,
+                onClose = onClose,
+                actions = { BingeTextButton(label = clearAll, onClick = onClearAll, enabled = canClear) },
+            )
+        },
+    )
 }
 
 /** One row per filter on one grouped card, as Binge's: a tinted icon, its name, and what it is set to on the second line. */
