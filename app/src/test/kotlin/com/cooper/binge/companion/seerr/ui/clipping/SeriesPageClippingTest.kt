@@ -3,15 +3,18 @@ package com.cooper.binge.companion.seerr.ui.clipping
 import com.cooper.binge.companion.seerr.discover.TitleAvailability
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.TitleResult
-import com.cooper.binge.companion.seerr.discover.request.RequestOptions
+import com.cooper.binge.companion.seerr.discover.request.RequestAccess
 import com.cooper.binge.companion.seerr.discover.request.RequestQuota
 import com.cooper.binge.companion.seerr.discover.request.SeasonChoice
 import com.cooper.binge.companion.seerr.discover.request.SeasonChoices
 import com.cooper.binge.companion.seerr.discover.title.SeasonEpisode
 import com.cooper.binge.companion.seerr.discover.title.SeasonInfo
+import com.cooper.binge.companion.seerr.discover.title.TitleCompany
 import com.cooper.binge.companion.seerr.discover.title.TitleExtras
 import com.cooper.binge.companion.seerr.discover.title.TitlePerson
 import com.cooper.binge.companion.seerr.discover.title.TitleRatings
+import com.cooper.binge.companion.seerr.ui.discover.request.QuotaState
+import com.cooper.binge.companion.seerr.ui.discover.request.RequestSeasonPage
 import com.cooper.binge.companion.seerr.ui.discover.request.RequestSheetActions
 import com.cooper.binge.companion.seerr.ui.discover.request.RequestSheetContent
 import com.cooper.binge.companion.seerr.ui.discover.request.RequestSheetTarget
@@ -60,7 +63,11 @@ private fun worstCase(): SeriesPageUiState.Ready {
         seriesFixture(seasons = seasons()).copy(
             tagline = "One ring to rule them all, one ring to find them, one ring to bring them all and in the darkness bind them",
             genres = listOf("Adventure", "Fantasy", "Action", "Epic Historical Drama"),
-            networks = listOf("A Very Long Premium Cable Network", "Another Streaming Service Of Considerable Length"),
+            networks =
+                listOf(
+                    TitleCompany(1, "A Very Long Premium Cable Network"),
+                    TitleCompany(2, "Another Streaming Service Of Considerable Length"),
+                ),
             creators = listOf("Christopher Montgomery-Fitzgerald", "Alexandria Wolfeschlegelsteinhausen"),
             cast = listOf(TitlePerson(1, "Elijah Wood-Montgomery-Fitzgerald", "Frodo Baggins of the Shire", null)),
         )
@@ -94,14 +101,15 @@ private fun sheetWorstCase(): RequestSheetUiState.Ready {
                 title = LONG_SEASON,
                 seasonChoices = SeasonChoices(choices, choices),
             ),
-        options = RequestOptions(may4k = false, servers = emptyList(), quota = RequestQuota(QUOTA_LIMIT, 2, QUOTA_DAYS)),
+        access = RequestAccess(may4k = false, mayChooseDestination = false),
+        quota = QuotaState.Known(RequestQuota(QUOTA_LIMIT, 2, QUOTA_DAYS)),
         pickedSeasons = setOf(2, 5),
     )
 }
 
 private val NO_ACTIONS = TitlePageActions({}, {}, {}, {}, {}, {}, {}, {}, {}, {})
 private val NO_SEASON_ACTIONS = SeasonActions({}, {}, { _, _ -> })
-private val NO_SHEET_ACTIONS = RequestSheetActions({}, {}, {}, {}, {}, {}, {}, {}, {})
+private val NO_SHEET_ACTIONS = RequestSheetActions({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {})
 
 /** The series page with every season status, long names and every rating, at font scales 1.3 and 2.0, through the design system's clipping check. */
 @RunWith(RobolectricTestRunner::class)
@@ -118,13 +126,22 @@ class SeriesPageClippingTest {
 
     private fun sheet(fontScale: Float) = rule.assertNoClippingAt(fontScale) { RequestSheetContent(sheetWorstCase(), NO_SHEET_ACTIONS) }
 
+    private fun seasonPage(fontScale: Float) =
+        rule.assertNoClippingAt(fontScale) {
+            RequestSeasonPage(checkNotNull(sheetWorstCase().seasons), enabled = true, actions = NO_SHEET_ACTIONS, onBack = {})
+        }
+
     @Test fun `the series page at 1_3`() = page(FONT_SCALE_13)
 
     @Test fun `the series page at 2_0`() = page(FONT_SCALE_20)
 
-    @Test fun `the season step at 1_3`() = sheet(FONT_SCALE_13)
+    @Test fun `the request form at 1_3`() = sheet(FONT_SCALE_13)
 
-    @Test fun `the season step at 2_0`() = sheet(FONT_SCALE_20)
+    @Test fun `the request form at 2_0`() = sheet(FONT_SCALE_20)
+
+    @Test fun `the season page at 1_3`() = seasonPage(FONT_SCALE_13)
+
+    @Test fun `the season page at 2_0`() = seasonPage(FONT_SCALE_20)
 }
 
 /** The same page and sheet in Spanish. */
@@ -142,11 +159,20 @@ class SeriesPageSpanishClippingTest {
 
     private fun sheet(fontScale: Float) = rule.assertNoClippingAt(fontScale) { RequestSheetContent(sheetWorstCase(), NO_SHEET_ACTIONS) }
 
+    private fun seasonPage(fontScale: Float) =
+        rule.assertNoClippingAt(fontScale) {
+            RequestSeasonPage(checkNotNull(sheetWorstCase().seasons), enabled = true, actions = NO_SHEET_ACTIONS, onBack = {})
+        }
+
     @Test fun `the series page at 1_3 in Spanish`() = page(FONT_SCALE_13)
 
     @Test fun `the series page at 2_0 in Spanish`() = page(FONT_SCALE_20)
 
-    @Test fun `the season step at 1_3 in Spanish`() = sheet(FONT_SCALE_13)
+    @Test fun `the request form at 1_3 in Spanish`() = sheet(FONT_SCALE_13)
 
-    @Test fun `the season step at 2_0 in Spanish`() = sheet(FONT_SCALE_20)
+    @Test fun `the request form at 2_0 in Spanish`() = sheet(FONT_SCALE_20)
+
+    @Test fun `the season page at 1_3 in Spanish`() = seasonPage(FONT_SCALE_13)
+
+    @Test fun `the season page at 2_0 in Spanish`() = seasonPage(FONT_SCALE_20)
 }

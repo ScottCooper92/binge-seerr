@@ -2,10 +2,11 @@ package com.cooper.binge.companion.seerr.ui.discover.request
 
 import com.cooper.binge.companion.seerr.discover.TitleAvailability
 import com.cooper.binge.companion.seerr.discover.TitleKind
+import com.cooper.binge.companion.seerr.discover.request.RequestAccess
 import com.cooper.binge.companion.seerr.discover.request.RequestChoices
-import com.cooper.binge.companion.seerr.discover.request.RequestOptions
 import com.cooper.binge.companion.seerr.discover.request.RequestQuota
 import com.cooper.binge.companion.seerr.discover.request.RequestResult
+import com.cooper.binge.companion.seerr.discover.request.RequestServer
 import com.cooper.binge.companion.seerr.discover.request.RequestSheetRepository
 import com.cooper.binge.companion.seerr.discover.request.RequestSubmission
 import com.cooper.binge.companion.seerr.discover.request.SeasonChoice
@@ -22,7 +23,11 @@ private class SeasonsRepository : RequestSheetRepository {
 
     var quota: RequestQuota? = null
 
-    override suspend fun options(kind: TitleKind) = RequestOptions(may4k = true, servers = emptyList(), quota = quota)
+    override suspend fun access(kind: TitleKind) = RequestAccess(may4k = true, mayChooseDestination = false)
+
+    override suspend fun quota(kind: TitleKind): RequestQuota? = quota
+
+    override suspend fun servers(kind: TitleKind) = emptyList<RequestServer>()
 
     override suspend fun choices(
         kind: TitleKind,
@@ -73,8 +78,8 @@ class RequestSheetSeasonsTest {
         val vm = viewModel()
         assertFalse(vm.ready().canSubmit)
 
-        vm.toggleSeason(3)
-        vm.toggleSeason(2)
+        vm.toggleSeasons(3)
+        vm.toggleSeasons(2)
         assertTrue(vm.ready().canSubmit)
         vm.submit()
 
@@ -85,7 +90,7 @@ class RequestSheetSeasonsTest {
     fun `a covered season cannot be picked`() {
         val vm = viewModel()
 
-        vm.toggleSeason(1)
+        vm.toggleSeasons(1)
 
         assertFalse(vm.ready().canSubmit)
     }
@@ -94,7 +99,7 @@ class RequestSheetSeasonsTest {
     fun `all seasons picks every open one`() {
         val vm = viewModel()
 
-        vm.toggleAllSeasons()
+        vm.toggleSeasons(null)
         vm.submit()
 
         assertEquals(listOf(2, 3), repository.submissions.single().seasons)
@@ -103,7 +108,7 @@ class RequestSheetSeasonsTest {
     @Test
     fun `switching to 4K lists that version's seasons and clears the picks`() {
         val vm = viewModel()
-        vm.toggleSeason(2)
+        vm.toggleSeasons(2)
 
         vm.setUse4k(true)
 
@@ -149,8 +154,8 @@ class RequestSheetSeasonsTest {
     fun `a quota with one season left lets one season through and says so`() {
         val vm = viewModel(quota = RequestQuota(limit = 10, remaining = 1, days = 7))
 
-        vm.toggleSeason(2)
-        vm.toggleSeason(3)
+        vm.toggleSeasons(2)
+        vm.toggleSeasons(3)
 
         assertEquals(setOf(2), vm.ready().pickedSeasons)
         assertEquals(1, vm.ready().seasons?.limit)

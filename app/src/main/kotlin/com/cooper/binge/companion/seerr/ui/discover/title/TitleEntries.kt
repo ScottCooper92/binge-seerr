@@ -7,11 +7,14 @@ import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import com.cooper.binge.companion.seerr.discover.TitleKind
+import com.cooper.binge.companion.seerr.discover.grid.GridPreset
 import com.cooper.binge.companion.seerr.flags.LocalDiscoveryEnabled
 import com.cooper.binge.companion.seerr.flags.LocalFlags
+import com.cooper.binge.companion.seerr.flags.bingePromotion
 import com.cooper.binge.companion.seerr.ui.CollectionRoute
 import com.cooper.binge.companion.seerr.ui.DetailPane
 import com.cooper.binge.companion.seerr.ui.DetailPaneContent
+import com.cooper.binge.companion.seerr.ui.DiscoverGridRoute
 import com.cooper.binge.companion.seerr.ui.PersonDetailRoute
 import com.cooper.binge.companion.seerr.ui.SeasonEpisodesRoute
 import com.cooper.binge.companion.seerr.ui.TitleCreditsRoute
@@ -34,6 +37,9 @@ fun EntryProviderScope<NavKey>.titleEntries(backStack: NavBackStack<NavKey>) {
                 onBack = { backStack.popIfTop(route) },
                 onOpenCredits = { backStack.add(TitleCreditsRoute(route.kind, route.tmdbId)) },
                 onOpenSeason = { number, name -> backStack.add(SeasonEpisodesRoute(route.tmdbId, number, name)) },
+                onOpenCompany = { company ->
+                    backStack.add(DiscoverGridRoute(route.kind, GridPreset.Company(company.id), company.name))
+                },
             )
         }
     }
@@ -53,7 +59,7 @@ fun EntryProviderScope<NavKey>.titleEntries(backStack: NavBackStack<NavKey>) {
     }
 }
 
-/** The title hand-off: a film's or a series' page with the discovery flag on, and Binge or the server's own page as before otherwise. */
+/** The title hand-off: a film's, a series', a person's or a collection's page with the discovery flag on, and Binge or the server's own page as before otherwise. */
 @Composable
 internal fun rememberOpenTitle(backStack: NavBackStack<NavKey>): (TitleKind, Int, String) -> Unit {
     val discovery = LocalDiscoveryEnabled.current

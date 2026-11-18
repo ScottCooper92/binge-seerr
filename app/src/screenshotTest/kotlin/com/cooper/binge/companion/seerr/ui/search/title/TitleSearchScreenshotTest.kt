@@ -7,6 +7,7 @@ import com.cooper.binge.companion.seerr.preview.SeerrFontScalePreviews
 import com.cooper.binge.companion.seerr.preview.SeerrScreenPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrScreenStatePreview
 import com.cooper.binge.companion.seerr.preview.SeerrSpanishPreviews
+import com.cooper.binge.companion.seerr.preview.SeerrTabletPanesPreview
 
 /** The Search tab: idle with recents, results, no results and a failure, at the sizes and in the languages the app ships. */
 class TitleSearchScreenshotTest {
@@ -16,7 +17,19 @@ class TitleSearchScreenshotTest {
     @Composable
     fun idleWithRecents() = Frame(idleWithRecentsState())
 
-    /** Nothing typed and nothing remembered: the prompt. */
+    /** The trending rails still on their way under the recents. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun idleLoading() = Frame(idleLoadingState())
+
+    /** A type chosen: only its results are listed, and the chip row keeps every count. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun resultsMovies() = Frame(readyMoviesState())
+
+    /** Nothing typed, nothing remembered and no trending: the prompt. */
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
@@ -27,6 +40,11 @@ class TitleSearchScreenshotTest {
     @SeerrScreenPreviews
     @Composable
     fun results() = Frame(readyResultsState())
+
+    @PreviewTest
+    @SeerrTabletPanesPreview
+    @Composable
+    fun resultsTablet() = Frame(readyResultsState())
 
     /** The same list at 1.3x, where a phone's larger text commonly lands. */
     @PreviewTest
@@ -49,6 +67,23 @@ class TitleSearchScreenshotTest {
     @SeerrSpanishPreviews
     @Composable
     fun idleSpanish() = Frame(idleWithRecentsState())
+
+    /** A chosen group that none of the loaded results belong to, with no pages left: the message, not a blank screen. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun emptyGroup() = Frame(readyEmptyTypeState())
+
+    @PreviewTest
+    @SeerrSpanishPreviews
+    @Composable
+    fun emptyGroupSpanish() = Frame(readyEmptyTypeState())
+
+    /** The same group while the next page is on its way. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun emptyGroupLoading() = Frame(readyEmptyTypeLoadingState())
 
     /** A further page loading under the list. */
     @PreviewTest

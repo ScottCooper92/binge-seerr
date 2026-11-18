@@ -9,6 +9,7 @@ import com.cooper.binge.companion.seerr.preview.SeerrFontScalePreviews
 import com.cooper.binge.companion.seerr.preview.SeerrScreenPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrScreenStatePreview
 import com.cooper.binge.companion.seerr.preview.SeerrSpanishPreviews
+import com.cooper.binge.companion.seerr.preview.SeerrTabletPanesPreview
 import kotlinx.coroutines.flow.emptyFlow
 
 private const val SCROLLED_PX = 2500
@@ -20,6 +21,9 @@ private const val COLLECTION_LARGE_FONT_PX = 6900
 private const val FACTS_LARGE_FONT_PX = 2700
 
 private val NO_ACTIONS = TitlePageActions({}, {}, {}, {}, {}, {}, {}, {}, {}, {})
+
+/** As [NO_ACTIONS], but a studio opens its grid, so the studios are links in the accent colour. */
+private val LINKED_ACTIONS = TitlePageActions({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, onOpenCompany = {})
 
 /** As [NO_ACTIONS], but no page opens for a collection, as on the phone today: the rail has no See all. */
 private val NO_COLLECTION_PAGE = TitlePageActions({}, {}, {}, {}, {}, {}, {}, null, {}, {})
@@ -34,6 +38,11 @@ class TitlePageScreenshotTest {
     @SeerrScreenPreviews
     @Composable
     fun requestable() = Frame(TitlePageUiState.Ready(fullMovie(), fullExtras()))
+
+    @PreviewTest
+    @SeerrTabletPanesPreview
+    @Composable
+    fun requestableTablet() = Frame(TitlePageUiState.Ready(fullMovie(), fullExtras()))
 
     /** Already in the library: no Request button, and the status chip says so. */
     @PreviewTest
@@ -118,6 +127,30 @@ class TitlePageScreenshotTest {
             TitlePageUiState.Ready(longMovie(), fullExtras()),
             emptyFlow(),
             NO_ACTIONS,
+            scrollState = rememberScrollState(initial = FACTS_LARGE_FONT_PX),
+        )
+
+    /** The facts with the studios as links: each name in the accent colour, where a tap opens that studio's grid. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun factsLinked() =
+        TitlePageScreen(
+            TitlePageUiState.Ready(fullMovie().copy(companiesOpen = true), fullExtras()),
+            emptyFlow(),
+            LINKED_ACTIONS,
+            scrollState = rememberScrollState(initial = FACTS_PX),
+        )
+
+    /** Linked studios with the longest names at font scales 1.5 and 2: the links wrap and none is cut off. */
+    @PreviewTest
+    @SeerrFontScalePreviews
+    @Composable
+    fun factsLinkedLargeFonts() =
+        TitlePageScreen(
+            TitlePageUiState.Ready(longMovie().copy(companiesOpen = true), fullExtras()),
+            emptyFlow(),
+            LINKED_ACTIONS,
             scrollState = rememberScrollState(initial = FACTS_LARGE_FONT_PX),
         )
 

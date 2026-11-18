@@ -13,14 +13,23 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.DetailStat
 import com.binge.designsystem.component.InfoRowList
+import com.binge.designsystem.isExpandedLayout
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.title.SeriesDetails
 import com.cooper.binge.companion.seerr.discover.title.trailerUrl
+import com.cooper.binge.companion.seerr.ui.discover.request.joinMeta
 import java.text.NumberFormat
 import java.util.Locale
 import com.binge.designsystem.R as DesR
 
 private const val MINUTES_PER_HOUR = 60
+
+/** The line under the title in the request sheet: first air year and season count, whichever the server gave. */
+@Composable
+internal fun SeriesDetails.requestMeta(): String? {
+    val seasons = seasonCount?.let { pluralStringResource(R.plurals.request_sheet_season_count, it, it) }
+    return joinMeta(listOf(firstAirYear, seasons), stringResource(R.string.request_sheet_meta_separator))
+}
 
 /** The series' stats, as Binge shows them: rating with its votes, first air year with the season count, episodes and certification. */
 @Composable
@@ -51,15 +60,19 @@ internal fun SeriesPageBody(
     val context = LocalContext.current
     val locale = LocalConfiguration.current.locales[0]
     Column(verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m))) {
-        TitleStatsRows(series.titleStats(locale))
+        // The expanded header already shows these and the synopsis.
+        val expanded = isExpandedLayout()
+        if (!expanded) TitleStatsRows(series.titleStats(locale))
         TitleActions(
             model = titleActionsModel(series.standard, series.fourK),
             onRequest = actions.onRequest,
             onTrailer = series.videos.trailerUrl()?.let { url -> { actions.onOpenUrl(url) } },
         )
-        OverviewSection(series.overview)
+        if (!expanded) OverviewSection(series.overview)
         EpisodesSection(state, seasonActions)
-        InfoRowList(series.factEntries(context.resources, locale, state.extras?.ratings))
+        InfoRowList(
+            series.factEntries(context.resources, locale, state.extras?.ratings, actions.onOpenCompany.takeIf { series.companiesOpen }),
+        )
         PeopleRow(stringResource(R.string.title_page_cast), series.cast, actions.onOpenPerson, actions.onOpenCredits)
         PeopleRow(stringResource(R.string.title_page_crew), series.keyCrew, actions.onOpenPerson, actions.onOpenCredits)
         WhereToWatchSection(series.providers, actions.onOpenUrl)
