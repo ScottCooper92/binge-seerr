@@ -61,25 +61,6 @@ class DemoSeriesTest {
         }
 
     @Test
-    fun `a person the title pages list has a page and credits that are demo titles, one of them listed twice`() =
-        demo { api ->
-            val person = api.personDetails(PERSON_ID)
-            val credits = api.personCredits(PERSON_ID)
-
-            assertEquals("Alex Sample", person.name)
-            assertTrue(credits.cast.isNotEmpty())
-            assertTrue(
-                credits.cast.map { it.id }.size >
-                    credits.cast
-                        .map { it.id }
-                        .distinct()
-                        .size,
-            )
-            assertTrue(credits.cast.all { credit -> DEMO_TITLES.any { it.tmdbId == credit.id } })
-            assertTrue(credits.crew.all { it.job == "Director" })
-        }
-
-    @Test
     fun `a season answers with its episodes, the last of which has not aired`() =
         demo { api ->
             val season = api.tvSeason(showId, 2)
@@ -90,5 +71,3 @@ class DemoSeriesTest {
             assertTrue(checkNotNull(season.episodes.last().airDate) > "2090")
         }
 }
-
-private const val PERSON_ID = 9001

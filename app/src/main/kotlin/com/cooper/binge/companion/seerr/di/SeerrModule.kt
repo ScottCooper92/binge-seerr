@@ -24,6 +24,7 @@ import com.cooper.binge.companion.seerr.notifications.ForwardingNotifier
 import com.cooper.binge.companion.seerr.notifications.SeerrForwarding
 import com.cooper.binge.companion.seerr.notifications.SeerrForwardingKeys
 import com.cooper.binge.companion.seerr.notifications.SeerrNotifier
+import com.cooper.binge.companion.seerr.seerr.TitleCache
 import com.cooper.binge.companion.seerr.telemetry.CrashReportingMigration
 import com.cooper.binge.companion.seerr.ui.hub.BingeInstallCheck
 import com.cooper.binge.companion.seerr.ui.hub.PackageManagerBingeInstallCheck
@@ -83,6 +84,10 @@ object SeerrModule {
     @Provides
     @Singleton
     fun titleDao(db: SeerrCacheDatabase): TitleDao = db.titleDao()
+
+    @Provides
+    @Singleton
+    fun titleCache(dao: TitleDao): TitleCache = TitleCache(dao)
 
     @Provides
     @Singleton
