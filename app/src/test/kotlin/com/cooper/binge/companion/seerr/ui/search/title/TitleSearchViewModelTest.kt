@@ -9,8 +9,12 @@ import com.cooper.binge.companion.seerr.discover.TitleListRepository
 import com.cooper.binge.companion.seerr.discover.TitlePage
 import com.cooper.binge.companion.seerr.discover.TitleResult
 import com.cooper.binge.companion.seerr.discover.TitleSource
+import com.cooper.binge.companion.seerr.discover.sliders.HubMediaSource
+import com.cooper.binge.companion.seerr.seerr.HydratedTitle
 import com.cooper.binge.companion.seerr.seerr.SeerrError
+import com.cooper.binge.companion.seerr.seerr.SeerrRequestMediaDto
 import com.cooper.binge.companion.seerr.util.MainDispatcherRule
+import com.cooper.binge.companion.seerr.util.awaitEvent
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
@@ -70,12 +74,25 @@ class TitleSearchViewModelTest {
     }
 
     private val history = FakeHistory(listOf("alien"))
+    private val media =
+        object : HubMediaSource {
+            override suspend fun serverUrl() = "https://server.example/"
+
+            override suspend fun recentlyAdded() = emptyList<SeerrRequestMediaDto>()
+
+            override suspend fun recentRequests() = emptyList<SeerrRequestMediaDto>()
+
+            override suspend fun hydrate(
+                mediaType: String,
+                tmdbId: Int,
+            ): HydratedTitle? = null
+        }
     private val titles = FakeTitles { source, page -> TitlePage(listOf(title(page), title(page + 10, TitleKind.Person)), page, 2) }
 
     /** Runs [block] with the view model's state being collected, on the test's scheduler, and stops the collector after. */
     private fun runVm(block: suspend TestScope.(TitleSearchViewModel) -> Unit) =
         runTest {
-            val vm = TitleSearchViewModel(titles, history)
+            val vm = TitleSearchViewModel(titles, history, media)
             val collector = launch(UnconfinedTestDispatcher(testScheduler)) { vm.uiState.collect {} }
             try {
                 block(vm)
@@ -154,5 +171,16 @@ class TitleSearchViewModelTest {
             vm.onForgetRecents()
             advanceUntilIdle()
             assertEquals(TitleSearchUiState.Idle("", emptyList()), vm.uiState.value)
+        }
+
+    @Test
+    fun `opening a series sends its card with the server's page`() =
+        runVm { vm ->
+            val event = awaitEvent(vm.events)
+            vm.onOpenTitle(title(5, TitleKind.Series))
+            advanceUntilIdle()
+            val card = (event.await() as TitleSearchEvent.Open).card
+            assertEquals("https://server.example/tv/5", card.webUrl)
+            assertEquals(5, card.tmdbId)
         }
 }
