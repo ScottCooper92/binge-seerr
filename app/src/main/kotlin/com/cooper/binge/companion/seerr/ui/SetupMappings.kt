@@ -18,6 +18,7 @@ import com.cooper.binge.companion.seerr.seerr.SeerrLoginRequest
 import com.cooper.binge.companion.seerr.seerr.SeerrSignInMode
 import com.cooper.binge.companion.seerr.seerr.isBlockedByLocalNetwork
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
+import com.cooper.binge.companion.seerr.seerr.wantsClientCertificate
 import com.cooper.binge.companion.seerr.telemetry.AnalyticsEvents
 import com.cooper.homelab.core.server.network.AddressLocality
 import com.cooper.homelab.core.server.network.LocalNetworkPermission
@@ -102,17 +103,24 @@ internal fun SetupError.forAddress(
         this
     }
 
-/** The address's own cases first, then an expired code; a 401 or 403 is the credentials; the rest is the server or the network. */
+/**
+ * The address's own cases first, then an expired code; a server that asks for a client certificate is its own case, since it did answer;
+ * a 401 or 403 is the credentials; the rest is the server or the network.
+ */
 internal fun Throwable.toSetupError(): SetupError =
     when (this) {
         is InvalidServerUrlException -> SetupError.InvalidUrl
         is NotSeerrServerException -> SetupError.NotSeerr
         is PlexPinExpiredException, is QuickConnectExpiredException -> SetupError.LinkExpired
         else ->
-            when (toSeerrError()) {
-                SeerrError.Unauthorized, SeerrError.Forbidden -> SetupError.Rejected
-                SeerrError.Unreachable -> SetupError.Unreachable
-                else -> SetupError.Unknown
+            when {
+                wantsClientCertificate() -> SetupError.ClientCertificateNeeded
+                else ->
+                    when (toSeerrError()) {
+                        SeerrError.Unauthorized, SeerrError.Forbidden -> SetupError.Rejected
+                        SeerrError.Unreachable -> SetupError.Unreachable
+                        else -> SetupError.Unknown
+                    }
             }
     }
 
