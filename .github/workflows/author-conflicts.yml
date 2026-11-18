@@ -33,7 +33,7 @@ jobs:
       (github.event_name == 'workflow_dispatch' ||
        (github.event.workflow_run.event == 'push' &&
         github.event.workflow_run.head_branch == github.event.repository.default_branch))
-    uses: ScottCooper92/binge-ci/.github/workflows/author-conflicts.yml@1b8bfc7cd36efacdcd204aa0808fdb8afad1c546 # v1
+    uses: ScottCooper92/binge-ci/.github/workflows/author-conflicts.yml@903427212a2a3918dca60d6c3d8af61f2a4682f4 # v1
     with:
       dispatched: ${{ github.event_name == 'workflow_dispatch' }}
       author_bot_id: ${{ vars.AUTHOR_BOT_ID }}
