@@ -40,6 +40,8 @@ class DiscoverFilterScrollTest {
                     filters = DiscoverFilters(),
                     vocabulary = WORDS,
                     today = LocalDate.of(2026, 11, 18),
+                    loads = FilterLoads({}, {}, {}),
+                    onOpenRegion = {},
                     onChange = {},
                     onDone = {},
                 )

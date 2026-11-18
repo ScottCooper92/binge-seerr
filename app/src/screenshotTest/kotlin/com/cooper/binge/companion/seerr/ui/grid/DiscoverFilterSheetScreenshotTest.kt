@@ -160,6 +160,8 @@ class DiscoverFilterSheetScreenshotTest {
                 filters = DiscoverFilters(language = "l5"),
                 vocabulary = FilterVocabulary(languages = (1..LONG_LIST).map { FilterOption("l$it", "Language $it") }),
                 today = TODAY,
+                loads = FilterLoads({}, {}, {}),
+                onOpenRegion = {},
                 onChange = {},
                 onDone = {},
             )

@@ -28,6 +28,7 @@ import com.binge.designsystem.component.BingeFilterChip
 import com.binge.designsystem.component.BingeSearchField
 import com.binge.designsystem.component.BingeSheetFooter
 import com.binge.designsystem.component.ListRow
+import com.binge.designsystem.component.bingeSheetScroll
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverFilters
 import java.util.Locale
@@ -262,7 +263,10 @@ internal fun ColumnScope.RegionSheetPage(
     onChange: (DiscoverFilters) -> Unit,
     onDone: () -> Unit,
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m))) {
+    Column(
+        modifier = Modifier.weight(1f, fill = false).bingeSheetScroll(),
+        verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
+    ) {
         Text(
             text = stringResource(R.string.grid_filter_region),
             style = MaterialTheme.typography.titleLarge,
