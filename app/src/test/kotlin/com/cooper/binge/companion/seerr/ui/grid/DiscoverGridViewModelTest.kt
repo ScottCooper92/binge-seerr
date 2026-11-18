@@ -228,4 +228,22 @@ class DiscoverGridViewModelTest {
             val state = vm.uiState.value as DiscoverGridUiState.Ready
             assertEquals(listOf(1, 3), state.cards.map { it.tmdbId })
         }
+
+    @Test
+    fun `a page of titles already shown does not stop paging`() {
+        grid.answer = { _, page ->
+            when (page) {
+                1 -> TitlePage(listOf(title(1), title(2)), 1, 3)
+                2 -> TitlePage(listOf(title(1), title(2)), 2, 3)
+                else -> TitlePage(listOf(title(3)), 3, 3)
+            }
+        }
+        runVm { vm ->
+            vm.onLoadMore()
+            advanceUntilIdle()
+            val state = vm.uiState.value as DiscoverGridUiState.Ready
+            assertEquals(listOf(1, 2, 3), state.cards.map { it.tmdbId })
+            assertTrue(!state.hasMore)
+        }
+    }
 }

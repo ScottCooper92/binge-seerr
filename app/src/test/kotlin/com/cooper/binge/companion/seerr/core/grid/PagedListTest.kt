@@ -29,13 +29,14 @@ class PagedListTest {
 
     private fun TestScope.listOver(
         query: MutableStateFlow<String>,
+        keyOf: ((String) -> Any)? = null,
         fetch: suspend (String, Int) -> SearchPage<String> = { q, p -> SearchPage(listOf("$q-$p"), p, 3) },
     ): PagedList<String, String> {
         val list =
             PagedList(scope(), query, { q, p ->
                 calls += q to p
                 fetch(q, p)
-            })
+            }, keyOf = keyOf)
         scope().launch { list.state.collect {} }
         return list
     }
@@ -188,6 +189,58 @@ class PagedListTest {
             slow.complete(SearchPage(listOf("late"), 2, 2))
             advanceUntilIdle()
             assertEquals(PagedListState.Ready(listOf("b-1"), hasMore = true), list.state.value)
+        }
+
+    @Test
+    fun `a later page of only repeats is read past and the next one appended`() =
+        runTest {
+            val list =
+                listOver(MutableStateFlow("a"), keyOf = { it }) { _, p ->
+                    when (p) {
+                        1 -> SearchPage(listOf("x", "y"), 1, 3)
+                        2 -> SearchPage(listOf("x", "y"), 2, 3)
+                        else -> SearchPage(listOf("z"), 3, 3)
+                    }
+                }
+            advanceUntilIdle()
+            list.loadMore()
+            advanceUntilIdle()
+            assertEquals(PagedListState.Ready(listOf("x", "y", "z"), hasMore = false), list.state.value)
+            assertEquals(listOf("a" to 1, "a" to 2, "a" to 3), calls)
+        }
+
+    @Test
+    fun `an item already listed is dropped, within a page and across pages`() =
+        runTest {
+            val list =
+                listOver(MutableStateFlow("a"), keyOf = { it }) { _, p ->
+                    if (p == 1) SearchPage(listOf("x", "x", "y"), 1, 2) else SearchPage(listOf("y", "z"), 2, 2)
+                }
+            advanceUntilIdle()
+            list.loadMore()
+            advanceUntilIdle()
+            assertEquals(PagedListState.Ready(listOf("x", "y", "z"), hasMore = false), list.state.value)
+        }
+
+    @Test
+    fun `a first page of only repeats of itself is not empty`() =
+        runTest {
+            val list = listOver(MutableStateFlow("a"), keyOf = { it }) { _, p -> SearchPage(listOf("x", "x"), p, 1) }
+            advanceUntilIdle()
+            assertEquals(PagedListState.Ready(listOf("x"), hasMore = false), list.state.value)
+        }
+
+    @Test
+    fun `a page that ends on repeats with no more pages ends the list there`() =
+        runTest {
+            val list =
+                listOver(MutableStateFlow("a"), keyOf = { it }) { _, p ->
+                    if (p == 1) SearchPage(listOf("x"), 1, 2) else SearchPage(listOf("x"), 2, 2)
+                }
+            advanceUntilIdle()
+            list.loadMore()
+            advanceUntilIdle()
+            assertEquals(PagedListState.Ready(listOf("x"), hasMore = false), list.state.value)
         }
 
     @Test
