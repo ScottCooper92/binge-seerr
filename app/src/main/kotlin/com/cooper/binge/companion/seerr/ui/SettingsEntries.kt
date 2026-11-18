@@ -268,24 +268,3 @@ internal fun SettingsHub(
         developerRows = debugDeveloperRows(backStack),
     )
 }
-
-/**
- * Settings in a wide window's tab: the hub beside its sections, on the tab's own [stack] so the tab bar stays. A pane host of its
- * own, sized to the room the bar leaves.
- */
-@Composable
-internal fun SettingsPanes(
-    stack: NavBackStack<NavKey>,
-    connected: () -> Boolean?,
-    onExit: () -> Unit,
-) {
-    SeerrPaneHost(
-        stack,
-        connected = connected(),
-        onExit = onExit,
-        defaultSection = { DefaultSectionPane(stack, onExit) },
-        inShell = true,
-    ) { panes ->
-        settingsEntries(stack, connected, panes, onExit)
-    }
-}

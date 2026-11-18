@@ -44,6 +44,14 @@ internal fun NavBackStack<NavKey>.popIfTop(entry: NavKey): Boolean {
     return true
 }
 
+/** Puts [route] in place of the top entry when [entry] is still the top, for a screen that reopens itself as another. */
+internal fun NavBackStack<NavKey>.replaceTop(
+    entry: NavKey,
+    route: NavKey,
+) {
+    if (lastOrNull() === entry) set(lastIndex, route)
+}
+
 /** Pushes [route], unless an equal route is already the top: a second tap on what is open opens nothing new. */
 internal fun NavBackStack<NavKey>.push(route: NavKey) {
     if (lastOrNull() != route) add(route)

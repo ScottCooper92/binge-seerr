@@ -26,7 +26,6 @@ import com.cooper.binge.companion.seerr.seerr.SeerrAuth
 import com.cooper.binge.companion.seerr.seerr.SeerrCredentials
 import com.cooper.binge.companion.seerr.ui.HomeRoute
 import com.cooper.binge.companion.seerr.ui.SeerrRoute
-import com.cooper.binge.companion.seerr.ui.shell.SeerrTab
 import com.cooper.binge.companion.seerr.ui.shell.openLink
 import com.cooper.binge.companion.seerr.ui.users.settings.ADMIN
 import com.cooper.binge.companion.seerr.ui.users.settings.ScriptedSeerr
@@ -181,11 +180,11 @@ internal class RealNavHostRule(
     /** Disconnects as the Disconnect button does, so everything keyed to the server is cleared. */
     fun disconnect() = runBlocking { graph().connection().disconnect() }
 
-    /** The Settings tab's own back stack as it stands, read on the main thread. */
-    fun settingsStack(): List<NavKey> = compose.runOnIdle { activity.tabs.stack(SeerrTab.Settings).toList() }
-
     /** A link to [routes] as `MainActivity` applies one: it replaces the app's stack and shows Settings. */
     fun openLink(vararg routes: SeerrRoute) = compose.runOnUiThread { activity.tabs.openLink(activity.backStack, routes.toList()) }
+
+    /** Pushes [route] onto the app's stack, as a tap on a title or a "see all" does. */
+    fun push(route: SeerrRoute) = compose.runOnUiThread { activity.backStack.add(route) }
 
     /** The back stack as it stands, read on the main thread. */
     fun stack(): List<NavKey> = compose.runOnIdle { activity.backStack.toList() }

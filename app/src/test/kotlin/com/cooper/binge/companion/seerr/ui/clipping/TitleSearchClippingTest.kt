@@ -4,6 +4,7 @@ import com.cooper.binge.companion.seerr.discover.TitleAvailability
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.TitleResult
 import com.cooper.binge.companion.seerr.seerr.SeerrError
+import com.cooper.binge.companion.seerr.ui.search.title.SearchType
 import com.cooper.binge.companion.seerr.ui.search.title.TitleSearchActions
 import com.cooper.binge.companion.seerr.ui.search.title.TitleSearchScreen
 import com.cooper.binge.companion.seerr.ui.search.title.TitleSearchUiState
@@ -15,15 +16,17 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 
-private const val OVERVIEW =
-    "A lighthouse keeper, a retired cartographer and a stubborn goat spend one winter on an island the maps forget."
+private const val DRAMA = 18
+private const val MYSTERY = 9648
+
+private val GENRES = mapOf(DRAMA to "Drama", MYSTERY to "Mystery and Suspense")
 
 private fun row(
     id: Int,
     kind: TitleKind,
     name: String,
     availability: TitleAvailability,
-) = TitleResult(kind, id, name, "2021", null, null, OVERVIEW, null, availability, null)
+) = TitleResult(kind, id, name, "2021", null, null, null, 8.4, availability, null, listOf(DRAMA, MYSTERY))
 
 private val STATES: List<TitleSearchUiState> =
     listOf(
@@ -40,6 +43,10 @@ private val STATES: List<TitleSearchUiState> =
                     row(2, TitleKind.Movie, "Sintel", TitleAvailability.Pending),
                     row(3, TitleKind.Person, "Alexandria Fitzgerald-Montgomery", TitleAvailability.None),
                 ),
+            loaded = 3,
+            type = SearchType.All,
+            counts = mapOf(SearchType.All to 1234, SearchType.Movies to 12, SearchType.Series to 31, SearchType.People to 7),
+            genreNames = GENRES,
             hasMore = true,
             appending = false,
             appendFailed = true,
@@ -51,7 +58,7 @@ private val STATES: List<TitleSearchUiState> =
         TitleSearchUiState.Error("lighthouse", SeerrError.Unreachable),
     )
 
-private val NO_ACTIONS = TitleSearchActions({}, {}, {}, {}, {}, {}, {}, {})
+private val NO_ACTIONS = TitleSearchActions({}, {}, {}, {}, {}, {}, {}, {}, {})
 
 /** The Search tab's states at their worst, at font scales 1.3 and 2.0, through the design system's `assertNoTextClipped`. */
 @RunWith(RobolectricTestRunner::class)

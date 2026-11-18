@@ -5,6 +5,7 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.navigation3.runtime.NavKey
 import com.cooper.binge.companion.seerr.ui.BlocklistDetailRoute
 import com.cooper.binge.companion.seerr.ui.BlocklistRoute
+import com.cooper.binge.companion.seerr.ui.CollectionRoute
 import com.cooper.binge.companion.seerr.ui.DiagnosticsRoute
 import com.cooper.binge.companion.seerr.ui.DiscoverGridRoute
 import com.cooper.binge.companion.seerr.ui.DiscoverSliderRoute
@@ -58,6 +59,7 @@ fun SeerrRoute.screenName(): String =
         RequestsRoute -> "requests"
         is RequestDetailRoute -> "request_detail"
         is TitleDetailRoute -> "title_detail"
+        is CollectionRoute -> "collection_detail"
         is TitleCreditsRoute -> "title_credits"
         is PersonDetailRoute -> "person_detail"
         is SeasonEpisodesRoute -> "season_episodes"
@@ -99,6 +101,7 @@ internal fun SeerrTab.screenName(): String =
         SeerrTab.Settings -> "hub"
         SeerrTab.Movies -> "movies"
         SeerrTab.Tv -> "tv"
+        SeerrTab.Discover -> "discover"
         SeerrTab.Search -> "search"
     }
 

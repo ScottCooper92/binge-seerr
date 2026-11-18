@@ -35,7 +35,7 @@ class NavHostActivity : ComponentActivity() {
     lateinit var backStack: NavBackStack<NavKey>
         private set
 
-    /** The shell's state; set by the composition, so a test can read the Settings tab's own stack. */
+    /** The shell's state; set by the composition, so a test can apply a link as `MainActivity` does. */
     lateinit var tabs: TabShellState<SeerrTab>
         private set
 
