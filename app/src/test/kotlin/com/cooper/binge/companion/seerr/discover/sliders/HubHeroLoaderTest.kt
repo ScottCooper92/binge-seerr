@@ -70,7 +70,6 @@ class HubHeroLoaderTest {
             assertEquals(listOf(4, 5, 6, 7, 8), hero.map { it.tmdbId })
             assertEquals(TitleSource.Trending, titles.loaded)
             assertTrue(hero.first().backdropUrl.endsWith("/b4.jpg"))
-            assertEquals(7.5f, hero.first().rating)
             assertEquals("https://s/movie/4", hero.first().webUrl)
         }
 

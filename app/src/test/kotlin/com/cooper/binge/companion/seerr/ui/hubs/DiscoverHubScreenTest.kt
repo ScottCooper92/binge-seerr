@@ -225,7 +225,7 @@ class DiscoverHubScreenTest {
     }
 
     private fun hero(server: String) =
-        HubHero(TitleKind.Movie, 9, "Seven Rivers", "https://img/b.jpg", "2021", 7.5f, TitleAvailability.Available, server + "movie/9")
+        HubHero(TitleKind.Movie, 9, "Seven Rivers", "https://img/b.jpg", "2021", TitleAvailability.Available, server + "movie/9")
 
     @Test
     fun `the hero shows above the rows and a tap on it opens its title`() {
