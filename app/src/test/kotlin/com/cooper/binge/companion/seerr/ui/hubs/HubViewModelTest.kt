@@ -31,6 +31,7 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
@@ -119,8 +120,10 @@ class HubViewModelTest {
     private class FakeGrid(
         private val canRefine: Boolean = true,
         private val fail: Boolean = false,
+        /** When set, the server answers only once this does. */
+        private val answer: CompletableDeferred<Boolean>? = null,
     ) : DiscoverGridRepository {
-        override suspend fun canRefine(preset: GridPreset): Boolean = if (fail) error("down") else canRefine
+        override suspend fun canRefine(preset: GridPreset): Boolean = if (fail) error("down") else answer?.await() ?: canRefine
 
         override suspend fun genres(kind: TitleKind): List<FilterOption> = emptyList()
 
@@ -299,8 +302,38 @@ class HubViewModelTest {
                 },
             )
         }
+
+    @Test
+    fun `the hub waits for the answer on filtering, so Browse all is never shown and then taken away`() =
+        runTest {
+            val answer = CompletableDeferred<Boolean>()
+            val model = vm(FakeSliders(SliderListState.Ready(listOf(slider(1, TRENDING)))), grid = FakeGrid(answer = answer))
+            val seen = mutableListOf<DiscoverHubUiState>()
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { model.uiState.collect { seen += it } }
+            testScheduler.advanceTimeBy(BROWSE_ALL_WAIT - 1)
+            assertEquals("rows are ready but the answer is not", DiscoverHubUiState.Loading, seen.last())
+
+            answer.complete(false)
+            val ready = seen.last() as DiscoverHubUiState.Ready
+            assertFalse(ready.browseAll)
+            assertTrue("no state showed Browse all", seen.filterIsInstance<DiscoverHubUiState.Ready>().none { it.browseAll })
+        }
+
+    @Test
+    fun `a server that does not answer in time is shown Browse all after the wait`() =
+        runTest {
+            val model = vm(FakeSliders(SliderListState.Ready(listOf(slider(1, TRENDING)))), grid = FakeGrid(answer = CompletableDeferred()))
+            val seen = mutableListOf<DiscoverHubUiState>()
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { model.uiState.collect { seen += it } }
+            testScheduler.advanceTimeBy(BROWSE_ALL_WAIT - 1)
+            assertEquals(DiscoverHubUiState.Loading, seen.last())
+
+            testScheduler.advanceTimeBy(2)
+            assertTrue((seen.last() as DiscoverHubUiState.Ready).browseAll)
+        }
 }
 
+private const val BROWSE_ALL_WAIT = 1_000L
 private const val TRENDING = 4
 private const val MOVIE_GENRES = 6
 private const val STUDIOS = 8

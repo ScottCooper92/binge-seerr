@@ -73,6 +73,17 @@ class DiscoverGridScreenshotTest {
             )
         }
 
+    /** The row's own chip, then one chip for each filter added in the sheet, each with what it is set to. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun addedFilters() = Frame(addedFiltersGridState())
+
+    @PreviewTest
+    @SeerrSpanishPreviews
+    @Composable
+    fun addedFiltersSpanish() = Frame(addedFiltersGridState())
+
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable

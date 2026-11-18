@@ -17,10 +17,11 @@ data class GridRequest(
     val sort: DiscoverSort,
 )
 
-/** A choice a filter offers: [id] is what the server is sent, and [name] is what the user reads. */
+/** A choice a filter offers: [id] is what the server is sent, [name] is what the user reads, and [imageUrl] its logo, if it has one. */
 data class FilterOption(
     val id: String,
     val name: String,
+    val imageUrl: String? = null,
 )
 
 /** The paged lists behind the "see all" grid. It knows nothing of Retrofit, so a view model holds this and a test holds a fake. */
