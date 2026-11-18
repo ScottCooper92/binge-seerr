@@ -14,6 +14,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
@@ -39,7 +40,6 @@ import com.cooper.binge.companion.seerr.discover.title.MovieDetails
 import com.cooper.binge.companion.seerr.discover.title.TitlePerson
 import com.cooper.binge.companion.seerr.discover.title.TitleRatings
 import com.cooper.binge.companion.seerr.seerr.toTmdbPosterUrl
-import java.util.Locale
 import com.binge.designsystem.R as DesR
 
 private const val MINUTES_PER_HOUR = 60
@@ -119,15 +119,16 @@ private fun StatsRow(
     movie: MovieDetails,
     ratings: TitleRatings?,
 ) {
+    val locale = LocalConfiguration.current.locales[0]
     val stats =
         listOfNotNull(
             movie.voteAverage?.let {
-                DetailStat(Icons.Filled.Star, "%.1f".format(Locale.getDefault(), it), stringResource(R.string.title_page_stat_rating))
+                DetailStat(Icons.Filled.Star, "%.1f".format(locale, it), stringResource(R.string.title_page_stat_rating))
             },
             ratings?.criticsPercent?.let { DetailStat(Icons.Filled.Verified, "$it%", stringResource(R.string.title_page_stat_critics)) },
             ratings?.audiencePercent?.let { DetailStat(Icons.Filled.Star, "$it%", stringResource(R.string.title_page_stat_audience)) },
             ratings?.imdbScore?.let {
-                DetailStat(Icons.Filled.Star, "%.1f".format(Locale.getDefault(), it), stringResource(R.string.title_page_stat_imdb))
+                DetailStat(Icons.Filled.Star, "%.1f".format(locale, it), stringResource(R.string.title_page_stat_imdb))
             },
         )
     // Three to a row at most: a longer row breaks a label mid-word at large text.
