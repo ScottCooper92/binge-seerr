@@ -173,7 +173,7 @@ private fun CardRow(
         MediaCard(
             posterUrl = card.artworkUrl,
             title = card.name,
-            rating = null,
+            rating = card.rating,
             onClick = { onOpenTitle(card) },
             modifier = Modifier.width(dimensionResource(DesR.dimen.card_width)),
             status = card.availability.toStatus(),
@@ -207,7 +207,10 @@ private fun Hero(
     hero: List<HubHero>,
     onOpenTitle: (HubCard) -> Unit,
 ) {
-    val items = hero.map { HeroItem(id = it.tmdbId, imageUrl = it.backdropUrl, title = it.name, rating = it.rating, year = it.year) }
+    val items =
+        hero.map {
+            HeroItem(id = it.tmdbId, imageUrl = it.backdropUrl, title = it.name, rating = it.rating, genres = it.genres, rank = it.rank)
+        }
     HeroCarousel(
         items = items,
         onItemClick = { id -> hero.firstOrNull { it.tmdbId == id }?.let { onOpenTitle(it.toCard()) } },
