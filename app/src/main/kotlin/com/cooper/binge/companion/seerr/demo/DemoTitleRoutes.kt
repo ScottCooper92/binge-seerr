@@ -1,17 +1,17 @@
 package com.cooper.binge.companion.seerr.demo
 
 import com.cooper.binge.companion.seerr.seerr.SeerrCastDto
-import com.cooper.binge.companion.seerr.seerr.SeerrCountryReleaseDto
+import com.cooper.binge.companion.seerr.seerr.SeerrCountryReleasesDto
 import com.cooper.binge.companion.seerr.seerr.SeerrCreditsDto
 import com.cooper.binge.companion.seerr.seerr.SeerrCrewDto
 import com.cooper.binge.companion.seerr.seerr.SeerrImdbDto
 import com.cooper.binge.companion.seerr.seerr.SeerrMediaDetailsDto
 import com.cooper.binge.companion.seerr.seerr.SeerrMovieDetailsDto
-import com.cooper.binge.companion.seerr.seerr.SeerrMovieReleaseDateDto
-import com.cooper.binge.companion.seerr.seerr.SeerrMovieReleasesDto
 import com.cooper.binge.companion.seerr.seerr.SeerrMovieWatchProviderDto
 import com.cooper.binge.companion.seerr.seerr.SeerrNamedDto
 import com.cooper.binge.companion.seerr.seerr.SeerrRatingsDto
+import com.cooper.binge.companion.seerr.seerr.SeerrReleaseDateDto
+import com.cooper.binge.companion.seerr.seerr.SeerrReleasesDto
 import com.cooper.binge.companion.seerr.seerr.SeerrRottenTomatoesDto
 import com.cooper.binge.companion.seerr.seerr.SeerrVideoDto
 import com.cooper.binge.companion.seerr.seerr.SeerrWatchRegionDto
@@ -80,7 +80,7 @@ private fun titleBody(
     genres = listOf(SeerrNamedDto(GENRE_ANIMATION, "Animation"), SeerrNamedDto(GENRE_COMEDY, "Comedy")),
     keywords = listOf(SeerrNamedDto(1, "demo"), SeerrNamedDto(2, "short film")),
     productionCompanies = listOf(SeerrNamedDto(2, "Demo Studios")),
-    releases = SeerrMovieReleasesDto(listOf(SeerrCountryReleaseDto("US", listOf(SeerrMovieReleaseDateDto("PG"))))),
+    releases = SeerrReleasesDto(listOf(SeerrCountryReleasesDto("US", listOf(SeerrReleaseDateDto("PG"))))),
     credits = SeerrCreditsDto(DEMO_CAST, DEMO_CREW),
     relatedVideos = listOf(SeerrVideoDto("demo", "Trailer", "YouTube", "Trailer", "https://www.youtube.com/watch?v=demo")),
     watchProviders = listOf(SeerrWatchRegionDto("US", null, listOf(SeerrMovieWatchProviderDto(1, "Demo Stream", null, 1)))),

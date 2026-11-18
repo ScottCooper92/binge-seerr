@@ -3,13 +3,16 @@ package com.cooper.binge.companion.seerr.discover.title
 import com.binge.companion.sdk.attempt
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.toAvailability
+import com.cooper.binge.companion.seerr.discover.toReleaseYear
 import com.cooper.binge.companion.seerr.discover.toTitlePage
+import com.cooper.binge.companion.seerr.seerr.FALLBACK_CERTIFICATION_REGION
 import com.cooper.binge.companion.seerr.seerr.SeerrApi
 import com.cooper.binge.companion.seerr.seerr.SeerrMovieDetailsDto
 import com.cooper.binge.companion.seerr.seerr.SeerrMovieWatchProviderDto
 import com.cooper.binge.companion.seerr.seerr.SeerrServerProfile
 import com.cooper.binge.companion.seerr.seerr.SeerrUserDto
 import com.cooper.binge.companion.seerr.seerr.SeerrWatchRegionDto
+import com.cooper.binge.companion.seerr.seerr.certificationIn
 import com.cooper.binge.companion.seerr.seerr.toPermissions
 import com.cooper.binge.companion.seerr.seerr.toTmdbBackdropUrl
 import com.cooper.binge.companion.seerr.seerr.toTmdbPosterUrl
@@ -18,8 +21,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
 
-private const val YEAR_LENGTH = 4
-private const val FALLBACK_COUNTRY = "US"
 private val KEY_CREW_JOBS = listOf("Director", "Writer", "Screenplay", "Producer")
 
 /**
@@ -125,7 +126,7 @@ internal fun SeerrMovieDetailsDto.toMovieDetails(
         overview = overview?.takeIf { it.isNotBlank() },
         posterUrl = posterPath?.toTmdbPosterUrl(),
         backdropUrl = backdropPath?.toTmdbBackdropUrl(),
-        year = releaseDate?.take(YEAR_LENGTH)?.takeIf { it.length == YEAR_LENGTH && it.all(Char::isDigit) },
+        year = releaseDate.toReleaseYear(),
         runtimeMinutes = runtime?.takeIf { it > 0 },
         certification = certificationFor(region),
         voteAverage = voteAverage?.takeIf { it > 0.0 },
@@ -161,11 +162,8 @@ internal fun SeerrMovieDetailsDto.toMovieDetails(
 private fun com.cooper.binge.companion.seerr.discover.TitleAvailability.mayBeRequested() =
     this == com.cooper.binge.companion.seerr.discover.TitleAvailability.None
 
-private fun SeerrMovieDetailsDto.certificationFor(region: String?): String? {
-    val results = releases?.results.orEmpty()
-    val country = results.firstOrNull { it.country == region } ?: results.firstOrNull { it.country == FALLBACK_COUNTRY }
-    return country?.releaseDates?.map { it.certification }?.firstOrNull { it.isNotBlank() }
-}
+private fun SeerrMovieDetailsDto.certificationFor(region: String?): String? =
+    listOfNotNull(region, FALLBACK_CERTIFICATION_REGION).firstNotNullOfOrNull { releases.certificationIn(it) }
 
 private fun List<SeerrWatchRegionDto>.providersFor(region: String?): TitleProviders? {
     val match = firstOrNull { it.region == region } ?: return null

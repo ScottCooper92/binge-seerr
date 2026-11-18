@@ -47,6 +47,7 @@ class SeerrTitleDetailsRepositoryTest {
     private val factory = SeerrApiFactory(logRequests = false, testTransport = seerr::interceptor, testDispatcher = seerr::newDispatcher)
     private var permissions = PERMISSION_ADMIN
     private var variant = SeerrVariant.Seerr
+    private var version = SeerrVersion(3, 2, 0)
     private var settings = SeerrPublicSettings(movie4kEnabled = true, streamingRegion = "GB", discoverRegion = "US")
     private var userRegion = """{"streamingRegion":"US"}"""
     private var ratingsAnswer = FakeResponse(headers = JSON, body = RATINGS)
@@ -71,7 +72,7 @@ class SeerrTitleDetailsRepositoryTest {
         seerr.dispatcher = ::route
         return runBlocking {
             factory.anonymous(seerr.url()) { api ->
-                val profile = SeerrServerProfile(variant = variant, version = SeerrVersion(3, 2, 0), settings = settings)
+                val profile = SeerrServerProfile(variant = variant, version = version, settings = settings)
                 block(
                     SeerrTitleDetailsRepository(
                         api = { api },
@@ -149,16 +150,15 @@ class SeerrTitleDetailsRepositoryTest {
         assertEquals(listOf("Reloaded"), extras.recommendations.map { it.name })
         assertTrue("a part that failed leaves only itself out", extras.similar.isEmpty())
 
-        val before = seerr.requests.count { it.url.encodedPath.endsWith("ratingscombined") }
+        val calls = { seerr.requests.count { it.url.encodedPath.endsWith("ratingscombined") } }
+        val before = calls()
         variant = SeerrVariant.Overseerr
+        version = SeerrVersion(1, 33, 2)
         assertNull(withRepository { it.extras(TitleKind.Movie, 603) }.ratings)
-        assertEquals(
-            "no ratings call is made to a server without it",
-            before,
-            seerr.requests.count {
-                it.url.encodedPath.endsWith("ratingscombined")
-            },
-        )
+        assertEquals("Overseerr below 1.34 is not asked", before, calls())
+
+        version = SeerrVersion(1, 34, 0)
+        assertEquals(TitleRatings(83, 85, 8.7), withRepository { it.extras(TitleKind.Movie, 603) }.ratings)
     }
 
     @Test

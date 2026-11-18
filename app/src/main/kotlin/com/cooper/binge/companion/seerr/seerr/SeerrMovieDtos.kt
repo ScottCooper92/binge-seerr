@@ -31,7 +31,7 @@ data class SeerrMovieDetailsDto(
     @SerialName("spokenLanguages") val spokenLanguages: List<SeerrLanguageNameDto> = emptyList(),
     @SerialName("productionCompanies") val productionCompanies: List<SeerrNamedDto> = emptyList(),
     @SerialName("productionCountries") val productionCountries: List<SeerrCountryNameDto> = emptyList(),
-    @SerialName("releases") val releases: SeerrMovieReleasesDto? = null,
+    @SerialName("releases") val releases: SeerrReleasesDto? = null,
     @SerialName("credits") val credits: SeerrCreditsDto? = null,
     @SerialName("collection") val collection: SeerrCollectionRefDto? = null,
     @SerialName("relatedVideos") val relatedVideos: List<SeerrVideoDto> = emptyList(),
@@ -56,23 +56,6 @@ data class SeerrLanguageNameDto(
 data class SeerrCountryNameDto(
     @SerialName("iso_3166_1") val code: String? = null,
     @SerialName("name") val name: String = "",
-)
-
-/** The film's certification in each country it was released in. */
-@Serializable
-data class SeerrMovieReleasesDto(
-    @SerialName("results") val results: List<SeerrCountryReleaseDto> = emptyList(),
-)
-
-@Serializable
-data class SeerrCountryReleaseDto(
-    @SerialName("iso_3166_1") val country: String = "",
-    @SerialName("release_dates") val releaseDates: List<SeerrMovieReleaseDateDto> = emptyList(),
-)
-
-@Serializable
-data class SeerrMovieReleaseDateDto(
-    @SerialName("certification") val certification: String = "",
 )
 
 @Serializable

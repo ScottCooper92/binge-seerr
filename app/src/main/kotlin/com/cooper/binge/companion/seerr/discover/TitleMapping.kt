@@ -23,7 +23,7 @@ internal fun SeerrTitleResultDto.toTitleResult(defaultKind: TitleKind?): TitleRe
         kind = kind,
         tmdbId = tmdbId,
         name = name,
-        year = date?.take(YEAR_LENGTH)?.takeIf { it.length == YEAR_LENGTH && it.all(Char::isDigit) },
+        year = date.toReleaseYear(),
         artworkPath = if (kind == TitleKind.Person) profilePath else posterPath,
         backdropPath = backdropPath,
         overview = overview?.takeIf { it.isNotBlank() },
@@ -52,3 +52,6 @@ internal fun SeerrMediaStatusCode?.toAvailability(): TitleAvailability =
         SeerrMediaStatusCode.Blocklisted -> TitleAvailability.Blocklisted
         else -> TitleAvailability.None
     }
+
+/** The four-digit year a TMDB date (`1999-03-30`) starts with, or null for a date that does not. */
+internal fun String?.toReleaseYear(): String? = this?.take(YEAR_LENGTH)?.takeIf { it.length == YEAR_LENGTH && it.all(Char::isDigit) }
