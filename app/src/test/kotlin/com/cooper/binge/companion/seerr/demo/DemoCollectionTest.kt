@@ -2,6 +2,7 @@ package com.cooper.binge.companion.seerr.demo
 
 import com.cooper.binge.companion.seerr.seerr.SeerrApi
 import com.cooper.binge.companion.seerr.seerr.SeerrApiFactory
+import com.cooper.binge.companion.seerr.seerr.SeerrMediaStatusCode
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -35,6 +36,24 @@ class DemoCollectionTest {
             assertEquals(404, failure?.code())
         }
 
+    @Test
+    fun `blocking the collection blocks every film in it and unblocking lifts them`() =
+        demo { api ->
+            val id = requireNotNull(api.movieFullDetails(FIRST_DEMO_FILM).collection).id
+
+            api.blockCollection(id)
+            assertTrue(api.collection(id).parts.all { it.mediaInfo?.status == BLOCKLISTED })
+
+            api.unblockCollection(id)
+            assertTrue(api.collection(id).parts.none { it.mediaInfo?.status == BLOCKLISTED })
+        }
+
+    @Test
+    fun `an unknown collection cannot be blocked`() =
+        demo { api ->
+            assertEquals(404, runCatchingHttp { api.blockCollection(MADE_UP_FILM) }?.code())
+        }
+
     private suspend fun runCatchingHttp(block: suspend () -> Unit): HttpException? =
         try {
             block()
@@ -44,5 +63,6 @@ class DemoCollectionTest {
         }
 }
 
+private val BLOCKLISTED = SeerrMediaStatusCode.Blocklisted
 private const val FIRST_DEMO_FILM = 10378
 private const val MADE_UP_FILM = 777_002
