@@ -9,6 +9,7 @@ import com.cooper.binge.companion.seerr.seerr.SeerrServerProfile
 import com.cooper.binge.companion.seerr.seerr.SeerrTitlePageDto
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
+import java.util.Locale
 
 /**
  * The lists of titles the discovery screens read: the hubs' rows, the grid and search. It knows nothing of Retrofit, so a
@@ -26,6 +27,9 @@ interface TitleListRepository {
 
     /** The genre tiles for [kind] (a movie or a series), empty where the server has no genre row. */
     suspend fun genres(kind: TitleKind): List<GenreTile>
+
+    /** TMDB's genre names by id for [kind], in the device's language; empty where the server cannot say. */
+    suspend fun genreNames(kind: TitleKind): Map<Int, String> = emptyMap()
 }
 
 /** [TitleListRepository] over the Seerr API. [io] is the dispatcher the calls run on; it has no default. */
@@ -55,6 +59,12 @@ class SeerrTitleListRepository(
             tiles.map { GenreTile(it.id, it.name, it.backdrops.firstOrNull()) }
         }
     }
+
+    override suspend fun genreNames(kind: TitleKind): Map<Int, String> =
+        withContext(io) {
+            val type = if (kind == TitleKind.Series) "tv" else "movie"
+            api().genres(type, Locale.getDefault().toLanguageTag()).mapNotNull { dto -> dto.name?.let { dto.id to it } }.toMap()
+        }
 }
 
 @Suppress("CyclomaticComplexMethod")
