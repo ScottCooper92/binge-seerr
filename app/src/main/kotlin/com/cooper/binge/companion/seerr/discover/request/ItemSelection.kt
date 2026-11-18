@@ -22,7 +22,10 @@ data class ItemSelection(
     /** The items the request sends, in the list's order. */
     val requestIds: List<Int> get() = items.map { it.id }.filter { it in picked && it in openIds }
 
-    val canSubmit: Boolean get() = requestIds.isNotEmpty()
+    /** More are ticked than the quota has room for, as when it was read after the user began ticking. */
+    val overLimit: Boolean get() = limit != null && requestIds.size > limit
+
+    val canSubmit: Boolean get() = requestIds.isNotEmpty() && !overLimit
 
     /** Another open item can still be picked: the quota has room for it. */
     val canPickMore: Boolean get() = limit == null || requestIds.size < limit

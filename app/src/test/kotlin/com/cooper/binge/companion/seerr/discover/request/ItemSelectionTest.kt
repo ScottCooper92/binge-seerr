@@ -53,4 +53,15 @@ class ItemSelectionTest {
         assertFalse(ItemSelection(items(true)).canSubmit)
         assertTrue(ItemSelection(items(true)).toggle(1).canSubmit)
     }
+
+    @Test
+    fun `more ticked than the quota allows cannot be sent`() {
+        val ticked = ItemSelection(items(true, true, true)).toggleAll()
+        assertTrue(ticked.canSubmit)
+
+        val afterQuotaArrives = ticked.copy(limit = 2)
+
+        assertTrue(afterQuotaArrives.overLimit)
+        assertFalse(afterQuotaArrives.canSubmit)
+    }
 }
