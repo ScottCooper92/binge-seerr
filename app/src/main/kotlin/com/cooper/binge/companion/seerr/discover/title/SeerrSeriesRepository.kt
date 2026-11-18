@@ -28,6 +28,12 @@ interface SeriesDetailsRepository {
 
     /** Ratings, recommendations and similar shows. Each part that fails or that the server lacks is empty. */
     suspend fun extras(tmdbId: Int): TitleExtras
+
+    /** The episodes of one season, in order. */
+    suspend fun season(
+        tmdbId: Int,
+        seasonNumber: Int,
+    ): List<SeasonEpisode>
 }
 
 /**
@@ -55,6 +61,23 @@ class SeerrSeriesRepository(
                 settings = profile.settings,
                 webUrl = serverUrl() + "tv/" + tmdbId,
             )
+        }
+
+    override suspend fun season(
+        tmdbId: Int,
+        seasonNumber: Int,
+    ): List<SeasonEpisode> =
+        withContext(io) {
+            api().tvSeason(tmdbId, seasonNumber).episodes.sortedBy { it.episodeNumber }.map {
+                SeasonEpisode(
+                    number = it.episodeNumber,
+                    name = it.name,
+                    overview = it.overview?.takeIf(String::isNotBlank),
+                    airDate = it.airDate?.takeIf(String::isNotBlank),
+                    stillUrl = it.stillPath?.toTmdbBackdropUrl(),
+                    rating = it.voteAverage?.toFloat()?.takeIf { rating -> rating > 0f },
+                )
+            }
         }
 
     /** Rotten Tomatoes only: the show route has no IMDb score, and it is served on every lineage. */

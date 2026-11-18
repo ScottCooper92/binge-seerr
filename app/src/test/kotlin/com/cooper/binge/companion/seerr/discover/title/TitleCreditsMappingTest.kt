@@ -111,4 +111,19 @@ class TitleCreditsMappingTest {
         assertEquals("Elder, Younger", credits.cast.first().role)
         assertEquals(credits.cast.map { it.personId }.distinct(), credits.cast.map { it.personId })
     }
+
+    @Test
+    fun `crew with no department comes after every named department`() {
+        val credits =
+            SeerrCreditsDto(
+                crew =
+                    listOf(
+                        crew(1, "Anon", "Helper", null),
+                        crew(2, "Cos", "Costume Designer", "Costume & Make-Up"),
+                        crew(3, "Lit", "Gaffer", "Lighting"),
+                    ),
+            ).toTitleCredits()
+
+        assertEquals(listOf("Costume & Make-Up", "Lighting", ""), credits.departments.map { it.name })
+    }
 }

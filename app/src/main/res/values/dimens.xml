@@ -61,4 +61,5 @@
     <dimen name="setup_mode_tabs_edge_padding">0dp</dimen>
     <dimen name="person_portrait_width">140dp</dimen>
     <dimen name="person_skeleton_name_height">32dp</dimen>
+    <dimen name="season_dropdown_max_width">180dp</dimen>
 </resources>
