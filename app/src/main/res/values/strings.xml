@@ -213,7 +213,6 @@
     <string name="grid_filter_genres">Genres</string>
     <string name="grid_filter_where">Where to watch</string>
     <string name="grid_filter_region">Region</string>
-    <string name="grid_filter_providers">Streaming services</string>
     <string name="grid_filter_providers_none">No streaming services listed for this region.</string>
     <string name="grid_filter_cert">Content rating</string>
     <string name="grid_filter_cert_country">Country</string>

@@ -77,7 +77,6 @@ app:grid_filter_match  03c0e806becb
 app:grid_filter_match_all  29c88933c20a
 app:grid_filter_match_any  0f5f08d2b9e5
 app:grid_filter_minutes  3122a2f3e04b
-app:grid_filter_providers  df1b4727fc14
 app:grid_filter_providers_none  44636dfdc023
 app:grid_filter_providers_search  05563f3e04fa
 app:grid_filter_rating  9f29530464f7

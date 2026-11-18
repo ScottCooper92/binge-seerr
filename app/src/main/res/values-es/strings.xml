@@ -193,7 +193,6 @@
     <string name="grid_filter_genres">Géneros</string>
     <string name="grid_filter_where">Dónde ver</string>
     <string name="grid_filter_region">Región</string>
-    <string name="grid_filter_providers">Servicios de streaming</string>
     <string name="grid_filter_providers_none">No hay servicios de streaming en esta región.</string>
     <string name="grid_filter_cert">Clasificación por edades</string>
     <string name="grid_filter_cert_country">País</string>
