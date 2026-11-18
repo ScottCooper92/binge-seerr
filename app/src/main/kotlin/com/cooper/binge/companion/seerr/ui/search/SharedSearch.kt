@@ -8,6 +8,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.di.IoDispatcher
+import com.cooper.binge.companion.seerr.flags.SearchTogglesFlag
 import com.cooper.binge.companion.seerr.notifications.ApplicationScope
 import com.cooper.binge.companion.seerr.seerr.toPermissions
 import com.cooper.binge.companion.seerr.seerr.toServerFailure
@@ -20,6 +21,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.StateFlow
 import javax.inject.Inject
 import com.cooper.homelab.core.presentation.search.SearchAccess as SharedSearchAccess
 
@@ -69,9 +71,13 @@ internal class SettingsSearchHost
         @ApplicationContext context: Context,
         connection: SeerrConnection,
         recents: RecentSearches,
+        flag: SearchTogglesFlag,
         @ApplicationScope appScope: CoroutineScope,
         @IoDispatcher dispatcher: CoroutineDispatcher,
     ) : ViewModel() {
+        /** Whether a result for an on/off setting carries its switch. */
+        val searchTogglesEnabled: StateFlow<Boolean> = flag.enabled
+
         val entries: List<SettingEntry<SeerrSearchTarget>> = sharedSettingsIndex(context.resources)
 
         val model =

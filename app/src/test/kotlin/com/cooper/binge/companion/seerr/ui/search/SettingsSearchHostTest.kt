@@ -5,6 +5,10 @@ import androidx.test.core.app.ApplicationProvider
 import com.cooper.binge.companion.seerr.auth.LegacyCredentialStore
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.auth.SeerrHealth
+import com.cooper.binge.companion.seerr.flags.LocalSearchTogglesFlag
+import com.cooper.binge.companion.seerr.flags.NoSearchTogglesOverride
+import com.cooper.binge.companion.seerr.flags.SearchTogglesFlag
+import com.cooper.binge.companion.seerr.flags.SearchTogglesOverride
 import com.cooper.binge.companion.seerr.seerr.SeerrApiFactory
 import com.cooper.binge.companion.seerr.seerr.SeerrAuth
 import com.cooper.binge.companion.seerr.ui.settings.server.ServerSettingsPage
@@ -17,6 +21,8 @@ import com.cooper.homelab.core.foundation.ServerId
 import com.cooper.homelab.core.presentation.search.DataStoreRecentSearches
 import com.cooper.homelab.core.presentation.search.SettingEntry
 import com.cooper.homelab.core.presentation.search.SettingsSearchState
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -86,10 +92,12 @@ class SettingsSearchHostTest {
     private fun TestScope.host(
         connection: SeerrConnection,
         recents: DataStoreRecentSearches = DataStoreRecentSearches(data(), ServerId("server-1"), "recent_entries"),
+        flag: SearchTogglesFlag = LocalSearchTogglesFlag(NoSearchTogglesOverride, backgroundScope),
     ) = SettingsSearchHost(
         context = ApplicationProvider.getApplicationContext(),
         connection = connection,
         recents = recents,
+        flag = flag,
         appScope = backgroundScope,
         dispatcher = UnconfinedTestDispatcher(testScheduler),
     )
@@ -129,6 +137,16 @@ class SettingsSearchHostTest {
         }
 
     @Test
+    fun `the search offers no switches unless the flag is on`() =
+        runTest {
+            assertFalse(host(connection()).searchTogglesEnabled.value)
+
+            val override = MutableStateFlow<Boolean?>(true)
+            val on = LocalSearchTogglesFlag(SwitchOverride(override), backgroundScope, initialOverride = true)
+            assertTrue(host(connection(), flag = on).searchTogglesEnabled.value)
+        }
+
+    @Test
     fun `a connection that was never made fails, and a retry tries again`() =
         runTest {
             val connection = connection()
@@ -160,4 +178,15 @@ class SettingsSearchHostTest {
                 ready.recent.map { it.id },
             )
         }
+}
+
+/** An override whose value a test holds. */
+private class SwitchOverride(
+    private val state: MutableStateFlow<Boolean?>,
+) : SearchTogglesOverride {
+    override val value: Flow<Boolean?> = state
+
+    override suspend fun set(value: Boolean?) {
+        state.value = value
+    }
 }

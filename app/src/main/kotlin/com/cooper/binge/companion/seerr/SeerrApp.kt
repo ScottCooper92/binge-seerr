@@ -11,6 +11,7 @@ import com.cooper.homelab.core.flags.FeatureFlags
 import com.cooper.homelab.core.review.ReviewPrompt
 import com.cooper.homelab.core.telemetry.Analytics
 import com.cooper.homelab.core.telemetry.CrashReportingSwitch
+import com.cooper.homelab.core.tip.TipBilling
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -53,6 +54,10 @@ class SeerrApp :
     @Inject
     lateinit var reviewPrompt: ReviewPrompt
 
+    /** Settled at start: a tip that was paid for after the app last ran is consumed before Play refunds it. */
+    @Inject
+    lateinit var tipBilling: TipBilling
+
     @Inject
     @field:ApplicationScope
     lateinit var scope: CoroutineScope
@@ -68,5 +73,6 @@ class SeerrApp :
         reviewPrompt.start()
         scope.launch { featureFlags.refresh() }
         scope.launch { discoveryFlag.refresh() }
+        scope.launch { tipBilling.settle() }
     }
 }

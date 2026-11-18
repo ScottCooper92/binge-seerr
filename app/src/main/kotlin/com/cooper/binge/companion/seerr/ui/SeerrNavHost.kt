@@ -21,6 +21,7 @@ import com.binge.designsystem.PaneContent
 import com.binge.designsystem.PaneEdge
 import com.cooper.binge.companion.seerr.flags.LocalDiscoveryEnabled
 import com.cooper.binge.companion.seerr.ui.hub.HubSection
+import com.cooper.binge.companion.seerr.ui.hubs.DiscoverHubEntry
 import com.cooper.binge.companion.seerr.ui.settings.diagnostics.DiagnosticsEntry
 import com.cooper.binge.companion.seerr.ui.settings.licences.LicencesEntry
 import com.cooper.binge.companion.seerr.ui.settings.server.ServerSettingsPage
@@ -129,14 +130,14 @@ private fun EntryProviderScope<NavKey>.homeEntries(
     }
     // No pane metadata: the shell takes the whole window, and what a tab opens covers it from above.
     entry<ShellRoute> {
-        if (connected() == true && tabs != null) SeerrTabShell(tabs) { hub(null) } else LoadingScreen()
+        if (connected() == true && tabs != null) SeerrTabShell(tabs, discover = { DiscoverHubEntry(it) }) { hub(null) } else LoadingScreen()
     }
 }
 
 /**
  * The settings search, over the whole window: it has no pane metadata, so it covers the hub and whatever is open beside it. A
- * result leaves the search first and opens its page through [PaneLayout.openFromSearch]: in the right pane in place of what was
- * open, so Back from it is the hub, not the search and not a section.
+ * result opens its page above the search through [PaneLayout.openFromSearch], and the search stays on the stack, so Back from the
+ * page returns to the search as it was.
  */
 private fun EntryProviderScope<NavKey>.searchEntries(
     backStack: NavBackStack<NavKey>,
@@ -144,10 +145,7 @@ private fun EntryProviderScope<NavKey>.searchEntries(
 ) {
     entry<SettingsSearchRoute> { route ->
         SettingsSearchEntry(
-            onOpen = { target ->
-                backStack.popIfTop(route)
-                panes.openFromSearch(backStack, target)
-            },
+            onOpen = { target -> panes.openFromSearch(backStack, target) },
             onBack = { backStack.popIfTop(route) },
         )
     }
@@ -289,7 +287,7 @@ private fun EntryProviderScope<NavKey>.detailEntries(
     entry<UserSettingsPageRoute>(metadata = DetailPane) { route ->
         DetailPaneContent {
             // No showBack: the page's own scaffold reads the pane depth through paneBackOrNull. Stacked above UserSettingsRoute
-            // the depth is > 1 and the arrow shows; opened by the settings search it sits straight beside the hub, and does not.
+            // or above the settings search the arrow shows, and Back is what it came from.
             UserSettingsPageEntry(route.userId, route.page, route.row, onBack = { backStack.popIfTop(route) })
         }
     }
@@ -300,8 +298,8 @@ private fun EntryProviderScope<NavKey>.detailEntries(
 
 /**
  * The server's own settings pages and the editors they open. They stack in the detail pane too. Reached by way of [SettingsRoute]
- * (or [ThisAppRoute], for licences) the pane depth is > 1, and the settings search opens a page straight beside the hub, at
- * depth 1. None of them take [showBack]: each page's scaffold decides its arrow from the depth, through the design system's
+ * (or [ThisAppRoute], for licences) the pane depth is > 1, and the settings search opens a page above the search, whose Back is the
+ * search. None of them take [showBack]: each page's scaffold decides its arrow from the depth, through the design system's
  * `paneBackOrNull`, so a page reached either way is right. A route added here needs its scaffold to do the same.
  */
 private fun EntryProviderScope<NavKey>.serverSettingsEntries(backStack: NavBackStack<NavKey>) {

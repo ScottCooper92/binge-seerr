@@ -1338,4 +1338,22 @@
     <string name="request_problem_not_allowed">Esta cuenta no puede hacer esta petición. Pide a un administrador que cambie tus permisos.</string>
     <string name="request_problem_unreachable">No se pudo contactar con el servidor. Comprueba tu conexión e inténtalo de nuevo.</string>
     <string name="request_problem_other">El servidor rechazó la petición. Inténtalo de nuevo o consulta con un administrador.</string>
+    <string name="hubs_title_movies">Películas</string>
+    <string name="hubs_title_tv">Series</string>
+    <string name="hubs_row_trending">Tendencias</string>
+    <string name="hubs_row_recently_added">Añadido recientemente</string>
+    <string name="hubs_row_recent_requests">Solicitudes recientes</string>
+    <string name="hubs_row_watchlist">Lista de seguimiento</string>
+    <string name="hubs_row_popular_movies">Películas populares</string>
+    <string name="hubs_row_popular_tv">Series populares</string>
+    <string name="hubs_row_upcoming_movies">Próximas películas</string>
+    <string name="hubs_row_upcoming_tv">Próximas series</string>
+    <string name="hubs_row_custom">Más para descubrir</string>
+    <string name="hubs_empty_message">El servidor no tiene filas que mostrar aquí. Activa alguna en Filas de Descubrir, en los ajustes del servidor.</string>
+    <string name="hubs_card_available">Disponible</string>
+    <string name="hubs_card_requested">Solicitada</string>
+    <string name="hubs_card_processing">En proceso</string>
+    <string name="hubs_card_partial">Parcial</string>
+    <string name="hubs_card_blocklisted">En la lista de bloqueo</string>
+    <string name="hubs_loading_row">Cargando una fila</string>
 </resources>

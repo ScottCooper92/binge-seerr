@@ -27,7 +27,7 @@ class ShellScreenshotTest {
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
-    fun placeholderTab() = ShellFrame(SeerrTab.Movies)
+    fun placeholderTab() = ShellFrame(SeerrTab.Search)
 
     @PreviewTest
     @SeerrSpanishPreviews
@@ -53,5 +53,5 @@ private fun ShellFrame(selected: SeerrTab) {
             selectedIndex = mutableIntStateOf(selected.ordinal),
             stacks = SeerrTab.entries.associateWith { NavBackStack<NavKey>(MoviesRoot) },
         )
-    SeerrTabShell(state) { HubScreen(state = previewReady(), actions = previewActions()) }
+    SeerrTabShell(state, discover = { TabPlaceholder(SeerrTab.Movies) }) { HubScreen(state = previewReady(), actions = previewActions()) }
 }

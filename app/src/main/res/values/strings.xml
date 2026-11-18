@@ -1395,4 +1395,22 @@
     <string name="request_problem_not_allowed">This account can\'t make this request. Ask an admin to change your permissions.</string>
     <string name="request_problem_unreachable">The server couldn\'t be reached. Check your connection, then try again.</string>
     <string name="request_problem_other">The server turned the request down. Try again, or ask an admin.</string>
+    <string name="hubs_title_movies">Movies</string>
+    <string name="hubs_title_tv">TV</string>
+    <string name="hubs_row_trending">Trending</string>
+    <string name="hubs_row_recently_added">Recently added</string>
+    <string name="hubs_row_recent_requests">Recent requests</string>
+    <string name="hubs_row_watchlist">Watchlist</string>
+    <string name="hubs_row_popular_movies">Popular movies</string>
+    <string name="hubs_row_popular_tv">Popular series</string>
+    <string name="hubs_row_upcoming_movies">Upcoming movies</string>
+    <string name="hubs_row_upcoming_tv">Upcoming series</string>
+    <string name="hubs_row_custom">More to discover</string>
+    <string name="hubs_empty_message">The server has no rows to show here. Turn some on under Discover sliders in the server settings.</string>
+    <string name="hubs_card_available">Available</string>
+    <string name="hubs_card_requested">Requested</string>
+    <string name="hubs_card_processing">Processing</string>
+    <string name="hubs_card_partial">Partial</string>
+    <string name="hubs_card_blocklisted">Blocklisted</string>
+    <string name="hubs_loading_row">Loading a row</string>
 </resources>

@@ -125,7 +125,7 @@ data class RequestDetailRoute(
 @Serializable
 data object SettingsRoute : SeerrRoute
 
-/** The settings search: the whole window, over the hub, until a result opens its page. */
+/** The settings search: the whole window, over the hub. A result opens its page above the search, which stays beneath it. */
 @Serializable
 data object SettingsSearchRoute : SeerrRoute
 
