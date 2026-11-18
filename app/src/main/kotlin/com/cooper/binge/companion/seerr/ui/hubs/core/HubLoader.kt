@@ -26,7 +26,7 @@ sealed interface HubState<out K, out I> {
     /** No row has resolved yet. */
     data object Loading : HubState<Nothing, Nothing>
 
-    /** At least one row has items. [pending] rows are still loading and fill in below as they land. */
+    /** At least one row has items. [pending] rows are still loading and fill in below, in order, once the rows above them settle. */
     data class Ready<K, I>(
         val rows: List<HubRow<K, I>>,
         val pending: Int = 0,
@@ -142,11 +142,20 @@ class HubLoader<K : Any, I>(
     }
 }
 
+/**
+ * Rows show in the order asked for and only up to the first one still loading, so a row that lands late can never appear
+ * above one already on screen. The rows behind it count as [HubState.Ready.pending] until it settles.
+ */
 private fun <K, I> Data<K, I>.toState(): HubState<K, I> {
     if (keys.isEmpty()) return HubState.Empty
     val resolved = keys.mapNotNull { key -> results[key] }
-    val loaded = keys.mapNotNull { key -> (results[key] as? RowResult.Loaded)?.let { key to it.items } }.filter { it.second.isNotEmpty() }
-    val pending = resolved.count { it is RowResult.Loading }
+    val settled = keys.takeWhile { results[it] !is RowResult.Loading }
+    val loaded =
+        settled
+            .mapNotNull { key ->
+                (results[key] as? RowResult.Loaded)?.let { key to it.items }
+            }.filter { it.second.isNotEmpty() }
+    val pending = keys.size - settled.size
     return when {
         loaded.isNotEmpty() -> HubState.Ready(loaded.map { (key, items) -> HubRow(key, items) }, pending)
         pending > 0 -> HubState.Loading
