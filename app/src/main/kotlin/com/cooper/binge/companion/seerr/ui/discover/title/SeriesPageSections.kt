@@ -14,6 +14,7 @@ import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.DetailStat
 import com.binge.designsystem.component.InfoRowList
 import com.binge.designsystem.component.SectionHeader
+import com.binge.designsystem.isExpandedLayout
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.title.SeriesDetails
 import com.cooper.binge.companion.seerr.discover.title.trailerUrl
@@ -52,14 +53,16 @@ internal fun SeriesPageBody(
     val context = LocalContext.current
     val locale = LocalConfiguration.current.locales[0]
     Column(verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m))) {
-        TitleStatsRows(series.titleStats(locale))
+        // The expanded header already shows these and the synopsis.
+        val expanded = isExpandedLayout()
+        if (!expanded) TitleStatsRows(series.titleStats(locale))
         TitleActions(
             model = titleActionsModel(series.standard, series.fourK),
             onRequest = actions.onRequest,
             onTrailer = series.videos.trailerUrl()?.let { url -> { actions.onOpenUrl(url) } },
             onShare = { context.shareTitle(series.name, series.webUrl) },
         )
-        OverviewSection(series.overview)
+        if (!expanded) OverviewSection(series.overview)
         EpisodesSection(state, seasonActions)
         InfoRowList(series.factEntries(context.resources, locale, state.extras?.ratings))
         PeopleRow(stringResource(R.string.title_page_cast), series.cast, actions.onOpenPerson, actions.onOpenCredits)
