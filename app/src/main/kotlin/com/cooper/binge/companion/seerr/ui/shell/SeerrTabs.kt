@@ -100,8 +100,8 @@ internal fun seerrTabItems(): List<BingeNavSuiteItem> =
 @Composable
 internal fun SeerrTabShell(
     tabs: TabShellState<SeerrTab>,
-    modifier: Modifier = Modifier,
     discover: @Composable (HubTab) -> Unit,
+    modifier: Modifier = Modifier,
     settings: @Composable () -> Unit,
 ) {
     TabShell(

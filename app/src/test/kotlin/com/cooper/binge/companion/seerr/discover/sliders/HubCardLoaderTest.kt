@@ -1,5 +1,6 @@
 package com.cooper.binge.companion.seerr.discover.sliders
 
+import com.cooper.binge.companion.seerr.demo.DEMO_ORIGIN
 import com.cooper.binge.companion.seerr.discover.GenreTile
 import com.cooper.binge.companion.seerr.discover.TitleAvailability
 import com.cooper.binge.companion.seerr.discover.TitleKind
@@ -40,11 +41,12 @@ class HubCardLoaderTest {
     }
 
     private class FakeMedia(
+        val server: String = "https://s/",
         val added: List<SeerrRequestMediaDto> = emptyList(),
         val requested: List<SeerrRequestMediaDto> = emptyList(),
         val missing: Set<Int> = emptySet(),
     ) : HubMediaSource {
-        override suspend fun serverUrl() = "https://s/"
+        override suspend fun serverUrl() = server
 
         override suspend fun recentlyAdded() = added
 
@@ -113,5 +115,14 @@ class HubCardLoaderTest {
     fun `a tile row has no cards`() =
         runTest {
             assertTrue(HubCardLoader(FakeTitles(emptyList()), FakeMedia()).load(HubRow.Genres(1, null, HubTab.Movies)).isEmpty())
+        }
+
+    @Test
+    fun `a card on the demo has no page to open and one on a real server has`() =
+        runTest {
+            val titles = FakeTitles(listOf(result(TitleKind.Movie, 1)))
+            val row = HubRow.Trending(1, null, HubTab.Movies)
+            assertTrue(HubCardLoader(titles, FakeMedia(server = DEMO_ORIGIN)).load(row).none { it.hasPage })
+            assertTrue(HubCardLoader(titles, FakeMedia()).load(row).all { it.hasPage })
         }
 }
