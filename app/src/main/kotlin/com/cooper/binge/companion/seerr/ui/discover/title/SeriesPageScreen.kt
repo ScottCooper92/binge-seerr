@@ -28,13 +28,14 @@ internal fun SeriesPageScreen(
     state: SeriesPageUiState,
     events: Flow<SeriesPageEvent>,
     actions: TitlePageActions,
+    seasonActions: SeasonActions,
     modifier: Modifier = Modifier,
     scrollState: ScrollState = rememberScrollState(),
 ) {
     when (state) {
         SeriesPageUiState.Loading -> MediaHeroDetailPlaceholder { LoadingScreen() }
         is SeriesPageUiState.Error -> MediaHeroDetailPlaceholder { ErrorScreen(state.error, onRetry = actions.onRetry) }
-        is SeriesPageUiState.Ready -> ReadySeriesPage(state, events, actions, modifier, scrollState)
+        is SeriesPageUiState.Ready -> ReadySeriesPage(state, events, actions, seasonActions, modifier, scrollState)
     }
 }
 
@@ -43,6 +44,7 @@ private fun ReadySeriesPage(
     state: SeriesPageUiState.Ready,
     events: Flow<SeriesPageEvent>,
     actions: TitlePageActions,
+    seasonActions: SeasonActions,
     modifier: Modifier,
     scrollState: ScrollState,
 ) {
@@ -68,7 +70,7 @@ private fun ReadySeriesPage(
         topBarActions = { glassAlpha -> ShareBarAction(glassAlpha) { context.shareTitle(series.name, series.webUrl) } },
     ) {
         Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
-        SeriesPageBody(state, actions)
+        SeriesPageBody(state, actions, seasonActions)
     }
     if (state.requestSheetOpen) {
         RequestSheet(

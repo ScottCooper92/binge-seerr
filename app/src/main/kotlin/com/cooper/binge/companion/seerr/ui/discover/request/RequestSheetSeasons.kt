@@ -38,7 +38,7 @@ internal fun SeasonStep(
 ) {
     Column {
         Text(stringResource(R.string.request_sheet_seasons), style = MaterialTheme.typography.titleSmall)
-        selection.limit?.let { QuotaNote(selection, it) }
+        selection.limit?.takeIf { it > 0 }?.let { QuotaNote(selection, it) }
         if (selection.partialAllowed) {
             if (selection.open.size > 1) {
                 CheckboxRow(
