@@ -137,7 +137,6 @@ class BlocklistPagerTest {
         listVersion = 0,
         hasFilters = hasFilters,
         canManage = true,
-        canBlockCollections = false,
         actingTmdbIds = emptySet(),
     )
 
