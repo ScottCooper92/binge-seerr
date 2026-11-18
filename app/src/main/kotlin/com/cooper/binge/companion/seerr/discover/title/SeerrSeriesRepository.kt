@@ -56,13 +56,14 @@ class SeerrSeriesRepository(
             val profile = profile()
             val dto = api.tvFullDetails(tmdbId)
             val permissions = user.toPermissions()
-            dto.toSeriesDetails(
-                region = streamingRegion(api, user, profile, deviceRegion()),
-                mayRequest = permissions.canRequestSeries,
-                mayRequest4k = permissions.mayRequest4k(isTv = true, profile.settings),
-                settings = profile.settings,
-                webUrl = serverUrl() + "tv/" + tmdbId,
-            )
+            dto
+                .toSeriesDetails(
+                    region = streamingRegion(api, user, profile, deviceRegion()),
+                    mayRequest = permissions.canRequestSeries,
+                    mayRequest4k = permissions.mayRequest4k(isTv = true, profile.settings),
+                    settings = profile.settings,
+                    webUrl = serverUrl() + "tv/" + tmdbId,
+                ).copy(companiesOpen = profile.hasDiscoverByCategory)
         }
 
     override suspend fun season(
@@ -144,7 +145,7 @@ internal fun SeerrTvDetailsDto.toSeriesDetails(
         inProduction = inProduction,
         originalLanguage = originalLanguage,
         spokenLanguageCodes = spokenLanguages.mapNotNull { it.code?.takeIf(String::isNotBlank) },
-        networks = networks.map { it.name },
+        networks = networks.map { TitleCompany(it.id, it.name) },
         creators = createdBy.map { it.name },
         seasonCount = numberOfSeasons?.takeIf { it > 0 },
         episodeCount = numberOfEpisodes?.takeIf { it > 0 },
