@@ -134,8 +134,17 @@ class DiscoverGridViewModelTest {
             assertEquals(setOf(18), controls.filters.genres)
             vm.onApply(controls.sort ?: DiscoverSort.PopularityDesc, controls.filters)
             advanceUntilIdle()
-            assertEquals(setOf(18), grid.requests.last().first.filters.genres)
-            assertEquals(ChipKind.Genre, vm.uiState.value.controls.chip?.kind)
+            assertEquals(
+                setOf(18),
+                grid.requests
+                    .last()
+                    .first.filters.genres,
+            )
+            assertEquals(
+                ChipKind.Genre,
+                vm.uiState.value.controls.chip
+                    ?.kind,
+            )
         }
 
     @Test
@@ -144,10 +153,17 @@ class DiscoverGridViewModelTest {
             val controls = vm.uiState.value.controls
             vm.onApply(DiscoverSort.PopularityDesc, controls.filters.copy(runtimeMin = 90))
             advanceUntilIdle()
-            assertEquals(ChipKind.Genre, vm.uiState.value.controls.chip?.kind)
+            assertEquals(
+                ChipKind.Genre,
+                vm.uiState.value.controls.chip
+                    ?.kind,
+            )
             vm.onClearFilter()
             advanceUntilIdle()
-            val filters = grid.requests.last().first.filters
+            val filters =
+                grid.requests
+                    .last()
+                    .first.filters
             assertTrue(filters.genres.isEmpty())
             assertEquals(90, filters.runtimeMin)
         }

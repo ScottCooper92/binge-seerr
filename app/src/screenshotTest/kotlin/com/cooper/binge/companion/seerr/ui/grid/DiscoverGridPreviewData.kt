@@ -56,4 +56,4 @@ internal fun plainGridState() =
 /** Few enough cards that the footer is on screen. */
 private const val FEW = 2
 
-internal val noGridActions = DiscoverGridActions({}, {}, {}, {}, { _, _ -> })
+internal val noGridActions = DiscoverGridActions({}, {}, {}, {}, {}, { _, _ -> })

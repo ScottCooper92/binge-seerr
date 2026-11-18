@@ -15,9 +15,9 @@ import com.cooper.binge.companion.seerr.discover.grid.DiscoverSort
 import com.cooper.binge.companion.seerr.discover.grid.GridPreset
 import com.cooper.binge.companion.seerr.discover.grid.GridRequest
 import com.cooper.binge.companion.seerr.discover.grid.keeps
-import com.cooper.binge.companion.seerr.discover.grid.without
 import com.cooper.binge.companion.seerr.discover.grid.startingFilters
 import com.cooper.binge.companion.seerr.discover.grid.startingSort
+import com.cooper.binge.companion.seerr.discover.grid.without
 import com.cooper.binge.companion.seerr.discover.sliders.HubCard
 import com.cooper.binge.companion.seerr.discover.sliders.HubMediaSource
 import com.cooper.binge.companion.seerr.discover.sliders.toCard
