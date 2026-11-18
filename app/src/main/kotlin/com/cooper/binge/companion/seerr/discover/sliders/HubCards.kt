@@ -27,9 +27,9 @@ data class HubCard(
 )
 
 internal fun TitleResult.toCard(serverUrl: String): HubCard =
-    HubCard(kind, tmdbId, name, year, artworkPath?.toTmdbPosterUrl(), availability, webUrl(serverUrl, kind, tmdbId))
+    HubCard(kind, tmdbId, name, year, artworkPath?.toTmdbPosterUrl(), availability, hubWebUrl(serverUrl, kind, tmdbId))
 
-private fun webUrl(
+internal fun hubWebUrl(
     serverUrl: String,
     kind: TitleKind,
     tmdbId: Int,
@@ -108,7 +108,7 @@ private fun SeerrRequestMediaDto.toCard(
             title.year,
             title.posterUrl,
             status.toAvailability(),
-            webUrl(serverUrl, tab.titleKind(), tmdbId),
+            hubWebUrl(serverUrl, tab.titleKind(), tmdbId),
         )
     }
 
