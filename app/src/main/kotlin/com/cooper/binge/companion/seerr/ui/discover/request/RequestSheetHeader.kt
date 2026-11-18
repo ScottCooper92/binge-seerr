@@ -74,3 +74,9 @@ private fun RequestSheetTarget.statusRes(): Int =
         !standardOpen && fourKOpen -> R.string.request_sheet_status_4k_open
         else -> R.string.request_sheet_status_new
     }
+
+/** The parts that exist, joined by [separator]; null when none does, so the header draws no empty line. */
+internal fun joinMeta(
+    parts: List<String?>,
+    separator: String,
+): String? = parts.filterNot { it.isNullOrBlank() }.takeIf { it.isNotEmpty() }?.joinToString(separator)

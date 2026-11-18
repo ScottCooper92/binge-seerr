@@ -62,7 +62,7 @@ private fun ReadySeriesPage(
                             actionLabel = resources.getString(R.string.action_try_again),
                             duration = SnackbarDuration.Long,
                         )
-                    if (answer == SnackbarResult.ActionPerformed) actions.onRetry()
+                    if (answer == SnackbarResult.ActionPerformed) actions.onReload()
                 }
             }
         }

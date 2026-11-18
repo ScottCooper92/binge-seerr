@@ -208,6 +208,9 @@ has no snackbars.) The design system's `docs/messages.md` has the worked example
   it. It does not go away by itself. It is an acknowledgement, not a confirmation, so it has exactly one action; a choice is
   `BingeConfirmDialog`.
 - **In place:** a failed load stays an error screen with Retry.
+- **A red footer:** the one exception, for a sheet whose pinned primary action failed to send and got no answer. The button
+  turns red with a short reason for a few seconds, and a tap in that time opens `BingeConfirmDialog` with the full cause and
+  Retry. Use it only for a failed send from a sheet with a pinned primary; everything else keeps the forms above.
 - **A snackbar never carries text the user must read to act.** Text the server supplies, such as a rejection's reason, has
   no length bound, so it belongs in a dialog. Do not turn every message into a dialog: a short result, or a refusal with
   nothing to act on, stays a snackbar.

@@ -59,21 +59,17 @@ internal class RequestSheetReads(
         }
     }
 
+    /** Applies [change] to the pick only while it is still for [serverId], so a late answer for a server the user left changes nothing. */
+    private fun forServer(
+        serverId: Int,
+        change: (DestinationPick) -> DestinationPick,
+    ) = store.updatePick { pick -> if (pick.serverId == serverId) change(pick) else pick }
+
     fun choices(serverId: Int) {
         scope.launch {
             attempt { repository.choices(target.kind, serverId) }.fold(
-                onSuccess = { loaded -> store.updatePick { pick -> if (pick.serverId == serverId) pick.withChoices(loaded) else pick } },
-                onFailure = {
-                    store.updatePick { pick ->
-                        if (pick.serverId ==
-                            serverId
-                        ) {
-                            pick.copy(choices = ChoicesState.Failed)
-                        } else {
-                            pick
-                        }
-                    }
-                },
+                onSuccess = { loaded -> forServer(serverId) { it.withChoices(loaded) } },
+                onFailure = { forServer(serverId) { it.copy(choices = ChoicesState.Failed) } },
             )
         }
     }

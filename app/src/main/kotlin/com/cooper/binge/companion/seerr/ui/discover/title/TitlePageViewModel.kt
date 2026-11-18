@@ -92,6 +92,11 @@ class TitlePageViewModel
         /** Closing the sheet reads the title again, since a refused send may mean the server's state moved under the page. */
         fun closeRequestSheet() {
             updateReady { it.copy(requestSheetOpen = false) }
+            reload()
+        }
+
+        /** Reads the title again where the page stands: a failure keeps what it shows and says so, rather than dropping to the loading page. */
+        fun reload() {
             viewModelScope.launch {
                 attempt { repository.movie(tmdbId) }.fold(
                     onSuccess = { movie -> updateReady { it.copy(movie = movie) } },

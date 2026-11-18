@@ -159,4 +159,28 @@ class SeriesPageViewModelTest {
             assertTrue(vm.uiState.value is SeriesPageUiState.Ready)
             collecting.cancel()
         }
+
+    @Test
+    fun `a reload after a failed one keeps the page and updates it`() =
+        runTest {
+            val repository = FakeSeries()
+            val vm = SeriesPageViewModel(repository, 1399)
+            repository.failSeries = IOException("down")
+            vm.reload()
+            assertTrue(vm.uiState.value is SeriesPageUiState.Ready)
+
+            repository.failSeries = null
+            repository.series = seriesFixture(seasons = listOf(seasonFixture(1, TitleAvailability.Pending)))
+            vm.reload()
+
+            assertTrue(vm.uiState.value is SeriesPageUiState.Ready)
+            assertEquals(
+                TitleAvailability.Pending,
+                vm
+                    .ready()
+                    .series.seasons
+                    .first()
+                    .standard,
+            )
+        }
 }

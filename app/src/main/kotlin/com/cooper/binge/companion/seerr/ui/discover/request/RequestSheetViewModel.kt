@@ -21,6 +21,7 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -191,6 +192,9 @@ class RequestSheetViewModel
         private val eventFlow = MutableSharedFlow<RequestSheetEvent>(extraBufferCapacity = 1)
         val events: SharedFlow<RequestSheetEvent> = eventFlow.asSharedFlow()
 
+        /** The timer that turns the red footer back; a new send or a new failure replaces it, so an old one cannot cut a newer window short. */
+        private var footerTimer: Job? = null
+
         init {
             load()
         }
@@ -266,6 +270,7 @@ class RequestSheetViewModel
         fun submit() {
             val current = store.ready() ?: return
             if (!current.canSubmit) return
+            footerTimer?.cancel()
             store.set(current.copy(submitting = true, problem = null, failure = null, footerFailed = false, failureDialog = false))
             val destination = current.pick?.takeIf { current.advancedExpanded && current.showAdvanced }
             val submission =
@@ -295,10 +300,12 @@ class RequestSheetViewModel
                 return
             }
             store.update { it.copy(submitting = false, failure = problem, footerFailed = true) }
-            viewModelScope.launch {
-                delay(FOOTER_FAILURE_MILLIS)
-                store.update { if (it.failure == problem && !it.failureDialog) it.copy(footerFailed = false) else it }
-            }
+            footerTimer?.cancel()
+            footerTimer =
+                viewModelScope.launch {
+                    delay(FOOTER_FAILURE_MILLIS)
+                    store.update { if (!it.failureDialog) it.copy(footerFailed = false) else it }
+                }
         }
     }
 

@@ -36,6 +36,8 @@ class TitlePageActions(
     val onOpenCollection: (Int) -> Unit,
     val onOpenUrl: (String) -> Unit,
     val onOpenCredits: () -> Unit,
+    /** Reads the page again where it stands, for the snackbar after a request whose reload failed. */
+    val onReload: () -> Unit = {},
 )
 
 /** The film page: a hero, its stats, and the actions, with Request first; then the facts and people. */
@@ -75,7 +77,7 @@ private fun ReadyPage(
                             actionLabel = resources.getString(R.string.action_try_again),
                             duration = SnackbarDuration.Long,
                         )
-                    if (answer == SnackbarResult.ActionPerformed) actions.onRetry()
+                    if (answer == SnackbarResult.ActionPerformed) actions.onReload()
                 }
             }
         }

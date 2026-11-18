@@ -44,6 +44,7 @@ import com.cooper.binge.companion.seerr.discover.title.TitleRatings
 import com.cooper.binge.companion.seerr.discover.title.TitleVideo
 import com.cooper.binge.companion.seerr.discover.title.trailerUrl
 import com.cooper.binge.companion.seerr.seerr.toTmdbPosterUrl
+import com.cooper.binge.companion.seerr.ui.discover.request.joinMeta
 import java.util.Locale
 import com.binge.designsystem.R as DesR
 
@@ -110,9 +111,9 @@ internal fun TitlePageBody(
 
 /** The line under the title in the request sheet: release year and runtime, whichever the server gave. */
 @Composable
-internal fun MovieDetails.requestMeta(): String {
+internal fun MovieDetails.requestMeta(): String? {
     val runtime = runtimeMinutes?.let { stringResource(R.string.title_page_runtime, it / MINUTES_PER_HOUR, it % MINUTES_PER_HOUR) }
-    return listOfNotNull(year, runtime).joinToString(stringResource(R.string.request_sheet_meta_separator))
+    return joinMeta(listOf(year, runtime), stringResource(R.string.request_sheet_meta_separator))
 }
 
 /** The movie's stats: rating with its votes, release year, runtime and certification, then the server's other ratings. */

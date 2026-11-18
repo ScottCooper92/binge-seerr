@@ -91,6 +91,11 @@ class SeriesPageViewModel
         /** Closing the sheet reads the show again, since a request moves its seasons and a refused one may mean the server's state moved. */
         fun closeRequestSheet() {
             updateReady { it.copy(requestSheetOpen = false) }
+            reload()
+        }
+
+        /** Reads the show again where the page stands: a failure keeps what it shows and says so, rather than dropping to the loading page. */
+        fun reload() {
             viewModelScope.launch {
                 attempt { repository.series(tmdbId) }.fold(
                     onSuccess = { series -> updateReady { it.copy(series = series) } },

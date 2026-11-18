@@ -159,4 +159,26 @@ class TitlePageViewModelTest {
             assertTrue(vm.uiState.value is TitlePageUiState.Ready)
             collecting.cancel()
         }
+
+    @Test
+    fun `a reload after a failed one keeps the page and updates it`() =
+        runTest {
+            val titles = FakeTitles()
+            val vm = TitlePageViewModel(titles, 603)
+            titles.failMovie = IOException("down")
+            vm.reload()
+            assertTrue(vm.uiState.value is TitlePageUiState.Ready)
+
+            titles.failMovie = null
+            titles.movie = movieFixture(standard = VersionState(TitleAvailability.Pending, mayRequest = false))
+            vm.reload()
+
+            assertTrue(vm.uiState.value is TitlePageUiState.Ready)
+            assertEquals(
+                TitleAvailability.Pending,
+                vm
+                    .ready()
+                    .movie.standard.availability,
+            )
+        }
 }
