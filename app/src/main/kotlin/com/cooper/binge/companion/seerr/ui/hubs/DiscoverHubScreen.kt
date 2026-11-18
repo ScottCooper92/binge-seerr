@@ -83,19 +83,27 @@ fun DiscoverHubScreen(
     val title = stringResource(if (tab == HubTab.Movies) R.string.hubs_title_movies else R.string.hubs_title_tv)
     val hasHero = (state as? DiscoverHubUiState.Ready)?.hero?.isNotEmpty() == true
     val statusBar = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
-    val bottom = dimensionResource(DesR.dimen.padding_m)
-    val base = if (hasHero) PaddingValues(bottom = bottom) else PaddingValues(top = statusBar, bottom = bottom)
-    val inner = navOverlayPadding(base)
-    // The hero and the rows run under the rail and pad their own first column, as Binge's hub does.
-    val bleeding = navOverlayPadding(base, bleedStart = true)
+    val inner = navOverlayPadding(if (hasHero) PaddingValues() else PaddingValues(top = statusBar))
+    // The scrolling states leave Binge's 16dp below their last row, and run under the rail, padding their own first column.
+    val scrolling =
+        navOverlayPadding(
+            if (hasHero) {
+                PaddingValues(
+                    bottom = dimensionResource(DesR.dimen.padding_m),
+                )
+            } else {
+                PaddingValues(top = statusBar, bottom = dimensionResource(DesR.dimen.padding_m))
+            },
+            bleedStart = true,
+        )
     Box(modifier = Modifier.fillMaxSize().semantics { paneTitle = title }) {
         when (state) {
-            DiscoverHubUiState.Loading -> HubSkeleton(bleeding)
+            DiscoverHubUiState.Loading -> HubSkeleton(scrolling)
             DiscoverHubUiState.Empty -> EmptyScreen(stringResource(R.string.hubs_empty_message), Modifier.padding(inner))
             is DiscoverHubUiState.Error -> ErrorScreen(state.error, Modifier.padding(inner), onRetry = onRefresh)
             is DiscoverHubUiState.Ready ->
                 BingePullToRefresh(isRefreshing = state.refreshing, onRefresh = onRefresh, indicatorTopInset = statusBar) {
-                    HubRows(tab, state, bleeding, onOpenTitle, onOpenGrid, onOpenRequests)
+                    HubRows(tab, state, scrolling, onOpenTitle, onOpenGrid, onOpenRequests)
                 }
         }
         if (hasHero) {

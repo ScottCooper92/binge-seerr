@@ -93,7 +93,7 @@ internal fun TitleSearchScreen(
                         IdleBody(
                             state,
                             actions,
-                            navOverlayPadding(PaddingValues(bottom = dimensionResource(DesR.dimen.padding_m))),
+                            navOverlayPadding(PaddingValues()),
                         )
                     is TitleSearchUiState.Loading -> LoadingScreen()
                     is TitleSearchUiState.Ready ->
