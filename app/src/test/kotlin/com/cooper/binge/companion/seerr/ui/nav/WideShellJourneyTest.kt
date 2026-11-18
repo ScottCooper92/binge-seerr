@@ -129,7 +129,7 @@ class WideShellJourneyTest {
     }
 
     @Test
-    fun `Back on another tab returns to Settings with the section as it was left`() {
+    fun `Back on another tab returns to Settings with the section open`() {
         NavHostActivity.discoveryEnabled = true
         host.connectDemo()
         host.launch(HomeRoute, RequestsRoute)

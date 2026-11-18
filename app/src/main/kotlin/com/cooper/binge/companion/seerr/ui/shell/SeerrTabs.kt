@@ -80,7 +80,8 @@ internal fun TabShellState<SeerrTab>.openLink(
  * Keeps a wide window's open section off the app's stack while another tab shows. A section on that stack is drawn by
  * [ShellPanesStrategy] inside the Settings tab, so anything pushed over it from Movies, TV or Search would be swallowed by
  * that scene. Leaving Settings moves the section's chain onto the Settings tab's own stack, and coming back puts it
- * on the app's stack again, so Back from another tab lands on Settings with the section as it was left.
+ * on the app's stack again, so Back from another tab lands on Settings with the section open. Its routes return, but its
+ * view models and saved state do not, so its filter and scroll start again.
  */
 internal fun TabShellState<SeerrTab>.settleSectionStash(appStack: NavBackStack<NavKey>) {
     val stash = stack(SeerrTab.Settings)

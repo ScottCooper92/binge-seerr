@@ -28,6 +28,7 @@ import com.cooper.binge.companion.seerr.ui.search.title.TitleSearchEntry
 import com.cooper.binge.companion.seerr.ui.shell.SeerrTab
 import com.cooper.binge.companion.seerr.ui.shell.SeerrTabShell
 import com.cooper.binge.companion.seerr.ui.shell.TabShellState
+import com.cooper.binge.companion.seerr.ui.shell.popToRoot
 import com.cooper.binge.companion.seerr.ui.shell.settleSectionStash
 import com.cooper.binge.companion.seerr.ui.state.LoadingScreen
 
@@ -60,6 +61,8 @@ fun SeerrNavHost(
     // The tab bar is for every window with the flag on. A wide one draws a section beside the hub in the Settings tab.
     val shell = tabs != null && LocalDiscoveryEnabled.current
     LaunchedEffect(connected, root, shell) { backStack.settleHome(connected, shell) }
+    // A section stashed on the Settings tab belongs to the server just left: signing out empties it.
+    LaunchedEffect(connected) { if (connected == false) tabs?.stack(SeerrTab.Settings)?.popToRoot() }
     // The default section is seeded only while the Settings tab shows: another tab's pushes must not sit above a section.
     val settingsSelected = tabs == null || tabs.selected == SeerrTab.Settings
     // The default section is off the stack, so Back from it leaves; the host's own Back shares the once-only exit.
