@@ -59,7 +59,10 @@ internal fun TitlePageBody(
             modifier = Modifier.readingMargin(),
         )
         if (!expanded) OverviewSection(movie.overview)
-        InfoRowList(movie.factEntries(context.resources, locale, state.extras?.ratings), Modifier.readingMargin())
+        InfoRowList(
+            movie.factEntries(context.resources, locale, state.extras?.ratings, actions.onOpenCompany.takeIf { movie.companiesOpen }),
+            Modifier.readingMargin(),
+        )
         PeopleRow(stringResource(R.string.title_page_cast), movie.cast, actions.onOpenPerson, actions.onOpenCredits)
         PeopleRow(stringResource(R.string.title_page_crew), movie.keyCrew, actions.onOpenPerson, actions.onOpenCredits)
         WhereToWatchSection(movie.providers, actions.onOpenUrl, Modifier.readingMargin())

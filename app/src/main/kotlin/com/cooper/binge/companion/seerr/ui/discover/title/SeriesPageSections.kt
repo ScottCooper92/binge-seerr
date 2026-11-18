@@ -72,7 +72,10 @@ internal fun SeriesPageBody(
         )
         if (!expanded) OverviewSection(series.overview)
         EpisodesSection(state, seasonActions, Modifier.readingMargin())
-        InfoRowList(series.factEntries(context.resources, locale, state.extras?.ratings), Modifier.readingMargin())
+        InfoRowList(
+            series.factEntries(context.resources, locale, state.extras?.ratings, actions.onOpenCompany.takeIf { series.companiesOpen }),
+            Modifier.readingMargin(),
+        )
         PeopleRow(stringResource(R.string.title_page_cast), series.cast, actions.onOpenPerson, actions.onOpenCredits)
         PeopleRow(stringResource(R.string.title_page_crew), series.keyCrew, actions.onOpenPerson, actions.onOpenCredits)
         WhereToWatchSection(series.providers, actions.onOpenUrl, Modifier.readingMargin())

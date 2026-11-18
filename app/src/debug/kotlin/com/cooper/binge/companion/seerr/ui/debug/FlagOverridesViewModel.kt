@@ -9,8 +9,9 @@ import com.cooper.binge.companion.seerr.flags.SEARCH_TOGGLES_FLAG_KEY
 import com.cooper.binge.companion.seerr.flags.SearchTogglesFlag
 import com.cooper.binge.companion.seerr.flags.SearchTogglesOverride
 import com.cooper.homelab.core.flags.FeatureFlags
-import com.cooper.homelab.core.flags.Flag
+import com.cooper.homelab.core.flags.FlagKey
 import com.cooper.homelab.core.flags.FlagOverrides
+import com.cooper.homelab.core.flags.SharedFlags
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -24,7 +25,7 @@ import javax.inject.Inject
 data class FlagRow(
     val key: String,
     /** The shared flag this row is, or null for one of the app's own. */
-    val flag: Flag?,
+    val flag: FlagKey?,
     val effective: Boolean,
     val override: Boolean?,
 )
@@ -56,7 +57,7 @@ class FlagOverridesViewModel
                 combine(searchTogglesFlag.enabled, searchTogglesOverride.value, ::Pair),
             ) { (flags, local), (discovery, discoveryLocal), (toggles, togglesLocal) ->
                 FlagOverridesUiState.Ready(
-                    Flag.entries.map { FlagRow(it.key, it, flags[it], local[it]) } +
+                    SharedFlags.all.map { FlagRow(it.key, it, flags[it], local[it.key]) } +
                         listOf(FlagRow(DISCOVERY_FLAG_KEY, null, discovery, discoveryLocal)) +
                         listOf(FlagRow(SEARCH_TOGGLES_FLAG_KEY, null, toggles, togglesLocal)),
                 )

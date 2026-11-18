@@ -65,4 +65,6 @@
     <dimen name="person_portrait_width">140dp</dimen>
     <dimen name="person_skeleton_name_height">32dp</dimen>
     <dimen name="season_dropdown_max_width">180dp</dimen>
+    <!-- The width the search results grid is capped at, so a result keeps a legible width. -->
+    <dimen name="search_content_max_width">640dp</dimen>
 </resources>
