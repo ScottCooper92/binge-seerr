@@ -73,7 +73,7 @@ private fun ColumnScope.RowsPage(
         draft = draft,
         sortChoices = sortChoices,
         today = today,
-        onSort = { onChange(draft.copy(sort = it)) },
+        onSort = { onChange(draft.withSort(it)) },
         onOpen = { nav.push(it.name) },
         onClearAll = { onChange(draft.copy(filters = DiscoverFilters())) },
     )

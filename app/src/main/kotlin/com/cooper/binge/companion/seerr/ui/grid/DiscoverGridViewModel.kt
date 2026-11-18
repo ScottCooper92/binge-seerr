@@ -14,7 +14,8 @@ import com.cooper.binge.companion.seerr.discover.grid.DiscoverGridRepository
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverSort
 import com.cooper.binge.companion.seerr.discover.grid.GridPreset
 import com.cooper.binge.companion.seerr.discover.grid.GridRequest
-import com.cooper.binge.companion.seerr.discover.grid.RATING_SORT_VOTE_FLOOR
+import com.cooper.binge.companion.seerr.discover.grid.keeps
+import com.cooper.binge.companion.seerr.discover.grid.without
 import com.cooper.binge.companion.seerr.discover.grid.startingFilters
 import com.cooper.binge.companion.seerr.discover.grid.startingSort
 import com.cooper.binge.companion.seerr.discover.sliders.HubCard
@@ -89,35 +90,18 @@ class DiscoverGridViewModel
             GridControls(
                 sort = query.sort.takeIf { canRefine },
                 sortChoices = if (canRefine) DiscoverSort.forKind(kind) else emptyList(),
-                chip =
-                    if (canRefine &&
-                        !starting.isEmpty &&
-                        query.filters.copy(voteCountMin = starting.voteCountMin) == starting
-                    ) {
-                        preset.toChip(title)
-                    } else {
-                        null
-                    },
+                filters = query.filters,
+                chip = if (canRefine && !starting.isEmpty && query.filters.keeps(starting)) preset.toChip(title) else null,
             )
 
         /** Applies the order and the filters the sheet edited as one change, so the list starts again once. */
         fun onApply(
             sort: DiscoverSort,
             filters: DiscoverFilters,
-        ) {
-            sortFilter.set(filters.withRatingFloor(sort), sort)
-        }
+        ) = sortFilter.set(filters, sort)
 
-        /** Ordering by rating also sets the vote-count floor, as a Vote count value the user can clear. */
-        fun onSort(sort: DiscoverSort) {
-            sortFilter.setSort(sort)
-            if (sort.isByRating) {
-                sortFilter.updateFilters { if (it.voteCountMin == null) it.copy(voteCountMin = RATING_SORT_VOTE_FLOOR) else it }
-            }
-        }
-
-        /** Drops the filter the row started with, so the grid shows the whole list. */
-        fun onClearFilter() = sortFilter.setFilters(DiscoverFilters())
+        /** Drops the filter the row started with and keeps any the user added since. */
+        fun onClearFilter() = sortFilter.updateFilters { it.without(starting) }
 
         fun onRetry() = list.retry()
 
@@ -137,9 +121,6 @@ class DiscoverGridViewModel
             ): DiscoverGridViewModel
         }
     }
-
-private fun DiscoverFilters.withRatingFloor(sort: DiscoverSort): DiscoverFilters =
-    if (sort.isByRating && voteCountMin == null) copy(voteCountMin = RATING_SORT_VOTE_FLOOR) else this
 
 internal fun toUiState(
     page: PagedListState<HubCard>,

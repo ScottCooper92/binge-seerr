@@ -61,7 +61,7 @@ internal class DiscoverGridActions(
     val onRetry: () -> Unit,
     val onLoadMore: () -> Unit,
     val onOpenTitle: (HubCard) -> Unit,
-    val onApply: (DiscoverSort, DiscoverFilters) -> Unit = { _, _ -> },
+    val onApply: (DiscoverSort, DiscoverFilters) -> Unit,
 )
 
 private const val LOAD_MORE_AHEAD = 6

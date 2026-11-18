@@ -3,6 +3,7 @@ package com.cooper.binge.companion.seerr.ui.grid
 import androidx.compose.runtime.saveable.Saver
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverFilters
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverSort
+import com.cooper.binge.companion.seerr.discover.grid.RATING_SORT_VOTE_FLOOR
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -13,6 +14,15 @@ internal data class DiscoverFilterDraft(
     val sort: DiscoverSort,
     val filters: DiscoverFilters,
 ) {
+    /**
+     * The draft with [next] as its order. Moving to an order by rating from one that is not sets the vote-count floor, so the Vote
+     * count row shows it and the user can clear it; a floor the user cleared stays cleared until the order changes again.
+     */
+    fun withSort(next: DiscoverSort): DiscoverFilterDraft {
+        val floored = next.isByRating && !sort.isByRating && filters.voteCountMin == null
+        return copy(sort = next, filters = if (floored) filters.copy(voteCountMin = RATING_SORT_VOTE_FLOOR) else filters)
+    }
+
     companion object {
         /** Saves a draft across a rotation as the JSON of itself, so no Android type is needed to hold it. */
         val Saver: Saver<DiscoverFilterDraft, String> =

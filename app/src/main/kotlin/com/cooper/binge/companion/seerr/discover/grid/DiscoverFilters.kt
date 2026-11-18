@@ -35,6 +35,28 @@ data class DiscoverFilters(
     val isEmpty: Boolean get() = this == DiscoverFilters()
 }
 
+/** Whether every filter a [preset] set is still set here, so the chip that stands for the preset still reads true. */
+fun DiscoverFilters.keeps(preset: DiscoverFilters): Boolean =
+    genres.containsAll(preset.genres) &&
+        keywords.containsAll(preset.keywords) &&
+        providers.containsAll(preset.providers) &&
+        (preset.company == null || company == preset.company) &&
+        (preset.language == null || language == preset.language) &&
+        (preset.region == null || region == preset.region) &&
+        (preset.releaseFrom == null || releaseFrom == preset.releaseFrom)
+
+/** These filters without the ones a [preset] set, so what the user added on top stays. */
+fun DiscoverFilters.without(preset: DiscoverFilters): DiscoverFilters =
+    copy(
+        genres = genres - preset.genres,
+        keywords = keywords - preset.keywords,
+        providers = providers - preset.providers,
+        company = company.takeUnless { it == preset.company },
+        language = language.takeUnless { it == preset.language },
+        region = region.takeUnless { it == preset.region },
+        releaseFrom = releaseFrom.takeUnless { it == preset.releaseFrom },
+    )
+
 /** The vote count a list sorted by rating needs, as TMDB's own "top rated" page asks, so a title with a few votes cannot top it. */
 const val RATING_SORT_VOTE_FLOOR = 300
 

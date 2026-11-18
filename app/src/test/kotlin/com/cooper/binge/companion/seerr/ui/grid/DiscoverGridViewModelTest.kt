@@ -9,7 +9,6 @@ import com.cooper.binge.companion.seerr.discover.grid.DiscoverGridRepository
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverSort
 import com.cooper.binge.companion.seerr.discover.grid.GridPreset
 import com.cooper.binge.companion.seerr.discover.grid.GridRequest
-import com.cooper.binge.companion.seerr.discover.grid.RATING_SORT_VOTE_FLOOR
 import com.cooper.binge.companion.seerr.discover.sliders.HubMediaSource
 import com.cooper.binge.companion.seerr.seerr.HydratedTitle
 import com.cooper.binge.companion.seerr.seerr.SeerrError
@@ -119,7 +118,7 @@ class DiscoverGridViewModelTest {
     @Test
     fun `a new order starts the list again and keeps the filter`() =
         runVm { vm ->
-            vm.onSort(DiscoverSort.RatingDesc)
+            vm.onApply(DiscoverSort.RatingDesc, vm.uiState.value.controls.filters)
             advanceUntilIdle()
             val last = grid.requests.last()
             assertEquals(DiscoverSort.RatingDesc, last.first.sort)
@@ -129,29 +128,28 @@ class DiscoverGridViewModelTest {
         }
 
     @Test
-    fun `ordering by rating sets a vote count floor that keeps the row's chip and can be cleared`() =
+    fun `the sheet opens on the filters in force and applying them unchanged keeps them and the chip`() =
         runVm { vm ->
-            vm.onSort(DiscoverSort.RatingDesc)
+            val controls = vm.uiState.value.controls
+            assertEquals(setOf(18), controls.filters.genres)
+            vm.onApply(controls.sort ?: DiscoverSort.PopularityDesc, controls.filters)
             advanceUntilIdle()
-            assertEquals(
-                RATING_SORT_VOTE_FLOOR,
-                grid.requests
-                    .last()
-                    .first.filters.voteCountMin,
-            )
-            assertEquals(
-                ChipKind.Genre,
-                vm.uiState.value.controls.chip
-                    ?.kind,
-            )
-            vm.onSort(DiscoverSort.PopularityDesc)
+            assertEquals(setOf(18), grid.requests.last().first.filters.genres)
+            assertEquals(ChipKind.Genre, vm.uiState.value.controls.chip?.kind)
+        }
+
+    @Test
+    fun `a filter added in the sheet keeps the row's chip and clearing the chip keeps the added filter`() =
+        runVm { vm ->
+            val controls = vm.uiState.value.controls
+            vm.onApply(DiscoverSort.PopularityDesc, controls.filters.copy(runtimeMin = 90))
             advanceUntilIdle()
-            assertEquals(
-                RATING_SORT_VOTE_FLOOR,
-                grid.requests
-                    .last()
-                    .first.filters.voteCountMin,
-            )
+            assertEquals(ChipKind.Genre, vm.uiState.value.controls.chip?.kind)
+            vm.onClearFilter()
+            advanceUntilIdle()
+            val filters = grid.requests.last().first.filters
+            assertTrue(filters.genres.isEmpty())
+            assertEquals(90, filters.runtimeMin)
         }
 
     @Test

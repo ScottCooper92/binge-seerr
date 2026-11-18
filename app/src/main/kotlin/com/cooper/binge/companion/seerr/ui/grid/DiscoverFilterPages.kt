@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
@@ -149,7 +150,7 @@ private fun VotesPage(
     inset: Modifier,
     onChange: (DiscoverFilters) -> Unit,
 ) {
-    val number = NumberFormat.getInstance()
+    val number = remember { NumberFormat.getInstance() }
     BingeNumberSlider(
         value = filters.voteCountMin ?: 0,
         onValueChange = { onChange(filters.copy(voteCountMin = it?.takeIf { value -> value > 0 })) },

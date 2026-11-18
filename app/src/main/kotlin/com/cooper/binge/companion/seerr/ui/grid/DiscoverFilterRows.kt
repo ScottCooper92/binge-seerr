@@ -1,5 +1,6 @@
 package com.cooper.binge.companion.seerr.ui.grid
 
+import android.text.format.DateFormat
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -16,6 +17,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -100,13 +102,14 @@ internal fun DiscoverFilterSection.summary(
     today: LocalDate,
 ): String {
     val any = stringResource(R.string.grid_filter_any)
+    val number = remember { NumberFormat.getInstance() }
     return when (this) {
         DiscoverFilterSection.Release -> releaseSummary(filters, today)
         DiscoverFilterSection.Rating ->
             filters.ratingMin?.let { stringResource(R.string.grid_filter_rating_value, it.toInt()) } ?: any
         DiscoverFilterSection.Runtime -> runtimeSummary(filters) ?: any
         DiscoverFilterSection.Votes ->
-            filters.voteCountMin?.let { stringResource(R.string.grid_filter_votes_value, NumberFormat.getInstance().format(it)) } ?: any
+            filters.voteCountMin?.let { stringResource(R.string.grid_filter_votes_value, number.format(it)) } ?: any
     }
 }
 
@@ -118,7 +121,7 @@ private fun releaseSummary(
     val preset = ReleasePreset.of(filters.releaseFrom, filters.releaseTo, today)
     if (preset != null) return stringResource(preset.label())
     val locale = LocalConfiguration.current.locales[0]
-    val month = DateTimeFormatter.ofPattern("LLL yyyy", locale)
+    val month = DateTimeFormatter.ofPattern(DateFormat.getBestDateTimePattern(locale, "MMMyyyy"), locale)
     val from = filters.releaseFrom?.let { LocalDate.parse(it).format(month) }
     val to = filters.releaseTo?.let { LocalDate.parse(it).format(month) }
     return when {
