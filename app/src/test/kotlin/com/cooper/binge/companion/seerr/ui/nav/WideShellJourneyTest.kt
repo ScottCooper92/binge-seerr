@@ -1,7 +1,11 @@
 package com.cooper.binge.companion.seerr.ui.nav
 
 import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isSelected
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -10,12 +14,13 @@ import androidx.compose.ui.test.performSemanticsAction
 import androidx.navigation3.runtime.NavKey
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.TitleKind
+import com.cooper.binge.companion.seerr.ui.DiscoverGridRoute
 import com.cooper.binge.companion.seerr.ui.HomeRoute
-import com.cooper.binge.companion.seerr.ui.HubRoute
 import com.cooper.binge.companion.seerr.ui.IssuesRoute
 import com.cooper.binge.companion.seerr.ui.RequestsRoute
 import com.cooper.binge.companion.seerr.ui.ShellRoute
 import com.cooper.binge.companion.seerr.ui.TitleDetailRoute
+import com.cooper.binge.companion.seerr.ui.shell.SeerrTab
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
 import org.junit.After
@@ -38,8 +43,8 @@ private const val WAIT_MILLIS = 5_000L
 private const val DEMO_FILM_ID = 10378
 
 /**
- * The tab bar on a window wide enough for two panes, through the real nav host. Settings keeps its hub beside the section inside
- * the tab, so the bar stays while a section is open, and a fold carries the open section across.
+ * The tab bar on a window wide enough for two panes, through the real nav host. A section stays on the app's stack at every
+ * width: here it is drawn beside the hub inside the Settings tab, so the bar stays, and a fold moves no entry and loses no state.
  */
 @HiltAndroidTest
 @RunWith(RobolectricTestRunner::class)
@@ -53,10 +58,28 @@ class WideShellJourneyTest {
         NavHostActivity.discoveryEnabled = false
     }
 
+    /** The Downloading filter chip, the one node with that text that can be selected: the hub's heading and the request rows read the same. */
+    private fun chip() =
+        host.compose.onNode(
+            hasText(host.string(R.string.requests_filter_processing), substring = true) and
+                SemanticsMatcher.keyIsDefined(SemanticsProperties.Selected),
+        )
+
+    /** Waits for the chip to read as selected: the filter comes back through restored state, a frame after the screen shows. */
+    private fun awaitChipSelected() {
+        host.compose.waitUntil(WAIT_MILLIS) {
+            host.compose
+                .onAllNodes(
+                    hasText(host.string(R.string.requests_filter_processing), substring = true) and isSelected(),
+                ).fetchSemanticsNodes()
+                .isNotEmpty()
+        }
+    }
+
     private fun bar() = host.compose.onNodeWithTag("tab_settings")
 
     @Test
-    fun `a section opens beside the hub under the tab bar and sits on the Settings stack`() {
+    fun `a section opens beside the hub under the tab bar`() {
         NavHostActivity.discoveryEnabled = true
         host.connectDemo()
         host.launch(HomeRoute)
@@ -67,9 +90,8 @@ class WideShellJourneyTest {
             .onNodeWithText(host.string(R.string.hub_section_issues_desc), substring = true)
             .performScrollTo()
             .performSemanticsAction(SemanticsActions.OnClick)
-        host.compose.waitUntil(WAIT_MILLIS) { host.settingsStack() == listOf(HubRoute, IssuesRoute) }
+        host.compose.waitUntil(WAIT_MILLIS) { host.stack() == listOf(ShellRoute, IssuesRoute) }
 
-        assertEquals("the app's stack is only the shell", listOf<NavKey>(ShellRoute), host.stack())
         bar().assertIsDisplayed()
         assertEquals("the hub is still on screen beside the section", true, host.isShowing(host.string(R.string.hub_section_requests_desc)))
     }
@@ -79,11 +101,9 @@ class WideShellJourneyTest {
         NavHostActivity.discoveryEnabled = true
         host.connectDemo()
         host.launch(HomeRoute, RequestsRoute)
-        host.compose.waitUntil(WAIT_MILLIS) { host.settingsStack() == listOf(HubRoute, RequestsRoute) }
-        host.compose.waitUntil(WAIT_MILLIS) { host.stack() == listOf<NavKey>(ShellRoute) }
+        host.awaitShowing(host.string(R.string.requests_filter_processing))
 
-        host.compose.waitUntil(WAIT_MILLIS) { host.stack() == listOf<NavKey>(ShellRoute) }
-        assertEquals(listOf<NavKey>(ShellRoute), host.stack())
+        host.compose.waitUntil(WAIT_MILLIS) { host.stack() == listOf<NavKey>(ShellRoute, RequestsRoute) }
         bar().assertIsDisplayed()
         host.awaitShowing(host.string(R.string.hub_section_issues_desc))
     }
@@ -97,45 +117,103 @@ class WideShellJourneyTest {
 
         host.openLink(HomeRoute, RequestsRoute)
 
-        host.compose.waitUntil(WAIT_MILLIS) { host.settingsStack() == listOf(HubRoute, RequestsRoute) }
+        host.compose.waitUntil(WAIT_MILLIS) { host.stack() == listOf<NavKey>(ShellRoute, RequestsRoute) }
+        bar().assertIsDisplayed()
+        host.awaitShowing(host.string(R.string.hub_section_issues_desc))
+    }
+
+    @Test
+    fun `a title opened from another tab covers the window while a section is open`() {
+        NavHostActivity.discoveryEnabled = true
+        host.connectDemo()
+        host.launch(HomeRoute, RequestsRoute)
+        host.compose.waitUntil(WAIT_MILLIS) { host.stack() == listOf<NavKey>(ShellRoute, RequestsRoute) }
+
+        host.compose.onNodeWithTag("tab_search").performClick()
         host.compose.waitUntil(WAIT_MILLIS) { host.stack() == listOf<NavKey>(ShellRoute) }
-        assertEquals(listOf<NavKey>(ShellRoute), host.stack())
+        host.push(TitleDetailRoute(TitleKind.Movie, DEMO_FILM_ID))
+
+        host.compose.waitUntil(WAIT_MILLIS) { host.stack() == listOf(ShellRoute, TitleDetailRoute(TitleKind.Movie, DEMO_FILM_ID)) }
+        host.compose.onNodeWithTag("tab_settings").assertDoesNotExist()
+        host.back()
+        host.compose.waitUntil(WAIT_MILLIS) { host.stack() == listOf<NavKey>(ShellRoute) }
         bar().assertIsDisplayed()
     }
 
     @Test
-    fun `a section left on Settings by a fold on another tab comes across when Settings is selected`() {
+    fun `Back on another tab returns to Settings with the section open`() {
         NavHostActivity.discoveryEnabled = true
         host.connectDemo()
         host.launch(HomeRoute, RequestsRoute)
-        host.compose.waitUntil(WAIT_MILLIS) { host.settingsStack() == listOf(HubRoute, RequestsRoute) }
+        host.compose.waitUntil(WAIT_MILLIS) { host.stack() == listOf<NavKey>(ShellRoute, RequestsRoute) }
+        host.compose.onNodeWithTag("tab_search").performClick()
         host.compose.waitUntil(WAIT_MILLIS) { host.stack() == listOf<NavKey>(ShellRoute) }
-        host.compose.onNodeWithTag("tab_tv").performClick()
-        host.compose.waitForIdle()
 
-        host.rotate(PHONE)
-        assertEquals("nothing moves while another tab shows", listOf<NavKey>(HubRoute, RequestsRoute), host.settingsStack())
-        host.compose.onNodeWithTag("tab_settings").performClick()
-
-        host.compose.waitUntil(WAIT_MILLIS) { host.stack() == listOf(ShellRoute, RequestsRoute) }
-        assertEquals(listOf<NavKey>(HubRoute), host.settingsStack())
+        host.back()
+        host.compose.waitUntil(WAIT_MILLIS) { host.stack() == listOf<NavKey>(ShellRoute, RequestsRoute) }
+        bar().assertIsDisplayed()
+        host.awaitShowing(host.string(R.string.hub_section_issues_desc))
     }
 
     @Test
-    fun `folding carries the open section from the Settings tab to a whole window and back`() {
+    fun `a grid opened from another tab is not hidden by an open section`() {
         NavHostActivity.discoveryEnabled = true
         host.connectDemo()
         host.launch(HomeRoute, RequestsRoute)
-        host.compose.waitUntil(WAIT_MILLIS) { host.settingsStack() == listOf(HubRoute, RequestsRoute) }
+        host.awaitShowing(host.string(R.string.requests_filter_processing))
+
+        host.compose.onNodeWithTag("tab_movies").performClick()
+        host.awaitShowing(host.string(R.string.hubs_browse_all_movies))
+        host.compose.waitUntil(WAIT_MILLIS) { host.stack() == listOf<NavKey>(ShellRoute) }
+        host.compose.onNodeWithText(host.string(R.string.hubs_browse_all_movies)).performClick()
+
+        host.compose.waitUntil(WAIT_MILLIS) { host.stack().let { it.size == 2 && it[0] == ShellRoute && it[1] is DiscoverGridRoute } }
+        host.awaitShowing(host.string(R.string.hubs_row_popular_movies))
+    }
+
+    @Test
+    fun `a section left on another tab does not come back for the next server`() {
+        NavHostActivity.discoveryEnabled = true
+        host.connectDemo()
+        host.launch(HomeRoute, RequestsRoute)
+        host.compose.waitUntil(WAIT_MILLIS) { host.stack() == listOf<NavKey>(ShellRoute, RequestsRoute) }
+        host.compose.onNodeWithTag("tab_search").performClick()
+        host.compose.waitUntil(WAIT_MILLIS) { host.stack() == listOf<NavKey>(ShellRoute) }
+
+        host.disconnect()
+        host.compose.waitUntil(WAIT_MILLIS) {
+            host.compose.runOnIdle {
+                host.activity.tabs
+                    .stack(SeerrTab.Settings)
+                    .size
+            } == 1
+        }
+        host.connectDemo()
+        host.compose.waitUntil(WAIT_MILLIS) { host.stack() == listOf<NavKey>(ShellRoute) }
+        host.compose.onNodeWithTag("tab_settings").performClick()
+        host.compose.waitForIdle()
+
+        assertEquals(listOf<NavKey>(ShellRoute), host.stack())
+    }
+
+    @Test
+    fun `a fold moves no entry and keeps the section's filter`() {
+        NavHostActivity.discoveryEnabled = true
+        host.connectDemo()
+        host.launch(HomeRoute, RequestsRoute)
+        host.awaitShowing(host.string(R.string.requests_filter_processing))
+        chip().performClick()
+        awaitChipSelected()
 
         host.rotate(PHONE)
-        host.compose.waitUntil(WAIT_MILLIS) { host.stack() == listOf(ShellRoute, RequestsRoute) }
-        assertEquals(listOf<NavKey>(HubRoute), host.settingsStack())
+        host.awaitShowing(host.string(R.string.requests_filter_processing))
+        assertEquals("nothing moved", listOf<NavKey>(ShellRoute, RequestsRoute), host.stack())
+        awaitChipSelected()
 
         host.rotate(WIDE)
-        host.compose.waitUntil(WAIT_MILLIS) { host.settingsStack() == listOf(HubRoute, RequestsRoute) }
-        host.compose.waitUntil(WAIT_MILLIS) { host.stack() == listOf<NavKey>(ShellRoute) }
-        assertEquals(listOf<NavKey>(ShellRoute), host.stack())
+        host.awaitShowing(host.string(R.string.hub_section_issues_desc))
+        assertEquals("nothing moved", listOf<NavKey>(ShellRoute, RequestsRoute), host.stack())
+        awaitChipSelected()
         bar().assertIsDisplayed()
     }
 }
