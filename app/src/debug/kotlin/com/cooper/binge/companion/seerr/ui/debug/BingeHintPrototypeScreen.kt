@@ -20,7 +20,6 @@ import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.BingeOutlinedButton
 import com.binge.designsystem.resolvedContentInset
 import com.binge.designsystem.template.BingeScreenScaffold
-import com.binge.designsystem.template.ScreenBar
 import com.binge.designsystem.template.screenInnerPadding
 import com.binge.designsystem.template.screenOuterPadding
 import com.cooper.binge.companion.seerr.R
@@ -47,7 +46,7 @@ private val rows =
 @Composable
 internal fun BingeHintPrototypeScreen(onBack: () -> Unit) {
     var dismissed by rememberSaveable { mutableStateOf(emptySet<String>()) }
-    BingeScreenScaffold(bar = ScreenBar.Small, title = stringResource(R.string.proto_binge_hint_title), onBack = onBack) { padding ->
+    BingeScreenScaffold(title = stringResource(R.string.proto_binge_hint_title), onBack = onBack) { padding ->
         Column(
             modifier =
                 Modifier

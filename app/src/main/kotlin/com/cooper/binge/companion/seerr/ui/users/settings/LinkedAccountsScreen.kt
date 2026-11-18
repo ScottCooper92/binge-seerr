@@ -45,7 +45,6 @@ import com.binge.designsystem.paneBackOrNull
 import com.binge.designsystem.resolvedContentInset
 import com.binge.designsystem.resolvedContentPadding
 import com.binge.designsystem.template.BingeScreenScaffold
-import com.binge.designsystem.template.ScreenBar
 import com.binge.designsystem.template.screenInnerPadding
 import com.binge.designsystem.template.screenOuterPadding
 import com.cooper.binge.companion.seerr.R
@@ -116,7 +115,6 @@ fun LinkedAccountsScreen(
         }
     }
     BingeScreenScaffold(
-        bar = ScreenBar.Small,
         title = stringResource(R.string.user_settings_page_linked),
         onBack = paneBackOrNull(actions.onBack),
         snackbarHostState = snackbarHostState,

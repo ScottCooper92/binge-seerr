@@ -7,14 +7,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.binge.designsystem.template.BingeScreenScaffold
-import com.binge.designsystem.template.ScreenBar
 import com.binge.designsystem.template.screenInnerPadding
 import com.binge.designsystem.template.screenOuterPadding
 
@@ -28,7 +25,7 @@ import com.binge.designsystem.template.screenOuterPadding
  * and its own manage sheet, opened from [onOverflowClick].
  *
  * @param leadingActions draw before the overflow button.
- * @param trailingActions draw after it. A destructive action goes here, so it is the last thing on the bar (#1531).
+ * @param trailingActions draw after it, handed the bar's own fade for its round buttons. A destructive action goes here, so it is the last thing on the bar (#1531).
  */
 @Composable
 internal fun OverflowDetailScaffold(
@@ -41,23 +38,20 @@ internal fun OverflowDetailScaffold(
     modifier: Modifier = Modifier,
     overflowIcon: ImageVector = Icons.Filled.MoreVert,
     leadingActions: @Composable RowScope.() -> Unit = {},
-    trailingActions: @Composable () -> Unit = {},
+    trailingActions: @Composable RowScope.(glassBackgroundAlpha: Float) -> Unit = {},
     content: @Composable (PaddingValues) -> Unit,
 ) {
     BingeScreenScaffold(
-        bar = ScreenBar.Small,
         title = title,
         modifier = modifier,
         onBack = onBack,
         snackbarHostState = snackbarHostState,
-        actions = {
+        actions = { glassBackgroundAlpha ->
             leadingActions()
             if (showOverflow) {
-                IconButton(onClick = onOverflowClick) {
-                    Icon(overflowIcon, contentDescription = overflowContentDescription)
-                }
+                BarIconAction(overflowIcon, overflowContentDescription, glassBackgroundAlpha, onOverflowClick)
             }
-            trailingActions()
+            trailingActions(glassBackgroundAlpha)
         },
     ) { padding ->
         Box(modifier = Modifier.fillMaxSize().padding(padding.screenOuterPadding())) {

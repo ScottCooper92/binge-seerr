@@ -7,31 +7,30 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.ui.state.BarIconAction
 
 /**
  * The overflow menu on the setup screens a user sees before a server is connected, where Settings is out of reach. One item
  * for now: **Report a problem**, which opens the same prefilled bug form as Settings, with the app and the device and no server.
  */
 @Composable
-internal fun ReportProblemAction(onReportProblem: () -> Unit) {
+internal fun ReportProblemAction(
+    glassBackgroundAlpha: Float,
+    onReportProblem: () -> Unit,
+) {
     var expanded by remember { mutableStateOf(false) }
     val more = stringResource(R.string.overflow_menu)
     Box {
-        IconButton(onClick = { expanded = true }, modifier = Modifier.semantics { contentDescription = more }) {
-            Icon(Icons.Filled.MoreVert, contentDescription = null)
-        }
+        BarIconAction(Icons.Filled.MoreVert, more, glassBackgroundAlpha) { expanded = true }
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             DropdownMenuItem(
                 text = { Text(stringResource(R.string.report_problem)) },

@@ -26,7 +26,6 @@ import com.binge.designsystem.component.PageIntro
 import com.binge.designsystem.component.SkeletonPlate
 import com.binge.designsystem.resolvedContentPadding
 import com.binge.designsystem.template.BingeScreenScaffold
-import com.binge.designsystem.template.ScreenBar
 import com.binge.designsystem.template.screenInnerPadding
 import com.binge.designsystem.template.screenOuterPadding
 import com.binge.designsystem.theme.BingeShapes
@@ -64,7 +63,6 @@ fun SettingsScreen(
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     BingeScreenScaffold(
-        bar = ScreenBar.Small,
         title = stringResource(R.string.hub_section_settings),
         onBack = actions.onBack.takeIf { showBack },
         snackbarHostState = snackbarHostState,

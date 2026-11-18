@@ -35,7 +35,6 @@ import com.binge.designsystem.component.rememberFilterPagerState
 import com.binge.designsystem.component.showSnackbar
 import com.binge.designsystem.resolvedContentPadding
 import com.binge.designsystem.template.BingeScreenScaffold
-import com.binge.designsystem.template.ScreenBar
 import com.binge.designsystem.template.screenOuterPadding
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
@@ -93,7 +92,6 @@ fun BlocklistScreen(
         }
     }
     BingeScreenScaffold(
-        bar = ScreenBar.Small,
         title = stringResource(R.string.hub_section_blocklist),
         onBack = actions.onBack.takeIf { showBack },
         snackbarHostState = snackbarHostState,

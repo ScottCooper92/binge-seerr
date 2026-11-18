@@ -11,7 +11,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import com.binge.designsystem.template.BingeScreenScaffold
-import com.binge.designsystem.template.ScreenBar
 import com.binge.designsystem.template.screenInnerPadding
 import com.binge.designsystem.template.screenOuterPadding
 import com.cooper.binge.companion.seerr.discover.title.SeasonEpisode
@@ -30,7 +29,7 @@ internal fun SeasonEpisodesScreen(
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    BingeScreenScaffold(title = title, modifier = modifier, bar = ScreenBar.Small, onBack = onBack) { padding ->
+    BingeScreenScaffold(title = title, modifier = modifier, onBack = onBack) { padding ->
         Box(Modifier.fillMaxSize().padding(padding.screenOuterPadding())) {
             val inner = padding.screenInnerPadding()
             when (state) {

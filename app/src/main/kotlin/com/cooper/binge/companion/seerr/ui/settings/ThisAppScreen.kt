@@ -23,7 +23,6 @@ import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.resolvedContentPadding
 import com.binge.designsystem.template.BingeScreenScaffold
-import com.binge.designsystem.template.ScreenBar
 import com.binge.designsystem.template.screenInnerPadding
 import com.binge.designsystem.template.screenOuterPadding
 import com.cooper.binge.companion.seerr.R
@@ -72,7 +71,6 @@ fun ThisAppScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     TipResults(tipEvents, snackbarHostState)
     BingeScreenScaffold(
-        bar = ScreenBar.Small,
         title = stringResource(R.string.hub_section_this_app),
         onBack = actions.onBack.takeIf { showBack },
         snackbarHostState = snackbarHostState,
