@@ -71,7 +71,11 @@ class DiscoverGridViewModel
                 refinable,
                 vocabulary,
             ) { page, query, canRefine, words -> toUiState(page, controls(query, canRefine == true, words)) }
-                .stateIn(viewModelScope, SharingStarted.Lazily, DiscoverGridUiState.Loading(controls(sortFilter.query.value, false, FilterVocabulary())))
+                .stateIn(
+                    viewModelScope,
+                    SharingStarted.Lazily,
+                    DiscoverGridUiState.Loading(controls(sortFilter.query.value, false, FilterVocabulary())),
+                )
 
         init {
             viewModelScope.launch { refinable.value = attempt { grid.canRefine(preset) }.getOrDefault(false) }
