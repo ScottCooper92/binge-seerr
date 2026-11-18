@@ -81,7 +81,7 @@ data class MovieDetails(
     val status: String?,
     val originalLanguage: String?,
     val spokenLanguageCodes: List<String>,
-    val studios: List<String>,
+    val studios: List<TitleCompany>,
     val budget: Long?,
     val revenue: Long?,
     val cast: List<TitlePerson>,
@@ -95,6 +95,8 @@ data class MovieDetails(
     val mediaId: Int?,
     val webUrl: String,
     val releaseDate: String? = null,
+    /** Whether the server can list what a studio made, so the studios may be links; set from its profile, never from a version here. */
+    val companiesOpen: Boolean = false,
 )
 
 /** The sections that load apart from the page, so one that fails leaves only itself out. */
@@ -120,3 +122,9 @@ interface TitleDetailsRepository {
         tmdbId: Int,
     ): TitleExtras
 }
+
+/** A studio (film) or a network (series) behind a title: its TMDB id opens the grid of what else it made. */
+data class TitleCompany(
+    val id: Int,
+    val name: String,
+)
