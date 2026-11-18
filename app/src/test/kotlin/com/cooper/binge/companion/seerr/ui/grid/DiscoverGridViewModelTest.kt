@@ -102,7 +102,7 @@ class DiscoverGridViewModelTest {
             assertEquals(DiscoverSort.PopularityDesc, request.sort)
             assertEquals(ActiveFilterChip(ChipKind.Genre, "Drama"), state.controls.chip)
             assertEquals(DiscoverSort.PopularityDesc, state.controls.sort)
-            assertEquals(DiscoverSort.forKind(TitleKind.Movie), state.controls.sortChoices)
+            assertEquals(DiscoverSort.sheetChoices(TitleKind.Movie), state.controls.sortChoices)
         }
 
     @Test
