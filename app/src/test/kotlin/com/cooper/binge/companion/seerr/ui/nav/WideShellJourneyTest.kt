@@ -80,6 +80,7 @@ class WideShellJourneyTest {
         host.connectDemo()
         host.launch(HomeRoute, RequestsRoute)
         host.compose.waitUntil(WAIT_MILLIS) { host.settingsStack() == listOf(HubRoute, RequestsRoute) }
+        host.compose.waitUntil(WAIT_MILLIS) { host.stack() == listOf<NavKey>(ShellRoute) }
 
         assertEquals(listOf<NavKey>(ShellRoute), host.stack())
         bar().assertIsDisplayed()
