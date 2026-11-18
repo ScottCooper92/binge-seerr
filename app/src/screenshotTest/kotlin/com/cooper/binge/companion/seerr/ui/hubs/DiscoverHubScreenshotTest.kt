@@ -5,6 +5,7 @@ import com.android.tools.screenshot.PreviewTest
 import com.cooper.binge.companion.seerr.discover.TitleAvailability
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.sliders.HubCard
+import com.cooper.binge.companion.seerr.discover.sliders.HubHero
 import com.cooper.binge.companion.seerr.discover.sliders.HubRow
 import com.cooper.binge.companion.seerr.discover.sliders.HubTab
 import com.cooper.binge.companion.seerr.preview.SeerrFontScale13Previews
@@ -39,6 +40,31 @@ class DiscoverHubScreenshotTest {
     @SeerrScreenStatePreview
     @Composable
     fun series() = Frame(readyState(), tab = HubTab.Series)
+
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun withHero() = Frame(readyState(hero = HEROES))
+
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun withHeroLongTitle() = Frame(readyState(hero = listOf(LONG_HERO)))
+
+    @PreviewTest
+    @SeerrSpanishPreviews
+    @Composable
+    fun withHeroSpanish() = Frame(readyState(hero = HEROES))
+
+    @PreviewTest
+    @SeerrFontScale13Previews
+    @Composable
+    fun withHeroLargeText13() = Frame(readyState(hero = listOf(LONG_HERO)))
+
+    @PreviewTest
+    @SeerrFontScalePreviews
+    @Composable
+    fun withHeroLargeText() = Frame(readyState(hero = listOf(LONG_HERO)))
 
     @PreviewTest
     @SeerrScreenStatePreview
@@ -96,6 +122,7 @@ private val SAMPLE_CARDS =
 private fun readyState(
     pending: Int = 0,
     refreshing: Boolean = false,
+    hero: List<HubHero> = emptyList(),
 ) = DiscoverHubUiState.Ready(
     rows =
         listOf(
@@ -105,4 +132,34 @@ private fun readyState(
         ),
     pending = pending,
     refreshing = refreshing,
+    hero = hero,
 )
+
+private fun hero(
+    id: Int,
+    name: String,
+    availability: TitleAvailability,
+) = HubHero(
+    TitleKind.Movie,
+    id,
+    name,
+    "https://image.tmdb.org/t/p/w1280/none$id.jpg",
+    "2021",
+    7.8f,
+    availability,
+    "https://server.example/movie/$id",
+)
+
+private val HEROES =
+    listOf(
+        hero(1, "The Long Way Home", TitleAvailability.Available),
+        hero(2, "Northern Lights", TitleAvailability.Pending),
+        hero(3, "A Quiet Harbour", TitleAvailability.None),
+    )
+
+private val LONG_HERO =
+    hero(
+        4,
+        "The Extraordinarily Long Title of a Film That Keeps Going: Part Two, the Return of the Seven Rivers",
+        TitleAvailability.PartiallyAvailable,
+    )
