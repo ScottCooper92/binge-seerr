@@ -130,7 +130,7 @@ data class TitleDetailRoute(
     val tmdbId: Int,
 ) : SeerrRoute
 
-/** A collection of films as a page, opened from a search result. */
+/** A collection of films as a page, opened from the collection rail on a film's page. */
 @Serializable
 data class CollectionRoute(
     val id: Int,
