@@ -45,6 +45,7 @@ How each gate is applied is in [`server-compatibility.md`](server-compatibility.
 | `GET /status` | Get Seerr status | v1.15.0 | v1.0.0 | yes | Server profile: variant, version, media server, sign-in modes, permissions. |
 | `GET /tv/{tvId}` | Get TV details | v1.0.0 | v1.0.0 | yes | The status lookup the Service makes, and the whole series page: seasons with their status per version, facts, people, videos, providers, next episode. |
 | `GET /tv/{tvId}/ratings` | Get TV ratings | v1.0.0 | v1.0.0 | yes | The Rotten Tomatoes score on the series page, on every lineage; a 404 means the server has none. |
+| `GET /tv/{tvId}/season/{seasonNumber}` | Get season details and episode list | v1.0.0 | v1.0.0 | yes | The selected season's first episodes on the series page, and the whole season on its own page. |
 | `GET /tv/{tvId}/recommendations` | Get recommended TV series | v1.0.0 | v1.0.0 | yes | The series page's recommendations row. |
 | `GET /tv/{tvId}/similar` | Get similar TV series | v1.0.0 | v1.0.0 | yes | The series page's similar row. |
 
@@ -266,7 +267,6 @@ Each row is ticked in "Today" by the PR that covers it.
 | `GET /person/{personId}` | Get person details | v1.0.0 | v1.0.0 |  | Planned under the discovery epic (#2039). |
 | `GET /person/{personId}/combined_credits` | Get combined credits | v1.0.0 | v1.0.0 |  | Planned under the discovery epic (#2039). |
 | `GET /search` | Search for movies, TV shows, or people | v1.0.0 | v1.0.0 | yes | The Search tab: movies, series and people, paged, debounced, with the queries that found something kept on the device. A `tmdb:<id>` query is the server's own lookup and works the same way. The server's multi search never returns collections; the mapping would show one if it did. |
-| `GET /tv/{tvId}/season/{seasonNumber}` | Get season details and episode list | v1.0.0 | v1.0.0 |  | Planned under the discovery epic (#2039). |
 | `POST /watchlist` | Add media to watchlist | — | v1.6.0 |  | Planned under the discovery epic (#2039). |
 | `DELETE /watchlist/{tmdbId}` | Delete watchlist item | — | v1.6.0 |  | Planned under the discovery epic (#2039). |
 

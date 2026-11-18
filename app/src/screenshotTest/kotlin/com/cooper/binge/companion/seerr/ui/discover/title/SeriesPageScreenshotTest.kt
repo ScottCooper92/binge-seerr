@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.emptyFlow
 private const val SEASONS_SCROLLED_PX = 900
 private const val LARGE_FONT_SEASONS_PX = 2300
 private const val EPISODES_PX = 1900
+private const val LARGE_FONT_EPISODES_PX = 4300
 
 private val NO_ACTIONS = TitlePageActions({}, {}, {}, {}, {}, {}, {}, {}, {}, {})
 
@@ -97,7 +98,7 @@ class SeriesPageScreenshotTest {
             emptyFlow(),
             NO_ACTIONS,
             NO_SEASON_ACTIONS,
-            scrollState = rememberScrollState(initial = EPISODES_PX),
+            scrollState = rememberScrollState(initial = LARGE_FONT_EPISODES_PX),
         )
 
     /** Every season held or asked for: no Request button. */
