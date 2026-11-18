@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.binge.companion.sdk.attempt
 import com.cooper.binge.companion.seerr.discover.request.RequestResult
+import com.cooper.binge.companion.seerr.discover.title.SeasonEpisode
 import com.cooper.binge.companion.seerr.discover.title.SeriesDetails
 import com.cooper.binge.companion.seerr.discover.title.SeriesDetailsRepository
 import com.cooper.binge.companion.seerr.discover.title.TitleExtras
@@ -22,6 +23,19 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+/** One season's episodes as the page holds them: read once when the season is first selected, and again only after a failure. */
+sealed interface EpisodesState {
+    data object Loading : EpisodesState
+
+    data class Ready(
+        val episodes: List<SeasonEpisode>,
+    ) : EpisodesState
+
+    data class Error(
+        val error: SeerrError,
+    ) : EpisodesState
+}
+
 sealed interface SeriesPageUiState {
     data object Loading : SeriesPageUiState
 
@@ -29,11 +43,16 @@ sealed interface SeriesPageUiState {
         val error: SeerrError,
     ) : SeriesPageUiState
 
-    /** [extras] is null until the sections that load apart have arrived, and a section that failed is simply empty in it. */
+    /**
+     * [extras] is null until the sections that load apart have arrived, and a section that failed is simply empty in it.
+     * [selectedSeason] is the season whose episodes show, and [episodes] holds what has been read of each season.
+     */
     data class Ready(
         val series: SeriesDetails,
         val extras: TitleExtras? = null,
         val requestSheetOpen: Boolean = false,
+        val selectedSeason: Int? = null,
+        val episodes: Map<Int, EpisodesState> = emptyMap(),
     ) : SeriesPageUiState {
         /** The Request button shows while either version still has a season to ask for. */
         val mayRequest: Boolean get() = series.standard.mayRequest || series.fourK?.mayRequest == true
@@ -75,12 +94,26 @@ class SeriesPageViewModel
             viewModelScope.launch {
                 attempt { repository.series(tmdbId) }.fold(
                     onSuccess = { series ->
-                        state.value = SeriesPageUiState.Ready(series)
+                        val first = (series.seasons.firstOrNull { it.number > 0 } ?: series.seasons.firstOrNull())?.number
+                        state.value = SeriesPageUiState.Ready(series, selectedSeason = first)
                         loadExtras()
+                        first?.let(::loadEpisodes)
                     },
                     onFailure = { state.value = SeriesPageUiState.Error(it.toSeerrError()) },
                 )
             }
+        }
+
+        /** Shows a season's episodes, reading them the first time. */
+        fun selectSeason(number: Int) {
+            val current = ready() ?: return
+            if (current.series.seasons.none { it.number == number }) return
+            updateReady { it.copy(selectedSeason = number) }
+            loadEpisodes(number)
+        }
+
+        fun retryEpisodes() {
+            ready()?.selectedSeason?.let(::loadEpisodes)
         }
 
         fun openRequestSheet() = updateReady { if (it.mayRequest) it.copy(requestSheetOpen = true) else it }
@@ -98,6 +131,21 @@ class SeriesPageViewModel
             eventFlow.tryEmit(SeriesPageEvent.Requested(result))
             closeRequestSheet()
         }
+
+        private fun loadEpisodes(number: Int) {
+            if (ready()?.episodes?.get(number) is EpisodesState.Loading || ready()?.episodes?.get(number) is EpisodesState.Ready) return
+            updateReady { it.copy(episodes = it.episodes + (number to EpisodesState.Loading)) }
+            viewModelScope.launch {
+                val result =
+                    attempt { repository.season(tmdbId, number) }.fold(
+                        onSuccess = { EpisodesState.Ready(it) },
+                        onFailure = { EpisodesState.Error(it.toSeerrError()) },
+                    )
+                updateReady { it.copy(episodes = it.episodes + (number to result)) }
+            }
+        }
+
+        private fun ready(): SeriesPageUiState.Ready? = state.value as? SeriesPageUiState.Ready
 
         private fun loadExtras() {
             viewModelScope.launch {

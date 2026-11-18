@@ -7,6 +7,7 @@ import com.cooper.binge.companion.seerr.seerr.SeerrMediaDetailsDto
 import com.cooper.binge.companion.seerr.seerr.SeerrMovieWatchProviderDto
 import com.cooper.binge.companion.seerr.seerr.SeerrNamedDto
 import com.cooper.binge.companion.seerr.seerr.SeerrRottenTomatoesDto
+import com.cooper.binge.companion.seerr.seerr.SeerrSeasonDetailsDto
 import com.cooper.binge.companion.seerr.seerr.SeerrTvDetailsDto
 import com.cooper.binge.companion.seerr.seerr.SeerrTvSeasonDto
 import com.cooper.binge.companion.seerr.seerr.SeerrVideoDto
@@ -21,6 +22,8 @@ private const val DEMO_NEXT_SEASON = 2
 private const val DEMO_NEXT_EPISODE = 4
 private const val GENRE_DRAMA = 18
 private const val RELATED_SHOWS_SKIP = 1
+private const val DEMO_EPISODES = 8
+private const val DEMO_UNAIRED_FROM = 7
 private const val DEMO_CREATOR_ID = 9101
 private const val DEMO_LEAD_ID = 9001
 private const val DEMO_RIVAL_ID = 9002
@@ -30,6 +33,7 @@ internal fun DemoData.seriesRoutes(): List<DemoRoute> =
     listOf(
         route("GET", "tv", "{}", "recommendations") { call, (id) -> page(call, relatedShows(id, skip = 0)) },
         route("GET", "tv", "{}", "similar") { call, (id) -> page(call, relatedShows(id, skip = RELATED_SHOWS_SKIP)) },
+        route("GET", "tv", "{}", "season", "{}") { _, (_, number) -> ok(demoSeason(number.toInt())) },
         route("GET", "tv", "{}", "ratings") { _, _ -> ok(SeerrRottenTomatoesDto(DEMO_SHOW_CRITICS, DEMO_SHOW_AUDIENCE, null)) },
     )
 
@@ -82,3 +86,21 @@ private fun seriesBody(
     watchProviders = listOf(SeerrWatchRegionDto("US", null, listOf(SeerrMovieWatchProviderDto(1, "Demo Stream", null, 1)))),
     mediaInfo = thin.mediaInfo,
 )
+
+/** A season of made-up episodes, the last of which has not aired, so a list shows both kinds. */
+private fun demoSeason(number: Int) =
+    SeerrSeasonDetailsDto(
+        seasonNumber = number,
+        name = "Season $number",
+        episodes =
+            (1..DEMO_EPISODES).map {
+                SeerrEpisodeDto(
+                    id = number * DEMO_EPISODES + it,
+                    name = "Episode $it",
+                    overview = "A made-up episode, with nothing real behind it.".takeIf { _ -> it != 2 },
+                    airDate = if (it < DEMO_UNAIRED_FROM) "2020-0$it-01" else "2099-01-0${it - DEMO_UNAIRED_FROM + 1}",
+                    episodeNumber = it,
+                    seasonNumber = number,
+                )
+            },
+    )
