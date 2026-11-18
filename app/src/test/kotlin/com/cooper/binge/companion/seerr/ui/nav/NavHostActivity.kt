@@ -18,6 +18,8 @@ import com.cooper.binge.companion.seerr.flags.LocalDiscoveryEnabled
 import com.cooper.binge.companion.seerr.theme.SeerrTheme
 import com.cooper.binge.companion.seerr.ui.HomeRoute
 import com.cooper.binge.companion.seerr.ui.SeerrNavHost
+import com.cooper.binge.companion.seerr.ui.shell.SeerrTab
+import com.cooper.binge.companion.seerr.ui.shell.TabShellState
 import com.cooper.binge.companion.seerr.ui.shell.rememberSeerrTabs
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -31,6 +33,10 @@ import dagger.hilt.android.AndroidEntryPoint
 class NavHostActivity : ComponentActivity() {
     /** The stack as it stands; set by the composition, for a test to read or push onto. */
     lateinit var backStack: NavBackStack<NavKey>
+        private set
+
+    /** The shell's state; set by the composition, so a test can read the Settings tab's own stack. */
+    lateinit var tabs: TabShellState<SeerrTab>
         private set
 
     /** Cleared before the activity closes, so the composition is taken down while the looper is live (#663). */
@@ -47,6 +53,7 @@ class NavHostActivity : ComponentActivity() {
             val stack = rememberNavBackStack(*firstStack.toTypedArray())
             backStack = stack
             val tabs = rememberSeerrTabs()
+            this.tabs = tabs
             SeerrTheme {
                 CompositionLocalProvider(LocalDiscoveryEnabled provides discoveryEnabled) {
                     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
