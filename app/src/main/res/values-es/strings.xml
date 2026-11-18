@@ -1472,7 +1472,6 @@
         <item quantity="many">%1$d de episodios</item>
         <item quantity="other">%1$d episodios</item>
     </plurals>
-    <string name="series_page_seasons">Temporadas</string>
     <string name="series_page_runtime">%1$d min</string>
     <string name="series_fact_networks">Cadenas</string>
     <string name="series_fact_creators">Creada por</string>
@@ -1490,4 +1489,7 @@
         <item quantity="other">Tu cuota permite %1$d temporadas más</item>
     </plurals>
     <string name="request_sheet_seasons_over">Tu cuota tiene menos margen que las %1$d temporadas aún abiertas, así que esta serie no se puede pedir ahora</string>
+    <string name="series_page_episodes">Episodios</string>
+    <string name="series_page_view_all_episodes">Ver todos los episodios</string>
+    <string name="season_episodes_empty">Aún no hay episodios en esta temporada</string>
 </resources>

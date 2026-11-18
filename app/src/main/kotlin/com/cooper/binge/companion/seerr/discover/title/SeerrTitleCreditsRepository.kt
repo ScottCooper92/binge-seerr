@@ -38,7 +38,7 @@ internal fun SeerrCreditsDto?.toTitleCredits(): TitleCredits {
             .map { (department, crew) ->
                 // One row per person in a department, under all the jobs they held there.
                 CreditsDepartment(department, crew.toTitleCrew())
-            }.sortedWith(compareBy({ departmentRank(it.name) }, { it.name }))
+            }.sortedWith(compareBy({ departmentRank(it.name) }, { it.name.isEmpty() }, { it.name }))
     return TitleCredits(cast, departments)
 }
 
