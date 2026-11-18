@@ -95,6 +95,7 @@ internal fun SeerrTab.screenName(): String =
         SeerrTab.Settings -> "hub"
         SeerrTab.Movies -> "movies"
         SeerrTab.Tv -> "tv"
+        SeerrTab.Discover -> "discover"
         SeerrTab.Search -> "search"
     }
 

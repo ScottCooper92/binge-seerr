@@ -24,6 +24,7 @@ import com.cooper.binge.companion.seerr.flags.LocalDiscoveryEnabled
 import com.cooper.binge.companion.seerr.ui.discover.title.LocalOpenTitle
 import com.cooper.binge.companion.seerr.ui.discover.title.rememberOpenTitle
 import com.cooper.binge.companion.seerr.ui.discover.title.titleEntries
+import com.cooper.binge.companion.seerr.ui.grid.DiscoverTabEntry
 import com.cooper.binge.companion.seerr.ui.grid.discoverGridEntries
 import com.cooper.binge.companion.seerr.ui.hub.HubSection
 import com.cooper.binge.companion.seerr.ui.hubs.DiscoverHubEntry
@@ -147,7 +148,7 @@ private fun EntryProviderScope<NavKey>.homeEntries(
                     onOpenGrid = { grid, title -> backStack.push(DiscoverGridRoute(grid.kind, grid.preset, title)) },
                     onOpenRequests = { backStack.openSection(HubSection.Requests) },
                 )
-            }, search = { TitleSearchEntry() }, settings = { hub(null) })
+            }, search = { TitleSearchEntry() }, grid = { DiscoverTabEntry(tabs.stack(SeerrTab.Discover)) }, settings = { hub(null) })
         } else {
             LoadingScreen()
         }
