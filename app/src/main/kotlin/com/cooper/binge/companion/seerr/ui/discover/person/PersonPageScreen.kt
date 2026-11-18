@@ -10,8 +10,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHostState
@@ -23,8 +21,6 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import com.binge.designsystem.component.ExpandableOverview
-import com.binge.designsystem.component.ExpressiveIconButton
-import com.binge.designsystem.component.IconButtonTone
 import com.binge.designsystem.component.MediaCard
 import com.binge.designsystem.component.MediaCarousel
 import com.binge.designsystem.template.HeroDetailScreen
@@ -33,6 +29,7 @@ import com.binge.designsystem.template.LocalHeroReadingMargin
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.person.PersonCredit
+import com.cooper.binge.companion.seerr.ui.discover.title.ShareBarAction
 import com.cooper.binge.companion.seerr.ui.discover.title.cardStatus
 import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
 import com.binge.designsystem.R as DesR
@@ -43,7 +40,7 @@ class PersonPageActions(
     val onRetry: () -> Unit,
     val onRetryCredits: () -> Unit,
     val onRefresh: () -> Unit,
-    val onShare: (url: String) -> Unit,
+    val onShare: (name: String, url: String) -> Unit,
     val onOpenUrl: (url: String) -> Unit,
     val onOpenTitle: (kind: TitleKind, tmdbId: Int) -> Unit,
 )
@@ -61,7 +58,6 @@ internal fun PersonPageScreen(
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
 ) {
     val ready = state as? PersonPageUiState.Ready
-    val shareLabel = stringResource(R.string.person_share)
     HeroDetailScreen(
         title = ready?.person?.name.orEmpty(),
         onBack = actions.onBack,
@@ -73,13 +69,7 @@ internal fun PersonPageScreen(
         pullIndicator = HeroPullIndicator.InBar,
         actions = { glassAlpha ->
             if (ready != null) {
-                ExpressiveIconButton(
-                    onClick = { actions.onShare(ready.person.webUrl) },
-                    icon = Icons.Filled.Share,
-                    contentDescription = shareLabel,
-                    tone = IconButtonTone.Glass,
-                    glassBackgroundAlpha = glassAlpha,
-                )
+                ShareBarAction(glassAlpha) { actions.onShare(ready.person.name, ready.person.webUrl) }
             }
         },
         hero = {

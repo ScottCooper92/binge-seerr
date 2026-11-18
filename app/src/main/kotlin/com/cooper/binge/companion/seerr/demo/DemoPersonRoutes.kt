@@ -46,7 +46,6 @@ private fun demoPerson(id: Int) =
         alsoKnownAs = listOf("The Demo"),
         gender = if (id % 2 == 0) DEMO_GENDER_FEMALE else DEMO_GENDER_MALE,
         popularity = DEMO_POPULARITY,
-        imdbId = "nm0000$id",
         homepage = "https://demo.example.com/people/$id",
     )
 

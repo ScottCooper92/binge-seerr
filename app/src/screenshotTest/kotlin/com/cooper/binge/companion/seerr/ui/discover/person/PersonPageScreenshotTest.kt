@@ -9,7 +9,7 @@ import com.cooper.binge.companion.seerr.preview.SeerrScreenStatePreview
 import com.cooper.binge.companion.seerr.preview.SeerrSpanishPreviews
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 
-private val NO_ACTIONS = PersonPageActions({}, {}, {}, {}, {}, {}, { _, _ -> })
+private val NO_ACTIONS = PersonPageActions({}, {}, {}, {}, { _, _ -> }, {}, { _, _ -> })
 
 @Composable
 private fun Frame(state: PersonPageUiState) = PersonPageScreen(state, NO_ACTIONS)

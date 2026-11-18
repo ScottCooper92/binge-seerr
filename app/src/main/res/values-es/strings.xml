@@ -1495,6 +1495,5 @@
     <string name="person_gender_male">Hombre</string>
     <string name="person_gender_non_binary">No binario</string>
     <string name="person_died_aged">%1$s (a los %2$d años)</string>
-    <string name="person_share">Compartir</string>
     <string name="person_refresh_failed">No se pudo actualizar esta página</string>
 </resources>

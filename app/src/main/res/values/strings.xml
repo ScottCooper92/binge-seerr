@@ -1551,6 +1551,5 @@
     <string name="person_gender_male">Male</string>
     <string name="person_gender_non_binary">Non-binary</string>
     <string name="person_died_aged">%1$s (aged %2$d)</string>
-    <string name="person_share">Share</string>
     <string name="person_refresh_failed">Couldn\'t refresh this page</string>
 </resources>

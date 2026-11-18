@@ -11,8 +11,8 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.discover.title.LocalOpenTitle
+import com.cooper.binge.companion.seerr.ui.discover.title.shareTitle
 import com.cooper.binge.companion.seerr.ui.openInBrowser
-import com.cooper.binge.companion.seerr.ui.shareLink
 
 /** A person, a page of its own. A title opens through [LocalOpenTitle], as from any other card. */
 @Composable
@@ -42,7 +42,7 @@ internal fun PersonEntry(
                 onRetry = viewModel::load,
                 onRetryCredits = viewModel::retryCredits,
                 onRefresh = viewModel::refresh,
-                onShare = context::shareLink,
+                onShare = context::shareTitle,
                 onOpenUrl = context::openInBrowser,
                 onOpenTitle = { kind, id -> openTitle(kind, id, "") },
             ),

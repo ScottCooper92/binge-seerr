@@ -60,7 +60,7 @@ private fun worstCase(): PersonPageUiState.Ready {
     )
 }
 
-private val NO_ACTIONS = PersonPageActions({}, {}, {}, {}, {}, {}, { _, _ -> })
+private val NO_ACTIONS = PersonPageActions({}, {}, {}, {}, { _, _ -> }, {}, { _, _ -> })
 
 /** The person page with the longest names, a long biography and a credit in every row, at font scales 1.3 and 2.0. */
 @RunWith(RobolectricTestRunner::class)

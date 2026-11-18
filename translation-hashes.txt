@@ -359,7 +359,6 @@ app:person_page_known_for  ead2a038b394
 app:person_page_links  2cedb0696337
 app:person_page_website  b5a229ac8bec
 app:person_refresh_failed  45304549fd49
-app:person_share  29887a5ff984
 app:person_stat_from  218197693424
 app:person_stat_gender  a04630ef8bc3
 app:person_stat_popularity  fe60d8511c44
