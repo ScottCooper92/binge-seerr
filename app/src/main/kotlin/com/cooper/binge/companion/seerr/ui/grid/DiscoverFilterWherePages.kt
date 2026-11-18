@@ -37,7 +37,7 @@ internal fun WherePage(
     val region = filters.region ?: vocabulary.defaultRegion
     LaunchedEffect(region) { region?.let(loads.onProviders) }
     val regionName = vocabulary.regions.firstOrNull { it.id == region }?.name ?: stringResource(R.string.grid_filter_any)
-    var query by rememberSaveable { mutableStateOf("") }
+    var query by rememberSaveable(region) { mutableStateOf("") }
     Column(verticalArrangement = chipGap) {
         ListRow(onClick = onOpenRegion, verticalAlignment = Alignment.CenterVertically, modifier = inset) { modifier ->
             Column(modifier) {
@@ -47,6 +47,8 @@ internal fun WherePage(
         }
         val providers = region?.let { vocabulary.providers[it] }
         when {
+            region != null && region in vocabulary.providersFailed && providers == null ->
+                Text(stringResource(R.string.grid_filter_providers_failed), style = MaterialTheme.typography.bodyMedium, modifier = inset)
             region == null || providers?.isEmpty() == true ->
                 Text(stringResource(R.string.grid_filter_providers_none), style = MaterialTheme.typography.bodyMedium, modifier = inset)
             providers == null ->

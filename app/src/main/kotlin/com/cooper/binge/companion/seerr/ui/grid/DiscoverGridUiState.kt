@@ -43,6 +43,7 @@ data class FilterVocabulary(
     val regions: List<FilterOption> = emptyList(),
     val defaultRegion: String? = null,
     val providers: Map<String, List<FilterOption>> = emptyMap(),
+    val providersFailed: Set<String> = emptySet(),
     val certifications: Map<String, List<String>> = emptyMap(),
     val keywordResults: List<FilterOption>? = null,
     val keywordsFailed: Boolean = false,

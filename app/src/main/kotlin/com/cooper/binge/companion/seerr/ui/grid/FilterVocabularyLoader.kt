@@ -36,13 +36,9 @@ internal class FilterVocabularyLoader(
     fun load(namedKeywords: Set<Int>) {
         scope.launch {
             val capabilities = attempt { lookups.capabilities() }.getOrDefault(state.value.capabilities)
-            state.update {
-                it.copy(
-                    genres = attempt { grid.genres(kind) }.getOrDefault(emptyList()),
-                    languages = attempt { grid.languages() }.getOrDefault(emptyList()),
-                    capabilities = capabilities,
-                )
-            }
+            val genres = attempt { grid.genres(kind) }.getOrDefault(emptyList())
+            val languages = attempt { grid.languages() }.getOrDefault(emptyList())
+            state.update { it.copy(genres = genres, languages = languages, capabilities = capabilities) }
             if (capabilities.watch) loadWatch()
             if (capabilities.certification) loadCertifications()
             if (namedKeywords.isNotEmpty()) nameKeywords(namedKeywords)
@@ -73,8 +69,15 @@ internal class FilterVocabularyLoader(
     private suspend fun providersFor(region: String) {
         if (!regionsRequested.add(region)) return
         val providers = attempt { lookups.providers(kind, region) }
-        if (providers.isFailure) regionsRequested.remove(region)
-        state.update { it.copy(providers = it.providers + (region to providers.getOrDefault(emptyList()))) }
+        val found = providers.getOrNull()
+        if (found == null) regionsRequested.remove(region)
+        state.update {
+            if (found == null) {
+                it.copy(providersFailed = it.providersFailed + region)
+            } else {
+                it.copy(providers = it.providers + (region to found), providersFailed = it.providersFailed - region)
+            }
+        }
     }
 
     /** Searches the keywords for [query]; a newer one replaces it, and blank clears the results. */
