@@ -7,7 +7,6 @@ plugins {
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
     alias(libs.plugins.aboutlibraries.android)
-    alias(libs.plugins.room)
     alias(libs.plugins.ktlint)
     id("binge.gates.detekt")
     id("binge.gates.baseline-staleness")
@@ -51,11 +50,6 @@ fun telemetryValue(
     localProperties.getProperty(key)?.takeIf { it.isNotBlank() }
         ?: System.getenv(key)?.takeIf { it.isNotBlank() }
         ?: default
-
-// The exported schema is committed: a change to a table is a migration decision made in review.
-room {
-    schemaDirectory("$projectDir/schemas")
-}
 
 android {
     namespace = "com.cooper.binge.companion.seerr"
@@ -237,6 +231,8 @@ tasks.named("check") { dependsOn(checkGrpcAlignment) }
 
 dependencies {
     implementation(project(":data"))
+    // The coverage floor below is measured over this module and :data together, as it was when they were one.
+    kover(project(":data"))
     implementation(libs.androidx.core.ktx)
     implementation(libs.binge.companion.sdk)
     implementation(libs.binge.companion.kit)
@@ -255,6 +251,7 @@ dependencies {
     implementation(libs.homelab.appservices.posthog)
     implementation(libs.homelab.appservices.firebase)
     testImplementation(libs.homelab.testing)
+    testImplementation(testFixtures(project(":data")))
     implementation(libs.hilt.android)
     ksp(libs.hilt.android.compiler)
     implementation(libs.hilt.lifecycle.viewmodel.compose)
@@ -295,7 +292,6 @@ dependencies {
     implementation(libs.paging.compose)
     implementation(libs.room.runtime)
     implementation(libs.room.paging)
-    ksp(libs.room.compiler)
     implementation(libs.work.runtime)
     implementation(libs.androidx.hilt.work)
     ksp(libs.androidx.hilt.compiler)

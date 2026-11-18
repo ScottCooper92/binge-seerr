@@ -8,14 +8,14 @@ import okhttp3.HttpUrl
  * The demo server's address. `.invalid` is reserved (RFC 2606) and never resolves, so a request that
  * somehow escaped the demo transport would fail rather than reach a stranger's host.
  */
-internal const val DEMO_HOST = "demo.seerr.invalid"
+const val DEMO_HOST = "demo.seerr.invalid"
 
 /** The base URL the demo connection is saved under, in the same shape as any other server's. */
 const val DEMO_ORIGIN = "https://$DEMO_HOST/"
 
 /** The demo's session cookie value and the id of the signed-in demo user. Neither is a secret. */
 internal const val DEMO_COOKIE = "demo"
-internal const val DEMO_USER_ID = 1
+const val DEMO_USER_ID = 1
 
 /** What the handshake names as the provider on the demo, so a host that shows the name shows that this is sample data. */
 const val DEMO_PROVIDER_NAME = "Seerr (demo)"

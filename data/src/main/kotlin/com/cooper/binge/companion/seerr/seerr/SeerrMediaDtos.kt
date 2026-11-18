@@ -46,7 +46,7 @@ data class SeerrMediaDetailsDto(
 
 /** A `yyyy-mm-dd` date's year; a serializable class cannot hide this in a private companion. */
 private const val YEAR_LENGTH = 4
-internal const val FALLBACK_CERTIFICATION_REGION = "US"
+const val FALLBACK_CERTIFICATION_REGION = "US"
 
 @Serializable
 data class SeerrReleasesDto(
@@ -174,7 +174,7 @@ data class SeerrMediaStatusSeasonBody(
 )
 
 /** The first non-blank certification a film has in [country], or null: the one rule the page and the Service read a film's age rating by. */
-internal fun SeerrReleasesDto?.certificationIn(country: String): String? =
+fun SeerrReleasesDto?.certificationIn(country: String): String? =
     this
         ?.results
         ?.firstOrNull { it.country == country }

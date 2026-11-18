@@ -6,8 +6,6 @@ import com.cooper.binge.companion.seerr.data.TitleEntity
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.util.Locale
-import javax.inject.Inject
-import javax.inject.Singleton
 
 private const val MAX_ENTRIES = 200
 private const val MAX_PERSISTED = 2_000
@@ -31,13 +29,11 @@ data class HydratedTitle(
  * is capped, both applied once per process on the first write. Only successes are kept, so a failed lookup is
  * tried again next time rather than pinned as untitled.
  */
-@Singleton
 class TitleCache
     internal constructor(
         private val dao: TitleDao,
         private val now: () -> Long,
     ) {
-        @Inject
         constructor(dao: TitleDao) : this(dao, System::currentTimeMillis)
 
         private val lock = Mutex()

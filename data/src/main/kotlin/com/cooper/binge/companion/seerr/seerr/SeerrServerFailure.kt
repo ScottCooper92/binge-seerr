@@ -28,7 +28,7 @@ suspend fun Throwable.toServerFailure(): ServerFailure =
     }
 
 /** Whether the server answered the handshake by asking for a client certificate, which the app does not send. Read by the same rules as [toServerFailure]. */
-internal fun Throwable.wantsClientCertificate(): Boolean = SeerrTransport.read(this) == ServerFailure.ClientCertificateNeeded
+fun Throwable.wantsClientCertificate(): Boolean = SeerrTransport.read(this) == ServerFailure.ClientCertificateNeeded
 
 /** Whether a failure of `GET /auth/me` means the server holds no user for these credentials; the same rule as [SeerrError.rejectsSession]. */
 val ServerFailure.rejectsSession: Boolean

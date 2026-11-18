@@ -1,37 +1,37 @@
 package com.cooper.binge.companion.seerr.seerr
 
 /** Seerr permission bits (server/lib/permissions.ts); ADMIN implies every permission. */
-internal const val PERMISSION_ADMIN = 2
-internal const val PERMISSION_MANAGE_SETTINGS = 1 shl 2
-internal const val PERMISSION_MANAGE_USERS = 1 shl 3
-internal const val PERMISSION_MANAGE_REQUESTS = 1 shl 4
-internal const val PERMISSION_REQUEST = 1 shl 5
-internal const val PERMISSION_AUTO_APPROVE = 1 shl 7
-internal const val PERMISSION_AUTO_APPROVE_MOVIE = 1 shl 8
-internal const val PERMISSION_AUTO_APPROVE_TV = 1 shl 9
-internal const val PERMISSION_REQUEST_4K = 1 shl 10
-internal const val PERMISSION_REQUEST_4K_MOVIE = 1 shl 11
-internal const val PERMISSION_REQUEST_4K_TV = 1 shl 12
-internal const val PERMISSION_REQUEST_ADVANCED = 1 shl 13
-internal const val PERMISSION_REQUEST_VIEW = 1 shl 14
-internal const val PERMISSION_AUTO_APPROVE_4K = 1 shl 15
-internal const val PERMISSION_AUTO_APPROVE_4K_MOVIE = 1 shl 16
-internal const val PERMISSION_AUTO_APPROVE_4K_TV = 1 shl 17
-internal const val PERMISSION_REQUEST_MOVIE = 1 shl 18
-internal const val PERMISSION_REQUEST_TV = 1 shl 19
-internal const val PERMISSION_MANAGE_ISSUES = 1 shl 20
-internal const val PERMISSION_VIEW_ISSUES = 1 shl 21
-internal const val PERMISSION_CREATE_ISSUES = 1 shl 22
-internal const val PERMISSION_AUTO_REQUEST = 1 shl 23
-internal const val PERMISSION_AUTO_REQUEST_MOVIE = 1 shl 24
-internal const val PERMISSION_AUTO_REQUEST_TV = 1 shl 25
-internal const val PERMISSION_RECENT_VIEW = 1 shl 26
-internal const val PERMISSION_WATCHLIST_VIEW = 1 shl 27
-internal const val PERMISSION_MANAGE_BLOCKLIST = 1 shl 28
-internal const val PERMISSION_VIEW_BLOCKLIST = 1 shl 30
+const val PERMISSION_ADMIN = 2
+const val PERMISSION_MANAGE_SETTINGS = 1 shl 2
+const val PERMISSION_MANAGE_USERS = 1 shl 3
+const val PERMISSION_MANAGE_REQUESTS = 1 shl 4
+const val PERMISSION_REQUEST = 1 shl 5
+const val PERMISSION_AUTO_APPROVE = 1 shl 7
+const val PERMISSION_AUTO_APPROVE_MOVIE = 1 shl 8
+const val PERMISSION_AUTO_APPROVE_TV = 1 shl 9
+const val PERMISSION_REQUEST_4K = 1 shl 10
+const val PERMISSION_REQUEST_4K_MOVIE = 1 shl 11
+const val PERMISSION_REQUEST_4K_TV = 1 shl 12
+const val PERMISSION_REQUEST_ADVANCED = 1 shl 13
+const val PERMISSION_REQUEST_VIEW = 1 shl 14
+const val PERMISSION_AUTO_APPROVE_4K = 1 shl 15
+const val PERMISSION_AUTO_APPROVE_4K_MOVIE = 1 shl 16
+const val PERMISSION_AUTO_APPROVE_4K_TV = 1 shl 17
+const val PERMISSION_REQUEST_MOVIE = 1 shl 18
+const val PERMISSION_REQUEST_TV = 1 shl 19
+const val PERMISSION_MANAGE_ISSUES = 1 shl 20
+const val PERMISSION_VIEW_ISSUES = 1 shl 21
+const val PERMISSION_CREATE_ISSUES = 1 shl 22
+const val PERMISSION_AUTO_REQUEST = 1 shl 23
+const val PERMISSION_AUTO_REQUEST_MOVIE = 1 shl 24
+const val PERMISSION_AUTO_REQUEST_TV = 1 shl 25
+const val PERMISSION_RECENT_VIEW = 1 shl 26
+const val PERMISSION_WATCHLIST_VIEW = 1 shl 27
+const val PERMISSION_MANAGE_BLOCKLIST = 1 shl 28
+const val PERMISSION_VIEW_BLOCKLIST = 1 shl 30
 
 /** Whether [bitmask] carries `ADMIN`, which the server reads as every other permission: the one test for it. */
-internal fun isAdminBitmask(bitmask: Int): Boolean = bitmask and PERMISSION_ADMIN != 0
+fun isAdminBitmask(bitmask: Int): Boolean = bitmask and PERMISSION_ADMIN != 0
 
 /**
  * What the connected user may do, decoded from their permission bitmask. This is what the

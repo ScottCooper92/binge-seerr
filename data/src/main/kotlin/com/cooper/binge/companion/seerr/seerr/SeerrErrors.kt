@@ -153,7 +153,7 @@ private fun HttpException.httpStatus(): Status =
 internal fun HttpException.rejectsSessionByAnswer(): Boolean = isSessionRejection(code(), response()?.headers() ?: Headers.headersOf())
 
 /** A 401 Seerr sent although `auth/me` still answers: a refusal, which a route may read more precisely (#997, #998). */
-internal fun HttpException.refusedWithLiveSession(): Boolean = isLiveSessionRefusal(code(), response()?.headers() ?: Headers.headersOf())
+fun HttpException.refusedWithLiveSession(): Boolean = isLiveSessionRefusal(code(), response()?.headers() ?: Headers.headersOf())
 
 /**
  * The error body, peeked rather than consumed so reading it and classifying the same failure (a report,
@@ -161,7 +161,7 @@ internal fun HttpException.refusedWithLiveSession(): Boolean = isLiveSessionRefu
  * one. This runs inside [toStatusException] itself, so a raw [IOException] here would escape
  * [statusCatching] uncaught rather than become the [Status] the contract expects.
  */
-internal fun HttpException.peekedBody(): String =
+fun HttpException.peekedBody(): String =
     attempt {
         response()
             ?.errorBody()
@@ -199,7 +199,7 @@ class BlocklistedTitleException : IllegalStateException(BLOCKLISTED)
  * gives a sentence (binge-companions#132). Only Seerr's quota 403 is RESOURCE_EXHAUSTED. A FAILED_PRECONDITION has
  * several causes, so only the two blocklist refusals count: Seerr's 403, and this app's own up-front check.
  */
-internal fun Throwable.userFacingRefusal(code: Status.Code): UserFacingRefusal? =
+fun Throwable.userFacingRefusal(code: Status.Code): UserFacingRefusal? =
     when {
         code == Status.Code.RESOURCE_EXHAUSTED -> UserFacingRefusal.QuotaSpent
         code != Status.Code.FAILED_PRECONDITION -> null
@@ -213,7 +213,7 @@ internal fun Throwable.userFacingRefusal(code: Status.Code): UserFacingRefusal? 
  * "No [4K ]Radarr|Sonarr server configured to delete media files" (`DELETE /media/:id/file` in `server/routes/media.ts`,
  * from 3.4.1). A configuration problem, not a stale target, so sending it again cannot succeed.
  */
-internal fun Throwable.isNoDefaultServerRefusal(): Boolean =
+fun Throwable.isNoDefaultServerRefusal(): Boolean =
     this is HttpException && code() == HTTP_CONFLICT && peekedBody().contains("server configured to delete media files", ignoreCase = true)
 
 /**

@@ -81,7 +81,7 @@ private data class CarriedConnection(
 private val carrierJson = Json { ignoreUnknownKeys = true }
 
 /** The bytes a carrier stores for [carried]. */
-internal fun encodeCarriedConnection(carried: CarriedCredentials): ByteArray {
+fun encodeCarriedConnection(carried: CarriedCredentials): ByteArray {
     val credentials = carried.credentials
     val connection =
         when (val auth = credentials.auth) {
@@ -104,7 +104,7 @@ internal fun encodeCarriedConnection(carried: CarriedCredentials): ByteArray {
  * understand, a kind it does not know, a session with no user. A carrier holds what an older build
  * wrote, so refusing beats guessing.
  */
-internal fun decodeCarriedConnection(bytes: ByteArray): CarriedCredentials? {
+fun decodeCarriedConnection(bytes: ByteArray): CarriedCredentials? {
     val carried =
         attempt { carrierJson.decodeFromString<CarriedConnection>(bytes.toString(Charsets.UTF_8)) }.getOrNull()
             ?: return null

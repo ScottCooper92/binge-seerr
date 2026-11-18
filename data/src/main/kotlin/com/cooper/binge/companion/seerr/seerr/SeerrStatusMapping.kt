@@ -146,13 +146,13 @@ fun List<SeerrDownloadStatusDto>.toDownloadProgress(nowMillis: Long): DownloadPr
     return builder.build()
 }
 
-internal fun List<SeerrDownloadStatusDto>.downloadFraction(
+fun List<SeerrDownloadStatusDto>.downloadFraction(
     totalSize: Double = sumOf { it.size ?: 0.0 },
     totalLeft: Double = sumOf { it.sizeLeft ?: 0.0 },
 ): Float = if (totalSize > 0.0) ((totalSize - totalLeft) / totalSize).toFloat().coerceIn(0f, 1f) else 0f
 
 /** Downloading when any item is transferring, otherwise queued; older servers with no status fall back to progress. */
-internal fun List<SeerrDownloadStatusDto>.isDownloading(fraction: Float): Boolean =
+fun List<SeerrDownloadStatusDto>.isDownloading(fraction: Float): Boolean =
     when {
         any { it.status?.equals(STATUS_DOWNLOADING, ignoreCase = true) == true } -> true
         any { it.status != null } -> false
