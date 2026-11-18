@@ -47,9 +47,10 @@ class ScreenNamesTest {
         assertEquals(names.size, names.toSet().size)
     }
 
-    /** An object's instance, or a class built from its constructor with a sample value for each parameter. */
+    /** An object's instance, a sealed interface's first subtype, or a class built from its constructor with a sample value for each parameter. */
     private fun sampleOf(type: Class<*>): Any {
         if (type.isEnum) return type.enumConstants.first()
+        if (type.isInterface) return sampleOf(type.permittedSubclasses.first())
         runCatching { return type.getField("INSTANCE").get(null) }
         val constructor = type.declaredConstructors.first { !it.isSynthetic }
         return constructor.newInstance(*constructor.parameterTypes.map(::sampleValue).toTypedArray())

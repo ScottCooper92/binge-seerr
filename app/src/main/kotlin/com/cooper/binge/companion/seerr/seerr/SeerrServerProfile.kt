@@ -163,6 +163,21 @@ data class SeerrServerProfile(
     /** The streaming service filter on `discover/{movies,tv}` (`watchRegion` and `watchProviders`), which arrived with the sliders. */
     val hasWatchProviderDiscover: Boolean get() = hasDiscoverSliders
 
+    /**
+     * The filter and sort parameters on `discover/{movies,tv}`: genre, studio or network, keywords, language, dates, runtime, rating,
+     * vote count and the streaming services. The first release tag whose `discover.ts` takes them is Overseerr 1.32 and Jellyseerr 1.4.
+     */
+    val hasDiscoverFilters: Boolean get() = hasDiscoverSliders
+
+    /** The TV `status` filter: Jellyseerr 2.0, and not Overseerr. */
+    val hasDiscoverStatusFilter: Boolean get() = jellyseerrLineage && atLeast(2, 0)
+
+    /** The certification filter (`certification*`): Jellyseerr 2.6, and not Overseerr. */
+    val hasDiscoverCertification: Boolean get() = jellyseerrLineage && atLeast(2, 6)
+
+    /** Keywords to leave out (`excludeKeywords`): the 3.0 release of the Jellyseerr lineage. */
+    val hasDiscoverExcludeKeywords: Boolean get() = jellyseerrLineage && atLeast(3, 0)
+
     /** The Plex watchlist; whether the signed-in user may use it is a permission, not this. */
     val hasDiscoverWatchlist: Boolean get() = if (jellyseerrLineage) atLeast(1, 2) else atLeast(1, 30)
 
