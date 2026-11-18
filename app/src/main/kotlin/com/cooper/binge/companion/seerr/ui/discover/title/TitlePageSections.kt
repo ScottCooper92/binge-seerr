@@ -53,11 +53,7 @@ internal fun TitlePageBody(
     Column(verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m))) {
         // The expanded header already shows these and the synopsis.
         val expanded = isExpandedLayout()
-        if (!expanded) {
-            Column(Modifier.readingMargin(), verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m))) {
-                TitleStatsRows(movie.titleStats(locale))
-            }
-        }
+        if (!expanded) TitleStatsRows(movie.titleStats(locale))
         TitleActions(
             model = titleActionsModel(movie.standard, movie.fourK),
             onRequest = actions.onRequest,
