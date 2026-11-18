@@ -17,7 +17,19 @@ class TitleSearchScreenshotTest {
     @Composable
     fun idleWithRecents() = Frame(idleWithRecentsState())
 
-    /** Nothing typed and nothing remembered: the prompt. */
+    /** The trending rails still on their way under the recents. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun idleLoading() = Frame(idleLoadingState())
+
+    /** A type chosen: only its results are listed, and the chip row keeps every count. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun resultsMovies() = Frame(readyMoviesState())
+
+    /** Nothing typed, nothing remembered and no trending: the prompt. */
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
@@ -55,6 +67,23 @@ class TitleSearchScreenshotTest {
     @SeerrSpanishPreviews
     @Composable
     fun idleSpanish() = Frame(idleWithRecentsState())
+
+    /** A chosen group that none of the loaded results belong to, with no pages left: the message, not a blank screen. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun emptyGroup() = Frame(readyEmptyTypeState())
+
+    @PreviewTest
+    @SeerrSpanishPreviews
+    @Composable
+    fun emptyGroupSpanish() = Frame(readyEmptyTypeState())
+
+    /** The same group while the next page is on its way. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun emptyGroupLoading() = Frame(readyEmptyTypeLoadingState())
 
     /** A further page loading under the list. */
     @PreviewTest
