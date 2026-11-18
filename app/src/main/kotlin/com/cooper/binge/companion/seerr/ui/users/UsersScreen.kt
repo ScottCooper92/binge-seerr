@@ -9,8 +9,6 @@ import androidx.compose.material.icons.filled.ManageAccounts
 import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.SwapVert
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.pulltorefresh.PullToRefreshState
 import androidx.compose.runtime.Composable
@@ -33,6 +31,7 @@ import com.binge.designsystem.template.screenInnerPadding
 import com.binge.designsystem.template.screenOuterPadding
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.seerr.ManageablePermission
+import com.cooper.binge.companion.seerr.ui.state.BarIconAction
 import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
 import com.cooper.binge.companion.seerr.ui.state.LoadingScreen
 import com.cooper.binge.companion.seerr.ui.state.SortSheet
@@ -92,7 +91,7 @@ fun UsersScreen(
                 else -> null
             },
         snackbarHostState = snackbarHostState,
-        actions = { UsersBarActions(ready, actions, onSort = { showSort = true }) },
+        actions = { glassBackgroundAlpha -> UsersBarActions(ready, actions, glassBackgroundAlpha, onSort = { showSort = true }) },
     ) { padding ->
         if (state is UsersUiState.Error) {
             ErrorScreen(error = state.error, modifier = Modifier.padding(padding), onRetry = actions.onRetryLoad)
@@ -183,26 +182,24 @@ private fun UsersSnackbarEffect(
 private fun UsersBarActions(
     ready: UsersUiState.Ready?,
     actions: UsersActions,
+    glassBackgroundAlpha: Float,
     onSort: () -> Unit,
 ) {
     if (ready == null) return
     if (ready.selection.isNotEmpty()) {
-        IconButton(onClick = actions.onStartBulkEdit) {
-            Icon(Icons.Filled.ManageAccounts, contentDescription = stringResource(R.string.users_edit_permissions))
-        }
-        IconButton(onClick = actions.onClearSelection) {
-            Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.users_clear_selection_cd))
-        }
+        BarIconAction(
+            Icons.Filled.ManageAccounts,
+            stringResource(R.string.users_edit_permissions),
+            glassBackgroundAlpha,
+            actions.onStartBulkEdit,
+        )
+        BarIconAction(Icons.Filled.Close, stringResource(R.string.users_clear_selection_cd), glassBackgroundAlpha, actions.onClearSelection)
     } else {
         if (ready.canAdmit) {
             // One way in skips the choice: a server with no media server can only create.
             val onAdd = if (ready.importSource == null) actions.admission.onStartCreate else actions.admission.onStart
-            IconButton(onClick = onAdd) {
-                Icon(Icons.Filled.PersonAdd, contentDescription = stringResource(R.string.users_add_cd))
-            }
+            BarIconAction(Icons.Filled.PersonAdd, stringResource(R.string.users_add_cd), glassBackgroundAlpha, onAdd)
         }
-        IconButton(onClick = onSort) {
-            Icon(Icons.Filled.SwapVert, contentDescription = stringResource(R.string.requests_sort_cd))
-        }
+        BarIconAction(Icons.Filled.SwapVert, stringResource(R.string.requests_sort_cd), glassBackgroundAlpha, onSort)
     }
 }
