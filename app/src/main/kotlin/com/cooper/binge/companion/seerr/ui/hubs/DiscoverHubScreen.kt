@@ -17,7 +17,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
@@ -46,7 +47,6 @@ import com.cooper.binge.companion.seerr.discover.sliders.HubTab
 import com.cooper.binge.companion.seerr.discover.sliders.toCard
 import com.cooper.binge.companion.seerr.ui.state.EmptyScreen
 import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
-import kotlinx.coroutines.flow.first
 import com.binge.designsystem.R as DesR
 
 private const val SKELETON_ROWS = 3
@@ -149,21 +149,24 @@ private fun Hero(
 
 /**
  * The hero loads apart from the rows and can land after them. A list keeps the item it shows first in place when something is
- * inserted above it, so a hub nobody has scrolled would stay on its first row with the new hero out of sight above. Until the
- * user scrolls, a hero that arrives takes the top of the list.
+ * inserted above it, so a hub sitting at its very top would stay on its first row with the new hero out of sight above. A hero
+ * that arrives while the list was at its top takes the top; one that arrives while the user has scrolled leaves them where they
+ * are. The position is read before the hero is in, since inserting it is what moves the list, and a pull to refresh at the top
+ * does not leave the top.
  */
 @Composable
 private fun ShowHeroWhenItArrives(
     listState: LazyListState,
     hasHero: Boolean,
 ) {
-    var scrolled by rememberSaveable { mutableStateOf(false) }
+    val heroNow by rememberUpdatedState(hasHero)
+    var atTopBeforeHero by remember { mutableStateOf(true) }
     LaunchedEffect(listState) {
-        snapshotFlow { listState.isScrollInProgress }.first { it }
-        scrolled = true
+        snapshotFlow { listState.firstVisibleItemIndex == 0 && listState.firstVisibleItemScrollOffset == 0 }
+            .collect { atTop -> if (!heroNow) atTopBeforeHero = atTop }
     }
     LaunchedEffect(hasHero) {
-        if (hasHero && !scrolled) listState.scrollToItem(0)
+        if (hasHero && atTopBeforeHero) listState.scrollToItem(0)
     }
 }
 

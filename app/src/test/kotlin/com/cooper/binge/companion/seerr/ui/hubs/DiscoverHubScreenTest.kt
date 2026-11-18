@@ -11,6 +11,7 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipeDown
 import androidx.compose.ui.test.swipeUp
 import com.cooper.binge.companion.seerr.discover.TitleAvailability
 import com.cooper.binge.companion.seerr.discover.TitleKind
@@ -118,5 +119,27 @@ class DiscoverHubScreenTest {
 
         compose.onNodeWithContentDescription("Seven Rivers", substring = true).assertDoesNotExist()
         compose.onNodeWithText("Title 1").assertDoesNotExist()
+    }
+
+    @Test
+    fun `a pull down at the top of the hub does not stop a late hero from showing`() {
+        val server = "https://server.example/"
+        val rows =
+            (1..4).map { id ->
+                val card = HubCard(TitleKind.Movie, id, "Title $id", "2020", null, TitleAvailability.None, server + "movie/$id")
+                HubRowUi(HubRow.Trending(id, null, HubTab.Movies), listOf(card))
+            }
+        val state = mutableStateOf(DiscoverHubUiState.Ready(rows, pending = 0, refreshing = false))
+        compose.setContent {
+            SeerrTheme { DiscoverHubScreen(HubTab.Movies, state.value, onRefresh = {}, onOpenTitle = {}) }
+        }
+        compose.onAllNodes(hasScrollAction()).onFirst().performTouchInput { swipeDown() }
+        compose.waitForIdle()
+        compose.onNodeWithText("Title 1").assertIsDisplayed()
+
+        state.value = state.value.copy(hero = listOf(hero(server)))
+        compose.waitForIdle()
+
+        compose.onNodeWithContentDescription("Seven Rivers", substring = true).assertIsDisplayed()
     }
 }
