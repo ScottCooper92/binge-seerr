@@ -77,10 +77,6 @@ sealed interface BlocklistUiState {
 sealed interface BlocklistEvent {
     data object Removed : BlocklistEvent
 
-    data class CollectionChanged(
-        val blocked: Boolean,
-    ) : BlocklistEvent
-
     data class Failed(
         val error: SeerrError,
     ) : BlocklistEvent
