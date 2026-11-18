@@ -184,4 +184,10 @@ class DiscoverFiltersTest {
         assertEquals(3, DiscoverFilters(genres = setOf(18, 35), runtimeMin = 90, language = "ja").appliedCount())
         assertEquals(1, DiscoverFilters(releaseFrom = "2020-01-01", releaseTo = "2021-01-01").appliedCount())
     }
+
+    @Test
+    fun `matching any genre means nothing with no genre chosen`() {
+        assertTrue(DiscoverFilters(genresAny = true).isEmpty)
+        assertFalse(DiscoverFilters(genres = setOf(18), genresAny = true).isEmpty)
+    }
 }

@@ -32,7 +32,7 @@ data class DiscoverFilters(
     val certification: String? = null,
 ) {
     /** Whether nothing narrows the list. */
-    val isEmpty: Boolean get() = this == DiscoverFilters()
+    val isEmpty: Boolean get() = copy(genresAny = genresAny && genres.isNotEmpty()) == DiscoverFilters()
 }
 
 /** How many of the filters the sheet's rows set are in force, one for each row, for the sheet's "N applied". */
