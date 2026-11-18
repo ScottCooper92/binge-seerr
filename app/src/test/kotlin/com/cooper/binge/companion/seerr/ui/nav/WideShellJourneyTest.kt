@@ -106,7 +106,7 @@ class WideShellJourneyTest {
         host.connectDemo()
         host.launch(HomeRoute, RequestsRoute)
         host.compose.waitUntil(WAIT_MILLIS) { host.settingsStack() == listOf(HubRoute, RequestsRoute) }
-        host.compose.onNodeWithTag("tab_tv").performClick()
+        host.compose.onNodeWithTag("tab_search").performClick()
         host.compose.waitForIdle()
 
         host.rotate(PHONE)

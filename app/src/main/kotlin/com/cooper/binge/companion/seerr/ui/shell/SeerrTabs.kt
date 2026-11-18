@@ -144,7 +144,10 @@ internal fun showDiscoverTab(): Boolean = booleanResource(R.bool.shell_show_disc
 /** The bar's destinations, labelled in the user's language. */
 @Composable
 internal fun seerrTabItems(): List<BingeNavSuiteItem> =
-    SeerrTab.entries.filter { it != SeerrTab.Discover || showDiscoverTab() }.map { BingeNavSuiteItem(key = it, label = it.label(), icon = it.icon, testTag = it.testTag) }
+    SeerrTab.entries
+        .filter {
+            it != SeerrTab.Discover || showDiscoverTab()
+        }.map { BingeNavSuiteItem(key = it, label = it.label(), icon = it.icon, testTag = it.testTag) }
 
 /**
  * The tab bar over each tab's root: the Settings tab is the hub, [settings], Movies and TV are the discovery hubs, [discover],
