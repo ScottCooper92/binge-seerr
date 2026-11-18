@@ -160,6 +160,10 @@
     <string name="grid_sort_revenue_asc">Lowest revenue</string>
     <string name="grid_sort_title_asc">Title A to Z</string>
     <string name="grid_sort_title_desc">Title Z to A</string>
+    <string name="grid_filters_button">Filters</string>
+    <string name="grid_filters_title">Filters</string>
+    <string name="grid_filters_sort">Sort by</string>
+    <string name="grid_subtitle" translatable="false">%1$s · %2$s</string>
     <string name="grid_chip_upcoming">Upcoming</string>
     <string name="grid_chip_genre">Genre</string>
     <string name="grid_chip_company">Studio or network</string>

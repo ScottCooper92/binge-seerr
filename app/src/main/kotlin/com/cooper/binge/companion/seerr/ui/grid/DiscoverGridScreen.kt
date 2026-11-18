@@ -13,6 +13,7 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -32,7 +33,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
-import com.binge.designsystem.component.BingeFilterChip
+import com.binge.designsystem.component.BingeOutlinedButton
 import com.binge.designsystem.component.DiscoverQuickClearChip
 import com.binge.designsystem.component.MediaCard
 import com.binge.designsystem.component.QuickClearTone
@@ -47,7 +48,6 @@ import com.cooper.binge.companion.seerr.ui.hubs.toStatus
 import com.cooper.binge.companion.seerr.ui.state.EmptyScreen
 import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
 import com.cooper.binge.companion.seerr.ui.state.LoadingScreen
-import com.cooper.binge.companion.seerr.ui.state.SortSheet
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import com.binge.designsystem.R as DesR
@@ -76,8 +76,10 @@ internal fun DiscoverGridScreen(
     BingeScreenScaffold(
         title = title ?: fallback,
         onBack = actions.onBack,
-        bar = ScreenBar.Small,
-        header = { GridControlsRow(state.controls, actions) },
+        bar = ScreenBar.Large,
+        subtitle = state.controls.subtitle(kind),
+        titleTrailing = state.controls.sort?.let { { FiltersButton(state.controls, actions) } },
+        header = state.controls.chip?.let { chip -> { ActiveFilterChips(chip, actions) } },
     ) { padding ->
         Box(Modifier.fillMaxSize().padding(padding)) {
             val inner = navOverlayPadding(PaddingValues(dimensionResource(DesR.dimen.padding_m)))
@@ -96,51 +98,54 @@ internal fun DiscoverGridScreen(
     }
 }
 
+/** The Filters button of Binge's header. It opens the sheet that holds the order and the filters. */
 @Composable
-private fun GridControlsRow(
+private fun FiltersButton(
     controls: GridControls,
     actions: DiscoverGridActions,
 ) {
-    var choosing by rememberSaveable { mutableStateOf(false) }
-    if (controls.sort == null && controls.chip == null) return
+    var open by rememberSaveable { mutableStateOf(false) }
+    BingeOutlinedButton(
+        label = stringResource(R.string.grid_filters_button),
+        onClick = { open = true },
+        leadingIcon = Icons.Filled.FilterList,
+    )
+    if (open && controls.sort != null) {
+        DiscoverFilterSheet(
+            sort = controls.sort,
+            sortChoices = controls.sortChoices,
+            onSort = actions.onSort,
+            onDismiss = { open = false },
+        )
+    }
+}
+
+/** The filters in force, each removable, in one scrolling row under the header, as Binge's discover filter chips are. */
+@Composable
+private fun ActiveFilterChips(
+    chip: ActiveFilterChip,
+    actions: DiscoverGridActions,
+) {
     LazyRow(
         modifier = Modifier.fillMaxWidth(),
         contentPadding = PaddingValues(horizontal = dimensionResource(DesR.dimen.padding_m)),
         horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
     ) {
-        controls.sort?.let { sort ->
-            item(key = "sort") {
-                BingeFilterChip(
-                    label = stringResource(sort.labelRes()),
-                    selected = false,
-                    onClick = { choosing = true },
-                    leadingIcon = sort.icon(),
-                )
-            }
-        }
-        controls.chip?.let { chip ->
-            item(key = "filter") {
-                DiscoverQuickClearChip(
-                    label = chip.label ?: stringResource(chip.kind.labelRes()),
-                    tone = QuickClearTone.Include,
-                    onClick = actions.onClearFilter,
-                )
-            }
+        item(key = "filter") {
+            DiscoverQuickClearChip(
+                label = chip.label ?: stringResource(chip.kind.labelRes()),
+                tone = QuickClearTone.Include,
+                onClick = actions.onClearFilter,
+            )
         }
     }
-    if (choosing && controls.sort != null) {
-        SortSheet(
-            choices = controls.sortChoices,
-            selected = controls.sort,
-            label = { stringResource(it.labelRes()) },
-            onSelect = {
-                choosing = false
-                actions.onSort(it)
-            },
-            onDismiss = { choosing = false },
-            icon = { it.icon() },
-        )
-    }
+}
+
+/** The kind and the current order, as Binge words "Movies by popularity"; a list with no order has the kind alone. */
+@Composable
+private fun GridControls.subtitle(kind: TitleKind): String {
+    val kindLabel = stringResource(if (kind == TitleKind.Series) R.string.hubs_title_tv else R.string.hubs_title_movies)
+    return sort?.let { stringResource(R.string.grid_subtitle, kindLabel, stringResource(it.labelRes())) } ?: kindLabel
 }
 
 @Composable
