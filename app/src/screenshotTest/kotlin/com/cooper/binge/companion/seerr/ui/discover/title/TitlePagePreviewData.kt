@@ -20,6 +20,7 @@ private const val CRITICS = 83
 private const val AUDIENCE = 85
 private const val IMDB = 8.7
 private const val VOTES = 24_000
+private const val RATING = 7.8
 
 private fun person(
     id: Int,
@@ -31,7 +32,7 @@ private fun related(
     id: Int,
     name: String,
     availability: TitleAvailability,
-) = TitleResult(TitleKind.Movie, id, name, "2003", null, null, null, null, availability, null)
+) = TitleResult(TitleKind.Movie, id, name, "2003", null, null, null, RATING, availability, null)
 
 /** A film with everything the server gives, standard requestable and 4K held. */
 internal fun fullMovie(
@@ -62,7 +63,17 @@ internal fun fullMovie(
     keyCrew = listOf(person(10, "Lana Wachowski", "Director, Writer"), person(11, "Lilly Wachowski", "Director, Writer")),
     otherCrew = emptyList(),
     videos = listOf(TitleVideo("Official Trailer", "https://www.youtube.com/watch?v=demo", isTrailer = true)),
-    providers = TitleProviders("US", null, listOf(TitleProvider(1, "Demo Stream", null)), emptyList()),
+    providers =
+        TitleProviders(
+            "US",
+            "https://seerr.example/watch",
+            listOf(
+                TitleProvider(1, "Demo Stream", null),
+                TitleProvider(2, "Another Service", null),
+                TitleProvider(3, "Third Channel", null),
+            ),
+            listOf(TitleProvider(4, "Demo Store", null), TitleProvider(5, "Corner Shop", null)),
+        ),
     collection = TitleCollection(2344, "The Matrix Collection", null),
     standard = standard,
     fourK = fourK,
@@ -80,6 +91,14 @@ internal fun fullExtras() =
                 related(605, "The Matrix Revolutions", TitleAvailability.None),
             ),
         similar = listOf(related(606, "Dark City", TitleAvailability.Pending)),
+    )
+
+/** The other films of the film's collection: one held, one asked for and one still open. */
+internal fun collectionFilms() =
+    listOf(
+        related(601, "The Matrix Resurrections", TitleAvailability.Available),
+        related(604, "The Matrix Reloaded", TitleAvailability.Pending),
+        related(605, "The Matrix Revolutions", TitleAvailability.None),
     )
 
 /** A film the server knows almost nothing about. */
@@ -113,3 +132,23 @@ internal fun longMovie() =
         genres = listOf("Adventure", "Fantasy", "Action", "Epic Historical Drama"),
         cast = listOf(person(1, "Elijah Wood-Montgomery-Fitzgerald", "Frodo Baggins of the Shire, bearer of the one ring")),
     )
+
+/** A film that can only be bought, with provider names too long for the column. */
+internal fun buyOnlyMovie() =
+    fullMovie().copy(
+        providers =
+            TitleProviders(
+                "US",
+                null,
+                emptyList(),
+                listOf(
+                    TitleProvider(4, "A Very Long Digital Storefront Name", null),
+                    TitleProvider(5, "Another Rather Long Shop Name", null),
+                    TitleProvider(6, "Corner Shop", null),
+                ),
+            ),
+    )
+
+/** A film whose collection has the longest name the server might give. */
+internal fun longCollectionMovie() =
+    fullMovie().copy(collection = TitleCollection(2344, "The Extended Special Collector's Edition Matrix Collection of Films", null))

@@ -37,7 +37,7 @@ How each gate is applied is in [`server-compatibility.md`](server-compatibility.
 | `POST /auth/jellyfin` | Sign in using a Jellyfin username and password | — | v1.0.0 | yes | In place today. |
 | `POST /auth/local` | Sign in using a local account | v1.17.0 | v1.0.0 | yes | In place today. |
 | `GET /auth/me` | Get logged-in user | v1.0.0 | v1.0.0 | yes | Server profile: variant, version, media server, sign-in modes, permissions. |
-| `GET /movie/{movieId}` | Get movie details | v1.0.0 | v1.0.0 | yes | The status lookup the Service makes, and the whole film page behind the discovery flag (facts, including the collection's name, credits, the trailer, watch providers), and the whole cast and crew list behind its "See all". |
+| `GET /movie/{movieId}` | Get movie details | v1.0.0 | v1.0.0 | yes | The status lookup the Service makes, and the whole film page behind the discovery flag (facts, including the collection's name, credits, the trailer, and Where to watch: the streaming and buy providers for the user's region, with their logos, in the server's order), and the whole cast and crew list behind its "See all". |
 | `GET /movie/{movieId}/ratingscombined` | Get RT and IMDB movie ratings combined | v1.34.0 | v1.7.0 | yes | Rotten Tomatoes and IMDb scores on the film page, only where the profile has `hasCombinedRatings`; a 404 means the server has neither. |
 | `GET /movie/{movieId}/recommendations` | Get recommended movies | v1.0.0 | v1.0.0 | yes | The film page's "More like this" rail, first: recommendations, then similar titles, each title once. |
 | `GET /movie/{movieId}/similar` | Get similar movies | v1.0.0 | v1.0.0 | yes | The film page's "More like this" rail, after the recommendations. |
@@ -246,7 +246,7 @@ Each row is ticked in "Today" by the PR that covers it.
 |---|---|---|---|---|---|
 | `GET /certifications/movie` | Get movie certifications | — | v2.6.0 |  | Planned under the discovery epic (#2039). |
 | `GET /certifications/tv` | Get TV certifications | — | v2.6.0 |  | Planned under the discovery epic (#2039). |
-| `GET /collection/{collectionId}` | Get collection details | v1.14.0 | v1.0.0 |  | Planned under the discovery epic (#2039). |
+| `GET /collection/{collectionId}` | Get collection details | v1.14.0 | v1.0.0 | yes | The film page's collection rail: the collection's other films in release order, each with the status the server holds for it, behind the discovery flag. The server mounts it behind sign-in only, with no permission, so any signed-in user may read it. A failed read leaves the rail out; the page does not fail. |
 | `GET /discover/genreslider/movie` | Get genre slider data for movies | v1.22.0 | v1.0.0 | yes | The shared title lists: hubs, the grid and search. |
 | `GET /discover/genreslider/tv` | Get genre slider data for TV series | v1.22.0 | v1.0.0 | yes | The shared title lists: hubs, the grid and search. |
 | `GET /discover/keyword/{keywordId}/movies` | Get movies from keyword | v1.9.0 | v1.0.0 | yes | The shared title lists: hubs, the grid and search. |

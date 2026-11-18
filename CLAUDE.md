@@ -108,6 +108,17 @@ the bug users report as "it does not work". This is a different rule from the ho
 "capabilities, never versions": the host contract is versioned by capability because it is ours
 to design; the server's API is versioned by release because it is not.
 
+## Modules
+
+`:app` is the application. `:data` is an Android library under it that holds the Seerr client (`seerr/`), the connection and its
+credential stores (`auth/`), the demo's transport and fixtures (`demo/`), the Room cache and its stores (`data/`), and the request
+models those stores import. It has no Compose, Activity, Hilt or vendor SDK, so `di/` stays in `:app` and builds its classes by hand.
+Its packages keep the names they had as one module, so a file's package does not say which module it is in.
+
+`internal` stops at the module boundary. Declare something `internal` in `:data` unless `:app` calls it, and a test in `:app` that
+needs an internal of `:data` belongs in `:data`. What tests in both modules share, such as the fake server and the ciphers, is in
+`:data`'s `testFixtures`. The Room schemas are in `data/schemas`, committed. More modules follow in the order #2163 sets out.
+
 ## Kotlin, Gradle and Android
 
 - Kotlin via AGP's built-in support, `jvmTarget` 17, built and tested on JDK 21. The JDK runs the
@@ -123,11 +134,11 @@ to design; the server's API is versioned by release because it is not.
 - The version catalog is `libs.versions.toml` at the repository root, not under
   `gradle/`, matching Binge so a version bump applies the same way to both.
 - Tests are JUnit 4, matching what the extracted code brings with it. Scope Gradle
-  to a module (`:app:test`) rather than running the whole tree when you are checking
+  to a module (`:app:test`, `:data:test`) rather than running the whole tree when you are checking
   one thing.
-- A Robolectric test needs no `@Config` for the SDK: `app/src/test/resources/robolectric.properties`
-  pins `sdk=34` and a plain `Application` for the whole module, and `RobolectricDefaultsTest`
-  asserts it. Do not pin them per class again. `@Config` is for what a test genuinely
+- A Robolectric test needs no `@Config` for the SDK: each module with Robolectric tests carries its own
+  `src/test/resources/robolectric.properties` (`:app` and `:data`), which pins `sdk=34` and a plain `Application`
+  for the whole module, and a `RobolectricDefaultsTest` in that module asserts it. Do not pin them per class again. `@Config` is for what a test genuinely
   varies — a `qualifiers` string, say. The pin matters because the fallback is `targetSdk`
   36, whose sandbox requires Java 21: unpinned, a test passes on JDK 21 and dies on a JDK 17
   machine before its body runs.
@@ -334,13 +345,16 @@ through the same type resolution.
 
 `detekt-baseline.xml` grandfathers what existed when the ruleset was switched on, so the gate is
 **zero new violations** rather than zero total. Do not add to it: a new finding is either fixed or
-argued with in review. The baseline should only shrink.
+argued with in review. The baseline should only shrink. Each module has its own: `detekt-baseline.xml` for `:app` and
+`data/detekt-baseline.xml` for `:data`, because the staleness check would call an entry stale from the wrong module.
 
 ### Coverage
 
 `koverVerify` holds `:app` to **84% of lines**, a number measured (the suite was at 86.4%) rather
-than inherited — Binge's 70 comes from its own per-module layout, and this is one module holding
-ViewModels, the Seerr client, the stores and the exported service together.
+than inherited — Binge's 70 comes from its own per-module layout. The figure is measured over `:app` and `:data` together
+(`kover(project(":data"))`), the same code it covered when they were one module: ViewModels, the Seerr client, the stores and the
+exported service. `:data` also holds itself to **70%** on its own tests, which measured 71.2%; raise it as the stores and the client
+gain tests of their own, and do not lower it.
 
 What is excluded is generated code and Android entry points: Hilt's graph and the whole `di`
 package, Room's `*_Impl*` including the inner classes it emits, `*ComposableSingletons*`,

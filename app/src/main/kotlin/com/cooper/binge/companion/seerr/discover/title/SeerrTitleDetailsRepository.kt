@@ -2,9 +2,11 @@ package com.cooper.binge.companion.seerr.discover.title
 
 import com.binge.companion.sdk.attempt
 import com.cooper.binge.companion.seerr.discover.TitleKind
+import com.cooper.binge.companion.seerr.discover.TitleResult
 import com.cooper.binge.companion.seerr.discover.toAvailability
 import com.cooper.binge.companion.seerr.discover.toReleaseYear
 import com.cooper.binge.companion.seerr.discover.toTitlePage
+import com.cooper.binge.companion.seerr.discover.toTitleResult
 import com.cooper.binge.companion.seerr.seerr.FALLBACK_CERTIFICATION_REGION
 import com.cooper.binge.companion.seerr.seerr.SeerrApi
 import com.cooper.binge.companion.seerr.seerr.SeerrMovieDetailsDto
@@ -27,13 +29,15 @@ private val KEY_CREW_JOBS = listOf("Director", "Writer", "Screenplay", "Producer
 
 /**
  * [TitleDetailsRepository] over the Seerr API. [serverUrl] is the server's address with its trailing slash, for the
- * title's page on it. [io] is the dispatcher the calls run on; it has no default.
+ * title's page on it. [deviceRegion] is the country the phone is set to, an ISO 3166-1 code, or null. [io] is the
+ * dispatcher the calls run on; it has no default.
  */
 class SeerrTitleDetailsRepository(
     private val api: suspend () -> SeerrApi,
     private val viewer: suspend () -> SeerrUserDto,
     private val profile: suspend () -> SeerrServerProfile,
     private val serverUrl: suspend () -> String,
+    private val deviceRegion: () -> String?,
     private val io: CoroutineDispatcher,
 ) : TitleDetailsRepository {
     override suspend fun movie(tmdbId: Int): MovieDetails =
@@ -42,7 +46,7 @@ class SeerrTitleDetailsRepository(
             val user = viewer()
             val profile = profile()
             val dto = api.movieFullDetails(tmdbId)
-            val region = streamingRegion(api, user, profile)
+            val region = streamingRegion(api, user, profile, deviceRegion())
             val permissions = user.toPermissions()
             dto.toMovieDetails(
                 region = region,
@@ -51,6 +55,9 @@ class SeerrTitleDetailsRepository(
                 webUrl = serverUrl() + "movie/" + tmdbId,
             )
         }
+
+    override suspend fun collectionParts(collectionId: Int): List<TitleResult> =
+        withContext(io) { api().collection(collectionId).parts.mapNotNull { it.toTitleResult(TitleKind.Movie) } }
 
     override suspend fun extras(
         kind: TitleKind,
@@ -166,15 +173,18 @@ internal fun List<SeerrVideoDto>.toTitleVideos(): List<TitleVideo> =
 /**
  * The region the title's streaming providers are read for: the user's own streaming region, then the server's, then the
  * discover regions in the same order, as the web client reads them. A server that has one region only has no streaming one.
+ * Seerr's default is no region anywhere, so the last resort is [deviceRegion], the country the phone is set to, and a
+ * region someone chose always wins over it.
  */
 internal suspend fun streamingRegion(
     api: SeerrApi,
     user: SeerrUserDto,
     profile: SeerrServerProfile,
+    deviceRegion: String?,
 ): String? {
     val own = attempt { api.userMainSettings(user.id) }.getOrNull()
     val server = profile.settings
     val streaming = if (profile.hasStreamingRegion) listOf(own?.streamingRegion, server.streamingRegion) else emptyList()
     val discover = listOf(own?.discoverRegion ?: own?.region, server.discoverRegion ?: server.region)
-    return (streaming + discover).firstOrNull { !it.isNullOrBlank() }
+    return (streaming + discover + deviceRegion).firstOrNull { !it.isNullOrBlank() }
 }

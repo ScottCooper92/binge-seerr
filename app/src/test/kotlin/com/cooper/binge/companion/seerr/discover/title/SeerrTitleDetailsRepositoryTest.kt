@@ -42,6 +42,11 @@ private const val RATINGS = """{"rt":{"criticsScore":83,"audienceScore":85},"imd
 private const val PAGE =
     """{"page":1,"totalPages":1,"results":[{"id":604,"mediaType":"movie","title":"Reloaded","releaseDate":"2003-05-15"}]}"""
 
+private const val COLLECTION =
+    """{"id":2344,"name":"The Matrix Collection","parts":[
+        {"id":603,"mediaType":"movie","title":"The Matrix","releaseDate":"1999-03-30","posterPath":"/m.jpg","voteAverage":8.1,"mediaInfo":{"id":11,"status":5}},
+        {"id":604,"mediaType":"movie","title":"Reloaded","releaseDate":"2003-05-15"}]}"""
+
 class SeerrTitleDetailsRepositoryTest {
     private val seerr = FakeSeerrServer()
     private val factory = SeerrApiFactory(logRequests = false, testTransport = seerr::interceptor, testDispatcher = seerr::newDispatcher)
@@ -49,6 +54,7 @@ class SeerrTitleDetailsRepositoryTest {
     private var variant = SeerrVariant.Seerr
     private var version = SeerrVersion(3, 2, 0)
     private var settings = SeerrPublicSettings(movie4kEnabled = true, streamingRegion = "GB", discoverRegion = "US")
+    private var deviceRegion: String? = null
     private var userRegion = """{"streamingRegion":"US"}"""
     private var movieBody = MOVIE
     private var ratingsAnswer = FakeResponse(headers = JSON, body = RATINGS)
@@ -65,6 +71,7 @@ class SeerrTitleDetailsRepositoryTest {
             "/api/v1/movie/603/ratingscombined" -> ratingsAnswer
             "/api/v1/movie/603/recommendations" -> FakeResponse(headers = JSON, body = PAGE)
             "/api/v1/movie/603/similar" -> FakeResponse(code = 500)
+            "/api/v1/collection/2344" -> FakeResponse(headers = JSON, body = COLLECTION)
             "/api/v1/user/9/settings/main" -> FakeResponse(headers = JSON, body = userRegion)
             else -> FakeResponse(code = 404)
         }
@@ -80,11 +87,25 @@ class SeerrTitleDetailsRepositoryTest {
                         viewer = { SeerrUserDto(id = 9, permissions = permissions) },
                         profile = { profile },
                         serverUrl = { "https://seerr.example/" },
+                        deviceRegion = { deviceRegion },
                         io = Dispatchers.Unconfined,
                     ),
                 )
             }
         }
+    }
+
+    @Test
+    fun `a collection's films map as movies, in the order the server gave, with the status it holds`() {
+        val parts = withRepository { it.collectionParts(2344) }
+
+        assertEquals(listOf(603, 604), parts.map { it.tmdbId })
+        assertTrue(parts.all { it.kind == TitleKind.Movie })
+        assertEquals(TitleAvailability.Available, parts[0].availability)
+        assertEquals(TitleAvailability.None, parts[1].availability)
+        assertEquals("2003", parts[1].year)
+        assertEquals(8.1, parts[0].rating)
+        assertNull(parts[1].rating)
     }
 
     @Test
@@ -141,6 +162,40 @@ class SeerrTitleDetailsRepositoryTest {
         val server = withRepository { it.movie(603) }
         assertEquals("GB", server.providers?.region)
         assertEquals("15", server.certification)
+    }
+
+    @Test
+    fun `with no region set anywhere the phone's country is the region`() {
+        settings = SeerrPublicSettings(movie4kEnabled = true)
+        userRegion = "{}"
+        deviceRegion = "GB"
+
+        val movie = withRepository { it.movie(603) }
+
+        assertEquals("GB", movie.providers?.region)
+        assertEquals(listOf("Stream GB"), movie.providers?.streaming?.map { it.name })
+        assertEquals("15", movie.certification)
+    }
+
+    @Test
+    fun `a region someone chose wins over the phone's country`() {
+        deviceRegion = "GB"
+
+        assertEquals("US", withRepository { it.movie(603) }.providers?.region)
+
+        userRegion = "{}"
+        assertEquals("GB", withRepository { it.movie(603) }.providers?.region)
+        settings = SeerrPublicSettings(movie4kEnabled = true, streamingRegion = "US")
+        assertEquals("US", withRepository { it.movie(603) }.providers?.region)
+    }
+
+    @Test
+    fun `with no region anywhere and none on the phone there are no providers`() {
+        settings = SeerrPublicSettings(movie4kEnabled = true)
+        userRegion = "{}"
+        deviceRegion = null
+
+        assertNull(withRepository { it.movie(603) }.providers)
     }
 
     @Test
