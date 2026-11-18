@@ -61,6 +61,7 @@ class PagedQuerySearch<T>(
             // Shared eagerly so the list and the state read one debounced stream, whatever `started` is.
             .stateIn(scope, SharingStarted.Eagerly, "")
 
+    /** Every settled query reaches the list, a short one as an empty page, so the next real query is a change and searches again. */
     private val list =
         PagedList(
             scope = scope,
@@ -95,9 +96,12 @@ class PagedQuerySearch<T>(
     /** Ask for the next page. One at a time, and none if the results have run out. */
     fun loadMore() = list.loadMore()
 
-    suspend fun forgetRecents() = history.clear()
+    suspend fun forgetRecents() {
+        history.clear()
+        remembered = null
+    }
 
-    /** A short query reaches the list as a query of its own, so the next real one is a change and searches again. */
+    /** Remembers a query once its results are non-empty, and only once until another query or the history being cleared. */
     private suspend fun remember(
         query: String,
         found: SearchPage<T>,

@@ -211,6 +211,22 @@ class PagedQuerySearchTest {
         }
 
     @Test
+    fun `a query is remembered again after the recents are forgotten`() =
+        runTest {
+            val history = FakeHistory()
+            val search = newSearch(scope(), history)
+            scope().launch { search.state.collect {} }
+            search.setQuery("alien")
+            advanceUntilIdle()
+            search.forgetRecents()
+            search.clear()
+            advanceUntilIdle()
+            search.setQuery("alien")
+            advanceUntilIdle()
+            assertEquals(listOf("alien"), history.list.value)
+        }
+
+    @Test
     fun `an empty first page is read past while more remain`() =
         runTest {
             val search =
