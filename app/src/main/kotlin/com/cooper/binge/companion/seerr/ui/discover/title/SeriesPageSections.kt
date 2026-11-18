@@ -1,6 +1,7 @@
 package com.cooper.binge.companion.seerr.ui.discover.title
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
@@ -63,14 +64,18 @@ internal fun SeriesPageBody(
     Column(verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m))) {
         // The expanded header already shows these and the synopsis.
         val expanded = isExpandedLayout()
-        if (!expanded) TitleStatsRows(series.titleStats(locale))
+        if (!expanded) {
+            Column(Modifier.readingMargin(), verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m))) {
+                TitleStatsRows(series.titleStats(locale))
+            }
+        }
         TitleActions(
             model = titleActionsModel(series.standard, series.fourK),
             onRequest = actions.onRequest,
             onTrailer = series.videos.trailerUrl()?.let { url -> { actions.onOpenUrl(url) } },
             modifier = Modifier.readingMargin(),
         )
-        if (!expanded) OverviewSection(series.overview)
+        if (!expanded && series.overview != null) Box(Modifier.readingMargin()) { OverviewSection(series.overview) }
         EpisodesSection(state, seasonActions, Modifier.readingMargin())
         InfoRowList(
             series.factEntries(
