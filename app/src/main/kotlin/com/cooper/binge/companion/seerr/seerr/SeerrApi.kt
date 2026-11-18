@@ -115,6 +115,12 @@ interface SeerrApi {
         @Query("page") page: Int = 1,
     ): SeerrTitlePageDto
 
+    /** A TMDB collection and its films, oldest first. Any signed-in user may read it; each part carries what the server holds of it. */
+    @GET("api/v1/collection/{collectionId}")
+    suspend fun collection(
+        @Path("collectionId") collectionId: Int,
+    ): SeerrCollectionDto
+
     /** Rotten Tomatoes and IMDb together; only Seerr serves it. A 404 means the server has neither score. */
     @GET("api/v1/movie/{tmdbId}/ratingscombined")
     suspend fun movieRatings(
@@ -131,6 +137,13 @@ interface SeerrApi {
     suspend fun tvFullDetails(
         @Path("tmdbId") tmdbId: Int,
     ): SeerrTvDetailsDto
+
+    /** One season with its episodes, for the series page's episode list and the season page. */
+    @GET("api/v1/tv/{tmdbId}/season/{seasonNumber}")
+    suspend fun tvSeason(
+        @Path("tmdbId") tmdbId: Int,
+        @Path("seasonNumber") seasonNumber: Int,
+    ): SeerrSeasonDetailsDto
 
     @GET("api/v1/tv/{tmdbId}/recommendations")
     suspend fun tvRecommendations(
