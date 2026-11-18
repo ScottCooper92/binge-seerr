@@ -9,6 +9,7 @@ import com.cooper.binge.companion.seerr.preview.SeerrFontScalePreviews
 import com.cooper.binge.companion.seerr.preview.SeerrScreenPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrScreenStatePreview
 import com.cooper.binge.companion.seerr.preview.SeerrSpanishPreviews
+import com.cooper.binge.companion.seerr.preview.SeerrTabletPanesPreview
 import kotlinx.coroutines.flow.emptyFlow
 
 private const val SCROLLED_PX = 2500
@@ -34,6 +35,11 @@ class TitlePageScreenshotTest {
     @SeerrScreenPreviews
     @Composable
     fun requestable() = Frame(TitlePageUiState.Ready(fullMovie(), fullExtras()))
+
+    @PreviewTest
+    @SeerrTabletPanesPreview
+    @Composable
+    fun requestableTablet() = Frame(TitlePageUiState.Ready(fullMovie(), fullExtras()))
 
     /** Already in the library: no Request button, and the status chip says so. */
     @PreviewTest
