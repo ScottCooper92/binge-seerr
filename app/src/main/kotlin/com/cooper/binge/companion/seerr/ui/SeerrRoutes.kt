@@ -2,6 +2,8 @@ package com.cooper.binge.companion.seerr.ui
 
 import androidx.navigation3.runtime.NavKey
 import com.cooper.binge.companion.seerr.discover.TitleKind
+import com.cooper.binge.companion.seerr.discover.grid.DiscoverFilters
+import com.cooper.binge.companion.seerr.discover.grid.DiscoverSort
 import com.cooper.binge.companion.seerr.discover.grid.GridPreset
 import com.cooper.binge.companion.seerr.ui.blocklist.BlocklistItem
 import com.cooper.binge.companion.seerr.ui.settings.ServiceType
@@ -170,4 +172,6 @@ data class DiscoverGridRoute(
     val kind: TitleKind,
     val preset: GridPreset,
     val title: String? = null,
+    val filters: DiscoverFilters? = null,
+    val sort: DiscoverSort? = null,
 ) : SeerrRoute

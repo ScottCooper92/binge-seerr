@@ -2,6 +2,7 @@ package com.cooper.binge.companion.seerr.ui.grid
 
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverFilters
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverSort
+import com.cooper.binge.companion.seerr.discover.grid.FilterOption
 import com.cooper.binge.companion.seerr.discover.sliders.HubCard
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 
@@ -23,6 +24,13 @@ data class GridControls(
     val sortChoices: List<DiscoverSort>,
     val chip: ActiveFilterChip?,
     val filters: DiscoverFilters = DiscoverFilters(),
+    val vocabulary: FilterVocabulary = FilterVocabulary(),
+)
+
+/** The choices the filter sheet's pickers offer, loaded once; a row whose list is empty is not shown. */
+data class FilterVocabulary(
+    val genres: List<FilterOption> = emptyList(),
+    val languages: List<FilterOption> = emptyList(),
 )
 
 /** The "see all" grid. The controls stay in every state, so a filter that empties the list can be cleared from it. */

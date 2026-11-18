@@ -63,6 +63,7 @@ internal class DiscoverGridActions(
     val onLoadMore: () -> Unit,
     val onOpenTitle: (HubCard) -> Unit,
     val onApply: (DiscoverSort, DiscoverFilters) -> Unit,
+    val onSwitchKind: (TitleKind, DiscoverSort, DiscoverFilters) -> Unit,
 )
 
 private const val LOAD_MORE_AHEAD = 6
@@ -81,7 +82,7 @@ internal fun DiscoverGridScreen(
         onBack = actions.onBack,
         bar = ScreenBar.Large,
         subtitle = state.controls.subtitle(kind),
-        titleTrailing = state.controls.sort?.let { { FiltersButton(state.controls, actions) } },
+        titleTrailing = state.controls.sort?.let { { FiltersButton(kind, state.controls, actions) } },
         header = state.controls.chip?.let { chip -> { ActiveFilterChips(chip, actions) } },
     ) { padding ->
         Box(Modifier.fillMaxSize().padding(padding)) {
@@ -104,6 +105,7 @@ internal fun DiscoverGridScreen(
 /** The Filters button of Binge's header. It opens the sheet that holds the order and the filters. */
 @Composable
 private fun FiltersButton(
+    kind: TitleKind,
     controls: GridControls,
     actions: DiscoverGridActions,
 ) {
@@ -120,11 +122,14 @@ private fun FiltersButton(
     )
     if (open && controls.sort != null) {
         DiscoverFilterSheet(
+            kind = kind,
             sort = controls.sort,
             filters = controls.filters,
-            sortChoices = controls.sortChoices,
+            vocabulary = controls.vocabulary,
             today = remember { LocalDate.now() },
-            onApply = actions.onApply,
+            onApply = { next, sort, filters ->
+                if (next == kind) actions.onApply(sort, filters) else actions.onSwitchKind(next, sort, filters)
+            },
             onDismiss = { open = false },
         )
     }

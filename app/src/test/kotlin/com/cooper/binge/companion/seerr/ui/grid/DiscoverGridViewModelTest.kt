@@ -7,6 +7,7 @@ import com.cooper.binge.companion.seerr.discover.TitleResult
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverFilters
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverGridRepository
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverSort
+import com.cooper.binge.companion.seerr.discover.grid.FilterOption
 import com.cooper.binge.companion.seerr.discover.grid.GridPreset
 import com.cooper.binge.companion.seerr.discover.grid.GridRequest
 import com.cooper.binge.companion.seerr.discover.sliders.HubMediaSource
@@ -46,6 +47,10 @@ class DiscoverGridViewModelTest {
 
         override suspend fun canRefine(preset: GridPreset) = refinable
 
+        override suspend fun genres(kind: TitleKind) = listOf(FilterOption("18", "Drama"), FilterOption("35", "Comedy"))
+
+        override suspend fun languages() = listOf(FilterOption("ja", "Japanese"))
+
         override suspend fun load(
             request: GridRequest,
             page: Int,
@@ -75,7 +80,7 @@ class DiscoverGridViewModelTest {
         kind: TitleKind = TitleKind.Movie,
         block: suspend TestScope.(DiscoverGridViewModel) -> Unit,
     ) = runTest {
-        val vm = DiscoverGridViewModel(grid, media, kind, preset, "Drama", "2026-11-19")
+        val vm = DiscoverGridViewModel(grid, media, kind, preset, "Drama", "2026-11-19", null, null)
         val collector = launch(UnconfinedTestDispatcher(testScheduler)) { vm.uiState.collect {} }
         try {
             advanceUntilIdle()
@@ -125,6 +130,38 @@ class DiscoverGridViewModelTest {
             assertEquals(setOf(18), last.first.filters.genres)
             assertEquals(1, last.second)
             assertEquals(DiscoverSort.RatingDesc, vm.uiState.value.controls.sort)
+        }
+
+    @Test
+    fun `the sheet's pickers are the genres and languages the server offers`() =
+        runVm { vm ->
+            advanceUntilIdle()
+            val words = vm.uiState.value.controls.vocabulary
+            assertEquals(listOf("Drama", "Comedy"), words.genres.map { it.name })
+            assertEquals(listOf("ja"), words.languages.map { it.id })
+        }
+
+    @Test
+    fun `a grid reopened by a kind switch starts on the filters and order it was given`() =
+        runTest {
+            val given = DiscoverFilters(runtimeMin = 90)
+            val vm =
+                DiscoverGridViewModel(
+                    grid,
+                    media,
+                    TitleKind.Series,
+                    GridPreset.Popular,
+                    null,
+                    "2026-11-19",
+                    given,
+                    DiscoverSort.FirstAirNewest,
+                )
+            val collector = launch(UnconfinedTestDispatcher(testScheduler)) { vm.uiState.collect {} }
+            advanceUntilIdle()
+            val (request, _) = grid.requests.first()
+            assertEquals(given, request.filters)
+            assertEquals(DiscoverSort.FirstAirNewest, request.sort)
+            collector.cancel()
         }
 
     @Test

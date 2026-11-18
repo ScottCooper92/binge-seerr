@@ -51,9 +51,12 @@ class DiscoverGridViewModel
         @Assisted private val preset: GridPreset,
         @Assisted("title") private val title: String?,
         @Assisted("upcomingFrom") upcomingFrom: String,
+        @Assisted private val initialFilters: DiscoverFilters?,
+        @Assisted private val initialSort: DiscoverSort?,
     ) : ViewModel() {
         private val starting = preset.startingFilters(upcomingFrom)
-        private val sortFilter = SortFilterState(starting, preset.startingSort(kind))
+        private val sortFilter = SortFilterState(initialFilters ?: starting, initialSort ?: preset.startingSort(kind))
+        private val vocabulary = MutableStateFlow(FilterVocabulary())
         private val refinable = MutableStateFlow<Boolean?>(null)
         private val eventFlow = MutableSharedFlow<DiscoverGridEvent>(extraBufferCapacity = 1)
         val events: SharedFlow<DiscoverGridEvent> = eventFlow.asSharedFlow()
@@ -66,11 +69,19 @@ class DiscoverGridViewModel
                 list.state,
                 sortFilter.query,
                 refinable,
-            ) { page, query, canRefine -> toUiState(page, controls(query, canRefine == true)) }
-                .stateIn(viewModelScope, SharingStarted.Lazily, DiscoverGridUiState.Loading(controls(sortFilter.query.value, false)))
+                vocabulary,
+            ) { page, query, canRefine, words -> toUiState(page, controls(query, canRefine == true, words)) }
+                .stateIn(viewModelScope, SharingStarted.Lazily, DiscoverGridUiState.Loading(controls(sortFilter.query.value, false, FilterVocabulary())))
 
         init {
             viewModelScope.launch { refinable.value = attempt { grid.canRefine(preset) }.getOrDefault(false) }
+            viewModelScope.launch {
+                vocabulary.value =
+                    FilterVocabulary(
+                        genres = attempt { grid.genres(kind) }.getOrDefault(emptyList()),
+                        languages = attempt { grid.languages() }.getOrDefault(emptyList()),
+                    )
+            }
         }
 
         private suspend fun fetch(
@@ -86,11 +97,13 @@ class DiscoverGridViewModel
         private fun controls(
             query: SortFilterQuery<DiscoverFilters, DiscoverSort>,
             canRefine: Boolean,
+            words: FilterVocabulary,
         ): GridControls =
             GridControls(
                 sort = query.sort.takeIf { canRefine },
                 sortChoices = if (canRefine) DiscoverSort.sheetChoices(kind) else emptyList(),
                 filters = query.filters,
+                vocabulary = words,
                 chip = if (canRefine && !starting.isEmpty && query.filters.keeps(starting)) preset.toChip(title) else null,
             )
 
@@ -118,6 +131,8 @@ class DiscoverGridViewModel
                 preset: GridPreset,
                 @Assisted("title") title: String?,
                 @Assisted("upcomingFrom") upcomingFrom: String,
+                initialFilters: DiscoverFilters?,
+                initialSort: DiscoverSort?,
             ): DiscoverGridViewModel
         }
     }

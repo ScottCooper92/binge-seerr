@@ -6,6 +6,7 @@ import com.android.tools.screenshot.PreviewTest
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverFilters
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverSort
+import com.cooper.binge.companion.seerr.discover.grid.FilterOption
 import com.cooper.binge.companion.seerr.preview.SeerrFontScale13Previews
 import com.cooper.binge.companion.seerr.preview.SeerrFontScalePreviews
 import com.cooper.binge.companion.seerr.preview.SeerrScreenPreviews
@@ -15,8 +16,16 @@ import java.time.LocalDate
 
 private val TODAY = LocalDate.of(2026, 11, 18)
 
+private val WORDS =
+    FilterVocabulary(
+        genres = listOf(FilterOption("18", "Drama"), FilterOption("35", "Comedy"), FilterOption("878", "Science Fiction")),
+        languages = listOf(FilterOption("en", "English"), FilterOption("ja", "Japanese"), FilterOption("es", "Spanish")),
+    )
+
 private val SET =
     DiscoverFilters(
+        genres = setOf(18, 878),
+        language = "ja",
         releaseFrom = "2020-03-01",
         ratingMin = 7.0,
         runtimeMin = 90,
@@ -73,6 +82,21 @@ class DiscoverFilterSheetScreenshotTest {
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
+    fun genres() = Section(DiscoverFilterSection.Genres)
+
+    @PreviewTest
+    @SeerrSpanishPreviews
+    @Composable
+    fun genresSpanish() = Section(DiscoverFilterSection.Genres)
+
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun language() = Section(DiscoverFilterSection.Language)
+
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
     fun runtime() = Section(DiscoverFilterSection.Runtime)
 
     @PreviewTest
@@ -89,9 +113,10 @@ class DiscoverFilterSheetScreenshotTest {
 @Composable
 private fun Rows(filters: DiscoverFilters) {
     DiscoverFilterSheetContent(
-        draft = DiscoverFilterDraft(DiscoverSort.PopularityDesc, filters),
-        sortChoices = DiscoverSort.forKind(TitleKind.Movie),
+        draft = DiscoverFilterDraft(TitleKind.Movie, DiscoverSort.PopularityDesc, filters),
+        vocabulary = WORDS,
         today = TODAY,
+        onKind = {},
         onSort = {},
         onOpen = {},
         onClearAll = {},
@@ -101,6 +126,6 @@ private fun Rows(filters: DiscoverFilters) {
 @Composable
 private fun Section(section: DiscoverFilterSection) {
     Column {
-        DiscoverSectionPage(section, SET, TODAY, onChange = {}, onDone = {})
+        DiscoverSectionPage(section, SET, WORDS, TODAY, onChange = {}, onDone = {})
     }
 }

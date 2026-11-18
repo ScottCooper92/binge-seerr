@@ -173,6 +173,14 @@
     <string name="grid_filter_minutes">%1$d min</string>
     <string name="grid_filter_runtime_start">Duración mínima</string>
     <string name="grid_filter_runtime_end">Duración máxima</string>
+    <string name="grid_filters_content">Contenido</string>
+    <string name="grid_content_movies">Películas</string>
+    <string name="grid_content_tv">Series</string>
+    <string name="grid_filter_genres">Géneros</string>
+    <string name="grid_filter_language">Idioma original</string>
+    <string name="grid_filter_match">Coincidir</string>
+    <string name="grid_filter_match_all">Todos</string>
+    <string name="grid_filter_match_any">Cualquiera</string>
     <string name="grid_chip_upcoming">Próximamente</string>
     <string name="grid_chip_genre">Género</string>
     <string name="grid_chip_company">Estudio o cadena</string>

@@ -8,6 +8,7 @@ import com.cooper.binge.companion.seerr.seerr.SeerrApi
 import com.cooper.binge.companion.seerr.seerr.SeerrServerProfile
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
+import java.util.Locale
 
 /** What the grid asks for: [preset] is where it was opened from, and [filters] and [sort] are what the user has made of it. */
 data class GridRequest(
@@ -17,10 +18,22 @@ data class GridRequest(
     val sort: DiscoverSort,
 )
 
+/** A choice a filter offers: [id] is what the server is sent, and [name] is what the user reads. */
+data class FilterOption(
+    val id: String,
+    val name: String,
+)
+
 /** The paged lists behind the "see all" grid. It knows nothing of Retrofit, so a view model holds this and a test holds a fake. */
 interface DiscoverGridRepository {
     /** Whether the connected server lets [preset] be sorted and filtered, or answers it as one plain list. */
     suspend fun canRefine(preset: GridPreset): Boolean
+
+    /** The genres a [kind] can be filtered by, named in the user's language. */
+    suspend fun genres(kind: TitleKind): List<FilterOption>
+
+    /** The original languages a list can be filtered by, by ISO code and English name. */
+    suspend fun languages(): List<FilterOption>
 
     /** One page of [request]; throws as the network call does. */
     suspend fun load(
@@ -41,6 +54,23 @@ class SeerrDiscoverGridRepository(
     private val io: CoroutineDispatcher,
 ) : DiscoverGridRepository {
     override suspend fun canRefine(preset: GridPreset): Boolean = preset.isFilterable && profile().hasDiscoverFilters
+
+    override suspend fun genres(kind: TitleKind): List<FilterOption> =
+        withContext(io) {
+            val type = if (kind == TitleKind.Series) "tv" else "movie"
+            api().genres(type, Locale.getDefault().toLanguageTag()).mapNotNull { genre ->
+                genre.name?.takeIf { it.isNotBlank() }?.let { FilterOption(genre.id.toString(), it) }
+            }
+        }
+
+    override suspend fun languages(): List<FilterOption> =
+        withContext(io) {
+            api()
+                .languages()
+                .mapNotNull { language ->
+                    language.englishName?.takeIf { it.isNotBlank() && language.code.isNotBlank() }?.let { FilterOption(language.code, it) }
+                }.sortedBy { it.name }
+        }
 
     override suspend fun load(
         request: GridRequest,

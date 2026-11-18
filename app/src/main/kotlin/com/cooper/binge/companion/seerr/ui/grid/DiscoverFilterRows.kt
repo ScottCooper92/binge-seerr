@@ -8,7 +8,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.HowToVote
+import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.MaterialTheme
@@ -37,10 +39,21 @@ internal enum class DiscoverFilterSection(
     @StringRes val title: Int,
     val icon: ImageVector,
 ) {
+    Genres(R.string.grid_filter_genres, Icons.Filled.Category),
     Release(R.string.grid_filter_release, Icons.Filled.CalendarMonth),
     Rating(R.string.grid_filter_rating, Icons.Filled.Star),
     Runtime(R.string.grid_filter_runtime, Icons.Filled.Schedule),
     Votes(R.string.grid_filter_votes, Icons.Filled.HowToVote),
+    Language(R.string.grid_filter_language, Icons.Filled.Language),
+    ;
+
+    /** Whether the sheet has anything to offer for this row: a picker with no choices is left out. */
+    fun isOffered(vocabulary: FilterVocabulary): Boolean =
+        when (this) {
+            Genres -> vocabulary.genres.isNotEmpty()
+            Language -> vocabulary.languages.isNotEmpty()
+            else -> true
+        }
 }
 
 /** The header of the sheet: its title, and Clear all once a filter is set. */
@@ -63,15 +76,16 @@ internal fun FilterSheetHeader(
 @Composable
 internal fun DiscoverFilterRows(
     filters: DiscoverFilters,
+    vocabulary: FilterVocabulary,
     today: LocalDate,
     onOpen: (DiscoverFilterSection) -> Unit,
 ) {
     val rows =
-        DiscoverFilterSection.entries.map { section ->
+        DiscoverFilterSection.entries.filter { it.isOffered(vocabulary) }.map { section ->
             ListItem(
                 icon = section.icon,
                 label = stringResource(section.title),
-                detail = section.summary(filters, today),
+                detail = section.summary(filters, vocabulary, today),
                 onClick = { onOpen(section) },
             )
         }
@@ -86,11 +100,18 @@ internal fun DiscoverFilterRows(
 @Composable
 internal fun DiscoverFilterSection.summary(
     filters: DiscoverFilters,
+    vocabulary: FilterVocabulary,
     today: LocalDate,
 ): String {
     val any = stringResource(R.string.grid_filter_any)
     val number = remember { NumberFormat.getInstance() }
     return when (this) {
+        DiscoverFilterSection.Genres ->
+            vocabulary.genres
+                .filter { it.id.toInt() in filters.genres }
+                .joinToString(", ") { it.name }
+                .ifEmpty { any }
+        DiscoverFilterSection.Language -> vocabulary.languages.firstOrNull { it.id == filters.language }?.name ?: any
         DiscoverFilterSection.Release -> releaseSummary(filters, today)
         DiscoverFilterSection.Rating ->
             filters.ratingMin?.let { stringResource(R.string.grid_filter_rating_value, it.toInt()) } ?: any

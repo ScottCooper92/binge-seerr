@@ -1,5 +1,6 @@
 package com.cooper.binge.companion.seerr.ui.grid
 
+import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverFilters
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverSort
 import com.cooper.binge.companion.seerr.discover.grid.RATING_SORT_VOTE_FLOOR
@@ -8,7 +9,7 @@ import org.junit.Assert.assertNull
 import org.junit.Test
 
 class DiscoverFilterDraftTest {
-    private val popular = DiscoverFilterDraft(DiscoverSort.PopularityDesc, DiscoverFilters(genres = setOf(18)))
+    private val popular = DiscoverFilterDraft(TitleKind.Movie, DiscoverSort.PopularityDesc, DiscoverFilters(genres = setOf(18)))
 
     @Test
     fun `moving to an order by rating sets the vote floor and keeps the other filters`() {
