@@ -163,6 +163,42 @@ class DiscoverHubScreenTest {
     }
 
     @Test
+    fun `browse all is left out where the server cannot filter`() {
+        val state = DiscoverHubUiState.Ready(emptyList(), pending = 0, refreshing = false, browseAll = false)
+        compose.setContent {
+            SeerrTheme {
+                DiscoverHubScreen(HubTab.Movies, state, onRefresh = {}, onOpenTitle = {}, onOpenGrid = {
+                    _,
+                    _,
+                    ->
+                }, onOpenRequests = {})
+            }
+        }
+        compose.onAllNodesWithText("Browse all", substring = true).assertCountEquals(0)
+    }
+
+    @Test
+    fun `browse all opens the grid on the popular list of the hubs kind`() {
+        val opened = mutableListOf<Pair<HubGrid, String>>()
+        val state = DiscoverHubUiState.Ready(emptyList(), pending = 0, refreshing = false)
+        compose.setContent {
+            SeerrTheme {
+                DiscoverHubScreen(
+                    HubTab.Series,
+                    state,
+                    onRefresh = {},
+                    onOpenTitle = {},
+                    onOpenGrid = { grid, title -> opened += grid to title },
+                    onOpenRequests = {},
+                )
+            }
+        }
+        compose.onNodeWithText("Browse all shows").performClick()
+        compose.onNodeWithText("Filter by genre, network, year and rating").assertExists()
+        assertEquals(listOf(HubGrid(TitleKind.Series, GridPreset.Popular) to "Popular series"), opened)
+    }
+
+    @Test
     fun `a rated card shows its score and an unrated card shows none`() {
         val rated = HubCard(TitleKind.Movie, 7, "Paper Moons", "2020", null, TitleAvailability.None, "https://s/movie/7", rating = 7.7f)
         val unrated = HubCard(TitleKind.Movie, 8, "Quiet Harbour", "2020", null, TitleAvailability.None, "https://s/movie/8")
@@ -206,7 +242,7 @@ class DiscoverHubScreenTest {
     }
 
     private fun hero(server: String) =
-        HubHero(TitleKind.Movie, 9, "Seven Rivers", "https://img/b.jpg", "2021", 7.5f, TitleAvailability.Available, server + "movie/9")
+        HubHero(TitleKind.Movie, 9, "Seven Rivers", "https://img/b.jpg", "2021", TitleAvailability.Available, server + "movie/9")
 
     @Test
     fun `the hero shows above the rows and a tap on it opens its title`() {

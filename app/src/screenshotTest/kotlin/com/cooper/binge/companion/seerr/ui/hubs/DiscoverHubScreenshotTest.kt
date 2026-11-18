@@ -203,7 +203,6 @@ private fun hero(
     name,
     "https://image.tmdb.org/t/p/w1280/none$id.jpg",
     "2021",
-    7.8f,
     availability,
     "https://server.example/movie/$id",
     genres,
