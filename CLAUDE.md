@@ -136,9 +136,9 @@ needs an internal of `:data` belongs in `:data`. What tests in both modules shar
 - Tests are JUnit 4, matching what the extracted code brings with it. Scope Gradle
   to a module (`:app:test`, `:data:test`) rather than running the whole tree when you are checking
   one thing.
-- A Robolectric test needs no `@Config` for the SDK: `app/src/test/resources/robolectric.properties`
-  pins `sdk=34` and a plain `Application` for the whole module, and `RobolectricDefaultsTest`
-  asserts it. Do not pin them per class again. `@Config` is for what a test genuinely
+- A Robolectric test needs no `@Config` for the SDK: each module with Robolectric tests carries its own
+  `src/test/resources/robolectric.properties` (`:app` and `:data`), which pins `sdk=34` and a plain `Application`
+  for the whole module, and a `RobolectricDefaultsTest` in that module asserts it. Do not pin them per class again. `@Config` is for what a test genuinely
   varies — a `qualifiers` string, say. The pin matters because the fallback is `targetSdk`
   36, whose sandbox requires Java 21: unpinned, a test passes on JDK 21 and dies on a JDK 17
   machine before its body runs.
