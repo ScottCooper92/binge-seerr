@@ -46,6 +46,7 @@ internal class DemoModel(
             data.mediaRoutes() +
             data.titleRoutes() +
             data.seriesRoutes() +
+            data.personRoutes() +
             data.discoverRoutes() +
             data.issueRoutes() +
             data.blocklistRoutes() +
