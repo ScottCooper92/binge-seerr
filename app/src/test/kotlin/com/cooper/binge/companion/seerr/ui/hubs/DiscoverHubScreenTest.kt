@@ -163,6 +163,28 @@ class DiscoverHubScreenTest {
     }
 
     @Test
+    fun `a rated card shows its score and an unrated card shows none`() {
+        val rated = HubCard(TitleKind.Movie, 7, "Paper Moons", "2020", null, TitleAvailability.None, "https://s/movie/7", rating = 7.7f)
+        val unrated = HubCard(TitleKind.Movie, 8, "Quiet Harbour", "2020", null, TitleAvailability.None, "https://s/movie/8")
+        val state =
+            DiscoverHubUiState.Ready(
+                listOf(HubRowUi.Cards(HubRow.Popular(1, null, HubTab.Movies), listOf(rated, unrated))),
+                pending = 0,
+                refreshing = false,
+            )
+        compose.setContent {
+            SeerrTheme {
+                DiscoverHubScreen(HubTab.Movies, state, onRefresh = {}, onOpenTitle = {}, onOpenGrid = {
+                    _,
+                    _,
+                    ->
+                }, onOpenRequests = {})
+            }
+        }
+        compose.onAllNodesWithText("7.7", substring = true, useUnmergedTree = true).assertCountEquals(1)
+    }
+
+    @Test
     fun `a row with no destination shows no see all`() {
         val card = HubCard(TitleKind.Movie, 7, "Paper Moons", "2020", null, TitleAvailability.None, "https://s/movie/7")
         val state =

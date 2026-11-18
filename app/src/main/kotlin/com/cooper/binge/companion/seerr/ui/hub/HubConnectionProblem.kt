@@ -36,6 +36,7 @@ internal fun ConnectionProblem(
                 when (health) {
                     ConnectionHealth.CouldNotLoad -> R.string.hub_couldnt_load_headline
                     ConnectionHealth.LocalNetworkDenied -> R.string.hub_local_network_headline
+                    ConnectionHealth.ClientCertificateNeeded -> R.string.hub_client_certificate_headline
                     else -> R.string.hub_unreachable_headline
                 },
             ),
@@ -44,6 +45,7 @@ internal fun ConnectionProblem(
                 when (health) {
                     ConnectionHealth.CouldNotLoad -> R.string.hub_couldnt_load_body
                     ConnectionHealth.LocalNetworkDenied -> R.string.hub_local_network_body
+                    ConnectionHealth.ClientCertificateNeeded -> R.string.hub_client_certificate_body
                     else -> R.string.hub_unreachable_body
                 },
             ),

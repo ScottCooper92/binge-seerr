@@ -30,6 +30,7 @@ internal fun SeerrTitleResultDto.toTitleResult(defaultKind: TitleKind?): TitleRe
         rating = voteAverage?.takeIf { it > 0.0 },
         availability = mediaInfo?.status.toAvailability(),
         mediaId = mediaInfo?.id,
+        genreIds = genreIds,
     )
 }
 

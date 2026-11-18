@@ -24,10 +24,21 @@ data class HubCard(
     val availability: TitleAvailability,
     /** The title's page on the server, where it opens when Binge is not there to take it. */
     val webUrl: String,
+    /** The title's TMDB score, or null where it has none: an unrated title shows no chip rather than "0.0". */
+    val rating: Float? = null,
 )
 
 internal fun TitleResult.toCard(serverUrl: String): HubCard =
-    HubCard(kind, tmdbId, name, year, artworkPath?.toTmdbPosterUrl(), availability, hubWebUrl(serverUrl, kind, tmdbId))
+    HubCard(
+        kind,
+        tmdbId,
+        name,
+        year,
+        artworkPath?.toTmdbPosterUrl(),
+        availability,
+        hubWebUrl(serverUrl, kind, tmdbId),
+        rating?.toFloat()?.takeIf { it > 0f },
+    )
 
 internal fun hubWebUrl(
     serverUrl: String,

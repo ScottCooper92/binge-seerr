@@ -23,6 +23,8 @@ data class TitleResult(
     val rating: Double?,
     val availability: TitleAvailability,
     val mediaId: Int?,
+    /** The TMDB genre ids the list gave, in its order; empty where it gave none. */
+    val genreIds: List<Int> = emptyList(),
 )
 
 /** One page of a list. Pages count from 1. */
