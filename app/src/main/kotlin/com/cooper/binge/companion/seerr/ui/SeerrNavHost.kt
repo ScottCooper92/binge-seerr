@@ -60,20 +60,21 @@ fun SeerrNavHost(
     // The tab bar is for every window with the flag on. A wide one draws a section beside the hub in the Settings tab.
     val shell = tabs != null && LocalDiscoveryEnabled.current
     LaunchedEffect(connected, root, shell) { backStack.settleHome(connected, shell) }
+    // The default section is seeded only while the Settings tab shows: another tab's pushes must not sit above a section.
+    val settingsSelected = tabs == null || tabs.selected == SeerrTab.Settings
     // The default section is off the stack, so Back from it leaves; the host's own Back shares the once-only exit.
     val exit = rememberExitOnce(onExit)
     // A disconnect still waiting on the server is not a connection to ask a review of: its card would show as the user leaves.
     val askable = remember(state) { derivedStateOf { if (state.value == HomeUiState.Disconnecting) false else state.value.connected() } }
     ReviewPromptOnReturnToRoot(connected = askable.value, stackDepth = backStack.size)
     CompositionLocalProvider(LocalOpenTitle provides rememberOpenTitle(backStack)) {
-        val seedDefault = tabs == null || tabs.selected == SeerrTab.Settings
         SeerrPaneHost(
             backStack,
             connected,
             exit,
             modifier,
             defaultSection = { DefaultSectionPane(backStack, exit) },
-            seedDefault = seedDefault,
+            settingsSelected = settingsSelected,
         ) { panes ->
             homeEntries(backStack, connected = { connectedState.value }, panes = panes, onExit = exit, tabs = tabs)
             settingsEntries(backStack, connected = { connectedState.value }, panes = panes, onExit = exit)

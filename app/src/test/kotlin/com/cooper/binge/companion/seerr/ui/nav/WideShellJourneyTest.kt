@@ -14,6 +14,7 @@ import androidx.compose.ui.test.performSemanticsAction
 import androidx.navigation3.runtime.NavKey
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.TitleKind
+import com.cooper.binge.companion.seerr.ui.DiscoverGridRoute
 import com.cooper.binge.companion.seerr.ui.HomeRoute
 import com.cooper.binge.companion.seerr.ui.IssuesRoute
 import com.cooper.binge.companion.seerr.ui.RequestsRoute
@@ -140,6 +141,22 @@ class WideShellJourneyTest {
         host.compose.waitUntil(WAIT_MILLIS) { host.stack() == listOf<NavKey>(ShellRoute, RequestsRoute) }
         bar().assertIsDisplayed()
         host.awaitShowing(host.string(R.string.hub_section_issues_desc))
+    }
+
+    @Test
+    fun `a grid opened from another tab is not hidden by an open section`() {
+        NavHostActivity.discoveryEnabled = true
+        host.connectDemo()
+        host.launch(HomeRoute, RequestsRoute)
+        host.awaitShowing(host.string(R.string.requests_filter_processing))
+
+        host.compose.onNodeWithTag("tab_movies").performClick()
+        host.awaitShowing(host.string(R.string.hubs_browse_all_movies))
+        host.compose.waitUntil(WAIT_MILLIS) { host.stack() == listOf<NavKey>(ShellRoute) }
+        host.compose.onNodeWithText(host.string(R.string.hubs_browse_all_movies)).performClick()
+
+        host.compose.waitUntil(WAIT_MILLIS) { host.stack().let { it.size == 2 && it[0] == ShellRoute && it[1] is DiscoverGridRoute } }
+        host.awaitShowing(host.string(R.string.hubs_row_popular_movies))
     }
 
     @Test
