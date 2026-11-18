@@ -328,33 +328,6 @@ class BlocklistViewModel
             }
         }
 
-        /** Seerr 3.2+ only; a server without it, or a viewer who cannot manage the list, is never asked. */
-        fun setCollectionBlocked(
-            collectionId: Int,
-            blocked: Boolean,
-        ) {
-            crashBreadcrumbs.key("collection_id", collectionId.toString())
-            crashBreadcrumbs.log(if (blocked) "blocking collection" else "unblocking collection")
-            viewModelScope.launch(dispatcher) {
-                val profile = connection.profile()
-                val permissions = attempt { connection.authenticatedUser() }.getOrNull().toPermissions()
-                if (!profile.canBlockCollections || !permissions.canManageBlocklist) return@launch
-                attempt {
-                    val api = connection.api()
-                    if (blocked) api.blockCollection(collectionId) else api.unblockCollection(collectionId)
-                }.onSuccess {
-                    countsRefresh.update { it + 1 }
-                    listVersionState.update { it + 1 }
-                    val action = if (blocked) "collection_blocked" else "collection_unblocked"
-                    analytics.event(AnalyticsEvents.BLOCKLIST_CHANGED, mapOf(AnalyticsEvents.PARAM_ACTION to action))
-                    eventFlow.emit(BlocklistEvent.CollectionChanged(blocked))
-                }.onFailure {
-                    analytics.operationFailed(if (blocked) "block_collection" else "unblock_collection", it, profile)
-                    eventFlow.emit(BlocklistEvent.Failed(it.toSeerrError()))
-                }
-            }
-        }
-
         private suspend fun seeded(): BlocklistReadCache = cache.also { it.adopt(attempt { connection.current() }.getOrNull()) }
 
         private suspend fun readScope(): ScopeRead {
