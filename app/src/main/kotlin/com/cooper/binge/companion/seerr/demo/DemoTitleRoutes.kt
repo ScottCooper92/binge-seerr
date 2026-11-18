@@ -1,6 +1,8 @@
 package com.cooper.binge.companion.seerr.demo
 
 import com.cooper.binge.companion.seerr.seerr.SeerrCastDto
+import com.cooper.binge.companion.seerr.seerr.SeerrCollectionDto
+import com.cooper.binge.companion.seerr.seerr.SeerrCollectionRefDto
 import com.cooper.binge.companion.seerr.seerr.SeerrCountryReleasesDto
 import com.cooper.binge.companion.seerr.seerr.SeerrCreditsDto
 import com.cooper.binge.companion.seerr.seerr.SeerrCrewDto
@@ -25,6 +27,9 @@ private const val DEMO_CRITICS = 92
 private const val DEMO_AUDIENCE = 88
 private const val DEMO_IMDB = 7.9
 private const val RELATED_SKIP_SIMILAR = 2
+private const val DEMO_COLLECTION_ID = 9500
+private const val DEMO_COLLECTION_FILMS = 3
+private const val DEMO_COLLECTION_NAME = "The Demo Collection"
 
 /** Hand-authored people and places, so no real name or address is in the demo. */
 private val DEMO_CAST =
@@ -41,15 +46,34 @@ private val DEMO_CREW =
         SeerrCrewDto(9103, "Morgan Composer", "Original Music Composer", "Sound", null),
     )
 
-/** The film page's reads beyond the thin lookup: recommendations, similar titles and the combined ratings. */
+/** The first few demo films, which the demo makes one collection so the film page's rail has something to show. */
+private val DEMO_COLLECTION = DEMO_TITLES.filter { it.isMovie }.take(DEMO_COLLECTION_FILMS)
+
+/** The film page's reads beyond the thin lookup: its collection, recommendations, similar titles and the combined ratings. */
 internal fun DemoData.titleRoutes(): List<DemoRoute> =
     listOf(
+        route("GET", "collection", "{}") { _, (id) -> collection(id.toIntOrNull()) },
         route("GET", "movie", "{}", "recommendations") { call, (id) -> page(call, related(id, skip = 1)) },
         route("GET", "movie", "{}", "similar") { call, (id) -> page(call, related(id, skip = RELATED_SKIP_SIMILAR)) },
         route("GET", "movie", "{}", "ratingscombined") { _, _ ->
             ok(SeerrRatingsDto(SeerrRottenTomatoesDto(DEMO_CRITICS, DEMO_AUDIENCE, null), SeerrImdbDto(DEMO_IMDB, null)))
         },
     )
+
+private fun DemoData.collection(id: Int?): DemoAnswer =
+    if (id != DEMO_COLLECTION_ID) {
+        demoNotFound
+    } else {
+        ok(
+            SeerrCollectionDto(
+                id = DEMO_COLLECTION_ID,
+                name = DEMO_COLLECTION_NAME,
+                overview = "Three demo films that belong together.",
+                posterPath = DEMO_COLLECTION.firstOrNull()?.poster,
+                parts = DEMO_COLLECTION.map { toResult(it) },
+            ),
+        )
+    }
 
 private fun DemoData.related(
     id: String,
@@ -92,5 +116,12 @@ private fun titleBody(
                 listOf(SeerrMovieWatchProviderDto(2, "Demo Store", null, 1)),
             ),
         ),
+    collection = collectionOf(tmdbId),
     mediaInfo = thin.mediaInfo,
 )
+
+/** The collection a demo film belongs to: the first few demo films share one, and no other has any. */
+private fun collectionOf(tmdbId: Int) =
+    DEMO_COLLECTION.firstOrNull { it.tmdbId == tmdbId }?.let {
+        SeerrCollectionRefDto(DEMO_COLLECTION_ID, DEMO_COLLECTION_NAME, DEMO_COLLECTION.first().poster)
+    }

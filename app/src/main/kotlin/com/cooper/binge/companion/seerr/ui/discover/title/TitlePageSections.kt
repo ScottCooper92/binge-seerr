@@ -54,6 +54,14 @@ internal fun TitlePageBody(
         PeopleRow(stringResource(R.string.title_page_cast), movie.cast, actions.onOpenPerson, actions.onOpenCredits)
         PeopleRow(stringResource(R.string.title_page_crew), movie.keyCrew, actions.onOpenPerson, actions.onOpenCredits)
         WhereToWatchSection(movie.providers, actions.onOpenUrl)
+        movie.collection?.let { collection ->
+            TitleRow(
+                title = collection.name,
+                titles = state.collectionParts,
+                onOpen = actions.onOpenTitle,
+                onSeeAll = actions.onOpenCollection?.let { open -> { open(collection.id) } },
+            )
+        }
         state.extras?.let { TitleRow(stringResource(R.string.title_page_more_like_this), it.moreLikeThis, actions.onOpenTitle) }
         KeywordsSection(movie.keywords)
     }
@@ -107,13 +115,14 @@ internal fun TitleRow(
     title: String,
     titles: List<TitleResult>,
     onOpen: (TitleResult) -> Unit,
+    onSeeAll: (() -> Unit)? = null,
 ) {
     if (titles.isEmpty()) return
-    MediaCarousel(title = title, items = titles, itemKey = { it.kind.name + it.tmdbId }) { _, item ->
+    MediaCarousel(title = title, items = titles, itemKey = { it.kind.name + it.tmdbId }, onMoreClick = onSeeAll) { _, item ->
         MediaCard(
             posterUrl = item.artworkPath?.let { it.toTmdbPosterUrl() },
             title = item.name,
-            rating = null,
+            rating = item.rating?.toFloat(),
             onClick = { onOpen(item) },
             modifier = Modifier.width(dimensionResource(DesR.dimen.card_width)),
             status = item.availability.cardStatus(),

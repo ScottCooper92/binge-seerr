@@ -15,9 +15,14 @@ private const val SCROLLED_PX = 2500
 private const val FACTS_PX = 1400
 private const val WATCH_PX = 2900
 private const val WATCH_LARGE_FONT_PX = 5200
+private const val COLLECTION_PX = 3300
+private const val COLLECTION_LARGE_FONT_PX = 6200
 private const val FACTS_LARGE_FONT_PX = 2700
 
 private val NO_ACTIONS = TitlePageActions({}, {}, {}, {}, {}, {}, {}, {}, {}, {})
+
+/** As [NO_ACTIONS], but no page opens for a collection, as on the phone today: the rail has no See all. */
+private val NO_COLLECTION_PAGE = TitlePageActions({}, {}, {}, {}, {}, {}, {}, null, {}, {})
 
 @Composable
 private fun Frame(state: TitlePageUiState) = TitlePageScreen(state, emptyFlow(), NO_ACTIONS)
@@ -174,5 +179,41 @@ class TitlePageScreenshotTest {
             emptyFlow(),
             NO_ACTIONS,
             scrollState = rememberScrollState(initial = WATCH_PX),
+        )
+
+    /** The collection rail, named by the collection, with a card in each state; no See all, since no page opens yet. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun collectionRail() =
+        TitlePageScreen(
+            TitlePageUiState.Ready(fullMovie(), fullExtras(), collectionParts = collectionFilms()),
+            emptyFlow(),
+            NO_COLLECTION_PAGE,
+            scrollState = rememberScrollState(initial = COLLECTION_PX),
+        )
+
+    /** The rail with See all, under a long collection name, at font scales 1.5 and 2. */
+    @PreviewTest
+    @SeerrFontScalePreviews
+    @Composable
+    fun collectionLargeFonts() =
+        TitlePageScreen(
+            TitlePageUiState.Ready(longCollectionMovie(), fullExtras(), collectionParts = collectionFilms()),
+            emptyFlow(),
+            NO_ACTIONS,
+            scrollState = rememberScrollState(initial = COLLECTION_LARGE_FONT_PX),
+        )
+
+    /** The rail in Spanish: the heading is the server's own collection name, and the status badges are translated. */
+    @PreviewTest
+    @SeerrSpanishPreviews
+    @Composable
+    fun collectionSpanish() =
+        TitlePageScreen(
+            TitlePageUiState.Ready(fullMovie(), fullExtras(), collectionParts = collectionFilms()),
+            emptyFlow(),
+            NO_ACTIONS,
+            scrollState = rememberScrollState(initial = COLLECTION_PX),
         )
 }
