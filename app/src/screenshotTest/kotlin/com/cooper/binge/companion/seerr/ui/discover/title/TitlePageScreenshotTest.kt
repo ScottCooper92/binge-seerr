@@ -15,8 +15,8 @@ private const val SCROLLED_PX = 2500
 private const val FACTS_PX = 1400
 private const val WATCH_PX = 2900
 private const val WATCH_LARGE_FONT_PX = 5200
-private const val COLLECTION_PX = 3300
-private const val COLLECTION_LARGE_FONT_PX = 6200
+private const val COLLECTION_PX = 3800
+private const val COLLECTION_LARGE_FONT_PX = 6900
 private const val FACTS_LARGE_FONT_PX = 2700
 
 private val NO_ACTIONS = TitlePageActions({}, {}, {}, {}, {}, {}, {}, {}, {}, {})
