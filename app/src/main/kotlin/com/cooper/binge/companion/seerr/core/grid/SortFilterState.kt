@@ -27,5 +27,10 @@ class SortFilterState<F, S>(
 
     fun updateFilters(change: (F) -> F) = state.update { it.copy(filters = change(it.filters)) }
 
+    fun set(
+        filters: F,
+        sort: S,
+    ) = state.update { SortFilterQuery(filters, sort) }
+
     fun setFilters(filters: F) = state.update { it.copy(filters = filters) }
 }

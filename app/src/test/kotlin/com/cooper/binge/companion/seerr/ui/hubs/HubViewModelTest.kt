@@ -8,6 +8,7 @@ import com.cooper.binge.companion.seerr.discover.TitlePage
 import com.cooper.binge.companion.seerr.discover.TitleResult
 import com.cooper.binge.companion.seerr.discover.TitleSource
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverGridRepository
+import com.cooper.binge.companion.seerr.discover.grid.FilterOption
 import com.cooper.binge.companion.seerr.discover.grid.GridPreset
 import com.cooper.binge.companion.seerr.discover.grid.GridRequest
 import com.cooper.binge.companion.seerr.discover.sliders.DiscoverSliderRepository
@@ -115,6 +116,10 @@ class HubViewModelTest {
         private val fail: Boolean = false,
     ) : DiscoverGridRepository {
         override suspend fun canRefine(preset: GridPreset): Boolean = if (fail) error("down") else canRefine
+
+        override suspend fun genres(kind: TitleKind): List<FilterOption> = emptyList()
+
+        override suspend fun languages(): List<FilterOption> = emptyList()
 
         override suspend fun load(
             request: GridRequest,

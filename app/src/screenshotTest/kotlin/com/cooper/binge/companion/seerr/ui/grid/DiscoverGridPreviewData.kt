@@ -10,28 +10,29 @@ private fun card(
     id: Int,
     name: String,
     availability: TitleAvailability,
-) = HubCard(TitleKind.Movie, id, name, "2021", null, availability, "https://server.example/movie/$id")
+    rating: Float? = null,
+) = HubCard(TitleKind.Movie, id, name, "2021", null, availability, "https://server.example/movie/$id", rating)
 
 private const val LONG_NAME = "The Extraordinarily Long and Winding Chronicle of a Very Patient Lighthouse Keeper"
 
 /** Every status, and one name long enough to wrap at the largest font scale. */
 internal fun gridCards(): List<HubCard> =
     listOf(
-        card(1, "Big Buck Bunny", TitleAvailability.Available),
-        card(2, LONG_NAME, TitleAvailability.PartiallyAvailable),
-        card(3, "Sintel", TitleAvailability.Pending),
+        card(1, "Big Buck Bunny", TitleAvailability.Available, 7.9f),
+        card(2, LONG_NAME, TitleAvailability.PartiallyAvailable, 8.4f),
+        card(3, "Sintel", TitleAvailability.Pending, 7.4f),
         card(4, "Tears of Steel", TitleAvailability.Processing),
-        card(5, "Metropolis", TitleAvailability.Blocklisted),
+        card(5, "Metropolis", TitleAvailability.Blocklisted, 8.1f),
         card(6, "Nosferatu", TitleAvailability.None),
-        card(7, "Parasite", TitleAvailability.None),
+        card(7, "Parasite", TitleAvailability.None, 8.5f),
         card(8, "Spirited Away", TitleAvailability.Available),
     )
 
 private val DRAMA = ActiveFilterChip(ChipKind.Genre, "Drama")
 
-private val SORTED = GridControls(DiscoverSort.PopularityDesc, DiscoverSort.forKind(TitleKind.Movie), DRAMA)
+private val SORTED = GridControls(DiscoverSort.PopularityDesc, DRAMA)
 
-private val UNFILTERED = GridControls(DiscoverSort.RatingDesc, DiscoverSort.forKind(TitleKind.Movie), null)
+private val UNFILTERED = GridControls(DiscoverSort.RatingDesc, null)
 
 internal fun readyGridState() = DiscoverGridUiState.Ready(SORTED, gridCards(), hasMore = true, appending = false, appendFailed = false)
 
@@ -51,9 +52,9 @@ internal fun failedGridState() = DiscoverGridUiState.Error(SORTED, SeerrError.Un
 internal fun loadingGridState() = DiscoverGridUiState.Loading(SORTED)
 
 internal fun plainGridState() =
-    DiscoverGridUiState.Ready(GridControls(null, emptyList(), null), gridCards(), hasMore = false, appending = false, appendFailed = false)
+    DiscoverGridUiState.Ready(GridControls(null, null), gridCards(), hasMore = false, appending = false, appendFailed = false)
 
 /** Few enough cards that the footer is on screen. */
 private const val FEW = 2
 
-internal val noGridActions = DiscoverGridActions({}, {}, {}, {}, {}, {})
+internal val noGridActions = DiscoverGridActions({}, {}, {}, {}, {}, { _, _ -> }, { _, _, _ -> })

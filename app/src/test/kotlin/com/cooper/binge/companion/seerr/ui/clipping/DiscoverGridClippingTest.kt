@@ -28,7 +28,6 @@ private fun card(
 private val CONTROLS =
     GridControls(
         DiscoverSort.RevenueDesc,
-        DiscoverSort.forKind(TitleKind.Movie),
         ActiveFilterChip(ChipKind.Genre, "A genre with a name long enough to need the whole row"),
     )
 
@@ -50,7 +49,7 @@ private val STATES: List<DiscoverGridUiState> =
         DiscoverGridUiState.Error(CONTROLS, SeerrError.Unreachable),
     )
 
-private val NO_ACTIONS = DiscoverGridActions({}, {}, {}, {}, {}, {})
+private val NO_ACTIONS = DiscoverGridActions({}, {}, {}, {}, {}, { _, _ -> }, { _, _, _ -> })
 
 /** The grid at its worst, at font scales 1.3 and 2.0, through the design system's `assertNoTextClipped`. */
 @RunWith(RobolectricTestRunner::class)
