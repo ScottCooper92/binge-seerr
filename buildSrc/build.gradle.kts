@@ -1,4 +1,4 @@
-// The build-logic type this repository carries: the gRPC alignment check. The shared gates come from
+// The build-logic types this repository carries: the gRPC alignment check and the module rules check. The shared gates come from
 // binge-ci (settings.gradle.kts); everything else configures the app module directly.
 plugins {
     `kotlin-dsl`
