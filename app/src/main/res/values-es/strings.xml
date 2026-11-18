@@ -1378,7 +1378,7 @@
     <string name="request_sheet_submit_4k">Pedir en 4K</string>
     <string name="request_sheet_status_new">Esto aún no está en tu servidor</string>
     <string name="request_sheet_status_seasons">Elige qué temporadas pedir</string>
-    <string name="request_sheet_status_4k_open">Ya pedida en HD; el 4K sigue disponible</string>
+    <string name="request_sheet_status_4k_open">El 4K sigue disponible para pedir</string>
     <string name="request_sheet_advanced">Opciones avanzadas</string>
     <string name="request_sheet_seasons_count">%1$d de %2$d seleccionadas</string>
     <string name="request_sheet_seasons_done">Listo</string>

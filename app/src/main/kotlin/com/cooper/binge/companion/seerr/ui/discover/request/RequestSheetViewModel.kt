@@ -294,7 +294,10 @@ class RequestSheetViewModel
         }
 
         private fun onSendFailed(problem: RequestProblem) {
-            val answered = problem.cause == RequestProblemCause.Quota || problem.cause == RequestProblemCause.NotAllowed
+            val answered =
+                problem.cause == RequestProblemCause.Quota ||
+                    problem.cause == RequestProblemCause.NotAllowed ||
+                    (problem.cause == RequestProblemCause.Other && !problem.detail.isNullOrBlank())
             if (answered) {
                 store.update { it.copy(submitting = false, problem = problem) }
                 return
