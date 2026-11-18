@@ -106,6 +106,8 @@ class WideShellJourneyTest {
         host.connectDemo()
         host.launch(HomeRoute, RequestsRoute)
         host.compose.waitUntil(WAIT_MILLIS) { host.settingsStack() == listOf(HubRoute, RequestsRoute) }
+        // The bar is composed a frame after the section settles, so wait for it as a user would.
+        host.compose.waitUntil(WAIT_MILLIS) { host.compose.onAllNodes(hasTestTag("tab_search")).fetchSemanticsNodes().isNotEmpty() }
         host.compose.onNodeWithTag("tab_search").performClick()
         host.compose.waitForIdle()
 
