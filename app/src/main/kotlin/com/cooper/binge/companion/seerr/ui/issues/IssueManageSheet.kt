@@ -19,8 +19,11 @@ import com.cooper.binge.companion.seerr.ui.state.externalItem
 
 /**
  * The page's overflow: the issue on the server, the title on the media server, and in Sonarr or Radarr. A link to an
- * address that cannot be a real site has no row: one that opens nothing is worse than none.
+ * address that cannot be a real site has no row: one that opens nothing is worse than none. [hasOpenableLink] says
+ * whether any row is left; the page leaves the button out when none is.
  */
+internal fun IssueDetail.hasOpenableLink(): Boolean = listOfNotNull(webUrl, mediaServerUrl, serviceUrl).any(::isOpenableSite)
+
 @Composable
 internal fun IssueManageSheet(
     detail: IssueDetail,

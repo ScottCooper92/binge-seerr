@@ -9,6 +9,8 @@ import com.cooper.binge.companion.seerr.seerr.SeerrMediaStatusCode
 import com.cooper.binge.companion.seerr.seerr.SeerrVariant
 import com.cooper.binge.companion.seerr.theme.SeerrTheme
 import com.cooper.binge.companion.seerr.ui.issues.IssueManageContent
+import com.cooper.binge.companion.seerr.ui.issues.commonIssueDetail
+import com.cooper.binge.companion.seerr.ui.issues.hasOpenableLink
 import com.cooper.binge.companion.seerr.ui.requests.FilesDeletion
 import com.cooper.binge.companion.seerr.ui.requests.MediaInstance
 import com.cooper.binge.companion.seerr.ui.requests.MediaRecord
@@ -24,6 +26,7 @@ import com.cooper.binge.companion.seerr.ui.users.UserActionsContent
 import com.cooper.binge.companion.seerr.ui.users.UserDetail
 import com.cooper.binge.companion.seerr.ui.users.UserItem
 import com.cooper.binge.companion.seerr.ui.users.UserOrigin
+import com.cooper.binge.companion.seerr.ui.users.hasManageActions
 import com.cooper.binge.companion.seerr.util.createSeerrComposeRule
 import com.cooper.binge.companion.seerr.util.requestDetail
 import com.cooper.binge.companion.seerr.util.string
@@ -203,5 +206,38 @@ class DeadWebLinksTest {
     @Test
     fun `the no default server row still opens this app's own settings where the screen can reach them`() {
         assertTrue(filesRow(demo + "settings/services", inApp = true).clickable)
+    }
+
+    private fun issue(
+        web: String,
+        mediaServer: String? = null,
+        service: String? = null,
+    ) = commonIssueDetail().copy(webUrl = web, mediaServerUrl = mediaServer, serviceUrl = service)
+
+    @Test
+    fun `an issue page has an actions button on a real server`() {
+        assertTrue(issue(real + "issues/4").hasOpenableLink())
+    }
+
+    @Test
+    fun `an issue page has no actions button when every address cannot be opened`() {
+        assertFalse(issue(demo + "issues/4", demo, demo).hasOpenableLink())
+    }
+
+    @Test
+    fun `an issue page keeps its actions button for one link that can be opened`() {
+        assertTrue(issue(demo + "issues/4", mediaServer = "https://plex.example.com/").hasOpenableLink())
+    }
+
+    @Test
+    fun `a user page has no actions button when it would hold no row`() {
+        assertFalse(user(demo + "users/7").hasManageActions())
+    }
+
+    @Test
+    fun `a user page keeps its actions button for any one row`() {
+        assertTrue(user(real + "users/7").hasManageActions())
+        assertTrue(user(demo + "users/7").copy(canEditSettings = true).hasManageActions())
+        assertTrue(user(demo + "users/7").copy(canDelete = true).hasManageActions())
     }
 }

@@ -130,7 +130,7 @@ fun UserDetailScreen(
         title = ready?.detail?.item?.name ?: seeded?.item?.name ?: stringResource(R.string.user_detail_title),
         onBack = actions.onBack.takeIf { showBack },
         snackbarHostState = snackbarHostState,
-        showOverflow = ready != null,
+        showOverflow = ready?.detail?.hasManageActions() == true,
         overflowContentDescription = stringResource(R.string.user_actions_cd),
         onOverflowClick = { managing = true },
     ) { inner ->
@@ -301,6 +301,9 @@ private fun ProfileHeader(
         }
     }
 }
+
+/** Whether the user page's overflow has any row: the page leaves the button out when it would open an empty sheet. */
+internal fun UserDetail.hasManageActions(): Boolean = canEditSettings || canDelete || isOpenableSite(webUrl)
 
 /** What the user page's overflow offers: their settings, the user on the server, and deleting them where allowed. */
 @Composable
