@@ -61,7 +61,7 @@ jobs:
     permissions:
       contents: read
       pull-requests: read
-    uses: ScottCooper92/binge-ci/.github/workflows/submodule-pins.yml@903427212a2a3918dca60d6c3d8af61f2a4682f4 # v1
+    uses: ScottCooper92/binge-ci/.github/workflows/submodule-pins.yml@37267fa7e22a43babb58aecf4577ce3cd0253b41 # v1.0.47
     with:
       private_submodules: homelab-core,binge-design-system,binge-ci
     secrets:
@@ -116,10 +116,11 @@ jobs:
       # --continue surfaces every failure in one run rather than stopping at the first,
       # which matters most to author-ci-fix: it gets exactly one repair attempt per
       # commit, and a log showing only the first of three failures spends that attempt
-      # fixing a third of the problem. Each -x names a task another job runs; -x also drops
-      # whatever only that task needed, which is the point for assembleRelease's R8.
+      # fixing a third of the problem. Each -x names a task another job runs, with no project in front of it so it
+      # drops that task in every module, :data's included; -x also drops whatever only that task needed, which is the
+      # point for assembleRelease's R8.
       - name: Build and lint, less what the other jobs run
-        run: ./gradlew build --continue -x :app:testDebugUnitTest -x :app:koverVerify -x :app:validateDebugScreenshotTest -x :app:assembleRelease
+        run: ./gradlew build --continue -x testDebugUnitTest -x koverVerify -x validateDebugScreenshotTest -x assembleRelease
 
       - name: Upload reports
         if: ${{ failure() }}
@@ -162,13 +163,13 @@ jobs:
           cache-read-only: true
 
       - name: Unit tests and coverage
-        run: ./gradlew :app:testDebugUnitTest :app:koverVerify --continue
+        run: ./gradlew testDebugUnitTest koverVerify --continue
 
       # UncaughtExceptionsBeforeTest names the test that ran next, never the coroutine that leaked. This report names it,
       # and the artifact below expires in a day, so a failed run says what leaked in its own log (#807).
       - name: Print the coroutine leak report
         if: ${{ failure() }}
-        run: cat app/build/reports/tests/testDebugUnitTest/coroutine-leaks.txt 2>/dev/null || echo "No coroutine leak was reported."
+        run: cat */build/reports/tests/testDebugUnitTest/coroutine-leaks.txt 2>/dev/null || echo "No coroutine leak was reported."
 
       - name: Upload reports
         if: ${{ failure() }}
@@ -182,11 +183,13 @@ jobs:
           retention-days: 1
 
   # The screenshot frames. The plugin renders in one fork, so this is the longest job and the one
-  # to watch: trimming a preview matrix is the way to shorten it.
+  # to watch: trimming a preview matrix is the way to shorten it. A successful run takes 11 to 16 minutes, and a slow
+  # runner has taken twice that, so the limit is 45 and not the 30 the other jobs get. Only :app has frames, so this is
+  # the one task still named with its project.
   screenshots:
     if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       # The submodules are private to the author: the default token reads this repository only. This one is read-only.
       - name: Mint a read-only token for the submodules
@@ -259,7 +262,7 @@ jobs:
           cache-read-only: true
 
       - name: Assemble the release build
-        run: ./gradlew :app:assembleRelease --continue
+        run: ./gradlew assembleRelease --continue
 
       - name: Upload reports
         if: ${{ failure() }}
@@ -323,7 +326,7 @@ jobs:
 
       # binge-ci's shared step: a pinned release verified against its published checksum, with
       # shellcheck at warning severity.
-      - uses: ScottCooper92/binge-ci/.github/actions/actionlint@903427212a2a3918dca60d6c3d8af61f2a4682f4 # v1
+      - uses: ScottCooper92/binge-ci/.github/actions/actionlint@37267fa7e22a43babb58aecf4577ce3cd0253b41 # v1.0.47
 
   # A red nightly has no PR or push to carry it, so without this it is a red mark in the
   # Actions tab that nothing points at. One issue stays open while the canary is red and
@@ -338,7 +341,7 @@ jobs:
     permissions:
       issues: write
     steps:
-      - uses: ScottCooper92/binge-ci/.github/actions/nightly-report@903427212a2a3918dca60d6c3d8af61f2a4682f4 # v1
+      - uses: ScottCooper92/binge-ci/.github/actions/nightly-report@37267fa7e22a43babb58aecf4577ce3cd0253b41 # v1.0.47
         with:
           result: ${{ needs.build.result }}
           title: Nightly CI is failing on main

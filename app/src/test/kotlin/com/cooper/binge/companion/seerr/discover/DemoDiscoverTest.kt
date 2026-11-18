@@ -100,6 +100,14 @@ class DemoDiscoverTest {
     }
 
     @Test
+    fun `a person found by search opens a page with the same name`() {
+        demo { api ->
+            val found = api.searchTitles("marlowe").results.single()
+            assertEquals(found.name, api.personDetails(checkNotNull(found.id)).name)
+        }
+    }
+
+    @Test
     fun `a broad search has a second page and the pages do not overlap`() {
         demo { api ->
             val first = api.searchTitles("in", page = 1)

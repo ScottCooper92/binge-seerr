@@ -263,7 +263,7 @@ protection requires, and the one the bots read. `ci.yml` explains the split. A g
 touching `ci.yml`, because that job excludes tasks rather than listing them.
 
 - Kotlin compilation.
-- The unit tests (`:app:test`).
+- The unit tests (`test` in every module: `:app` and `:data`).
 - `ktlintCheck` — the ktlint plugin wires itself into `check`.
 - `detekt` — static analysis of the Kotlin itself, which ktlint and Android lint do not do.
 - **Android lint** (`:app:lint`) — AGP wires this into `check` too. It is easy to
