@@ -30,7 +30,7 @@ import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverFilters
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverSort
-import com.cooper.binge.companion.seerr.discover.grid.appliedCount
+import com.cooper.binge.companion.seerr.discover.grid.setGroups
 import java.time.LocalDate
 import com.binge.designsystem.R as DesR
 
@@ -46,11 +46,13 @@ internal fun DiscoverFilterSheet(
     filters: DiscoverFilters,
     vocabulary: FilterVocabulary,
     today: LocalDate,
+    loads: FilterLoads,
     onApply: (TitleKind, DiscoverSort, DiscoverFilters) -> Unit,
     onDismiss: () -> Unit,
 ) {
     var draft by rememberSaveable(stateSaver = DiscoverFilterDraft.Saver) { mutableStateOf(DiscoverFilterDraft(kind, sort, filters)) }
-    val words = if (draft.kind == kind) vocabulary else FilterVocabulary(languages = vocabulary.languages)
+    var choosing by rememberSaveable { mutableStateOf<FilterChoosing?>(null) }
+    val words = if (draft.kind == kind) vocabulary else vocabulary.forOtherKind()
     BingeAdaptiveSheet(
         kind = BingeSheetKind.Task,
         onDismissRequest = onDismiss,
@@ -61,14 +63,24 @@ internal fun DiscoverFilterSheet(
     ) { nav ->
         val section = DiscoverFilterSection.entries.firstOrNull { it.name == nav.page }
         if (section == null) {
-            RowsPage(draft, words, today, nav, { draft = it }) {
+            RowsPage(draft, words, today, nav, { choosing = FilterChoosing.Language }, { draft = it }) {
                 onApply(draft.kind, draft.sort, draft.filters)
                 onDismiss()
             }
         } else {
-            DiscoverSectionPage(section, draft.filters, words, today, onChange = { draft = draft.copy(filters = it) }, onDone = nav::pop)
+            DiscoverSectionPage(
+                section = section,
+                filters = draft.filters,
+                vocabulary = words,
+                today = today,
+                loads = loads,
+                onOpenRegion = { choosing = FilterChoosing.Region },
+                onChange = { draft = draft.copy(filters = it) },
+                onDone = nav::pop,
+            )
         }
     }
+    choosing?.let { FilterChoiceSheet(it, draft.filters, words, { draft = draft.copy(filters = it) }) { choosing = null } }
 }
 
 @Composable
@@ -77,6 +89,7 @@ private fun ColumnScope.RowsPage(
     vocabulary: FilterVocabulary,
     today: LocalDate,
     nav: BingeSheetNav,
+    onChooseLanguage: () -> Unit,
     onChange: (DiscoverFilterDraft) -> Unit,
     onApply: () -> Unit,
 ) {
@@ -87,7 +100,7 @@ private fun ColumnScope.RowsPage(
             today = today,
             onKind = { onChange(draft.withKind(it)) },
             onSort = { onChange(draft.withSort(it)) },
-            onOpen = { nav.push(it.name) },
+            onOpen = { if (it == DiscoverFilterSection.Language) onChooseLanguage() else nav.push(it.name) },
             onClearAll = { onChange(draft.cleared()) },
         )
     }
@@ -111,7 +124,7 @@ internal fun DiscoverFilterSheetContent(
     val inset = Modifier.padding(horizontal = dimensionResource(DesR.dimen.padding_m))
     val gap = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s))
     Column(modifier = Modifier.padding(bottom = dimensionResource(DesR.dimen.padding_m))) {
-        FilterSheetHeader(appliedCount = draft.filters.appliedCount(), canClear = !draft.isDefault, onClearAll = onClearAll)
+        FilterSheetHeader(appliedCount = draft.filters.setGroups().size, canClear = !draft.isDefault, onClearAll = onClearAll)
         SectionTitle(stringResource(R.string.grid_filters_content))
         FlowRow(modifier = inset, horizontalArrangement = gap) {
             listOf(TitleKind.Movie, TitleKind.Series).forEach { kind ->
@@ -135,7 +148,7 @@ internal fun DiscoverFilterSheetContent(
             }
         }
         SectionTitle(stringResource(R.string.grid_filters_filter_by))
-        DiscoverFilterRows(draft.filters, vocabulary, today, onOpen)
+        DiscoverFilterRows(draft.filters, draft.kind, vocabulary, today, onOpen)
     }
 }
 
@@ -155,3 +168,17 @@ private fun SectionTitle(text: String) {
             ),
     )
 }
+
+/** What the sheet asks its view model to load as a page opens or a keyword is typed. */
+internal class FilterLoads(
+    val onProviders: (String) -> Unit,
+    val onKeywordQuery: (String) -> Unit,
+    val onNameKeywords: (Set<Int>) -> Unit,
+)
+
+/**
+ * The lists that belong to the kind the grid opened on are left out when the sheet is on the other: its genres, streaming
+ * providers and ratings are another set. The lists both kinds share stay.
+ */
+private fun FilterVocabulary.forOtherKind() =
+    copy(genres = emptyList(), regions = emptyList(), providers = emptyMap(), certifications = emptyMap())
