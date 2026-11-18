@@ -9,6 +9,7 @@ import com.cooper.binge.companion.seerr.discover.grid.DiscoverGridRepository
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverSort
 import com.cooper.binge.companion.seerr.discover.grid.GridPreset
 import com.cooper.binge.companion.seerr.discover.grid.GridRequest
+import com.cooper.binge.companion.seerr.discover.grid.RATING_SORT_VOTE_FLOOR
 import com.cooper.binge.companion.seerr.discover.sliders.HubMediaSource
 import com.cooper.binge.companion.seerr.seerr.HydratedTitle
 import com.cooper.binge.companion.seerr.seerr.SeerrError
@@ -125,6 +126,18 @@ class DiscoverGridViewModelTest {
             assertEquals(setOf(18), last.first.filters.genres)
             assertEquals(1, last.second)
             assertEquals(DiscoverSort.RatingDesc, vm.uiState.value.controls.sort)
+        }
+
+    @Test
+    fun `ordering by rating sets a vote count floor that keeps the row's chip and can be cleared`() =
+        runVm { vm ->
+            vm.onSort(DiscoverSort.RatingDesc)
+            advanceUntilIdle()
+            assertEquals(RATING_SORT_VOTE_FLOOR, grid.requests.last().first.filters.voteCountMin)
+            assertEquals(ChipKind.Genre, vm.uiState.value.controls.chip?.kind)
+            vm.onSort(DiscoverSort.PopularityDesc)
+            advanceUntilIdle()
+            assertEquals(RATING_SORT_VOTE_FLOOR, grid.requests.last().first.filters.voteCountMin)
         }
 
     @Test

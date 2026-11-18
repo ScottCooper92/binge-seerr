@@ -29,6 +29,9 @@ enum class DiscoverSort(
     NameDesc("original_name.desc", movie = false),
     ;
 
+    /** Whether this orders by the average vote, which a handful of votes can swing. */
+    val isByRating: Boolean get() = this == RatingDesc || this == RatingAsc
+
     fun appliesTo(kind: TitleKind): Boolean = if (kind == TitleKind.Series) series else movie
 
     companion object {
