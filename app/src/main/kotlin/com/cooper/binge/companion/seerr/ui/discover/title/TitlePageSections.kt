@@ -205,7 +205,7 @@ private fun TitleRow(
 }
 
 @Composable
-private fun TitleAvailability.label(): Pair<String, BingeSentiment>? =
+internal fun TitleAvailability.label(): Pair<String, BingeSentiment>? =
     when (this) {
         TitleAvailability.None -> null
         TitleAvailability.Pending -> stringResource(R.string.hubs_card_requested) to BingeSentiment.Info

@@ -1,0 +1,94 @@
+package com.cooper.binge.companion.seerr.ui.discover.request
+
+import androidx.compose.foundation.layout.Column
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DoneAll
+import androidx.compose.material.icons.filled.Tv
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
+import com.binge.designsystem.component.CheckboxRow
+import com.binge.designsystem.component.StatusChip
+import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.discover.request.SeasonChoice
+import com.cooper.binge.companion.seerr.discover.request.SeasonSelection
+import com.cooper.binge.companion.seerr.ui.discover.title.label
+
+/** A season's name: the server's, else "Season N" (or "Specials" for season 0), so a show that names none still reads. */
+@Composable
+internal fun seasonLabel(
+    number: Int,
+    name: String,
+): String =
+    name.ifBlank {
+        if (number == 0) stringResource(R.string.season_specials) else stringResource(R.string.season_name, number)
+    }
+
+/**
+ * A show's seasons for the version being requested. With partial requests on, each open season is a checkbox, with "All
+ * seasons" above; one the server already holds or has been asked for is shown as such and cannot be picked. With them off, the
+ * server takes the whole show, so the sheet says what that is and offers no choice.
+ */
+@Composable
+internal fun SeasonStep(
+    selection: SeasonSelection,
+    enabled: Boolean,
+    actions: RequestSheetActions,
+) {
+    Column {
+        Text(stringResource(R.string.request_sheet_seasons), style = MaterialTheme.typography.titleSmall)
+        if (selection.partialAllowed) {
+            if (selection.open.size > 1) {
+                CheckboxRow(
+                    label = stringResource(R.string.request_sheet_all_seasons),
+                    checked = selection.allOpenPicked,
+                    onCheckedChange = { actions.onAllSeasons() },
+                    enabled = enabled,
+                    icon = Icons.Filled.DoneAll,
+                    showDivider = true,
+                )
+            }
+            selection.seasons.forEachIndexed { index, season ->
+                SeasonRow(
+                    season,
+                    picked = season.number in selection.picked,
+                    enabled = enabled,
+                    last = index == selection.seasons.lastIndex,
+                    actions,
+                )
+            }
+        } else {
+            CheckboxRow(
+                label = stringResource(R.string.request_sheet_remaining_seasons),
+                checked = true,
+                onCheckedChange = {},
+                enabled = false,
+                icon = Icons.Filled.DoneAll,
+                trailingContent = { Text(selection.open.size.toString(), style = MaterialTheme.typography.labelLarge) },
+            )
+        }
+    }
+}
+
+@Composable
+private fun SeasonRow(
+    season: SeasonChoice,
+    picked: Boolean,
+    enabled: Boolean,
+    last: Boolean,
+    actions: RequestSheetActions,
+) {
+    val status = season.availability.label()
+    CheckboxRow(
+        label = seasonLabel(season.number, season.name),
+        checked = picked || !season.isOpen,
+        onCheckedChange = { actions.onSeason(season.number) },
+        enabled = enabled && season.isOpen,
+        supportingText = pluralStringResource(R.plurals.season_episodes, season.episodeCount, season.episodeCount),
+        icon = Icons.Filled.Tv,
+        showDivider = !last,
+        trailingContent = status?.let { (label, sentiment) -> { StatusChip(label, sentiment, singleLine = true) } },
+    )
+}
