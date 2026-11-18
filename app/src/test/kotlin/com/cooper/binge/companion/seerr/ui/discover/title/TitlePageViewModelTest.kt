@@ -2,8 +2,10 @@ package com.cooper.binge.companion.seerr.ui.discover.title
 
 import com.cooper.binge.companion.seerr.discover.TitleAvailability
 import com.cooper.binge.companion.seerr.discover.TitleKind
+import com.cooper.binge.companion.seerr.discover.TitleResult
 import com.cooper.binge.companion.seerr.discover.request.RequestResult
 import com.cooper.binge.companion.seerr.discover.title.MovieDetails
+import com.cooper.binge.companion.seerr.discover.title.TitleCollection
 import com.cooper.binge.companion.seerr.discover.title.TitleDetailsRepository
 import com.cooper.binge.companion.seerr.discover.title.TitleExtras
 import com.cooper.binge.companion.seerr.discover.title.TitleRatings
@@ -58,8 +60,16 @@ private class FakeTitles(
     var movie: MovieDetails = movieFixture(),
     var failMovie: Throwable? = null,
     var extras: TitleExtras = TitleExtras(TitleRatings(90, null, null), emptyList(), emptyList()),
+    var collection: List<TitleResult> = emptyList(),
+    var failCollection: Throwable? = null,
 ) : TitleDetailsRepository {
     var movieReads = 0
+    val collectionReads = mutableListOf<Int>()
+
+    override suspend fun collectionParts(collectionId: Int): List<TitleResult> {
+        collectionReads += collectionId
+        return failCollection?.let { throw it } ?: collection
+    }
 
     override suspend fun movie(tmdbId: Int): MovieDetails {
         movieReads++
@@ -137,4 +147,35 @@ class TitlePageViewModelTest {
                     .movie.standard.availability,
             )
         }
+
+    private fun film(id: Int) = TitleResult(TitleKind.Movie, id, "Film $id", "2003", null, null, null, null, TitleAvailability.None, null)
+
+    private val inCollection = movieFixture().copy(collection = TitleCollection(2344, "The Matrix Collection", null))
+
+    @Test
+    fun `a film in a collection loads the collection's other films and leaves itself out`() {
+        val titles = FakeTitles(movie = inCollection, collection = listOf(film(603), film(604), film(605)))
+        val vm = TitlePageViewModel(titles, 603)
+
+        assertEquals(listOf(2344), titles.collectionReads)
+        assertEquals(listOf(604, 605), vm.ready().collectionParts.map { it.tmdbId })
+    }
+
+    @Test
+    fun `a film with no collection reads none`() {
+        val titles = FakeTitles()
+        val vm = TitlePageViewModel(titles, 603)
+
+        assertTrue(titles.collectionReads.isEmpty())
+        assertTrue(vm.ready().collectionParts.isEmpty())
+    }
+
+    @Test
+    fun `a collection that fails to read leaves the rail out and the page open`() {
+        val titles = FakeTitles(movie = inCollection, failCollection = IOException("down"))
+        val vm = TitlePageViewModel(titles, 603)
+
+        assertTrue(vm.ready().collectionParts.isEmpty())
+        assertEquals("The Matrix", vm.ready().movie.title)
+    }
 }

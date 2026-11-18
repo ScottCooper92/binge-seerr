@@ -26,10 +26,11 @@ internal fun TitleDetailEntry(
     tmdbId: Int,
     onBack: () -> Unit,
     onOpenCredits: () -> Unit,
+    onOpenSeason: (seasonNumber: Int, seasonName: String) -> Unit,
 ) {
     when (kind) {
         TitleKind.Movie -> FilmPageEntry(tmdbId, onBack, onOpenCredits)
-        TitleKind.Series -> SeriesPageEntry(tmdbId, onBack, onOpenCredits)
+        TitleKind.Series -> SeriesPageEntry(tmdbId, onBack, onOpenCredits, onOpenSeason)
         else -> EmptyScreen(message = "")
     }
 }
@@ -62,6 +63,7 @@ private fun SeriesPageEntry(
     tmdbId: Int,
     onBack: () -> Unit,
     onOpenCredits: () -> Unit,
+    onOpenSeason: (Int, String) -> Unit,
 ) {
     val viewModel = hiltViewModel<SeriesPageViewModel, SeriesPageViewModel.Factory>(creationCallback = { it.create(tmdbId) })
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -77,10 +79,11 @@ private fun SeriesPageEntry(
                 onCloseRequest = viewModel::closeRequestSheet,
                 onRequested = viewModel::requested,
             ),
+        seasonActions = SeasonActions(viewModel::selectSeason, viewModel::retryEpisodes, onOpenSeason),
     )
 }
 
-/** The page's actions with the links a title page shares: another title, a web page. A person and a collection open nowhere yet. */
+/** The page's actions with the links a title page shares: another title, a web page. A person and a collection open nowhere yet, so the collection rail has no See all. */
 @Composable
 private fun rememberTitlePageActions(
     onBack: () -> Unit,
@@ -100,7 +103,7 @@ private fun rememberTitlePageActions(
         onRequested = onRequested,
         onOpenTitle = { result: TitleResult -> openTitle(result.kind, result.tmdbId, "") },
         onOpenPerson = {},
-        onOpenCollection = {},
+        onOpenCollection = null,
         onOpenUrl = context::openInBrowser,
         onOpenCredits = onOpenCredits,
     )

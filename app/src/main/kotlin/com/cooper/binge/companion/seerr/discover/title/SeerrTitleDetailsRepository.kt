@@ -2,9 +2,11 @@ package com.cooper.binge.companion.seerr.discover.title
 
 import com.binge.companion.sdk.attempt
 import com.cooper.binge.companion.seerr.discover.TitleKind
+import com.cooper.binge.companion.seerr.discover.TitleResult
 import com.cooper.binge.companion.seerr.discover.toAvailability
 import com.cooper.binge.companion.seerr.discover.toReleaseYear
 import com.cooper.binge.companion.seerr.discover.toTitlePage
+import com.cooper.binge.companion.seerr.discover.toTitleResult
 import com.cooper.binge.companion.seerr.seerr.FALLBACK_CERTIFICATION_REGION
 import com.cooper.binge.companion.seerr.seerr.SeerrApi
 import com.cooper.binge.companion.seerr.seerr.SeerrMovieDetailsDto
@@ -51,6 +53,9 @@ class SeerrTitleDetailsRepository(
                 webUrl = serverUrl() + "movie/" + tmdbId,
             )
         }
+
+    override suspend fun collectionParts(collectionId: Int): List<TitleResult> =
+        withContext(io) { api().collection(collectionId).parts.mapNotNull { it.toTitleResult(TitleKind.Movie) } }
 
     override suspend fun extras(
         kind: TitleKind,

@@ -58,6 +58,7 @@ internal val DefaultSection: HubSection = HubSection.Requests
  *
  * @param backStack read for the one case the library can't see: [DefaultSection] opened beside the hub,
  *   where popping it would land on its own placeholder and look like Back did nothing (#815).
+ * @param containerWidth the room the panes share, when it is less than the window: beside a rail, say.
  * @param threePane a landscape tablet's [ThreePaneStrategy]: the hub first, with [defaultSection] in the
  *   second pane while no section is on the stack (#1110).
  */
@@ -68,13 +69,14 @@ internal fun rememberSeerrPaneStrategy(
     backStack: List<NavKey>,
     threePane: Boolean = false,
     defaultSection: @Composable () -> Unit = {},
+    containerWidth: Dp? = null,
 ): SceneStrategy<NavKey> {
     // The design system's gap between the panes in place of Material adaptive's own 24dp (#814), as Binge's is.
     val spaced = directive.copy(horizontalPartitionSpacerSize = dimensionResource(DesR.dimen.pane_spacer))
     val listDetail =
         rememberListDetailSceneStrategy<NavKey>(
             backNavigationBehavior = PaneBackNavigationBehavior,
-            directive = spaced.copy(defaultPanePreferredWidth = equalPaneWidth(spaced)),
+            directive = spaced.copy(defaultPanePreferredWidth = equalPaneWidth(spaced, containerWidth)),
         )
     val currentDefault by rememberUpdatedState(defaultSection)
     return remember(listDetail, backStack, threePane) {
@@ -123,9 +125,12 @@ private class SeerrPaneScene(
 
 /** Half the window less half the gap between the panes, so the gap sits at the window's centre. */
 @Composable
-private fun equalPaneWidth(directive: PaneScaffoldDirective): Dp {
+private fun equalPaneWidth(
+    directive: PaneScaffoldDirective,
+    containerWidth: Dp?,
+): Dp {
     val windowWidth =
-        with(LocalDensity.current) {
+        containerWidth ?: with(LocalDensity.current) {
             LocalWindowInfo.current.containerSize.width
                 .toDp()
         }

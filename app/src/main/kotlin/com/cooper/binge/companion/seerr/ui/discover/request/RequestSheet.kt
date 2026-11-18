@@ -30,6 +30,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.binge.designsystem.component.BingeActionFooter
 import com.binge.designsystem.component.BingeAdaptiveSheet
+import com.binge.designsystem.component.BingeIconPlate
 import com.binge.designsystem.component.BingeSheetKind
 import com.binge.designsystem.component.SwitchRow
 import com.cooper.binge.companion.seerr.R
@@ -172,7 +173,7 @@ private fun FourKRow(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
     ) {
-        Icon(Icons.Filled.Hd, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        BingeIconPlate(Icons.Filled.Hd)
         SwitchRow(
             label = stringResource(R.string.request_sheet_4k),
             checked = state.use4k,
