@@ -5,9 +5,12 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
@@ -30,15 +33,18 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
+import com.binge.designsystem.CollapsingTitleState
+import com.binge.designsystem.collapsingTitle
 import com.binge.designsystem.component.BingeFilterChipRow
 import com.binge.designsystem.component.BingeSearchField
 import com.binge.designsystem.component.FilterChipItem
 import com.binge.designsystem.navOverlayPadding
+import com.binge.designsystem.navOverlayStart
+import com.binge.designsystem.nestedScrollConnection
 import com.binge.designsystem.searchResultColumns
-import com.binge.designsystem.template.BingeScreenScaffold
-import com.binge.designsystem.template.ScreenBar
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.TitleResult
 import com.cooper.binge.companion.seerr.ui.state.EmptyScreen
@@ -61,31 +67,41 @@ internal class TitleSearchActions(
     val onType: (SearchType) -> Unit,
 )
 
-/** The Search tab: a large title and the field over whichever of the idle offer, results or a message the state calls for. */
+/**
+ * The Search tab, laid out as Binge's: a large title that gives way as the results scroll, the field and the type chips, and
+ * below them whichever of the idle offer, results or a message the state calls for. The title starts at the status bar, with no bar
+ * of its own above it, as this is a tab root with nowhere to go back to.
+ */
 @Composable
 internal fun TitleSearchScreen(
     state: TitleSearchUiState,
     actions: TitleSearchActions,
     modifier: Modifier = Modifier,
 ) {
-    BingeScreenScaffold(
-        title = stringResource(R.string.title_search_title),
-        modifier = modifier,
-        bar = ScreenBar.Large,
-        header = { SearchHeader(state, actions) },
-    ) { padding ->
-        val inner = navOverlayPadding(PaddingValues(dimensionResource(DesR.dimen.padding_m)))
-        Box(Modifier.fillMaxSize().padding(padding)) {
-            when (state) {
-                is TitleSearchUiState.Idle -> IdleBody(state, actions, navOverlayPadding(PaddingValues()))
-                is TitleSearchUiState.Loading -> LoadingScreen()
-                is TitleSearchUiState.Ready -> key(state.type) { ResultsList(state, actions, inner) }
-                is TitleSearchUiState.NoResults ->
-                    EmptyScreen(
-                        message = stringResource(R.string.title_search_none_message, state.query),
-                        title = stringResource(R.string.title_search_none_title),
-                    )
-                is TitleSearchUiState.Error -> ErrorScreen(error = state.error, onRetry = actions.onRetry)
+    val titleState = remember { CollapsingTitleState() }
+    Box(modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
+        Column(
+            Modifier
+                .widthIn(max = dimensionResource(R.dimen.search_content_max_width))
+                .fillMaxSize()
+                .nestedScroll(remember(titleState) { titleState.nestedScrollConnection() }),
+        ) {
+            SearchHeader(state, actions, titleState)
+            Box(Modifier.weight(1f).fillMaxWidth()) {
+                when (state) {
+                    is TitleSearchUiState.Idle -> IdleBody(state, actions, navOverlayPadding(PaddingValues()))
+                    is TitleSearchUiState.Loading -> LoadingScreen()
+                    is TitleSearchUiState.Ready ->
+                        key(
+                            state.type,
+                        ) { ResultsList(state, actions, navOverlayPadding(PaddingValues(dimensionResource(DesR.dimen.padding_m)))) }
+                    is TitleSearchUiState.NoResults ->
+                        EmptyScreen(
+                            message = stringResource(R.string.title_search_none_message, state.query),
+                            title = stringResource(R.string.title_search_none_title),
+                        )
+                    is TitleSearchUiState.Error -> ErrorScreen(error = state.error, onRetry = actions.onRetry)
+                }
             }
         }
     }
@@ -95,16 +111,32 @@ internal fun TitleSearchScreen(
 private fun SearchHeader(
     state: TitleSearchUiState,
     actions: TitleSearchActions,
+    titleState: CollapsingTitleState,
 ) {
-    Column {
-        BingeSearchField(
-            query = state.text,
-            onQueryChange = actions.onQueryChange,
-            onClear = actions.onClear,
-            onSubmit = actions.onSubmit,
-            placeholder = stringResource(R.string.title_search_placeholder),
-            modifier = Modifier.fillMaxWidth().padding(dimensionResource(DesR.dimen.padding_m)),
-        )
+    Column(Modifier.statusBarsPadding().padding(start = navOverlayStart())) {
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = dimensionResource(DesR.dimen.screen_content_inset))
+                .padding(top = dimensionResource(DesR.dimen.padding_s), bottom = dimensionResource(DesR.dimen.padding_m)),
+        ) {
+            // Only the title gives way: a field that could leave the window would make the user scroll back to change the query.
+            Column(Modifier.collapsingTitle(titleState)) {
+                Text(
+                    text = stringResource(R.string.title_search_title),
+                    style = MaterialTheme.typography.displaySmall,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+                Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
+            }
+            BingeSearchField(
+                query = state.text,
+                onQueryChange = actions.onQueryChange,
+                onClear = actions.onClear,
+                onSubmit = actions.onSubmit,
+                placeholder = stringResource(R.string.title_search_placeholder),
+            )
+        }
         if (state is TitleSearchUiState.Ready) TypeChips(state, actions.onType)
     }
 }
