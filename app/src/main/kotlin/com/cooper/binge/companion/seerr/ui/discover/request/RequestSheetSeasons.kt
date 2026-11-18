@@ -38,13 +38,14 @@ internal fun SeasonStep(
 ) {
     Column {
         Text(stringResource(R.string.request_sheet_seasons), style = MaterialTheme.typography.titleSmall)
+        selection.limit?.let { QuotaNote(selection, it) }
         if (selection.partialAllowed) {
             if (selection.open.size > 1) {
                 CheckboxRow(
                     label = stringResource(R.string.request_sheet_all_seasons),
                     checked = selection.allOpenPicked,
                     onCheckedChange = { actions.onAllSeasons() },
-                    enabled = enabled,
+                    enabled = enabled && selection.canPickAll,
                     icon = Icons.Filled.DoneAll,
                     showDivider = true,
                 )
@@ -53,6 +54,7 @@ internal fun SeasonStep(
                 SeasonRow(
                     season,
                     picked = season.number in selection.picked,
+                    selection = selection,
                     enabled = enabled,
                     last = index == selection.seasons.lastIndex,
                     actions,
@@ -75,6 +77,7 @@ internal fun SeasonStep(
 private fun SeasonRow(
     season: SeasonChoice,
     picked: Boolean,
+    selection: SeasonSelection,
     enabled: Boolean,
     last: Boolean,
     actions: RequestSheetActions,
@@ -85,10 +88,25 @@ private fun SeasonRow(
         label = seasonLabel(season.number, season.name),
         checked = picked || !season.isOpen,
         onCheckedChange = { actions.onSeason(season.number) },
-        enabled = enabled && season.isOpen,
+        enabled = enabled && season.isOpen && (picked || selection.canPickMore),
         supportingText = status?.let { stringResource(R.string.series_season_subtitle, episodes, it) } ?: episodes,
         supportingMaxLines = 2,
         icon = Icons.Filled.Tv,
         showDivider = !last,
     )
+}
+
+/** What the quota allows: how many seasons can still be picked, or that the whole show is more than it has left. */
+@Composable
+private fun QuotaNote(
+    selection: SeasonSelection,
+    limit: Int,
+) {
+    val text =
+        when {
+            selection.overLimit -> stringResource(R.string.request_sheet_seasons_over, selection.open.size)
+            selection.partialAllowed -> pluralStringResource(R.plurals.request_sheet_seasons_limit, limit, limit)
+            else -> return
+        }
+    Text(text, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
 }

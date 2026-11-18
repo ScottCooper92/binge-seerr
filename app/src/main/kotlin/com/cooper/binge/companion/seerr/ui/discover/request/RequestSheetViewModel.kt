@@ -87,7 +87,15 @@ sealed interface RequestSheetUiState {
     ) : RequestSheetUiState {
         /** A show's seasons of the chosen version, with what the user ticked; null for a film. */
         val seasons: SeasonSelection?
-            get() = target.seasonChoices?.let { SeasonSelection(it.of(use4k), target.partialRequests, pickedSeasons) }
+            get() =
+                target.seasonChoices?.let {
+                    SeasonSelection(
+                        it.of(use4k),
+                        target.partialRequests,
+                        pickedSeasons,
+                        limit = options.quota?.remaining,
+                    )
+                }
 
         /** The servers of the chosen version: 4K is a property of a server, so the 4K switch narrows this list. */
         val servers: List<RequestServer> get() = options.servers.filter { it.is4k == use4k }

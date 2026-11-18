@@ -1521,4 +1521,9 @@
     <string name="series_status_ended">Ended</string>
     <string name="series_status_pilot">Pilot</string>
     <string name="series_season_subtitle" translatable="false">%1$s · %2$s</string>
+    <plurals name="request_sheet_seasons_limit">
+        <item quantity="one">Your quota allows %1$d more season</item>
+        <item quantity="other">Your quota allows %1$d more seasons</item>
+    </plurals>
+    <string name="request_sheet_seasons_over">Your quota has less room than the %1$d seasons still open, so this series cannot be requested now</string>
 </resources>

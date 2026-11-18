@@ -84,4 +84,50 @@ class SeasonSelectionTest {
         assertFalse(choices.of(use4k = false).single().isOpen)
         assertTrue(choices.of(use4k = true).single().isOpen)
     }
+
+    @Test
+    fun `a quota with room for two seasons stops the third pick`() {
+        val selection =
+            SeasonSelection(
+                listOf(season(1), season(2), season(3)),
+                partialAllowed = true,
+                limit = 2,
+            ).toggle(1).toggle(2).toggle(3)
+
+        assertEquals(listOf(1, 2), selection.requestSeasons)
+        assertFalse(selection.canPickMore)
+    }
+
+    @Test
+    fun `a picked season can still be unpicked at the limit and another taken`() {
+        val full = SeasonSelection(listOf(season(1), season(2), season(3)), partialAllowed = true, limit = 1).toggle(1)
+
+        assertEquals(listOf(3), full.toggle(1).toggle(3).requestSeasons)
+    }
+
+    @Test
+    fun `all seasons is not offered when the quota cannot take every open one`() {
+        val selection = SeasonSelection(listOf(season(1), season(2), season(3)), partialAllowed = true, limit = 2)
+
+        assertFalse(selection.canPickAll)
+        assertTrue(selection.toggleAll().requestSeasons.isEmpty())
+        assertTrue(SeasonSelection(listOf(season(1), season(2)), partialAllowed = true, limit = 2).canPickAll)
+    }
+
+    @Test
+    fun `with partial requests off a show the quota cannot take cannot be sent`() {
+        val over = SeasonSelection(listOf(season(1), season(2), season(3)), partialAllowed = false, limit = 2)
+
+        assertTrue(over.overLimit)
+        assertFalse(over.canSubmit)
+        assertTrue(over.copy(limit = 3).canSubmit)
+    }
+
+    @Test
+    fun `no limit puts no cap on the picks`() {
+        val selection = SeasonSelection(listOf(season(1), season(2), season(3)), partialAllowed = true).toggleAll()
+
+        assertEquals(listOf(1, 2, 3), selection.requestSeasons)
+        assertFalse(selection.overLimit)
+    }
 }

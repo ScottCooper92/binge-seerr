@@ -24,12 +24,13 @@ data class SeasonChoices(
 /**
  * Which seasons a request sends. With partial requests off the server takes the whole show, so the choice is made for the user
  * and [requestSeasons] is every open season. With them on, the user picks from the open ones and a covered season is never
- * selectable.
+ * selectable. [limit] is how many seasons the user's quota has left, null for none: the server refuses a request for more.
  */
 data class SeasonSelection(
     val seasons: List<SeasonChoice>,
     val partialAllowed: Boolean,
     val picked: Set<Int> = emptySet(),
+    val limit: Int? = null,
 ) {
     val open: List<SeasonChoice> get() = seasons.filter { it.isOpen }
 
@@ -39,7 +40,16 @@ data class SeasonSelection(
     val requestSeasons: List<Int>
         get() = if (partialAllowed) picked.filter { it in openNumbers }.sorted() else open.map { it.number }
 
-    val canSubmit: Boolean get() = requestSeasons.isNotEmpty()
+    /** The whole show is asked for and the quota cannot take it, so the request would be refused. */
+    val overLimit: Boolean get() = !partialAllowed && limit != null && open.size > limit
+
+    val canSubmit: Boolean get() = requestSeasons.isNotEmpty() && !overLimit
+
+    /** Another open season can still be picked: the quota has room for it. */
+    val canPickMore: Boolean get() = limit == null || picked.count { it in openNumbers } < limit
+
+    /** "All seasons" is offered while the quota has room for every open one. */
+    val canPickAll: Boolean get() = limit == null || open.size <= limit
 
     val allOpenPicked: Boolean get() = openNumbers.isNotEmpty() && openNumbers.all { it in picked }
 
@@ -48,13 +58,14 @@ data class SeasonSelection(
         when {
             !partialAllowed || number !in openNumbers -> this
             number in picked -> copy(picked = picked - number)
+            !canPickMore -> this
             else -> copy(picked = picked + number)
         }
 
     /** All seasons still open, or none when they are all picked already. */
     fun toggleAll(): SeasonSelection =
         when {
-            !partialAllowed || openNumbers.isEmpty() -> this
+            !partialAllowed || openNumbers.isEmpty() || !canPickAll -> this
             allOpenPicked -> copy(picked = emptySet())
             else -> copy(picked = openNumbers)
         }

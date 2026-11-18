@@ -4,6 +4,7 @@ import com.cooper.binge.companion.seerr.discover.TitleAvailability
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.TitleResult
 import com.cooper.binge.companion.seerr.discover.request.RequestOptions
+import com.cooper.binge.companion.seerr.discover.request.RequestQuota
 import com.cooper.binge.companion.seerr.discover.request.SeasonChoice
 import com.cooper.binge.companion.seerr.discover.request.SeasonChoices
 import com.cooper.binge.companion.seerr.discover.title.SeasonInfo
@@ -30,6 +31,8 @@ import org.robolectric.annotation.GraphicsMode
 private const val LONG_SEASON = "The Extended Special Collector's Edition Season With A Very Long Name"
 private const val SEASON_EPISODES = 24
 private const val RATING_CRITICS = 83
+private const val QUOTA_LIMIT = 10
+private const val QUOTA_DAYS = 7
 private const val RATING_AUDIENCE = 85
 
 private val STATUSES =
@@ -74,7 +77,7 @@ private fun sheetWorstCase(): RequestSheetUiState.Ready {
                 title = LONG_SEASON,
                 seasonChoices = SeasonChoices(choices, choices),
             ),
-        options = RequestOptions(may4k = false, servers = emptyList(), quota = null),
+        options = RequestOptions(may4k = false, servers = emptyList(), quota = RequestQuota(QUOTA_LIMIT, 2, QUOTA_DAYS)),
         pickedSeasons = setOf(2, 5),
     )
 }

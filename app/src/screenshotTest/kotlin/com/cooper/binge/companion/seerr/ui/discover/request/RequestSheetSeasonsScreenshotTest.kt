@@ -8,6 +8,7 @@ import com.android.tools.screenshot.PreviewTest
 import com.cooper.binge.companion.seerr.discover.TitleAvailability
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.request.RequestOptions
+import com.cooper.binge.companion.seerr.discover.request.RequestQuota
 import com.cooper.binge.companion.seerr.discover.request.SeasonChoice
 import com.cooper.binge.companion.seerr.discover.request.SeasonChoices
 import com.cooper.binge.companion.seerr.preview.SeerrComponentPreviews
@@ -17,6 +18,8 @@ import com.cooper.binge.companion.seerr.preview.SheetFrame
 
 private const val SEASONS_HEIGHT = 720
 private const val EPISODES = 10
+private const val QUOTA_LIMIT = 10
+private const val QUOTA_DAYS = 7
 private const val LONG_NAME = "The Extended Special Collector's Edition Season With A Very Long Name"
 
 private fun choices(longName: Boolean = false) =
@@ -32,6 +35,7 @@ private fun state(
     picked: Set<Int> = emptySet(),
     partial: Boolean = true,
     longName: Boolean = false,
+    quota: RequestQuota? = null,
 ) = RequestSheetUiState.Ready(
     target =
         RequestSheetTarget(
@@ -41,7 +45,7 @@ private fun state(
             seasonChoices = SeasonChoices(choices(longName), choices(longName)),
             partialRequests = partial,
         ),
-    options = RequestOptions(may4k = false, servers = emptyList(), quota = null),
+    options = RequestOptions(may4k = false, servers = emptyList(), quota = quota),
     pickedSeasons = picked,
 )
 
@@ -83,6 +87,18 @@ class RequestSheetSeasonsScreenshotTest {
     @SeerrComponentPreviews
     @Composable
     fun partialOff() = Frame(state(partial = false))
+
+    /** The quota has room for one more season: the other open season and All seasons cannot be picked, and the note says why. */
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun quotaLimited() = Frame(state(picked = setOf(4), quota = RequestQuota(QUOTA_LIMIT, 1, QUOTA_DAYS)))
+
+    /** The server takes the whole show but the quota cannot: the sheet says so and the button is disabled. */
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun quotaTooSmall() = Frame(state(partial = false, quota = RequestQuota(QUOTA_LIMIT, 1, QUOTA_DAYS)))
 
     /** A long season name at font scales 1.5 and 2. */
     @PreviewTest

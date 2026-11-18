@@ -1465,4 +1465,10 @@
     <string name="series_status_returning">Serie en emisión</string>
     <string name="series_status_ended">Finalizada</string>
     <string name="series_status_pilot">Piloto</string>
+    <plurals name="request_sheet_seasons_limit">
+        <item quantity="one">Tu cuota permite %1$d temporada más</item>
+        <item quantity="many">Tu cuota permite %1$d de temporadas más</item>
+        <item quantity="other">Tu cuota permite %1$d temporadas más</item>
+    </plurals>
+    <string name="request_sheet_seasons_over">Tu cuota tiene menos margen que las %1$d temporadas aún abiertas, así que esta serie no se puede pedir ahora</string>
 </resources>

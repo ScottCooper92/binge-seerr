@@ -4,6 +4,7 @@ import com.cooper.binge.companion.seerr.discover.TitleAvailability
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.request.RequestChoices
 import com.cooper.binge.companion.seerr.discover.request.RequestOptions
+import com.cooper.binge.companion.seerr.discover.request.RequestQuota
 import com.cooper.binge.companion.seerr.discover.request.RequestResult
 import com.cooper.binge.companion.seerr.discover.request.RequestSheetRepository
 import com.cooper.binge.companion.seerr.discover.request.RequestSubmission
@@ -19,7 +20,9 @@ import org.junit.Test
 private class SeasonsRepository : RequestSheetRepository {
     val submissions = mutableListOf<RequestSubmission>()
 
-    override suspend fun options(kind: TitleKind) = RequestOptions(may4k = true, servers = emptyList(), quota = null)
+    var quota: RequestQuota? = null
+
+    override suspend fun options(kind: TitleKind) = RequestOptions(may4k = true, servers = emptyList(), quota = quota)
 
     override suspend fun choices(
         kind: TitleKind,
@@ -55,7 +58,13 @@ class RequestSheetSeasonsTest {
                 ),
         )
 
-    private fun viewModel(target: RequestSheetTarget = this.target) = RequestSheetViewModel(repository, target)
+    private fun viewModel(
+        target: RequestSheetTarget = this.target,
+        quota: RequestQuota? = null,
+    ): RequestSheetViewModel {
+        repository.quota = quota
+        return RequestSheetViewModel(repository, target)
+    }
 
     private fun RequestSheetViewModel.ready() = uiState.value as RequestSheetUiState.Ready
 
@@ -134,5 +143,16 @@ class RequestSheetSeasonsTest {
                 .seasons
                 .isEmpty(),
         )
+    }
+
+    @Test
+    fun `a quota with one season left lets one season through and says so`() {
+        val vm = viewModel(quota = RequestQuota(limit = 10, remaining = 1, days = 7))
+
+        vm.toggleSeason(2)
+        vm.toggleSeason(3)
+
+        assertEquals(setOf(2), vm.ready().pickedSeasons)
+        assertEquals(1, vm.ready().seasons?.limit)
     }
 }
