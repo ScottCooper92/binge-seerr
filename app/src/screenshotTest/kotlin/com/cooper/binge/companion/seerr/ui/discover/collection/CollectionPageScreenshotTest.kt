@@ -9,7 +9,7 @@ import com.cooper.binge.companion.seerr.preview.SeerrSpanishPreviews
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import kotlinx.coroutines.flow.emptyFlow
 
-private val NO_ACTIONS = CollectionPageActions({}, {}, {}, {}, {}, {})
+private val NO_ACTIONS = CollectionPageActions({}, {}, {}, {}, {}, {}, {}, {}, {})
 
 @Composable
 private fun Frame(state: CollectionPageUiState) = CollectionPageScreen(state, emptyFlow(), NO_ACTIONS)
