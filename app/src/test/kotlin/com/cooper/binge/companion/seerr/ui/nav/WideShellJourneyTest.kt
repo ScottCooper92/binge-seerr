@@ -96,15 +96,13 @@ class WideShellJourneyTest {
     }
 
     /** Waits for the chip to read as selected: the filter comes back through restored state, a frame after the screen shows. */
-    private fun awaitChipSelected() {
-        host.compose.waitUntil(WAIT_MILLIS) {
-            host.compose
-                .onAllNodes(
-                    hasText(host.string(R.string.requests_filter_pending), substring = true) and isSelected(),
-                ).fetchSemanticsNodes()
-                .isNotEmpty()
-        }
-    }
+    private fun awaitChipSelected() = host.await("the Pending chip selected", WAIT_MILLIS) { chipIsSelected() }
+
+    private fun chipIsSelected() =
+        host.compose
+            .onAllNodes(hasText(host.string(R.string.requests_filter_pending), substring = true) and isSelected())
+            .fetchSemanticsNodes()
+            .isNotEmpty()
 
     private fun bar() = host.compose.onNodeWithTag("tab_settings")
 
@@ -302,8 +300,7 @@ class WideShellJourneyTest {
         host.connectDemo()
         host.launch(HomeRoute, RequestsRoute)
         awaitChipReady()
-        chip().performClick()
-        awaitChipSelected()
+        host.clickUntil("the Pending chip selected after tapping it", WAIT_MILLIS, target = ::chip, reached = ::chipIsSelected)
 
         host.rotate(PHONE)
         host.awaitShowing(host.string(R.string.requests_filter_pending))

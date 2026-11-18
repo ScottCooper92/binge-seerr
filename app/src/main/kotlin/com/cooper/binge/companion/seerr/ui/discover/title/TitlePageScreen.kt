@@ -21,7 +21,6 @@ import com.cooper.binge.companion.seerr.ui.discover.request.RequestSheet
 import com.cooper.binge.companion.seerr.ui.discover.request.RequestSheetTarget
 import com.cooper.binge.companion.seerr.ui.discover.request.messageRes
 import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
-import com.cooper.binge.companion.seerr.ui.state.LoadingScreen
 import com.cooper.binge.companion.seerr.ui.state.MediaHeroDetailPage
 import com.cooper.binge.companion.seerr.ui.state.MediaHeroDetailPlaceholder
 import com.cooper.binge.companion.seerr.ui.state.WideHeader
@@ -54,7 +53,7 @@ internal fun TitlePageScreen(
     scrollState: ScrollState = rememberScrollState(),
 ) {
     when (state) {
-        TitlePageUiState.Loading -> MediaHeroDetailPlaceholder { LoadingScreen() }
+        TitlePageUiState.Loading -> TitlePageSkeleton(onBack = actions.onBack, modifier = modifier)
         is TitlePageUiState.Error -> MediaHeroDetailPlaceholder { ErrorScreen(state.error, onRetry = actions.onRetry) }
         is TitlePageUiState.Ready -> ReadyPage(state, events, actions, modifier, scrollState)
     }
