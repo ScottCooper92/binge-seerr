@@ -19,8 +19,8 @@ internal fun DemoData.discoverRoutes(): List<DemoRoute> =
             "discover",
             "trending",
         ) { call, _ -> page(call, titles(movie = true).interleave(titles(movie = false))) },
-        route("GET", "discover", "movies") { call, _ -> page(call, titles(movie = true)) },
-        route("GET", "discover", "tv") { call, _ -> page(call, titles(movie = false)) },
+        route("GET", "discover", "movies") { call, _ -> page(call, sorted(call, titles(movie = true))) },
+        route("GET", "discover", "tv") { call, _ -> page(call, sorted(call, titles(movie = false))) },
         route("GET", "discover", "movies", "upcoming") { call, _ -> page(call, titles(movie = true)) },
         route("GET", "discover", "tv", "upcoming") { call, _ -> page(call, titles(movie = false)) },
         route("GET", "discover", "movies", "genre", "{}") { call, _ -> page(call, titles(movie = true)) },
@@ -44,6 +44,26 @@ private val GENRE_TILES =
         SeerrGenreSliderDto(35, "Comedy", listOf("/8qy3jRmaHR7f8VZh3iXCqCWfFsH.jpg")),
         SeerrGenreSliderDto(18, "Drama", listOf("/rb2NWyb008u1EcKCOyXs2Nmj0ra.jpg")),
     )
+
+/**
+ * The demo's own titles in the order the grid asks for with `sortBy`: by title, by year or by the catalog's own order, which
+ * stands for popularity. The demo holds no ratings, votes or revenue, so those leave the order as it is.
+ */
+private fun sorted(
+    call: DemoCall,
+    all: List<DemoTitle>,
+): List<DemoTitle> {
+    val sort = call.query("sortBy").orEmpty()
+    val field = sort.substringBeforeLast('.')
+    val descending = sort.endsWith(".desc")
+    val ascending =
+        when {
+            field.endsWith("title") || field.endsWith("name") -> all.sortedBy { it.title.lowercase() }
+            field.endsWith("date") -> all.sortedBy { it.year }
+            else -> return if (field == "popularity" && !descending) all.reversed() else all
+        }
+    return if (descending) ascending.reversed() else ascending
+}
 
 private fun titles(movie: Boolean): List<DemoTitle> = DEMO_TITLES.filter { it.isMovie == movie }
 
