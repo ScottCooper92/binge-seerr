@@ -2,6 +2,7 @@ package com.cooper.binge.companion.seerr.ui.discover.request
 
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.request.RequestAccess
+import com.cooper.binge.companion.seerr.discover.request.RequestAllResult
 import com.cooper.binge.companion.seerr.discover.request.RequestChoice
 import com.cooper.binge.companion.seerr.discover.request.RequestChoices
 import com.cooper.binge.companion.seerr.discover.request.RequestQuota
@@ -55,6 +56,13 @@ private class FakeRepository(
         kind: TitleKind,
         serverId: Int,
     ): RequestChoices = failChoices?.let { throw it } ?: CHOICES
+
+    var allResult: RequestAllResult? = null
+
+    override suspend fun submitAll(submissions: List<RequestSubmission>): RequestAllResult {
+        this.submissions += submissions
+        return allResult ?: RequestAllResult(created = submissions.size, alreadyThere = 0, failure = null)
+    }
 
     override suspend fun submit(submission: RequestSubmission): RequestResult {
         submissions += submission
