@@ -110,3 +110,13 @@ fun Context.bingeTitleHandOff(
 
 /** The kind of title page a request's media type opens: a film's, or a series'. */
 internal fun RequestMediaType.toTitleKind(): TitleKind = if (this == RequestMediaType.Tv) TitleKind.Series else TitleKind.Movie
+
+/** The media type of a film's or a series' page; a person or a collection has none. */
+internal fun TitleKind.toRequestMediaType(): RequestMediaType =
+    if (this ==
+        TitleKind.Series
+    ) {
+        RequestMediaType.Tv
+    } else {
+        RequestMediaType.Movie
+    }

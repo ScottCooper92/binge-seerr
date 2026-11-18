@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
+import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.SnackbarHostState
@@ -138,7 +139,7 @@ internal fun BlocklistDetailPage(
             if (discovery || state.webUrl.isNotEmpty()) {
                 ExpressiveIconButton(
                     onClick = { openTitle(item.mediaType.toTitleKind(), item.tmdbId, state.webUrl) },
-                    icon = Icons.AutoMirrored.Filled.OpenInNew,
+                    icon = if (discovery) Icons.Filled.Movie else Icons.AutoMirrored.Filled.OpenInNew,
                     contentDescription = stringResource(if (discovery) R.string.request_open_title else R.string.request_open_elsewhere),
                     tint = BingeTheme.colors.onScrim,
                     tone = IconButtonTone.Glass,

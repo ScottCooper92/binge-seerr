@@ -64,7 +64,13 @@ class OpenTitleLinksTest {
     }
 
     @Test
-    fun `the title row opens a film as a film and a show as a series`() {
+    fun `only the title's own row stays in the app, so only it takes the chevron`() {
+        val inApp = links(film("https://seerr.example.com/movie/1"), discovery = true).map { it.inApp }
+        assertEquals(listOf(true, false), inApp)
+    }
+
+    @Test
+    fun `the title row opens a film as a film`() {
         val film = film("https://seerr.example.com/movie/1")
         links(film, discovery = true).first().onOpen()
         assertEquals(Triple(TitleKind.Movie, film.item.tmdbId, film.webUrl), opened.single())
@@ -94,5 +100,7 @@ class OpenTitleLinksTest {
     fun `a request's media type maps to the kind of page it opens`() {
         assertEquals(TitleKind.Movie, RequestMediaType.Movie.toTitleKind())
         assertEquals(TitleKind.Series, RequestMediaType.Tv.toTitleKind())
+        assertEquals(RequestMediaType.Movie, TitleKind.Movie.toRequestMediaType())
+        assertEquals(RequestMediaType.Tv, TitleKind.Series.toRequestMediaType())
     }
 }

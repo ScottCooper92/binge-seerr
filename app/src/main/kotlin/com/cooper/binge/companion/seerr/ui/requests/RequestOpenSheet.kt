@@ -27,12 +27,15 @@ import com.cooper.binge.companion.seerr.ui.openInBrowser
 import com.cooper.binge.companion.seerr.ui.openTitle
 import com.cooper.binge.companion.seerr.ui.state.ActionSheetGroup
 import com.cooper.binge.companion.seerr.ui.state.externalItem
+import com.cooper.binge.companion.seerr.ui.state.openItem
 import com.cooper.binge.companion.seerr.ui.toTitleKind
 
 /** One place the title can be opened. */
 internal class RequestOpenLink(
     val label: String,
     val icon: ImageVector,
+    /** Whether the row stays in the app, which the sheet shows with the chevron; a row that leaves it shows the external icon. */
+    val inApp: Boolean = false,
     val onOpen: () -> Unit,
 )
 
@@ -62,7 +65,7 @@ internal fun rememberRequestOpenLinks(detail: RequestDetail): List<RequestOpenLi
         // A link to an address that cannot be a real site is left out: a row that opens nothing is worse than none.
         listOfNotNull(
             // With discovery on the title has a page here, which opens first even where the server's address is not a real site.
-            RequestOpenLink(resources.getString(R.string.request_open_title), Icons.Filled.Movie) {
+            RequestOpenLink(resources.getString(R.string.request_open_title), Icons.Filled.Movie, inApp = true) {
                 openTitle(detail.item.mediaType.toTitleKind(), detail.item.tmdbId, detail.webUrl)
             }.takeIf { discovery },
             RequestOpenLink(titleLabel, Icons.AutoMirrored.Filled.OpenInNew) {
@@ -116,7 +119,10 @@ internal fun RequestOpenSheetContent(
 ) {
     ActionSheetGroup(
         title = stringResource(if (LocalDiscoveryEnabled.current) R.string.request_open else R.string.request_open_elsewhere),
-        rows = links.map { link -> externalItem(link.icon, link.label) { onOpen(link) } },
+        rows =
+            links.map { link ->
+                if (link.inApp) openItem(link.icon, link.label) { onOpen(link) } else externalItem(link.icon, link.label) { onOpen(link) }
+            },
         modifier = modifier,
     )
 }
