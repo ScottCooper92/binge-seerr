@@ -2,6 +2,8 @@ package com.cooper.binge.companion.seerr.ui.grid
 
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverFilters
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverSort
+import com.cooper.binge.companion.seerr.discover.grid.FilterCapabilities
+import com.cooper.binge.companion.seerr.discover.grid.FilterGroup
 import com.cooper.binge.companion.seerr.discover.grid.FilterOption
 import com.cooper.binge.companion.seerr.discover.sliders.HubCard
 import com.cooper.binge.companion.seerr.seerr.SeerrError
@@ -24,12 +26,28 @@ data class GridControls(
     val chip: ActiveFilterChip?,
     val filters: DiscoverFilters = DiscoverFilters(),
     val vocabulary: FilterVocabulary = FilterVocabulary(),
+    /** The filters the user added to the list's own, one chip each; empty where the list takes no filters. */
+    val groups: List<FilterGroup> = emptyList(),
+    /** What the chips in [groups] name: the filters in force without the ones the list opened with. */
+    val added: DiscoverFilters = DiscoverFilters(),
 )
 
-/** The choices the filter sheet's pickers offer, loaded once; a row whose list is empty is not shown. */
+/**
+ * The choices the filter sheet's pickers offer; a row whose list is empty, or whose filter the server lacks, is not shown.
+ * [providers] are by region code, for the kind the grid opened on. [keywordResults] is null until a keyword has been searched.
+ */
 data class FilterVocabulary(
     val genres: List<FilterOption> = emptyList(),
     val languages: List<FilterOption> = emptyList(),
+    val capabilities: FilterCapabilities = FilterCapabilities(),
+    val regions: List<FilterOption> = emptyList(),
+    val defaultRegion: String? = null,
+    val providers: Map<String, List<FilterOption>> = emptyMap(),
+    val providersFailed: Set<String> = emptySet(),
+    val certifications: Map<String, List<String>> = emptyMap(),
+    val keywordResults: List<FilterOption>? = null,
+    val keywordsFailed: Boolean = false,
+    val keywordNames: Map<Int, String> = emptyMap(),
 )
 
 /** The "see all" grid. The controls stay in every state, so a filter that empties the list can be cleared from it. */

@@ -49,7 +49,7 @@ class DiscoverGridSkeletonGeometryTest {
                     kind = TitleKind.Movie,
                     title = "Drama",
                     state = if (resolved) ready() else DiscoverGridUiState.Loading(CONTROLS),
-                    actions = DiscoverGridActions({}, {}, {}, {}, {}, { _, _ -> }, { _, _, _ -> }),
+                    actions = DiscoverGridActions({}, {}, {}, {}, {}, {}, { _, _ -> }, { _, _, _ -> }, FilterLoads({}, {}, {})),
                 )
             }
         }
