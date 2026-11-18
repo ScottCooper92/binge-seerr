@@ -52,5 +52,5 @@ internal fun SeerrIssueCommentDto.toIssueComment(currentUserId: Int?): IssueComm
         isAdmin = SeerrPermissions.fromBits(user?.permissions).isAdmin,
         message = message.orEmpty(),
         createdAtMillis = createdAt?.toEpochMillisOrNull(),
-        isMine = user?.id != null && user.id == currentUserId,
+        isMine = user?.id?.let { it == currentUserId } == true,
     )
