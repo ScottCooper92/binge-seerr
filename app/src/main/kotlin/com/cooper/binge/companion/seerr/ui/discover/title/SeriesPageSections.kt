@@ -15,6 +15,8 @@ import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.DetailStat
 import com.binge.designsystem.component.InfoRowList
 import com.binge.designsystem.isExpandedLayout
+import com.binge.designsystem.layout.LayoutAnchors
+import com.binge.designsystem.layout.layoutAnchor
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.title.SeriesDetails
 import com.cooper.binge.companion.seerr.discover.title.trailerUrl
@@ -68,7 +70,7 @@ internal fun SeriesPageBody(
             model = titleActionsModel(series.standard, series.fourK),
             onRequest = actions.onRequest,
             onTrailer = series.videos.trailerUrl()?.let { url -> { actions.onOpenUrl(url) } },
-            modifier = Modifier.readingMargin(),
+            modifier = Modifier.readingMargin().layoutAnchor(LayoutAnchors.section(LayoutAnchors.Detail.ACTIONS)),
         )
         if (!expanded) OverviewSection(series.overview)
         EpisodesSection(state, seasonActions, Modifier.readingMargin())
