@@ -16,11 +16,19 @@ import com.binge.designsystem.component.InfoRowList
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.title.SeriesDetails
 import com.cooper.binge.companion.seerr.discover.title.trailerUrl
+import com.cooper.binge.companion.seerr.ui.discover.request.joinMeta
 import java.text.NumberFormat
 import java.util.Locale
 import com.binge.designsystem.R as DesR
 
 private const val MINUTES_PER_HOUR = 60
+
+/** The line under the title in the request sheet: first air year and season count, whichever the server gave. */
+@Composable
+internal fun SeriesDetails.requestMeta(): String? {
+    val seasons = seasonCount?.let { pluralStringResource(R.plurals.request_sheet_season_count, it, it) }
+    return joinMeta(listOf(firstAirYear, seasons), stringResource(R.string.request_sheet_meta_separator))
+}
 
 /** The series' stats, as Binge shows them: rating with its votes, first air year with the season count, episodes and certification. */
 @Composable
