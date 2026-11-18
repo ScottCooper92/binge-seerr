@@ -145,9 +145,11 @@ private fun EntryProviderScope<NavKey>.homeEntries(
     entry<ShellRoute> {
         if (connected() == true && tabs != null) {
             SeerrTabShell(tabs, discover = {
-                DiscoverHubEntry(it, onOpenGrid = { grid, title ->
-                    backStack.push(DiscoverGridRoute(grid.kind, grid.preset, title))
-                })
+                DiscoverHubEntry(
+                    it,
+                    onOpenGrid = { grid, title -> backStack.push(DiscoverGridRoute(grid.kind, grid.preset, title)) },
+                    onOpenRequests = { backStack.openSection(HubSection.Requests) },
+                )
             }, search = { TitleSearchEntry() }, settings = { hub(null) })
         } else {
             LoadingScreen()

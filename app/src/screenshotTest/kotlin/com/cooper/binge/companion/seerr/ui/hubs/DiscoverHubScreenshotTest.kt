@@ -129,7 +129,13 @@ class DiscoverHubScreenshotTest {
 private fun Frame(
     state: DiscoverHubUiState,
     tab: HubTab = HubTab.Movies,
-) = PreviewSystemBarInsets { DiscoverHubScreen(tab = tab, state = state, onRefresh = {}, onOpenTitle = {}, onOpenGrid = { _, _ -> }) }
+) = PreviewSystemBarInsets {
+    DiscoverHubScreen(tab = tab, state = state, onRefresh = {}, onOpenTitle = {}, onOpenGrid = {
+        _,
+        _,
+        ->
+    }, onOpenRequests = {})
+}
 
 private fun card(
     id: Int,
