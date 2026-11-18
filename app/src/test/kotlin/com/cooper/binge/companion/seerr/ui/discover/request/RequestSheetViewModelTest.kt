@@ -282,6 +282,32 @@ class RequestSheetViewModelTest {
     }
 
     @Test
+    fun `a server answer with its own reason goes to the message dialog, not the red footer`() {
+        val vm = viewModel(advanced().apply { failSubmit = refusal(400, "Quality profile not found") })
+
+        vm.submit()
+
+        val state = vm.ready()
+        assertEquals(RequestProblem(RequestProblemCause.Other, "Quality profile not found"), state.problem)
+        assertNull(state.failure)
+        assertFalse(state.footerFailed)
+        assertFalse(state.submitting)
+    }
+
+    @Test
+    fun `a server answer with no reason has nothing to act on, so it turns the footer red`() {
+        val empty = HttpException(Response.error<Any>(500, "".toResponseBody("application/json".toMediaType())))
+        val vm = viewModel(advanced().apply { failSubmit = empty })
+
+        vm.submit()
+
+        val state = vm.ready()
+        assertEquals(RequestProblemCause.Other, state.failure?.cause)
+        assertTrue(state.footerFailed)
+        assertNull(state.problem)
+    }
+
+    @Test
     fun `an unreachable server turns the footer red for four seconds, then back`() =
         runTest {
             val vm = viewModel(FakeRepository(PLAIN, failSubmit = java.net.UnknownHostException("x")))
