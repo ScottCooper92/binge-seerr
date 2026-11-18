@@ -37,7 +37,7 @@ How each gate is applied is in [`server-compatibility.md`](server-compatibility.
 | `POST /auth/jellyfin` | Sign in using a Jellyfin username and password | — | v1.0.0 | yes | In place today. |
 | `POST /auth/local` | Sign in using a local account | v1.17.0 | v1.0.0 | yes | In place today. |
 | `GET /auth/me` | Get logged-in user | v1.0.0 | v1.0.0 | yes | Server profile: variant, version, media server, sign-in modes, permissions. |
-| `GET /movie/{movieId}` | Get movie details | v1.0.0 | v1.0.0 | yes | The status lookup the Service makes, and the whole film page behind the discovery flag (facts, credits, videos, watch providers, collection). |
+| `GET /movie/{movieId}` | Get movie details | v1.0.0 | v1.0.0 | yes | The status lookup the Service makes, and the whole film page behind the discovery flag (facts, credits, videos, watch providers, collection), and the whole cast and crew list behind its "See all". |
 | `GET /movie/{movieId}/ratingscombined` | Get RT and IMDB movie ratings combined | v1.34.0 | v1.7.0 | yes | Rotten Tomatoes and IMDb scores on the film page, only where the profile has `hasCombinedRatings`; a 404 means the server has neither. |
 | `GET /movie/{movieId}/recommendations` | Get recommended movies | v1.0.0 | v1.0.0 | yes | The film page's Recommended row. |
 | `GET /movie/{movieId}/similar` | Get similar movies | v1.0.0 | v1.0.0 | yes | The film page's Similar row. |

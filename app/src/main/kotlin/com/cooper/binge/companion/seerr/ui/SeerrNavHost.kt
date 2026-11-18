@@ -26,6 +26,7 @@ import com.cooper.binge.companion.seerr.flags.LocalDiscoveryEnabled
 import com.cooper.binge.companion.seerr.flags.LocalFlags
 import com.cooper.binge.companion.seerr.ui.discover.title.LocalOpenTitle
 import com.cooper.binge.companion.seerr.ui.discover.title.TitleDetailEntry
+import com.cooper.binge.companion.seerr.ui.discover.title.credits.TitleCreditsEntry
 import com.cooper.binge.companion.seerr.ui.hub.HubSection
 import com.cooper.binge.companion.seerr.ui.hubs.DiscoverHubEntry
 import com.cooper.binge.companion.seerr.ui.requests.RequestMediaType
@@ -268,7 +269,17 @@ private fun EntryProviderScope<NavKey>.detailEntries(
         }
     }
     entry<TitleDetailRoute>(metadata = DetailPane) { route ->
-        DetailPaneContent { TitleDetailEntry(route.kind, route.tmdbId, onBack = { backStack.popIfTop(route) }) }
+        DetailPaneContent {
+            TitleDetailEntry(
+                route.kind,
+                route.tmdbId,
+                onBack = { backStack.popIfTop(route) },
+                onOpenCredits = { backStack.add(TitleCreditsRoute(route.kind, route.tmdbId)) },
+            )
+        }
+    }
+    entry<TitleCreditsRoute>(metadata = DetailPane) { route ->
+        DetailPaneContent { TitleCreditsEntry(route.kind, route.tmdbId, onBack = { backStack.popIfTop(route) }) }
     }
     entry<IssueDetailRoute>(metadata = DetailPane) { route ->
         DetailPaneContent { IssueDetailEntry(route.issueId, onBack = { backStack.popIfTop(route) }, showBack = showBack()) }

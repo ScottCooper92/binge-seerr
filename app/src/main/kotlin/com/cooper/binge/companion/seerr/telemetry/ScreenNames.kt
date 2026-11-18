@@ -24,6 +24,7 @@ import com.cooper.binge.companion.seerr.ui.SettingsRoute
 import com.cooper.binge.companion.seerr.ui.SettingsSearchRoute
 import com.cooper.binge.companion.seerr.ui.ShellRoute
 import com.cooper.binge.companion.seerr.ui.ThisAppRoute
+import com.cooper.binge.companion.seerr.ui.TitleCreditsRoute
 import com.cooper.binge.companion.seerr.ui.TitleDetailRoute
 import com.cooper.binge.companion.seerr.ui.UserDetailRoute
 import com.cooper.binge.companion.seerr.ui.UserSettingsPageRoute
@@ -54,6 +55,7 @@ fun SeerrRoute.screenName(): String =
         RequestsRoute -> "requests"
         is RequestDetailRoute -> "request_detail"
         is TitleDetailRoute -> "title_detail"
+        is TitleCreditsRoute -> "title_credits"
         IssuesRoute -> "issues"
         is IssueDetailRoute -> "issue_detail"
         BlocklistRoute -> "blocklist"

@@ -129,6 +129,13 @@ data class TitleDetailRoute(
     val tmdbId: Int,
 ) : SeerrRoute
 
+/** The whole cast and crew of a title, opened from its page. */
+@Serializable
+data class TitleCreditsRoute(
+    val kind: TitleKind,
+    val tmdbId: Int,
+) : SeerrRoute
+
 /** Settings: the connection and the admin's read-only view of the server. */
 @Serializable
 data object SettingsRoute : SeerrRoute
