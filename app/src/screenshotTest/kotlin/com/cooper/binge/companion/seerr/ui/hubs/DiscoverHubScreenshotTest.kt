@@ -59,12 +59,12 @@ class DiscoverHubScreenshotTest {
     @PreviewTest
     @SeerrFontScale13Previews
     @Composable
-    fun withHeroLargeText13() = Frame(readyState(hero = listOf(LONG_HERO)))
+    fun withHeroLargeText13() = Frame(readyState(hero = listOf(WRAPPING_HERO)))
 
     @PreviewTest
     @SeerrFontScalePreviews
     @Composable
-    fun withHeroLargeText() = Frame(readyState(hero = listOf(LONG_HERO)))
+    fun withHeroLargeText() = Frame(readyState(hero = listOf(WRAPPING_HERO)))
 
     @PreviewTest
     @SeerrScreenStatePreview
@@ -156,6 +156,8 @@ private val HEROES =
         hero(2, "Northern Lights", TitleAvailability.Pending),
         hero(3, "A Quiet Harbour", TitleAvailability.None),
     )
+
+private val WRAPPING_HERO = hero(5, "The Long Way Home Again", TitleAvailability.PartiallyAvailable)
 
 private val LONG_HERO =
     hero(
