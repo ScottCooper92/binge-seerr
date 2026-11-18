@@ -30,6 +30,7 @@ import com.binge.designsystem.component.BackdropTile
 import com.binge.designsystem.component.BingePullToRefresh
 import com.binge.designsystem.component.CarouselSkeleton
 import com.binge.designsystem.component.DarkStatusBarEffect
+import com.binge.designsystem.component.DiscoverEntryRow
 import com.binge.designsystem.component.HeroCarousel
 import com.binge.designsystem.component.HeroItem
 import com.binge.designsystem.component.LogoTile
@@ -42,6 +43,7 @@ import com.binge.designsystem.navOverlayPadding
 import com.binge.designsystem.theme.BingeSentiment
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.TitleAvailability
+import com.cooper.binge.companion.seerr.discover.grid.GridPreset
 import com.cooper.binge.companion.seerr.discover.sliders.HubCard
 import com.cooper.binge.companion.seerr.discover.sliders.HubGrid
 import com.cooper.binge.companion.seerr.discover.sliders.HubHero
@@ -50,6 +52,7 @@ import com.cooper.binge.companion.seerr.discover.sliders.HubTab
 import com.cooper.binge.companion.seerr.discover.sliders.HubTile
 import com.cooper.binge.companion.seerr.discover.sliders.seeAll
 import com.cooper.binge.companion.seerr.discover.sliders.tileGrid
+import com.cooper.binge.companion.seerr.discover.sliders.titleKind
 import com.cooper.binge.companion.seerr.discover.sliders.toCard
 import com.cooper.binge.companion.seerr.ui.state.EmptyScreen
 import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
@@ -57,6 +60,7 @@ import com.binge.designsystem.R as DesR
 
 private const val SKELETON_ROWS = 3
 private const val HERO_KEY = "hero"
+private const val BROWSE_ALL_KEY = "browse_all"
 
 /**
  * One discovery hub, Movies or TV: the server's rows of posters, each loading on its own. [onOpenTitle] gets the card the user
@@ -117,6 +121,7 @@ private fun HubRows(
     ShowHeroWhenItArrives(listState, hasHero = state.hero.isNotEmpty())
     LazyColumn(state = listState, modifier = Modifier.fillMaxSize(), contentPadding = contentPadding) {
         if (state.hero.isNotEmpty()) item(key = HERO_KEY) { Hero(state.hero, onOpenTitle) }
+        item(key = BROWSE_ALL_KEY) { BrowseAllRow(tab, onOpenGrid) }
         items(state.rows, key = { it.row.sliderId }) { row ->
             when (row) {
                 is HubRowUi.Cards -> CardRow(tab, row, onOpenTitle, onOpenGrid, onOpenRequests)
@@ -126,6 +131,22 @@ private fun HubRows(
         // A row still loading is a skeleton below the ones that landed, so the page does not jump when it arrives.
         items(state.pending) { CarouselSkeleton(description = stringResource(R.string.hubs_loading_row)) }
     }
+}
+
+/** The way into the unfiltered grid, under the hero as Binge puts it: the popular list, with the grid's filters. */
+@Composable
+private fun BrowseAllRow(
+    tab: HubTab,
+    onOpenGrid: (HubGrid, String) -> Unit,
+) {
+    val movies = tab == HubTab.Movies
+    val grid = HubGrid(tab.titleKind(), GridPreset.Popular)
+    val gridTitle = stringResource(if (movies) R.string.hubs_row_popular_movies else R.string.hubs_row_popular_tv)
+    DiscoverEntryRow(
+        title = stringResource(if (movies) R.string.hubs_browse_all_movies else R.string.hubs_browse_all_tv),
+        subtitle = stringResource(if (movies) R.string.hubs_browse_subtitle_movies else R.string.hubs_browse_subtitle_tv),
+        onClick = { onOpenGrid(grid, gridTitle) },
+    )
 }
 
 @Composable

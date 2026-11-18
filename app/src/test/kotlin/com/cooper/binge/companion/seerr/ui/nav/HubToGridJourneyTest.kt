@@ -60,7 +60,7 @@ class HubToGridJourneyTest {
         host.launch(HomeRoute)
         host.awaitShowing(host.string(R.string.hub_section_requests))
         host.compose.onNodeWithTag("tab_movies").performClick()
-        host.awaitShowing(host.string(R.string.hubs_row_popular_movies))
+        host.awaitShowing("Browse all movies")
     }
 
     /** The demo seeds five sliders and none of them is a tile row, so the server is given the built-ins this journey needs. */
@@ -105,6 +105,17 @@ class HubToGridJourneyTest {
         host.back()
         awaitStack(ShellRoute)
         host.awaitShowing(host.string(R.string.hubs_row_recent_requests))
+    }
+
+    @Test
+    fun `browse all opens the grid on the popular list and Back returns to the hub`() {
+        openMoviesHub()
+        host.compose.onNodeWithText("Browse all movies").performClick()
+
+        awaitStack(ShellRoute, DiscoverGridRoute(TitleKind.Movie, GridPreset.Popular, host.string(R.string.hubs_row_popular_movies)))
+        host.back()
+        awaitStack(ShellRoute)
+        host.awaitShowing("Browse all movies")
     }
 
     @Test

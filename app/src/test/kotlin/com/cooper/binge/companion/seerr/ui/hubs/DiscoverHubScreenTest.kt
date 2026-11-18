@@ -163,6 +163,27 @@ class DiscoverHubScreenTest {
     }
 
     @Test
+    fun `browse all opens the grid on the popular list of the hubs kind`() {
+        val opened = mutableListOf<Pair<HubGrid, String>>()
+        val state = DiscoverHubUiState.Ready(emptyList(), pending = 0, refreshing = false)
+        compose.setContent {
+            SeerrTheme {
+                DiscoverHubScreen(
+                    HubTab.Series,
+                    state,
+                    onRefresh = {},
+                    onOpenTitle = {},
+                    onOpenGrid = { grid, title -> opened += grid to title },
+                    onOpenRequests = {},
+                )
+            }
+        }
+        compose.onNodeWithText("Browse all shows").performClick()
+        compose.onNodeWithText("Filter by genre, network, year and rating").assertExists()
+        assertEquals(listOf(HubGrid(TitleKind.Series, GridPreset.Popular) to "Popular series"), opened)
+    }
+
+    @Test
     fun `a row with no destination shows no see all`() {
         val card = HubCard(TitleKind.Movie, 7, "Paper Moons", "2020", null, TitleAvailability.None, "https://s/movie/7")
         val state =

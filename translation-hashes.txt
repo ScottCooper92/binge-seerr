@@ -154,6 +154,10 @@ app:hub_unreachable_headline  4da010bad62f
 app:hub_unverified_callers  cdf5a058f8b8
 app:hub_update_available  ff8b555d818f
 app:hub_update_release_notes  1254829bd999
+app:hubs_browse_all_movies  d3e46e91abdb
+app:hubs_browse_all_tv  bff0010bb868
+app:hubs_browse_subtitle_movies  57dcfa5444c8
+app:hubs_browse_subtitle_tv  b69eb08005b7
 app:hubs_card_available  e674447337e8
 app:hubs_card_blocklisted  492cd06939da
 app:hubs_card_partial  a4d50fb85403
