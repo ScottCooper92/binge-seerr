@@ -12,16 +12,18 @@ import com.cooper.binge.companion.seerr.flags.LocalFlags
 import com.cooper.binge.companion.seerr.flags.bingePromotion
 import com.cooper.binge.companion.seerr.ui.DetailPane
 import com.cooper.binge.companion.seerr.ui.DetailPaneContent
+import com.cooper.binge.companion.seerr.ui.PersonDetailRoute
 import com.cooper.binge.companion.seerr.ui.SeasonEpisodesRoute
 import com.cooper.binge.companion.seerr.ui.TitleCreditsRoute
 import com.cooper.binge.companion.seerr.ui.TitleDetailRoute
+import com.cooper.binge.companion.seerr.ui.discover.person.PersonEntry
 import com.cooper.binge.companion.seerr.ui.discover.title.credits.TitleCreditsEntry
 import com.cooper.binge.companion.seerr.ui.discover.title.season.SeasonEpisodesEntry
 import com.cooper.binge.companion.seerr.ui.openTitle
 import com.cooper.binge.companion.seerr.ui.popIfTop
 import com.cooper.binge.companion.seerr.ui.requests.RequestMediaType
 
-/** The title pages: a film's or a series' page, a season of it, and the credits. Each leaves through [popIfTop] with its own key. */
+/** The title pages: a film's or a series' page, a season of it, the credits, and a person's page. Each leaves through [popIfTop] with its own key. */
 fun EntryProviderScope<NavKey>.titleEntries(backStack: NavBackStack<NavKey>) {
     entry<TitleDetailRoute>(metadata = DetailPane) { route ->
         DetailPaneContent {
@@ -33,6 +35,9 @@ fun EntryProviderScope<NavKey>.titleEntries(backStack: NavBackStack<NavKey>) {
                 onOpenSeason = { number, name -> backStack.add(SeasonEpisodesRoute(route.tmdbId, number, name)) },
             )
         }
+    }
+    entry<PersonDetailRoute>(metadata = DetailPane) { route ->
+        DetailPaneContent { PersonEntry(route.personId, onBack = { backStack.popIfTop(route) }) }
     }
     entry<SeasonEpisodesRoute>(metadata = DetailPane) { route ->
         DetailPaneContent {
@@ -52,8 +57,10 @@ internal fun rememberOpenTitle(backStack: NavBackStack<NavKey>): (TitleKind, Int
     val context = LocalContext.current
     return remember(backStack, discovery, promoted, context) {
         { kind, id, webUrl ->
-            // A person and a collection open as they did until their own pages land.
-            if (discovery && (kind == TitleKind.Movie || kind == TitleKind.Series)) {
+            // A collection opens as it did until its own page lands.
+            if (discovery && kind == TitleKind.Person) {
+                backStack.add(PersonDetailRoute(id))
+            } else if (discovery && (kind == TitleKind.Movie || kind == TitleKind.Series)) {
                 backStack.add(TitleDetailRoute(kind, id))
             } else {
                 context.openTitle(promoted, if (kind == TitleKind.Series) RequestMediaType.Tv else RequestMediaType.Movie, id, webUrl)

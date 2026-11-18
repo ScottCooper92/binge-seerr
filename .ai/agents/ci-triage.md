@@ -13,9 +13,9 @@ all. `.github/workflows/ci.yml` is the source of truth for the split:
 | `submodule-pins` | On a PR only: binge-ci's shared check that every submodule pin is merged upstream, unless the PR carries `hold` |
 | `actionlint` | Not on the nightly: binge-ci's shared actionlint step over `.github/workflows/`, with shellcheck at warning severity |
 | `checks` | `./gradlew build` minus the tasks the next three jobs own — Kotlin compile, `ktlintCheck`, `detekt`, `checkBaselineStaleness`, Android `lint`, `checkTranslationStaleness`, `checkTvMaterialSeparation`, `checkGrpcAlignment`, the debug assemble |
-| `tests` | `:app:testDebugUnitTest` and `:app:koverVerify` |
+| `tests` | `testDebugUnitTest` and `koverVerify`, in every module (`:app`, `:data`) |
 | `screenshots` | `:app:validateDebugScreenshotTest` |
-| `release` | `:app:assembleRelease` — R8 with this app's keep rules, and lint-vital |
+| `release` | `assembleRelease`, in every module — R8 with this app's keep rules, and lint-vital |
 | `build` | Nothing of its own. Waits on the other six, and is green only if all of them are. The pin check passes by being skipped outside a PR, and `actionlint` by being skipped on the nightly. It merges the four Gradle jobs' reports into the one `build-reports` artifact |
 
 `build` is the check branch protection requires, and the one `author-ci-fix.yml` reads.
@@ -27,7 +27,7 @@ whichever jobs failed.
 lands there. A red run whose log ends in a report you did not expect is still one of
 these jobs, not a second gate that appeared from somewhere.
 
-There is a coverage floor (`koverVerify`, 84% of `:app`'s lines) and a screenshot
+There is a coverage floor (`koverVerify`: 84% of the lines of `:app` and `:data` together, and 70% for `:data` on its own tests) and a screenshot
 suite (`validateDebugScreenshotTest`), and both are real, gating checks. There is
 no `buf` here. `koverVerify` has no row below: raising coverage means writing a
 real test, which is a judgment call about what to test, not a mechanical repair, so
@@ -63,7 +63,7 @@ Run only what failed, scoped:
 ./gradlew :app:ktlintCheck
 ./gradlew :app:detekt
 ./gradlew :app:lintDebug
-./gradlew :app:test
+./gradlew :app:test    # or :data:test, for a failure under data/
 ```
 
 Do not run the full gate. CI does that on push.
