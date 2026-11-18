@@ -150,7 +150,7 @@ class SeerrTitleDetailsRepositoryTest {
         assertTrue("a part that failed leaves only itself out", extras.similar.isEmpty())
 
         val before = seerr.requests.count { it.url.encodedPath.endsWith("ratingscombined") }
-        variant = SeerrVariant.Jellyseerr
+        variant = SeerrVariant.Overseerr
         assertNull(withRepository { it.extras(TitleKind.Movie, 603) }.ratings)
         assertEquals(
             "no ratings call is made to a server without it",
