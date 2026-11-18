@@ -13,6 +13,9 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 
+private const val TITLE = "Spider-Man: Brand New Day"
+private const val TAGLINE = "A new day, and a very old problem"
+private val GENRES = listOf("Action", "Adventure", "Science Fiction")
 private const val LONG_OVERVIEW =
     "A hacker learns from mysterious rebels about the true nature of his reality and his role in the war against its controllers. " +
         "He is pulled out of a life he took for granted and into a fight that was always his, and he has to decide what he believes."
@@ -29,6 +32,9 @@ private const val LONG_OVERVIEW =
 class TitlePageSkeletonGeometryTest {
     @get:Rule
     val rule: ComposeContentTestRule = createSeerrComposeRule()
+
+    /** The common shape the skeleton stands in for: a title over two lines, a tagline of one and three genres, which set the hero's height. */
+    private fun film() = movieFixture().copy(title = TITLE, tagline = TAGLINE, genres = GENRES, overview = LONG_OVERVIEW)
 
     private val anchors =
         listOf(LayoutAnchors.Detail.HERO, LayoutAnchors.Detail.STATS, LayoutAnchors.Detail.ACTIONS, LayoutAnchors.Detail.OVERVIEW)
@@ -55,7 +61,7 @@ class TitlePageSkeletonGeometryTest {
         ) { resolved ->
             SeerrTheme {
                 TitlePageScreen(
-                    if (resolved) TitlePageUiState.Ready(movieFixture().copy(overview = LONG_OVERVIEW)) else TitlePageUiState.Loading,
+                    if (resolved) TitlePageUiState.Ready(film()) else TitlePageUiState.Loading,
                     emptyFlow(),
                     TitlePageActions({}, {}, {}, {}, {}, {}, {}, {}, {}, {}),
                 )
@@ -68,7 +74,13 @@ class TitlePageSkeletonGeometryTest {
         rule.assertSkeletonReservesGeometry(anchors, checkSize = true) { resolved ->
             SeerrTheme {
                 SeriesPageScreen(
-                    if (resolved) SeriesPageUiState.Ready(seriesFixture().copy(overview = LONG_OVERVIEW)) else SeriesPageUiState.Loading,
+                    if (resolved) {
+                        SeriesPageUiState.Ready(
+                            seriesFixture().copy(name = TITLE, tagline = TAGLINE, genres = GENRES, overview = LONG_OVERVIEW),
+                        )
+                    } else {
+                        SeriesPageUiState.Loading
+                    },
                     emptyFlow(),
                     TitlePageActions({}, {}, {}, {}, {}, {}, {}, {}, {}, {}),
                     SeasonActions({}, {}, { _, _ -> }),
@@ -81,7 +93,7 @@ class TitlePageSkeletonGeometryTest {
         rule.assertSkeletonReservesGeometry(anchors, checkSize = true) { resolved ->
             SeerrTheme {
                 TitlePageScreen(
-                    if (resolved) TitlePageUiState.Ready(movieFixture().copy(overview = LONG_OVERVIEW)) else TitlePageUiState.Loading,
+                    if (resolved) TitlePageUiState.Ready(film()) else TitlePageUiState.Loading,
                     emptyFlow(),
                     TitlePageActions({}, {}, {}, {}, {}, {}, {}, {}, {}, {}),
                 )

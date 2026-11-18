@@ -1,10 +1,12 @@
 package com.cooper.binge.companion.seerr.ui.discover.collection
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
@@ -23,6 +25,8 @@ import com.cooper.binge.companion.seerr.ui.discover.title.TitleHeroSkeleton
 import com.binge.designsystem.R as DesR
 
 private const val PART_ROW_COUNT = 3
+private const val PLACEHOLDER_NAME = "A Collection Of Films"
+private const val PLACEHOLDER_META = "3 films"
 private const val PLACEHOLDER_RATING = 7.5
 
 private const val PLACEHOLDER_OVERVIEW =
@@ -47,25 +51,42 @@ internal fun CollectionPageSkeleton(
     HeroDetailScreen(
         title = "",
         onBack = onBack,
-        modifier = modifier,
+        modifier = modifier.background(MaterialTheme.colorScheme.background),
         contentMaxWidth = Dp.Infinity,
         darkStatusBar = false,
-        hero = { TitleHeroSkeleton(cinematic = false) },
+        hero = {
+            TitleHeroSkeleton(
+                cinematic = false,
+                title = PLACEHOLDER_NAME,
+                tagline = null,
+                genres = emptyList(),
+                metaText = PLACEHOLDER_META,
+            )
+        },
     ) {
-        Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
-        OverviewSkeleton(Modifier.layoutAnchor(LayoutAnchors.section(LayoutAnchors.Detail.OVERVIEW)))
-        Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
-        Column(
-            modifier = Modifier.padding(horizontal = dimensionResource(DesR.dimen.padding_m)),
-            verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
-        ) {
-            repeat(PART_ROW_COUNT) { index ->
-                val anchor = if (index == 0) Modifier.layoutAnchor(LayoutAnchors.section(LayoutAnchors.Collection.FIRST_ITEM)) else Modifier
-                CollectionPartRow(
-                    PLACEHOLDER_PART,
-                    onClick = {},
-                    modifier = anchor.clearAndSetSemantics {}.skeleton(visible = true, shape = BingeShapes.Large),
-                )
+        Column(Modifier.clearAndSetSemantics {}) {
+            Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
+            OverviewSkeleton(Modifier.layoutAnchor(LayoutAnchors.section(LayoutAnchors.Detail.OVERVIEW)))
+            Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
+            Column(
+                modifier = Modifier.padding(horizontal = dimensionResource(DesR.dimen.padding_m)),
+                verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
+            ) {
+                repeat(PART_ROW_COUNT) { index ->
+                    val anchor =
+                        if (index ==
+                            0
+                        ) {
+                            Modifier.layoutAnchor(LayoutAnchors.section(LayoutAnchors.Collection.FIRST_ITEM))
+                        } else {
+                            Modifier
+                        }
+                    CollectionPartRow(
+                        PLACEHOLDER_PART,
+                        onClick = {},
+                        modifier = anchor.clearAndSetSemantics {}.skeleton(visible = true, shape = BingeShapes.Large),
+                    )
+                }
             }
         }
     }

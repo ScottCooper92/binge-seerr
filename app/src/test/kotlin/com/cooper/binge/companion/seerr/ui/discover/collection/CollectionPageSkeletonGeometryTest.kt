@@ -39,7 +39,12 @@ class CollectionPageSkeletonGeometryTest {
     fun `the collection skeleton holds them at a font scale of 2`() = check()
 
     /** A collection in its common shape: a story, and films whose synopses run past the lines the row gives them. */
-    private fun collection() = collectionFixture(List(2) { partFixture(it + 1).copy(overview = LONG_STORY) }).copy(overview = LONG_STORY)
+    private fun collection() =
+        collectionFixture(
+            List(3) {
+                partFixture(it + 1).copy(overview = LONG_STORY)
+            },
+        ).copy(name = "A Collection Of Films", overview = LONG_STORY)
 
     private fun check() {
         rule.assertSkeletonReservesGeometry(anchors, checkSize = true) { resolved ->

@@ -1,5 +1,6 @@
 package com.cooper.binge.companion.seerr.ui.discover.title
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,15 +19,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
 import com.binge.designsystem.component.CarouselSkeleton
+import com.binge.designsystem.component.DetailHero
 import com.binge.designsystem.component.DetailStat
 import com.binge.designsystem.component.DetailStatRow
-import com.binge.designsystem.component.ImagePlaceholder
 import com.binge.designsystem.component.SkeletonPlate
-import com.binge.designsystem.component.lineHeightOf
 import com.binge.designsystem.isExpandedLayout
 import com.binge.designsystem.layout.LayoutAnchors
 import com.binge.designsystem.layout.layoutAnchor
@@ -36,9 +38,9 @@ import com.binge.designsystem.template.HeroDetailScreen
 import com.binge.designsystem.theme.BingeShapes
 import com.binge.designsystem.R as DesR
 
-private const val HERO_TITLE_FRACTION = 0.7f
-private const val HERO_GENRES_FRACTION = 0.45f
-private const val HERO_TAGLINE_FRACTION = 0.6f
+private const val PLACEHOLDER_TITLE = "A Long Title On Two Lines"
+private const val PLACEHOLDER_TAGLINE = "A tagline that runs one line, no more"
+private val PLACEHOLDER_GENRES = listOf("Action", "Adventure", "Science Fiction")
 private const val STAT_COUNT = 3
 private const val OVERVIEW_LINE_COUNT = 3
 private const val OVERVIEW_LAST_LINE_FRACTION = 0.6f
@@ -58,7 +60,7 @@ internal fun TitlePageSkeleton(
     HeroDetailScreen(
         title = "",
         onBack = onBack,
-        modifier = modifier,
+        modifier = modifier.background(MaterialTheme.colorScheme.background),
         heroHeight = dimensionResource(if (cinematic) DesR.dimen.detail_cinematic_header_height else DesR.dimen.detail_hero_height),
         horizontalInset = dimensionResource(if (cinematic) DesR.dimen.detail_cinematic_header_padding else DesR.dimen.padding_m),
         contentMaxWidth = Dp.Infinity,
@@ -66,7 +68,7 @@ internal fun TitlePageSkeleton(
         hero = { TitleHeroSkeleton(cinematic) },
     ) {
         Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
-        Column(verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m))) {
+        Column(Modifier.clearAndSetSemantics {}, verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m))) {
             if (!cinematic) StatsRowsSkeleton(Modifier.layoutAnchor(LayoutAnchors.section(LayoutAnchors.Detail.STATS)))
             ActionsSkeleton(Modifier.readingMargin().layoutAnchor(LayoutAnchors.section(LayoutAnchors.Detail.ACTIONS)))
             if (!cinematic) OverviewSkeleton(Modifier.layoutAnchor(LayoutAnchors.section(LayoutAnchors.Detail.OVERVIEW)))
@@ -75,28 +77,36 @@ internal fun TitlePageSkeleton(
     }
 }
 
+/**
+ * The hero: the page's own [DetailHero] laid out on placeholder text under one plain shimmer, so its height is the loaded hero's, which
+ * grows with the title, the genres and the tagline, and no placeholder image is drawn in it. The placeholder is a typical film's:
+ * a title over two lines, three genres and a tagline of one. Its semantics are cleared, since the text is never shown or read out.
+ * At the expanded width the cinematic header has a fixed height, so a plate of that height stands in for it.
+ */
 @Composable
-internal fun TitleHeroSkeleton(cinematic: Boolean) {
-    Box(Modifier.fillMaxWidth().layoutAnchor(LayoutAnchors.section(LayoutAnchors.Detail.HERO))) {
-        ImagePlaceholder(
-            Modifier.fillMaxWidth().height(
-                dimensionResource(if (cinematic) DesR.dimen.detail_cinematic_header_height else DesR.dimen.detail_hero_height),
-            ),
-        )
-        Column(
-            modifier =
-                Modifier
-                    .align(Alignment.BottomStart)
-                    .padding(
-                        start = dimensionResource(DesR.dimen.padding_m),
-                        end = dimensionResource(DesR.dimen.padding_m),
-                        bottom = dimensionResource(DesR.dimen.detail_hero_text_bottom_padding),
-                    ),
-            verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
-        ) {
-            SkeletonPlate(Modifier.fillMaxWidth(HERO_TITLE_FRACTION).height(lineHeightOf(MaterialTheme.typography.displaySmall)))
-            SkeletonPlate(Modifier.fillMaxWidth(HERO_GENRES_FRACTION).height(lineHeightOf(MaterialTheme.typography.labelLarge)))
-            SkeletonPlate(Modifier.fillMaxWidth(HERO_TAGLINE_FRACTION).height(lineHeightOf(MaterialTheme.typography.bodyMedium)))
+internal fun TitleHeroSkeleton(
+    cinematic: Boolean,
+    modifier: Modifier = Modifier,
+    title: String = PLACEHOLDER_TITLE,
+    tagline: String? = PLACEHOLDER_TAGLINE,
+    genres: List<String> = PLACEHOLDER_GENRES,
+    metaText: String = "",
+) {
+    val anchor = modifier.fillMaxWidth().layoutAnchor(LayoutAnchors.section(LayoutAnchors.Detail.HERO))
+    if (cinematic) {
+        Box(anchor.height(dimensionResource(DesR.dimen.detail_cinematic_header_height)).skeleton(visible = true, shape = RectangleShape))
+    } else {
+        Box(anchor.clearAndSetSemantics {}.skeleton(visible = true, shape = RectangleShape)) {
+            DetailHero(
+                title = title,
+                backdropUrl = null,
+                tagline = tagline,
+                metaText = metaText,
+                onBack = {},
+                genres = genres,
+                showChrome = false,
+                richBackdrop = true,
+            )
         }
     }
 }
