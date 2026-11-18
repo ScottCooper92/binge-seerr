@@ -1,5 +1,6 @@
 package com.cooper.binge.companion.seerr.ui.search.title
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -7,13 +8,11 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -29,8 +28,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
+import com.binge.designsystem.component.BingeFilterChipRow
 import com.binge.designsystem.component.BingeSearchField
+import com.binge.designsystem.component.FilterChipItem
 import com.binge.designsystem.navOverlayPadding
+import com.binge.designsystem.template.BingeScreenScaffold
+import com.binge.designsystem.template.ScreenBar
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.TitleResult
 import com.cooper.binge.companion.seerr.ui.state.EmptyScreen
@@ -50,29 +53,28 @@ internal class TitleSearchActions(
     val onRecent: (String) -> Unit,
     val onForgetRecents: () -> Unit,
     val onOpenTitle: (TitleResult) -> Unit,
+    val onType: (SearchType) -> Unit,
 )
 
-/** The Search tab: the field above, and below it whichever of recents, results or a message the state calls for. */
+/** The Search tab: a large title and the field over whichever of the idle offer, results or a message the state calls for. */
 @Composable
 internal fun TitleSearchScreen(
     state: TitleSearchUiState,
     actions: TitleSearchActions,
     modifier: Modifier = Modifier,
 ) {
-    Column(modifier.fillMaxSize().statusBarsPadding()) {
-        BingeSearchField(
-            query = state.text,
-            onQueryChange = actions.onQueryChange,
-            onClear = actions.onClear,
-            onSubmit = actions.onSubmit,
-            placeholder = stringResource(R.string.title_search_placeholder),
-            modifier = Modifier.fillMaxWidth().padding(dimensionResource(DesR.dimen.padding_m)),
-        )
-        Box(Modifier.weight(1f).fillMaxWidth()) {
+    BingeScreenScaffold(
+        title = stringResource(R.string.title_search_title),
+        modifier = modifier,
+        bar = ScreenBar.Large,
+        header = { SearchHeader(state, actions) },
+    ) { padding ->
+        val inner = navOverlayPadding(PaddingValues(dimensionResource(DesR.dimen.padding_m)))
+        Box(Modifier.fillMaxSize().padding(padding)) {
             when (state) {
-                is TitleSearchUiState.Idle -> IdleBody(state, actions)
+                is TitleSearchUiState.Idle -> IdleBody(state, actions, navOverlayPadding(PaddingValues()))
                 is TitleSearchUiState.Loading -> LoadingScreen()
-                is TitleSearchUiState.Ready -> ResultsList(state, actions)
+                is TitleSearchUiState.Ready -> ResultsList(state, actions, inner)
                 is TitleSearchUiState.NoResults ->
                     EmptyScreen(
                         message = stringResource(R.string.title_search_none_message, state.query),
@@ -85,25 +87,49 @@ internal fun TitleSearchScreen(
 }
 
 @Composable
-private fun IdleBody(
-    state: TitleSearchUiState.Idle,
+private fun SearchHeader(
+    state: TitleSearchUiState,
     actions: TitleSearchActions,
 ) {
-    if (state.recents.isEmpty()) {
-        EmptyScreen(
-            message = stringResource(R.string.title_search_idle_message),
-            title = stringResource(R.string.title_search_idle_title),
-            icon = Icons.Filled.Search,
+    Column {
+        BingeSearchField(
+            query = state.text,
+            onQueryChange = actions.onQueryChange,
+            onClear = actions.onClear,
+            onSubmit = actions.onSubmit,
+            placeholder = stringResource(R.string.title_search_placeholder),
+            modifier = Modifier.fillMaxWidth().padding(dimensionResource(DesR.dimen.padding_m)),
         )
-    } else {
-        RecentSearches(state.recents, onSelect = actions.onRecent, onClear = actions.onForgetRecents)
+        if (state is TitleSearchUiState.Ready) TypeChips(state, actions.onType)
     }
 }
+
+@Composable
+private fun TypeChips(
+    state: TitleSearchUiState.Ready,
+    onType: (SearchType) -> Unit,
+) {
+    BingeFilterChipRow(
+        items = SearchType.entries.map { FilterChipItem(label = stringResource(it.labelRes()), count = state.counts[it]) },
+        selectedIndex = state.type.ordinal,
+        onSelect = { onType(SearchType.entries[it]) },
+    )
+}
+
+@StringRes
+private fun SearchType.labelRes(): Int =
+    when (this) {
+        SearchType.All -> R.string.title_search_type_all
+        SearchType.Movies -> R.string.hubs_title_movies
+        SearchType.Series -> R.string.hubs_title_tv
+        SearchType.People -> R.string.title_search_type_people
+    }
 
 @Composable
 private fun ResultsList(
     state: TitleSearchUiState.Ready,
     actions: TitleSearchActions,
+    contentPadding: PaddingValues,
 ) {
     val listState = rememberLazyListState()
     val nearEnd by remember {
@@ -118,11 +144,11 @@ private fun ResultsList(
     LazyColumn(
         state = listState,
         modifier = Modifier.fillMaxSize(),
-        contentPadding = navOverlayPadding(PaddingValues(dimensionResource(DesR.dimen.padding_m))),
+        contentPadding = contentPadding,
         verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
     ) {
         items(state.results, key = { "${it.kind}-${it.tmdbId}" }) { result ->
-            TitleResultRow(result, onClick = { actions.onOpenTitle(result) })
+            TitleResultRow(result, state.genreNames, onClick = { actions.onOpenTitle(result) })
         }
         if (state.appending || state.appendFailed) item(key = "footer") { AppendFooter(state.appendFailed, actions.onLoadMore) }
     }

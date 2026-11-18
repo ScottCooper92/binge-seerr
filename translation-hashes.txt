@@ -1147,6 +1147,11 @@ app:title_search_recent  228c84b5a56e
 app:title_search_recent_clear  83b12c2216ef
 app:title_search_recent_clear_message  07df4079fb26
 app:title_search_recent_clear_title  7c4fe3db6870
+app:title_search_title  49c266baaaa7
+app:title_search_trending_movies  beedc3c7ea98
+app:title_search_trending_series  02d437e24b40
+app:title_search_type_all  a52ace420f21
+app:title_search_type_people  7db20897053b
 app:tv_account  7e1b0d5641f2
 app:tv_account_requests_empty  1bea507092bb
 app:tv_account_sign_out  48f0d3d397d4

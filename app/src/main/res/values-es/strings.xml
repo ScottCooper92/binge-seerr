@@ -126,6 +126,11 @@
     <string name="title_search_recent_clear_title">¿Borrar las búsquedas recientes?</string>
     <string name="title_search_recent_clear_message">Se quitan las búsquedas guardadas en este dispositivo. Tu servidor no cambia.</string>
     <string name="title_search_kind_year">%1$s · %2$s</string>
+    <string name="title_search_title">Buscar</string>
+    <string name="title_search_type_all">Todo</string>
+    <string name="title_search_type_people">Personas</string>
+    <string name="title_search_trending_movies">Películas en tendencia</string>
+    <string name="title_search_trending_series">Series en tendencia</string>
     <string name="title_kind_movie">Película</string>
     <string name="title_kind_series">Serie</string>
     <string name="title_kind_person">Persona</string>

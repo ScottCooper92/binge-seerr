@@ -43,6 +43,7 @@ class TitleSearchViewModelTest {
         var answer: (TitleSource.Search, Int) -> TitlePage,
     ) : TitleListRepository {
         val loads = mutableListOf<Pair<String, Int>>()
+        var trending: () -> TitlePage = { TitlePage(listOf(title(101), title(102, TitleKind.Series), title(103, TitleKind.Person)), 1, 1) }
 
         override suspend fun supports(source: TitleSource) = true
 
@@ -50,12 +51,24 @@ class TitleSearchViewModelTest {
             source: TitleSource,
             page: Int,
         ): TitlePage {
+            if (source is TitleSource.Trending) return trending()
             source as TitleSource.Search
             loads += source.query to page
             return answer(source, page)
         }
 
         override suspend fun genres(kind: TitleKind): List<GenreTile> = emptyList()
+
+        override suspend fun genreNames(kind: TitleKind): Map<Int, String> =
+            mapOf(
+                if (kind ==
+                    TitleKind.Movie
+                ) {
+                    28 to "Action"
+                } else {
+                    18 to "Drama"
+                },
+            )
     }
 
     private class FakeHistory(
@@ -105,7 +118,69 @@ class TitleSearchViewModelTest {
     fun `it starts idle with the recents`() =
         runVm { vm ->
             advanceUntilIdle()
-            assertEquals(TitleSearchUiState.Idle("", listOf("alien")), vm.uiState.value)
+            val idle = vm.uiState.value as TitleSearchUiState.Idle
+            assertEquals(listOf("alien"), idle.recents)
+            assertEquals("", idle.text)
+        }
+
+    @Test
+    fun `the trending rails are the first page split into movies and series`() =
+        runVm { vm ->
+            advanceUntilIdle()
+            val rails = (vm.uiState.value as TitleSearchUiState.Idle).trending as Trending.Ready
+            assertEquals(listOf(101), rails.movies.map { it.tmdbId })
+            assertEquals(listOf(102), rails.series.map { it.tmdbId })
+        }
+
+    @Test
+    fun `a trending failure leaves the rails out and clearing the field asks again`() =
+        runVm { vm ->
+            titles.trending = { throw IOException("down") }
+            val failing = TitleSearchViewModel(titles, history, media)
+            val collector = launch(UnconfinedTestDispatcher(testScheduler)) { failing.uiState.collect {} }
+            advanceUntilIdle()
+            assertEquals(Trending.Unavailable, (failing.uiState.value as TitleSearchUiState.Idle).trending)
+            titles.trending = { TitlePage(listOf(title(101)), 1, 1) }
+            failing.onClear()
+            advanceUntilIdle()
+            assertTrue((failing.uiState.value as TitleSearchUiState.Idle).trending is Trending.Ready)
+            collector.cancel()
+        }
+
+    @Test
+    fun `the type chips count what has loaded and All is the server's total`() =
+        runVm { vm ->
+            titles.answer = { _, page ->
+                TitlePage(listOf(title(page), title(page + 10, TitleKind.Series), title(page + 20, TitleKind.Person)), page, 5, total = 50)
+            }
+            vm.onQueryChange("matrix")
+            advanceUntilIdle()
+            val ready = vm.uiState.value as TitleSearchUiState.Ready
+            assertEquals(50, ready.counts[SearchType.All])
+            assertEquals(1, ready.counts[SearchType.Movies])
+            assertEquals(1, ready.counts[SearchType.Series])
+            assertEquals(1, ready.counts[SearchType.People])
+        }
+
+    @Test
+    fun `choosing a type narrows the list and a new query starts on All again`() =
+        runVm { vm ->
+            vm.onQueryChange("matrix")
+            advanceUntilIdle()
+            vm.onType(SearchType.People)
+            assertEquals(listOf(11), (vm.uiState.value as TitleSearchUiState.Ready).results.map { it.tmdbId })
+            assertEquals(SearchType.People, (vm.uiState.value as TitleSearchUiState.Ready).type)
+            vm.onQueryChange("alien")
+            advanceUntilIdle()
+            assertEquals(SearchType.All, (vm.uiState.value as TitleSearchUiState.Ready).type)
+        }
+
+    @Test
+    fun `the genre names of both kinds reach the results`() =
+        runVm { vm ->
+            vm.onQueryChange("matrix")
+            advanceUntilIdle()
+            assertEquals(mapOf(28 to "Action", 18 to "Drama"), (vm.uiState.value as TitleSearchUiState.Ready).genreNames)
         }
 
     @Test
@@ -182,7 +257,7 @@ class TitleSearchViewModelTest {
             advanceUntilIdle()
             vm.onForgetRecents()
             advanceUntilIdle()
-            assertEquals(TitleSearchUiState.Idle("", emptyList()), vm.uiState.value)
+            assertEquals(emptyList<String>(), (vm.uiState.value as TitleSearchUiState.Idle).recents)
         }
 
     @Test

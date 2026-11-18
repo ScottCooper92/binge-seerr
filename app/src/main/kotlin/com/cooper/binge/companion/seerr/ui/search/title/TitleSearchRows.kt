@@ -17,6 +17,8 @@ import com.binge.designsystem.component.BingeInitialsAvatar
 import com.binge.designsystem.component.ListRow
 import com.binge.designsystem.component.ListRowHeader
 import com.binge.designsystem.component.ListRowPoster
+import com.binge.designsystem.component.RatingChip
+import com.binge.designsystem.component.RatingChipTone
 import com.binge.designsystem.component.StatusChip
 import com.binge.designsystem.component.WrappingRow
 import com.cooper.binge.companion.seerr.R
@@ -33,6 +35,7 @@ import com.binge.designsystem.R as DesR
 @Composable
 internal fun TitleResultRow(
     result: TitleResult,
+    genreNames: Map<Int, String>,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -49,12 +52,13 @@ internal fun TitleResultRow(
                 ListRowPoster(imageUrl = artwork, contentDescription = null)
             }
         },
-    ) { contentModifier -> TitleResultMeta(result, contentModifier) }
+    ) { contentModifier -> TitleResultMeta(result, genreNames, contentModifier) }
 }
 
 @Composable
 private fun TitleResultMeta(
     result: TitleResult,
+    genreNames: Map<Int, String>,
     modifier: Modifier,
 ) {
     val gap = dimensionResource(DesR.dimen.detail_cast_avatar_label_spacing)
@@ -62,30 +66,29 @@ private fun TitleResultMeta(
     Column(modifier = modifier.padding(top = top)) {
         ListRowHeader(title = result.name)
         Spacer(Modifier.height(gap))
+        Text(
+            text = result.subtitle(),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+        Spacer(Modifier.height(gap))
         WrappingRow(horizontalSpacing = gap, verticalSpacing = gap) {
             result.availability.toStatus()?.let { StatusChip(label = it.label, sentiment = it.sentiment) }
-            Text(
-                text = result.subtitle(),
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
-        result.overview?.let { overview ->
-            Spacer(Modifier.height(gap))
-            Text(
-                text = overview,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = OVERVIEW_LINES,
-                overflow = TextOverflow.Ellipsis,
-            )
+            result.rating?.let { RatingChip(rating = it.toFloat(), tone = RatingChipTone.Surface) }
+            result.genreLine(genreNames)?.let { genres ->
+                Text(
+                    text = genres,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
         }
     }
 }
-
-private const val OVERVIEW_LINES = 2
 
 @Composable
 private fun TitleResult.subtitle(): String {
@@ -101,3 +104,16 @@ private fun TitleKind.labelRes(): Int =
         TitleKind.Person -> R.string.title_kind_person
         TitleKind.Collection -> R.string.title_kind_collection
     }
+
+/** The first two genres the server names for the result, joined; null where it names none. */
+@Composable
+private fun TitleResult.genreLine(names: Map<Int, String>): String? {
+    val shown = genreIds.mapNotNull(names::get).take(GENRES_SHOWN)
+    return when (shown.size) {
+        0 -> null
+        1 -> shown[0]
+        else -> stringResource(R.string.title_search_genres_join, shown[0], shown[1])
+    }
+}
+
+private const val GENRES_SHOWN = 2

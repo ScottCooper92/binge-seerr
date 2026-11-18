@@ -11,54 +11,79 @@ private fun result(
     name: String,
     year: String?,
     availability: TitleAvailability,
-    overview: String? = null,
-) = TitleResult(kind, id, name, year, null, null, overview, null, availability, null)
+    rating: Double? = null,
+    genreIds: List<Int> = emptyList(),
+) = TitleResult(kind, id, name, year, null, null, null, rating, availability, null, genreIds)
 
 private const val LONG_NAME = "The Extraordinarily Long and Winding Chronicle of a Very Patient Lighthouse Keeper and Her Companions"
-private const val LONG_OVERVIEW =
-    "A lighthouse keeper, a retired cartographer and a stubborn goat spend one winter on an island the maps forget, " +
-        "and the letters they write to the mainland say more than they mean to."
 
 /** A set that covers every status and kind, with one name long enough to wrap at the largest font scale. */
 internal fun searchResults(): List<TitleResult> =
     listOf(
-        result(
-            1,
-            TitleKind.Movie,
-            "Big Buck Bunny",
-            "2008",
-            TitleAvailability.Available,
-            "A giant rabbit takes a quiet revenge on three bullying rodents.",
-        ),
-        result(2, TitleKind.Series, LONG_NAME, "2021", TitleAvailability.PartiallyAvailable, LONG_OVERVIEW),
-        result(3, TitleKind.Movie, "Sintel", "2010", TitleAvailability.Pending),
+        result(1, TitleKind.Movie, "Big Buck Bunny", "2008", TitleAvailability.Available, 7.9, listOf(ACTION, COMEDY)),
+        result(2, TitleKind.Series, LONG_NAME, "2021", TitleAvailability.PartiallyAvailable, 8.4, listOf(DRAMA, MYSTERY)),
+        result(3, TitleKind.Movie, "Sintel", "2010", TitleAvailability.Pending, 7.4, listOf(ACTION)),
         result(4, TitleKind.Series, "Severance", null, TitleAvailability.Processing),
-        result(5, TitleKind.Movie, "Metropolis", "1927", TitleAvailability.Blocklisted),
+        result(5, TitleKind.Movie, "Metropolis", "1927", TitleAvailability.Blocklisted, 8.1, listOf(DRAMA)),
         result(6, TitleKind.Person, "Marlowe Quinn", null, TitleAvailability.None),
-        result(7, TitleKind.Movie, "Tears of Steel", "2012", TitleAvailability.None),
+        result(7, TitleKind.Movie, "Tears of Steel", "2012", TitleAvailability.None, 6.9, listOf(ACTION, DRAMA, COMEDY)),
     )
+
+private const val ACTION = 28
+private const val COMEDY = 35
+private const val DRAMA = 18
+private const val MYSTERY = 9648
+private const val TOTAL = 38
+
+private val GENRE_NAMES = mapOf(ACTION to "Action", COMEDY to "Comedy", DRAMA to "Drama", MYSTERY to "Mystery")
 
 /** Few enough rows that the footer is on screen. */
 private const val FEW = 2
 
 private val RECENTS = listOf("big buck", "severance", "a search long enough that it has to be cut short at the end of its row on a phone")
 
-internal fun idleWithRecentsState() = TitleSearchUiState.Idle(text = "", recents = RECENTS)
+private fun trendingRails() =
+    Trending.Ready(
+        searchResults().filter { it.kind == TitleKind.Movie },
+        searchResults().filter {
+            it.kind ==
+                TitleKind.Series
+        },
+    )
 
-internal fun idleWithoutRecentsState() = TitleSearchUiState.Idle(text = "", recents = emptyList())
+internal fun idleWithRecentsState() = TitleSearchUiState.Idle(text = "", recents = RECENTS, trending = trendingRails())
 
-internal fun readyResultsState() =
-    TitleSearchUiState.Ready("lighthouse", searchResults(), hasMore = true, appending = false, appendFailed = false)
+internal fun idleWithoutRecentsState() = TitleSearchUiState.Idle(text = "", recents = emptyList(), trending = Trending.Unavailable)
 
-internal fun readyAppendingState() =
-    TitleSearchUiState.Ready("lighthouse", searchResults().take(FEW), hasMore = true, appending = true, appendFailed = false)
+internal fun idleLoadingState() = TitleSearchUiState.Idle(text = "", recents = RECENTS, trending = Trending.Loading)
 
-internal fun readyAppendFailedState() =
-    TitleSearchUiState.Ready("lighthouse", searchResults().take(FEW), hasMore = true, appending = false, appendFailed = true)
+private fun ready(
+    results: List<TitleResult>,
+    type: SearchType = SearchType.All,
+    appending: Boolean = false,
+    appendFailed: Boolean = false,
+) = TitleSearchUiState.Ready(
+    text = "lighthouse",
+    results = results.filter(type::keeps),
+    type = type,
+    counts = results.typeCounts(TOTAL),
+    genreNames = GENRE_NAMES,
+    hasMore = true,
+    appending = appending,
+    appendFailed = appendFailed,
+)
+
+internal fun readyResultsState() = ready(searchResults())
+
+internal fun readyMoviesState() = ready(searchResults(), SearchType.Movies)
+
+internal fun readyAppendingState() = ready(searchResults().take(FEW), appending = true)
+
+internal fun readyAppendFailedState() = ready(searchResults().take(FEW), appendFailed = true)
 
 internal fun noResultsState() = TitleSearchUiState.NoResults("qzxv", "qzxv")
 
 internal fun failedState() = TitleSearchUiState.Error("lighthouse", SeerrError.Unreachable)
 
 internal val noActions =
-    TitleSearchActions({}, {}, {}, {}, {}, {}, {}, {})
+    TitleSearchActions({}, {}, {}, {}, {}, {}, {}, {}, {})
