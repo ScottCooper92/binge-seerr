@@ -68,7 +68,11 @@ private fun worstCase(): SeriesPageUiState.Ready {
                     TitleCompany(1, "A Very Long Premium Cable Network"),
                     TitleCompany(2, "Another Streaming Service Of Considerable Length"),
                 ),
-            creators = listOf("Christopher Montgomery-Fitzgerald", "Alexandria Wolfeschlegelsteinhausen"),
+            creators =
+                listOf(
+                    TitlePerson(1, "Christopher Montgomery-Fitzgerald", null, null),
+                    TitlePerson(2, "Alexandria Wolfeschlegelsteinhausen", null, null),
+                ),
             cast = listOf(TitlePerson(1, "Elijah Wood-Montgomery-Fitzgerald", "Frodo Baggins of the Shire", null)),
         )
     val extras =
