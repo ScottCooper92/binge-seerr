@@ -1386,6 +1386,9 @@
     <string name="hubs_row_popular_tv">Series populares</string>
     <string name="hubs_row_upcoming_movies">Próximas películas</string>
     <string name="hubs_row_upcoming_tv">Próximas series</string>
+    <string name="hubs_row_genres">Géneros</string>
+    <string name="hubs_row_studios">Estudios</string>
+    <string name="hubs_row_networks">Cadenas</string>
     <string name="hubs_row_custom">Más para descubrir</string>
     <string name="hubs_empty_message">El servidor no tiene filas que mostrar aquí. Activa alguna en Filas de Descubrir, en los ajustes del servidor.</string>
     <string name="hubs_card_available">Disponible</string>

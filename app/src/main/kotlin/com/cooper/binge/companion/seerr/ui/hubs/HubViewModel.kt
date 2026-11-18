@@ -9,10 +9,13 @@ import com.cooper.binge.companion.seerr.discover.sliders.HubCard
 import com.cooper.binge.companion.seerr.discover.sliders.HubCardLoader
 import com.cooper.binge.companion.seerr.discover.sliders.HubHero
 import com.cooper.binge.companion.seerr.discover.sliders.HubHeroLoader
+import com.cooper.binge.companion.seerr.discover.sliders.HubItem
 import com.cooper.binge.companion.seerr.discover.sliders.HubRow
 import com.cooper.binge.companion.seerr.discover.sliders.HubTab
+import com.cooper.binge.companion.seerr.discover.sliders.HubTile
+import com.cooper.binge.companion.seerr.discover.sliders.HubTileLoader
 import com.cooper.binge.companion.seerr.discover.sliders.SliderListState
-import com.cooper.binge.companion.seerr.discover.sliders.isCardRow
+import com.cooper.binge.companion.seerr.discover.sliders.isTileRow
 import com.cooper.binge.companion.seerr.discover.sliders.rowsFor
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
@@ -29,6 +32,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import com.cooper.binge.companion.seerr.ui.hubs.core.HubRow as CoreHubRow
 
 /** What a hub shows. */
 sealed interface DiscoverHubUiState {
@@ -51,11 +55,22 @@ sealed interface DiscoverHubUiState {
     ) : DiscoverHubUiState
 }
 
-/** One poster row. [row] says which slider it is, so the screen can title a built-in one in the user's language. */
-data class HubRowUi(
-    val row: HubRow,
-    val cards: List<HubCard>,
-)
+/** One row of a hub. [row] says which slider it is, so the screen can title a built-in one in the user's language. */
+sealed interface HubRowUi {
+    val row: HubRow
+
+    /** A row of posters. */
+    data class Cards(
+        override val row: HubRow,
+        val cards: List<HubCard>,
+    ) : HubRowUi
+
+    /** A row of category tiles: genres, studios or networks. */
+    data class Tiles(
+        override val row: HubRow,
+        val tiles: List<HubTile>,
+    ) : HubRowUi
+}
 
 /**
  * One hub, Movies or TV. The rows are the server's sliders for [tab], read through the shared slider list, and each loads
@@ -67,11 +82,15 @@ class HubViewModel
     constructor(
         private val sliders: DiscoverSliderRepository,
         cards: HubCardLoader,
+        tiles: HubTileLoader,
         private val heroes: HubHeroLoader,
         @IoDispatcher dispatcher: CoroutineDispatcher,
         @Assisted private val tab: HubTab,
     ) : ViewModel() {
-        private val loader = HubLoader<HubRow, HubCard>(viewModelScope, dispatcher) { cards.load(it) }
+        private val loader =
+            HubLoader<HubRow, HubItem>(viewModelScope, dispatcher) { row ->
+                if (row.isTileRow()) tiles.load(row).map(HubItem::Tile) else cards.load(row).map(HubItem::Card)
+            }
 
         private val hero = MutableStateFlow<List<HubHero>>(emptyList())
 
@@ -83,7 +102,7 @@ class HubViewModel
         init {
             viewModelScope.launch {
                 sliders.sliders.collect { list ->
-                    if (list is SliderListState.Ready) loader.show(list.sliders.rowsFor(tab).filter { it.isCardRow() })
+                    if (list is SliderListState.Ready) loader.show(list.sliders.rowsFor(tab))
                 }
             }
             load()
@@ -111,7 +130,7 @@ private const val STOP_TIMEOUT_MILLIS = 5_000L
 
 private fun toUiState(
     list: SliderListState,
-    rows: HubState<HubRow, HubCard>,
+    rows: HubState<HubRow, HubItem>,
     refreshing: Boolean,
     hero: List<HubHero>,
 ): DiscoverHubUiState =
@@ -123,6 +142,13 @@ private fun toUiState(
                 HubState.Loading -> DiscoverHubUiState.Loading
                 HubState.Empty -> DiscoverHubUiState.Empty
                 is HubState.Failed -> DiscoverHubUiState.Error(rows.error.toSeerrError())
-                is HubState.Ready -> DiscoverHubUiState.Ready(rows.rows.map { HubRowUi(it.key, it.items) }, rows.pending, refreshing, hero)
+                is HubState.Ready -> DiscoverHubUiState.Ready(rows.rows.map { it.toUi() }, rows.pending, refreshing, hero)
             }
+    }
+
+private fun CoreHubRow<HubRow, HubItem>.toUi(): HubRowUi =
+    if (key.isTileRow()) {
+        HubRowUi.Tiles(key, items.filterIsInstance<HubItem.Tile>().map { it.tile })
+    } else {
+        HubRowUi.Cards(key, items.filterIsInstance<HubItem.Card>().map { it.card })
     }

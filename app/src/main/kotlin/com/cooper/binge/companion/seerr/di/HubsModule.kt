@@ -6,6 +6,7 @@ import com.cooper.binge.companion.seerr.discover.TitleListRepository
 import com.cooper.binge.companion.seerr.discover.sliders.HubCardLoader
 import com.cooper.binge.companion.seerr.discover.sliders.HubHeroLoader
 import com.cooper.binge.companion.seerr.discover.sliders.HubMediaSource
+import com.cooper.binge.companion.seerr.discover.sliders.HubTileLoader
 import com.cooper.binge.companion.seerr.discover.sliders.SeerrHubMediaSource
 import com.cooper.binge.companion.seerr.seerr.TitleCache
 import dagger.Module
@@ -48,4 +49,7 @@ object HubsModule {
         titles: TitleListRepository,
         media: HubMediaSource,
     ): HubHeroLoader = HubHeroLoader(titles, media)
+
+    @Provides
+    fun hubTileLoader(titles: TitleListRepository): HubTileLoader = HubTileLoader(titles)
 }

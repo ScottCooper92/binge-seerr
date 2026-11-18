@@ -26,11 +26,13 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.paneTitle
 import androidx.compose.ui.semantics.semantics
+import com.binge.designsystem.component.BackdropTile
 import com.binge.designsystem.component.BingePullToRefresh
 import com.binge.designsystem.component.CarouselSkeleton
 import com.binge.designsystem.component.DarkStatusBarEffect
 import com.binge.designsystem.component.HeroCarousel
 import com.binge.designsystem.component.HeroItem
+import com.binge.designsystem.component.LogoTile
 import com.binge.designsystem.component.MediaCard
 import com.binge.designsystem.component.MediaCardStatus
 import com.binge.designsystem.component.MediaCarousel
@@ -41,9 +43,13 @@ import com.binge.designsystem.theme.BingeSentiment
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.TitleAvailability
 import com.cooper.binge.companion.seerr.discover.sliders.HubCard
+import com.cooper.binge.companion.seerr.discover.sliders.HubGrid
 import com.cooper.binge.companion.seerr.discover.sliders.HubHero
 import com.cooper.binge.companion.seerr.discover.sliders.HubRow
 import com.cooper.binge.companion.seerr.discover.sliders.HubTab
+import com.cooper.binge.companion.seerr.discover.sliders.HubTile
+import com.cooper.binge.companion.seerr.discover.sliders.seeAll
+import com.cooper.binge.companion.seerr.discover.sliders.tileGrid
 import com.cooper.binge.companion.seerr.discover.sliders.toCard
 import com.cooper.binge.companion.seerr.ui.state.EmptyScreen
 import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
@@ -67,6 +73,7 @@ fun DiscoverHubScreen(
     state: DiscoverHubUiState,
     onRefresh: () -> Unit,
     onOpenTitle: (HubCard) -> Unit,
+    onOpenGrid: (HubGrid, String) -> Unit,
 ) {
     val title = stringResource(if (tab == HubTab.Movies) R.string.hubs_title_movies else R.string.hubs_title_tv)
     val hasHero = (state as? DiscoverHubUiState.Ready)?.hero?.isNotEmpty() == true
@@ -79,7 +86,7 @@ fun DiscoverHubScreen(
             is DiscoverHubUiState.Error -> ErrorScreen(state.error, Modifier.padding(inner), onRetry = onRefresh)
             is DiscoverHubUiState.Ready ->
                 BingePullToRefresh(isRefreshing = state.refreshing, onRefresh = onRefresh, indicatorTopInset = statusBar) {
-                    HubRows(tab, state, inner, onOpenTitle)
+                    HubRows(tab, state, inner, onOpenTitle, onOpenGrid)
                 }
         }
         if (hasHero) {
@@ -102,29 +109,67 @@ private fun HubRows(
     state: DiscoverHubUiState.Ready,
     contentPadding: PaddingValues,
     onOpenTitle: (HubCard) -> Unit,
+    onOpenGrid: (HubGrid, String) -> Unit,
 ) {
     val listState = rememberLazyListState()
     ShowHeroWhenItArrives(listState, hasHero = state.hero.isNotEmpty())
     LazyColumn(state = listState, modifier = Modifier.fillMaxSize(), contentPadding = contentPadding) {
         if (state.hero.isNotEmpty()) item(key = HERO_KEY) { Hero(state.hero, onOpenTitle) }
         items(state.rows, key = { it.row.sliderId }) { row ->
-            MediaCarousel(
-                title = row.row.title(tab),
-                items = row.cards,
-                itemKey = { it.kind.name + it.tmdbId },
-            ) { _, card ->
-                MediaCard(
-                    posterUrl = card.artworkUrl,
-                    title = card.name,
-                    rating = null,
-                    onClick = { onOpenTitle(card) },
-                    modifier = Modifier.width(dimensionResource(DesR.dimen.card_width)),
-                    status = card.availability.toStatus(),
-                )
+            when (row) {
+                is HubRowUi.Cards -> CardRow(tab, row, onOpenTitle, onOpenGrid)
+                is HubRowUi.Tiles -> TileRow(tab, row, onOpenGrid)
             }
         }
         // A row still loading is a skeleton below the ones that landed, so the page does not jump when it arrives.
         items(state.pending) { CarouselSkeleton(description = stringResource(R.string.hubs_loading_row)) }
+    }
+}
+
+@Composable
+private fun CardRow(
+    tab: HubTab,
+    row: HubRowUi.Cards,
+    onOpenTitle: (HubCard) -> Unit,
+    onOpenGrid: (HubGrid, String) -> Unit,
+) {
+    val title = row.row.title(tab)
+    val grid = row.row.seeAll()
+    MediaCarousel(
+        title = title,
+        onMoreClick = grid?.let { { onOpenGrid(it, title) } },
+        items = row.cards,
+        itemKey = { it.kind.name + it.tmdbId },
+    ) { _, card ->
+        MediaCard(
+            posterUrl = card.artworkUrl,
+            title = card.name,
+            rating = null,
+            onClick = { onOpenTitle(card) },
+            modifier = Modifier.width(dimensionResource(DesR.dimen.card_width)),
+            status = card.availability.toStatus(),
+        )
+    }
+}
+
+/** Genres show their backdrop under the name; studios and networks show their logo, as the web client does. */
+@Composable
+private fun TileRow(
+    tab: HubTab,
+    row: HubRowUi.Tiles,
+    onOpenGrid: (HubGrid, String) -> Unit,
+) {
+    fun open(tile: HubTile) = row.row.tileGrid(tile)?.let { onOpenGrid(it, tile.name) }
+    MediaCarousel(
+        title = row.row.title(tab),
+        items = row.tiles,
+        itemKey = { it.id },
+    ) { _, tile ->
+        if (row.row is HubRow.Genres) {
+            BackdropTile(title = tile.name, imageUrl = tile.imageUrl, onClick = { open(tile) })
+        } else {
+            LogoTile(name = tile.name, logoUrl = tile.imageUrl, onClick = { open(tile) })
+        }
     }
 }
 
@@ -184,6 +229,9 @@ private fun HubRow.title(tab: HubTab): String =
             is HubRow.RecentRequests -> R.string.hubs_row_recent_requests
             is HubRow.Watchlist -> R.string.hubs_row_watchlist
             is HubRow.Popular -> if (tab == HubTab.Movies) R.string.hubs_row_popular_movies else R.string.hubs_row_popular_tv
+            is HubRow.Genres -> R.string.hubs_row_genres
+            is HubRow.Studios -> R.string.hubs_row_studios
+            is HubRow.Networks -> R.string.hubs_row_networks
             is HubRow.Upcoming -> if (tab == HubTab.Movies) R.string.hubs_row_upcoming_movies else R.string.hubs_row_upcoming_tv
             else -> R.string.hubs_row_custom
         },

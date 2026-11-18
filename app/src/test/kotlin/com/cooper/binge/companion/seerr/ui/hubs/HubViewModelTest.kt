@@ -12,6 +12,7 @@ import com.cooper.binge.companion.seerr.discover.sliders.HubCardLoader
 import com.cooper.binge.companion.seerr.discover.sliders.HubHeroLoader
 import com.cooper.binge.companion.seerr.discover.sliders.HubMediaSource
 import com.cooper.binge.companion.seerr.discover.sliders.HubTab
+import com.cooper.binge.companion.seerr.discover.sliders.HubTileLoader
 import com.cooper.binge.companion.seerr.discover.sliders.SliderListState
 import com.cooper.binge.companion.seerr.seerr.HydratedTitle
 import com.cooper.binge.companion.seerr.seerr.SeerrRequestMediaDto
@@ -70,8 +71,9 @@ class HubViewModelTest {
 
     private class Titles(
         private val fail: Boolean = false,
+        private val canDiscoverByCompany: Boolean = true,
     ) : TitleListRepository {
-        override suspend fun supports(source: TitleSource) = true
+        override suspend fun supports(source: TitleSource) = source !is TitleSource.ByCompany || canDiscoverByCompany
 
         override suspend fun load(
             source: TitleSource,
@@ -82,7 +84,7 @@ class HubViewModelTest {
             return TitlePage(listOf(movie), 1, 1)
         }
 
-        override suspend fun genres(kind: TitleKind): List<GenreTile> = emptyList()
+        override suspend fun genres(kind: TitleKind): List<GenreTile> = listOf(GenreTile(28, "Action", "/g.jpg"))
     }
 
     private object NoMedia : HubMediaSource {
@@ -107,9 +109,41 @@ class HubViewModelTest {
     private fun vm(
         sliders: FakeSliders,
         titles: TitleListRepository = Titles(),
-    ) = HubViewModel(sliders, HubCardLoader(titles, NoMedia), HubHeroLoader(titles, NoMedia), dispatcher, HubTab.Movies)
+    ) = HubViewModel(
+        sliders,
+        HubCardLoader(titles, NoMedia),
+        HubTileLoader(titles),
+        HubHeroLoader(titles, NoMedia),
+        dispatcher,
+        HubTab.Movies,
+    )
 
     private suspend fun HubViewModel.settled() = uiState.first { it !is DiscoverHubUiState.Loading }
+
+    @Test
+    fun `a genre row shows tiles with the genres backdrop`() =
+        runTest {
+            val ready = vm(FakeSliders(SliderListState.Ready(listOf(slider(1, MOVIE_GENRES))))).settled() as DiscoverHubUiState.Ready
+            val tile = (ready.rows.single() as HubRowUi.Tiles).tiles.single()
+            assertEquals("Action", tile.name)
+            assertEquals(28, tile.id)
+            assertTrue(tile.imageUrl.orEmpty().endsWith("/g.jpg"))
+        }
+
+    @Test
+    fun `a studio row shows the fixed studios where the server can discover by company`() =
+        runTest {
+            val ready = vm(FakeSliders(SliderListState.Ready(listOf(slider(1, STUDIOS))))).settled() as DiscoverHubUiState.Ready
+            assertTrue((ready.rows.single() as HubRowUi.Tiles).tiles.any { it.name == "Disney" })
+        }
+
+    @Test
+    fun `a studio row is left out where the server cannot discover by company`() =
+        runTest {
+            val sliders = FakeSliders(SliderListState.Ready(listOf(slider(1, STUDIOS), slider(2, TRENDING))))
+            val ready = vm(sliders, Titles(canDiscoverByCompany = false)).settled() as DiscoverHubUiState.Ready
+            assertEquals(listOf(2), ready.rows.map { it.row.sliderId })
+        }
 
     @Test
     fun `the hub shows the rows of the servers sliders that have titles`() =
@@ -120,8 +154,7 @@ class HubViewModelTest {
             assertEquals(listOf(1), ready.rows.map { it.row.sliderId })
             assertEquals(
                 "One",
-                ready.rows
-                    .single()
+                (ready.rows.single() as HubRowUi.Cards)
                     .cards
                     .single()
                     .name,
@@ -175,6 +208,7 @@ class HubViewModelTest {
                 HubViewModel(
                     FakeSliders(SliderListState.Ready(listOf(slider(1, TRENDING)))),
                     HubCardLoader(titles, NoMedia),
+                    HubTileLoader(titles),
                     HubHeroLoader(Titles(fail = true), NoMedia),
                     dispatcher,
                     HubTab.Movies,
@@ -186,4 +220,6 @@ class HubViewModelTest {
 }
 
 private const val TRENDING = 4
+private const val MOVIE_GENRES = 6
+private const val STUDIOS = 8
 private const val WATCHLIST = 3

@@ -144,7 +144,11 @@ private fun EntryProviderScope<NavKey>.homeEntries(
     // No pane metadata: the shell takes the whole window, and what a tab opens covers it from above.
     entry<ShellRoute> {
         if (connected() == true && tabs != null) {
-            SeerrTabShell(tabs, discover = { DiscoverHubEntry(it) }, search = { TitleSearchEntry() }, settings = { hub(null) })
+            SeerrTabShell(tabs, discover = {
+                DiscoverHubEntry(it, onOpenGrid = { grid, title ->
+                    backStack.push(DiscoverGridRoute(grid.kind, grid.preset, title))
+                })
+            }, search = { TitleSearchEntry() }, settings = { hub(null) })
         } else {
             LoadingScreen()
         }
