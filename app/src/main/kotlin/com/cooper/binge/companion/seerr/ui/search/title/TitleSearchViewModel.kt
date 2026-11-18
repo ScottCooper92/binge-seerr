@@ -150,6 +150,7 @@ internal fun QuerySearchState<TitleResult>.toUiState(
                 hasMore = hasMore,
                 appending = appending,
                 appendFailed = appendFailed,
+                loaded = all.size,
             )
         }
         is QuerySearchState.NoResults -> TitleSearchUiState.NoResults(text, query)

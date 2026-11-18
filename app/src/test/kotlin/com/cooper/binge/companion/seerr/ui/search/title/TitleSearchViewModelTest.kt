@@ -60,15 +60,7 @@ class TitleSearchViewModelTest {
         override suspend fun genres(kind: TitleKind): List<GenreTile> = emptyList()
 
         override suspend fun genreNames(kind: TitleKind): Map<Int, String> =
-            mapOf(
-                if (kind ==
-                    TitleKind.Movie
-                ) {
-                    28 to "Action"
-                } else {
-                    18 to "Drama"
-                },
-            )
+            if (kind == TitleKind.Movie) mapOf(28 to "Action") else mapOf(18 to "Drama")
     }
 
     private class FakeHistory(
@@ -173,6 +165,22 @@ class TitleSearchViewModelTest {
             vm.onQueryChange("alien")
             advanceUntilIdle()
             assertEquals(SearchType.All, (vm.uiState.value as TitleSearchUiState.Ready).type)
+        }
+
+    @Test
+    fun `a type absent from the loaded pages leaves an empty list and the loaded count still grows`() =
+        runVm { vm ->
+            titles.answer = { _, page -> TitlePage(listOf(title(page), title(page + 10, TitleKind.Series)), page, 3) }
+            vm.onQueryChange("matrix")
+            advanceUntilIdle()
+            vm.onType(SearchType.People)
+            val first = vm.uiState.value as TitleSearchUiState.Ready
+            assertTrue(first.results.isEmpty())
+            assertTrue(first.hasMore)
+            vm.onLoadMore()
+            advanceUntilIdle()
+            val second = vm.uiState.value as TitleSearchUiState.Ready
+            assertTrue(second.loaded > first.loaded)
         }
 
     @Test

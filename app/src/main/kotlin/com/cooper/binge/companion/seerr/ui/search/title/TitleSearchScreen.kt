@@ -132,13 +132,21 @@ private fun ResultsList(
     contentPadding: PaddingValues,
 ) {
     val listState = rememberLazyListState()
+    LaunchedEffect(state.type) { listState.scrollToItem(0) }
+    if (state.results.isEmpty() && !state.hasMore && !state.appending) {
+        EmptyScreen(
+            message = stringResource(R.string.title_search_none_message, state.text),
+            title = stringResource(R.string.title_search_none_title),
+        )
+        return
+    }
     val nearEnd by remember {
         derivedStateOf {
             val info = listState.layoutInfo
             (info.visibleItemsInfo.lastOrNull()?.index ?: 0) >= info.totalItemsCount - LOAD_MORE_AHEAD
         }
     }
-    LaunchedEffect(listState, state.hasMore, state.results.size) {
+    LaunchedEffect(listState, state.hasMore, state.loaded) {
         if (state.hasMore) snapshotFlow { nearEnd }.distinctUntilChanged().filter { it }.collect { actions.onLoadMore() }
     }
     LazyColumn(

@@ -27,6 +27,8 @@ sealed interface TitleSearchUiState {
         val hasMore: Boolean,
         val appending: Boolean,
         val appendFailed: Boolean,
+        /** How many results the pages loaded so far hold, before the type filter; it grows with every page. */
+        val loaded: Int = results.size,
     ) : TitleSearchUiState
 
     data class NoResults(
