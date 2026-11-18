@@ -41,6 +41,8 @@ internal class WideHeader(
  * [topBarActions], the rich backdrop, and the [LayoutAnchors.Detail.HERO] anchor a page's skeleton is checked
  * against (#572). The body runs full-width, and the status bar is left to the theme.
  *
+ * @param wideHeader at the expanded width, a page that passes this swaps in the design system's [DetailCinematicHeader]; without it,
+ *   or on a narrower window, the single-column hero stays.
  * @param onBack null where the pane beside this one already offers the way back.
  * @param inFlight shows a moderation under way.
  * @param genres drawn under the title in the accent colour, with the italic [tagline] under them.
@@ -93,7 +95,7 @@ internal fun MediaHeroDetailPage(
             } else {
                 DetailHero(
                     title = title,
-                    backdropUrl = backdropUrl,
+                    backdropUrl = singleColumnBackdrop(backdropUrl, wideHeader?.posterUrl),
                     tagline = tagline,
                     genres = genres,
                     metaText = metaText,
@@ -108,6 +110,15 @@ internal fun MediaHeroDetailPage(
         content = body,
     )
 }
+
+/**
+ * The image behind the single-column hero: the title's own backdrop, or its poster where it has none, so the hero is never
+ * bare. The expanded header draws the poster itself beside the title, so it takes the backdrop alone and never shows it twice.
+ */
+internal fun singleColumnBackdrop(
+    backdropUrl: String?,
+    posterUrl: String?,
+): String? = backdropUrl ?: posterUrl
 
 /** Where a hero page's skeleton or its failure sits before there is a page: the theme's background, full window. */
 @Composable

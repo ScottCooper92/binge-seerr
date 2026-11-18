@@ -24,6 +24,7 @@ import com.binge.designsystem.component.PersonCard
 import com.binge.designsystem.component.SectionHeader
 import com.binge.designsystem.component.WrappingRow
 import com.binge.designsystem.isExpandedLayout
+import com.binge.designsystem.template.LocalHeroReadingMargin
 import com.binge.designsystem.theme.BingeSentiment
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.TitleAvailability
@@ -54,6 +55,7 @@ internal fun TitlePageBody(
             model = titleActionsModel(movie.standard, movie.fourK),
             onRequest = actions.onRequest,
             onTrailer = movie.videos.trailerUrl()?.let { url -> { actions.onOpenUrl(url) } },
+            modifier = Modifier.readingMargin(),
         )
         if (!expanded) OverviewSection(movie.overview)
         InfoRowList(
@@ -66,10 +68,11 @@ internal fun TitlePageBody(
                 },
                 actions.onOpenPerson,
             ),
+            Modifier.readingMargin(),
         )
         PeopleRow(stringResource(R.string.title_page_cast), movie.cast, actions.onOpenPerson, actions.onOpenCredits)
         PeopleRow(stringResource(R.string.title_page_crew), movie.keyCrew, actions.onOpenPerson, actions.onOpenCredits)
-        WhereToWatchSection(movie.providers, actions.onOpenUrl)
+        WhereToWatchSection(movie.providers, actions.onOpenUrl, Modifier.readingMargin())
         movie.collection?.let { collection ->
             TitleRow(
                 title = collection.name,
@@ -79,9 +82,27 @@ internal fun TitlePageBody(
             )
         }
         state.extras?.let { TitleRow(stringResource(R.string.title_page_more_like_this), it.moreLikeThis, actions.onOpenTitle) }
-        KeywordsSection(movie.keywords)
+        KeywordsSection(movie.keywords, Modifier.readingMargin())
     }
 }
+
+/**
+ * The margin that centres a reading column in the width the hero template leaves the body, which it measures as
+ * [LocalHeroReadingMargin]. It applies only at the expanded width, where the cinematic header and the column go together: a
+ * window between 672dp and 840dp keeps the phone's single column, so nothing moves in. A section takes it as its modifier, so a
+ * section that draws nothing takes no space, and the rails, which bleed to the window's edge, do not take it.
+ */
+@Composable
+internal fun Modifier.readingMargin(): Modifier = if (isExpandedLayout()) padding(horizontal = LocalHeroReadingMargin.current) else this
+
+/** The inset a rail starts at: the screen's, plus the reading margin at the expanded width, so its first card lines up with the column and it still bleeds. */
+@Composable
+private fun railInset() =
+    if (isExpandedLayout()) {
+        dimensionResource(DesR.dimen.padding_m) + LocalHeroReadingMargin.current
+    } else {
+        dimensionResource(DesR.dimen.padding_m)
+    }
 
 /** The line under the title in the request sheet: release year and runtime, whichever the server gave. */
 @Composable
@@ -102,15 +123,21 @@ internal fun OverviewSection(overview: String?) {
 }
 
 @Composable
-internal fun KeywordsSection(keywords: List<String>) {
+internal fun KeywordsSection(
+    keywords: List<String>,
+    modifier: Modifier = Modifier,
+) {
     if (keywords.isEmpty()) return
-    SectionHeader(stringResource(R.string.title_page_keywords))
-    TagRow(keywords)
+    SectionHeader(stringResource(R.string.title_page_keywords), modifier)
+    TagRow(keywords, modifier)
 }
 
 @Composable
-internal fun TagRow(labels: List<String>) {
-    WrappingRow(Modifier.padding(horizontal = dimensionResource(DesR.dimen.padding_m))) {
+internal fun TagRow(
+    labels: List<String>,
+    modifier: Modifier = Modifier,
+) {
+    WrappingRow(modifier.padding(horizontal = dimensionResource(DesR.dimen.padding_m))) {
         labels.forEach { BingeTag(label = it, uppercase = false) }
     }
 }
@@ -123,7 +150,14 @@ internal fun PeopleRow(
     onSeeAll: () -> Unit,
 ) {
     if (people.isEmpty()) return
-    MediaCarousel(title = title, items = people, itemKey = { it.personId }, onMoreClick = onSeeAll, onEndTileClick = null) { _, person ->
+    MediaCarousel(
+        title = title,
+        items = people,
+        itemKey = { it.personId },
+        onMoreClick = onSeeAll,
+        onEndTileClick = null,
+        horizontalPadding = railInset(),
+    ) { _, person ->
         PersonCard(
             name = person.name,
             subtitle = person.role,
@@ -141,7 +175,13 @@ internal fun TitleRow(
     onSeeAll: (() -> Unit)? = null,
 ) {
     if (titles.isEmpty()) return
-    MediaCarousel(title = title, items = titles, itemKey = { it.kind.name + it.tmdbId }, onMoreClick = onSeeAll) { _, item ->
+    MediaCarousel(
+        title = title,
+        items = titles,
+        itemKey = { it.kind.name + it.tmdbId },
+        onMoreClick = onSeeAll,
+        horizontalPadding = railInset(),
+    ) { _, item ->
         MediaCard(
             posterUrl = item.artworkPath?.let { it.toTmdbPosterUrl() },
             title = item.name,
