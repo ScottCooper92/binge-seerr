@@ -110,6 +110,39 @@ class WideShellJourneyTest {
     }
 
     @Test
+    fun `a title opened from another tab covers the window while a section is open`() {
+        NavHostActivity.discoveryEnabled = true
+        host.connectDemo()
+        host.launch(HomeRoute, RequestsRoute)
+        host.compose.waitUntil(WAIT_MILLIS) { host.stack() == listOf<NavKey>(ShellRoute, RequestsRoute) }
+
+        host.compose.onNodeWithTag("tab_search").performClick()
+        host.compose.waitUntil(WAIT_MILLIS) { host.stack() == listOf<NavKey>(ShellRoute) }
+        host.push(TitleDetailRoute(TitleKind.Movie, DEMO_FILM_ID))
+
+        host.compose.waitUntil(WAIT_MILLIS) { host.stack() == listOf(ShellRoute, TitleDetailRoute(TitleKind.Movie, DEMO_FILM_ID)) }
+        host.compose.onNodeWithTag("tab_settings").assertDoesNotExist()
+        host.back()
+        host.compose.waitUntil(WAIT_MILLIS) { host.stack() == listOf<NavKey>(ShellRoute) }
+        bar().assertIsDisplayed()
+    }
+
+    @Test
+    fun `Back on another tab returns to Settings with the section as it was left`() {
+        NavHostActivity.discoveryEnabled = true
+        host.connectDemo()
+        host.launch(HomeRoute, RequestsRoute)
+        host.compose.waitUntil(WAIT_MILLIS) { host.stack() == listOf<NavKey>(ShellRoute, RequestsRoute) }
+        host.compose.onNodeWithTag("tab_search").performClick()
+        host.compose.waitUntil(WAIT_MILLIS) { host.stack() == listOf<NavKey>(ShellRoute) }
+
+        host.back()
+        host.compose.waitUntil(WAIT_MILLIS) { host.stack() == listOf<NavKey>(ShellRoute, RequestsRoute) }
+        bar().assertIsDisplayed()
+        host.awaitShowing(host.string(R.string.hub_section_issues_desc))
+    }
+
+    @Test
     fun `a fold moves no entry and keeps the section's filter`() {
         NavHostActivity.discoveryEnabled = true
         host.connectDemo()

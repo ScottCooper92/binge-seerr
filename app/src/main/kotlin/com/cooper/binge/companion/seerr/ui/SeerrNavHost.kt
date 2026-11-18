@@ -28,6 +28,7 @@ import com.cooper.binge.companion.seerr.ui.search.title.TitleSearchEntry
 import com.cooper.binge.companion.seerr.ui.shell.SeerrTab
 import com.cooper.binge.companion.seerr.ui.shell.SeerrTabShell
 import com.cooper.binge.companion.seerr.ui.shell.TabShellState
+import com.cooper.binge.companion.seerr.ui.shell.settleSectionStash
 import com.cooper.binge.companion.seerr.ui.state.LoadingScreen
 
 /**
@@ -65,7 +66,15 @@ fun SeerrNavHost(
     val askable = remember(state) { derivedStateOf { if (state.value == HomeUiState.Disconnecting) false else state.value.connected() } }
     ReviewPromptOnReturnToRoot(connected = askable.value, stackDepth = backStack.size)
     CompositionLocalProvider(LocalOpenTitle provides rememberOpenTitle(backStack)) {
-        SeerrPaneHost(backStack, connected, exit, modifier, defaultSection = { DefaultSectionPane(backStack, exit) }) { panes ->
+        val seedDefault = tabs == null || tabs.selected == SeerrTab.Settings
+        SeerrPaneHost(
+            backStack,
+            connected,
+            exit,
+            modifier,
+            defaultSection = { DefaultSectionPane(backStack, exit) },
+            seedDefault = seedDefault,
+        ) { panes ->
             homeEntries(backStack, connected = { connectedState.value }, panes = panes, onExit = exit, tabs = tabs)
             settingsEntries(backStack, connected = { connectedState.value }, panes = panes, onExit = exit)
             discoverGridEntries(backStack)
@@ -106,6 +115,9 @@ private fun EntryProviderScope<NavKey>.homeEntries(
     // open section beside the hub, inside the Settings tab.
     entry<ShellRoute>(metadata = ShellPane) {
         if (connected() == true && tabs != null) {
+            val hubBeside = panes.hubBeside()
+            val stack = backStack.toList()
+            LaunchedEffect(tabs.selected, hubBeside, stack) { if (hubBeside) tabs.settleSectionStash(backStack) }
             SeerrTabShell(tabs, discover = {
                 DiscoverHubEntry(
                     it,

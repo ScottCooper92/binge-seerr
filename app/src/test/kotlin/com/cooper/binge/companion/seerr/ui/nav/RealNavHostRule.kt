@@ -183,6 +183,9 @@ internal class RealNavHostRule(
     /** A link to [routes] as `MainActivity` applies one: it replaces the app's stack and shows Settings. */
     fun openLink(vararg routes: SeerrRoute) = compose.runOnUiThread { activity.tabs.openLink(activity.backStack, routes.toList()) }
 
+    /** Pushes [route] onto the app's stack, as a tap on a title or a "see all" does. */
+    fun push(route: SeerrRoute) = compose.runOnUiThread { activity.backStack.add(route) }
+
     /** The back stack as it stands, read on the main thread. */
     fun stack(): List<NavKey> = compose.runOnIdle { activity.backStack.toList() }
 

@@ -82,6 +82,7 @@ internal fun SeerrPaneHost(
     onExit: () -> Unit,
     modifier: Modifier = Modifier,
     defaultSection: @Composable () -> Unit = {},
+    seedDefault: Boolean = true,
     entries: EntryProviderScope<NavKey>.(panes: PaneLayout) -> Unit,
 ) {
     val exit = rememberExitOnce(onExit)
@@ -92,8 +93,8 @@ internal fun SeerrPaneHost(
     val threePane = rememberUpdatedState(hubBeside.value && isThreePaneWindow())
     // Three panes show a section in the middle all the time, so the default one goes on the stack, not a placeholder:
     // its list then keeps its state when it opens an item. Back from it leaves the app, as from the placeholder (#815).
-    LaunchedEffect(threePane.value, backStack.size) {
-        if (threePane.value && backStack.toList() == listOf(HubRoute)) backStack.add(DefaultSection.route())
+    LaunchedEffect(threePane.value, backStack.size, seedDefault) {
+        if (seedDefault && threePane.value && backStack.isOnlyPaneRoot()) backStack.add(DefaultSection.route())
     }
     // The one back-arrow rule (paneShowsBack), fed the stack's own shape (paneDepth) alongside
     // hubBeside — read here as a provider for the same reason hubBeside is: an entry's metadata is
@@ -120,6 +121,9 @@ internal fun SeerrPaneHost(
         )
     }
 }
+
+/** Whether the stack is just the pane root: the hub, or the shell that holds it. */
+private fun NavBackStack<NavKey>.isOnlyPaneRoot(): Boolean = size == 1 && this[0].isPaneRoot()
 
 /** [onExit] as a call that runs once for this composition: the activity it finishes has only one exit to take. */
 @Composable
