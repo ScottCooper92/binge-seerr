@@ -25,7 +25,7 @@ import com.cooper.binge.companion.seerr.ui.discover.title.credits.TitleCreditsEn
 import com.cooper.binge.companion.seerr.ui.discover.title.season.SeriesEpisodesEntry
 import com.cooper.binge.companion.seerr.ui.openTitle
 import com.cooper.binge.companion.seerr.ui.popIfTop
-import com.cooper.binge.companion.seerr.ui.requests.RequestMediaType
+import com.cooper.binge.companion.seerr.ui.toRequestMediaType
 
 /** The title pages: a film's or a series' page, every season's episodes of it, a collection, the credits, and a person's page. Each leaves through [popIfTop] with its own key. */
 fun EntryProviderScope<NavKey>.titleEntries(backStack: NavBackStack<NavKey>) {
@@ -74,7 +74,7 @@ internal fun rememberOpenTitle(backStack: NavBackStack<NavKey>): (TitleKind, Int
             } else if (discovery && (kind == TitleKind.Movie || kind == TitleKind.Series)) {
                 backStack.add(TitleDetailRoute(kind, id))
             } else {
-                context.openTitle(promoted, if (kind == TitleKind.Series) RequestMediaType.Tv else RequestMediaType.Movie, id, webUrl)
+                context.openTitle(promoted, kind.toRequestMediaType(), id, webUrl)
             }
         }
     }

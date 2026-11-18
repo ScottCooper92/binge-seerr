@@ -45,12 +45,13 @@ class SeasonActions(
 internal fun EpisodesSection(
     state: SeriesPageUiState.Ready,
     actions: SeasonActions,
+    modifier: Modifier = Modifier,
 ) {
     var picking by rememberSaveable { mutableStateOf(false) }
     val number = state.selectedSeason ?: return
     val season = state.series.seasons.firstOrNull { it.number == number } ?: return
     val gap = dimensionResource(DesR.dimen.padding_m)
-    Column(verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s))) {
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s))) {
         SectionHeader(
             title = stringResource(R.string.series_page_episodes),
             trailingContent =

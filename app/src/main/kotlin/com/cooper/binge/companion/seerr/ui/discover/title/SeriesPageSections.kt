@@ -6,6 +6,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.VideoLibrary
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
@@ -67,9 +68,10 @@ internal fun SeriesPageBody(
             model = titleActionsModel(series.standard, series.fourK),
             onRequest = actions.onRequest,
             onTrailer = series.videos.trailerUrl()?.let { url -> { actions.onOpenUrl(url) } },
+            modifier = Modifier.readingMargin(),
         )
         if (!expanded) OverviewSection(series.overview)
-        EpisodesSection(state, seasonActions)
+        EpisodesSection(state, seasonActions, Modifier.readingMargin())
         InfoRowList(
             series.factEntries(
                 context.resources,
@@ -80,11 +82,12 @@ internal fun SeriesPageBody(
                 },
                 actions.onOpenPerson,
             ),
+            Modifier.readingMargin(),
         )
         PeopleRow(stringResource(R.string.title_page_cast), series.cast, actions.onOpenPerson, actions.onOpenCredits)
         PeopleRow(stringResource(R.string.title_page_crew), series.keyCrew, actions.onOpenPerson, actions.onOpenCredits)
-        WhereToWatchSection(series.providers, actions.onOpenUrl)
+        WhereToWatchSection(series.providers, actions.onOpenUrl, Modifier.readingMargin())
         state.extras?.let { TitleRow(stringResource(R.string.title_page_more_like_this), it.moreLikeThis, actions.onOpenTitle) }
-        KeywordsSection(series.keywords)
+        KeywordsSection(series.keywords, Modifier.readingMargin())
     }
 }

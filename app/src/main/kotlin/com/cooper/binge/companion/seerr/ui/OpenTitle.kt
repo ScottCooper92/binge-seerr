@@ -5,6 +5,7 @@ import android.content.Intent
 import androidx.core.net.toUri
 import com.binge.companion.sdk.CompanionManifest
 import com.binge.companion.sdk.attempt
+import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.seerr.mediaIdOf
 import com.cooper.binge.companion.seerr.ui.requests.RequestMediaType
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
@@ -106,3 +107,16 @@ fun Context.bingeTitleHandOff(
     mediaType: RequestMediaType,
     tmdbId: Int,
 ): (() -> Unit)? = { openTitleInBinge(mediaType, tmdbId) }.takeIf { bingeAnswersTitleLink(promoted, mediaType, tmdbId) }
+
+/** The kind of title page a request's media type opens: a film's, or a series'. */
+internal fun RequestMediaType.toTitleKind(): TitleKind = if (this == RequestMediaType.Tv) TitleKind.Series else TitleKind.Movie
+
+/** The media type of a film's or a series' page; a person or a collection has none. */
+internal fun TitleKind.toRequestMediaType(): RequestMediaType =
+    if (this ==
+        TitleKind.Series
+    ) {
+        RequestMediaType.Tv
+    } else {
+        RequestMediaType.Movie
+    }

@@ -1,6 +1,8 @@
 package com.cooper.binge.companion.seerr.ui.search.title
 
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
@@ -8,12 +10,15 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.CarouselSkeleton
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.TitleResult
 import com.cooper.binge.companion.seerr.ui.discover.title.TitleRow
 import com.cooper.binge.companion.seerr.ui.state.EmptyScreen
+import com.binge.designsystem.R as DesR
 
 /**
  * What the Search tab offers before anything is searched: the recent queries as chips, then the trending rails. With neither,
@@ -36,7 +41,15 @@ internal fun IdleBody(
         )
         return
     }
-    LazyColumn(contentPadding = contentPadding) {
+    val direction = LocalLayoutDirection.current
+    val listPadding =
+        PaddingValues(
+            start = contentPadding.calculateStartPadding(direction),
+            top = contentPadding.calculateTopPadding(),
+            end = contentPadding.calculateEndPadding(direction),
+            bottom = contentPadding.calculateBottomPadding() + dimensionResource(DesR.dimen.padding_m),
+        )
+    LazyColumn(contentPadding = listPadding) {
         if (state.recents.isNotEmpty()) {
             item(key = "recents") { RecentSearches(state.recents, onSelect = actions.onRecent, onClear = actions.onForgetRecents) }
         }
