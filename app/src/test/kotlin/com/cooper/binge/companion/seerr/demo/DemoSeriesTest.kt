@@ -59,4 +59,15 @@ class DemoSeriesTest {
             assertTrue(recommendations.none { it.id == showId })
             assertTrue(api.tvSimilar(showId).results.none { it.id == showId })
         }
+
+    @Test
+    fun `a season answers with its episodes, the last of which has not aired`() =
+        demo { api ->
+            val season = api.tvSeason(showId, 2)
+
+            assertEquals(2, season.seasonNumber)
+            assertTrue(season.episodes.size > 5)
+            assertEquals(season.episodes.map { it.episodeNumber }, (1..season.episodes.size).toList())
+            assertTrue(checkNotNull(season.episodes.last().airDate) > "2090")
+        }
 }

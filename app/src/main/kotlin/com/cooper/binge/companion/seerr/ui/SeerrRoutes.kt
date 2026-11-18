@@ -125,7 +125,7 @@ data class RequestDetailRoute(
     val requestId: Int,
 ) : SeerrRoute
 
-/** A title as a page, opened from a card in the discovery tabs. Only a film has a page so far. */
+/** A title as a page, opened from a card in the discovery tabs: a film's or a series'. */
 @Serializable
 data class TitleDetailRoute(
     val kind: TitleKind,
@@ -137,6 +137,14 @@ data class TitleDetailRoute(
 data class TitleCreditsRoute(
     val kind: TitleKind,
     val tmdbId: Int,
+) : SeerrRoute
+
+/** Every episode of one season of a show, opened from the show's page. [seasonName] is the name the page showed, which may be blank. */
+@Serializable
+data class SeasonEpisodesRoute(
+    val tmdbId: Int,
+    val seasonNumber: Int,
+    val seasonName: String,
 ) : SeerrRoute
 
 /** Settings: the connection and the admin's read-only view of the server. */
