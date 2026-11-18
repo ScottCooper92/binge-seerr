@@ -18,8 +18,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.Dp
 import com.binge.designsystem.component.BingeFilterChipRow
 import com.binge.designsystem.component.FilterChipItem
 import com.binge.designsystem.component.MediaCard
@@ -119,7 +121,7 @@ private fun LazyGridScope.creditSection(
     onOpen: (TitleKind, Int) -> Unit,
 ) {
     if (credits.isEmpty()) return
-    full("$tag-header") { SectionHeader(stringResource(title)) }
+    full("$tag-header") { SectionHeader(stringResource(title), horizontalPadding = dimensionResource(DesR.dimen.zero)) }
     items(credits, key = { "$tag-${it.key}" }) { credit ->
         MediaCard(
             posterUrl = credit.posterUrl,
@@ -143,10 +145,27 @@ private fun FilterChips(
             FilterChipItem(stringResource(R.string.person_filter_movies), icon = Icons.Filled.Movie),
             FilterChipItem(stringResource(R.string.person_filter_series), icon = Icons.Filled.Tv),
         )
-    BingeFilterChipRow(items, selectedIndex = selected.ordinal, onSelect = { onSelect(CreditsFilter.entries[it]) })
+    BingeFilterChipRow(items, selectedIndex = selected.ordinal, onSelect = {
+        onSelect(CreditsFilter.entries[it])
+    }, modifier = Modifier.bleedInto(dimensionResource(DesR.dimen.padding_m)))
 }
 
 private fun LazyGridScope.full(
     key: String,
     content: @Composable () -> Unit,
 ) = item(key = key, span = { GridItemSpan(maxLineSpan) }) { content() }
+
+/** The grid pads its content by [padding]; a row with an inset of its own would sit that much too far in, so it spans the padding too. */
+private fun Modifier.bleedInto(padding: Dp): Modifier =
+    layout { measurable, constraints ->
+        val bleed = padding.roundToPx()
+        val placeable =
+            measurable.measure(
+                constraints.copy(
+                    maxWidth = constraints.maxWidth + 2 * bleed,
+                    minWidth =
+                        constraints.maxWidth + 2 * bleed,
+                ),
+            )
+        layout(constraints.maxWidth, placeable.height) { placeable.place(-bleed, 0) }
+    }

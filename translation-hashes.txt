@@ -344,6 +344,14 @@ app:permission_view_requests  47b9133042ef
 app:permission_view_requests_detail  8eb67caa268a
 app:permission_view_watchlists  8cc1d099df19
 app:permission_view_watchlists_detail  e9e7cdc52dbf
+app:person_credits_filtered_empty  14efc157f3df
+app:person_filter_all  a52ace420f21
+app:person_filter_movies  dff924b69f96
+app:person_filter_series  a8295e08ff7a
+app:person_page_also_known_as  4f8c470505d1
+app:person_page_born  16178f9087b8
+app:person_page_died  90f16c1dea8a
+app:person_page_place  1ded31f5d3ea
 app:report_problem  53de38dec81e
 app:report_title_anyway  f58c58d44ba2
 app:report_title_cannot_report  5d65aa1e469e

@@ -24,7 +24,7 @@ private val DEMO_PEOPLE =
 internal fun DemoData.personRoutes(): List<DemoRoute> =
     listOf(
         route("GET", "person", "{}") { _, (id) -> ok(demoPerson(id.toInt())) },
-        route("GET", "person", "{}", "combined_credits") { _, (id) -> ok(demoCredits(id.toInt())) },
+        route("GET", "person", "{}", "combined_credits") { _, _ -> ok(demoCredits()) },
     )
 
 private fun demoPerson(id: Int) =
@@ -38,7 +38,8 @@ private fun demoPerson(id: Int) =
         alsoKnownAs = listOf("The Demo"),
     )
 
-private fun DemoData.demoCredits(id: Int): SeerrPersonCreditsDto {
+/** Every demo person is in the same few titles: nothing real is behind any of them, and a tap opens a demo page either way. */
+private fun DemoData.demoCredits(): SeerrPersonCreditsDto {
     val movies = DEMO_TITLES.filter { it.isMovie }
     val shows = DEMO_TITLES.filterNot { it.isMovie }
     val cast = (movies.take(CAST_TITLES - 1) + shows.take(1)).map { credit(it, character = "The Hero") }
