@@ -42,6 +42,13 @@ class TitleActionsModelTest {
     }
 
     @Test
+    fun `a partly available series that can still be requested keeps its status as a line`() {
+        val model = titleActionsModel(VersionState(TitleAvailability.PartiallyAvailable, mayRequest = true), null)
+        assertEquals(TitlePrimary.Request(fourKOnly = false), model.primary)
+        assertEquals(listOf(VersionStatus(TitleAvailability.PartiallyAvailable, fourK = false)), model.otherStatuses)
+    }
+
+    @Test
     fun `a user who may not request and a title the server holds nothing of has no primary`() {
         assertEquals(TitleActionsModel(TitlePrimary.None, emptyList()), titleActionsModel(held(TitleAvailability.None), null))
     }

@@ -14,5 +14,5 @@ internal fun Context.shareTitle(
             .setType("text/plain")
             .putExtra(Intent.EXTRA_SUBJECT, title)
             .putExtra(Intent.EXTRA_TEXT, "$title\n$url")
-    startActivity(Intent.createChooser(send, getString(R.string.title_page_action_share)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+    startActivity(Intent.createChooser(send, getString(R.string.title_page_action_share)))
 }

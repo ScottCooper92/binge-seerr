@@ -31,8 +31,9 @@ internal data class TitleActionsModel(
 )
 
 /**
- * The actionable version is the primary. A version the user may not request, or that the server already holds, is only
- * a status: the primary when it is the one thing to say, otherwise a line beside the button.
+ * The actionable version is the primary. Every state the server holds of a version is also said: as the primary when it is
+ * the one thing to say, otherwise as a line beside the button. A series can be partly available and still requestable,
+ * so a version that may be requested can have a state too.
  */
 internal fun titleActionsModel(
     standard: VersionState,
@@ -40,8 +41,8 @@ internal fun titleActionsModel(
 ): TitleActionsModel {
     val statuses =
         listOfNotNull(
-            VersionStatus(standard.availability, fourK = false).takeIf { !standard.mayRequest },
-            fourK?.let { VersionStatus(it.availability, fourK = true) }?.takeIf { !fourK.mayRequest },
+            VersionStatus(standard.availability, fourK = false),
+            fourK?.let { VersionStatus(it.availability, fourK = true) },
         ).filter { it.availability != TitleAvailability.None }
     return when {
         standard.mayRequest || fourK?.mayRequest == true ->
