@@ -42,6 +42,7 @@ class SeerrCollectionRepository(
         }
 
     override suspend fun mayRequest(): Boolean = withContext(io) { viewer().toPermissions().canRequestMovie }
+
     override suspend fun mayBlock(): Boolean =
         withContext(io) { profile().canBlockCollections && viewer().toPermissions().canManageBlocklist }
 

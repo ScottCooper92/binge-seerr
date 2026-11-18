@@ -149,6 +149,7 @@ class CollectionPageViewModelTest {
             assertFalse(vm.ready().requestSheetOpen)
             assertEquals(0, vm.ready().collection.toRequest)
         }
+
     fun `a viewer who may not block is offered nothing`() {
         val vm = CollectionPageViewModel(FakeCollections(may = false), id = 2344)
         vm.askBlock()
