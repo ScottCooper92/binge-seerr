@@ -243,13 +243,13 @@ Each row is ticked in "Today" by the PR that covers it.
 | `GET /discover/genreslider/movie` | Get genre slider data for movies | v1.22.0 | v1.0.0 | yes | The shared title lists: hubs, the grid and search. |
 | `GET /discover/genreslider/tv` | Get genre slider data for TV series | v1.22.0 | v1.0.0 | yes | The shared title lists: hubs, the grid and search. |
 | `GET /discover/keyword/{keywordId}/movies` | Get movies from keyword | v1.9.0 | v1.0.0 | yes | The shared title lists: hubs, the grid and search. |
-| `GET /discover/movies` | Discover movies | v1.0.0 | v1.0.0 | yes | The shared title lists: hubs, the grid and search. |
+| `GET /discover/movies` | Discover movies | v1.0.0 | v1.0.0 | yes | The hubs' popular row, and the "see all" grid: sorted by `sortBy` and narrowed by the filter parameters where the server has them (`docs/server-compatibility.md`); a server without them gets the dedicated routes and an unsorted grid. |
 | `GET /discover/movies/genre/{genreId}` | Discover movies by genre | v1.21.0 | v1.0.0 | yes | The shared title lists: hubs, the grid and search. |
 | `GET /discover/movies/language/{language}` | Discover movies by original language | v1.21.0 | v1.0.0 | yes | The shared title lists: hubs, the grid and search. |
 | `GET /discover/movies/studio/{studioId}` | Discover movies by studio | v1.21.0 | v1.0.0 | yes | The shared title lists: hubs, the grid and search. |
 | `GET /discover/movies/upcoming` | Upcoming movies | v1.0.0 | v1.0.0 | yes | The shared title lists: hubs, the grid and search. |
 | `GET /discover/trending` | Trending movies and TV | v1.0.0 | v1.0.0 | yes | The shared title lists: hubs, the grid and search. |
-| `GET /discover/tv` | Discover TV shows | v1.0.0 | v1.0.0 | yes | The shared title lists: hubs, the grid and search. |
+| `GET /discover/tv` | Discover TV shows | v1.0.0 | v1.0.0 | yes | The hubs' popular row, and the "see all" grid: sorted by `sortBy` and narrowed by the filter parameters where the server has them (`docs/server-compatibility.md`); a server without them gets the dedicated routes and an unsorted grid. |
 | `GET /discover/tv/genre/{genreId}` | Discover TV shows by genre | v1.21.0 | v1.0.0 | yes | The shared title lists: hubs, the grid and search. |
 | `GET /discover/tv/language/{language}` | Discover TV shows by original language | v1.21.0 | v1.0.0 | yes | The shared title lists: hubs, the grid and search. |
 | `GET /discover/tv/network/{networkId}` | Discover TV shows by network | v1.21.0 | v1.0.0 | yes | The shared title lists: hubs, the grid and search. |

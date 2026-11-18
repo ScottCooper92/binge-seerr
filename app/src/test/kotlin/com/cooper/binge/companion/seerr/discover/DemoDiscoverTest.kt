@@ -109,4 +109,18 @@ class DemoDiscoverTest {
             assertTrue((first.results + second.results).let { rows -> rows.map { it.id }.toSet().size == rows.size })
         }
     }
+
+    @Test
+    fun `the discover lists can be put in order by title and by year`() {
+        demo { api ->
+            val titles = api.discoverMovies(sortBy = "original_title.asc").results.mapNotNull { it.title }
+            assertEquals(titles.sortedBy { it.lowercase() }, titles)
+            val newest = api.discoverMovies(sortBy = "primary_release_date.desc").results.mapNotNull { it.releaseDate?.take(4)?.toInt() }
+            assertEquals(newest.sortedDescending(), newest)
+            val popular = api.discoverMovies(sortBy = "popularity.desc").results.mapNotNull { it.id }
+            assertEquals(popular.reversed(), api.discoverMovies(sortBy = "popularity.asc").results.mapNotNull { it.id })
+            val names = api.discoverTv(sortBy = "original_name.desc").results.mapNotNull { it.name }
+            assertEquals(names.sortedByDescending { it.lowercase() }, names)
+        }
+    }
 }

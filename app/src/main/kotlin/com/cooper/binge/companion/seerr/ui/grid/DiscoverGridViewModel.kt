@@ -60,7 +60,11 @@ class DiscoverGridViewModel
             PagedList(viewModelScope, sortFilter.query, ::fetch)
 
         val uiState: StateFlow<DiscoverGridUiState> =
-            combine(list.state, sortFilter.query, refinable) { page, query, canRefine -> toUiState(page, controls(query, canRefine == true)) }
+            combine(
+                list.state,
+                sortFilter.query,
+                refinable,
+            ) { page, query, canRefine -> toUiState(page, controls(query, canRefine == true)) }
                 .stateIn(viewModelScope, SharingStarted.Lazily, DiscoverGridUiState.Loading(controls(sortFilter.query.value, false)))
 
         init {
@@ -120,7 +124,13 @@ internal fun toUiState(
         PagedListState.Empty -> DiscoverGridUiState.Empty(controls)
         is PagedListState.Failed -> DiscoverGridUiState.Error(controls, page.cause.toSeerrError())
         is PagedListState.Ready ->
-            DiscoverGridUiState.Ready(controls, page.items.distinctBy { it.kind to it.tmdbId }, page.hasMore, page.appending, page.appendFailed)
+            DiscoverGridUiState.Ready(
+                controls,
+                page.items.distinctBy { it.kind to it.tmdbId },
+                page.hasMore,
+                page.appending,
+                page.appendFailed,
+            )
     }
 
 private fun GridPreset.toChip(title: String?): ActiveFilterChip? =

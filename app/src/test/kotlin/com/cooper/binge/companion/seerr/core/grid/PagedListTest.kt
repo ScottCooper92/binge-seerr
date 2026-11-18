@@ -31,7 +31,11 @@ class PagedListTest {
         query: MutableStateFlow<String>,
         fetch: suspend (String, Int) -> SearchPage<String> = { q, p -> SearchPage(listOf("$q-$p"), p, 3) },
     ): PagedList<String, String> {
-        val list = PagedList(scope(), query, { q, p -> calls += q to p; fetch(q, p) })
+        val list =
+            PagedList(scope(), query, { q, p ->
+                calls += q to p
+                fetch(q, p)
+            })
         scope().launch { list.state.collect {} }
         return list
     }
@@ -97,7 +101,8 @@ class PagedListTest {
     fun `a failure can be retried`() =
         runTest {
             var fail = true
-            val list = listOver(MutableStateFlow("a")) { q, p -> if (fail) throw IOException("down") else SearchPage(listOf("$q-$p"), p, 1) }
+            val list =
+                listOver(MutableStateFlow("a")) { q, p -> if (fail) throw IOException("down") else SearchPage(listOf("$q-$p"), p, 1) }
             advanceUntilIdle()
             assertTrue((list.state.value as PagedListState.Failed).cause is IOException)
             fail = false
@@ -124,7 +129,16 @@ class PagedListTest {
     fun `a page that fails keeps the rows and can be asked for again`() =
         runTest {
             var fail = true
-            val list = listOver(MutableStateFlow("a")) { q, p -> if (p == 2 && fail) throw IOException("down") else SearchPage(listOf("$q-$p"), p, 2) }
+            val list =
+                listOver(MutableStateFlow("a")) { q, p ->
+                    if (p == 2 &&
+                        fail
+                    ) {
+                        throw IOException("down")
+                    } else {
+                        SearchPage(listOf("$q-$p"), p, 2)
+                    }
+                }
             advanceUntilIdle()
             list.loadMore()
             advanceUntilIdle()

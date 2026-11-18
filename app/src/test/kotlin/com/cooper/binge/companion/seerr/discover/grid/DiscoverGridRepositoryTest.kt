@@ -49,7 +49,12 @@ class DiscoverGridRepositoryTest {
     @Test
     fun `a server with the filter parameters is asked for the filters and the order on the plain route`() {
         val request =
-            GridRequest(TitleKind.Movie, GridPreset.Genre(18), DiscoverFilters(genres = setOf(18), ratingMin = 7.0), DiscoverSort.RatingDesc)
+            GridRequest(
+                TitleKind.Movie,
+                GridPreset.Genre(18),
+                DiscoverFilters(genres = setOf(18), ratingMin = 7.0),
+                DiscoverSort.RatingDesc,
+            )
         val page = withGrid { it.load(request, page = 2) }
 
         assertEquals("/api/v1/discover/movies", lastUrl().encodedPath)

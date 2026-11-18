@@ -139,7 +139,12 @@ class DiscoverGridViewModelTest {
     @Test
     fun `a show's upcoming list starts on its first air date`() =
         runVm(preset = GridPreset.Upcoming, kind = TitleKind.Series) { vm ->
-            assertEquals(DiscoverSort.FirstAirOldest, grid.requests.single().first.sort)
+            assertEquals(
+                DiscoverSort.FirstAirOldest,
+                grid.requests
+                    .single()
+                    .first.sort,
+            )
             assertTrue(DiscoverSort.RevenueDesc !in vm.uiState.value.controls.sortChoices)
         }
 

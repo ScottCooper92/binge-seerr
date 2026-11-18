@@ -120,7 +120,11 @@ private fun GridControlsRow(
         }
         controls.chip?.let { chip ->
             item(key = "filter") {
-                DiscoverQuickClearChip(label = chip.label ?: stringResource(chip.kind.labelRes()), tone = QuickClearTone.Include, onClick = actions.onClearFilter)
+                DiscoverQuickClearChip(
+                    label = chip.label ?: stringResource(chip.kind.labelRes()),
+                    tone = QuickClearTone.Include,
+                    onClick = actions.onClearFilter,
+                )
             }
         }
     }
