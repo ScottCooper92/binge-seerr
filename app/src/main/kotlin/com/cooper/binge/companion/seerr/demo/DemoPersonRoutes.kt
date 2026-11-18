@@ -18,6 +18,9 @@ private val DEMO_PEOPLE =
         9101 to "Riley Director",
         9102 to "Casey Writer",
         9103 to "Morgan Composer",
+        9201 to "Marlowe Quinn",
+        9202 to "Ines Valdemar",
+        9203 to "Tobias Hallworth",
     )
 
 /** `person/{id}` and its credits, hand-authored: the credits are titles the demo has, so a tap opens a real demo page. */

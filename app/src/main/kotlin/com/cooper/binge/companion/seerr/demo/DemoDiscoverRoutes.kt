@@ -75,9 +75,9 @@ private fun found(call: DemoCall): List<DemoTitle> {
 /** The people the demo's search can find: invented names with no photo, since the demo holds no real person. */
 private val DEMO_PEOPLE =
     listOf(
-        SeerrTitleResultDto(id = 9001, mediaType = "person", name = "Marlowe Quinn"),
-        SeerrTitleResultDto(id = 9002, mediaType = "person", name = "Ines Valdemar"),
-        SeerrTitleResultDto(id = 9003, mediaType = "person", name = "Tobias Hallworth"),
+        SeerrTitleResultDto(id = 9201, mediaType = "person", name = "Marlowe Quinn"),
+        SeerrTitleResultDto(id = 9202, mediaType = "person", name = "Ines Valdemar"),
+        SeerrTitleResultDto(id = 9203, mediaType = "person", name = "Tobias Hallworth"),
     )
 
 /** Search pages are short, so a broad query in the demo has a second page to load. */
