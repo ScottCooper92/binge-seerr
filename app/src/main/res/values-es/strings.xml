@@ -1434,17 +1434,24 @@
     <string name="title_page_stat_runtime">Duración</string>
     <string name="title_page_stat_rated">Clasificación</string>
     <string name="title_page_stat_votes">%1$s votos</string>
+    <string name="title_page_more_like_this">Más como esto</string>
+    <string name="title_page_overview">Resumen</string>
+    <string name="title_page_fact_director">Dirigida por</string>
+    <string name="title_page_fact_release_date">Fecha de estreno</string>
+    <string name="series_stat_episodes">Episodios</string>
+    <plurals name="series_stat_seasons">
+        <item quantity="one">%d temporada</item>
+        <item quantity="many">%d de temporadas</item>
+        <item quantity="other">%d temporadas</item>
+    </plurals>
     <string name="title_page_stat_rating">Nota</string>
     <string name="title_page_stat_critics">Crítica</string>
     <string name="title_page_stat_audience">Público</string>
     <string name="title_page_stat_imdb">IMDb</string>
     <string name="title_page_cast">Reparto</string>
     <string name="title_page_crew">Equipo principal</string>
-    <string name="title_page_videos">Vídeos</string>
     <string name="title_page_where_to_watch">Dónde verla</string>
     <string name="title_page_collection">Colección</string>
-    <string name="title_page_recommended">Recomendadas</string>
-    <string name="title_page_similar">Similares</string>
     <string name="title_page_keywords">Palabras clave</string>
     <string name="title_page_fact_status">Estado</string>
     <string name="title_page_fact_original_language">Idioma original</string>
@@ -1489,7 +1496,6 @@
     <string name="series_fact_creators">Creada por</string>
     <string name="series_fact_first_aired">Primera emisión</string>
     <string name="series_fact_last_aired">Última emisión</string>
-    <string name="series_fact_episodes">Episodios</string>
     <string name="series_fact_next_episode">Próximo episodio</string>
     <string name="series_fact_next_airs">Próximo episodio se emite</string>
     <string name="series_next_episode">%1$s (temporada %2$d, episodio %3$d)</string>
