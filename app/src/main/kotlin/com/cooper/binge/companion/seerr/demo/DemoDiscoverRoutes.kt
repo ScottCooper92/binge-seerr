@@ -32,7 +32,7 @@ internal fun DemoData.discoverRoutes(): List<DemoRoute> =
         route("GET", "discover", "keyword", "{}", "movies") { call, _ -> page(call, titles(movie = true)) },
         route("GET", "discover", "genreslider", "{}") { _, _ -> ok(GENRE_TILES) },
         route("GET", "discover", "watchlist") { call, _ -> page(call, titles(movie = true).take(WATCHLIST_SIZE)) },
-        route("GET", "search") { call, _ -> page(call, found(call)) },
+        route("GET", "search") { call, _ -> searchPage(call) },
     )
 
 private const val WATCHLIST_SIZE = 3
@@ -50,6 +50,28 @@ private fun titles(movie: Boolean): List<DemoTitle> = DEMO_TITLES.filter { it.is
 private fun found(call: DemoCall): List<DemoTitle> {
     val query = call.query("query").orEmpty().trim()
     return DEMO_TITLES.filter { query.isNotEmpty() && it.title.contains(query, ignoreCase = true) }
+}
+
+/** The people the demo's search can find: invented names with no photo, since the demo holds no real person. */
+private val DEMO_PEOPLE =
+    listOf(
+        SeerrTitleResultDto(id = 9001, mediaType = "person", name = "Marlowe Quinn"),
+        SeerrTitleResultDto(id = 9002, mediaType = "person", name = "Ines Valdemar"),
+        SeerrTitleResultDto(id = 9003, mediaType = "person", name = "Tobias Hallworth"),
+    )
+
+/** Search pages are short, so a broad query in the demo has a second page to load. */
+private const val SEARCH_PAGE_SIZE = 3
+
+/** Titles, then people, matching the query, [SEARCH_PAGE_SIZE] to a page. */
+private fun DemoData.searchPage(call: DemoCall): DemoAnswer {
+    val query = call.query("query").orEmpty().trim()
+    val all =
+        found(call).map { toResult(it) } + DEMO_PEOPLE.filter { query.isNotEmpty() && it.name.orEmpty().contains(query, ignoreCase = true) }
+    val page = call.intQuery("page", 1).coerceAtLeast(1)
+    val pages = ((all.size + SEARCH_PAGE_SIZE - 1) / SEARCH_PAGE_SIZE).coerceAtLeast(1)
+    val rows = all.drop((page - 1) * SEARCH_PAGE_SIZE).take(SEARCH_PAGE_SIZE)
+    return ok(SeerrTitlePageDto(page = page, totalPages = pages, totalResults = all.size, results = rows))
 }
 
 private fun <T> List<T>.interleave(other: List<T>): List<T> =

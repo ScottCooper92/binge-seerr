@@ -114,8 +114,9 @@ private fun HubRow.title(tab: HubTab): String =
         },
     )
 
+/** The one status chip a title's availability shows, on a hub card and in a search row alike; nothing when the server holds nothing of it. */
 @Composable
-private fun TitleAvailability.toStatus(): MediaCardStatus? =
+internal fun TitleAvailability.toStatus(): MediaCardStatus? =
     when (this) {
         TitleAvailability.None -> null
         TitleAvailability.Pending -> MediaCardStatus(stringResource(R.string.hubs_card_requested), BingeSentiment.Info)

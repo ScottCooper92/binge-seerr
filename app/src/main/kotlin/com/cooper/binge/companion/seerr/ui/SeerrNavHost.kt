@@ -29,6 +29,7 @@ import com.cooper.binge.companion.seerr.ui.discover.title.TitleDetailEntry
 import com.cooper.binge.companion.seerr.ui.hub.HubSection
 import com.cooper.binge.companion.seerr.ui.hubs.DiscoverHubEntry
 import com.cooper.binge.companion.seerr.ui.requests.RequestMediaType
+import com.cooper.binge.companion.seerr.ui.search.title.TitleSearchEntry
 import com.cooper.binge.companion.seerr.ui.settings.diagnostics.DiagnosticsEntry
 import com.cooper.binge.companion.seerr.ui.settings.licences.LicencesEntry
 import com.cooper.binge.companion.seerr.ui.settings.server.ServerSettingsPage
@@ -139,7 +140,11 @@ private fun EntryProviderScope<NavKey>.homeEntries(
     }
     // No pane metadata: the shell takes the whole window, and what a tab opens covers it from above.
     entry<ShellRoute> {
-        if (connected() == true && tabs != null) SeerrTabShell(tabs, discover = { DiscoverHubEntry(it) }) { hub(null) } else LoadingScreen()
+        if (connected() == true && tabs != null) {
+            SeerrTabShell(tabs, discover = { DiscoverHubEntry(it) }, search = { TitleSearchEntry() }, settings = { hub(null) })
+        } else {
+            LoadingScreen()
+        }
     }
 }
 

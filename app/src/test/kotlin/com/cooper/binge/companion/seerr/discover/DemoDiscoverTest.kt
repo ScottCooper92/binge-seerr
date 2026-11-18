@@ -89,4 +89,24 @@ class DemoDiscoverTest {
             assertTrue(api.tvGenreSlider().isNotEmpty())
         }
     }
+
+    @Test
+    fun `search finds a person and carries the type`() {
+        demo { api ->
+            val row = api.searchTitles("marlowe").results.single()
+            assertEquals("person", row.mediaType)
+            assertEquals("Marlowe Quinn", row.name)
+        }
+    }
+
+    @Test
+    fun `a broad search has a second page and the pages do not overlap`() {
+        demo { api ->
+            val first = api.searchTitles("in", page = 1)
+            val second = api.searchTitles("in", page = 2)
+            assertEquals(2, first.totalPages)
+            assertTrue(second.results.isNotEmpty())
+            assertTrue((first.results + second.results).let { rows -> rows.map { it.id }.toSet().size == rows.size })
+        }
+    }
 }
