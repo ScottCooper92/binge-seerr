@@ -420,6 +420,9 @@ class JobsViewModelTest {
             try {
                 val collector = launch(start = CoroutineStart.UNDISPATCHED) { vm.uiState.collect {} }
                 vm.awaitReady()
+                // The first read's callback is still deciding, on OkHttp's thread, whether to start the poll when the state turns Ready.
+                // Let it finish while the page is watching, or a poll started after the page left would never be stopped.
+                seerr.awaitCallbacks()
                 collector.cancel()
                 testScheduler.runCurrent()
                 // A read the poll had in flight as the page left finishes before counting: no real-time hold stands in for it.
