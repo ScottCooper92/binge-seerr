@@ -25,8 +25,13 @@ app:blocklist_unblock  712da63171e0
 app:blocklist_unblock_confirm_message  b3fbbba0b9a2
 app:blocklist_unblock_confirm_title  fa537450834b
 app:blocklist_untitled  b588b8ee4230
+app:collection_page_block  f19aca0da35c
+app:collection_page_block_held  2348f7a074a0
+app:collection_page_block_message  cc12c71a32cd
+app:collection_page_block_title  2cf38885c065
 app:collection_page_films  611a57fff3f8
 app:collection_page_meta  29160b761e52
+app:collection_page_unblock  9580ed81054d
 app:companion_refusal_blocklisted  1ef35782e4e3
 app:companion_refusal_locale  dbd3a49d0d90
 app:companion_refusal_quota  2d262170429f
@@ -1126,6 +1131,7 @@ app:setup_username_placeholder  43c6c81836dc
 app:shake_report_message  e30de55e532d
 app:shake_report_title  0ea0e0de374e
 app:shell_placeholder_message  d428420b0878
+app:shell_tab_discover  d4a33d5b78bc
 app:shell_tab_movies  dff924b69f96
 app:shell_tab_search  49c266baaaa7
 app:shell_tab_settings  74a883a037bc

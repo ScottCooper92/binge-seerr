@@ -111,6 +111,7 @@
     <string name="hub_section_settings">Ajustes</string>
     <string name="shell_tab_movies">Películas</string>
     <string name="shell_tab_tv">Series</string>
+    <string name="shell_tab_discover">Descubrir</string>
     <string name="shell_tab_search">Buscar</string>
     <string name="shell_tab_settings">Ajustes</string>
     <string name="shell_placeholder_message">Esta parte de la app llegará en una próxima actualización.</string>
@@ -1588,4 +1589,9 @@
         <item quantity="other">%d películas</item>
     </plurals>
     <string name="collection_page_meta">%1$s · %2$d por solicitar</string>
+    <string name="collection_page_block">Bloquear colección</string>
+    <string name="collection_page_unblock">Desbloquear colección</string>
+    <string name="collection_page_block_title">¿Bloquear %1$s?</string>
+    <string name="collection_page_block_message">No se podrá solicitar ninguna de sus películas hasta que se desbloquee.</string>
+    <string name="collection_page_block_held">Las películas que ya están en tu servidor o solicitadas también se bloquean, y su estado se borra si luego desbloqueas la colección.</string>
 </resources>
