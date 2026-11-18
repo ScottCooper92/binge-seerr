@@ -105,7 +105,7 @@ class TitleSearchViewModel
             search.submit()
         }
 
-        /** A movie or a series opens; the card carries the server's page for it, where Binge is not there to take it. */
+        /** A movie, a series or a person opens; the card carries the server's page for it, where Binge is not there to take it. */
         fun onOpenTitle(result: TitleResult) {
             viewModelScope.launch { eventFlow.emit(TitleSearchEvent.Open(result.toCard(media.serverUrl()))) }
         }

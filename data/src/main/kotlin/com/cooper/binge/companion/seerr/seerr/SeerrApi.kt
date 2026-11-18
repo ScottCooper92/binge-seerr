@@ -138,6 +138,18 @@ interface SeerrApi {
         @Path("tmdbId") tmdbId: Int,
     ): SeerrTvDetailsDto
 
+    /** A person's page. */
+    @GET("api/v1/person/{personId}")
+    suspend fun personDetails(
+        @Path("personId") personId: Int,
+    ): SeerrPersonDetailsDto
+
+    /** The titles a person is in, with the server's status for each, so a card can say what is already in the library. */
+    @GET("api/v1/person/{personId}/combined_credits")
+    suspend fun personCredits(
+        @Path("personId") personId: Int,
+    ): SeerrPersonCreditsDto
+
     /** One season with its episodes, for the series page's episode list and the season page. */
     @GET("api/v1/tv/{tmdbId}/season/{seasonNumber}")
     suspend fun tvSeason(
