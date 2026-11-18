@@ -20,6 +20,7 @@ import com.cooper.binge.companion.seerr.ui.IssuesRoute
 import com.cooper.binge.companion.seerr.ui.RequestsRoute
 import com.cooper.binge.companion.seerr.ui.ShellRoute
 import com.cooper.binge.companion.seerr.ui.TitleDetailRoute
+import com.cooper.binge.companion.seerr.ui.shell.SeerrTab
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
 import org.junit.After
@@ -129,7 +130,7 @@ class WideShellJourneyTest {
     }
 
     @Test
-    fun `Back on another tab returns to Settings with the section as it was left`() {
+    fun `Back on another tab returns to Settings with the section open`() {
         NavHostActivity.discoveryEnabled = true
         host.connectDemo()
         host.launch(HomeRoute, RequestsRoute)
@@ -157,6 +158,31 @@ class WideShellJourneyTest {
 
         host.compose.waitUntil(WAIT_MILLIS) { host.stack().let { it.size == 2 && it[0] == ShellRoute && it[1] is DiscoverGridRoute } }
         host.awaitShowing(host.string(R.string.hubs_row_popular_movies))
+    }
+
+    @Test
+    fun `a section left on another tab does not come back for the next server`() {
+        NavHostActivity.discoveryEnabled = true
+        host.connectDemo()
+        host.launch(HomeRoute, RequestsRoute)
+        host.compose.waitUntil(WAIT_MILLIS) { host.stack() == listOf<NavKey>(ShellRoute, RequestsRoute) }
+        host.compose.onNodeWithTag("tab_search").performClick()
+        host.compose.waitUntil(WAIT_MILLIS) { host.stack() == listOf<NavKey>(ShellRoute) }
+
+        host.disconnect()
+        host.compose.waitUntil(WAIT_MILLIS) {
+            host.compose.runOnIdle {
+                host.activity.tabs
+                    .stack(SeerrTab.Settings)
+                    .size
+            } == 1
+        }
+        host.connectDemo()
+        host.compose.waitUntil(WAIT_MILLIS) { host.stack() == listOf<NavKey>(ShellRoute) }
+        host.compose.onNodeWithTag("tab_settings").performClick()
+        host.compose.waitForIdle()
+
+        assertEquals(listOf<NavKey>(ShellRoute), host.stack())
     }
 
     @Test

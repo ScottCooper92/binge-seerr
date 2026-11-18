@@ -19,9 +19,11 @@ import com.binge.designsystem.component.BingeNavSuiteItem
 import com.binge.designsystem.component.rememberBingeNavPresentation
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.sliders.HubTab
+import com.cooper.binge.companion.seerr.ui.DefaultSection
 import com.cooper.binge.companion.seerr.ui.SeerrRoute
 import com.cooper.binge.companion.seerr.ui.hubSection
 import com.cooper.binge.companion.seerr.ui.replaceAll
+import com.cooper.binge.companion.seerr.ui.route
 import com.cooper.binge.companion.seerr.ui.state.EmptyScreen
 import kotlinx.serialization.Serializable
 
@@ -80,7 +82,8 @@ internal fun TabShellState<SeerrTab>.openLink(
  * Keeps a wide window's open section off the app's stack while another tab shows. A section on that stack is drawn by
  * [ShellPanesStrategy] inside the Settings tab, so anything pushed over it from Movies, TV or Search would be swallowed by
  * that scene. Leaving Settings moves the section's chain onto the Settings tab's own stack, and coming back puts it
- * on the app's stack again, so Back from another tab lands on Settings with the section as it was left.
+ * on the app's stack again, so Back from another tab lands on Settings with the section open. Its entries are made anew, so its
+ * filter and scroll start over. The default section seeded in three panes does not block the restore; the chain replaces it.
  */
 internal fun TabShellState<SeerrTab>.settleSectionStash(appStack: NavBackStack<NavKey>) {
     val stash = stack(SeerrTab.Settings)
@@ -90,7 +93,7 @@ internal fun TabShellState<SeerrTab>.settleSectionStash(appStack: NavBackStack<N
         stash.replaceAll(stash.take(1) + above)
         appStack.replaceAll(appStack.take(1))
     } else if (stash.size > 1) {
-        if (appStack.size == 1) appStack.addAll(stash.drop(1))
+        if (above.isEmpty() || above == listOf(DefaultSection.route())) appStack.replaceAll(appStack.take(1) + stash.drop(1))
         stash.replaceAll(stash.take(1))
     }
 }
