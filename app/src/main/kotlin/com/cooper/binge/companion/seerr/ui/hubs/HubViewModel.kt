@@ -137,7 +137,11 @@ class HubViewModel
         private fun load() {
             viewModelScope.launch { attempt { sliders.refresh() } }
             viewModelScope.launch { loadHero() }
-            viewModelScope.launch { browseAll.value = attempt { grid.canRefine(GridPreset.Popular) }.getOrDefault(true) }
+            viewModelScope.launch {
+                // A failed read keeps the answer the hub already has, and shows Browse all only where it has none.
+                val answer = attempt { grid.canRefine(GridPreset.Popular) }.getOrNull()
+                browseAll.update { answer ?: it ?: true }
+            }
         }
 
         /** A server with no trending list has no hero place at all; otherwise the place stays until the answer says there is nothing. */
