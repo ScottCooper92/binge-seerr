@@ -27,19 +27,24 @@ jobs:
   canary:
     name: canary (${{ matrix.slice }})
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: ${{ matrix.timeout }}
     strategy:
       fail-fast: false
       matrix:
         include:
           - slice: checks
-            command: ./gradlew build --continue -x :app:testDebugUnitTest -x :app:koverVerify -x :app:validateDebugScreenshotTest -x :app:assembleRelease
+            timeout: 30
+            command: ./gradlew build --continue -x testDebugUnitTest -x koverVerify -x validateDebugScreenshotTest -x assembleRelease
           - slice: tests
-            command: ./gradlew :app:testDebugUnitTest :app:koverVerify --continue
+            timeout: 30
+            command: ./gradlew testDebugUnitTest koverVerify --continue
+          # The screenshots slice gets the 45 minutes ci.yml gives its own job: a slow runner has taken twice the usual 11 to 16.
           - slice: screenshots
+            timeout: 45
             command: ./gradlew :app:validateDebugScreenshotTest --continue
           - slice: release
-            command: ./gradlew :app:assembleRelease --continue
+            timeout: 30
+            command: ./gradlew assembleRelease --continue
     steps:
       # The submodules are private to the author: the default token reads this repository only. This one is read-only.
       - name: Mint a read-only token for the submodules
