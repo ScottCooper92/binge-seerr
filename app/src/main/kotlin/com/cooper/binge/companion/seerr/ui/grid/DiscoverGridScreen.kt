@@ -39,6 +39,7 @@ import com.binge.designsystem.component.BingeFilledButton
 import com.binge.designsystem.component.DiscoverQuickClearChip
 import com.binge.designsystem.component.MediaCard
 import com.binge.designsystem.component.QuickClearTone
+import com.binge.designsystem.mediaGridColumns
 import com.binge.designsystem.navOverlayPadding
 import com.binge.designsystem.template.BingeScreenScaffold
 import com.binge.designsystem.template.ScreenBar
@@ -200,7 +201,7 @@ private fun PosterGrid(
     }
     LazyVerticalGrid(
         state = gridState,
-        columns = GridCells.Adaptive(dimensionResource(DesR.dimen.card_width)),
+        columns = GridCells.Fixed(mediaGridColumns()),
         modifier = Modifier.fillMaxSize(),
         contentPadding = contentPadding,
         horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),

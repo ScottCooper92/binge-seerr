@@ -1,6 +1,5 @@
 package com.cooper.binge.companion.seerr.discover.request
 
-import com.binge.companion.sdk.attempt
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.seerr.RequestPostOutcome
 import com.cooper.binge.companion.seerr.seerr.SEERR_MEDIA_TYPE_MOVIE
@@ -48,17 +47,11 @@ data class RequestQuota(
     val spent: Boolean get() = remaining <= 0
 }
 
-/**
- * What the request sheet may offer this user for this kind of title. [servers] is empty unless the user may choose a
- * destination, and lists a 4K server only to a user who may request 4K of this kind.
- */
-data class RequestOptions(
+/** What this user may do with a request: ask for 4K, and choose where it goes. */
+data class RequestAccess(
     val may4k: Boolean,
-    val servers: List<RequestServer>,
-    val quota: RequestQuota?,
-) {
-    val mayChooseDestination: Boolean get() = servers.isNotEmpty()
-}
+    val mayChooseDestination: Boolean,
+)
 
 /** Where a request goes when the user picked a destination; a null field is left to the server's default. */
 data class RequestDestination(
@@ -80,11 +73,18 @@ enum class RequestResult { Created, NothingToRequest, AlreadyRequested }
 
 /**
  * What the request sheet reads and writes. It knows nothing of Retrofit, so a view model holds this and a test holds a fake.
+ * Each read stands alone, so one failing cannot take the others with it.
  */
 interface RequestSheetRepository {
-    suspend fun options(kind: TitleKind): RequestOptions
+    suspend fun access(kind: TitleKind): RequestAccess
 
-    /** The profiles and root folders of [serverId], one of [RequestOptions.servers]. */
+    /** The quota for this kind of title; null where it is not metered. A failed read throws. */
+    suspend fun quota(kind: TitleKind): RequestQuota?
+
+    /** The servers this user may choose between, empty unless they may choose a destination. A failed read throws. */
+    suspend fun servers(kind: TitleKind): List<RequestServer>
+
+    /** The profiles and root folders of [serverId], one of [servers]. */
     suspend fun choices(
         kind: TitleKind,
         serverId: Int,
@@ -100,21 +100,26 @@ class SeerrRequestSheetRepository(
     private val profile: suspend () -> SeerrServerProfile,
     private val io: CoroutineDispatcher,
 ) : RequestSheetRepository {
-    override suspend fun options(kind: TitleKind): RequestOptions =
+    override suspend fun access(kind: TitleKind): RequestAccess =
         withContext(io) {
-            val user = viewer()
-            val permissions = user.toPermissions()
-            val isTv = kind == TitleKind.Series
-            val may4k = permissions.mayRequest4k(isTv, profile().settings)
-            val api = api()
-            val servers =
-                if (permissions.canRequestAdvanced) {
-                    api.offeredServers(isTv, allow4k = may4k).map { it.toRequestServer() }
-                } else {
-                    emptyList()
-                }
-            val quota = attempt { api.userQuota(user.id) }.getOrNull()
-            RequestOptions(may4k, servers, (if (isTv) quota?.tv else quota?.movie).toRequestQuota())
+            val permissions = viewer().toPermissions()
+            RequestAccess(
+                may4k = permissions.mayRequest4k(kind == TitleKind.Series, profile().settings),
+                mayChooseDestination = permissions.canRequestAdvanced,
+            )
+        }
+
+    override suspend fun quota(kind: TitleKind): RequestQuota? =
+        withContext(io) {
+            val quota = api().userQuota(viewer().id)
+            (if (kind == TitleKind.Series) quota.tv else quota.movie).toRequestQuota()
+        }
+
+    override suspend fun servers(kind: TitleKind): List<RequestServer> =
+        withContext(io) {
+            val access = access(kind)
+            if (!access.mayChooseDestination) return@withContext emptyList()
+            api().offeredServers(kind == TitleKind.Series, allow4k = access.may4k).map { it.toRequestServer() }
         }
 
     override suspend fun choices(

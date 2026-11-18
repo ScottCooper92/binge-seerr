@@ -119,6 +119,9 @@ Its packages keep the names they had as one module, so a file's package does not
 needs an internal of `:data` belongs in `:data`. What tests in both modules share, such as the fake server and the ciphers, is in
 `:data`'s `testFixtures`. The Room schemas are in `data/schemas`, committed. More modules follow in the order #2163 sets out.
 
+What each module may depend on is the table in `buildSrc/src/main/kotlin/ModuleRules.kt`, and `checkModuleRules` holds the build to it. A new module gets
+a row in the same PR, with what it may depend on and why. A row changes when the design of the modules does, not to get a build green.
+
 ## Kotlin, Gradle and Android
 
 - Kotlin via AGP's built-in support, `jvmTarget` 17, built and tested on JDK 21. The JDK runs the
@@ -219,6 +222,9 @@ has no snackbars.) The design system's `docs/messages.md` has the worked example
   it. It does not go away by itself. It is an acknowledgement, not a confirmation, so it has exactly one action; a choice is
   `BingeConfirmDialog`.
 - **In place:** a failed load stays an error screen with Retry.
+- **A red footer:** the one exception, for a sheet whose pinned primary action failed to send and got no answer. The button
+  turns red with a short reason for a few seconds, and a tap in that time opens `BingeConfirmDialog` with the full cause and
+  Retry. Use it only for a failed send from a sheet with a pinned primary; everything else keeps the forms above.
 - **A snackbar never carries text the user must read to act.** Text the server supplies, such as a rejection's reason, has
   no length bound, so it belongs in a dialog. Do not turn every message into a dialog: a short result, or a refusal with
   nothing to act on, stays a snackbar.
@@ -281,6 +287,10 @@ touching `ci.yml`, because that job excludes tasks rather than listing them.
   resolved to a version other than the catalog's `grpc`. The SDK brings `grpc-binder` at
   binge-companions' catalog version, so a `grpc` bump here needs the `binge-companions` submodule
   bumped to a revision on the same release, in a commit of its own.
+- `checkModuleRules` — a module that depends on what its row in `buildSrc/src/main/kotlin/ModuleRules.kt` does not
+  allow: another module off its list, or a forbidden library anywhere on its resolved classpath (for `:data`: Compose,
+  Activity, navigation, the design system, Hilt, Dagger or a vendor SDK). A module with no row fails too. It runs in
+  every module's `check`, and the failure names the dependency to remove.
 - `checkBaselineStaleness` — an entry in `detekt-baseline.xml` that the code no longer produces.
   An orphaned entry reads as debt still owed and absorbs the next real finding of that rule in
   that file. Delete the entry.
@@ -367,8 +377,8 @@ floor; do not lower it.
 
 **Never silence a gate instead of fixing it.** Do not add a ktlint baseline, do not
 add `ktlint` disable comments to make a file pass, do not add a `lint-baseline.xml`,
-do not set `abortOnError = false`, do not exclude a source set from `check`, and do not
-add to `detekt-baseline.xml`.
+do not set `abortOnError = false`, do not exclude a source set from `check`, do not
+add to `detekt-baseline.xml`, and do not edit a row of the module map to let a dependency through.
 Formatting failures are the cheapest class of failure to fix properly. A lint
 baseline is worse than it looks: it silences the finding permanently and silently,
 in a repository that is meant to be the reference implementation.

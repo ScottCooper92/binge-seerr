@@ -12,6 +12,7 @@ import com.binge.designsystem.component.BingeConfirmDialog
 import com.binge.designsystem.component.BingeTextButton
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.flags.LocalFlags
+import com.cooper.binge.companion.seerr.flags.bingePromotion
 
 /**
  * Disconnecting drops the saved server, so it asks first. The hub and Settings share it. On the demo server it is

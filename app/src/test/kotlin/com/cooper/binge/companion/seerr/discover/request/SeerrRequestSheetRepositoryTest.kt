@@ -77,40 +77,43 @@ class SeerrRequestSheetRepositoryTest {
 
     @Test
     fun `an admin is offered 4K, both servers and the quota left`() {
-        val options = withRepository { it.options(TitleKind.Movie) }
+        val access = withRepository { it.access(TitleKind.Movie) }
+        val servers = withRepository { it.servers(TitleKind.Movie) }
+        val quota = withRepository { it.quota(TitleKind.Movie) }
 
-        assertTrue(options.may4k)
-        assertEquals(listOf("Radarr", "Radarr 4K"), options.servers.map { it.name })
-        assertEquals(listOf(false, true), options.servers.map { it.is4k })
-        assertEquals(RequestQuota(limit = 10, remaining = 2, days = 7), options.quota)
-        assertTrue(options.mayChooseDestination)
+        assertTrue(access.may4k)
+        assertTrue(access.mayChooseDestination)
+        assertEquals(listOf("Radarr", "Radarr 4K"), servers.map { it.name })
+        assertEquals(listOf(false, true), servers.map { it.is4k })
+        assertEquals(RequestQuota(limit = 10, remaining = 2, days = 7), quota)
     }
 
     @Test
     fun `a request-only user has no destination to choose and no 4K`() {
         permissions = PERMISSION_REQUEST
 
-        val options = withRepository { it.options(TitleKind.Movie) }
+        val access = withRepository { it.access(TitleKind.Movie) }
+        val servers = withRepository { it.servers(TitleKind.Movie) }
 
-        assertFalse(options.may4k)
-        assertTrue(options.servers.isEmpty())
-        assertFalse(options.mayChooseDestination)
+        assertFalse(access.may4k)
+        assertFalse(access.mayChooseDestination)
+        assertTrue(servers.isEmpty())
     }
 
     @Test
     fun `an advanced user without 4K is never offered a 4K server`() {
         permissions = PERMISSION_REQUEST or PERMISSION_REQUEST_ADVANCED
 
-        val options = withRepository { it.options(TitleKind.Movie) }
+        val servers = withRepository { it.servers(TitleKind.Movie) }
 
-        assertEquals(listOf("Radarr"), options.servers.map { it.name })
+        assertEquals(listOf("Radarr"), servers.map { it.name })
     }
 
     @Test
     fun `a type with no limit has no quota`() {
-        val options = withRepository { it.options(TitleKind.Series) }
+        val quota = withRepository { it.quota(TitleKind.Series) }
 
-        assertNull(options.quota)
+        assertNull(quota)
     }
 
     @Test

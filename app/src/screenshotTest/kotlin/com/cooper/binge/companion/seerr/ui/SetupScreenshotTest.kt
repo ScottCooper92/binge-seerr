@@ -13,6 +13,7 @@ import com.cooper.binge.companion.seerr.preview.SeerrTabletPanesPreview
 import com.cooper.binge.companion.seerr.seerr.SeerrSignInMode
 import com.cooper.binge.companion.seerr.ui.tv.NoSetupActions
 import com.cooper.homelab.core.flags.Flags
+import com.cooper.homelab.core.flags.SharedFlags
 
 /**
  * The phone setup: the two steps' layouts across the device matrix, then each state of them on the
@@ -260,7 +261,7 @@ private fun SetupFrame(
     title: String? = null,
     onBack: (() -> Unit)? = null,
 ) {
-    CompositionLocalProvider(LocalFlags provides Flags.AllOn) {
+    CompositionLocalProvider(LocalFlags provides Flags.of(SharedFlags.BingePromotion to true, SharedFlags.ReviewPrompt to true)) {
         SetupScreen(state = state, actions = actions, title = title, onBack = onBack)
     }
 }

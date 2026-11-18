@@ -9,6 +9,7 @@ import com.cooper.binge.companion.seerr.preview.SeerrFontScalePreviews
 import com.cooper.binge.companion.seerr.preview.SeerrScreenPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrScreenStatePreview
 import com.cooper.binge.companion.seerr.preview.SeerrSpanishPreviews
+import com.cooper.binge.companion.seerr.preview.SeerrTabletPanesPreview
 import kotlinx.coroutines.flow.emptyFlow
 
 private const val EPISODES_PX = 1900
@@ -31,6 +32,11 @@ class SeriesPageScreenshotTest {
     @SeerrScreenPreviews
     @Composable
     fun requestable() = Frame(SeriesPageUiState.Ready(fullSeries(), seriesExtras()))
+
+    @PreviewTest
+    @SeerrTabletPanesPreview
+    @Composable
+    fun requestableTablet() = Frame(SeriesPageUiState.Ready(fullSeries(), seriesExtras()))
 
     /** The season picker sheet's content: one season in each state, the status beside the ones the server holds, the shown one checked. */
     @PreviewTest

@@ -4,9 +4,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.binge.companion.sdk.attempt
 import com.cooper.binge.companion.seerr.discover.TitleKind
+import com.cooper.binge.companion.seerr.discover.request.RequestAccess
 import com.cooper.binge.companion.seerr.discover.request.RequestChoices
 import com.cooper.binge.companion.seerr.discover.request.RequestDestination
-import com.cooper.binge.companion.seerr.discover.request.RequestOptions
+import com.cooper.binge.companion.seerr.discover.request.RequestQuota
 import com.cooper.binge.companion.seerr.discover.request.RequestResult
 import com.cooper.binge.companion.seerr.discover.request.RequestServer
 import com.cooper.binge.companion.seerr.discover.request.RequestSheetRepository
@@ -20,19 +21,19 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 /**
  * The title a request sheet is for. [seasons] is empty for a movie, and for a series means the whole show. [standardOpen] and
  * [fourKOpen] say which versions the server holds nothing of, so the sheet never offers one that is already requested.
  * [seasonChoices] is a show's seasons per version, and [partialRequests] is the server's setting for sending only some.
+ * [posterUrl] and [meta] ("2023 · 2h 1m") head the sheet.
  */
 data class RequestSheetTarget(
     val kind: TitleKind,
@@ -43,6 +44,8 @@ data class RequestSheetTarget(
     val fourKOpen: Boolean = true,
     val seasonChoices: SeasonChoices? = null,
     val partialRequests: Boolean = true,
+    val posterUrl: String? = null,
+    val meta: String? = null,
 )
 
 /** Why a send failed, in the terms the dialog explains. [detail] is the server's own sentence, where it gave one. */
@@ -51,24 +54,62 @@ data class RequestProblem(
     val detail: String?,
 )
 
-enum class RequestProblemCause { Quota, NotAllowed, Unreachable, AlreadyThere, Other }
+enum class RequestProblemCause { Quota, NotAllowed, Unreachable, Other }
 
-/** Where the request goes when the user chose a destination. [choices] is null while the server's own lists are being read. */
+/** The quota read. [Known] holds null where the server does not meter this kind of title, which is no row at all. */
+sealed interface QuotaState {
+    data object Loading : QuotaState
+
+    data class Known(
+        val quota: RequestQuota?,
+    ) : QuotaState
+
+    data object Failed : QuotaState
+}
+
+/** The servers the user may choose between, read once and kept. */
+sealed interface ServersState {
+    data object Loading : ServersState
+
+    data class Ready(
+        val servers: List<RequestServer>,
+    ) : ServersState
+
+    data object Failed : ServersState
+}
+
+/** The chosen server's profiles and folders. While they are not [Ready] the sheet will not send what it cannot show. */
+sealed interface ChoicesState {
+    data object Loading : ChoicesState
+
+    data class Ready(
+        val choices: RequestChoices,
+    ) : ChoicesState
+
+    data object Failed : ChoicesState
+}
+
+/** Where the request goes when the user opened Advanced options and chose a destination. */
 data class DestinationPick(
     val serverId: Int,
     val profileId: Int?,
     val rootFolder: String?,
-    val choices: RequestChoices?,
+    val choices: ChoicesState,
 ) {
     /** The lists the chosen server gave, with the current pick kept where it still offers it, else its first. */
     fun withChoices(loaded: RequestChoices): DestinationPick =
         copy(
-            choices = loaded,
+            choices = ChoicesState.Ready(loaded),
             profileId = loaded.profiles.firstOrNull { it.id == profileId }?.id ?: loaded.profiles.firstOrNull()?.id ?: profileId,
             rootFolder = loaded.rootFolders.firstOrNull { it == rootFolder } ?: loaded.rootFolders.firstOrNull() ?: rootFolder,
         )
 }
 
+/**
+ * [problem] is a refusal with a cause and a next step, shown in a dialog with one OK. [failure] is a send that did not get an
+ * answer: the footer button turns red for a few seconds ([footerFailed]), and a tap in that time opens [failureDialog] to retry.
+ * [advancedExpanded] is whether Advanced options is open; closed, the request is a plain one.
+ */
 sealed interface RequestSheetUiState {
     data object Loading : RequestSheetUiState
 
@@ -78,43 +119,58 @@ sealed interface RequestSheetUiState {
 
     data class Ready(
         val target: RequestSheetTarget,
-        val options: RequestOptions,
+        val access: RequestAccess,
+        val quota: QuotaState = QuotaState.Loading,
+        val servers: ServersState = ServersState.Loading,
         val use4k: Boolean = false,
+        val advancedExpanded: Boolean = false,
         val pick: DestinationPick? = null,
         val submitting: Boolean = false,
         val problem: RequestProblem? = null,
+        val failure: RequestProblem? = null,
+        val footerFailed: Boolean = false,
+        val failureDialog: Boolean = false,
         val pickedSeasons: Set<Int> = emptySet(),
     ) : RequestSheetUiState {
+        val knownQuota: RequestQuota? get() = (quota as? QuotaState.Known)?.quota
+
         /** A show's seasons of the chosen version, with what the user ticked; null for a film. */
         val seasons: SeasonSelection?
             get() =
                 target.seasonChoices?.let {
-                    SeasonSelection(
-                        it.of(use4k),
-                        target.partialRequests,
-                        pickedSeasons,
-                        limit = options.quota?.remaining,
-                    )
+                    SeasonSelection(it.of(use4k), target.partialRequests, pickedSeasons, limit = knownQuota?.remaining)
                 }
 
         /** The servers of the chosen version: 4K is a property of a server, so the 4K switch narrows this list. */
-        val servers: List<RequestServer> get() = options.servers.filter { it.is4k == use4k }
+        val servers4k: List<RequestServer> get() = (servers as? ServersState.Ready)?.servers.orEmpty().filter { it.is4k == use4k }
 
-        val quotaSpent: Boolean get() = options.quota?.spent == true
+        /** Advanced options is offered to a user who may choose, unless the servers read and hold none of this version. */
+        val showAdvanced: Boolean get() = access.mayChooseDestination && (servers !is ServersState.Ready || servers4k.isNotEmpty())
+
+        val quotaSpent: Boolean get() = knownQuota?.spent == true
 
         /** The 4K switch moves only while both versions are open to request; with one left, that one is the choice. */
-        val canToggle4k: Boolean get() = options.may4k && target.standardOpen && target.fourKOpen && !submitting
+        val canToggle4k: Boolean get() = access.may4k && target.standardOpen && target.fourKOpen && !submitting
 
-        /** A pick whose lists have not read yet still submits: the server fills an empty axis with its own default. */
-        val canSubmit: Boolean get() = !submitting && !quotaSpent && (seasons?.canSubmit ?: true)
+        /** Open and not yet showing real lists: sending now would send defaults the user never saw. */
+        val advancedBlocking: Boolean
+            get() = advancedExpanded && showAdvanced && (servers !is ServersState.Ready || pick?.choices !is ChoicesState.Ready)
+
+        val canSubmit: Boolean get() = !submitting && !quotaSpent && !advancedBlocking && (seasons?.canSubmit ?: true)
     }
 }
 
+/** [Done] is any answer that leaves nothing more to do: a request made, one already there, or nothing left to ask for. */
 sealed interface RequestSheetEvent {
     data class Done(
         val result: RequestResult,
     ) : RequestSheetEvent
 }
+
+private const val FOOTER_FAILURE_MILLIS = 4_000L
+
+/** Which of the sheet's reads to try again. */
+enum class RequestRead { Quota, Servers, Choices }
 
 @HiltViewModel(assistedFactory = RequestSheetViewModel.Factory::class)
 class RequestSheetViewModel
@@ -128,112 +184,133 @@ class RequestSheetViewModel
             fun create(target: RequestSheetTarget): RequestSheetViewModel
         }
 
-        private val state = MutableStateFlow<RequestSheetUiState>(RequestSheetUiState.Loading)
-        val uiState: StateFlow<RequestSheetUiState> = state.asStateFlow()
+        private val store = RequestSheetStore()
+        private val reads = RequestSheetReads(repository, target, store, viewModelScope)
+
+        val uiState: StateFlow<RequestSheetUiState> = store.flow
 
         private val eventFlow = MutableSharedFlow<RequestSheetEvent>(extraBufferCapacity = 1)
         val events: SharedFlow<RequestSheetEvent> = eventFlow.asSharedFlow()
+
+        /** The timer that turns the red footer back; a new send or a new failure replaces it, so an old one cannot cut a newer window short. */
+        private var footerTimer: Job? = null
 
         init {
             load()
         }
 
         fun load() {
-            state.value = RequestSheetUiState.Loading
+            store.set(RequestSheetUiState.Loading)
             viewModelScope.launch {
-                attempt { repository.options(target.kind) }.fold(
-                    onSuccess = { options ->
-                        val use4k = options.may4k && !target.standardOpen && target.fourKOpen
-                        val pick = options.servers.pickFor(use4k)
-                        state.value = RequestSheetUiState.Ready(target, options, use4k = use4k, pick = pick)
-                        pick?.let { loadChoices(it.serverId) }
+                attempt { repository.access(target.kind) }.fold(
+                    onSuccess = { access ->
+                        val use4k = access.may4k && !target.standardOpen && target.fourKOpen
+                        val servers = if (access.mayChooseDestination) ServersState.Loading else ServersState.Ready(emptyList())
+                        store.set(RequestSheetUiState.Ready(target, access, servers = servers, use4k = use4k))
+                        reads.quota()
+                        if (access.mayChooseDestination) reads.servers()
                     },
-                    onFailure = { state.value = RequestSheetUiState.Error(it.toSeerrError()) },
+                    onFailure = { store.set(RequestSheetUiState.Error(it.toSeerrError())) },
                 )
             }
         }
 
+        fun retry(read: RequestRead) =
+            when (read) {
+                RequestRead.Quota -> {
+                    store.update { it.copy(quota = QuotaState.Loading) }
+                    reads.quota()
+                }
+                RequestRead.Servers -> {
+                    store.update { it.copy(servers = ServersState.Loading) }
+                    reads.servers()
+                }
+                RequestRead.Choices ->
+                    store.ready()?.pick?.serverId?.let { serverId ->
+                        store.updatePick { it.copy(choices = ChoicesState.Loading) }
+                        reads.choices(serverId)
+                    }
+            }
+
         fun setUse4k(use4k: Boolean) {
-            val current = ready() ?: return
+            val current = store.ready() ?: return
             if (current.use4k == use4k || !current.canToggle4k) return
-            val pick = current.options.servers.pickFor(use4k)
-            state.value = current.copy(use4k = use4k, pick = pick, pickedSeasons = emptySet())
-            pick?.let { loadChoices(it.serverId) }
+            val pick = (current.servers as? ServersState.Ready)?.servers.orEmpty().pickFor(use4k)
+            store.set(current.copy(use4k = use4k, pick = pick, pickedSeasons = emptySet()))
+            pick?.let { reads.choices(it.serverId) }
         }
 
-        fun toggleSeason(number: Int) = pickSeasons { it.toggle(number) }
+        fun setAdvancedExpanded(expanded: Boolean) = store.update { it.copy(advancedExpanded = expanded) }
 
-        fun toggleAllSeasons() = pickSeasons { it.toggleAll() }
+        /** Flips one season, or every open one for `null`. */
+        fun toggleSeasons(number: Int?) =
+            store.update { current ->
+                current.seasons?.let { current.copy(pickedSeasons = (number?.let(it::toggle) ?: it.toggleAll()).picked) } ?: current
+            }
 
         fun selectServer(id: Int) {
-            val current = ready() ?: return
-            val server = current.servers.firstOrNull { it.id == id } ?: return
+            val current = store.ready() ?: return
+            val server = current.servers4k.firstOrNull { it.id == id } ?: return
             if (current.pick?.serverId == id) return
-            state.value = current.copy(pick = DestinationPick(server.id, server.profileId, server.rootFolder, choices = null))
-            loadChoices(id)
+            store.set(current.copy(pick = DestinationPick(server.id, server.profileId, server.rootFolder, ChoicesState.Loading)))
+            reads.choices(id)
         }
 
-        fun selectProfile(id: Int) = updatePick { it.copy(profileId = id) }
+        fun selectProfile(id: Int) = store.updatePick { it.copy(profileId = id) }
 
-        fun selectRootFolder(path: String) = updatePick { it.copy(rootFolder = path) }
+        fun selectRootFolder(path: String) = store.updatePick { it.copy(rootFolder = path) }
 
-        fun dismissProblem() = updateReady { it.copy(problem = null) }
+        fun dismissProblem() = store.update { it.copy(problem = null) }
 
-        private fun pickSeasons(change: (SeasonSelection) -> SeasonSelection) =
-            updateReady { current -> current.seasons?.let { current.copy(pickedSeasons = change(it).picked) } ?: current }
+        /** A tap on the footer while it shows the failure opens the dialog that explains it and offers Retry. */
+        fun openFailure() = store.update { if (it.failure != null) it.copy(failureDialog = true) else it }
+
+        fun dismissFailure() = store.update { it.copy(failureDialog = false, failure = null, footerFailed = false) }
 
         fun submit() {
-            val current = ready() ?: return
+            val current = store.ready() ?: return
             if (!current.canSubmit) return
-            state.value = current.copy(submitting = true, problem = null)
+            footerTimer?.cancel()
+            store.set(current.copy(submitting = true, problem = null, failure = null, footerFailed = false, failureDialog = false))
+            val destination = current.pick?.takeIf { current.advancedExpanded && current.showAdvanced }
             val submission =
                 RequestSubmission(
                     kind = target.kind,
                     tmdbId = target.tmdbId,
                     seasons = current.seasons?.requestSeasons ?: target.seasons,
                     is4k = current.use4k,
-                    destination = current.pick?.let { RequestDestination(it.serverId, it.profileId, it.rootFolder) },
+                    destination = destination?.let { RequestDestination(it.serverId, it.profileId, it.rootFolder) },
                 )
             viewModelScope.launch {
                 attempt { repository.submit(submission) }.fold(
                     onSuccess = { result ->
-                        if (result == RequestResult.Created) {
-                            eventFlow.tryEmit(RequestSheetEvent.Done(result))
-                            // This ViewModel outlives the sheet, so the next opening must not start from the old send.
-                            load()
-                        } else {
-                            // The server took the call and made nothing: say so in a dialog the user acknowledges, not a vanishing sheet.
-                            updateReady { it.copy(submitting = false, problem = RequestProblem(RequestProblemCause.AlreadyThere, null)) }
-                        }
+                        eventFlow.tryEmit(RequestSheetEvent.Done(result))
+                        // This ViewModel outlives the sheet, so the next opening must not start from the old send.
+                        load()
                     },
-                    onFailure = { error -> updateReady { it.copy(submitting = false, problem = error.toProblem()) } },
+                    onFailure = { error -> onSendFailed(error.toProblem()) },
                 )
             }
         }
 
-        private fun loadChoices(serverId: Int) {
-            viewModelScope.launch {
-                // A server whose lists will not read keeps its own defaults, which the server accepts, and the pickers stay shut.
-                val loaded = attempt { repository.choices(target.kind, serverId) }.getOrNull() ?: return@launch
-                updatePick { pick -> if (pick.serverId == serverId) pick.withChoices(loaded) else pick }
+        private fun onSendFailed(problem: RequestProblem) {
+            val answered =
+                problem.cause == RequestProblemCause.Quota ||
+                    problem.cause == RequestProblemCause.NotAllowed ||
+                    (problem.cause == RequestProblemCause.Other && !problem.detail.isNullOrBlank())
+            if (answered) {
+                store.update { it.copy(submitting = false, problem = problem) }
+                return
             }
+            store.update { it.copy(submitting = false, failure = problem, footerFailed = true) }
+            footerTimer?.cancel()
+            footerTimer =
+                viewModelScope.launch {
+                    delay(FOOTER_FAILURE_MILLIS)
+                    store.update { if (!it.failureDialog) it.copy(footerFailed = false) else it }
+                }
         }
-
-        private fun ready(): RequestSheetUiState.Ready? = state.value as? RequestSheetUiState.Ready
-
-        private fun updateReady(transform: (RequestSheetUiState.Ready) -> RequestSheetUiState.Ready) =
-            state.update { (it as? RequestSheetUiState.Ready)?.let(transform) ?: it }
-
-        private fun updatePick(transform: (DestinationPick) -> DestinationPick) =
-            updateReady { current -> current.copy(pick = current.pick?.let(transform)) }
     }
-
-/** The preselected server of a version: the server's default, else its first; null where the user has none to choose. */
-private fun List<RequestServer>.pickFor(use4k: Boolean): DestinationPick? {
-    val ofVersion = filter { it.is4k == use4k }
-    val server = ofVersion.firstOrNull { it.isDefault } ?: ofVersion.firstOrNull() ?: return null
-    return DestinationPick(server.id, server.profileId, server.rootFolder, choices = null)
-}
 
 private fun Throwable.toProblem(): RequestProblem {
     val cause =
