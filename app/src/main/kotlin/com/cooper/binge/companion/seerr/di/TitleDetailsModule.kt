@@ -1,7 +1,9 @@
 package com.cooper.binge.companion.seerr.di
 
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
+import com.cooper.binge.companion.seerr.discover.title.SeerrTitleCreditsRepository
 import com.cooper.binge.companion.seerr.discover.title.SeerrTitleDetailsRepository
+import com.cooper.binge.companion.seerr.discover.title.TitleCreditsRepository
 import com.cooper.binge.companion.seerr.discover.title.TitleDetailsRepository
 import dagger.Module
 import dagger.Provides
@@ -25,4 +27,10 @@ object TitleDetailsModule {
             serverUrl = { connection.current().baseUrl },
             io = io,
         )
+
+    @Provides
+    fun titleCreditsRepository(
+        connection: SeerrConnection,
+        @IoDispatcher io: CoroutineDispatcher,
+    ): TitleCreditsRepository = SeerrTitleCreditsRepository(api = connection::api, io = io)
 }

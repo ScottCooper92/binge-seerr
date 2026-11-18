@@ -1479,4 +1479,19 @@
     <string name="title_page_status_planned">Planned</string>
     <string name="title_page_status_rumored">Rumoured</string>
     <string name="title_page_status_canceled">Cancelled</string>
+    <string name="title_credits_title">Cast and crew</string>
+    <string name="title_credits_cast">Cast</string>
+    <string name="title_credits_department_other">Other</string>
+    <string name="title_credits_department_directing">Directing</string>
+    <string name="title_credits_department_writing">Writing</string>
+    <string name="title_credits_department_production">Production</string>
+    <string name="title_credits_department_camera">Camera</string>
+    <string name="title_credits_department_sound">Sound</string>
+    <string name="title_credits_department_art">Art</string>
+    <string name="title_credits_department_editing">Editing</string>
+    <string name="title_credits_department_costume">Costume and make-up</string>
+    <string name="title_credits_department_visual_effects">Visual effects</string>
+    <string name="title_credits_department_lighting">Lighting</string>
+    <string name="title_credits_department_crew">Crew</string>
+    <string name="title_credits_department_actors">Additional cast</string>
 </resources>

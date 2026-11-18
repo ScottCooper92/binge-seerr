@@ -71,8 +71,8 @@ internal fun TitlePageBody(
             rows = movie.factRows(LocalContext.current.resources, LocalConfiguration.current.locales[0]),
             modifier = Modifier.padding(horizontal = gap),
         )
-        PeopleRow(stringResource(R.string.title_page_cast), movie.cast, actions.onOpenPerson)
-        PeopleRow(stringResource(R.string.title_page_crew), movie.keyCrew, actions.onOpenPerson)
+        PeopleRow(stringResource(R.string.title_page_cast), movie.cast, actions.onOpenPerson, actions.onOpenCredits)
+        PeopleRow(stringResource(R.string.title_page_crew), movie.keyCrew, actions.onOpenPerson, actions.onOpenCredits)
         VideosGroup(movie, actions.onOpenUrl)
         movie.providers?.takeIf { it.streaming.isNotEmpty() }?.let { providers ->
             SectionHeader(stringResource(R.string.title_page_where_to_watch))
@@ -151,9 +151,10 @@ private fun PeopleRow(
     title: String,
     people: List<TitlePerson>,
     onOpen: (Int) -> Unit,
+    onSeeAll: () -> Unit,
 ) {
     if (people.isEmpty()) return
-    MediaCarousel(title = title, items = people, itemKey = { it.personId }) { _, person ->
+    MediaCarousel(title = title, items = people, itemKey = { it.personId }, onMoreClick = onSeeAll, onEndTileClick = null) { _, person ->
         PersonCard(
             name = person.name,
             subtitle = person.role,

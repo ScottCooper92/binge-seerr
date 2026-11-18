@@ -24,6 +24,7 @@ internal fun TitleDetailEntry(
     kind: TitleKind,
     tmdbId: Int,
     onBack: () -> Unit,
+    onOpenCredits: () -> Unit,
 ) {
     if (kind != TitleKind.Movie) {
         EmptyScreen(message = "")
@@ -46,6 +47,7 @@ internal fun TitleDetailEntry(
                 onOpenTitle = { result: TitleResult -> openTitle(result.kind, result.tmdbId, "") },
                 onOpenPerson = {},
                 onOpenCollection = {},
+                onOpenCredits = onOpenCredits,
                 onOpenUrl = context::openInBrowser,
             ),
     )

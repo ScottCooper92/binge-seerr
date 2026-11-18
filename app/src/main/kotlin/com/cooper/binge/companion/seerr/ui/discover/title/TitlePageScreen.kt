@@ -35,6 +35,7 @@ class TitlePageActions(
     val onOpenPerson: (Int) -> Unit,
     val onOpenCollection: (Int) -> Unit,
     val onOpenUrl: (String) -> Unit,
+    val onOpenCredits: () -> Unit,
 )
 
 /** The film page: a hero, the facts and people, and Request pinned below; a request is the primary action. */

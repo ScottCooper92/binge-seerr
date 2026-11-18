@@ -1422,4 +1422,19 @@
     <string name="title_page_status_planned">Planeada</string>
     <string name="title_page_status_rumored">Rumoreada</string>
     <string name="title_page_status_canceled">Cancelada</string>
+    <string name="title_credits_title">Reparto y equipo</string>
+    <string name="title_credits_cast">Reparto</string>
+    <string name="title_credits_department_other">Otros</string>
+    <string name="title_credits_department_directing">Dirección</string>
+    <string name="title_credits_department_writing">Guion</string>
+    <string name="title_credits_department_production">Producción</string>
+    <string name="title_credits_department_camera">Cámara</string>
+    <string name="title_credits_department_sound">Sonido</string>
+    <string name="title_credits_department_art">Arte</string>
+    <string name="title_credits_department_editing">Montaje</string>
+    <string name="title_credits_department_costume">Vestuario y maquillaje</string>
+    <string name="title_credits_department_visual_effects">Efectos visuales</string>
+    <string name="title_credits_department_lighting">Iluminación</string>
+    <string name="title_credits_department_crew">Equipo técnico</string>
+    <string name="title_credits_department_actors">Reparto adicional</string>
 </resources>
