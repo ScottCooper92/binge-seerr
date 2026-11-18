@@ -183,6 +183,8 @@
     <string name="grid_filter_clear_from">Clear the start date</string>
     <string name="grid_filter_clear_to">Clear the end date</string>
     <string name="grid_filter_range" translatable="false">%1$s – %2$s</string>
+    <string name="grid_filter_release_from">From %1$s</string>
+    <string name="grid_filter_release_until">Until %1$s</string>
     <string name="grid_filter_rating_value">%1$d or higher</string>
     <string name="grid_filter_votes_value">%1$s votes or more</string>
     <string name="grid_filter_runtime_between">%1$d to %2$d min</string>

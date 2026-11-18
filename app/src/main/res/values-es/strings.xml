@@ -163,6 +163,8 @@
     <string name="grid_filter_to">Hasta</string>
     <string name="grid_filter_clear_from">Borrar la fecha de inicio</string>
     <string name="grid_filter_clear_to">Borrar la fecha final</string>
+    <string name="grid_filter_release_from">Desde %1$s</string>
+    <string name="grid_filter_release_until">Hasta %1$s</string>
     <string name="grid_filter_rating_value">%1$d o más</string>
     <string name="grid_filter_votes_value">%1$s votos o más</string>
     <string name="grid_filter_runtime_between">De %1$d a %2$d min</string>

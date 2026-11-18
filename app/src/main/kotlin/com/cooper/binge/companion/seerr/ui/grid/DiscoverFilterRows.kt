@@ -19,6 +19,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -29,6 +30,7 @@ import com.cooper.binge.companion.seerr.discover.grid.DiscoverFilters
 import com.cooper.binge.companion.seerr.discover.grid.ReleasePreset
 import java.text.NumberFormat
 import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 import com.binge.designsystem.R as DesR
 
 /** The filters the sheet edits, each a row that opens its own page. */
@@ -112,11 +114,19 @@ internal fun DiscoverFilterSection.summary(
 private fun releaseSummary(
     filters: DiscoverFilters,
     today: LocalDate,
-): String =
-    when (val preset = ReleasePreset.of(filters.releaseFrom, filters.releaseTo, today)) {
-        null -> stringResource(R.string.grid_filter_range, filters.releaseFrom ?: "…", filters.releaseTo ?: "…")
-        else -> stringResource(preset.label())
+): String {
+    val preset = ReleasePreset.of(filters.releaseFrom, filters.releaseTo, today)
+    if (preset != null) return stringResource(preset.label())
+    val locale = LocalConfiguration.current.locales[0]
+    val month = DateTimeFormatter.ofPattern("LLL yyyy", locale)
+    val from = filters.releaseFrom?.let { LocalDate.parse(it).format(month) }
+    val to = filters.releaseTo?.let { LocalDate.parse(it).format(month) }
+    return when {
+        from != null && to != null -> stringResource(R.string.grid_filter_range, from, to)
+        from != null -> stringResource(R.string.grid_filter_release_from, from)
+        else -> stringResource(R.string.grid_filter_release_until, to.orEmpty())
     }
+}
 
 @Composable
 private fun runtimeSummary(filters: DiscoverFilters): String? {
