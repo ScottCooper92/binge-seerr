@@ -87,7 +87,7 @@ jobs:
       # report does. Printing it keeps the answer in the log rather than only in the artifact (#807).
       - name: Print the coroutine leak report
         if: ${{ failure() && matrix.slice == 'tests' }}
-        run: cat app/build/reports/tests/testDebugUnitTest/coroutine-leaks.txt 2>/dev/null || echo "No coroutine leak was reported."
+        run: cat */build/reports/tests/testDebugUnitTest/coroutine-leaks.txt 2>/dev/null || echo "No coroutine leak was reported."
 
       - name: Upload reports
         if: ${{ failure() }}
