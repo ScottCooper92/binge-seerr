@@ -1,8 +1,6 @@
 package com.cooper.binge.companion.seerr.ui
 
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
-import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
-import androidx.compose.material3.adaptive.layout.calculatePaneScaffoldDirective
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -17,6 +15,8 @@ import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.ui.NavDisplay
+import com.binge.designsystem.PaneContent
+import com.binge.designsystem.PaneEdge
 import com.cooper.binge.companion.seerr.flags.LocalDiscoveryEnabled
 import com.cooper.binge.companion.seerr.ui.discover.title.LocalOpenTitle
 import com.cooper.binge.companion.seerr.ui.discover.title.rememberOpenTitle
@@ -30,7 +30,7 @@ import com.cooper.binge.companion.seerr.ui.shell.SeerrTab
 import com.cooper.binge.companion.seerr.ui.shell.SeerrTabShell
 import com.cooper.binge.companion.seerr.ui.shell.TabShellState
 import com.cooper.binge.companion.seerr.ui.shell.popToRoot
-import com.cooper.binge.companion.seerr.ui.shell.settleSections
+import com.cooper.binge.companion.seerr.ui.shell.settleSectionStash
 import com.cooper.binge.companion.seerr.ui.state.LoadingScreen
 
 /**
@@ -59,21 +59,27 @@ fun SeerrNavHost(
     // Keyed on the root as well as the connection: a notification's link replaces the stack with one
     // rooted on HomeRoute, and it can arrive after the connection has already resolved.
     val root = backStack.firstOrNull()
-    // The tab bar is for every window with the flag on. A wide one keeps Settings' hub beside its sections inside that tab.
-    val wide = calculatePaneScaffoldDirective(currentWindowAdaptiveInfoV2()).maxHorizontalPartitions > 1
+    // The tab bar is for every window with the flag on. A wide one draws a section beside the hub in the Settings tab.
     val shell = tabs != null && LocalDiscoveryEnabled.current
     LaunchedEffect(connected, root, shell) { backStack.settleHome(connected, shell) }
-    // A section open on one kind of window moves to where the other kind shows it, and a sign-out forgets what Settings had open.
-    // Keyed on what the stack holds, not its size (a link can replace it with one of the same length), and on the tab showing.
-    LaunchedEffect(shell, wide, backStack.toList(), tabs?.selected) { if (shell && tabs != null) tabs.settleSections(backStack, wide) }
+    // A section stashed on the Settings tab belongs to the server it was opened on: a sign-out empties it, so the next server does not open it.
     LaunchedEffect(connected) { if (connected == false) tabs?.stack(SeerrTab.Settings)?.popToRoot() }
+    // The default section is seeded only while the Settings tab shows: another tab's pushes must not sit above a section.
+    val settingsSelected = tabs == null || tabs.selected == SeerrTab.Settings
     // The default section is off the stack, so Back from it leaves; the host's own Back shares the once-only exit.
     val exit = rememberExitOnce(onExit)
     // A disconnect still waiting on the server is not a connection to ask a review of: its card would show as the user leaves.
     val askable = remember(state) { derivedStateOf { if (state.value == HomeUiState.Disconnecting) false else state.value.connected() } }
     ReviewPromptOnReturnToRoot(connected = askable.value, stackDepth = backStack.size)
     CompositionLocalProvider(LocalOpenTitle provides rememberOpenTitle(backStack)) {
-        SeerrPaneHost(backStack, connected, exit, modifier, defaultSection = { DefaultSectionPane(backStack, exit) }) { panes ->
+        SeerrPaneHost(
+            backStack,
+            connected,
+            exit,
+            modifier,
+            defaultSection = { DefaultSectionPane(backStack, exit) },
+            settingsSelected = settingsSelected,
+        ) { panes ->
             homeEntries(backStack, connected = { connectedState.value }, panes = panes, onExit = exit, tabs = tabs)
             settingsEntries(backStack, connected = { connectedState.value }, panes = panes, onExit = exit)
             discoverGridEntries(backStack)
@@ -110,28 +116,32 @@ private fun EntryProviderScope<NavKey>.homeEntries(
             else -> LoadingScreen()
         }
     }
-    // No pane metadata: the shell takes the whole window, and what a tab opens covers it from above.
-    entry<ShellRoute> {
+    // On a phone the shell takes the whole window and what a tab opens covers it from above. A wide window's strategy draws the
+    // open section beside the hub, inside the Settings tab.
+    entry<ShellRoute>(metadata = ShellPane) {
         if (connected() == true && tabs != null) {
+            val hubBeside = panes.hubBeside()
+            val stack = backStack.toList()
+            LaunchedEffect(tabs.selected, hubBeside, stack) { if (hubBeside) tabs.settleSectionStash(backStack) }
             SeerrTabShell(tabs, discover = {
                 DiscoverHubEntry(
                     it,
                     onOpenGrid = { grid, title -> backStack.push(DiscoverGridRoute(grid.kind, grid.preset, title)) },
                     onOpenRequests = {
-                        if (panes.hubBeside()) {
-                            tabs.show(SeerrTab.Settings)
-                            tabs.stack(SeerrTab.Settings).openSection(HubSection.Requests)
-                        } else {
-                            backStack.openSection(HubSection.Requests)
-                        }
+                        if (panes.hubBeside()) tabs.show(SeerrTab.Settings)
+                        backStack.openSection(HubSection.Requests)
                     },
                 )
             }, search = { TitleSearchEntry() }, grid = { DiscoverTabEntry(tabs.stack(SeerrTab.Discover)) }, settings = {
                 if (panes.hubBeside()) {
                     SettingsPanes(
-                        tabs.stack(SeerrTab.Settings),
-                        connected,
-                        onExit,
+                        threePane = panes.threePane(),
+                        hub = {
+                            PaneContent(innerEdge = PaneEdge.End) {
+                                SettingsHub(backStack, panes, backStack.selectedSection(defaultShowing = true))
+                            }
+                        },
+                        defaultSection = { DefaultSectionPane(backStack, onExit) },
                     )
                 } else {
                     SettingsHub(backStack, panes, null)

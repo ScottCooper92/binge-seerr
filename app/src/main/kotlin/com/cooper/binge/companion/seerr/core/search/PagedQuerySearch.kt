@@ -116,6 +116,6 @@ class PagedQuerySearch<T>(
             PagedListState.Loading -> QuerySearchState.Loading(query)
             PagedListState.Empty -> QuerySearchState.NoResults(query)
             is PagedListState.Failed -> QuerySearchState.Failed(query, cause)
-            is PagedListState.Ready -> QuerySearchState.Results(query, items, hasMore, appending, appendFailed)
+            is PagedListState.Ready -> QuerySearchState.Results(query, items, hasMore, appending, appendFailed, total)
         }
 }

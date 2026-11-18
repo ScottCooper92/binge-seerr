@@ -23,9 +23,9 @@ import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.state.EmptyScreen
 import com.binge.designsystem.R as DesR
 
-private const val PANE_ROLE = "seerr.threePane.role"
+internal const val PANE_ROLE = "seerr.threePane.role"
 
-private enum class PaneRole { Hub, Section }
+internal enum class PaneRole { Hub, Section }
 
 /** Marks the hub's entry, so [ThreePaneStrategy] knows which entry is the first pane. */
 internal val ThreePaneHub: Map<String, Any> = mapOf(PANE_ROLE to PaneRole.Hub)
@@ -136,7 +136,7 @@ internal fun NothingOpen() =
  */
 internal fun NavBackStack<NavKey>.openBeside(route: NavKey) {
     val section = indexOfLast { it.hubSection() != null }
-    val anchor = if (section >= 0) section else indexOfLast { it == HubRoute }
+    val anchor = if (section >= 0) section else indexOfLast { it.isPaneRoot() }
     while (lastIndex > anchor && size > 1) removeLastOrNull()
     add(route)
 }
