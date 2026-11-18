@@ -12,6 +12,10 @@ import com.cooper.binge.companion.seerr.discover.title.TitleRatings
 import com.cooper.binge.companion.seerr.discover.title.VersionState
 import com.cooper.binge.companion.seerr.util.MainDispatcherRule
 import com.cooper.binge.companion.seerr.util.awaitEvent
+import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -140,6 +144,46 @@ class TitlePageViewModelTest {
 
             assertEquals(TitlePageEvent.Requested(RequestResult.Created), event.await())
             assertFalse(vm.ready().requestSheetOpen)
+            assertEquals(
+                TitleAvailability.Pending,
+                vm
+                    .ready()
+                    .movie.standard.availability,
+            )
+        }
+
+    @Test
+    fun `a failed read after a request keeps the page and says so`() =
+        runTest {
+            val titles = FakeTitles()
+            val vm = TitlePageViewModel(titles, 603)
+            vm.openRequestSheet()
+            titles.failMovie = IOException("down")
+            val events = mutableListOf<TitlePageEvent>()
+            val collecting = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.events.toList(events) }
+
+            vm.requested(RequestResult.Created)
+            runCurrent()
+
+            assertEquals(listOf(TitlePageEvent.Requested(RequestResult.Created), TitlePageEvent.ReloadFailed), events)
+            assertTrue(vm.uiState.value is TitlePageUiState.Ready)
+            collecting.cancel()
+        }
+
+    @Test
+    fun `a reload after a failed one keeps the page and updates it`() =
+        runTest {
+            val titles = FakeTitles()
+            val vm = TitlePageViewModel(titles, 603)
+            titles.failMovie = IOException("down")
+            vm.reload()
+            assertTrue(vm.uiState.value is TitlePageUiState.Ready)
+
+            titles.failMovie = null
+            titles.movie = movieFixture(standard = VersionState(TitleAvailability.Pending, mayRequest = false))
+            vm.reload()
+
+            assertTrue(vm.uiState.value is TitlePageUiState.Ready)
             assertEquals(
                 TitleAvailability.Pending,
                 vm

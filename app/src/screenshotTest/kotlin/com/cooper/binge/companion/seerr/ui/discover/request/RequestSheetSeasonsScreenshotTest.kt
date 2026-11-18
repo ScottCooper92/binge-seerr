@@ -2,12 +2,13 @@ package com.cooper.binge.companion.seerr.ui.discover.request
 
 import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.android.tools.screenshot.PreviewTest
 import com.cooper.binge.companion.seerr.discover.TitleAvailability
 import com.cooper.binge.companion.seerr.discover.TitleKind
-import com.cooper.binge.companion.seerr.discover.request.RequestOptions
+import com.cooper.binge.companion.seerr.discover.request.RequestAccess
 import com.cooper.binge.companion.seerr.discover.request.RequestQuota
 import com.cooper.binge.companion.seerr.discover.request.SeasonChoice
 import com.cooper.binge.companion.seerr.discover.request.SeasonChoices
@@ -16,7 +17,9 @@ import com.cooper.binge.companion.seerr.preview.SeerrFontScalePreviews
 import com.cooper.binge.companion.seerr.preview.SeerrSpanishPreviews
 import com.cooper.binge.companion.seerr.preview.SheetFrame
 
-private const val SEASONS_HEIGHT = 720
+private val FORM_HEIGHT = 640.dp
+private val PAGE_HEIGHT = 720.dp
+private val WORST_HEIGHT = 1200.dp
 private const val EPISODES = 10
 private const val QUOTA_LIMIT = 10
 private const val QUOTA_DAYS = 7
@@ -44,72 +47,108 @@ private fun state(
             title = "The Long Winter",
             seasonChoices = SeasonChoices(choices(longName), choices(longName)),
             partialRequests = partial,
+            meta = "2011 · 5 seasons",
         ),
-    options = RequestOptions(may4k = false, servers = emptyList(), quota = quota),
+    access = RequestAccess(may4k = false, mayChooseDestination = false),
+    quota = QuotaState.Known(quota),
     pickedSeasons = picked,
 )
 
+private fun noActions() = RequestSheetActions({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {})
+
 @Composable
-private fun Frame(
-    state: RequestSheetUiState,
-    height: Dp = SEASONS_HEIGHT.dp,
+private fun Form(
+    state: RequestSheetUiState.Ready,
+    height: Dp = FORM_HEIGHT,
 ) {
-    SheetFrame(
-        androidx.compose.ui.Modifier
-            .height(height),
-    ) {
-        RequestSheetContent(state, RequestSheetActions({}, {}, {}, {}, {}, {}, {}, {}, {}))
-    }
+    SheetFrame(Modifier.height(height)) { RequestSheetContent(state, noActions()) }
 }
 
-/** The request sheet for a show: its seasons, with the covered ones shown as such and only the open ones pickable. */
+@Composable
+private fun SeasonPage(
+    state: RequestSheetUiState.Ready,
+    height: Dp = PAGE_HEIGHT,
+) {
+    SheetFrame(
+        Modifier.height(height),
+    ) { RequestSeasonPage(checkNotNull(state.seasons), enabled = true, actions = noActions(), onBack = {}) }
+}
+
+/** The request sheet for a show: the form with its Seasons row, and the season page it opens. */
 class RequestSheetSeasonsScreenshotTest {
-    /** Nothing picked yet: the button is disabled. */
+    /** Nothing picked yet: the Seasons row is unticked and the button is held. */
     @PreviewTest
     @SeerrComponentPreviews
     @Composable
-    fun nonePicked() = Frame(state())
+    fun formNonePicked() = Form(state())
+
+    /** Some open seasons picked: the row's box shows a dash. */
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun formOnePicked() = Form(state(picked = setOf(4)))
+
+    /** Every open season picked: the box is ticked. */
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun formAllPicked() = Form(state(picked = setOf(4, 5)))
+
+    /** Nothing picked yet on the season page: the covered seasons are shown and cannot be picked. */
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun nonePicked() = SeasonPage(state())
 
     /** One open season picked. */
     @PreviewTest
     @SeerrComponentPreviews
     @Composable
-    fun onePicked() = Frame(state(picked = setOf(4)))
+    fun onePicked() = SeasonPage(state(picked = setOf(4)))
 
     /** Every open season picked, so All seasons is ticked. */
     @PreviewTest
     @SeerrComponentPreviews
     @Composable
-    fun allPicked() = Frame(state(picked = setOf(4, 5)))
+    fun allPicked() = SeasonPage(state(picked = setOf(4, 5)))
 
-    /** The server takes the whole show: no choice, and the sheet says what will be sent. */
+    /** The server takes the whole show: no choice, and the page says what will be sent. */
     @PreviewTest
     @SeerrComponentPreviews
     @Composable
-    fun partialOff() = Frame(state(partial = false))
+    fun partialOff() = SeasonPage(state(partial = false))
 
     /** The quota has room for one more season: the other open season and All seasons cannot be picked, and the note says why. */
     @PreviewTest
     @SeerrComponentPreviews
     @Composable
-    fun quotaLimited() = Frame(state(picked = setOf(4), quota = RequestQuota(QUOTA_LIMIT, 1, QUOTA_DAYS)))
+    fun quotaLimited() = SeasonPage(state(picked = setOf(4), quota = RequestQuota(QUOTA_LIMIT, 1, QUOTA_DAYS)))
 
-    /** The server takes the whole show but the quota cannot: the sheet says so and the button is disabled. */
+    /** The server takes the whole show but the quota cannot: the page says so and the button on the form is held. */
     @PreviewTest
     @SeerrComponentPreviews
     @Composable
-    fun quotaTooSmall() = Frame(state(partial = false, quota = RequestQuota(QUOTA_LIMIT, 1, QUOTA_DAYS)))
+    fun quotaTooSmall() = SeasonPage(state(partial = false, quota = RequestQuota(QUOTA_LIMIT, 1, QUOTA_DAYS)))
 
-    /** A long season name at font scales 1.5 and 2. */
+    /** A long season name on the season page at font scales 1.5 and 2. */
     @PreviewTest
     @SeerrFontScalePreviews
     @Composable
-    fun longLargeFonts() = Frame(state(picked = setOf(4), longName = true), WORST_HEIGHT)
+    fun longLargeFonts() = SeasonPage(state(picked = setOf(4), longName = true), WORST_HEIGHT)
+
+    /** The form for a show at font scales 1.5 and 2. */
+    @PreviewTest
+    @SeerrFontScalePreviews
+    @Composable
+    fun formLargeFonts() = Form(state(picked = setOf(4), longName = true, quota = RequestQuota(QUOTA_LIMIT, 1, QUOTA_DAYS)), WORST_HEIGHT)
 
     @PreviewTest
     @SeerrSpanishPreviews
     @Composable
-    fun longSpanish() = Frame(state(picked = setOf(4), longName = true), WORST_HEIGHT)
-}
+    fun longSpanish() = SeasonPage(state(picked = setOf(4), longName = true), WORST_HEIGHT)
 
-private val WORST_HEIGHT = 1200.dp
+    @PreviewTest
+    @SeerrSpanishPreviews
+    @Composable
+    fun formSpanish() = Form(state(picked = setOf(4), longName = true, quota = RequestQuota(QUOTA_LIMIT, 1, QUOTA_DAYS)), WORST_HEIGHT)
+}

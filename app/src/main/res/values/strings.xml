@@ -1470,9 +1470,28 @@
     <string name="tv_settings_release_notes">Release notes</string>
     <string name="tv_settings_release_notes_scan">Scan it with your phone\'s camera to read what the new version changes, or go to %1$s</string>
     <string name="tv_settings_release_notes_code_description">QR code that opens the server\'s release notes</string>
-    <string name="request_sheet_title">Request</string>
     <string name="request_sheet_4k">4K</string>
+    <string name="title_page_reload_failed">Couldn\'t refresh this page</string>
     <string name="request_sheet_submit">Request</string>
+    <string name="request_sheet_meta_separator" translatable="false">" · "</string>
+    <plurals name="request_sheet_season_count">
+        <item quantity="one">%d season</item>
+        <item quantity="other">%d seasons</item>
+    </plurals>
+    <string name="request_sheet_submit_4k">Request in 4K</string>
+    <string name="request_sheet_status_new">This isn\'t on your server yet</string>
+    <string name="request_sheet_status_seasons">Choose which seasons to request</string>
+    <string name="request_sheet_status_4k_open">4K is still open to request</string>
+    <string name="request_sheet_advanced">Advanced options</string>
+    <string name="request_sheet_seasons_count">%1$d of %2$d selected</string>
+    <string name="request_sheet_seasons_done">Done</string>
+    <string name="request_sheet_back">Back</string>
+    <string name="request_sheet_quota_loading">Checking your quota</string>
+    <string name="request_sheet_quota_failed">Couldn\'t read your quota</string>
+    <string name="request_sheet_servers_failed">Couldn\'t load the servers</string>
+    <string name="request_sheet_choices_failed">Couldn\'t load the profiles and folders</string>
+    <string name="request_sheet_failed_unreachable">Couldn\'t reach your server</string>
+    <string name="request_sheet_failed_other">The server turned it down</string>
     <string name="request_sheet_quota_spent">You\'ve used all your requests for this period.</string>
     <string name="request_sheet_done_created">Requested</string>
     <string name="request_sheet_done_already">Already requested</string>
@@ -1545,7 +1564,6 @@
     <string name="title_page_fact_studios">Studios</string>
     <string name="title_page_fact_budget">Budget</string>
     <string name="title_page_fact_revenue">Revenue</string>
-    <string name="request_problem_already_there">The server already has this title requested, or has nothing left to request. Close this sheet and the page will show where it stands.</string>
     <string name="title_page_status_released">Released</string>
     <string name="title_page_status_post_production">Post production</string>
     <string name="title_page_status_in_production">In production</string>
