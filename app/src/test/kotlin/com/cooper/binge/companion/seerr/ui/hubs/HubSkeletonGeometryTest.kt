@@ -8,6 +8,7 @@ import com.binge.designsystem.testing.assertSkeletonReservesGeometry
 import com.cooper.binge.companion.seerr.discover.TitleAvailability
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.sliders.HubCard
+import com.cooper.binge.companion.seerr.discover.sliders.HubHero
 import com.cooper.binge.companion.seerr.discover.sliders.HubRow
 import com.cooper.binge.companion.seerr.discover.sliders.HubTab
 import com.cooper.binge.companion.seerr.theme.SeerrTheme
@@ -20,7 +21,8 @@ import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 
 /**
- * The hub's skeleton reserves what its first loaded row fills, in position and in size (#2235).
+ * The hub's skeleton reserves what the loaded hub fills, in position and in size (#2235): the hero, the Browse all row and the
+ * first rail, which is the shape both hubs normally have.
  *
  * Size is the point: a plate that starts at the same corner but is shorter leaves every row after the first landing
  * somewhere else. The rail with "See all" is taller than the one without, because its header carries a button floored at the
@@ -62,7 +64,12 @@ class HubSkeletonGeometryTest {
         row: HubRow,
         fontScale: Float = 1f,
     ) {
-        val anchors = listOf(LayoutAnchors.Hub.DISCOVER_ENTRY, LayoutAnchors.Hub.FIRST_CAROUSEL).map(LayoutAnchors::section)
+        val anchors =
+            listOf(
+                LayoutAnchors.Hub.HERO,
+                LayoutAnchors.Hub.DISCOVER_ENTRY,
+                LayoutAnchors.Hub.FIRST_CAROUSEL,
+            ).map(LayoutAnchors::section)
         rule.assertSkeletonReservesGeometry(anchors = anchors, checkSize = true) { resolved ->
             val density = LocalDensity.current
             CompositionLocalProvider(LocalDensity provides Density(density.density, fontScale)) {
@@ -85,6 +92,18 @@ class HubSkeletonGeometryTest {
             listOf(HubRowUi.Cards(row, List(CARDS) { card(it) })),
             pending = 0,
             refreshing = false,
+            hero = listOf(hero()),
+        )
+
+    private fun hero() =
+        HubHero(
+            TitleKind.Movie,
+            1,
+            "Paper Moons",
+            "https://server.example/backdrop.jpg",
+            "2020",
+            TitleAvailability.None,
+            "https://server.example/movie/1",
         )
 
     private fun card(id: Int) =

@@ -79,7 +79,8 @@ private const val BROWSE_ALL_KEY = "browse_all"
  *
  * The hub has no title bar: the tab bar says where you are, and the hero runs edge to edge from the top of the screen, under the
  * status bar, whose icons stay light over the backdrop with a dark wash at the top edge for when the rows scroll up under it.
- * Without a hero the rows start below the status bar instead. The hub's name is its pane title, for a screen reader.
+ * Without a hero the rows start below the status bar instead, but a hub still loading reserves the hero's place, since both hubs
+ * normally have one. The hub's name is its pane title, for a screen reader.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -94,7 +95,8 @@ fun DiscoverHubScreen(
     val title = stringResource(if (tab == HubTab.Movies) R.string.hubs_title_movies else R.string.hubs_title_tv)
     val hasHero = (state as? DiscoverHubUiState.Ready)?.hero?.isNotEmpty() == true
     val statusBar = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
-    val inner = navOverlayPadding(if (hasHero) PaddingValues() else PaddingValues(top = statusBar))
+    val reservesHero = hasHero || state is DiscoverHubUiState.Loading
+    val inner = navOverlayPadding(if (reservesHero) PaddingValues() else PaddingValues(top = statusBar))
     Box(modifier = Modifier.fillMaxSize().semantics { paneTitle = title }) {
         when (state) {
             DiscoverHubUiState.Loading -> HubSkeleton(inner)
@@ -115,6 +117,13 @@ fun DiscoverHubScreen(
 @Composable
 private fun HubSkeleton(contentPadding: PaddingValues) {
     LazyColumn(contentPadding = contentPadding) {
+        item {
+            HeroCarousel(
+                items = emptyList(),
+                onItemClick = {},
+                modifier = Modifier.layoutAnchor(LayoutAnchors.section(LayoutAnchors.Hub.HERO)),
+            )
+        }
         item { BrowseAllSkeleton() }
         items(SKELETON_ROWS) { index ->
             CarouselSkeleton(modifier = Modifier.firstCarouselAnchor(index), description = stringResource(R.string.hubs_loading_row))
@@ -259,6 +268,7 @@ private fun Hero(
         }
     HeroCarousel(
         items = items,
+        modifier = Modifier.layoutAnchor(LayoutAnchors.section(LayoutAnchors.Hub.HERO)),
         onItemClick = { id -> hero.firstOrNull { it.tmdbId == id }?.let { onOpenTitle(it.toCard()) } },
         heroActions = { item ->
             hero
