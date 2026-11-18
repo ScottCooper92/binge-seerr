@@ -87,10 +87,6 @@ fun BlocklistScreen(
             val (message, kind) =
                 when (event) {
                     BlocklistEvent.Removed -> R.string.blocklist_removed to SnackbarMessageKind.Confirmation
-                    is BlocklistEvent.CollectionChanged -> {
-                        val res = if (event.blocked) R.string.blocklist_collection_blocked else R.string.blocklist_collection_unblocked
-                        res to SnackbarMessageKind.Confirmation
-                    }
                     is BlocklistEvent.Failed -> event.error.messageRes() to SnackbarMessageKind.Error
                 }
             snackbarHostState.showSnackbar(resources.getString(message), kind)

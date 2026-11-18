@@ -53,12 +53,24 @@ private val DEMO_COLLECTION = DEMO_TITLES.filter { it.isMovie }.take(DEMO_COLLEC
 internal fun DemoData.titleRoutes(): List<DemoRoute> =
     listOf(
         route("GET", "collection", "{}") { _, (id) -> collection(id.toIntOrNull()) },
+        route("POST", "blocklist", "collection", "{}") { _, (id) -> setCollectionBlocked(id.toIntOrNull(), blocked = true) },
+        route("DELETE", "blocklist", "collection", "{}") { _, (id) -> setCollectionBlocked(id.toIntOrNull(), blocked = false) },
         route("GET", "movie", "{}", "recommendations") { call, (id) -> page(call, related(id, skip = 1)) },
         route("GET", "movie", "{}", "similar") { call, (id) -> page(call, related(id, skip = RELATED_SKIP_SIMILAR)) },
         route("GET", "movie", "{}", "ratingscombined") { _, _ ->
             ok(SeerrRatingsDto(SeerrRottenTomatoesDto(DEMO_CRITICS, DEMO_AUDIENCE, null), SeerrImdbDto(DEMO_IMDB, null)))
         },
     )
+
+/** Blocking a collection blocks each of its films, as the server does; unblocking lifts each one. */
+private fun DemoData.setCollectionBlocked(
+    id: Int?,
+    blocked: Boolean,
+): DemoAnswer {
+    if (id != DEMO_COLLECTION_ID) return demoNotFound
+    DEMO_COLLECTION.forEach { if (blocked) block(it, DEMO_USER_ID) else unblock(it.tmdbId) }
+    return done
+}
 
 private fun DemoData.collection(id: Int?): DemoAnswer =
     if (id != DEMO_COLLECTION_ID) {
