@@ -80,7 +80,7 @@ private fun SeasonList(
 
 /**
  * Where the list opens: past every item of the seasons before [number]. A fresh page has only the chosen season read, so each
- * earlier one is a header and a placeholder; one that is read already counts its rows. A season above that loads later holds
+ * earlier one is a header and a skeleton row per episode; one that is read already counts its rows. A season above that loads later holds
  * the place by key, so what the reader opened at stays under them.
  */
 private fun openAtIndex(
@@ -89,7 +89,15 @@ private fun openAtIndex(
 ): Int =
     seasons
         .takeWhile { it.season.number != number }
-        .sumOf { 1 + ((it.episodes as? SeasonEpisodesState.Loaded)?.episodes?.size?.coerceAtLeast(1) ?: 1) }
+        .sumOf { 1 + it.itemCount() }
+
+/** How many list items a season's rows take, as laid out now: a skeleton per episode while unread, one row for a failure or an empty season. */
+private fun SeasonSection.itemCount(): Int =
+    when (val state = episodes) {
+        SeasonEpisodesState.Loading -> season.episodeCount.coerceAtLeast(1)
+        is SeasonEpisodesState.Loaded -> state.episodes.size.coerceAtLeast(1)
+        is SeasonEpisodesState.Failed -> 1
+    }
 
 private fun LazyListScope.seasonItems(
     section: SeasonSection,
@@ -98,7 +106,10 @@ private fun LazyListScope.seasonItems(
     val number = section.season.number
     item(key = seasonKey(number)) { SeasonHeader(section) }
     when (val episodes = section.episodes) {
-        SeasonEpisodesState.Loading -> item(key = "${seasonKey(number)}-state") { LoadingScreen() }
+        SeasonEpisodesState.Loading ->
+            items(section.season.episodeCount.coerceAtLeast(1), key = { "${seasonKey(number)}-skeleton-$it" }) {
+                EpisodeRowSkeleton(Modifier.padding(horizontal = dimensionResource(DesR.dimen.padding_m)))
+            }
         is SeasonEpisodesState.Failed ->
             item(
                 key = "${seasonKey(number)}-state",

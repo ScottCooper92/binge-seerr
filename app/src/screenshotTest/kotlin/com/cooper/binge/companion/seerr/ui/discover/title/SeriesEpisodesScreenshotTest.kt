@@ -52,6 +52,13 @@ class SeriesEpisodesScreenshotTest {
             openAt = 2,
         )
 
+    /** Seasons not read yet each hold a skeleton row per episode, so the list keeps its length as they load. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun seasonsReading() =
+        Frame(SeriesEpisodesUiState.Ready(listOf(section(1, SeasonEpisodesState.Loading), section(2, SeasonEpisodesState.Loading))))
+
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
