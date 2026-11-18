@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -28,15 +27,15 @@ import com.cooper.binge.companion.seerr.R
 import com.binge.designsystem.R as DesR
 
 /**
- * The actions under the stats: the primary on the left, then round buttons that each carry a label. [onTrailer] is null
- * where the server lists no trailer, and the button is not drawn. A line under the row says where the other version stands.
+ * The actions under the stats: the primary on the left, then a round Trailer button that carries a label. Share is in the
+ * page's bar only. [onTrailer] is null where the server lists no trailer, and the button is not drawn. A line under the row
+ * says where the other version stands.
  */
 @Composable
 internal fun TitleActions(
     model: TitleActionsModel,
     onRequest: () -> Unit,
     onTrailer: (() -> Unit)?,
-    onShare: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -49,7 +48,6 @@ internal fun TitleActions(
         ) {
             PrimaryAction(model.primary, onRequest, Modifier.weight(1f))
             onTrailer?.let { LabelledRoundButton(Icons.Filled.PlayArrow, stringResource(R.string.title_page_action_trailer), it) }
-            LabelledRoundButton(Icons.Filled.Share, stringResource(R.string.title_page_action_share), onShare)
         }
         model.otherStatuses.forEach { OtherStatusLine(it) }
     }
