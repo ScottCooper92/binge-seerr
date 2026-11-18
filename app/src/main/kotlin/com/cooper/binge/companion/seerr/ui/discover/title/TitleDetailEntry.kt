@@ -83,7 +83,7 @@ private fun SeriesPageEntry(
     )
 }
 
-/** The page's actions with the links a title page shares: another title, a web page. A person and a collection open nowhere yet, so the collection rail has no See all. */
+/** The page's actions with the links a title page shares: another title, a web page. A collection opens its page, which gives the film's collection rail its See all. A person opens nowhere yet. */
 @Composable
 private fun rememberTitlePageActions(
     onBack: () -> Unit,
