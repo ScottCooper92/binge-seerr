@@ -141,16 +141,17 @@ private fun card(
     id: Int,
     name: String,
     availability: TitleAvailability = TitleAvailability.None,
-) = HubCard(TitleKind.Movie, id, name, "2020", null, availability, "https://server.example/movie/$id")
+    rating: Float? = null,
+) = HubCard(TitleKind.Movie, id, name, "2020", null, availability, "https://server.example/movie/$id", rating)
 
 private val SAMPLE_CARDS =
     listOf(
-        card(1, "The Long Way Home", TitleAvailability.Available),
-        card(2, "Northern Lights", TitleAvailability.Pending),
-        card(3, "A Quiet Harbour", TitleAvailability.Processing),
+        card(1, "The Long Way Home", TitleAvailability.Available, rating = 7.7f),
+        card(2, "Northern Lights", TitleAvailability.Pending, rating = 6.9f),
+        card(3, "A Quiet Harbour", TitleAvailability.Processing, rating = 8.1f),
         card(4, "Paper Moons"),
-        card(5, "Seven Rivers", TitleAvailability.PartiallyAvailable),
-        card(6, "Blocked Title", TitleAvailability.Blocklisted),
+        card(5, "Seven Rivers", TitleAvailability.PartiallyAvailable, rating = 7.0f),
+        card(6, "Blocked Title", TitleAvailability.Blocklisted, rating = 5.4f),
     )
 
 private fun readyState(
@@ -195,6 +196,7 @@ private fun hero(
     id: Int,
     name: String,
     availability: TitleAvailability,
+    genres: List<String> = listOf("Action", "Adventure"),
 ) = HubHero(
     TitleKind.Movie,
     id,
@@ -204,6 +206,8 @@ private fun hero(
     7.8f,
     availability,
     "https://server.example/movie/$id",
+    genres,
+    rank = id,
 )
 
 private val HEROES =
@@ -218,4 +222,5 @@ private val LONG_HERO =
         4,
         "The Extraordinarily Long Title of a Film That Keeps Going: Part Two, the Return of the Seven Rivers",
         TitleAvailability.PartiallyAvailable,
+        genres = listOf("Science Fiction & Fantasy", "Adventure", "Action"),
     )

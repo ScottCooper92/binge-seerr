@@ -32,6 +32,7 @@ data class SeerrTitleResultDto(
     @SerialName("releaseDate") val releaseDate: String? = null,
     @SerialName("firstAirDate") val firstAirDate: String? = null,
     @SerialName("voteAverage") val voteAverage: Double? = null,
+    @SerialName("genreIds") val genreIds: List<Int> = emptyList(),
     @SerialName("mediaInfo") val mediaInfo: SeerrMediaInfoDto? = null,
 )
 
