@@ -11,6 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import com.cooper.binge.companion.seerr.R
@@ -23,6 +24,7 @@ import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
 import com.cooper.binge.companion.seerr.ui.state.LoadingScreen
 import com.cooper.binge.companion.seerr.ui.state.MediaHeroDetailPage
 import com.cooper.binge.companion.seerr.ui.state.MediaHeroDetailPlaceholder
+import com.cooper.binge.companion.seerr.ui.state.WideHeader
 import kotlinx.coroutines.flow.Flow
 import com.binge.designsystem.R as DesR
 
@@ -92,6 +94,7 @@ private fun ReadyPage(
         metaText = "",
         genres = movie.genres,
         tagline = movie.tagline,
+        wideHeader = WideHeader(movie.posterUrl, movie.overview, movie.titleStats(LocalConfiguration.current.locales[0])),
         onBack = actions.onBack,
         modifier = modifier,
         snackbarHostState = snackbar,
