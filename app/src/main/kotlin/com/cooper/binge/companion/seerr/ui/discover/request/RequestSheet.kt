@@ -190,7 +190,7 @@ private fun RequestFooter(
         onClick = if (failed) actions.onOpenFailure else actions.onSubmit,
         enabled = state.canSubmit || failed,
         loading = state.submitting,
-        destructive = failed,
+        failed = failed,
     )
 }
 
