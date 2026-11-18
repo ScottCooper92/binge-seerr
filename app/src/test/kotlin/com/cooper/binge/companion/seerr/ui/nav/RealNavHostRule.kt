@@ -25,6 +25,7 @@ import com.cooper.binge.companion.seerr.seerr.SeerrApi
 import com.cooper.binge.companion.seerr.seerr.SeerrAuth
 import com.cooper.binge.companion.seerr.seerr.SeerrCredentials
 import com.cooper.binge.companion.seerr.ui.HomeRoute
+import com.cooper.binge.companion.seerr.ui.shell.SeerrTab
 import com.cooper.binge.companion.seerr.ui.users.settings.ADMIN
 import com.cooper.binge.companion.seerr.ui.users.settings.ScriptedSeerr
 import com.cooper.homelab.core.presentation.search.RecentSearches
@@ -179,6 +180,8 @@ internal class RealNavHostRule(
     fun disconnect() = runBlocking { graph().connection().disconnect() }
 
     /** The back stack as it stands, read on the main thread. */
+    fun settingsStack(): List<NavKey> = compose.runOnIdle { activity.tabs.stack(SeerrTab.Settings).toList() }
+
     fun stack(): List<NavKey> = compose.runOnIdle { activity.backStack.toList() }
 
     /** Saves [credentials] over the connection, as a sign-in's own save does, so the connection emits again. */

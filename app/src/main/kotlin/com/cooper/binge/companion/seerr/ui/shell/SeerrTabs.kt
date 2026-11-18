@@ -15,11 +15,16 @@ import androidx.compose.ui.res.stringResource
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.rememberNavBackStack
-import com.binge.designsystem.component.BingeNavPresentation
 import com.binge.designsystem.component.BingeNavSuiteItem
+import com.binge.designsystem.component.rememberBingeNavPresentation
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.sliders.HubTab
+import com.cooper.binge.companion.seerr.ui.DiscoverGridRoute
+import com.cooper.binge.companion.seerr.ui.HubRoute
 import com.cooper.binge.companion.seerr.ui.SeerrRoute
+import com.cooper.binge.companion.seerr.ui.TitleCreditsRoute
+import com.cooper.binge.companion.seerr.ui.TitleDetailRoute
+import com.cooper.binge.companion.seerr.ui.hubSection
 import com.cooper.binge.companion.seerr.ui.replaceAll
 import com.cooper.binge.companion.seerr.ui.state.EmptyScreen
 import kotlinx.serialization.Serializable
@@ -35,7 +40,10 @@ enum class SeerrTab(
     Settings(Icons.Filled.Settings, "tab_settings"),
 }
 
-/** The root of each tab's own stack. Anything a tab opens goes on the app's stack above the shell, not on these. */
+/**
+ * The root of each tab's own stack, bar Settings', whose root is [HubRoute]. On a phone anything a tab opens goes on the app's
+ * stack above the shell. In a wide window Settings keeps the hub beside its sections, so those go on its own stack.
+ */
 @Serializable
 data object MoviesRoot : NavKey
 
@@ -45,16 +53,13 @@ data object TvRoot : NavKey
 @Serializable
 data object SearchRoot : NavKey
 
-@Serializable
-data object SettingsRoot : NavKey
-
 /** The shell's state: the selected tab, and a stack for each tab holding its root. */
 @Composable
 internal fun rememberSeerrTabs(): TabShellState<SeerrTab> {
     val movies = rememberNavBackStack(MoviesRoot)
     val tv = rememberNavBackStack(TvRoot)
     val search = rememberNavBackStack(SearchRoot)
-    val settings = rememberNavBackStack(SettingsRoot)
+    val settings = rememberNavBackStack(HubRoute)
     val stacks =
         remember(movies, tv, search, settings) {
             mapOf(SeerrTab.Movies to movies, SeerrTab.Tv to tv, SeerrTab.Search to search, SeerrTab.Settings to settings)
@@ -73,6 +78,32 @@ internal fun TabShellState<SeerrTab>.openLink(
 ) {
     appStack.replaceAll(routes)
     show(SeerrTab.Settings)
+}
+
+/**
+ * Keeps a section where the window can show it. A wide window shows Settings' hub beside its sections inside the tab, so
+ * sections the app's stack holds (a link's, or ones opened on a phone-width window) move to Settings' own stack. A narrow window
+ * shows a section over the whole window, so the ones Settings holds move back on to the app's stack. Only a stack that is the
+ * shell and sections is moved: a title page or a grid above them stays where it was.
+ */
+internal fun TabShellState<SeerrTab>.settleSections(
+    appStack: NavBackStack<NavKey>,
+    wide: Boolean,
+) {
+    val settings = stack(SeerrTab.Settings)
+    if (wide) {
+        val above = appStack.drop(1)
+        if (above.firstOrNull()?.hubSection() != null &&
+            above.none { it is TitleDetailRoute || it is TitleCreditsRoute || it is DiscoverGridRoute }
+        ) {
+            settings.replaceAll(listOf(HubRoute) + above)
+            appStack.popToRoot()
+            show(SeerrTab.Settings)
+        }
+    } else if (settings.size > 1 && appStack.size == 1 && selected == SeerrTab.Settings) {
+        appStack.addAll(settings.drop(1))
+        settings.popToRoot()
+    }
 }
 
 @Composable
@@ -108,8 +139,8 @@ internal fun SeerrTabShell(
     TabShell(
         state = tabs,
         items = seerrTabItems(),
-        // One place to choose how the bar looks: the floating pill, or the plain bottom bar.
-        presentation = BingeNavPresentation.FloatingBar,
+        // The design system's own choice: the floating pill, or the rail on a landscape tablet, as Binge does.
+        presentation = rememberBingeNavPresentation(),
         modifier = modifier,
     ) { tab ->
         when (tab) {
