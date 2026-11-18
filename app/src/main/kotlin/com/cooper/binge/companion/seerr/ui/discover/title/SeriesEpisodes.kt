@@ -30,11 +30,11 @@ import com.binge.designsystem.R as DesR
 /** How many episodes the page shows before it offers the whole season on a page of its own. */
 internal const val EPISODES_ON_PAGE = 5
 
-/** What the season list does: select a season, read its episodes again, and open the whole season. */
+/** What the season list does: select a season, read its episodes again, and open every season's episodes at the chosen one. */
 class SeasonActions(
     val onSelect: (Int) -> Unit,
     val onRetry: () -> Unit,
-    val onViewAll: (seasonNumber: Int, seasonName: String) -> Unit,
+    val onViewAll: (seasonNumber: Int, seriesName: String) -> Unit,
 )
 
 /**
@@ -71,7 +71,7 @@ internal fun EpisodesSection(
                 episodes.episodes.take(EPISODES_ON_PAGE).forEach { EpisodeRow(it, Modifier.padding(horizontal = gap)) }
                 if (episodes.episodes.size > EPISODES_ON_PAGE) {
                     Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                        TextButton(onClick = { actions.onViewAll(season.number, season.name) }) {
+                        TextButton(onClick = { actions.onViewAll(season.number, state.series.name) }) {
                             Text(stringResource(R.string.series_page_view_all_episodes), color = MaterialTheme.colorScheme.primary)
                         }
                     }

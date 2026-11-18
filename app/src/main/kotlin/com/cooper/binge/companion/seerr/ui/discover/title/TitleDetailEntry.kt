@@ -27,7 +27,7 @@ internal fun TitleDetailEntry(
     tmdbId: Int,
     onBack: () -> Unit,
     onOpenCredits: () -> Unit,
-    onOpenSeason: (seasonNumber: Int, seasonName: String) -> Unit,
+    onOpenSeason: (seasonNumber: Int, seriesName: String) -> Unit,
     onOpenCompany: (TitleCompany) -> Unit,
 ) {
     when (kind) {

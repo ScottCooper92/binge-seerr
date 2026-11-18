@@ -16,18 +16,18 @@ import com.cooper.binge.companion.seerr.ui.DetailPane
 import com.cooper.binge.companion.seerr.ui.DetailPaneContent
 import com.cooper.binge.companion.seerr.ui.DiscoverGridRoute
 import com.cooper.binge.companion.seerr.ui.PersonDetailRoute
-import com.cooper.binge.companion.seerr.ui.SeasonEpisodesRoute
+import com.cooper.binge.companion.seerr.ui.SeriesEpisodesRoute
 import com.cooper.binge.companion.seerr.ui.TitleCreditsRoute
 import com.cooper.binge.companion.seerr.ui.TitleDetailRoute
 import com.cooper.binge.companion.seerr.ui.discover.collection.CollectionPageEntry
 import com.cooper.binge.companion.seerr.ui.discover.person.PersonEntry
 import com.cooper.binge.companion.seerr.ui.discover.title.credits.TitleCreditsEntry
-import com.cooper.binge.companion.seerr.ui.discover.title.season.SeasonEpisodesEntry
+import com.cooper.binge.companion.seerr.ui.discover.title.season.SeriesEpisodesEntry
 import com.cooper.binge.companion.seerr.ui.openTitle
 import com.cooper.binge.companion.seerr.ui.popIfTop
 import com.cooper.binge.companion.seerr.ui.requests.RequestMediaType
 
-/** The title pages: a film's or a series' page, a season of it, a collection, the credits, and a person's page. Each leaves through [popIfTop] with its own key. */
+/** The title pages: a film's or a series' page, every season's episodes of it, a collection, the credits, and a person's page. Each leaves through [popIfTop] with its own key. */
 fun EntryProviderScope<NavKey>.titleEntries(backStack: NavBackStack<NavKey>) {
     entry<TitleDetailRoute>(metadata = DetailPane) { route ->
         DetailPaneContent {
@@ -36,7 +36,7 @@ fun EntryProviderScope<NavKey>.titleEntries(backStack: NavBackStack<NavKey>) {
                 route.tmdbId,
                 onBack = { backStack.popIfTop(route) },
                 onOpenCredits = { backStack.add(TitleCreditsRoute(route.kind, route.tmdbId)) },
-                onOpenSeason = { number, name -> backStack.add(SeasonEpisodesRoute(route.tmdbId, number, name)) },
+                onOpenSeason = { number, seriesName -> backStack.add(SeriesEpisodesRoute(route.tmdbId, seriesName, number)) },
                 onOpenCompany = { company ->
                     backStack.add(DiscoverGridRoute(route.kind, GridPreset.Company(company.id), company.name))
                 },
@@ -49,9 +49,9 @@ fun EntryProviderScope<NavKey>.titleEntries(backStack: NavBackStack<NavKey>) {
     entry<PersonDetailRoute>(metadata = DetailPane) { route ->
         DetailPaneContent { PersonEntry(route.personId, onBack = { backStack.popIfTop(route) }) }
     }
-    entry<SeasonEpisodesRoute>(metadata = DetailPane) { route ->
+    entry<SeriesEpisodesRoute>(metadata = DetailPane) { route ->
         DetailPaneContent {
-            SeasonEpisodesEntry(route.tmdbId, route.seasonNumber, route.seasonName, onBack = { backStack.popIfTop(route) })
+            SeriesEpisodesEntry(route.tmdbId, route.seriesName, route.seasonNumber, onBack = { backStack.popIfTop(route) })
         }
     }
     entry<TitleCreditsRoute>(metadata = DetailPane) { route ->
