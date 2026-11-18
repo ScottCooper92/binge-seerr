@@ -210,7 +210,7 @@ private fun PosterGrid(
             MediaCard(
                 posterUrl = card.artworkUrl,
                 title = card.name,
-                rating = null,
+                rating = card.rating,
                 onClick = { actions.onOpenTitle(card) },
                 status = card.availability.toStatus(),
             )

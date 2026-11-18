@@ -30,6 +30,7 @@ import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverFilters
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverSort
+import com.cooper.binge.companion.seerr.discover.grid.appliedCount
 import java.time.LocalDate
 import com.binge.designsystem.R as DesR
 
@@ -99,7 +100,7 @@ private fun ColumnScope.RowsPage(
             onKind = { onChange(draft.withKind(it)) },
             onSort = { onChange(draft.withSort(it)) },
             onOpen = { nav.push(it.name) },
-            onClearAll = { onChange(draft.copy(filters = DiscoverFilters())) },
+            onClearAll = { onChange(draft.cleared()) },
         )
     }
     BingeSheetFooter {
@@ -122,7 +123,7 @@ internal fun DiscoverFilterSheetContent(
     val inset = Modifier.padding(horizontal = dimensionResource(DesR.dimen.padding_m))
     val gap = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s))
     Column(modifier = Modifier.padding(bottom = dimensionResource(DesR.dimen.padding_m))) {
-        FilterSheetHeader(showClear = !draft.filters.isEmpty, onClearAll = onClearAll)
+        FilterSheetHeader(appliedCount = draft.filters.appliedCount(), canClear = !draft.isDefault, onClearAll = onClearAll)
         SectionTitle(stringResource(R.string.grid_filters_content))
         FlowRow(modifier = inset, horizontalArrangement = gap) {
             listOf(TitleKind.Movie, TitleKind.Series).forEach { kind ->

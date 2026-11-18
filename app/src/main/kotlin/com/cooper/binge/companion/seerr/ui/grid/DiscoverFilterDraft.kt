@@ -11,6 +11,8 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
+private val DEFAULT_SORT = DiscoverSort.PopularityDesc
+
 /** What the filter sheet is editing: the order and the filters, applied together by Show results. */
 @Serializable
 internal data class DiscoverFilterDraft(
@@ -18,6 +20,12 @@ internal data class DiscoverFilterDraft(
     val sort: DiscoverSort,
     val filters: DiscoverFilters,
 ) {
+    /** Whether nothing differs from what the grid opens on: no filter set and the default order. */
+    val isDefault: Boolean get() = filters.isEmpty && sort == DEFAULT_SORT
+
+    /** The draft with every filter and the order back to their defaults, as Binge's Clear all does; the kind is kept. */
+    fun cleared(): DiscoverFilterDraft = copy(sort = DEFAULT_SORT, filters = DiscoverFilters())
+
     /** The draft for [next] kind of title: what belongs to one kind alone goes, and the order keeps its meaning. */
     fun withKind(next: TitleKind): DiscoverFilterDraft =
         if (next == kind) this else DiscoverFilterDraft(next, sort.carriedTo(next), filters.carriedToOtherKind())
