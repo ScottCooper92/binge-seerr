@@ -3,6 +3,7 @@ package com.cooper.binge.companion.seerr.ui.grid
 import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.Composable
 import com.android.tools.screenshot.PreviewTest
+import com.binge.designsystem.component.BingeChoiceSheetContent
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverFilters
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverSort
@@ -19,6 +20,40 @@ import java.time.LocalDate
 private val TODAY = LocalDate.of(2026, 11, 18)
 
 private const val LONG_LIST = 40
+
+private val REGION_CODES =
+    listOf(
+        "AR",
+        "AT",
+        "AU",
+        "BE",
+        "BR",
+        "CA",
+        "CH",
+        "CL",
+        "CO",
+        "CZ",
+        "DE",
+        "DK",
+        "ES",
+        "FI",
+        "FR",
+        "GB",
+        "GR",
+        "IE",
+        "IN",
+        "IT",
+        "JP",
+        "MX",
+        "NL",
+        "NO",
+        "NZ",
+        "PL",
+        "PT",
+        "SE",
+        "US",
+        "ZA",
+    )
 
 private val WORDS =
     FilterVocabulary(
@@ -142,10 +177,11 @@ class DiscoverFilterSheetScreenshotTest {
     @Composable
     fun genresSpanish() = Section(DiscoverFilterSection.Genres)
 
+    /** The language row opens a choice sheet: Any first, then the server's languages. */
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
-    fun language() = Section(DiscoverFilterSection.Language)
+    fun language() = Choice(FilterChoosing.Language, DiscoverFilters(language = "ja"), WORDS)
 
     @PreviewTest
     @SeerrScreenStatePreview
@@ -157,23 +193,16 @@ class DiscoverFilterSheetScreenshotTest {
     @Composable
     fun rating() = Section(DiscoverFilterSection.Rating)
 
-    /** A server's whole language list: more rows than the sheet is tall, so the page scrolls and Done stays pinned under it. */
+    /** A server's whole language list: sectioned, with a letter rail, as the choice sheet does it from forty entries. */
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
     fun languageLong() =
-        Column {
-            DiscoverSectionPage(
-                section = DiscoverFilterSection.Language,
-                filters = DiscoverFilters(language = "l5"),
-                vocabulary = FilterVocabulary(languages = (1..LONG_LIST).map { FilterOption("l$it", "Language $it") }),
-                today = TODAY,
-                loads = FilterLoads({}, {}, {}),
-                onOpenRegion = {},
-                onChange = {},
-                onDone = {},
-            )
-        }
+        Choice(
+            FilterChoosing.Language,
+            DiscoverFilters(language = "l5"),
+            FilterVocabulary(languages = (1..LONG_LIST).map { FilterOption("l$it", "Language $it") }),
+        )
 
     @PreviewTest
     @SeerrScreenStatePreview
@@ -196,11 +225,22 @@ class DiscoverFilterSheetScreenshotTest {
     @Composable
     fun whereFontScale() = Section(DiscoverFilterSection.WhereToWatch)
 
-    /** The page the region row opens: a search, then the countries with streaming services, the chosen one first and ticked. */
+    /** The choice sheet the region row opens: each country with its flag, the chosen one ticked. */
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
-    fun region() = Column { RegionSheetPage(SET, WORDS, onChange = {}, onDone = {}) }
+    fun region() = Choice(FilterChoosing.Region, SET, WORDS)
+
+    /** A long country list: Current, Suggested (the default region) and All, with a letter rail. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun regionLong() =
+        Choice(
+            FilterChoosing.Region,
+            SET,
+            WORDS.copy(regions = REGION_CODES.map { FilterOption(it, countryName(it)) }.sortedBy { it.name }),
+        )
 
     @PreviewTest
     @SeerrScreenStatePreview
@@ -247,6 +287,24 @@ private fun Rows(
         onSort = {},
         onOpen = {},
         onClearAll = {},
+    )
+}
+
+@Composable
+private fun Choice(
+    choosing: FilterChoosing,
+    filters: DiscoverFilters,
+    words: FilterVocabulary,
+) {
+    val spec = filterChoiceSpec(choosing, filters, words)
+    BingeChoiceSheetContent(
+        title = spec.title,
+        choices = spec.choices,
+        selected = spec.selected,
+        onSelect = {},
+        suggested = spec.suggested,
+        pinned = spec.pinned,
+        filterPlaceholder = spec.filterPlaceholder,
     )
 }
 

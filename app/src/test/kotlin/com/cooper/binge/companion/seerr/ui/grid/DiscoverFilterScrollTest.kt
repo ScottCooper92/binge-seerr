@@ -20,11 +20,11 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.GraphicsMode
 import java.time.LocalDate
 
-private const val LANGUAGES = 180
+private const val GENRES = 180
 
-private val WORDS = FilterVocabulary(languages = (1..LANGUAGES).map { FilterOption("l$it", "Language $it") })
+private val WORDS = FilterVocabulary(genres = (1..GENRES).map { FilterOption("$it", "Genre $it") })
 
-/** A page taller than the sheet scrolls, and its Done stays where it is: a server's whole language list is some 180 rows. */
+/** A page taller than the sheet scrolls, and its Done stays where it is: a long genre list stands in for any page taller than the sheet. */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 class DiscoverFilterScrollTest {
@@ -32,11 +32,11 @@ class DiscoverFilterScrollTest {
     val rule = createSeerrComposeRule()
 
     @Test
-    fun `the last language can be reached and Done is still on screen`() {
+    fun `the last genre can be reached and Done is still on screen`() {
         rule.setContent {
             Column(Modifier.height(500.dp)) {
                 DiscoverSectionPage(
-                    section = DiscoverFilterSection.Language,
+                    section = DiscoverFilterSection.Genres,
                     filters = DiscoverFilters(),
                     vocabulary = WORDS,
                     today = LocalDate.of(2026, 11, 18),
@@ -47,7 +47,7 @@ class DiscoverFilterScrollTest {
                 )
             }
         }
-        rule.onNodeWithText("Language $LANGUAGES").performScrollTo().assertIsDisplayed()
+        rule.onNodeWithText("Genre $GENRES").performScrollTo().assertIsDisplayed()
         rule.onNodeWithText(ApplicationProvider.getApplicationContext<Context>().getString(R.string.grid_filters_done)).assertIsDisplayed()
     }
 }

@@ -6,9 +6,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -17,13 +14,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.BingeFilterChip
 import com.binge.designsystem.component.BingeSearchField
-import com.binge.designsystem.component.ListRow
+import com.binge.designsystem.component.CheckboxRow
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverFilters
 import java.util.Locale
@@ -156,13 +152,12 @@ private fun KeywordMatches(
                 results.forEach { keyword ->
                     val id = keyword.id.toInt()
                     val selected = id in chosen
-                    ListRow(
-                        onClick = { onChange(chosen.toggled(id)) },
-                        verticalAlignment = Alignment.CenterVertically,
-                        selected = selected,
-                        leading = { Icon(DiscoverFilterSection.Keywords.icon, contentDescription = null) },
-                        trailingContent = { if (selected) Icon(Icons.Filled.Check, contentDescription = null) },
-                    ) { modifier -> Text(keyword.name, style = MaterialTheme.typography.titleMedium, modifier = modifier) }
+                    CheckboxRow(
+                        label = keyword.name,
+                        checked = selected,
+                        onCheckedChange = { onChange(chosen.toggled(id)) },
+                        icon = DiscoverFilterSection.Keywords.icon,
+                    )
                 }
             }
     }

@@ -6,14 +6,10 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
@@ -29,7 +25,6 @@ import com.binge.designsystem.component.BingeSheetFooter
 import com.binge.designsystem.component.BingeSheetTopBar
 import com.binge.designsystem.component.BingeTextButton
 import com.binge.designsystem.component.FilterChipItem
-import com.binge.designsystem.component.ListRow
 import com.binge.designsystem.component.bingeSheetScroll
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverFilters
@@ -66,7 +61,7 @@ internal fun ColumnScope.DiscoverSectionPage(
         SectionPageHeader(stringResource(section.title))
         when (section) {
             DiscoverFilterSection.Genres -> GenresPage(filters, vocabulary, inset, onChange)
-            DiscoverFilterSection.Language -> LanguagePage(filters, vocabulary, onChange)
+            DiscoverFilterSection.Language -> Unit
             DiscoverFilterSection.Release -> ReleasePage(filters, today, inset, onChange)
             DiscoverFilterSection.Rating -> RatingPage(filters, inset, onChange)
             DiscoverFilterSection.Runtime -> RuntimePage(filters, inset, onChange)
@@ -242,28 +237,3 @@ private fun GenresPage(
 }
 
 internal fun Set<Int>.toggled(id: Int): Set<Int> = if (id in this) this - id else this + id
-
-/** One original language, chosen from the list the server knows; choosing the one set again clears it. */
-@Composable
-private fun LanguagePage(
-    filters: DiscoverFilters,
-    vocabulary: FilterVocabulary,
-    onChange: (DiscoverFilters) -> Unit,
-) {
-    Column(
-        modifier = Modifier.padding(horizontal = dimensionResource(DesR.dimen.padding_m)),
-        verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
-    ) {
-        vocabulary.languages.forEach { language ->
-            val selected = language.id == filters.language
-            ListRow(
-                onClick = { onChange(filters.copy(language = if (selected) null else language.id)) },
-                verticalAlignment = Alignment.CenterVertically,
-                selected = selected,
-                trailingContent = { if (selected) Icon(Icons.Filled.Check, contentDescription = null) },
-            ) { modifier ->
-                Text(language.name, style = MaterialTheme.typography.titleMedium, modifier = modifier)
-            }
-        }
-    }
-}

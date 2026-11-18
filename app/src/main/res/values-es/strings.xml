@@ -200,6 +200,8 @@
     <string name="grid_filter_keywords">Palabras clave</string>
     <string name="grid_filter_keywords_exclude">Palabras clave excluidas</string>
     <string name="grid_filter_providers_search">Buscar servicios de streaming</string>
+    <string name="grid_filter_providers_loading">Cargando servicios de streaming</string>
+    <string name="grid_filter_language_search">Buscar idiomas</string>
     <string name="grid_filter_region_search">Buscar países</string>
     <string name="grid_filter_search_none">Nada coincide con esa búsqueda.</string>
     <string name="grid_filter_keywords_search">Buscar palabras clave</string>

@@ -51,6 +51,7 @@ internal fun DiscoverFilterSheet(
     onDismiss: () -> Unit,
 ) {
     var draft by rememberSaveable(stateSaver = DiscoverFilterDraft.Saver) { mutableStateOf(DiscoverFilterDraft(kind, sort, filters)) }
+    var choosing by rememberSaveable { mutableStateOf<FilterChoosing?>(null) }
     val words = if (draft.kind == kind) vocabulary else vocabulary.forOtherKind()
     BingeAdaptiveSheet(
         kind = BingeSheetKind.Task,
@@ -61,10 +62,8 @@ internal fun DiscoverFilterSheet(
         backLabel = { null },
     ) { nav ->
         val section = DiscoverFilterSection.entries.firstOrNull { it.name == nav.page }
-        if (nav.page == REGION_PAGE) {
-            RegionSheetPage(draft.filters, words, onChange = { draft = draft.copy(filters = it) }, onDone = nav::pop)
-        } else if (section == null) {
-            RowsPage(draft, words, today, nav, { draft = it }) {
+        if (section == null) {
+            RowsPage(draft, words, today, nav, { choosing = FilterChoosing.Language }, { draft = it }) {
                 onApply(draft.kind, draft.sort, draft.filters)
                 onDismiss()
             }
@@ -75,12 +74,13 @@ internal fun DiscoverFilterSheet(
                 vocabulary = words,
                 today = today,
                 loads = loads,
-                onOpenRegion = { nav.push(REGION_PAGE) },
+                onOpenRegion = { choosing = FilterChoosing.Region },
                 onChange = { draft = draft.copy(filters = it) },
                 onDone = nav::pop,
             )
         }
     }
+    choosing?.let { FilterChoiceSheet(it, draft.filters, words, { draft = draft.copy(filters = it) }) { choosing = null } }
 }
 
 @Composable
@@ -89,6 +89,7 @@ private fun ColumnScope.RowsPage(
     vocabulary: FilterVocabulary,
     today: LocalDate,
     nav: BingeSheetNav,
+    onChooseLanguage: () -> Unit,
     onChange: (DiscoverFilterDraft) -> Unit,
     onApply: () -> Unit,
 ) {
@@ -99,7 +100,7 @@ private fun ColumnScope.RowsPage(
             today = today,
             onKind = { onChange(draft.withKind(it)) },
             onSort = { onChange(draft.withSort(it)) },
-            onOpen = { nav.push(it.name) },
+            onOpen = { if (it == DiscoverFilterSection.Language) onChooseLanguage() else nav.push(it.name) },
             onClearAll = { onChange(draft.cleared()) },
         )
     }
@@ -174,8 +175,6 @@ internal class FilterLoads(
     val onKeywordQuery: (String) -> Unit,
     val onNameKeywords: (Set<Int>) -> Unit,
 )
-
-internal const val REGION_PAGE = "Region"
 
 /**
  * The lists that belong to the kind the grid opened on are left out when the sheet is on the other: its genres, streaming

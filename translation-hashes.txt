@@ -73,10 +73,12 @@ app:grid_filter_keywords_failed  3fea4aa75383
 app:grid_filter_keywords_none  d1f0ab980e9b
 app:grid_filter_keywords_search  520c45ef9426
 app:grid_filter_language  c5c60a2af071
+app:grid_filter_language_search  98cdcf4f2415
 app:grid_filter_match  03c0e806becb
 app:grid_filter_match_all  29c88933c20a
 app:grid_filter_match_any  0f5f08d2b9e5
 app:grid_filter_minutes  3122a2f3e04b
+app:grid_filter_providers_loading  9883b74fbd25
 app:grid_filter_providers_none  44636dfdc023
 app:grid_filter_providers_search  05563f3e04fa
 app:grid_filter_rating  9f29530464f7
