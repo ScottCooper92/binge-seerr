@@ -42,6 +42,7 @@ class FilterLookupsTest {
                         api = { api },
                         profile = { profile },
                         viewer = { SeerrUserDto(id = 1) },
+                        deviceRegion = { "ES" },
                         io = Dispatchers.Unconfined,
                     ),
                 )
@@ -110,5 +111,12 @@ class FilterLookupsTest {
         profile = SeerrServerProfile(variant = SeerrVariant.Seerr, version = SeerrVersion(3, 2, 0))
         val current = withLookups("{}") { it.capabilities() }
         assertTrue(current.certification && current.excludeKeywords && current.status)
+    }
+
+    @Test
+    fun `with no region chosen anywhere the default is the one the phone is set to`() {
+        val region = withLookups("{}") { it.defaultRegion() }
+
+        assertEquals("ES", region)
     }
 }

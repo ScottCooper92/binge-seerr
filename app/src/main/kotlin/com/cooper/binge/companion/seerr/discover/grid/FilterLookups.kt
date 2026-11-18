@@ -42,11 +42,12 @@ interface FilterLookups {
     suspend fun keywordNames(ids: Set<Int>): Map<Int, String>
 }
 
-/** [FilterLookups] over the Seerr API; [viewer] is the signed-in user, whose own region is read first. */
+/** [FilterLookups] over the Seerr API; [viewer] is the signed-in user, whose own region is read first, and [deviceRegion] the last resort. */
 class SeerrFilterLookups(
     private val api: suspend () -> SeerrApi,
     private val profile: suspend () -> SeerrServerProfile,
     private val viewer: suspend () -> SeerrUserDto,
+    private val deviceRegion: () -> String?,
     private val io: CoroutineDispatcher,
 ) : FilterLookups {
     override suspend fun capabilities(): FilterCapabilities =
@@ -68,7 +69,7 @@ class SeerrFilterLookups(
                 .sortedBy { it.name }
         }
 
-    override suspend fun defaultRegion(): String? = withContext(io) { streamingRegion(api(), viewer(), profile()) }
+    override suspend fun defaultRegion(): String? = withContext(io) { streamingRegion(api(), viewer(), profile(), deviceRegion()) }
 
     override suspend fun providers(
         kind: TitleKind,

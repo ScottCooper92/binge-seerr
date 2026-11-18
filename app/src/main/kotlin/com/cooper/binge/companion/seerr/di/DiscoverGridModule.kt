@@ -35,6 +35,7 @@ object DiscoverGridModule {
             api = connection::api,
             profile = connection::profile,
             viewer = { connection.recentAuthenticatedUser() },
+            deviceRegion = ::deviceRegion,
             io = io,
         )
 }
