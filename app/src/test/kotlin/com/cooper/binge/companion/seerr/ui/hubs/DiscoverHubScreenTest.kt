@@ -1,10 +1,16 @@
 package com.cooper.binge.companion.seerr.ui.hubs
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.getBoundsInRoot
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.junit4.StateRestorationTester
@@ -12,10 +18,13 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeDown
 import androidx.compose.ui.test.swipeUp
+import androidx.compose.ui.unit.dp
+import com.binge.designsystem.LocalNavOverlayInsets
 import com.cooper.binge.companion.seerr.discover.TitleAvailability
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.grid.GridPreset
@@ -28,6 +37,7 @@ import com.cooper.binge.companion.seerr.discover.sliders.HubTile
 import com.cooper.binge.companion.seerr.theme.SeerrTheme
 import com.cooper.binge.companion.seerr.util.createSeerrComposeRule
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -380,5 +390,36 @@ class DiscoverHubScreenTest {
                 it.config[SemanticsProperties.Text].toString()
             }
         assertEquals(shownBefore, shownAfter)
+    }
+
+    @Test
+    fun `the last row ends at least 16dp above the floating bar`() {
+        val overlay = 100.dp
+        val state =
+            DiscoverHubUiState.Ready(
+                List(8) { i -> HubRowUi.Tiles(HubRow.Genres(i, null, HubTab.Movies), listOf(HubTile(i, "Tile $i", null))) },
+                pending = 0,
+                refreshing = false,
+                hero = emptyList(),
+            )
+        compose.setContent {
+            SeerrTheme {
+                CompositionLocalProvider(LocalNavOverlayInsets provides PaddingValues(bottom = overlay)) {
+                    Box(Modifier.fillMaxSize()) {
+                        DiscoverHubScreen(HubTab.Movies, state, onRefresh = {}, onOpenTitle = {}, onOpenGrid = {
+                            _,
+                            _,
+                            ->
+                        }, onOpenRequests = {})
+                    }
+                }
+            }
+        }
+        compose.onAllNodes(hasScrollAction()).onFirst().performTouchInput { repeat(8) { swipeUp() } }
+        compose.waitForIdle()
+        val root = compose.onRoot().getBoundsInRoot()
+        val last = compose.onNodeWithText("Tile 7", useUnmergedTree = true).getBoundsInRoot()
+        val clearance = root.bottom - overlay - last.bottom
+        assertTrue("clearance was $clearance", clearance >= 16.dp)
     }
 }
