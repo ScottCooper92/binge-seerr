@@ -61,7 +61,7 @@ jobs:
     concurrency:
       group: author-comments-${{ github.event.issue.number || github.event.pull_request.number }}
       cancel-in-progress: false
-    uses: ScottCooper92/binge-ci/.github/workflows/author-comments.yml@1b8bfc7cd36efacdcd204aa0808fdb8afad1c546 # v1
+    uses: ScottCooper92/binge-ci/.github/workflows/author-comments.yml@903427212a2a3918dca60d6c3d8af61f2a4682f4 # v1
     with:
       author_bot_id: ${{ vars.AUTHOR_BOT_ID }}
       private_submodules: homelab-core,binge-design-system,binge-ci
