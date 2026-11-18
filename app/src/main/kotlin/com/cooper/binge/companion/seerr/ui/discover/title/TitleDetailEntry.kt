@@ -58,6 +58,7 @@ private fun FilmPageEntry(
                 onRequest = viewModel::openRequestSheet,
                 onCloseRequest = viewModel::closeRequestSheet,
                 onRequested = viewModel::requested,
+                onReload = viewModel::reload,
             ),
     )
 }
@@ -84,6 +85,7 @@ private fun SeriesPageEntry(
                 onRequest = viewModel::openRequestSheet,
                 onCloseRequest = viewModel::closeRequestSheet,
                 onRequested = viewModel::requested,
+                onReload = viewModel::reload,
             ),
         seasonActions = SeasonActions(viewModel::selectSeason, viewModel::retryEpisodes, onOpenSeason),
     )
@@ -99,6 +101,7 @@ private fun rememberTitlePageActions(
     onRequest: () -> Unit,
     onCloseRequest: () -> Unit,
     onRequested: (RequestResult) -> Unit,
+    onReload: () -> Unit,
 ): TitlePageActions {
     val context = LocalContext.current
     val openTitle = LocalOpenTitle.current
@@ -114,5 +117,6 @@ private fun rememberTitlePageActions(
         onOpenUrl = context::openInBrowser,
         onOpenCredits = onOpenCredits,
         onOpenCompany = onOpenCompany,
+        onReload = onReload,
     )
 }
