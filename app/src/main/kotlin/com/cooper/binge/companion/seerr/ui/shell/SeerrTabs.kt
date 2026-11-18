@@ -87,7 +87,9 @@ private fun NavKey.isDiscoveryRoute(): Boolean = this is TitleDetailRoute || thi
 /**
  * Keeps a section where the window can show it. A wide window shows Settings' hub beside its sections inside the tab, so
  * sections the app's stack holds (a link's, or ones opened on a phone-width window) move to Settings' own stack. A narrow window
- * shows a section over the whole window, so the ones Settings holds move back on to the app's stack. Only a stack that is the
+ * shows a section over the whole window, so the ones Settings holds move back on to the app's stack, but only while Settings is the
+ * tab showing: on another tab they wait on the hidden stack until the app's stack next changes. A moved section is a new entry in the other
+ * display, so its scroll and filters start again. Only a stack that is the
  * shell and sections is moved: a title page or a grid above them stays where it was.
  */
 internal fun TabShellState<SeerrTab>.settleSections(
