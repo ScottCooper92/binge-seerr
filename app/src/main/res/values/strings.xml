@@ -168,6 +168,10 @@
     <string name="grid_subtitle" translatable="false">%1$s · %2$s</string>
     <string name="grid_filters_show_results">Show results</string>
     <string name="grid_filters_filter_by">Filter by</string>
+    <plurals name="grid_filters_applied">
+        <item quantity="one">%d applied</item>
+        <item quantity="other">%d applied</item>
+    </plurals>
     <string name="grid_filters_clear_all">Clear all</string>
     <string name="grid_filters_clear">Clear</string>
     <string name="grid_filters_done">Done</string>
@@ -1590,6 +1594,22 @@
         <item quantity="other">Your quota allows %1$d more seasons</item>
     </plurals>
     <string name="request_sheet_seasons_over">Your quota has less room than the %1$d seasons still open, so this series cannot be requested now</string>
+    <string name="person_page_born">Born</string>
+    <string name="person_page_died">Died</string>
+    <string name="person_page_also_known_as">Also known as</string>
+    <string name="person_page_biography">Biography</string>
+    <string name="person_page_known_for">Known for</string>
+    <string name="person_page_links">External links</string>
+    <string name="person_page_imdb">IMDb</string>
+    <string name="person_page_website">Website</string>
+    <string name="person_stat_from">From</string>
+    <string name="person_stat_gender">Gender</string>
+    <string name="person_stat_popularity">Popularity</string>
+    <string name="person_gender_female">Female</string>
+    <string name="person_gender_male">Male</string>
+    <string name="person_gender_non_binary">Non-binary</string>
+    <string name="person_died_aged">%1$s (aged %2$d)</string>
+    <string name="person_refresh_failed">Couldn\'t refresh this page</string>
     <string name="series_page_episodes">Episodes</string>
     <string name="series_page_view_all_episodes">View all episodes</string>
     <string name="season_episodes_empty">No episodes listed for this season yet</string>

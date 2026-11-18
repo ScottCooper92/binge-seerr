@@ -10,20 +10,21 @@ private fun card(
     id: Int,
     name: String,
     availability: TitleAvailability,
-) = HubCard(TitleKind.Movie, id, name, "2021", null, availability, "https://server.example/movie/$id")
+    rating: Float? = null,
+) = HubCard(TitleKind.Movie, id, name, "2021", null, availability, "https://server.example/movie/$id", rating)
 
 private const val LONG_NAME = "The Extraordinarily Long and Winding Chronicle of a Very Patient Lighthouse Keeper"
 
 /** Every status, and one name long enough to wrap at the largest font scale. */
 internal fun gridCards(): List<HubCard> =
     listOf(
-        card(1, "Big Buck Bunny", TitleAvailability.Available),
-        card(2, LONG_NAME, TitleAvailability.PartiallyAvailable),
-        card(3, "Sintel", TitleAvailability.Pending),
+        card(1, "Big Buck Bunny", TitleAvailability.Available, 7.9f),
+        card(2, LONG_NAME, TitleAvailability.PartiallyAvailable, 8.4f),
+        card(3, "Sintel", TitleAvailability.Pending, 7.4f),
         card(4, "Tears of Steel", TitleAvailability.Processing),
-        card(5, "Metropolis", TitleAvailability.Blocklisted),
+        card(5, "Metropolis", TitleAvailability.Blocklisted, 8.1f),
         card(6, "Nosferatu", TitleAvailability.None),
-        card(7, "Parasite", TitleAvailability.None),
+        card(7, "Parasite", TitleAvailability.None, 8.5f),
         card(8, "Spirited Away", TitleAvailability.Available),
     )
 

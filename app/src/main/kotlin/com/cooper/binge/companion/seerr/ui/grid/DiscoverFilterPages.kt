@@ -25,9 +25,11 @@ import com.binge.designsystem.component.BingeFilterChipRow
 import com.binge.designsystem.component.BingeNumberSlider
 import com.binge.designsystem.component.BingeRangeSlider
 import com.binge.designsystem.component.BingeSheetFooter
+import com.binge.designsystem.component.BingeSheetStepHandle
 import com.binge.designsystem.component.BingeTextButton
 import com.binge.designsystem.component.FilterChipItem
 import com.binge.designsystem.component.ListRow
+import com.binge.designsystem.component.bingeSheetScroll
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverFilters
 import com.cooper.binge.companion.seerr.discover.grid.ReleasePreset
@@ -53,7 +55,11 @@ internal fun ColumnScope.DiscoverSectionPage(
     onDone: () -> Unit,
 ) {
     val inset = Modifier.padding(horizontal = dimensionResource(DesR.dimen.padding_m))
-    Column(verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m))) {
+    Column(
+        modifier = Modifier.weight(1f, fill = false).bingeSheetScroll(),
+        verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
+    ) {
+        BingeSheetStepHandle(title = stringResource(section.title))
         Text(text = stringResource(section.title), style = MaterialTheme.typography.titleLarge, modifier = inset)
         when (section) {
             DiscoverFilterSection.Genres -> GenresPage(filters, vocabulary, inset, onChange)

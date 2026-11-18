@@ -25,10 +25,12 @@ import com.binge.designsystem.component.BingeFilterChip
 import com.binge.designsystem.component.BingeSheetFooter
 import com.binge.designsystem.component.BingeSheetKind
 import com.binge.designsystem.component.BingeSheetNav
+import com.binge.designsystem.component.bingeSheetScroll
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverFilters
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverSort
+import com.cooper.binge.companion.seerr.discover.grid.appliedCount
 import java.time.LocalDate
 import com.binge.designsystem.R as DesR
 
@@ -78,15 +80,17 @@ private fun ColumnScope.RowsPage(
     onChange: (DiscoverFilterDraft) -> Unit,
     onApply: () -> Unit,
 ) {
-    DiscoverFilterSheetContent(
-        draft = draft,
-        vocabulary = vocabulary,
-        today = today,
-        onKind = { onChange(draft.withKind(it)) },
-        onSort = { onChange(draft.withSort(it)) },
-        onOpen = { nav.push(it.name) },
-        onClearAll = { onChange(draft.copy(filters = DiscoverFilters())) },
-    )
+    Column(Modifier.weight(1f, fill = false).bingeSheetScroll()) {
+        DiscoverFilterSheetContent(
+            draft = draft,
+            vocabulary = vocabulary,
+            today = today,
+            onKind = { onChange(draft.withKind(it)) },
+            onSort = { onChange(draft.withSort(it)) },
+            onOpen = { nav.push(it.name) },
+            onClearAll = { onChange(draft.cleared()) },
+        )
+    }
     BingeSheetFooter {
         BingeActionFooter(label = stringResource(R.string.grid_filters_show_results), onClick = onApply)
     }
@@ -107,7 +111,7 @@ internal fun DiscoverFilterSheetContent(
     val inset = Modifier.padding(horizontal = dimensionResource(DesR.dimen.padding_m))
     val gap = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s))
     Column(modifier = Modifier.padding(bottom = dimensionResource(DesR.dimen.padding_m))) {
-        FilterSheetHeader(showClear = !draft.filters.isEmpty, onClearAll = onClearAll)
+        FilterSheetHeader(appliedCount = draft.filters.appliedCount(), canClear = !draft.isDefault, onClearAll = onClearAll)
         SectionTitle(stringResource(R.string.grid_filters_content))
         FlowRow(modifier = inset, horizontalArrangement = gap) {
             listOf(TitleKind.Movie, TitleKind.Series).forEach { kind ->
