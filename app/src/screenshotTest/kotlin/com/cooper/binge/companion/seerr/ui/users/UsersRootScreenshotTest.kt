@@ -6,7 +6,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.paging.PagingData
 import com.android.tools.screenshot.PreviewTest
-import com.cooper.binge.companion.seerr.preview.SeerrScreenPreviews
+import com.cooper.binge.companion.seerr.preview.SeerrRootScreenPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrScreenStatePreview
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.ui.state.RestingPull
@@ -23,7 +23,7 @@ import kotlinx.coroutines.flow.flowOf
  */
 class UsersRootScreenshotTest {
     @PreviewTest
-    @SeerrScreenPreviews
+    @SeerrRootScreenPreviews
     @Composable
     fun readyLayout() = Frame(ready(canAdmit = true))
 

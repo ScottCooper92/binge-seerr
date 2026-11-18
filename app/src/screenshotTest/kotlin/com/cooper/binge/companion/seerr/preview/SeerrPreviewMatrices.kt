@@ -26,9 +26,11 @@ import com.cooper.binge.companion.seerr.theme.SeerrBrand
  * keeps the same file name. The locale pin is the design system's now: without it this single-module app's debug
  * variant, which carries the AAPT2 pseudolocales, would record every string accented and bracketed.
  *
- * Not every shared cell has a counterpart. `tablet` is left out of [SeerrScreenPreviews] on purpose: this app's layouts
- * change only at 600dp and 840dp, so a tablet frame showed the foldable's layout, wider. The design system's
- * `ScreenPreviewsWithoutTablet` is the same four cells. Add the tablet back if a screen gains a breakpoint above 840dp.
+ * Fewer cells than the shared set, on purpose. A screen's layout frame is [SeerrScreenPreviews], the `phone` cell alone,
+ * and a section root adds `phone-land` through [SeerrRootScreenPreviews]. `phone-light` and `foldable` are not cells here:
+ * the light theme is covered by the component cells, and the foldable showed what `phone-land` shows. The three-pane
+ * layout past the expanded-rail line is [SeerrTabletPanesPreview], on the frames that compose the panes. Add a cell back
+ * when a screen gains a layout the cells above do not show.
  */
 
 /** The phone and TV harness themes, wearing [SeerrBrand]. */
@@ -46,13 +48,16 @@ class SeerrTvScreenshotThemeOnBlackWrapper : TvScreenshotThemeOnBlackWrapper() {
     override val brand: BingeBrand = SeerrBrand
 }
 
-/** The design system's `ScreenPreviewsWithoutTablet`: phone, phone-light, phone-land and foldable. */
+/** The frame that establishes a screen's layout: the design system's `phone` cell. A state of the screen takes [SeerrScreenStatePreview]. */
 @PreviewWrapper(SeerrScreenshotThemeWrapper::class)
 @Preview(name = "phone", device = PHONE_PORTRAIT_SPEC, uiMode = UI_MODE_NIGHT_YES, locale = SOURCE_LOCALE)
-@Preview(name = "phone-light", device = PHONE_PORTRAIT_SPEC, uiMode = UI_MODE_NIGHT_NO, locale = SOURCE_LOCALE)
-@Preview(name = "phone-land", device = PHONE_LANDSCAPE_SPEC, uiMode = UI_MODE_NIGHT_YES, locale = SOURCE_LOCALE)
-@Preview(name = "foldable", device = FOLDABLE_PORTRAIT_SPEC, uiMode = UI_MODE_NIGHT_YES, locale = SOURCE_LOCALE)
 annotation class SeerrScreenPreviews
+
+/** A section root's layout frame: `phone` and `phone-land`, the narrowest window that puts two panes side by side. */
+@PreviewWrapper(SeerrScreenshotThemeWrapper::class)
+@Preview(name = "phone", device = PHONE_PORTRAIT_SPEC, uiMode = UI_MODE_NIGHT_YES, locale = SOURCE_LOCALE)
+@Preview(name = "phone-land", device = PHONE_LANDSCAPE_SPEC, uiMode = UI_MODE_NIGHT_YES, locale = SOURCE_LOCALE)
+annotation class SeerrRootScreenPreviews
 
 /** The design system's `ScreenStatePreview`: the `phone` cell, for a state of a screen whose layout frame has the matrix. */
 @PreviewWrapper(SeerrScreenshotThemeWrapper::class)
@@ -79,9 +84,8 @@ annotation class SeerrTabletPanesPreview
 @Preview(name = "font13", device = PHONE_PORTRAIT_SPEC, fontScale = 1.3f, uiMode = UI_MODE_NIGHT_YES, locale = SOURCE_LOCALE)
 annotation class SeerrFontScale13Previews
 
-/** A phone window at the two larger font scales, 1.5 and 2.0; the 1.0 cell is the screen's own frame. */
+/** A phone window at font scale 2.0, the largest a user can set; the 1.0 cell is the screen's own frame and [SeerrFontScale13Previews] the middle. */
 @PreviewWrapper(SeerrScreenshotThemeWrapper::class)
-@Preview(name = "font15", device = PHONE_PORTRAIT_SPEC, fontScale = 1.5f, uiMode = UI_MODE_NIGHT_YES, locale = SOURCE_LOCALE)
 @Preview(name = "font20", device = PHONE_PORTRAIT_SPEC, fontScale = 2f, uiMode = UI_MODE_NIGHT_YES, locale = SOURCE_LOCALE)
 annotation class SeerrFontScalePreviews
 
