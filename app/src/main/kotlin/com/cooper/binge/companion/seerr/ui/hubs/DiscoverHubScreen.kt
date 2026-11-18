@@ -2,8 +2,11 @@ package com.cooper.binge.companion.seerr.ui.hubs
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -12,17 +15,19 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.paneTitle
+import androidx.compose.ui.semantics.semantics
 import com.binge.designsystem.component.BingePullToRefresh
 import com.binge.designsystem.component.CarouselSkeleton
+import com.binge.designsystem.component.DarkStatusBarEffect
 import com.binge.designsystem.component.HeroCarousel
 import com.binge.designsystem.component.HeroItem
 import com.binge.designsystem.component.MediaCard
 import com.binge.designsystem.component.MediaCardStatus
 import com.binge.designsystem.component.MediaCarousel
+import com.binge.designsystem.component.StatusBarScrim
 import com.binge.designsystem.component.StatusChip
 import com.binge.designsystem.navOverlayPadding
-import com.binge.designsystem.template.BingeScreenScaffold
-import com.binge.designsystem.template.ScreenBar
 import com.binge.designsystem.theme.BingeSentiment
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.TitleAvailability
@@ -41,6 +46,10 @@ private const val HERO_KEY = "hero"
 /**
  * One discovery hub, Movies or TV: the server's rows of posters, each loading on its own. [onOpenTitle] gets the card the user
  * tapped.
+ *
+ * The hub has no title bar: the tab bar says where you are, and the hero runs edge to edge from the top of the screen, under the
+ * status bar, whose icons stay light over the backdrop with a dark wash at the top edge for when the rows scroll up under it.
+ * Without a hero the rows start below the status bar instead. The hub's name is its pane title, for a screen reader.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -50,21 +59,23 @@ fun DiscoverHubScreen(
     onRefresh: () -> Unit,
     onOpenTitle: (HubCard) -> Unit,
 ) {
-    BingeScreenScaffold(
-        bar = ScreenBar.Small,
-        title = stringResource(if (tab == HubTab.Movies) R.string.hubs_title_movies else R.string.hubs_title_tv),
-    ) { padding ->
-        Box(modifier = Modifier.fillMaxSize().padding(padding)) {
-            val inner = navOverlayPadding(PaddingValues())
-            when (state) {
-                DiscoverHubUiState.Loading -> HubSkeleton(inner)
-                DiscoverHubUiState.Empty -> EmptyScreen(stringResource(R.string.hubs_empty_message), Modifier.padding(inner))
-                is DiscoverHubUiState.Error -> ErrorScreen(state.error, Modifier.padding(inner), onRetry = onRefresh)
-                is DiscoverHubUiState.Ready ->
-                    BingePullToRefresh(isRefreshing = state.refreshing, onRefresh = onRefresh) {
-                        HubRows(tab, state, inner, onOpenTitle)
-                    }
-            }
+    val title = stringResource(if (tab == HubTab.Movies) R.string.hubs_title_movies else R.string.hubs_title_tv)
+    val hasHero = (state as? DiscoverHubUiState.Ready)?.hero?.isNotEmpty() == true
+    val statusBar = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+    val inner = navOverlayPadding(if (hasHero) PaddingValues() else PaddingValues(top = statusBar))
+    Box(modifier = Modifier.fillMaxSize().semantics { paneTitle = title }) {
+        when (state) {
+            DiscoverHubUiState.Loading -> HubSkeleton(inner)
+            DiscoverHubUiState.Empty -> EmptyScreen(stringResource(R.string.hubs_empty_message), Modifier.padding(inner))
+            is DiscoverHubUiState.Error -> ErrorScreen(state.error, Modifier.padding(inner), onRetry = onRefresh)
+            is DiscoverHubUiState.Ready ->
+                BingePullToRefresh(isRefreshing = state.refreshing, onRefresh = onRefresh, indicatorTopInset = statusBar) {
+                    HubRows(tab, state, inner, onOpenTitle)
+                }
+        }
+        if (hasHero) {
+            DarkStatusBarEffect()
+            StatusBarScrim()
         }
     }
 }

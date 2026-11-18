@@ -1,5 +1,7 @@
 package com.cooper.binge.companion.seerr.ui.hubs
 
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
@@ -58,5 +60,14 @@ class DiscoverHubScreenTest {
         show("https://server.example/", opened, hero = listOf(hero("https://server.example/")))
         compose.onNodeWithContentDescription("Seven Rivers", substring = true).assertExists().performClick()
         assertEquals(listOf(9), opened.map { it.tmdbId })
+    }
+
+    @Test
+    fun `the hub has no title bar and names itself to a screen reader`() {
+        show("https://server.example/", mutableListOf())
+        compose.onNodeWithText("Movies").assertDoesNotExist()
+        compose
+            .onNode(SemanticsMatcher.expectValue(SemanticsProperties.PaneTitle, "Movies"))
+            .assertExists()
     }
 }
