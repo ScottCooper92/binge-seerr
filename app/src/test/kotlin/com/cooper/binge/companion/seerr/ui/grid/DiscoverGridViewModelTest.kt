@@ -133,11 +133,25 @@ class DiscoverGridViewModelTest {
         runVm { vm ->
             vm.onSort(DiscoverSort.RatingDesc)
             advanceUntilIdle()
-            assertEquals(RATING_SORT_VOTE_FLOOR, grid.requests.last().first.filters.voteCountMin)
-            assertEquals(ChipKind.Genre, vm.uiState.value.controls.chip?.kind)
+            assertEquals(
+                RATING_SORT_VOTE_FLOOR,
+                grid.requests
+                    .last()
+                    .first.filters.voteCountMin,
+            )
+            assertEquals(
+                ChipKind.Genre,
+                vm.uiState.value.controls.chip
+                    ?.kind,
+            )
             vm.onSort(DiscoverSort.PopularityDesc)
             advanceUntilIdle()
-            assertEquals(RATING_SORT_VOTE_FLOOR, grid.requests.last().first.filters.voteCountMin)
+            assertEquals(
+                RATING_SORT_VOTE_FLOOR,
+                grid.requests
+                    .last()
+                    .first.filters.voteCountMin,
+            )
         }
 
     @Test

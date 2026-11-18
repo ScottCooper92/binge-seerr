@@ -89,7 +89,15 @@ class DiscoverGridViewModel
             GridControls(
                 sort = query.sort.takeIf { canRefine },
                 sortChoices = if (canRefine) DiscoverSort.forKind(kind) else emptyList(),
-                chip = if (canRefine && !starting.isEmpty && query.filters.copy(voteCountMin = starting.voteCountMin) == starting) preset.toChip(title) else null,
+                chip =
+                    if (canRefine &&
+                        !starting.isEmpty &&
+                        query.filters.copy(voteCountMin = starting.voteCountMin) == starting
+                    ) {
+                        preset.toChip(title)
+                    } else {
+                        null
+                    },
             )
 
         /** Ordering by rating also sets the vote-count floor, as a Vote count value the user can clear. */
