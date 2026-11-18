@@ -37,7 +37,6 @@ internal fun SeasonStep(
     actions: RequestSheetActions,
 ) {
     Column {
-        Text(stringResource(R.string.request_sheet_seasons), style = MaterialTheme.typography.titleSmall)
         selection.limit?.let { QuotaNote(selection, it) }
         if (selection.partialAllowed) {
             if (selection.open.size > 1) {

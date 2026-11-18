@@ -27,6 +27,13 @@ import com.binge.designsystem.R as DesR
 
 private const val MINUTES_PER_HOUR = 60
 
+/** The line under the title in the request sheet: first air year and season count, whichever the server gave. */
+@Composable
+internal fun SeriesDetails.requestMeta(): String {
+    val seasons = seasonCount?.let { pluralStringResource(R.plurals.request_sheet_season_count, it, it) }
+    return listOfNotNull(firstAirYear, seasons).joinToString(stringResource(R.string.request_sheet_meta_separator))
+}
+
 /** The series' stats: rating with its votes, first air year, episode runtime and certification, then the server's other ratings. */
 @Composable
 internal fun SeriesDetails.titleStats(
