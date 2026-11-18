@@ -3,7 +3,6 @@ package com.cooper.binge.companion.seerr.discover.title
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.seerr.SeerrApi
 import com.cooper.binge.companion.seerr.seerr.SeerrCreditsDto
-import com.cooper.binge.companion.seerr.seerr.toTmdbPosterUrl
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 
@@ -25,10 +24,7 @@ class SeerrTitleCreditsRepository(
 }
 
 internal fun SeerrCreditsDto?.toTitleCredits(): TitleCredits {
-    val cast =
-        this?.cast.orEmpty().sortedBy { it.order ?: Int.MAX_VALUE }.map {
-            TitlePerson(it.id, it.name, it.character?.takeIf(String::isNotBlank), it.profilePath?.toTmdbPosterUrl())
-        }
+    val cast = this?.cast.orEmpty().toTitleCast()
     val departments =
         this
             ?.crew
@@ -36,13 +32,7 @@ internal fun SeerrCreditsDto?.toTitleCredits(): TitleCredits {
             .groupBy { it.department.orEmpty() }
             .map { (department, crew) ->
                 // One row per person in a department, under all the jobs they held there.
-                val people =
-                    crew.groupBy { it.id }.values.map { jobs ->
-                        val first = jobs.first()
-                        val role = jobs.mapNotNull { it.job?.takeIf(String::isNotBlank) }.distinct().joinToString(", ")
-                        TitlePerson(first.id, first.name, role.ifEmpty { null }, first.profilePath?.toTmdbPosterUrl())
-                    }
-                CreditsDepartment(department, people)
+                CreditsDepartment(department, crew.toTitleCrew())
             }.sortedWith(compareBy({ departmentRank(it.name) }, { it.name }))
     return TitleCredits(cast, departments)
 }

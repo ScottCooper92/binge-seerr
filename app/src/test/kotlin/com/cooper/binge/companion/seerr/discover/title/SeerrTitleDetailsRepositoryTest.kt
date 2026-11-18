@@ -111,6 +111,26 @@ class SeerrTitleDetailsRepositoryTest {
     }
 
     @Test
+    fun `a person listed twice in the cast or the other crew appears once`() {
+        movieBody =
+            MOVIE
+                .replace(
+                    """{"id":1,"name":"A","character":"Neo","order":0}]""",
+                    """{"id":1,"name":"A","character":"Neo","order":0},{"id":1,"name":"A","character":"The One","order":2}]""",
+                ).replace(
+                    """{"id":12,"name":"Cam","job":"Cinematography"}""",
+                    """{"id":12,"name":"Cam","job":"Cinematography"},{"id":12,"name":"Cam","job":"Camera Operator"}""",
+                )
+
+        val movie = withRepository { it.movie(603) }
+
+        assertEquals(listOf(1, 2), movie.cast.map { it.personId })
+        assertEquals("Neo, The One", movie.cast.first().role)
+        assertEquals(listOf(12), movie.otherCrew.map { it.personId })
+        assertEquals("Cinematography, Camera Operator", movie.otherCrew.single().role)
+    }
+
+    @Test
     fun `providers and certification follow the user's streaming region then the server's`() {
         val own = withRepository { it.movie(603) }
         assertEquals("US", own.providers?.region)

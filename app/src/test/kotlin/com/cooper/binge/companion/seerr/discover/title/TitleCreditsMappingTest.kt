@@ -88,7 +88,27 @@ class TitleCreditsMappingTest {
     }
 
     @Test
-    fun `a title with no credits is empty`() {
-        assertTrue((null as SeerrCreditsDto?).toTitleCredits().isEmpty)
+    fun `a title with no credits has neither cast nor departments`() {
+        val credits = (null as SeerrCreditsDto?).toTitleCredits()
+
+        assertTrue(credits.cast.isEmpty())
+        assertTrue(credits.departments.isEmpty())
+    }
+
+    @Test
+    fun `a person listed twice in the cast reads once under both characters`() {
+        val credits =
+            SeerrCreditsDto(
+                cast =
+                    listOf(
+                        SeerrCastDto(7, "Twin", "Elder", null, 0),
+                        SeerrCastDto(8, "Other", "Guard", null, 1),
+                        SeerrCastDto(7, "Twin", "Younger", null, 2),
+                    ),
+            ).toTitleCredits()
+
+        assertEquals(listOf(7, 8), credits.cast.map { it.personId })
+        assertEquals("Elder, Younger", credits.cast.first().role)
+        assertEquals(credits.cast.map { it.personId }.distinct(), credits.cast.map { it.personId })
     }
 }

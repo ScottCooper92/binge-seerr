@@ -24,7 +24,7 @@ class TitlePageSparseTest {
                 TitlePageScreen(
                     state = TitlePageUiState.Ready(sparse),
                     events = emptyFlow(),
-                    actions = TitlePageActions({}, {}, {}, {}, {}, {}, {}, {}, {}),
+                    actions = TitlePageActions({}, {}, {}, {}, {}, {}, {}, {}, {}, {}),
                 )
             }
         }

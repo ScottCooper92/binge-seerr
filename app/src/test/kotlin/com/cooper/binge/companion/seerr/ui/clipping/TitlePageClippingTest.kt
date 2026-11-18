@@ -40,7 +40,7 @@ private fun worstCase(): TitlePageUiState.Ready {
     return TitlePageUiState.Ready(movie, extras)
 }
 
-private val NO_ACTIONS = TitlePageActions({}, {}, {}, {}, {}, {}, {}, {}, {})
+private val NO_ACTIONS = TitlePageActions({}, {}, {}, {}, {}, {}, {}, {}, {}, {})
 
 /** The film page with long facts and every rating, at font scales 1.3 and 2.0, through the design system's clipping check. */
 @RunWith(RobolectricTestRunner::class)

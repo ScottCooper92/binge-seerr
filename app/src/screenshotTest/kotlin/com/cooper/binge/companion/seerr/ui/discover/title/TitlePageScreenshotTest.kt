@@ -13,7 +13,7 @@ import kotlinx.coroutines.flow.emptyFlow
 
 private const val SCROLLED_PX = 2500
 
-private val NO_ACTIONS = TitlePageActions({}, {}, {}, {}, {}, {}, {}, {}, {})
+private val NO_ACTIONS = TitlePageActions({}, {}, {}, {}, {}, {}, {}, {}, {}, {})
 
 @Composable
 private fun Frame(state: TitlePageUiState) = TitlePageScreen(state, emptyFlow(), NO_ACTIONS)

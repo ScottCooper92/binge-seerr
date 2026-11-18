@@ -12,9 +12,7 @@ data class CreditsDepartment(
 data class TitleCredits(
     val cast: List<TitlePerson>,
     val departments: List<CreditsDepartment>,
-) {
-    val isEmpty: Boolean get() = cast.isEmpty() && departments.isEmpty()
-}
+)
 
 /** What the cast and crew list reads. It knows nothing of Retrofit, so a view model holds this and a test holds a fake. */
 interface TitleCreditsRepository {

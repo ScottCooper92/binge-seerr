@@ -115,10 +115,7 @@ internal fun SeerrMovieDetailsDto.toMovieDetails(
                 TitlePerson(person.id, person.name, jobs.joinToString(", ").ifEmpty { null }, person.profilePath?.toTmdbPosterUrl())
             }
     val keyIds = key.map { it.personId }.toSet()
-    val others =
-        crew
-            .filter { it.id !in keyIds }
-            .map { TitlePerson(it.id, it.name, it.job, it.profilePath?.toTmdbPosterUrl()) }
+    val others = crew.filter { it.id !in keyIds }.toTitleCrew()
     val standardStatus = mediaInfo?.status.toAvailability()
     val status4k = mediaInfo?.status4k.toAvailability()
     return MovieDetails(
@@ -142,9 +139,7 @@ internal fun SeerrMovieDetailsDto.toMovieDetails(
         budget = budget?.takeIf { it > 0 },
         revenue = revenue?.takeIf { it > 0 },
         cast =
-            credits?.cast.orEmpty().sortedBy { it.order ?: Int.MAX_VALUE }.map {
-                TitlePerson(it.id, it.name, it.character?.takeIf(String::isNotBlank), it.profilePath?.toTmdbPosterUrl())
-            },
+            credits?.cast.orEmpty().toTitleCast(),
         keyCrew = key,
         otherCrew = others,
         videos = relatedVideos.toTitleVideos(),
