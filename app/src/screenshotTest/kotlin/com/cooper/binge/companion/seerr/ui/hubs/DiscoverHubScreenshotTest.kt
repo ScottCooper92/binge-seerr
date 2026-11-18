@@ -9,6 +9,7 @@ import com.cooper.binge.companion.seerr.discover.sliders.HubCard
 import com.cooper.binge.companion.seerr.discover.sliders.HubHero
 import com.cooper.binge.companion.seerr.discover.sliders.HubRow
 import com.cooper.binge.companion.seerr.discover.sliders.HubTab
+import com.cooper.binge.companion.seerr.discover.sliders.HubTile
 import com.cooper.binge.companion.seerr.preview.SeerrFontScale13Previews
 import com.cooper.binge.companion.seerr.preview.SeerrFontScalePreviews
 import com.cooper.binge.companion.seerr.preview.SeerrScreenPreviews
@@ -69,6 +70,31 @@ class DiscoverHubScreenshotTest {
     fun withHeroLargeText() = Frame(readyState(hero = listOf(LONG_HERO)))
 
     @PreviewTest
+    @SeerrScreenPreviews
+    @Composable
+    fun tileRows() = Frame(tilesState())
+
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun networkTiles() = Frame(tilesState(tab = HubTab.Series), tab = HubTab.Series)
+
+    @PreviewTest
+    @SeerrSpanishPreviews
+    @Composable
+    fun tileRowsSpanish() = Frame(tilesState())
+
+    @PreviewTest
+    @SeerrFontScale13Previews
+    @Composable
+    fun tileRowsLargeText13() = Frame(tilesState())
+
+    @PreviewTest
+    @SeerrFontScalePreviews
+    @Composable
+    fun tileRowsLargeText() = Frame(tilesState())
+
+    @PreviewTest
     @SeerrScreenStatePreview
     @Composable
     fun loading() = Frame(DiscoverHubUiState.Loading)
@@ -103,7 +129,7 @@ class DiscoverHubScreenshotTest {
 private fun Frame(
     state: DiscoverHubUiState,
     tab: HubTab = HubTab.Movies,
-) = PreviewSystemBarInsets { DiscoverHubScreen(tab = tab, state = state, onRefresh = {}, onOpenTitle = {}) }
+) = PreviewSystemBarInsets { DiscoverHubScreen(tab = tab, state = state, onRefresh = {}, onOpenTitle = {}, onOpenCategory = { _, _ -> }) }
 
 private fun card(
     id: Int,
@@ -128,14 +154,36 @@ private fun readyState(
 ) = DiscoverHubUiState.Ready(
     rows =
         listOf(
-            HubRowUi(HubRow.Trending(1, null, HubTab.Movies), SAMPLE_CARDS),
-            HubRowUi(HubRow.RecentlyAdded(2, null, HubTab.Movies), SAMPLE_CARDS.reversed()),
-            HubRowUi(HubRow.Popular(3, "Staff picks", HubTab.Movies), SAMPLE_CARDS.take(4)),
+            HubRowUi.Cards(HubRow.Trending(1, null, HubTab.Movies), SAMPLE_CARDS),
+            HubRowUi.Cards(HubRow.RecentlyAdded(2, null, HubTab.Movies), SAMPLE_CARDS.reversed()),
+            HubRowUi.Cards(HubRow.Popular(3, "Staff picks", HubTab.Movies), SAMPLE_CARDS.take(4)),
         ),
     pending = pending,
     refreshing = refreshing,
     hero = hero,
 )
+
+private fun tilesState(tab: HubTab = HubTab.Movies) =
+    DiscoverHubUiState.Ready(
+        rows =
+            if (tab == HubTab.Movies) {
+                listOf(
+                    HubRowUi.Tiles(HubRow.Genres(1, null, tab), GENRES),
+                    HubRowUi.Tiles(HubRow.Studios(2, null), COMPANIES),
+                )
+            } else {
+                listOf(
+                    HubRowUi.Tiles(HubRow.Genres(1, null, tab), GENRES),
+                    HubRowUi.Tiles(HubRow.Networks(2, null), COMPANIES),
+                )
+            },
+        pending = 0,
+        refreshing = false,
+    )
+
+private val GENRES = listOf("Action", "Adventure", "Animation", "Science Fiction & Fantasy").mapIndexed { i, n -> HubTile(i, n, null) }
+
+private val COMPANIES = listOf("Disney", "Warner Bros. Pictures", "Marvel Studios", "Universal").mapIndexed { i, n -> HubTile(i, n, null) }
 
 private fun hero(
     id: Int,

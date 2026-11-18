@@ -162,10 +162,13 @@ app:hubs_card_requested  2d9e28289fac
 app:hubs_empty_message  1cd000df2d5b
 app:hubs_loading_row  7526686030d0
 app:hubs_row_custom  8e80ab3f7c10
+app:hubs_row_genres  3561abfe8067
+app:hubs_row_networks  ab2c47c3c77f
 app:hubs_row_popular_movies  7cfbd05499d2
 app:hubs_row_popular_tv  16c10204e017
 app:hubs_row_recent_requests  b83a589f114a
 app:hubs_row_recently_added  96ec5d338ae3
+app:hubs_row_studios  e41cca7d2395
 app:hubs_row_trending  5e1a0ebc939d
 app:hubs_row_upcoming_movies  627f6d5d31ed
 app:hubs_row_upcoming_tv  eb3560bc6cc1

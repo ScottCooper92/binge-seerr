@@ -21,6 +21,7 @@ import com.cooper.binge.companion.seerr.discover.sliders.HubCard
 import com.cooper.binge.companion.seerr.discover.sliders.HubHero
 import com.cooper.binge.companion.seerr.discover.sliders.HubRow
 import com.cooper.binge.companion.seerr.discover.sliders.HubTab
+import com.cooper.binge.companion.seerr.discover.sliders.HubTile
 import com.cooper.binge.companion.seerr.theme.SeerrTheme
 import com.cooper.binge.companion.seerr.util.createSeerrComposeRule
 import org.junit.Assert.assertEquals
@@ -42,13 +43,19 @@ class DiscoverHubScreenTest {
         val card = HubCard(TitleKind.Movie, 7, "Paper Moons", "2020", null, TitleAvailability.None, server + "movie/7")
         val state =
             DiscoverHubUiState.Ready(
-                listOf(HubRowUi(HubRow.Trending(1, null, HubTab.Movies), listOf(card))),
+                listOf(HubRowUi.Cards(HubRow.Trending(1, null, HubTab.Movies), listOf(card))),
                 pending = 0,
                 refreshing = false,
                 hero = hero,
             )
         compose.setContent {
-            SeerrTheme { DiscoverHubScreen(HubTab.Movies, state, onRefresh = {}, onOpenTitle = { opened += it }) }
+            SeerrTheme {
+                DiscoverHubScreen(HubTab.Movies, state, onRefresh = {}, onOpenTitle = { opened += it }, onOpenCategory = {
+                    _,
+                    _,
+                    ->
+                })
+            }
         }
     }
 
@@ -58,6 +65,34 @@ class DiscoverHubScreenTest {
         show("https://server.example/", opened)
         compose.onNodeWithText("Paper Moons").performClick()
         assertEquals(listOf(7), opened.map { it.tmdbId })
+    }
+
+    @Test
+    fun `a tap on a genre or a studio tile opens that category`() {
+        val opened = mutableListOf<Pair<HubRow, HubTile>>()
+        val state =
+            DiscoverHubUiState.Ready(
+                listOf(
+                    HubRowUi.Tiles(HubRow.Genres(1, null, HubTab.Movies), listOf(HubTile(28, "Action", null))),
+                    HubRowUi.Tiles(HubRow.Studios(2, null), listOf(HubTile(2, "Disney", null))),
+                ),
+                pending = 0,
+                refreshing = false,
+            )
+        compose.setContent {
+            SeerrTheme {
+                DiscoverHubScreen(HubTab.Movies, state, onRefresh = {}, onOpenTitle = {}, onOpenCategory = { row, tile ->
+                    opened +=
+                        row to tile
+                })
+            }
+        }
+        compose.onNodeWithText("Genres").assertExists()
+        compose.onNodeWithText("Studios").assertExists()
+        compose.onNodeWithText("Action", useUnmergedTree = true).performClick()
+        compose.onNodeWithText("Disney", useUnmergedTree = true).performClick()
+        assertEquals(listOf(28, 2), opened.map { it.second.id })
+        assertEquals(listOf(1, 2), opened.map { it.first.sliderId })
     }
 
     private fun hero(server: String) =
@@ -86,11 +121,11 @@ class DiscoverHubScreenTest {
         val rows =
             (1..4).map { id ->
                 val card = HubCard(TitleKind.Movie, id, "Title $id", "2020", null, TitleAvailability.None, server + "movie/$id")
-                HubRowUi(HubRow.Trending(id, null, HubTab.Movies), listOf(card))
+                HubRowUi.Cards(HubRow.Trending(id, null, HubTab.Movies), listOf(card))
             }
         val state = mutableStateOf(DiscoverHubUiState.Ready(rows, pending = 0, refreshing = false))
         compose.setContent {
-            SeerrTheme { DiscoverHubScreen(HubTab.Movies, state.value, onRefresh = {}, onOpenTitle = {}) }
+            SeerrTheme { DiscoverHubScreen(HubTab.Movies, state.value, onRefresh = {}, onOpenTitle = {}, onOpenCategory = { _, _ -> }) }
         }
         compose.onNodeWithText("Title 1").assertIsDisplayed()
 
@@ -106,11 +141,11 @@ class DiscoverHubScreenTest {
         val rows =
             (1..12).map { id ->
                 val card = HubCard(TitleKind.Movie, id, "Title $id", "2020", null, TitleAvailability.None, server + "movie/$id")
-                HubRowUi(HubRow.Trending(id, null, HubTab.Movies), listOf(card))
+                HubRowUi.Cards(HubRow.Trending(id, null, HubTab.Movies), listOf(card))
             }
         val state = mutableStateOf(DiscoverHubUiState.Ready(rows, pending = 0, refreshing = false))
         compose.setContent {
-            SeerrTheme { DiscoverHubScreen(HubTab.Movies, state.value, onRefresh = {}, onOpenTitle = {}) }
+            SeerrTheme { DiscoverHubScreen(HubTab.Movies, state.value, onRefresh = {}, onOpenTitle = {}, onOpenCategory = { _, _ -> }) }
         }
         compose.onAllNodes(hasScrollAction()).onFirst().performTouchInput { swipeUp() }
         compose.waitForIdle()
