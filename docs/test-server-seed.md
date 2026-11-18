@@ -20,7 +20,7 @@ It needs Python 3 and nothing else. Both variables are required, and the key mus
 
 ## What it sets
 
-It switches every built-in slider on and keeps the server's order. It then adds one custom slider of each kind the hubs map. Each is titled `Seed: ...`, so running the script again updates them and does not add copies.
+It adds one custom slider of each kind the hubs map. Each is titled `Seed: ...`, so running the script again updates them and does not add copies. The server saves a new slider switched off, so the script then switches on every built-in slider and every seeded one, in one write that keeps the server's order and leaves other sliders as they were.
 
 | Kind | Holds | Shows on |
 | --- | --- | --- |

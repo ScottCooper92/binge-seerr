@@ -12,7 +12,7 @@ Run by hand against a test server, never from CI. It needs two environment varia
 
 What it does:
 
-  * switches every built-in slider on, leaving the server's order alone;
+  * switches every built-in slider and every slider it adds on, leaving the server's order alone;
   * adds one custom slider of each kind the hubs map (keyword, genre, studio, network, streaming and search, for movies
     and TV where the kind has both), each titled "Seed: ..." so a second run updates them and does not add copies.
 
@@ -187,9 +187,13 @@ def wire(slider):
     return body
 
 
-def enable_built_ins(server, sliders):
-    """Switches every built-in slider on, keeping the list's order and every other slider as it is."""
-    off = [s for s in sliders if s.get("isBuiltIn") and not s.get("enabled", True)]
+def wanted_on(slider):
+    return bool(slider.get("isBuiltIn")) or (slider.get("title") or "").startswith(PREFIX)
+
+
+def enable(server, sliders):
+    """Switches every built-in and seeded slider on in one list write, keeping the order and every other slider as it is."""
+    off = [s for s in sliders if wanted_on(s) and not s.get("enabled", True)]
     if not off:
         return 0
     server.write("POST", "settings/discover", [wire({**s, "enabled": True} if s in off else s) for s in sliders])
@@ -199,7 +203,6 @@ def enable_built_ins(server, sliders):
 def seed(server, region):
     sliders = server.read("settings/discover") or []
     report = {"added": [], "updated": [], "skipped": [], "resolved": {}}
-    report["enabled"] = enable_built_ins(server, sliders)
     existing = {s.get("title"): s for s in sliders if not s.get("isBuiltIn") and (s.get("title") or "").startswith(PREFIX)}
     for kind, name, lookup in plan(server, region):
         title = PREFIX + name
@@ -216,6 +219,10 @@ def seed(server, region):
         else:
             server.write("POST", "settings/discover/add", body)
             report["added"].append(title)
+    # The add route saves a slider switched off, and the update route never touches that, so this runs last.
+    report["enabled"] = enable(server, server.read("settings/discover") or [])
+    if server.dry_run:
+        report["enabled"] += len(report["added"])
     return report
 
 
@@ -262,7 +269,7 @@ def main():
             print("Built-in sliders that were switched on are left on.")
             return 0
         report = seed(server, region)
-        print(f"Built-in sliders {'that would be switched on' if args.dry_run else 'switched on'}: {report['enabled']}")
+        print(f"Built-in and seeded sliders {'that would be switched on' if args.dry_run else 'switched on'}: {report['enabled']}")
         for label in ("added", "updated"):
             print(f"{label.capitalize()} {len(report[label])}: " + (", ".join(report[label]) or "none"))
         print(f"Skipped {len(report['skipped'])}:" + ("" if report["skipped"] else " none"))
