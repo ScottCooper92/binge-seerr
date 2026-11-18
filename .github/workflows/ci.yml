@@ -99,6 +99,11 @@ jobs:
           submodules: recursive
           token: ${{ steps.submodule_token.outputs.token }}
 
+      # The screenshot shards below take their classes from this script. Its test proves every class lands in
+      # exactly one shard, so a dropped or doubled class is a red run here and not a frame nothing validates.
+      - name: Test the screenshot sharding
+        run: .github/scripts/shard-screenshots.test.sh
+
       # JDK 21, matching binge-ci's ci-setup. The JDK runs the build and nothing else:
       # `jvmTarget` 17 in app/build.gradle.kts decides the bytecode, so this does not move what
       # runs on a device.
@@ -182,14 +187,21 @@ jobs:
           if-no-files-found: ignore
           retention-days: 1
 
-  # The screenshot frames. The plugin renders in one fork, so this is the longest job and the one
-  # to watch: trimming a preview matrix is the way to shorten it. A successful run takes 11 to 16 minutes, and a slow
-  # runner has taken twice that, so the limit is 45 and not the 30 the other jobs get. Only :app has frames, so this is
-  # the one task still named with its project.
+  # The screenshot frames, in shards. The plugin renders every frame in one JVM that keeps each frame's native
+  # memory until it exits, so the whole suite in one fork grew with the suite: a single job took 11 to 16 minutes
+  # and, on a slow runner, ran out of memory or stalled. Each shard renders a third of the classes, chosen by
+  # .github/scripts/shard-screenshots.sh so that every class lands in exactly one shard, and the shards run side by
+  # side. The job's result is the shards' together, so `build` still reads one `screenshots` and a red shard is a red
+  # `screenshots`. A shard normally takes about 5 minutes; one that has not finished in 20 has stalled. Only :app has
+  # frames, so this is the one task still named with its project.
   screenshots:
     if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2]
     steps:
       # The submodules are private to the author: the default token reads this repository only. This one is read-only.
       - name: Mint a read-only token for the submodules
@@ -217,16 +229,25 @@ jobs:
       - name: Compile screenshot sources
         run: ./gradlew :app:compileDebugScreenshotTestKotlin --max-workers=2
 
-      - name: Validate screenshots
+      - name: Validate screenshots (shard ${{ matrix.shard }} of ${{ strategy.job-total }})
+        env:
+          SHARD: ${{ matrix.shard }}
+          SHARDS: ${{ strategy.job-total }}
         run: |
+          mapfile -t filters < <(.github/scripts/shard-screenshots.sh "$SHARDS" "$SHARD")
+          if [ "${#filters[@]}" -eq 0 ]; then
+            echo "shard $SHARD has no classes; an empty filter would run the whole suite in one JVM" >&2
+            exit 1
+          fi
+          printf '%s\n' "${filters[@]}" | paste - - | sed 's/^/  /'
           ./gradlew --stop
-          ./gradlew :app:validateDebugScreenshotTest --continue
+          ./gradlew :app:validateDebugScreenshotTest --continue "${filters[@]}"
 
       - name: Upload reports
         if: ${{ failure() }}
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
-          name: build-reports-screenshots
+          name: build-reports-screenshots-${{ matrix.shard }}
           path: |
             **/build/outputs/screenshotTest-results/**/diffs/**
           if-no-files-found: ignore

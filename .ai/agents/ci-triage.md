@@ -14,13 +14,13 @@ all. `.github/workflows/ci.yml` is the source of truth for the split:
 | `actionlint` | Not on the nightly: binge-ci's shared actionlint step over `.github/workflows/`, with shellcheck at warning severity |
 | `checks` | `./gradlew build` minus the tasks the next three jobs own — Kotlin compile, `ktlintCheck`, `detekt`, `checkBaselineStaleness`, Android `lint`, `checkTranslationStaleness`, `checkTvMaterialSeparation`, `checkGrpcAlignment`, the debug assemble |
 | `tests` | `testDebugUnitTest` and `koverVerify`, in every module (`:app`, `:data`) |
-| `screenshots` | `:app:validateDebugScreenshotTest` |
+| `screenshots` | `:app:validateDebugScreenshotTest`, as a matrix of three shards (`screenshots (0)`, `(1)` and `(2)`). `.github/scripts/shard-screenshots.sh` gives each shard its test classes, and every class is in exactly one. The job's result is the shards' together, so one red shard is a red `screenshots`. Each shard uploads its own `build-reports-screenshots-<n>` |
 | `release` | `assembleRelease`, in every module — R8 with this app's keep rules, and lint-vital |
 | `build` | Nothing of its own. Waits on the other six, and is green only if all of them are. The pin check passes by being skipped outside a PR, and `actionlint` by being skipped on the nightly. It merges the four Gradle jobs' reports into the one `build-reports` artifact |
 
 `build` is the check branch protection requires, and the one `author-ci-fix.yml` reads.
 Its log only says which of the jobs failed. Read the failing job's log, not
-`build`'s: that is where the error is. The reports in `build-reports` come from
+`build`'s: that is where the error is. For `screenshots`, that is the failing shard's log, not the other two. The reports in `build-reports` come from
 whichever jobs failed.
 
 `checks` excludes tasks rather than listing them, so a gate added to `check` later
