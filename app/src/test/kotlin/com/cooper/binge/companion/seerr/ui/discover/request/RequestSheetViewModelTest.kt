@@ -200,4 +200,37 @@ class RequestSheetViewModelTest {
 
         assertEquals(RequestProblemCause.Unreachable, vm.ready().problem?.cause)
     }
+
+    @Test
+    fun `a title whose standard version is requested defaults to 4K and cannot flip back`() {
+        val vm = RequestSheetViewModel(FakeRepository(advanced), TARGET.copy(standardOpen = false))
+
+        assertTrue(vm.ready().use4k)
+        assertEquals(2, vm.ready().pick?.serverId)
+        assertFalse(vm.ready().canToggle4k)
+        vm.setUse4k(false)
+        assertTrue(vm.ready().use4k)
+    }
+
+    @Test
+    fun `a title whose 4K version is requested offers the standard one only`() {
+        val vm = RequestSheetViewModel(FakeRepository(advanced), TARGET.copy(fourKOpen = false))
+
+        assertFalse(vm.ready().use4k)
+        assertFalse(vm.ready().canToggle4k)
+    }
+
+    @Test
+    fun `a send the server took and made nothing of is a dialog, not a closed sheet`() =
+        runTest {
+            val repository = FakeRepository(advanced, result = RequestResult.AlreadyRequested)
+            val vm = viewModel(repository)
+            val event = awaitEvent(vm.events)
+
+            vm.submit()
+
+            assertEquals(RequestProblemCause.AlreadyThere, vm.ready().problem?.cause)
+            assertFalse(vm.ready().submitting)
+            event.cancel()
+        }
 }

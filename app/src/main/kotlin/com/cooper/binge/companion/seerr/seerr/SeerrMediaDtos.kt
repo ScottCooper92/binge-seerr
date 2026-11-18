@@ -31,12 +31,7 @@ data class SeerrMediaDetailsDto(
     /** The age rating for [region] (`US`, `GB`), falling back to the US one; null when the title has none there. */
     fun certification(region: String): String? =
         listOf(region, FALLBACK_CERTIFICATION_REGION).firstNotNullOfOrNull { country ->
-            val movie =
-                releases
-                    ?.results
-                    ?.firstOrNull { it.country == country }
-                    ?.releaseDates
-                    ?.firstNotNullOfOrNull { it.certification.takeIf(String::isNotBlank) }
+            val movie = releases.certificationIn(country)
             val show =
                 contentRatings
                     ?.results
@@ -51,7 +46,7 @@ data class SeerrMediaDetailsDto(
 
 /** A `yyyy-mm-dd` date's year; a serializable class cannot hide this in a private companion. */
 private const val YEAR_LENGTH = 4
-private const val FALLBACK_CERTIFICATION_REGION = "US"
+internal const val FALLBACK_CERTIFICATION_REGION = "US"
 
 @Serializable
 data class SeerrReleasesDto(
@@ -177,3 +172,11 @@ data class SeerrMediaStatusBody(
 data class SeerrMediaStatusSeasonBody(
     @SerialName("seasonNumber") val seasonNumber: Int,
 )
+
+/** The first non-blank certification a film has in [country], or null: the one rule the page and the Service read a film's age rating by. */
+internal fun SeerrReleasesDto?.certificationIn(country: String): String? =
+    this
+        ?.results
+        ?.firstOrNull { it.country == country }
+        ?.releaseDates
+        ?.firstNotNullOfOrNull { it.certification.takeIf(String::isNotBlank) }

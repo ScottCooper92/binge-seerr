@@ -37,7 +37,10 @@ How each gate is applied is in [`server-compatibility.md`](server-compatibility.
 | `POST /auth/jellyfin` | Sign in using a Jellyfin username and password | — | v1.0.0 | yes | In place today. |
 | `POST /auth/local` | Sign in using a local account | v1.17.0 | v1.0.0 | yes | In place today. |
 | `GET /auth/me` | Get logged-in user | v1.0.0 | v1.0.0 | yes | Server profile: variant, version, media server, sign-in modes, permissions. |
-| `GET /movie/{movieId}` | Get movie details | v1.0.0 | v1.0.0 | yes | The status lookup the Service already makes; never a page. |
+| `GET /movie/{movieId}` | Get movie details | v1.0.0 | v1.0.0 | yes | The status lookup the Service makes, and the whole film page behind the discovery flag (facts, credits, videos, watch providers, collection). |
+| `GET /movie/{movieId}/ratingscombined` | Get RT and IMDB movie ratings combined | v1.34.0 | v1.7.0 | yes | Rotten Tomatoes and IMDb scores on the film page, only where the profile has `hasCombinedRatings`; a 404 means the server has neither. |
+| `GET /movie/{movieId}/recommendations` | Get recommended movies | v1.0.0 | v1.0.0 | yes | The film page's Recommended row. |
+| `GET /movie/{movieId}/similar` | Get similar movies | v1.0.0 | v1.0.0 | yes | The film page's Similar row. |
 | `GET /settings/public` | Get public settings | v1.0.0 | v1.0.0 | yes | Server profile: variant, version, media server, sign-in modes, permissions; "what a visitor sees" on the general settings page. |
 | `GET /status` | Get Seerr status | v1.15.0 | v1.0.0 | yes | Server profile: variant, version, media server, sign-in modes, permissions. |
 | `GET /tv/{tvId}` | Get TV details | v1.0.0 | v1.0.0 | yes | The status lookup the Service already makes; never a page. |
@@ -257,9 +260,6 @@ Each row is ticked in "Today" by the PR that covers it.
 | `GET /discover/watchlist` | Get the Plex watchlist. | v1.30.0 | v1.2.0 | yes | The shared title lists: hubs, the grid and search. |
 | `GET /media` | Get media | v1.0.0 | v1.0.0 | yes | The hubs' Recently Added row (`filter=allavailable`, sorted by `mediaAdded`), where the server has it. |
 | `GET /movie/{movieId}/ratings` | Get movie ratings | v1.0.0 | v1.0.0 |  | Planned under the discovery epic (#2039). |
-| `GET /movie/{movieId}/ratingscombined` | Get RT and IMDB movie ratings combined | v1.34.0 | v1.7.0 |  | Planned under the discovery epic (#2039). |
-| `GET /movie/{movieId}/recommendations` | Get recommended movies | v1.0.0 | v1.0.0 |  | Planned under the discovery epic (#2039). |
-| `GET /movie/{movieId}/similar` | Get similar movies | v1.0.0 | v1.0.0 |  | Planned under the discovery epic (#2039). |
 | `GET /person/{personId}` | Get person details | v1.0.0 | v1.0.0 |  | Planned under the discovery epic (#2039). |
 | `GET /person/{personId}/combined_credits` | Get combined credits | v1.0.0 | v1.0.0 |  | Planned under the discovery epic (#2039). |
 | `GET /search` | Search for movies, TV shows, or people | v1.0.0 | v1.0.0 | yes | The Search tab: movies, series and people, paged, debounced, with the queries that found something kept on the device. A `tmdb:<id>` query is the server's own lookup and works the same way. The server's multi search never returns collections; the mapping would show one if it did. |

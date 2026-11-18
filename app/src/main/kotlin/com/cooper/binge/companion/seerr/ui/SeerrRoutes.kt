@@ -1,6 +1,7 @@
 package com.cooper.binge.companion.seerr.ui
 
 import androidx.navigation3.runtime.NavKey
+import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.ui.blocklist.BlocklistItem
 import com.cooper.binge.companion.seerr.ui.settings.ServiceType
 import com.cooper.binge.companion.seerr.ui.settings.server.ServerAgent
@@ -119,6 +120,13 @@ data class OverrideRuleRoute(
 @Serializable
 data class RequestDetailRoute(
     val requestId: Int,
+) : SeerrRoute
+
+/** A title as a page, opened from a card in the discovery tabs. Only a film has a page so far. */
+@Serializable
+data class TitleDetailRoute(
+    val kind: TitleKind,
+    val tmdbId: Int,
 ) : SeerrRoute
 
 /** Settings: the connection and the admin's read-only view of the server. */
