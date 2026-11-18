@@ -15,6 +15,7 @@ import com.cooper.binge.companion.seerr.ui.Ticker
 import com.cooper.homelab.core.flags.FeatureFlags
 import com.cooper.homelab.core.flags.FixedFeatureFlags
 import com.cooper.homelab.core.flags.Flags
+import com.cooper.homelab.core.flags.SharedFlags
 import com.cooper.homelab.core.server.network.LocalNetworkPermission
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
@@ -56,7 +57,7 @@ class HubViewModel
         private val installCheck: BingeInstallCheck = NoBingeInstallCheck,
         private val bingeConnection: BingeConnectionStore = NoBingeConnectionStore,
         private val localNetwork: LocalNetworkPermission = LocalNetworkPermission.AlwaysGranted,
-        featureFlags: FeatureFlags = FixedFeatureFlags(Flags.AllOn),
+        featureFlags: FeatureFlags = FixedFeatureFlags(Flags.of(SharedFlags.BingePromotion to true, SharedFlags.ReviewPrompt to true)),
     ) : ViewModel() {
         private val recheckTrigger = MutableStateFlow(0)
         private val isProbing = MutableStateFlow(false)
