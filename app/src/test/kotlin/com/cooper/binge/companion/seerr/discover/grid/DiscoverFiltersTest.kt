@@ -25,6 +25,13 @@ class DiscoverFiltersTest {
     ) = toDiscoverQuery(kind, filters, sort, page, profile)
 
     @Test
+    fun `genres are joined with a comma for all of them and a pipe for any of them`() {
+        val all = DiscoverFilters(genres = setOf(18, 35))
+        assertEquals("18,35", query(filters = all)["genre"])
+        assertEquals("18|35", query(filters = all.copy(genresAny = true))["genre"])
+    }
+
+    @Test
     fun `no filters sends the page and the order only`() {
         assertEquals(mapOf("page" to "1", "sortBy" to "popularity.desc"), query())
         assertEquals(mapOf("page" to "3", "sortBy" to "vote_average.asc"), query(sort = DiscoverSort.RatingAsc, page = 3))

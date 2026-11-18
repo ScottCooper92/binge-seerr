@@ -10,6 +10,7 @@ import com.cooper.binge.companion.seerr.seerr.SeerrServerProfile
  */
 data class DiscoverFilters(
     val genres: Set<Int> = emptySet(),
+    val genresAny: Boolean = false,
     val company: Int? = null,
     val keywords: Set<Int> = emptySet(),
     val excludeKeywords: Set<Int> = emptySet(),
@@ -32,10 +33,14 @@ data class DiscoverFilters(
     val isEmpty: Boolean get() = this == DiscoverFilters()
 }
 
+/** The vote count a list sorted by rating needs, as TMDB's own "top rated" page asks, so a title with a few votes cannot top it. */
+const val RATING_SORT_VOTE_FLOOR = 300
+
 /**
  * The query the server's discover route takes for [filters] in [sort], at [page]. A parameter the connected server does not know
  * is left out, as is one that makes no sense for [kind], so no screen has to ask which server it is talking to. A list is
- * joined with a comma, and the streaming services with the pipe TMDB reads as "any of".
+ * joined with a comma, TMDB's "all of", and the streaming services with the pipe it reads as "any of". Genres take the pipe too
+ * when [DiscoverFilters.genresAny] is set.
  */
 fun toDiscoverQuery(
     kind: TitleKind,
@@ -59,7 +64,7 @@ private fun MutableMap<String, String>.putWhat(
     kind: TitleKind,
     filters: DiscoverFilters,
 ) {
-    filters.genres.joinedOrNull(",")?.let { put("genre", it) }
+    filters.genres.joinedOrNull(if (filters.genresAny) "|" else ",")?.let { put("genre", it) }
     filters.company?.let { put(if (kind == TitleKind.Series) "network" else "studio", it.toString()) }
     filters.keywords.joinedOrNull(",")?.let { put("keywords", it) }
     filters.language?.let { put("language", it) }
