@@ -188,7 +188,7 @@ private fun Hero(
 ) {
     val items =
         hero.map {
-            HeroItem(id = it.tmdbId, imageUrl = it.backdropUrl, title = it.name, rating = it.rating, genres = it.genres, rank = it.rank)
+            HeroItem(id = it.tmdbId, imageUrl = it.backdropUrl, title = it.name, rating = null, genres = it.genres, rank = it.rank)
         }
     HeroCarousel(
         items = items,
