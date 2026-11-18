@@ -70,7 +70,7 @@ fun SetupScreen(
         title = title,
         onExit = onBack,
         // Before a server is connected Settings is out of reach, so a problem can still be reported from the bar.
-        actions = { if (onReportProblem != null) ReportProblemAction(onReportProblem) },
+        actions = { glassBackgroundAlpha -> if (onReportProblem != null) ReportProblemAction(glassBackgroundAlpha, onReportProblem) },
         // The home swaps to the hub on the credentials landing; Connected is the frame in between.
         loading = state is SetupUiState.Loading || state is SetupUiState.Connected,
         aside = { step -> if (step == SIGN_IN_STEP) server?.let { SetupServerBackdrop(it) } },

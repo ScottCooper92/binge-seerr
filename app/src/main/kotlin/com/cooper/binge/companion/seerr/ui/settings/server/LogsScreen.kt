@@ -40,7 +40,6 @@ import com.binge.designsystem.paneBackOrNull
 import com.binge.designsystem.resolvedContentPadding
 import com.binge.designsystem.template.FilteredListScreen
 import com.binge.designsystem.template.PagedPhase
-import com.binge.designsystem.template.ScreenBar
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.requests.PagedAppendState
 import com.cooper.binge.companion.seerr.ui.requests.PagedRefreshError
@@ -82,7 +81,6 @@ fun LogsScreen(
         title = stringResource(R.string.server_settings_logs),
         onBack = paneBackOrNull(actions.onBack),
         // The console keeps its single-line bar and an opaque header; the default is the gallery's transparent collapsing bar.
-        bar = ScreenBar.Small,
         headerBackground = MaterialTheme.colorScheme.background,
         scrimFraction = 0f,
         filters = LogLevel.entries.map { FilterChipItem(label = stringResource(it.labelRes())) },

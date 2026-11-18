@@ -83,7 +83,12 @@ internal fun TitleSearchScreen(
             SearchHeader(state, actions, titleState)
             Box(Modifier.weight(1f).fillMaxWidth()) {
                 when (state) {
-                    is TitleSearchUiState.Idle -> IdleBody(state, actions, navOverlayPadding(PaddingValues()))
+                    is TitleSearchUiState.Idle ->
+                        IdleBody(
+                            state,
+                            actions,
+                            navOverlayPadding(PaddingValues()),
+                        )
                     is TitleSearchUiState.Loading -> LoadingScreen()
                     is TitleSearchUiState.Ready ->
                         key(

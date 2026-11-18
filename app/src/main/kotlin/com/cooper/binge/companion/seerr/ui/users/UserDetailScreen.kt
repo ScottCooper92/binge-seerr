@@ -58,14 +58,12 @@ import com.binge.designsystem.layout.layoutAnchor
 import com.binge.designsystem.resolvedContentInset
 import com.binge.designsystem.resolvedContentPadding
 import com.cooper.binge.companion.seerr.R
-import com.cooper.binge.companion.seerr.flags.LocalFlags
-import com.cooper.binge.companion.seerr.flags.bingePromotion
 import com.cooper.binge.companion.seerr.seerr.ManageablePermission
 import com.cooper.binge.companion.seerr.seerr.SeerrError
+import com.cooper.binge.companion.seerr.ui.discover.title.LocalOpenTitle
 import com.cooper.binge.companion.seerr.ui.hub.QuotaSection
 import com.cooper.binge.companion.seerr.ui.isOpenableSite
 import com.cooper.binge.companion.seerr.ui.openInBrowser
-import com.cooper.binge.companion.seerr.ui.openTitle
 import com.cooper.binge.companion.seerr.ui.requests.PagedAppendState
 import com.cooper.binge.companion.seerr.ui.requests.RequestItem
 import com.cooper.binge.companion.seerr.ui.requests.RequestMediaType
@@ -79,6 +77,7 @@ import com.cooper.binge.companion.seerr.ui.state.actionItem
 import com.cooper.binge.companion.seerr.ui.state.externalItem
 import com.cooper.binge.companion.seerr.ui.state.messageRes
 import com.cooper.binge.companion.seerr.ui.state.openItem
+import com.cooper.binge.companion.seerr.ui.toTitleKind
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
 import com.binge.designsystem.R as DesR
@@ -329,15 +328,14 @@ internal fun UserActionsContent(
     )
 }
 
-/** A carousel of titles; each card opens the title in Binge, or on the server where Binge is not installed. */
+/** A carousel of titles; each card opens the title's page, or with discovery off in Binge, or on the server where Binge is not installed. */
 @Composable
 private fun TitleCarousel(
     title: String,
     items: List<TitleCardItem>,
     serverRoot: String,
 ) {
-    val context = LocalContext.current
-    val promoted = LocalFlags.current.bingePromotion
+    val openTitle = LocalOpenTitle.current
     MediaCarousel(title = title, items = items, itemKey = { it.mediaType.name + it.tmdbId }, onMoreClick = null) { _, item ->
         MediaCard(
             posterUrl = item.posterUrl,
@@ -347,7 +345,7 @@ private fun TitleCarousel(
             rating = null,
             onClick = {
                 val path = if (item.mediaType == RequestMediaType.Tv) "tv/" else "movie/"
-                context.openTitle(promoted, item.mediaType, item.tmdbId, serverRoot + path + item.tmdbId)
+                openTitle(item.mediaType.toTitleKind(), item.tmdbId, serverRoot + path + item.tmdbId)
             },
         )
     }

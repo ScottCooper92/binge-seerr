@@ -8,7 +8,7 @@ import com.cooper.homelab.core.flags.SharedFlags
 /** The flags for the composition below. Off until a root provides them, so a screen shown alone advertises nothing. */
 val LocalFlags = staticCompositionLocalOf { Flags() }
 
-/** Whether the discovery surfaces show. Off until a root provides it; nothing reads it yet. */
+/** Whether the discovery surfaces show: the shell with its tabs, and the page a title opens. Off until a root provides it. */
 val LocalDiscoveryEnabled = staticCompositionLocalOf { false }
 
 /**

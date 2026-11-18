@@ -85,14 +85,26 @@ fun DiscoverHubScreen(
     val statusBar = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     val reservesHero = state is DiscoverHubUiState.Loading || state is DiscoverHubUiState.Ready
     val inner = navOverlayPadding(if (reservesHero) PaddingValues() else PaddingValues(top = statusBar))
+    // The scrolling states leave Binge's 16dp below their last row, and run under the rail, padding their own first column.
+    val scrolling =
+        navOverlayPadding(
+            if (reservesHero) {
+                PaddingValues(
+                    bottom = dimensionResource(DesR.dimen.padding_m),
+                )
+            } else {
+                PaddingValues(top = statusBar, bottom = dimensionResource(DesR.dimen.padding_m))
+            },
+            bleedStart = true,
+        )
     Box(modifier = Modifier.fillMaxSize().semantics { paneTitle = title }) {
         when (state) {
-            DiscoverHubUiState.Loading -> HubSkeleton(inner)
+            DiscoverHubUiState.Loading -> HubSkeleton(scrolling)
             DiscoverHubUiState.Empty -> EmptyScreen(stringResource(R.string.hubs_empty_message), Modifier.padding(inner))
             is DiscoverHubUiState.Error -> ErrorScreen(state.error, Modifier.padding(inner), onRetry = onRefresh)
             is DiscoverHubUiState.Ready ->
                 BingePullToRefresh(isRefreshing = state.refreshing, onRefresh = onRefresh, indicatorTopInset = statusBar) {
-                    HubRows(tab, state, inner, onOpenTitle, onOpenGrid, onOpenRequests)
+                    HubRows(tab, state, scrolling, onOpenTitle, onOpenGrid, onOpenRequests)
                 }
         }
         if (hasHero) {

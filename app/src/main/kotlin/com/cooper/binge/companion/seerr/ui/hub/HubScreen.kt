@@ -30,7 +30,6 @@ import com.binge.designsystem.navOverlayPadding
 import com.binge.designsystem.resolvedContentInset
 import com.binge.designsystem.resolvedContentPadding
 import com.binge.designsystem.template.BingeScreenScaffold
-import com.binge.designsystem.template.ScreenBar
 import com.binge.designsystem.template.screenInnerPadding
 import com.binge.designsystem.template.screenOuterPadding
 import com.cooper.binge.companion.seerr.R
@@ -86,7 +85,6 @@ fun HubScreen(
     // The account sits in the bar while the dashboard is up (#1325): the photo or initials, ringed by what is left of the quota.
     val account = ready?.overview?.account?.takeIf { ready.health.showsDashboard() }
     BingeScreenScaffold(
-        bar = ScreenBar.Small,
         title = ready?.server?.title ?: stringResource(R.string.companion_name),
         actions = {
             account?.let {
