@@ -236,6 +236,7 @@ val checkGrpcAlignment =
 tasks.named("check") { dependsOn(checkGrpcAlignment) }
 
 dependencies {
+    implementation(project(":data"))
     implementation(libs.androidx.core.ktx)
     implementation(libs.binge.companion.sdk)
     implementation(libs.binge.companion.kit)
