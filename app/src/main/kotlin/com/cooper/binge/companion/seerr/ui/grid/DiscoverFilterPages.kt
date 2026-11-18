@@ -31,6 +31,7 @@ import com.binge.designsystem.component.ListRow
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverFilters
 import com.cooper.binge.companion.seerr.discover.grid.ReleasePreset
+import com.cooper.binge.companion.seerr.discover.grid.cleared
 import com.cooper.binge.companion.seerr.discover.grid.withRelease
 import java.text.NumberFormat
 import java.time.LocalDate
@@ -49,6 +50,8 @@ internal fun ColumnScope.DiscoverSectionPage(
     filters: DiscoverFilters,
     vocabulary: FilterVocabulary,
     today: LocalDate,
+    loads: FilterLoads,
+    onOpenRegion: () -> Unit,
     onChange: (DiscoverFilters) -> Unit,
     onDone: () -> Unit,
 ) {
@@ -62,25 +65,22 @@ internal fun ColumnScope.DiscoverSectionPage(
             DiscoverFilterSection.Rating -> RatingPage(filters, inset, onChange)
             DiscoverFilterSection.Runtime -> RuntimePage(filters, inset, onChange)
             DiscoverFilterSection.Votes -> VotesPage(filters, inset, onChange)
+            DiscoverFilterSection.WhereToWatch -> WherePage(filters, vocabulary, inset, loads, onOpenRegion, onChange)
+            DiscoverFilterSection.Certification -> CertificationPage(filters, vocabulary, inset, onChange)
+            DiscoverFilterSection.Keywords ->
+                KeywordsPage(filters.keywords, vocabulary, inset, loads) { onChange(filters.copy(keywords = it)) }
+            DiscoverFilterSection.ExcludeKeywords ->
+                KeywordsPage(filters.excludeKeywords, vocabulary, inset, loads) { onChange(filters.copy(excludeKeywords = it)) }
+            DiscoverFilterSection.Status -> StatusPage(filters, inset, onChange)
         }
         BingeTextButton(
             label = stringResource(R.string.grid_filters_clear),
-            onClick = { onChange(section.cleared(filters)) },
+            onClick = { onChange(filters.cleared(section.group)) },
             modifier = inset,
         )
     }
     BingeSheetFooter { BingeActionFooter(label = stringResource(R.string.grid_filters_done), onClick = onDone) }
 }
-
-private fun DiscoverFilterSection.cleared(filters: DiscoverFilters): DiscoverFilters =
-    when (this) {
-        DiscoverFilterSection.Genres -> filters.copy(genres = emptySet(), genresAny = false)
-        DiscoverFilterSection.Language -> filters.copy(language = null)
-        DiscoverFilterSection.Release -> filters.copy(releaseFrom = null, releaseTo = null)
-        DiscoverFilterSection.Rating -> filters.copy(ratingMin = null)
-        DiscoverFilterSection.Runtime -> filters.copy(runtimeMin = null, runtimeMax = null)
-        DiscoverFilterSection.Votes -> filters.copy(voteCountMin = null)
-    }
 
 @Composable
 private fun ReleasePage(
@@ -212,7 +212,7 @@ private fun GenresPage(
     }
 }
 
-private fun Set<Int>.toggled(id: Int): Set<Int> = if (id in this) this - id else this + id
+internal fun Set<Int>.toggled(id: Int): Set<Int> = if (id in this) this - id else this + id
 
 /** One original language, chosen from the list the server knows; choosing the one set again clears it. */
 @Composable

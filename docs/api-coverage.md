@@ -243,8 +243,8 @@ Each row is ticked in "Today" by the PR that covers it.
 
 | Endpoint | What it does | Overseerr since | Jellyseerr / Seerr since | Today | Note |
 |---|---|---|---|---|---|
-| `GET /certifications/movie` | Get movie certifications | — | v2.6.0 |  | Planned under the discovery epic (#2039). |
-| `GET /certifications/tv` | Get TV certifications | — | v2.6.0 |  | Planned under the discovery epic (#2039). |
+| `GET /certifications/movie` | Get movie certifications | — | v2.6.0 | yes | The grid's filter sheet: a country's age ratings for the content rating filter. |
+| `GET /certifications/tv` | Get TV certifications | — | v2.6.0 | yes | The same, for shows. |
 | `GET /collection/{collectionId}` | Get collection details | v1.14.0 | v1.0.0 |  | Planned under the discovery epic (#2039). |
 | `GET /discover/genreslider/movie` | Get genre slider data for movies | v1.22.0 | v1.0.0 | yes | The shared title lists: hubs, the grid and search. |
 | `GET /discover/genreslider/tv` | Get genre slider data for TV series | v1.22.0 | v1.0.0 | yes | The shared title lists: hubs, the grid and search. |
@@ -288,6 +288,6 @@ Each row is ticked in "Today" by the PR that covers it.
 | `DELETE /user/{userId}/pushSubscription/{endpoint}` | Delete user push subscription by key | v1.35.0 | v2.7.0 |  | Web push is the PWA's transport; this app polls (Phase 5). |
 | `GET /user/{userId}/pushSubscription/{endpoint}` | Get web push notification settings for a user | v1.35.0 | v2.7.0 |  | Web push is the PWA's transport; this app polls (Phase 5). |
 | `GET /user/{userId}/pushSubscriptions` | Get all web push notification settings for a user | v1.34.0 | v2.5.2 |  | Web push is the PWA's transport; this app polls (Phase 5). |
-| `GET /watchproviders/movies` | Get watch provider movies | v1.32.0 | v1.4.0 | yes | The streaming providers a Discover movie slider picks from. |
-| `GET /watchproviders/regions` | Get watch provider regions | v1.32.0 | v1.4.0 | yes | The General settings page's streaming region picker. |
-| `GET /watchproviders/tv` | Get watch provider series | v1.32.0 | v1.4.0 | yes | The streaming providers a Discover TV slider picks from. |
+| `GET /watchproviders/movies` | Get watch provider movies | v1.32.0 | v1.4.0 | yes | The streaming providers a Discover movie slider and the grid's filter sheet pick from. |
+| `GET /watchproviders/regions` | Get watch provider regions | v1.32.0 | v1.4.0 | yes | The General settings page's streaming region picker, and the filter sheet's. |
+| `GET /watchproviders/tv` | Get watch provider series | v1.32.0 | v1.4.0 | yes | The streaming providers a Discover TV slider and the grid's filter sheet pick from. |

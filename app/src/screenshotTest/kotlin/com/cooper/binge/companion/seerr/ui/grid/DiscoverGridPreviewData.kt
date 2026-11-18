@@ -2,7 +2,10 @@ package com.cooper.binge.companion.seerr.ui.grid
 
 import com.cooper.binge.companion.seerr.discover.TitleAvailability
 import com.cooper.binge.companion.seerr.discover.TitleKind
+import com.cooper.binge.companion.seerr.discover.grid.DiscoverFilters
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverSort
+import com.cooper.binge.companion.seerr.discover.grid.FilterGroup
+import com.cooper.binge.companion.seerr.discover.grid.FilterOption
 import com.cooper.binge.companion.seerr.discover.sliders.HubCard
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 
@@ -31,9 +34,36 @@ private val DRAMA = ActiveFilterChip(ChipKind.Genre, "Drama")
 
 private val SORTED = GridControls(DiscoverSort.PopularityDesc, DRAMA)
 
+private val ADDED =
+    GridControls(
+        sort = DiscoverSort.PopularityDesc,
+        chip = DRAMA,
+        filters =
+            DiscoverFilters(
+                language = "ja",
+                providers = setOf(8, 337),
+                region = "GB",
+                certificationCountry = "GB",
+                certification = "15",
+                keywords = setOf(9715),
+                status = setOf(0, 3),
+            ),
+        vocabulary =
+            FilterVocabulary(
+                languages = listOf(FilterOption("ja", "Japanese")),
+                defaultRegion = "GB",
+                providers = mapOf("GB" to listOf(FilterOption("8", "Netflix"), FilterOption("337", "Disney Plus"))),
+                keywordNames = mapOf(9715 to "superhero"),
+            ),
+        groups = listOf(FilterGroup.Language, FilterGroup.Where, FilterGroup.Certification, FilterGroup.Keywords, FilterGroup.Status),
+    )
+
 private val UNFILTERED = GridControls(DiscoverSort.RatingDesc, null)
 
 internal fun readyGridState() = DiscoverGridUiState.Ready(SORTED, gridCards(), hasMore = true, appending = false, appendFailed = false)
+
+internal fun addedFiltersGridState() =
+    DiscoverGridUiState.Ready(ADDED, gridCards(), hasMore = true, appending = false, appendFailed = false)
 
 internal fun unfilteredGridState() =
     DiscoverGridUiState.Ready(UNFILTERED, gridCards(), hasMore = true, appending = false, appendFailed = false)
@@ -56,4 +86,4 @@ internal fun plainGridState() =
 /** Few enough cards that the footer is on screen. */
 private const val FEW = 2
 
-internal val noGridActions = DiscoverGridActions({}, {}, {}, {}, {}, { _, _ -> }, { _, _, _ -> })
+internal val noGridActions = DiscoverGridActions({}, {}, {}, {}, {}, {}, { _, _ -> }, { _, _, _ -> }, FilterLoads({}, {}, {}))

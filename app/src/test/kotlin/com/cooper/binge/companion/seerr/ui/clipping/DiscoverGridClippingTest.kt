@@ -2,7 +2,10 @@ package com.cooper.binge.companion.seerr.ui.clipping
 
 import com.cooper.binge.companion.seerr.discover.TitleAvailability
 import com.cooper.binge.companion.seerr.discover.TitleKind
+import com.cooper.binge.companion.seerr.discover.grid.DiscoverFilters
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverSort
+import com.cooper.binge.companion.seerr.discover.grid.FilterGroup
+import com.cooper.binge.companion.seerr.discover.grid.FilterOption
 import com.cooper.binge.companion.seerr.discover.sliders.HubCard
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.ui.grid.ActiveFilterChip
@@ -10,6 +13,8 @@ import com.cooper.binge.companion.seerr.ui.grid.ChipKind
 import com.cooper.binge.companion.seerr.ui.grid.DiscoverGridActions
 import com.cooper.binge.companion.seerr.ui.grid.DiscoverGridScreen
 import com.cooper.binge.companion.seerr.ui.grid.DiscoverGridUiState
+import com.cooper.binge.companion.seerr.ui.grid.FilterLoads
+import com.cooper.binge.companion.seerr.ui.grid.FilterVocabulary
 import com.cooper.binge.companion.seerr.ui.grid.GridControls
 import com.cooper.binge.companion.seerr.util.createSeerrComposeRule
 import org.junit.Rule
@@ -29,6 +34,23 @@ private val CONTROLS =
     GridControls(
         DiscoverSort.RevenueDesc,
         ActiveFilterChip(ChipKind.Genre, "A genre with a name long enough to need the whole row"),
+        filters =
+            DiscoverFilters(
+                providers = setOf(8, 337),
+                region = "GB",
+                keywords = setOf(9715),
+                certificationCountry = "GB",
+                certification = "15",
+            ),
+        vocabulary =
+            FilterVocabulary(
+                providers =
+                    mapOf(
+                        "GB" to listOf(FilterOption("8", "A streaming service with a long name"), FilterOption("337", "Another one")),
+                    ),
+                keywordNames = mapOf(9715 to "a keyword with a rather long name"),
+            ),
+        groups = listOf(FilterGroup.Where, FilterGroup.Keywords, FilterGroup.Certification),
     )
 
 private val STATES: List<DiscoverGridUiState> =
@@ -49,7 +71,7 @@ private val STATES: List<DiscoverGridUiState> =
         DiscoverGridUiState.Error(CONTROLS, SeerrError.Unreachable),
     )
 
-private val NO_ACTIONS = DiscoverGridActions({}, {}, {}, {}, {}, { _, _ -> }, { _, _, _ -> })
+private val NO_ACTIONS = DiscoverGridActions({}, {}, {}, {}, {}, {}, { _, _ -> }, { _, _, _ -> }, FilterLoads({}, {}, {}))
 
 /** The grid at its worst, at font scales 1.3 and 2.0, through the design system's `assertNoTextClipped`. */
 @RunWith(RobolectricTestRunner::class)

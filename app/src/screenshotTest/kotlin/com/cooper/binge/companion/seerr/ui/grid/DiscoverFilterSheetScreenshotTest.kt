@@ -6,12 +6,14 @@ import com.android.tools.screenshot.PreviewTest
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverFilters
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverSort
+import com.cooper.binge.companion.seerr.discover.grid.FilterCapabilities
 import com.cooper.binge.companion.seerr.discover.grid.FilterOption
 import com.cooper.binge.companion.seerr.preview.SeerrFontScale13Previews
 import com.cooper.binge.companion.seerr.preview.SeerrFontScalePreviews
 import com.cooper.binge.companion.seerr.preview.SeerrScreenPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrScreenStatePreview
 import com.cooper.binge.companion.seerr.preview.SeerrSpanishPreviews
+import com.cooper.binge.companion.seerr.preview.SeerrTallComponentPreviews
 import java.time.LocalDate
 
 private val TODAY = LocalDate.of(2026, 11, 18)
@@ -20,6 +22,28 @@ private val WORDS =
     FilterVocabulary(
         genres = listOf(FilterOption("18", "Drama"), FilterOption("35", "Comedy"), FilterOption("878", "Science Fiction")),
         languages = listOf(FilterOption("en", "English"), FilterOption("ja", "Japanese"), FilterOption("es", "Spanish")),
+        capabilities = FilterCapabilities(watch = true, certification = true, keywords = true, excludeKeywords = true, status = true),
+        regions = listOf(FilterOption("US", "United States"), FilterOption("GB", "United Kingdom"), FilterOption("ES", "Spain")),
+        defaultRegion = "GB",
+        providers =
+            mapOf(
+                "GB" to
+                    listOf(
+                        FilterOption("8", "Netflix"),
+                        FilterOption("337", "Disney Plus"),
+                        FilterOption("9", "Amazon Prime Video"),
+                        FilterOption("39", "Now TV"),
+                        FilterOption("29", "Sky Go"),
+                    ),
+            ),
+        certifications =
+            mapOf(
+                "GB" to listOf("U", "PG", "12A", "15", "18"),
+                "US" to listOf("G", "PG", "PG-13", "R"),
+                "ES" to listOf("A", "7", "12", "16", "18"),
+            ),
+        keywordResults = listOf(FilterOption("9715", "superhero"), FilterOption("4344", "musical"), FilterOption("1721", "fight")),
+        keywordNames = mapOf(9715 to "superhero", 4344 to "musical", 2343 to "a keyword with a rather long name to check the wrap"),
     )
 
 private val SET =
@@ -31,6 +55,13 @@ private val SET =
         runtimeMin = 90,
         runtimeMax = 150,
         voteCountMin = 1500,
+        providers = setOf(8, 337),
+        region = "GB",
+        certificationCountry = "GB",
+        certification = "15",
+        keywords = setOf(9715, 4344),
+        excludeKeywords = setOf(2343),
+        status = setOf(0, 3),
     )
 
 /** The filter sheet's rows page, and the page a row opens, as the sheet shows them. */
@@ -40,6 +71,18 @@ class DiscoverFilterSheetScreenshotTest {
     @SeerrScreenPreviews
     @Composable
     fun rows() = Rows(SET)
+
+    /** Every row, the ones below the fold of a phone too: a show, with every filter set. */
+    @PreviewTest
+    @SeerrTallComponentPreviews
+    @Composable
+    fun rowsAll() = Rows(SET, TitleKind.Series)
+
+    /** A show's rows: the same, with the Status row that only a series has. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun rowsSeries() = Rows(SET, TitleKind.Series)
 
     /** Nothing set: every row says Any and Clear all is not offered. */
     @PreviewTest
@@ -108,12 +151,68 @@ class DiscoverFilterSheetScreenshotTest {
     @SeerrScreenStatePreview
     @Composable
     fun votes() = Section(DiscoverFilterSection.Votes)
+
+    /** The region as a row, and the services of the region as chips. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun where() = Section(DiscoverFilterSection.WhereToWatch)
+
+    @PreviewTest
+    @SeerrSpanishPreviews
+    @Composable
+    fun whereSpanish() = Section(DiscoverFilterSection.WhereToWatch)
+
+    @PreviewTest
+    @SeerrFontScalePreviews
+    @Composable
+    fun whereFontScale() = Section(DiscoverFilterSection.WhereToWatch)
+
+    /** The page the region row opens: the countries with streaming services, one ticked. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun region() = Column { RegionSheetPage(SET, WORDS, onChange = {}, onDone = {}) }
+
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun certification() = Section(DiscoverFilterSection.Certification)
+
+    @PreviewTest
+    @SeerrSpanishPreviews
+    @Composable
+    fun certificationSpanish() = Section(DiscoverFilterSection.Certification)
+
+    /** The chosen keywords as chips, the field empty. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun keywords() = Section(DiscoverFilterSection.Keywords)
+
+    @PreviewTest
+    @SeerrFontScalePreviews
+    @Composable
+    fun excludedKeywordsFontScale() = Section(DiscoverFilterSection.ExcludeKeywords)
+
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun status() = Section(DiscoverFilterSection.Status)
+
+    @PreviewTest
+    @SeerrSpanishPreviews
+    @Composable
+    fun statusSpanish() = Section(DiscoverFilterSection.Status)
 }
 
 @Composable
-private fun Rows(filters: DiscoverFilters) {
+private fun Rows(
+    filters: DiscoverFilters,
+    kind: TitleKind = TitleKind.Movie,
+) {
     DiscoverFilterSheetContent(
-        draft = DiscoverFilterDraft(TitleKind.Movie, DiscoverSort.PopularityDesc, filters),
+        draft = DiscoverFilterDraft(kind, DiscoverSort.PopularityDesc, filters),
         vocabulary = WORDS,
         today = TODAY,
         onKind = {},
@@ -126,6 +225,6 @@ private fun Rows(filters: DiscoverFilters) {
 @Composable
 private fun Section(section: DiscoverFilterSection) {
     Column {
-        DiscoverSectionPage(section, SET, WORDS, TODAY, onChange = {}, onDone = {})
+        DiscoverSectionPage(section, SET, WORDS, TODAY, FilterLoads({}, {}, {}), onOpenRegion = {}, onChange = {}, onDone = {})
     }
 }

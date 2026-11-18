@@ -106,3 +106,16 @@ data class SeerrWatchProviderDto(
     @SerialName("id") val id: Int = 0,
     @SerialName("name") val name: String? = null,
 )
+
+/** One age rating of a country's certification system; [order] is its place from the most open to the most restricted. */
+@Serializable
+data class SeerrCertificationDto(
+    @SerialName("certification") val certification: String = "",
+    @SerialName("order") val order: Int = 0,
+)
+
+/** The age ratings TMDB knows, by country code, for the certification filter. */
+@Serializable
+data class SeerrCertificationsDto(
+    @SerialName("certifications") val certifications: Map<String, List<SeerrCertificationDto>> = emptyMap(),
+)

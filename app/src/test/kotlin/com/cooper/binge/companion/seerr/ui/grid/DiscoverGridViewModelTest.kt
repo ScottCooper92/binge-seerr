@@ -1,5 +1,6 @@
 package com.cooper.binge.companion.seerr.ui.grid
 
+import com.cooper.binge.companion.seerr.core.search.QUERY_DEBOUNCE_MS
 import com.cooper.binge.companion.seerr.discover.TitleAvailability
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.TitlePage
@@ -7,6 +8,9 @@ import com.cooper.binge.companion.seerr.discover.TitleResult
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverFilters
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverGridRepository
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverSort
+import com.cooper.binge.companion.seerr.discover.grid.FilterCapabilities
+import com.cooper.binge.companion.seerr.discover.grid.FilterGroup
+import com.cooper.binge.companion.seerr.discover.grid.FilterLookups
 import com.cooper.binge.companion.seerr.discover.grid.FilterOption
 import com.cooper.binge.companion.seerr.discover.grid.GridPreset
 import com.cooper.binge.companion.seerr.discover.grid.GridRequest
@@ -20,6 +24,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -60,6 +65,39 @@ class DiscoverGridViewModelTest {
         }
     }
 
+    private class FakeLookups : FilterLookups {
+        var capabilities = FilterCapabilities(watch = true, certification = true, keywords = true, excludeKeywords = true, status = true)
+        val providerRegions = mutableListOf<String>()
+        val searches = mutableListOf<String>()
+        var failProviders = false
+
+        override suspend fun capabilities() = capabilities
+
+        override suspend fun regions() = listOf(FilterOption("GB", "United Kingdom"), FilterOption("US", "United States"))
+
+        override suspend fun defaultRegion() = "GB"
+
+        override suspend fun providers(
+            kind: TitleKind,
+            region: String,
+        ): List<FilterOption> {
+            providerRegions += region
+            if (failProviders) throw IOException("down")
+            return listOf(FilterOption("8", "Netflix"))
+        }
+
+        override suspend fun certifications(kind: TitleKind) = mapOf("GB" to listOf("U", "PG", "15"))
+
+        override suspend fun searchKeywords(query: String): List<FilterOption> {
+            searches += query
+            return listOf(FilterOption("1", "silent film"))
+        }
+
+        override suspend fun keywordNames(ids: Set<Int>) = ids.associateWith { "keyword $it" }
+    }
+
+    private val lookups = FakeLookups()
+
     private val media =
         object : HubMediaSource {
             override suspend fun serverUrl() = "https://server.example/"
@@ -80,7 +118,7 @@ class DiscoverGridViewModelTest {
         kind: TitleKind = TitleKind.Movie,
         block: suspend TestScope.(DiscoverGridViewModel) -> Unit,
     ) = runTest {
-        val vm = DiscoverGridViewModel(grid, media, kind, preset, "Drama", "2026-11-19", null, null)
+        val vm = DiscoverGridViewModel(grid, lookups, media, kind, preset, "Drama", "2026-11-19", null, null)
         val collector = launch(UnconfinedTestDispatcher(testScheduler)) { vm.uiState.collect {} }
         try {
             advanceUntilIdle()
@@ -147,6 +185,7 @@ class DiscoverGridViewModelTest {
             val vm =
                 DiscoverGridViewModel(
                     grid,
+                    lookups,
                     media,
                     TitleKind.Series,
                     GridPreset.Popular,
@@ -321,6 +360,115 @@ class DiscoverGridViewModelTest {
             val state = vm.uiState.value as DiscoverGridUiState.Ready
             assertEquals(listOf(1, 2, 3), state.cards.map { it.tmdbId })
             assertTrue(!state.hasMore)
+        }
+    }
+
+    @Test
+    fun `the sheet offers the services of the user's region, the ratings and the keywords`() =
+        runVm { vm ->
+            val words = (vm.uiState.value as DiscoverGridUiState.Ready).controls.vocabulary
+            assertTrue(words.capabilities.watch)
+            assertEquals("GB", words.defaultRegion)
+            assertEquals(listOf("8"), words.providers.getValue("GB").map { it.id })
+            assertEquals(listOf("U", "PG", "15"), words.certifications.getValue("GB"))
+            assertEquals(listOf("GB"), lookups.providerRegions)
+        }
+
+    @Test
+    fun `a region's services are loaded once, when the sheet asks`() =
+        runVm { vm ->
+            vm.onProvidersNeeded("US")
+            vm.onProvidersNeeded("US")
+            advanceUntilIdle()
+            assertEquals(listOf("GB", "US"), lookups.providerRegions)
+        }
+
+    @Test
+    fun `a region whose services failed to load is asked for again`() =
+        runVm { vm ->
+            lookups.failProviders = true
+            vm.onProvidersNeeded("US")
+            advanceUntilIdle()
+            lookups.failProviders = false
+            vm.onProvidersNeeded("US")
+            advanceUntilIdle()
+            assertEquals(
+                listOf("8"),
+                (vm.uiState.value as DiscoverGridUiState.Ready)
+                    .controls.vocabulary.providers
+                    .getValue("US")
+                    .map { it.id },
+            )
+        }
+
+    @Test
+    fun `typing a keyword searches once the typing settles and names what it found`() =
+        runVm { vm ->
+            vm.onKeywordQuery("sil")
+            vm.onKeywordQuery("silent")
+            advanceTimeBy(QUERY_DEBOUNCE_MS + 1)
+            advanceUntilIdle()
+            val words = (vm.uiState.value as DiscoverGridUiState.Ready).controls.vocabulary
+            assertEquals(listOf("silent"), lookups.searches)
+            assertEquals(listOf("silent film"), words.keywordResults?.map { it.name })
+            assertEquals("silent film", words.keywordNames[1])
+        }
+
+    @Test
+    fun `clearing the keyword field drops the results`() =
+        runVm { vm ->
+            vm.onKeywordQuery("silent")
+            advanceTimeBy(QUERY_DEBOUNCE_MS + 1)
+            advanceUntilIdle()
+            vm.onKeywordQuery("")
+            advanceUntilIdle()
+            assertEquals(null, (vm.uiState.value as DiscoverGridUiState.Ready).controls.vocabulary.keywordResults)
+        }
+
+    @Test
+    fun `keywords the grid was opened with are named`() =
+        runTest {
+            val vm = DiscoverGridViewModel(grid, lookups, media, TitleKind.Movie, GridPreset.Keyword(7), "x", "2026-11-19", null, null)
+            val collector = launch(UnconfinedTestDispatcher(testScheduler)) { vm.uiState.collect {} }
+            advanceUntilIdle()
+            val words = (vm.uiState.value as DiscoverGridUiState.Ready).controls.vocabulary
+            assertEquals("keyword 7", words.keywordNames[7])
+            collector.cancel()
+        }
+
+    @Test
+    fun `a server without the filters leaves their rows out`() =
+        runVm { vm ->
+            lookups.capabilities = FilterCapabilities()
+            val bare = DiscoverGridViewModel(grid, lookups, media, TitleKind.Movie, GridPreset.Genre(18), "Drama", "2026-11-19", null, null)
+            val collector = launch(UnconfinedTestDispatcher(testScheduler)) { bare.uiState.collect {} }
+            advanceUntilIdle()
+            val words = (bare.uiState.value as DiscoverGridUiState.Ready).controls.vocabulary
+            assertEquals(FilterCapabilities(), words.capabilities)
+            assertTrue(words.regions.isEmpty() && words.certifications.isEmpty())
+            collector.cancel()
+        }
+
+    @Test
+    fun `a filter added on top of the row's own is a chip of its own and clearing it keeps the row's chip`() =
+        runVm { vm ->
+            vm.onApply(DiscoverSort.PopularityDesc, DiscoverFilters(genres = setOf(18), language = "ja"))
+            advanceUntilIdle()
+            val controls = (vm.uiState.value as DiscoverGridUiState.Ready).controls
+            assertEquals(listOf(FilterGroup.Language), controls.groups)
+            assertEquals("Drama", controls.chip?.label)
+            vm.onClearGroup(FilterGroup.Language)
+            advanceUntilIdle()
+            val after = (vm.uiState.value as DiscoverGridUiState.Ready).controls
+            assertEquals(emptyList<FilterGroup>(), after.groups)
+            assertEquals(setOf(18), after.filters.genres)
+        }
+
+    @Test
+    fun `a list that takes no filters has no filter chips`() {
+        grid.refinable = false
+        runVm { vm ->
+            assertEquals(emptyList<FilterGroup>(), (vm.uiState.value as DiscoverGridUiState.Ready).controls.groups)
         }
     }
 }

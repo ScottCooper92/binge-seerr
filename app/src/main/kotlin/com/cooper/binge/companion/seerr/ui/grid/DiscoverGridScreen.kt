@@ -12,6 +12,7 @@ import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Refresh
@@ -45,6 +46,7 @@ import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverFilters
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverSort
+import com.cooper.binge.companion.seerr.discover.grid.FilterGroup
 import com.cooper.binge.companion.seerr.discover.sliders.HubCard
 import com.cooper.binge.companion.seerr.ui.hubs.toStatus
 import com.cooper.binge.companion.seerr.ui.state.EmptyScreen
@@ -59,11 +61,13 @@ import com.binge.designsystem.R as DesR
 internal class DiscoverGridActions(
     val onBack: () -> Unit,
     val onClearFilter: () -> Unit,
+    val onClearGroup: (FilterGroup) -> Unit,
     val onRetry: () -> Unit,
     val onLoadMore: () -> Unit,
     val onOpenTitle: (HubCard) -> Unit,
     val onApply: (DiscoverSort, DiscoverFilters) -> Unit,
     val onSwitchKind: (TitleKind, DiscoverSort, DiscoverFilters) -> Unit,
+    val loads: FilterLoads,
 )
 
 private const val LOAD_MORE_AHEAD = 6
@@ -83,7 +87,10 @@ internal fun DiscoverGridScreen(
         bar = ScreenBar.Large,
         subtitle = state.controls.subtitle(kind),
         titleTrailing = state.controls.sort?.let { { FiltersButton(kind, state.controls, actions) } },
-        header = state.controls.chip?.let { chip -> { ActiveFilterChips(chip, actions) } },
+        header =
+            state.controls.takeIf { it.chip != null || it.groups.isNotEmpty() }?.let { controls ->
+                { ActiveFilterChips(controls, actions) }
+            },
     ) { padding ->
         Box(Modifier.fillMaxSize().padding(padding)) {
             val inner = navOverlayPadding(PaddingValues(dimensionResource(DesR.dimen.padding_m)))
@@ -127,6 +134,7 @@ private fun FiltersButton(
             filters = controls.filters,
             vocabulary = controls.vocabulary,
             today = remember { LocalDate.now() },
+            loads = actions.loads,
             onApply = { next, sort, filters ->
                 if (next == kind) actions.onApply(sort, filters) else actions.onSwitchKind(next, sort, filters)
             },
@@ -138,19 +146,30 @@ private fun FiltersButton(
 /** The filters in force, each removable, in one scrolling row under the header, as Binge's discover filter chips are. */
 @Composable
 private fun ActiveFilterChips(
-    chip: ActiveFilterChip,
+    controls: GridControls,
     actions: DiscoverGridActions,
 ) {
+    val today = remember { LocalDate.now() }
     LazyRow(
         modifier = Modifier.fillMaxWidth(),
         contentPadding = PaddingValues(horizontal = dimensionResource(DesR.dimen.padding_m)),
         horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
     ) {
-        item(key = "filter") {
+        controls.chip?.let { chip ->
+            item(key = "filter") {
+                DiscoverQuickClearChip(
+                    label = chip.label ?: stringResource(chip.kind.labelRes()),
+                    tone = QuickClearTone.Include,
+                    onClick = actions.onClearFilter,
+                )
+            }
+        }
+        items(controls.groups, key = { it.name }) { group ->
+            val section = DiscoverFilterSection.entries.first { it.group == group }
             DiscoverQuickClearChip(
-                label = chip.label ?: stringResource(chip.kind.labelRes()),
+                label = section.summary(controls.filters, controls.vocabulary, today),
                 tone = QuickClearTone.Include,
-                onClick = actions.onClearFilter,
+                onClick = { actions.onClearGroup(group) },
             )
         }
     }
