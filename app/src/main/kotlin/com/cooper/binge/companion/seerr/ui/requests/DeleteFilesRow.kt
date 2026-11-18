@@ -81,6 +81,7 @@ private fun noDefaultServerRow(
     val context = LocalContext.current
     val url = media.servicesSettingsUrl
     val openServices = callbacks.onOpenServices.takeIf { url != null }
+    val opens = url != null && (openServices != null || isOpenableSite(url))
     return ListItem(
         icon = Icons.Filled.ErrorOutline,
         iconTint = error,
@@ -92,9 +93,9 @@ private fun noDefaultServerRow(
             ),
         detailColor = error,
         supportingMaxLines = NO_DEFAULT_SERVER_LINES,
-        clickable = url != null && (openServices != null || isOpenableSite(url)),
+        clickable = opens,
         destination = if (openServices != null) ListItemDestination.InApp else ListItemDestination.External,
-        trailingContent = if (url == null || (openServices == null && !isOpenableSite(url))) ({}) else null,
+        trailingContent = if (opens) null else ({}),
         onClick = { openServices?.invoke() ?: url?.let(context::openInBrowser) },
     )
 }
