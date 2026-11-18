@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="search_content_max_width">1100dp</dimen>
+</resources>
