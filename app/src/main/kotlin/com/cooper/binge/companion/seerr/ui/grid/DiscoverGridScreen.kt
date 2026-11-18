@@ -3,7 +3,6 @@ package com.cooper.binge.companion.seerr.ui.grid
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyRow
@@ -39,6 +38,7 @@ import com.binge.designsystem.component.QuickClearTone
 import com.binge.designsystem.navOverlayPadding
 import com.binge.designsystem.template.BingeScreenScaffold
 import com.binge.designsystem.template.ScreenBar
+import com.binge.designsystem.template.ScreenBody
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverFilters
@@ -65,13 +65,17 @@ internal class DiscoverGridActions(
 
 private const val LOAD_MORE_AHEAD = 6
 
-/** The "see all" grid: a bar of the order and the filter the row started with, over a paged grid of posters. */
+/**
+ * The "see all" grid: a bar of the order and the filter the row started with, over a paged grid of posters. [firstVisibleIndex] starts it
+ * scrolled, for a frame of the grid mid-list.
+ */
 @Composable
 internal fun DiscoverGridScreen(
     kind: TitleKind,
     title: String?,
     state: DiscoverGridUiState,
     actions: DiscoverGridActions,
+    firstVisibleIndex: Int = 0,
 ) {
     val fallback = stringResource(if (kind == TitleKind.Series) R.string.hubs_title_tv else R.string.hubs_title_movies)
     BingeScreenScaffold(
@@ -82,12 +86,16 @@ internal fun DiscoverGridScreen(
         titleTrailing = state.controls.sort?.let { { FiltersButton(kind, state.controls, actions) } },
         header = state.controls.chip?.let { chip -> { ActiveFilterChips(chip, actions) } },
     ) { padding ->
-        Box(Modifier.fillMaxSize().padding(padding)) {
+        // The bar's height and the navigation bar go inside the grid's own scroll, so posters pass under the one and run down to the
+        // window's edge under the other, as Binge's gallery does; only the sides stay outside it.
+        ScreenBody(padding) { body ->
             val inner =
                 navOverlayPadding(
                     PaddingValues(
-                        horizontal = dimensionResource(DesR.dimen.screen_content_inset),
-                        vertical = dimensionResource(DesR.dimen.padding_m),
+                        start = dimensionResource(DesR.dimen.screen_content_inset),
+                        top = body.calculateTopPadding(),
+                        end = dimensionResource(DesR.dimen.screen_content_inset),
+                        bottom = body.calculateBottomPadding() + dimensionResource(DesR.dimen.padding_m),
                     ),
                 )
             when (state) {
@@ -99,7 +107,7 @@ internal fun DiscoverGridScreen(
                         modifier = Modifier.padding(inner),
                     )
                 is DiscoverGridUiState.Error -> ErrorScreen(state.error, Modifier.padding(inner), onRetry = actions.onRetry)
-                is DiscoverGridUiState.Ready -> PosterGrid(state, inner, actions)
+                is DiscoverGridUiState.Ready -> PosterGrid(state, inner, actions, firstVisibleIndex)
             }
         }
     }
@@ -171,8 +179,9 @@ private fun PosterGrid(
     state: DiscoverGridUiState.Ready,
     contentPadding: PaddingValues,
     actions: DiscoverGridActions,
+    firstVisibleIndex: Int,
 ) {
-    val gridState = rememberLazyGridState()
+    val gridState = rememberLazyGridState(initialFirstVisibleItemIndex = firstVisibleIndex)
     val nearEnd by remember {
         derivedStateOf {
             val info = gridState.layoutInfo
