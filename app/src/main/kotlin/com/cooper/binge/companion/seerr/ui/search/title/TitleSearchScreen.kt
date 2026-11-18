@@ -112,7 +112,7 @@ private fun ResultsList(
             (info.visibleItemsInfo.lastOrNull()?.index ?: 0) >= info.totalItemsCount - LOAD_MORE_AHEAD
         }
     }
-    LaunchedEffect(listState, state.hasMore) {
+    LaunchedEffect(listState, state.hasMore, state.results.size) {
         if (state.hasMore) snapshotFlow { nearEnd }.distinctUntilChanged().filter { it }.collect { actions.onLoadMore() }
     }
     LazyColumn(

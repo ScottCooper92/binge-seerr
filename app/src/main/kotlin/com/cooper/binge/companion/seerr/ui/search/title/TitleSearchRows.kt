@@ -19,12 +19,11 @@ import com.binge.designsystem.component.ListRowHeader
 import com.binge.designsystem.component.ListRowPoster
 import com.binge.designsystem.component.StatusChip
 import com.binge.designsystem.component.WrappingRow
-import com.binge.designsystem.theme.BingeSentiment
 import com.cooper.binge.companion.seerr.R
-import com.cooper.binge.companion.seerr.discover.TitleAvailability
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.TitleResult
 import com.cooper.binge.companion.seerr.seerr.toTmdbPosterUrl
+import com.cooper.binge.companion.seerr.ui.hubs.toStatus
 import com.binge.designsystem.R as DesR
 
 /**
@@ -64,7 +63,7 @@ private fun TitleResultMeta(
         ListRowHeader(title = result.name)
         Spacer(Modifier.height(gap))
         WrappingRow(horizontalSpacing = gap, verticalSpacing = gap) {
-            result.availability.chip()?.let { (label, sentiment) -> StatusChip(label = stringResource(label), sentiment = sentiment) }
+            result.availability.toStatus()?.let { StatusChip(label = it.label, sentiment = it.sentiment) }
             Text(
                 text = result.subtitle(),
                 style = MaterialTheme.typography.labelMedium,
@@ -101,15 +100,4 @@ private fun TitleKind.labelRes(): Int =
         TitleKind.Series -> R.string.title_kind_series
         TitleKind.Person -> R.string.title_kind_person
         TitleKind.Collection -> R.string.title_kind_collection
-    }
-
-/** The status chip a card or row shows for what the server holds of a title; nothing for a title it holds nothing of. */
-internal fun TitleAvailability.chip(): Pair<Int, BingeSentiment>? =
-    when (this) {
-        TitleAvailability.None -> null
-        TitleAvailability.Pending -> R.string.title_status_pending to BingeSentiment.Caution
-        TitleAvailability.Processing -> R.string.title_status_processing to BingeSentiment.Info
-        TitleAvailability.PartiallyAvailable -> R.string.title_status_partial to BingeSentiment.Positive
-        TitleAvailability.Available -> R.string.title_status_available to BingeSentiment.Positive
-        TitleAvailability.Blocklisted -> R.string.title_status_blocklisted to BingeSentiment.Neutral
     }

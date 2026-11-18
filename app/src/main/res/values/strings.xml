@@ -147,11 +147,6 @@
     <string name="title_kind_series">Series</string>
     <string name="title_kind_person">Person</string>
     <string name="title_kind_collection">Collection</string>
-    <string name="title_status_pending">Requested</string>
-    <string name="title_status_processing">Processing</string>
-    <string name="title_status_partial">Partly available</string>
-    <string name="title_status_available">Available</string>
-    <string name="title_status_blocklisted">Blocklisted</string>
     <string name="hub_section_settings_desc">Services, notifications and jobs</string>
     <string name="hub_section_this_app">This app</string>
     <string name="hub_section_this_app_desc">Preferences, notifications, feedback and more</string>
