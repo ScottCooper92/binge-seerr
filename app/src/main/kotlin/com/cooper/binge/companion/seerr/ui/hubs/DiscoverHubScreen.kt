@@ -43,10 +43,13 @@ import com.binge.designsystem.theme.BingeSentiment
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.TitleAvailability
 import com.cooper.binge.companion.seerr.discover.sliders.HubCard
+import com.cooper.binge.companion.seerr.discover.sliders.HubGrid
 import com.cooper.binge.companion.seerr.discover.sliders.HubHero
 import com.cooper.binge.companion.seerr.discover.sliders.HubRow
 import com.cooper.binge.companion.seerr.discover.sliders.HubTab
 import com.cooper.binge.companion.seerr.discover.sliders.HubTile
+import com.cooper.binge.companion.seerr.discover.sliders.seeAll
+import com.cooper.binge.companion.seerr.discover.sliders.tileGrid
 import com.cooper.binge.companion.seerr.discover.sliders.toCard
 import com.cooper.binge.companion.seerr.ui.state.EmptyScreen
 import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
@@ -70,7 +73,7 @@ fun DiscoverHubScreen(
     state: DiscoverHubUiState,
     onRefresh: () -> Unit,
     onOpenTitle: (HubCard) -> Unit,
-    onOpenCategory: (HubRow, HubTile) -> Unit,
+    onOpenGrid: (HubGrid, String) -> Unit,
 ) {
     val title = stringResource(if (tab == HubTab.Movies) R.string.hubs_title_movies else R.string.hubs_title_tv)
     val hasHero = (state as? DiscoverHubUiState.Ready)?.hero?.isNotEmpty() == true
@@ -83,7 +86,7 @@ fun DiscoverHubScreen(
             is DiscoverHubUiState.Error -> ErrorScreen(state.error, Modifier.padding(inner), onRetry = onRefresh)
             is DiscoverHubUiState.Ready ->
                 BingePullToRefresh(isRefreshing = state.refreshing, onRefresh = onRefresh, indicatorTopInset = statusBar) {
-                    HubRows(tab, state, inner, onOpenTitle, onOpenCategory)
+                    HubRows(tab, state, inner, onOpenTitle, onOpenGrid)
                 }
         }
         if (hasHero) {
@@ -106,7 +109,7 @@ private fun HubRows(
     state: DiscoverHubUiState.Ready,
     contentPadding: PaddingValues,
     onOpenTitle: (HubCard) -> Unit,
-    onOpenCategory: (HubRow, HubTile) -> Unit,
+    onOpenGrid: (HubGrid, String) -> Unit,
 ) {
     val listState = rememberLazyListState()
     ShowHeroWhenItArrives(listState, hasHero = state.hero.isNotEmpty())
@@ -114,8 +117,8 @@ private fun HubRows(
         if (state.hero.isNotEmpty()) item(key = HERO_KEY) { Hero(state.hero, onOpenTitle) }
         items(state.rows, key = { it.row.sliderId }) { row ->
             when (row) {
-                is HubRowUi.Cards -> CardRow(tab, row, onOpenTitle)
-                is HubRowUi.Tiles -> TileRow(tab, row, onOpenCategory)
+                is HubRowUi.Cards -> CardRow(tab, row, onOpenTitle, onOpenGrid)
+                is HubRowUi.Tiles -> TileRow(tab, row, onOpenGrid)
             }
         }
         // A row still loading is a skeleton below the ones that landed, so the page does not jump when it arrives.
@@ -128,9 +131,13 @@ private fun CardRow(
     tab: HubTab,
     row: HubRowUi.Cards,
     onOpenTitle: (HubCard) -> Unit,
+    onOpenGrid: (HubGrid, String) -> Unit,
 ) {
+    val title = row.row.title(tab)
+    val grid = row.row.seeAll()
     MediaCarousel(
-        title = row.row.title(tab),
+        title = title,
+        onMoreClick = grid?.let { { onOpenGrid(it, title) } },
         items = row.cards,
         itemKey = { it.kind.name + it.tmdbId },
     ) { _, card ->
@@ -150,17 +157,18 @@ private fun CardRow(
 private fun TileRow(
     tab: HubTab,
     row: HubRowUi.Tiles,
-    onOpenCategory: (HubRow, HubTile) -> Unit,
+    onOpenGrid: (HubGrid, String) -> Unit,
 ) {
+    fun open(tile: HubTile) = row.row.tileGrid(tile)?.let { onOpenGrid(it, tile.name) }
     MediaCarousel(
         title = row.row.title(tab),
         items = row.tiles,
         itemKey = { it.id },
     ) { _, tile ->
         if (row.row is HubRow.Genres) {
-            BackdropTile(title = tile.name, imageUrl = tile.imageUrl, onClick = { onOpenCategory(row.row, tile) })
+            BackdropTile(title = tile.name, imageUrl = tile.imageUrl, onClick = { open(tile) })
         } else {
-            LogoTile(name = tile.name, logoUrl = tile.imageUrl, onClick = { onOpenCategory(row.row, tile) })
+            LogoTile(name = tile.name, logoUrl = tile.imageUrl, onClick = { open(tile) })
         }
     }
 }
