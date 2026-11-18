@@ -5,6 +5,8 @@ import androidx.compose.runtime.Composable
 import com.android.tools.screenshot.PreviewTest
 import com.cooper.binge.companion.seerr.discover.TitleAvailability
 import com.cooper.binge.companion.seerr.discover.title.VersionState
+import com.cooper.binge.companion.seerr.preview.SeerrExpandedFontScalePreviews
+import com.cooper.binge.companion.seerr.preview.SeerrExpandedSpanishPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrFontScalePreviews
 import com.cooper.binge.companion.seerr.preview.SeerrScreenPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrScreenStatePreview
@@ -36,6 +38,16 @@ class SeriesPageScreenshotTest {
     @SeerrTabletPanesPreview
     @Composable
     fun requestableTablet() = Frame(SeriesPageUiState.Ready(fullSeries(), seriesExtras()))
+
+    @PreviewTest
+    @SeerrExpandedSpanishPreviews
+    @Composable
+    fun requestableExpandedSpanish() = Frame(SeriesPageUiState.Ready(fullSeries(), seriesExtras()))
+
+    @PreviewTest
+    @SeerrExpandedFontScalePreviews
+    @Composable
+    fun requestableExpandedLargeText() = Frame(SeriesPageUiState.Ready(fullSeries(), seriesExtras()))
 
     /** The season picker sheet's content: one season in each state, the status beside the ones the server holds, the shown one checked. */
     @PreviewTest

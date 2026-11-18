@@ -6,6 +6,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.VideoLibrary
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
@@ -56,26 +57,23 @@ internal fun SeriesPageBody(
         // The expanded header already shows these and the synopsis.
         val expanded = isExpandedLayout()
         if (!expanded) TitleStatsRows(series.titleStats(locale))
-        ReadingColumn {
-            TitleActions(
-                model = titleActionsModel(series.standard, series.fourK),
-                onRequest = actions.onRequest,
-                onTrailer = series.videos.trailerUrl()?.let { url -> { actions.onOpenUrl(url) } },
-                onShare = { context.shareTitle(series.name, series.webUrl) },
-            )
-            if (!expanded) OverviewSection(series.overview)
-        }
-        ReadingColumn { EpisodesSection(state, seasonActions) }
-        ReadingColumn { InfoRowList(series.factEntries(context.resources, locale, state.extras?.ratings)) }
+        TitleActions(
+            model = titleActionsModel(series.standard, series.fourK),
+            onRequest = actions.onRequest,
+            onTrailer = series.videos.trailerUrl()?.let { url -> { actions.onOpenUrl(url) } },
+            onShare = { context.shareTitle(series.name, series.webUrl) },
+            modifier = Modifier.readingMargin(),
+        )
+        if (!expanded) OverviewSection(series.overview)
+        EpisodesSection(state, seasonActions, Modifier.readingMargin())
+        InfoRowList(series.factEntries(context.resources, locale, state.extras?.ratings), Modifier.readingMargin())
         PeopleRow(stringResource(R.string.title_page_cast), series.cast, actions.onOpenPerson, actions.onOpenCredits)
         PeopleRow(stringResource(R.string.title_page_crew), series.keyCrew, actions.onOpenPerson, actions.onOpenCredits)
         series.providers?.takeIf { it.streaming.isNotEmpty() }?.let { providers ->
-            ReadingColumn {
-                SectionHeader(stringResource(R.string.title_page_where_to_watch))
-                TagRow(providers.streaming.map { it.name })
-            }
+            SectionHeader(stringResource(R.string.title_page_where_to_watch), Modifier.readingMargin())
+            TagRow(providers.streaming.map { it.name }, Modifier.readingMargin())
         }
         state.extras?.let { TitleRow(stringResource(R.string.title_page_more_like_this), it.moreLikeThis, actions.onOpenTitle) }
-        ReadingColumn { KeywordsSection(series.keywords) }
+        KeywordsSection(series.keywords, Modifier.readingMargin())
     }
 }

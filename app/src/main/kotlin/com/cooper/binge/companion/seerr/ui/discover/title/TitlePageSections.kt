@@ -2,7 +2,6 @@ package com.cooper.binge.companion.seerr.ui.discover.title
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -48,19 +47,18 @@ internal fun TitlePageBody(
         // The expanded header already shows these and the synopsis.
         val expanded = isExpandedLayout()
         if (!expanded) TitleStatsRows(movie.titleStats(locale))
-        ReadingColumn {
-            TitleActions(
-                model = titleActionsModel(movie.standard, movie.fourK),
-                onRequest = actions.onRequest,
-                onTrailer = movie.videos.trailerUrl()?.let { url -> { actions.onOpenUrl(url) } },
-                onShare = { context.shareTitle(movie.title, movie.webUrl) },
-            )
-            if (!expanded) OverviewSection(movie.overview)
-            InfoRowList(movie.factEntries(context.resources, locale, state.extras?.ratings))
-        }
+        TitleActions(
+            model = titleActionsModel(movie.standard, movie.fourK),
+            onRequest = actions.onRequest,
+            onTrailer = movie.videos.trailerUrl()?.let { url -> { actions.onOpenUrl(url) } },
+            onShare = { context.shareTitle(movie.title, movie.webUrl) },
+            modifier = Modifier.readingMargin(),
+        )
+        if (!expanded) OverviewSection(movie.overview)
+        InfoRowList(movie.factEntries(context.resources, locale, state.extras?.ratings), Modifier.readingMargin())
         PeopleRow(stringResource(R.string.title_page_cast), movie.cast, actions.onOpenPerson, actions.onOpenCredits)
         PeopleRow(stringResource(R.string.title_page_crew), movie.keyCrew, actions.onOpenPerson, actions.onOpenCredits)
-        ReadingColumn { WhereToWatchSection(movie.providers, actions.onOpenUrl) }
+        WhereToWatchSection(movie.providers, actions.onOpenUrl, Modifier.readingMargin())
         movie.collection?.let { collection ->
             TitleRow(
                 title = collection.name,
@@ -70,21 +68,17 @@ internal fun TitlePageBody(
             )
         }
         state.extras?.let { TitleRow(stringResource(R.string.title_page_more_like_this), it.moreLikeThis, actions.onOpenTitle) }
-        ReadingColumn { KeywordsSection(movie.keywords) }
+        KeywordsSection(movie.keywords, Modifier.readingMargin())
     }
 }
 
 /**
- * A run of sections that sits in the page's reading column. The hero template leaves the body full-width so the rails can bleed, and
- * measures the margin that centres a column in what is left: [LocalHeroReadingMargin], zero on a phone, so a phone's page is as it was.
+ * The margin that centres a reading column in the width the hero template leaves the body, which it measures as
+ * [LocalHeroReadingMargin]: zero on a phone, so a phone's page is as it was. A section takes it as its modifier, so a section that
+ * draws nothing takes no space, and the rails, which bleed to the window's edge, do not take it.
  */
 @Composable
-internal fun ReadingColumn(content: @Composable ColumnScope.() -> Unit) =
-    Column(
-        modifier = Modifier.padding(horizontal = LocalHeroReadingMargin.current),
-        verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
-        content = content,
-    )
+internal fun Modifier.readingMargin(): Modifier = padding(horizontal = LocalHeroReadingMargin.current)
 
 /** The inset a rail starts at: the screen's, plus the reading margin, so its first card lines up with the column and it still bleeds. */
 @Composable
@@ -102,15 +96,21 @@ internal fun OverviewSection(overview: String?) {
 }
 
 @Composable
-internal fun KeywordsSection(keywords: List<String>) {
+internal fun KeywordsSection(
+    keywords: List<String>,
+    modifier: Modifier = Modifier,
+) {
     if (keywords.isEmpty()) return
-    SectionHeader(stringResource(R.string.title_page_keywords))
-    TagRow(keywords)
+    SectionHeader(stringResource(R.string.title_page_keywords), modifier)
+    TagRow(keywords, modifier)
 }
 
 @Composable
-internal fun TagRow(labels: List<String>) {
-    WrappingRow(Modifier.padding(horizontal = dimensionResource(DesR.dimen.padding_m))) {
+internal fun TagRow(
+    labels: List<String>,
+    modifier: Modifier = Modifier,
+) {
+    WrappingRow(modifier.padding(horizontal = dimensionResource(DesR.dimen.padding_m))) {
         labels.forEach { BingeTag(label = it, uppercase = false) }
     }
 }

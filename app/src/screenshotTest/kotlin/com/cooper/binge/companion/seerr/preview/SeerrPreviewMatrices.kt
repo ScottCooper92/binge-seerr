@@ -96,6 +96,20 @@ annotation class SeerrFontScale13ComponentPreviews
 @Preview(name = "es", device = PHONE_PORTRAIT_SPEC, uiMode = UI_MODE_NIGHT_YES, locale = "es")
 annotation class SeerrSpanishPreviews
 
+/** The expanded windows in Spanish, where the cinematic header's overlay copy runs longer than English. */
+@PreviewWrapper(SeerrScreenshotThemeWrapper::class)
+@Preview(name = "foldable-es", device = FOLDABLE_PORTRAIT_SPEC, uiMode = UI_MODE_NIGHT_YES, locale = "es")
+@Preview(name = "tablet-es", device = TABLET_LANDSCAPE_SPEC, uiMode = UI_MODE_NIGHT_YES, locale = "es")
+annotation class SeerrExpandedSpanishPreviews
+
+/** The expanded windows at font scales 1.3 and 2.0, where the header's overlay grows and the reading column must still hold. */
+@PreviewWrapper(SeerrScreenshotThemeWrapper::class)
+@Preview(name = "foldable-font13", device = FOLDABLE_PORTRAIT_SPEC, fontScale = 1.3f, uiMode = UI_MODE_NIGHT_YES, locale = SOURCE_LOCALE)
+@Preview(name = "foldable-font20", device = FOLDABLE_PORTRAIT_SPEC, fontScale = 2f, uiMode = UI_MODE_NIGHT_YES, locale = SOURCE_LOCALE)
+@Preview(name = "tablet-font13", device = TABLET_LANDSCAPE_SPEC, fontScale = 1.3f, uiMode = UI_MODE_NIGHT_YES, locale = SOURCE_LOCALE)
+@Preview(name = "tablet-font20", device = TABLET_LANDSCAPE_SPEC, fontScale = 2f, uiMode = UI_MODE_NIGHT_YES, locale = SOURCE_LOCALE)
+annotation class SeerrExpandedFontScalePreviews
+
 /** A component against both themes, at the size its content asks for. */
 @PreviewWrapper(SeerrScreenshotThemeWrapper::class)
 @Preview(name = "dark", uiMode = UI_MODE_NIGHT_YES, locale = SOURCE_LOCALE)
