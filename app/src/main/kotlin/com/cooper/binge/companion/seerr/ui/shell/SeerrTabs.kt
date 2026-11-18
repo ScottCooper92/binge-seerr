@@ -59,9 +59,13 @@ data object SearchRoot : NavKey
 @Serializable
 data object SettingsRoot : NavKey
 
-/** The shell's state: the selected tab, and a stack for each tab holding its root. */
+/**
+ * The shell's state: the selected tab, and a stack for each tab holding its root. With [discovery] on it starts on Movies, which is
+ * also the tab Back returns to; off, there are no discovery tabs and it starts on Settings as the app always has. The selected
+ * tab survives a recreate, so this only decides the first one.
+ */
 @Composable
-internal fun rememberSeerrTabs(): TabShellState<SeerrTab> {
+internal fun rememberSeerrTabs(discovery: Boolean): TabShellState<SeerrTab> {
     val movies = rememberNavBackStack(MoviesRoot)
     val tv = rememberNavBackStack(TvRoot)
     val discover = rememberNavBackStack(DiscoverGridRoute(TitleKind.Movie, GridPreset.Popular))
@@ -77,8 +81,7 @@ internal fun rememberSeerrTabs(): TabShellState<SeerrTab> {
                 SeerrTab.Settings to settings,
             )
         }
-    // Settings stays the start tab for now: the hubs are new and the app opens as it always has. Moving the start to Movies is its own change.
-    return rememberTabShellState(tabs = SeerrTab.entries, initial = SeerrTab.Settings, stacks = stacks)
+    return rememberTabShellState(tabs = SeerrTab.entries, initial = if (discovery) SeerrTab.Movies else SeerrTab.Settings, stacks = stacks)
 }
 
 /**

@@ -113,6 +113,7 @@ class WideShellJourneyTest {
         NavHostActivity.discoveryEnabled = true
         host.connectDemo()
         host.launch(HomeRoute)
+        host.openSettingsTab()
         host.awaitShowing(host.string(R.string.hub_section_issues_desc))
         bar().assertIsDisplayed()
 
@@ -171,7 +172,7 @@ class WideShellJourneyTest {
     }
 
     @Test
-    fun `Back on another tab returns to Settings with the section open`() {
+    fun `choosing Settings again from another tab brings its section back`() {
         NavHostActivity.discoveryEnabled = true
         host.connectDemo()
         host.launch(HomeRoute, RequestsRoute)
@@ -179,7 +180,7 @@ class WideShellJourneyTest {
         host.compose.onNodeWithTag("tab_search").performClick()
         host.compose.waitUntil(WAIT_MILLIS) { host.stack() == listOf<NavKey>(ShellRoute) }
 
-        host.back()
+        bar().performClick()
         host.compose.waitUntil(WAIT_MILLIS) { host.stack() == listOf<NavKey>(ShellRoute, RequestsRoute) }
         bar().assertIsDisplayed()
         host.awaitShowing(host.string(R.string.hub_section_issues_desc))

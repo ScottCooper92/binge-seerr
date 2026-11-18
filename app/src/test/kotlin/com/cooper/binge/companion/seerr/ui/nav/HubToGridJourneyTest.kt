@@ -4,7 +4,6 @@ import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithContentDescription
-import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
@@ -58,8 +57,6 @@ class HubToGridJourneyTest {
         host.connectDemo()
         if (seedSliders) host.api { it.updateDiscoverSliders(movieSliders()) }
         host.launch(HomeRoute)
-        host.awaitShowing(host.string(R.string.hub_section_requests))
-        host.compose.onNodeWithTag("tab_movies").performClick()
         host.awaitShowing(host.string(R.string.hubs_browse_all_movies))
     }
 

@@ -110,7 +110,7 @@ class MainActivity : ComponentActivity() {
                 return@setContent
             }
             val backStack = rememberNavBackStack(HomeRoute)
-            val tabs = rememberSeerrTabs()
+            val tabs = rememberSeerrTabs(discovery = flags[DiscoveryEnabled])
             LaunchedEffect(backStack) {
                 screenNames(backStack, selectedTab = { tabs.selected }).collect { analytics.screen(it) }
             }
