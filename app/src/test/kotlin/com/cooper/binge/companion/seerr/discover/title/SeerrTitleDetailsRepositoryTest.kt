@@ -42,6 +42,11 @@ private const val RATINGS = """{"rt":{"criticsScore":83,"audienceScore":85},"imd
 private const val PAGE =
     """{"page":1,"totalPages":1,"results":[{"id":604,"mediaType":"movie","title":"Reloaded","releaseDate":"2003-05-15"}]}"""
 
+private const val COLLECTION =
+    """{"id":2344,"name":"The Matrix Collection","parts":[
+        {"id":603,"mediaType":"movie","title":"The Matrix","releaseDate":"1999-03-30","posterPath":"/m.jpg","mediaInfo":{"id":11,"status":5}},
+        {"id":604,"mediaType":"movie","title":"Reloaded","releaseDate":"2003-05-15"}]}"""
+
 class SeerrTitleDetailsRepositoryTest {
     private val seerr = FakeSeerrServer()
     private val factory = SeerrApiFactory(logRequests = false, testTransport = seerr::interceptor, testDispatcher = seerr::newDispatcher)
@@ -65,6 +70,7 @@ class SeerrTitleDetailsRepositoryTest {
             "/api/v1/movie/603/ratingscombined" -> ratingsAnswer
             "/api/v1/movie/603/recommendations" -> FakeResponse(headers = JSON, body = PAGE)
             "/api/v1/movie/603/similar" -> FakeResponse(code = 500)
+            "/api/v1/collection/2344" -> FakeResponse(headers = JSON, body = COLLECTION)
             "/api/v1/user/9/settings/main" -> FakeResponse(headers = JSON, body = userRegion)
             else -> FakeResponse(code = 404)
         }
@@ -85,6 +91,17 @@ class SeerrTitleDetailsRepositoryTest {
                 )
             }
         }
+    }
+
+    @Test
+    fun `a collection's films map as movies, in the order the server gave, with the status it holds`() {
+        val parts = withRepository { it.collectionParts(2344) }
+
+        assertEquals(listOf(603, 604), parts.map { it.tmdbId })
+        assertTrue(parts.all { it.kind == TitleKind.Movie })
+        assertEquals(TitleAvailability.Available, parts[0].availability)
+        assertEquals(TitleAvailability.None, parts[1].availability)
+        assertEquals("2003", parts[1].year)
     }
 
     @Test

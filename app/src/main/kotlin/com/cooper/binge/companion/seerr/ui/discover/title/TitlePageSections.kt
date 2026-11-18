@@ -57,6 +57,14 @@ internal fun TitlePageBody(
             SectionHeader(stringResource(R.string.title_page_where_to_watch))
             TagRow(providers.streaming.map { it.name })
         }
+        movie.collection?.let { collection ->
+            TitleRow(
+                title = collection.name,
+                titles = state.collectionParts,
+                onOpen = actions.onOpenTitle,
+                onSeeAll = actions.onOpenCollection?.let { open -> { open(collection.id) } },
+            )
+        }
         state.extras?.let { TitleRow(stringResource(R.string.title_page_more_like_this), it.moreLikeThis, actions.onOpenTitle) }
         KeywordsSection(movie.keywords)
     }
@@ -110,9 +118,10 @@ internal fun TitleRow(
     title: String,
     titles: List<TitleResult>,
     onOpen: (TitleResult) -> Unit,
+    onSeeAll: (() -> Unit)? = null,
 ) {
     if (titles.isEmpty()) return
-    MediaCarousel(title = title, items = titles, itemKey = { it.kind.name + it.tmdbId }) { _, item ->
+    MediaCarousel(title = title, items = titles, itemKey = { it.kind.name + it.tmdbId }, onMoreClick = onSeeAll) { _, item ->
         MediaCard(
             posterUrl = item.artworkPath?.let { it.toTmdbPosterUrl() },
             title = item.name,
