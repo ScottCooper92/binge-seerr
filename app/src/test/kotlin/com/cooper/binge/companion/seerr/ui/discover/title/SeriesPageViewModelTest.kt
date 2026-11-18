@@ -200,4 +200,19 @@ class SeriesPageViewModelTest {
         assertEquals(null, vm.ready().selectedSeason)
         vm.retryEpisodes()
     }
+
+    @Test
+    fun `the first season with episodes is selected before the specials`() {
+        val withSpecials = seriesFixture(seasons = listOf(seasonFixture(0), seasonFixture(1), seasonFixture(2)))
+        val vm = SeriesPageViewModel(FakeSeries(series = withSpecials), 1399)
+
+        assertEquals(1, vm.ready().selectedSeason)
+    }
+
+    @Test
+    fun `a show whose only season is the specials selects them`() {
+        val vm = SeriesPageViewModel(FakeSeries(series = seriesFixture(seasons = listOf(seasonFixture(0)))), 1399)
+
+        assertEquals(0, vm.ready().selectedSeason)
+    }
 }

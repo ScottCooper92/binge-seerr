@@ -94,7 +94,7 @@ class SeriesPageViewModel
             viewModelScope.launch {
                 attempt { repository.series(tmdbId) }.fold(
                     onSuccess = { series ->
-                        val first = series.seasons.firstOrNull()?.number
+                        val first = (series.seasons.firstOrNull { it.number > 0 } ?: series.seasons.firstOrNull())?.number
                         state.value = SeriesPageUiState.Ready(series, selectedSeason = first)
                         loadExtras()
                         first?.let(::loadEpisodes)

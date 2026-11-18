@@ -117,6 +117,7 @@ private fun SeasonsGroup(
     if (seasons.isEmpty()) return
     val rows =
         seasons.map { season ->
+            val isSelected = season.number == selected
             val status = season.standard.label()?.first
             val episodes = pluralStringResource(R.plurals.season_episodes, season.episodeCount, season.episodeCount)
             val detail =
@@ -129,13 +130,18 @@ private fun SeasonsGroup(
                 label = seasonLabel(season.number, season.name),
                 detail = detail,
                 supportingMaxLines = 3,
-                selected = season.number == selected,
+                selected = isSelected,
                 onClick = { onSelect(season.number) },
                 trailingContent =
-                    if (season.number ==
-                        selected
-                    ) {
-                        ({ Icon(Icons.Filled.CheckCircle, contentDescription = null) })
+                    if (isSelected) {
+                        (
+                            {
+                                Icon(
+                                    Icons.Filled.CheckCircle,
+                                    contentDescription = null,
+                                )
+                            }
+                        )
                     } else {
                         ({ Spacer(Modifier) })
                     },
