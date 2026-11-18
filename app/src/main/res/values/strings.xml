@@ -1488,6 +1488,9 @@
     <string name="title_page_cast">Cast</string>
     <string name="title_page_crew">Key crew</string>
     <string name="title_page_where_to_watch">Where to watch</string>
+    <string name="title_page_watch_stream">Stream</string>
+    <string name="title_page_watch_buy">Buy</string>
+    <string name="title_page_justwatch">Data provided by JustWatch</string>
     <string name="title_page_collection">Collection</string>
     <string name="title_page_keywords">Keywords</string>
     <string name="title_page_fact_status">Status</string>
