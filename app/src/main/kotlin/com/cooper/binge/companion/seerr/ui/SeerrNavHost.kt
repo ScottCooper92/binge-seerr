@@ -21,6 +21,7 @@ import com.cooper.binge.companion.seerr.flags.LocalDiscoveryEnabled
 import com.cooper.binge.companion.seerr.ui.discover.title.LocalOpenTitle
 import com.cooper.binge.companion.seerr.ui.discover.title.rememberOpenTitle
 import com.cooper.binge.companion.seerr.ui.discover.title.titleEntries
+import com.cooper.binge.companion.seerr.ui.grid.DiscoverTabEntry
 import com.cooper.binge.companion.seerr.ui.grid.discoverGridEntries
 import com.cooper.binge.companion.seerr.ui.hub.HubSection
 import com.cooper.binge.companion.seerr.ui.hubs.DiscoverHubEntry
@@ -131,7 +132,7 @@ private fun EntryProviderScope<NavKey>.homeEntries(
                         backStack.openSection(HubSection.Requests)
                     },
                 )
-            }, search = { TitleSearchEntry() }, settings = {
+            }, search = { TitleSearchEntry() }, grid = { DiscoverTabEntry(tabs.stack(SeerrTab.Discover)) }, settings = {
                 if (panes.hubBeside()) {
                     SettingsPanes(
                         threePane = panes.threePane(),
