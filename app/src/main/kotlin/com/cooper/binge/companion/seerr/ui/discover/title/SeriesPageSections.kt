@@ -24,6 +24,7 @@ import com.cooper.binge.companion.seerr.discover.title.SeasonInfo
 import com.cooper.binge.companion.seerr.discover.title.SeriesDetails
 import com.cooper.binge.companion.seerr.discover.title.trailerUrl
 import com.cooper.binge.companion.seerr.ui.discover.request.seasonLabel
+import java.text.NumberFormat
 import java.util.Locale
 import com.binge.designsystem.R as DesR
 
@@ -36,7 +37,13 @@ internal fun SeriesDetails.titleStats(locale: Locale): List<DetailStat> {
     return listOfNotNull(
         ratingStat(voteAverage, voteCount, locale),
         firstAirYear?.let { DetailStat(Icons.Filled.CalendarMonth, it, seasonsLabel ?: stringResource(R.string.title_page_stat_released)) },
-        episodeCount?.let { DetailStat(Icons.Filled.VideoLibrary, "$it", stringResource(R.string.series_stat_episodes)) },
+        episodeCount?.let {
+            DetailStat(
+                Icons.Filled.VideoLibrary,
+                NumberFormat.getIntegerInstance(locale).format(it),
+                stringResource(R.string.series_stat_episodes),
+            )
+        },
         ratedStat(certification),
     )
 }
