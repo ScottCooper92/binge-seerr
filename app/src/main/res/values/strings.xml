@@ -1644,4 +1644,9 @@
         <item quantity="other">%d films</item>
     </plurals>
     <string name="collection_page_meta">%1$s · %2$d to request</string>
+    <string name="collection_page_block">Block collection</string>
+    <string name="collection_page_unblock">Unblock collection</string>
+    <string name="collection_page_block_title">Block %1$s?</string>
+    <string name="collection_page_block_message">None of its films can be requested until it is unblocked.</string>
+    <string name="collection_page_block_held">Films already on your server or requested are blocklisted too, and their status is cleared if you unblock the collection later.</string>
 </resources>
