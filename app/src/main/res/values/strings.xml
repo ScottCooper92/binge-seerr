@@ -129,6 +129,7 @@
     <!-- The discovery shell's bottom navigation, and what a tab says until its screen exists. -->
     <string name="shell_tab_movies">Movies</string>
     <string name="shell_tab_tv">TV</string>
+    <string name="shell_tab_discover">Discover</string>
     <string name="shell_tab_search">Search</string>
     <string name="shell_tab_settings">Settings</string>
     <string name="shell_placeholder_message">This part of the app arrives in a later update.</string>
@@ -1663,4 +1664,9 @@
         <item quantity="other">%d films</item>
     </plurals>
     <string name="collection_page_meta">%1$s · %2$d to request</string>
+    <string name="collection_page_block">Block collection</string>
+    <string name="collection_page_unblock">Unblock collection</string>
+    <string name="collection_page_block_title">Block %1$s?</string>
+    <string name="collection_page_block_message">None of its films can be requested until it is unblocked.</string>
+    <string name="collection_page_block_held">Films already on your server or requested are blocklisted too, and their status is cleared if you unblock the collection later.</string>
 </resources>

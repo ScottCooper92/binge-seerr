@@ -119,8 +119,8 @@ How each gate is applied is in [`server-compatibility.md`](server-compatibility.
 | `GET /blacklist/{tmdbId}` | Get media from blocklist | — | v2.0.0 |  | Not needed: the list payload carries everything a row shows. |
 | `GET /blocklist` | Returns blocklisted items | — | v3.0.0 | yes | The blocklist browser, paged, searched and filtered by source; the hub's count. |
 | `POST /blocklist` | Add media to blocklist | — | v3.0.0 | yes | From the moderation sheet: decline or remove and block. |
-| `DELETE /blocklist/collection/{collectionId}` | Remove collection from blocklist | — | v3.2.0 | yes | `BlocklistViewModel.setCollectionBlocked`; the collection page that calls it is Phase 7. |
-| `POST /blocklist/collection/{collectionId}` | Add collection to blocklist | — | v3.2.0 | yes | `BlocklistViewModel.setCollectionBlocked`; the collection page that calls it is Phase 7. |
+| `DELETE /blocklist/collection/{collectionId}` | Remove collection from blocklist | — | v3.2.0 | yes | The collection page's overflow (`CollectionPageViewModel.setBlocked`), shown only to a viewer with `MANAGE_BLOCKLIST` on a server that has the endpoint (`canBlockCollections`). Blocking asks first; unblocking goes straight through. Demo mode serves both. |
+| `POST /blocklist/collection/{collectionId}` | Add collection to blocklist | — | v3.2.0 | yes | The collection page's overflow (`CollectionPageViewModel.setBlocked`), shown only to a viewer with `MANAGE_BLOCKLIST` on a server that has the endpoint (`canBlockCollections`). Blocking asks first; unblocking goes straight through. Demo mode serves both. |
 | `DELETE /blocklist/{tmdbId}` | Remove media from blocklist | — | v3.0.0 | yes | Unblock from the browser's row, behind a confirm. |
 | `GET /blocklist/{tmdbId}` | Get media from blocklist | — | v3.0.0 |  | Not needed: the list payload carries everything a row shows. |
 | `GET /settings/jellyfin/users` | Get Jellyfin Users | — | v1.1.0 | yes | The import picker on a Jellyfin or Emby server, filtered here to accounts not yet imported. Admin only, like all of `/settings`. |

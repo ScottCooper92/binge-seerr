@@ -17,6 +17,15 @@ internal fun CollectionPageEntry(
     val openTitle = LocalOpenTitle.current
     CollectionPageScreen(
         state = state,
-        actions = CollectionPageActions(onBack, viewModel::load) { openTitle(it.kind, it.tmdbId, "") },
+        events = viewModel.events,
+        actions =
+            CollectionPageActions(
+                onBack = onBack,
+                onRetry = viewModel::load,
+                onOpenTitle = { openTitle(it.kind, it.tmdbId, "") },
+                onAskBlock = viewModel::askBlock,
+                onDismissBlock = viewModel::dismissBlock,
+                onSetBlocked = viewModel::setBlocked,
+            ),
     )
 }

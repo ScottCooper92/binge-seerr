@@ -60,7 +60,7 @@ import com.binge.designsystem.R as DesR
 
 /** What the screen does with what the user does; the entry wires each to the view model. */
 internal class DiscoverGridActions(
-    val onBack: () -> Unit,
+    val onBack: (() -> Unit)?,
     val onClearFilter: () -> Unit,
     val onClearGroup: (FilterGroup) -> Unit,
     val onRetry: () -> Unit,
