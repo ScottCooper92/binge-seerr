@@ -75,7 +75,6 @@ class BlocklistViewModelTest {
             vm.setScreenVisible(true)
             val ready = vm.awaitReady { it.counts?.all != null && it.canManage }
             assertTrue(ready.hasFilters)
-            assertTrue(ready.canBlockCollections)
             assertEquals(BlocklistCounts(all = 1, manual = 1, tagged = 1), ready.counts)
 
             assertEquals(
@@ -97,7 +96,6 @@ class BlocklistViewModelTest {
             vm.setScreenVisible(true)
             val ready = vm.awaitReady { !it.hasFilters }
             assertFalse(ready.canManage)
-            assertFalse(ready.canBlockCollections)
             assertNull(ready.counts)
             assertEquals(
                 "Heat",

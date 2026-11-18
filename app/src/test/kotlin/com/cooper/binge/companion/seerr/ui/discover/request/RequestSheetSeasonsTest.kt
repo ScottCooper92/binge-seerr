@@ -3,6 +3,7 @@ package com.cooper.binge.companion.seerr.ui.discover.request
 import com.cooper.binge.companion.seerr.discover.TitleAvailability
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.request.RequestAccess
+import com.cooper.binge.companion.seerr.discover.request.RequestAllResult
 import com.cooper.binge.companion.seerr.discover.request.RequestChoices
 import com.cooper.binge.companion.seerr.discover.request.RequestQuota
 import com.cooper.binge.companion.seerr.discover.request.RequestResult
@@ -33,6 +34,8 @@ private class SeasonsRepository : RequestSheetRepository {
         kind: TitleKind,
         serverId: Int,
     ) = RequestChoices(emptyList(), emptyList())
+
+    override suspend fun submitAll(submissions: List<RequestSubmission>) = RequestAllResult(submissions.size, 0, null)
 
     override suspend fun submit(submission: RequestSubmission): RequestResult {
         submissions += submission

@@ -43,7 +43,7 @@ private fun worstCase(): CollectionPageUiState.Ready {
     return CollectionPageUiState.Ready(collection)
 }
 
-private val NO_ACTIONS = CollectionPageActions({}, {}, {}, {}, {}, {})
+private val NO_ACTIONS = CollectionPageActions({}, {}, {}, {}, {}, {}, {}, {}, {})
 
 /** The collection page with a film in every status and the longest names, at font scales 1.3 and 2.0, through the design system's clipping check. */
 @RunWith(RobolectricTestRunner::class)

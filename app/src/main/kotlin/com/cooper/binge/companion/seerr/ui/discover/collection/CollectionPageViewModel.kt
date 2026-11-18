@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.binge.companion.sdk.attempt
 import com.cooper.binge.companion.seerr.discover.collection.CollectionDetails
 import com.cooper.binge.companion.seerr.discover.collection.CollectionRepository
+import com.cooper.binge.companion.seerr.discover.request.RequestResult
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
 import com.cooper.binge.companion.seerr.telemetry.AnalyticsEvents
@@ -33,16 +34,26 @@ sealed interface CollectionPageUiState {
         val error: SeerrError,
     ) : CollectionPageUiState
 
-    /** [mayBlock] is false until the viewer's rights are read, so the menu appears only for one who may use it. */
+    /**
+     * [mayRequest] and [mayBlock] are false until the viewer's rights are read, so the Request button and the menu appear only for
+     * one who may use them.
+     */
     data class Ready(
         val collection: CollectionDetails,
+        val mayRequest: Boolean = false,
         val mayBlock: Boolean = false,
+        val requestSheetOpen: Boolean = false,
         val confirmingBlock: Boolean = false,
         val changing: Boolean = false,
     ) : CollectionPageUiState
 }
 
 sealed interface CollectionPageEvent {
+    /** A request went through, for the screen's snackbar. */
+    data class Requested(
+        val result: RequestResult,
+    ) : CollectionPageEvent
+
     /** The server blocked or unblocked the collection, for the screen's snackbar. */
     data class Changed(
         val blocked: Boolean,
@@ -91,6 +102,23 @@ class CollectionPageViewModel
             }
         }
 
+        /** The sheet opens only for a viewer who may request and while a film is still open to request. */
+        fun openRequestSheet() = updateReady { if (it.mayRequest && it.collection.toRequest > 0) it.copy(requestSheetOpen = true) else it }
+
+        /** Closing the sheet reads the collection again, since a refused send may mean the server's state moved under the page. */
+        fun closeRequestSheet() {
+            updateReady { it.copy(requestSheetOpen = false) }
+            viewModelScope.launch {
+                attempt { repository.collection(id) }.onSuccess { fresh -> updateReady { it.copy(collection = fresh) } }
+            }
+        }
+
+        /** The server answered a request: the sheet closes and the page reads the collection again, so its statuses move. */
+        fun requested(result: RequestResult) {
+            eventFlow.tryEmit(CollectionPageEvent.Requested(result))
+            closeRequestSheet()
+        }
+
         /** Blocking asks first; unblocking is undone as easily as it is done, so it goes straight through. */
         fun askBlock() = updateReady { if (it.mayBlock && !it.collection.blocked) it.copy(confirmingBlock = true) else it }
 
@@ -121,8 +149,10 @@ class CollectionPageViewModel
 
         private fun loadRights() {
             viewModelScope.launch {
-                val may = attempt { repository.mayBlock() }.getOrNull() ?: return@launch
-                updateReady { it.copy(mayBlock = may) }
+                attempt { repository.mayRequest() }.onSuccess { may -> updateReady { it.copy(mayRequest = may) } }
+            }
+            viewModelScope.launch {
+                attempt { repository.mayBlock() }.onSuccess { may -> updateReady { it.copy(mayBlock = may) } }
             }
         }
 

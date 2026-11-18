@@ -1664,6 +1664,18 @@
         <item quantity="other">%d films</item>
     </plurals>
     <string name="collection_page_meta">%1$s · %2$d to request</string>
+    <string name="request_sheet_films">Films</string>
+    <string name="request_sheet_all_films">All films</string>
+    <string name="request_sheet_status_films">Choose which films to request</string>
+    <string name="request_sheet_done_partial">Requested some films; the server turned down the rest</string>
+    <plurals name="request_sheet_submit_films">
+        <item quantity="one">Request %d film</item>
+        <item quantity="other">Request %d films</item>
+    </plurals>
+    <plurals name="request_sheet_films_limit">
+        <item quantity="one">Your quota allows %d more film</item>
+        <item quantity="other">Your quota allows %d more films</item>
+    </plurals>
     <string name="collection_page_block">Block collection</string>
     <string name="collection_page_unblock">Unblock collection</string>
     <string name="collection_page_block_title">Block %1$s?</string>
