@@ -26,6 +26,7 @@ import com.cooper.binge.companion.seerr.flags.LocalDiscoveryEnabled
 import com.cooper.binge.companion.seerr.flags.LocalFlags
 import com.cooper.binge.companion.seerr.ui.discover.title.LocalOpenTitle
 import com.cooper.binge.companion.seerr.ui.discover.title.TitleDetailEntry
+import com.cooper.binge.companion.seerr.ui.grid.discoverGridEntries
 import com.cooper.binge.companion.seerr.ui.hub.HubSection
 import com.cooper.binge.companion.seerr.ui.hubs.DiscoverHubEntry
 import com.cooper.binge.companion.seerr.ui.requests.RequestMediaType
@@ -80,6 +81,7 @@ fun SeerrNavHost(
             searchEntries(backStack, panes)
             detailEntries(backStack, showBack = panes.showBack)
             serverSettingsEntries(backStack)
+            discoverGridEntries(backStack)
         }
     }
 }

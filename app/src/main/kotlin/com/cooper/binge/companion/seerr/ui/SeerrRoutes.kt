@@ -2,6 +2,7 @@ package com.cooper.binge.companion.seerr.ui
 
 import androidx.navigation3.runtime.NavKey
 import com.cooper.binge.companion.seerr.discover.TitleKind
+import com.cooper.binge.companion.seerr.discover.grid.GridPreset
 import com.cooper.binge.companion.seerr.ui.blocklist.BlocklistItem
 import com.cooper.binge.companion.seerr.ui.settings.ServiceType
 import com.cooper.binge.companion.seerr.ui.settings.server.ServerAgent
@@ -152,3 +153,14 @@ data object DiagnosticsRoute : SeerrRoute
 /** The setup form on the live connection; pops itself once new credentials are saved. */
 @Serializable
 data object EditConnectionRoute : SeerrRoute
+
+/**
+ * The paged grid a hub row's "see all" opens. [preset] is the row, which becomes the grid's starting filter, and [title] is its
+ * name for the bar and the filter's chip. Opened over the tab bar, like every other page a tab opens.
+ */
+@Serializable
+data class DiscoverGridRoute(
+    val kind: TitleKind,
+    val preset: GridPreset,
+    val title: String? = null,
+) : SeerrRoute
