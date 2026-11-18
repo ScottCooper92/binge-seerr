@@ -69,6 +69,7 @@ class SeerrSeriesRepositoryTest {
                         viewer = { SeerrUserDto(id = 9, permissions = PERMISSION_ADMIN) },
                         profile = { profile },
                         serverUrl = { "https://seerr.example/" },
+                        deviceRegion = { null },
                         io = Dispatchers.Unconfined,
                     ),
                 )
