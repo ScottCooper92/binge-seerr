@@ -77,7 +77,7 @@ class DemoSeriesTest {
             )
             assertTrue(credits.cast.all { credit -> DEMO_TITLES.any { it.tmdbId == credit.id } })
             assertTrue(credits.crew.all { it.job == "Director" })
-    }
+        }
 
     @Test
     fun `a season answers with its episodes, the last of which has not aired`() =
