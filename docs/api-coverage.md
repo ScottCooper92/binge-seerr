@@ -262,7 +262,7 @@ Each row is ticked in "Today" by the PR that covers it.
 | `GET /movie/{movieId}/similar` | Get similar movies | v1.0.0 | v1.0.0 |  | Planned under the discovery epic (#2039). |
 | `GET /person/{personId}` | Get person details | v1.0.0 | v1.0.0 |  | Planned under the discovery epic (#2039). |
 | `GET /person/{personId}/combined_credits` | Get combined credits | v1.0.0 | v1.0.0 |  | Planned under the discovery epic (#2039). |
-| `GET /search` | Search for movies, TV shows, or people | v1.0.0 | v1.0.0 | yes | The shared title lists: hubs, the grid and search. |
+| `GET /search` | Search for movies, TV shows, or people | v1.0.0 | v1.0.0 | yes | The Search tab: movies, series and people, paged, debounced, with the queries that found something kept on the device. A `tmdb:<id>` query is the server's own lookup and works the same way. The server's multi search never returns collections; the mapping would show one if it did. |
 | `GET /tv/{tvId}/ratings` | Get TV ratings | v1.0.0 | v1.0.0 |  | Planned under the discovery epic (#2039). |
 | `GET /tv/{tvId}/recommendations` | Get recommended TV series | v1.0.0 | v1.0.0 |  | Planned under the discovery epic (#2039). |
 | `GET /tv/{tvId}/season/{seasonNumber}` | Get season details and episode list | v1.0.0 | v1.0.0 |  | Planned under the discovery epic (#2039). |

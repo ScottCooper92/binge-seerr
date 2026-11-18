@@ -66,7 +66,8 @@ private const val SEARCH_PAGE_SIZE = 3
 /** Titles, then people, matching the query, [SEARCH_PAGE_SIZE] to a page. */
 private fun DemoData.searchPage(call: DemoCall): DemoAnswer {
     val query = call.query("query").orEmpty().trim()
-    val all = found(call).map { toResult(it) } + DEMO_PEOPLE.filter { query.isNotEmpty() && it.name.orEmpty().contains(query, ignoreCase = true) }
+    val all =
+        found(call).map { toResult(it) } + DEMO_PEOPLE.filter { query.isNotEmpty() && it.name.orEmpty().contains(query, ignoreCase = true) }
     val page = call.intQuery("page", 1).coerceAtLeast(1)
     val pages = ((all.size + SEARCH_PAGE_SIZE - 1) / SEARCH_PAGE_SIZE).coerceAtLeast(1)
     val rows = all.drop((page - 1) * SEARCH_PAGE_SIZE).take(SEARCH_PAGE_SIZE)

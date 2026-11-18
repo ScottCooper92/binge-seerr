@@ -52,7 +52,10 @@ internal fun RecentSearches(
                 )
                 TextButton(onClick = { confirming = true }) {
                     Icon(Icons.Filled.DeleteSweep, contentDescription = null)
-                    Text(stringResource(R.string.title_search_recent_clear), modifier = Modifier.padding(start = dimensionResource(DesR.dimen.padding_s)))
+                    Text(
+                        stringResource(R.string.title_search_recent_clear),
+                        modifier = Modifier.padding(start = dimensionResource(DesR.dimen.padding_s)),
+                    )
                 }
             }
         }

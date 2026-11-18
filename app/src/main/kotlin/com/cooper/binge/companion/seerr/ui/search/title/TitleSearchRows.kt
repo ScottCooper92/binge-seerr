@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
@@ -41,6 +42,7 @@ internal fun TitleResultRow(
     ListRow(
         modifier = modifier,
         onClick = if (opens) onClick else null,
+        verticalAlignment = if (result.kind == TitleKind.Person) Alignment.CenterVertically else Alignment.Top,
         leading = {
             if (result.kind == TitleKind.Person) {
                 BingeInitialsAvatar(name = result.name, avatarUrl = artwork)
@@ -57,7 +59,8 @@ private fun TitleResultMeta(
     modifier: Modifier,
 ) {
     val gap = dimensionResource(DesR.dimen.detail_cast_avatar_label_spacing)
-    Column(modifier = modifier.padding(top = dimensionResource(DesR.dimen.detail_meta_spacing))) {
+    val top = if (result.kind == TitleKind.Person) dimensionResource(DesR.dimen.zero) else dimensionResource(DesR.dimen.detail_meta_spacing)
+    Column(modifier = modifier.padding(top = top)) {
         ListRowHeader(title = result.name)
         Spacer(Modifier.height(gap))
         WrappingRow(horizontalSpacing = gap, verticalSpacing = gap) {
