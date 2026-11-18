@@ -11,32 +11,34 @@ import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.BingeAdaptiveSheet
 import com.binge.designsystem.component.BingeSheetKind
 import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.ui.isOpenableSite
 import com.cooper.binge.companion.seerr.ui.openInBrowser
 import com.cooper.binge.companion.seerr.ui.requests.RequestMediaType
 import com.cooper.binge.companion.seerr.ui.state.ActionSheetGroup
 import com.cooper.binge.companion.seerr.ui.state.externalItem
 
-/** The page's overflow: the issue on the server, the title on the media server, and in Sonarr or Radarr. */
+/**
+ * The page's overflow: the issue on the server, the title on the media server, and in Sonarr or Radarr. A link to an
+ * address that cannot be a real site has no row: one that opens nothing is worse than none.
+ */
 @Composable
 internal fun IssueManageSheet(
     detail: IssueDetail,
     onDismiss: () -> Unit,
 ) {
     val context = LocalContext.current
-
-    fun open(url: String): () -> Unit =
-        {
-            onDismiss()
-            context.openInBrowser(url)
-        }
     BingeAdaptiveSheet(kind = BingeSheetKind.Menu, onDismissRequest = onDismiss) {
         IssueManageContent(
             serverName = detail.serverName,
             mediaServerName = detail.mediaServerName,
             serviceName = if (detail.item.mediaType == RequestMediaType.Tv) "Sonarr" else "Radarr",
-            onOpenWeb = open(detail.webUrl),
-            onOpenMediaServer = detail.mediaServerUrl?.let(::open),
-            onOpenService = detail.serviceUrl?.let(::open),
+            webUrl = detail.webUrl,
+            mediaServerUrl = detail.mediaServerUrl,
+            serviceUrl = detail.serviceUrl,
+            onOpen = { url ->
+                onDismiss()
+                context.openInBrowser(url)
+            },
         )
     }
 }
@@ -46,24 +48,28 @@ internal fun IssueManageContent(
     serverName: String,
     mediaServerName: String?,
     serviceName: String,
-    onOpenWeb: () -> Unit,
+    webUrl: String,
+    onOpen: (String) -> Unit,
     modifier: Modifier = Modifier,
-    onOpenMediaServer: (() -> Unit)? = null,
-    onOpenService: (() -> Unit)? = null,
+    mediaServerUrl: String? = null,
+    serviceUrl: String? = null,
 ) {
     ActionSheetGroup(
         rows =
             listOfNotNull(
-                externalItem(Icons.AutoMirrored.Filled.OpenInNew, stringResource(R.string.open_in_named, serverName), onOpenWeb),
-                onOpenMediaServer?.let {
+                externalItem(Icons.AutoMirrored.Filled.OpenInNew, stringResource(R.string.open_in_named, serverName)) {
+                    onOpen(webUrl)
+                }.takeIf { isOpenableSite(webUrl) },
+                mediaServerUrl?.takeIf(::isOpenableSite)?.let { url ->
                     externalItem(
                         Icons.Filled.PlayArrow,
                         mediaServerName?.let { name -> stringResource(R.string.open_in_named, name) }
                             ?: stringResource(R.string.request_open_media_server),
-                        it,
-                    )
+                    ) { onOpen(url) }
                 },
-                onOpenService?.let { externalItem(Icons.Filled.Dns, stringResource(R.string.open_in_named, serviceName), it) },
+                serviceUrl?.takeIf(::isOpenableSite)?.let { url ->
+                    externalItem(Icons.Filled.Dns, stringResource(R.string.open_in_named, serviceName)) { onOpen(url) }
+                },
             ),
         modifier = modifier,
     )

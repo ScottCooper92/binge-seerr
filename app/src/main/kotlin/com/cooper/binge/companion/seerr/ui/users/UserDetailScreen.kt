@@ -62,6 +62,7 @@ import com.cooper.binge.companion.seerr.flags.LocalFlags
 import com.cooper.binge.companion.seerr.seerr.ManageablePermission
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.ui.hub.QuotaSection
+import com.cooper.binge.companion.seerr.ui.isOpenableSite
 import com.cooper.binge.companion.seerr.ui.openInBrowser
 import com.cooper.binge.companion.seerr.ui.openTitle
 import com.cooper.binge.companion.seerr.ui.requests.PagedAppendState
@@ -312,7 +313,10 @@ internal fun UserActionsContent(
     modifier: Modifier = Modifier,
 ) {
     val settings = openItem(Icons.Filled.Settings, stringResource(R.string.user_settings_title), onClick = onOpenSettings)
-    val web = externalItem(Icons.AutoMirrored.Filled.OpenInNew, stringResource(R.string.open_in_named, detail.serverName), onOpenWeb)
+    // A page at an address that cannot be a real site has no row: one that opens nothing is worse than none.
+    val web =
+        externalItem(Icons.AutoMirrored.Filled.OpenInNew, stringResource(R.string.open_in_named, detail.serverName), onOpenWeb)
+            .takeIf { isOpenableSite(detail.webUrl) }
     val delete =
         actionItem(Icons.Filled.Delete, stringResource(R.string.user_delete), destructive = true, enabled = !deleting, onClick = onDelete)
     ActionSheetGroup(

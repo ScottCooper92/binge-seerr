@@ -218,8 +218,15 @@ class SheetsClippingTest {
     @Composable
     private fun IssueSheets() {
         Column {
-            IssueManageContent("Alexandria's Front Room Jellyseerr", "Plex Media Server Upstairs", LONG_SERVICE, onOpenWeb = {
-            }, onOpenMediaServer = {}, onOpenService = {})
+            IssueManageContent(
+                serverName = "Alexandria's Front Room Jellyseerr",
+                mediaServerName = "Plex Media Server Upstairs",
+                serviceName = LONG_SERVICE,
+                webUrl = "https://seerr.example/issues/41",
+                onOpen = {},
+                mediaServerUrl = "https://plex.example/web",
+                serviceUrl = "https://sonarr.example/",
+            )
             CommentActionsContent(onEdit = {}, onDelete = {})
             OutboxActionsContent(retryable = true, onRetry = {}, onEdit = {}, onDrop = {})
             CommentComposerContent(draft = LONG_NAME, onDraftChange = {}, onSubmit = {}, onCancel = {})

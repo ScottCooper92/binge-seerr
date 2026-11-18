@@ -18,6 +18,7 @@ import com.cooper.binge.companion.seerr.flags.LocalFlags
 import com.cooper.binge.companion.seerr.seerr.SeerrMediaServer
 import com.cooper.binge.companion.seerr.seerr.SeerrServerProfile
 import com.cooper.binge.companion.seerr.ui.bingeAnswersTitleLink
+import com.cooper.binge.companion.seerr.ui.isOpenableSite
 import com.cooper.binge.companion.seerr.ui.openInBrowser
 import com.cooper.binge.companion.seerr.ui.openTitle
 import com.cooper.binge.companion.seerr.ui.state.ActionSheetGroup
@@ -51,17 +52,18 @@ internal fun rememberRequestOpenLinks(detail: RequestDetail): List<RequestOpenLi
             } else {
                 resources.getString(R.string.open_in_named, detail.serverName)
             }
+        // A link to an address that cannot be a real site is left out: a row that opens nothing is worse than none.
         listOfNotNull(
             RequestOpenLink(titleLabel, Icons.AutoMirrored.Filled.OpenInNew) {
                 context.openTitle(promoted, detail.item.mediaType, detail.item.tmdbId, detail.webUrl)
-            },
-            detail.mediaServerUrl?.let { url ->
+            }.takeIf { isOpenableSite(detail.webUrl) },
+            detail.mediaServerUrl?.takeIf(::isOpenableSite)?.let { url ->
                 val label =
                     detail.mediaServerName?.let { resources.getString(R.string.open_in_named, it) }
                         ?: resources.getString(R.string.request_open_media_server)
                 RequestOpenLink(label, Icons.Filled.PlayArrow) { context.openInBrowser(url) }
             },
-            detail.serviceUrl?.let { url ->
+            detail.serviceUrl?.takeIf(::isOpenableSite)?.let { url ->
                 val labelRes =
                     if (detail.item.mediaType == RequestMediaType.Tv) R.string.media_open_sonarr else R.string.media_open_radarr
                 RequestOpenLink(resources.getString(labelRes), Icons.Filled.Dns) { context.openInBrowser(url) }
