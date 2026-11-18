@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.binge.companion.sdk.attempt
 import com.cooper.binge.companion.seerr.di.IoDispatcher
+import com.cooper.binge.companion.seerr.discover.grid.DiscoverGridRepository
+import com.cooper.binge.companion.seerr.discover.grid.GridPreset
 import com.cooper.binge.companion.seerr.discover.sliders.DiscoverSliderRepository
 import com.cooper.binge.companion.seerr.discover.sliders.HubCard
 import com.cooper.binge.companion.seerr.discover.sliders.HubCardLoader
@@ -43,6 +45,8 @@ sealed interface DiscoverHubUiState {
         val refreshing: Boolean,
         /** The carousel above the rows; empty where the server has no trending list or it failed. */
         val hero: List<HubHero> = emptyList(),
+        /** Whether the "Browse all" row shows: it promises filters, which the grid only has on a server that takes them. */
+        val browseAll: Boolean = true,
     ) : DiscoverHubUiState
 
     /** No row has anything to show: every slider is off, or the library is empty. */
@@ -82,6 +86,7 @@ class HubViewModel
         cards: HubCardLoader,
         tiles: HubTileLoader,
         private val heroes: HubHeroLoader,
+        private val grid: DiscoverGridRepository,
         @IoDispatcher dispatcher: CoroutineDispatcher,
         @Assisted private val tab: HubTab,
     ) : ViewModel() {
@@ -91,9 +96,12 @@ class HubViewModel
 
         private val hero = MutableStateFlow<List<HubHero>>(emptyList())
 
+        /** Shown until the server says it cannot filter: a row added later would land above the list, out of sight. */
+        private val browseAll = MutableStateFlow(true)
+
         val uiState: StateFlow<DiscoverHubUiState> =
-            combine(sliders.sliders, loader.state, loader.refreshing, hero) { list, rows, refreshing, hero ->
-                toUiState(list, rows, refreshing, hero)
+            combine(sliders.sliders, loader.state, loader.refreshing, hero, browseAll) { list, rows, refreshing, hero, browseAll ->
+                toUiState(list, rows, refreshing, hero, browseAll)
             }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), DiscoverHubUiState.Loading)
 
         init {
@@ -115,6 +123,7 @@ class HubViewModel
             viewModelScope.launch { attempt { sliders.refresh() } }
             // A failed hero leaves the last one, or none: it never holds the rows.
             viewModelScope.launch { attempt { heroes.load(tab) }.onSuccess { hero.value = it } }
+            viewModelScope.launch { attempt { grid.canRefine(GridPreset.Popular) }.onSuccess { browseAll.value = it } }
         }
 
         @AssistedFactory
@@ -130,6 +139,7 @@ private fun toUiState(
     rows: HubState<HubRow, HubRowUi>,
     refreshing: Boolean,
     hero: List<HubHero>,
+    browseAll: Boolean,
 ): DiscoverHubUiState =
     when (list) {
         SliderListState.Loading -> DiscoverHubUiState.Loading
@@ -139,7 +149,7 @@ private fun toUiState(
                 HubState.Loading -> DiscoverHubUiState.Loading
                 HubState.Empty -> DiscoverHubUiState.Empty
                 is HubState.Failed -> DiscoverHubUiState.Error(rows.error.toSeerrError())
-                is HubState.Ready -> DiscoverHubUiState.Ready(rows.rows.flatMap { it.items }, rows.pending, refreshing, hero)
+                is HubState.Ready -> DiscoverHubUiState.Ready(rows.rows.flatMap { it.items }, rows.pending, refreshing, hero, browseAll)
             }
     }
 

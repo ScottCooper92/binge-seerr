@@ -111,6 +111,9 @@ internal fun DemoData.page(
     return ok(SeerrTitlePageDto(page = page, totalPages = pages, totalResults = all.size, results = rows))
 }
 
+/** Two of the demo's genres, picked by the title's id so neighbouring titles read differently and the same title always the same. */
+private fun DemoTitle.genreIds(): List<Int> = listOf(0, 1).map { DEMO_GENRES[(tmdbId + it) % DEMO_GENRES.size].id }
+
 internal fun DemoData.toResult(title: DemoTitle): SeerrTitleResultDto =
     SeerrTitleResultDto(
         id = title.tmdbId,
@@ -122,6 +125,7 @@ internal fun DemoData.toResult(title: DemoTitle): SeerrTitleResultDto =
         releaseDate = "${title.year}-01-01".takeIf { title.isMovie },
         firstAirDate = "${title.year}-01-01".takeUnless { title.isMovie },
         voteAverage = DEMO_VOTE,
+        genreIds = title.genreIds(),
         mediaInfo = SeerrMediaInfoDto(id = title.mediaId, status = mediaStatus(title)),
     )
 
