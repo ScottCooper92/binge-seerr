@@ -1,5 +1,7 @@
 package com.cooper.binge.companion.seerr.discover.sliders
 
+import com.cooper.binge.companion.seerr.seerr.toTmdbLogoUrl
+
 /**
  * The studios and networks the built-in Studios and Networks sliders show: the fixed lists the providers' web client carries,
  * read from Seerr's `src/components/Discover/StudioSlider` and `NetworkSlider` at tag v3.5.2 (the lists are the same on its
@@ -47,10 +49,8 @@ internal val HUB_NETWORKS: List<HubTile> =
         company(3353, "Peacock", "/gIAcGTjKKr0KOHL5s4O36roJ8p7.png"),
     )
 
-private const val TMDB_LOGO_BASE = "https://image.tmdb.org/t/p/w780_filter(duotone,ffffff,bababa)"
-
 private fun company(
     id: Int,
     name: String,
     logoPath: String,
-): HubTile = HubTile(id, name, TMDB_LOGO_BASE + logoPath)
+): HubTile = HubTile(id, name, logoPath.toTmdbLogoUrl())
