@@ -73,7 +73,15 @@ internal fun SeriesPageBody(
         if (!expanded) OverviewSection(series.overview)
         EpisodesSection(state, seasonActions, Modifier.readingMargin())
         InfoRowList(
-            series.factEntries(context.resources, locale, state.extras?.ratings, actions.onOpenCompany.takeIf { series.companiesOpen }),
+            series.factEntries(
+                context.resources,
+                locale,
+                state.extras?.ratings,
+                actions.onOpenCompany.takeIf {
+                    series.companiesOpen
+                },
+                actions.onOpenPerson,
+            ),
             Modifier.readingMargin(),
         )
         PeopleRow(stringResource(R.string.title_page_cast), series.cast, actions.onOpenPerson, actions.onOpenCredits)

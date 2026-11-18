@@ -2,6 +2,8 @@ package com.cooper.binge.companion.seerr.ui
 
 import androidx.navigation3.runtime.NavKey
 import com.cooper.binge.companion.seerr.discover.TitleKind
+import com.cooper.binge.companion.seerr.discover.grid.DiscoverFilters
+import com.cooper.binge.companion.seerr.discover.grid.DiscoverSort
 import com.cooper.binge.companion.seerr.discover.grid.GridPreset
 import com.cooper.binge.companion.seerr.ui.blocklist.BlocklistItem
 import com.cooper.binge.companion.seerr.ui.settings.ServiceType
@@ -130,6 +132,12 @@ data class TitleDetailRoute(
     val tmdbId: Int,
 ) : SeerrRoute
 
+/** A collection of films as a page, opened from the collection rail on a film's page. */
+@Serializable
+data class CollectionRoute(
+    val id: Int,
+) : SeerrRoute
+
 /** A person: their profile and the titles they are in, opened from a title page, the cast list or a search result. */
 @Serializable
 data class PersonDetailRoute(
@@ -184,4 +192,6 @@ data class DiscoverGridRoute(
     val kind: TitleKind,
     val preset: GridPreset,
     val title: String? = null,
+    val filters: DiscoverFilters? = null,
+    val sort: DiscoverSort? = null,
 ) : SeerrRoute

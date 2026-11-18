@@ -59,7 +59,15 @@ internal fun TitlePageBody(
         )
         if (!expanded) OverviewSection(movie.overview)
         InfoRowList(
-            movie.factEntries(context.resources, locale, state.extras?.ratings, actions.onOpenCompany.takeIf { movie.companiesOpen }),
+            movie.factEntries(
+                context.resources,
+                locale,
+                state.extras?.ratings,
+                actions.onOpenCompany.takeIf {
+                    movie.companiesOpen
+                },
+                actions.onOpenPerson,
+            ),
             Modifier.readingMargin(),
         )
         PeopleRow(stringResource(R.string.title_page_cast), movie.cast, actions.onOpenPerson, actions.onOpenCredits)

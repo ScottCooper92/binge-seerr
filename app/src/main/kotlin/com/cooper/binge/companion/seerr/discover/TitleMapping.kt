@@ -12,6 +12,7 @@ internal fun SeerrTitlePageDto.toTitlePage(defaultKind: TitleKind?): TitlePage =
         results = results.mapNotNull { it.toTitleResult(defaultKind) },
         page = page,
         totalPages = totalPages,
+        total = totalResults.takeIf { it > 0 },
     )
 
 internal fun SeerrTitleResultDto.toTitleResult(defaultKind: TitleKind?): TitleResult? {

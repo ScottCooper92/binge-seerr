@@ -146,7 +146,7 @@ internal fun SeerrTvDetailsDto.toSeriesDetails(
         originalLanguage = originalLanguage,
         spokenLanguageCodes = spokenLanguages.mapNotNull { it.code?.takeIf(String::isNotBlank) },
         networks = networks.map { TitleCompany(it.id, it.name) },
-        creators = createdBy.map { it.name },
+        creators = createdBy.map { TitlePerson(it.id, it.name, null, null) },
         seasonCount = numberOfSeasons?.takeIf { it > 0 },
         episodeCount = numberOfEpisodes?.takeIf { it > 0 },
         nextEpisode =
