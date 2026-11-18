@@ -4,8 +4,8 @@ import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isSelected
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -64,6 +64,17 @@ class WideShellJourneyTest {
             hasText(host.string(R.string.requests_filter_processing), substring = true) and
                 SemanticsMatcher.keyIsDefined(SemanticsProperties.Selected),
         )
+
+    /** Waits for the chip to read as selected: the filter comes back through restored state, a frame after the screen shows. */
+    private fun awaitChipSelected() {
+        host.compose.waitUntil(WAIT_MILLIS) {
+            host.compose
+                .onAllNodes(
+                    hasText(host.string(R.string.requests_filter_processing), substring = true) and isSelected(),
+                ).fetchSemanticsNodes()
+                .isNotEmpty()
+        }
+    }
 
     private fun bar() = host.compose.onNodeWithTag("tab_settings")
 
@@ -192,17 +203,17 @@ class WideShellJourneyTest {
         host.launch(HomeRoute, RequestsRoute)
         host.awaitShowing(host.string(R.string.requests_filter_processing))
         chip().performClick()
-        chip().assertIsSelected()
+        awaitChipSelected()
 
         host.rotate(PHONE)
         host.awaitShowing(host.string(R.string.requests_filter_processing))
         assertEquals("nothing moved", listOf<NavKey>(ShellRoute, RequestsRoute), host.stack())
-        chip().assertIsSelected()
+        awaitChipSelected()
 
         host.rotate(WIDE)
         host.awaitShowing(host.string(R.string.hub_section_issues_desc))
         assertEquals("nothing moved", listOf<NavKey>(ShellRoute, RequestsRoute), host.stack())
-        chip().assertIsSelected()
+        awaitChipSelected()
         bar().assertIsDisplayed()
     }
 }
