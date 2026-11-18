@@ -13,8 +13,6 @@ import com.cooper.binge.companion.seerr.seerr.toAvatarUrl
 import com.cooper.binge.companion.seerr.seerr.toEpochMillisOrNull
 import com.cooper.binge.companion.seerr.ui.state.DownloadActivity
 
-const val REQUESTS_PAGE_SIZE = 20
-
 /** Null for a request whose media type this app does not render; there is nothing to show. */
 suspend fun SeerrRequestDto.toRequestItem(
     api: SeerrApi,
