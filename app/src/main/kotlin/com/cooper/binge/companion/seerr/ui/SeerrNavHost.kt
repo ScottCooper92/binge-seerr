@@ -24,6 +24,7 @@ import com.binge.designsystem.PaneEdge
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.flags.LocalDiscoveryEnabled
 import com.cooper.binge.companion.seerr.flags.LocalFlags
+import com.cooper.binge.companion.seerr.ui.discover.person.PersonEntry
 import com.cooper.binge.companion.seerr.ui.discover.title.LocalOpenTitle
 import com.cooper.binge.companion.seerr.ui.discover.title.TitleDetailEntry
 import com.cooper.binge.companion.seerr.ui.discover.title.credits.TitleCreditsEntry
@@ -284,6 +285,9 @@ private fun EntryProviderScope<NavKey>.detailEntries(
             )
         }
     }
+    entry<PersonDetailRoute>(metadata = DetailPane) { route ->
+        DetailPaneContent { PersonEntry(route.personId, onBack = { backStack.popIfTop(route) }) }
+    }
     entry<TitleCreditsRoute>(metadata = DetailPane) { route ->
         DetailPaneContent { TitleCreditsEntry(route.kind, route.tmdbId, onBack = { backStack.popIfTop(route) }) }
     }
@@ -380,7 +384,9 @@ private fun rememberOpenTitle(backStack: NavBackStack<NavKey>): (TitleKind, Int,
     return remember(backStack, discovery, promoted, context) {
         { kind, id, webUrl ->
             // A person and a collection open as they did until their own pages land.
-            if (discovery && (kind == TitleKind.Movie || kind == TitleKind.Series)) {
+            if (discovery && kind == TitleKind.Person) {
+                backStack.add(PersonDetailRoute(id))
+            } else if (discovery && (kind == TitleKind.Movie || kind == TitleKind.Series)) {
                 backStack.add(TitleDetailRoute(kind, id))
             } else {
                 context.openTitle(promoted, if (kind == TitleKind.Series) RequestMediaType.Tv else RequestMediaType.Movie, id, webUrl)

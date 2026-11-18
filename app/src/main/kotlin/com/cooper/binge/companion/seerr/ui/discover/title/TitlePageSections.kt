@@ -221,7 +221,7 @@ internal fun TitleAvailability.label(): Pair<String, BingeSentiment>? =
     }
 
 @Composable
-private fun TitleAvailability.cardStatus(): MediaCardStatus? = label()?.let { (text, sentiment) -> MediaCardStatus(text, sentiment) }
+internal fun TitleAvailability.cardStatus(): MediaCardStatus? = label()?.let { (text, sentiment) -> MediaCardStatus(text, sentiment) }
 
 /** How many stats go in each row: at most [STATS_PER_ROW], with the rows as even as they can be. */
 private fun evenRowSize(count: Int): Int {

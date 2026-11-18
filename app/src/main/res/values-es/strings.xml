@@ -1474,4 +1474,12 @@
         <item quantity="other">Tu cuota permite %1$d temporadas más</item>
     </plurals>
     <string name="request_sheet_seasons_over">Tu cuota tiene menos margen que las %1$d temporadas aún abiertas, así que esta serie no se puede pedir ahora</string>
+    <string name="person_page_born">Nacimiento</string>
+    <string name="person_page_died">Fallecimiento</string>
+    <string name="person_page_place">Lugar de nacimiento</string>
+    <string name="person_page_also_known_as">También conocido como</string>
+    <string name="person_filter_all">Todo</string>
+    <string name="person_filter_movies">Películas</string>
+    <string name="person_filter_series">Series</string>
+    <string name="person_credits_filtered_empty">No hay créditos de este tipo</string>
 </resources>

@@ -99,7 +99,7 @@ private fun rememberTitlePageActions(
         onCloseRequest = onCloseRequest,
         onRequested = onRequested,
         onOpenTitle = { result: TitleResult -> openTitle(result.kind, result.tmdbId, "") },
-        onOpenPerson = {},
+        onOpenPerson = { openTitle(TitleKind.Person, it, "") },
         onOpenCollection = {},
         onOpenUrl = context::openInBrowser,
         onOpenCredits = onOpenCredits,

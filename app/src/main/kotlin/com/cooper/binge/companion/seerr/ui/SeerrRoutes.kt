@@ -130,6 +130,12 @@ data class TitleDetailRoute(
     val tmdbId: Int,
 ) : SeerrRoute
 
+/** A person: their profile and the titles they are in, opened from a title page, the cast list or a search result. */
+@Serializable
+data class PersonDetailRoute(
+    val personId: Int,
+) : SeerrRoute
+
 /** The whole cast and crew of a title, opened from its page. */
 @Serializable
 data class TitleCreditsRoute(
