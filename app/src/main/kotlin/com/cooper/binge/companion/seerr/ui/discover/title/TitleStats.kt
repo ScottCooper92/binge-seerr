@@ -7,10 +7,13 @@ import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.Shield
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.DetailStat
 import com.binge.designsystem.component.DetailStatRow
+import com.binge.designsystem.layout.LayoutAnchors
+import com.binge.designsystem.layout.layoutAnchor
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.title.MovieDetails
 import java.util.Locale
@@ -46,11 +49,27 @@ internal fun ratingStat(
 internal fun ratedStat(certification: String?): DetailStat? =
     certification?.let { DetailStat(Icons.Outlined.Shield, it, stringResource(R.string.title_page_stat_rated)) }
 
+/** How many stats the page puts on a row: all of them, or two at a large font. The skeleton lays its cells out by the same rule. */
+@Composable
+internal fun statsPerRow(): Int = if (LocalDensity.current.fontScale >= LARGE_FONT_SCALE) 2 else Int.MAX_VALUE
+
 /** At a large font a label of four across breaks mid-word, so the stats go two to a row from [LARGE_FONT_SCALE]. */
 @Composable
 internal fun TitleStatsRows(stats: List<DetailStat>) {
-    val perRow = if (LocalDensity.current.fontScale >= LARGE_FONT_SCALE) 2 else Int.MAX_VALUE
-    stats.chunked(perRow).forEach { DetailStatRow(stats = it) }
+    val perRow = statsPerRow()
+    stats.chunked(perRow).forEachIndexed { index, row ->
+        DetailStatRow(
+            stats = row,
+            modifier =
+                if (index ==
+                    0
+                ) {
+                    Modifier.layoutAnchor(LayoutAnchors.section(LayoutAnchors.Detail.STATS))
+                } else {
+                    Modifier
+                },
+        )
+    }
 }
 
 private fun compactNumber(
