@@ -379,6 +379,30 @@ class TvSettingsSheetFocusTest {
         assertEquals(1, listingOpens)
     }
 
+    /** A television has no browser, so an update's release notes open as the address and a code the phone scans. */
+    @Test
+    fun anUpdateOffersItsReleaseNotesAsACodeAndBackReturnsToTheRow() {
+        setSheet(config = null, server = SERVER.copy(updateAvailable = true))
+        composeTestRule.onNode(hasText(string(R.string.tv_settings_release_notes)) and isFocusable()).requestFocus()
+        composeTestRule.waitForIdle()
+
+        press(Key.DirectionCenter)
+        composeTestRule
+            .onNodeWithText(string(R.string.tv_settings_release_notes_scan, "https://github.com/seerr-team/seerr/releases"))
+            .assertExists()
+        composeTestRule.onNodeWithContentDescription(string(R.string.tv_settings_release_notes_code_description)).assertIsFocused()
+        pressBack()
+
+        composeTestRule.onNode(hasText(string(R.string.tv_settings_release_notes)) and isFocusable()).assertIsFocused()
+    }
+
+    @Test
+    fun aCurrentServerOffersNoReleaseNotes() {
+        setSheet(config = null)
+
+        composeTestRule.onNodeWithText(string(R.string.tv_settings_release_notes)).assertDoesNotExist()
+    }
+
     /** The bug report's code holds focus, and Back, not a Close row, is the way back to the row that opened it. */
     @Test
     fun theBugReportsCodeHoldsFocusAndBackReturnsToItsRow() {
@@ -474,6 +498,7 @@ class TvSettingsSheetFocusTest {
     private fun setSheet(
         config: ServerConfig?,
         app: AppSettings? = null,
+        server: ServerSummary = SERVER,
     ) {
         composeTestRule.setContent {
             BingeTvTheme {
@@ -481,7 +506,7 @@ class TvSettingsSheetFocusTest {
                     state =
                         SettingsUiState.Ready(
                             connection = CONNECTION,
-                            server = SERVER,
+                            server = server,
                             config = config,
                             app = app?.copy(shareUsageData = sharingUsage, binge = binge),
                         ),

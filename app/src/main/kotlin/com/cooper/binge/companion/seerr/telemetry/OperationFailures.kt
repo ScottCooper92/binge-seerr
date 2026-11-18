@@ -7,6 +7,7 @@ import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.seerr.SeerrServerProfile
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
 import com.cooper.binge.companion.seerr.seerr.toStatusException
+import com.cooper.homelab.core.telemetry.Analytics
 import io.grpc.StatusException
 import kotlinx.coroutines.CancellationException
 import retrofit2.HttpException

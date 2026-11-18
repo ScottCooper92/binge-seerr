@@ -11,12 +11,12 @@ import com.cooper.binge.companion.seerr.preview.SeerrFontScalePreviews
 import com.cooper.binge.companion.seerr.preview.SeerrScreenPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrScreenStatePreview
 import com.cooper.binge.companion.seerr.preview.SeerrSpanishPreviews
-import com.cooper.binge.companion.seerr.tip.TipUiState
 import com.cooper.binge.companion.seerr.ui.hub.BingeStatus
+import com.cooper.homelab.core.presentation.tip.TipState
 
 private val SampleApp =
     AppSettings(
-        bugReportUrl = "https://github.com/ScottCooper92/binge-seerr/issues/new?template=bug.yml",
+        bugReportUrl = "https://github.com/ScottCooper92/app-feedback/issues/new?template=seerr-bug.yml",
         shakeToReport = true,
         binge = BingeStatus.Connected,
     )
@@ -40,7 +40,7 @@ class ThisAppScreenshotTest {
         ThisAppFrame(
             ThisAppUiState.Ready(SampleApp, notifications()),
             tip =
-                TipUiState.Ready(
+                TipState.Ready(
                     mapOf(
                         3 to "£3",
                         5 to "£5",
@@ -111,7 +111,7 @@ class ThisAppScreenshotTest {
 @Composable
 private fun ThisAppFrame(
     state: ThisAppUiState,
-    tip: TipUiState = TipUiState.Unavailable,
+    tip: TipState = TipState.Unavailable,
 ) = ThisAppScreen(
     state = state,
     actions =

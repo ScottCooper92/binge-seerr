@@ -160,7 +160,6 @@ class ListScreensClippingTest {
                     listVersion = 1,
                     hasFilters = true,
                     canManage = true,
-                    canBlockCollections = true,
                     actingTmdbIds = emptySet(),
                 ),
             itemsFor = { rows },

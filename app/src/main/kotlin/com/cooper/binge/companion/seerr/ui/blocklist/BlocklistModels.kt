@@ -56,12 +56,11 @@ sealed interface BlocklistUiState {
         val filter: BlocklistFilter,
         val search: String,
         val counts: BlocklistCounts?,
-        /** Bumped by a removal or a collection change; each filter's page refreshes once it trails this. */
+        /** Bumped by a removal; each filter's page refreshes once it trails this. */
         val listVersion: Int,
         /** Seerr 3.0+: the manual and tagged chips; Jellyseerr 2.x has one list. */
         val hasFilters: Boolean,
         val canManage: Boolean,
-        val canBlockCollections: Boolean,
         val actingTmdbIds: Set<Int>,
     ) : BlocklistUiState {
         /** Per page, not per selection: an empty page says why it is empty, and a swiped-to page is its own. */
@@ -76,10 +75,6 @@ sealed interface BlocklistUiState {
 
 sealed interface BlocklistEvent {
     data object Removed : BlocklistEvent
-
-    data class CollectionChanged(
-        val blocked: Boolean,
-    ) : BlocklistEvent
 
     data class Failed(
         val error: SeerrError,

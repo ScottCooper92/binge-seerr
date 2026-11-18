@@ -47,9 +47,10 @@ class ScreenNamesTest {
         assertEquals(names.size, names.toSet().size)
     }
 
-    /** An object's instance, or a class built from its constructor with a sample value for each parameter. */
+    /** An object's instance, a sealed interface's first subtype, or a class built from its constructor with a sample value for each parameter. */
     private fun sampleOf(type: Class<*>): Any {
         if (type.isEnum) return type.enumConstants.first()
+        if (type.isInterface) return sampleOf(type.permittedSubclasses.first())
         runCatching { return type.getField("INSTANCE").get(null) }
         val constructor = type.declaredConstructors.first { !it.isSynthetic }
         return constructor.newInstance(*constructor.parameterTypes.map(::sampleValue).toTypedArray())
@@ -61,7 +62,9 @@ class ScreenNamesTest {
             type == Long::class.javaPrimitiveType || type == Long::class.javaObjectType -> 1L
             type == Boolean::class.javaPrimitiveType || type == Boolean::class.javaObjectType -> false
             type == String::class.java -> "sample"
+            type == Double::class.javaPrimitiveType || type == Double::class.javaObjectType -> 1.0
             List::class.java.isAssignableFrom(type) -> emptyList<Any>()
+            Set::class.java.isAssignableFrom(type) -> emptySet<Any>()
             else -> sampleOf(type)
         }
 }

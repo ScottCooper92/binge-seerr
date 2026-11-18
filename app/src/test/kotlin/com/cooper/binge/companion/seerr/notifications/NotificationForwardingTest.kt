@@ -1,109 +1,108 @@
 package com.cooper.binge.companion.seerr.notifications
 
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.longPreferencesKey
+import androidx.datastore.preferences.core.stringSetPreferencesKey
+import com.binge.companion.contracts.v1.ForwardedNotification
 import com.binge.companion.contracts.v1.forwardedNotification
 import com.google.protobuf.timestamp
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
+import java.util.Base64
 
+/**
+ * What the queue keeps on disk is a promise to installs that already hold one: the preference names, and each notice as the
+ * Base64 of its protobuf bytes in a string set. The queue's own behaviour is tested where it lives, in the shared library.
+ */
 class NotificationForwardingTest {
     @get:Rule
     val folder = TemporaryFolder()
 
-    private var now = START
+    private val enabledKey = booleanPreferencesKey("forwarding_enabled")
+    private val lastPollKey = longPreferencesKey("forwarding_last_poll_millis")
+    private val queueKey = stringSetPreferencesKey("forwarding_queue")
 
-    private fun TestScope.forwarding() =
-        NotificationForwarding(PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("f.preferences_pb") }) { now }
+    private fun TestScope.store() = PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("f.preferences_pb") }
 
     @Test
-    fun `off until Binge turns it on, and turning it on counts as a poll`() =
+    fun `a queue the released version wrote is read oldest first, and an unreadable entry is dropped`() =
         runTest {
-            val forwarding = forwarding()
-            assertFalse(forwarding.enabled.first())
-            assertFalse(forwarding.isActive())
+            val store = store()
+            store.edit {
+                it[enabledKey] = true
+                it[lastPollKey] = NOW
+                it[queueKey] =
+                    setOf(
+                        stored(notice("b", NOW + 2_000)),
+                        stored(notice("a", NOW + 1_000)),
+                        "not base64!",
+                        Base64.getEncoder().encodeToString(byteArrayOf(0x0a)),
+                    )
+            }
 
-            forwarding.setEnabled(true)
+            val pending = seerrForwarding(store) { NOW }.pending()
 
-            assertTrue(forwarding.enabled.first())
-            assertTrue(forwarding.isActive())
+            assertEquals(listOf("a", "b"), pending.map { it.id })
         }
 
     @Test
-    fun `lapses when no host polls for a day, and a poll brings it back`() =
+    fun `what it writes is the Base64 of each notice's protobuf under the shipped names`() =
         runTest {
-            val forwarding = forwarding()
+            val store = store()
+            val forwarding = seerrForwarding(store) { NOW }
             forwarding.setEnabled(true)
 
-            now += FORWARDING_LAPSE_MILLIS + 1
-            assertFalse(forwarding.isActive())
-            assertTrue(forwarding.enabled.first())
+            forwarding.enqueue(notice("a", NOW))
 
-            forwarding.pending()
-            assertTrue(forwarding.isActive())
+            val prefs: Preferences = store.data.first()
+            assertEquals(true, prefs[enabledKey])
+            assertEquals(NOW, prefs[lastPollKey])
+            assertEquals(setOf(stored(notice("a", NOW))), prefs[queueKey])
         }
 
     @Test
-    fun `the queue lists oldest first, acknowledging removes, and an unknown id is ignored`() =
+    fun `the shipped limits are a day of lapse, a week of age and 200 queued`() =
         runTest {
-            val forwarding = forwarding()
+            val store = store()
+            var now = NOW
+            val forwarding = seerrForwarding(store) { now }
             forwarding.setEnabled(true)
-            forwarding.enqueue(notice("b", atMillis = START + 2_000))
-            forwarding.enqueue(notice("a", atMillis = START + 1_000))
+            forwarding.enqueue(notice("stale", NOW))
 
-            assertEquals(listOf("a", "b"), forwarding.pending().map { it.id })
-
-            forwarding.acknowledge(listOf("a", "never-issued"))
-            assertEquals(listOf("b"), forwarding.pending().map { it.id })
-        }
-
-    @Test
-    fun `turning it off drops the queue, and nothing is listed while off`() =
-        runTest {
-            val forwarding = forwarding()
-            forwarding.setEnabled(true)
-            forwarding.enqueue(notice("a", atMillis = START))
-
-            forwarding.setEnabled(false)
-
-            assertFalse(forwarding.isActive())
-            assertEquals(emptyList<String>(), forwarding.pending().map { it.id })
-            forwarding.setEnabled(true)
-            assertEquals(emptyList<String>(), forwarding.pending().map { it.id })
-        }
-
-    @Test
-    fun `a notice older than a week, or beyond the cap, is dropped unread`() =
-        runTest {
-            val forwarding = forwarding()
-            forwarding.setEnabled(true)
-            forwarding.enqueue(notice("stale", atMillis = START))
-            now += FORWARDED_MAX_AGE_MILLIS + 1_000
-            repeat(FORWARDED_MAX_QUEUED + 1) { forwarding.enqueue(notice("n$it", atMillis = now + it * 1_000L)) }
-
+            now += WEEK + 1_000
+            repeat(201) { forwarding.enqueue(notice("n$it", now + it * 1_000L)) }
             val pending = forwarding.pending().map { it.id }
 
-            assertEquals(FORWARDED_MAX_QUEUED, pending.size)
+            assertEquals(200, pending.size)
             assertEquals("n1", pending.first())
-            assertEquals("n$FORWARDED_MAX_QUEUED", pending.last())
+            now += DAY + 1
+            assertTrue(!forwarding.isActive())
         }
 
     private fun notice(
         id: String,
         atMillis: Long,
-    ) = forwardedNotification {
-        this.id = id
-        title = id
-        createdAt = timestamp { seconds = atMillis / 1_000 }
-    }
+    ): ForwardedNotification =
+        forwardedNotification {
+            this.id = id
+            title = id
+            createdAt = timestamp { seconds = atMillis / 1_000 }
+        }
+
+    private fun stored(notice: ForwardedNotification): String = Base64.getEncoder().encodeToString(notice.toByteArray())
 
     private companion object {
-        const val START = 1_800_000_000_000L
+        const val NOW = 1_800_000_000_000L
+        const val DAY = 24 * 60 * 60 * 1000L
+        const val WEEK = 7 * DAY
     }
 }

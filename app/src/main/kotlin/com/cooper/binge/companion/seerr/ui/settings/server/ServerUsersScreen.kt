@@ -18,6 +18,7 @@ import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.component.ListItemConnector
 import com.binge.designsystem.component.bingeNumberItem
 import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.ui.search.SettingRows
 import com.cooper.binge.companion.seerr.ui.settings.labelRes
 import com.cooper.binge.companion.seerr.ui.users.labelRes
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorActions
@@ -80,7 +81,7 @@ fun ServerUsersScreen(
                         detail = permissions.joinToString(", ").ifEmpty { stringResource(R.string.server_settings_permissions_none) },
                         enabled = enabled,
                         onClick = onOpenDefaultPermissions,
-                    ),
+                    ).copy(key = SettingRows.USERS_DEFAULT_PERMISSIONS),
                 ),
         )
     }
@@ -104,7 +105,7 @@ private fun SignInGroup(
                     draft.localLogin,
                     enabled,
                     detail = stringResource(R.string.server_settings_local_login_detail),
-                ) { on -> actions.onEdit { it.copy(localLogin = on) } },
+                ) { on -> actions.onEdit { it.copy(localLogin = on) } }.copy(key = SettingRows.USERS_LOCAL_LOGIN),
                 draft.mediaServerLogin?.let { allowed ->
                     editorToggle(
                         Icons.Filled.Storage,

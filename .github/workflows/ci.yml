@@ -61,7 +61,12 @@ jobs:
     permissions:
       contents: read
       pull-requests: read
-    uses: ScottCooper92/binge-ci/.github/workflows/submodule-pins.yml@4ea9f85339ca1f32747cfcbe89aaf1252e5bfdd5 # v1
+    uses: ScottCooper92/binge-ci/.github/workflows/submodule-pins.yml@0e23ad4311757677213da647bd150eca33d256f0 # v1.0.49
+    with:
+      private_submodules: homelab-core,binge-design-system,binge-ci
+    secrets:
+      REVIEWER_APP_ID: ${{ secrets.REVIEWER_APP_ID }}
+      REVIEWER_APP_PRIVATE_KEY: ${{ secrets.REVIEWER_APP_PRIVATE_KEY }}
 
   # `build` minus what the three jobs below own. Everything else `check` pulls in lands here:
   # compile, lint, detekt and its baseline-staleness check, ktlint, the translation, tv-material and gRPC gates,
@@ -79,9 +84,25 @@ jobs:
       # included build is an empty directory and Gradle fails at settings evaluation. Recursive,
       # because a submodule can carry its own: binge-companions includes binge-ci's Gradle gates
       # from a binge-ci submodule, and this build includes binge-companions.
+      # The submodules are private to the author: the default token reads this repository only. This one is read-only.
+      - name: Mint a read-only token for the submodules
+        id: submodule_token
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349 # v2
+        with:
+          app-id: ${{ secrets.REVIEWER_APP_ID }}
+          private-key: ${{ secrets.REVIEWER_APP_PRIVATE_KEY }}
+          repositories: binge-seerr,homelab-core,binge-design-system,binge-ci
+          permission-contents: read
+
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           submodules: recursive
+          token: ${{ steps.submodule_token.outputs.token }}
+
+      # The screenshot shards below take their classes from this script. Its test proves every class lands in
+      # exactly one shard, so a dropped or doubled class is a red run here and not a frame nothing validates.
+      - name: Test the screenshot sharding
+        run: .github/scripts/shard-screenshots.test.sh
 
       # JDK 21, matching binge-ci's ci-setup. The JDK runs the build and nothing else:
       # `jvmTarget` 17 in app/build.gradle.kts decides the bytecode, so this does not move what
@@ -100,10 +121,11 @@ jobs:
       # --continue surfaces every failure in one run rather than stopping at the first,
       # which matters most to author-ci-fix: it gets exactly one repair attempt per
       # commit, and a log showing only the first of three failures spends that attempt
-      # fixing a third of the problem. Each -x names a task another job runs; -x also drops
-      # whatever only that task needed, which is the point for assembleRelease's R8.
+      # fixing a third of the problem. Each -x names a task another job runs, with no project in front of it so it
+      # drops that task in every module, :data's included; -x also drops whatever only that task needed, which is the
+      # point for assembleRelease's R8.
       - name: Build and lint, less what the other jobs run
-        run: ./gradlew build --continue -x :app:testDebugUnitTest -x :app:koverVerify -x :app:validateDebugScreenshotTest -x :app:assembleRelease
+        run: ./gradlew build --continue -x testDebugUnitTest -x koverVerify -x validateDebugScreenshotTest -x assembleRelease
 
       - name: Upload reports
         if: ${{ failure() }}
@@ -123,9 +145,20 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
+      # The submodules are private to the author: the default token reads this repository only. This one is read-only.
+      - name: Mint a read-only token for the submodules
+        id: submodule_token
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349 # v2
+        with:
+          app-id: ${{ secrets.REVIEWER_APP_ID }}
+          private-key: ${{ secrets.REVIEWER_APP_PRIVATE_KEY }}
+          repositories: binge-seerr,homelab-core,binge-design-system,binge-ci
+          permission-contents: read
+
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           submodules: recursive
+          token: ${{ steps.submodule_token.outputs.token }}
       - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
         with:
           distribution: temurin
@@ -135,13 +168,13 @@ jobs:
           cache-read-only: true
 
       - name: Unit tests and coverage
-        run: ./gradlew :app:testDebugUnitTest :app:koverVerify --continue
+        run: ./gradlew testDebugUnitTest koverVerify --continue
 
       # UncaughtExceptionsBeforeTest names the test that ran next, never the coroutine that leaked. This report names it,
       # and the artifact below expires in a day, so a failed run says what leaked in its own log (#807).
       - name: Print the coroutine leak report
         if: ${{ failure() }}
-        run: cat app/build/reports/tests/testDebugUnitTest/coroutine-leaks.txt 2>/dev/null || echo "No coroutine leak was reported."
+        run: cat */build/reports/tests/testDebugUnitTest/coroutine-leaks.txt 2>/dev/null || echo "No coroutine leak was reported."
 
       - name: Upload reports
         if: ${{ failure() }}
@@ -154,16 +187,36 @@ jobs:
           if-no-files-found: ignore
           retention-days: 1
 
-  # The screenshot frames. The plugin renders in one fork, so this is the longest job and the one
-  # to watch: trimming a preview matrix is the way to shorten it.
+  # The screenshot frames, in shards. The plugin renders every frame in one JVM that keeps each frame's native
+  # memory until it exits, so the whole suite in one fork grew with the suite: a single job took 11 to 16 minutes
+  # and, on a slow runner, ran out of memory or stalled. Each shard renders a third of the classes, chosen by
+  # .github/scripts/shard-screenshots.sh so that every class lands in exactly one shard, and the shards run side by
+  # side. The job's result is the shards' together, so `build` still reads one `screenshots` and a red shard is a red
+  # `screenshots`. A shard normally takes about 5 minutes; one that has not finished in 20 has stalled. Only :app has
+  # frames, so this is the one task still named with its project.
   screenshots:
     if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2]
     steps:
+      # The submodules are private to the author: the default token reads this repository only. This one is read-only.
+      - name: Mint a read-only token for the submodules
+        id: submodule_token
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349 # v2
+        with:
+          app-id: ${{ secrets.REVIEWER_APP_ID }}
+          private-key: ${{ secrets.REVIEWER_APP_PRIVATE_KEY }}
+          repositories: binge-seerr,homelab-core,binge-design-system,binge-ci
+          permission-contents: read
+
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           submodules: recursive
+          token: ${{ steps.submodule_token.outputs.token }}
       - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
         with:
           distribution: temurin
@@ -176,16 +229,25 @@ jobs:
       - name: Compile screenshot sources
         run: ./gradlew :app:compileDebugScreenshotTestKotlin --max-workers=2
 
-      - name: Validate screenshots
+      - name: Validate screenshots (shard ${{ matrix.shard }} of ${{ strategy.job-total }})
+        env:
+          SHARD: ${{ matrix.shard }}
+          SHARDS: ${{ strategy.job-total }}
         run: |
+          mapfile -t filters < <(.github/scripts/shard-screenshots.sh "$SHARDS" "$SHARD")
+          if [ "${#filters[@]}" -eq 0 ]; then
+            echo "shard $SHARD has no classes; an empty filter would run the whole suite in one JVM" >&2
+            exit 1
+          fi
+          printf '%s\n' "${filters[@]}" | paste - - | sed 's/^/  /'
           ./gradlew --stop
-          ./gradlew :app:validateDebugScreenshotTest --continue
+          ./gradlew :app:validateDebugScreenshotTest --continue "${filters[@]}"
 
       - name: Upload reports
         if: ${{ failure() }}
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
-          name: build-reports-screenshots
+          name: build-reports-screenshots-${{ matrix.shard }}
           path: |
             **/build/outputs/screenshotTest-results/**/diffs/**
           if-no-files-found: ignore
@@ -198,9 +260,20 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
+      # The submodules are private to the author: the default token reads this repository only. This one is read-only.
+      - name: Mint a read-only token for the submodules
+        id: submodule_token
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349 # v2
+        with:
+          app-id: ${{ secrets.REVIEWER_APP_ID }}
+          private-key: ${{ secrets.REVIEWER_APP_PRIVATE_KEY }}
+          repositories: binge-seerr,homelab-core,binge-design-system,binge-ci
+          permission-contents: read
+
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           submodules: recursive
+          token: ${{ steps.submodule_token.outputs.token }}
       - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
         with:
           distribution: temurin
@@ -210,7 +283,7 @@ jobs:
           cache-read-only: true
 
       - name: Assemble the release build
-        run: ./gradlew :app:assembleRelease --continue
+        run: ./gradlew assembleRelease --continue
 
       - name: Upload reports
         if: ${{ failure() }}
@@ -274,7 +347,7 @@ jobs:
 
       # binge-ci's shared step: a pinned release verified against its published checksum, with
       # shellcheck at warning severity.
-      - uses: ScottCooper92/binge-ci/.github/actions/actionlint@4ea9f85339ca1f32747cfcbe89aaf1252e5bfdd5 # v1
+      - uses: ScottCooper92/binge-ci/.github/actions/actionlint@0e23ad4311757677213da647bd150eca33d256f0 # v1.0.49
 
   # A red nightly has no PR or push to carry it, so without this it is a red mark in the
   # Actions tab that nothing points at. One issue stays open while the canary is red and
@@ -289,7 +362,7 @@ jobs:
     permissions:
       issues: write
     steps:
-      - uses: ScottCooper92/binge-ci/.github/actions/nightly-report@4ea9f85339ca1f32747cfcbe89aaf1252e5bfdd5 # v1
+      - uses: ScottCooper92/binge-ci/.github/actions/nightly-report@0e23ad4311757677213da647bd150eca33d256f0 # v1.0.49
         with:
           result: ${{ needs.build.result }}
           title: Nightly CI is failing on main

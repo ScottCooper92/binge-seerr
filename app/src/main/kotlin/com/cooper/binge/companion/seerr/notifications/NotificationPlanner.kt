@@ -2,8 +2,8 @@ package com.cooper.binge.companion.seerr.notifications
 
 import com.binge.companion.sdk.attempt
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
-import com.cooper.binge.companion.seerr.telemetry.CrashBreadcrumbs
-import com.cooper.binge.companion.seerr.telemetry.NoOpCrashBreadcrumbs
+import com.cooper.homelab.core.telemetry.CrashBreadcrumbs
+import com.cooper.homelab.core.telemetry.NoOpCrashBreadcrumbs
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -30,8 +30,8 @@ class NotificationPlanner
         private val notifier: SeerrNotifier,
         @ApplicationScope private val scope: CoroutineScope,
         private val breadcrumbs: CrashBreadcrumbs = NoOpCrashBreadcrumbs,
-    ) {
-        fun start() {
+    ) : NotificationPlanning {
+        override fun start() {
             val plans =
                 combine(
                     connection.credentials,

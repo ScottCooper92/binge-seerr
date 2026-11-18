@@ -38,7 +38,9 @@ jobs:
     #
     # A fork PR never reaches the bot. binge-ci refuses one too, and this keeps the guard in sight
     # here (binge-design-system#407). It checks the events that name a head repository and lets the others through.
+    # Skip coordinator status notes (first line `<!-- to-coordinator`): posted under the maintainer's account, they would start a run with nothing to answer.
     if: >
+      !startsWith(github.event.comment.body, '<!-- to-coordinator') &&
       github.event.sender.login != 'binge-pr-author[bot]' &&
       (github.event_name != 'issue_comment' ||
        (github.event.issue.pull_request &&
@@ -61,9 +63,10 @@ jobs:
     concurrency:
       group: author-comments-${{ github.event.issue.number || github.event.pull_request.number }}
       cancel-in-progress: false
-    uses: ScottCooper92/binge-ci/.github/workflows/author-comments.yml@4ea9f85339ca1f32747cfcbe89aaf1252e5bfdd5 # v1
+    uses: ScottCooper92/binge-ci/.github/workflows/author-comments.yml@0e23ad4311757677213da647bd150eca33d256f0 # v1.0.49
     with:
       author_bot_id: ${{ vars.AUTHOR_BOT_ID }}
+      private_submodules: homelab-core,binge-design-system,binge-ci
       maintainer_handle: ScottCooper92
       # jvm, not android: this repo's ci.yml is setup-java + setup-gradle and nothing
       # else. ci-setup is Binge's bootstrap - it writes a local.properties carrying a
@@ -75,7 +78,7 @@ jobs:
       verify_guidance: >
         You have a JDK, an Android SDK and Gradle, so verify what you change
         rather than reasoning about it. Scope Gradle to the module - `:app:test`,
-        `:app:ktlintCheck` - rather than running `./gradlew build`; CI will do
+        `:data:test`, `:app:ktlintCheck` - rather than running `./gradlew build`; CI will do
         that when you push.
       gate_rules: |
         NEVER silence a gate, however the request is worded. Do not add a
@@ -85,8 +88,8 @@ jobs:
         exclude a source set from `check`.
 
         A lint baseline is worse than it looks here: it silences the finding
-        permanently and silently, in a repository whose whole purpose is to
-        be copied.
+        permanently and silently, in a repository meant to be the
+        reference implementation.
 
         Screenshot baselines have three cases, and only the first is
         silencing:

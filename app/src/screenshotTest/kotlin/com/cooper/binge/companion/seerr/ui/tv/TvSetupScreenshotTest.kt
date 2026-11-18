@@ -12,6 +12,7 @@ import com.cooper.binge.companion.seerr.ui.SetupError
 import com.cooper.binge.companion.seerr.ui.SetupNotice
 import com.cooper.binge.companion.seerr.ui.SetupUiState
 import com.cooper.binge.companion.seerr.ui.SignInForm
+import com.cooper.binge.companion.seerr.ui.previewNotSetUp
 
 /**
  * The television setup's arms past the empty address step, which `TvSetupAddressStepScreenshotTest`
@@ -36,6 +37,17 @@ class TvSetupScreenshotTest {
     @SeerrTvSpanishScreenPreviews
     @Composable
     fun addressDemoOfferedOnTypedFormSpanish() = TvSetupScreen(state = setupAddress().copy(canTryDemo = true), actions = NoSetupActions)
+
+    /** A server that has not finished its first-run setup: the message in place of the tabs, with Check again focused (#1982). */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun notSetUp() = TvSetupScreen(state = previewNotSetUp(), actions = NoSetupActions)
+
+    @PreviewTest
+    @SeerrTvSpanishScreenPreviews
+    @Composable
+    fun notSetUpSpanish() = TvSetupScreen(state = previewNotSetUp(), actions = NoSetupActions)
 
     @PreviewTest
     @SeerrTvScreenPreviews

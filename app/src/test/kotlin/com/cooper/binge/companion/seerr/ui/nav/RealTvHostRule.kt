@@ -18,10 +18,10 @@ import com.cooper.binge.companion.seerr.MainActivity
 import com.cooper.binge.companion.seerr.auth.CredentialStore
 import com.cooper.binge.companion.seerr.seerr.SeerrAuth
 import com.cooper.binge.companion.seerr.seerr.SeerrCredentials
-import com.cooper.binge.companion.seerr.telemetry.TelemetryPrefs
 import com.cooper.binge.companion.seerr.ui.DeepLinkNavigator
 import com.cooper.binge.companion.seerr.ui.users.settings.ADMIN
 import com.cooper.binge.companion.seerr.ui.users.settings.ScriptedSeerr
+import com.cooper.homelab.core.telemetry.TelemetryPrefs
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors

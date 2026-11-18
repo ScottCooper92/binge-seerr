@@ -3,7 +3,7 @@ package com.cooper.binge.companion.seerr.ui.requests
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.lifecycle.ViewModelStore
 import androidx.paging.testing.asSnapshot
-import com.cooper.binge.companion.seerr.auth.CredentialStore
+import com.cooper.binge.companion.seerr.auth.LegacyCredentialStore
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.data.FakeRequestStore
 import com.cooper.binge.companion.seerr.seerr.SeerrApiFactory
@@ -136,7 +136,7 @@ class RequestsViewModelTest {
         connection =
             SeerrConnection(
                 store =
-                    CredentialStore(
+                    LegacyCredentialStore(
                         PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("r.preferences_pb") },
                         PlainCipher,
                         UnconfinedTestDispatcher(testScheduler),
@@ -397,7 +397,7 @@ class RequestsViewModelTest {
             val connection =
                 SeerrConnection(
                     store =
-                        CredentialStore(
+                        LegacyCredentialStore(
                             PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("r.preferences_pb") },
                             PlainCipher,
                             UnconfinedTestDispatcher(testScheduler),
@@ -483,7 +483,7 @@ class RequestsViewModelTest {
         val connection =
             SeerrConnection(
                 store =
-                    CredentialStore(
+                    LegacyCredentialStore(
                         PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("r.preferences_pb") },
                         PlainCipher,
                         UnconfinedTestDispatcher(testScheduler),

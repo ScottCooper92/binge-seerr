@@ -25,13 +25,17 @@ import com.cooper.binge.companion.seerr.seerr.SeerrApi
 import com.cooper.binge.companion.seerr.seerr.SeerrAuth
 import com.cooper.binge.companion.seerr.seerr.SeerrCredentials
 import com.cooper.binge.companion.seerr.ui.HomeRoute
+import com.cooper.binge.companion.seerr.ui.SeerrRoute
+import com.cooper.binge.companion.seerr.ui.shell.openLink
 import com.cooper.binge.companion.seerr.ui.users.settings.ADMIN
 import com.cooper.binge.companion.seerr.ui.users.settings.ScriptedSeerr
+import com.cooper.homelab.core.presentation.search.RecentSearches
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.components.SingletonComponent
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.rules.RuleChain
 import org.junit.rules.TemporaryFolder
@@ -76,6 +80,7 @@ internal class RealNavHostRule(
 
     /** Saves a connection to [seerr], served as an admin on a current Seerr, before anything reads it. */
     fun connect(permissions: Int = ADMIN) {
+        forgetSearchRecents()
         seerr.start()
         seerr.viewer(id = 1, permissions = permissions)
         val saved = runBlocking { graph().credentials().save(SeerrCredentials(seerr.server.url("/").toString(), SeerrAuth.ApiKey("k3y"))) }
@@ -84,6 +89,7 @@ internal class RealNavHostRule(
 
     /** Saves the connection to the demo server (#1705): canned data answered on the device, so nothing is scripted. */
     fun connectDemo() {
+        forgetSearchRecents()
         check(runBlocking { graph().credentials().save(demoCredentials()) }) { "the connection was not saved" }
         // The application settles the restore at start, and the test host has no application of its own: without it, leaving the
         // demo would read as a restore still to come.
@@ -161,6 +167,24 @@ internal class RealNavHostRule(
         compose.runOnUiThread { repeat(times) { activity.onBackPressedDispatcher.onBackPressed() } }
         compose.waitForIdle()
     }
+
+    /** The settings search's recents as the app's own store holds them, newest first. */
+    fun recentSearches(): List<String> = runBlocking { graph().recentSearches().ids.first() }
+
+    /**
+     * The search's recents live in a store that outlives a test (a top-level DataStore delegate, one per process), so what an earlier
+     * test opened from the search would lead the page of the next. Each test starts with none.
+     */
+    private fun forgetSearchRecents() = runBlocking { graph().recentSearches().clear() }
+
+    /** Disconnects as the Disconnect button does, so everything keyed to the server is cleared. */
+    fun disconnect() = runBlocking { graph().connection().disconnect() }
+
+    /** A link to [routes] as `MainActivity` applies one: it replaces the app's stack and shows Settings. */
+    fun openLink(vararg routes: SeerrRoute) = compose.runOnUiThread { activity.tabs.openLink(activity.backStack, routes.toList()) }
+
+    /** Pushes [route] onto the app's stack, as a tap on a title or a "see all" does. */
+    fun push(route: SeerrRoute) = compose.runOnUiThread { activity.backStack.add(route) }
 
     /** The back stack as it stands, read on the main thread. */
     fun stack(): List<NavKey> = compose.runOnIdle { activity.backStack.toList() }
@@ -272,6 +296,8 @@ internal class RealNavHostRule(
         fun connection(): SeerrConnection
 
         fun restore(): ConnectionRestore
+
+        fun recentSearches(): RecentSearches
     }
 }
 

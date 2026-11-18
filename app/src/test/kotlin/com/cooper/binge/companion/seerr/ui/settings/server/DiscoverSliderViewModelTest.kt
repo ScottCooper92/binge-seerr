@@ -4,6 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModelStore
 import com.binge.designsystem.SaveStatus
 import com.binge.designsystem.save.SAVE_AS_MADE_DELAY_MILLIS
+import com.cooper.binge.companion.seerr.discover.sliders.SeerrDiscoverSliderRepository
 import com.cooper.binge.companion.seerr.ui.users.settings.ADMIN
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorEvent
 import com.cooper.binge.companion.seerr.ui.users.settings.ExtrasEditorUiState
@@ -84,6 +85,13 @@ class DiscoverSliderViewModelTest {
         val vm =
             DiscoverSliderViewModel(
                 connection,
+                SeerrDiscoverSliderRepository(
+                    connection::api,
+                    connection::profile,
+                    connection.credentials,
+                    backgroundScope,
+                    mainDispatcherRule.dispatcher,
+                ),
                 ServerListCatalog(connection),
                 mainDispatcherRule.dispatcher,
                 id,

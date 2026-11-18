@@ -17,13 +17,13 @@ import com.cooper.binge.companion.seerr.seerr.SeerrUserDto
 import com.cooper.binge.companion.seerr.seerr.TitleCache
 import com.cooper.binge.companion.seerr.seerr.toPermissions
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
-import com.cooper.binge.companion.seerr.telemetry.Analytics
 import com.cooper.binge.companion.seerr.telemetry.AnalyticsEvents
-import com.cooper.binge.companion.seerr.telemetry.CrashBreadcrumbs
-import com.cooper.binge.companion.seerr.telemetry.NoOpAnalytics
-import com.cooper.binge.companion.seerr.telemetry.NoOpCrashBreadcrumbs
 import com.cooper.binge.companion.seerr.telemetry.operationFailed
 import com.cooper.binge.companion.seerr.ui.requests.seerrMediaType
+import com.cooper.homelab.core.telemetry.Analytics
+import com.cooper.homelab.core.telemetry.CrashBreadcrumbs
+import com.cooper.homelab.core.telemetry.NoOpAnalytics
+import com.cooper.homelab.core.telemetry.NoOpCrashBreadcrumbs
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -60,7 +60,6 @@ data class BlocklistScope(
     val path: String = "blocklist",
     val hasFilters: Boolean = false,
     val canManage: Boolean = false,
-    val canBlockCollections: Boolean = false,
 )
 
 /** What one arrival's reads returned; null is a read that failed, and [viewerError] says why the viewer's did. */
@@ -90,7 +89,6 @@ private fun BlocklistScope.readWith(read: ScopeRead): BlocklistScope {
         path = read.profile?.blocklistPath ?: path,
         hasFilters = read.profile?.hasBlocklistFilters ?: hasFilters,
         canManage = canManage,
-        canBlockCollections = (read.profile?.canBlockCollections ?: canBlockCollections) && canManage,
     )
 }
 
@@ -269,7 +267,6 @@ class BlocklistViewModel
                             listVersion = listVersion,
                             hasFilters = scopeState.scope.hasFilters,
                             canManage = scopeState.scope.canManage,
-                            canBlockCollections = scopeState.scope.canBlockCollections,
                             actingTmdbIds = acting,
                         )
                 }
@@ -325,33 +322,6 @@ class BlocklistViewModel
                     eventFlow.emit(BlocklistEvent.Failed(it.toSeerrError()))
                 }
                 acting.update { it - item.tmdbId }
-            }
-        }
-
-        /** Seerr 3.2+ only; a server without it, or a viewer who cannot manage the list, is never asked. */
-        fun setCollectionBlocked(
-            collectionId: Int,
-            blocked: Boolean,
-        ) {
-            crashBreadcrumbs.key("collection_id", collectionId.toString())
-            crashBreadcrumbs.log(if (blocked) "blocking collection" else "unblocking collection")
-            viewModelScope.launch(dispatcher) {
-                val profile = connection.profile()
-                val permissions = attempt { connection.authenticatedUser() }.getOrNull().toPermissions()
-                if (!profile.canBlockCollections || !permissions.canManageBlocklist) return@launch
-                attempt {
-                    val api = connection.api()
-                    if (blocked) api.blockCollection(collectionId) else api.unblockCollection(collectionId)
-                }.onSuccess {
-                    countsRefresh.update { it + 1 }
-                    listVersionState.update { it + 1 }
-                    val action = if (blocked) "collection_blocked" else "collection_unblocked"
-                    analytics.event(AnalyticsEvents.BLOCKLIST_CHANGED, mapOf(AnalyticsEvents.PARAM_ACTION to action))
-                    eventFlow.emit(BlocklistEvent.CollectionChanged(blocked))
-                }.onFailure {
-                    analytics.operationFailed(if (blocked) "block_collection" else "unblock_collection", it, profile)
-                    eventFlow.emit(BlocklistEvent.Failed(it.toSeerrError()))
-                }
             }
         }
 

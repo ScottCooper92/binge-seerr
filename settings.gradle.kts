@@ -65,6 +65,23 @@ includeBuild("design-system") {
     }
 }
 
+// The shared app library, as source the same way (a private submodule: the licence exception covers linking it). Gradle
+// substitutes `com.cooper.homelab:app-services` with the included build's project.
+includeBuild("homelab-core") {
+    dependencySubstitution {
+        substitute(module("com.cooper.homelab:app-services")).using(project(":app-services"))
+        substitute(module("com.cooper.homelab:app-services-play")).using(project(":app-services-play"))
+        substitute(module("com.cooper.homelab:app-services-posthog")).using(project(":app-services-posthog"))
+        substitute(module("com.cooper.homelab:app-services-firebase")).using(project(":app-services-firebase"))
+        substitute(module("com.cooper.homelab:server")).using(project(":server"))
+        substitute(module("com.cooper.homelab:binge-bridge")).using(project(":binge-bridge"))
+        substitute(module("com.cooper.homelab:presentation")).using(project(":presentation"))
+        substitute(module("com.cooper.homelab:ui-android")).using(project(":ui-android"))
+        substitute(module("com.cooper.homelab:testing")).using(project(":testing"))
+    }
+}
+
 include(":app")
+include(":data")
 // The binge: detekt comment rules, copied from binge-companions per binge-companions#39 and loaded by :app's detekt run.
 include(":detekt-rules")

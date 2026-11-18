@@ -6,7 +6,7 @@ import com.binge.companion.contracts.request.v1.HandshakeRequest
 import com.binge.companion.contracts.request.v1.RequestServiceGrpcKt
 import com.binge.companion.contracts.v1.MediaId
 import com.binge.companion.contracts.v1.MediaType
-import com.cooper.binge.companion.seerr.auth.CredentialStore
+import com.cooper.binge.companion.seerr.auth.LegacyCredentialStore
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.seerr.SeerrApiFactory
 import com.cooper.binge.companion.seerr.seerr.SeerrAuth
@@ -284,7 +284,7 @@ class SeerrDeleteFilesTest {
         settings: String = """{"initialized":true}""",
     ): RequestServiceGrpcKt.RequestServiceCoroutineStub {
         val store =
-            CredentialStore(
+            LegacyCredentialStore(
                 dataStore = PreferenceDataStoreFactory.create { folder.newFile("creds.preferences_pb") },
                 cipher = PlainCipher,
                 io = Dispatchers.Unconfined,

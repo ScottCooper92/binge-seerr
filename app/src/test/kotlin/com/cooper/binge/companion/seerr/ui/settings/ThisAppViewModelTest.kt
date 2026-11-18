@@ -3,7 +3,7 @@ package com.cooper.binge.companion.seerr.ui.settings
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.lifecycle.ViewModelStore
 import com.cooper.binge.companion.seerr.auth.BingeConnectionStore
-import com.cooper.binge.companion.seerr.auth.CredentialStore
+import com.cooper.binge.companion.seerr.auth.LegacyCredentialStore
 import com.cooper.binge.companion.seerr.auth.NoBingeConnectionStore
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.feedback.BugReportLinks
@@ -12,13 +12,11 @@ import com.cooper.binge.companion.seerr.notifications.DEFAULT_POLL_INTERVAL_MINU
 import com.cooper.binge.companion.seerr.notifications.FakeBackgroundAccess
 import com.cooper.binge.companion.seerr.notifications.FakeNotifier
 import com.cooper.binge.companion.seerr.notifications.FakeScheduler
-import com.cooper.binge.companion.seerr.notifications.NotificationForwarding
 import com.cooper.binge.companion.seerr.notifications.NotificationPrefs
 import com.cooper.binge.companion.seerr.notifications.NotificationSignal
+import com.cooper.binge.companion.seerr.notifications.seerrForwarding
 import com.cooper.binge.companion.seerr.seerr.SeerrApiFactory
 import com.cooper.binge.companion.seerr.seerr.SeerrLoginRequest
-import com.cooper.binge.companion.seerr.telemetry.AnalyticsConsent
-import com.cooper.binge.companion.seerr.telemetry.TelemetryPrefs
 import com.cooper.binge.companion.seerr.ui.Ticker
 import com.cooper.binge.companion.seerr.ui.hub.BingeInstallCheck
 import com.cooper.binge.companion.seerr.ui.hub.BingeStatus
@@ -28,6 +26,8 @@ import com.cooper.binge.companion.seerr.util.FakeSeerrServer
 import com.cooper.binge.companion.seerr.util.MainDispatcherRule
 import com.cooper.binge.companion.seerr.util.PlainCipher
 import com.cooper.binge.companion.seerr.util.RecordingAnalytics
+import com.cooper.homelab.core.telemetry.AnalyticsConsent
+import com.cooper.homelab.core.telemetry.TelemetryPrefs
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
@@ -117,7 +117,7 @@ class ThisAppViewModelTest {
         connection =
             SeerrConnection(
                 store =
-                    CredentialStore(
+                    LegacyCredentialStore(
                         PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("s.preferences_pb") },
                         PlainCipher,
                         UnconfinedTestDispatcher(testScheduler),
@@ -127,7 +127,13 @@ class ThisAppViewModelTest {
         connection.logIn(seerr.url("/"), SeerrLoginRequest.Local("s@example.com", "pw")).getOrThrow()
         val notificationsStore = PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("n.preferences_pb") }
         prefs = NotificationPrefs(notificationsStore)
-        telemetryPrefs = TelemetryPrefs(PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("t.preferences_pb") })
+        telemetryPrefs =
+            TelemetryPrefs(
+                PreferenceDataStoreFactory.create(scope = backgroundScope) {
+                    folder.newFile("t.preferences_pb")
+                },
+                crashReportingDefault = true,
+            )
         feedbackPrefs = FeedbackPrefs(PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("f.preferences_pb") })
         val vm =
             ThisAppViewModel(
@@ -138,7 +144,7 @@ class ThisAppViewModelTest {
                 prefs,
                 scheduler,
                 notifier,
-                NotificationForwarding(notificationsStore),
+                seerrForwarding(notificationsStore),
                 background,
                 mainDispatcherRule.dispatcher,
                 analytics,
@@ -165,7 +171,7 @@ class ThisAppViewModelTest {
             assertTrue(app.shakeToReport)
             assertFalse(app.shareUsageData)
             assertTrue(app.sendCrashReports)
-            assertTrue(app.bugReportUrl.startsWith("https://github.com/ScottCooper92/binge-seerr/issues/new?template=bug.yml"))
+            assertTrue(app.bugReportUrl.startsWith("https://github.com/ScottCooper92/app-feedback/issues/new?template=seerr-bug.yml"))
         }
 
     @Test

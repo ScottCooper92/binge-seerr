@@ -2,6 +2,8 @@ package com.cooper.binge.companion.seerr.handoff
 
 import com.binge.companion.sdk.attempt
 import com.cooper.binge.companion.seerr.ui.DeepLinks
+import com.cooper.homelab.core.server.network.AddressLocality
+import com.cooper.homelab.core.server.network.hostLocality
 import java.net.URI
 import java.net.URISyntaxException
 import java.net.URLDecoder

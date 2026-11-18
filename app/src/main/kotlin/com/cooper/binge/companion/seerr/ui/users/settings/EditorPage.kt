@@ -28,6 +28,7 @@ import com.binge.designsystem.component.BingeActionFooter
 import com.binge.designsystem.component.BingeConfirmDialog
 import com.binge.designsystem.component.SnackbarMessageKind
 import com.binge.designsystem.component.showSnackbar
+import com.binge.designsystem.paneBackOrNull
 import com.binge.designsystem.resolvedContentInset
 import com.binge.designsystem.template.BingeScreenScaffold
 import com.binge.designsystem.template.FormAction
@@ -98,6 +99,14 @@ class EditorActions<T>(
 fun <T> EditorViewModel<T>.editorActions(onBack: () -> Unit): EditorActions<T> =
     EditorActions(onBack = onBack, onRetry = ::reload, onEdit = ::edit, onSave = ::save)
 
+/** Same as above, for a page that saves as it changes on the shared library's engine. */
+fun <T> SaveAsMadeEditorViewModel<T>.editorActions(onBack: () -> Unit): EditorActions<T> =
+    EditorActions(onBack = onBack, onRetry = ::reload, onEdit = ::edit, onSave = ::save)
+
+/** Same as above, for a page that saves as it changes and renders extras beside its draft, on the shared library's engine. */
+fun <T, X> SaveAsMadeEditorWithExtrasViewModel<T, X>.editorActions(onBack: () -> Unit): EditorActions<T> =
+    EditorActions(onBack = onBack, onRetry = ::reload, onEdit = ::edit, onSave = ::save)
+
 /** Same as above, for an editor whose page renders extras beside its draft. */
 fun <T, X> ExtrasEditorViewModel<T, X>.editorActions(onBack: () -> Unit): EditorActions<T> =
     EditorActions(onBack = onBack, onRetry = ::reload, onEdit = ::edit, onSave = ::save)
@@ -146,7 +155,7 @@ internal fun <T> EditorPage(
     val onBack = rememberDiscardGuard(guarded = guarded, onLeave = actions.onBack)
     FormScreen(
         title = title,
-        onBack = onBack,
+        onBack = paneBackOrNull(onBack),
         bar = ScreenBar.Small,
         snackbarHostState = snackbarHostState,
         placement = if (footerCommit) FormActionPlacement.Footer else FormActionPlacement.TopBar,

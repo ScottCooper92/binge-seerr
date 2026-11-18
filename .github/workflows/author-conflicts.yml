@@ -10,8 +10,8 @@ run-name: >-
 
 # Thin caller. The workflow itself lives in ScottCooper92/binge-ci.
 #
-# PUBLIC repository: the fork filter inside the scan is the control here, not a
-# formality. The `agent` label stays maintainers-only.
+# The fork filter inside the scan is the control here, whether the repository is
+# public or private. The `agent` label stays maintainers-only.
 on:
   workflow_run:
     workflows: ["CI"]
@@ -33,10 +33,11 @@ jobs:
       (github.event_name == 'workflow_dispatch' ||
        (github.event.workflow_run.event == 'push' &&
         github.event.workflow_run.head_branch == github.event.repository.default_branch))
-    uses: ScottCooper92/binge-ci/.github/workflows/author-conflicts.yml@4ea9f85339ca1f32747cfcbe89aaf1252e5bfdd5 # v1
+    uses: ScottCooper92/binge-ci/.github/workflows/author-conflicts.yml@0e23ad4311757677213da647bd150eca33d256f0 # v1.0.49
     with:
       dispatched: ${{ github.event_name == 'workflow_dispatch' }}
       author_bot_id: ${{ vars.AUTHOR_BOT_ID }}
+      private_submodules: homelab-core,binge-design-system,binge-ci
       conflict_rules: |
         Three kinds of file are never yours to arbitrate.
 
@@ -60,8 +61,8 @@ jobs:
         human's call. Leave it unresolved and say so in note.md rather than
         guessing.
 
-        Beyond those files, this is the reference companion, and its code is
-        read and copied. A conflict resolved into something that merely
+        Beyond those files, this is the reference companion, and what it shows is
+        what other companions are measured against. A conflict resolved into something that merely
         compiles is a worse outcome here than one handed back - if the two
         sides disagree about how the example should read, that is a human's
         call. Leave it unresolved and say so in note.md.

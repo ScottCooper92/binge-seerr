@@ -17,8 +17,8 @@ run-name: >-
 
 # Thin caller. The workflow itself lives in ScottCooper92/binge-ci.
 #
-# PUBLIC repository, and the reference companion app: what lands on main is read
-# and copied by people writing their own companions. `./gradlew build` cannot
+# All rights reserved, and the reference companion app: what lands on main is what
+# other companions are measured against. `./gradlew build` cannot
 # check the thing that makes this repository worth anything - whether the example
 # is one worth following - so auto_merge stayed off until the extraction had
 # landed and the review had a track record here. It has both now (#12 through
@@ -62,13 +62,16 @@ jobs:
     #
     # A fork PR never reaches the bot. binge-ci refuses one too, and this keeps the guard in sight
     # here (binge-design-system#407). It checks the events that name a head repository and lets the others through.
+    # Skip coordinator status notes (`<!-- to-coordinator`) so they start no empty run.
     if: >-
+      !startsWith(github.event.comment.body, '<!-- to-coordinator') &&
       (github.event_name != 'workflow_run' || github.event.workflow_run.event != 'schedule') &&
       (!github.event.pull_request || github.event.pull_request.head.repo.full_name == github.repository) &&
       (!github.event.workflow_run || github.event.workflow_run.head_repository.full_name == github.repository)
-    uses: ScottCooper92/binge-ci/.github/workflows/bot-review.yml@4ea9f85339ca1f32747cfcbe89aaf1252e5bfdd5 # v1
+    uses: ScottCooper92/binge-ci/.github/workflows/bot-review.yml@0e23ad4311757677213da647bd150eca33d256f0 # v1.0.49
     with:
       dispatch_pr: ${{ inputs.pr }}
+      private_submodules: homelab-core,binge-design-system,binge-ci
       auto_merge: true
       # STACKED PRs land here (#99 through #115), and squash rewrites the parent's commits into a
       # new SHA. The moment the parent merges, every child holds commits that are nowhere in main's

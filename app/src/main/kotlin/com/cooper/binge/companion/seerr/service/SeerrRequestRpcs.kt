@@ -27,8 +27,7 @@ import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.data.MediaStatusStore
 import com.cooper.binge.companion.seerr.data.RequestStore
 import com.cooper.binge.companion.seerr.seerr.BlocklistedTitleException
-import com.cooper.binge.companion.seerr.seerr.HTTP_ACCEPTED
-import com.cooper.binge.companion.seerr.seerr.HTTP_CONFLICT
+import com.cooper.binge.companion.seerr.seerr.RequestPostOutcome
 import com.cooper.binge.companion.seerr.seerr.SeerrEditRequestBody
 import com.cooper.binge.companion.seerr.seerr.SeerrPermissions
 import com.cooper.binge.companion.seerr.seerr.SeerrRequestBody
@@ -47,6 +46,7 @@ import com.cooper.binge.companion.seerr.seerr.refusedWithLiveSession
 import com.cooper.binge.companion.seerr.seerr.resolveAdvancedDestination
 import com.cooper.binge.companion.seerr.seerr.seerrMediaType
 import com.cooper.binge.companion.seerr.seerr.standardVersion
+import com.cooper.binge.companion.seerr.seerr.toOutcome
 import com.cooper.binge.companion.seerr.seerr.toPermissions
 import com.cooper.binge.companion.seerr.seerr.updateRequest
 import io.grpc.Status
@@ -198,11 +198,10 @@ internal class SeerrRequestRpcs(
         val response = connection.api().requestMedia(body)
         statusCache.clearAll()
         val builder = SubmitRequestResponse.newBuilder()
-        when {
-            response.code() == HTTP_ACCEPTED -> Unit
-            response.isSuccessful -> response.body()?.id?.let { builder.setRequestId(it.toString()) }
-            response.code() == HTTP_CONFLICT -> builder.setAlreadyRequested(true)
-            else -> throw HttpException(response)
+        when (val outcome = response.toOutcome()) {
+            is RequestPostOutcome.Created -> outcome.requestId?.let { builder.setRequestId(it.toString()) }
+            RequestPostOutcome.AlreadyRequested -> builder.setAlreadyRequested(true)
+            RequestPostOutcome.NothingToRequest -> Unit
         }
         return builder.setStatus(statusReads.status(media)).build()
     }

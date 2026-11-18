@@ -7,22 +7,23 @@ import com.cooper.binge.companion.seerr.auth.NoBingeConnectionStore
 import com.cooper.binge.companion.seerr.di.IoDispatcher
 import com.cooper.binge.companion.seerr.feedback.BugReportLinks
 import com.cooper.binge.companion.seerr.feedback.FeedbackPrefs
-import com.cooper.binge.companion.seerr.flags.FeatureFlags
-import com.cooper.binge.companion.seerr.flags.FixedFeatureFlags
-import com.cooper.binge.companion.seerr.flags.Flags
 import com.cooper.binge.companion.seerr.notifications.BackgroundAccess
-import com.cooper.binge.companion.seerr.notifications.NotificationForwarding
 import com.cooper.binge.companion.seerr.notifications.NotificationPrefs
 import com.cooper.binge.companion.seerr.notifications.NotificationScheduler
 import com.cooper.binge.companion.seerr.notifications.NotificationSignal
+import com.cooper.binge.companion.seerr.notifications.SeerrForwarding
 import com.cooper.binge.companion.seerr.notifications.SeerrNotifier
-import com.cooper.binge.companion.seerr.telemetry.Analytics
-import com.cooper.binge.companion.seerr.telemetry.NoOpAnalytics
-import com.cooper.binge.companion.seerr.telemetry.TelemetryPrefs
 import com.cooper.binge.companion.seerr.ui.Ticker
 import com.cooper.binge.companion.seerr.ui.hub.BingeInstallCheck
 import com.cooper.binge.companion.seerr.ui.hub.NoBingeInstallCheck
 import com.cooper.binge.companion.seerr.ui.minuteClock
+import com.cooper.homelab.core.flags.FeatureFlags
+import com.cooper.homelab.core.flags.FixedFeatureFlags
+import com.cooper.homelab.core.flags.Flags
+import com.cooper.homelab.core.flags.SharedFlags
+import com.cooper.homelab.core.telemetry.Analytics
+import com.cooper.homelab.core.telemetry.NoOpAnalytics
+import com.cooper.homelab.core.telemetry.TelemetryPrefs
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Job
@@ -64,13 +65,13 @@ class ThisAppViewModel
         prefs: NotificationPrefs,
         scheduler: NotificationScheduler,
         notifier: SeerrNotifier,
-        forwarding: NotificationForwarding,
+        forwarding: SeerrForwarding,
         background: BackgroundAccess,
         @IoDispatcher private val dispatcher: CoroutineDispatcher,
         analytics: Analytics = NoOpAnalytics,
         bingeInstallCheck: BingeInstallCheck = NoBingeInstallCheck,
         bingeConnection: BingeConnectionStore = NoBingeConnectionStore,
-        featureFlags: FeatureFlags = FixedFeatureFlags(Flags.AllOn),
+        featureFlags: FeatureFlags = FixedFeatureFlags(Flags.of(SharedFlags.BingePromotion to true, SharedFlags.ReviewPrompt to true)),
         private val minuteTicker: Ticker = Ticker(),
     ) : ViewModel() {
         internal var clock: () -> Long = System::currentTimeMillis

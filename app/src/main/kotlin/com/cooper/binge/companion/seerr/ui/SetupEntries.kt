@@ -5,10 +5,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.feedback.BugReportLinks
 
 /**
  * The setup form on the live connection, prefilled with its address. The connection stays in
@@ -47,13 +49,25 @@ internal fun ReconnectEntry(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     LaunchedEffect(viewModel) { viewModel.beginEdit(notice = SetupNotice.SessionRejected) }
-    Box(modifier) { SetupScreen(state = state, actions = viewModel.actions(onDisconnect)) }
+    val context = LocalContext.current
+    Box(modifier) {
+        SetupScreen(
+            state = state,
+            actions = viewModel.actions(onDisconnect),
+            onReportProblem = { context.openInBrowser(BugReportLinks().url()) },
+        )
+    }
 }
 
 @Composable
 internal fun SetupEntry(viewModel: SetupViewModel = hiltViewModel()) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    SetupScreen(state = state, actions = viewModel.actions())
+    val context = LocalContext.current
+    SetupScreen(
+        state = state,
+        actions = viewModel.actions(),
+        onReportProblem = { context.openInBrowser(BugReportLinks().url()) },
+    )
 }
 
 internal fun SetupViewModel.actions(onDisconnect: (() -> Unit)? = null): SetupActions =
@@ -61,6 +75,7 @@ internal fun SetupViewModel.actions(onDisconnect: (() -> Unit)? = null): SetupAc
         onEditAddress = ::editAddress,
         onInspect = ::inspect,
         onChangeServer = ::changeServer,
+        onCheckAgain = ::inspect,
         onEditForm = ::editForm,
         onConnect = ::connect,
         onPlexLaunched = ::plexLaunched,

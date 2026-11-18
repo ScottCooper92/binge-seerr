@@ -1,11 +1,11 @@
 package com.cooper.binge.companion.seerr.ui.handoff
 
 import com.cooper.binge.companion.seerr.handoff.AddressCandidate
-import com.cooper.binge.companion.seerr.handoff.AddressLocality
 import com.cooper.binge.companion.seerr.handoff.addressLocality
 import com.cooper.binge.companion.seerr.handoff.normaliseServerAddress
 import com.cooper.binge.companion.seerr.seerr.SeerrSignInMode
 import com.cooper.binge.companion.seerr.ui.SignInForm
+import com.cooper.homelab.core.server.network.AddressLocality
 
 /** The phone's confirmation before it sends a server address to a television (#323). */
 sealed interface SendAddressUiState {

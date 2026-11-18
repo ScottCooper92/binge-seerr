@@ -2,9 +2,10 @@ package com.cooper.binge.companion.seerr.ui.debug
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.cooper.binge.companion.seerr.flags.FeatureFlags
-import com.cooper.binge.companion.seerr.flags.Flag
-import com.cooper.binge.companion.seerr.flags.FlagOverrides
+import com.cooper.binge.companion.seerr.flags.AllFlagKeys
+import com.cooper.homelab.core.flags.FeatureFlags
+import com.cooper.homelab.core.flags.FlagKey
+import com.cooper.homelab.core.flags.FlagOverrides
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -16,10 +17,13 @@ import javax.inject.Inject
 
 /** One flag on the developer screen: what it resolves to now, and the override behind that, if any. */
 data class FlagRow(
-    val flag: Flag,
+    val flag: FlagKey,
     val effective: Boolean,
     val override: Boolean?,
-)
+) {
+    /** The flag's key, which names it on the screen. */
+    val key: String get() = flag.key
+}
 
 sealed interface FlagOverridesUiState {
     data object Loading : FlagOverridesUiState
@@ -34,12 +38,12 @@ sealed interface FlagOverridesUiState {
 class FlagOverridesViewModel
     @Inject
     constructor(
-        private val featureFlags: FeatureFlags,
+        featureFlags: FeatureFlags,
         private val overrides: FlagOverrides,
     ) : ViewModel() {
         val uiState: StateFlow<FlagOverridesUiState> =
             combine(featureFlags.flags, overrides.values) { flags, local ->
-                FlagOverridesUiState.Ready(Flag.entries.map { FlagRow(it, flags[it], local[it]) })
+                FlagOverridesUiState.Ready(AllFlagKeys.map { FlagRow(it, flags[it], local[it.key]) })
             }.map<FlagOverridesUiState.Ready, FlagOverridesUiState> { it }
                 .stateIn(viewModelScope, SharingStarted.Lazily, FlagOverridesUiState.Loading)
 

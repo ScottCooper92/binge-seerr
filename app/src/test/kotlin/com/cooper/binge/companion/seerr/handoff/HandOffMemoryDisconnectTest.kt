@@ -3,7 +3,7 @@ package com.cooper.binge.companion.seerr.handoff
 import com.cooper.binge.companion.seerr.seerr.SeerrAuth
 import com.cooper.binge.companion.seerr.ui.users.settings.ADMIN
 import com.cooper.binge.companion.seerr.ui.users.settings.ScriptedSeerr
-import com.cooper.binge.companion.seerr.util.InMemoryDataStore
+import com.cooper.homelab.core.testing.InMemoryDataStore
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals

@@ -1,7 +1,7 @@
 package com.cooper.binge.companion.seerr.telemetry
 
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
-import com.cooper.binge.companion.seerr.auth.CredentialStore
+import com.cooper.binge.companion.seerr.auth.LegacyCredentialStore
 import com.cooper.binge.companion.seerr.demo.demoCredentials
 import com.cooper.binge.companion.seerr.seerr.SeerrAuth
 import com.cooper.binge.companion.seerr.seerr.SeerrCredentials
@@ -23,7 +23,7 @@ class SavedConnectionDemoSessionTest {
     val folder = TemporaryFolder()
 
     private val store by lazy {
-        CredentialStore(
+        LegacyCredentialStore(
             dataStore = PreferenceDataStoreFactory.create { folder.newFile("creds.preferences_pb") },
             cipher = PlainCipher,
             io = Dispatchers.Unconfined,

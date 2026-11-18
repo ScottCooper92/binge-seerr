@@ -8,13 +8,13 @@ import com.cooper.binge.companion.seerr.di.IoDispatcher
 import com.cooper.binge.companion.seerr.seerr.details
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
 import com.cooper.binge.companion.seerr.seerr.toTmdbBackdropUrl
-import com.cooper.binge.companion.seerr.telemetry.Analytics
 import com.cooper.binge.companion.seerr.telemetry.AnalyticsEvents
-import com.cooper.binge.companion.seerr.telemetry.CrashBreadcrumbs
-import com.cooper.binge.companion.seerr.telemetry.NoOpAnalytics
-import com.cooper.binge.companion.seerr.telemetry.NoOpCrashBreadcrumbs
 import com.cooper.binge.companion.seerr.telemetry.operationFailed
 import com.cooper.binge.companion.seerr.ui.requests.seerrMediaType
+import com.cooper.homelab.core.telemetry.Analytics
+import com.cooper.homelab.core.telemetry.CrashBreadcrumbs
+import com.cooper.homelab.core.telemetry.NoOpAnalytics
+import com.cooper.homelab.core.telemetry.NoOpCrashBreadcrumbs
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject

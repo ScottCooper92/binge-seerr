@@ -7,6 +7,7 @@ import com.binge.designsystem.template.StepFlowScreen
 import com.binge.designsystem.template.StepHeading
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.flags.LocalFlags
+import com.cooper.binge.companion.seerr.flags.bingePromotion
 
 /** Everything the setup screen can ask of its ViewModel, in one place so the entry stays a wiring. */
 class SetupActions(
@@ -35,6 +36,8 @@ class SetupActions(
     val onDisconnect: (() -> Unit)? = null,
     /** Connects to the demo server (#1705). Defaulted: only the address step offers it. */
     val onTryDemo: () -> Unit = {},
+    /** Reads a server again that said it was not set up. Defaulted: only that state offers it. */
+    val onCheckAgain: () -> Unit = {},
 )
 
 /**
@@ -42,7 +45,8 @@ class SetupActions(
  * Back from the sign-in, the arrow or the gesture, is changing server, so it returns to the address.
  *
  * Edit connection passes a [title] and its [onBack]: it opens as a pane of its own, so the flow's bar carries the title,
- * and Back on the address leaves the pane. Setup and reconnect have neither; the step's heading says where the user is.
+ * and Back on the address leaves the pane. Setup and reconnect have neither; the step's heading says where the user is. They pass
+ * [onReportProblem], which puts a menu with that one item on the bar: a user who cannot connect has no Settings to reach.
  */
 @Composable
 fun SetupScreen(
@@ -50,10 +54,13 @@ fun SetupScreen(
     actions: SetupActions,
     title: String? = null,
     onBack: (() -> Unit)? = null,
+    onReportProblem: (() -> Unit)? = null,
 ) {
     // A step keeps drawing itself while it slides out, after the state has moved on, so each draws the last state it had.
     val address = rememberLatest(state as? SetupUiState.Address)
-    val signIn = rememberLatest(state as? SetupUiState.SignIn)
+    val secondStep = rememberLatest(state.takeIf { it is SetupUiState.SignIn || it is SetupUiState.NotSetUp })
+    // The latest second-step state, not the current one, is drawn: a step sliding out must keep what it showed.
+    val server = (secondStep as? SetupUiState.NotSetUp)?.server ?: (secondStep as? SetupUiState.SignIn)?.server
     // While the address waits on the local-network permission, asking for it is the way on: Continue could only fail (#1099).
     val allow = if (address?.needsLocalNetwork == true) rememberAllowLocalNetwork(actions.onLocalNetworkChanged) else null
     StepFlowScreen(
@@ -62,9 +69,11 @@ fun SetupScreen(
         onBack = actions.onChangeServer,
         title = title,
         onExit = onBack,
+        // Before a server is connected Settings is out of reach, so a problem can still be reported from the bar.
+        actions = { if (onReportProblem != null) ReportProblemAction(onReportProblem) },
         // The home swaps to the hub on the credentials landing; Connected is the frame in between.
         loading = state is SetupUiState.Loading || state is SetupUiState.Connected,
-        aside = { step -> if (step == SIGN_IN_STEP) signIn?.let { SetupServerBackdrop(it.server) } },
+        aside = { step -> if (step == SIGN_IN_STEP) server?.let { SetupServerBackdrop(it) } },
         heading = { step ->
             when (step) {
                 ADDRESS_STEP ->
@@ -75,19 +84,19 @@ fun SetupScreen(
                                 if (LocalFlags.current.bingePromotion) R.string.setup_intro else R.string.setup_intro_plain,
                             ),
                     )
-                else -> signIn?.let { SetupServerHeading(it.server) }
+                else -> server?.let { SetupServerHeading(it) }
             }
         },
         footer = { step ->
             when (step) {
                 ADDRESS_STEP -> address?.let { SetupAddressFooter(it, allow, actions.onInspect) }
-                else -> signIn?.let { SetupSignInFooter(it, actions) }
+                else -> SetupSecondStepFooter(secondStep, actions)
             }
         },
     ) { step ->
         when (step) {
             ADDRESS_STEP -> address?.let { SetupAddressContent(it, allow, actions) }
-            else -> signIn?.let { SetupSignInContent(it, actions) }
+            else -> SetupSecondStepContent(secondStep, actions)
         }
     }
     (state as? SetupUiState.SignIn)?.link?.let { link -> SetupLinkSheet(link, actions.onPlexLaunched, actions.onCancelLink) }
@@ -117,6 +126,7 @@ internal fun SetupError.messageRes(): Int =
         SetupError.Unreachable -> R.string.setup_error_unreachable
         SetupError.UnreachableNotLocal -> R.string.setup_error_unreachable_not_local
         SetupError.LocalNetworkDenied -> R.string.setup_error_local_network_denied
+        SetupError.ClientCertificateNeeded -> R.string.setup_error_client_certificate
         SetupError.Unknown -> R.string.setup_error_unknown
         SetupError.LinkExpired -> R.string.setup_error_link_expired
         SetupError.HandOffSessionRejected -> R.string.setup_error_handoff_session_rejected

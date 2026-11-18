@@ -26,6 +26,7 @@ import com.binge.designsystem.component.HintCard
 import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.component.SectionHeader
+import com.binge.designsystem.navOverlayPadding
 import com.binge.designsystem.resolvedContentInset
 import com.binge.designsystem.resolvedContentPadding
 import com.binge.designsystem.template.BingeScreenScaffold
@@ -37,11 +38,14 @@ import com.cooper.binge.companion.seerr.demo.isDemoOrigin
 import com.cooper.binge.companion.seerr.ui.DisconnectButton
 import com.cooper.binge.companion.seerr.ui.rememberAllowLocalNetwork
 import com.cooper.binge.companion.seerr.ui.state.LoadingScreen
+import com.cooper.homelab.core.uiandroid.search.SettingsSearchEntry
 import com.binge.designsystem.R as DesR
 
 class HubActions(
     val onOpenSection: (HubSection) -> Unit,
     val onOpenAccount: (userId: Int) -> Unit,
+    /** The settings search: its field at the top of the dashboard opens it. */
+    val onOpenSearch: () -> Unit = {},
     val onOpenRequest: (requestId: Int) -> Unit,
     val onRetry: () -> Unit,
     /** The sign-in form on the saved server, to correct an address that no longer answers. */
@@ -91,7 +95,8 @@ fun HubScreen(
         },
     ) { padding ->
         Box(modifier = Modifier.fillMaxSize().padding(padding.screenOuterPadding())) {
-            val inner = padding.screenInnerPadding()
+            // Inside the tab bar shell the floating pill covers the last row, so the content pads by what the pill publishes.
+            val inner = navOverlayPadding(padding.screenInnerPadding())
             when {
                 // A rejected session is the app's to answer, by going to sign-in (#810): nothing to offer here meanwhile.
                 ready?.health == ConnectionHealth.Unauthorized -> LoadingScreen(Modifier.padding(inner))
@@ -136,6 +141,7 @@ fun HubScreen(
 internal fun ConnectionHealth.isProblem(): Boolean =
     this == ConnectionHealth.Unreachable ||
         this == ConnectionHealth.LocalNetworkDenied ||
+        this == ConnectionHealth.ClientCertificateNeeded ||
         this == ConnectionHealth.CouldNotLoad
 
 /** Whether the hub's body is the dashboard: neither a problem page nor the loading page a rejected session waits on. */
@@ -165,6 +171,13 @@ private fun Dashboard(
             SectionHeader(title = stringResource(R.string.hub_downloading_now, state.downloading.size))
             DownloadingStrip(state.downloading, onClick = { actions.onOpenRequest(it.requestId) }, sides = sides)
         }
+        SettingsSearchEntry(
+            onClick = actions.onOpenSearch,
+            modifier =
+                Modifier
+                    .padding(sides)
+                    .padding(vertical = dimensionResource(DesR.dimen.padding_m)),
+        )
         ServerCard(server = state.server, overview = state.overview, sides = sides)
         SectionHeader(title = stringResource(R.string.hub_manage))
         ItemGroup(

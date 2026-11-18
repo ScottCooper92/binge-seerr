@@ -14,6 +14,8 @@ import com.cooper.binge.companion.seerr.ui.settings.SignInKind
 internal class TvSettingsSummary(
     val title: String,
     val lines: List<String>,
+    /** Whether the server reports an update, so the page offers its release notes. */
+    val updateAvailable: Boolean = false,
 )
 
 /**
@@ -28,6 +30,7 @@ internal fun tvSettingsSummary(
 ): TvSettingsSummary =
     TvSettingsSummary(
         title = state.server.versionLine(),
+        updateAvailable = state.server.updateAvailable,
         lines =
             listOfNotNull(
                 state.connection.baseUrl,
@@ -43,6 +46,7 @@ private fun ConnectionHealth.labelRes(): Int =
         ConnectionHealth.Unauthorized -> R.string.hub_unauthorized_headline
         ConnectionHealth.CouldNotLoad -> R.string.hub_couldnt_load_headline
         ConnectionHealth.LocalNetworkDenied -> R.string.hub_local_network_headline
+        ConnectionHealth.ClientCertificateNeeded -> R.string.hub_client_certificate_headline
         ConnectionHealth.Unreachable -> R.string.hub_unreachable_headline
     }
 

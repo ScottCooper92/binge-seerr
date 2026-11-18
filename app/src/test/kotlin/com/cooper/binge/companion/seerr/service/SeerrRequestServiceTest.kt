@@ -36,7 +36,7 @@ import com.binge.companion.sdk.MAX_SEASON_NUMBERS
 import com.binge.companion.sdk.UserMessage
 import com.binge.companion.sdk.userMessageOf
 import com.cooper.binge.companion.seerr.auth.BingeConnectionStore
-import com.cooper.binge.companion.seerr.auth.CredentialStore
+import com.cooper.binge.companion.seerr.auth.LegacyCredentialStore
 import com.cooper.binge.companion.seerr.auth.NoBingeConnectionStore
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.data.CachedStatus
@@ -48,13 +48,13 @@ import com.cooper.binge.companion.seerr.seerr.SeerrCredentials
 import com.cooper.binge.companion.seerr.seerr.SeerrVariant
 import com.cooper.binge.companion.seerr.seerr.standardVersion
 import com.cooper.binge.companion.seerr.seerr.version4k
-import com.cooper.binge.companion.seerr.telemetry.Analytics
-import com.cooper.binge.companion.seerr.telemetry.NoOpAnalytics
 import com.cooper.binge.companion.seerr.util.PlainCipher
 import com.cooper.binge.companion.seerr.util.RecordingAnalytics
 import com.cooper.binge.companion.seerr.util.enqueueProfile
 import com.cooper.binge.companion.seerr.util.requestStatusOf
 import com.cooper.binge.companion.seerr.util.routeProfiles
+import com.cooper.homelab.core.telemetry.Analytics
+import com.cooper.homelab.core.telemetry.NoOpAnalytics
 import io.grpc.ManagedChannel
 import io.grpc.Server
 import io.grpc.Status
@@ -150,7 +150,7 @@ class SeerrRequestServiceTest {
         userMessages: UserMessages = UserMessages.None,
     ): RequestServiceGrpcKt.RequestServiceCoroutineStub {
         val store =
-            CredentialStore(
+            LegacyCredentialStore(
                 dataStore = PreferenceDataStoreFactory.create { folder.newFile("creds.preferences_pb") },
                 cipher = PlainCipher,
                 io = Dispatchers.Unconfined,
@@ -1139,7 +1139,7 @@ class SeerrRequestServiceTest {
     fun `nothing connected is UNAUTHENTICATED everywhere but the handshake`() =
         runTest {
             val store =
-                CredentialStore(
+                LegacyCredentialStore(
                     PreferenceDataStoreFactory.create { folder.newFile("empty.preferences_pb") },
                     PlainCipher,
                     Dispatchers.Unconfined,

@@ -27,23 +27,39 @@ jobs:
   canary:
     name: canary (${{ matrix.slice }})
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: ${{ matrix.timeout }}
     strategy:
       fail-fast: false
       matrix:
         include:
           - slice: checks
-            command: ./gradlew build --continue -x :app:testDebugUnitTest -x :app:koverVerify -x :app:validateDebugScreenshotTest -x :app:assembleRelease
+            timeout: 30
+            command: ./gradlew build --continue -x testDebugUnitTest -x koverVerify -x validateDebugScreenshotTest -x assembleRelease
           - slice: tests
-            command: ./gradlew :app:testDebugUnitTest :app:koverVerify --continue
+            timeout: 30
+            command: ./gradlew testDebugUnitTest koverVerify --continue
+          # The screenshots slice gets the 45 minutes ci.yml gives its own job: a slow runner has taken twice the usual 11 to 16.
           - slice: screenshots
+            timeout: 45
             command: ./gradlew :app:validateDebugScreenshotTest --continue
           - slice: release
-            command: ./gradlew :app:assembleRelease --continue
+            timeout: 30
+            command: ./gradlew assembleRelease --continue
     steps:
+      # The submodules are private to the author: the default token reads this repository only. This one is read-only.
+      - name: Mint a read-only token for the submodules
+        id: submodule_token
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349 # v2
+        with:
+          app-id: ${{ secrets.REVIEWER_APP_ID }}
+          private-key: ${{ secrets.REVIEWER_APP_PRIVATE_KEY }}
+          repositories: binge-seerr,homelab-core,binge-design-system,binge-ci
+          permission-contents: read
+
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           submodules: recursive
+          token: ${{ steps.submodule_token.outputs.token }}
 
       # Moves each submodule to the tip of its remote's default branch in the working tree only.
       - name: Move the submodules to their upstream heads
@@ -71,7 +87,7 @@ jobs:
       # report does. Printing it keeps the answer in the log rather than only in the artifact (#807).
       - name: Print the coroutine leak report
         if: ${{ failure() && matrix.slice == 'tests' }}
-        run: cat app/build/reports/tests/testDebugUnitTest/coroutine-leaks.txt 2>/dev/null || echo "No coroutine leak was reported."
+        run: cat */build/reports/tests/testDebugUnitTest/coroutine-leaks.txt 2>/dev/null || echo "No coroutine leak was reported."
 
       - name: Upload reports
         if: ${{ failure() }}
@@ -100,7 +116,7 @@ jobs:
     permissions:
       issues: write
     steps:
-      - uses: ScottCooper92/binge-ci/.github/actions/nightly-report@4ea9f85339ca1f32747cfcbe89aaf1252e5bfdd5 # v1
+      - uses: ScottCooper92/binge-ci/.github/actions/nightly-report@0e23ad4311757677213da647bd150eca33d256f0 # v1.0.49
         with:
           result: ${{ needs.canary.result }}
           title: 'Consumer canary: main no longer builds against upstream heads'

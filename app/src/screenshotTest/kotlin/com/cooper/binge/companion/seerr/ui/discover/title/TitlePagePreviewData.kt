@@ -1,0 +1,161 @@
+package com.cooper.binge.companion.seerr.ui.discover.title
+
+import com.cooper.binge.companion.seerr.discover.TitleAvailability
+import com.cooper.binge.companion.seerr.discover.TitleKind
+import com.cooper.binge.companion.seerr.discover.TitleResult
+import com.cooper.binge.companion.seerr.discover.title.MovieDetails
+import com.cooper.binge.companion.seerr.discover.title.TitleCollection
+import com.cooper.binge.companion.seerr.discover.title.TitleCompany
+import com.cooper.binge.companion.seerr.discover.title.TitleExtras
+import com.cooper.binge.companion.seerr.discover.title.TitlePerson
+import com.cooper.binge.companion.seerr.discover.title.TitleProvider
+import com.cooper.binge.companion.seerr.discover.title.TitleProviders
+import com.cooper.binge.companion.seerr.discover.title.TitleRatings
+import com.cooper.binge.companion.seerr.discover.title.TitleVideo
+import com.cooper.binge.companion.seerr.discover.title.VersionState
+
+private const val RUNTIME = 136
+private const val BUDGET = 63_000_000L
+private const val REVENUE = 467_000_000L
+private const val CRITICS = 83
+private const val AUDIENCE = 85
+private const val IMDB = 8.7
+private const val VOTES = 24_000
+private const val RATING = 7.8
+
+private fun person(
+    id: Int,
+    name: String,
+    role: String,
+) = TitlePerson(id, name, role, null)
+
+private fun related(
+    id: Int,
+    name: String,
+    availability: TitleAvailability,
+) = TitleResult(TitleKind.Movie, id, name, "2003", null, null, null, RATING, availability, null)
+
+/** A film with everything the server gives, standard requestable and 4K held. */
+internal fun fullMovie(
+    title: String = "The Matrix",
+    standard: VersionState = VersionState(TitleAvailability.None, mayRequest = true),
+    fourK: VersionState? = VersionState(TitleAvailability.Processing, mayRequest = false),
+) = MovieDetails(
+    tmdbId = 603,
+    title = title,
+    tagline = "Free your mind",
+    overview = "A hacker learns what his world really is, and what he can do about it.",
+    posterUrl = null,
+    backdropUrl = null,
+    year = "1999",
+    runtimeMinutes = RUNTIME,
+    certification = "R",
+    voteAverage = 8.2,
+    voteCount = VOTES,
+    genres = listOf("Action", "Science Fiction"),
+    keywords = listOf("simulation", "dystopia", "martial arts"),
+    status = "Released",
+    originalLanguage = "en",
+    spokenLanguageCodes = listOf("en", "es"),
+    studios = listOf(TitleCompany(174, "Warner Bros."), TitleCompany(79, "Village Roadshow Pictures")),
+    budget = BUDGET,
+    revenue = REVENUE,
+    cast = listOf(person(1, "Keanu Reeves", "Neo"), person(2, "Carrie-Anne Moss", "Trinity"), person(3, "Laurence Fishburne", "Morpheus")),
+    keyCrew = listOf(person(10, "Lana Wachowski", "Director, Writer"), person(11, "Lilly Wachowski", "Director, Writer")),
+    otherCrew = emptyList(),
+    videos = listOf(TitleVideo("Official Trailer", "https://www.youtube.com/watch?v=demo", isTrailer = true)),
+    providers =
+        TitleProviders(
+            "US",
+            "https://seerr.example/watch",
+            listOf(
+                TitleProvider(1, "Demo Stream", null),
+                TitleProvider(2, "Another Service", null),
+                TitleProvider(3, "Third Channel", null),
+            ),
+            listOf(TitleProvider(4, "Demo Store", null), TitleProvider(5, "Corner Shop", null)),
+        ),
+    collection = TitleCollection(2344, "The Matrix Collection", null),
+    standard = standard,
+    fourK = fourK,
+    mediaId = 11,
+    webUrl = "https://seerr.example/movie/603",
+    releaseDate = "1999-03-31",
+)
+
+internal fun fullExtras() =
+    TitleExtras(
+        ratings = TitleRatings(CRITICS, AUDIENCE, IMDB),
+        recommendations =
+            listOf(
+                related(604, "The Matrix Reloaded", TitleAvailability.Available),
+                related(605, "The Matrix Revolutions", TitleAvailability.None),
+            ),
+        similar = listOf(related(606, "Dark City", TitleAvailability.Pending)),
+    )
+
+/** The other films of the film's collection: one held, one asked for and one still open. */
+internal fun collectionFilms() =
+    listOf(
+        related(601, "The Matrix Resurrections", TitleAvailability.Available),
+        related(604, "The Matrix Reloaded", TitleAvailability.Pending),
+        related(605, "The Matrix Revolutions", TitleAvailability.None),
+    )
+
+/** A film the server knows almost nothing about. */
+internal fun sparseMovie() =
+    fullMovie("Untitled").copy(
+        tagline = null,
+        overview = null,
+        runtimeMinutes = null,
+        certification = null,
+        voteAverage = null,
+        genres = emptyList(),
+        keywords = emptyList(),
+        status = null,
+        originalLanguage = null,
+        spokenLanguageCodes = emptyList(),
+        studios = emptyList(),
+        budget = null,
+        revenue = null,
+        cast = emptyList(),
+        keyCrew = emptyList(),
+        videos = emptyList(),
+        providers = null,
+        collection = null,
+        releaseDate = null,
+    )
+
+internal fun longMovie() =
+    fullMovie("The Lord of the Rings: The Fellowship of the Ring (Extended Director's Cut Special Edition)").copy(
+        tagline = "One ring to rule them all, one ring to find them, one ring to bring them all and in the darkness bind them",
+        studios =
+            listOf(
+                TitleCompany(1, "New Line Cinema"),
+                TitleCompany(2, "WingNut Films"),
+                TitleCompany(3, "The Saul Zaentz Company"),
+                TitleCompany(4, "Another Very Long Production Company Name"),
+            ),
+        genres = listOf("Adventure", "Fantasy", "Action", "Epic Historical Drama"),
+        cast = listOf(person(1, "Elijah Wood-Montgomery-Fitzgerald", "Frodo Baggins of the Shire, bearer of the one ring")),
+    )
+
+/** A film that can only be bought, with provider names too long for the column. */
+internal fun buyOnlyMovie() =
+    fullMovie().copy(
+        providers =
+            TitleProviders(
+                "US",
+                null,
+                emptyList(),
+                listOf(
+                    TitleProvider(4, "A Very Long Digital Storefront Name", null),
+                    TitleProvider(5, "Another Rather Long Shop Name", null),
+                    TitleProvider(6, "Corner Shop", null),
+                ),
+            ),
+    )
+
+/** A film whose collection has the longest name the server might give. */
+internal fun longCollectionMovie() =
+    fullMovie().copy(collection = TitleCollection(2344, "The Extended Special Collector's Edition Matrix Collection of Films", null))

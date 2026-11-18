@@ -1,13 +1,13 @@
 package com.cooper.binge.companion.seerr.ui.settings
 
 import com.cooper.binge.companion.seerr.notifications.BackgroundAccess
-import com.cooper.binge.companion.seerr.notifications.NotificationForwarding
 import com.cooper.binge.companion.seerr.notifications.NotificationPrefs
 import com.cooper.binge.companion.seerr.notifications.NotificationScheduler
 import com.cooper.binge.companion.seerr.notifications.NotificationSignal
+import com.cooper.binge.companion.seerr.notifications.SeerrForwarding
 import com.cooper.binge.companion.seerr.notifications.SeerrNotifier
-import com.cooper.binge.companion.seerr.telemetry.Analytics
 import com.cooper.binge.companion.seerr.telemetry.AnalyticsEvents
+import com.cooper.homelab.core.telemetry.Analytics
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -33,7 +33,7 @@ internal class PollNotificationsSource(
     private val prefs: NotificationPrefs,
     scheduler: NotificationScheduler,
     private val notifier: SeerrNotifier,
-    private val forwarding: NotificationForwarding,
+    private val forwarding: SeerrForwarding,
     private val background: BackgroundAccess,
     private val analytics: Analytics,
     private val scope: CoroutineScope,

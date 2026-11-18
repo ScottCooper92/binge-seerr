@@ -13,11 +13,26 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.unit.Dp
+import com.binge.designsystem.component.DetailCinematicHeader
 import com.binge.designsystem.component.DetailHero
+import com.binge.designsystem.component.DetailStat
+import com.binge.designsystem.isExpandedLayout
 import com.binge.designsystem.layout.LayoutAnchors
 import com.binge.designsystem.layout.layoutAnchor
 import com.binge.designsystem.template.HeroDetailScreen
+import com.binge.designsystem.R as DesR
+
+/**
+ * What the expanded header shows beside the backdrop: the [posterUrl], the [synopsis] and the [stats] the single-column page
+ * keeps in its body. A page that gives none of it keeps the single-column hero at every width.
+ */
+internal class WideHeader(
+    val posterUrl: String?,
+    val synopsis: String?,
+    val stats: List<DetailStat>,
+)
 
 /**
  * A media-hero detail page — a request's, a blocklisted title's — on the design system's
@@ -28,6 +43,7 @@ import com.binge.designsystem.template.HeroDetailScreen
  *
  * @param onBack null where the pane beside this one already offers the way back.
  * @param inFlight shows a moderation under way.
+ * @param genres drawn under the title in the accent colour, with the italic [tagline] under them.
  */
 @Composable
 internal fun MediaHeroDetailPage(
@@ -42,31 +58,52 @@ internal fun MediaHeroDetailPage(
     footer: (@Composable () -> Unit)? = null,
     inFlight: Boolean = false,
     metaContent: (@Composable () -> Unit)? = null,
+    genres: List<String> = emptyList(),
+    tagline: String? = null,
+    wideHeader: WideHeader? = null,
     body: @Composable ColumnScope.() -> Unit,
 ) {
+    // At the expanded width the cinematic header takes the place of the hero, as Binge's detail pages do.
+    val cinematic = wideHeader != null && isExpandedLayout()
     HeroDetailScreen(
         title = title,
         onBack = onBack,
         modifier = modifier,
         snackbarHostState = snackbarHostState,
         scrollState = scrollState,
+        heroHeight = dimensionResource(if (cinematic) DesR.dimen.detail_cinematic_header_height else DesR.dimen.detail_hero_height),
+        horizontalInset = dimensionResource(if (cinematic) DesR.dimen.detail_cinematic_header_padding else DesR.dimen.padding_m),
         contentMaxWidth = Dp.Infinity,
         darkStatusBar = false,
         inFlight = inFlight,
         actions = topBarActions,
         footer = footer,
         hero = {
-            DetailHero(
-                title = title,
-                backdropUrl = backdropUrl,
-                tagline = null,
-                metaText = metaText,
-                onBack = {},
-                showChrome = false,
-                richBackdrop = true,
-                metaContent = metaContent,
-                modifier = Modifier.layoutAnchor(LayoutAnchors.section(LayoutAnchors.Detail.HERO)),
-            )
+            if (cinematic && wideHeader != null) {
+                DetailCinematicHeader(
+                    title = title,
+                    genres = genres,
+                    synopsis = wideHeader.synopsis,
+                    stats = wideHeader.stats,
+                    backdropUrl = backdropUrl,
+                    posterUrl = wideHeader.posterUrl,
+                    tagline = tagline,
+                    modifier = Modifier.layoutAnchor(LayoutAnchors.section(LayoutAnchors.Detail.HERO)),
+                )
+            } else {
+                DetailHero(
+                    title = title,
+                    backdropUrl = backdropUrl,
+                    tagline = tagline,
+                    genres = genres,
+                    metaText = metaText,
+                    onBack = {},
+                    showChrome = false,
+                    richBackdrop = true,
+                    metaContent = metaContent,
+                    modifier = Modifier.layoutAnchor(LayoutAnchors.section(LayoutAnchors.Detail.HERO)),
+                )
+            }
         },
         content = body,
     )

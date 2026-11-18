@@ -1,5 +1,7 @@
 package com.cooper.binge.companion.seerr.handoff
 
+import com.cooper.homelab.core.server.network.AddressLocality
+import com.cooper.homelab.core.server.network.hostLocality
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test

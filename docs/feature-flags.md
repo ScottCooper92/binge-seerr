@@ -1,26 +1,36 @@
 # Feature flags
 
-One flag decides what this app says about Binge. It is off until Remote Config turns it on.
+Four flags. `BINGE_PROMOTION` decides what this app says about Binge. `REVIEW_PROMPT` decides whether it may ask for a Play review. `discovery_enabled` decides whether the discovery surfaces show (#2039). `search_toggles_enabled` decides whether a settings search result carries its own switch. The first three are off until Remote Config turns them on; the last has no remote value and is on only through a debug build's override.
 
 | Flag | Remote Config key | Off means |
 | --- | --- | --- |
 | `BINGE_PROMOTION` | `binge_promotion_enabled` | Nothing about Binge: no prompt to install or open it, no hub tile or settings row, Binge-free wording in the setup intro and the disconnect confirmation. Titles open on the server's own page. |
+| `REVIEW_PROMPT` | `review_prompt_enabled` | The app never asks the platform to show its review card. |
+| `DiscoveryEnabled` | `discovery_enabled` | The app is exactly as it was before the discovery epic: no bottom navigation, no Movies, TV or Search tabs, no title, person or collection pages. Nothing reads it yet. |
+| `SearchToggles` | none: a debug override only | A settings search result for an on/off setting has no switch; it opens the setting, as before. On, the result carries the setting's own switch, which writes through the page's own editor. |
 
-The flag is about not pushing anyone to install an app they cannot connect to. It does not gate the integration
+The `BINGE_PROMOTION` flag is about not pushing anyone to install an app they cannot connect to. It does not gate the integration
 itself: the REQUEST and NOTIFICATIONS Service is always exported, and the hand-off Activities always answer an admitted
 caller, so a Binge that finds this app can use it whatever the flag says.
 
+`DiscoveryEnabled` and `SearchToggles` are this app's own flags, declared as `FlagKey`s in `flags/FeatureFlags.kt` beside the
+shared ones, and resolved by the same `FeatureFlags` (read as `flags[DiscoveryEnabled]`). The Firebase source reads
+`RemoteFlagKeys`, which is the shared flags and `DiscoveryEnabled`, from the one Remote Config instance with its one-hour fetch interval.
+`SearchToggles` is deliberately not in that list: it has no remote value, so a Remote Config template cannot turn it on. A debug build
+can override either from the developer flags screen, in the same DataStore as the other overrides under `override_discovery_enabled` and
+`override_search_toggles_enabled`; a release build has no override.
+
 ## How a value arrives
 
-`FirebaseRemoteFlagSource` reads Firebase Remote Config. A build with no `google-services.json` has no Firebase
+`FirebaseRemoteFlagSource` reads Firebase Remote Config for `RemoteFlagKeys`. A build with no `google-services.json` has no Firebase
 app, and the flag stays off. Remote Config keeps the last activated values on disk, so a cold start uses them
 before the first fetch lands. The app fetches at start and each time `MainActivity` comes to the foreground; Remote
 Config itself throttles that to once an hour.
 
 ### The first read is on the main thread
 
-Hilt builds `RemoteFeatureFlags` while it injects `SeerrApp`, so `source.current()` runs on the main thread in
-`Application.onCreate`. That call creates the Remote Config instance and reads the flag, which may wait for Remote
+Hilt builds `RemoteFeatureFlags` while it injects `SeerrApp`, and `FlagsModule` passes `seedFromCache = true`, so
+`source.current()` runs on the main thread in `Application.onCreate`. That call creates the Remote Config instance and reads the flag, which may wait for Remote
 Config's cache to load from disk. It stays there on purpose: a value that arrived late would show a screen without Binge and then with it.
 
 We measured it on 2026-10-26 and it is cheap enough to keep:

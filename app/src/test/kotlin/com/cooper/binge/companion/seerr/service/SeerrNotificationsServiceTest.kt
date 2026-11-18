@@ -5,8 +5,8 @@ import com.binge.companion.contracts.notifications.v1.HandshakeRequest
 import com.binge.companion.contracts.notifications.v1.ListNotificationsRequest
 import com.binge.companion.contracts.notifications.v1.NotificationsServiceGrpcKt
 import com.binge.companion.contracts.notifications.v1.setNotificationForwardingRequest
-import com.cooper.binge.companion.seerr.notifications.NotificationForwarding
 import com.cooper.binge.companion.seerr.notifications.NotificationPrefs
+import com.cooper.binge.companion.seerr.notifications.seerrForwarding
 import io.grpc.ManagedChannel
 import io.grpc.Server
 import io.grpc.inprocess.InProcessChannelBuilder
@@ -35,7 +35,7 @@ class SeerrNotificationsServiceTest {
 
     private fun TestScope.stub(): NotificationsServiceGrpcKt.NotificationsServiceCoroutineStub {
         val store = PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("n.preferences_pb") }
-        val service = SeerrNotificationsService(SeerrNotificationRpcs(NotificationForwarding(store), NotificationPrefs(store)))
+        val service = SeerrNotificationsService(SeerrNotificationRpcs(seerrForwarding(store), NotificationPrefs(store)))
         val name = InProcessServerBuilder.generateName()
         server =
             InProcessServerBuilder

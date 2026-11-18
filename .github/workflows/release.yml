@@ -32,9 +32,20 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
+      # The submodules are private to the author: the default token reads this repository only. This one is read-only.
+      - name: Mint a read-only token for the submodules
+        id: submodule_token
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349 # v2
+        with:
+          app-id: ${{ secrets.REVIEWER_APP_ID }}
+          private-key: ${{ secrets.REVIEWER_APP_PRIVATE_KEY }}
+          repositories: binge-seerr,homelab-core,binge-design-system,binge-ci
+          permission-contents: read
+
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           submodules: recursive
+          token: ${{ steps.submodule_token.outputs.token }}
           # The full history and every tag: the release notes start at the previous version tag, and a shallow
           # checkout has none to find.
           fetch-depth: 0
@@ -50,10 +61,10 @@ jobs:
       - uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6
 
       # The screenshot comparison is left out: ci.yml has already run it on the tagged commit, and on a
-      # hosted runner it runs out of memory (v0.1.0's run was cancelled in :app:validateDebugScreenshotTest).
+      # hosted runner it runs out of memory (v0.1.0's run was cancelled in validateDebugScreenshotTest).
       # Lint, the unit tests, coverage and the instrumentation-test compile stay.
       - name: Verify
-        run: ./gradlew build -x :app:validateDebugScreenshotTest
+        run: ./gradlew build -x validateDebugScreenshotTest
 
       - name: Derive the version from the tag
         shell: bash

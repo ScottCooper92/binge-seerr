@@ -5,13 +5,18 @@ this file from `main` and treat it as the source of truth; so should you.
 
 ## What this repository is
 
-An Android admin console for a Seerr, Jellyseerr or Overseerr server, and the reference
+An Android client and admin console for a Seerr, Jellyseerr or Overseerr server, and the reference
 companion app for [Binge](https://github.com/ScottCooper92). Those are its two jobs, in that
 order for the person installing it and in the other order for the person reading it.
 
-As a console, it manages the server the user already runs: requests, issues, users, the
-blocklist, the server's settings pages and its notifications, on a phone and on Android TV. It
-is not a discovery client; browsing for titles is Binge's job or the server's web client's.
+As a client and console, it works with the server the user already runs. It manages requests,
+issues, users, the blocklist, the server's settings pages and its notifications, on a phone and on
+Android TV. It is also becoming a discovery client on the phone: Movies and TV hubs, title search,
+and title, person and collection pages, with requesting as the primary action on every title page.
+Seerr's API is the only data source for it. An earlier decision said browsing for titles was
+Binge's job or the server's web client's (#26, and the closed #34). That decision was reversed on
+purpose, because this app is used more than Binge is; the epic is #2039. Until the discovery
+feature flag is on, the app is exactly as it was.
 
 As a companion, it is what Binge talks to. Binge ships as a plain TMDB client with zero
 bundled providers; a companion app is a separate APK that exports a bound Android Service
@@ -41,20 +46,24 @@ passes the design system's `BingeExpressiveTheme`/`BingeTvTheme` this app's own 
 `BingeBrand` in place of Binge's amber (#281), so the two apps share every component and
 still read as two products at a glance. `.gitmodules` is an agent-governed path, so an author
 bot's commit can revert a change to it — bump a submodule in a commit of its own,
-and check both pins after any bot push.
+and check every pin after any bot push.
 
-This app is GPL-3.0-or-later, with a section-7 permission for the Google libraries it links
-(`LICENSE-EXCEPTION.md`); its name and artwork are all rights reserved (`ASSETS.md`,
-`TRADEMARKS.md`). The contracts in binge-companions stay Apache-2.0.
+A third included build, `homelab-core/`, is private: it provides `com.cooper.homelab:app-services` (the bug-report link,
+the shake filter, the review prompt and the tip billing) and `com.cooper.homelab:testing` for tests. CI fetches it through a minted read-only token, and a checkout without access to it fails to build.
+
+This app is all rights reserved (`LICENSE`): no licence is granted to copy, modify or distribute its code, name or
+artwork (`ASSETS.md`, `TRADEMARKS.md`). Versions released earlier stay under the licence they shipped with. Third-party
+libraries keep their own licences, listed on the app's Open-source licences page. The contracts in binge-companions stay
+Apache-2.0.
 
 ## The one rule everything else serves
 
-**This repository is read as documentation.**
+**This app is the reference implementation of a companion, and it behaves like any other.**
 
-It is public and it is called the reference companion. A third-party author writing
-their own companion will read this code to learn what a companion looks like, and
-will copy what they find. That makes "it works" insufficient on its own — the
-question is whether the thing being copied is the thing you would want copied.
+The repository is all rights reserved, whether or not it is public: it grants no licence to copy it. It is still
+called the reference companion, because the contract in binge-companions is public and this
+app is the worked example the contract is checked against. That makes "it works" insufficient
+on its own — the question is whether this is the implementation you would point to as the right one.
 
 The practical consequence: no shortcut that depends on being first-party. This
 companion has no privileged relationship with Binge, gets no special-cased
@@ -99,6 +108,20 @@ the bug users report as "it does not work". This is a different rule from the ho
 "capabilities, never versions": the host contract is versioned by capability because it is ours
 to design; the server's API is versioned by release because it is not.
 
+## Modules
+
+`:app` is the application. `:data` is an Android library under it that holds the Seerr client (`seerr/`), the connection and its
+credential stores (`auth/`), the demo's transport and fixtures (`demo/`), the Room cache and its stores (`data/`), and the request
+models those stores import. It has no Compose, Activity, Hilt or vendor SDK, so `di/` stays in `:app` and builds its classes by hand.
+Its packages keep the names they had as one module, so a file's package does not say which module it is in.
+
+`internal` stops at the module boundary. Declare something `internal` in `:data` unless `:app` calls it, and a test in `:app` that
+needs an internal of `:data` belongs in `:data`. What tests in both modules share, such as the fake server and the ciphers, is in
+`:data`'s `testFixtures`. The Room schemas are in `data/schemas`, committed. More modules follow in the order #2163 sets out.
+
+What each module may depend on is the table in `buildSrc/src/main/kotlin/ModuleRules.kt`, and `checkModuleRules` holds the build to it. A new module gets
+a row in the same PR, with what it may depend on and why. A row changes when the design of the modules does, not to get a build green.
+
 ## Kotlin, Gradle and Android
 
 - Kotlin via AGP's built-in support, `jvmTarget` 17, built and tested on JDK 21. The JDK runs the
@@ -114,11 +137,11 @@ to design; the server's API is versioned by release because it is not.
 - The version catalog is `libs.versions.toml` at the repository root, not under
   `gradle/`, matching Binge so a version bump applies the same way to both.
 - Tests are JUnit 4, matching what the extracted code brings with it. Scope Gradle
-  to a module (`:app:test`) rather than running the whole tree when you are checking
+  to a module (`:app:test`, `:data:test`) rather than running the whole tree when you are checking
   one thing.
-- A Robolectric test needs no `@Config` for the SDK: `app/src/test/resources/robolectric.properties`
-  pins `sdk=34` and a plain `Application` for the whole module, and `RobolectricDefaultsTest`
-  asserts it. Do not pin them per class again. `@Config` is for what a test genuinely
+- A Robolectric test needs no `@Config` for the SDK: each module with Robolectric tests carries its own
+  `src/test/resources/robolectric.properties` (`:app` and `:data`), which pins `sdk=34` and a plain `Application`
+  for the whole module, and a `RobolectricDefaultsTest` in that module asserts it. Do not pin them per class again. `@Config` is for what a test genuinely
   varies — a `qualifiers` string, say. The pin matters because the fallback is `targetSdk`
   36, whose sandbox requires Java 21: unpinned, a test passes on JDK 21 and dies on a JDK 17
   machine before its body runs.
@@ -199,6 +222,9 @@ has no snackbars.) The design system's `docs/messages.md` has the worked example
   it. It does not go away by itself. It is an acknowledgement, not a confirmation, so it has exactly one action; a choice is
   `BingeConfirmDialog`.
 - **In place:** a failed load stays an error screen with Retry.
+- **A red footer:** the one exception, for a sheet whose pinned primary action failed to send and got no answer. The button
+  turns red with a short reason for a few seconds, and a tap in that time opens `BingeConfirmDialog` with the full cause and
+  Retry. Use it only for a failed send from a sheet with a pinned primary; everything else keeps the forms above.
 - **A snackbar never carries text the user must read to act.** Text the server supplies, such as a rejection's reason, has
   no length bound, so it belongs in a dialog. Do not turn every message into a dialog: a short result, or a refusal with
   nothing to act on, stays a snackbar.
@@ -223,7 +249,7 @@ screens and the exported Service call the real `SeerrApi` and cannot tell. Rules
 - **An endpoint the demo does not serve says so**: a 501 the screens already show as a server error, and that never counts against
   the connection's health. Add a route when a screen needs one; do not make a screen special-case the demo.
 - **Nothing in the app asks "is this the demo"** except to say so: the tag, the exit wording, the Settings rows that make no sense
-  without a server, the handshake's provider name, and the `demo` property on analytics (`DemoSession`, read in the one `PostHogAnalytics`, so no call
+  without a server, the handshake's provider name, and the `demo` property on analytics (`DemoSession`, read in the one `DemoAnalyticsDecorator`, so no call
   site asks). Behaviour does not fork.
 
 ## Gates
@@ -240,7 +266,7 @@ protection requires, and the one the bots read. `ci.yml` explains the split. A g
 touching `ci.yml`, because that job excludes tasks rather than listing them.
 
 - Kotlin compilation.
-- The unit tests (`:app:test`).
+- The unit tests (`test` in every module: `:app` and `:data`).
 - `ktlintCheck` — the ktlint plugin wires itself into `check`.
 - `detekt` — static analysis of the Kotlin itself, which ktlint and Android lint do not do.
 - **Android lint** (`:app:lint`) — AGP wires this into `check` too. It is easy to
@@ -261,6 +287,10 @@ touching `ci.yml`, because that job excludes tasks rather than listing them.
   resolved to a version other than the catalog's `grpc`. The SDK brings `grpc-binder` at
   binge-companions' catalog version, so a `grpc` bump here needs the `binge-companions` submodule
   bumped to a revision on the same release, in a commit of its own.
+- `checkModuleRules` — a module that depends on what its row in `buildSrc/src/main/kotlin/ModuleRules.kt` does not
+  allow: another module off its list, or a forbidden library anywhere on its resolved classpath (for `:data`: Compose,
+  Activity, navigation, the design system, Hilt, Dagger or a vendor SDK). A module with no row fails too. It runs in
+  every module's `check`, and the failure names the dependency to remove.
 - `checkBaselineStaleness` — an entry in `detekt-baseline.xml` that the code no longer produces.
   An orphaned entry reads as debt still owed and absorbs the next real finding of that rule in
   that file. Delete the entry.
@@ -325,13 +355,16 @@ through the same type resolution.
 
 `detekt-baseline.xml` grandfathers what existed when the ruleset was switched on, so the gate is
 **zero new violations** rather than zero total. Do not add to it: a new finding is either fixed or
-argued with in review. The baseline should only shrink.
+argued with in review. The baseline should only shrink. Each module has its own: `detekt-baseline.xml` for `:app` and
+`data/detekt-baseline.xml` for `:data`, because the staleness check would call an entry stale from the wrong module.
 
 ### Coverage
 
 `koverVerify` holds `:app` to **84% of lines**, a number measured (the suite was at 86.4%) rather
-than inherited — Binge's 70 comes from its own per-module layout, and this is one module holding
-ViewModels, the Seerr client, the stores and the exported service together.
+than inherited — Binge's 70 comes from its own per-module layout. The figure is measured over `:app` and `:data` together
+(`kover(project(":data"))`), the same code it covered when they were one module: ViewModels, the Seerr client, the stores and the
+exported service. `:data` also holds itself to **70%** on its own tests, which measured 71.2%; raise it as the stores and the client
+gain tests of their own, and do not lower it.
 
 What is excluded is generated code and Android entry points: Hilt's graph and the whole `di`
 package, Room's `*_Impl*` including the inner classes it emits, `*ComposableSingletons*`,
@@ -344,11 +377,11 @@ floor; do not lower it.
 
 **Never silence a gate instead of fixing it.** Do not add a ktlint baseline, do not
 add `ktlint` disable comments to make a file pass, do not add a `lint-baseline.xml`,
-do not set `abortOnError = false`, do not exclude a source set from `check`, and do not
-add to `detekt-baseline.xml`.
+do not set `abortOnError = false`, do not exclude a source set from `check`, do not
+add to `detekt-baseline.xml`, and do not edit a row of the module map to let a dependency through.
 Formatting failures are the cheapest class of failure to fix properly. A lint
 baseline is worse than it looks: it silences the finding permanently and silently,
-in a repository whose whole purpose is to be copied.
+in a repository that is meant to be the reference implementation.
 
 ## Follow-ups
 
@@ -384,8 +417,8 @@ label.
 
 **That label is maintainers-only.** Applying it grants an agent code execution with
 this repository's secrets in scope. Do not apply it to a PR you have not read, and
-never to one from a fork — the workflows already refuse fork PRs, and on a public
-repository that guard is the load-bearing control rather than a formality.
+never to one from a fork — the workflows already refuse fork PRs, and that guard is the
+control, not a formality, whether the repository is public or private.
 
 **Add `hold` only when a human must do the merging.** `hold` withholds the bot's merge: the PR is
 still reviewed and kept current, but a maintainer lands it. Add it alongside `agent` only when the PR

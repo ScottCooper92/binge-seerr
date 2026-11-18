@@ -4,11 +4,10 @@ import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.lifecycle.ViewModelStore
 import com.cooper.binge.companion.seerr.auth.BingeConnectionStore
 import com.cooper.binge.companion.seerr.auth.BingeHint
-import com.cooper.binge.companion.seerr.auth.CredentialStore
 import com.cooper.binge.companion.seerr.auth.DataStoreBingeConnectionStore
+import com.cooper.binge.companion.seerr.auth.LegacyCredentialStore
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
-import com.cooper.binge.companion.seerr.auth.SeerrConnectionHealthMonitor
-import com.cooper.binge.companion.seerr.seerr.LocalNetworkPermission
+import com.cooper.binge.companion.seerr.auth.SeerrHealth
 import com.cooper.binge.companion.seerr.seerr.SeerrApiFactory
 import com.cooper.binge.companion.seerr.seerr.SeerrAuth
 import com.cooper.binge.companion.seerr.seerr.SeerrVariant
@@ -17,6 +16,7 @@ import com.cooper.binge.companion.seerr.util.FakeResponse
 import com.cooper.binge.companion.seerr.util.FakeSeerrServer
 import com.cooper.binge.companion.seerr.util.MainDispatcherRule
 import com.cooper.binge.companion.seerr.util.PlainCipher
+import com.cooper.homelab.core.server.network.LocalNetworkPermission
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.first
@@ -152,11 +152,11 @@ class HubViewModelTest {
                 PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("binge_connection.preferences_pb") },
             ),
     ): HubViewModel {
-        val monitor = SeerrConnectionHealthMonitor()
+        val monitor = SeerrHealth.standalone()
         connection =
             SeerrConnection(
                 store =
-                    CredentialStore(
+                    LegacyCredentialStore(
                         PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("h.preferences_pb") },
                         PlainCipher,
                         UnconfinedTestDispatcher(testScheduler),
@@ -273,11 +273,11 @@ class HubViewModelTest {
         turn: () -> Unit,
     ): HubViewModel {
         healthyServer()
-        val monitor = SeerrConnectionHealthMonitor()
+        val monitor = SeerrHealth.standalone()
         connection =
             SeerrConnection(
                 store =
-                    CredentialStore(
+                    LegacyCredentialStore(
                         PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("h.preferences_pb") },
                         PlainCipher,
                         UnconfinedTestDispatcher(testScheduler),

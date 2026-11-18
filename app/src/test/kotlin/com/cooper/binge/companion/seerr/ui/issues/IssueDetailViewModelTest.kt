@@ -4,12 +4,10 @@ import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModelStore
 import com.binge.designsystem.SaveStatus
-import com.cooper.binge.companion.seerr.auth.CredentialStore
+import com.cooper.binge.companion.seerr.auth.LegacyCredentialStore
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.data.FakeIssueStore
 import com.cooper.binge.companion.seerr.data.IssueEntity
-import com.cooper.binge.companion.seerr.review.NoReviewSignals
-import com.cooper.binge.companion.seerr.review.ReviewSignalSink
 import com.cooper.binge.companion.seerr.seerr.SeerrApiFactory
 import com.cooper.binge.companion.seerr.seerr.SeerrAuth
 import com.cooper.binge.companion.seerr.seerr.SeerrError
@@ -27,6 +25,8 @@ import com.cooper.binge.companion.seerr.util.RecordingAnalytics
 import com.cooper.binge.companion.seerr.util.RecordingCrashBreadcrumbs
 import com.cooper.binge.companion.seerr.util.afterProcessDeath
 import com.cooper.binge.companion.seerr.util.awaitEvent
+import com.cooper.homelab.core.review.NoReviewSignals
+import com.cooper.homelab.core.review.ReviewSignalSink
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -115,7 +115,7 @@ class IssueDetailViewModelTest {
         val connection =
             SeerrConnection(
                 store =
-                    CredentialStore(
+                    LegacyCredentialStore(
                         PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("d${stores++}.preferences_pb") },
                         PlainCipher,
                         UnconfinedTestDispatcher(testScheduler),

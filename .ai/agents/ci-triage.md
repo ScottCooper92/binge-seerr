@@ -13,21 +13,21 @@ all. `.github/workflows/ci.yml` is the source of truth for the split:
 | `submodule-pins` | On a PR only: binge-ci's shared check that every submodule pin is merged upstream, unless the PR carries `hold` |
 | `actionlint` | Not on the nightly: binge-ci's shared actionlint step over `.github/workflows/`, with shellcheck at warning severity |
 | `checks` | `./gradlew build` minus the tasks the next three jobs own — Kotlin compile, `ktlintCheck`, `detekt`, `checkBaselineStaleness`, Android `lint`, `checkTranslationStaleness`, `checkTvMaterialSeparation`, `checkGrpcAlignment`, the debug assemble |
-| `tests` | `:app:testDebugUnitTest` and `:app:koverVerify` |
-| `screenshots` | `:app:validateDebugScreenshotTest` |
-| `release` | `:app:assembleRelease` — R8 with this app's keep rules, and lint-vital |
+| `tests` | `testDebugUnitTest` and `koverVerify`, in every module (`:app`, `:data`) |
+| `screenshots` | `:app:validateDebugScreenshotTest`, as a matrix of three shards (`screenshots (0)`, `(1)` and `(2)`). `.github/scripts/shard-screenshots.sh` gives each shard its test classes, and every class is in exactly one. The job's result is the shards' together, so one red shard is a red `screenshots`. Each shard uploads its own `build-reports-screenshots-<n>` |
+| `release` | `assembleRelease`, in every module — R8 with this app's keep rules, and lint-vital |
 | `build` | Nothing of its own. Waits on the other six, and is green only if all of them are. The pin check passes by being skipped outside a PR, and `actionlint` by being skipped on the nightly. It merges the four Gradle jobs' reports into the one `build-reports` artifact |
 
 `build` is the check branch protection requires, and the one `author-ci-fix.yml` reads.
 Its log only says which of the jobs failed. Read the failing job's log, not
-`build`'s: that is where the error is. The reports in `build-reports` come from
+`build`'s: that is where the error is. For `screenshots`, that is the failing shard's log, not the other two. The reports in `build-reports` come from
 whichever jobs failed.
 
 `checks` excludes tasks rather than listing them, so a gate added to `check` later
 lands there. A red run whose log ends in a report you did not expect is still one of
 these jobs, not a second gate that appeared from somewhere.
 
-There is a coverage floor (`koverVerify`, 84% of `:app`'s lines) and a screenshot
+There is a coverage floor (`koverVerify`: 84% of the lines of `:app` and `:data` together, and 70% for `:data` on its own tests) and a screenshot
 suite (`validateDebugScreenshotTest`), and both are real, gating checks. There is
 no `buf` here. `koverVerify` has no row below: raising coverage means writing a
 real test, which is a judgment call about what to test, not a mechanical repair, so
@@ -42,11 +42,12 @@ an invitation to improvise.
 | `actionlint` reports an error in a workflow file | A workflow that does not parse or type-check, or a `run:` script shellcheck flags at warning severity | Fix it in the workflow file actionlint names, at the line it gives. **Never** remove the job from `build`'s `needs` or lower the shellcheck severity |
 | `ktlintMainSourceSetCheck` / `ktlintTestSourceSetCheck` reports formatting | Style rule | Fix the formatting. `./gradlew ktlintFormat` fixes most of it mechanically; read the diff it produces rather than committing it blind. **Never** add a baseline or a disable comment |
 | `detekt` reports a new finding | Static analysis the ktlint/lint pair does not do, gated at zero new violations against `detekt-baseline.xml` | Fix the code the finding describes, or argue it in review if it is a false positive. **Never** add to `detekt-baseline.xml` to make it pass |
-| Android `lint` reports an error-severity issue | AGP's own checks, wired into `check` | Fix the code the issue describes. **Never** add `lint-baseline.xml`, `abortOnError = false`, or a `lintOptions` disable for the rule. A baseline in this repository is silently copied by everyone who reads it |
+| Android `lint` reports an error-severity issue | AGP's own checks, wired into `check` | Fix the code the issue describes. **Never** add `lint-baseline.xml`, `abortOnError = false`, or a `lintOptions` disable for the rule. A baseline in this repository silently lowers the bar for the reference implementation |
 | Android `lint` reports `NewApi` | Code uses an API above `minSdk` 26 | Guard it with a version check or use the AndroidX-compatible call. Raising `minSdk` to make it pass is a **stop** — that is a product decision and it narrows who can install the companion |
 | Kotlin compile error | Ordinary | Fix it. If a symbol from the contract stubs "does not exist", the app and the contract version it builds against disagree — fix the app, and if the contract is genuinely wrong that is a PR against binge-companions, not a change here |
 | `:app:test` — a unit test fails | Ordinary | Fix the code the test is describing. Changing an assertion to match new behaviour is only correct when the PR deliberately changed that behaviour and says so |
 | `validateDebugScreenshotTest` reports a diff | A `@PreviewTest` frame no longer renders like its committed reference PNG | **Stop.** Accepting a regenerated baseline is a judgment call a human should make, not a mechanical repair. Leave the working tree clean and name the remedy in a PR comment instead: `./gradlew :app:updateDebugScreenshotTest`, look at the regenerated PNGs, then commit them alongside the code that changed them |
+| `checkModuleRules` reports "The module rules are broken in :module" | A module depends on a module or a library its row in `buildSrc/src/main/kotlin/ModuleRules.kt` does not allow, or has no row | Remove the dependency the failure names, or move the code that needs it to the module that may have it. Editing a row, or adding a module to the table to make the build pass, is a **stop**: the table is the design of the modules (#2163) and a person changes it |
 | `checkBaselineStaleness` reports an entry `detekt-baseline.xml` holds that the code no longer produces | The failure output names each stale `rule in file` pair | Mechanical: delete the named entries from `detekt-baseline.xml`. **Never** add to the file instead |
 | `Failed to apply plugin 'org.jetbrains.kotlin.android'` | AGP 9 has built-in Kotlin support and rejects the plugin being applied to a module | Remove the `apply` from the module that applies it. The root build's own `apply false` declaration is intentional — it puts a compatible Kotlin version on AGP's classpath — and is not the plugin this error is about; do not remove that one. Do not downgrade AGP. See the comment in `libs.versions.toml` |
 | Manifest merger failure | Two manifests declare conflicting attributes | Read the merger report it points at. Resolve by making the declarations agree; `tools:replace` is a last resort and needs saying why in the PR |
@@ -63,7 +64,7 @@ Run only what failed, scoped:
 ./gradlew :app:ktlintCheck
 ./gradlew :app:detekt
 ./gradlew :app:lintDebug
-./gradlew :app:test
+./gradlew :app:test    # or :data:test, for a failure under data/
 ```
 
 Do not run the full gate. CI does that on push.

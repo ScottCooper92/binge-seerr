@@ -4,7 +4,7 @@ import androidx.paging.CombinedLoadStates
 import androidx.paging.LoadState
 import androidx.paging.LoadStates
 import com.binge.designsystem.template.PagedPhase
-import com.cooper.binge.companion.seerr.seerr.LocalNetworkDeniedException
+import com.cooper.homelab.core.server.network.LocalNetworkDeniedException
 import okhttp3.ResponseBody.Companion.toResponseBody
 import org.junit.Assert.assertEquals
 import org.junit.Test

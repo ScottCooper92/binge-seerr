@@ -1,6 +1,10 @@
 package com.cooper.binge.companion.seerr.ui
 
 import androidx.navigation3.runtime.NavKey
+import com.cooper.binge.companion.seerr.discover.TitleKind
+import com.cooper.binge.companion.seerr.discover.grid.DiscoverFilters
+import com.cooper.binge.companion.seerr.discover.grid.DiscoverSort
+import com.cooper.binge.companion.seerr.discover.grid.GridPreset
 import com.cooper.binge.companion.seerr.ui.blocklist.BlocklistItem
 import com.cooper.binge.companion.seerr.ui.settings.ServiceType
 import com.cooper.binge.companion.seerr.ui.settings.server.ServerAgent
@@ -21,6 +25,13 @@ data object HomeRoute : SeerrRoute
 /** The hub, which replaces [HomeRoute] at the root once a server is connected. See [settleHome]. */
 @Serializable
 data object HubRoute : SeerrRoute
+
+/**
+ * The tab bar over each tab root, for a connected phone with the discovery flag on. It stands in for [HubRoute] at the root
+ * (see [settleHome]), and what a tab opens goes on the stack above it, so it covers the bar.
+ */
+@Serializable
+data object ShellRoute : SeerrRoute
 
 /** The requests browser. */
 @Serializable
@@ -71,12 +82,16 @@ data class UserSettingsRoute(
 data class UserSettingsPageRoute(
     val userId: Int,
     val page: UserSettingsPage,
+    /** The row to scroll to and wash, by [com.cooper.binge.companion.seerr.ui.search.SettingRows] key; null opens the page at the top. */
+    val row: String? = null,
 ) : SeerrRoute
 
 /** One of the server's own settings pages, for a user who manages settings. */
 @Serializable
 data class ServerSettingsPageRoute(
     val page: ServerSettingsPage,
+    /** The row to scroll to and wash, by [com.cooper.binge.companion.seerr.ui.search.SettingRows] key; null opens the page at the top. */
+    val row: String? = null,
 ) : SeerrRoute
 
 /** One Radarr or Sonarr instance; a null [id] is a new one. */
@@ -110,9 +125,47 @@ data class RequestDetailRoute(
     val requestId: Int,
 ) : SeerrRoute
 
+/** A title as a page, opened from a card in the discovery tabs: a film's or a series'. */
+@Serializable
+data class TitleDetailRoute(
+    val kind: TitleKind,
+    val tmdbId: Int,
+) : SeerrRoute
+
+/** A collection of films as a page, opened from the collection rail on a film's page. */
+@Serializable
+data class CollectionRoute(
+    val id: Int,
+) : SeerrRoute
+
+/** A person: their profile and the titles they are in, opened from a title page, the cast list or a search result. */
+@Serializable
+data class PersonDetailRoute(
+    val personId: Int,
+) : SeerrRoute
+
+/** The whole cast and crew of a title, opened from its page. */
+@Serializable
+data class TitleCreditsRoute(
+    val kind: TitleKind,
+    val tmdbId: Int,
+) : SeerrRoute
+
+/** Every episode of one season of a show, opened from the show's page. [seasonName] is the name the page showed, which may be blank. */
+@Serializable
+data class SeasonEpisodesRoute(
+    val tmdbId: Int,
+    val seasonNumber: Int,
+    val seasonName: String,
+) : SeerrRoute
+
 /** Settings: the connection and the admin's read-only view of the server. */
 @Serializable
 data object SettingsRoute : SeerrRoute
+
+/** The settings search: the whole window, over the hub. A result opens its page above the search, which stays beneath it. */
+@Serializable
+data object SettingsSearchRoute : SeerrRoute
 
 /** This app's own page: Binge, feedback, what it reports, and About. The one section every viewer has. */
 @Serializable
@@ -122,6 +175,23 @@ data object ThisAppRoute : SeerrRoute
 @Serializable
 data object LicencesRoute : SeerrRoute
 
+/** The app's own log, with Copy and Share, opened from This app. */
+@Serializable
+data object DiagnosticsRoute : SeerrRoute
+
 /** The setup form on the live connection; pops itself once new credentials are saved. */
 @Serializable
 data object EditConnectionRoute : SeerrRoute
+
+/**
+ * The paged grid a hub row's "see all" opens. [preset] is the row, which becomes the grid's starting filter, and [title] is its
+ * name for the bar and the filter's chip. Opened over the tab bar, like every other page a tab opens.
+ */
+@Serializable
+data class DiscoverGridRoute(
+    val kind: TitleKind,
+    val preset: GridPreset,
+    val title: String? = null,
+    val filters: DiscoverFilters? = null,
+    val sort: DiscoverSort? = null,
+) : SeerrRoute

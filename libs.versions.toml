@@ -35,14 +35,14 @@ navigation3 = "1.1.7"
 # 1.1.7 above wins the resolution and the scene API it compiles against (androidx.navigation3.scene)
 # is unchanged there. Pinned to the stable line rather than 1.4.0-alpha, which buys nothing here.
 material3Adaptive = "1.3.0"
-kotlinxSerializationJson = "1.12.0"
+kotlinxSerializationJson = "1.13.0"
 retrofit = "3.0.0"
 okhttp = "5.5.1"
 datastore = "1.3.0"
 firebaseBom = "34.19.0"
 firebaseCrashlytics = "3.0.8"
-googleServices = "4.5.0"
-posthog = "3.76.0"
+googleServices = "4.6.0"
+posthog = "3.76.2"
 # Play Services, for Block Store only: it is the one carrier that survives a device transfer,
 # and the app degrades to "sign in again" wherever Play Services is not there.
 blockstore = "16.4.0"
@@ -93,6 +93,15 @@ binge-companion-kit = { module = "io.github.scottcooper92:binge-companion-kit" }
 # Version-less for the same reason: resolves to the included binge-design-system build.
 binge-designsystem = { module = "com.binge:designsystem" }
 binge-designsystem-tv = { module = "com.binge:designsystem-tv" }
+homelab-appservices = { module = "com.cooper.homelab:app-services" }
+homelab-appservices-play = { module = "com.cooper.homelab:app-services-play" }
+homelab-appservices-posthog = { module = "com.cooper.homelab:app-services-posthog" }
+homelab-appservices-firebase = { module = "com.cooper.homelab:app-services-firebase" }
+homelab-bridge = { module = "com.cooper.homelab:binge-bridge" }
+homelab-presentation = { module = "com.cooper.homelab:presentation" }
+homelab-uiandroid = { module = "com.cooper.homelab:ui-android" }
+homelab-server = { module = "com.cooper.homelab:server" }
+homelab-testing = { module = "com.cooper.homelab:testing" }
 hilt-android = { module = "com.google.dagger:hilt-android", version.ref = "hilt" }
 hilt-android-compiler = { module = "com.google.dagger:hilt-android-compiler", version.ref = "hilt" }
 hilt-android-testing = { module = "com.google.dagger:hilt-android-testing", version.ref = "hilt" }
@@ -157,6 +166,7 @@ compose-ui-test-manifest = { module = "androidx.compose.ui:ui-test-manifest" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
+android-library = { id = "com.android.library", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 # Applied by detekt-rules/ only, a plain JVM module, where AGP's built-in Kotlin does not reach.
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }

@@ -1,0 +1,30 @@
+name: Submodule bump
+
+# Moves the `homelab-core` submodule's pin to the head of its default branch, weekly, in a pull request
+# that carries the `agent` label. Nothing happens while the pin is already at the head. Run it from the
+# Actions tab with `dry_run` on first to see what it would do.
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Report what would be opened or updated and change nothing
+        type: boolean
+        default: true
+  schedule:
+    - cron: '41 5 * * 1'
+
+# What the called workflow declares, which a caller has to hold - see binge-ci's README.md, "Writing a caller".
+permissions:
+  contents: read
+
+jobs:
+  bump:
+    uses: ScottCooper92/binge-ci/.github/workflows/submodule-bump.yml@0e23ad4311757677213da647bd150eca33d256f0 # v1.0.49
+    with:
+      submodule_path: homelab-core
+      # Private, so the app token has to be able to read it.
+      private_submodules: homelab-core
+      dry_run: ${{ inputs.dry_run == true }}
+    secrets:
+      AUTHOR_APP_ID: ${{ secrets.AUTHOR_APP_ID }}
+      AUTHOR_APP_PRIVATE_KEY: ${{ secrets.AUTHOR_APP_PRIVATE_KEY }}

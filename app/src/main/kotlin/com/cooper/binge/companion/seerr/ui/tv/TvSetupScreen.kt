@@ -71,6 +71,7 @@ internal fun TvSetupScreen(
     when {
         // The home swaps to the connected plate on the credentials landing; this is the frame in between.
         state == SetupUiState.Loading || state is SetupUiState.Connected -> TvLoadingPlate(modifier = modifier)
+        state is SetupUiState.NotSetUp -> TvSetupNotSetUpPage(state = state, actions = actions, modifier = modifier)
         state is SetupUiState.SignIn ->
             TvSetupSignInStep(
                 state = state,
@@ -248,7 +249,7 @@ private const val CODE_REQUEST_DELAY_MILLIS = 500L
  * [leads] and the page lands on it.
  */
 @Composable
-private fun TvChangeServerButton(
+internal fun TvChangeServerButton(
     actions: SetupActions,
     leads: Boolean,
     arrival: TvArrivalFocus?,

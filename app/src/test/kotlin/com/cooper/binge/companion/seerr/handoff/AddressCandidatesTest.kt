@@ -1,6 +1,7 @@
 package com.cooper.binge.companion.seerr.handoff
 
 import com.cooper.binge.companion.seerr.seerr.SeerrPublicSettings
+import com.cooper.homelab.core.server.network.AddressLocality
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull

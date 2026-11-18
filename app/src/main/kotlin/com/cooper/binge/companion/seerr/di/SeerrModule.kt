@@ -19,15 +19,18 @@ import com.cooper.binge.companion.seerr.feedback.FeedbackPrefs
 import com.cooper.binge.companion.seerr.notifications.AndroidNotificationText
 import com.cooper.binge.companion.seerr.notifications.AndroidNotifier
 import com.cooper.binge.companion.seerr.notifications.ApplicationScope
+import com.cooper.binge.companion.seerr.notifications.ForwardedNotificationCodec
 import com.cooper.binge.companion.seerr.notifications.ForwardingNotifier
-import com.cooper.binge.companion.seerr.notifications.NotificationForwarding
-import com.cooper.binge.companion.seerr.notifications.NotificationPrefs
-import com.cooper.binge.companion.seerr.notifications.NotificationScheduler
+import com.cooper.binge.companion.seerr.notifications.SeerrForwarding
+import com.cooper.binge.companion.seerr.notifications.SeerrForwardingKeys
 import com.cooper.binge.companion.seerr.notifications.SeerrNotifier
-import com.cooper.binge.companion.seerr.notifications.WorkManagerNotificationScheduler
-import com.cooper.binge.companion.seerr.telemetry.TelemetryPrefs
+import com.cooper.binge.companion.seerr.seerr.TitleCache
+import com.cooper.binge.companion.seerr.telemetry.CrashReportingMigration
 import com.cooper.binge.companion.seerr.ui.hub.BingeInstallCheck
 import com.cooper.binge.companion.seerr.ui.hub.PackageManagerBingeInstallCheck
+import com.cooper.homelab.core.bridge.NotificationForwarding
+import com.cooper.homelab.core.foundation.Clock
+import com.cooper.homelab.core.telemetry.TelemetryPrefs
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -51,9 +54,12 @@ import javax.inject.Singleton
 @Retention(AnnotationRetention.RUNTIME)
 annotation class IoDispatcher
 
-private val Context.notificationsDataStore: DataStore<Preferences> by preferencesDataStore(name = "seerr_notifications")
+internal val Context.notificationsDataStore: DataStore<Preferences> by preferencesDataStore(name = "seerr_notifications")
 
-private val Context.telemetryDataStore: DataStore<Preferences> by preferencesDataStore(name = "seerr_telemetry")
+private val Context.telemetryDataStore: DataStore<Preferences> by preferencesDataStore(
+    name = "seerr_telemetry",
+    produceMigrations = { listOf(CrashReportingMigration) },
+)
 
 private val Context.feedbackDataStore: DataStore<Preferences> by preferencesDataStore(name = "seerr_feedback")
 
@@ -78,6 +84,10 @@ object SeerrModule {
     @Provides
     @Singleton
     fun titleDao(db: SeerrCacheDatabase): TitleDao = db.titleDao()
+
+    @Provides
+    @Singleton
+    fun titleCache(dao: TitleDao): TitleCache = TitleCache(dao)
 
     @Provides
     @Singleton
@@ -107,15 +117,9 @@ object SeerrModule {
 
     @Provides
     @Singleton
-    fun notificationPrefs(
-        @ApplicationContext context: Context,
-    ): NotificationPrefs = NotificationPrefs(context.notificationsDataStore)
-
-    @Provides
-    @Singleton
     fun telemetryPrefs(
         @ApplicationContext context: Context,
-    ): TelemetryPrefs = TelemetryPrefs(context.telemetryDataStore)
+    ): TelemetryPrefs = TelemetryPrefs(context.telemetryDataStore, crashReportingDefault = false)
 
     @Provides
     @Singleton
@@ -125,22 +129,17 @@ object SeerrModule {
 
     @Provides
     @Singleton
-    fun notificationScheduler(
-        @ApplicationContext context: Context,
-    ): NotificationScheduler = WorkManagerNotificationScheduler(context)
-
-    @Provides
-    @Singleton
     fun notificationForwarding(
         @ApplicationContext context: Context,
-    ): NotificationForwarding = NotificationForwarding(context.notificationsDataStore)
+    ): SeerrForwarding =
+        NotificationForwarding(context.notificationsDataStore, SeerrForwardingKeys, ForwardedNotificationCodec, Clock.system())
 
     /** Posts this app's notices itself, unless Binge is showing them instead. */
     @Provides
     @Singleton
     fun notifier(
         @ApplicationContext context: Context,
-        forwarding: NotificationForwarding,
+        forwarding: SeerrForwarding,
     ): SeerrNotifier = ForwardingNotifier(AndroidNotifier(context), forwarding, AndroidNotificationText(context))
 
     @Provides

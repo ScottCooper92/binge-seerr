@@ -8,19 +8,20 @@ what the app does. Each file maps to one part of the Play Console.
 | [`listing.md`](listing.md) | Main store listing: app name, short description, full description (English) |
 | [`listing.es.md`](listing.es.md) | The same, for the Spanish listing the app's `values-es/` earns it |
 | [`app-access.md`](app-access.md) | App content > App access: how a reviewer uses the app with no server (the demo) |
-| [`privacy.md`](privacy.md) | The privacy policy the listing links to, published at https://scottcooper92.github.io/binge-seerr/privacy/ (see below) |
+| [`privacy.md`](privacy.md) | The privacy policy the listing links to, published at https://scottcooper92.github.io/app-feedback/seerr/privacy/ (see below) |
 | [`data-safety.md`](data-safety.md) | The answers to the Data safety form, each derived from `privacy.md` and the code it describes |
 
 ## Where the privacy policy is published
 
 Play needs the policy at a public URL. It is published at
-https://scottcooper92.github.io/binge-seerr/privacy/, and that is the URL to give the Play Console.
+https://scottcooper92.github.io/app-feedback/seerr/privacy/, and that is the URL to give the Play Console and the one the app's
+privacy row opens. The page lives in the public app-feedback repository, because this repository is private.
 
-The `privacy-policy.yml` workflow publishes it to GitHub Pages. It runs when a change to
-`privacy.md` reaches `main`, renders the file to one HTML page, and deploys it, so a merged policy
-change goes live with no further step. It publishes that one page, not the rest of `docs/`. The
-page loads nothing from any other site, and its last-updated date is the date of the last commit
-to `privacy.md`. To publish again without a change, run the workflow by hand from the Actions tab.
+`privacy.md` here is the source of the policy, and it is reviewed with the code. The `privacy-policy.yml` workflow runs when a change to
+`privacy.md` reaches `main` and opens a pull request on app-feedback that replaces the body of `docs/seerr/privacy/index.md`. The page's
+front matter and its last-updated line are kept, and the date in that line is the date of the last commit to `privacy.md`. The policy goes
+live when that pull request merges. A second change before then updates the same pull request. To sync again without a change, run the
+workflow by hand from the Actions tab.
 
 ## What is not here
 
@@ -55,8 +56,8 @@ to `privacy.md` and `data-safety.md` in the same PR. The specific claims that mu
   device-to-device transfer and, where end-to-end encryption is available, a cloud restore.
   Disconnecting clears both. So it is **not** true that the secret never leaves the device.
 - Traffic goes to the server the user entered; plex.tv when the user chooses to sign in with Plex;
-  PostHog only after the user agrees to usage data; Firebase Crashlytics for crash reports and recovered failures unless
-  the user turns them off; and GitHub only when the user submits the bug report form.
+  PostHog only after the user agrees to usage data; Firebase Crashlytics for crash reports and recovered failures only if
+  the user agrees on first run; and GitHub only when the user submits the bug report form.
 - The phone-to-TV hand-off (`handoff/`, `ui/handoff/`) sends the server address, and a sealed session
   only if the user switches it on, to a television on the same network, only on the Send button. The
   API key the phone stores is never sent; sign-in details typed for the television's sign-in step
@@ -64,12 +65,13 @@ to `privacy.md` and `data-safety.md` in the same PR. The specific claims that mu
   and the listener stays up through that step. The scanner is Google Play services', so the app holds no camera permission.
   The addresses it remembers (`handoff/HandOffAddressMemory.kt`) are cleared on disconnect and on
   connecting to a server (`onServerChanged` in `di/AuthModule.kt`).
-- A crash or recovered-failure report carries the ids of the record in hand (`telemetry/CrashReporting.kt`), a fixed action
+- A crash or recovered-failure report carries the ids of the record in hand (attached at the `crashBreadcrumbs.key(...)` call sites, for example in `ui/issues/IssueDetailViewModel.kt`, through the shared `CrashBreadcrumbs`), a fixed action
   line, the device model and the Android version. The app attaches no title, name, message or address; the crash's own stack trace
   and exception message are Crashlytics's and are not filtered.
 - There is an analytics SDK (PostHog) and a crash reporting SDK (Firebase Crashlytics), both gated
-  as above, and no advertising SDK. Check `app/build.gradle.kts` and `telemetry/` before changing
-  this claim in either direction.
+  as above, and no advertising SDK. Check `app/build.gradle.kts` (the `app-services-posthog` and
+  `app-services-firebase` dependencies and the Crashlytics plugin) and `di/TelemetryModule.kt` before changing this claim in
+  either direction.
 - `android:allowBackup="false"` and `android:dataExtractionRules` (`res/xml/data_extraction_rules.xml`):
   Android's own backup and device-to-device transfer do not copy the app's data, and uninstalling
   removes it. `allowBackup` alone does not stop a device-to-device transfer on every Android 12+

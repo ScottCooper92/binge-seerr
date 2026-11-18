@@ -1,55 +1,37 @@
 package com.cooper.binge.companion.seerr.flags
 
 import androidx.compose.runtime.staticCompositionLocalOf
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-
-/** A switch for the Binge-facing surfaces, with the Remote Config key that carries it. Set in whichever Firebase project the build uses. */
-enum class Flag(
-    val key: String,
-) {
-    /** Anything that asks the user to install, open or connect Binge. */
-    BingePromotion("binge_promotion_enabled"),
-
-    /** Whether the app may ask Google Play to show its review card. Off until the flag is turned on remotely. */
-    ReviewPrompt("review_prompt_enabled"),
-}
-
-/**
- * Every flag at once. Off by default: a build that cannot reach a flag service says nothing about Binge. The REQUEST
- * Service is not flagged; a host that finds it can always use it.
- */
-data class Flags(
-    val bingePromotion: Boolean = false,
-    val reviewPrompt: Boolean = false,
-) {
-    operator fun get(flag: Flag): Boolean =
-        when (flag) {
-            Flag.BingePromotion -> bingePromotion
-            Flag.ReviewPrompt -> reviewPrompt
-        }
-
-    companion object {
-        val AllOn = Flags(bingePromotion = true, reviewPrompt = true)
-    }
-}
-
-/** The current [Flags]: remote values, with debug overrides on top in a debug build. */
-interface FeatureFlags {
-    val flags: StateFlow<Flags>
-
-    /** Fetches fresh remote values; the next value of [flags] carries them. A failed fetch keeps the last ones. */
-    suspend fun refresh()
-}
-
-/** Fixed flags, for a test or a constructor default. It has no default of its own: the caller says which. */
-class FixedFeatureFlags(
-    value: Flags,
-) : FeatureFlags {
-    override val flags: StateFlow<Flags> = MutableStateFlow(value)
-
-    override suspend fun refresh() = Unit
-}
+import com.cooper.homelab.core.flags.FlagKey
+import com.cooper.homelab.core.flags.Flags
+import com.cooper.homelab.core.flags.SharedFlags
 
 /** The flags for the composition below. Off until a root provides them, so a screen shown alone advertises nothing. */
 val LocalFlags = staticCompositionLocalOf { Flags() }
+
+/** Whether the discovery surfaces show. Off until a root provides it; nothing reads it yet. */
+val LocalDiscoveryEnabled = staticCompositionLocalOf { false }
+
+/**
+ * Whether the app shows the discovery surfaces (#2039). Off until Remote Config turns it on, and off in a build with no
+ * Firebase app. With it off the app is exactly as it was before the epic.
+ */
+val DiscoveryEnabled = FlagKey("discovery_enabled")
+
+/**
+ * Whether a settings search result for an on/off setting carries its own switch. It is a debug-only switch, so it has no remote
+ * value and is deliberately not in [RemoteFlagKeys]: a Remote Config template must never be able to turn it on. Only a debug
+ * build's developer override does, and a shipped build never shows the switches.
+ */
+val SearchToggles = FlagKey("search_toggles_enabled")
+
+/** The flags Remote Config is asked for: the shared ones, and this app's discovery flag. */
+val RemoteFlagKeys: List<FlagKey> = SharedFlags.all + DiscoveryEnabled
+
+/** Every flag the developer flags screen lists and can override. */
+val AllFlagKeys: List<FlagKey> = RemoteFlagKeys + SearchToggles
+
+/** Anything that asks the user to install, open or connect Binge. */
+val Flags.bingePromotion: Boolean get() = this[SharedFlags.BingePromotion]
+
+/** Whether the app may ask the platform to show its review card. */
+val Flags.reviewPrompt: Boolean get() = this[SharedFlags.ReviewPrompt]

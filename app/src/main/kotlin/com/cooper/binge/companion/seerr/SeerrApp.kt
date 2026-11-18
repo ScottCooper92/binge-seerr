@@ -4,12 +4,13 @@ import android.app.Application
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
 import com.cooper.binge.companion.seerr.auth.ConnectionRestore
-import com.cooper.binge.companion.seerr.flags.FeatureFlags
 import com.cooper.binge.companion.seerr.notifications.ApplicationScope
-import com.cooper.binge.companion.seerr.notifications.NotificationPlanner
-import com.cooper.binge.companion.seerr.review.ReviewPrompt
-import com.cooper.binge.companion.seerr.telemetry.Analytics
-import com.cooper.binge.companion.seerr.telemetry.CrashReportingSwitch
+import com.cooper.binge.companion.seerr.notifications.NotificationPlanning
+import com.cooper.homelab.core.flags.FeatureFlags
+import com.cooper.homelab.core.review.ReviewPrompt
+import com.cooper.homelab.core.telemetry.Analytics
+import com.cooper.homelab.core.telemetry.CrashReportingSwitch
+import com.cooper.homelab.core.tip.TipBilling
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -29,7 +30,7 @@ class SeerrApp :
     lateinit var workerFactory: HiltWorkerFactory
 
     @Inject
-    lateinit var planner: NotificationPlanner
+    lateinit var planner: NotificationPlanning
 
     @Inject
     lateinit var connectionRestore: ConnectionRestore
@@ -49,6 +50,10 @@ class SeerrApp :
     @Inject
     lateinit var reviewPrompt: ReviewPrompt
 
+    /** Settled at start: a tip that was paid for after the app last ran is consumed before Play refunds it. */
+    @Inject
+    lateinit var tipBilling: TipBilling
+
     @Inject
     @field:ApplicationScope
     lateinit var scope: CoroutineScope
@@ -63,5 +68,6 @@ class SeerrApp :
         planner.start()
         reviewPrompt.start()
         scope.launch { featureFlags.refresh() }
+        scope.launch { tipBilling.settle() }
     }
 }

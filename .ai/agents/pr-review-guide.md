@@ -8,7 +8,7 @@ importantly, how hard to press.
 ## 1. What CI has already decided
 
 CI is green on the head under review before a review starts. That means
-`./gradlew build` compiled the Kotlin, ran `:app:test`, passed `ktlintCheck`, passed
+`./gradlew build` compiled the Kotlin, ran the unit tests of every module (`:app:test`, `:data:test`), passed `ktlintCheck`, passed
 `detekt` with zero new violations against `detekt-baseline.xml`, and passed Android
 `lint`.
 
@@ -25,10 +25,10 @@ Green is necessary and not sufficient. Everything below is ungated.
 None is machine-checkable, and they are roughly in order of how expensive they are
 to get wrong.
 
-**This code is read as documentation.** The repository is public and is called the
-reference companion. Whatever appears here is what a third-party author will copy
-into their own companion. So the question is never only "does this work" but "is
-this the version of it we want copied". A clever shortcut that works is a worse
+**This code is the reference implementation.** The repository is all rights reserved, whether or not it is public, and is called the
+reference companion: the contract in binge-companions is public, and this app is the worked
+example it is checked against. So the question is never only "does this work" but "is
+this the version of it we would point to as right". A clever shortcut that works is a worse
 outcome than the obvious thing, and this is the single highest-value thing to press
 on. It is also the one that most looks like a nit and is not.
 
@@ -102,7 +102,7 @@ missed nit, which costs almost nothing. The asymmetry is deliberate.
 
 **"It is only the reference app" is not a licence.** It is the opposite. Nothing
 ships against this yet, and that is exactly why the example should be right before
-anyone copies it.
+anything depends on it.
 
 **But do not review a placeholder as though it were the finished feature.** The app is
 pre-alpha at contract parity: the console and the REQUEST v1 service are built, and what is

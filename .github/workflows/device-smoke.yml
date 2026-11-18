@@ -24,6 +24,9 @@ on:
       - 'app/src/main/keepRules/**'
       - 'app/src/main/kotlin/com/cooper/binge/companion/seerr/service/**'
       - 'app/src/main/kotlin/com/cooper/binge/companion/seerr/seerr/**'
+      # The Seerr client lives in :data now, so a change to it, or to what builds it, is a change to what this lane proves.
+      - 'data/build.gradle.kts'
+      - 'data/src/main/kotlin/com/cooper/binge/companion/seerr/seerr/**'
       - 'binge-companions'
       - 'libs.versions.toml'
       - '.github/workflows/device-smoke.yml'
@@ -52,9 +55,20 @@ jobs:
       contents: read
       actions: write
     steps:
+      # The submodules are private to the author: the default token reads this repository only. This one is read-only.
+      - name: Mint a read-only token for the submodules
+        id: submodule_token
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349 # v2
+        with:
+          app-id: ${{ secrets.REVIEWER_APP_ID }}
+          private-key: ${{ secrets.REVIEWER_APP_PRIVATE_KEY }}
+          repositories: binge-seerr,homelab-core,binge-design-system,binge-ci
+          permission-contents: read
+
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           submodules: recursive
+          token: ${{ steps.submodule_token.outputs.token }}
           ref: ${{ github.event.inputs.ref || github.sha }}
 
       - name: Free disk space for the emulator
@@ -99,7 +113,7 @@ jobs:
 
       # A miss is not a failure: the setup step below falls back to the full download and boot.
       - name: Restore AVD cache
-        uses: ScottCooper92/binge-ci/.github/actions/restore-avd-cache@4ea9f85339ca1f32747cfcbe89aaf1252e5bfdd5 # v1
+        uses: ScottCooper92/binge-ci/.github/actions/restore-avd-cache@0e23ad4311757677213da647bd150eca33d256f0 # v1.0.49
         with:
           device: smokeAtdApi34
           api-level: '34'
@@ -128,7 +142,7 @@ jobs:
         if: >
           !cancelled() && github.event_name == 'push' &&
           steps.setup-device.outcome == 'success'
-        uses: ScottCooper92/binge-ci/.github/actions/save-avd-cache@4ea9f85339ca1f32747cfcbe89aaf1252e5bfdd5 # v1
+        uses: ScottCooper92/binge-ci/.github/actions/save-avd-cache@0e23ad4311757677213da647bd150eca33d256f0 # v1.0.49
         with:
           device: smokeAtdApi34
           api-level: '34'

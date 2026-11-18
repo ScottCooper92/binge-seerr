@@ -2,6 +2,7 @@ package com.cooper.binge.companion.seerr.ui.settings
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Article
+import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Science
@@ -17,15 +18,19 @@ import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.openInBrowser
 import com.cooper.binge.companion.seerr.ui.openPlayStoreListing
 import com.cooper.binge.companion.seerr.ui.openTestingOptIn
+import com.cooper.homelab.core.uiandroid.R as CoreR
 
-private const val PRIVACY_POLICY_URL = "https://scottcooper92.github.io/binge-seerr/privacy/"
+private const val PRIVACY_POLICY_URL = "https://scottcooper92.github.io/app-feedback/seerr/privacy/"
 
 /**
  * The About group: the app's own version (a tap opens its Play listing, which is where a rating is left), the
- * privacy policy, the open-source licences, and the beta opt-in. The server's version is in Connection.
+ * privacy policy, the open-source licences, Diagnostics and the beta opt-in. The server's version is in Connection.
  */
 @Composable
-internal fun aboutRows(onOpenLicences: () -> Unit): List<ListItem> {
+internal fun aboutRows(
+    onOpenLicences: () -> Unit,
+    onOpenDiagnostics: () -> Unit,
+): List<ListItem> {
     val context = LocalContext.current
     return listOf(
         ListItem(
@@ -48,6 +53,12 @@ internal fun aboutRows(onOpenLicences: () -> Unit): List<ListItem> {
             iconTint = BingeSentiment.Neutral.fill(),
             label = stringResource(R.string.licences_title),
             onClick = onOpenLicences,
+        ),
+        ListItem(
+            icon = Icons.Filled.BugReport,
+            iconTint = BingeSentiment.Neutral.fill(),
+            label = stringResource(CoreR.string.diagnostics_title),
+            onClick = onOpenDiagnostics,
         ),
         ListItem(
             icon = Icons.Filled.Science,

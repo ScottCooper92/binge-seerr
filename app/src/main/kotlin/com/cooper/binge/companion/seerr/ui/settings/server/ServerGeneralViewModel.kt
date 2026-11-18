@@ -8,7 +8,7 @@ import com.cooper.binge.companion.seerr.di.IoDispatcher
 import com.cooper.binge.companion.seerr.notifications.ApplicationScope
 import com.cooper.binge.companion.seerr.seerr.SeerrAuth
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorEvent
-import com.cooper.binge.companion.seerr.ui.users.settings.ExtrasEditorViewModel
+import com.cooper.binge.companion.seerr.ui.users.settings.SaveAsMadeEditorWithExtrasViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -21,7 +21,8 @@ import javax.inject.Inject
  * The server's general settings: the main form as an editor over `settings/main`, with the API key, the fork (for
  * its display languages) and the server's region and language lists beside it, each list read only when its picker
  * opens. The server answers a write with the whole record, which is what is adopted; the key lives in the extras
- * rather than the draft because regenerating it is not an edit to save.
+ * rather than the draft because regenerating it is not an edit to save. It saves as made: every setting stands alone,
+ * and `settings/main` merges what it is sent.
  */
 @HiltViewModel
 class ServerGeneralViewModel
@@ -31,10 +32,7 @@ class ServerGeneralViewModel
         private val listCatalog: ServerListCatalog,
         @IoDispatcher private val dispatcher: CoroutineDispatcher,
         @ApplicationScope appScope: CoroutineScope,
-    ) : ExtrasEditorViewModel<ServerGeneralSettings, ServerGeneralExtras>(ServerGeneralExtras(), dispatcher) {
-        /** General saves as it changes (#930): every setting on it stands alone, and `settings/main` merges what it is sent. */
-        override val saveAsMadeScope: CoroutineScope = appScope
-
+    ) : SaveAsMadeEditorWithExtrasViewModel<ServerGeneralSettings, ServerGeneralExtras>(ServerGeneralExtras(), dispatcher, appScope) {
         init {
             reload()
         }
@@ -95,12 +93,7 @@ class ServerGeneralViewModel
             if (ready() == null) return
             viewModelScope.launch(dispatcher) {
                 val tags = attempt { connection.api().mainSettings() }.getOrNull()?.tags ?: return@launch
-                editReady { ready ->
-                    ready.copy(
-                        saved = ready.saved.copy(blocklist = ready.saved.blocklist?.copy(tags = tags)),
-                        draft = ready.draft.copy(blocklist = ready.draft.blocklist?.copy(tags = tags)),
-                    )
-                }
+                editSaved { it.copy(blocklist = it.blocklist?.copy(tags = tags)) }
             }
         }
 

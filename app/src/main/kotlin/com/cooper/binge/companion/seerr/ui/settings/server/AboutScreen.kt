@@ -35,6 +35,7 @@ import com.binge.designsystem.component.BingePullToRefresh
 import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.component.ListItemDestination
+import com.binge.designsystem.paneBackOrNull
 import com.binge.designsystem.resolvedContentPadding
 import com.binge.designsystem.template.BingeScreenScaffold
 import com.binge.designsystem.template.ScreenBar
@@ -80,7 +81,7 @@ fun AboutScreen(
     BingeScreenScaffold(
         bar = ScreenBar.Small,
         title = stringResource(R.string.settings_about),
-        onBack = onBack,
+        onBack = paneBackOrNull(onBack),
         snackbarHostState = snackbarHostState,
     ) { padding ->
         Box(modifier = Modifier.fillMaxSize().padding(padding.screenOuterPadding())) {

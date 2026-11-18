@@ -9,13 +9,14 @@ import com.cooper.binge.companion.seerr.auth.NoBingeConnectionStore
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.auth.SeerrConnectionHealth
 import com.cooper.binge.companion.seerr.di.IoDispatcher
-import com.cooper.binge.companion.seerr.flags.FeatureFlags
-import com.cooper.binge.companion.seerr.flags.FixedFeatureFlags
-import com.cooper.binge.companion.seerr.flags.Flags
-import com.cooper.binge.companion.seerr.seerr.LocalNetworkPermission
 import com.cooper.binge.companion.seerr.seerr.SeerrCredentials
 import com.cooper.binge.companion.seerr.seerr.isBlockedByLocalNetwork
 import com.cooper.binge.companion.seerr.ui.Ticker
+import com.cooper.homelab.core.flags.FeatureFlags
+import com.cooper.homelab.core.flags.FixedFeatureFlags
+import com.cooper.homelab.core.flags.Flags
+import com.cooper.homelab.core.flags.SharedFlags
+import com.cooper.homelab.core.server.network.LocalNetworkPermission
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -56,7 +57,7 @@ class HubViewModel
         private val installCheck: BingeInstallCheck = NoBingeInstallCheck,
         private val bingeConnection: BingeConnectionStore = NoBingeConnectionStore,
         private val localNetwork: LocalNetworkPermission = LocalNetworkPermission.AlwaysGranted,
-        featureFlags: FeatureFlags = FixedFeatureFlags(Flags.AllOn),
+        featureFlags: FeatureFlags = FixedFeatureFlags(Flags.of(SharedFlags.BingePromotion to true, SharedFlags.ReviewPrompt to true)),
     ) : ViewModel() {
         private val recheckTrigger = MutableStateFlow(0)
         private val isProbing = MutableStateFlow(false)
@@ -179,7 +180,7 @@ class HubViewModel
                 // Requests alone — a settled-looking menu that then grows rows under a finger.
                 when {
                     server is ServerRead.Failed ->
-                        HubUiState.Error(health.takeIf { it == ConnectionHealth.LocalNetworkDenied } ?: ConnectionHealth.Unreachable)
+                        HubUiState.Error(health.takeIf { it.namesItsOwnCause() } ?: ConnectionHealth.Unreachable)
                     server !is ServerRead.Loaded || !overview.loaded -> HubUiState.Loading
                     else ->
                         HubUiState.Ready(
@@ -334,11 +335,16 @@ private fun effectiveHealth(
         }
     }
 
+/** A problem the hub can say more about than "unreachable", which a failed read of the server must not flatten back into it. */
+private fun ConnectionHealth.namesItsOwnCause(): Boolean =
+    this == ConnectionHealth.LocalNetworkDenied || this == ConnectionHealth.ClientCertificateNeeded
+
 internal fun SeerrConnectionHealth.toConnectionHealth(): ConnectionHealth =
     when (this) {
         SeerrConnectionHealth.Healthy -> ConnectionHealth.Healthy
         SeerrConnectionHealth.Unreachable -> ConnectionHealth.Unreachable
         SeerrConnectionHealth.Unauthorized -> ConnectionHealth.Unauthorized
+        SeerrConnectionHealth.ClientCertificateNeeded -> ConnectionHealth.ClientCertificateNeeded
         // Unchecked is every cold start: the credentials are saved and the overview has not landed
         // yet. NotConnected means they vanished mid-check, and the shell swaps to setup on it.
         SeerrConnectionHealth.Unchecked, SeerrConnectionHealth.NotConnected -> ConnectionHealth.Checking

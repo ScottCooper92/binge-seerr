@@ -1,9 +1,8 @@
 package com.cooper.binge.companion.seerr.handoff
 
 import com.cooper.binge.companion.seerr.seerr.SeerrPublicSettings
-import com.cooper.binge.companion.seerr.seerr.isValidBaseUrl
-import com.cooper.binge.companion.seerr.seerr.normaliseBaseUrl
-import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import com.cooper.homelab.core.server.address.ServerAddress
+import com.cooper.homelab.core.server.network.AddressLocality
 
 /** Where an address the phone could send to a television came from. */
 enum class AddressSource {
@@ -28,21 +27,9 @@ data class AddressCandidate(
  * [raw] as one comparable server address: a scheme added where it was left off, scheme and host
  * lowercased, a default port dropped, user info, query and fragment removed, and a trailing slash.
  * Two spellings of one server come out equal. Null for anything that is not a server address, by the
- * same rule the television's own form applies ([isValidBaseUrl]).
+ * same rule the television's own form applies.
  */
-fun normaliseServerAddress(raw: String): String? {
-    if (raw.isBlank() || !raw.isValidBaseUrl()) return null
-    return raw
-        .normaliseBaseUrl()
-        .toHttpUrlOrNull()
-        ?.newBuilder()
-        ?.username("")
-        ?.password("")
-        ?.query(null)
-        ?.fragment(null)
-        ?.build()
-        ?.toString()
-}
+fun normaliseServerAddress(raw: String): String? = ServerAddress.parse(raw)?.url
 
 /** The Application URL the administrator set, when there is one to offer: blank and absent are the same. */
 fun SeerrPublicSettings.applicationUrlOrNull(): String? = applicationUrl?.takeIf { it.isNotBlank() }?.let(::normaliseServerAddress)

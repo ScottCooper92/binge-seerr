@@ -75,7 +75,6 @@ class BlocklistViewModelTest {
             vm.setScreenVisible(true)
             val ready = vm.awaitReady { it.counts?.all != null && it.canManage }
             assertTrue(ready.hasFilters)
-            assertTrue(ready.canBlockCollections)
             assertEquals(BlocklistCounts(all = 1, manual = 1, tagged = 1), ready.counts)
 
             assertEquals(
@@ -97,7 +96,6 @@ class BlocklistViewModelTest {
             vm.setScreenVisible(true)
             val ready = vm.awaitReady { !it.hasFilters }
             assertFalse(ready.canManage)
-            assertFalse(ready.canBlockCollections)
             assertNull(ready.counts)
             assertEquals(
                 "Heat",
@@ -130,25 +128,6 @@ class BlocklistViewModelTest {
             vm.awaitReady { it.actingTmdbIds.isEmpty() }
             seerr.awaitCount("GET", "/api/v1/blocklist", moreThan = probes)
             assertEquals(listOf("blocklist_changed" to mapOf("action" to "removed")), analytics.events)
-        }
-
-    @Test
-    fun `a collection is blocked only where the server can, and the call is skipped elsewhere`() =
-        runTest {
-            val vm = viewModel()
-            vm.awaitReady { it.canBlockCollections }
-            val collectionChanged = awaitEvent(vm.events)
-            vm.setCollectionBlocked(5, blocked = true)
-            assertEquals(BlocklistEvent.CollectionChanged(blocked = true), collectionChanged.await())
-            assertEquals(1, received("POST", "/api/v1/blocklist/collection/5").size)
-            assertEquals(listOf("blocklist_changed" to mapOf("action" to "collection_blocked")), analytics.events)
-
-            seerr.viewer(id = 1, permissions = ADMIN, version = "3.1.0")
-            val older = viewModel()
-            older.awaitReady { !it.canBlockCollections }
-            older.setCollectionBlocked(5, blocked = true)
-            older.awaitReady()
-            assertEquals(1, received("POST", "/api/v1/blocklist/collection/5").size)
         }
 
     /**

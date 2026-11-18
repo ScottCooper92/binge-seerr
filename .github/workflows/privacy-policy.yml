@@ -1,16 +1,22 @@
 name: Privacy policy
 
-# Publishes docs/listing/privacy.md to GitHub Pages, which is the URL the Play listing links to
-# (#478). The file is the source and the page is a copy of it, so the page is rebuilt whenever the
-# file changes on main and a merged policy change goes live with no further step.
+# docs/listing/privacy.md is the source of the privacy policy, and it is reviewed with the code it
+# describes. The policy is published from the public app-feedback repository's Pages site, at
+# https://scottcooper92.github.io/app-feedback/seerr/privacy/, which is the URL the Play listing and
+# the app link to (#2087). This repository is private, so its own Pages site is not the home.
 #
-# Only the policy is published, not the docs tree: the artifact holds one rendered page, at
-# https://scottcooper92.github.io/binge-seerr/privacy/. The page is self-contained, with its styles
-# inline and no scripts, fonts or stylesheets from anywhere else, so opening a privacy policy does
-# not itself send a request to a third party.
+# Whenever the policy changes on main, this opens a pull request on app-feedback that replaces the
+# body of docs/seerr/privacy/index.md with the policy. That file's front matter and its "Last
+# updated / Change history" line are kept, and only the date in that line is refreshed, to the date
+# of the last commit to privacy.md. The pull request is the review: nothing is published until it
+# merges there.
 #
-# This needs Pages turned on with GitHub Actions as its source (Settings > Pages). Until then the
-# deploy job fails.
+# One branch, force-pushed, and one open pull request, reused: a second change before the first
+# merges updates the same pull request instead of opening another.
+#
+# The token is a GitHub App's, limited to app-feedback with contents and pull requests write, and is
+# minted for this run only. It is not a personal access token. If the App is not installed on
+# app-feedback, the token step fails and says so.
 on:
   push:
     branches: [main]
@@ -19,24 +25,22 @@ on:
       - .github/workflows/privacy-policy.yml
   workflow_dispatch:
 
-# One deployment at a time. A newer run waits rather than cancelling one already deploying, so a
-# deployment is never cut off halfway, and the last policy to merge is the one that ends up live.
+# One sync at a time. A newer run waits rather than cancelling one already pushing, so the branch
+# is never left half-updated and the last policy to merge is the one proposed.
 concurrency:
-  group: pages
+  group: privacy-policy-sync
   cancel-in-progress: false
 
 permissions:
   contents: read
 
 jobs:
-  build:
+  sync:
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    # No configure-pages step: it only tells a static-site generator the site's base path, and this
-    # page is rendered by pandoc with no links into the site. Its settings read answered 404 here with
-    # Pages on and `pages: read` granted, failing the build before anything was published.
-    permissions:
-      contents: read
+    env:
+      BRANCH: sync/seerr-privacy-policy
+      TARGET: docs/seerr/privacy/index.md
     steps:
       # Full history, so the last-updated date is that of the last commit to change the policy. A
       # shallow clone would give the date of whatever commit triggered the run.
@@ -44,67 +48,90 @@ jobs:
         with:
           fetch-depth: 0
 
-      # A pinned release verified against its published checksum, the same way ci.yml installs
-      # actionlint. The runner image's apt archive would give whatever version it carries that week.
-      - name: Install pandoc
-        env:
-          VERSION: '3.12'
-          SHA256: 67d7d011fed8c8543306022b985b9b2499ab9b74818df91d8727c7e9ebc5ba06
-        run: |
-          set -euo pipefail
-          curl -sSLo pandoc.tar.gz \
-            "https://github.com/jgm/pandoc/releases/download/${VERSION}/pandoc-${VERSION}-linux-amd64.tar.gz"
-          echo "${SHA256}  pandoc.tar.gz" | sha256sum -c -
-          tar xzf pandoc.tar.gz --strip-components=2 "pandoc-${VERSION}/bin/pandoc"
-          ./pandoc --version | head -n 1
+      - name: Mint a token for app-feedback
+        id: token
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349 # v2
+        with:
+          app-id: ${{ secrets.AUTHOR_APP_ID }}
+          private-key: ${{ secrets.AUTHOR_APP_PRIVATE_KEY }}
+          owner: ScottCooper92
+          repositories: app-feedback
+          permission-contents: write
+          permission-pull-requests: write
 
-      # The policy's first line is its heading. The last-updated line goes straight under it, so
-      # the date is the first thing a reader sees.
-      - name: Render the policy
-        env:
-          SOURCE: docs/listing/privacy.md
-          HISTORY_URL: ${{ github.server_url }}/${{ github.repository }}/commits/${{ github.ref_name }}/docs/listing/privacy.md
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ScottCooper92/app-feedback
+          path: app-feedback
+          ref: main
+          token: ${{ steps.token.outputs.token }}
+
+      # The page is the front matter and the heading, then the last-updated line, then the policy
+      # without its own heading. Every part this does not write is checked to be where it is
+      # expected, so a change to the page's layout stops the sync instead of being overwritten.
+      - name: Build the page
         run: |
           set -euo pipefail
-          head -n 1 "$SOURCE" | grep -q '^# ' || {
-            echo "::error file=$SOURCE::The policy must start with a '# ' heading"
+          source=docs/listing/privacy.md
+          page="app-feedback/${TARGET}"
+          [ "$(head -n 1 "$source" | cut -c1-2)" = '# ' ] || {
+            echo "::error file=$source::The policy must start with a '# ' heading"
             exit 1
           }
-          updated=$(git log -1 --format=%cs -- "$SOURCE")
-          mkdir -p _site/privacy
-          {
-            head -n 1 "$SOURCE"
-            printf '\n*Last updated %s. [Change history](%s).*\n' "$updated" "$HISTORY_URL"
-            tail -n +2 "$SOURCE"
-          } | ./pandoc \
-            --from=gfm \
-            --to=html5 \
-            --standalone \
-            --metadata pagetitle="Privacy policy - Seerr Companion" \
-            --metadata lang=en \
-            --output=_site/privacy/index.html
-          # The point of rendering it here is that the page loads nothing from anywhere else. Fail
-          # rather than publish a page that does, if a pandoc upgrade or the policy itself adds a
-          # script, a stylesheet link or an embedded resource.
-          if grep -Eni '<script|<link|<iframe|<img|@import|url\(' _site/privacy/index.html; then
-            echo "::error::The rendered page loads an external resource"
+          [ -z "$(sed -n 2p "$source")" ] || {
+            echo "::error file=$source::The policy's heading must be followed by a blank line"
             exit 1
+          }
+          [ "$(head -n 1 "$page")" = '---' ] || {
+            echo "::error::$TARGET does not start with front matter"
+            exit 1
+          }
+          front_end=$(awk 'NR > 1 && /^---$/ { print NR; exit }' "$page")
+          [ -n "$front_end" ] || {
+            echo "::error::$TARGET has no end to its front matter"
+            exit 1
+          }
+          history=$(grep -m1 -E '^\*Last updated [0-9]{4}-[0-9]{2}-[0-9]{2}\. \[Change history\]' "$page") || {
+            echo "::error::$TARGET has no 'Last updated ... Change history' line"
+            exit 1
+          }
+          updated=$(git log -1 --format=%cs -- "$source")
+          history=$(printf '%s' "$history" | sed -E "s/^\*Last updated [0-9]{4}-[0-9]{2}-[0-9]{2}\./*Last updated ${updated}./")
+          {
+            head -n "$front_end" "$page"
+            head -n 1 "$source"
+            printf '\n%s\n\n' "$history"
+            tail -n +3 "$source"
+          } > page.new
+          mv page.new "$page"
+
+      - name: Open or update the pull request
+        env:
+          GH_TOKEN: ${{ steps.token.outputs.token }}
+          REPO: ScottCooper92/app-feedback
+          SOURCE_COMMIT: ${{ github.sha }}
+          BOT_ID: ${{ vars.AUTHOR_BOT_ID }}
+          SOURCE_URL: ${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}
+        run: |
+          set -euo pipefail
+          : "${BOT_ID:?The AUTHOR_BOT_ID repository variable is not set}"
+          cd app-feedback
+          if git diff --quiet -- "$TARGET"; then
+            echo "The published policy already matches."
+            exit 0
           fi
-
-      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
-        with:
-          path: _site
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    permissions:
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}privacy/
-    steps:
-      - id: deployment
-        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
+          git config user.name "binge-pr-author[bot]"
+          git config user.email "${BOT_ID}+binge-pr-author[bot]@users.noreply.github.com"
+          git checkout -B "$BRANCH"
+          git add -- "$TARGET"
+          git commit -m "docs: sync the Seerr Companion privacy policy" \
+            -m "Source: ${SOURCE_URL}"
+          git push --force origin "$BRANCH"
+          existing=$(gh pr list --repo "$REPO" --head "$BRANCH" --state open --json number --jq '.[0].number // empty')
+          body="Syncs the Seerr Companion privacy policy from its source, \`docs/listing/privacy.md\`, at ${SOURCE_URL}. Only the body of the policy and the date in its last-updated line change. Merging this publishes it."
+          if [ -n "$existing" ]; then
+            gh pr edit "$existing" --repo "$REPO" --body "$body"
+          else
+            gh pr create --repo "$REPO" --base main --head "$BRANCH" \
+              --title "docs: sync the Seerr Companion privacy policy" --body "$body"
+          fi

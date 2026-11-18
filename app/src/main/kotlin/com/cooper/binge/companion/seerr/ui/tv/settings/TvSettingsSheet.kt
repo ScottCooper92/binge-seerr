@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Dns
 import androidx.compose.material.icons.filled.LinkOff
+import androidx.compose.material.icons.filled.QrCode
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
@@ -36,6 +37,8 @@ import com.binge.designsystem.tv.template.TvPaneRow
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.demo.isDemoOrigin
 import com.cooper.binge.companion.seerr.flags.LocalFlags
+import com.cooper.binge.companion.seerr.flags.bingePromotion
+import com.cooper.binge.companion.seerr.seerr.releaseNotesUrl
 import com.cooper.binge.companion.seerr.ui.hub.HubUiState
 import com.cooper.binge.companion.seerr.ui.settings.AppSettings
 import com.cooper.binge.companion.seerr.ui.settings.SettingsUiState
@@ -44,10 +47,12 @@ import com.binge.designsystem.tv.R as TvR
 
 internal const val PAGE_SETTINGS = "settings"
 internal const val PAGE_BUG_REPORT = "bug-report"
+internal const val PAGE_RELEASE_NOTES = "release-notes"
 private const val PAGE_GROUP_PREFIX = "group:"
 private const val KEY_CLOSE = "close"
 private const val KEY_SUMMARY = "summary"
 private const val KEY_CODE = "code"
+private const val KEY_RELEASE_NOTES = "release-notes-row"
 
 /** The page a group opens, named by its title: a group appears or goes as the hub reads the server, so an index would shift. */
 internal fun groupPage(title: String): String = PAGE_GROUP_PREFIX + title
@@ -86,6 +91,7 @@ internal fun TvSettingsSheet(
             nav.page.agentOrNull() != null && actions.agents != null ->
                 actions.agents.page(this, checkNotNull(nav.page.agentOrNull()), nav)
             nav.page == PAGE_BUG_REPORT && ready.app != null -> BugReportPage(nav, ready.app)
+            nav.page == PAGE_RELEASE_NOTES -> TvReleaseNotesSheetContent(ready.server.variant.releaseNotesUrl(), nav.row(KEY_CODE))
             else -> {
                 val tvJobs = TvJobs(jobs, actions.jobs, presses)
                 val agents =
@@ -153,6 +159,16 @@ private fun ColumnScope.RootPage(
     if (demo) TvSideSheetBody(stringResource(R.string.settings_demo_note))
     TvSideSheetRows {
         TvInfoCard(title = summary.title, lines = summary.lines, icon = Icons.Filled.Dns, modifier = nav.row(KEY_SUMMARY))
+        // Only when the server reports an update: a television has no browser, so the notes open as a code for the phone.
+        if (summary.updateAvailable) {
+            TvSideSheetRow(
+                label = stringResource(R.string.tv_settings_release_notes),
+                icon = Icons.Filled.QrCode,
+                onClick = { nav.push(PAGE_RELEASE_NOTES, KEY_RELEASE_NOTES) },
+                modifier = nav.row(KEY_RELEASE_NOTES),
+                opensPage = true,
+            )
+        }
         groups.forEach { group ->
             TvSideSheetRow(
                 label = group.page.title,
