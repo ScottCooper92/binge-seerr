@@ -90,7 +90,7 @@ private fun ReadyPage(
     val context = LocalContext.current
     MediaHeroDetailPage(
         title = movie.title,
-        backdropUrl = movie.backdropUrl ?: movie.posterUrl,
+        backdropUrl = movie.backdropUrl,
         metaText = "",
         genres = movie.genres,
         tagline = movie.tagline,
