@@ -133,6 +133,7 @@ internal fun SeerrMovieDetailsDto.toMovieDetails(
         fourK = if (mayRequest4k) VersionState(status4k, status4k.mayBeRequested()) else null,
         mediaId = mediaInfo?.id,
         webUrl = webUrl,
+        releaseDate = releaseDate?.takeIf { it.isNotBlank() },
     )
 }
 
