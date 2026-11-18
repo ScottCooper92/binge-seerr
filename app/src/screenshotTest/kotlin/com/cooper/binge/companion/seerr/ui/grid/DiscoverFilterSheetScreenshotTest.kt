@@ -18,6 +18,8 @@ import java.time.LocalDate
 
 private val TODAY = LocalDate.of(2026, 11, 18)
 
+private const val LONG_LIST = 40
+
 private val WORDS =
     FilterVocabulary(
         genres = listOf(FilterOption("18", "Drama"), FilterOption("35", "Comedy"), FilterOption("878", "Science Fiction")),
@@ -146,6 +148,22 @@ class DiscoverFilterSheetScreenshotTest {
     @SeerrScreenStatePreview
     @Composable
     fun rating() = Section(DiscoverFilterSection.Rating)
+
+    /** A server's whole language list: more rows than the sheet is tall, so the page scrolls and Done stays pinned under it. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun languageLong() =
+        Column {
+            DiscoverSectionPage(
+                section = DiscoverFilterSection.Language,
+                filters = DiscoverFilters(language = "l5"),
+                vocabulary = FilterVocabulary(languages = (1..LONG_LIST).map { FilterOption("l$it", "Language $it") }),
+                today = TODAY,
+                onChange = {},
+                onDone = {},
+            )
+        }
 
     @PreviewTest
     @SeerrScreenStatePreview

@@ -25,6 +25,7 @@ import com.binge.designsystem.component.BingeFilterChip
 import com.binge.designsystem.component.BingeSheetFooter
 import com.binge.designsystem.component.BingeSheetKind
 import com.binge.designsystem.component.BingeSheetNav
+import com.binge.designsystem.component.bingeSheetScroll
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverFilters
@@ -90,15 +91,17 @@ private fun ColumnScope.RowsPage(
     onChange: (DiscoverFilterDraft) -> Unit,
     onApply: () -> Unit,
 ) {
-    DiscoverFilterSheetContent(
-        draft = draft,
-        vocabulary = vocabulary,
-        today = today,
-        onKind = { onChange(draft.withKind(it)) },
-        onSort = { onChange(draft.withSort(it)) },
-        onOpen = { nav.push(it.name) },
-        onClearAll = { onChange(draft.copy(filters = DiscoverFilters())) },
-    )
+    Column(Modifier.weight(1f, fill = false).bingeSheetScroll()) {
+        DiscoverFilterSheetContent(
+            draft = draft,
+            vocabulary = vocabulary,
+            today = today,
+            onKind = { onChange(draft.withKind(it)) },
+            onSort = { onChange(draft.withSort(it)) },
+            onOpen = { nav.push(it.name) },
+            onClearAll = { onChange(draft.copy(filters = DiscoverFilters())) },
+        )
+    }
     BingeSheetFooter {
         BingeActionFooter(label = stringResource(R.string.grid_filters_show_results), onClick = onApply)
     }
