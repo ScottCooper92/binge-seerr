@@ -28,6 +28,8 @@ data class GridControls(
     val vocabulary: FilterVocabulary = FilterVocabulary(),
     /** The filters the user added to the list's own, one chip each; empty where the list takes no filters. */
     val groups: List<FilterGroup> = emptyList(),
+    /** What the chips in [groups] name: the filters in force without the ones the list opened with. */
+    val added: DiscoverFilters = DiscoverFilters(),
 )
 
 /**

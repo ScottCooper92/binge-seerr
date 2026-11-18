@@ -194,7 +194,14 @@ internal fun DiscoverFilterSection.summary(
                 .joinToString(", ") { it.name }
                 .ifEmpty { if (filters.providers.isEmpty()) any else number.format(filters.providers.size) }
         DiscoverFilterSection.Certification ->
-            filters.certification?.let { stringResource(R.string.grid_filter_pair, filters.certificationCountry.orEmpty(), it) } ?: any
+            filters.certification?.let {
+                stringResource(
+                    R.string.grid_filter_pair,
+                    filters.certificationCountry?.let(::countryName).orEmpty(),
+                    it,
+                )
+            }
+                ?: any
         DiscoverFilterSection.Keywords -> keywordSummary(filters.keywords, vocabulary) ?: any
         DiscoverFilterSection.ExcludeKeywords -> keywordSummary(filters.excludeKeywords, vocabulary) ?: any
         DiscoverFilterSection.Status -> {

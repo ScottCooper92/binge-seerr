@@ -471,4 +471,41 @@ class DiscoverGridViewModelTest {
             assertEquals(emptyList<FilterGroup>(), (vm.uiState.value as DiscoverGridUiState.Ready).controls.groups)
         }
     }
+
+    @Test
+    fun `a genre added to a genre row is a chip that names only it, and clearing it keeps the row's genre`() =
+        runVm { vm ->
+            vm.onApply(DiscoverSort.PopularityDesc, DiscoverFilters(genres = setOf(18, 35)))
+            advanceUntilIdle()
+            val controls = (vm.uiState.value as DiscoverGridUiState.Ready).controls
+            assertEquals(setOf(35), controls.added.genres)
+            assertEquals(listOf(FilterGroup.Genres), controls.groups)
+            vm.onClearGroup(FilterGroup.Genres)
+            advanceUntilIdle()
+            val after = (vm.uiState.value as DiscoverGridUiState.Ready).controls
+            assertEquals(setOf(18), after.filters.genres)
+            assertEquals("Drama", after.chip?.label)
+            assertEquals(emptyList<FilterGroup>(), after.groups)
+        }
+
+    @Test
+    fun `keywords excluded on another kind's grid are named when the grid opens`() =
+        runTest {
+            val vm =
+                DiscoverGridViewModel(
+                    grid,
+                    lookups,
+                    media,
+                    TitleKind.Series,
+                    GridPreset.Popular,
+                    null,
+                    "2026-11-19",
+                    DiscoverFilters(excludeKeywords = setOf(9)),
+                    DiscoverSort.PopularityDesc,
+                )
+            val collector = launch(UnconfinedTestDispatcher(testScheduler)) { vm.uiState.collect {} }
+            advanceUntilIdle()
+            assertEquals("keyword 9", vm.uiState.value.controls.vocabulary.keywordNames[9])
+            collector.cancel()
+        }
 }

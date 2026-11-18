@@ -50,4 +50,25 @@ class FilterGroupTest {
     fun `a region alone is not a filter`() {
         assertTrue(DiscoverFilters(region = "GB").setGroups().isEmpty())
     }
+
+    @Test
+    fun `clearing a group keeps what the list opened with in it`() {
+        val opened = DiscoverFilters(genres = setOf(28))
+        val now = DiscoverFilters(genres = setOf(28, 12), language = "ja")
+
+        assertEquals(setOf(28), now.clearedKeeping(FilterGroup.Genres, opened).genres)
+        assertEquals("ja", now.clearedKeeping(FilterGroup.Genres, opened).language)
+        assertEquals(null, now.clearedKeeping(FilterGroup.Language, opened).language)
+    }
+
+    @Test
+    fun `a streaming row's region stays with its service`() {
+        val opened = DiscoverFilters(providers = setOf(8), region = "GB")
+        val now = DiscoverFilters(providers = setOf(8, 337), region = "GB")
+
+        val cleared = now.clearedKeeping(FilterGroup.Where, opened)
+
+        assertEquals(setOf(8), cleared.providers)
+        assertEquals("GB", cleared.region)
+    }
 }

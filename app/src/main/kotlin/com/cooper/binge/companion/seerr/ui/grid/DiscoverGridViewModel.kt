@@ -17,6 +17,7 @@ import com.cooper.binge.companion.seerr.discover.grid.FilterLookups
 import com.cooper.binge.companion.seerr.discover.grid.GridPreset
 import com.cooper.binge.companion.seerr.discover.grid.GridRequest
 import com.cooper.binge.companion.seerr.discover.grid.cleared
+import com.cooper.binge.companion.seerr.discover.grid.clearedKeeping
 import com.cooper.binge.companion.seerr.discover.grid.keeps
 import com.cooper.binge.companion.seerr.discover.grid.setGroups
 import com.cooper.binge.companion.seerr.discover.grid.startingFilters
@@ -86,7 +87,13 @@ class DiscoverGridViewModel
             viewModelScope.launch {
                 val canRefine = attempt { grid.canRefine(preset) }.getOrDefault(false)
                 refinable.value = canRefine
-                if (canRefine) loader.load(starting.keywords + starting.excludeKeywords + sortFilter.query.value.filters.keywords)
+                if (canRefine) {
+                    loader.load(
+                        starting.keywords + starting.excludeKeywords +
+                            sortFilter.query.value.filters
+                                .let { it.keywords + it.excludeKeywords },
+                    )
+                }
             }
         }
 
@@ -110,6 +117,7 @@ class DiscoverGridViewModel
                 filters = query.filters,
                 vocabulary = words,
                 groups = if (canRefine) query.filters.without(starting).setGroups() else emptyList(),
+                added = if (canRefine) query.filters.without(starting) else DiscoverFilters(),
                 chip = if (canRefine && !starting.isEmpty && query.filters.keeps(starting)) preset.toChip(title) else null,
             )
 
@@ -129,8 +137,9 @@ class DiscoverGridViewModel
 
         fun onKeywordsNeeded(ids: Set<Int>) = loader.nameKeywords(ids)
 
-        /** Drops one added filter and keeps the rest. */
-        fun onClearGroup(group: FilterGroup) = sortFilter.updateFilters { it.cleared(group) }
+        /** Drops one added filter and keeps the rest, and the filter the list opened with while it is still in force. */
+        fun onClearGroup(group: FilterGroup) =
+            sortFilter.updateFilters { if (it.keeps(starting)) it.clearedKeeping(group, starting) else it.cleared(group) }
 
         fun onRetry() = list.retry()
 

@@ -48,3 +48,22 @@ fun DiscoverFilters.cleared(group: FilterGroup): DiscoverFilters =
         FilterGroup.ExcludedKeywords -> copy(excludeKeywords = emptySet())
         FilterGroup.Status -> copy(status = emptySet())
     }
+
+/**
+ * These filters with [group] cleared except what [base], the filters the list opened with, set in it: a chip for what the
+ * user added drops that, and the row's own filter stays.
+ */
+fun DiscoverFilters.clearedKeeping(
+    group: FilterGroup,
+    base: DiscoverFilters,
+): DiscoverFilters =
+    cleared(group).let { cleared ->
+        when (group) {
+            FilterGroup.Genres -> cleared.copy(genres = base.genres)
+            FilterGroup.Release -> cleared.copy(releaseFrom = base.releaseFrom, releaseTo = base.releaseTo)
+            FilterGroup.Language -> cleared.copy(language = base.language)
+            FilterGroup.Where -> cleared.copy(providers = base.providers, region = base.region)
+            FilterGroup.Keywords -> cleared.copy(keywords = base.keywords)
+            else -> cleared
+        }
+    }

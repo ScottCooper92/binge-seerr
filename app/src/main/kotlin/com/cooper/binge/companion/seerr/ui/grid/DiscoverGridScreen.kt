@@ -167,7 +167,7 @@ private fun ActiveFilterChips(
         items(controls.groups, key = { it.name }) { group ->
             val section = DiscoverFilterSection.entries.first { it.group == group }
             DiscoverQuickClearChip(
-                label = section.summary(controls.filters, controls.vocabulary, today),
+                label = section.summary(controls.added, controls.vocabulary, today),
                 tone = QuickClearTone.Include,
                 onClick = { actions.onClearGroup(group) },
             )

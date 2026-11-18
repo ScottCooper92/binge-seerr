@@ -35,20 +35,23 @@ private val DRAMA = ActiveFilterChip(ChipKind.Genre, "Drama")
 
 private val SORTED = GridControls(DiscoverSort.PopularityDesc, DRAMA)
 
+private val ADDED_FILTERS =
+    DiscoverFilters(
+        language = "ja",
+        providers = setOf(8, 337),
+        region = "GB",
+        certificationCountry = "GB",
+        certification = "15",
+        keywords = setOf(9715),
+        status = setOf(0, 3),
+    )
+
 private val ADDED =
     GridControls(
         sort = DiscoverSort.PopularityDesc,
         chip = DRAMA,
-        filters =
-            DiscoverFilters(
-                language = "ja",
-                providers = setOf(8, 337),
-                region = "GB",
-                certificationCountry = "GB",
-                certification = "15",
-                keywords = setOf(9715),
-                status = setOf(0, 3),
-            ),
+        filters = ADDED_FILTERS,
+        added = ADDED_FILTERS,
         vocabulary =
             FilterVocabulary(
                 languages = listOf(FilterOption("ja", "Japanese")),
