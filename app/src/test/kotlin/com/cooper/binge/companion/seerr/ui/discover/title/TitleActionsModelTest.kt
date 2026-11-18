@@ -45,7 +45,15 @@ class TitleActionsModelTest {
     fun `a partly available series that can still be requested keeps its status as a line`() {
         val model = titleActionsModel(VersionState(TitleAvailability.PartiallyAvailable, mayRequest = true), null)
         assertEquals(TitlePrimary.Request(fourKOnly = false), model.primary)
-        assertEquals(listOf(VersionStatus(TitleAvailability.PartiallyAvailable, fourK = false)), model.otherStatuses)
+        assertEquals(listOf(VersionStatus(TitleAvailability.PartiallyAvailable, fourK = false, versionShown = false)), model.otherStatuses)
+    }
+
+    @Test
+    fun `a server with a 4K version names the version and one without does not`() {
+        val withFourK = titleActionsModel(held(TitleAvailability.Available), held(TitleAvailability.None))
+        assertEquals(TitlePrimary.Status(VersionStatus(TitleAvailability.Available, fourK = false, versionShown = true)), withFourK.primary)
+        val without = titleActionsModel(held(TitleAvailability.Available), null)
+        assertEquals(TitlePrimary.Status(VersionStatus(TitleAvailability.Available, fourK = false, versionShown = false)), without.primary)
     }
 
     @Test

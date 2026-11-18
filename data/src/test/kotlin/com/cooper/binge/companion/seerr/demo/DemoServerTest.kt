@@ -24,6 +24,19 @@ class DemoServerTest {
 
     private fun demo(block: suspend (SeerrApi) -> Unit) = runTest { apis.anonymous(DEMO_ORIGIN, block) }
 
+    @Test
+    fun `the demo's titles carry genres the demo can name`() =
+        demo { api ->
+            val named = api.genres("movie", "en").associate { it.id to it.name }
+            val results = api.discoverTrending().results
+
+            assertTrue(results.isNotEmpty())
+            results.forEach { result ->
+                assertEquals(2, result.genreIds.size)
+                assertTrue("every id is one the demo names", result.genreIds.all { it in named })
+            }
+        }
+
     private suspend fun code(block: suspend () -> Unit): Int =
         try {
             block()

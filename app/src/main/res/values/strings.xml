@@ -1444,6 +1444,10 @@
     <string name="hubs_row_watchlist">Watchlist</string>
     <string name="hubs_row_popular_movies">Popular movies</string>
     <string name="hubs_row_popular_tv">Popular series</string>
+    <string name="hubs_browse_all_movies">Browse all movies</string>
+    <string name="hubs_browse_all_tv">Browse all shows</string>
+    <string name="hubs_browse_subtitle_movies">Filter by genre, decade, provider and more</string>
+    <string name="hubs_browse_subtitle_tv">Filter by genre, network, year and rating</string>
     <string name="hubs_row_upcoming_movies">Upcoming movies</string>
     <string name="hubs_row_upcoming_tv">Upcoming series</string>
     <string name="hubs_row_genres">Genres</string>
@@ -1468,17 +1472,23 @@
     <string name="title_page_stat_runtime">Runtime</string>
     <string name="title_page_stat_rated">Rated</string>
     <string name="title_page_stat_votes">%1$s votes</string>
+    <string name="title_page_more_like_this">More like this</string>
+    <string name="title_page_overview">Overview</string>
+    <string name="title_page_fact_director">Directed by</string>
+    <string name="title_page_fact_release_date">Release date</string>
+    <string name="series_stat_episodes">Episodes</string>
+    <plurals name="series_stat_seasons">
+        <item quantity="one">%d season</item>
+        <item quantity="other">%d seasons</item>
+    </plurals>
     <string name="title_page_stat_rating">Rating</string>
     <string name="title_page_stat_critics">Critics</string>
     <string name="title_page_stat_audience">Audience</string>
     <string name="title_page_stat_imdb">IMDb</string>
     <string name="title_page_cast">Cast</string>
     <string name="title_page_crew">Key crew</string>
-    <string name="title_page_videos">Videos</string>
     <string name="title_page_where_to_watch">Where to watch</string>
     <string name="title_page_collection">Collection</string>
-    <string name="title_page_recommended">Recommended</string>
-    <string name="title_page_similar">Similar</string>
     <string name="title_page_keywords">Keywords</string>
     <string name="title_page_fact_status">Status</string>
     <string name="title_page_fact_original_language">Original language</string>
@@ -1523,7 +1533,6 @@
     <string name="series_fact_creators">Created by</string>
     <string name="series_fact_first_aired">First aired</string>
     <string name="series_fact_last_aired">Last aired</string>
-    <string name="series_fact_episodes">Episodes</string>
     <string name="series_fact_next_episode">Next episode</string>
     <string name="series_fact_next_airs">Next episode airs</string>
     <string name="series_next_episode">%1$s (season %2$d, episode %3$d)</string>

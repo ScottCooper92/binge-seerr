@@ -12,6 +12,8 @@ import com.cooper.binge.companion.seerr.preview.SeerrSpanishPreviews
 import kotlinx.coroutines.flow.emptyFlow
 
 private const val SCROLLED_PX = 2500
+private const val FACTS_PX = 1400
+private const val FACTS_LARGE_FONT_PX = 2700
 
 private val NO_ACTIONS = TitlePageActions({}, {}, {}, {}, {}, {}, {}, {}, {}, {})
 
@@ -99,4 +101,28 @@ class TitlePageScreenshotTest {
     @SeerrSpanishPreviews
     @Composable
     fun longSpanish() = Frame(TitlePageUiState.Ready(longMovie(), fullExtras()))
+
+    /** The facts list at font scales 1.5 and 2, with the longest studio names: a label and its value stay readable. */
+    @PreviewTest
+    @SeerrFontScalePreviews
+    @Composable
+    fun factsLargeFonts() =
+        TitlePageScreen(
+            TitlePageUiState.Ready(longMovie(), fullExtras()),
+            emptyFlow(),
+            NO_ACTIONS,
+            scrollState = rememberScrollState(initial = FACTS_LARGE_FONT_PX),
+        )
+
+    /** The facts list in Spanish: the labels, the date and the language names. */
+    @PreviewTest
+    @SeerrSpanishPreviews
+    @Composable
+    fun factsSpanish() =
+        TitlePageScreen(
+            TitlePageUiState.Ready(longMovie(), fullExtras()),
+            emptyFlow(),
+            NO_ACTIONS,
+            scrollState = rememberScrollState(initial = FACTS_PX),
+        )
 }
