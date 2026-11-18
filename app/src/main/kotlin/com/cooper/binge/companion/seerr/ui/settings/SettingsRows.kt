@@ -15,8 +15,8 @@ import com.binge.designsystem.theme.BingeSentiment
 import com.binge.designsystem.theme.fill
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.demo.isDemoOrigin
-import com.cooper.binge.companion.seerr.seerr.isWebUrl
 import com.cooper.binge.companion.seerr.seerr.releaseNotesUrl
+import com.cooper.binge.companion.seerr.ui.isOpenableSite
 import com.cooper.binge.companion.seerr.ui.openInBrowser
 import com.cooper.binge.companion.seerr.ui.settings.server.ServerSettingsPage
 
@@ -33,7 +33,7 @@ internal fun connectionRows(
     showAbout: Boolean = true,
 ): List<ListItem> {
     val context = LocalContext.current
-    // The demo's address is not a page: nothing is there to open, and no other server is edited into its place.
+    // The demo has no other server to edit into its place.
     val demo = connection.baseUrl.isDemoOrigin()
     return listOfNotNull(
         ListItem(
@@ -41,7 +41,7 @@ internal fun connectionRows(
             iconTint = BingeSentiment.Info.fill(),
             label = stringResource(R.string.settings_server),
             detail = connection.baseUrl,
-            clickable = connection.baseUrl.isWebUrl() && !demo,
+            clickable = isOpenableSite(connection.baseUrl),
             destination = ListItemDestination.External,
             onClick = { context.openInBrowser(connection.baseUrl) },
         ),

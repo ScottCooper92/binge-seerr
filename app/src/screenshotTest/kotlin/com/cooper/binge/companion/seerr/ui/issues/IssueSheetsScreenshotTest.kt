@@ -17,14 +17,22 @@ class IssueSheetsScreenshotTest {
     @Composable
     fun manageWithServiceLinks() =
         SheetFrame {
-            IssueManageContent("Seerr", "Plex", "Radarr", onOpenWeb = {}, onOpenMediaServer = {}, onOpenService = {})
+            IssueManageContent(
+                serverName = "Seerr",
+                mediaServerName = "Plex",
+                serviceName = "Radarr",
+                webUrl = "https://seerr.example/issues/1",
+                onOpen = {},
+                mediaServerUrl = "https://plex.example/",
+                serviceUrl = "https://radarr.example/",
+            )
         }
 
     /** Without a media server or service URL to offer, the web link is all there is. */
     @PreviewTest
     @SeerrComponentPreviews
     @Composable
-    fun manageWebLinkOnly() = SheetFrame { IssueManageContent("Seerr", null, "Radarr", onOpenWeb = {}) }
+    fun manageWebLinkOnly() = SheetFrame { IssueManageContent("Seerr", null, "Radarr", "https://seerr.example/issues/1", {}) }
 
     @PreviewTest
     @SeerrComponentPreviews
