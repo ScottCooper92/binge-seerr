@@ -79,11 +79,14 @@ class TitleSearchViewModel
         }
     }
 
+private fun TitleResult.key() = kind to tmdbId
+
+/** Rows are keyed by kind and TMDB id, and a title can come back on two pages, so a repeat is dropped. */
 internal fun QuerySearchState<TitleResult>.toUiState(text: String): TitleSearchUiState =
     when (this) {
         is QuerySearchState.Idle -> TitleSearchUiState.Idle(text, recents)
         is QuerySearchState.Loading -> TitleSearchUiState.Loading(text)
-        is QuerySearchState.Results -> TitleSearchUiState.Ready(text, items, hasMore, appending, appendFailed)
+        is QuerySearchState.Results -> TitleSearchUiState.Ready(text, items.distinctBy(TitleResult::key), hasMore, appending, appendFailed)
         is QuerySearchState.NoResults -> TitleSearchUiState.NoResults(text, query)
         is QuerySearchState.Failed -> TitleSearchUiState.Error(text, cause.toSeerrError())
     }

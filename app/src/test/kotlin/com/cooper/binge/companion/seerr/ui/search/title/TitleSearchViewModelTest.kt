@@ -165,6 +165,18 @@ class TitleSearchViewModelTest {
         }
 
     @Test
+    fun `a title repeated on a further page is shown once`() =
+        runVm { vm ->
+            titles.answer = { _, page -> TitlePage(listOf(title(1), title(page + 10, TitleKind.Person)), page, 2) }
+            vm.onQueryChange("matrix")
+            advanceUntilIdle()
+            vm.onLoadMore()
+            advanceUntilIdle()
+            val ready = vm.uiState.value as TitleSearchUiState.Ready
+            assertEquals(listOf(1, 11, 12), ready.results.map { it.tmdbId })
+        }
+
+    @Test
     fun `forgetting the recents empties them`() =
         runVm { vm ->
             advanceUntilIdle()
