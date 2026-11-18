@@ -1,5 +1,6 @@
 package com.cooper.binge.companion.seerr.discover.collection
 
+import com.binge.companion.sdk.attempt
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.toTitleResult
 import com.cooper.binge.companion.seerr.seerr.SeerrApi
@@ -34,6 +35,8 @@ class SeerrCollectionRepository(
 
     override suspend fun mayBlock(): Boolean =
         withContext(io) { profile().canBlockCollections && viewer().toPermissions().canManageBlocklist }
+
+    override suspend fun serverProfile(): SeerrServerProfile? = attempt { profile() }.getOrNull()
 
     override suspend fun setBlocked(
         id: Int,

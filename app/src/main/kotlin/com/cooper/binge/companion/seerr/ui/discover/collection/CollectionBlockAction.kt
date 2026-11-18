@@ -2,9 +2,9 @@ package com.cooper.binge.companion.seerr.ui.discover.collection
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Undo
 import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Undo
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -49,7 +49,7 @@ internal fun CollectionOverflowAction(
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             DropdownMenuItem(
                 text = { Text(stringResource(if (blocked) R.string.collection_page_unblock else R.string.collection_page_block)) },
-                leadingIcon = { Icon(if (blocked) Icons.Filled.Undo else Icons.Filled.Block, contentDescription = null) },
+                leadingIcon = { Icon(if (blocked) Icons.AutoMirrored.Filled.Undo else Icons.Filled.Block, contentDescription = null) },
                 onClick = {
                     expanded = false
                     if (blocked) onUnblock() else onBlock()

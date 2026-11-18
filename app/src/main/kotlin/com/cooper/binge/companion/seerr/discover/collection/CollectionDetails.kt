@@ -2,6 +2,7 @@ package com.cooper.binge.companion.seerr.discover.collection
 
 import com.cooper.binge.companion.seerr.discover.TitleAvailability
 import com.cooper.binge.companion.seerr.discover.TitleResult
+import com.cooper.binge.companion.seerr.seerr.SeerrServerProfile
 
 /** A collection as its page shows it: the name and story, and every film in it, oldest first. */
 data class CollectionDetails(
@@ -24,6 +25,9 @@ interface CollectionRepository {
 
     /** Whether the viewer may block collections here: the server must have the endpoint and the account must manage the blocklist. */
     suspend fun mayBlock(): Boolean
+
+    /** The server's lineage and version, for the failure event only; null where it cannot be read. */
+    suspend fun serverProfile(): SeerrServerProfile?
 
     suspend fun setBlocked(
         id: Int,
