@@ -2,6 +2,7 @@ package com.cooper.binge.companion.seerr.ui.discover.title
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -24,6 +25,7 @@ import com.binge.designsystem.component.PersonCard
 import com.binge.designsystem.component.SectionHeader
 import com.binge.designsystem.component.WrappingRow
 import com.binge.designsystem.isExpandedLayout
+import com.binge.designsystem.template.LocalHeroReadingMargin
 import com.binge.designsystem.theme.BingeSentiment
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.TitleAvailability
@@ -46,17 +48,19 @@ internal fun TitlePageBody(
         // The expanded header already shows these and the synopsis.
         val expanded = isExpandedLayout()
         if (!expanded) TitleStatsRows(movie.titleStats(locale))
-        TitleActions(
-            model = titleActionsModel(movie.standard, movie.fourK),
-            onRequest = actions.onRequest,
-            onTrailer = movie.videos.trailerUrl()?.let { url -> { actions.onOpenUrl(url) } },
-            onShare = { context.shareTitle(movie.title, movie.webUrl) },
-        )
-        if (!expanded) OverviewSection(movie.overview)
-        InfoRowList(movie.factEntries(context.resources, locale, state.extras?.ratings))
+        ReadingColumn {
+            TitleActions(
+                model = titleActionsModel(movie.standard, movie.fourK),
+                onRequest = actions.onRequest,
+                onTrailer = movie.videos.trailerUrl()?.let { url -> { actions.onOpenUrl(url) } },
+                onShare = { context.shareTitle(movie.title, movie.webUrl) },
+            )
+            if (!expanded) OverviewSection(movie.overview)
+            InfoRowList(movie.factEntries(context.resources, locale, state.extras?.ratings))
+        }
         PeopleRow(stringResource(R.string.title_page_cast), movie.cast, actions.onOpenPerson, actions.onOpenCredits)
         PeopleRow(stringResource(R.string.title_page_crew), movie.keyCrew, actions.onOpenPerson, actions.onOpenCredits)
-        WhereToWatchSection(movie.providers, actions.onOpenUrl)
+        ReadingColumn { WhereToWatchSection(movie.providers, actions.onOpenUrl) }
         movie.collection?.let { collection ->
             TitleRow(
                 title = collection.name,
@@ -66,9 +70,25 @@ internal fun TitlePageBody(
             )
         }
         state.extras?.let { TitleRow(stringResource(R.string.title_page_more_like_this), it.moreLikeThis, actions.onOpenTitle) }
-        KeywordsSection(movie.keywords)
+        ReadingColumn { KeywordsSection(movie.keywords) }
     }
 }
+
+/**
+ * A run of sections that sits in the page's reading column. The hero template leaves the body full-width so the rails can bleed, and
+ * measures the margin that centres a column in what is left: [LocalHeroReadingMargin], zero on a phone, so a phone's page is as it was.
+ */
+@Composable
+internal fun ReadingColumn(content: @Composable ColumnScope.() -> Unit) =
+    Column(
+        modifier = Modifier.padding(horizontal = LocalHeroReadingMargin.current),
+        verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
+        content = content,
+    )
+
+/** The inset a rail starts at: the screen's, plus the reading margin, so its first card lines up with the column and it still bleeds. */
+@Composable
+private fun railInset() = dimensionResource(DesR.dimen.padding_m) + LocalHeroReadingMargin.current
 
 /** The "Overview" heading over the synopsis, as Binge's pages have it. */
 @Composable
@@ -103,7 +123,14 @@ internal fun PeopleRow(
     onSeeAll: () -> Unit,
 ) {
     if (people.isEmpty()) return
-    MediaCarousel(title = title, items = people, itemKey = { it.personId }, onMoreClick = onSeeAll, onEndTileClick = null) { _, person ->
+    MediaCarousel(
+        title = title,
+        items = people,
+        itemKey = { it.personId },
+        onMoreClick = onSeeAll,
+        onEndTileClick = null,
+        horizontalPadding = railInset(),
+    ) { _, person ->
         PersonCard(
             name = person.name,
             subtitle = person.role,
@@ -121,7 +148,13 @@ internal fun TitleRow(
     onSeeAll: (() -> Unit)? = null,
 ) {
     if (titles.isEmpty()) return
-    MediaCarousel(title = title, items = titles, itemKey = { it.kind.name + it.tmdbId }, onMoreClick = onSeeAll) { _, item ->
+    MediaCarousel(
+        title = title,
+        items = titles,
+        itemKey = { it.kind.name + it.tmdbId },
+        onMoreClick = onSeeAll,
+        horizontalPadding = railInset(),
+    ) { _, item ->
         MediaCard(
             posterUrl = item.artworkPath?.let { it.toTmdbPosterUrl() },
             title = item.name,

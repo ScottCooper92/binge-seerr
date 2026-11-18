@@ -56,22 +56,26 @@ internal fun SeriesPageBody(
         // The expanded header already shows these and the synopsis.
         val expanded = isExpandedLayout()
         if (!expanded) TitleStatsRows(series.titleStats(locale))
-        TitleActions(
-            model = titleActionsModel(series.standard, series.fourK),
-            onRequest = actions.onRequest,
-            onTrailer = series.videos.trailerUrl()?.let { url -> { actions.onOpenUrl(url) } },
-            onShare = { context.shareTitle(series.name, series.webUrl) },
-        )
-        if (!expanded) OverviewSection(series.overview)
-        EpisodesSection(state, seasonActions)
-        InfoRowList(series.factEntries(context.resources, locale, state.extras?.ratings))
+        ReadingColumn {
+            TitleActions(
+                model = titleActionsModel(series.standard, series.fourK),
+                onRequest = actions.onRequest,
+                onTrailer = series.videos.trailerUrl()?.let { url -> { actions.onOpenUrl(url) } },
+                onShare = { context.shareTitle(series.name, series.webUrl) },
+            )
+            if (!expanded) OverviewSection(series.overview)
+        }
+        ReadingColumn { EpisodesSection(state, seasonActions) }
+        ReadingColumn { InfoRowList(series.factEntries(context.resources, locale, state.extras?.ratings)) }
         PeopleRow(stringResource(R.string.title_page_cast), series.cast, actions.onOpenPerson, actions.onOpenCredits)
         PeopleRow(stringResource(R.string.title_page_crew), series.keyCrew, actions.onOpenPerson, actions.onOpenCredits)
         series.providers?.takeIf { it.streaming.isNotEmpty() }?.let { providers ->
-            SectionHeader(stringResource(R.string.title_page_where_to_watch))
-            TagRow(providers.streaming.map { it.name })
+            ReadingColumn {
+                SectionHeader(stringResource(R.string.title_page_where_to_watch))
+                TagRow(providers.streaming.map { it.name })
+            }
         }
         state.extras?.let { TitleRow(stringResource(R.string.title_page_more_like_this), it.moreLikeThis, actions.onOpenTitle) }
-        KeywordsSection(series.keywords)
+        ReadingColumn { KeywordsSection(series.keywords) }
     }
 }
