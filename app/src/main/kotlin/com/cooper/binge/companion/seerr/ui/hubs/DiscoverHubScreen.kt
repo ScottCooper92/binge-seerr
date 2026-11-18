@@ -152,7 +152,7 @@ private fun Hero(
  * inserted above it, so a hub sitting at its very top would stay on its first row with the new hero out of sight above. A hero
  * that arrives while the list was at its top takes the top; one that arrives while the user has scrolled leaves them where they
  * are. The position is read before the hero is in, since inserting it is what moves the list, and a pull to refresh at the top
- * does not leave the top.
+ * does not leave the top. A hub restored with its hero already there is left alone.
  */
 @Composable
 private fun ShowHeroWhenItArrives(
@@ -165,8 +165,12 @@ private fun ShowHeroWhenItArrives(
         snapshotFlow { listState.firstVisibleItemIndex == 0 && listState.firstVisibleItemScrollOffset == 0 }
             .collect { atTop -> if (!heroNow) atTopBeforeHero = atTop }
     }
+    // Only a hero that arrives while this composition is watching counts. A hub composed again with its hero already there (a
+    // rotation, a restore) has a list state that came back with its own position, which is not this one's to reset.
+    var heroSeen by remember { mutableStateOf(hasHero) }
     LaunchedEffect(hasHero) {
-        if (hasHero && atTopBeforeHero) listState.scrollToItem(0)
+        if (hasHero && !heroSeen && atTopBeforeHero) listState.scrollToItem(0)
+        heroSeen = hasHero
     }
 }
 
