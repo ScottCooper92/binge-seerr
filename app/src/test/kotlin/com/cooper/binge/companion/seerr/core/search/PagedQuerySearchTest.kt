@@ -45,8 +45,8 @@ class PagedQuerySearchTest {
     private fun newSearch(
         scope: CoroutineScope,
         history: QueryHistory = FakeHistory(),
-        fetch: suspend (String, Int) -> SearchPage<String> = { q, p -> SearchPage(listOf("$q-$p"), p, 3) },
         keyOf: ((String) -> Any)? = null,
+        fetch: suspend (String, Int) -> SearchPage<String> = { q, p -> SearchPage(listOf("$q-$p"), p, 3) },
     ) = PagedQuerySearch(scope, history, { q, p ->
         calls += q to p
         fetch(q, p)
