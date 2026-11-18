@@ -9,6 +9,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.TitleResult
 import com.cooper.binge.companion.seerr.discover.request.RequestResult
+import com.cooper.binge.companion.seerr.discover.title.TitleCompany
 import com.cooper.binge.companion.seerr.ui.openInBrowser
 import com.cooper.binge.companion.seerr.ui.state.EmptyScreen
 
@@ -27,10 +28,11 @@ internal fun TitleDetailEntry(
     onBack: () -> Unit,
     onOpenCredits: () -> Unit,
     onOpenSeason: (seasonNumber: Int, seasonName: String) -> Unit,
+    onOpenCompany: (TitleCompany) -> Unit,
 ) {
     when (kind) {
-        TitleKind.Movie -> FilmPageEntry(tmdbId, onBack, onOpenCredits)
-        TitleKind.Series -> SeriesPageEntry(tmdbId, onBack, onOpenCredits, onOpenSeason)
+        TitleKind.Movie -> FilmPageEntry(tmdbId, onBack, onOpenCredits, onOpenCompany)
+        TitleKind.Series -> SeriesPageEntry(tmdbId, onBack, onOpenCredits, onOpenSeason, onOpenCompany)
         else -> EmptyScreen(message = "")
     }
 }
@@ -40,6 +42,7 @@ private fun FilmPageEntry(
     tmdbId: Int,
     onBack: () -> Unit,
     onOpenCredits: () -> Unit,
+    onOpenCompany: (TitleCompany) -> Unit,
 ) {
     val viewModel = hiltViewModel<TitlePageViewModel, TitlePageViewModel.Factory>(creationCallback = { it.create(tmdbId) })
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -50,6 +53,7 @@ private fun FilmPageEntry(
             rememberTitlePageActions(
                 onBack = onBack,
                 onOpenCredits = onOpenCredits,
+                onOpenCompany = onOpenCompany,
                 onRetry = viewModel::load,
                 onRequest = viewModel::openRequestSheet,
                 onCloseRequest = viewModel::closeRequestSheet,
@@ -65,6 +69,7 @@ private fun SeriesPageEntry(
     onBack: () -> Unit,
     onOpenCredits: () -> Unit,
     onOpenSeason: (Int, String) -> Unit,
+    onOpenCompany: (TitleCompany) -> Unit,
 ) {
     val viewModel = hiltViewModel<SeriesPageViewModel, SeriesPageViewModel.Factory>(creationCallback = { it.create(tmdbId) })
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -75,6 +80,7 @@ private fun SeriesPageEntry(
             rememberTitlePageActions(
                 onBack = onBack,
                 onOpenCredits = onOpenCredits,
+                onOpenCompany = onOpenCompany,
                 onRetry = viewModel::load,
                 onRequest = viewModel::openRequestSheet,
                 onCloseRequest = viewModel::closeRequestSheet,
@@ -85,11 +91,12 @@ private fun SeriesPageEntry(
     )
 }
 
-/** The page's actions with the links a title page shares: another title, a web page. A person and a collection open their own pages, which gives the film's collection rail its See all. */
+/** The page's actions with the links a title page shares: another title, a web page. A studio or network opens its grid; a person and a collection open their own pages, which gives the film's collection rail its See all. */
 @Composable
 private fun rememberTitlePageActions(
     onBack: () -> Unit,
     onOpenCredits: () -> Unit,
+    onOpenCompany: (TitleCompany) -> Unit,
     onRetry: () -> Unit,
     onRequest: () -> Unit,
     onCloseRequest: () -> Unit,
@@ -109,6 +116,7 @@ private fun rememberTitlePageActions(
         onOpenCollection = { id -> openTitle(TitleKind.Collection, id, "") },
         onOpenUrl = context::openInBrowser,
         onOpenCredits = onOpenCredits,
+        onOpenCompany = onOpenCompany,
         onReload = onReload,
     )
 }

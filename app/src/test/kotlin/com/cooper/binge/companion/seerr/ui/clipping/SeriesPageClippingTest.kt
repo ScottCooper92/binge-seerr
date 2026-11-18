@@ -9,6 +9,7 @@ import com.cooper.binge.companion.seerr.discover.request.SeasonChoice
 import com.cooper.binge.companion.seerr.discover.request.SeasonChoices
 import com.cooper.binge.companion.seerr.discover.title.SeasonEpisode
 import com.cooper.binge.companion.seerr.discover.title.SeasonInfo
+import com.cooper.binge.companion.seerr.discover.title.TitleCompany
 import com.cooper.binge.companion.seerr.discover.title.TitleExtras
 import com.cooper.binge.companion.seerr.discover.title.TitlePerson
 import com.cooper.binge.companion.seerr.discover.title.TitleRatings
@@ -62,7 +63,11 @@ private fun worstCase(): SeriesPageUiState.Ready {
         seriesFixture(seasons = seasons()).copy(
             tagline = "One ring to rule them all, one ring to find them, one ring to bring them all and in the darkness bind them",
             genres = listOf("Adventure", "Fantasy", "Action", "Epic Historical Drama"),
-            networks = listOf("A Very Long Premium Cable Network", "Another Streaming Service Of Considerable Length"),
+            networks =
+                listOf(
+                    TitleCompany(1, "A Very Long Premium Cable Network"),
+                    TitleCompany(2, "Another Streaming Service Of Considerable Length"),
+                ),
             creators = listOf("Christopher Montgomery-Fitzgerald", "Alexandria Wolfeschlegelsteinhausen"),
             cast = listOf(TitlePerson(1, "Elijah Wood-Montgomery-Fitzgerald", "Frodo Baggins of the Shire", null)),
         )
