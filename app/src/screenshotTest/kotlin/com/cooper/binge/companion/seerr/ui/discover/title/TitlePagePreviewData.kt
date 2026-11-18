@@ -63,7 +63,17 @@ internal fun fullMovie(
     keyCrew = listOf(person(10, "Lana Wachowski", "Director, Writer"), person(11, "Lilly Wachowski", "Director, Writer")),
     otherCrew = emptyList(),
     videos = listOf(TitleVideo("Official Trailer", "https://www.youtube.com/watch?v=demo", isTrailer = true)),
-    providers = TitleProviders("US", null, listOf(TitleProvider(1, "Demo Stream", null)), emptyList()),
+    providers =
+        TitleProviders(
+            "US",
+            "https://seerr.example/watch",
+            listOf(
+                TitleProvider(1, "Demo Stream", null),
+                TitleProvider(2, "Another Service", null),
+                TitleProvider(3, "Third Channel", null),
+            ),
+            listOf(TitleProvider(4, "Demo Store", null), TitleProvider(5, "Corner Shop", null)),
+        ),
     collection = TitleCollection(2344, "The Matrix Collection", null),
     standard = standard,
     fourK = fourK,
@@ -121,6 +131,22 @@ internal fun longMovie() =
         studios = listOf("New Line Cinema", "WingNut Films", "The Saul Zaentz Company", "Another Very Long Production Company Name"),
         genres = listOf("Adventure", "Fantasy", "Action", "Epic Historical Drama"),
         cast = listOf(person(1, "Elijah Wood-Montgomery-Fitzgerald", "Frodo Baggins of the Shire, bearer of the one ring")),
+    )
+
+/** A film that can only be bought, with provider names too long for the column. */
+internal fun buyOnlyMovie() =
+    fullMovie().copy(
+        providers =
+            TitleProviders(
+                "US",
+                null,
+                emptyList(),
+                listOf(
+                    TitleProvider(4, "A Very Long Digital Storefront Name", null),
+                    TitleProvider(5, "Another Rather Long Shop Name", null),
+                    TitleProvider(6, "Corner Shop", null),
+                ),
+            ),
     )
 
 /** A film whose collection has the longest name the server might give. */
