@@ -35,6 +35,7 @@ interface CollectionRepository {
 
     /** Whether the viewer may request films: the Request button is not drawn for one who may not. */
     suspend fun mayRequest(): Boolean
+
     /** Whether the viewer may block collections here: the server must have the endpoint and the account must manage the blocklist. */
     suspend fun mayBlock(): Boolean
 

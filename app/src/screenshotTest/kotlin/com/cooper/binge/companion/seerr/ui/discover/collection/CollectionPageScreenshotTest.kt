@@ -27,6 +27,7 @@ class CollectionPageScreenshotTest {
     @SeerrScreenStatePreview
     @Composable
     fun requestable() = Frame(CollectionPageUiState.Ready(mixedCollection(), mayRequest = true))
+
     /** A viewer who may block collections: the overflow sits beside back. */
     @PreviewTest
     @SeerrScreenStatePreview
