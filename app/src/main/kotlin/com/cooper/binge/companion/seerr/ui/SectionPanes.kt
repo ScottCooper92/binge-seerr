@@ -142,6 +142,12 @@ internal fun NavKey?.isPaneRoot(): Boolean = this == HubRoute || this == ShellRo
 /** Only the pane root is on the stack: nothing is open beside the hub. */
 internal fun List<NavKey>.isOnlyPaneRoot(): Boolean = size == 1 && first().isPaneRoot()
 
+/**
+ * A page pushed straight over the shell that is not a section, a title or a grid: [ShellPanesStrategy] leaves it to cover the
+ * window, so no hub is beside it and it carries its own Back.
+ */
+internal fun List<NavKey>.coversWindow(): Boolean = size > 1 && first() == ShellRoute && this[1].hubSection() == null
+
 /** The route a hub section opens. */
 internal fun HubSection.route(): SeerrRoute =
     when (this) {

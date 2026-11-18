@@ -1,10 +1,12 @@
 package com.cooper.binge.companion.seerr.ui.requests
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.res.stringResource
 import com.android.tools.screenshot.PreviewTest
 import com.binge.designsystem.component.BingeConfirmDialogContent
 import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.flags.LocalDiscoveryEnabled
 import com.cooper.binge.companion.seerr.preview.SeerrComponentPreviews
 import com.cooper.binge.companion.seerr.preview.SheetFrame
 import com.cooper.binge.companion.seerr.preview.SideSheetFrame
@@ -192,6 +194,17 @@ class RequestSheetsScreenshotTest {
     fun openElsewhere() =
         SheetFrame {
             RequestOpenSheetContent(links = rememberRequestOpenLinks(pendingDetail()), onOpen = {})
+        }
+
+    /** With discovery on, the same sheet under a neutral header, with the title's own page first and the hand-off beneath it. */
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun openWithTitlePage() =
+        SheetFrame {
+            CompositionLocalProvider(LocalDiscoveryEnabled provides true) {
+                RequestOpenSheetContent(links = rememberRequestOpenLinks(pendingDetail()), onOpen = {})
+            }
         }
 }
 

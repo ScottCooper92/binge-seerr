@@ -233,6 +233,8 @@
     <string name="media_type_movie">Película</string>
     <string name="request_open_binge">Abrir en Binge</string>
     <string name="request_open_elsewhere">Abrir en otro lugar</string>
+    <string name="request_open">Abrir</string>
+    <string name="request_open_title">Abrir título</string>
     <string name="request_open_media_server">Abrir en el servidor multimedia</string>
     <string name="request_stats_title">Estadísticas</string>
     <string name="request_this_request_title">Esta petición</string>

@@ -3,10 +3,10 @@ package com.cooper.binge.companion.seerr.discover.title
 import com.binge.companion.sdk.attempt
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.TitleResult
+import com.cooper.binge.companion.seerr.discover.collection.CollectionRepository
 import com.cooper.binge.companion.seerr.discover.toAvailability
 import com.cooper.binge.companion.seerr.discover.toReleaseYear
 import com.cooper.binge.companion.seerr.discover.toTitlePage
-import com.cooper.binge.companion.seerr.discover.toTitleResult
 import com.cooper.binge.companion.seerr.seerr.FALLBACK_CERTIFICATION_REGION
 import com.cooper.binge.companion.seerr.seerr.SeerrApi
 import com.cooper.binge.companion.seerr.seerr.SeerrMovieDetailsDto
@@ -30,7 +30,8 @@ private val KEY_CREW_JOBS = listOf("Director", "Writer", "Screenplay", "Producer
 /**
  * [TitleDetailsRepository] over the Seerr API. [serverUrl] is the server's address with its trailing slash, for the
  * title's page on it. [deviceRegion] is the country the phone is set to, an ISO 3166-1 code, or null. [io] is the
- * dispatcher the calls run on; it has no default.
+ * dispatcher the calls run on; it has no default. A collection's films are read through [collections], the one place that
+ * reads and orders them.
  */
 class SeerrTitleDetailsRepository(
     private val api: suspend () -> SeerrApi,
@@ -38,6 +39,7 @@ class SeerrTitleDetailsRepository(
     private val profile: suspend () -> SeerrServerProfile,
     private val serverUrl: suspend () -> String,
     private val deviceRegion: () -> String?,
+    private val collections: CollectionRepository,
     private val io: CoroutineDispatcher,
 ) : TitleDetailsRepository {
     override suspend fun movie(tmdbId: Int): MovieDetails =
@@ -57,8 +59,7 @@ class SeerrTitleDetailsRepository(
                 ).copy(companiesOpen = profile.hasDiscoverByCategory)
         }
 
-    override suspend fun collectionParts(collectionId: Int): List<TitleResult> =
-        withContext(io) { api().collection(collectionId).parts.mapNotNull { it.toTitleResult(TitleKind.Movie) } }
+    override suspend fun collectionParts(collectionId: Int): List<TitleResult> = collections.collection(collectionId).parts
 
     override suspend fun extras(
         kind: TitleKind,

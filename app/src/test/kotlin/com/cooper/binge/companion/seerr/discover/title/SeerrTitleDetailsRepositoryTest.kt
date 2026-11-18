@@ -2,6 +2,7 @@ package com.cooper.binge.companion.seerr.discover.title
 
 import com.cooper.binge.companion.seerr.discover.TitleAvailability
 import com.cooper.binge.companion.seerr.discover.TitleKind
+import com.cooper.binge.companion.seerr.discover.collection.SeerrCollectionRepository
 import com.cooper.binge.companion.seerr.seerr.PERMISSION_ADMIN
 import com.cooper.binge.companion.seerr.seerr.PERMISSION_REQUEST
 import com.cooper.binge.companion.seerr.seerr.PERMISSION_REQUEST_MOVIE
@@ -44,8 +45,8 @@ private const val PAGE =
 
 private const val COLLECTION =
     """{"id":2344,"name":"The Matrix Collection","parts":[
-        {"id":603,"mediaType":"movie","title":"The Matrix","releaseDate":"1999-03-30","posterPath":"/m.jpg","voteAverage":8.1,"mediaInfo":{"id":11,"status":5}},
-        {"id":604,"mediaType":"movie","title":"Reloaded","releaseDate":"2003-05-15"}]}"""
+        {"id":604,"mediaType":"movie","title":"Reloaded","releaseDate":"2003-05-15"},
+        {"id":603,"mediaType":"movie","title":"The Matrix","releaseDate":"1999-03-30","posterPath":"/m.jpg","voteAverage":8.1,"mediaInfo":{"id":11,"status":5}}]}"""
 
 class SeerrTitleDetailsRepositoryTest {
     private val seerr = FakeSeerrServer()
@@ -88,6 +89,13 @@ class SeerrTitleDetailsRepositoryTest {
                         profile = { profile },
                         serverUrl = { "https://seerr.example/" },
                         deviceRegion = { deviceRegion },
+                        collections =
+                            SeerrCollectionRepository(
+                                api = { api },
+                                viewer = { SeerrUserDto(id = 9, permissions = permissions) },
+                                profile = { profile },
+                                io = Dispatchers.Unconfined,
+                            ),
                         io = Dispatchers.Unconfined,
                     ),
                 )
@@ -96,7 +104,7 @@ class SeerrTitleDetailsRepositoryTest {
     }
 
     @Test
-    fun `a collection's films map as movies, in the order the server gave, with the status it holds`() {
+    fun `a collection's films map as movies, in release order, with the status it holds`() {
         val parts = withRepository { it.collectionParts(2344) }
 
         assertEquals(listOf(603, 604), parts.map { it.tmdbId })
