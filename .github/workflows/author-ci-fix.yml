@@ -53,6 +53,9 @@ jobs:
       # not run in. The Android SDK is preinstalled on the hosted runner image, which is
       # why ci.yml installs one too.
       toolchain: jvm
+      # The bot may re-record frames of screens its own PR changed, with before/after posted for
+      # review (binge-ci #376). The gate is in gate_rules below.
+      rerecord_screenshots: true
       java_version: '21'
       verify_guidance: >
         Scope Gradle to the module rather than running the whole tree when you
@@ -66,27 +69,25 @@ jobs:
         these either, for any reason:
 
           - detekt-baseline.xml
-          - any screenshot baseline PNG, and never run
-            updateDebugScreenshotTest
 
         Formatting failures are the cheapest class of failure to fix
         properly. A lint baseline is worse than it looks: it silences the
         finding permanently and silently, in a repository meant to be
         the reference implementation.
 
-        A failing screenshot test means the rendering changed. Re-recording
-        the baseline makes CI green while accepting whatever was rendered,
-        which is how a real visual regression gets merged. A baseline entry
-        is a deliberate human decision, not a repair.
+        Screenshot baselines follow the re-record gate this workflow turns
+        on (rerecord_screenshots): re-record a frame only when every differing
+        frame renders a screen or component this PR's own diff changed. Run
+        `./gradlew :app:updateDebugScreenshotTest --tests '<class pattern>'`
+        scoped to those classes, and commit only those PNGs. The workflow
+        then posts each frame's before and after on the PR for the review bot
+        to judge against the PR's stated intent. A differing frame for a
+        screen the PR did not touch is a regression or a stale base: stop and
+        say so. A render error or an out-of-memory failure is not a diff:
+        never re-record on one. Never edit an allowlist or the baseline file
+        to get to green.
 
-        This is deliberately stricter than the review-feedback bot, which may
-        re-record a baseline its own requested change moved. Do not
-        "harmonise" the two. That bot knows why the pixels changed because
-        it just changed them; you arrive at a red build you did not cause
-        and cannot tell an intended shift from a regression. Stopping is
-        the right answer for you and the wrong one for it.
-
-        If the only way to green is through one of those, that is a stop:
+        If the only way to green is through detekt-baseline.xml, that is a stop:
         make no changes and say so.
     secrets:
       AUTHOR_APP_ID: ${{ secrets.AUTHOR_APP_ID }}
