@@ -48,7 +48,9 @@ fun RequestSheet(
 ) {
     val viewModel =
         hiltViewModel<RequestSheetViewModel, RequestSheetViewModel.Factory>(
-            key = "request-${target.kind}-${target.tmdbId}-${target.standardOpen}-${target.fourKOpen}-${target.seasonChoices.hashCode()}",
+            key =
+                "request-${target.kind}-${target.tmdbId}-${target.standardOpen}-${target.fourKOpen}" +
+                    "-${target.seasonChoices.hashCode()}-${target.films.hashCode()}",
             creationCallback = { factory -> factory.create(target) },
         )
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -67,15 +69,15 @@ fun RequestSheet(
                     onUse4k = viewModel::setUse4k,
                     onSeason = viewModel::toggleSeasons,
                     onAllSeasons = { viewModel.toggleSeasons(null) },
+                    onFilm = viewModel::toggleFilms,
+                    onAllFilms = { viewModel.toggleFilms(null) },
                     onAdvancedExpanded = viewModel::setAdvancedExpanded,
                     onServer = viewModel::selectServer,
                     onProfile = viewModel::selectProfile,
                     onRootFolder = viewModel::selectRootFolder,
                     onSubmit = viewModel::submit,
                     onRetry = viewModel::load,
-                    onRetryQuota = { viewModel.retry(RequestRead.Quota) },
-                    onRetryServers = { viewModel.retry(RequestRead.Servers) },
-                    onRetryChoices = { viewModel.retry(RequestRead.Choices) },
+                    onRetryRead = viewModel::retry,
                     onDismissProblem = viewModel::dismissProblem,
                     onOpenFailure = viewModel::openFailure,
                     onDismissFailure = viewModel::dismissFailure,
@@ -88,22 +90,22 @@ class RequestSheetActions(
     val onUse4k: (Boolean) -> Unit,
     val onSeason: (Int) -> Unit,
     val onAllSeasons: () -> Unit,
+    val onFilm: (Int) -> Unit,
+    val onAllFilms: () -> Unit,
     val onAdvancedExpanded: (Boolean) -> Unit,
     val onServer: (Int) -> Unit,
     val onProfile: (Int) -> Unit,
     val onRootFolder: (String) -> Unit,
     val onSubmit: () -> Unit,
     val onRetry: () -> Unit,
-    val onRetryQuota: () -> Unit,
-    val onRetryServers: () -> Unit,
-    val onRetryChoices: () -> Unit,
+    val onRetryRead: (RequestRead) -> Unit,
     val onDismissProblem: () -> Unit,
     val onOpenFailure: () -> Unit,
     val onDismissFailure: () -> Unit,
 )
 
 /** A page of the sheet: the form, or one of the lists it opens. */
-private enum class SheetPage { Form, Seasons, Server, Profile, RootFolder }
+private enum class SheetPage { Form, Seasons, Films, Server, Profile, RootFolder }
 
 @Composable
 internal fun RequestSheetContent(
@@ -142,7 +144,7 @@ private fun ReadyContent(
             verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
         ) {
             RequestHeader(state.target)
-            RequestOptionsGroup(state, actions, onOpenSeasons = { page = SheetPage.Seasons })
+            RequestOptionsGroup(state, actions, onOpenSeasons = { page = SheetPage.Seasons }, onOpenFilms = { page = SheetPage.Films })
             RequestAdvancedOptions(state, actions, onOpen = { page = it.toPage() })
         }
         RequestFooter(state, actions)
@@ -182,6 +184,7 @@ private fun RequestFooter(
         when {
             failed && state.failure?.cause == RequestProblemCause.Unreachable -> stringResource(R.string.request_sheet_failed_unreachable)
             failed -> stringResource(R.string.request_sheet_failed_other)
+            state.films != null -> filmsSubmitLabel(state.films?.requestIds?.size ?: 0)
             state.use4k -> stringResource(R.string.request_sheet_submit_4k)
             else -> stringResource(R.string.request_sheet_submit)
         }
@@ -204,6 +207,7 @@ private fun PageFor(
     val pick = state.pick
     when (page) {
         SheetPage.Seasons -> state.seasons?.let { RequestSeasonPage(it, !state.submitting, actions, onBack) }
+        SheetPage.Films -> state.films?.let { RequestFilmsPage(state.target.films, it, state.use4k, !state.submitting, actions, onBack) }
         SheetPage.Server ->
             pick?.let {
                 DestinationPickerPanel(
@@ -273,4 +277,5 @@ fun RequestResult.messageRes(): Int =
         RequestResult.Created -> R.string.request_sheet_done_created
         RequestResult.AlreadyRequested -> R.string.request_sheet_done_already
         RequestResult.NothingToRequest -> R.string.request_sheet_done_nothing
+        RequestResult.PartiallyCreated -> R.string.request_sheet_done_partial
     }

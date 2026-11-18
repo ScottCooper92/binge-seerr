@@ -6,6 +6,7 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.DoneAll
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Hd
+import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -19,6 +20,7 @@ import androidx.compose.ui.state.ToggleableState
 import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
 import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.discover.request.ItemSelection
 import com.cooper.binge.companion.seerr.discover.request.RequestQuota
 import com.cooper.binge.companion.seerr.discover.request.SeasonSelection
 
@@ -31,11 +33,13 @@ internal fun RequestOptionsGroup(
     state: RequestSheetUiState.Ready,
     actions: RequestSheetActions,
     onOpenSeasons: () -> Unit,
+    onOpenFilms: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val rows =
         listOfNotNull(
             state.seasons?.let { seasonsRow(it, state.submitting, actions, onOpenSeasons) },
+            state.films?.let { filmsRow(it, state.submitting, actions, onOpenFilms) },
             fourKRow(state, actions),
             quotaRow(state, actions),
             advancedRow(state, actions),
@@ -73,6 +77,39 @@ private fun seasonsRow(
                 if (selection.partialAllowed) {
                     TriStateCheckbox(state = checkbox, onClick = actions.onAllSeasons, enabled = !submitting && selection.canPickAll)
                 }
+                Icon(
+                    Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        },
+    )
+}
+
+/** A collection's films as one row: a box that ticks or clears every open film, the count ticked, and a chevron into the list. */
+@Composable
+private fun filmsRow(
+    selection: ItemSelection,
+    submitting: Boolean,
+    actions: RequestSheetActions,
+    onOpenFilms: () -> Unit,
+): ListItem {
+    val checkbox =
+        when {
+            selection.allOpenPicked -> ToggleableState.On
+            selection.requestIds.isEmpty() -> ToggleableState.Off
+            else -> ToggleableState.Indeterminate
+        }
+    return ListItem(
+        icon = Icons.Filled.Movie,
+        label = stringResource(R.string.request_sheet_films),
+        detail = stringResource(R.string.request_sheet_seasons_count, selection.requestIds.size, selection.openCount),
+        enabled = !submitting,
+        onClick = onOpenFilms,
+        trailingContent = {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                TriStateCheckbox(state = checkbox, onClick = actions.onAllFilms, enabled = !submitting && selection.canPickAll)
                 Icon(
                     Icons.AutoMirrored.Filled.KeyboardArrowRight,
                     contentDescription = null,
@@ -133,7 +170,7 @@ private fun quotaRow(
                 label = stringResource(R.string.request_sheet_quota_failed),
                 detail = stringResource(R.string.action_try_again),
                 detailColor = MaterialTheme.colorScheme.error,
-                onClick = actions.onRetryQuota,
+                onClick = { actions.onRetryRead(RequestRead.Quota) },
             )
         is QuotaState.Known -> quota.quota?.let { quotaRow(it) }
     }

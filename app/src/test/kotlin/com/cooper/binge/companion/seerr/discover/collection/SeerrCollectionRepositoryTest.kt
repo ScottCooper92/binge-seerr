@@ -27,7 +27,7 @@ private val JSON = headersOf("Content-Type", "application/json")
 private const val COLLECTION =
     """{"id":2344,"name":"The Matrix Collection","overview":"  ","posterPath":"/poster.jpg","backdropPath":"/back.jpg","parts":[
         {"id":604,"mediaType":"movie","title":"Reloaded","releaseDate":"2003-05-15"},
-        {"id":603,"mediaType":"movie","title":"The Matrix","releaseDate":"1999-03-30","mediaInfo":{"id":11,"status":5}},
+        {"id":603,"mediaType":"movie","title":"The Matrix","releaseDate":"1999-03-30","mediaInfo":{"id":11,"status":5,"status4k":2}},
         {"id":900,"mediaType":"movie","title":"Undated"}]}"""
 
 class SeerrCollectionRepositoryTest {
@@ -87,6 +87,14 @@ class SeerrCollectionRepositoryTest {
 
         assertNull(collection.overview)
         assertEquals(true, collection.backdropUrl?.endsWith("/back.jpg"))
+    }
+
+    @Test
+    fun `each film's 4K status is read apart from its standard one`() {
+        val collection = read()
+
+        assertEquals(TitleAvailability.Pending, collection.parts4k[603])
+        assertEquals(TitleAvailability.None, collection.parts4k[604])
     }
 
     @Test

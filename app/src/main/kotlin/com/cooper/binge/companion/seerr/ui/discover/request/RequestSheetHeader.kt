@@ -70,6 +70,7 @@ internal fun RequestHeader(
 /** Where the title stands for this user: a show with seasons to choose says so, a title with only 4K open says that, else it is new. */
 private fun RequestSheetTarget.statusRes(): Int =
     when {
+        isCollection -> R.string.request_sheet_status_films
         seasonChoices != null && partialRequests -> R.string.request_sheet_status_seasons
         !standardOpen && fourKOpen -> R.string.request_sheet_status_4k_open
         else -> R.string.request_sheet_status_new

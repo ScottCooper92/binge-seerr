@@ -1587,6 +1587,20 @@
         <item quantity="other">%d películas</item>
     </plurals>
     <string name="collection_page_meta">%1$s · %2$d por solicitar</string>
+    <string name="request_sheet_films">Películas</string>
+    <string name="request_sheet_all_films">Todas las películas</string>
+    <string name="request_sheet_status_films">Elige qué películas solicitar</string>
+    <string name="request_sheet_done_partial">Se solicitaron algunas películas; el servidor rechazó el resto</string>
+    <plurals name="request_sheet_submit_films">
+        <item quantity="one">Solicitar %d película</item>
+        <item quantity="many">Solicitar %d de películas</item>
+        <item quantity="other">Solicitar %d películas</item>
+    </plurals>
+    <plurals name="request_sheet_films_limit">
+        <item quantity="one">Tu cuota permite %d película más</item>
+        <item quantity="many">Tu cuota permite %d de películas más</item>
+        <item quantity="other">Tu cuota permite %d películas más</item>
+    </plurals>
     <string name="collection_page_block">Bloquear colección</string>
     <string name="collection_page_unblock">Desbloquear colección</string>
     <string name="collection_page_block_title">¿Bloquear %1$s?</string>
