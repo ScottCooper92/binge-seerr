@@ -32,7 +32,7 @@ data class DiscoverFilters(
     val certification: String? = null,
 ) {
     /** Whether nothing narrows the list. */
-    val isEmpty: Boolean get() = this == DiscoverFilters()
+    val isEmpty: Boolean get() = copy(genresAny = genresAny && genres.isNotEmpty()) == DiscoverFilters()
 }
 
 /** Whether every filter a [preset] set is still set here, so the chip that stands for the preset still reads true. */

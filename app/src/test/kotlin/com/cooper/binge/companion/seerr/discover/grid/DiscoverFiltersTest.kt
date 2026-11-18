@@ -177,4 +177,10 @@ class DiscoverFiltersTest {
         assertEquals("ByGenre", GridPreset.Genre(28).toSource(TitleKind.Movie)::class.simpleName)
         assertEquals("Trending", GridPreset.Trending.toSource(TitleKind.Series)::class.simpleName)
     }
+
+    @Test
+    fun `matching any genre means nothing with no genre chosen`() {
+        assertTrue(DiscoverFilters(genresAny = true).isEmpty)
+        assertFalse(DiscoverFilters(genres = setOf(18), genresAny = true).isEmpty)
+    }
 }
