@@ -7,6 +7,7 @@ import com.cooper.binge.companion.seerr.discover.TitleResult
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverFilters
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverGridRepository
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverSort
+import com.cooper.binge.companion.seerr.discover.grid.FilterOption
 import com.cooper.binge.companion.seerr.discover.grid.GridPreset
 import com.cooper.binge.companion.seerr.discover.grid.GridRequest
 import com.cooper.binge.companion.seerr.discover.sliders.HubMediaSource
@@ -46,6 +47,10 @@ class DiscoverGridViewModelTest {
 
         override suspend fun canRefine(preset: GridPreset) = refinable
 
+        override suspend fun genres(kind: TitleKind) = listOf(FilterOption("18", "Drama"), FilterOption("35", "Comedy"))
+
+        override suspend fun languages() = listOf(FilterOption("ja", "Japanese"))
+
         override suspend fun load(
             request: GridRequest,
             page: Int,
@@ -75,7 +80,7 @@ class DiscoverGridViewModelTest {
         kind: TitleKind = TitleKind.Movie,
         block: suspend TestScope.(DiscoverGridViewModel) -> Unit,
     ) = runTest {
-        val vm = DiscoverGridViewModel(grid, media, kind, preset, "Drama", "2026-11-19")
+        val vm = DiscoverGridViewModel(grid, media, kind, preset, "Drama", "2026-11-19", null, null)
         val collector = launch(UnconfinedTestDispatcher(testScheduler)) { vm.uiState.collect {} }
         try {
             advanceUntilIdle()
@@ -97,7 +102,6 @@ class DiscoverGridViewModelTest {
             assertEquals(DiscoverSort.PopularityDesc, request.sort)
             assertEquals(ActiveFilterChip(ChipKind.Genre, "Drama"), state.controls.chip)
             assertEquals(DiscoverSort.PopularityDesc, state.controls.sort)
-            assertEquals(DiscoverSort.forKind(TitleKind.Movie), state.controls.sortChoices)
         }
 
     @Test
@@ -118,13 +122,86 @@ class DiscoverGridViewModelTest {
     @Test
     fun `a new order starts the list again and keeps the filter`() =
         runVm { vm ->
-            vm.onSort(DiscoverSort.RatingDesc)
+            vm.onApply(DiscoverSort.RatingDesc, vm.uiState.value.controls.filters)
             advanceUntilIdle()
             val last = grid.requests.last()
             assertEquals(DiscoverSort.RatingDesc, last.first.sort)
             assertEquals(setOf(18), last.first.filters.genres)
             assertEquals(1, last.second)
             assertEquals(DiscoverSort.RatingDesc, vm.uiState.value.controls.sort)
+        }
+
+    @Test
+    fun `the sheet's pickers are the genres and languages the server offers`() =
+        runVm { vm ->
+            advanceUntilIdle()
+            val words = vm.uiState.value.controls.vocabulary
+            assertEquals(listOf("Drama", "Comedy"), words.genres.map { it.name })
+            assertEquals(listOf("ja"), words.languages.map { it.id })
+        }
+
+    @Test
+    fun `a grid reopened by a kind switch starts on the filters and order it was given`() =
+        runTest {
+            val given = DiscoverFilters(runtimeMin = 90)
+            val vm =
+                DiscoverGridViewModel(
+                    grid,
+                    media,
+                    TitleKind.Series,
+                    GridPreset.Popular,
+                    null,
+                    "2026-11-19",
+                    given,
+                    DiscoverSort.FirstAirNewest,
+                )
+            val collector = launch(UnconfinedTestDispatcher(testScheduler)) { vm.uiState.collect {} }
+            advanceUntilIdle()
+            val (request, _) = grid.requests.first()
+            assertEquals(given, request.filters)
+            assertEquals(DiscoverSort.FirstAirNewest, request.sort)
+            collector.cancel()
+        }
+
+    @Test
+    fun `the sheet opens on the filters in force and applying them unchanged keeps them and the chip`() =
+        runVm { vm ->
+            val controls = vm.uiState.value.controls
+            assertEquals(setOf(18), controls.filters.genres)
+            vm.onApply(controls.sort ?: DiscoverSort.PopularityDesc, controls.filters)
+            advanceUntilIdle()
+            assertEquals(
+                setOf(18),
+                grid.requests
+                    .last()
+                    .first.filters.genres,
+            )
+            assertEquals(
+                ChipKind.Genre,
+                vm.uiState.value.controls.chip
+                    ?.kind,
+            )
+        }
+
+    @Test
+    fun `a filter added in the sheet keeps the row's chip and clearing the chip keeps the added filter`() =
+        runVm { vm ->
+            val controls = vm.uiState.value.controls
+            vm.onApply(DiscoverSort.PopularityDesc, controls.filters.copy(runtimeMin = 90))
+            advanceUntilIdle()
+            assertEquals(
+                ChipKind.Genre,
+                vm.uiState.value.controls.chip
+                    ?.kind,
+            )
+            vm.onClearFilter()
+            advanceUntilIdle()
+            val filters =
+                grid.requests
+                    .last()
+                    .first.filters
+            assertTrue(filters.genres.isEmpty())
+            assertEquals(90, filters.runtimeMin)
         }
 
     @Test
@@ -151,7 +228,7 @@ class DiscoverGridViewModelTest {
                     .single()
                     .first.sort,
             )
-            assertTrue(DiscoverSort.RevenueDesc !in vm.uiState.value.controls.sortChoices)
+            assertTrue(DiscoverSort.RevenueDesc !in DiscoverSort.sheetChoices(TitleKind.Movie))
         }
 
     @Test
@@ -161,7 +238,7 @@ class DiscoverGridViewModelTest {
             val controls = vm.uiState.value.controls
             assertNull(controls.sort)
             assertNull(controls.chip)
-            assertTrue(controls.sortChoices.isEmpty())
+            assertNull(controls.sort)
         }
     }
 

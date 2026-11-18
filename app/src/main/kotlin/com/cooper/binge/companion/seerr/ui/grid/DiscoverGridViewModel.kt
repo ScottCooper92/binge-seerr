@@ -14,8 +14,10 @@ import com.cooper.binge.companion.seerr.discover.grid.DiscoverGridRepository
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverSort
 import com.cooper.binge.companion.seerr.discover.grid.GridPreset
 import com.cooper.binge.companion.seerr.discover.grid.GridRequest
+import com.cooper.binge.companion.seerr.discover.grid.keeps
 import com.cooper.binge.companion.seerr.discover.grid.startingFilters
 import com.cooper.binge.companion.seerr.discover.grid.startingSort
+import com.cooper.binge.companion.seerr.discover.grid.without
 import com.cooper.binge.companion.seerr.discover.sliders.HubCard
 import com.cooper.binge.companion.seerr.discover.sliders.HubMediaSource
 import com.cooper.binge.companion.seerr.discover.sliders.toCard
@@ -49,9 +51,12 @@ class DiscoverGridViewModel
         @Assisted private val preset: GridPreset,
         @Assisted("title") private val title: String?,
         @Assisted("upcomingFrom") upcomingFrom: String,
+        @Assisted private val initialFilters: DiscoverFilters?,
+        @Assisted private val initialSort: DiscoverSort?,
     ) : ViewModel() {
         private val starting = preset.startingFilters(upcomingFrom)
-        private val sortFilter = SortFilterState(starting, preset.startingSort(kind))
+        private val sortFilter = SortFilterState(initialFilters ?: starting, initialSort ?: preset.startingSort(kind))
+        private val vocabulary = MutableStateFlow(FilterVocabulary())
         private val refinable = MutableStateFlow<Boolean?>(null)
         private val eventFlow = MutableSharedFlow<DiscoverGridEvent>(extraBufferCapacity = 1)
         val events: SharedFlow<DiscoverGridEvent> = eventFlow.asSharedFlow()
@@ -64,11 +69,26 @@ class DiscoverGridViewModel
                 list.state,
                 sortFilter.query,
                 refinable,
-            ) { page, query, canRefine -> toUiState(page, controls(query, canRefine == true)) }
-                .stateIn(viewModelScope, SharingStarted.Lazily, DiscoverGridUiState.Loading(controls(sortFilter.query.value, false)))
+                vocabulary,
+            ) { page, query, canRefine, words -> toUiState(page, controls(query, canRefine == true, words)) }
+                .stateIn(
+                    viewModelScope,
+                    SharingStarted.Lazily,
+                    DiscoverGridUiState.Loading(controls(sortFilter.query.value, false, FilterVocabulary())),
+                )
 
         init {
-            viewModelScope.launch { refinable.value = attempt { grid.canRefine(preset) }.getOrDefault(false) }
+            viewModelScope.launch {
+                val canRefine = attempt { grid.canRefine(preset) }.getOrDefault(false)
+                refinable.value = canRefine
+                if (canRefine) {
+                    vocabulary.value =
+                        FilterVocabulary(
+                            genres = attempt { grid.genres(kind) }.getOrDefault(emptyList()),
+                            languages = attempt { grid.languages() }.getOrDefault(emptyList()),
+                        )
+                }
+            }
         }
 
         private suspend fun fetch(
@@ -84,17 +104,23 @@ class DiscoverGridViewModel
         private fun controls(
             query: SortFilterQuery<DiscoverFilters, DiscoverSort>,
             canRefine: Boolean,
+            words: FilterVocabulary,
         ): GridControls =
             GridControls(
                 sort = query.sort.takeIf { canRefine },
-                sortChoices = if (canRefine) DiscoverSort.forKind(kind) else emptyList(),
-                chip = if (canRefine && !starting.isEmpty && query.filters == starting) preset.toChip(title) else null,
+                filters = query.filters,
+                vocabulary = words,
+                chip = if (canRefine && !starting.isEmpty && query.filters.keeps(starting)) preset.toChip(title) else null,
             )
 
-        fun onSort(sort: DiscoverSort) = sortFilter.setSort(sort)
+        /** Applies the order and the filters the sheet edited as one change, so the list starts again once. */
+        fun onApply(
+            sort: DiscoverSort,
+            filters: DiscoverFilters,
+        ) = sortFilter.set(filters, sort)
 
-        /** Drops the filter the row started with, so the grid shows the whole list. */
-        fun onClearFilter() = sortFilter.setFilters(DiscoverFilters())
+        /** Drops the filter the row started with and keeps any the user added since. */
+        fun onClearFilter() = sortFilter.updateFilters { it.without(starting) }
 
         fun onRetry() = list.retry()
 
@@ -111,6 +137,8 @@ class DiscoverGridViewModel
                 preset: GridPreset,
                 @Assisted("title") title: String?,
                 @Assisted("upcomingFrom") upcomingFrom: String,
+                initialFilters: DiscoverFilters?,
+                initialSort: DiscoverSort?,
             ): DiscoverGridViewModel
         }
     }

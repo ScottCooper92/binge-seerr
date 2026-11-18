@@ -99,7 +99,7 @@ class DiscoveryShellJourneyTest {
         host.awaitShowing(host.string(R.string.hub_section_requests))
 
         host.compose.onNodeWithTag("tab_search").performClick()
-        host.awaitShowing(host.string(R.string.title_search_idle_message))
+        host.awaitShowing(host.string(R.string.title_search_placeholder))
         assertEquals(listOf<NavKey>(ShellRoute), host.stack())
 
         host.back()

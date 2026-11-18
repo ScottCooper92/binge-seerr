@@ -25,6 +25,13 @@ class DiscoverFiltersTest {
     ) = toDiscoverQuery(kind, filters, sort, page, profile)
 
     @Test
+    fun `genres are joined with a comma for all of them and a pipe for any of them`() {
+        val all = DiscoverFilters(genres = setOf(18, 35))
+        assertEquals("18,35", query(filters = all)["genre"])
+        assertEquals("18|35", query(filters = all.copy(genresAny = true))["genre"])
+    }
+
+    @Test
     fun `no filters sends the page and the order only`() {
         assertEquals(mapOf("page" to "1", "sortBy" to "popularity.desc"), query())
         assertEquals(mapOf("page" to "3", "sortBy" to "vote_average.asc"), query(sort = DiscoverSort.RatingAsc, page = 3))
@@ -169,5 +176,18 @@ class DiscoverFiltersTest {
     fun `a preset's dedicated source names its kind`() {
         assertEquals("ByGenre", GridPreset.Genre(28).toSource(TitleKind.Movie)::class.simpleName)
         assertEquals("Trending", GridPreset.Trending.toSource(TitleKind.Series)::class.simpleName)
+    }
+
+    @Test
+    fun `the applied count is one for each row that is set`() {
+        assertEquals(0, DiscoverFilters().appliedCount())
+        assertEquals(3, DiscoverFilters(genres = setOf(18, 35), runtimeMin = 90, language = "ja").appliedCount())
+        assertEquals(1, DiscoverFilters(releaseFrom = "2020-01-01", releaseTo = "2021-01-01").appliedCount())
+    }
+
+    @Test
+    fun `matching any genre means nothing with no genre chosen`() {
+        assertTrue(DiscoverFilters(genresAny = true).isEmpty)
+        assertFalse(DiscoverFilters(genres = setOf(18), genresAny = true).isEmpty)
     }
 }

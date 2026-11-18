@@ -21,6 +21,7 @@ internal fun SeriesDetails.factEntries(
     locale: Locale,
     ratings: TitleRatings?,
     onOpenCompany: ((TitleCompany) -> Unit)? = null,
+    onOpenPerson: ((Int) -> Unit)? = null,
 ): List<InfoRowEntry> {
     fun entry(
         label: Int,
@@ -28,7 +29,7 @@ internal fun SeriesDetails.factEntries(
     ) = InfoRowEntry(resources.getString(label), value)
     val next = nextEpisode
     return listOf(
-        entry(R.string.series_fact_creators, creators.joinToString(", ")),
+        peopleEntry(resources.getString(R.string.series_fact_creators), creators, onOpenPerson),
         companyEntry(resources.getString(R.string.series_fact_networks), networks, onOpenCompany),
         entry(R.string.title_page_fact_status, status?.let { seriesStatusRes(it)?.let(resources::getString) ?: it }),
         entry(R.string.series_fact_first_aired, firstAirDate.toDisplayDate(locale)),

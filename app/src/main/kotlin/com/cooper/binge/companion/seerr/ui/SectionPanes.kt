@@ -58,7 +58,6 @@ internal val DefaultSection: HubSection = HubSection.Requests
  *
  * @param backStack read for the one case the library can't see: [DefaultSection] opened beside the hub,
  *   where popping it would land on its own placeholder and look like Back did nothing (#815).
- * @param containerWidth the room the panes share, when it is less than the window: beside a rail, say.
  * @param threePane a landscape tablet's [ThreePaneStrategy]: the hub first, with [defaultSection] in the
  *   second pane while no section is on the stack (#1110).
  */
@@ -69,19 +68,19 @@ internal fun rememberSeerrPaneStrategy(
     backStack: List<NavKey>,
     threePane: Boolean = false,
     defaultSection: @Composable () -> Unit = {},
-    containerWidth: Dp? = null,
+    shellBeside: Boolean = false,
 ): SceneStrategy<NavKey> {
     // The design system's gap between the panes in place of Material adaptive's own 24dp (#814), as Binge's is.
     val spaced = directive.copy(horizontalPartitionSpacerSize = dimensionResource(DesR.dimen.pane_spacer))
     val listDetail =
         rememberListDetailSceneStrategy<NavKey>(
             backNavigationBehavior = PaneBackNavigationBehavior,
-            directive = spaced.copy(defaultPanePreferredWidth = equalPaneWidth(spaced, containerWidth)),
+            directive = spaced.copy(defaultPanePreferredWidth = equalPaneWidth(spaced)),
         )
     val currentDefault by rememberUpdatedState(defaultSection)
-    return remember(listDetail, backStack, threePane) {
+    return remember(listDetail, backStack, threePane, shellBeside) {
         val first = if (threePane) ThreePaneStrategy { currentDefault() } else null
-        SeerrPaneStrategy(listDetail, backStack, first)
+        SeerrPaneStrategy(listDetail, backStack, first, shell = if (shellBeside) ShellPanesStrategy else null)
     }
 }
 
@@ -95,14 +94,17 @@ private class SeerrPaneStrategy(
     private val listDetail: SceneStrategy<NavKey>,
     private val backStack: List<NavKey>,
     private val threePane: SceneStrategy<NavKey>? = null,
+    private val shell: SceneStrategy<NavKey>? = null,
 ) : SceneStrategy<NavKey> {
     override fun SceneStrategyScope<NavKey>.calculateScene(entries: List<NavEntry<NavKey>>): Scene<NavKey>? {
         val scene =
-            threePane?.let { with(it) { calculateScene(entries) } }
+            shell?.let { with(it) { calculateScene(entries) } }
+                ?: threePane?.let { with(it) { calculateScene(entries) } }
                 ?: with(listDetail) { calculateScene(entries) }
                 ?: return null
         // toList(): a NavBackStack is a list by delegation, without a list's equality.
-        val defaultBesideHub = scene.entries.size > 1 && backStack.toList() == listOf(HubRoute, DefaultSection.route())
+        val defaultBesideHub =
+            scene.entries.size > 1 && backStack.toList().let { it.size == 2 && it[0].isPaneRoot() && it[1] == DefaultSection.route() }
         return SeerrPaneScene(scene, claimsBack = !defaultBesideHub)
     }
 }
@@ -125,17 +127,20 @@ private class SeerrPaneScene(
 
 /** Half the window less half the gap between the panes, so the gap sits at the window's centre. */
 @Composable
-private fun equalPaneWidth(
-    directive: PaneScaffoldDirective,
-    containerWidth: Dp?,
-): Dp {
+private fun equalPaneWidth(directive: PaneScaffoldDirective): Dp {
     val windowWidth =
-        containerWidth ?: with(LocalDensity.current) {
+        with(LocalDensity.current) {
             LocalWindowInfo.current.containerSize.width
                 .toDp()
         }
     return (windowWidth - directive.horizontalPartitionSpacerSize) / 2
 }
+
+/** The root the hub sits at: [HubRoute] beside the sections, or [ShellRoute], whose Settings tab holds the hub. */
+internal fun NavKey?.isPaneRoot(): Boolean = this == HubRoute || this == ShellRoute
+
+/** Only the pane root is on the stack: nothing is open beside the hub. */
+internal fun List<NavKey>.isOnlyPaneRoot(): Boolean = size == 1 && first().isPaneRoot()
 
 /** The route a hub section opens. */
 internal fun HubSection.route(): SeerrRoute =
@@ -178,7 +183,7 @@ internal fun NavBackStack<NavKey>.openSection(section: HubSection) {
  * beneath it first, so Back, and a narrower window, return to the list it was opened from rather than to the hub (#815).
  */
 internal fun NavBackStack<NavKey>.openAboveDefault(route: NavKey) {
-    if (lastOrNull() == HubRoute) add(DefaultSection.route())
+    if (lastOrNull().isPaneRoot()) add(DefaultSection.route())
     add(route)
 }
 
@@ -197,6 +202,6 @@ internal fun List<NavKey>.selectedSection(defaultShowing: Boolean): HubSection? 
  * is already true.
  */
 internal fun List<NavKey>.paneDepth(): Int {
-    val hubIndex = indexOfLast { it == HubRoute }
+    val hubIndex = indexOfLast { it.isPaneRoot() }
     return if (hubIndex == -1) size else size - hubIndex - 1
 }

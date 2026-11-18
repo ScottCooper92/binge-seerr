@@ -20,6 +20,7 @@ internal fun MovieDetails.factEntries(
     locale: Locale,
     ratings: TitleRatings?,
     onOpenCompany: ((TitleCompany) -> Unit)? = null,
+    onOpenPerson: ((Int) -> Unit)? = null,
 ): List<InfoRowEntry> {
     fun entry(
         label: Int,
@@ -32,7 +33,7 @@ internal fun MovieDetails.factEntries(
             maximumFractionDigits = 0
         }
     return listOf(
-        entry(R.string.title_page_fact_director, keyCrew.directors().joinToString(", ")),
+        peopleEntry(resources.getString(R.string.title_page_fact_director), keyCrew.directors(), onOpenPerson),
         entry(R.string.title_page_fact_release_date, releaseDate.toDisplayDate(locale)),
         entry(R.string.title_page_fact_original_language, originalLanguage?.let { languageName(it, locale) }),
         entry(R.string.title_page_fact_spoken_languages, spokenLanguageCodes.joinToString(", ") { languageName(it, locale) }),
@@ -45,13 +46,13 @@ internal fun MovieDetails.factEntries(
 }
 
 /** The people whose billed job includes directing; the server lists a job as plain text, as TMDB writes it. */
-private fun List<TitlePerson>.directors(): List<String> =
+private fun List<TitlePerson>.directors(): List<TitlePerson> =
     filter { person ->
         person.role
             .orEmpty()
             .split(", ")
             .contains(DIRECTOR_JOB)
-    }.map { it.name }
+    }
 
 private const val DIRECTOR_JOB = "Director"
 
