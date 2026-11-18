@@ -59,8 +59,10 @@ app:grid_filter_rating  6cad6def356f
 app:grid_filter_rating_value  d8ecf84e4cbd
 app:grid_filter_release  bd84924cadae
 app:grid_filter_release_any  61f1a04fe02e
+app:grid_filter_release_from  40f7d611c17b
 app:grid_filter_release_last_five  30a8f93df23f
 app:grid_filter_release_this_year  98597183c8c6
+app:grid_filter_release_until  7e492e99f96f
 app:grid_filter_release_upcoming  5f1a2542e4e4
 app:grid_filter_runtime  109311589787
 app:grid_filter_runtime_between  cb7edf76f46c

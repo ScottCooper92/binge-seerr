@@ -42,18 +42,20 @@ internal fun ColumnScope.DiscoverSectionPage(
     onChange: (DiscoverFilters) -> Unit,
     onDone: () -> Unit,
 ) {
-    Column(
-        modifier = Modifier.padding(horizontal = dimensionResource(DesR.dimen.padding_m)),
-        verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
-    ) {
-        Text(text = stringResource(section.title), style = MaterialTheme.typography.titleLarge)
+    val inset = Modifier.padding(horizontal = dimensionResource(DesR.dimen.padding_m))
+    Column(verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m))) {
+        Text(text = stringResource(section.title), style = MaterialTheme.typography.titleLarge, modifier = inset)
         when (section) {
-            DiscoverFilterSection.Release -> ReleasePage(filters, today, onChange)
-            DiscoverFilterSection.Rating -> RatingPage(filters, onChange)
-            DiscoverFilterSection.Runtime -> RuntimePage(filters, onChange)
-            DiscoverFilterSection.Votes -> VotesPage(filters, onChange)
+            DiscoverFilterSection.Release -> ReleasePage(filters, today, inset, onChange)
+            DiscoverFilterSection.Rating -> RatingPage(filters, inset, onChange)
+            DiscoverFilterSection.Runtime -> RuntimePage(filters, inset, onChange)
+            DiscoverFilterSection.Votes -> VotesPage(filters, inset, onChange)
         }
-        BingeTextButton(label = stringResource(R.string.grid_filters_clear), onClick = { onChange(section.cleared(filters)) })
+        BingeTextButton(
+            label = stringResource(R.string.grid_filters_clear),
+            onClick = { onChange(section.cleared(filters)) },
+            modifier = inset,
+        )
     }
     BingeSheetFooter { BingeActionFooter(label = stringResource(R.string.grid_filters_done), onClick = onDone) }
 }
@@ -70,6 +72,7 @@ private fun DiscoverFilterSection.cleared(filters: DiscoverFilters): DiscoverFil
 private fun ReleasePage(
     filters: DiscoverFilters,
     today: LocalDate,
+    inset: Modifier,
     onChange: (DiscoverFilters) -> Unit,
 ) {
     val presets = ReleasePreset.entries
@@ -91,12 +94,14 @@ private fun ReleasePage(
         fromMaximum = filters.releaseTo?.let(LocalDate::parse),
         toMinimum = filters.releaseFrom?.let(LocalDate::parse),
         today = today,
+        modifier = inset,
     )
 }
 
 @Composable
 private fun RatingPage(
     filters: DiscoverFilters,
+    inset: Modifier,
     onChange: (DiscoverFilters) -> Unit,
 ) {
     BingeNumberSlider(
@@ -105,12 +110,14 @@ private fun RatingPage(
         range = 0..RATING_MAX,
         format = { it.toString() },
         description = stringResource(R.string.grid_filter_rating),
+        modifier = inset,
     )
 }
 
 @Composable
 private fun RuntimePage(
     filters: DiscoverFilters,
+    inset: Modifier,
     onChange: (DiscoverFilters) -> Unit,
 ) {
     val resources = LocalContext.current.resources
@@ -132,12 +139,14 @@ private fun RuntimePage(
         startThumbDescription = stringResource(R.string.grid_filter_runtime_start),
         endThumbDescription = stringResource(R.string.grid_filter_runtime_end),
         openEndLabel = stringResource(R.string.grid_filter_any),
+        modifier = inset,
     )
 }
 
 @Composable
 private fun VotesPage(
     filters: DiscoverFilters,
+    inset: Modifier,
     onChange: (DiscoverFilters) -> Unit,
 ) {
     val number = NumberFormat.getInstance()
@@ -148,5 +157,6 @@ private fun VotesPage(
         format = { number.format(it) },
         description = stringResource(R.string.grid_filter_votes),
         step = VOTES_STEP,
+        modifier = inset,
     )
 }
