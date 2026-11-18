@@ -14,6 +14,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -56,6 +57,7 @@ internal fun PersonPageScreen(
     actions: PersonPageActions,
     modifier: Modifier = Modifier,
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
+    pullState: PullToRefreshState? = null,
 ) {
     val ready = state as? PersonPageUiState.Ready
     HeroDetailScreen(
@@ -67,6 +69,7 @@ internal fun PersonPageScreen(
         onRefresh = actions.onRefresh.takeIf { ready != null },
         isRefreshing = ready?.refreshing == true,
         pullIndicator = HeroPullIndicator.InBar,
+        pullState = pullState,
         actions = { glassAlpha ->
             if (ready != null) {
                 ShareBarAction(glassAlpha) { actions.onShare(ready.person.name, ready.person.webUrl) }
