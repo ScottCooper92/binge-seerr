@@ -6,6 +6,7 @@ import com.binge.designsystem.component.InfoRowEntry
 import com.binge.designsystem.component.InfoValue
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.title.TitleCompany
+import com.cooper.binge.companion.seerr.discover.title.TitlePerson
 import com.cooper.binge.companion.seerr.discover.title.TitleRatings
 import java.util.Locale
 
@@ -37,4 +38,16 @@ internal fun companyEntry(
         InfoRowEntry(label, companies.joinToString(", ") { it.name })
     } else {
         InfoRowEntry(label, InfoValue.Links(companies.map { company -> InfoLink(company.name) { onOpenCompany(company) } }))
+    }
+
+/** A directors or creators row: each name opens that person's page where [onOpenPerson] is given, and is plain text where it is not. */
+internal fun peopleEntry(
+    label: String,
+    people: List<TitlePerson>,
+    onOpenPerson: ((Int) -> Unit)?,
+): InfoRowEntry =
+    if (onOpenPerson == null || people.isEmpty()) {
+        InfoRowEntry(label, people.joinToString(", ") { it.name })
+    } else {
+        InfoRowEntry(label, InfoValue.Links(people.map { person -> InfoLink(person.name) { onOpenPerson(person.personId) } }))
     }

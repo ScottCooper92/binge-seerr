@@ -27,6 +27,17 @@ class CollectionPageScreenshotTest {
     @SeerrScreenStatePreview
     @Composable
     fun requestable() = Frame(CollectionPageUiState.Ready(mixedCollection(), mayRequest = true))
+    /** A viewer who may block collections: the overflow sits beside back. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun blockable() = Frame(CollectionPageUiState.Ready(mixedCollection(), mayBlock = true))
+
+    /** Every film blocklisted, so the collection reads as blocked. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun blocked() = Frame(CollectionPageUiState.Ready(blockedCollection(), mayBlock = true))
 
     /** Every film already on the server: the count says no more to request. */
     @PreviewTest

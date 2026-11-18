@@ -58,7 +58,7 @@ import com.binge.designsystem.R as DesR
 
 /** What the screen does with what the user does; the entry wires each to the view model. */
 internal class DiscoverGridActions(
-    val onBack: () -> Unit,
+    val onBack: (() -> Unit)?,
     val onClearFilter: () -> Unit,
     val onRetry: () -> Unit,
     val onLoadMore: () -> Unit,
@@ -87,7 +87,13 @@ internal fun DiscoverGridScreen(
         header = state.controls.chip?.let { chip -> { ActiveFilterChips(chip, actions) } },
     ) { padding ->
         Box(Modifier.fillMaxSize().padding(padding)) {
-            val inner = navOverlayPadding(PaddingValues(dimensionResource(DesR.dimen.padding_m)))
+            val inner =
+                navOverlayPadding(
+                    PaddingValues(
+                        horizontal = dimensionResource(DesR.dimen.screen_content_inset),
+                        vertical = dimensionResource(DesR.dimen.padding_m),
+                    ),
+                )
             when (state) {
                 is DiscoverGridUiState.Loading -> LoadingScreen()
                 is DiscoverGridUiState.Empty ->
@@ -144,7 +150,7 @@ private fun ActiveFilterChips(
 ) {
     LazyRow(
         modifier = Modifier.fillMaxWidth(),
-        contentPadding = PaddingValues(horizontal = dimensionResource(DesR.dimen.padding_m)),
+        contentPadding = PaddingValues(horizontal = dimensionResource(DesR.dimen.screen_content_inset)),
         horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
     ) {
         item(key = "filter") {

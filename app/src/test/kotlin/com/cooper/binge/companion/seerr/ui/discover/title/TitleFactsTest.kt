@@ -75,9 +75,49 @@ class TitleFactsTest {
     }
 
     @Test
+    fun `each director is a link to their page where the page can open one`() {
+        val opened = mutableListOf<Int>()
+        val crew = listOf(person("Ann Writer", "Writer"), person("Bo Director", "Director, Writer"), person("Cy Director", "Director"))
+        val facts = movie(crew).factEntries(resources, Locale.US, null, onOpenPerson = { opened += it })
+        val links = (facts.first { it.label == "Directed by" }.value as InfoValue.Links).links
+        assertEquals(listOf("Bo Director", "Cy Director"), links.map { it.text })
+        links.first().onClick()
+        assertEquals(listOf("Bo Director".length), opened)
+    }
+
+    @Test
+    fun `directors stay plain text where the page cannot open a person`() {
+        val facts = movie(listOf(person("Bo Director", "Director"))).factEntries(resources, Locale.US, null)
+        assertEquals("Bo Director", facts.valueOf("Directed by"))
+    }
+
+    @Test
+    fun `each creator is a link to their page where the page can open one`() {
+        val opened = mutableListOf<Int>()
+        val series =
+            seriesFixture().copy(
+                creators = listOf(TitlePerson(7, "Ann Creator", null, null), TitlePerson(8, "Bo Creator", null, null)),
+            )
+        val facts = series.factEntries(resources, Locale.US, null, onOpenPerson = { opened += it })
+        val links = (facts.first { it.label == "Created by" }.value as InfoValue.Links).links
+        assertEquals(listOf("Ann Creator", "Bo Creator"), links.map { it.text })
+        links.last().onClick()
+        assertEquals(listOf(8), opened)
+    }
+
+    @Test
+    fun `creators stay plain text where the page cannot open a person`() {
+        val series =
+            seriesFixture().copy(
+                creators = listOf(TitlePerson(7, "Ann Creator", null, null), TitlePerson(8, "Bo Creator", null, null)),
+            )
+        assertEquals("Ann Creator, Bo Creator", series.factEntries(resources, Locale.US, null).valueOf("Created by"))
+    }
+
+    @Test
     fun `studios are links that name their company where the page can open one`() {
         val opened = mutableListOf<TitleCompany>()
-        val facts = movie(emptyList()).factEntries(resources, Locale.US, null) { opened += it }
+        val facts = movie(emptyList()).factEntries(resources, Locale.US, null, onOpenCompany = { opened += it })
         val links = (facts.first { it.label == "Studios" }.value as InfoValue.Links).links
         assertEquals(listOf("One Studio", "Another"), links.map { it.text })
         links.last().onClick()
@@ -92,7 +132,7 @@ class TitleFactsTest {
 
     @Test
     fun `a film with no studios has no studio links`() {
-        val facts = movie(emptyList()).copy(studios = emptyList()).factEntries(resources, Locale.US, null) { }
+        val facts = movie(emptyList()).copy(studios = emptyList()).factEntries(resources, Locale.US, null, onOpenCompany = { })
         assertEquals("", facts.valueOf("Studios"))
     }
 

@@ -20,6 +20,8 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.BingeActionFooter
 import com.binge.designsystem.component.ExpandableOverview
+import com.binge.designsystem.component.SnackbarMessageKind
+import com.binge.designsystem.component.showSnackbar
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.TitleAvailability
 import com.cooper.binge.companion.seerr.discover.TitleKind
@@ -35,7 +37,9 @@ import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
 import com.cooper.binge.companion.seerr.ui.state.LoadingScreen
 import com.cooper.binge.companion.seerr.ui.state.MediaHeroDetailPage
 import com.cooper.binge.companion.seerr.ui.state.MediaHeroDetailPlaceholder
+import com.cooper.binge.companion.seerr.ui.state.messageRes
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collectLatest
 import com.binge.designsystem.R as DesR
 
 class CollectionPageActions(
@@ -45,6 +49,9 @@ class CollectionPageActions(
     val onRequest: () -> Unit,
     val onCloseRequest: () -> Unit,
     val onRequested: (RequestResult) -> Unit,
+    val onAskBlock: () -> Unit,
+    val onDismissBlock: () -> Unit,
+    val onSetBlocked: (Boolean) -> Unit,
 )
 
 /** The collection page: a hero with its count, the story, then every film as a row that opens the film's page. */
@@ -75,8 +82,17 @@ private fun ReadyPage(
     val snackbar = remember { SnackbarHostState() }
     val resources = LocalResources.current
     LaunchedEffect(events) {
-        events.collect { event ->
-            if (event is CollectionPageEvent.Requested) snackbar.showSnackbar(resources.getString(event.result.messageRes()))
+        events.collectLatest { event ->
+            snackbar.currentSnackbarData?.dismiss()
+            val (message, kind) =
+                when (event) {
+                    is CollectionPageEvent.Requested -> event.result.messageRes() to SnackbarMessageKind.Confirmation
+                    is CollectionPageEvent.Changed ->
+                        (if (event.blocked) R.string.blocklist_collection_blocked else R.string.blocklist_collection_unblocked) to
+                            SnackbarMessageKind.Confirmation
+                    is CollectionPageEvent.Failed -> event.error.messageRes() to SnackbarMessageKind.Error
+                }
+            snackbar.showSnackbar(resources.getString(message), kind)
         }
     }
     val mayRequest = state.mayRequest && collection.toRequest > 0
@@ -89,6 +105,17 @@ private fun ReadyPage(
         scrollState = scrollState,
         snackbarHostState = snackbar,
         footer = if (mayRequest) ({ RequestAllFooter(collection.toRequest, actions.onRequest) }) else null,
+        topBarActions = { glassAlpha ->
+            if (state.mayBlock) {
+                CollectionOverflowAction(
+                    glassBackgroundAlpha = glassAlpha,
+                    blocked = collection.blocked,
+                    enabled = !state.changing,
+                    onBlock = actions.onAskBlock,
+                    onUnblock = { actions.onSetBlocked(false) },
+                )
+            }
+        },
     ) {
         Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
         collection.overview?.let { overview ->
@@ -109,6 +136,11 @@ private fun ReadyPage(
     }
     if (state.requestSheetOpen) {
         RequestSheet(target = collection.toRequestTarget(), onDismiss = actions.onCloseRequest, onResult = actions.onRequested)
+    }
+    if (state.confirmingBlock) {
+        CollectionBlockConfirm(collection.name, collection.blockReachesHeldFilms, onConfirm = {
+            actions.onSetBlocked(true)
+        }, onDismiss = actions.onDismissBlock)
     }
 }
 
