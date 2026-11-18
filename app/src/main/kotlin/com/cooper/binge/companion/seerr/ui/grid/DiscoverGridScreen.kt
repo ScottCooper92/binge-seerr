@@ -81,7 +81,13 @@ internal fun DiscoverGridScreen(
         header = { GridControlsRow(state.controls, actions) },
     ) { padding ->
         Box(Modifier.fillMaxSize().padding(padding)) {
-            val inner = navOverlayPadding(PaddingValues(dimensionResource(DesR.dimen.padding_m)))
+            val inner =
+                navOverlayPadding(
+                    PaddingValues(
+                        horizontal = dimensionResource(DesR.dimen.screen_content_inset),
+                        vertical = dimensionResource(DesR.dimen.padding_m),
+                    ),
+                )
             when (state) {
                 is DiscoverGridUiState.Loading -> LoadingScreen()
                 is DiscoverGridUiState.Empty ->
@@ -106,7 +112,7 @@ private fun GridControlsRow(
     if (controls.sort == null && controls.chip == null) return
     LazyRow(
         modifier = Modifier.fillMaxWidth(),
-        contentPadding = PaddingValues(horizontal = dimensionResource(DesR.dimen.padding_m)),
+        contentPadding = PaddingValues(horizontal = dimensionResource(DesR.dimen.screen_content_inset)),
         horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
     ) {
         controls.sort?.let { sort ->
