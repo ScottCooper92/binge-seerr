@@ -5,14 +5,18 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -37,9 +41,15 @@ import com.binge.designsystem.component.LogoTile
 import com.binge.designsystem.component.MediaCard
 import com.binge.designsystem.component.MediaCardStatus
 import com.binge.designsystem.component.MediaCarousel
+import com.binge.designsystem.component.SkeletonPlate
 import com.binge.designsystem.component.StatusBarScrim
 import com.binge.designsystem.component.StatusChip
+import com.binge.designsystem.layout.LayoutAnchors
+import com.binge.designsystem.layout.layoutAnchor
+import com.binge.designsystem.navOverlayEnd
 import com.binge.designsystem.navOverlayPadding
+import com.binge.designsystem.navOverlayStart
+import com.binge.designsystem.resolvedContentInset
 import com.binge.designsystem.theme.BingeSentiment
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.TitleAvailability
@@ -104,9 +114,29 @@ fun DiscoverHubScreen(
 @Composable
 private fun HubSkeleton(contentPadding: PaddingValues) {
     LazyColumn(contentPadding = contentPadding) {
-        items(SKELETON_ROWS) { CarouselSkeleton(description = stringResource(R.string.hubs_loading_row)) }
+        item { BrowseAllSkeleton() }
+        items(SKELETON_ROWS) { index ->
+            CarouselSkeleton(modifier = Modifier.firstCarouselAnchor(index), description = stringResource(R.string.hubs_loading_row))
+        }
     }
 }
+
+/** The Browse all row the loaded hub puts above its rails, so the first rail lands where its plate stood. */
+@Composable
+private fun BrowseAllSkeleton() {
+    SkeletonPlate(
+        Modifier
+            .fillMaxWidth()
+            .padding(start = resolvedContentInset() + navOverlayStart(), end = resolvedContentInset() + navOverlayEnd())
+            .height(dimensionResource(R.dimen.hub_entry_skeleton_height))
+            .layoutAnchor(LayoutAnchors.section(LayoutAnchors.Hub.DISCOVER_ENTRY)),
+        shape = MaterialTheme.shapes.large,
+    )
+}
+
+/** Marks the leading carousel, skeleton or loaded, so the geometry test can check the first row lands where its plate stood. */
+private fun Modifier.firstCarouselAnchor(index: Int): Modifier =
+    if (index == 0) layoutAnchor(LayoutAnchors.section(LayoutAnchors.Hub.FIRST_CAROUSEL)) else this
 
 @Composable
 private fun HubRows(
@@ -122,10 +152,11 @@ private fun HubRows(
     LazyColumn(state = listState, modifier = Modifier.fillMaxSize(), contentPadding = contentPadding) {
         if (state.hero.isNotEmpty()) item(key = HERO_KEY) { Hero(state.hero, onOpenTitle) }
         if (state.browseAll) item(key = BROWSE_ALL_KEY) { BrowseAllRow(tab, onOpenGrid) }
-        items(state.rows, key = { it.row.sliderId }) { row ->
+        itemsIndexed(state.rows, key = { _, row -> row.row.sliderId }) { index, row ->
+            val anchor = Modifier.firstCarouselAnchor(index)
             when (row) {
-                is HubRowUi.Cards -> CardRow(tab, row, onOpenTitle, onOpenGrid, onOpenRequests)
-                is HubRowUi.Tiles -> TileRow(tab, row, onOpenGrid)
+                is HubRowUi.Cards -> CardRow(tab, row, onOpenTitle, onOpenGrid, onOpenRequests, anchor)
+                is HubRowUi.Tiles -> TileRow(tab, row, onOpenGrid, anchor)
             }
         }
         // A row still loading is a skeleton below the ones that landed, so the page does not jump when it arrives.
@@ -146,6 +177,7 @@ private fun BrowseAllRow(
         title = stringResource(if (movies) R.string.hubs_browse_all_movies else R.string.hubs_browse_all_tv),
         subtitle = stringResource(if (movies) R.string.hubs_browse_subtitle_movies else R.string.hubs_browse_subtitle_tv),
         onClick = { onOpenGrid(grid, gridTitle) },
+        modifier = Modifier.layoutAnchor(LayoutAnchors.section(LayoutAnchors.Hub.DISCOVER_ENTRY)),
     )
 }
 
@@ -156,11 +188,13 @@ private fun CardRow(
     onOpenTitle: (HubCard) -> Unit,
     onOpenGrid: (HubGrid, String) -> Unit,
     onOpenRequests: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val title = row.row.title(tab)
     val grid = row.row.seeAll()
     MediaCarousel(
         title = title,
+        modifier = modifier,
         onMoreClick =
             when {
                 grid != null -> ({ onOpenGrid(grid, title) })
@@ -187,10 +221,12 @@ private fun TileRow(
     tab: HubTab,
     row: HubRowUi.Tiles,
     onOpenGrid: (HubGrid, String) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     fun open(tile: HubTile) = row.row.tileGrid(tile)?.let { onOpenGrid(it, tile.name) }
     MediaCarousel(
         title = row.row.title(tab),
+        modifier = modifier,
         items = row.tiles,
         itemKey = { it.id },
     ) { _, tile ->
