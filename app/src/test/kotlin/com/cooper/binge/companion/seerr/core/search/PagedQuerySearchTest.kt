@@ -46,10 +46,11 @@ class PagedQuerySearchTest {
         scope: CoroutineScope,
         history: QueryHistory = FakeHistory(),
         fetch: suspend (String, Int) -> SearchPage<String> = { q, p -> SearchPage(listOf("$q-$p"), p, 3) },
+        keyOf: ((String) -> Any)? = null,
     ) = PagedQuerySearch(scope, history, { q, p ->
         calls += q to p
         fetch(q, p)
-    })
+    }, keyOf = keyOf)
 
     @Test
     fun `starts idle with the recents and searches nothing`() =
@@ -185,6 +186,31 @@ class PagedQuerySearchTest {
             advanceUntilIdle()
             assertEquals(QuerySearchState.Results("alien", listOf("alien-1", "alien-2", "alien-3"), hasMore = false), search.state.value)
             assertEquals(listOf("alien" to 1, "alien" to 2, "alien" to 3), calls)
+        }
+
+    @Test
+    fun `an empty first page is read past while more remain`() =
+        runTest {
+            val search =
+                newSearch(scope(), fetch = { q, p -> SearchPage(if (p == 1) emptyList() else listOf("$q-$p"), p, 2) })
+            scope().launch { search.state.collect {} }
+            search.setQuery("alien")
+            advanceUntilIdle()
+            assertEquals(QuerySearchState.Results("alien", listOf("alien-2"), hasMore = false), search.state.value)
+        }
+
+    @Test
+    fun `a page of repeats is read past and repeats are dropped`() =
+        runTest {
+            val pages = mapOf(1 to listOf("a", "b"), 2 to listOf("b", "a"), 3 to listOf("c"))
+            val search =
+                newSearch(scope(), fetch = { _, p -> SearchPage(pages.getValue(p), p, 3) }, keyOf = { it })
+            scope().launch { search.state.collect {} }
+            search.setQuery("alien")
+            advanceUntilIdle()
+            search.loadMore()
+            advanceUntilIdle()
+            assertEquals(QuerySearchState.Results("alien", listOf("a", "b", "c"), hasMore = false), search.state.value)
         }
 
     @Test
