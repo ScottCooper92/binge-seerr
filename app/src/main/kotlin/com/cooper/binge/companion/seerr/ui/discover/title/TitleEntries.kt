@@ -53,7 +53,7 @@ fun EntryProviderScope<NavKey>.titleEntries(backStack: NavBackStack<NavKey>) {
     }
 }
 
-/** The title hand-off: a film's or a series' page with the discovery flag on, and Binge or the server's own page as before otherwise. */
+/** The title hand-off: a film's, a series', a person's or a collection's page with the discovery flag on, and Binge or the server's own page as before otherwise. */
 @Composable
 internal fun rememberOpenTitle(backStack: NavBackStack<NavKey>): (TitleKind, Int, String) -> Unit {
     val discovery = LocalDiscoveryEnabled.current
