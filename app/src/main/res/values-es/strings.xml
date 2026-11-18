@@ -1356,4 +1356,25 @@
     <string name="hubs_card_partial">Parcial</string>
     <string name="hubs_card_blocklisted">En la lista de bloqueo</string>
     <string name="hubs_loading_row">Cargando una fila</string>
+    <string name="title_page_request">Pedir</string>
+    <string name="title_page_runtime">%1$d h %2$d min</string>
+    <string name="title_page_status_4k">%1$s · 4K</string>
+    <string name="title_page_stat_rating">Nota</string>
+    <string name="title_page_stat_critics">Crítica</string>
+    <string name="title_page_stat_audience">Público</string>
+    <string name="title_page_stat_imdb">IMDb</string>
+    <string name="title_page_cast">Reparto</string>
+    <string name="title_page_crew">Equipo principal</string>
+    <string name="title_page_videos">Vídeos</string>
+    <string name="title_page_where_to_watch">Dónde verla</string>
+    <string name="title_page_collection">Colección</string>
+    <string name="title_page_recommended">Recomendadas</string>
+    <string name="title_page_similar">Similares</string>
+    <string name="title_page_keywords">Palabras clave</string>
+    <string name="title_page_fact_status">Estado</string>
+    <string name="title_page_fact_original_language">Idioma original</string>
+    <string name="title_page_fact_spoken_languages">Idiomas hablados</string>
+    <string name="title_page_fact_studios">Estudios</string>
+    <string name="title_page_fact_budget">Presupuesto</string>
+    <string name="title_page_fact_revenue">Recaudación</string>
 </resources>

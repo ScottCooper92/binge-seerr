@@ -5,6 +5,7 @@ import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.material3.adaptive.layout.calculatePaneScaffoldDirective
 import androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -20,6 +21,8 @@ import androidx.navigation3.ui.NavDisplay
 import com.binge.designsystem.PaneContent
 import com.binge.designsystem.PaneEdge
 import com.cooper.binge.companion.seerr.flags.LocalDiscoveryEnabled
+import com.cooper.binge.companion.seerr.ui.discover.title.LocalOpenTitle
+import com.cooper.binge.companion.seerr.ui.discover.title.TitleDetailEntry
 import com.cooper.binge.companion.seerr.ui.hub.HubSection
 import com.cooper.binge.companion.seerr.ui.hubs.DiscoverHubEntry
 import com.cooper.binge.companion.seerr.ui.settings.diagnostics.DiagnosticsEntry
@@ -65,12 +68,14 @@ fun SeerrNavHost(
     // A disconnect still waiting on the server is not a connection to ask a review of: its card would show as the user leaves.
     val askable = remember(state) { derivedStateOf { if (state.value == HomeUiState.Disconnecting) false else state.value.connected() } }
     ReviewPromptOnReturnToRoot(connected = askable.value, stackDepth = backStack.size)
-    SeerrPaneHost(backStack, connected, exit, modifier, defaultSection = { DefaultSectionPane(backStack, exit) }) { panes ->
-        homeEntries(backStack, connected = { connectedState.value }, panes = panes, onExit = exit, tabs = tabs)
-        sectionEntries(backStack, panes)
-        searchEntries(backStack, panes)
-        detailEntries(backStack, showBack = panes.showBack)
-        serverSettingsEntries(backStack)
+    CompositionLocalProvider(LocalOpenTitle provides { kind, id -> backStack.add(TitleDetailRoute(kind, id)) }) {
+        SeerrPaneHost(backStack, connected, exit, modifier, defaultSection = { DefaultSectionPane(backStack, exit) }) { panes ->
+            homeEntries(backStack, connected = { connectedState.value }, panes = panes, onExit = exit, tabs = tabs)
+            sectionEntries(backStack, panes)
+            searchEntries(backStack, panes)
+            detailEntries(backStack, showBack = panes.showBack)
+            serverSettingsEntries(backStack)
+        }
     }
 }
 
@@ -252,6 +257,9 @@ private fun EntryProviderScope<NavKey>.detailEntries(
                 onOpenServices = { backStack.add(ServerSettingsPageRoute(ServerSettingsPage.Services)) },
             )
         }
+    }
+    entry<TitleDetailRoute>(metadata = DetailPane) { route ->
+        DetailPaneContent { TitleDetailEntry(route.kind, route.tmdbId, onBack = { backStack.popIfTop(route) }) }
     }
     entry<IssueDetailRoute>(metadata = DetailPane) { route ->
         DetailPaneContent { IssueDetailEntry(route.issueId, onBack = { backStack.popIfTop(route) }, showBack = showBack()) }

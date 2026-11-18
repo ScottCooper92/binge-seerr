@@ -44,6 +44,7 @@ internal class DemoModel(
         publicRoutes(data) +
             data.requestRoutes() +
             data.mediaRoutes() +
+            data.titleRoutes() +
             data.discoverRoutes() +
             data.issueRoutes() +
             data.blocklistRoutes() +

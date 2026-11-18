@@ -96,6 +96,30 @@ interface SeerrApi {
         @Path("tmdbId") tmdbId: Int,
     ): SeerrMediaDetailsDto
 
+    /** The whole film page; [movieDetails] is the thin read the Service uses. */
+    @GET("api/v1/movie/{tmdbId}")
+    suspend fun movieFullDetails(
+        @Path("tmdbId") tmdbId: Int,
+    ): SeerrMovieDetailsDto
+
+    @GET("api/v1/movie/{tmdbId}/recommendations")
+    suspend fun movieRecommendations(
+        @Path("tmdbId") tmdbId: Int,
+        @Query("page") page: Int = 1,
+    ): SeerrTitlePageDto
+
+    @GET("api/v1/movie/{tmdbId}/similar")
+    suspend fun movieSimilar(
+        @Path("tmdbId") tmdbId: Int,
+        @Query("page") page: Int = 1,
+    ): SeerrTitlePageDto
+
+    /** Rotten Tomatoes and IMDb together; only Seerr serves it. A 404 means the server has neither score. */
+    @GET("api/v1/movie/{tmdbId}/ratingscombined")
+    suspend fun movieRatings(
+        @Path("tmdbId") tmdbId: Int,
+    ): SeerrRatingsDto
+
     @GET("api/v1/tv/{tmdbId}")
     suspend fun tvDetails(
         @Path("tmdbId") tmdbId: Int,
