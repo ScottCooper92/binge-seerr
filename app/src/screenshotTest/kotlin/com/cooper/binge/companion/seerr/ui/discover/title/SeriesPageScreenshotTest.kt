@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.emptyFlow
 
 private const val EPISODES_PX = 1900
 private const val LARGE_FONT_EPISODES_PX = 4300
+private const val WATCH_PX = 4200
 private const val FACTS_PX = 1800
 private const val FACTS_LARGE_FONT_PX = 3600
 
@@ -110,6 +111,19 @@ class SeriesPageScreenshotTest {
             NO_ACTIONS,
             NO_SEASON_ACTIONS,
             scrollState = rememberScrollState(initial = LARGE_FONT_EPISODES_PX),
+        )
+
+    /** Where to watch on the series page: both kinds, the Stream chip chosen, and the JustWatch credit. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun whereToWatch() =
+        SeriesPageScreen(
+            SeriesPageUiState.Ready(fullSeries(), seriesExtras()),
+            emptyFlow(),
+            NO_ACTIONS,
+            NO_SEASON_ACTIONS,
+            scrollState = rememberScrollState(initial = WATCH_PX),
         )
 
     /** Every season held or asked for: no Request button. */

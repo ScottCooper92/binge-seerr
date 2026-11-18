@@ -14,7 +14,6 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.DetailStat
 import com.binge.designsystem.component.InfoRowList
-import com.binge.designsystem.component.SectionHeader
 import com.binge.designsystem.isExpandedLayout
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.title.SeriesDetails
@@ -69,10 +68,7 @@ internal fun SeriesPageBody(
         InfoRowList(series.factEntries(context.resources, locale, state.extras?.ratings), Modifier.readingMargin())
         PeopleRow(stringResource(R.string.title_page_cast), series.cast, actions.onOpenPerson, actions.onOpenCredits)
         PeopleRow(stringResource(R.string.title_page_crew), series.keyCrew, actions.onOpenPerson, actions.onOpenCredits)
-        series.providers?.takeIf { it.streaming.isNotEmpty() }?.let { providers ->
-            SectionHeader(stringResource(R.string.title_page_where_to_watch), Modifier.readingMargin())
-            TagRow(providers.streaming.map { it.name }, Modifier.readingMargin())
-        }
+        WhereToWatchSection(series.providers, actions.onOpenUrl, Modifier.readingMargin())
         state.extras?.let { TitleRow(stringResource(R.string.title_page_more_like_this), it.moreLikeThis, actions.onOpenTitle) }
         KeywordsSection(series.keywords, Modifier.readingMargin())
     }
