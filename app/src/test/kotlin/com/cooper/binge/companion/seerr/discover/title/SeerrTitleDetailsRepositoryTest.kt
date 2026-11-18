@@ -49,6 +49,7 @@ class SeerrTitleDetailsRepositoryTest {
     private var variant = SeerrVariant.Seerr
     private var version = SeerrVersion(3, 2, 0)
     private var settings = SeerrPublicSettings(movie4kEnabled = true, streamingRegion = "GB", discoverRegion = "US")
+    private var deviceRegion: String? = null
     private var userRegion = """{"streamingRegion":"US"}"""
     private var movieBody = MOVIE
     private var ratingsAnswer = FakeResponse(headers = JSON, body = RATINGS)
@@ -80,6 +81,7 @@ class SeerrTitleDetailsRepositoryTest {
                         viewer = { SeerrUserDto(id = 9, permissions = permissions) },
                         profile = { profile },
                         serverUrl = { "https://seerr.example/" },
+                        deviceRegion = { deviceRegion },
                         io = Dispatchers.Unconfined,
                     ),
                 )
@@ -141,6 +143,40 @@ class SeerrTitleDetailsRepositoryTest {
         val server = withRepository { it.movie(603) }
         assertEquals("GB", server.providers?.region)
         assertEquals("15", server.certification)
+    }
+
+    @Test
+    fun `with no region set anywhere the phone's country is the region`() {
+        settings = SeerrPublicSettings(movie4kEnabled = true)
+        userRegion = "{}"
+        deviceRegion = "GB"
+
+        val movie = withRepository { it.movie(603) }
+
+        assertEquals("GB", movie.providers?.region)
+        assertEquals(listOf("Stream GB"), movie.providers?.streaming?.map { it.name })
+        assertEquals("15", movie.certification)
+    }
+
+    @Test
+    fun `a region someone chose wins over the phone's country`() {
+        deviceRegion = "GB"
+
+        assertEquals("US", withRepository { it.movie(603) }.providers?.region)
+
+        userRegion = "{}"
+        assertEquals("GB", withRepository { it.movie(603) }.providers?.region)
+        settings = SeerrPublicSettings(movie4kEnabled = true, streamingRegion = "US")
+        assertEquals("US", withRepository { it.movie(603) }.providers?.region)
+    }
+
+    @Test
+    fun `with no region anywhere and none on the phone there are no providers`() {
+        settings = SeerrPublicSettings(movie4kEnabled = true)
+        userRegion = "{}"
+        deviceRegion = null
+
+        assertNull(withRepository { it.movie(603) }.providers)
     }
 
     @Test

@@ -32,13 +32,15 @@ interface SeriesDetailsRepository {
 
 /**
  * [SeriesDetailsRepository] over the Seerr API. [serverUrl] is the server's address with its trailing slash, for the show's
- * page on it. [io] is the dispatcher the calls run on; it has no default.
+ * page on it. [deviceRegion] is the country the phone is set to, or null. [io] is the dispatcher the calls run on; it has
+ * no default.
  */
 class SeerrSeriesRepository(
     private val api: suspend () -> SeerrApi,
     private val viewer: suspend () -> SeerrUserDto,
     private val profile: suspend () -> SeerrServerProfile,
     private val serverUrl: suspend () -> String,
+    private val deviceRegion: () -> String?,
     private val io: CoroutineDispatcher,
 ) : SeriesDetailsRepository {
     override suspend fun series(tmdbId: Int): SeriesDetails =
@@ -49,7 +51,7 @@ class SeerrSeriesRepository(
             val dto = api.tvFullDetails(tmdbId)
             val permissions = user.toPermissions()
             dto.toSeriesDetails(
-                region = streamingRegion(api, user, profile),
+                region = streamingRegion(api, user, profile, deviceRegion()),
                 mayRequest = permissions.canRequestSeries,
                 mayRequest4k = permissions.mayRequest4k(isTv = true, profile.settings),
                 settings = profile.settings,
