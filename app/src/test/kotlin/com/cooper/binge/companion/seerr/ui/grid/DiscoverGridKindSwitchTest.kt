@@ -14,7 +14,11 @@ class DiscoverGridKindSwitchTest {
         preset: GridPreset,
         title: String?,
         kind: TitleKind = TitleKind.Series,
-    ) = DiscoverGridRoute(TitleKind.Movie, preset, title).carriedTo(kind, DiscoverSort.ReleaseNewest, DiscoverFilters(genres = setOf(18), runtimeMin = 90))
+    ) = DiscoverGridRoute(
+        TitleKind.Movie,
+        preset,
+        title,
+    ).carriedTo(kind, DiscoverSort.ReleaseNewest, DiscoverFilters(genres = setOf(18), runtimeMin = 90))
 
     @Test
     fun `a title that names a kind is dropped, so the new grid is called by its own kind`() {
