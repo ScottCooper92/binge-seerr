@@ -1400,6 +1400,14 @@
     <string name="title_page_request">Pedir</string>
     <string name="title_page_runtime">%1$d h %2$d min</string>
     <string name="title_page_status_4k">%1$s · 4K</string>
+    <string name="title_page_request_4k">Pedir en 4K</string>
+    <string name="title_page_status_hd">%1$s · HD</string>
+    <string name="title_page_action_trailer">Tráiler</string>
+    <string name="title_page_action_share">Compartir</string>
+    <string name="title_page_stat_released">Estreno</string>
+    <string name="title_page_stat_runtime">Duración</string>
+    <string name="title_page_stat_rated">Clasificación</string>
+    <string name="title_page_stat_votes">%1$s votos</string>
     <string name="title_page_stat_rating">Nota</string>
     <string name="title_page_stat_critics">Crítica</string>
     <string name="title_page_stat_audience">Público</string>
@@ -1452,11 +1460,6 @@
     </plurals>
     <string name="series_page_seasons">Temporadas</string>
     <string name="series_page_runtime">%1$d min</string>
-    <plurals name="series_page_season_count">
-        <item quantity="one">%1$d temporada</item>
-        <item quantity="many">%1$d de temporadas</item>
-        <item quantity="other">%1$d temporadas</item>
-    </plurals>
     <string name="series_fact_networks">Cadenas</string>
     <string name="series_fact_creators">Creada por</string>
     <string name="series_fact_first_aired">Primera emisión</string>

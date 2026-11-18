@@ -11,9 +11,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
-import androidx.compose.ui.res.stringResource
-import com.binge.designsystem.component.BingeActionFooter
-import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.ui.discover.request.RequestSheet
 import com.cooper.binge.companion.seerr.ui.discover.request.RequestSheetTarget
@@ -25,7 +22,7 @@ import com.cooper.binge.companion.seerr.ui.state.MediaHeroDetailPlaceholder
 import kotlinx.coroutines.flow.Flow
 import com.binge.designsystem.R as DesR
 
-/** The series page: a hero, the seasons, facts and people, and Request pinned below; a request is the primary action. */
+/** The series page: a hero, its stats, and the actions, with Request first; then the seasons, facts and people. */
 @Composable
 internal fun SeriesPageScreen(
     state: SeriesPageUiState,
@@ -57,15 +54,18 @@ private fun ReadySeriesPage(
         }
     }
     val series = state.series
+    val context = LocalContext.current
     MediaHeroDetailPage(
         title = series.name,
         backdropUrl = series.backdropUrl ?: series.posterUrl,
-        metaText = series.metaLine(),
+        metaText = "",
+        genres = series.genres,
+        tagline = series.tagline,
         onBack = actions.onBack,
         modifier = modifier,
         snackbarHostState = snackbar,
         scrollState = scrollState,
-        footer = if (state.mayRequest) ({ BingeActionFooter(stringResource(R.string.title_page_request), actions.onRequest) }) else null,
+        topBarActions = { glassAlpha -> ShareBarAction(glassAlpha) { context.shareTitle(series.name, series.webUrl) } },
     ) {
         Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
         SeriesPageBody(state, actions)

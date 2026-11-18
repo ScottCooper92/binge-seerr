@@ -1457,6 +1457,14 @@
     <string name="title_page_request">Request</string>
     <string name="title_page_runtime">%1$dh %2$dm</string>
     <string name="title_page_status_4k">%1$s · 4K</string>
+    <string name="title_page_request_4k">Request in 4K</string>
+    <string name="title_page_status_hd">%1$s · HD</string>
+    <string name="title_page_action_trailer">Trailer</string>
+    <string name="title_page_action_share">Share</string>
+    <string name="title_page_stat_released">Released</string>
+    <string name="title_page_stat_runtime">Runtime</string>
+    <string name="title_page_stat_rated">Rated</string>
+    <string name="title_page_stat_votes">%1$s votes</string>
     <string name="title_page_stat_rating">Rating</string>
     <string name="title_page_stat_critics">Critics</string>
     <string name="title_page_stat_audience">Audience</string>
@@ -1508,10 +1516,6 @@
     </plurals>
     <string name="series_page_seasons">Seasons</string>
     <string name="series_page_runtime">%1$d min</string>
-    <plurals name="series_page_season_count">
-        <item quantity="one">%1$d season</item>
-        <item quantity="other">%1$d seasons</item>
-    </plurals>
     <string name="series_fact_networks">Networks</string>
     <string name="series_fact_creators">Created by</string>
     <string name="series_fact_first_aired">First aired</string>
