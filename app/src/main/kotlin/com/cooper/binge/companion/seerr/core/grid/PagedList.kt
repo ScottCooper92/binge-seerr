@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 
@@ -37,6 +38,12 @@ sealed interface PagedListState<out T> {
     ) : PagedListState<Nothing>
 }
 
+/** A list state and the query it answers, so a reader pairing it with a query can tell a stale state from a current one. */
+data class Answered<out Q, out T>(
+    val query: Q,
+    val state: PagedListState<T>,
+)
+
 /**
  * A paged list over any query [Q]: the first page when the query changes, further pages on request, and a retry. A query that
  * changes while one is loading drops the old one, pages included. [fetch] is the whole of what the source contributes, and
@@ -54,9 +61,15 @@ class PagedList<Q, T>(
     private val attempt = MutableStateFlow(0)
     private val moreRequests = MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
-    val state: StateFlow<PagedListState<T>> =
+    /** The state with the query it answers; null until the first query is taken up. */
+    val answered: StateFlow<Answered<Q, T>?> =
         combine(query.distinctUntilChanged(), attempt) { q, _ -> q }
-            .flatMapLatest { listFlow(it) }
+            .flatMapLatest { q -> listFlow(q).map { Answered(q, it) } }
+            .stateIn(scope, started, null)
+
+    val state: StateFlow<PagedListState<T>> =
+        answered
+            .map { it?.state ?: PagedListState.Loading }
             .stateIn(scope, started, PagedListState.Loading)
 
     /** Try the current query again after a failure. */
