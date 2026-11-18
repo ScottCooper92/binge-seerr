@@ -8,6 +8,7 @@ import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isEnabled
 import androidx.compose.ui.test.isSelected
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
@@ -67,19 +68,39 @@ class WideShellJourneyTest {
         NavHostActivity.discoveryEnabled = false
     }
 
-    /** The Downloading filter chip, the one node with that text that can be selected: the hub's heading and the request rows read the same. */
+    /**
+     * The Pending filter chip, the one node with that text that can be selected: the request rows read the same. It is one
+     * page from the first, so a tap crosses one page of the pager and not three.
+     */
     private fun chip() =
         host.compose.onNode(
-            hasText(host.string(R.string.requests_filter_processing), substring = true) and
+            hasText(host.string(R.string.requests_filter_pending), substring = true) and
                 SemanticsMatcher.keyIsDefined(SemanticsProperties.Selected),
         )
+
+    /**
+     * Waits for the chip itself. The hub beside it also says "Downloading now" and the rows say "Pending", so [RealNavHostRule.awaitShowing] can pass
+     * before the section's chip row has composed, and a click made then lands on nothing.
+     */
+    private fun awaitChipReady() {
+        host.compose.waitUntil(WAIT_MILLIS) {
+            host.compose
+                .onAllNodes(
+                    hasText(host.string(R.string.requests_filter_pending), substring = true) and
+                        SemanticsMatcher.keyIsDefined(SemanticsProperties.Selected) and
+                        isEnabled(),
+                ).fetchSemanticsNodes()
+                .isNotEmpty()
+        }
+        host.compose.waitForIdle()
+    }
 
     /** Waits for the chip to read as selected: the filter comes back through restored state, a frame after the screen shows. */
     private fun awaitChipSelected() {
         host.compose.waitUntil(WAIT_MILLIS) {
             host.compose
                 .onAllNodes(
-                    hasText(host.string(R.string.requests_filter_processing), substring = true) and isSelected(),
+                    hasText(host.string(R.string.requests_filter_pending), substring = true) and isSelected(),
                 ).fetchSemanticsNodes()
                 .isNotEmpty()
         }
@@ -280,12 +301,12 @@ class WideShellJourneyTest {
         NavHostActivity.discoveryEnabled = true
         host.connectDemo()
         host.launch(HomeRoute, RequestsRoute)
-        host.awaitShowing(host.string(R.string.requests_filter_processing))
+        awaitChipReady()
         chip().performClick()
         awaitChipSelected()
 
         host.rotate(PHONE)
-        host.awaitShowing(host.string(R.string.requests_filter_processing))
+        host.awaitShowing(host.string(R.string.requests_filter_pending))
         assertEquals("nothing moved", listOf<NavKey>(ShellRoute, RequestsRoute), host.stack())
         awaitChipSelected()
 

@@ -76,7 +76,6 @@ private fun ready(
     listVersion = 1,
     hasFilters = hasFilters,
     canManage = true,
-    canBlockCollections = true,
     actingTmdbIds = emptySet(),
 )
 

@@ -1,6 +1,7 @@
 package com.cooper.binge.companion.seerr.di
 
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
+import com.cooper.binge.companion.seerr.discover.collection.CollectionRepository
 import com.cooper.binge.companion.seerr.discover.title.SeerrTitleCreditsRepository
 import com.cooper.binge.companion.seerr.discover.title.SeerrTitleDetailsRepository
 import com.cooper.binge.companion.seerr.discover.title.TitleCreditsRepository
@@ -18,6 +19,7 @@ object TitleDetailsModule {
     @Provides
     fun titleDetailsRepository(
         connection: SeerrConnection,
+        collections: CollectionRepository,
         @IoDispatcher io: CoroutineDispatcher,
     ): TitleDetailsRepository =
         SeerrTitleDetailsRepository(
@@ -26,6 +28,7 @@ object TitleDetailsModule {
             profile = connection::profile,
             serverUrl = { connection.current().baseUrl },
             deviceRegion = ::deviceRegion,
+            collections = collections,
             io = io,
         )
 

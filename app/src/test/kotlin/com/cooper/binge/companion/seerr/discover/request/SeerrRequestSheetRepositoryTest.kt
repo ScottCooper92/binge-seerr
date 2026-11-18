@@ -41,6 +41,7 @@ class SeerrRequestSheetRepositoryTest {
     private var permissions = PERMISSION_ADMIN
     private var settings = SeerrPublicSettings(movie4kEnabled = true)
     private var postAnswer = FakeResponse(headers = JSON, body = """{"id":31}""")
+    private var postByBody: ((String) -> FakeResponse)? = null
 
     @After
     fun tearDown() {
@@ -54,7 +55,7 @@ class SeerrRequestSheetRepositoryTest {
             "/api/v1/service/sonarr" -> FakeResponse(headers = JSON, body = "[]")
             "/api/v1/service/radarr/1" -> FakeResponse(headers = JSON, body = RADARR_ONE)
             "/api/v1/user/9/quota" -> FakeResponse(headers = JSON, body = QUOTA)
-            "/api/v1/request" -> postAnswer
+            "/api/v1/request" -> postByBody?.invoke(request.body) ?: postAnswer
             else -> FakeResponse(code = 404)
         }
 
@@ -169,5 +170,46 @@ class SeerrRequestSheetRepositoryTest {
             }
 
         assertEquals(403, failure.code())
+    }
+
+    private fun film(id: Int) = RequestSubmission(TitleKind.Movie, id, emptyList(), is4k = false, destination = null)
+
+    @Test
+    fun `several submissions are sent in order and counted`() {
+        val answer = withRepository { it.submitAll(listOf(film(603), film(604), film(605))) }
+
+        assertEquals(RequestAllResult(created = 3, alreadyThere = 0, failure = null), answer)
+        val ids = seerr.requests.filter { it.method == "POST" }.map { Regex("\"mediaId\":(\\d+)").find(it.body)?.groupValues?.get(1) }
+        assertEquals(listOf("603", "604", "605"), ids)
+    }
+
+    @Test
+    fun `a refused film does not stop the ones after it and its refusal is reported`() {
+        postByBody = { body ->
+            if (body.contains("\"mediaId\":604")) FakeResponse(code = 403, headers = JSON, body = """{"message":"no"}""") else postAnswer
+        }
+
+        val answer = withRepository { it.submitAll(listOf(film(603), film(604), film(605))) }
+
+        assertEquals(2, answer.created)
+        assertEquals(403, (answer.failure as HttpException).code())
+    }
+
+    @Test
+    fun `a film the server already has is counted apart from the ones it made`() {
+        postByBody = { body ->
+            if (body.contains(
+                    "\"mediaId\":604",
+                )
+            ) {
+                FakeResponse(code = 409, headers = JSON, body = """{"message":"exists"}""")
+            } else {
+                postAnswer
+            }
+        }
+
+        val answer = withRepository { it.submitAll(listOf(film(603), film(604))) }
+
+        assertEquals(RequestAllResult(created = 1, alreadyThere = 1, failure = null), answer)
     }
 }
