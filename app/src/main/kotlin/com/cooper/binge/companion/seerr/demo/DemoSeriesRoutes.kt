@@ -21,6 +21,9 @@ private const val DEMO_NEXT_SEASON = 2
 private const val DEMO_NEXT_EPISODE = 4
 private const val GENRE_DRAMA = 18
 private const val RELATED_SHOWS_SKIP = 1
+private const val DEMO_CREATOR_ID = 9101
+private const val DEMO_LEAD_ID = 9001
+private const val DEMO_RIVAL_ID = 9002
 
 /** The series page's reads beyond the thin lookup: recommendations, similar shows and the Rotten Tomatoes score. */
 internal fun DemoData.seriesRoutes(): List<DemoRoute> =
@@ -63,14 +66,17 @@ private fun seriesBody(
     genres = listOf(SeerrNamedDto(GENRE_DRAMA, "Drama")),
     keywords = listOf(SeerrNamedDto(1, "demo"), SeerrNamedDto(2, "ensemble")),
     networks = listOf(SeerrNamedDto(1, "Demo Network")),
-    createdBy = listOf(SeerrNamedDto(9101, "Riley Director")),
+    createdBy = listOf(SeerrNamedDto(DEMO_CREATOR_ID, "Riley Director")),
     contentRatings = thin.contentRatings,
     seasons = thin.seasons.map { SeerrTvSeasonDto(seasonNumber = it.seasonNumber, name = it.name, episodeCount = it.episodeCount) },
     nextEpisodeToAir =
         SeerrEpisodeDto(name = "The Next One", airDate = "2099-01-01", episodeNumber = DEMO_NEXT_EPISODE, seasonNumber = DEMO_NEXT_SEASON),
     credits =
         SeerrCreditsDto(
-            listOf(SeerrCastDto(9001, "Alex Sample", "The Hero", null, 0), SeerrCastDto(9002, "Sam Example", "The Rival", null, 1)),
+            listOf(
+                SeerrCastDto(DEMO_LEAD_ID, "Alex Sample", "The Hero", null, 0),
+                SeerrCastDto(DEMO_RIVAL_ID, "Sam Example", "The Rival", null, 1),
+            ),
         ),
     relatedVideos = listOf(SeerrVideoDto("demo", "Trailer", "YouTube", "Trailer", "https://www.youtube.com/watch?v=demo")),
     watchProviders = listOf(SeerrWatchRegionDto("US", null, listOf(SeerrMovieWatchProviderDto(1, "Demo Stream", null, 1)))),

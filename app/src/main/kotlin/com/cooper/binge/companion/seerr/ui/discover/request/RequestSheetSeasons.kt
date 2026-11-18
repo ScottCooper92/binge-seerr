@@ -10,7 +10,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.CheckboxRow
-import com.binge.designsystem.component.StatusChip
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.request.SeasonChoice
 import com.cooper.binge.companion.seerr.discover.request.SeasonSelection
@@ -80,15 +79,16 @@ private fun SeasonRow(
     last: Boolean,
     actions: RequestSheetActions,
 ) {
-    val status = season.availability.label()
+    val status = season.availability.label()?.first
+    val episodes = pluralStringResource(R.plurals.season_episodes, season.episodeCount, season.episodeCount)
     CheckboxRow(
         label = seasonLabel(season.number, season.name),
         checked = picked || !season.isOpen,
         onCheckedChange = { actions.onSeason(season.number) },
         enabled = enabled && season.isOpen,
-        supportingText = pluralStringResource(R.plurals.season_episodes, season.episodeCount, season.episodeCount),
+        supportingText = status?.let { stringResource(R.string.series_season_subtitle, episodes, it) } ?: episodes,
+        supportingMaxLines = 2,
         icon = Icons.Filled.Tv,
         showDivider = !last,
-        trailingContent = status?.let { (label, sentiment) -> { StatusChip(label, sentiment, singleLine = true) } },
     )
 }

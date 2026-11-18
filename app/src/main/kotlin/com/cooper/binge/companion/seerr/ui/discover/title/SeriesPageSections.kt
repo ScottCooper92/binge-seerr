@@ -18,7 +18,6 @@ import com.binge.designsystem.component.ExpandableOverview
 import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.component.SectionHeader
-import com.binge.designsystem.component.StatusChip
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.title.SeasonInfo
 import com.cooper.binge.companion.seerr.discover.title.SeriesDetails
@@ -73,20 +72,28 @@ internal fun SeriesPageBody(
     }
 }
 
-/** Each season with its episode count, year and, where the server holds or has been asked for it, its status. */
+/**
+ * Each season with its episode count, year and, where the server holds or has been asked for it, its status. The status is
+ * text in the detail line rather than a chip, so a long name at a large font still has the row's width.
+ */
 @Composable
 private fun SeasonsGroup(seasons: List<SeasonInfo>) {
     if (seasons.isEmpty()) return
     val rows =
         seasons.map { season ->
-            val status = season.standard.label()
+            val status = season.standard.label()?.first
             val episodes = pluralStringResource(R.plurals.season_episodes, season.episodeCount, season.episodeCount)
+            val detail =
+                listOfNotNull(
+                    season.airYear,
+                    status,
+                ).fold(episodes) { text, part -> stringResource(R.string.series_season_subtitle, text, part) }
             ListItem(
                 icon = Icons.Filled.Tv,
                 label = seasonLabel(season.number, season.name),
-                detail = season.airYear?.let { stringResource(R.string.series_season_subtitle, episodes, it) } ?: episodes,
+                detail = detail,
+                supportingMaxLines = 3,
                 clickable = false,
-                trailingContent = status?.let { (label, sentiment) -> { StatusChip(label, sentiment, singleLine = true) } },
             )
         }
     ItemGroup(
