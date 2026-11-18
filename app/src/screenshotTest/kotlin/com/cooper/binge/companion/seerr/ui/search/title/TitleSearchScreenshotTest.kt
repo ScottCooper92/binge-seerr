@@ -7,6 +7,7 @@ import com.cooper.binge.companion.seerr.preview.SeerrFontScalePreviews
 import com.cooper.binge.companion.seerr.preview.SeerrScreenPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrScreenStatePreview
 import com.cooper.binge.companion.seerr.preview.SeerrSpanishPreviews
+import com.cooper.binge.companion.seerr.preview.SeerrTabletPanesPreview
 
 /** The Search tab: idle with recents, results, no results and a failure, at the sizes and in the languages the app ships. */
 class TitleSearchScreenshotTest {
@@ -27,6 +28,11 @@ class TitleSearchScreenshotTest {
     @SeerrScreenPreviews
     @Composable
     fun results() = Frame(readyResultsState())
+
+    @PreviewTest
+    @SeerrTabletPanesPreview
+    @Composable
+    fun resultsTablet() = Frame(readyResultsState())
 
     /** The same list at 1.3x, where a phone's larger text commonly lands. */
     @PreviewTest

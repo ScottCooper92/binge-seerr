@@ -8,6 +8,7 @@ import com.cooper.binge.companion.seerr.preview.SeerrFontScalePreviews
 import com.cooper.binge.companion.seerr.preview.SeerrScreenPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrScreenStatePreview
 import com.cooper.binge.companion.seerr.preview.SeerrSpanishPreviews
+import com.cooper.binge.companion.seerr.preview.SeerrTabletPanesPreview
 
 /** The "see all" grid: its order and the filter the row started with, over posters, and its empty, loading and failed states. */
 class DiscoverGridScreenshotTest {
@@ -18,6 +19,11 @@ class DiscoverGridScreenshotTest {
     fun filtered() = Frame(readyGridState())
 
     /** The filter cleared: only the order chip is left. */
+    @PreviewTest
+    @SeerrTabletPanesPreview
+    @Composable
+    fun filteredTablet() = Frame(readyGridState())
+
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
