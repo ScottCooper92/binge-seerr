@@ -3,14 +3,18 @@ package com.cooper.binge.companion.seerr.ui.shell
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Tv
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.booleanResource
 import androidx.compose.ui.res.stringResource
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
@@ -18,8 +22,11 @@ import androidx.navigation3.runtime.rememberNavBackStack
 import com.binge.designsystem.component.BingeNavSuiteItem
 import com.binge.designsystem.component.rememberBingeNavPresentation
 import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.discover.TitleKind
+import com.cooper.binge.companion.seerr.discover.grid.GridPreset
 import com.cooper.binge.companion.seerr.discover.sliders.HubTab
 import com.cooper.binge.companion.seerr.ui.DefaultSection
+import com.cooper.binge.companion.seerr.ui.DiscoverGridRoute
 import com.cooper.binge.companion.seerr.ui.SeerrRoute
 import com.cooper.binge.companion.seerr.ui.hubSection
 import com.cooper.binge.companion.seerr.ui.replaceAll
@@ -34,6 +41,7 @@ enum class SeerrTab(
 ) {
     Movies(Icons.Filled.Movie, "tab_movies"),
     Tv(Icons.Filled.Tv, "tab_tv"),
+    Discover(Icons.Filled.Explore, "tab_discover"),
     Search(Icons.Filled.Search, "tab_search"),
     Settings(Icons.Filled.Settings, "tab_settings"),
 }
@@ -56,11 +64,18 @@ data object SettingsRoot : NavKey
 internal fun rememberSeerrTabs(): TabShellState<SeerrTab> {
     val movies = rememberNavBackStack(MoviesRoot)
     val tv = rememberNavBackStack(TvRoot)
+    val discover = rememberNavBackStack(DiscoverGridRoute(TitleKind.Movie, GridPreset.Popular))
     val search = rememberNavBackStack(SearchRoot)
     val settings = rememberNavBackStack(SettingsRoot)
     val stacks =
-        remember(movies, tv, search, settings) {
-            mapOf(SeerrTab.Movies to movies, SeerrTab.Tv to tv, SeerrTab.Search to search, SeerrTab.Settings to settings)
+        remember(movies, tv, discover, search, settings) {
+            mapOf(
+                SeerrTab.Movies to movies,
+                SeerrTab.Tv to tv,
+                SeerrTab.Discover to discover,
+                SeerrTab.Search to search,
+                SeerrTab.Settings to settings,
+            )
         }
     // Settings stays the start tab for now: the hubs are new and the app opens as it always has. Moving the start to Movies is its own change.
     return rememberTabShellState(tabs = SeerrTab.entries, initial = SeerrTab.Settings, stacks = stacks)
@@ -104,15 +119,24 @@ private fun SeerrTab.label(): String =
         when (this) {
             SeerrTab.Movies -> R.string.shell_tab_movies
             SeerrTab.Tv -> R.string.shell_tab_tv
+            SeerrTab.Discover -> R.string.shell_tab_discover
             SeerrTab.Search -> R.string.shell_tab_search
             SeerrTab.Settings -> R.string.shell_tab_settings
         },
     )
 
+/** Whether Discover is a tab: on a tablet-width window (sw600dp) only, as in Binge. On a phone the grids open from the hubs. */
+@Composable
+@ReadOnlyComposable
+internal fun showDiscoverTab(): Boolean = booleanResource(R.bool.shell_show_discover)
+
 /** The bar's destinations, labelled in the user's language. */
 @Composable
 internal fun seerrTabItems(): List<BingeNavSuiteItem> =
-    SeerrTab.entries.map { BingeNavSuiteItem(key = it, label = it.label(), icon = it.icon, testTag = it.testTag) }
+    SeerrTab.entries
+        .filter {
+            it != SeerrTab.Discover || showDiscoverTab()
+        }.map { BingeNavSuiteItem(key = it, label = it.label(), icon = it.icon, testTag = it.testTag) }
 
 /**
  * The tab bar over each tab's root: the Settings tab is the hub, [settings], Movies and TV are the discovery hubs, [discover],
@@ -126,8 +150,12 @@ internal fun SeerrTabShell(
     discover: @Composable (HubTab) -> Unit,
     modifier: Modifier = Modifier,
     search: @Composable () -> Unit = { TabPlaceholder(SeerrTab.Search) },
+    grid: @Composable () -> Unit = { TabPlaceholder(SeerrTab.Discover) },
     settings: @Composable () -> Unit,
 ) {
+    // A window that stops being tablet-width takes Discover out of the bar: leave it for the start tab.
+    val discoverShown = showDiscoverTab()
+    LaunchedEffect(discoverShown, tabs.selected) { if (!discoverShown && tabs.selected == SeerrTab.Discover) tabs.show(tabs.startTab) }
     TabShell(
         state = tabs,
         items = seerrTabItems(),
@@ -140,6 +168,7 @@ internal fun SeerrTabShell(
             SeerrTab.Settings -> settings()
             SeerrTab.Movies -> discover(HubTab.Movies)
             SeerrTab.Tv -> discover(HubTab.Series)
+            SeerrTab.Discover -> grid()
         }
     }
 }
