@@ -26,10 +26,11 @@ internal fun TitleDetailEntry(
     tmdbId: Int,
     onBack: () -> Unit,
     onOpenCredits: () -> Unit,
+    onOpenSeason: (seasonNumber: Int, seasonName: String) -> Unit,
 ) {
     when (kind) {
         TitleKind.Movie -> FilmPageEntry(tmdbId, onBack, onOpenCredits)
-        TitleKind.Series -> SeriesPageEntry(tmdbId, onBack, onOpenCredits)
+        TitleKind.Series -> SeriesPageEntry(tmdbId, onBack, onOpenCredits, onOpenSeason)
         else -> EmptyScreen(message = "")
     }
 }
@@ -62,6 +63,7 @@ private fun SeriesPageEntry(
     tmdbId: Int,
     onBack: () -> Unit,
     onOpenCredits: () -> Unit,
+    onOpenSeason: (Int, String) -> Unit,
 ) {
     val viewModel = hiltViewModel<SeriesPageViewModel, SeriesPageViewModel.Factory>(creationCallback = { it.create(tmdbId) })
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -77,6 +79,7 @@ private fun SeriesPageEntry(
                 onCloseRequest = viewModel::closeRequestSheet,
                 onRequested = viewModel::requested,
             ),
+        seasonActions = SeasonActions(viewModel::selectSeason, viewModel::retryEpisodes, onOpenSeason),
     )
 }
 

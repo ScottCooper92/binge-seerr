@@ -11,7 +11,9 @@ import com.cooper.binge.companion.seerr.seerr.SeerrWatchProviderDto
 
 private val REGIONS = listOf(SeerrRegionDto("US", "United States"), SeerrRegionDto("GB", "United Kingdom"), SeerrRegionDto("ES", "Spain"))
 private val LANGUAGES = listOf(SeerrLanguageDto("en", "English"), SeerrLanguageDto("es", "Spanish"), SeerrLanguageDto("fr", "French"))
-private val GENRES =
+
+/** The genres the demo knows, which its titles are tagged with. */
+internal val DEMO_GENRES =
     listOf(SeerrGenreDto(28, "Action"), SeerrGenreDto(16, "Animation"), SeerrGenreDto(35, "Comedy"), SeerrGenreDto(18, "Drama"))
 private val KEYWORDS = listOf(SeerrKeywordDto(1, "silent film"), SeerrKeywordDto(2, "open source"), SeerrKeywordDto(3, "space"))
 private val COMPANIES = listOf(SeerrCompanyDto(1, "Blender Foundation"), SeerrCompanyDto(2, "Demo Studios"))
@@ -23,7 +25,7 @@ internal fun lookupRoutes(): List<DemoRoute> =
         route("GET", "regions") { _, _ -> ok(REGIONS) },
         route("GET", "watchproviders", "regions") { _, _ -> ok(REGIONS) },
         route("GET", "languages") { _, _ -> ok(LANGUAGES) },
-        route("GET", "genres", "{}") { _, _ -> ok(GENRES) },
+        route("GET", "genres", "{}") { _, _ -> ok(DEMO_GENRES) },
         route("GET", "watchproviders", "{}") { _, _ -> ok(PROVIDERS) },
         route("GET", "search", "keyword") { call, _ -> ok(SeerrKeywordPageDto(KEYWORDS.filter { matches(it.name, call) })) },
         route("GET", "search", "company") { call, _ -> ok(SeerrCompanyPageDto(COMPANIES.filter { matches(it.name, call) })) },

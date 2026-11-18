@@ -55,6 +55,16 @@ class DiscoverHubScreenshotTest {
     fun withHeroLongTitle() = Frame(readyState(hero = listOf(LONG_HERO)))
 
     @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun longRowTitle() = Frame(longTitleState())
+
+    @PreviewTest
+    @SeerrFontScale13Previews
+    @Composable
+    fun longRowTitleLargeText13() = Frame(longTitleState())
+
+    @PreviewTest
     @SeerrSpanishPreviews
     @Composable
     fun withHeroSpanish() = Frame(readyState(hero = HEROES))
@@ -170,6 +180,13 @@ private fun readyState(
     hero = hero,
 )
 
+private fun longTitleState() =
+    DiscoverHubUiState.Ready(
+        rows = listOf(HubRowUi.Cards(HubRow.Popular(1, "Seed: Movie genre: Science Fiction", HubTab.Movies), SAMPLE_CARDS)),
+        pending = 0,
+        refreshing = false,
+    )
+
 private fun tilesState(tab: HubTab = HubTab.Movies) =
     DiscoverHubUiState.Ready(
         rows =
@@ -203,7 +220,6 @@ private fun hero(
     name,
     "https://image.tmdb.org/t/p/w1280/none$id.jpg",
     "2021",
-    7.8f,
     availability,
     "https://server.example/movie/$id",
     genres,

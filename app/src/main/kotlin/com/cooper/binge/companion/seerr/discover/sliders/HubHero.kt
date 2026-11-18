@@ -18,7 +18,6 @@ data class HubHero(
     val name: String,
     val backdropUrl: String,
     val year: String?,
-    val rating: Float?,
     val availability: TitleAvailability,
     val webUrl: String,
     /** Up to a few genre names, in the device's language; empty where the server could not name them. */
@@ -60,7 +59,6 @@ private fun TitleResult.toHero(
             name,
             it.toTmdbBackdropUrl(),
             year,
-            rating?.toFloat(),
             availability,
             hubWebUrl(serverUrl, kind, tmdbId),
             genreIds.mapNotNull { id -> genreNames[id] },
