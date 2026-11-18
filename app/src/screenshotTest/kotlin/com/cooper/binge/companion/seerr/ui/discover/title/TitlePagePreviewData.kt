@@ -61,7 +61,7 @@ internal fun fullMovie(
     cast = listOf(person(1, "Keanu Reeves", "Neo"), person(2, "Carrie-Anne Moss", "Trinity"), person(3, "Laurence Fishburne", "Morpheus")),
     keyCrew = listOf(person(10, "Lana Wachowski", "Director, Writer"), person(11, "Lilly Wachowski", "Director, Writer")),
     otherCrew = emptyList(),
-    videos = listOf(TitleVideo("Official Trailer", "https://www.youtube.com/watch?v=demo")),
+    videos = listOf(TitleVideo("Official Trailer", "https://www.youtube.com/watch?v=demo", isTrailer = true)),
     providers = TitleProviders("US", null, listOf(TitleProvider(1, "Demo Stream", null)), emptyList()),
     collection = TitleCollection(2344, "The Matrix Collection", null),
     standard = standard,

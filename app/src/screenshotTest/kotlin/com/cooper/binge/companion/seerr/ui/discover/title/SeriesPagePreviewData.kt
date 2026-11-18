@@ -78,7 +78,7 @@ internal fun fullSeries(
     cast = listOf(person(1, "Alex Sample", "The Warden"), person(2, "Sam Example", "The Heir"), person(3, "Jordan Demo", "The Cook")),
     keyCrew = listOf(person(10, "Riley Director", "Executive Producer"), person(11, "Casey Writer", "Writer")),
     otherCrew = emptyList(),
-    videos = listOf(TitleVideo("Official Trailer", "https://www.youtube.com/watch?v=demo")),
+    videos = listOf(TitleVideo("Official Trailer", "https://www.youtube.com/watch?v=demo", isTrailer = true)),
     providers = TitleProviders("US", null, listOf(TitleProvider(1, "Demo Stream", null)), emptyList()),
     standard = standard,
     fourK = null,
