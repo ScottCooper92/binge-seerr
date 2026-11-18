@@ -13,12 +13,12 @@ import kotlinx.coroutines.launch
 
 /**
  * Debug builds only. Writes the switch that says whether the notification poll runs on the shared library's reactor, planner,
- * scheduler and cursor store. The choice is read once when the process starts, so it takes effect on the next launch:
- * `adb shell am broadcast -a <applicationId>.SHARED_POLLING -p <applicationId> --ez enabled true`, then wait a couple of seconds
- * before relaunching. The broadcast must name the package (`-p`): from Android 8 a manifest receiver is not reached without it.
- * Do not name the receiver with `-n`: a debug application id already ends in `.debug`, so `.debug.` expands against it.
- * `--ez enabled false` turns it back off, and no `enabled` extra clears the override. Turning it off after a run on the shared
- * store makes the poll read the old, behind cursors again, so it announces the gap once.
+ * scheduler and cursor store (the default) or on the app's earlier path. The choice is read once when the process starts, so it
+ * takes effect on the next launch: `adb shell am broadcast -a <applicationId>.SHARED_POLLING -p <applicationId> --ez enabled false`,
+ * then wait a couple of seconds before relaunching. The broadcast must name the package (`-p`): from Android 8 a manifest receiver
+ * is not reached without it. Do not name the receiver with `-n`: a debug application id already ends in `.debug`, so `.debug.`
+ * expands against it. `--ez enabled true`, or no `enabled` extra, goes back to the default. Turning it off after a run on the
+ * shared store makes the poll read the old, behind cursors again, so it announces the gap once.
  */
 class SharedPollingSwitchReceiver : BroadcastReceiver() {
     override fun onReceive(
