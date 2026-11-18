@@ -53,10 +53,7 @@ internal fun TitlePageBody(
         InfoRowList(movie.factEntries(context.resources, locale, state.extras?.ratings))
         PeopleRow(stringResource(R.string.title_page_cast), movie.cast, actions.onOpenPerson, actions.onOpenCredits)
         PeopleRow(stringResource(R.string.title_page_crew), movie.keyCrew, actions.onOpenPerson, actions.onOpenCredits)
-        movie.providers?.takeIf { it.streaming.isNotEmpty() }?.let { providers ->
-            SectionHeader(stringResource(R.string.title_page_where_to_watch))
-            TagRow(providers.streaming.map { it.name })
-        }
+        WhereToWatchSection(movie.providers, actions.onOpenUrl)
         movie.collection?.let { collection ->
             TitleRow(
                 title = collection.name,
