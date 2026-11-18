@@ -34,6 +34,7 @@ import com.binge.designsystem.resolvedContentInset
 import com.binge.designsystem.resolvedContentPadding
 import com.binge.designsystem.theme.BingeTheme
 import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.flags.LocalDiscoveryEnabled
 import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
 import com.cooper.binge.companion.seerr.ui.state.MediaHeroDetailPage
 import com.cooper.binge.companion.seerr.ui.state.MediaHeroDetailPlaceholder
@@ -341,7 +342,8 @@ internal fun RequestDetailPage(
                     ExpressiveIconButton(
                         onClick = it,
                         icon = Icons.AutoMirrored.Filled.OpenInNew,
-                        contentDescription = stringResource(R.string.request_open_elsewhere),
+                        contentDescription =
+                            stringResource(if (LocalDiscoveryEnabled.current) R.string.request_open else R.string.request_open_elsewhere),
                         tint = BingeTheme.colors.onScrim,
                         tone = IconButtonTone.Glass,
                         size = dimensionResource(DesR.dimen.top_bar_icon_size),

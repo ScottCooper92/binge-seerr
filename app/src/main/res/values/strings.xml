@@ -254,6 +254,8 @@
     <string name="media_type_movie">Movie</string>
     <string name="request_open_binge">Open in Binge</string>
     <string name="request_open_elsewhere">Open elsewhere</string>
+    <string name="request_open">Open</string>
+    <string name="request_open_title">Open title</string>
     <string name="request_open_media_server">Open in media server</string>
     <string name="request_stats_title">Stats</string>
     <string name="request_this_request_title">This request</string>
