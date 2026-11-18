@@ -1498,4 +1498,8 @@
         <item quantity="other">%d películas</item>
     </plurals>
     <string name="collection_page_meta">%1$s · %2$d por solicitar</string>
+    <string name="collection_page_block">Bloquear colección</string>
+    <string name="collection_page_unblock">Desbloquear colección</string>
+    <string name="collection_page_block_title">¿Bloquear %1$s?</string>
+    <string name="collection_page_block_message">No se podrá solicitar ninguna de sus películas hasta que se desbloquee.</string>
 </resources>

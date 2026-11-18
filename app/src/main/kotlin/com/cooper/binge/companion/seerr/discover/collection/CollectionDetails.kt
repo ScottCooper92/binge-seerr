@@ -11,11 +11,22 @@ data class CollectionDetails(
     val backdropUrl: String?,
     val parts: List<TitleResult>,
 ) {
+    /** The server has no collection flag to read: a collection is blocked when every film in it is. */
+    val blocked: Boolean get() = parts.isNotEmpty() && parts.all { it.availability == TitleAvailability.Blocklisted }
+
     /** The films nothing has been asked for or added of yet: the ones the page can still offer to request. */
     val toRequest: Int get() = parts.count { it.availability == TitleAvailability.None }
 }
 
-/** Reads a collection from the connected server. */
+/** Reads a collection from the connected server, and blocks or unblocks it for a viewer who may. */
 interface CollectionRepository {
     suspend fun collection(id: Int): CollectionDetails
+
+    /** Whether the viewer may block collections here: the server must have the endpoint and the account must manage the blocklist. */
+    suspend fun mayBlock(): Boolean
+
+    suspend fun setBlocked(
+        id: Int,
+        blocked: Boolean,
+    )
 }
