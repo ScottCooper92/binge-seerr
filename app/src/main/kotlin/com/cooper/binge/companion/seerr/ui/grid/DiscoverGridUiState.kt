@@ -1,5 +1,6 @@
 package com.cooper.binge.companion.seerr.ui.grid
 
+import com.cooper.binge.companion.seerr.discover.grid.DiscoverFilters
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverSort
 import com.cooper.binge.companion.seerr.discover.sliders.HubCard
 import com.cooper.binge.companion.seerr.seerr.SeerrError
@@ -21,6 +22,7 @@ data class GridControls(
     val sort: DiscoverSort?,
     val sortChoices: List<DiscoverSort>,
     val chip: ActiveFilterChip?,
+    val filters: DiscoverFilters = DiscoverFilters(),
 )
 
 /** The "see all" grid. The controls stay in every state, so a filter that empties the list can be cleared from it. */

@@ -2,12 +2,14 @@ package com.cooper.binge.companion.seerr.discover.grid
 
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.seerr.SeerrServerProfile
+import kotlinx.serialization.Serializable
 
 /**
  * What narrows a discover list, in the app's own terms. Each field is one parameter of the server's `discover/{movies,tv}` route
  * and an unset one is not sent. [releaseFrom] and [releaseTo] are ISO dates (`2024-01-31`), the release date of a movie and the
  * first air date of a show. [company] is a studio for a movie and a network for a show.
  */
+@Serializable
 data class DiscoverFilters(
     val genres: Set<Int> = emptySet(),
     val genresAny: Boolean = false,

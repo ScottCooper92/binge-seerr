@@ -1,11 +1,13 @@
 package com.cooper.binge.companion.seerr.discover.grid
 
 import com.cooper.binge.companion.seerr.discover.TitleKind
+import kotlinx.serialization.Serializable
 
 /**
  * The orders the server's discover routes accept, as its `sortBy` values. The movie and TV lists share the first six; a
  * movie adds revenue and a title, a show adds a title of its own, and each has its own date.
  */
+@Serializable
 enum class DiscoverSort(
     val value: String,
     private val movie: Boolean = true,
