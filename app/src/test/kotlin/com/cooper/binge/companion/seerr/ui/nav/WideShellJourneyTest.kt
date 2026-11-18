@@ -80,6 +80,7 @@ class WideShellJourneyTest {
         host.connectDemo()
         host.launch(HomeRoute, RequestsRoute)
         host.compose.waitUntil(WAIT_MILLIS) { host.settingsStack() == listOf(HubRoute, RequestsRoute) }
+        host.compose.waitUntil(WAIT_MILLIS) { host.stack() == listOf<NavKey>(ShellRoute) }
 
         host.compose.waitUntil(WAIT_MILLIS) { host.stack() == listOf<NavKey>(ShellRoute) }
         assertEquals(listOf<NavKey>(ShellRoute), host.stack())
@@ -108,6 +109,7 @@ class WideShellJourneyTest {
         host.connectDemo()
         host.launch(HomeRoute, RequestsRoute)
         host.compose.waitUntil(WAIT_MILLIS) { host.settingsStack() == listOf(HubRoute, RequestsRoute) }
+        host.compose.waitUntil(WAIT_MILLIS) { host.stack() == listOf<NavKey>(ShellRoute) }
         host.compose.onNodeWithTag("tab_tv").performClick()
         host.compose.waitForIdle()
 

@@ -1492,6 +1492,22 @@
         <item quantity="other">Tu cuota permite %1$d temporadas más</item>
     </plurals>
     <string name="request_sheet_seasons_over">Tu cuota tiene menos margen que las %1$d temporadas aún abiertas, así que esta serie no se puede pedir ahora</string>
+    <string name="person_page_born">Nacimiento</string>
+    <string name="person_page_died">Fallecimiento</string>
+    <string name="person_page_also_known_as">También conocido como</string>
+    <string name="person_page_biography">Biografía</string>
+    <string name="person_page_known_for">Conocido por</string>
+    <string name="person_page_links">Enlaces externos</string>
+    <string name="person_page_imdb">IMDb</string>
+    <string name="person_page_website">Sitio web</string>
+    <string name="person_stat_from">Origen</string>
+    <string name="person_stat_gender">Género</string>
+    <string name="person_stat_popularity">Popularidad</string>
+    <string name="person_gender_female">Mujer</string>
+    <string name="person_gender_male">Hombre</string>
+    <string name="person_gender_non_binary">No binario</string>
+    <string name="person_died_aged">%1$s (a los %2$d años)</string>
+    <string name="person_refresh_failed">No se pudo actualizar esta página</string>
     <string name="series_page_episodes">Episodios</string>
     <string name="series_page_view_all_episodes">Ver todos los episodios</string>
     <string name="season_episodes_empty">Aún no hay episodios en esta temporada</string>

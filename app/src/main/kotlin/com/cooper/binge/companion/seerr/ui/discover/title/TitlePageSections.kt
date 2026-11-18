@@ -51,7 +51,6 @@ internal fun TitlePageBody(
             model = titleActionsModel(movie.standard, movie.fourK),
             onRequest = actions.onRequest,
             onTrailer = movie.videos.trailerUrl()?.let { url -> { actions.onOpenUrl(url) } },
-            onShare = { context.shareTitle(movie.title, movie.webUrl) },
             modifier = Modifier.readingMargin(),
         )
         if (!expanded) OverviewSection(movie.overview)
@@ -178,4 +177,4 @@ internal fun TitleAvailability.label(): Pair<String, BingeSentiment>? =
     }
 
 @Composable
-private fun TitleAvailability.cardStatus(): MediaCardStatus? = label()?.let { (text, sentiment) -> MediaCardStatus(text, sentiment) }
+internal fun TitleAvailability.cardStatus(): MediaCardStatus? = label()?.let { (text, sentiment) -> MediaCardStatus(text, sentiment) }

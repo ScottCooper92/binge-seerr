@@ -24,6 +24,9 @@ on:
       - 'app/src/main/keepRules/**'
       - 'app/src/main/kotlin/com/cooper/binge/companion/seerr/service/**'
       - 'app/src/main/kotlin/com/cooper/binge/companion/seerr/seerr/**'
+      # The Seerr client lives in :data now, so a change to it, or to what builds it, is a change to what this lane proves.
+      - 'data/build.gradle.kts'
+      - 'data/src/main/kotlin/com/cooper/binge/companion/seerr/seerr/**'
       - 'binge-companions'
       - 'libs.versions.toml'
       - '.github/workflows/device-smoke.yml'
