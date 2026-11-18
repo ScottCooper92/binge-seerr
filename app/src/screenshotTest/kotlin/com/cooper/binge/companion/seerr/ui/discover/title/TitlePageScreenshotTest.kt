@@ -8,6 +8,7 @@ import com.cooper.binge.companion.seerr.discover.title.VersionState
 import com.cooper.binge.companion.seerr.preview.SeerrExpandedFontScalePreviews
 import com.cooper.binge.companion.seerr.preview.SeerrExpandedSpanishPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrFontScalePreviews
+import com.cooper.binge.companion.seerr.preview.SeerrNarrowTabletPreview
 import com.cooper.binge.companion.seerr.preview.SeerrScreenPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrScreenStatePreview
 import com.cooper.binge.companion.seerr.preview.SeerrSpanishPreviews
@@ -42,6 +43,12 @@ class TitlePageScreenshotTest {
     @SeerrTabletPanesPreview
     @Composable
     fun requestableTablet() = Frame(TitlePageUiState.Ready(fullMovie(), fullExtras()))
+
+    /** A window wider than the reading column but short of the expanded line: the sections share one left edge. */
+    @PreviewTest
+    @SeerrNarrowTabletPreview
+    @Composable
+    fun requestableNarrowTablet() = Frame(TitlePageUiState.Ready(fullMovie(), fullExtras()))
 
     @PreviewTest
     @SeerrExpandedSpanishPreviews

@@ -96,6 +96,16 @@ annotation class SeerrFontScale13ComponentPreviews
 @Preview(name = "es", device = PHONE_PORTRAIT_SPEC, uiMode = UI_MODE_NIGHT_YES, locale = "es")
 annotation class SeerrSpanishPreviews
 
+/** A portrait tablet at 800dp: wider than the hero template's 640dp column, narrower than the expanded line, so the page keeps one column. */
+@PreviewWrapper(SeerrScreenshotThemeWrapper::class)
+@Preview(
+    name = "tablet-port",
+    device = "spec:width=800dp,height=1280dp,orientation=portrait",
+    uiMode = UI_MODE_NIGHT_YES,
+    locale = SOURCE_LOCALE,
+)
+annotation class SeerrNarrowTabletPreview
+
 /** The expanded windows in Spanish, where the cinematic header's overlay copy runs longer than English. */
 @PreviewWrapper(SeerrScreenshotThemeWrapper::class)
 @Preview(name = "foldable-es", device = FOLDABLE_PORTRAIT_SPEC, uiMode = UI_MODE_NIGHT_YES, locale = "es")

@@ -77,15 +77,21 @@ internal fun TitlePageBody(
 
 /**
  * The margin that centres a reading column in the width the hero template leaves the body, which it measures as
- * [LocalHeroReadingMargin]: zero on a phone, so a phone's page is as it was. A section takes it as its modifier, so a section that
- * draws nothing takes no space, and the rails, which bleed to the window's edge, do not take it.
+ * [LocalHeroReadingMargin]. It applies only at the expanded width, where the cinematic header and the column go together: a
+ * window between 672dp and 840dp keeps the phone's single column, so nothing moves in. A section takes it as its modifier, so a
+ * section that draws nothing takes no space, and the rails, which bleed to the window's edge, do not take it.
  */
 @Composable
-internal fun Modifier.readingMargin(): Modifier = padding(horizontal = LocalHeroReadingMargin.current)
+internal fun Modifier.readingMargin(): Modifier = if (isExpandedLayout()) padding(horizontal = LocalHeroReadingMargin.current) else this
 
-/** The inset a rail starts at: the screen's, plus the reading margin, so its first card lines up with the column and it still bleeds. */
+/** The inset a rail starts at: the screen's, plus the reading margin at the expanded width, so its first card lines up with the column and it still bleeds. */
 @Composable
-private fun railInset() = dimensionResource(DesR.dimen.padding_m) + LocalHeroReadingMargin.current
+private fun railInset() =
+    if (isExpandedLayout()) {
+        dimensionResource(DesR.dimen.padding_m) + LocalHeroReadingMargin.current
+    } else {
+        dimensionResource(DesR.dimen.padding_m)
+    }
 
 /** The line under the title in the request sheet: release year and runtime, whichever the server gave. */
 @Composable
