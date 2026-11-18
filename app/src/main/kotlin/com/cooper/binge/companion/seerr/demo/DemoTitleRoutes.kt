@@ -83,6 +83,14 @@ private fun titleBody(
     releases = SeerrReleasesDto(listOf(SeerrCountryReleasesDto("US", listOf(SeerrReleaseDateDto("PG"))))),
     credits = SeerrCreditsDto(DEMO_CAST, DEMO_CREW),
     relatedVideos = listOf(SeerrVideoDto("demo", "Trailer", "YouTube", "Trailer", "https://www.youtube.com/watch?v=demo")),
-    watchProviders = listOf(SeerrWatchRegionDto("US", null, listOf(SeerrMovieWatchProviderDto(1, "Demo Stream", null, 1)))),
+    watchProviders =
+        listOf(
+            SeerrWatchRegionDto(
+                "US",
+                null,
+                listOf(SeerrMovieWatchProviderDto(1, "Demo Stream", null, 1)),
+                listOf(SeerrMovieWatchProviderDto(2, "Demo Store", null, 1)),
+            ),
+        ),
     mediaInfo = thin.mediaInfo,
 )
