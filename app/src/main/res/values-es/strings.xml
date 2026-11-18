@@ -1474,6 +1474,7 @@
     <string name="hubs_card_processing">En proceso</string>
     <string name="hubs_card_partial">Parcial</string>
     <string name="hubs_card_blocklisted">En la lista de bloqueo</string>
+    <string name="grid_loading">Cargando títulos</string>
     <string name="hubs_loading_row">Cargando una fila</string>
     <string name="title_page_request">Pedir</string>
     <string name="title_page_runtime">%1$d h %2$d min</string>
