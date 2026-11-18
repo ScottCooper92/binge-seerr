@@ -1580,4 +1580,10 @@
     <string name="series_page_episodes">Episodios</string>
     <string name="series_page_view_all_episodes">Ver todos los episodios</string>
     <string name="season_episodes_empty">Aún no hay episodios en esta temporada</string>
+    <plurals name="collection_page_films">
+        <item quantity="one">%d película</item>
+        <item quantity="many">%d de películas</item>
+        <item quantity="other">%d películas</item>
+    </plurals>
+    <string name="collection_page_meta">%1$s · %2$d por solicitar</string>
 </resources>

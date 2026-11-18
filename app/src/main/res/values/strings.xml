@@ -1638,4 +1638,9 @@
     <string name="series_page_episodes">Episodes</string>
     <string name="series_page_view_all_episodes">View all episodes</string>
     <string name="season_episodes_empty">No episodes listed for this season yet</string>
+    <plurals name="collection_page_films">
+        <item quantity="one">%d film</item>
+        <item quantity="other">%d films</item>
+    </plurals>
+    <string name="collection_page_meta">%1$s · %2$d to request</string>
 </resources>

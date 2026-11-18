@@ -29,8 +29,7 @@ import com.cooper.binge.companion.seerr.ui.hubs.toStatus
 import com.binge.designsystem.R as DesR
 
 /**
- * One search result. A movie, a series or a person opens through [onClick]. A collection is shown but not opened until its page
- * exists, so its row has no click and no ripple.
+ * One search result. A movie, a series, a collection or a person opens through [onClick].
  */
 @Composable
 internal fun TitleResultRow(
@@ -40,10 +39,9 @@ internal fun TitleResultRow(
     modifier: Modifier = Modifier,
 ) {
     val artwork = result.artworkPath?.toTmdbPosterUrl()
-    val opens = result.kind != TitleKind.Collection
     ListRow(
         modifier = modifier,
-        onClick = if (opens) onClick else null,
+        onClick = onClick,
         verticalAlignment = if (result.kind == TitleKind.Person) Alignment.CenterVertically else Alignment.Top,
         leading = {
             if (result.kind == TitleKind.Person) {
