@@ -15,6 +15,7 @@ import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -33,7 +34,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
-import com.binge.designsystem.component.BingeOutlinedButton
+import com.binge.designsystem.component.BingeFilledButton
 import com.binge.designsystem.component.DiscoverQuickClearChip
 import com.binge.designsystem.component.MediaCard
 import com.binge.designsystem.component.QuickClearTone
@@ -107,10 +108,15 @@ private fun FiltersButton(
     actions: DiscoverGridActions,
 ) {
     var open by rememberSaveable { mutableStateOf(false) }
-    BingeOutlinedButton(
+    BingeFilledButton(
         label = stringResource(R.string.grid_filters_button),
         onClick = { open = true },
         leadingIcon = Icons.Filled.FilterList,
+        colors =
+            ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+            ),
     )
     if (open && controls.sort != null) {
         DiscoverFilterSheet(

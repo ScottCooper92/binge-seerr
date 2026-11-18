@@ -152,7 +152,7 @@
     <string name="grid_filters_done">Hecho</string>
     <string name="grid_filter_any">Cualquiera</string>
     <string name="grid_filter_release">Fecha de estreno</string>
-    <string name="grid_filter_rating">Valoración mínima</string>
+    <string name="grid_filter_rating">Valoración</string>
     <string name="grid_filter_runtime">Duración</string>
     <string name="grid_filter_votes">Número de votos</string>
     <string name="grid_filter_release_any">Cualquier año</string>

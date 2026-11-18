@@ -1,7 +1,10 @@
 package com.cooper.binge.companion.seerr.ui.grid
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -15,11 +18,10 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.BingeActionFooter
 import com.binge.designsystem.component.BingeAdaptiveSheet
-import com.binge.designsystem.component.BingeFilterChipRow
+import com.binge.designsystem.component.BingeFilterChip
 import com.binge.designsystem.component.BingeSheetFooter
 import com.binge.designsystem.component.BingeSheetKind
 import com.binge.designsystem.component.BingeSheetNav
-import com.binge.designsystem.component.FilterChipItem
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverFilters
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverSort
@@ -83,6 +85,7 @@ private fun ColumnScope.RowsPage(
 }
 
 /** What the rows page shows, apart from the window it sits in, so a frame can draw it. */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun DiscoverFilterSheetContent(
     draft: DiscoverFilterDraft,
@@ -92,11 +95,22 @@ internal fun DiscoverFilterSheetContent(
     onOpen: (DiscoverFilterSection) -> Unit,
     onClearAll: () -> Unit,
 ) {
-    val items = sortChoices.map { FilterChipItem(label = stringResource(it.labelRes()), icon = it.icon()) }
     Column(modifier = Modifier.padding(bottom = dimensionResource(DesR.dimen.padding_m))) {
         FilterSheetHeader(showClear = !draft.filters.isEmpty, onClearAll = onClearAll)
         SectionTitle(stringResource(R.string.grid_filters_sort))
-        BingeFilterChipRow(items = items, selectedIndex = sortChoices.indexOf(draft.sort), onSelect = { onSort(sortChoices[it]) })
+        FlowRow(
+            modifier = Modifier.padding(horizontal = dimensionResource(DesR.dimen.padding_m)),
+            horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
+        ) {
+            sortChoices.forEach { choice ->
+                BingeFilterChip(
+                    label = stringResource(choice.labelRes()),
+                    selected = choice == draft.sort,
+                    onClick = { onSort(choice) },
+                    leadingIcon = choice.icon(),
+                )
+            }
+        }
         SectionTitle(stringResource(R.string.grid_filters_filter_by))
         DiscoverFilterRows(draft.filters, today, onOpen)
     }

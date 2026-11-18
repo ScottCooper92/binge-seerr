@@ -26,7 +26,8 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import com.binge.designsystem.component.BingeTextButton
-import com.binge.designsystem.component.ListRow
+import com.binge.designsystem.component.ItemGroup
+import com.binge.designsystem.component.ListItem
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverFilters
 import com.cooper.binge.companion.seerr.discover.grid.ReleasePreset
@@ -62,37 +63,27 @@ internal fun FilterSheetHeader(
     }
 }
 
-/** One row per filter: its icon and name, and what it is set to on the second line. */
+/** One row per filter on one grouped card, as Binge's: a tinted icon, its name, and what it is set to on the second line. */
 @Composable
 internal fun DiscoverFilterRows(
     filters: DiscoverFilters,
     today: LocalDate,
     onOpen: (DiscoverFilterSection) -> Unit,
 ) {
-    Column(
-        modifier = Modifier.padding(horizontal = dimensionResource(DesR.dimen.padding_m)),
-        verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
-    ) {
-        DiscoverFilterSection.entries.forEach { section ->
-            ListRow(
+    val rows =
+        DiscoverFilterSection.entries.map { section ->
+            ListItem(
+                icon = section.icon,
+                label = stringResource(section.title),
+                detail = section.summary(filters, today),
                 onClick = { onOpen(section) },
-                verticalAlignment = Alignment.CenterVertically,
-                leading = { Icon(section.icon, contentDescription = null) },
-                trailingContent = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null) },
-            ) { modifier ->
-                Column(modifier) {
-                    Text(stringResource(section.title), style = MaterialTheme.typography.titleMedium)
-                    Text(
-                        text = section.summary(filters, today),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
-            }
+            )
         }
-    }
+    ItemGroup(
+        title = null,
+        rows = rows,
+        modifier = Modifier.padding(horizontal = dimensionResource(DesR.dimen.padding_m)),
+    )
 }
 
 /** What a section is set to, in words, or "Any" for a filter that is not set. */
@@ -119,6 +110,7 @@ private fun releaseSummary(
     today: LocalDate,
 ): String {
     val preset = ReleasePreset.of(filters.releaseFrom, filters.releaseTo, today)
+    if (preset == ReleasePreset.AnyYear) return stringResource(R.string.grid_filter_any)
     if (preset != null) return stringResource(preset.label())
     val locale = LocalConfiguration.current.locales[0]
     val month = DateTimeFormatter.ofPattern(DateFormat.getBestDateTimePattern(locale, "MMMyyyy"), locale)

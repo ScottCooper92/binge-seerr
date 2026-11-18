@@ -171,7 +171,7 @@
     <string name="grid_filters_done">Done</string>
     <string name="grid_filter_any">Any</string>
     <string name="grid_filter_release">Release date</string>
-    <string name="grid_filter_rating">Minimum rating</string>
+    <string name="grid_filter_rating">Rating</string>
     <string name="grid_filter_runtime">Runtime</string>
     <string name="grid_filter_votes">Vote count</string>
     <string name="grid_filter_release_any">Any year</string>

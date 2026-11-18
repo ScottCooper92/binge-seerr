@@ -40,6 +40,14 @@ enum class DiscoverSort(
         /** The orders the list of [kind] can be put in, in the order a picker offers them. */
         fun forKind(kind: TitleKind): List<DiscoverSort> = entries.filter { it.appliesTo(kind) }
 
+        /** The orders the filter sheet offers, as Binge's sort choices are: not every order the server takes. */
+        fun sheetChoices(kind: TitleKind): List<DiscoverSort> =
+            if (kind == TitleKind.Series) {
+                listOf(PopularityDesc, RatingDesc, FirstAirNewest, FirstAirOldest, NameAsc)
+            } else {
+                listOf(PopularityDesc, RatingDesc, ReleaseNewest, ReleaseOldest, TitleAsc)
+            }
+
         /** The date order a preset starts in: the movie's release date, or the show's first air date. */
         fun soonest(kind: TitleKind): DiscoverSort = if (kind == TitleKind.Series) FirstAirOldest else ReleaseOldest
     }
