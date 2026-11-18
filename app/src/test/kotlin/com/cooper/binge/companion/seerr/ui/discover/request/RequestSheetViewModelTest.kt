@@ -151,6 +151,21 @@ class RequestSheetViewModelTest {
         }
 
     @Test
+    fun `a sent request leaves the sheet ready to open again with the options re-read`() =
+        runTest {
+            val repository = FakeRepository(advanced)
+            val vm = viewModel(repository)
+            val event = awaitEvent(vm.events)
+            repository.options = advanced.copy(quota = RequestQuota(10, 3, 6))
+            vm.submit()
+            event.await()
+
+            assertFalse(vm.ready().submitting)
+            assertTrue(vm.ready().canSubmit)
+            assertEquals(RequestQuota(10, 3, 6), vm.ready().options.quota)
+        }
+
+    @Test
     fun `a spent quota holds the submit`() {
         val spent = advanced.copy(quota = RequestQuota(10, 0, 7))
         val repository = FakeRepository(spent)

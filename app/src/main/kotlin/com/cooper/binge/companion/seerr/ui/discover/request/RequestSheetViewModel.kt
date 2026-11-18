@@ -162,7 +162,11 @@ class RequestSheetViewModel
                 )
             viewModelScope.launch {
                 attempt { repository.submit(submission) }.fold(
-                    onSuccess = { result -> eventFlow.tryEmit(RequestSheetEvent.Done(result)) },
+                    onSuccess = { result ->
+                        eventFlow.tryEmit(RequestSheetEvent.Done(result))
+                        // This ViewModel outlives the sheet, so the next opening must not start from the old send.
+                        load()
+                    },
                     onFailure = { error -> updateReady { it.copy(submitting = false, problem = error.toProblem()) } },
                 )
             }
