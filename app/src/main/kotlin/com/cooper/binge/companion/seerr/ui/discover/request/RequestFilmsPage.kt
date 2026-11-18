@@ -35,6 +35,7 @@ import com.binge.designsystem.R as DesR
 internal fun RequestFilmsPage(
     films: List<RequestFilm>,
     selection: ItemSelection,
+    use4k: Boolean,
     enabled: Boolean,
     actions: RequestSheetActions,
     onBack: () -> Unit,
@@ -73,10 +74,10 @@ internal fun RequestFilmsPage(
                 val picked = film.tmdbId in selection.picked
                 CheckboxRow(
                     label = film.title,
-                    checked = picked || !film.open,
+                    checked = picked || !film.open(use4k),
                     onCheckedChange = { actions.onFilm(film.tmdbId) },
-                    enabled = enabled && film.open && (picked || selection.canPickMore),
-                    supportingText = listOfNotNull(film.availability.label()?.first, film.year).joinToString(" · ").ifBlank { null },
+                    enabled = enabled && film.open(use4k) && (picked || selection.canPickMore),
+                    supportingText = listOfNotNull(film.availability(use4k).label()?.first, film.year).joinToString(" · ").ifBlank { null },
                     supportingMaxLines = 2,
                     icon = Icons.Filled.Movie,
                     showDivider = index != films.lastIndex,

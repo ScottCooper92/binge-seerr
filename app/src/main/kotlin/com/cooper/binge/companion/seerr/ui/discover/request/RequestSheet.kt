@@ -207,7 +207,7 @@ private fun PageFor(
     val pick = state.pick
     when (page) {
         SheetPage.Seasons -> state.seasons?.let { RequestSeasonPage(it, !state.submitting, actions, onBack) }
-        SheetPage.Films -> state.films?.let { RequestFilmsPage(state.target.films, it, !state.submitting, actions, onBack) }
+        SheetPage.Films -> state.films?.let { RequestFilmsPage(state.target.films, it, state.use4k, !state.submitting, actions, onBack) }
         SheetPage.Server ->
             pick?.let {
                 DestinationPickerPanel(

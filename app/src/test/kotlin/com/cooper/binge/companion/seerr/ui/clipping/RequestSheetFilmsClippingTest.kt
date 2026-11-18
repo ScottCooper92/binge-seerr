@@ -69,7 +69,14 @@ class RequestSheetFilmsClippingTest {
     private fun page(fontScale: Float) =
         rule.assertNoClippingAt(fontScale) {
             val state = filmsCase()
-            RequestFilmsPage(state.target.films, checkNotNull(state.films), enabled = true, actions = noActions(), onBack = {})
+            RequestFilmsPage(
+                state.target.films,
+                checkNotNull(state.films),
+                use4k = state.use4k,
+                enabled = true,
+                actions = noActions(),
+                onBack = {},
+            )
         }
 
     @Test fun `the films form at 1_3`() = form(FONT_SCALE_13)

@@ -11,6 +11,8 @@ data class CollectionDetails(
     val backdropUrl: String?,
     val posterUrl: String?,
     val parts: List<TitleResult>,
+    /** What the server holds of each film's 4K version, by TMDB id: a film's [TitleResult.availability] is the standard one. */
+    val parts4k: Map<Int, TitleAvailability> = emptyMap(),
 ) {
     /** The films nothing has been asked for or added of yet: the ones the page can still offer to request. */
     val toRequest: Int get() = parts.count { it.availability == TitleAvailability.None }

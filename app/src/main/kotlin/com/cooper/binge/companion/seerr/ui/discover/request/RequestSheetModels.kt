@@ -7,14 +7,18 @@ import com.cooper.binge.companion.seerr.discover.request.RequestQuota
 import com.cooper.binge.companion.seerr.discover.request.RequestServer
 import com.cooper.binge.companion.seerr.discover.request.SeasonChoices
 
-/** One film of a collection as the sheet lists it. [open] is false for one the server holds, has a request for, or has blocked. */
+/** One film of a collection as the sheet lists it. It is open to request in a version only while the server holds nothing of it and has no request for it. */
 data class RequestFilm(
     val tmdbId: Int,
     val title: String,
     val year: String?,
     val availability: TitleAvailability,
+    val availability4k: TitleAvailability = TitleAvailability.None,
 ) {
-    val open: Boolean get() = availability == TitleAvailability.None
+    /** What the server holds of the version being requested, standard or 4K. */
+    fun availability(use4k: Boolean): TitleAvailability = if (use4k) availability4k else availability
+
+    fun open(use4k: Boolean): Boolean = availability(use4k) == TitleAvailability.None
 }
 
 /**
@@ -22,7 +26,8 @@ data class RequestFilm(
  * [fourKOpen] say which versions the server holds nothing of, so the sheet never offers one that is already requested.
  * [seasonChoices] is a show's seasons per version, and [partialRequests] is the server's setting for sending only some.
  * [posterUrl] and [meta] ("2023 · 2h 1m") head the sheet. [films] is the films of a collection, in release order: a collection is
- * requested one film at a time, standard version only, so its [tmdbId] is the collection's and [fourKOpen] is false.
+ * requested one film at a time in the chosen version, so its [tmdbId] is the collection's; [standardOpen] and [fourKOpen] say whether any
+ * film is open in each version.
  */
 data class RequestSheetTarget(
     val kind: TitleKind,

@@ -30,8 +30,8 @@ private fun films(longNames: Boolean) =
             "1999",
             TitleAvailability.Available,
         ),
-        RequestFilm(2, "The Matrix Reloaded", "2003", TitleAvailability.Processing),
-        RequestFilm(3, "The Matrix Revolutions", "2003", TitleAvailability.None),
+        RequestFilm(2, "The Matrix Reloaded", "2003", TitleAvailability.Processing, TitleAvailability.Pending),
+        RequestFilm(3, "The Matrix Revolutions", "2003", TitleAvailability.None, TitleAvailability.Available),
         RequestFilm(4, "The Matrix Resurrections", "2021", TitleAvailability.None),
         RequestFilm(5, "The Matrix Origins", "2026", TitleAvailability.None),
     )
@@ -40,19 +40,22 @@ private fun state(
     picked: Set<Int>? = null,
     remaining: Int = QUOTA_LIMIT,
     longNames: Boolean = false,
+    may4k: Boolean = false,
+    use4k: Boolean = false,
 ) = RequestSheetUiState.Ready(
     target =
         RequestSheetTarget(
             kind = TitleKind.Movie,
             tmdbId = 2344,
             title = if (longNames) LONG_TITLE else "The Matrix Collection",
-            fourKOpen = false,
+            fourKOpen = may4k,
             meta = "5 films",
             films = films(longNames),
         ),
-    access = RequestAccess(may4k = false, mayChooseDestination = false),
+    access = RequestAccess(may4k = may4k, mayChooseDestination = false),
     quota = QuotaState.Known(RequestQuota(QUOTA_LIMIT, remaining, QUOTA_DAYS)),
     pickedFilms = picked,
+    use4k = use4k,
 )
 
 private fun noActions() = RequestSheetActions({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {})
@@ -71,7 +74,14 @@ private fun FilmsPage(
     height: Dp = PAGE_HEIGHT,
 ) {
     SheetFrame(Modifier.height(height)) {
-        RequestFilmsPage(state.target.films, checkNotNull(state.films), enabled = true, actions = noActions(), onBack = {})
+        RequestFilmsPage(
+            state.target.films,
+            checkNotNull(state.films),
+            use4k = state.use4k,
+            enabled = true,
+            actions = noActions(),
+            onBack = {},
+        )
     }
 }
 
@@ -106,6 +116,18 @@ class RequestSheetFilmsScreenshotTest {
     @SeerrComponentPreviews
     @Composable
     fun pageCapped() = FilmsPage(state(picked = setOf(3, 4), remaining = 2))
+
+    /** A user who may ask for 4K: the switch sits between the Films row and the quota, and the button names 4K films. */
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun formWith4k() = Form(state(may4k = true))
+
+    /** The 4K switch on: the films page lists what 4K holds. */
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun pageIn4k() = FilmsPage(state(may4k = true, use4k = true))
 
     /** The longest names at font scales 1.5 and 2. */
     @PreviewTest

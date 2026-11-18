@@ -1,6 +1,7 @@
 package com.cooper.binge.companion.seerr.discover.collection
 
 import com.cooper.binge.companion.seerr.discover.TitleKind
+import com.cooper.binge.companion.seerr.discover.toAvailability
 import com.cooper.binge.companion.seerr.discover.toTitleResult
 import com.cooper.binge.companion.seerr.seerr.SeerrApi
 import com.cooper.binge.companion.seerr.seerr.SeerrUserDto
@@ -29,6 +30,11 @@ class SeerrCollectionRepository(
                     dto.parts
                         .mapNotNull { it.toTitleResult(TitleKind.Movie) }
                         .sortedWith(compareBy(nullsLast()) { it.year }),
+                parts4k =
+                    dto.parts
+                        .mapNotNull { part ->
+                            (part.tmdbId ?: part.id)?.let { it to part.mediaInfo?.status4k.toAvailability() }
+                        }.toMap(),
             )
         }
 

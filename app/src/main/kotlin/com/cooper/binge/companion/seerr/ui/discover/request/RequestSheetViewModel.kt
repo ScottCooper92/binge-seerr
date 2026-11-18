@@ -73,7 +73,7 @@ sealed interface RequestSheetUiState {
         val films: ItemSelection?
             get() =
                 target.films.takeIf { it.isNotEmpty() }?.let { films ->
-                    val base = ItemSelection(films.map { SelectableItem(it.tmdbId, it.open) }, limit = knownQuota?.remaining)
+                    val base = ItemSelection(films.map { SelectableItem(it.tmdbId, it.open(use4k)) }, limit = knownQuota?.remaining)
                     pickedFilms?.let { base.copy(picked = it) } ?: base.preselected()
                 }
 
@@ -177,7 +177,7 @@ class RequestSheetViewModel
             val current = store.ready() ?: return
             if (current.use4k == use4k || !current.canToggle4k) return
             val pick = (current.servers as? ServersState.Ready)?.servers.orEmpty().pickFor(use4k)
-            store.set(current.copy(use4k = use4k, pick = pick, pickedSeasons = emptySet()))
+            store.set(current.copy(use4k = use4k, pick = pick, pickedSeasons = emptySet(), pickedFilms = null))
             pick?.let { reads.choices(it.serverId) }
         }
 
@@ -220,7 +220,7 @@ class RequestSheetViewModel
             footerTimer?.cancel()
             store.set(current.copy(submitting = true, problem = null, failure = null, footerFailed = false, failureDialog = false))
             val destination = current.pick?.takeIf { current.advancedExpanded && current.showAdvanced }
-            current.films?.let { return submitFilms(it, destination) }
+            current.films?.let { return submitFilms(it, destination, current.use4k) }
             val submission =
                 RequestSubmission(
                     kind = target.kind,
@@ -245,6 +245,7 @@ class RequestSheetViewModel
         private fun submitFilms(
             selection: ItemSelection,
             destination: DestinationPick?,
+            use4k: Boolean,
         ) {
             val submissions =
                 selection.requestIds.map { id ->
@@ -252,7 +253,7 @@ class RequestSheetViewModel
                         kind = TitleKind.Movie,
                         tmdbId = id,
                         seasons = emptyList(),
-                        is4k = false,
+                        is4k = use4k,
                         destination = destination?.let { RequestDestination(it.serverId, it.profileId, it.rootFolder) },
                     )
                 }

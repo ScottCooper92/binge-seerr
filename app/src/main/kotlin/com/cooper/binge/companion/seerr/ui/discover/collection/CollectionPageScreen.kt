@@ -21,6 +21,7 @@ import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.BingeActionFooter
 import com.binge.designsystem.component.ExpandableOverview
 import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.discover.TitleAvailability
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.TitleResult
 import com.cooper.binge.companion.seerr.discover.collection.CollectionDetails
@@ -126,9 +127,10 @@ private fun CollectionDetails.toRequestTarget() =
         kind = TitleKind.Movie,
         tmdbId = id,
         title = name,
-        fourKOpen = false,
+        standardOpen = parts.any { it.availability == TitleAvailability.None },
+        fourKOpen = parts.any { (parts4k[it.tmdbId] ?: TitleAvailability.None) == TitleAvailability.None },
         posterUrl = posterUrl,
-        films = parts.map { RequestFilm(it.tmdbId, it.name, it.year, it.availability) },
+        films = parts.map { RequestFilm(it.tmdbId, it.name, it.year, it.availability, parts4k[it.tmdbId] ?: TitleAvailability.None) },
     )
 
 @Composable

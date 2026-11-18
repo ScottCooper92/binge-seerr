@@ -48,7 +48,8 @@ private class FilmsRepository(
 private fun film(
     id: Int,
     availability: TitleAvailability = TitleAvailability.None,
-) = RequestFilm(id, "Film $id", "${2000 + id}", availability)
+    availability4k: TitleAvailability = TitleAvailability.None,
+) = RequestFilm(id, "Film $id", "${2000 + id}", availability, availability4k)
 
 private fun collection(vararg films: RequestFilm) =
     RequestSheetTarget(
@@ -137,5 +138,61 @@ class RequestSheetFilmsTest {
             vm.submit()
 
             assertEquals(RequestSheetEvent.Done(RequestResult.AlreadyRequested), event.await())
+        }
+
+    private fun collection4k(vararg films: RequestFilm) =
+        RequestSheetTarget(
+            kind = TitleKind.Movie,
+            tmdbId = 2344,
+            title = "The Collection",
+            standardOpen = true,
+            fourKOpen = true,
+            films = films.toList(),
+        )
+
+    @Test
+    fun `a collection offers 4K to a user who may ask for it and sends it on every film`() =
+        runTest {
+            val repository = FilmsRepository()
+            val vm = RequestSheetViewModel(repository, collection4k(film(1), film(2), film(3)))
+            assertTrue(vm.ready().canToggle4k)
+
+            vm.setUse4k(true)
+            val event = awaitEvent(vm.events)
+            vm.submit()
+            event.await()
+
+            assertEquals(listOf(1, 2, 3), repository.sent.map { it.tmdbId })
+            assertTrue(repository.sent.all { it.is4k })
+        }
+
+    @Test
+    fun `switching to 4K lists the films open in 4K and ticks them afresh`() {
+        val target =
+            collection4k(
+                film(1, availability4k = TitleAvailability.Available),
+                film(2),
+                film(3, availability = TitleAvailability.Available),
+            )
+        val vm = RequestSheetViewModel(FilmsRepository(), target)
+        assertEquals(listOf(1, 2), vm.ready().films?.requestIds)
+
+        vm.toggleFilms(1)
+        vm.setUse4k(true)
+
+        assertEquals(listOf(2, 3), vm.ready().films?.requestIds)
+    }
+
+    @Test
+    fun `a standard send says the version is not 4K`() =
+        runTest {
+            val repository = FilmsRepository()
+            val vm = RequestSheetViewModel(repository, collection4k(film(1), film(2)))
+
+            val event = awaitEvent(vm.events)
+            vm.submit()
+            event.await()
+
+            assertTrue(repository.sent.none { it.is4k })
         }
 }
