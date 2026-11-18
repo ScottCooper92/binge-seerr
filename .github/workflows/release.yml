@@ -61,10 +61,10 @@ jobs:
       - uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6
 
       # The screenshot comparison is left out: ci.yml has already run it on the tagged commit, and on a
-      # hosted runner it runs out of memory (v0.1.0's run was cancelled in :app:validateDebugScreenshotTest).
+      # hosted runner it runs out of memory (v0.1.0's run was cancelled in validateDebugScreenshotTest).
       # Lint, the unit tests, coverage and the instrumentation-test compile stay.
       - name: Verify
-        run: ./gradlew build -x :app:validateDebugScreenshotTest
+        run: ./gradlew build -x validateDebugScreenshotTest
 
       - name: Derive the version from the tag
         shell: bash

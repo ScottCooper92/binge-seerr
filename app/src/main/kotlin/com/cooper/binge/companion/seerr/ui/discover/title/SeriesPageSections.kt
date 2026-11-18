@@ -56,7 +56,6 @@ internal fun SeriesPageBody(
             model = titleActionsModel(series.standard, series.fourK),
             onRequest = actions.onRequest,
             onTrailer = series.videos.trailerUrl()?.let { url -> { actions.onOpenUrl(url) } },
-            onShare = { context.shareTitle(series.name, series.webUrl) },
         )
         OverviewSection(series.overview)
         EpisodesSection(state, seasonActions)
