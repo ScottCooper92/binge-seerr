@@ -8,10 +8,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.di.IoDispatcher
-import com.cooper.binge.companion.seerr.flags.SearchTogglesFlag
+import com.cooper.binge.companion.seerr.flags.SearchToggles
 import com.cooper.binge.companion.seerr.notifications.ApplicationScope
 import com.cooper.binge.companion.seerr.seerr.toPermissions
 import com.cooper.binge.companion.seerr.seerr.toServerFailure
+import com.cooper.homelab.core.flags.FeatureFlags
 import com.cooper.homelab.core.foundation.TextKey
 import com.cooper.homelab.core.foundation.UiText
 import com.cooper.homelab.core.presentation.search.RecentSearches
@@ -21,7 +22,11 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import javax.inject.Inject
 import com.cooper.homelab.core.presentation.search.SearchAccess as SharedSearchAccess
 
@@ -71,12 +76,16 @@ internal class SettingsSearchHost
         @ApplicationContext context: Context,
         connection: SeerrConnection,
         recents: RecentSearches,
-        flag: SearchTogglesFlag,
+        flags: FeatureFlags,
         @ApplicationScope appScope: CoroutineScope,
         @IoDispatcher dispatcher: CoroutineDispatcher,
     ) : ViewModel() {
         /** Whether a result for an on/off setting carries its switch. */
-        val searchTogglesEnabled: StateFlow<Boolean> = flag.enabled
+        val searchTogglesEnabled: StateFlow<Boolean> =
+            flags.flags
+                .map { it[SearchToggles] }
+                .distinctUntilChanged()
+                .stateIn(viewModelScope, SharingStarted.Eagerly, flags.flags.value[SearchToggles])
 
         val entries: List<SettingEntry<SeerrSearchTarget>> = sharedSettingsIndex(context.resources)
 
