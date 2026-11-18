@@ -20,7 +20,7 @@ import com.cooper.binge.companion.seerr.ui.state.EmptyScreen
  */
 val LocalOpenTitle = compositionLocalOf<(TitleKind, Int, String) -> Unit> { { _, _, _ -> } }
 
-/** The page of one title: a film's or a series'. A kind with no page of its own yet is empty. */
+/** The page of one title: a film's or a series'. A person and a collection have pages of their own, so any other kind is empty. */
 @Composable
 internal fun TitleDetailEntry(
     kind: TitleKind,
