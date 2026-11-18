@@ -9,6 +9,7 @@ import com.cooper.binge.companion.seerr.util.ReversingCipher
 import com.cooper.binge.companion.seerr.util.enqueueProfile
 import com.cooper.binge.companion.seerr.util.routeProfiles
 import com.cooper.homelab.core.foundation.ServerId
+import com.cooper.homelab.core.server.connection.CallResult
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -41,9 +42,11 @@ class SeerrHealthWiringTest {
     private fun TestScope.data(): DataStore<Preferences> =
         PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("w${stores++}.preferences_pb") }
 
-    private fun TestScope.connection(data: DataStore<Preferences> = data()): SeerrConnection {
-        val health = SeerrHealth(seerrHealthMonitor()) { ServerId("server-1") }
-        return SeerrConnection(
+    private fun TestScope.connection(
+        data: DataStore<Preferences> = data(),
+        health: SeerrHealth = SeerrHealth(seerrHealthMonitor()) { ServerId("server-1") },
+    ): SeerrConnection =
+        SeerrConnection(
             store =
                 LegacyCredentialStore(
                     data,
@@ -53,7 +56,6 @@ class SeerrHealthWiringTest {
             apis = SeerrApiFactory(logRequests = false, health = health),
             healthMonitor = health,
         )
-    }
 
     private suspend fun SeerrConnection.call() {
         runCatching { api().authenticatedUser() }
@@ -146,5 +148,56 @@ class SeerrHealthWiringTest {
             val restarted = connection(data)
 
             assertEquals(SeerrConnectionHealth.Unchecked, restarted.health.first())
+        }
+
+    @Test
+    fun `a server that asks for a client certificate reads as such only once it is unreachable`() =
+        runTest {
+            val health = SeerrHealth(seerrHealthMonitor()) { ServerId("server-1") }
+            val sut = connection(health = health)
+            connect()
+            sut.connect(baseUrl, SeerrAuth.ApiKey("k3y")).getOrThrow()
+
+            health.reportClientCertificate(true)
+            health.report(CallResult.TransportFailure())
+            assertEquals(SeerrConnectionHealth.Healthy, sut.health.first())
+
+            health.reportClientCertificate(true)
+            health.report(CallResult.TransportFailure())
+            assertEquals(SeerrConnectionHealth.ClientCertificateNeeded, sut.health.first())
+        }
+
+    @Test
+    fun `a different failure, an answer or a new connection clears the client certificate reading`() =
+        runTest {
+            val health = SeerrHealth(seerrHealthMonitor()) { ServerId("server-1") }
+            val sut = connection(health = health)
+            connect()
+            sut.connect(baseUrl, SeerrAuth.ApiKey("k3y")).getOrThrow()
+            repeat(2) {
+                health.reportClientCertificate(true)
+                health.report(CallResult.TransportFailure())
+            }
+
+            health.reportClientCertificate(false)
+            health.report(CallResult.TransportFailure())
+            assertEquals(SeerrConnectionHealth.Unreachable, sut.health.first())
+
+            health.reportClientCertificate(true)
+            health.report(CallResult.TransportFailure())
+            assertEquals(SeerrConnectionHealth.ClientCertificateNeeded, sut.health.first())
+
+            health.reportClientCertificate(false)
+            health.report(CallResult.Answered(200))
+            assertEquals(SeerrConnectionHealth.Healthy, sut.health.first())
+
+            repeat(2) {
+                health.reportClientCertificate(true)
+                health.report(CallResult.TransportFailure())
+            }
+            sut.disconnect()
+            connect()
+            sut.connect(baseUrl, SeerrAuth.ApiKey("k3y")).getOrThrow()
+            assertEquals(SeerrConnectionHealth.Healthy, sut.health.first())
         }
 }
