@@ -22,11 +22,14 @@ import com.cooper.binge.companion.seerr.seerr.HydratedTitle
 import com.cooper.binge.companion.seerr.seerr.SeerrRequestMediaDto
 import com.cooper.binge.companion.seerr.ui.settings.server.DiscoverSlider
 import com.cooper.binge.companion.seerr.ui.settings.server.SliderForm
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -77,6 +80,7 @@ class HubViewModelTest {
     private class Titles(
         private val fail: Boolean = false,
         private val canDiscoverByCompany: Boolean = true,
+        private val gate: CompletableDeferred<Unit>? = null,
     ) : TitleListRepository {
         override suspend fun supports(source: TitleSource) = source !is TitleSource.ByCompany || canDiscoverByCompany
 
@@ -85,6 +89,7 @@ class HubViewModelTest {
             page: Int,
         ): TitlePage {
             if (fail) error("down")
+            gate?.await()
             val movie = TitleResult(TitleKind.Movie, 1, "One", "2020", null, "/b.jpg", null, null, TitleAvailability.None, null)
             return TitlePage(listOf(movie), 1, 1)
         }
@@ -255,6 +260,44 @@ class HubViewModelTest {
             val state = failingHero.uiState.first { it !is DiscoverHubUiState.Loading }
             assertTrue((state as DiscoverHubUiState.Ready).hero.isEmpty())
             assertEquals(listOf(1), state.rows.map { it.row.sliderId })
+        }
+
+    @Test
+    fun `a cold launch stays a skeleton until the rows above a fast row land, and no row ever moves`() =
+        runTest {
+            val gate = CompletableDeferred<Unit>()
+            val titles = Titles(gate = gate)
+            val sliders = FakeSliders(SliderListState.Loading)
+            val model =
+                HubViewModel(
+                    sliders,
+                    HubCardLoader(titles, NoMedia),
+                    HubTileLoader(titles),
+                    HubHeroLoader(titles, NoMedia),
+                    FakeGrid(),
+                    dispatcher,
+                    HubTab.Movies,
+                )
+            val seen = mutableListOf<DiscoverHubUiState>()
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { model.uiState.collect { seen += it } }
+            assertEquals("the slider list has not answered", DiscoverHubUiState.Loading, seen.last())
+
+            sliders.state.value = SliderListState.Ready(listOf(slider(1, TRENDING), slider(2, STUDIOS)))
+            assertEquals("the fast studios row is held behind the slow trending row", DiscoverHubUiState.Loading, seen.last())
+
+            gate.complete(Unit)
+            val ready = seen.last() as DiscoverHubUiState.Ready
+            assertEquals(listOf(1, 2), ready.rows.map { it.row.sliderId })
+            assertEquals(listOf(1), ready.hero.map { it.tmdbId })
+            assertTrue(
+                "no state showed the studios row on its own",
+                seen.filterIsInstance<DiscoverHubUiState.Ready>().all {
+                    it.rows
+                        .first()
+                        .row.sliderId ==
+                        1
+                },
+            )
         }
 }
 
