@@ -26,6 +26,9 @@ internal fun CollectionPageEntry(
                 onRequest = viewModel::openRequestSheet,
                 onCloseRequest = viewModel::closeRequestSheet,
                 onRequested = viewModel::requested,
+                onAskBlock = viewModel::askBlock,
+                onDismissBlock = viewModel::dismissBlock,
+                onSetBlocked = viewModel::setBlocked,
             ),
     )
 }

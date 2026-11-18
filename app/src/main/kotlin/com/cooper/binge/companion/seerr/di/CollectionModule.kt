@@ -17,5 +17,11 @@ object CollectionModule {
     fun collectionRepository(
         connection: SeerrConnection,
         @IoDispatcher io: CoroutineDispatcher,
-    ): CollectionRepository = SeerrCollectionRepository(api = connection::api, viewer = { connection.recentAuthenticatedUser() }, io = io)
+    ): CollectionRepository =
+        SeerrCollectionRepository(
+            api = connection::api,
+            viewer = { connection.recentAuthenticatedUser() },
+            profile = connection::profile,
+            io = io,
+        )
 }

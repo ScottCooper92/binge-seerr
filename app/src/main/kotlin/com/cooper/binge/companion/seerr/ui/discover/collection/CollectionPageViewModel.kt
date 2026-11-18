@@ -8,6 +8,12 @@ import com.cooper.binge.companion.seerr.discover.collection.CollectionRepository
 import com.cooper.binge.companion.seerr.discover.request.RequestResult
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
+import com.cooper.binge.companion.seerr.telemetry.AnalyticsEvents
+import com.cooper.binge.companion.seerr.telemetry.operationFailed
+import com.cooper.homelab.core.telemetry.Analytics
+import com.cooper.homelab.core.telemetry.CrashBreadcrumbs
+import com.cooper.homelab.core.telemetry.NoOpAnalytics
+import com.cooper.homelab.core.telemetry.NoOpCrashBreadcrumbs
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -28,11 +34,17 @@ sealed interface CollectionPageUiState {
         val error: SeerrError,
     ) : CollectionPageUiState
 
-    /** [mayRequest] is false until the viewer's rights are read, so the Request button appears only for one who may use it. */
+    /**
+     * [mayRequest] and [mayBlock] are false until the viewer's rights are read, so the Request button and the menu appear only for
+     * one who may use them.
+     */
     data class Ready(
         val collection: CollectionDetails,
         val mayRequest: Boolean = false,
+        val mayBlock: Boolean = false,
         val requestSheetOpen: Boolean = false,
+        val confirmingBlock: Boolean = false,
+        val changing: Boolean = false,
     ) : CollectionPageUiState
 }
 
@@ -40,6 +52,15 @@ sealed interface CollectionPageEvent {
     /** A request went through, for the screen's snackbar. */
     data class Requested(
         val result: RequestResult,
+    ) : CollectionPageEvent
+
+    /** The server blocked or unblocked the collection, for the screen's snackbar. */
+    data class Changed(
+        val blocked: Boolean,
+    ) : CollectionPageEvent
+
+    data class Failed(
+        val error: SeerrError,
     ) : CollectionPageEvent
 }
 
@@ -49,6 +70,8 @@ class CollectionPageViewModel
     @AssistedInject
     constructor(
         private val repository: CollectionRepository,
+        private val analytics: Analytics = NoOpAnalytics,
+        private val crashBreadcrumbs: CrashBreadcrumbs = NoOpCrashBreadcrumbs,
         @Assisted private val id: Int,
     ) : ViewModel() {
         @AssistedFactory
@@ -96,10 +119,40 @@ class CollectionPageViewModel
             closeRequestSheet()
         }
 
+        /** Blocking asks first; unblocking is undone as easily as it is done, so it goes straight through. */
+        fun askBlock() = updateReady { if (it.mayBlock && !it.collection.blocked) it.copy(confirmingBlock = true) else it }
+
+        fun dismissBlock() = updateReady { it.copy(confirmingBlock = false) }
+
+        fun setBlocked(blocked: Boolean) {
+            val ready = state.value as? CollectionPageUiState.Ready ?: return
+            if (!ready.mayBlock || ready.changing) return
+            updateReady { it.copy(confirmingBlock = false, changing = true) }
+            crashBreadcrumbs.key("collection_id", id.toString())
+            crashBreadcrumbs.log(if (blocked) "blocking collection" else "unblocking collection")
+            viewModelScope.launch {
+                attempt { repository.setBlocked(id, blocked) }.fold(
+                    onSuccess = {
+                        val action = if (blocked) "collection_blocked" else "collection_unblocked"
+                        analytics.event(AnalyticsEvents.BLOCKLIST_CHANGED, mapOf(AnalyticsEvents.PARAM_ACTION to action))
+                        attempt { repository.collection(id) }.onSuccess { fresh -> updateReady { it.copy(collection = fresh) } }
+                        eventFlow.tryEmit(CollectionPageEvent.Changed(blocked))
+                    },
+                    onFailure = {
+                        analytics.operationFailed(if (blocked) "block_collection" else "unblock_collection", it, repository.serverProfile())
+                        eventFlow.tryEmit(CollectionPageEvent.Failed(it.toSeerrError()))
+                    },
+                )
+                updateReady { it.copy(changing = false) }
+            }
+        }
+
         private fun loadRights() {
             viewModelScope.launch {
-                val may = attempt { repository.mayRequest() }.getOrNull() ?: return@launch
-                updateReady { it.copy(mayRequest = may) }
+                attempt { repository.mayRequest() }.onSuccess { may -> updateReady { it.copy(mayRequest = may) } }
+            }
+            viewModelScope.launch {
+                attempt { repository.mayBlock() }.onSuccess { may -> updateReady { it.copy(mayBlock = may) } }
             }
         }
 

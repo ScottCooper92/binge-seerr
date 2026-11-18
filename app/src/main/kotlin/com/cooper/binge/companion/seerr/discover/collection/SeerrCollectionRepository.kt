@@ -1,8 +1,10 @@
 package com.cooper.binge.companion.seerr.discover.collection
 
+import com.binge.companion.sdk.attempt
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.toTitleResult
 import com.cooper.binge.companion.seerr.seerr.SeerrApi
+import com.cooper.binge.companion.seerr.seerr.SeerrServerProfile
 import com.cooper.binge.companion.seerr.seerr.SeerrUserDto
 import com.cooper.binge.companion.seerr.seerr.toPermissions
 import com.cooper.binge.companion.seerr.seerr.toTmdbBackdropUrl
@@ -14,6 +16,7 @@ import kotlinx.coroutines.withContext
 class SeerrCollectionRepository(
     private val api: suspend () -> SeerrApi,
     private val viewer: suspend () -> SeerrUserDto,
+    private val profile: suspend () -> SeerrServerProfile,
     private val io: CoroutineDispatcher,
 ) : CollectionRepository {
     override suspend fun collection(id: Int): CollectionDetails =
@@ -33,4 +36,16 @@ class SeerrCollectionRepository(
         }
 
     override suspend fun mayRequest(): Boolean = withContext(io) { viewer().toPermissions().canRequestMovie }
+    override suspend fun mayBlock(): Boolean =
+        withContext(io) { profile().canBlockCollections && viewer().toPermissions().canManageBlocklist }
+
+    override suspend fun serverProfile(): SeerrServerProfile? = attempt { profile() }.getOrNull()
+
+    override suspend fun setBlocked(
+        id: Int,
+        blocked: Boolean,
+    ) = withContext(io) {
+        val api = api()
+        if (blocked) api.blockCollection(id) else api.unblockCollection(id)
+    }
 }
