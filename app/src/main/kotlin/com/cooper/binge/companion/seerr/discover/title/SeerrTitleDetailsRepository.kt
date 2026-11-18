@@ -80,22 +80,6 @@ class SeerrTitleDetailsRepository(
                 )
             }
         }
-
-    /**
-     * The region the title's streaming providers are read for: the user's own streaming region, then the server's, then the
-     * discover regions in the same order, as the web client reads them. A server that has one region only has no streaming one.
-     */
-    private suspend fun streamingRegion(
-        api: SeerrApi,
-        user: SeerrUserDto,
-        profile: SeerrServerProfile,
-    ): String? {
-        val own = attempt { api.userMainSettings(user.id) }.getOrNull()
-        val server = profile.settings
-        val streaming = if (profile.hasStreamingRegion) listOf(own?.streamingRegion, server.streamingRegion) else emptyList()
-        val discover = listOf(own?.discoverRegion ?: own?.region, server.discoverRegion ?: server.region)
-        return (streaming + discover).firstOrNull { !it.isNullOrBlank() }
-    }
 }
 
 internal fun SeerrMovieDetailsDto.toMovieDetails(
@@ -159,7 +143,7 @@ private fun com.cooper.binge.companion.seerr.discover.TitleAvailability.mayBeReq
 private fun SeerrMovieDetailsDto.certificationFor(region: String?): String? =
     listOfNotNull(region, FALLBACK_CERTIFICATION_REGION).firstNotNullOfOrNull { releases.certificationIn(it) }
 
-private fun List<SeerrWatchRegionDto>.providersFor(region: String?): TitleProviders? {
+internal fun List<SeerrWatchRegionDto>.providersFor(region: String?): TitleProviders? {
     val match = firstOrNull { it.region == region } ?: return null
     return TitleProviders(match.region, match.link, match.flatrate.toProviders(), match.buy.toProviders()).takeUnless { it.isEmpty }
 }
@@ -171,9 +155,25 @@ private fun com.cooper.binge.companion.seerr.seerr.SeerrRatingsDto.toRatings() =
     TitleRatings(rottenTomatoes?.criticsScore, rottenTomatoes?.audienceScore, imdb?.criticsScore)
 
 /** The server lists every clip a title has, often repeated: each once, trailers first, and only a few of them. */
-private fun List<SeerrVideoDto>.toTitleVideos(): List<TitleVideo> =
+internal fun List<SeerrVideoDto>.toTitleVideos(): List<TitleVideo> =
     filter { it.site == null || it.site == "YouTube" }
         .distinctBy { it.key }
         .sortedBy { if (it.type == "Trailer") 0 else 1 }
         .mapNotNull { video -> video.url?.let { TitleVideo(video.name, it) } }
         .take(MAX_VIDEOS)
+
+/**
+ * The region the title's streaming providers are read for: the user's own streaming region, then the server's, then the
+ * discover regions in the same order, as the web client reads them. A server that has one region only has no streaming one.
+ */
+internal suspend fun streamingRegion(
+    api: SeerrApi,
+    user: SeerrUserDto,
+    profile: SeerrServerProfile,
+): String? {
+    val own = attempt { api.userMainSettings(user.id) }.getOrNull()
+    val server = profile.settings
+    val streaming = if (profile.hasStreamingRegion) listOf(own?.streamingRegion, server.streamingRegion) else emptyList()
+    val discover = listOf(own?.discoverRegion ?: own?.region, server.discoverRegion ?: server.region)
+    return (streaming + discover).firstOrNull { !it.isNullOrBlank() }
+}

@@ -9,7 +9,7 @@ import kotlinx.coroutines.withContext
 /** The departments the list leads with, in this order; any other follows alphabetically. */
 private val DEPARTMENT_ORDER = listOf("Directing", "Writing", "Production", "Camera", "Sound", "Art", "Editing")
 
-/** [TitleCreditsRepository] over the Seerr API. Only a film has credits here so far; a series arrives with its page. */
+/** [TitleCreditsRepository] over the Seerr API: a film's credits or a series'. */
 class SeerrTitleCreditsRepository(
     private val api: suspend () -> SeerrApi,
     private val io: CoroutineDispatcher,
@@ -17,10 +17,15 @@ class SeerrTitleCreditsRepository(
     override suspend fun credits(
         kind: TitleKind,
         tmdbId: Int,
-    ): TitleCredits {
-        require(kind == TitleKind.Movie) { "Only a film has a credits list so far" }
-        return withContext(io) { api().movieFullDetails(tmdbId).credits.toTitleCredits() }
-    }
+    ): TitleCredits =
+        withContext(io) {
+            val api = api()
+            when (kind) {
+                TitleKind.Movie -> api.movieFullDetails(tmdbId).credits
+                TitleKind.Series -> api.tvFullDetails(tmdbId).credits
+                else -> throw IllegalArgumentException("Only a film or a series has a credits list")
+            }.toTitleCredits()
+        }
 }
 
 internal fun SeerrCreditsDto?.toTitleCredits(): TitleCredits {

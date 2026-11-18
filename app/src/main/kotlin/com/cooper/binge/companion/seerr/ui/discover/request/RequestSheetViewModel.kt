@@ -11,6 +11,8 @@ import com.cooper.binge.companion.seerr.discover.request.RequestResult
 import com.cooper.binge.companion.seerr.discover.request.RequestServer
 import com.cooper.binge.companion.seerr.discover.request.RequestSheetRepository
 import com.cooper.binge.companion.seerr.discover.request.RequestSubmission
+import com.cooper.binge.companion.seerr.discover.request.SeasonChoices
+import com.cooper.binge.companion.seerr.discover.request.SeasonSelection
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.seerr.serverMessage
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
@@ -30,6 +32,7 @@ import kotlinx.coroutines.launch
 /**
  * The title a request sheet is for. [seasons] is empty for a movie, and for a series means the whole show. [standardOpen] and
  * [fourKOpen] say which versions the server holds nothing of, so the sheet never offers one that is already requested.
+ * [seasonChoices] is a show's seasons per version, and [partialRequests] is the server's setting for sending only some.
  */
 data class RequestSheetTarget(
     val kind: TitleKind,
@@ -38,6 +41,8 @@ data class RequestSheetTarget(
     val seasons: List<Int> = emptyList(),
     val standardOpen: Boolean = true,
     val fourKOpen: Boolean = true,
+    val seasonChoices: SeasonChoices? = null,
+    val partialRequests: Boolean = true,
 )
 
 /** Why a send failed, in the terms the dialog explains. [detail] is the server's own sentence, where it gave one. */
@@ -78,7 +83,20 @@ sealed interface RequestSheetUiState {
         val pick: DestinationPick? = null,
         val submitting: Boolean = false,
         val problem: RequestProblem? = null,
+        val pickedSeasons: Set<Int> = emptySet(),
     ) : RequestSheetUiState {
+        /** A show's seasons of the chosen version, with what the user ticked; null for a film. */
+        val seasons: SeasonSelection?
+            get() =
+                target.seasonChoices?.let {
+                    SeasonSelection(
+                        it.of(use4k),
+                        target.partialRequests,
+                        pickedSeasons,
+                        limit = options.quota?.remaining,
+                    )
+                }
+
         /** The servers of the chosen version: 4K is a property of a server, so the 4K switch narrows this list. */
         val servers: List<RequestServer> get() = options.servers.filter { it.is4k == use4k }
 
@@ -88,7 +106,7 @@ sealed interface RequestSheetUiState {
         val canToggle4k: Boolean get() = options.may4k && target.standardOpen && target.fourKOpen && !submitting
 
         /** A pick whose lists have not read yet still submits: the server fills an empty axis with its own default. */
-        val canSubmit: Boolean get() = !submitting && !quotaSpent
+        val canSubmit: Boolean get() = !submitting && !quotaSpent && (seasons?.canSubmit ?: true)
     }
 }
 
@@ -139,9 +157,13 @@ class RequestSheetViewModel
             val current = ready() ?: return
             if (current.use4k == use4k || !current.canToggle4k) return
             val pick = current.options.servers.pickFor(use4k)
-            state.value = current.copy(use4k = use4k, pick = pick)
+            state.value = current.copy(use4k = use4k, pick = pick, pickedSeasons = emptySet())
             pick?.let { loadChoices(it.serverId) }
         }
+
+        fun toggleSeason(number: Int) = pickSeasons { it.toggle(number) }
+
+        fun toggleAllSeasons() = pickSeasons { it.toggleAll() }
 
         fun selectServer(id: Int) {
             val current = ready() ?: return
@@ -157,6 +179,9 @@ class RequestSheetViewModel
 
         fun dismissProblem() = updateReady { it.copy(problem = null) }
 
+        private fun pickSeasons(change: (SeasonSelection) -> SeasonSelection) =
+            updateReady { current -> current.seasons?.let { current.copy(pickedSeasons = change(it).picked) } ?: current }
+
         fun submit() {
             val current = ready() ?: return
             if (!current.canSubmit) return
@@ -165,7 +190,7 @@ class RequestSheetViewModel
                 RequestSubmission(
                     kind = target.kind,
                     tmdbId = target.tmdbId,
-                    seasons = target.seasons,
+                    seasons = current.seasons?.requestSeasons ?: target.seasons,
                     is4k = current.use4k,
                     destination = current.pick?.let { RequestDestination(it.serverId, it.profileId, it.rootFolder) },
                 )

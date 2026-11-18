@@ -1440,4 +1440,38 @@
     <string name="title_credits_department_lighting">Iluminación</string>
     <string name="title_credits_department_crew">Equipo técnico</string>
     <string name="title_credits_department_actors">Reparto adicional</string>
+    <string name="request_sheet_seasons">Temporadas</string>
+    <string name="request_sheet_all_seasons">Todas las temporadas</string>
+    <string name="request_sheet_remaining_seasons">Todas las temporadas restantes</string>
+    <string name="season_name">Temporada %1$d</string>
+    <string name="season_specials">Especiales</string>
+    <plurals name="season_episodes">
+        <item quantity="one">%1$d episodio</item>
+        <item quantity="many">%1$d de episodios</item>
+        <item quantity="other">%1$d episodios</item>
+    </plurals>
+    <string name="series_page_seasons">Temporadas</string>
+    <string name="series_page_runtime">%1$d min</string>
+    <plurals name="series_page_season_count">
+        <item quantity="one">%1$d temporada</item>
+        <item quantity="many">%1$d de temporadas</item>
+        <item quantity="other">%1$d temporadas</item>
+    </plurals>
+    <string name="series_fact_networks">Cadenas</string>
+    <string name="series_fact_creators">Creada por</string>
+    <string name="series_fact_first_aired">Primera emisión</string>
+    <string name="series_fact_last_aired">Última emisión</string>
+    <string name="series_fact_episodes">Episodios</string>
+    <string name="series_fact_next_episode">Próximo episodio</string>
+    <string name="series_fact_next_airs">Próximo episodio se emite</string>
+    <string name="series_next_episode">%1$s (temporada %2$d, episodio %3$d)</string>
+    <string name="series_status_returning">Serie en emisión</string>
+    <string name="series_status_ended">Finalizada</string>
+    <string name="series_status_pilot">Piloto</string>
+    <plurals name="request_sheet_seasons_limit">
+        <item quantity="one">Tu cuota permite %1$d temporada más</item>
+        <item quantity="many">Tu cuota permite %1$d de temporadas más</item>
+        <item quantity="other">Tu cuota permite %1$d temporadas más</item>
+    </plurals>
+    <string name="request_sheet_seasons_over">Tu cuota tiene menos margen que las %1$d temporadas aún abiertas, así que esta serie no se puede pedir ahora</string>
 </resources>

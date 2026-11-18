@@ -59,7 +59,7 @@ fun RequestSheet(
 ) {
     val viewModel =
         hiltViewModel<RequestSheetViewModel, RequestSheetViewModel.Factory>(
-            key = "request-${target.kind}-${target.tmdbId}-${target.standardOpen}-${target.fourKOpen}",
+            key = "request-${target.kind}-${target.tmdbId}-${target.standardOpen}-${target.fourKOpen}-${target.seasonChoices.hashCode()}",
             creationCallback = { factory -> factory.create(target) },
         )
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -76,6 +76,8 @@ fun RequestSheet(
             actions =
                 RequestSheetActions(
                     onUse4k = viewModel::setUse4k,
+                    onSeason = viewModel::toggleSeason,
+                    onAllSeasons = viewModel::toggleAllSeasons,
                     onServer = viewModel::selectServer,
                     onProfile = viewModel::selectProfile,
                     onRootFolder = viewModel::selectRootFolder,
@@ -89,6 +91,8 @@ fun RequestSheet(
 
 class RequestSheetActions(
     val onUse4k: (Boolean) -> Unit,
+    val onSeason: (Int) -> Unit,
+    val onAllSeasons: () -> Unit,
     val onServer: (Int) -> Unit,
     val onProfile: (Int) -> Unit,
     val onRootFolder: (String) -> Unit,
@@ -141,6 +145,7 @@ private fun ReadyContent(
             verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
         ) {
             if (state.options.may4k && state.target.fourKOpen) FourKRow(state, actions)
+            state.seasons?.let { SeasonStep(it, enabled = !state.submitting, actions) }
             if (pick != null) DestinationFields(state, pick) { picker = it }
         }
         state.options.quota?.let { QuotaRow(it) }
