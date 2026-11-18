@@ -10,8 +10,8 @@ check() {
   shift 2
   local file got
   file="$(mktemp)"
-  printf '%s\n' "$@" > "$file"
-  [ "$#" -eq 0 ] && : > "$file"
+  : > "$file"
+  for path in "$@"; do printf '%s\0' "$path" >> "$file"; done
   got="$("$here/classify-changes.sh" "$file" 2>/dev/null | cut -d= -f2 | tr '\n' ' ' | sed 's/ $//')"
   rm -f "$file"
   if [ "$got" != "$expected" ]; then
@@ -58,6 +58,30 @@ check "gradle.properties"           "true true true"  gradle.properties
 check "settings.gradle.kts"         "true true true"  settings.gradle.kts
 check "the binge-ci pin"            "true false true" binge-ci
 check "a UI change with a build file" "true true true" "$K/ui/hub/HubScreen.kt" app/build.gradle.kts
+
+# Paths git would quote in its default output: a non-ASCII character, a tab or a newline. The list is NUL-separated, so
+# each reads as itself and matches its pattern. A keep rule is the release set's only R8 input here.
+check "an accented keep-rule name"   "true false true" "app/src/main/keepRules/règles.pro"
+check "a tab in a path"              "true false true" $'app/src/main/keepRules/a\tb.pro'
+check "a newline in a path"          "true false true" $'app/src/main/keepRules/a\nb.pro'
+
+# A rename lists both its paths when the diff is read as CI reads it, so a source file moved into docs still reads as a
+# source change. With git's default rename detection only the new path would print, and the diff would look docs-only.
+repo="$(mktemp -d)"
+(
+  cd "$repo"
+  git init -q
+  mkdir -p app/src/main/kotlin docs
+  printf 'class X\n' > app/src/main/kotlin/X.kt
+  git add -A
+  git -c user.email=t@example.invalid -c user.name=t commit -q -m base
+  git mv app/src/main/kotlin/X.kt docs/X.kt
+  git -c user.email=t@example.invalid -c user.name=t commit -q -m move
+  git diff -z --no-renames --name-only HEAD~1 HEAD > "$repo/changed.list"
+)
+got="$("$here/classify-changes.sh" "$repo/changed.list" 2>/dev/null | cut -d= -f2 | tr '\n' ' ' | sed 's/ $//')"
+rm -rf "$repo"
+[ "$got" = "true true false" ] || { echo "FAIL a source file renamed into docs: expected 'true true false', got '$got'"; failed=1; }
 
 [ "$failed" -eq 0 ] && echo "classify-changes: all cases pass"
 exit "$failed"

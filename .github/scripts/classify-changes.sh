@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Decides which CI jobs a diff can affect, from the changed paths, one per line, in the file given
-# as $1. Prints `product=`, `screens=` and `release=`, each true or false, one per line.
+# Decides which CI jobs a diff can affect, from the changed paths in the file given as $1, NUL-separated
+# (`git diff -z --no-renames --name-only`: a rename lists both paths, and no path is quoted). Prints `product=`, `screens=` and `release=`, each true or false, one per line.
 #
 # The design is Binge's change classifier, kept deliberately small. A job is skipped only when
 # EVERY changed path is in a closed, finite set that provably cannot affect it. For `product` and
@@ -66,8 +66,10 @@ release_input() {
   return 1
 }
 
+# The list is NUL-separated (`git diff -z`): git quotes a path with a non-ASCII character, a quote or a tab
+# in its default output, and that quoted form would match no pattern below.
 paths=()
-while IFS= read -r path; do
+while IFS= read -r -d '' path; do
   [ -n "$path" ] && paths+=("$path")
 done < "$list"
 

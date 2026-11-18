@@ -146,12 +146,14 @@ jobs:
           fi
           [ -n "$base" ] || all "No baseline to diff against"
 
-          git diff --name-only "$base" "$head" > "$RUNNER_TEMP/changed.txt" || all "The diff could not be read"
+          # NUL-separated and with no rename detection: a path git would quote (a non-ASCII character, a tab) is
+          # printed as itself, and a rename lists both its paths, so a source file moved into docs is not docs-only.
+          git diff -z --no-renames --name-only "$base" "$head" > "$RUNNER_TEMP/changed.txt" || all "The diff could not be read"
           .github/scripts/classify-changes.sh "$RUNNER_TEMP/changed.txt" | tee -a "$GITHUB_OUTPUT"
           {
             echo "Diff against $label:"
             echo '```'
-            cat "$RUNNER_TEMP/changed.txt"
+            tr '\0' '\n' < "$RUNNER_TEMP/changed.txt"
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 

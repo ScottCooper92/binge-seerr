@@ -264,7 +264,8 @@ result is the shards' together. On a PR, `submodule-pins` checks
 that every submodule pin is merged upstream, and `actionlint` lints the workflow files. A first job, `changes`,
 decides which of the four a PR can affect: a docs-only diff skips every Gradle job, a diff that cannot move a frame
 skips `screenshots`, and `release` runs on a PR only when a build file, the version catalog, `gradle/`,
-`gradle.properties`, a keep rule or `.pro` file, or a submodule pin changes (Binge builds release only on a tag).
+`gradle.properties`, a keep rule or `.pro` file, the manifest, `res/xml`, `res/raw`, assets, the release source set,
+`.gitmodules`, a submodule pin or a workflow file changes (Binge builds release only on a tag).
 The rules are the lists in `.github/scripts/classify-changes.sh`, tested by `classify-changes.test.sh`. For the Gradle
 jobs and `screenshots` a path in no skip list runs the job. `release` is the reverse, an allow-list: a path runs it only
 if `release_input` names it, so a new R8 input (a new build file or keep-rule directory) is added there or the PR skips
