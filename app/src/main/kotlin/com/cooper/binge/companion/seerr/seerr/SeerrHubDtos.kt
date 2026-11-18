@@ -23,6 +23,13 @@ data class SeerrRequestsPageDto(
     @SerialName("results") val results: List<SeerrRequestDto> = emptyList(),
 )
 
+/** A page of `media`: the titles the server knows, each with its status. Only ids here, so a card is hydrated by a details call. */
+@Serializable
+data class SeerrMediaPageDto(
+    @SerialName("pageInfo") val pageInfo: SeerrPageInfoDto = SeerrPageInfoDto(),
+    @SerialName("results") val results: List<SeerrRequestMediaDto> = emptyList(),
+)
+
 /** One request as the list serves it: the title is only a TMDB id here, hydrated by a details call. */
 @Serializable
 data class SeerrRequestDto(

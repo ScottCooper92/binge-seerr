@@ -591,6 +591,15 @@ interface SeerrApi {
         @Body body: SeerrMetadataTestBody,
     ): SeerrMetadataTestResultDto
 
+    /** The titles the server knows, [filter] one of its own (`allavailable`) and [sort] `mediaAdded` for the newest in the library. */
+    @GET("api/v1/media")
+    suspend fun mediaList(
+        @Query("filter") filter: String,
+        @Query("take") take: Int,
+        @Query("skip") skip: Int = 0,
+        @Query("sort") sort: String = "added",
+    ): SeerrMediaPageDto
+
     /** Trending movies and shows together. */
     @GET("api/v1/discover/trending")
     suspend fun discoverTrending(
@@ -603,6 +612,8 @@ interface SeerrApi {
         @Query("page") page: Int = 1,
         @Query("sortBy") sortBy: String? = null,
         @Query("keywords") keywords: String? = null,
+        @Query("watchRegion") watchRegion: String? = null,
+        @Query("watchProviders") watchProviders: String? = null,
     ): SeerrTitlePageDto
 
     /** Popular shows; [keywords] is a TMDB id or a comma-separated list. */
@@ -611,6 +622,8 @@ interface SeerrApi {
         @Query("page") page: Int = 1,
         @Query("sortBy") sortBy: String? = null,
         @Query("keywords") keywords: String? = null,
+        @Query("watchRegion") watchRegion: String? = null,
+        @Query("watchProviders") watchProviders: String? = null,
     ): SeerrTitlePageDto
 
     @GET("api/v1/discover/movies/upcoming")

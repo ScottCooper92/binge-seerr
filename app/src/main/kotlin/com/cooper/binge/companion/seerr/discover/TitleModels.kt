@@ -104,6 +104,27 @@ sealed interface TitleSource {
         override fun supportedBy(profile: SeerrServerProfile) = profile.hasKeywordDiscover
     }
 
+    /** Titles carrying any of the keywords, through the base discover call, as the web client queries a custom keyword row. */
+    data class ByKeywords(
+        val kind: TitleKind,
+        val keywordIds: List<Int>,
+    ) : TitleSource {
+        override val defaultKind: TitleKind = kind
+
+        override fun supportedBy(profile: SeerrServerProfile) = profile.hasKeywordDiscover
+    }
+
+    /** Titles on some streaming services in a region. */
+    data class ByStreaming(
+        val kind: TitleKind,
+        val region: String,
+        val providerIds: List<Int>,
+    ) : TitleSource {
+        override val defaultKind: TitleKind = kind
+
+        override fun supportedBy(profile: SeerrServerProfile) = profile.hasWatchProviderDiscover
+    }
+
     data object Watchlist : TitleSource {
         override val defaultKind: TitleKind? = null
 

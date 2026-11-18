@@ -174,4 +174,14 @@ class DemoServerTest {
         const val MADE_UP = 27205
         const val NOT_A_TITLE = 1
     }
+
+    @Test
+    fun `the media list serves the titles the library holds, newest first, and honours take`() =
+        demo { api ->
+            val all = api.mediaList(filter = "allavailable", take = 20, sort = "mediaAdded").results
+            assertTrue(all.isNotEmpty())
+            assertTrue(all.all { it.status == SeerrMediaStatusCode.Available })
+            assertEquals(all.map { it.id }, all.map { it.id }.sortedByDescending { it })
+            assertEquals(1, api.mediaList(filter = "allavailable", take = 1).results.size)
+        }
 }

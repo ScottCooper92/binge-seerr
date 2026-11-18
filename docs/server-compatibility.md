@@ -82,6 +82,8 @@ endpoint, is in [`api-coverage.md`](api-coverage.md). The gates that change what
 | LunaSea notification agent | always | never |
 | Discover sliders, watch providers, keyword and company search | 1.32 | Jellyseerr 1.4 |
 | Discover keyword lists | 1.9 | always |
+| Recently Added list (`media?filter=allavailable`, `sort=mediaAdded`) | 1.18 | always |
+| Discover by watch provider and region | 1.32 | Seerr 1.4 |
 | Upcoming shows | 1.20 | always |
 | Discover by genre, language, studio and network | 1.21 | always |
 | Genre slider backdrops | 1.22 | always |
