@@ -6,12 +6,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -36,6 +34,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
+import com.binge.designsystem.CenteredContent
 import com.binge.designsystem.CollapsingTitleState
 import com.binge.designsystem.collapsingTitle
 import com.binge.designsystem.component.BingeFilterChipRow
@@ -79,13 +78,8 @@ internal fun TitleSearchScreen(
     modifier: Modifier = Modifier,
 ) {
     val titleState = remember { CollapsingTitleState() }
-    Box(modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
-        Column(
-            Modifier
-                .widthIn(max = dimensionResource(R.dimen.search_content_max_width))
-                .fillMaxSize()
-                .nestedScroll(remember(titleState) { titleState.nestedScrollConnection() }),
-        ) {
+    CenteredContent(modifier, maxWidth = dimensionResource(DesR.dimen.search_content_max_width)) { capped ->
+        Column(capped.nestedScroll(remember(titleState) { titleState.nestedScrollConnection() })) {
             SearchHeader(state, actions, titleState)
             Box(Modifier.weight(1f).fillMaxWidth()) {
                 when (state) {
@@ -187,11 +181,11 @@ private fun ResultsList(
     }
     // One column on a phone; the wider windows fold the results into columns rather than running a row the width of a tablet.
     // The grid is capped at the search width, not the reading column, and centred above it.
-    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
+    CenteredContent(maxWidth = dimensionResource(DesR.dimen.search_content_max_width)) { capped ->
         LazyVerticalGrid(
             columns = GridCells.Fixed(searchResultColumns()),
             state = gridState,
-            modifier = Modifier.widthIn(max = dimensionResource(R.dimen.search_content_max_width)).fillMaxSize(),
+            modifier = capped,
             contentPadding = contentPadding,
             horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
             verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),

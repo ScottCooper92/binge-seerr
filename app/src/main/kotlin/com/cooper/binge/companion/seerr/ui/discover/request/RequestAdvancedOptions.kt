@@ -37,7 +37,11 @@ private fun serverRows(
     val servers = state.servers
     if (servers is ServersState.Loading) return listOf(ListItem(DestinationIcons.server, label = title, clickable = false, loading = true))
     if (servers is ServersState.Failed) {
-        return listOf(failedRow(DestinationIcons.server, stringResource(R.string.request_sheet_servers_failed), actions.onRetryServers))
+        return listOf(
+            failedRow(DestinationIcons.server, stringResource(R.string.request_sheet_servers_failed), {
+                actions.onRetryRead(RequestRead.Servers)
+            }),
+        )
     }
     val pick = state.pick ?: return emptyList()
     val server =
@@ -71,7 +75,11 @@ private fun choiceRows(
             )
         ChoicesState.Failed ->
             listOf(
-                failedRow(DestinationIcons.profile, stringResource(R.string.request_sheet_choices_failed), actions.onRetryChoices),
+                failedRow(
+                    DestinationIcons.profile,
+                    stringResource(R.string.request_sheet_choices_failed),
+                    { actions.onRetryRead(RequestRead.Choices) },
+                ),
             )
         is ChoicesState.Ready ->
             listOf(
