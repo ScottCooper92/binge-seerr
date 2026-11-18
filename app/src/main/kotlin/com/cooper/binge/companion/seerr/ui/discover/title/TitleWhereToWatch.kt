@@ -57,12 +57,12 @@ internal fun TitleProviders.forKind(kind: WatchKind): List<TitleProvider> =
     when (kind) {
         WatchKind.Stream -> streaming
         WatchKind.Buy -> buy
-    }
+    }.distinctBy { it.id }
 
 /**
  * Where the title can be watched in the server's region: a Stream and a Buy chip for the kinds that have providers, then
  * the providers' logos and names in the server's order, and the JustWatch credit the data needs. Nothing is drawn when
- * there are no providers at all. A tap on a logo opens the server's page for the region, where it gave one.
+ * there are no providers at all. A tap on a logo opens TMDB's watch page for the region, where it gave one.
  */
 @Composable
 internal fun WhereToWatchSection(

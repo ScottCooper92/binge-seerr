@@ -25,13 +25,15 @@ import com.binge.designsystem.template.ScreenBar
 import com.binge.designsystem.template.screenInnerPadding
 import com.binge.designsystem.template.screenOuterPadding
 import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.title.TitleCredits
 import com.cooper.binge.companion.seerr.discover.title.TitlePerson
+import com.cooper.binge.companion.seerr.ui.discover.title.LocalOpenTitle
 import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
 import com.cooper.binge.companion.seerr.ui.state.LoadingScreen
 import com.binge.designsystem.R as DesR
 
-/** The whole cast, then the crew by department. A person is not tappable until the person page exists. */
+/** The whole cast, then the crew by department. A person opens their page. */
 @Composable
 internal fun TitleCreditsScreen(
     state: TitleCreditsUiState,
@@ -80,8 +82,10 @@ private fun CreditsList(
 /** A person with an avatar, initials where there is no photo, and their character or jobs under the name. */
 @Composable
 private fun CreditRow(person: TitlePerson) {
+    val openTitle = LocalOpenTitle.current
     ListRow(
         modifier = Modifier.padding(horizontal = dimensionResource(DesR.dimen.padding_m)),
+        onClick = { openTitle(TitleKind.Person, person.personId, "") },
         verticalAlignment = Alignment.CenterVertically,
         leading = { BingeInitialsAvatar(name = person.name, avatarUrl = person.photoUrl) },
     ) { contentModifier ->
