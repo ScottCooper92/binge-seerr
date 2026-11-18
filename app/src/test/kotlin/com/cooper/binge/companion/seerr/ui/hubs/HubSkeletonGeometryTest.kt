@@ -60,9 +60,29 @@ class HubSkeletonGeometryTest {
     fun `at the largest font the skeleton still holds the first rail where it lands`() =
         check(HubRow.Trending(1, null, HubTab.Movies), LARGEST_FONT)
 
+    @Test
+    @Config(qualifiers = PHONE)
+    fun `a hero that answers after the rows does not move them`() = check(TRENDING, loading = ready(TRENDING, hero = emptyList()))
+
+    @Test
+    @Config(qualifiers = TABLET)
+    fun `on a tablet a hero that answers after the rows does not move them`() =
+        check(TRENDING, loading = ready(TRENDING, hero = emptyList()))
+
+    @Test
+    @Config(qualifiers = PHONE)
+    fun `a hero that fails or comes back empty does not move the rows`() = check(TRENDING, loaded = ready(TRENDING, hero = emptyList()))
+
+    @Test
+    @Config(qualifiers = TABLET)
+    fun `on a tablet a hero that fails or comes back empty does not move the rows`() =
+        check(TRENDING, loaded = ready(TRENDING, hero = emptyList()))
+
     private fun check(
         row: HubRow,
         fontScale: Float = 1f,
+        loading: DiscoverHubUiState = DiscoverHubUiState.Loading,
+        loaded: DiscoverHubUiState = ready(row),
     ) {
         val anchors =
             listOf(
@@ -76,7 +96,7 @@ class HubSkeletonGeometryTest {
                 SeerrTheme {
                     DiscoverHubScreen(
                         tab = HubTab.Movies,
-                        state = if (resolved) ready(row) else DiscoverHubUiState.Loading,
+                        state = if (resolved) loaded else loading,
                         onRefresh = {},
                         onOpenTitle = {},
                         onOpenGrid = { _, _ -> },
@@ -87,13 +107,15 @@ class HubSkeletonGeometryTest {
         }
     }
 
-    private fun ready(row: HubRow) =
-        DiscoverHubUiState.Ready(
-            listOf(HubRowUi.Cards(row, List(CARDS) { card(it) })),
-            pending = 0,
-            refreshing = false,
-            hero = listOf(hero()),
-        )
+    private fun ready(
+        row: HubRow,
+        hero: List<HubHero> = listOf(hero()),
+    ) = DiscoverHubUiState.Ready(
+        listOf(HubRowUi.Cards(row, List(CARDS) { card(it) })),
+        pending = 0,
+        refreshing = false,
+        hero = hero,
+    )
 
     private fun hero() =
         HubHero(
@@ -113,6 +135,7 @@ class HubSkeletonGeometryTest {
         const val PHONE = "w411dp-h891dp-xhdpi"
         const val TABLET = "w840dp-h1280dp-xhdpi"
         const val CARDS = 6
+        val TRENDING = HubRow.Trending(1, null, HubTab.Movies)
         const val LARGE_FONT = 1.3f
         const val LARGEST_FONT = 2f
     }

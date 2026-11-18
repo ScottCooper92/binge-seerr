@@ -15,14 +15,16 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import com.binge.designsystem.component.EpisodeListRow
 import com.binge.designsystem.component.SectionHeader
 import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.discover.title.SeasonEpisode
 import com.cooper.binge.companion.seerr.discover.title.SeasonInfo
 import com.cooper.binge.companion.seerr.ui.discover.request.seasonLabel
-import com.cooper.binge.companion.seerr.ui.discover.title.season.EpisodeRow
 import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
 import com.cooper.binge.companion.seerr.ui.state.LoadingScreen
 import com.binge.designsystem.R as DesR
@@ -30,11 +32,11 @@ import com.binge.designsystem.R as DesR
 /** How many episodes the page shows before it offers the whole season on a page of its own. */
 internal const val EPISODES_ON_PAGE = 5
 
-/** What the season list does: select a season, read its episodes again, and open the whole season. */
+/** What the season list does: select a season, read its episodes again, and open every season's episodes at the chosen one. */
 class SeasonActions(
     val onSelect: (Int) -> Unit,
     val onRetry: () -> Unit,
-    val onViewAll: (seasonNumber: Int, seasonName: String) -> Unit,
+    val onViewAll: (seasonNumber: Int, seriesName: String) -> Unit,
 )
 
 /**
@@ -69,10 +71,10 @@ internal fun EpisodesSection(
             null, EpisodesState.Loading -> LoadingScreen()
             is EpisodesState.Error -> ErrorScreen(episodes.error, onRetry = actions.onRetry)
             is EpisodesState.Ready -> {
-                episodes.episodes.take(EPISODES_ON_PAGE).forEach { EpisodeRow(it, Modifier.padding(horizontal = gap)) }
+                episodes.episodes.take(EPISODES_ON_PAGE).forEach { EpisodeCard(it, Modifier.padding(horizontal = gap)) }
                 if (episodes.episodes.size > EPISODES_ON_PAGE) {
                     Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                        TextButton(onClick = { actions.onViewAll(season.number, season.name) }) {
+                        TextButton(onClick = { actions.onViewAll(season.number, state.series.name) }) {
                             Text(stringResource(R.string.series_page_view_all_episodes), color = MaterialTheme.colorScheme.primary)
                         }
                     }
@@ -98,4 +100,22 @@ internal fun EpisodesSection(
 private fun SeasonInfo.subtitle(): String {
     val episodes = pluralStringResource(R.plurals.season_episodes, episodeCount, episodeCount)
     return listOfNotNull(seasonLabel(number, name), episodes, airYear).joinToString(stringResource(R.string.series_season_separator))
+}
+
+/** An episode on the page: the design system's row with no click, since an episode here opens nothing, so it is plain content and not a button. */
+@Composable
+private fun EpisodeCard(
+    episode: SeasonEpisode,
+    modifier: Modifier = Modifier,
+) {
+    val locale = LocalConfiguration.current.locales[0]
+    EpisodeListRow(
+        episodeNumber = episode.number,
+        name = episode.name,
+        stillUrl = episode.stillUrl,
+        onClick = null,
+        modifier = modifier,
+        rating = episode.rating ?: 0f,
+        airDate = episode.airDate.toDisplayDate(locale),
+    )
 }

@@ -19,6 +19,9 @@ import javax.inject.Singleton
 
 private const val REDACTOR_TAG = "Redactor"
 
+/** The frames kept in a logged throwable: this app's own and the shared library's. The library holds no default. */
+internal val OWN_PACKAGES = listOf("com.cooper.binge.", "com.cooper.homelab.")
+
 /**
  * The shared [Logger]: an in-memory [RingLog] that the Diagnostics page reads. Nothing is written to disk. A debug build also
  * forwards each redacted entry to Logcat, and says so when the redactor had to replace something (a call site is wrong then).
@@ -44,8 +47,7 @@ object LoggingModule {
             // One saved server: no entry carries a server field today, so there is no order to label.
             serverOrder = { emptyList() },
             forward = LogcatLogger.takeIf { BuildConfig.DEBUG },
-            // The frames kept in a logged throwable are this app's own, named here so the library holds no default.
-            ownPackages = listOf("com.cooper.binge."),
+            ownPackages = OWN_PACKAGES,
         )
 
     @Provides
