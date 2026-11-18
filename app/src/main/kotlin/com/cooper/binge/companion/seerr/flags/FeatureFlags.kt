@@ -18,8 +18,9 @@ val LocalDiscoveryEnabled = staticCompositionLocalOf { false }
 val DiscoveryEnabled = FlagKey("discovery_enabled")
 
 /**
- * Whether a settings search result for an on/off setting carries its own switch. It has no remote value, so it is not in
- * [RemoteFlagKeys]: only a debug build's developer override turns it on, and a shipped build never shows the switches.
+ * Whether a settings search result for an on/off setting carries its own switch. It is a debug-only switch, so it has no remote
+ * value and is deliberately not in [RemoteFlagKeys]: a Remote Config template must never be able to turn it on. Only a debug
+ * build's developer override does, and a shipped build never shows the switches.
  */
 val SearchToggles = FlagKey("search_toggles_enabled")
 
