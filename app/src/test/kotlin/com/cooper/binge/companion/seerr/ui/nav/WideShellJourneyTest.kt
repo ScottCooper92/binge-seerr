@@ -63,7 +63,7 @@ class WideShellJourneyTest {
     @get:Rule
     internal val host = RealNavHostRule(this)
 
-    /** A wait for [what] that, on a timeout, prints the back stack and the screen: see [RealNavHostRule.awaitState]. */
+    /** A wait for [what] that, on a timeout, prints the back stack and the screen: see [RealNavHostRule.await]. */
     private fun awaitState(
         what: String,
         condition: () -> Boolean,
