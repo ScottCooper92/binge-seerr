@@ -43,12 +43,14 @@ private fun SeerrRequestSummaryDto.toSummary(): RequestSummary =
  * `modifiedBy` when their own permissions approve the request at creation, and afterwards only approve, decline and retry
  * change it. `updatedAt` cannot tell: completing or failing the request moves it as well.
  */
-internal fun SeerrRequestDto.approvedAutomatically(): Boolean =
-    modifiedBy?.id != null &&
-        modifiedBy.id == requestedBy?.id &&
+internal fun SeerrRequestDto.approvedAutomatically(): Boolean {
+    val modifier = modifiedBy?.id
+    return modifier != null &&
+        modifier == requestedBy?.id &&
         status != null &&
         status != SeerrRequestStatusCode.Pending &&
         status != SeerrRequestStatusCode.Declined
+}
 
 private fun SeerrWatchStatsDto.toWatchStats(): WatchStats =
     WatchStats(
@@ -106,7 +108,7 @@ internal class DetailSources(
             checkNotNull(dto.toRequestItem(api, { _, _, _ -> hydrated }, System.currentTimeMillis())) {
                 "Unrenderable media type"
             }.copy(queueTracked = queueGate.sees(dto.media, dto.is4k))
-        val own = dto.requestedBy?.id != null && dto.requestedBy.id == user?.id
+        val own = dto.requestedBy?.id?.let { it == user?.id } == true
         val automatic = dto.approvedAutomatically()
         val moderator = dto.modifiedBy?.takeUnless { automatic }
         return RequestDetail(

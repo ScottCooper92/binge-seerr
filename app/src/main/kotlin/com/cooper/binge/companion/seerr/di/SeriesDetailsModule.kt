@@ -23,6 +23,7 @@ object SeriesDetailsModule {
             viewer = { connection.recentAuthenticatedUser() },
             profile = connection::profile,
             serverUrl = { connection.current().baseUrl },
+            deviceRegion = ::deviceRegion,
             io = io,
         )
 }

@@ -1,0 +1,293 @@
+package com.cooper.binge.companion.seerr.seerr
+
+import com.binge.companion.sdk.attempt
+import com.binge.companion.sdk.serverUnreachable
+import com.cooper.binge.companion.seerr.auth.NotConnectedException
+import com.cooper.homelab.core.server.network.LocalNetworkDeniedException
+import io.grpc.Status
+import io.grpc.StatusException
+import kotlinx.coroutines.CancellationException
+import kotlinx.serialization.SerializationException
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonPrimitive
+import okhttp3.Headers
+import retrofit2.HttpException
+import java.io.IOException
+
+private const val HTTP_SERVER_ERROR_MIN = 500
+
+/** Seerr's status for a request write that went through and created nothing: there was nothing left to request. */
+const val HTTP_ACCEPTED = 202
+
+/** The session is gone: Seerr answers 401 to a cookie or key it no longer knows. */
+const val HTTP_UNAUTHORIZED = 401
+
+/** A permission the user lacks, or (see [isSessionRejection]) a session the server has dropped. */
+const val HTTP_FORBIDDEN = 403
+
+/** Seerr answers 404 for a route a lineage does not serve as well as for a missing record, so callers read it directly. */
+const val HTTP_NOT_FOUND = 404
+
+/**
+ * Seerr's answer for a target in the wrong state: a request already moderated, retried or no longer pending (#999), and
+ * a title someone has already requested, which a submit reads as `already_requested` before anything maps it.
+ */
+const val HTTP_CONFLICT = 409
+
+/**
+ * Why a call to the server failed, as the app's own screens classify it. The gRPC mapping below
+ * and this one read the same facts, so the Service and a screen never disagree about a failure:
+ * a 401 is the session unless the session still answers (#997), a 403 is a permission unless the
+ * body names a quota, a 404 is the title, transport and 5xx are the server or the network, and
+ * anything else is a rejection on the merits.
+ */
+enum class SeerrError {
+    NotConnected,
+    Unauthorized,
+    Forbidden,
+    Quota,
+    NotFound,
+    Unreachable,
+
+    /** The server is on the local network and Android has not let this app reach it. Only the permission fixes it. */
+    LocalNetworkDenied,
+    Server,
+    Rejected,
+    Unknown,
+}
+
+/**
+ * Whether a failure of `GET /auth/me` means the server holds no user for these credentials: the session
+ * expired, the API key was rotated, or the user was deleted. The Service and the screens share it (#672).
+ *
+ * Every lineage guards `auth/me` with `isAuthenticated()` and no permission, which answers **403** exactly
+ * when no user is attached. A 401 there comes from a proxy in front, and means the same. For `auth/me`
+ * only: anywhere else a 403 is a real permission refusal.
+ */
+val SeerrError.rejectsSession: Boolean
+    get() = this == SeerrError.Unauthorized || this == SeerrError.Forbidden
+
+/**
+ * Whether sending the same thing again could succeed: the network, the server or something unexpected failed, not the
+ * server refusing it. The one rule a page reads to decide whether a failed write is kept for Retry (#1465): a refusal
+ * (a permission, a quota, a 4xx on the merits, a target gone) would only be refused again, so it is reported instead.
+ */
+val SeerrError.isTransient: Boolean
+    get() =
+        this == SeerrError.Unreachable ||
+            this == SeerrError.LocalNetworkDenied ||
+            this == SeerrError.Server ||
+            this == SeerrError.Unknown
+
+fun Throwable.toSeerrError(): SeerrError =
+    when (this) {
+        is NotConnectedException -> SeerrError.NotConnected
+        is LocalNetworkDeniedException -> SeerrError.LocalNetworkDenied
+        is HttpException ->
+            when {
+                rejectsSessionByAnswer() -> SeerrError.Unauthorized
+                refusedWithLiveSession() -> SeerrError.Forbidden
+                code() == HTTP_FORBIDDEN -> if (mentionsQuota()) SeerrError.Quota else SeerrError.Forbidden
+                code() == HTTP_NOT_FOUND -> SeerrError.NotFound
+                code() >= HTTP_SERVER_ERROR_MIN -> SeerrError.Server
+                else -> SeerrError.Rejected
+            }
+        is IOException -> if (isServerUnreachable()) SeerrError.Unreachable else SeerrError.Unknown
+        else -> SeerrError.Unknown
+    }
+
+/**
+ * Seerr's failures as the contract's gRPC status codes: the whole error model on this side, because a
+ * response message never carries an error field. [httpStatus] maps the HTTP answers.
+ *
+ * A server that does not answer is the SDK's `serverUnreachable` (#1913), named [serverName] where the caller has it.
+ * A body this app cannot parse ([SerializationException]) is a plain `UNAVAILABLE`: the server did answer.
+ * An exception's own message never crosses to the host: a serialization failure's quotes the body, which can
+ * hold the server's secrets (#680). The exception stays on `withCause`, which gRPC never serialises.
+ */
+fun Throwable.toStatusException(serverName: String? = null): StatusException =
+    when (this) {
+        is StatusException -> this
+        is NotConnectedException -> StatusException(Status.UNAUTHENTICATED.withDescription(message))
+        is NothingLeftToRequestException -> StatusException(Status.FAILED_PRECONDITION.withDescription(NOTHING_LEFT_TO_REQUEST))
+        is BlocklistedTitleException -> StatusException(Status.FAILED_PRECONDITION.withDescription(BLOCKLISTED))
+        is HttpException ->
+            if (isServerFailure()) {
+                serverUnreachable(serverName)
+            } else {
+                StatusException(httpStatus().withDescription("Seerr answered HTTP ${code()}"))
+            }
+        is IOException ->
+            when {
+                isServerUnreachable() -> serverUnreachable(serverName, timedOut = isTimeout())
+                isTransportRefusal() -> StatusException(Status.UNAVAILABLE.withDescription(TRANSPORT_REFUSED).withCause(this))
+                else -> StatusException(Status.INTERNAL.withDescription(UNHANDLED).withCause(this))
+            }
+        is SerializationException -> StatusException(Status.UNAVAILABLE.withDescription(UNREADABLE).withCause(this))
+        else -> StatusException(Status.INTERNAL.withDescription(UNHANDLED).withCause(this))
+    }
+
+/**
+ * A 401 is our own session rejected, which only this app can repair, so the host sends the user here. A 401
+ * while the session still answers is a refusal, unless the Service reads that route more precisely (#997).
+ * Seerr returns 403 for a refusal and a spent quota alike, and the message is its only signal. A 409 is a
+ * target in the wrong state, such as a request already approved, so the host refreshes and re-offers (#999).
+ */
+private fun HttpException.httpStatus(): Status =
+    when {
+        rejectsSessionByAnswer() -> Status.UNAUTHENTICATED
+        refusedWithLiveSession() -> Status.PERMISSION_DENIED
+        code() == HTTP_FORBIDDEN && mentionsBlocklisted() -> Status.FAILED_PRECONDITION
+        code() == HTTP_FORBIDDEN -> if (mentionsQuota()) Status.RESOURCE_EXHAUSTED else Status.PERMISSION_DENIED
+        code() == HTTP_NOT_FOUND -> Status.NOT_FOUND
+        code() == HTTP_CONFLICT -> Status.FAILED_PRECONDITION
+        code() >= HTTP_SERVER_ERROR_MIN -> Status.UNAVAILABLE
+        else -> Status.INVALID_ARGUMENT
+    }
+
+/**
+ * A 401 the session was not found alive behind, or a 403 [SeerrSessionInterceptor] confirmed against `auth/me`:
+ * the session, not a permission.
+ */
+internal fun HttpException.rejectsSessionByAnswer(): Boolean = isSessionRejection(code(), response()?.headers() ?: Headers.headersOf())
+
+/** A 401 Seerr sent although `auth/me` still answers: a refusal, which a route may read more precisely (#997, #998). */
+fun HttpException.refusedWithLiveSession(): Boolean = isLiveSessionRefusal(code(), response()?.headers() ?: Headers.headersOf())
+
+/**
+ * The error body, peeked rather than consumed so reading it and classifying the same failure (a report,
+ * then the screen's own mapping) agree with each other. A body that fails to read is the same as a missing or empty
+ * one. This runs inside [toStatusException] itself, so a raw [IOException] here would escape
+ * [statusCatching] uncaught rather than become the [Status] the contract expects.
+ */
+fun HttpException.peekedBody(): String =
+    attempt {
+        response()
+            ?.errorBody()
+            ?.source()
+            ?.peek()
+            ?.readUtf8()
+    }.getOrNull().orEmpty()
+
+/**
+ * Seerr refuses a request for a blocklisted title with a 403 whose message is "This media is blocklisted."
+ * (`BlocklistedMediaError` in Seerr's and Jellyseerr's `server/routes/request.ts`). The contract calls that
+ * FAILED_PRECONDITION, not a permission (#682).
+ */
+private fun HttpException.mentionsBlocklisted(): Boolean = peekedBody().contains("blocklisted", ignoreCase = true)
+
+/**
+ * A refusal the user can act on, so the host may show them a sentence for it rather than its own copy for the code
+ * (binge-companions#132). [reason] is the machine half, the `ErrorInfo.reason` beside the sentence.
+ */
+enum class UserFacingRefusal(
+    val reason: String,
+) {
+    /** RESOURCE_EXHAUSTED: the user's request quota on the server is spent. */
+    QuotaSpent("QUOTA_EXCEEDED"),
+
+    /** FAILED_PRECONDITION: the title is on the server's blocklist. */
+    Blocklisted("TITLE_BLOCKLISTED"),
+}
+
+/** A title this app already knows is blocklisted, refused before Seerr is asked: FAILED_PRECONDITION, as Seerr's own refusal is. */
+class BlocklistedTitleException : IllegalStateException(BLOCKLISTED)
+
+/**
+ * Whether [this] failure, already classified as [code], is a refusal the user can act on, which the exported Service
+ * gives a sentence (binge-companions#132). Only Seerr's quota 403 is RESOURCE_EXHAUSTED. A FAILED_PRECONDITION has
+ * several causes, so only the two blocklist refusals count: Seerr's 403, and this app's own up-front check.
+ */
+fun Throwable.userFacingRefusal(code: Status.Code): UserFacingRefusal? =
+    when {
+        code == Status.Code.RESOURCE_EXHAUSTED -> UserFacingRefusal.QuotaSpent
+        code != Status.Code.FAILED_PRECONDITION -> null
+        this is BlocklistedTitleException -> UserFacingRefusal.Blocklisted
+        this is HttpException && code() == HTTP_FORBIDDEN && mentionsBlocklisted() -> UserFacingRefusal.Blocklisted
+        else -> null
+    }
+
+/**
+ * Seerr's refusal to delete a title's files when no Radarr or Sonarr server serves that version: a 409 whose message is
+ * "No [4K ]Radarr|Sonarr server configured to delete media files" (`DELETE /media/:id/file` in `server/routes/media.ts`,
+ * from 3.4.1). A configuration problem, not a stale target, so sending it again cannot succeed.
+ */
+fun Throwable.isNoDefaultServerRefusal(): Boolean =
+    this is HttpException && code() == HTTP_CONFLICT && peekedBody().contains("server configured to delete media files", ignoreCase = true)
+
+/**
+ * Seerr's answer when the media server it was asked to test or save cannot be reached at the address it was given: a 502
+ * whose body names `INVALID_URL` (`POST settings/jellyfin`). The generic "server error" would blame Seerr, so the
+ * media-server page says what to check instead (#1880). Only the Jellyfin and Emby settings endpoints answer this way, so
+ * "media server" names it correctly wherever it is read.
+ */
+fun Throwable.isMediaServerUnreachable(): Boolean =
+    this is HttpException && code() == HTTP_BAD_GATEWAY && peekedBody().contains("INVALID_URL")
+
+private const val HTTP_BAD_GATEWAY = 502
+
+/** The most of a server's `message` a screen shows. */
+const val MAX_DETAIL_CHARS = 160
+
+/**
+ * What the server says it refused, for a screen to show beside "The server would not accept that" (#1821): the `message`
+ * of a rejection on the merits (a 4xx that is none of the others), as one short line. Nothing else of the body is read,
+ * so a field it echoes back, an API key included, never reaches the screen or a log, and a body that is not JSON with a
+ * text `message` gives null. Any other failure gives null as well.
+ */
+fun Throwable.rejectionDetail(): String? = if (this is HttpException && toSeerrError() == SeerrError.Rejected) serverMessage() else null
+
+/**
+ * The server's own `message` for any failed call, as one short line, or null. It reads the `message` field and nothing
+ * else of the body, for the same reason as [rejectionDetail]. A screen uses it where the failure is a 5xx that names
+ * its cause, as the agent test does.
+ */
+fun Throwable.serverMessage(): String? {
+    if (this !is HttpException) return null
+    val message =
+        attempt {
+            (Json.parseToJsonElement(peekedBody()) as? JsonObject)
+                ?.get("message")
+                ?.jsonPrimitive
+                ?.takeIf { it.isString }
+                ?.content
+        }.getOrNull() ?: return null
+    return message
+        .split(Regex("\\s+"))
+        .filter { it.isNotEmpty() }
+        .joinToString(" ")
+        .take(MAX_DETAIL_CHARS)
+        .takeIf { it.isNotBlank() }
+}
+
+/** Seerr's only signal for a quota breach is the word in its 403 body. */
+private fun HttpException.mentionsQuota(): Boolean = peekedBody().namesQuota()
+
+/** Seerr's one quota signal: the word in a 403 body. */
+internal fun String.namesQuota(): Boolean = contains("quota", ignoreCase = true)
+
+/**
+ * Runs [block] and re-throws any failure as the [StatusException] the contract expects.
+ *
+ * The broad catch is the point rather than an oversight: this is the edge of the exported Service,
+ * where the contract says a failure is a gRPC status code and never a field on a response. Anything
+ * that escapes here uncaught crosses the Binder as an unknown, so everything is mapped.
+ */
+@Suppress("TooGenericExceptionCaught")
+suspend inline fun <T> statusCatching(block: () -> T): T =
+    try {
+        block()
+    } catch (e: StatusException) {
+        throw e
+    } catch (e: kotlin.coroutines.cancellation.CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        throw e.toStatusException()
+    }
+
+private const val UNREADABLE = "Seerr returned something this companion could not read"
+private const val UNHANDLED = "The companion failed to handle this request"
+private const val TRANSPORT_REFUSED = "The connection to Seerr was refused by its certificate or this device's network policy"
+private const val BLOCKLISTED = "The title is blocklisted"
+private const val NOTHING_LEFT_TO_REQUEST = "Seerr has nothing left to request for those seasons"
