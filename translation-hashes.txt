@@ -26,6 +26,7 @@ app:blocklist_unblock_confirm_message  b3fbbba0b9a2
 app:blocklist_unblock_confirm_title  fa537450834b
 app:blocklist_untitled  b588b8ee4230
 app:collection_page_block  f19aca0da35c
+app:collection_page_block_held  2348f7a074a0
 app:collection_page_block_message  cc12c71a32cd
 app:collection_page_block_title  2cf38885c065
 app:collection_page_films  611a57fff3f8

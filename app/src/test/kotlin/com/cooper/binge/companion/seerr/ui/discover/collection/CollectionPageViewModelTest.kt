@@ -214,4 +214,11 @@ class CollectionPageViewModelTest {
 
             assertEquals("block_collection", analytics.events.single().second[AnalyticsEvents.PARAM_OPERATION])
         }
+
+    @Test
+    fun `blocking reaches held films only when a film is held or requested`() {
+        assertFalse(collectionFixture(listOf(partFixture(1), partFixture(2, TitleAvailability.Blocklisted))).blockReachesHeldFilms)
+        assertTrue(collectionFixture(listOf(partFixture(1), partFixture(2, TitleAvailability.Available))).blockReachesHeldFilms)
+        assertTrue(collectionFixture(listOf(partFixture(1, TitleAvailability.Pending))).blockReachesHeldFilms)
+    }
 }

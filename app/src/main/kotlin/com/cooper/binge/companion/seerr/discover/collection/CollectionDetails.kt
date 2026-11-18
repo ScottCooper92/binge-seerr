@@ -15,6 +15,13 @@ data class CollectionDetails(
     /** The server has no collection flag to read: a collection is blocked when every film in it is. */
     val blocked: Boolean get() = parts.isNotEmpty() && parts.all { it.availability == TitleAvailability.Blocklisted }
 
+    /** Whether blocking would reach a film the server already holds or has a request for; the server blocklists every film regardless. */
+    val blockReachesHeldFilms: Boolean get() =
+        parts.any {
+            it.availability != TitleAvailability.None &&
+                it.availability != TitleAvailability.Blocklisted
+        }
+
     /** The films nothing has been asked for or added of yet: the ones the page can still offer to request. */
     val toRequest: Int get() = parts.count { it.availability == TitleAvailability.None }
 }

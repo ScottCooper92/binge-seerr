@@ -1521,4 +1521,5 @@
     <string name="collection_page_unblock">Desbloquear colección</string>
     <string name="collection_page_block_title">¿Bloquear %1$s?</string>
     <string name="collection_page_block_message">No se podrá solicitar ninguna de sus películas hasta que se desbloquee.</string>
+    <string name="collection_page_block_held">Las películas que ya están en tu servidor o solicitadas también se bloquean, y su estado se borra si luego desbloqueas la colección.</string>
 </resources>

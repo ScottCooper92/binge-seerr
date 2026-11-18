@@ -120,7 +120,9 @@ private fun ReadyPage(
         Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_l)))
     }
     if (state.confirmingBlock) {
-        CollectionBlockConfirm(collection.name, onConfirm = { actions.onSetBlocked(true) }, onDismiss = actions.onDismissBlock)
+        CollectionBlockConfirm(collection.name, collection.blockReachesHeldFilms, onConfirm = {
+            actions.onSetBlocked(true)
+        }, onDismiss = actions.onDismissBlock)
     }
 }
 

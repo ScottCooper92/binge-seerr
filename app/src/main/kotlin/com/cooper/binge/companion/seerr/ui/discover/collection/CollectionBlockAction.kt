@@ -63,12 +63,15 @@ internal fun CollectionOverflowAction(
 @Composable
 internal fun CollectionBlockConfirm(
     name: String,
+    reachesHeldFilms: Boolean,
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
 ) {
     BingeConfirmDialog(
         title = stringResource(R.string.collection_page_block_title, name),
-        message = stringResource(R.string.collection_page_block_message),
+        message =
+            stringResource(R.string.collection_page_block_message) +
+                if (reachesHeldFilms) " " + stringResource(R.string.collection_page_block_held) else "",
         confirmLabel = stringResource(R.string.collection_page_block),
         destructive = true,
         onConfirm = onConfirm,
