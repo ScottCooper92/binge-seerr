@@ -25,6 +25,8 @@ import com.binge.designsystem.component.PersonCard
 import com.binge.designsystem.component.SectionHeader
 import com.binge.designsystem.component.WrappingRow
 import com.binge.designsystem.isExpandedLayout
+import com.binge.designsystem.layout.LayoutAnchors
+import com.binge.designsystem.layout.layoutAnchor
 import com.binge.designsystem.template.LocalHeroReadingMargin
 import com.binge.designsystem.theme.BingeSentiment
 import com.cooper.binge.companion.seerr.R
@@ -60,7 +62,7 @@ internal fun TitlePageBody(
             model = titleActionsModel(movie.standard, movie.fourK),
             onRequest = actions.onRequest,
             onTrailer = movie.videos.trailerUrl()?.let { url -> { actions.onOpenUrl(url) } },
-            modifier = Modifier.readingMargin(),
+            modifier = Modifier.readingMargin().layoutAnchor(LayoutAnchors.section(LayoutAnchors.Detail.ACTIONS)),
         )
         if (!expanded && movie.overview != null) Box(Modifier.readingMargin()) { OverviewSection(movie.overview) }
         InfoRowList(
@@ -116,7 +118,12 @@ internal fun MovieDetails.requestMeta(): String? {
 @Composable
 internal fun OverviewSection(overview: String?) {
     if (overview == null) return
-    Column(Modifier.padding(horizontal = dimensionResource(DesR.dimen.padding_m))) {
+    Column(
+        Modifier
+            .padding(
+                horizontal = dimensionResource(DesR.dimen.padding_m),
+            ).layoutAnchor(LayoutAnchors.section(LayoutAnchors.Detail.OVERVIEW)),
+    ) {
         Text(stringResource(R.string.title_page_overview), style = MaterialTheme.typography.titleMedium)
         Spacer(Modifier.height(dimensionResource(DesR.dimen.detail_meta_spacing)))
         ExpandableOverview(text = overview)
