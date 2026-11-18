@@ -21,6 +21,8 @@ sealed interface TitleSearchUiState {
     data class Ready(
         override val text: String,
         val results: List<TitleResult>,
+        /** How many results have loaded in all, whatever type is chosen: it grows with every page, which [results] may not. */
+        val loaded: Int,
         val type: SearchType,
         val counts: Map<SearchType, Int>,
         val genreNames: Map<Int, String>,

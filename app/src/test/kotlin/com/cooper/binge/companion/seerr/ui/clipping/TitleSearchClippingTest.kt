@@ -43,6 +43,7 @@ private val STATES: List<TitleSearchUiState> =
                     row(2, TitleKind.Movie, "Sintel", TitleAvailability.Pending),
                     row(3, TitleKind.Person, "Alexandria Fitzgerald-Montgomery", TitleAvailability.None),
                 ),
+            loaded = 3,
             type = SearchType.All,
             counts = mapOf(SearchType.All to 1234, SearchType.Movies to 12, SearchType.Series to 31, SearchType.People to 7),
             genreNames = GENRES,

@@ -144,6 +144,7 @@ internal fun QuerySearchState<TitleResult>.toUiState(
             TitleSearchUiState.Ready(
                 text = text,
                 results = all.filter(type::keeps),
+                loaded = all.size,
                 type = type,
                 counts = all.typeCounts(total),
                 genreNames = genreNames,

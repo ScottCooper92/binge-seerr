@@ -62,6 +62,23 @@ class TitleSearchScreenshotTest {
     @Composable
     fun idleSpanish() = Frame(idleWithRecentsState())
 
+    /** A chosen group that none of the loaded results belong to, with no pages left: the message, not a blank screen. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun emptyGroup() = Frame(readyEmptyTypeState())
+
+    @PreviewTest
+    @SeerrSpanishPreviews
+    @Composable
+    fun emptyGroupSpanish() = Frame(readyEmptyTypeState())
+
+    /** The same group while the next page is on its way. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun emptyGroupLoading() = Frame(readyEmptyTypeLoadingState())
+
     /** A further page loading under the list. */
     @PreviewTest
     @SeerrScreenStatePreview

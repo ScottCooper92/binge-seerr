@@ -1154,6 +1154,8 @@ app:title_search_title  49c266baaaa7
 app:title_search_trending_movies  beedc3c7ea98
 app:title_search_trending_series  02d437e24b40
 app:title_search_type_all  a52ace420f21
+app:title_search_type_none_message  c38ab7f5a517
+app:title_search_type_none_title  f66fd111a0f7
 app:title_search_type_people  7db20897053b
 app:tv_account  7e1b0d5641f2
 app:tv_account_requests_empty  1bea507092bb

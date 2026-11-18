@@ -65,6 +65,7 @@ private fun ready(
 ) = TitleSearchUiState.Ready(
     text = "lighthouse",
     results = results.filter(type::keeps),
+    loaded = results.size,
     type = type,
     counts = results.typeCounts(TOTAL),
     genreNames = GENRE_NAMES,
@@ -76,6 +77,12 @@ private fun ready(
 internal fun readyResultsState() = ready(searchResults())
 
 internal fun readyMoviesState() = ready(searchResults(), SearchType.Movies)
+
+/** A group the pages so far hold none of, with no more pages to look in. */
+internal fun readyEmptyTypeState() = ready(searchResults().filter { it.kind != TitleKind.Person }, SearchType.People).copy(hasMore = false)
+
+/** The same group while more pages remain: a spinner, as the next page is on its way. */
+internal fun readyEmptyTypeLoadingState() = ready(searchResults().filter { it.kind != TitleKind.Person }, SearchType.People)
 
 internal fun readyAppendingState() = ready(searchResults().take(FEW), appending = true)
 

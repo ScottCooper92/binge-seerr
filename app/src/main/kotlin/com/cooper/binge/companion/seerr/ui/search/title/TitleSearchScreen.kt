@@ -22,6 +22,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -74,7 +75,7 @@ internal fun TitleSearchScreen(
             when (state) {
                 is TitleSearchUiState.Idle -> IdleBody(state, actions, navOverlayPadding(PaddingValues()))
                 is TitleSearchUiState.Loading -> LoadingScreen()
-                is TitleSearchUiState.Ready -> ResultsList(state, actions, inner)
+                is TitleSearchUiState.Ready -> key(state.type) { ResultsList(state, actions, inner) }
                 is TitleSearchUiState.NoResults ->
                     EmptyScreen(
                         message = stringResource(R.string.title_search_none_message, state.query),
@@ -138,8 +139,15 @@ private fun ResultsList(
             (info.visibleItemsInfo.lastOrNull()?.index ?: 0) >= info.totalItemsCount - LOAD_MORE_AHEAD
         }
     }
-    LaunchedEffect(listState, state.hasMore, state.results.size) {
+    LaunchedEffect(listState, state.hasMore, state.loaded) {
         if (state.hasMore) snapshotFlow { nearEnd }.distinctUntilChanged().filter { it }.collect { actions.onLoadMore() }
+    }
+    if (state.results.isEmpty() && !state.hasMore && !state.appending) {
+        EmptyScreen(
+            message = stringResource(R.string.title_search_type_none_message, state.text.trim()),
+            title = stringResource(R.string.title_search_type_none_title),
+        )
+        return
     }
     LazyColumn(
         state = listState,
@@ -150,7 +158,9 @@ private fun ResultsList(
         items(state.results, key = { "${it.kind}-${it.tmdbId}" }) { result ->
             TitleResultRow(result, state.genreNames, onClick = { actions.onOpenTitle(result) })
         }
-        if (state.appending || state.appendFailed) item(key = "footer") { AppendFooter(state.appendFailed, actions.onLoadMore) }
+        if (state.appending || state.appendFailed || state.results.isEmpty()) {
+            item(key = "footer") { AppendFooter(state.appendFailed, actions.onLoadMore) }
+        }
     }
 }
 

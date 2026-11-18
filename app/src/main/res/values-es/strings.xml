@@ -126,6 +126,8 @@
     <string name="title_search_recent_clear_title">¿Borrar las búsquedas recientes?</string>
     <string name="title_search_recent_clear_message">Se quitan las búsquedas guardadas en este dispositivo. Tu servidor no cambia.</string>
     <string name="title_search_kind_year">%1$s · %2$s</string>
+    <string name="title_search_type_none_title">Nada en este grupo</string>
+    <string name="title_search_type_none_message">Ninguno de los resultados de “%1$s” es de este tipo. Elige otro grupo o Todo.</string>
     <string name="title_search_title">Buscar</string>
     <string name="title_search_type_all">Todo</string>
     <string name="title_search_type_people">Personas</string>

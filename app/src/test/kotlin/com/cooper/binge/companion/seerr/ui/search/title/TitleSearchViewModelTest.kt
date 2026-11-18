@@ -60,15 +60,7 @@ class TitleSearchViewModelTest {
         override suspend fun genres(kind: TitleKind): List<GenreTile> = emptyList()
 
         override suspend fun genreNames(kind: TitleKind): Map<Int, String> =
-            mapOf(
-                if (kind ==
-                    TitleKind.Movie
-                ) {
-                    28 to "Action"
-                } else {
-                    18 to "Drama"
-                },
-            )
+            if (kind == TitleKind.Movie) mapOf(28 to "Action") else mapOf(18 to "Drama")
     }
 
     private class FakeHistory(
