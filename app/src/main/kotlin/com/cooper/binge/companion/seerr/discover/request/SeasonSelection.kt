@@ -25,6 +25,7 @@ data class SeasonChoices(
  * Which seasons a request sends. With partial requests off the server takes the whole show, so the choice is made for the user
  * and [requestSeasons] is every open season. With them on, the user picks from the open ones and a covered season is never
  * selectable. [limit] is how many seasons the user's quota has left, null for none: the server refuses a request for more.
+ * The picking rules are [ItemSelection]'s, which the films of a collection share.
  */
 data class SeasonSelection(
     val seasons: List<SeasonChoice>,
@@ -32,41 +33,30 @@ data class SeasonSelection(
     val picked: Set<Int> = emptySet(),
     val limit: Int? = null,
 ) {
-    val open: List<SeasonChoice> get() = seasons.filter { it.isOpen }
+    private val items: ItemSelection get() = ItemSelection(seasons.map { SelectableItem(it.number, it.isOpen) }, picked, limit)
 
-    private val openNumbers: Set<Int> get() = open.mapTo(linkedSetOf()) { it.number }
+    val open: List<SeasonChoice> get() = seasons.filter { it.isOpen }
 
     /** The seasons the request sends, in order. */
     val requestSeasons: List<Int>
-        get() = if (partialAllowed) picked.filter { it in openNumbers }.sorted() else open.map { it.number }
+        get() = if (partialAllowed) items.requestIds.sorted() else open.map { it.number }
 
     /** The whole show is asked for and the quota cannot take it, so the request would be refused. */
-    val overLimit: Boolean get() = !partialAllowed && limit != null && open.size > limit
+    val overLimit: Boolean get() = !partialAllowed && !items.canPickAll
 
     val canSubmit: Boolean get() = requestSeasons.isNotEmpty() && !overLimit
 
     /** Another open season can still be picked: the quota has room for it. */
-    val canPickMore: Boolean get() = limit == null || picked.count { it in openNumbers } < limit
+    val canPickMore: Boolean get() = items.canPickMore
 
     /** "All seasons" is offered while the quota has room for every open one. */
-    val canPickAll: Boolean get() = limit == null || open.size <= limit
+    val canPickAll: Boolean get() = items.canPickAll
 
-    val allOpenPicked: Boolean get() = openNumbers.isNotEmpty() && openNumbers.all { it in picked }
+    val allOpenPicked: Boolean get() = items.allOpenPicked
 
     /** Flips one season; a covered or unknown one is left as it is. */
-    fun toggle(number: Int): SeasonSelection =
-        when {
-            !partialAllowed || number !in openNumbers -> this
-            number in picked -> copy(picked = picked - number)
-            !canPickMore -> this
-            else -> copy(picked = picked + number)
-        }
+    fun toggle(number: Int): SeasonSelection = if (partialAllowed) copy(picked = items.toggle(number).picked) else this
 
     /** All seasons still open, or none when they are all picked already. */
-    fun toggleAll(): SeasonSelection =
-        when {
-            !partialAllowed || openNumbers.isEmpty() || !canPickAll -> this
-            allOpenPicked -> copy(picked = emptySet())
-            else -> copy(picked = openNumbers)
-        }
+    fun toggleAll(): SeasonSelection = if (partialAllowed) copy(picked = items.toggleAll().picked) else this
 }

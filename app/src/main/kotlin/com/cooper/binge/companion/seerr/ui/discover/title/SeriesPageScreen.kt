@@ -75,7 +75,7 @@ private fun ReadySeriesPage(
     val context = LocalContext.current
     MediaHeroDetailPage(
         title = series.name,
-        backdropUrl = series.backdropUrl ?: series.posterUrl,
+        backdropUrl = series.backdropUrl,
         metaText = "",
         genres = series.genres,
         tagline = series.tagline,

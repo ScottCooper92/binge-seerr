@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
+import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.SnackbarHostState
@@ -20,7 +21,6 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
@@ -41,12 +41,12 @@ import com.binge.designsystem.resolvedContentPadding
 import com.binge.designsystem.theme.BingeShapes
 import com.binge.designsystem.theme.BingeTheme
 import com.cooper.binge.companion.seerr.R
-import com.cooper.binge.companion.seerr.flags.LocalFlags
-import com.cooper.binge.companion.seerr.flags.bingePromotion
-import com.cooper.binge.companion.seerr.ui.openTitle
+import com.cooper.binge.companion.seerr.flags.LocalDiscoveryEnabled
+import com.cooper.binge.companion.seerr.ui.discover.title.LocalOpenTitle
 import com.cooper.binge.companion.seerr.ui.requests.labelRes
 import com.cooper.binge.companion.seerr.ui.state.MediaHeroDetailPage
 import com.cooper.binge.companion.seerr.ui.state.messageRes
+import com.cooper.binge.companion.seerr.ui.toTitleKind
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
 import com.binge.designsystem.R as DesR
@@ -119,8 +119,8 @@ internal fun BlocklistDetailPage(
 ) {
     val item = state.item
     val title = item.title ?: stringResource(item.mediaType.labelRes())
-    val context = LocalContext.current
-    val promoted = LocalFlags.current.bingePromotion
+    val openTitle = LocalOpenTitle.current
+    val discovery = LocalDiscoveryEnabled.current
     val footer: (@Composable () -> Unit)? =
         if (state.canManage) {
             { BlocklistUnblockAction(unblocking = state.unblocking, onClick = onPrimary) }
@@ -136,11 +136,11 @@ internal fun BlocklistDetailPage(
         scrollState = scrollState,
         snackbarHostState = snackbarHostState,
         topBarActions = {
-            if (state.webUrl.isNotEmpty()) {
+            if (discovery || state.webUrl.isNotEmpty()) {
                 ExpressiveIconButton(
-                    onClick = { context.openTitle(promoted, item.mediaType, item.tmdbId, state.webUrl) },
-                    icon = Icons.AutoMirrored.Filled.OpenInNew,
-                    contentDescription = stringResource(R.string.request_open_elsewhere),
+                    onClick = { openTitle(item.mediaType.toTitleKind(), item.tmdbId, state.webUrl) },
+                    icon = if (discovery) Icons.Filled.Movie else Icons.AutoMirrored.Filled.OpenInNew,
+                    contentDescription = stringResource(if (discovery) R.string.request_open_title else R.string.request_open_elsewhere),
                     tint = BingeTheme.colors.onScrim,
                     tone = IconButtonTone.Glass,
                     size = dimensionResource(DesR.dimen.top_bar_icon_size),

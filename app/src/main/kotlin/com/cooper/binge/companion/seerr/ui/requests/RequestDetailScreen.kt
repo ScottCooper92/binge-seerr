@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
+import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.ReportProblem
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.pulltorefresh.PullToRefreshState
@@ -34,6 +35,7 @@ import com.binge.designsystem.resolvedContentInset
 import com.binge.designsystem.resolvedContentPadding
 import com.binge.designsystem.theme.BingeTheme
 import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.flags.LocalDiscoveryEnabled
 import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
 import com.cooper.binge.companion.seerr.ui.state.MediaHeroDetailPage
 import com.cooper.binge.companion.seerr.ui.state.MediaHeroDetailPlaceholder
@@ -340,8 +342,9 @@ internal fun RequestDetailPage(
                 onOpen?.let {
                     ExpressiveIconButton(
                         onClick = it,
-                        icon = Icons.AutoMirrored.Filled.OpenInNew,
-                        contentDescription = stringResource(R.string.request_open_elsewhere),
+                        icon = if (LocalDiscoveryEnabled.current) Icons.Filled.Movie else Icons.AutoMirrored.Filled.OpenInNew,
+                        contentDescription =
+                            stringResource(if (LocalDiscoveryEnabled.current) R.string.request_open else R.string.request_open_elsewhere),
                         tint = BingeTheme.colors.onScrim,
                         tone = IconButtonTone.Glass,
                         size = dimensionResource(DesR.dimen.top_bar_icon_size),
