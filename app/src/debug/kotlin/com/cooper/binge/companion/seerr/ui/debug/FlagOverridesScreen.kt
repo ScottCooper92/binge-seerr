@@ -17,7 +17,6 @@ import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.resolvedContentInset
 import com.binge.designsystem.template.BingeScreenScaffold
-import com.binge.designsystem.template.ScreenBar
 import com.binge.designsystem.template.screenInnerPadding
 import com.binge.designsystem.template.screenOuterPadding
 import com.cooper.binge.companion.seerr.R
@@ -29,7 +28,7 @@ internal fun FlagOverridesScreen(
     viewModel: FlagOverridesViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    BingeScreenScaffold(bar = ScreenBar.Small, title = stringResource(R.string.proto_flags_title), onBack = onBack) { padding ->
+    BingeScreenScaffold(title = stringResource(R.string.proto_flags_title), onBack = onBack) { padding ->
         Column(
             modifier =
                 Modifier

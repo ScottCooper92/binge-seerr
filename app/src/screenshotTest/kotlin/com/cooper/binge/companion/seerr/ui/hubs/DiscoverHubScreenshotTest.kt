@@ -109,6 +109,12 @@ class DiscoverHubScreenshotTest {
     @Composable
     fun loading() = Frame(DiscoverHubUiState.Loading)
 
+    /** The Browse all plate is the row's own height, which grows with the font. */
+    @PreviewTest
+    @SeerrFontScale13Previews
+    @Composable
+    fun loadingFont13() = Frame(DiscoverHubUiState.Loading)
+
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable

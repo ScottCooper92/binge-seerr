@@ -21,7 +21,6 @@ import com.binge.designsystem.component.ListRow
 import com.binge.designsystem.component.ListRowHeader
 import com.binge.designsystem.component.SectionHeader
 import com.binge.designsystem.template.BingeScreenScaffold
-import com.binge.designsystem.template.ScreenBar
 import com.binge.designsystem.template.screenInnerPadding
 import com.binge.designsystem.template.screenOuterPadding
 import com.cooper.binge.companion.seerr.R
@@ -44,7 +43,6 @@ internal fun TitleCreditsScreen(
     BingeScreenScaffold(
         title = stringResource(R.string.title_credits_title),
         modifier = modifier,
-        bar = ScreenBar.Small,
         onBack = onBack,
     ) { padding ->
         Box(Modifier.fillMaxSize().padding(padding.screenOuterPadding())) {
