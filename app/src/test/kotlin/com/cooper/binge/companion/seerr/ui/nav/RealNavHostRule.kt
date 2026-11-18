@@ -201,9 +201,19 @@ internal class RealNavHostRule(
     fun awaitShowing(
         text: String,
         timeoutMillis: Long = AWAIT_MILLIS,
+    ) = awaitState("\"$text\" on screen", timeoutMillis) { isShowing(text) }
+
+    /**
+     * [ComposeTestRule.waitUntil] that, on a timeout, says what the screen was showing, as [awaitShowing] does: a wait that
+     * only fails in a full run then names its cause (#1794). [what] names the state waited for.
+     */
+    fun awaitState(
+        what: String,
+        timeoutMillis: Long = AWAIT_MILLIS,
+        condition: () -> Boolean,
     ) {
         try {
-            compose.waitUntil("\"$text\" on screen", timeoutMillis) { isShowing(text) }
+            compose.waitUntil(what, timeoutMillis, condition)
         } catch (timeout: ComposeTimeoutException) {
             throw ComposeTimeoutException("${timeout.message}\n${describeScreen()}")
         }
