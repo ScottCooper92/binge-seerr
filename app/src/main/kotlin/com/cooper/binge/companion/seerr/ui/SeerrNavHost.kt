@@ -354,7 +354,7 @@ private fun EntryProviderScope<NavKey>.serverSettingsEntries(backStack: NavBackS
     }
 }
 
-/** The title hand-off: its page with the discovery flag on, and Binge or the server's own page as before without it. */
+/** The title hand-off: a film's page with the discovery flag on, and Binge or the server's own page as before otherwise. */
 @Composable
 private fun rememberOpenTitle(backStack: NavBackStack<NavKey>): (TitleKind, Int, String) -> Unit {
     val discovery = LocalDiscoveryEnabled.current
@@ -362,7 +362,8 @@ private fun rememberOpenTitle(backStack: NavBackStack<NavKey>): (TitleKind, Int,
     val context = LocalContext.current
     return remember(backStack, discovery, promoted, context) {
         { kind, id, webUrl ->
-            if (discovery) {
+            // Only a film has a page so far; a series opens as it did until its own page lands.
+            if (discovery && kind == TitleKind.Movie) {
                 backStack.add(TitleDetailRoute(kind, id))
             } else {
                 context.openTitle(promoted, if (kind == TitleKind.Series) RequestMediaType.Tv else RequestMediaType.Movie, id, webUrl)
