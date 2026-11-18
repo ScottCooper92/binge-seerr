@@ -14,7 +14,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.template.BingeScreenScaffold
-import com.binge.designsystem.template.ScreenBar
 import com.binge.designsystem.template.screenInnerPadding
 import com.binge.designsystem.template.screenOuterPadding
 import com.cooper.binge.companion.seerr.R
@@ -30,7 +29,6 @@ internal fun RequestCardsPrototypeScreen(onBack: () -> Unit) {
     val tapped = stringResource(R.string.proto_tapped)
     val detail = remember { cardsPrototypeDetail() }
     BingeScreenScaffold(
-        bar = ScreenBar.Small,
         title = stringResource(R.string.proto_request_cards_title),
         onBack = onBack,
         snackbarHostState = snackbar,

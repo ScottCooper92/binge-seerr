@@ -15,7 +15,6 @@ import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.resolvedContentInset
 import com.binge.designsystem.resolvedContentPadding
 import com.binge.designsystem.template.BingeScreenScaffold
-import com.binge.designsystem.template.ScreenBar
 import com.binge.designsystem.template.screenInnerPadding
 import com.binge.designsystem.template.screenOuterPadding
 import com.cooper.binge.companion.seerr.R
@@ -44,7 +43,6 @@ fun UserSettingsScreen(
 ) {
     val ready = state as? UserSettingsUiState.Ready
     BingeScreenScaffold(
-        bar = ScreenBar.Small,
         title = ready?.index?.userName ?: stringResource(R.string.user_settings_title),
         onBack = actions.onBack.takeIf { showBack },
     ) { padding ->

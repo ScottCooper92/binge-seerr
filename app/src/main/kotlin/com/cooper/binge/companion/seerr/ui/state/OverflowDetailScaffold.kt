@@ -14,7 +14,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.binge.designsystem.template.BingeScreenScaffold
-import com.binge.designsystem.template.ScreenBar
 import com.binge.designsystem.template.screenInnerPadding
 import com.binge.designsystem.template.screenOuterPadding
 
@@ -45,7 +44,6 @@ internal fun OverflowDetailScaffold(
     content: @Composable (PaddingValues) -> Unit,
 ) {
     BingeScreenScaffold(
-        bar = ScreenBar.Small,
         title = title,
         modifier = modifier,
         onBack = onBack,

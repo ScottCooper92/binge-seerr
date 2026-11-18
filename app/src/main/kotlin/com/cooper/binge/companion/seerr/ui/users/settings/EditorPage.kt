@@ -34,7 +34,6 @@ import com.binge.designsystem.template.BingeScreenScaffold
 import com.binge.designsystem.template.FormAction
 import com.binge.designsystem.template.FormActionPlacement
 import com.binge.designsystem.template.FormScreen
-import com.binge.designsystem.template.ScreenBar
 import com.binge.designsystem.template.formSaveStatus
 import com.binge.designsystem.theme.BingeShapes
 import com.cooper.binge.companion.seerr.R
@@ -156,7 +155,6 @@ internal fun <T> EditorPage(
     FormScreen(
         title = title,
         onBack = paneBackOrNull(onBack),
-        bar = ScreenBar.Small,
         snackbarHostState = snackbarHostState,
         placement = if (footerCommit) FormActionPlacement.Footer else FormActionPlacement.TopBar,
         primaryAction =

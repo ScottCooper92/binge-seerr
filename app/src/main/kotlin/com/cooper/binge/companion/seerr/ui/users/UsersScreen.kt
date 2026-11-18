@@ -29,7 +29,6 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import com.binge.designsystem.component.SnackbarMessageKind
 import com.binge.designsystem.component.showSnackbar
 import com.binge.designsystem.template.BingeScreenScaffold
-import com.binge.designsystem.template.ScreenBar
 import com.binge.designsystem.template.screenInnerPadding
 import com.binge.designsystem.template.screenOuterPadding
 import com.cooper.binge.companion.seerr.R
@@ -78,7 +77,6 @@ fun UsersScreen(
     UsersSnackbarEffect(events, snackbarHostState)
     val selected = ready?.selection?.size ?: 0
     BingeScreenScaffold(
-        bar = ScreenBar.Small,
         // The bar in both of its modes: the count while rows are ticked, the screen's own title otherwise.
         title =
             if (selected > 0) {

@@ -17,7 +17,6 @@ import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.paneBackOrNull
 import com.binge.designsystem.resolvedContentPadding
 import com.binge.designsystem.template.BingeScreenScaffold
-import com.binge.designsystem.template.ScreenBar
 import com.binge.designsystem.template.screenInnerPadding
 import com.binge.designsystem.template.screenOuterPadding
 import com.binge.designsystem.theme.BingeSentiment
@@ -41,7 +40,6 @@ fun NotificationAgentsScreen(
     actions: AgentsActions,
 ) {
     BingeScreenScaffold(
-        bar = ScreenBar.Small,
         title = stringResource(R.string.settings_group_notifications),
         onBack = paneBackOrNull(actions.onBack),
     ) { padding ->

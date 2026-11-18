@@ -28,7 +28,6 @@ import com.binge.designsystem.component.FilterChipItem
 import com.binge.designsystem.component.SnackbarMessageKind
 import com.binge.designsystem.component.showSnackbar
 import com.binge.designsystem.template.FilteredListScreen
-import com.binge.designsystem.template.ScreenBar
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.state.DialogMessage
 import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
@@ -86,7 +85,6 @@ fun RequestsScreen(
         title = stringResource(R.string.hub_section_requests),
         onBack = actions.onBack.takeIf { showBack },
         // The console keeps its single-line bar and an opaque header; the default is the gallery's transparent collapsing bar.
-        bar = ScreenBar.Small,
         headerBackground = MaterialTheme.colorScheme.background,
         scrimFraction = 0f,
         filters =
