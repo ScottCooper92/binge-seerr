@@ -117,11 +117,12 @@ class TitleSearchViewModel
 
 private fun TitleResult.key() = kind to tmdbId
 
-/** A movie's genres and a series' come from two lists whose ids do not clash, so one map names both. */
+/** A movie's genres and a series' come from two lists that share a name where they share an id, so one map names both. */
 private suspend fun TitleListRepository.allGenreNames(): Map<Int, String> = genreNames(TitleKind.Movie) + genreNames(TitleKind.Series)
 
 /** The server's trending list holds movies, series and people; the rails are the first two, from its first page. */
 private suspend fun TitleListRepository.trendingRails(): Trending {
+    if (!supports(TitleSource.Trending)) return Trending.Unavailable
     val page = load(TitleSource.Trending, 1)
     return Trending.Ready(
         movies = page.results.filter { it.kind == TitleKind.Movie },

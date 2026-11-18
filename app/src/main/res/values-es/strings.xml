@@ -1374,9 +1374,28 @@
     <string name="tv_settings_release_notes">Notas de la versión</string>
     <string name="tv_settings_release_notes_scan">Escanéalo con la cámara del móvil para ver qué cambia en la nueva versión, o ve a %1$s</string>
     <string name="tv_settings_release_notes_code_description">Código QR que abre las notas de la versión del servidor</string>
-    <string name="request_sheet_title">Pedir</string>
     <string name="request_sheet_4k">4K</string>
+    <string name="title_page_reload_failed">No se pudo actualizar esta página</string>
     <string name="request_sheet_submit">Pedir</string>
+    <plurals name="request_sheet_season_count">
+        <item quantity="one">%d temporada</item>
+        <item quantity="many">%d de temporadas</item>
+        <item quantity="other">%d temporadas</item>
+    </plurals>
+    <string name="request_sheet_submit_4k">Pedir en 4K</string>
+    <string name="request_sheet_status_new">Esto aún no está en tu servidor</string>
+    <string name="request_sheet_status_seasons">Elige qué temporadas pedir</string>
+    <string name="request_sheet_status_4k_open">El 4K sigue disponible para pedir</string>
+    <string name="request_sheet_advanced">Opciones avanzadas</string>
+    <string name="request_sheet_seasons_count">%1$d de %2$d seleccionadas</string>
+    <string name="request_sheet_seasons_done">Listo</string>
+    <string name="request_sheet_back">Atrás</string>
+    <string name="request_sheet_quota_loading">Comprobando tu cuota</string>
+    <string name="request_sheet_quota_failed">No se pudo leer tu cuota</string>
+    <string name="request_sheet_servers_failed">No se pudieron cargar los servidores</string>
+    <string name="request_sheet_choices_failed">No se pudieron cargar los perfiles y las carpetas</string>
+    <string name="request_sheet_failed_unreachable">No se pudo contactar con tu servidor</string>
+    <string name="request_sheet_failed_other">El servidor lo rechazó</string>
     <string name="request_sheet_quota_spent">Has usado todas tus peticiones de este periodo.</string>
     <string name="request_sheet_done_created">Petición enviada</string>
     <string name="request_sheet_done_already">Ya estaba pedido</string>
@@ -1450,7 +1469,6 @@
     <string name="title_page_fact_studios">Estudios</string>
     <string name="title_page_fact_budget">Presupuesto</string>
     <string name="title_page_fact_revenue">Recaudación</string>
-    <string name="request_problem_already_there">El servidor ya tiene pedido este título, o no queda nada por pedir. Cierra esta hoja y la página mostrará cómo está.</string>
     <string name="title_page_status_released">Estrenada</string>
     <string name="title_page_status_post_production">En posproducción</string>
     <string name="title_page_status_in_production">En producción</string>
