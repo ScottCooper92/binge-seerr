@@ -1406,6 +1406,10 @@
     <string name="hubs_row_watchlist">Lista de seguimiento</string>
     <string name="hubs_row_popular_movies">Películas populares</string>
     <string name="hubs_row_popular_tv">Series populares</string>
+    <string name="hubs_browse_all_movies">Ver todas las películas</string>
+    <string name="hubs_browse_all_tv">Ver todas las series</string>
+    <string name="hubs_browse_subtitle_movies">Filtra por género, década, servicio y más</string>
+    <string name="hubs_browse_subtitle_tv">Filtra por género, cadena, año y valoración</string>
     <string name="hubs_row_upcoming_movies">Próximas películas</string>
     <string name="hubs_row_upcoming_tv">Próximas series</string>
     <string name="hubs_row_genres">Géneros</string>

@@ -7,6 +7,9 @@ import com.cooper.binge.companion.seerr.discover.TitleListRepository
 import com.cooper.binge.companion.seerr.discover.TitlePage
 import com.cooper.binge.companion.seerr.discover.TitleResult
 import com.cooper.binge.companion.seerr.discover.TitleSource
+import com.cooper.binge.companion.seerr.discover.grid.DiscoverGridRepository
+import com.cooper.binge.companion.seerr.discover.grid.GridPreset
+import com.cooper.binge.companion.seerr.discover.grid.GridRequest
 import com.cooper.binge.companion.seerr.discover.sliders.DiscoverSliderRepository
 import com.cooper.binge.companion.seerr.discover.sliders.HubCardLoader
 import com.cooper.binge.companion.seerr.discover.sliders.HubHeroLoader
@@ -29,6 +32,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -106,14 +110,28 @@ class HubViewModelTest {
         enabled: Boolean = true,
     ) = DiscoverSlider(id, typeCode, null, true, enabled, null)
 
+    private class FakeGrid(
+        private val canRefine: Boolean = true,
+        private val fail: Boolean = false,
+    ) : DiscoverGridRepository {
+        override suspend fun canRefine(preset: GridPreset): Boolean = if (fail) error("down") else canRefine
+
+        override suspend fun load(
+            request: GridRequest,
+            page: Int,
+        ): TitlePage = error("unused")
+    }
+
     private fun vm(
         sliders: FakeSliders,
         titles: TitleListRepository = Titles(),
+        grid: DiscoverGridRepository = FakeGrid(),
     ) = HubViewModel(
         sliders,
         HubCardLoader(titles, NoMedia),
         HubTileLoader(titles),
         HubHeroLoader(titles, NoMedia),
+        grid,
         dispatcher,
         HubTab.Movies,
     )
@@ -199,6 +217,21 @@ class HubViewModelTest {
         }
 
     @Test
+    fun `browse all shows where the server can filter and is left out where it cannot`() =
+        runTest {
+            val sliders = { FakeSliders(SliderListState.Ready(listOf(slider(1, TRENDING)))) }
+            assertTrue((vm(sliders()).settled() as DiscoverHubUiState.Ready).browseAll)
+            assertFalse((vm(sliders(), grid = FakeGrid(canRefine = false)).settled() as DiscoverHubUiState.Ready).browseAll)
+        }
+
+    @Test
+    fun `a failed read of the servers filters leaves browse all showing`() =
+        runTest {
+            val ready = vm(FakeSliders(SliderListState.Ready(listOf(slider(1, TRENDING)))), grid = FakeGrid(fail = true)).settled()
+            assertTrue((ready as DiscoverHubUiState.Ready).browseAll)
+        }
+
+    @Test
     fun `the hero rides with the rows and a failing hero never holds them`() =
         runTest {
             val ready = vm(FakeSliders(SliderListState.Ready(listOf(slider(1, TRENDING))))).settled() as DiscoverHubUiState.Ready
@@ -210,6 +243,7 @@ class HubViewModelTest {
                     HubCardLoader(titles, NoMedia),
                     HubTileLoader(titles),
                     HubHeroLoader(Titles(fail = true), NoMedia),
+                    FakeGrid(),
                     dispatcher,
                     HubTab.Movies,
                 )
