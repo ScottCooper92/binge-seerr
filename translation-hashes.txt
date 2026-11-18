@@ -446,7 +446,7 @@ app:request_sheet_seasons_done  11a6767d5674
 app:request_sheet_seasons_limit  fec73812ed3a
 app:request_sheet_seasons_over  8fa79a63c5df
 app:request_sheet_servers_failed  94bd0fd2612d
-app:request_sheet_status_4k_open  7e6991f74754
+app:request_sheet_status_4k_open  6ff3eeb732ad
 app:request_sheet_status_new  7d33b71f02f2
 app:request_sheet_status_seasons  9141ec0d44b9
 app:request_sheet_submit  59f03d642b41
