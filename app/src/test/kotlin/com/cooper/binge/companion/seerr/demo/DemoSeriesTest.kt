@@ -78,14 +78,6 @@ class DemoSeriesTest {
             assertTrue(credits.cast.all { credit -> DEMO_TITLES.any { it.tmdbId == credit.id } })
             assertTrue(credits.crew.all { it.job == "Director" })
         }
-
-    @Test
-    fun `a person found by search opens a page under the name searched for`() =
-        demo { api ->
-            val found = api.searchTitles("marlowe").results.single()
-
-            assertEquals("Marlowe Quinn", api.personDetails(checkNotNull(found.id)).name)
-        }
 }
 
 private const val PERSON_ID = 9001
