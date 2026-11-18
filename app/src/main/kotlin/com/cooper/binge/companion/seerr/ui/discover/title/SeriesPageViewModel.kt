@@ -64,6 +64,9 @@ sealed interface SeriesPageEvent {
     data class Requested(
         val result: RequestResult,
     ) : SeriesPageEvent
+
+    /** The read after a request failed: the page keeps what it had, and the screen offers to try again. */
+    data object ReloadFailed : SeriesPageEvent
 }
 
 /** The series page. Detail keyed on an id, so it shares [Lazily][kotlinx.coroutines.flow.SharingStarted.Lazily] with the other detail pages: it loads once. */
@@ -121,8 +124,16 @@ class SeriesPageViewModel
         /** Closing the sheet reads the show again, since a request moves its seasons and a refused one may mean the server's state moved. */
         fun closeRequestSheet() {
             updateReady { it.copy(requestSheetOpen = false) }
+            reload()
+        }
+
+        /** Reads the show again where the page stands: a failure keeps what it shows and says so, rather than dropping to the loading page. */
+        fun reload() {
             viewModelScope.launch {
-                attempt { repository.series(tmdbId) }.onSuccess { series -> updateReady { it.copy(series = series) } }
+                attempt { repository.series(tmdbId) }.fold(
+                    onSuccess = { series -> updateReady { it.copy(series = series) } },
+                    onFailure = { eventFlow.tryEmit(SeriesPageEvent.ReloadFailed) },
+                )
             }
         }
 
