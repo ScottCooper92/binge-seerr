@@ -139,6 +139,12 @@ private fun equalPaneWidth(directive: PaneScaffoldDirective): Dp {
 /** The root the hub sits at: [HubRoute] beside the sections, or [ShellRoute], whose Settings tab holds the hub. */
 internal fun NavKey?.isPaneRoot(): Boolean = this == HubRoute || this == ShellRoute
 
+/** Only the pane root is on the stack: nothing is open beside the hub. */
+internal fun List<NavKey>.isOnlyPaneRoot(): Boolean = size == 1 && first().isPaneRoot()
+
+/** A section is open directly above the pane root. */
+internal fun List<NavKey>.hasSectionOverRoot(): Boolean = size > 1 && first().isPaneRoot() && this[1].hubSection() != null
+
 /** The route a hub section opens. */
 internal fun HubSection.route(): SeerrRoute =
     when (this) {

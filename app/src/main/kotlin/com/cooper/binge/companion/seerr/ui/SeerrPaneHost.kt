@@ -82,6 +82,7 @@ internal fun SeerrPaneHost(
     onExit: () -> Unit,
     modifier: Modifier = Modifier,
     defaultSection: @Composable () -> Unit = {},
+    settingsSelected: Boolean = true,
     entries: EntryProviderScope<NavKey>.(panes: PaneLayout) -> Unit,
 ) {
     val exit = rememberExitOnce(onExit)
@@ -92,8 +93,11 @@ internal fun SeerrPaneHost(
     val threePane = rememberUpdatedState(hubBeside.value && isThreePaneWindow())
     // Three panes show a section in the middle all the time, so the default one goes on the stack, not a placeholder:
     // its list then keeps its state when it opens an item. Back from it leaves the app, as from the placeholder (#815).
-    LaunchedEffect(threePane.value, backStack.size) {
-        if (threePane.value && backStack.toList() == listOf(HubRoute)) backStack.add(DefaultSection.route())
+    // With the shell it goes on only while the Settings tab is showing: another tab's pushes must not sit above a section.
+    LaunchedEffect(threePane.value, backStack.size, settingsSelected) {
+        if (threePane.value && settingsSelected && backStack.isOnlyPaneRoot()) {
+            backStack.add(DefaultSection.route())
+        }
     }
     // The one back-arrow rule (paneShowsBack), fed the stack's own shape (paneDepth) alongside
     // hubBeside — read here as a provider for the same reason hubBeside is: an entry's metadata is
