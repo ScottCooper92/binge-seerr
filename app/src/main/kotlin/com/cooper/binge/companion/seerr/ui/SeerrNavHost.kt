@@ -63,7 +63,7 @@ fun SeerrNavHost(
     val shell = tabs != null && LocalDiscoveryEnabled.current
     LaunchedEffect(connected, root, shell) { backStack.settleHome(connected, shell) }
     // A section open on one kind of window moves to where the other kind shows it, and a sign-out forgets what Settings had open.
-    LaunchedEffect(shell, wide, backStack.size) { if (shell) tabs?.settleSections(backStack, wide) }
+    LaunchedEffect(shell, wide, backStack.size) { if (shell && tabs != null) tabs.settleSections(backStack, wide) }
     LaunchedEffect(connected) { if (connected == false) tabs?.stack(SeerrTab.Settings)?.popToRoot() }
     // The default section is off the stack, so Back from it leaves; the host's own Back shares the once-only exit.
     val exit = rememberExitOnce(onExit)

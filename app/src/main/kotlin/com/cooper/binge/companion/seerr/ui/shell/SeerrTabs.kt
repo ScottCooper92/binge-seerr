@@ -80,6 +80,10 @@ internal fun TabShellState<SeerrTab>.openLink(
     show(SeerrTab.Settings)
 }
 
+private fun List<NavKey>.startsWithSection(): Boolean = getOrNull(0)?.hubSection() != null
+
+private fun NavKey.isDiscoveryRoute(): Boolean = this is TitleDetailRoute || this is TitleCreditsRoute || this is DiscoverGridRoute
+
 /**
  * Keeps a section where the window can show it. A wide window shows Settings' hub beside its sections inside the tab, so
  * sections the app's stack holds (a link's, or ones opened on a phone-width window) move to Settings' own stack. A narrow window
@@ -93,9 +97,7 @@ internal fun TabShellState<SeerrTab>.settleSections(
     val settings = stack(SeerrTab.Settings)
     if (wide) {
         val above = appStack.drop(1)
-        if (above.firstOrNull()?.hubSection() != null &&
-            above.none { it is TitleDetailRoute || it is TitleCreditsRoute || it is DiscoverGridRoute }
-        ) {
+        if (above.startsWithSection() && above.none { it.isDiscoveryRoute() }) {
             settings.replaceAll(listOf(HubRoute) + above)
             appStack.popToRoot()
             show(SeerrTab.Settings)
