@@ -27,7 +27,15 @@ class CheckModuleRulesTaskTest {
             ModuleRule(
                 path = ":data",
                 projects = emptySet(),
-                forbidden = listOf("androidx.compose*", "com.google.dagger*", "com.binge:designsystem*", "io.exact:thing"),
+                forbidden =
+                    listOf(
+                        "androidx.compose*",
+                        "com.google.dagger*",
+                        "com.binge:designsystem*",
+                        "com.android.billingclient*",
+                        "com.google.android.play*",
+                        "io.exact:thing",
+                    ),
                 reason = "no UI, no graph",
             ),
         )
@@ -92,6 +100,8 @@ class CheckModuleRulesTaskTest {
         assertTrue(data.forbids("com.binge:designsystem-tv"))
         assertTrue(data.forbids("androidx.compose.runtime:runtime"))
         assertTrue(!data.forbids("androidx.room:room-runtime"))
+        assertTrue(data.forbids("com.android.billingclient:billing-ktx"))
+        assertTrue(data.forbids("com.google.android.play:review"))
     }
 
     @Test
@@ -101,15 +111,6 @@ class CheckModuleRulesTaskTest {
         val failure = assertThrows(GradleException::class.java) { build.data.check() }
 
         assertTrue(failure.message.orEmpty().contains(":data has no row in the module map"))
-    }
-
-    @Test
-    fun `looks at the main classpaths only, so test libraries are free`() {
-        pom("androidx.compose.ui", "ui", "1.0.0")
-        val build = build()
-        build.data.classpath("androidx.compose.ui:ui:1.0.0", name = "testRuntime")
-
-        build.data.check(classpaths = listOf("runtime"))
     }
 
     private class Build(

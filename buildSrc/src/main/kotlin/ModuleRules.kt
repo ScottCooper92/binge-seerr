@@ -36,6 +36,9 @@ val MODULE_RULES: List<ModuleRule> =
                     "androidx.navigation*",
                     "com.google.dagger*",
                     "com.google.android.gms*",
+                    "com.google.android.play*",
+                    "com.android.billingclient*",
+                    "org.jetbrains.kotlinx:kotlinx-coroutines-play-services",
                     "com.google.firebase*",
                     "com.posthog*",
                     "io.coil-kt*",
@@ -43,7 +46,7 @@ val MODULE_RULES: List<ModuleRule> =
                 ),
             reason =
                 "The Seerr client, the connection, the demo and the cache: no Compose, Activity, navigation or design system (no UI), " +
-                    "no Hilt or Dagger (the graph is built in :app), and no vendor SDK (Play services, Firebase, PostHog).",
+                    "no Hilt or Dagger (the graph is built in :app), and no vendor SDK (Play services, Play Billing, Play In-App Review, Firebase, PostHog).",
         ),
         ModuleRule(
             path = ":detekt-rules",

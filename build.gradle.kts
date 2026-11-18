@@ -32,7 +32,9 @@ subprojects {
                 group = "verification"
                 description = "Checks this module's dependencies against the module map."
                 this.module.set(module.path)
-                // An Android module's classpaths are the debug variant's; a plain JVM module's have no variant in the name.
+                // An Android module's classpaths are the debug variant's; a plain JVM module's have no variant in the name. This list is
+            // the scope of the check: test and release classpaths are not looked at, so test libraries are free and a
+            // `releaseImplementation` would pass.
                 listOf("debugCompileClasspath", "debugRuntimeClasspath", "compileClasspath", "runtimeClasspath").forEach { name ->
                     module.configurations.findByName(name)?.let { configuration ->
                         graphs.add(configuration.incoming.resolutionResult.rootComponent.map { ModuleGraph(module.path, name, it) })
