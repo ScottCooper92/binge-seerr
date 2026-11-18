@@ -13,14 +13,16 @@ The `BINGE_PROMOTION` flag is about not pushing anyone to install an app they ca
 itself: the REQUEST and NOTIFICATIONS Service is always exported, and the hand-off Activities always answer an admitted
 caller, so a Binge that finds this app can use it whatever the flag says.
 
-`DiscoveryFlag` is this app's own, in `flags/DiscoveryFlag.kt`. It predates the shared library's open flag keys (an app declares
-a `FlagKey` and lists it in the Firebase source), and moving it onto one is a follow-up. It reads the same Remote Config instance and keeps
-the same one-hour fetch interval. A debug build can override it from the developer flags screen, in the same DataStore as the
-other overrides under `override_discovery_enabled`; a release build has no override.
+`DiscoveryEnabled` and `SearchToggles` are this app's own flags, declared as `FlagKey`s in `flags/FeatureFlags.kt` beside the
+shared ones, and resolved by the same `FeatureFlags` (read as `flags[DiscoveryEnabled]`). The Firebase source reads
+`RemoteFlagKeys`, which is the shared flags and `DiscoveryEnabled`, from the one Remote Config instance with its one-hour fetch interval.
+`SearchToggles` is deliberately not in that list: it has no remote value, so a Remote Config template cannot turn it on. A debug build
+can override either from the developer flags screen, in the same DataStore as the other overrides under `override_discovery_enabled` and
+`override_search_toggles_enabled`; a release build has no override.
 
 ## How a value arrives
 
-`FirebaseRemoteFlagSource` reads Firebase Remote Config. A build with no `google-services.json` has no Firebase
+`FirebaseRemoteFlagSource` reads Firebase Remote Config for `RemoteFlagKeys`. A build with no `google-services.json` has no Firebase
 app, and the flag stays off. Remote Config keeps the last activated values on disk, so a cold start uses them
 before the first fetch lands. The app fetches at start and each time `MainActivity` comes to the foreground; Remote
 Config itself throttles that to once an hour.

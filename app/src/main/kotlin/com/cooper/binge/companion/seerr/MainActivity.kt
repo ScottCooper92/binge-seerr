@@ -25,7 +25,7 @@ import com.cooper.binge.companion.seerr.discover.sliders.DiscoverSliderRepositor
 import com.cooper.binge.companion.seerr.feedback.BugReportLinks
 import com.cooper.binge.companion.seerr.feedback.FeedbackPrefs
 import com.cooper.binge.companion.seerr.feedback.ShakeToReportPrompt
-import com.cooper.binge.companion.seerr.flags.DiscoveryFlag
+import com.cooper.binge.companion.seerr.flags.DiscoveryEnabled
 import com.cooper.binge.companion.seerr.flags.LocalDiscoveryEnabled
 import com.cooper.binge.companion.seerr.flags.LocalFlags
 import com.cooper.binge.companion.seerr.telemetry.LocalAnalytics
@@ -79,9 +79,6 @@ class MainActivity : ComponentActivity() {
     lateinit var featureFlags: FeatureFlags
 
     @Inject
-    lateinit var discoveryFlag: DiscoveryFlag
-
-    @Inject
     lateinit var discoverSliders: DiscoverSliderRepository
 
     private var consumedLink: String? = null
@@ -123,8 +120,7 @@ class MainActivity : ComponentActivity() {
             }
             // Phone only: a television has no accelerometer, and reports a bug from Settings instead.
             val shakeToReport by feedbackPrefs.shakeToReport.collectAsStateWithLifecycle(initialValue = false)
-            val discoveryEnabled by discoveryFlag.enabled.collectAsStateWithLifecycle()
-            CompositionLocalProvider(LocalFlags provides flags, LocalDiscoveryEnabled provides discoveryEnabled) {
+            CompositionLocalProvider(LocalFlags provides flags, LocalDiscoveryEnabled provides flags[DiscoveryEnabled]) {
                 SeerrTheme {
                     ShakeToReportPrompt(enabled = shakeToReport, bugReportUrl = bugReportLinks::url)
                     // The window's own background (the platform default, since Theme.Seerr sets none)
@@ -143,9 +139,8 @@ class MainActivity : ComponentActivity() {
         super.onStart()
         userRefresh.onForeground()
         lifecycleScope.launch { featureFlags.refresh() }
-        lifecycleScope.launch { discoveryFlag.refresh() }
         // The slider list is read again on a return, to pick up a change made in the web client. Only the discovery hubs use it.
-        if (discoveryFlag.enabled.value) lifecycleScope.launch { attempt { discoverSliders.refresh() } }
+        if (featureFlags.flags.value[DiscoveryEnabled]) lifecycleScope.launch { attempt { discoverSliders.refresh() } }
     }
 
     override fun onNewIntent(intent: Intent) {
