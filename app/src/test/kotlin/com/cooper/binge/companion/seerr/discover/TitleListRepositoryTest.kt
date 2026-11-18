@@ -129,10 +129,11 @@ class TitleListRepositoryTest {
     }
 
     @Test
-    fun `a sort order goes on the base call`() {
+    fun `a popular list asks for the popularity order on the base call, as the grid does`() {
         answer(MOVIES_PAGE)
-        withRepository { it.load(TitleSource.Popular(TitleKind.Movie, sortBy = "vote_average.desc"), page = 1) }
-        assertEquals("vote_average.desc", lastCall().queryParameter("sortBy"))
+        withRepository { it.load(TitleSource.Popular(TitleKind.Movie), page = 1) }
+        assertEquals("/api/v1/discover/movies", lastCall().encodedPath)
+        assertEquals("popularity.desc", lastCall().queryParameter("sortBy"))
     }
 
     @Test

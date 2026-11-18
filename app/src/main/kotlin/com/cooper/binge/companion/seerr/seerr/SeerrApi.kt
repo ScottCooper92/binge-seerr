@@ -631,16 +631,6 @@ interface SeerrApi {
         @Query("page") page: Int = 1,
     ): SeerrTitlePageDto
 
-    /** Popular movies; [keywords] is a TMDB id or a comma-separated list. */
-    @GET("api/v1/discover/movies")
-    suspend fun discoverMovies(
-        @Query("page") page: Int = 1,
-        @Query("sortBy") sortBy: String? = null,
-        @Query("keywords") keywords: String? = null,
-        @Query("watchRegion") watchRegion: String? = null,
-        @Query("watchProviders") watchProviders: String? = null,
-    ): SeerrTitlePageDto
-
     /** Movies narrowed and ordered by [query], the parameters the server's `discover/movies` route takes; see `DiscoverFilters`. */
     @GET("api/v1/discover/movies")
     suspend fun discoverMoviesFiltered(
@@ -651,16 +641,6 @@ interface SeerrApi {
     @GET("api/v1/discover/tv")
     suspend fun discoverTvFiltered(
         @QueryMap query: Map<String, String>,
-    ): SeerrTitlePageDto
-
-    /** Popular shows; [keywords] is a TMDB id or a comma-separated list. */
-    @GET("api/v1/discover/tv")
-    suspend fun discoverTv(
-        @Query("page") page: Int = 1,
-        @Query("sortBy") sortBy: String? = null,
-        @Query("keywords") keywords: String? = null,
-        @Query("watchRegion") watchRegion: String? = null,
-        @Query("watchProviders") watchProviders: String? = null,
     ): SeerrTitlePageDto
 
     @GET("api/v1/discover/movies/upcoming")

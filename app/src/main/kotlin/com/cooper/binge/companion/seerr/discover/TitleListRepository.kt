@@ -1,5 +1,8 @@
 package com.cooper.binge.companion.seerr.discover
 
+import com.cooper.binge.companion.seerr.discover.grid.DiscoverFilters
+import com.cooper.binge.companion.seerr.discover.grid.DiscoverSort
+import com.cooper.binge.companion.seerr.discover.grid.toDiscoverQuery
 import com.cooper.binge.companion.seerr.seerr.SeerrApi
 import com.cooper.binge.companion.seerr.seerr.SeerrGenreSliderDto
 import com.cooper.binge.companion.seerr.seerr.SeerrServerProfile
@@ -40,7 +43,8 @@ class SeerrTitleListRepository(
         require(supports(source)) { "The server has no such list" }
         // Without a query the server fails the call instead of answering an empty page.
         if (source is TitleSource.Search && source.query.isBlank()) return TitlePage(emptyList(), page = 1, totalPages = 1)
-        return withContext(io) { api().fetch(source, page).toTitlePage(source.defaultKind) }
+        val profile = profile()
+        return withContext(io) { api().fetch(source, page, profile).toTitlePage(source.defaultKind) }
     }
 
     override suspend fun genres(kind: TitleKind): List<GenreTile> {
@@ -57,13 +61,13 @@ class SeerrTitleListRepository(
 private suspend fun SeerrApi.fetch(
     source: TitleSource,
     page: Int,
+    profile: SeerrServerProfile,
 ): SeerrTitlePageDto =
     when (source) {
         TitleSource.Trending -> discoverTrending(page)
         TitleSource.Watchlist -> discoverWatchlist(page)
         is TitleSource.Search -> searchTitles(source.query, page)
-        is TitleSource.Popular ->
-            if (source.kind == TitleKind.Series) discoverTv(page, source.sortBy) else discoverMovies(page, source.sortBy)
+        is TitleSource.Popular -> discover(source.kind, DiscoverFilters(), page, profile)
         is TitleSource.Upcoming -> if (source.kind == TitleKind.Series) discoverUpcomingTv(page) else discoverUpcomingMovies(page)
         is TitleSource.ByGenre ->
             if (source.kind == TitleKind.Series) discoverTvByGenre(source.genreId, page) else discoverMoviesByGenre(source.genreId, page)
@@ -79,32 +83,24 @@ private suspend fun SeerrApi.fetch(
             } else {
                 discoverMoviesByLanguage(source.language, page)
             }
-        is TitleSource.ByKeywords -> discoverByKeywords(source, page)
-        is TitleSource.ByStreaming -> discoverByStreaming(source, page)
+        is TitleSource.ByKeywords -> discover(source.kind, DiscoverFilters(keywords = source.keywordIds.toSet()), page, profile)
+        is TitleSource.ByStreaming ->
+            discover(source.kind, DiscoverFilters(providers = source.providerIds.toSet(), region = source.region), page, profile)
         is TitleSource.ByKeyword ->
             if (source.kind == TitleKind.Series) {
-                discoverTv(page, keywords = source.keywordId.toString())
+                discover(source.kind, DiscoverFilters(keywords = setOf(source.keywordId)), page, profile)
             } else {
                 discoverMoviesByKeyword(source.keywordId, page)
             }
     }
 
-private suspend fun SeerrApi.discoverByKeywords(
-    source: TitleSource.ByKeywords,
+/** The server's plain `discover/{movies,tv}` route, asked as the grid asks it: through [toDiscoverQuery], the one mapping to its parameters. */
+private suspend fun SeerrApi.discover(
+    kind: TitleKind,
+    filters: DiscoverFilters,
     page: Int,
+    profile: SeerrServerProfile,
 ): SeerrTitlePageDto {
-    val keywords = source.keywordIds.joinToString(",")
-    return if (source.kind == TitleKind.Series) discoverTv(page, keywords = keywords) else discoverMovies(page, keywords = keywords)
-}
-
-private suspend fun SeerrApi.discoverByStreaming(
-    source: TitleSource.ByStreaming,
-    page: Int,
-): SeerrTitlePageDto {
-    val providers = source.providerIds.joinToString("|")
-    return if (source.kind == TitleKind.Series) {
-        discoverTv(page, watchRegion = source.region, watchProviders = providers)
-    } else {
-        discoverMovies(page, watchRegion = source.region, watchProviders = providers)
-    }
+    val query = toDiscoverQuery(kind, filters, DiscoverSort.PopularityDesc, page, profile)
+    return if (kind == TitleKind.Series) discoverTvFiltered(query) else discoverMoviesFiltered(query)
 }
