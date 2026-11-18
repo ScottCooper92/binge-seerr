@@ -1,8 +1,11 @@
 package com.cooper.binge.companion.seerr.ui.discover.title
 
 import android.content.res.Resources
+import com.binge.designsystem.component.InfoLink
 import com.binge.designsystem.component.InfoRowEntry
+import com.binge.designsystem.component.InfoValue
 import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.discover.title.TitleCompany
 import com.cooper.binge.companion.seerr.discover.title.TitleRatings
 import java.util.Locale
 
@@ -23,3 +26,15 @@ internal fun ratingEntries(
         InfoRowEntry(resources.getString(R.string.title_page_stat_audience), ratings?.audiencePercent?.let { "$it%" }),
         InfoRowEntry(resources.getString(R.string.title_page_stat_imdb), ratings?.imdbScore?.let { "%.1f".format(locale, it) }),
     )
+
+/** A studio or network row: each name opens its grid where [onOpenCompany] is given, and is plain text where it is not. */
+internal fun companyEntry(
+    label: String,
+    companies: List<TitleCompany>,
+    onOpenCompany: ((TitleCompany) -> Unit)?,
+): InfoRowEntry =
+    if (onOpenCompany == null || companies.isEmpty()) {
+        InfoRowEntry(label, companies.joinToString(", ") { it.name })
+    } else {
+        InfoRowEntry(label, InfoValue.Links(companies.map { company -> InfoLink(company.name) { onOpenCompany(company) } }))
+    }

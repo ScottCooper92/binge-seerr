@@ -3,6 +3,7 @@ package com.cooper.binge.companion.seerr.ui.clipping
 import com.cooper.binge.companion.seerr.discover.TitleAvailability
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.TitleResult
+import com.cooper.binge.companion.seerr.discover.title.TitleCompany
 import com.cooper.binge.companion.seerr.discover.title.TitleExtras
 import com.cooper.binge.companion.seerr.discover.title.TitlePerson
 import com.cooper.binge.companion.seerr.discover.title.TitleRatings
@@ -28,7 +29,12 @@ private fun worstCase(): TitlePageUiState.Ready {
         movieFixture().copy(
             tagline = "One ring to rule them all, one ring to find them, one ring to bring them all and in the darkness bind them",
             genres = listOf("Adventure", "Fantasy", "Action", "Epic Historical Drama"),
-            studios = listOf("New Line Cinema", "WingNut Films", "The Saul Zaentz Company"),
+            studios =
+                listOf(
+                    TitleCompany(1, "New Line Cinema"),
+                    TitleCompany(2, "WingNut Films"),
+                    TitleCompany(3, "The Saul Zaentz Company"),
+                ),
             cast = listOf(TitlePerson(1, "Elijah Wood-Montgomery-Fitzgerald", "Frodo Baggins of the Shire", null)),
         )
     val extras =
