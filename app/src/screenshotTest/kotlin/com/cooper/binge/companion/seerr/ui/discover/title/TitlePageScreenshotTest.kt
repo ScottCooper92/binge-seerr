@@ -1,5 +1,6 @@
 package com.cooper.binge.companion.seerr.ui.discover.title
 
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.runtime.Composable
 import com.android.tools.screenshot.PreviewTest
 import com.cooper.binge.companion.seerr.discover.TitleAvailability
@@ -9,6 +10,8 @@ import com.cooper.binge.companion.seerr.preview.SeerrScreenPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrScreenStatePreview
 import com.cooper.binge.companion.seerr.preview.SeerrSpanishPreviews
 import kotlinx.coroutines.flow.emptyFlow
+
+private const val SCROLLED_PX = 2500
 
 private val NO_ACTIONS = TitlePageActions({}, {}, {}, {}, {}, {}, {}, {}, {})
 
@@ -68,6 +71,18 @@ class TitlePageScreenshotTest {
     @SeerrScreenStatePreview
     @Composable
     fun sparse() = Frame(TitlePageUiState.Ready(sparseMovie()))
+
+    /** Scrolled well past the hero: the top bar has its surface, so the back arrow and title do not draw over the content. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun scrolled() =
+        TitlePageScreen(
+            TitlePageUiState.Ready(fullMovie(), fullExtras()),
+            emptyFlow(),
+            NO_ACTIONS,
+            scrollState = rememberScrollState(initial = SCROLLED_PX),
+        )
 
     @PreviewTest
     @SeerrScreenStatePreview

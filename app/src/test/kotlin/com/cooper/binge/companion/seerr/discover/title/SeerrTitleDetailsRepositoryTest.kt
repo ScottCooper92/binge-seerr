@@ -50,6 +50,7 @@ class SeerrTitleDetailsRepositoryTest {
     private var version = SeerrVersion(3, 2, 0)
     private var settings = SeerrPublicSettings(movie4kEnabled = true, streamingRegion = "GB", discoverRegion = "US")
     private var userRegion = """{"streamingRegion":"US"}"""
+    private var movieBody = MOVIE
     private var ratingsAnswer = FakeResponse(headers = JSON, body = RATINGS)
 
     @After
@@ -60,7 +61,7 @@ class SeerrTitleDetailsRepositoryTest {
 
     private fun route(request: FakeRequest): FakeResponse =
         when (request.url.encodedPath) {
-            "/api/v1/movie/603" -> FakeResponse(headers = JSON, body = MOVIE)
+            "/api/v1/movie/603" -> FakeResponse(headers = JSON, body = movieBody)
             "/api/v1/movie/603/ratingscombined" -> ratingsAnswer
             "/api/v1/movie/603/recommendations" -> FakeResponse(headers = JSON, body = PAGE)
             "/api/v1/movie/603/similar" -> FakeResponse(code = 500)
@@ -165,5 +166,33 @@ class SeerrTitleDetailsRepositoryTest {
     fun `a server with neither score has no ratings`() {
         ratingsAnswer = FakeResponse(code = 404)
         assertNull(withRepository { it.extras(TitleKind.Movie, 603) }.ratings)
+    }
+
+    @Test
+    fun `videos are each once, trailers first, and only a few`() {
+        val videos =
+            listOf(
+                """{"key":"a","name":"Clip A","site":"YouTube","type":"Clip","url":"https://y/a"}""",
+                """{"key":"a","name":"Clip A again","site":"YouTube","type":"Clip","url":"https://y/a"}""",
+                """{"key":"b","name":"In Cinemas Now","site":"YouTube","type":"Teaser","url":"https://y/b"}""",
+                """{"key":"t","name":"Trailer","site":"YouTube","type":"Trailer","url":"https://y/t"}""",
+                """{"key":"c","name":"Clip C","site":"YouTube","type":"Clip","url":"https://y/c"}""",
+            )
+        movieBody = MOVIE.replace(Regex(""""relatedVideos":\[.*?\]"""), "\"relatedVideos\":[${videos.joinToString(",")}]")
+
+        val movie = withRepository { it.movie(603) }
+
+        assertEquals(listOf("Trailer", "Clip A", "In Cinemas Now"), movie.videos.map { it.name })
+    }
+
+    @Test
+    fun `spoken languages are codes, formatted by the screen`() {
+        movieBody =
+            MOVIE.replace(
+                "\"genres\"",
+                "\"spokenLanguages\":[{\"iso_639_1\":\"en\",\"name\":\"English\"},{\"iso_639_1\":\"fr\",\"name\":\"French\"}],\"genres\"",
+            )
+
+        assertEquals(listOf("en", "fr"), withRepository { it.movie(603) }.spokenLanguageCodes)
     }
 }

@@ -1450,4 +1450,11 @@
     <string name="title_page_fact_studios">Studios</string>
     <string name="title_page_fact_budget">Budget</string>
     <string name="title_page_fact_revenue">Revenue</string>
+    <string name="request_problem_already_there">The server already has this title requested, or has nothing left to request. Close this sheet and the page will show where it stands.</string>
+    <string name="title_page_status_released">Released</string>
+    <string name="title_page_status_post_production">Post production</string>
+    <string name="title_page_status_in_production">In production</string>
+    <string name="title_page_status_planned">Planned</string>
+    <string name="title_page_status_rumored">Rumoured</string>
+    <string name="title_page_status_canceled">Cancelled</string>
 </resources>

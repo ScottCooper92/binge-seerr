@@ -1,7 +1,9 @@
 package com.cooper.binge.companion.seerr.ui.discover.title
 
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -42,11 +44,12 @@ internal fun TitlePageScreen(
     events: Flow<TitlePageEvent>,
     actions: TitlePageActions,
     modifier: Modifier = Modifier,
+    scrollState: ScrollState = rememberScrollState(),
 ) {
     when (state) {
         TitlePageUiState.Loading -> MediaHeroDetailPlaceholder { LoadingScreen() }
         is TitlePageUiState.Error -> MediaHeroDetailPlaceholder { ErrorScreen(state.error, onRetry = actions.onRetry) }
-        is TitlePageUiState.Ready -> ReadyPage(state, events, actions, modifier)
+        is TitlePageUiState.Ready -> ReadyPage(state, events, actions, modifier, scrollState)
     }
 }
 
@@ -56,6 +59,7 @@ private fun ReadyPage(
     events: Flow<TitlePageEvent>,
     actions: TitlePageActions,
     modifier: Modifier,
+    scrollState: ScrollState,
 ) {
     val snackbar = remember { SnackbarHostState() }
     val resources = LocalContext.current.resources
@@ -72,6 +76,7 @@ private fun ReadyPage(
         onBack = actions.onBack,
         modifier = modifier,
         snackbarHostState = snackbar,
+        scrollState = scrollState,
         footer = if (state.mayRequest) ({ BingeActionFooter(stringResource(R.string.title_page_request), actions.onRequest) }) else null,
     ) {
         Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
@@ -79,7 +84,14 @@ private fun ReadyPage(
     }
     if (state.requestSheetOpen) {
         RequestSheet(
-            target = RequestSheetTarget(com.cooper.binge.companion.seerr.discover.TitleKind.Movie, movie.tmdbId, movie.title),
+            target =
+                RequestSheetTarget(
+                    kind = com.cooper.binge.companion.seerr.discover.TitleKind.Movie,
+                    tmdbId = movie.tmdbId,
+                    title = movie.title,
+                    standardOpen = movie.standard.mayRequest,
+                    fourKOpen = movie.fourK?.mayRequest == true,
+                ),
             onDismiss = actions.onCloseRequest,
             onResult = actions.onRequested,
         )

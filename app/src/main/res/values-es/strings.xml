@@ -1393,4 +1393,11 @@
     <string name="title_page_fact_studios">Estudios</string>
     <string name="title_page_fact_budget">Presupuesto</string>
     <string name="title_page_fact_revenue">Recaudación</string>
+    <string name="request_problem_already_there">El servidor ya tiene pedido este título, o no queda nada por pedir. Cierra esta hoja y la página mostrará cómo está.</string>
+    <string name="title_page_status_released">Estrenada</string>
+    <string name="title_page_status_post_production">En posproducción</string>
+    <string name="title_page_status_in_production">En producción</string>
+    <string name="title_page_status_planned">Planeada</string>
+    <string name="title_page_status_rumored">Rumoreada</string>
+    <string name="title_page_status_canceled">Cancelada</string>
 </resources>

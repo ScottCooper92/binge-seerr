@@ -75,7 +75,7 @@ data class MovieDetails(
     val keywords: List<String>,
     val status: String?,
     val originalLanguage: String?,
-    val spokenLanguages: List<String>,
+    val spokenLanguageCodes: List<String>,
     val studios: List<String>,
     val budget: Long?,
     val revenue: Long?,

@@ -86,15 +86,18 @@ class TitlePageViewModel
 
         fun openRequestSheet() = updateReady { if (it.mayRequest) it.copy(requestSheetOpen = true) else it }
 
-        fun closeRequestSheet() = updateReady { it.copy(requestSheetOpen = false) }
-
-        /** The server answered a request: the sheet closes and the page reads the title again, so its status moves. */
-        fun requested(result: RequestResult) {
-            closeRequestSheet()
-            eventFlow.tryEmit(TitlePageEvent.Requested(result))
+        /** Closing the sheet reads the title again, since a refused send may mean the server's state moved under the page. */
+        fun closeRequestSheet() {
+            updateReady { it.copy(requestSheetOpen = false) }
             viewModelScope.launch {
                 attempt { repository.movie(tmdbId) }.onSuccess { movie -> updateReady { it.copy(movie = movie) } }
             }
+        }
+
+        /** The server answered a request: the sheet closes and the page reads the title again, so its status moves. */
+        fun requested(result: RequestResult) {
+            eventFlow.tryEmit(TitlePageEvent.Requested(result))
+            closeRequestSheet()
         }
 
         private fun loadExtras() {

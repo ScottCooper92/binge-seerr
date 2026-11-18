@@ -66,7 +66,11 @@ internal fun TitlePageBody(
         movie.tagline?.let { Text(it, Modifier.padding(horizontal = gap), style = MaterialTheme.typography.titleSmall) }
         movie.overview?.let { ExpandableOverview(text = it, modifier = Modifier.padding(horizontal = gap)) }
         if (movie.genres.isNotEmpty()) TagRow(movie.genres)
-        ItemGroup(title = null, rows = movie.factRows(LocalContext.current.resources), modifier = Modifier.padding(horizontal = gap))
+        ItemGroup(
+            title = null,
+            rows = movie.factRows(LocalContext.current.resources, LocalConfiguration.current.locales[0]),
+            modifier = Modifier.padding(horizontal = gap),
+        )
         PeopleRow(stringResource(R.string.title_page_cast), movie.cast, actions.onOpenPerson)
         PeopleRow(stringResource(R.string.title_page_crew), movie.keyCrew, actions.onOpenPerson)
         VideosGroup(movie, actions.onOpenUrl)
@@ -131,8 +135,8 @@ private fun StatsRow(
                 DetailStat(Icons.Filled.Star, "%.1f".format(locale, it), stringResource(R.string.title_page_stat_imdb))
             },
         )
-    // Three to a row at most: a longer row breaks a label mid-word at large text.
-    stats.chunked(STATS_PER_ROW).forEach { DetailStatRow(stats = it) }
+    // Three to a row at most, split evenly (2 + 2, not 3 + 1): a longer row breaks a label mid-word at large text.
+    if (stats.isNotEmpty()) stats.chunked(evenRowSize(stats.size)).forEach { DetailStatRow(stats = it) }
 }
 
 @Composable
@@ -212,3 +216,9 @@ private fun TitleAvailability.label(): Pair<String, BingeSentiment>? =
 
 @Composable
 private fun TitleAvailability.cardStatus(): MediaCardStatus? = label()?.let { (text, sentiment) -> MediaCardStatus(text, sentiment) }
+
+/** How many stats go in each row: at most [STATS_PER_ROW], with the rows as even as they can be. */
+private fun evenRowSize(count: Int): Int {
+    val rows = (count + STATS_PER_ROW - 1) / STATS_PER_ROW
+    return (count + rows - 1) / rows.coerceAtLeast(1)
+}

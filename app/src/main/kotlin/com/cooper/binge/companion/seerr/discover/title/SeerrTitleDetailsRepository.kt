@@ -11,6 +11,7 @@ import com.cooper.binge.companion.seerr.seerr.SeerrMovieDetailsDto
 import com.cooper.binge.companion.seerr.seerr.SeerrMovieWatchProviderDto
 import com.cooper.binge.companion.seerr.seerr.SeerrServerProfile
 import com.cooper.binge.companion.seerr.seerr.SeerrUserDto
+import com.cooper.binge.companion.seerr.seerr.SeerrVideoDto
 import com.cooper.binge.companion.seerr.seerr.SeerrWatchRegionDto
 import com.cooper.binge.companion.seerr.seerr.certificationIn
 import com.cooper.binge.companion.seerr.seerr.toPermissions
@@ -21,6 +22,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
 
+private const val MAX_VIDEOS = 3
 private val KEY_CREW_JOBS = listOf("Director", "Writer", "Screenplay", "Producer")
 
 /**
@@ -135,7 +137,7 @@ internal fun SeerrMovieDetailsDto.toMovieDetails(
         keywords = keywords.map { it.name },
         status = status?.takeIf { it.isNotBlank() },
         originalLanguage = originalLanguage,
-        spokenLanguages = spokenLanguages.map { it.name }.filter { it.isNotBlank() },
+        spokenLanguageCodes = spokenLanguages.mapNotNull { it.code?.takeIf(String::isNotBlank) },
         studios = productionCompanies.map { it.name },
         budget = budget?.takeIf { it > 0 },
         revenue = revenue?.takeIf { it > 0 },
@@ -145,10 +147,7 @@ internal fun SeerrMovieDetailsDto.toMovieDetails(
             },
         keyCrew = key,
         otherCrew = others,
-        videos =
-            relatedVideos.filter { it.site == null || it.site == "YouTube" }.mapNotNull { video ->
-                video.url?.let { TitleVideo(video.name, it) }
-            },
+        videos = relatedVideos.toTitleVideos(),
         providers = watchProviders.providersFor(region),
         collection = collection?.let { TitleCollection(it.id, it.name, it.posterPath?.toTmdbPosterUrl()) },
         standard = VersionState(standardStatus, mayRequest && standardStatus.mayBeRequested()),
@@ -175,3 +174,11 @@ private fun List<SeerrMovieWatchProviderDto>.toProviders() =
 
 private fun com.cooper.binge.companion.seerr.seerr.SeerrRatingsDto.toRatings() =
     TitleRatings(rottenTomatoes?.criticsScore, rottenTomatoes?.audienceScore, imdb?.criticsScore)
+
+/** The server lists every clip a title has, often repeated: each once, trailers first, and only a few of them. */
+private fun List<SeerrVideoDto>.toTitleVideos(): List<TitleVideo> =
+    filter { it.site == null || it.site == "YouTube" }
+        .distinctBy { it.key }
+        .sortedBy { if (it.type == "Trailer") 0 else 1 }
+        .mapNotNull { video -> video.url?.let { TitleVideo(video.name, it) } }
+        .take(MAX_VIDEOS)

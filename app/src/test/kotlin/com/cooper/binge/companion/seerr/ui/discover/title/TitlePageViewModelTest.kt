@@ -38,7 +38,7 @@ internal fun movieFixture(
     keywords = emptyList(),
     status = "Released",
     originalLanguage = "en",
-    spokenLanguages = emptyList(),
+    spokenLanguageCodes = emptyList(),
     studios = emptyList(),
     budget = null,
     revenue = null,

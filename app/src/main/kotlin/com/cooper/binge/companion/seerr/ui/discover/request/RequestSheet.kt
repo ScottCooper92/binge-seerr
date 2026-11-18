@@ -59,7 +59,7 @@ fun RequestSheet(
 ) {
     val viewModel =
         hiltViewModel<RequestSheetViewModel, RequestSheetViewModel.Factory>(
-            key = "request-${target.kind}-${target.tmdbId}",
+            key = "request-${target.kind}-${target.tmdbId}-${target.standardOpen}-${target.fourKOpen}",
             creationCallback = { factory -> factory.create(target) },
         )
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -140,7 +140,7 @@ private fun ReadyContent(
             modifier = Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
         ) {
-            if (state.options.may4k) FourKRow(state, actions)
+            if (state.options.may4k && state.target.fourKOpen) FourKRow(state, actions)
             if (pick != null) DestinationFields(state, pick) { picker = it }
         }
         state.options.quota?.let { QuotaRow(it) }
@@ -172,7 +172,7 @@ private fun FourKRow(
             label = stringResource(R.string.request_sheet_4k),
             checked = state.use4k,
             onCheckedChange = actions.onUse4k,
-            enabled = !state.submitting,
+            enabled = state.canToggle4k,
         )
     }
 }
@@ -306,6 +306,7 @@ private fun RequestProblemCause.bodyRes(): Int =
         RequestProblemCause.Quota -> R.string.request_problem_quota
         RequestProblemCause.NotAllowed -> R.string.request_problem_not_allowed
         RequestProblemCause.Unreachable -> R.string.request_problem_unreachable
+        RequestProblemCause.AlreadyThere -> R.string.request_problem_already_there
         RequestProblemCause.Other -> R.string.request_problem_other
     }
 

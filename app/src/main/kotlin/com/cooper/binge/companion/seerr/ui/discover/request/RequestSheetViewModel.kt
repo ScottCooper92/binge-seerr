@@ -27,12 +27,17 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-/** The title a request sheet is for. [seasons] is empty for a movie, and for a series means the whole show. */
+/**
+ * The title a request sheet is for. [seasons] is empty for a movie, and for a series means the whole show. [standardOpen] and
+ * [fourKOpen] say which versions the server holds nothing of, so the sheet never offers one that is already requested.
+ */
 data class RequestSheetTarget(
     val kind: TitleKind,
     val tmdbId: Int,
     val title: String,
     val seasons: List<Int> = emptyList(),
+    val standardOpen: Boolean = true,
+    val fourKOpen: Boolean = true,
 )
 
 /** Why a send failed, in the terms the dialog explains. [detail] is the server's own sentence, where it gave one. */
@@ -41,7 +46,7 @@ data class RequestProblem(
     val detail: String?,
 )
 
-enum class RequestProblemCause { Quota, NotAllowed, Unreachable, Other }
+enum class RequestProblemCause { Quota, NotAllowed, Unreachable, AlreadyThere, Other }
 
 /** Where the request goes when the user chose a destination. [choices] is null while the server's own lists are being read. */
 data class DestinationPick(
@@ -78,6 +83,9 @@ sealed interface RequestSheetUiState {
         val servers: List<RequestServer> get() = options.servers.filter { it.is4k == use4k }
 
         val quotaSpent: Boolean get() = options.quota?.spent == true
+
+        /** The 4K switch moves only while both versions are open to request; with one left, that one is the choice. */
+        val canToggle4k: Boolean get() = options.may4k && target.standardOpen && target.fourKOpen && !submitting
 
         /** A pick whose lists have not read yet still submits: the server fills an empty axis with its own default. */
         val canSubmit: Boolean get() = !submitting && !quotaSpent
@@ -117,8 +125,9 @@ class RequestSheetViewModel
             viewModelScope.launch {
                 attempt { repository.options(target.kind) }.fold(
                     onSuccess = { options ->
-                        val pick = options.servers.pickFor(use4k = false)
-                        state.value = RequestSheetUiState.Ready(target, options, pick = pick)
+                        val use4k = options.may4k && !target.standardOpen && target.fourKOpen
+                        val pick = options.servers.pickFor(use4k)
+                        state.value = RequestSheetUiState.Ready(target, options, use4k = use4k, pick = pick)
                         pick?.let { loadChoices(it.serverId) }
                     },
                     onFailure = { state.value = RequestSheetUiState.Error(it.toSeerrError()) },
@@ -128,7 +137,7 @@ class RequestSheetViewModel
 
         fun setUse4k(use4k: Boolean) {
             val current = ready() ?: return
-            if (current.use4k == use4k || current.submitting) return
+            if (current.use4k == use4k || !current.canToggle4k) return
             val pick = current.options.servers.pickFor(use4k)
             state.value = current.copy(use4k = use4k, pick = pick)
             pick?.let { loadChoices(it.serverId) }
@@ -163,9 +172,14 @@ class RequestSheetViewModel
             viewModelScope.launch {
                 attempt { repository.submit(submission) }.fold(
                     onSuccess = { result ->
-                        eventFlow.tryEmit(RequestSheetEvent.Done(result))
-                        // This ViewModel outlives the sheet, so the next opening must not start from the old send.
-                        load()
+                        if (result == RequestResult.Created) {
+                            eventFlow.tryEmit(RequestSheetEvent.Done(result))
+                            // This ViewModel outlives the sheet, so the next opening must not start from the old send.
+                            load()
+                        } else {
+                            // The server took the call and made nothing: say so in a dialog the user acknowledges, not a vanishing sheet.
+                            updateReady { it.copy(submitting = false, problem = RequestProblem(RequestProblemCause.AlreadyThere, null)) }
+                        }
                     },
                     onFailure = { error -> updateReady { it.copy(submitting = false, problem = error.toProblem()) } },
                 )
