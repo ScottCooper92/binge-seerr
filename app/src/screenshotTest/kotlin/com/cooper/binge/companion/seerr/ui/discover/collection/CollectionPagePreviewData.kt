@@ -23,6 +23,7 @@ internal fun mixedCollection() =
         name = "The Matrix Collection",
         overview = "A hacker discovers the world is a simulation. ".repeat(REPEATS),
         backdropUrl = null,
+        posterUrl = null,
         parts =
             listOf(
                 film(0, "The Matrix", TitleAvailability.Available),
@@ -42,6 +43,7 @@ internal fun sparseCollection() =
         name = "A Pair",
         overview = null,
         backdropUrl = null,
+        posterUrl = null,
         parts =
             listOf(
                 film(0, "First", TitleAvailability.None, overview = null),
@@ -59,3 +61,6 @@ internal fun longCollection() =
                 },
         )
     }
+
+internal fun blockedCollection() =
+    mixedCollection().let { it.copy(parts = it.parts.map { part -> part.copy(availability = TitleAvailability.Blocklisted) }) }

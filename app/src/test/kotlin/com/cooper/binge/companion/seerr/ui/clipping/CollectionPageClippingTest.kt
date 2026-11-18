@@ -8,6 +8,7 @@ import com.cooper.binge.companion.seerr.ui.discover.collection.CollectionPageUiS
 import com.cooper.binge.companion.seerr.ui.discover.collection.collectionFixture
 import com.cooper.binge.companion.seerr.ui.discover.collection.partFixture
 import com.cooper.binge.companion.seerr.util.createSeerrComposeRule
+import kotlinx.coroutines.flow.emptyFlow
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -42,7 +43,7 @@ private fun worstCase(): CollectionPageUiState.Ready {
     return CollectionPageUiState.Ready(collection)
 }
 
-private val NO_ACTIONS = CollectionPageActions({}, {}, {})
+private val NO_ACTIONS = CollectionPageActions({}, {}, {}, {}, {}, {}, {}, {}, {})
 
 /** The collection page with a film in every status and the longest names, at font scales 1.3 and 2.0, through the design system's clipping check. */
 @RunWith(RobolectricTestRunner::class)
@@ -52,7 +53,7 @@ class CollectionPageClippingTest {
     @get:Rule
     val rule = createSeerrComposeRule()
 
-    private fun page(fontScale: Float) = rule.assertNoClippingAt(fontScale) { CollectionPageScreen(worstCase(), NO_ACTIONS) }
+    private fun page(fontScale: Float) = rule.assertNoClippingAt(fontScale) { CollectionPageScreen(worstCase(), emptyFlow(), NO_ACTIONS) }
 
     @Test fun `the collection page at 1_3`() = page(FONT_SCALE_13)
 
@@ -67,7 +68,7 @@ class CollectionPageSpanishClippingTest {
     @get:Rule
     val rule = createSeerrComposeRule()
 
-    private fun page(fontScale: Float) = rule.assertNoClippingAt(fontScale) { CollectionPageScreen(worstCase(), NO_ACTIONS) }
+    private fun page(fontScale: Float) = rule.assertNoClippingAt(fontScale) { CollectionPageScreen(worstCase(), emptyFlow(), NO_ACTIONS) }
 
     @Test fun `the collection page at 1_3 in Spanish`() = page(FONT_SCALE_13)
 
