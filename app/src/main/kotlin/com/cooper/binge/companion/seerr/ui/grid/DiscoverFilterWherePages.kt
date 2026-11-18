@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
@@ -107,7 +108,13 @@ private fun ProviderRow(
             )
         },
         trailingContent = { if (selected) Icon(Icons.Filled.Check, contentDescription = null) },
-    ) { contentModifier -> Text(provider.name, style = MaterialTheme.typography.titleMedium, modifier = contentModifier) }
+    ) { contentModifier ->
+        Text(
+            provider.name,
+            style = MaterialTheme.typography.titleMedium,
+            modifier = contentModifier.wrapContentHeight(Alignment.CenterVertically),
+        )
+    }
 }
 
 /**
