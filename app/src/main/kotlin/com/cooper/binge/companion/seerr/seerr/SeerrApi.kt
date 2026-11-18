@@ -126,6 +126,37 @@ interface SeerrApi {
         @Path("tmdbId") tmdbId: Int,
     ): SeerrMediaDetailsDto
 
+    /** The same call as [tvDetails], read whole: what the series page shows. */
+    @GET("api/v1/tv/{tmdbId}")
+    suspend fun tvFullDetails(
+        @Path("tmdbId") tmdbId: Int,
+    ): SeerrTvDetailsDto
+
+    /** One season with its episodes, for the series page's season list. */
+    @GET("api/v1/tv/{tmdbId}/season/{seasonNumber}")
+    suspend fun tvSeason(
+        @Path("tmdbId") tmdbId: Int,
+        @Path("seasonNumber") seasonNumber: Int,
+    ): SeerrSeasonDetailsDto
+
+    @GET("api/v1/tv/{tmdbId}/recommendations")
+    suspend fun tvRecommendations(
+        @Path("tmdbId") tmdbId: Int,
+        @Query("page") page: Int = 1,
+    ): SeerrTitlePageDto
+
+    @GET("api/v1/tv/{tmdbId}/similar")
+    suspend fun tvSimilar(
+        @Path("tmdbId") tmdbId: Int,
+        @Query("page") page: Int = 1,
+    ): SeerrTitlePageDto
+
+    /** Rotten Tomatoes only, on every lineage. A 404 means the server has no score for the show. */
+    @GET("api/v1/tv/{tmdbId}/ratings")
+    suspend fun tvRatings(
+        @Path("tmdbId") tmdbId: Int,
+    ): SeerrRottenTomatoesDto
+
     /**
      * The raw [Response], because the STATUS CODE carries meaning the body cannot: a 202 means the
      * server took the call and created nothing, since every season was already covered. It is a
