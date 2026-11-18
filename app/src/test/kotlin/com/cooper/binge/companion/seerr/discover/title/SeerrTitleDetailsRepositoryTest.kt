@@ -44,7 +44,7 @@ private const val PAGE =
 
 private const val COLLECTION =
     """{"id":2344,"name":"The Matrix Collection","parts":[
-        {"id":603,"mediaType":"movie","title":"The Matrix","releaseDate":"1999-03-30","posterPath":"/m.jpg","mediaInfo":{"id":11,"status":5}},
+        {"id":603,"mediaType":"movie","title":"The Matrix","releaseDate":"1999-03-30","posterPath":"/m.jpg","voteAverage":8.1,"mediaInfo":{"id":11,"status":5}},
         {"id":604,"mediaType":"movie","title":"Reloaded","releaseDate":"2003-05-15"}]}"""
 
 class SeerrTitleDetailsRepositoryTest {
@@ -102,6 +102,8 @@ class SeerrTitleDetailsRepositoryTest {
         assertEquals(TitleAvailability.Available, parts[0].availability)
         assertEquals(TitleAvailability.None, parts[1].availability)
         assertEquals("2003", parts[1].year)
+        assertEquals(8.1, parts[0].rating)
+        assertNull(parts[1].rating)
     }
 
     @Test

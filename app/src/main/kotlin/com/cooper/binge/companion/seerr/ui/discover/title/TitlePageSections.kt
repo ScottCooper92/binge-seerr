@@ -125,7 +125,7 @@ internal fun TitleRow(
         MediaCard(
             posterUrl = item.artworkPath?.let { it.toTmdbPosterUrl() },
             title = item.name,
-            rating = null,
+            rating = item.rating?.toFloat(),
             onClick = { onOpen(item) },
             modifier = Modifier.width(dimensionResource(DesR.dimen.card_width)),
             status = item.availability.cardStatus(),

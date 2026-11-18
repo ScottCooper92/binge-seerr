@@ -20,6 +20,7 @@ private const val CRITICS = 83
 private const val AUDIENCE = 85
 private const val IMDB = 8.7
 private const val VOTES = 24_000
+private const val RATING = 7.8
 
 private fun person(
     id: Int,
@@ -31,7 +32,7 @@ private fun related(
     id: Int,
     name: String,
     availability: TitleAvailability,
-) = TitleResult(TitleKind.Movie, id, name, "2003", null, null, null, null, availability, null)
+) = TitleResult(TitleKind.Movie, id, name, "2003", null, null, null, RATING, availability, null)
 
 /** A film with everything the server gives, standard requestable and 4K held. */
 internal fun fullMovie(

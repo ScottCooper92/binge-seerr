@@ -29,6 +29,7 @@ private const val DEMO_IMDB = 7.9
 private const val RELATED_SKIP_SIMILAR = 2
 private const val DEMO_COLLECTION_ID = 9500
 private const val DEMO_COLLECTION_FILMS = 3
+private const val DEMO_COLLECTION_NAME = "The Demo Collection"
 
 /** Hand-authored people and places, so no real name or address is in the demo. */
 private val DEMO_CAST =
@@ -66,7 +67,7 @@ private fun DemoData.collection(id: Int?): DemoAnswer =
         ok(
             SeerrCollectionDto(
                 id = DEMO_COLLECTION_ID,
-                name = "The Demo Collection",
+                name = DEMO_COLLECTION_NAME,
                 overview = "Three demo films that belong together.",
                 posterPath = DEMO_COLLECTION.firstOrNull()?.poster,
                 parts = DEMO_COLLECTION.map { toResult(it) },
@@ -114,5 +115,5 @@ private fun titleBody(
 /** The collection a demo film belongs to: the first few demo films share one, and no other has any. */
 private fun collectionOf(tmdbId: Int) =
     DEMO_COLLECTION.firstOrNull { it.tmdbId == tmdbId }?.let {
-        SeerrCollectionRefDto(DEMO_COLLECTION_ID, "The Demo Collection", DEMO_COLLECTION.first().poster)
+        SeerrCollectionRefDto(DEMO_COLLECTION_ID, DEMO_COLLECTION_NAME, DEMO_COLLECTION.first().poster)
     }
