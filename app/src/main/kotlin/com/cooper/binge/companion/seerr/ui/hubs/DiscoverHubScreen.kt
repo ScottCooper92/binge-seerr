@@ -30,6 +30,7 @@ import com.binge.designsystem.component.BackdropTile
 import com.binge.designsystem.component.BingePullToRefresh
 import com.binge.designsystem.component.CarouselSkeleton
 import com.binge.designsystem.component.DarkStatusBarEffect
+import com.binge.designsystem.component.DiscoverEntryRow
 import com.binge.designsystem.component.HeroCarousel
 import com.binge.designsystem.component.HeroItem
 import com.binge.designsystem.component.LogoTile
@@ -42,6 +43,7 @@ import com.binge.designsystem.navOverlayPadding
 import com.binge.designsystem.theme.BingeSentiment
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.TitleAvailability
+import com.cooper.binge.companion.seerr.discover.grid.GridPreset
 import com.cooper.binge.companion.seerr.discover.sliders.HubCard
 import com.cooper.binge.companion.seerr.discover.sliders.HubGrid
 import com.cooper.binge.companion.seerr.discover.sliders.HubHero
@@ -50,6 +52,7 @@ import com.cooper.binge.companion.seerr.discover.sliders.HubTab
 import com.cooper.binge.companion.seerr.discover.sliders.HubTile
 import com.cooper.binge.companion.seerr.discover.sliders.seeAll
 import com.cooper.binge.companion.seerr.discover.sliders.tileGrid
+import com.cooper.binge.companion.seerr.discover.sliders.titleKind
 import com.cooper.binge.companion.seerr.discover.sliders.toCard
 import com.cooper.binge.companion.seerr.ui.state.EmptyScreen
 import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
@@ -57,6 +60,7 @@ import com.binge.designsystem.R as DesR
 
 private const val SKELETON_ROWS = 3
 private const val HERO_KEY = "hero"
+private const val BROWSE_ALL_KEY = "browse_all"
 
 /**
  * One discovery hub, Movies or TV: the server's rows of posters, each loading on its own. [onOpenTitle] gets the card the user
@@ -74,6 +78,7 @@ fun DiscoverHubScreen(
     onRefresh: () -> Unit,
     onOpenTitle: (HubCard) -> Unit,
     onOpenGrid: (HubGrid, String) -> Unit,
+    onOpenRequests: () -> Unit,
 ) {
     val title = stringResource(if (tab == HubTab.Movies) R.string.hubs_title_movies else R.string.hubs_title_tv)
     val hasHero = (state as? DiscoverHubUiState.Ready)?.hero?.isNotEmpty() == true
@@ -86,7 +91,7 @@ fun DiscoverHubScreen(
             is DiscoverHubUiState.Error -> ErrorScreen(state.error, Modifier.padding(inner), onRetry = onRefresh)
             is DiscoverHubUiState.Ready ->
                 BingePullToRefresh(isRefreshing = state.refreshing, onRefresh = onRefresh, indicatorTopInset = statusBar) {
-                    HubRows(tab, state, inner, onOpenTitle, onOpenGrid)
+                    HubRows(tab, state, inner, onOpenTitle, onOpenGrid, onOpenRequests)
                 }
         }
         if (hasHero) {
@@ -110,14 +115,16 @@ private fun HubRows(
     contentPadding: PaddingValues,
     onOpenTitle: (HubCard) -> Unit,
     onOpenGrid: (HubGrid, String) -> Unit,
+    onOpenRequests: () -> Unit,
 ) {
     val listState = rememberLazyListState()
     ShowHeroWhenItArrives(listState, hasHero = state.hero.isNotEmpty())
     LazyColumn(state = listState, modifier = Modifier.fillMaxSize(), contentPadding = contentPadding) {
         if (state.hero.isNotEmpty()) item(key = HERO_KEY) { Hero(state.hero, onOpenTitle) }
+        if (state.browseAll) item(key = BROWSE_ALL_KEY) { BrowseAllRow(tab, onOpenGrid) }
         items(state.rows, key = { it.row.sliderId }) { row ->
             when (row) {
-                is HubRowUi.Cards -> CardRow(tab, row, onOpenTitle, onOpenGrid)
+                is HubRowUi.Cards -> CardRow(tab, row, onOpenTitle, onOpenGrid, onOpenRequests)
                 is HubRowUi.Tiles -> TileRow(tab, row, onOpenGrid)
             }
         }
@@ -126,25 +133,47 @@ private fun HubRows(
     }
 }
 
+/** The way into the unfiltered grid, under the hero as Binge puts it: the popular list, with the grid's filters. */
+@Composable
+private fun BrowseAllRow(
+    tab: HubTab,
+    onOpenGrid: (HubGrid, String) -> Unit,
+) {
+    val movies = tab == HubTab.Movies
+    val grid = HubGrid(tab.titleKind(), GridPreset.Popular)
+    val gridTitle = stringResource(if (movies) R.string.hubs_row_popular_movies else R.string.hubs_row_popular_tv)
+    DiscoverEntryRow(
+        title = stringResource(if (movies) R.string.hubs_browse_all_movies else R.string.hubs_browse_all_tv),
+        subtitle = stringResource(if (movies) R.string.hubs_browse_subtitle_movies else R.string.hubs_browse_subtitle_tv),
+        onClick = { onOpenGrid(grid, gridTitle) },
+    )
+}
+
 @Composable
 private fun CardRow(
     tab: HubTab,
     row: HubRowUi.Cards,
     onOpenTitle: (HubCard) -> Unit,
     onOpenGrid: (HubGrid, String) -> Unit,
+    onOpenRequests: () -> Unit,
 ) {
     val title = row.row.title(tab)
     val grid = row.row.seeAll()
     MediaCarousel(
         title = title,
-        onMoreClick = grid?.let { { onOpenGrid(it, title) } },
+        onMoreClick =
+            when {
+                grid != null -> ({ onOpenGrid(grid, title) })
+                row.row is HubRow.RecentRequests -> onOpenRequests
+                else -> null
+            },
         items = row.cards,
         itemKey = { it.kind.name + it.tmdbId },
     ) { _, card ->
         MediaCard(
             posterUrl = card.artworkUrl,
             title = card.name,
-            rating = null,
+            rating = card.rating,
             onClick = { onOpenTitle(card) },
             modifier = Modifier.width(dimensionResource(DesR.dimen.card_width)),
             status = card.availability.toStatus(),
@@ -178,7 +207,10 @@ private fun Hero(
     hero: List<HubHero>,
     onOpenTitle: (HubCard) -> Unit,
 ) {
-    val items = hero.map { HeroItem(id = it.tmdbId, imageUrl = it.backdropUrl, title = it.name, rating = it.rating, year = it.year) }
+    val items =
+        hero.map {
+            HeroItem(id = it.tmdbId, imageUrl = it.backdropUrl, title = it.name, rating = null, genres = it.genres, rank = it.rank)
+        }
     HeroCarousel(
         items = items,
         onItemClick = { id -> hero.firstOrNull { it.tmdbId == id }?.let { onOpenTitle(it.toCard()) } },

@@ -12,10 +12,15 @@ data class TitlePerson(
     val photoUrl: String?,
 )
 
+/** A clip the server lists for a title. [isTrailer] is the server's own type; the list puts trailers first. */
 data class TitleVideo(
     val name: String,
     val url: String,
+    val isTrailer: Boolean = false,
 )
+
+/** The address of the first trailer, or null where the server lists none; another kind of clip is not a trailer. */
+fun List<TitleVideo>.trailerUrl(): String? = firstOrNull { it.isTrailer }?.url
 
 data class TitleProvider(
     val id: Int,
@@ -89,6 +94,7 @@ data class MovieDetails(
     val fourK: VersionState?,
     val mediaId: Int?,
     val webUrl: String,
+    val releaseDate: String? = null,
 )
 
 /** The sections that load apart from the page, so one that fails leaves only itself out. */
@@ -96,7 +102,10 @@ data class TitleExtras(
     val ratings: TitleRatings?,
     val recommendations: List<TitleResult>,
     val similar: List<TitleResult>,
-)
+) {
+    /** The server's recommendations, then its similar titles, each title once: one rail, as the page shows it. */
+    val moreLikeThis: List<TitleResult> get() = (recommendations + similar).distinctBy { it.kind to it.tmdbId }
+}
 
 /** What the film page reads. It knows nothing of Retrofit, so a view model holds this and a test holds a fake. */
 interface TitleDetailsRepository {

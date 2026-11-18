@@ -61,13 +61,14 @@ internal fun fullMovie(
     cast = listOf(person(1, "Keanu Reeves", "Neo"), person(2, "Carrie-Anne Moss", "Trinity"), person(3, "Laurence Fishburne", "Morpheus")),
     keyCrew = listOf(person(10, "Lana Wachowski", "Director, Writer"), person(11, "Lilly Wachowski", "Director, Writer")),
     otherCrew = emptyList(),
-    videos = listOf(TitleVideo("Official Trailer", "https://www.youtube.com/watch?v=demo")),
+    videos = listOf(TitleVideo("Official Trailer", "https://www.youtube.com/watch?v=demo", isTrailer = true)),
     providers = TitleProviders("US", null, listOf(TitleProvider(1, "Demo Stream", null)), emptyList()),
     collection = TitleCollection(2344, "The Matrix Collection", null),
     standard = standard,
     fourK = fourK,
     mediaId = 11,
     webUrl = "https://seerr.example/movie/603",
+    releaseDate = "1999-03-31",
 )
 
 internal fun fullExtras() =
@@ -102,6 +103,7 @@ internal fun sparseMovie() =
         videos = emptyList(),
         providers = null,
         collection = null,
+        releaseDate = null,
     )
 
 internal fun longMovie() =

@@ -31,7 +31,7 @@ import com.cooper.homelab.core.notifications.PollReactor as SharedPollReactor
 @Retention(AnnotationRetention.BINARY)
 annotation class SharedPollingEnabled
 
-/** The preference key in the debug overrides file that turns the shared polling on. A shipped build never reads it. */
+/** The preference key in the debug overrides file that turns the shared polling off. A shipped build never reads it. */
 internal const val SHARED_POLLING_OVERRIDE = "override_shared_polling"
 
 /** The unique work name the poll has shipped under. WorkManager keeps work by it across updates, so it never changes. */

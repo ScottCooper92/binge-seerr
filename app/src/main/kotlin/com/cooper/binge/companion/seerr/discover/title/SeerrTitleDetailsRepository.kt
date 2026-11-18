@@ -133,6 +133,7 @@ internal fun SeerrMovieDetailsDto.toMovieDetails(
         fourK = if (mayRequest4k) VersionState(status4k, status4k.mayBeRequested()) else null,
         mediaId = mediaInfo?.id,
         webUrl = webUrl,
+        releaseDate = releaseDate?.takeIf { it.isNotBlank() },
     )
 }
 
@@ -159,7 +160,7 @@ internal fun List<SeerrVideoDto>.toTitleVideos(): List<TitleVideo> =
     filter { it.site == null || it.site == "YouTube" }
         .distinctBy { it.key }
         .sortedBy { if (it.type == "Trailer") 0 else 1 }
-        .mapNotNull { video -> video.url?.let { TitleVideo(video.name, it) } }
+        .mapNotNull { video -> video.url?.let { TitleVideo(video.name, it, isTrailer = video.type == "Trailer") } }
         .take(MAX_VIDEOS)
 
 /**

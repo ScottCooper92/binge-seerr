@@ -12,7 +12,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.EntryProviderScope
@@ -21,16 +20,13 @@ import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.ui.NavDisplay
 import com.binge.designsystem.PaneContent
 import com.binge.designsystem.PaneEdge
-import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.flags.LocalDiscoveryEnabled
-import com.cooper.binge.companion.seerr.flags.LocalFlags
 import com.cooper.binge.companion.seerr.ui.discover.title.LocalOpenTitle
-import com.cooper.binge.companion.seerr.ui.discover.title.TitleDetailEntry
-import com.cooper.binge.companion.seerr.ui.discover.title.credits.TitleCreditsEntry
+import com.cooper.binge.companion.seerr.ui.discover.title.rememberOpenTitle
+import com.cooper.binge.companion.seerr.ui.discover.title.titleEntries
 import com.cooper.binge.companion.seerr.ui.grid.discoverGridEntries
 import com.cooper.binge.companion.seerr.ui.hub.HubSection
 import com.cooper.binge.companion.seerr.ui.hubs.DiscoverHubEntry
-import com.cooper.binge.companion.seerr.ui.requests.RequestMediaType
 import com.cooper.binge.companion.seerr.ui.search.title.TitleSearchEntry
 import com.cooper.binge.companion.seerr.ui.settings.diagnostics.DiagnosticsEntry
 import com.cooper.binge.companion.seerr.ui.settings.licences.LicencesEntry
@@ -83,6 +79,7 @@ fun SeerrNavHost(
             detailEntries(backStack, showBack = panes.showBack)
             serverSettingsEntries(backStack)
             discoverGridEntries(backStack)
+            titleEntries(backStack)
         }
     }
 }
@@ -145,9 +142,11 @@ private fun EntryProviderScope<NavKey>.homeEntries(
     entry<ShellRoute> {
         if (connected() == true && tabs != null) {
             SeerrTabShell(tabs, discover = {
-                DiscoverHubEntry(it, onOpenGrid = { grid, title ->
-                    backStack.push(DiscoverGridRoute(grid.kind, grid.preset, title))
-                })
+                DiscoverHubEntry(
+                    it,
+                    onOpenGrid = { grid, title -> backStack.push(DiscoverGridRoute(grid.kind, grid.preset, title)) },
+                    onOpenRequests = { backStack.openSection(HubSection.Requests) },
+                )
             }, search = { TitleSearchEntry() }, settings = { hub(null) })
         } else {
             LoadingScreen()
@@ -274,19 +273,6 @@ private fun EntryProviderScope<NavKey>.detailEntries(
             )
         }
     }
-    entry<TitleDetailRoute>(metadata = DetailPane) { route ->
-        DetailPaneContent {
-            TitleDetailEntry(
-                route.kind,
-                route.tmdbId,
-                onBack = { backStack.popIfTop(route) },
-                onOpenCredits = { backStack.add(TitleCreditsRoute(route.kind, route.tmdbId)) },
-            )
-        }
-    }
-    entry<TitleCreditsRoute>(metadata = DetailPane) { route ->
-        DetailPaneContent { TitleCreditsEntry(route.kind, route.tmdbId, onBack = { backStack.popIfTop(route) }) }
-    }
     entry<IssueDetailRoute>(metadata = DetailPane) { route ->
         DetailPaneContent { IssueDetailEntry(route.issueId, onBack = { backStack.popIfTop(route) }, showBack = showBack()) }
     }
@@ -368,23 +354,5 @@ private fun EntryProviderScope<NavKey>.serverSettingsEntries(backStack: NavBackS
     }
     entry<OverrideRuleRoute>(metadata = DetailPane) { route ->
         DetailPaneContent { OverrideRuleEntry(route.id, onBack = { backStack.popIfTop(route) }) }
-    }
-}
-
-/** The title hand-off: a film's or a series' page with the discovery flag on, and Binge or the server's own page as before otherwise. */
-@Composable
-private fun rememberOpenTitle(backStack: NavBackStack<NavKey>): (TitleKind, Int, String) -> Unit {
-    val discovery = LocalDiscoveryEnabled.current
-    val promoted = LocalFlags.current.bingePromotion
-    val context = LocalContext.current
-    return remember(backStack, discovery, promoted, context) {
-        { kind, id, webUrl ->
-            // A person and a collection open as they did until their own pages land.
-            if (discovery && (kind == TitleKind.Movie || kind == TitleKind.Series)) {
-                backStack.add(TitleDetailRoute(kind, id))
-            } else {
-                context.openTitle(promoted, if (kind == TitleKind.Series) RequestMediaType.Tv else RequestMediaType.Movie, id, webUrl)
-            }
-        }
     }
 }

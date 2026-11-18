@@ -28,6 +28,7 @@ import com.binge.designsystem.template.HeroDetailScreen
  *
  * @param onBack null where the pane beside this one already offers the way back.
  * @param inFlight shows a moderation under way.
+ * @param genres drawn under the title in the accent colour, with the italic [tagline] under them.
  */
 @Composable
 internal fun MediaHeroDetailPage(
@@ -42,6 +43,8 @@ internal fun MediaHeroDetailPage(
     footer: (@Composable () -> Unit)? = null,
     inFlight: Boolean = false,
     metaContent: (@Composable () -> Unit)? = null,
+    genres: List<String> = emptyList(),
+    tagline: String? = null,
     body: @Composable ColumnScope.() -> Unit,
 ) {
     HeroDetailScreen(
@@ -59,7 +62,8 @@ internal fun MediaHeroDetailPage(
             DetailHero(
                 title = title,
                 backdropUrl = backdropUrl,
-                tagline = null,
+                tagline = tagline,
+                genres = genres,
                 metaText = metaText,
                 onBack = {},
                 showChrome = false,

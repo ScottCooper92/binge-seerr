@@ -2,14 +2,10 @@ package com.cooper.binge.companion.seerr.ui.discover.title
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Collections
-import androidx.compose.material.icons.filled.PlayCircle
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.filled.Verified
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -19,40 +15,22 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.BingeTag
-import com.binge.designsystem.component.DetailStat
-import com.binge.designsystem.component.DetailStatRow
 import com.binge.designsystem.component.ExpandableOverview
-import com.binge.designsystem.component.ItemGroup
-import com.binge.designsystem.component.ListItem
-import com.binge.designsystem.component.ListItemDestination
+import com.binge.designsystem.component.InfoRowList
 import com.binge.designsystem.component.MediaCard
 import com.binge.designsystem.component.MediaCardStatus
 import com.binge.designsystem.component.MediaCarousel
 import com.binge.designsystem.component.PersonCard
 import com.binge.designsystem.component.SectionHeader
-import com.binge.designsystem.component.StatusChip
 import com.binge.designsystem.component.WrappingRow
 import com.binge.designsystem.theme.BingeSentiment
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.TitleAvailability
 import com.cooper.binge.companion.seerr.discover.TitleResult
-import com.cooper.binge.companion.seerr.discover.title.MovieDetails
 import com.cooper.binge.companion.seerr.discover.title.TitlePerson
-import com.cooper.binge.companion.seerr.discover.title.TitleRatings
-import com.cooper.binge.companion.seerr.discover.title.TitleVideo
-import com.cooper.binge.companion.seerr.discover.title.VersionState
+import com.cooper.binge.companion.seerr.discover.title.trailerUrl
 import com.cooper.binge.companion.seerr.seerr.toTmdbPosterUrl
 import com.binge.designsystem.R as DesR
-
-private const val MINUTES_PER_HOUR = 60
-private const val STATS_PER_ROW = 3
-
-/** The line under the title: year, runtime and certification, whichever the server gave. */
-@Composable
-internal fun MovieDetails.metaLine(): String {
-    val runtime = runtimeMinutes?.let { stringResource(R.string.title_page_runtime, it / MINUTES_PER_HOUR, it % MINUTES_PER_HOUR) }
-    return listOfNotNull(year, runtime, certification).joinToString(" · ")
-}
 
 /** What the page says below its hero. A section the server gave nothing for is not drawn. */
 @Composable
@@ -61,87 +39,45 @@ internal fun TitlePageBody(
     actions: TitlePageActions,
 ) {
     val movie = state.movie
-    val gap = dimensionResource(DesR.dimen.padding_m)
-    Column(verticalArrangement = Arrangement.spacedBy(gap)) {
-        StatusRow(movie.standard, movie.fourK)
-        StatsRow(movie.voteAverage, state.extras?.ratings)
-        movie.tagline?.let { Text(it, Modifier.padding(horizontal = gap), style = MaterialTheme.typography.titleSmall) }
-        movie.overview?.let { ExpandableOverview(text = it, modifier = Modifier.padding(horizontal = gap)) }
-        if (movie.genres.isNotEmpty()) TagRow(movie.genres)
-        ItemGroup(
-            title = null,
-            rows = movie.factRows(LocalContext.current.resources, LocalConfiguration.current.locales[0]),
-            modifier = Modifier.padding(horizontal = gap),
+    val context = LocalContext.current
+    val locale = LocalConfiguration.current.locales[0]
+    Column(verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m))) {
+        TitleStatsRows(movie.titleStats(locale))
+        TitleActions(
+            model = titleActionsModel(movie.standard, movie.fourK),
+            onRequest = actions.onRequest,
+            onTrailer = movie.videos.trailerUrl()?.let { url -> { actions.onOpenUrl(url) } },
+            onShare = { context.shareTitle(movie.title, movie.webUrl) },
         )
+        OverviewSection(movie.overview)
+        InfoRowList(movie.factEntries(context.resources, locale, state.extras?.ratings))
         PeopleRow(stringResource(R.string.title_page_cast), movie.cast, actions.onOpenPerson, actions.onOpenCredits)
         PeopleRow(stringResource(R.string.title_page_crew), movie.keyCrew, actions.onOpenPerson, actions.onOpenCredits)
-        VideosGroup(movie.videos, actions.onOpenUrl)
         movie.providers?.takeIf { it.streaming.isNotEmpty() }?.let { providers ->
             SectionHeader(stringResource(R.string.title_page_where_to_watch))
             TagRow(providers.streaming.map { it.name })
         }
-        movie.collection?.let { collection ->
-            ItemGroup(
-                title = null,
-                modifier = Modifier.padding(horizontal = gap),
-                rows =
-                    listOf(
-                        ListItem(
-                            icon = Icons.Filled.Collections,
-                            label = collection.name,
-                            detail = stringResource(R.string.title_page_collection),
-                            onClick = { actions.onOpenCollection(collection.id) },
-                        ),
-                    ),
-            )
-        }
-        state.extras?.let { extras ->
-            TitleRow(stringResource(R.string.title_page_recommended), extras.recommendations, actions.onOpenTitle)
-            TitleRow(stringResource(R.string.title_page_similar), extras.similar, actions.onOpenTitle)
-        }
-        if (movie.keywords.isNotEmpty()) {
-            SectionHeader(stringResource(R.string.title_page_keywords))
-            TagRow(movie.keywords)
-        }
+        state.extras?.let { TitleRow(stringResource(R.string.title_page_more_like_this), it.moreLikeThis, actions.onOpenTitle) }
+        KeywordsSection(movie.keywords)
+    }
+}
+
+/** The "Overview" heading over the synopsis, as Binge's pages have it. */
+@Composable
+internal fun OverviewSection(overview: String?) {
+    if (overview == null) return
+    Column(Modifier.padding(horizontal = dimensionResource(DesR.dimen.padding_m))) {
+        Text(stringResource(R.string.title_page_overview), style = MaterialTheme.typography.titleMedium)
+        Spacer(Modifier.height(dimensionResource(DesR.dimen.detail_meta_spacing)))
+        ExpandableOverview(text = overview)
     }
 }
 
 @Composable
-internal fun StatusRow(
-    standardVersion: VersionState,
-    fourKVersion: VersionState?,
-) {
-    val standard = standardVersion.availability.label()
-    val fourK = fourKVersion?.availability?.label()
-    if (standard == null && fourK == null) return
-    Row(
-        Modifier.padding(horizontal = dimensionResource(DesR.dimen.padding_m)),
-        horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
-    ) {
-        standard?.let { StatusChip(it.first, it.second) }
-        fourK?.let { StatusChip(stringResource(R.string.title_page_status_4k, it.first), it.second) }
-    }
-}
-
-@Composable
-internal fun StatsRow(
-    voteAverage: Double?,
-    ratings: TitleRatings?,
-) {
-    val locale = LocalConfiguration.current.locales[0]
-    val stats =
-        listOfNotNull(
-            voteAverage?.let {
-                DetailStat(Icons.Filled.Star, "%.1f".format(locale, it), stringResource(R.string.title_page_stat_rating))
-            },
-            ratings?.criticsPercent?.let { DetailStat(Icons.Filled.Verified, "$it%", stringResource(R.string.title_page_stat_critics)) },
-            ratings?.audiencePercent?.let { DetailStat(Icons.Filled.Star, "$it%", stringResource(R.string.title_page_stat_audience)) },
-            ratings?.imdbScore?.let {
-                DetailStat(Icons.Filled.Star, "%.1f".format(locale, it), stringResource(R.string.title_page_stat_imdb))
-            },
-        )
-    // Three to a row at most, split evenly (2 + 2, not 3 + 1): a longer row breaks a label mid-word at large text.
-    if (stats.isNotEmpty()) stats.chunked(evenRowSize(stats.size)).forEach { DetailStatRow(stats = it) }
+internal fun KeywordsSection(keywords: List<String>) {
+    if (keywords.isEmpty()) return
+    SectionHeader(stringResource(R.string.title_page_keywords))
+    TagRow(keywords)
 }
 
 @Composable
@@ -167,27 +103,6 @@ internal fun PeopleRow(
             onClick = { onOpen(person.personId) },
         )
     }
-}
-
-@Composable
-internal fun VideosGroup(
-    videos: List<TitleVideo>,
-    onOpenUrl: (String) -> Unit,
-) {
-    if (videos.isEmpty()) return
-    ItemGroup(
-        title = stringResource(R.string.title_page_videos),
-        modifier = Modifier.padding(horizontal = dimensionResource(DesR.dimen.padding_m)),
-        rows =
-            videos.map { video ->
-                ListItem(
-                    icon = Icons.Filled.PlayCircle,
-                    label = video.name,
-                    destination = ListItemDestination.External,
-                    onClick = { onOpenUrl(video.url) },
-                )
-            },
-    )
 }
 
 @Composable
@@ -222,9 +137,3 @@ internal fun TitleAvailability.label(): Pair<String, BingeSentiment>? =
 
 @Composable
 private fun TitleAvailability.cardStatus(): MediaCardStatus? = label()?.let { (text, sentiment) -> MediaCardStatus(text, sentiment) }
-
-/** How many stats go in each row: at most [STATS_PER_ROW], with the rows as even as they can be. */
-private fun evenRowSize(count: Int): Int {
-    val rows = (count + STATS_PER_ROW - 1) / STATS_PER_ROW
-    return (count + rows - 1) / rows.coerceAtLeast(1)
-}

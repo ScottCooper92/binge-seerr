@@ -26,6 +26,7 @@ class HubHeroLoaderTest {
         private val results: List<TitleResult>,
         private val supported: Boolean = true,
         private val fail: Boolean = false,
+        private val names: Map<Int, String>? = emptyMap(),
     ) : TitleListRepository {
         var loaded: TitleSource? = null
 
@@ -41,6 +42,8 @@ class HubHeroLoaderTest {
         }
 
         override suspend fun genres(kind: TitleKind): List<GenreTile> = emptyList()
+
+        override suspend fun genreNames(kind: TitleKind): Map<Int, String> = names ?: error("no names")
     }
 
     private class Media : HubMediaSource {
@@ -67,8 +70,33 @@ class HubHeroLoaderTest {
             assertEquals(listOf(4, 5, 6, 7, 8), hero.map { it.tmdbId })
             assertEquals(TitleSource.Trending, titles.loaded)
             assertTrue(hero.first().backdropUrl.endsWith("/b4.jpg"))
-            assertEquals(7.5f, hero.first().rating)
             assertEquals("https://s/movie/4", hero.first().webUrl)
+        }
+
+    @Test
+    fun `each hero carries its place in the trending list of its kind and its genre names`() =
+        runTest {
+            val results =
+                listOf(
+                    title(TitleKind.Series, 1),
+                    title(TitleKind.Movie, 2, backdrop = null),
+                    title(TitleKind.Movie, 3).copy(genreIds = listOf(28, 99, 12)),
+                )
+            val hero = HubHeroLoader(Titles(results, names = mapOf(28 to "Action", 12 to "Adventure")), Media()).load(HubTab.Movies)
+            // The title without a backdrop still takes rank 1, so the one that follows is #2 as it is in the list.
+            assertEquals(listOf(3), hero.map { it.tmdbId })
+            assertEquals(2, hero.single().rank)
+            assertEquals(listOf("Action", "Adventure"), hero.single().genres)
+        }
+
+    @Test
+    fun `a server that cannot name genres still has a hero without the genre line`() =
+        runTest {
+            val results = listOf(title(TitleKind.Movie, 1).copy(genreIds = listOf(28)))
+            val hero = HubHeroLoader(Titles(results, names = null), Media()).load(HubTab.Movies)
+            assertEquals(listOf(1), hero.map { it.tmdbId })
+            assertEquals(emptyList<String>(), hero.single().genres)
+            assertEquals(1, hero.single().rank)
         }
 
     @Test
