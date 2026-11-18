@@ -9,20 +9,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
@@ -75,12 +66,9 @@ private const val BROWSE_ALL_KEY = "browse_all"
 
 /**
  * One discovery hub, Movies or TV: the server's rows of posters, each loading on its own. [onOpenTitle] gets the card the user
- * tapped.
- *
- * The hub has no title bar: the tab bar says where you are, and the hero runs edge to edge from the top of the screen, under the
- * status bar, whose icons stay light over the backdrop with a dark wash at the top edge for when the rows scroll up under it.
- * Without a hero the rows start below the status bar instead, but a hub still loading reserves the hero's place, since both hubs
- * normally have one. The hub's name is its pane title, for a screen reader.
+ * tapped. The hub has no title bar. The hero runs edge to edge under the status bar, whose icons go light only over a real hero.
+ * Its place is always there on a loaded hub, as Binge keeps it: an empty carousel while it loads and after it fails or comes back
+ * empty, so the rows never move when it answers. The hub's name is its pane title, for a screen reader.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -95,7 +83,7 @@ fun DiscoverHubScreen(
     val title = stringResource(if (tab == HubTab.Movies) R.string.hubs_title_movies else R.string.hubs_title_tv)
     val hasHero = (state as? DiscoverHubUiState.Ready)?.hero?.isNotEmpty() == true
     val statusBar = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
-    val reservesHero = hasHero || state is DiscoverHubUiState.Loading
+    val reservesHero = state is DiscoverHubUiState.Loading || state is DiscoverHubUiState.Ready
     val inner = navOverlayPadding(if (reservesHero) PaddingValues() else PaddingValues(top = statusBar))
     // The scrolling states leave Binge's 16dp below their last row, and run under the rail, padding their own first column.
     val scrolling =
@@ -178,10 +166,8 @@ private fun HubRows(
     onOpenGrid: (HubGrid, String) -> Unit,
     onOpenRequests: () -> Unit,
 ) {
-    val listState = rememberLazyListState()
-    ShowHeroWhenItArrives(listState, hasHero = state.hero.isNotEmpty())
-    LazyColumn(state = listState, modifier = Modifier.fillMaxSize(), contentPadding = contentPadding) {
-        if (state.hero.isNotEmpty()) item(key = HERO_KEY) { Hero(state.hero, onOpenTitle) }
+    LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = contentPadding) {
+        item(key = HERO_KEY) { Hero(state.hero, onOpenTitle) }
         if (state.browseAll) item(key = BROWSE_ALL_KEY) { BrowseAllRow(tab, onOpenGrid) }
         itemsIndexed(state.rows, key = { _, row -> row.row.sliderId }) { index, row ->
             val anchor = Modifier.firstCarouselAnchor(index)
@@ -290,33 +276,6 @@ private fun Hero(
                 ?.let { StatusChip(it.label, it.sentiment) }
         },
     )
-}
-
-/**
- * The hero loads apart from the rows and can land after them. A list keeps the item it shows first in place when something is
- * inserted above it, so a hub sitting at its very top would stay on its first row with the new hero out of sight above. A hero
- * that arrives while the list was at its top takes the top; one that arrives while the user has scrolled leaves them where they
- * are. The position is read before the hero is in, since inserting it is what moves the list, and a pull to refresh at the top
- * does not leave the top. A hub restored with its hero already there is left alone.
- */
-@Composable
-private fun ShowHeroWhenItArrives(
-    listState: LazyListState,
-    hasHero: Boolean,
-) {
-    val heroNow by rememberUpdatedState(hasHero)
-    var atTopBeforeHero by remember { mutableStateOf(true) }
-    LaunchedEffect(listState) {
-        snapshotFlow { listState.firstVisibleItemIndex == 0 && listState.firstVisibleItemScrollOffset == 0 }
-            .collect { atTop -> if (!heroNow) atTopBeforeHero = atTop }
-    }
-    // Only a hero that arrives while this composition is watching counts. A hub composed again with its hero already there (a
-    // rotation, a restore) has a list state that came back with its own position, which is not this one's to reset.
-    var heroSeen by remember { mutableStateOf(hasHero) }
-    LaunchedEffect(hasHero) {
-        if (hasHero && !heroSeen && atTopBeforeHero) listState.scrollToItem(0)
-        heroSeen = hasHero
-    }
 }
 
 /** A custom slider's own title, else the built-in row's name in the user's language. */

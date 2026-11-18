@@ -159,7 +159,7 @@ class SettingsGroupsScreenshotTest {
     @Composable
     fun jobStates() = JobStatesGroup()
 
-    /** The same five rows at 1.5 and 2.0 font scale, where the icon actions must not squeeze the names. */
+    /** The same five rows at 2.0 font scale, where the icon actions must not squeeze the names. */
     @PreviewTest
     @SeerrFontScalePreviews
     @Composable

@@ -57,6 +57,12 @@ class CollectionPageScreenshotTest {
     @Composable
     fun loading() = Frame(CollectionPageUiState.Loading)
 
+    /** The skeleton at font scale 2, where a film's row is taller than its poster. */
+    @PreviewTest
+    @SeerrFontScalePreviews
+    @Composable
+    fun loadingLargeFonts() = Frame(CollectionPageUiState.Loading)
+
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable

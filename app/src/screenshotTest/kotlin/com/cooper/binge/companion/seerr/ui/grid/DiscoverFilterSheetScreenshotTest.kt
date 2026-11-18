@@ -54,7 +54,7 @@ class DiscoverFilterSheetScreenshotTest {
     @Composable
     fun rowsFont13() = Rows(SET)
 
-    /** At 1.5x and 2x the values stay on one line and are cut with an ellipsis, never over the arrow. */
+    /** At 2x the values stay on one line and are cut with an ellipsis, never over the arrow. */
     @PreviewTest
     @SeerrFontScalePreviews
     @Composable

@@ -21,7 +21,7 @@ import com.cooper.binge.companion.seerr.seerr.SeerrError
  * The Movies and TV hubs under a synthetic status bar and navigation bar, which the renderer reports as zero and the hub reads:
  * the hero edge to edge under the status bar, the rows below a status bar when there is no hero, a row still loading, and the
  * loading, empty and error pages. The Spanish frame carries the longest row titles, and the large-text frames a long hero title
- * at 1.3x, 1.5x and 2x.
+ * at 1.3x and 2x.
  */
 class DiscoverHubScreenshotTest {
     @PreviewTest

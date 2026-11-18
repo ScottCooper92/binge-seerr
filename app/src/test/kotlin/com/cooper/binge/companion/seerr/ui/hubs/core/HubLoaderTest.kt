@@ -60,19 +60,35 @@ class HubLoaderTest {
         }
 
     @Test
-    fun `a row shows as soon as it lands and the others fill in below`() =
+    fun `a row that lands before the ones above it waits so nothing moves`() =
         runTest {
             val rows = Rows()
             val loader = loader(rows)
             loader.show(listOf("a", "b", "c"))
 
             rows.answer("b", listOf(2))
-            assertEquals(listOf("b"), loader.ready().rows.map { it.key })
-            assertEquals(2, loader.ready().pending)
+            rows.answer("c", listOf(3))
+            assertSame("a is still loading, so b and c stay hidden", HubState.Loading, loader.state.value)
+
+            rows.answer("a", listOf(1))
+            assertEquals("the order asked for, whatever order they landed in", listOf("a", "b", "c"), loader.ready().rows.map { it.key })
+            assertEquals(0, loader.ready().pending)
+        }
+
+    @Test
+    fun `rows show in order up to the first one still loading`() =
+        runTest {
+            val rows = Rows()
+            val loader = loader(rows)
+            loader.show(listOf("a", "b", "c"))
 
             rows.answer("a", listOf(1))
             rows.answer("c", listOf(3))
-            assertEquals("the order asked for, whatever order they landed in", listOf("a", "b", "c"), loader.ready().rows.map { it.key })
+            assertEquals(listOf("a"), loader.ready().rows.map { it.key })
+            assertEquals(2, loader.ready().pending)
+
+            rows.answer("b", emptyList())
+            assertEquals("an empty row above drops out once it settles", listOf("a", "c"), loader.ready().rows.map { it.key })
             assertEquals(0, loader.ready().pending)
         }
 

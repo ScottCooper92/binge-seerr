@@ -198,7 +198,7 @@ class SeriesPageScreenshotTest {
     @Composable
     fun longSpanish() = Frame(SeriesPageUiState.Ready(longSeries(), seriesExtras()))
 
-    /** The facts list at font scales 1.5 and 2, below the episodes. */
+    /** The facts list at font scale 2, below the episodes. */
     @PreviewTest
     @SeerrFontScalePreviews
     @Composable
