@@ -422,13 +422,18 @@ class JobsViewModelTest {
                 vm.awaitReady()
                 collector.cancel()
                 testScheduler.runCurrent()
-                // Let a read the poll had in flight as the page left land before counting.
-                seerr.awaitCountHoldingTime("GET", "/api/v1/settings/jobs", moreThan = Int.MAX_VALUE)
+                // A read the poll had in flight as the page left finishes before counting: no real-time hold stands in for it.
+                seerr.awaitCallbacks()
+                testScheduler.runCurrent()
                 val reads = seerr.count("GET", "/api/v1/settings/jobs")
 
+                // A hundred polls' worth of virtual time. A poll left running would start a read in each, so it would count
+                // far past the one read the cancelled poll may still have on the wire, whose arrival a slow runner can delay.
                 testScheduler.advanceTimeBy(100 * vm.runningRefreshMillis)
                 testScheduler.runCurrent()
-                assertFalse(seerr.awaitCountHoldingTime("GET", "/api/v1/settings/jobs", moreThan = reads))
+                seerr.awaitCallbacks()
+                val after = seerr.count("GET", "/api/v1/settings/jobs")
+                assertTrue("the poll kept reading while the page was away: $reads reads, then $after", after - reads <= 1)
 
                 val returned = launch(start = CoroutineStart.UNDISPATCHED) { vm.uiState.collect {} }
                 testScheduler.runCurrent()
