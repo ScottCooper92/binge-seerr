@@ -68,7 +68,7 @@ class PagedList<Q, T>(
     private fun listFlow(query: Q): Flow<PagedListState<T>> =
         flow {
             emit(PagedListState.Loading)
-            val first = attempt { fetch(query, 1) }.getOrElse { return@flow emit(PagedListState.Failed(it)) }
+            val first = attempt { readPage(query, 1) }.getOrElse { return@flow emit(PagedListState.Failed(it)) }
             if (first.items.isEmpty()) return@flow emit(PagedListState.Empty)
             var shown = PagedListState.Ready(first.items, first.hasMore)
             emit(shown)
@@ -76,7 +76,7 @@ class PagedList<Q, T>(
             moreRequests.collect {
                 if (!last.hasMore) return@collect
                 emit(shown.copy(appending = true, appendFailed = false))
-                attempt { fetch(query, last.page + 1) }
+                attempt { readPage(query, last.page + 1) }
                     .onSuccess { next ->
                         last = next
                         shown = shown.copy(items = shown.items + next.items, hasMore = next.hasMore)
@@ -84,4 +84,15 @@ class PagedList<Q, T>(
                     }.onFailure { emit(shown.copy(appendFailed = true)) }
             }
         }
+
+    /** A page that adds nothing while more remain is read past, so an empty page never ends the paging. */
+    private suspend fun readPage(
+        query: Q,
+        from: Int,
+    ): SearchPage<T> {
+        var number = from
+        var page = fetch(query, number)
+        while (page.items.isEmpty() && page.hasMore) page = fetch(query, ++number)
+        return page
+    }
 }

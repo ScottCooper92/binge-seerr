@@ -68,12 +68,9 @@ fun GridPreset.startingFilters(today: String): DiscoverFilters =
 
 /** The order a preset starts in: soonest first for what is yet to come, otherwise the most popular. */
 fun GridPreset.startingSort(kind: TitleKind): DiscoverSort =
-    if (this ==
-        GridPreset.Upcoming
-    ) {
-        DiscoverSort.soonest(kind)
-    } else {
-        DiscoverSort.PopularityDesc
+    when (this) {
+        GridPreset.Upcoming -> DiscoverSort.soonest(kind)
+        else -> DiscoverSort.PopularityDesc
     }
 
 /** The dedicated route for a preset: what a server with no filter parameters is asked, and the lists that take none. */

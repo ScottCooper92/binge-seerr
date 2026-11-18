@@ -50,6 +50,31 @@ class PagedListTest {
         }
 
     @Test
+    fun `an empty page with more behind it is read past`() =
+        runTest {
+            val list =
+                listOver(MutableStateFlow("a")) { q, p ->
+                    if (p == 2) SearchPage(emptyList(), p, 4) else SearchPage(listOf("$q-$p"), p, 4)
+                }
+            advanceUntilIdle()
+            list.loadMore()
+            advanceUntilIdle()
+            assertEquals(PagedListState.Ready(listOf("a-1", "a-3"), hasMore = true), list.state.value)
+            assertEquals(listOf("a" to 1, "a" to 2, "a" to 3), calls)
+        }
+
+    @Test
+    fun `an empty first page with more behind it is read past`() =
+        runTest {
+            val list =
+                listOver(MutableStateFlow("a")) { q, p ->
+                    if (p == 1) SearchPage(emptyList(), p, 2) else SearchPage(listOf("$q-$p"), p, 2)
+                }
+            advanceUntilIdle()
+            assertEquals(PagedListState.Ready(listOf("a-2"), hasMore = false), list.state.value)
+        }
+
+    @Test
     fun `a new query starts again from its first page`() =
         runTest {
             val query = MutableStateFlow("a")

@@ -139,6 +139,12 @@ class DiscoverGridViewModelTest {
     @Test
     fun `a show's upcoming list starts on its first air date`() =
         runVm(preset = GridPreset.Upcoming, kind = TitleKind.Series) { vm ->
+            grid.answer = { _, page -> TitlePage(listOf(title(page, TitleKind.Series)), page, 1) }
+            vm.onRetry()
+            advanceUntilIdle()
+            grid.requests.clear()
+            vm.onRetry()
+            advanceUntilIdle()
             assertEquals(
                 DiscoverSort.FirstAirOldest,
                 grid.requests
@@ -207,5 +213,19 @@ class DiscoverGridViewModelTest {
             advanceUntilIdle()
             val opened = (event.await() as DiscoverGridEvent.Open).card
             assertEquals("https://server.example/movie/1", opened.webUrl)
+        }
+
+    @Test
+    fun `a page of another kind does not stop the paging`() =
+        runVm { vm ->
+            grid.answer = { _, page ->
+                if (page == 2) TitlePage(listOf(title(page, TitleKind.Series)), page, 3) else TitlePage(listOf(title(page)), page, 3)
+            }
+            vm.onRetry()
+            advanceUntilIdle()
+            vm.onLoadMore()
+            advanceUntilIdle()
+            val state = vm.uiState.value as DiscoverGridUiState.Ready
+            assertEquals(listOf(1, 3), state.cards.map { it.tmdbId })
         }
 }
