@@ -27,6 +27,7 @@ import com.cooper.binge.companion.seerr.flags.LocalFlags
 import com.cooper.binge.companion.seerr.ui.discover.title.LocalOpenTitle
 import com.cooper.binge.companion.seerr.ui.discover.title.TitleDetailEntry
 import com.cooper.binge.companion.seerr.ui.discover.title.credits.TitleCreditsEntry
+import com.cooper.binge.companion.seerr.ui.discover.title.season.SeasonEpisodesEntry
 import com.cooper.binge.companion.seerr.ui.grid.discoverGridEntries
 import com.cooper.binge.companion.seerr.ui.hub.HubSection
 import com.cooper.binge.companion.seerr.ui.hubs.DiscoverHubEntry
@@ -281,7 +282,13 @@ private fun EntryProviderScope<NavKey>.detailEntries(
                 route.tmdbId,
                 onBack = { backStack.popIfTop(route) },
                 onOpenCredits = { backStack.add(TitleCreditsRoute(route.kind, route.tmdbId)) },
+                onOpenSeason = { number, name -> backStack.add(SeasonEpisodesRoute(route.tmdbId, number, name)) },
             )
+        }
+    }
+    entry<SeasonEpisodesRoute>(metadata = DetailPane) { route ->
+        DetailPaneContent {
+            SeasonEpisodesEntry(route.tmdbId, route.seasonNumber, route.seasonName, onBack = { backStack.popIfTop(route) })
         }
     }
     entry<TitleCreditsRoute>(metadata = DetailPane) { route ->

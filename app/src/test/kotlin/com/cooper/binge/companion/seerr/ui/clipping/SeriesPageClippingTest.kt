@@ -7,6 +7,7 @@ import com.cooper.binge.companion.seerr.discover.request.RequestOptions
 import com.cooper.binge.companion.seerr.discover.request.RequestQuota
 import com.cooper.binge.companion.seerr.discover.request.SeasonChoice
 import com.cooper.binge.companion.seerr.discover.request.SeasonChoices
+import com.cooper.binge.companion.seerr.discover.title.SeasonEpisode
 import com.cooper.binge.companion.seerr.discover.title.SeasonInfo
 import com.cooper.binge.companion.seerr.discover.title.TitleExtras
 import com.cooper.binge.companion.seerr.discover.title.TitlePerson
@@ -15,6 +16,8 @@ import com.cooper.binge.companion.seerr.ui.discover.request.RequestSheetActions
 import com.cooper.binge.companion.seerr.ui.discover.request.RequestSheetContent
 import com.cooper.binge.companion.seerr.ui.discover.request.RequestSheetTarget
 import com.cooper.binge.companion.seerr.ui.discover.request.RequestSheetUiState
+import com.cooper.binge.companion.seerr.ui.discover.title.EpisodesState
+import com.cooper.binge.companion.seerr.ui.discover.title.SeasonActions
 import com.cooper.binge.companion.seerr.ui.discover.title.SeriesPageScreen
 import com.cooper.binge.companion.seerr.ui.discover.title.SeriesPageUiState
 import com.cooper.binge.companion.seerr.ui.discover.title.TitlePageActions
@@ -33,6 +36,9 @@ private const val SEASON_EPISODES = 24
 private const val RATING_CRITICS = 83
 private const val QUOTA_LIMIT = 10
 private const val QUOTA_DAYS = 7
+private const val EPISODES = 7
+private const val OVERVIEW_REPEATS = 4
+private const val LONG_EPISODE = "The One Where Everyone Finally Finds Out What Happened At The Extraordinarily Long Winter Festival"
 private const val RATING_AUDIENCE = 85
 
 private val STATUSES =
@@ -64,7 +70,17 @@ private fun worstCase(): SeriesPageUiState.Ready {
             listOf(TitleResult(TitleKind.Series, 2, "Related", "2003", null, null, null, null, TitleAvailability.None, null)),
             emptyList(),
         )
-    return SeriesPageUiState.Ready(series, extras)
+    val episodes =
+        (1..EPISODES).map {
+            SeasonEpisode(
+                it,
+                "$LONG_EPISODE $it",
+                "An overview that runs on for a good while. ".repeat(OVERVIEW_REPEATS),
+                "2020-01-01",
+                null,
+            )
+        }
+    return SeriesPageUiState.Ready(series, extras, selectedSeason = 1, episodes = mapOf(1 to EpisodesState.Ready(episodes)))
 }
 
 private fun sheetWorstCase(): RequestSheetUiState.Ready {
@@ -83,6 +99,7 @@ private fun sheetWorstCase(): RequestSheetUiState.Ready {
 }
 
 private val NO_ACTIONS = TitlePageActions({}, {}, {}, {}, {}, {}, {}, {}, {}, {})
+private val NO_SEASON_ACTIONS = SeasonActions({}, {}, { _, _ -> })
 private val NO_SHEET_ACTIONS = RequestSheetActions({}, {}, {}, {}, {}, {}, {}, {}, {})
 
 /** The series page with every season status, long names and every rating, at font scales 1.3 and 2.0, through the design system's clipping check. */
@@ -93,7 +110,10 @@ class SeriesPageClippingTest {
     @get:Rule
     val rule = createSeerrComposeRule()
 
-    private fun page(fontScale: Float) = rule.assertNoClippingAt(fontScale) { SeriesPageScreen(worstCase(), emptyFlow(), NO_ACTIONS) }
+    private fun page(fontScale: Float) =
+        rule.assertNoClippingAt(fontScale) {
+            SeriesPageScreen(worstCase(), emptyFlow(), NO_ACTIONS, NO_SEASON_ACTIONS)
+        }
 
     private fun sheet(fontScale: Float) = rule.assertNoClippingAt(fontScale) { RequestSheetContent(sheetWorstCase(), NO_SHEET_ACTIONS) }
 
@@ -114,7 +134,10 @@ class SeriesPageSpanishClippingTest {
     @get:Rule
     val rule = createSeerrComposeRule()
 
-    private fun page(fontScale: Float) = rule.assertNoClippingAt(fontScale) { SeriesPageScreen(worstCase(), emptyFlow(), NO_ACTIONS) }
+    private fun page(fontScale: Float) =
+        rule.assertNoClippingAt(fontScale) {
+            SeriesPageScreen(worstCase(), emptyFlow(), NO_ACTIONS, NO_SEASON_ACTIONS)
+        }
 
     private fun sheet(fontScale: Float) = rule.assertNoClippingAt(fontScale) { RequestSheetContent(sheetWorstCase(), NO_SHEET_ACTIONS) }
 

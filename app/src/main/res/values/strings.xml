@@ -1518,7 +1518,6 @@
     <string name="series_fact_last_aired">Last aired</string>
     <string name="series_fact_episodes">Episodes</string>
     <string name="series_fact_next_episode">Next episode</string>
-    <string name="series_fact_next_airs">Next episode airs</string>
     <string name="series_next_episode">%1$s (season %2$d, episode %3$d)</string>
     <string name="series_status_returning">Returning series</string>
     <string name="series_status_ended">Ended</string>
@@ -1529,4 +1528,7 @@
         <item quantity="other">Your quota allows %1$d more seasons</item>
     </plurals>
     <string name="request_sheet_seasons_over">Your quota has less room than the %1$d seasons still open, so this series cannot be requested now</string>
+    <string name="series_page_episodes_of">Episodes · %1$s</string>
+    <string name="series_page_view_all_episodes">View all episodes</string>
+    <string name="season_episodes_empty">No episodes listed for this season yet</string>
 </resources>

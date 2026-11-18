@@ -4,6 +4,7 @@ import com.cooper.binge.companion.seerr.discover.TitleAvailability
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.TitleResult
 import com.cooper.binge.companion.seerr.discover.title.NextEpisode
+import com.cooper.binge.companion.seerr.discover.title.SeasonEpisode
 import com.cooper.binge.companion.seerr.discover.title.SeasonInfo
 import com.cooper.binge.companion.seerr.discover.title.SeriesDetails
 import com.cooper.binge.companion.seerr.discover.title.TitleExtras
@@ -134,3 +135,35 @@ internal fun seriesExtras() =
                 TitleResult(TitleKind.Series, 3, "The Long Night", "2019", null, null, null, null, TitleAvailability.Available, null),
             ),
     )
+
+private const val EPISODE_COUNT = 8
+private const val LONG_EPISODE_NAME = "The One Where Everyone Finally Finds Out What Happened At The Extraordinarily Long Winter Festival"
+private const val UNAIRED_FROM = 7
+
+/** A season's episodes, the last of which has not aired, one without an overview and one without a still. */
+internal fun episodes(
+    count: Int = EPISODE_COUNT,
+    longNames: Boolean = false,
+) = (1..count).map {
+    SeasonEpisode(
+        number = it,
+        name = if (longNames) "$LONG_EPISODE_NAME $it" else "Episode $it",
+        overview = "A made-up episode, in which a family keeps a border town alive for one more night.".takeIf { _ -> it != 2 },
+        airDate = if (it < UNAIRED_FROM) "2020-0$it-01" else "2099-01-0${it - UNAIRED_FROM + 1}",
+        stillUrl = null,
+    )
+}
+
+/** The first season selected with its episodes read. */
+internal fun readyWithEpisodes(
+    series: SeriesDetails = fullSeries(),
+    longNames: Boolean = false,
+) = SeriesPageUiState.Ready(
+    series,
+    seriesExtras(),
+    selectedSeason = 1,
+    episodes =
+        mapOf(
+            1 to EpisodesState.Ready(episodes(longNames = longNames)),
+        ),
+)

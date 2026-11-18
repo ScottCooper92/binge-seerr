@@ -3,7 +3,6 @@ package com.cooper.binge.companion.seerr.ui.discover.title
 import android.content.res.Resources
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
-import androidx.compose.material.icons.filled.Event
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.LiveTv
@@ -33,20 +32,17 @@ internal fun SeriesDetails.factRows(
 
     fun language(code: String) = Locale(code).getDisplayLanguage(locale).replaceFirstChar { it.titlecase(locale) }
     val statusText = status?.let { seriesStatusRes(it)?.let(resources::getString) ?: it }
-    val next = nextEpisode
     return listOfNotNull(
         row(Icons.Filled.Info, R.string.title_page_fact_status, statusText),
         row(Icons.Filled.LiveTv, R.string.series_fact_networks, networks.joinToString(", ")),
         row(Icons.Filled.Person, R.string.series_fact_creators, creators.joinToString(", ")),
         row(Icons.Filled.VideoLibrary, R.string.series_fact_episodes, episodeCount?.let { locale.formatNumber(it) }),
         row(Icons.Filled.CalendarMonth, R.string.series_fact_first_aired, firstAirDate.toDisplayDate(locale)),
-        row(Icons.Filled.CalendarMonth, R.string.series_fact_last_aired, lastAirDate.toDisplayDate(locale).takeUnless { next != null }),
         row(
-            Icons.Filled.Event,
-            R.string.series_fact_next_episode,
-            next?.let { resources.getString(R.string.series_next_episode, it.name, it.seasonNumber, it.episodeNumber) },
+            Icons.Filled.CalendarMonth,
+            R.string.series_fact_last_aired,
+            lastAirDate.toDisplayDate(locale).takeUnless { nextEpisode != null },
         ),
-        row(Icons.Filled.Event, R.string.series_fact_next_airs, next?.airDate.toDisplayDate(locale)),
         row(Icons.Filled.Language, R.string.title_page_fact_original_language, originalLanguage?.let(::language)),
         row(
             Icons.Filled.Translate,

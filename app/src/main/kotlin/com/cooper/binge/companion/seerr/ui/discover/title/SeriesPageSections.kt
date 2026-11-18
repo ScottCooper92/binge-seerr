@@ -2,9 +2,13 @@ package com.cooper.binge.companion.seerr.ui.discover.title
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Event
 import androidx.compose.material.icons.filled.Tv
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -19,6 +23,7 @@ import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.component.SectionHeader
 import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.discover.title.NextEpisode
 import com.cooper.binge.companion.seerr.discover.title.SeasonInfo
 import com.cooper.binge.companion.seerr.discover.title.SeriesDetails
 import com.cooper.binge.companion.seerr.ui.discover.request.seasonLabel
@@ -39,6 +44,7 @@ internal fun SeriesDetails.metaLine(): String {
 internal fun SeriesPageBody(
     state: SeriesPageUiState.Ready,
     actions: TitlePageActions,
+    seasonActions: SeasonActions,
 ) {
     val series = state.series
     val gap = dimensionResource(DesR.dimen.padding_m)
@@ -48,7 +54,9 @@ internal fun SeriesPageBody(
         series.tagline?.let { Text(it, Modifier.padding(horizontal = gap), style = MaterialTheme.typography.titleSmall) }
         series.overview?.let { ExpandableOverview(text = it, modifier = Modifier.padding(horizontal = gap)) }
         if (series.genres.isNotEmpty()) TagRow(series.genres)
-        SeasonsGroup(series.seasons)
+        NextEpisodeRow(series.nextEpisode)
+        SeasonsGroup(series.seasons, state.selectedSeason, seasonActions.onSelect)
+        EpisodesSection(state, seasonActions)
         ItemGroup(
             title = null,
             rows = series.factRows(LocalContext.current.resources, LocalConfiguration.current.locales[0]),
@@ -72,12 +80,40 @@ internal fun SeriesPageBody(
     }
 }
 
+/** The next episode to air, where the server returned one: its title, where it falls in the show and when it airs. */
+@Composable
+private fun NextEpisodeRow(next: NextEpisode?) {
+    if (next == null) return
+    val locale = LocalConfiguration.current.locales[0]
+    val place = stringResource(R.string.series_next_episode, next.name, next.seasonNumber, next.episodeNumber)
+    val detail = listOfNotNull(place, next.airDate.toDisplayDate(locale)).joinToString(" · ")
+    ItemGroup(
+        title = null,
+        rows =
+            listOf(
+                ListItem(
+                    icon = Icons.Filled.Event,
+                    label = stringResource(R.string.series_fact_next_episode),
+                    detail = detail,
+                    supportingMaxLines = 3,
+                    clickable = false,
+                ),
+            ),
+        modifier = Modifier.padding(horizontal = dimensionResource(DesR.dimen.padding_m)),
+    )
+}
+
 /**
  * Each season with its episode count, year and, where the server holds or has been asked for it, its status. The status is
- * text in the detail line rather than a chip, so a long name at a large font still has the row's width.
+ * text in the detail line rather than a chip, so a long name at a large font still has the row's width. A tap selects the
+ * season whose episodes show below; the selected one carries a check, not a chevron, since nothing opens.
  */
 @Composable
-private fun SeasonsGroup(seasons: List<SeasonInfo>) {
+private fun SeasonsGroup(
+    seasons: List<SeasonInfo>,
+    selected: Int?,
+    onSelect: (Int) -> Unit,
+) {
     if (seasons.isEmpty()) return
     val rows =
         seasons.map { season ->
@@ -93,7 +129,16 @@ private fun SeasonsGroup(seasons: List<SeasonInfo>) {
                 label = seasonLabel(season.number, season.name),
                 detail = detail,
                 supportingMaxLines = 3,
-                clickable = false,
+                selected = season.number == selected,
+                onClick = { onSelect(season.number) },
+                trailingContent =
+                    if (season.number ==
+                        selected
+                    ) {
+                        ({ Icon(Icons.Filled.CheckCircle, contentDescription = null) })
+                    } else {
+                        ({ Spacer(Modifier) })
+                    },
             )
         }
     ItemGroup(
