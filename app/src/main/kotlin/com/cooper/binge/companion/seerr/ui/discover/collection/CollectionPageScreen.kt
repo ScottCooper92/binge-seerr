@@ -22,6 +22,8 @@ import com.binge.designsystem.component.BingeActionFooter
 import com.binge.designsystem.component.ExpandableOverview
 import com.binge.designsystem.component.SnackbarMessageKind
 import com.binge.designsystem.component.showSnackbar
+import com.binge.designsystem.layout.LayoutAnchors
+import com.binge.designsystem.layout.layoutAnchor
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.TitleAvailability
 import com.cooper.binge.companion.seerr.discover.TitleKind
@@ -34,7 +36,6 @@ import com.cooper.binge.companion.seerr.ui.discover.request.RequestSheetTarget
 import com.cooper.binge.companion.seerr.ui.discover.request.filmsSubmitLabel
 import com.cooper.binge.companion.seerr.ui.discover.request.messageRes
 import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
-import com.cooper.binge.companion.seerr.ui.state.LoadingScreen
 import com.cooper.binge.companion.seerr.ui.state.MediaHeroDetailPage
 import com.cooper.binge.companion.seerr.ui.state.MediaHeroDetailPlaceholder
 import com.cooper.binge.companion.seerr.ui.state.messageRes
@@ -64,7 +65,7 @@ internal fun CollectionPageScreen(
     scrollState: ScrollState = rememberScrollState(),
 ) {
     when (state) {
-        CollectionPageUiState.Loading -> MediaHeroDetailPlaceholder { LoadingScreen() }
+        CollectionPageUiState.Loading -> CollectionPageSkeleton(onBack = actions.onBack, modifier = modifier)
         is CollectionPageUiState.Error -> MediaHeroDetailPlaceholder { ErrorScreen(state.error, onRetry = actions.onRetry) }
         is CollectionPageUiState.Ready -> ReadyPage(state, events, actions, modifier, scrollState)
     }
@@ -119,7 +120,12 @@ private fun ReadyPage(
     ) {
         Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
         collection.overview?.let { overview ->
-            Column(Modifier.padding(horizontal = dimensionResource(DesR.dimen.padding_m))) {
+            Column(
+                Modifier
+                    .padding(
+                        horizontal = dimensionResource(DesR.dimen.padding_m),
+                    ).layoutAnchor(LayoutAnchors.section(LayoutAnchors.Detail.OVERVIEW)),
+            ) {
                 Text(stringResource(R.string.title_page_overview), style = MaterialTheme.typography.titleMedium)
                 Spacer(Modifier.height(dimensionResource(DesR.dimen.detail_meta_spacing)))
                 ExpandableOverview(text = overview)
@@ -130,7 +136,20 @@ private fun ReadyPage(
             modifier = Modifier.padding(horizontal = dimensionResource(DesR.dimen.padding_m)),
             verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
         ) {
-            collection.parts.forEach { part -> CollectionPartRow(part, onClick = { actions.onOpenTitle(part) }) }
+            collection.parts.forEachIndexed { index, part ->
+                CollectionPartRow(
+                    part,
+                    onClick = { actions.onOpenTitle(part) },
+                    modifier =
+                        if (index ==
+                            0
+                        ) {
+                            Modifier.layoutAnchor(LayoutAnchors.section(LayoutAnchors.Collection.FIRST_ITEM))
+                        } else {
+                            Modifier
+                        },
+                )
+            }
         }
         Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_l)))
     }
