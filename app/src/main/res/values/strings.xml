@@ -1444,6 +1444,10 @@
     <string name="hubs_row_watchlist">Watchlist</string>
     <string name="hubs_row_popular_movies">Popular movies</string>
     <string name="hubs_row_popular_tv">Popular series</string>
+    <string name="hubs_browse_all_movies">Browse all movies</string>
+    <string name="hubs_browse_all_tv">Browse all shows</string>
+    <string name="hubs_browse_subtitle_movies">Filter by genre, decade, provider and more</string>
+    <string name="hubs_browse_subtitle_tv">Filter by genre, network, year and rating</string>
     <string name="hubs_row_upcoming_movies">Upcoming movies</string>
     <string name="hubs_row_upcoming_tv">Upcoming series</string>
     <string name="hubs_row_genres">Genres</string>
