@@ -4,6 +4,7 @@ import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.navigation3.runtime.NavKey
@@ -97,6 +98,23 @@ class WideShellJourneyTest {
         host.compose.waitUntil(WAIT_MILLIS) { host.settingsStack() == listOf(HubRoute, RequestsRoute) }
         assertEquals(listOf<NavKey>(ShellRoute), host.stack())
         bar().assertIsDisplayed()
+    }
+
+    @Test
+    fun `a section left on Settings by a fold on another tab comes across when Settings is selected`() {
+        NavHostActivity.discoveryEnabled = true
+        host.connectDemo()
+        host.launch(HomeRoute, RequestsRoute)
+        host.compose.waitUntil(WAIT_MILLIS) { host.settingsStack() == listOf(HubRoute, RequestsRoute) }
+        host.compose.onNodeWithTag("tab_tv").performClick()
+        host.compose.waitForIdle()
+
+        host.rotate(PHONE)
+        assertEquals("nothing moves while another tab shows", listOf<NavKey>(HubRoute, RequestsRoute), host.settingsStack())
+        host.compose.onNodeWithTag("tab_settings").performClick()
+
+        host.compose.waitUntil(WAIT_MILLIS) { host.stack() == listOf(ShellRoute, RequestsRoute) }
+        assertEquals(listOf<NavKey>(HubRoute), host.settingsStack())
     }
 
     @Test
