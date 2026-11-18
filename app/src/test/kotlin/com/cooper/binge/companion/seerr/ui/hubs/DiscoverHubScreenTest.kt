@@ -163,6 +163,21 @@ class DiscoverHubScreenTest {
     }
 
     @Test
+    fun `browse all is left out where the server cannot filter`() {
+        val state = DiscoverHubUiState.Ready(emptyList(), pending = 0, refreshing = false, browseAll = false)
+        compose.setContent {
+            SeerrTheme {
+                DiscoverHubScreen(HubTab.Movies, state, onRefresh = {}, onOpenTitle = {}, onOpenGrid = {
+                    _,
+                    _,
+                    ->
+                }, onOpenRequests = {})
+            }
+        }
+        compose.onAllNodesWithText("Browse all", substring = true).assertCountEquals(0)
+    }
+
+    @Test
     fun `browse all opens the grid on the popular list of the hubs kind`() {
         val opened = mutableListOf<Pair<HubGrid, String>>()
         val state = DiscoverHubUiState.Ready(emptyList(), pending = 0, refreshing = false)

@@ -121,7 +121,7 @@ private fun HubRows(
     ShowHeroWhenItArrives(listState, hasHero = state.hero.isNotEmpty())
     LazyColumn(state = listState, modifier = Modifier.fillMaxSize(), contentPadding = contentPadding) {
         if (state.hero.isNotEmpty()) item(key = HERO_KEY) { Hero(state.hero, onOpenTitle) }
-        item(key = BROWSE_ALL_KEY) { BrowseAllRow(tab, onOpenGrid) }
+        if (state.browseAll) item(key = BROWSE_ALL_KEY) { BrowseAllRow(tab, onOpenGrid) }
         items(state.rows, key = { it.row.sliderId }) { row ->
             when (row) {
                 is HubRowUi.Cards -> CardRow(tab, row, onOpenTitle, onOpenGrid, onOpenRequests)
