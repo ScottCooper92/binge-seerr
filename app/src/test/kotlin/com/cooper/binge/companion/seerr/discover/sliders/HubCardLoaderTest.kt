@@ -20,6 +20,16 @@ class HubCardLoaderTest {
         id: Int,
     ) = TitleResult(kind, id, "t$id", "2020", "/p$id.jpg", null, null, null, TitleAvailability.Available, null)
 
+    @Test
+    fun `a title's score becomes the card's rating and an unrated title has none`() {
+        val rated = result(TitleKind.Movie, 1).copy(rating = 7.74)
+        val unrated = result(TitleKind.Movie, 2).copy(rating = 0.0)
+        val unknown = result(TitleKind.Movie, 3).copy(rating = null)
+        assertEquals(7.74f, rated.toCard("https://s/").rating)
+        assertEquals(null, unrated.toCard("https://s/").rating)
+        assertEquals(null, unknown.toCard("https://s/").rating)
+    }
+
     private class FakeTitles(
         private val results: List<TitleResult>,
         private val supported: Boolean = true,

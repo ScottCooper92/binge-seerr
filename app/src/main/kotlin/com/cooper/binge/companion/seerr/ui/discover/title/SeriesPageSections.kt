@@ -21,16 +21,22 @@ import com.binge.designsystem.component.SectionHeader
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.title.NextEpisode
 import com.cooper.binge.companion.seerr.discover.title.SeriesDetails
+import com.cooper.binge.companion.seerr.discover.title.TitleRatings
+import com.cooper.binge.companion.seerr.discover.title.trailerUrl
+import com.cooper.binge.companion.seerr.ui.discover.request.seasonLabel
+import java.util.Locale
 import com.binge.designsystem.R as DesR
 
 private const val MINUTES_PER_HOUR = 60
 
-/** The line under the title: first air year, episode runtime, season count and certification, whichever the server gave. */
+/** The series' stats: rating with its votes, first air year, episode runtime and certification, then the server's other ratings. */
 @Composable
-internal fun SeriesDetails.metaLine(): String {
+internal fun SeriesDetails.titleStats(
+    locale: Locale,
+    ratings: TitleRatings?,
+): TitleStats {
     val runtime = episodeRuntimeMinutes?.let { stringResource(R.string.series_page_runtime, it) }
-    val seasonsText = seasonCount?.let { pluralStringResource(R.plurals.series_page_season_count, it, it) }
-    return listOfNotNull(firstAirYear, runtime, seasonsText, certification).joinToString(" · ")
+    return titleStats(voteAverage, voteCount, firstAirYear, runtime, certification, ratings, locale)
 }
 
 /** What the page says below its hero. A section the server gave nothing for is not drawn. */
@@ -43,11 +49,15 @@ internal fun SeriesPageBody(
     val series = state.series
     val gap = dimensionResource(DesR.dimen.padding_m)
     Column(verticalArrangement = Arrangement.spacedBy(gap)) {
-        StatusRow(series.standard, series.fourK)
-        StatsRow(series.voteAverage, state.extras?.ratings)
-        series.tagline?.let { Text(it, Modifier.padding(horizontal = gap), style = MaterialTheme.typography.titleSmall) }
+        val context = LocalContext.current
+        TitleStatsRows(series.titleStats(LocalConfiguration.current.locales[0], state.extras?.ratings))
+        TitleActions(
+            model = titleActionsModel(series.standard, series.fourK),
+            onRequest = actions.onRequest,
+            onTrailer = series.videos.trailerUrl()?.let { url -> { actions.onOpenUrl(url) } },
+            onShare = { context.shareTitle(series.name, series.webUrl) },
+        )
         series.overview?.let { ExpandableOverview(text = it, modifier = Modifier.padding(horizontal = gap)) }
-        if (series.genres.isNotEmpty()) TagRow(series.genres)
         NextEpisodeRow(series.nextEpisode)
         EpisodesSection(state, seasonActions)
         ItemGroup(

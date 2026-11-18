@@ -12,17 +12,6 @@ data class HubTile(
     val imageUrl: String?,
 )
 
-/** One item a hub row loads: a poster card, or a category tile. */
-sealed interface HubItem {
-    data class Card(
-        val card: HubCard,
-    ) : HubItem
-
-    data class Tile(
-        val tile: HubTile,
-    ) : HubItem
-}
-
 /** Whether a row is a row of category tiles (genres, studios, networks), as against poster cards. */
 fun HubRow.isTileRow(): Boolean = this is HubRow.Genres || this is HubRow.Studios || this is HubRow.Networks
 

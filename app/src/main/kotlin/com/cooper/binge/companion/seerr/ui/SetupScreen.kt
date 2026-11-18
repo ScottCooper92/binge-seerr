@@ -125,6 +125,7 @@ internal fun SetupError.messageRes(): Int =
         SetupError.Unreachable -> R.string.setup_error_unreachable
         SetupError.UnreachableNotLocal -> R.string.setup_error_unreachable_not_local
         SetupError.LocalNetworkDenied -> R.string.setup_error_local_network_denied
+        SetupError.ClientCertificateNeeded -> R.string.setup_error_client_certificate
         SetupError.Unknown -> R.string.setup_error_unknown
         SetupError.LinkExpired -> R.string.setup_error_link_expired
         SetupError.HandOffSessionRejected -> R.string.setup_error_handoff_session_rejected

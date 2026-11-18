@@ -14,6 +14,7 @@ import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.grid.GridPreset
 import com.cooper.binge.companion.seerr.ui.DiscoverGridRoute
 import com.cooper.binge.companion.seerr.ui.HomeRoute
+import com.cooper.binge.companion.seerr.ui.RequestsRoute
 import com.cooper.binge.companion.seerr.ui.ShellRoute
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
@@ -38,7 +39,7 @@ private const val STUDIOS = 8
 
 /**
  * The Movies hub through the real nav host, on the demo server: a genre tile and a row's "See all" each open the grid with the
- * preset they stand for, and Back returns to the hub.
+ * preset they stand for, the Recent requests row's "See all" opens the request browser, and Back returns to the hub.
  */
 @HiltAndroidTest
 @RunWith(RobolectricTestRunner::class)
@@ -52,10 +53,10 @@ class HubToGridJourneyTest {
         NavHostActivity.discoveryEnabled = false
     }
 
-    private fun openMoviesHub() {
+    private fun openMoviesHub(seedSliders: Boolean = true) {
         NavHostActivity.discoveryEnabled = true
         host.connectDemo()
-        host.api { it.updateDiscoverSliders(movieSliders()) }
+        if (seedSliders) host.api { it.updateDiscoverSliders(movieSliders()) }
         host.launch(HomeRoute)
         host.awaitShowing(host.string(R.string.hub_section_requests))
         host.compose.onNodeWithTag("tab_movies").performClick()
@@ -93,6 +94,18 @@ class HubToGridJourneyTest {
     }
 
     private fun awaitStack(vararg stack: NavKey) = host.compose.waitUntil(WAIT_MILLIS) { host.stack() == stack.toList() }
+
+    @Test
+    fun `see all on the recent requests row opens the request browser and Back returns to the hub`() {
+        openMoviesHub(seedSliders = false)
+        scrollHubTo(host.string(R.string.hubs_row_recent_requests))
+        host.compose.onNodeWithContentDescription("See all in ${host.string(R.string.hubs_row_recent_requests)}").performClick()
+
+        awaitStack(ShellRoute, RequestsRoute)
+        host.back()
+        awaitStack(ShellRoute)
+        host.awaitShowing(host.string(R.string.hubs_row_recent_requests))
+    }
 
     @Test
     fun `a genre tile opens the grid on that genre and Back returns to the hub`() {

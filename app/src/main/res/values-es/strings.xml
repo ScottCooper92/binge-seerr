@@ -29,6 +29,7 @@
     <string name="setup_error_rejected">El servidor rechazó las credenciales.</string>
     <string name="setup_error_unreachable">No se pudo conectar con el servidor.</string>
     <string name="setup_error_local_network_denied">Android está bloqueando el acceso a tu red local. Permítelo para esta aplicación y vuelve a intentarlo.</string>
+    <string name="setup_error_client_certificate">Este servidor pide un certificado de cliente y esta aplicación todavía no puede enviarlo. Conéctate por una dirección que no lo pida, por ejemplo en tu red doméstica, o consulta a quien administra el servidor.</string>
     <string name="setup_local_network_explanation">Este servidor está en tu red local. Android pide tu permiso antes de que una aplicación pueda acceder a otros dispositivos de ella.</string>
     <string name="local_network_allow">Permitir acceso a la red local</string>
     <string name="local_network_allow_short">Permitir acceso</string>
@@ -952,6 +953,8 @@
     <string name="hub_unreachable_body">No respondió. Puede estar apagado o haber cambiado de dirección. Comprueba el servidor y reintenta.</string>
     <string name="hub_local_network_headline">El acceso a la red local está desactivado</string>
     <string name="hub_local_network_body">Android impide que esta aplicación llegue a tu servidor en tu red local. Permite el acceso a la red local y se volverá a conectar.</string>
+    <string name="hub_client_certificate_headline">Este servidor necesita un certificado de cliente</string>
+    <string name="hub_client_certificate_body">El servidor respondió, pero pide un certificado de cliente y esta aplicación todavía no puede enviarlo. Conéctate por una dirección que no lo pida, por ejemplo en tu red doméstica, o consulta a quien administra el servidor.</string>
     <string name="hub_unauthorized_headline">Hay que reconectar</string>
     <string name="hub_couldnt_load_headline">Todavía conectando…</string>
     <string name="hub_couldnt_load_body">El servidor respondió, pero el panel aún no se pudo cargar. Puede pasar en el primer arranque mientras la conexión se asienta. Reintentando automáticamente.</string>
@@ -1400,6 +1403,14 @@
     <string name="title_page_request">Pedir</string>
     <string name="title_page_runtime">%1$d h %2$d min</string>
     <string name="title_page_status_4k">%1$s · 4K</string>
+    <string name="title_page_request_4k">Pedir en 4K</string>
+    <string name="title_page_status_hd">%1$s · HD</string>
+    <string name="title_page_action_trailer">Tráiler</string>
+    <string name="title_page_action_share">Compartir</string>
+    <string name="title_page_stat_released">Estreno</string>
+    <string name="title_page_stat_runtime">Duración</string>
+    <string name="title_page_stat_rated">Clasificación</string>
+    <string name="title_page_stat_votes">%1$s votos</string>
     <string name="title_page_stat_rating">Nota</string>
     <string name="title_page_stat_critics">Crítica</string>
     <string name="title_page_stat_audience">Público</string>
@@ -1451,11 +1462,6 @@
         <item quantity="other">%1$d episodios</item>
     </plurals>
     <string name="series_page_runtime">%1$d min</string>
-    <plurals name="series_page_season_count">
-        <item quantity="one">%1$d temporada</item>
-        <item quantity="many">%1$d de temporadas</item>
-        <item quantity="other">%1$d temporadas</item>
-    </plurals>
     <string name="series_fact_networks">Cadenas</string>
     <string name="series_fact_creators">Creada por</string>
     <string name="series_fact_first_aired">Primera emisión</string>

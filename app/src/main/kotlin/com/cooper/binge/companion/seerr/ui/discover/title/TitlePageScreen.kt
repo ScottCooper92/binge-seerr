@@ -11,9 +11,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
-import androidx.compose.ui.res.stringResource
-import com.binge.designsystem.component.BingeActionFooter
-import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.TitleResult
 import com.cooper.binge.companion.seerr.ui.discover.request.RequestSheet
 import com.cooper.binge.companion.seerr.ui.discover.request.RequestSheetTarget
@@ -38,7 +35,7 @@ class TitlePageActions(
     val onOpenCredits: () -> Unit,
 )
 
-/** The film page: a hero, the facts and people, and Request pinned below; a request is the primary action. */
+/** The film page: a hero, its stats, and the actions, with Request first; then the facts and people. */
 @Composable
 internal fun TitlePageScreen(
     state: TitlePageUiState,
@@ -70,15 +67,18 @@ private fun ReadyPage(
         }
     }
     val movie = state.movie
+    val context = LocalContext.current
     MediaHeroDetailPage(
         title = movie.title,
         backdropUrl = movie.backdropUrl ?: movie.posterUrl,
-        metaText = movie.metaLine(),
+        metaText = "",
+        genres = movie.genres,
+        tagline = movie.tagline,
         onBack = actions.onBack,
         modifier = modifier,
         snackbarHostState = snackbar,
         scrollState = scrollState,
-        footer = if (state.mayRequest) ({ BingeActionFooter(stringResource(R.string.title_page_request), actions.onRequest) }) else null,
+        topBarActions = { glassAlpha -> ShareBarAction(glassAlpha) { context.shareTitle(movie.title, movie.webUrl) } },
     ) {
         Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
         TitlePageBody(state, actions)

@@ -10,8 +10,9 @@ data class HubGrid(
 )
 
 /**
- * The grid a row's "see all" opens, or null for a row with none: recently added and recent requests are the server's own
- * lists, and a custom search, a keyword set or a streaming set of several ids has no single preset to start from.
+ * The grid a row's "see all" opens, or null for a row with none: recently added is the server's own list, recent requests opens
+ * the request browser instead of the grid, and a custom search, a keyword set or a streaming set of several ids has no single
+ * preset to start from.
  */
 fun HubRow.seeAll(): HubGrid? =
     when (this) {

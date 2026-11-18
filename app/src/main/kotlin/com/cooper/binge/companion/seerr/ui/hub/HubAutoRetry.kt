@@ -53,5 +53,6 @@ class HubAutoRetry(
 private fun ConnectionHealth.isRetryable(): Boolean =
     this == ConnectionHealth.Unreachable ||
         this == ConnectionHealth.LocalNetworkDenied ||
+        this == ConnectionHealth.ClientCertificateNeeded ||
         this == ConnectionHealth.CouldNotLoad ||
         this == ConnectionHealth.Unauthorized

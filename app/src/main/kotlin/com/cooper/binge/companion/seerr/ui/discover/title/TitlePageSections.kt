@@ -1,21 +1,24 @@
 package com.cooper.binge.companion.seerr.ui.discover.title
 
+import android.icu.text.CompactDecimalFormat
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Collections
 import androidx.compose.material.icons.filled.PlayCircle
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.ThumbUp
 import androidx.compose.material.icons.filled.Verified
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material.icons.outlined.Shield
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.BingeTag
@@ -30,7 +33,6 @@ import com.binge.designsystem.component.MediaCardStatus
 import com.binge.designsystem.component.MediaCarousel
 import com.binge.designsystem.component.PersonCard
 import com.binge.designsystem.component.SectionHeader
-import com.binge.designsystem.component.StatusChip
 import com.binge.designsystem.component.WrappingRow
 import com.binge.designsystem.theme.BingeSentiment
 import com.cooper.binge.companion.seerr.R
@@ -40,19 +42,13 @@ import com.cooper.binge.companion.seerr.discover.title.MovieDetails
 import com.cooper.binge.companion.seerr.discover.title.TitlePerson
 import com.cooper.binge.companion.seerr.discover.title.TitleRatings
 import com.cooper.binge.companion.seerr.discover.title.TitleVideo
-import com.cooper.binge.companion.seerr.discover.title.VersionState
+import com.cooper.binge.companion.seerr.discover.title.trailerUrl
 import com.cooper.binge.companion.seerr.seerr.toTmdbPosterUrl
+import java.util.Locale
 import com.binge.designsystem.R as DesR
 
 private const val MINUTES_PER_HOUR = 60
-private const val STATS_PER_ROW = 3
-
-/** The line under the title: year, runtime and certification, whichever the server gave. */
-@Composable
-internal fun MovieDetails.metaLine(): String {
-    val runtime = runtimeMinutes?.let { stringResource(R.string.title_page_runtime, it / MINUTES_PER_HOUR, it % MINUTES_PER_HOUR) }
-    return listOfNotNull(year, runtime, certification).joinToString(" · ")
-}
+private const val LARGE_FONT_SCALE = 1.5f
 
 /** What the page says below its hero. A section the server gave nothing for is not drawn. */
 @Composable
@@ -63,11 +59,17 @@ internal fun TitlePageBody(
     val movie = state.movie
     val gap = dimensionResource(DesR.dimen.padding_m)
     Column(verticalArrangement = Arrangement.spacedBy(gap)) {
-        StatusRow(movie.standard, movie.fourK)
-        StatsRow(movie.voteAverage, state.extras?.ratings)
-        movie.tagline?.let { Text(it, Modifier.padding(horizontal = gap), style = MaterialTheme.typography.titleSmall) }
+        val context = LocalContext.current
+        TitleStatsRows(
+            movie.titleStats(LocalConfiguration.current.locales[0], state.extras?.ratings),
+        )
+        TitleActions(
+            model = titleActionsModel(movie.standard, movie.fourK),
+            onRequest = actions.onRequest,
+            onTrailer = movie.videos.trailerUrl()?.let { url -> { actions.onOpenUrl(url) } },
+            onShare = { context.shareTitle(movie.title, movie.webUrl) },
+        )
         movie.overview?.let { ExpandableOverview(text = it, modifier = Modifier.padding(horizontal = gap)) }
-        if (movie.genres.isNotEmpty()) TagRow(movie.genres)
         ItemGroup(
             title = null,
             rows = movie.factRows(LocalContext.current.resources, LocalConfiguration.current.locales[0]),
@@ -106,43 +108,64 @@ internal fun TitlePageBody(
     }
 }
 
+/** The movie's stats: rating with its votes, release year, runtime and certification, then the server's other ratings. */
 @Composable
-internal fun StatusRow(
-    standardVersion: VersionState,
-    fourKVersion: VersionState?,
-) {
-    val standard = standardVersion.availability.label()
-    val fourK = fourKVersion?.availability?.label()
-    if (standard == null && fourK == null) return
-    Row(
-        Modifier.padding(horizontal = dimensionResource(DesR.dimen.padding_m)),
-        horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
-    ) {
-        standard?.let { StatusChip(it.first, it.second) }
-        fourK?.let { StatusChip(stringResource(R.string.title_page_status_4k, it.first), it.second) }
-    }
+internal fun MovieDetails.titleStats(
+    locale: Locale,
+    ratings: TitleRatings?,
+): TitleStats {
+    val runtime = runtimeMinutes?.let { stringResource(R.string.title_page_runtime, it / MINUTES_PER_HOUR, it % MINUTES_PER_HOUR) }
+    return titleStats(voteAverage, voteCount, year, runtime, certification, ratings, locale)
 }
 
+/** The stats of a title page: the row Binge shows, and the ratings only this server has, in a second row of the same style. */
+internal class TitleStats(
+    val main: List<DetailStat>,
+    val ratings: List<DetailStat>,
+)
+
 @Composable
-internal fun StatsRow(
+@Suppress("LongParameterList")
+internal fun titleStats(
     voteAverage: Double?,
+    voteCount: Int?,
+    year: String?,
+    runtime: String?,
+    certification: String?,
     ratings: TitleRatings?,
-) {
-    val locale = LocalConfiguration.current.locales[0]
-    val stats =
+    locale: Locale,
+): TitleStats {
+    val votes = voteCount?.let { stringResource(R.string.title_page_stat_votes, compactNumber(it, locale)) }
+    val ratingLabel = votes ?: stringResource(R.string.title_page_stat_rating)
+    val main =
         listOfNotNull(
-            voteAverage?.let {
-                DetailStat(Icons.Filled.Star, "%.1f".format(locale, it), stringResource(R.string.title_page_stat_rating))
-            },
+            voteAverage?.let { DetailStat(Icons.Filled.Star, "%.1f".format(locale, it), ratingLabel) },
+            year?.let { DetailStat(Icons.Filled.CalendarMonth, it, stringResource(R.string.title_page_stat_released)) },
+            runtime?.let { DetailStat(Icons.Filled.Schedule, it, stringResource(R.string.title_page_stat_runtime)) },
+            certification?.let { DetailStat(Icons.Outlined.Shield, it, stringResource(R.string.title_page_stat_rated)) },
+        )
+    val other =
+        listOfNotNull(
             ratings?.criticsPercent?.let { DetailStat(Icons.Filled.Verified, "$it%", stringResource(R.string.title_page_stat_critics)) },
-            ratings?.audiencePercent?.let { DetailStat(Icons.Filled.Star, "$it%", stringResource(R.string.title_page_stat_audience)) },
+            ratings?.audiencePercent?.let { DetailStat(Icons.Filled.ThumbUp, "$it%", stringResource(R.string.title_page_stat_audience)) },
             ratings?.imdbScore?.let {
                 DetailStat(Icons.Filled.Star, "%.1f".format(locale, it), stringResource(R.string.title_page_stat_imdb))
             },
         )
-    // Three to a row at most, split evenly (2 + 2, not 3 + 1): a longer row breaks a label mid-word at large text.
-    if (stats.isNotEmpty()) stats.chunked(evenRowSize(stats.size)).forEach { DetailStatRow(stats = it) }
+    return TitleStats(main, other)
 }
+
+/** At a large font a label of four across breaks mid-word, so the stats go two to a row from [LARGE_FONT_SCALE]. */
+@Composable
+internal fun TitleStatsRows(stats: TitleStats) {
+    val perRow = if (LocalDensity.current.fontScale >= LARGE_FONT_SCALE) 2 else Int.MAX_VALUE
+    (stats.main.chunked(perRow) + stats.ratings.chunked(perRow)).forEach { DetailStatRow(stats = it) }
+}
+
+private fun compactNumber(
+    value: Int,
+    locale: Locale,
+): String = CompactDecimalFormat.getInstance(locale, CompactDecimalFormat.CompactStyle.SHORT).format(value.toLong())
 
 @Composable
 internal fun TagRow(labels: List<String>) {
@@ -222,9 +245,3 @@ internal fun TitleAvailability.label(): Pair<String, BingeSentiment>? =
 
 @Composable
 private fun TitleAvailability.cardStatus(): MediaCardStatus? = label()?.let { (text, sentiment) -> MediaCardStatus(text, sentiment) }
-
-/** How many stats go in each row: at most [STATS_PER_ROW], with the rows as even as they can be. */
-private fun evenRowSize(count: Int): Int {
-    val rows = (count + STATS_PER_ROW - 1) / STATS_PER_ROW
-    return (count + rows - 1) / rows.coerceAtLeast(1)
-}

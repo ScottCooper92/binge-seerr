@@ -87,8 +87,8 @@ class SeerrConnection(
      * connection exists.
      */
     val health: Flow<SeerrConnectionHealth> =
-        combine(store.credentials, healthMonitor.health) { saved, reported ->
-            if (saved == null) SeerrConnectionHealth.NotConnected else reported.toSeerr()
+        combine(store.credentials, healthMonitor.health, healthMonitor.clientCertificateNeeded) { saved, reported, certificate ->
+            if (saved == null) SeerrConnectionHealth.NotConnected else reported.toSeerr(certificate)
         }.distinctUntilChanged()
 
     /**

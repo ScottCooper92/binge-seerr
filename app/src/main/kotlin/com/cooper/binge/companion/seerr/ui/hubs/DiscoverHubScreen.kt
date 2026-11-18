@@ -74,6 +74,7 @@ fun DiscoverHubScreen(
     onRefresh: () -> Unit,
     onOpenTitle: (HubCard) -> Unit,
     onOpenGrid: (HubGrid, String) -> Unit,
+    onOpenRequests: () -> Unit,
 ) {
     val title = stringResource(if (tab == HubTab.Movies) R.string.hubs_title_movies else R.string.hubs_title_tv)
     val hasHero = (state as? DiscoverHubUiState.Ready)?.hero?.isNotEmpty() == true
@@ -86,7 +87,7 @@ fun DiscoverHubScreen(
             is DiscoverHubUiState.Error -> ErrorScreen(state.error, Modifier.padding(inner), onRetry = onRefresh)
             is DiscoverHubUiState.Ready ->
                 BingePullToRefresh(isRefreshing = state.refreshing, onRefresh = onRefresh, indicatorTopInset = statusBar) {
-                    HubRows(tab, state, inner, onOpenTitle, onOpenGrid)
+                    HubRows(tab, state, inner, onOpenTitle, onOpenGrid, onOpenRequests)
                 }
         }
         if (hasHero) {
@@ -110,6 +111,7 @@ private fun HubRows(
     contentPadding: PaddingValues,
     onOpenTitle: (HubCard) -> Unit,
     onOpenGrid: (HubGrid, String) -> Unit,
+    onOpenRequests: () -> Unit,
 ) {
     val listState = rememberLazyListState()
     ShowHeroWhenItArrives(listState, hasHero = state.hero.isNotEmpty())
@@ -117,7 +119,7 @@ private fun HubRows(
         if (state.hero.isNotEmpty()) item(key = HERO_KEY) { Hero(state.hero, onOpenTitle) }
         items(state.rows, key = { it.row.sliderId }) { row ->
             when (row) {
-                is HubRowUi.Cards -> CardRow(tab, row, onOpenTitle, onOpenGrid)
+                is HubRowUi.Cards -> CardRow(tab, row, onOpenTitle, onOpenGrid, onOpenRequests)
                 is HubRowUi.Tiles -> TileRow(tab, row, onOpenGrid)
             }
         }
@@ -132,19 +134,25 @@ private fun CardRow(
     row: HubRowUi.Cards,
     onOpenTitle: (HubCard) -> Unit,
     onOpenGrid: (HubGrid, String) -> Unit,
+    onOpenRequests: () -> Unit,
 ) {
     val title = row.row.title(tab)
     val grid = row.row.seeAll()
     MediaCarousel(
         title = title,
-        onMoreClick = grid?.let { { onOpenGrid(it, title) } },
+        onMoreClick =
+            when {
+                grid != null -> ({ onOpenGrid(grid, title) })
+                row.row is HubRow.RecentRequests -> onOpenRequests
+                else -> null
+            },
         items = row.cards,
         itemKey = { it.kind.name + it.tmdbId },
     ) { _, card ->
         MediaCard(
             posterUrl = card.artworkUrl,
             title = card.name,
-            rating = null,
+            rating = card.rating,
             onClick = { onOpenTitle(card) },
             modifier = Modifier.width(dimensionResource(DesR.dimen.card_width)),
             status = card.availability.toStatus(),
@@ -178,7 +186,10 @@ private fun Hero(
     hero: List<HubHero>,
     onOpenTitle: (HubCard) -> Unit,
 ) {
-    val items = hero.map { HeroItem(id = it.tmdbId, imageUrl = it.backdropUrl, title = it.name, rating = it.rating, year = it.year) }
+    val items =
+        hero.map {
+            HeroItem(id = it.tmdbId, imageUrl = it.backdropUrl, title = it.name, rating = it.rating, genres = it.genres, rank = it.rank)
+        }
     HeroCarousel(
         items = items,
         onItemClick = { id -> hero.firstOrNull { it.tmdbId == id }?.let { onOpenTitle(it.toCard()) } },
