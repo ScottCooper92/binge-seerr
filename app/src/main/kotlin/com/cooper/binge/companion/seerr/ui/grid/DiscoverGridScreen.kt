@@ -94,7 +94,13 @@ internal fun DiscoverGridScreen(
             },
     ) { padding ->
         Box(Modifier.fillMaxSize().padding(padding)) {
-            val inner = navOverlayPadding(PaddingValues(dimensionResource(DesR.dimen.padding_m)))
+            val inner =
+                navOverlayPadding(
+                    PaddingValues(
+                        horizontal = dimensionResource(DesR.dimen.screen_content_inset),
+                        vertical = dimensionResource(DesR.dimen.padding_m),
+                    ),
+                )
             when (state) {
                 is DiscoverGridUiState.Loading -> LoadingScreen()
                 is DiscoverGridUiState.Empty ->
@@ -153,7 +159,7 @@ private fun ActiveFilterChips(
     val today = remember { LocalDate.now() }
     LazyRow(
         modifier = Modifier.fillMaxWidth(),
-        contentPadding = PaddingValues(horizontal = dimensionResource(DesR.dimen.padding_m)),
+        contentPadding = PaddingValues(horizontal = dimensionResource(DesR.dimen.screen_content_inset)),
         horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
     ) {
         controls.chip?.let { chip ->
