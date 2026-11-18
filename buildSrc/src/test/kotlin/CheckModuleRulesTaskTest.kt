@@ -123,26 +123,25 @@ class CheckModuleRulesTaskTest {
         val project: Project,
         private val rules: List<ModuleRule>,
     ) {
-        private val names = linkedSetOf<String>()
+        private var resolved = false
 
         fun classpath(
             vararg coordinates: String,
             project: Module? = null,
-            name: String = "runtime",
         ) {
-            names += name
-            val configuration = this.project.configurations.maybeCreate(name)
-            coordinates.forEach { this.project.dependencies.add(name, it) }
-            project?.let { this.project.dependencies.add(configuration.name, this.project.dependencies.project(mapOf("path" to it.project.path))) }
+            resolved = true
+            this.project.configurations.maybeCreate("runtime")
+            coordinates.forEach { this.project.dependencies.add("runtime", it) }
+            project?.let { this.project.dependencies.add("runtime", this.project.dependencies.project(mapOf("path" to it.project.path))) }
         }
 
-        fun check(classpaths: List<String> = listOf("runtime")) {
+        fun check() {
             val task =
                 project.tasks.register("checkModuleRules", CheckModuleRulesTask::class.java) {
                     module.set(project.path)
                     this.rules = this@Module.rules
-                    classpaths.filter { it in names }.forEach { name ->
-                        graphs.add(project.configurations.getByName(name).incoming.resolutionResult.rootComponent.map { ModuleGraph(project.path, name, it) })
+                    if (resolved) {
+                        graphs.add(project.configurations.getByName("runtime").incoming.resolutionResult.rootComponent.map { ModuleGraph(project.path, "runtime", it) })
                     }
                 }.get()
             task.check()
