@@ -4,7 +4,9 @@ import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isSelected
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -45,6 +47,9 @@ private const val WAIT_MILLIS = 5_000L
 
 /** A film the demo server knows. */
 private const val DEMO_FILM_ID = 10378
+
+/** A film the demo server lists on its Movies hub. */
+private const val DEMO_FILM_NAME = "Spirited Away"
 
 /**
  * The tab bar on a window wide enough for two panes, through the real nav host. A section stays on the app's stack at every
@@ -225,6 +230,32 @@ class WideShellJourneyTest {
 
         host.compose.waitUntil(WAIT_MILLIS) { host.stack() == listOf<NavKey>(ShellRoute) }
         bar().assertIsDisplayed()
+    }
+
+    @Test
+    fun `a title opened from the Movies hub shows Back and Back returns to the hub`() {
+        NavHostActivity.discoveryEnabled = true
+        host.connectDemo()
+        host.launch(HomeRoute)
+        host.compose.waitUntil(WAIT_MILLIS) {
+            host.compose
+                .onAllNodes(hasTestTag("tab_movies"))
+                .fetchSemanticsNodes()
+                .isNotEmpty()
+        }
+        host.compose.onNodeWithTag("tab_movies").performClick()
+        host.awaitShowing(host.string(R.string.hubs_browse_all_movies))
+
+        host.compose.onAllNodes(hasText(DEMO_FILM_NAME, substring = true) and hasClickAction())[0].performClick()
+        host.compose.waitUntil(WAIT_MILLIS) { host.stack().let { it.size == 2 && it[1] is TitleDetailRoute } }
+
+        awaitBackControl()
+        host.compose
+            .onNodeWithContentDescription(host.string(DesR.string.cd_navigate_back))
+            .assertIsDisplayed()
+            .performClick()
+        host.compose.waitUntil(WAIT_MILLIS) { host.stack() == listOf<NavKey>(ShellRoute) }
+        host.awaitShowing(host.string(R.string.hubs_browse_all_movies))
     }
 
     @Test
