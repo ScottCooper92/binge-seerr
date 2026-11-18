@@ -27,7 +27,7 @@ import com.cooper.binge.companion.seerr.ui.hubs.toStatus
 import com.binge.designsystem.R as DesR
 
 /**
- * One search result. A movie, a series, a person or a collection opens through [onClick]; every kind has a page of its own now.
+ * One search result. A movie, a series, a collection or a person opens through [onClick].
  */
 @Composable
 internal fun TitleResultRow(
