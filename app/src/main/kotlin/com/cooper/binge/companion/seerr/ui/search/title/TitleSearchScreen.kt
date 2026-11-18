@@ -133,6 +133,14 @@ private fun ResultsList(
     contentPadding: PaddingValues,
 ) {
     val listState = rememberLazyListState()
+    LaunchedEffect(state.type) { listState.scrollToItem(0) }
+    if (state.results.isEmpty() && !state.hasMore && !state.appending) {
+        EmptyScreen(
+            message = stringResource(R.string.title_search_none_message, state.text),
+            title = stringResource(R.string.title_search_none_title),
+        )
+        return
+    }
     val nearEnd by remember {
         derivedStateOf {
             val info = listState.layoutInfo
