@@ -9,6 +9,7 @@ import com.cooper.binge.companion.seerr.preview.SeerrFontScalePreviews
 import com.cooper.binge.companion.seerr.preview.SeerrScreenPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrScreenStatePreview
 import com.cooper.binge.companion.seerr.preview.SeerrSpanishPreviews
+import com.cooper.binge.companion.seerr.preview.SeerrTabletPanesPreview
 import kotlinx.coroutines.flow.emptyFlow
 
 private const val EPISODES_PX = 1900
@@ -21,6 +22,9 @@ private val NO_ACTIONS = TitlePageActions({}, {}, {}, {}, {}, {}, {}, {}, {}, {}
 
 private val NO_SEASON_ACTIONS = SeasonActions({}, {}, { _, _ -> })
 
+/** As [NO_ACTIONS], but a network opens its grid, so the networks are links in the accent colour. */
+private val LINKED_ACTIONS = TitlePageActions({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, onOpenCompany = {})
+
 @Composable
 private fun Frame(state: SeriesPageUiState) = SeriesPageScreen(state, emptyFlow(), NO_ACTIONS, NO_SEASON_ACTIONS)
 
@@ -31,6 +35,11 @@ class SeriesPageScreenshotTest {
     @SeerrScreenPreviews
     @Composable
     fun requestable() = Frame(SeriesPageUiState.Ready(fullSeries(), seriesExtras()))
+
+    @PreviewTest
+    @SeerrTabletPanesPreview
+    @Composable
+    fun requestableTablet() = Frame(SeriesPageUiState.Ready(fullSeries(), seriesExtras()))
 
     /** The season picker sheet's content: one season in each state, the status beside the ones the server holds, the shown one checked. */
     @PreviewTest
@@ -93,6 +102,19 @@ class SeriesPageScreenshotTest {
             NO_ACTIONS,
             NO_SEASON_ACTIONS,
             scrollState = rememberScrollState(initial = LARGE_FONT_EPISODES_PX),
+        )
+
+    /** The facts with the networks as links, in the accent colour. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun factsLinked() =
+        SeriesPageScreen(
+            SeriesPageUiState.Ready(fullSeries().copy(companiesOpen = true), seriesExtras()),
+            emptyFlow(),
+            LINKED_ACTIONS,
+            NO_SEASON_ACTIONS,
+            scrollState = rememberScrollState(initial = FACTS_PX),
         )
 
     /** Where to watch on the series page: both kinds, the Stream chip chosen, and the JustWatch credit. */

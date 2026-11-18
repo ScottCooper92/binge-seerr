@@ -8,9 +8,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
@@ -31,6 +34,7 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.BingeSearchField
 import com.binge.designsystem.navOverlayPadding
+import com.binge.designsystem.searchResultColumns
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.TitleResult
 import com.cooper.binge.companion.seerr.ui.state.EmptyScreen
@@ -105,26 +109,34 @@ private fun ResultsList(
     state: TitleSearchUiState.Ready,
     actions: TitleSearchActions,
 ) {
-    val listState = rememberLazyListState()
+    val gridState = rememberLazyGridState()
     val nearEnd by remember {
         derivedStateOf {
-            val info = listState.layoutInfo
+            val info = gridState.layoutInfo
             (info.visibleItemsInfo.lastOrNull()?.index ?: 0) >= info.totalItemsCount - LOAD_MORE_AHEAD
         }
     }
-    LaunchedEffect(listState, state.hasMore, state.results.size) {
+    LaunchedEffect(gridState, state.hasMore, state.results.size) {
         if (state.hasMore) snapshotFlow { nearEnd }.distinctUntilChanged().filter { it }.collect { actions.onLoadMore() }
     }
-    LazyColumn(
-        state = listState,
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = navOverlayPadding(PaddingValues(dimensionResource(DesR.dimen.padding_m))),
-        verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
-    ) {
-        items(state.results, key = { "${it.kind}-${it.tmdbId}" }) { result ->
-            TitleResultRow(result, onClick = { actions.onOpenTitle(result) })
+    // One column on a phone, as the list always was; the wider windows fold the results into columns rather than running a row the
+    // width of a tablet. The grid is capped at the search width, not the reading column, and centred above it.
+    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(searchResultColumns()),
+            state = gridState,
+            modifier = Modifier.widthIn(max = dimensionResource(R.dimen.search_content_max_width)).fillMaxSize(),
+            contentPadding = navOverlayPadding(PaddingValues(dimensionResource(DesR.dimen.padding_m))),
+            horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
+            verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
+        ) {
+            items(state.results, key = { "${it.kind}-${it.tmdbId}" }) { result ->
+                TitleResultRow(result, onClick = { actions.onOpenTitle(result) })
+            }
+            if (state.appending || state.appendFailed) {
+                item(key = "footer", span = { GridItemSpan(maxLineSpan) }) { AppendFooter(state.appendFailed, actions.onLoadMore) }
+            }
         }
-        if (state.appending || state.appendFailed) item(key = "footer") { AppendFooter(state.appendFailed, actions.onLoadMore) }
     }
 }
 

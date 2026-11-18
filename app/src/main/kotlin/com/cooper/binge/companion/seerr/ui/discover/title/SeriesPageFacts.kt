@@ -5,6 +5,7 @@ import com.binge.companion.sdk.attempt
 import com.binge.designsystem.component.InfoRowEntry
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.title.SeriesDetails
+import com.cooper.binge.companion.seerr.discover.title.TitleCompany
 import com.cooper.binge.companion.seerr.discover.title.TitleRatings
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -19,6 +20,7 @@ internal fun SeriesDetails.factEntries(
     resources: Resources,
     locale: Locale,
     ratings: TitleRatings?,
+    onOpenCompany: ((TitleCompany) -> Unit)? = null,
 ): List<InfoRowEntry> {
     fun entry(
         label: Int,
@@ -27,7 +29,7 @@ internal fun SeriesDetails.factEntries(
     val next = nextEpisode
     return listOf(
         entry(R.string.series_fact_creators, creators.joinToString(", ")),
-        entry(R.string.series_fact_networks, networks.joinToString(", ")),
+        companyEntry(resources.getString(R.string.series_fact_networks), networks, onOpenCompany),
         entry(R.string.title_page_fact_status, status?.let { seriesStatusRes(it)?.let(resources::getString) ?: it }),
         entry(R.string.series_fact_first_aired, firstAirDate.toDisplayDate(locale)),
         entry(R.string.series_fact_last_aired, lastAirDate.toDisplayDate(locale).takeUnless { next != null }),

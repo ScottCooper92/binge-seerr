@@ -23,6 +23,7 @@ import com.binge.designsystem.component.MediaCarousel
 import com.binge.designsystem.component.PersonCard
 import com.binge.designsystem.component.SectionHeader
 import com.binge.designsystem.component.WrappingRow
+import com.binge.designsystem.isExpandedLayout
 import com.binge.designsystem.theme.BingeSentiment
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.TitleAvailability
@@ -46,14 +47,18 @@ internal fun TitlePageBody(
     val context = LocalContext.current
     val locale = LocalConfiguration.current.locales[0]
     Column(verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m))) {
-        TitleStatsRows(movie.titleStats(locale))
+        // The expanded header already shows these and the synopsis.
+        val expanded = isExpandedLayout()
+        if (!expanded) TitleStatsRows(movie.titleStats(locale))
         TitleActions(
             model = titleActionsModel(movie.standard, movie.fourK),
             onRequest = actions.onRequest,
             onTrailer = movie.videos.trailerUrl()?.let { url -> { actions.onOpenUrl(url) } },
         )
-        OverviewSection(movie.overview)
-        InfoRowList(movie.factEntries(context.resources, locale, state.extras?.ratings))
+        if (!expanded) OverviewSection(movie.overview)
+        InfoRowList(
+            movie.factEntries(context.resources, locale, state.extras?.ratings, actions.onOpenCompany.takeIf { movie.companiesOpen }),
+        )
         PeopleRow(stringResource(R.string.title_page_cast), movie.cast, actions.onOpenPerson, actions.onOpenCredits)
         PeopleRow(stringResource(R.string.title_page_crew), movie.keyCrew, actions.onOpenPerson, actions.onOpenCredits)
         WhereToWatchSection(movie.providers, actions.onOpenUrl)
