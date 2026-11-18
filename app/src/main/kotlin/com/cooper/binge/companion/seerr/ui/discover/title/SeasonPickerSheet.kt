@@ -112,15 +112,6 @@ internal fun SeasonPickerContent(
                     } else {
                         ({ Spacer(Modifier) })
                     },
-                if (isSelected) {
-                    (
-                        {
-                            Icon(Icons.Filled.Check, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                        }
-                    )
-                } else {
-                    null
-                },
             )
         }
     ItemGroup(
