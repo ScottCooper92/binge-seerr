@@ -40,7 +40,8 @@ sealed interface PagedListState<out T> {
 /**
  * A paged list over any query [Q]: the first page when the query changes, further pages on request, and a retry. A query that
  * changes while one is loading drops the old one, pages included. [fetch] is the whole of what the source contributes, and
- * [Q] is whatever it keys on: it knows nothing of what is listed, so it holds no strings and no types of the source.
+ * [Q] is whatever it keys on: it knows nothing of what is listed, so it holds no strings and no types of the source. With a
+ * [keyOf], an item whose key is already listed is dropped, and a page of nothing but repeats is read past like an empty one.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class PagedList<Q, T>(
@@ -48,6 +49,7 @@ class PagedList<Q, T>(
     query: Flow<Q>,
     private val fetch: suspend (query: Q, page: Int) -> SearchPage<T>,
     started: SharingStarted = SharingStarted.Lazily,
+    private val keyOf: ((T) -> Any)? = null,
 ) {
     private val attempt = MutableStateFlow(0)
     private val moreRequests = MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
@@ -68,7 +70,8 @@ class PagedList<Q, T>(
     private fun listFlow(query: Q): Flow<PagedListState<T>> =
         flow {
             emit(PagedListState.Loading)
-            val first = attempt { readPage(query, 1) }.getOrElse { return@flow emit(PagedListState.Failed(it)) }
+            val seen = mutableSetOf<Any>()
+            val first = attempt { readPage(query, 1, seen) }.getOrElse { return@flow emit(PagedListState.Failed(it)) }
             if (first.items.isEmpty()) return@flow emit(PagedListState.Empty)
             var shown = PagedListState.Ready(first.items, first.hasMore)
             emit(shown)
@@ -76,7 +79,7 @@ class PagedList<Q, T>(
             moreRequests.collect {
                 if (!last.hasMore) return@collect
                 emit(shown.copy(appending = true, appendFailed = false))
-                attempt { readPage(query, last.page + 1) }
+                attempt { readPage(query, last.page + 1, seen) }
                     .onSuccess { next ->
                         last = next
                         shown = shown.copy(items = shown.items + next.items, hasMore = next.hasMore)
@@ -85,14 +88,18 @@ class PagedList<Q, T>(
             }
         }
 
-    /** A page that adds nothing while more remain is read past, so an empty page never ends the paging. */
+    /** A page that adds nothing new while more remain is read past, so an empty page, or one of repeats, never ends the paging. */
     private suspend fun readPage(
         query: Q,
         from: Int,
+        seen: MutableSet<Any>,
     ): SearchPage<T> {
         var number = from
-        var page = fetch(query, number)
-        while (page.items.isEmpty() && page.hasMore) page = fetch(query, ++number)
-        return page
+        while (true) {
+            val page = fetch(query, number)
+            val added = if (keyOf == null) page.items else page.items.filter { seen.add(keyOf.invoke(it)) }
+            if (added.isNotEmpty() || !page.hasMore) return page.copy(items = added)
+            number++
+        }
     }
 }

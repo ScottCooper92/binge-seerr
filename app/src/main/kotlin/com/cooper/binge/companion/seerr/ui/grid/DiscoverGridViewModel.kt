@@ -57,7 +57,7 @@ class DiscoverGridViewModel
         val events: SharedFlow<DiscoverGridEvent> = eventFlow.asSharedFlow()
 
         private val list =
-            PagedList(viewModelScope, sortFilter.query, ::fetch)
+            PagedList(viewModelScope, sortFilter.query, ::fetch, keyOf = { it.kind to it.tmdbId })
 
         val uiState: StateFlow<DiscoverGridUiState> =
             combine(
@@ -126,7 +126,7 @@ internal fun toUiState(
         is PagedListState.Ready ->
             DiscoverGridUiState.Ready(
                 controls,
-                page.items.distinctBy { it.kind to it.tmdbId },
+                page.items,
                 page.hasMore,
                 page.appending,
                 page.appendFailed,
