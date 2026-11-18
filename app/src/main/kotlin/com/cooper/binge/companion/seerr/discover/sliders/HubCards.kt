@@ -1,6 +1,5 @@
 package com.cooper.binge.companion.seerr.discover.sliders
 
-import com.cooper.binge.companion.seerr.demo.DEMO_ORIGIN
 import com.cooper.binge.companion.seerr.discover.TitleAvailability
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.TitleListRepository
@@ -25,10 +24,7 @@ data class HubCard(
     val availability: TitleAvailability,
     /** The title's page on the server, where it opens when Binge is not there to take it. */
     val webUrl: String,
-) {
-    /** False for the demo, whose address is not a site: a tap has nowhere to go until the app has a title page of its own. */
-    val hasPage: Boolean get() = !webUrl.startsWith(DEMO_ORIGIN, ignoreCase = true)
-}
+)
 
 internal fun TitleResult.toCard(serverUrl: String): HubCard =
     HubCard(kind, tmdbId, name, year, artworkPath?.toTmdbPosterUrl(), availability, webUrl(serverUrl, kind, tmdbId))

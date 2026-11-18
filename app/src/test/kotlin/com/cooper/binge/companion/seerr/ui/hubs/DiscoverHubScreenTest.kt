@@ -3,7 +3,6 @@ package com.cooper.binge.companion.seerr.ui.hubs
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import com.cooper.binge.companion.seerr.demo.DEMO_ORIGIN
 import com.cooper.binge.companion.seerr.discover.TitleAvailability
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.sliders.HubCard
@@ -44,13 +43,5 @@ class DiscoverHubScreenTest {
         show("https://server.example/", opened)
         compose.onNodeWithText("Paper Moons").performClick()
         assertEquals(listOf(7), opened.map { it.tmdbId })
-    }
-
-    @Test
-    fun `a tap on a card does nothing in the demo`() {
-        val opened = mutableListOf<HubCard>()
-        show(DEMO_ORIGIN, opened)
-        compose.onNodeWithText("Paper Moons").performClick()
-        assertEquals(emptyList<HubCard>(), opened)
     }
 }

@@ -88,7 +88,7 @@ private fun HubRows(
                     posterUrl = card.artworkUrl,
                     title = card.name,
                     rating = null,
-                    onClick = { if (card.hasPage) onOpenTitle(card) },
+                    onClick = { onOpenTitle(card) },
                     modifier = Modifier.width(dimensionResource(DesR.dimen.card_width)),
                     status = card.availability.toStatus(),
                 )
