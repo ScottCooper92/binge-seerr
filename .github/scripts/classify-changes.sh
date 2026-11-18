@@ -13,12 +13,14 @@
 #            every path is documentation or tooling nothing compiles or packages.
 #   screens  the screenshot frames. False when no path can move a frame: tests, the exported
 #            Service, the review launcher, keep rules and the like.
-#   release  the R8 build. True only for what decides whether R8 can build the app: a build file (any
-#            *.gradle.kts), the version catalog, `gradle/` and gradle.properties, a keep rule or any .pro
-#            file, or a submodule pin (design-system, binge-companions, binge-ci, homelab-core). Binge builds
-#            release only on a tag; here a PR builds it only for those paths, and every push to main builds it
-#            regardless, so a break the filter missed shows right after the merge. The workflow itself,
-#            the manifest, resources and assets are not inputs: ordinary app code and UI changes skip it.
+#   release  the release variant's build: R8 and whether the release source set compiles. True only for
+#            what only that build reads: a build file (any *.gradle.kts), the version catalog, `gradle/` and
+#            gradle.properties, a keep rule or any .pro file, the manifest, `res/xml`, `res/raw` and assets,
+#            the release source set, .gitmodules, a submodule pin (design-system, binge-companions, binge-ci,
+#            homelab-core) or a workflow file. Binge builds release only on a tag; here a PR builds it only for
+#            those paths, and every push to main builds it regardless. A change to `src/main` code can still
+#            break the release-only compile, and a push to main is what catches that. Ordinary app code and
+#            UI changes skip it.
 #
 # Never state a skip-set path here that a bot reads or that the build reads. `.github/workflows`
 # is in no set: a change to the pipeline is validated by running the pipeline.
@@ -51,12 +53,15 @@ no_frames() {
   return 1
 }
 
-# Paths that decide whether R8 can build the app. Keep this list the same as binge-seerr's.
+# Paths that only the release variant reads, or that decide whether R8 can build the app.
 release_input() {
   case "$1" in
     *.pro | app/src/main/keepRules/*) return 0 ;;
     *.gradle.kts | libs.versions.toml | gradle/* | gradle.properties) return 0 ;;
-    design-system | binge-companions | binge-ci | homelab-core) return 0 ;;
+    design-system | binge-companions | binge-ci | homelab-core | .gitmodules) return 0 ;;
+    */src/release/* | */src/main/AndroidManifest.xml | */src/main/res/raw/* | */src/main/res/xml/* | */src/main/assets/*) return 0 ;;
+    # The pipeline is validated by running it, release job included.
+    .github/workflows/*) return 0 ;;
   esac
   return 1
 }

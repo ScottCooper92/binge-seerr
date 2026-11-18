@@ -25,7 +25,7 @@ check "docs only"                  "false false false" CLAUDE.md docs/listing/pr
 check "the Play release notes"    "false false false" distribution/whatsnew/whatsnew-en-GB
 check "scripts and tooling only"   "false false false" .github/scripts/classify-changes.sh tools/x.sh
 check "the shard script runs screenshots" "true true false" .github/scripts/shard-screenshots.sh
-check "workflows run the Gradle jobs, not R8" "true true false"    .github/workflows/ci.yml
+check "workflows run every Gradle job, R8 too" "true true true" .github/workflows/ci.yml
 check "empty diff runs everything" "true true true"
 check "a screen"                   "true true false"   "$K/ui/hub/HubScreen.kt"
 check "a frame"                    "true true false"   app/src/screenshotTestDebug/reference/x.png
@@ -41,10 +41,10 @@ check "the version catalog"        "true true true"    libs.versions.toml
 check "a build file"               "true true true"    app/build.gradle.kts
 check "a keep rule"                "true false true"   app/src/main/keepRules/app.pro
 check "a pro file outside keepRules" "true true true" app/proguard-rules.pro
-check "the release source set"     "true true false" app/src/release/kotlin/X.kt
-check "assets"                     "true true false" app/src/main/assets/x.json
-check "the manifest"               "true true false"    app/src/main/AndroidManifest.xml
-check "the data module's manifest"  "true true false"    data/src/main/AndroidManifest.xml
+check "the release source set"     "true true true" app/src/release/kotlin/X.kt
+check "assets"                     "true true true" app/src/main/assets/x.json
+check "the manifest"               "true true true"    app/src/main/AndroidManifest.xml
+check "the data module's manifest"  "true true true"    data/src/main/AndroidManifest.xml
 check "the data module's build file" "true true true"   data/build.gradle.kts
 check "the design system pin"      "true true true"    design-system
 check "the homelab-core pin"      "true true true"    homelab-core
@@ -52,7 +52,7 @@ check "the companions pin"         "true false true"   binge-companions
 check "docs with a screen"         "true true false"   CLAUDE.md "$K/ui/hub/HubScreen.kt"
 
 check "a UI-only change skips R8" "true true false" "$K/ui/hub/HubScreen.kt" app/src/main/res/values/strings.xml
-check ".gitmodules alone skips R8" "true true false" .gitmodules
+check ".gitmodules runs R8" "true true true" .gitmodules
 check "a Gradle wrapper change"     "true true true"  gradle/wrapper/gradle-wrapper.properties
 check "gradle.properties"           "true true true"  gradle.properties
 check "settings.gradle.kts"         "true true true"  settings.gradle.kts
