@@ -1,12 +1,16 @@
 package com.cooper.binge.companion.seerr.ui.nav
 
+import androidx.compose.ui.test.assertHeightIsAtLeast
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.unit.dp
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.HomeRoute
 import com.cooper.binge.companion.seerr.ui.HubRoute
@@ -102,6 +106,11 @@ class SettingsSearchJourneyTest {
         assertEquals(listOf(HubRoute, SettingsSearchRoute, own), host.stack())
         host.awaitShowing(host.string(R.string.user_settings_display_name))
         assertEquals("the page has its Back", 1, backArrows())
+        // The page opened scrolled to a row, and its bar must not have slid away with that scroll: Back is on screen at full size.
+        host.compose
+            .onNodeWithContentDescription(host.string(DesR.string.cd_navigate_back))
+            .assertIsDisplayed()
+            .assertHeightIsAtLeast(48.dp)
 
         host.back()
 
