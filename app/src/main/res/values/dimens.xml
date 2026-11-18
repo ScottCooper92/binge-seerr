@@ -60,4 +60,5 @@
     <!-- The sign-in mode tabs sit inside the step's own gutter, so the row adds none: its first tab starts at the fields' edge -->
     <dimen name="setup_mode_tabs_edge_padding">0dp</dimen>
     <dimen name="request_sheet_poster_width">64dp</dimen>
+    <dimen name="season_dropdown_max_width">180dp</dimen>
 </resources>
