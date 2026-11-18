@@ -68,6 +68,7 @@ internal fun fullMovie(
     fourK = fourK,
     mediaId = 11,
     webUrl = "https://seerr.example/movie/603",
+    releaseDate = "1999-03-31",
 )
 
 internal fun fullExtras() =
@@ -102,6 +103,7 @@ internal fun sparseMovie() =
         videos = emptyList(),
         providers = null,
         collection = null,
+        releaseDate = null,
     )
 
 internal fun longMovie() =

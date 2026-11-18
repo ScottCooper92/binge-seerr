@@ -1,51 +1,57 @@
 package com.cooper.binge.companion.seerr.ui.discover.title
 
 import android.content.res.Resources
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AttachMoney
-import androidx.compose.material.icons.filled.Business
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Language
-import androidx.compose.material.icons.filled.Paid
-import androidx.compose.material.icons.filled.Translate
-import com.binge.designsystem.component.ListItem
+import com.binge.designsystem.component.InfoRowEntry
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.title.MovieDetails
+import com.cooper.binge.companion.seerr.discover.title.TitlePerson
+import com.cooper.binge.companion.seerr.discover.title.TitleRatings
 import java.text.NumberFormat
 import java.util.Currency
 import java.util.Locale
 
-/** The film's facts as the rows of one group: each has an icon, and none opens anything. A fact the server did not give is left out. */
-internal fun MovieDetails.factRows(
+/**
+ * The film's facts as the label and value rows Binge shows: who directed it, when it came out, its languages and studios,
+ * its collection, its status, and the money and ratings the server holds. A fact the server did not give is left out.
+ */
+internal fun MovieDetails.factEntries(
     resources: Resources,
     locale: Locale,
-): List<ListItem> {
-    fun row(
-        icon: androidx.compose.ui.graphics.vector.ImageVector,
+    ratings: TitleRatings?,
+): List<InfoRowEntry> {
+    fun entry(
         label: Int,
         value: String?,
-    ) = value?.takeIf { it.isNotBlank() }?.let { ListItem(icon = icon, label = resources.getString(label), detail = it, clickable = false) }
+    ) = InfoRowEntry(resources.getString(label), value)
     // TMDB money is dollars, written the way the reader's own language writes them.
     val money =
         NumberFormat.getCurrencyInstance(locale).apply {
             currency = Currency.getInstance("USD")
             maximumFractionDigits = 0
         }
-
-    fun language(code: String) = Locale(code).getDisplayLanguage(locale).replaceFirstChar { it.titlecase(locale) }
-    return listOfNotNull(
-        row(Icons.Filled.Info, R.string.title_page_fact_status, status?.let { statusLabelRes(it)?.let(resources::getString) ?: it }),
-        row(Icons.Filled.Language, R.string.title_page_fact_original_language, originalLanguage?.let(::language)),
-        row(
-            Icons.Filled.Translate,
-            R.string.title_page_fact_spoken_languages,
-            spokenLanguageCodes.joinToString(", ", transform = ::language),
-        ),
-        row(Icons.Filled.Business, R.string.title_page_fact_studios, studios.joinToString(", ")),
-        row(Icons.Filled.AttachMoney, R.string.title_page_fact_budget, budget?.let(money::format)),
-        row(Icons.Filled.Paid, R.string.title_page_fact_revenue, revenue?.let(money::format)),
-    )
+    return listOf(
+        entry(R.string.title_page_fact_director, keyCrew.directors().joinToString(", ")),
+        entry(R.string.title_page_fact_release_date, releaseDate.toDisplayDate(locale)),
+        entry(R.string.title_page_fact_original_language, originalLanguage?.let { languageName(it, locale) }),
+        entry(R.string.title_page_fact_spoken_languages, spokenLanguageCodes.joinToString(", ") { languageName(it, locale) }),
+        entry(R.string.title_page_fact_studios, studios.joinToString(", ")),
+        entry(R.string.title_page_collection, collection?.name),
+        entry(R.string.title_page_fact_status, status?.let { statusLabelRes(it)?.let(resources::getString) ?: it }),
+        entry(R.string.title_page_fact_budget, budget?.let(money::format)),
+        entry(R.string.title_page_fact_revenue, revenue?.let(money::format)),
+    ) + ratingEntries(resources, locale, ratings)
 }
+
+/** The people whose billed job includes directing; the server lists a job as plain text, as TMDB writes it. */
+private fun List<TitlePerson>.directors(): List<String> =
+    filter { person ->
+        person.role
+            .orEmpty()
+            .split(", ")
+            .contains(DIRECTOR_JOB)
+    }.map { it.name }
+
+private const val DIRECTOR_JOB = "Director"
 
 /** The server's film status in the user's language; null for a status this app does not know, which is shown as the server wrote it. */
 private fun statusLabelRes(status: String): Int? =

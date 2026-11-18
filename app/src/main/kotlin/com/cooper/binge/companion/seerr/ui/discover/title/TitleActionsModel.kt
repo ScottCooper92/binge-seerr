@@ -3,10 +3,14 @@ package com.cooper.binge.companion.seerr.ui.discover.title
 import com.cooper.binge.companion.seerr.discover.TitleAvailability
 import com.cooper.binge.companion.seerr.discover.title.VersionState
 
-/** What the server holds of one version of a title: standard, or 4K when [fourK] is true. */
+/**
+ * What the server holds of one version of a title: standard, or 4K when [fourK] is true. [versionShown] is false on a
+ * server with no 4K version, where "HD" would name a choice nobody has.
+ */
 internal data class VersionStatus(
     val availability: TitleAvailability,
     val fourK: Boolean,
+    val versionShown: Boolean = true,
 )
 
 /** The page's primary action, in the slot under the stats. */
@@ -41,7 +45,7 @@ internal fun titleActionsModel(
 ): TitleActionsModel {
     val statuses =
         listOfNotNull(
-            VersionStatus(standard.availability, fourK = false),
+            VersionStatus(standard.availability, fourK = false, versionShown = fourK != null),
             fourK?.let { VersionStatus(it.availability, fourK = true) },
         ).filter { it.availability != TitleAvailability.None }
     return when {

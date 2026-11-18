@@ -83,11 +83,15 @@ private fun OtherStatusLine(status: VersionStatus) {
     Text(text, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
 }
 
-/** The version's state as a short phrase: "Requested · 4K". Null where there is nothing to say. */
+/** The version's state as a short phrase: "Requested · 4K", or just "Requested" where there is only one version. */
 @Composable
 private fun VersionStatus.label() =
     availability.label()?.let { (text, sentiment) ->
-        stringResource(if (fourK) R.string.title_page_status_4k else R.string.title_page_status_hd, text) to sentiment
+        when {
+            !versionShown -> text
+            fourK -> stringResource(R.string.title_page_status_4k, text)
+            else -> stringResource(R.string.title_page_status_hd, text)
+        } to sentiment
     }
 
 /** A tonal round button with its name under it, so an icon never has to be guessed at. */

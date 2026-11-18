@@ -1,59 +1,45 @@
 package com.cooper.binge.companion.seerr.ui.discover.title
 
 import android.content.res.Resources
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CalendarMonth
-import androidx.compose.material.icons.filled.Event
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Language
-import androidx.compose.material.icons.filled.LiveTv
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Translate
-import androidx.compose.material.icons.filled.VideoLibrary
-import androidx.compose.ui.graphics.vector.ImageVector
 import com.binge.companion.sdk.attempt
-import com.binge.designsystem.component.ListItem
+import com.binge.designsystem.component.InfoRowEntry
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.title.SeriesDetails
+import com.cooper.binge.companion.seerr.discover.title.TitleRatings
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import java.util.Locale
 
-/** The show's facts as the rows of one group: each has an icon, and none opens anything. A fact the server did not give is left out. */
-internal fun SeriesDetails.factRows(
+/**
+ * The show's facts as the label and value rows Binge shows: who made it, where it airs, when it ran, its status and
+ * languages, and the ratings the server holds. A fact the server did not give is left out.
+ */
+internal fun SeriesDetails.factEntries(
     resources: Resources,
     locale: Locale,
-): List<ListItem> {
-    fun row(
-        icon: ImageVector,
+    ratings: TitleRatings?,
+): List<InfoRowEntry> {
+    fun entry(
         label: Int,
         value: String?,
-    ) = value?.takeIf { it.isNotBlank() }?.let { ListItem(icon = icon, label = resources.getString(label), detail = it, clickable = false) }
-
-    fun language(code: String) = Locale(code).getDisplayLanguage(locale).replaceFirstChar { it.titlecase(locale) }
-    val statusText = status?.let { seriesStatusRes(it)?.let(resources::getString) ?: it }
+    ) = InfoRowEntry(resources.getString(label), value)
     val next = nextEpisode
-    return listOfNotNull(
-        row(Icons.Filled.Info, R.string.title_page_fact_status, statusText),
-        row(Icons.Filled.LiveTv, R.string.series_fact_networks, networks.joinToString(", ")),
-        row(Icons.Filled.Person, R.string.series_fact_creators, creators.joinToString(", ")),
-        row(Icons.Filled.VideoLibrary, R.string.series_fact_episodes, episodeCount?.let { locale.formatNumber(it) }),
-        row(Icons.Filled.CalendarMonth, R.string.series_fact_first_aired, firstAirDate.toDisplayDate(locale)),
-        row(Icons.Filled.CalendarMonth, R.string.series_fact_last_aired, lastAirDate.toDisplayDate(locale).takeUnless { next != null }),
-        row(
-            Icons.Filled.Event,
+    return listOf(
+        entry(R.string.series_fact_creators, creators.joinToString(", ")),
+        entry(R.string.series_fact_networks, networks.joinToString(", ")),
+        entry(R.string.title_page_fact_status, status?.let { seriesStatusRes(it)?.let(resources::getString) ?: it }),
+        entry(R.string.series_fact_first_aired, firstAirDate.toDisplayDate(locale)),
+        entry(R.string.series_fact_last_aired, lastAirDate.toDisplayDate(locale).takeUnless { next != null }),
+        entry(
             R.string.series_fact_next_episode,
             next?.let { resources.getString(R.string.series_next_episode, it.name, it.seasonNumber, it.episodeNumber) },
         ),
-        row(Icons.Filled.Event, R.string.series_fact_next_airs, next?.airDate.toDisplayDate(locale)),
-        row(Icons.Filled.Language, R.string.title_page_fact_original_language, originalLanguage?.let(::language)),
-        row(
-            Icons.Filled.Translate,
-            R.string.title_page_fact_spoken_languages,
-            spokenLanguageCodes.joinToString(", ", transform = ::language),
-        ),
-    )
+        entry(R.string.series_fact_next_airs, next?.airDate.toDisplayDate(locale)),
+        entry(R.string.title_page_stat_runtime, episodeRuntimeMinutes?.let { resources.getString(R.string.series_page_runtime, it) }),
+        entry(R.string.title_page_fact_original_language, originalLanguage?.let { languageName(it, locale) }),
+        entry(R.string.title_page_fact_spoken_languages, spokenLanguageCodes.joinToString(", ") { languageName(it, locale) }),
+    ) + ratingEntries(resources, locale, ratings)
 }
 
 /** A `yyyy-mm-dd` date written the way the reader's own language writes it; null for one that does not parse. */
@@ -63,11 +49,6 @@ internal fun String?.toDisplayDate(locale: Locale): String? =
 private fun attemptDate(text: String): LocalDate? = attempt { LocalDate.parse(text.take(ISO_DATE_LENGTH)) }.getOrNull()
 
 private const val ISO_DATE_LENGTH = 10
-
-private fun Locale.formatNumber(value: Int): String =
-    java.text.NumberFormat
-        .getIntegerInstance(this)
-        .format(value)
 
 /** The server's show status in the user's language; null for one this app does not know, which is shown as the server wrote it. */
 private fun seriesStatusRes(status: String): Int? =
