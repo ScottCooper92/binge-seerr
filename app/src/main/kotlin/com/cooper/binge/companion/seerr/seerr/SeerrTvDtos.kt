@@ -53,6 +53,15 @@ data class SeerrTvSeasonDto(
     @SerialName("posterPath") val posterPath: String? = null,
 )
 
+/** `GET tv/{id}/season/{n}`: one season with its episodes. */
+@Serializable
+data class SeerrSeasonDetailsDto(
+    @SerialName("seasonNumber") val seasonNumber: Int,
+    @SerialName("name") val name: String? = null,
+    @SerialName("airDate") val airDate: String? = null,
+    @SerialName("episodes") val episodes: List<SeerrEpisodeDto> = emptyList(),
+)
+
 @Serializable
 data class SeerrEpisodeDto(
     @SerialName("id") val id: Int = 0,

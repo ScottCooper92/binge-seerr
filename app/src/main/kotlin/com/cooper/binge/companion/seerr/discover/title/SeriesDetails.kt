@@ -72,3 +72,12 @@ data class SeriesDetails(
                 fourK = seasons.map { SeasonChoice(it.number, it.name, it.episodeCount, it.fourK ?: TitleAvailability.None) },
             )
 }
+
+/** One episode of a season. [airDate] is a `yyyy-mm-dd` date and null for one the server has none for; [stillUrl] is a full URL. */
+data class SeasonEpisode(
+    val number: Int,
+    val name: String,
+    val overview: String?,
+    val airDate: String?,
+    val stillUrl: String?,
+)

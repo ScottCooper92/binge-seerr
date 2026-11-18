@@ -3,6 +3,7 @@ package com.cooper.binge.companion.seerr.ui.discover.title
 import com.cooper.binge.companion.seerr.discover.TitleAvailability
 import com.cooper.binge.companion.seerr.discover.request.RequestResult
 import com.cooper.binge.companion.seerr.discover.title.NextEpisode
+import com.cooper.binge.companion.seerr.discover.title.SeasonEpisode
 import com.cooper.binge.companion.seerr.discover.title.SeasonInfo
 import com.cooper.binge.companion.seerr.discover.title.SeriesDetails
 import com.cooper.binge.companion.seerr.discover.title.SeriesDetailsRepository
@@ -71,7 +72,19 @@ private class FakeSeries(
     var series: SeriesDetails = seriesFixture(),
     var failSeries: Throwable? = null,
     var extras: TitleExtras = TitleExtras(TitleRatings(90, null, null), emptyList(), emptyList()),
+    var failSeasons: Throwable? = null,
 ) : SeriesDetailsRepository {
+    val seasonReads = mutableListOf<Int>()
+
+    override suspend fun season(
+        tmdbId: Int,
+        seasonNumber: Int,
+    ): List<SeasonEpisode> {
+        seasonReads += seasonNumber
+        failSeasons?.let { throw it }
+        return listOf(SeasonEpisode(1, "Pilot $seasonNumber", null, "2011-04-17", null))
+    }
+
     override suspend fun series(tmdbId: Int): SeriesDetails = failSeries?.let { throw it } ?: series
 
     override suspend fun extras(tmdbId: Int) = extras
@@ -137,4 +150,54 @@ class SeriesPageViewModelTest {
                     .standard,
             )
         }
+
+    @Test
+    fun `the first season is selected and its episodes read`() {
+        val vm = SeriesPageViewModel(FakeSeries(), 1399)
+
+        assertEquals(1, vm.ready().selectedSeason)
+        assertEquals("Pilot 1", (vm.ready().episodes.getValue(1) as EpisodesState.Ready).episodes.single().name)
+    }
+
+    @Test
+    fun `selecting a season reads it once and keeps what it read`() {
+        val repository = FakeSeries()
+        val vm = SeriesPageViewModel(repository, 1399)
+
+        vm.selectSeason(2)
+        vm.selectSeason(1)
+        vm.selectSeason(2)
+
+        assertEquals(listOf(1, 2), repository.seasonReads)
+        assertEquals(2, vm.ready().selectedSeason)
+    }
+
+    @Test
+    fun `a season the show does not list cannot be selected`() {
+        val vm = SeriesPageViewModel(FakeSeries(), 1399)
+
+        vm.selectSeason(9)
+
+        assertEquals(1, vm.ready().selectedSeason)
+    }
+
+    @Test
+    fun `a failed season is an error that a retry reads again`() {
+        val repository = FakeSeries(failSeasons = IOException("down"))
+        val vm = SeriesPageViewModel(repository, 1399)
+        assertTrue(vm.ready().episodes.getValue(1) is EpisodesState.Error)
+
+        repository.failSeasons = null
+        vm.retryEpisodes()
+
+        assertTrue(vm.ready().episodes.getValue(1) is EpisodesState.Ready)
+    }
+
+    @Test
+    fun `a show with no seasons selects none`() {
+        val vm = SeriesPageViewModel(FakeSeries(series = seriesFixture(seasons = emptyList())), 1399)
+
+        assertEquals(null, vm.ready().selectedSeason)
+        vm.retryEpisodes()
+    }
 }
