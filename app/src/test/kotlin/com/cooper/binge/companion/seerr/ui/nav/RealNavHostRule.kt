@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.pm.ActivityInfo
 import androidx.annotation.StringRes
 import androidx.compose.ui.test.ComposeTimeoutException
+import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDisplayed
 import androidx.compose.ui.test.isRoot
@@ -152,6 +153,30 @@ internal class RealNavHostRule(
         }
     }
 
+    /**
+     * Clicks [target] on each poll until [reached], for a control whose click can be lost to a recomposition or a list swapping under
+     * it, as [clickUntilShowing] does for text. A timeout says what the screen showed, so a failure on a slow runner names its cause.
+     */
+    fun clickUntil(
+        what: String,
+        timeoutMillis: Long = AWAIT_MILLIS,
+        target: () -> SemanticsNodeInteraction,
+        reached: () -> Boolean,
+    ) = await(what, timeoutMillis) { reached().also { done -> if (!done) target().performClick() } }
+
+    /** Waits for [condition], and a timeout says what the screen was showing, as [awaitShowing] does. */
+    fun await(
+        what: String,
+        timeoutMillis: Long = AWAIT_MILLIS,
+        condition: () -> Boolean,
+    ) {
+        try {
+            compose.waitUntil(what, timeoutMillis, condition)
+        } catch (timeout: ComposeTimeoutException) {
+            throw ComposeTimeoutException("${timeout.message}\n${describeScreen()}")
+        }
+    }
+
     /** How many nodes read [text] now, counting a merged node whose text only includes it, as [isShowing] does. */
     fun count(text: String): Int = settled().onAllNodes(hasText(text, substring = true)).fetchSemanticsNodes().size
 
@@ -201,23 +226,7 @@ internal class RealNavHostRule(
     fun awaitShowing(
         text: String,
         timeoutMillis: Long = AWAIT_MILLIS,
-    ) = awaitState("\"$text\" on screen", timeoutMillis) { isShowing(text) }
-
-    /**
-     * [ComposeTestRule.waitUntil] that, on a timeout, says what the screen was showing, as [awaitShowing] does: a wait that
-     * only fails in a full run then names its cause (#1794). [what] names the state waited for.
-     */
-    fun awaitState(
-        what: String,
-        timeoutMillis: Long = AWAIT_MILLIS,
-        condition: () -> Boolean,
-    ) {
-        try {
-            compose.waitUntil(what, timeoutMillis, condition)
-        } catch (timeout: ComposeTimeoutException) {
-            throw ComposeTimeoutException("${timeout.message}\n${describeScreen()}")
-        }
-    }
+    ) = await("\"$text\" on screen", timeoutMillis) { isShowing(text) }
 
     /** The back stack and the semantics tree, capped at [MAX_TREE_LINES] lines. Never throws: it runs while a failure is already in flight. */
     private fun describeScreen(): String =

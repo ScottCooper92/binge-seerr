@@ -126,6 +126,12 @@ class TitlePageScreenshotTest {
     @Composable
     fun loading() = Frame(TitlePageUiState.Loading)
 
+    /** The skeleton at font scales 1.5 and 2, where the stats go two to a row. */
+    @PreviewTest
+    @SeerrFontScalePreviews
+    @Composable
+    fun loadingLargeFonts() = Frame(TitlePageUiState.Loading)
+
     /** The longest title, tagline and names at font scales 1.5 and 2. */
     @PreviewTest
     @SeerrFontScalePreviews
