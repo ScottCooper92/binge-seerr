@@ -132,7 +132,7 @@ app:hub_unreachable_body  4bb14008686e
 app:hub_unreachable_headline  4da010bad62f
 app:hub_unverified_callers  cdf5a058f8b8
 app:hub_update_available  ff8b555d818f
-app:hub_update_release_notes_description  a96fe628e3c5
+app:hub_update_release_notes  1254829bd999
 app:hubs_card_available  e674447337e8
 app:hubs_card_blocklisted  492cd06939da
 app:hubs_card_partial  a4d50fb85403
