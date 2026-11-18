@@ -6,24 +6,27 @@ import com.binge.companion.contracts.v1.forwardedNotification
 import com.cooper.binge.companion.seerr.seerr.mediaIdOf
 import com.cooper.binge.companion.seerr.ui.issues.IssueItem
 import com.cooper.binge.companion.seerr.ui.requests.RequestItem
+import com.cooper.homelab.core.bridge.ForwardingRouter
 import com.google.protobuf.timestamp
 
 /** The `kind` a forwarded connection notice carries; a signal's carries its own key. */
 internal const val FORWARDED_KIND_CONNECTION = "connection"
 
 /**
- * Routes each notice: queued for Binge while it forwards this app's notices
- * ([NotificationForwarding.isActive]), posted by [local] otherwise, never both. Binge's switch decides
- * who shows them; this app's own settings still decide which kinds there are. A batch of one names
- * its title, so a tap in Binge opens it; a larger one names none, and opens this app's page there.
+ * Routes each notice through the shared [ForwardingRouter]: queued for Binge while it forwards this app's notices, posted by
+ * [local] otherwise, never both. Binge's switch decides who shows them; this app's own settings still decide which kinds there
+ * are. A batch of one names its title, so a tap in Binge opens it; a larger one names none, and opens this app's page there.
+ * The router takes the notice it would queue, so one is built even when [local] posts instead; each is cheap and never empty.
  */
 class ForwardingNotifier(
     private val local: SeerrNotifier,
-    private val forwarding: NotificationForwarding,
+    private val forwarding: SeerrForwarding,
     private val words: NotificationText,
     private val clock: () -> Long = System::currentTimeMillis,
 ) : SeerrNotifier {
-    override suspend fun canPost(): Boolean = forwarding.isActive() || local.canPost()
+    private val router = ForwardingRouter(forwarding)
+
+    override suspend fun canPost(): Boolean = router.canPost { local.canPost() }
 
     override suspend fun notifyNewRequests(items: List<RequestItem>) =
         route(NotificationSignal.PendingRequests, items.requestBatch()) { local.notifyNewRequests(items) }
@@ -41,17 +44,16 @@ class ForwardingNotifier(
         route(NotificationSignal.RequestDeclined, items.requestBatch()) { local.notifyRequestsDeclined(items) }
 
     override suspend fun notifyConnectionProblem() {
-        if (!forwarding.isActive()) return local.notifyConnectionProblem()
         val now = clock()
-        forwarding.enqueue(
+        val notice =
             forwardedNotification {
                 id = "$FORWARDED_KIND_CONNECTION:$now"
                 title = words.connectionTitle()
                 text = words.connectionBody()
                 kind = FORWARDED_KIND_CONNECTION
                 createdAt = now.toTimestamp()
-            },
-        )
+            }
+        router.route(notice) { local.notifyConnectionProblem() }
     }
 
     /**
@@ -70,8 +72,7 @@ class ForwardingNotifier(
         batch: Batch,
         post: suspend () -> Unit,
     ) {
-        if (!forwarding.isActive()) return post()
-        forwarding.enqueue(batch.toNotification(signal))
+        router.route(batch.toNotification(signal), post)
     }
 
     private fun Batch.toNotification(signal: NotificationSignal): ForwardedNotification {

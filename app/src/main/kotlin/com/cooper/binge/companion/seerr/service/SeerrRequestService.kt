@@ -10,6 +10,8 @@ import com.binge.companion.contracts.request.v1.CancelRequestResponse
 import com.binge.companion.contracts.request.v1.Capability
 import com.binge.companion.contracts.request.v1.DeclineRequestRequest
 import com.binge.companion.contracts.request.v1.DeclineRequestResponse
+import com.binge.companion.contracts.request.v1.DeleteFilesRequest
+import com.binge.companion.contracts.request.v1.DeleteFilesResponse
 import com.binge.companion.contracts.request.v1.EditRequestRequest
 import com.binge.companion.contracts.request.v1.EditRequestResponse
 import com.binge.companion.contracts.request.v1.GetAdvancedRequestOptionsRequest
@@ -58,6 +60,7 @@ import com.cooper.binge.companion.seerr.demo.isDemo
 import com.cooper.binge.companion.seerr.seerr.SeerrPermissions
 import com.cooper.binge.companion.seerr.seerr.SeerrServerProfile
 import com.cooper.binge.companion.seerr.seerr.SeerrVariant
+import com.cooper.binge.companion.seerr.seerr.isServerUnreachable
 import com.cooper.binge.companion.seerr.seerr.rejectsSession
 import com.cooper.binge.companion.seerr.seerr.statusCatching
 import com.cooper.binge.companion.seerr.seerr.toPermissions
@@ -65,9 +68,9 @@ import com.cooper.binge.companion.seerr.seerr.toSeerrError
 import com.cooper.binge.companion.seerr.seerr.toStatusException
 import com.cooper.binge.companion.seerr.seerr.userFacingRefusal
 import com.cooper.binge.companion.seerr.seerr.versionsFor
-import com.cooper.binge.companion.seerr.telemetry.Analytics
-import com.cooper.binge.companion.seerr.telemetry.NoOpAnalytics
 import com.cooper.binge.companion.seerr.telemetry.operationFailed
+import com.cooper.homelab.core.telemetry.Analytics
+import com.cooper.homelab.core.telemetry.NoOpAnalytics
 import io.grpc.StatusException
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
@@ -223,6 +226,9 @@ class SeerrRequestService(
     override suspend fun blockTitle(request: BlockTitleRequest): BlockTitleResponse =
         gated("block_title", Capability.CAPABILITY_BLOCK) { issues.blockTitle(request) }
 
+    override suspend fun deleteFiles(request: DeleteFilesRequest): DeleteFilesResponse =
+        gated("delete_files", Capability.CAPABILITY_DELETE_FILES) { requests.deleteFiles(request) }
+
     override suspend fun unblockTitle(request: UnblockTitleRequest): UnblockTitleResponse =
         gated("unblock_title", Capability.CAPABILITY_BLOCK) { issues.unblockTitle(request) }
 
@@ -277,6 +283,7 @@ class SeerrRequestService(
                 throw e
             } catch (e: Exception) {
                 analytics.operationFailed(operation, e, connection)
+                if (e.isServerUnreachable()) throw e.toStatusException(connection.unreachableName())
                 throw e.toStatusException().withSentenceFor(e)
             }
         }

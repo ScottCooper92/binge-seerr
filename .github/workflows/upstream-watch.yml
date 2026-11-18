@@ -1,0 +1,28 @@
+name: Upstream watch
+
+# Opens one issue for the newest new stable Seerr release, with a compatibility checklist.
+# Weekly, and by hand: run it from the Actions tab with `dry_run` on first to see what it would open.
+#
+# `docs/upstream.json` records the version last checked, without a leading v. A person edits it, in
+# the PR that closes the issue. The workflow never writes it. Jellyseerr's project moved into Seerr's
+# repository, so it is not listed twice.
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Report what would be opened and open nothing
+        type: boolean
+        default: true
+  schedule:
+    - cron: '29 6 * * 1'
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  watch:
+    uses: ScottCooper92/binge-ci/.github/workflows/upstream-watch.yml@903427212a2a3918dca60d6c3d8af61f2a4682f4 # v1
+    with:
+      upstreams: '[{"name":"seerr","repo":"seerr-team/seerr"}]'
+      dry_run: ${{ inputs.dry_run == true }}

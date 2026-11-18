@@ -5,7 +5,6 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.res.stringResource
 import com.android.tools.screenshot.PreviewTest
 import com.cooper.binge.companion.seerr.R
-import com.cooper.binge.companion.seerr.flags.Flags
 import com.cooper.binge.companion.seerr.flags.LocalFlags
 import com.cooper.binge.companion.seerr.preview.SeerrScreenPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrScreenStatePreview
@@ -13,6 +12,7 @@ import com.cooper.binge.companion.seerr.preview.SeerrSpanishPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrTabletPanesPreview
 import com.cooper.binge.companion.seerr.seerr.SeerrSignInMode
 import com.cooper.binge.companion.seerr.ui.tv.NoSetupActions
+import com.cooper.homelab.core.flags.Flags
 
 /**
  * The phone setup: the two steps' layouts across the device matrix, then each state of them on the
@@ -43,6 +43,22 @@ class SetupScreenshotTest {
     @SeerrSpanishPreviews
     @Composable
     fun addressDemoOfferedSpanish() = SetupFrame(state = previewAddress().copy(canTryDemo = true), actions = NoSetupActions)
+
+    /** A server that has not finished its first-run setup: the message and Check again, in place of the sign-in (#1982). */
+    @PreviewTest
+    @SeerrScreenPreviews
+    @Composable
+    fun notSetUp() = SetupFrame(state = previewNotSetUp(), actions = NoSetupActions)
+
+    @PreviewTest
+    @SeerrSpanishPreviews
+    @Composable
+    fun notSetUpSpanish() = SetupFrame(state = previewNotSetUp(), actions = NoSetupActions)
+
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun notSetUpChecking() = SetupFrame(state = previewNotSetUp(isChecking = true), actions = NoSetupActions)
 
     @PreviewTest
     @SeerrScreenStatePreview

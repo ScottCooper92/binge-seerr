@@ -1,8 +1,8 @@
 package com.cooper.binge.companion.seerr.ui.nav
 
+import com.binge.companion.kit.SecretCipher
 import com.cooper.binge.companion.seerr.auth.ConnectionCarrier
 import com.cooper.binge.companion.seerr.auth.NoConnectionCarrier
-import com.cooper.binge.companion.seerr.auth.SecretCipher
 import com.cooper.binge.companion.seerr.di.DeviceKeysModule
 import com.cooper.binge.companion.seerr.util.PlainCipher
 import dagger.Module

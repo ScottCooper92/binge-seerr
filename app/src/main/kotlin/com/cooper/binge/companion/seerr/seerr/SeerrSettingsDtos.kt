@@ -144,6 +144,8 @@ data class SeerrNotificationAgentDto(
     @EncodeDefault @SerialName("enabled") val enabled: Boolean = false,
     @EncodeDefault @SerialName("types") val types: Int = 0,
     @EncodeDefault @SerialName("options") val options: JsonObject = JsonObject(emptyMap()),
+    /** Absent from a server that has none (and sent back only when it was read). */
+    @SerialName("embedPoster") val embedPoster: Boolean? = null,
 )
 
 /** One Pushover sound (`GET settings/notifications/pushover/sounds`). */

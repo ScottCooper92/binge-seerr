@@ -24,7 +24,7 @@ import com.binge.designsystem.template.screenOuterPadding
  * with an overflow button that opens a manage sheet, and the `screenOuterPadding()`/`screenInnerPadding()` split
  * every scrolling body under it uses.
  *
- * It owns only the icon button. The two screens' `Ready` and `Loading` arms differ, so each keeps its own `when`
+ * It owns only the icon button, which [showOverflow] leaves out when its sheet would hold no row; the other actions stay. The two screens' `Ready` and `Loading` arms differ, so each keeps its own `when`
  * and its own manage sheet, opened from [onOverflowClick].
  *
  * @param leadingActions draw before the overflow button.
@@ -51,13 +51,13 @@ internal fun OverflowDetailScaffold(
         onBack = onBack,
         snackbarHostState = snackbarHostState,
         actions = {
+            leadingActions()
             if (showOverflow) {
-                leadingActions()
                 IconButton(onClick = onOverflowClick) {
                     Icon(overflowIcon, contentDescription = overflowContentDescription)
                 }
-                trailingActions()
             }
+            trailingActions()
         },
     ) { padding ->
         Box(modifier = Modifier.fillMaxSize().padding(padding.screenOuterPadding())) {

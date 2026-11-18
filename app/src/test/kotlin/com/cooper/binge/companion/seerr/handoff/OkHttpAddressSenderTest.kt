@@ -1,5 +1,6 @@
 package com.cooper.binge.companion.seerr.handoff
 
+import com.cooper.binge.companion.seerr.telemetry.DiscardLogger
 import kotlinx.coroutines.test.runTest
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
@@ -25,7 +26,7 @@ class OkHttpAddressSenderTest {
 
     private val target get() = TvHandOffTarget(host = server.hostName, port = server.port, token = token)
 
-    private val sender = OkHttpAddressSender(OkHttpClient.Builder().followRedirects(false).build())
+    private val sender = OkHttpAddressSender(OkHttpClient.Builder().followRedirects(false).build(), logger = DiscardLogger)
 
     @Test
     fun `the address is posted as the form's one field to the token's path`() =

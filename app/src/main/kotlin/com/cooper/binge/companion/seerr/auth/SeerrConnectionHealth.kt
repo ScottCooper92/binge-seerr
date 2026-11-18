@@ -1,8 +1,16 @@
 package com.cooper.binge.companion.seerr.auth
 
+import com.cooper.binge.companion.seerr.seerr.isArrProxyRoute
+import com.cooper.homelab.core.foundation.ServerId
+import com.cooper.homelab.core.server.connection.CallResult
+import com.cooper.homelab.core.server.connection.ConnectionHealth
+import com.cooper.homelab.core.server.connection.ConnectionHealthMonitor
+import com.cooper.homelab.core.server.connection.SeerrClassifier
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.runBlocking
 
 /** What the last few calls to the saved server said about it. */
 enum class SeerrConnectionHealth {
@@ -23,79 +31,94 @@ enum class SeerrConnectionHealth {
 
     /** Server reached but the credentials rejected; needs reconnecting. */
     Unauthorized,
+
+    /**
+     * Server unreachable the way [Unreachable] is, except that it answered the handshake by asking for a client certificate, which
+     * the app cannot send (#2156). Only ever a refinement of [Unreachable]: it takes the same two failures to get here.
+     */
+    ClientCertificateNeeded,
 }
 
 /**
- * The write side of [SeerrConnectionHealthMonitor]: the interceptor reports each outcome here
- * without seeing the read side. [NoOp] backs the throwaway setup-probe client, whose unvalidated
- * candidate credentials must never feed the saved server's health.
+ * The write side of [SeerrHealth]: the interceptor reports each call here without seeing the read side. [NoOp] backs the
+ * throwaway setup-probe client, whose unvalidated candidate credentials must never feed the saved server's health.
  */
-interface SeerrConnectionHealthReporter {
-    fun reportSuccess()
+fun interface SeerrHealthReporter {
+    fun report(result: CallResult)
 
-    fun reportAuthFailure()
+    /**
+     * Whether the last call that failed to connect failed because the server asked for a client certificate. Said before the
+     * failure is reported, so the verdict that follows already knows. An answered call says false; a cancelled one says nothing.
+     */
+    fun reportClientCertificate(needed: Boolean) = Unit
 
-    fun reportNetworkFailure()
-
-    object NoOp : SeerrConnectionHealthReporter {
-        override fun reportSuccess() = Unit
-
-        override fun reportAuthFailure() = Unit
-
-        override fun reportNetworkFailure() = Unit
+    object NoOp : SeerrHealthReporter {
+        override fun report(result: CallResult) = Unit
     }
 }
 
-/** A single transient failure can be a blip; only a run of them with no success between reads as unreachable. */
-private const val UNREACHABLE_FAILURE_THRESHOLD = 2
+/** A single transient failure can be a blip; only a run of them with no answer between reads as unreachable. */
+private const val UNREACHABLE_AFTER = 2
+
+/** The shared library's monitor with this app's rules: [SeerrClassifier], and two calls in a row with no answer is unreachable. */
+fun seerrHealthMonitor(): ConnectionHealthMonitor = ConnectionHealthMonitor(SeerrClassifier(::isArrProxyRoute), UNREACHABLE_AFTER)
 
 /**
- * Live connection health, fed by every call the cached client makes through [SeerrHealthInterceptor].
- * Observe-only: nothing gates a request on it. An auth rejection flips to [SeerrConnectionHealth.Unauthorized]
- * at once, [UNREACHABLE_FAILURE_THRESHOLD] transient failures in a row to [SeerrConnectionHealth.Unreachable],
- * and any success back to [SeerrConnectionHealth.Healthy].
- *
- * It starts [SeerrConnectionHealth.Unchecked]: it does not read the store, so "not connected" is [SeerrConnection]'s call.
+ * Live health of the one saved server, fed by every call the cached client makes. Observe-only. What a call means is the shared
+ * library's rule ([SeerrClassifier]); this keys it by [server], which is minted once and persisted, so [report] (on an OkHttp
+ * thread, which blocks anyway) reads it with `runBlocking` once and keeps it: a DataStore read, warm after the first.
+ * It does not read the store: "not connected" is [SeerrConnection]'s call.
  */
-class SeerrConnectionHealthMonitor : SeerrConnectionHealthReporter {
-    private val lock = Any()
-    private var networkFailureStreak = 0
+class SeerrHealth(
+    private val monitor: ConnectionHealthMonitor,
+    private val server: suspend () -> ServerId,
+) : SeerrHealthReporter {
+    private val id: ServerId by lazy { runBlocking { server() } }
 
-    private val state = MutableStateFlow(SeerrConnectionHealth.Unchecked)
-    val health: StateFlow<SeerrConnectionHealth> = state.asStateFlow()
+    val health: Flow<ConnectionHealth> = flow { emitAll(monitor.health(server())) }
 
-    /** Reported from OkHttp threads, so the streak and the state move together under the lock. */
-    override fun reportSuccess() =
-        synchronized(lock) {
-            networkFailureStreak = 0
-            state.value = SeerrConnectionHealth.Healthy
-        }
+    private val clientCertificate = MutableStateFlow(false)
 
-    override fun reportAuthFailure() =
-        synchronized(lock) {
-            networkFailureStreak = 0
-            state.value = SeerrConnectionHealth.Unauthorized
-        }
+    /** Whether the failures that make the server read as unreachable were the server asking for a client certificate. */
+    val clientCertificateNeeded: Flow<Boolean> = clientCertificate
 
-    override fun reportNetworkFailure() =
-        synchronized(lock) {
-            networkFailureStreak++
-            if (networkFailureStreak >= UNREACHABLE_FAILURE_THRESHOLD) {
-                state.value = SeerrConnectionHealth.Unreachable
-            }
-        }
+    override fun report(result: CallResult) = monitor.report(id, result)
+
+    override fun reportClientCertificate(needed: Boolean) {
+        clientCertificate.value = needed
+    }
 
     /** A connection was just validated against the server: start clean at healthy. */
-    fun onConnected() =
-        synchronized(lock) {
-            networkFailureStreak = 0
-            state.value = SeerrConnectionHealth.Healthy
-        }
+    suspend fun onConnected() {
+        clientCertificate.value = false
+        monitor.onConnected(server())
+    }
 
     /** The credentials were cleared: whatever the last call said no longer describes anything. */
-    fun reset() =
-        synchronized(lock) {
-            networkFailureStreak = 0
-            state.value = SeerrConnectionHealth.Unchecked
-        }
+    suspend fun reset() {
+        clientCertificate.value = false
+        monitor.reset(server())
+    }
+
+    companion object {
+        /** Health for a connection that has no saved identity to key it by, such as a test's: one server, named here. */
+        fun standalone(): SeerrHealth = SeerrHealth(seerrHealthMonitor()) { ServerId("saved") }
+    }
 }
+
+/** The app's enum for the shared library's verdict; [SeerrConnectionHealth.NotConnected] is the store's to say, not the monitor's. */
+internal fun ConnectionHealth.toSeerr(): SeerrConnectionHealth =
+    when (this) {
+        ConnectionHealth.Unchecked -> SeerrConnectionHealth.Unchecked
+        ConnectionHealth.Healthy -> SeerrConnectionHealth.Healthy
+        ConnectionHealth.Unreachable -> SeerrConnectionHealth.Unreachable
+        ConnectionHealth.Unauthorized -> SeerrConnectionHealth.Unauthorized
+    }
+
+/** The monitor's verdict, with an unreachable server told apart when it asked for a client certificate. */
+internal fun ConnectionHealth.toSeerr(clientCertificateNeeded: Boolean): SeerrConnectionHealth =
+    if (this == ConnectionHealth.Unreachable && clientCertificateNeeded) {
+        SeerrConnectionHealth.ClientCertificateNeeded
+    } else {
+        toSeerr()
+    }

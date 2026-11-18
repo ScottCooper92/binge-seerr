@@ -35,9 +35,10 @@ jobs:
     if: >-
       (!github.event.pull_request || github.event.pull_request.head.repo.full_name == github.repository) &&
       (!github.event.workflow_run || github.event.workflow_run.head_repository.full_name == github.repository)
-    uses: ScottCooper92/binge-ci/.github/workflows/author-retarget.yml@494e473b01f083178315f3f723383fefba23c937 # v1
+    uses: ScottCooper92/binge-ci/.github/workflows/author-retarget.yml@903427212a2a3918dca60d6c3d8af61f2a4682f4 # v1
     with:
       author_bot_id: ${{ vars.AUTHOR_BOT_ID }}
+      private_submodules: homelab-core,binge-design-system,binge-ci
     secrets:
       AUTHOR_APP_ID: ${{ secrets.AUTHOR_APP_ID }}
       AUTHOR_APP_PRIVATE_KEY: ${{ secrets.AUTHOR_APP_PRIVATE_KEY }}

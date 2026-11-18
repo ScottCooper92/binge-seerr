@@ -9,13 +9,13 @@ import com.cooper.binge.companion.seerr.auth.NoBingeConnectionStore
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.auth.SeerrConnectionHealth
 import com.cooper.binge.companion.seerr.di.IoDispatcher
-import com.cooper.binge.companion.seerr.flags.FeatureFlags
-import com.cooper.binge.companion.seerr.flags.FixedFeatureFlags
-import com.cooper.binge.companion.seerr.flags.Flags
-import com.cooper.binge.companion.seerr.seerr.LocalNetworkPermission
 import com.cooper.binge.companion.seerr.seerr.SeerrCredentials
 import com.cooper.binge.companion.seerr.seerr.isBlockedByLocalNetwork
 import com.cooper.binge.companion.seerr.ui.Ticker
+import com.cooper.homelab.core.flags.FeatureFlags
+import com.cooper.homelab.core.flags.FixedFeatureFlags
+import com.cooper.homelab.core.flags.Flags
+import com.cooper.homelab.core.server.network.LocalNetworkPermission
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -65,6 +65,9 @@ class HubViewModel
         /** A pull's re-read is running; a second pull meanwhile is dropped. */
         private val pulling = MutableStateFlow(false)
 
+        /** Bumped by a pull so the server's card is read again: its name and version can change on the server while the hub is open. */
+        private val serverPulls = MutableStateFlow(0)
+
         /** Re-read on every arrival: installing Binge while this screen is backgrounded should flip the tile unprompted. */
         private val installedTrigger = MutableStateFlow(installCheck.isInstalled())
 
@@ -85,7 +88,7 @@ class HubViewModel
          * Failure is its own value rather than null, because a null cannot say "still reading" from "gave up".
          */
         private val server: Flow<ServerRead> =
-            reloadTrigger
+            combine(reloadTrigger, serverPulls) { credentials, _ -> credentials }
                 .flatMapLatest { credentials ->
                     flow {
                         val remembered = cache.serverFor(credentials)
@@ -176,7 +179,7 @@ class HubViewModel
                 // Requests alone — a settled-looking menu that then grows rows under a finger.
                 when {
                     server is ServerRead.Failed ->
-                        HubUiState.Error(health.takeIf { it == ConnectionHealth.LocalNetworkDenied } ?: ConnectionHealth.Unreachable)
+                        HubUiState.Error(health.takeIf { it.namesItsOwnCause() } ?: ConnectionHealth.Unreachable)
                     server !is ServerRead.Loaded || !overview.loaded -> HubUiState.Loading
                     else ->
                         HubUiState.Ready(
@@ -238,11 +241,12 @@ class HubViewModel
 
         /**
          * The dashboard's pull: re-reads what becoming visible does, the pending count and whether Binge is installed,
-         * and the downloads now rather than on the poll's next tick. A pull while one is running is dropped.
+         * the downloads now rather than on the poll's next tick, and the server's card (its title and version). A pull while one is running is dropped.
          */
         fun refresh() {
             if (!pulling.compareAndSet(expect = false, update = true)) return
             installedTrigger.value = installCheck.isInstalled()
+            serverPulls.value++
             viewModelScope.launch(dispatcher) {
                 try {
                     coroutineScope {
@@ -330,11 +334,16 @@ private fun effectiveHealth(
         }
     }
 
+/** A problem the hub can say more about than "unreachable", which a failed read of the server must not flatten back into it. */
+private fun ConnectionHealth.namesItsOwnCause(): Boolean =
+    this == ConnectionHealth.LocalNetworkDenied || this == ConnectionHealth.ClientCertificateNeeded
+
 internal fun SeerrConnectionHealth.toConnectionHealth(): ConnectionHealth =
     when (this) {
         SeerrConnectionHealth.Healthy -> ConnectionHealth.Healthy
         SeerrConnectionHealth.Unreachable -> ConnectionHealth.Unreachable
         SeerrConnectionHealth.Unauthorized -> ConnectionHealth.Unauthorized
+        SeerrConnectionHealth.ClientCertificateNeeded -> ConnectionHealth.ClientCertificateNeeded
         // Unchecked is every cold start: the credentials are saved and the overview has not landed
         // yet. NotConnected means they vanished mid-check, and the shell swaps to setup on it.
         SeerrConnectionHealth.Unchecked, SeerrConnectionHealth.NotConnected -> ConnectionHealth.Checking

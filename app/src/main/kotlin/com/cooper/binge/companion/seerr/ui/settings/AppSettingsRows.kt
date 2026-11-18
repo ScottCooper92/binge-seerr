@@ -2,6 +2,7 @@ package com.cooper.binge.companion.seerr.ui.settings
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BugReport
+import androidx.compose.material.icons.filled.Coffee
 import androidx.compose.material.icons.filled.Healing
 import androidx.compose.material.icons.filled.Insights
 import androidx.compose.material.icons.filled.Tv
@@ -31,6 +32,7 @@ internal fun appRows(
     onToggleShakeToReport: (Boolean) -> Unit,
     onToggleShareUsageData: (Boolean) -> Unit,
     onToggleSendCrashReports: (Boolean) -> Unit,
+    onOpenTip: (() -> Unit)? = null,
 ): List<ListItem> {
     val context = LocalContext.current
     return listOfNotNull(
@@ -65,6 +67,16 @@ internal fun appRows(
             toggled = app.sendCrashReports,
             onClick = { onToggleSendCrashReports(!app.sendCrashReports) },
         ),
+        // The tip jar's row: only once Play has priced every step (see `TipState.Ready`).
+        onOpenTip?.let {
+            ListItem(
+                icon = Icons.Filled.Coffee,
+                iconTint = BingeSentiment.Info.fill(),
+                label = stringResource(R.string.tip_row),
+                destination = ListItemDestination.InApp,
+                onClick = it,
+            )
+        },
     )
 }
 
@@ -90,7 +102,7 @@ private fun bingeRow(
     return ListItem(
         icon = Icons.Filled.Tv,
         iconTint = BingeSentiment.Info.fill(),
-        label = stringResource(R.string.settings_binge),
+        label = stringResource(R.string.settings_binge_preferences),
         detail = stringResource(detail),
         supportingMaxLines = BINGE_DETAIL_MAX_LINES,
         destination = ListItemDestination.External,

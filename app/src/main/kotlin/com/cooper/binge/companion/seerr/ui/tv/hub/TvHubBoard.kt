@@ -8,7 +8,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.ErrorKind
-import com.binge.designsystem.tv.component.TvButton
+import com.binge.designsystem.tv.component.TvCompactButton
 import com.binge.designsystem.tv.component.TvErrorPlate
 import com.binge.designsystem.tv.focus.TvArrivalFocusEffect
 import com.binge.designsystem.tv.focus.rememberTvArrivalFocus
@@ -88,6 +88,7 @@ private fun TvHubProblem(
                 when (health) {
                     ConnectionHealth.CouldNotLoad -> R.string.hub_couldnt_load_headline
                     ConnectionHealth.LocalNetworkDenied -> R.string.hub_local_network_headline
+                    ConnectionHealth.ClientCertificateNeeded -> R.string.hub_client_certificate_headline
                     else -> R.string.hub_unreachable_headline
                 },
             ),
@@ -98,6 +99,7 @@ private fun TvHubProblem(
                     rechecking -> R.string.hub_rechecking
                     health == ConnectionHealth.CouldNotLoad -> R.string.hub_couldnt_load_body
                     health == ConnectionHealth.LocalNetworkDenied -> R.string.hub_local_network_body
+                    health == ConnectionHealth.ClientCertificateNeeded -> R.string.hub_client_certificate_body
                     else -> R.string.hub_unreachable_body
                 },
             ),
@@ -115,15 +117,15 @@ private fun TvHubProblem(
         modifier = modifier.tvArrivalObserver(arrival),
         extraActions = {
             if (denied) {
-                TvButton(
+                TvCompactButton(
                     label = stringResource(allow.shortLabel),
                     onClick = allow.run,
                     style = TvButtonStyle.Primary,
                     modifier = Modifier.focusRequester(arrival.requester),
                 )
             }
-            TvButton(label = stringResource(R.string.settings_edit_connection), onClick = actions.onReconnect)
-            TvButton(label = stringResource(R.string.hub_disconnect), onClick = actions.onDisconnect)
+            TvCompactButton(label = stringResource(R.string.settings_edit_connection), onClick = actions.onReconnect)
+            TvCompactButton(label = stringResource(R.string.hub_disconnect), onClick = actions.onDisconnect)
         },
     )
 }

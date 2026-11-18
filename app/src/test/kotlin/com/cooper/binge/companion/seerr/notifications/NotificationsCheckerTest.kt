@@ -2,6 +2,7 @@ package com.cooper.binge.companion.seerr.notifications
 
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import com.cooper.binge.companion.seerr.seerr.TitleCache
+import com.cooper.binge.companion.seerr.telemetry.DiscardLogger
 import com.cooper.binge.companion.seerr.ui.requests.REQUESTS_PAGE_SIZE
 import com.cooper.binge.companion.seerr.ui.users.settings.ADMIN
 import com.cooper.binge.companion.seerr.ui.users.settings.REQUEST
@@ -71,7 +72,13 @@ class NotificationsCheckerTest {
     ): NotificationsChecker {
         on.forEach { prefs.setEnabled(it, true) }
         val connection = seerr.connection(this)
-        return NotificationsChecker(prefs, connection, NotificationFeeds(connection, TitleCache(FakeTitleDao())), notifier)
+        return NotificationsChecker(
+            prefs,
+            connection,
+            NotificationFeeds(connection, TitleCache(FakeTitleDao()), DiscardLogger),
+            notifier,
+            PrefsCursorFeeds(prefs),
+        )
     }
 
     @Test

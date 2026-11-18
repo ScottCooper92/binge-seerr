@@ -6,10 +6,12 @@ import com.cooper.binge.companion.seerr.data.RequestStore
 import com.cooper.binge.companion.seerr.seerr.SeerrEditRequestBody
 import com.cooper.binge.companion.seerr.seerr.SeerrRequestStatusCode
 import com.cooper.binge.companion.seerr.seerr.updateRequest
-import com.cooper.binge.companion.seerr.telemetry.Analytics
-import com.cooper.binge.companion.seerr.telemetry.CrashBreadcrumbs
-import com.cooper.binge.companion.seerr.telemetry.NoOpAnalytics
-import com.cooper.binge.companion.seerr.telemetry.NoOpCrashBreadcrumbs
+import com.cooper.homelab.core.review.NoReviewSignals
+import com.cooper.homelab.core.review.ReviewSignalSink
+import com.cooper.homelab.core.telemetry.Analytics
+import com.cooper.homelab.core.telemetry.CrashBreadcrumbs
+import com.cooper.homelab.core.telemetry.NoOpAnalytics
+import com.cooper.homelab.core.telemetry.NoOpCrashBreadcrumbs
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharedFlow
@@ -75,9 +77,10 @@ class RequestModeration(
     crashBreadcrumbs: CrashBreadcrumbs = NoOpCrashBreadcrumbs,
     /** The cached list rows, moved with a success so the list agrees before its refresh lands. */
     private val cache: RequestStore = NoRequestStore,
+    reviewSignals: ReviewSignalSink = NoReviewSignals,
     onModerated: () -> Unit,
 ) : RequestModerationControls {
-    private val runner = ModerationRunner(scope, dispatcher, connection, analytics, crashBreadcrumbs, cache, onModerated)
+    private val runner = ModerationRunner(scope, dispatcher, connection, analytics, crashBreadcrumbs, cache, onModerated, reviewSignals)
     private val media = MediaModeration(runner, connection, cache, analytics)
 
     val actingIds: StateFlow<Set<Int>> = runner.actingIds

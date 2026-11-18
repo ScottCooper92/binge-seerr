@@ -29,8 +29,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 
 /**
- * The connected television: Home and Issues as tabs under the top bar, with Account and Settings opening as sheets over them,
- * each bound to the same ViewModel as its phone screen, and the edit-connection form as a full-screen overlay above them.
+ * The connected television: Home and Issues as tabs under the top bar, with Settings opening as a sheet over them and the
+ * account as the design system's menu on the avatar, each bound to the same ViewModel as its phone screen, and the edit-connection form as a full-screen overlay above them.
  */
 @Composable
 internal fun TvConnectedShell(
@@ -75,10 +75,12 @@ internal fun TvConnectedShell(
         tabs = tabs,
         tabsResolved = tabsResolved,
         account =
-            TvTopBarAccount(
-                name = account?.name.orEmpty(),
-                avatarUrl = account?.avatarUrl,
+            rememberTvAccount(
+                hubViewModel = hubViewModel,
+                hub = hub,
                 demo = (hub as? HubUiState.Ready)?.server?.baseUrl?.isDemoOrigin() == true,
+                // Only a session sign-in has a session to end; a server's API key has nothing to sign out of.
+                onSignOut = settingsViewModel::signOut.takeIf { settings.signsInWithSession() },
             ),
         showBar = !editingConnection,
         overlay =
@@ -93,14 +95,6 @@ internal fun TvConnectedShell(
         onCloseTopLayer = { pages[tab].detailId = null },
     ) { destination, close, closer ->
         when (destination) {
-            TvDestination.Account ->
-                TvAccountEntry(
-                    hubViewModel = hubViewModel,
-                    onDismissRequest = close,
-                    closer = closer,
-                    // Only a session sign-in has a session to end; a server's API key has nothing to sign out of.
-                    onSignOut = settingsViewModel::signOut.takeIf { settings.signsInWithSession() },
-                )
             // Home is what needs attention: the requests as rows over a backdrop, once the server answers.
             TvDestination.Hub ->
                 TvHomeEntry(
@@ -208,7 +202,7 @@ private fun detailPage(
                 }
             }
         }
-        TvDestination.Account, TvDestination.Settings -> null
+        TvDestination.Settings -> null
     }
 }
 
@@ -235,7 +229,7 @@ private fun tabPages(
         TvDestination.Issues -> {
             { TvIssuesPages(pages[tab]) }
         }
-        TvDestination.Account, TvDestination.Settings -> null
+        TvDestination.Settings -> null
     }
 
 /** The tabs [TabRules] offers for what the server has said of this account; the start tab alone while it has said nothing. */

@@ -22,6 +22,17 @@ sealed interface ModerationEvent {
                 -> false
             }
 
+    /** Whether this is a request the user finished with, the kind of thing that earns the review prompt. */
+    val countsAsPositiveAction: Boolean
+        get() =
+            when (this) {
+                Approved, Declined, DeclinedAndBlocked -> true
+                Retried, Edited, is DeclinedButBlockFailed, Removed, RemovedAndBlocked, is RemovedButBlockFailed, Blocked, BlockFailed,
+                MediaStatusSet, MediaCleared, MediaFilesDeleted, MediaFilesNoDefaultServer, is MediaFilesAndRequestsDeleted,
+                is MediaFilesDeletedRequestsKept, is Failed,
+                -> false
+            }
+
     data object Approved : ModerationEvent
 
     data object Retried : ModerationEvent

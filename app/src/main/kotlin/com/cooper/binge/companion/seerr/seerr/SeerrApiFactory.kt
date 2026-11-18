@@ -1,8 +1,12 @@
 package com.cooper.binge.companion.seerr.seerr
 
-import com.cooper.binge.companion.seerr.auth.CleartextConsent
-import com.cooper.binge.companion.seerr.auth.SeerrConnectionHealthReporter
+import com.cooper.binge.companion.seerr.auth.SeerrHealthReporter
 import com.cooper.binge.companion.seerr.demo.DemoTransport
+import com.cooper.homelab.core.server.network.CleartextConsent
+import com.cooper.homelab.core.server.network.CleartextGate
+import com.cooper.homelab.core.server.network.CleartextGuard
+import com.cooper.homelab.core.server.network.LocalNetworkInterceptor
+import com.cooper.homelab.core.server.network.LocalNetworkPermission
 import kotlinx.serialization.json.Json
 import okhttp3.ConnectionPool
 import okhttp3.Cookie
@@ -17,7 +21,9 @@ import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.kotlinx.serialization.asConverterFactory
+import java.util.concurrent.Executor
 import java.util.concurrent.TimeUnit
+import kotlin.concurrent.thread
 
 /**
  * Builds a [SeerrApi] for a user-supplied server. The base URL is only known once the user has
@@ -30,7 +36,7 @@ import java.util.concurrent.TimeUnit
 class SeerrApiFactory(
     private val logRequests: Boolean,
     /** Fed by the cached client only: a probe's candidate credentials never speak for the saved server. */
-    private val health: SeerrConnectionHealthReporter = SeerrConnectionHealthReporter.NoOp,
+    private val health: SeerrHealthReporter = SeerrHealthReporter.NoOp,
     /** Called on the cached client only, whenever the saved server accepts a write. */
     private val onWrite: () -> Unit = {},
     /** The public hosts the user agreed to reach over plain HTTP. Every client this factory builds enforces it. */
@@ -56,6 +62,11 @@ class SeerrApiFactory(
     internal val testDns: Dns? = null,
     /** Where the request log goes when [logRequests] is on, when set. Test-only (#1031): it is how a test reads what is logged. */
     internal val testLogger: HttpLoggingInterceptor.Logger? = null,
+    /**
+     * Where a released client's pool is closed. Closing a pooled TLS socket writes a close_notify, which is network I/O,
+     * and callers such as disconnecting run on the main thread (#1943). Test-only: a test reads what was handed over.
+     */
+    internal val poolReleaser: Executor = Executor { task -> thread(name = "seerr-pool-release", isDaemon = true) { task.run() } },
 ) {
     /**
      * `explicitNulls = false` so an omitted field (`seasons` on a movie request) is dropped from the body, not sent as null.
@@ -87,7 +98,7 @@ class SeerrApiFactory(
                     OkHttpClient
                         .Builder()
                         .addInterceptor(SeerrHealthInterceptor(health))
-                        .addInterceptor(SeerrLocalNetworkInterceptor(localNetwork))
+                        .addInterceptor(LocalNetworkInterceptor(localNetwork))
                         .addInterceptor(SeerrWriteInterceptor(onWrite))
                         .addInterceptor(SeerrSessionInterceptor(baseUrl))
                         .applyAuth(auth, baseUrl)
@@ -169,7 +180,7 @@ class SeerrApiFactory(
             .apply { testTransport?.let { addInterceptor(it(cookieJar ?: CookieJar.NO_COOKIES)) } }
             .apply { testDispatcher?.let { dispatcher(it()) } }
             .apply { testDns?.let { dns(it) } }
-            .addNetworkInterceptor(CleartextGuard(cleartext))
+            .addNetworkInterceptor(CleartextGuard(CleartextGate(cleartext, publicCleartextAvailable = true)))
             .addNetworkInterceptor(loggingInterceptor())
             .connectionPool(ConnectionPool(MAX_IDLE_CONNECTIONS, IDLE_TIMEOUT_SECONDS, TimeUnit.SECONDS))
             .connectTimeout(CONNECT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
@@ -236,7 +247,7 @@ class SeerrApiFactory(
 
     private fun OkHttpClient.release() {
         dispatcher.executorService.shutdown()
-        connectionPool.evictAll()
+        poolReleaser.execute { connectionPool.evictAll() }
     }
 
     private class CachedApi(

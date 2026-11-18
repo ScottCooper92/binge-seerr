@@ -10,6 +10,7 @@ import retrofit2.http.POST
 import retrofit2.http.PUT
 import retrofit2.http.Path
 import retrofit2.http.Query
+import retrofit2.http.QueryMap
 
 /**
  * The slice of Seerr's `/api/v1` this companion needs: who we are, what a title's state is, and
@@ -96,10 +97,58 @@ interface SeerrApi {
         @Path("tmdbId") tmdbId: Int,
     ): SeerrMediaDetailsDto
 
+    /** The whole film page; [movieDetails] is the thin read the Service uses. */
+    @GET("api/v1/movie/{tmdbId}")
+    suspend fun movieFullDetails(
+        @Path("tmdbId") tmdbId: Int,
+    ): SeerrMovieDetailsDto
+
+    @GET("api/v1/movie/{tmdbId}/recommendations")
+    suspend fun movieRecommendations(
+        @Path("tmdbId") tmdbId: Int,
+        @Query("page") page: Int = 1,
+    ): SeerrTitlePageDto
+
+    @GET("api/v1/movie/{tmdbId}/similar")
+    suspend fun movieSimilar(
+        @Path("tmdbId") tmdbId: Int,
+        @Query("page") page: Int = 1,
+    ): SeerrTitlePageDto
+
+    /** Rotten Tomatoes and IMDb together; only Seerr serves it. A 404 means the server has neither score. */
+    @GET("api/v1/movie/{tmdbId}/ratingscombined")
+    suspend fun movieRatings(
+        @Path("tmdbId") tmdbId: Int,
+    ): SeerrRatingsDto
+
     @GET("api/v1/tv/{tmdbId}")
     suspend fun tvDetails(
         @Path("tmdbId") tmdbId: Int,
     ): SeerrMediaDetailsDto
+
+    /** The same call as [tvDetails], read whole: what the series page shows. */
+    @GET("api/v1/tv/{tmdbId}")
+    suspend fun tvFullDetails(
+        @Path("tmdbId") tmdbId: Int,
+    ): SeerrTvDetailsDto
+
+    @GET("api/v1/tv/{tmdbId}/recommendations")
+    suspend fun tvRecommendations(
+        @Path("tmdbId") tmdbId: Int,
+        @Query("page") page: Int = 1,
+    ): SeerrTitlePageDto
+
+    @GET("api/v1/tv/{tmdbId}/similar")
+    suspend fun tvSimilar(
+        @Path("tmdbId") tmdbId: Int,
+        @Query("page") page: Int = 1,
+    ): SeerrTitlePageDto
+
+    /** Rotten Tomatoes only, on every lineage. A 404 means the server has no score for the show. */
+    @GET("api/v1/tv/{tmdbId}/ratings")
+    suspend fun tvRatings(
+        @Path("tmdbId") tmdbId: Int,
+    ): SeerrRottenTomatoesDto
 
     /**
      * The raw [Response], because the STATUS CODE carries meaning the body cannot: a 202 means the
@@ -590,6 +639,106 @@ interface SeerrApi {
     suspend fun testMetadataProviders(
         @Body body: SeerrMetadataTestBody,
     ): SeerrMetadataTestResultDto
+
+    /** The titles the server knows, [filter] one of its own (`allavailable`) and [sort] `mediaAdded` for the newest in the library. */
+    @GET("api/v1/media")
+    suspend fun mediaList(
+        @Query("filter") filter: String,
+        @Query("take") take: Int,
+        @Query("skip") skip: Int = 0,
+        @Query("sort") sort: String = "added",
+    ): SeerrMediaPageDto
+
+    /** Trending movies and shows together. */
+    @GET("api/v1/discover/trending")
+    suspend fun discoverTrending(
+        @Query("page") page: Int = 1,
+    ): SeerrTitlePageDto
+
+    /** Movies narrowed and ordered by [query], the parameters the server's `discover/movies` route takes; see `DiscoverFilters`. */
+    @GET("api/v1/discover/movies")
+    suspend fun discoverMoviesFiltered(
+        @QueryMap query: Map<String, String>,
+    ): SeerrTitlePageDto
+
+    /** Shows narrowed and ordered by [query], the parameters the server's `discover/tv` route takes; see `DiscoverFilters`. */
+    @GET("api/v1/discover/tv")
+    suspend fun discoverTvFiltered(
+        @QueryMap query: Map<String, String>,
+    ): SeerrTitlePageDto
+
+    @GET("api/v1/discover/movies/upcoming")
+    suspend fun discoverUpcomingMovies(
+        @Query("page") page: Int = 1,
+    ): SeerrTitlePageDto
+
+    @GET("api/v1/discover/tv/upcoming")
+    suspend fun discoverUpcomingTv(
+        @Query("page") page: Int = 1,
+    ): SeerrTitlePageDto
+
+    @GET("api/v1/discover/movies/genre/{genreId}")
+    suspend fun discoverMoviesByGenre(
+        @Path("genreId") genreId: Int,
+        @Query("page") page: Int = 1,
+    ): SeerrTitlePageDto
+
+    @GET("api/v1/discover/tv/genre/{genreId}")
+    suspend fun discoverTvByGenre(
+        @Path("genreId") genreId: Int,
+        @Query("page") page: Int = 1,
+    ): SeerrTitlePageDto
+
+    @GET("api/v1/discover/movies/studio/{studioId}")
+    suspend fun discoverMoviesByStudio(
+        @Path("studioId") studioId: Int,
+        @Query("page") page: Int = 1,
+    ): SeerrTitlePageDto
+
+    @GET("api/v1/discover/tv/network/{networkId}")
+    suspend fun discoverTvByNetwork(
+        @Path("networkId") networkId: Int,
+        @Query("page") page: Int = 1,
+    ): SeerrTitlePageDto
+
+    /** [language] is an ISO 639-1 code, the original language of the titles. */
+    @GET("api/v1/discover/movies/language/{language}")
+    suspend fun discoverMoviesByLanguage(
+        @Path("language") language: String,
+        @Query("page") page: Int = 1,
+    ): SeerrTitlePageDto
+
+    @GET("api/v1/discover/tv/language/{language}")
+    suspend fun discoverTvByLanguage(
+        @Path("language") language: String,
+        @Query("page") page: Int = 1,
+    ): SeerrTitlePageDto
+
+    @GET("api/v1/discover/keyword/{keywordId}/movies")
+    suspend fun discoverMoviesByKeyword(
+        @Path("keywordId") keywordId: Int,
+        @Query("page") page: Int = 1,
+    ): SeerrTitlePageDto
+
+    /** The genres with a backdrop each, for the genre row. */
+    @GET("api/v1/discover/genreslider/movie")
+    suspend fun movieGenreSlider(): List<SeerrGenreSliderDto>
+
+    @GET("api/v1/discover/genreslider/tv")
+    suspend fun tvGenreSlider(): List<SeerrGenreSliderDto>
+
+    /** The signed-in user's Plex watchlist. */
+    @GET("api/v1/discover/watchlist")
+    suspend fun discoverWatchlist(
+        @Query("page") page: Int = 1,
+    ): SeerrTitlePageDto
+
+    /** Movies, shows and people matching [query]. Retrofit encodes the query, which the server needs as `%20` and not `+`. */
+    @GET("api/v1/search")
+    suspend fun searchTitles(
+        @Query("query") query: String,
+        @Query("page") page: Int = 1,
+    ): SeerrTitlePageDto
 
     /** The discover sliders in the order the web client shows them, Overseerr 1.32 and the Jellyseerr lineage from 1.4. */
     @GET("api/v1/settings/discover")

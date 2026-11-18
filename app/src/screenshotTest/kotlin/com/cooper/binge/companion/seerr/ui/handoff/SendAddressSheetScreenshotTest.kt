@@ -3,13 +3,13 @@ package com.cooper.binge.companion.seerr.ui.handoff
 import androidx.compose.runtime.Composable
 import com.android.tools.screenshot.PreviewTest
 import com.cooper.binge.companion.seerr.handoff.AddressCandidate
-import com.cooper.binge.companion.seerr.handoff.AddressLocality
 import com.cooper.binge.companion.seerr.handoff.AddressSource
 import com.cooper.binge.companion.seerr.preview.SeerrComponentPreviews
 import com.cooper.binge.companion.seerr.preview.SheetFrame
 import com.cooper.binge.companion.seerr.preview.SideSheetFrame
 import com.cooper.binge.companion.seerr.seerr.SeerrSignInMode
 import com.cooper.binge.companion.seerr.ui.SignInForm
+import com.cooper.homelab.core.server.network.AddressLocality
 
 /**
  * The phone's confirmation before it sends a server address to a television (#323): the field on its

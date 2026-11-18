@@ -44,6 +44,9 @@ internal class DemoModel(
         publicRoutes(data) +
             data.requestRoutes() +
             data.mediaRoutes() +
+            data.titleRoutes() +
+            data.seriesRoutes() +
+            data.discoverRoutes() +
             data.issueRoutes() +
             data.blocklistRoutes() +
             data.userRoutes() +
@@ -62,6 +65,7 @@ internal class DemoModel(
 
     private fun publicSettings() =
         SeerrPublicSettings(
+            initialized = true,
             applicationTitle = "Seerr demo",
             mediaServerType = JELLYFIN,
             jellyfinServerName = "Demo library",

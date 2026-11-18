@@ -7,6 +7,8 @@ import com.binge.companion.contracts.request.v1.CancelRequestRequest
 import com.binge.companion.contracts.request.v1.CancelRequestResponse
 import com.binge.companion.contracts.request.v1.DeclineRequestRequest
 import com.binge.companion.contracts.request.v1.DeclineRequestResponse
+import com.binge.companion.contracts.request.v1.DeleteFilesRequest
+import com.binge.companion.contracts.request.v1.DeleteFilesResponse
 import com.binge.companion.contracts.request.v1.EditRequestRequest
 import com.binge.companion.contracts.request.v1.EditRequestResponse
 import com.binge.companion.contracts.request.v1.GetAdvancedRequestOptionsRequest
@@ -25,8 +27,7 @@ import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.data.MediaStatusStore
 import com.cooper.binge.companion.seerr.data.RequestStore
 import com.cooper.binge.companion.seerr.seerr.BlocklistedTitleException
-import com.cooper.binge.companion.seerr.seerr.HTTP_ACCEPTED
-import com.cooper.binge.companion.seerr.seerr.HTTP_CONFLICT
+import com.cooper.binge.companion.seerr.seerr.RequestPostOutcome
 import com.cooper.binge.companion.seerr.seerr.SeerrEditRequestBody
 import com.cooper.binge.companion.seerr.seerr.SeerrPermissions
 import com.cooper.binge.companion.seerr.seerr.SeerrRequestBody
@@ -37,11 +38,15 @@ import com.cooper.binge.companion.seerr.seerr.advancedRequestOptions
 import com.cooper.binge.companion.seerr.seerr.checkHasSeasons
 import com.cooper.binge.companion.seerr.seerr.checkedSeasonNumbers
 import com.cooper.binge.companion.seerr.seerr.destinationOptions
+import com.cooper.binge.companion.seerr.seerr.details
+import com.cooper.binge.companion.seerr.seerr.hasFiles
 import com.cooper.binge.companion.seerr.seerr.isSeerrTv
+import com.cooper.binge.companion.seerr.seerr.recordIdFor
 import com.cooper.binge.companion.seerr.seerr.refusedWithLiveSession
 import com.cooper.binge.companion.seerr.seerr.resolveAdvancedDestination
 import com.cooper.binge.companion.seerr.seerr.seerrMediaType
 import com.cooper.binge.companion.seerr.seerr.standardVersion
+import com.cooper.binge.companion.seerr.seerr.toOutcome
 import com.cooper.binge.companion.seerr.seerr.toPermissions
 import com.cooper.binge.companion.seerr.seerr.updateRequest
 import io.grpc.Status
@@ -49,6 +54,14 @@ import io.grpc.StatusException
 import retrofit2.HttpException
 
 private const val MAX_DECLINE_REASON = 1000
+
+/** A contract `version_id` as Seerr's `is4k`: the standard version or 4K, and anything else is a bad argument. */
+private fun String.isFourK(): Boolean =
+    when (this) {
+        VERSION_ID_STANDARD -> false
+        VERSION_ID_4K -> true
+        else -> throw invalidArgument("version_id \"$this\" is not one this integration listed")
+    }
 
 /** The REQUEST v1 writes that make, moderate and change a request, and the advanced path's reads. [SeerrRequestService] gates them. */
 internal class SeerrRequestRpcs(
@@ -60,12 +73,7 @@ internal class SeerrRequestRpcs(
     suspend fun submitRequest(request: SubmitRequestRequest): SubmitRequestResponse {
         // Re-checked here, not trusted to the host. version_id is a field on a core rpc, not a gated rpc,
         // so the contract calls an unlisted one a bad argument (INVALID_ARGUMENT), not PERMISSION_DENIED.
-        val is4k =
-            when (request.versionId) {
-                VERSION_ID_STANDARD -> false
-                VERSION_ID_4K -> true
-                else -> throw invalidArgument("version_id \"${request.versionId}\" is not one this integration listed")
-            }
+        val is4k = request.versionId.isFourK()
         if (is4k && !connection.mayRequest4k(request.media)) {
             throw invalidArgument("version_id names 4K, but 4K requests are not open to this user for this media type")
         }
@@ -80,6 +88,34 @@ internal class SeerrRequestRpcs(
                 is4k = is4k,
             )
         return submitAndRespond(media, body)
+    }
+
+    /**
+     * Deletes the version's files from Radarr or Sonarr, then withdraws its requests, a completed one included (Seerr
+     * keeps it after the files go, #1939). The contract says DeleteFiles withdraws the request; the console's Delete
+     * files still leaves a completed one, which #1942 tracks. A version with a request and no files yet is not gone: the request is withdrawn and the answer is OK. Once the
+     * files are deleted the answer is OK even if a withdrawal then fails, because the contract never answers an error
+     * after deleting; the next status read shows what remains. NOT_FOUND is for a title Seerr has no record of, or one
+     * with neither files nor a request left in that version.
+     */
+    suspend fun deleteFiles(request: DeleteFilesRequest): DeleteFilesResponse {
+        val media = request.media
+        val is4k = request.versionId.isFourK()
+        if (is4k && !connection.mayRequest4k(media)) {
+            throw invalidArgument("version_id names 4K, but 4K is not open to this user for this media type")
+        }
+        val api = connection.api()
+        val info = api.details(media).mediaInfo
+        val recordId = info.recordIdFor(media)
+        val withFiles = (if (is4k) info?.status4k else info?.status).hasFiles()
+        val withdrawable =
+            info?.requests.orEmpty().filter { it.is4k == is4k && it.status != SeerrRequestStatusCode.Declined }
+        if (!withFiles && withdrawable.isEmpty()) {
+            throw StatusException(Status.NOT_FOUND.withDescription("Seerr has no files or request left for that version"))
+        }
+        if (withFiles) api.deleteMediaFiles(recordId, is4k)
+        withdrawable.forEach { pending -> attempt { api.deleteRequest(pending.id) }.onSuccess { requestCache.delete(pending.id) } }
+        return DeleteFilesResponse.getDefaultInstance()
     }
 
     /**
@@ -162,11 +198,10 @@ internal class SeerrRequestRpcs(
         val response = connection.api().requestMedia(body)
         statusCache.clearAll()
         val builder = SubmitRequestResponse.newBuilder()
-        when {
-            response.code() == HTTP_ACCEPTED -> Unit
-            response.isSuccessful -> response.body()?.id?.let { builder.setRequestId(it.toString()) }
-            response.code() == HTTP_CONFLICT -> builder.setAlreadyRequested(true)
-            else -> throw HttpException(response)
+        when (val outcome = response.toOutcome()) {
+            is RequestPostOutcome.Created -> outcome.requestId?.let { builder.setRequestId(it.toString()) }
+            RequestPostOutcome.AlreadyRequested -> builder.setAlreadyRequested(true)
+            RequestPostOutcome.NothingToRequest -> Unit
         }
         return builder.setStatus(statusReads.status(media)).build()
     }

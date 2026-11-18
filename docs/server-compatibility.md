@@ -25,6 +25,11 @@ the raw facts behind it.
    `series4kEnabled`, `partialRequestsEnabled`, `enableSpecialEpisodes`, `hideAvailable`,
    `emailEnabled` and the rest.
 
+   `initialized` is the one field that says the server has no first-run setup behind it. Only an
+   explicit `false` means "not set up", and the app then shows a message in place of the sign-in,
+   because the server has no accounts to sign in to. A server that omits it (older releases, forks)
+   is taken to be set up.
+
 A feature is offered when all three say yes. The server's own `401`, `403` and `404` stay the
 backstop, and a screen that meets one of them shows it rather than retrying.
 
@@ -76,9 +81,21 @@ endpoint, is in [`api-coverage.md`](api-coverage.md). The gates that change what
 | Media-server watchlist add and remove | never | Jellyseerr 1.6 |
 | LunaSea notification agent | always | never |
 | Discover sliders, watch providers, keyword and company search | 1.32 | Jellyseerr 1.4 |
+| Discover keyword lists | 1.9 | always |
+| Recently Added list (`media?filter=allavailable`, `sort=mediaAdded`) | 1.18 | always |
+| Discover by watch provider and region | 1.32 | Jellyseerr 1.4 |
+| Upcoming shows | 1.20 | always |
+| Filter and sort parameters on `discover/{movies,tv}` (genre, studio, network, keywords, language, dates, runtime, rating, vote count, streaming services) | 1.32 | Jellyseerr 1.4 |
+| TV `status` filter on `discover/tv` | never | Jellyseerr 2.0 |
+| Certification filter on `discover/{movies,tv}` | never | Jellyseerr 2.6 |
+| `excludeKeywords` on `discover/{movies,tv}` | never | Jellyseerr 3.0 |
+| Discover by genre, language, studio and network | 1.21 | always |
+| Genre slider backdrops | 1.22 | always |
+| Plex watchlist list (`discover/watchlist`) | 1.30 | Jellyseerr 1.2 |
 | Combined RT and IMDb ratings | 1.34 | Jellyseerr 1.7 |
 | Pushover sounds, read by any signed-in user (the route sits ahead of the admin-only `/settings` router) | 1.34 | Jellyseerr 1.8 |
 | Telegram topic, `messageThreadId`, on a user and on the Telegram agent | never | Jellyseerr 2.2 |
+| Webhook template sent as typed, not JSON-encoded first (seerr-team/seerr#2641) | never | Seerr 3.3 |
 | Issues, comments | 1.28 | always |
 | Issue and request counts | 1.30 | always |
 
@@ -181,7 +198,8 @@ installed, the TLS handshake fails and the address step says the server could no
 Plain HTTP is still allowed, because a LAN Seerr at a private IP is usually served that way and the
 config file cannot express IP ranges. The app refuses an `http://` address that names a public host
 until the user ticks a consent in setup, since the key would otherwise cross the internet in the
-clear (`auth/CleartextConsent.kt`). Builds before that opt-in only warned.
+clear (the consent store is the shared library's `CleartextConsent`, wired in `di/AuthModule.kt`; the guard is `seerr/Cleartext.kt`). Builds
+before that opt-in only warned.
 
 ## Where this lives
 
@@ -189,3 +207,17 @@ clear (`auth/CleartextConsent.kt`). Builds before that opt-in only warned.
 (`hasBlocklist`, `blocklistPath`, `hasOverrideRules`, `hasQuickConnect`, `signInModes`, and so
 on), and a screen or the Service asks for the capability. The same rule the contracts follow
 applies here: a version answers "can we parse each other", and never "is this feature there".
+
+## Deleting a title's files
+
+`DELETE /media/{id}/file` removes a title's files through Radarr or Sonarr. It needs `MANAGE_REQUESTS`
+and Jellyseerr 1.5 or later; Overseerr has no such route. The REQUEST contract's `CAPABILITY_DELETE_FILES`
+is declared only where both hold, which is the console's own gate for its Delete files row.
+
+Deletion is per version, so the capability travels on a version's `allowed_actions` and never on the
+title's or a request's. A version offers it while it has files to delete: available, partly available or
+still processing, the same states the console offers its row for. `DeleteFiles` deletes the files for that
+version, then withdraws the version's open requests, which are those not declined or completed. It leaves
+a withdrawal that then fails unreported, because the contract never answers an error after files are gone.
+A version with a request and no files is withdrawn without a file call. A server with no default Radarr or
+Sonarr for that version answers `409`, which is `FAILED_PRECONDITION`.

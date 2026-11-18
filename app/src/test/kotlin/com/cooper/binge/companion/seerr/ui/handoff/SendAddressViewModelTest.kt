@@ -2,7 +2,7 @@ package com.cooper.binge.companion.seerr.ui.handoff
 
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.lifecycle.ViewModelStore
-import com.cooper.binge.companion.seerr.auth.CredentialStore
+import com.cooper.binge.companion.seerr.auth.LegacyCredentialStore
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.handoff.AddressSender
 import com.cooper.binge.companion.seerr.handoff.AddressSource
@@ -18,9 +18,9 @@ import com.cooper.binge.companion.seerr.seerr.SeerrApiFactory
 import com.cooper.binge.companion.seerr.seerr.SeerrAuth
 import com.cooper.binge.companion.seerr.seerr.SeerrCredentials
 import com.cooper.binge.companion.seerr.seerr.SeerrSignInMode
-import com.cooper.binge.companion.seerr.util.InMemoryDataStore
 import com.cooper.binge.companion.seerr.util.MainDispatcherRule
 import com.cooper.binge.companion.seerr.util.PlainCipher
+import com.cooper.homelab.core.testing.InMemoryDataStore
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.TestScope
@@ -135,7 +135,7 @@ class SendAddressViewModelTest {
         enterPin: Boolean = true,
     ): SendAddressViewModel {
         val store =
-            CredentialStore(
+            LegacyCredentialStore(
                 PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("c${stores++}.preferences_pb") },
                 PlainCipher,
                 UnconfinedTestDispatcher(testScheduler),

@@ -11,36 +11,37 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation3.runtime.rememberNavBackStack
+import com.binge.companion.kit.isTelevision
+import com.binge.companion.sdk.attempt
 import com.cooper.binge.companion.seerr.auth.ConnectionRestore
 import com.cooper.binge.companion.seerr.auth.ForegroundUserRefresh
+import com.cooper.binge.companion.seerr.discover.sliders.DiscoverSliderRepository
 import com.cooper.binge.companion.seerr.feedback.BugReportLinks
 import com.cooper.binge.companion.seerr.feedback.FeedbackPrefs
 import com.cooper.binge.companion.seerr.feedback.ShakeToReportPrompt
-import com.cooper.binge.companion.seerr.flags.FeatureFlags
+import com.cooper.binge.companion.seerr.flags.DiscoveryFlag
+import com.cooper.binge.companion.seerr.flags.LocalDiscoveryEnabled
 import com.cooper.binge.companion.seerr.flags.LocalFlags
-import com.cooper.binge.companion.seerr.telemetry.Analytics
 import com.cooper.binge.companion.seerr.telemetry.LocalAnalytics
-import com.cooper.binge.companion.seerr.telemetry.screenName
+import com.cooper.binge.companion.seerr.telemetry.screenNames
 import com.cooper.binge.companion.seerr.theme.SeerrTheme
 import com.cooper.binge.companion.seerr.ui.DeepLinkNavigator
 import com.cooper.binge.companion.seerr.ui.HomeRoute
 import com.cooper.binge.companion.seerr.ui.SeerrNavHost
-import com.cooper.binge.companion.seerr.ui.SeerrRoute
 import com.cooper.binge.companion.seerr.ui.consent.ConsentGate
 import com.cooper.binge.companion.seerr.ui.linkedRequestId
-import com.cooper.binge.companion.seerr.ui.replaceAll
+import com.cooper.binge.companion.seerr.ui.shell.openLink
+import com.cooper.binge.companion.seerr.ui.shell.rememberSeerrTabs
 import com.cooper.binge.companion.seerr.ui.tv.TvSeerrShell
-import com.cooper.binge.companion.seerr.ui.tv.isTelevision
+import com.cooper.homelab.core.flags.FeatureFlags
+import com.cooper.homelab.core.telemetry.Analytics
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -77,6 +78,12 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var featureFlags: FeatureFlags
 
+    @Inject
+    lateinit var discoveryFlag: DiscoveryFlag
+
+    @Inject
+    lateinit var discoverSliders: DiscoverSliderRepository
+
     private var consumedLink: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -106,25 +113,25 @@ class MainActivity : ComponentActivity() {
                 return@setContent
             }
             val backStack = rememberNavBackStack(HomeRoute)
+            val tabs = rememberSeerrTabs()
             LaunchedEffect(backStack) {
-                snapshotFlow { backStack.lastOrNull() as? SeerrRoute }
-                    .filterNotNull()
-                    .distinctUntilChanged()
-                    .collect { analytics.screen(it.screenName()) }
+                screenNames(backStack, selectedTab = { tabs.selected }).collect { analytics.screen(it) }
             }
+            // A link replaces the app's stack and puts Settings under it, whichever tab was showing.
             LaunchedEffect(backStack) {
-                deepLinks.backStacks.collect { routes -> backStack.replaceAll(routes) }
+                deepLinks.backStacks.collect { routes -> tabs.openLink(backStack, routes) }
             }
             // Phone only: a television has no accelerometer, and reports a bug from Settings instead.
             val shakeToReport by feedbackPrefs.shakeToReport.collectAsStateWithLifecycle(initialValue = false)
-            CompositionLocalProvider(LocalFlags provides flags) {
+            val discoveryEnabled by discoveryFlag.enabled.collectAsStateWithLifecycle()
+            CompositionLocalProvider(LocalFlags provides flags, LocalDiscoveryEnabled provides discoveryEnabled) {
                 SeerrTheme {
                     ShakeToReportPrompt(enabled = shakeToReport, bugReportUrl = bugReportLinks::url)
                     // The window's own background (the platform default, since Theme.Seerr sets none)
                     // doesn't match this, so a two-pane gutter would otherwise show through as a
                     // different colour than the panes it sits between.
                     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                        ConsentGate { SeerrNavHost(backStack = backStack, onExit = ::finish) }
+                        ConsentGate { SeerrNavHost(backStack = backStack, onExit = ::finish, tabs = tabs) }
                     }
                 }
             }
@@ -136,6 +143,9 @@ class MainActivity : ComponentActivity() {
         super.onStart()
         userRefresh.onForeground()
         lifecycleScope.launch { featureFlags.refresh() }
+        lifecycleScope.launch { discoveryFlag.refresh() }
+        // The slider list is read again on a return, to pick up a change made in the web client. Only the discovery hubs use it.
+        if (discoveryFlag.enabled.value) lifecycleScope.launch { attempt { discoverSliders.refresh() } }
     }
 
     override fun onNewIntent(intent: Intent) {

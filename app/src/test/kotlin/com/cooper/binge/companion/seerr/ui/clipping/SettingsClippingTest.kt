@@ -1,13 +1,11 @@
 package com.cooper.binge.companion.seerr.ui.clipping
 
-import com.cooper.binge.companion.seerr.notifications.NotificationSignal
 import com.cooper.binge.companion.seerr.seerr.SeerrDefaultAccess
 import com.cooper.binge.companion.seerr.seerr.SeerrVariant
 import com.cooper.binge.companion.seerr.ui.settings.AppSettings
 import com.cooper.binge.companion.seerr.ui.settings.ConnectionSummary
 import com.cooper.binge.companion.seerr.ui.settings.GeneralSettings
 import com.cooper.binge.companion.seerr.ui.settings.NotificationAgents
-import com.cooper.binge.companion.seerr.ui.settings.NotificationSettings
 import com.cooper.binge.companion.seerr.ui.settings.RequestLimit
 import com.cooper.binge.companion.seerr.ui.settings.RequestPolicy
 import com.cooper.binge.companion.seerr.ui.settings.ScheduledJob
@@ -109,14 +107,6 @@ class SettingsClippingTest {
                             ),
                         ),
                 ),
-            notifications =
-                NotificationSettings(
-                    offered = NotificationSignal.entries,
-                    enabled = NotificationSignal.entries.toSet(),
-                    blocked = true,
-                    lastRunMillis = null,
-                    nextRunMillis = null,
-                ),
             app = AppSettings(bugReportUrl = LONG_URL, shakeToReport = true, shareUsageData = true, sendCrashReports = true),
         )
 
@@ -125,11 +115,6 @@ class SettingsClippingTest {
             onBack = {},
             onEditConnection = {},
             onOpenPage = {},
-            onToggleSignal = { _, _ -> },
-            onNotificationAccessChanged = {},
-            onToggleShakeToReport = {},
-            onToggleShareUsageData = {},
-            onToggleSendCrashReports = {},
             onDisconnect = {},
         )
 }

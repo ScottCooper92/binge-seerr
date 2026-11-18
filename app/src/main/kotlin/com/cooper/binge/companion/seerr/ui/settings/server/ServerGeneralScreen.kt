@@ -21,6 +21,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.ItemGroup
 import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.ui.search.SettingRows
 import com.cooper.binge.companion.seerr.ui.settings.DisplayLanguages
 import com.cooper.binge.companion.seerr.ui.users.settings.AddressKeyboard
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorActions
@@ -85,7 +86,7 @@ private fun ApplicationGroup(
                     value = draft.applicationTitle,
                     enabled = enabled,
                     onChange = { value -> actions.onEdit { it.copy(applicationTitle = value) } },
-                ),
+                ).copy(key = SettingRows.GENERAL_TITLE),
                 textSettingItem(
                     icon = Icons.Filled.Link,
                     label = stringResource(R.string.settings_application_url),
@@ -95,7 +96,7 @@ private fun ApplicationGroup(
                     keyboard = AddressKeyboard,
                     hint = stringResource(R.string.server_settings_application_url_hint),
                     check = { value -> urlError.takeIf { !draft.copy(applicationUrl = value).urlValid } },
-                ),
+                ).copy(key = SettingRows.GENERAL_URL),
                 displayLanguageSettingItem(
                     icon = Icons.Filled.Translate,
                     title = stringResource(R.string.settings_display_language),
@@ -103,8 +104,8 @@ private fun ApplicationGroup(
                     selected = draft.locale,
                     enabled = enabled,
                     onSelect = { code -> actions.onEdit { it.copy(locale = code) } },
-                ),
-                apiKeyItem(extras.apiKey, keyActions, enabled),
+                ).copy(key = SettingRows.GENERAL_LANGUAGE),
+                apiKeyItem(extras.apiKey, keyActions, enabled).copy(key = SettingRows.GENERAL_API_KEY),
             ),
     )
 }
@@ -129,7 +130,7 @@ private fun DiscoverGroup(
                     enabled = enabled,
                     onOpen = { onLoadList(ServerList.DiscoverRegions) },
                     onSelect = { code -> actions.onEdit { it.copy(discoverRegion = code) } },
-                ),
+                ).copy(key = SettingRows.GENERAL_DISCOVER_REGION),
                 // Only the Jellyseerr lineage has a streaming region, and only it is asked for the list.
                 draft.streamingRegion?.let { region ->
                     regionSettingItem(
@@ -140,7 +141,7 @@ private fun DiscoverGroup(
                         enabled = enabled,
                         onOpen = { onLoadList(ServerList.StreamingRegions) },
                         onSelect = { code -> actions.onEdit { it.copy(streamingRegion = code) } },
-                    )
+                    ).copy(key = SettingRows.GENERAL_STREAMING_REGION)
                 },
                 languageSettingItem(
                     icon = Icons.Filled.Language,
@@ -150,14 +151,14 @@ private fun DiscoverGroup(
                     enabled = enabled,
                     onOpen = { onLoadList(ServerList.Languages) },
                     onSelect = { codes -> actions.onEdit { it.copy(originalLanguage = codes) } },
-                ),
+                ).copy(key = SettingRows.GENERAL_DISCOVER_LANGUAGE),
                 editorToggle(
                     Icons.Filled.Visibility,
                     stringResource(R.string.settings_hide_available),
                     draft.hideAvailable,
                     enabled,
                     detail = stringResource(R.string.server_settings_hide_available_detail),
-                ) { on -> actions.onEdit { it.copy(hideAvailable = on) } },
+                ) { on -> actions.onEdit { it.copy(hideAvailable = on) } }.copy(key = SettingRows.GENERAL_HIDE_AVAILABLE),
                 draft.hideBlocklisted?.let { hidden ->
                     editorToggle(
                         Icons.Filled.Block,
@@ -174,7 +175,7 @@ private fun DiscoverGroup(
                         hidden,
                         enabled,
                         detail = stringResource(R.string.server_settings_hide_requested_detail),
-                    ) { on -> actions.onEdit { it.copy(hideRequested = on) } }
+                    ) { on -> actions.onEdit { it.copy(hideRequested = on) } }.copy(key = SettingRows.GENERAL_HIDE_REQUESTED)
                 },
             ),
     )
@@ -196,7 +197,7 @@ internal fun RequestsGroup(
                     draft.partialRequests,
                     enabled,
                     detail = stringResource(R.string.server_settings_partial_requests_detail),
-                ) { on -> actions.onEdit { it.copy(partialRequests = on) } },
+                ) { on -> actions.onEdit { it.copy(partialRequests = on) } }.copy(key = SettingRows.GENERAL_PARTIAL_REQUESTS),
                 draft.specialEpisodes?.let { allowed ->
                     editorToggle(
                         Icons.Filled.Event,
@@ -204,7 +205,7 @@ internal fun RequestsGroup(
                         allowed,
                         enabled,
                         detail = stringResource(R.string.server_settings_special_episodes_detail),
-                    ) { on -> actions.onEdit { it.copy(specialEpisodes = on) } }
+                    ) { on -> actions.onEdit { it.copy(specialEpisodes = on) } }.copy(key = SettingRows.GENERAL_SPECIAL_EPISODES)
                 },
             ),
     )
@@ -227,7 +228,7 @@ internal fun AdvancedGroup(
                     draft.cacheImages,
                     enabled,
                     detail = stringResource(R.string.server_settings_cache_images_detail),
-                ) { on -> actions.onEdit { it.copy(cacheImages = on) } },
+                ) { on -> actions.onEdit { it.copy(cacheImages = on) } }.copy(key = SettingRows.GENERAL_CACHE_IMAGES),
                 draft.youtubeUrl?.let { url ->
                     textSettingItem(
                         icon = Icons.Filled.PlayCircle,
@@ -238,7 +239,7 @@ internal fun AdvancedGroup(
                         keyboard = AddressKeyboard,
                         emptyLabel = stringResource(R.string.server_settings_youtube_default),
                         hint = stringResource(R.string.server_settings_youtube_url_hint),
-                    )
+                    ).copy(key = SettingRows.GENERAL_YOUTUBE_URL)
                 },
                 draft.versionCheck?.let { checking ->
                     editorToggle(Icons.Filled.Update, stringResource(R.string.server_settings_version_check), checking, enabled) { on ->
@@ -252,7 +253,7 @@ internal fun AdvancedGroup(
                         trusted,
                         enabled,
                         detail = stringResource(R.string.server_settings_trust_proxy_detail),
-                    ) { on -> actions.onEdit { it.copy(trustProxy = on) } }
+                    ) { on -> actions.onEdit { it.copy(trustProxy = on) } }.copy(key = SettingRows.GENERAL_TRUST_PROXY)
                 },
                 draft.csrfProtection?.let { protected ->
                     editorToggle(
@@ -261,7 +262,7 @@ internal fun AdvancedGroup(
                         protected,
                         enabled,
                         detail = stringResource(R.string.server_settings_csrf_detail),
-                    ) { on -> actions.onEdit { it.copy(csrfProtection = on) } }
+                    ) { on -> actions.onEdit { it.copy(csrfProtection = on) } }.copy(key = SettingRows.GENERAL_CSRF)
                 },
             ),
         // Overseerr badges both "Restart required", as the forks do on their Network page (#868).

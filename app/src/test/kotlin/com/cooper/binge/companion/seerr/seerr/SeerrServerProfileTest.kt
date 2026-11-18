@@ -217,4 +217,12 @@ class SeerrServerProfileTest {
         version: String,
         settings: SeerrPublicSettings = SeerrPublicSettings(),
     ): SeerrServerProfile = SeerrServerProfile.from(SeerrStatusDto(version = version), settings)
+
+    @Test
+    fun `only an explicit false means the server is not set up`() {
+        fun profile(settings: SeerrPublicSettings) = SeerrServerProfile.unknown(SeerrVariant.Seerr).copy(settings = settings)
+        assertFalse(profile(SeerrPublicSettings(initialized = false)).isSetUp)
+        assertTrue(profile(SeerrPublicSettings(initialized = true)).isSetUp)
+        assertTrue("an older server or a fork sends nothing", profile(SeerrPublicSettings()).isSetUp)
+    }
 }

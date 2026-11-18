@@ -14,7 +14,7 @@ import com.binge.companion.contracts.request.v1.RequestServiceGrpcKt
 import com.binge.companion.contracts.request.v1.SubmitRequestRequest
 import com.binge.companion.contracts.v1.MediaId
 import com.binge.companion.contracts.v1.MediaType
-import com.cooper.binge.companion.seerr.auth.CredentialStore
+import com.cooper.binge.companion.seerr.auth.LegacyCredentialStore
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.demo.DEMO_PROVIDER_NAME
 import com.cooper.binge.companion.seerr.demo.demoCredentials
@@ -66,7 +66,7 @@ class DemoCompanionTest {
 
     private suspend fun TestScope.demoStub(): RequestServiceGrpcKt.RequestServiceCoroutineStub {
         val store =
-            CredentialStore(
+            LegacyCredentialStore(
                 PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("c.preferences_pb") },
                 PlainCipher,
                 UnconfinedTestDispatcher(testScheduler),

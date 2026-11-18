@@ -3,23 +3,23 @@ package com.cooper.binge.companion.seerr.ui
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.binge.companion.kit.SecretCipher
 import com.binge.companion.sdk.attempt
 import com.cooper.binge.companion.seerr.auth.PlexPinFlow
-import com.cooper.binge.companion.seerr.auth.SecretCipher
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.demo.demoCredentials
 import com.cooper.binge.companion.seerr.di.IoDispatcher
 import com.cooper.binge.companion.seerr.handoff.AddressHandOffs
 import com.cooper.binge.companion.seerr.handoff.HAND_OFF_SESSION_MODE
-import com.cooper.binge.companion.seerr.seerr.LocalNetworkPermission
 import com.cooper.binge.companion.seerr.seerr.SeerrSignInMode
 import com.cooper.binge.companion.seerr.seerr.insecurePublicHostOrNull
 import com.cooper.binge.companion.seerr.seerr.isBlockedByLocalNetwork
-import com.cooper.binge.companion.seerr.telemetry.Analytics
 import com.cooper.binge.companion.seerr.telemetry.AnalyticsEvents
-import com.cooper.binge.companion.seerr.telemetry.CrashBreadcrumbs
-import com.cooper.binge.companion.seerr.telemetry.NoOpAnalytics
-import com.cooper.binge.companion.seerr.telemetry.NoOpCrashBreadcrumbs
+import com.cooper.homelab.core.server.network.LocalNetworkPermission
+import com.cooper.homelab.core.telemetry.Analytics
+import com.cooper.homelab.core.telemetry.CrashBreadcrumbs
+import com.cooper.homelab.core.telemetry.NoOpAnalytics
+import com.cooper.homelab.core.telemetry.NoOpCrashBreadcrumbs
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.delay
@@ -178,7 +178,7 @@ class SetupViewModel
                         val server = preview.toSetupServer()
                         // With the phone's session, straight in: the sign-in form is shown only if the server turns it down.
                         val session = draft.value.handedSession
-                        if (session == null) {
+                        if (session == null || !server.setUp) {
                             draft.update { it.copy(server = server, form = SignInForm(mode = server.modes.first())) }
                         } else {
                             // The server decides: a session it doesn't answer to is dropped, never kept, and the sign-in step

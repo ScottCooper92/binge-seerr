@@ -32,14 +32,13 @@ gains a Request button, Binge shows each title's request state, and an advanced 
 server, profile and folder choices, which Binge renders itself from this app's answers. Binge is
 optional; everything above works without it.
 
-**It is not a discovery client.** Browsing and searching for titles is Binge's job, or the
-server's own web client; this app manages what has already been asked for.
+**It is also a discovery client, on the phone.** Behind a feature flag that is off for now, it browses Movies and TV, searches for titles, and opens title, person and collection pages, all from your own server's API, with requesting as the main action. Binge remains the richer browsing app; this one reaches the same titles through the server you already run.
 
 The store listing and the privacy policy are under [`docs/listing/`](docs/listing/). The short
 version: the one secret (your API key or session) is encrypted with an Android Keystore key and
 stored on the device, and Google Play's Block Store can carry it to a new device; the app talks to
 the server you entered and, if you choose to sign in with Plex, to plex.tv. Usage data (PostHog,
-only if you agree) and crash reports (Firebase Crashlytics, switchable in Settings) are the only
+only if you agree) and crash reports (Firebase Crashlytics, switchable in This app, or in Settings on TV) are the only
 other traffic.
 
 ### Where the secret lives
@@ -47,7 +46,7 @@ other traffic.
 The app holds one secret: an API key, or a session cookie from a password or Plex sign-in. It keeps
 two copies, each guarding against something different:
 
-- **On the device**, encrypted with an Android Keystore key (`CredentialStore`, `SecretCipher`). The
+- **On the device**, encrypted with an Android Keystore key (`CredentialStore`, and `SecretCipher` from the companion kit). The
   key never leaves the Keystore, so the stored copy is useless off this device or without this app.
 - **In Google Play's Block Store** (`BlockStoreConnectionCarrier`), so a new device or a reinstall can
   reconnect without signing in again. It is written as JSON, backed up to the cloud only when the
@@ -71,9 +70,9 @@ Binge ships as a plain TMDB client with zero bundled providers. A companion app 
 that exports a bound Android Service implementing a contract from
 [binge-companions](https://github.com/ScottCooper92/binge-companions); only data crosses the
 IPC boundary, over gRPC on Binder, and there is no dynamic code loading. This app implements
-REQUEST v1, and it is the **reference** companion: the worked example a third-party author reads
-to learn what a companion looks like. Whatever is here will be copied, so the bar is not "does it
-work" but "is this worth copying".
+REQUEST v1, and it is the **reference** companion: the worked example the contract in
+binge-companions is checked against. So the bar is not "does it work" but "is this the
+implementation we would point to as right".
 
 It has no privileged relationship with Binge. It talks through the same public contract and the
 same handshake as anyone else's companion would; if something only worked because both ends share
@@ -95,6 +94,13 @@ The platform's decisions are in Binge's `docs/companion-platform-architecture.md
 and the wire contract in binge-companions' `contracts/`; this app's own roadmap is
 [#26](https://github.com/ScottCooper92/binge-seerr/issues/26).
 
+## Feedback
+
+[Report a bug](https://github.com/ScottCooper92/app-feedback/issues/new?template=seerr-bug.yml) or
+[suggest a feature](https://github.com/ScottCooper92/app-feedback/issues/new?template=seerr-feature.yml)
+on the public app-feedback repository. The app's own "Report a bug" row opens the same form with
+your app version and device filled in.
+
 ## Status
 
 **Pre-alpha, at contract parity.** The exported Service serves every REQUEST v1 operation against
@@ -114,6 +120,9 @@ build, so clone with submodules:
 git clone --recurse-submodules https://github.com/ScottCooper92/binge-seerr
 ./gradlew build
 ```
+
+The app also links a private library of the author's, `homelab-core`, through the same kind of submodule. Its source is not
+public, so **only the author's own CI and machines can build this app**, and a reproducible build from source is not possible.
 
 That is the whole gate: the checks `CLAUDE.md` lists under Gates, from the Kotlin compile to the
 screenshot suite. JDK 21, then a `jvmTarget` of 17, `compileSdk` 37, `minSdk` 26 and the AGP in `libs.versions.toml`, matching Binge,
@@ -165,4 +174,11 @@ CI triage table those workflows work from.
 
 ## Licence
 
-Apache 2.0. See [LICENSE](LICENSE).
+Copyright (c) 2025-2026 Scott Cooper. All rights reserved. See [LICENSE](LICENSE): no licence is granted
+to copy, modify or distribute this code. The app's name and artwork are covered too: see
+[ASSETS.md](ASSETS.md) and [TRADEMARKS.md](TRADEMARKS.md).
+
+Third-party libraries keep their own licences, which the app lists on its Open-source licences page.
+Versions of the app that were released before this notice stay under the licence they shipped with.
+
+The contracts and SDK in `binge-companions` stay under Apache 2.0, so anyone can write a companion.

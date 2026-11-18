@@ -1,5 +1,8 @@
 package com.cooper.binge.companion.seerr.ui.settings.server
 
+import com.cooper.binge.companion.seerr.seerr.SeerrPublicSettings
+import com.cooper.binge.companion.seerr.seerr.SeerrServerProfile
+import com.cooper.binge.companion.seerr.seerr.SeerrVariant
 import kotlinx.serialization.json.jsonPrimitive
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -8,6 +11,8 @@ import org.junit.Test
 
 /** What ties an agent's options to the port range and to the form's validity. */
 class NotificationAgentModelsTest {
+    private val latest = SeerrServerProfile(variant = SeerrVariant.Seerr, version = null, settings = SeerrPublicSettings())
+
     private val email =
         AgentForm(
             ServerAgent.Email,
@@ -51,8 +56,8 @@ class NotificationAgentModelsTest {
             )
         val ntfy = AgentForm(ServerAgent.Ntfy, options = mapOf(AgentOption.NtfyPassword to " p w ", AgentOption.NtfyToken to " tk_1 "))
 
-        val sent = form.toDto().options
-        val ntfySent = ntfy.toDto().options
+        val sent = form.toDto(latest).options
+        val ntfySent = ntfy.toDto(latest).options
 
         assertEquals(" hunter2 ", sent.getValue("authPass").jsonPrimitive.content)
         assertEquals("pgp pass ", sent.getValue("pgpPassword").jsonPrimitive.content)

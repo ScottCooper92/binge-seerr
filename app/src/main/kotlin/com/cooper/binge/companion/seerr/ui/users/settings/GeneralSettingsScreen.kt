@@ -18,6 +18,7 @@ import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
 import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.ui.search.SettingRows
 import com.cooper.binge.companion.seerr.ui.settings.DisplayLanguages
 import com.cooper.binge.companion.seerr.ui.settings.server.ServerList
 import com.cooper.binge.companion.seerr.ui.settings.server.displayLanguageSettingItem
@@ -90,7 +91,7 @@ private fun ProfileGroup(
                     // What the server itself shows when this is blank, so the row answers "or what?".
                     emptyLabel = draft.fallbackName.ifBlank { stringResource(R.string.settings_value_not_set) },
                     placeholder = draft.fallbackName.takeIf { it.isNotBlank() },
-                ),
+                ).copy(key = SettingRows.ACCOUNT_DISPLAY_NAME),
                 textSettingItem(
                     icon = Icons.Filled.Email,
                     label = stringResource(R.string.user_settings_email),
@@ -101,7 +102,7 @@ private fun ProfileGroup(
                     required = draft.emailRequired,
                     check = { value -> emailError.takeIf { !draft.copy(email = value).emailValid } },
                     keyboard = EmailKeyboard,
-                ),
+                ).copy(key = SettingRows.ACCOUNT_EMAIL),
                 displayLanguageSettingItem(
                     icon = Icons.Filled.Translate,
                     title = stringResource(R.string.settings_display_language),
@@ -111,7 +112,7 @@ private fun ProfileGroup(
                     selected = draft.locale.trim(),
                     enabled = enabled,
                     onSelect = { code -> actions.onEdit { it.copy(locale = code) } },
-                ),
+                ).copy(key = SettingRows.ACCOUNT_LANGUAGE),
             ),
     )
 }
@@ -138,7 +139,7 @@ private fun DiscoverGroup(
                     onOpen = { onLoadList(ServerList.DiscoverRegions) },
                     onSelect = { code -> actions.onEdit { it.copy(region = code) } },
                     serverDefault = defaults.region,
-                ),
+                ).copy(key = SettingRows.ACCOUNT_DISCOVER_REGION),
                 languageSettingItem(
                     icon = Icons.Filled.Language,
                     title = stringResource(R.string.server_settings_discover_language),
@@ -148,7 +149,7 @@ private fun DiscoverGroup(
                     onOpen = { onLoadList(ServerList.Languages) },
                     onSelect = { codes -> actions.onEdit { it.copy(originalLanguage = codes) } },
                     serverDefault = defaults.originalLanguage,
-                ),
+                ).copy(key = SettingRows.ACCOUNT_DISCOVER_LANGUAGE),
                 draft.streamingRegion?.let { region ->
                     regionSettingItem(
                         icon = Icons.Filled.LiveTv,

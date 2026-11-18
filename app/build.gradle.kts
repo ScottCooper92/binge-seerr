@@ -6,6 +6,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
+    alias(libs.plugins.aboutlibraries.android)
     alias(libs.plugins.room)
     alias(libs.plugins.ktlint)
     id("binge.gates.detekt")
@@ -18,7 +19,7 @@ plugins {
 
 // Crash reporting needs this app's own Firebase project, whose google-services.json is never
 // committed: release.yml writes it from a secret. Without it neither plugin is applied, so a fork
-// or a local build still builds, and crash reporting is simply off (`telemetry/CrashReporting.kt`).
+// or a local build still builds, and crash reporting is simply off (the Crashlytics adapters in the shared `app-services-firebase` module do nothing without a Firebase app).
 if (file("google-services.json").exists()) {
     apply(
         plugin =
@@ -237,11 +238,22 @@ tasks.named("check") { dependsOn(checkGrpcAlignment) }
 dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.binge.companion.sdk)
+    implementation(libs.binge.companion.kit)
     implementation(libs.binge.companion.contracts)
     implementation(libs.binge.designsystem)
     // The television surface in ui/tv: tv-material and the phone's Material 3 are never mixed in one
     // file, so that package imports only this module's theme and units.
     implementation(libs.binge.designsystem.tv)
+    implementation(libs.homelab.appservices)
+    implementation(libs.homelab.server)
+    implementation(libs.homelab.bridge)
+    implementation(libs.homelab.presentation)
+    implementation(libs.homelab.uiandroid)
+    // The vendor adapters behind it: Google Play (the review card and the tip jar), PostHog and Firebase.
+    implementation(libs.homelab.appservices.play)
+    implementation(libs.homelab.appservices.posthog)
+    implementation(libs.homelab.appservices.firebase)
+    testImplementation(libs.homelab.testing)
     implementation(libs.hilt.android)
     ksp(libs.hilt.android.compiler)
     implementation(libs.hilt.lifecycle.viewmodel.compose)
@@ -257,8 +269,11 @@ dependencies {
     implementation(libs.okhttp.logging.interceptor)
     implementation(libs.datastore.preferences)
     implementation(platform(libs.firebase.bom))
-    implementation(libs.firebase.config)
+    // Crashlytics stays on the app on purpose: its Gradle plugin instruments this runtime. The adapters over it are the shared
+    // `app-services-firebase` module's.
     implementation(libs.firebase.crashlytics)
+    // The discovery flag reads Remote Config itself, because the shared flag registry is closed to an app's own flags.
+    implementation(libs.firebase.config)
     implementation(libs.posthog.android)
     implementation(platform(libs.compose.bom))
     implementation(libs.compose.ui)
@@ -266,6 +281,8 @@ dependencies {
     implementation(libs.compose.material3)
     implementation(libs.activity.compose)
     implementation(libs.androidx.core.splashscreen)
+    // The licences page reads the list the AboutLibraries plugin writes at build time.
+    implementation(libs.aboutlibraries.core)
     implementation(libs.lifecycle.viewmodel.compose)
     implementation(libs.lifecycle.viewmodel.savedstate)
     implementation(libs.lifecycle.runtime.compose)

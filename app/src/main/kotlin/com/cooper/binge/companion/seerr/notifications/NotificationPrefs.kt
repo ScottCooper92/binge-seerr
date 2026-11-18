@@ -34,6 +34,13 @@ enum class NotificationSignal(
 
 private val LAST_RUN = longPreferencesKey("last_run_millis")
 
+private val POLL_INTERVAL = intPreferencesKey("poll_interval_minutes")
+
+/** How often the poll may run, in minutes: WorkManager's 15 is the floor, so these are the steps from there. */
+val POLL_INTERVAL_CHOICES: List<Int> = listOf(15, 30, 60, 120, 360)
+
+const val DEFAULT_POLL_INTERVAL_MINUTES: Int = 15
+
 /**
  * The user's own requests that still have an outcome to announce. Shared by the three own-request
  * signals, because it is not deduplication: it is how deep the next walk of the list has to go
@@ -48,6 +55,8 @@ private val WATCHED_REQUEST_IDS = stringSetPreferencesKey("own_requests_watching
  */
 class NotificationPrefs(
     private val dataStore: DataStore<Preferences>,
+    /** Starts a signal's cursor over wherever the cursors are kept; [CursorReset.None] while they are the preferences below. */
+    private val cursorReset: CursorReset = CursorReset.None,
 ) {
     fun enabled(signal: NotificationSignal): Flow<Boolean> = dataStore.data.map { it[signal.toggleKey()] ?: false }.distinctUntilChanged()
 
@@ -68,11 +77,16 @@ class NotificationPrefs(
         dataStore.edit { it[PAUSED_FOR_AUTH_FAILURE] = paused }
     }
 
-    /** Enabling a signal drops its deduplication state, so what arrived while it was off is not announced. */
+    /**
+     * Enabling a signal drops its deduplication state, so what arrived while it was off is not announced. The shared cursor goes
+     * first and the toggle after, so a poll that runs in between still sees the signal off and skips it, rather than finding
+     * the old cursor and announcing the gap.
+     */
     suspend fun setEnabled(
         signal: NotificationSignal,
         value: Boolean,
     ) {
+        if (value) cursorReset.reset(signal)
         dataStore.edit { prefs ->
             prefs[signal.toggleKey()] = value
             if (value) prefs.clearDedup(signal)
@@ -81,6 +95,10 @@ class NotificationPrefs(
 
     /** Turns [signals] on only when no signal is on at all, leaving a choice the user has made alone. */
     suspend fun enableIfNoneOn(signals: List<NotificationSignal>) {
+        // Decided here so the shared cursors can go before the toggles do; the edit re-checks, so a change in between turns nothing
+        // on twice. A cursor dropped for a signal that stays off only means it seeds again when it is turned on.
+        if (NotificationSignal.entries.any { isEnabled(it) }) return
+        signals.forEach { cursorReset.reset(it) }
         dataStore.edit { prefs ->
             if (NotificationSignal.entries.none { prefs[it.toggleKey()] == true }) {
                 signals.forEach { signal ->
@@ -121,6 +139,17 @@ class NotificationPrefs(
         dataStore.edit { it[WATCHED_REQUEST_IDS] = ids.mapTo(mutableSetOf()) { id -> id.toString() } }
     }
 
+    /** How often the poll is asked to run, always one of [POLL_INTERVAL_CHOICES]; Android may run it less often than this. */
+    val pollIntervalMinutes: Flow<Int> =
+        dataStore.data
+            .map { prefs -> prefs[POLL_INTERVAL]?.takeIf { it in POLL_INTERVAL_CHOICES } ?: DEFAULT_POLL_INTERVAL_MINUTES }
+            .distinctUntilChanged()
+
+    suspend fun setPollIntervalMinutes(minutes: Int) {
+        require(minutes in POLL_INTERVAL_CHOICES) { "No poll interval of $minutes minutes" }
+        dataStore.edit { it[POLL_INTERVAL] = minutes }
+    }
+
     /** When the poll last finished, for the settings row; null before its first run. */
     val lastRunMillis: Flow<Long?> = dataStore.data.map { it[LAST_RUN] }.distinctUntilChanged()
 
@@ -140,6 +169,7 @@ class NotificationPrefs(
             prefs.remove(WATCHED_REQUEST_IDS)
             prefs.remove(PAUSED_FOR_AUTH_FAILURE)
         }
+        cursorReset.resetAll()
     }
 }
 

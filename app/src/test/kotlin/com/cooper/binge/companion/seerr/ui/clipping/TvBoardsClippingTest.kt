@@ -22,7 +22,6 @@ import com.cooper.binge.companion.seerr.ui.requests.RequestCounts
 import com.cooper.binge.companion.seerr.ui.requests.RequestFilter
 import com.cooper.binge.companion.seerr.ui.tv.NoIssuesActions
 import com.cooper.binge.companion.seerr.ui.tv.NoRequestsActions
-import com.cooper.binge.companion.seerr.ui.tv.hub.TvAccountSheet
 import com.cooper.binge.companion.seerr.ui.tv.hub.TvHubActions
 import com.cooper.binge.companion.seerr.ui.tv.hub.TvHubBoard
 import com.cooper.binge.companion.seerr.ui.tv.issue
@@ -34,8 +33,6 @@ import com.cooper.binge.companion.seerr.ui.tv.requests.TvRequestsGrid
 import com.cooper.binge.companion.seerr.ui.tv.requests.TvRequestsRowsBoard
 import com.cooper.binge.companion.seerr.ui.tv.requestsReady
 import com.cooper.binge.companion.seerr.ui.tv.rows
-import com.cooper.binge.companion.seerr.ui.users.UserDetail
-import com.cooper.binge.companion.seerr.ui.users.UserDetailUiState
 import com.cooper.binge.companion.seerr.util.createSeerrKeyboardComposeRule
 import org.junit.Rule
 import org.junit.Test
@@ -70,8 +67,6 @@ class TvBoardsClippingTest {
     @Test fun `the requests grid at 1_3`() = rule.assertNoTvClippingAt(FONT_SCALE_13) { RequestsGrid() }
 
     @Test fun `the issues grid at 1_3`() = rule.assertNoTvClippingAt(FONT_SCALE_13) { IssuesGrid() }
-
-    @Test fun `the account sheet at 1_3`() = rule.assertNoTvClippingAt(FONT_SCALE_13) { Account() }
 
     private fun longRequest(index: Int) =
         request(
@@ -175,29 +170,5 @@ class TvBoardsClippingTest {
             onRetryLoad = {},
             onBack = {},
             now = NOW,
-        )
-
-    @Composable
-    private fun Account() =
-        TvAccountSheet(
-            detail =
-                UserDetailUiState.Ready(
-                    UserDetail(
-                        item = worstCaseUser(),
-                        permissions = emptySet(),
-                        quota = HubQuota(HubQuotaBucket(10_000, 0, 365), HubQuotaBucket(8_000, 5_000, 365)),
-                        watch = null,
-                        watchlist = emptyList(),
-                        isSelf = true,
-                        canEditSettings = true,
-                        canDelete = false,
-                        serverUrl = "http://seerr.lan:5055",
-                        webUrl = "http://seerr.lan:5055/users/7",
-                    ),
-                ),
-            accountFailed = false,
-            onRetry = {},
-            onDismissRequest = {},
-            onSignOut = {},
         )
 }

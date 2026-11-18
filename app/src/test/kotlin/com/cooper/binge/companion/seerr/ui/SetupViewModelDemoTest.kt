@@ -3,7 +3,7 @@ package com.cooper.binge.companion.seerr.ui
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModelStore
-import com.cooper.binge.companion.seerr.auth.CredentialStore
+import com.cooper.binge.companion.seerr.auth.LegacyCredentialStore
 import com.cooper.binge.companion.seerr.auth.PlexPinFlow
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.demo.DEMO_ORIGIN
@@ -50,7 +50,7 @@ class SetupViewModelDemoTest {
         connection =
             SeerrConnection(
                 store =
-                    CredentialStore(
+                    LegacyCredentialStore(
                         PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("c.preferences_pb") },
                         PlainCipher,
                         UnconfinedTestDispatcher(testScheduler),
@@ -62,7 +62,14 @@ class SetupViewModelDemoTest {
                 connection = connection,
                 plex =
                     PlexPinFlow(
-                        identity = { PlexClientIdentity(identifier = "cid", product = "Binge Seerr", version = "0.1.0", device = "Pixel") },
+                        identity = {
+                            PlexClientIdentity(
+                                identifier = "cid",
+                                product = "Seerr Companion",
+                                version = "0.1.0",
+                                device = "Pixel",
+                            )
+                        },
                         apis = { error("Plex is not used") },
                     ),
                 savedState = SavedStateHandle(),

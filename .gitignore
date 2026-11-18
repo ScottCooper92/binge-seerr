@@ -25,3 +25,6 @@ keystore.properties
 
 # This app's Firebase config: release.yml writes it from a secret, and a fork brings its own
 app/google-services.json
+
+# Python bytecode from the scripts under tools/
+__pycache__/

@@ -9,7 +9,7 @@
 # binge-companions build compiles the contracts and SDK with; a mismatch fails as "compiled with
 # an incompatible version of Kotlin" on every SDK class.
 [versions]
-agp = "9.4.1"
+agp = "9.5.1"
 kotlin = "2.4.21"
 coreKtx = "1.19.1"
 junit = "4.13.2"
@@ -35,14 +35,14 @@ navigation3 = "1.1.7"
 # 1.1.7 above wins the resolution and the scene API it compiles against (androidx.navigation3.scene)
 # is unchanged there. Pinned to the stable line rather than 1.4.0-alpha, which buys nothing here.
 material3Adaptive = "1.3.0"
-kotlinxSerializationJson = "1.11.0"
+kotlinxSerializationJson = "1.13.0"
 retrofit = "3.0.0"
 okhttp = "5.5.1"
 datastore = "1.3.0"
 firebaseBom = "34.19.0"
 firebaseCrashlytics = "3.0.8"
-googleServices = "4.5.0"
-posthog = "3.72.8"
+googleServices = "4.6.0"
+posthog = "3.76.2"
 # Play Services, for Block Store only: it is the one carrier that survives a device transfer,
 # and the app degrades to "sign in again" wherever Play Services is not there.
 blockstore = "16.4.0"
@@ -59,6 +59,11 @@ lifecycle = "2.11.0"
 browser = "1.10.0"
 # Backports the API 31 splash to API 21+, which is what gets a television one at all.
 coreSplashscreen = "1.2.0"
+playBilling = "9.1.0"
+# The in-app review card; the system draws it. kotlinx-coroutines-play-services awaits its Tasks.
+playReview = "2.0.2"
+# Data only: the plugin writes the licence list of the shipped dependencies, the core library parses it.
+aboutLibraries = "15.3.0"
 # Only for the sign-in fields: it builds the saved-password request whose bundles a credential
 # provider parses, so those keys are not spelled out here.
 credentials = "1.6.0"
@@ -81,12 +86,22 @@ junit = { module = "junit:junit", version.ref = "junit" }
 # The binge: comment rules in detekt-rules/ compile against detekt's API and are tested with its harness.
 detekt-api = { module = "dev.detekt:detekt-api", version.ref = "detekt" }
 detekt-test = { module = "dev.detekt:detekt-test", version.ref = "detekt" }
-# Version-less on purpose: both resolve to projects of the included binge-companions build.
+# Version-less on purpose: each resolves to a project of the included binge-companions build.
 binge-companion-contracts = { module = "io.github.scottcooper92:binge-companion-contracts" }
 binge-companion-sdk = { module = "io.github.scottcooper92:binge-companion-sdk" }
+binge-companion-kit = { module = "io.github.scottcooper92:binge-companion-kit" }
 # Version-less for the same reason: resolves to the included binge-design-system build.
 binge-designsystem = { module = "com.binge:designsystem" }
 binge-designsystem-tv = { module = "com.binge:designsystem-tv" }
+homelab-appservices = { module = "com.cooper.homelab:app-services" }
+homelab-appservices-play = { module = "com.cooper.homelab:app-services-play" }
+homelab-appservices-posthog = { module = "com.cooper.homelab:app-services-posthog" }
+homelab-appservices-firebase = { module = "com.cooper.homelab:app-services-firebase" }
+homelab-bridge = { module = "com.cooper.homelab:binge-bridge" }
+homelab-presentation = { module = "com.cooper.homelab:presentation" }
+homelab-uiandroid = { module = "com.cooper.homelab:ui-android" }
+homelab-server = { module = "com.cooper.homelab:server" }
+homelab-testing = { module = "com.cooper.homelab:testing" }
 hilt-android = { module = "com.google.dagger:hilt-android", version.ref = "hilt" }
 hilt-android-compiler = { module = "com.google.dagger:hilt-android-compiler", version.ref = "hilt" }
 hilt-android-testing = { module = "com.google.dagger:hilt-android-testing", version.ref = "hilt" }
@@ -115,6 +130,9 @@ compose-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview"
 compose-ui-tooling = { module = "androidx.compose.ui:ui-tooling" }
 compose-material3 = { module = "androidx.compose.material3:material3", version.ref = "material3" }
 activity-compose = { module = "androidx.activity:activity-compose", version.ref = "activityCompose" }
+play-billing-ktx = { module = "com.android.billingclient:billing-ktx", version.ref = "playBilling" }
+aboutlibraries-core = { module = "com.mikepenz:aboutlibraries-core", version.ref = "aboutLibraries" }
+play-review = { module = "com.google.android.play:review", version.ref = "playReview" }
 androidx-core-splashscreen = { module = "androidx.core:core-splashscreen", version.ref = "coreSplashscreen" }
 lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycle" }
 lifecycle-viewmodel-savedstate = { module = "androidx.lifecycle:lifecycle-viewmodel-savedstate", version.ref = "lifecycle" }
@@ -158,6 +176,7 @@ kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", versi
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 screenshot = { id = "com.android.compose.screenshot", version.ref = "screenshot" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+aboutlibraries-android = { id = "com.mikepenz.aboutlibraries.plugin.android", version.ref = "aboutLibraries" }
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
 room = { id = "androidx.room", version.ref = "room" }
 google-services = { id = "com.google.gms.google-services", version.ref = "googleServices" }

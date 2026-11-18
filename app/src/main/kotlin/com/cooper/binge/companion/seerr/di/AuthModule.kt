@@ -4,31 +4,43 @@ import android.content.Context
 import android.os.Build
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import com.binge.companion.kit.SecretCipher
 import com.cooper.binge.companion.seerr.BuildConfig
 import com.cooper.binge.companion.seerr.auth.BingeConnectionStore
-import com.cooper.binge.companion.seerr.auth.CleartextConsent
 import com.cooper.binge.companion.seerr.auth.ConnectionCarrier
 import com.cooper.binge.companion.seerr.auth.ConnectionRestore
 import com.cooper.binge.companion.seerr.auth.CredentialStore
 import com.cooper.binge.companion.seerr.auth.DataStoreBingeConnectionStore
-import com.cooper.binge.companion.seerr.auth.DataStoreCleartextConsent
 import com.cooper.binge.companion.seerr.auth.DeviceIdentityStore
 import com.cooper.binge.companion.seerr.auth.ForegroundUserRefresh
+import com.cooper.binge.companion.seerr.auth.LegacyCredentialImport
+import com.cooper.binge.companion.seerr.auth.LegacyCredentialStore
 import com.cooper.binge.companion.seerr.auth.PlexPinFlow
-import com.cooper.binge.companion.seerr.auth.SecretCipher
+import com.cooper.binge.companion.seerr.auth.RegistryCredentialStore
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
-import com.cooper.binge.companion.seerr.auth.SeerrConnectionHealthMonitor
+import com.cooper.binge.companion.seerr.auth.SeerrHealth
+import com.cooper.binge.companion.seerr.auth.SeerrLogin
+import com.cooper.binge.companion.seerr.auth.SeerrLoginCodec
+import com.cooper.binge.companion.seerr.auth.ServerIdentity
+import com.cooper.binge.companion.seerr.auth.forLibrary
+import com.cooper.binge.companion.seerr.auth.seerrHealthMonitor
 import com.cooper.binge.companion.seerr.data.MediaStatusStore
 import com.cooper.binge.companion.seerr.handoff.HandOffAddressMemory
 import com.cooper.binge.companion.seerr.notifications.ApplicationScope
 import com.cooper.binge.companion.seerr.notifications.NotificationPrefs
-import com.cooper.binge.companion.seerr.seerr.AndroidLocalNetworkPermission
-import com.cooper.binge.companion.seerr.seerr.LocalNetworkPermission
 import com.cooper.binge.companion.seerr.seerr.PlexClientIdentity
 import com.cooper.binge.companion.seerr.seerr.SeerrApiFactory
 import com.cooper.binge.companion.seerr.seerr.TitleCache
+import com.cooper.binge.companion.seerr.seerr.insecurePublicHostOrNull
+import com.cooper.binge.companion.seerr.telemetry.LogcatLogger
 import com.cooper.binge.companion.seerr.ui.hub.HubOverviewCache
+import com.cooper.homelab.core.server.connection.ServerRegistry
+import com.cooper.homelab.core.server.network.AndroidLocalNetworkPermission
+import com.cooper.homelab.core.server.network.CleartextConsent
+import com.cooper.homelab.core.server.network.DataStoreCleartextConsent
+import com.cooper.homelab.core.server.network.LocalNetworkPermission
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -38,15 +50,29 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import java.util.UUID
+import javax.inject.Qualifier
 import javax.inject.Singleton
+import com.cooper.homelab.core.server.connection.CredentialStore as LoginStore
 
 private val Context.credentialsDataStore: DataStore<Preferences> by preferencesDataStore(name = "seerr_credentials")
 private val Context.deviceDataStore: DataStore<Preferences> by preferencesDataStore(name = "seerr_device")
 private val Context.cleartextConsentDataStore: DataStore<Preferences> by preferencesDataStore(name = "cleartext_consent")
 private val Context.bingeConnectionDataStore: DataStore<Preferences> by preferencesDataStore(name = "binge_connection")
+private val Context.serverRegistryDataStore: DataStore<Preferences> by preferencesDataStore(name = "seerr_servers")
+private val Context.serverLoginsDataStore: DataStore<Preferences> by preferencesDataStore(name = "seerr_server_logins")
+
+/** Marks the one boolean that says whether the saved connection lives in the shared library's per-server stores. */
+@Qualifier
+@Retention(AnnotationRetention.BINARY)
+annotation class ServerRegistryEnabled
+
+/** The preference key in the debug overrides file that turns the registry on. A shipped build never reads it. */
+internal const val SERVER_REGISTRY_OVERRIDE = "override_server_registry"
 
 /** The name plex.tv lists this app under on the user's authorised devices. A brand name, never translated. */
-private const val PLEX_PRODUCT_NAME = "Binge Seerr"
+private const val PLEX_PRODUCT_NAME = "Seerr Companion"
 
 /**
  * Everything that reaches the server: the saved connection and the clients that speak to it. What
@@ -57,13 +83,63 @@ private const val PLEX_PRODUCT_NAME = "Binge Seerr"
 @Module
 @InstallIn(SingletonComponent::class)
 object AuthModule {
+    /**
+     * Whether the saved connection lives in the shared library's per-server stores. Off unless a debug build's override file says
+     * so, and read once here, so the choice is fixed for the life of the process and a flip takes effect on the next launch. It is
+     * not remote-controlled. The read blocks the main thread once, which is why it stays behind `BuildConfig.DEBUG`.
+     */
+    @Provides
+    @Singleton
+    @ServerRegistryEnabled
+    fun serverRegistryEnabled(
+        @ApplicationContext context: Context,
+    ): Boolean =
+        BuildConfig.DEBUG &&
+            runBlocking { context.flagOverridesDataStore.data.first()[booleanPreferencesKey(SERVER_REGISTRY_OVERRIDE)] } == true
+
+    @Provides
+    @Singleton
+    fun serverRegistry(
+        @ApplicationContext context: Context,
+    ): ServerRegistry = ServerRegistry(context.serverRegistryDataStore, "registry", { UUID.randomUUID().toString() }, LogcatLogger)
+
+    @Provides
+    @Singleton
+    fun serverLogins(
+        @ApplicationContext context: Context,
+        cipher: SecretCipher,
+    ): LoginStore<SeerrLogin> = LoginStore(context.serverLoginsDataStore, SeerrLoginCodec, cipher.forLibrary(), LogcatLogger)
+
+    @Provides
+    @Singleton
+    fun currentServerId(
+        @ApplicationContext context: Context,
+    ): ServerIdentity = ServerIdentity(context.deviceDataStore)
+
     @Provides
     @Singleton
     fun credentialStore(
         @ApplicationContext context: Context,
         cipher: SecretCipher,
         @IoDispatcher io: CoroutineDispatcher,
-    ): CredentialStore = CredentialStore(context.credentialsDataStore, cipher, io)
+        @ServerRegistryEnabled useRegistry: Boolean,
+        registry: dagger.Lazy<ServerRegistry>,
+        logins: dagger.Lazy<LoginStore<SeerrLogin>>,
+        currentServerId: ServerIdentity,
+    ): CredentialStore {
+        val legacy = LegacyCredentialStore(context.credentialsDataStore, cipher, io)
+        if (!useRegistry) return legacy
+        val importer =
+            LegacyCredentialImport(
+                legacy = context.credentialsDataStore,
+                registry = registry.get(),
+                logins = logins.get(),
+                marker = context.serverRegistryDataStore,
+                serverId = currentServerId,
+                logger = LogcatLogger,
+            )
+        return RegistryCredentialStore(registry.get(), logins.get(), importer, currentServerId, io)
+    }
 
     @Provides
     @Singleton
@@ -79,7 +155,7 @@ object AuthModule {
 
     @Provides
     @Singleton
-    fun healthMonitor(): SeerrConnectionHealthMonitor = SeerrConnectionHealthMonitor()
+    fun healthMonitor(identity: ServerIdentity): SeerrHealth = SeerrHealth(seerrHealthMonitor(), identity::currentServerId)
 
     /**
      * The write hook drops the title-status cache. It covers this app's own pages, which reach the
@@ -89,7 +165,7 @@ object AuthModule {
     @Provides
     @Singleton
     fun apiFactory(
-        health: SeerrConnectionHealthMonitor,
+        health: SeerrHealth,
         statuses: MediaStatusStore,
         cleartext: CleartextConsent,
         localNetwork: LocalNetworkPermission,
@@ -108,7 +184,13 @@ object AuthModule {
     fun cleartextConsent(
         @ApplicationContext context: Context,
         store: CredentialStore,
-    ): CleartextConsent = DataStoreCleartextConsent(context.cleartextConsentDataStore) { store.credentials.first()?.baseUrl }
+    ): CleartextConsent =
+        DataStoreCleartextConsent(context.cleartextConsentDataStore) {
+            store.credentials
+                .first()
+                ?.baseUrl
+                ?.insecurePublicHostOrNull()
+        }
 
     @Provides
     @Singleton
@@ -153,7 +235,7 @@ object AuthModule {
     fun connection(
         store: CredentialStore,
         apis: SeerrApiFactory,
-        health: SeerrConnectionHealthMonitor,
+        health: SeerrHealth,
         carrier: ConnectionCarrier,
         caches: ServerScopedCaches,
         titles: TitleCache,

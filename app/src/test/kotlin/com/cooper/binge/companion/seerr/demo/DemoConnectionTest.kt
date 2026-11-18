@@ -4,15 +4,15 @@ import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import com.cooper.binge.companion.seerr.auth.CarriedCredentials
 import com.cooper.binge.companion.seerr.auth.ConnectionCarrier
 import com.cooper.binge.companion.seerr.auth.ConnectionRestore
-import com.cooper.binge.companion.seerr.auth.CredentialStore
+import com.cooper.binge.companion.seerr.auth.LegacyCredentialStore
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
-import com.cooper.binge.companion.seerr.auth.SeerrConnectionHealth
-import com.cooper.binge.companion.seerr.auth.SeerrConnectionHealthMonitor
+import com.cooper.binge.companion.seerr.auth.SeerrHealth
 import com.cooper.binge.companion.seerr.seerr.SeerrApiFactory
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.seerr.SeerrVariant
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
 import com.cooper.binge.companion.seerr.util.PlainCipher
+import com.cooper.homelab.core.server.connection.ConnectionHealth
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -36,7 +36,7 @@ class DemoConnectionTest {
     private fun TestScope.connection(apis: SeerrApiFactory = SeerrApiFactory(logRequests = false)) =
         SeerrConnection(
             store =
-                CredentialStore(
+                LegacyCredentialStore(
                     PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("c.preferences_pb") },
                     PlainCipher,
                     UnconfinedTestDispatcher(testScheduler),
@@ -95,21 +95,21 @@ class DemoConnectionTest {
     @Test
     fun `endpoints the demo does not serve do not mark it unreachable`() =
         runTest {
-            val monitor = SeerrConnectionHealthMonitor()
+            val monitor = SeerrHealth.standalone()
             val connection = connection(SeerrApiFactory(logRequests = false, health = monitor))
             val demo = demoCredentials()
             connection.connect(demo.baseUrl, demo.auth).getOrThrow()
 
             repeat(3) { runCatchingFailure { connection.api().plexServers() } }
 
-            assertEquals(SeerrConnectionHealth.Healthy, monitor.health.value)
+            assertEquals(ConnectionHealth.Healthy, monitor.health.first())
         }
 
     @Test
     fun `starting the app with the demo saved does not carry it either`() =
         runTest {
             val store =
-                CredentialStore(
+                LegacyCredentialStore(
                     PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("c.preferences_pb") },
                     PlainCipher,
                     UnconfinedTestDispatcher(testScheduler),

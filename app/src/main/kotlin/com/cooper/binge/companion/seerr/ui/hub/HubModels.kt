@@ -1,10 +1,10 @@
 package com.cooper.binge.companion.seerr.ui.hub
 
-import com.cooper.binge.companion.seerr.flags.Flags
 import com.cooper.binge.companion.seerr.seerr.SeerrPermissions
 import com.cooper.binge.companion.seerr.seerr.SeerrVariant
 import com.cooper.binge.companion.seerr.ui.users.settings.UserRole
 import com.cooper.binge.companion.seerr.ui.users.userRole
+import com.cooper.homelab.core.flags.Flags
 
 /**
  * Live reachability of the connected server as the hub shows it. [Checking] is the brief re-probe;
@@ -13,7 +13,7 @@ import com.cooper.binge.companion.seerr.ui.users.userRole
  * unreachable server on the user's own network while Android refuses this app that network: the
  * permission, not the server, so the way out is Settings rather than a retry.
  */
-enum class ConnectionHealth { Checking, Healthy, Unreachable, LocalNetworkDenied, CouldNotLoad, Unauthorized }
+enum class ConnectionHealth { Checking, Healthy, Unreachable, LocalNetworkDenied, ClientCertificateNeeded, CouldNotLoad, Unauthorized }
 
 /** The outcome of the overview's `auth/me`, kept apart from its data so a failed load is never read as a restricted user. */
 enum class HubUserLoad { Pending, Loaded, Failed, Rejected }

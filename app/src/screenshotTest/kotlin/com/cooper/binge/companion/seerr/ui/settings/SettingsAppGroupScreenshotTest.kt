@@ -10,7 +10,7 @@ import com.cooper.binge.companion.seerr.preview.SeerrComponentPreviews
 
 private val SampleApp =
     AppSettings(
-        bugReportUrl = "https://github.com/ScottCooper92/binge-seerr/issues/new?template=bug.yml",
+        bugReportUrl = "https://github.com/ScottCooper92/app-feedback/issues/new?template=seerr-bug.yml",
         shakeToReport = true,
     )
 

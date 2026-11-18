@@ -12,14 +12,14 @@ chose themselves, such as their own server, is neither.
 |---|---|---|
 | Does your app collect or share any of the required user data types? | **Yes** | Crash reports go to Firebase Crashlytics, feature-switch reads go to Firebase Remote Config, and usage data goes to PostHog once the user agrees. All three are the developer's chosen processors. Everything else goes to the server the user entered, or stays on the device. See the Plex note below. |
 | Is all of the user data collected by your app encrypted in transit? | **Yes** | All three SDKs send over HTTPS. The user's own server uses whatever scheme its address has, and is not collection. |
-| Do you provide a way for users to request that their data is deleted? | **No** | None of the datasets is linked to a person, so there is nothing to look a request up by. Crash reports and usage data can be turned off in Settings; the Remote Config read cannot. |
+| Do you provide a way for users to request that their data is deleted? | **No** | None of the datasets is linked to a person, so there is nothing to look a request up by. Crash reports and usage data can be turned off in This app (Settings on Android TV); the Remote Config read cannot. |
 
 ## Data collected
 
 | Data type | Collected | Shared | Optional | Purpose | Why |
 |---|---|---|---|---|---|
 | App activity: *App interactions* | Yes | No | Yes: asked on first launch, off unless granted | Analytics | The app's own screen names and action names (e.g. a request approved, a DVR instance saved), each with at most a fixed category as a param — never an id, a title or a message — to PostHog. While the built-in demo is open, each also carries `demo` = true. A failed server action is also reported, with its action name, HTTP and gRPC status codes, and the server's software name and version. PostHog's library also sends app opened, backgrounded, installed and updated events with the app's version, and every event carries the device's make and model, Android version, screen size, language, time zone and network type (including the mobile carrier's name). These describe the app's interactions, so *App interactions* still fits; the data is not a crash log. PostHog is a service provider processing on the developer's behalf. |
-| App info and performance: *Crash logs*, *Diagnostics* | Yes | No | Yes: on by default, switch in Settings | App functionality | Crash reports to Firebase Crashlytics, a service provider. No user id; logs are not forwarded. A report carries a short action line from a fixed list and, for an action on one record, that record's number on the user's server (an issue, request, comment, TMDB, collection, instance or rule id), never a title, name, message or address. |
+| App info and performance: *Crash logs*, *Diagnostics* | Yes | No | Yes: asked on first launch, off unless granted; installs updated from an earlier answer keep their setting. Switch in This app (Settings on Android TV) | App functionality | Crash reports to Firebase Crashlytics, a service provider. No user id; logs are not forwarded. A report carries a short action line from a fixed list and, for an action on one record, that record's number on the user's server (an issue, request, comment, TMDB, collection, instance or rule id), never a title, name, message or address. |
 | Device or other IDs | Yes | No | Yes | Analytics, App functionality | The random per-install ids the SDKs mint: PostHog's, Crashlytics' and the Firebase installation id that Remote Config sends on every start (with the app and Android version, language, country and time zone). Not linked to an account. |
 
 None of it is linked to the user's identity, and none is used for advertising.
@@ -93,6 +93,15 @@ feature under the user's own Google account, not the developer receiving data, s
 collection by the developer. It is disclosed in `privacy.md` regardless. Whether the form should
 list it is a question for the maintainer and Play's review; record the answer here once it is known.
 
+## Google Play Billing
+
+A tip is bought and consumed through Google Play under the user's own Google account
+(homelab-core's `PlayTipBilling`, wired in `app/src/release/kotlin/com/cooper/binge/companion/seerr/di/TipBillingModule.kt`). Play takes the payment. The app receives no card or payment details and
+keeps no purchase history. It sends nothing about a purchase to the developer or anyone else. This is
+Google's platform feature, not collection by the developer, so the Financial info and Purchase history
+answers stay as they are. As with the Block Store copy, whether the form should list it is a question
+for the maintainer and Play's review; record the answer here once it is known.
+
 ## Permissions declared
 
 The app's own manifest declares `INTERNET`, `POST_NOTIFICATIONS`, `ACCESS_NETWORK_STATE` (a television
@@ -108,6 +117,7 @@ release manifest, which also carries (checked against
 | `ACCESS_NETWORK_STATE` | The app itself (the hand-off), and also WorkManager and PostHog |
 | `WAKE_LOCK`, `RECEIVE_BOOT_COMPLETED`, `FOREGROUND_SERVICE` | WorkManager |
 | `USE_BIOMETRIC`, `USE_FINGERPRINT` | `androidx.biometric` (transitive; the app never uses biometrics) |
+| `com.android.vending.BILLING` | `com.android.billingclient:billing` (via `billing-ktx`; the tip purchase, with Google's own purchase activity) |
 | `<applicationId>.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION` | `androidx.core` (signature-level, the app's own) |
 
 They are listed in `privacy.md`. Re-check the merged manifest whenever a dependency changes.

@@ -1,14 +1,18 @@
 package com.cooper.binge.companion.seerr.ui
 
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
+import androidx.compose.material3.adaptive.layout.calculatePaneScaffoldDirective
 import androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.EntryProviderScope
@@ -17,8 +21,23 @@ import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.ui.NavDisplay
 import com.binge.designsystem.PaneContent
 import com.binge.designsystem.PaneEdge
+import com.cooper.binge.companion.seerr.discover.TitleKind
+import com.cooper.binge.companion.seerr.flags.LocalDiscoveryEnabled
+import com.cooper.binge.companion.seerr.flags.LocalFlags
+import com.cooper.binge.companion.seerr.ui.discover.title.LocalOpenTitle
+import com.cooper.binge.companion.seerr.ui.discover.title.TitleDetailEntry
+import com.cooper.binge.companion.seerr.ui.discover.title.credits.TitleCreditsEntry
+import com.cooper.binge.companion.seerr.ui.grid.discoverGridEntries
 import com.cooper.binge.companion.seerr.ui.hub.HubSection
+import com.cooper.binge.companion.seerr.ui.hubs.DiscoverHubEntry
+import com.cooper.binge.companion.seerr.ui.requests.RequestMediaType
+import com.cooper.binge.companion.seerr.ui.search.title.TitleSearchEntry
+import com.cooper.binge.companion.seerr.ui.settings.diagnostics.DiagnosticsEntry
+import com.cooper.binge.companion.seerr.ui.settings.licences.LicencesEntry
 import com.cooper.binge.companion.seerr.ui.settings.server.ServerSettingsPage
+import com.cooper.binge.companion.seerr.ui.shell.SeerrTab
+import com.cooper.binge.companion.seerr.ui.shell.SeerrTabShell
+import com.cooper.binge.companion.seerr.ui.shell.TabShellState
 import com.cooper.binge.companion.seerr.ui.state.LoadingScreen
 
 /**
@@ -26,11 +45,13 @@ import com.cooper.binge.companion.seerr.ui.state.LoadingScreen
  * entry its own store, so a screen's ViewModel lives and dies with its place on the stack rather
  * than with the Activity.
  */
+@OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
 fun SeerrNavHost(
     backStack: NavBackStack<NavKey>,
     onExit: () -> Unit,
     modifier: Modifier = Modifier,
+    tabs: TabShellState<SeerrTab>? = null,
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val state = viewModel.uiState.collectAsStateWithLifecycle()
@@ -45,14 +66,24 @@ fun SeerrNavHost(
     // Keyed on the root as well as the connection: a notification's link replaces the stack with one
     // rooted on HomeRoute, and it can arrive after the connection has already resolved.
     val root = backStack.firstOrNull()
-    LaunchedEffect(connected, root) { backStack.settleHome(connected) }
+    // The tab bar is for a phone-width window with the flag on. A wider window keeps the hub beside its sections as it is today.
+    val compact = calculatePaneScaffoldDirective(currentWindowAdaptiveInfoV2()).maxHorizontalPartitions <= 1
+    val shell = tabs != null && LocalDiscoveryEnabled.current && compact
+    LaunchedEffect(connected, root, shell) { backStack.settleHome(connected, shell) }
     // The default section is off the stack, so Back from it leaves; the host's own Back shares the once-only exit.
     val exit = rememberExitOnce(onExit)
-    SeerrPaneHost(backStack, connected, exit, modifier, defaultSection = { DefaultSectionPane(backStack, exit) }) { panes ->
-        homeEntries(backStack, connected = { connectedState.value }, panes = panes, onExit = exit)
-        sectionEntries(backStack, panes)
-        detailEntries(backStack, showBack = panes.showBack)
-        serverSettingsEntries(backStack)
+    // A disconnect still waiting on the server is not a connection to ask a review of: its card would show as the user leaves.
+    val askable = remember(state) { derivedStateOf { if (state.value == HomeUiState.Disconnecting) false else state.value.connected() } }
+    ReviewPromptOnReturnToRoot(connected = askable.value, stackDepth = backStack.size)
+    CompositionLocalProvider(LocalOpenTitle provides rememberOpenTitle(backStack)) {
+        SeerrPaneHost(backStack, connected, exit, modifier, defaultSection = { DefaultSectionPane(backStack, exit) }) { panes ->
+            homeEntries(backStack, connected = { connectedState.value }, panes = panes, onExit = exit, tabs = tabs)
+            sectionEntries(backStack, panes)
+            searchEntries(backStack, panes)
+            detailEntries(backStack, showBack = panes.showBack)
+            serverSettingsEntries(backStack)
+            discoverGridEntries(backStack)
+        }
     }
 }
 
@@ -60,7 +91,7 @@ private fun HomeUiState.connected(): Boolean? =
     when (this) {
         HomeUiState.Resolving -> null
         HomeUiState.Setup -> false
-        HomeUiState.Connected, HomeUiState.Reconnect -> true
+        HomeUiState.Connected, HomeUiState.Disconnecting, HomeUiState.Reconnect -> true
     }
 
 /**
@@ -75,7 +106,19 @@ private fun EntryProviderScope<NavKey>.homeEntries(
     connected: () -> Boolean?,
     panes: PaneLayout,
     onExit: () -> Unit,
+    tabs: TabShellState<SeerrTab>?,
 ) {
+    val hub: @Composable (selectedSection: HubSection?) -> Unit = { selectedSection ->
+        HubEntry(
+            selectedSection = selectedSection,
+            onOpenSection = { section -> backStack.openSection(section) },
+            onOpenAccount = { id -> panes.open(backStack, UserDetailRoute(id)) },
+            onOpenSearch = { backStack.push(SettingsSearchRoute) },
+            onOpenRequest = { id -> panes.open(backStack, RequestDetailRoute(id)) },
+            onReconnect = { panes.open(backStack, EditConnectionRoute) },
+            developerRows = debugDeveloperRows(backStack),
+        )
+    }
     entry<HomeRoute> {
         // Connected shows the spinner for a frame at most, while settleHome swaps the hub in.
         when (connected()) {
@@ -92,18 +135,42 @@ private fun EntryProviderScope<NavKey>.homeEntries(
         PaneContent(innerEdge = PaneEdge.End) {
             // And the other way: after a disconnect, settleHome is already swapping setup back in.
             if (connected() == true) {
-                HubEntry(
-                    selectedSection = backStack.selectedSection(defaultShowing = panes.hubBeside()),
-                    onOpenSection = { section -> backStack.openSection(section) },
-                    onOpenAccount = { id -> panes.open(backStack, UserDetailRoute(id)) },
-                    onOpenRequest = { id -> panes.open(backStack, RequestDetailRoute(id)) },
-                    onReconnect = { panes.open(backStack, EditConnectionRoute) },
-                    developerRows = debugDeveloperRows(backStack),
-                )
+                hub(backStack.selectedSection(defaultShowing = panes.hubBeside()))
             } else {
                 LoadingScreen()
             }
         }
+    }
+    // No pane metadata: the shell takes the whole window, and what a tab opens covers it from above.
+    entry<ShellRoute> {
+        if (connected() == true && tabs != null) {
+            SeerrTabShell(tabs, discover = {
+                DiscoverHubEntry(
+                    it,
+                    onOpenGrid = { grid, title -> backStack.push(DiscoverGridRoute(grid.kind, grid.preset, title)) },
+                    onOpenRequests = { backStack.openSection(HubSection.Requests) },
+                )
+            }, search = { TitleSearchEntry() }, settings = { hub(null) })
+        } else {
+            LoadingScreen()
+        }
+    }
+}
+
+/**
+ * The settings search, over the whole window: it has no pane metadata, so it covers the hub and whatever is open beside it. A
+ * result opens its page above the search through [PaneLayout.openFromSearch], and the search stays on the stack, so Back from the
+ * page returns to the search as it was.
+ */
+private fun EntryProviderScope<NavKey>.searchEntries(
+    backStack: NavBackStack<NavKey>,
+    panes: PaneLayout,
+) {
+    entry<SettingsSearchRoute> { route ->
+        SettingsSearchEntry(
+            onOpen = { target -> panes.openFromSearch(backStack, target) },
+            onBack = { backStack.popIfTop(route) },
+        )
     }
 }
 
@@ -128,6 +195,9 @@ private fun EntryProviderScope<NavKey>.sectionEntries(
     entry<SettingsRoute>(
         metadata = section,
     ) { DetailPaneContent { SectionContent(HubSection.Settings, backStack, panes.showBack(), open) } }
+    entry<ThisAppRoute>(
+        metadata = section,
+    ) { DetailPaneContent { SectionContent(HubSection.ThisApp, backStack, panes.showBack(), open) } }
 }
 
 /**
@@ -174,6 +244,7 @@ private fun SectionContent(
         HubSection.Users ->
             UsersEntry(onBack = onBack, showBack = showBack, onOpen = { id -> open(UserDetailRoute(id)) })
         HubSection.Settings -> SettingsEntry(backStack, showBack = showBack, open = open, onBack = onBack)
+        HubSection.ThisApp -> ThisAppEntry(showBack = showBack, open = open, onBack = onBack)
     }
 }
 
@@ -204,6 +275,19 @@ private fun EntryProviderScope<NavKey>.detailEntries(
                 onOpenServices = { backStack.add(ServerSettingsPageRoute(ServerSettingsPage.Services)) },
             )
         }
+    }
+    entry<TitleDetailRoute>(metadata = DetailPane) { route ->
+        DetailPaneContent {
+            TitleDetailEntry(
+                route.kind,
+                route.tmdbId,
+                onBack = { backStack.popIfTop(route) },
+                onOpenCredits = { backStack.add(TitleCreditsRoute(route.kind, route.tmdbId)) },
+            )
+        }
+    }
+    entry<TitleCreditsRoute>(metadata = DetailPane) { route ->
+        DetailPaneContent { TitleCreditsEntry(route.kind, route.tmdbId, onBack = { backStack.popIfTop(route) }) }
     }
     entry<IssueDetailRoute>(metadata = DetailPane) { route ->
         DetailPaneContent { IssueDetailEntry(route.issueId, onBack = { backStack.popIfTop(route) }, showBack = showBack()) }
@@ -238,9 +322,9 @@ private fun EntryProviderScope<NavKey>.detailEntries(
     }
     entry<UserSettingsPageRoute>(metadata = DetailPane) { route ->
         DetailPaneContent {
-            // No showBack: every page here is stacked above UserSettingsRoute, which is itself never
-            // pushed straight onto [HubRoute] (only from UserDetailEntry), so pane depth is always > 1.
-            UserSettingsPageEntry(route.userId, route.page, onBack = { backStack.popIfTop(route) })
+            // No showBack: the page's own scaffold reads the pane depth through paneBackOrNull. Stacked above UserSettingsRoute
+            // or above the settings search the arrow shows, and Back is what it came from.
+            UserSettingsPageEntry(route.userId, route.page, route.row, onBack = { backStack.popIfTop(route) })
         }
     }
     entry<EditConnectionRoute>(metadata = DetailPane) { route ->
@@ -249,16 +333,17 @@ private fun EntryProviderScope<NavKey>.detailEntries(
 }
 
 /**
- * The server's own settings pages and the editors they open. They stack in the detail pane too, and
- * every one of them is reached by way of [SettingsRoute] first, so pane depth here is always > 1 and
- * none of them take [showBack] — unlike [detailEntries], where two routes are reachable straight off
- * the hub. Wire a future route in here the same way [detailEntries] wires those two, if it changes that.
+ * The server's own settings pages and the editors they open. They stack in the detail pane too. Reached by way of [SettingsRoute]
+ * (or [ThisAppRoute], for licences) the pane depth is > 1, and the settings search opens a page above the search, whose Back is the
+ * search. None of them take [showBack]: each page's scaffold decides its arrow from the depth, through the design system's
+ * `paneBackOrNull`, so a page reached either way is right. A route added here needs its scaffold to do the same.
  */
 private fun EntryProviderScope<NavKey>.serverSettingsEntries(backStack: NavBackStack<NavKey>) {
     entry<ServerSettingsPageRoute>(metadata = DetailPane) { route ->
         DetailPaneContent {
             ServerSettingsPageEntry(
                 page = route.page,
+                row = route.row,
                 onBack = { backStack.popIfTop(route) },
                 onOpenPage = { page -> backStack.add(ServerSettingsPageRoute(page)) },
                 onOpenInstance = { type, id -> backStack.add(DvrInstanceRoute(type, id)) },
@@ -267,6 +352,12 @@ private fun EntryProviderScope<NavKey>.serverSettingsEntries(backStack: NavBackS
                 onOpenSlider = { id -> backStack.add(DiscoverSliderRoute(id)) },
             )
         }
+    }
+    entry<LicencesRoute>(metadata = DetailPane) { route ->
+        DetailPaneContent { LicencesEntry(onBack = { backStack.popIfTop(route) }) }
+    }
+    entry<DiagnosticsRoute>(metadata = DetailPane) { route ->
+        DetailPaneContent { DiagnosticsEntry(onBack = { backStack.popIfTop(route) }) }
     }
     entry<DiscoverSliderRoute>(metadata = DetailPane) { route ->
         DetailPaneContent { DiscoverSliderEntry(route.id, onBack = { backStack.popIfTop(route) }) }
@@ -279,5 +370,23 @@ private fun EntryProviderScope<NavKey>.serverSettingsEntries(backStack: NavBackS
     }
     entry<OverrideRuleRoute>(metadata = DetailPane) { route ->
         DetailPaneContent { OverrideRuleEntry(route.id, onBack = { backStack.popIfTop(route) }) }
+    }
+}
+
+/** The title hand-off: a film's or a series' page with the discovery flag on, and Binge or the server's own page as before otherwise. */
+@Composable
+private fun rememberOpenTitle(backStack: NavBackStack<NavKey>): (TitleKind, Int, String) -> Unit {
+    val discovery = LocalDiscoveryEnabled.current
+    val promoted = LocalFlags.current.bingePromotion
+    val context = LocalContext.current
+    return remember(backStack, discovery, promoted, context) {
+        { kind, id, webUrl ->
+            // A person and a collection open as they did until their own pages land.
+            if (discovery && (kind == TitleKind.Movie || kind == TitleKind.Series)) {
+                backStack.add(TitleDetailRoute(kind, id))
+            } else {
+                context.openTitle(promoted, if (kind == TitleKind.Series) RequestMediaType.Tv else RequestMediaType.Movie, id, webUrl)
+            }
+        }
     }
 }

@@ -1,11 +1,11 @@
 package com.cooper.binge.companion.seerr.ui
 
-import com.cooper.binge.companion.seerr.seerr.LocalNetworkPermission
 import com.cooper.binge.companion.seerr.seerr.SeerrCredentials
 import com.cooper.binge.companion.seerr.seerr.insecurePublicHostOrNull
 import com.cooper.binge.companion.seerr.seerr.isBlockedByLocalNetwork
-import com.cooper.binge.companion.seerr.telemetry.Analytics
 import com.cooper.binge.companion.seerr.telemetry.AnalyticsEvents
+import com.cooper.homelab.core.server.network.LocalNetworkPermission
+import com.cooper.homelab.core.telemetry.Analytics
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
@@ -67,6 +67,7 @@ internal fun SetupDraft.toUiState(
                 canTryDemo = editing == null && !received,
             )
         }
+        !server.setUp -> SetupUiState.NotSetUp(server = server, isChecking = busy, error = error)
         else ->
             SetupUiState.SignIn(
                 server = server,

@@ -36,6 +36,7 @@ import com.binge.designsystem.component.BingeSearchField
 import com.binge.designsystem.component.FilterChipItem
 import com.binge.designsystem.component.LogRowEntry
 import com.binge.designsystem.component.LogRowLevel
+import com.binge.designsystem.paneBackOrNull
 import com.binge.designsystem.resolvedContentPadding
 import com.binge.designsystem.template.FilteredListScreen
 import com.binge.designsystem.template.PagedPhase
@@ -79,7 +80,7 @@ fun LogsScreen(
     val focusManager = LocalFocusManager.current
     FilteredListScreen(
         title = stringResource(R.string.server_settings_logs),
-        onBack = actions.onBack,
+        onBack = paneBackOrNull(actions.onBack),
         // The console keeps its single-line bar and an opaque header; the default is the gallery's transparent collapsing bar.
         bar = ScreenBar.Small,
         headerBackground = MaterialTheme.colorScheme.background,

@@ -2,8 +2,7 @@
 
 *Seerr Companion* ("the app") is an administration console for a Seerr, Jellyseerr or
 Overseerr server that you run. This policy describes what the app stores, where it sends it, and
-what it does not do. It is written to be checked against the source code, which is public at
-https://github.com/ScottCooper92/binge-seerr.
+what it does not do.
 
 ## What the app stores on your device
 
@@ -28,6 +27,10 @@ https://github.com/ScottCooper92/binge-seerr.
   that this install appears once, not once per sign-in, in the devices list on your Plex account.
 - **Your answers about usage data and crash reports**, and whether shaking the phone offers to
   report a bug.
+- **Three numbers for the rating prompt**: when you first opened the app, how many requests you
+  approved or declined and issues you resolved, and when you were last asked to rate the app.
+  They never leave the device. When you have used the app for a while, Google Play may offer to let you
+  rate it; Play draws that card and tells the app nothing about what you do with it.
 
 The app turns off Android's own backup (`allowBackup="false"`) and excludes all of its data from both
 cloud backup and device-to-device transfer (`data_extraction_rules.xml`), so neither copies any of the
@@ -48,6 +51,9 @@ two ways described above, and the phone-to-TV hand-off below, which stays on you
   what happens there.
 - **To Google (Play services Block Store)**, if the device has Play services: the connection copy
   described above, handled by Google's own service under your Google account.
+- **To Google (Play Billing)**, only if you choose to leave a tip: the tip is bought and consumed
+  through Google Play under your Google account, and Google takes the payment. The app keeps no
+  payment or purchase data and sends none anywhere else.
 - **To TMDB's image servers** (image.tmdb.org), to show posters and backdrops: as with any web
   request, your device's IP address and the picture asked for. It happens with your own server and in
   the demo alike, and carries no account or identifier of the app's.
@@ -58,7 +64,7 @@ two ways described above, and the phone-to-TV hand-off below, which stays on you
   device. Binge cannot read the server address or the secret.
 
 - **To PostHog**, only if you agree to share usage data when the app first asks, or later in
-  Settings: which of the app's screens you open, and which action you take (approving a request,
+  This app (Settings on Android TV): which of the app's screens you open, and which action you take (approving a request,
   resolving an issue, saving a DVR instance, and so on). Both are the app's own fixed names
   ("requests", "request_moderated"), with at most a fixed category as a detail (which kind of
   action, which sign-in method, on/off) — never an id, a title, a message, your server's address or
@@ -68,7 +74,7 @@ two ways described above, and the phone-to-TV hand-off below, which stays on you
   is opened, sent to the background, installed or updated, with the app's version. Every event
   carries what the library reads from the device: its make and model, the Android version, the
   screen size, the language, the time zone and the type of network (Wi-Fi or mobile, and the mobile
-  carrier's name). Nothing is sent until you agree, and turning it off in Settings stops it. The
+  carrier's name). Nothing is sent until you agree, and turning it off in This app (Settings on Android TV) stops it. The
   library does not contact PostHog before then either. PostHog records it against a random
   identifier for this install, not against you, and derives a rough location from the IP address.
 - **To Google (Firebase Crashlytics)**, when the app crashes, or when it records a failure it
@@ -78,8 +84,9 @@ two ways described above, and the phone-to-TV hand-off below, which stays on you
   number on your server: the number of an issue, request, comment, title (its TMDB id), collection,
   DVR instance or override rule. The app attaches no title, name, message or server address. A crash
   report also carries the crash's own stack trace and exception message, which the app does not
-  write and cannot promise are free of an address. This is
-  on unless you turn it off in Settings. No user identifier is set, and the app does not forward its
+  write and cannot promise are free of an address. It is
+  sent only if you agree when the app first asks, and you can change that in This app (Settings on Android TV). If you
+  installed an earlier version, your earlier setting is kept. No user identifier is set, and the app does not forward its
   logs.
 - **To Google (Firebase Remote Config)**, each time the app starts or comes to the foreground, and
   no more than about once an hour: a Firebase installation id that identifies this install, the
@@ -87,8 +94,8 @@ two ways described above, and the phone-to-TV hand-off below, which stays on you
   zone. It reads two on/off settings the developer controls. It sends no account, server address,
   title or request data. It happens whether or not you agree to share usage data, and there is no
   switch for it in Settings.
-- **To GitHub**, only when you choose to report a bug: the app opens a new issue form in your
-  browser with the app version, the device and the Android version filled in. Nothing is sent until
+- **To GitHub**, only when you choose to report a bug: the app opens a new issue form on the
+  public app-feedback repository in your browser with the app version, the device and the Android version filled in. Nothing is sent until
   you submit the form yourself, and the issue is public.
 
 The app has no server of its own.
@@ -163,6 +170,9 @@ beyond what this policy describes:
   survive a restart and run reliably.
 - **Biometric** and **fingerprint**, declared by the `androidx.biometric` library that a
   dependency brings in. The app never asks for biometrics.
+- **Billing** (`com.android.vending.BILLING`), declared by the Google Play Billing library: it lets
+  the app offer a tip through Google Play. Nothing is bought unless you confirm it in Google's own
+  purchase screen.
 - A signature-level permission named after the app, added by `androidx.core` to protect the app's
   own broadcast receivers. No other app can hold it.
 
@@ -172,9 +182,9 @@ The app is a server administration tool and is not directed at children.
 
 ## Changes
 
-This policy changes when the app's behaviour changes, in the same change, and its history is the
-repository's history.
+This policy changes when the app's behaviour changes, and its history is this page's change history (linked at the top).
 
 ## Contact
 
-Open an issue at https://github.com/ScottCooper92/binge-seerr/issues.
+Report a bug at https://github.com/ScottCooper92/app-feedback/issues/new?template=seerr-bug.yml, or
+suggest a feature at https://github.com/ScottCooper92/app-feedback/issues/new?template=seerr-feature.yml.

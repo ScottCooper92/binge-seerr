@@ -6,14 +6,17 @@ import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.di.IoDispatcher
 import com.cooper.binge.companion.seerr.notifications.ApplicationScope
-import com.cooper.binge.companion.seerr.telemetry.Analytics
+import com.cooper.binge.companion.seerr.seerr.SeerrError
+import com.cooper.binge.companion.seerr.seerr.serverMessage
+import com.cooper.binge.companion.seerr.seerr.toSeerrError
 import com.cooper.binge.companion.seerr.telemetry.AnalyticsEvents
-import com.cooper.binge.companion.seerr.telemetry.CrashBreadcrumbs
-import com.cooper.binge.companion.seerr.telemetry.NoOpAnalytics
-import com.cooper.binge.companion.seerr.telemetry.NoOpCrashBreadcrumbs
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorEvent
 import com.cooper.binge.companion.seerr.ui.users.settings.ExtrasEditorUiState
-import com.cooper.binge.companion.seerr.ui.users.settings.ExtrasEditorViewModel
+import com.cooper.binge.companion.seerr.ui.users.settings.SaveAsMadeEditorWithExtrasViewModel
+import com.cooper.homelab.core.telemetry.Analytics
+import com.cooper.homelab.core.telemetry.CrashBreadcrumbs
+import com.cooper.homelab.core.telemetry.NoOpAnalytics
+import com.cooper.homelab.core.telemetry.NoOpCrashBreadcrumbs
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -46,10 +49,8 @@ class NotificationAgentViewModel
         @ApplicationScope appScope: CoroutineScope,
         private val crashBreadcrumbs: CrashBreadcrumbs = NoOpCrashBreadcrumbs,
         private val agentChanges: NotificationAgentChanges = NotificationAgentChanges(),
-    ) : ExtrasEditorViewModel<AgentForm, AgentExtras>(AgentExtras(), dispatcher) {
+    ) : SaveAsMadeEditorWithExtrasViewModel<AgentForm, AgentExtras>(AgentExtras(), dispatcher, appScope) {
         internal var soundsDebounceMillis = SOUNDS_DEBOUNCE_MILLIS
-
-        override val saveAsMadeScope: CoroutineScope = appScope
 
         init {
             reload()
@@ -68,7 +69,8 @@ class NotificationAgentViewModel
 
         override suspend fun write(draft: AgentForm): AgentForm {
             crashBreadcrumbs.log("updating ${agent.segment} notification agent")
-            val form = connection.api().updateNotificationAgent(agent.segment, draft.toDto()).toForm(agent)
+            val saved = connection.api().updateNotificationAgent(agent.segment, draft.toDto(connection.profile())).toForm(agent)
+            val form = saved.withPayloadOf(draft)
             agentChanges.changed(agent)
             analytics.event(
                 AnalyticsEvents.NOTIFICATION_AGENT_CHANGED,
@@ -110,7 +112,7 @@ class NotificationAgentViewModel
             viewModelScope.launch(dispatcher) {
                 val outcome =
                     attempt {
-                        val response = connection.api().testNotificationAgent(agent.segment, draft.toDto())
+                        val response = connection.api().testNotificationAgent(agent.segment, draft.toDto(connection.profile()))
                         if (!response.isSuccessful) throw HttpException(response)
                     }
                 editExtras { it.copy(testing = false) }
@@ -121,7 +123,12 @@ class NotificationAgentViewModel
                             mapOf(AnalyticsEvents.PARAM_AGENT to agent.segment, AnalyticsEvents.PARAM_ACTION to "tested"),
                         )
                         notify(EditorEvent.Notice(R.string.server_settings_agent_tested))
-                    }.onFailure { failure -> notify(EditorEvent.Failed.from(failure)) }
+                    }.onFailure { failure ->
+                        notify(
+                            failure.takeIf { it.toSeerrError() == SeerrError.Server }?.serverMessage()?.let(EditorEvent::TestFailed)
+                                ?: EditorEvent.Failed.from(failure),
+                        )
+                    }
             }
         }
 

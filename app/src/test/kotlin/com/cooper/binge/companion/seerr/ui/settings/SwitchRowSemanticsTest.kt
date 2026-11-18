@@ -75,4 +75,20 @@ class SwitchRowSemanticsTest {
         composeTestRule.onNodeWithText(string(R.string.settings_share_usage_data)).assert(isSwitch).assertIsOff()
         composeTestRule.onNodeWithText(string(R.string.settings_send_crash_reports)).assert(isSwitch).assertIsOn()
     }
+
+    @Test
+    fun `the tip row is there only when the caller can open it`() {
+        var opened = 0
+        var offered by mutableStateOf(false)
+        composeTestRule.setContent {
+            BingeExpressiveTheme(dynamicColor = false) {
+                val app = AppSettings(bugReportUrl = "", shakeToReport = true, shareUsageData = false, sendCrashReports = true)
+                ItemRows(rows = appRows(app, {}, {}, {}, onOpenTip = { opened += 1 }.takeIf { offered }))
+            }
+        }
+        composeTestRule.onNodeWithText(string(R.string.tip_row)).assertDoesNotExist()
+        offered = true
+        composeTestRule.onNodeWithText(string(R.string.tip_row)).performClick()
+        assertEquals(1, opened)
+    }
 }

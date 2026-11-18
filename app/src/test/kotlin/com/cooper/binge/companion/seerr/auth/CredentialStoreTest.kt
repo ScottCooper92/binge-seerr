@@ -1,6 +1,7 @@
 package com.cooper.binge.companion.seerr.auth
 
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import com.binge.companion.kit.SecretCipher
 import com.cooper.binge.companion.seerr.seerr.SeerrAuth
 import com.cooper.binge.companion.seerr.seerr.SeerrCredentials
 import com.cooper.binge.companion.seerr.seerr.SeerrVariant
@@ -34,7 +35,7 @@ class CredentialStoreTest {
         scope: kotlinx.coroutines.CoroutineScope,
         io: CoroutineDispatcher = UnconfinedTestDispatcher(testScheduler),
     ): CredentialStore =
-        CredentialStore(PreferenceDataStoreFactory.create(scope = scope) { folder.newFile("creds.preferences_pb") }, cipher, io)
+        LegacyCredentialStore(PreferenceDataStoreFactory.create(scope = scope) { folder.newFile("creds.preferences_pb") }, cipher, io)
 
     @Test
     fun `the secret is decrypted on the io dispatcher, never on the collector's main thread`() =

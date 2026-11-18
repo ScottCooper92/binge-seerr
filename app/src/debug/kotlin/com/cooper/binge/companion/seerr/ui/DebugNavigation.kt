@@ -1,13 +1,18 @@
 package com.cooper.binge.companion.seerr.ui
 
+import androidx.activity.compose.LocalActivity
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material.icons.filled.Lightbulb
+import androidx.compose.material.icons.filled.RateReview
 import androidx.compose.material.icons.filled.ViewAgenda
+import androidx.compose.runtime.Composable
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.review.ReviewPromptViewModel
 import com.cooper.binge.companion.seerr.ui.debug.BingeHintPrototypeScreen
 import com.cooper.binge.companion.seerr.ui.debug.FlagOverridesScreen
 import com.cooper.binge.companion.seerr.ui.debug.ManageSheetPrototypeScreen
@@ -15,8 +20,14 @@ import com.cooper.binge.companion.seerr.ui.debug.RequestCardsPrototypeScreen
 import com.cooper.binge.companion.seerr.ui.hub.DeveloperRow
 
 /** The hub's developer section, present only in a debug build: each prototype opens straight off the hub. */
-internal fun debugDeveloperRows(backStack: NavBackStack<NavKey>): List<DeveloperRow> =
-    listOf(
+@Composable
+internal fun debugDeveloperRows(backStack: NavBackStack<NavKey>): List<DeveloperRow> {
+    val activity = LocalActivity.current
+    val review: ReviewPromptViewModel = hiltViewModel()
+    return listOf(
+        DeveloperRow(Icons.Filled.RateReview, R.string.proto_review_title, R.string.proto_review_detail) {
+            activity?.let(review::askNow)
+        },
         DeveloperRow(Icons.Filled.Flag, R.string.proto_flags_title, R.string.proto_flags_detail) {
             backStack.add(FlagOverridesRoute)
         },
@@ -30,6 +41,7 @@ internal fun debugDeveloperRows(backStack: NavBackStack<NavKey>): List<Developer
             backStack.add(RequestCardsPrototypeRoute)
         },
     )
+}
 
 /** The prototypes' screens. [showBack] is unused here: they are always stacked above the hub, so their arrow always shows. */
 internal fun EntryProviderScope<NavKey>.debugDetailEntries(

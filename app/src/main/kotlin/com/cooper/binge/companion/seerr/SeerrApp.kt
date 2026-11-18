@@ -4,11 +4,14 @@ import android.app.Application
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
 import com.cooper.binge.companion.seerr.auth.ConnectionRestore
-import com.cooper.binge.companion.seerr.flags.FeatureFlags
+import com.cooper.binge.companion.seerr.flags.DiscoveryFlag
 import com.cooper.binge.companion.seerr.notifications.ApplicationScope
-import com.cooper.binge.companion.seerr.notifications.NotificationPlanner
-import com.cooper.binge.companion.seerr.telemetry.Analytics
-import com.cooper.binge.companion.seerr.telemetry.CrashReportingSwitch
+import com.cooper.binge.companion.seerr.notifications.NotificationPlanning
+import com.cooper.homelab.core.flags.FeatureFlags
+import com.cooper.homelab.core.review.ReviewPrompt
+import com.cooper.homelab.core.telemetry.Analytics
+import com.cooper.homelab.core.telemetry.CrashReportingSwitch
+import com.cooper.homelab.core.tip.TipBilling
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -28,7 +31,7 @@ class SeerrApp :
     lateinit var workerFactory: HiltWorkerFactory
 
     @Inject
-    lateinit var planner: NotificationPlanner
+    lateinit var planner: NotificationPlanning
 
     @Inject
     lateinit var connectionRestore: ConnectionRestore
@@ -45,6 +48,17 @@ class SeerrApp :
     lateinit var featureFlags: FeatureFlags
 
     @Inject
+    lateinit var discoveryFlag: DiscoveryFlag
+
+    /** Injected so it is built at start, which is when the first launch is stamped. */
+    @Inject
+    lateinit var reviewPrompt: ReviewPrompt
+
+    /** Settled at start: a tip that was paid for after the app last ran is consumed before Play refunds it. */
+    @Inject
+    lateinit var tipBilling: TipBilling
+
+    @Inject
     @field:ApplicationScope
     lateinit var scope: CoroutineScope
 
@@ -56,6 +70,9 @@ class SeerrApp :
         crashReporting.start()
         connectionRestore.start()
         planner.start()
+        reviewPrompt.start()
         scope.launch { featureFlags.refresh() }
+        scope.launch { discoveryFlag.refresh() }
+        scope.launch { tipBilling.settle() }
     }
 }

@@ -6,10 +6,12 @@ import com.cooper.binge.companion.seerr.data.RequestStore
 import com.cooper.binge.companion.seerr.seerr.SeerrAddToBlocklistBody
 import com.cooper.binge.companion.seerr.seerr.addToBlocklistOnce
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
-import com.cooper.binge.companion.seerr.telemetry.Analytics
 import com.cooper.binge.companion.seerr.telemetry.AnalyticsEvents
-import com.cooper.binge.companion.seerr.telemetry.CrashBreadcrumbs
 import com.cooper.binge.companion.seerr.telemetry.operationFailed
+import com.cooper.homelab.core.review.NoReviewSignals
+import com.cooper.homelab.core.review.ReviewSignalSink
+import com.cooper.homelab.core.telemetry.Analytics
+import com.cooper.homelab.core.telemetry.CrashBreadcrumbs
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -37,6 +39,7 @@ internal class ModerationRunner(
     private val crashBreadcrumbs: CrashBreadcrumbs,
     private val cache: RequestStore,
     private val onModerated: () -> Unit,
+    private val reviewSignals: ReviewSignalSink = NoReviewSignals,
 ) {
     private val acting = MutableStateFlow<Set<Int>>(emptySet())
     val actingIds: StateFlow<Set<Int>> = acting.asStateFlow()
@@ -111,6 +114,7 @@ internal class ModerationRunner(
                 .onSuccess {
                     onModerated()
                     val event = outcome()
+                    if (event.countsAsPositiveAction) reviewSignals.recordPositiveAction()
                     analytics.event(AnalyticsEvents.REQUEST_MODERATED, mapOf(AnalyticsEvents.PARAM_ACTION to event.actionLabel()))
                     if (syncFirst) connection.syncInto(cache, requestId)
                     eventFlow.emit(event)

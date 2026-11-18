@@ -4,11 +4,10 @@ import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.lifecycle.ViewModelStore
 import com.cooper.binge.companion.seerr.auth.BingeConnectionStore
 import com.cooper.binge.companion.seerr.auth.BingeHint
-import com.cooper.binge.companion.seerr.auth.CredentialStore
 import com.cooper.binge.companion.seerr.auth.DataStoreBingeConnectionStore
+import com.cooper.binge.companion.seerr.auth.LegacyCredentialStore
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
-import com.cooper.binge.companion.seerr.auth.SeerrConnectionHealthMonitor
-import com.cooper.binge.companion.seerr.seerr.LocalNetworkPermission
+import com.cooper.binge.companion.seerr.auth.SeerrHealth
 import com.cooper.binge.companion.seerr.seerr.SeerrApiFactory
 import com.cooper.binge.companion.seerr.seerr.SeerrAuth
 import com.cooper.binge.companion.seerr.seerr.SeerrVariant
@@ -17,6 +16,7 @@ import com.cooper.binge.companion.seerr.util.FakeResponse
 import com.cooper.binge.companion.seerr.util.FakeSeerrServer
 import com.cooper.binge.companion.seerr.util.MainDispatcherRule
 import com.cooper.binge.companion.seerr.util.PlainCipher
+import com.cooper.homelab.core.server.network.LocalNetworkPermission
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.first
@@ -152,11 +152,11 @@ class HubViewModelTest {
                 PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("binge_connection.preferences_pb") },
             ),
     ): HubViewModel {
-        val monitor = SeerrConnectionHealthMonitor()
+        val monitor = SeerrHealth.standalone()
         connection =
             SeerrConnection(
                 store =
-                    CredentialStore(
+                    LegacyCredentialStore(
                         PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("h.preferences_pb") },
                         PlainCipher,
                         UnconfinedTestDispatcher(testScheduler),
@@ -250,14 +250,14 @@ class HubViewModelTest {
         }
 
     @Test
-    fun `a plain requester sees only the requests row, and no count the server would refuse`() =
+    fun `a plain requester sees only the requests row and This app, and no count the server would refuse`() =
         runTest {
             healthyServer(permissions = REQUEST)
             val vm = viewModel()
 
             val ready = vm.awaitReady()
 
-            assertEquals(listOf(HubSection.Requests), ready.overview.visibleSections())
+            assertEquals(listOf(HubSection.Requests, HubSection.ThisApp), ready.overview.visibleSections())
             assertNull(ready.overview.userCount)
             assertNull(ready.overview.blocklistCount)
             assertNull(ready.overview.openIssueCount)
@@ -273,11 +273,11 @@ class HubViewModelTest {
         turn: () -> Unit,
     ): HubViewModel {
         healthyServer()
-        val monitor = SeerrConnectionHealthMonitor()
+        val monitor = SeerrHealth.standalone()
         connection =
             SeerrConnection(
                 store =
-                    CredentialStore(
+                    LegacyCredentialStore(
                         PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("h.preferences_pb") },
                         PlainCipher,
                         UnconfinedTestDispatcher(testScheduler),
@@ -326,7 +326,7 @@ class HubViewModelTest {
             val ready = vm.awaitReady()
 
             assertEquals(ConnectionHealth.CouldNotLoad, ready.health)
-            assertEquals(listOf(HubSection.Requests), ready.overview.visibleSections())
+            assertEquals(listOf(HubSection.Requests, HubSection.ThisApp), ready.overview.visibleSections())
         }
 
     @Test
@@ -482,7 +482,7 @@ class HubViewModelTest {
             serve("/api/v1/request/count", """{"total":0,"movie":0,"tv":0,"pending":0,"processing":0}""")
             connection.connect(seerr.url("/"), SeerrAuth.ApiKey("k3y-2")).getOrThrow()
 
-            val ready = vm.awaitReady { it.server.title == "Second Home" }
+            val ready = vm.awaitReady { it.server.title == "Second Home" && it.overview.movieRequestCount != null }
 
             assertEquals(0, ready.overview.movieRequestCount)
         }
@@ -548,7 +548,7 @@ class HubViewModelTest {
                 release.countDown()
             }
             val ready = returnToHub().awaitReady { it.overview.account?.name == "Other" }
-            assertEquals(listOf(HubSection.Requests), ready.overview.visibleSections())
+            assertEquals(listOf(HubSection.Requests, HubSection.ThisApp), ready.overview.visibleSections())
         }
 
     @Test
@@ -806,6 +806,23 @@ class HubViewModelTest {
             assertEquals(3, settled.overview.pendingRequestCount)
             assertEquals(downloadReads + 1, reads("/api/v1/request"))
             assertEquals(countReads + 1, reads("/api/v1/request/count"))
+        }
+
+    /** The server's title is the card's name; renaming the server and pulling shows the new one without reconnecting. */
+    @Test
+    fun `a pull re-reads the server's card, so a renamed server shows its new title`() =
+        runTest {
+            healthyServer()
+            val vm = viewModel()
+            vm.setScreenVisible(true)
+            vm.awaitReady { it.server.title == "Family" }
+            seerr.awaitIdle()
+            serve("/api/v1/settings/public", """{"applicationTitle":"Home Server","mediaServerType":2}""")
+
+            vm.refresh()
+            val ready = vm.awaitReady { it.server.title == "Home Server" && !it.refreshing }
+
+            assertEquals("Home Server", ready.server.title)
         }
 
     /** A pull is the spinner until its reads answer, and a second pull meanwhile reads nothing more. */

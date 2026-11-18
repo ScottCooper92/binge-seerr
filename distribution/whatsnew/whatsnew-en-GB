@@ -1,1 +1,8 @@
-Internal release of Seerr Companion: manage your Seerr, Jellyseerr or Overseerr server from your phone or TV.
+Early access to Seerr Companion: manage your Seerr, Jellyseerr or Overseerr server from your phone or TV.
+
+New in this build:
+- A This app page: preferences, notifications, feedback and About
+- Choose how often notifications are checked, and a hint if Android is delaying them
+- A tip option under This app
+- "Downloading now" comes first on the home screen
+- Webhook notifications now save and test properly

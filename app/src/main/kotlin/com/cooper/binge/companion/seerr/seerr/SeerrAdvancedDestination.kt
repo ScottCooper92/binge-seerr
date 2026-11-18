@@ -59,7 +59,7 @@ suspend fun SeerrApi.destinationChoicesFor(
  * here is one this integration did not offer, and naming it later is INVALID_ARGUMENT, as the
  * contract says for any `server_id` it did not offer.
  */
-private suspend fun SeerrApi.offeredServers(
+internal suspend fun SeerrApi.offeredServers(
     isTv: Boolean,
     allow4k: Boolean,
 ): List<SeerrServerDto> = arrServers(isTv).filter { allow4k || !it.is4k }

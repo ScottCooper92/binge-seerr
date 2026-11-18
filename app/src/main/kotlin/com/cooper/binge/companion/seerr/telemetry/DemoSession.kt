@@ -3,6 +3,7 @@ package com.cooper.binge.companion.seerr.telemetry
 import com.cooper.binge.companion.seerr.auth.CredentialStore
 import com.cooper.binge.companion.seerr.demo.isDemo
 import com.cooper.binge.companion.seerr.notifications.ApplicationScope
+import com.cooper.homelab.core.telemetry.AnalyticsDecorator
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
@@ -10,7 +11,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/** Whether the saved connection is the demo, which [PostHogAnalytics] uses to mark what it reports. */
+/** Whether the saved connection is the demo, which [DemoAnalyticsDecorator] uses to mark what analytics reports. */
 interface DemoSession {
     val isDemo: Boolean
 
@@ -45,3 +46,17 @@ class SavedConnectionDemoSession
             read.first { it }
         }
     }
+
+/** Marks what analytics reports with `demo=true` while the saved connection is the demo, so those sessions can be left out. */
+class DemoAnalyticsDecorator(
+    private val demo: DemoSession,
+) : AnalyticsDecorator {
+    override suspend fun awaitReady() = demo.awaitRead()
+
+    override fun decorate(properties: Map<String, Any>): Map<String, Any> =
+        if (demo.isDemo) properties + (DEMO_PROPERTY to true) else properties
+
+    private companion object {
+        const val DEMO_PROPERTY = "demo"
+    }
+}

@@ -49,7 +49,7 @@ class TvShellJourneysTest {
     }
 
     private val home get() = host.string(R.string.tv_home)
-    private val account get() = host.string(R.string.tv_account)
+    private val settings get() = host.string(R.string.hub_section_settings)
 
     @Test
     fun `a request's link, sent to the running app, opens that request's page over Home`() {
@@ -109,14 +109,14 @@ class TvShellJourneysTest {
         host.launch()
         host.awaitShowing(home)
         host.compose
-            .onAllNodes(hasContentDescription(host.string(R.string.tv_account)))
+            .onAllNodes(hasContentDescription(host.string(R.string.hub_section_settings)))
             .onFirst()
             .performClick()
-        host.awaitWorded(account)
+        host.awaitWorded(settings)
 
         host.sendLink(DeepLinks.request(11))
 
         host.awaitShowing(OVERVIEW)
-        assertFalse("the sheet stayed open", host.isWorded(account))
+        assertFalse("the sheet stayed open", host.isWorded(settings))
     }
 }

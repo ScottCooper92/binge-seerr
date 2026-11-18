@@ -1,6 +1,6 @@
 package com.cooper.binge.companion.seerr.ui.hub
 
-import com.cooper.binge.companion.seerr.flags.Flags
+import com.cooper.homelab.core.flags.Flags
 import org.junit.Assert.assertEquals
 import org.junit.Test
 

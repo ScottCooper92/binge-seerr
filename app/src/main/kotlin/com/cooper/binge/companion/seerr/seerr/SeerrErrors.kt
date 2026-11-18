@@ -1,7 +1,9 @@
 package com.cooper.binge.companion.seerr.seerr
 
 import com.binge.companion.sdk.attempt
+import com.binge.companion.sdk.serverUnreachable
 import com.cooper.binge.companion.seerr.auth.NotConnectedException
+import com.cooper.homelab.core.server.network.LocalNetworkDeniedException
 import io.grpc.Status
 import io.grpc.StatusException
 import kotlinx.coroutines.CancellationException
@@ -91,7 +93,7 @@ fun Throwable.toSeerrError(): SeerrError =
                 code() >= HTTP_SERVER_ERROR_MIN -> SeerrError.Server
                 else -> SeerrError.Rejected
             }
-        is IOException -> SeerrError.Unreachable
+        is IOException -> if (isServerUnreachable()) SeerrError.Unreachable else SeerrError.Unknown
         else -> SeerrError.Unknown
     }
 
@@ -99,18 +101,29 @@ fun Throwable.toSeerrError(): SeerrError =
  * Seerr's failures as the contract's gRPC status codes: the whole error model on this side, because a
  * response message never carries an error field. [httpStatus] maps the HTTP answers.
  *
- * A body this app cannot parse ([SerializationException]) is `UNAVAILABLE`, since a server update may fix it.
+ * A server that does not answer is the SDK's `serverUnreachable` (#1913), named [serverName] where the caller has it.
+ * A body this app cannot parse ([SerializationException]) is a plain `UNAVAILABLE`: the server did answer.
  * An exception's own message never crosses to the host: a serialization failure's quotes the body, which can
  * hold the server's secrets (#680). The exception stays on `withCause`, which gRPC never serialises.
  */
-fun Throwable.toStatusException(): StatusException =
+fun Throwable.toStatusException(serverName: String? = null): StatusException =
     when (this) {
         is StatusException -> this
         is NotConnectedException -> StatusException(Status.UNAUTHENTICATED.withDescription(message))
         is NothingLeftToRequestException -> StatusException(Status.FAILED_PRECONDITION.withDescription(NOTHING_LEFT_TO_REQUEST))
         is BlocklistedTitleException -> StatusException(Status.FAILED_PRECONDITION.withDescription(BLOCKLISTED))
-        is HttpException -> StatusException(httpStatus().withDescription("Seerr answered HTTP ${code()}"))
-        is IOException -> StatusException(Status.UNAVAILABLE.withDescription("Seerr could not be reached").withCause(this))
+        is HttpException ->
+            if (isServerFailure()) {
+                serverUnreachable(serverName)
+            } else {
+                StatusException(httpStatus().withDescription("Seerr answered HTTP ${code()}"))
+            }
+        is IOException ->
+            when {
+                isServerUnreachable() -> serverUnreachable(serverName, timedOut = isTimeout())
+                isTransportRefusal() -> StatusException(Status.UNAVAILABLE.withDescription(TRANSPORT_REFUSED).withCause(this))
+                else -> StatusException(Status.INTERNAL.withDescription(UNHANDLED).withCause(this))
+            }
         is SerializationException -> StatusException(Status.UNAVAILABLE.withDescription(UNREADABLE).withCause(this))
         else -> StatusException(Status.INTERNAL.withDescription(UNHANDLED).withCause(this))
     }
@@ -137,7 +150,7 @@ private fun HttpException.httpStatus(): Status =
  * A 401 the session was not found alive behind, or a 403 [SeerrSessionInterceptor] confirmed against `auth/me`:
  * the session, not a permission.
  */
-private fun HttpException.rejectsSessionByAnswer(): Boolean = isSessionRejection(code(), response()?.headers() ?: Headers.headersOf())
+internal fun HttpException.rejectsSessionByAnswer(): Boolean = isSessionRejection(code(), response()?.headers() ?: Headers.headersOf())
 
 /** A 401 Seerr sent although `auth/me` still answers: a refusal, which a route may read more precisely (#997, #998). */
 internal fun HttpException.refusedWithLiveSession(): Boolean = isLiveSessionRefusal(code(), response()?.headers() ?: Headers.headersOf())
@@ -223,8 +236,15 @@ const val MAX_DETAIL_CHARS = 160
  * so a field it echoes back, an API key included, never reaches the screen or a log, and a body that is not JSON with a
  * text `message` gives null. Any other failure gives null as well.
  */
-fun Throwable.rejectionDetail(): String? {
-    if (this !is HttpException || toSeerrError() != SeerrError.Rejected) return null
+fun Throwable.rejectionDetail(): String? = if (this is HttpException && toSeerrError() == SeerrError.Rejected) serverMessage() else null
+
+/**
+ * The server's own `message` for any failed call, as one short line, or null. It reads the `message` field and nothing
+ * else of the body, for the same reason as [rejectionDetail]. A screen uses it where the failure is a 5xx that names
+ * its cause, as the agent test does.
+ */
+fun Throwable.serverMessage(): String? {
+    if (this !is HttpException) return null
     val message =
         attempt {
             (Json.parseToJsonElement(peekedBody()) as? JsonObject)
@@ -268,5 +288,6 @@ suspend inline fun <T> statusCatching(block: () -> T): T =
 
 private const val UNREADABLE = "Seerr returned something this companion could not read"
 private const val UNHANDLED = "The companion failed to handle this request"
+private const val TRANSPORT_REFUSED = "The connection to Seerr was refused by its certificate or this device's network policy"
 private const val BLOCKLISTED = "The title is blocklisted"
 private const val NOTHING_LEFT_TO_REQUEST = "Seerr has nothing left to request for those seasons"

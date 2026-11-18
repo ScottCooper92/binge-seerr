@@ -269,6 +269,14 @@ class TvSettingsScreenshotTest {
         Sheet(SampleSettingsWithApp, page = PAGE_BUG_REPORT)
     }
 
+    /** An update's release notes: the address and the code the phone scans (#1986). */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun ReleaseNotesCode() {
+        Sheet(SampleSettings.copy(server = SampleSettings.server.copy(updateAvailable = true)), page = PAGE_RELEASE_NOTES)
+    }
+
     /** Before the settings are read (#1053): the sheet's title over its loading line. */
     @PreviewTest
     @SeerrTvScreenPreviews

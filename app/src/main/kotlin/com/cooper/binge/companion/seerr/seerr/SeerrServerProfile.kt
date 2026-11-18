@@ -83,6 +83,22 @@ data class SeerrServerProfile(
             settings.instanceId?.takeIf { it.isNotBlank() }
                 ?: settings.vapidPublic?.takeIf { it.isNotBlank() }?.let { "v" + sha256Hex(it).take(VAPID_ID_LENGTH) }
 
+    /**
+     * What the user calls this server: the title its administrator set, else the edition's name, else null for an
+     * edition not recognised (#1913). A name for the user to read, so never a version or an address.
+     */
+    val serverTitle: String?
+        get() =
+            settings.applicationTitle?.trim()?.takeIf { it.isNotEmpty() }
+                ?: variant.takeUnless { it == SeerrVariant.Unknown }?.displayName
+
+    /**
+     * False only when the server says it has not finished its first-run setup: it has no accounts and no media server, so
+     * there is nothing to sign in to. A server that does not say, as older releases and forks do not, is set up. This is
+     * the server's own answer and never a version comparison.
+     */
+    val isSetUp: Boolean get() = settings.initialized != false
+
     /** An unknown lineage hides nothing, as [unknown] promises: it is taken as the family's latest, never as Overseerr. */
     private val jellyseerrLineage: Boolean get() = variant.isJellyseerrLineage || variant == SeerrVariant.Unknown
 
@@ -125,6 +141,46 @@ data class SeerrServerProfile(
     /** The slider routes arrived with Overseerr 1.32 and with Jellyseerr 1.4; Jellyseerr 1.0 to 1.3 answer 404. */
     val hasDiscoverSliders: Boolean get() = if (jellyseerrLineage) atLeast(1, 4) else atLeast(1, 32)
 
+    /**
+     * The discover variants that arrived after the base calls. Each version is the first release tag whose
+     * `server/routes/discover.ts` registers the route, in Overseerr and in Jellyseerr; `docs/server-compatibility.md` has them.
+     */
+    val hasUpcomingTv: Boolean get() = jellyseerrLineage || atLeast(1, 20)
+
+    /** `discover/{movies,tv}` by genre, language, studio and network. */
+    val hasDiscoverByCategory: Boolean get() = jellyseerrLineage || atLeast(1, 21)
+
+    val hasKeywordDiscover: Boolean get() = jellyseerrLineage || atLeast(1, 9)
+
+    /** `movie/{id}/ratingscombined`: Rotten Tomatoes and IMDb in one call, from Jellyseerr 1.7 and Overseerr 1.34 (its `v1.33.2` tag has no such route). */
+    val hasCombinedRatings: Boolean get() = if (jellyseerrLineage) atLeast(1, 7) else atLeast(1, 34)
+
+    val hasGenreSliders: Boolean get() = jellyseerrLineage || atLeast(1, 22)
+
+    /** `media` filtered to what is in the library, newest first: Overseerr 1.18 and the Jellyseerr lineage from the start. */
+    val hasRecentlyAdded: Boolean get() = jellyseerrLineage || atLeast(1, 18)
+
+    /** The streaming service filter on `discover/{movies,tv}` (`watchRegion` and `watchProviders`), which arrived with the sliders. */
+    val hasWatchProviderDiscover: Boolean get() = hasDiscoverSliders
+
+    /**
+     * The filter and sort parameters on `discover/{movies,tv}`: genre, studio or network, keywords, language, dates, runtime, rating,
+     * vote count and the streaming services. The first release tag whose `discover.ts` takes them is Overseerr 1.32 and Jellyseerr 1.4.
+     */
+    val hasDiscoverFilters: Boolean get() = hasDiscoverSliders
+
+    /** The TV `status` filter: Jellyseerr 2.0, and not Overseerr. */
+    val hasDiscoverStatusFilter: Boolean get() = jellyseerrLineage && atLeast(2, 0)
+
+    /** The certification filter (`certification*`): Jellyseerr 2.6, and not Overseerr. */
+    val hasDiscoverCertification: Boolean get() = jellyseerrLineage && atLeast(2, 6)
+
+    /** Keywords to leave out (`excludeKeywords`): the 3.0 release of the Jellyseerr lineage. */
+    val hasDiscoverExcludeKeywords: Boolean get() = jellyseerrLineage && atLeast(3, 0)
+
+    /** The Plex watchlist; whether the signed-in user may use it is a permission, not this. */
+    val hasDiscoverWatchlist: Boolean get() = if (jellyseerrLineage) atLeast(1, 2) else atLeast(1, 30)
+
     /** The ntfy agent arrived with Jellyseerr 2.6; Overseerr never had it. */
     val hasNtfy: Boolean get() = jellyseerrLineage && atLeast(2, 6)
 
@@ -136,6 +192,12 @@ data class SeerrServerProfile(
 
     /** A Telegram topic, per user and on the server's agent: Jellyseerr 2.2 added one, and Overseerr never had it. */
     val hasTelegramTopics: Boolean get() = jellyseerrLineage && atLeast(2, 2)
+
+    /**
+     * The webhook template goes up as typed from Seerr 3.3 (seerr-team/seerr#2641). Before that, and on Overseerr,
+     * the server base64-encodes the string it is sent, so the template must arrive JSON-encoded as one string.
+     */
+    val sendsWebhookPayloadRaw: Boolean get() = jellyseerrLineage && atLeast(3, 3)
 
     /** Pushover's sound list: Overseerr 1.34, and the Jellyseerr lineage from 1.8. */
     val hasPushoverSounds: Boolean get() = if (jellyseerrLineage) atLeast(1, 8) else atLeast(1, 34)

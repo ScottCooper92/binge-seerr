@@ -56,3 +56,11 @@ value class SeerrIssueTypeCode(
         val Other = SeerrIssueTypeCode(4)
     }
 }
+
+/**
+ * Whether a version in this state has files to delete. Who may delete is a permission and a server fact, not this; this is
+ * what there currently is to delete. `Processing` counts as a download already in flight, and a null status (the server has
+ * nothing for this version) does not.
+ */
+fun SeerrMediaStatusCode?.hasFiles(): Boolean =
+    this == SeerrMediaStatusCode.Processing || this == SeerrMediaStatusCode.PartiallyAvailable || this == SeerrMediaStatusCode.Available

@@ -2,6 +2,7 @@
 // in the module that needs it: :app, and :detekt-rules, which holds the binge: detekt rules.
 plugins {
     alias(libs.plugins.android.application) apply false
+    alias(libs.plugins.aboutlibraries.android) apply false
     // Declared and never applied: this is what puts Kotlin 2.4.21 on the build classpath for AGP's
     // built-in Kotlin support to use. See the note on `kotlin` in libs.versions.toml.
     alias(libs.plugins.kotlin.android) apply false

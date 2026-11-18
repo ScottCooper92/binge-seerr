@@ -1,9 +1,13 @@
 package com.cooper.binge.companion.seerr.seerr
 
+import androidx.datastore.core.CorruptionException
+import com.binge.companion.sdk.ServerUnreachable
 import com.binge.companion.sdk.attempt
+import com.binge.companion.sdk.serverUnreachableOf
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.auth.NotConnectedException
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorEvent
+import com.cooper.homelab.core.server.network.LocalNetworkDeniedException
 import io.grpc.Status
 import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.SerializationException
@@ -18,7 +22,14 @@ import org.junit.Test
 import retrofit2.HttpException
 import retrofit2.Response
 import java.io.IOException
+import java.net.SocketException
 import java.net.SocketTimeoutException
+import java.net.UnknownHostException
+import java.net.UnknownServiceException
+import java.security.cert.CertificateException
+import javax.net.ssl.SSLException
+import javax.net.ssl.SSLHandshakeException
+import javax.net.ssl.SSLPeerUnverifiedException
 
 /** The contract's error model, from this side: every Seerr failure becomes one of its documented codes. */
 class SeerrErrorsTest {
@@ -58,6 +69,18 @@ class SeerrErrorsTest {
         assertEquals(null, http(500, """{"message":"boom"}""").rejectionDetail())
         assertEquals(null, http(404, """{"message":"gone"}""").rejectionDetail())
         assertEquals(null, IOException("down").rejectionDetail())
+    }
+
+    /** A 5xx that names its cause (the agent test's) is read by [serverMessage], which a rejection's detail is not. */
+    @Test
+    fun `the server's message is read from any failed call and nothing else`() {
+        assertEquals(
+            "Failed to send Telegram notification.",
+            http(500, """{"message":"Failed to send Telegram notification."}""").serverMessage(),
+        )
+        assertEquals("a b", http(400, """{"message":" a\n b "}""").serverMessage())
+        assertEquals(null, http(500, "<html>boom</html>").serverMessage())
+        assertEquals(null, IOException("down").serverMessage())
     }
 
     @Test
@@ -108,9 +131,59 @@ class SeerrErrorsTest {
     }
 
     @Test
-    fun `transport failures and 5xx are UNAVAILABLE`() {
+    fun `a certificate or cleartext refusal is UNAVAILABLE without the unreachable detail`() {
+        listOf(
+            SSLHandshakeException("untrusted").apply { initCause(CertificateException("no trust anchor")) },
+            SSLPeerUnverifiedException("Hostname seerr.lan not verified"),
+            UnknownServiceException("cleartext"),
+        ).forEach {
+            assertEquals(Status.Code.UNAVAILABLE, codeOf(it))
+            assertNull(serverUnreachableOf(it.toStatusException()))
+            assertEquals(SeerrError.Unknown, it.toSeerrError())
+        }
+    }
+
+    /** Conscrypt reports a connection the server dropped as an SSLException, and that is the server failing to answer (#1933). */
+    @Test
+    fun `a handshake the server closed and a read it reset are still unreachable`() {
+        listOf(
+            SSLHandshakeException("Connection closed by peer"),
+            SSLException("Read error: ssl=0x1: I/O error", SocketException("Connection reset by peer")),
+        ).forEach {
+            assertEquals(ServerUnreachable("Seerr"), serverUnreachableOf(it.toStatusException("Seerr")))
+            assertEquals(SeerrError.Unreachable, it.toSeerrError())
+        }
+    }
+
+    @Test
+    fun `a certificate buried in the cause chain still makes it a refusal`() {
+        val failure = SSLException("handshake failed", RuntimeException("wrapped", CertificateException("expired")))
+
+        assertNull(serverUnreachableOf(failure.toStatusException("Seerr")))
+        assertEquals(Status.Code.UNAVAILABLE, codeOf(failure))
+    }
+
+    @Test
+    fun `a corrupt local store is INTERNAL, not a server that did not answer`() {
+        val failure = CorruptionException("unreadable")
+
+        assertEquals(Status.Code.INTERNAL, codeOf(failure))
+        assertNull(serverUnreachableOf(failure.toStatusException()))
+        assertEquals(SeerrError.Unknown, failure.toSeerrError())
+    }
+
+    @Test
+    fun `a reset connection and an unresolved name are still unreachable`() {
+        listOf(SocketException("Connection reset"), UnknownHostException("seerr.invalid")).forEach {
+            assertEquals(ServerUnreachable("Seerr"), serverUnreachableOf(it.toStatusException("Seerr")))
+            assertEquals(SeerrError.Unreachable, it.toSeerrError())
+        }
+    }
+
+    @Test
+    fun `transport failures and 5xx are UNAVAILABLE, and a timeout is a deadline`() {
         assertEquals(Status.Code.UNAVAILABLE, codeOf(IOException("reset")))
-        assertEquals(Status.Code.UNAVAILABLE, codeOf(SocketTimeoutException("timeout")))
+        assertEquals(Status.Code.DEADLINE_EXCEEDED, codeOf(SocketTimeoutException("timeout")))
         assertEquals(Status.Code.UNAVAILABLE, codeOf(http(502)))
     }
 

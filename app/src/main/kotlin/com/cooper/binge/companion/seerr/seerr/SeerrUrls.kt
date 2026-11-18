@@ -1,25 +1,21 @@
 package com.cooper.binge.companion.seerr.seerr
 
+import com.cooper.homelab.core.server.address.AddressScheme
+import com.cooper.homelab.core.server.address.ServerAddress
+import com.cooper.homelab.core.server.network.isPublicCleartext
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 
 /**
- * Ensures a user-entered address has a scheme and a trailing slash so Retrofit treats it as a
- * base. An explicit scheme is honoured; a schemeless address defaults to `http` for a local or
- * private host — a self-hosted Seerr on a LAN is plain HTTP — and `https` otherwise.
+ * A user-entered address as the base URL Retrofit needs, in the shared library's form ([ServerAddress.parse]): a scheme added
+ * where it was left off (`http` for a local or private host, `https` otherwise), the scheme and host lowercased, a default port,
+ * user info, query and fragment dropped, dot segments resolved and a trailing slash. An address that is not one comes back as
+ * it was typed: check [isValidBaseUrl] first.
  */
-fun String.normaliseBaseUrl(): String {
-    val trimmed = trim()
-    val withScheme =
-        when {
-            trimmed.startsWith("http://", ignoreCase = true) || trimmed.startsWith("https://", ignoreCase = true) -> trimmed
-            trimmed.isLocalHostAddress() -> "http://$trimmed"
-            else -> "https://$trimmed"
-        }
-    return if (withScheme.endsWith("/")) withScheme else "$withScheme/"
-}
+fun String.normaliseBaseUrl(): String = ServerAddress.parse(this)?.url ?: trim()
 
 private const val TMDB_BACKDROP_BASE = "https://image.tmdb.org/t/p/w1280"
 private const val TMDB_POSTER_BASE = "https://image.tmdb.org/t/p/w342"
+private const val TMDB_LOGO_BASE = "https://image.tmdb.org/t/p/w780_filter(duotone,ffffff,bababa)"
 
 /** A TMDB `backdrop_path` (`/abc.jpg`), as `GET backdrops` returns them, to the image URL at sign-in width. */
 fun String.toTmdbBackdropUrl(): String = TMDB_BACKDROP_BASE + withLeadingSlash()
@@ -27,14 +23,19 @@ fun String.toTmdbBackdropUrl(): String = TMDB_BACKDROP_BASE + withLeadingSlash()
 /** A TMDB `posterPath`, as a title lookup returns it, to the image URL at row and card width. */
 fun String.toTmdbPosterUrl(): String = TMDB_POSTER_BASE + withLeadingSlash()
 
+/** A TMDB company `logo_path`, to the image URL at tile width, drawn through TMDB's duotone filter as the web client does. */
+fun String.toTmdbLogoUrl(): String = TMDB_LOGO_BASE + withLeadingSlash()
+
 private fun String.withLeadingSlash(): String = if (startsWith("/")) this else "/$this"
 
-/** Where each fork publishes its releases: the "update available" row's destination. */
+/**
+ * Where each fork publishes its releases: the "update available" destination, in the chip, the Version row and the TV's code.
+ * Jellyseerr's project moved into Seerr's, and its old releases address redirects there, so both open Seerr's.
+ */
 fun SeerrVariant.releaseNotesUrl(): String =
     when (this) {
         SeerrVariant.Overseerr -> "https://github.com/sct/overseerr/releases"
-        SeerrVariant.Jellyseerr -> "https://github.com/fallenbagel/jellyseerr/releases"
-        SeerrVariant.Seerr, SeerrVariant.Unknown -> "https://github.com/seerr-team/seerr/releases"
+        SeerrVariant.Jellyseerr, SeerrVariant.Seerr, SeerrVariant.Unknown -> "https://github.com/seerr-team/seerr/releases"
     }
 
 /** Each fork's documentation. */
@@ -68,38 +69,20 @@ fun SeerrVariant.contributeUrl(): String =
         SeerrVariant.Seerr, SeerrVariant.Unknown -> "https://opencollective.com/seerr"
     }
 
+/**
+ * The host, when [this] explicitly asks for plain HTTP to a PUBLIC one: an `http://` scheme whose host is not loopback,
+ * private, LAN or tailnet. The secret would cross the network unencrypted, so setup refuses it unless the user opts in for
+ * that host (see `CleartextConsent`). Null for anything else. The host is OkHttp's spelling of it (punycode, compressed IPv6),
+ * because that is the one the cleartext guard sees on the request and so the one a consent is keyed on.
+ */
+fun String.insecurePublicHostOrNull(): String? {
+    if (!trim().startsWith("http://", ignoreCase = true)) return null
+    val address = ServerAddress.parse(this)?.takeIf { isPublicCleartext(it.scheme == AddressScheme.Https, it.host) } ?: return null
+    return address.url.toHttpUrlOrNull()?.host
+}
+
 /** Only an `http(s)` address is handed to a browser. */
 fun String.isWebUrl(): Boolean = startsWith("http://", ignoreCase = true) || startsWith("https://", ignoreCase = true)
 
 /** Whether [this] parses as a base URL once normalised — the check a setup screen makes before connecting. */
-fun String.isValidBaseUrl(): Boolean = normaliseBaseUrl().toHttpUrlOrNull() != null
-
-private const val DEFAULT_SEERR_PORT = 5055
-
-/**
- * Whether the already scheme-normalised [this] (see [normaliseBaseUrl]) names an explicit port.
- * The normaliser guarantees a scheme and a trailing slash, so the authority is exactly what sits
- * between `://` and the next `/` — bracketed for IPv6 — and a port is a `:` right after it.
- */
-internal fun String.hasExplicitPort(): Boolean {
-    val authority = substringAfter("://", "").substringBefore("/")
-    return if (authority.startsWith("[")) authority.substringAfter("]").startsWith(":") else authority.contains(":")
-}
-
-/**
- * [this], already normalised and portless, with [DEFAULT_SEERR_PORT] — the port every fork's
- * Docker image serves on — added. The second candidate `SeerrConnection.inspect` tries when the
- * entered address carried no port of its own.
- */
-internal fun String.withDefaultSeerrPort(): String? =
-    toHttpUrlOrNull()
-        ?.newBuilder()
-        ?.port(DEFAULT_SEERR_PORT)
-        ?.build()
-        ?.toString()
-
-private fun String.isLocalHostAddress(): Boolean {
-    // Prefixing a scheme lets HttpUrl extract the host — it handles ports, paths and bracketed IPv6.
-    val host = "http://$this".toHttpUrlOrNull()?.host ?: return false
-    return host.isLocalOrPrivateHost()
-}
+fun String.isValidBaseUrl(): Boolean = ServerAddress.parse(this) != null

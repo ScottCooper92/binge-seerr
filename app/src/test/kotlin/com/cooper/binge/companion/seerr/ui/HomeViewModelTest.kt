@@ -2,12 +2,13 @@ package com.cooper.binge.companion.seerr.ui
 
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.lifecycle.ViewModelStore
+import com.binge.companion.kit.SecretCipher
 import com.cooper.binge.companion.seerr.auth.ConnectionRestore
 import com.cooper.binge.companion.seerr.auth.CredentialStore
+import com.cooper.binge.companion.seerr.auth.LegacyCredentialStore
 import com.cooper.binge.companion.seerr.auth.NoConnectionCarrier
-import com.cooper.binge.companion.seerr.auth.SecretCipher
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
-import com.cooper.binge.companion.seerr.auth.SeerrConnectionHealthMonitor
+import com.cooper.binge.companion.seerr.auth.SeerrHealth
 import com.cooper.binge.companion.seerr.seerr.SeerrApiFactory
 import com.cooper.binge.companion.seerr.seerr.SeerrAuth
 import com.cooper.binge.companion.seerr.seerr.SeerrCredentials
@@ -18,6 +19,7 @@ import com.cooper.binge.companion.seerr.util.ReversingCipher
 import com.cooper.binge.companion.seerr.util.enqueueProfile
 import com.cooper.binge.companion.seerr.util.routeProfiles
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
@@ -55,7 +57,7 @@ class HomeViewModelTest {
     fun tearDown() = viewModels.clear()
 
     private fun TestScope.store(cipher: SecretCipher = ReversingCipher) =
-        CredentialStore(
+        LegacyCredentialStore(
             dataStore = PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("creds.preferences_pb") },
             cipher = cipher,
             io = UnconfinedTestDispatcher(testScheduler),
@@ -138,7 +140,7 @@ class HomeViewModelTest {
             val server = MockWebServer().routeProfiles().apply { start() }
             val drain = OkHttpDrain()
             try {
-                val monitor = SeerrConnectionHealthMonitor()
+                val monitor = SeerrHealth.standalone()
                 val store = store()
                 val connection =
                     SeerrConnection(
@@ -168,6 +170,46 @@ class HomeViewModelTest {
 
                 signIn()
                 assertEquals(HomeUiState.Connected, withContext(Dispatchers.Default) { vm.uiState.first { it == HomeUiState.Connected } })
+            } finally {
+                viewModels.clear()
+                drain.awaitIdle()
+                server.close()
+            }
+        }
+
+    @Test
+    fun `a disconnect still waiting on the server is its own state, and the flag clears when it ends`() =
+        runTest {
+            val server = MockWebServer().routeProfiles().apply { start() }
+            val drain = OkHttpDrain()
+            try {
+                val monitor = SeerrHealth.standalone()
+                val store = store()
+                val connection =
+                    SeerrConnection(
+                        store = store,
+                        apis = SeerrApiFactory(logRequests = false, health = monitor, testDispatcher = drain::newDispatcher),
+                        healthMonitor = monitor,
+                    )
+                server.enqueue(json("""{"id":42}""").newBuilder().addHeader("Set-Cookie", "connect.sid=s3ss10n; Path=/").build())
+                server.enqueueProfile(json("""{"version":"3.1.0"}"""), json("""{"initialized":true}"""))
+                server.enqueue(json("""{"status":"ok"}""").newBuilder().headersDelay(30, java.util.concurrent.TimeUnit.SECONDS).build())
+                connection
+                    .logIn(
+                        server.url("/").toString(),
+                        com.cooper.binge.companion.seerr.seerr.SeerrLoginRequest
+                            .Local("s@example.com", "pw"),
+                    ).getOrThrow()
+                val vm = HomeViewModel(connection, restore(store))
+                viewModels.put("home", vm)
+                backgroundScope.launch { vm.uiState.collect {} }
+                withContext(Dispatchers.Default) { vm.uiState.first { it == HomeUiState.Connected } }
+
+                val disconnecting = launch(Dispatchers.IO) { connection.disconnect() }
+                withContext(Dispatchers.Default) { vm.uiState.first { it == HomeUiState.Disconnecting } }
+                disconnecting.cancelAndJoin()
+
+                withContext(Dispatchers.Default) { vm.uiState.first { it != HomeUiState.Disconnecting } }
             } finally {
                 viewModels.clear()
                 drain.awaitIdle()

@@ -1,6 +1,6 @@
 package com.cooper.binge.companion.seerr.util
 
-import com.cooper.binge.companion.seerr.auth.SecretCipher
+import com.binge.companion.kit.SecretCipher
 
 /** A cipher whose key is gone: it still encrypts, but nothing it stored decrypts again, as after a Keystore wipe. */
 internal object LostKeyCipher : SecretCipher {

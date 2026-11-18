@@ -192,6 +192,12 @@ internal fun SeerrDiscoverSliderDto.toSlider(): DiscoverSlider? {
     )
 }
 
+/** The slider as the page for one reads it; fails for a kind this app does not recognize, as [SeerrDiscoverSliderDto.toForm] does. */
+internal fun DiscoverSlider.toForm(): SliderForm {
+    val sliderType = type ?: throw NoSuchElementException("slider type $typeCode")
+    return SliderForm(id = id, type = sliderType, title = title.orEmpty(), data = data.orEmpty())
+}
+
 /** The record as the batch update takes it: every field back, with the order and the enabled state as edited. */
 internal fun DiscoverSlider.toDto(): SeerrDiscoverSliderDto =
     SeerrDiscoverSliderDto(id = id, type = typeCode, title = title, isBuiltIn = builtIn, enabled = enabled, data = data)

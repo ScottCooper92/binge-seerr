@@ -5,6 +5,7 @@ import com.cooper.binge.companion.seerr.auth.PlexPinFlow
 import com.cooper.binge.companion.seerr.seerr.PlexClientIdentity
 import com.cooper.binge.companion.seerr.seerr.PlexPinDto
 import com.cooper.binge.companion.seerr.seerr.PlexTvApi
+import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.ui.LinkFlow
 import com.cooper.binge.companion.seerr.ui.users.UserOrigin
 import com.cooper.binge.companion.seerr.util.MainDispatcherRule
@@ -56,14 +57,14 @@ class LinkedAccountsViewModelTest {
         seerr.close()
     }
 
-    private suspend fun TestScope.viewModel(): LinkedAccountsViewModel {
+    private suspend fun TestScope.viewModel(userId: Int = 8): LinkedAccountsViewModel {
         val plex =
             PlexPinFlow(
-                identity = { PlexClientIdentity(identifier = "cid", product = "Binge Seerr", version = "0.1.0", device = "Pixel") },
+                identity = { PlexClientIdentity(identifier = "cid", product = "Seerr Companion", version = "0.1.0", device = "Pixel") },
                 apis = { plexTv },
                 pollInterval = 10.milliseconds,
             )
-        val vm = LinkedAccountsViewModel(seerr.connection(this), plex, mainDispatcherRule.dispatcher, 8)
+        val vm = LinkedAccountsViewModel(seerr.connection(this), plex, mainDispatcherRule.dispatcher, userId)
         viewModels.put(vm.hashCode().toString(), vm)
         backgroundScope.launch { vm.uiState.collect {} }
         return vm
@@ -162,5 +163,67 @@ class LinkedAccountsViewModelTest {
             assertEquals(LinkedAccountsEvent.Unlinked, unlinked.await())
             assertEquals(1, seerr.count("DELETE", "/api/v1/user/8/settings/linked-accounts/jellyfin"))
             assertFalse(vm.awaitReady().mediaServer?.linked == true)
+        }
+
+    @Test
+    fun `an unlink the server refuses keeps its reason`() =
+        runTest {
+            seerr.serve(
+                "DELETE /api/v1/user/8/settings/linked-accounts/jellyfin",
+                """{"message":"User does not have a local email or password set."}""",
+                code = 400,
+            )
+            val vm = viewModel()
+            vm.awaitReady()
+
+            val refused = awaitEvent(vm.events)
+            vm.unlinkMediaServer()
+            assertEquals(
+                LinkedAccountsEvent.UnlinkRefused("User does not have a local email or password set.", offerCredentialsStep = true),
+                refused.await(),
+            )
+        }
+
+    @Test
+    fun `the primary administrator is refused outright, with no credentials step to offer`() =
+        runTest {
+            seerr.serve(
+                "DELETE /api/v1/user/1/settings/linked-accounts/jellyfin",
+                """{"message":"Cannot unlink media server accounts for the primary administrator."}""",
+                code = 400,
+            )
+            seerr.serve("GET /api/v1/user/1", """{"id":1,"displayName":"Admin","userType":3}""")
+            val vm = viewModel(userId = 1)
+            vm.awaitReady()
+
+            val refused = awaitEvent(vm.events)
+            vm.unlinkMediaServer()
+            assertEquals(
+                LinkedAccountsEvent.UnlinkRefused(
+                    "Cannot unlink media server accounts for the primary administrator.",
+                    offerCredentialsStep = false,
+                ),
+                refused.await(),
+            )
+        }
+
+    @Test
+    fun `only the primary administrator is held back from unlinking`() =
+        runTest {
+            seerr.serve("GET /api/v1/user/1", """{"id":1,"displayName":"Admin","userType":3}""")
+            assertFalse(viewModel(userId = 1).awaitReady().canUnlink)
+            assertTrue(viewModel().awaitReady().canUnlink)
+        }
+
+    @Test
+    fun `an unlink that fails without a reason is an ordinary failure`() =
+        runTest {
+            seerr.serve("DELETE /api/v1/user/8/settings/linked-accounts/jellyfin", "", code = 500)
+            val vm = viewModel()
+            vm.awaitReady()
+
+            val failed = awaitEvent(vm.events)
+            vm.unlinkMediaServer()
+            assertEquals(LinkedAccountsEvent.Failed(SeerrError.Server), failed.await())
         }
 }

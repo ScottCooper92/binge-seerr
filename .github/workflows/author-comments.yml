@@ -61,9 +61,10 @@ jobs:
     concurrency:
       group: author-comments-${{ github.event.issue.number || github.event.pull_request.number }}
       cancel-in-progress: false
-    uses: ScottCooper92/binge-ci/.github/workflows/author-comments.yml@494e473b01f083178315f3f723383fefba23c937 # v1
+    uses: ScottCooper92/binge-ci/.github/workflows/author-comments.yml@903427212a2a3918dca60d6c3d8af61f2a4682f4 # v1
     with:
       author_bot_id: ${{ vars.AUTHOR_BOT_ID }}
+      private_submodules: homelab-core,binge-design-system,binge-ci
       maintainer_handle: ScottCooper92
       # jvm, not android: this repo's ci.yml is setup-java + setup-gradle and nothing
       # else. ci-setup is Binge's bootstrap - it writes a local.properties carrying a
@@ -85,8 +86,8 @@ jobs:
         exclude a source set from `check`.
 
         A lint baseline is worse than it looks here: it silences the finding
-        permanently and silently, in a repository whose whole purpose is to
-        be copied.
+        permanently and silently, in a repository meant to be the
+        reference implementation.
 
         Screenshot baselines have three cases, and only the first is
         silencing:

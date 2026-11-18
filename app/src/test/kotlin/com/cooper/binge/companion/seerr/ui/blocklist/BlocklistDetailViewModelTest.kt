@@ -22,6 +22,8 @@ import org.junit.rules.TemporaryFolder
 
 private const val TMDB_ID = 100
 private const val ADDED_AT_MILLIS = 1_749_000_000_000L
+private const val MOVIE =
+    """{"title":"Heat","releaseDate":"1995-12-15","backdropPath":"/heat.jpg","overview":"A crew and a cop."}"""
 
 /** The blocked title's own page: known synchronously off the route, the backdrop/overview/web url fetched after. */
 class BlocklistDetailViewModelTest {
@@ -52,10 +54,7 @@ class BlocklistDetailViewModelTest {
     fun setUp() {
         seerr.start()
         seerr.viewer(id = 1, permissions = ADMIN)
-        seerr.serve(
-            "GET /api/v1/movie/100",
-            """{"title":"Heat","releaseDate":"1995-12-15","backdropPath":"/heat.jpg","overview":"A crew and a cop."}""",
-        )
+        seerr.serve("GET /api/v1/movie/100", MOVIE)
         seerr.serve("DELETE /api/v1/blocklist/100", "", code = 204)
     }
 
@@ -75,11 +74,13 @@ class BlocklistDetailViewModelTest {
     @Test
     fun `the item's own fields render immediately, the lookup fills in the backdrop, overview and web url after`() =
         runTest {
+            val lookup = seerr.serveHeld("GET /api/v1/movie/100")
             val vm = viewModel()
             assertEquals("Heat", vm.uiState.value.item.title)
             assertTrue(vm.uiState.value.canManage)
             assertEquals("", vm.uiState.value.webUrl)
 
+            lookup.release(MOVIE)
             val ready = vm.uiState.first { it.webUrl.isNotEmpty() }
             assertEquals(seerr.server.url("/movie/100").toString(), ready.webUrl)
             assertEquals("https://image.tmdb.org/t/p/w1280/heat.jpg", ready.backdropUrl)

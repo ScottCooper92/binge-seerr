@@ -1,17 +1,21 @@
 package com.cooper.binge.companion.seerr.demo
 
 import com.cooper.binge.companion.seerr.seerr.SeerrMediaInfoDto
+import com.cooper.binge.companion.seerr.seerr.SeerrMediaPageDto
 import com.cooper.binge.companion.seerr.seerr.SeerrMediaStatusCode
+import com.cooper.binge.companion.seerr.seerr.SeerrPageInfoDto
+import com.cooper.binge.companion.seerr.seerr.SeerrRequestMediaDto
 import kotlinx.serialization.json.JsonPrimitive
 
 /** `media`, the title lookups and the download servers: what a request page reads about the title and where it goes. */
 internal fun DemoData.mediaRoutes(): List<DemoRoute> =
     listOf(
-        route("GET", "movie", "{}") { _, (id) -> details("movie", id) },
-        route("GET", "tv", "{}") { _, (id) -> details("tv", id) },
+        route("GET", "movie", "{}") { _, (id) -> movieDetails(id) },
+        route("GET", "tv", "{}") { _, (id) -> tvDetails(id) },
         route("POST", "media", "{}", "{}") { _, (id, status) -> withMedia(id) { markMedia(it, status) } },
         route("DELETE", "media", "{}") { _, (id) -> withMedia(id) { forget(it).let { done } } },
         route("DELETE", "media", "{}", "file") { _, (id) -> withMedia(id) { deleteFiles(it) } },
+        route("GET", "media") { call, _ -> recentlyAdded(call) },
         route("GET", "media", "{}", "watch_data") { _, _ -> demoNotFound },
         route("GET", "service", "radarr") { _, _ -> ok(demoServers("radarr")) },
         route("GET", "service", "sonarr") { _, _ -> ok(demoServers("sonarr")) },
@@ -64,7 +68,7 @@ private fun mediaStatusFor(path: String): SeerrMediaStatusCode? =
         else -> null
     }
 
-private fun DemoData.details(
+internal fun DemoData.details(
     mediaType: String,
     id: String,
 ): DemoAnswer {
@@ -76,3 +80,16 @@ private fun DemoData.details(
         )
     return ok(title.details(mediaStatus(title), info))
 }
+
+/** The titles the library holds, newest first, as `media` lists them: what the hubs' Recently Added row reads. */
+private fun DemoData.recentlyAdded(call: DemoCall): DemoAnswer {
+    val take = call.intQuery("take", DEFAULT_MEDIA_TAKE).coerceAtLeast(1)
+    val held = DEMO_TITLES.filter { mediaStatus(it) == SeerrMediaStatusCode.Available }.sortedByDescending { it.mediaId }
+    val rows =
+        held.take(take).map {
+            SeerrRequestMediaDto(id = it.mediaId, tmdbId = it.tmdbId, mediaType = it.mediaType, status = SeerrMediaStatusCode.Available)
+        }
+    return ok(SeerrMediaPageDto(pageInfo = SeerrPageInfoDto(results = held.size, pages = 1, page = 1), results = rows))
+}
+
+private const val DEFAULT_MEDIA_TAKE = 20

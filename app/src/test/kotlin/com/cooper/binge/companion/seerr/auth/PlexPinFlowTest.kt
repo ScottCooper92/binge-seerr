@@ -15,7 +15,7 @@ import kotlin.time.Duration.Companion.milliseconds
 /** The plex.tv side of a Plex sign-in, against a scripted plex.tv. */
 class PlexPinFlowTest {
     private val plex = MockWebServer().apply { start() }
-    private val identity = PlexClientIdentity(identifier = "cid 1", product = "Binge Seerr", version = "0.1.0", device = "Pixel")
+    private val identity = PlexClientIdentity(identifier = "cid 1", product = "Seerr Companion", version = "0.1.0", device = "Pixel")
 
     private fun flow(now: () -> Instant = Instant::now): PlexPinFlow =
         PlexPinFlow(
@@ -41,11 +41,11 @@ class PlexPinFlowTest {
 
             assertEquals("tok3n", token)
             assertEquals("ABCD", pin.code)
-            assertEquals("https://app.plex.tv/auth#?clientID=cid+1&code=ABCD&context%5Bdevice%5D%5Bproduct%5D=Binge+Seerr", pin.authUrl)
+            assertEquals("https://app.plex.tv/auth#?clientID=cid+1&code=ABCD&context%5Bdevice%5D%5Bproduct%5D=Seerr+Companion", pin.authUrl)
             val mint = plex.takeRequest()
             assertEquals("/api/v2/pins?strong=true", mint.url.encodedPath + "?" + mint.url.encodedQuery)
             assertEquals("cid 1", mint.headers["X-Plex-Client-Identifier"])
-            assertEquals("Binge Seerr", mint.headers["X-Plex-Product"])
+            assertEquals("Seerr Companion", mint.headers["X-Plex-Product"])
             assertEquals("/api/v2/pins/41", plex.takeRequest().url.encodedPath)
             assertEquals(3, plex.requestCount)
         }

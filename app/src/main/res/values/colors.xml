@@ -2,4 +2,7 @@
 <resources>
     <color name="companion_brand">#6366F1</color>
     <color name="companion_brand_dark">#818CF8</color>
+
+    <!-- The launch splash's ground: the design system's light background. values-night and values-television swap it, so the splash follows the device's theme. -->
+    <color name="splash_background">#FFFFFBFF</color>
 </resources>

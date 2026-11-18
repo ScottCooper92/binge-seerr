@@ -1,6 +1,9 @@
 package com.cooper.binge.companion.seerr.ui.issues
 
+import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.getBoundsInRoot
+import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onNodeWithContentDescription
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.theme.SeerrTheme
@@ -37,5 +40,23 @@ class IssueDetailBarOrderTest {
         val delete = rule.onNodeWithContentDescription(string(R.string.issue_delete)).getBoundsInRoot()
 
         assertTrue("Delete (${delete.left}) sits right of manage (${manage.left})", delete.left >= manage.right)
+    }
+
+    @Test
+    fun `an issue with no link to open still offers delete and no manage button`() {
+        val dead = "https://demo.seerr.invalid/"
+        val detail = commonIssueDetail().copy(canDelete = true, webUrl = dead, mediaServerUrl = null, serviceUrl = null)
+        rule.setContent {
+            SeerrTheme {
+                IssueDetailScreen(
+                    state = IssueDetailUiState.Ready(detail = detail),
+                    events = emptyFlow(),
+                    actions = noIssueDetailActions(),
+                )
+            }
+        }
+
+        rule.onNodeWithContentDescription(string(R.string.issue_delete)).assertIsDisplayed()
+        rule.onAllNodesWithContentDescription(string(R.string.issue_manage_cd)).assertCountEquals(0)
     }
 }

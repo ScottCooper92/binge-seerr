@@ -43,9 +43,10 @@ jobs:
       (github.event.workflow_run.event != 'schedule') &&
       (!github.event.pull_request || github.event.pull_request.head.repo.full_name == github.repository) &&
       (!github.event.workflow_run || github.event.workflow_run.head_repository.full_name == github.repository)
-    uses: ScottCooper92/binge-ci/.github/workflows/author-ci-fix.yml@494e473b01f083178315f3f723383fefba23c937 # v1
+    uses: ScottCooper92/binge-ci/.github/workflows/author-ci-fix.yml@903427212a2a3918dca60d6c3d8af61f2a4682f4 # v1
     with:
       author_bot_id: ${{ vars.AUTHOR_BOT_ID }}
+      private_submodules: homelab-core,binge-design-system,binge-ci
       # jvm, not android: this repo's ci.yml is setup-java + setup-gradle and nothing
       # else. ci-setup is Binge's bootstrap - it writes a local.properties carrying a
       # TMDB key this app has no use for, and tunes Gradle for a container this job does
@@ -70,8 +71,8 @@ jobs:
 
         Formatting failures are the cheapest class of failure to fix
         properly. A lint baseline is worse than it looks: it silences the
-        finding permanently and silently, in a repository whose whole
-        purpose is to be copied.
+        finding permanently and silently, in a repository meant to be
+        the reference implementation.
 
         A failing screenshot test means the rendering changed. Re-recording
         the baseline makes CI green while accepting whatever was rendered,

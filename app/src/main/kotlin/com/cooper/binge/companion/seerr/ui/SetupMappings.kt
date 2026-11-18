@@ -7,22 +7,23 @@ import com.cooper.binge.companion.seerr.auth.PlexPinExpiredException
 import com.cooper.binge.companion.seerr.auth.QuickConnectExpiredException
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.auth.SeerrServerPreview
-import com.cooper.binge.companion.seerr.handoff.AddressLocality
 import com.cooper.binge.companion.seerr.handoff.HAND_OFF_SESSION_MODE
 import com.cooper.binge.companion.seerr.handoff.HandOffCredentials
 import com.cooper.binge.companion.seerr.handoff.HandOffProgress
 import com.cooper.binge.companion.seerr.handoff.HandOffSignInModes
 import com.cooper.binge.companion.seerr.handoff.addressLocality
-import com.cooper.binge.companion.seerr.seerr.LocalNetworkPermission
 import com.cooper.binge.companion.seerr.seerr.SeerrAuth
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.seerr.SeerrLoginRequest
 import com.cooper.binge.companion.seerr.seerr.SeerrSignInMode
 import com.cooper.binge.companion.seerr.seerr.isBlockedByLocalNetwork
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
-import com.cooper.binge.companion.seerr.telemetry.Analytics
+import com.cooper.binge.companion.seerr.seerr.wantsClientCertificate
 import com.cooper.binge.companion.seerr.telemetry.AnalyticsEvents
-import com.cooper.binge.companion.seerr.telemetry.CrashBreadcrumbs
+import com.cooper.homelab.core.server.network.AddressLocality
+import com.cooper.homelab.core.server.network.LocalNetworkPermission
+import com.cooper.homelab.core.telemetry.Analytics
+import com.cooper.homelab.core.telemetry.CrashBreadcrumbs
 
 /** The form offers the media server's own sign-in first and the admin key last. */
 private val MODE_ORDER =
@@ -66,6 +67,8 @@ internal fun SetupUiState.toHandOffProgress(
                 attempt = attempts,
                 serverId = server.instanceId,
             )
+        // The phone has nothing to send to a server that is not set up, so for its page the attempt has failed.
+        is SetupUiState.NotSetUp -> HandOffProgress.Failed
         is SetupUiState.Connected -> HandOffProgress.Connected
     }
 
@@ -82,6 +85,7 @@ internal fun SeerrServerPreview.toSetupServer(): SetupServer {
         canResetPassword = settings.emailEnabled && SeerrSignInMode.Local in modes,
         backdropUrl = backdropUrls.firstOrNull(),
         instanceId = profile.instanceId,
+        setUp = profile.isSetUp,
     )
 }
 
@@ -99,17 +103,24 @@ internal fun SetupError.forAddress(
         this
     }
 
-/** The address's own cases first, then an expired code; a 401 or 403 is the credentials; the rest is the server or the network. */
+/**
+ * The address's own cases first, then an expired code; a server that asks for a client certificate is its own case, since it did answer;
+ * a 401 or 403 is the credentials; the rest is the server or the network.
+ */
 internal fun Throwable.toSetupError(): SetupError =
     when (this) {
         is InvalidServerUrlException -> SetupError.InvalidUrl
         is NotSeerrServerException -> SetupError.NotSeerr
         is PlexPinExpiredException, is QuickConnectExpiredException -> SetupError.LinkExpired
         else ->
-            when (toSeerrError()) {
-                SeerrError.Unauthorized, SeerrError.Forbidden -> SetupError.Rejected
-                SeerrError.Unreachable -> SetupError.Unreachable
-                else -> SetupError.Unknown
+            when {
+                wantsClientCertificate() -> SetupError.ClientCertificateNeeded
+                else ->
+                    when (toSeerrError()) {
+                        SeerrError.Unauthorized, SeerrError.Forbidden -> SetupError.Rejected
+                        SeerrError.Unreachable -> SetupError.Unreachable
+                        else -> SetupError.Unknown
+                    }
             }
     }
 

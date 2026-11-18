@@ -25,7 +25,6 @@ import com.binge.designsystem.component.MediaTypeTag
 import com.binge.designsystem.component.SectionHeader
 import com.binge.designsystem.downloadEtaLabel
 import com.binge.designsystem.resolvedContentPadding
-import com.binge.designsystem.theme.BingeTheme
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.state.MediaStateChip
 import com.cooper.binge.companion.seerr.ui.state.RequestStateChip
@@ -55,7 +54,9 @@ internal fun RequestHeroMeta(
             Text(
                 text = year,
                 style = MaterialTheme.typography.bodyMedium,
-                color = BingeTheme.colors.onScrim,
+                // The hero fades into the page background, so this reads on it as the design system's own meta line
+                // does, not in the scrim's always-white: that vanishes on a light page or before a backdrop loads.
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = YEAR_ALPHA),
                 modifier = Modifier.align(Alignment.CenterVertically),
             )
         }
@@ -183,3 +184,5 @@ internal fun DownloadRow(download: DetailDownload) {
         }
     }
 }
+
+private const val YEAR_ALPHA = 0.80f

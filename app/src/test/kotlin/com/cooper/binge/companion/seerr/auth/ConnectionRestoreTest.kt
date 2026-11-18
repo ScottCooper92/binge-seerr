@@ -4,8 +4,11 @@ import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import com.cooper.binge.companion.seerr.seerr.SeerrApiFactory
 import com.cooper.binge.companion.seerr.seerr.SeerrAuth
 import com.cooper.binge.companion.seerr.seerr.SeerrCredentials
-import com.cooper.binge.companion.seerr.util.InMemoryDataStore
+import com.cooper.binge.companion.seerr.seerr.insecurePublicHostOrNull
 import com.cooper.binge.companion.seerr.util.ReversingCipher
+import com.cooper.homelab.core.server.network.CleartextConsent
+import com.cooper.homelab.core.server.network.DataStoreCleartextConsent
+import com.cooper.homelab.core.testing.InMemoryDataStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.TestScope
@@ -41,7 +44,7 @@ class ConnectionRestoreTest {
     fun tearDown() = server.close()
 
     private fun TestScope.store(scope: CoroutineScope) =
-        CredentialStore(
+        LegacyCredentialStore(
             dataStore = PreferenceDataStoreFactory.create(scope = scope) { folder.newFile("creds.preferences_pb") },
             cipher = ReversingCipher,
             io = UnconfinedTestDispatcher(testScheduler),
@@ -217,7 +220,7 @@ class ConnectionRestoreTest {
         runTest {
             val store = store(backgroundScope)
             store.save(publicCarried)
-            val grandfathered = DataStoreCleartextConsent(InMemoryDataStore()) { publicCarried.baseUrl }
+            val grandfathered = DataStoreCleartextConsent(InMemoryDataStore()) { publicCarried.baseUrl.insecurePublicHostOrNull() }
             val carrier = FakeCarrier(publicCarried)
 
             restore(backgroundScope, store, carrier, grandfathered).refreshCarrier()

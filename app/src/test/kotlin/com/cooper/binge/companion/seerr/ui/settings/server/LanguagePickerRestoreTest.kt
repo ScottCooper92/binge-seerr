@@ -2,6 +2,10 @@ package com.cooper.binge.companion.seerr.ui.settings.server
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Language
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -14,14 +18,14 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 
-/** #949: a language sheet restored open, after a rotation, keeps the ticks made before it. */
+/** A tick applies at once with no Done, and a sheet restored open after a rotation is still open and still has no Done. */
 @RunWith(RobolectricTestRunner::class)
 class LanguagePickerRestoreTest {
     @get:Rule
     val rule = createSeerrComposeRule()
 
     @Test
-    fun `ticks made before a rotation are still there to save after it`() {
+    fun `a tick applies at once, and the sheet is still open after a rotation`() {
         val restoration = StateRestorationTester(rule)
         var saved: String? = null
         restoration.setContent {
@@ -47,9 +51,44 @@ class LanguagePickerRestoreTest {
 
         rule.onNodeWithText("Discover languages").performClick()
         rule.onNodeWithText("Galician").performClick()
-        restoration.emulateSavedInstanceStateRestore()
-        rule.onNodeWithText("Done").performClick()
 
         assertEquals("eu|gl", saved)
+        rule.onNodeWithText("Galician").assertIsDisplayed()
+        rule.onNodeWithText("Done").assertDoesNotExist()
+
+        restoration.emulateSavedInstanceStateRestore()
+
+        rule.onNodeWithText("Galician").assertIsDisplayed()
+        rule.onNodeWithText("Done").assertDoesNotExist()
+    }
+
+    @Test
+    fun `unticking a saved code the list lacks leaves its row in the open sheet`() {
+        var value by mutableStateOf("eu|xx")
+        rule.setContent {
+            BingeExpressiveTheme(dynamicColor = false) {
+                ItemGroup(
+                    title = null,
+                    rows =
+                        listOf(
+                            languageSettingItem(
+                                icon = Icons.Filled.Language,
+                                title = "Discover languages",
+                                value = value,
+                                choices = ListChoices.Ready(listOf(ListEntry("eu", "Basque"), ListEntry("gl", "Galician"))),
+                                enabled = true,
+                                onOpen = {},
+                                onSelect = { value = it },
+                            ),
+                        ),
+                )
+            }
+        }
+
+        rule.onNodeWithText("Discover languages").performClick()
+        rule.onNodeWithText("XX").performClick()
+
+        assertEquals("eu", value)
+        rule.onNodeWithText("XX").assertIsDisplayed()
     }
 }

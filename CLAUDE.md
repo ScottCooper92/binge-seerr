@@ -5,13 +5,18 @@ this file from `main` and treat it as the source of truth; so should you.
 
 ## What this repository is
 
-An Android admin console for a Seerr, Jellyseerr or Overseerr server, and the reference
+An Android client and admin console for a Seerr, Jellyseerr or Overseerr server, and the reference
 companion app for [Binge](https://github.com/ScottCooper92). Those are its two jobs, in that
 order for the person installing it and in the other order for the person reading it.
 
-As a console, it manages the server the user already runs: requests, issues, users, the
-blocklist, the server's settings pages and its notifications, on a phone and on Android TV. It
-is not a discovery client; browsing for titles is Binge's job or the server's web client's.
+As a client and console, it works with the server the user already runs. It manages requests,
+issues, users, the blocklist, the server's settings pages and its notifications, on a phone and on
+Android TV. It is also becoming a discovery client on the phone: Movies and TV hubs, title search,
+and title, person and collection pages, with requesting as the primary action on every title page.
+Seerr's API is the only data source for it. An earlier decision said browsing for titles was
+Binge's job or the server's web client's (#26, and the closed #34). That decision was reversed on
+purpose, because this app is used more than Binge is; the epic is #2039. Until the discovery
+feature flag is on, the app is exactly as it was.
 
 As a companion, it is what Binge talks to. Binge ships as a plain TMDB client with zero
 bundled providers; a companion app is a separate APK that exports a bound Android Service
@@ -32,7 +37,7 @@ and Spanish. A release build admits Binge through its published Play App Signing
 yet released: the on-device check of that handshake is still open (#85), and the Play listing under
 `docs/listing/` waits on its screenshots.
 
-The contracts and the SDK are consumed as source: `binge-companions/` is a git
+The contracts, the SDK and the companion kit are consumed as source: `binge-companions/` is a git
 submodule of the binge-companions repository, and `settings.gradle.kts` includes it as a composite build. So is the
 shared design system, `design-system/` (binge-design-system): the screens are built
 from its theme and components, which is what makes this app read as part of Binge's
@@ -41,16 +46,24 @@ passes the design system's `BingeExpressiveTheme`/`BingeTvTheme` this app's own 
 `BingeBrand` in place of Binge's amber (#281), so the two apps share every component and
 still read as two products at a glance. `.gitmodules` is an agent-governed path, so an author
 bot's commit can revert a change to it — bump a submodule in a commit of its own,
-and check both pins after any bot push.
+and check every pin after any bot push.
+
+A third included build, `homelab-core/`, is private: it provides `com.cooper.homelab:app-services` (the bug-report link,
+the shake filter, the review prompt and the tip billing) and `com.cooper.homelab:testing` for tests. CI fetches it through a minted read-only token, and a checkout without access to it fails to build.
+
+This app is all rights reserved (`LICENSE`): no licence is granted to copy, modify or distribute its code, name or
+artwork (`ASSETS.md`, `TRADEMARKS.md`). Versions released earlier stay under the licence they shipped with. Third-party
+libraries keep their own licences, listed on the app's Open-source licences page. The contracts in binge-companions stay
+Apache-2.0.
 
 ## The one rule everything else serves
 
-**This repository is read as documentation.**
+**This app is the reference implementation of a companion, and it behaves like any other.**
 
-It is public and it is called the reference companion. A third-party author writing
-their own companion will read this code to learn what a companion looks like, and
-will copy what they find. That makes "it works" insufficient on its own — the
-question is whether the thing being copied is the thing you would want copied.
+The repository is all rights reserved, whether or not it is public: it grants no licence to copy it. It is still
+called the reference companion, because the contract in binge-companions is public and this
+app is the worked example the contract is checked against. That makes "it works" insufficient
+on its own — the question is whether this is the implementation you would point to as the right one.
 
 The practical consequence: no shortcut that depends on being first-party. This
 companion has no privileged relationship with Binge, gets no special-cased
@@ -219,7 +232,7 @@ screens and the exported Service call the real `SeerrApi` and cannot tell. Rules
 - **An endpoint the demo does not serve says so**: a 501 the screens already show as a server error, and that never counts against
   the connection's health. Add a route when a screen needs one; do not make a screen special-case the demo.
 - **Nothing in the app asks "is this the demo"** except to say so: the tag, the exit wording, the Settings rows that make no sense
-  without a server, the handshake's provider name, and the `demo` property on analytics (`DemoSession`, read in the one `PostHogAnalytics`, so no call
+  without a server, the handshake's provider name, and the `demo` property on analytics (`DemoSession`, read in the one `DemoAnalyticsDecorator`, so no call
   site asks). Behaviour does not fork.
 
 ## Gates
@@ -344,7 +357,7 @@ do not set `abortOnError = false`, do not exclude a source set from `check`, and
 add to `detekt-baseline.xml`.
 Formatting failures are the cheapest class of failure to fix properly. A lint
 baseline is worse than it looks: it silences the finding permanently and silently,
-in a repository whose whole purpose is to be copied.
+in a repository that is meant to be the reference implementation.
 
 ## Follow-ups
 
@@ -380,8 +393,8 @@ label.
 
 **That label is maintainers-only.** Applying it grants an agent code execution with
 this repository's secrets in scope. Do not apply it to a PR you have not read, and
-never to one from a fork — the workflows already refuse fork PRs, and on a public
-repository that guard is the load-bearing control rather than a formality.
+never to one from a fork — the workflows already refuse fork PRs, and that guard is the
+control, not a formality, whether the repository is public or private.
 
 **Add `hold` only when a human must do the merging.** `hold` withholds the bot's merge: the PR is
 still reviewed and kept current, but a maintainer lands it. Add it alongside `agent` only when the PR

@@ -22,8 +22,12 @@ import com.cooper.binge.companion.seerr.seerr.readProfile
 import com.cooper.binge.companion.seerr.seerr.rejectsSession
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
 import com.cooper.binge.companion.seerr.seerr.toTmdbBackdropUrl
+import com.cooper.homelab.core.server.network.CleartextConsent
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
@@ -44,7 +48,7 @@ import kotlin.time.Duration.Companion.seconds
 class SeerrConnection(
     private val store: CredentialStore,
     private val apis: SeerrApiFactory,
-    private val healthMonitor: SeerrConnectionHealthMonitor = SeerrConnectionHealthMonitor(),
+    private val healthMonitor: SeerrHealth = SeerrHealth.standalone(),
     private val quickConnectPollInterval: Duration = 2.seconds,
     /** The off-device copy, kept in step with the store so a new device has something to restore from. */
     private val carrier: ConnectionCarrier = NoConnectionCarrier,
@@ -60,6 +64,16 @@ class SeerrConnection(
 
     val credentials: Flow<SeerrCredentials?> get() = store.credentials
 
+    private val forgetting = MutableStateFlow(false)
+
+    /**
+     * True from the moment [disconnect] or [signOut] starts until it has finished, so while the server is still being
+     * asked to end the session. The saved credentials only go after that answer, so [credentials] alone still says
+     * connected for as long as a slow or unreachable server takes. Anything that must not treat that as a connection,
+     * such as the review prompt, reads this too (#1956).
+     */
+    val disconnecting: StateFlow<Boolean> get() = forgetting.asStateFlow()
+
     /** The server the user signed out of, while nothing is saved; see [signOut]. */
     val signedOutServer: Flow<String?> get() = store.signedOutServer
 
@@ -73,8 +87,8 @@ class SeerrConnection(
      * connection exists.
      */
     val health: Flow<SeerrConnectionHealth> =
-        combine(store.credentials, healthMonitor.health) { saved, reported ->
-            if (saved == null) SeerrConnectionHealth.NotConnected else reported
+        combine(store.credentials, healthMonitor.health, healthMonitor.clientCertificateNeeded) { saved, reported, certificate ->
+            if (saved == null) SeerrConnectionHealth.NotConnected else reported.toSeerr(certificate)
         }.distinctUntilChanged()
 
     /**
@@ -150,6 +164,17 @@ class SeerrConnection(
     }
 
     /**
+     * The saved server's name for a message saying it did not answer (#1913), read from what is already cached and
+     * never from the network: asking an unreachable server for its profile would only wait out a second timeout.
+     * With no cached profile it is the edition the credentials recorded, or null when that is not known.
+     */
+    suspend fun unreachableName(): String? {
+        val saved = attempt { current() }.getOrNull() ?: return null
+        val cached = cachedProfile?.takeIf { it.first == saved }?.second
+        return cached?.serverTitle ?: saved.variant.takeUnless { it == SeerrVariant.Unknown }?.displayName
+    }
+
+    /**
      * Re-reads `auth/me` rather than serving the cached copy. The cache is per connection, so a
      * permission granted or revoked on the server is otherwise invisible until the app reconnects;
      * a screen that re-resolves its scope on entry has to ask for this explicitly.
@@ -209,7 +234,8 @@ class SeerrConnection(
                     api.inspectProfile(SeerrVariant.Unknown).getOrElse { failure ->
                         throw if (failure is IOException) failure else NotSeerrServerException(failure)
                     }
-                val backdrops = attempt { api.backdrops() }.getOrDefault(emptyList())
+                // A server that is not set up has no session to give: nothing past its two public reads is sent to it.
+                val backdrops = if (profile.isSetUp) attempt { api.backdrops() }.getOrDefault(emptyList()) else emptyList()
                 SeerrServerPreview(baseUrl, profile, backdrops.map { it.toTmdbBackdropUrl() })
             }
         }
@@ -327,6 +353,15 @@ class SeerrConnection(
     suspend fun signOut() = forget(keepAddress = true)
 
     private suspend fun forget(keepAddress: Boolean) {
+        forgetting.value = true
+        try {
+            forgetNow(keepAddress)
+        } finally {
+            forgetting.value = false
+        }
+    }
+
+    private suspend fun forgetNow(keepAddress: Boolean) {
         val saved = store.credentials.first()
         val auth = saved?.auth
         if (auth is SeerrAuth.Session && !auth.shared) attempt { apis.cached(saved.baseUrl, auth).logOut() }

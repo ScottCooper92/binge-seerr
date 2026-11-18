@@ -336,6 +336,8 @@ sealed interface LinkedAccountsUiState {
         val canQuickConnect: Boolean,
         val link: LinkFlow? = null,
         val busy: Boolean = false,
+        /** False for the primary administrator, whose media-server sign-ins the server always refuses to unlink. */
+        val canUnlink: Boolean = true,
     ) : LinkedAccountsUiState
 
     data class Error(
@@ -353,5 +355,12 @@ sealed interface LinkedAccountsEvent {
 
     data class Failed(
         val error: SeerrError,
+    ) : LinkedAccountsEvent
+
+    /** The server refused to unlink and said why: a dialog, since the user must read it to act. */
+    data class UnlinkRefused(
+        val reason: String,
+        /** Whether setting an email and password is the way out; it is not for the primary administrator, whom the server refuses outright. */
+        val offerCredentialsStep: Boolean,
     ) : LinkedAccountsEvent
 }

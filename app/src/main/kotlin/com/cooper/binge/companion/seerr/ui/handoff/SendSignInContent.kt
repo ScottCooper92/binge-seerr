@@ -22,8 +22,8 @@ import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.component.ListItemDestination
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.seerr.SeerrVariant
-import com.cooper.binge.companion.seerr.ui.ModeChips
 import com.cooper.binge.companion.seerr.ui.ModeFields
+import com.cooper.binge.companion.seerr.ui.ModeTabs
 import com.cooper.binge.companion.seerr.ui.SetupServer
 import com.cooper.binge.companion.seerr.ui.SetupUiState
 import com.cooper.binge.companion.seerr.ui.submitLabelRes
@@ -121,7 +121,7 @@ private fun SignInFormContent(
                     ),
             )
         }
-        if (step.modes.size > 1) ModeChips(server, step.form.mode) { mode -> actions.onEditSignIn { copy(mode = mode) } }
+        if (step.modes.size > 1) ModeTabs(server, step.form.mode) { mode -> actions.onEditSignIn { copy(mode = mode) } }
         ModeFields(signIn, actions.onEditSignIn, onRequestPasswordReset = {}, onConnect = actions.onSendSignIn)
         Text(
             stringResource(R.string.send_signin_sealed),

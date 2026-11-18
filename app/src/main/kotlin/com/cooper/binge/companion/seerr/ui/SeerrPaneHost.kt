@@ -53,6 +53,17 @@ internal class PaneLayout(
             backStack.openBeside(route)
         }
     }
+
+    /**
+     * Opens [route] for a settings search result, above the search, which stays on the stack: Back from the page returns to the
+     * search with its query and results as they were, in every kind of window.
+     */
+    fun openFromSearch(
+        backStack: NavBackStack<NavKey>,
+        route: NavKey,
+    ) {
+        backStack.push(route)
+    }
 }
 
 /**

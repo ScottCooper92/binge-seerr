@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.ReportProblem
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.runtime.Composable
@@ -42,7 +41,7 @@ import com.binge.designsystem.tv.nav.LocalTvTabHosted
 import com.binge.designsystem.tv.nav.LocalTvTopInset
 import com.cooper.binge.companion.seerr.R
 
-/** The pages of the connected TV app: the tabs in the top bar, and the two sheets it opens over them. */
+/** The pages of the connected TV app: the tabs in the top bar, and the Settings sheet it opens over them. */
 internal enum class TvDestination(
     val key: String,
     val labelRes: Int,
@@ -50,7 +49,6 @@ internal enum class TvDestination(
     /** Whether the page is a side sheet over the current tab, which draws its own scrim, rather than a tab. */
     val isSheet: Boolean = false,
 ) {
-    Account("account", R.string.tv_account, Icons.Filled.Person, isSheet = true),
     Hub("hub", R.string.tv_home, Icons.Filled.Home),
     Issues("issues", R.string.hub_section_issues, Icons.Filled.ReportProblem),
     Settings("settings", R.string.hub_section_settings, Icons.Filled.Settings, isSheet = true),
@@ -65,7 +63,7 @@ internal enum class TvDestination(
  * Back: a top layer, an overlay or a sheet takes it first; on a page it moves focus to the current tab; on the bar it
  * leaves any other tab for the start tab, and from the start tab leaves the app.
  *
- * @param sheet Account or Settings, over whichever tab shows, above the bar.
+ * @param sheet Settings, over whichever tab shows, above the bar.
  * @param overlay a detail page or a see-all grid that belongs to the current tab, drawn under the bar too.
  * @param topLayer a title's own page, such as a request: a full screen over everything, the bar included, with no top
  *   inset. It traps focus and takes Back itself; it closes through the closer it is given, which releases the trap as the close
@@ -101,6 +99,8 @@ internal fun TvHomeShell(
     var barHeightPx by remember { mutableIntStateOf(0) }
     var barFocused by remember { mutableStateOf(false) }
     val opener = remember { TvDestination.entries.associateWith { FocusRequester() } }
+    // The avatar's menu is not a destination: it opens in place, so the bar reaches it through its own requester.
+    val accountOpener = remember { FocusRequester() }
     val entries = remember { TvDestination.entries.associateWith { FocusRequester() } }
     val overlayEntry = remember { FocusRequester() }
     // Held here, not in the sheet: it hands focus back after the sheet has gone.
@@ -111,7 +111,7 @@ internal fun TvHomeShell(
     val topLayerCloser = rememberTvOverlayCloser(restoreTo = null, onClose = onCloseTopLayer)
     val start = tabs.first()
     // Where the bar is reached from a page: the current tab, or the avatar when the bar has no tabs to show.
-    val barStop = opener.getValue(if (tabs.size > 1) tab else TvDestination.Account)
+    val barStop = if (tabs.size > 1) opener.getValue(tab) else accountOpener
     val barUp = showBar && tabsResolved
     Box(modifier = modifier.fillMaxSize()) {
         TvShellBack(
@@ -142,14 +142,16 @@ internal fun TvHomeShell(
             )
         }
         TvTopBar(
-            destinations = listOf(TvDestination.Account) + tabs.takeIf { it.size > 1 }.orEmpty() + TvDestination.Settings,
+            tabs = tabs.takeIf { it.size > 1 }.orEmpty(),
             current = tab,
             opener = opener,
+            accountOpener = accountOpener,
             down = if (overlay != null) overlayEntry else entries.getValue(tab),
             visible = barUp,
             account = account,
             onFocusedChange = { barFocused = it },
-            onSelect = { if (it.isSheet) onOpenSheet(it) else onSelectTab(it) },
+            onSelect = onSelectTab,
+            onOpenSettings = { onOpenSheet(TvDestination.Settings) },
             modifier = Modifier.align(Alignment.TopCenter).onSizeChanged { barHeightPx = it.height },
         )
         topLayer?.let { TvShellTopLayer(topLayerCloser, it) }

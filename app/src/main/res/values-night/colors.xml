@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The design system's dark background, matching Theme.Seerr's window in dark mode. -->
+    <color name="splash_background">#FF0E0E0F</color>
+</resources>

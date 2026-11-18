@@ -217,6 +217,65 @@ class SeerrAllowedActionsTest {
         }
     }
 
+    private fun statusWith(availability: Availability) =
+        CachedStatus(status = requestStatusOf(availability), fetchedAtMillis = 0, requesterIds = emptyMap())
+
+    /** One capability, one version (#1914): it travels on a version that has files and on nothing wider. */
+    @Test
+    fun `a moderator is offered file deletion on a version that has files, and on neither the title nor a request`() {
+        listOf(
+            Availability.AVAILABILITY_AVAILABLE,
+            Availability.AVAILABILITY_PARTIALLY_AVAILABLE,
+            Availability.AVAILABILITY_PROCESSING,
+        ).forEach { availability ->
+            val status = moderator.withAllowedActions(statusWith(availability), viewerId = VIEWER, profile = profile, isTv = false)
+
+            assertEquals("$availability", listOf(Capability.CAPABILITY_DELETE_FILES), status.versionsList.single().allowedActionsList)
+            assertFalse("$availability", Capability.CAPABILITY_DELETE_FILES in status.allowedActionsList)
+        }
+    }
+
+    @Test
+    fun `a version with no files is offered no deletion`() {
+        listOf(
+            Availability.AVAILABILITY_NOT_REQUESTED,
+            Availability.AVAILABILITY_PENDING,
+            Availability.AVAILABILITY_BLOCKLISTED,
+        ).forEach { availability ->
+            val status = moderator.withAllowedActions(statusWith(availability), viewerId = VIEWER, profile = profile, isTv = false)
+
+            assertTrue(
+                "$availability",
+                status.versionsList
+                    .single()
+                    .allowedActionsList
+                    .isEmpty(),
+            )
+        }
+    }
+
+    @Test
+    fun `file deletion needs MANAGE_REQUESTS and a server that has the route`() {
+        val overseerr = SeerrServerProfile.from(SeerrStatusDto(version = "1.33.2"), SeerrPublicSettings())
+
+        assertTrue(Capability.CAPABILITY_DELETE_FILES in moderator.toCapabilities(profile))
+        assertFalse(Capability.CAPABILITY_DELETE_FILES in requester.toCapabilities(profile))
+        assertFalse(Capability.CAPABILITY_DELETE_FILES in moderator.toCapabilities(overseerr))
+        val status =
+            requester.withAllowedActions(
+                statusWith(Availability.AVAILABILITY_AVAILABLE),
+                viewerId = VIEWER,
+                profile = profile,
+                isTv = false,
+            )
+        assertTrue(
+            status.versionsList
+                .single()
+                .allowedActionsList
+                .isEmpty(),
+        )
+    }
+
     @Test
     fun `the title's request-scoped actions are the union of its requests'`() {
         val status =

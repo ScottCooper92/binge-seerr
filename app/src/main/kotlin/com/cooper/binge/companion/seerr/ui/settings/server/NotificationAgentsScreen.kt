@@ -14,6 +14,7 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
+import com.binge.designsystem.paneBackOrNull
 import com.binge.designsystem.resolvedContentPadding
 import com.binge.designsystem.template.BingeScreenScaffold
 import com.binge.designsystem.template.ScreenBar
@@ -42,7 +43,7 @@ fun NotificationAgentsScreen(
     BingeScreenScaffold(
         bar = ScreenBar.Small,
         title = stringResource(R.string.settings_group_notifications),
-        onBack = actions.onBack,
+        onBack = paneBackOrNull(actions.onBack),
     ) { padding ->
         Box(modifier = Modifier.fillMaxSize().padding(padding.screenOuterPadding())) {
             val inner = padding.screenInnerPadding()

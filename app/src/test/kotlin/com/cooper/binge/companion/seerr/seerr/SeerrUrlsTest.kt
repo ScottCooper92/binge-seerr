@@ -1,5 +1,6 @@
 package com.cooper.binge.companion.seerr.seerr
 
+import com.cooper.homelab.core.server.network.isLocalOrPrivateHost
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -29,6 +30,13 @@ class SeerrUrlsTest {
     }
 
     @Test
+    fun `the insecure host is in the spelling the cleartext guard sees on the request`() {
+        assertEquals("xn--caf-dma.example", "http://café.example".insecurePublicHostOrNull())
+        assertEquals("2001:4860::8888", "http://[2001:4860:0:0::8888]".insecurePublicHostOrNull())
+        assertEquals("8.8.8.8", "http://[::ffff:8.8.8.8]".insecurePublicHostOrNull())
+    }
+
+    @Test
     fun `home network names, loopback and link-local are local, and lookalikes are not`() {
         listOf(
             "seerr.lan",
@@ -41,7 +49,7 @@ class SeerrUrlsTest {
             "fd7a:115c:a1e0::1",
             "10.0.0.2",
             "nas",
-        ).forEach { assertTrue(it, it.isLocalOrPrivateHost()) }
+        ).forEach { assertTrue(it, isLocalOrPrivateHost(it)) }
         listOf(
             "127.example.com",
             "169.254.example.com",
@@ -51,7 +59,7 @@ class SeerrUrlsTest {
             "100.64.example.com",
             "seerr.lan.example.com",
             "internal.example.com",
-        ).forEach { assertFalse(it, it.isLocalOrPrivateHost()) }
+        ).forEach { assertFalse(it, isLocalOrPrivateHost(it)) }
     }
 
     @Test
@@ -69,25 +77,17 @@ class SeerrUrlsTest {
     }
 
     @Test
-    fun `a normalised url carries an explicit port only when one was typed`() {
-        assertFalse("http://192.168.1.10/".hasExplicitPort())
-        assertFalse("https://seerr.example.com/base/".hasExplicitPort())
-        assertFalse("http://[::1]/".hasExplicitPort())
-        assertTrue("http://192.168.1.10:5055/".hasExplicitPort())
-        assertTrue("https://seerr.example.com:8443/base/".hasExplicitPort())
-        assertTrue("http://[::1]:8080/".hasExplicitPort())
-    }
-
-    @Test
-    fun `the default Seerr port is added to a portless normalised url`() {
-        assertEquals("http://192.168.1.10:5055/", "http://192.168.1.10/".withDefaultSeerrPort())
-        assertEquals("https://seerr.example.com:5055/base/", "https://seerr.example.com/base/".withDefaultSeerrPort())
-    }
-
-    @Test
     fun `each fork's contribute link matches its own About page`() {
         assertEquals("https://github.com/sponsors/sct", SeerrVariant.Jellyseerr.contributeUrl())
         assertEquals("https://opencollective.com/seerr", SeerrVariant.Seerr.contributeUrl())
         assertEquals("https://github.com/sponsors/sct", SeerrVariant.Overseerr.contributeUrl())
+    }
+
+    @Test
+    fun `each project's release notes are its own releases page, Jellyseerr's now Seerr's`() {
+        assertEquals("https://github.com/seerr-team/seerr/releases", SeerrVariant.Seerr.releaseNotesUrl())
+        assertEquals("https://github.com/seerr-team/seerr/releases", SeerrVariant.Jellyseerr.releaseNotesUrl())
+        assertEquals("https://github.com/sct/overseerr/releases", SeerrVariant.Overseerr.releaseNotesUrl())
+        assertEquals("https://github.com/seerr-team/seerr/releases", SeerrVariant.Unknown.releaseNotesUrl())
     }
 }

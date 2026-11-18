@@ -1,6 +1,8 @@
 package com.cooper.binge.companion.seerr.ui.handoff
 
 import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -12,8 +14,8 @@ import com.cooper.binge.companion.seerr.ReportTitleActivity
 import com.cooper.binge.companion.seerr.SendAddressActivity
 import com.cooper.binge.companion.seerr.handoff.TitleReportLinks
 import com.cooper.binge.companion.seerr.handoff.TvHandOffLinks
-import com.cooper.binge.companion.seerr.seerr.AndroidLocalNetworkPermission
-import com.cooper.binge.companion.seerr.seerr.LOCAL_NETWORK_PERMISSION
+import com.cooper.homelab.core.server.network.AndroidLocalNetworkPermission
+import com.cooper.homelab.core.server.network.LOCAL_NETWORK_PERMISSION
 import com.google.mlkit.vision.barcode.common.Barcode
 import com.google.mlkit.vision.codescanner.GmsBarcodeScannerOptions
 import com.google.mlkit.vision.codescanner.GmsBarcodeScanning
@@ -37,7 +39,20 @@ internal fun rememberScanTvCode(): () -> Unit {
     }
 }
 
+private const val SCAN_ACTION = "com.google.android.gms.mlkit.ACTION_SCAN_BARCODE"
+private const val PLAY_SERVICES = "com.google.android.gms"
+
+/**
+ * Whether Play Services' scanner activity can be started here. Where it cannot, ML Kit's own delegate activity throws
+ * `ActivityNotFoundException` from its `onCreate`, which no listener on the scan sees (#1944).
+ */
+internal fun PackageManager.canOpenScanner(): Boolean = resolveActivity(Intent(SCAN_ACTION).setPackage(PLAY_SERVICES), 0) != null
+
 private fun scanTvCode(context: Context) {
+    if (!context.packageManager.canOpenScanner()) {
+        Toast.makeText(context, R.string.scan_tv_unavailable, Toast.LENGTH_LONG).show()
+        return
+    }
     val options = GmsBarcodeScannerOptions.Builder().setBarcodeFormats(Barcode.FORMAT_QR_CODE).build()
     GmsBarcodeScanning
         .getClient(context, options)

@@ -18,13 +18,15 @@ import com.cooper.binge.companion.seerr.seerr.arrServers
 import com.cooper.binge.companion.seerr.seerr.details
 import com.cooper.binge.companion.seerr.seerr.toPermissions
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
-import com.cooper.binge.companion.seerr.telemetry.Analytics
 import com.cooper.binge.companion.seerr.telemetry.AnalyticsEvents
-import com.cooper.binge.companion.seerr.telemetry.CrashBreadcrumbs
-import com.cooper.binge.companion.seerr.telemetry.NoOpAnalytics
-import com.cooper.binge.companion.seerr.telemetry.NoOpCrashBreadcrumbs
 import com.cooper.binge.companion.seerr.ui.Ticker
 import com.cooper.binge.companion.seerr.ui.minuteClock
+import com.cooper.homelab.core.review.NoReviewSignals
+import com.cooper.homelab.core.review.ReviewSignalSink
+import com.cooper.homelab.core.telemetry.Analytics
+import com.cooper.homelab.core.telemetry.CrashBreadcrumbs
+import com.cooper.homelab.core.telemetry.NoOpAnalytics
+import com.cooper.homelab.core.telemetry.NoOpCrashBreadcrumbs
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -62,6 +64,7 @@ class RequestDetailViewModel
         private val cache: RequestStore = NoRequestStore,
         private val minuteTicker: Ticker = Ticker(),
         private val queueGates: DownloadQueueGates = DownloadQueueGates(connection),
+        private val reviewSignals: ReviewSignalSink = NoReviewSignals,
     ) : ViewModel() {
         private val state = MutableStateFlow<RequestDetailUiState>(RequestDetailUiState.Loading)
 
@@ -88,6 +91,7 @@ class RequestDetailViewModel
                 analytics = analytics,
                 crashBreadcrumbs = crashBreadcrumbs,
                 cache = cache,
+                reviewSignals = reviewSignals,
                 onModerated = ::reloadAfterAction,
             )
 

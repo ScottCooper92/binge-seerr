@@ -10,6 +10,7 @@ import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.component.ListItemDestination
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.seerr.SeerrMediaStatusCode
+import com.cooper.binge.companion.seerr.seerr.hasFiles
 import com.cooper.binge.companion.seerr.ui.state.DownloadActivity
 import com.cooper.binge.companion.seerr.ui.state.MediaStateChip
 import com.cooper.binge.companion.seerr.ui.state.labelRes
@@ -108,11 +109,3 @@ private fun instanceRow(
 /** Processing with nothing in the queue: a read-only row says why that may be. A picker's detail is its value. */
 private val MediaInstance.isProcessingWithoutDownload: Boolean
     get() = status == SeerrMediaStatusCode.Processing && download == DownloadActivity.None
-
-/**
- * Whether an instance in this state has files to delete. [MediaRecord.canDeleteFiles] is who may
- * delete at all; this is what there currently is to delete. `Processing` counts as a download
- * already in flight, and a null status (the server has nothing for this instance) does not.
- */
-internal fun SeerrMediaStatusCode?.hasFiles(): Boolean =
-    this == SeerrMediaStatusCode.Processing || this == SeerrMediaStatusCode.PartiallyAvailable || this == SeerrMediaStatusCode.Available
