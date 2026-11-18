@@ -275,6 +275,8 @@
     <string name="media_type_movie">Movie</string>
     <string name="request_open_binge">Open in Binge</string>
     <string name="request_open_elsewhere">Open elsewhere</string>
+    <string name="request_open">Open</string>
+    <string name="request_open_title">Open title</string>
     <string name="request_open_media_server">Open in media server</string>
     <string name="request_stats_title">Stats</string>
     <string name="request_this_request_title">This request</string>
@@ -1553,6 +1555,7 @@
     <string name="hubs_card_processing">Processing</string>
     <string name="hubs_card_partial">Partial</string>
     <string name="hubs_card_blocklisted">Blocklisted</string>
+    <string name="grid_loading">Loading titles</string>
     <string name="hubs_loading_row">Loading a row</string>
     <string name="title_page_request">Request</string>
     <string name="title_page_runtime">%1$dh %2$dm</string>

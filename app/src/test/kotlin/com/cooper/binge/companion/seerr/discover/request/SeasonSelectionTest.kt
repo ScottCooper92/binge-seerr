@@ -130,4 +130,19 @@ class SeasonSelectionTest {
         assertEquals(listOf(1, 2, 3), selection.requestSeasons)
         assertFalse(selection.overLimit)
     }
+
+    @Test
+    fun `the seasons sent are in number order whatever order the list and the picks came in`() {
+        val selection = SeasonSelection(listOf(season(3), season(1), season(2)), partialAllowed = true).toggle(3).toggle(1)
+
+        assertEquals(listOf(1, 3), selection.requestSeasons)
+    }
+
+    @Test
+    fun `a pick the quota has no room for leaves the selection as it was`() {
+        val full = SeasonSelection(listOf(season(1), season(2), season(3)), partialAllowed = true, limit = 1).toggle(1)
+
+        assertEquals(full, full.toggle(2))
+        assertEquals(full, full.toggleAll())
+    }
 }

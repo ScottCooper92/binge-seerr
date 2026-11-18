@@ -7,10 +7,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -39,7 +37,6 @@ import com.binge.designsystem.component.BingeFilledButton
 import com.binge.designsystem.component.DiscoverQuickClearChip
 import com.binge.designsystem.component.MediaCard
 import com.binge.designsystem.component.QuickClearTone
-import com.binge.designsystem.mediaGridColumns
 import com.binge.designsystem.navOverlayPadding
 import com.binge.designsystem.template.BingeScreenScaffold
 import com.binge.designsystem.template.ScreenBar
@@ -52,7 +49,6 @@ import com.cooper.binge.companion.seerr.discover.sliders.HubCard
 import com.cooper.binge.companion.seerr.ui.hubs.toStatus
 import com.cooper.binge.companion.seerr.ui.state.EmptyScreen
 import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
-import com.cooper.binge.companion.seerr.ui.state.LoadingScreen
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import java.time.LocalDate
@@ -102,7 +98,7 @@ internal fun DiscoverGridScreen(
                     ),
                 )
             when (state) {
-                is DiscoverGridUiState.Loading -> LoadingScreen()
+                is DiscoverGridUiState.Loading -> GridSkeleton(inner)
                 is DiscoverGridUiState.Empty ->
                     EmptyScreen(
                         message = stringResource(R.string.grid_empty_message),
@@ -205,20 +201,14 @@ private fun PosterGrid(
     LaunchedEffect(gridState, state.hasMore, state.cards.size) {
         if (state.hasMore) snapshotFlow { nearEnd }.distinctUntilChanged().filter { it }.collect { actions.onLoadMore() }
     }
-    LazyVerticalGrid(
-        state = gridState,
-        columns = GridCells.Fixed(mediaGridColumns()),
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = contentPadding,
-        horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
-        verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
-    ) {
-        items(state.cards, key = { it.kind.name + it.tmdbId }) { card ->
+    GridFrame(contentPadding, gridState) {
+        itemsIndexed(state.cards, key = { _, card -> card.kind.name + card.tmdbId }) { index, card ->
             MediaCard(
                 posterUrl = card.artworkUrl,
                 title = card.name,
                 rating = card.rating,
                 onClick = { actions.onOpenTitle(card) },
+                modifier = Modifier.firstCellAnchor(index),
                 status = card.availability.toStatus(),
             )
         }
