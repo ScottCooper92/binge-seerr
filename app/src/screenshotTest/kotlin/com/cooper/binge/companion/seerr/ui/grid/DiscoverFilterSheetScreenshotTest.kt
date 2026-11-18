@@ -25,17 +25,25 @@ private val WORDS =
         genres = listOf(FilterOption("18", "Drama"), FilterOption("35", "Comedy"), FilterOption("878", "Science Fiction")),
         languages = listOf(FilterOption("en", "English"), FilterOption("ja", "Japanese"), FilterOption("es", "Spanish")),
         capabilities = FilterCapabilities(watch = true, certification = true, keywords = true, excludeKeywords = true, status = true),
-        regions = listOf(FilterOption("US", "United States"), FilterOption("GB", "United Kingdom"), FilterOption("ES", "Spain")),
+        regions =
+            listOf(
+                FilterOption("ES", "Spain"),
+                FilterOption("GB", "United Kingdom"),
+                FilterOption("US", "United States"),
+                FilterOption("FR", "France"),
+                FilterOption("DE", "Germany"),
+            ),
         defaultRegion = "GB",
         providers =
             mapOf(
                 "GB" to
                     listOf(
                         FilterOption("8", "Netflix"),
-                        FilterOption("337", "Disney Plus"),
                         FilterOption("9", "Amazon Prime Video"),
+                        FilterOption("337", "Disney Plus"),
                         FilterOption("39", "Now TV"),
                         FilterOption("29", "Sky Go"),
+                        FilterOption("5", "ARROW"),
                     ),
             ),
         certifications =
@@ -172,7 +180,7 @@ class DiscoverFilterSheetScreenshotTest {
     @Composable
     fun votes() = Section(DiscoverFilterSection.Votes)
 
-    /** The region as a row, and the services of the region as chips. */
+    /** The region as a row, then the region's services in priority order, each a row with its logo and a search over them. */
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
@@ -188,7 +196,7 @@ class DiscoverFilterSheetScreenshotTest {
     @Composable
     fun whereFontScale() = Section(DiscoverFilterSection.WhereToWatch)
 
-    /** The page the region row opens: the countries with streaming services, one ticked. */
+    /** The page the region row opens: a search, then the countries with streaming services, the chosen one first and ticked. */
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable

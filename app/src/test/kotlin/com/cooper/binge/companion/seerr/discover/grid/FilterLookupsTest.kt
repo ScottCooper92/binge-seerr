@@ -14,6 +14,7 @@ import okhttp3.Headers.Companion.headersOf
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -65,9 +66,14 @@ class FilterLookupsTest {
     }
 
     @Test
-    fun `the providers of a region are asked for by kind and region and sorted by name`() {
+    fun `the providers of a region are asked for by kind and region and listed by priority with their logos`() {
         val providers =
-            withLookups("""[{"id":337,"name":"Disney Plus"},{"id":8,"name":"Netflix"},{"id":0,"name":""}]""") {
+            withLookups(
+                """[{"id":5,"name":"ARROW"},{"id":337,"name":"Disney Plus","logoPath":"/d.jpg","displayPriority":2},
+                |{"id":8,"name":"Netflix","logoPath":"/n.jpg","displayPriority":1},{"id":0,"name":""},
+                |{"id":7,"name":"Acorn TV","displayPriority":2}]
+                """.trimMargin(),
+            ) {
                 it.providers(TitleKind.Movie, "GB")
             }
 
@@ -84,7 +90,9 @@ class FilterLookupsTest {
                 .url
                 .queryParameter("watchRegion"),
         )
-        assertEquals(listOf("337", "8"), providers.map { it.id })
+        assertEquals(listOf("Netflix", "Acorn TV", "Disney Plus", "ARROW"), providers.map { it.name })
+        assertEquals("https://image.tmdb.org/t/p/w342/n.jpg", providers.first().imageUrl)
+        assertNull(providers.first { it.name == "Acorn TV" }.imageUrl)
     }
 
     @Test

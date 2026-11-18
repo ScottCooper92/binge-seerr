@@ -220,6 +220,9 @@
     <string name="grid_filter_cert_rating">Rating</string>
     <string name="grid_filter_keywords">Keywords</string>
     <string name="grid_filter_keywords_exclude">Excluded keywords</string>
+    <string name="grid_filter_providers_search">Search streaming services</string>
+    <string name="grid_filter_region_search">Search countries</string>
+    <string name="grid_filter_search_none">Nothing matches that search.</string>
     <string name="grid_filter_keywords_search">Search keywords</string>
     <string name="grid_filter_keywords_none">No keywords found.</string>
     <string name="grid_filter_keywords_failed">Couldn’t search keywords. Try again.</string>

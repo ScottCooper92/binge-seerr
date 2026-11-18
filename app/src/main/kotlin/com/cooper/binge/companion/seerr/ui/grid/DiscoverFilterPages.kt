@@ -24,8 +24,9 @@ import com.binge.designsystem.component.BingeFilterChip
 import com.binge.designsystem.component.BingeFilterChipRow
 import com.binge.designsystem.component.BingeNumberSlider
 import com.binge.designsystem.component.BingeRangeSlider
+import com.binge.designsystem.component.BingeSheetDockingHeader
 import com.binge.designsystem.component.BingeSheetFooter
-import com.binge.designsystem.component.BingeSheetStepHandle
+import com.binge.designsystem.component.BingeSheetTopBar
 import com.binge.designsystem.component.BingeTextButton
 import com.binge.designsystem.component.FilterChipItem
 import com.binge.designsystem.component.ListRow
@@ -62,8 +63,7 @@ internal fun ColumnScope.DiscoverSectionPage(
         modifier = Modifier.weight(1f, fill = false).bingeSheetScroll(),
         verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
     ) {
-        BingeSheetStepHandle(title = stringResource(section.title))
-        Text(text = stringResource(section.title), style = MaterialTheme.typography.titleLarge, modifier = inset)
+        SectionPageHeader(stringResource(section.title))
         when (section) {
             DiscoverFilterSection.Genres -> GenresPage(filters, vocabulary, inset, onChange)
             DiscoverFilterSection.Language -> LanguagePage(filters, vocabulary, onChange)
@@ -86,6 +86,29 @@ internal fun ColumnScope.DiscoverSectionPage(
         )
     }
     BingeSheetFooter { BingeActionFooter(label = stringResource(R.string.grid_filters_done), onClick = onDone) }
+}
+
+/**
+ * A page's heading: the large title while the sheet floats and the sheet's own bar once it docks, so the title is on screen
+ * once, whichever the sheet is doing. It carries the sheet's drag handle.
+ */
+@Composable
+internal fun SectionPageHeader(title: String) {
+    BingeSheetDockingHeader(
+        header = {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleLarge,
+                modifier =
+                    Modifier.padding(
+                        start = dimensionResource(DesR.dimen.padding_m),
+                        top = dimensionResource(DesR.dimen.padding_m),
+                        end = dimensionResource(DesR.dimen.padding_m),
+                    ),
+            )
+        },
+        dockedTopBar = { onClose -> BingeSheetTopBar(title = title, onClose = onClose) },
+    )
 }
 
 @Composable

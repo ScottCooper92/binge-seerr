@@ -3,11 +3,9 @@ package com.cooper.binge.companion.seerr.ui.grid
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Icon
@@ -23,12 +21,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
-import com.binge.designsystem.component.BingeActionFooter
 import com.binge.designsystem.component.BingeFilterChip
 import com.binge.designsystem.component.BingeSearchField
-import com.binge.designsystem.component.BingeSheetFooter
 import com.binge.designsystem.component.ListRow
-import com.binge.designsystem.component.bingeSheetScroll
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverFilters
 import java.util.Locale
@@ -57,71 +52,7 @@ internal fun countryName(code: String): String =
         .displayCountry
         .ifBlank { code }
 
-private val chipGap @Composable get() = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s))
-
-/** The streaming services of the region, as chips to tap on and off, under a row that opens the region's own page. */
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-internal fun WherePage(
-    filters: DiscoverFilters,
-    vocabulary: FilterVocabulary,
-    inset: Modifier,
-    loads: FilterLoads,
-    onOpenRegion: () -> Unit,
-    onChange: (DiscoverFilters) -> Unit,
-) {
-    val region = filters.region ?: vocabulary.defaultRegion
-    LaunchedEffect(region) { region?.let(loads.onProviders) }
-    val regionName = vocabulary.regions.firstOrNull { it.id == region }?.name ?: stringResource(R.string.grid_filter_any)
-    Column(verticalArrangement = chipGap) {
-        ListRow(onClick = onOpenRegion, verticalAlignment = Alignment.CenterVertically, modifier = inset) { modifier ->
-            Column(modifier) {
-                Text(stringResource(R.string.grid_filter_region), style = MaterialTheme.typography.labelMedium)
-                Text(regionName, style = MaterialTheme.typography.titleMedium)
-            }
-        }
-        val providers = region?.let { vocabulary.providers[it] }.orEmpty()
-        Text(stringResource(R.string.grid_filter_providers), style = MaterialTheme.typography.titleSmall, modifier = inset)
-        if (providers.isEmpty()) {
-            Text(stringResource(R.string.grid_filter_providers_none), style = MaterialTheme.typography.bodyMedium, modifier = inset)
-        } else {
-            FlowRow(modifier = inset, horizontalArrangement = chipGap) {
-                providers.forEach { provider ->
-                    val id = provider.id.toInt()
-                    BingeFilterChip(
-                        label = provider.name,
-                        selected = id in filters.providers,
-                        onClick = { onChange(filters.copy(providers = filters.providers.toggled(id), region = region)) },
-                    )
-                }
-            }
-        }
-    }
-}
-
-/** The countries that have streaming providers; choosing another clears the services, as their ids differ by region. */
-@Composable
-internal fun RegionPage(
-    filters: DiscoverFilters,
-    vocabulary: FilterVocabulary,
-    onChange: (DiscoverFilters) -> Unit,
-) {
-    val current = filters.region ?: vocabulary.defaultRegion
-    Column(
-        modifier = Modifier.padding(horizontal = dimensionResource(DesR.dimen.padding_m)),
-        verticalArrangement = chipGap,
-    ) {
-        vocabulary.regions.forEach { region ->
-            val selected = region.id == current
-            ListRow(
-                onClick = { if (!selected) onChange(filters.copy(region = region.id, providers = emptySet())) },
-                verticalAlignment = Alignment.CenterVertically,
-                selected = selected,
-                trailingContent = { if (selected) Icon(Icons.Filled.Check, contentDescription = null) },
-            ) { modifier -> Text(region.name, style = MaterialTheme.typography.titleMedium, modifier = modifier) }
-        }
-    }
-}
+internal val chipGap @Composable get() = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s))
 
 /** A country's age ratings: the country as chips, then its ratings, of which one is chosen. */
 @OptIn(ExperimentalLayoutApi::class)
@@ -229,6 +160,7 @@ private fun KeywordMatches(
                         onClick = { onChange(chosen.toggled(id)) },
                         verticalAlignment = Alignment.CenterVertically,
                         selected = selected,
+                        leading = { Icon(DiscoverFilterSection.Keywords.icon, contentDescription = null) },
                         trailingContent = { if (selected) Icon(Icons.Filled.Check, contentDescription = null) },
                     ) { modifier -> Text(keyword.name, style = MaterialTheme.typography.titleMedium, modifier = modifier) }
                 }
@@ -253,26 +185,4 @@ internal fun StatusPage(
             )
         }
     }
-}
-
-/** The page the Where to watch page opens for its region, with a Done that goes back. */
-@Composable
-internal fun ColumnScope.RegionSheetPage(
-    filters: DiscoverFilters,
-    vocabulary: FilterVocabulary,
-    onChange: (DiscoverFilters) -> Unit,
-    onDone: () -> Unit,
-) {
-    Column(
-        modifier = Modifier.weight(1f, fill = false).bingeSheetScroll(),
-        verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
-    ) {
-        Text(
-            text = stringResource(R.string.grid_filter_region),
-            style = MaterialTheme.typography.titleLarge,
-            modifier = Modifier.padding(horizontal = dimensionResource(DesR.dimen.padding_m)),
-        )
-        RegionPage(filters, vocabulary, onChange)
-    }
-    BingeSheetFooter { BingeActionFooter(label = stringResource(R.string.grid_filters_done), onClick = onDone) }
 }

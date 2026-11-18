@@ -100,11 +100,13 @@ data class SeerrCompanyPageDto(
     @SerialName("results") val results: List<SeerrCompanyDto> = emptyList(),
 )
 
-/** One streaming provider TMDB lists in a region. */
+/** One streaming provider TMDB lists in a region, with the logo and the place TMDB gives it in that region's list. */
 @Serializable
 data class SeerrWatchProviderDto(
     @SerialName("id") val id: Int = 0,
     @SerialName("name") val name: String? = null,
+    @SerialName("logoPath") val logoPath: String? = null,
+    @SerialName("displayPriority") val displayPriority: Int? = null,
 )
 
 /** One age rating of a country's certification system; [order] is its place from the most open to the most restricted. */

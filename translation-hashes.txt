@@ -79,9 +79,11 @@ app:grid_filter_match_any  0f5f08d2b9e5
 app:grid_filter_minutes  3122a2f3e04b
 app:grid_filter_providers  df1b4727fc14
 app:grid_filter_providers_none  44636dfdc023
+app:grid_filter_providers_search  05563f3e04fa
 app:grid_filter_rating  9f29530464f7
 app:grid_filter_rating_value  d8ecf84e4cbd
 app:grid_filter_region  d3a008ef1335
+app:grid_filter_region_search  320113ee29d0
 app:grid_filter_release  bd84924cadae
 app:grid_filter_release_any  61f1a04fe02e
 app:grid_filter_release_from  40f7d611c17b
@@ -95,6 +97,7 @@ app:grid_filter_runtime_end  2d8d73b545f6
 app:grid_filter_runtime_max  1a4c3c47e930
 app:grid_filter_runtime_min  30ce790b053b
 app:grid_filter_runtime_start  2cbf2849483c
+app:grid_filter_search_none  dd261f1091d1
 app:grid_filter_status  920e413c7d41
 app:grid_filter_status_cancelled  d353a99eb455
 app:grid_filter_status_ended  7cdc804e6996

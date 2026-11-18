@@ -5,6 +5,7 @@ import com.cooper.binge.companion.seerr.discover.title.streamingRegion
 import com.cooper.binge.companion.seerr.seerr.SeerrApi
 import com.cooper.binge.companion.seerr.seerr.SeerrServerProfile
 import com.cooper.binge.companion.seerr.seerr.SeerrUserDto
+import com.cooper.binge.companion.seerr.seerr.toTmdbPosterUrl
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 
@@ -27,7 +28,7 @@ interface FilterLookups {
     /** The region the title page reads providers in: the user's own, then the server's. Null where there is none. */
     suspend fun defaultRegion(): String?
 
-    /** The streaming providers for [kind] in [region], by TMDB id. */
+    /** The streaming providers for [kind] in [region], by TMDB id, in the order the title page lists them: TMDB's own priority first. */
     suspend fun providers(
         kind: TitleKind,
         region: String,
@@ -78,8 +79,9 @@ class SeerrFilterLookups(
         withContext(io) {
             api()
                 .watchProviders(if (kind == TitleKind.Series) "tv" else "movies", region)
-                .mapNotNull { provider -> provider.name?.takeIf { it.isNotBlank() }?.let { FilterOption(provider.id.toString(), it) } }
-                .sortedBy { it.name }
+                .filter { !it.name.isNullOrBlank() }
+                .sortedWith(compareBy({ it.displayPriority ?: Int.MAX_VALUE }, { it.name }))
+                .map { FilterOption(it.id.toString(), it.name.orEmpty(), it.logoPath?.toTmdbPosterUrl()) }
         }
 
     override suspend fun certifications(kind: TitleKind): Map<String, List<String>> =

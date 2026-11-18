@@ -38,7 +38,11 @@ internal val DEMO_GENRES =
     listOf(SeerrGenreDto(28, "Action"), SeerrGenreDto(16, "Animation"), SeerrGenreDto(35, "Comedy"), SeerrGenreDto(18, "Drama"))
 private val KEYWORDS = listOf(SeerrKeywordDto(1, "silent film"), SeerrKeywordDto(2, "open source"), SeerrKeywordDto(3, "space"))
 private val COMPANIES = listOf(SeerrCompanyDto(1, "Blender Foundation"), SeerrCompanyDto(2, "Demo Studios"))
-private val PROVIDERS = listOf(SeerrWatchProviderDto(1, "Demo Stream"), SeerrWatchProviderDto(2, "Sample Plus"))
+private val PROVIDERS =
+    listOf(
+        SeerrWatchProviderDto(id = 2, name = "Sample Plus", displayPriority = 2),
+        SeerrWatchProviderDto(id = 1, name = "Demo Stream", displayPriority = 1),
+    )
 
 /** The pickers' lookups: regions, languages, genres, keywords, companies and watch providers, a short fixed list of each. */
 internal fun lookupRoutes(): List<DemoRoute> =
