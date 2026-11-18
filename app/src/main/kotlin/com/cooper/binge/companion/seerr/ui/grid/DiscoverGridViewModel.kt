@@ -100,16 +100,15 @@ class DiscoverGridViewModel
                     },
             )
 
-        /** Ordering by rating also sets the vote-count floor, as a Vote count value the user can clear. */
         /** Applies the order and the filters the sheet edited as one change, so the list starts again once. */
         fun onApply(
             sort: DiscoverSort,
             filters: DiscoverFilters,
         ) {
-            val floored = if (sort.isByRating && filters.voteCountMin == null) filters.copy(voteCountMin = RATING_SORT_VOTE_FLOOR) else filters
-            sortFilter.set(floored, sort)
+            sortFilter.set(filters.withRatingFloor(sort), sort)
         }
 
+        /** Ordering by rating also sets the vote-count floor, as a Vote count value the user can clear. */
         fun onSort(sort: DiscoverSort) {
             sortFilter.setSort(sort)
             if (sort.isByRating) {
@@ -138,6 +137,9 @@ class DiscoverGridViewModel
             ): DiscoverGridViewModel
         }
     }
+
+private fun DiscoverFilters.withRatingFloor(sort: DiscoverSort): DiscoverFilters =
+    if (sort.isByRating && voteCountMin == null) copy(voteCountMin = RATING_SORT_VOTE_FLOOR) else this
 
 internal fun toUiState(
     page: PagedListState<HubCard>,
