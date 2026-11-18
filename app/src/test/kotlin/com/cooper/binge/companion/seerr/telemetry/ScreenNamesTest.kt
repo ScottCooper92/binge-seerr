@@ -62,7 +62,9 @@ class ScreenNamesTest {
             type == Long::class.javaPrimitiveType || type == Long::class.javaObjectType -> 1L
             type == Boolean::class.javaPrimitiveType || type == Boolean::class.javaObjectType -> false
             type == String::class.java -> "sample"
+            type == Double::class.javaPrimitiveType || type == Double::class.javaObjectType -> 1.0
             List::class.java.isAssignableFrom(type) -> emptyList<Any>()
+            Set::class.java.isAssignableFrom(type) -> emptySet<Any>()
             else -> sampleOf(type)
         }
 }
