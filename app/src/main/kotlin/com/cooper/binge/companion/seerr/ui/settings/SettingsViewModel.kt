@@ -18,6 +18,7 @@ import com.cooper.binge.companion.seerr.ui.minuteClock
 import com.cooper.homelab.core.flags.FeatureFlags
 import com.cooper.homelab.core.flags.FixedFeatureFlags
 import com.cooper.homelab.core.flags.Flags
+import com.cooper.homelab.core.flags.SharedFlags
 import com.cooper.homelab.core.telemetry.Analytics
 import com.cooper.homelab.core.telemetry.CrashBreadcrumbs
 import com.cooper.homelab.core.telemetry.NoOpAnalytics
@@ -110,7 +111,7 @@ class SettingsViewModel
         private val minuteTicker: Ticker = Ticker(),
         bingeInstallCheck: BingeInstallCheck = NoBingeInstallCheck,
         bingeConnection: BingeConnectionStore = NoBingeConnectionStore,
-        featureFlags: FeatureFlags = FixedFeatureFlags(Flags.AllOn),
+        featureFlags: FeatureFlags = FixedFeatureFlags(Flags.of(SharedFlags.BingePromotion to true, SharedFlags.ReviewPrompt to true)),
     ) : ViewModel() {
         private val appSource =
             AppSettingsSource(

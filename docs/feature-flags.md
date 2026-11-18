@@ -13,8 +13,8 @@ The `BINGE_PROMOTION` flag is about not pushing anyone to install an app they ca
 itself: the REQUEST and NOTIFICATIONS Service is always exported, and the hand-off Activities always answer an admitted
 caller, so a Binge that finds this app can use it whatever the flag says.
 
-`DiscoveryFlag` is this app's own, in `flags/DiscoveryFlag.kt`, because the shared library's flag registry is a closed enum an
-app cannot add to. It moves into the shared registry if that is ever opened up. It reads the same Remote Config instance and keeps
+`DiscoveryFlag` is this app's own, in `flags/DiscoveryFlag.kt`. It predates the shared library's open flag keys (an app declares
+a `FlagKey` and lists it in the Firebase source), and moving it onto one is a follow-up. It reads the same Remote Config instance and keeps
 the same one-hour fetch interval. A debug build can override it from the developer flags screen, in the same DataStore as the
 other overrides under `override_discovery_enabled`; a release build has no override.
 

@@ -1,5 +1,6 @@
 package com.cooper.binge.companion.seerr.ui.hub
 
+import com.cooper.binge.companion.seerr.flags.bingePromotion
 import com.cooper.binge.companion.seerr.seerr.SeerrPermissions
 import com.cooper.binge.companion.seerr.seerr.SeerrVariant
 import com.cooper.binge.companion.seerr.ui.users.settings.UserRole
