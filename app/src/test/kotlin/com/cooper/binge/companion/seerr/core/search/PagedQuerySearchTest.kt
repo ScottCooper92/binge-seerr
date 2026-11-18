@@ -189,6 +189,28 @@ class PagedQuerySearchTest {
         }
 
     @Test
+    fun `clearing the query and typing it again searches again`() =
+        runTest {
+            var failing = true
+            val search =
+                newSearch(scope(), fetch = { q, p ->
+                    if (failing) throw IOException("offline")
+                    SearchPage(listOf("$q-$p"), p, 1)
+                })
+            scope().launch { search.state.collect {} }
+            search.setQuery("alien")
+            advanceUntilIdle()
+            assertTrue(search.state.value is QuerySearchState.Failed)
+            failing = false
+            search.clear()
+            advanceUntilIdle()
+            search.setQuery("alien")
+            advanceUntilIdle()
+            assertEquals(2, calls.size)
+            assertEquals(QuerySearchState.Results("alien", listOf("alien-1"), hasMore = false), search.state.value)
+        }
+
+    @Test
     fun `an empty first page is read past while more remain`() =
         runTest {
             val search =

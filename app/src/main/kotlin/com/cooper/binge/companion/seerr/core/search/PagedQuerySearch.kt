@@ -12,7 +12,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -49,6 +48,7 @@ class PagedQuerySearch<T>(
     private val input = MutableStateFlow(Input(query = "", immediate = false))
     private val text = MutableStateFlow("")
     private var remembered: String? = null
+    private val noResults = SearchPage<T>(emptyList(), page = 1, totalPages = 1)
 
     /** What the field shows: the text as typed, not the debounced query. */
     val query: StateFlow<String> = text
@@ -58,20 +58,14 @@ class PagedQuerySearch<T>(
             .debounce { if (it.immediate) 0L else debounceMs }
             .map { it.query }
             .distinctUntilChanged()
+            // Shared eagerly so the list and the state read one debounced stream, whatever `started` is.
             .stateIn(scope, SharingStarted.Eagerly, "")
 
     private val list =
         PagedList(
             scope = scope,
-            query = settled.filter { it.length >= minQueryLength },
-            fetch = { q, page ->
-                fetch(q, page).also { found ->
-                    if (found.items.isNotEmpty() && remembered != q) {
-                        remembered = q
-                        attempt { history.remember(q) }
-                    }
-                }
-            },
+            query = settled,
+            fetch = { q, page -> if (q.length < minQueryLength) noResults else fetch(q, page).also { remember(q, it) } },
             started = started,
             keyOf = keyOf,
         )
@@ -102,6 +96,16 @@ class PagedQuerySearch<T>(
     fun loadMore() = list.loadMore()
 
     suspend fun forgetRecents() = history.clear()
+
+    /** A short query reaches the list as a query of its own, so the next real one is a change and searches again. */
+    private suspend fun remember(
+        query: String,
+        found: SearchPage<T>,
+    ) {
+        if (found.items.isEmpty() || remembered == query) return
+        remembered = query
+        attempt { history.remember(query) }
+    }
 
     private fun PagedListState<T>.toSearchState(query: String): QuerySearchState<T> =
         when (this) {
