@@ -20,6 +20,7 @@ import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.component.ServerCardChip
 import com.binge.designsystem.component.ServerCardStat
+import com.binge.designsystem.component.ServerCardUpdate
 import com.binge.designsystem.resolvedContentPadding
 import com.binge.designsystem.theme.BingeSentiment
 import com.cooper.binge.companion.seerr.R
@@ -37,20 +38,15 @@ internal fun ServerCard(
     sides: PaddingValues = resolvedContentPadding(),
 ) {
     val demo = stringResource(R.string.demo_indicator)
-    val updateAvailable = stringResource(R.string.hub_update_available)
     val context = LocalContext.current
-    val releaseNotes = stringResource(R.string.hub_update_release_notes_description)
-    val flags =
-        listOfNotNull(
-            ServerCardChip(demo, BingeSentiment.Caution).takeIf { server.baseUrl.isDemoOrigin() },
-            // The one chip that is a button: it opens the project's release notes, in the browser the user's tap opens.
-            ServerCardChip(
-                label = updateAvailable,
-                sentiment = BingeSentiment.Caution,
-                onClick = { context.openInBrowser(server.variant.releaseNotesUrl()) },
-                contentDescription = releaseNotes,
-            ).takeIf { server.updateAvailable },
-        )
+    val flags = listOfNotNull(ServerCardChip(demo, BingeSentiment.Caution).takeIf { server.baseUrl.isDemoOrigin() })
+    // The whole row is a button: it opens the project's release notes, in the browser the user's tap opens.
+    val update =
+        ServerCardUpdate(
+            label = stringResource(R.string.hub_update_available),
+            actionLabel = stringResource(R.string.hub_update_release_notes),
+            onClick = { context.openInBrowser(server.variant.releaseNotesUrl()) },
+        ).takeIf { server.updateAvailable }
     DesServerCard(
         title = server.title,
         logo = painterResource(R.drawable.ic_companion),
@@ -62,6 +58,7 @@ internal fun ServerCard(
         address = server.baseUrl,
         chips = flags,
         statusChip = ServerCardChip(stringResource(R.string.hub_health_connected), BingeSentiment.Positive),
+        update = update,
         stats = serverStats(overview),
         sides = sides,
     )
@@ -82,7 +79,13 @@ private fun serverStats(overview: HubOverview): List<ServerCardStat> =
         // Only a viewer who manages users is told the count, so nobody else gets a stat that never fills in.
         ServerCardStat(Icons.Filled.People, overview.userCount?.toString(), stringResource(R.string.hub_section_users))
             .takeIf { overview.permissions.canManageUsers },
-        ServerCardStat(Icons.Filled.HourglassEmpty, overview.pendingRequestCount?.toString(), stringResource(R.string.hub_stat_pending)),
+        // Pending is the one total waiting on someone, so it takes the caution accent while there is any.
+        ServerCardStat(
+            icon = Icons.Filled.HourglassEmpty,
+            value = overview.pendingRequestCount?.toString(),
+            label = stringResource(R.string.hub_stat_pending),
+            sentiment = BingeSentiment.Caution.takeIf { (overview.pendingRequestCount ?: 0) > 0 },
+        ),
     )
 
 /** Request quota as settings-style rows: Movies and TV, each with what is left, or "Unlimited" and no bar. */
