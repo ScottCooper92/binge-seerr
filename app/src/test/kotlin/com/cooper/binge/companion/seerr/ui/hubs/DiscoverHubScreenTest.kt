@@ -3,6 +3,7 @@ package com.cooper.binge.companion.seerr.ui.hubs
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
@@ -52,7 +53,11 @@ class DiscoverHubScreenTest {
             )
         compose.setContent {
             SeerrTheme {
-                DiscoverHubScreen(HubTab.Movies, state, onRefresh = {}, onOpenTitle = { opened += it }, onOpenGrid = { _, _ -> })
+                DiscoverHubScreen(HubTab.Movies, state, onRefresh = {}, onOpenTitle = { opened += it }, onOpenGrid = {
+                    _,
+                    _,
+                    ->
+                }, onOpenRequests = {})
             }
         }
     }
@@ -79,10 +84,14 @@ class DiscoverHubScreenTest {
             )
         compose.setContent {
             SeerrTheme {
-                DiscoverHubScreen(HubTab.Movies, state, onRefresh = {}, onOpenTitle = {}, onOpenGrid = { grid, title ->
-                    opened +=
-                        grid to title
-                })
+                DiscoverHubScreen(
+                    HubTab.Movies,
+                    state,
+                    onRefresh = {},
+                    onOpenTitle = {},
+                    onOpenGrid = { grid, title -> opened += grid to title },
+                    onOpenRequests = {},
+                )
             }
         }
         compose.onNodeWithText("Genres").assertExists()
@@ -110,15 +119,68 @@ class DiscoverHubScreenTest {
             )
         compose.setContent {
             SeerrTheme {
-                DiscoverHubScreen(HubTab.Movies, state, onRefresh = {}, onOpenTitle = {}, onOpenGrid = { grid, title ->
-                    opened +=
-                        grid to title
-                })
+                DiscoverHubScreen(
+                    HubTab.Movies,
+                    state,
+                    onRefresh = {},
+                    onOpenTitle = {},
+                    onOpenGrid = { grid, title -> opened += grid to title },
+                    onOpenRequests = {},
+                )
             }
         }
         compose.onNodeWithText("Popular movies").assertExists()
         compose.onAllNodesWithText("See all", substring = true, ignoreCase = true, useUnmergedTree = true).onFirst().performClick()
         assertEquals(listOf(HubGrid(TitleKind.Movie, GridPreset.Popular) to "Popular movies"), opened)
+    }
+
+    @Test
+    fun `see all on the recent requests row opens the request browser and not the grid`() {
+        var requests = 0
+        val grids = mutableListOf<HubGrid>()
+        val card = HubCard(TitleKind.Movie, 7, "Paper Moons", "2020", null, TitleAvailability.None, "https://s/movie/7")
+        val state =
+            DiscoverHubUiState.Ready(
+                listOf(HubRowUi.Cards(HubRow.RecentRequests(1, null, HubTab.Movies), listOf(card))),
+                pending = 0,
+                refreshing = false,
+            )
+        compose.setContent {
+            SeerrTheme {
+                DiscoverHubScreen(
+                    HubTab.Movies,
+                    state,
+                    onRefresh = {},
+                    onOpenTitle = {},
+                    onOpenGrid = { grid, _ -> grids += grid },
+                    onOpenRequests = { requests++ },
+                )
+            }
+        }
+        compose.onNodeWithContentDescription("See all in Recent requests").performClick()
+        assertEquals(1, requests)
+        assertEquals(emptyList<HubGrid>(), grids)
+    }
+
+    @Test
+    fun `a row with no destination shows no see all`() {
+        val card = HubCard(TitleKind.Movie, 7, "Paper Moons", "2020", null, TitleAvailability.None, "https://s/movie/7")
+        val state =
+            DiscoverHubUiState.Ready(
+                listOf(HubRowUi.Cards(HubRow.RecentlyAdded(1, null, HubTab.Movies), listOf(card))),
+                pending = 0,
+                refreshing = false,
+            )
+        compose.setContent {
+            SeerrTheme {
+                DiscoverHubScreen(HubTab.Movies, state, onRefresh = {}, onOpenTitle = {}, onOpenGrid = {
+                    _,
+                    _,
+                    ->
+                }, onOpenRequests = {})
+            }
+        }
+        compose.onAllNodesWithText("See all", substring = true, ignoreCase = true, useUnmergedTree = true).assertCountEquals(0)
     }
 
     private fun hero(server: String) =
@@ -151,7 +213,13 @@ class DiscoverHubScreenTest {
             }
         val state = mutableStateOf(DiscoverHubUiState.Ready(rows, pending = 0, refreshing = false))
         compose.setContent {
-            SeerrTheme { DiscoverHubScreen(HubTab.Movies, state.value, onRefresh = {}, onOpenTitle = {}, onOpenGrid = { _, _ -> }) }
+            SeerrTheme {
+                DiscoverHubScreen(HubTab.Movies, state.value, onRefresh = {}, onOpenTitle = {}, onOpenGrid = {
+                    _,
+                    _,
+                    ->
+                }, onOpenRequests = {})
+            }
         }
         compose.onNodeWithText("Title 1").assertIsDisplayed()
 
@@ -171,7 +239,13 @@ class DiscoverHubScreenTest {
             }
         val state = mutableStateOf(DiscoverHubUiState.Ready(rows, pending = 0, refreshing = false))
         compose.setContent {
-            SeerrTheme { DiscoverHubScreen(HubTab.Movies, state.value, onRefresh = {}, onOpenTitle = {}, onOpenGrid = { _, _ -> }) }
+            SeerrTheme {
+                DiscoverHubScreen(HubTab.Movies, state.value, onRefresh = {}, onOpenTitle = {}, onOpenGrid = {
+                    _,
+                    _,
+                    ->
+                }, onOpenRequests = {})
+            }
         }
         compose.onAllNodes(hasScrollAction()).onFirst().performTouchInput { swipeUp() }
         compose.waitForIdle()
@@ -194,7 +268,13 @@ class DiscoverHubScreenTest {
             }
         val state = mutableStateOf(DiscoverHubUiState.Ready(rows, pending = 0, refreshing = false))
         compose.setContent {
-            SeerrTheme { DiscoverHubScreen(HubTab.Movies, state.value, onRefresh = {}, onOpenTitle = {}, onOpenGrid = { _, _ -> }) }
+            SeerrTheme {
+                DiscoverHubScreen(HubTab.Movies, state.value, onRefresh = {}, onOpenTitle = {}, onOpenGrid = {
+                    _,
+                    _,
+                    ->
+                }, onOpenRequests = {})
+            }
         }
         compose.onAllNodes(hasScrollAction()).onFirst().performTouchInput { swipeDown() }
         compose.waitForIdle()
@@ -217,7 +297,13 @@ class DiscoverHubScreenTest {
         val state = DiscoverHubUiState.Ready(rows, pending = 0, refreshing = false, hero = listOf(hero(server)))
         val restoration = StateRestorationTester(compose)
         restoration.setContent {
-            SeerrTheme { DiscoverHubScreen(HubTab.Movies, state, onRefresh = {}, onOpenTitle = {}, onOpenGrid = { _, _ -> }) }
+            SeerrTheme {
+                DiscoverHubScreen(HubTab.Movies, state, onRefresh = {}, onOpenTitle = {}, onOpenGrid = {
+                    _,
+                    _,
+                    ->
+                }, onOpenRequests = {})
+            }
         }
         repeat(2) { compose.onAllNodes(hasScrollAction()).onFirst().performTouchInput { swipeUp() } }
         compose.waitForIdle()

@@ -51,17 +51,17 @@ import javax.inject.Singleton
 import com.cooper.homelab.core.notifications.PollReactor as SharedPollReactor
 
 /**
- * The notification poll, in one of two shapes chosen once per process: today's, or the same poll on the shared library's
- * reactor, planner, scheduler and cursor store. Both keep the worker's class, the work's unique name, every preference the app
+ * The notification poll, in one of two shapes chosen once per process: the shared library's reactor, planner, scheduler and
+ * cursor store (the default), or the app's earlier one, kept for a release as a debug-build off switch. Both keep the worker's class, the work's unique name, every preference the app
  * has written, and what a notice says.
  */
 @Module
 @InstallIn(SingletonComponent::class)
 object SharedPollingModule {
     /**
-     * Whether the poll runs on the shared library. Off unless a debug build's override file says so, and read once here, so the
-     * choice is fixed for the life of the process and a flip takes effect on the next launch. It is not remote-controlled. The
-     * read blocks the main thread once, which is why it stays behind `BuildConfig.DEBUG`.
+     * Whether the poll runs on the shared library. On, and read once here, so the choice is fixed for the life of the process.
+     * A debug build's override file can turn it off for the next launch; a shipped build never reads it, and nothing remote
+     * controls it. The debug read blocks the main thread once.
      */
     @Provides
     @Singleton
@@ -69,8 +69,14 @@ object SharedPollingModule {
     fun sharedPollingEnabled(
         @ApplicationContext context: Context,
     ): Boolean =
-        BuildConfig.DEBUG &&
-            runBlocking { context.flagOverridesDataStore.data.first()[booleanPreferencesKey(SHARED_POLLING_OVERRIDE)] } == true
+        sharedPollingOn(
+            BuildConfig.DEBUG,
+            if (BuildConfig.DEBUG) {
+                runBlocking { context.flagOverridesDataStore.data.first()[booleanPreferencesKey(SHARED_POLLING_OVERRIDE)] }
+            } else {
+                null
+            },
+        )
 
     @Provides
     @Singleton
@@ -174,3 +180,9 @@ object SharedPollingModule {
             legacy.get()
         }
 }
+
+/** On unless a debug build's override says off. A shipped build ignores the override, whatever it holds. */
+internal fun sharedPollingOn(
+    debug: Boolean,
+    override: Boolean?,
+): Boolean = !debug || override != false

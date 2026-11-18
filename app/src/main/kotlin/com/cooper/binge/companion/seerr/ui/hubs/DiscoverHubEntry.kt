@@ -16,6 +16,7 @@ import com.cooper.binge.companion.seerr.ui.discover.title.LocalOpenTitle
 internal fun DiscoverHubEntry(
     tab: HubTab,
     onOpenGrid: (HubGrid, String) -> Unit,
+    onOpenRequests: () -> Unit,
 ) {
     val model = hiltViewModel<HubViewModel, HubViewModel.Factory>(key = tab.name, creationCallback = { it.create(tab) })
     val state by model.uiState.collectAsStateWithLifecycle()
@@ -26,5 +27,6 @@ internal fun DiscoverHubEntry(
         onRefresh = model::refresh,
         onOpenTitle = { card -> openTitle(card.kind, card.tmdbId, card.webUrl) },
         onOpenGrid = onOpenGrid,
+        onOpenRequests = onOpenRequests,
     )
 }
