@@ -1,7 +1,8 @@
 package com.cooper.binge.companion.seerr.seerr
 
-import com.cooper.binge.companion.seerr.auth.SeerrHealthReporter
+import com.cooper.binge.companion.seerr.auth.SeerrHealth
 import com.cooper.binge.companion.seerr.demo.DemoTransport
+import com.cooper.homelab.core.foundation.ServerId
 import com.cooper.homelab.core.server.network.CleartextConsent
 import com.cooper.homelab.core.server.network.CleartextGate
 import com.cooper.homelab.core.server.network.CleartextGuard
@@ -35,8 +36,8 @@ import kotlin.concurrent.thread
  */
 class SeerrApiFactory(
     private val logRequests: Boolean,
-    /** Fed by the cached client only: a probe's candidate credentials never speak for the saved server. */
-    private val health: SeerrHealthReporter = SeerrHealthReporter.NoOp,
+    /** Fed by the cached client only: a probe's candidate credentials never speak for the saved server. Null reports nothing. */
+    private val health: SeerrHealth? = null,
     /** Called on the cached client only, whenever the saved server accepts a write. */
     private val onWrite: () -> Unit = {},
     /** The public hosts the user agreed to reach over plain HTTP. Every client this factory builds enforces it. */
@@ -83,10 +84,17 @@ class SeerrApiFactory(
 
     private var cached: CachedApi? = null
 
-    /** The service for the saved server, rebuilt only when the credentials change. */
+    /** The id [cached] is given for the saved server, from the health it reports to; null where there is none to report to. */
+    suspend fun serverId(): ServerId? = health?.serverId()
+
+    /**
+     * The service for the saved server, rebuilt only when the credentials change. It reports every call to the factory's health,
+     * keyed by [server]; with no [server], or no health, it reports nothing.
+     */
     fun cached(
         baseUrl: String,
         auth: SeerrAuth,
+        server: ServerId? = null,
     ): SeerrApi =
         synchronized(this) {
             val current = cached
@@ -97,7 +105,7 @@ class SeerrApiFactory(
                 val client =
                     OkHttpClient
                         .Builder()
-                        .addInterceptor(SeerrHealthInterceptor(health))
+                        .apply { if (health != null && server != null) health.interceptors(server).forEach(::addInterceptor) }
                         .addInterceptor(LocalNetworkInterceptor(localNetwork))
                         .addInterceptor(SeerrWriteInterceptor(onWrite))
                         .addInterceptor(SeerrSessionInterceptor(baseUrl))

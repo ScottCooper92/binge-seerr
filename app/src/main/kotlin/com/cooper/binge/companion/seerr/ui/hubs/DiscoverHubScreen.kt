@@ -27,13 +27,11 @@ import com.binge.designsystem.component.CarouselSkeleton
 import com.binge.designsystem.component.DarkStatusBarEffect
 import com.binge.designsystem.component.DiscoverEntryRow
 import com.binge.designsystem.component.HeroCarousel
-import com.binge.designsystem.component.HeroItem
 import com.binge.designsystem.component.LogoTile
 import com.binge.designsystem.component.MediaCard
 import com.binge.designsystem.component.MediaCardStatus
 import com.binge.designsystem.component.MediaCarousel
 import com.binge.designsystem.component.StatusBarScrim
-import com.binge.designsystem.component.StatusChip
 import com.binge.designsystem.layout.LayoutAnchors
 import com.binge.designsystem.layout.layoutAnchor
 import com.binge.designsystem.modifier.skeleton
@@ -260,21 +258,11 @@ private fun Hero(
     hero: List<HubHero>,
     onOpenTitle: (HubCard) -> Unit,
 ) {
-    val items =
-        hero.map {
-            HeroItem(id = it.tmdbId, imageUrl = it.backdropUrl, title = it.name, rating = it.rating, genres = it.genres, rank = it.rank)
-        }
+    val items = hero.toHeroItems()
     HeroCarousel(
         items = items,
         modifier = Modifier.layoutAnchor(LayoutAnchors.section(LayoutAnchors.Hub.HERO)),
         onItemClick = { id -> hero.firstOrNull { it.tmdbId == id }?.let { onOpenTitle(it.toCard()) } },
-        heroActions = { item ->
-            hero
-                .firstOrNull { it.tmdbId == item.id }
-                ?.availability
-                ?.toStatus()
-                ?.let { StatusChip(it.label, it.sentiment) }
-        },
     )
 }
 

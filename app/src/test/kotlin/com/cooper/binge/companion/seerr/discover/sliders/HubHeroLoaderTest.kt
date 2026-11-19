@@ -7,6 +7,7 @@ import com.cooper.binge.companion.seerr.discover.TitleListRepository
 import com.cooper.binge.companion.seerr.discover.TitlePage
 import com.cooper.binge.companion.seerr.discover.TitleResult
 import com.cooper.binge.companion.seerr.discover.TitleSource
+import com.cooper.binge.companion.seerr.discover.title.TitleRatings
 import com.cooper.binge.companion.seerr.seerr.HydratedTitle
 import com.cooper.binge.companion.seerr.seerr.SeerrRequestMediaDto
 import kotlinx.coroutines.test.runTest
@@ -59,6 +60,38 @@ class HubHeroLoaderTest {
             tmdbId: Int,
         ): HydratedTitle? = null
     }
+
+    @Test
+    fun `each hero gets its own scores, and a title that has none or fails is left without`() =
+        runTest {
+            val scores =
+                HubScoreSource { _, id ->
+                    when (id) {
+                        1 -> TitleRatings(97, 91, 7.9)
+                        2 -> null
+                        else -> error("down")
+                    }
+                }
+            val loader =
+                HubHeroLoader(
+                    Titles(listOf(title(TitleKind.Movie, 1), title(TitleKind.Movie, 2), title(TitleKind.Movie, 3))),
+                    Media(),
+                    scores,
+                )
+
+            val scored = loader.withScores(loader.load(HubTab.Movies))
+
+            assertEquals(listOf(TitleRatings(97, 91, 7.9), null, null), scored.map { it.ratings })
+            assertEquals("the titles and their order are the same", listOf(1, 2, 3), scored.map { it.tmdbId })
+        }
+
+    @Test
+    fun `a hub with no score source gives its heroes no scores`() =
+        runTest {
+            val loader = HubHeroLoader(Titles(listOf(title(TitleKind.Movie, 1))), Media())
+
+            assertEquals(listOf(null), loader.withScores(loader.load(HubTab.Movies)).map { it.ratings })
+        }
 
     @Test
     fun `a hero carries its vote average, and none where it is zero or missing`() =
