@@ -26,6 +26,8 @@ import androidx.compose.ui.unit.Dp
 import com.binge.designsystem.component.ExpandableOverview
 import com.binge.designsystem.component.MediaCard
 import com.binge.designsystem.component.MediaCarousel
+import com.binge.designsystem.layout.LayoutAnchors
+import com.binge.designsystem.layout.layoutAnchor
 import com.binge.designsystem.template.HeroDetailScreen
 import com.binge.designsystem.template.HeroPullIndicator
 import com.cooper.binge.companion.seerr.R
@@ -83,14 +85,14 @@ internal fun PersonPageScreen(
         },
     ) {
         when (state) {
-            PersonPageUiState.Loading -> PersonSkeleton()
+            PersonPageUiState.Loading -> PersonReadingColumn { inset -> PersonSkeleton(inset) }
             is PersonPageUiState.Error ->
                 ErrorScreen(
                     state.error,
                     Modifier.padding(dimensionResource(DesR.dimen.padding_m)),
                     actions.onRetry,
                 )
-            is PersonPageUiState.Ready -> PersonBody(state, actions)
+            is PersonPageUiState.Ready -> PersonReadingColumn { inset -> PersonBodyContent(state, actions, inset) }
         }
     }
 }
@@ -98,24 +100,16 @@ internal fun PersonPageScreen(
 /**
  * The person page's reading column, as Binge's person page has it: its profile, biography and links keep to
  * `person_content_max_width` (640dp, 960dp from w840dp) and centre in a wider window, and the credit rails bleed to the edge but start
- * where the column does. Both insets floor at the screen's own padding, so a phone is unchanged.
+ * where the column does. Both insets floor at the screen's own padding, so a phone is unchanged. The loading skeleton takes the same
+ * inset, so the page does not shift when it arrives (#2294).
  */
 @Composable
-private fun ColumnScope.PersonBody(
-    state: PersonPageUiState.Ready,
-    actions: PersonPageActions,
-) {
+private fun PersonReadingColumn(content: @Composable ColumnScope.(inset: Dp) -> Unit) {
+    val cap = dimensionResource(R.dimen.person_content_max_width)
+    val floor = dimensionResource(DesR.dimen.padding_m)
     BoxWithConstraints(Modifier.fillMaxWidth()) {
-        val inset =
-            (
-                (
-                    maxWidth -
-                        dimensionResource(
-                            R.dimen.person_content_max_width,
-                        )
-                ) / 2
-            ).coerceAtLeast(dimensionResource(DesR.dimen.padding_m))
-        PersonBodyContent(state, actions, inset)
+        val inset = ((maxWidth - cap) / 2).coerceAtLeast(floor)
+        Column { content(inset) }
     }
 }
 
@@ -128,7 +122,7 @@ private fun PersonBodyContent(
     val person = state.person
     val gap = dimensionResource(DesR.dimen.padding_m)
     Column(verticalArrangement = Arrangement.spacedBy(gap), modifier = Modifier.padding(bottom = gap)) {
-        PersonProfile(person, Modifier.padding(horizontal = margin))
+        PersonProfile(person, Modifier.padding(horizontal = margin).layoutAnchor(LayoutAnchors.section(LayoutAnchors.Detail.PROFILE)))
         person.biography?.let { biography ->
             Column(
                 Modifier.padding(horizontal = margin),
@@ -158,7 +152,7 @@ private fun CreditsSection(
     inset: Dp,
 ) {
     when (state) {
-        PersonCreditsState.Loading -> CreditsSkeleton()
+        PersonCreditsState.Loading -> CreditsSkeleton(inset)
         is PersonCreditsState.Error ->
             ErrorScreen(state.error, Modifier.padding(dimensionResource(DesR.dimen.padding_m)), actions.onRetryCredits)
         is PersonCreditsState.Ready -> {
