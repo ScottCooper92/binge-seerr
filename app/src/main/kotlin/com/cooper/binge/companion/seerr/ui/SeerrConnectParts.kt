@@ -7,6 +7,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.Dp
 import com.binge.designsystem.component.BingeTextButton
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.seerr.SeerrSignInMode
@@ -56,14 +57,26 @@ private fun FieldSpec.labelRes(): Int =
         else -> R.string.setup_password
     }
 
-/** What a failure of the shared machine says on the setup form: the same line [SetupError] gives it on the old path. */
+/**
+ * What a failure of the shared machine says on the setup form: the same line [SetupError] gives it on the old path. [address] is set on
+ * the address step, where an address a phone sent that is off the home network reads as such ([forAddress]).
+ */
 @Composable
-internal fun seerrErrorText(error: ConnectError): String? = error.toSetupError()?.let { stringResource(it.messageRes()) }
+internal fun seerrErrorText(
+    error: ConnectError,
+    address: String? = null,
+    received: Boolean = false,
+): String? =
+    error
+        .toSetupError()
+        ?.let { if (address != null) it.forAddress(address, received) else it }
+        ?.let { stringResource(it.messageRes()) }
 
 /**
  * Seerr's own parts of the sign-in step, in the slots the shared one leaves for them: the note under an API key, the forgot-password
  * button under a local account's fields, the notice (a reset email sent, a session the server turned down) after the error, and a
- * saved login offered on the field that names the account.
+ * saved login offered on the field that names the account. [onDisconnect] is the way off a server that rejected the session (#810),
+ * under the commit.
  *
  * [onEdit] writes what a credential provider returns into the form.
  */
@@ -72,12 +85,15 @@ internal fun seerrSignInOptions(
     resetCoolingDown: Boolean,
     onRequestPasswordReset: () -> Unit,
     onEdit: ((SignInForm.() -> SignInForm) -> Unit),
+    tabEdgePadding: Dp? = null,
+    onDisconnect: (() -> Unit)? = null,
 ): ConnectSignInOptions<SetupServer> =
     ConnectSignInOptions(
-        tabEdgePadding = null,
+        tabEdgePadding = tabEdgePadding,
         afterFields = { state -> SeerrAfterFields(state, resetCoolingDown, onRequestPasswordReset) },
         afterError = { _ -> notice?.let { SeerrNotice(it) } },
         fieldModifier = { field -> field.savedLogin(onEdit) },
+        footerBelow = onDisconnect?.let { leave -> { _ -> DisconnectButton(leave) } },
     )
 
 @Composable
