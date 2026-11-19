@@ -1,5 +1,8 @@
 package com.cooper.binge.companion.seerr.ui.nav
 
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.getOrNull
+import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasText
@@ -19,6 +22,7 @@ import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import org.junit.After
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -30,6 +34,8 @@ private const val PHONE = "w400dp-h800dp"
 private const val WAIT_MILLIS = 5_000L
 
 private const val POPULAR_MOVIES = 5
+private const val REQUESTS_TAKEN = 100
+private const val FILM_ID = 133701
 
 /** A demo film nobody has requested, third in the demo's catalog so it is near the start of every list. */
 private const val FILM = "Tears of Steel"
@@ -51,18 +57,31 @@ class TitleStatusJourneyTest {
     }
 
     private val request get() = host.string(R.string.title_page_request)
-    private val requested get() = host.string(R.string.hubs_card_requested)
+    private val requested = "Requested"
 
     private fun awaitStack(vararg stack: NavKey) = host.compose.waitUntil(WAIT_MILLIS) { host.stack() == stack.toList() }
 
     private fun card(): SemanticsNodeInteraction = host.compose.onAllNodes(hasText(FILM, substring = true)).onFirst()
 
-    /** The card for [FILM] reads [chip] on it now. A card is one merged node, so its title and its chip are in the same text. */
-    private fun cardReads(chip: String): Boolean =
+    /** A card says its status as its state description, not as text, so that is what is read. */
+    private fun stateReads(status: String) =
+        SemanticsMatcher("state reads $status") { node ->
+            node.config.getOrNull(SemanticsProperties.StateDescription)?.contains(status, ignoreCase = true) == true
+        }
+
+    /** The card for [FILM] reads [status] as its state now. */
+    private fun cardReads(status: String): Boolean =
         host.compose
-            .onAllNodes(hasText(FILM, substring = true) and hasText(chip, substring = true))
+            .onAllNodes(hasText(FILM, substring = true) and stateReads(status))
             .fetchSemanticsNodes()
             .isNotEmpty()
+
+    /** The film has a request on the server, so a card that does not show one is not for want of the request. */
+    private fun requestExists(): Boolean =
+        host
+            .api { it.requests(take = REQUESTS_TAKEN) }
+            .results
+            .any { it.media.tmdbId == FILM_ID }
 
     /**
      * The "Request" that is lowest on screen. The page's own button and the sheet's share a label, and a click that reaches the
@@ -109,6 +128,7 @@ class TitleStatusJourneyTest {
         requestFromTheCardAndGoBack()
 
         awaitStack(ShellRoute)
+        assertTrue("the request for $FILM reached the server", requestExists())
         host.await("the hub's card for $FILM reads $requested") { cardReads(requested) }
     }
 
@@ -124,6 +144,7 @@ class TitleStatusJourneyTest {
         requestFromTheCardAndGoBack()
 
         awaitStack(ShellRoute, grid)
+        assertTrue("the request for $FILM reached the server", requestExists())
         host.await("the grid's card for $FILM reads $requested") { cardReads(requested) }
     }
 
