@@ -60,7 +60,7 @@ internal fun RequestDetailEntry(
  * ride that result.
  */
 @Composable
-private fun SiblingRequestSheet(
+internal fun SiblingRequestSheet(
     sheet: SiblingSheet,
     onOpenUser: (Int) -> Unit,
     onOpenServices: () -> Unit,

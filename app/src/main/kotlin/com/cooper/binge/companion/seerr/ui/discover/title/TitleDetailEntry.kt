@@ -11,6 +11,7 @@ import com.cooper.binge.companion.seerr.discover.TitleResult
 import com.cooper.binge.companion.seerr.discover.request.RequestResult
 import com.cooper.binge.companion.seerr.discover.title.TitleCompany
 import com.cooper.binge.companion.seerr.discover.title.TitleKeyword
+import com.cooper.binge.companion.seerr.ui.SiblingRequestSheet
 import com.cooper.binge.companion.seerr.ui.openInBrowser
 import com.cooper.binge.companion.seerr.ui.state.EmptyScreen
 
@@ -34,10 +35,13 @@ internal fun TitleDetailEntry(
     onOpenSeason: (seasonNumber: Int, seriesName: String) -> Unit,
     onOpenCompany: (TitleCompany) -> Unit,
     onOpenKeyword: (TitleKeyword) -> Unit,
+    onOpenUser: (Int) -> Unit,
+    onOpenServices: () -> Unit,
 ) {
     when (kind) {
-        TitleKind.Movie -> FilmPageEntry(tmdbId, onBack, onOpenCredits, onOpenCompany, onOpenKeyword)
-        TitleKind.Series -> SeriesPageEntry(tmdbId, onBack, onOpenCredits, onOpenSeason, onOpenCompany, onOpenKeyword)
+        TitleKind.Movie -> FilmPageEntry(tmdbId, onBack, onOpenCredits, onOpenCompany, onOpenKeyword, onOpenUser, onOpenServices)
+        TitleKind.Series ->
+            SeriesPageEntry(tmdbId, onBack, onOpenCredits, onOpenSeason, onOpenCompany, onOpenKeyword, onOpenUser, onOpenServices)
         else -> EmptyScreen(message = "")
     }
 }
@@ -49,6 +53,8 @@ private fun FilmPageEntry(
     onOpenCredits: () -> Unit,
     onOpenCompany: (TitleCompany) -> Unit,
     onOpenKeyword: (TitleKeyword) -> Unit,
+    onOpenUser: (Int) -> Unit,
+    onOpenServices: () -> Unit,
 ) {
     val viewModel = hiltViewModel<TitlePageViewModel, TitlePageViewModel.Factory>(creationCallback = { it.create(tmdbId) })
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -62,10 +68,11 @@ private fun FilmPageEntry(
                 onOpenCompany = onOpenCompany,
                 onOpenKeyword = onOpenKeyword,
                 onRetry = viewModel::load,
-                onRequest = viewModel::openRequestSheet,
+                onRequest = viewModel::onPrimary,
                 onCloseRequest = viewModel::closeRequestSheet,
                 onRequested = viewModel::requested,
                 onReload = viewModel::reload,
+                manage = TitleManage(viewModel::closeManageSheet, onOpenUser, onOpenServices),
             ),
     )
 }
@@ -78,6 +85,8 @@ private fun SeriesPageEntry(
     onOpenSeason: (Int, String) -> Unit,
     onOpenCompany: (TitleCompany) -> Unit,
     onOpenKeyword: (TitleKeyword) -> Unit,
+    onOpenUser: (Int) -> Unit,
+    onOpenServices: () -> Unit,
 ) {
     val viewModel = hiltViewModel<SeriesPageViewModel, SeriesPageViewModel.Factory>(creationCallback = { it.create(tmdbId) })
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -91,10 +100,11 @@ private fun SeriesPageEntry(
                 onOpenCompany = onOpenCompany,
                 onOpenKeyword = onOpenKeyword,
                 onRetry = viewModel::load,
-                onRequest = viewModel::openRequestSheet,
+                onRequest = viewModel::onPrimary,
                 onCloseRequest = viewModel::closeRequestSheet,
                 onRequested = viewModel::requested,
                 onReload = viewModel::reload,
+                manage = TitleManage(viewModel::closeManageSheet, onOpenUser, onOpenServices),
             ),
         seasonActions = SeasonActions(viewModel::selectSeason, viewModel::retryEpisodes, onOpenSeason),
     )
@@ -112,6 +122,7 @@ private fun rememberTitlePageActions(
     onCloseRequest: () -> Unit,
     onRequested: (RequestResult) -> Unit,
     onReload: () -> Unit,
+    manage: TitleManage,
 ): TitlePageActions {
     val context = LocalContext.current
     val openTitle = LocalOpenTitle.current
@@ -129,5 +140,14 @@ private fun rememberTitlePageActions(
         onOpenCompany = onOpenCompany,
         onOpenKeyword = onOpenKeyword,
         onReload = onReload,
+        onCloseManage = manage.onClose,
+        manageSheet = { sheet -> SiblingRequestSheet(sheet, manage.onOpenUser, manage.onOpenServices) },
     )
 }
+
+/** What the page needs to manage a request in a sheet over it: how it closes, and where its requester and its services open. */
+private class TitleManage(
+    val onClose: () -> Unit,
+    val onOpenUser: (Int) -> Unit,
+    val onOpenServices: () -> Unit,
+)

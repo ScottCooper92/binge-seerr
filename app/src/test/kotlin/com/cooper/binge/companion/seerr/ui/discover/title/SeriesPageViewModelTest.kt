@@ -11,7 +11,9 @@ import com.cooper.binge.companion.seerr.discover.title.TitleCompany
 import com.cooper.binge.companion.seerr.discover.title.TitleExtras
 import com.cooper.binge.companion.seerr.discover.title.TitlePerson
 import com.cooper.binge.companion.seerr.discover.title.TitleRatings
+import com.cooper.binge.companion.seerr.discover.title.TitleRequest
 import com.cooper.binge.companion.seerr.discover.title.VersionState
+import com.cooper.binge.companion.seerr.seerr.SeerrRequestStatusCode
 import com.cooper.binge.companion.seerr.util.MainDispatcherRule
 import com.cooper.binge.companion.seerr.util.awaitEvent
 import kotlinx.coroutines.flow.toList
@@ -126,12 +128,29 @@ class SeriesPageViewModelTest {
     fun `the request sheet opens only while a season can still be asked for`() {
         val covered = seriesFixture(standard = VersionState(TitleAvailability.Available, mayRequest = false))
         val closed = SeriesPageViewModel(FakeSeries(series = covered), 1399)
-        closed.openRequestSheet()
+        closed.onPrimary()
         assertFalse(closed.ready().requestSheetOpen)
 
         val open = SeriesPageViewModel(FakeSeries(), 1399)
-        open.openRequestSheet()
+        open.onPrimary()
         assertTrue(open.ready().requestSheetOpen)
+    }
+
+    @Test
+    fun `a held series opens its request and keeps it after the sheet closes`() {
+        val held =
+            seriesFixture(
+                standard = VersionState(TitleAvailability.Pending, mayRequest = false),
+            ).copy(requests = listOf(TitleRequest(7, false, SeerrRequestStatusCode.Pending, 5)))
+        val vm = SeriesPageViewModel(FakeSeries(series = held), 1399)
+
+        vm.onPrimary()
+        assertEquals(7, vm.ready().manageRequestId)
+        assertTrue(vm.ready().manageSheetOpen)
+
+        vm.closeManageSheet()
+        assertFalse(vm.ready().manageSheetOpen)
+        assertEquals(7, vm.ready().manageRequestId)
     }
 
     @Test
@@ -139,7 +158,7 @@ class SeriesPageViewModelTest {
         runTest {
             val repository = FakeSeries()
             val vm = SeriesPageViewModel(repository, 1399)
-            vm.openRequestSheet()
+            vm.onPrimary()
             repository.series = seriesFixture(seasons = listOf(seasonFixture(1, TitleAvailability.Pending), seasonFixture(2)))
 
             val event = awaitEvent(vm.events)
@@ -162,7 +181,7 @@ class SeriesPageViewModelTest {
         runTest {
             val repository = FakeSeries()
             val vm = SeriesPageViewModel(repository, 1399)
-            vm.openRequestSheet()
+            vm.onPrimary()
             repository.failSeries = IOException("down")
             val events = mutableListOf<SeriesPageEvent>()
             val collecting = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.events.toList(events) }

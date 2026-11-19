@@ -4,6 +4,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.runtime.Composable
 import com.android.tools.screenshot.PreviewTest
 import com.cooper.binge.companion.seerr.discover.TitleAvailability
+import com.cooper.binge.companion.seerr.discover.title.TitleRequest
 import com.cooper.binge.companion.seerr.discover.title.VersionState
 import com.cooper.binge.companion.seerr.preview.SeerrExpandedFontScalePreviews
 import com.cooper.binge.companion.seerr.preview.SeerrExpandedSpanishPreviews
@@ -13,6 +14,7 @@ import com.cooper.binge.companion.seerr.preview.SeerrScreenPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrScreenStatePreview
 import com.cooper.binge.companion.seerr.preview.SeerrSpanishPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrTabletPanesPreview
+import com.cooper.binge.companion.seerr.seerr.SeerrRequestStatusCode
 import kotlinx.coroutines.flow.emptyFlow
 
 private const val SCROLLED_PX = 2500
@@ -67,7 +69,7 @@ class TitlePageScreenshotTest {
     @Composable
     fun requestableExpandedLargeText() = Frame(TitlePageUiState.Ready(fullMovie(), fullExtras()))
 
-    /** Already in the library: no Request button, and the status chip says so. */
+    /** Already in the library, with no request on file and no version open: the primary says Available and is drawn disabled. */
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
@@ -94,7 +96,33 @@ class TitlePageScreenshotTest {
             ),
         )
 
-    /** Blocklisted: nothing to request. */
+    /** Requested, waiting on approval: the primary says so and opens that request. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun requested() =
+        Frame(
+            TitlePageUiState.Ready(
+                fullMovie(standard = VersionState(TitleAvailability.Pending, mayRequest = false), fourK = null)
+                    .copy(requests = listOf(TitleRequest(7, false, SeerrRequestStatusCode.Pending, 5))),
+                fullExtras(),
+            ),
+        )
+
+    /** Approved and being fetched. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun processing() =
+        Frame(
+            TitlePageUiState.Ready(
+                fullMovie(standard = VersionState(TitleAvailability.Processing, mayRequest = false), fourK = null)
+                    .copy(requests = listOf(TitleRequest(7, false, SeerrRequestStatusCode.Approved, 5))),
+                fullExtras(),
+            ),
+        )
+
+    /** Blocklisted: the primary is drawn and disabled. */
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable

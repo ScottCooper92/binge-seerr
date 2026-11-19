@@ -6,6 +6,7 @@ import com.cooper.binge.companion.seerr.discover.collection.SeerrCollectionRepos
 import com.cooper.binge.companion.seerr.seerr.PERMISSION_ADMIN
 import com.cooper.binge.companion.seerr.seerr.PERMISSION_REQUEST
 import com.cooper.binge.companion.seerr.seerr.PERMISSION_REQUEST_MOVIE
+import com.cooper.binge.companion.seerr.seerr.PERMISSION_REQUEST_VIEW
 import com.cooper.binge.companion.seerr.seerr.SeerrApiFactory
 import com.cooper.binge.companion.seerr.seerr.SeerrPublicSettings
 import com.cooper.binge.companion.seerr.seerr.SeerrServerProfile
@@ -246,6 +247,31 @@ class SeerrTitleDetailsRepositoryTest {
         permissions = 0
         val none = withRepository { it.movie(603) }
         assertFalse(none.standard.mayRequest)
+    }
+
+    @Test
+    fun `a viewer who may not view requests keeps only their own among the title's requests`() {
+        movieBody =
+            MOVIE.replace(
+                """"mediaInfo":{"id":11,"status":5,"status4k":1}""",
+                """"mediaInfo":{"id":11,"status":5,"status4k":1,"requests":[
+                    {"id":1,"status":1,"is4k":false,"requestedBy":{"id":9}},
+                    {"id":2,"status":2,"is4k":false,"requestedBy":{"id":4}},
+                    {"id":3,"status":1,"is4k":false}]}""",
+            )
+
+        permissions = PERMISSION_REQUEST or PERMISSION_REQUEST_MOVIE
+        assertEquals("their own only", listOf(1), withRepository { it.movie(603) }.requests.map { it.id })
+
+        permissions = PERMISSION_REQUEST_VIEW
+        assertEquals(
+            "everyone's with permission to view requests",
+            listOf(1, 2, 3),
+            withRepository { it.movie(603) }.requests.map { it.id },
+        )
+
+        permissions = PERMISSION_ADMIN
+        assertEquals(listOf(1, 2, 3), withRepository { it.movie(603) }.requests.map { it.id })
     }
 
     @Test

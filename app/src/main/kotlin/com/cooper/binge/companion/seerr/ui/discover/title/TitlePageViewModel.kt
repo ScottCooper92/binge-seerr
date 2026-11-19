@@ -36,6 +36,9 @@ sealed interface TitlePageUiState {
         val movie: MovieDetails,
         val extras: TitleExtras? = null,
         val requestSheetOpen: Boolean = false,
+        /** The request the primary last opened to manage. Kept after the sheet closes, so a moderation's result still has its sheet to land in. */
+        val manageRequestId: Int? = null,
+        val manageSheetOpen: Boolean = false,
         val collectionParts: List<TitleResult> = emptyList(),
     ) : TitlePageUiState {
         /** The Request button shows while either version can still be asked for. */
@@ -90,7 +93,18 @@ class TitlePageViewModel
             }
         }
 
-        fun openRequestSheet() = updateReady { if (it.mayRequest) it.copy(requestSheetOpen = true) else it }
+        /** The primary was tapped: the request sheet or one request's sheet, as the page's state says, or nothing where there is none to open. */
+        fun onPrimary() =
+            updateReady { ready ->
+                when (val tap = titleActionsModel(ready.movie.standard, ready.movie.fourK, ready.movie.requests).primary.tap) {
+                    PrimaryTap.RequestSheet -> ready.copy(requestSheetOpen = true)
+                    is PrimaryTap.ManageRequest -> ready.copy(manageRequestId = tap.requestId, manageSheetOpen = true)
+                    PrimaryTap.Nothing -> ready
+                }
+            }
+
+        /** The request's sheet closed. The id stays, and a change made in it reloads the page through the sheet's own `onChanged`. */
+        fun closeManageSheet() = updateReady { it.copy(manageSheetOpen = false) }
 
         /** Closing the sheet reads the title again, since a refused send may mean the server's state moved under the page. */
         fun closeRequestSheet() {

@@ -9,7 +9,9 @@ import com.cooper.binge.companion.seerr.discover.title.TitleCollection
 import com.cooper.binge.companion.seerr.discover.title.TitleDetailsRepository
 import com.cooper.binge.companion.seerr.discover.title.TitleExtras
 import com.cooper.binge.companion.seerr.discover.title.TitleRatings
+import com.cooper.binge.companion.seerr.discover.title.TitleRequest
 import com.cooper.binge.companion.seerr.discover.title.VersionState
+import com.cooper.binge.companion.seerr.seerr.SeerrRequestStatusCode
 import com.cooper.binge.companion.seerr.util.MainDispatcherRule
 import com.cooper.binge.companion.seerr.util.awaitEvent
 import kotlinx.coroutines.flow.toList
@@ -116,12 +118,29 @@ class TitlePageViewModelTest {
     fun `the request sheet opens only while the title can be requested`() {
         val none = movieFixture(standard = VersionState(TitleAvailability.Available, mayRequest = false))
         val vm = TitlePageViewModel(FakeTitles(movie = none), 603)
-        vm.openRequestSheet()
+        vm.onPrimary()
         assertFalse(vm.ready().requestSheetOpen)
 
         val open = TitlePageViewModel(FakeTitles(), 603)
-        open.openRequestSheet()
+        open.onPrimary()
         assertTrue(open.ready().requestSheetOpen)
+    }
+
+    @Test
+    fun `a held title opens its request and keeps it after the sheet closes`() {
+        val held =
+            movieFixture(
+                standard = VersionState(TitleAvailability.Pending, mayRequest = false),
+            ).copy(requests = listOf(TitleRequest(7, false, SeerrRequestStatusCode.Pending, 5)))
+        val vm = TitlePageViewModel(FakeTitles(movie = held), 603)
+
+        vm.onPrimary()
+        assertEquals(7, vm.ready().manageRequestId)
+        assertTrue(vm.ready().manageSheetOpen)
+
+        vm.closeManageSheet()
+        assertFalse(vm.ready().manageSheetOpen)
+        assertEquals("the id stays so a moderation's result still has its sheet", 7, vm.ready().manageRequestId)
     }
 
     @Test
@@ -136,7 +155,7 @@ class TitlePageViewModelTest {
         runTest {
             val titles = FakeTitles()
             val vm = TitlePageViewModel(titles, 603)
-            vm.openRequestSheet()
+            vm.onPrimary()
             titles.movie = movieFixture(standard = VersionState(TitleAvailability.Pending, mayRequest = false))
 
             val event = awaitEvent(vm.events)
@@ -157,7 +176,7 @@ class TitlePageViewModelTest {
         runTest {
             val titles = FakeTitles()
             val vm = TitlePageViewModel(titles, 603)
-            vm.openRequestSheet()
+            vm.onPrimary()
             titles.failMovie = IOException("down")
             val events = mutableListOf<TitlePageEvent>()
             val collecting = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.events.toList(events) }

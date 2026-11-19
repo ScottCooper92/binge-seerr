@@ -18,14 +18,17 @@ import com.cooper.binge.companion.seerr.ui.DiscoverGridRoute
 import com.cooper.binge.companion.seerr.ui.NavMotionSpecs
 import com.cooper.binge.companion.seerr.ui.PersonDetailRoute
 import com.cooper.binge.companion.seerr.ui.SeriesEpisodesRoute
+import com.cooper.binge.companion.seerr.ui.ServerSettingsPageRoute
 import com.cooper.binge.companion.seerr.ui.TitleCreditsRoute
 import com.cooper.binge.companion.seerr.ui.TitleDetailRoute
+import com.cooper.binge.companion.seerr.ui.UserDetailRoute
 import com.cooper.binge.companion.seerr.ui.discover.collection.CollectionPageEntry
 import com.cooper.binge.companion.seerr.ui.discover.person.PersonEntry
 import com.cooper.binge.companion.seerr.ui.discover.title.credits.TitleCreditsEntry
 import com.cooper.binge.companion.seerr.ui.discover.title.season.SeriesEpisodesEntry
 import com.cooper.binge.companion.seerr.ui.openTitle
 import com.cooper.binge.companion.seerr.ui.popIfTop
+import com.cooper.binge.companion.seerr.ui.settings.server.ServerSettingsPage
 import com.cooper.binge.companion.seerr.ui.toRequestMediaType
 
 /** The title pages: a film's or a series' page, every season's episodes of it, a collection, the credits, and a person's page. Each leaves through [popIfTop] with its own key. */
@@ -47,6 +50,8 @@ internal fun EntryProviderScope<NavKey>.titleEntries(
                 onOpenKeyword = { keyword ->
                     backStack.add(DiscoverGridRoute(route.kind, GridPreset.Keyword(keyword.id), keyword.name))
                 },
+                onOpenUser = { id -> backStack.add(UserDetailRoute(id)) },
+                onOpenServices = { backStack.add(ServerSettingsPageRoute(ServerSettingsPage.Services)) },
             )
         }
     }

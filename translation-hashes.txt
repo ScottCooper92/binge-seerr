@@ -1242,9 +1242,7 @@ app:title_page_stat_rating  9f29530464f7
 app:title_page_stat_released  f33deea9b100
 app:title_page_stat_runtime  109311589787
 app:title_page_stat_votes  dd205fec85fc
-app:title_page_status_4k  fa07fd33f2be
 app:title_page_status_canceled  d353a99eb455
-app:title_page_status_hd  51303226a081
 app:title_page_status_in_production  c4b56e06767d
 app:title_page_status_planned  fb6f7c93e6bf
 app:title_page_status_post_production  31488d521882
