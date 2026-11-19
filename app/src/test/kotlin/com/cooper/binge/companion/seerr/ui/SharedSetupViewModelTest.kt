@@ -447,6 +447,33 @@ class SharedSetupViewModelTest {
         }
 
     @Test
+    fun `a declined permission does not hide a later refusal from the phone once the session is gone`() =
+        runTest {
+            val session = FakeSession().apply { handedSession = "ph0n3" }
+            var granted = false
+            val vm = viewModel(unreachable = { !granted }, localNetwork = { granted }) { HandOffOpening.Opened(session) }
+            vm.awaitAddress()
+            vm.showHandOff(true)
+            vm.awaitAddress { it.handOff != null }
+            session.address.complete("http://192.168.1.20:5055")
+            vm.awaitAddress { it.error == SetupError.LocalNetworkDenied }
+            assertFalse(session.progress() is HandOffProgress.Failed)
+
+            granted = true
+            seerr.enqueueProfile(json("""{"version":"3.4.0"}"""), json("""{"mediaServerType":2,"localLogin":true}"""))
+            seerr.enqueue(json("[]"))
+            vm.editAddress(seerr.url("/"))
+            vm.inspect()
+            vm.awaitSignIn()
+            seerr.enqueue(FakeResponse(code = 401, headers = headersOf("Content-Type", "application/json"), body = """{"message":"no"}"""))
+            session.sendCredentials(HandOffCredentials(mode = "Local", email = "ana@example.com", password = "wrong"))
+            vm.awaitSignIn { it.error != null }
+
+            val progress = session.progress() as HandOffProgress.SignIn
+            assertTrue("the session is gone, so the refusal is the phone's to hear", progress.failed)
+        }
+
+    @Test
     fun `a session sent from the sign-in step after a refused attempt is adopted and counted once`() =
         runTest {
             val session = FakeSession()
