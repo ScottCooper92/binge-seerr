@@ -129,9 +129,9 @@ private fun SearchBody(
                     actions,
                     navOverlayPadding(
                         PaddingValues(
-                            start = dimensionResource(DesR.dimen.padding_m),
+                            start = dimensionResource(DesR.dimen.screen_content_inset),
                             top = top + dimensionResource(DesR.dimen.padding_s),
-                            end = dimensionResource(DesR.dimen.padding_m),
+                            end = dimensionResource(DesR.dimen.screen_content_inset),
                             bottom = bottom + dimensionResource(DesR.dimen.padding_m),
                         ),
                     ),

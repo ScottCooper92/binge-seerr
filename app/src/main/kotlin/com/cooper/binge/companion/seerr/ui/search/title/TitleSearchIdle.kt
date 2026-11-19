@@ -9,12 +9,14 @@ import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.CarouselSkeleton
 import com.binge.designsystem.navOverlayStart
+import com.binge.designsystem.template.LocalHeroReadingMargin
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.TitleResult
 import com.cooper.binge.companion.seerr.ui.discover.title.TitleRow
@@ -50,16 +52,19 @@ internal fun IdleBody(
             end = contentPadding.calculateEndPadding(direction),
             bottom = contentPadding.calculateBottomPadding() + dimensionResource(DesR.dimen.padding_m),
         )
-    LazyColumn(contentPadding = listPadding) {
-        if (state.recents.isNotEmpty()) {
-            item(key = "recents") { RecentSearches(state.recents, onSelect = actions.onRecent, onClear = actions.onForgetRecents) }
-        }
-        when (val trending = state.trending) {
-            Trending.Loading -> item(key = "loading") { CarouselSkeleton(description = stringResource(R.string.hubs_loading_row)) }
-            Trending.Unavailable -> Unit
-            is Trending.Ready -> {
-                rail("movies", R.string.title_search_trending_movies, trending.movies, actions.onOpenTitle)
-                rail("series", R.string.title_search_trending_series, trending.series, actions.onOpenTitle)
+    val railMargin = dimensionResource(DesR.dimen.screen_content_inset) - dimensionResource(DesR.dimen.padding_m)
+    CompositionLocalProvider(LocalHeroReadingMargin provides railMargin) {
+        LazyColumn(contentPadding = listPadding) {
+            if (state.recents.isNotEmpty()) {
+                item(key = "recents") { RecentSearches(state.recents, onSelect = actions.onRecent, onClear = actions.onForgetRecents) }
+            }
+            when (val trending = state.trending) {
+                Trending.Loading -> item(key = "loading") { CarouselSkeleton(description = stringResource(R.string.hubs_loading_row)) }
+                Trending.Unavailable -> Unit
+                is Trending.Ready -> {
+                    rail("movies", R.string.title_search_trending_movies, trending.movies, actions.onOpenTitle)
+                    rail("series", R.string.title_search_trending_series, trending.series, actions.onOpenTitle)
+                }
             }
         }
     }
