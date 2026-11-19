@@ -55,8 +55,7 @@ class IssueDetailScreenshotTest {
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
-    fun composerResolving() =
-        Frame(IssueDetailUiState.Ready(detail = openIssueWithActionsDetail(), action = IssueAction.UpdatingStatus))
+    fun composerResolving() = Frame(IssueDetailUiState.Ready(detail = openIssueWithActionsDetail(), action = IssueAction.UpdatingStatus))
 
     /** A row a list already had, before the fetch lands (#1053): its header over the loading body. */
     @PreviewTest

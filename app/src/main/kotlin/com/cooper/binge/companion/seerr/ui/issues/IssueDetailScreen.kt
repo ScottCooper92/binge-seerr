@@ -212,7 +212,7 @@ private fun Ready(
     val composer = detail.canComment || detail.canResolve
     // The card floats over the thread, which scrolls under it: its height, which takes in the keyboard and the navigation bar,
     // ends the thread above it.
-    var composerHeight by remember { mutableStateOf(Dp.Zero) }
+    var composerHeight by remember { mutableStateOf(Dp(0f)) }
     Box(modifier = Modifier.fillMaxSize()) {
         BingePullToRefresh(
             isRefreshing = state.isRefreshing,

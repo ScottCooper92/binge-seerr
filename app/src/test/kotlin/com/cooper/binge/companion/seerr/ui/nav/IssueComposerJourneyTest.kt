@@ -49,7 +49,8 @@ class IssueComposerJourneyTest {
 
         // The chip asks first, as it always has; the confirmation is a dialog, the only window the page opens.
         host.clickUntilShowing(resolve, host.string(R.string.issue_resolve_confirm_title))
-        host.compose.onAllNodesWithText(resolve).onLast().performClick()
+        val labelled = host.compose.onAllNodesWithText(resolve)
+        labelled.onLast().performClick()
         host.await("the Reopen chip once the issue is resolved") {
             host.isShowing(host.string(R.string.issue_action_reopen), exactly = true)
         }
