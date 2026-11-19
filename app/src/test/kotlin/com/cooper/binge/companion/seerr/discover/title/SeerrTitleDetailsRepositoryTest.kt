@@ -385,6 +385,9 @@ class SeerrTitleDetailsRepositoryTest {
 
         movieBody = body("\"mediaUrl\":\"https://media.invalid/x\"")
         assertNull("not a real site", withRepository { it.movie(603) }.watchUrl)
+
+        movieBody = body("\"mediaUrl\":\"https://media.invalid/x\",\"mediaUrl4k\":\"https://jf.example/4k\"")
+        assertEquals("an unopenable standard link leaves the 4K one", "https://jf.example/4k", withRepository { it.movie(603) }.watchUrl)
     }
 
     @Test

@@ -90,4 +90,16 @@ class SeerrUrlsTest {
         assertEquals("https://github.com/sct/overseerr/releases", SeerrVariant.Overseerr.releaseNotesUrl())
         assertEquals("https://github.com/seerr-team/seerr/releases", SeerrVariant.Unknown.releaseNotesUrl())
     }
+
+    @Test
+    fun `only an http or https address that can be a real site is openable`() {
+        assertTrue(isOpenableSite("https://seerr.example.com/movie/603"))
+        assertTrue(isOpenableSite("http://192.168.1.20:5055/tv/1396"))
+        assertFalse(isOpenableSite("https://demo.seerr.invalid/movie/603"))
+        assertFalse(isOpenableSite("https://invalid/movie/603"))
+        assertFalse(isOpenableSite("ftp://seerr.example.com/movie/603"))
+        assertFalse(isOpenableSite("binge://title/movie/603"))
+        assertFalse(isOpenableSite("not a url"))
+        assertFalse(isOpenableSite(""))
+    }
 }

@@ -15,13 +15,17 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.paneTitle
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
+import coil3.SingletonImageLoader
+import coil3.request.ImageRequest
 import com.binge.designsystem.component.BackdropTile
 import com.binge.designsystem.component.BingePullToRefresh
 import com.binge.designsystem.component.CarouselSkeleton
@@ -55,6 +59,7 @@ import com.cooper.binge.companion.seerr.discover.sliders.seeAll
 import com.cooper.binge.companion.seerr.discover.sliders.tileGrid
 import com.cooper.binge.companion.seerr.discover.sliders.titleKind
 import com.cooper.binge.companion.seerr.discover.sliders.toCard
+import com.cooper.binge.companion.seerr.ui.shell.showDiscoverTab
 import com.cooper.binge.companion.seerr.ui.state.EmptyScreen
 import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
 import com.binge.designsystem.R as DesR
@@ -116,6 +121,7 @@ fun DiscoverHubScreen(
 
 @Composable
 private fun HubSkeleton(contentPadding: PaddingValues) {
+    val discoverTab = showDiscoverTab()
     LazyColumn(contentPadding = contentPadding) {
         item {
             HeroCarousel(
@@ -124,7 +130,7 @@ private fun HubSkeleton(contentPadding: PaddingValues) {
                 modifier = Modifier.layoutAnchor(LayoutAnchors.section(LayoutAnchors.Hub.HERO)),
             )
         }
-        item { BrowseAllSkeleton() }
+        if (!discoverTab) item { BrowseAllSkeleton() }
         items(SKELETON_ROWS) { index ->
             CarouselSkeleton(modifier = Modifier.firstCarouselAnchor(index), description = stringResource(R.string.hubs_loading_row))
         }
@@ -137,7 +143,13 @@ private fun HubSkeleton(contentPadding: PaddingValues) {
  */
 @Composable
 private fun BrowseAllSkeleton() {
-    Box(Modifier.padding(start = resolvedContentInset() + navOverlayStart(), end = resolvedContentInset() + navOverlayEnd())) {
+    Box(
+        Modifier.padding(
+            start = resolvedContentInset() + navOverlayStart(),
+            end = resolvedContentInset() + navOverlayEnd(),
+            bottom = dimensionResource(DesR.dimen.padding_m),
+        ),
+    ) {
         DiscoverEntryRow(
             title = BLANK,
             subtitle = BLANK,
@@ -166,11 +178,13 @@ private fun HubRows(
     onOpenGrid: (HubGrid, String) -> Unit,
     onOpenRequests: () -> Unit,
 ) {
+    val discoverTab = showDiscoverTab()
     val listState = rememberLazyListState()
     ScrollToTopOnTabReselect(tab.shellTab(), listState)
     LazyColumn(state = listState, modifier = Modifier.fillMaxSize(), contentPadding = contentPadding) {
         if (state.heroPlace) item(key = HERO_KEY) { Hero(state.hero, onOpenTitle) }
-        if (state.browseAll) item(key = BROWSE_ALL_KEY) { BrowseAllRow(tab, onOpenGrid) }
+        // Where Discover is a tab of its own the card is a second way to the same grid, so it is left out, as in Binge.
+        if (state.browseAll && !discoverTab) item(key = BROWSE_ALL_KEY) { BrowseAllRow(tab, onOpenGrid) }
         itemsIndexed(state.rows, key = { _, row -> row.row.sliderId }) { index, row ->
             val anchor = Modifier.firstCarouselAnchor(index)
             when (row) {
@@ -196,7 +210,10 @@ private fun BrowseAllRow(
         title = stringResource(if (movies) R.string.hubs_browse_all_movies else R.string.hubs_browse_all_tv),
         subtitle = stringResource(if (movies) R.string.hubs_browse_subtitle_movies else R.string.hubs_browse_subtitle_tv),
         onClick = { onOpenGrid(grid, gridTitle) },
-        modifier = Modifier.layoutAnchor(LayoutAnchors.section(LayoutAnchors.Hub.DISCOVER_ENTRY)),
+        modifier =
+            Modifier
+                .padding(bottom = dimensionResource(DesR.dimen.padding_m))
+                .layoutAnchor(LayoutAnchors.section(LayoutAnchors.Hub.DISCOVER_ENTRY)),
     )
 }
 
@@ -263,6 +280,7 @@ private fun Hero(
     onOpenTitle: (HubCard) -> Unit,
 ) {
     val items = hero.toHeroItems()
+    PreloadBackdrops(items.mapNotNull { it.imageUrl })
     HeroCarousel(
         items = items,
         modifier = Modifier.layoutAnchor(LayoutAnchors.section(LayoutAnchors.Hub.HERO)),
@@ -299,3 +317,16 @@ internal fun TitleAvailability.toStatus(): MediaCardStatus? =
         TitleAvailability.Available -> MediaCardStatus(stringResource(R.string.hubs_card_available), BingeSentiment.Positive)
         TitleAvailability.Blocklisted -> MediaCardStatus(stringResource(R.string.hubs_card_blocklisted), BingeSentiment.Negative)
     }
+
+/**
+ * Loads every slide's backdrop as the hero appears, so the first advance crossfades to an image already held rather than to the
+ * placeholder while it downloads.
+ */
+@Composable
+private fun PreloadBackdrops(urls: List<String>) {
+    val context = LocalContext.current
+    LaunchedEffect(urls) {
+        val loader = SingletonImageLoader.get(context)
+        urls.forEach { loader.enqueue(ImageRequest.Builder(context).data(it).build()) }
+    }
+}
