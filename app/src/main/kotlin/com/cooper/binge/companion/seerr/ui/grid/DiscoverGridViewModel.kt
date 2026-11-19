@@ -8,6 +8,7 @@ import com.cooper.binge.companion.seerr.core.grid.PagedListState
 import com.cooper.binge.companion.seerr.core.grid.SortFilterQuery
 import com.cooper.binge.companion.seerr.core.grid.SortFilterState
 import com.cooper.binge.companion.seerr.core.search.SearchPage
+import com.cooper.binge.companion.seerr.data.TitleStatusStore
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverFilters
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverGridRepository
@@ -23,6 +24,7 @@ import com.cooper.binge.companion.seerr.discover.grid.setGroups
 import com.cooper.binge.companion.seerr.discover.grid.startingFilters
 import com.cooper.binge.companion.seerr.discover.grid.startingSort
 import com.cooper.binge.companion.seerr.discover.grid.without
+import com.cooper.binge.companion.seerr.discover.overlaid
 import com.cooper.binge.companion.seerr.discover.sliders.HubCard
 import com.cooper.binge.companion.seerr.discover.sliders.HubMediaSource
 import com.cooper.binge.companion.seerr.discover.sliders.toCard
@@ -59,6 +61,7 @@ class DiscoverGridViewModel
         @Assisted("upcomingFrom") upcomingFrom: String,
         @Assisted private val initialFilters: DiscoverFilters?,
         @Assisted private val initialSort: DiscoverSort?,
+        statuses: TitleStatusStore = TitleStatusStore(),
     ) : ViewModel() {
         private val starting = preset.startingFilters(upcomingFrom)
         private val sortFilter = SortFilterState(initialFilters ?: starting, initialSort ?: preset.startingSort(kind))
@@ -72,7 +75,7 @@ class DiscoverGridViewModel
 
         val uiState: StateFlow<DiscoverGridUiState> =
             combine(
-                list.state,
+                list.state.combine(statuses.statuses) { page, held -> page.overlaid(held) },
                 sortFilter.query,
                 refinable,
                 loader.vocabulary,
