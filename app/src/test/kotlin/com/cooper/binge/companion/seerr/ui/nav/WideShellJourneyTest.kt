@@ -67,7 +67,7 @@ class WideShellJourneyTest {
     private fun awaitState(
         what: String,
         condition: () -> Boolean,
-    ) = host.await(what, WAIT_MILLIS, condition)
+    ) = host.await(what, WAIT_MILLIS, pending(), condition)
 
     @After
     fun flagOff() {
