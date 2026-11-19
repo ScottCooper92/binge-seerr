@@ -27,6 +27,9 @@ import kotlinx.coroutines.withContext
 interface SeriesDetailsRepository {
     suspend fun series(tmdbId: Int): SeriesDetails
 
+    /** Takes the show off the blocklist; a failure throws. The viewer's right to is [SeriesDetails.mayUnblock]. */
+    suspend fun unblock(tmdbId: Int)
+
     /** Ratings, recommendations and similar shows. Each part that fails or that the server lacks is empty. */
     suspend fun extras(tmdbId: Int): TitleExtras
 
@@ -72,6 +75,7 @@ class SeerrSeriesRepository(
                     canRequest = permissions.canRequestSeries,
                     keywordsOpen = profile.hasKeywordDiscover,
                     mayReport = profile.hasIssues && permissions.canReportIssues,
+                    mayUnblock = profile.hasBlocklist && permissions.canManageBlocklist,
                 )
         }
 
@@ -91,6 +95,8 @@ class SeerrSeriesRepository(
                 )
             }
         }
+
+    override suspend fun unblock(tmdbId: Int) = withContext(io) { unblockTitle(api(), profile(), tmdbId, "tv") }
 
     /** Rotten Tomatoes only: the show route has no IMDb score, and it is served on every lineage. */
     override suspend fun extras(tmdbId: Int): TitleExtras =

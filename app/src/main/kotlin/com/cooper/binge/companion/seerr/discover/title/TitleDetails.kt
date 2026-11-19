@@ -117,6 +117,8 @@ data class MovieDetails(
     val canRequest: Boolean = true,
     /** The server takes issues and this viewer may report one: its profile has them and their permissions allow it. */
     val mayReport: Boolean = false,
+    /** The viewer may take the title off the blocklist: the server has one and the account may manage it. */
+    val mayUnblock: Boolean = false,
     /** Whether the server can list what a studio made, so the studios may be links; set from its profile, never from a version here. */
     val companiesOpen: Boolean = false,
     /** Whether the server can list the titles of a keyword, so the keywords may be links; set from its profile. */
@@ -136,6 +138,9 @@ data class TitleExtras(
 /** What the film page reads. It knows nothing of Retrofit, so a view model holds this and a test holds a fake. */
 interface TitleDetailsRepository {
     suspend fun movie(tmdbId: Int): MovieDetails
+
+    /** Takes the film off the blocklist; a failure throws. The viewer's right to is [MovieDetails.mayUnblock]. */
+    suspend fun unblock(tmdbId: Int)
 
     /** The films of a collection, in release order. Any signed-in user may read them; a failed read throws. */
     suspend fun collectionParts(collectionId: Int): List<TitleResult>

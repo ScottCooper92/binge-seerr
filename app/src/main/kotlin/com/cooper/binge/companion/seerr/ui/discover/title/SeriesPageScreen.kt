@@ -23,6 +23,7 @@ import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
 import com.cooper.binge.companion.seerr.ui.state.MediaHeroDetailPage
 import com.cooper.binge.companion.seerr.ui.state.MediaHeroDetailPlaceholder
 import com.cooper.binge.companion.seerr.ui.state.WideHeader
+import com.cooper.binge.companion.seerr.ui.state.messageRes
 import kotlinx.coroutines.flow.Flow
 import com.binge.designsystem.R as DesR
 
@@ -58,6 +59,8 @@ private fun ReadySeriesPage(
         events.collect { event ->
             when (event) {
                 is SeriesPageEvent.Requested -> snackbar.showSnackbar(resources.getString(event.result.messageRes()))
+                SeriesPageEvent.Unblocked -> snackbar.showSnackbar(resources.getString(R.string.blocklist_removed))
+                is SeriesPageEvent.UnblockFailed -> snackbar.showSnackbar(resources.getString(event.error.messageRes()))
                 SeriesPageEvent.ReloadFailed -> {
                     val answer =
                         snackbar.showSnackbar(
@@ -121,6 +124,7 @@ private fun ReadySeriesPage(
             canRequest = state.series.canRequest,
             onWatch = actions.onOpenUrl,
             onDismiss = actions.onCloseStatus,
+            onUnblock = actions.onUnblock.takeIf { state.series.mayUnblock },
         )
     }
     if (state.reportSheetOpen) actions.reportSheet(actions.onCloseReport)

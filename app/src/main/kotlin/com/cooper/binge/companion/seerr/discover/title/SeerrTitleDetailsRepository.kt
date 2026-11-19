@@ -66,10 +66,13 @@ class SeerrTitleDetailsRepository(
                     canRequest = permissions.canRequestMovie,
                     keywordsOpen = profile.hasKeywordDiscover,
                     mayReport = profile.hasIssues && permissions.canReportIssues,
+                    mayUnblock = profile.hasBlocklist && permissions.canManageBlocklist,
                 )
         }
 
     override suspend fun collectionParts(collectionId: Int): List<TitleResult> = collections.collection(collectionId).parts
+
+    override suspend fun unblock(tmdbId: Int) = withContext(io) { unblockTitle(api(), profile(), tmdbId, "movie") }
 
     override suspend fun extras(
         kind: TitleKind,
@@ -238,3 +241,11 @@ internal fun com.cooper.binge.companion.seerr.seerr.SeerrRequestSummaryDto.toTit
  */
 internal fun com.cooper.binge.companion.seerr.seerr.SeerrMediaInfoDto.watchUrl(): String? =
     listOf(mediaUrl, jellyfinMediaUrl, plexUrl, mediaUrl4k, plexUrl4k).firstOrNull { !it.isNullOrBlank() }?.takeIf(::isOpenableSite)
+
+/** Takes a title off the blocklist, by the path and the media type this server's version wants. */
+internal suspend fun unblockTitle(
+    api: SeerrApi,
+    profile: SeerrServerProfile,
+    tmdbId: Int,
+    mediaType: String,
+) = api.removeFromBlocklist(profile.blocklistPath, tmdbId, profile.unblockMediaType(mediaType))

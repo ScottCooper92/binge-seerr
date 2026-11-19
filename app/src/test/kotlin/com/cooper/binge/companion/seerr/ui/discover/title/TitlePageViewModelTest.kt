@@ -70,11 +70,18 @@ private class FakeTitles(
     var failCollection: Throwable? = null,
 ) : TitleDetailsRepository {
     var movieReads = 0
+    var failUnblock: Throwable? = null
+    val unblocked = mutableListOf<Int>()
     val collectionReads = mutableListOf<Int>()
 
     override suspend fun collectionParts(collectionId: Int): List<TitleResult> {
         collectionReads += collectionId
         return failCollection?.let { throw it } ?: collection
+    }
+
+    override suspend fun unblock(tmdbId: Int) {
+        failUnblock?.let { throw it }
+        unblocked += tmdbId
     }
 
     override suspend fun movie(tmdbId: Int): MovieDetails {
@@ -223,6 +230,61 @@ class TitlePageViewModelTest {
             assertFalse(vm.ready().requestSheetOpen)
             assertEquals(
                 TitleAvailability.Pending,
+                vm
+                    .ready()
+                    .movie.standard.availability,
+            )
+        }
+
+    @Test
+    fun `unblocking takes a blocklisted title off the list reads it again and says so`() =
+        runTest {
+            val repo = FakeTitles()
+            repo.movie = movieFixture(standard = VersionState(TitleAvailability.Blocklisted, mayRequest = false)).copy(mayUnblock = true)
+            val vm = TitlePageViewModel(repo, 603)
+            vm.onPrimary()
+            assertTrue(vm.ready().statusSheetOpen)
+            repo.movie = movieFixture()
+
+            val event = awaitEvent(vm.events)
+            vm.unblock()
+
+            assertEquals(TitlePageEvent.Unblocked, event.await())
+            assertEquals(listOf(603), repo.unblocked)
+            assertFalse(vm.ready().statusSheetOpen)
+            assertEquals(
+                TitleAvailability.None,
+                vm
+                    .ready()
+                    .movie.standard.availability,
+            )
+        }
+
+    @Test
+    fun `a viewer who may not unblock never reaches the server`() {
+        val repo = FakeTitles()
+        repo.movie = movieFixture(standard = VersionState(TitleAvailability.Blocklisted, mayRequest = false))
+        val vm = TitlePageViewModel(repo, 603)
+
+        vm.unblock()
+
+        assertTrue(repo.unblocked.isEmpty())
+    }
+
+    @Test
+    fun `a refused unblock says so and leaves the title as it was`() =
+        runTest {
+            val repo = FakeTitles()
+            repo.movie = movieFixture(standard = VersionState(TitleAvailability.Blocklisted, mayRequest = false)).copy(mayUnblock = true)
+            repo.failUnblock = IOException("down")
+            val vm = TitlePageViewModel(repo, 603)
+
+            val event = awaitEvent(vm.events)
+            vm.unblock()
+
+            assertTrue(event.await() is TitlePageEvent.UnblockFailed)
+            assertEquals(
+                TitleAvailability.Blocklisted,
                 vm
                     .ready()
                     .movie.standard.availability,

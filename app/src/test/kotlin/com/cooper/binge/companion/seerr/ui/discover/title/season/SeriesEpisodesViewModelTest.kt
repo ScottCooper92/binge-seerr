@@ -32,6 +32,8 @@ private class FakeEpisodes(
     override suspend fun series(tmdbId: Int): SeriesDetails = failSeries?.let { throw it } ?: series
 
     override suspend fun extras(tmdbId: Int): TitleExtras = error("not read here")
+
+    override suspend fun unblock(tmdbId: Int) = error("not used here")
 }
 
 class SeriesEpisodesViewModelTest {

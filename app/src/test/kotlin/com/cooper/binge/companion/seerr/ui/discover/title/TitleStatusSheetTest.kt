@@ -7,6 +7,7 @@ import androidx.compose.ui.test.performClick
 import com.cooper.binge.companion.seerr.theme.SeerrTheme
 import com.cooper.binge.companion.seerr.util.createSeerrComposeRule
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -24,7 +25,8 @@ class TitleStatusSheetTest {
         serverName: String? = "Plex",
         canRequest: Boolean = true,
         onWatch: (String) -> Unit = {},
-    ) = rule.setContent { SeerrTheme { TitleStatusSheetContent(state, watchUrl, serverName, canRequest, onWatch) } }
+        onUnblock: (() -> Unit)? = null,
+    ) = rule.setContent { SeerrTheme { TitleStatusSheetContent(state, watchUrl, serverName, canRequest, onWatch, onUnblock = onUnblock) } }
 
     @Test
     fun `an available title offers Watch on the media server and opens its link`() {
@@ -64,6 +66,30 @@ class TitleStatusSheetTest {
 
         rule.onNodeWithText("This title is on its way to the library.").assertIsDisplayed()
         rule.onNodeWithText("Another user requested this title.").assertDoesNotExist()
+    }
+
+    @Test
+    fun `a blocklisted title offers Unblock to a viewer who may and runs it`() {
+        var unblocked = false
+        show(TitleState.Blocklisted, onUnblock = { unblocked = true })
+
+        rule.onNodeWithText("Unblock").assertIsDisplayed().performClick()
+
+        assertTrue(unblocked)
+    }
+
+    @Test
+    fun `a blocklisted title offers no Unblock to a viewer who may not`() {
+        show(TitleState.Blocklisted)
+
+        rule.onNodeWithText("Unblock").assertDoesNotExist()
+    }
+
+    @Test
+    fun `a title that is not blocklisted never offers Unblock`() {
+        show(TitleState.Requested, onUnblock = {})
+
+        rule.onNodeWithText("Unblock").assertDoesNotExist()
     }
 
     @Test

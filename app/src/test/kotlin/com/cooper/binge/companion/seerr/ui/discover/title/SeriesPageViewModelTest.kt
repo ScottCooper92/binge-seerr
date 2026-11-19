@@ -83,6 +83,13 @@ private class FakeSeries(
     var failSeasons: Throwable? = null,
 ) : SeriesDetailsRepository {
     val seasonReads = mutableListOf<Int>()
+    var failUnblock: Throwable? = null
+    val unblocked = mutableListOf<Int>()
+
+    override suspend fun unblock(tmdbId: Int) {
+        failUnblock?.let { throw it }
+        unblocked += tmdbId
+    }
 
     override suspend fun season(
         tmdbId: Int,
@@ -209,6 +216,61 @@ class SeriesPageViewModelTest {
 
         assertTrue(vm.ready().requestSheetFourK)
     }
+
+    @Test
+    fun `unblocking takes a blocklisted title off the list reads it again and says so`() =
+        runTest {
+            val repo = FakeSeries()
+            repo.series = seriesFixture(standard = VersionState(TitleAvailability.Blocklisted, mayRequest = false)).copy(mayUnblock = true)
+            val vm = SeriesPageViewModel(repo, 1399)
+            vm.onPrimary()
+            assertTrue(vm.ready().statusSheetOpen)
+            repo.series = seriesFixture()
+
+            val event = awaitEvent(vm.events)
+            vm.unblock()
+
+            assertEquals(SeriesPageEvent.Unblocked, event.await())
+            assertEquals(listOf(1399), repo.unblocked)
+            assertFalse(vm.ready().statusSheetOpen)
+            assertEquals(
+                TitleAvailability.None,
+                vm
+                    .ready()
+                    .series.standard.availability,
+            )
+        }
+
+    @Test
+    fun `a viewer who may not unblock never reaches the server`() {
+        val repo = FakeSeries()
+        repo.series = seriesFixture(standard = VersionState(TitleAvailability.Blocklisted, mayRequest = false))
+        val vm = SeriesPageViewModel(repo, 1399)
+
+        vm.unblock()
+
+        assertTrue(repo.unblocked.isEmpty())
+    }
+
+    @Test
+    fun `a refused unblock says so and leaves the title as it was`() =
+        runTest {
+            val repo = FakeSeries()
+            repo.series = seriesFixture(standard = VersionState(TitleAvailability.Blocklisted, mayRequest = false)).copy(mayUnblock = true)
+            repo.failUnblock = IOException("down")
+            val vm = SeriesPageViewModel(repo, 1399)
+
+            val event = awaitEvent(vm.events)
+            vm.unblock()
+
+            assertTrue(event.await() is SeriesPageEvent.UnblockFailed)
+            assertEquals(
+                TitleAvailability.Blocklisted,
+                vm
+                    .ready()
+                    .series.standard.availability,
+            )
+        }
 
     @Test
     fun `a request that went through closes the sheet says so and reads the show again`() =
