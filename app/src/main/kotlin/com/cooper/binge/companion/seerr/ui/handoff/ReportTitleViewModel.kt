@@ -151,6 +151,16 @@ class ReportTitleViewModel
             }
         }
 
+        /**
+         * The form is closed: it comes back empty, ready for another report. A send still in flight is left alone, since clearing
+         * [IssueReport.Sending] would let a second post fire when the form reopens.
+         */
+        fun dismiss() =
+            state.update { current ->
+                val ready = current as? ReportTitleUiState.Ready ?: return@update current
+                if (ready.report == IssueReport.Sending) ready else ready.copy(report = IssueReport.Idle)
+            }
+
         @AssistedFactory
         interface Factory {
             fun create(link: TitleReportLink): ReportTitleViewModel

@@ -32,7 +32,10 @@ internal fun TitleReportSheet(
                 onSend = viewModel::send,
                 onOpenApp = onClose,
                 onReportAnyway = viewModel::reportAnyway,
-                onClose = onClose,
+                onClose = {
+                    viewModel.dismiss()
+                    onClose()
+                },
             ),
     )
 }
