@@ -84,5 +84,11 @@ fun String.insecurePublicHostOrNull(): String? {
 /** Only an `http(s)` address is handed to a browser. */
 fun String.isWebUrl(): Boolean = startsWith("http://", ignoreCase = true) || startsWith("https://", ignoreCase = true)
 
+/**
+ * Whether [url] can be a real site: http or https, and not under `.invalid`, the reserved name that never resolves. The
+ * demo's address is one, so a title there goes nowhere rather than to a dead page, and nothing here knows of the demo.
+ */
+fun isOpenableSite(url: String): Boolean = url.toHttpUrlOrNull()?.host?.let { it != "invalid" && !it.endsWith(".invalid") } ?: false
+
 /** Whether [this] parses as a base URL once normalised — the check a setup screen makes before connecting. */
 fun String.isValidBaseUrl(): Boolean = ServerAddress.parse(this) != null
