@@ -33,6 +33,7 @@ import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.DiscoverQuickClearChip
 import com.binge.designsystem.component.MediaCard
 import com.binge.designsystem.component.QuickClearTone
+import com.binge.designsystem.component.ScrollToTopOnTabReselect
 import com.binge.designsystem.component.rememberPaneTopBarScrollBehavior
 import com.binge.designsystem.navOverlayPadding
 import com.binge.designsystem.template.BingeScreenScaffold
@@ -72,7 +73,8 @@ private const val PILL_INTERACTIVE_COLLAPSE = 0.5f
 
 /**
  * The "see all" grid: a bar of the order and the filter the row started with, over a paged grid of posters. [firstVisibleIndex] starts it
- * scrolled, for a frame of the grid mid-list.
+ * scrolled, for a frame of the grid mid-list. [reselectKey] is the tab this grid is the root of: a tap on that tab again scrolls it to
+ * the top. A grid opened from a row has none.
  */
 @Composable
 internal fun DiscoverGridScreen(
@@ -81,6 +83,7 @@ internal fun DiscoverGridScreen(
     state: DiscoverGridUiState,
     actions: DiscoverGridActions,
     firstVisibleIndex: Int = 0,
+    reselectKey: Any? = null,
 ) {
     val scrollBehavior = rememberPaneTopBarScrollBehavior()
     var filtersOpen by rememberSaveable { mutableStateOf(false) }
@@ -124,7 +127,7 @@ internal fun DiscoverGridScreen(
                         modifier = Modifier.padding(inner),
                     )
                 is DiscoverGridUiState.Error -> ErrorScreen(state.error, Modifier.padding(inner), onRetry = actions.onRetry)
-                is DiscoverGridUiState.Ready -> PosterGrid(state, inner, actions, firstVisibleIndex)
+                is DiscoverGridUiState.Ready -> PosterGrid(state, inner, actions, firstVisibleIndex, reselectKey)
             }
         }
     }
@@ -204,8 +207,10 @@ private fun PosterGrid(
     contentPadding: PaddingValues,
     actions: DiscoverGridActions,
     firstVisibleIndex: Int,
+    reselectKey: Any?,
 ) {
     val gridState = rememberLazyGridState(initialFirstVisibleItemIndex = firstVisibleIndex)
+    if (reselectKey != null) ScrollToTopOnTabReselect(reselectKey, gridState)
     val nearEnd by remember {
         derivedStateOf {
             val info = gridState.layoutInfo

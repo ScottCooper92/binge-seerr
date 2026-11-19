@@ -12,7 +12,9 @@ import com.cooper.binge.companion.seerr.discover.title.TitleRatings
 import com.cooper.binge.companion.seerr.discover.title.TitleRequest
 import com.cooper.binge.companion.seerr.discover.title.VersionState
 import com.cooper.binge.companion.seerr.seerr.SeerrRequestStatusCode
+import com.cooper.binge.companion.seerr.telemetry.AnalyticsEvents
 import com.cooper.binge.companion.seerr.util.MainDispatcherRule
+import com.cooper.binge.companion.seerr.util.RecordingAnalytics
 import com.cooper.binge.companion.seerr.util.awaitEvent
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
@@ -269,6 +271,40 @@ class TitlePageViewModelTest {
                     .ready()
                     .movie.standard.availability,
             )
+        }
+
+    @Test
+    fun `a successful unblock is counted as a blocklist change`() =
+        runTest {
+            val repo = FakeTitles()
+            repo.movie = movieFixture(standard = VersionState(TitleAvailability.Blocklisted, mayRequest = false)).copy(mayUnblock = true)
+            val analytics = RecordingAnalytics()
+            val vm = TitlePageViewModel(repo, 603, analytics)
+            val event = awaitEvent(vm.events)
+
+            vm.unblock()
+            event.await()
+
+            assertEquals(
+                listOf(AnalyticsEvents.BLOCKLIST_CHANGED to mapOf<String, Any>(AnalyticsEvents.PARAM_ACTION to "movie_unblocked")),
+                analytics.events,
+            )
+        }
+
+    @Test
+    fun `a refused unblock is not counted`() =
+        runTest {
+            val repo = FakeTitles()
+            repo.movie = movieFixture(standard = VersionState(TitleAvailability.Blocklisted, mayRequest = false)).copy(mayUnblock = true)
+            repo.failUnblock = IOException("down")
+            val analytics = RecordingAnalytics()
+            val vm = TitlePageViewModel(repo, 603, analytics)
+            val event = awaitEvent(vm.events)
+
+            vm.unblock()
+            event.await()
+
+            assertTrue(analytics.events.isEmpty())
         }
 
     @Test

@@ -156,8 +156,9 @@ internal fun List<NavKey>.nothingOpenBesideHub(): Boolean =
 internal fun List<NavKey>.coversWindow(): Boolean = size > 1 && first() == ShellRoute && !this[1].opensBesideHub()
 
 /**
- * Whether [ShellPanesStrategy] draws this route in the Settings tab's content pane when it is the first thing above the shell: a hub
- * section, or the settings search. The strategy's marker, the stash and [coversWindow] all ask this, so they cannot disagree.
+ * Whether this route is drawn in the Settings tab's content pane when it is the first thing above the shell: a hub section, or the
+ * settings search. The stash and [coversWindow] ask this of the key. [ShellPanesStrategy] reads the [SectionPane] marker on the
+ * entry instead, so the two are kept in step by hand, and `SectionMarkerAgreementTest` fails when a route has one and not the other.
  */
 internal fun NavKey.opensBesideHub(): Boolean = hubSection() != null || this == SettingsSearchRoute
 
@@ -208,10 +209,17 @@ internal fun NavBackStack<NavKey>.openAboveDefault(route: NavKey) {
 
 /**
  * The section the hub marks as open: the one on the stack, or [DefaultSection] while it is the
- * placeholder beside the hub. Nothing is marked when a screen other than a section fills the pane.
+ * placeholder beside the hub. Nothing is marked when a screen other than a section fills the pane: the settings search, or a page
+ * opened from one of its results, even with a section still open beneath it. The mark returns when the search closes (#2380).
  */
 internal fun List<NavKey>.selectedSection(defaultShowing: Boolean): HubSection? =
-    firstNotNullOfOrNull { it.hubSection() } ?: DefaultSection.takeIf { defaultShowing && size == 1 }
+    if (SettingsSearchRoute in
+        this
+    ) {
+        null
+    } else {
+        firstNotNullOfOrNull { it.hubSection() } ?: DefaultSection.takeIf { defaultShowing && size == 1 }
+    }
 
 /**
  * How many entries sit above [HubRoute] on the way to whatever is on screen now: 1 for a screen

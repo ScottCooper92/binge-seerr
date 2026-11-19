@@ -11,6 +11,9 @@ import com.cooper.binge.companion.seerr.discover.title.TitleDetailsRepository
 import com.cooper.binge.companion.seerr.discover.title.TitleExtras
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
+import com.cooper.binge.companion.seerr.telemetry.AnalyticsEvents
+import com.cooper.homelab.core.telemetry.Analytics
+import com.cooper.homelab.core.telemetry.NoOpAnalytics
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -85,6 +88,7 @@ class TitlePageViewModel
     constructor(
         private val repository: TitleDetailsRepository,
         @Assisted private val tmdbId: Int,
+        private val analytics: Analytics = NoOpAnalytics,
     ) : ViewModel() {
         @AssistedFactory
         interface Factory {
@@ -167,6 +171,7 @@ class TitlePageViewModel
             viewModelScope.launch {
                 attempt { repository.unblock(tmdbId) }.fold(
                     onSuccess = {
+                        analytics.event(AnalyticsEvents.BLOCKLIST_CHANGED, mapOf(AnalyticsEvents.PARAM_ACTION to "movie_unblocked"))
                         eventFlow.tryEmit(TitlePageEvent.Unblocked)
                         reload()
                     },
