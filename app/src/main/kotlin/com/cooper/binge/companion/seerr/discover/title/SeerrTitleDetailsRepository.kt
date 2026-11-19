@@ -92,6 +92,8 @@ class SeerrTitleDetailsRepository(
     override suspend fun unblock(tmdbId: Int) =
         withContext(io) { statuses.unblocking(TitleKey(TitleType.Movie, tmdbId)) { api().unblockTitle(profile(), tmdbId, "movie") } }
 
+    override suspend fun serverProfile(): SeerrServerProfile? = attempt { profile() }.getOrNull()
+
     override suspend fun extras(
         kind: TitleKind,
         tmdbId: Int,

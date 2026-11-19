@@ -4,6 +4,7 @@ import com.cooper.binge.companion.seerr.discover.TitleAvailability
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.TitleResult
 import com.cooper.binge.companion.seerr.seerr.SeerrRequestStatusCode
+import com.cooper.binge.companion.seerr.seerr.SeerrServerProfile
 
 /** A person on a title: [role] is a character for cast and a job for crew. [photoUrl] is a full URL. */
 data class TitlePerson(
@@ -145,6 +146,9 @@ interface TitleDetailsRepository {
 
     /** Takes the film off the blocklist; a failure throws. The viewer's right to is [MovieDetails.mayUnblock]. */
     suspend fun unblock(tmdbId: Int)
+
+    /** The server's lineage and version, for the failure event only; null where it cannot be read. */
+    suspend fun serverProfile(): SeerrServerProfile?
 
     /** Puts the film on the signed-in user's watchlist, or takes it off; a failure throws. */
     suspend fun setWatchlist(
