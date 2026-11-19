@@ -139,6 +139,14 @@ class TabShellStateTest {
     }
 
     @Test
+    fun `select says whether the tab was already showing`() {
+        val shell = state()
+
+        assertEquals(false, shell.select(Tab.Two))
+        assertEquals(true, shell.select(Tab.Two))
+    }
+
+    @Test
     fun `restart shows the start tab and takes every stack and the app stack back to its root`() {
         val stacks = SeerrTab.entries.associateWith { NavBackStack<NavKey>(MoviesRoot) }
         stacks.getValue(SeerrTab.Movies).push(Page(1))

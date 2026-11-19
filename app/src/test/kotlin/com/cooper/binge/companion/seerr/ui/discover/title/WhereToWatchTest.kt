@@ -2,7 +2,9 @@ package com.cooper.binge.companion.seerr.ui.discover.title
 
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.cooper.binge.companion.seerr.discover.title.TitleProvider
@@ -66,13 +68,13 @@ class WhereToWatchTest {
         show(providers(listOf(provider(1, "Stream One")), listOf(provider(2, "Store One"))))
 
         rule.onNodeWithText("Where to watch").assertIsDisplayed()
-        rule.onNodeWithText("Stream One").assertIsDisplayed()
-        rule.onAllNodesWithText("Store One").assertCountEquals(0)
+        rule.onNodeWithContentDescription("Stream One, opens outside the app").assertIsDisplayed()
+        rule.onAllNodesWithContentDescription("Store One, opens outside the app").assertCountEquals(0)
 
         rule.onNodeWithText("Buy").performClick()
 
-        rule.onNodeWithText("Store One").assertIsDisplayed()
-        rule.onAllNodesWithText("Stream One").assertCountEquals(0)
+        rule.onNodeWithContentDescription("Store One, opens outside the app").assertIsDisplayed()
+        rule.onAllNodesWithContentDescription("Stream One, opens outside the app").assertCountEquals(0)
         rule.onNodeWithText("Data provided by JustWatch").assertIsDisplayed()
     }
 
@@ -80,7 +82,7 @@ class WhereToWatchTest {
     fun `a provider the server lists twice in a kind is shown once`() {
         show(providers(listOf(provider(1, "Stream One"), provider(1, "Stream One")), emptyList()))
 
-        rule.onAllNodesWithText("Stream One").assertCountEquals(1)
+        rule.onAllNodesWithContentDescription("Stream One, opens outside the app").assertCountEquals(1)
     }
 
     @Test
@@ -89,7 +91,7 @@ class WhereToWatchTest {
 
         rule.onAllNodesWithText("Stream").assertCountEquals(0)
         rule.onNodeWithText("Buy").assertIsDisplayed()
-        rule.onNodeWithText("Store One").assertIsDisplayed()
+        rule.onNodeWithContentDescription("Store One, opens outside the app").assertIsDisplayed()
     }
 
     @Test
@@ -97,7 +99,7 @@ class WhereToWatchTest {
         val opened = mutableListOf<String>()
         show(providers(listOf(provider(1, "Stream One")), emptyList()), opened)
 
-        rule.onNodeWithText("Stream One").performClick()
+        rule.onNodeWithContentDescription("Stream One, opens outside the app").performClick()
 
         assertEquals(listOf("https://watch.example/gb"), opened)
     }
