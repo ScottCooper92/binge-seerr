@@ -10,6 +10,7 @@ import com.cooper.binge.companion.seerr.discover.sliders.HubHero
 import com.cooper.binge.companion.seerr.discover.sliders.HubRow
 import com.cooper.binge.companion.seerr.discover.sliders.HubTab
 import com.cooper.binge.companion.seerr.discover.sliders.HubTile
+import com.cooper.binge.companion.seerr.discover.title.TitleRatings
 import com.cooper.binge.companion.seerr.preview.SeerrFontScale13Previews
 import com.cooper.binge.companion.seerr.preview.SeerrFontScalePreviews
 import com.cooper.binge.companion.seerr.preview.SeerrScreenPreviews
@@ -229,6 +230,7 @@ private fun hero(
     availability: TitleAvailability,
     genres: List<String> = listOf("Action", "Adventure"),
     rating: Float? = null,
+    ratings: TitleRatings? = null,
 ) = HubHero(
     TitleKind.Movie,
     id,
@@ -240,12 +242,13 @@ private fun hero(
     genres,
     rank = id,
     rating = rating,
+    ratings = ratings,
 )
 
 private val HEROES =
     listOf(
-        hero(1, "The Long Way Home", TitleAvailability.Available, rating = 7.9f),
-        hero(2, "Northern Lights", TitleAvailability.Pending, rating = 6.4f),
+        hero(1, "The Long Way Home", TitleAvailability.Available, rating = 7.9f, ratings = TitleRatings(97, 91, 7.9)),
+        hero(2, "Northern Lights", TitleAvailability.Pending, rating = 6.4f, ratings = TitleRatings(41, 78, null)),
         hero(3, "A Quiet Harbour", TitleAvailability.None),
     )
 
@@ -256,4 +259,5 @@ private val LONG_HERO =
         TitleAvailability.PartiallyAvailable,
         genres = listOf("Science Fiction & Fantasy", "Adventure", "Action"),
         rating = 8.1f,
+        ratings = TitleRatings(88, 84, 8.1),
     )
