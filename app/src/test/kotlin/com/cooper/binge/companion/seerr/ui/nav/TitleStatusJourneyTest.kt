@@ -4,8 +4,6 @@ import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onFirst
-import androidx.compose.ui.test.onLast
-import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
 import androidx.navigation3.runtime.NavKey
@@ -66,6 +64,16 @@ class TitleStatusJourneyTest {
             .fetchSemanticsNodes()
             .isNotEmpty()
 
+    /**
+     * The "Request" that is lowest on screen. The page's own button and the sheet's share a label, and a click that reaches the
+     * page's button through the sheet's scrim only dismisses the sheet, so the one pinned in the sheet's footer is the one wanted.
+     */
+    private fun lowestRequest(): SemanticsNodeInteraction {
+        val nodes = host.compose.onAllNodes(hasText(request))
+        val lowest = nodes.fetchSemanticsNodes().withIndex().maxByOrNull { it.value.boundsInRoot.top }?.index ?: 0
+        return nodes[lowest]
+    }
+
     /** Opens [FILM]'s page from its card, requests it from the sheet, and comes back with Back. */
     private fun requestFromTheCardAndGoBack() {
         host.clickUntil("the page of $FILM", target = { card().performScrollTo() }, reached = { host.isShowing(request, exactly = true) })
@@ -76,7 +84,7 @@ class TitleStatusJourneyTest {
         )
         host.clickUntil(
             "$FILM requested",
-            target = { host.compose.onAllNodes(hasText(request)).onLast() },
+            target = { lowestRequest() },
             reached = { host.isShowing(requested, exactly = true) },
         )
         host.back()
