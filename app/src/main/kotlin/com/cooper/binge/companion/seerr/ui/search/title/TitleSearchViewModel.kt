@@ -13,6 +13,8 @@ import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.TitleListRepository
 import com.cooper.binge.companion.seerr.discover.TitleResult
 import com.cooper.binge.companion.seerr.discover.TitleSource
+import com.cooper.binge.companion.seerr.discover.grid.DiscoverGridRepository
+import com.cooper.binge.companion.seerr.discover.grid.GridPreset
 import com.cooper.binge.companion.seerr.discover.sliders.HubCard
 import com.cooper.binge.companion.seerr.discover.sliders.HubMediaSource
 import com.cooper.binge.companion.seerr.discover.sliders.toCard
@@ -43,6 +45,7 @@ class TitleSearchViewModel
         studios: StudioSearch,
         history: QueryHistory,
         private val media: HubMediaSource,
+        private val grid: DiscoverGridRepository,
     ) : ViewModel() {
         private val eventFlow = MutableSharedFlow<TitleSearchEvent>(extraBufferCapacity = 1)
         val events: SharedFlow<TitleSearchEvent> = eventFlow.asSharedFlow()
@@ -70,17 +73,20 @@ class TitleSearchViewModel
         private val type = MutableStateFlow(SearchType.All)
         private val trending = MutableStateFlow<Trending>(Trending.Loading)
         private val genreNames = MutableStateFlow<Map<Int, String>>(emptyMap())
+        private val browseAll = MutableStateFlow(true)
+        private val lookups = combine(genreNames, browseAll, ::Pair)
 
-        /** What the lists around the results come from: the trending rails and the genre names, which share one flow. */
-        private val around = combine(trending, genreNames) { trending, genres -> trending to genres }
+        /** What surrounds the results: the trending rails with the genre names and the Browse all answer, which share one flow. */
+        private val around = combine(trending, lookups) { trending, lookups -> trending to lookups }
 
         val uiState: StateFlow<TitleSearchUiState> =
-            combine(search.query, search.state, studioSearch.state, type, around) { text, state, studios, type, (trending, genres) ->
-                state.toUiState(text, type, trending, genres, studios)
+            combine(search.query, search.state, studioSearch.state, type, around) { text, state, studios, type, (trending, lookups) ->
+                state.toUiState(text, type, trending, lookups.first, lookups.second, studios)
             }.stateIn(viewModelScope, SharingStarted.Lazily, TitleSearchUiState.Idle("", emptyList()))
 
         init {
             loadTrending()
+            viewModelScope.launch { browseAll.value = attempt { grid.canRefine(GridPreset.Popular) }.getOrDefault(true) }
             viewModelScope.launch { genreNames.value = attempt { titles.allGenreNames() }.getOrDefault(emptyMap()) }
         }
 
@@ -175,6 +181,7 @@ internal fun QuerySearchState<TitleResult>.toUiState(
     type: SearchType,
     trending: Trending,
     genreNames: Map<Int, String>,
+    browseAll: Boolean = true,
     studios: QuerySearchState<StudioResult> = QuerySearchState.Idle(emptyList()),
 ): TitleSearchUiState {
     val found = studios as? QuerySearchState.Results
@@ -201,7 +208,14 @@ internal fun QuerySearchState<TitleResult>.toUiState(
         is QuerySearchState.Idle -> TitleSearchUiState.Idle(text, recents, trending)
         is QuerySearchState.Loading -> TitleSearchUiState.Loading(text)
         is QuerySearchState.Results -> ready(items.distinctBy(TitleResult::key), this)
-        is QuerySearchState.NoResults -> if (found != null) ready(emptyList(), null) else TitleSearchUiState.NoResults(text, query, type)
+        is QuerySearchState.NoResults ->
+            if (found !=
+                null
+            ) {
+                ready(emptyList(), null)
+            } else {
+                TitleSearchUiState.NoResults(text, query, type, browseAll)
+            }
         is QuerySearchState.Failed -> TitleSearchUiState.Error(text, cause.toSeerrError())
     }
 }

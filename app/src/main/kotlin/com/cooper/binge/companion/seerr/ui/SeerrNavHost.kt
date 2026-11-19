@@ -132,7 +132,7 @@ private fun EntryProviderScope<NavKey>.homeEntries(
             val hubBeside = panes.hubBeside()
             val stack = backStack.toList()
             LaunchedEffect(tabs.selected, hubBeside, stack) { if (hubBeside) tabs.settleSectionStash(backStack) }
-            SeerrTabShell(tabs, discover = {
+            SeerrTabShell(tabs, backToStart = stack.nothingOpenBesideHub(), discover = {
                 DiscoverHubEntry(
                     it,
                     onOpenGrid = { grid, title -> backStack.push(DiscoverGridRoute(grid.kind, grid.preset, title)) },

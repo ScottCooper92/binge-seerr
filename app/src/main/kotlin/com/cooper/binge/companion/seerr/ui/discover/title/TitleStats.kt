@@ -1,6 +1,5 @@
 package com.cooper.binge.companion.seerr.ui.discover.title
 
-import android.icu.text.CompactDecimalFormat
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Schedule
@@ -12,6 +11,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.DetailStat
 import com.binge.designsystem.component.DetailStatRow
+import com.binge.designsystem.formatVoteCount
 import com.binge.designsystem.layout.LayoutAnchors
 import com.binge.designsystem.layout.layoutAnchor
 import com.cooper.binge.companion.seerr.R
@@ -40,7 +40,7 @@ internal fun ratingStat(
     voteCount: Int?,
     locale: Locale,
 ): DetailStat? {
-    val votes = voteCount?.let { stringResource(R.string.title_page_stat_votes, compactNumber(it, locale)) }
+    val votes = voteCount?.let { stringResource(R.string.title_page_stat_votes, it.formatVoteCount()) }
     val label = votes ?: stringResource(R.string.title_page_stat_rating)
     return voteAverage?.let { DetailStat(Icons.Filled.Star, "%.1f".format(locale, it), label) }
 }
@@ -65,8 +65,3 @@ internal fun TitleStatsRows(stats: List<DetailStat>) {
         )
     }
 }
-
-private fun compactNumber(
-    value: Int,
-    locale: Locale,
-): String = CompactDecimalFormat.getInstance(locale, CompactDecimalFormat.CompactStyle.SHORT).format(value.toLong())

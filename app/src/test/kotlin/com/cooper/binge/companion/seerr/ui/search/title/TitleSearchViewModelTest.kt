@@ -12,6 +12,10 @@ import com.cooper.binge.companion.seerr.discover.TitleListRepository
 import com.cooper.binge.companion.seerr.discover.TitlePage
 import com.cooper.binge.companion.seerr.discover.TitleResult
 import com.cooper.binge.companion.seerr.discover.TitleSource
+import com.cooper.binge.companion.seerr.discover.grid.DiscoverGridRepository
+import com.cooper.binge.companion.seerr.discover.grid.FilterOption
+import com.cooper.binge.companion.seerr.discover.grid.GridPreset
+import com.cooper.binge.companion.seerr.discover.grid.GridRequest
 import com.cooper.binge.companion.seerr.discover.sliders.HubMediaSource
 import com.cooper.binge.companion.seerr.seerr.HydratedTitle
 import com.cooper.binge.companion.seerr.seerr.SeerrError
@@ -81,6 +85,22 @@ class TitleSearchViewModelTest {
         }
     }
 
+    private class FakeGrid(
+        var canRefine: Boolean = true,
+    ) : DiscoverGridRepository {
+        override suspend fun canRefine(preset: GridPreset): Boolean = canRefine
+
+        override suspend fun genres(kind: TitleKind): List<FilterOption> = emptyList()
+
+        override suspend fun languages(): List<FilterOption> = emptyList()
+
+        override suspend fun load(
+            request: GridRequest,
+            page: Int,
+        ): TitlePage = error("unused")
+    }
+
+    private val grid = FakeGrid()
     private val history = FakeHistory(listOf("alien"))
     private val media =
         object : HubMediaSource {
@@ -102,7 +122,7 @@ class TitleSearchViewModelTest {
     /** Runs [block] with the view model's state being collected, on the test's scheduler, and stops the collector after. */
     private fun runVm(block: suspend TestScope.(TitleSearchViewModel) -> Unit) =
         runTest {
-            val vm = TitleSearchViewModel(titles, studios, history, media)
+            val vm = TitleSearchViewModel(titles, studios, history, media, grid)
             val collector = launch(UnconfinedTestDispatcher(testScheduler)) { vm.uiState.collect {} }
             try {
                 block(vm)
@@ -133,7 +153,7 @@ class TitleSearchViewModelTest {
     fun `a trending failure leaves the rails out and clearing the field asks again`() =
         runVm { vm ->
             titles.trending = { throw IOException("down") }
-            val failing = TitleSearchViewModel(titles, studios, history, media)
+            val failing = TitleSearchViewModel(titles, studios, history, media, grid)
             val collector = launch(UnconfinedTestDispatcher(testScheduler)) { failing.uiState.collect {} }
             advanceUntilIdle()
             assertEquals(Trending.Unavailable, (failing.uiState.value as TitleSearchUiState.Idle).trending)
@@ -145,15 +165,25 @@ class TitleSearchViewModelTest {
         }
 
     @Test
-    fun `the type chips count what has loaded and All is their sum, whatever total the server gave`() =
+    fun `the type chips count what has loaded and All counts every row, collections too, whatever total the server gave`() =
         runVm { vm ->
             titles.answer = { _, page ->
-                TitlePage(listOf(title(page), title(page + 10, TitleKind.Series), title(page + 20, TitleKind.Person)), page, 5, total = 50)
+                TitlePage(
+                    listOf(
+                        title(page),
+                        title(page + 10, TitleKind.Series),
+                        title(page + 20, TitleKind.Person),
+                        title(page + 30, TitleKind.Collection),
+                    ),
+                    page,
+                    5,
+                    total = 50,
+                )
             }
             vm.onQueryChange("matrix")
             advanceUntilIdle()
             val ready = vm.uiState.value as TitleSearchUiState.Ready
-            assertEquals(3, ready.counts[SearchType.All])
+            assertEquals(4, ready.counts[SearchType.All])
             assertEquals(1, ready.counts[SearchType.Movies])
             assertEquals(1, ready.counts[SearchType.Series])
             assertEquals(1, ready.counts[SearchType.People])
@@ -226,6 +256,19 @@ class TitleSearchViewModelTest {
             vm.onQueryChange("zzzz")
             advanceUntilIdle()
             assertEquals(TitleSearchUiState.NoResults("zzzz", "zzzz", SearchType.All), vm.uiState.value)
+        }
+
+    @Test
+    fun `a server that cannot filter the grid has no browse all after no results`() =
+        runVm { vm ->
+            grid.canRefine = false
+            val fresh = TitleSearchViewModel(titles, studios, history, media, grid)
+            val collector = launch(UnconfinedTestDispatcher(testScheduler)) { fresh.uiState.collect {} }
+            titles.answer = { _, page -> TitlePage(emptyList(), page, 1) }
+            fresh.onQueryChange("zzzz")
+            advanceUntilIdle()
+            assertEquals(TitleSearchUiState.NoResults("zzzz", "zzzz", SearchType.All, browseAll = false), fresh.uiState.value)
+            collector.cancel()
         }
 
     @Test

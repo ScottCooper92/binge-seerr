@@ -22,11 +22,14 @@ class TitleSearchNoResultsTest {
 
     private var opened: HubGrid? = null
 
-    private fun show(type: SearchType) {
+    private fun show(
+        type: SearchType,
+        browseAll: Boolean = true,
+    ) {
         rule.setContent {
             SeerrTheme {
                 TitleSearchScreen(
-                    state = TitleSearchUiState.NoResults("qzxv", "qzxv", type),
+                    state = TitleSearchUiState.NoResults("qzxv", "qzxv", type, browseAll),
                     actions = TitleSearchActions({}, {}, {}, {}, {}, {}, {}, {}, {}, { grid, _ -> opened = grid }, {}),
                 )
             }
@@ -58,5 +61,13 @@ class TitleSearchNoResultsTest {
         rule.onNodeWithText("Browse all shows").performClick()
 
         assertEquals(HubGrid(TitleKind.Series, GridPreset.Popular), opened)
+    }
+
+    @Test
+    fun `the browse row is absent when the server cannot filter the grid`() {
+        show(SearchType.All, browseAll = false)
+
+        rule.onNodeWithText("Browse all movies").assertDoesNotExist()
+        rule.onNodeWithText("Try another query.").assertExists()
     }
 }
