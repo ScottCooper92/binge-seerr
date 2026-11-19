@@ -5,9 +5,6 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
 import com.cooper.binge.companion.seerr.BuildConfig
-import com.cooper.binge.companion.seerr.flags.DiscoveryGate
-import com.cooper.binge.companion.seerr.flags.DiscoveryPrefs
-import com.cooper.binge.companion.seerr.flags.PrefsDiscoveryGate
 import com.cooper.binge.companion.seerr.flags.RemoteFlagKeys
 import com.cooper.binge.companion.seerr.notifications.ApplicationScope
 import com.cooper.homelab.core.flags.DataStoreFlagOverrides
@@ -27,8 +24,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import javax.inject.Singleton
-
-private val Context.discoveryDataStore: DataStore<Preferences> by preferencesDataStore(name = "seerr_discovery")
 
 internal val Context.flagOverridesDataStore: DataStore<Preferences> by preferencesDataStore(name = "flag_overrides")
 
@@ -66,13 +61,4 @@ object FlagsModule {
         val initial = if (BuildConfig.DEBUG) runBlocking { overrides.values.first() } else emptyMap()
         return RemoteFeatureFlags(source, overrides, scope, io, initial, seedFromCache = true)
     }
-
-    /** Discovery is the remote flag and the user's own preference; every reader goes through this. */
-    @Provides
-    @Singleton
-    fun discoveryGate(
-        @ApplicationContext context: Context,
-        featureFlags: FeatureFlags,
-        @ApplicationScope scope: CoroutineScope,
-    ): DiscoveryGate = PrefsDiscoveryGate(featureFlags, DiscoveryPrefs(context.discoveryDataStore), scope)
 }
