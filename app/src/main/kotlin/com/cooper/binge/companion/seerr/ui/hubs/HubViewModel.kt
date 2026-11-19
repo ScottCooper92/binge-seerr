@@ -23,8 +23,9 @@ import com.cooper.binge.companion.seerr.discover.sliders.isTileRow
 import com.cooper.binge.companion.seerr.discover.sliders.rowsFor
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
-import com.cooper.binge.companion.seerr.ui.hubs.core.HubLoader
-import com.cooper.binge.companion.seerr.ui.hubs.core.HubState
+import com.cooper.binge.companion.seerr.seerr.toServerFailure
+import com.cooper.homelab.core.presentation.hub.HubLoader
+import com.cooper.homelab.core.presentation.hub.HubState
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -101,7 +102,11 @@ class HubViewModel
     ) : ViewModel() {
         /** Each row's one "item" is the finished [HubRowUi], so an empty row is the loader's to drop and nothing is wrapped and unwrapped. */
         private val loader =
-            HubLoader<HubRow, HubRowUi>(viewModelScope, dispatcher) { row -> listOfNotNull(rowUi(row, cards, tiles)) }
+            HubLoader<HubRow, HubRowUi>(
+                viewModelScope,
+                dispatcher,
+                { it.toServerFailure() },
+            ) { row -> listOfNotNull(rowUi(row, cards, tiles)) }
 
         /** Null until the server says whether it has a trending list; the hub waits for that like it does for [browseAll]. */
         private val hero = MutableStateFlow<HeroSlot?>(null)
@@ -212,7 +217,7 @@ private fun toUiState(
             when (rows) {
                 HubState.Loading -> DiscoverHubUiState.Loading
                 HubState.Empty -> DiscoverHubUiState.Empty
-                is HubState.Failed -> DiscoverHubUiState.Error(rows.error.toSeerrError())
+                is HubState.Failed -> DiscoverHubUiState.Error(rows.failure.toSeerrError())
                 is HubState.Ready ->
                     if (browseAll == null || hero == null) {
                         DiscoverHubUiState.Loading
