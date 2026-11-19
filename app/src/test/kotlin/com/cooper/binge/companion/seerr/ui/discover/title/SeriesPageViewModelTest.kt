@@ -11,7 +11,9 @@ import com.cooper.binge.companion.seerr.discover.title.TitleCompany
 import com.cooper.binge.companion.seerr.discover.title.TitleExtras
 import com.cooper.binge.companion.seerr.discover.title.TitlePerson
 import com.cooper.binge.companion.seerr.discover.title.TitleRatings
+import com.cooper.binge.companion.seerr.discover.title.TitleRequest
 import com.cooper.binge.companion.seerr.discover.title.VersionState
+import com.cooper.binge.companion.seerr.seerr.SeerrRequestStatusCode
 import com.cooper.binge.companion.seerr.util.MainDispatcherRule
 import com.cooper.binge.companion.seerr.util.awaitEvent
 import kotlinx.coroutines.flow.toList
@@ -132,6 +134,23 @@ class SeriesPageViewModelTest {
         val open = SeriesPageViewModel(FakeSeries(), 1399)
         open.onPrimary()
         assertTrue(open.ready().requestSheetOpen)
+    }
+
+    @Test
+    fun `a held series opens its request and keeps it after the sheet closes`() {
+        val held =
+            seriesFixture(
+                standard = VersionState(TitleAvailability.Pending, mayRequest = false),
+            ).copy(requests = listOf(TitleRequest(7, false, SeerrRequestStatusCode.Pending, null, null)))
+        val vm = SeriesPageViewModel(FakeSeries(series = held), 1399)
+
+        vm.onPrimary()
+        assertEquals(7, vm.ready().manageRequestId)
+        assertTrue(vm.ready().manageSheetOpen)
+
+        vm.closeManageSheet()
+        assertFalse(vm.ready().manageSheetOpen)
+        assertEquals(7, vm.ready().manageRequestId)
     }
 
     @Test

@@ -9,7 +9,9 @@ import com.cooper.binge.companion.seerr.discover.title.TitleCollection
 import com.cooper.binge.companion.seerr.discover.title.TitleDetailsRepository
 import com.cooper.binge.companion.seerr.discover.title.TitleExtras
 import com.cooper.binge.companion.seerr.discover.title.TitleRatings
+import com.cooper.binge.companion.seerr.discover.title.TitleRequest
 import com.cooper.binge.companion.seerr.discover.title.VersionState
+import com.cooper.binge.companion.seerr.seerr.SeerrRequestStatusCode
 import com.cooper.binge.companion.seerr.util.MainDispatcherRule
 import com.cooper.binge.companion.seerr.util.awaitEvent
 import kotlinx.coroutines.flow.toList
@@ -122,6 +124,23 @@ class TitlePageViewModelTest {
         val open = TitlePageViewModel(FakeTitles(), 603)
         open.onPrimary()
         assertTrue(open.ready().requestSheetOpen)
+    }
+
+    @Test
+    fun `a held title opens its request and keeps it after the sheet closes`() {
+        val held =
+            movieFixture(
+                standard = VersionState(TitleAvailability.Pending, mayRequest = false),
+            ).copy(requests = listOf(TitleRequest(7, false, SeerrRequestStatusCode.Pending, null, null)))
+        val vm = TitlePageViewModel(FakeTitles(movie = held), 603)
+
+        vm.onPrimary()
+        assertEquals(7, vm.ready().manageRequestId)
+        assertTrue(vm.ready().manageSheetOpen)
+
+        vm.closeManageSheet()
+        assertFalse(vm.ready().manageSheetOpen)
+        assertEquals("the id stays so a moderation's result still has its sheet", 7, vm.ready().manageRequestId)
     }
 
     @Test

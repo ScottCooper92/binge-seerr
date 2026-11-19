@@ -74,8 +74,14 @@ class TitleActionsModelTest {
     }
 
     @Test
-    fun `a partly available series that can still be requested manages its request`() {
+    fun `a partly available series that can still be requested opens the request sheet for the remaining seasons`() {
         val partly = VersionState(TitleAvailability.PartiallyAvailable, mayRequest = true)
+        assertEquals(PrimaryTap.RequestSheet, primary(partly, requests = listOf(request(7))).tap)
+    }
+
+    @Test
+    fun `a partly available series with nothing left to request manages its request`() {
+        val partly = VersionState(TitleAvailability.PartiallyAvailable, mayRequest = false)
         assertEquals(PrimaryTap.ManageRequest(7), primary(partly, requests = listOf(request(7))).tap)
     }
 

@@ -112,7 +112,7 @@ private fun ReadySeriesPage(
         actions.manageSheet(
             SiblingSheet(
                 requestId,
-                open = true,
+                open = state.manageSheetOpen,
                 snackbarHostState = snackbar,
                 onDismiss = actions.onCloseManage,
                 onChanged = actions.onReload,

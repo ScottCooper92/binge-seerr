@@ -66,7 +66,7 @@ class TitlePageScreenshotTest {
     @Composable
     fun requestableExpandedLargeText() = Frame(TitlePageUiState.Ready(fullMovie(), fullExtras()))
 
-    /** Already in the library: the primary says Available, and a tap opens the request. */
+    /** Already in the library, with no request on file and no version open: the primary says Available and is drawn disabled. */
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable

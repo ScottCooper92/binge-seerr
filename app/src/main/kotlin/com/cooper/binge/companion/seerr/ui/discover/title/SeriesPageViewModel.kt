@@ -51,8 +51,9 @@ sealed interface SeriesPageUiState {
         val series: SeriesDetails,
         val extras: TitleExtras? = null,
         val requestSheetOpen: Boolean = false,
-        /** The request whose sheet is open over the page, when the primary opened one to manage. */
+        /** The request the primary last opened to manage. Kept after the sheet closes, so a moderation's result still has its sheet to land in. */
         val manageRequestId: Int? = null,
+        val manageSheetOpen: Boolean = false,
         val selectedSeason: Int? = null,
         val episodes: Map<Int, EpisodesState> = emptyMap(),
     ) : SeriesPageUiState {
@@ -126,16 +127,13 @@ class SeriesPageViewModel
             updateReady { ready ->
                 when (val tap = titleActionsModel(ready.series.standard, ready.series.fourK, ready.series.requests).primary.tap) {
                     PrimaryTap.RequestSheet -> ready.copy(requestSheetOpen = true)
-                    is PrimaryTap.ManageRequest -> ready.copy(manageRequestId = tap.requestId)
+                    is PrimaryTap.ManageRequest -> ready.copy(manageRequestId = tap.requestId, manageSheetOpen = true)
                     PrimaryTap.Nothing -> ready
                 }
             }
 
-        /** The request's sheet closed; the page reads the title again, since what was done in it moves the title's state. */
-        fun closeManageSheet() {
-            updateReady { it.copy(manageRequestId = null) }
-            reload()
-        }
+        /** The request's sheet closed. The id stays, and a change made in it reloads the page through the sheet's own `onChanged`. */
+        fun closeManageSheet() = updateReady { it.copy(manageSheetOpen = false) }
 
         /** Closing the sheet reads the show again, since a request moves its seasons and a refused one may mean the server's state moved. */
         fun closeRequestSheet() {
