@@ -1567,9 +1567,7 @@
     <string name="hubs_loading_row">Loading a row</string>
     <string name="title_page_request">Request</string>
     <string name="title_page_runtime">%1$dh %2$dm</string>
-    <string name="title_page_status_4k">%1$s · 4K</string>
     <string name="title_page_request_4k">Request in 4K</string>
-    <string name="title_page_status_hd">%1$s · HD</string>
     <string name="title_page_action_trailer">Trailer</string>
     <string name="title_page_action_share">Share</string>
     <string name="title_page_stat_released">Released</string>

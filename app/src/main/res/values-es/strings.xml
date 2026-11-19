@@ -1507,9 +1507,7 @@
     <string name="hubs_loading_row">Cargando una fila</string>
     <string name="title_page_request">Pedir</string>
     <string name="title_page_runtime">%1$d h %2$d min</string>
-    <string name="title_page_status_4k">%1$s · 4K</string>
     <string name="title_page_request_4k">Pedir en 4K</string>
-    <string name="title_page_status_hd">%1$s · HD</string>
     <string name="title_page_action_trailer">Tráiler</string>
     <string name="title_page_action_share">Compartir</string>
     <string name="title_page_stat_released">Estreno</string>
