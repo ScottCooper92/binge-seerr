@@ -167,8 +167,10 @@
     <string name="grid_sort_date_asc">Oldest first</string>
     <string name="grid_sort_revenue_desc">Highest revenue</string>
     <string name="grid_sort_revenue_asc">Lowest revenue</string>
-    <string name="grid_sort_title_asc">Title A to Z</string>
-    <string name="grid_sort_title_desc">Title Z to A</string>
+    <string name="grid_sort_title_asc">Title (A–Z)</string>
+    <string name="grid_sort_title_desc">Title (Z–A)</string>
+    <string name="grid_title">Discover</string>
+    <string name="grid_open_filters">Open filters</string>
     <string name="grid_filters_button">Filters</string>
     <string name="grid_filters_title">Filters</string>
     <string name="grid_filters_sort">Sort by</string>
@@ -251,8 +253,6 @@
     <string name="hub_section_settings_desc">Services, notifications and jobs</string>
     <string name="hub_section_this_app">This app</string>
     <string name="hub_section_this_app_desc">Preferences, notifications, feedback and more</string>
-    <string name="three_pane_nothing_open_title">Nothing open</string>
-    <string name="three_pane_nothing_open_message">Pick something from the list to see it here.</string>
     <!-- The detail pane beside the hub, before any section is opened. -->
 
     <string name="requests_filter_all">All</string>

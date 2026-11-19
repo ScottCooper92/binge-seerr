@@ -18,7 +18,6 @@ import com.binge.designsystem.layout.LayoutAnchors
 import com.binge.designsystem.layout.layoutAnchor
 import com.binge.designsystem.mediaGridColumns
 import com.cooper.binge.companion.seerr.R
-import com.binge.designsystem.R as DesR
 
 private const val SKELETON_ROWS = 8
 
@@ -37,8 +36,8 @@ internal fun GridFrame(
         columns = GridCells.Fixed(mediaGridColumns()),
         modifier = Modifier.fillMaxSize(),
         contentPadding = contentPadding,
-        horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
-        verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
+        horizontalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.grid_gap)),
+        verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.grid_gap)),
         content = content,
     )
 }

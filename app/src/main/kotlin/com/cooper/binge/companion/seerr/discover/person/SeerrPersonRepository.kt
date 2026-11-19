@@ -1,6 +1,8 @@
 package com.cooper.binge.companion.seerr.discover.person
 
+import com.cooper.binge.companion.seerr.data.TitleStatusStore
 import com.cooper.binge.companion.seerr.discover.TitleKind
+import com.cooper.binge.companion.seerr.discover.seedRows
 import com.cooper.binge.companion.seerr.discover.toAvailability
 import com.cooper.binge.companion.seerr.seerr.SeerrApi
 import com.cooper.binge.companion.seerr.seerr.SeerrPersonCreditDto
@@ -18,11 +20,18 @@ class SeerrPersonRepository(
     private val api: suspend () -> SeerrApi,
     private val serverUrl: suspend () -> String,
     private val io: CoroutineDispatcher,
+    private val statuses: TitleStatusStore = TitleStatusStore(),
 ) : PersonRepository {
     override suspend fun details(personId: Int): PersonDetails =
         withContext(io) { api().personDetails(personId).toPersonDetails(webUrl = serverUrl() + "person/" + personId) }
 
-    override suspend fun credits(personId: Int): PersonCredits = withContext(io) { api().personCredits(personId).toPersonCredits() }
+    override suspend fun credits(personId: Int): PersonCredits =
+        withContext(io) {
+            val read = statuses.beginRead()
+            val dto = api().personCredits(personId)
+            statuses.seedRows(read, (dto.cast + dto.crew).map { Triple(it.kind(), it.id, it.mediaInfo) })
+            dto.toPersonCredits()
+        }
 }
 
 internal fun SeerrPersonDetailsDto.toPersonDetails(webUrl: String) =

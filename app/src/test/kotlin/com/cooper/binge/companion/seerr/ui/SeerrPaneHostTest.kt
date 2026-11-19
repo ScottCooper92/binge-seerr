@@ -34,7 +34,7 @@ private const val REQUESTS = "requests"
 private const val SUBPAGE = "server settings subpage"
 private const val REQUEST = "request"
 
-/** A landscape tablet: past the design system's expanded-rail line, so the host lays out three panes (#1110). */
+/** A landscape tablet: past the design system's expanded-rail line, laid out as two panes like any wide window (#2348). */
 private const val TABLET = "w1280dp-h800dp"
 
 /** A phone: one pane, so a section on the hub claims Back. */
@@ -47,7 +47,7 @@ private const val PHONE = "w400dp-h800dp"
  * [LocalPaneDepth] (#823). The entries are stand-ins wrapped as the real ones are, because the real screens take Hilt
  * ViewModels.
  *
- * Two panes on a window under the landscape-tablet line; [TABLET] for the three panes above it.
+ * Two panes on a window under the landscape-tablet line; [TABLET] is the same two panes above it.
  */
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @RunWith(RobolectricTestRunner::class)
@@ -71,13 +71,13 @@ class SeerrPaneHostTest {
         rule.setContent {
             backStack = remember { NavBackStack(mutableStateListOf(*keys)) }
             dispatcher = checkNotNull(LocalOnBackPressedDispatcherOwner.current).onBackPressedDispatcher
-            SeerrPaneHost(backStack, connected = true, onExit = { exits++ }, defaultSection = { DetailPaneContent { Record(DEFAULT) } }) {
+            SeerrPaneHost(backStack, connected = true, onExit = { exits++ }) {
                 entry<HubRoute>(
                     metadata =
-                        ListDetailSceneStrategy.listPane(detailPlaceholder = { DetailPaneContent { Record(DEFAULT) } }) + ThreePaneHub,
+                        ListDetailSceneStrategy.listPane(detailPlaceholder = { DetailPaneContent { Record(DEFAULT) } }),
                 ) { PaneContent(innerEdge = PaneEdge.End) { Record(HUB) } }
-                entry<RequestsRoute>(metadata = DetailPane + ThreePaneSection) { DetailPaneContent { Record(REQUESTS) } }
-                entry<SettingsRoute>(metadata = DetailPane + ThreePaneSection) { DetailPaneContent { Record(SETTINGS) } }
+                entry<RequestsRoute>(metadata = DetailPane + SectionPane) { DetailPaneContent { Record(REQUESTS) } }
+                entry<SettingsRoute>(metadata = DetailPane + SectionPane) { DetailPaneContent { Record(SETTINGS) } }
                 entry<RequestDetailRoute>(metadata = DetailPane) { DetailPaneContent { Record(REQUEST) } }
                 entry<ServerSettingsPageRoute>(metadata = DetailPane) { route ->
                     DetailPaneContent { Record(if (route.page == ServerSettingsPage.General) PAGE else SUBPAGE) }
@@ -137,38 +137,13 @@ class SeerrPaneHostTest {
         assertEquals(Pane(PaneEdge.Start, showsBack = true), panes.getValue(REQUEST))
     }
 
-    /** The default section goes on the stack, so its list keeps its state when it opens something; Back still leaves (#815). */
+    /** An expanded window is the same two panes: nothing is put on the stack beside the hub, and the default section is its placeholder (#2348). */
     @Test
     @Config(qualifiers = TABLET)
-    fun `in three panes, the hub alone gets the default section on the stack beside it`() {
+    fun `at an expanded width the hub alone has nothing on the stack beside it`() {
         val backStack = show(HubRoute)
 
-        assertEquals(listOf<NavKey>(HubRoute, RequestsRoute), backStack.toList())
-        assertEquals(Pane(PaneEdge.Start, showsBack = false), panes.getValue(REQUESTS))
-    }
-
-    @Test
-    @Config(qualifiers = TABLET)
-    fun `in three panes, neither the section nor what it opened shows a Back arrow`() {
-        show(HubRoute, SettingsRoute, ServerSettingsPageRoute(ServerSettingsPage.General))
-
-        assertEquals(PaneEdge.End, panes.getValue(HUB).innerEdge)
-        assertEquals(Pane(PaneEdge.Start, showsBack = false), panes.getValue(SETTINGS))
-        assertEquals(Pane(PaneEdge.Start, showsBack = false), panes.getValue(PAGE))
-    }
-
-    @Test
-    @Config(qualifiers = TABLET)
-    fun `in three panes, a screen stacked above the open item keeps its Back arrow, and the section still has none`() {
-        show(
-            HubRoute,
-            SettingsRoute,
-            ServerSettingsPageRoute(ServerSettingsPage.General),
-            ServerSettingsPageRoute(ServerSettingsPage.Users),
-        )
-
-        assertEquals(Pane(PaneEdge.Start, showsBack = false), panes.getValue(SETTINGS))
-        assertEquals(Pane(PaneEdge.Start, showsBack = true), panes.getValue(SUBPAGE))
+        assertEquals(listOf<NavKey>(HubRoute), backStack.toList())
     }
 
     /**
@@ -232,18 +207,5 @@ class SeerrPaneHostTest {
 
         assertEquals(listOf<NavKey>(HubRoute), backStack.toList())
         assertEquals(1, exits)
-    }
-
-    /** Three panes keep the default section on the stack beside the hub, and Back from there is the system's (#815). */
-    @Test
-    @Config(qualifiers = TABLET)
-    fun `in three panes, Back from the default section is left to the system`() {
-        val backStack = show(HubRoute)
-
-        rule.runOnUiThread { dispatcher.onBackPressed() }
-        rule.waitForIdle()
-
-        assertEquals(0, exits)
-        assertEquals(listOf<NavKey>(HubRoute, RequestsRoute), backStack.toList())
     }
 }
