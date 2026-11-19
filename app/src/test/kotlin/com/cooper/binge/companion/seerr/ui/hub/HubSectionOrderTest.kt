@@ -8,7 +8,9 @@ import org.junit.Test
 class HubSectionOrderTest {
     @Test
     fun `an admin on a full server sees every section in the display order`() {
-        val overview = HubOverview(permissions = SeerrPermissions(isAdmin = true), hasIssues = true, hasBlocklist = true)
+        val permissions =
+            SeerrPermissions(isAdmin = true, canManageUsers = true, canViewIssues = true, canViewBlocklist = true)
+        val overview = HubOverview(permissions = permissions, hasIssues = true, hasBlocklist = true)
 
         assertEquals(
             listOf(
