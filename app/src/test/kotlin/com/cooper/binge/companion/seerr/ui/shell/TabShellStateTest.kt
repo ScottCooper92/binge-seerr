@@ -137,4 +137,12 @@ class TabShellStateTest {
         appStack.pop()
         assertEquals("Back walks the link and lands on the shell", listOf<NavKey>(ShellRoute), appStack.toList())
     }
+
+    @Test
+    fun `select says whether the tab was already showing`() {
+        val shell = state()
+
+        assertEquals(false, shell.select(Tab.Two))
+        assertEquals(true, shell.select(Tab.Two))
+    }
 }

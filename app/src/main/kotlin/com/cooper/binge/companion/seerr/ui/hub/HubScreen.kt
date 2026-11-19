@@ -24,6 +24,7 @@ import com.binge.designsystem.component.BingePullToRefresh
 import com.binge.designsystem.component.HintCard
 import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
+import com.binge.designsystem.component.OnTabReselect
 import com.binge.designsystem.component.SectionHeader
 import com.binge.designsystem.navOverlayPadding
 import com.binge.designsystem.resolvedContentInset
@@ -35,6 +36,7 @@ import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.demo.isDemoOrigin
 import com.cooper.binge.companion.seerr.ui.DisconnectButton
 import com.cooper.binge.companion.seerr.ui.rememberAllowLocalNetwork
+import com.cooper.binge.companion.seerr.ui.shell.SeerrTab
 import com.cooper.binge.companion.seerr.ui.state.LoadingScreen
 import com.cooper.homelab.core.uiandroid.search.SettingsSearchEntry
 import com.binge.designsystem.R as DesR
@@ -150,7 +152,9 @@ private fun Dashboard(
     val inset = resolvedContentInset()
     // Each side from the pane it sits in: the edge shared with the section beside it takes the narrow inner inset (#819).
     val sides = resolvedContentPadding()
-    Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(contentPadding)) {
+    val scrollState = rememberScrollState()
+    OnTabReselect(SeerrTab.Settings) { scrollState.animateScrollTo(0) }
+    Column(modifier = Modifier.fillMaxSize().verticalScroll(scrollState).padding(contentPadding)) {
         // First, while anything is downloading: it is the part of this page that changes while the user watches.
         if (state.downloading.isNotEmpty()) {
             SectionHeader(title = stringResource(R.string.hub_downloading_now, state.downloading.size))

@@ -31,7 +31,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.CenteredContent
@@ -40,6 +42,7 @@ import com.binge.designsystem.collapsingTitle
 import com.binge.designsystem.component.BingeFilterChipRow
 import com.binge.designsystem.component.BingeSearchField
 import com.binge.designsystem.component.FilterChipItem
+import com.binge.designsystem.component.OnTabReselect
 import com.binge.designsystem.navOverlayPadding
 import com.binge.designsystem.navOverlayStart
 import com.binge.designsystem.nestedScrollConnection
@@ -47,6 +50,7 @@ import com.binge.designsystem.searchResultColumns
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.TitleResult
 import com.cooper.binge.companion.seerr.discover.sliders.HubGrid
+import com.cooper.binge.companion.seerr.ui.shell.SeerrTab
 import com.cooper.binge.companion.seerr.ui.state.EmptyScreen
 import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
 import com.cooper.binge.companion.seerr.ui.state.LoadingScreen
@@ -110,6 +114,12 @@ private fun SearchHeader(
     actions: TitleSearchActions,
     titleState: CollapsingTitleState,
 ) {
+    val focus = remember { FocusRequester() }
+    val keyboard = LocalSoftwareKeyboardController.current
+    OnTabReselect(SeerrTab.Search) {
+        focus.requestFocus()
+        keyboard?.show()
+    }
     Column(Modifier.statusBarsPadding().padding(start = navOverlayStart())) {
         Column(
             Modifier
@@ -132,6 +142,7 @@ private fun SearchHeader(
                 onClear = actions.onClear,
                 onSubmit = actions.onSubmit,
                 placeholder = stringResource(R.string.title_search_placeholder),
+                focusRequester = focus,
             )
         }
         when (state) {

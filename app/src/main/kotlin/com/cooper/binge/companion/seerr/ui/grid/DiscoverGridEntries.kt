@@ -17,6 +17,7 @@ import com.cooper.binge.companion.seerr.ui.NavMotionSpecs
 import com.cooper.binge.companion.seerr.ui.discover.title.LocalOpenTitle
 import com.cooper.binge.companion.seerr.ui.popIfTop
 import com.cooper.binge.companion.seerr.ui.replaceTop
+import com.cooper.binge.companion.seerr.ui.shell.SeerrTab
 import java.time.LocalDate
 
 /** The grid a "see all" opens. It has no pane metadata: it covers the tab bar, and Back returns to the hub it came from. */
@@ -38,6 +39,7 @@ internal fun DiscoverGridEntry(
     onBack: (() -> Unit)?,
     backStack: NavBackStack<NavKey>,
     title: String? = route.title,
+    reselectKey: Any? = null,
 ) {
     val tomorrow = remember { LocalDate.now().plusDays(1).toString() }
     val model =
@@ -57,6 +59,7 @@ internal fun DiscoverGridEntry(
     DiscoverGridScreen(
         kind = route.kind,
         title = title,
+        reselectKey = reselectKey,
         state = state,
         actions =
             DiscoverGridActions(
@@ -82,5 +85,11 @@ internal fun DiscoverGridEntry(
 @Composable
 internal fun DiscoverTabEntry(stack: NavBackStack<NavKey>) {
     val route = stack.lastOrNull() as? DiscoverGridRoute ?: return
-    DiscoverGridEntry(route, onBack = null, backStack = stack, title = stringResource(R.string.shell_tab_discover))
+    DiscoverGridEntry(
+        route,
+        onBack = null,
+        backStack = stack,
+        title = stringResource(R.string.shell_tab_discover),
+        reselectKey = SeerrTab.Discover,
+    )
 }
