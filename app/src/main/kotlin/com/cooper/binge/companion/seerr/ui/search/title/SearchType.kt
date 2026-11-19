@@ -20,8 +20,14 @@ enum class SearchType(
 }
 
 /**
- * How many results each type chip shows. A type counts what has loaded so far, so it grows as pages arrive. [SearchType.All]
-* counts every row loaded, collections included, so it always matches the list under it. The studios are a list of their own.
+ * How many results each type chip shows. A type counts what has loaded so far, so it grows as pages arrive. [SearchType.All] counts
+ * every title row loaded, collections included, and the studios found, so it is the sum of what the chips hold and any collections.
  */
 internal fun List<TitleResult>.typeCounts(studios: Int = 0): Map<SearchType, Int> =
-    SearchType.entries.associateWith { type -> if (type == SearchType.Studios) studios else count(type::keeps) }
+    SearchType.entries.associateWith { type ->
+        when (type) {
+            SearchType.All -> size + studios
+            SearchType.Studios -> studios
+            else -> count(type::keeps)
+        }
+    }
