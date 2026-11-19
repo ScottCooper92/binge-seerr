@@ -108,7 +108,7 @@ class RequestSheetViewModelTest {
             val repository = FakeRepository(PLAIN)
             val vm = viewModel(repository)
             assertNull(vm.ready().pick)
-            assertFalse(vm.ready().showAdvanced)
+            assertFalse(vm.ready().choosesDestination)
 
             val event = awaitEvent(vm.events)
             vm.submit()
@@ -132,9 +132,33 @@ class RequestSheetViewModelTest {
     }
 
     @Test
-    fun `collapsed Advanced options sends a plain request even with a pick`() =
+    fun `a user who may choose sends the shown destination without touching it`() =
         runTest {
             val repository = advanced()
+            val vm = viewModel(repository)
+            val event = awaitEvent(vm.events)
+
+            vm.submit()
+            event.await()
+
+            val destination = repository.submissions.single().destination
+            assertEquals(1, destination?.serverId)
+            assertEquals(4, destination?.profileId)
+            assertEquals("/movies", destination?.rootFolder)
+        }
+
+    @Test
+    fun `a read still in flight holds the request`() {
+        val loading = RequestSheetUiState.Ready(TARGET, ADVANCED, quota = QuotaState.Known(null))
+
+        assertTrue(loading.servers is ServersState.Loading)
+        assertFalse(loading.canSubmit)
+    }
+
+    @Test
+    fun `a failed servers read still sends, with no destination`() =
+        runTest {
+            val repository = advanced().apply { failServers = IOException("down") }
             val vm = viewModel(repository)
             val event = awaitEvent(vm.events)
 
@@ -145,11 +169,10 @@ class RequestSheetViewModelTest {
         }
 
     @Test
-    fun `an expanded Advanced options sends the chosen destination`() =
+    fun `a user who may choose sends the chosen destination`() =
         runTest {
             val repository = advanced()
             val vm = viewModel(repository)
-            vm.setAdvancedExpanded(true)
             vm.selectProfile(5)
             val event = awaitEvent(vm.events)
 
@@ -220,15 +243,14 @@ class RequestSheetViewModelTest {
     }
 
     @Test
-    fun `servers that fail to read are failed, hold Request only while open, and read again`() {
+    fun `servers that fail to read are failed, still allow a plain request, and read again`() {
         val repository = advanced().apply { failServers = IOException("down") }
         val vm = viewModel(repository)
 
         assertEquals(ServersState.Failed, vm.ready().servers)
-        assertTrue(vm.ready().showAdvanced)
+        assertTrue(vm.ready().choosesDestination)
         assertTrue(vm.ready().canSubmit)
-        vm.setAdvancedExpanded(true)
-        assertFalse(vm.ready().canSubmit)
+        assertNull(vm.ready().destination)
 
         repository.failServers = null
         vm.retry(RequestRead.Servers)
@@ -238,13 +260,30 @@ class RequestSheetViewModelTest {
     }
 
     @Test
-    fun `profiles that fail to load keep Request held while open, and read again`() {
+    fun `a server whose lists fail to load is still the server the request names`() =
+        runTest {
+            val repository = advanced().apply { failChoices = IOException("down") }
+            val vm = viewModel(repository)
+            vm.setUse4k(true)
+            val event = awaitEvent(vm.events)
+
+            vm.submit()
+            event.await()
+
+            val destination = repository.submissions.single().destination
+            assertEquals(2, destination?.serverId)
+            assertEquals(7, destination?.profileId)
+            assertEquals("/uhd", destination?.rootFolder)
+        }
+
+    @Test
+    fun `profiles that fail to load still allow a plain request, and read again`() {
         val repository = advanced().apply { failChoices = IOException("down") }
         val vm = viewModel(repository)
-        vm.setAdvancedExpanded(true)
 
         assertEquals(ChoicesState.Failed, vm.ready().pick?.choices)
-        assertFalse(vm.ready().canSubmit)
+        assertTrue(vm.ready().canSubmit)
+        assertEquals(1, vm.ready().destination?.serverId)
 
         repository.failChoices = null
         vm.retry(RequestRead.Choices)
@@ -254,25 +293,13 @@ class RequestSheetViewModelTest {
     }
 
     @Test
-    fun `closing Advanced options frees the request again, as a plain one`() {
-        val repository = advanced().apply { failChoices = IOException("down") }
-        val vm = viewModel(repository)
-        vm.setAdvancedExpanded(true)
-        assertFalse(vm.ready().canSubmit)
-
-        vm.setAdvancedExpanded(false)
-
-        assertTrue(vm.ready().canSubmit)
-    }
-
-    @Test
-    fun `a user whose version has no server is not offered Advanced options`() {
+    fun `a user whose version has no server is not offered the destination rows`() {
         val repository = FakeRepository(ADVANCED, servers = listOf(STANDARD))
         val vm = viewModel(repository)
 
         vm.setUse4k(true)
 
-        assertFalse(vm.ready().showAdvanced)
+        assertFalse(vm.ready().choosesDestination)
     }
 
     @Test

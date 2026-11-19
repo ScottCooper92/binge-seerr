@@ -115,6 +115,16 @@ class HubOverviewLoader
             }
         }
 
+        /**
+         * The signed-in user and their quota, for the account in a title bar: the connection's recent user, so it costs no round trip
+         * where the dashboard just read it, and the quota best-effort. Null when the user cannot be read.
+         */
+        suspend fun accountBar(): AccountBar? {
+            val user = attempt { connection.recentAuthenticatedUser() }.getOrNull() ?: return null
+            val quota = attempt { connection.api().userQuota(user.id).toHubQuota() }.getOrNull()
+            return AccountBar(user.toAccount(user.toPermissions().isAdmin), quota)
+        }
+
         /** The pending request count alone, for the badge's refresh on becoming visible. */
         suspend fun pendingRequestCount(): Int? = attempt { connection.api().requestCount().pending }.getOrNull()
 
