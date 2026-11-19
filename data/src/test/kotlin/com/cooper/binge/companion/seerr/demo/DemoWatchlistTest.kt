@@ -40,4 +40,17 @@ class DemoWatchlistTest {
             assertTrue(listed.isNotEmpty())
             assertEquals(true, api.movieFullDetails(listed.first()).onUserWatchlist)
         }
+
+    @Test
+    fun `the signed-in user's own list carries its size, which follows an add, and another user's is empty`() =
+        demo { api ->
+            val before = api.userWatchlist(DEMO_USER_ID)
+            val added = DEMO_TITLES.filter { it.isMovie }.last()
+
+            api.addToWatchlist(SeerrAddToWatchlistBody(added.tmdbId, "movie", added.title))
+
+            assertEquals(before.results.size, before.totalResults)
+            assertEquals(before.results.size + 1, api.userWatchlist(DEMO_USER_ID).totalResults)
+            assertTrue(api.userWatchlist(DEMO_USER_ID + 1).results.isEmpty())
+        }
 }

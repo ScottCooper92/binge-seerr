@@ -43,7 +43,7 @@ sealed interface TitlePageUiState {
         val manageSheetOpen: Boolean = false,
         val statusSheetOpen: Boolean = false,
         val reportSheetOpen: Boolean = false,
-        /** A watchlist call is in flight, so another tap waits for it. */
+        /** A watchlist call is in flight, so another tap is ignored. */
         val watchlistBusy: Boolean = false,
         val collectionParts: List<TitleResult> = emptyList(),
     ) : TitlePageUiState {
