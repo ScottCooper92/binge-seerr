@@ -1,7 +1,9 @@
 package com.cooper.binge.companion.seerr.ui.grid
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import com.android.tools.screenshot.PreviewTest
 import com.binge.designsystem.component.BingeChoiceSheetContent
 import com.cooper.binge.companion.seerr.discover.TitleKind
@@ -279,15 +281,18 @@ private fun Rows(
     filters: DiscoverFilters,
     kind: TitleKind = TitleKind.Movie,
 ) {
-    DiscoverFilterSheetContent(
-        draft = DiscoverFilterDraft(kind, DiscoverSort.PopularityDesc, filters),
-        vocabulary = WORDS,
-        today = TODAY,
-        onKind = {},
-        onSort = {},
-        onOpen = {},
-        onClearAll = {},
-    )
+    Column(Modifier.fillMaxSize()) {
+        DiscoverFilterSheetContent(
+            draft = DiscoverFilterDraft(kind, DiscoverSort.PopularityDesc, filters),
+            vocabulary = WORDS,
+            today = TODAY,
+            onKind = {},
+            onSort = {},
+            onOpen = {},
+            onClearAll = {},
+            onApply = {},
+        )
+    }
 }
 
 @Composable

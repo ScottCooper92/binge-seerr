@@ -2,10 +2,6 @@ package com.cooper.binge.companion.seerr.ui.grid
 
 import android.text.format.DateFormat
 import androidx.annotation.StringRes
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.CalendarMonth
@@ -18,23 +14,12 @@ import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material.icons.filled.Tag
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.dimensionResource
-import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import com.binge.designsystem.component.BingeSheetDockingHeader
-import com.binge.designsystem.component.BingeSheetTopBar
-import com.binge.designsystem.component.BingeTextButton
-import com.binge.designsystem.component.ItemGroup
-import com.binge.designsystem.component.ListItem
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverFilters
@@ -43,7 +28,6 @@ import com.cooper.binge.companion.seerr.discover.grid.ReleasePreset
 import java.text.NumberFormat
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
-import com.binge.designsystem.R as DesR
 
 /** The filters the sheet edits, each a row that opens its own page. */
 internal enum class DiscoverFilterSection(
@@ -95,74 +79,6 @@ internal enum class DiscoverFilterSection(
             Status -> vocabulary.capabilities.status && kind == TitleKind.Series
             else -> true
         }
-}
-
-/**
- * The header of the sheet, as Binge's: the drag handle over the title with how many filters are applied and Clear all while
- * the sheet floats, and a top bar with the same once it fills the screen. Clear all is off when nothing differs from default.
- */
-@Composable
-internal fun FilterSheetHeader(
-    appliedCount: Int,
-    canClear: Boolean,
-    onClearAll: () -> Unit,
-) {
-    val applied = if (appliedCount > 0) pluralStringResource(R.plurals.grid_filters_applied, appliedCount, appliedCount) else null
-    val title = stringResource(R.string.grid_filters_title)
-    val clearAll = stringResource(R.string.grid_filters_clear_all)
-    BingeSheetDockingHeader(
-        header = {
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = dimensionResource(DesR.dimen.padding_m)),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(text = title, style = MaterialTheme.typography.titleLarge)
-                    applied?.let {
-                        Text(
-                            text = it,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                }
-                BingeTextButton(label = clearAll, onClick = onClearAll, enabled = canClear)
-            }
-        },
-        dockedTopBar = { onClose ->
-            BingeSheetTopBar(
-                title = title,
-                subtitle = applied,
-                onClose = onClose,
-                actions = { BingeTextButton(label = clearAll, onClick = onClearAll, enabled = canClear) },
-            )
-        },
-    )
-}
-
-/** One row per filter on one grouped card, as Binge's: a tinted icon, its name, and what it is set to on the second line. */
-@Composable
-internal fun DiscoverFilterRows(
-    filters: DiscoverFilters,
-    kind: TitleKind,
-    vocabulary: FilterVocabulary,
-    today: LocalDate,
-    onOpen: (DiscoverFilterSection) -> Unit,
-) {
-    val rows =
-        DiscoverFilterSection.entries.filter { it.isOffered(vocabulary, kind) }.map { section ->
-            ListItem(
-                icon = section.icon,
-                label = stringResource(section.title),
-                detail = section.summary(filters, vocabulary, today),
-                onClick = { onOpen(section) },
-            )
-        }
-    ItemGroup(
-        title = null,
-        rows = rows,
-        modifier = Modifier.padding(horizontal = dimensionResource(DesR.dimen.padding_m)),
-    )
 }
 
 /** What a section is set to, in words, or "Any" for a filter that is not set. */
