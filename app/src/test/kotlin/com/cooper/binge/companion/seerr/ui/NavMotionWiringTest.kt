@@ -1,11 +1,9 @@
 package com.cooper.binge.companion.seerr.ui
 
-import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
-import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.ui.NavDisplay
-import com.cooper.binge.companion.seerr.ui.discover.title.titleEntries
-import com.cooper.binge.companion.seerr.ui.grid.discoverGridEntries
+import com.cooper.binge.companion.seerr.util.entryMetadata
+import com.cooper.binge.companion.seerr.util.routesWithoutEntries
 import com.cooper.binge.companion.seerr.util.sampleRoutes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -65,19 +63,9 @@ class NavMotionWiringTest {
     }
 
     /** The roots and the shell: leaving the app is the system's back, so they animate as Navigation 3 does. */
-    private val roots: Set<KClass<*>> = setOf(HomeRoute::class, ShellRoute::class, HubRoute::class)
+    private val roots: Set<KClass<*>> = routesWithoutEntries
 
-    private fun metadataOf(route: NavKey): Map<String, Any> {
-        val stack = NavBackStack<NavKey>(HomeRoute)
-        val panes = PaneLayout(hubBeside = { false }, showBack = { true }, motion = specs)
-        val provider =
-            entryProvider<NavKey> {
-                titleEntries(stack, specs)
-                discoverGridEntries(stack, specs)
-                settingsEntries(stack, connected = { true }, panes = panes, onExit = {})
-            }
-        return provider(route).metadata
-    }
+    private fun metadataOf(route: NavKey): Map<String, Any> = entryMetadata(route, specs)
 
     @Test
     fun `a page that takes the whole window carries the detail set`() {
