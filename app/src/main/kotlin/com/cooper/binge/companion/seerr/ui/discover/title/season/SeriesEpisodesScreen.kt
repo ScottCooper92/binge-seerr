@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.TopAppBarDefaults
@@ -85,7 +84,7 @@ private fun SeasonList(
     val listState = rememberLazyListState()
     val sections = seasons.toSectionUis(onRetrySeason)
     val openAt = seasonKey(openAtSeason)
-    CollapseBarWhenOpenedMidList(listState, scrollBehavior, opensMidList = seasons.firstOrNull()?.season?.number != openAtSeason)
+    CollapseBarWhenOpenedMidList(scrollBehavior, opensMidList = seasons.firstOrNull()?.season?.number != openAtSeason)
     SeasonSectionsList(
         sections = sections,
         listState = listState,
@@ -98,7 +97,6 @@ private fun SeasonList(
 @Composable
 private fun List<SeasonSection>.toSectionUis(onRetry: (Int) -> Unit): List<SeasonSectionUi> {
     val locale = LocalConfiguration.current.locales[0]
-    val separator = stringResource(R.string.series_season_separator)
     val retry = stringResource(DesR.string.error_kind_retry)
     val empty = stringResource(R.string.season_episodes_empty)
     return map { section ->
@@ -137,7 +135,6 @@ private fun SeasonEpisode.toBrowseUi(locale: Locale) =
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun CollapseBarWhenOpenedMidList(
-    listState: LazyListState,
     scrollBehavior: TopAppBarScrollBehavior,
     opensMidList: Boolean,
 ) {
