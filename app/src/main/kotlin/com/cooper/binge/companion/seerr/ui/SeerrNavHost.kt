@@ -28,10 +28,10 @@ import com.cooper.binge.companion.seerr.ui.hubs.DiscoverHubEntry
 import com.cooper.binge.companion.seerr.ui.search.title.TitleSearchEntry
 import com.cooper.binge.companion.seerr.ui.shell.SeerrTab
 import com.cooper.binge.companion.seerr.ui.shell.SeerrTabShell
-import com.cooper.binge.companion.seerr.ui.shell.TabShellState
-import com.cooper.binge.companion.seerr.ui.shell.popToRoot
 import com.cooper.binge.companion.seerr.ui.shell.settleSectionStash
 import com.cooper.binge.companion.seerr.ui.state.LoadingScreen
+import com.cooper.homelab.core.uiandroid.shell.TabShellState
+import com.cooper.homelab.core.uiandroid.shell.popToRoot
 
 /**
  * The one [NavDisplay]. Every screen is an entry here; the ViewModel-store decorator gives each
@@ -129,12 +129,10 @@ private fun EntryProviderScope<NavKey>.homeEntries(
                     },
                 )
             }, search = {
-                TitleSearchEntry(onOpenGrid = {
-                    grid,
-                    title,
-                    ->
-                    backStack.push(DiscoverGridRoute(grid.kind, grid.preset, title))
-                })
+                TitleSearchEntry(
+                    onOpenGrid = { grid, title -> backStack.push(DiscoverGridRoute(grid.kind, grid.preset, title)) },
+                    onOpenAccount = { id -> backStack.push(UserDetailRoute(id)) },
+                )
             }, grid = {
                 DiscoverTabEntry(tabs.stack(SeerrTab.Discover), onOpenAccount = { id ->
                     backStack.push(UserDetailRoute(id))

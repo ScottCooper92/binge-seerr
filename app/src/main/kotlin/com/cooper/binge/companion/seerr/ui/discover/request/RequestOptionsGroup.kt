@@ -7,7 +7,6 @@ import androidx.compose.material.icons.filled.DoneAll
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Hd
 import androidx.compose.material.icons.filled.Movie
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.TriStateCheckbox
@@ -25,8 +24,8 @@ import com.cooper.binge.companion.seerr.discover.request.RequestQuota
 import com.cooper.binge.companion.seerr.discover.request.SeasonSelection
 
 /**
- * The one group of options: Seasons for a show, 4K where this user may ask for it, Advanced options where they may choose
- * a destination. The quota the request would use sits above Advanced options, so what it opens lands directly under it. A row the user has no use for is not drawn.
+ * The one group of options: Seasons for a show, 4K where this user may ask for it, the destination rows where they may choose
+ * one. The quota the request would use sits above the destination rows. A row the user has no use for is not drawn.
  */
 @Composable
 internal fun RequestOptionsGroup(
@@ -34,6 +33,7 @@ internal fun RequestOptionsGroup(
     actions: RequestSheetActions,
     onOpenSeasons: () -> Unit,
     onOpenFilms: () -> Unit,
+    onOpenDestination: (DestinationField) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val rows =
@@ -42,8 +42,7 @@ internal fun RequestOptionsGroup(
             state.films?.let { filmsRow(it, state.submitting, actions, onOpenFilms) },
             fourKRow(state, actions),
             quotaRow(state, actions),
-            advancedRow(state, actions),
-        )
+        ) + destinationRows(state, actions, onOpenDestination)
     if (rows.isNotEmpty()) ItemGroup(title = null, rows = rows, modifier = modifier)
 }
 
@@ -132,21 +131,6 @@ private fun fourKRow(
         toggled = state.use4k,
         enabled = state.canToggle4k,
         onClick = { actions.onUse4k(!state.use4k) },
-    )
-}
-
-@Composable
-private fun advancedRow(
-    state: RequestSheetUiState.Ready,
-    actions: RequestSheetActions,
-): ListItem? {
-    if (!state.showAdvanced) return null
-    return ListItem(
-        icon = Icons.Filled.Settings,
-        label = stringResource(R.string.request_sheet_advanced),
-        expanded = state.advancedExpanded,
-        enabled = !state.submitting,
-        onClick = { actions.onAdvancedExpanded(!state.advancedExpanded) },
     )
 }
 

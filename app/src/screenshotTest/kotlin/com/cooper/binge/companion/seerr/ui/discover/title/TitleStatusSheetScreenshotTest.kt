@@ -13,6 +13,15 @@ class TitleStatusSheetScreenshotTest {
     @Composable
     fun watch() = SheetFrame { TitleStatusSheetContent(TitleState.Available, "https://plex.example/watch", "Plex", true, {}) }
 
+    /** Binge answers the title link: Watch in Binge first, the media server below it. */
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun watchInBinge() =
+        SheetFrame {
+            TitleStatusSheetContent(TitleState.Available, "https://plex.example/watch", "Plex", true, {}, onWatchInBinge = {})
+        }
+
     /** In the library with no link to give: the status and a line saying so. */
     @PreviewTest
     @SeerrComponentPreviews

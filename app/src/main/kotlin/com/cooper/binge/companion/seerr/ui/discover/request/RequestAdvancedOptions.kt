@@ -2,9 +2,7 @@ package com.cooper.binge.companion.seerr.ui.discover.request
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.DestinationIcons
@@ -13,26 +11,16 @@ import com.cooper.binge.companion.seerr.ui.DestinationIcons
 internal enum class DestinationField { Server, Profile, RootFolder }
 
 /**
- * Server, profile and root folder, drawn while Advanced options is open. A read still going shows a spinner in its row, and one
- * that failed says so and a tap reads it again; the request is held back until the real lists are on screen.
+ * Server, profile and root folder, as rows of the options group for a user who may choose a destination. A read still going shows
+ * a spinner in its row, and one that failed says so and a tap reads it again; the request waits only for a read still going, and a failed one still names the shown server.
  */
 @Composable
-internal fun RequestAdvancedOptions(
-    state: RequestSheetUiState.Ready,
-    actions: RequestSheetActions,
-    onOpen: (DestinationField) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    if (!state.advancedExpanded || !state.showAdvanced) return
-    ItemGroup(title = null, rows = serverRows(state, actions, onOpen), modifier = modifier)
-}
-
-@Composable
-private fun serverRows(
+internal fun destinationRows(
     state: RequestSheetUiState.Ready,
     actions: RequestSheetActions,
     onOpen: (DestinationField) -> Unit,
 ): List<ListItem> {
+    if (!state.choosesDestination) return emptyList()
     val title = stringResource(R.string.advanced_server)
     val servers = state.servers
     if (servers is ServersState.Loading) return listOf(ListItem(DestinationIcons.server, label = title, clickable = false, loading = true))

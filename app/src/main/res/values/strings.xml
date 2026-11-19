@@ -1528,7 +1528,6 @@
     <string name="request_sheet_status_new">This isn\'t on your server yet</string>
     <string name="request_sheet_status_seasons">Choose which seasons to request</string>
     <string name="request_sheet_status_4k_open">4K is still open to request</string>
-    <string name="request_sheet_advanced">Advanced options</string>
     <string name="request_sheet_seasons_count">%1$d of %2$d selected</string>
     <string name="request_sheet_seasons_done">Done</string>
     <string name="request_sheet_back">Back</string>
@@ -1578,6 +1577,7 @@
     <string name="title_page_request_4k">Request in 4K</string>
     <string name="title_sheet_watch">Watch</string>
     <string name="title_sheet_watch_on">Watch on %1$s</string>
+    <string name="title_sheet_watch_in_binge">Watch in Binge</string>
     <string name="title_sheet_note_cannot_request">Your account can\'t request this title.</string>
     <string name="title_sheet_note_nothing_to_request">There is nothing to request for this title yet.</string>
     <string name="title_sheet_note_other_request">Another user requested this title.</string>

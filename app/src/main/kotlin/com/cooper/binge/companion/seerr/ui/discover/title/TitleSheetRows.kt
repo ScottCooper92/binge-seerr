@@ -5,7 +5,9 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.platform.LocalResources
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.title.MovieDetails
@@ -22,7 +24,7 @@ internal class TitleSheetFacts(
 )
 
 /**
- * The rows the title adds to a request's sheet: Watch where the title is in the library and has a link, then Request in 4K
+ * The rows the title adds to a request's sheet: Watch (in Binge where it answers, then on the media server) where the title is in the library and has a link, then Request in 4K
  * where the viewer may. One layout for a title with a request on file, as the status sheet is for one without.
  */
 @Composable
@@ -30,23 +32,33 @@ internal fun rememberTitleSheetRows(
     facts: TitleSheetFacts,
     onWatch: (String) -> Unit,
     onRequestFourK: () -> Unit,
+    onWatchInBinge: (() -> Unit)? = null,
 ): List<SheetTitleRow> {
     val resources = LocalResources.current
-    return remember(facts.state, facts.watchUrl, facts.mediaServerName, facts.fourKOpen, resources) {
-        listOfNotNull(
-            facts.watchUrl?.takeIf { facts.state.isInLibrary() }?.let { url ->
-                val label =
-                    facts.mediaServerName?.let { resources.getString(R.string.title_sheet_watch_on, it) }
-                        ?: resources.getString(R.string.title_sheet_watch)
-                SheetTitleRow(Icons.Filled.PlayArrow, label, external = true) { onWatch(url) }
-            },
-            SheetTitleRow(
-                Icons.Filled.Add,
-                resources.getString(R.string.request_sheet_submit_4k),
-                external = false,
-                onClick = onRequestFourK,
-            ).takeIf { facts.fourKOpen },
-        )
+    val watch by rememberUpdatedState(onWatch)
+    val watchInBinge by rememberUpdatedState(onWatchInBinge)
+    val requestFourK by rememberUpdatedState(onRequestFourK)
+    val bingeAnswers = onWatchInBinge != null
+    val openInBinge: () -> Unit = { watchInBinge?.invoke() }
+    return remember(facts.state, facts.watchUrl, facts.mediaServerName, facts.fourKOpen, bingeAnswers, resources) {
+        val watchRows =
+            titleWatchRows(
+                facts.state,
+                facts.watchUrl,
+                facts.mediaServerName,
+                onWatchInBinge = openInBinge.takeIf { bingeAnswers },
+                onWatchOnServer = { watch(it) },
+                resources = resources,
+            ).map { row -> SheetTitleRow(Icons.Filled.PlayArrow, row.label, external = true, onClick = row.onClick) }
+        watchRows +
+            listOfNotNull(
+                SheetTitleRow(
+                    Icons.Filled.Add,
+                    resources.getString(R.string.request_sheet_submit_4k),
+                    external = false,
+                    onClick = { requestFourK() },
+                ).takeIf { facts.fourKOpen },
+            )
     }
 }
 
@@ -74,6 +86,13 @@ internal fun TitleManageSheet(
                         actions.onOpenUrl(url)
                     },
                     onRequestFourK = actions.onRequestFourK,
+                    onWatchInBinge =
+                        actions.onWatchInBinge?.let { openInBinge ->
+                            {
+                                actions.onCloseManage()
+                                openInBinge()
+                            }
+                        },
                 ),
         ),
     )

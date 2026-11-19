@@ -41,7 +41,6 @@ private fun plain() =
     RequestSheetUiState.Ready(target(), RequestAccess(may4k = false, mayChooseDestination = false), quota = QuotaState.Known(null))
 
 private fun advanced(
-    expanded: Boolean = false,
     quota: QuotaState = OPEN_QUOTA,
     servers: ServersState = ServersState.Ready(listOf(STANDARD, UHD)),
     choices: ChoicesState = ChoicesState.Ready(CHOICES),
@@ -50,7 +49,6 @@ private fun advanced(
     access = RequestAccess(may4k = true, mayChooseDestination = true),
     quota = quota,
     servers = servers,
-    advancedExpanded = expanded,
     pick =
         DestinationPick(serverId = 1, profileId = 4, rootFolder = "/media/movies", choices = choices).takeIf {
             servers is ServersState.Ready
@@ -58,7 +56,7 @@ private fun advanced(
 )
 
 private fun worstCase() =
-    advanced(expanded = true).copy(
+    advanced().copy(
         target = target("The Lord of the Rings: The Fellowship of the Ring (Extended Director's Cut Special Edition)"),
         servers =
             ServersState.Ready(
@@ -82,7 +80,7 @@ private fun worstCase() =
 
 private fun failedSend() = RequestProblem(RequestProblemCause.Unreachable, null)
 
-/** The in-app request sheet for a film: the header, the options group, Advanced options, each failure, and the dialogs. */
+/** The in-app request sheet for a film: the header, the options group with its destination rows, each failure, and the dialogs. */
 class RequestSheetScreenshotTest {
     /** A user who may only request: no 4K, no destination, no quota to show. */
     @PreviewTest
@@ -90,35 +88,29 @@ class RequestSheetScreenshotTest {
     @Composable
     fun plainUser() = Frame(plain(), SHORT_HEIGHT)
 
-    /** An advanced user with Advanced options closed: the request is a plain one. */
+    /** A user who may choose a destination: server, profile and root folder sit in the options group. */
     @PreviewTest
     @SeerrComponentPreviews
     @Composable
-    fun advancedCollapsed() = Frame(advanced(), FORM_HEIGHT)
+    fun advancedUser() = Frame(advanced(), FORM_HEIGHT)
 
-    /** Advanced options open: server, profile and root folder. */
+    /** While the lists are still being read: spinners in the rows, and the button held. */
     @PreviewTest
     @SeerrComponentPreviews
     @Composable
-    fun advancedExpanded() = Frame(advanced(expanded = true), FORM_HEIGHT)
+    fun advancedLoading() = Frame(advanced(choices = ChoicesState.Loading), FORM_HEIGHT)
 
-    /** Open while the lists are still being read: spinners in the rows, and the button held. */
+    /** The server's profiles and folders failed to load: one line with a tap to try again. The button stays enabled. */
     @PreviewTest
     @SeerrComponentPreviews
     @Composable
-    fun advancedLoading() = Frame(advanced(expanded = true, choices = ChoicesState.Loading), FORM_HEIGHT)
-
-    /** The server's profiles and folders failed to load: one line with a tap to try again, and the button held. */
-    @PreviewTest
-    @SeerrComponentPreviews
-    @Composable
-    fun choicesFailed() = Frame(advanced(expanded = true, choices = ChoicesState.Failed), FORM_HEIGHT)
+    fun choicesFailed() = Frame(advanced(choices = ChoicesState.Failed), FORM_HEIGHT)
 
     /** The list of servers failed to load. */
     @PreviewTest
     @SeerrComponentPreviews
     @Composable
-    fun serversFailed() = Frame(advanced(expanded = true, servers = ServersState.Failed), FORM_HEIGHT)
+    fun serversFailed() = Frame(advanced(servers = ServersState.Failed), FORM_HEIGHT)
 
     /** The quota could not be read: the row says so, and the button stays enabled. */
     @PreviewTest
@@ -194,6 +186,6 @@ private fun Frame(
     height: Dp,
 ) {
     SheetFrame(Modifier.height(height)) {
-        RequestSheetContent(state, RequestSheetActions({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}))
+        RequestSheetContent(state, RequestSheetActions({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}))
     }
 }

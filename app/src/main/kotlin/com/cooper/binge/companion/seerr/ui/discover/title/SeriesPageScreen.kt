@@ -124,6 +124,7 @@ private fun ReadySeriesPage(
             mediaServerName = state.series.mediaServerName,
             canRequest = state.series.canRequest,
             onWatch = actions.onOpenUrl,
+            onWatchInBinge = actions.onWatchInBinge,
             onDismiss = actions.onCloseStatus,
             onUnblock = actions.onUnblock.takeIf { state.series.mayUnblock },
         )

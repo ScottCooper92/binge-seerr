@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Debug builds only: Binge's own debug build has its own package name, which the main manifest does not name. -->
+    <queries>
+        <package android:name="com.cooper.binge.app.debug" />
+    </queries>
     <application>
         <!--
             Debug builds only. Turns the shared library's per-server stores on or off for the next launch:

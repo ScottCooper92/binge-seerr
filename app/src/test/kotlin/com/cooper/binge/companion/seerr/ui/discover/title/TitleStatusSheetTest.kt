@@ -26,7 +26,20 @@ class TitleStatusSheetTest {
         canRequest: Boolean = true,
         onWatch: (String) -> Unit = {},
         onUnblock: (() -> Unit)? = null,
-    ) = rule.setContent { SeerrTheme { TitleStatusSheetContent(state, watchUrl, serverName, canRequest, onWatch, onUnblock = onUnblock) } }
+        onWatchInBinge: (() -> Unit)? = null,
+    ) = rule.setContent {
+        SeerrTheme {
+            TitleStatusSheetContent(
+                state,
+                watchUrl,
+                serverName,
+                canRequest,
+                onWatch,
+                onWatchInBinge = onWatchInBinge,
+                onUnblock = onUnblock,
+            )
+        }
+    }
 
     @Test
     fun `an available title offers Watch on the media server and opens its link`() {
@@ -36,6 +49,26 @@ class TitleStatusSheetTest {
         rule.onNodeWithText("Watch on Plex").assertIsDisplayed().performClick()
 
         assertEquals("https://plex.example/watch", opened)
+    }
+
+    @Test
+    fun `where Binge answers the sheet offers Watch in Binge above the media server`() {
+        var opened = false
+        var server: String? = null
+        show(TitleState.Available, onWatch = { server = it }, onWatchInBinge = { opened = true })
+
+        rule.onNodeWithText("Watch on Plex").assertIsDisplayed()
+        rule.onNodeWithText("Watch in Binge").assertIsDisplayed().performClick()
+
+        assertTrue(opened)
+        assertEquals(null, server)
+    }
+
+    @Test
+    fun `where Binge does not answer there is no Watch in Binge`() {
+        show(TitleState.Available)
+
+        rule.onNodeWithText("Watch in Binge").assertDoesNotExist()
     }
 
     @Test
