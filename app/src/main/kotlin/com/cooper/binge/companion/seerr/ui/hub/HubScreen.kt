@@ -11,7 +11,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
-import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.pulltorefresh.PullToRefreshState
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
@@ -63,9 +62,6 @@ class HubActions(
  *
  * @param selectedSection the section open beside the hub, marked in the Manage group. Null on a
  * window narrow enough that the hub is alone on screen, where nothing is open beside it.
- * @param admitsUnverifiedCallers whether this build admits Binge's package names under any certificate.
- * True only on a debug build, where it puts a banner at the top of the dashboard so a tester knows what
- * they are running (#679).
  * @param pullState a still frame's resting pull; null remembers M3's own.
  */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -74,7 +70,6 @@ fun HubScreen(
     state: HubUiState,
     actions: HubActions,
     selectedSection: HubSection? = null,
-    admitsUnverifiedCallers: Boolean = false,
     pullState: PullToRefreshState? = null,
 ) {
     val ready = state as? HubUiState.Ready
@@ -126,7 +121,7 @@ fun HubScreen(
                         onRefresh = actions.onRefresh,
                         indicatorTopInset = inner.calculateTopPadding(),
                         state = pullState ?: rememberPullToRefreshState(),
-                    ) { Dashboard(ready, actions, selectedSection, admitsUnverifiedCallers, contentPadding = inner) }
+                    ) { Dashboard(ready, actions, selectedSection, contentPadding = inner) }
             }
         }
     }
@@ -150,20 +145,12 @@ private fun Dashboard(
     state: HubUiState.Ready,
     actions: HubActions,
     selectedSection: HubSection?,
-    admitsUnverifiedCallers: Boolean,
     contentPadding: PaddingValues,
 ) {
     val inset = resolvedContentInset()
     // Each side from the pane it sits in: the edge shared with the section beside it takes the narrow inner inset (#819).
     val sides = resolvedContentPadding()
     Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(contentPadding)) {
-        if (admitsUnverifiedCallers) {
-            HintCard(
-                text = stringResource(R.string.hub_unverified_callers),
-                icon = Icons.Filled.Warning,
-                modifier = Modifier.padding(sides).padding(bottom = dimensionResource(DesR.dimen.padding_m)),
-            )
-        }
         SettingsSearchEntry(
             onClick = actions.onOpenSearch,
             modifier =
