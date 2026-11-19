@@ -1,5 +1,6 @@
 package com.cooper.binge.companion.seerr.ui.search.title
 
+import com.cooper.binge.companion.seerr.discover.StudioResult
 import com.cooper.binge.companion.seerr.discover.TitleResult
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 
@@ -21,6 +22,8 @@ sealed interface TitleSearchUiState {
     data class Ready(
         override val text: String,
         val results: List<TitleResult>,
+        /** The studios the search found, drawn on the Studios chip; empty where it found none. */
+        val studios: List<StudioResult> = emptyList(),
         /** How many results have loaded in all, whatever type is chosen: it grows with every page, which [results] may not. */
         val loaded: Int,
         val type: SearchType,

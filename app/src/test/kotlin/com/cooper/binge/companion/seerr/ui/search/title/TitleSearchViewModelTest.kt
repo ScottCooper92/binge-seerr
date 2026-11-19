@@ -2,7 +2,10 @@ package com.cooper.binge.companion.seerr.ui.search.title
 
 import com.cooper.binge.companion.seerr.core.search.QUERY_DEBOUNCE_MS
 import com.cooper.binge.companion.seerr.core.search.QueryHistory
+import com.cooper.binge.companion.seerr.core.search.SearchPage
 import com.cooper.binge.companion.seerr.discover.GenreTile
+import com.cooper.binge.companion.seerr.discover.StudioResult
+import com.cooper.binge.companion.seerr.discover.StudioSearch
 import com.cooper.binge.companion.seerr.discover.TitleAvailability
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.TitleListRepository
@@ -92,12 +95,14 @@ class TitleSearchViewModelTest {
                 tmdbId: Int,
             ): HydratedTitle? = null
         }
+    private var studioPage: (String, Int) -> SearchPage<StudioResult> = { _, page -> SearchPage(emptyList(), page, 1) }
+    private val studios = StudioSearch { query, page -> studioPage(query, page) }
     private val titles = FakeTitles { source, page -> TitlePage(listOf(title(page), title(page + 10, TitleKind.Person)), page, 2) }
 
     /** Runs [block] with the view model's state being collected, on the test's scheduler, and stops the collector after. */
     private fun runVm(block: suspend TestScope.(TitleSearchViewModel) -> Unit) =
         runTest {
-            val vm = TitleSearchViewModel(titles, history, media)
+            val vm = TitleSearchViewModel(titles, studios, history, media)
             val collector = launch(UnconfinedTestDispatcher(testScheduler)) { vm.uiState.collect {} }
             try {
                 block(vm)
@@ -128,7 +133,7 @@ class TitleSearchViewModelTest {
     fun `a trending failure leaves the rails out and clearing the field asks again`() =
         runVm { vm ->
             titles.trending = { throw IOException("down") }
-            val failing = TitleSearchViewModel(titles, history, media)
+            val failing = TitleSearchViewModel(titles, studios, history, media)
             val collector = launch(UnconfinedTestDispatcher(testScheduler)) { failing.uiState.collect {} }
             advanceUntilIdle()
             assertEquals(Trending.Unavailable, (failing.uiState.value as TitleSearchUiState.Idle).trending)
@@ -277,5 +282,32 @@ class TitleSearchViewModelTest {
             val card = (event.await() as TitleSearchEvent.Open).card
             assertEquals("https://server.example/tv/5", card.webUrl)
             assertEquals(5, card.tmdbId)
+        }
+
+    @Test
+    fun `the Studios chip counts what the company search found and opens its list`() =
+        runVm { vm ->
+            studioPage = { _, page -> SearchPage(listOf(StudioResult(1, "Lucasfilm", null), StudioResult(2, "Pixar", null)), page, 1) }
+            vm.onQueryChange("lucas")
+            advanceUntilIdle()
+            val all = vm.uiState.value as TitleSearchUiState.Ready
+            assertEquals(2, all.counts[SearchType.Studios])
+            assertEquals(all.results.size, all.counts[SearchType.All])
+            vm.onType(SearchType.Studios)
+            val studiosList = vm.uiState.value as TitleSearchUiState.Ready
+            assertEquals(listOf("Lucasfilm", "Pixar"), studiosList.studios.map { it.name })
+            assertTrue(studiosList.results.isEmpty())
+        }
+
+    @Test
+    fun `a query only studios answer still shows the chips`() =
+        runVm { vm ->
+            titles.answer = { _, page -> TitlePage(emptyList(), page, 1) }
+            studioPage = { _, page -> SearchPage(listOf(StudioResult(1, "Lucasfilm", null)), page, 1) }
+            vm.onQueryChange("lucas")
+            advanceUntilIdle()
+            val ready = vm.uiState.value as TitleSearchUiState.Ready
+            assertEquals(1, ready.counts[SearchType.Studios])
+            assertEquals(0, ready.counts[SearchType.All])
         }
 }

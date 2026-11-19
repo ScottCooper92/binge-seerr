@@ -27,7 +27,7 @@ class TitleSearchNoResultsTest {
             SeerrTheme {
                 TitleSearchScreen(
                     state = TitleSearchUiState.NoResults("qzxv", "qzxv", type),
-                    actions = TitleSearchActions({}, {}, {}, {}, {}, {}, {}, {}, {}, { grid, _ -> opened = grid }),
+                    actions = TitleSearchActions({}, {}, {}, {}, {}, {}, {}, {}, {}, { grid, _ -> opened = grid }, {}),
                 )
             }
         }

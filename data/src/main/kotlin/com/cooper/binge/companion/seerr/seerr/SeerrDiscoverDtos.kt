@@ -92,12 +92,16 @@ data class SeerrKeywordPageDto(
 data class SeerrCompanyDto(
     @SerialName("id") val id: Int = 0,
     @SerialName("name") val name: String? = null,
+    @SerialName("logoPath") val logoPath: String? = null,
 )
 
 /** A page of TMDB's company search, as the server passes it through. */
 @Serializable
 data class SeerrCompanyPageDto(
     @SerialName("results") val results: List<SeerrCompanyDto> = emptyList(),
+    @SerialName("page") val page: Int = 1,
+    @SerialName("totalPages") val totalPages: Int = 1,
+    @SerialName("totalResults") val totalResults: Int? = null,
 )
 
 /** One streaming provider TMDB lists in a region, with the logo and the place TMDB gives it in that region's list. */

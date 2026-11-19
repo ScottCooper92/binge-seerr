@@ -280,7 +280,7 @@ Each row is ticked in "Today" by the PR that covers it.
 | `GET /languages` | Languages supported by TMDB | v1.20.0 | v1.0.0 | yes | The General settings page's language pickers: discover languages and blocklisted languages. |
 | `GET /network/{networkId}` | Get TV network details | v1.21.0 | v1.0.0 | yes | Names the network a Discover slider holds as an id. |
 | `GET /regions` | Regions supported by TMDB | v1.20.0 | v1.0.0 | yes | The General settings page's region pickers: discover region and blocklisted regions. |
-| `GET /search/company` | Search for companies | v1.32.0 | v1.4.0 | yes | Finds the studio of a Discover slider. |
+| `GET /search/company` | Search for companies | v1.32.0 | v1.4.0 | yes | Finds the studio of a Discover slider, and fills the Studios chip of the title search with its logo and total. |
 | `GET /search/keyword` | Search for keywords | v1.32.0 | v1.4.0 | yes | Finds tags to blocklist on the General settings page, and keywords for an override rule's condition. |
 | `POST /settings/initialize` | Initialize application | v1.20.0 | v1.0.0 |  | The first-run wizard stays the web client's. |
 | `GET /studio/{studioId}` | Get movie studio details | v1.21.0 | v1.0.0 | yes | Names the studio a Discover slider holds as an id. |

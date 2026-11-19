@@ -11,16 +11,19 @@ enum class SearchType(
     Movies(TitleKind.Movie),
     Series(TitleKind.Series),
     People(TitleKind.Person),
+
+    /** Production companies, a list of their own: no title is one. */
+    Studios(null),
     ;
 
-    fun keeps(result: TitleResult): Boolean = kind == null || result.kind == kind
+    fun keeps(result: TitleResult): Boolean = this != Studios && (kind == null || result.kind == kind)
 }
 
 /**
  * How many results each type chip shows. A type counts what has loaded so far, so it grows as pages arrive. [SearchType.All]
- * is the sum of the others, as Binge's is, so the chips always add up.
+ * is the sum of the title chips, as Binge's is: the studios are a list of their own and are not in it.
  */
-internal fun List<TitleResult>.typeCounts(): Map<SearchType, Int> {
-    val byType = SearchType.entries.filter { it != SearchType.All }.associateWith { type -> count(type::keeps) }
-    return mapOf(SearchType.All to byType.values.sum()) + byType
+internal fun List<TitleResult>.typeCounts(studios: Int = 0): Map<SearchType, Int> {
+    val titles = listOf(SearchType.Movies, SearchType.Series, SearchType.People).associateWith { type -> count(type::keeps) }
+    return mapOf(SearchType.All to titles.values.sum()) + titles + (SearchType.Studios to studios)
 }
