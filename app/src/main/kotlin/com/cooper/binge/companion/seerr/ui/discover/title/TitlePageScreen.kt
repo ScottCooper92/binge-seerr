@@ -93,6 +93,7 @@ private fun ReadyPage(
         metaText = "",
         genres = movie.genres,
         tagline = movie.tagline,
+        externalScores = state.extras?.ratings.toExternalScores(context.resources, LocalConfiguration.current.locales[0]),
         wideHeader = WideHeader(movie.posterUrl, movie.overview, movie.titleStats(LocalConfiguration.current.locales[0])),
         onBack = actions.onBack,
         modifier = modifier,

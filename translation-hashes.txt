@@ -1213,8 +1213,8 @@ app:title_kind_series  a8295e08ff7a
 app:title_page_action_share  29887a5ff984
 app:title_page_action_trailer  6a7b20d1da8a
 app:title_page_cast  150040557337
-app:title_page_collection  7b790708ff1b
 app:title_page_crew  2ca84359bc5c
+app:title_page_details  45989de49fb7
 app:title_page_fact_budget  1c6225ec7092
 app:title_page_fact_director  783deb1acce9
 app:title_page_fact_original_language  c5c60a2af071
@@ -1231,9 +1231,9 @@ app:title_page_reload_failed  45304549fd49
 app:title_page_request  59f03d642b41
 app:title_page_request_4k  292e7610c12a
 app:title_page_runtime  64e7f6be2a29
-app:title_page_stat_audience  545c02357695
-app:title_page_stat_critics  5d1aaff3fa8b
-app:title_page_stat_imdb  061f3a4e4a30
+app:title_page_score_audience  ec2460286ade
+app:title_page_score_critics  0bc23adb8452
+app:title_page_score_imdb  9fbb2ae3851a
 app:title_page_stat_rated  227db2d1eec3
 app:title_page_stat_rating  9f29530464f7
 app:title_page_stat_released  f33deea9b100

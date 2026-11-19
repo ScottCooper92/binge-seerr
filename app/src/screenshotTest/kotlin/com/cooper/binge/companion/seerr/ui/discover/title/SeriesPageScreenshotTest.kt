@@ -18,8 +18,9 @@ import kotlinx.coroutines.flow.emptyFlow
 private const val EPISODES_PX = 1900
 private const val LARGE_FONT_EPISODES_PX = 4300
 private const val WATCH_PX = 4200
-private const val FACTS_PX = 1800
-private const val FACTS_LARGE_FONT_PX = 3600
+
+/** Scrolled past the end: the state clamps it, so the page rests on its last section, the Details. */
+private const val DETAILS_END_PX = 100_000
 
 private val NO_ACTIONS = TitlePageActions({}, {}, {}, {}, {}, {}, {}, {}, {}, {})
 
@@ -123,6 +124,19 @@ class SeriesPageScreenshotTest {
             scrollState = rememberScrollState(initial = LARGE_FONT_EPISODES_PX),
         )
 
+    /** A tablet in landscape: the Details run in three columns across the width, under the rails. */
+    @PreviewTest
+    @SeerrTabletPanesPreview
+    @Composable
+    fun detailsTablet() =
+        SeriesPageScreen(
+            SeriesPageUiState.Ready(fullSeries(), seriesExtras()),
+            emptyFlow(),
+            NO_ACTIONS,
+            NO_SEASON_ACTIONS,
+            scrollState = rememberScrollState(initial = DETAILS_END_PX),
+        )
+
     /** The facts with the networks as links, in the accent colour. */
     @PreviewTest
     @SeerrScreenStatePreview
@@ -133,7 +147,7 @@ class SeriesPageScreenshotTest {
             emptyFlow(),
             LINKED_ACTIONS,
             NO_SEASON_ACTIONS,
-            scrollState = rememberScrollState(initial = FACTS_PX),
+            scrollState = rememberScrollState(initial = DETAILS_END_PX),
         )
 
     /** Where to watch on the series page: both kinds, the Stream chip chosen, and the JustWatch credit. */
@@ -208,7 +222,7 @@ class SeriesPageScreenshotTest {
             emptyFlow(),
             NO_ACTIONS,
             NO_SEASON_ACTIONS,
-            scrollState = rememberScrollState(initial = FACTS_LARGE_FONT_PX),
+            scrollState = rememberScrollState(initial = DETAILS_END_PX),
         )
 
     /** The facts list in Spanish: the labels, the dates and the next episode. */
@@ -221,6 +235,6 @@ class SeriesPageScreenshotTest {
             emptyFlow(),
             NO_ACTIONS,
             NO_SEASON_ACTIONS,
-            scrollState = rememberScrollState(initial = FACTS_PX),
+            scrollState = rememberScrollState(initial = DETAILS_END_PX),
         )
 }

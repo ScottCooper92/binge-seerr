@@ -16,12 +16,13 @@ import com.cooper.binge.companion.seerr.preview.SeerrTabletPanesPreview
 import kotlinx.coroutines.flow.emptyFlow
 
 private const val SCROLLED_PX = 2500
-private const val FACTS_PX = 1400
+
+/** Scrolled past the end: the state clamps it, so the page rests on its last section, the Details. */
+private const val DETAILS_END_PX = 100_000
 private const val WATCH_PX = 2900
 private const val WATCH_LARGE_FONT_PX = 5200
 private const val COLLECTION_PX = 3800
 private const val COLLECTION_LARGE_FONT_PX = 6900
-private const val FACTS_LARGE_FONT_PX = 2700
 
 private val NO_ACTIONS = TitlePageActions({}, {}, {}, {}, {}, {}, {}, {}, {}, {})
 
@@ -143,7 +144,7 @@ class TitlePageScreenshotTest {
     @Composable
     fun longSpanish() = Frame(TitlePageUiState.Ready(longMovie(), fullExtras()))
 
-    /** The facts list at font scales 1.5 and 2, with the longest studio names: a label and its value stay readable. */
+    /** The Details at the end of the page at font scales 1.5 and 2, with the longest studio names: a label and its value stay readable. */
     @PreviewTest
     @SeerrFontScalePreviews
     @Composable
@@ -152,10 +153,22 @@ class TitlePageScreenshotTest {
             TitlePageUiState.Ready(longMovie(), fullExtras()),
             emptyFlow(),
             NO_ACTIONS,
-            scrollState = rememberScrollState(initial = FACTS_LARGE_FONT_PX),
+            scrollState = rememberScrollState(initial = DETAILS_END_PX),
         )
 
-    /** The facts with the studios as links: each name in the accent colour, where a tap opens that studio's grid. */
+    /** A tablet in landscape: the Details run in three columns across the width, under the rails. */
+    @PreviewTest
+    @SeerrTabletPanesPreview
+    @Composable
+    fun detailsTablet() =
+        TitlePageScreen(
+            TitlePageUiState.Ready(fullMovie(), fullExtras()),
+            emptyFlow(),
+            NO_ACTIONS,
+            scrollState = rememberScrollState(initial = DETAILS_END_PX),
+        )
+
+    /** The Details with the studios as links: each name in the accent colour, where a tap opens that studio's grid. */
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
@@ -164,7 +177,7 @@ class TitlePageScreenshotTest {
             TitlePageUiState.Ready(fullMovie().copy(companiesOpen = true), fullExtras()),
             emptyFlow(),
             LINKED_ACTIONS,
-            scrollState = rememberScrollState(initial = FACTS_PX),
+            scrollState = rememberScrollState(initial = DETAILS_END_PX),
         )
 
     /** Linked studios with the longest names at font scales 1.5 and 2: the links wrap and none is cut off. */
@@ -176,10 +189,10 @@ class TitlePageScreenshotTest {
             TitlePageUiState.Ready(longMovie().copy(companiesOpen = true), fullExtras()),
             emptyFlow(),
             LINKED_ACTIONS,
-            scrollState = rememberScrollState(initial = FACTS_LARGE_FONT_PX),
+            scrollState = rememberScrollState(initial = DETAILS_END_PX),
         )
 
-    /** The facts list in Spanish: the labels, the date and the language names. */
+    /** The Details in Spanish: the heading, the labels, the date and the language names. */
     @PreviewTest
     @SeerrSpanishPreviews
     @Composable
@@ -188,7 +201,7 @@ class TitlePageScreenshotTest {
             TitlePageUiState.Ready(longMovie(), fullExtras()),
             emptyFlow(),
             NO_ACTIONS,
-            scrollState = rememberScrollState(initial = FACTS_PX),
+            scrollState = rememberScrollState(initial = DETAILS_END_PX),
         )
 
     /** Where to watch with both kinds: the Stream chip chosen, its providers' logos and names, and the JustWatch credit. */

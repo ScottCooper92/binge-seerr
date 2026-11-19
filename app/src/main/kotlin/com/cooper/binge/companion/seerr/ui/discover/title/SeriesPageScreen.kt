@@ -78,6 +78,7 @@ private fun ReadySeriesPage(
         metaText = "",
         genres = series.genres,
         tagline = series.tagline,
+        externalScores = state.extras?.ratings.toExternalScores(context.resources, LocalConfiguration.current.locales[0]),
         wideHeader = WideHeader(series.posterUrl, series.overview, series.titleStats(LocalConfiguration.current.locales[0])),
         onBack = actions.onBack,
         modifier = modifier,
