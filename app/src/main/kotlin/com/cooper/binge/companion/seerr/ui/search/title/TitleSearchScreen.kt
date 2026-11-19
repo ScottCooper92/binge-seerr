@@ -46,6 +46,7 @@ import com.binge.designsystem.nestedScrollConnection
 import com.binge.designsystem.searchResultColumns
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.TitleResult
+import com.cooper.binge.companion.seerr.discover.sliders.HubGrid
 import com.cooper.binge.companion.seerr.ui.state.EmptyScreen
 import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
 import com.cooper.binge.companion.seerr.ui.state.LoadingScreen
@@ -64,6 +65,7 @@ internal class TitleSearchActions(
     val onForgetRecents: () -> Unit,
     val onOpenTitle: (TitleResult) -> Unit,
     val onType: (SearchType) -> Unit,
+    val onOpenGrid: (HubGrid, String) -> Unit,
 )
 
 /**
@@ -94,11 +96,7 @@ internal fun TitleSearchScreen(
                         key(
                             state.type,
                         ) { ResultsList(state, actions, navOverlayPadding(PaddingValues(dimensionResource(DesR.dimen.padding_m)))) }
-                    is TitleSearchUiState.NoResults ->
-                        EmptyScreen(
-                            message = stringResource(R.string.title_search_none_message, state.query),
-                            title = stringResource(R.string.title_search_none_title),
-                        )
+                    is TitleSearchUiState.NoResults -> NoResultsBody(state, actions.onOpenGrid)
                     is TitleSearchUiState.Error -> ErrorScreen(error = state.error, onRetry = actions.onRetry)
                 }
             }
@@ -136,18 +134,23 @@ private fun SearchHeader(
                 placeholder = stringResource(R.string.title_search_placeholder),
             )
         }
-        if (state is TitleSearchUiState.Ready) TypeChips(state, actions.onType)
+        when (state) {
+            is TitleSearchUiState.Ready -> TypeChips(state.type, state.counts, actions.onType)
+            is TitleSearchUiState.NoResults -> TypeChips(state.type, SearchType.entries.associateWith { 0 }, actions.onType)
+            else -> Unit
+        }
     }
 }
 
 @Composable
 private fun TypeChips(
-    state: TitleSearchUiState.Ready,
+    type: SearchType,
+    counts: Map<SearchType, Int>,
     onType: (SearchType) -> Unit,
 ) {
     BingeFilterChipRow(
-        items = SearchType.entries.map { FilterChipItem(label = stringResource(it.labelRes()), count = state.counts[it]) },
-        selectedIndex = state.type.ordinal,
+        items = SearchType.entries.map { FilterChipItem(label = stringResource(it.labelRes()), count = counts[it]) },
+        selectedIndex = type.ordinal,
         onSelect = { onType(SearchType.entries[it]) },
     )
 }
