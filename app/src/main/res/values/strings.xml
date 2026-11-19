@@ -280,6 +280,7 @@
     <string name="request_state_queued">Queued</string>
     <string name="media_type_movie">Movie</string>
     <string name="request_open_binge">Open in Binge</string>
+    <string name="request_open_title_cd">Open %1$s</string>
     <string name="request_open_elsewhere">Open elsewhere</string>
     <string name="request_open">Open</string>
     <string name="request_open_title">Open title</string>

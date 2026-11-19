@@ -51,6 +51,8 @@ class RequestsActions(
      * so a row's sheet carries the same edit and media rows as the detail page's.
      */
     val detailSheet: @Composable (SiblingSheet) -> Unit,
+    /** A row's poster, tapped: the title's own page. Null where discovery is off, so the poster is no target and the row opens the request. */
+    val onOpenTitle: ((RequestItem) -> Unit)? = null,
 )
 
 /**
@@ -181,6 +183,7 @@ private fun RequestsPage(
         scope = state.scope,
         now = state.now,
         onOpen = actions.onOpen,
+        onOpenTitle = actions.onOpenTitle,
         onManage = onManage,
         onPull = actions.onRefreshCounts,
         modifier = Modifier.fillMaxSize(),

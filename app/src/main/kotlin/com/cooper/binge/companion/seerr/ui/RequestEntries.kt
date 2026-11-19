@@ -7,6 +7,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.cooper.binge.companion.seerr.flags.LocalDiscoveryEnabled
+import com.cooper.binge.companion.seerr.ui.discover.title.LocalOpenTitle
 import com.cooper.binge.companion.seerr.ui.requests.EditRequestActions
 import com.cooper.binge.companion.seerr.ui.requests.ManageMediaActions
 import com.cooper.binge.companion.seerr.ui.requests.ModerationSnackbarEffect
@@ -180,6 +182,8 @@ internal fun RequestsEntry(
     viewModel: RequestsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val discovery = LocalDiscoveryEnabled.current
+    val openTitle = LocalOpenTitle.current
     // The chip counts refetch on arrival, so a moderation elsewhere shows without a poll.
     DisposableEffect(viewModel) {
         viewModel.setScreenVisible(true)
@@ -200,6 +204,7 @@ internal fun RequestsEntry(
                 onRefreshCounts = viewModel::refreshCounts,
                 onChanged = viewModel::listChanged,
                 detailSheet = { sheet -> SiblingRequestSheet(sheet, onOpenUser, onOpenServices) },
+                onOpenTitle = { item: RequestItem -> openTitle(item.mediaType.toTitleKind(), item.tmdbId, "") }.takeIf { discovery },
             ),
     )
 }
