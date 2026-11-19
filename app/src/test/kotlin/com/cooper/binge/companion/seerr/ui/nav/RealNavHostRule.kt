@@ -265,10 +265,25 @@ internal class RealNavHostRule(
 
     private fun activityBackStack(): List<NavKey> = compose.runOnUiThread { activity.backStack.toList() }
 
-    /** A rotation as a device has one: the window's [qualifiers] change and the activity is recreated. */
+    /**
+     * A rotation as a device has one: the window's [qualifiers] change and the activity is recreated. Focus is released first
+     * ([releaseFocus]). The content is not taken down as [close] does, because the saved state a recreate restores is the thing
+     * a rotation test is there to check.
+     */
     fun rotate(qualifiers: String) {
+        releaseFocus()
         RuntimeEnvironment.setQualifiers(qualifiers)
         checkNotNull(scenario).recreate()
+        compose.waitForIdle()
+    }
+
+    /**
+     * Drops focus from whatever holds it, while the looper is live. A text field still focused when a composition is disposed
+     * leaves work on Compose's shared UI dispatcher that Robolectric discards, and the next test to collect paged items then
+     * waits for good (#663). A recreate disposes the old activity's composition, so a rotation releases focus first.
+     */
+    private fun releaseFocus() {
+        compose.runOnUiThread { activity.window.decorView.clearFocus() }
         compose.waitForIdle()
     }
 
