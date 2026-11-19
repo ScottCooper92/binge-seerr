@@ -29,6 +29,7 @@ class UserDetailWatchlistRowTest {
     private fun show(
         mayOpen: Boolean,
         count: Int?,
+        offered: Boolean = true,
     ) = rule.setContent {
         SeerrTheme {
             UserDetailScreen(
@@ -42,7 +43,7 @@ class UserDetailWatchlistRowTest {
                         onOpenRequest = {},
                         onOpenSettings = {},
                         onDeleteUser = {},
-                        onOpenWatchlist = { opened++ },
+                        onOpenWatchlist = if (offered) ({ opened++ }) else null,
                     ),
             )
         }
@@ -72,6 +73,13 @@ class UserDetailWatchlistRowTest {
         rule.onNodeWithText("Watchlist").assertIsDisplayed().performClick()
 
         assertEquals(1, opened)
+    }
+
+    @Test
+    fun `with the grid not on offer, which is the discovery flag off, the page has no row`() {
+        show(mayOpen = true, count = 12, offered = false)
+
+        rule.onNodeWithText("Watchlist").assertDoesNotExist()
     }
 
     @Test

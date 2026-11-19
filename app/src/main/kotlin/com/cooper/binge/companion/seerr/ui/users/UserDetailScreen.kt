@@ -95,8 +95,8 @@ class UserDetailActions(
     val onOpenRequest: (RequestItem) -> Unit,
     val onOpenSettings: () -> Unit,
     val onDeleteUser: () -> Unit,
-    /** Opens the watchlist grid, on the viewer's own page. */
-    val onOpenWatchlist: () -> Unit = {},
+    /** Opens the watchlist grid, on the viewer's own page; null where the grid is not on offer, which is with the discovery flag off. */
+    val onOpenWatchlist: (() -> Unit)? = null,
 )
 
 /**
@@ -171,15 +171,15 @@ private fun formatCount(count: Int): String = NumberFormat.getIntegerInstance(Lo
 /** The row that opens the viewer's own watchlist, on the page of a user whose list this is. */
 private fun LazyListScope.watchlistRow(
     detail: UserDetail?,
-    onOpen: () -> Unit,
+    onOpen: (() -> Unit)?,
     sides: PaddingValues,
 ) {
-    if (detail?.mayOpenWatchlist == true) item { WatchlistRow(detail.watchlistCount, onOpen, Modifier.padding(sides)) }
+    if (detail?.mayOpenWatchlist == true && onOpen != null) item { WatchlistRow(detail.watchlistCount, onOpen, Modifier.padding(sides)) }
 }
 
 /** The row that opens the viewer's whole watchlist as a grid, with how many titles it holds where the server says. */
 @Composable
-private fun WatchlistRow(
+internal fun WatchlistRow(
     count: Int?,
     onOpen: () -> Unit,
     modifier: Modifier = Modifier,

@@ -7,6 +7,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.flags.LocalDiscoveryEnabled
 import com.cooper.binge.companion.seerr.ui.users.UserAdmissionActions
 import com.cooper.binge.companion.seerr.ui.users.UserDetailActions
 import com.cooper.binge.companion.seerr.ui.users.UserDetailScreen
@@ -77,6 +78,7 @@ internal fun UserDetailEntry(
         hiltViewModel<UserDetailViewModel, UserDetailViewModel.Factory>(creationCallback = { factory -> factory.create(userId) }),
 ) {
     val watchlistTitle = stringResource(R.string.user_watchlist)
+    val discovery = LocalDiscoveryEnabled.current
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     DisposableEffect(viewModel) {
         viewModel.setScreenVisible(true)
@@ -94,7 +96,7 @@ internal fun UserDetailEntry(
                 onOpenRequest = { item -> onOpenRequest(item.id) },
                 onOpenSettings = onOpenSettings,
                 onDeleteUser = viewModel::deleteUser,
-                onOpenWatchlist = { onOpenWatchlist(watchlistTitle) },
+                onOpenWatchlist = { onOpenWatchlist(watchlistTitle) }.takeIf { discovery },
             ),
     )
 }
