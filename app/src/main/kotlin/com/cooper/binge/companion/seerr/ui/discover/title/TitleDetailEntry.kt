@@ -10,6 +10,7 @@ import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.TitleResult
 import com.cooper.binge.companion.seerr.discover.request.RequestResult
 import com.cooper.binge.companion.seerr.discover.title.TitleCompany
+import com.cooper.binge.companion.seerr.ui.SiblingRequestSheet
 import com.cooper.binge.companion.seerr.ui.openInBrowser
 import com.cooper.binge.companion.seerr.ui.state.EmptyScreen
 
@@ -32,10 +33,12 @@ internal fun TitleDetailEntry(
     onOpenCredits: () -> Unit,
     onOpenSeason: (seasonNumber: Int, seriesName: String) -> Unit,
     onOpenCompany: (TitleCompany) -> Unit,
+    onOpenUser: (Int) -> Unit,
+    onOpenServices: () -> Unit,
 ) {
     when (kind) {
-        TitleKind.Movie -> FilmPageEntry(tmdbId, onBack, onOpenCredits, onOpenCompany)
-        TitleKind.Series -> SeriesPageEntry(tmdbId, onBack, onOpenCredits, onOpenSeason, onOpenCompany)
+        TitleKind.Movie -> FilmPageEntry(tmdbId, onBack, onOpenCredits, onOpenCompany, onOpenUser, onOpenServices)
+        TitleKind.Series -> SeriesPageEntry(tmdbId, onBack, onOpenCredits, onOpenSeason, onOpenCompany, onOpenUser, onOpenServices)
         else -> EmptyScreen(message = "")
     }
 }
@@ -46,6 +49,8 @@ private fun FilmPageEntry(
     onBack: () -> Unit,
     onOpenCredits: () -> Unit,
     onOpenCompany: (TitleCompany) -> Unit,
+    onOpenUser: (Int) -> Unit,
+    onOpenServices: () -> Unit,
 ) {
     val viewModel = hiltViewModel<TitlePageViewModel, TitlePageViewModel.Factory>(creationCallback = { it.create(tmdbId) })
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -58,10 +63,13 @@ private fun FilmPageEntry(
                 onOpenCredits = onOpenCredits,
                 onOpenCompany = onOpenCompany,
                 onRetry = viewModel::load,
-                onRequest = viewModel::openRequestSheet,
+                onRequest = viewModel::onPrimary,
                 onCloseRequest = viewModel::closeRequestSheet,
                 onRequested = viewModel::requested,
                 onReload = viewModel::reload,
+                onCloseManage = viewModel::closeManageSheet,
+                onOpenUser = onOpenUser,
+                onOpenServices = onOpenServices,
             ),
     )
 }
@@ -73,6 +81,8 @@ private fun SeriesPageEntry(
     onOpenCredits: () -> Unit,
     onOpenSeason: (Int, String) -> Unit,
     onOpenCompany: (TitleCompany) -> Unit,
+    onOpenUser: (Int) -> Unit,
+    onOpenServices: () -> Unit,
 ) {
     val viewModel = hiltViewModel<SeriesPageViewModel, SeriesPageViewModel.Factory>(creationCallback = { it.create(tmdbId) })
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -85,10 +95,13 @@ private fun SeriesPageEntry(
                 onOpenCredits = onOpenCredits,
                 onOpenCompany = onOpenCompany,
                 onRetry = viewModel::load,
-                onRequest = viewModel::openRequestSheet,
+                onRequest = viewModel::onPrimary,
                 onCloseRequest = viewModel::closeRequestSheet,
                 onRequested = viewModel::requested,
                 onReload = viewModel::reload,
+                onCloseManage = viewModel::closeManageSheet,
+                onOpenUser = onOpenUser,
+                onOpenServices = onOpenServices,
             ),
         seasonActions = SeasonActions(viewModel::selectSeason, viewModel::retryEpisodes, onOpenSeason),
     )
@@ -105,6 +118,9 @@ private fun rememberTitlePageActions(
     onCloseRequest: () -> Unit,
     onRequested: (RequestResult) -> Unit,
     onReload: () -> Unit,
+    onCloseManage: () -> Unit,
+    onOpenUser: (Int) -> Unit,
+    onOpenServices: () -> Unit,
 ): TitlePageActions {
     val context = LocalContext.current
     val openTitle = LocalOpenTitle.current
@@ -121,5 +137,7 @@ private fun rememberTitlePageActions(
         onOpenCredits = onOpenCredits,
         onOpenCompany = onOpenCompany,
         onReload = onReload,
+        onCloseManage = onCloseManage,
+        manageSheet = { sheet -> SiblingRequestSheet(sheet, onOpenUser, onOpenServices) },
     )
 }

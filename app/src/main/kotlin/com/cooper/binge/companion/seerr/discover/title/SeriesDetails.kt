@@ -65,6 +65,8 @@ data class SeriesDetails(
     val partialRequests: Boolean,
     val mediaId: Int?,
     val webUrl: String,
+    /** The requests the server holds for the show, newest last as it lists them. */
+    val requests: List<TitleRequest> = emptyList(),
 ) {
     /** The seasons of each version for the request sheet. */
     val seasonChoices: SeasonChoices

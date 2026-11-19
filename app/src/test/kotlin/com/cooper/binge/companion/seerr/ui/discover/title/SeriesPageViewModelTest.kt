@@ -126,11 +126,11 @@ class SeriesPageViewModelTest {
     fun `the request sheet opens only while a season can still be asked for`() {
         val covered = seriesFixture(standard = VersionState(TitleAvailability.Available, mayRequest = false))
         val closed = SeriesPageViewModel(FakeSeries(series = covered), 1399)
-        closed.openRequestSheet()
+        closed.onPrimary()
         assertFalse(closed.ready().requestSheetOpen)
 
         val open = SeriesPageViewModel(FakeSeries(), 1399)
-        open.openRequestSheet()
+        open.onPrimary()
         assertTrue(open.ready().requestSheetOpen)
     }
 
@@ -139,7 +139,7 @@ class SeriesPageViewModelTest {
         runTest {
             val repository = FakeSeries()
             val vm = SeriesPageViewModel(repository, 1399)
-            vm.openRequestSheet()
+            vm.onPrimary()
             repository.series = seriesFixture(seasons = listOf(seasonFixture(1, TitleAvailability.Pending), seasonFixture(2)))
 
             val event = awaitEvent(vm.events)
@@ -162,7 +162,7 @@ class SeriesPageViewModelTest {
         runTest {
             val repository = FakeSeries()
             val vm = SeriesPageViewModel(repository, 1399)
-            vm.openRequestSheet()
+            vm.onPrimary()
             repository.failSeries = IOException("down")
             val events = mutableListOf<SeriesPageEvent>()
             val collecting = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.events.toList(events) }

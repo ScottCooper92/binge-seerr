@@ -51,6 +51,8 @@ sealed interface SeriesPageUiState {
         val series: SeriesDetails,
         val extras: TitleExtras? = null,
         val requestSheetOpen: Boolean = false,
+        /** The request whose sheet is open over the page, when the primary opened one to manage. */
+        val manageRequestId: Int? = null,
         val selectedSeason: Int? = null,
         val episodes: Map<Int, EpisodesState> = emptyMap(),
     ) : SeriesPageUiState {
@@ -119,7 +121,21 @@ class SeriesPageViewModel
             ready()?.selectedSeason?.let(::loadEpisodes)
         }
 
-        fun openRequestSheet() = updateReady { if (it.mayRequest) it.copy(requestSheetOpen = true) else it }
+        /** The primary was tapped: the request sheet or one request's sheet, as the page's state says, or nothing where there is none to open. */
+        fun onPrimary() =
+            updateReady { ready ->
+                when (val tap = titleActionsModel(ready.series.standard, ready.series.fourK, ready.series.requests).primary.tap) {
+                    PrimaryTap.RequestSheet -> ready.copy(requestSheetOpen = true)
+                    is PrimaryTap.ManageRequest -> ready.copy(manageRequestId = tap.requestId)
+                    PrimaryTap.Nothing -> ready
+                }
+            }
+
+        /** The request's sheet closed; the page reads the title again, since what was done in it moves the title's state. */
+        fun closeManageSheet() {
+            updateReady { it.copy(manageRequestId = null) }
+            reload()
+        }
 
         /** Closing the sheet reads the show again, since a request moves its seasons and a refused one may mean the server's state moved. */
         fun closeRequestSheet() {

@@ -19,6 +19,7 @@ import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.ui.discover.request.RequestSheet
 import com.cooper.binge.companion.seerr.ui.discover.request.RequestSheetTarget
 import com.cooper.binge.companion.seerr.ui.discover.request.messageRes
+import com.cooper.binge.companion.seerr.ui.requests.SiblingSheet
 import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
 import com.cooper.binge.companion.seerr.ui.state.MediaHeroDetailPage
 import com.cooper.binge.companion.seerr.ui.state.MediaHeroDetailPlaceholder
@@ -105,6 +106,17 @@ private fun ReadySeriesPage(
                 ),
             onDismiss = actions.onCloseRequest,
             onResult = actions.onRequested,
+        )
+    }
+    state.manageRequestId?.let { requestId ->
+        actions.manageSheet(
+            SiblingSheet(
+                requestId,
+                open = true,
+                snackbarHostState = snackbar,
+                onDismiss = actions.onCloseManage,
+                onChanged = actions.onReload,
+            ),
         )
     }
 }

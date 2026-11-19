@@ -116,11 +116,11 @@ class TitlePageViewModelTest {
     fun `the request sheet opens only while the title can be requested`() {
         val none = movieFixture(standard = VersionState(TitleAvailability.Available, mayRequest = false))
         val vm = TitlePageViewModel(FakeTitles(movie = none), 603)
-        vm.openRequestSheet()
+        vm.onPrimary()
         assertFalse(vm.ready().requestSheetOpen)
 
         val open = TitlePageViewModel(FakeTitles(), 603)
-        open.openRequestSheet()
+        open.onPrimary()
         assertTrue(open.ready().requestSheetOpen)
     }
 
@@ -136,7 +136,7 @@ class TitlePageViewModelTest {
         runTest {
             val titles = FakeTitles()
             val vm = TitlePageViewModel(titles, 603)
-            vm.openRequestSheet()
+            vm.onPrimary()
             titles.movie = movieFixture(standard = VersionState(TitleAvailability.Pending, mayRequest = false))
 
             val event = awaitEvent(vm.events)
@@ -157,7 +157,7 @@ class TitlePageViewModelTest {
         runTest {
             val titles = FakeTitles()
             val vm = TitlePageViewModel(titles, 603)
-            vm.openRequestSheet()
+            vm.onPrimary()
             titles.failMovie = IOException("down")
             val events = mutableListOf<TitlePageEvent>()
             val collecting = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.events.toList(events) }

@@ -20,6 +20,7 @@ import com.cooper.binge.companion.seerr.discover.title.TitleCompany
 import com.cooper.binge.companion.seerr.ui.discover.request.RequestSheet
 import com.cooper.binge.companion.seerr.ui.discover.request.RequestSheetTarget
 import com.cooper.binge.companion.seerr.ui.discover.request.messageRes
+import com.cooper.binge.companion.seerr.ui.requests.SiblingSheet
 import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
 import com.cooper.binge.companion.seerr.ui.state.MediaHeroDetailPage
 import com.cooper.binge.companion.seerr.ui.state.MediaHeroDetailPlaceholder
@@ -41,6 +42,10 @@ class TitlePageActions(
     val onOpenCompany: ((TitleCompany) -> Unit)? = null,
     /** Reads the page again where it stands, for the snackbar after a request whose reload failed. */
     val onReload: () -> Unit = {},
+    /** The sheet of a request the primary opened, closed. */
+    val onCloseManage: () -> Unit = {},
+    /** The sheet of one request, backed by that request's own view model, which the nav entry supplies. */
+    val manageSheet: @Composable (SiblingSheet) -> Unit = {},
 )
 
 /** The film page: a hero, its stats, and the actions, with Request first; then the facts and people. */
@@ -118,6 +123,17 @@ private fun ReadyPage(
                 ),
             onDismiss = actions.onCloseRequest,
             onResult = actions.onRequested,
+        )
+    }
+    state.manageRequestId?.let { requestId ->
+        actions.manageSheet(
+            SiblingSheet(
+                requestId,
+                open = true,
+                snackbarHostState = snackbar,
+                onDismiss = actions.onCloseManage,
+                onChanged = actions.onReload,
+            ),
         )
     }
 }

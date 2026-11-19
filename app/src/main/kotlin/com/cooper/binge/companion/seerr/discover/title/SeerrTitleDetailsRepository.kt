@@ -143,6 +143,7 @@ internal fun SeerrMovieDetailsDto.toMovieDetails(
         mediaId = mediaInfo?.id,
         webUrl = webUrl,
         releaseDate = releaseDate?.takeIf { it.isNotBlank() },
+        requests = mediaInfo?.requests.orEmpty().map { it.toTitleRequest() },
     )
 }
 
@@ -190,3 +191,13 @@ internal suspend fun streamingRegion(
     val discover = listOf(own?.discoverRegion ?: own?.region, server.discoverRegion ?: server.region)
     return (streaming + discover + deviceRegion).firstOrNull { !it.isNullOrBlank() }
 }
+
+/** The request the title's own answer lists, reduced to what the page keeps: its id, version, state, who asked and when. */
+internal fun com.cooper.binge.companion.seerr.seerr.SeerrRequestSummaryDto.toTitleRequest() =
+    TitleRequest(
+        id = id,
+        is4k = is4k,
+        status = status,
+        requestedBy = requestedBy?.let { it.displayName ?: it.username ?: it.email },
+        createdAt = createdAt,
+    )

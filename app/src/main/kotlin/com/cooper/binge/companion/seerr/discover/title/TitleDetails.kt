@@ -3,6 +3,7 @@ package com.cooper.binge.companion.seerr.discover.title
 import com.cooper.binge.companion.seerr.discover.TitleAvailability
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.TitleResult
+import com.cooper.binge.companion.seerr.seerr.SeerrRequestStatusCode
 
 /** A person on a title: [role] is a character for cast and a job for crew. [photoUrl] is a full URL. */
 data class TitlePerson(
@@ -53,6 +54,18 @@ data class TitleRatings(
     val isEmpty: Boolean get() = criticsPercent == null && audiencePercent == null && imdbScore == null
 }
 
+/**
+ * A request the server holds for a title, as its own answer lists it: enough to open that request's sheet and to say who asked and
+ * when. [id] is the request's id, which the request page and its sheet are keyed by.
+ */
+data class TitleRequest(
+    val id: Int,
+    val is4k: Boolean,
+    val status: SeerrRequestStatusCode?,
+    val requestedBy: String?,
+    val createdAt: String?,
+)
+
 /** One version of a title, standard or 4K: what the server holds of it and whether this user may ask for it. */
 data class VersionState(
     val availability: TitleAvailability,
@@ -95,6 +108,8 @@ data class MovieDetails(
     val mediaId: Int?,
     val webUrl: String,
     val releaseDate: String? = null,
+    /** The requests the server holds for the film, newest last as it lists them. */
+    val requests: List<TitleRequest> = emptyList(),
     /** Whether the server can list what a studio made, so the studios may be links; set from its profile, never from a version here. */
     val companiesOpen: Boolean = false,
 )

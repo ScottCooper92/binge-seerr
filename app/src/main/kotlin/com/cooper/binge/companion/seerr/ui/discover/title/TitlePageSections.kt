@@ -54,8 +54,8 @@ internal fun TitlePageBody(
         val expanded = isExpandedLayout()
         if (!expanded) TitleStatsRows(movie.titleStats(locale))
         TitleActions(
-            model = titleActionsModel(movie.standard, movie.fourK),
-            onRequest = actions.onRequest,
+            model = titleActionsModel(movie.standard, movie.fourK, movie.requests),
+            onPrimary = actions.onRequest,
             onTrailer = movie.videos.trailerUrl()?.let { url -> { actions.onOpenUrl(url) } },
             modifier = Modifier.readingMargin().layoutAnchor(LayoutAnchors.section(LayoutAnchors.Detail.ACTIONS)),
         )

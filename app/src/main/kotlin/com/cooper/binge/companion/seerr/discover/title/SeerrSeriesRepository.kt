@@ -174,6 +174,7 @@ internal fun SeerrTvDetailsDto.toSeriesDetails(
         partialRequests = settings.partialRequestsEnabled,
         mediaId = mediaInfo?.id,
         webUrl = webUrl,
+        requests = mediaInfo?.requests.orEmpty().map { it.toTitleRequest() },
     )
 }
 
