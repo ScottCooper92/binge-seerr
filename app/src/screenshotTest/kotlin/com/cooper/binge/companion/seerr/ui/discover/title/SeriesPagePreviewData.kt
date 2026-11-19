@@ -9,6 +9,7 @@ import com.cooper.binge.companion.seerr.discover.title.SeasonInfo
 import com.cooper.binge.companion.seerr.discover.title.SeriesDetails
 import com.cooper.binge.companion.seerr.discover.title.TitleCompany
 import com.cooper.binge.companion.seerr.discover.title.TitleExtras
+import com.cooper.binge.companion.seerr.discover.title.TitleKeyword
 import com.cooper.binge.companion.seerr.discover.title.TitlePerson
 import com.cooper.binge.companion.seerr.discover.title.TitleProvider
 import com.cooper.binge.companion.seerr.discover.title.TitleProviders
@@ -66,7 +67,7 @@ internal fun fullSeries(
     voteAverage = 8.4,
     voteCount = VOTES,
     genres = listOf("Drama", "Fantasy"),
-    keywords = listOf("winter", "family", "kingdom"),
+    keywords = listOf(TitleKeyword(1, "winter"), TitleKeyword(2, "family"), TitleKeyword(3, "kingdom")),
     status = "Returning Series",
     inProduction = true,
     originalLanguage = "en",
