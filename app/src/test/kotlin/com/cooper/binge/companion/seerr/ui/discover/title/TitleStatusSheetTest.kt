@@ -52,9 +52,18 @@ class TitleStatusSheetTest {
 
     @Test
     fun `a title that is not in the library never offers Watch`() {
-        show(TitleState.Processing)
+        show(TitleState.Requested)
 
         rule.onNodeWithText("Another user requested this title.").assertIsDisplayed()
+        rule.onNodeWithText("Watch").assertDoesNotExist()
+    }
+
+    @Test
+    fun `a processing title claims no requester`() {
+        show(TitleState.Processing)
+
+        rule.onNodeWithText("This title is on its way to the library.").assertIsDisplayed()
+        rule.onNodeWithText("Another user requested this title.").assertDoesNotExist()
     }
 
     @Test

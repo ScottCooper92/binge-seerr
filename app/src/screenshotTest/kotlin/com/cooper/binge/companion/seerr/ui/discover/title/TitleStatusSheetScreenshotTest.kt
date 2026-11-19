@@ -23,7 +23,13 @@ class TitleStatusSheetScreenshotTest {
     @PreviewTest
     @SeerrComponentPreviews
     @Composable
-    fun otherRequest() = SheetFrame { TitleStatusSheetContent(TitleState.Processing, null, null, true, {}) }
+    fun otherRequest() = SheetFrame { TitleStatusSheetContent(TitleState.Requested, null, null, true, {}) }
+
+    /** Processing with no request on file (a server sync): the line claims no requester. */
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun processing() = SheetFrame { TitleStatusSheetContent(TitleState.Processing, null, null, true, {}) }
 
     /** A show with no season to request yet, for a viewer who may request: the line says there is nothing to request, not that the account can't. */
     @PreviewTest

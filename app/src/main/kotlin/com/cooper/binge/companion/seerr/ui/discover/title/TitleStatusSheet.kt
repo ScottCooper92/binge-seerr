@@ -84,7 +84,8 @@ internal fun TitleStatusSheetContent(
 private fun TitleState.noteRes(canRequest: Boolean) =
     when (this) {
         TitleState.Request -> if (canRequest) R.string.title_sheet_note_nothing_to_request else R.string.title_sheet_note_cannot_request
-        TitleState.Requested, TitleState.Processing -> R.string.title_sheet_note_other_request
+        TitleState.Requested -> R.string.title_sheet_note_other_request
+        TitleState.Processing -> R.string.title_sheet_note_processing
         TitleState.PartiallyAvailable, TitleState.Available -> R.string.title_sheet_note_in_library
         TitleState.Blocklisted -> R.string.title_sheet_note_blocklisted
     }

@@ -1513,6 +1513,7 @@
     <string name="title_sheet_note_cannot_request">Tu cuenta no puede solicitar este título.</string>
     <string name="title_sheet_note_nothing_to_request">Todavía no hay nada que solicitar de este título.</string>
     <string name="title_sheet_note_other_request">Otro usuario ha solicitado este título.</string>
+    <string name="title_sheet_note_processing">Este título está de camino a la biblioteca.</string>
     <string name="title_sheet_note_in_library">Este título está en la biblioteca.</string>
     <string name="title_sheet_note_blocklisted">Este título está en la lista de bloqueo, así que no se puede solicitar.</string>
     <string name="title_page_action_report">Informar</string>
