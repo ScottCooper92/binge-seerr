@@ -13,6 +13,8 @@ import androidx.navigation3.runtime.NavKey
 import com.cooper.binge.companion.seerr.ui.DiscoverGridRoute
 import com.cooper.binge.companion.seerr.ui.NavMotionSpecs
 import com.cooper.binge.companion.seerr.ui.discover.title.LocalOpenTitle
+import com.cooper.binge.companion.seerr.ui.hub.AccountBarState
+import com.cooper.binge.companion.seerr.ui.hub.AccountBarViewModel
 import com.cooper.binge.companion.seerr.ui.popIfTop
 import com.cooper.binge.companion.seerr.ui.replaceTop
 import com.cooper.binge.companion.seerr.ui.shell.SeerrTab
@@ -22,11 +24,12 @@ import java.time.LocalDate
 internal fun EntryProviderScope<NavKey>.discoverGridEntries(
     backStack: NavBackStack<NavKey>,
     motion: NavMotionSpecs,
+    onOpenAccount: (Int) -> Unit,
 ) {
     entry<DiscoverGridRoute>(metadata = motion.detail) { route ->
         DiscoverGridEntry(route, onBack = {
             backStack.popIfTop(route)
-        }, backStack = backStack)
+        }, backStack = backStack, onOpenAccount = onOpenAccount)
     }
 }
 
@@ -36,6 +39,7 @@ internal fun DiscoverGridEntry(
     route: DiscoverGridRoute,
     onBack: (() -> Unit)?,
     backStack: NavBackStack<NavKey>,
+    onOpenAccount: (Int) -> Unit,
     title: String? = route.title,
     reselectKey: Any? = null,
 ) {
@@ -54,7 +58,11 @@ internal fun DiscoverGridEntry(
             }
         }
     }
+    val bar = hiltViewModel<AccountBarViewModel>()
+    val account by bar.uiState.collectAsStateWithLifecycle()
     DiscoverGridScreen(
+        accountBar = (account as? AccountBarState.Ready)?.bar,
+        onOpenAccount = onOpenAccount,
         kind = route.kind,
         title = title,
         reselectKey = reselectKey,
@@ -81,12 +89,16 @@ internal fun DiscoverGridEntry(
  * Content choice in the filter sheet reopens it as the other kind in place, so the tab picks Movies or TV shows as Binge's does.
  */
 @Composable
-internal fun DiscoverTabEntry(stack: NavBackStack<NavKey>) {
+internal fun DiscoverTabEntry(
+    stack: NavBackStack<NavKey>,
+    onOpenAccount: (Int) -> Unit,
+) {
     val route = stack.lastOrNull() as? DiscoverGridRoute ?: return
     DiscoverGridEntry(
         route,
         onBack = null,
         backStack = stack,
+        onOpenAccount = onOpenAccount,
         title = null,
         reselectKey = SeerrTab.Discover,
     )
