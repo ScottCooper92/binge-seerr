@@ -10,8 +10,6 @@ import com.cooper.binge.companion.seerr.discover.title.SeriesDetailsRepository
 import com.cooper.binge.companion.seerr.discover.title.TitleExtras
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
-import com.cooper.binge.companion.seerr.telemetry.AnalyticsEvents
-import com.cooper.binge.companion.seerr.telemetry.operationFailed
 import com.cooper.homelab.core.telemetry.Analytics
 import com.cooper.homelab.core.telemetry.NoOpAnalytics
 import dagger.assisted.Assisted
@@ -64,6 +62,8 @@ sealed interface SeriesPageUiState {
         val reportSheetOpen: Boolean = false,
         /** A watchlist call is in flight, so another tap is ignored. */
         val watchlistBusy: Boolean = false,
+        /** The confirm for Block is up. */
+        val blockConfirmOpen: Boolean = false,
         val selectedSeason: Int? = null,
         val episodes: Map<Int, EpisodesState> = emptyMap(),
     ) : SeriesPageUiState {
@@ -83,6 +83,14 @@ sealed interface SeriesPageEvent {
 
     /** The title came off the blocklist, for the screen's snackbar; the page reads it again. */
     data object Unblocked : SeriesPageEvent
+
+    /** The show was blocked, for the screen's snackbar; the page reads it again. */
+    data object Blocked : SeriesPageEvent
+
+    /** The server refused or could not be reached, so the show is not blocked. */
+    data class BlockFailed(
+        val error: SeerrError,
+    ) : SeriesPageEvent
 
     /** The watchlist call failed, so the button is back where it was; the screen says so. */
     data class WatchlistFailed(
@@ -190,22 +198,44 @@ class SeriesPageViewModel
             }
         }
 
-        /** Takes the title off the blocklist from the status sheet: the sheet closes, the page reads the title again, and a snackbar says so. */
-        fun unblock() {
-            if (ready?.series?.mayUnblock != true) return
-            closeSheet(TitleSheet.Status)
-            viewModelScope.launch {
-                attempt { repository.unblock(tmdbId) }.fold(
-                    onSuccess = {
-                        analytics.event(AnalyticsEvents.BLOCKLIST_CHANGED, mapOf(AnalyticsEvents.PARAM_ACTION to "series_unblocked"))
-                        eventFlow.tryEmit(SeriesPageEvent.Unblocked)
-                        reload()
-                    },
-                    onFailure = {
-                        analytics.operationFailed("unblock_title", it, repository.serverProfile())
-                        eventFlow.tryEmit(SeriesPageEvent.UnblockFailed(it.toSeerrError()))
-                    },
-                )
+        /** Where the blocklist stands for this title: the confirm opens and closes, and a block or an unblock is sent. */
+        fun blocklist(step: BlocklistStep) {
+            when (step) {
+                BlocklistStep.Ask -> updateReady { it.copy(blockConfirmOpen = true) }
+                BlocklistStep.Cancel -> updateReady { it.copy(blockConfirmOpen = false) }
+                BlocklistStep.Block -> {
+                    val ready = ready ?: return
+                    if (!ready.series.mayBlock) return
+                    updateReady { it.copy(blockConfirmOpen = false) }
+                    viewModelScope.sendBlocklistChange(
+                        analytics,
+                        "series_blocked",
+                        "block_title",
+                        repository::serverProfile,
+                        send = { repository.block(tmdbId, ready.series.name) },
+                        onDone = {
+                            eventFlow.tryEmit(SeriesPageEvent.Blocked)
+                            reload()
+                        },
+                        onFailed = { eventFlow.tryEmit(SeriesPageEvent.BlockFailed(it)) },
+                    )
+                }
+                BlocklistStep.Unblock -> {
+                    if (ready?.series?.mayUnblock != true) return
+                    closeSheet(TitleSheet.Status)
+                    viewModelScope.sendBlocklistChange(
+                        analytics,
+                        "series_unblocked",
+                        "unblock_title",
+                        repository::serverProfile,
+                        send = { repository.unblock(tmdbId) },
+                        onDone = {
+                            eventFlow.tryEmit(SeriesPageEvent.Unblocked)
+                            reload()
+                        },
+                        onFailed = { eventFlow.tryEmit(SeriesPageEvent.UnblockFailed(it)) },
+                    )
+                }
             }
         }
 

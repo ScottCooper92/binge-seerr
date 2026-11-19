@@ -1195,6 +1195,8 @@ app:state_error_unknown_title  ab827e3fe17d
 app:state_error_unreachable_message  5ffff6c5878b
 app:state_error_unreachable_title  8884ecffcd27
 app:tip_row  f65a6e40cbc4
+app:title_block_confirm_message  9b9e2f6a5cf6
+app:title_block_confirm_title  2cf38885c065
 app:title_credits_cast  150040557337
 app:title_credits_department_actors  42d6879a1f74
 app:title_credits_department_art  75df3579c730
@@ -1215,6 +1217,7 @@ app:title_kind_movie  941de4447b2e
 app:title_kind_person  6007db63e18e
 app:title_kind_series  ca62d5e073f5
 app:title_kind_studio  0aa91af2ec4c
+app:title_page_action_block  211d0bb8cf4f
 app:title_page_action_report  b6ce788d9786
 app:title_page_action_share  29887a5ff984
 app:title_page_action_trailer  6a7b20d1da8a

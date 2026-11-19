@@ -1589,6 +1589,9 @@
     <string name="title_page_watchlist_add">Add to watchlist</string>
     <string name="title_page_watchlist_remove">Remove from watchlist</string>
     <string name="title_page_action_report">Report</string>
+    <string name="title_page_action_block">Block</string>
+    <string name="title_block_confirm_title">Block %1$s?</string>
+    <string name="title_block_confirm_message">Nobody can request it until it is unblocked. You can unblock it from its page or the blocklist.</string>
     <string name="title_page_action_trailer">Trailer</string>
     <string name="title_page_action_share">Share</string>
     <string name="title_page_stat_released">Released</string>

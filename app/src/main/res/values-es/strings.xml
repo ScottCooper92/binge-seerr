@@ -1530,6 +1530,9 @@
     <string name="title_page_watchlist_add">Añadir a la lista de seguimiento</string>
     <string name="title_page_watchlist_remove">Quitar de la lista de seguimiento</string>
     <string name="title_page_action_report">Informar</string>
+    <string name="title_page_action_block">Bloquear</string>
+    <string name="title_block_confirm_title">¿Bloquear %1$s?</string>
+    <string name="title_block_confirm_message">Nadie podrá pedirlo hasta que se desbloquee. Puedes desbloquearlo desde su página o desde la lista de bloqueados.</string>
     <string name="title_page_action_trailer">Tráiler</string>
     <string name="title_page_action_share">Compartir</string>
     <string name="title_page_stat_released">Estreno</string>
