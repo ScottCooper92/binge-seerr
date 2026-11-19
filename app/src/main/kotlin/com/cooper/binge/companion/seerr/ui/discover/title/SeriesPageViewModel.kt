@@ -159,8 +159,7 @@ class SeriesPageViewModel
 
         /** Takes the title off the blocklist from the status sheet: the sheet closes, the page reads the title again, and a snackbar says so. */
         fun unblock() {
-            val ready = state.value as? SeriesPageUiState.Ready ?: return
-            if (!ready.series.mayUnblock) return
+            if (ready?.series?.mayUnblock != true) return
             closeStatusSheet()
             viewModelScope.launch {
                 attempt { repository.unblock(tmdbId) }.fold(

@@ -96,9 +96,9 @@ class SeerrSeriesRepository(
             }
         }
 
-    /** Rotten Tomatoes only: the show route has no IMDb score, and it is served on every lineage. */
     override suspend fun unblock(tmdbId: Int) = withContext(io) { unblockTitle(api(), profile(), tmdbId, "tv") }
 
+    /** Rotten Tomatoes only: the show route has no IMDb score, and it is served on every lineage. */
     override suspend fun extras(tmdbId: Int): TitleExtras =
         withContext(io) {
             coroutineScope {
