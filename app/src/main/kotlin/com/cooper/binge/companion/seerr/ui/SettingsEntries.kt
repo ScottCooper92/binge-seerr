@@ -18,15 +18,15 @@ import com.cooper.binge.companion.seerr.ui.settings.server.ServerSettingsPage
 import com.cooper.binge.companion.seerr.ui.state.LoadingScreen
 
 /**
- * The settings search, over the whole window: it has no pane metadata, so it covers the hub and whatever is open beside it. A
- * result opens its page above the search through [PaneLayout.openFromSearch], and the search stays on the stack, so Back from the
- * page returns to the search as it was.
+ * The settings search, as any section is: beside the hub in the one content pane on a wide window, over the whole window on a
+ * narrow one (#2343). What was open beneath it stays on the stack, so Back brings it back. A result opens its page above the search
+ * through [PaneLayout.openFromSearch], and the search stays on the stack, so Back from the page returns to the search as it was.
  */
 internal fun EntryProviderScope<NavKey>.searchEntries(
     backStack: NavBackStack<NavKey>,
     panes: PaneLayout,
 ) {
-    entry<SettingsSearchRoute>(metadata = panes.motion.detail) { route ->
+    entry<SettingsSearchRoute>(metadata = DetailPane + SectionPane + panes.motion.detail) { route ->
         SettingsSearchEntry(
             onOpen = { target -> panes.openFromSearch(backStack, target) },
             onBack = { backStack.popIfTop(route) },
