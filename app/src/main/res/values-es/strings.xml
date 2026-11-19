@@ -529,6 +529,11 @@
     <string name="user_plays">Reproducciones</string>
     <string name="user_permissions_title">Permisos</string>
     <string name="user_recently_watched">Visto recientemente</string>
+    <plurals name="user_watchlist_count">
+        <item quantity="one">%1$s título</item>
+        <item quantity="many">%1$s de títulos</item>
+        <item quantity="other">%1$s títulos</item>
+    </plurals>
     <string name="user_watchlist">Lista de seguimiento</string>
     <string name="user_no_requests">Aún no hay peticiones.</string>
     <string name="user_delete">Eliminar el usuario</string>

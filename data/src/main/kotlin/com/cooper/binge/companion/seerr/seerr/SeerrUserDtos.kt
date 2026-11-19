@@ -67,6 +67,8 @@ data class SeerrAddToWatchlistBody(
 data class SeerrWatchlistPageDto(
     @SerialName("page") val page: Int = 1,
     @SerialName("totalPages") val totalPages: Int = 1,
+    /** The whole list's size, where the server says it; the count a row shows. */
+    @SerialName("totalResults") val totalResults: Int? = null,
     @SerialName("results") val results: List<SeerrWatchlistItemDto> = emptyList(),
 )
 

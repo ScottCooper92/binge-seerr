@@ -106,7 +106,7 @@ class DiscoverGridViewModel
         ): SearchPage<HubCard> {
             val loaded = grid.load(GridRequest(kind, preset, query.filters, query.sort), page)
             val serverUrl = media.serverUrl()
-            val cards = loaded.results.filter { it.kind == kind }.map { it.toCard(serverUrl) }
+            val cards = loaded.results.filter { preset == GridPreset.OwnWatchlist || it.kind == kind }.map { it.toCard(serverUrl) }
             return SearchPage(cards, loaded.page, loaded.totalPages)
         }
 
@@ -185,7 +185,7 @@ internal fun toUiState(
 
 private fun GridPreset.toChip(title: String?): ActiveFilterChip? =
     when (this) {
-        GridPreset.Popular, GridPreset.Trending, GridPreset.Watchlist -> null
+        GridPreset.Popular, GridPreset.Trending, GridPreset.Watchlist, GridPreset.OwnWatchlist -> null
         GridPreset.Upcoming -> ActiveFilterChip(ChipKind.Upcoming, null)
         is GridPreset.Genre -> ActiveFilterChip(ChipKind.Genre, title)
         is GridPreset.Company -> ActiveFilterChip(ChipKind.Company, title)

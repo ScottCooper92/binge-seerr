@@ -23,6 +23,10 @@ sealed interface GridPreset {
     @Serializable
     data object Watchlist : GridPreset
 
+    /** The signed-in user's whole watchlist, movies and series together, as the user page opens it. */
+    @Serializable
+    data object OwnWatchlist : GridPreset
+
     @Serializable
     data class Genre(
         val id: Int,
@@ -52,12 +56,12 @@ sealed interface GridPreset {
 }
 
 /** Whether the list can be sorted and filtered at all, or is one plain paged call. */
-val GridPreset.isFilterable: Boolean get() = this != GridPreset.Trending && this != GridPreset.Watchlist
+val GridPreset.isFilterable: Boolean get() = this != GridPreset.Trending && this != GridPreset.Watchlist && this != GridPreset.OwnWatchlist
 
 /** The filters a preset starts the grid with. */
 fun GridPreset.startingFilters(today: String): DiscoverFilters =
     when (this) {
-        GridPreset.Popular, GridPreset.Trending, GridPreset.Watchlist -> DiscoverFilters()
+        GridPreset.Popular, GridPreset.Trending, GridPreset.Watchlist, GridPreset.OwnWatchlist -> DiscoverFilters()
         GridPreset.Upcoming -> DiscoverFilters(releaseFrom = today)
         is GridPreset.Genre -> DiscoverFilters(genres = setOf(id))
         is GridPreset.Company -> DiscoverFilters(company = id)
@@ -79,7 +83,7 @@ fun GridPreset.toSource(kind: TitleKind): TitleSource =
         GridPreset.Popular -> TitleSource.Popular(kind)
         GridPreset.Upcoming -> TitleSource.Upcoming(kind)
         GridPreset.Trending -> TitleSource.Trending
-        GridPreset.Watchlist -> TitleSource.Watchlist
+        GridPreset.Watchlist, GridPreset.OwnWatchlist -> TitleSource.Watchlist
         is GridPreset.Genre -> TitleSource.ByGenre(kind, id)
         is GridPreset.Company -> TitleSource.ByCompany(kind, id)
         is GridPreset.Language -> TitleSource.ByLanguage(kind, code)
