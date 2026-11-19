@@ -61,6 +61,7 @@ class SeerrTitleDetailsRepository(
                     mayViewAllRequests = permissions.canViewRequests,
                     webUrl = serverUrl() + "movie/" + tmdbId,
                 ).copy(
+                    accountMayRequest = permissions.canRequestMovie,
                     companiesOpen = profile.hasDiscoverByCategory,
                     mediaServerName = profile.mediaServerName(),
                     keywordsOpen = profile.hasKeywordDiscover,
@@ -230,6 +231,6 @@ internal fun com.cooper.binge.companion.seerr.seerr.SeerrRequestSummaryDto.toTit
         requesterId = requestedBy?.id,
     )
 
-/** The title's link in the media server's web UI, whichever of the server's fields it filled; null where none is a real site. */
+/** The title's link in the media server's web UI, whichever of the server's fields it filled (the standard links first, then the 4K ones); null where none is a real site. */
 internal fun com.cooper.binge.companion.seerr.seerr.SeerrMediaInfoDto.watchUrl(): String? =
-    (mediaUrl ?: jellyfinMediaUrl ?: plexUrl)?.takeIf(::isOpenableSite)
+    listOf(mediaUrl, jellyfinMediaUrl, plexUrl, mediaUrl4k, plexUrl4k).firstOrNull { !it.isNullOrBlank() }?.takeIf(::isOpenableSite)

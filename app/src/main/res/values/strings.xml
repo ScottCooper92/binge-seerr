@@ -1571,6 +1571,7 @@
     <string name="title_sheet_watch">Watch</string>
     <string name="title_sheet_watch_on">Watch on %1$s</string>
     <string name="title_sheet_note_cannot_request">Your account can\'t request this title.</string>
+    <string name="title_sheet_note_nothing_to_request">There\'s nothing to request for this title yet.</string>
     <string name="title_sheet_note_other_request">Another user requested this title.</string>
     <string name="title_sheet_note_in_library">This title is in the library.</string>
     <string name="title_sheet_note_blocklisted">This title is blocklisted, so it can\'t be requested.</string>

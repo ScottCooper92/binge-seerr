@@ -113,6 +113,8 @@ data class MovieDetails(
     val watchUrl: String? = null,
     /** The media server the Seerr server fronts, by name, for the Watch row's label; null where it has none this app knows. */
     val mediaServerName: String? = null,
+    /** Whether the signed-in account holds the right to request this kind of title, apart from whether anything is left to request. */
+    val accountMayRequest: Boolean = true,
     /** Whether the server can list what a studio made, so the studios may be links; set from its profile, never from a version here. */
     val companiesOpen: Boolean = false,
     /** Whether the server can list the titles of a keyword, so the keywords may be links; set from its profile. */

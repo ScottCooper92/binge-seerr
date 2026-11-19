@@ -67,6 +67,7 @@ class SeerrSeriesRepository(
                     settings = profile.settings,
                     webUrl = serverUrl() + "tv/" + tmdbId,
                 ).copy(
+                    accountMayRequest = permissions.canRequestSeries,
                     companiesOpen = profile.hasDiscoverByCategory,
                     mediaServerName = profile.mediaServerName(),
                     keywordsOpen = profile.hasKeywordDiscover,

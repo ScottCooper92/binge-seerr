@@ -29,12 +29,14 @@ internal fun TitleStatusSheet(
     mediaServerName: String?,
     onWatch: (String) -> Unit,
     onDismiss: () -> Unit,
+    accountMayRequest: Boolean = true,
 ) {
     BingeAdaptiveSheet(kind = BingeSheetKind.Menu, onDismissRequest = onDismiss) {
         TitleStatusSheetContent(
             state = state,
             watchUrl = watchUrl,
             mediaServerName = mediaServerName,
+            accountMayRequest = accountMayRequest,
             onWatch = { url ->
                 onDismiss()
                 onWatch(url)
@@ -51,6 +53,7 @@ internal fun TitleStatusSheetContent(
     mediaServerName: String?,
     onWatch: (String) -> Unit,
     modifier: Modifier = Modifier,
+    accountMayRequest: Boolean = true,
 ) {
     val watch = watchUrl?.takeIf { state.isInLibrary() }
     if (watch != null) {
@@ -69,7 +72,7 @@ internal fun TitleStatusSheetContent(
         ) {
             Text(stringResource(state.labelRes()), style = MaterialTheme.typography.titleMedium)
             Text(
-                stringResource(state.noteRes()),
+                stringResource(state.noteRes(accountMayRequest)),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -78,9 +81,10 @@ internal fun TitleStatusSheetContent(
 }
 
 @StringRes
-private fun TitleState.noteRes() =
+private fun TitleState.noteRes(accountMayRequest: Boolean) =
     when (this) {
-        TitleState.Request -> R.string.title_sheet_note_cannot_request
+        TitleState.Request ->
+            if (accountMayRequest) R.string.title_sheet_note_nothing_to_request else R.string.title_sheet_note_cannot_request
         TitleState.Requested, TitleState.Processing -> R.string.title_sheet_note_other_request
         TitleState.PartiallyAvailable, TitleState.Available -> R.string.title_sheet_note_in_library
         TitleState.Blocklisted -> R.string.title_sheet_note_blocklisted
