@@ -8,14 +8,20 @@
 
 80 caracteres como máximo.
 
-> Gestiona tu servidor Seerr, Jellyseerr u Overseerr, y pide desde Binge.
+> Explora, pide y gestiona tu servidor Seerr, Jellyseerr u Overseerr.
 
-(72 caracteres)
+(67 caracteres)
 
 ## Descripción completa
 
-> Una consola de administración para el servidor Seerr, Jellyseerr u Overseerr que ya tienes, en tu
-> móvil y en tu televisor.
+> Un cliente y consola de administración para el servidor Seerr, Jellyseerr u Overseerr que ya
+> tienes, en tu móvil y en tu televisor.
+>
+> **Explorar.** En el móvil, explora películas y series de tu propio servidor, busca títulos y abre
+> las páginas de títulos, personas y colecciones: tráileres, reparto, dónde verlo y recomendaciones.
+> Pide desde cualquier título, eligiendo temporadas y 4K, añádelo a tu lista de seguimiento o
+> informa de un problema, en la medida en que lo permitan tu cuenta y tu servidor. Puedes
+> desactivarlo en Esta aplicación.
 >
 > **Peticiones.** Ve todas las peticiones del servidor, filtradas por estado y ordenadas como
 > quieras. Apruébalas, recházalas, reinténtalas o elimínalas, bloquea un título para que no se
