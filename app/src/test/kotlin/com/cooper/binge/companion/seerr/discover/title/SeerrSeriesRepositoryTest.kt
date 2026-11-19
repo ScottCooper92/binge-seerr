@@ -86,6 +86,14 @@ class SeerrSeriesRepositoryTest {
     }
 
     @Test
+    fun `keywords may be links only where the server can filter by keyword`() {
+        assertTrue(withRepository { it.series(1399) }.keywordsOpen)
+        variant = SeerrVariant.Overseerr
+        version = SeerrVersion(1, 8, 0)
+        assertFalse(withRepository { it.series(1399) }.keywordsOpen)
+    }
+
+    @Test
     fun `a season's episodes come in order with blank text and dates left out`() {
         val episodes = withRepository { it.season(1399, 2) }
 

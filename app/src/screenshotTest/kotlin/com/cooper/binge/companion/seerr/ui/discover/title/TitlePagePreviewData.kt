@@ -7,6 +7,7 @@ import com.cooper.binge.companion.seerr.discover.title.MovieDetails
 import com.cooper.binge.companion.seerr.discover.title.TitleCollection
 import com.cooper.binge.companion.seerr.discover.title.TitleCompany
 import com.cooper.binge.companion.seerr.discover.title.TitleExtras
+import com.cooper.binge.companion.seerr.discover.title.TitleKeyword
 import com.cooper.binge.companion.seerr.discover.title.TitlePerson
 import com.cooper.binge.companion.seerr.discover.title.TitleProvider
 import com.cooper.binge.companion.seerr.discover.title.TitleProviders
@@ -54,7 +55,7 @@ internal fun fullMovie(
     voteAverage = 8.2,
     voteCount = VOTES,
     genres = listOf("Action", "Science Fiction"),
-    keywords = listOf("simulation", "dystopia", "martial arts"),
+    keywords = listOf(TitleKeyword(1, "simulation"), TitleKeyword(2, "dystopia"), TitleKeyword(3, "martial arts")),
     status = "Released",
     originalLanguage = "en",
     spokenLanguageCodes = listOf("en", "es"),

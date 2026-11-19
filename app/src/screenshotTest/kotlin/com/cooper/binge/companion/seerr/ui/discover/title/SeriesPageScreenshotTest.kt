@@ -29,6 +29,9 @@ private val NO_SEASON_ACTIONS = SeasonActions({}, {}, { _, _ -> })
 /** As [NO_ACTIONS], but a network opens its grid, so the networks are links in the accent colour. */
 private val LINKED_ACTIONS = TitlePageActions({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, onOpenCompany = {}, onReport = {})
 
+/** As [NO_ACTIONS], but a keyword opens its grid, so the keywords are chips. */
+private val KEYWORD_ACTIONS = TitlePageActions({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, onOpenKeyword = {})
+
 @Composable
 private fun Frame(state: SeriesPageUiState) = SeriesPageScreen(state, emptyFlow(), NO_ACTIONS, NO_SEASON_ACTIONS)
 
@@ -146,6 +149,19 @@ class SeriesPageScreenshotTest {
             SeriesPageUiState.Ready(fullSeries().copy(companiesOpen = true), seriesExtras()),
             emptyFlow(),
             LINKED_ACTIONS,
+            NO_SEASON_ACTIONS,
+            scrollState = rememberScrollState(initial = DETAILS_END_PX),
+        )
+
+    /** The keywords as chips, where a tap opens that keyword's grid. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun keywordsLinked() =
+        SeriesPageScreen(
+            SeriesPageUiState.Ready(fullSeries().copy(keywordsOpen = true), seriesExtras()),
+            emptyFlow(),
+            KEYWORD_ACTIONS,
             NO_SEASON_ACTIONS,
             scrollState = rememberScrollState(initial = DETAILS_END_PX),
         )

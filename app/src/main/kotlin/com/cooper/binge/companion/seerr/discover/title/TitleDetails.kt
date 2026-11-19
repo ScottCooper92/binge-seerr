@@ -89,7 +89,7 @@ data class MovieDetails(
     val voteAverage: Double?,
     val voteCount: Int?,
     val genres: List<String>,
-    val keywords: List<String>,
+    val keywords: List<TitleKeyword>,
     val status: String?,
     val originalLanguage: String?,
     val spokenLanguageCodes: List<String>,
@@ -113,6 +113,8 @@ data class MovieDetails(
     val mayReport: Boolean = false,
     /** Whether the server can list what a studio made, so the studios may be links; set from its profile, never from a version here. */
     val companiesOpen: Boolean = false,
+    /** Whether the server can list the titles of a keyword, so the keywords may be links; set from its profile. */
+    val keywordsOpen: Boolean = false,
 )
 
 /** The sections that load apart from the page, so one that fails leaves only itself out. */
@@ -138,6 +140,12 @@ interface TitleDetailsRepository {
         tmdbId: Int,
     ): TitleExtras
 }
+
+/** A keyword the server tags a title with, with the id its discover filter takes. */
+data class TitleKeyword(
+    val id: Int,
+    val name: String,
+)
 
 /** A studio (film) or a network (series) behind a title: its TMDB id opens the grid of what else it made. */
 data class TitleCompany(

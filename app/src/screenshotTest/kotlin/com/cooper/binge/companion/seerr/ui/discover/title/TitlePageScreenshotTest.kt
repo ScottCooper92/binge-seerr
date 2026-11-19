@@ -31,6 +31,9 @@ private val NO_ACTIONS = TitlePageActions({}, {}, {}, {}, {}, {}, {}, {}, {}, {}
 /** As [NO_ACTIONS], but a studio opens its grid, so the studios are links in the accent colour. */
 private val LINKED_ACTIONS = TitlePageActions({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, onOpenCompany = {}, onReport = {})
 
+/** As [NO_ACTIONS], but a keyword opens its grid, so the keywords are chips. */
+private val KEYWORD_ACTIONS = TitlePageActions({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, onOpenKeyword = {})
+
 /** As [NO_ACTIONS], but no page opens for a collection, as on the phone today: the rail has no See all. */
 private val NO_COLLECTION_PAGE = TitlePageActions({}, {}, {}, {}, {}, {}, {}, null, {}, {})
 
@@ -241,6 +244,18 @@ class TitlePageScreenshotTest {
             TitlePageUiState.Ready(longMovie().copy(companiesOpen = true), fullExtras()),
             emptyFlow(),
             LINKED_ACTIONS,
+            scrollState = rememberScrollState(initial = DETAILS_END_PX),
+        )
+
+    /** The keywords as chips, where a tap opens that keyword's grid. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun keywordsLinked() =
+        TitlePageScreen(
+            TitlePageUiState.Ready(fullMovie().copy(keywordsOpen = true), fullExtras()),
+            emptyFlow(),
+            KEYWORD_ACTIONS,
             scrollState = rememberScrollState(initial = DETAILS_END_PX),
         )
 

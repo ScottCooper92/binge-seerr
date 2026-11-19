@@ -42,7 +42,7 @@ data class SeriesDetails(
     val voteAverage: Double?,
     val voteCount: Int?,
     val genres: List<String>,
-    val keywords: List<String>,
+    val keywords: List<TitleKeyword>,
     val status: String?,
     val inProduction: Boolean,
     val originalLanguage: String?,
@@ -54,6 +54,8 @@ data class SeriesDetails(
     val nextEpisode: NextEpisode?,
     /** Whether the server can list what a network made, so the networks may be links; set from its profile. */
     val companiesOpen: Boolean = false,
+    /** Whether the server can list the titles of a keyword, so the keywords may be links; set from its profile. */
+    val keywordsOpen: Boolean = false,
     val seasons: List<SeasonInfo>,
     val cast: List<TitlePerson>,
     val keyCrew: List<TitlePerson>,

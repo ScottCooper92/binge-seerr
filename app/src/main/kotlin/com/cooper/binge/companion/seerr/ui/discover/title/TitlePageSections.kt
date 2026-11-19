@@ -15,6 +15,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
+import com.binge.designsystem.component.BingeFilterChip
 import com.binge.designsystem.component.BingeTag
 import com.binge.designsystem.component.ExpandableOverview
 import com.binge.designsystem.component.MediaCard
@@ -33,6 +34,7 @@ import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.TitleAvailability
 import com.cooper.binge.companion.seerr.discover.TitleResult
 import com.cooper.binge.companion.seerr.discover.title.MovieDetails
+import com.cooper.binge.companion.seerr.discover.title.TitleKeyword
 import com.cooper.binge.companion.seerr.discover.title.TitlePerson
 import com.cooper.binge.companion.seerr.discover.title.trailerUrl
 import com.cooper.binge.companion.seerr.seerr.toTmdbPosterUrl
@@ -74,7 +76,7 @@ internal fun TitlePageBody(
             )
         }
         state.extras?.let { TitleRow(stringResource(R.string.title_page_more_like_this), it.moreLikeThis, actions.onOpenTitle) }
-        KeywordsSection(movie.keywords, Modifier.readingMargin())
+        KeywordsSection(movie.keywords, actions.onOpenKeyword.takeIf { movie.keywordsOpen }, Modifier.readingMargin())
         TitleDetailsSection(
             movie.detailEntries(context.resources, locale, actions.onOpenCompany.takeIf { movie.companiesOpen }, actions.onOpenPerson),
         )
@@ -120,21 +122,30 @@ internal fun OverviewSection(overview: String?) {
 
 @Composable
 internal fun KeywordsSection(
-    keywords: List<String>,
+    keywords: List<TitleKeyword>,
+    onOpen: ((TitleKeyword) -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
     if (keywords.isEmpty()) return
     SectionHeader(stringResource(R.string.title_page_keywords), modifier)
-    TagRow(keywords, modifier)
+    TagRow(keywords, onOpen, modifier)
 }
 
+/** Each keyword is a chip that opens its grid where [onOpen] is given, and a plain tag where it is not. */
 @Composable
 internal fun TagRow(
-    labels: List<String>,
+    keywords: List<TitleKeyword>,
+    onOpen: ((TitleKeyword) -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
     WrappingRow(modifier.padding(horizontal = resolvedContentInset())) {
-        labels.forEach { BingeTag(label = it, uppercase = false) }
+        keywords.forEach { keyword ->
+            if (onOpen == null) {
+                BingeTag(label = keyword.name, uppercase = false)
+            } else {
+                BingeFilterChip(label = keyword.name, selected = false, onClick = { onOpen(keyword) })
+            }
+        }
     }
 }
 

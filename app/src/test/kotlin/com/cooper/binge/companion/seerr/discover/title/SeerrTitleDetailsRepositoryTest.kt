@@ -185,6 +185,18 @@ class SeerrTitleDetailsRepositoryTest {
     }
 
     @Test
+    fun `keywords keep their ids and may be links only where the server can filter by keyword`() {
+        val movie = withRepository { it.movie(603) }
+        assertEquals(listOf(TitleKeyword(1, "simulation")), movie.keywords)
+        assertTrue(movie.keywordsOpen)
+        variant = SeerrVariant.Overseerr
+        version = SeerrVersion(1, 8, 0)
+        assertFalse(withRepository { it.movie(603) }.keywordsOpen)
+        version = SeerrVersion(1, 9, 0)
+        assertTrue(withRepository { it.movie(603) }.keywordsOpen)
+    }
+
+    @Test
     fun `with no region set anywhere the phone's country is the region`() {
         settings = SeerrPublicSettings(movie4kEnabled = true)
         userRegion = "{}"
