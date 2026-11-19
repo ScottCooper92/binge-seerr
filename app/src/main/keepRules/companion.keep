@@ -25,3 +25,9 @@
 # generated serializer references the fields itself, and the bundled rules retain Companion and
 # serializer().
 -keep,allowobfuscation,allowoptimization @kotlinx.serialization.Serializable class **
+
+# Class names, so the ring log and Diagnostics keep this app's own and the shared library's frames. The log keeps
+# only frames whose class starts with a package prefix (LoggingModule's OWN_PACKAGES), and R8 renames every class
+# to a short name that matches none. -keepnames only stops the renaming: R8 still removes what nothing uses.
+-keepnames class com.cooper.binge.companion.seerr.**
+-keepnames class com.cooper.homelab.**
