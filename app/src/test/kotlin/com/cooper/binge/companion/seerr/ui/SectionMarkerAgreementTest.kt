@@ -1,15 +1,12 @@
 package com.cooper.binge.companion.seerr.ui
 
-import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
-import androidx.navigation3.runtime.entryProvider
-import com.cooper.binge.companion.seerr.ui.discover.title.titleEntries
-import com.cooper.binge.companion.seerr.ui.grid.discoverGridEntries
 import com.cooper.binge.companion.seerr.ui.hub.HubSection
+import com.cooper.binge.companion.seerr.util.entryMetadata
+import com.cooper.binge.companion.seerr.util.routesWithoutEntries
 import com.cooper.binge.companion.seerr.util.sampleRoutes
 import org.junit.Assert.assertEquals
 import org.junit.Test
-import kotlin.reflect.KClass
 
 /**
  * [ShellPanesStrategy] draws what sits above the shell from the [SectionPane] marker on the entry, while the stash and
@@ -18,21 +15,8 @@ import kotlin.reflect.KClass
  * checked, so a new one given the marker without the predicate, or the reverse, fails here.
  */
 class SectionMarkerAgreementTest {
-    private val specs = navMotionSpecs { error("a transition was run") }
-
-    /** The roots and the shell are built by the host and never sit above it, so the provider here has no entry for them. */
-    private val notProvided: Set<KClass<*>> = setOf(HomeRoute::class, ShellRoute::class, HubRoute::class)
-
     private fun carriesSectionMarker(route: NavKey): Boolean {
-        val stack = NavBackStack<NavKey>(HomeRoute)
-        val panes = PaneLayout(hubBeside = { false }, showBack = { true }, motion = specs)
-        val provider =
-            entryProvider<NavKey> {
-                titleEntries(stack, specs)
-                discoverGridEntries(stack, specs, onOpenAccount = {})
-                settingsEntries(stack, connected = { true }, panes = panes, onExit = {})
-            }
-        val metadata = provider(route).metadata
+        val metadata = entryMetadata(route)
         return SectionPane.all { (key, value) -> metadata[key] == value }
     }
 
@@ -40,7 +24,7 @@ class SectionMarkerAgreementTest {
     fun `a route carries the section marker exactly when opensBesideHub says it opens beside the hub`() {
         val disagree =
             sampleRoutes()
-                .filter { it::class !in notProvided }
+                .filter { it::class !in routesWithoutEntries }
                 .filter { carriesSectionMarker(it) != it.opensBesideHub() }
                 .map { "${it::class.simpleName} (marker=${carriesSectionMarker(it)}, opensBesideHub=${it.opensBesideHub()})" }
 
@@ -51,7 +35,7 @@ class SectionMarkerAgreementTest {
     fun `the settings search and every hub section open beside the hub and nothing else does`() {
         val beside =
             sampleRoutes()
-                .filter { it::class !in notProvided }
+                .filter { it::class !in routesWithoutEntries }
                 .filter { it.opensBesideHub() }
                 .map { it::class }
                 .toSet()
