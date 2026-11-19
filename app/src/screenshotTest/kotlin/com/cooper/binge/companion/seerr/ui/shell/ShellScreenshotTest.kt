@@ -14,6 +14,7 @@ import com.cooper.binge.companion.seerr.preview.SeerrTabletPanesPreview
 import com.cooper.binge.companion.seerr.ui.hub.HubScreen
 import com.cooper.binge.companion.seerr.ui.hub.previewActions
 import com.cooper.binge.companion.seerr.ui.hub.previewReady
+import com.cooper.homelab.core.uiandroid.shell.TabShellState
 
 /**
  * The tab bar on a phone, and on a foldable and a tablet where the bar is the same pill or the design system's rail: the floating pill over the Settings tab, which is the hub as it is today and clears the pill at its

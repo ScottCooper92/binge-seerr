@@ -42,6 +42,22 @@ class RequestSheetsScreenshotTest {
             )
         }
 
+    /** Binge answers the title link: Watch in Binge leads, the media server below it. */
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun actionsWithBingeRow() =
+        SheetFrame {
+            ActionsContent(
+                settledDetail(),
+                titleRows =
+                    listOf(
+                        SheetTitleRow(Icons.Filled.PlayArrow, stringResource(R.string.title_sheet_watch_in_binge), external = true) {},
+                        SheetTitleRow(Icons.Filled.PlayArrow, "Watch on Plex", external = true) {},
+                    ),
+            )
+        }
+
     /** At the expanded width the actions are a side sheet, and Edit request opens as a page of it. */
     @PreviewTest
     @SeerrComponentPreviews

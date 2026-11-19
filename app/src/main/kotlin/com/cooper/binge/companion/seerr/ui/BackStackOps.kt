@@ -1,29 +1,7 @@
 package com.cooper.binge.companion.seerr.ui
 
-import androidx.compose.runtime.snapshots.Snapshot
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
-
-/**
- * Puts [routes] in place of the whole stack, as a link does. Every Back, every screen that leaves on its own and every
- * replaced stack goes through this file, and nothing here can empty it: NavDisplay throws on an empty stack (#1760). The
- * root stays until something replaces it, and Back at the root is the activity's to handle.
- */
-internal fun NavBackStack<NavKey>.replaceAll(routes: List<NavKey>) {
-    require(routes.isNotEmpty()) { "a back stack needs a root" }
-    // One snapshot, written over in place: no reader sees the stack empty, or half of the old one under the new root.
-    // An equal route keeps its instance: a page still on screen holds that instance for its own popIfTop.
-    Snapshot.withMutableSnapshot {
-        routes.forEachIndexed { index, route ->
-            if (index >= size) {
-                add(route)
-            } else if (this[index] != route) {
-                set(index, route)
-            }
-        }
-        while (size > routes.size) removeAt(lastIndex)
-    }
-}
 
 /** Back: takes the top entry off, unless it is the root. False when there was nothing to pop, so the caller can leave. */
 internal fun NavBackStack<NavKey>.pop(): Boolean {
