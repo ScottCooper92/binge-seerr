@@ -132,7 +132,7 @@ class RequestSheetViewModelTest {
     }
 
     @Test
-    fun `a user who may choose sends the shown destination without touching it`() =
+    fun `an untouched sheet sends no destination, so the server's own rules apply`() =
         runTest {
             val repository = advanced()
             val vm = viewModel(repository)
@@ -141,10 +141,7 @@ class RequestSheetViewModelTest {
             vm.submit()
             event.await()
 
-            val destination = repository.submissions.single().destination
-            assertEquals(1, destination?.serverId)
-            assertEquals(4, destination?.profileId)
-            assertEquals("/movies", destination?.rootFolder)
+            assertNull(repository.submissions.single().destination)
         }
 
     @Test
@@ -182,6 +179,39 @@ class RequestSheetViewModelTest {
             val destination = repository.submissions.single().destination
             assertEquals(1, destination?.serverId)
             assertEquals(5, destination?.profileId)
+            assertEquals("/movies", destination?.rootFolder)
+        }
+
+    @Test
+    fun `changing the root folder sends the whole pick`() =
+        runTest {
+            val repository = advanced()
+            val vm = viewModel(repository)
+            vm.selectRootFolder("/more")
+            val event = awaitEvent(vm.events)
+
+            vm.submit()
+            event.await()
+
+            val destination = repository.submissions.single().destination
+            assertEquals(1, destination?.serverId)
+            assertEquals(4, destination?.profileId)
+            assertEquals("/more", destination?.rootFolder)
+        }
+
+    @Test
+    fun `switching to 4K drops a change made for the other version`() =
+        runTest {
+            val repository = advanced()
+            val vm = viewModel(repository)
+            vm.selectProfile(5)
+            vm.setUse4k(true)
+            val event = awaitEvent(vm.events)
+
+            vm.submit()
+            event.await()
+
+            assertNull(repository.submissions.single().destination)
         }
 
     @Test
@@ -260,9 +290,28 @@ class RequestSheetViewModelTest {
     }
 
     @Test
-    fun `a server whose lists fail to load is still the server the request names`() =
+    fun `a picked server whose lists fail to load is still the server the request names`() =
         runTest {
-            val repository = advanced().apply { failChoices = IOException("down") }
+            val second = RequestServer(3, "Radarr 2", is4k = false, isDefault = false, profileId = 6, rootFolder = "/b")
+            val repository = FakeRepository(ADVANCED, RequestQuota(10, 2, 7), listOf(STANDARD, second, UHD))
+            val vm = viewModel(repository)
+            repository.failChoices = IOException("down")
+            vm.selectServer(3)
+            val event = awaitEvent(vm.events)
+
+            vm.submit()
+            event.await()
+
+            val destination = repository.submissions.single().destination
+            assertEquals(3, destination?.serverId)
+            assertEquals(6, destination?.profileId)
+            assertEquals("/b", destination?.rootFolder)
+        }
+
+    @Test
+    fun `switching to 4K without touching a row sends a plain 4K request`() =
+        runTest {
+            val repository = advanced()
             val vm = viewModel(repository)
             vm.setUse4k(true)
             val event = awaitEvent(vm.events)
@@ -270,10 +319,9 @@ class RequestSheetViewModelTest {
             vm.submit()
             event.await()
 
-            val destination = repository.submissions.single().destination
-            assertEquals(2, destination?.serverId)
-            assertEquals(7, destination?.profileId)
-            assertEquals("/uhd", destination?.rootFolder)
+            val submission = repository.submissions.single()
+            assertTrue(submission.is4k)
+            assertNull(submission.destination)
         }
 
     @Test
@@ -283,7 +331,7 @@ class RequestSheetViewModelTest {
 
         assertEquals(ChoicesState.Failed, vm.ready().pick?.choices)
         assertTrue(vm.ready().canSubmit)
-        assertEquals(1, vm.ready().destination?.serverId)
+        assertNull(vm.ready().destination)
 
         repository.failChoices = null
         vm.retry(RequestRead.Choices)
