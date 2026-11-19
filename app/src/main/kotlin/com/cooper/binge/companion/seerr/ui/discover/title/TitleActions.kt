@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.PlayArrow
@@ -14,14 +13,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.clearAndSetSemantics
-import androidx.compose.ui.text.style.TextAlign
 import com.binge.designsystem.component.BingeFilledButton
-import com.binge.designsystem.component.ExpressiveIconButton
-import com.binge.designsystem.component.IconButtonTone
+import com.binge.designsystem.component.LabelledIconButton
 import com.binge.designsystem.component.StatusChip
 import com.cooper.binge.companion.seerr.R
 import com.binge.designsystem.R as DesR
@@ -47,7 +42,7 @@ internal fun TitleActions(
             verticalAlignment = Alignment.Top,
         ) {
             PrimaryAction(model.primary, onRequest, Modifier.weight(1f))
-            onTrailer?.let { LabelledRoundButton(Icons.Filled.PlayArrow, stringResource(R.string.title_page_action_trailer), it) }
+            onTrailer?.let { LabelledIconButton(Icons.Filled.PlayArrow, stringResource(R.string.title_page_action_trailer), it) }
         }
         model.otherStatuses.forEach { OtherStatusLine(it) }
     }
@@ -91,24 +86,3 @@ private fun VersionStatus.label() =
             else -> stringResource(R.string.title_page_status_hd, text)
         } to sentiment
     }
-
-/** A tonal round button with its name under it, so an icon never has to be guessed at. */
-@Composable
-private fun LabelledRoundButton(
-    icon: ImageVector,
-    label: String,
-    onClick: () -> Unit,
-) {
-    Column(
-        modifier = Modifier.widthIn(min = dimensionResource(R.dimen.title_action_round_min_width)),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        ExpressiveIconButton(onClick = onClick, icon = icon, contentDescription = label, tone = IconButtonTone.Tonal)
-        Text(
-            text = label,
-            modifier = Modifier.clearAndSetSemantics {},
-            style = MaterialTheme.typography.labelSmall,
-            textAlign = TextAlign.Center,
-        )
-    }
-}
