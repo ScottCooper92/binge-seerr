@@ -8,10 +8,14 @@ import com.cooper.homelab.core.server.connection.CredentialParts
 /**
  * How the user is signed in to one server: the secret and what goes with it. The address is not part of it, since the saved
  * server holds that. [SeerrCredentials] is a [SeerrLogin] and an address.
+ *
+ * [boundTo] is the address the login was saved for, or null for a row written before it was kept. The login and the address are
+ * two writes, so a reader can see one without the other; a login is read as the saved server's only while the two agree.
  */
 data class SeerrLogin(
     val auth: SeerrAuth,
     val variant: SeerrVariant,
+    val boundTo: String? = null,
 )
 
 /**
@@ -23,24 +27,33 @@ object SeerrLoginCodec : CredentialCodec<SeerrLogin> {
     const val USER_ID = "userId"
     const val SHARED = "shared"
     const val VARIANT = "variant"
+    const val ADDRESS = "address"
     const val KIND_API_KEY = "api_key"
     const val KIND_SESSION = "session"
 
     override fun split(credential: SeerrLogin): CredentialParts =
         when (val auth = credential.auth) {
             is SeerrAuth.ApiKey ->
-                CredentialParts(mapOf(KIND to KIND_API_KEY, VARIANT to credential.variant.name), auth.key)
+                CredentialParts(withAddress(mapOf(KIND to KIND_API_KEY, VARIANT to credential.variant.name), credential), auth.key)
             is SeerrAuth.Session ->
                 CredentialParts(
-                    mapOf(
-                        KIND to KIND_SESSION,
-                        USER_ID to auth.userId.toString(),
-                        SHARED to auth.shared.toString(),
-                        VARIANT to credential.variant.name,
+                    withAddress(
+                        mapOf(
+                            KIND to KIND_SESSION,
+                            USER_ID to auth.userId.toString(),
+                            SHARED to auth.shared.toString(),
+                            VARIANT to credential.variant.name,
+                        ),
+                        credential,
                     ),
                     auth.cookie,
                 )
         }
+
+    private fun withAddress(
+        fields: Map<String, String>,
+        credential: SeerrLogin,
+    ): Map<String, String> = credential.boundTo?.let { fields + (ADDRESS to it) } ?: fields
 
     override fun join(
         fields: Map<String, String>,
@@ -53,6 +66,6 @@ object SeerrLoginCodec : CredentialCodec<SeerrLogin> {
                 KIND_SESSION -> fields[USER_ID]?.toIntOrNull()?.let { SeerrAuth.Session(secret, it, fields[SHARED] == "true") }
                 else -> null
             }
-        return auth?.let { SeerrLogin(it, variant) }
+        return auth?.let { SeerrLogin(it, variant, fields[ADDRESS]) }
     }
 }

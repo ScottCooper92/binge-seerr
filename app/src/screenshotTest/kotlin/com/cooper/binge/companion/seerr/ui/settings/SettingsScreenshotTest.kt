@@ -12,7 +12,7 @@ import com.cooper.binge.companion.seerr.demo.DEMO_ORIGIN
 import com.cooper.binge.companion.seerr.preview.SeerrComponentPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrFontScale13ComponentPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrFontScalePreviews
-import com.cooper.binge.companion.seerr.preview.SeerrScreenPreviews
+import com.cooper.binge.companion.seerr.preview.SeerrRootScreenPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrScreenStatePreview
 import com.cooper.binge.companion.seerr.preview.SeerrSpanishPreviews
 import com.cooper.binge.companion.seerr.seerr.SeerrDefaultAccess
@@ -34,7 +34,7 @@ import com.cooper.binge.companion.seerr.ui.tv.settings.systemRows
 class SettingsScreenshotTest {
     /** An admin on Seerr 3: every group, with the rows the newest lineage adds. */
     @PreviewTest
-    @SeerrScreenPreviews
+    @SeerrRootScreenPreviews
     @Composable
     fun adminLayout() = SettingsFrame(adminState())
 
@@ -159,7 +159,7 @@ class SettingsGroupsScreenshotTest {
     @Composable
     fun jobStates() = JobStatesGroup()
 
-    /** The same five rows at 1.5 and 2.0 font scale, where the icon actions must not squeeze the names. */
+    /** The same five rows at 2.0 font scale, where the icon actions must not squeeze the names. */
     @PreviewTest
     @SeerrFontScalePreviews
     @Composable

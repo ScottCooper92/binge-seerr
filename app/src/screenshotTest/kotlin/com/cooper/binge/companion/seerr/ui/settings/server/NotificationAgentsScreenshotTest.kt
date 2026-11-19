@@ -80,7 +80,7 @@ class NotificationAgentScreenshotTest {
     @Composable
     fun emailSpanish() = AgentFrame(agentReady(emailForm()), ServerAgent.Email)
 
-    /** At 1.5x and 2x text every row must still fit. */
+    /** At 2x text every row must still fit. */
     @PreviewTest
     @SeerrFontScalePreviews
     @Composable

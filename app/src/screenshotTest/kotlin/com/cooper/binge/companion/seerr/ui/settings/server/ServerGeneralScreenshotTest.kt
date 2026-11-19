@@ -53,7 +53,7 @@ class ServerGeneralScreenshotTest {
     fun openedOnRow() =
         ProvideRowFocus(key = SettingRows.GENERAL_URL, showAtPeak = true) { GeneralFrame(generalReady(jellyseerrSettings())) }
 
-    /** At 1.5x and 2x text the pinned Cancel and Save bar must still fit. */
+    /** At 2x text the pinned Cancel and Save bar must still fit. */
     @PreviewTest
     @SeerrFontScalePreviews
     @Composable

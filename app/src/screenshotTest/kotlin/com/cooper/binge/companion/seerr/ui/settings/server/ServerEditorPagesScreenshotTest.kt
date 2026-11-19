@@ -75,7 +75,7 @@ class NetworkScreenshotTest {
     @Composable
     fun spanish() = NetworkFrame(settled(seerrNetwork().copy(apiRequestTimeout = "1.5")))
 
-    /** At 1.5x and 2x text every row must still fit. */
+    /** At 2x text every row must still fit. */
     @PreviewTest
     @SeerrFontScalePreviews
     @Composable

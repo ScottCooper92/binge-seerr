@@ -96,7 +96,7 @@ class UserGeneralSettingsScreenshotTest {
     @Composable
     fun spanish() = GeneralFrame(settledGeneral(managerGeneral()))
 
-    /** At 1.5x and 2x text the pinned Cancel and Save bar must still fit. */
+    /** At 2x text the pinned Cancel and Save bar must still fit. */
     @PreviewTest
     @SeerrFontScalePreviews
     @Composable
@@ -215,7 +215,7 @@ class UserPermissionsScreenshotTest {
     @Composable
     fun spanish() = PermissionsFrame(settled(permissions()))
 
-    /** At 1.5x and 2x text the pinned Cancel and Save bar must still fit. */
+    /** At 2x text the pinned Cancel and Save bar must still fit. */
     @PreviewTest
     @SeerrFontScalePreviews
     @Composable
@@ -274,7 +274,7 @@ class UserNotificationsScreenshotTest {
     @Composable
     fun spanish() = NotificationsFrame(settled(notifications(moderator = false)))
 
-    /** At 1.5x and 2x text the pinned Cancel and Save bar must still fit. */
+    /** At 2x text the pinned Cancel and Save bar must still fit. */
     @PreviewTest
     @SeerrFontScalePreviews
     @Composable
@@ -292,7 +292,7 @@ class UserNotificationsScreenshotTest {
 }
 
 class UserLinkedAccountsScreenshotTest {
-    /** The Unlink and Link icon buttons at 1.5 and 2.0 font scale. */
+    /** The Unlink and Link icon buttons at 2.0 font scale. */
     @PreviewTest
     @SeerrFontScalePreviews
     @Composable

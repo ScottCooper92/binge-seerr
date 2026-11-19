@@ -97,7 +97,7 @@ class DvrInstanceScreenshotTest {
     @Composable
     fun testedRadarrSpanish() = DvrFrame(dvrReady(radarrForm(), extras = DvrExtras(choices = choices(languages = false))))
 
-    /** The page at 1.5x and 2x text, where the pinned Cancel and Save bar must still fit. */
+    /** The page at 2x text, where the pinned Cancel and Save bar must still fit. */
     @PreviewTest
     @SeerrFontScalePreviews
     @Composable
@@ -215,7 +215,7 @@ class OverrideRuleScreenshotTest {
             ),
         )
 
-    /** The saved rule at 1.5x and 2x text, where every row must still fit. */
+    /** The saved rule at 2x text, where every row must still fit. */
     @PreviewTest
     @SeerrFontScalePreviews
     @Composable

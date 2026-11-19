@@ -80,19 +80,19 @@ class PersonPageScreenshotTest {
     @Composable
     fun failed() = Frame(PersonPageUiState.Error(SeerrError.Unreachable))
 
-    /** A full person at font scales 1.5 and 2. */
+    /** A full person at font scale 2. */
     @PreviewTest
     @SeerrFontScalePreviews
     @Composable
     fun fullLargeFonts() = Frame(readyPerson())
 
-    /** A sparse person at font scales 1.5 and 2. */
+    /** A sparse person at font scale 2. */
     @PreviewTest
     @SeerrFontScalePreviews
     @Composable
     fun sparseLargeFonts() = Frame(readyPerson(sparsePerson(), PersonCreditsState.Ready(PersonCredits(emptyList(), emptyList()))))
 
-    /** The longest names at font scales 1.5 and 2. */
+    /** The longest names at font scale 2. */
     @PreviewTest
     @SeerrFontScalePreviews
     @Composable
