@@ -72,9 +72,7 @@ private fun FilmPageEntry(
                 onCloseRequest = viewModel::closeRequestSheet,
                 onRequested = viewModel::requested,
                 onReload = viewModel::reload,
-                onCloseManage = viewModel::closeManageSheet,
-                onOpenUser = onOpenUser,
-                onOpenServices = onOpenServices,
+                manage = TitleManage(viewModel::closeManageSheet, onOpenUser, onOpenServices),
             ),
     )
 }
@@ -106,9 +104,7 @@ private fun SeriesPageEntry(
                 onCloseRequest = viewModel::closeRequestSheet,
                 onRequested = viewModel::requested,
                 onReload = viewModel::reload,
-                onCloseManage = viewModel::closeManageSheet,
-                onOpenUser = onOpenUser,
-                onOpenServices = onOpenServices,
+                manage = TitleManage(viewModel::closeManageSheet, onOpenUser, onOpenServices),
             ),
         seasonActions = SeasonActions(viewModel::selectSeason, viewModel::retryEpisodes, onOpenSeason),
     )
@@ -126,9 +122,7 @@ private fun rememberTitlePageActions(
     onCloseRequest: () -> Unit,
     onRequested: (RequestResult) -> Unit,
     onReload: () -> Unit,
-    onCloseManage: () -> Unit,
-    onOpenUser: (Int) -> Unit,
-    onOpenServices: () -> Unit,
+    manage: TitleManage,
 ): TitlePageActions {
     val context = LocalContext.current
     val openTitle = LocalOpenTitle.current
@@ -146,7 +140,14 @@ private fun rememberTitlePageActions(
         onOpenCompany = onOpenCompany,
         onOpenKeyword = onOpenKeyword,
         onReload = onReload,
-        onCloseManage = onCloseManage,
-        manageSheet = { sheet -> SiblingRequestSheet(sheet, onOpenUser, onOpenServices) },
+        onCloseManage = manage.onClose,
+        manageSheet = { sheet -> SiblingRequestSheet(sheet, manage.onOpenUser, manage.onOpenServices) },
     )
 }
+
+/** What the page needs to manage a request in a sheet over it: how it closes, and where its requester and its services open. */
+private class TitleManage(
+    val onClose: () -> Unit,
+    val onOpenUser: (Int) -> Unit,
+    val onOpenServices: () -> Unit,
+)
