@@ -5,6 +5,7 @@ import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.collection.SeerrCollectionRepository
 import com.cooper.binge.companion.seerr.seerr.PERMISSION_ADMIN
 import com.cooper.binge.companion.seerr.seerr.PERMISSION_CREATE_ISSUES
+import com.cooper.binge.companion.seerr.seerr.PERMISSION_MANAGE_BLOCKLIST
 import com.cooper.binge.companion.seerr.seerr.PERMISSION_REQUEST
 import com.cooper.binge.companion.seerr.seerr.PERMISSION_REQUEST_MOVIE
 import com.cooper.binge.companion.seerr.seerr.PERMISSION_REQUEST_VIEW
@@ -60,12 +61,18 @@ class SeerrTitleDetailsRepositoryTest {
     private var deviceRegion: String? = null
     private var userRegion = """{"streamingRegion":"US"}"""
     private var movieBody = MOVIE
+    private val unblocks = mutableListOf<String>()
     private var ratingsAnswer = FakeResponse(headers = JSON, body = RATINGS)
 
     @After
     fun tearDown() {
         seerr.awaitIdle()
         seerr.close()
+    }
+
+    private fun recordUnblock(request: FakeRequest): FakeResponse {
+        unblocks += "${request.method} ${request.url.encodedPath}?${request.url.encodedQuery}"
+        return FakeResponse()
     }
 
     private fun route(request: FakeRequest): FakeResponse =
@@ -76,6 +83,7 @@ class SeerrTitleDetailsRepositoryTest {
             "/api/v1/movie/603/similar" -> FakeResponse(code = 500)
             "/api/v1/collection/2344" -> FakeResponse(headers = JSON, body = COLLECTION)
             "/api/v1/user/9/settings/main" -> FakeResponse(headers = JSON, body = userRegion)
+            "/api/v1/blocklist/603", "/api/v1/blacklist/603" -> recordUnblock(request)
             else -> FakeResponse(code = 404)
         }
 
@@ -263,6 +271,32 @@ class SeerrTitleDetailsRepositoryTest {
         variant = SeerrVariant.Overseerr
         version = SeerrVersion(1, 27, 0)
         assertFalse("an Overseerr before issues", withRepository { it.movie(603) }.mayReport)
+    }
+
+    @Test
+    fun `a title can be unblocked only where the server has a blocklist and the viewer may manage it`() {
+        assertTrue(withRepository { it.movie(603) }.mayUnblock)
+
+        permissions = PERMISSION_REQUEST
+        assertFalse("no blocklist permission", withRepository { it.movie(603) }.mayUnblock)
+
+        permissions = PERMISSION_MANAGE_BLOCKLIST
+        assertTrue(withRepository { it.movie(603) }.mayUnblock)
+
+        variant = SeerrVariant.Overseerr
+        version = SeerrVersion(1, 27, 0)
+        assertFalse("an Overseerr has no blocklist", withRepository { it.movie(603) }.mayUnblock)
+    }
+
+    @Test
+    fun `unblocking names the movie on a server that needs the media type and omits it on one that refuses it`() {
+        withRepository { it.unblock(603) }
+        assertEquals(listOf("DELETE /api/v1/blocklist/603?mediaType=movie"), unblocks)
+
+        unblocks.clear()
+        version = SeerrVersion(3, 0, 0)
+        withRepository { it.unblock(603) }
+        assertEquals(listOf("DELETE /api/v1/blocklist/603?null"), unblocks)
     }
 
     @Test

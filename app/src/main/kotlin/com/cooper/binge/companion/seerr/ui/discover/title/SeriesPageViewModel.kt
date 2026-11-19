@@ -74,6 +74,14 @@ sealed interface SeriesPageEvent {
 
     /** The read after a request failed: the page keeps what it had, and the screen offers to try again. */
     data object ReloadFailed : SeriesPageEvent
+
+    /** The title came off the blocklist, for the screen's snackbar; the page reads it again. */
+    data object Unblocked : SeriesPageEvent
+
+    /** The server refused or could not be reached, so the title stays blocklisted. */
+    data class UnblockFailed(
+        val error: SeerrError,
+    ) : SeriesPageEvent
 }
 
 /** The series page. Detail keyed on an id, so it shares [Lazily][kotlinx.coroutines.flow.SharingStarted.Lazily] with the other detail pages: it loads once. */
@@ -116,14 +124,14 @@ class SeriesPageViewModel
 
         /** Shows a season's episodes, reading them the first time. */
         fun selectSeason(number: Int) {
-            val current = ready() ?: return
+            val current = ready ?: return
             if (current.series.seasons.none { it.number == number }) return
             updateReady { it.copy(selectedSeason = number) }
             loadEpisodes(number)
         }
 
         fun retryEpisodes() {
-            ready()?.selectedSeason?.let(::loadEpisodes)
+            ready?.selectedSeason?.let(::loadEpisodes)
         }
 
         /** The primary was tapped: the request sheet or one request's sheet, as the page's state says, or nothing where there is none to open. */
@@ -148,6 +156,21 @@ class SeriesPageViewModel
         fun closeManageSheet() = updateReady { it.copy(manageSheetOpen = false) }
 
         fun closeStatusSheet() = updateReady { it.copy(statusSheetOpen = false) }
+
+        /** Takes the title off the blocklist from the status sheet: the sheet closes, the page reads the title again, and a snackbar says so. */
+        fun unblock() {
+            if (ready?.series?.mayUnblock != true) return
+            closeStatusSheet()
+            viewModelScope.launch {
+                attempt { repository.unblock(tmdbId) }.fold(
+                    onSuccess = {
+                        eventFlow.tryEmit(SeriesPageEvent.Unblocked)
+                        reload()
+                    },
+                    onFailure = { eventFlow.tryEmit(SeriesPageEvent.UnblockFailed(it.toSeerrError())) },
+                )
+            }
+        }
 
         /** Request in 4K, tapped in a request's sheet: that sheet gives way to the request sheet. */
         fun requestFourKFromManage() = updateReady { it.copy(manageSheetOpen = false, requestSheetOpen = true, requestSheetFourK = true) }
@@ -177,7 +200,7 @@ class SeriesPageViewModel
         }
 
         private fun loadEpisodes(number: Int) {
-            if (ready()?.episodes?.get(number) is EpisodesState.Loading || ready()?.episodes?.get(number) is EpisodesState.Ready) return
+            if (ready?.episodes?.get(number) is EpisodesState.Loading || ready?.episodes?.get(number) is EpisodesState.Ready) return
             updateReady { it.copy(episodes = it.episodes + (number to EpisodesState.Loading)) }
             viewModelScope.launch {
                 val result =
@@ -189,7 +212,7 @@ class SeriesPageViewModel
             }
         }
 
-        private fun ready(): SeriesPageUiState.Ready? = state.value as? SeriesPageUiState.Ready
+        private val ready: SeriesPageUiState.Ready? get() = state.value as? SeriesPageUiState.Ready
 
         private fun loadExtras() {
             viewModelScope.launch {

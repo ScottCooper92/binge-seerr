@@ -43,6 +43,12 @@ class TitleStatusSheetScreenshotTest {
     @Composable
     fun cannotRequest() = SheetFrame { TitleStatusSheetContent(TitleState.Request, null, null, false, {}) }
 
+    /** Blocklisted, for a viewer who may manage the blocklist: the same lines with the unblock row under them. */
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun blocklistedCanUnblock() = SheetFrame { TitleStatusSheetContent(TitleState.Blocklisted, null, null, true, {}, onUnblock = {}) }
+
     /** Blocklisted: the status and why it cannot be requested. */
     @PreviewTest
     @SeerrComponentPreviews
