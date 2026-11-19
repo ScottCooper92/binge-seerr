@@ -270,7 +270,12 @@ class RequestsRemoteMediatorTest {
             mediator(store, statuses = statuses).load(LoadType.REFRESH, pagingState)
 
             assertEquals(SeerrMediaStatusCode.Processing, statuses.current(heat)?.standard)
-            val row = store.refreshed.single().first.first().toRequestItem()
+            val row =
+                store.refreshed
+                    .single()
+                    .first
+                    .first()
+                    .toRequestItem()
             assertEquals(SeerrMediaStatusCode.Processing, row.withBlockFrom(statuses.held()).mediaStatus)
         }
 
@@ -288,7 +293,12 @@ class RequestsRemoteMediatorTest {
             mediator(store, statuses = statuses).load(LoadType.REFRESH, pagingState)
 
             assertEquals(SeerrMediaStatusCode.Blocklisted, statuses.current(heat)?.standard)
-            val row = store.refreshed.single().first.first().toRequestItem()
+            val row =
+                store.refreshed
+                    .single()
+                    .first
+                    .first()
+                    .toRequestItem()
             assertEquals(SeerrMediaStatusCode.Blocklisted, row.withBlockFrom(statuses.held()).mediaStatus)
         }
 
