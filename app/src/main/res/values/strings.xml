@@ -66,7 +66,6 @@
     <string name="hub_binge_connect_hint">Connect Binge to this app to send and manage requests directly from Binge</string>
     <string name="hub_binge_connected_hint">Connected to Binge: request titles and manage requests directly from there</string>
     <string name="hub_binge_open">Open Binge</string>
-    <string name="hub_unverified_callers">Debug build: accepts Binge\'s package names under any certificate.</string>
 
     <string name="hub_health_connected">Connected</string>
     <string name="hub_update_available">Update available</string>
@@ -137,8 +136,8 @@
     <string name="title_search_placeholder">Search movies, series and people</string>
     <string name="title_search_idle_title">Find something to watch</string>
     <string name="title_search_idle_message">Search by title or name. Results come from your server.</string>
-    <string name="title_search_none_title">No results</string>
-    <string name="title_search_none_message">Nothing matched “%1$s”. Check the spelling or try fewer words.</string>
+    <string name="title_search_none_title">No results for “%1$s”</string>
+    <string name="title_search_none_message">Try another query.</string>
     <string name="title_search_more_failed">Couldn’t load more. Tap to try again</string>
     <string name="title_search_recent">Recent searches</string>
     <string name="title_search_recent_clear">Clear</string>
@@ -154,7 +153,7 @@
     <string name="title_search_trending_series">Trending shows</string>
     <string name="title_search_genres_join" translatable="false">%1$s · %2$s</string>
     <string name="title_kind_movie">Movie</string>
-    <string name="title_kind_series">Series</string>
+    <string name="title_kind_series">TV</string>
     <string name="title_kind_person">Person</string>
     <string name="title_kind_collection">Collection</string>
     <!-- The "see all" grid of a hub row: its order, the filter the row started with, and its empty state. -->

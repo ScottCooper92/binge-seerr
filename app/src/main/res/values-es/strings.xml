@@ -50,7 +50,6 @@
     <string name="hub_binge_connect_hint">Conecta Binge a esta app para enviar y gestionar peticiones directamente desde Binge</string>
     <string name="hub_binge_connected_hint">Conectado a Binge: pide títulos y gestiona peticiones directamente desde allí</string>
     <string name="hub_binge_open">Abrir Binge</string>
-    <string name="hub_unverified_callers">Compilación de depuración: acepta los nombres de paquete de Binge con cualquier certificado.</string>
     <string name="hub_health_connected">Conectado</string>
     <string name="hub_update_available">Actualización disponible</string>
     <string name="hub_stat_pending">Pendientes</string>
@@ -119,8 +118,8 @@
     <string name="title_search_placeholder">Buscar películas, series y personas</string>
     <string name="title_search_idle_title">Encuentra algo para ver</string>
     <string name="title_search_idle_message">Busca por título o nombre. Los resultados vienen de tu servidor.</string>
-    <string name="title_search_none_title">Sin resultados</string>
-    <string name="title_search_none_message">Nada coincide con “%1$s”. Revisa la ortografía o prueba con menos palabras.</string>
+    <string name="title_search_none_title">Sin resultados para “%1$s”</string>
+    <string name="title_search_none_message">Prueba con otra búsqueda.</string>
     <string name="title_search_more_failed">No se pudo cargar más. Toca para reintentar</string>
     <string name="title_search_recent">Búsquedas recientes</string>
     <string name="title_search_recent_clear">Borrar</string>
