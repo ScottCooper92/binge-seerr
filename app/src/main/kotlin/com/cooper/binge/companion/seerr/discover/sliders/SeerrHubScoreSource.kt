@@ -24,7 +24,7 @@ class SeerrHubScoreSource(
         withContext(io) {
             when (kind) {
                 TitleKind.Movie -> if (profile().hasCombinedRatings) api().movieRatings(tmdbId).toRatings() else null
-                TitleKind.Series -> api().tvRatings(tmdbId).let { TitleRatings(it.criticsScore, it.audienceScore, imdbScore = null) }
+                TitleKind.Series -> api().tvRatings(tmdbId).toRatings()
                 TitleKind.Person, TitleKind.Collection -> null
             }?.takeUnless { it.isEmpty }
         }

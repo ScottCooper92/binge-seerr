@@ -1559,9 +1559,6 @@
     <string name="hubs_row_custom">More to discover</string>
     <string name="hubs_empty_message">The server has no rows to show here. Turn some on under Discover sliders in the server settings.</string>
     <string name="hubs_card_available">Available</string>
-    <string name="hubs_hero_score_critics">Critics %1$d percent</string>
-    <string name="hubs_hero_score_audience">Audience %1$d percent</string>
-    <string name="hubs_hero_score_imdb">IMDb %1$s out of 10</string>
     <string name="hubs_card_requested">Requested</string>
     <string name="hubs_card_processing">Processing</string>
     <string name="hubs_card_partial">Partial</string>

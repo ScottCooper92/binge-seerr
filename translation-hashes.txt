@@ -238,9 +238,6 @@ app:hubs_card_partial  a4d50fb85403
 app:hubs_card_processing  c8e3e92a62ec
 app:hubs_card_requested  2d9e28289fac
 app:hubs_empty_message  1cd000df2d5b
-app:hubs_hero_score_audience  ec2460286ade
-app:hubs_hero_score_critics  0bc23adb8452
-app:hubs_hero_score_imdb  9fbb2ae3851a
 app:hubs_loading_row  7526686030d0
 app:hubs_row_custom  8e80ab3f7c10
 app:hubs_row_genres  3561abfe8067

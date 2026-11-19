@@ -161,6 +161,10 @@ internal fun List<SeerrWatchRegionDto>.providersFor(region: String?): TitleProvi
 private fun List<SeerrMovieWatchProviderDto>.toProviders() =
     sortedBy { it.displayPriority ?: Int.MAX_VALUE }.map { TitleProvider(it.id, it.name, it.logoPath?.toTmdbPosterUrl()) }
 
+/** A show's Rotten Tomatoes alone: the show route has no IMDb score. */
+internal fun com.cooper.binge.companion.seerr.seerr.SeerrRottenTomatoesDto.toRatings() =
+    TitleRatings(criticsScore, audienceScore, imdbScore = null)
+
 internal fun com.cooper.binge.companion.seerr.seerr.SeerrRatingsDto.toRatings() =
     TitleRatings(rottenTomatoes?.criticsScore, rottenTomatoes?.audienceScore, imdb?.criticsScore)
 
