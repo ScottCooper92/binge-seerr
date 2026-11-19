@@ -162,7 +162,7 @@ internal fun EntryProviderScope<NavKey>.detailEntries(
                 showBack = showBack(),
                 onOpenRequest = { id -> backStack.add(RequestDetailRoute(id)) },
                 onOpenSettings = { backStack.add(UserSettingsRoute(route.userId)) },
-                onOpenWatchlist = { title -> backStack.add(DiscoverGridRoute(TitleKind.Movie, GridPreset.Watchlist, title)) },
+                onOpenWatchlist = { title -> backStack.add(DiscoverGridRoute(TitleKind.Movie, GridPreset.OwnWatchlist, title)) },
             )
         }
     }
