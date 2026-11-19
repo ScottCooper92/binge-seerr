@@ -66,9 +66,9 @@ import com.binge.designsystem.resolvedContentPadding
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.seerr.ManageablePermission
 import com.cooper.binge.companion.seerr.seerr.SeerrError
+import com.cooper.binge.companion.seerr.seerr.isOpenableSite
 import com.cooper.binge.companion.seerr.ui.discover.title.LocalOpenTitle
 import com.cooper.binge.companion.seerr.ui.hub.QuotaSection
-import com.cooper.binge.companion.seerr.ui.isOpenableSite
 import com.cooper.binge.companion.seerr.ui.openInBrowser
 import com.cooper.binge.companion.seerr.ui.requests.PagedAppendState
 import com.cooper.binge.companion.seerr.ui.requests.RequestItem

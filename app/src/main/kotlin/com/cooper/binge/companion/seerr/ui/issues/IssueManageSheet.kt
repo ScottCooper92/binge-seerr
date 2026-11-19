@@ -11,7 +11,7 @@ import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.BingeAdaptiveSheet
 import com.binge.designsystem.component.BingeSheetKind
 import com.cooper.binge.companion.seerr.R
-import com.cooper.binge.companion.seerr.ui.isOpenableSite
+import com.cooper.binge.companion.seerr.seerr.isOpenableSite
 import com.cooper.binge.companion.seerr.ui.openInBrowser
 import com.cooper.binge.companion.seerr.ui.requests.RequestMediaType
 import com.cooper.binge.companion.seerr.ui.state.ActionSheetGroup
