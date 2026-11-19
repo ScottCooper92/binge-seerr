@@ -21,11 +21,13 @@ class DiscoveryGateTest {
     @get:Rule
     val folder = TemporaryFolder()
 
+    private var files = 0
+
     private fun kotlinx.coroutines.test.TestScope.gate(
         flag: Boolean,
         flags: FeatureFlags = FixedFeatureFlags(Flags.of(DiscoveryEnabled to flag)),
     ): Pair<PrefsDiscoveryGate, DiscoveryPrefs> {
-        val prefs = DiscoveryPrefs(PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("d.preferences_pb") })
+        val prefs = DiscoveryPrefs(PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("d${files++}.preferences_pb") })
         return PrefsDiscoveryGate(flags, prefs, kotlinx.coroutines.CoroutineScope(UnconfinedTestDispatcher(testScheduler))) to prefs
     }
 
