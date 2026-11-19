@@ -29,12 +29,15 @@ import com.binge.designsystem.component.DetailHero
 import com.binge.designsystem.component.DetailStat
 import com.binge.designsystem.component.DetailStatRow
 import com.binge.designsystem.component.SkeletonPlate
+import com.binge.designsystem.component.statsPerRow
 import com.binge.designsystem.isExpandedLayout
 import com.binge.designsystem.layout.LayoutAnchors
 import com.binge.designsystem.layout.layoutAnchor
 import com.binge.designsystem.modifier.skeleton
+import com.binge.designsystem.resolvedContentInset
 import com.binge.designsystem.resolvedContentPadding
 import com.binge.designsystem.template.HeroDetailScreen
+import com.binge.designsystem.template.readingMargin
 import com.binge.designsystem.theme.BingeShapes
 import com.binge.designsystem.R as DesR
 
@@ -141,7 +144,7 @@ private fun ActionsSkeleton(modifier: Modifier = Modifier) {
  */
 @Composable
 internal fun OverviewSkeleton(modifier: Modifier = Modifier) {
-    Column(modifier = Modifier.padding(horizontal = dimensionResource(DesR.dimen.padding_m)).then(modifier)) {
+    Column(modifier = Modifier.padding(horizontal = resolvedContentInset()).then(modifier)) {
         TextPlate(MaterialTheme.typography.titleMedium, Modifier.width(dimensionResource(DesR.dimen.skeleton_header_width)))
         Spacer(Modifier.height(dimensionResource(DesR.dimen.detail_meta_spacing)))
         repeat(OVERVIEW_LINE_COUNT) { index ->

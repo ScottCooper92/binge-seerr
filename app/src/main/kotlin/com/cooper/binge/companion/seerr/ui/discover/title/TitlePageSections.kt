@@ -1,34 +1,29 @@
 package com.cooper.binge.companion.seerr.ui.discover.title
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
-import com.binge.designsystem.component.BingeFilterChip
-import com.binge.designsystem.component.BingeTag
-import com.binge.designsystem.component.ExpandableOverview
+import com.binge.designsystem.component.DetailOverviewSection
+import com.binge.designsystem.component.DetailStatsRows
 import com.binge.designsystem.component.MediaCard
 import com.binge.designsystem.component.MediaCardStatus
 import com.binge.designsystem.component.MediaCarousel
 import com.binge.designsystem.component.PersonCard
 import com.binge.designsystem.component.SectionHeader
-import com.binge.designsystem.component.WrappingRow
+import com.binge.designsystem.component.TagRow
 import com.binge.designsystem.isExpandedLayout
 import com.binge.designsystem.layout.LayoutAnchors
 import com.binge.designsystem.layout.layoutAnchor
 import com.binge.designsystem.resolvedContentInset
-import com.binge.designsystem.template.LocalHeroReadingMargin
+import com.binge.designsystem.template.readingInset
+import com.binge.designsystem.template.readingMargin
 import com.binge.designsystem.theme.BingeSentiment
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.TitleAvailability
@@ -55,7 +50,7 @@ internal fun TitlePageBody(
     Column(verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m))) {
         // The expanded header already shows these and the synopsis.
         val expanded = isExpandedLayout()
-        if (!expanded) TitleStatsRows(movie.titleStats(locale))
+        if (!expanded) DetailStatsRows(movie.titleStats(locale))
         TitleActions(
             model = titleActionsModel(movie.standard, movie.fourK, movie.requests, movie.mayReport),
             onPrimary = actions.onRequest,
@@ -64,7 +59,7 @@ internal fun TitlePageBody(
             watchlist = movie.mayWatchlist.takeIf { it }?.let { WatchlistButton(movie.onWatchlist, actions.onToggleWatchlist) },
             modifier = Modifier.readingMargin().layoutAnchor(LayoutAnchors.section(LayoutAnchors.Detail.ACTIONS)),
         )
-        if (!expanded && movie.overview != null) Box(Modifier.readingMargin()) { OverviewSection(movie.overview) }
+        if (!expanded) DetailOverviewSection(stringResource(R.string.title_page_overview), movie.overview)
         PeopleRow(stringResource(R.string.title_page_cast), movie.cast, actions.onOpenPerson, actions.onOpenCredits)
         PeopleRow(stringResource(R.string.title_page_crew), movie.keyCrew, actions.onOpenPerson, actions.onOpenCredits)
         WhereToWatchSection(movie.providers, actions.onOpenUrl, Modifier.readingMargin())
@@ -84,41 +79,11 @@ internal fun TitlePageBody(
     }
 }
 
-/**
- * The rule for the margin of a hero page's body, the one Binge's detail pages follow: the design system's hero template measures the
- * width it leaves the body and provides [LocalHeroReadingMargin], the gap that centres a column of `content_max_width` in it, which is
- * zero up to that width. Every section adds it, at every width, so a window wider than the column gets one under the full-width
- * hero, and the title, series and person pages all start in the same place. A section takes it as its modifier, so a section that
- * draws nothing takes no space; the rails, which bleed to the window's edge, take [readingInset] instead.
- */
-@Composable
-internal fun Modifier.readingMargin(): Modifier = padding(horizontal = LocalHeroReadingMargin.current)
-
-/** The inset a section or a rail starts at: the screen's, plus the reading margin, so a rail's first card lines up with the column and it still bleeds. */
-@Composable
-internal fun readingInset() = dimensionResource(DesR.dimen.padding_m) + LocalHeroReadingMargin.current
-
 /** The line under the title in the request sheet: release year and runtime, whichever the server gave. */
 @Composable
 internal fun MovieDetails.requestMeta(): String? {
     val runtime = runtimeMinutes?.let { stringResource(R.string.title_page_runtime, it / MINUTES_PER_HOUR, it % MINUTES_PER_HOUR) }
     return joinMeta(listOf(year, runtime), stringResource(R.string.request_sheet_meta_separator))
-}
-
-/** The "Overview" heading over the synopsis, as Binge's pages have it. */
-@Composable
-internal fun OverviewSection(overview: String?) {
-    if (overview == null) return
-    Column(
-        Modifier
-            .padding(
-                horizontal = dimensionResource(DesR.dimen.padding_m),
-            ).layoutAnchor(LayoutAnchors.section(LayoutAnchors.Detail.OVERVIEW)),
-    ) {
-        Text(stringResource(R.string.title_page_overview), style = MaterialTheme.typography.titleMedium)
-        Spacer(Modifier.height(dimensionResource(DesR.dimen.detail_meta_spacing)))
-        ExpandableOverview(text = overview)
-    }
 }
 
 @Composable
@@ -129,25 +94,12 @@ internal fun KeywordsSection(
 ) {
     if (keywords.isEmpty()) return
     SectionHeader(stringResource(R.string.title_page_keywords), modifier)
-    TagRow(keywords, onOpen, modifier)
-}
-
-/** Each keyword is a chip that opens its grid where [onOpen] is given, and a plain tag where it is not. */
-@Composable
-internal fun TagRow(
-    keywords: List<TitleKeyword>,
-    onOpen: ((TitleKeyword) -> Unit)?,
-    modifier: Modifier = Modifier,
-) {
-    WrappingRow(modifier.padding(horizontal = resolvedContentInset())) {
-        keywords.forEach { keyword ->
-            if (onOpen == null) {
-                BingeTag(label = keyword.name, uppercase = false)
-            } else {
-                BingeFilterChip(label = keyword.name, selected = false, onClick = { onOpen(keyword) })
-            }
-        }
-    }
+    TagRow(
+        tags = keywords.map { it.name },
+        modifier = modifier.padding(horizontal = resolvedContentInset()),
+        compact = true,
+        onTagClick = onOpen?.let { open -> { index -> open(keywords[index]) } },
+    )
 }
 
 @Composable

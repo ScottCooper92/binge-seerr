@@ -1,7 +1,6 @@
 package com.cooper.binge.companion.seerr.ui.discover.title
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
@@ -13,10 +12,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import com.binge.designsystem.component.DetailOverviewSection
 import com.binge.designsystem.component.DetailStat
+import com.binge.designsystem.component.DetailStatsRows
 import com.binge.designsystem.isExpandedLayout
 import com.binge.designsystem.layout.LayoutAnchors
 import com.binge.designsystem.layout.layoutAnchor
+import com.binge.designsystem.template.readingMargin
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.title.SeriesDetails
 import com.cooper.binge.companion.seerr.discover.title.trailerUrl
@@ -65,7 +67,7 @@ internal fun SeriesPageBody(
     Column(verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m))) {
         // The expanded header already shows these and the synopsis.
         val expanded = isExpandedLayout()
-        if (!expanded) TitleStatsRows(series.titleStats(locale))
+        if (!expanded) DetailStatsRows(series.titleStats(locale))
         TitleActions(
             model = titleActionsModel(series.standard, series.fourK, series.requests, series.mayReport),
             onPrimary = actions.onRequest,
@@ -74,7 +76,7 @@ internal fun SeriesPageBody(
             watchlist = series.mayWatchlist.takeIf { it }?.let { WatchlistButton(series.onWatchlist, actions.onToggleWatchlist) },
             modifier = Modifier.readingMargin().layoutAnchor(LayoutAnchors.section(LayoutAnchors.Detail.ACTIONS)),
         )
-        if (!expanded && series.overview != null) Box(Modifier.readingMargin()) { OverviewSection(series.overview) }
+        if (!expanded) DetailOverviewSection(stringResource(R.string.title_page_overview), series.overview)
         PeopleRow(stringResource(R.string.title_page_cast), series.cast, actions.onOpenPerson, actions.onOpenCredits)
         PeopleRow(stringResource(R.string.title_page_crew), series.keyCrew, actions.onOpenPerson, actions.onOpenCredits)
         WhereToWatchSection(series.providers, actions.onOpenUrl, Modifier.readingMargin())
