@@ -67,7 +67,15 @@ private fun RoundButtons(
     onTrailer: (() -> Unit)?,
     onReport: (() -> Unit)?,
 ) {
-    onTrailer?.let { LabelledIconButton(Icons.Filled.PlayArrow, stringResource(R.string.title_page_action_trailer), it) }
+    onTrailer?.let { trailer ->
+        val label = stringResource(R.string.title_page_action_trailer)
+        LabelledIconButton(
+            Icons.Filled.PlayArrow,
+            label,
+            trailer,
+            contentDescription = stringResource(DesR.string.cd_link_chip_opens_outside, label),
+        )
+    }
     onReport?.let { LabelledIconButton(Icons.Filled.ReportProblem, stringResource(R.string.title_page_action_report), it) }
 }
 
