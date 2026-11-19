@@ -136,6 +136,9 @@ private fun equalPaneWidth(directive: PaneScaffoldDirective): Dp {
     return (windowWidth - directive.horizontalPartitionSpacerSize) / 2
 }
 
+/** Whether this key is [DefaultSection] standing in beside the hub, which the shared stash treats as nothing open. */
+internal fun NavKey.isDefaultStandIn(): Boolean = this == DefaultSection.route()
+
 /** The root the hub sits at: [HubRoute] beside the sections, or [ShellRoute], whose Settings tab holds the hub. */
 internal fun NavKey?.isPaneRoot(): Boolean = this == HubRoute || this == ShellRoute
 

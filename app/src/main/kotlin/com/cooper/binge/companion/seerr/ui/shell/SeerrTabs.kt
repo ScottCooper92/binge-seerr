@@ -25,11 +25,8 @@ import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.grid.GridPreset
 import com.cooper.binge.companion.seerr.discover.sliders.HubTab
-import com.cooper.binge.companion.seerr.ui.DefaultSection
 import com.cooper.binge.companion.seerr.ui.DiscoverGridRoute
 import com.cooper.binge.companion.seerr.ui.SeerrRoute
-import com.cooper.binge.companion.seerr.ui.opensBesideHub
-import com.cooper.binge.companion.seerr.ui.route
 import com.cooper.binge.companion.seerr.ui.state.EmptyScreen
 import com.cooper.homelab.core.uiandroid.shell.TabShell
 import com.cooper.homelab.core.uiandroid.shell.TabShellState
