@@ -55,7 +55,7 @@ class SeriesEpisodesScreenTest {
         val tops =
             listOf(1, 2, 3).map {
                 compose
-                    .onNodeWithText("Season $it · 10 episodes")
+                    .onNodeWithText("Season $it")
                     .assertIsDisplayed()
                     .getUnclippedBoundsInRoot()
                     .top
@@ -68,8 +68,8 @@ class SeriesEpisodesScreenTest {
     fun `it opens at the season the show's page had chosen`() {
         show(state(perSeason = 12), openAt = 3)
 
-        compose.onNodeWithText("Season 3 · 10 episodes").assertIsDisplayed()
-        assertTrue(compose.onAllNodesWithTextCount("Season 1 · 10 episodes") == 0)
+        compose.onNodeWithText("Season 3").assertIsDisplayed()
+        assertTrue(compose.onAllNodesWithTextCount("Season 1") == 0)
     }
 
     @Test
@@ -83,8 +83,8 @@ class SeriesEpisodesScreenTest {
             )
         show(seasons, openAt = 2)
 
-        compose.onNodeWithText("Season 2 · 10 episodes").assertIsDisplayed()
-        compose.onNodeWithText("Season 1 · 10 episodes").assertIsNotDisplayed()
+        compose.onNodeWithText("Season 2").assertIsDisplayed()
+        compose.onNodeWithText("Season 1").assertIsNotDisplayed()
     }
 
     @Test

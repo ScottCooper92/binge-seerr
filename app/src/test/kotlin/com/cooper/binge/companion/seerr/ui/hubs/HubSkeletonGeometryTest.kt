@@ -11,6 +11,7 @@ import com.cooper.binge.companion.seerr.discover.sliders.HubCard
 import com.cooper.binge.companion.seerr.discover.sliders.HubHero
 import com.cooper.binge.companion.seerr.discover.sliders.HubRow
 import com.cooper.binge.companion.seerr.discover.sliders.HubTab
+import com.cooper.binge.companion.seerr.discover.title.TitleRatings
 import com.cooper.binge.companion.seerr.theme.SeerrTheme
 import com.cooper.binge.companion.seerr.util.createSeerrComposeRule
 import org.junit.Rule
@@ -78,6 +79,26 @@ class HubSkeletonGeometryTest {
     fun `on a tablet a hero that fails or comes back empty does not move the rows`() =
         check(TRENDING, loaded = ready(TRENDING, hero = emptyList()))
 
+    @Test
+    @Config(qualifiers = PHONE)
+    fun `review scores and a status on the hero do not change its height or move the rows`() =
+        check(TRENDING, loading = ready(TRENDING), loaded = ready(TRENDING, hero = listOf(scoredHero())))
+
+    @Test
+    @Config(qualifiers = TABLET)
+    fun `on a tablet review scores and a status on the hero do not change its height`() =
+        check(TRENDING, loading = ready(TRENDING), loaded = ready(TRENDING, hero = listOf(scoredHero())))
+
+    @Test
+    @Config(qualifiers = PHONE)
+    fun `at a larger font review scores and a status on the hero still leave its height alone`() =
+        check(TRENDING, LARGE_FONT, loading = ready(TRENDING), loaded = ready(TRENDING, hero = listOf(scoredHero())))
+
+    @Test
+    @Config(qualifiers = PHONE)
+    fun `at the largest font review scores and a status on the hero still leave its height alone`() =
+        check(TRENDING, LARGEST_FONT, loading = ready(TRENDING), loaded = ready(TRENDING, hero = listOf(scoredHero())))
+
     private fun check(
         row: HubRow,
         fontScale: Float = 1f,
@@ -127,6 +148,8 @@ class HubSkeletonGeometryTest {
             TitleAvailability.None,
             "https://server.example/movie/1",
         )
+
+    private fun scoredHero() = hero().copy(availability = TitleAvailability.Available, ratings = TitleRatings(97, 91, 7.9))
 
     private fun card(id: Int) =
         HubCard(TitleKind.Movie, id, "Movie $id", "2020", null, TitleAvailability.None, "https://server.example/movie/$id")

@@ -6,7 +6,11 @@ import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.TitleListRepository
 import com.cooper.binge.companion.seerr.discover.TitleResult
 import com.cooper.binge.companion.seerr.discover.TitleSource
+import com.cooper.binge.companion.seerr.discover.title.TitleRatings
 import com.cooper.binge.companion.seerr.seerr.toTmdbBackdropUrl
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 
 /** Most pages the hero carousel has. */
 const val HERO_PAGES = 5
@@ -26,7 +30,20 @@ data class HubHero(
     val rank: Int? = null,
     /** The title's vote average, as a poster card shows it; null where the server has none or it is zero. */
     val rating: Float? = null,
+    /** The title's Rotten Tomatoes and IMDb scores; null until they arrive, and where the server has none. */
+    val ratings: TitleRatings? = null,
 )
+
+/** Where a hero title's review scores come from: the same ones the title page shows. A title with none reads as null. */
+fun interface HubScoreSource {
+    suspend fun ratings(
+        kind: TitleKind,
+        tmdbId: Int,
+    ): TitleRatings?
+}
+
+/** A hub with no score source: its heroes show no scores. */
+private val NoScores = HubScoreSource { _, _ -> null }
 
 /**
  * The first titles of the server's trending list that are the hub's own kind and have a backdrop, at most [HERO_PAGES]. It
@@ -35,7 +52,19 @@ data class HubHero(
 class HubHeroLoader(
     private val titles: TitleListRepository,
     private val media: HubMediaSource,
+    private val scores: HubScoreSource = NoScores,
 ) {
+    /**
+     * [heroes] with their review scores, each read on its own so a title the server cannot score, or a read that fails, leaves only
+     * that title without. Read after the hero shows, so the scores never hold it back.
+     */
+    suspend fun withScores(heroes: List<HubHero>): List<HubHero> =
+        coroutineScope {
+            heroes
+                .map { hero -> async { hero.copy(ratings = attempt { scores.ratings(hero.kind, hero.tmdbId) }.getOrNull()) } }
+                .awaitAll()
+        }
+
     /** Whether the server has the trending list at all, so a hub knows before it loads whether it has a hero. */
     suspend fun supported(): Boolean = titles.supports(TitleSource.Trending)
 
