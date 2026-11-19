@@ -17,9 +17,12 @@ class TitleSheetRowsTest {
         state: TitleState,
         url: String? = "https://plex.example/x",
         fourKOpen: Boolean = false,
+        binge: (() -> Unit)? = null,
     ): List<String> {
         var labels = emptyList<String>()
-        rule.setContent { labels = rememberTitleSheetRows(TitleSheetFacts(state, url, "Plex", fourKOpen), {}, {}).labels() }
+        rule.setContent {
+            labels = rememberTitleSheetRows(TitleSheetFacts(state, url, "Plex", fourKOpen), {}, {}, onWatchInBinge = binge).labels()
+        }
         rule.waitForIdle()
         return labels
     }
@@ -39,5 +42,20 @@ class TitleSheetRowsTest {
     @Test
     fun `Watch needs a link and Request in 4K needs the permission`() {
         assertEquals(emptyList<String>(), rows(TitleState.Available, url = null))
+    }
+
+    @Test
+    fun `where Binge answers Watch in Binge comes before the media server`() {
+        assertEquals(listOf("Watch in Binge", "Watch on Plex", "Request in 4K"), rows(TitleState.Available, fourKOpen = true, binge = {}))
+    }
+
+    @Test
+    fun `Watch in Binge needs the title in the library`() {
+        assertEquals(emptyList<String>(), rows(TitleState.Requested, binge = {}))
+    }
+
+    @Test
+    fun `Watch in Binge needs the link Watch needs`() {
+        assertEquals(emptyList<String>(), rows(TitleState.Available, url = null, binge = {}))
     }
 }

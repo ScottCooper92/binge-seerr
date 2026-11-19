@@ -49,6 +49,13 @@
             <action android:name="android.intent.action.VIEW" />
             <data android:scheme="binge" />
         </intent>
+        <!-- The title link names its host, as Binge's own filter for it does, so the match holds whatever the scheme-only entry does. -->
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data
+                android:scheme="binge"
+                android:host="title" />
+        </intent>
         <!-- Play Services' scanner, so the scan can check it is there before starting it (#1944). -->
         <intent>
             <action android:name="com.google.android.gms.mlkit.ACTION_SCAN_BARCODE" />
