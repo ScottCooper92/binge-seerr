@@ -229,13 +229,7 @@ internal fun QuerySearchState<TitleResult>.toUiState(
         is QuerySearchState.Loading -> TitleSearchUiState.Loading(text)
         is QuerySearchState.Results -> ready(items.distinctBy(TitleResult::key), this)
         is QuerySearchState.NoResults ->
-            if (found !=
-                null
-            ) {
-                ready(emptyList(), null)
-            } else {
-                TitleSearchUiState.NoResults(text, query, type, browseAll, hasStudios)
-            }
+            if (found != null) ready(emptyList(), null) else TitleSearchUiState.NoResults(text, query, type, browseAll, hasStudios)
         is QuerySearchState.Failed -> TitleSearchUiState.Error(text, cause.toSeerrError())
     }
 }

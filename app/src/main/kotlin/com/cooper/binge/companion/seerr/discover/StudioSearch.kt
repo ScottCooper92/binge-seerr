@@ -31,7 +31,7 @@ class SeerrStudioSearch(
     private val profile: suspend () -> SeerrServerProfile,
     private val io: CoroutineDispatcher,
 ) : StudioSearch {
-    override suspend fun supported(): Boolean = profile().hasDiscoverSliders
+    override suspend fun supported(): Boolean = profile().hasCompanySearch
 
     override suspend fun search(
         query: String,
