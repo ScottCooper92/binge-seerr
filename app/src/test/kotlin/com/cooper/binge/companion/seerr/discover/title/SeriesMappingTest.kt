@@ -9,6 +9,7 @@ import com.cooper.binge.companion.seerr.seerr.SeerrMediaStatusCode
 import com.cooper.binge.companion.seerr.seerr.SeerrPublicSettings
 import com.cooper.binge.companion.seerr.seerr.SeerrRequestStatusCode
 import com.cooper.binge.companion.seerr.seerr.SeerrRequestSummaryDto
+import com.cooper.binge.companion.seerr.seerr.SeerrRequestUserDto
 import com.cooper.binge.companion.seerr.seerr.SeerrSeasonStatusDto
 import com.cooper.binge.companion.seerr.seerr.SeerrTvDetailsDto
 import com.cooper.binge.companion.seerr.seerr.SeerrTvSeasonDto
@@ -43,10 +44,13 @@ class SeriesMappingTest {
         dto: SeerrTvDetailsDto,
         settings: SeerrPublicSettings = SeerrPublicSettings(),
         mayRequest4k: Boolean = false,
+        mayViewAllRequests: Boolean = true,
     ) = dto.toSeriesDetails(
         region = "US",
         mayRequest = true,
         mayRequest4k = mayRequest4k,
+        viewerId = 7,
+        mayViewAllRequests = mayViewAllRequests,
         settings = settings,
         webUrl = "https://seerr.example/tv/1399",
     )
@@ -156,5 +160,15 @@ class SeriesMappingTest {
             )
 
         assertEquals(listOf("One, Two"), map(dto).cast.map { it.role })
+    }
+
+    @Test
+    fun `another user's request is dropped for a viewer who may not view requests and kept for one who may`() {
+        val mine = SeerrRequestSummaryDto(1, SeerrRequestStatusCode.Pending, requestedBy = SeerrRequestUserDto(id = 7))
+        val theirs = SeerrRequestSummaryDto(2, SeerrRequestStatusCode.Pending, requestedBy = SeerrRequestUserDto(id = 8))
+        val dto = show(SeerrMediaInfoDto(id = 1, status = SeerrMediaStatusCode.Pending, requests = listOf(mine, theirs)))
+
+        assertEquals(listOf(1), map(dto, mayViewAllRequests = false).requests.map { it.id })
+        assertEquals(listOf(1, 2), map(dto, mayViewAllRequests = true).requests.map { it.id })
     }
 }

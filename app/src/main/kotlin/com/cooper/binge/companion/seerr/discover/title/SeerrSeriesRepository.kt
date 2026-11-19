@@ -61,6 +61,8 @@ class SeerrSeriesRepository(
                     region = streamingRegion(api, user, profile, deviceRegion()),
                     mayRequest = permissions.canRequestSeries,
                     mayRequest4k = permissions.mayRequest4k(isTv = true, profile.settings),
+                    viewerId = user.id,
+                    mayViewAllRequests = permissions.canViewRequests,
                     settings = profile.settings,
                     webUrl = serverUrl() + "tv/" + tmdbId,
                 ).let {
@@ -123,6 +125,8 @@ internal fun SeerrTvDetailsDto.toSeriesDetails(
     region: String?,
     mayRequest: Boolean,
     mayRequest4k: Boolean,
+    viewerId: Int,
+    mayViewAllRequests: Boolean,
     settings: SeerrPublicSettings,
     webUrl: String,
 ): SeriesDetails {
@@ -179,7 +183,12 @@ internal fun SeerrTvDetailsDto.toSeriesDetails(
         partialRequests = settings.partialRequestsEnabled,
         mediaId = mediaInfo?.id,
         webUrl = webUrl,
-        requests = mediaInfo?.requests.orEmpty().map { it.toTitleRequest() },
+        requests =
+            mediaInfo
+                ?.requests
+                .orEmpty()
+                .viewableBy(viewerId, mayViewAllRequests)
+                .map { it.toTitleRequest() },
     )
 }
 
