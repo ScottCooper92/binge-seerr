@@ -27,7 +27,8 @@ class DiscoveryGateTest {
         flag: Boolean,
         flags: FeatureFlags = FixedFeatureFlags(Flags.of(DiscoveryEnabled to flag)),
     ): Pair<PrefsDiscoveryGate, DiscoveryPrefs> {
-        val prefs = DiscoveryPrefs(PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("d${files++}.preferences_pb") })
+        val store = PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("d${files++}.preferences_pb") }
+        val prefs = DiscoveryPrefs(store)
         return PrefsDiscoveryGate(flags, prefs, kotlinx.coroutines.CoroutineScope(UnconfinedTestDispatcher(testScheduler))) to prefs
     }
 
