@@ -35,7 +35,6 @@ import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
 import org.junit.After
 import org.junit.Assert.assertEquals
-import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -383,7 +382,6 @@ class WideShellJourneyTest {
         awaitState("the app stack to be listOf<NavKey>(ShellRoute)") { host.stack() == listOf<NavKey>(ShellRoute) }
     }
 
-    @Ignore("The Pending chip reads All while the list shows Pending, on CI; the cause is tracked in #2369")
     @Test
     fun `a fold moves no entry and keeps the section's filter`() =
         foldKeepsTheFilter {
@@ -400,7 +398,6 @@ class WideShellJourneyTest {
      * The same fold with the chip clicked through its semantic action, which sends no touch. Run beside the touch one, a failure of
      * the touch variant alone says the tap, not the filter, is what is lost (#2257).
      */
-    @Ignore("Times out waiting for the Pending chip on CI; the cause is tracked in #2369")
     @Test
     fun `a fold moves no entry and keeps the section's filter when the chip is clicked by its semantic action`() =
         foldKeepsTheFilter {
