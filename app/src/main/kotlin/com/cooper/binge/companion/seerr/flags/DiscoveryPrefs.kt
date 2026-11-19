@@ -10,7 +10,10 @@ import kotlinx.coroutines.flow.map
 
 private val DISCOVERY = booleanPreferencesKey("discovery")
 
-/** Whether the user wants the discovery surfaces. On until turned off; it only counts while the remote flag is on (see [DiscoveryGate]). */
+/**
+ * Whether the user wants the discovery surfaces. On until turned off; it only counts while the remote flag is on, which core's
+ * `PreferenceGate` combines.
+ */
 class DiscoveryPrefs(
     private val dataStore: DataStore<Preferences>,
 ) {

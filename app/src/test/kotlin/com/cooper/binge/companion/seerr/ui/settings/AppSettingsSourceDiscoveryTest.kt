@@ -6,10 +6,10 @@ import com.cooper.binge.companion.seerr.feedback.BugReportLinks
 import com.cooper.binge.companion.seerr.feedback.FeedbackPrefs
 import com.cooper.binge.companion.seerr.flags.DiscoveryEnabled
 import com.cooper.binge.companion.seerr.flags.DiscoveryPrefs
-import com.cooper.binge.companion.seerr.flags.PrefsDiscoveryGate
 import com.cooper.binge.companion.seerr.ui.hub.NoBingeInstallCheck
 import com.cooper.binge.companion.seerr.util.RecordingAnalytics
 import com.cooper.homelab.core.flags.FixedFeatureFlags
+import com.cooper.homelab.core.flags.FlagPreferenceGate
 import com.cooper.homelab.core.flags.Flags
 import com.cooper.homelab.core.telemetry.TelemetryPrefs
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -51,7 +51,7 @@ class AppSettingsSourceDiscoveryTest {
                 analytics,
                 backgroundScope,
                 dispatcher,
-                PrefsDiscoveryGate(flags, discovery, backgroundScope),
+                FlagPreferenceGate(flags, DiscoveryEnabled, discovery.enabled, discovery::setEnabled, backgroundScope),
             )
         return source to discovery
     }

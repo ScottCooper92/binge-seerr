@@ -16,13 +16,13 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.rememberNavBackStack
-import com.cooper.binge.companion.seerr.flags.DiscoveryGate
 import com.cooper.binge.companion.seerr.flags.LocalDiscoveryEnabled
 import com.cooper.binge.companion.seerr.theme.SeerrTheme
 import com.cooper.binge.companion.seerr.ui.HomeRoute
 import com.cooper.binge.companion.seerr.ui.SeerrNavHost
 import com.cooper.binge.companion.seerr.ui.shell.SeerrTab
 import com.cooper.binge.companion.seerr.ui.shell.rememberSeerrTabs
+import com.cooper.homelab.core.flags.PreferenceGate
 import com.cooper.homelab.core.uiandroid.shell.RestartOnGateChange
 import com.cooper.homelab.core.uiandroid.shell.TabShellState
 import dagger.hilt.android.AndroidEntryPoint
@@ -45,7 +45,7 @@ class NavHostActivity : ComponentActivity() {
         private set
 
     @Inject
-    lateinit var discoveryGate: DiscoveryGate
+    lateinit var discoveryGate: PreferenceGate
 
     /** Cleared before the activity closes, so the composition is taken down while the looper is live (#663). */
     internal var shown by mutableStateOf(true)

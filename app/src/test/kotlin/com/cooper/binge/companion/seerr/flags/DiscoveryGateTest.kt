@@ -2,11 +2,11 @@ package com.cooper.binge.companion.seerr.flags
 
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import com.cooper.homelab.core.flags.FixedFeatureFlags
+import com.cooper.homelab.core.flags.FlagPreferenceGate
 import com.cooper.homelab.core.flags.Flags
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
@@ -17,84 +17,49 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 
-/** Discovery is the remote flag AND the user's own preference, read from this one place. */
+/**
+ * The Discovery setting's wiring into core's shared gate: this app's flag and its own preference reach it, and a write goes back to
+ * the preference. The gate's own rules (the four combined cases, nothing resolved before the preference is read) are tested in core.
+ */
 @OptIn(ExperimentalCoroutinesApi::class)
 class DiscoveryGateTest {
     @get:Rule
     val folder = TemporaryFolder()
 
-    private var files = 0
-
-    private suspend fun TestScope.prefs(stored: Boolean?): DiscoveryPrefs {
-        val store = PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("d${files++}.preferences_pb") }
-        return DiscoveryPrefs(store).also { if (stored != null) it.setEnabled(stored) }
+    private fun TestScope.wiring(flag: Boolean): Pair<FlagPreferenceGate, DiscoveryPrefs> {
+        val store = PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("d.preferences_pb") }
+        val prefs = DiscoveryPrefs(store)
+        val flags = FixedFeatureFlags(Flags.of(DiscoveryEnabled to flag))
+        val scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler))
+        val gate = FlagPreferenceGate(flags, DiscoveryEnabled, prefs.enabled, prefs::setEnabled, scope)
+        return gate to prefs
     }
 
-    private fun TestScope.gate(
-        flag: Boolean,
-        prefs: DiscoveryPrefs,
-    ) = PrefsDiscoveryGate(
-        FixedFeatureFlags(Flags.of(DiscoveryEnabled to flag)),
-        prefs,
-        CoroutineScope(UnconfinedTestDispatcher(testScheduler)),
-    )
-
     @Test
-    fun `the preference defaults to on`() =
+    fun `the preference defaults to on, and the gate offers the row only while the flag is on`() =
         runTest {
-            assertTrue(prefs(stored = null).enabled.first())
+            val (on, prefs) = wiring(flag = true)
+            assertTrue(prefs.enabled.first())
+            assertTrue(on.offered.first())
+            assertEquals(true, on.resolved.first { it != null })
         }
 
     @Test
-    fun `the four flag and preference cases`() =
+    fun `with the flag off nothing is offered and discovery is off`() =
         runTest {
-            val cases =
-                listOf(
-                    Triple(false, false, false),
-                    Triple(false, true, false),
-                    Triple(true, false, false),
-                    Triple(true, true, true),
-                )
-            for ((flag, pref, expected) in cases) {
-                val gate = gate(flag, prefs(stored = pref))
-                assertEquals("flag=$flag pref=$pref", expected, gate.resolved.first { it != null })
-            }
+            val (off, _) = wiring(flag = false)
+            assertFalse(off.offered.first())
+            assertEquals(false, off.resolved.first { it != null })
         }
 
     @Test
-    fun `the row is offered only while the remote flag is on`() =
+    fun `setting the preference writes it back to this app's store`() =
         runTest {
-            assertFalse(gate(false, prefs(null)).offered.first())
-            assertTrue(gate(true, prefs(null)).offered.first())
-        }
+            val (gate, prefs) = wiring(flag = true)
 
-    @Test
-    fun `an opted-out user never observes discovery on, so a first value is not mistaken for a toggle`() =
-        runTest {
-            val gate = gate(flag = true, prefs = prefs(stored = false))
-            val seen = mutableListOf<Boolean?>()
-            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { gate.resolved.collect { seen += it } }
-
-            assertEquals(false, gate.resolved.first { it != null })
-            assertFalse("the value is false from its first non-null state: $seen", seen.any { it == true })
-        }
-
-    @Test
-    fun `before it resolves the flag alone is the fallback and current reads it`() =
-        runTest {
-            val gate = gate(flag = true, prefs = prefs(null))
-            assertTrue(gate.fallback)
-            assertTrue(gate.current())
-        }
-
-    @Test
-    fun `turning the preference off turns discovery off and on again restores it`() =
-        runTest {
-            val gate = gate(flag = true, prefs = prefs(null))
-            assertEquals(true, gate.resolved.first { it != null })
             gate.setPreference(false)
+
+            assertFalse(prefs.enabled.first { !it })
             assertEquals(false, gate.resolved.first { it == false })
-            gate.setPreference(true)
-            assertEquals(true, gate.resolved.first { it == true })
         }
 }
