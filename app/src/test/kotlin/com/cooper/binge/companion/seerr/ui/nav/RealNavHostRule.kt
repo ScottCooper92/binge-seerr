@@ -3,7 +3,9 @@ package com.cooper.binge.companion.seerr.ui.nav
 import android.content.Context
 import android.content.pm.ActivityInfo
 import androidx.annotation.StringRes
+import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.ComposeTimeoutException
+import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
@@ -53,6 +55,9 @@ private const val AWAIT_MILLIS = 10_000L
 
 /** What a timeout prints of the screen: enough to read, small enough that a CI log stays readable. */
 private const val MAX_TREE_LINES = 300
+
+/** The semantics properties a failure dump reports for a node: what it says and whether it is selected, enabled or focused. */
+private val REPORTED_PROPERTIES = setOf("Text", "Selected", "Disabled", "Role", "Focused", "ContentDescription")
 
 /**
  * Hosts the real [com.cooper.binge.companion.seerr.ui.SeerrNavHost] on the JVM, against the app's
@@ -169,20 +174,22 @@ internal class RealNavHostRule(
     fun clickUntil(
         what: String,
         timeoutMillis: Long = AWAIT_MILLIS,
+        focus: SemanticsMatcher? = null,
         target: () -> SemanticsNodeInteraction,
         reached: () -> Boolean,
-    ) = await(what, timeoutMillis) { reached().also { done -> if (!done) target().performClick() } }
+    ) = await(what, timeoutMillis, focus) { reached().also { done -> if (!done) target().performClick() } }
 
     /** Waits for [condition], and a timeout says what the screen was showing, as [awaitShowing] does. */
     fun await(
         what: String,
         timeoutMillis: Long = AWAIT_MILLIS,
+        focus: SemanticsMatcher? = null,
         condition: () -> Boolean,
     ) {
         try {
             compose.waitUntil(what, timeoutMillis, condition)
         } catch (timeout: ComposeTimeoutException) {
-            throw ComposeTimeoutException("${timeout.message}\n${describeScreen()}")
+            throw ComposeTimeoutException("${timeout.message}\n${focus?.let(::describeFocus).orEmpty()}${describeScreen()}")
         }
     }
 
@@ -248,6 +255,33 @@ internal class RealNavHostRule(
             "Back stack: $stack\n${describeWindow()}\nOn screen:\n${tree.cappedAt(MAX_TREE_LINES)}"
         } catch (failure: RuntimeException) {
             "(could not describe the screen: $failure)"
+        }
+
+    /**
+     * The window's width, every node [focus] matches and every node that can be selected, each with its bounds and the few properties that
+     * say what it is and what it reads, so a failure names where the control was and which of its row was selected, which the capped
+     * tree below may have cut off. Never throws.
+     */
+    private fun describeFocus(focus: SemanticsMatcher): String =
+        try {
+            val width = compose.runOnUiThread { activity.resources.configuration.screenWidthDp }
+
+            fun list(matcher: SemanticsMatcher): String =
+                compose
+                    .onAllNodes(matcher)
+                    .fetchSemanticsNodes()
+                    .joinToString("\n") { node ->
+                        val props =
+                            node.config
+                                .filter { (key, _) ->
+                                    key.name in REPORTED_PROPERTIES
+                                }.joinToString { (key, value) -> "${key.name}=$value" }
+                        "  ${node.boundsInRoot}: $props"
+                    }.ifEmpty { "  none" }
+            "Window: ${width}dp wide\nMatching nodes (${focus.description}):\n${list(focus)}\n" +
+                "Selectable nodes:\n${list(SemanticsMatcher.keyIsDefined(SemanticsProperties.Selected))}\n"
+        } catch (failure: RuntimeException) {
+            "(could not describe the matching nodes: $failure)\n"
         }
 
     /** Whether the activity's window is resumed, attached and focused: a tap sent to a window that is not is lost without an error. */
