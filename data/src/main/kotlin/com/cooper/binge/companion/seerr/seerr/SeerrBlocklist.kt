@@ -22,3 +22,14 @@ suspend fun SeerrApi.addToBlocklistOnce(
         if (e.code() != HTTP_PRECONDITION_FAILED && e.code() != HTTP_CONFLICT) throw e
     }
 }
+
+/**
+ * Takes a title off the blocklist: the one place that makes the two server-dependent choices, the path
+ * ([SeerrServerProfile.blocklistPath]) and whether to send the media type ([SeerrServerProfile.unblockMediaType]).
+ * [mediaType] is `movie` or `tv`. The exported Service and the console's screens all unblock through it.
+ */
+suspend fun SeerrApi.unblockTitle(
+    profile: SeerrServerProfile,
+    tmdbId: Int,
+    mediaType: String,
+) = removeFromBlocklist(profile.blocklistPath, tmdbId, profile.unblockMediaType(mediaType))
