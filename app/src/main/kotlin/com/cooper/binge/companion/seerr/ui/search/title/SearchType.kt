@@ -17,10 +17,10 @@ enum class SearchType(
 }
 
 /**
- * How many results each type chip shows. A type counts what has loaded so far, so it grows as pages arrive. [All] is the
- * server's total where it gave one, and never less than what has loaded.
+ * How many results each type chip shows. A type counts what has loaded so far, so it grows as pages arrive. [SearchType.All]
+ * is the sum of the others, as Binge's is, so the chips always add up.
  */
-internal fun List<TitleResult>.typeCounts(total: Int?): Map<SearchType, Int> =
-    SearchType.entries.associateWith { type ->
-        if (type == SearchType.All) maxOf(total ?: 0, size) else count(type::keeps)
-    }
+internal fun List<TitleResult>.typeCounts(): Map<SearchType, Int> {
+    val byType = SearchType.entries.filter { it != SearchType.All }.associateWith { type -> count(type::keeps) }
+    return mapOf(SearchType.All to byType.values.sum()) + byType
+}

@@ -154,7 +154,7 @@
     <string name="title_search_trending_series">Trending shows</string>
     <string name="title_search_genres_join" translatable="false">%1$s · %2$s</string>
     <string name="title_kind_movie">Movie</string>
-    <string name="title_kind_series">Series</string>
+    <string name="title_kind_series">TV</string>
     <string name="title_kind_person">Person</string>
     <string name="title_kind_collection">Collection</string>
     <!-- The "see all" grid of a hub row: its order, the filter the row started with, and its empty state. -->
