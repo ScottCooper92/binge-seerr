@@ -1575,6 +1575,7 @@
     <string name="title_sheet_note_other_request">Another user requested this title.</string>
     <string name="title_sheet_note_in_library">This title is in the library.</string>
     <string name="title_sheet_note_blocklisted">This title is blocklisted, so it can\'t be requested.</string>
+    <string name="title_page_action_report">Report</string>
     <string name="title_page_action_trailer">Trailer</string>
     <string name="title_page_action_share">Share</string>
     <string name="title_page_stat_released">Released</string>

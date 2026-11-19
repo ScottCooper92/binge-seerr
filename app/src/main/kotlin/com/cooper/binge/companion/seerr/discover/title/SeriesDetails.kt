@@ -75,6 +75,8 @@ data class SeriesDetails(
     val mediaServerName: String? = null,
     /** The viewer's account may request this kind of title at all, whether or not anything is left to request. */
     val canRequest: Boolean = true,
+    /** The server takes issues and this viewer may report one: its profile has them and their permissions allow it. */
+    val mayReport: Boolean = false,
 ) {
     /** The seasons of each version for the request sheet. */
     val seasonChoices: SeasonChoices

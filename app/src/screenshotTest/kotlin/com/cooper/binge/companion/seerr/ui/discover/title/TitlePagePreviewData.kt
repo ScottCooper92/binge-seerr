@@ -42,6 +42,7 @@ internal fun fullMovie(
     standard: VersionState = VersionState(TitleAvailability.None, mayRequest = true),
     fourK: VersionState? = VersionState(TitleAvailability.Processing, mayRequest = false),
 ) = MovieDetails(
+    mayReport = true,
     tmdbId = 603,
     title = title,
     tagline = "Free your mind",

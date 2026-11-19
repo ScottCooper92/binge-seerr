@@ -65,6 +65,7 @@ class SeerrTitleDetailsRepository(
                     mediaServerName = profile.mediaServerName(),
                     canRequest = permissions.canRequestMovie,
                     keywordsOpen = profile.hasKeywordDiscover,
+                    mayReport = profile.hasIssues && permissions.canReportIssues,
                 )
         }
 

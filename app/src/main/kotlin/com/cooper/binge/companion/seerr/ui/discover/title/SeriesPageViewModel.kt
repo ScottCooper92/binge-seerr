@@ -55,6 +55,7 @@ sealed interface SeriesPageUiState {
         val manageRequestId: Int? = null,
         val manageSheetOpen: Boolean = false,
         val statusSheetOpen: Boolean = false,
+        val reportSheetOpen: Boolean = false,
         val selectedSeason: Int? = null,
         val episodes: Map<Int, EpisodesState> = emptyMap(),
     ) : SeriesPageUiState {
@@ -126,7 +127,15 @@ class SeriesPageViewModel
         /** The primary was tapped: the request sheet or one request's sheet, as the page's state says, or nothing where there is none to open. */
         fun onPrimary() =
             updateReady { ready ->
-                when (val tap = titleActionsModel(ready.series.standard, ready.series.fourK, ready.series.requests).primary.tap) {
+                when (
+                    val tap =
+                        titleActionsModel(
+                            ready.series.standard,
+                            ready.series.fourK,
+                            ready.series.requests,
+                            ready.series.mayReport,
+                        ).primary.tap
+                ) {
                     PrimaryTap.RequestSheet -> ready.copy(requestSheetOpen = true)
                     is PrimaryTap.ManageRequest -> ready.copy(manageRequestId = tap.requestId, manageSheetOpen = true)
                     PrimaryTap.StatusSheet -> ready.copy(statusSheetOpen = true)
@@ -137,6 +146,10 @@ class SeriesPageViewModel
         fun closeManageSheet() = updateReady { it.copy(manageSheetOpen = false) }
 
         fun closeStatusSheet() = updateReady { it.copy(statusSheetOpen = false) }
+
+        fun openReportSheet() = updateReady { it.copy(reportSheetOpen = true) }
+
+        fun closeReportSheet() = updateReady { it.copy(reportSheetOpen = false) }
 
         /** Closing the sheet reads the show again, since a request moves its seasons and a refused one may mean the server's state moved. */
         fun closeRequestSheet() {

@@ -92,7 +92,7 @@ class ReportTitleViewModel
                 attempt { connection.current().baseUrl }.getOrElse { return failure(it) }
             // A profile that cannot be read leaves the id unknown, which the addresses then decide.
             val connectedId = attempt { connection.profile().instanceId }.getOrNull()
-            if (!TitleReportLinks.isSameServer(link, connected, connectedId)) {
+            if (!link.ownServer && !TitleReportLinks.isSameServer(link, connected, connectedId)) {
                 return ReportTitleUiState.DifferentServer(
                     theirs = label(link.server),
                     yours = label(connected),
@@ -150,6 +150,16 @@ class ReportTitleViewModel
                 state.update { current -> (current as? ReportTitleUiState.Ready)?.copy(report = outcome) ?: current }
             }
         }
+
+        /**
+         * The form is closed: it comes back empty, ready for another report. A send still in flight is left alone, since clearing
+         * [IssueReport.Sending] would let a second post fire when the form reopens.
+         */
+        fun dismiss() =
+            state.update { current ->
+                val ready = current as? ReportTitleUiState.Ready ?: return@update current
+                if (ready.report == IssueReport.Sending) ready else ready.copy(report = IssueReport.Idle)
+            }
 
         @AssistedFactory
         interface Factory {

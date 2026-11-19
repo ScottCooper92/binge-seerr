@@ -71,6 +71,7 @@ class SeerrSeriesRepository(
                     mediaServerName = profile.mediaServerName(),
                     canRequest = permissions.canRequestSeries,
                     keywordsOpen = profile.hasKeywordDiscover,
+                    mayReport = profile.hasIssues && permissions.canReportIssues,
                 )
         }
 

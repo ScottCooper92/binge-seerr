@@ -50,6 +50,12 @@ class TitlePageActions(
     val onCloseStatus: () -> Unit = {},
     /** The sheet of one request, backed by that request's own view model, which the nav entry supplies. */
     val manageSheet: @Composable (SiblingSheet) -> Unit = {},
+    /** Report, drawn once the title is in the library; null where the page has nothing to report on. */
+    val onReport: (() -> Unit)? = null,
+    /** The report sheet, closed. */
+    val onCloseReport: () -> Unit = {},
+    /** The report form for this title, hosted over the page. */
+    val reportSheet: @Composable (onClose: () -> Unit) -> Unit = {},
 )
 
 /** The film page: a hero, its stats, and the actions, with Request first; then the facts and people. */
@@ -131,7 +137,7 @@ private fun ReadyPage(
     }
     if (state.statusSheetOpen) {
         TitleStatusSheet(
-            state = titleActionsModel(state.movie.standard, state.movie.fourK, state.movie.requests).primary.state,
+            state = titleActionsModel(state.movie.standard, state.movie.fourK, state.movie.requests, state.movie.mayReport).primary.state,
             watchUrl = state.movie.watchUrl,
             mediaServerName = state.movie.mediaServerName,
             canRequest = state.movie.canRequest,
@@ -139,6 +145,7 @@ private fun ReadyPage(
             onDismiss = actions.onCloseStatus,
         )
     }
+    if (state.reportSheetOpen) actions.reportSheet(actions.onCloseReport)
     state.manageRequestId?.let { requestId ->
         actions.manageSheet(
             SiblingSheet(

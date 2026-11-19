@@ -31,8 +31,8 @@ class TitleActionsEnabledTest {
         label: Int,
     ) {
         var taps = 0
-        val model = titleActionsModel(standard, fourK, emptyList())
-        rule.setContent { SeerrTheme { TitleActions(model, onPrimary = { taps++ }, onTrailer = null) } }
+        val model = titleActionsModel(standard, fourK, emptyList(), mayReport = false)
+        rule.setContent { SeerrTheme { TitleActions(model, onPrimary = { taps++ }, onTrailer = null, onReport = null) } }
 
         rule.onNodeWithText(resources.getString(label)).assertIsEnabled().performClick()
 

@@ -116,6 +116,17 @@ class TitlePageViewModelTest {
     }
 
     @Test
+    fun `the report sheet opens and closes`() {
+        val vm = TitlePageViewModel(FakeTitles(), 603)
+
+        vm.openReportSheet()
+        assertTrue(vm.ready().reportSheetOpen)
+
+        vm.closeReportSheet()
+        assertFalse(vm.ready().reportSheetOpen)
+    }
+
+    @Test
     fun `a failed load is an error that retries`() {
         val titles = FakeTitles(failMovie = IOException("down"))
         val vm = TitlePageViewModel(titles, 603)

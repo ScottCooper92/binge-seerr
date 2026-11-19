@@ -115,6 +115,8 @@ data class MovieDetails(
     val mediaServerName: String? = null,
     /** The viewer's account may request this kind of title at all, whether or not anything is left to request. */
     val canRequest: Boolean = true,
+    /** The server takes issues and this viewer may report one: its profile has them and their permissions allow it. */
+    val mayReport: Boolean = false,
     /** Whether the server can list what a studio made, so the studios may be links; set from its profile, never from a version here. */
     val companiesOpen: Boolean = false,
     /** Whether the server can list the titles of a keyword, so the keywords may be links; set from its profile. */
