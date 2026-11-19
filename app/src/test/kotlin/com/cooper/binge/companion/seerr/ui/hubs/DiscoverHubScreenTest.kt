@@ -54,6 +54,7 @@ class DiscoverHubScreenTest {
         server: String,
         opened: MutableList<HubCard>,
         hero: List<HubHero> = emptyList(),
+        heroPlace: Boolean = true,
     ) {
         val card = HubCard(TitleKind.Movie, 7, "Paper Moons", "2020", null, TitleAvailability.None, server + "movie/7")
         val state =
@@ -62,6 +63,7 @@ class DiscoverHubScreenTest {
                 pending = 0,
                 refreshing = false,
                 hero = hero,
+                heroPlace = heroPlace,
             )
         compose.setContent {
             SeerrTheme {
@@ -72,6 +74,20 @@ class DiscoverHubScreenTest {
                 }, onOpenRequests = {})
             }
         }
+    }
+
+    @Test
+    fun `with no hero place the rows sit at the top, and with one they sit below it`() {
+        show("https://server.example/", mutableListOf(), heroPlace = false)
+        val without = compose.onNodeWithText("Paper Moons").getBoundsInRoot().top
+        assertTrue("no hero place above the row: $without", without < 400.dp)
+    }
+
+    @Test
+    fun `the hero's place keeps the rows below it`() {
+        show("https://server.example/", mutableListOf(), heroPlace = true)
+        val with = compose.onNodeWithText("Paper Moons").getBoundsInRoot().top
+        assertTrue("the hero's place is above the row: $with", with > 400.dp)
     }
 
     @Test
