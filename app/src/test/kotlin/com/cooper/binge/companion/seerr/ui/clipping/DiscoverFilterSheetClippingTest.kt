@@ -1,5 +1,8 @@
 package com.cooper.binge.companion.seerr.ui.clipping
 
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.ui.Modifier
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverFilters
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverSort
@@ -55,15 +58,18 @@ class DiscoverFilterSheetClippingTest {
 
     private fun check(fontScale: Float) =
         rule.assertNoClippingAt(fontScale) {
-            DiscoverFilterSheetContent(
-                draft = DiscoverFilterDraft(TitleKind.Series, DiscoverSort.PopularityDesc, FILTERS),
-                vocabulary = WORDS,
-                today = LocalDate.of(2026, 11, 18),
-                onKind = {},
-                onSort = {},
-                onOpen = {},
-                onClearAll = {},
-            )
+            Column(Modifier.fillMaxSize()) {
+                DiscoverFilterSheetContent(
+                    draft = DiscoverFilterDraft(TitleKind.Series, DiscoverSort.PopularityDesc, FILTERS),
+                    vocabulary = WORDS,
+                    today = LocalDate.of(2026, 11, 18),
+                    onKind = {},
+                    onSort = {},
+                    onOpen = {},
+                    onClearAll = {},
+                    onApply = {},
+                )
+            }
         }
 
     @Test fun `every row at 1_3`() = check(FONT_SCALE_13)
@@ -82,14 +88,17 @@ class DiscoverFilterSheetSpanishClippingTest {
     @Test
     fun `every row at 2_0`() =
         rule.assertNoClippingAt(FONT_SCALE_20) {
-            DiscoverFilterSheetContent(
-                draft = DiscoverFilterDraft(TitleKind.Series, DiscoverSort.PopularityDesc, FILTERS),
-                vocabulary = WORDS,
-                today = LocalDate.of(2026, 11, 18),
-                onKind = {},
-                onSort = {},
-                onOpen = {},
-                onClearAll = {},
-            )
+            Column(Modifier.fillMaxSize()) {
+                DiscoverFilterSheetContent(
+                    draft = DiscoverFilterDraft(TitleKind.Series, DiscoverSort.PopularityDesc, FILTERS),
+                    vocabulary = WORDS,
+                    today = LocalDate.of(2026, 11, 18),
+                    onKind = {},
+                    onSort = {},
+                    onOpen = {},
+                    onClearAll = {},
+                    onApply = {},
+                )
+            }
         }
 }

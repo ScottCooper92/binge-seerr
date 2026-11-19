@@ -1,38 +1,30 @@
 package com.cooper.binge.companion.seerr.ui.grid
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.Tv
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import com.binge.designsystem.component.BingeActionFooter
 import com.binge.designsystem.component.BingeAdaptiveSheet
-import com.binge.designsystem.component.BingeFilterChip
-import com.binge.designsystem.component.BingeSheetFooter
 import com.binge.designsystem.component.BingeSheetKind
 import com.binge.designsystem.component.BingeSheetNav
-import com.binge.designsystem.component.bingeSheetScroll
+import com.binge.designsystem.template.FilterControlUi
+import com.binge.designsystem.template.FilterOptionUi
+import com.binge.designsystem.template.FilterRowUi
+import com.binge.designsystem.template.FilterSectionUi
+import com.binge.designsystem.template.FilterSheetContent
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverFilters
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverSort
 import com.cooper.binge.companion.seerr.discover.grid.setGroups
 import java.time.LocalDate
-import com.binge.designsystem.R as DesR
 
 /**
  * The grid's filter sheet, as Binge's discover filter sheet is: the kind of title and the order at the top as single-choice
@@ -93,26 +85,24 @@ private fun ColumnScope.RowsPage(
     onChange: (DiscoverFilterDraft) -> Unit,
     onApply: () -> Unit,
 ) {
-    Column(Modifier.weight(1f, fill = false).bingeSheetScroll()) {
-        DiscoverFilterSheetContent(
-            draft = draft,
-            vocabulary = vocabulary,
-            today = today,
-            onKind = { onChange(draft.withKind(it)) },
-            onSort = { onChange(draft.withSort(it)) },
-            onOpen = { if (it == DiscoverFilterSection.Language) onChooseLanguage() else nav.push(it.name) },
-            onClearAll = { onChange(draft.cleared()) },
-        )
-    }
-    BingeSheetFooter {
-        BingeActionFooter(label = stringResource(R.string.grid_filters_show_results), onClick = onApply)
-    }
+    DiscoverFilterSheetContent(
+        draft = draft,
+        vocabulary = vocabulary,
+        today = today,
+        onKind = { onChange(draft.withKind(it)) },
+        onSort = { onChange(draft.withSort(it)) },
+        onOpen = { if (it == DiscoverFilterSection.Language) onChooseLanguage() else nav.push(it.name) },
+        onClearAll = { onChange(draft.cleared()) },
+        onApply = onApply,
+    )
 }
 
-/** What the rows page shows, apart from the window it sits in, so a frame can draw it. */
-@OptIn(ExperimentalLayoutApi::class)
+/**
+ * What the rows page shows, apart from the window it sits in, so a frame can draw it: the design system's filter sheet body,
+ * with the content kind and the order as its choice sections and a row for each filter that opens a page of its own.
+ */
 @Composable
-internal fun DiscoverFilterSheetContent(
+internal fun ColumnScope.DiscoverFilterSheetContent(
     draft: DiscoverFilterDraft,
     vocabulary: FilterVocabulary,
     today: LocalDate,
@@ -120,54 +110,75 @@ internal fun DiscoverFilterSheetContent(
     onSort: (DiscoverSort) -> Unit,
     onOpen: (DiscoverFilterSection) -> Unit,
     onClearAll: () -> Unit,
+    onApply: () -> Unit,
 ) {
-    val inset = Modifier.padding(horizontal = dimensionResource(DesR.dimen.padding_m))
-    val gap = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s))
-    Column(modifier = Modifier.padding(bottom = dimensionResource(DesR.dimen.padding_m))) {
-        FilterSheetHeader(appliedCount = draft.filters.setGroups().size, canClear = !draft.isDefault, onClearAll = onClearAll)
-        SectionTitle(stringResource(R.string.grid_filters_content))
-        FlowRow(modifier = inset, horizontalArrangement = gap) {
-            listOf(TitleKind.Movie, TitleKind.Series).forEach { kind ->
-                BingeFilterChip(
-                    label = stringResource(kind.contentLabel()),
-                    selected = kind == draft.kind,
-                    onClick = { onKind(kind) },
-                    leadingIcon = if (kind == TitleKind.Series) Icons.Filled.Tv else Icons.Filled.Movie,
-                )
-            }
-        }
-        SectionTitle(stringResource(R.string.grid_filters_sort))
-        FlowRow(modifier = inset, horizontalArrangement = gap) {
-            DiscoverSort.sheetChoices(draft.kind).forEach { choice ->
-                BingeFilterChip(
-                    label = stringResource(choice.labelRes()),
-                    selected = choice == draft.sort,
-                    onClick = { onSort(choice) },
-                    leadingIcon = choice.icon(),
-                )
-            }
-        }
-        SectionTitle(stringResource(R.string.grid_filters_filter_by))
-        DiscoverFilterRows(draft.filters, draft.kind, vocabulary, today, onOpen)
-    }
-}
-
-private fun TitleKind.contentLabel(): Int = if (this == TitleKind.Series) R.string.grid_content_tv else R.string.grid_content_movies
-
-@Composable
-private fun SectionTitle(text: String) {
-    Text(
-        text = text,
-        style = MaterialTheme.typography.titleSmall,
-        modifier =
-            Modifier.padding(
-                start = dimensionResource(DesR.dimen.padding_m),
-                top = dimensionResource(DesR.dimen.padding_m),
-                end = dimensionResource(DesR.dimen.padding_m),
-                bottom = dimensionResource(DesR.dimen.padding_s),
+    val appliedCount = draft.filters.setGroups().size
+    val sections =
+        listOf(
+            FilterSectionUi(
+                id = KIND_SECTION,
+                title = stringResource(R.string.grid_filters_content),
+                control =
+                    FilterControlUi.SingleChoice(
+                        options =
+                            listOf(TitleKind.Movie, TitleKind.Series).map { kind ->
+                                FilterOptionUi(
+                                    id = kind.name,
+                                    label = stringResource(kind.contentLabel()),
+                                    icon = if (kind == TitleKind.Series) Icons.Filled.Tv else Icons.Filled.Movie,
+                                )
+                            },
+                        selectedId = draft.kind.name,
+                    ),
             ),
+            FilterSectionUi(
+                id = SORT_SECTION,
+                title = stringResource(R.string.grid_filters_sort),
+                control =
+                    FilterControlUi.SingleChoice(
+                        options =
+                            DiscoverSort.sheetChoices(draft.kind).map { choice ->
+                                FilterOptionUi(choice.name, stringResource(choice.labelRes()), choice.icon())
+                            },
+                        selectedId = draft.sort.name,
+                    ),
+            ),
+        )
+    val offered = DiscoverFilterSection.entries.filter { it.isOffered(vocabulary, draft.kind) }
+    val rows =
+        offered.map { section ->
+            FilterRowUi(
+                id = section.name,
+                title = stringResource(section.title),
+                summary = section.summary(draft.filters, vocabulary, today),
+                icon = section.icon,
+            )
+        }
+    FilterSheetContent(
+        title = stringResource(R.string.grid_filters_title),
+        clearAllLabel = stringResource(R.string.grid_filters_clear_all),
+        showResultsLabel = stringResource(R.string.grid_filters_show_results),
+        sections = sections,
+        onApply = onApply,
+        onClearAll = onClearAll,
+        appliedLabel = if (appliedCount > 0) pluralStringResource(R.plurals.grid_filters_applied, appliedCount, appliedCount) else null,
+        rowsTitle = stringResource(R.string.grid_filters_filter_by),
+        rows = rows,
+        onSingleSelect = { section, option ->
+            when (section) {
+                KIND_SECTION -> onKind(TitleKind.valueOf(option))
+                SORT_SECTION -> onSort(DiscoverSort.valueOf(option))
+            }
+        },
+        onRowClick = { id -> onOpen(DiscoverFilterSection.valueOf(id)) },
+        clearAllEnabled = !draft.isDefault,
     )
 }
+
+private const val KIND_SECTION = "kind"
+private const val SORT_SECTION = "sort"
+
+private fun TitleKind.contentLabel(): Int = if (this == TitleKind.Series) R.string.grid_content_tv else R.string.grid_content_movies
 
 /** What the sheet asks its view model to load as a page opens or a keyword is typed. */
 internal class FilterLoads(
