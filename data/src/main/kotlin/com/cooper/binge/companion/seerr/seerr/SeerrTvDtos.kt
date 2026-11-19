@@ -39,6 +39,8 @@ data class SeerrTvDetailsDto(
     @SerialName("relatedVideos") val relatedVideos: List<SeerrVideoDto> = emptyList(),
     @SerialName("watchProviders") val watchProviders: List<SeerrWatchRegionDto> = emptyList(),
     @SerialName("mediaInfo") val mediaInfo: SeerrMediaInfoDto? = null,
+    /** Whether the signed-in user has the show on their watchlist; absent from a server without one. */
+    @SerialName("onUserWatchlist") val onUserWatchlist: Boolean? = null,
 )
 
 /** A season as the show lists it. Season 0 is the specials. */

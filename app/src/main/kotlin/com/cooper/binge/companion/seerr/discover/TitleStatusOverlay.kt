@@ -1,0 +1,89 @@
+package com.cooper.binge.companion.seerr.discover
+
+import com.cooper.binge.companion.seerr.core.grid.PagedListState
+import com.cooper.binge.companion.seerr.core.search.QuerySearchState
+import com.cooper.binge.companion.seerr.data.TitleKey
+import com.cooper.binge.companion.seerr.data.TitleStatusStore
+import com.cooper.binge.companion.seerr.data.TitleStatuses
+import com.cooper.binge.companion.seerr.data.TitleType
+import com.cooper.binge.companion.seerr.data.toTitleStatuses
+import com.cooper.binge.companion.seerr.discover.collection.CollectionDetails
+import com.cooper.binge.companion.seerr.discover.person.PersonCredit
+import com.cooper.binge.companion.seerr.discover.person.PersonCredits
+import com.cooper.binge.companion.seerr.discover.sliders.HubCard
+import com.cooper.binge.companion.seerr.discover.sliders.HubHero
+import com.cooper.binge.companion.seerr.seerr.SeerrMediaInfoDto
+
+/** What [TitleStatusStore] knows of every title, as a list of cards reads it to show the latest status. */
+internal typealias TitleStatusMap = Map<TitleKey, TitleStatuses>
+
+internal fun TitleKind.titleType(): TitleType? =
+    when (this) {
+        TitleKind.Movie -> TitleType.Movie
+        TitleKind.Series -> TitleType.Tv
+        TitleKind.Person, TitleKind.Collection -> null
+    }
+
+/** The status the store holds for a title, as a card shows it; [fallback] is what the card says for a title the store has not seen. */
+internal fun TitleStatusMap.availabilityOf(
+    kind: TitleKind,
+    tmdbId: Int,
+    fallback: TitleAvailability,
+): TitleAvailability {
+    val type = kind.titleType() ?: return fallback
+    val held = this[TitleKey(type, tmdbId)] ?: return fallback
+    return held.standard.toAvailability()
+}
+
+internal fun TitleResult.overlaid(statuses: TitleStatusMap): TitleResult =
+    statuses.availabilityOf(kind, tmdbId, availability).let { if (it == availability) this else copy(availability = it) }
+
+internal fun HubCard.overlaid(statuses: TitleStatusMap): HubCard =
+    statuses.availabilityOf(kind, tmdbId, availability).let { if (it == availability) this else copy(availability = it) }
+
+internal fun HubHero.overlaid(statuses: TitleStatusMap): HubHero =
+    statuses.availabilityOf(kind, tmdbId, availability).let { if (it == availability) this else copy(availability = it) }
+
+internal fun PersonCredit.overlaid(statuses: TitleStatusMap): PersonCredit =
+    statuses.availabilityOf(kind, tmdbId, availability).let { if (it == availability) this else copy(availability = it) }
+
+internal fun PersonCredits.overlaid(statuses: TitleStatusMap): PersonCredits =
+    PersonCredits(cast.overlaidBy(statuses) { it.overlaid(statuses) }, crew.overlaidBy(statuses) { it.overlaid(statuses) })
+
+internal fun CollectionDetails.overlaid(statuses: TitleStatusMap): CollectionDetails =
+    parts.overlaidBy(statuses) { it.overlaid(statuses) }.let { if (it === parts) this else copy(parts = it) }
+
+/** The list itself when no item changed, so a status that moved elsewhere does not rebuild a list it is not in. */
+internal fun <T> List<T>.overlaidBy(
+    statuses: TitleStatusMap,
+    overlay: (T) -> T,
+): List<T> {
+    if (statuses.isEmpty()) return this
+    val mapped = map(overlay)
+    return if (mapped.indices.all { mapped[it] === this[it] }) this else mapped
+}
+
+internal fun PagedListState<HubCard>.overlaid(statuses: TitleStatusMap): PagedListState<HubCard> =
+    if (this is PagedListState.Ready) {
+        items.overlaidBy(statuses) { it.overlaid(statuses) }.let { if (it === items) this else copy(items = it) }
+    } else {
+        this
+    }
+
+internal fun QuerySearchState<TitleResult>.overlaid(statuses: TitleStatusMap): QuerySearchState<TitleResult> =
+    if (this is QuerySearchState.Results) {
+        items.overlaidBy(statuses) { it.overlaid(statuses) }.let { if (it === items) this else copy(items = it) }
+    } else {
+        this
+    }
+
+/** Records the status a list's rows carry, for [read] to order against actions made while the list was loading. */
+internal fun TitleStatusStore.seedRows(
+    read: Long,
+    rows: List<Triple<TitleKind?, Int?, SeerrMediaInfoDto?>>,
+) {
+    rows.forEach { (kind, tmdbId, info) ->
+        val type = kind?.titleType() ?: return@forEach
+        if (tmdbId != null) seed(TitleKey(type, tmdbId), info.toTitleStatuses(), read)
+    }
+}

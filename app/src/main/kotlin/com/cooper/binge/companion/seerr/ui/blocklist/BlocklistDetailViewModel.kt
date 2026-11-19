@@ -4,7 +4,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.binge.companion.sdk.attempt
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
+import com.cooper.binge.companion.seerr.data.TitleKey
+import com.cooper.binge.companion.seerr.data.TitleStatusStore
+import com.cooper.binge.companion.seerr.data.TitleType
 import com.cooper.binge.companion.seerr.di.IoDispatcher
+import com.cooper.binge.companion.seerr.discover.title.unblocking
 import com.cooper.binge.companion.seerr.seerr.details
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
 import com.cooper.binge.companion.seerr.seerr.toTmdbBackdropUrl
@@ -49,6 +53,7 @@ class BlocklistDetailViewModel
         @Assisted canManage: Boolean,
         private val analytics: Analytics = NoOpAnalytics,
         private val crashBreadcrumbs: CrashBreadcrumbs = NoOpCrashBreadcrumbs,
+        private val statuses: TitleStatusStore = TitleStatusStore(),
     ) : ViewModel() {
         private val state = MutableStateFlow(BlocklistDetailUiState(item = item, canManage = canManage))
         val uiState: StateFlow<BlocklistDetailUiState> = state.asStateFlow()
@@ -81,11 +86,14 @@ class BlocklistDetailViewModel
             crashBreadcrumbs.log("removing from blocklist")
             viewModelScope.launch(dispatcher) {
                 attempt {
-                    connection.api().removeFromBlocklist(
-                        connection.profile().blocklistPath,
-                        item.tmdbId,
-                        connection.profile().unblockMediaType(item.mediaType.seerrMediaType()),
-                    )
+                    val key = TitleKey(if (item.mediaType.seerrMediaType() == "tv") TitleType.Tv else TitleType.Movie, item.tmdbId)
+                    statuses.unblocking(key) {
+                        connection.api().removeFromBlocklist(
+                            connection.profile().blocklistPath,
+                            item.tmdbId,
+                            connection.profile().unblockMediaType(item.mediaType.seerrMediaType()),
+                        )
+                    }
                 }.onSuccess {
                     analytics.event(AnalyticsEvents.BLOCKLIST_CHANGED, mapOf(AnalyticsEvents.PARAM_ACTION to "removed"))
                     eventFlow.emit(BlocklistDetailEvent.Removed)

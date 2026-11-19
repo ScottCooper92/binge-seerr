@@ -14,6 +14,7 @@ import com.cooper.binge.companion.seerr.data.RoomRequestStore
 import com.cooper.binge.companion.seerr.data.RoomUserStore
 import com.cooper.binge.companion.seerr.data.SeerrCacheDatabase
 import com.cooper.binge.companion.seerr.data.TitleDao
+import com.cooper.binge.companion.seerr.data.TitleStatusStore
 import com.cooper.binge.companion.seerr.data.UserStore
 import com.cooper.binge.companion.seerr.feedback.FeedbackPrefs
 import com.cooper.binge.companion.seerr.notifications.AndroidNotificationText
@@ -100,6 +101,11 @@ object SeerrModule {
     @Provides
     @Singleton
     fun userStore(db: SeerrCacheDatabase): UserStore = RoomUserStore(db)
+
+    /** What every list of cards follows for a title's status; process memory, cleared with the server's other caches. */
+    @Provides
+    @Singleton
+    fun titleStatusStore(): TitleStatusStore = TitleStatusStore()
 
     @Provides
     @Singleton

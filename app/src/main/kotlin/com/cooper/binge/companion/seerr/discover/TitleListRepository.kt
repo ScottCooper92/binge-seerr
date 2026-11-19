@@ -1,5 +1,6 @@
 package com.cooper.binge.companion.seerr.discover
 
+import com.cooper.binge.companion.seerr.data.TitleStatusStore
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverFilters
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverSort
 import com.cooper.binge.companion.seerr.discover.grid.toDiscoverQuery
@@ -37,6 +38,7 @@ class SeerrTitleListRepository(
     private val api: suspend () -> SeerrApi,
     private val profile: suspend () -> SeerrServerProfile,
     private val io: CoroutineDispatcher,
+    private val statuses: TitleStatusStore = TitleStatusStore(),
 ) : TitleListRepository {
     override suspend fun supports(source: TitleSource): Boolean = source.supportedBy(profile())
 
@@ -48,7 +50,10 @@ class SeerrTitleListRepository(
         // Without a query the server fails the call instead of answering an empty page.
         if (source is TitleSource.Search && source.query.isBlank()) return TitlePage(emptyList(), page = 1, totalPages = 1)
         val profile = profile()
-        return withContext(io) { api().fetch(source, page, profile).toTitlePage(source.defaultKind) }
+        return withContext(io) {
+            val read = statuses.beginRead()
+            api().fetch(source, page, profile).also { it.seedInto(statuses, read, source.defaultKind) }.toTitlePage(source.defaultKind)
+        }
     }
 
     override suspend fun genres(kind: TitleKind): List<GenreTile> {

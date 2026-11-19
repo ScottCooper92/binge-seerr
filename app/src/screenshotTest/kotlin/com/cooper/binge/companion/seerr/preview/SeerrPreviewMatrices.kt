@@ -28,7 +28,7 @@ import com.cooper.binge.companion.seerr.theme.SeerrBrand
  *
  * Fewer cells than the shared set, on purpose. A screen's layout frame is [SeerrScreenPreviews], the `phone` cell alone,
  * and a section root adds `phone-light` and `phone-land` through [SeerrRootScreenPreviews], so a root's own chrome is
- * seen in the light theme. `foldable` is not a cell here: it showed what `phone-land` shows. The three-pane layout past
+ * seen in the light theme. `foldable` is not a cell here: it showed what `phone-land` shows. The two-pane layout past
  * the expanded-rail line is [SeerrTabletPanesPreview], on the frames that compose the panes. Add a cell back when a
  * screen gains a layout the cells above do not show.
  */
@@ -75,7 +75,7 @@ annotation class SeerrListPanePreview
 @Preview(name = "phone-land", device = PHONE_LANDSCAPE_SPEC, uiMode = UI_MODE_NIGHT_YES, locale = SOURCE_LOCALE)
 annotation class SeerrLandscapePanesPreview
 
-/** A landscape tablet's window alone, past the design system's expanded-rail line, where the app shows three panes (#1110). */
+/** A landscape tablet's window alone, past the design system's expanded-rail line, where the app shows the hub beside one content pane (#2348). */
 @PreviewWrapper(SeerrScreenshotThemeWrapper::class)
 @Preview(name = "tablet-land", device = TABLET_LANDSCAPE_SPEC, uiMode = UI_MODE_NIGHT_YES, locale = SOURCE_LOCALE)
 annotation class SeerrTabletPanesPreview

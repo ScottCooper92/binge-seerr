@@ -758,6 +758,19 @@ interface SeerrApi {
     @GET("api/v1/discover/genreslider/tv")
     suspend fun tvGenreSlider(): List<SeerrGenreSliderDto>
 
+    /** Puts a title on the signed-in user's watchlist (201). It requests nothing. */
+    @POST("api/v1/watchlist")
+    suspend fun addToWatchlist(
+        @Body body: SeerrAddToWatchlistBody,
+    )
+
+    /** Takes a title off the signed-in user's watchlist (204). [mediaType] is `movie` or `tv`. */
+    @DELETE("api/v1/watchlist/{tmdbId}")
+    suspend fun removeFromWatchlist(
+        @Path("tmdbId") tmdbId: Int,
+        @Query("mediaType") mediaType: String,
+    )
+
     /** The signed-in user's Plex watchlist. */
     @GET("api/v1/discover/watchlist")
     suspend fun discoverWatchlist(

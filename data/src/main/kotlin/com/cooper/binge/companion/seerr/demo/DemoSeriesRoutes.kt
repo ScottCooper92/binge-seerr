@@ -48,7 +48,7 @@ internal fun DemoData.tvDetails(id: String): DemoAnswer {
     return ok(seriesBody(thin, id.toInt()))
 }
 
-private fun seriesBody(
+private fun DemoData.seriesBody(
     thin: SeerrMediaDetailsDto,
     tmdbId: Int,
 ) = SeerrTvDetailsDto(
@@ -93,6 +93,7 @@ private fun seriesBody(
             ),
         ),
     mediaInfo = thin.mediaInfo,
+    onUserWatchlist = onWatchlist("tv", tmdbId),
 )
 
 /** A season of made-up episodes, the last of which has not aired, so a list shows both kinds. */
