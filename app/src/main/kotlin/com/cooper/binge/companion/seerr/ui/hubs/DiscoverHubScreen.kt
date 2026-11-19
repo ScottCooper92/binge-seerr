@@ -39,7 +39,6 @@ import com.binge.designsystem.navOverlayEnd
 import com.binge.designsystem.navOverlayPadding
 import com.binge.designsystem.navOverlayStart
 import com.binge.designsystem.resolvedContentInset
-import com.binge.designsystem.theme.BingeSentiment
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.TitleAvailability
 import com.cooper.binge.companion.seerr.discover.grid.GridPreset
@@ -53,6 +52,7 @@ import com.cooper.binge.companion.seerr.discover.sliders.seeAll
 import com.cooper.binge.companion.seerr.discover.sliders.tileGrid
 import com.cooper.binge.companion.seerr.discover.sliders.titleKind
 import com.cooper.binge.companion.seerr.discover.sliders.toCard
+import com.cooper.binge.companion.seerr.ui.discover.title.statusStyle
 import com.cooper.binge.companion.seerr.ui.state.EmptyScreen
 import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
 import com.binge.designsystem.R as DesR
@@ -287,11 +287,4 @@ private fun HubRow.title(tab: HubTab): String =
 /** The one status chip a title's availability shows, on a hub card and in a search row alike; nothing when the server holds nothing of it. */
 @Composable
 internal fun TitleAvailability.toStatus(): MediaCardStatus? =
-    when (this) {
-        TitleAvailability.None -> null
-        TitleAvailability.Pending -> MediaCardStatus(stringResource(R.string.hubs_card_requested), BingeSentiment.Info)
-        TitleAvailability.Processing -> MediaCardStatus(stringResource(R.string.hubs_card_processing), BingeSentiment.Caution)
-        TitleAvailability.PartiallyAvailable -> MediaCardStatus(stringResource(R.string.hubs_card_partial), BingeSentiment.Caution)
-        TitleAvailability.Available -> MediaCardStatus(stringResource(R.string.hubs_card_available), BingeSentiment.Positive)
-        TitleAvailability.Blocklisted -> MediaCardStatus(stringResource(R.string.hubs_card_blocklisted), BingeSentiment.Negative)
-    }
+    statusStyle()?.let { MediaCardStatus(stringResource(it.label), it.sentiment) }

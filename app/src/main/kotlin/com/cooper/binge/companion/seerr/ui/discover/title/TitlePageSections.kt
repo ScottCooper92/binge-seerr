@@ -202,14 +202,7 @@ internal fun TitleRow(
 
 @Composable
 internal fun TitleAvailability.label(): Pair<String, BingeSentiment>? =
-    when (this) {
-        TitleAvailability.None -> null
-        TitleAvailability.Pending -> stringResource(R.string.hubs_card_requested) to BingeSentiment.Info
-        TitleAvailability.Processing -> stringResource(R.string.hubs_card_processing) to BingeSentiment.Caution
-        TitleAvailability.PartiallyAvailable -> stringResource(R.string.hubs_card_partial) to BingeSentiment.Caution
-        TitleAvailability.Available -> stringResource(R.string.hubs_card_available) to BingeSentiment.Positive
-        TitleAvailability.Blocklisted -> stringResource(R.string.hubs_card_blocklisted) to BingeSentiment.Negative
-    }
+    statusStyle()?.let { stringResource(it.label) to it.sentiment }
 
 @Composable
 internal fun TitleAvailability.cardStatus(): MediaCardStatus? = label()?.let { (text, sentiment) -> MediaCardStatus(text, sentiment) }
