@@ -3,12 +3,12 @@ package com.cooper.binge.companion.seerr.ui.settings
 import com.cooper.binge.companion.seerr.auth.BingeConnectionStore
 import com.cooper.binge.companion.seerr.feedback.BugReportLinks
 import com.cooper.binge.companion.seerr.feedback.FeedbackPrefs
-import com.cooper.binge.companion.seerr.flags.DiscoveryGate
-import com.cooper.binge.companion.seerr.flags.NoDiscoveryGate
 import com.cooper.binge.companion.seerr.telemetry.AnalyticsEvents
 import com.cooper.binge.companion.seerr.ui.hub.BingeInstallCheck
 import com.cooper.binge.companion.seerr.ui.hub.bingeStatusOf
 import com.cooper.homelab.core.flags.FeatureFlags
+import com.cooper.homelab.core.flags.NoPreferenceGate
+import com.cooper.homelab.core.flags.PreferenceGate
 import com.cooper.homelab.core.telemetry.Analytics
 import com.cooper.homelab.core.telemetry.AnalyticsConsent
 import com.cooper.homelab.core.telemetry.TelemetryPrefs
@@ -33,7 +33,7 @@ internal class AppSettingsSource(
     private val analytics: Analytics,
     private val scope: CoroutineScope,
     private val dispatcher: CoroutineDispatcher,
-    private val discoveryGate: DiscoveryGate = NoDiscoveryGate,
+    private val discoveryGate: PreferenceGate = NoPreferenceGate,
 ) {
     /** Re-read on every arrival, so Binge installed while this screen was away shows on return. */
     private val bingeInstalled = MutableStateFlow(bingeInstallCheck.isInstalled())

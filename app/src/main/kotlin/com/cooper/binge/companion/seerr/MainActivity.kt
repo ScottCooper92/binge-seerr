@@ -25,7 +25,6 @@ import com.cooper.binge.companion.seerr.discover.sliders.DiscoverSliderRepositor
 import com.cooper.binge.companion.seerr.feedback.BugReportLinks
 import com.cooper.binge.companion.seerr.feedback.FeedbackPrefs
 import com.cooper.binge.companion.seerr.feedback.ShakeToReportPrompt
-import com.cooper.binge.companion.seerr.flags.DiscoveryGate
 import com.cooper.binge.companion.seerr.flags.LocalDiscoveryEnabled
 import com.cooper.binge.companion.seerr.flags.LocalFlags
 import com.cooper.binge.companion.seerr.telemetry.LocalAnalytics
@@ -41,6 +40,7 @@ import com.cooper.binge.companion.seerr.ui.shell.openLink
 import com.cooper.binge.companion.seerr.ui.shell.rememberSeerrTabs
 import com.cooper.binge.companion.seerr.ui.tv.TvSeerrShell
 import com.cooper.homelab.core.flags.FeatureFlags
+import com.cooper.homelab.core.flags.PreferenceGate
 import com.cooper.homelab.core.telemetry.Analytics
 import com.cooper.homelab.core.uiandroid.shell.RestartOnGateChange
 import dagger.hilt.android.AndroidEntryPoint
@@ -81,7 +81,7 @@ class MainActivity : ComponentActivity() {
     lateinit var featureFlags: FeatureFlags
 
     @Inject
-    lateinit var discoveryGate: DiscoveryGate
+    lateinit var discoveryGate: PreferenceGate
 
     @Inject
     lateinit var discoverSliders: DiscoverSliderRepository

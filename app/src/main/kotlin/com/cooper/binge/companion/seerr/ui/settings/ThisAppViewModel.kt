@@ -7,8 +7,6 @@ import com.cooper.binge.companion.seerr.auth.NoBingeConnectionStore
 import com.cooper.binge.companion.seerr.di.IoDispatcher
 import com.cooper.binge.companion.seerr.feedback.BugReportLinks
 import com.cooper.binge.companion.seerr.feedback.FeedbackPrefs
-import com.cooper.binge.companion.seerr.flags.DiscoveryGate
-import com.cooper.binge.companion.seerr.flags.NoDiscoveryGate
 import com.cooper.binge.companion.seerr.notifications.BackgroundAccess
 import com.cooper.binge.companion.seerr.notifications.NotificationPrefs
 import com.cooper.binge.companion.seerr.notifications.NotificationScheduler
@@ -22,6 +20,8 @@ import com.cooper.binge.companion.seerr.ui.minuteClock
 import com.cooper.homelab.core.flags.FeatureFlags
 import com.cooper.homelab.core.flags.FixedFeatureFlags
 import com.cooper.homelab.core.flags.Flags
+import com.cooper.homelab.core.flags.NoPreferenceGate
+import com.cooper.homelab.core.flags.PreferenceGate
 import com.cooper.homelab.core.flags.SharedFlags
 import com.cooper.homelab.core.telemetry.Analytics
 import com.cooper.homelab.core.telemetry.NoOpAnalytics
@@ -75,7 +75,7 @@ class ThisAppViewModel
         bingeConnection: BingeConnectionStore = NoBingeConnectionStore,
         featureFlags: FeatureFlags = FixedFeatureFlags(Flags.of(SharedFlags.BingePromotion to true, SharedFlags.ReviewPrompt to true)),
         private val minuteTicker: Ticker = Ticker(),
-        discoveryGate: DiscoveryGate = NoDiscoveryGate,
+        discoveryGate: PreferenceGate = NoPreferenceGate,
     ) : ViewModel() {
         internal var clock: () -> Long = System::currentTimeMillis
 
