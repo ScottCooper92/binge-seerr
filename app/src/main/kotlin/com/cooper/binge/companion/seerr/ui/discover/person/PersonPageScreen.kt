@@ -26,12 +26,12 @@ import com.binge.designsystem.component.MediaCard
 import com.binge.designsystem.component.MediaCarousel
 import com.binge.designsystem.template.HeroDetailScreen
 import com.binge.designsystem.template.HeroPullIndicator
-import com.binge.designsystem.template.LocalHeroReadingMargin
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.person.PersonCredit
 import com.cooper.binge.companion.seerr.ui.discover.title.ShareBarAction
 import com.cooper.binge.companion.seerr.ui.discover.title.cardStatus
+import com.cooper.binge.companion.seerr.ui.discover.title.readingInset
 import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
 import com.binge.designsystem.R as DesR
 
@@ -100,7 +100,7 @@ private fun ColumnScope.PersonBody(
     actions: PersonPageActions,
 ) {
     val person = state.person
-    val margin = LocalHeroReadingMargin.current + dimensionResource(DesR.dimen.padding_m)
+    val margin = readingInset()
     val gap = dimensionResource(DesR.dimen.padding_m)
     Column(verticalArrangement = Arrangement.spacedBy(gap), modifier = Modifier.padding(bottom = gap)) {
         PersonProfile(person, Modifier.padding(horizontal = margin))
@@ -149,7 +149,9 @@ private fun CreditRail(
     onOpen: (TitleKind, Int) -> Unit,
 ) {
     if (credits.isEmpty()) return
-    MediaCarousel(title = title, items = credits, itemKey = { it.key }, onEndTileClick = null) { _, credit ->
+    MediaCarousel(title = title, items = credits, itemKey = {
+        it.key
+    }, onEndTileClick = null, horizontalPadding = readingInset()) { _, credit ->
         MediaCard(
             posterUrl = credit.posterUrl,
             title = credit.title,
