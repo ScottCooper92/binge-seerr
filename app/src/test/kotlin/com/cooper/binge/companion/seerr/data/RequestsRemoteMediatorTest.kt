@@ -14,7 +14,10 @@ import com.cooper.binge.companion.seerr.seerr.TitleCache
 import com.cooper.binge.companion.seerr.ui.requests.REQUESTS_PAGE_SIZE
 import com.cooper.binge.companion.seerr.ui.requests.toRequestEntity
 import com.cooper.binge.companion.seerr.ui.requests.toRequestItem
+import com.cooper.binge.companion.seerr.ui.requests.withBlockFrom
 import com.cooper.binge.companion.seerr.util.FakeTitleDao
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import mockwebserver3.Dispatcher
 import mockwebserver3.MockResponse
@@ -96,7 +99,8 @@ class RequestsRemoteMediatorTest {
         store: RequestStore,
         query: RequestListQuery = RequestListQuery("all", "added", requestedBy = null),
         titles: TitleCache = TitleCache(FakeTitleDao()),
-    ) = RequestsRemoteMediator(query = query, api = ::api, store = store) { dto, api, key, index ->
+        statuses: TitleStatusStore = TitleStatusStore(),
+    ) = RequestsRemoteMediator(query = query, api = ::api, store = store, statuses = statuses) { dto, api, key, index ->
         dto.toRequestEntity(api, titles::get, key, index, nowMillis = 0L)
     }
 
@@ -252,4 +256,54 @@ class RequestsRemoteMediatorTest {
         }
 
     private fun json(body: String) = MockResponse(code = 200, headers = headersOf("Content-Type", "application/json"), body = body)
+
+    private val heat = TitleKey(TitleType.Movie, 100)
+
+    @Test
+    fun `a title blocked in the app and unblocked elsewhere shows what the refresh read, not the block`() =
+        runTest {
+            start()
+            val store = FakeRequestStore()
+            val statuses = TitleStatusStore()
+            statuses.applyOptimistic(heat) { it.copy(standard = SeerrMediaStatusCode.Blocklisted) }
+
+            mediator(store, statuses = statuses).load(LoadType.REFRESH, pagingState)
+
+            assertEquals(SeerrMediaStatusCode.Processing, statuses.current(heat)?.standard)
+            val row = store.refreshed.single().first.first().toRequestItem()
+            assertEquals(SeerrMediaStatusCode.Processing, row.withBlockFrom(statuses.held()).mediaStatus)
+        }
+
+    @Test
+    fun `a block made while the refresh was in flight is not undone by what the refresh read`() =
+        runTest {
+            start()
+            val store = FakeRequestStore()
+            val statuses = TitleStatusStore()
+            pageBody = {
+                statuses.applyOptimistic(heat) { it.copy(standard = SeerrMediaStatusCode.Blocklisted) }
+                json(PAGE0)
+            }
+
+            mediator(store, statuses = statuses).load(LoadType.REFRESH, pagingState)
+
+            assertEquals(SeerrMediaStatusCode.Blocklisted, statuses.current(heat)?.standard)
+            val row = store.refreshed.single().first.first().toRequestItem()
+            assertEquals(SeerrMediaStatusCode.Blocklisted, row.withBlockFrom(statuses.held()).mediaStatus)
+        }
+
+    @Test
+    fun `a page seeds the titles it carries for both versions and leaves a person alone`() =
+        runTest {
+            start()
+            val statuses = TitleStatusStore()
+
+            mediator(FakeRequestStore(), statuses = statuses).load(LoadType.REFRESH, pagingState)
+
+            assertEquals(SeerrMediaStatusCode.Available, statuses.current(TitleKey(TitleType.Tv, 200))?.standard)
+            assertEquals(SeerrMediaStatusCode.Available, statuses.current(TitleKey(TitleType.Movie, 400))?.fourK)
+            assertNull(statuses.current(TitleKey(TitleType.Movie, 300)))
+        }
+
+    private fun TitleStatusStore.held() = runBlocking { statuses.first() }
 }

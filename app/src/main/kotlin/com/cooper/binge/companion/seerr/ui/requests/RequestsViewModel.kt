@@ -186,6 +186,7 @@ class RequestsViewModel
                                     api = connection::api,
                                     store = store,
                                     onRefresh = { rows -> refreshes.record(filter, rows) },
+                                    statuses = statuses,
                                 ) { dto, api, key, index ->
                                     dto.toRequestEntity(api, titles::get, key, index, System.currentTimeMillis())
                                 },
