@@ -41,7 +41,7 @@ class TitleSearchRailInsetTest {
         recents: List<String>,
         trending: Trending,
     ) {
-        val actions = TitleSearchActions({}, {}, {}, {}, {}, {}, {}, {}, {}, { _, _ -> })
+        val actions = TitleSearchActions({}, {}, {}, {}, {}, {}, {}, {}, {}, { _, _ -> }, {})
         rule.setContent {
             SeerrTheme {
                 CompositionLocalProvider(LocalNavOverlayInsets provides PaddingValues(start = RAIL)) {

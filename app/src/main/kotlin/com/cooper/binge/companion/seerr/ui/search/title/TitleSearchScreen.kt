@@ -45,6 +45,7 @@ import com.binge.designsystem.navOverlayStart
 import com.binge.designsystem.nestedScrollConnection
 import com.binge.designsystem.searchResultColumns
 import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.discover.StudioResult
 import com.cooper.binge.companion.seerr.discover.TitleResult
 import com.cooper.binge.companion.seerr.discover.sliders.HubGrid
 import com.cooper.binge.companion.seerr.ui.state.EmptyScreen
@@ -66,6 +67,7 @@ internal class TitleSearchActions(
     val onOpenTitle: (TitleResult) -> Unit,
     val onType: (SearchType) -> Unit,
     val onOpenGrid: (HubGrid, String) -> Unit,
+    val onOpenStudio: (StudioResult) -> Unit,
 )
 
 /**
@@ -162,6 +164,7 @@ private fun SearchType.labelRes(): Int =
         SearchType.Movies -> R.string.hubs_title_movies
         SearchType.Series -> R.string.hubs_title_tv
         SearchType.People -> R.string.title_search_type_people
+        SearchType.Studios -> R.string.title_search_type_studios
     }
 
 @Composable
@@ -180,7 +183,9 @@ private fun ResultsList(
     LaunchedEffect(gridState, state.hasMore, state.loaded) {
         if (state.hasMore) snapshotFlow { nearEnd }.distinctUntilChanged().filter { it }.collect { actions.onLoadMore() }
     }
-    if (state.results.isEmpty() && !state.hasMore && !state.appending) {
+    val onStudios = state.type == SearchType.Studios
+    val empty = if (onStudios) state.studios.isEmpty() else state.results.isEmpty()
+    if (empty && !state.hasMore && !state.appending) {
         EmptyScreen(
             message = stringResource(R.string.title_search_type_none_message, state.text.trim()),
             title = stringResource(R.string.title_search_type_none_title),
@@ -198,10 +203,16 @@ private fun ResultsList(
             horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
             verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
         ) {
-            items(state.results, key = { "${it.kind}-${it.tmdbId}" }) { result ->
-                TitleResultRow(result, state.genreNames, onClick = { actions.onOpenTitle(result) })
+            if (onStudios) {
+                items(state.studios, key = { "studio-${it.id}" }) { studio ->
+                    StudioResultRow(studio, onClick = { actions.onOpenStudio(studio) })
+                }
+            } else {
+                items(state.results, key = { "${it.kind}-${it.tmdbId}" }) { result ->
+                    TitleResultRow(result, state.genreNames, onClick = { actions.onOpenTitle(result) })
+                }
             }
-            if (state.appending || state.appendFailed || state.results.isEmpty()) {
+            if (state.appending || state.appendFailed || empty) {
                 item(key = "footer", span = { GridItemSpan(maxLineSpan) }) { AppendFooter(state.appendFailed, actions.onLoadMore) }
             }
         }
