@@ -29,9 +29,9 @@ import com.cooper.binge.companion.seerr.ui.search.title.TitleSearchEntry
 import com.cooper.binge.companion.seerr.ui.shell.SeerrTab
 import com.cooper.binge.companion.seerr.ui.shell.SeerrTabShell
 import com.cooper.binge.companion.seerr.ui.state.LoadingScreen
+import com.cooper.homelab.core.uiandroid.shell.RestartOnSessionEnd
 import com.cooper.homelab.core.uiandroid.shell.TabShellState
 import com.cooper.homelab.core.uiandroid.shell.nothingOpenBeside
-import com.cooper.homelab.core.uiandroid.shell.popToRoot
 import com.cooper.homelab.core.uiandroid.shell.settleStash
 
 /**
@@ -63,8 +63,8 @@ fun SeerrNavHost(
     // The tab bar is for every window with the flag on. A wide one draws a section beside the hub in the Settings tab.
     val shell = tabs != null && LocalDiscoveryEnabled.current
     LaunchedEffect(connected, root, shell) { backStack.settleHome(connected, shell) }
-    // A section stashed on the Settings tab belongs to the server it was opened on: a sign-out empties it, so the next server does not open it.
-    LaunchedEffect(connected) { if (connected == false) tabs?.stack(SeerrTab.Settings)?.popToRoot() }
+    // A page parked on a hidden tab belongs to the session it was opened in: a sign-out starts the shell over, so the next one does not open it.
+    if (tabs != null) RestartOnSessionEnd(connected, tabs, backStack)
     // The default section is off the stack, so Back from it leaves; the host's own Back shares the once-only exit.
     val exit = rememberExitOnce(onExit)
     // A disconnect still waiting on the server is not a connection to ask a review of: its card would show as the user leaves.
