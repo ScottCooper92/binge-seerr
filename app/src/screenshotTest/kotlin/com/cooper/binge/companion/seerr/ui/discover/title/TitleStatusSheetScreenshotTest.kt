@@ -11,23 +11,35 @@ class TitleStatusSheetScreenshotTest {
     @PreviewTest
     @SeerrComponentPreviews
     @Composable
-    fun watch() = SheetFrame { TitleStatusSheetContent(TitleState.Available, "https://plex.example/watch", "Plex", {}) }
+    fun watch() = SheetFrame { TitleStatusSheetContent(TitleState.Available, "https://plex.example/watch", "Plex", true, {}) }
 
     /** In the library with no link to give: the status and a line saying so. */
     @PreviewTest
     @SeerrComponentPreviews
     @Composable
-    fun inLibraryNoLink() = SheetFrame { TitleStatusSheetContent(TitleState.Available, null, "Plex", {}) }
+    fun inLibraryNoLink() = SheetFrame { TitleStatusSheetContent(TitleState.Available, null, "Plex", true, {}) }
 
     /** Someone else's request, which this viewer cannot open: the status and a line saying so, with nothing to manage. */
     @PreviewTest
     @SeerrComponentPreviews
     @Composable
-    fun otherRequest() = SheetFrame { TitleStatusSheetContent(TitleState.Processing, null, null, {}) }
+    fun otherRequest() = SheetFrame { TitleStatusSheetContent(TitleState.Processing, null, null, true, {}) }
+
+    /** A show with no season to request yet, for a viewer who may request: the line says there is nothing to request, not that the account can't. */
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun nothingToRequest() = SheetFrame { TitleStatusSheetContent(TitleState.Request, null, null, true, {}) }
+
+    /** A viewer whose account may not request. */
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun cannotRequest() = SheetFrame { TitleStatusSheetContent(TitleState.Request, null, null, false, {}) }
 
     /** Blocklisted: the status and why it cannot be requested. */
     @PreviewTest
     @SeerrComponentPreviews
     @Composable
-    fun blocklisted() = SheetFrame { TitleStatusSheetContent(TitleState.Blocklisted, null, null, {}) }
+    fun blocklisted() = SheetFrame { TitleStatusSheetContent(TitleState.Blocklisted, null, null, true, {}) }
 }

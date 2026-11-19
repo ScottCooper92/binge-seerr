@@ -134,6 +134,7 @@ private fun ReadyPage(
             state = titleActionsModel(state.movie.standard, state.movie.fourK, state.movie.requests).primary.state,
             watchUrl = state.movie.watchUrl,
             mediaServerName = state.movie.mediaServerName,
+            canRequest = state.movie.canRequest,
             onWatch = actions.onOpenUrl,
             onDismiss = actions.onCloseStatus,
         )

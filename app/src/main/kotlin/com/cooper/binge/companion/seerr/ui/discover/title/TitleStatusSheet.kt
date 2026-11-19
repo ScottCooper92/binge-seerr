@@ -27,6 +27,7 @@ internal fun TitleStatusSheet(
     state: TitleState,
     watchUrl: String?,
     mediaServerName: String?,
+    canRequest: Boolean,
     onWatch: (String) -> Unit,
     onDismiss: () -> Unit,
 ) {
@@ -35,6 +36,7 @@ internal fun TitleStatusSheet(
             state = state,
             watchUrl = watchUrl,
             mediaServerName = mediaServerName,
+            canRequest = canRequest,
             onWatch = { url ->
                 onDismiss()
                 onWatch(url)
@@ -49,6 +51,7 @@ internal fun TitleStatusSheetContent(
     state: TitleState,
     watchUrl: String?,
     mediaServerName: String?,
+    canRequest: Boolean,
     onWatch: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -69,7 +72,7 @@ internal fun TitleStatusSheetContent(
         ) {
             Text(stringResource(state.labelRes()), style = MaterialTheme.typography.titleMedium)
             Text(
-                stringResource(state.noteRes()),
+                stringResource(state.noteRes(canRequest)),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -78,9 +81,9 @@ internal fun TitleStatusSheetContent(
 }
 
 @StringRes
-private fun TitleState.noteRes() =
+private fun TitleState.noteRes(canRequest: Boolean) =
     when (this) {
-        TitleState.Request -> R.string.title_sheet_note_cannot_request
+        TitleState.Request -> if (canRequest) R.string.title_sheet_note_nothing_to_request else R.string.title_sheet_note_cannot_request
         TitleState.Requested, TitleState.Processing -> R.string.title_sheet_note_other_request
         TitleState.PartiallyAvailable, TitleState.Available -> R.string.title_sheet_note_in_library
         TitleState.Blocklisted -> R.string.title_sheet_note_blocklisted

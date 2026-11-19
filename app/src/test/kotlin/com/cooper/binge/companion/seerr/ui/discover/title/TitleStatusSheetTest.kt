@@ -22,8 +22,9 @@ class TitleStatusSheetTest {
         state: TitleState,
         watchUrl: String? = "https://plex.example/watch",
         serverName: String? = "Plex",
+        canRequest: Boolean = true,
         onWatch: (String) -> Unit = {},
-    ) = rule.setContent { SeerrTheme { TitleStatusSheetContent(state, watchUrl, serverName, onWatch) } }
+    ) = rule.setContent { SeerrTheme { TitleStatusSheetContent(state, watchUrl, serverName, canRequest, onWatch) } }
 
     @Test
     fun `an available title offers Watch on the media server and opens its link`() {
@@ -64,8 +65,15 @@ class TitleStatusSheetTest {
     }
 
     @Test
+    fun `a viewer who may request a show with no season to request yet is told there is nothing to request`() {
+        show(TitleState.Request, canRequest = true)
+
+        rule.onNodeWithText("There is nothing to request for this title yet.").assertIsDisplayed()
+    }
+
+    @Test
     fun `a viewer who may not request says so`() {
-        show(TitleState.Request)
+        show(TitleState.Request, canRequest = false)
 
         rule.onNodeWithText("Your account can't request this title.").assertIsDisplayed()
     }

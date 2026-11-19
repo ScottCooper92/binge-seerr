@@ -275,6 +275,32 @@ class SeerrTitleDetailsRepositoryTest {
     }
 
     @Test
+    fun `the watch link is the first the server filled in, standard before 4K, skipping a blank one`() {
+        fun body(info: String) =
+            MOVIE.replace(
+                "\"mediaInfo\":{\"id\":11,\"status\":5,\"status4k\":1}",
+                "\"mediaInfo\":{\"id\":11,\"status\":5,\"status4k\":1,$info}",
+            )
+
+        movieBody = body("\"mediaUrl\":\"\",\"jellyfinMediaUrl\":\"https://jf.example/item\",\"mediaUrl4k\":\"https://jf.example/4k\"")
+        assertEquals("a blank link is skipped", "https://jf.example/item", withRepository { it.movie(603) }.watchUrl)
+
+        movieBody = body("\"mediaUrl4k\":\"https://jf.example/4k\"")
+        assertEquals("a title held only in 4K still opens", "https://jf.example/4k", withRepository { it.movie(603) }.watchUrl)
+
+        movieBody = body("\"mediaUrl\":\"https://media.invalid/x\"")
+        assertNull("not a real site", withRepository { it.movie(603) }.watchUrl)
+    }
+
+    @Test
+    fun `the details say whether the viewer's account may request a film at all`() {
+        assertTrue(withRepository { it.movie(603) }.canRequest)
+
+        permissions = 0
+        assertFalse(withRepository { it.movie(603) }.canRequest)
+    }
+
+    @Test
     fun `extras carry the combined ratings only where the server has them and a failed part is empty`() {
         val extras = withRepository { it.extras(TitleKind.Movie, 603) }
 

@@ -113,6 +113,7 @@ private fun ReadySeriesPage(
             state = titleActionsModel(state.series.standard, state.series.fourK, state.series.requests).primary.state,
             watchUrl = state.series.watchUrl,
             mediaServerName = state.series.mediaServerName,
+            canRequest = state.series.canRequest,
             onWatch = actions.onOpenUrl,
             onDismiss = actions.onCloseStatus,
         )

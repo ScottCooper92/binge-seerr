@@ -73,6 +73,8 @@ data class SeriesDetails(
     val watchUrl: String? = null,
     /** The media server the Seerr server fronts, by name, for the Watch row's label; null where it has none this app knows. */
     val mediaServerName: String? = null,
+    /** The viewer's account may request this kind of title at all, whether or not anything is left to request. */
+    val canRequest: Boolean = true,
 ) {
     /** The seasons of each version for the request sheet. */
     val seasonChoices: SeasonChoices

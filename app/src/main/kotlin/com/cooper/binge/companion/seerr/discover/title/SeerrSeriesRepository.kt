@@ -69,6 +69,7 @@ class SeerrSeriesRepository(
                 ).copy(
                     companiesOpen = profile.hasDiscoverByCategory,
                     mediaServerName = profile.mediaServerName(),
+                    canRequest = permissions.canRequestSeries,
                     keywordsOpen = profile.hasKeywordDiscover,
                 )
         }
