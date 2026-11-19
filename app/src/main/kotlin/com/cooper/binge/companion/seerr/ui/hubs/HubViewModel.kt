@@ -12,6 +12,8 @@ import com.cooper.binge.companion.seerr.discover.overlaid
 import com.cooper.binge.companion.seerr.discover.sliders.DiscoverSliderRepository
 import com.cooper.binge.companion.seerr.discover.sliders.HubCard
 import com.cooper.binge.companion.seerr.discover.sliders.HubCardLoader
+import com.cooper.binge.companion.seerr.discover.sliders.HubFirstFrame
+import com.cooper.binge.companion.seerr.discover.sliders.HubFirstFrames
 import com.cooper.binge.companion.seerr.discover.sliders.HubHero
 import com.cooper.binge.companion.seerr.discover.sliders.HubHeroLoader
 import com.cooper.binge.companion.seerr.discover.sliders.HubRow
@@ -43,7 +45,11 @@ import kotlinx.coroutines.launch
 
 /** What a hub shows. */
 sealed interface DiscoverHubUiState {
-    data object Loading : DiscoverHubUiState
+    /** The skeleton. It keeps the hero's place and the Browse all plate unless the cached server profile says they will not be there. */
+    data class Loading(
+        val heroPlace: Boolean = true,
+        val browseAll: Boolean = true,
+    ) : DiscoverHubUiState
 
     /** [pending] rows are still loading and fill in below; [refreshing] is a pull to refresh in flight. */
     data class Ready(
@@ -99,7 +105,10 @@ class HubViewModel
         @IoDispatcher dispatcher: CoroutineDispatcher,
         @Assisted private val tab: HubTab,
         private val statuses: TitleStatusStore = TitleStatusStore(),
+        firstFrames: HubFirstFrames = HubFirstFrames { HubFirstFrame() },
     ) : ViewModel() {
+        private val firstFrame = firstFrames.read()
+
         /** Each row's one "item" is the finished [HubRowUi], so an empty row is the loader's to drop and nothing is wrapped and unwrapped. */
         private val loader =
             HubLoader<HubRow, HubRowUi>(
@@ -119,10 +128,10 @@ class HubViewModel
 
         val uiState: StateFlow<DiscoverHubUiState> =
             combine(sliders.sliders, loader.state, loader.refreshing, hero, browseAll) { list, rows, refreshing, hero, browseAll ->
-                toUiState(list, rows, refreshing, hero, browseAll)
+                toUiState(list, rows, refreshing, hero, browseAll, firstFrame)
             }.combine(statuses.statuses) { state, held ->
                 state.overlaid(held)
-            }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), DiscoverHubUiState.Loading)
+            }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), firstFrame.loading())
 
         init {
             viewModelScope.launch {
@@ -200,6 +209,8 @@ private sealed interface HeroSlot {
 
 private const val STOP_TIMEOUT_MILLIS = 5_000L
 
+private fun HubFirstFrame.loading() = DiscoverHubUiState.Loading(heroPlace, browseAll)
+
 /** How long the hub holds its rows for the server's answer on filtering, once they are ready, before it shows Browse all. */
 private const val BROWSE_ALL_WAIT_MILLIS = 1_000L
 
@@ -209,18 +220,19 @@ private fun toUiState(
     refreshing: Boolean,
     hero: HeroSlot?,
     browseAll: Boolean?,
+    firstFrame: HubFirstFrame,
 ): DiscoverHubUiState =
     when (list) {
-        SliderListState.Loading -> DiscoverHubUiState.Loading
+        SliderListState.Loading -> firstFrame.loading()
         is SliderListState.Failed -> DiscoverHubUiState.Error(list.error.toSeerrError())
         is SliderListState.Ready ->
             when (rows) {
-                HubState.Loading -> DiscoverHubUiState.Loading
+                HubState.Loading -> firstFrame.loading()
                 HubState.Empty -> DiscoverHubUiState.Empty
                 is HubState.Failed -> DiscoverHubUiState.Error(rows.failure.toSeerrError())
                 is HubState.Ready ->
                     if (browseAll == null || hero == null) {
-                        DiscoverHubUiState.Loading
+                        firstFrame.loading()
                     } else {
                         val titles = (hero as? HeroSlot.Shown)?.titles.orEmpty()
                         DiscoverHubUiState.Ready(
