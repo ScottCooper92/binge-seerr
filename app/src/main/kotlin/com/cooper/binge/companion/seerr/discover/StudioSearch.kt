@@ -2,6 +2,7 @@ package com.cooper.binge.companion.seerr.discover
 
 import com.cooper.binge.companion.seerr.core.search.SearchPage
 import com.cooper.binge.companion.seerr.seerr.SeerrApi
+import com.cooper.binge.companion.seerr.seerr.SeerrServerProfile
 import com.cooper.binge.companion.seerr.seerr.toTmdbLogoUrl
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
@@ -14,7 +15,10 @@ data class StudioResult(
 )
 
 /** TMDB's companies matching a query, one page at a time. Throws as the network call does. */
-fun interface StudioSearch {
+interface StudioSearch {
+    /** Whether the connected server has the company search; the Studios chip is left out where it has not. */
+    suspend fun supported(): Boolean
+
     suspend fun search(
         query: String,
         page: Int,
@@ -24,9 +28,22 @@ fun interface StudioSearch {
 /** [StudioSearch] over the server's `/search/company`. [io] is the dispatcher the call runs on; it has no default. */
 class SeerrStudioSearch(
     private val api: suspend () -> SeerrApi,
+    private val profile: suspend () -> SeerrServerProfile,
     private val io: CoroutineDispatcher,
 ) : StudioSearch {
+    override suspend fun supported(): Boolean = profile().hasDiscoverSliders
+
     override suspend fun search(
+        query: String,
+        page: Int,
+    ): SearchPage<StudioResult> =
+        if (!supported()) {
+            SearchPage(emptyList(), page = 1, totalPages = 1)
+        } else {
+            searchCompanies(query, page)
+        }
+
+    private suspend fun searchCompanies(
         query: String,
         page: Int,
     ): SearchPage<StudioResult> =

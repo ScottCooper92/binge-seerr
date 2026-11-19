@@ -137,8 +137,9 @@ private fun SearchHeader(
             )
         }
         when (state) {
-            is TitleSearchUiState.Ready -> TypeChips(state.type, state.counts, actions.onType)
-            is TitleSearchUiState.NoResults -> TypeChips(state.type, SearchType.entries.associateWith { 0 }, actions.onType)
+            is TitleSearchUiState.Ready -> TypeChips(state.type, state.counts, state.hasStudios, actions.onType)
+            is TitleSearchUiState.NoResults ->
+                TypeChips(state.type, SearchType.entries.associateWith { 0 }, state.hasStudios, actions.onType)
             else -> Unit
         }
     }
@@ -148,12 +149,14 @@ private fun SearchHeader(
 private fun TypeChips(
     type: SearchType,
     counts: Map<SearchType, Int>,
+    hasStudios: Boolean,
     onType: (SearchType) -> Unit,
 ) {
+    val types = SearchType.entries.filter { hasStudios || it != SearchType.Studios }
     BingeFilterChipRow(
-        items = SearchType.entries.map { FilterChipItem(label = stringResource(it.labelRes()), count = counts[it]) },
-        selectedIndex = type.ordinal,
-        onSelect = { onType(SearchType.entries[it]) },
+        items = types.map { FilterChipItem(label = stringResource(it.labelRes()), count = counts[it]) },
+        selectedIndex = types.indexOf(type).coerceAtLeast(0),
+        onSelect = { onType(types[it]) },
     )
 }
 
@@ -185,7 +188,8 @@ private fun ResultsList(
     }
     val onStudios = state.type == SearchType.Studios
     val empty = if (onStudios) state.studios.isEmpty() else state.results.isEmpty()
-    if (empty && !state.hasMore && !state.appending) {
+    val settled = !state.hasMore && !state.appending && !state.appendFailed
+    if (empty && settled) {
         EmptyScreen(
             message = stringResource(R.string.title_search_type_none_message, state.text.trim()),
             title = stringResource(R.string.title_search_type_none_title),

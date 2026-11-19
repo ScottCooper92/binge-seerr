@@ -116,7 +116,16 @@ class TitleSearchViewModelTest {
             ): HydratedTitle? = null
         }
     private var studioPage: (String, Int) -> SearchPage<StudioResult> = { _, page -> SearchPage(emptyList(), page, 1) }
-    private val studios = StudioSearch { query, page -> studioPage(query, page) }
+    private var studiosSupported = true
+    private val studios =
+        object : StudioSearch {
+            override suspend fun supported() = studiosSupported
+
+            override suspend fun search(
+                query: String,
+                page: Int,
+            ) = studioPage(query, page)
+        }
     private val titles = FakeTitles { source, page -> TitlePage(listOf(title(page), title(page + 10, TitleKind.Person)), page, 2) }
 
     /** Runs [block] with the view model's state being collected, on the test's scheduler, and stops the collector after. */
@@ -352,5 +361,37 @@ class TitleSearchViewModelTest {
             val ready = vm.uiState.value as TitleSearchUiState.Ready
             assertEquals(1, ready.counts[SearchType.Studios])
             assertEquals(0, ready.counts[SearchType.All])
+        }
+
+    @Test
+    fun `a server without company search leaves the Studios chip out`() =
+        runVm { vm ->
+            studiosSupported = false
+            val noStudios = TitleSearchViewModel(titles, studios, history, media, grid)
+            val collector = launch(UnconfinedTestDispatcher(testScheduler)) { noStudios.uiState.collect {} }
+            noStudios.onQueryChange("matrix")
+            advanceUntilIdle()
+
+            assertEquals(false, (noStudios.uiState.value as TitleSearchUiState.Ready).hasStudios)
+            collector.cancel()
+        }
+
+    @Test
+    fun `a failed studio search offers a retry on the Studios chip, not a spinner`() =
+        runVm { vm ->
+            studioPage = { _, _ -> throw IOException("down") }
+            vm.onQueryChange("lucas")
+            advanceUntilIdle()
+            vm.onType(SearchType.Studios)
+
+            val failed = vm.uiState.value as TitleSearchUiState.Ready
+            assertTrue(failed.appendFailed)
+            assertEquals(false, failed.hasMore)
+            assertEquals(false, failed.appending)
+
+            studioPage = { _, page -> SearchPage(listOf(StudioResult(1, "Lucasfilm", null)), page, 1) }
+            vm.onLoadMore()
+            advanceUntilIdle()
+            assertEquals(listOf("Lucasfilm"), (vm.uiState.value as TitleSearchUiState.Ready).studios.map { it.name })
         }
 }

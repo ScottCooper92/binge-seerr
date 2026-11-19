@@ -74,18 +74,20 @@ class TitleSearchViewModel
         private val trending = MutableStateFlow<Trending>(Trending.Loading)
         private val genreNames = MutableStateFlow<Map<Int, String>>(emptyMap())
         private val browseAll = MutableStateFlow(true)
-        private val lookups = combine(genreNames, browseAll, ::Pair)
+        private val hasStudios = MutableStateFlow(true)
+        private val lookups = combine(genreNames, browseAll, hasStudios) { genres, browse, studios -> Lookups(genres, browse, studios) }
 
         /** What surrounds the results: the trending rails with the genre names and the Browse all answer, which share one flow. */
         private val around = combine(trending, lookups) { trending, lookups -> trending to lookups }
 
         val uiState: StateFlow<TitleSearchUiState> =
             combine(search.query, search.state, studioSearch.state, type, around) { text, state, studios, type, (trending, lookups) ->
-                state.toUiState(text, type, trending, lookups.first, lookups.second, studios)
+                state.toUiState(text, type, trending, lookups.genres, lookups.browseAll, studios, lookups.studios)
             }.stateIn(viewModelScope, SharingStarted.Lazily, TitleSearchUiState.Idle("", emptyList()))
 
         init {
             loadTrending()
+            viewModelScope.launch { hasStudios.value = attempt { studios.supported() }.getOrDefault(true) }
             viewModelScope.launch { browseAll.value = attempt { grid.canRefine(GridPreset.Popular) }.getOrDefault(true) }
             viewModelScope.launch { genreNames.value = attempt { titles.allGenreNames() }.getOrDefault(emptyMap()) }
         }
@@ -127,7 +129,14 @@ class TitleSearchViewModel
             studioSearch.retry()
         }
 
-        fun onLoadMore() = if (type.value == SearchType.Studios) studioSearch.loadMore() else search.loadMore()
+        /** On Studios, a page that failed is asked for again, as a failed list has no next page to load. */
+        fun onLoadMore() {
+            when {
+                type.value != SearchType.Studios -> search.loadMore()
+                studioSearch.state.value is QuerySearchState.Failed -> studioSearch.retry()
+                else -> studioSearch.loadMore()
+            }
+        }
 
         /** Search a recent query again: it fills the field and runs at once. */
         fun onRecent(query: String) {
@@ -183,15 +192,16 @@ internal fun QuerySearchState<TitleResult>.toUiState(
     genreNames: Map<Int, String>,
     browseAll: Boolean = true,
     studios: QuerySearchState<StudioResult> = QuerySearchState.Idle(emptyList()),
+    hasStudios: Boolean = true,
 ): TitleSearchUiState {
     val found = studios as? QuerySearchState.Results
     val studioRows = found?.items.orEmpty()
-    // The loading and failure shown are the chosen list's: on Studios, the studios'.
-    val onStudios = type == SearchType.Studios && found != null
+    // On Studios the footer, the retry and the spinner are the studios' own, whatever state their search is in.
+    val onStudios = type == SearchType.Studios
 
     fun ready(
         all: List<TitleResult>,
-        more: QuerySearchState.Results<TitleResult>?,
+        titleMore: QuerySearchState.Results<TitleResult>?,
     ) = TitleSearchUiState.Ready(
         text = text,
         results = all.filter(type::keeps),
@@ -200,9 +210,10 @@ internal fun QuerySearchState<TitleResult>.toUiState(
         type = type,
         counts = all.typeCounts(studioRows.size),
         genreNames = genreNames,
-        hasMore = if (onStudios) found.hasMore else more?.hasMore ?: false,
-        appending = if (onStudios) found.appending else more?.appending ?: false,
-        appendFailed = if (onStudios) found.appendFailed else more?.appendFailed ?: false,
+        hasMore = if (onStudios) found?.hasMore ?: false else titleMore?.hasMore ?: false,
+        appending = if (onStudios) found?.appending ?: (studios is QuerySearchState.Loading) else titleMore?.appending ?: false,
+        appendFailed = if (onStudios) found?.appendFailed ?: (studios is QuerySearchState.Failed) else titleMore?.appendFailed ?: false,
+        hasStudios = hasStudios,
     )
     return when (this) {
         is QuerySearchState.Idle -> TitleSearchUiState.Idle(text, recents, trending)
@@ -214,7 +225,7 @@ internal fun QuerySearchState<TitleResult>.toUiState(
             ) {
                 ready(emptyList(), null)
             } else {
-                TitleSearchUiState.NoResults(text, query, type, browseAll)
+                TitleSearchUiState.NoResults(text, query, type, browseAll, hasStudios)
             }
         is QuerySearchState.Failed -> TitleSearchUiState.Error(text, cause.toSeerrError())
     }
@@ -226,3 +237,10 @@ sealed interface TitleSearchEvent {
         val card: HubCard,
     ) : TitleSearchEvent
 }
+
+/** What the lists around the results are made from: the genre names, the Browse all answer and whether the server has company search. */
+private data class Lookups(
+    val genres: Map<Int, String>,
+    val browseAll: Boolean,
+    val studios: Boolean,
+)
