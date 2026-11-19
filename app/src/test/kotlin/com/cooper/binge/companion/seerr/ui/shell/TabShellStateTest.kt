@@ -137,4 +137,27 @@ class TabShellStateTest {
         appStack.pop()
         assertEquals("Back walks the link and lands on the shell", listOf<NavKey>(ShellRoute), appStack.toList())
     }
+
+    @Test
+    fun `select says whether the tab was already showing`() {
+        val shell = state()
+
+        assertEquals(false, shell.select(Tab.Two))
+        assertEquals(true, shell.select(Tab.Two))
+    }
+
+    @Test
+    fun `restart shows the start tab and takes every stack and the app stack back to its root`() {
+        val stacks = SeerrTab.entries.associateWith { NavBackStack<NavKey>(MoviesRoot) }
+        stacks.getValue(SeerrTab.Movies).push(Page(1))
+        stacks.getValue(SeerrTab.Settings).push(Page(2))
+        val shell = TabShellState(SeerrTab.entries, mutableIntStateOf(SeerrTab.Settings.ordinal), stacks, startTab = SeerrTab.Movies)
+        val appStack = NavBackStack<NavKey>(ShellRoute, RequestsRoute)
+
+        shell.restart(appStack)
+
+        assertEquals(SeerrTab.Movies, shell.selected)
+        assertEquals(listOf<NavKey>(ShellRoute), appStack.toList())
+        SeerrTab.entries.forEach { assertEquals(listOf<NavKey>(MoviesRoot), stacks.getValue(it).toList()) }
+    }
 }

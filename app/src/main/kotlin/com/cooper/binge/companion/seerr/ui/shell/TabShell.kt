@@ -1,7 +1,10 @@
 package com.cooper.binge.companion.seerr.ui.shell
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.ContentTransform
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.MutableIntState
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.mutableIntStateOf
@@ -14,7 +17,10 @@ import androidx.navigation3.runtime.NavKey
 import com.binge.designsystem.component.BingeNavPresentation
 import com.binge.designsystem.component.BingeNavSuiteItem
 import com.binge.designsystem.component.BingeNavSuiteShell
+import com.binge.designsystem.component.LocalTabReselectSignal
+import com.binge.designsystem.motion.rememberBingeNavMotion
 import com.cooper.binge.companion.seerr.ui.replaceAll
+import kotlinx.coroutines.flow.MutableSharedFlow
 
 /*
  * A tab shell with a back stack per tab. Nothing here names the app it serves: the tabs are whatever type the caller
@@ -54,9 +60,17 @@ class TabShellState<T : Any>(
         return true
     }
 
-    /** A tap on the bar: another tab shows as it was left, and the tab already showing goes back to its root. */
-    fun select(tab: T) {
-        if (tab == selected) stack(tab).popToRoot() else show(tab)
+    /**
+     * A tap on the bar: another tab shows as it was left, and the tab already showing goes back to its root.
+     * True when it was the tab already showing, so the caller can tell the tab to scroll to its top.
+     */
+    fun select(tab: T): Boolean {
+        if (tab != selected) {
+            show(tab)
+            return false
+        }
+        stack(tab).popToRoot()
+        return true
     }
 }
 
@@ -84,6 +98,9 @@ fun <T : Any> rememberTabShellState(
  * another tab shows, so a list comes back scrolled where it was. [backToStart] is whether Back at a tab other than the start
  * tab goes to the start tab. A caller that draws something Back should close first, beside the shell's own content, turns it
  * off while that is open, so the handler of whatever holds it takes the Back.
+ *
+ * A tab change cross-fades by [transition]. A tap on the tab already showing pops it to its root and then sends the tab on
+ * [LocalTabReselectSignal], so whatever shows the root scrolls to its top (`ScrollToTopOnTabReselect`).
  */
 @Composable
 fun <T : Any> TabShell(
@@ -92,18 +109,26 @@ fun <T : Any> TabShell(
     presentation: BingeNavPresentation,
     modifier: Modifier = Modifier,
     backToStart: Boolean = true,
+    transition: ContentTransform = rememberBingeNavMotion().tabSwitch,
     content: @Composable (T) -> Unit,
 ) {
     val saveable = rememberSaveableStateHolder()
+    val reselects = remember { MutableSharedFlow<Any>(extraBufferCapacity = 1) }
     BackHandler(enabled = backToStart && state.selected != state.startTab) { state.back() }
     BingeNavSuiteShell(
         items = items,
         selectedKey = state.selected,
-        onSelect = { key -> state.tabs.firstOrNull { it == key }?.let(state::select) },
+        onSelect = { key ->
+            val tab = state.tabs.firstOrNull { it == key }
+            if (tab != null && state.select(tab)) reselects.tryEmit(tab)
+        },
         modifier = modifier,
         presentation = presentation,
     ) {
-        val tab = state.selected
-        saveable.SaveableStateProvider(state.tabs.indexOf(tab)) { content(tab) }
+        CompositionLocalProvider(LocalTabReselectSignal provides reselects) {
+            AnimatedContent(targetState = state.selected, transitionSpec = { transition }, label = "tab") { tab ->
+                saveable.SaveableStateProvider(state.tabs.indexOf(tab)) { content(tab) }
+            }
+        }
     }
 }

@@ -1052,6 +1052,8 @@ app:settings_binge  b914ef32a2e1
 app:settings_binge_preferences  2f344a3b2787
 app:settings_choices_filter  638e249f4a15
 app:settings_demo_note  f064b6ca2aa7
+app:settings_discovery  80fc40213320
+app:settings_discovery_caption  43ecdb3156f7
 app:settings_display_language  11a045e402c3
 app:settings_edit_connection  047f9f951500
 app:settings_edit_connection_caption  bc5acad237f1
@@ -1462,6 +1464,7 @@ app:user_settings_unlinked_done  33f1cdf22cb6
 app:user_settings_watchlist_movies  555533a147fe
 app:user_settings_watchlist_tv  4e8636deae2a
 app:user_watchlist  eff2ec588be1
+app:user_watchlist_count  ccf7dfaff0dd
 app:users_add_cd  4cd030d9892f
 app:users_add_create  d46f69340818
 app:users_add_create_desc  a1b978098f8d

@@ -6,7 +6,7 @@ Four flags. `BINGE_PROMOTION` decides what this app says about Binge. `REVIEW_PR
 | --- | --- | --- |
 | `BINGE_PROMOTION` | `binge_promotion_enabled` | Nothing about Binge: no prompt to install or open it, no hub tile or settings row, Binge-free wording in the setup intro and the disconnect confirmation. Titles open on the server's own page. |
 | `REVIEW_PROMPT` | `review_prompt_enabled` | The app never asks the platform to show its review card. |
-| `DiscoveryEnabled` | `discovery_enabled` | The app is exactly as it was before the discovery epic: no bottom navigation, no Movies, TV or Search tabs, no title, person or collection pages. Nothing reads it yet. |
+| `DiscoveryEnabled` | `discovery_enabled` | The app is exactly as it was before the discovery epic: no bottom navigation, no Movies, TV or Search tabs, no title, person or collection pages. It is the remote half only: the app shows discovery when this flag is on and the user's own Discovery setting under This app is on too (default on), combined in `DiscoveryGate`. |
 | `SearchToggles` | none: a debug override only | A settings search result for an on/off setting has no switch; it opens the setting, as before. On, the result carries the setting's own switch, which writes through the page's own editor. |
 
 The `BINGE_PROMOTION` flag is about not pushing anyone to install an app they cannot connect to. It does not gate the integration
@@ -14,7 +14,7 @@ itself: the REQUEST and NOTIFICATIONS Service is always exported, and the hand-o
 caller, so a Binge that finds this app can use it whatever the flag says.
 
 `DiscoveryEnabled` and `SearchToggles` are this app's own flags, declared as `FlagKey`s in `flags/FeatureFlags.kt` beside the
-shared ones, and resolved by the same `FeatureFlags` (read as `flags[DiscoveryEnabled]`). The Firebase source reads
+shared ones, and resolved by the same `FeatureFlags`. Nothing but `DiscoveryGate` reads `DiscoveryEnabled`: the gate combines it with the user's preference, and everything else reads the gate. The Firebase source reads
 `RemoteFlagKeys`, which is the shared flags and `DiscoveryEnabled`, from the one Remote Config instance with its one-hour fetch interval.
 `SearchToggles` is deliberately not in that list: it has no remote value, so a Remote Config template cannot turn it on. A debug build
 can override either from the developer flags screen, in the same DataStore as the other overrides under `override_discovery_enabled` and

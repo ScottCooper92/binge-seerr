@@ -3,6 +3,8 @@ package com.cooper.binge.companion.seerr.ui.settings
 import com.cooper.binge.companion.seerr.auth.BingeConnectionStore
 import com.cooper.binge.companion.seerr.feedback.BugReportLinks
 import com.cooper.binge.companion.seerr.feedback.FeedbackPrefs
+import com.cooper.binge.companion.seerr.flags.DiscoveryGate
+import com.cooper.binge.companion.seerr.flags.NoDiscoveryGate
 import com.cooper.binge.companion.seerr.telemetry.AnalyticsEvents
 import com.cooper.binge.companion.seerr.ui.hub.BingeInstallCheck
 import com.cooper.binge.companion.seerr.ui.hub.bingeStatusOf
@@ -31,6 +33,7 @@ internal class AppSettingsSource(
     private val analytics: Analytics,
     private val scope: CoroutineScope,
     private val dispatcher: CoroutineDispatcher,
+    private val discoveryGate: DiscoveryGate = NoDiscoveryGate,
 ) {
     /** Re-read on every arrival, so Binge installed while this screen was away shows on return. */
     private val bingeInstalled = MutableStateFlow(bingeInstallCheck.isInstalled())
@@ -41,18 +44,25 @@ internal class AppSettingsSource(
             telemetryPrefs.analyticsConsent,
             telemetryPrefs.crashReportingEnabled,
             combine(bingeInstalled, bingeConnection.hasConnected, featureFlags.flags, ::bingeStatusOf),
-        ) { shake, consent, crashes, binge ->
+            combine(discoveryGate.offered, discoveryGate.preference) { offered, pref -> pref.takeIf { offered } },
+        ) { shake, consent, crashes, binge, discovery ->
             AppSettings(
                 bugReportUrl = bugReportLinks.url(),
                 shakeToReport = shake,
                 shareUsageData = consent == AnalyticsConsent.GRANTED,
                 sendCrashReports = crashes,
                 binge = binge,
+                discovery = discovery,
             )
         }
 
     fun recheckBinge() {
         bingeInstalled.value = bingeInstallCheck.isInstalled()
+    }
+
+    fun setDiscovery(enabled: Boolean) {
+        analytics.event(AnalyticsEvents.DISCOVERY_CHANGED, mapOf(AnalyticsEvents.PARAM_ENABLED to enabled))
+        scope.launch(dispatcher) { discoveryGate.setPreference(enabled) }
     }
 
     fun setShakeToReport(enabled: Boolean) {

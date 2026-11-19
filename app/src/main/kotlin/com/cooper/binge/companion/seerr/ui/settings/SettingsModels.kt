@@ -118,6 +118,8 @@ data class AppSettings(
     val shakeToReport: Boolean,
     val shareUsageData: Boolean = false,
     val sendCrashReports: Boolean = true,
+    /** The Discovery preference; null while the remote flag is off, which hides the row. */
+    val discovery: Boolean? = null,
     /** Where Binge stands on this device, for the group's first row. */
     val binge: BingeStatus = BingeStatus.NotInstalled,
 )

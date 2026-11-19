@@ -529,6 +529,11 @@
     <string name="user_plays">Reproducciones</string>
     <string name="user_permissions_title">Permisos</string>
     <string name="user_recently_watched">Visto recientemente</string>
+    <plurals name="user_watchlist_count">
+        <item quantity="one">%1$s título</item>
+        <item quantity="many">%1$s de títulos</item>
+        <item quantity="other">%1$s títulos</item>
+    </plurals>
     <string name="user_watchlist">Lista de seguimiento</string>
     <string name="user_no_requests">Aún no hay peticiones.</string>
     <string name="user_delete">Eliminar el usuario</string>
@@ -1212,6 +1217,8 @@
     <string name="overflow_menu">Más opciones</string>
     <string name="report_problem">Informar de un problema</string>
     <string name="settings_report_bug_caption">Abre GitHub con los datos de tu dispositivo ya rellenados</string>
+    <string name="settings_discovery">Descubrir</string>
+    <string name="settings_discovery_caption">Explora, busca y solicita títulos en la app</string>
     <string name="settings_shake_to_report">Agitar para informar</string>
     <string name="shake_report_title">¿Informar de un error?</string>
     <string name="shake_report_message">Se abrirá una incidencia nueva en la página de GitHub de esta aplicación, con la versión de la aplicación y el dispositivo ya rellenados. No se incluye nada sobre tu servidor.</string>
