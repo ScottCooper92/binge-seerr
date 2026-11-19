@@ -42,6 +42,12 @@ class TitleSearchScreenshotTest {
     @Composable
     fun resultsMovies() = Frame(readyMoviesState())
 
+    /** The Studios chip chosen: the companies the search found, each with its logo tile and "Studio". */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun resultsStudios() = Frame(readyStudiosState())
+
     /** Nothing typed, nothing remembered and no trending: the prompt. */
     @PreviewTest
     @SeerrScreenStatePreview

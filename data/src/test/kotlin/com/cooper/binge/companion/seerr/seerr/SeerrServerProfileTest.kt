@@ -48,6 +48,8 @@ class SeerrServerProfileTest {
         assertTrue(profile("1.4.0", jellyfin).hasDiscoverSliders)
         assertFalse(profile("1.31.0").hasDiscoverSliders)
         assertTrue(profile("1.32.0").hasDiscoverSliders)
+        assertFalse(profile("1.31.0").hasCompanySearch)
+        assertTrue(profile("1.32.0").hasCompanySearch)
     }
 
     @Test

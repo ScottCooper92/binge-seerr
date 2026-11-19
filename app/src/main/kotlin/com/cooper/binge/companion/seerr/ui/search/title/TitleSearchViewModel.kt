@@ -8,6 +8,8 @@ import com.cooper.binge.companion.seerr.core.search.QueryHistory
 import com.cooper.binge.companion.seerr.core.search.QuerySearchState
 import com.cooper.binge.companion.seerr.core.search.SearchPage
 import com.cooper.binge.companion.seerr.data.TitleStatusStore
+import com.cooper.binge.companion.seerr.discover.StudioResult
+import com.cooper.binge.companion.seerr.discover.StudioSearch
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.TitleListRepository
 import com.cooper.binge.companion.seerr.discover.TitleResult
@@ -20,6 +22,7 @@ import com.cooper.binge.companion.seerr.discover.sliders.HubMediaSource
 import com.cooper.binge.companion.seerr.discover.sliders.toCard
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -27,6 +30,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -40,6 +44,7 @@ class TitleSearchViewModel
     @Inject
     constructor(
         private val titles: TitleListRepository,
+        studios: StudioSearch,
         history: QueryHistory,
         private val media: HubMediaSource,
         private val grid: DiscoverGridRepository,
@@ -59,25 +64,39 @@ class TitleSearchViewModel
                 keyOf = { it.kind to it.tmdbId },
             )
 
+        /** The studios for the same query, kept apart from the titles: its own page and its own failure, and no history of its own. */
+        private val studioSearch =
+            PagedQuerySearch<StudioResult>(
+                scope = viewModelScope,
+                history = NoQueryHistory,
+                fetch = { query, page -> studios.search(query, page) },
+                keyOf = { it.id },
+            )
+
         private val type = MutableStateFlow(SearchType.All)
         private val trending = MutableStateFlow<Trending>(Trending.Loading)
         private val genreNames = MutableStateFlow<Map<Int, String>>(emptyMap())
         private val browseAll = MutableStateFlow(true)
-        private val lookups = combine(genreNames, browseAll, ::Pair)
+        private val hasStudios = MutableStateFlow(true)
+        private val lookups = combine(genreNames, browseAll, hasStudios) { genres, browse, studios -> Lookups(genres, browse, studios) }
+
+        /** What surrounds the results: the trending rails with the genre names and the Browse all answer, which share one flow. */
+        private val around = combine(trending, lookups) { trending, lookups -> trending to lookups }
 
         val uiState: StateFlow<TitleSearchUiState> =
             combine(
                 search.query,
                 search.state.combine(statuses.statuses) { state, held -> state.overlaid(held) },
+                studioSearch.state,
                 type,
-                trending,
-                lookups,
-            ) { text, state, type, trending, (genres, browseAll) ->
-                state.toUiState(text, type, trending, genres, browseAll)
+                around,
+            ) { text, state, studios, type, (trending, lookups) ->
+                state.toUiState(text, type, trending, lookups.genres, lookups.browseAll, studios, lookups.studios)
             }.stateIn(viewModelScope, SharingStarted.Lazily, TitleSearchUiState.Idle("", emptyList()))
 
         init {
             loadTrending()
+            viewModelScope.launch { hasStudios.value = attempt { studios.supported() }.getOrDefault(true) }
             viewModelScope.launch { browseAll.value = attempt { grid.canRefine(GridPreset.Popular) }.getOrDefault(true) }
             viewModelScope.launch { genreNames.value = attempt { titles.allGenreNames() }.getOrDefault(emptyMap()) }
         }
@@ -96,28 +115,45 @@ class TitleSearchViewModel
         fun onQueryChange(text: String) {
             if (text.trim() != search.query.value.trim()) type.value = SearchType.All
             search.setQuery(text)
+            studioSearch.setQuery(text)
         }
 
         fun onClear() {
             type.value = SearchType.All
             search.clear()
+            studioSearch.clear()
             if (trending.value is Trending.Unavailable) {
                 trending.value = Trending.Loading
                 loadTrending()
             }
         }
 
-        fun onSubmit() = search.submit()
+        fun onSubmit() {
+            search.submit()
+            studioSearch.submit()
+        }
 
-        fun onRetry() = search.retry()
+        fun onRetry() {
+            search.retry()
+            studioSearch.retry()
+        }
 
-        fun onLoadMore() = search.loadMore()
+        /** On Studios, a page that failed is asked for again, as a failed list has no next page to load. */
+        fun onLoadMore() {
+            when {
+                type.value != SearchType.Studios -> search.loadMore()
+                studioSearch.state.value is QuerySearchState.Failed -> studioSearch.retry()
+                else -> studioSearch.loadMore()
+            }
+        }
 
         /** Search a recent query again: it fills the field and runs at once. */
         fun onRecent(query: String) {
             type.value = SearchType.All
             search.setQuery(query)
+            studioSearch.setQuery(query)
             search.submit()
+            studioSearch.submit()
         }
 
         /** A movie, a series or a person opens; the card carries the server's page for it, where Binge is not there to take it. */
@@ -145,34 +181,58 @@ private suspend fun TitleListRepository.trendingRails(): Trending {
     )
 }
 
-/** Rows are keyed by kind and TMDB id, and a title can come back on two pages, so a repeat is dropped. */
+/** Nothing to remember: the studios search runs beside the titles', whose query the history already holds. */
+private object NoQueryHistory : QueryHistory {
+    override val recents: Flow<List<String>> = flowOf(emptyList())
+
+    override suspend fun remember(query: String) = Unit
+
+    override suspend fun clear() = Unit
+}
+
+/**
+ * Rows are keyed by kind and TMDB id, and a title can come back on two pages, so a repeat is dropped. A query the titles do not
+ * answer still shows the chips when the studios do, with the Studios chip to open.
+ */
 internal fun QuerySearchState<TitleResult>.toUiState(
     text: String,
     type: SearchType,
     trending: Trending,
     genreNames: Map<Int, String>,
     browseAll: Boolean = true,
-): TitleSearchUiState =
-    when (this) {
+    studios: QuerySearchState<StudioResult> = QuerySearchState.Idle(emptyList()),
+    hasStudios: Boolean = true,
+): TitleSearchUiState {
+    val found = studios as? QuerySearchState.Results
+    val studioRows = found?.items.orEmpty()
+    // On Studios the footer, the retry and the spinner are the studios' own, whatever state their search is in.
+    val onStudios = type == SearchType.Studios
+
+    fun ready(
+        all: List<TitleResult>,
+        titleMore: QuerySearchState.Results<TitleResult>?,
+    ) = TitleSearchUiState.Ready(
+        text = text,
+        results = all.filter(type::keeps),
+        studios = studioRows,
+        loaded = all.size,
+        type = type,
+        counts = all.typeCounts(studioRows.size),
+        genreNames = genreNames,
+        hasMore = if (onStudios) found?.hasMore ?: false else titleMore?.hasMore ?: false,
+        appending = if (onStudios) found?.appending ?: (studios is QuerySearchState.Loading) else titleMore?.appending ?: false,
+        appendFailed = if (onStudios) found?.appendFailed ?: (studios is QuerySearchState.Failed) else titleMore?.appendFailed ?: false,
+        hasStudios = hasStudios,
+    )
+    return when (this) {
         is QuerySearchState.Idle -> TitleSearchUiState.Idle(text, recents, trending)
         is QuerySearchState.Loading -> TitleSearchUiState.Loading(text)
-        is QuerySearchState.Results -> {
-            val all = items.distinctBy(TitleResult::key)
-            TitleSearchUiState.Ready(
-                text = text,
-                results = all.filter(type::keeps),
-                loaded = all.size,
-                type = type,
-                counts = all.typeCounts(),
-                genreNames = genreNames,
-                hasMore = hasMore,
-                appending = appending,
-                appendFailed = appendFailed,
-            )
-        }
-        is QuerySearchState.NoResults -> TitleSearchUiState.NoResults(text, query, type, browseAll)
+        is QuerySearchState.Results -> ready(items.distinctBy(TitleResult::key), this)
+        is QuerySearchState.NoResults ->
+            if (found != null) ready(emptyList(), null) else TitleSearchUiState.NoResults(text, query, type, browseAll, hasStudios)
         is QuerySearchState.Failed -> TitleSearchUiState.Error(text, cause.toSeerrError())
     }
+}
 
 /** What the Search tab asks its host to do. */
 sealed interface TitleSearchEvent {
@@ -180,3 +240,10 @@ sealed interface TitleSearchEvent {
         val card: HubCard,
     ) : TitleSearchEvent
 }
+
+/** What the lists around the results are made from: the genre names, the Browse all answer and whether the server has company search. */
+private data class Lookups(
+    val genres: Map<Int, String>,
+    val browseAll: Boolean,
+    val studios: Boolean,
+)
