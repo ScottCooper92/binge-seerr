@@ -26,7 +26,7 @@ class TitleActionsModelTest {
         standard: VersionState,
         fourK: VersionState? = null,
         requests: List<TitleRequest> = emptyList(),
-    ) = titleActionsModel(standard, fourK, requests).primary
+    ) = titleActionsModel(standard, fourK, requests, mayReport = true).primary
 
     @Test
     fun `an open standard version is a Request that opens the sheet`() {
@@ -102,7 +102,8 @@ class TitleActionsModelTest {
 
     @Test
     fun `report is offered once the title is in the library in whole or in part`() {
-        fun canReport(availability: TitleAvailability) = titleActionsModel(held(availability), null, emptyList()).canReport
+        fun canReport(availability: TitleAvailability) =
+            titleActionsModel(held(availability), null, emptyList(), mayReport = true).canReport
 
         assertTrue(canReport(TitleAvailability.Available))
         assertTrue(canReport(TitleAvailability.PartiallyAvailable))
@@ -110,6 +111,11 @@ class TitleActionsModelTest {
         assertFalse(canReport(TitleAvailability.Pending))
         assertFalse(canReport(TitleAvailability.Processing))
         assertFalse(canReport(TitleAvailability.Blocklisted))
+    }
+
+    @Test
+    fun `report is not offered where the server takes no issue from this viewer`() {
+        assertFalse(titleActionsModel(held(TitleAvailability.Available), null, emptyList(), mayReport = false).canReport)
     }
 
     @Test

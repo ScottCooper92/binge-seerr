@@ -67,6 +67,8 @@ data class SeriesDetails(
     val webUrl: String,
     /** The requests the server holds for the show, newest last as it lists them. */
     val requests: List<TitleRequest> = emptyList(),
+    /** The server takes issues and this viewer may report one: its profile has them and their permissions allow it. */
+    val mayReport: Boolean = false,
 ) {
     /** The seasons of each version for the request sheet. */
     val seasonChoices: SeasonChoices

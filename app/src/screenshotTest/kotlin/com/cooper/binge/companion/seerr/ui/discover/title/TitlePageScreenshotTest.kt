@@ -78,6 +78,18 @@ class TitlePageScreenshotTest {
             ),
         )
 
+    /** Available to a viewer the server takes no issue from: Trailer is there and Report is not. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun availableNoReport() =
+        Frame(
+            TitlePageUiState.Ready(
+                fullMovie(standard = VersionState(TitleAvailability.Available, mayRequest = false), fourK = null).copy(mayReport = false),
+                fullExtras(),
+            ),
+        )
+
     /** Standard held and 4K still open: the button stays, and both versions are named. */
     @PreviewTest
     @SeerrScreenStatePreview

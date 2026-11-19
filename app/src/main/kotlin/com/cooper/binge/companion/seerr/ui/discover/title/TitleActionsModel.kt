@@ -35,7 +35,7 @@ internal data class TitlePrimary(
 /** The page's actions under the stats: the primary, which is there in every state. */
 internal data class TitleActionsModel(
     val primary: TitlePrimary,
-    /** Report is offered only where the server takes an issue, which is once the title is in the library, in whole or in part. */
+    /** Report is offered once the title is in the library, in whole or in part, where the server takes an issue and the viewer may make one. */
     val canReport: Boolean,
 )
 
@@ -49,6 +49,7 @@ internal fun titleActionsModel(
     standard: VersionState,
     fourK: VersionState?,
     requests: List<TitleRequest>,
+    mayReport: Boolean,
 ): TitleActionsModel {
     val openStandard = standard.mayRequest && standard.availability == TitleAvailability.None
     val state =
@@ -58,15 +59,7 @@ internal fun titleActionsModel(
             listOfNotNull(standard.availability, fourK?.availability).map { it.toState() }.maxByOrNull { it.rank } ?: TitleState.Request
         }
     val mayRequest = standard.mayRequest || fourK?.mayRequest == true
-    val tap =
-        when {
-            state == TitleState.Request -> if (mayRequest) PrimaryTap.RequestSheet else PrimaryTap.Nothing
-            state == TitleState.Blocklisted -> PrimaryTap.Nothing
-            state == TitleState.PartiallyAvailable && mayRequest -> PrimaryTap.RequestSheet
-            else ->
-                requests.toManage()?.let { PrimaryTap.ManageRequest(it.id) }
-                    ?: if (mayRequest) PrimaryTap.RequestSheet else PrimaryTap.Nothing
-        }
+    val tap = tapFor(state, mayRequest, requests)
     return TitleActionsModel(
         TitlePrimary(
             state,
@@ -74,9 +67,26 @@ internal fun titleActionsModel(
                 state == TitleState.Request && !standard.mayRequest && fourK?.mayRequest == true,
             tap = tap,
         ),
-        canReport = state == TitleState.Available || state == TitleState.PartiallyAvailable,
+        canReport = mayReport && state.isInLibrary(),
     )
 }
+
+/** What a tap on the primary opens, as the KDoc of [titleActionsModel] sets out. */
+private fun tapFor(
+    state: TitleState,
+    mayRequest: Boolean,
+    requests: List<TitleRequest>,
+): PrimaryTap =
+    when {
+        state == TitleState.Request -> if (mayRequest) PrimaryTap.RequestSheet else PrimaryTap.Nothing
+        state == TitleState.Blocklisted -> PrimaryTap.Nothing
+        state == TitleState.PartiallyAvailable && mayRequest -> PrimaryTap.RequestSheet
+        else ->
+            requests.toManage()?.let { PrimaryTap.ManageRequest(it.id) }
+                ?: if (mayRequest) PrimaryTap.RequestSheet else PrimaryTap.Nothing
+    }
+
+private fun TitleState.isInLibrary() = this == TitleState.Available || this == TitleState.PartiallyAvailable
 
 private fun TitleAvailability.toState() =
     when (this) {

@@ -67,7 +67,7 @@ internal fun SeriesPageBody(
         val expanded = isExpandedLayout()
         if (!expanded) TitleStatsRows(series.titleStats(locale))
         TitleActions(
-            model = titleActionsModel(series.standard, series.fourK, series.requests),
+            model = titleActionsModel(series.standard, series.fourK, series.requests, series.mayReport),
             onPrimary = actions.onRequest,
             onTrailer = series.videos.trailerUrl()?.let { url -> { actions.onOpenUrl(url) } },
             onReport = actions.onReport,

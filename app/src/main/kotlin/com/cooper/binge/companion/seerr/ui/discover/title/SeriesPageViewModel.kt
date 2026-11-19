@@ -126,7 +126,15 @@ class SeriesPageViewModel
         /** The primary was tapped: the request sheet or one request's sheet, as the page's state says, or nothing where there is none to open. */
         fun onPrimary() =
             updateReady { ready ->
-                when (val tap = titleActionsModel(ready.series.standard, ready.series.fourK, ready.series.requests).primary.tap) {
+                when (
+                    val tap =
+                        titleActionsModel(
+                            ready.series.standard,
+                            ready.series.fourK,
+                            ready.series.requests,
+                            ready.series.mayReport,
+                        ).primary.tap
+                ) {
                     PrimaryTap.RequestSheet -> ready.copy(requestSheetOpen = true)
                     is PrimaryTap.ManageRequest -> ready.copy(manageRequestId = tap.requestId, manageSheetOpen = true)
                     PrimaryTap.Nothing -> ready

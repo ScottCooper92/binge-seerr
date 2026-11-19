@@ -4,6 +4,7 @@ import com.cooper.binge.companion.seerr.discover.TitleAvailability
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.collection.SeerrCollectionRepository
 import com.cooper.binge.companion.seerr.seerr.PERMISSION_ADMIN
+import com.cooper.binge.companion.seerr.seerr.PERMISSION_CREATE_ISSUES
 import com.cooper.binge.companion.seerr.seerr.PERMISSION_REQUEST
 import com.cooper.binge.companion.seerr.seerr.PERMISSION_REQUEST_MOVIE
 import com.cooper.binge.companion.seerr.seerr.SeerrApiFactory
@@ -234,6 +235,21 @@ class SeerrTitleDetailsRepositoryTest {
         permissions = 0
         val none = withRepository { it.movie(603) }
         assertFalse(none.standard.mayRequest)
+    }
+
+    @Test
+    fun `a title can be reported on only where the server takes issues and the viewer may make one`() {
+        assertTrue(withRepository { it.movie(603) }.mayReport)
+
+        permissions = PERMISSION_REQUEST or PERMISSION_REQUEST_MOVIE
+        assertFalse("no issue permission", withRepository { it.movie(603) }.mayReport)
+
+        permissions = PERMISSION_CREATE_ISSUES
+        assertTrue(withRepository { it.movie(603) }.mayReport)
+
+        variant = SeerrVariant.Overseerr
+        version = SeerrVersion(1, 27, 0)
+        assertFalse("an Overseerr before issues", withRepository { it.movie(603) }.mayReport)
     }
 
     @Test
