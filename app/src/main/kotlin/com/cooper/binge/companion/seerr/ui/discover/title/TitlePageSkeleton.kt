@@ -74,7 +74,7 @@ internal fun TitlePageSkeleton(
         Column(Modifier.clearAndSetSemantics {}, verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m))) {
             if (!cinematic) StatsRowsSkeleton(Modifier.layoutAnchor(LayoutAnchors.section(LayoutAnchors.Detail.STATS)))
             ActionsSkeleton(Modifier.readingMargin().layoutAnchor(LayoutAnchors.section(LayoutAnchors.Detail.ACTIONS)))
-            if (!cinematic) OverviewSkeleton(Modifier.readingMargin().layoutAnchor(LayoutAnchors.section(LayoutAnchors.Detail.OVERVIEW)))
+            if (!cinematic) OverviewSkeleton(Modifier.layoutAnchor(LayoutAnchors.section(LayoutAnchors.Detail.OVERVIEW)).readingMargin())
             CarouselSkeleton()
         }
     }
@@ -121,9 +121,9 @@ internal fun TitleHeroSkeleton(
 @Composable
 private fun StatsRowsSkeleton(modifier: Modifier = Modifier) {
     val blank = List(STAT_COUNT) { DetailStat(Icons.Filled.Star, " ", " ") }
-    Column(Modifier.readingMargin(), verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m))) {
-        blank.chunked(statsPerRow()).forEachIndexed { index, row ->
-            Box((if (index == 0) modifier else Modifier).fillMaxWidth().padding(resolvedContentPadding())) {
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m))) {
+        blank.chunked(statsPerRow()).forEach { row ->
+            Box(Modifier.readingMargin().fillMaxWidth().padding(resolvedContentPadding())) {
                 DetailStatRow(row, Modifier.skeleton(visible = true, shape = BingeShapes.Large), contentPadding = PaddingValues())
             }
         }
@@ -144,7 +144,7 @@ private fun ActionsSkeleton(modifier: Modifier = Modifier) {
  */
 @Composable
 internal fun OverviewSkeleton(modifier: Modifier = Modifier) {
-    Column(modifier = Modifier.padding(horizontal = resolvedContentInset()).then(modifier)) {
+    Column(modifier = modifier.padding(horizontal = resolvedContentInset())) {
         TextPlate(MaterialTheme.typography.titleMedium, Modifier.width(dimensionResource(DesR.dimen.skeleton_header_width)))
         Spacer(Modifier.height(dimensionResource(DesR.dimen.detail_meta_spacing)))
         repeat(OVERVIEW_LINE_COUNT) { index ->

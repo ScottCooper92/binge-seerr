@@ -67,7 +67,8 @@ internal fun SeriesPageBody(
     Column(verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m))) {
         // The expanded header already shows these and the synopsis.
         val expanded = isExpandedLayout()
-        if (!expanded) DetailStatsRows(series.titleStats(locale))
+        val stats = series.titleStats(locale)
+        if (!expanded && stats.isNotEmpty()) DetailStatsRows(stats)
         TitleActions(
             model = titleActionsModel(series.standard, series.fourK, series.requests, series.mayReport),
             onPrimary = actions.onRequest,
