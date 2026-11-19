@@ -18,6 +18,9 @@ import com.cooper.binge.companion.seerr.data.UserStore
 import com.cooper.binge.companion.seerr.feedback.FeedbackPrefs
 import com.cooper.binge.companion.seerr.notifications.AndroidNotificationText
 import com.cooper.binge.companion.seerr.notifications.AndroidNotifier
+import com.cooper.binge.companion.seerr.flags.DiscoveryGate
+import com.cooper.binge.companion.seerr.flags.DiscoveryPrefs
+import com.cooper.binge.companion.seerr.flags.PrefsDiscoveryGate
 import com.cooper.binge.companion.seerr.notifications.ApplicationScope
 import com.cooper.binge.companion.seerr.notifications.ForwardedNotificationCodec
 import com.cooper.binge.companion.seerr.notifications.ForwardingNotifier
@@ -31,6 +34,7 @@ import com.cooper.binge.companion.seerr.ui.hub.PackageManagerBingeInstallCheck
 import com.cooper.homelab.core.bridge.NotificationForwarding
 import com.cooper.homelab.core.foundation.Clock
 import com.cooper.homelab.core.telemetry.TelemetryPrefs
+import com.cooper.homelab.core.flags.FeatureFlags
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -61,6 +65,7 @@ private val Context.telemetryDataStore: DataStore<Preferences> by preferencesDat
     produceMigrations = { listOf(CrashReportingMigration) },
 )
 
+private val Context.discoveryDataStore: DataStore<Preferences> by preferencesDataStore(name = "seerr_discovery")
 private val Context.feedbackDataStore: DataStore<Preferences> by preferencesDataStore(name = "seerr_feedback")
 
 /**
@@ -126,6 +131,14 @@ object SeerrModule {
     fun feedbackPrefs(
         @ApplicationContext context: Context,
     ): FeedbackPrefs = FeedbackPrefs(context.feedbackDataStore)
+
+    @Provides
+    @Singleton
+    fun discoveryGate(
+        @ApplicationContext context: Context,
+        featureFlags: FeatureFlags,
+        @ApplicationScope scope: CoroutineScope,
+    ): DiscoveryGate = PrefsDiscoveryGate(featureFlags, DiscoveryPrefs(context.discoveryDataStore), scope)
 
     @Provides
     @Singleton

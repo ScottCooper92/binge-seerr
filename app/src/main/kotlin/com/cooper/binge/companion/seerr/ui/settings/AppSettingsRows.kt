@@ -3,6 +3,7 @@ package com.cooper.binge.companion.seerr.ui.settings
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.Coffee
+import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material.icons.filled.Healing
 import androidx.compose.material.icons.filled.Insights
 import androidx.compose.material.icons.filled.Tv
@@ -34,6 +35,7 @@ internal fun appRows(
     onToggleShareUsageData: (Boolean) -> Unit,
     onToggleSendCrashReports: (Boolean) -> Unit,
     onOpenTip: (() -> Unit)? = null,
+    onToggleDiscovery: (Boolean) -> Unit = {},
 ): List<ListItem> {
     val context = LocalContext.current
     return listOfNotNull(
@@ -46,6 +48,17 @@ internal fun appRows(
             destination = ListItemDestination.External,
             onClick = { context.openInBrowser(app.bugReportUrl) },
         ),
+        // Only while the remote flag offers discovery; the preference is the user's own opt-out.
+        app.discovery?.let { on ->
+            ListItem(
+                icon = Icons.Filled.Explore,
+                iconTint = BingeSentiment.Info.fill(),
+                label = stringResource(R.string.settings_discovery),
+                detail = stringResource(R.string.settings_discovery_caption),
+                toggled = on,
+                onClick = { onToggleDiscovery(!on) },
+            ).copy(key = SettingRows.APP_DISCOVERY)
+        },
         ListItem(
             icon = Icons.Filled.Vibration,
             iconTint = BingeSentiment.Info.fill(),

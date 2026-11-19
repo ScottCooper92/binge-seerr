@@ -10,6 +10,8 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
@@ -25,7 +27,7 @@ import com.cooper.binge.companion.seerr.discover.sliders.DiscoverSliderRepositor
 import com.cooper.binge.companion.seerr.feedback.BugReportLinks
 import com.cooper.binge.companion.seerr.feedback.FeedbackPrefs
 import com.cooper.binge.companion.seerr.feedback.ShakeToReportPrompt
-import com.cooper.binge.companion.seerr.flags.DiscoveryEnabled
+import com.cooper.binge.companion.seerr.flags.DiscoveryGate
 import com.cooper.binge.companion.seerr.flags.LocalDiscoveryEnabled
 import com.cooper.binge.companion.seerr.flags.LocalFlags
 import com.cooper.binge.companion.seerr.telemetry.LocalAnalytics
@@ -37,6 +39,7 @@ import com.cooper.binge.companion.seerr.ui.SeerrNavHost
 import com.cooper.binge.companion.seerr.ui.consent.ConsentGate
 import com.cooper.binge.companion.seerr.ui.linkedRequestId
 import com.cooper.binge.companion.seerr.ui.shell.openLink
+import com.cooper.binge.companion.seerr.ui.replaceAll
 import com.cooper.binge.companion.seerr.ui.shell.rememberSeerrTabs
 import com.cooper.binge.companion.seerr.ui.tv.TvSeerrShell
 import com.cooper.homelab.core.flags.FeatureFlags
@@ -110,7 +113,16 @@ class MainActivity : ComponentActivity() {
                 return@setContent
             }
             val backStack = rememberNavBackStack(HomeRoute)
-            val tabs = rememberSeerrTabs(discovery = flags[DiscoveryEnabled])
+            val discovery by discoveryGate.enabled.collectAsStateWithLifecycle()
+            val tabs = rememberSeerrTabs(discovery = discovery)
+            // Turning discovery off or on starts the app over from its start tab, with no stack left over from the other mode.
+            var shownDiscovery by remember { mutableStateOf(discovery) }
+            LaunchedEffect(discovery) {
+                if (discovery != shownDiscovery) {
+                    shownDiscovery = discovery
+                    backStack.replaceAll(backStack.take(1))
+                }
+            }
             LaunchedEffect(backStack) {
                 screenNames(backStack, selectedTab = { tabs.selected }).collect { analytics.screen(it) }
             }
@@ -120,7 +132,7 @@ class MainActivity : ComponentActivity() {
             }
             // Phone only: a television has no accelerometer, and reports a bug from Settings instead.
             val shakeToReport by feedbackPrefs.shakeToReport.collectAsStateWithLifecycle(initialValue = false)
-            CompositionLocalProvider(LocalFlags provides flags, LocalDiscoveryEnabled provides flags[DiscoveryEnabled]) {
+            CompositionLocalProvider(LocalFlags provides flags, LocalDiscoveryEnabled provides discovery) {
                 SeerrTheme {
                     ShakeToReportPrompt(enabled = shakeToReport, bugReportUrl = bugReportLinks::url)
                     // The window's own background (the platform default, since Theme.Seerr sets none)
@@ -140,7 +152,7 @@ class MainActivity : ComponentActivity() {
         userRefresh.onForeground()
         lifecycleScope.launch { featureFlags.refresh() }
         // The slider list is read again on a return, to pick up a change made in the web client. Only the discovery hubs use it.
-        if (featureFlags.flags.value[DiscoveryEnabled]) lifecycleScope.launch { attempt { discoverSliders.refresh() } }
+        if (discoveryGate.enabled.value) lifecycleScope.launch { attempt { discoverSliders.refresh() } }
     }
 
     override fun onNewIntent(intent: Intent) {
