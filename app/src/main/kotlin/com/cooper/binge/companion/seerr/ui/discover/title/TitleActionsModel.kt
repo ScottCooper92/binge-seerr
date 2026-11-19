@@ -35,6 +35,8 @@ internal data class TitlePrimary(
 /** The page's actions under the stats: the primary, which is there in every state. */
 internal data class TitleActionsModel(
     val primary: TitlePrimary,
+    /** Report is offered only where the server takes an issue, which is once the title is in the library, in whole or in part. */
+    val canReport: Boolean,
 )
 
 /**
@@ -72,6 +74,7 @@ internal fun titleActionsModel(
                 state == TitleState.Request && !standard.mayRequest && fourK?.mayRequest == true,
             tap = tap,
         ),
+        canReport = state == TitleState.Available || state == TitleState.PartiallyAvailable,
     )
 }
 

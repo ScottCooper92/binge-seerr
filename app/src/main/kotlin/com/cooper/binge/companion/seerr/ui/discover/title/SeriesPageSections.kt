@@ -70,6 +70,7 @@ internal fun SeriesPageBody(
             model = titleActionsModel(series.standard, series.fourK, series.requests),
             onPrimary = actions.onRequest,
             onTrailer = series.videos.trailerUrl()?.let { url -> { actions.onOpenUrl(url) } },
+            onReport = actions.onReport,
             modifier = Modifier.readingMargin().layoutAnchor(LayoutAnchors.section(LayoutAnchors.Detail.ACTIONS)),
         )
         if (!expanded && series.overview != null) Box(Modifier.readingMargin()) { OverviewSection(series.overview) }

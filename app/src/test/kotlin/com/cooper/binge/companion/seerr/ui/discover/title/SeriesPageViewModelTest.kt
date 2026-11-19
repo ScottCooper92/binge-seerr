@@ -113,6 +113,17 @@ class SeriesPageViewModelTest {
     }
 
     @Test
+    fun `the report sheet opens and closes`() {
+        val vm = SeriesPageViewModel(FakeSeries(), 1399)
+
+        vm.openReportSheet()
+        assertTrue(vm.ready().reportSheetOpen)
+
+        vm.closeReportSheet()
+        assertFalse(vm.ready().reportSheetOpen)
+    }
+
+    @Test
     fun `a failed load is an error that retries`() {
         val repository = FakeSeries(failSeries = IOException("down"))
         val vm = SeriesPageViewModel(repository, 1399)

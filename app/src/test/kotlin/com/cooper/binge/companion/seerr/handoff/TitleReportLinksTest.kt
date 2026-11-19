@@ -25,6 +25,12 @@ class TitleReportLinksTest {
     }
 
     @Test
+    fun `a scanned code is never for the app's own server, whatever it says`() {
+        assertFalse(TitleReportLinks.parse("https://seerr.example/movie/900?is4k=1&sid=abc-123")?.ownServer == true)
+        assertFalse(TitleReportLinks.parse("https://seerr.example/movie/900")?.ownServer == true)
+    }
+
+    @Test
     fun `the 4K mark is the one query it carries`() {
         assertTrue(TitleReportLinks.parse("https://seerr.example/movie/900?is4k=1")?.is4k == true)
         assertFalse(TitleReportLinks.parse("https://seerr.example/movie/900?is4k=0")?.is4k == true)

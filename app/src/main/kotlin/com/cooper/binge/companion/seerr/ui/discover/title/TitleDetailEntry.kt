@@ -10,6 +10,8 @@ import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.TitleResult
 import com.cooper.binge.companion.seerr.discover.request.RequestResult
 import com.cooper.binge.companion.seerr.discover.title.TitleCompany
+import com.cooper.binge.companion.seerr.seerr.SEERR_MEDIA_TYPE_MOVIE
+import com.cooper.binge.companion.seerr.seerr.SEERR_MEDIA_TYPE_TV
 import com.cooper.binge.companion.seerr.ui.SiblingRequestSheet
 import com.cooper.binge.companion.seerr.ui.openInBrowser
 import com.cooper.binge.companion.seerr.ui.state.EmptyScreen
@@ -67,9 +69,8 @@ private fun FilmPageEntry(
                 onCloseRequest = viewModel::closeRequestSheet,
                 onRequested = viewModel::requested,
                 onReload = viewModel::reload,
-                onCloseManage = viewModel::closeManageSheet,
-                onOpenUser = onOpenUser,
-                onOpenServices = onOpenServices,
+                manage = TitleManage(viewModel::closeManageSheet, onOpenUser, onOpenServices),
+                report = TitleReport(SEERR_MEDIA_TYPE_MOVIE, tmdbId, viewModel::openReportSheet, viewModel::closeReportSheet),
             ),
     )
 }
@@ -99,9 +100,8 @@ private fun SeriesPageEntry(
                 onCloseRequest = viewModel::closeRequestSheet,
                 onRequested = viewModel::requested,
                 onReload = viewModel::reload,
-                onCloseManage = viewModel::closeManageSheet,
-                onOpenUser = onOpenUser,
-                onOpenServices = onOpenServices,
+                manage = TitleManage(viewModel::closeManageSheet, onOpenUser, onOpenServices),
+                report = TitleReport(SEERR_MEDIA_TYPE_TV, tmdbId, viewModel::openReportSheet, viewModel::closeReportSheet),
             ),
         seasonActions = SeasonActions(viewModel::selectSeason, viewModel::retryEpisodes, onOpenSeason),
     )
@@ -118,9 +118,8 @@ private fun rememberTitlePageActions(
     onCloseRequest: () -> Unit,
     onRequested: (RequestResult) -> Unit,
     onReload: () -> Unit,
-    onCloseManage: () -> Unit,
-    onOpenUser: (Int) -> Unit,
-    onOpenServices: () -> Unit,
+    manage: TitleManage,
+    report: TitleReport,
 ): TitlePageActions {
     val context = LocalContext.current
     val openTitle = LocalOpenTitle.current
@@ -137,7 +136,25 @@ private fun rememberTitlePageActions(
         onOpenCredits = onOpenCredits,
         onOpenCompany = onOpenCompany,
         onReload = onReload,
-        onCloseManage = onCloseManage,
-        manageSheet = { sheet -> SiblingRequestSheet(sheet, onOpenUser, onOpenServices) },
+        onCloseManage = manage.onClose,
+        manageSheet = { sheet -> SiblingRequestSheet(sheet, manage.onOpenUser, manage.onOpenServices) },
+        onReport = report.onOpen,
+        onCloseReport = report.onClose,
+        reportSheet = { onClose -> TitleReportSheet(report.mediaType, report.tmdbId, onClose) },
     )
 }
+
+/** What the page needs to manage a request in a sheet over it: how it closes, and where its requester and its services open. */
+private class TitleManage(
+    val onClose: () -> Unit,
+    val onOpenUser: (Int) -> Unit,
+    val onOpenServices: () -> Unit,
+)
+
+/** What the page needs to offer a report on its title: which title, and how to open and close the form. */
+private class TitleReport(
+    val mediaType: String,
+    val tmdbId: Int,
+    val onOpen: () -> Unit,
+    val onClose: () -> Unit,
+)

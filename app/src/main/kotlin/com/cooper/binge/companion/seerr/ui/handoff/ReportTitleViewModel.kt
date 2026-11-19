@@ -92,7 +92,7 @@ class ReportTitleViewModel
                 attempt { connection.current().baseUrl }.getOrElse { return failure(it) }
             // A profile that cannot be read leaves the id unknown, which the addresses then decide.
             val connectedId = attempt { connection.profile().instanceId }.getOrNull()
-            if (!TitleReportLinks.isSameServer(link, connected, connectedId)) {
+            if (!link.ownServer && !TitleReportLinks.isSameServer(link, connected, connectedId)) {
                 return ReportTitleUiState.DifferentServer(
                     theirs = label(link.server),
                     yours = label(connected),

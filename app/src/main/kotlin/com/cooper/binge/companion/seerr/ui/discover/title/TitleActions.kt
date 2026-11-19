@@ -9,6 +9,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.ReportProblem
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material.icons.filled.Timelapse
@@ -25,7 +26,7 @@ import com.binge.designsystem.R as DesR
 
 /**
  * The actions under the stats: the primary on the left, there in every state and saying where the title stands, then a round
- * Trailer button that carries a label. Share is in the page's bar only. [onTrailer] is null where the server lists no trailer, and the
+ * Trailer button and, once the title is in the library, a Report button, each carrying a label. Share is in the page's bar only. [onTrailer] is null where the server lists no trailer, and the
  * button is not drawn.
  */
 @Composable
@@ -33,6 +34,7 @@ internal fun TitleActions(
     model: TitleActionsModel,
     onPrimary: () -> Unit,
     onTrailer: (() -> Unit)?,
+    onReport: (() -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
     Row(
@@ -42,6 +44,10 @@ internal fun TitleActions(
     ) {
         PrimaryAction(model.primary, onPrimary, Modifier.weight(1f))
         onTrailer?.let { LabelledIconButton(Icons.Filled.PlayArrow, stringResource(R.string.title_page_action_trailer), it) }
+        onReport
+            ?.takeIf {
+                model.canReport
+            }?.let { LabelledIconButton(Icons.Filled.ReportProblem, stringResource(R.string.title_page_action_report), it) }
     }
 }
 

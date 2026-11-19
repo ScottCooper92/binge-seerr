@@ -79,6 +79,17 @@ class ReportTitleViewModelTest {
         }
 
     @Test
+    fun `a title the app shows from its own server needs no address to match`() =
+        runTest {
+            val vm = viewModel(TitleReportLink("", "movie", 949, is4k = false, ownServer = true))
+
+            val state = vm.settled()
+
+            assertTrue(state is ReportTitleUiState.Ready)
+            assertEquals(MEDIA_ID, (state as ReportTitleUiState.Ready).mediaId)
+        }
+
+    @Test
     fun `the 4K mark on the code is kept for the form to say`() =
         runTest {
             assertTrue((viewModel(here(is4k = true)).settled() as ReportTitleUiState.Ready).is4k)
