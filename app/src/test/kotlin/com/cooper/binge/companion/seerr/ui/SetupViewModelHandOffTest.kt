@@ -545,7 +545,7 @@ class SetupViewModelHandOffTest {
             assertEquals(untouched, (vm.uiState.value as SetupUiState.SignIn).form)
         }
 
-    private class FakeSession(
+    internal class FakeSession(
         override val url: String = "http://192.168.1.20:41234/a/aaaaaaaa",
     ) : AddressHandOffSession {
         override val scanUrl: String get() = "$url#k=${"A".repeat(43)}"

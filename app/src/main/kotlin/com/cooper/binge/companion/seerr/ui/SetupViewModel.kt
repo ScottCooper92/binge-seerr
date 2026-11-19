@@ -51,7 +51,8 @@ class SetupViewModel
         private val analytics: Analytics = NoOpAnalytics,
         private val crashBreadcrumbs: CrashBreadcrumbs = NoOpCrashBreadcrumbs,
         private val localNetwork: LocalNetworkPermission = LocalNetworkPermission.AlwaysGranted,
-    ) : ViewModel() {
+    ) : ViewModel(),
+        SetupSource {
         private val draft = MutableStateFlow(SetupDraft())
 
         private val links =
@@ -114,7 +115,7 @@ class SetupViewModel
             reopenSignedOutServer()
         }
 
-        val uiState: StateFlow<SetupUiState> =
+        override val uiState: StateFlow<SetupUiState> =
             combine(connection.credentials, draft) { saved, draft -> draft.toUiState(saved, localNetwork) }
                 .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), SetupUiState.Loading)
 
@@ -122,7 +123,7 @@ class SetupViewModel
          * Settings' Edit connection: the form on the live server, prefilled and read, with that connection kept until a new one
          * saves. [notice] says why the form is up when the user didn't ask for it: a session the server rejected (#810).
          */
-        fun beginEdit(notice: SetupNotice? = null) {
+        override fun beginEdit(notice: SetupNotice?) {
             if (draft.value.editing != null) return
             crashBreadcrumbs.log("editing server connection")
             viewModelScope.launch(dispatcher) {
