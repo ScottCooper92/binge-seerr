@@ -97,32 +97,41 @@ private class SeerrPaneStrategy(
     private val shell: SceneStrategy<NavKey>? = null,
 ) : SceneStrategy<NavKey> {
     override fun SceneStrategyScope<NavKey>.calculateScene(entries: List<NavEntry<NavKey>>): Scene<NavKey>? {
+        val shellScene = shell?.let { with(it) { calculateScene(entries) } }
         val scene =
-            shell?.let { with(it) { calculateScene(entries) } }
+            shellScene
                 ?: threePane?.let { with(it) { calculateScene(entries) } }
                 ?: with(listDetail) { calculateScene(entries) }
                 ?: return null
         // toList(): a NavBackStack is a list by delegation, without a list's equality.
         val defaultBesideHub =
             scene.entries.size > 1 && backStack.toList().let { it.size == 2 && it[0].isPaneRoot() && it[1] == DefaultSection.route() }
-        return SeerrPaneScene(scene, claimsBack = !defaultBesideHub)
+        return SeerrPaneScene(scene, claimsBack = !defaultBesideHub, contentTakesBack = shellScene != null)
     }
 }
 
 /**
  * Not claiming Back takes two things: NavDisplay claims it while a scene has [previousEntries], and the list-detail
  * scene registers a handler of its own in its content, so that content runs under a dispatcher that is switched off.
+ * The shell's scene has no such handler, and its content has one that should answer here: the tab shell's, which takes Back
+ * from the bare hub to the start tab. So with [contentTakesBack] the content keeps its dispatcher (#2346).
  */
 private class SeerrPaneScene(
     scene: Scene<NavKey>,
     claimsBack: Boolean,
+    contentTakesBack: Boolean = false,
 ) : Scene<NavKey> by scene {
     override val previousEntries: List<NavEntry<NavKey>> = if (claimsBack) scene.previousEntries else emptyList()
 
-    override val content: @Composable () -> Unit = {
-        val owner = rememberNavigationEventDispatcherOwner(enabled = claimsBack)
-        CompositionLocalProvider(LocalNavigationEventDispatcherOwner provides owner) { scene.content() }
-    }
+    override val content: @Composable () -> Unit =
+        if (contentTakesBack) {
+            scene.content
+        } else {
+            {
+                val owner = rememberNavigationEventDispatcherOwner(enabled = claimsBack)
+                CompositionLocalProvider(LocalNavigationEventDispatcherOwner provides owner) { scene.content() }
+            }
+        }
 }
 
 /** Half the window less half the gap between the panes, so the gap sits at the window's centre. */
@@ -141,6 +150,13 @@ internal fun NavKey?.isPaneRoot(): Boolean = this == HubRoute || this == ShellRo
 
 /** Only the pane root is on the stack: nothing is open beside the hub. */
 internal fun List<NavKey>.isOnlyPaneRoot(): Boolean = size == 1 && first().isPaneRoot()
+
+/**
+ * The bare hub: nothing is open beside it but the default section, which three panes keep on the stack so its list holds its
+ * state. Back from here leaves for the start tab; from anything above it, Back closes that first (#2346).
+ */
+internal fun List<NavKey>.nothingOpenBesideHub(): Boolean =
+    isOnlyPaneRoot() || (size == 2 && first().isPaneRoot() && this[1] == DefaultSection.route())
 
 /**
  * A page pushed straight over the shell that is not a section, a title or a grid: [ShellPanesStrategy] leaves it to cover the
