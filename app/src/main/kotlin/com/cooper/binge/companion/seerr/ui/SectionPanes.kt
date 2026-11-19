@@ -156,8 +156,9 @@ internal fun List<NavKey>.nothingOpenBesideHub(): Boolean =
 internal fun List<NavKey>.coversWindow(): Boolean = size > 1 && first() == ShellRoute && !this[1].opensBesideHub()
 
 /**
- * Whether [ShellPanesStrategy] draws this route in the Settings tab's content pane when it is the first thing above the shell: a hub
- * section, or the settings search. The strategy's marker, the stash and [coversWindow] all ask this, so they cannot disagree.
+ * Whether this route is drawn in the Settings tab's content pane when it is the first thing above the shell: a hub section, or the
+ * settings search. The stash and [coversWindow] ask this of the key. [ShellPanesStrategy] reads the [SectionPane] marker on the
+ * entry instead, so the two are kept in step by hand, and `SectionMarkerAgreementTest` fails when a route has one and not the other.
  */
 internal fun NavKey.opensBesideHub(): Boolean = hubSection() != null || this == SettingsSearchRoute
 
