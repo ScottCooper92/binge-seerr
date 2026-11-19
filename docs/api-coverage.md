@@ -149,7 +149,7 @@ How each gate is applied is in [`server-compatibility.md`](server-compatibility.
 | `GET /user/{userId}/settings/permissions` | Get permission settings for a user | v1.20.0 | v1.0.0 | yes | The user's permissions page. |
 | `POST /user/{userId}/settings/permissions` | Update permission settings for a user | v1.20.0 | v1.0.0 | yes | The user's permissions page; the cached browser row follows. |
 | `GET /user/{userId}/watch_data` | Get watch data | v1.29.0 | v1.1.0 | yes | The user page, where the server returns it. |
-| `GET /user/{userId}/watchlist` | Get the Plex watchlist for a specific user | v1.30.0 | v1.2.0 | yes | The user page, where the server returns it. |
+| `GET /user/{userId}/watchlist` | Get the Plex watchlist for a specific user | v1.30.0 | v1.2.0 | yes | The user page's Watchlist carousel, where the server returns it, and on the viewer's own page the Watchlist row, whose count is the answer's `totalResults`. The row opens the existing watchlist grid. |
 
 ### Phase 8 — server administration
 
@@ -280,7 +280,7 @@ Each row is ticked in "Today" by the PR that covers it.
 | `GET /languages` | Languages supported by TMDB | v1.20.0 | v1.0.0 | yes | The General settings page's language pickers: discover languages and blocklisted languages. |
 | `GET /network/{networkId}` | Get TV network details | v1.21.0 | v1.0.0 | yes | Names the network a Discover slider holds as an id. |
 | `GET /regions` | Regions supported by TMDB | v1.20.0 | v1.0.0 | yes | The General settings page's region pickers: discover region and blocklisted regions. |
-| `GET /search/company` | Search for companies | v1.32.0 | v1.4.0 | yes | Finds the studio of a Discover slider. |
+| `GET /search/company` | Search for companies | v1.32.0 | v1.4.0 | yes | Finds the studio of a Discover slider, and fills the Studios chip of the title search with its logo and total. |
 | `GET /search/keyword` | Search for keywords | v1.32.0 | v1.4.0 | yes | Finds tags to blocklist on the General settings page, and keywords for an override rule's condition. |
 | `POST /settings/initialize` | Initialize application | v1.20.0 | v1.0.0 |  | The first-run wizard stays the web client's. |
 | `GET /studio/{studioId}` | Get movie studio details | v1.21.0 | v1.0.0 | yes | Names the studio a Discover slider holds as an id. |

@@ -7,6 +7,8 @@ import com.cooper.binge.companion.seerr.auth.NoBingeConnectionStore
 import com.cooper.binge.companion.seerr.di.IoDispatcher
 import com.cooper.binge.companion.seerr.feedback.BugReportLinks
 import com.cooper.binge.companion.seerr.feedback.FeedbackPrefs
+import com.cooper.binge.companion.seerr.flags.DiscoveryGate
+import com.cooper.binge.companion.seerr.flags.NoDiscoveryGate
 import com.cooper.binge.companion.seerr.notifications.BackgroundAccess
 import com.cooper.binge.companion.seerr.notifications.NotificationPrefs
 import com.cooper.binge.companion.seerr.notifications.NotificationScheduler
@@ -73,6 +75,7 @@ class ThisAppViewModel
         bingeConnection: BingeConnectionStore = NoBingeConnectionStore,
         featureFlags: FeatureFlags = FixedFeatureFlags(Flags.of(SharedFlags.BingePromotion to true, SharedFlags.ReviewPrompt to true)),
         private val minuteTicker: Ticker = Ticker(),
+        discoveryGate: DiscoveryGate = NoDiscoveryGate,
     ) : ViewModel() {
         internal var clock: () -> Long = System::currentTimeMillis
 
@@ -91,6 +94,7 @@ class ThisAppViewModel
                 analytics,
                 viewModelScope,
                 dispatcher,
+                discoveryGate,
             )
 
         private val poll =
@@ -122,6 +126,8 @@ class ThisAppViewModel
         ) = poll.setSignal(signal, value)
 
         fun setPollInterval(minutes: Int) = poll.setInterval(minutes)
+
+        fun setDiscovery(enabled: Boolean) = source.setDiscovery(enabled)
 
         fun setShakeToReport(enabled: Boolean) = source.setShakeToReport(enabled)
 

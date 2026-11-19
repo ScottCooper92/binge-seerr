@@ -127,6 +127,7 @@ internal fun ThisAppEntry(
             onToggleShakeToReport = viewModel::setShakeToReport,
             onToggleShareUsageData = viewModel::setShareUsageData,
             onToggleSendCrashReports = viewModel::setSendCrashReports,
+            onToggleDiscovery = viewModel::setDiscovery,
             onToggleSignal = viewModel::setSignal,
             onNotificationAccessChanged = viewModel::recheckNotificationAccess,
             onSetPollInterval = viewModel::setPollInterval,

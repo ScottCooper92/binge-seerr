@@ -4,8 +4,11 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
+import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.auth.ServerIdentity
 import com.cooper.binge.companion.seerr.core.search.QueryHistory
+import com.cooper.binge.companion.seerr.discover.SeerrStudioSearch
+import com.cooper.binge.companion.seerr.discover.StudioSearch
 import com.cooper.binge.companion.seerr.ui.search.ServerRecentSearches
 import com.cooper.binge.companion.seerr.ui.search.title.ServerQueryHistory
 import com.cooper.homelab.core.presentation.search.RecentSearches
@@ -14,6 +17,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import kotlinx.coroutines.CoroutineDispatcher
 import javax.inject.Singleton
 
 private val Context.searchDataStore: DataStore<Preferences> by preferencesDataStore(name = "seerr_search")
@@ -35,4 +39,11 @@ object SearchModule {
         @ApplicationContext context: Context,
         identity: ServerIdentity,
     ): QueryHistory = ServerQueryHistory(context.searchDataStore, identity::currentServerId)
+
+    @Provides
+    @Singleton
+    fun studioSearch(
+        connection: SeerrConnection,
+        @IoDispatcher io: CoroutineDispatcher,
+    ): StudioSearch = SeerrStudioSearch(api = connection::api, profile = connection::profile, io = io)
 }

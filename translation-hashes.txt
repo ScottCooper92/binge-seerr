@@ -1052,6 +1052,8 @@ app:settings_binge  b914ef32a2e1
 app:settings_binge_preferences  2f344a3b2787
 app:settings_choices_filter  638e249f4a15
 app:settings_demo_note  f064b6ca2aa7
+app:settings_discovery  80fc40213320
+app:settings_discovery_caption  43ecdb3156f7
 app:settings_display_language  11a045e402c3
 app:settings_edit_connection  047f9f951500
 app:settings_edit_connection_caption  bc5acad237f1
@@ -1213,6 +1215,7 @@ app:title_kind_collection  7b790708ff1b
 app:title_kind_movie  941de4447b2e
 app:title_kind_person  6007db63e18e
 app:title_kind_series  ca62d5e073f5
+app:title_kind_studio  0aa91af2ec4c
 app:title_page_action_report  b6ce788d9786
 app:title_page_action_share  29887a5ff984
 app:title_page_action_trailer  6a7b20d1da8a
@@ -1273,6 +1276,7 @@ app:title_search_type_all  a52ace420f21
 app:title_search_type_none_message  c38ab7f5a517
 app:title_search_type_none_title  f66fd111a0f7
 app:title_search_type_people  7db20897053b
+app:title_search_type_studios  e41cca7d2395
 app:title_sheet_note_blocklisted  099c01eec535
 app:title_sheet_note_cannot_request  7cb50e8e8ac7
 app:title_sheet_note_in_library  6aacfe844e11
@@ -1460,6 +1464,7 @@ app:user_settings_unlinked_done  33f1cdf22cb6
 app:user_settings_watchlist_movies  555533a147fe
 app:user_settings_watchlist_tv  4e8636deae2a
 app:user_watchlist  eff2ec588be1
+app:user_watchlist_count  ccf7dfaff0dd
 app:users_add_cd  4cd030d9892f
 app:users_add_create  d46f69340818
 app:users_add_create_desc  a1b978098f8d

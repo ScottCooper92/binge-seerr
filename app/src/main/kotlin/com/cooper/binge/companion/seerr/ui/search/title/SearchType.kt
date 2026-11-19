@@ -11,13 +11,17 @@ enum class SearchType(
     Movies(TitleKind.Movie),
     Series(TitleKind.Series),
     People(TitleKind.Person),
+
+    /** Production companies, a list of their own: no title is one. */
+    Studios(null),
     ;
 
-    fun keeps(result: TitleResult): Boolean = kind == null || result.kind == kind
+    fun keeps(result: TitleResult): Boolean = this != Studios && (kind == null || result.kind == kind)
 }
 
 /**
  * How many results each type chip shows. A type counts what has loaded so far, so it grows as pages arrive. [SearchType.All]
- * counts every row loaded, collections included, so it always matches the list under it.
+* counts every row loaded, collections included, so it always matches the list under it. The studios are a list of their own.
  */
-internal fun List<TitleResult>.typeCounts(): Map<SearchType, Int> = SearchType.entries.associateWith { type -> count(type::keeps) }
+internal fun List<TitleResult>.typeCounts(studios: Int = 0): Map<SearchType, Int> =
+    SearchType.entries.associateWith { type -> if (type == SearchType.Studios) studios else count(type::keeps) }
