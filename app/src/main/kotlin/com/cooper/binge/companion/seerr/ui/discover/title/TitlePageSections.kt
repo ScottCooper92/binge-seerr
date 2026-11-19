@@ -26,6 +26,7 @@ import com.binge.designsystem.component.WrappingRow
 import com.binge.designsystem.isExpandedLayout
 import com.binge.designsystem.layout.LayoutAnchors
 import com.binge.designsystem.layout.layoutAnchor
+import com.binge.designsystem.resolvedContentInset
 import com.binge.designsystem.template.LocalHeroReadingMargin
 import com.binge.designsystem.theme.BingeSentiment
 import com.cooper.binge.companion.seerr.R
@@ -131,7 +132,7 @@ internal fun TagRow(
     labels: List<String>,
     modifier: Modifier = Modifier,
 ) {
-    WrappingRow(modifier.padding(horizontal = dimensionResource(DesR.dimen.padding_m))) {
+    WrappingRow(modifier.padding(horizontal = resolvedContentInset())) {
         labels.forEach { BingeTag(label = it, uppercase = false) }
     }
 }
