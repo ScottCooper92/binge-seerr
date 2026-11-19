@@ -15,6 +15,7 @@ import com.cooper.binge.companion.seerr.ui.CollectionRoute
 import com.cooper.binge.companion.seerr.ui.DetailPane
 import com.cooper.binge.companion.seerr.ui.DetailPaneContent
 import com.cooper.binge.companion.seerr.ui.DiscoverGridRoute
+import com.cooper.binge.companion.seerr.ui.NavMotionSpecs
 import com.cooper.binge.companion.seerr.ui.PersonDetailRoute
 import com.cooper.binge.companion.seerr.ui.SeriesEpisodesRoute
 import com.cooper.binge.companion.seerr.ui.TitleCreditsRoute
@@ -28,8 +29,11 @@ import com.cooper.binge.companion.seerr.ui.popIfTop
 import com.cooper.binge.companion.seerr.ui.toRequestMediaType
 
 /** The title pages: a film's or a series' page, every season's episodes of it, a collection, the credits, and a person's page. Each leaves through [popIfTop] with its own key. */
-fun EntryProviderScope<NavKey>.titleEntries(backStack: NavBackStack<NavKey>) {
-    entry<TitleDetailRoute>(metadata = DetailPane) { route ->
+internal fun EntryProviderScope<NavKey>.titleEntries(
+    backStack: NavBackStack<NavKey>,
+    motion: NavMotionSpecs,
+) {
+    entry<TitleDetailRoute>(metadata = DetailPane + motion.detail) { route ->
         DetailPaneContent {
             TitleDetailEntry(
                 route.kind,
@@ -43,18 +47,18 @@ fun EntryProviderScope<NavKey>.titleEntries(backStack: NavBackStack<NavKey>) {
             )
         }
     }
-    entry<CollectionRoute>(metadata = DetailPane) { route ->
+    entry<CollectionRoute>(metadata = DetailPane + motion.detail) { route ->
         DetailPaneContent { CollectionPageEntry(route.id, onBack = { backStack.popIfTop(route) }) }
     }
-    entry<PersonDetailRoute>(metadata = DetailPane) { route ->
+    entry<PersonDetailRoute>(metadata = DetailPane + motion.detail) { route ->
         DetailPaneContent { PersonEntry(route.personId, onBack = { backStack.popIfTop(route) }) }
     }
-    entry<SeriesEpisodesRoute>(metadata = DetailPane) { route ->
+    entry<SeriesEpisodesRoute>(metadata = DetailPane + motion.detail) { route ->
         DetailPaneContent {
             SeriesEpisodesEntry(route.tmdbId, route.seriesName, route.seasonNumber, onBack = { backStack.popIfTop(route) })
         }
     }
-    entry<TitleCreditsRoute>(metadata = DetailPane) { route ->
+    entry<TitleCreditsRoute>(metadata = DetailPane + motion.detail) { route ->
         DetailPaneContent { TitleCreditsEntry(route.kind, route.tmdbId, onBack = { backStack.popIfTop(route) }) }
     }
 }

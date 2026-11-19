@@ -37,7 +37,7 @@ private fun Search(
     )
 }
 
-private fun List<SettingEntry<SeerrSearchTarget>>.of(target: SearchTarget) = single { it.target.target == target }
+private fun List<SettingEntry<SeerrSearchTarget>>.of(target: SearchTarget) = single { it.target.target == target && it.row == null }
 
 /** The settings search: the empty page, results for an admin, results for a viewer who is not one, and a query nothing matches. */
 class SettingsSearchScreenshotTest {

@@ -22,8 +22,9 @@ permissions:
   contents: read
 
 jobs:
-  # The same four slices ci.yml runs as parallel jobs, as a matrix: one serial `./gradlew build` outgrew the 30 minutes a
-  # job gets (#1630). Each slice resolves the upstream heads itself. `canary-report` below reads the matrix's aggregate result.
+  # The same slices ci.yml runs as parallel jobs, as a matrix: one serial `./gradlew build` outgrew the 30 minutes a
+  # job gets (#1630). The screenshots are three slices, one per shard of ci.yml's split. Each slice resolves the upstream
+  # heads itself. `canary-report` below reads the matrix's aggregate result.
   canary:
     name: canary (${{ matrix.slice }})
     runs-on: ubuntu-latest
@@ -38,10 +39,20 @@ jobs:
           - slice: tests
             timeout: 30
             command: ./gradlew testDebugUnitTest koverVerify --continue
-          # The screenshots slice runs every frame in one JVM, where ci.yml shards them in three jobs of 20 minutes each, so it keeps 45: a slow runner has taken twice the usual 11 to 16.
-          - slice: screenshots
-            timeout: 45
-            command: ./gradlew :app:validateDebugScreenshotTest --continue
+          # The screenshots in the three shards ci.yml uses, so each renders in a JVM of its own and in the 20 minutes ci.yml gives
+          # a shard (#2249). One JVM for every frame took 45 minutes and was killed on the runner (#2181).
+          - slice: screenshots-0
+            timeout: 20
+            shard: 0
+            shards: 3
+          - slice: screenshots-1
+            timeout: 20
+            shard: 1
+            shards: 3
+          - slice: screenshots-2
+            timeout: 20
+            shard: 2
+            shards: 3
           - slice: release
             timeout: 30
             command: ./gradlew assembleRelease --continue
@@ -81,7 +92,28 @@ jobs:
           cache-read-only: true
 
       - name: Build the ${{ matrix.slice }} slice
+        if: ${{ !startsWith(matrix.slice, 'screenshots') }}
         run: ${{ matrix.command }}
+
+      # As in ci.yml: a cold compile and the render sharing one VM ran it out of memory, so the sources compile first.
+      - name: Compile screenshot sources
+        if: ${{ startsWith(matrix.slice, 'screenshots') }}
+        run: ./gradlew :app:compileDebugScreenshotTestKotlin --max-workers=2
+
+      - name: Validate screenshots (shard ${{ matrix.shard }} of ${{ matrix.shards }})
+        if: ${{ startsWith(matrix.slice, 'screenshots') }}
+        env:
+          SHARD: ${{ matrix.shard }}
+          SHARDS: ${{ matrix.shards }}
+        run: |
+          mapfile -t filters < <(.github/scripts/shard-screenshots.sh "$SHARDS" "$SHARD")
+          if [ "${#filters[@]}" -eq 0 ]; then
+            echo "shard $SHARD has no classes; an empty filter would run the whole suite in one JVM" >&2
+            exit 1
+          fi
+          printf '%s\n' "${filters[@]}" | paste - - | sed 's/^/  /'
+          ./gradlew --stop
+          ./gradlew :app:validateDebugScreenshotTest --continue "${filters[@]}"
 
       # As in ci.yml: UncaughtExceptionsBeforeTest names the test that ran next, never the coroutine that leaked, and this
       # report does. Printing it keeps the answer in the log rather than only in the artifact (#807).

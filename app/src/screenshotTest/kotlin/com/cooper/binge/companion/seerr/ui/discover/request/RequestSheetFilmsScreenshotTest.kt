@@ -129,7 +129,7 @@ class RequestSheetFilmsScreenshotTest {
     @Composable
     fun pageIn4k() = FilmsPage(state(may4k = true, use4k = true))
 
-    /** The longest names at font scales 1.5 and 2. */
+    /** The longest names at font scale 2. */
     @PreviewTest
     @SeerrFontScalePreviews
     @Composable

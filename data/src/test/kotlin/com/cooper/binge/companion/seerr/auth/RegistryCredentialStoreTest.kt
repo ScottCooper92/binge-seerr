@@ -13,6 +13,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
@@ -298,6 +300,68 @@ class RegistryCredentialStoreTest {
         assertNull(SeerrLoginCodec.join(mapOf("kind" to "oauth"), "s"))
         assertNull(SeerrLoginCodec.join(mapOf("kind" to "session"), "s"))
         assertEquals(SeerrVariant.Unknown, SeerrLoginCodec.join(mapOf("kind" to "api_key", "variant" to "Nope"), "s")?.variant)
+    }
+
+    @Test
+    fun `a save to a new address never reads as the old address with the new secret`() =
+        runTest {
+            val install = install()
+            install.store.save(apiKey)
+            install.store.signOut()
+            val seen = mutableListOf<SeerrCredentials?>()
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { install.store.credentials.toList(seen) }
+
+            install.store.save(session)
+
+            assertEquals(listOf(session), seen.filterNotNull().distinct())
+            assertEquals(session, install.store.credentials.first())
+        }
+
+    @Test
+    fun `a login saved for another address reads as signed out of the saved one`() =
+        runTest {
+            val install = install()
+            install.store.save(apiKey)
+            val id =
+                install.registry
+                    .current()
+                    .servers
+                    .single()
+                    .id
+
+            install.logins.save(id, SeerrLogin(SeerrAuth.ApiKey("other"), SeerrVariant.Seerr, boundTo = "https://elsewhere.example/"))
+
+            assertNull(install.store.credentials.first())
+            assertEquals(apiKey.baseUrl, install.store.signedOutServer.first())
+        }
+
+    @Test
+    fun `a login saved before its address was kept is trusted on the saved address`() =
+        runTest {
+            val install = install()
+            install.store.save(apiKey)
+            val id =
+                install.registry
+                    .current()
+                    .servers
+                    .single()
+                    .id
+
+            install.logins.save(id, SeerrLogin(apiKey.auth, apiKey.variant))
+
+            assertEquals(apiKey, install.store.credentials.first())
+            assertNull(install.store.signedOutServer.first())
+        }
+
+    @Test
+    fun `the address a login was saved for is kept in the clear and reads back`() {
+        val login = SeerrLogin(SeerrAuth.ApiKey("k"), SeerrVariant.Seerr, boundTo = "https://seerr.example.com/")
+
+        val parts = SeerrLoginCodec.split(login)
+
+        assertEquals("https://seerr.example.com/", parts.fields["address"])
+        assertEquals(login, SeerrLoginCodec.join(parts.fields, "k"))
+        assertNull(SeerrLoginCodec.join(mapOf("kind" to "api_key", "variant" to "Seerr"), "k")?.boundTo)
     }
 
     private class ReversingCipher : SecretCipher {

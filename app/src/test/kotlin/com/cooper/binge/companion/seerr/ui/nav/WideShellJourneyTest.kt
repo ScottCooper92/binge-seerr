@@ -334,12 +334,35 @@ class WideShellJourneyTest {
     }
 
     @Test
-    fun `a fold moves no entry and keeps the section's filter`() {
+    fun `a fold moves no entry and keeps the section's filter`() =
+        foldKeepsTheFilter {
+            host.clickUntil(
+                "the Pending chip selected after tapping it",
+                WAIT_MILLIS,
+                pending(),
+                target = ::chip,
+                reached = ::chipIsSelected,
+            )
+        }
+
+    /**
+     * The same fold with the chip clicked through its semantic action, which sends no touch. Run beside the touch one, a failure of
+     * the touch variant alone says the tap, not the filter, is what is lost (#2257).
+     */
+    @Test
+    fun `a fold moves no entry and keeps the section's filter when the chip is clicked by its semantic action`() =
+        foldKeepsTheFilter {
+            host.await("the Pending chip selected after its click action", WAIT_MILLIS, pending()) {
+                chipIsSelected().also { selected -> if (!selected) chip().performSemanticsAction(SemanticsActions.OnClick) }
+            }
+        }
+
+    private fun foldKeepsTheFilter(selectPendingChip: () -> Unit) {
         NavHostActivity.discoveryEnabled = true
         host.connectDemo()
         host.launch(HomeRoute, RequestsRoute)
         awaitChipReady()
-        host.clickUntil("the Pending chip selected after tapping it", WAIT_MILLIS, pending(), target = ::chip, reached = ::chipIsSelected)
+        selectPendingChip()
 
         host.rotate(PHONE)
         host.awaitShowing(host.string(R.string.requests_filter_pending))
