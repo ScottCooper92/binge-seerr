@@ -7,12 +7,17 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.HowToVote
 import androidx.compose.material.icons.filled.Language
+import androidx.compose.material.icons.filled.LiveTv
 import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.Sync
+import androidx.compose.material.icons.filled.Tag
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -21,6 +26,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -30,7 +36,9 @@ import com.binge.designsystem.component.BingeTextButton
 import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
 import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverFilters
+import com.cooper.binge.companion.seerr.discover.grid.FilterGroup
 import com.cooper.binge.companion.seerr.discover.grid.ReleasePreset
 import java.text.NumberFormat
 import java.time.LocalDate
@@ -48,13 +56,43 @@ internal enum class DiscoverFilterSection(
     Runtime(R.string.grid_filter_runtime, Icons.Filled.Schedule),
     Votes(R.string.grid_filter_votes, Icons.Filled.HowToVote),
     Language(R.string.grid_filter_language, Icons.Filled.Language),
+    WhereToWatch(R.string.grid_filter_where, Icons.Filled.LiveTv),
+    Certification(R.string.grid_filter_cert, Icons.Filled.Shield),
+    Keywords(R.string.grid_filter_keywords, Icons.Filled.Tag),
+    ExcludeKeywords(R.string.grid_filter_keywords_exclude, Icons.Filled.Block),
+    Status(R.string.grid_filter_status, Icons.Filled.Sync),
     ;
 
+    /** The filters the row sets, which the grid shows as one chip. */
+    val group: FilterGroup
+        get() =
+            when (this) {
+                Genres -> FilterGroup.Genres
+                Release -> FilterGroup.Release
+                Rating -> FilterGroup.Rating
+                Runtime -> FilterGroup.Runtime
+                Votes -> FilterGroup.Votes
+                Language -> FilterGroup.Language
+                WhereToWatch -> FilterGroup.Where
+                Certification -> FilterGroup.Certification
+                Keywords -> FilterGroup.Keywords
+                ExcludeKeywords -> FilterGroup.ExcludedKeywords
+                Status -> FilterGroup.Status
+            }
+
     /** Whether the sheet has anything to offer for this row: a picker with no choices is left out. */
-    fun isOffered(vocabulary: FilterVocabulary): Boolean =
+    fun isOffered(
+        vocabulary: FilterVocabulary,
+        kind: TitleKind,
+    ): Boolean =
         when (this) {
             Genres -> vocabulary.genres.isNotEmpty()
             Language -> vocabulary.languages.isNotEmpty()
+            WhereToWatch -> vocabulary.capabilities.watch && vocabulary.regions.isNotEmpty()
+            Certification -> vocabulary.capabilities.certification && vocabulary.certifications.isNotEmpty()
+            Keywords -> vocabulary.capabilities.keywords
+            ExcludeKeywords -> vocabulary.capabilities.excludeKeywords
+            Status -> vocabulary.capabilities.status && kind == TitleKind.Series
             else -> true
         }
 }
@@ -106,12 +144,13 @@ internal fun FilterSheetHeader(
 @Composable
 internal fun DiscoverFilterRows(
     filters: DiscoverFilters,
+    kind: TitleKind,
     vocabulary: FilterVocabulary,
     today: LocalDate,
     onOpen: (DiscoverFilterSection) -> Unit,
 ) {
     val rows =
-        DiscoverFilterSection.entries.filter { it.isOffered(vocabulary) }.map { section ->
+        DiscoverFilterSection.entries.filter { it.isOffered(vocabulary, kind) }.map { section ->
             ListItem(
                 icon = section.icon,
                 label = stringResource(section.title),
@@ -148,8 +187,38 @@ internal fun DiscoverFilterSection.summary(
         DiscoverFilterSection.Runtime -> runtimeSummary(filters) ?: any
         DiscoverFilterSection.Votes ->
             filters.voteCountMin?.let { stringResource(R.string.grid_filter_votes_value, number.format(it)) } ?: any
+        DiscoverFilterSection.WhereToWatch ->
+            vocabulary.providers[filters.region ?: vocabulary.defaultRegion]
+                .orEmpty()
+                .filter { it.id.toInt() in filters.providers }
+                .joinToString(", ") { it.name }
+                .ifEmpty { if (filters.providers.isEmpty()) any else number.format(filters.providers.size) }
+        DiscoverFilterSection.Certification ->
+            filters.certification?.let {
+                stringResource(
+                    R.string.grid_filter_pair,
+                    filters.certificationCountry?.let(::countryName).orEmpty(),
+                    it,
+                )
+            }
+                ?: any
+        DiscoverFilterSection.Keywords -> keywordSummary(filters.keywords, vocabulary) ?: any
+        DiscoverFilterSection.ExcludeKeywords -> keywordSummary(filters.excludeKeywords, vocabulary) ?: any
+        DiscoverFilterSection.Status -> {
+            val resources = LocalContext.current.resources
+            filters.status
+                .sorted()
+                .mapNotNull(::statusLabel)
+                .joinToString(", ") { resources.getString(it) }
+                .ifEmpty { any }
+        }
     }
 }
+
+private fun keywordSummary(
+    ids: Set<Int>,
+    vocabulary: FilterVocabulary,
+): String? = ids.sorted().joinToString(", ") { vocabulary.keywordNames[it] ?: it.toString() }.ifEmpty { null }
 
 @Composable
 private fun releaseSummary(

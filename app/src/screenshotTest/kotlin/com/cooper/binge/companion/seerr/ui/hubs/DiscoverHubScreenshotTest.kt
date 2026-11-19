@@ -44,6 +44,12 @@ class DiscoverHubScreenshotTest {
     @Composable
     fun series() = Frame(readyState(), tab = HubTab.Series)
 
+    /** A server with no trending list: no hero, and no place kept for one, so the rows start at the top under the status bar. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun noHero() = Frame(readyState(heroPlace = false))
+
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
@@ -174,6 +180,7 @@ private fun readyState(
     pending: Int = 0,
     refreshing: Boolean = false,
     hero: List<HubHero> = emptyList(),
+    heroPlace: Boolean = true,
 ) = DiscoverHubUiState.Ready(
     rows =
         listOf(
@@ -184,6 +191,7 @@ private fun readyState(
     pending = pending,
     refreshing = refreshing,
     hero = hero,
+    heroPlace = heroPlace,
 )
 
 private fun longTitleState() =
@@ -220,6 +228,7 @@ private fun hero(
     name: String,
     availability: TitleAvailability,
     genres: List<String> = listOf("Action", "Adventure"),
+    rating: Float? = null,
 ) = HubHero(
     TitleKind.Movie,
     id,
@@ -230,12 +239,13 @@ private fun hero(
     "https://server.example/movie/$id",
     genres,
     rank = id,
+    rating = rating,
 )
 
 private val HEROES =
     listOf(
-        hero(1, "The Long Way Home", TitleAvailability.Available),
-        hero(2, "Northern Lights", TitleAvailability.Pending),
+        hero(1, "The Long Way Home", TitleAvailability.Available, rating = 7.9f),
+        hero(2, "Northern Lights", TitleAvailability.Pending, rating = 6.4f),
         hero(3, "A Quiet Harbour", TitleAvailability.None),
     )
 
@@ -245,4 +255,5 @@ private val LONG_HERO =
         "The Extraordinarily Long Title of a Film That Keeps Going: Part Two, the Return of the Seven Rivers",
         TitleAvailability.PartiallyAvailable,
         genres = listOf("Science Fiction & Fantasy", "Adventure", "Action"),
+        rating = 8.1f,
     )

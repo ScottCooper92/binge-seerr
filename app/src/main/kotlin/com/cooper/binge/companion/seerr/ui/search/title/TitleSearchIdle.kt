@@ -14,6 +14,7 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.CarouselSkeleton
+import com.binge.designsystem.navOverlayStart
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.TitleResult
 import com.cooper.binge.companion.seerr.ui.discover.title.TitleRow
@@ -22,7 +23,7 @@ import com.binge.designsystem.R as DesR
 
 /**
  * What the Search tab offers before anything is searched: the recent queries as chips, then the trending rails. With neither,
- * the plain prompt to search.
+ * the plain prompt to search. [contentPadding] bleeds under the navigation rail, as the rails clear it themselves.
  */
 @Composable
 internal fun IdleBody(
@@ -37,7 +38,7 @@ internal fun IdleBody(
             message = stringResource(R.string.title_search_idle_message),
             title = stringResource(R.string.title_search_idle_title),
             icon = Icons.Filled.Search,
-            modifier = Modifier.padding(contentPadding),
+            modifier = Modifier.padding(contentPadding).padding(start = navOverlayStart()),
         )
         return
     }

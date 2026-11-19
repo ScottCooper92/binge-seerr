@@ -63,6 +63,12 @@ class WideShellJourneyTest {
     @get:Rule
     internal val host = RealNavHostRule(this)
 
+    /** A wait for [what] that, on a timeout, prints the back stack and the screen: see [RealNavHostRule.await]. */
+    private fun awaitState(
+        what: String,
+        condition: () -> Boolean,
+    ) = host.await(what, WAIT_MILLIS, condition)
+
     @After
     fun flagOff() {
         NavHostActivity.discoveryEnabled = false
@@ -83,7 +89,7 @@ class WideShellJourneyTest {
      * before the section's chip row has composed, and a click made then lands on nothing.
      */
     private fun awaitChipReady() {
-        host.compose.waitUntil(WAIT_MILLIS) {
+        awaitState("the Pending chip to be composed and enabled") {
             host.compose
                 .onAllNodes(
                     hasText(host.string(R.string.requests_filter_pending), substring = true) and
@@ -96,15 +102,13 @@ class WideShellJourneyTest {
     }
 
     /** Waits for the chip to read as selected: the filter comes back through restored state, a frame after the screen shows. */
-    private fun awaitChipSelected() {
-        host.compose.waitUntil(WAIT_MILLIS) {
-            host.compose
-                .onAllNodes(
-                    hasText(host.string(R.string.requests_filter_pending), substring = true) and isSelected(),
-                ).fetchSemanticsNodes()
-                .isNotEmpty()
-        }
-    }
+    private fun awaitChipSelected() = host.await("the Pending chip selected", WAIT_MILLIS) { chipIsSelected() }
+
+    private fun chipIsSelected() =
+        host.compose
+            .onAllNodes(hasText(host.string(R.string.requests_filter_pending), substring = true) and isSelected())
+            .fetchSemanticsNodes()
+            .isNotEmpty()
 
     private fun bar() = host.compose.onNodeWithTag("tab_settings")
 
@@ -120,7 +124,7 @@ class WideShellJourneyTest {
             .onNodeWithText(host.string(R.string.hub_section_issues_desc), substring = true)
             .performScrollTo()
             .performSemanticsAction(SemanticsActions.OnClick)
-        host.compose.waitUntil(WAIT_MILLIS) { host.stack() == listOf(ShellRoute, IssuesRoute) }
+        awaitState("the app stack to be listOf(ShellRoute, IssuesRoute)") { host.stack() == listOf(ShellRoute, IssuesRoute) }
 
         bar().assertIsDisplayed()
         assertEquals("the hub is still on screen beside the section", true, host.isShowing(host.string(R.string.hub_section_requests_desc)))
@@ -133,7 +137,10 @@ class WideShellJourneyTest {
         host.launch(HomeRoute, RequestsRoute)
         host.awaitShowing(host.string(R.string.requests_filter_processing))
 
-        host.compose.waitUntil(WAIT_MILLIS) { host.stack() == listOf<NavKey>(ShellRoute, RequestsRoute) }
+        awaitState("the app stack to be listOf<NavKey>(ShellRoute, RequestsRoute)") {
+            host.stack() ==
+                listOf<NavKey>(ShellRoute, RequestsRoute)
+        }
         bar().assertIsDisplayed()
         host.awaitShowing(host.string(R.string.hub_section_issues_desc))
     }
@@ -143,11 +150,17 @@ class WideShellJourneyTest {
         NavHostActivity.discoveryEnabled = true
         host.connectDemo()
         host.launch(HomeRoute, TitleDetailRoute(TitleKind.Movie, DEMO_FILM_ID))
-        host.compose.waitUntil(WAIT_MILLIS) { host.stack() == listOf(ShellRoute, TitleDetailRoute(TitleKind.Movie, DEMO_FILM_ID)) }
+        awaitState("the app stack to be listOf(ShellRoute, TitleDetailRoute(TitleKind.Movie, DEMO_FILM_ID))") {
+            host.stack() ==
+                listOf(ShellRoute, TitleDetailRoute(TitleKind.Movie, DEMO_FILM_ID))
+        }
 
         host.openLink(HomeRoute, RequestsRoute)
 
-        host.compose.waitUntil(WAIT_MILLIS) { host.stack() == listOf<NavKey>(ShellRoute, RequestsRoute) }
+        awaitState("the app stack to be listOf<NavKey>(ShellRoute, RequestsRoute)") {
+            host.stack() ==
+                listOf<NavKey>(ShellRoute, RequestsRoute)
+        }
         bar().assertIsDisplayed()
         host.awaitShowing(host.string(R.string.hub_section_issues_desc))
     }
@@ -157,16 +170,22 @@ class WideShellJourneyTest {
         NavHostActivity.discoveryEnabled = true
         host.connectDemo()
         host.launch(HomeRoute, RequestsRoute)
-        host.compose.waitUntil(WAIT_MILLIS) { host.stack() == listOf<NavKey>(ShellRoute, RequestsRoute) }
+        awaitState("the app stack to be listOf<NavKey>(ShellRoute, RequestsRoute)") {
+            host.stack() ==
+                listOf<NavKey>(ShellRoute, RequestsRoute)
+        }
 
         host.compose.onNodeWithTag("tab_search").performClick()
-        host.compose.waitUntil(WAIT_MILLIS) { host.stack() == listOf<NavKey>(ShellRoute) }
+        awaitState("the app stack to be listOf<NavKey>(ShellRoute)") { host.stack() == listOf<NavKey>(ShellRoute) }
         host.push(TitleDetailRoute(TitleKind.Movie, DEMO_FILM_ID))
 
-        host.compose.waitUntil(WAIT_MILLIS) { host.stack() == listOf(ShellRoute, TitleDetailRoute(TitleKind.Movie, DEMO_FILM_ID)) }
+        awaitState("the app stack to be listOf(ShellRoute, TitleDetailRoute(TitleKind.Movie, DEMO_FILM_ID))") {
+            host.stack() ==
+                listOf(ShellRoute, TitleDetailRoute(TitleKind.Movie, DEMO_FILM_ID))
+        }
         host.compose.onNodeWithTag("tab_settings").assertDoesNotExist()
         host.back()
-        host.compose.waitUntil(WAIT_MILLIS) { host.stack() == listOf<NavKey>(ShellRoute) }
+        awaitState("the app stack to be listOf<NavKey>(ShellRoute)") { host.stack() == listOf<NavKey>(ShellRoute) }
         bar().assertIsDisplayed()
     }
 
@@ -175,12 +194,18 @@ class WideShellJourneyTest {
         NavHostActivity.discoveryEnabled = true
         host.connectDemo()
         host.launch(HomeRoute, RequestsRoute)
-        host.compose.waitUntil(WAIT_MILLIS) { host.stack() == listOf<NavKey>(ShellRoute, RequestsRoute) }
+        awaitState("the app stack to be listOf<NavKey>(ShellRoute, RequestsRoute)") {
+            host.stack() ==
+                listOf<NavKey>(ShellRoute, RequestsRoute)
+        }
         host.compose.onNodeWithTag("tab_search").performClick()
-        host.compose.waitUntil(WAIT_MILLIS) { host.stack() == listOf<NavKey>(ShellRoute) }
+        awaitState("the app stack to be listOf<NavKey>(ShellRoute)") { host.stack() == listOf<NavKey>(ShellRoute) }
 
         host.back()
-        host.compose.waitUntil(WAIT_MILLIS) { host.stack() == listOf<NavKey>(ShellRoute, RequestsRoute) }
+        awaitState("the app stack to be listOf<NavKey>(ShellRoute, RequestsRoute)") {
+            host.stack() ==
+                listOf<NavKey>(ShellRoute, RequestsRoute)
+        }
         bar().assertIsDisplayed()
         host.awaitShowing(host.string(R.string.hub_section_issues_desc))
     }
@@ -194,10 +219,12 @@ class WideShellJourneyTest {
 
         host.compose.onNodeWithTag("tab_movies").performClick()
         host.awaitShowing(host.string(R.string.hubs_browse_all_movies))
-        host.compose.waitUntil(WAIT_MILLIS) { host.stack() == listOf<NavKey>(ShellRoute) }
+        awaitState("the app stack to be listOf<NavKey>(ShellRoute)") { host.stack() == listOf<NavKey>(ShellRoute) }
         host.compose.onNodeWithText(host.string(R.string.hubs_browse_all_movies)).performClick()
 
-        host.compose.waitUntil(WAIT_MILLIS) { host.stack().let { it.size == 2 && it[0] == ShellRoute && it[1] is DiscoverGridRoute } }
+        awaitState(
+            "two entries on the app stack",
+        ) { host.stack().let { it.size == 2 && it[0] == ShellRoute && it[1] is DiscoverGridRoute } }
         host.awaitShowing(host.string(R.string.hubs_row_popular_movies))
     }
 
@@ -206,12 +233,15 @@ class WideShellJourneyTest {
         NavHostActivity.discoveryEnabled = true
         host.connectDemo()
         host.launch(HomeRoute, RequestsRoute)
-        host.compose.waitUntil(WAIT_MILLIS) { host.stack() == listOf<NavKey>(ShellRoute, RequestsRoute) }
+        awaitState("the app stack to be listOf<NavKey>(ShellRoute, RequestsRoute)") {
+            host.stack() ==
+                listOf<NavKey>(ShellRoute, RequestsRoute)
+        }
         host.compose.onNodeWithTag("tab_search").performClick()
-        host.compose.waitUntil(WAIT_MILLIS) { host.stack() == listOf<NavKey>(ShellRoute) }
+        awaitState("the app stack to be listOf<NavKey>(ShellRoute)") { host.stack() == listOf<NavKey>(ShellRoute) }
 
         host.disconnect()
-        host.compose.waitUntil(WAIT_MILLIS) {
+        awaitState("the Settings tab stack to hold one entry") {
             host.compose.runOnIdle {
                 host.activity.tabs
                     .stack(SeerrTab.Settings)
@@ -219,7 +249,7 @@ class WideShellJourneyTest {
             } == 1
         }
         host.connectDemo()
-        host.compose.waitUntil(WAIT_MILLIS) { host.stack() == listOf<NavKey>(ShellRoute) }
+        awaitState("the app stack to be listOf<NavKey>(ShellRoute)") { host.stack() == listOf<NavKey>(ShellRoute) }
         host.compose.onNodeWithTag("tab_settings").performClick()
         host.compose.waitForIdle()
 
@@ -228,7 +258,7 @@ class WideShellJourneyTest {
 
     /** The round Back control over a page pushed above the shell: it covers the window, so no list beside it offers the way back. */
     private fun awaitBackControl() {
-        host.compose.waitUntil(WAIT_MILLIS) {
+        awaitState("the Back control") {
             host.compose
                 .onAllNodes(hasContentDescription(host.string(DesR.string.cd_navigate_back)))
                 .fetchSemanticsNodes()
@@ -241,7 +271,10 @@ class WideShellJourneyTest {
         NavHostActivity.discoveryEnabled = true
         host.connectDemo()
         host.launch(HomeRoute, TitleDetailRoute(TitleKind.Movie, DEMO_FILM_ID))
-        host.compose.waitUntil(WAIT_MILLIS) { host.stack() == listOf(ShellRoute, TitleDetailRoute(TitleKind.Movie, DEMO_FILM_ID)) }
+        awaitState("the app stack to be listOf(ShellRoute, TitleDetailRoute(TitleKind.Movie, DEMO_FILM_ID))") {
+            host.stack() ==
+                listOf(ShellRoute, TitleDetailRoute(TitleKind.Movie, DEMO_FILM_ID))
+        }
 
         awaitBackControl()
         host.compose
@@ -249,7 +282,7 @@ class WideShellJourneyTest {
             .assertIsDisplayed()
             .performClick()
 
-        host.compose.waitUntil(WAIT_MILLIS) { host.stack() == listOf<NavKey>(ShellRoute) }
+        awaitState("the app stack to be listOf<NavKey>(ShellRoute)") { host.stack() == listOf<NavKey>(ShellRoute) }
         bar().assertIsDisplayed()
     }
 
@@ -258,7 +291,7 @@ class WideShellJourneyTest {
         NavHostActivity.discoveryEnabled = true
         host.connectDemo()
         host.launch(HomeRoute)
-        host.compose.waitUntil(WAIT_MILLIS) {
+        awaitState("the Movies tab") {
             host.compose
                 .onAllNodes(hasTestTag("tab_movies"))
                 .fetchSemanticsNodes()
@@ -268,14 +301,14 @@ class WideShellJourneyTest {
         host.awaitShowing(host.string(R.string.hubs_browse_all_movies))
 
         host.compose.onAllNodes(hasText(DEMO_FILM_NAME, substring = true) and hasClickAction())[0].performClick()
-        host.compose.waitUntil(WAIT_MILLIS) { host.stack().let { it.size == 2 && it[1] is TitleDetailRoute } }
+        awaitState("two entries on the app stack") { host.stack().let { it.size == 2 && it[1] is TitleDetailRoute } }
 
         awaitBackControl()
         host.compose
             .onNodeWithContentDescription(host.string(DesR.string.cd_navigate_back))
             .assertIsDisplayed()
             .performClick()
-        host.compose.waitUntil(WAIT_MILLIS) { host.stack() == listOf<NavKey>(ShellRoute) }
+        awaitState("the app stack to be listOf<NavKey>(ShellRoute)") { host.stack() == listOf<NavKey>(ShellRoute) }
         host.awaitShowing(host.string(R.string.hubs_browse_all_movies))
     }
 
@@ -285,7 +318,7 @@ class WideShellJourneyTest {
         host.connectDemo()
         val grid = DiscoverGridRoute(TitleKind.Movie, GridPreset.Popular, null)
         host.launch(HomeRoute, grid)
-        host.compose.waitUntil(WAIT_MILLIS) { host.stack() == listOf(ShellRoute, grid) }
+        awaitState("the app stack to be listOf(ShellRoute, grid)") { host.stack() == listOf(ShellRoute, grid) }
 
         awaitBackControl()
         host.compose
@@ -293,7 +326,7 @@ class WideShellJourneyTest {
             .assertIsDisplayed()
             .performClick()
 
-        host.compose.waitUntil(WAIT_MILLIS) { host.stack() == listOf<NavKey>(ShellRoute) }
+        awaitState("the app stack to be listOf<NavKey>(ShellRoute)") { host.stack() == listOf<NavKey>(ShellRoute) }
     }
 
     @Test
@@ -302,8 +335,7 @@ class WideShellJourneyTest {
         host.connectDemo()
         host.launch(HomeRoute, RequestsRoute)
         awaitChipReady()
-        chip().performClick()
-        awaitChipSelected()
+        host.clickUntil("the Pending chip selected after tapping it", WAIT_MILLIS, target = ::chip, reached = ::chipIsSelected)
 
         host.rotate(PHONE)
         host.awaitShowing(host.string(R.string.requests_filter_pending))

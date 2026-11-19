@@ -57,17 +57,11 @@ internal fun statsPerRow(): Int = if (LocalDensity.current.fontScale >= LARGE_FO
 @Composable
 internal fun TitleStatsRows(stats: List<DetailStat>) {
     val perRow = statsPerRow()
+    val margin = Modifier.readingMargin()
     stats.chunked(perRow).forEachIndexed { index, row ->
         DetailStatRow(
             stats = row,
-            modifier =
-                if (index ==
-                    0
-                ) {
-                    Modifier.layoutAnchor(LayoutAnchors.section(LayoutAnchors.Detail.STATS))
-                } else {
-                    Modifier
-                },
+            modifier = if (index == 0) margin.layoutAnchor(LayoutAnchors.section(LayoutAnchors.Detail.STATS)) else margin,
         )
     }
 }

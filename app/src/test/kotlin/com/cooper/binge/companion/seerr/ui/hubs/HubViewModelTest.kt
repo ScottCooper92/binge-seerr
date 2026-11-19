@@ -30,7 +30,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
@@ -81,8 +83,15 @@ class HubViewModelTest {
         private val fail: Boolean = false,
         private val canDiscoverByCompany: Boolean = true,
         private val gate: CompletableDeferred<Unit>? = null,
+        private val trendingSupported: Boolean = true,
+        private val trendingEmpty: Boolean = false,
     ) : TitleListRepository {
-        override suspend fun supports(source: TitleSource) = source !is TitleSource.ByCompany || canDiscoverByCompany
+        override suspend fun supports(source: TitleSource) =
+            when (source) {
+                is TitleSource.ByCompany -> canDiscoverByCompany
+                TitleSource.Trending -> trendingSupported
+                else -> true
+            }
 
         override suspend fun load(
             source: TitleSource,
@@ -90,6 +99,7 @@ class HubViewModelTest {
         ): TitlePage {
             if (fail) error("down")
             gate?.await()
+            if (trendingEmpty) return TitlePage(emptyList(), 1, 1)
             val movie = TitleResult(TitleKind.Movie, 1, "One", "2020", null, "/b.jpg", null, null, TitleAvailability.None, null)
             return TitlePage(listOf(movie), 1, 1)
         }
@@ -119,8 +129,10 @@ class HubViewModelTest {
     private class FakeGrid(
         private val canRefine: Boolean = true,
         private val fail: Boolean = false,
+        /** When set, the server answers only once this does. */
+        private val answer: CompletableDeferred<Boolean>? = null,
     ) : DiscoverGridRepository {
-        override suspend fun canRefine(preset: GridPreset): Boolean = if (fail) error("down") else canRefine
+        override suspend fun canRefine(preset: GridPreset): Boolean = if (fail) error("down") else answer?.await() ?: canRefine
 
         override suspend fun genres(kind: TitleKind): List<FilterOption> = emptyList()
 
@@ -299,8 +311,110 @@ class HubViewModelTest {
                 },
             )
         }
+
+    @Test
+    fun `the hub waits for the answer on filtering, so Browse all is never shown and then taken away`() =
+        runTest {
+            val answer = CompletableDeferred<Boolean>()
+            val model = vm(FakeSliders(SliderListState.Ready(listOf(slider(1, TRENDING)))), grid = FakeGrid(answer = answer))
+            val seen = mutableListOf<DiscoverHubUiState>()
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { model.uiState.collect { seen += it } }
+            testScheduler.advanceTimeBy(BROWSE_ALL_WAIT - 1)
+            assertEquals("rows are ready but the answer is not", DiscoverHubUiState.Loading, seen.last())
+
+            answer.complete(false)
+            val ready = seen.last() as DiscoverHubUiState.Ready
+            assertFalse(ready.browseAll)
+            assertTrue("no state showed Browse all", seen.filterIsInstance<DiscoverHubUiState.Ready>().none { it.browseAll })
+        }
+
+    @Test
+    fun `a server that does not answer in time is shown Browse all after the wait`() =
+        runTest {
+            val model = vm(FakeSliders(SliderListState.Ready(listOf(slider(1, TRENDING)))), grid = FakeGrid(answer = CompletableDeferred()))
+            val seen = mutableListOf<DiscoverHubUiState>()
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { model.uiState.collect { seen += it } }
+            testScheduler.advanceTimeBy(BROWSE_ALL_WAIT - 1)
+            assertEquals(DiscoverHubUiState.Loading, seen.last())
+
+            testScheduler.advanceTimeBy(2)
+            assertTrue((seen.last() as DiscoverHubUiState.Ready).browseAll)
+        }
+
+    private fun TestScope.heroStates(titles: Titles): List<DiscoverHubUiState> {
+        val model =
+            HubViewModel(
+                FakeSliders(SliderListState.Ready(listOf(slider(1, STUDIOS)))),
+                HubCardLoader(titles, NoMedia),
+                HubTileLoader(titles),
+                HubHeroLoader(titles, NoMedia),
+                FakeGrid(),
+                dispatcher,
+                HubTab.Movies,
+            )
+        val seen = mutableListOf<DiscoverHubUiState>()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { model.uiState.collect { seen += it } }
+        return seen
+    }
+
+    private fun List<DiscoverHubUiState>.ready() = filterIsInstance<DiscoverHubUiState.Ready>()
+
+    @Test
+    fun `a server with no trending list never has a hero place`() =
+        runTest {
+            val seen = heroStates(Titles(trendingSupported = false))
+
+            assertTrue("the rows show", seen.ready().isNotEmpty())
+            assertTrue("and no state kept a place for a hero", seen.ready().none { it.heroPlace })
+        }
+
+    @Test
+    fun `the hero's place is kept while it loads and filled when it answers`() =
+        runTest {
+            val gate = CompletableDeferred<Unit>()
+            val seen = heroStates(Titles(gate = gate))
+            assertTrue("rows are ready with the hero still on its way", seen.ready().last().heroPlace)
+            assertTrue(
+                seen
+                    .ready()
+                    .last()
+                    .hero
+                    .isEmpty(),
+            )
+
+            gate.complete(Unit)
+            assertEquals(
+                listOf(1),
+                seen
+                    .ready()
+                    .last()
+                    .hero
+                    .map { it.tmdbId },
+            )
+            assertTrue("the place was never taken away", seen.ready().all { it.heroPlace })
+        }
+
+    @Test
+    fun `an empty answer takes the hero's place away once, and the rows stay`() =
+        runTest {
+            val gate = CompletableDeferred<Unit>()
+            val seen = heroStates(Titles(gate = gate, trendingEmpty = true))
+            assertTrue(seen.ready().last().heroPlace)
+
+            gate.complete(Unit)
+            assertFalse(seen.ready().last().heroPlace)
+            assertEquals(
+                listOf(1),
+                seen
+                    .ready()
+                    .last()
+                    .rows
+                    .map { it.row.sliderId },
+            )
+        }
 }
 
+private const val BROWSE_ALL_WAIT = 1_000L
 private const val TRENDING = 4
 private const val MOVIE_GENRES = 6
 private const val STUDIOS = 8

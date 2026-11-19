@@ -27,11 +27,14 @@ import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 /** What a hub shows. */
@@ -43,8 +46,10 @@ sealed interface DiscoverHubUiState {
         val rows: List<HubRowUi>,
         val pending: Int,
         val refreshing: Boolean,
-        /** The carousel above the rows; empty where the server has no trending list or it failed. */
+        /** The carousel above the rows; empty where the server has no trending list, it failed or has not answered yet. */
         val hero: List<HubHero> = emptyList(),
+        /** Whether the hero's place is kept above the rows: while the hero loads, and with it; not once the answer is that there is none. */
+        val heroPlace: Boolean = true,
         /** Whether the "Browse all" row shows: it promises filters, which the grid only has on a server that takes them. */
         val browseAll: Boolean = true,
     ) : DiscoverHubUiState
@@ -94,10 +99,14 @@ class HubViewModel
         private val loader =
             HubLoader<HubRow, HubRowUi>(viewModelScope, dispatcher) { row -> listOfNotNull(rowUi(row, cards, tiles)) }
 
-        private val hero = MutableStateFlow<List<HubHero>>(emptyList())
+        /** Null until the server says whether it has a trending list; the hub waits for that like it does for [browseAll]. */
+        private val hero = MutableStateFlow<HeroSlot?>(null)
 
-        /** Shown until the server says it cannot filter: a row added later would land above the list, out of sight. */
-        private val browseAll = MutableStateFlow(true)
+        /**
+         * Whether the Browse all row shows. Null until the server says whether it can filter, and the hub waits for that, up to
+         * [BROWSE_ALL_WAIT_MILLIS] once its rows are ready, so the row is not shown and then taken away from under the user.
+         */
+        private val browseAll = MutableStateFlow<Boolean?>(null)
 
         val uiState: StateFlow<DiscoverHubUiState> =
             combine(sliders.sliders, loader.state, loader.refreshing, hero, browseAll) { list, rows, refreshing, hero, browseAll ->
@@ -110,6 +119,12 @@ class HubViewModel
                     if (list is SliderListState.Ready) loader.show(list.sliders.rowsFor(tab))
                 }
             }
+            viewModelScope.launch {
+                loader.state.first { it is HubState.Ready }
+                delay(BROWSE_ALL_WAIT_MILLIS)
+                browseAll.update { it ?: true }
+                hero.update { it ?: HeroSlot.Loading }
+            }
             load()
         }
 
@@ -121,9 +136,21 @@ class HubViewModel
 
         private fun load() {
             viewModelScope.launch { attempt { sliders.refresh() } }
+            viewModelScope.launch { loadHero() }
+            viewModelScope.launch {
+                // A failed read keeps the answer the hub already has, and shows Browse all only where it has none.
+                val answer = attempt { grid.canRefine(GridPreset.Popular) }.getOrNull()
+                browseAll.update { answer ?: it ?: true }
+            }
+        }
+
+        /** A server with no trending list has no hero place at all; otherwise the place stays until the answer says there is nothing. */
+        private suspend fun loadHero() {
+            if (hero.value == null) hero.value = if (attempt { heroes.supported() }.getOrDefault(true)) HeroSlot.Loading else HeroSlot.Gone
             // A failed hero leaves the last one, or none: it never holds the rows.
-            viewModelScope.launch { attempt { heroes.load(tab) }.onSuccess { hero.value = it } }
-            viewModelScope.launch { attempt { grid.canRefine(GridPreset.Popular) }.onSuccess { browseAll.value = it } }
+            attempt { heroes.load(tab) }
+                .onSuccess { titles -> hero.value = if (titles.isEmpty()) HeroSlot.Gone else HeroSlot.Shown(titles) }
+                .onFailure { hero.update { if (it is HeroSlot.Shown) it else HeroSlot.Gone } }
         }
 
         @AssistedFactory
@@ -132,14 +159,28 @@ class HubViewModel
         }
     }
 
+/** What the hero's place holds: kept while it loads, filled with the titles, or gone where the answer is that there are none. */
+private sealed interface HeroSlot {
+    data object Loading : HeroSlot
+
+    data class Shown(
+        val titles: List<HubHero>,
+    ) : HeroSlot
+
+    data object Gone : HeroSlot
+}
+
 private const val STOP_TIMEOUT_MILLIS = 5_000L
+
+/** How long the hub holds its rows for the server's answer on filtering, once they are ready, before it shows Browse all. */
+private const val BROWSE_ALL_WAIT_MILLIS = 1_000L
 
 private fun toUiState(
     list: SliderListState,
     rows: HubState<HubRow, HubRowUi>,
     refreshing: Boolean,
-    hero: List<HubHero>,
-    browseAll: Boolean,
+    hero: HeroSlot?,
+    browseAll: Boolean?,
 ): DiscoverHubUiState =
     when (list) {
         SliderListState.Loading -> DiscoverHubUiState.Loading
@@ -149,7 +190,20 @@ private fun toUiState(
                 HubState.Loading -> DiscoverHubUiState.Loading
                 HubState.Empty -> DiscoverHubUiState.Empty
                 is HubState.Failed -> DiscoverHubUiState.Error(rows.error.toSeerrError())
-                is HubState.Ready -> DiscoverHubUiState.Ready(rows.rows.flatMap { it.items }, rows.pending, refreshing, hero, browseAll)
+                is HubState.Ready ->
+                    if (browseAll == null || hero == null) {
+                        DiscoverHubUiState.Loading
+                    } else {
+                        val titles = (hero as? HeroSlot.Shown)?.titles.orEmpty()
+                        DiscoverHubUiState.Ready(
+                            rows.rows.flatMap { it.items },
+                            rows.pending,
+                            refreshing,
+                            titles,
+                            hero != HeroSlot.Gone,
+                            browseAll,
+                        )
+                    }
             }
     }
 

@@ -54,6 +54,7 @@ class DiscoverHubScreenTest {
         server: String,
         opened: MutableList<HubCard>,
         hero: List<HubHero> = emptyList(),
+        heroPlace: Boolean = true,
     ) {
         val card = HubCard(TitleKind.Movie, 7, "Paper Moons", "2020", null, TitleAvailability.None, server + "movie/7")
         val state =
@@ -62,6 +63,7 @@ class DiscoverHubScreenTest {
                 pending = 0,
                 refreshing = false,
                 hero = hero,
+                heroPlace = heroPlace,
             )
         compose.setContent {
             SeerrTheme {
@@ -72,6 +74,20 @@ class DiscoverHubScreenTest {
                 }, onOpenRequests = {})
             }
         }
+    }
+
+    @Test
+    fun `with no hero place the rows sit at the top, and with one they sit below it`() {
+        show("https://server.example/", mutableListOf(), heroPlace = false)
+        val without = compose.onNodeWithText("Paper Moons").getBoundsInRoot().top
+        assertTrue("no hero place above the row: $without", without < 400.dp)
+    }
+
+    @Test
+    fun `the hero's place keeps the rows below it`() {
+        show("https://server.example/", mutableListOf(), heroPlace = true)
+        val with = compose.onNodeWithText("Paper Moons").getBoundsInRoot().top
+        assertTrue("the hero's place is above the row: $with", with > 400.dp)
     }
 
     @Test
@@ -253,8 +269,35 @@ class DiscoverHubScreenTest {
         compose.onAllNodesWithText("See all", substring = true, ignoreCase = true, useUnmergedTree = true).assertCountEquals(0)
     }
 
-    private fun hero(server: String) =
-        HubHero(TitleKind.Movie, 9, "Seven Rivers", "https://img/b.jpg", "2021", TitleAvailability.Available, server + "movie/9")
+    private fun hero(
+        server: String,
+        rating: Float? = null,
+    ) = HubHero(
+        TitleKind.Movie,
+        9,
+        "Seven Rivers",
+        "https://img/b.jpg",
+        "2021",
+        TitleAvailability.Available,
+        server + "movie/9",
+        rating = rating,
+    )
+
+    @Test
+    fun `a rated hero shows its rating and an unrated one does not`() {
+        val server = "https://server.example/"
+        show(server, mutableListOf(), hero = listOf(hero(server, rating = 6.4f)))
+        compose.onNodeWithText("6.4", substring = true, useUnmergedTree = true).assertExists()
+    }
+
+    @Test
+    fun `a hero with no rating shows no score`() {
+        val server = "https://server.example/"
+        show(server, mutableListOf(), hero = listOf(hero(server)))
+        compose.onNodeWithText("Seven Rivers", substring = true, useUnmergedTree = true).assertExists()
+        compose.onAllNodesWithText("6.4", substring = true, useUnmergedTree = true).assertCountEquals(0)
+        compose.onAllNodesWithText("0.0", substring = true, useUnmergedTree = true).assertCountEquals(0)
+    }
 
     @Test
     fun `the hero shows above the rows and a tap on it opens its title`() {

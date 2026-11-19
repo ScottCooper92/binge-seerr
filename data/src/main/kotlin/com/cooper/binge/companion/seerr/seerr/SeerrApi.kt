@@ -652,6 +652,12 @@ interface SeerrApi {
         @Path("networkId") networkId: Int,
     ): SeerrCompanyDto
 
+    /** The age ratings TMDB knows for [type] (`movie` or `tv`), by country, for the discover certification filter. */
+    @GET("api/v1/certifications/{type}")
+    suspend fun certifications(
+        @Path("type") type: String,
+    ): SeerrCertificationsDto
+
     /** The streaming providers TMDB lists for [type] (`movies` or `tv`) in [watchRegion], for a Discover slider's providers. */
     @GET("api/v1/watchproviders/{type}")
     suspend fun watchProviders(

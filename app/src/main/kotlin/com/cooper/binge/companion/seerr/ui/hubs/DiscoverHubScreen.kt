@@ -83,7 +83,7 @@ fun DiscoverHubScreen(
     val title = stringResource(if (tab == HubTab.Movies) R.string.hubs_title_movies else R.string.hubs_title_tv)
     val hasHero = (state as? DiscoverHubUiState.Ready)?.hero?.isNotEmpty() == true
     val statusBar = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
-    val reservesHero = state is DiscoverHubUiState.Loading || state is DiscoverHubUiState.Ready
+    val reservesHero = state is DiscoverHubUiState.Loading || (state as? DiscoverHubUiState.Ready)?.heroPlace == true
     val inner = navOverlayPadding(if (reservesHero) PaddingValues() else PaddingValues(top = statusBar))
     // The scrolling states leave Binge's 16dp below their last row, and run under the rail, padding their own first column.
     val scrolling =
@@ -167,7 +167,7 @@ private fun HubRows(
     onOpenRequests: () -> Unit,
 ) {
     LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = contentPadding) {
-        item(key = HERO_KEY) { Hero(state.hero, onOpenTitle) }
+        if (state.heroPlace) item(key = HERO_KEY) { Hero(state.hero, onOpenTitle) }
         if (state.browseAll) item(key = BROWSE_ALL_KEY) { BrowseAllRow(tab, onOpenGrid) }
         itemsIndexed(state.rows, key = { _, row -> row.row.sliderId }) { index, row ->
             val anchor = Modifier.firstCarouselAnchor(index)
@@ -262,7 +262,7 @@ private fun Hero(
 ) {
     val items =
         hero.map {
-            HeroItem(id = it.tmdbId, imageUrl = it.backdropUrl, title = it.name, rating = null, genres = it.genres, rank = it.rank)
+            HeroItem(id = it.tmdbId, imageUrl = it.backdropUrl, title = it.name, rating = it.rating, genres = it.genres, rank = it.rank)
         }
     HeroCarousel(
         items = items,

@@ -97,6 +97,8 @@ kotlin.target.compilations.configureEach {
 detektGate {
     baselineFile = layout.projectDirectory.file("detekt-baseline.xml")
     customRulesProject = ":detekt-rules"
+    // detekt 2.0.0-alpha.6 crashed twice with an array index error in its per-file futures (#2179); one file at a time.
+    parallel = false
 }
 
 // The gate measures logic. Room's generated DAO and database implementations, including the inner classes it emits for paging

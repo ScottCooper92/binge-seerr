@@ -23,6 +23,7 @@ import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.BingeConfirmDialog
 import com.binge.designsystem.component.TrendingSearchChip
 import com.binge.designsystem.component.WrappingRow
+import com.binge.designsystem.navOverlayStart
 import com.cooper.binge.companion.seerr.R
 import com.binge.designsystem.R as DesR
 
@@ -35,7 +36,8 @@ internal fun RecentSearches(
     modifier: Modifier = Modifier,
 ) {
     var confirming by rememberSaveable { mutableStateOf(false) }
-    Column(modifier.fillMaxWidth().padding(horizontal = dimensionResource(DesR.dimen.padding_m))) {
+    val gutter = dimensionResource(DesR.dimen.padding_m)
+    Column(modifier.fillMaxWidth().padding(start = gutter + navOverlayStart(), end = gutter)) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Text(
                 text = stringResource(R.string.title_search_recent),

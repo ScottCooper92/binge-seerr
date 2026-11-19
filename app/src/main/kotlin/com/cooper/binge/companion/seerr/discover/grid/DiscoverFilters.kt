@@ -35,17 +35,6 @@ data class DiscoverFilters(
     val isEmpty: Boolean get() = copy(genresAny = genresAny && genres.isNotEmpty()) == DiscoverFilters()
 }
 
-/** How many of the filters the sheet's rows set are in force, one for each row, for the sheet's "N applied". */
-fun DiscoverFilters.appliedCount(): Int =
-    listOf(
-        genres.isNotEmpty(),
-        releaseFrom != null || releaseTo != null,
-        ratingMin != null || ratingMax != null,
-        runtimeMin != null || runtimeMax != null,
-        voteCountMin != null || voteCountMax != null,
-        language != null,
-    ).count { it }
-
 /** Whether every filter a [preset] set is still set here, so the chip that stands for the preset still reads true. */
 fun DiscoverFilters.keeps(preset: DiscoverFilters): Boolean =
     genres.containsAll(preset.genres) &&
@@ -56,7 +45,10 @@ fun DiscoverFilters.keeps(preset: DiscoverFilters): Boolean =
         (preset.region == null || region == preset.region) &&
         (preset.releaseFrom == null || releaseFrom == preset.releaseFrom)
 
-/** These filters without the ones a [preset] set, so what the user added on top stays. */
+/**
+ * These filters without the ones a [preset] set, so what the user added on top stays. A region stays while a service added
+ * on top remains, as a service means nothing without the region it was picked in.
+ */
 fun DiscoverFilters.without(preset: DiscoverFilters): DiscoverFilters =
     copy(
         genres = genres - preset.genres,
@@ -64,7 +56,7 @@ fun DiscoverFilters.without(preset: DiscoverFilters): DiscoverFilters =
         providers = providers - preset.providers,
         company = company.takeUnless { it == preset.company },
         language = language.takeUnless { it == preset.language },
-        region = region.takeUnless { it == preset.region },
+        region = region.takeUnless { it == preset.region && (providers - preset.providers).isEmpty() },
         releaseFrom = releaseFrom.takeUnless { it == preset.releaseFrom },
     )
 
