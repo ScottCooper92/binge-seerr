@@ -17,6 +17,7 @@ import androidx.compose.ui.res.dimensionResource
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.TitleResult
 import com.cooper.binge.companion.seerr.discover.title.TitleCompany
+import com.cooper.binge.companion.seerr.discover.title.TitleKeyword
 import com.cooper.binge.companion.seerr.ui.discover.request.RequestSheet
 import com.cooper.binge.companion.seerr.ui.discover.request.RequestSheetTarget
 import com.cooper.binge.companion.seerr.ui.discover.request.messageRes
@@ -39,6 +40,7 @@ class TitlePageActions(
     val onOpenUrl: (String) -> Unit,
     val onOpenCredits: () -> Unit,
     val onOpenCompany: ((TitleCompany) -> Unit)? = null,
+    val onOpenKeyword: ((TitleKeyword) -> Unit)? = null,
     /** Reads the page again where it stands, for the snackbar after a request whose reload failed. */
     val onReload: () -> Unit = {},
 )

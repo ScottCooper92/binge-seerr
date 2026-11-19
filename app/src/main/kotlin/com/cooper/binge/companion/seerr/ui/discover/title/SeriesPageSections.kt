@@ -78,7 +78,7 @@ internal fun SeriesPageBody(
         PeopleRow(stringResource(R.string.title_page_crew), series.keyCrew, actions.onOpenPerson, actions.onOpenCredits)
         WhereToWatchSection(series.providers, actions.onOpenUrl, Modifier.readingMargin())
         state.extras?.let { TitleRow(stringResource(R.string.title_page_more_like_this), it.moreLikeThis, actions.onOpenTitle) }
-        KeywordsSection(series.keywords, Modifier.readingMargin())
+        KeywordsSection(series.keywords, actions.onOpenKeyword.takeIf { series.keywordsOpen }, Modifier.readingMargin())
         TitleDetailsSection(
             series.detailEntries(context.resources, locale, actions.onOpenCompany.takeIf { series.companiesOpen }, actions.onOpenPerson),
         )

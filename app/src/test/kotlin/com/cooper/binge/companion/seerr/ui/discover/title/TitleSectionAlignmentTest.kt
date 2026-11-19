@@ -14,6 +14,7 @@ import com.binge.designsystem.PaneContent
 import com.binge.designsystem.PaneEdge
 import com.binge.designsystem.component.DetailInfoEntry
 import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.discover.title.TitleKeyword
 import com.cooper.binge.companion.seerr.theme.SeerrTheme
 import com.cooper.binge.companion.seerr.util.createSeerrComposeRule
 import org.junit.Assert.assertEquals
@@ -54,7 +55,7 @@ class TitleSectionAlignmentTest {
                 CompositionLocalProvider(LocalIsSinglePaneNav provides !besideHub) {
                     PaneContent(innerEdge = PaneEdge.Start) {
                         Column {
-                            KeywordsSection(listOf("simulation"))
+                            KeywordsSection(listOf(TitleKeyword(1, "simulation")), onOpen = null)
                             TitleDetailsSection(listOf(DetailInfoEntry(Icons.Outlined.Info, "Status", "Released")))
                         }
                     }

@@ -1,12 +1,15 @@
 package com.cooper.binge.companion.seerr.ui.nav
 
 import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.navigation3.runtime.NavKey
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.TitleKind
+import com.cooper.binge.companion.seerr.discover.grid.GridPreset
 import com.cooper.binge.companion.seerr.ui.CollectionRoute
+import com.cooper.binge.companion.seerr.ui.DiscoverGridRoute
 import com.cooper.binge.companion.seerr.ui.HomeRoute
 import com.cooper.binge.companion.seerr.ui.ShellRoute
 import com.cooper.binge.companion.seerr.ui.TitleCreditsRoute
@@ -31,6 +34,10 @@ private const val DEMO_FILM_NAME = "Big Buck Bunny"
 /** The demo's collection, and its name on the page. */
 private const val DEMO_COLLECTION_ID = 9500
 private const val DEMO_COLLECTION_NAME = "The Demo Collection"
+
+/** The demo film's second keyword and its id: the chip on the page, and the filter the grid opens on. */
+private const val DEMO_KEYWORD_ID = 2
+private const val DEMO_KEYWORD_NAME = "short film"
 
 /** The collection page's count, which the film page does not show. */
 private const val DEMO_COLLECTION_FILMS = "3 films"
@@ -86,6 +93,32 @@ class TitleEntriesJourneyTest {
         host.awaitShowing(DEMO_COLLECTION_FILMS)
 
         assertEquals(listOf<NavKey>(ShellRoute, film, CollectionRoute(DEMO_COLLECTION_ID)), host.stack())
+        host.back()
+        host.awaitShowing(DEMO_FILM_NAME)
+        assertEquals(listOf<NavKey>(ShellRoute, film), host.stack())
+    }
+
+    @Test
+    fun `a keyword on a film's page opens the grid filtered by it and Back returns to the film`() {
+        NavHostActivity.discoveryEnabled = true
+        host.connectDemo()
+        val film = TitleDetailRoute(TitleKind.Movie, DEMO_FILM_ID)
+        host.launch(HomeRoute, film)
+        host.awaitShowing(DEMO_FILM_NAME)
+        val keyword = hasText(DEMO_KEYWORD_NAME)
+        host.compose.waitUntil(WAIT_MILLIS) {
+            host.compose
+                .onAllNodes(keyword)
+                .fetchSemanticsNodes()
+                .isNotEmpty()
+        }
+        host.compose
+            .onNode(keyword)
+            .performScrollTo()
+            .performClick()
+
+        val grid = DiscoverGridRoute(TitleKind.Movie, GridPreset.Keyword(DEMO_KEYWORD_ID), DEMO_KEYWORD_NAME)
+        awaitStack(ShellRoute, film, grid)
         host.back()
         host.awaitShowing(DEMO_FILM_NAME)
         assertEquals(listOf<NavKey>(ShellRoute, film), host.stack())

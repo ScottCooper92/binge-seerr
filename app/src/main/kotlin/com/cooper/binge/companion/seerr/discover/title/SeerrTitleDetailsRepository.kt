@@ -56,7 +56,7 @@ class SeerrTitleDetailsRepository(
                     mayRequest = permissions.canRequestMovie,
                     mayRequest4k = permissions.mayRequest4k(isTv = false, profile.settings),
                     webUrl = serverUrl() + "movie/" + tmdbId,
-                ).copy(companiesOpen = profile.hasDiscoverByCategory)
+                ).copy(companiesOpen = profile.hasDiscoverByCategory, keywordsOpen = profile.hasKeywordDiscover)
         }
 
     override suspend fun collectionParts(collectionId: Int): List<TitleResult> = collections.collection(collectionId).parts
@@ -124,7 +124,7 @@ internal fun SeerrMovieDetailsDto.toMovieDetails(
         voteAverage = voteAverage?.takeIf { it > 0.0 },
         voteCount = voteCount?.takeIf { it > 0 },
         genres = genres.map { it.name },
-        keywords = keywords.map { it.name },
+        keywords = keywords.map { TitleKeyword(it.id, it.name) },
         status = status?.takeIf { it.isNotBlank() },
         originalLanguage = originalLanguage,
         spokenLanguageCodes = spokenLanguages.mapNotNull { it.code?.takeIf(String::isNotBlank) },
