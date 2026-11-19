@@ -275,6 +275,9 @@ class WideShellJourneyTest {
         awaitState("the app stack to be listOf<NavKey>(ShellRoute)") { host.stack() == listOf<NavKey>(ShellRoute) }
 
         host.disconnect()
+        awaitState("the start tab showing, as a sign-out starts the shell over") {
+            host.compose.runOnIdle { host.activity.tabs.selected == host.activity.tabs.startTab }
+        }
         awaitState("the Settings tab stack to hold one entry") {
             host.compose.runOnIdle {
                 host.activity.tabs
