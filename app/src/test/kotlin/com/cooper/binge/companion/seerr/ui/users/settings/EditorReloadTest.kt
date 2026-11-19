@@ -2,8 +2,8 @@ package com.cooper.binge.companion.seerr.ui.users.settings
 
 import androidx.lifecycle.ViewModelStore
 import com.binge.designsystem.SaveStatus
-import com.binge.designsystem.save.SAVE_AS_MADE_DELAY_MILLIS
 import com.cooper.binge.companion.seerr.util.MainDispatcherRule
+import com.cooper.homelab.core.presentation.editor.SAVE_AS_MADE_DELAY_MILLIS
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope

@@ -4,7 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.binge.companion.sdk.attempt
 import com.binge.designsystem.SaveStatus
-import com.binge.designsystem.save.SaveAsMade
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.di.IoDispatcher
 import com.cooper.binge.companion.seerr.notifications.ApplicationScope
@@ -12,6 +11,8 @@ import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.seerr.SeerrMainSettingsUpdateBody
 import com.cooper.binge.companion.seerr.seerr.isTransient
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
+import com.cooper.binge.companion.seerr.ui.users.settings.toUi
+import com.cooper.homelab.core.presentation.editor.SaveAsMade
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -82,7 +83,8 @@ class BlocklistTagsViewModel
                 adopt = { sent, _ -> (state.value as? BlocklistTagsUiState.Ready)?.tags != sent },
                 failed = { failed -> editReady { it.copy(saveFailed = failed) } },
                 isTransient = { it.toSeerrError().isTransient },
-                status = { status -> editReady { it.copy(saveStatus = status) } },
+                status = { status -> editReady { it.copy(saveStatus = status.toUi()) } },
+                refused = {},
             )
 
         init {
@@ -127,7 +129,9 @@ class BlocklistTagsViewModel
         }
 
         /** Leaving the page with a change not yet sent sends it now, on the application's scope. */
-        override fun onCleared() = saveAsMade.cleared()
+        override fun onCleared() {
+            saveAsMade.cleared()
+        }
 
         private fun editReady(transform: (BlocklistTagsUiState.Ready) -> BlocklistTagsUiState.Ready) =
             state.update { current -> (current as? BlocklistTagsUiState.Ready)?.let(transform) ?: current }
