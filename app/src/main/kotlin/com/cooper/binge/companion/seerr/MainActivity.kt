@@ -38,9 +38,10 @@ import com.cooper.binge.companion.seerr.ui.HomeRoute
 import com.cooper.binge.companion.seerr.ui.SeerrNavHost
 import com.cooper.binge.companion.seerr.ui.consent.ConsentGate
 import com.cooper.binge.companion.seerr.ui.linkedRequestId
-import com.cooper.binge.companion.seerr.ui.replaceAll
+import com.cooper.binge.companion.seerr.ui.shell.SeerrTab
 import com.cooper.binge.companion.seerr.ui.shell.openLink
 import com.cooper.binge.companion.seerr.ui.shell.rememberSeerrTabs
+import com.cooper.binge.companion.seerr.ui.shell.restart
 import com.cooper.binge.companion.seerr.ui.tv.TvSeerrShell
 import com.cooper.homelab.core.flags.FeatureFlags
 import com.cooper.homelab.core.telemetry.Analytics
@@ -119,11 +120,16 @@ class MainActivity : ComponentActivity() {
             val discovery by discoveryGate.enabled.collectAsStateWithLifecycle()
             val tabs = rememberSeerrTabs(discovery = discovery)
             // Turning discovery off or on starts the app over from its start tab, with no stack left over from the other mode.
-            var shownDiscovery by remember { mutableStateOf(discovery) }
-            LaunchedEffect(discovery) {
-                if (discovery != shownDiscovery) {
-                    shownDiscovery = discovery
-                    backStack.replaceAll(backStack.take(1))
+            // Only a change after the preference has been read is a toggle: the first value is not, so a restored stack or a link stays.
+            val ready by discoveryGate.ready.collectAsStateWithLifecycle()
+            var shownDiscovery by remember { mutableStateOf<Boolean?>(null) }
+            LaunchedEffect(discovery, ready) {
+                if (!ready) return@LaunchedEffect
+                val before = shownDiscovery
+                shownDiscovery = discovery
+                when {
+                    before == null && !discovery -> tabs.show(SeerrTab.Settings)
+                    before != null && before != discovery -> tabs.restart(backStack)
                 }
             }
             LaunchedEffect(backStack) {

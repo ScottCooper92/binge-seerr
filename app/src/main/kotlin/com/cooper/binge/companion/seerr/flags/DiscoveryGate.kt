@@ -20,6 +20,9 @@ interface DiscoveryGate {
     /** The combined value. */
     val enabled: StateFlow<Boolean>
 
+    /** False until the user's preference has been read, so a first value is not mistaken for a change. */
+    val ready: StateFlow<Boolean>
+
     /** The remote flag alone: whether the Discovery row is shown at all. */
     val offered: Flow<Boolean>
 
@@ -32,6 +35,7 @@ interface DiscoveryGate {
 /** A gate that is off and offers nothing, for a screen built without one. */
 object NoDiscoveryGate : DiscoveryGate {
     override val enabled: StateFlow<Boolean> = MutableStateFlow(false)
+    override val ready: StateFlow<Boolean> = MutableStateFlow(true)
     override val offered: Flow<Boolean> = flowOf(false)
     override val preference: Flow<Boolean> = flowOf(true)
 
@@ -45,6 +49,8 @@ class PrefsDiscoveryGate(
 ) : DiscoveryGate {
     override val offered: Flow<Boolean> = featureFlags.flags.map { it[DiscoveryEnabled] }.distinctUntilChanged()
     override val preference: Flow<Boolean> = prefs.enabled
+
+    override val ready: StateFlow<Boolean> = preference.map { true }.stateIn(scope, SharingStarted.Eagerly, false)
 
     /** Until the preference has been read the flag alone decides, which is right for everyone who has not opted out. */
     override val enabled: StateFlow<Boolean> =
