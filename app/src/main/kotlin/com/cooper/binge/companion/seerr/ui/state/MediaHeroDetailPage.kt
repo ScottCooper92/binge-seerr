@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.Dp
 import com.binge.designsystem.component.DetailCinematicHeader
 import com.binge.designsystem.component.DetailHero
 import com.binge.designsystem.component.DetailStat
+import com.binge.designsystem.component.ExternalScore
 import com.binge.designsystem.isExpandedLayout
 import com.binge.designsystem.layout.LayoutAnchors
 import com.binge.designsystem.layout.layoutAnchor
@@ -46,6 +47,7 @@ internal class WideHeader(
  * @param onBack null where the pane beside this one already offers the way back.
  * @param inFlight shows a moderation under way.
  * @param genres drawn under the title in the accent colour, with the italic [tagline] under them.
+ * @param externalScores review scores after the genres on the same line, each with its icon.
  */
 @Composable
 internal fun MediaHeroDetailPage(
@@ -63,6 +65,7 @@ internal fun MediaHeroDetailPage(
     genres: List<String> = emptyList(),
     tagline: String? = null,
     wideHeader: WideHeader? = null,
+    externalScores: List<ExternalScore> = emptyList(),
     body: @Composable ColumnScope.() -> Unit,
 ) {
     // At the expanded width the cinematic header takes the place of the hero, as Binge's detail pages do.
@@ -90,6 +93,7 @@ internal fun MediaHeroDetailPage(
                     backdropUrl = backdropUrl,
                     posterUrl = wideHeader.posterUrl,
                     tagline = tagline,
+                    externalScores = externalScores,
                     modifier = Modifier.layoutAnchor(LayoutAnchors.section(LayoutAnchors.Detail.HERO)),
                 )
             } else {
@@ -103,6 +107,7 @@ internal fun MediaHeroDetailPage(
                     showChrome = false,
                     richBackdrop = true,
                     metaContent = metaContent,
+                    externalScores = externalScores,
                     modifier = Modifier.layoutAnchor(LayoutAnchors.section(LayoutAnchors.Detail.HERO)),
                 )
             }

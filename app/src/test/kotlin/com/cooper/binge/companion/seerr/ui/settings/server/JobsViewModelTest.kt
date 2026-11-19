@@ -408,6 +408,38 @@ class JobsViewModelTest {
             }
         }
 
+    /**
+     * #2289: the read that starts the poll lands on OkHttp's thread, and the page can leave between its check for a watcher and the
+     * poll starting. The stop has then already run, so nothing cancels the poll. A start on that side of the stop is made directly.
+     */
+    @Test
+    fun `a poll that starts after the page has left stops at its first tick instead of reading`() =
+        runTest {
+            seerr.serve("GET /api/v1/settings/jobs", "[${job("plex-full-scan", running = true)}]")
+            val vm = JobsViewModel(seerr.connection(this), mainDispatcherRule.dispatcher)
+            viewModels.put(vm.hashCode().toString(), vm)
+            vm.runningRefreshMillis = 10
+            try {
+                val collector = launch(start = CoroutineStart.UNDISPATCHED) { vm.uiState.collect {} }
+                vm.awaitReady()
+                seerr.awaitCallbacks()
+                collector.cancel()
+                testScheduler.runCurrent()
+                seerr.awaitCallbacks()
+                val reads = seerr.count("GET", "/api/v1/settings/jobs")
+
+                vm.followRunning()
+                repeat(5) {
+                    testScheduler.advanceTimeBy(vm.runningRefreshMillis)
+                    testScheduler.runCurrent()
+                    seerr.awaitCallbacks()
+                }
+                assertEquals("a poll started with the page away read the list", reads, seerr.count("GET", "/api/v1/settings/jobs"))
+            } finally {
+                viewModels.clear()
+            }
+        }
+
     /** #935: the running poll serves a page showing the list; a page back on screen may have missed the job stopping. */
     @Test
     fun `a running job's poll stops while the page is away and reads at once on its return`() =

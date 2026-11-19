@@ -14,7 +14,6 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.DetailStat
-import com.binge.designsystem.component.InfoRowList
 import com.binge.designsystem.isExpandedLayout
 import com.binge.designsystem.layout.LayoutAnchors
 import com.binge.designsystem.layout.layoutAnchor
@@ -75,22 +74,13 @@ internal fun SeriesPageBody(
         )
         if (!expanded && series.overview != null) Box(Modifier.readingMargin()) { OverviewSection(series.overview) }
         EpisodesSection(state, seasonActions, Modifier.readingMargin())
-        InfoRowList(
-            series.factEntries(
-                context.resources,
-                locale,
-                state.extras?.ratings,
-                actions.onOpenCompany.takeIf {
-                    series.companiesOpen
-                },
-                actions.onOpenPerson,
-            ),
-            Modifier.readingMargin(),
-        )
         PeopleRow(stringResource(R.string.title_page_cast), series.cast, actions.onOpenPerson, actions.onOpenCredits)
         PeopleRow(stringResource(R.string.title_page_crew), series.keyCrew, actions.onOpenPerson, actions.onOpenCredits)
         WhereToWatchSection(series.providers, actions.onOpenUrl, Modifier.readingMargin())
         state.extras?.let { TitleRow(stringResource(R.string.title_page_more_like_this), it.moreLikeThis, actions.onOpenTitle) }
         KeywordsSection(series.keywords, Modifier.readingMargin())
+        TitleDetailsSection(
+            series.detailEntries(context.resources, locale, actions.onOpenCompany.takeIf { series.companiesOpen }, actions.onOpenPerson),
+        )
     }
 }

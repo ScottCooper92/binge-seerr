@@ -2,18 +2,24 @@ package com.cooper.binge.companion.seerr.ui.users.settings
 
 import androidx.lifecycle.ViewModelStore
 import com.binge.designsystem.SaveStatus
-import com.binge.designsystem.save.SAVE_AS_MADE_DELAY_MILLIS
+import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.util.MainDispatcherRule
+import com.cooper.binge.companion.seerr.util.awaitEvent
+import com.cooper.homelab.core.presentation.editor.SAVE_AS_MADE_DELAY_MILLIS
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
+import okhttp3.ResponseBody.Companion.toResponseBody
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
+import retrofit2.HttpException
+import retrofit2.Response
 
 /** A save-as-made editor over one number on a fake server, whose writes the test answers one at a time. */
 private class NumberEditorViewModel(
@@ -104,5 +110,24 @@ class EditorReloadTest {
             vm.writes[2].complete(Unit)
             runCurrent()
             assertEquals(EditorUiState.Ready(draft = 5, saved = 5, saveStatus = SaveStatus.Saved), vm.uiState.value)
+        }
+
+    @Test
+    fun `a write the server refuses while the page reloads shows its reason on the loaded page`() =
+        runTest(mainDispatcherRule.dispatcher) {
+            val vm = editor()
+            vm.edit { 5 }
+            advanceTimeBy(SAVE_AS_MADE_DELAY_MILLIS + 1)
+            val failed = awaitEvent(vm.events)
+
+            vm.reload()
+            vm.writes.single().completeExceptionally(HttpException(Response.error<Unit>(400, "".toResponseBody())))
+            runCurrent()
+
+            val ready = vm.ready()
+            assertEquals(SeerrError.Rejected, ready.saveRefusal)
+            assertEquals("the refused change is not kept", 0, ready.draft)
+            assertEquals(false, ready.saveFailed)
+            assertTrue(failed.await() is EditorEvent.Failed)
         }
 }

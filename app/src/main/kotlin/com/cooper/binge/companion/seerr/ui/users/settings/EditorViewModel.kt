@@ -5,13 +5,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.binge.companion.sdk.attempt
 import com.binge.designsystem.SaveStatus
-import com.binge.designsystem.save.SaveAsMade
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.seerr.isMediaServerUnreachable
 import com.cooper.binge.companion.seerr.seerr.isTransient
 import com.cooper.binge.companion.seerr.seerr.rejectionDetail
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
+import com.cooper.homelab.core.presentation.editor.SaveAsMade
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -153,7 +153,7 @@ abstract class EditorViewModel<T>(
                     state.update { current -> (current as? EditorUiState.Ready<T>)?.copy(saveFailed = failed) ?: current }
                 },
                 status = { status ->
-                    state.update { current -> (current as? EditorUiState.Ready<T>)?.copy(saveStatus = status) ?: current }
+                    state.update { current -> (current as? EditorUiState.Ready<T>)?.copy(saveStatus = status.toUi()) ?: current }
                 },
                 isTransient = { it.toSeerrError().isTransient },
                 refused = { failure ->
@@ -183,13 +183,22 @@ abstract class EditorViewModel<T>(
         val settling = saveAsMade?.settle()
         state.value = EditorUiState.Loading
         viewModelScope.launch(dispatcher) {
-            val kept = settling?.await()
+            val settled = settling?.await()
+            val kept = settled?.kept
+            val refusal = settled?.refusal
             saveAsMade?.reloaded(keptUnsent = kept != null)
             attempt { load() }
                 .onSuccess { loaded ->
                     // A draft kept across the process being killed goes back over what was read (#1026).
                     val draft = kept ?: savedDraft?.restoreOver(loaded) ?: loaded
-                    state.value = EditorUiState.Ready(draft = draft, saved = loaded, saveFailed = kept != null)
+                    state.value =
+                        EditorUiState.Ready(
+                            draft = draft,
+                            saved = loaded,
+                            saveFailed = kept != null,
+                            saveRefusal = refusal?.toSeerrError(),
+                        )
+                    refusal?.let { eventFlow.emit(EditorEvent.Failed.from(it)) }
                 }.onFailure { state.value = EditorUiState.Error(it.toSeerrError()) }
         }
     }

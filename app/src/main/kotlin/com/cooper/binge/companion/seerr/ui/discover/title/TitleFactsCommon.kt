@@ -1,8 +1,11 @@
 package com.cooper.binge.companion.seerr.ui.discover.title
 
 import android.content.res.Resources
+import androidx.compose.ui.graphics.vector.ImageVector
+import com.binge.designsystem.component.DetailInfoEntry
+import com.binge.designsystem.component.ExternalScore
+import com.binge.designsystem.component.ExternalScoreKind
 import com.binge.designsystem.component.InfoLink
-import com.binge.designsystem.component.InfoRowEntry
 import com.binge.designsystem.component.InfoValue
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.title.TitleCompany
@@ -16,38 +19,56 @@ internal fun languageName(
     locale: Locale,
 ): String = Locale(code).getDisplayLanguage(locale).replaceFirstChar { it.titlecase(locale) }
 
-/** The server's other ratings as facts: Binge's page has one row of stats, so these follow the facts instead. */
-internal fun ratingEntries(
+/** The critics' score at or above this reads as fresh (a tomato), below it as rotten (a splat), as Rotten Tomatoes draws it. */
+private const val FRESH_THRESHOLD_PERCENT = 60
+
+/**
+ * The server's other ratings as the header's scores, in the order Binge lists them: critics, audience, IMDb. A score the server did
+ * not give is left out. Each carries the words a screen reader reads for it, in the reader's language.
+ */
+internal fun TitleRatings?.toExternalScores(
     resources: Resources,
     locale: Locale,
-    ratings: TitleRatings?,
-): List<InfoRowEntry> =
-    listOf(
-        InfoRowEntry(resources.getString(R.string.title_page_stat_critics), ratings?.criticsPercent?.let { "$it%" }),
-        InfoRowEntry(resources.getString(R.string.title_page_stat_audience), ratings?.audiencePercent?.let { "$it%" }),
-        InfoRowEntry(resources.getString(R.string.title_page_stat_imdb), ratings?.imdbScore?.let { "%.1f".format(locale, it) }),
+): List<ExternalScore> =
+    listOfNotNull(
+        this?.criticsPercent?.let { percent ->
+            ExternalScore(
+                if (percent >= FRESH_THRESHOLD_PERCENT) ExternalScoreKind.CriticsFresh else ExternalScoreKind.CriticsRotten,
+                "$percent%",
+                resources.getString(R.string.title_page_score_critics, percent),
+            )
+        },
+        this?.audiencePercent?.let { percent ->
+            ExternalScore(ExternalScoreKind.Audience, "$percent%", resources.getString(R.string.title_page_score_audience, percent))
+        },
+        this?.imdbScore?.let { score ->
+            val value = "%.1f".format(locale, score)
+            ExternalScore(ExternalScoreKind.Imdb, value, resources.getString(R.string.title_page_score_imdb, value))
+        },
     )
 
 /** A studio or network row: each name opens its grid where [onOpenCompany] is given, and is plain text where it is not. */
 internal fun companyEntry(
+    icon: ImageVector,
     label: String,
     companies: List<TitleCompany>,
     onOpenCompany: ((TitleCompany) -> Unit)?,
-): InfoRowEntry =
+): DetailInfoEntry =
     if (onOpenCompany == null || companies.isEmpty()) {
-        InfoRowEntry(label, companies.joinToString(", ") { it.name })
+        DetailInfoEntry(icon, label, companies.joinToString(", ") { it.name })
     } else {
-        InfoRowEntry(label, InfoValue.Links(companies.map { company -> InfoLink(company.name) { onOpenCompany(company) } }))
+        DetailInfoEntry(icon, label, InfoValue.Links(companies.map { company -> InfoLink(company.name) { onOpenCompany(company) } }))
     }
 
 /** A directors or creators row: each name opens that person's page where [onOpenPerson] is given, and is plain text where it is not. */
 internal fun peopleEntry(
+    icon: ImageVector,
     label: String,
     people: List<TitlePerson>,
     onOpenPerson: ((Int) -> Unit)?,
-): InfoRowEntry =
+): DetailInfoEntry =
     if (onOpenPerson == null || people.isEmpty()) {
-        InfoRowEntry(label, people.joinToString(", ") { it.name })
+        DetailInfoEntry(icon, label, people.joinToString(", ") { it.name })
     } else {
-        InfoRowEntry(label, InfoValue.Links(people.map { person -> InfoLink(person.name) { onOpenPerson(person.personId) } }))
+        DetailInfoEntry(icon, label, InfoValue.Links(people.map { person -> InfoLink(person.name) { onOpenPerson(person.personId) } }))
     }
