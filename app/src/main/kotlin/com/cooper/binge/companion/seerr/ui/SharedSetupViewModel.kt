@@ -94,7 +94,9 @@ class SharedSetupViewModel
                 onCredentials = ::onHandedCredentials,
                 onCode = { code -> app.update { it.copy(code = code) } },
                 progress = {
-                    val failed = machine.draft.value.error != null || app.value.handOffRejected
+                    val error = machine.draft.value.error
+                    val holdingForPermission = app.value.handedSession != null && error == LOCAL_NETWORK_DENIED
+                    val failed = (error != null && !holdingForPermission) || app.value.handOffRejected
                     uiState.value.toHandOffProgress(app.value.received, failed, app.value.attempts)
                 },
             )
@@ -282,13 +284,19 @@ class SharedSetupViewModel
          */
         private fun watchHandedSession() {
             viewModelScope.launch(dispatcher) {
+                var awaitingGrant = false
                 machine.draft.collect { draft ->
-                    if (app.value.handedSession == null) return@collect
+                    if (app.value.handedSession == null) {
+                        awaitingGrant = false
+                        return@collect
+                    }
                     val server = draft.server
-                    val needsPermission = draft.error == ConnectError.Failed(ServerFailure.LocalNetworkDenied)
+                    val needsPermission = draft.error == LOCAL_NETWORK_DENIED
                     when {
-                        draft.error != null && !needsPermission -> app.update { it.copy(handedSession = null) }
-                        server != null && server.setUp && !draft.busy -> {
+                        needsPermission -> awaitingGrant = true
+                        draft.error != null -> app.update { it.copy(handedSession = null) }
+                        awaitingGrant && server != null && server.setUp && !draft.busy -> {
+                            awaitingGrant = false
                             app.update { it.copy(attempts = it.attempts + 1) }
                             adoptHandedSession(server)
                         }
@@ -312,6 +320,8 @@ class SharedSetupViewModel
         }
 
         private companion object {
+            val LOCAL_NETWORK_DENIED = ConnectError.Failed(ServerFailure.LocalNetworkDenied)
+
             const val STOP_TIMEOUT_MILLIS = 5_000L
         }
     }

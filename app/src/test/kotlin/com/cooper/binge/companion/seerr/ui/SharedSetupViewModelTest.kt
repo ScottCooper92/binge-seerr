@@ -33,6 +33,7 @@ import okhttp3.Interceptor
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -401,6 +402,7 @@ class SharedSetupViewModelTest {
 
             session.address.complete("http://192.168.1.20:5055")
             assertEquals(SetupError.LocalNetworkDenied, vm.awaitAddress { it.error != null }.error)
+            assertNotEquals(HandOffProgress.Failed, session.progress())
             seerr.enqueueProfile(json("""{"version":"3.4.0"}"""), json("""{"mediaServerType":2,"localLogin":true}"""))
             seerr.enqueue(json("[]"))
             seerr.enqueue(json("""{"id":9,"permissions":2}"""))
