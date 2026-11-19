@@ -6,15 +6,18 @@ import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isEnabled
 import androidx.compose.ui.test.isSelected
+import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.navigation3.runtime.NavKey
 import com.cooper.binge.companion.seerr.R
@@ -224,9 +227,9 @@ class WideShellJourneyTest {
         host.awaitShowing(host.string(R.string.requests_filter_processing))
 
         host.compose.onNodeWithTag("tab_movies").performClick()
-        host.awaitShowing(host.string(R.string.hubs_browse_all_movies))
+        host.awaitShowing(host.string(R.string.hubs_row_recently_added))
         awaitState("the app stack to be listOf<NavKey>(ShellRoute)") { host.stack() == listOf<NavKey>(ShellRoute) }
-        host.compose.onNodeWithText(host.string(R.string.hubs_browse_all_movies)).performClick()
+        openPopularGrid()
 
         awaitState(
             "two entries on the app stack",
@@ -246,9 +249,9 @@ class WideShellJourneyTest {
         host.awaitShowing(host.string(R.string.hub_section_requests_desc))
 
         host.compose.onNodeWithTag("tab_movies").performClick()
-        host.awaitShowing(host.string(R.string.hubs_browse_all_movies))
+        host.awaitShowing(host.string(R.string.hubs_row_recently_added))
         awaitState("the search to leave the app stack with its tab") { host.stack() == listOf<NavKey>(ShellRoute) }
-        host.compose.onNodeWithText(host.string(R.string.hubs_browse_all_movies)).performClick()
+        openPopularGrid()
 
         awaitState("the grid on the app stack") { host.stack().let { it.size == 2 && it[0] == ShellRoute && it[1] is DiscoverGridRoute } }
         host.awaitShowing(host.string(R.string.hubs_row_popular_movies))
@@ -285,6 +288,23 @@ class WideShellJourneyTest {
         host.compose.waitForIdle()
 
         assertEquals(listOf<NavKey>(ShellRoute), host.stack())
+    }
+
+    /** Opens a grid from the Movies hub's Popular movies row: where Discover is a tab, the hub has no Browse all card. */
+    private fun openPopularGrid() {
+        val popular = host.string(R.string.hubs_row_popular_movies)
+        host.compose.waitUntil(WAIT_MILLIS) {
+            try {
+                host.compose
+                    .onAllNodes(hasScrollAction())
+                    .onFirst()
+                    .performScrollToNode(hasText(popular, substring = true))
+                true
+            } catch (_: AssertionError) {
+                false
+            }
+        }
+        host.compose.onNodeWithContentDescription(host.string(DesR.string.action_see_all_in_section, popular)).performClick()
     }
 
     /** The round Back control over a page pushed above the shell: it covers the window, so no list beside it offers the way back. */
@@ -329,7 +349,7 @@ class WideShellJourneyTest {
                 .isNotEmpty()
         }
         host.compose.onNodeWithTag("tab_movies").performClick()
-        host.awaitShowing(host.string(R.string.hubs_browse_all_movies))
+        host.awaitShowing(host.string(R.string.hubs_row_recently_added))
 
         host.compose.onAllNodes(hasText(DEMO_FILM_NAME, substring = true) and hasClickAction())[0].performClick()
         awaitState("two entries on the app stack") { host.stack().let { it.size == 2 && it[1] is TitleDetailRoute } }
@@ -340,7 +360,7 @@ class WideShellJourneyTest {
             .assertIsDisplayed()
             .performClick()
         awaitState("the app stack to be listOf<NavKey>(ShellRoute)") { host.stack() == listOf<NavKey>(ShellRoute) }
-        host.awaitShowing(host.string(R.string.hubs_browse_all_movies))
+        host.awaitShowing(host.string(R.string.hubs_row_recently_added))
     }
 
     @Test
