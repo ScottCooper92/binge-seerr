@@ -19,6 +19,7 @@ import com.cooper.binge.companion.seerr.seerr.refusedWithLiveSession
 import com.cooper.binge.companion.seerr.seerr.seerrMediaType
 import com.cooper.binge.companion.seerr.seerr.standardVersion
 import com.cooper.binge.companion.seerr.seerr.toRequestStatus
+import com.cooper.binge.companion.seerr.seerr.unblockTitle
 import com.cooper.binge.companion.seerr.seerr.version4k
 import io.grpc.Status
 import io.grpc.StatusException
@@ -86,11 +87,7 @@ internal class SeerrIssueRpcs(
      */
     suspend fun unblockTitle(request: UnblockTitleRequest): UnblockTitleResponse {
         try {
-            connection.api().removeFromBlocklist(
-                connection.profile().blocklistPath,
-                request.media.tmdbId,
-                connection.profile().unblockMediaType(request.media.seerrMediaType()),
-            )
+            connection.api().unblockTitle(connection.profile(), request.media.tmdbId, request.media.seerrMediaType())
         } catch (e: HttpException) {
             if (!e.refusedWithLiveSession()) throw e
             throw StatusException(Status.NOT_FOUND.withDescription("The title is not on the blocklist"))

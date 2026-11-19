@@ -21,6 +21,7 @@ import com.cooper.binge.companion.seerr.seerr.SeerrUserDto
 import com.cooper.binge.companion.seerr.seerr.TitleCache
 import com.cooper.binge.companion.seerr.seerr.toPermissions
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
+import com.cooper.binge.companion.seerr.seerr.unblockTitle
 import com.cooper.binge.companion.seerr.telemetry.AnalyticsEvents
 import com.cooper.binge.companion.seerr.telemetry.operationFailed
 import com.cooper.binge.companion.seerr.ui.requests.seerrMediaType
@@ -314,11 +315,7 @@ class BlocklistViewModel
                 attempt {
                     val key = TitleKey(if (item.mediaType.seerrMediaType() == "tv") TitleType.Tv else TitleType.Movie, item.tmdbId)
                     statuses.unblocking(key) {
-                        connection.api().removeFromBlocklist(
-                            connection.profile().blocklistPath,
-                            item.tmdbId,
-                            connection.profile().unblockMediaType(item.mediaType.seerrMediaType()),
-                        )
+                        connection.api().unblockTitle(connection.profile(), item.tmdbId, item.mediaType.seerrMediaType())
                     }
                 }.onSuccess {
                     countsRefresh.update { it + 1 }

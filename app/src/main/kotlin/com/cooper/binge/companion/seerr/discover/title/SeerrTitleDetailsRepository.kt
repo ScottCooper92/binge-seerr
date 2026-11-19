@@ -24,6 +24,7 @@ import com.cooper.binge.companion.seerr.seerr.certificationIn
 import com.cooper.binge.companion.seerr.seerr.toPermissions
 import com.cooper.binge.companion.seerr.seerr.toTmdbBackdropUrl
 import com.cooper.binge.companion.seerr.seerr.toTmdbPosterUrl
+import com.cooper.binge.companion.seerr.seerr.unblockTitle
 import com.cooper.binge.companion.seerr.seerr.watchLink
 import com.cooper.binge.companion.seerr.ui.requests.mediaServerName
 import kotlinx.coroutines.CoroutineDispatcher
@@ -89,7 +90,7 @@ class SeerrTitleDetailsRepository(
     ) = withContext(io) { setOnWatchlist(api(), tmdbId, title, "movie", onList) }
 
     override suspend fun unblock(tmdbId: Int) =
-        withContext(io) { statuses.unblocking(TitleKey(TitleType.Movie, tmdbId)) { unblockTitle(api(), profile(), tmdbId, "movie") } }
+        withContext(io) { statuses.unblocking(TitleKey(TitleType.Movie, tmdbId)) { api().unblockTitle(profile(), tmdbId, "movie") } }
 
     override suspend fun extras(
         kind: TitleKind,
@@ -251,14 +252,6 @@ internal fun com.cooper.binge.companion.seerr.seerr.SeerrRequestSummaryDto.toTit
         status = status,
         requesterId = requestedBy?.id,
     )
-
-/** Takes a title off the blocklist, by the path and the media type this server's version wants. */
-internal suspend fun unblockTitle(
-    api: SeerrApi,
-    profile: SeerrServerProfile,
-    tmdbId: Int,
-    mediaType: String,
-) = api.removeFromBlocklist(profile.blocklistPath, tmdbId, profile.unblockMediaType(mediaType))
 
 /** Shows the title unblocked at once, and puts the block back if the server refuses. */
 internal suspend fun TitleStatusStore.unblocking(
