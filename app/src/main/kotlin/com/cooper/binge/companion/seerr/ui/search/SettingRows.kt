@@ -36,7 +36,6 @@ internal object SettingRows {
     const val ACCOUNT_DISCOVER_REGION = "account.discover-region"
     const val ACCOUNT_DISCOVER_LANGUAGE = "account.discover-language"
 
-    const val APP_DISCOVERY = "app.discovery"
     const val APP_SHAKE_TO_REPORT = "app.shake-to-report"
     const val APP_SHARE_USAGE_DATA = "app.share-usage-data"
     const val APP_SEND_CRASH_REPORTS = "app.send-crash-reports"

@@ -48,7 +48,7 @@ internal fun appRows(
             destination = ListItemDestination.External,
             onClick = { context.openInBrowser(app.bugReportUrl) },
         ),
-        // Only while the remote flag offers discovery; the preference is the user's own opt-out.
+        // Only while the remote flag offers discovery, which settings search cannot know, so the row has no search entry.
         app.discovery?.let { on ->
             ListItem(
                 icon = Icons.Filled.Explore,
@@ -57,7 +57,7 @@ internal fun appRows(
                 detail = stringResource(R.string.settings_discovery_caption),
                 toggled = on,
                 onClick = { onToggleDiscovery(!on) },
-            ).copy(key = SettingRows.APP_DISCOVERY)
+            )
         },
         ListItem(
             icon = Icons.Filled.Vibration,
