@@ -12,17 +12,21 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.rememberNavBackStack
+import com.cooper.binge.companion.seerr.flags.DiscoveryGate
 import com.cooper.binge.companion.seerr.flags.LocalDiscoveryEnabled
 import com.cooper.binge.companion.seerr.theme.SeerrTheme
 import com.cooper.binge.companion.seerr.ui.HomeRoute
 import com.cooper.binge.companion.seerr.ui.SeerrNavHost
+import com.cooper.binge.companion.seerr.ui.shell.DiscoveryShellEffect
 import com.cooper.binge.companion.seerr.ui.shell.SeerrTab
 import com.cooper.binge.companion.seerr.ui.shell.TabShellState
 import com.cooper.binge.companion.seerr.ui.shell.rememberSeerrTabs
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
 /**
  * The real [SeerrNavHost], themed and hosted the way `MainActivity` hosts it, under a Hilt activity so
@@ -40,6 +44,9 @@ class NavHostActivity : ComponentActivity() {
     lateinit var tabs: TabShellState<SeerrTab>
         private set
 
+    @Inject
+    lateinit var discoveryGate: DiscoveryGate
+
     /** Cleared before the activity closes, so the composition is taken down while the looper is live (#663). */
     internal var shown by mutableStateOf(true)
 
@@ -53,12 +60,15 @@ class NavHostActivity : ComponentActivity() {
             if (!shown) return@setContent
             val stack = rememberNavBackStack(*firstStack.toTypedArray())
             backStack = stack
-            val tabs = rememberSeerrTabs(discovery = discoveryEnabled)
+            val resolved by discoveryGate.resolved.collectAsStateWithLifecycle()
+            val discovery = resolved ?: discoveryGate.fallback
+            val tabs = rememberSeerrTabs(discovery = discovery)
             this.tabs = tabs
+            DiscoveryShellEffect(resolved, tabs, stack)
             // A link's chain sits above the Settings tab, as MainActivity's openLink shows it; a plain launch opens on the start tab.
-            LaunchedEffect(tabs) { if (savedInstanceState == null && firstStack.size > 1 && discoveryEnabled) tabs.show(SeerrTab.Settings) }
+            LaunchedEffect(tabs) { if (savedInstanceState == null && firstStack.size > 1 && discovery) tabs.show(SeerrTab.Settings) }
             SeerrTheme {
-                CompositionLocalProvider(LocalDiscoveryEnabled provides discoveryEnabled) {
+                CompositionLocalProvider(LocalDiscoveryEnabled provides discovery) {
                     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
                         SeerrNavHost(backStack = stack, onExit = ::leave, tabs = tabs)
                     }
