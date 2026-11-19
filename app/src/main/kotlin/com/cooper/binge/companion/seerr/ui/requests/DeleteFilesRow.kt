@@ -10,7 +10,7 @@ import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.component.ListItemDestination
 import com.cooper.binge.companion.seerr.R
-import com.cooper.binge.companion.seerr.ui.isOpenableSite
+import com.cooper.binge.companion.seerr.seerr.isOpenableSite
 import com.cooper.binge.companion.seerr.ui.openInBrowser
 
 /** One instance's Delete files row, or in its place what the deletion from this page came to. */

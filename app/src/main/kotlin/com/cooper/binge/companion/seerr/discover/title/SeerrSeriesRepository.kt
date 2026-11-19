@@ -21,6 +21,7 @@ import com.cooper.binge.companion.seerr.seerr.SeerrUserDto
 import com.cooper.binge.companion.seerr.seerr.toPermissions
 import com.cooper.binge.companion.seerr.seerr.toTmdbBackdropUrl
 import com.cooper.binge.companion.seerr.seerr.toTmdbPosterUrl
+import com.cooper.binge.companion.seerr.seerr.watchLink
 import com.cooper.binge.companion.seerr.ui.requests.mediaServerName
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.async
@@ -213,7 +214,7 @@ internal fun SeerrTvDetailsDto.toSeriesDetails(
             },
         partialRequests = settings.partialRequestsEnabled,
         mediaId = mediaInfo?.id,
-        watchUrl = mediaInfo?.watchUrl(),
+        watchUrl = mediaInfo?.watchLink(),
         webUrl = webUrl,
         requests =
             mediaInfo

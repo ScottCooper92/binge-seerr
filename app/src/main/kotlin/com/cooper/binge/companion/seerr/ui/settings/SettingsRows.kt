@@ -15,8 +15,8 @@ import com.binge.designsystem.theme.BingeSentiment
 import com.binge.designsystem.theme.fill
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.demo.isDemoOrigin
+import com.cooper.binge.companion.seerr.seerr.isOpenableSite
 import com.cooper.binge.companion.seerr.seerr.releaseNotesUrl
-import com.cooper.binge.companion.seerr.ui.isOpenableSite
 import com.cooper.binge.companion.seerr.ui.openInBrowser
 import com.cooper.binge.companion.seerr.ui.settings.server.ServerSettingsPage
 
