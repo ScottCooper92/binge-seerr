@@ -9,6 +9,7 @@ import androidx.compose.ui.test.performClick
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.HomeRoute
 import com.cooper.binge.companion.seerr.ui.RequestsRoute
+import com.cooper.binge.companion.seerr.ui.ThisAppRoute
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
 import org.junit.After
@@ -43,12 +44,17 @@ class DiscoveryToggleJourneyTest {
 
     private fun barIsGone() = host.compose.onAllNodes(hasTestTag("tab_settings")).assertCountEquals(0)
 
-    /** From the Settings hub (the tab, or the only screen) to This app's page, then taps the Discovery row once. */
+    /** Opens This app's page above the shell, as the hub's tile does, then taps the Discovery row once. */
     private fun toggleDiscovery() {
-        host.clickUntilShowing(host.string(R.string.hub_section_this_app), host.string(R.string.settings_discovery))
+        host.push(ThisAppRoute())
+        host.awaitShowing(host.string(R.string.settings_discovery_caption))
         host.compose.onNodeWithText(host.string(R.string.settings_discovery)).performClick()
         host.compose.waitForIdle()
     }
+
+    /** Off restarts the shell: This app's page, opened above it, is gone and Settings is what shows. */
+    private fun awaitThisAppClosed() =
+        host.await("This app's page closed") { !host.isShowing(host.string(R.string.settings_discovery_caption)) }
 
     @Test
     fun `turning discovery off from This app leaves Settings as the only screen`() {
@@ -56,12 +62,10 @@ class DiscoveryToggleJourneyTest {
         host.connectDemo()
         host.launch(HomeRoute)
         host.awaitShowing(host.string(R.string.hubs_browse_all_movies))
-        host.openSettingsTab()
-        host.awaitShowing(host.string(R.string.hub_section_this_app))
 
         toggleDiscovery()
 
-        host.awaitShowing(host.string(R.string.hub_section_requests))
+        awaitThisAppClosed()
         barIsGone()
         assertTrue("nothing from discovery mode is left on the stack: ${host.stack()}", host.stack().size == 1)
     }
@@ -72,10 +76,8 @@ class DiscoveryToggleJourneyTest {
         host.connectDemo()
         host.launch(HomeRoute)
         host.awaitShowing(host.string(R.string.hubs_browse_all_movies))
-        host.openSettingsTab()
-        host.awaitShowing(host.string(R.string.hub_section_this_app))
         toggleDiscovery()
-        host.awaitShowing(host.string(R.string.hub_section_requests))
+        awaitThisAppClosed()
         barIsGone()
 
         toggleDiscovery()
@@ -91,10 +93,8 @@ class DiscoveryToggleJourneyTest {
         host.connectDemo()
         host.launch(HomeRoute)
         host.awaitShowing(host.string(R.string.hubs_browse_all_movies))
-        host.openSettingsTab()
-        host.awaitShowing(host.string(R.string.hub_section_this_app))
         toggleDiscovery()
-        host.awaitShowing(host.string(R.string.hub_section_requests))
+        awaitThisAppClosed()
 
         host.launch(HomeRoute, RequestsRoute)
 
