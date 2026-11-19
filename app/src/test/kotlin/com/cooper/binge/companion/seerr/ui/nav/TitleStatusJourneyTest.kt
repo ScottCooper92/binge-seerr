@@ -70,7 +70,12 @@ class TitleStatusJourneyTest {
      */
     private fun lowestRequest(): SemanticsNodeInteraction {
         val nodes = host.compose.onAllNodes(hasText(request))
-        val lowest = nodes.fetchSemanticsNodes().withIndex().maxByOrNull { it.value.boundsInRoot.top }?.index ?: 0
+        val lowest =
+            nodes
+                .fetchSemanticsNodes()
+                .withIndex()
+                .maxByOrNull { it.value.boundsInRoot.top }
+                ?.index ?: 0
         return nodes[lowest]
     }
 
