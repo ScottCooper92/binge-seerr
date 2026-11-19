@@ -1,6 +1,7 @@
 package com.cooper.binge.companion.seerr.di
 
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
+import com.cooper.binge.companion.seerr.data.TitleStatusStore
 import com.cooper.binge.companion.seerr.discover.collection.CollectionRepository
 import com.cooper.binge.companion.seerr.discover.title.SeerrTitleCreditsRepository
 import com.cooper.binge.companion.seerr.discover.title.SeerrTitleDetailsRepository
@@ -20,6 +21,7 @@ object TitleDetailsModule {
     fun titleDetailsRepository(
         connection: SeerrConnection,
         collections: CollectionRepository,
+        statuses: TitleStatusStore,
         @IoDispatcher io: CoroutineDispatcher,
     ): TitleDetailsRepository =
         SeerrTitleDetailsRepository(
@@ -30,6 +32,7 @@ object TitleDetailsModule {
             deviceRegion = ::deviceRegion,
             collections = collections,
             io = io,
+            statuses = statuses,
         )
 
     @Provides

@@ -1,5 +1,6 @@
 package com.cooper.binge.companion.seerr.discover
 
+import com.cooper.binge.companion.seerr.data.TitleStatusStore
 import com.cooper.binge.companion.seerr.seerr.SeerrMediaStatusCode
 import com.cooper.binge.companion.seerr.seerr.SeerrTitlePageDto
 import com.cooper.binge.companion.seerr.seerr.SeerrTitleResultDto
@@ -57,3 +58,10 @@ internal fun SeerrMediaStatusCode?.toAvailability(): TitleAvailability =
 
 /** The four-digit year a TMDB date (`1999-03-30`) starts with, or null for a date that does not. */
 internal fun String?.toReleaseYear(): String? = this?.take(YEAR_LENGTH)?.takeIf { it.length == YEAR_LENGTH && it.all(Char::isDigit) }
+
+/** Writes what the page's rows say of their titles into [statuses], so every list of cards follows them. */
+internal fun SeerrTitlePageDto.seedInto(
+    statuses: TitleStatusStore,
+    read: Long,
+    defaultKind: TitleKind?,
+) = statuses.seedRows(read, results.map { Triple(it.mediaType?.let(::kindOf) ?: defaultKind, it.tmdbId ?: it.id, it.mediaInfo) })

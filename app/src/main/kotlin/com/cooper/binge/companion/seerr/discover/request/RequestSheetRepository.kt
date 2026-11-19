@@ -1,11 +1,15 @@
 package com.cooper.binge.companion.seerr.discover.request
 
 import com.binge.companion.sdk.attempt
+import com.cooper.binge.companion.seerr.data.TitleKey
+import com.cooper.binge.companion.seerr.data.TitleStatusStore
+import com.cooper.binge.companion.seerr.data.TitleType
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.seerr.RequestPostOutcome
 import com.cooper.binge.companion.seerr.seerr.SEERR_MEDIA_TYPE_MOVIE
 import com.cooper.binge.companion.seerr.seerr.SEERR_MEDIA_TYPE_TV
 import com.cooper.binge.companion.seerr.seerr.SeerrApi
+import com.cooper.binge.companion.seerr.seerr.SeerrMediaStatusCode
 import com.cooper.binge.companion.seerr.seerr.SeerrQuotaBucketDto
 import com.cooper.binge.companion.seerr.seerr.SeerrRequestBody
 import com.cooper.binge.companion.seerr.seerr.SeerrServerDto
@@ -113,6 +117,7 @@ class SeerrRequestSheetRepository(
     private val viewer: suspend () -> SeerrUserDto,
     private val profile: suspend () -> SeerrServerProfile,
     private val io: CoroutineDispatcher,
+    private val statuses: TitleStatusStore = TitleStatusStore(),
 ) : RequestSheetRepository {
     override suspend fun access(kind: TitleKind): RequestAccess =
         withContext(io) {
@@ -161,10 +166,16 @@ class SeerrRequestSheetRepository(
                     profileId = destination?.profileId,
                     rootFolder = destination?.rootFolder,
                 )
-            when (api().requestMedia(body).toOutcome()) {
+            val key = TitleKey(if (submission.kind == TitleKind.Series) TitleType.Tv else TitleType.Movie, submission.tmdbId)
+            val undo =
+                statuses.applyOptimistic(key) { held ->
+                    if (held.statusOf(submission.is4k).isRequestable()) held.with(submission.is4k, SeerrMediaStatusCode.Pending) else held
+                }
+            val outcome = attempt { api().requestMedia(body).toOutcome() }.onFailure { statuses.rollback(undo) }.getOrThrow()
+            when (outcome) {
                 is RequestPostOutcome.Created -> RequestResult.Created
-                RequestPostOutcome.NothingToRequest -> RequestResult.NothingToRequest
-                RequestPostOutcome.AlreadyRequested -> RequestResult.AlreadyRequested
+                RequestPostOutcome.NothingToRequest -> RequestResult.NothingToRequest.also { statuses.rollback(undo) }
+                RequestPostOutcome.AlreadyRequested -> RequestResult.AlreadyRequested.also { statuses.rollback(undo) }
             }
         }
 
@@ -189,3 +200,7 @@ private fun SeerrQuotaBucketDto?.toRequestQuota(): RequestQuota? {
     val limit = this?.limit?.takeIf { it > 0 } ?: return null
     return RequestQuota(limit = limit, remaining = (remaining ?: (limit - (used ?: 0))).coerceIn(0, limit), days = days)
 }
+
+/** A version with no status, or one the server reads as not requested, is one a request moves to Pending. */
+private fun SeerrMediaStatusCode?.isRequestable(): Boolean =
+    this == null || this == SeerrMediaStatusCode.Unknown || this == SeerrMediaStatusCode.Deleted
