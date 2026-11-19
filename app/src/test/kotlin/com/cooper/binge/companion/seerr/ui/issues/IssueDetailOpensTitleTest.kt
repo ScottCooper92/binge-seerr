@@ -3,7 +3,6 @@ package com.cooper.binge.companion.seerr.ui.issues
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasText
-import androidx.compose.ui.test.onNode
 import androidx.compose.ui.test.performClick
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.theme.SeerrTheme

@@ -2,7 +2,6 @@ package com.cooper.binge.companion.seerr.ui.nav
 
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasText
-import androidx.compose.ui.test.onNode
 import androidx.compose.ui.test.performClick
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.HomeRoute
