@@ -126,13 +126,13 @@ class TitlePageScreenshotTest {
     @Composable
     fun loading() = Frame(TitlePageUiState.Loading)
 
-    /** The skeleton at font scales 1.5 and 2, where the stats go two to a row. */
+    /** The skeleton at font scale 2, where the stats go two to a row. */
     @PreviewTest
     @SeerrFontScalePreviews
     @Composable
     fun loadingLargeFonts() = Frame(TitlePageUiState.Loading)
 
-    /** The longest title, tagline and names at font scales 1.5 and 2. */
+    /** The longest title, tagline and names at font scale 2. */
     @PreviewTest
     @SeerrFontScalePreviews
     @Composable
@@ -143,7 +143,7 @@ class TitlePageScreenshotTest {
     @Composable
     fun longSpanish() = Frame(TitlePageUiState.Ready(longMovie(), fullExtras()))
 
-    /** The facts list at font scales 1.5 and 2, with the longest studio names: a label and its value stay readable. */
+    /** The facts list at font scale 2, with the longest studio names: a label and its value stay readable. */
     @PreviewTest
     @SeerrFontScalePreviews
     @Composable
@@ -167,7 +167,7 @@ class TitlePageScreenshotTest {
             scrollState = rememberScrollState(initial = FACTS_PX),
         )
 
-    /** Linked studios with the longest names at font scales 1.5 and 2: the links wrap and none is cut off. */
+    /** Linked studios with the longest names at font scale 2: the links wrap and none is cut off. */
     @PreviewTest
     @SeerrFontScalePreviews
     @Composable
@@ -215,7 +215,7 @@ class TitlePageScreenshotTest {
             scrollState = rememberScrollState(initial = WATCH_PX),
         )
 
-    /** The section at font scales 1.5 and 2, with the longest provider names. */
+    /** The section at font scale 2, with the longest provider names. */
     @PreviewTest
     @SeerrFontScalePreviews
     @Composable
@@ -251,7 +251,7 @@ class TitlePageScreenshotTest {
             scrollState = rememberScrollState(initial = COLLECTION_PX),
         )
 
-    /** The rail with See all, under a long collection name, at font scales 1.5 and 2. */
+    /** The rail with See all, under a long collection name, at font scale 2. */
     @PreviewTest
     @SeerrFontScalePreviews
     @Composable

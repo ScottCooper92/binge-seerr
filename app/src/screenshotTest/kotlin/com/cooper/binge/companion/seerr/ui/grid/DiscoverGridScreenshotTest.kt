@@ -44,7 +44,7 @@ class DiscoverGridScreenshotTest {
     @Composable
     fun font13() = Frame(readyGridState())
 
-    /** At 1.5x and 2x the long title wraps and the cards grow; nothing is cut off. */
+    /** At 2x the long title wraps and the cards grow; nothing is cut off. */
     @PreviewTest
     @SeerrFontScalePreviews
     @Composable

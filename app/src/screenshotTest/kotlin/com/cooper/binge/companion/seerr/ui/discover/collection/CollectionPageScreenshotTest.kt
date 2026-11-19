@@ -57,7 +57,7 @@ class CollectionPageScreenshotTest {
     @Composable
     fun loading() = Frame(CollectionPageUiState.Loading)
 
-    /** The skeleton at font scales 1.5 and 2, where a film's row is taller than its poster. */
+    /** The skeleton at font scale 2, where a film's row is taller than its poster. */
     @PreviewTest
     @SeerrFontScalePreviews
     @Composable
@@ -68,7 +68,7 @@ class CollectionPageScreenshotTest {
     @Composable
     fun error() = Frame(CollectionPageUiState.Error(SeerrError.Unreachable))
 
-    /** The longest names at font scales 1.5 and 2. */
+    /** The longest names at font scale 2. */
     @PreviewTest
     @SeerrFontScalePreviews
     @Composable

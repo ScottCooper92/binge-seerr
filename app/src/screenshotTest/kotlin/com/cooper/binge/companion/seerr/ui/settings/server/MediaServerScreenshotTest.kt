@@ -64,7 +64,7 @@ class MediaServerScreenshotTest {
     @Composable
     fun spanish() = Frame(ready(jellyfinForm(), MediaServerExtras(libraries = libraries())))
 
-    /** At 1.5x and 2x text the pinned Cancel and Save bar must still fit. */
+    /** At 2x text the pinned Cancel and Save bar must still fit. */
     @PreviewTest
     @SeerrFontScalePreviews
     @Composable
