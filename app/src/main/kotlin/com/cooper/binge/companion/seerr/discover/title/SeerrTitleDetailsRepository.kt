@@ -58,7 +58,7 @@ class SeerrTitleDetailsRepository(
             val profile = profile()
             val read = statuses.beginRead()
             val dto = api.movieFullDetails(tmdbId)
-            statuses.seed(TitleKey(TitleType.Movie, tmdbId), dto.mediaInfo.toTitleStatuses(), read)
+            statuses.seed(TitleKey(TitleType.Movie, tmdbId), dto.mediaInfo.toTitleStatuses().copy(onWatchlist = dto.onUserWatchlist), read)
             val region = streamingRegion(api, user, profile, deviceRegion())
             val permissions = user.toPermissions()
             dto
@@ -87,7 +87,9 @@ class SeerrTitleDetailsRepository(
         tmdbId: Int,
         title: String,
         onList: Boolean,
-    ) = withContext(io) { setOnWatchlist(api(), tmdbId, title, "movie", onList) }
+    ) = withContext(io) {
+        statuses.watchlisting(TitleKey(TitleType.Movie, tmdbId), onList) { setOnWatchlist(api(), tmdbId, title, "movie", onList) }
+    }
 
     override suspend fun unblock(tmdbId: Int) =
         withContext(io) { statuses.unblocking(TitleKey(TitleType.Movie, tmdbId)) { api().unblockTitle(profile(), tmdbId, "movie") } }
@@ -254,6 +256,16 @@ internal fun com.cooper.binge.companion.seerr.seerr.SeerrRequestSummaryDto.toTit
         status = status,
         requesterId = requestedBy?.id,
     )
+
+/** Shows the title on or off the watchlist at once, and puts it back if the server refuses. */
+internal suspend fun TitleStatusStore.watchlisting(
+    key: TitleKey,
+    onList: Boolean,
+    call: suspend () -> Unit,
+) {
+    val undo = applyOptimistic(key) { it.copy(onWatchlist = onList) }
+    attempt { call() }.onFailure { rollback(undo) }.getOrThrow()
+}
 
 /** Shows the title unblocked at once, and puts the block back if the server refuses. */
 internal suspend fun TitleStatusStore.unblocking(
