@@ -153,47 +153,49 @@ class SeerrHealthWiringTest {
     @Test
     fun `a server that asks for a client certificate reads as such only once it is unreachable`() =
         runTest {
-            val health = SeerrHealth(seerrHealthMonitor()) { ServerId("server-1") }
+            val monitor = seerrHealthMonitor()
+            val health = SeerrHealth(monitor) { ServerId("server-1") }
             val sut = connection(health = health)
             connect()
             sut.connect(baseUrl, SeerrAuth.ApiKey("k3y")).getOrThrow()
 
             health.reportClientCertificate(true)
-            health.report(CallResult.TransportFailure())
+            monitor.report(ServerId("server-1"), CallResult.TransportFailure())
             assertEquals(SeerrConnectionHealth.Healthy, sut.health.first())
 
             health.reportClientCertificate(true)
-            health.report(CallResult.TransportFailure())
+            monitor.report(ServerId("server-1"), CallResult.TransportFailure())
             assertEquals(SeerrConnectionHealth.ClientCertificateNeeded, sut.health.first())
         }
 
     @Test
     fun `a different failure, an answer or a new connection clears the client certificate reading`() =
         runTest {
-            val health = SeerrHealth(seerrHealthMonitor()) { ServerId("server-1") }
+            val monitor = seerrHealthMonitor()
+            val health = SeerrHealth(monitor) { ServerId("server-1") }
             val sut = connection(health = health)
             connect()
             sut.connect(baseUrl, SeerrAuth.ApiKey("k3y")).getOrThrow()
             repeat(2) {
                 health.reportClientCertificate(true)
-                health.report(CallResult.TransportFailure())
+                monitor.report(ServerId("server-1"), CallResult.TransportFailure())
             }
 
             health.reportClientCertificate(false)
-            health.report(CallResult.TransportFailure())
+            monitor.report(ServerId("server-1"), CallResult.TransportFailure())
             assertEquals(SeerrConnectionHealth.Unreachable, sut.health.first())
 
             health.reportClientCertificate(true)
-            health.report(CallResult.TransportFailure())
+            monitor.report(ServerId("server-1"), CallResult.TransportFailure())
             assertEquals(SeerrConnectionHealth.ClientCertificateNeeded, sut.health.first())
 
             health.reportClientCertificate(false)
-            health.report(CallResult.Answered(200))
+            monitor.report(ServerId("server-1"), CallResult.Answered(200))
             assertEquals(SeerrConnectionHealth.Healthy, sut.health.first())
 
             repeat(2) {
                 health.reportClientCertificate(true)
-                health.report(CallResult.TransportFailure())
+                monitor.report(ServerId("server-1"), CallResult.TransportFailure())
             }
             sut.disconnect()
             connect()
