@@ -4,6 +4,7 @@ import android.content.res.Resources
 import androidx.annotation.StringRes
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -57,8 +58,8 @@ internal fun RequestActionsSheet(
     var pending by rememberSaveable { mutableStateOf<Pending?>(null) }
     // Whether the page for the edit or the choice of instance has been pushed. A page popped stays on screen until its exit ends, and
     // the state behind it is dropped only then, so the page underneath sees the state still open and must not push it again.
-    var editPushed by remember { mutableStateOf(false) }
-    var markPushed by remember { mutableStateOf(false) }
+    val editPushed = remember { mutableStateOf(false) }
+    val markPushed = remember { mutableStateOf(false) }
     CloseWhenActionLands(actionsLanded, actionsLandedNow, onDismiss)
     val shown = rememberOwnProgress(progress)
     BingeAdaptiveSheet(
@@ -74,16 +75,7 @@ internal fun RequestActionsSheet(
     ) { nav ->
         // The page follows the edit, not the tap: an edit begun in a narrow window shows here once it widens.
         val editOpen = nav.stacksPages && editActions != null && edit != null
-        LaunchedEffect(editOpen, nav.page) {
-            when {
-                !editOpen -> editPushed = false
-                nav.page == EDIT_PAGE -> editPushed = true
-                !editPushed -> {
-                    editPushed = true
-                    nav.push(EDIT_PAGE)
-                }
-            }
-        }
+        PushPageOnce(editOpen, nav, EDIT_PAGE, editPushed)
         // A stack that survived a narrow window keeps its page, but there the editor is a sheet of its own, not this one.
         if (nav.page == EDIT_PAGE && nav.stacksPages && editActions != null) {
             EditRequestPage(nav = nav, item = item, edit = edit, actions = editActions)
@@ -91,16 +83,7 @@ internal fun RequestActionsSheet(
         }
         // Mark as follows the choice of instance the same way: a page here, its own sheet where this one does not stack pages.
         val markOpen = nav.stacksPages && marking != null
-        LaunchedEffect(markOpen, nav.page) {
-            when {
-                !markOpen -> markPushed = false
-                nav.page == MARK_PAGE -> markPushed = true
-                !markPushed -> {
-                    markPushed = true
-                    nav.push(MARK_PAGE)
-                }
-            }
-        }
+        PushPageOnce(markOpen, nav, MARK_PAGE, markPushed)
         if (nav.page == MARK_PAGE && nav.stacksPages && marking != null) {
             MarkAsPage(nav = nav, instance = marking, onSelect = onMarkSelect)
             return@BingeAdaptiveSheet
@@ -165,6 +148,26 @@ internal fun RequestActionsSheet(
             onDecline = onDecline,
             onRemove = onRemove,
         )
+    }
+}
+
+/** Pushes [page] once while [open], and not again while the page it pushed is still leaving: the state behind it outlives its exit. */
+@Composable
+private fun PushPageOnce(
+    open: Boolean,
+    nav: BingeSheetNav,
+    page: String,
+    pushed: MutableState<Boolean>,
+) {
+    LaunchedEffect(open, nav.page) {
+        when {
+            !open -> pushed.value = false
+            nav.page == page -> pushed.value = true
+            !pushed.value -> {
+                pushed.value = true
+                nav.push(page)
+            }
+        }
     }
 }
 
