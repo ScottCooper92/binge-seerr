@@ -110,10 +110,16 @@ class SeerrConnection(
     private var cachedUser: CachedUser? = null
     private var cachedProfile: Pair<SeerrCredentials, SeerrServerProfile>? = null
 
+    /** The cached service for the saved server, reporting every call to the health it was built with, keyed by the persisted id. */
+    private suspend fun cachedApi(
+        baseUrl: String,
+        auth: SeerrAuth,
+    ): SeerrApi = apis.cached(baseUrl, auth, apis.serverId())
+
     /** The API for the saved server, or [NotConnectedException] when nothing is saved. */
     suspend fun api(): SeerrApi {
         val saved = store.credentials.first() ?: throw NotConnectedException()
-        return apis.cached(saved.baseUrl, saved.auth)
+        return cachedApi(saved.baseUrl, saved.auth)
     }
 
     /** The saved credentials, or [NotConnectedException]. */
@@ -138,8 +144,7 @@ class SeerrConnection(
             cachedUser
                 ?.takeIf { it.credentials == saved && (maxAge == null || clock() - it.readAt < maxAge.inWholeMilliseconds) }
                 ?.user
-                ?: apis
-                    .cached(saved.baseUrl, saved.auth)
+                ?: cachedApi(saved.baseUrl, saved.auth)
                     .authenticatedUser()
                     .also { cachedUser = CachedUser(saved, it, clock()) }
         }
@@ -157,7 +162,7 @@ class SeerrConnection(
         return userLock.withLock {
             cachedProfile?.takeIf { it.first == saved }?.second
                 ?: profileReads
-                    .inspect(saved, apis.cached(saved.baseUrl, saved.auth), seen)
+                    .inspect(saved, cachedApi(saved.baseUrl, saved.auth), seen)
                     .getOrElse { SeerrServerProfile.unknown(saved.variant) }
                     .also { if (it.complete) cachedProfile = saved to it }
         }
@@ -198,7 +203,7 @@ class SeerrConnection(
         val seen = profileReads.failures
         return userLock.withLock {
             cachedProfile = null
-            profileReads.inspect(saved, apis.cached(saved.baseUrl, saved.auth), seen).onSuccess {
+            profileReads.inspect(saved, cachedApi(saved.baseUrl, saved.auth), seen).onSuccess {
                 if (it.complete) {
                     cachedProfile =
                         saved to it
@@ -364,7 +369,7 @@ class SeerrConnection(
     private suspend fun forgetNow(keepAddress: Boolean) {
         val saved = store.credentials.first()
         val auth = saved?.auth
-        if (auth is SeerrAuth.Session && !auth.shared) attempt { apis.cached(saved.baseUrl, auth).logOut() }
+        if (auth is SeerrAuth.Session && !auth.shared) attempt { cachedApi(saved.baseUrl, auth).logOut() }
         userLock.withLock {
             cachedUser = null
             cachedProfile = null
