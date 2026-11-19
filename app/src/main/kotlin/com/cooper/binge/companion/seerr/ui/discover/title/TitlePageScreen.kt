@@ -51,6 +51,8 @@ class TitlePageActions(
     val onCloseStatus: () -> Unit = {},
     /** Request in 4K, tapped in a request's sheet: that sheet closes and the request sheet opens. */
     val onRequestFourK: () -> Unit = {},
+    /** Watch in Binge: the hand-off to the title in Binge, or null where Binge is not there to answer it. */
+    val onWatchInBinge: (() -> Unit)? = null,
     /** The watchlist button, tapped. */
     val onToggleWatchlist: () -> Unit = {},
     /** Remove from blocklist, tapped in the status sheet of a blocklisted title. */
@@ -152,6 +154,7 @@ private fun ReadyPage(
             mediaServerName = state.movie.mediaServerName,
             canRequest = state.movie.canRequest,
             onWatch = actions.onOpenUrl,
+            onWatchInBinge = actions.onWatchInBinge,
             onDismiss = actions.onCloseStatus,
             onUnblock = actions.onUnblock.takeIf { state.movie.mayUnblock },
         )
