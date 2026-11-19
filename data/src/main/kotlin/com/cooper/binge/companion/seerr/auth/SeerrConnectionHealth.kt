@@ -1,16 +1,20 @@
 package com.cooper.binge.companion.seerr.auth
 
+import com.cooper.binge.companion.seerr.demo.isDemo
+import com.cooper.binge.companion.seerr.seerr.SeerrClientCertificateInterceptor
 import com.cooper.binge.companion.seerr.seerr.isArrProxyRoute
+import com.cooper.binge.companion.seerr.seerr.isSessionRejection
 import com.cooper.homelab.core.foundation.ServerId
-import com.cooper.homelab.core.server.connection.CallResult
 import com.cooper.homelab.core.server.connection.ConnectionHealth
+import com.cooper.homelab.core.server.connection.ConnectionHealthInterceptor
 import com.cooper.homelab.core.server.connection.ConnectionHealthMonitor
 import com.cooper.homelab.core.server.connection.SeerrClassifier
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.runBlocking
+import okhttp3.HttpUrl
+import okhttp3.Interceptor
 
 /** What the last few calls to the saved server said about it. */
 enum class SeerrConnectionHealth {
@@ -39,24 +43,6 @@ enum class SeerrConnectionHealth {
     ClientCertificateNeeded,
 }
 
-/**
- * The write side of [SeerrHealth]: the interceptor reports each call here without seeing the read side. [NoOp] backs the
- * throwaway setup-probe client, whose unvalidated candidate credentials must never feed the saved server's health.
- */
-fun interface SeerrHealthReporter {
-    fun report(result: CallResult)
-
-    /**
-     * Whether the last call that failed to connect failed because the server asked for a client certificate. Said before the
-     * failure is reported, so the verdict that follows already knows. An answered call says false; a cancelled one says nothing.
-     */
-    fun reportClientCertificate(needed: Boolean) = Unit
-
-    object NoOp : SeerrHealthReporter {
-        override fun report(result: CallResult) = Unit
-    }
-}
-
 /** A single transient failure can be a blip; only a run of them with no answer between reads as unreachable. */
 private const val UNREACHABLE_AFTER = 2
 
@@ -65,15 +51,27 @@ fun seerrHealthMonitor(): ConnectionHealthMonitor = ConnectionHealthMonitor(Seer
 
 /**
  * Live health of the one saved server, fed by every call the cached client makes. Observe-only. What a call means is the shared
- * library's rule ([SeerrClassifier]); this keys it by [server], which is minted once and persisted, so [report] (on an OkHttp
- * thread, which blocks anyway) reads it with `runBlocking` once and keeps it: a DataStore read, warm after the first.
- * It does not read the store: "not connected" is [SeerrConnection]'s call.
+ * library's rule ([SeerrClassifier]); this keys it by [server], which is minted once and persisted. The client for the saved server
+ * carries [interceptors], built for that id; the throwaway setup-probe client carries none, because its unvalidated candidate
+ * credentials must never feed the saved server's health. It does not read the store: "not connected" is [SeerrConnection]'s call.
  */
 class SeerrHealth(
     private val monitor: ConnectionHealthMonitor,
     private val server: suspend () -> ServerId,
-) : SeerrHealthReporter {
-    private val id: ServerId by lazy { runBlocking { server() } }
+) {
+    /** The id the saved server is keyed by, minted once and persisted: a read after the first is warm. */
+    suspend fun serverId(): ServerId = server()
+
+    /**
+     * What a client for [id] carries to report every call: the shared library's interceptor, with this app's session rule and the
+     * demo as an address that is always reached, outside the one that says a client certificate was asked for, so that is known
+     * before the failure's verdict is read.
+     */
+    fun interceptors(id: ServerId): List<Interceptor> =
+        listOf(
+            ConnectionHealthInterceptor(monitor, id, sessionRejected = ::isSessionRejection, alwaysReached = HttpUrl::isDemo),
+            SeerrClientCertificateInterceptor(::reportClientCertificate),
+        )
 
     val health: Flow<ConnectionHealth> = flow { emitAll(monitor.health(server())) }
 
@@ -82,9 +80,7 @@ class SeerrHealth(
     /** Whether the failures that make the server read as unreachable were the server asking for a client certificate. */
     val clientCertificateNeeded: Flow<Boolean> = clientCertificate
 
-    override fun report(result: CallResult) = monitor.report(id, result)
-
-    override fun reportClientCertificate(needed: Boolean) {
+    internal fun reportClientCertificate(needed: Boolean) {
         clientCertificate.value = needed
     }
 
