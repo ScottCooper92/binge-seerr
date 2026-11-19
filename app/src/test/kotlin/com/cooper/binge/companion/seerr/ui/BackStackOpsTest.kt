@@ -109,8 +109,8 @@ class BackStackOpsTest {
     }
 
     @Test
-    fun `in three panes, opening what is already open keeps its instance, so its removal still closes it`() {
-        val panes = PaneLayout(hubBeside = { true }, showBack = { false }, threePane = { true })
+    fun `opening what is already open keeps its instance, so its removal still closes it`() {
+        val panes = PaneLayout(hubBeside = { true }, showBack = { false })
         val open = RequestDetailRoute(5)
         val stack = stackOf(HubRoute, RequestsRoute, open)
 

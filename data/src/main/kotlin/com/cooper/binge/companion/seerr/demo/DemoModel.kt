@@ -50,6 +50,7 @@ internal class DemoModel(
             data.discoverRoutes() +
             data.issueRoutes() +
             data.blocklistRoutes() +
+            data.watchlistRoutes() +
             data.userRoutes() +
             data.settingsRoutes() +
             data.maintenanceRoutes() +

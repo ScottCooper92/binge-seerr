@@ -17,23 +17,23 @@ import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.scene.Scene
 import androidx.navigation3.scene.SceneStrategy
 import androidx.navigation3.scene.SceneStrategyScope
-import com.binge.designsystem.LocalPaneDepth
 import com.binge.designsystem.R as DesR
 
 private const val SHELL_ROLE = "seerr.shell"
+private const val SECTION_ROLE = "seerr.section"
+
+/** Marks a section's entry, so [ShellPanesStrategy] knows the stack above the shell starts with one and draws it beside the hub. */
+internal val SectionPane: Map<String, Any> = mapOf(SECTION_ROLE to true)
 
 /** Marks the shell's entry, so [ShellPanesStrategy] knows which entry holds the tab bar and the Settings tab. */
 internal val ShellPane: Map<String, Any> = mapOf(SHELL_ROLE to true)
 
 /**
- * What sits above the shell on the app's stack, for the Settings tab to draw beside its hub: the open [section] and, in three
- * panes, the [item] it opened, which is [itemDepth] entries above it. [newest] is whatever is on top, for two panes.
+ * What sits above the shell on the app's stack, for the Settings tab to draw beside its hub: [newest], whatever is on top. The
+ * right pane shows it, so a section, what it opened and a page inside that each take the one pane in turn, and Back walks down.
  */
 @Immutable
 internal class ShellDetail(
-    val section: NavEntry<NavKey>?,
-    val item: NavEntry<NavKey>?,
-    val itemDepth: Int,
     val newest: NavEntry<NavKey>?,
 )
 
@@ -50,10 +50,8 @@ internal object ShellPanesStrategy : SceneStrategy<NavKey> {
     override fun SceneStrategyScope<NavKey>.calculateScene(entries: List<NavEntry<NavKey>>): Scene<NavKey>? {
         val shell = entries.firstOrNull()?.takeIf { it.metadata[SHELL_ROLE] == true } ?: return null
         val above = entries.drop(1)
-        if (above.isNotEmpty() && above.first().metadata[PANE_ROLE] != PaneRole.Section) return null
-        val section = above.firstOrNull()
-        val item = above.getOrNull(1)?.let { above.last() }
-        return ShellPanesScene(entries, shell, ShellDetail(section, item, above.size - 1, above.lastOrNull()))
+        if (above.isNotEmpty() && above.first().metadata[SECTION_ROLE] != true) return null
+        return ShellPanesScene(entries, shell, ShellDetail(above.lastOrNull()))
     }
 }
 
@@ -72,34 +70,22 @@ private class ShellPanesScene(
 }
 
 /**
- * The Settings tab on a wide window: [hub] beside the open section, or beside [section]'s placeholder while none is open. In
- * [threePane] the item it opened takes a third pane, as [ThreePaneRow] lays out.
+ * The Settings tab on a wide window, at every width: the [hub] on the left, and the right pane showing whatever is newest above
+ * it, or [defaultSection] while nothing is open. The left pane never changes. What a section opens, and what that opens in turn,
+ * replaces only the right pane (#2348).
  */
 @Composable
 internal fun SettingsPanes(
-    threePane: Boolean,
     hub: @Composable () -> Unit,
     defaultSection: @Composable () -> Unit,
 ) {
     val detail = LocalShellDetail.current
-    if (threePane) {
-        ThreePaneRow(
-            hub = hub,
-            section = { CompositionLocalProvider(LocalPaneDepth provides 1) { detail?.section?.Content() ?: defaultSection() } },
-            item = {
-                CompositionLocalProvider(
-                    LocalPaneDepth provides (detail?.itemDepth ?: 1),
-                ) { detail?.item?.Content() ?: NothingOpen() }
-            },
-        )
-    } else {
-        TwoPaneRow(hub = hub, detail = { detail?.newest?.Content() ?: defaultSection() })
-    }
+    TwoPaneRow(hub = hub, detail = { detail?.newest?.Content() ?: defaultSection() })
 }
 
 /** Two equal panes with the design system's gap between them. */
 @Composable
-private fun TwoPaneRow(
+internal fun TwoPaneRow(
     hub: @Composable () -> Unit,
     detail: @Composable () -> Unit,
     modifier: Modifier = Modifier,

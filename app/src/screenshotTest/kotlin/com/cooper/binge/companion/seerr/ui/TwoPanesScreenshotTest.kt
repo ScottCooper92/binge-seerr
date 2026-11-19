@@ -33,29 +33,29 @@ import com.cooper.binge.companion.seerr.ui.requests.pendingDetail
 import kotlinx.coroutines.flow.flowOf
 
 /**
- * A landscape tablet's three panes (#1110): the hub, the open section and what it opened, laid out by the scene's own
- * [ThreePaneRow] with each pane told its edges and depth as the scene tells them. The section and the item beside it
- * show no Back arrow, because neither leaves the screen.
+ * A landscape tablet's two panes (#2348): the hub, always on the left, and one content pane on the right, laid out by the shell's
+ * own [TwoPaneRow]. What a section opens replaces only the right pane, so an item opened from a list shows with a Back arrow that
+ * returns to the list.
  */
-class ThreePanesScreenshotTest {
+class TwoPanesScreenshotTest {
     /** The hub alone: the default section beside it, and nothing open yet. */
     @PreviewTest
     @SeerrTabletPanesPreview
     @Composable
-    fun hubWithDefaultSection() = Panes(HubSection.Requests, section = { Requests() }, item = null)
+    fun hubWithDefaultSection() = Panes(HubSection.Requests, depth = 1) { Requests() }
 
     /** A section opened from the hub, with nothing of its own open. */
     @PreviewTest
     @SeerrTabletPanesPreview
     @Composable
-    fun sectionNothingOpen() = Panes(HubSection.Issues, section = { Issues() }, item = null)
+    fun sectionNothingOpen() = Panes(HubSection.Issues, depth = 1) { Issues() }
 
-    /** A request opened from the list, beside it: no Back arrow on either. */
+    /** A request opened from the list: it takes the right pane in place of the list, with a Back arrow to it. */
     @PreviewTest
     @SeerrTabletPanesPreview
     @Composable
     fun sectionWithItemOpen() =
-        Panes(HubSection.Requests, section = { Requests() }) {
+        Panes(HubSection.Requests, depth = 2) {
             RequestDetailPage(
                 detail = pendingDetail(),
                 onBack = {},
@@ -71,18 +71,17 @@ class ThreePanesScreenshotTest {
 @Composable
 private fun Panes(
     selected: HubSection,
-    section: @Composable () -> Unit,
-    item: (@Composable () -> Unit)?,
+    depth: Int,
+    content: @Composable () -> Unit,
 ) {
-    CompositionLocalProvider(LocalIsSinglePaneNav provides false, LocalPaneDepth provides 1) {
-        ThreePaneRow(
+    CompositionLocalProvider(LocalIsSinglePaneNav provides false, LocalPaneDepth provides depth) {
+        TwoPaneRow(
             hub = {
                 PaneContent(innerEdge = PaneEdge.End) {
                     HubScreen(state = previewReady(), actions = previewActions(), selectedSection = selected)
                 }
             },
-            section = { DetailPaneContent(section) },
-            item = { item?.let { DetailPaneContent(it) } ?: NothingOpen() },
+            detail = { DetailPaneContent(content) },
         )
     }
 }

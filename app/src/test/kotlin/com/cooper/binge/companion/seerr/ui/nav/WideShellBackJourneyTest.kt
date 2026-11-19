@@ -24,11 +24,11 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
-/** Two panes: the hub beside one section. */
+/** A wide window: the hub beside one content pane. */
 private const val TWO_PANES = "w900dp-h800dp"
 
-/** Three panes: a landscape tablet, with the hub, a section and what it opened. */
-private const val THREE_PANES = "w1280dp-h800dp"
+/** An expanded window: a landscape tablet. It is the same two panes as any wide window (#2348). */
+private const val EXPANDED = "w1280dp-h800dp"
 private const val WAIT_MILLIS = 5_000L
 
 /**
@@ -111,28 +111,27 @@ class WideShellBackJourneyTest {
     fun `two panes - Back closes the open request, then leaves for the start tab`() = requestDetail()
 
     @Test
-    @Config(qualifiers = THREE_PANES)
-    fun `three panes - Back closes the open request, then leaves for the start tab`() = requestDetail()
+    @Config(qualifiers = EXPANDED)
+    fun `expanded - Back closes the open request, then leaves for the start tab`() = requestDetail()
 
     @Test
     fun `two panes - Back closes an item, then the section, then leaves for the start tab`() = issueDetail(listOf(ShellRoute))
 
     @Test
-    @Config(qualifiers = THREE_PANES)
-    fun `three panes - Back closes an item, then the section, then leaves for the start tab`() =
-        issueDetail(listOf(ShellRoute, RequestsRoute))
+    @Config(qualifiers = EXPANDED)
+    fun `expanded - Back closes an item, then the section, then leaves for the start tab`() = issueDetail(listOf(ShellRoute))
 
     @Test
     fun `two panes - Back closes the settings search and brings the section back`() = search(listOf(ShellRoute))
 
     @Test
-    @Config(qualifiers = THREE_PANES)
-    fun `three panes - Back closes the settings search and brings the section back`() = search(listOf(ShellRoute, RequestsRoute))
+    @Config(qualifiers = EXPANDED)
+    fun `expanded - Back closes the settings search and brings the section back`() = search(listOf(ShellRoute))
 
     @Test
     fun `two panes - Back unwinds a page two levels deep one level at a time`() = nestedPage(listOf(ShellRoute))
 
     @Test
-    @Config(qualifiers = THREE_PANES)
-    fun `three panes - Back unwinds a page two levels deep one level at a time`() = nestedPage(listOf(ShellRoute, RequestsRoute))
+    @Config(qualifiers = EXPANDED)
+    fun `expanded - Back unwinds a page two levels deep one level at a time`() = nestedPage(listOf(ShellRoute))
 }

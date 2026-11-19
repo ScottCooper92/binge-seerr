@@ -1,8 +1,10 @@
 package com.cooper.binge.companion.seerr.discover.grid
 
+import com.cooper.binge.companion.seerr.data.TitleStatusStore
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.TitleListRepository
 import com.cooper.binge.companion.seerr.discover.TitlePage
+import com.cooper.binge.companion.seerr.discover.seedInto
 import com.cooper.binge.companion.seerr.discover.toTitlePage
 import com.cooper.binge.companion.seerr.seerr.SeerrApi
 import com.cooper.binge.companion.seerr.seerr.SeerrServerProfile
@@ -52,6 +54,7 @@ class SeerrDiscoverGridRepository(
     private val profile: suspend () -> SeerrServerProfile,
     private val titles: TitleListRepository,
     private val io: CoroutineDispatcher,
+    private val statuses: TitleStatusStore = TitleStatusStore(),
 ) : DiscoverGridRepository {
     override suspend fun canRefine(preset: GridPreset): Boolean = preset.isFilterable && profile().hasDiscoverFilters
 
@@ -75,8 +78,9 @@ class SeerrDiscoverGridRepository(
         val query = toDiscoverQuery(request.kind, request.filters, request.sort, page, profile())
         return withContext(io) {
             val api = api()
+            val read = statuses.beginRead()
             val dto = if (request.kind == TitleKind.Series) api.discoverTvFiltered(query) else api.discoverMoviesFiltered(query)
-            dto.toTitlePage(request.kind)
+            dto.also { it.seedInto(statuses, read, request.kind) }.toTitlePage(request.kind)
         }
     }
 }

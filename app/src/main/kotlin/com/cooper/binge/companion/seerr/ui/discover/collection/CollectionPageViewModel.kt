@@ -3,8 +3,10 @@ package com.cooper.binge.companion.seerr.ui.discover.collection
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.binge.companion.sdk.attempt
+import com.cooper.binge.companion.seerr.data.TitleStatusStore
 import com.cooper.binge.companion.seerr.discover.collection.CollectionDetails
 import com.cooper.binge.companion.seerr.discover.collection.CollectionRepository
+import com.cooper.binge.companion.seerr.discover.overlaid
 import com.cooper.binge.companion.seerr.discover.request.RequestResult
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
@@ -73,6 +75,7 @@ class CollectionPageViewModel
         private val analytics: Analytics = NoOpAnalytics,
         private val crashBreadcrumbs: CrashBreadcrumbs = NoOpCrashBreadcrumbs,
         @Assisted private val id: Int,
+        private val statuses: TitleStatusStore = TitleStatusStore(),
     ) : ViewModel() {
         @AssistedFactory
         interface Factory {
@@ -87,6 +90,10 @@ class CollectionPageViewModel
 
         init {
             load()
+            // A request, block or removal made anywhere moves the films' statuses here without a read (#2354).
+            viewModelScope.launch {
+                statuses.statuses.collect { held -> updateReady { it.copy(collection = it.collection.overlaid(held)) } }
+            }
         }
 
         fun load() {

@@ -98,7 +98,7 @@ internal fun DemoData.movieDetails(id: String): DemoAnswer {
     return ok(titleBody(thin, id.toInt()))
 }
 
-private fun titleBody(
+private fun DemoData.titleBody(
     thin: SeerrMediaDetailsDto,
     tmdbId: Int,
 ) = SeerrMovieDetailsDto(
@@ -130,6 +130,7 @@ private fun titleBody(
         ),
     collection = collectionOf(tmdbId),
     mediaInfo = thin.mediaInfo,
+    onUserWatchlist = onWatchlist("movie", tmdbId),
 )
 
 /** The collection a demo film belongs to: the first few demo films share one, and no other has any. */

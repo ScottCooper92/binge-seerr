@@ -54,6 +54,14 @@ data class SeerrWatchedMediaDto(
     @SerialName("mediaType") val mediaType: String,
 )
 
+/** `POST /watchlist`: a title to put on the signed-in user's watchlist. [mediaType] is `movie` or `tv`. */
+@Serializable
+data class SeerrAddToWatchlistBody(
+    @SerialName("tmdbId") val tmdbId: Int,
+    @SerialName("mediaType") val mediaType: String,
+    @SerialName("title") val title: String,
+)
+
 /** `user/{id}/watchlist`: the media server's watchlist, paged by page number rather than `skip`. */
 @Serializable
 data class SeerrWatchlistPageDto(

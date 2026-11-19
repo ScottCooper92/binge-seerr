@@ -10,7 +10,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
-import com.cooper.binge.companion.seerr.ui.settingsShowing as settingsShowingRule
 
 @RunWith(RobolectricTestRunner::class)
 class SeerrTabsStartTest {
@@ -62,13 +61,5 @@ class SeerrTabsStartTest {
         compose.waitForIdle()
 
         assertEquals(SeerrTab.Tv, tabs.selected)
-    }
-
-    @Test
-    fun `Settings counts as showing whenever there is no shell whichever tab was saved`() {
-        assertTrue(settingsShowingRule(shell = false, selected = SeerrTab.Movies))
-        assertTrue(settingsShowingRule(shell = false, selected = null))
-        assertTrue(settingsShowingRule(shell = true, selected = SeerrTab.Settings))
-        assertFalse(settingsShowingRule(shell = true, selected = SeerrTab.Movies))
     }
 }
