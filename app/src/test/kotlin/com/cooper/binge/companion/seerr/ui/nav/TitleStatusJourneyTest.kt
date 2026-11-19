@@ -87,10 +87,11 @@ class TitleStatusJourneyTest {
             target = { host.compose.onAllNodes(hasText(request)).onFirst() },
             reached = { host.isShowing(host.string(R.string.request_sheet_status_new)) },
         )
+        // The page's button can still read Request once the film is asked for, when its 4K version is open, so the sheet going is the sign.
         host.clickUntil(
-            "$FILM requested",
+            "$FILM requested and the sheet closed",
             target = { lowestRequest() },
-            reached = { host.isShowing(requested, exactly = true) },
+            reached = { !host.isShowing(host.string(R.string.request_sheet_status_new)) },
         )
         host.back()
     }
