@@ -44,7 +44,7 @@ class TitleSearchPagingTest {
         var loads = 0
         var state by mutableStateOf<TitleSearchUiState>(ready(loaded = 20, hasMore = true))
         rule.setContent {
-            SeerrTheme { TitleSearchScreen(state, TitleSearchActions({}, {}, {}, {}, { loads++ }, {}, {}, {}, {})) }
+            SeerrTheme { TitleSearchScreen(state, TitleSearchActions({}, {}, {}, {}, { loads++ }, {}, {}, {}, {}, { _, _ -> })) }
         }
         rule.waitForIdle()
         assertEquals(1, loads)
@@ -57,7 +57,12 @@ class TitleSearchPagingTest {
     @Test
     fun `an empty group with no more pages says so`() {
         rule.setContent {
-            SeerrTheme { TitleSearchScreen(ready(loaded = 40, hasMore = false), TitleSearchActions({}, {}, {}, {}, {}, {}, {}, {}, {})) }
+            SeerrTheme {
+                TitleSearchScreen(
+                    ready(loaded = 40, hasMore = false),
+                    TitleSearchActions({}, {}, {}, {}, {}, {}, {}, {}, {}, { _, _ -> }),
+                )
+            }
         }
         val title = ApplicationProvider.getApplicationContext<Context>().getString(R.string.title_search_type_none_title)
         rule.onNodeWithText(title).assertIsDisplayed()
