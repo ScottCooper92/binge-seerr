@@ -54,6 +54,7 @@ internal fun DiscoverGridEntry(
             DiscoverGridActions(
                 onBack = onBack,
                 onClearFilter = model::onClearFilter,
+                onClearGroup = model::onClearGroup,
                 onRetry = model::onRetry,
                 onLoadMore = model::onLoadMore,
                 onOpenTitle = model::onOpenTitle,
@@ -61,6 +62,7 @@ internal fun DiscoverGridEntry(
                 onSwitchKind = { kind, sort, filters ->
                     backStack.replaceTop(route, route.carriedTo(kind, sort, filters))
                 },
+                loads = FilterLoads(model::onProvidersNeeded, model::onKeywordQuery, model::onKeywordsNeeded),
             ),
     )
 }

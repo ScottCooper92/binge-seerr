@@ -71,7 +71,7 @@ internal fun TitlePageSkeleton(
         Column(Modifier.clearAndSetSemantics {}, verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m))) {
             if (!cinematic) StatsRowsSkeleton(Modifier.layoutAnchor(LayoutAnchors.section(LayoutAnchors.Detail.STATS)))
             ActionsSkeleton(Modifier.readingMargin().layoutAnchor(LayoutAnchors.section(LayoutAnchors.Detail.ACTIONS)))
-            if (!cinematic) OverviewSkeleton(Modifier.layoutAnchor(LayoutAnchors.section(LayoutAnchors.Detail.OVERVIEW)))
+            if (!cinematic) OverviewSkeleton(Modifier.readingMargin().layoutAnchor(LayoutAnchors.section(LayoutAnchors.Detail.OVERVIEW)))
             CarouselSkeleton()
         }
     }
@@ -118,7 +118,7 @@ internal fun TitleHeroSkeleton(
 @Composable
 private fun StatsRowsSkeleton(modifier: Modifier = Modifier) {
     val blank = List(STAT_COUNT) { DetailStat(Icons.Filled.Star, " ", " ") }
-    Column(verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m))) {
+    Column(Modifier.readingMargin(), verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m))) {
         blank.chunked(statsPerRow()).forEachIndexed { index, row ->
             Box((if (index == 0) modifier else Modifier).fillMaxWidth().padding(resolvedContentPadding())) {
                 DetailStatRow(row, Modifier.skeleton(visible = true, shape = BingeShapes.Large), contentPadding = PaddingValues())

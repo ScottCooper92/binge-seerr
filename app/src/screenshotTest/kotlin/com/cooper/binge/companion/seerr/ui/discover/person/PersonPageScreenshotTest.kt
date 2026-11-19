@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import com.android.tools.screenshot.PreviewTest
 import com.cooper.binge.companion.seerr.discover.person.PersonCredits
 import com.cooper.binge.companion.seerr.preview.SeerrFontScalePreviews
+import com.cooper.binge.companion.seerr.preview.SeerrNarrowTabletPreview
 import com.cooper.binge.companion.seerr.preview.SeerrScreenPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrScreenStatePreview
 import com.cooper.binge.companion.seerr.preview.SeerrSpanishPreviews
@@ -26,6 +27,12 @@ class PersonPageScreenshotTest {
     @SeerrScreenPreviews
     @Composable
     fun full() = Frame(readyPerson())
+
+    /** An 800dp portrait window: wider than the reading column, narrower than the expanded layout, so the page sits in a column. */
+    @PreviewTest
+    @SeerrNarrowTabletPreview
+    @Composable
+    fun narrowTablet() = Frame(readyPerson())
 
     /** The server knows only the name and the person has no credits: no empty section is drawn. */
     @PreviewTest

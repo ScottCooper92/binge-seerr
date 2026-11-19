@@ -1,6 +1,7 @@
 package com.cooper.binge.companion.seerr.ui.discover.title
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
@@ -59,7 +60,7 @@ internal fun TitlePageBody(
             onTrailer = movie.videos.trailerUrl()?.let { url -> { actions.onOpenUrl(url) } },
             modifier = Modifier.readingMargin().layoutAnchor(LayoutAnchors.section(LayoutAnchors.Detail.ACTIONS)),
         )
-        if (!expanded) OverviewSection(movie.overview)
+        if (!expanded && movie.overview != null) Box(Modifier.readingMargin()) { OverviewSection(movie.overview) }
         InfoRowList(
             movie.factEntries(
                 context.resources,
@@ -89,22 +90,18 @@ internal fun TitlePageBody(
 }
 
 /**
- * The margin that centres a reading column in the width the hero template leaves the body, which it measures as
- * [LocalHeroReadingMargin]. It applies only at the expanded width, where the cinematic header and the column go together: a
- * window between 672dp and 840dp keeps the phone's single column, so nothing moves in. A section takes it as its modifier, so a
- * section that draws nothing takes no space, and the rails, which bleed to the window's edge, do not take it.
+ * The rule for the margin of a hero page's body, the one Binge's detail pages follow: the design system's hero template measures the
+ * width it leaves the body and provides [LocalHeroReadingMargin], the gap that centres a column of `content_max_width` in it, which is
+ * zero up to that width. Every section adds it, at every width, so a window wider than the column gets one under the full-width
+ * hero, and the title, series and person pages all start in the same place. A section takes it as its modifier, so a section that
+ * draws nothing takes no space; the rails, which bleed to the window's edge, take [readingInset] instead.
  */
 @Composable
-internal fun Modifier.readingMargin(): Modifier = if (isExpandedLayout()) padding(horizontal = LocalHeroReadingMargin.current) else this
+internal fun Modifier.readingMargin(): Modifier = padding(horizontal = LocalHeroReadingMargin.current)
 
-/** The inset a rail starts at: the screen's, plus the reading margin at the expanded width, so its first card lines up with the column and it still bleeds. */
+/** The inset a section or a rail starts at: the screen's, plus the reading margin, so a rail's first card lines up with the column and it still bleeds. */
 @Composable
-private fun railInset() =
-    if (isExpandedLayout()) {
-        dimensionResource(DesR.dimen.padding_m) + LocalHeroReadingMargin.current
-    } else {
-        dimensionResource(DesR.dimen.padding_m)
-    }
+internal fun readingInset() = dimensionResource(DesR.dimen.padding_m) + LocalHeroReadingMargin.current
 
 /** The line under the title in the request sheet: release year and runtime, whichever the server gave. */
 @Composable
@@ -163,7 +160,7 @@ internal fun PeopleRow(
         itemKey = { it.personId },
         onMoreClick = onSeeAll,
         onEndTileClick = null,
-        horizontalPadding = railInset(),
+        horizontalPadding = readingInset(),
     ) { _, person ->
         PersonCard(
             name = person.name,
@@ -187,7 +184,7 @@ internal fun TitleRow(
         items = titles,
         itemKey = { it.kind.name + it.tmdbId },
         onMoreClick = onSeeAll,
-        horizontalPadding = railInset(),
+        horizontalPadding = readingInset(),
     ) { _, item ->
         MediaCard(
             posterUrl = item.artworkPath?.let { it.toTmdbPosterUrl() },

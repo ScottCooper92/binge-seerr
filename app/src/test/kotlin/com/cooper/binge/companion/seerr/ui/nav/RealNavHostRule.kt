@@ -235,13 +235,7 @@ internal class RealNavHostRule(
     fun awaitShowing(
         text: String,
         timeoutMillis: Long = AWAIT_MILLIS,
-    ) {
-        try {
-            compose.waitUntil("\"$text\" on screen", timeoutMillis) { isShowing(text) }
-        } catch (timeout: ComposeTimeoutException) {
-            throw ComposeTimeoutException("${timeout.message}\n${describeScreen()}")
-        }
-    }
+    ) = await("\"$text\" on screen", timeoutMillis) { isShowing(text) }
 
     /** The back stack and the semantics tree, capped at [MAX_TREE_LINES] lines. Never throws: it runs while a failure is already in flight. */
     private fun describeScreen(): String =
@@ -251,9 +245,22 @@ internal class RealNavHostRule(
             val tree =
                 (0 until roots.fetchSemanticsNodes().size)
                     .joinToString("\n") { roots[it].printToString(maxDepth = Int.MAX_VALUE) }
-            "Back stack: $stack\nOn screen:\n${tree.cappedAt(MAX_TREE_LINES)}"
+            "Back stack: $stack\n${describeWindow()}\nOn screen:\n${tree.cappedAt(MAX_TREE_LINES)}"
         } catch (failure: RuntimeException) {
             "(could not describe the screen: $failure)"
+        }
+
+    /** Whether the activity's window is resumed, attached and focused: a tap sent to a window that is not is lost without an error. */
+    private fun describeWindow(): String =
+        try {
+            compose.runOnUiThread {
+                val current = activity
+                val decor = current.window.decorView
+                "Window: lifecycle=${current.lifecycle.currentState} attached=${decor.isAttachedToWindow} " +
+                    "focused=${decor.hasWindowFocus()} finishing=${current.isFinishing}"
+            }
+        } catch (failure: RuntimeException) {
+            "(could not read the window: $failure)"
         }
 
     private fun activityBackStack(): List<NavKey> = compose.runOnUiThread { activity.backStack.toList() }
