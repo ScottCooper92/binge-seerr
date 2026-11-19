@@ -131,7 +131,7 @@ class TitlePageViewModelTest {
         val held =
             movieFixture(
                 standard = VersionState(TitleAvailability.Pending, mayRequest = false),
-            ).copy(requests = listOf(TitleRequest(7, false, SeerrRequestStatusCode.Pending, null, null)))
+            ).copy(requests = listOf(TitleRequest(7, false, SeerrRequestStatusCode.Pending, 5)))
         val vm = TitlePageViewModel(FakeTitles(movie = held), 603)
 
         vm.onPrimary()

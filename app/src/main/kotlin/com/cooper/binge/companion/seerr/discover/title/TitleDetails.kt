@@ -55,16 +55,24 @@ data class TitleRatings(
 }
 
 /**
- * A request the server holds for a title, as its own answer lists it: enough to open that request's sheet and to say who asked and
- * when. [id] is the request's id, which the request page and its sheet are keyed by.
+ * A request the server holds for a title, as its own answer lists it: enough to open that request's sheet. [id] is the request's
+ * id, which the request page and its sheet are keyed by, and [requesterId] is who made it, which decides who may open it.
  */
 data class TitleRequest(
     val id: Int,
     val is4k: Boolean,
     val status: SeerrRequestStatusCode?,
-    val requestedBy: String?,
-    val createdAt: String?,
+    val requesterId: Int?,
 )
+
+/**
+ * The requests this viewer may open. The server lists every user's requests on a title but shows another user's only to a viewer
+ * who may view requests, and refuses it to anyone else, so such a viewer keeps their own.
+ */
+internal fun List<TitleRequest>.openableBy(
+    viewerId: Int?,
+    canViewRequests: Boolean,
+): List<TitleRequest> = if (canViewRequests) this else filter { viewerId != null && it.requesterId == viewerId }
 
 /** One version of a title, standard or 4K: what the server holds of it and whether this user may ask for it. */
 data class VersionState(

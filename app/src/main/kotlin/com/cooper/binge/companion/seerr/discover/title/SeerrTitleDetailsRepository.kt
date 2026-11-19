@@ -56,7 +56,12 @@ class SeerrTitleDetailsRepository(
                     mayRequest = permissions.canRequestMovie,
                     mayRequest4k = permissions.mayRequest4k(isTv = false, profile.settings),
                     webUrl = serverUrl() + "movie/" + tmdbId,
-                ).copy(companiesOpen = profile.hasDiscoverByCategory)
+                ).let {
+                    it.copy(
+                        companiesOpen = profile.hasDiscoverByCategory,
+                        requests = it.requests.openableBy(user.id, permissions.canViewRequests),
+                    )
+                }
         }
 
     override suspend fun collectionParts(collectionId: Int): List<TitleResult> = collections.collection(collectionId).parts
@@ -202,6 +207,5 @@ internal fun com.cooper.binge.companion.seerr.seerr.SeerrRequestSummaryDto.toTit
         id = id,
         is4k = is4k,
         status = status,
-        requestedBy = requestedBy?.let { it.displayName ?: it.username ?: it.email },
-        createdAt = createdAt,
+        requesterId = requestedBy?.id,
     )

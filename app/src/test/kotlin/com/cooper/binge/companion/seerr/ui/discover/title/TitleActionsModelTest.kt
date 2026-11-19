@@ -18,7 +18,7 @@ class TitleActionsModelTest {
     private fun request(
         id: Int,
         status: SeerrRequestStatusCode = SeerrRequestStatusCode.Pending,
-    ) = TitleRequest(id, is4k = false, status = status, requestedBy = null, createdAt = null)
+    ) = TitleRequest(id, is4k = false, status = status, requesterId = 5)
 
     private fun primary(
         standard: VersionState,

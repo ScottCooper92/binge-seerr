@@ -141,7 +141,7 @@ class SeriesPageViewModelTest {
         val held =
             seriesFixture(
                 standard = VersionState(TitleAvailability.Pending, mayRequest = false),
-            ).copy(requests = listOf(TitleRequest(7, false, SeerrRequestStatusCode.Pending, null, null)))
+            ).copy(requests = listOf(TitleRequest(7, false, SeerrRequestStatusCode.Pending, 5)))
         val vm = SeriesPageViewModel(FakeSeries(series = held), 1399)
 
         vm.onPrimary()
