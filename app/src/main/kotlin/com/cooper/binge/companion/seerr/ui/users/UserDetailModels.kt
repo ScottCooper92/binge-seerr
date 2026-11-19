@@ -45,6 +45,10 @@ data class UserDetail(
     val serverName: String = "Seerr",
     /** The server lists a user's requests to that user and to a viewer who may see everyone's; the section is hidden otherwise. */
     val canViewRequests: Boolean = true,
+    /** The size of the user's whole watchlist where the server says it, for the row that opens it. */
+    val watchlistCount: Int? = null,
+    /** The row that opens the watchlist grid shows: this is the viewer's own page and the server has a watchlist to read. */
+    val mayOpenWatchlist: Boolean = false,
 )
 
 sealed interface UserDetailUiState {

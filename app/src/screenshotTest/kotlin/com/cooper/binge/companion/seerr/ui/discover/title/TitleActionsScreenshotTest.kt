@@ -77,7 +77,7 @@ class TitleActionsScreenshotTest {
     @Composable
     fun threeRoundButtonsLargeText() = Frame(trailer = true, report = true, watchlist = true)
 
-    /** Three round buttons at font scale 2: each label stays whole under its button, and nothing runs past the window. */
+    /** Three round buttons at font scale 2: nothing runs past the window, and the English Watchlist label ends in an ellipsis (#2372). */
     @PreviewTest
     @SeerrFontScalePreviews
     @Composable
