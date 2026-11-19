@@ -140,15 +140,25 @@ class TitleSearchViewModelTest {
         }
 
     @Test
-    fun `the type chips count what has loaded and All is their sum, whatever total the server gave`() =
+    fun `the type chips count what has loaded and All counts every row, collections too, whatever total the server gave`() =
         runVm { vm ->
             titles.answer = { _, page ->
-                TitlePage(listOf(title(page), title(page + 10, TitleKind.Series), title(page + 20, TitleKind.Person)), page, 5, total = 50)
+                TitlePage(
+                    listOf(
+                        title(page),
+                        title(page + 10, TitleKind.Series),
+                        title(page + 20, TitleKind.Person),
+                        title(page + 30, TitleKind.Collection),
+                    ),
+                    page,
+                    5,
+                    total = 50,
+                )
             }
             vm.onQueryChange("matrix")
             advanceUntilIdle()
             val ready = vm.uiState.value as TitleSearchUiState.Ready
-            assertEquals(3, ready.counts[SearchType.All])
+            assertEquals(4, ready.counts[SearchType.All])
             assertEquals(1, ready.counts[SearchType.Movies])
             assertEquals(1, ready.counts[SearchType.Series])
             assertEquals(1, ready.counts[SearchType.People])
