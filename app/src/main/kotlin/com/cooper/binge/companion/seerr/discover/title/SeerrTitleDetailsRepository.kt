@@ -8,6 +8,7 @@ import com.cooper.binge.companion.seerr.discover.toAvailability
 import com.cooper.binge.companion.seerr.discover.toReleaseYear
 import com.cooper.binge.companion.seerr.discover.toTitlePage
 import com.cooper.binge.companion.seerr.seerr.FALLBACK_CERTIFICATION_REGION
+import com.cooper.binge.companion.seerr.seerr.SeerrAddToWatchlistBody
 import com.cooper.binge.companion.seerr.seerr.SeerrApi
 import com.cooper.binge.companion.seerr.seerr.SeerrMovieDetailsDto
 import com.cooper.binge.companion.seerr.seerr.SeerrMovieWatchProviderDto
@@ -67,10 +68,18 @@ class SeerrTitleDetailsRepository(
                     keywordsOpen = profile.hasKeywordDiscover,
                     mayReport = profile.hasIssues && permissions.canReportIssues,
                     mayUnblock = profile.hasBlocklist && permissions.canManageBlocklist,
+                    onWatchlist = dto.onUserWatchlist == true,
+                    mayWatchlist = profile.hasDiscoverWatchlist,
                 )
         }
 
     override suspend fun collectionParts(collectionId: Int): List<TitleResult> = collections.collection(collectionId).parts
+
+    override suspend fun setWatchlist(
+        tmdbId: Int,
+        title: String,
+        onList: Boolean,
+    ) = withContext(io) { setOnWatchlist(api(), tmdbId, title, "movie", onList) }
 
     override suspend fun unblock(tmdbId: Int) = withContext(io) { unblockTitle(api(), profile(), tmdbId, "movie") }
 
@@ -249,3 +258,12 @@ internal suspend fun unblockTitle(
     tmdbId: Int,
     mediaType: String,
 ) = api.removeFromBlocklist(profile.blocklistPath, tmdbId, profile.unblockMediaType(mediaType))
+
+/** Puts a title on the signed-in user's watchlist, or takes it off. Adding requests nothing. */
+internal suspend fun setOnWatchlist(
+    api: SeerrApi,
+    tmdbId: Int,
+    title: String,
+    mediaType: String,
+    onList: Boolean,
+) = if (onList) api.addToWatchlist(SeerrAddToWatchlistBody(tmdbId, mediaType, title)) else api.removeFromWatchlist(tmdbId, mediaType)

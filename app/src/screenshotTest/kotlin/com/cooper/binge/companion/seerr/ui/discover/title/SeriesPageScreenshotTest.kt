@@ -179,6 +179,18 @@ class SeriesPageScreenshotTest {
             scrollState = rememberScrollState(initial = WATCH_PX),
         )
 
+    /** A show on the watchlist: the bookmark is filled, beside Trailer and before Report. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun watchlistOn() =
+        Frame(
+            SeriesPageUiState.Ready(
+                fullSeries().copy(mayWatchlist = true, onWatchlist = true),
+                seriesExtras(),
+            ),
+        )
+
     /** Every season held or asked for: no Request button. */
     @PreviewTest
     @SeerrScreenStatePreview

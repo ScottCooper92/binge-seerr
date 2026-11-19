@@ -176,6 +176,43 @@ class TitlePageScreenshotTest {
     @Composable
     fun loadingLargeFonts() = Frame(TitlePageUiState.Loading)
 
+    /** An available title on a server with a watchlist, the title not on it: an outlined bookmark labelled Watchlist sits beside Trailer, before Report. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun watchlistOff() =
+        Frame(
+            TitlePageUiState.Ready(
+                fullMovie(standard = VersionState(TitleAvailability.Available, mayRequest = false), fourK = null).copy(mayWatchlist = true),
+                fullExtras(),
+            ),
+        )
+
+    /** The same title on the watchlist: the bookmark is filled. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun watchlistOn() =
+        Frame(
+            TitlePageUiState.Ready(
+                fullMovie(standard = VersionState(TitleAvailability.Available, mayRequest = false), fourK = null)
+                    .copy(mayWatchlist = true, onWatchlist = true),
+                fullExtras(),
+            ),
+        )
+
+    /** The action row at font scale 2 with all four buttons, the primary and Trailer, Watchlist and Report: the labels stay whole. */
+    @PreviewTest
+    @SeerrFontScalePreviews
+    @Composable
+    fun watchlistLargeFonts() =
+        Frame(
+            TitlePageUiState.Ready(
+                fullMovie(standard = VersionState(TitleAvailability.Available, mayRequest = false), fourK = null).copy(mayWatchlist = true),
+                fullExtras(),
+            ),
+        )
+
     /** An available title at font scale 2: Trailer and Report, both labelled, sit beside the primary and the labels stay whole. */
     @PreviewTest
     @SeerrFontScalePreviews

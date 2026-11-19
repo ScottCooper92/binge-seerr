@@ -31,11 +31,9 @@ internal fun DemoData.discoverRoutes(): List<DemoRoute> =
         route("GET", "discover", "tv", "language", "{}") { call, _ -> page(call, titles(movie = false)) },
         route("GET", "discover", "keyword", "{}", "movies") { call, _ -> page(call, titles(movie = true)) },
         route("GET", "discover", "genreslider", "{}") { _, _ -> ok(GENRE_TILES) },
-        route("GET", "discover", "watchlist") { call, _ -> page(call, titles(movie = true).take(WATCHLIST_SIZE)) },
+        route("GET", "discover", "watchlist") { call, _ -> page(call, watchlist.toList()) },
         route("GET", "search") { call, _ -> searchPage(call) },
     )
-
-private const val WATCHLIST_SIZE = 3
 
 private val GENRE_TILES =
     listOf(

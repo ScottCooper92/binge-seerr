@@ -79,6 +79,10 @@ data class SeriesDetails(
     val mayReport: Boolean = false,
     /** The viewer may take the title off the blocklist: the server has one and the account may manage it. */
     val mayUnblock: Boolean = false,
+    /** The title is on the signed-in user's watchlist. */
+    val onWatchlist: Boolean = false,
+    /** The server has a watchlist (`profile.hasDiscoverWatchlist`), so the page offers the button. */
+    val mayWatchlist: Boolean = false,
 ) {
     /** The seasons of each version for the request sheet. */
     val seasonChoices: SeasonChoices

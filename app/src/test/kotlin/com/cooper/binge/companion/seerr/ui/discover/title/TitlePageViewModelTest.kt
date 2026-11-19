@@ -72,11 +72,22 @@ private class FakeTitles(
     var movieReads = 0
     var failUnblock: Throwable? = null
     val unblocked = mutableListOf<Int>()
+    var failWatchlist: Throwable? = null
+    val watchlistCalls = mutableListOf<Triple<Int, String, Boolean>>()
     val collectionReads = mutableListOf<Int>()
 
     override suspend fun collectionParts(collectionId: Int): List<TitleResult> {
         collectionReads += collectionId
         return failCollection?.let { throw it } ?: collection
+    }
+
+    override suspend fun setWatchlist(
+        tmdbId: Int,
+        title: String,
+        onList: Boolean,
+    ) {
+        failWatchlist?.let { throw it }
+        watchlistCalls += Triple(tmdbId, title, onList)
     }
 
     override suspend fun unblock(tmdbId: Int) {
@@ -118,7 +129,7 @@ class TitlePageViewModelTest {
         assertTrue(vm.ready().statusSheetOpen)
         assertFalse(vm.ready().requestSheetOpen)
 
-        vm.closeStatusSheet()
+        vm.closeSheet(TitleSheet.Status)
         assertFalse(vm.ready().statusSheetOpen)
     }
 
@@ -169,7 +180,7 @@ class TitlePageViewModelTest {
         assertEquals(7, vm.ready().manageRequestId)
         assertTrue(vm.ready().manageSheetOpen)
 
-        vm.closeManageSheet()
+        vm.closeSheet(TitleSheet.Manage)
         assertFalse(vm.ready().manageSheetOpen)
         assertEquals("the id stays so a moderation's result still has its sheet", 7, vm.ready().manageRequestId)
     }
@@ -289,6 +300,64 @@ class TitlePageViewModelTest {
                     .ready()
                     .movie.standard.availability,
             )
+        }
+
+    @Test
+    fun `the watchlist button flips at once and the server is told`() =
+        runTest {
+            val repo = FakeTitles()
+            repo.movie = movieFixture().copy(mayWatchlist = true)
+            val vm = TitlePageViewModel(repo, 603)
+
+            vm.toggleWatchlist()
+            assertTrue(vm.ready().movie.onWatchlist)
+            vm.toggleWatchlist()
+            assertFalse(vm.ready().movie.onWatchlist)
+
+            assertEquals(listOf(Triple(603, "The Matrix", true), Triple(603, "The Matrix", false)), repo.watchlistCalls)
+            assertFalse(vm.ready().watchlistBusy)
+        }
+
+    @Test
+    fun `a refused watchlist call puts the button back and says so`() =
+        runTest {
+            val repo = FakeTitles()
+            repo.movie = movieFixture().copy(mayWatchlist = true)
+            repo.failWatchlist = IOException("down")
+            val vm = TitlePageViewModel(repo, 603)
+
+            val event = awaitEvent(vm.events)
+            vm.toggleWatchlist()
+
+            assertTrue(event.await() is TitlePageEvent.WatchlistFailed)
+            assertFalse(vm.ready().movie.onWatchlist)
+            assertFalse(vm.ready().watchlistBusy)
+        }
+
+    @Test
+    fun `a title on the watchlist is taken off it`() =
+        runTest {
+            val repo = FakeTitles()
+            repo.movie = movieFixture().copy(mayWatchlist = true, onWatchlist = true)
+            val vm = TitlePageViewModel(repo, 603)
+
+            vm.toggleWatchlist()
+
+            assertFalse(vm.ready().movie.onWatchlist)
+            assertEquals(listOf(Triple(603, "The Matrix", false)), repo.watchlistCalls)
+        }
+
+    @Test
+    fun `a server without a watchlist never gets a call`() =
+        runTest {
+            val repo = FakeTitles()
+            repo.movie = movieFixture()
+            val vm = TitlePageViewModel(repo, 603)
+
+            vm.toggleWatchlist()
+
+            assertTrue(repo.watchlistCalls.isEmpty())
+            assertFalse(vm.ready().movie.onWatchlist)
         }
 
     @Test

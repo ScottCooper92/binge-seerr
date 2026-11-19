@@ -30,6 +30,13 @@ interface SeriesDetailsRepository {
     /** Takes the show off the blocklist; a failure throws. The viewer's right to is [SeriesDetails.mayUnblock]. */
     suspend fun unblock(tmdbId: Int)
 
+    /** Puts the show on the signed-in user's watchlist, or takes it off; a failure throws. */
+    suspend fun setWatchlist(
+        tmdbId: Int,
+        title: String,
+        onList: Boolean,
+    )
+
     /** Ratings, recommendations and similar shows. Each part that fails or that the server lacks is empty. */
     suspend fun extras(tmdbId: Int): TitleExtras
 
@@ -76,6 +83,8 @@ class SeerrSeriesRepository(
                     keywordsOpen = profile.hasKeywordDiscover,
                     mayReport = profile.hasIssues && permissions.canReportIssues,
                     mayUnblock = profile.hasBlocklist && permissions.canManageBlocklist,
+                    onWatchlist = dto.onUserWatchlist == true,
+                    mayWatchlist = profile.hasDiscoverWatchlist,
                 )
         }
 
@@ -95,6 +104,12 @@ class SeerrSeriesRepository(
                 )
             }
         }
+
+    override suspend fun setWatchlist(
+        tmdbId: Int,
+        title: String,
+        onList: Boolean,
+    ) = withContext(io) { setOnWatchlist(api(), tmdbId, title, "tv", onList) }
 
     override suspend fun unblock(tmdbId: Int) = withContext(io) { unblockTitle(api(), profile(), tmdbId, "tv") }
 

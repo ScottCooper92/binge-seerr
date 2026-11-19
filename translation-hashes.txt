@@ -1217,6 +1217,7 @@ app:title_kind_series  a8295e08ff7a
 app:title_page_action_report  b6ce788d9786
 app:title_page_action_share  29887a5ff984
 app:title_page_action_trailer  6a7b20d1da8a
+app:title_page_action_watchlist  eff2ec588be1
 app:title_page_cast  150040557337
 app:title_page_crew  2ca84359bc5c
 app:title_page_details  45989de49fb7
@@ -1252,6 +1253,8 @@ app:title_page_status_released  f33deea9b100
 app:title_page_status_rumored  ecfc9f3c1c40
 app:title_page_watch_buy  64e3cb0e4960
 app:title_page_watch_stream  1eec3071dd26
+app:title_page_watchlist_add  ed2785d46856
+app:title_page_watchlist_remove  cfa7586c1b76
 app:title_page_where_to_watch  842e10fb4af2
 app:title_search_idle_message  c60d5b36dc11
 app:title_search_idle_title  0410cdd0c766
