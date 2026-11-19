@@ -1,12 +1,12 @@
 # Feature flags
 
-Four flags. `BINGE_PROMOTION` decides what this app says about Binge. `REVIEW_PROMPT` decides whether it may ask for a Play review. `discovery_enabled` decides whether the discovery surfaces show (#2039). `search_toggles_enabled` decides whether a settings search result carries its own switch. The first three are off until Remote Config turns them on; the last has no remote value and is on only through a debug build's override.
+Four flags. `BINGE_PROMOTION` decides what this app says about Binge. `REVIEW_PROMPT` decides whether it may ask for a Play review. `discovery_enabled` decides whether the discovery surfaces show (#2039). `search_toggles_enabled` decides whether a settings search result carries its own switch. `BINGE_PROMOTION` and `REVIEW_PROMPT` are off until Remote Config turns them on. `discovery_enabled` is on until Remote Config turns it off. The last has no remote value and is on only through a debug build's override.
 
 | Flag | Remote Config key | Off means |
 | --- | --- | --- |
 | `BINGE_PROMOTION` | `binge_promotion_enabled` | Nothing about Binge: no prompt to install or open it, no hub tile or settings row, Binge-free wording in the setup intro and the disconnect confirmation. Titles open on the server's own page. |
 | `REVIEW_PROMPT` | `review_prompt_enabled` | The app never asks the platform to show its review card. |
-| `DiscoveryEnabled` | `discovery_enabled` | The app is exactly as it was before the discovery epic: no bottom navigation, no Movies, TV or Search tabs, no title, person or collection pages. It is the remote half only: the app shows discovery when this flag is on and the user's own Discovery setting under This app is on too (default on), combined by core's shared `PreferenceGate`. |
+| `DiscoveryEnabled` | `discovery_enabled` | The app is exactly as it was before the discovery epic: no bottom navigation, no Movies, TV or Search tabs, no title, person or collection pages. It defaults to on in the app, so a first run with nothing fetched, and a build with no Firebase app, show discovery; a fetched `false` is the kill switch. It is the remote half only: the app shows discovery when this flag is on and the user's own Discovery setting under This app is on too (default on), combined by core's shared `PreferenceGate`. |
 | `SearchToggles` | none: a debug override only | A settings search result for an on/off setting has no switch; it opens the setting, as before. On, the result carries the setting's own switch, which writes through the page's own editor. |
 
 The `BINGE_PROMOTION` flag is about not pushing anyone to install an app they cannot connect to. It does not gate the integration
@@ -23,7 +23,7 @@ can override either from the developer flags screen, in the same DataStore as th
 ## How a value arrives
 
 `FirebaseRemoteFlagSource` reads Firebase Remote Config for `RemoteFlagKeys`. A build with no `google-services.json` has no Firebase
-app, and the flag stays off. Remote Config keeps the last activated values on disk, so a cold start uses them
+app, and each flag keeps its in-app default: off, except discovery, which is on. Remote Config keeps the last activated values on disk, so a cold start uses them
 before the first fetch lands. The app fetches at start and each time `MainActivity` comes to the foreground; Remote
 Config itself throttles that to once an hour.
 
@@ -59,7 +59,7 @@ Remote Config's value, on, off. A release build never reads overrides.
 
 ## Building from source
 
-A build that was not given a `google-services.json` has no Remote Config, so the flag stays off and the app says
-nothing about Binge. The integration still works: Binge finds and binds the Service as it would a release build. To
+A build that was not given a `google-services.json` has no Remote Config, so the Binge flags stay off and the app says
+nothing about Binge. Discovery is on, as its in-app default. The integration still works: Binge finds and binds the Service as it would a release build. To
 see the Binge prompts from a source build, point it at your own Firebase project and set the key to `true`, or use
 the debug build's **Feature flags** row.
