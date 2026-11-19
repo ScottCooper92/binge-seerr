@@ -3,6 +3,7 @@ package com.cooper.binge.companion.seerr.di
 import com.cooper.binge.companion.seerr.data.IssueStore
 import com.cooper.binge.companion.seerr.data.MediaStatusStore
 import com.cooper.binge.companion.seerr.data.RequestStore
+import com.cooper.binge.companion.seerr.data.TitleStatusStore
 import com.cooper.binge.companion.seerr.data.UserStore
 import com.cooper.homelab.core.presentation.search.RecentSearches
 import javax.inject.Inject
@@ -18,6 +19,7 @@ class ServerScopedCaches
         private val requests: RequestStore,
         private val users: UserStore,
         private val statuses: MediaStatusStore,
+        private val titleStatuses: TitleStatusStore,
         private val recentSearches: RecentSearches,
     ) {
         suspend fun clearAll() {
@@ -25,6 +27,7 @@ class ServerScopedCaches
             requests.clearAll()
             users.clearAll()
             statuses.clearAll()
+            titleStatuses.clear()
             recentSearches.clear()
         }
     }

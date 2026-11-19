@@ -7,6 +7,7 @@ import com.cooper.binge.companion.seerr.core.search.PagedQuerySearch
 import com.cooper.binge.companion.seerr.core.search.QueryHistory
 import com.cooper.binge.companion.seerr.core.search.QuerySearchState
 import com.cooper.binge.companion.seerr.core.search.SearchPage
+import com.cooper.binge.companion.seerr.data.TitleStatusStore
 import com.cooper.binge.companion.seerr.discover.StudioResult
 import com.cooper.binge.companion.seerr.discover.StudioSearch
 import com.cooper.binge.companion.seerr.discover.TitleKind
@@ -15,6 +16,7 @@ import com.cooper.binge.companion.seerr.discover.TitleResult
 import com.cooper.binge.companion.seerr.discover.TitleSource
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverGridRepository
 import com.cooper.binge.companion.seerr.discover.grid.GridPreset
+import com.cooper.binge.companion.seerr.discover.overlaid
 import com.cooper.binge.companion.seerr.discover.sliders.HubCard
 import com.cooper.binge.companion.seerr.discover.sliders.HubMediaSource
 import com.cooper.binge.companion.seerr.discover.sliders.toCard
@@ -46,6 +48,7 @@ class TitleSearchViewModel
         history: QueryHistory,
         private val media: HubMediaSource,
         private val grid: DiscoverGridRepository,
+        statuses: TitleStatusStore = TitleStatusStore(),
     ) : ViewModel() {
         private val eventFlow = MutableSharedFlow<TitleSearchEvent>(extraBufferCapacity = 1)
         val events: SharedFlow<TitleSearchEvent> = eventFlow.asSharedFlow()
@@ -80,7 +83,13 @@ class TitleSearchViewModel
         private val around = combine(trending, lookups) { trending, lookups -> trending to lookups }
 
         val uiState: StateFlow<TitleSearchUiState> =
-            combine(search.query, search.state, studioSearch.state, type, around) { text, state, studios, type, (trending, lookups) ->
+            combine(
+                search.query,
+                search.state.combine(statuses.statuses) { state, held -> state.overlaid(held) },
+                studioSearch.state,
+                type,
+                around,
+            ) { text, state, studios, type, (trending, lookups) ->
                 state.toUiState(text, type, trending, lookups.first, lookups.second, studios)
             }.stateIn(viewModelScope, SharingStarted.Lazily, TitleSearchUiState.Idle("", emptyList()))
 

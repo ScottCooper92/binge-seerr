@@ -69,7 +69,7 @@ class NavMotionWiringTest {
 
     private fun metadataOf(route: NavKey): Map<String, Any> {
         val stack = NavBackStack<NavKey>(HomeRoute)
-        val panes = PaneLayout(hubBeside = { false }, showBack = { true }, threePane = { false }, motion = specs)
+        val panes = PaneLayout(hubBeside = { false }, showBack = { true }, motion = specs)
         val provider =
             entryProvider<NavKey> {
                 titleEntries(stack, specs)

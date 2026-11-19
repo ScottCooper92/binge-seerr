@@ -2,6 +2,7 @@ package com.cooper.binge.companion.seerr.ui.discover.title
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -17,12 +18,13 @@ import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.BingeStatusButton
 import com.binge.designsystem.component.BingeStatusButtonEmphasis
 import com.binge.designsystem.component.LabelledIconButton
+import com.binge.designsystem.isExpandedLayout
 import com.binge.designsystem.theme.BingeSentiment
 import com.cooper.binge.companion.seerr.R
 import com.binge.designsystem.R as DesR
 
 /**
- * The actions under the stats: the primary on the left, there in every state and saying where the title stands, then a round
+ * The actions under the stats: the primary, there in every state and saying where the title stands, then a round
  * Trailer button and, once the title is in the library, a Report button, each carrying a label. Share is in the page's bar only. [onTrailer] is null where the server lists no trailer, and the
  * button is not drawn.
  */
@@ -34,18 +36,39 @@ internal fun TitleActions(
     onReport: (() -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
-    Row(
-        modifier = modifier.fillMaxWidth().padding(horizontal = dimensionResource(DesR.dimen.padding_m)),
-        horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
-        verticalAlignment = Alignment.Top,
-    ) {
-        PrimaryAction(model.primary, onPrimary, Modifier.weight(1f))
-        onTrailer?.let { LabelledIconButton(Icons.Filled.PlayArrow, stringResource(R.string.title_page_action_trailer), it) }
-        onReport
-            ?.takeIf {
-                model.canReport
-            }?.let { LabelledIconButton(Icons.Filled.ReportProblem, stringResource(R.string.title_page_action_report), it) }
+    val report = onReport?.takeIf { model.canReport }
+    val roundButtons = listOfNotNull(onTrailer, report).size
+    val gap = dimensionResource(DesR.dimen.padding_m)
+    val edge = modifier.fillMaxWidth().padding(horizontal = gap)
+    if (roundButtons >= STACK_FROM && !isExpandedLayout()) {
+        Column(modifier = edge, verticalArrangement = Arrangement.spacedBy(gap)) {
+            PrimaryAction(model.primary, onPrimary, Modifier.fillMaxWidth())
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(gap, Alignment.CenterHorizontally),
+                verticalAlignment = Alignment.Top,
+            ) {
+                RoundButtons(onTrailer, report)
+            }
+        }
+    } else {
+        Row(modifier = edge, horizontalArrangement = Arrangement.spacedBy(gap), verticalAlignment = Alignment.Top) {
+            PrimaryAction(model.primary, onPrimary, Modifier.weight(1f))
+            RoundButtons(onTrailer, report)
+        }
     }
+}
+
+/** From this many round buttons the primary takes a row of its own, so its label keeps the room it needs at a large font. */
+private const val STACK_FROM = 2
+
+@Composable
+private fun RoundButtons(
+    onTrailer: (() -> Unit)?,
+    onReport: (() -> Unit)?,
+) {
+    onTrailer?.let { LabelledIconButton(Icons.Filled.PlayArrow, stringResource(R.string.title_page_action_trailer), it) }
+    onReport?.let { LabelledIconButton(Icons.Filled.ReportProblem, stringResource(R.string.title_page_action_report), it) }
 }
 
 /**
