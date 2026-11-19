@@ -15,7 +15,10 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.Shadows.shadowOf
 
-/** Whether Binge answers a title's link, which decides if a sheet offers Watch in Binge. */
+/**
+ * The gating of `bingeTitleHandOff`: the promotion flag, and a resolving intent. Robolectric's package manager does no package
+ * visibility filtering, so this does not cover the manifest's `<queries>`; only a device shows that.
+ */
 @RunWith(RobolectricTestRunner::class)
 class BingeHandOffResolutionTest {
     private val context: Application = ApplicationProvider.getApplicationContext()
