@@ -1,6 +1,8 @@
 package com.cooper.binge.companion.seerr.ui.nav
 
-import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.onNode
 import androidx.compose.ui.test.performClick
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.HomeRoute
@@ -41,7 +43,8 @@ class TitleOpenJourneyTest {
         host.connectDemo()
         host.launch(HomeRoute, IssuesRoute, IssueDetailRoute(1))
         host.awaitShowing(host.string(R.string.issue_comment_hint))
-        host.compose.onNodeWithText(ISSUE_TITLE).performClick()
+        // The title is also the page heading, which does nothing: the header row is the one that opens it.
+        host.compose.onNode(hasText(ISSUE_TITLE) and hasClickAction()).performClick()
         host.compose.waitForIdle()
     }
 

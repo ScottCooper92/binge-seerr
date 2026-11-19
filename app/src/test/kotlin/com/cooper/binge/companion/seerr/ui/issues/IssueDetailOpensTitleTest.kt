@@ -1,7 +1,9 @@
 package com.cooper.binge.companion.seerr.ui.issues
 
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.onNode
 import androidx.compose.ui.test.performClick
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.theme.SeerrTheme
@@ -38,7 +40,8 @@ class IssueDetailOpensTitleTest {
             }
         }
 
-        rule.onNodeWithText("Breaking Bad").performClick()
+        // The title is also the page heading, which does nothing: the header row is the one that opens it.
+        rule.onNode(hasText("Breaking Bad") and hasClickAction()).performClick()
 
         assertEquals(listOf(Triple(TitleKind.Series, 1396, detail.webUrl)), opened)
     }
