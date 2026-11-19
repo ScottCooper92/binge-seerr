@@ -10,6 +10,9 @@ import com.cooper.binge.companion.seerr.discover.title.SeriesDetailsRepository
 import com.cooper.binge.companion.seerr.discover.title.TitleExtras
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
+import com.cooper.binge.companion.seerr.telemetry.AnalyticsEvents
+import com.cooper.homelab.core.telemetry.Analytics
+import com.cooper.homelab.core.telemetry.NoOpAnalytics
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -98,6 +101,7 @@ class SeriesPageViewModel
     constructor(
         private val repository: SeriesDetailsRepository,
         @Assisted private val tmdbId: Int,
+        private val analytics: Analytics = NoOpAnalytics,
     ) : ViewModel() {
         @AssistedFactory
         interface Factory {
@@ -192,6 +196,7 @@ class SeriesPageViewModel
             viewModelScope.launch {
                 attempt { repository.unblock(tmdbId) }.fold(
                     onSuccess = {
+                        analytics.event(AnalyticsEvents.BLOCKLIST_CHANGED, mapOf(AnalyticsEvents.PARAM_ACTION to "series_unblocked"))
                         eventFlow.tryEmit(SeriesPageEvent.Unblocked)
                         reload()
                     },

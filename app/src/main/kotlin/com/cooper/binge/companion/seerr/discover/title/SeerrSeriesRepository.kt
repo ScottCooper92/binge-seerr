@@ -21,6 +21,7 @@ import com.cooper.binge.companion.seerr.seerr.SeerrUserDto
 import com.cooper.binge.companion.seerr.seerr.toPermissions
 import com.cooper.binge.companion.seerr.seerr.toTmdbBackdropUrl
 import com.cooper.binge.companion.seerr.seerr.toTmdbPosterUrl
+import com.cooper.binge.companion.seerr.seerr.unblockTitle
 import com.cooper.binge.companion.seerr.seerr.watchLink
 import com.cooper.binge.companion.seerr.ui.requests.mediaServerName
 import kotlinx.coroutines.CoroutineDispatcher
@@ -120,7 +121,7 @@ class SeerrSeriesRepository(
     ) = withContext(io) { setOnWatchlist(api(), tmdbId, title, "tv", onList) }
 
     override suspend fun unblock(tmdbId: Int) =
-        withContext(io) { statuses.unblocking(TitleKey(TitleType.Tv, tmdbId)) { unblockTitle(api(), profile(), tmdbId, "tv") } }
+        withContext(io) { statuses.unblocking(TitleKey(TitleType.Tv, tmdbId)) { api().unblockTitle(profile(), tmdbId, "tv") } }
 
     /** Rotten Tomatoes only: the show route has no IMDb score, and it is served on every lineage. */
     override suspend fun extras(tmdbId: Int): TitleExtras =

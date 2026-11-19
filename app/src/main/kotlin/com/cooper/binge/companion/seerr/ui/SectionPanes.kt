@@ -209,10 +209,17 @@ internal fun NavBackStack<NavKey>.openAboveDefault(route: NavKey) {
 
 /**
  * The section the hub marks as open: the one on the stack, or [DefaultSection] while it is the
- * placeholder beside the hub. Nothing is marked when a screen other than a section fills the pane.
+ * placeholder beside the hub. Nothing is marked when a screen other than a section fills the pane: the settings search, or a page
+ * opened from one of its results, even with a section still open beneath it. The mark returns when the search closes (#2380).
  */
 internal fun List<NavKey>.selectedSection(defaultShowing: Boolean): HubSection? =
-    firstNotNullOfOrNull { it.hubSection() } ?: DefaultSection.takeIf { defaultShowing && size == 1 }
+    if (SettingsSearchRoute in
+        this
+    ) {
+        null
+    } else {
+        firstNotNullOfOrNull { it.hubSection() } ?: DefaultSection.takeIf { defaultShowing && size == 1 }
+    }
 
 /**
  * How many entries sit above [HubRoute] on the way to whatever is on screen now: 1 for a screen

@@ -1528,7 +1528,6 @@
     <string name="request_sheet_status_new">This isn\'t on your server yet</string>
     <string name="request_sheet_status_seasons">Choose which seasons to request</string>
     <string name="request_sheet_status_4k_open">4K is still open to request</string>
-    <string name="request_sheet_advanced">Advanced options</string>
     <string name="request_sheet_seasons_count">%1$d of %2$d selected</string>
     <string name="request_sheet_seasons_done">Done</string>
     <string name="request_sheet_back">Back</string>
