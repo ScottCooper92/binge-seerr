@@ -18,6 +18,7 @@ internal fun TitleBarAccount(
 ) = HubAccountAction(
     account = bar.account,
     quota = bar.quota,
-    onClick = { if (enabled) onOpen(bar.account.id) },
+    onClick = { onOpen(bar.account.id) },
+    enabled = enabled,
     modifier = Modifier.alpha(alpha).then(if (enabled) Modifier else Modifier.clearAndSetSemantics {}),
 )
