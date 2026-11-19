@@ -18,6 +18,7 @@ import com.cooper.binge.companion.seerr.discover.sliders.HubMediaSource
 import com.cooper.binge.companion.seerr.discover.sliders.HubTab
 import com.cooper.binge.companion.seerr.discover.sliders.HubTileLoader
 import com.cooper.binge.companion.seerr.discover.sliders.SliderListState
+import com.cooper.binge.companion.seerr.discover.title.TitleRatings
 import com.cooper.binge.companion.seerr.seerr.HydratedTitle
 import com.cooper.binge.companion.seerr.seerr.SeerrRequestMediaDto
 import com.cooper.binge.companion.seerr.ui.settings.server.DiscoverSlider
@@ -411,6 +412,33 @@ class HubViewModelTest {
                     .rows
                     .map { it.row.sliderId },
             )
+        }
+
+    @Test
+    fun `the review scores join the hero after it shows and never hold it back`() =
+        runTest {
+            val gate = CompletableDeferred<TitleRatings?>()
+            val titles = Titles()
+            val model =
+                HubViewModel(
+                    FakeSliders(SliderListState.Ready(listOf(slider(1, STUDIOS)))),
+                    HubCardLoader(titles, NoMedia),
+                    HubTileLoader(titles),
+                    HubHeroLoader(titles, NoMedia) { _, _ -> gate.await() },
+                    FakeGrid(),
+                    dispatcher,
+                    HubTab.Movies,
+                )
+            val seen = mutableListOf<DiscoverHubUiState>()
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { model.uiState.collect { seen += it } }
+            val before = seen.filterIsInstance<DiscoverHubUiState.Ready>().last()
+            assertEquals("the hero shows while its scores are still on their way", listOf(1), before.hero.map { it.tmdbId })
+            assertEquals(listOf<TitleRatings?>(null), before.hero.map { it.ratings })
+
+            gate.complete(TitleRatings(97, 91, 7.9))
+            val after = seen.filterIsInstance<DiscoverHubUiState.Ready>().last()
+            assertEquals(listOf<TitleRatings?>(TitleRatings(97, 91, 7.9)), after.hero.map { it.ratings })
+            assertEquals("the rows did not change", before.rows, after.rows)
         }
 }
 
