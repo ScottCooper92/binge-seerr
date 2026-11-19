@@ -3,8 +3,9 @@ package com.cooper.binge.companion.seerr.ui.grid
 import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AttachMoney
-import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.HowToVote
+import androidx.compose.material.icons.filled.NewReleases
 import androidx.compose.material.icons.filled.SortByAlpha
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.TrendingUp
@@ -35,8 +36,8 @@ internal fun DiscoverSort.icon(): ImageVector =
         DiscoverSort.PopularityDesc, DiscoverSort.PopularityAsc -> Icons.Filled.TrendingUp
         DiscoverSort.RatingDesc, DiscoverSort.RatingAsc -> Icons.Filled.Star
         DiscoverSort.VotesDesc, DiscoverSort.VotesAsc -> Icons.Filled.HowToVote
-        DiscoverSort.ReleaseNewest, DiscoverSort.ReleaseOldest, DiscoverSort.FirstAirNewest, DiscoverSort.FirstAirOldest ->
-            Icons.Filled.CalendarMonth
+        DiscoverSort.ReleaseNewest, DiscoverSort.FirstAirNewest -> Icons.Filled.NewReleases
+        DiscoverSort.ReleaseOldest, DiscoverSort.FirstAirOldest -> Icons.Filled.History
         DiscoverSort.RevenueDesc, DiscoverSort.RevenueAsc -> Icons.Filled.AttachMoney
         DiscoverSort.TitleAsc, DiscoverSort.TitleDesc, DiscoverSort.NameAsc, DiscoverSort.NameDesc -> Icons.Filled.SortByAlpha
     }
