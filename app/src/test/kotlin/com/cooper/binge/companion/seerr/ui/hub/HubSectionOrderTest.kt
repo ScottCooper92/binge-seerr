@@ -1,0 +1,30 @@
+package com.cooper.binge.companion.seerr.ui.hub
+
+import com.cooper.binge.companion.seerr.seerr.SeerrPermissions
+import org.junit.Assert.assertEquals
+import org.junit.Test
+
+/** The order of the Manage group on the Settings tab is the order of [HubSection]; a reorder is a decision, so it is pinned (#2337). */
+class HubSectionOrderTest {
+    @Test
+    fun `an admin on a full server sees every section in the display order`() {
+        val overview = HubOverview(permissions = SeerrPermissions(isAdmin = true), hasIssues = true, hasBlocklist = true)
+
+        assertEquals(
+            listOf(
+                HubSection.Requests,
+                HubSection.Issues,
+                HubSection.Users,
+                HubSection.Blocklist,
+                HubSection.Settings,
+                HubSection.ThisApp,
+            ),
+            overview.visibleSections(),
+        )
+    }
+
+    @Test
+    fun `a viewer with no permissions sees only the section about the app`() {
+        assertEquals(listOf(HubSection.Requests, HubSection.ThisApp), HubOverview().visibleSections())
+    }
+}
