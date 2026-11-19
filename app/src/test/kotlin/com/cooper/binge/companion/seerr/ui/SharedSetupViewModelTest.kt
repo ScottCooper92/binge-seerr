@@ -68,6 +68,7 @@ class SharedSetupViewModelTest {
     private fun TestScope.viewModel(
         scripted: Boolean = true,
         unreachable: (HttpUrl) -> Boolean = { false },
+        localNetwork: LocalNetworkPermission = LocalNetworkPermission.AlwaysGranted,
         handOffs: AddressHandOffs = AddressHandOffs { HandOffOpening.NoLocalNetwork },
     ): SharedSetupViewModel {
         connection =
@@ -101,7 +102,7 @@ class SharedSetupViewModelTest {
                 connection = connection,
                 handOffs = handOffs,
                 cleartext = cleartext,
-                localNetwork = LocalNetworkPermission.AlwaysGranted,
+                localNetwork = localNetwork,
                 dispatcher = mainDispatcherRule.dispatcher,
                 analytics = analytics,
             )
@@ -386,6 +387,31 @@ class SharedSetupViewModelTest {
             val progress = session.progress() as HandOffProgress.SignIn
             assertTrue(progress.failed)
             assertEquals(1, progress.attempt)
+        }
+
+    @Test
+    fun `a phone's session is kept while the TV asks for the local network, and adopted once it is granted`() =
+        runTest {
+            val session = FakeSession().apply { handedSession = "ph0n3" }
+            var granted = false
+            val vm = viewModel(unreachable = { !granted }, localNetwork = { granted }) { HandOffOpening.Opened(session) }
+            vm.awaitAddress()
+            vm.showHandOff(true)
+            vm.awaitAddress { it.handOff != null }
+
+            session.address.complete("http://192.168.1.20:5055")
+            assertEquals(SetupError.LocalNetworkDenied, vm.awaitAddress { it.error != null }.error)
+            seerr.enqueueProfile(json("""{"version":"3.4.0"}"""), json("""{"mediaServerType":2,"localLogin":true}"""))
+            seerr.enqueue(json("[]"))
+            seerr.enqueue(json("""{"id":9,"permissions":2}"""))
+            seerr.enqueueProfile(json("""{"version":"3.4.0"}"""), json("""{"mediaServerType":2,"localLogin":true}"""))
+
+            granted = true
+            vm.localNetworkResult()
+            val connected = vm.awaitConnected()
+
+            assertEquals(SeerrAuth.Session(cookie = "ph0n3", userId = 9, shared = true), connected.credentials.auth)
+            assertEquals(HandOffProgress.Connected, session.progress())
         }
 
     @Test

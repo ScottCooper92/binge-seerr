@@ -12,6 +12,8 @@ import com.cooper.binge.companion.seerr.handoff.HandOffCredentials
 import com.cooper.binge.companion.seerr.seerr.insecurePublicHostOrNull
 import com.cooper.binge.companion.seerr.seerr.toServerFailure
 import com.cooper.binge.companion.seerr.telemetry.AnalyticsEvents
+import com.cooper.homelab.core.foundation.ServerFailure
+import com.cooper.homelab.core.presentation.connect.ConnectError
 import com.cooper.homelab.core.presentation.connect.ConnectPorts
 import com.cooper.homelab.core.presentation.connect.ConnectViewModel
 import com.cooper.homelab.core.presentation.connect.ProbedServer
@@ -103,7 +105,7 @@ class SharedSetupViewModel
 
         init {
             reopenSignedOutServer()
-            clearHandedSessionOnFailure()
+            watchHandedSession()
         }
 
         override fun beginEdit(notice: SetupNotice?) {
@@ -273,11 +275,24 @@ class SharedSetupViewModel
             }
         }
 
-        /** A read that failed ends the phone's session for good: it is never kept to be tried against another address. */
-        private fun clearHandedSessionOnFailure() {
+        /**
+         * A phone's session waits for the read it came with. A read that failed ends it for good, so it is never tried against
+         * another address, except when the failure is the local-network permission: the grant reads the server again, and the
+         * session is adopted then, once the server has answered (#2428).
+         */
+        private fun watchHandedSession() {
             viewModelScope.launch(dispatcher) {
                 machine.draft.collect { draft ->
-                    if (draft.error != null && app.value.handedSession != null) app.update { it.copy(handedSession = null) }
+                    if (app.value.handedSession == null) return@collect
+                    val server = draft.server
+                    val needsPermission = draft.error == ConnectError.Failed(ServerFailure.LocalNetworkDenied)
+                    when {
+                        draft.error != null && !needsPermission -> app.update { it.copy(handedSession = null) }
+                        server != null && server.setUp && !draft.busy -> {
+                            app.update { it.copy(attempts = it.attempts + 1) }
+                            adoptHandedSession(server)
+                        }
+                    }
                 }
             }
         }
