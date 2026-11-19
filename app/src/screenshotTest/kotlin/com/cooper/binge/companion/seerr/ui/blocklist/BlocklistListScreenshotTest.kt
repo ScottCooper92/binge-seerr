@@ -30,7 +30,7 @@ class BlocklistListScreenshotTest {
     @Composable
     fun unblocking() = Frame(manyTagsBlocklistItem(), canManage = true, isActing = true)
 
-    /** At 1.5 and 2.0 font scale the icon button stays 48dp, so the title keeps what the button leaves. */
+    /** At 2.0 font scale the icon button stays 48dp, so the title keeps what the button leaves. */
     @PreviewTest
     @SeerrFontScalePreviews
     @Composable

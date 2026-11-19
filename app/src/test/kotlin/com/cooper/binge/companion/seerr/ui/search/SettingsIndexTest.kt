@@ -96,6 +96,7 @@ class SettingsIndexTest {
                 "users." to "settings/server/ServerUsersScreen.kt",
                 "metadata." to "settings/server/MetadataScreen.kt",
                 "account." to "users/settings/GeneralSettingsScreen.kt",
+                "app." to "settings/AppSettingsRows.kt",
             )
         val root = File("src/main/kotlin/com/cooper/binge/companion/seerr/ui")
         rowConstants.forEach { (name, key) ->
@@ -154,7 +155,8 @@ class SettingsIndexTest {
         assertEquals("two entries share an id", ids.size, ids.toSet().size)
         assertTrue(ids.all { it.matches(Regex("[a-zA-Z.|-]+")) })
         assertEquals("server.Logs|", settingsIndex.single { it.target == SearchTarget.Server(ServerSettingsPage.Logs) }.id)
-        assertEquals("this-app|", settingsIndex.single { it.target == SearchTarget.ThisApp }.id)
+        assertEquals("this-app|", settingsIndex.single { it.target == SearchTarget.ThisApp && it.row == null }.id)
+        assertEquals("this-app|app.shake-to-report", settingsIndex.single { it.row == SettingRows.APP_SHAKE_TO_REPORT }.id)
         assertEquals("server.General|general.url", settingsIndex.single { it.row == SettingRows.GENERAL_URL }.id)
     }
 
@@ -212,8 +214,17 @@ class SettingsIndexTest {
         assertEquals(ServerSettingsPageRoute(ServerSettingsPage.Logs), SearchTarget.Server(ServerSettingsPage.Logs).route(7))
         assertEquals(NotificationAgentRoute(ServerAgent.Slack), SearchTarget.Agent(ServerAgent.Slack).route(7))
         assertEquals(UserSettingsPageRoute(7, UserSettingsPage.General), SearchTarget.Account(UserSettingsPage.General).route(7))
-        assertEquals(ThisAppRoute, SearchTarget.ThisApp.route(7))
+        assertEquals(ThisAppRoute(), SearchTarget.ThisApp.route(7))
+        assertEquals(ThisAppRoute(SettingRows.APP_SHAKE_TO_REPORT), SearchTarget.ThisApp.route(7, SettingRows.APP_SHAKE_TO_REPORT))
         assertEquals(LicencesRoute, SearchTarget.Licences.route(7))
         assertEquals(DiagnosticsRoute, SearchTarget.Diagnostics.route(7))
+    }
+
+    @Test
+    fun `each device switch has its own This app entry on its row`() {
+        val appEntries = settingsIndex.filter { it.target == SearchTarget.ThisApp && it.row != null }
+
+        assertEquals(deviceSwitches.keys, appEntries.map { it.row }.toSet())
+        assertTrue(appEntries.all { it.available(admin) })
     }
 }

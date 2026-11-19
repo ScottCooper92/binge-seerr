@@ -1435,6 +1435,9 @@
     <string name="search_kw_logs">errores depuración historial</string>
     <string name="search_kw_about">versión actualización estado</string>
     <string name="search_kw_this_app">preferencias binge comentarios error informe privacidad</string>
+    <string name="search_kw_shake">informe de error comentarios gesto movimiento</string>
+    <string name="search_kw_usage_data">analíticas estadísticas telemetría privacidad</string>
+    <string name="search_kw_crash_reports">fallos errores estabilidad privacidad</string>
     <string name="search_kw_licences">código abierto bibliotecas</string>
     <string name="search_kw_diagnostics">registro soporte copiar compartir informe</string>
     <string name="search_kw_address">dominio enlace web</string>

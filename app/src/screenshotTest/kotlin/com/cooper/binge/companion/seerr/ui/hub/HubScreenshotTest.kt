@@ -12,7 +12,7 @@ import com.binge.designsystem.LocalPaneWidth
 import com.cooper.binge.companion.seerr.demo.DEMO_ORIGIN
 import com.cooper.binge.companion.seerr.preview.SeerrFontScalePreviews
 import com.cooper.binge.companion.seerr.preview.SeerrListPanePreview
-import com.cooper.binge.companion.seerr.preview.SeerrScreenPreviews
+import com.cooper.binge.companion.seerr.preview.SeerrRootScreenPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrScreenStatePreview
 import com.cooper.binge.companion.seerr.ui.state.RestingPull
 
@@ -25,7 +25,7 @@ import com.cooper.binge.companion.seerr.ui.state.RestingPull
 class HubScreenshotTest {
     /** The canonical layout: an administrator, every manage row, the downloading strip. */
     @PreviewTest
-    @SeerrScreenPreviews
+    @SeerrRootScreenPreviews
     @SeerrFontScalePreviews
     @Composable
     fun ready() = HubScreen(state = previewReady(), actions = previewActions())

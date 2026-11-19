@@ -10,6 +10,7 @@ import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import com.binge.designsystem.PaneContent
 import com.binge.designsystem.PaneEdge
+import com.binge.designsystem.component.ProvideRowFocus
 import com.cooper.binge.companion.seerr.ui.hub.HubSection
 import com.cooper.binge.companion.seerr.ui.settings.diagnostics.DiagnosticsEntry
 import com.cooper.binge.companion.seerr.ui.settings.licences.LicencesEntry
@@ -25,7 +26,7 @@ internal fun EntryProviderScope<NavKey>.searchEntries(
     backStack: NavBackStack<NavKey>,
     panes: PaneLayout,
 ) {
-    entry<SettingsSearchRoute> { route ->
+    entry<SettingsSearchRoute>(metadata = panes.motion.detail) { route ->
         SettingsSearchEntry(
             onOpen = { target -> panes.openFromSearch(backStack, target) },
             onBack = { backStack.popIfTop(route) },
@@ -41,7 +42,7 @@ internal fun EntryProviderScope<NavKey>.sectionEntries(
     backStack: NavBackStack<NavKey>,
     panes: PaneLayout,
 ) {
-    val section = DetailPane + ThreePaneSection
+    val section = DetailPane + ThreePaneSection + panes.motion.tab
     val open: (NavKey) -> Unit = { route -> panes.open(backStack, route) }
     entry<RequestsRoute>(
         metadata = section,
@@ -56,7 +57,13 @@ internal fun EntryProviderScope<NavKey>.sectionEntries(
     ) { DetailPaneContent { SectionContent(HubSection.Settings, backStack, panes.showBack(), open) } }
     entry<ThisAppRoute>(
         metadata = section,
-    ) { DetailPaneContent { SectionContent(HubSection.ThisApp, backStack, panes.showBack(), open) } }
+    ) { route ->
+        DetailPaneContent {
+            ProvideRowFocus(
+                route.row,
+            ) { SectionContent(HubSection.ThisApp, backStack, panes.showBack(), open) }
+        }
+    }
 }
 
 /**
@@ -118,11 +125,12 @@ internal fun SectionContent(
 internal fun EntryProviderScope<NavKey>.detailEntries(
     backStack: NavBackStack<NavKey>,
     showBack: () -> Boolean,
+    motion: NavMotionSpecs,
 ) {
-    debugDetailEntries(backStack, showBack)
+    debugDetailEntries(backStack, showBack, motion)
     // Each page leaves through popIfTop with its own key, for its back arrow and for leaving on its own (a delete, a
     // save) alike: a late call from a page already on its way out never takes the one now on top.
-    entry<RequestDetailRoute>(metadata = DetailPane) { route ->
+    entry<RequestDetailRoute>(metadata = DetailPane + motion.tab) { route ->
         DetailPaneContent {
             // No showBack: DetailOverlayTopBar always draws its back arrow, and its onBack is non-nullable.
             // Harmless here: a request page is always stacked above a section or UserDetailEntry, so its
@@ -135,17 +143,17 @@ internal fun EntryProviderScope<NavKey>.detailEntries(
             )
         }
     }
-    entry<IssueDetailRoute>(metadata = DetailPane) { route ->
+    entry<IssueDetailRoute>(metadata = DetailPane + motion.tab) { route ->
         DetailPaneContent { IssueDetailEntry(route.issueId, onBack = { backStack.popIfTop(route) }, showBack = showBack()) }
     }
-    entry<BlocklistDetailRoute>(metadata = DetailPane) { route ->
+    entry<BlocklistDetailRoute>(metadata = DetailPane + motion.tab) { route ->
         DetailPaneContent {
             // No showBack: like RequestDetailRoute, this is only ever stacked above BlocklistRoute, so
             // its pane depth is always > 1 and the hero's DetailOverlayTopBar back arrow is never redundant.
             BlocklistDetailEntry(route.item, route.canManage, onBack = { backStack.popIfTop(route) })
         }
     }
-    entry<UserDetailRoute>(metadata = DetailPane) { route ->
+    entry<UserDetailRoute>(metadata = DetailPane + motion.tab) { route ->
         DetailPaneContent {
             UserDetailEntry(
                 route.userId,
@@ -156,7 +164,7 @@ internal fun EntryProviderScope<NavKey>.detailEntries(
             )
         }
     }
-    entry<UserSettingsRoute>(metadata = DetailPane) { route ->
+    entry<UserSettingsRoute>(metadata = DetailPane + motion.tab) { route ->
         DetailPaneContent {
             UserSettingsEntry(
                 route.userId,
@@ -166,14 +174,14 @@ internal fun EntryProviderScope<NavKey>.detailEntries(
             )
         }
     }
-    entry<UserSettingsPageRoute>(metadata = DetailPane) { route ->
+    entry<UserSettingsPageRoute>(metadata = DetailPane + motion.tab) { route ->
         DetailPaneContent {
             // No showBack: the page's own scaffold reads the pane depth through paneBackOrNull. Stacked above UserSettingsRoute
             // or above the settings search the arrow shows, and Back is what it came from.
             UserSettingsPageEntry(route.userId, route.page, route.row, onBack = { backStack.popIfTop(route) })
         }
     }
-    entry<EditConnectionRoute>(metadata = DetailPane) { route ->
+    entry<EditConnectionRoute>(metadata = DetailPane + motion.tab) { route ->
         DetailPaneContent { EditConnectionEntry(onDone = { backStack.popIfTop(route) }, showBack = showBack()) }
     }
 }
@@ -184,8 +192,11 @@ internal fun EntryProviderScope<NavKey>.detailEntries(
  * search. None of them take [showBack]: each page's scaffold decides its arrow from the depth, through the design system's
  * `paneBackOrNull`, so a page reached either way is right. A route added here needs its scaffold to do the same.
  */
-internal fun EntryProviderScope<NavKey>.serverSettingsEntries(backStack: NavBackStack<NavKey>) {
-    entry<ServerSettingsPageRoute>(metadata = DetailPane) { route ->
+internal fun EntryProviderScope<NavKey>.serverSettingsEntries(
+    backStack: NavBackStack<NavKey>,
+    motion: NavMotionSpecs,
+) {
+    entry<ServerSettingsPageRoute>(metadata = DetailPane + motion.tab) { route ->
         DetailPaneContent {
             ServerSettingsPageEntry(
                 page = route.page,
@@ -199,22 +210,22 @@ internal fun EntryProviderScope<NavKey>.serverSettingsEntries(backStack: NavBack
             )
         }
     }
-    entry<LicencesRoute>(metadata = DetailPane) { route ->
+    entry<LicencesRoute>(metadata = DetailPane + motion.tab) { route ->
         DetailPaneContent { LicencesEntry(onBack = { backStack.popIfTop(route) }) }
     }
-    entry<DiagnosticsRoute>(metadata = DetailPane) { route ->
+    entry<DiagnosticsRoute>(metadata = DetailPane + motion.tab) { route ->
         DetailPaneContent { DiagnosticsEntry(onBack = { backStack.popIfTop(route) }) }
     }
-    entry<DiscoverSliderRoute>(metadata = DetailPane) { route ->
+    entry<DiscoverSliderRoute>(metadata = DetailPane + motion.tab) { route ->
         DetailPaneContent { DiscoverSliderEntry(route.id, onBack = { backStack.popIfTop(route) }) }
     }
-    entry<NotificationAgentRoute>(metadata = DetailPane) { route ->
+    entry<NotificationAgentRoute>(metadata = DetailPane + motion.tab) { route ->
         DetailPaneContent { NotificationAgentEntry(route.agent, onBack = { backStack.popIfTop(route) }) }
     }
-    entry<DvrInstanceRoute>(metadata = DetailPane) { route ->
+    entry<DvrInstanceRoute>(metadata = DetailPane + motion.tab) { route ->
         DetailPaneContent { DvrInstanceEntry(route.type, route.id, onBack = { backStack.popIfTop(route) }) }
     }
-    entry<OverrideRuleRoute>(metadata = DetailPane) { route ->
+    entry<OverrideRuleRoute>(metadata = DetailPane + motion.tab) { route ->
         DetailPaneContent { OverrideRuleEntry(route.id, onBack = { backStack.popIfTop(route) }) }
     }
 }
@@ -247,8 +258,8 @@ internal fun EntryProviderScope<NavKey>.settingsEntries(
     }
     sectionEntries(backStack, panes)
     searchEntries(backStack, panes)
-    detailEntries(backStack, showBack = panes.showBack)
-    serverSettingsEntries(backStack)
+    detailEntries(backStack, showBack = panes.showBack, motion = panes.motion)
+    serverSettingsEntries(backStack, panes.motion)
 }
 
 /** The hub itself: [selectedSection] is the row marked as open. */

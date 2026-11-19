@@ -174,7 +174,7 @@ class RequestSheetScreenshotTest {
     @Composable
     fun worstCaseFont13() = Frame(worstCase(), WORST_HEIGHT)
 
-    /** The longest names at font scales 1.5 and 2, with the quota failed and the button red. */
+    /** The longest names at font scale 2, with the quota failed and the button red. */
     @PreviewTest
     @SeerrFontScalePreviews
     @Composable

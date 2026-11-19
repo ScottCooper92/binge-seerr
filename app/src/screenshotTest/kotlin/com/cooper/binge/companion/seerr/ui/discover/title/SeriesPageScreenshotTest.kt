@@ -110,7 +110,7 @@ class SeriesPageScreenshotTest {
             scrollState = rememberScrollState(initial = EPISODES_PX),
         )
 
-    /** Long episode titles under a long season name at font scales 1.5 and 2. */
+    /** Long episode titles under a long season name at font scale 2. */
     @PreviewTest
     @SeerrFontScalePreviews
     @Composable
@@ -181,13 +181,13 @@ class SeriesPageScreenshotTest {
     @Composable
     fun loading() = Frame(SeriesPageUiState.Loading)
 
-    /** The longest names at font scales 1.5 and 2. */
+    /** The longest names at font scale 2. */
     @PreviewTest
     @SeerrFontScalePreviews
     @Composable
     fun longLargeFonts() = Frame(SeriesPageUiState.Ready(longSeries(), seriesExtras()))
 
-    /** The season picker under the longest names at font scales 1.5 and 2. */
+    /** The season picker under the longest names at font scale 2. */
     @PreviewTest
     @SeerrFontScalePreviews
     @Composable
@@ -198,7 +198,7 @@ class SeriesPageScreenshotTest {
     @Composable
     fun longSpanish() = Frame(SeriesPageUiState.Ready(longSeries(), seriesExtras()))
 
-    /** The facts list at font scales 1.5 and 2, below the episodes. */
+    /** The facts list at font scale 2, below the episodes. */
     @PreviewTest
     @SeerrFontScalePreviews
     @Composable

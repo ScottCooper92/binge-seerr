@@ -65,7 +65,7 @@ class TitleSearchScreenshotTest {
     @Composable
     fun resultsFont13() = Frame(readyResultsState())
 
-    /** At 1.5x and 2x the long title wraps and the rows grow; nothing is cut off. */
+    /** At 2x the long title wraps and the rows grow; nothing is cut off. */
     @PreviewTest
     @SeerrFontScalePreviews
     @Composable

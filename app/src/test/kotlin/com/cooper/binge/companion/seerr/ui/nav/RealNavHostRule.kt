@@ -56,8 +56,12 @@ private const val AWAIT_MILLIS = 10_000L
 /** What a timeout prints of the screen: enough to read, small enough that a CI log stays readable. */
 private const val MAX_TREE_LINES = 300
 
-/** The semantics properties a failure dump reports for a node: what it says and whether it is selected, enabled or focused. */
-private val REPORTED_PROPERTIES = setOf("Text", "Selected", "Disabled", "Role", "Focused", "ContentDescription")
+/**
+ * The semantics properties a failure dump reports for a node: what it says, whether it is selected, enabled or focused, and how far a
+ * horizontal scroller is along (a pager reports its offset in pixels, so its page is that over its width).
+ */
+private val REPORTED_PROPERTIES =
+    setOf("Text", "Selected", "Disabled", "Role", "Focused", "ContentDescription", "HorizontalScrollAxisRange")
 
 /**
  * Hosts the real [com.cooper.binge.companion.seerr.ui.SeerrNavHost] on the JVM, against the app's
@@ -279,7 +283,8 @@ internal class RealNavHostRule(
                         "  ${node.boundsInRoot}: $props"
                     }.ifEmpty { "  none" }
             "Window: ${width}dp wide\nMatching nodes (${focus.description}):\n${list(focus)}\n" +
-                "Selectable nodes:\n${list(SemanticsMatcher.keyIsDefined(SemanticsProperties.Selected))}\n"
+                "Selectable nodes:\n${list(SemanticsMatcher.keyIsDefined(SemanticsProperties.Selected))}\n" +
+                "Horizontally scrollable nodes:\n${list(SemanticsMatcher.keyIsDefined(SemanticsProperties.HorizontalScrollAxisRange))}\n"
         } catch (failure: RuntimeException) {
             "(could not describe the matching nodes: $failure)\n"
         }

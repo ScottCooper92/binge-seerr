@@ -56,7 +56,7 @@ class TitleCreditsScreenshotTest {
     @Composable
     fun error() = TitleCreditsScreen(TitleCreditsUiState.Error(SeerrError.Unreachable), {}, {})
 
-    /** The longest names and roles at font scales 1.5 and 2. */
+    /** The longest names and roles at font scale 2. */
     @PreviewTest
     @SeerrFontScalePreviews
     @Composable

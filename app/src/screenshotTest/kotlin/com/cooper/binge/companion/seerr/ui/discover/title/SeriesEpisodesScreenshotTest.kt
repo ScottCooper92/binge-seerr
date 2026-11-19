@@ -83,7 +83,7 @@ class SeriesEpisodesScreenshotTest {
     @Composable
     fun failed() = Frame(SeriesEpisodesUiState.Error(SeerrError.Unreachable))
 
-    /** The longest names and a long show name at font scales 1.5 and 2. */
+    /** The longest names and a long show name at font scale 2. */
     @PreviewTest
     @SeerrFontScalePreviews
     @Composable
