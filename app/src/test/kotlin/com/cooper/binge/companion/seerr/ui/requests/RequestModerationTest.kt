@@ -475,6 +475,10 @@ class RequestModerationTest {
 
     private val film = TitleKey(TitleType.Movie, 550)
 
+    /** The sync follows the event on the network, so wait for it in real time. */
+    private suspend fun awaitSync(done: () -> Boolean) =
+        withContext(Dispatchers.Default) { withTimeout(SYNC_WAIT_MILLIS) { while (!done()) delay(POLL_MILLIS) } }
+
     @Test
     fun `a moderation writes the status the server now gives the title`() =
         runTest {
@@ -486,6 +490,7 @@ class RequestModerationTest {
             sut.approve(11)
             approved.await()
 
+            awaitSync { statuses.current(film)?.standard == SeerrMediaStatusCode.Processing }
             assertEquals(SeerrMediaStatusCode.Processing, statuses.current(film)?.standard)
             assertEquals(SeerrMediaStatusCode.Pending, statuses.current(film)?.fourK)
         }
@@ -521,6 +526,7 @@ class RequestModerationTest {
             sut.remove(item, blockTitle = false)
             removed.await()
 
+            awaitSync { statuses.current(film)?.standard == null }
             assertEquals(null, statuses.current(film)?.standard)
         }
 }
