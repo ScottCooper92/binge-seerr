@@ -42,7 +42,7 @@ import javax.inject.Inject
  * Setup on the shared connect machine, behind the shared-setup flag. It gives the screens what [SetupViewModel] does, a
  * [SetupUiState] and the same actions, so they do not change. The address and sign-in steps are the machine's; what is beside
  * it is the app's own: the television's hand-off, the password reset and the notice. Plex and Quick Connect, which finish in
- * another app, are not offered here until the shared library has the link flows.
+ * another app, are not offered here: they are not wired to the library's link flows yet.
  */
 @HiltViewModel
 class SharedSetupViewModel
@@ -298,6 +298,5 @@ class SharedSetupViewModel
 
         private companion object {
             const val STOP_TIMEOUT_MILLIS = 5_000L
-            const val DEMO_MODE = "demo"
         }
     }

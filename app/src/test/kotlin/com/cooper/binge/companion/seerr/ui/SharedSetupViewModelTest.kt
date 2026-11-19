@@ -28,6 +28,8 @@ import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import okhttp3.Headers.Companion.headersOf
+import okhttp3.HttpUrl
+import okhttp3.Interceptor
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -36,6 +38,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
+import java.io.IOException
 
 /**
  * Setup on the shared connect machine, behind the shared-setup flag: the same two steps as [SetupViewModelTest], read through the
@@ -64,6 +67,7 @@ class SharedSetupViewModelTest {
 
     private fun TestScope.viewModel(
         scripted: Boolean = true,
+        unreachable: (HttpUrl) -> Boolean = { false },
         handOffs: AddressHandOffs = AddressHandOffs { HandOffOpening.NoLocalNetwork },
     ): SharedSetupViewModel {
         connection =
@@ -78,7 +82,13 @@ class SharedSetupViewModelTest {
                     if (scripted) {
                         SeerrApiFactory(
                             logRequests = false,
-                            testTransport = seerr::interceptor,
+                            testTransport = { cookies ->
+                                val scripted = seerr.interceptor(cookies)
+                                Interceptor { chain ->
+                                    if (unreachable(chain.request().url)) throw IOException("unreachable")
+                                    scripted.intercept(chain)
+                                }
+                            },
                             testDispatcher = seerr::newInlineDispatcher,
                         )
                     } else {
@@ -170,6 +180,44 @@ class SharedSetupViewModelTest {
             assertEquals(SetupError.NotSeerr, vm.awaitAddress { it.error != null }.error)
             vm.editAddress("other")
             assertNull(vm.awaitAddress { it.serverUrl == "other" }.error)
+        }
+
+    @Test
+    fun `a portless address is tried at the default Seerr port next`() =
+        runTest {
+            val vm = viewModel(unreachable = { it.port != 5055 })
+            seerr.enqueueProfile(json("""{"version":"3.4.0"}"""), json("""{"mediaServerType":2,"localLogin":true}"""))
+            seerr.enqueue(json("[]"))
+            vm.awaitAddress()
+            vm.editAddress("http://192.168.1.10")
+
+            vm.inspect()
+
+            assertEquals("http://192.168.1.10:5055/", vm.awaitSignIn().server.baseUrl)
+        }
+
+    @Test
+    fun `an address a phone sent that cannot be reached says so for an address off the home network`() =
+        runTest {
+            val session = FakeSession()
+            val vm = viewModel(unreachable = { true }) { HandOffOpening.Opened(session) }
+            vm.awaitAddress()
+            vm.showHandOff(true)
+            vm.awaitAddress { it.handOff != null }
+
+            session.address.complete("https://203.0.113.9")
+            vm.awaitAddress { it.awaitingConfirm }
+            vm.inspect()
+
+            assertEquals(SetupError.UnreachableNotLocal, vm.awaitAddress { it.error != null }.error)
+            vm.editAddress("https://203.0.113.9")
+            assertEquals(
+                SetupError.Unreachable,
+                run {
+                    vm.inspect()
+                    vm.awaitAddress { it.error != null }.error
+                },
+            )
         }
 
     @Test
