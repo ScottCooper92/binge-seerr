@@ -176,15 +176,20 @@ class DemoJourneyTest {
         host.compose.waitForIdle()
     }
 
+    /** Taps Manage until its sheet shows: after Back the page reloads, and a single tap on it can be lost to that (#2318). */
     private fun openManageSheet() {
         host.awaitShowing(host.string(R.string.request_primary_manage))
-        // The hub's own Manage row reads the same, so the page's button is the last one.
-        host.compose
-            .onAllNodesWithText(host.string(R.string.request_primary_manage))
-            .onLast()
-            .performScrollTo()
-            .performClick()
-        host.awaitShowing(host.string(R.string.media_delete_files))
+        host.clickUntil(
+            "the Manage sheet showing Delete files",
+            target = {
+                // The hub's own Manage row reads the same, so the page's button is the last one.
+                host.compose
+                    .onAllNodesWithText(host.string(R.string.request_primary_manage))
+                    .onLast()
+                    .performScrollTo()
+            },
+            reached = { host.isShowing(host.string(R.string.media_delete_files)) },
+        )
     }
 
     @Test
