@@ -40,7 +40,7 @@ internal fun ratingStat(
     voteCount: Int?,
     locale: Locale,
 ): DetailStat? {
-    val votes = voteCount?.let { stringResource(R.string.title_page_stat_votes, it.formatVoteCount()) }
+    val votes = voteCount?.let { stringResource(R.string.title_page_stat_votes, it.formatVoteCount(locale)) }
     val label = votes ?: stringResource(R.string.title_page_stat_rating)
     return voteAverage?.let { DetailStat(Icons.Filled.Star, "%.1f".format(locale, it), label) }
 }

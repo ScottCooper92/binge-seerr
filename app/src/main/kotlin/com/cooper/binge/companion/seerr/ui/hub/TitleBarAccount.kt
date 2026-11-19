@@ -5,6 +5,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.semantics.clearAndSetSemantics
 
+/** How far a large bar has collapsed before its title-row account gives way to the collapsed bar's copy. */
+internal const val ACCOUNT_HANDOVER_COLLAPSE = 0.5f
+
 /**
  * The account action in a large bar: [HubAccountAction] in the title row (full) or in the collapsed bar (fading in with [alpha]).
  * Only the copy that shows takes taps and is announced, so the other is neither tapped by accident nor read twice.

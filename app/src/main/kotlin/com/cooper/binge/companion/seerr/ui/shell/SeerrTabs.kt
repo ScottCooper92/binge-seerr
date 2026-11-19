@@ -29,9 +29,12 @@ import com.cooper.binge.companion.seerr.ui.DefaultSection
 import com.cooper.binge.companion.seerr.ui.DiscoverGridRoute
 import com.cooper.binge.companion.seerr.ui.SeerrRoute
 import com.cooper.binge.companion.seerr.ui.opensBesideHub
-import com.cooper.binge.companion.seerr.ui.replaceAll
 import com.cooper.binge.companion.seerr.ui.route
 import com.cooper.binge.companion.seerr.ui.state.EmptyScreen
+import com.cooper.homelab.core.uiandroid.shell.TabShell
+import com.cooper.homelab.core.uiandroid.shell.TabShellState
+import com.cooper.homelab.core.uiandroid.shell.rememberTabShellState
+import com.cooper.homelab.core.uiandroid.shell.replaceAll
 import kotlinx.serialization.Serializable
 
 /** The tabs of the discovery shell, in the order the bar shows them. */
@@ -94,16 +97,6 @@ internal fun TabShellState<SeerrTab>.openLink(
 ) {
     appStack.replaceAll(routes)
     show(SeerrTab.Settings)
-}
-
-/**
- * Discovery was turned on or off: the app starts over, with the start tab showing, every tab at its root and nothing open over
- * the shell, so no screen from the other mode is left on top.
- */
-internal fun TabShellState<SeerrTab>.restart(appStack: NavBackStack<NavKey>) {
-    appStack.popToRoot()
-    SeerrTab.entries.forEach { stack(it).popToRoot() }
-    show(startTab)
 }
 
 /**

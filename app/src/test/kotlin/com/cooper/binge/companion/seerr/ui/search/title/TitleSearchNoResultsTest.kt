@@ -13,9 +13,11 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 
 /** A search that finds nothing keeps its chips, names the query, and offers the unfiltered grid (#2334). */
 @RunWith(RobolectricTestRunner::class)
+@Config(qualifiers = "w411dp-h891dp-xhdpi")
 class TitleSearchNoResultsTest {
     @get:Rule
     val rule = createSeerrComposeRule()

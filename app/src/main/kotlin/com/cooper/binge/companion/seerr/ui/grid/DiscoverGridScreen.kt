@@ -46,6 +46,7 @@ import com.cooper.binge.companion.seerr.discover.grid.DiscoverFilters
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverSort
 import com.cooper.binge.companion.seerr.discover.grid.FilterGroup
 import com.cooper.binge.companion.seerr.discover.sliders.HubCard
+import com.cooper.binge.companion.seerr.ui.hub.ACCOUNT_HANDOVER_COLLAPSE
 import com.cooper.binge.companion.seerr.ui.hub.AccountBar
 import com.cooper.binge.companion.seerr.ui.hub.TitleBarAccount
 import com.cooper.binge.companion.seerr.ui.hubs.toStatus
@@ -71,9 +72,6 @@ internal class DiscoverGridActions(
 
 private const val LOAD_MORE_AHEAD = 6
 
-/** Past this much collapse the title row's pill gives way to the bar's action. */
-private const val PILL_INTERACTIVE_COLLAPSE = 0.5f
-
 /**
  * The "see all" grid: a bar of the order and the filter the row started with, over a paged grid of posters. [firstVisibleIndex] starts it
  * scrolled, for a frame of the grid mid-list. [reselectKey] is the tab this grid is the root of: a tap on that tab again scrolls it to
@@ -93,7 +91,7 @@ internal fun DiscoverGridScreen(
     val scrollBehavior = rememberPaneTopBarScrollBehavior()
     var filtersOpen by rememberSaveable { mutableStateOf(false) }
     val collapsed = scrollBehavior.state.collapsedFraction
-    val pillInteractive = collapsed < PILL_INTERACTIVE_COLLAPSE
+    val pillInteractive = collapsed < ACCOUNT_HANDOVER_COLLAPSE
     val activeCount = state.controls.groups.size
     val filterable = state.controls.sort != null
     BingeScreenScaffold(
