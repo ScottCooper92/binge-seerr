@@ -286,5 +286,4 @@ private fun HubRow.title(tab: HubTab): String =
 
 /** The one status chip a title's availability shows, on a hub card and in a search row alike; nothing when the server holds nothing of it. */
 @Composable
-internal fun TitleAvailability.toStatus(): MediaCardStatus? =
-    statusStyle()?.let { MediaCardStatus(stringResource(it.label), it.sentiment) }
+internal fun TitleAvailability.toStatus(): MediaCardStatus? = statusStyle()?.let { MediaCardStatus(stringResource(it.label), it.sentiment) }

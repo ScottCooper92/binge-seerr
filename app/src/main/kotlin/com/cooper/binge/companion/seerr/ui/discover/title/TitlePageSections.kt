@@ -201,8 +201,7 @@ internal fun TitleRow(
 }
 
 @Composable
-internal fun TitleAvailability.label(): Pair<String, BingeSentiment>? =
-    statusStyle()?.let { stringResource(it.label) to it.sentiment }
+internal fun TitleAvailability.label(): Pair<String, BingeSentiment>? = statusStyle()?.let { stringResource(it.label) to it.sentiment }
 
 @Composable
 internal fun TitleAvailability.cardStatus(): MediaCardStatus? = label()?.let { (text, sentiment) -> MediaCardStatus(text, sentiment) }
