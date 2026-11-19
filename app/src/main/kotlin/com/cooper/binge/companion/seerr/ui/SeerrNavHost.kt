@@ -129,12 +129,10 @@ private fun EntryProviderScope<NavKey>.homeEntries(
                     },
                 )
             }, search = {
-                TitleSearchEntry(onOpenGrid = {
-                    grid,
-                    title,
-                    ->
-                    backStack.push(DiscoverGridRoute(grid.kind, grid.preset, title))
-                })
+                TitleSearchEntry(
+                    onOpenGrid = { grid, title -> backStack.push(DiscoverGridRoute(grid.kind, grid.preset, title)) },
+                    onOpenAccount = { id -> backStack.push(UserDetailRoute(id)) },
+                )
             }, grid = {
                 DiscoverTabEntry(tabs.stack(SeerrTab.Discover), onOpenAccount = { id ->
                     backStack.push(UserDetailRoute(id))
