@@ -71,13 +71,14 @@ internal fun SeriesPageBody(
             onPrimary = actions.onRequest,
             onTrailer = series.videos.trailerUrl()?.let { url -> { actions.onOpenUrl(url) } },
             onReport = actions.onReport,
+            watchlist = series.mayWatchlist.takeIf { it }?.let { WatchlistButton(series.onWatchlist, actions.onToggleWatchlist) },
             modifier = Modifier.readingMargin().layoutAnchor(LayoutAnchors.section(LayoutAnchors.Detail.ACTIONS)),
         )
         if (!expanded && series.overview != null) Box(Modifier.readingMargin()) { OverviewSection(series.overview) }
-        EpisodesSection(state, seasonActions, Modifier.readingMargin())
         PeopleRow(stringResource(R.string.title_page_cast), series.cast, actions.onOpenPerson, actions.onOpenCredits)
         PeopleRow(stringResource(R.string.title_page_crew), series.keyCrew, actions.onOpenPerson, actions.onOpenCredits)
         WhereToWatchSection(series.providers, actions.onOpenUrl, Modifier.readingMargin())
+        EpisodesSection(state, seasonActions, Modifier.readingMargin())
         state.extras?.let { TitleRow(stringResource(R.string.title_page_more_like_this), it.moreLikeThis, actions.onOpenTitle) }
         KeywordsSection(series.keywords, actions.onOpenKeyword.takeIf { series.keywordsOpen }, Modifier.readingMargin())
         TitleDetailsSection(

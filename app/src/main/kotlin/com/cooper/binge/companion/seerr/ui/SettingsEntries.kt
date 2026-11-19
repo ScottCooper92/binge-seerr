@@ -18,7 +18,9 @@ import com.cooper.binge.companion.seerr.ui.settings.server.ServerSettingsPage
 import com.cooper.binge.companion.seerr.ui.state.LoadingScreen
 
 /**
- * The settings search, over the whole window: it has no pane metadata, so it covers the hub and whatever is open beside it. A
+ * The settings search, as any section is: beside the hub in the one content pane on a wide window, over the whole window on a
+ * narrow one (#2343). It is not a hub section, but [opensBesideHub] counts it as one, so [ShellPanesStrategy] draws it in the
+ * Settings tab and the stash and the window checks agree. What was open beneath it stays on the stack, so Back brings it back. A
  * result opens its page above the search through [PaneLayout.openFromSearch], and the search stays on the stack, so Back from the
  * page returns to the search as it was.
  */
@@ -26,7 +28,7 @@ internal fun EntryProviderScope<NavKey>.searchEntries(
     backStack: NavBackStack<NavKey>,
     panes: PaneLayout,
 ) {
-    entry<SettingsSearchRoute>(metadata = panes.motion.detail) { route ->
+    entry<SettingsSearchRoute>(metadata = DetailPane + SectionPane + panes.motion.detail) { route ->
         SettingsSearchEntry(
             onOpen = { target -> panes.openFromSearch(backStack, target) },
             onBack = { backStack.popIfTop(route) },
@@ -35,14 +37,13 @@ internal fun EntryProviderScope<NavKey>.searchEntries(
 }
 
 /**
- * The hub's manage sections: the detail pane beside it, the middle of three panes on a landscape tablet, or the whole
- * window on a narrow one.
+ * The hub's manage sections: the detail pane beside it on a wide window, or the whole window on a narrow one.
  */
 internal fun EntryProviderScope<NavKey>.sectionEntries(
     backStack: NavBackStack<NavKey>,
     panes: PaneLayout,
 ) {
-    val section = DetailPane + ThreePaneSection + panes.motion.tab
+    val section = DetailPane + SectionPane + panes.motion.tab
     val open: (NavKey) -> Unit = { route -> panes.open(backStack, route) }
     entry<RequestsRoute>(
         metadata = section,
@@ -245,7 +246,7 @@ internal fun EntryProviderScope<NavKey>.settingsEntries(
     // Back from it leaves the app and a narrow window shows the hub alone (openAboveDefault stacks it first).
     // A placeholder gets no entry scope, so its ViewModel belongs to the host.
     entry<HubRoute>(
-        metadata = ListDetailSceneStrategy.listPane(detailPlaceholder = { DefaultSectionPane(backStack, onExit) }) + ThreePaneHub,
+        metadata = ListDetailSceneStrategy.listPane(detailPlaceholder = { DefaultSectionPane(backStack, onExit) }),
     ) {
         PaneContent(innerEdge = PaneEdge.End) {
             // And the other way: after a disconnect, settleHome is already swapping setup back in.

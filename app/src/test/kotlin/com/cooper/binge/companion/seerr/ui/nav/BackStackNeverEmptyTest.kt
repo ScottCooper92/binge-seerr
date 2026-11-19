@@ -73,27 +73,27 @@ class BackStackNeverEmptyTest {
 
     @Test
     fun `a demo, a moderation, leaving the demo and a local sign-in never empty the stack`() =
-        demoToSignIn(R.string.setup_mode_local, threePane = false)
+        demoToSignIn(R.string.setup_mode_local, wide = false)
 
     @Test
     fun `a demo, a moderation, leaving the demo and a Jellyfin sign-in never empty the stack`() =
-        demoToSignIn(R.string.setup_mode_jellyfin, threePane = false)
+        demoToSignIn(R.string.setup_mode_jellyfin, wide = false)
 
-    /** Three panes put the default section on the stack beside the hub, which Back at the root must not take (#815). */
+    /** An expanded window is the same two panes as a medium one, so the journey and its stacks are the same (#2348). */
     @Test
     @Config(qualifiers = TABLET)
-    fun `in three panes, the same journey never empties the stack and Back at the root leaves`() =
-        demoToSignIn(R.string.setup_mode_local, threePane = true)
+    fun `on an expanded window, the same journey never empties the stack and Back at the root leaves`() =
+        demoToSignIn(R.string.setup_mode_local, wide = true)
 
     /**
-     * The journey, with [mode] for the sign-in. [threePane] keeps the default section on the stack beside the hub, where
-     * a phone shows the hub alone and walks back to it.
+     * The journey, with [mode] for the sign-in. [wide] has the hub beside the pane, where Requests is the default section: Back
+     * from it is the system's and leaves (#815), so the walk back to the hub is a phone's.
      */
     private fun demoToSignIn(
         mode: Int,
-        threePane: Boolean,
+        wide: Boolean,
     ) {
-        val hubAlone = if (threePane) listOf(HubRoute, RequestsRoute) else listOf<NavKey>(HubRoute)
+        val hubAlone = listOf<NavKey>(HubRoute)
         host.connectDemo()
         host.launch(HomeRoute)
         watchStack()
@@ -105,7 +105,7 @@ class BackStackNeverEmptyTest {
         assertStack(HubRoute, RequestsRoute)
         approveTheFirstPending()
         assertTrue("the request page was not on top", host.stack().last() is RequestDetailRoute)
-        if (!threePane) {
+        if (!wide) {
             host.back()
             assertStack(HubRoute, RequestsRoute)
             host.back()
@@ -201,7 +201,7 @@ class BackStackNeverEmptyTest {
     /** Settings' Exit the demo, then the confirm's: Settings leaves, and setup takes the root. */
     private fun exitTheDemo() {
         val exit = host.string(R.string.hub_demo_exit)
-        // In three panes the hub and Settings both show the button, and a click that lands as the panes settle opens no
+        // With the hub and Settings side by side both show the button, and a click that lands as the panes settle opens no
         // confirm (#2002): scroll the last one into view, then click until the confirm is up.
         host.compose
             .onAllNodesWithText(exit)

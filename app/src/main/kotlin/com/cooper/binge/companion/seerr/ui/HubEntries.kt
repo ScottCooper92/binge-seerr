@@ -16,7 +16,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import com.binge.designsystem.component.BingeSnackbarHost
-import com.cooper.binge.companion.seerr.ADMITS_UNVERIFIED_CALLERS
 import com.cooper.binge.companion.seerr.tip.TipHost
 import com.cooper.binge.companion.seerr.ui.hub.DeveloperRow
 import com.cooper.binge.companion.seerr.ui.hub.HubActions
@@ -57,7 +56,6 @@ internal fun HubEntry(
     HubScreen(
         state = state,
         selectedSection = selectedSection,
-        admitsUnverifiedCallers = ADMITS_UNVERIFIED_CALLERS,
         actions =
             HubActions(
                 onOpenSection = onOpenSection,
@@ -147,7 +145,7 @@ internal fun ThisAppEntry(
 }
 
 /**
- * The settings search over the whole window. A result opens its page above the search, which stays on the stack, so Back from
+ * The settings search, beside the hub on the hub route and over the whole window on a narrow one. A result opens its page above the search, which stays on the stack, so Back from
  * the page returns to the search.
  */
 @Composable

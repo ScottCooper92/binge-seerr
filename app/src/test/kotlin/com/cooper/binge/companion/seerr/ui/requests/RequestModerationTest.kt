@@ -5,6 +5,10 @@ import com.cooper.binge.companion.seerr.auth.LegacyCredentialStore
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.data.FakeRequestStore
 import com.cooper.binge.companion.seerr.data.RequestEntity
+import com.cooper.binge.companion.seerr.data.TitleKey
+import com.cooper.binge.companion.seerr.data.TitleStatusStore
+import com.cooper.binge.companion.seerr.data.TitleStatuses
+import com.cooper.binge.companion.seerr.data.TitleType
 import com.cooper.binge.companion.seerr.seerr.SeerrApiFactory
 import com.cooper.binge.companion.seerr.seerr.SeerrAuth
 import com.cooper.binge.companion.seerr.seerr.SeerrError
@@ -50,8 +54,10 @@ class RequestModerationTest {
     private val received = CopyOnWriteArrayList<RecordedRequest>()
     private val codes = mutableMapOf<String, Int>()
     private val bodies = mutableMapOf<String, String>()
+    private val readCodes = mutableMapOf<String, Int>()
     private var moderated = 0
     private val cache = FakeRequestStore()
+    private val statuses = TitleStatusStore()
     private val analytics = RecordingAnalytics()
     private val crashBreadcrumbs = RecordingCrashBreadcrumbs()
 
@@ -71,7 +77,8 @@ class RequestModerationTest {
                             "/api/v1/settings/public" -> """{"mediaServerType":2}"""
                             else -> bodies[path] ?: "{}"
                         }
-                    return MockResponse(code = codes[path] ?: 200, headers = headersOf("Content-Type", "application/json"), body = body)
+                    val code = (if (request.method == "GET") readCodes[path] else null) ?: codes[path] ?: 200
+                    return MockResponse(code = code, headers = headersOf("Content-Type", "application/json"), body = body)
                 }
             }
         seerr.start()
@@ -94,6 +101,7 @@ class RequestModerationTest {
             crashBreadcrumbs = crashBreadcrumbs,
             cache = cache,
             reviewSignals = reviewSignals,
+            statuses = statuses,
         ) { moderated++ }
     }
 
@@ -463,5 +471,62 @@ class RequestModerationTest {
                 ),
                 analytics.events,
             )
+        }
+
+    private val film = TitleKey(TitleType.Movie, 550)
+
+    /** The sync follows the event on the network, so wait for it in real time. */
+    private suspend fun awaitSync(done: () -> Boolean) =
+        withContext(Dispatchers.Default) { withTimeout(SYNC_WAIT_MILLIS) { while (!done()) delay(POLL_MILLIS) } }
+
+    @Test
+    fun `a moderation writes the status the server now gives the title`() =
+        runTest {
+            bodies["/api/v1/request/11"] =
+                """{"id":11,"status":2,"media":{"id":3,"tmdbId":550,"mediaType":"movie","status":3,"status4k":2}}"""
+            val sut = moderation()
+
+            val approved = awaitEvent(sut.events)
+            sut.approve(11)
+            approved.await()
+
+            awaitSync { statuses.current(film)?.standard == SeerrMediaStatusCode.Processing }
+            assertEquals(SeerrMediaStatusCode.Processing, statuses.current(film)?.standard)
+            assertEquals(SeerrMediaStatusCode.Pending, statuses.current(film)?.fourK)
+        }
+
+    @Test
+    fun `blocking shows the title blocklisted at once and a refused block puts the status back`() =
+        runTest {
+            val sut = moderation()
+
+            val blocked = awaitEvent(sut.events)
+            sut.blockTitle(item)
+            blocked.await()
+            assertEquals(SeerrMediaStatusCode.Blocklisted, statuses.current(film)?.standard)
+
+            statuses.confirm(film, TitleStatuses(SeerrMediaStatusCode.Available))
+            codes["/api/v1/blacklist"] = 500
+            val failed = awaitEvent(sut.events)
+            sut.blockTitle(item)
+            failed.await()
+            assertEquals(SeerrMediaStatusCode.Available, statuses.current(film)?.standard)
+        }
+
+    @Test
+    fun `removing the last request reads the title again, so its status goes`() =
+        runTest {
+            cache.append("all:added:all", listOf(item.toEntity("all:added:all", 0)), null)
+            readCodes["/api/v1/request/11"] = 404
+            bodies["/api/v1/movie/550"] = """{"title":"Fight Club"}"""
+            statuses.confirm(film, TitleStatuses(SeerrMediaStatusCode.Pending))
+            val sut = moderation()
+
+            val removed = awaitEvent(sut.events)
+            sut.remove(item, blockTitle = false)
+            removed.await()
+
+            awaitSync { statuses.current(film)?.standard == null }
+            assertEquals(null, statuses.current(film)?.standard)
         }
 }

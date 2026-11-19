@@ -15,8 +15,8 @@ import com.cooper.binge.companion.seerr.preview.SeerrSpanishPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrTabletPanesPreview
 import kotlinx.coroutines.flow.emptyFlow
 
-private const val EPISODES_PX = 1900
-private const val LARGE_FONT_EPISODES_PX = 4300
+private const val EPISODES_PX = 3850
+private const val LARGE_FONT_EPISODES_PX = 5450
 private const val WATCH_PX = 4200
 
 /** Scrolled past the end: the state clamps it, so the page rests on its last section, the Details. */
@@ -177,6 +177,18 @@ class SeriesPageScreenshotTest {
             NO_ACTIONS,
             NO_SEASON_ACTIONS,
             scrollState = rememberScrollState(initial = WATCH_PX),
+        )
+
+    /** A show on the watchlist: the bookmark is filled, beside Trailer and before Report. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun watchlistOn() =
+        Frame(
+            SeriesPageUiState.Ready(
+                fullSeries().copy(mayWatchlist = true, onWatchlist = true),
+                seriesExtras(),
+            ),
         )
 
     /** Every season held or asked for: no Request button. */

@@ -34,9 +34,9 @@ private const val WIDE = "w900dp-h800dp"
 private const val EMPTY_PAGE = """{"pageInfo":{"pages":0,"results":0},"results":[]}"""
 
 /**
- * The settings search on a window with the hub beside the detail pane, through the real nav host: the search covers the whole
- * window, a result opens above it over the whole window with its own Back arrow, the search stays on the stack, and Back returns to
- * the search with its query. A second Back is what was open before the search.
+ * The settings search on a window with the hub beside the detail pane, through the real nav host (#2343): the search takes the
+ * content pane, a result opens its page above it in the same pane with its own Back arrow, the hub stays beside both, the search
+ * stays on the stack, and Back returns to the search with its query. A second Back is what was open before the search.
  */
 @HiltAndroidTest
 @RunWith(RobolectricTestRunner::class)
@@ -73,7 +73,7 @@ class SettingsSearchWideJourneyTest {
             .performTouchInput { swipeDown(startY = centerY, endY = bottom) }
         host.compose.onNodeWithText(searchTitle).performClick()
         host.awaitShowing(host.string(com.cooper.homelab.core.uiandroid.R.string.search_prompt))
-        assertTrue("the search covers the whole window, hub included", !host.isShowing(host.string(R.string.hub_section_requests_desc)))
+        assertTrue("the hub stays beside the search", host.isShowing(host.string(R.string.hub_section_requests_desc)))
         host.compose.onNode(hasSetTextAction()).performTextInput("logs")
         host.awaitShowing(host.string(R.string.server_settings_logs))
         host.compose.onNodeWithText(host.string(R.string.server_settings_logs)).performClick()
@@ -81,13 +81,13 @@ class SettingsSearchWideJourneyTest {
 
         assertEquals("the search stays under the page", listOf(HubRoute, IssuesRoute, SettingsSearchRoute, logs), host.stack())
         assertEquals("the page has its own Back, to the search", 1, backArrows())
-        assertTrue("the page is over the whole window, hub included", !host.isShowing(host.string(R.string.hub_section_issues_desc)))
+        assertTrue("the hub stays beside the page", host.isShowing(host.string(R.string.hub_section_issues_desc)))
 
         host.back()
 
-        assertEquals("Back is the search, full window, with its query", listOf(HubRoute, IssuesRoute, SettingsSearchRoute), host.stack())
+        assertEquals("Back is the search, beside the hub, with its query", listOf(HubRoute, IssuesRoute, SettingsSearchRoute), host.stack())
         host.awaitShowing(host.string(R.string.server_settings_logs))
-        assertTrue("the search covers the whole window, hub included", !host.isShowing(host.string(R.string.hub_section_issues_desc)))
+        assertTrue("the hub stays beside the search", host.isShowing(host.string(R.string.hub_section_issues_desc)))
         assertTrue("the query is kept", host.isShowing("logs"))
 
         host.back()

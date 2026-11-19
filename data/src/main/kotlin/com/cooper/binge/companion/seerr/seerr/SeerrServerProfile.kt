@@ -178,8 +178,11 @@ data class SeerrServerProfile(
     /** Keywords to leave out (`excludeKeywords`): the 3.0 release of the Jellyseerr lineage. */
     val hasDiscoverExcludeKeywords: Boolean get() = jellyseerrLineage && atLeast(3, 0)
 
-    /** The Plex watchlist; whether the signed-in user may use it is a permission, not this. */
+    /** The Plex watchlist, to read (`GET /discover/watchlist`); whether the signed-in user may use it is a permission, not this. */
     val hasDiscoverWatchlist: Boolean get() = if (jellyseerrLineage) atLeast(1, 2) else atLeast(1, 30)
+
+    /** Adding to and removing from the watchlist (`POST /watchlist`, `DELETE /watchlist/{tmdbId}`): Jellyseerr 1.6, and never Overseerr. */
+    val hasWatchlistEdit: Boolean get() = jellyseerrLineage && atLeast(1, 6)
 
     /** The ntfy agent arrived with Jellyseerr 2.6; Overseerr never had it. */
     val hasNtfy: Boolean get() = jellyseerrLineage && atLeast(2, 6)

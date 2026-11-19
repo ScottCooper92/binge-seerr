@@ -33,7 +33,6 @@ private const val ACTION = 28
 private const val COMEDY = 35
 private const val DRAMA = 18
 private const val MYSTERY = 9648
-private const val TOTAL = 38
 
 private val GENRE_NAMES = mapOf(ACTION to "Action", COMEDY to "Comedy", DRAMA to "Drama", MYSTERY to "Mystery")
 
@@ -67,7 +66,7 @@ private fun ready(
     results = results.filter(type::keeps),
     loaded = results.size,
     type = type,
-    counts = results.typeCounts(TOTAL),
+    counts = results.typeCounts(),
     genreNames = GENRE_NAMES,
     hasMore = true,
     appending = appending,
@@ -88,9 +87,9 @@ internal fun readyAppendingState() = ready(searchResults().take(FEW), appending 
 
 internal fun readyAppendFailedState() = ready(searchResults().take(FEW), appendFailed = true)
 
-internal fun noResultsState() = TitleSearchUiState.NoResults("qzxv", "qzxv")
+internal fun noResultsState() = TitleSearchUiState.NoResults("qzxv", "qzxv", SearchType.All)
 
 internal fun failedState() = TitleSearchUiState.Error("lighthouse", SeerrError.Unreachable)
 
 internal val noActions =
-    TitleSearchActions({}, {}, {}, {}, {}, {}, {}, {}, {})
+    TitleSearchActions({}, {}, {}, {}, {}, {}, {}, {}, {}, { _, _ -> })

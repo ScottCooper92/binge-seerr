@@ -37,6 +37,8 @@ data class SeerrMovieDetailsDto(
     @SerialName("relatedVideos") val relatedVideos: List<SeerrVideoDto> = emptyList(),
     @SerialName("watchProviders") val watchProviders: List<SeerrWatchRegionDto> = emptyList(),
     @SerialName("mediaInfo") val mediaInfo: SeerrMediaInfoDto? = null,
+    /** Whether the signed-in user has the title on their watchlist; absent from a server without one. */
+    @SerialName("onUserWatchlist") val onUserWatchlist: Boolean? = null,
 )
 
 /** An id and a name: a genre, a keyword or a production company. */
