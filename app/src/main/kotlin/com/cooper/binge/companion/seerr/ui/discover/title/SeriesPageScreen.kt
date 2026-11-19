@@ -108,6 +108,22 @@ private fun ReadySeriesPage(
             onResult = actions.onRequested,
         )
     }
+    if (state.statusSheetOpen) {
+        TitleStatusSheet(
+            state =
+                titleActionsModel(
+                    state.series.standard,
+                    state.series.fourK,
+                    state.series.requests,
+                    state.series.mayReport,
+                ).primary.state,
+            watchUrl = state.series.watchUrl,
+            mediaServerName = state.series.mediaServerName,
+            canRequest = state.series.canRequest,
+            onWatch = actions.onOpenUrl,
+            onDismiss = actions.onCloseStatus,
+        )
+    }
     if (state.reportSheetOpen) actions.reportSheet(actions.onCloseReport)
     state.manageRequestId?.let { requestId ->
         actions.manageSheet(

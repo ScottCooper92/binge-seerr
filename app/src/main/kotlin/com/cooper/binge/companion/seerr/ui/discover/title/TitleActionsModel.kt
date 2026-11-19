@@ -18,8 +18,8 @@ internal sealed interface PrimaryTap {
         val requestId: Int,
     ) : PrimaryTap
 
-    /** Nothing to open yet, so the button is drawn disabled. */
-    data object Nothing : PrimaryTap
+    /** The title's status and what it offers where no request of the viewer's is on file, so a tap always opens something. */
+    data object StatusSheet : PrimaryTap
 }
 
 /**
@@ -78,15 +78,15 @@ private fun tapFor(
     requests: List<TitleRequest>,
 ): PrimaryTap =
     when {
-        state == TitleState.Request -> if (mayRequest) PrimaryTap.RequestSheet else PrimaryTap.Nothing
-        state == TitleState.Blocklisted -> PrimaryTap.Nothing
+        state == TitleState.Request -> if (mayRequest) PrimaryTap.RequestSheet else PrimaryTap.StatusSheet
+        state == TitleState.Blocklisted -> PrimaryTap.StatusSheet
         state == TitleState.PartiallyAvailable && mayRequest -> PrimaryTap.RequestSheet
         else ->
             requests.toManage()?.let { PrimaryTap.ManageRequest(it.id) }
-                ?: if (mayRequest) PrimaryTap.RequestSheet else PrimaryTap.Nothing
+                ?: if (mayRequest) PrimaryTap.RequestSheet else PrimaryTap.StatusSheet
     }
 
-private fun TitleState.isInLibrary() = this == TitleState.Available || this == TitleState.PartiallyAvailable
+internal fun TitleState.isInLibrary() = this == TitleState.Available || this == TitleState.PartiallyAvailable
 
 private fun TitleAvailability.toState() =
     when (this) {

@@ -113,6 +113,18 @@ class SeriesPageViewModelTest {
     }
 
     @Test
+    fun `a series with nothing of the viewer's to open still opens the status sheet`() {
+        val imported = seriesFixture(standard = VersionState(TitleAvailability.Available, mayRequest = false))
+        val vm = SeriesPageViewModel(FakeSeries(series = imported), 1399)
+
+        vm.onPrimary()
+        assertTrue(vm.ready().statusSheetOpen)
+
+        vm.closeStatusSheet()
+        assertFalse(vm.ready().statusSheetOpen)
+    }
+
+    @Test
     fun `the report sheet opens and closes`() {
         val vm = SeriesPageViewModel(FakeSeries(), 1399)
 

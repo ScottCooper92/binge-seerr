@@ -74,7 +74,7 @@ private fun FilmPageEntry(
                 onCloseRequest = viewModel::closeRequestSheet,
                 onRequested = viewModel::requested,
                 onReload = viewModel::reload,
-                manage = TitleManage(viewModel::closeManageSheet, onOpenUser, onOpenServices),
+                manage = TitleManage(viewModel::closeManageSheet, viewModel::closeStatusSheet, onOpenUser, onOpenServices),
                 report = TitleReport(SEERR_MEDIA_TYPE_MOVIE, tmdbId, viewModel::openReportSheet, viewModel::closeReportSheet),
             ),
     )
@@ -107,7 +107,7 @@ private fun SeriesPageEntry(
                 onCloseRequest = viewModel::closeRequestSheet,
                 onRequested = viewModel::requested,
                 onReload = viewModel::reload,
-                manage = TitleManage(viewModel::closeManageSheet, onOpenUser, onOpenServices),
+                manage = TitleManage(viewModel::closeManageSheet, viewModel::closeStatusSheet, onOpenUser, onOpenServices),
                 report = TitleReport(SEERR_MEDIA_TYPE_TV, tmdbId, viewModel::openReportSheet, viewModel::closeReportSheet),
             ),
         seasonActions = SeasonActions(viewModel::selectSeason, viewModel::retryEpisodes, onOpenSeason),
@@ -146,6 +146,7 @@ private fun rememberTitlePageActions(
         onOpenKeyword = onOpenKeyword,
         onReload = onReload,
         onCloseManage = manage.onClose,
+        onCloseStatus = manage.onCloseStatus,
         manageSheet = { sheet -> SiblingRequestSheet(sheet, manage.onOpenUser, manage.onOpenServices) },
         onReport = report.onOpen,
         onCloseReport = report.onClose,
@@ -153,9 +154,10 @@ private fun rememberTitlePageActions(
     )
 }
 
-/** What the page needs to manage a request in a sheet over it: how it closes, and where its requester and its services open. */
+/** What the page needs for the sheets over it: how the request's and the status sheet close, and where a requester and the services open. */
 private class TitleManage(
     val onClose: () -> Unit,
+    val onCloseStatus: () -> Unit,
     val onOpenUser: (Int) -> Unit,
     val onOpenServices: () -> Unit,
 )

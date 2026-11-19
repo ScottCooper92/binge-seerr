@@ -19,6 +19,8 @@ import com.cooper.binge.companion.seerr.seerr.certificationIn
 import com.cooper.binge.companion.seerr.seerr.toPermissions
 import com.cooper.binge.companion.seerr.seerr.toTmdbBackdropUrl
 import com.cooper.binge.companion.seerr.seerr.toTmdbPosterUrl
+import com.cooper.binge.companion.seerr.ui.isOpenableSite
+import com.cooper.binge.companion.seerr.ui.requests.mediaServerName
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -60,6 +62,8 @@ class SeerrTitleDetailsRepository(
                     webUrl = serverUrl() + "movie/" + tmdbId,
                 ).copy(
                     companiesOpen = profile.hasDiscoverByCategory,
+                    mediaServerName = profile.mediaServerName(),
+                    canRequest = permissions.canRequestMovie,
                     keywordsOpen = profile.hasKeywordDiscover,
                     mayReport = profile.hasIssues && permissions.canReportIssues,
                 )
@@ -149,6 +153,7 @@ internal fun SeerrMovieDetailsDto.toMovieDetails(
         standard = VersionState(standardStatus, mayRequest && standardStatus.mayBeRequested()),
         fourK = if (mayRequest4k) VersionState(status4k, status4k.mayBeRequested()) else null,
         mediaId = mediaInfo?.id,
+        watchUrl = mediaInfo?.watchUrl(),
         webUrl = webUrl,
         releaseDate = releaseDate?.takeIf { it.isNotBlank() },
         requests =
@@ -226,3 +231,10 @@ internal fun com.cooper.binge.companion.seerr.seerr.SeerrRequestSummaryDto.toTit
         status = status,
         requesterId = requestedBy?.id,
     )
+
+/**
+ * The title's link in the media server's web UI: the first the server filled in, the standard version's before the 4K one's, so a title
+ * held only in 4K still opens. Null where that first link is not a real site.
+ */
+internal fun com.cooper.binge.companion.seerr.seerr.SeerrMediaInfoDto.watchUrl(): String? =
+    listOf(mediaUrl, jellyfinMediaUrl, plexUrl, mediaUrl4k, plexUrl4k).firstOrNull { !it.isNullOrBlank() }?.takeIf(::isOpenableSite)

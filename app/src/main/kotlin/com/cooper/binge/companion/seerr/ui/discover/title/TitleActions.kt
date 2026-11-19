@@ -7,19 +7,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Block
-import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.ReportProblem
-import androidx.compose.material.icons.filled.Schedule
-import androidx.compose.material.icons.filled.Sync
-import androidx.compose.material.icons.filled.Timelapse
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
-import com.binge.designsystem.component.BingeOutlinedButton
 import com.binge.designsystem.component.BingeStatusButton
 import com.binge.designsystem.component.BingeStatusButtonEmphasis
 import com.binge.designsystem.component.LabelledIconButton
@@ -56,7 +50,7 @@ internal fun TitleActions(
 
 /**
  * The state as the design system's status button: Request, filled with its icon, where nothing is held, and otherwise the state with
- * its status dot, tonal. Where there is nothing to open yet it is drawn as a disabled outlined button until the sheet always opens.
+ * its status dot, tonal. It is enabled in every state, because a tap always opens a sheet.
  */
 @Composable
 private fun PrimaryAction(
@@ -65,16 +59,6 @@ private fun PrimaryAction(
     modifier: Modifier,
 ) {
     val label = stringResource(primary.label())
-    if (primary.tap == PrimaryTap.Nothing) {
-        BingeOutlinedButton(
-            label = label,
-            onClick = onClick,
-            modifier = modifier.fillMaxWidth(),
-            leadingIcon = primary.state.icon(),
-            enabled = false,
-        )
-        return
-    }
     val request = primary.state == TitleState.Request
     BingeStatusButton(
         label = label,
@@ -98,7 +82,7 @@ private fun TitleState.sentiment() =
         TitleState.Blocklisted -> BingeSentiment.Negative
     }
 
-private fun TitleState.labelRes() =
+internal fun TitleState.labelRes() =
     when (this) {
         TitleState.Request -> R.string.title_page_request
         TitleState.Requested -> R.string.hubs_card_requested
@@ -106,14 +90,4 @@ private fun TitleState.labelRes() =
         TitleState.PartiallyAvailable -> R.string.hubs_card_partial
         TitleState.Available -> R.string.hubs_card_available
         TitleState.Blocklisted -> R.string.hubs_card_blocklisted
-    }
-
-private fun TitleState.icon() =
-    when (this) {
-        TitleState.Request -> Icons.Filled.Add
-        TitleState.Requested -> Icons.Filled.Schedule
-        TitleState.Processing -> Icons.Filled.Sync
-        TitleState.PartiallyAvailable -> Icons.Filled.Timelapse
-        TitleState.Available -> Icons.Filled.CheckCircle
-        TitleState.Blocklisted -> Icons.Filled.Block
     }

@@ -72,7 +72,7 @@ class TitleActionsModelTest {
     @Test
     fun `a held title with no request on file opens the sheet only if a version is still open`() {
         assertEquals(PrimaryTap.RequestSheet, primary(held(TitleAvailability.Available), open).tap)
-        assertEquals(PrimaryTap.Nothing, primary(held(TitleAvailability.Available)).tap)
+        assertEquals(PrimaryTap.StatusSheet, primary(held(TitleAvailability.Available)).tap)
     }
 
     @Test
@@ -89,13 +89,16 @@ class TitleActionsModelTest {
 
     @Test
     fun `a user who may not request and a title the server holds nothing of has a disabled primary`() {
-        assertEquals(TitlePrimary(TitleState.Request, fourKOnly = false, tap = PrimaryTap.Nothing), primary(held(TitleAvailability.None)))
+        assertEquals(
+            TitlePrimary(TitleState.Request, fourKOnly = false, tap = PrimaryTap.StatusSheet),
+            primary(held(TitleAvailability.None)),
+        )
     }
 
     @Test
     fun `a blocklisted title has nothing to open`() {
         assertEquals(
-            TitlePrimary(TitleState.Blocklisted, fourKOnly = false, tap = PrimaryTap.Nothing),
+            TitlePrimary(TitleState.Blocklisted, fourKOnly = false, tap = PrimaryTap.StatusSheet),
             primary(held(TitleAvailability.Blocklisted)),
         )
     }

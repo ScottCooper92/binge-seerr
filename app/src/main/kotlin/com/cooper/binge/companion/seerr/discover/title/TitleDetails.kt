@@ -109,6 +109,12 @@ data class MovieDetails(
     val releaseDate: String? = null,
     /** The requests the server holds for the film, newest last as it lists them. */
     val requests: List<TitleRequest> = emptyList(),
+    /** Where the title opens in the media server's own web UI, once the server holds it and gives a link that can be a real site. */
+    val watchUrl: String? = null,
+    /** The media server the Seerr server fronts, by name, for the Watch row's label; null where it has none this app knows. */
+    val mediaServerName: String? = null,
+    /** The viewer's account may request this kind of title at all, whether or not anything is left to request. */
+    val canRequest: Boolean = true,
     /** The server takes issues and this viewer may report one: its profile has them and their permissions allow it. */
     val mayReport: Boolean = false,
     /** Whether the server can list what a studio made, so the studios may be links; set from its profile, never from a version here. */
