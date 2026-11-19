@@ -12,10 +12,11 @@ val LocalFlags = staticCompositionLocalOf { Flags() }
 val LocalDiscoveryEnabled = staticCompositionLocalOf { false }
 
 /**
- * Whether the app shows the discovery surfaces (#2039). Off until Remote Config turns it on, and off in a build with no
- * Firebase app. With it off the app is exactly as it was before the epic.
+ * Whether the app shows the discovery surfaces (#2039). On until Remote Config turns it off, so a first run with nothing
+ * fetched, and a build with no Firebase app, show discovery. The user's own Discovery setting can still opt out. With it off
+ * the app is exactly as it was before the epic.
  */
-val DiscoveryEnabled = FlagKey("discovery_enabled")
+val DiscoveryEnabled = FlagKey("discovery_enabled", default = true)
 
 /**
  * Whether setup runs on the shared connect machine from the shared library instead of the app's own view model. Off until Remote

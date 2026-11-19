@@ -59,16 +59,19 @@ class AppFlagsTest {
     }
 
     @Test
-    fun `discovery is off with nothing behind it and follows the remote value once it arrives`() =
+    fun `discovery is on with nothing fetched and follows the remote value once it arrives`() =
         runTest {
-            val off = flags()
+            val none = flags()
+            none.refresh()
+            assertTrue(none.flags.value[DiscoveryEnabled])
+
+            val first = flags(FakeSource(Flags()))
+            first.refresh()
+            assertTrue(first.flags.value[DiscoveryEnabled])
+
+            val off = flags(FakeSource(Flags.of(DiscoveryEnabled to false)))
             off.refresh()
             assertFalse(off.flags.value[DiscoveryEnabled])
-
-            val on = flags(FakeSource(Flags.of(DiscoveryEnabled to true)))
-            assertFalse(on.flags.value[DiscoveryEnabled])
-            on.refresh()
-            assertTrue(on.flags.value[DiscoveryEnabled])
         }
 
     @Test
