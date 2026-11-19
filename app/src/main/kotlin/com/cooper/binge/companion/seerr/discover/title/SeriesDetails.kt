@@ -77,6 +77,8 @@ data class SeriesDetails(
     val canRequest: Boolean = true,
     /** The server takes issues and this viewer may report one: its profile has them and their permissions allow it. */
     val mayReport: Boolean = false,
+    /** The viewer may take the title off the blocklist: the server has one and the account may manage it. */
+    val mayUnblock: Boolean = false,
 ) {
     /** The seasons of each version for the request sheet. */
     val seasonChoices: SeasonChoices

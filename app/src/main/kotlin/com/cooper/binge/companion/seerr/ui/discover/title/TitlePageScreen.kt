@@ -26,6 +26,7 @@ import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
 import com.cooper.binge.companion.seerr.ui.state.MediaHeroDetailPage
 import com.cooper.binge.companion.seerr.ui.state.MediaHeroDetailPlaceholder
 import com.cooper.binge.companion.seerr.ui.state.WideHeader
+import com.cooper.binge.companion.seerr.ui.state.messageRes
 import kotlinx.coroutines.flow.Flow
 import com.binge.designsystem.R as DesR
 
@@ -50,6 +51,8 @@ class TitlePageActions(
     val onCloseStatus: () -> Unit = {},
     /** Request in 4K, tapped in a request's sheet: that sheet closes and the request sheet opens. */
     val onRequestFourK: () -> Unit = {},
+    /** Remove from blocklist, tapped in the status sheet of a blocklisted title. */
+    val onUnblock: () -> Unit = {},
     /** The sheet of one request, backed by that request's own view model, which the nav entry supplies. */
     val manageSheet: @Composable (SiblingSheet) -> Unit = {},
     /** Report, drawn once the title is in the library; null where the page has nothing to report on. */
@@ -90,6 +93,8 @@ private fun ReadyPage(
         events.collect { event ->
             when (event) {
                 is TitlePageEvent.Requested -> snackbar.showSnackbar(resources.getString(event.result.messageRes()))
+                TitlePageEvent.Unblocked -> snackbar.showSnackbar(resources.getString(R.string.blocklist_removed))
+                is TitlePageEvent.UnblockFailed -> snackbar.showSnackbar(resources.getString(event.error.messageRes()))
                 TitlePageEvent.ReloadFailed -> {
                     val answer =
                         snackbar.showSnackbar(
@@ -145,6 +150,7 @@ private fun ReadyPage(
             canRequest = state.movie.canRequest,
             onWatch = actions.onOpenUrl,
             onDismiss = actions.onCloseStatus,
+            onUnblock = actions.onUnblock.takeIf { state.movie.mayUnblock },
         )
     }
     if (state.reportSheetOpen) actions.reportSheet(actions.onCloseReport)

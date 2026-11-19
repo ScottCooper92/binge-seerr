@@ -4,6 +4,7 @@ import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.LockOpen
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -13,8 +14,10 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.BingeAdaptiveSheet
 import com.binge.designsystem.component.BingeSheetKind
+import com.binge.designsystem.component.ItemGroup
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.state.ActionSheetGroup
+import com.cooper.binge.companion.seerr.ui.state.actionItem
 import com.cooper.binge.companion.seerr.ui.state.externalItem
 import com.binge.designsystem.R as DesR
 
@@ -30,6 +33,7 @@ internal fun TitleStatusSheet(
     canRequest: Boolean,
     onWatch: (String) -> Unit,
     onDismiss: () -> Unit,
+    onUnblock: (() -> Unit)? = null,
 ) {
     BingeAdaptiveSheet(kind = BingeSheetKind.Menu, onDismissRequest = onDismiss) {
         TitleStatusSheetContent(
@@ -41,6 +45,7 @@ internal fun TitleStatusSheet(
                 onDismiss()
                 onWatch(url)
             },
+            onUnblock = onUnblock,
         )
     }
 }
@@ -54,6 +59,7 @@ internal fun TitleStatusSheetContent(
     canRequest: Boolean,
     onWatch: (String) -> Unit,
     modifier: Modifier = Modifier,
+    onUnblock: (() -> Unit)? = null,
 ) {
     val watch = watchUrl?.takeIf { state.isInLibrary() }
     if (watch != null) {
@@ -76,6 +82,13 @@ internal fun TitleStatusSheetContent(
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+            if (state == TitleState.Blocklisted && onUnblock != null) {
+                ItemGroup(
+                    title = null,
+                    rows = listOf(actionItem(Icons.Filled.LockOpen, stringResource(R.string.blocklist_unblock), onClick = onUnblock)),
+                    modifier = Modifier.padding(top = dimensionResource(DesR.dimen.padding_m)),
+                )
+            }
         }
     }
 }

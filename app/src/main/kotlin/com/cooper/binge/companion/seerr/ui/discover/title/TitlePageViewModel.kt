@@ -58,6 +58,14 @@ sealed interface TitlePageEvent {
 
     /** The read after a request failed: the page keeps what it had, and the screen offers to try again. */
     data object ReloadFailed : TitlePageEvent
+
+    /** The title came off the blocklist, for the screen's snackbar; the page reads it again. */
+    data object Unblocked : TitlePageEvent
+
+    /** The server refused or could not be reached, so the title stays blocklisted. */
+    data class UnblockFailed(
+        val error: SeerrError,
+    ) : TitlePageEvent
 }
 
 /** The film page. Detail keyed on an id, so it shares [Lazily][kotlinx.coroutines.flow.SharingStarted.Lazily] with the other detail pages: it loads once. */
@@ -119,6 +127,22 @@ class TitlePageViewModel
         fun closeManageSheet() = updateReady { it.copy(manageSheetOpen = false) }
 
         fun closeStatusSheet() = updateReady { it.copy(statusSheetOpen = false) }
+
+        /** Takes the title off the blocklist from the status sheet: the sheet closes, the page reads the title again, and a snackbar says so. */
+        fun unblock() {
+            val ready = state.value as? TitlePageUiState.Ready ?: return
+            if (!ready.movie.mayUnblock) return
+            closeStatusSheet()
+            viewModelScope.launch {
+                attempt { repository.unblock(tmdbId) }.fold(
+                    onSuccess = {
+                        eventFlow.tryEmit(TitlePageEvent.Unblocked)
+                        reload()
+                    },
+                    onFailure = { eventFlow.tryEmit(TitlePageEvent.UnblockFailed(it.toSeerrError())) },
+                )
+            }
+        }
 
         /** Request in 4K, tapped in a request's sheet: that sheet gives way to the request sheet. */
         fun requestFourKFromManage() = updateReady { it.copy(manageSheetOpen = false, requestSheetOpen = true, requestSheetFourK = true) }
