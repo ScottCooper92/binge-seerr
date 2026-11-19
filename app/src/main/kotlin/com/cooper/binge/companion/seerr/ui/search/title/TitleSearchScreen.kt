@@ -50,6 +50,7 @@ import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.StudioResult
 import com.cooper.binge.companion.seerr.discover.TitleResult
 import com.cooper.binge.companion.seerr.discover.sliders.HubGrid
+import com.cooper.binge.companion.seerr.ui.hub.ACCOUNT_HANDOVER_COLLAPSE
 import com.cooper.binge.companion.seerr.ui.hub.AccountBar
 import com.cooper.binge.companion.seerr.ui.hub.TitleBarAccount
 import com.cooper.binge.companion.seerr.ui.shell.SeerrTab
@@ -90,7 +91,7 @@ internal fun TitleSearchScreen(
 ) {
     val scrollBehavior = rememberPaneTopBarScrollBehavior()
     val collapsed = scrollBehavior.state.collapsedFraction
-    val titleRowShows = collapsed < TITLE_ROW_COLLAPSE
+    val titleRowShows = collapsed < ACCOUNT_HANDOVER_COLLAPSE
     BingeScreenScaffold(
         title = stringResource(R.string.title_search_title),
         modifier = modifier,
@@ -108,9 +109,6 @@ internal fun TitleSearchScreen(
         }
     }
 }
-
-/** Past this much collapse the title row's account gives way to the bar's. */
-private const val TITLE_ROW_COLLAPSE = 0.5f
 
 @Composable
 private fun SearchBody(

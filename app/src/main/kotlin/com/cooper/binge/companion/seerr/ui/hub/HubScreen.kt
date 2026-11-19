@@ -89,7 +89,7 @@ fun HubScreen(
     val account = ready?.overview?.account?.takeIf { ready.health.showsDashboard() }
     val scrollBehavior = rememberPaneTopBarScrollBehavior()
     val collapsed = scrollBehavior.state.collapsedFraction
-    val pillInteractive = collapsed < TITLE_ROW_COLLAPSE
+    val pillInteractive = collapsed < ACCOUNT_HANDOVER_COLLAPSE
     BingeScreenScaffold(
         title = ready?.server?.title ?: stringResource(R.string.companion_name),
         bar = ScreenBar.Large,
@@ -153,9 +153,6 @@ private fun AccountAction(
     enabled = enabled,
     modifier = Modifier.alpha(alpha).then(if (enabled) Modifier else Modifier.clearAndSetSemantics {}),
 )
-
-/** Past this much collapse the title row's account gives way to the bar's. */
-private const val TITLE_ROW_COLLAPSE = 0.5f
 
 /**
  * Whether the hub shows the server's problem in place of its dashboard. Not [ConnectionHealth.Unauthorized]: a rejection
