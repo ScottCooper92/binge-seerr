@@ -154,7 +154,7 @@ internal fun QuerySearchState<TitleResult>.toUiState(
                 appendFailed = appendFailed,
             )
         }
-        is QuerySearchState.NoResults -> TitleSearchUiState.NoResults(text, query)
+        is QuerySearchState.NoResults -> TitleSearchUiState.NoResults(text, query, type)
         is QuerySearchState.Failed -> TitleSearchUiState.Error(text, cause.toSeerrError())
     }
 

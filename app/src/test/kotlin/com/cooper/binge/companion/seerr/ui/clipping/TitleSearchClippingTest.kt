@@ -58,7 +58,7 @@ private val STATES: List<TitleSearchUiState> =
         TitleSearchUiState.Error("lighthouse", SeerrError.Unreachable),
     )
 
-private val NO_ACTIONS = TitleSearchActions({}, {}, {}, {}, {}, {}, {}, {}, {})
+private val NO_ACTIONS = TitleSearchActions({}, {}, {}, {}, {}, {}, {}, {}, {}, { _, _ -> })
 
 /** The Search tab's states at their worst, at font scales 1.3 and 2.0, through the design system's `assertNoTextClipped`. */
 @RunWith(RobolectricTestRunner::class)

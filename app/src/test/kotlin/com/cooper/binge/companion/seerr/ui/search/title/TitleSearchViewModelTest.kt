@@ -220,7 +220,7 @@ class TitleSearchViewModelTest {
             titles.answer = { _, page -> TitlePage(emptyList(), page, 1) }
             vm.onQueryChange("zzzz")
             advanceUntilIdle()
-            assertEquals(TitleSearchUiState.NoResults("zzzz", "zzzz"), vm.uiState.value)
+            assertEquals(TitleSearchUiState.NoResults("zzzz", "zzzz", SearchType.All), vm.uiState.value)
         }
 
     @Test

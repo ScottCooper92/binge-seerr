@@ -88,9 +88,9 @@ internal fun readyAppendingState() = ready(searchResults().take(FEW), appending 
 
 internal fun readyAppendFailedState() = ready(searchResults().take(FEW), appendFailed = true)
 
-internal fun noResultsState() = TitleSearchUiState.NoResults("qzxv", "qzxv")
+internal fun noResultsState() = TitleSearchUiState.NoResults("qzxv", "qzxv", SearchType.All)
 
 internal fun failedState() = TitleSearchUiState.Error("lighthouse", SeerrError.Unreachable)
 
 internal val noActions =
-    TitleSearchActions({}, {}, {}, {}, {}, {}, {}, {}, {})
+    TitleSearchActions({}, {}, {}, {}, {}, {}, {}, {}, {}, { _, _ -> })
