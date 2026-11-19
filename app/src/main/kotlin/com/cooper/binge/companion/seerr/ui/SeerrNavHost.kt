@@ -82,8 +82,8 @@ fun SeerrNavHost(
         ) { panes ->
             homeEntries(backStack, connected = { connectedState.value }, panes = panes, onExit = exit, tabs = tabs)
             settingsEntries(backStack, connected = { connectedState.value }, panes = panes, onExit = exit)
-            discoverGridEntries(backStack)
-            titleEntries(backStack)
+            discoverGridEntries(backStack, panes.motion)
+            titleEntries(backStack, panes.motion)
         }
     }
 }

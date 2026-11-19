@@ -18,4 +18,5 @@ internal fun debugDeveloperRows(backStack: NavBackStack<NavKey>): List<Developer
 internal fun EntryProviderScope<NavKey>.debugDetailEntries(
     backStack: NavBackStack<NavKey>,
     showBack: () -> Boolean,
+    motion: NavMotionSpecs,
 ) = Unit

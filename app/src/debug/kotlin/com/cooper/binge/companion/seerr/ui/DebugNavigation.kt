@@ -47,17 +47,18 @@ internal fun debugDeveloperRows(backStack: NavBackStack<NavKey>): List<Developer
 internal fun EntryProviderScope<NavKey>.debugDetailEntries(
     backStack: NavBackStack<NavKey>,
     showBack: () -> Boolean,
+    motion: NavMotionSpecs,
 ) {
-    entry<ManageSheetPrototypeRoute>(metadata = DetailPane) {
+    entry<ManageSheetPrototypeRoute>(metadata = DetailPane + motion.tab) {
         DetailPaneContent { ManageSheetPrototypeScreen(onBack = { backStack.pop() }) }
     }
-    entry<FlagOverridesRoute>(metadata = DetailPane) {
+    entry<FlagOverridesRoute>(metadata = DetailPane + motion.tab) {
         DetailPaneContent { FlagOverridesScreen(onBack = { backStack.pop() }) }
     }
-    entry<BingeHintPrototypeRoute>(metadata = DetailPane) {
+    entry<BingeHintPrototypeRoute>(metadata = DetailPane + motion.tab) {
         DetailPaneContent { BingeHintPrototypeScreen(onBack = { backStack.pop() }) }
     }
-    entry<RequestCardsPrototypeRoute>(metadata = DetailPane) {
+    entry<RequestCardsPrototypeRoute>(metadata = DetailPane + motion.tab) {
         DetailPaneContent { RequestCardsPrototypeScreen(onBack = { backStack.pop() }) }
     }
 }
