@@ -35,13 +35,15 @@ internal fun NoResultsBody(
             message = stringResource(R.string.title_search_none_message),
             modifier = Modifier.weight(1f),
         )
-        DiscoverEntryRow(
-            title = stringResource(if (series) R.string.hubs_browse_all_tv else R.string.hubs_browse_all_movies),
-            subtitle = stringResource(if (series) R.string.hubs_browse_subtitle_tv else R.string.hubs_browse_subtitle_movies),
-            onClick = { onOpenGrid(grid, gridTitle) },
-            modifier = Modifier.padding(navOverlayPadding(PaddingValues(vertical = dimensionResource(DesR.dimen.list_row_spacing)))),
-            startPadding = dimensionResource(DesR.dimen.screen_content_inset),
-            endPadding = dimensionResource(DesR.dimen.screen_content_inset),
-        )
+        if (state.browseAll) {
+            DiscoverEntryRow(
+                title = stringResource(if (series) R.string.hubs_browse_all_tv else R.string.hubs_browse_all_movies),
+                subtitle = stringResource(if (series) R.string.hubs_browse_subtitle_tv else R.string.hubs_browse_subtitle_movies),
+                onClick = { onOpenGrid(grid, gridTitle) },
+                modifier = Modifier.padding(navOverlayPadding(PaddingValues(vertical = dimensionResource(DesR.dimen.list_row_spacing)))),
+                startPadding = dimensionResource(DesR.dimen.screen_content_inset),
+                endPadding = dimensionResource(DesR.dimen.screen_content_inset),
+            )
+        }
     }
 }
