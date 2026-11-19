@@ -8,6 +8,7 @@ import com.cooper.binge.companion.seerr.preview.SeerrNarrowTabletPreview
 import com.cooper.binge.companion.seerr.preview.SeerrScreenPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrScreenStatePreview
 import com.cooper.binge.companion.seerr.preview.SeerrSpanishPreviews
+import com.cooper.binge.companion.seerr.preview.SeerrTabletPanesPreview
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.ui.state.RestingPull
 
@@ -33,6 +34,12 @@ class PersonPageScreenshotTest {
     @SeerrNarrowTabletPreview
     @Composable
     fun narrowTablet() = Frame(readyPerson())
+
+    /** A tablet in landscape, from w840dp: the column widens to Binge's 960dp cap, and the credit rails start where it does. */
+    @PreviewTest
+    @SeerrTabletPanesPreview
+    @Composable
+    fun wideTablet() = Frame(readyPerson())
 
     /** The server knows only the name and the person has no credits: no empty section is drawn. */
     @PreviewTest

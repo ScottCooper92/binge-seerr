@@ -5,12 +5,14 @@ import android.content.pm.ActivityInfo
 import androidx.annotation.StringRes
 import androidx.compose.ui.test.ComposeTimeoutException
 import androidx.compose.ui.test.SemanticsNodeInteraction
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDisplayed
 import androidx.compose.ui.test.isRoot
 import androidx.compose.ui.test.junit4.ComposeTestRule
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.printToString
 import androidx.navigation3.runtime.NavKey
@@ -103,6 +105,13 @@ internal class RealNavHostRule(
      * screen's switch calls, without walking the screens to it.
      */
     fun <T> api(block: suspend (SeerrApi) -> T): T = runBlocking { block(graph().connection().api()) }
+
+    /** Shows the Settings tab, as a user on the Movies tab would by tapping it. */
+    fun openSettingsTab() {
+        compose.waitUntil(5_000L) { compose.onAllNodes(hasTestTag("tab_settings")).fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithTag("tab_settings").performClick()
+        compose.waitForIdle()
+    }
 
     /** Starts the host on [stack]. A second launch closes the first: a cold start of the app over the same graph. */
     fun launch(vararg stack: NavKey) {
