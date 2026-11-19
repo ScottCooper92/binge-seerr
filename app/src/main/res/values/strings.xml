@@ -547,6 +547,10 @@
     <string name="user_plays">Plays</string>
     <string name="user_permissions_title">Permissions</string>
     <string name="user_recently_watched">Recently watched</string>
+    <plurals name="user_watchlist_count">
+        <item quantity="one">%1$s title</item>
+        <item quantity="other">%1$s titles</item>
+    </plurals>
     <string name="user_watchlist">Watchlist</string>
     <string name="user_no_requests">No requests yet.</string>
     <string name="user_delete">Delete user</string>

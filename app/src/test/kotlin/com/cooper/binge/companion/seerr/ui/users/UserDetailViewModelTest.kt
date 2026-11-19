@@ -13,6 +13,9 @@ import com.cooper.binge.companion.seerr.seerr.SeerrApiFactory
 import com.cooper.binge.companion.seerr.seerr.SeerrAuth
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.seerr.SeerrRequestStatusCode
+import com.cooper.binge.companion.seerr.seerr.SeerrServerProfile
+import com.cooper.binge.companion.seerr.seerr.SeerrVariant
+import com.cooper.binge.companion.seerr.seerr.SeerrVersion
 import com.cooper.binge.companion.seerr.seerr.TitleCache
 import com.cooper.binge.companion.seerr.ui.hub.HubQuotaBucket
 import com.cooper.binge.companion.seerr.ui.requests.RequestMediaType
@@ -379,6 +382,66 @@ class UserDetailViewModelTest {
             val detail = viewModel().awaitReady().detail
 
             assertEquals("#8", detail.item.name)
+        }
+
+    @Test
+    fun `the viewer's own page opens their watchlist, with its size`() =
+        runTest {
+            server(viewerId = 8, permissions = REQUEST)
+
+            val own = viewModel().awaitReady().detail
+
+            assertTrue(own.mayOpenWatchlist)
+            assertEquals(1, own.watchlistCount)
+        }
+
+    @Test
+    fun `another user's page does not offer the viewer's watchlist`() =
+        runTest {
+            server(viewerId = 2, permissions = ADMIN)
+
+            assertFalse(viewModel().awaitReady().detail.mayOpenWatchlist)
+        }
+
+    @Test
+    fun `the watchlist row needs the viewer's own page and a server that has a watchlist to read`() {
+        fun profile(
+            variant: SeerrVariant,
+            major: Int,
+            minor: Int,
+        ) = SeerrServerProfile(variant = variant, version = SeerrVersion(major, minor, 0))
+
+        assertTrue(mayOpenWatchlist(viewerId = 8, userId = 8, profile = profile(SeerrVariant.Seerr, 3, 1)))
+        assertFalse("another user's page", mayOpenWatchlist(viewerId = 2, userId = 8, profile = profile(SeerrVariant.Seerr, 3, 1)))
+        assertFalse("no signed-in viewer", mayOpenWatchlist(viewerId = null, userId = 8, profile = profile(SeerrVariant.Seerr, 3, 1)))
+        assertFalse("an Overseerr before the watchlist", mayOpenWatchlist(8, 8, profile(SeerrVariant.Overseerr, 1, 29)))
+        assertTrue(mayOpenWatchlist(8, 8, profile(SeerrVariant.Overseerr, 1, 30)))
+    }
+
+    @Test
+    fun `a watchlist the server will not list still has its row, without a count`() =
+        runTest {
+            server(viewerId = 8, permissions = REQUEST)
+            responses.remove("GET /api/v1/user/8/watchlist")
+
+            val own = viewModel().awaitReady().detail
+
+            assertTrue(own.mayOpenWatchlist)
+            assertNull(own.watchlistCount)
+        }
+
+    @Test
+    fun `the count is the whole list's size where the server gives it, and unknown where a second page hides it`() =
+        runTest {
+            server(viewerId = 8, permissions = REQUEST)
+            serve(
+                "GET /api/v1/user/8/watchlist",
+                """{"page":1,"totalPages":3,"totalResults":57,"results":[{"tmdbId":200,"mediaType":"tv"}]}""",
+            )
+            assertEquals(57, viewModel().awaitReady().detail.watchlistCount)
+
+            serve("GET /api/v1/user/8/watchlist", """{"page":1,"totalPages":3,"results":[{"tmdbId":200,"mediaType":"tv"}]}""")
+            assertNull(viewModel().awaitReady().detail.watchlistCount)
         }
 
     @Test

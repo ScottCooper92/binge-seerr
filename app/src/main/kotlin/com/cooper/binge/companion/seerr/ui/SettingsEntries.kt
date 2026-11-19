@@ -11,6 +11,8 @@ import androidx.navigation3.runtime.NavKey
 import com.binge.designsystem.PaneContent
 import com.binge.designsystem.PaneEdge
 import com.binge.designsystem.component.ProvideRowFocus
+import com.cooper.binge.companion.seerr.discover.TitleKind
+import com.cooper.binge.companion.seerr.discover.grid.GridPreset
 import com.cooper.binge.companion.seerr.ui.hub.HubSection
 import com.cooper.binge.companion.seerr.ui.settings.diagnostics.DiagnosticsEntry
 import com.cooper.binge.companion.seerr.ui.settings.licences.LicencesEntry
@@ -161,6 +163,7 @@ internal fun EntryProviderScope<NavKey>.detailEntries(
                 showBack = showBack(),
                 onOpenRequest = { id -> backStack.add(RequestDetailRoute(id)) },
                 onOpenSettings = { backStack.add(UserSettingsRoute(route.userId)) },
+                onOpenWatchlist = { title -> backStack.add(DiscoverGridRoute(TitleKind.Movie, GridPreset.Watchlist, title)) },
             )
         }
     }

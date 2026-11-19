@@ -11,8 +11,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.plus
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
+import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Inbox
 import androidx.compose.material.icons.filled.PlayArrow
@@ -30,9 +32,11 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.paging.LoadState
@@ -47,6 +51,8 @@ import com.binge.designsystem.component.BingeSheetKind
 import com.binge.designsystem.component.BingeTag
 import com.binge.designsystem.component.DetailStat
 import com.binge.designsystem.component.DetailStatRow
+import com.binge.designsystem.component.ItemGroup
+import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.component.MediaCard
 import com.binge.designsystem.component.MediaCarousel
 import com.binge.designsystem.component.SectionHeader
@@ -80,6 +86,7 @@ import com.cooper.binge.companion.seerr.ui.state.openItem
 import com.cooper.binge.companion.seerr.ui.toTitleKind
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
+import java.text.NumberFormat
 import com.binge.designsystem.R as DesR
 
 class UserDetailActions(
@@ -88,6 +95,8 @@ class UserDetailActions(
     val onOpenRequest: (RequestItem) -> Unit,
     val onOpenSettings: () -> Unit,
     val onDeleteUser: () -> Unit,
+    /** Opens the watchlist grid, on the viewer's own page. */
+    val onOpenWatchlist: () -> Unit = {},
 )
 
 /**
@@ -155,6 +164,41 @@ fun UserDetailScreen(
     }
 }
 
+/** A count as the viewer's locale writes a number, so a long list reads with its separators. */
+@Composable
+private fun formatCount(count: Int): String = NumberFormat.getIntegerInstance(LocalConfiguration.current.locales[0]).format(count)
+
+/** The row that opens the viewer's own watchlist, on the page of a user whose list this is. */
+private fun LazyListScope.watchlistRow(
+    detail: UserDetail?,
+    onOpen: () -> Unit,
+    sides: PaddingValues,
+) {
+    if (detail?.mayOpenWatchlist == true) item { WatchlistRow(detail.watchlistCount, onOpen, Modifier.padding(sides)) }
+}
+
+/** The row that opens the viewer's whole watchlist as a grid, with how many titles it holds where the server says. */
+@Composable
+private fun WatchlistRow(
+    count: Int?,
+    onOpen: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    ItemGroup(
+        title = null,
+        modifier = modifier,
+        rows =
+            listOf(
+                ListItem(
+                    icon = Icons.Filled.Bookmark,
+                    label = stringResource(R.string.user_watchlist),
+                    detail = count?.let { pluralStringResource(R.plurals.user_watchlist_count, it, formatCount(it)) },
+                    onClick = onOpen,
+                ),
+            ),
+    )
+}
+
 @Composable
 private fun UserDetailContent(
     item: UserItem,
@@ -209,6 +253,7 @@ private fun UserDetailContent(
                 }
             }
         }
+        watchlistRow(detail, actions.onOpenWatchlist, sides)
         detail?.watch?.takeIf { it.recentlyWatched.isNotEmpty() }?.let { watch ->
             item { TitleCarousel(stringResource(R.string.user_recently_watched), watch.recentlyWatched, detail.serverUrl) }
         }

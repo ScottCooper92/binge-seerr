@@ -149,7 +149,7 @@ How each gate is applied is in [`server-compatibility.md`](server-compatibility.
 | `GET /user/{userId}/settings/permissions` | Get permission settings for a user | v1.20.0 | v1.0.0 | yes | The user's permissions page. |
 | `POST /user/{userId}/settings/permissions` | Update permission settings for a user | v1.20.0 | v1.0.0 | yes | The user's permissions page; the cached browser row follows. |
 | `GET /user/{userId}/watch_data` | Get watch data | v1.29.0 | v1.1.0 | yes | The user page, where the server returns it. |
-| `GET /user/{userId}/watchlist` | Get the Plex watchlist for a specific user | v1.30.0 | v1.2.0 | yes | The user page, where the server returns it. |
+| `GET /user/{userId}/watchlist` | Get the Plex watchlist for a specific user | v1.30.0 | v1.2.0 | yes | The user page's Watchlist carousel, where the server returns it, and on the viewer's own page the Watchlist row, whose count is the answer's `totalResults`. The row opens the existing watchlist grid. |
 
 ### Phase 8 — server administration
 

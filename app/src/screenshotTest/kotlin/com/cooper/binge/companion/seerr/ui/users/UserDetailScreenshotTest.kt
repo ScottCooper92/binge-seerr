@@ -3,8 +3,10 @@ package com.cooper.binge.companion.seerr.ui.users
 import androidx.compose.runtime.Composable
 import androidx.paging.PagingData
 import com.android.tools.screenshot.PreviewTest
+import com.cooper.binge.companion.seerr.preview.SeerrFontScalePreviews
 import com.cooper.binge.companion.seerr.preview.SeerrScreenPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrScreenStatePreview
+import com.cooper.binge.companion.seerr.preview.SeerrSpanishPreviews
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flowOf
 
@@ -27,6 +29,30 @@ class UserDetailScreenshotTest {
     @SeerrScreenStatePreview
     @Composable
     fun seeded() = Frame(UserDetailUiState.Seeded(manageableUserDetail().item))
+
+    /** The viewer's own page on a server with a watchlist: a Watchlist row with the list's size, above the sections, that opens the grid. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun ownWatchlist() = Frame(manageableUserDetail().copy(isSelf = true, mayOpenWatchlist = true, watchlistCount = 12))
+
+    /** The same row where the server gave no size: the label alone. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun ownWatchlistNoCount() = Frame(manageableUserDetail().copy(isSelf = true, mayOpenWatchlist = true, watchlistCount = null))
+
+    /** The row at font scale 2. */
+    @PreviewTest
+    @SeerrFontScalePreviews
+    @Composable
+    fun ownWatchlistLargeFonts() = Frame(manageableUserDetail().copy(isSelf = true, mayOpenWatchlist = true, watchlistCount = 1234))
+
+    /** The row in Spanish, whose plural for a large count reads "1234 de títulos". */
+    @PreviewTest
+    @SeerrSpanishPreviews
+    @Composable
+    fun ownWatchlistSpanish() = Frame(manageableUserDetail().copy(isSelf = true, mayOpenWatchlist = true, watchlistCount = 1_000_000))
 
     /** A viewer the server would refuse this user's requests: the page ends at the profile's own sections, with no Requests header. */
     @PreviewTest

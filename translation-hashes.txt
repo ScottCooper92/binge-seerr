@@ -1460,6 +1460,7 @@ app:user_settings_unlinked_done  33f1cdf22cb6
 app:user_settings_watchlist_movies  555533a147fe
 app:user_settings_watchlist_tv  4e8636deae2a
 app:user_watchlist  eff2ec588be1
+app:user_watchlist_count  ccf7dfaff0dd
 app:users_add_cd  4cd030d9892f
 app:users_add_create  d46f69340818
 app:users_add_create_desc  a1b978098f8d
