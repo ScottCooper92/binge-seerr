@@ -143,8 +143,8 @@ internal fun NavKey?.isPaneRoot(): Boolean = this == HubRoute || this == ShellRo
 internal fun List<NavKey>.isOnlyPaneRoot(): Boolean = size == 1 && first().isPaneRoot()
 
 /**
- * The bare hub: nothing is open beside it but the default section, which three panes keep on the stack so its list holds its
- * state. Back from here leaves for the start tab; from anything above it, Back closes that first (#2346).
+ * The bare hub: nothing is open beside it, or only the default section, which the user opened on purpose and which shows the
+ * same screen as the placeholder. Back from here leaves for the start tab; from anything above it, Back closes that first (#2346).
  */
 internal fun List<NavKey>.nothingOpenBesideHub(): Boolean =
     isOnlyPaneRoot() || (size == 2 && first().isPaneRoot() && this[1] == DefaultSection.route())

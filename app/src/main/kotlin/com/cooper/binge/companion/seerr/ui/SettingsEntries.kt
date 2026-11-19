@@ -35,8 +35,7 @@ internal fun EntryProviderScope<NavKey>.searchEntries(
 }
 
 /**
- * The hub's manage sections: the detail pane beside it, the middle of three panes on a landscape tablet, or the whole
- * window on a narrow one.
+ * The hub's manage sections: the detail pane beside it on a wide window, or the whole window on a narrow one.
  */
 internal fun EntryProviderScope<NavKey>.sectionEntries(
     backStack: NavBackStack<NavKey>,
