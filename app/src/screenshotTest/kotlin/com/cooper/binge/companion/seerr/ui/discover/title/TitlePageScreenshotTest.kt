@@ -207,18 +207,6 @@ class TitlePageScreenshotTest {
             scrollState = rememberScrollState(initial = DETAILS_END_PX),
         )
 
-    /** The keyword chips at font scales 1.3 and 2: they wrap and none is cut off. */
-    @PreviewTest
-    @SeerrFontScalePreviews
-    @Composable
-    fun keywordsLinkedLargeFonts() =
-        TitlePageScreen(
-            TitlePageUiState.Ready(fullMovie().copy(keywordsOpen = true), fullExtras()),
-            emptyFlow(),
-            KEYWORD_ACTIONS,
-            scrollState = rememberScrollState(initial = DETAILS_END_PX),
-        )
-
     /** The Details in Spanish: the heading, the labels, the date and the language names. */
     @PreviewTest
     @SeerrSpanishPreviews

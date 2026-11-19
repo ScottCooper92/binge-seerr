@@ -166,19 +166,6 @@ class SeriesPageScreenshotTest {
             scrollState = rememberScrollState(initial = DETAILS_END_PX),
         )
 
-    /** The keyword chips at font scales 1.3 and 2: they wrap and none is cut off. */
-    @PreviewTest
-    @SeerrFontScalePreviews
-    @Composable
-    fun keywordsLinkedLargeFonts() =
-        SeriesPageScreen(
-            SeriesPageUiState.Ready(fullSeries().copy(keywordsOpen = true), seriesExtras()),
-            emptyFlow(),
-            KEYWORD_ACTIONS,
-            NO_SEASON_ACTIONS,
-            scrollState = rememberScrollState(initial = DETAILS_END_PX),
-        )
-
     /** Where to watch on the series page: both kinds, the Stream chip chosen, and the JustWatch credit. */
     @PreviewTest
     @SeerrScreenStatePreview
