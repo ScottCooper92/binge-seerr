@@ -7,10 +7,12 @@ import com.cooper.binge.companion.seerr.core.search.PagedQuerySearch
 import com.cooper.binge.companion.seerr.core.search.QueryHistory
 import com.cooper.binge.companion.seerr.core.search.QuerySearchState
 import com.cooper.binge.companion.seerr.core.search.SearchPage
+import com.cooper.binge.companion.seerr.data.TitleStatusStore
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.TitleListRepository
 import com.cooper.binge.companion.seerr.discover.TitleResult
 import com.cooper.binge.companion.seerr.discover.TitleSource
+import com.cooper.binge.companion.seerr.discover.overlaid
 import com.cooper.binge.companion.seerr.discover.sliders.HubCard
 import com.cooper.binge.companion.seerr.discover.sliders.HubMediaSource
 import com.cooper.binge.companion.seerr.discover.sliders.toCard
@@ -38,6 +40,7 @@ class TitleSearchViewModel
         private val titles: TitleListRepository,
         history: QueryHistory,
         private val media: HubMediaSource,
+        statuses: TitleStatusStore = TitleStatusStore(),
     ) : ViewModel() {
         private val eventFlow = MutableSharedFlow<TitleSearchEvent>(extraBufferCapacity = 1)
         val events: SharedFlow<TitleSearchEvent> = eventFlow.asSharedFlow()
@@ -58,7 +61,13 @@ class TitleSearchViewModel
         private val genreNames = MutableStateFlow<Map<Int, String>>(emptyMap())
 
         val uiState: StateFlow<TitleSearchUiState> =
-            combine(search.query, search.state, type, trending, genreNames) { text, state, type, trending, genres ->
+            combine(
+                search.query,
+                search.state.combine(statuses.statuses) { state, held -> state.overlaid(held) },
+                type,
+                trending,
+                genreNames,
+            ) { text, state, type, trending, genres ->
                 state.toUiState(text, type, trending, genres)
             }.stateIn(viewModelScope, SharingStarted.Lazily, TitleSearchUiState.Idle("", emptyList()))
 

@@ -3,9 +3,12 @@ package com.cooper.binge.companion.seerr.ui.hubs
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.binge.companion.sdk.attempt
+import com.cooper.binge.companion.seerr.data.TitleStatusStore
 import com.cooper.binge.companion.seerr.di.IoDispatcher
+import com.cooper.binge.companion.seerr.discover.TitleStatusMap
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverGridRepository
 import com.cooper.binge.companion.seerr.discover.grid.GridPreset
+import com.cooper.binge.companion.seerr.discover.overlaid
 import com.cooper.binge.companion.seerr.discover.sliders.DiscoverSliderRepository
 import com.cooper.binge.companion.seerr.discover.sliders.HubCard
 import com.cooper.binge.companion.seerr.discover.sliders.HubCardLoader
@@ -94,6 +97,7 @@ class HubViewModel
         private val grid: DiscoverGridRepository,
         @IoDispatcher dispatcher: CoroutineDispatcher,
         @Assisted private val tab: HubTab,
+        private val statuses: TitleStatusStore = TitleStatusStore(),
     ) : ViewModel() {
         /** Each row's one "item" is the finished [HubRowUi], so an empty row is the loader's to drop and nothing is wrapped and unwrapped. */
         private val loader =
@@ -111,7 +115,7 @@ class HubViewModel
         val uiState: StateFlow<DiscoverHubUiState> =
             combine(sliders.sliders, loader.state, loader.refreshing, hero, browseAll) { list, rows, refreshing, hero, browseAll ->
                 toUiState(list, rows, refreshing, hero, browseAll)
-            }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), DiscoverHubUiState.Loading)
+            }.combine(statuses.statuses) { state, held -> state.overlaid(held) }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), DiscoverHubUiState.Loading)
 
         init {
             viewModelScope.launch {
@@ -234,4 +238,16 @@ private suspend fun rowUi(
         tiles.load(row).takeIf { it.isNotEmpty() }?.let { HubRowUi.Tiles(row, it) }
     } else {
         cards.load(row).takeIf { it.isNotEmpty() }?.let { HubRowUi.Cards(row, it) }
+    }
+
+/** The cards and the hero with the latest status the store holds, so a request made on a title page shows here on Back (#2354). */
+private fun DiscoverHubUiState.overlaid(held: TitleStatusMap): DiscoverHubUiState =
+    if (this !is DiscoverHubUiState.Ready || held.isEmpty()) {
+        this
+    } else {
+        copy(
+            rows =
+                rows.map { row -> if (row is HubRowUi.Cards) row.copy(cards = row.cards.map { it.overlaid(held) }) else row },
+            hero = hero.map { it.overlaid(held) },
+        )
     }
