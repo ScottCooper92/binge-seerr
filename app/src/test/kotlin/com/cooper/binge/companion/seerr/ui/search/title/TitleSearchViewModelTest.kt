@@ -344,7 +344,7 @@ class TitleSearchViewModelTest {
             advanceUntilIdle()
             val all = vm.uiState.value as TitleSearchUiState.Ready
             assertEquals(2, all.counts[SearchType.Studios])
-            assertEquals(all.results.size, all.counts[SearchType.All])
+            assertEquals(all.results.size + 2, all.counts[SearchType.All])
             vm.onType(SearchType.Studios)
             val studiosList = vm.uiState.value as TitleSearchUiState.Ready
             assertEquals(listOf("Lucasfilm", "Pixar"), studiosList.studios.map { it.name })
@@ -360,7 +360,7 @@ class TitleSearchViewModelTest {
             advanceUntilIdle()
             val ready = vm.uiState.value as TitleSearchUiState.Ready
             assertEquals(1, ready.counts[SearchType.Studios])
-            assertEquals(0, ready.counts[SearchType.All])
+            assertEquals(1, ready.counts[SearchType.All])
         }
 
     @Test
