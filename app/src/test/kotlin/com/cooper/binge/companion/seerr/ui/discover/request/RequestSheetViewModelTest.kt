@@ -260,13 +260,30 @@ class RequestSheetViewModelTest {
     }
 
     @Test
+    fun `a server whose lists fail to load is still the server the request names`() =
+        runTest {
+            val repository = advanced().apply { failChoices = IOException("down") }
+            val vm = viewModel(repository)
+            vm.setUse4k(true)
+            val event = awaitEvent(vm.events)
+
+            vm.submit()
+            event.await()
+
+            val destination = repository.submissions.single().destination
+            assertEquals(2, destination?.serverId)
+            assertEquals(7, destination?.profileId)
+            assertEquals("/uhd", destination?.rootFolder)
+        }
+
+    @Test
     fun `profiles that fail to load still allow a plain request, and read again`() {
         val repository = advanced().apply { failChoices = IOException("down") }
         val vm = viewModel(repository)
 
         assertEquals(ChoicesState.Failed, vm.ready().pick?.choices)
         assertTrue(vm.ready().canSubmit)
-        assertNull(vm.ready().destination)
+        assertEquals(1, vm.ready().destination?.serverId)
 
         repository.failChoices = null
         vm.retry(RequestRead.Choices)

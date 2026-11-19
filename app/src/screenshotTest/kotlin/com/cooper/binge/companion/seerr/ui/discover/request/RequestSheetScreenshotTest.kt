@@ -100,7 +100,7 @@ class RequestSheetScreenshotTest {
     @Composable
     fun advancedLoading() = Frame(advanced(choices = ChoicesState.Loading), FORM_HEIGHT)
 
-    /** The server's profiles and folders failed to load: one line with a tap to try again, and the button held. */
+    /** The server's profiles and folders failed to load: one line with a tap to try again. The button stays enabled. */
     @PreviewTest
     @SeerrComponentPreviews
     @Composable

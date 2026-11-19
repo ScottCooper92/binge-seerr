@@ -90,9 +90,9 @@ sealed interface RequestSheetUiState {
         val destinationBlocking: Boolean
             get() = choosesDestination && (servers is ServersState.Loading || pick?.choices is ChoicesState.Loading)
 
-        /** The destination the request names: the pick the user can see, only once its lists are real. */
+        /** The destination the request names: the pick the user can see. A pick whose lists failed still names its server, with that server's own profile and folder. */
         val destination: DestinationPick?
-            get() = pick?.takeIf { choosesDestination && it.choices is ChoicesState.Ready }
+            get() = pick?.takeIf { choosesDestination && it.choices !is ChoicesState.Loading }
 
         val canSubmit: Boolean get() =
             !submitting &&

@@ -12,7 +12,7 @@ internal enum class DestinationField { Server, Profile, RootFolder }
 
 /**
  * Server, profile and root folder, as rows of the options group for a user who may choose a destination. A read still going shows
- * a spinner in its row, and one that failed says so and a tap reads it again; the request is held back until the real lists are on screen.
+ * a spinner in its row, and one that failed says so and a tap reads it again; the request waits only for a read still going, and a failed one still names the shown server.
  */
 @Composable
 internal fun destinationRows(
