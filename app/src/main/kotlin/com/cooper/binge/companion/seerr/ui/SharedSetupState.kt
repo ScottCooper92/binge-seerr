@@ -1,0 +1,119 @@
+package com.cooper.binge.companion.seerr.ui
+
+import com.cooper.binge.companion.seerr.seerr.SeerrCredentials
+import com.cooper.binge.companion.seerr.seerr.SeerrSignInMode
+import com.cooper.binge.companion.seerr.telemetry.AnalyticsEvents
+import com.cooper.homelab.core.presentation.connect.ConnectEvent
+import com.cooper.homelab.core.presentation.connect.ConnectState
+import com.cooper.homelab.core.telemetry.Analytics
+import com.cooper.homelab.core.presentation.connect.SignInForm as ConnectForm
+
+/**
+ * What the shared setup keeps beside the machine: the television's hand-off, which the machine knows nothing of, and the few things
+ * the old view model held that are the app's own (a notice, a password reset). Each is one more input to [toSetupUiState].
+ */
+internal data class SharedSetupApp(
+    val handOff: AddressHandOff? = null,
+    /** The hand-off's live code, kept through the sign-in step so a phone can carry on there. */
+    val code: AddressHandOff.Listening? = null,
+    /** Whether the address is the one a phone sent, untouched since. */
+    val received: Boolean = false,
+    /** The session a phone sent with the address, until the server it names has been read and has judged it. */
+    val handedSession: String? = null,
+    /** How many sets of credentials a phone has sent this TV, taken or not; the phone's way to tell which attempt an error is about. */
+    val attempts: Int = 0,
+    /** A phone's session was sent and the server turned it down, so the sign-in step says so. */
+    val handOffRejected: Boolean = false,
+    val notice: SetupNotice? = null,
+    val resetBusy: Boolean = false,
+    val resetError: SetupError? = null,
+    val resetCoolingDown: Boolean = false,
+)
+
+/** The form the screens read, from the machine's: the same four fields, under the mode the machine chose. */
+internal fun ConnectForm.toSetupForm(): SignInForm =
+    SignInForm(
+        mode = (mode as? SeerrMode)?.mode ?: SeerrSignInMode.ApiKey,
+        apiKey = value(FIELD_API_KEY),
+        username = value(FIELD_USERNAME),
+        email = value(FIELD_EMAIL),
+        password = value(FIELD_PASSWORD),
+    )
+
+/** What the screen shows for [this] step, with [saved] the connection already stored and [app] what is the app's own. */
+internal fun ConnectState<SetupServer>.toSetupUiState(
+    saved: SeerrCredentials?,
+    app: SharedSetupApp,
+): SetupUiState =
+    when (this) {
+        ConnectState.Loading -> SetupUiState.Loading
+        is ConnectState.Address ->
+            SetupUiState.Address(
+                serverUrl = address,
+                insecure = insecure,
+                isInspecting = isInspecting,
+                error = error.toSetupError()?.forAddress(address, app.received),
+                cleartextAllowed = cleartextAllowed,
+                handOff = app.handOff,
+                needsLocalNetwork = needsLocalNetwork,
+                code = app.code,
+                received = app.received,
+                canTryDemo = canTryDemo && !app.received,
+            )
+        is ConnectState.NotSetUp -> SetupUiState.NotSetUp(server = server.preview, isChecking = isChecking, error = error.toSetupError())
+        is ConnectState.SignIn ->
+            SetupUiState.SignIn(
+                server = server.preview,
+                form = form.toSetupForm(),
+                isConnecting = isConnecting || app.resetBusy,
+                link = null,
+                error = error.toSetupError() ?: app.resetError ?: SetupError.HandOffSessionRejected.takeIf { app.handOffRejected },
+                notice = app.notice,
+                code = app.code,
+                resetCoolingDown = app.resetCoolingDown,
+            )
+        ConnectState.Connected -> saved?.let { SetupUiState.Connected(it) } ?: SetupUiState.Loading
+    }
+
+/** What field [id] holds, as the screens' form keeps it. */
+internal fun SignInForm.field(id: String): String =
+    when (id) {
+        FIELD_API_KEY -> apiKey
+        FIELD_USERNAME -> username
+        FIELD_EMAIL -> email
+        else -> password
+    }
+
+/** The machine's sign-in finished: counted under the mode's name, or as the demo. Never an address, a host or a user. */
+internal fun ConnectEvent.report(analytics: Analytics) {
+    if (this !is ConnectEvent.SignedIn) return
+    val method = if (mode == "demo") AnalyticsEvents.METHOD_DEMO else mode
+    analytics.event(
+        AnalyticsEvents.SIGN_IN,
+        mapOf(AnalyticsEvents.PARAM_METHOD to method, AnalyticsEvents.PARAM_SUCCESS to success),
+    )
+}
+
+/** What the screens call: the phone's, or the television's, which also offers the hand-off. Plex and Quick Connect do nothing here. */
+internal fun SharedSetupViewModel.actions(
+    tv: Boolean,
+    onDisconnect: (() -> Unit)?,
+): SetupActions =
+    SetupActions(
+        onEditAddress = ::editAddress,
+        onInspect = ::inspect,
+        onChangeServer = ::changeServer,
+        onCheckAgain = ::inspect,
+        onEditForm = ::editForm,
+        onConnect = ::connect,
+        onPlexLaunched = {},
+        onCancelLink = {},
+        onRequestPasswordReset = ::requestPasswordReset,
+        onAllowCleartext = ::allowCleartext,
+        onStartHandOff = { if (tv) showHandOff(true) },
+        onCancelHandOff = { if (tv) showHandOff(false) },
+        onOfferSignInCode = { if (tv) showHandOff(true) },
+        onLocalNetworkChanged = ::localNetworkResult,
+        onDisconnect = onDisconnect,
+        onTryDemo = tryDemo,
+    )
