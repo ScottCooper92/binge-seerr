@@ -75,6 +75,12 @@ class PersonPageScreenshotTest {
     @Composable
     fun loading() = Frame(PersonPageUiState.Loading)
 
+    /** A wide window while the page loads: the skeleton starts at the column's edge, where the loaded profile starts. */
+    @PreviewTest
+    @SeerrTabletPanesPreview
+    @Composable
+    fun loadingTablet() = Frame(PersonPageUiState.Loading)
+
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
