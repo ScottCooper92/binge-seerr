@@ -187,7 +187,15 @@ class BackStackNeverEmptyTest {
 
     /** The demo's pending request, approved from its page (#1705), as the crash's breadcrumbs had it. */
     private fun approveTheFirstPending() {
-        host.compose.onNode(filterChip(host.string(R.string.requests_filter_pending))).performClick()
+        val pending = filterChip(host.string(R.string.requests_filter_pending))
+        // The hub beside the section also says "Downloading now", so the wait before this can pass before the chip row has composed.
+        host.await("the Pending chip to be composed") {
+            host.compose
+                .onAllNodes(pending)
+                .fetchSemanticsNodes()
+                .isNotEmpty()
+        }
+        host.compose.onNode(pending).performClick()
         host.clickUntilShowing("Sintel", host.string(R.string.request_primary_review))
         host.compose
             .onNodeWithText(host.string(R.string.request_primary_review))
