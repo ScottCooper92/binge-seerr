@@ -814,6 +814,28 @@ class SendAddressViewModelTest {
             vm.uiState.first { (it as? SendAddressUiState.SigningIn)?.step == SignInStep.Session(awaiting = 1) }
         }
 
+    /** #1991: the server was reached, so the sheet says it is not set up, and follows the TV once the user has checked again. */
+    @Test
+    fun `a TV on a server that is not set up says so, and the sheet follows it on to the sign-in`() =
+        runViewModelTest {
+            tv.statuses =
+                mutableListOf(
+                    HandOffStatus(HandOffStatus.WAITING),
+                    HandOffStatus(HandOffStatus.CHECKING),
+                    HandOffStatus(HandOffStatus.NOT_SET_UP),
+                )
+            val vm = viewModel(scannedLink, SeerrCredentials("http://seerr.lan:5055/", SeerrAuth.Session("s1d", 4)))
+            vm.settled()
+
+            vm.send()
+            vm.uiState.first { (it as? SendAddressUiState.SigningIn)?.step == SignInStep.NotSetUp }
+
+            // The administrator finishes the setup and the TV's user checks again.
+            tv.statuses =
+                mutableListOf(HandOffStatus(HandOffStatus.SIGN_IN, "Living room", listOf("Local"), address = "http://seerr.lan:5055/"))
+            vm.uiState.first { (it as? SendAddressUiState.SigningIn)?.step is SignInStep.Form }
+        }
+
     /** The TV can answer the confirm and refuse the session between two polls, so the sheet never sees `checking`. */
     @Test
     fun `a session the TV turns down straight after its confirm is not offered again`() =

@@ -314,6 +314,11 @@ class SendAddressViewModel
                     tvServerId = status.serverId
                     showSignIn(status, address)
                 }
+                // The server answered and is not set up: the TV says so on its own screen, and the sheet follows it (#1991).
+                HandOffStatus.NOT_SET_UP ->
+                    _uiState.update { state ->
+                        if (state is SendAddressUiState.SigningIn) state.copy(step = SignInStep.NotSetUp) else state
+                    }
                 // Nothing to do here: the answer is the TV's, and the sheet follows whatever it is (#912).
                 HandOffStatus.CONFIRM ->
                     _uiState.update { state ->
@@ -377,7 +382,14 @@ class SendAddressViewModel
 
         private companion object {
             /** States a TV can be in that mean the address is done with: a scan then carries on rather than starting over. */
-            val CARRY_ON_STATES = setOf(HandOffStatus.CHECKING, HandOffStatus.CONFIRM, HandOffStatus.SIGN_IN, HandOffStatus.CONNECTED)
+            val CARRY_ON_STATES =
+                setOf(
+                    HandOffStatus.CHECKING,
+                    HandOffStatus.CONFIRM,
+                    HandOffStatus.NOT_SET_UP,
+                    HandOffStatus.SIGN_IN,
+                    HandOffStatus.CONNECTED,
+                )
             const val POLL_MILLIS = 1_500L
             const val LOST_AFTER_SILENT_POLLS = 4
         }

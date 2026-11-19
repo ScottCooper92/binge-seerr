@@ -494,6 +494,57 @@ class SetupViewModelHandOffTest {
         }
 
     @Test
+    fun `a handed session is dropped when the server is not set up, so a later read cannot adopt it`() =
+        runTest {
+            val session = FakeSession().apply { handedSession = "ph0n3" }
+            val vm = viewModel { HandOffOpening.Opened(session) }
+            vm.awaitAddress()
+            vm.showHandOff(true)
+            vm.awaitAddress { it.handOff != null }
+            seerr.enqueueProfile(json("""{"version":"3.4.0"}"""), json("""{"initialized":false}"""))
+
+            session.address.complete(seerr.url("/"))
+            vm.uiState.first { it is SetupUiState.NotSetUp }
+            assertEquals("the phone is told the server is not set up, not that it failed", HandOffProgress.NotSetUp, session.progress())
+
+            seerr.enqueueProfile(json("""{"version":"3.4.0"}"""), json("""{"initialized":true,"mediaServerType":2,"localLogin":true}"""))
+            seerr.enqueue(json("[]"))
+            vm.inspect()
+            val signIn = vm.uiState.first { it is SetupUiState.SignIn } as SetupUiState.SignIn
+
+            assertNull("no stale session was tried against the set-up server", signIn.error)
+            assertTrue(seerr.requests.none { it.url.encodedPath.endsWith("/auth/me") })
+            assertEquals(
+                "the one attempt the phone was told about, not one per check",
+                1,
+                (session.progress() as HandOffProgress.SignIn).attempt,
+            )
+        }
+
+    @Test
+    fun `changing server drops a handed session that was still waiting`() =
+        runTest {
+            val session = FakeSession().apply { handedSession = "ph0n3" }
+            val vm = viewModel { HandOffOpening.Opened(session) }
+            vm.awaitAddress()
+            vm.showHandOff(true)
+            vm.awaitAddress { it.handOff != null }
+            seerr.enqueueProfile(json("""{"version":"3.4.0"}"""), json("""{"initialized":false}"""))
+            session.address.complete(seerr.url("/"))
+            vm.uiState.first { it is SetupUiState.NotSetUp }
+
+            vm.changeServer()
+            vm.awaitAddress()
+            seerr.enqueueProfile(json("""{"version":"3.4.0"}"""), json("""{"initialized":true,"mediaServerType":2,"localLogin":true}"""))
+            seerr.enqueue(json("[]"))
+            vm.editAddress(seerr.url("/"))
+            vm.inspect()
+
+            assertNull(vm.uiState.first { it is SetupUiState.SignIn }.let { (it as SetupUiState.SignIn).error })
+            assertTrue(seerr.requests.none { it.url.encodedPath.endsWith("/auth/me") })
+        }
+
+    @Test
     fun `a session sent from the sign-in step is counted even when the server cannot be read`() =
         runTest {
             val session = FakeSession()

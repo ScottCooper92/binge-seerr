@@ -22,6 +22,14 @@ sealed interface HandOffProgress {
     data object Failed : HandOffProgress
 
     /**
+     * The address named a Seerr server, which has not finished its first-run setup, so there is nothing to sign in to yet (#1991).
+     * The TV shows its own message and the page says the same, following the TV: it moves on once the server is set up and read
+     * again, or goes back to the address when the TV's user changes server. No address is taken meanwhile, because the TV is
+     * not on its address step.
+     */
+    data object NotSetUp : HandOffProgress
+
+    /**
      * The server answered and the TV is on its sign-in step, named [server] and reached at [address], offering [modes]
      * by name. [failed] is whether the last attempt was refused, and [attempt] is how many sets of credentials the TV
      * has taken, so a phone can tell which attempt [failed] is about. Credentials are sealed for [address] (#1029): the

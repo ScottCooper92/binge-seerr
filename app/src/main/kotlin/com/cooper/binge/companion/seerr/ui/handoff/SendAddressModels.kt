@@ -96,6 +96,12 @@ sealed interface SignInStep {
         val resume: Session? = null,
     ) : SignInStep
 
+    /**
+     * The TV reached a server that has not finished its first-run setup (#1991): there is nothing to sign in to until its
+     * administrator has, and then the user checks again on the TV. The sheet follows the TV from here.
+     */
+    data object NotSetUp : SignInStep
+
     /** The TV reached [server] but offers only sign-ins that finish with a code on the TV, so there is nothing to type here. */
     data class OnTv(
         val server: String,

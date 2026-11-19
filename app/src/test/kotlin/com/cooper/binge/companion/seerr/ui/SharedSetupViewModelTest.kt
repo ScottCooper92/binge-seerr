@@ -415,6 +415,57 @@ class SharedSetupViewModelTest {
         }
 
     @Test
+    fun `a handed session is dropped when the server is not set up, so a later read cannot adopt it`() =
+        runTest {
+            val session = FakeSession().apply { handedSession = "ph0n3" }
+            val vm = viewModel { HandOffOpening.Opened(session) }
+            vm.awaitAddress()
+            vm.showHandOff(true)
+            vm.awaitAddress { it.handOff != null }
+            seerr.enqueueProfile(json("""{"version":"3.4.0"}"""), json("""{"initialized":false}"""))
+
+            session.address.complete(seerr.url("/"))
+            vm.awaitNotSetUp()
+            assertEquals("the phone is told the server is not set up, not that it failed", HandOffProgress.NotSetUp, session.progress())
+
+            seerr.enqueueProfile(json("""{"version":"3.4.0"}"""), json("""{"initialized":true,"mediaServerType":2,"localLogin":true}"""))
+            seerr.enqueue(json("[]"))
+            vm.inspect()
+            val signIn = vm.awaitSignIn()
+
+            assertNull("no stale session was tried against the set-up server", signIn.error)
+            assertTrue(seerr.requests.none { it.url.encodedPath.endsWith("/auth/me") })
+            assertEquals(
+                "the one attempt the phone was told about, not one per check",
+                1,
+                (session.progress() as HandOffProgress.SignIn).attempt,
+            )
+        }
+
+    @Test
+    fun `changing server drops a handed session that was still waiting`() =
+        runTest {
+            val session = FakeSession().apply { handedSession = "ph0n3" }
+            val vm = viewModel { HandOffOpening.Opened(session) }
+            vm.awaitAddress()
+            vm.showHandOff(true)
+            vm.awaitAddress { it.handOff != null }
+            seerr.enqueueProfile(json("""{"version":"3.4.0"}"""), json("""{"initialized":false}"""))
+            session.address.complete(seerr.url("/"))
+            vm.awaitNotSetUp()
+
+            vm.changeServer()
+            vm.awaitAddress()
+            seerr.enqueueProfile(json("""{"version":"3.4.0"}"""), json("""{"initialized":true,"mediaServerType":2,"localLogin":true}"""))
+            seerr.enqueue(json("[]"))
+            vm.editAddress(seerr.url("/"))
+            vm.inspect()
+
+            assertNull(vm.awaitSignIn().error)
+            assertTrue(seerr.requests.none { it.url.encodedPath.endsWith("/auth/me") })
+        }
+
+    @Test
     fun `an address that comes with the phone's session signs the TV straight in, without its form`() =
         runTest {
             val session = FakeSession().apply { handedSession = "ph0n3" }

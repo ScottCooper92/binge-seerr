@@ -45,6 +45,9 @@ internal data class HandOffPageCopy(
     val pinWrong: String,
     val pinLocked: String,
     val failed: String,
+    /** The TV found the server and it has not finished its first-run setup (#1991). */
+    val notSetUpTitle: String,
+    val notSetUpBody: String,
     val signInTitle: String,
     /** Names the server the TV found, in its own sentence. */
     val signInBody: (server: String) -> String,
@@ -217,6 +220,7 @@ internal class HandOffPageTemplate(
         return when (progress) {
             HandOffProgress.Waiting -> form(acceptLanguage, invalid = false)
             HandOffProgress.Failed -> form(acceptLanguage, invalid = false, problem = copy.failed)
+            HandOffProgress.NotSetUp -> message(copy, copy.notSetUpTitle, copy.notSetUpBody, following = true)
             HandOffProgress.Checking -> message(copy, copy.sentTitle, copy.sentBody, following = true)
             HandOffProgress.ConfirmOnTv -> message(copy, copy.confirmTitle, copy.confirmBody, following = true)
             is HandOffProgress.SignIn -> signIn(copy, progress)

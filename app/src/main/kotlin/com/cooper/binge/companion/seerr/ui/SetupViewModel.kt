@@ -180,7 +180,9 @@ class SetupViewModel
                         // With the phone's session, straight in: the sign-in form is shown only if the server turns it down.
                         val session = draft.value.handedSession
                         if (session == null || !server.setUp) {
-                            draft.update { it.copy(server = server, form = SignInForm(mode = server.modes.first())) }
+                            // A server that is not set up has been read but cannot judge a session, so the phone's is not kept for
+                            // a later read to adopt (#1994): the phone is told the server is not set up, and moves on.
+                            draft.update { it.copy(server = server, form = SignInForm(mode = server.modes.first()), handedSession = null) }
                         } else {
                             // The server decides: a session it doesn't answer to is dropped, never kept, and the sign-in step
                             // comes up with a line saying why, which the phone reads as a refused attempt.
@@ -245,7 +247,17 @@ class SetupViewModel
             cancelLink()
             // Back to the address: the sign-in step's code goes with the step.
             handOff.cancel()
-            draft.update { it.copy(server = null, form = SignInForm(), error = null, notice = null, code = null, received = false) }
+            draft.update {
+                it.copy(
+                    server = null,
+                    form = SignInForm(),
+                    error = null,
+                    notice = null,
+                    code = null,
+                    received = false,
+                    handedSession = null,
+                )
+            }
         }
 
         fun editForm(transform: SignInForm.() -> SignInForm) =
