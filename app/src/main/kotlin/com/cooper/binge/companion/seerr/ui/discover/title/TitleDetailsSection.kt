@@ -1,5 +1,6 @@
 package com.cooper.binge.companion.seerr.ui.discover.title
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
