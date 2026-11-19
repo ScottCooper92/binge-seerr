@@ -66,7 +66,7 @@ class DiscoverGridInsetsTest {
                         TitleKind.Movie,
                         "Drama",
                         state,
-                        DiscoverGridActions({}, {}, {}, {}, {}, { _, _ -> }, { _, _, _ -> }),
+                        DiscoverGridActions({}, {}, {}, {}, {}, {}, { _, _ -> }, { _, _, _ -> }, FilterLoads({}, {}, {})),
                     )
                 }
             }
