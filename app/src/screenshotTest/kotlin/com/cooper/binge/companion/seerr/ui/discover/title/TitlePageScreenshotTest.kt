@@ -113,7 +113,7 @@ class TitlePageScreenshotTest {
         Frame(
             TitlePageUiState.Ready(
                 fullMovie(standard = VersionState(TitleAvailability.Pending, mayRequest = false), fourK = null)
-                    .copy(requests = listOf(TitleRequest(7, false, SeerrRequestStatusCode.Pending, "Sam", null))),
+                    .copy(requests = listOf(TitleRequest(7, false, SeerrRequestStatusCode.Pending, 5))),
                 fullExtras(),
             ),
         )
@@ -126,7 +126,7 @@ class TitlePageScreenshotTest {
         Frame(
             TitlePageUiState.Ready(
                 fullMovie(standard = VersionState(TitleAvailability.Processing, mayRequest = false), fourK = null)
-                    .copy(requests = listOf(TitleRequest(7, false, SeerrRequestStatusCode.Approved, "Sam", null))),
+                    .copy(requests = listOf(TitleRequest(7, false, SeerrRequestStatusCode.Approved, 5))),
                 fullExtras(),
             ),
         )
