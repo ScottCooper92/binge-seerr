@@ -7,6 +7,7 @@ import com.cooper.binge.companion.seerr.ui.SeerrRoute
 import com.cooper.binge.companion.seerr.ui.SettingsRoute
 import com.cooper.binge.companion.seerr.ui.ThisAppRoute
 import com.cooper.binge.companion.seerr.ui.tv.TvDestination
+import com.cooper.binge.companion.seerr.util.sampleRoute
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -35,7 +36,7 @@ class ScreenNamesTest {
                 .toList()
         assertTrue("SeerrRoute's subclasses were not found", routes.size > 10)
         routes.forEach { route ->
-            val name = (sampleOf(route) as SeerrRoute).screenName()
+            val name = (sampleRoute(route)).screenName()
             assertFalse("${route.simpleName} has a blank name", name.isBlank())
         }
     }
@@ -46,25 +47,4 @@ class ScreenNamesTest {
         assertTrue(names.all { it.startsWith("tv_") })
         assertEquals(names.size, names.toSet().size)
     }
-
-    /** An object's instance, a sealed interface's first subtype, or a class built from its constructor with a sample value for each parameter. */
-    private fun sampleOf(type: Class<*>): Any {
-        if (type.isEnum) return type.enumConstants.first()
-        if (type.isInterface) return sampleOf(type.permittedSubclasses.first())
-        runCatching { return type.getField("INSTANCE").get(null) }
-        val constructor = type.declaredConstructors.first { !it.isSynthetic }
-        return constructor.newInstance(*constructor.parameterTypes.map(::sampleValue).toTypedArray())
-    }
-
-    private fun sampleValue(type: Class<*>): Any =
-        when {
-            type == Int::class.javaPrimitiveType || type == Int::class.javaObjectType -> 1
-            type == Long::class.javaPrimitiveType || type == Long::class.javaObjectType -> 1L
-            type == Boolean::class.javaPrimitiveType || type == Boolean::class.javaObjectType -> false
-            type == String::class.java -> "sample"
-            type == Double::class.javaPrimitiveType || type == Double::class.javaObjectType -> 1.0
-            List::class.java.isAssignableFrom(type) -> emptyList<Any>()
-            Set::class.java.isAssignableFrom(type) -> emptySet<Any>()
-            else -> sampleOf(type)
-        }
 }

@@ -13,14 +13,22 @@ import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.DiscoverGridRoute
+import com.cooper.binge.companion.seerr.ui.NavMotionSpecs
 import com.cooper.binge.companion.seerr.ui.discover.title.LocalOpenTitle
 import com.cooper.binge.companion.seerr.ui.popIfTop
 import com.cooper.binge.companion.seerr.ui.replaceTop
 import java.time.LocalDate
 
 /** The grid a "see all" opens. It has no pane metadata: it covers the tab bar, and Back returns to the hub it came from. */
-fun EntryProviderScope<NavKey>.discoverGridEntries(backStack: NavBackStack<NavKey>) {
-    entry<DiscoverGridRoute> { route -> DiscoverGridEntry(route, onBack = { backStack.popIfTop(route) }, backStack = backStack) }
+internal fun EntryProviderScope<NavKey>.discoverGridEntries(
+    backStack: NavBackStack<NavKey>,
+    motion: NavMotionSpecs,
+) {
+    entry<DiscoverGridRoute>(metadata = motion.detail) { route ->
+        DiscoverGridEntry(route, onBack = {
+            backStack.popIfTop(route)
+        }, backStack = backStack)
+    }
 }
 
 /** A card opens the title's page, or with the flag off the hand-off [LocalOpenTitle] falls back to. */
