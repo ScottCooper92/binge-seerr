@@ -4,13 +4,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.pluralStringResource
@@ -29,7 +27,6 @@ import com.cooper.binge.companion.seerr.ui.discover.title.toDisplayDate
 import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
 import com.cooper.binge.companion.seerr.ui.state.LoadingScreen
 import com.cooper.binge.companion.seerr.ui.state.messageRes
-import kotlinx.coroutines.flow.first
 import java.util.Locale
 import com.binge.designsystem.R as DesR
 
@@ -51,7 +48,14 @@ internal fun SeriesEpisodesScreen(
     modifier: Modifier = Modifier,
 ) {
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
-    BingeScreenScaffold(title = title, modifier = modifier, onBack = onBack, scrollBehavior = scrollBehavior) { padding ->
+    val listState = rememberLazyListState()
+    BingeScreenScaffold(
+        title = title,
+        modifier = modifier,
+        onBack = onBack,
+        scrollBehavior = scrollBehavior,
+        listState = listState,
+    ) { padding ->
         Box(Modifier.fillMaxSize().padding(padding.screenOuterPadding())) {
             val inner = padding.screenInnerPadding()
             when (state) {
@@ -61,7 +65,7 @@ internal fun SeriesEpisodesScreen(
                     SeasonList(
                         state.seasons,
                         openAtSeason,
-                        scrollBehavior,
+                        listState,
                         onSeasonNear,
                         onRetrySeason,
                         inner,
@@ -71,20 +75,17 @@ internal fun SeriesEpisodesScreen(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SeasonList(
     seasons: List<SeasonSection>,
     openAtSeason: Int,
-    scrollBehavior: TopAppBarScrollBehavior,
+    listState: LazyListState,
     onSeasonNear: (Int) -> Unit,
     onRetrySeason: (Int) -> Unit,
     contentPadding: PaddingValues,
 ) {
-    val listState = rememberLazyListState()
     val sections = seasons.toSectionUis(onRetrySeason)
     val openAt = seasonKey(openAtSeason)
-    CollapseBarWhenOpenedMidList(scrollBehavior, opensMidList = seasons.firstOrNull()?.season?.number != openAtSeason)
     SeasonSectionsList(
         sections = sections,
         listState = listState,
@@ -130,21 +131,6 @@ private fun SeasonEpisode.toBrowseUi(locale: Locale) =
         rating = rating,
         airDate = airDate.toDisplayDate(locale),
     )
-
-/** A list that opens below its top has rows under the bar from the first frame, so the bar starts collapsed and scrimmed over them. */
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun CollapseBarWhenOpenedMidList(
-    scrollBehavior: TopAppBarScrollBehavior,
-    opensMidList: Boolean,
-) {
-    LaunchedEffect(scrollBehavior) {
-        if (!opensMidList) return@LaunchedEffect
-        // The bar's collapse limit is known once it has been measured, which is after the first composition.
-        snapshotFlow { scrollBehavior.state.heightOffsetLimit }.first { it < 0f }
-        scrollBehavior.state.heightOffset = scrollBehavior.state.heightOffsetLimit
-    }
-}
 
 private fun seasonKey(number: Int) = "season-$number"
 
