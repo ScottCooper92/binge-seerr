@@ -71,7 +71,6 @@ fun RequestSheet(
                     onAllSeasons = { viewModel.toggleSeasons(null) },
                     onFilm = viewModel::toggleFilms,
                     onAllFilms = { viewModel.toggleFilms(null) },
-                    onAdvancedExpanded = viewModel::setAdvancedExpanded,
                     onServer = viewModel::selectServer,
                     onProfile = viewModel::selectProfile,
                     onRootFolder = viewModel::selectRootFolder,
@@ -92,7 +91,6 @@ class RequestSheetActions(
     val onAllSeasons: () -> Unit,
     val onFilm: (Int) -> Unit,
     val onAllFilms: () -> Unit,
-    val onAdvancedExpanded: (Boolean) -> Unit,
     val onServer: (Int) -> Unit,
     val onProfile: (Int) -> Unit,
     val onRootFolder: (String) -> Unit,
@@ -144,8 +142,13 @@ private fun ReadyContent(
             verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
         ) {
             RequestHeader(state.target)
-            RequestOptionsGroup(state, actions, onOpenSeasons = { page = SheetPage.Seasons }, onOpenFilms = { page = SheetPage.Films })
-            RequestAdvancedOptions(state, actions, onOpen = { page = it.toPage() })
+            RequestOptionsGroup(
+                state,
+                actions,
+                onOpenSeasons = { page = SheetPage.Seasons },
+                onOpenFilms = { page = SheetPage.Films },
+                onOpenDestination = { page = it.toPage() },
+            )
         }
         RequestFooter(state, actions)
     }

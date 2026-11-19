@@ -93,6 +93,31 @@ class SectionPanesTest {
     }
 
     @Test
+    fun `the hub marks no section while the settings search is in the pane and marks it again when the search closes`() {
+        val stack = backStack(HubRoute, IssuesRoute, SettingsSearchRoute)
+        assertNull(stack.selectedSection(defaultShowing = true))
+        assertNull(stack.selectedSection(defaultShowing = false))
+
+        stack.removeLast()
+        assertEquals(HubSection.Issues, stack.selectedSection(defaultShowing = true))
+    }
+
+    @Test
+    fun `a page opened from a search result is the search's so no section is marked either`() {
+        val stack = backStack(HubRoute, IssuesRoute, SettingsSearchRoute, UserDetailRoute(3))
+        assertNull(stack.selectedSection(defaultShowing = true))
+    }
+
+    @Test
+    fun `a search opened from the bare hub marks nothing and closing it brings the default back`() {
+        val stack = backStack(HubRoute, SettingsSearchRoute)
+        assertNull(stack.selectedSection(defaultShowing = true))
+
+        stack.removeLast()
+        assertEquals(DefaultSection, stack.selectedSection(defaultShowing = true))
+    }
+
+    @Test
     fun `pane depth counts what is stacked above the hub`() {
         assertEquals(1, backStack(HubRoute, RequestsRoute).paneDepth())
         assertEquals(1, backStack(HubRoute, UserDetailRoute(1)).paneDepth())

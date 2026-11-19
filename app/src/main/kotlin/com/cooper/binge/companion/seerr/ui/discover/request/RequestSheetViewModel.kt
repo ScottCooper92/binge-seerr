@@ -32,7 +32,6 @@ import kotlinx.coroutines.launch
 /**
  * [problem] is a refusal with a cause and a next step, shown in a dialog with one OK. [failure] is a send that did not get an
  * answer: the footer button turns red for a few seconds ([footerFailed]), and a tap in that time opens [failureDialog] to retry.
- * [advancedExpanded] is whether Advanced options is open; closed, the request is a plain one.
  */
 sealed interface RequestSheetUiState {
     data object Loading : RequestSheetUiState
@@ -47,7 +46,6 @@ sealed interface RequestSheetUiState {
         val quota: QuotaState = QuotaState.Loading,
         val servers: ServersState = ServersState.Loading,
         val use4k: Boolean = false,
-        val advancedExpanded: Boolean = false,
         val pick: DestinationPick? = null,
         val submitting: Boolean = false,
         val problem: RequestProblem? = null,
@@ -80,22 +78,26 @@ sealed interface RequestSheetUiState {
         /** The servers of the chosen version: 4K is a property of a server, so the 4K switch narrows this list. */
         val servers4k: List<RequestServer> get() = (servers as? ServersState.Ready)?.servers.orEmpty().filter { it.is4k == use4k }
 
-        /** Advanced options is offered to a user who may choose, unless the servers read and hold none of this version. */
-        val showAdvanced: Boolean get() = access.mayChooseDestination && (servers !is ServersState.Ready || servers4k.isNotEmpty())
+        /** The destination rows are offered to a user who may choose, unless the servers read and hold none of this version. */
+        val choosesDestination: Boolean get() = access.mayChooseDestination && (servers !is ServersState.Ready || servers4k.isNotEmpty())
 
         val quotaSpent: Boolean get() = knownQuota?.spent == true
 
         /** The 4K switch moves only while both versions are open to request; with one left, that one is the choice. */
         val canToggle4k: Boolean get() = access.may4k && target.standardOpen && target.fourKOpen && !submitting
 
-        /** Open and not yet showing real lists: sending now would send defaults the user never saw. */
-        val advancedBlocking: Boolean
-            get() = advancedExpanded && showAdvanced && (servers !is ServersState.Ready || pick?.choices !is ChoicesState.Ready)
+        /** A read is still in flight: sending now would send defaults the user never saw. A read that failed does not hold the request. */
+        val destinationBlocking: Boolean
+            get() = choosesDestination && (servers is ServersState.Loading || pick?.choices is ChoicesState.Loading)
+
+        /** The destination the request names: the pick the user can see. A pick whose lists failed still names its server, with that server's own profile and folder. */
+        val destination: DestinationPick?
+            get() = pick?.takeIf { choosesDestination && it.choices !is ChoicesState.Loading }
 
         val canSubmit: Boolean get() =
             !submitting &&
                 !quotaSpent &&
-                !advancedBlocking &&
+                !destinationBlocking &&
                 (seasons?.canSubmit ?: true) &&
                 (films?.canSubmit ?: true)
     }
@@ -181,8 +183,6 @@ class RequestSheetViewModel
             pick?.let { reads.choices(it.serverId) }
         }
 
-        fun setAdvancedExpanded(expanded: Boolean) = store.update { it.copy(advancedExpanded = expanded) }
-
         /** Flips one film of a collection, or every open one for `null`. */
         fun toggleFilms(id: Int?) =
             store.update { current ->
@@ -219,7 +219,7 @@ class RequestSheetViewModel
             if (!current.canSubmit) return
             footerTimer?.cancel()
             store.set(current.copy(submitting = true, problem = null, failure = null, footerFailed = false, failureDialog = false))
-            val destination = current.pick?.takeIf { current.advancedExpanded && current.showAdvanced }
+            val destination = current.destination
             current.films?.let { return submitFilms(it, destination, current.use4k) }
             val submission =
                 RequestSubmission(

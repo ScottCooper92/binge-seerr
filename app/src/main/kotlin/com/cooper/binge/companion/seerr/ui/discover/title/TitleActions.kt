@@ -127,21 +127,6 @@ private fun PrimaryAction(
 @StringRes
 private fun TitlePrimary.label() = if (state == TitleState.Request && fourKOnly) R.string.title_page_request_4k else state.labelRes()
 
-private fun TitleState.sentiment() =
-    when (this) {
-        TitleState.Request -> BingeSentiment.Neutral
-        TitleState.Requested -> BingeSentiment.Caution
-        TitleState.Processing, TitleState.PartiallyAvailable -> BingeSentiment.Info
-        TitleState.Available -> BingeSentiment.Positive
-        TitleState.Blocklisted -> BingeSentiment.Negative
-    }
+private fun TitleState.sentiment() = toAvailability().statusStyle()?.sentiment ?: BingeSentiment.Neutral
 
-internal fun TitleState.labelRes() =
-    when (this) {
-        TitleState.Request -> R.string.title_page_request
-        TitleState.Requested -> R.string.hubs_card_requested
-        TitleState.Processing -> R.string.hubs_card_processing
-        TitleState.PartiallyAvailable -> R.string.hubs_card_partial
-        TitleState.Available -> R.string.hubs_card_available
-        TitleState.Blocklisted -> R.string.hubs_card_blocklisted
-    }
+internal fun TitleState.labelRes() = toAvailability().statusStyle()?.label ?: R.string.title_page_request
