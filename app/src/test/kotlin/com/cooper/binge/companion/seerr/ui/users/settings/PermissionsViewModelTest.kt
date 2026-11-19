@@ -1,7 +1,6 @@
 package com.cooper.binge.companion.seerr.ui.users.settings
 
 import androidx.lifecycle.ViewModelStore
-import com.binge.designsystem.save.SAVE_AS_MADE_DELAY_MILLIS
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.data.FakeUserStore
 import com.cooper.binge.companion.seerr.data.UserEntity
@@ -9,6 +8,7 @@ import com.cooper.binge.companion.seerr.seerr.ManageablePermission
 import com.cooper.binge.companion.seerr.ui.users.labelRes
 import com.cooper.binge.companion.seerr.util.MainDispatcherRule
 import com.cooper.binge.companion.seerr.util.awaitEvent
+import com.cooper.homelab.core.presentation.editor.SAVE_AS_MADE_DELAY_MILLIS
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope

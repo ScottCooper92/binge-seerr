@@ -4,10 +4,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.binge.companion.sdk.attempt
 import com.binge.designsystem.SaveStatus
-import com.binge.designsystem.save.SaveAsMade
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.seerr.isTransient
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
+import com.cooper.homelab.core.presentation.editor.SaveAsMade
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -134,7 +134,7 @@ abstract class ExtrasEditorViewModel<T, X>(
                     state.update { current -> (current as? ExtrasEditorUiState.Ready<T, X>)?.copy(saveFailed = failed) ?: current }
                 },
                 status = { status ->
-                    state.update { current -> (current as? ExtrasEditorUiState.Ready<T, X>)?.copy(saveStatus = status) ?: current }
+                    state.update { current -> (current as? ExtrasEditorUiState.Ready<T, X>)?.copy(saveStatus = status.toUi()) ?: current }
                 },
                 isTransient = { it.toSeerrError().isTransient },
                 refused = { failure ->
@@ -158,13 +158,22 @@ abstract class ExtrasEditorViewModel<T, X>(
         val settling = saveAsMade?.settle()
         state.value = ExtrasEditorUiState.Loading
         viewModelScope.launch(dispatcher) {
-            val kept = settling?.await()
+            val settled = settling?.await()
+            val kept = settled?.kept
+            val refusal = settled?.refusal
             saveAsMade?.reloaded(keptUnsent = kept != null)
             attempt { load() }
                 .onSuccess { loaded ->
                     val draft = kept ?: savedDraft?.restoreOver(loaded) ?: loaded
                     state.value =
-                        ExtrasEditorUiState.Ready(draft = draft, saved = loaded, extras = extrasState.value, saveFailed = kept != null)
+                        ExtrasEditorUiState.Ready(
+                            draft = draft,
+                            saved = loaded,
+                            extras = extrasState.value,
+                            saveFailed = kept != null,
+                            saveRefusal = refusal?.toSeerrError(),
+                        )
+                    refusal?.let { eventFlow.emit(EditorEvent.Failed.from(it)) }
                 }.onFailure { state.value = ExtrasEditorUiState.Error(it.toSeerrError()) }
         }
     }

@@ -2,6 +2,7 @@ package com.cooper.binge.companion.seerr.ui.discover.title
 
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
+import com.binge.designsystem.component.ExternalScoreKind
 import com.binge.designsystem.component.InfoValue
 import com.cooper.binge.companion.seerr.discover.TitleAvailability
 import com.cooper.binge.companion.seerr.discover.TitleKind
@@ -64,13 +65,13 @@ class TitleFactsTest {
         role: String,
     ) = TitlePerson(name.length, name, role, null)
 
-    private fun List<com.binge.designsystem.component.InfoRowEntry>.valueOf(label: String) =
+    private fun List<com.binge.designsystem.component.DetailInfoEntry>.valueOf(label: String) =
         (first { it.label == label }.value as com.binge.designsystem.component.InfoValue.Plain).text
 
     @Test
     fun `the director is whoever the server bills for directing`() {
         val facts =
-            movie(listOf(person("Ann Writer", "Writer"), person("Bo Director", "Director, Writer"))).factEntries(resources, Locale.US, null)
+            movie(listOf(person("Ann Writer", "Writer"), person("Bo Director", "Director, Writer"))).detailEntries(resources, Locale.US)
         assertEquals("Bo Director", facts.valueOf("Directed by"))
     }
 
@@ -78,7 +79,7 @@ class TitleFactsTest {
     fun `each director is a link to their page where the page can open one`() {
         val opened = mutableListOf<Int>()
         val crew = listOf(person("Ann Writer", "Writer"), person("Bo Director", "Director, Writer"), person("Cy Director", "Director"))
-        val facts = movie(crew).factEntries(resources, Locale.US, null, onOpenPerson = { opened += it })
+        val facts = movie(crew).detailEntries(resources, Locale.US, onOpenPerson = { opened += it })
         val links = (facts.first { it.label == "Directed by" }.value as InfoValue.Links).links
         assertEquals(listOf("Bo Director", "Cy Director"), links.map { it.text })
         links.first().onClick()
@@ -87,7 +88,7 @@ class TitleFactsTest {
 
     @Test
     fun `directors stay plain text where the page cannot open a person`() {
-        val facts = movie(listOf(person("Bo Director", "Director"))).factEntries(resources, Locale.US, null)
+        val facts = movie(listOf(person("Bo Director", "Director"))).detailEntries(resources, Locale.US)
         assertEquals("Bo Director", facts.valueOf("Directed by"))
     }
 
@@ -98,7 +99,7 @@ class TitleFactsTest {
             seriesFixture().copy(
                 creators = listOf(TitlePerson(7, "Ann Creator", null, null), TitlePerson(8, "Bo Creator", null, null)),
             )
-        val facts = series.factEntries(resources, Locale.US, null, onOpenPerson = { opened += it })
+        val facts = series.detailEntries(resources, Locale.US, onOpenPerson = { opened += it })
         val links = (facts.first { it.label == "Created by" }.value as InfoValue.Links).links
         assertEquals(listOf("Ann Creator", "Bo Creator"), links.map { it.text })
         links.last().onClick()
@@ -111,13 +112,13 @@ class TitleFactsTest {
             seriesFixture().copy(
                 creators = listOf(TitlePerson(7, "Ann Creator", null, null), TitlePerson(8, "Bo Creator", null, null)),
             )
-        assertEquals("Ann Creator, Bo Creator", series.factEntries(resources, Locale.US, null).valueOf("Created by"))
+        assertEquals("Ann Creator, Bo Creator", series.detailEntries(resources, Locale.US).valueOf("Created by"))
     }
 
     @Test
     fun `studios are links that name their company where the page can open one`() {
         val opened = mutableListOf<TitleCompany>()
-        val facts = movie(emptyList()).factEntries(resources, Locale.US, null, onOpenCompany = { opened += it })
+        val facts = movie(emptyList()).detailEntries(resources, Locale.US, onOpenCompany = { opened += it })
         val links = (facts.first { it.label == "Studios" }.value as InfoValue.Links).links
         assertEquals(listOf("One Studio", "Another"), links.map { it.text })
         links.last().onClick()
@@ -126,36 +127,56 @@ class TitleFactsTest {
 
     @Test
     fun `studios stay plain text where the page cannot open a company`() {
-        val facts = movie(emptyList()).factEntries(resources, Locale.US, null)
+        val facts = movie(emptyList()).detailEntries(resources, Locale.US)
         assertEquals(InfoValue.Plain("One Studio, Another"), facts.first { it.label == "Studios" }.value)
     }
 
     @Test
     fun `a film with no studios has no studio links`() {
-        val facts = movie(emptyList()).copy(studios = emptyList()).factEntries(resources, Locale.US, null, onOpenCompany = { })
+        val facts = movie(emptyList()).copy(studios = emptyList()).detailEntries(resources, Locale.US, onOpenCompany = { })
         assertEquals("", facts.valueOf("Studios"))
     }
 
     @Test
     fun `the release date is written the way the reader's language writes it`() {
-        val facts = movie(emptyList()).factEntries(resources, Locale.US, null)
+        val facts = movie(emptyList()).detailEntries(resources, Locale.US)
         assertEquals("Mar 31, 1999", facts.valueOf("Release date"))
     }
 
     @Test
     fun `a fact the server did not give has an empty value, which the list does not draw`() {
-        val facts = movie(emptyList(), releaseDate = null).factEntries(resources, Locale.US, null)
+        val facts = movie(emptyList(), releaseDate = null).detailEntries(resources, Locale.US)
         assertEquals("", facts.valueOf("Directed by"))
         assertEquals("", facts.valueOf("Release date"))
     }
 
     @Test
-    fun `the server's other ratings follow as facts`() {
-        val facts = movie(emptyList()).factEntries(resources, Locale.US, TitleRatings(83, 85, 8.7))
-        assertEquals("83%", facts.valueOf("Critics"))
-        assertEquals("85%", facts.valueOf("Audience"))
-        assertEquals("8.7", facts.valueOf("IMDb"))
-        assertFalse(movie(emptyList()).factEntries(resources, Locale.US, null).valueOf("Critics").isNotEmpty())
+    fun `the server's other ratings are the header's scores, critics then audience then IMDb`() {
+        val scores = TitleRatings(83, 85, 8.7).toExternalScores(resources, Locale.US)
+        assertEquals(listOf(ExternalScoreKind.CriticsFresh, ExternalScoreKind.Audience, ExternalScoreKind.Imdb), scores.map { it.kind })
+        assertEquals(listOf("83%", "85%", "8.7"), scores.map { it.value })
+        assertEquals(
+            listOf("Critics 83 percent", "Audience 85 percent", "IMDb 8.7 out of 10"),
+            scores.map { it.contentDescription },
+        )
+    }
+
+    @Test
+    fun `a critics score under 60 percent is a rotten one and 60 is still fresh`() {
+        assertEquals(ExternalScoreKind.CriticsRotten, TitleRatings(59, null, null).toExternalScores(resources, Locale.US).single().kind)
+        assertEquals(ExternalScoreKind.CriticsFresh, TitleRatings(60, null, null).toExternalScores(resources, Locale.US).single().kind)
+    }
+
+    @Test
+    fun `a score the server did not give is left out, and no ratings give no scores`() {
+        assertEquals(listOf("85%"), TitleRatings(null, 85, null).toExternalScores(resources, Locale.US).map { it.value })
+        assertEquals(emptyList<String>(), (null as TitleRatings?).toExternalScores(resources, Locale.US).map { it.value })
+    }
+
+    @Test
+    fun `the facts hold neither the scores nor the collection, which the header and its own rail carry`() {
+        val labels = movie(emptyList()).detailEntries(resources, Locale.US).map { it.label }
+        assertFalse(labels.any { it == "Critics" || it == "Audience" || it == "IMDb" || it == "Collection" })
     }
 
     @Test

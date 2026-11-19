@@ -2,7 +2,6 @@ package com.cooper.binge.companion.seerr.ui.settings.server
 
 import androidx.lifecycle.ViewModelStore
 import com.binge.designsystem.SaveStatus
-import com.binge.designsystem.save.SAVE_AS_MADE_DELAY_MILLIS
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.ui.users.settings.ADMIN
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorEvent
@@ -10,6 +9,7 @@ import com.cooper.binge.companion.seerr.ui.users.settings.EditorUiState
 import com.cooper.binge.companion.seerr.ui.users.settings.ScriptedSeerr
 import com.cooper.binge.companion.seerr.util.MainDispatcherRule
 import com.cooper.binge.companion.seerr.util.awaitEvent
+import com.cooper.homelab.core.presentation.editor.SAVE_AS_MADE_DELAY_MILLIS
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
