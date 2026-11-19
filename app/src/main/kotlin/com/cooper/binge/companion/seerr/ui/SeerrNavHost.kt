@@ -28,10 +28,11 @@ import com.cooper.binge.companion.seerr.ui.hubs.DiscoverHubEntry
 import com.cooper.binge.companion.seerr.ui.search.title.TitleSearchEntry
 import com.cooper.binge.companion.seerr.ui.shell.SeerrTab
 import com.cooper.binge.companion.seerr.ui.shell.SeerrTabShell
-import com.cooper.binge.companion.seerr.ui.shell.settleSectionStash
 import com.cooper.binge.companion.seerr.ui.state.LoadingScreen
 import com.cooper.homelab.core.uiandroid.shell.TabShellState
+import com.cooper.homelab.core.uiandroid.shell.nothingOpenBeside
 import com.cooper.homelab.core.uiandroid.shell.popToRoot
+import com.cooper.homelab.core.uiandroid.shell.settleStash
 
 /**
  * The one [NavDisplay]. Every screen is an entry here; the ViewModel-store decorator gives each
@@ -118,8 +119,12 @@ private fun EntryProviderScope<NavKey>.homeEntries(
         if (connected() == true && tabs != null) {
             val hubBeside = panes.hubBeside()
             val stack = backStack.toList()
-            LaunchedEffect(tabs.selected, hubBeside, stack) { if (hubBeside) tabs.settleSectionStash(backStack) }
-            SeerrTabShell(tabs, backToStart = stack.nothingOpenBesideHub(), discover = {
+            LaunchedEffect(tabs.selected, hubBeside, stack) {
+                if (hubBeside) {
+                    tabs.settleStash(backStack, SeerrTab.Settings, NavKey::opensBesideHub, NavKey::isDefaultStandIn)
+                }
+            }
+            SeerrTabShell(tabs, backToStart = nothingOpenBeside(stack, NavKey::isPaneRoot, NavKey::isDefaultStandIn), discover = {
                 DiscoverHubEntry(
                     it,
                     onOpenGrid = { grid, title -> backStack.push(DiscoverGridRoute(grid.kind, grid.preset, title)) },

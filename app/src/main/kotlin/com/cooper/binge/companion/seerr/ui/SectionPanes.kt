@@ -136,18 +136,14 @@ private fun equalPaneWidth(directive: PaneScaffoldDirective): Dp {
     return (windowWidth - directive.horizontalPartitionSpacerSize) / 2
 }
 
+/** Whether this key is [DefaultSection] standing in beside the hub, which the shared stash treats as nothing open. */
+internal fun NavKey.isDefaultStandIn(): Boolean = this == DefaultSection.route()
+
 /** The root the hub sits at: [HubRoute] beside the sections, or [ShellRoute], whose Settings tab holds the hub. */
 internal fun NavKey?.isPaneRoot(): Boolean = this == HubRoute || this == ShellRoute
 
 /** Only the pane root is on the stack: nothing is open beside the hub. */
 internal fun List<NavKey>.isOnlyPaneRoot(): Boolean = size == 1 && first().isPaneRoot()
-
-/**
- * The bare hub: nothing is open beside it, or only the default section, which the user opened on purpose and which shows the
- * same screen as the placeholder. Back from here leaves for the start tab; from anything above it, Back closes that first (#2346).
- */
-internal fun List<NavKey>.nothingOpenBesideHub(): Boolean =
-    isOnlyPaneRoot() || (size == 2 && first().isPaneRoot() && this[1] == DefaultSection.route())
 
 /**
  * A page pushed straight over the shell that is not a section, a title or a grid: [ShellPanesStrategy] leaves it to cover the
