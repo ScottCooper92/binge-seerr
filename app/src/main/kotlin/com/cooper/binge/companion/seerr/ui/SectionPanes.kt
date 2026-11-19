@@ -8,7 +8,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.dimensionResource
@@ -58,16 +57,12 @@ internal val DefaultSection: HubSection = HubSection.Requests
  *
  * @param backStack read for the one case the library can't see: [DefaultSection] opened beside the hub,
  *   where popping it would land on its own placeholder and look like Back did nothing (#815).
- * @param threePane a landscape tablet's [ThreePaneStrategy]: the hub first, with [defaultSection] in the
- *   second pane while no section is on the stack (#1110).
  */
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
 internal fun rememberSeerrPaneStrategy(
     directive: PaneScaffoldDirective,
     backStack: List<NavKey>,
-    threePane: Boolean = false,
-    defaultSection: @Composable () -> Unit = {},
     shellBeside: Boolean = false,
 ): SceneStrategy<NavKey> {
     // The design system's gap between the panes in place of Material adaptive's own 24dp (#814), as Binge's is.
@@ -77,15 +72,13 @@ internal fun rememberSeerrPaneStrategy(
             backNavigationBehavior = PaneBackNavigationBehavior,
             directive = spaced.copy(defaultPanePreferredWidth = equalPaneWidth(spaced)),
         )
-    val currentDefault by rememberUpdatedState(defaultSection)
-    return remember(listDetail, backStack, threePane, shellBeside) {
-        val first = if (threePane) ThreePaneStrategy { currentDefault() } else null
-        SeerrPaneStrategy(listDetail, backStack, first, shell = if (shellBeside) ShellPanesStrategy else null)
+    return remember(listDetail, backStack, shellBeside) {
+        SeerrPaneStrategy(listDetail, backStack, shell = if (shellBeside) ShellPanesStrategy else null)
     }
 }
 
 /**
- * [threePane]'s scenes when it has one, else [listDetail]'s, except that one showing the hub beside the default
+ * The shell's scenes when it has one, else [listDetail]'s, except that one showing the hub beside the default
  * section that was opened on purpose claims no Back. The system takes it and leaves the app, as it does from the
  * placeholder, which looks the same. Every scene is wrapped, so a scene's type never changes with the stack and the
  * panes don't animate as if it had.
@@ -93,14 +86,12 @@ internal fun rememberSeerrPaneStrategy(
 private class SeerrPaneStrategy(
     private val listDetail: SceneStrategy<NavKey>,
     private val backStack: List<NavKey>,
-    private val threePane: SceneStrategy<NavKey>? = null,
     private val shell: SceneStrategy<NavKey>? = null,
 ) : SceneStrategy<NavKey> {
     override fun SceneStrategyScope<NavKey>.calculateScene(entries: List<NavEntry<NavKey>>): Scene<NavKey>? {
         val shellScene = shell?.let { with(it) { calculateScene(entries) } }
         val scene =
             shellScene
-                ?: threePane?.let { with(it) { calculateScene(entries) } }
                 ?: with(listDetail) { calculateScene(entries) }
                 ?: return null
         // toList(): a NavBackStack is a list by delegation, without a list's equality.

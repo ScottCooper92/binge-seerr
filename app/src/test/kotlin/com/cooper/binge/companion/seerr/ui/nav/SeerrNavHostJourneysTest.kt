@@ -102,43 +102,36 @@ class SeerrNavHostJourneysTest {
         )
 
     /**
-     * The three panes with the app's own entries: the default section is beside the hub from the start, what a section
-     * opens takes the third pane in place of what was there, and Back closes it rather than walking back through
-     * every item opened (#1110).
+     * An expanded window with the app's own entries (#2348): the hub stays on the left, the default section is beside it from the
+     * start, and what a section opens replaces only the right pane, in place of the list, with Back returning to the list.
      */
     @Test
     @Config(qualifiers = TABLET)
-    fun `on a landscape tablet, opening from a list replaces the open item, and Back closes it`() {
+    fun `on a landscape tablet, opening from a list replaces the list in the one right pane, and Back returns to it`() {
         connectToUsers()
         host.launch(HomeRoute)
         host.awaitShowing(hub)
         host.awaitShowing(host.string(R.string.requests_filter_processing))
-        assertTrue("the third pane did not say nothing was open", host.isShowing(nothingOpen))
 
         host.compose
             .onNodeWithText(host.string(R.string.hub_section_users_desc), substring = true)
             .performScrollTo()
             .performClick()
         host.awaitShowing(ANA)
+        assertTrue("the hub stays beside the list", host.isShowing(hub))
         openUser(ANA)
-        assertTrue("the list left the screen", host.isShowing(BO))
-        assertNoBackArrow()
-
-        openUser(BO)
-        assertEquals("Ana was left on screen under Bo", 1, host.count(ANA))
-        assertNoBackArrow()
+        assertTrue("the hub stays beside the user", host.isShowing(hub))
+        assertEquals("Back from the user's page is offered", 1, backArrows())
 
         host.back()
-        host.awaitShowing(nothingOpen)
-        assertEquals("Back went to Ana rather than closing Bo", 1, host.count(ANA))
-        assertEquals("Bo's page stayed after Back", 1, host.count(BO))
-        assertTrue("the hub left the screen", host.isShowing(hub))
+        host.awaitShowing(BO)
+        assertTrue("the hub is still beside the list", host.isShowing(hub))
     }
 
-    /** A rotation to two panes shows the hub beside the open item, and back to three restores the list between them. */
+    /** An expanded window and a medium one are the same layout, so a rotation between them keeps the open item. */
     @Test
     @Config(qualifiers = TABLET)
-    fun `a rotation from three panes to two and back keeps the open item`() {
+    fun `a rotation between an expanded and a medium window keeps the open item`() {
         connectToUsers()
         host.launch(HomeRoute)
         host.awaitShowing(hub)
@@ -154,10 +147,9 @@ class SeerrNavHostJourneysTest {
         assertTrue("two panes lost the hub", host.isShowing(hub))
 
         host.rotate(TABLET)
-        host.compose.waitUntil("the list back between the hub and Ana", AWAIT_MILLIS) { host.isShowing(BO) && host.count(ANA) > 1 }
+        host.compose.waitUntil("Ana alone beside the hub again", AWAIT_MILLIS) { host.isShowing(ANA) && !host.isShowing(BO) }
+        assertTrue("the expanded window lost the hub", host.isShowing(hub))
     }
-
-    private val nothingOpen get() = host.string(R.string.three_pane_nothing_open_title)
 
     /** The lists, and two users whose pages read in full, so a user's page shows their name. */
     private fun connectToUsers() {
@@ -172,21 +164,17 @@ class SeerrNavHostJourneysTest {
         }
     }
 
-    /** Taps [name]'s row in the list, the first node reading it, and waits for their page in the third pane. */
+    /** Taps [name]'s row in the list, the first node reading it, and waits for their page to replace the list in the right pane. */
     private fun openUser(name: String) {
         host.compose.onAllNodesWithText(name, substring = true)[0].performClick()
-        host.compose.waitUntil("$name's page in the third pane", AWAIT_MILLIS) { !host.isShowing(nothingOpen) && host.count(name) > 1 }
+        host.compose.waitUntil("$name's page in place of the list", AWAIT_MILLIS) { host.isShowing(name) && !host.isShowing(BO) }
     }
 
-    /** Neither the section nor what it opened offers Back, since neither leaves the screen. */
-    private fun assertNoBackArrow() =
-        assertTrue(
-            "a Back arrow in the three panes",
-            host.compose
-                .onAllNodesWithContentDescription(host.string(DesR.string.cd_navigate_back))
-                .fetchSemanticsNodes()
-                .isEmpty(),
-        )
+    private fun backArrows() =
+        host.compose
+            .onAllNodesWithContentDescription(host.string(DesR.string.cd_navigate_back))
+            .fetchSemanticsNodes()
+            .size
 
     /**
      * A cold start over a hub the app remembers, with the server gone: the problem page. Retry re-checks,
