@@ -65,15 +65,6 @@ data class TitleRequest(
     val requesterId: Int?,
 )
 
-/**
- * The requests this viewer may open. The server lists every user's requests on a title but shows another user's only to a viewer
- * who may view requests, and refuses it to anyone else, so such a viewer keeps their own.
- */
-internal fun List<TitleRequest>.openableBy(
-    viewerId: Int?,
-    canViewRequests: Boolean,
-): List<TitleRequest> = if (canViewRequests) this else filter { viewerId != null && it.requesterId == viewerId }
-
 /** One version of a title, standard or 4K: what the server holds of it and whether this user may ask for it. */
 data class VersionState(
     val availability: TitleAvailability,

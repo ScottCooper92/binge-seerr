@@ -58,12 +58,7 @@ class SeerrTitleDetailsRepository(
                     viewerId = user.id,
                     mayViewAllRequests = permissions.canViewRequests,
                     webUrl = serverUrl() + "movie/" + tmdbId,
-                ).let {
-                    it.copy(
-                        companiesOpen = profile.hasDiscoverByCategory,
-                        requests = it.requests.openableBy(user.id, permissions.canViewRequests),
-                    )
-                }
+                ).copy(companiesOpen = profile.hasDiscoverByCategory)
         }
 
     override suspend fun collectionParts(collectionId: Int): List<TitleResult> = collections.collection(collectionId).parts
@@ -219,7 +214,7 @@ internal fun List<com.cooper.binge.companion.seerr.seerr.SeerrRequestSummaryDto>
     mayViewAll: Boolean,
 ) = if (mayViewAll) this else filter { it.requestedBy?.id == viewerId }
 
-/** The request the title's own answer lists, reduced to what the page keeps: its id, version, state, who asked and when. */
+/** The request the title's own answer lists, reduced to what the page keeps: its id, version, state and who asked. */
 internal fun com.cooper.binge.companion.seerr.seerr.SeerrRequestSummaryDto.toTitleRequest() =
     TitleRequest(
         id = id,

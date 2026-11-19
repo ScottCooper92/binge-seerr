@@ -65,12 +65,7 @@ class SeerrSeriesRepository(
                     mayViewAllRequests = permissions.canViewRequests,
                     settings = profile.settings,
                     webUrl = serverUrl() + "tv/" + tmdbId,
-                ).let {
-                    it.copy(
-                        companiesOpen = profile.hasDiscoverByCategory,
-                        requests = it.requests.openableBy(user.id, permissions.canViewRequests),
-                    )
-                }
+                ).copy(companiesOpen = profile.hasDiscoverByCategory)
         }
 
     override suspend fun season(
