@@ -4,6 +4,7 @@ import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.LockOpen
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.MaterialTheme
@@ -36,6 +37,10 @@ internal fun TitleStatusSheet(
     onDismiss: () -> Unit,
     onWatchInBinge: (() -> Unit)? = null,
     onUnblock: (() -> Unit)? = null,
+    fourKOpen: Boolean = false,
+    remainingOpen: Boolean = false,
+    onRequestFourK: () -> Unit = {},
+    onRequestRemaining: () -> Unit = {},
 ) {
     BingeAdaptiveSheet(kind = BingeSheetKind.Menu, onDismissRequest = onDismiss) {
         TitleStatusSheetContent(
@@ -55,6 +60,10 @@ internal fun TitleStatusSheet(
                     }
                 },
             onUnblock = onUnblock,
+            fourKOpen = fourKOpen,
+            remainingOpen = remainingOpen,
+            onRequestFourK = onRequestFourK,
+            onRequestRemaining = onRequestRemaining,
         )
     }
 }
@@ -70,11 +79,22 @@ internal fun TitleStatusSheetContent(
     modifier: Modifier = Modifier,
     onWatchInBinge: (() -> Unit)? = null,
     onUnblock: (() -> Unit)? = null,
+    fourKOpen: Boolean = false,
+    remainingOpen: Boolean = false,
+    onRequestFourK: () -> Unit = {},
+    onRequestRemaining: () -> Unit = {},
 ) {
     val watchRows = titleWatchRows(state, watchUrl, mediaServerName, onWatchInBinge, onWatch, LocalResources.current)
-    if (watchRows.isNotEmpty()) {
+    val requestRows =
+        listOfNotNull(
+            actionItem(Icons.Filled.Add, stringResource(R.string.title_sheet_request_remaining), onClick = onRequestRemaining)
+                .takeIf { state.isInLibrary() && remainingOpen },
+            actionItem(Icons.Filled.Add, stringResource(R.string.request_sheet_submit_4k), onClick = onRequestFourK)
+                .takeIf { state.isInLibrary() && fourKOpen },
+        )
+    if (watchRows.isNotEmpty() || requestRows.isNotEmpty()) {
         ActionSheetGroup(
-            rows = watchRows.map { externalItem(Icons.Filled.PlayArrow, it.label, it.onClick) },
+            rows = watchRows.map { externalItem(Icons.Filled.PlayArrow, it.label, it.onClick) } + requestRows,
             modifier = modifier,
             title = stringResource(state.labelRes()),
         )

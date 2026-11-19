@@ -51,6 +51,8 @@ class TitlePageActions(
     val onCloseStatus: () -> Unit = {},
     /** Request in 4K, tapped in a request's sheet: that sheet closes and the request sheet opens. */
     val onRequestFourK: () -> Unit = {},
+    /** Request the remaining seasons of a partly available series, tapped in a sheet: that sheet gives way to the request sheet. */
+    val onRequestRemaining: () -> Unit = {},
     /** Watch in Binge: the hand-off to the title in Binge, or null where Binge is not there to answer it. */
     val onWatchInBinge: (() -> Unit)? = null,
     /** The watchlist button, tapped. */
@@ -155,6 +157,10 @@ private fun ReadyPage(
             canRequest = state.movie.canRequest,
             onWatch = actions.onOpenUrl,
             onWatchInBinge = actions.onWatchInBinge,
+            fourKOpen = state.movie.fourK?.mayRequest == true,
+            remainingOpen = false,
+            onRequestFourK = actions.onRequestFourK,
+            onRequestRemaining = actions.onRequestRemaining,
             onDismiss = actions.onCloseStatus,
             onUnblock = actions.onUnblock.takeIf { state.movie.mayUnblock },
         )

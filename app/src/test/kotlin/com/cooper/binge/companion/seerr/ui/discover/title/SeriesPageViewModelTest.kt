@@ -211,7 +211,7 @@ class SeriesPageViewModelTest {
         val vm = SeriesPageViewModel(FakeSeries(series = held), 1399)
         vm.onPrimary()
 
-        vm.requestFourKFromManage()
+        vm.requestFromSheet(true)
 
         assertFalse(vm.ready().manageSheetOpen)
         assertTrue(vm.ready().requestSheetOpen)
@@ -230,9 +230,26 @@ class SeriesPageViewModelTest {
         vm.onPrimary()
         assertFalse(vm.ready().requestSheetFourK)
 
-        vm.requestFourKFromManage()
+        vm.requestFromSheet(true)
 
         assertTrue(vm.ready().requestSheetFourK)
+    }
+
+    @Test
+    fun `a partly available series with seasons left opens the status sheet, and its remaining seasons open the request sheet`() {
+        val partly = seriesFixture(standard = VersionState(TitleAvailability.PartiallyAvailable, mayRequest = true))
+        val vm = SeriesPageViewModel(FakeSeries(series = partly), 1399)
+
+        vm.onPrimary()
+
+        assertTrue(vm.ready().statusSheetOpen)
+        assertFalse(vm.ready().requestSheetOpen)
+
+        vm.requestFromSheet(false)
+
+        assertFalse(vm.ready().statusSheetOpen)
+        assertTrue(vm.ready().requestSheetOpen)
+        assertFalse(vm.ready().requestSheetFourK)
     }
 
     @Test

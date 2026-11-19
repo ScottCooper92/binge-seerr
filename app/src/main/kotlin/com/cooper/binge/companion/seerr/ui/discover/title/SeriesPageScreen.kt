@@ -125,6 +125,10 @@ private fun ReadySeriesPage(
             canRequest = state.series.canRequest,
             onWatch = actions.onOpenUrl,
             onWatchInBinge = actions.onWatchInBinge,
+            fourKOpen = state.series.fourK?.mayRequest == true,
+            remainingOpen = state.series.standard.mayRequest,
+            onRequestFourK = actions.onRequestFourK,
+            onRequestRemaining = actions.onRequestRemaining,
             onDismiss = actions.onCloseStatus,
             onUnblock = actions.onUnblock.takeIf { state.series.mayUnblock },
         )
