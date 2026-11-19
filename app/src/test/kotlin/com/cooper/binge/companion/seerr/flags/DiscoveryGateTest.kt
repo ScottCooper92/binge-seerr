@@ -1,11 +1,13 @@
 package com.cooper.binge.companion.seerr.flags
 
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
-import com.cooper.homelab.core.flags.FeatureFlags
 import com.cooper.homelab.core.flags.FixedFeatureFlags
 import com.cooper.homelab.core.flags.Flags
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -23,20 +25,24 @@ class DiscoveryGateTest {
 
     private var files = 0
 
-    private fun kotlinx.coroutines.test.TestScope.gate(
-        flag: Boolean,
-        flags: FeatureFlags = FixedFeatureFlags(Flags.of(DiscoveryEnabled to flag)),
-    ): Pair<PrefsDiscoveryGate, DiscoveryPrefs> {
+    private suspend fun TestScope.prefs(stored: Boolean?): DiscoveryPrefs {
         val store = PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("d${files++}.preferences_pb") }
-        val prefs = DiscoveryPrefs(store)
-        return PrefsDiscoveryGate(flags, prefs, kotlinx.coroutines.CoroutineScope(UnconfinedTestDispatcher(testScheduler))) to prefs
+        return DiscoveryPrefs(store).also { if (stored != null) it.setEnabled(stored) }
     }
+
+    private fun TestScope.gate(
+        flag: Boolean,
+        prefs: DiscoveryPrefs,
+    ) = PrefsDiscoveryGate(
+        FixedFeatureFlags(Flags.of(DiscoveryEnabled to flag)),
+        prefs,
+        CoroutineScope(UnconfinedTestDispatcher(testScheduler)),
+    )
 
     @Test
     fun `the preference defaults to on`() =
         runTest {
-            val (_, prefs) = gate(flag = true)
-            assertTrue(prefs.enabled.first())
+            assertTrue(prefs(stored = null).enabled.first())
         }
 
     @Test
@@ -50,27 +56,45 @@ class DiscoveryGateTest {
                     Triple(true, true, true),
                 )
             for ((flag, pref, expected) in cases) {
-                val (gate, prefs) = gate(flag)
-                prefs.setEnabled(pref)
-                assertEquals("flag=$flag pref=$pref", expected, gate.enabled.first { it == expected })
+                val gate = gate(flag, prefs(stored = pref))
+                assertEquals("flag=$flag pref=$pref", expected, gate.resolved.first { it != null })
             }
         }
 
     @Test
     fun `the row is offered only while the remote flag is on`() =
         runTest {
-            assertFalse(gate(flag = false).first.offered.first())
-            assertTrue(gate(flag = true).first.offered.first())
+            assertFalse(gate(false, prefs(null)).offered.first())
+            assertTrue(gate(true, prefs(null)).offered.first())
+        }
+
+    @Test
+    fun `an opted-out user never observes discovery on, so a first value is not mistaken for a toggle`() =
+        runTest {
+            val gate = gate(flag = true, prefs = prefs(stored = false))
+            val seen = mutableListOf<Boolean?>()
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { gate.resolved.collect { seen += it } }
+
+            assertEquals(false, gate.resolved.first { it != null })
+            assertFalse("the value is false from its first non-null state: $seen", seen.any { it == true })
+        }
+
+    @Test
+    fun `before it resolves the flag alone is the fallback and current reads it`() =
+        runTest {
+            val gate = gate(flag = true, prefs = prefs(null))
+            assertTrue(gate.fallback)
+            assertTrue(gate.current())
         }
 
     @Test
     fun `turning the preference off turns discovery off and on again restores it`() =
         runTest {
-            val (gate, _) = gate(flag = true)
-            assertTrue(gate.enabled.value)
+            val gate = gate(flag = true, prefs = prefs(null))
+            assertEquals(true, gate.resolved.first { it != null })
             gate.setPreference(false)
-            assertFalse(gate.enabled.first { !it })
+            assertEquals(false, gate.resolved.first { it == false })
             gate.setPreference(true)
-            assertTrue(gate.enabled.first { it })
+            assertEquals(true, gate.resolved.first { it == true })
         }
 }

@@ -117,19 +117,19 @@ class MainActivity : ComponentActivity() {
                 return@setContent
             }
             val backStack = rememberNavBackStack(HomeRoute)
-            val discovery by discoveryGate.enabled.collectAsStateWithLifecycle()
+            val resolved by discoveryGate.resolved.collectAsStateWithLifecycle()
+            val discovery = resolved ?: discoveryGate.fallback
             val tabs = rememberSeerrTabs(discovery = discovery)
             // Turning discovery off or on starts the app over from its start tab, with no stack left over from the other mode.
-            // Only a change after the preference has been read is a toggle: the first value is not, so a restored stack or a link stays.
-            val ready by discoveryGate.ready.collectAsStateWithLifecycle()
+            // Only a change after the gate has resolved is a toggle: the first resolved value is not, so a restored stack or a link stays.
             var shownDiscovery by remember { mutableStateOf<Boolean?>(null) }
-            LaunchedEffect(discovery, ready) {
-                if (!ready) return@LaunchedEffect
+            LaunchedEffect(resolved) {
+                val now = resolved ?: return@LaunchedEffect
                 val before = shownDiscovery
-                shownDiscovery = discovery
+                shownDiscovery = now
                 when {
-                    before == null && !discovery -> tabs.show(SeerrTab.Settings)
-                    before != null && before != discovery -> tabs.restart(backStack)
+                    before == null && !now -> tabs.show(SeerrTab.Settings)
+                    before != null && before != now -> tabs.restart(backStack)
                 }
             }
             LaunchedEffect(backStack) {
@@ -161,7 +161,7 @@ class MainActivity : ComponentActivity() {
         userRefresh.onForeground()
         lifecycleScope.launch { featureFlags.refresh() }
         // The slider list is read again on a return, to pick up a change made in the web client. Only the discovery hubs use it.
-        if (discoveryGate.enabled.value) lifecycleScope.launch { attempt { discoverSliders.refresh() } }
+        if (discoveryGate.current()) lifecycleScope.launch { attempt { discoverSliders.refresh() } }
     }
 
     override fun onNewIntent(intent: Intent) {
