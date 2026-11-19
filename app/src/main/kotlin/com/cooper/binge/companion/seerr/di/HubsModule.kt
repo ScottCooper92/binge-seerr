@@ -5,10 +5,12 @@ import com.cooper.binge.companion.seerr.data.TitleStatusStore
 import com.cooper.binge.companion.seerr.discover.SeerrTitleListRepository
 import com.cooper.binge.companion.seerr.discover.TitleListRepository
 import com.cooper.binge.companion.seerr.discover.sliders.HubCardLoader
+import com.cooper.binge.companion.seerr.discover.sliders.HubFirstFrames
 import com.cooper.binge.companion.seerr.discover.sliders.HubHeroLoader
 import com.cooper.binge.companion.seerr.discover.sliders.HubMediaSource
 import com.cooper.binge.companion.seerr.discover.sliders.HubScoreSource
 import com.cooper.binge.companion.seerr.discover.sliders.HubTileLoader
+import com.cooper.binge.companion.seerr.discover.sliders.SeerrHubFirstFrames
 import com.cooper.binge.companion.seerr.discover.sliders.SeerrHubMediaSource
 import com.cooper.binge.companion.seerr.discover.sliders.SeerrHubScoreSource
 import com.cooper.binge.companion.seerr.seerr.TitleCache
@@ -30,6 +32,10 @@ object HubsModule {
         statuses: TitleStatusStore,
         @IoDispatcher io: CoroutineDispatcher,
     ): TitleListRepository = SeerrTitleListRepository(api = connection::api, profile = connection::profile, io = io, statuses = statuses)
+
+    @Provides
+    @Singleton
+    fun hubFirstFrames(connection: SeerrConnection): HubFirstFrames = SeerrHubFirstFrames(connection::cachedProfileOrNull)
 
     @Provides
     @Singleton

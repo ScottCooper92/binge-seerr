@@ -100,18 +100,33 @@ class HubSkeletonGeometryTest {
     fun `at the largest font review scores and a status on the hero still leave its height alone`() =
         check(TRENDING, LARGEST_FONT, loading = ready(TRENDING), loaded = ready(TRENDING, hero = listOf(scoredHero())))
 
+    @Test
+    @Config(qualifiers = PHONE)
+    fun `where the cached profile says the server cannot filter, the skeleton has no Browse all place and the rows do not move`() =
+        check(
+            TRENDING,
+            loading = DiscoverHubUiState.Loading(browseAll = false),
+            loaded = ready(TRENDING).copy(browseAll = false),
+            browseAllPlace = false,
+        )
+
+    @Test
+    @Config(qualifiers = PHONE)
+    fun `with no cached profile the skeleton keeps the Browse all place for a server that can filter`() = check(TRENDING)
+
     private fun check(
         row: HubRow,
         fontScale: Float = 1f,
-        loading: DiscoverHubUiState = DiscoverHubUiState.Loading,
+        loading: DiscoverHubUiState = DiscoverHubUiState.Loading(),
         loaded: DiscoverHubUiState = ready(row),
+        browseAllPlace: Boolean = true,
     ) {
         // Where Discover is a tab of its own the Browse all row is not drawn, so there is nothing for the skeleton to reserve.
         val discoverTab = RuntimeEnvironment.getQualifiers().contains("w840dp")
         val anchors =
             listOfNotNull(
                 LayoutAnchors.Hub.HERO,
-                LayoutAnchors.Hub.DISCOVER_ENTRY.takeUnless { discoverTab },
+                LayoutAnchors.Hub.DISCOVER_ENTRY.takeUnless { discoverTab || !browseAllPlace },
                 LayoutAnchors.Hub.FIRST_CAROUSEL,
             ).map(LayoutAnchors::section)
         rule.assertSkeletonReservesGeometry(anchors = anchors, checkSize = true) { resolved ->
