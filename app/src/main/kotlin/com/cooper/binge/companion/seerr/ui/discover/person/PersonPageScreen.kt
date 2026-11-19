@@ -1,10 +1,12 @@
 package com.cooper.binge.companion.seerr.ui.discover.person
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
@@ -31,7 +33,6 @@ import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.person.PersonCredit
 import com.cooper.binge.companion.seerr.ui.discover.title.ShareBarAction
 import com.cooper.binge.companion.seerr.ui.discover.title.cardStatus
-import com.cooper.binge.companion.seerr.ui.discover.title.readingInset
 import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
 import com.binge.designsystem.R as DesR
 
@@ -94,13 +95,37 @@ internal fun PersonPageScreen(
     }
 }
 
+/**
+ * The person page's reading column, as Binge's person page has it: its profile, biography and links keep to
+ * `person_content_max_width` (640dp, 960dp from w840dp) and centre in a wider window, and the credit rails bleed to the edge but start
+ * where the column does. Both insets floor at the screen's own padding, so a phone is unchanged.
+ */
 @Composable
 private fun ColumnScope.PersonBody(
     state: PersonPageUiState.Ready,
     actions: PersonPageActions,
 ) {
+    BoxWithConstraints(Modifier.fillMaxWidth()) {
+        val inset =
+            (
+                (
+                    maxWidth -
+                        dimensionResource(
+                            R.dimen.person_content_max_width,
+                        )
+                ) / 2
+            ).coerceAtLeast(dimensionResource(DesR.dimen.padding_m))
+        PersonBodyContent(state, actions, inset)
+    }
+}
+
+@Composable
+private fun PersonBodyContent(
+    state: PersonPageUiState.Ready,
+    actions: PersonPageActions,
+    margin: Dp,
+) {
     val person = state.person
-    val margin = readingInset()
     val gap = dimensionResource(DesR.dimen.padding_m)
     Column(verticalArrangement = Arrangement.spacedBy(gap), modifier = Modifier.padding(bottom = gap)) {
         PersonProfile(person, Modifier.padding(horizontal = margin))
@@ -113,7 +138,7 @@ private fun ColumnScope.PersonBody(
                 ExpandableOverview(text = biography)
             }
         }
-        CreditsSection(state.credits, actions)
+        CreditsSection(state.credits, actions, margin)
         person.links().takeIf { it.isNotEmpty() }?.let { links ->
             Column(
                 Modifier.padding(horizontal = margin),
@@ -130,14 +155,15 @@ private fun ColumnScope.PersonBody(
 private fun CreditsSection(
     state: PersonCreditsState,
     actions: PersonPageActions,
+    inset: Dp,
 ) {
     when (state) {
         PersonCreditsState.Loading -> CreditsSkeleton()
         is PersonCreditsState.Error ->
             ErrorScreen(state.error, Modifier.padding(dimensionResource(DesR.dimen.padding_m)), actions.onRetryCredits)
         is PersonCreditsState.Ready -> {
-            CreditRail(stringResource(R.string.person_page_known_for), state.credits.cast, actions.onOpenTitle)
-            CreditRail(stringResource(R.string.title_page_crew), state.credits.crew, actions.onOpenTitle)
+            CreditRail(stringResource(R.string.person_page_known_for), state.credits.cast, inset, actions.onOpenTitle)
+            CreditRail(stringResource(R.string.title_page_crew), state.credits.crew, inset, actions.onOpenTitle)
         }
     }
 }
@@ -146,12 +172,17 @@ private fun CreditsSection(
 private fun CreditRail(
     title: String,
     credits: List<PersonCredit>,
+    inset: Dp,
     onOpen: (TitleKind, Int) -> Unit,
 ) {
     if (credits.isEmpty()) return
-    MediaCarousel(title = title, items = credits, itemKey = {
-        it.key
-    }, onEndTileClick = null, horizontalPadding = readingInset()) { _, credit ->
+    MediaCarousel(
+        title = title,
+        items = credits,
+        itemKey = { it.key },
+        onEndTileClick = null,
+        horizontalPadding = inset,
+    ) { _, credit ->
         MediaCard(
             posterUrl = credit.posterUrl,
             title = credit.title,

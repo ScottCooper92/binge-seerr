@@ -67,7 +67,7 @@ class WideShellJourneyTest {
     private fun awaitState(
         what: String,
         condition: () -> Boolean,
-    ) = host.await(what, WAIT_MILLIS, condition)
+    ) = host.await(what, WAIT_MILLIS, pending(), condition)
 
     @After
     fun flagOff() {
@@ -102,7 +102,10 @@ class WideShellJourneyTest {
     }
 
     /** Waits for the chip to read as selected: the filter comes back through restored state, a frame after the screen shows. */
-    private fun awaitChipSelected() = host.await("the Pending chip selected", WAIT_MILLIS) { chipIsSelected() }
+    private fun awaitChipSelected() = host.await("the Pending chip selected", WAIT_MILLIS, pending()) { chipIsSelected() }
+
+    /** Every node that says Pending, for a failure to list with its bounds and whether each can be selected, selected and enabled. */
+    private fun pending() = hasText(host.string(R.string.requests_filter_pending), substring = true)
 
     private fun chipIsSelected() =
         host.compose
@@ -117,6 +120,7 @@ class WideShellJourneyTest {
         NavHostActivity.discoveryEnabled = true
         host.connectDemo()
         host.launch(HomeRoute)
+        host.openSettingsTab()
         host.awaitShowing(host.string(R.string.hub_section_issues_desc))
         bar().assertIsDisplayed()
 
@@ -190,7 +194,7 @@ class WideShellJourneyTest {
     }
 
     @Test
-    fun `Back on another tab returns to Settings with the section open`() {
+    fun `choosing Settings again from another tab brings its section back`() {
         NavHostActivity.discoveryEnabled = true
         host.connectDemo()
         host.launch(HomeRoute, RequestsRoute)
@@ -201,7 +205,7 @@ class WideShellJourneyTest {
         host.compose.onNodeWithTag("tab_search").performClick()
         awaitState("the app stack to be listOf<NavKey>(ShellRoute)") { host.stack() == listOf<NavKey>(ShellRoute) }
 
-        host.back()
+        bar().performClick()
         awaitState("the app stack to be listOf<NavKey>(ShellRoute, RequestsRoute)") {
             host.stack() ==
                 listOf<NavKey>(ShellRoute, RequestsRoute)
@@ -335,7 +339,7 @@ class WideShellJourneyTest {
         host.connectDemo()
         host.launch(HomeRoute, RequestsRoute)
         awaitChipReady()
-        host.clickUntil("the Pending chip selected after tapping it", WAIT_MILLIS, target = ::chip, reached = ::chipIsSelected)
+        host.clickUntil("the Pending chip selected after tapping it", WAIT_MILLIS, pending(), target = ::chip, reached = ::chipIsSelected)
 
         host.rotate(PHONE)
         host.awaitShowing(host.string(R.string.requests_filter_pending))

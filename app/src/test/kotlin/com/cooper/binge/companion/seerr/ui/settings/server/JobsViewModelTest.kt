@@ -420,15 +420,25 @@ class JobsViewModelTest {
             try {
                 val collector = launch(start = CoroutineStart.UNDISPATCHED) { vm.uiState.collect {} }
                 vm.awaitReady()
+                // The first read's callback is still deciding, on OkHttp's thread, whether to start the poll when the state turns Ready.
+                // Let it finish while the page is watching, or a poll started after the page left would never be stopped.
+                seerr.awaitCallbacks()
                 collector.cancel()
                 testScheduler.runCurrent()
-                // Let a read the poll had in flight as the page left land before counting.
-                seerr.awaitCountHoldingTime("GET", "/api/v1/settings/jobs", moreThan = Int.MAX_VALUE)
+                // A read the poll had in flight as the page left finishes before counting: no real-time hold stands in for it.
+                seerr.awaitCallbacks()
+                testScheduler.runCurrent()
                 val reads = seerr.count("GET", "/api/v1/settings/jobs")
 
-                testScheduler.advanceTimeBy(100 * vm.runningRefreshMillis)
-                testScheduler.runCurrent()
-                assertFalse(seerr.awaitCountHoldingTime("GET", "/api/v1/settings/jobs", moreThan = reads))
+                // One poll's worth of virtual time at a time, draining each read's real-time callback between steps. A poll
+                // left running reads in each step, so it counts well past the one read a cancelled poll may still have on the wire.
+                repeat(5) {
+                    testScheduler.advanceTimeBy(vm.runningRefreshMillis)
+                    testScheduler.runCurrent()
+                    seerr.awaitCallbacks()
+                }
+                val after = seerr.count("GET", "/api/v1/settings/jobs")
+                assertTrue("the poll kept reading while the page was away: $reads reads, then $after", after - reads <= 1)
 
                 val returned = launch(start = CoroutineStart.UNDISPATCHED) { vm.uiState.collect {} }
                 testScheduler.runCurrent()

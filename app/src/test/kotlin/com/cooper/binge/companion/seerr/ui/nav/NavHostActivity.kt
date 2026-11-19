@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -52,8 +53,10 @@ class NavHostActivity : ComponentActivity() {
             if (!shown) return@setContent
             val stack = rememberNavBackStack(*firstStack.toTypedArray())
             backStack = stack
-            val tabs = rememberSeerrTabs()
+            val tabs = rememberSeerrTabs(discovery = discoveryEnabled)
             this.tabs = tabs
+            // A link's chain sits above the Settings tab, as MainActivity's openLink shows it; a plain launch opens on the start tab.
+            LaunchedEffect(tabs) { if (savedInstanceState == null && firstStack.size > 1 && discoveryEnabled) tabs.show(SeerrTab.Settings) }
             SeerrTheme {
                 CompositionLocalProvider(LocalDiscoveryEnabled provides discoveryEnabled) {
                     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {

@@ -57,6 +57,7 @@ class DiscoveryShellJourneyTest {
         NavHostActivity.discoveryEnabled = true
         host.connectDemo()
         host.launch(HomeRoute)
+        host.openSettingsTab()
         host.awaitShowing(host.string(R.string.hub_section_requests))
         bar().assertIsDisplayed()
         assertEquals(listOf<NavKey>(ShellRoute), host.stack())
@@ -74,7 +75,10 @@ class DiscoveryShellJourneyTest {
         assertEquals(listOf<NavKey>(ShellRoute), host.stack())
         assertFalse("Back from a section stays in the app", host.activity.isFinishing)
         host.back()
-        assertTrue("Back from the shell leaves the app", host.activity.isFinishing)
+        host.awaitShowing(host.string(R.string.hubs_browse_all_movies))
+        assertFalse("Back from Settings goes to Movies, the start tab", host.activity.isFinishing)
+        host.back()
+        assertTrue("Back from Movies leaves the app", host.activity.isFinishing)
     }
 
     @Test
@@ -92,23 +96,23 @@ class DiscoveryShellJourneyTest {
     }
 
     @Test
-    fun `back from another tab returns to the start tab and only back from that leaves the app`() {
+    fun `the app opens on Movies and back from another tab returns to it and only back from Movies leaves the app`() {
         NavHostActivity.discoveryEnabled = true
         host.connectDemo()
         host.launch(HomeRoute)
-        host.awaitShowing(host.string(R.string.hub_section_requests))
+        host.awaitShowing(host.string(R.string.hubs_browse_all_movies))
 
         host.compose.onNodeWithTag("tab_search").performClick()
         host.awaitShowing(host.string(R.string.title_search_placeholder))
         assertEquals(listOf<NavKey>(ShellRoute), host.stack())
 
         host.back()
-        host.awaitShowing(host.string(R.string.hub_section_requests))
+        host.awaitShowing(host.string(R.string.hubs_browse_all_movies))
         assertFalse("Back from another tab stays in the app", host.activity.isFinishing)
         bar().assertIsDisplayed()
 
         host.back()
-        assertTrue("Back from the start tab leaves the app", host.activity.isFinishing)
+        assertTrue("Back from Movies, the start tab, leaves the app", host.activity.isFinishing)
     }
 
     @Test
