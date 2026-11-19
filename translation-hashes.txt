@@ -1256,8 +1256,8 @@ app:title_search_idle_message  c60d5b36dc11
 app:title_search_idle_title  0410cdd0c766
 app:title_search_kind_year  fed2d9b8a028
 app:title_search_more_failed  457068ead784
-app:title_search_none_message  828429113faa
-app:title_search_none_title  a43619f32117
+app:title_search_none_message  50f80cb49add
+app:title_search_none_title  562e0f007c1a
 app:title_search_placeholder  c433649b7de6
 app:title_search_recent  228c84b5a56e
 app:title_search_recent_clear  83b12c2216ef
