@@ -51,6 +51,8 @@ class TitlePageActions(
     val onCloseStatus: () -> Unit = {},
     /** Request in 4K, tapped in a request's sheet: that sheet closes and the request sheet opens. */
     val onRequestFourK: () -> Unit = {},
+    /** The watchlist button, tapped. */
+    val onToggleWatchlist: () -> Unit = {},
     /** Remove from blocklist, tapped in the status sheet of a blocklisted title. */
     val onUnblock: () -> Unit = {},
     /** The sheet of one request, backed by that request's own view model, which the nav entry supplies. */
@@ -94,6 +96,7 @@ private fun ReadyPage(
             when (event) {
                 is TitlePageEvent.Requested -> snackbar.showSnackbar(resources.getString(event.result.messageRes()))
                 TitlePageEvent.Unblocked -> snackbar.showSnackbar(resources.getString(R.string.blocklist_removed))
+                is TitlePageEvent.WatchlistFailed -> snackbar.showSnackbar(resources.getString(event.error.messageRes()))
                 is TitlePageEvent.UnblockFailed -> snackbar.showSnackbar(resources.getString(event.error.messageRes()))
                 TitlePageEvent.ReloadFailed -> {
                     val answer =

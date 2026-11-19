@@ -58,6 +58,8 @@ sealed interface SeriesPageUiState {
         val manageSheetOpen: Boolean = false,
         val statusSheetOpen: Boolean = false,
         val reportSheetOpen: Boolean = false,
+        /** A watchlist call is in flight, so another tap waits for it. */
+        val watchlistBusy: Boolean = false,
         val selectedSeason: Int? = null,
         val episodes: Map<Int, EpisodesState> = emptyMap(),
     ) : SeriesPageUiState {
@@ -77,6 +79,11 @@ sealed interface SeriesPageEvent {
 
     /** The title came off the blocklist, for the screen's snackbar; the page reads it again. */
     data object Unblocked : SeriesPageEvent
+
+    /** The watchlist call failed, so the button is back where it was; the screen says so. */
+    data class WatchlistFailed(
+        val error: SeerrError,
+    ) : SeriesPageEvent
 
     /** The server refused or could not be reached, so the title stays blocklisted. */
     data class UnblockFailed(
@@ -153,14 +160,35 @@ class SeriesPageViewModel
             }
 
         /** The request's sheet closed. The id stays, and a change made in it reloads the page through the sheet's own `onChanged`. */
-        fun closeManageSheet() = updateReady { it.copy(manageSheetOpen = false) }
+        fun closeSheet(sheet: TitleSheet) =
+            updateReady {
+                when (sheet) {
+                    TitleSheet.Manage -> it.copy(manageSheetOpen = false)
+                    TitleSheet.Status -> it.copy(statusSheetOpen = false)
+                }
+            }
 
-        fun closeStatusSheet() = updateReady { it.copy(statusSheetOpen = false) }
+        /** The watchlist button was tapped: it flips at once, and flips back with a message if the server refuses. */
+        fun toggleWatchlist() {
+            val ready = state.value as? SeriesPageUiState.Ready ?: return
+            if (!ready.series.mayWatchlist || ready.watchlistBusy) return
+            val target = !ready.series.onWatchlist
+            updateReady { it.copy(series = it.series.copy(onWatchlist = target), watchlistBusy = true) }
+            viewModelScope.launch {
+                attempt { repository.setWatchlist(tmdbId, ready.series.name, target) }.fold(
+                    onSuccess = { updateReady { it.copy(watchlistBusy = false) } },
+                    onFailure = { failure ->
+                        updateReady { it.copy(series = it.series.copy(onWatchlist = !target), watchlistBusy = false) }
+                        eventFlow.tryEmit(SeriesPageEvent.WatchlistFailed(failure.toSeerrError()))
+                    },
+                )
+            }
+        }
 
         /** Takes the title off the blocklist from the status sheet: the sheet closes, the page reads the title again, and a snackbar says so. */
         fun unblock() {
             if (ready?.series?.mayUnblock != true) return
-            closeStatusSheet()
+            closeSheet(TitleSheet.Status)
             viewModelScope.launch {
                 attempt { repository.unblock(tmdbId) }.fold(
                     onSuccess = {

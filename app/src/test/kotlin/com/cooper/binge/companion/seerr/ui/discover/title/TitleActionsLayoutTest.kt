@@ -37,6 +37,7 @@ class TitleActionsLayoutTest {
         trailer: Boolean,
         report: Boolean,
         fontScale: Float = 2f,
+        watchlist: Boolean = false,
     ) = rule.setContent {
         SeerrTheme {
             CompositionLocalProvider(LocalDensity provides Density(LocalDensity.current.density, fontScale)) {
@@ -51,6 +52,7 @@ class TitleActionsLayoutTest {
                     onPrimary = {},
                     onTrailer = if (trailer) ({}) else null,
                     onReport = if (report) ({}) else null,
+                    watchlist = if (watchlist) WatchlistButton(onList = false, onToggle = {}) else null,
                 )
             }
         }
@@ -92,6 +94,34 @@ class TitleActionsLayoutTest {
         assertWithinWindow("Partial", "Trailer", "Report")
         assertTrue("the buttons are below the primary", bounds("Trailer").top >= bounds("Partial").bottom)
         assertEquals("the buttons share a row", bounds("Trailer").top, bounds("Report").top)
+    }
+
+    @Test
+    @Config(qualifiers = PHONE)
+    fun `a trailer and a watchlist button stack under the primary without a report`() {
+        show(trailer = true, report = false, watchlist = true)
+
+        assertWithinWindow("Partial", "Trailer", "Watchlist")
+        assertTrue("the buttons are below the primary", bounds("Trailer").top >= bounds("Partial").bottom)
+    }
+
+    @Test
+    @Config(qualifiers = PHONE)
+    fun `three round buttons at the largest font stay inside the window on one row below the primary`() {
+        show(trailer = true, report = true, watchlist = true)
+
+        assertWithinWindow("Partial", "Trailer", "Watchlist", "Report")
+        assertTrue("the buttons are below the primary", bounds("Trailer").top >= bounds("Partial").bottom)
+        assertEquals("the buttons share a row", bounds("Trailer").top, bounds("Watchlist").top)
+        assertEquals("the buttons share a row", bounds("Watchlist").top, bounds("Report").top)
+    }
+
+    @Test
+    @Config(qualifiers = "es-$PHONE")
+    fun `the longest watchlist label stays inside the window in Spanish at the largest font`() {
+        show(trailer = true, report = true, watchlist = true)
+
+        assertWithinWindow("Lista de seguimiento")
     }
 
     @Test
