@@ -130,6 +130,8 @@
     <string name="title_search_type_none_message">Ninguno de los resultados de “%1$s” es de este tipo. Elige otro grupo o Todo.</string>
     <string name="title_search_title">Buscar</string>
     <string name="title_search_type_all">Todo</string>
+    <string name="title_search_type_studios">Estudios</string>
+    <string name="title_kind_studio">Estudio</string>
     <string name="title_search_type_people">Personas</string>
     <string name="title_search_trending_movies">Películas en tendencia</string>
     <string name="title_search_trending_series">Series en tendencia</string>

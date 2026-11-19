@@ -1,5 +1,6 @@
 package com.cooper.binge.companion.seerr.ui.search.title
 
+import com.cooper.binge.companion.seerr.discover.StudioResult
 import com.cooper.binge.companion.seerr.discover.TitleResult
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 
@@ -21,6 +22,8 @@ sealed interface TitleSearchUiState {
     data class Ready(
         override val text: String,
         val results: List<TitleResult>,
+        /** The studios the search found, drawn on the Studios chip; empty where it found none. */
+        val studios: List<StudioResult> = emptyList(),
         /** How many results have loaded in all, whatever type is chosen: it grows with every page, which [results] may not. */
         val loaded: Int,
         val type: SearchType,
@@ -29,6 +32,8 @@ sealed interface TitleSearchUiState {
         val hasMore: Boolean,
         val appending: Boolean,
         val appendFailed: Boolean,
+        /** Whether the server has the company search; the Studios chip is left out where it has not. */
+        val hasStudios: Boolean = true,
     ) : TitleSearchUiState
 
     /**
@@ -40,6 +45,7 @@ sealed interface TitleSearchUiState {
         val query: String,
         val type: SearchType,
         val browseAll: Boolean = true,
+        val hasStudios: Boolean = true,
     ) : TitleSearchUiState
 
     data class Error(

@@ -141,6 +141,9 @@ data class SeerrServerProfile(
     /** The slider routes arrived with Overseerr 1.32 and with Jellyseerr 1.4; Jellyseerr 1.0 to 1.3 answer 404. */
     val hasDiscoverSliders: Boolean get() = if (jellyseerrLineage) atLeast(1, 4) else atLeast(1, 32)
 
+    /** `/search/company` arrived with the slider routes, in the same releases. */
+    val hasCompanySearch: Boolean get() = hasDiscoverSliders
+
     /**
      * The discover variants that arrived after the base calls. Each version is the first release tag whose
      * `server/routes/discover.ts` registers the route, in Overseerr and in Jellyseerr; `docs/server-compatibility.md` has them.
