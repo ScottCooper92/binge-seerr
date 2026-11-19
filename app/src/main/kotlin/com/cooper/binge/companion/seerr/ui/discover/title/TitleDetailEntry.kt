@@ -10,6 +10,7 @@ import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.TitleResult
 import com.cooper.binge.companion.seerr.discover.request.RequestResult
 import com.cooper.binge.companion.seerr.discover.title.TitleCompany
+import com.cooper.binge.companion.seerr.discover.title.TitleKeyword
 import com.cooper.binge.companion.seerr.ui.SiblingRequestSheet
 import com.cooper.binge.companion.seerr.ui.openInBrowser
 import com.cooper.binge.companion.seerr.ui.state.EmptyScreen
@@ -33,12 +34,14 @@ internal fun TitleDetailEntry(
     onOpenCredits: () -> Unit,
     onOpenSeason: (seasonNumber: Int, seriesName: String) -> Unit,
     onOpenCompany: (TitleCompany) -> Unit,
+    onOpenKeyword: (TitleKeyword) -> Unit,
     onOpenUser: (Int) -> Unit,
     onOpenServices: () -> Unit,
 ) {
     when (kind) {
-        TitleKind.Movie -> FilmPageEntry(tmdbId, onBack, onOpenCredits, onOpenCompany, onOpenUser, onOpenServices)
-        TitleKind.Series -> SeriesPageEntry(tmdbId, onBack, onOpenCredits, onOpenSeason, onOpenCompany, onOpenUser, onOpenServices)
+        TitleKind.Movie -> FilmPageEntry(tmdbId, onBack, onOpenCredits, onOpenCompany, onOpenKeyword, onOpenUser, onOpenServices)
+        TitleKind.Series ->
+            SeriesPageEntry(tmdbId, onBack, onOpenCredits, onOpenSeason, onOpenCompany, onOpenKeyword, onOpenUser, onOpenServices)
         else -> EmptyScreen(message = "")
     }
 }
@@ -49,6 +52,7 @@ private fun FilmPageEntry(
     onBack: () -> Unit,
     onOpenCredits: () -> Unit,
     onOpenCompany: (TitleCompany) -> Unit,
+    onOpenKeyword: (TitleKeyword) -> Unit,
     onOpenUser: (Int) -> Unit,
     onOpenServices: () -> Unit,
 ) {
@@ -62,6 +66,7 @@ private fun FilmPageEntry(
                 onBack = onBack,
                 onOpenCredits = onOpenCredits,
                 onOpenCompany = onOpenCompany,
+                onOpenKeyword = onOpenKeyword,
                 onRetry = viewModel::load,
                 onRequest = viewModel::onPrimary,
                 onCloseRequest = viewModel::closeRequestSheet,
@@ -81,6 +86,7 @@ private fun SeriesPageEntry(
     onOpenCredits: () -> Unit,
     onOpenSeason: (Int, String) -> Unit,
     onOpenCompany: (TitleCompany) -> Unit,
+    onOpenKeyword: (TitleKeyword) -> Unit,
     onOpenUser: (Int) -> Unit,
     onOpenServices: () -> Unit,
 ) {
@@ -94,6 +100,7 @@ private fun SeriesPageEntry(
                 onBack = onBack,
                 onOpenCredits = onOpenCredits,
                 onOpenCompany = onOpenCompany,
+                onOpenKeyword = onOpenKeyword,
                 onRetry = viewModel::load,
                 onRequest = viewModel::onPrimary,
                 onCloseRequest = viewModel::closeRequestSheet,
@@ -113,6 +120,7 @@ private fun rememberTitlePageActions(
     onBack: () -> Unit,
     onOpenCredits: () -> Unit,
     onOpenCompany: (TitleCompany) -> Unit,
+    onOpenKeyword: (TitleKeyword) -> Unit,
     onRetry: () -> Unit,
     onRequest: () -> Unit,
     onCloseRequest: () -> Unit,
@@ -136,6 +144,7 @@ private fun rememberTitlePageActions(
         onOpenUrl = context::openInBrowser,
         onOpenCredits = onOpenCredits,
         onOpenCompany = onOpenCompany,
+        onOpenKeyword = onOpenKeyword,
         onReload = onReload,
         onCloseManage = onCloseManage,
         manageSheet = { sheet -> SiblingRequestSheet(sheet, onOpenUser, onOpenServices) },

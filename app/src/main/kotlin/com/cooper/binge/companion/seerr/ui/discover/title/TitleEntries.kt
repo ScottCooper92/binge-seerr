@@ -47,6 +47,9 @@ internal fun EntryProviderScope<NavKey>.titleEntries(
                 onOpenCompany = { company ->
                     backStack.add(DiscoverGridRoute(route.kind, GridPreset.Company(company.id), company.name))
                 },
+                onOpenKeyword = { keyword ->
+                    backStack.add(DiscoverGridRoute(route.kind, GridPreset.Keyword(keyword.id), keyword.name))
+                },
                 onOpenUser = { id -> backStack.add(UserDetailRoute(id)) },
                 onOpenServices = { backStack.add(ServerSettingsPageRoute(ServerSettingsPage.Services)) },
             )

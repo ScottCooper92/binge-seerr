@@ -65,7 +65,7 @@ class SeerrSeriesRepository(
                     mayViewAllRequests = permissions.canViewRequests,
                     settings = profile.settings,
                     webUrl = serverUrl() + "tv/" + tmdbId,
-                ).copy(companiesOpen = profile.hasDiscoverByCategory)
+                ).copy(companiesOpen = profile.hasDiscoverByCategory, keywordsOpen = profile.hasKeywordDiscover)
         }
 
     override suspend fun season(
@@ -144,7 +144,7 @@ internal fun SeerrTvDetailsDto.toSeriesDetails(
         voteAverage = voteAverage?.takeIf { it > 0.0 },
         voteCount = voteCount?.takeIf { it > 0 },
         genres = genres.map { it.name },
-        keywords = keywords.map { it.name },
+        keywords = keywords.map { TitleKeyword(it.id, it.name) },
         status = status?.takeIf { it.isNotBlank() },
         inProduction = inProduction,
         originalLanguage = originalLanguage,
