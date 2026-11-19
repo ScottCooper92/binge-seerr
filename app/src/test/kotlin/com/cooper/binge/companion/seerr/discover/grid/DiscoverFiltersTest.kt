@@ -158,6 +158,7 @@ class DiscoverFiltersTest {
     fun `trending and the watchlist are not filterable`() {
         assertFalse(GridPreset.Trending.isFilterable)
         assertFalse(GridPreset.Watchlist.isFilterable)
+        assertFalse(GridPreset.OwnWatchlist.isFilterable)
         assertTrue(GridPreset.Popular.isFilterable)
         assertTrue(GridPreset.Provider(8, "GB").isFilterable)
     }

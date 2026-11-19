@@ -7,6 +7,8 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.cooper.binge.companion.seerr.discover.TitleKind
+import com.cooper.binge.companion.seerr.discover.grid.GridPreset
 import com.cooper.binge.companion.seerr.discover.sliders.HubGrid
 import com.cooper.binge.companion.seerr.ui.discover.title.LocalOpenTitle
 
@@ -40,6 +42,7 @@ fun TitleSearchEntry(
                 onOpenTitle = viewModel::onOpenTitle,
                 onType = viewModel::onType,
                 onOpenGrid = onOpenGrid,
+                onOpenStudio = { studio -> onOpenGrid(HubGrid(TitleKind.Movie, GridPreset.Company(studio.id)), studio.name) },
             ),
         modifier = modifier,
     )

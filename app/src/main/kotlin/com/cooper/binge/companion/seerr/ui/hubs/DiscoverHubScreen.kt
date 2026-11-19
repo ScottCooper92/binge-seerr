@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -35,6 +36,7 @@ import com.binge.designsystem.component.LogoTile
 import com.binge.designsystem.component.MediaCard
 import com.binge.designsystem.component.MediaCardStatus
 import com.binge.designsystem.component.MediaCarousel
+import com.binge.designsystem.component.ScrollToTopOnTabReselect
 import com.binge.designsystem.component.StatusBarScrim
 import com.binge.designsystem.layout.LayoutAnchors
 import com.binge.designsystem.layout.layoutAnchor
@@ -177,7 +179,9 @@ private fun HubRows(
     onOpenRequests: () -> Unit,
 ) {
     val discoverTab = showDiscoverTab()
-    LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = contentPadding) {
+    val listState = rememberLazyListState()
+    ScrollToTopOnTabReselect(tab.shellTab(), listState)
+    LazyColumn(state = listState, modifier = Modifier.fillMaxSize(), contentPadding = contentPadding) {
         if (state.heroPlace) item(key = HERO_KEY) { Hero(state.hero, onOpenTitle) }
         // Where Discover is a tab of its own the card is a second way to the same grid, so it is left out, as in Binge.
         if (state.browseAll && !discoverTab) item(key = BROWSE_ALL_KEY) { BrowseAllRow(tab, onOpenGrid) }

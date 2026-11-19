@@ -148,6 +148,8 @@
     <string name="title_search_type_none_message">None of the results for “%1$s” are of this kind. Choose another group or All.</string>
     <string name="title_search_title">Search</string>
     <string name="title_search_type_all">All</string>
+    <string name="title_search_type_studios">Studios</string>
+    <string name="title_kind_studio">Studio</string>
     <string name="title_search_type_people">People</string>
     <string name="title_search_trending_movies">Trending movies</string>
     <string name="title_search_trending_series">Trending shows</string>
@@ -547,6 +549,10 @@
     <string name="user_plays">Plays</string>
     <string name="user_permissions_title">Permissions</string>
     <string name="user_recently_watched">Recently watched</string>
+    <plurals name="user_watchlist_count">
+        <item quantity="one">%1$s title</item>
+        <item quantity="other">%1$s titles</item>
+    </plurals>
     <string name="user_watchlist">Watchlist</string>
     <string name="user_no_requests">No requests yet.</string>
     <string name="user_delete">Delete user</string>
@@ -1268,6 +1274,8 @@
     <string name="overflow_menu">More options</string>
     <string name="report_problem">Report a problem</string>
     <string name="settings_report_bug_caption">Opens GitHub with your device details filled in</string>
+    <string name="settings_discovery">Discovery</string>
+    <string name="settings_discovery_caption">Browse, search and request titles in the app</string>
     <string name="settings_shake_to_report">Shake to report</string>
     <string name="shake_report_title">Report a bug?</string>
     <string name="shake_report_message">This opens a new issue on this app\'s GitHub page, with your app version and device filled in. Nothing about your server is included.</string>

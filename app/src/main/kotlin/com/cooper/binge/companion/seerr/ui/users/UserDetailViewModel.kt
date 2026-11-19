@@ -20,6 +20,7 @@ import com.cooper.binge.companion.seerr.di.IoDispatcher
 import com.cooper.binge.companion.seerr.seerr.ManageablePermission
 import com.cooper.binge.companion.seerr.seerr.SeerrApi
 import com.cooper.binge.companion.seerr.seerr.SeerrPermissions
+import com.cooper.binge.companion.seerr.seerr.SeerrServerProfile
 import com.cooper.binge.companion.seerr.seerr.SeerrUserDto
 import com.cooper.binge.companion.seerr.seerr.TitleCache
 import com.cooper.binge.companion.seerr.seerr.toPermissions
@@ -272,6 +273,7 @@ class UserDetailViewModel
                         .orEmpty()
                 val cards = titled(api, recent + listed)
                 val viewerDto = viewer.await()
+                val watchlistPage = watchlist.await()
                 val permissions = viewerDto.toPermissions()
                 UserDetail(
                     item = item,
@@ -280,6 +282,8 @@ class UserDetailViewModel
                     watch = watch.await()?.let { UserWatch(playCount = it.playCount, recentlyWatched = recent.mapNotNull(cards::get)) },
                     watchlist = listed.mapNotNull(cards::get),
                     isSelf = viewerDto?.id == userId,
+                    watchlistCount = watchlistPage?.let { page -> page.totalResults ?: page.results.size.takeIf { page.totalPages <= 1 } },
+                    mayOpenWatchlist = mayOpenWatchlist(viewerDto?.id, userId, connection.profile()),
                     canViewRequests = viewerDto.mayReadRequestsOf(userId),
                     canEditSettings = mayOpenSettings(userId, viewerDto?.id, permissions),
                     canDelete = permissions.canDelete(target = item, viewerId = viewerDto?.id),
@@ -324,3 +328,10 @@ private fun SeerrPermissions.canDelete(
     if (target.id == OWNER_USER_ID || target.id == viewerId) return false
     return !target.isAdmin || viewerId == OWNER_USER_ID
 }
+
+/** The row that opens the watchlist grid: the viewer's own page, on a server that has a watchlist to read. */
+internal fun mayOpenWatchlist(
+    viewerId: Int?,
+    userId: Int,
+    profile: SeerrServerProfile,
+): Boolean = viewerId == userId && profile.hasDiscoverWatchlist

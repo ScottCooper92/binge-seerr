@@ -1,5 +1,6 @@
 package com.cooper.binge.companion.seerr.ui.search.title
 
+import com.cooper.binge.companion.seerr.discover.StudioResult
 import com.cooper.binge.companion.seerr.discover.TitleAvailability
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.TitleResult
@@ -61,12 +62,14 @@ private fun ready(
     type: SearchType = SearchType.All,
     appending: Boolean = false,
     appendFailed: Boolean = false,
+    studios: List<StudioResult> = STUDIOS,
 ) = TitleSearchUiState.Ready(
     text = "lighthouse",
     results = results.filter(type::keeps),
+    studios = studios,
     loaded = results.size,
     type = type,
-    counts = results.typeCounts(),
+    counts = results.typeCounts(studios.size),
     genreNames = GENRE_NAMES,
     hasMore = true,
     appending = appending,
@@ -74,6 +77,14 @@ private fun ready(
 )
 
 internal fun readyResultsState() = ready(searchResults())
+
+private val STUDIOS =
+    listOf(
+        StudioResult(1, "Lighthouse Pictures", null),
+        StudioResult(2, "Beacon Films and a Very Long Studio Name That Wraps", null),
+    )
+
+internal fun readyStudiosState() = ready(searchResults(), SearchType.Studios)
 
 internal fun readyMoviesState() = ready(searchResults(), SearchType.Movies)
 
@@ -92,4 +103,4 @@ internal fun noResultsState() = TitleSearchUiState.NoResults("qzxv", "qzxv", Sea
 internal fun failedState() = TitleSearchUiState.Error("lighthouse", SeerrError.Unreachable)
 
 internal val noActions =
-    TitleSearchActions({}, {}, {}, {}, {}, {}, {}, {}, {}, { _, _ -> })
+    TitleSearchActions({}, {}, {}, {}, {}, {}, {}, {}, {}, { _, _ -> }, {})
