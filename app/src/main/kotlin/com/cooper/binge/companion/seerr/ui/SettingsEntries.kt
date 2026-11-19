@@ -18,16 +18,17 @@ import com.cooper.binge.companion.seerr.ui.settings.server.ServerSettingsPage
 import com.cooper.binge.companion.seerr.ui.state.LoadingScreen
 
 /**
- * The settings search, beside the hub on the hub route and over the whole window on a narrow one (#2343). It is a detail pane,
- * not a section: on the shell it stays out of [ShellPanesStrategy]'s section scene. What was open beneath it stays on the stack,
- * so Back brings it back. A result opens its page above the search through [PaneLayout.openFromSearch], and the search stays on
- * the stack, so Back from the page returns to the search as it was.
+ * The settings search, as any section is: beside the hub in the one content pane on a wide window, over the whole window on a
+ * narrow one (#2343). It is not a hub section, but [opensBesideHub] counts it as one, so [ShellPanesStrategy] draws it in the
+ * Settings tab and the stash and the window checks agree. What was open beneath it stays on the stack, so Back brings it back. A
+ * result opens its page above the search through [PaneLayout.openFromSearch], and the search stays on the stack, so Back from the
+ * page returns to the search as it was.
  */
 internal fun EntryProviderScope<NavKey>.searchEntries(
     backStack: NavBackStack<NavKey>,
     panes: PaneLayout,
 ) {
-    entry<SettingsSearchRoute>(metadata = DetailPane + panes.motion.detail) { route ->
+    entry<SettingsSearchRoute>(metadata = DetailPane + SectionPane + panes.motion.detail) { route ->
         SettingsSearchEntry(
             onOpen = { target -> panes.openFromSearch(backStack, target) },
             onBack = { backStack.popIfTop(route) },

@@ -24,6 +24,7 @@ import com.cooper.binge.companion.seerr.ui.DiscoverGridRoute
 import com.cooper.binge.companion.seerr.ui.HomeRoute
 import com.cooper.binge.companion.seerr.ui.IssuesRoute
 import com.cooper.binge.companion.seerr.ui.RequestsRoute
+import com.cooper.binge.companion.seerr.ui.SettingsSearchRoute
 import com.cooper.binge.companion.seerr.ui.ShellRoute
 import com.cooper.binge.companion.seerr.ui.TitleDetailRoute
 import com.cooper.binge.companion.seerr.ui.shell.SeerrTab
@@ -230,6 +231,31 @@ class WideShellJourneyTest {
             "two entries on the app stack",
         ) { host.stack().let { it.size == 2 && it[0] == ShellRoute && it[1] is DiscoverGridRoute } }
         host.awaitShowing(host.string(R.string.hubs_row_popular_movies))
+    }
+
+    @Test
+    fun `a search opened from the bare hub is stashed with the tab and a grid opened from another tab is not hidden by it`() {
+        NavHostActivity.discoveryEnabled = true
+        host.connectDemo()
+        host.launch(HomeRoute, SettingsSearchRoute)
+        awaitState("the app stack to be listOf(ShellRoute, SettingsSearchRoute)") {
+            host.stack() == listOf(ShellRoute, SettingsSearchRoute)
+        }
+        bar().assertIsDisplayed()
+        host.awaitShowing(host.string(R.string.hub_section_requests_desc))
+
+        host.compose.onNodeWithTag("tab_movies").performClick()
+        host.awaitShowing(host.string(R.string.hubs_browse_all_movies))
+        awaitState("the search to leave the app stack with its tab") { host.stack() == listOf<NavKey>(ShellRoute) }
+        host.compose.onNodeWithText(host.string(R.string.hubs_browse_all_movies)).performClick()
+
+        awaitState("the grid on the app stack") { host.stack().let { it.size == 2 && it[0] == ShellRoute && it[1] is DiscoverGridRoute } }
+        host.awaitShowing(host.string(R.string.hubs_row_popular_movies))
+
+        host.back()
+        awaitState("the grid closed") { host.stack() == listOf<NavKey>(ShellRoute) }
+        bar().performClick()
+        awaitState("the search back beside the hub") { host.stack() == listOf(ShellRoute, SettingsSearchRoute) }
     }
 
     @Test
