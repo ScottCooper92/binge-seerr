@@ -10,6 +10,7 @@ import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import com.binge.designsystem.PaneContent
 import com.binge.designsystem.PaneEdge
+import com.binge.designsystem.component.ProvideRowFocus
 import com.cooper.binge.companion.seerr.ui.hub.HubSection
 import com.cooper.binge.companion.seerr.ui.settings.diagnostics.DiagnosticsEntry
 import com.cooper.binge.companion.seerr.ui.settings.licences.LicencesEntry
@@ -56,7 +57,13 @@ internal fun EntryProviderScope<NavKey>.sectionEntries(
     ) { DetailPaneContent { SectionContent(HubSection.Settings, backStack, panes.showBack(), open) } }
     entry<ThisAppRoute>(
         metadata = section,
-    ) { DetailPaneContent { SectionContent(HubSection.ThisApp, backStack, panes.showBack(), open) } }
+    ) { route ->
+        DetailPaneContent {
+            ProvideRowFocus(
+                route.row,
+            ) { SectionContent(HubSection.ThisApp, backStack, panes.showBack(), open) }
+        }
+    }
 }
 
 /**

@@ -7,7 +7,9 @@ import androidx.compose.material.icons.filled.Animation
 import androidx.compose.material.icons.filled.Badge
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Event
+import androidx.compose.material.icons.filled.Healing
 import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.Insights
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.filled.Link
@@ -19,6 +21,7 @@ import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.Title
 import androidx.compose.material.icons.filled.Translate
 import androidx.compose.material.icons.filled.Tv
+import androidx.compose.material.icons.filled.Vibration
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.filled.VpnKey
@@ -224,6 +227,30 @@ internal val settingRowEntries: List<IndexEntry> =
                 SettingRows.ACCOUNT_DISCOVER_LANGUAGE,
             ),
         )
+        add(
+            appSetting(
+                R.string.settings_shake_to_report,
+                Icons.Filled.Vibration,
+                SettingRows.APP_SHAKE_TO_REPORT,
+                R.string.search_kw_shake,
+            ),
+        )
+        add(
+            appSetting(
+                R.string.settings_share_usage_data,
+                Icons.Filled.Insights,
+                SettingRows.APP_SHARE_USAGE_DATA,
+                R.string.search_kw_usage_data,
+            ),
+        )
+        add(
+            appSetting(
+                R.string.settings_send_crash_reports,
+                Icons.Filled.Healing,
+                SettingRows.APP_SEND_CRASH_REPORTS,
+                R.string.search_kw_crash_reports,
+            ),
+        )
     }
 
 private fun setting(
@@ -235,6 +262,14 @@ private fun setting(
     @StringRes pageLabel: Int = page.label(),
     shown: (SearchAccess) -> Boolean = { true },
 ) = IndexEntry(SearchTarget.Server(page), label, icon, R.string.hub_section_settings, keywords, pageLabel, row, shown)
+
+/** A setting on the This app page, which is not the server's: its own section, and the page's name in the results. */
+private fun appSetting(
+    @StringRes label: Int,
+    icon: ImageVector,
+    row: String,
+    @StringRes keywords: Int,
+) = IndexEntry(SearchTarget.ThisApp, label, icon, R.string.settings_group_app, keywords, R.string.hub_section_this_app, row)
 
 private fun setting(
     page: UserSettingsPage,
