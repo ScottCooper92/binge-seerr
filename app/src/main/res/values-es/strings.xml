@@ -1527,16 +1527,16 @@
         <item quantity="other">%d temporadas</item>
     </plurals>
     <string name="title_page_stat_rating">Nota</string>
-    <string name="title_page_stat_critics">Crítica</string>
-    <string name="title_page_stat_audience">Público</string>
-    <string name="title_page_stat_imdb">IMDb</string>
+    <string name="title_page_score_critics">Crítica: %1$d por ciento</string>
+    <string name="title_page_score_audience">Público: %1$d por ciento</string>
+    <string name="title_page_score_imdb">IMDb: %1$s sobre 10</string>
+    <string name="title_page_details">Detalles</string>
     <string name="title_page_cast">Reparto</string>
     <string name="title_page_crew">Equipo principal</string>
     <string name="title_page_where_to_watch">Dónde verla</string>
     <string name="title_page_watch_stream">Streaming</string>
     <string name="title_page_watch_buy">Comprar</string>
     <string name="title_page_justwatch">Datos proporcionados por JustWatch</string>
-    <string name="title_page_collection">Colección</string>
     <string name="title_page_keywords">Palabras clave</string>
     <string name="title_page_fact_status">Estado</string>
     <string name="title_page_fact_original_language">Idioma original</string>

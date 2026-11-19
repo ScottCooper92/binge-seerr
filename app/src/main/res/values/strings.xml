@@ -1586,16 +1586,16 @@
         <item quantity="other">%d seasons</item>
     </plurals>
     <string name="title_page_stat_rating">Rating</string>
-    <string name="title_page_stat_critics">Critics</string>
-    <string name="title_page_stat_audience">Audience</string>
-    <string name="title_page_stat_imdb">IMDb</string>
+    <string name="title_page_score_critics">Critics %1$d percent</string>
+    <string name="title_page_score_audience">Audience %1$d percent</string>
+    <string name="title_page_score_imdb">IMDb %1$s out of 10</string>
+    <string name="title_page_details">Details</string>
     <string name="title_page_cast">Cast</string>
     <string name="title_page_crew">Key crew</string>
     <string name="title_page_where_to_watch">Where to watch</string>
     <string name="title_page_watch_stream">Stream</string>
     <string name="title_page_watch_buy">Buy</string>
     <string name="title_page_justwatch">Data provided by JustWatch</string>
-    <string name="title_page_collection">Collection</string>
     <string name="title_page_keywords">Keywords</string>
     <string name="title_page_fact_status">Status</string>
     <string name="title_page_fact_original_language">Original language</string>

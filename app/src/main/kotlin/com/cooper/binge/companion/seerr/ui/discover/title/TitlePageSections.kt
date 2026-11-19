@@ -17,7 +17,6 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.BingeTag
 import com.binge.designsystem.component.ExpandableOverview
-import com.binge.designsystem.component.InfoRowList
 import com.binge.designsystem.component.MediaCard
 import com.binge.designsystem.component.MediaCardStatus
 import com.binge.designsystem.component.MediaCarousel
@@ -61,18 +60,6 @@ internal fun TitlePageBody(
             modifier = Modifier.readingMargin().layoutAnchor(LayoutAnchors.section(LayoutAnchors.Detail.ACTIONS)),
         )
         if (!expanded && movie.overview != null) Box(Modifier.readingMargin()) { OverviewSection(movie.overview) }
-        InfoRowList(
-            movie.factEntries(
-                context.resources,
-                locale,
-                state.extras?.ratings,
-                actions.onOpenCompany.takeIf {
-                    movie.companiesOpen
-                },
-                actions.onOpenPerson,
-            ),
-            Modifier.readingMargin(),
-        )
         PeopleRow(stringResource(R.string.title_page_cast), movie.cast, actions.onOpenPerson, actions.onOpenCredits)
         PeopleRow(stringResource(R.string.title_page_crew), movie.keyCrew, actions.onOpenPerson, actions.onOpenCredits)
         WhereToWatchSection(movie.providers, actions.onOpenUrl, Modifier.readingMargin())
@@ -86,6 +73,9 @@ internal fun TitlePageBody(
         }
         state.extras?.let { TitleRow(stringResource(R.string.title_page_more_like_this), it.moreLikeThis, actions.onOpenTitle) }
         KeywordsSection(movie.keywords, Modifier.readingMargin())
+        TitleDetailsSection(
+            movie.detailEntries(context.resources, locale, actions.onOpenCompany.takeIf { movie.companiesOpen }, actions.onOpenPerson),
+        )
     }
 }
 
