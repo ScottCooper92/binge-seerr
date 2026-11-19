@@ -154,6 +154,7 @@ internal fun SeerrTabShell(
     modifier: Modifier = Modifier,
     search: @Composable () -> Unit = { TabPlaceholder(SeerrTab.Search) },
     grid: @Composable () -> Unit = { TabPlaceholder(SeerrTab.Discover) },
+    backToStart: Boolean = true,
     settings: @Composable () -> Unit,
 ) {
     // A window that stops being tablet-width takes Discover out of the bar: leave it for the start tab.
@@ -165,6 +166,7 @@ internal fun SeerrTabShell(
         // The design system's own choice: the floating pill, or the rail on a landscape tablet, as Binge does.
         presentation = rememberBingeNavPresentation(),
         modifier = modifier,
+        backToStart = backToStart,
     ) { tab ->
         when (tab) {
             SeerrTab.Search -> search()

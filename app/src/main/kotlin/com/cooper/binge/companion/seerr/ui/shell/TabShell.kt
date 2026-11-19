@@ -81,7 +81,9 @@ fun <T : Any> rememberTabShellState(
 
 /**
  * [content] for the selected tab inside the design system's navigation shell. Each tab's composition state is saved when
- * another tab shows, so a list comes back scrolled where it was.
+ * another tab shows, so a list comes back scrolled where it was. [backToStart] is whether Back at a tab other than the start
+ * tab goes to the start tab. A caller that draws something Back should close first, beside the shell's own content, turns it
+ * off while that is open, so the handler of whatever holds it takes the Back.
  */
 @Composable
 fun <T : Any> TabShell(
@@ -89,10 +91,11 @@ fun <T : Any> TabShell(
     items: List<BingeNavSuiteItem>,
     presentation: BingeNavPresentation,
     modifier: Modifier = Modifier,
+    backToStart: Boolean = true,
     content: @Composable (T) -> Unit,
 ) {
     val saveable = rememberSaveableStateHolder()
-    BackHandler(enabled = state.selected != state.startTab) { state.back() }
+    BackHandler(enabled = backToStart && state.selected != state.startTab) { state.back() }
     BingeNavSuiteShell(
         items = items,
         selectedKey = state.selected,
