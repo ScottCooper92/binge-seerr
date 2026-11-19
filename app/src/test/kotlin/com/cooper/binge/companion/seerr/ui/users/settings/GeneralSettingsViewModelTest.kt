@@ -1,11 +1,11 @@
 package com.cooper.binge.companion.seerr.ui.users.settings
 
 import androidx.lifecycle.ViewModelStore
-import com.binge.designsystem.save.SAVE_AS_MADE_DELAY_MILLIS
 import com.cooper.binge.companion.seerr.ui.settings.server.ServerListCatalog
 import com.cooper.binge.companion.seerr.ui.users.UserOrigin
 import com.cooper.binge.companion.seerr.ui.users.UserSettingsChanges
 import com.cooper.binge.companion.seerr.util.MainDispatcherRule
+import com.cooper.homelab.core.presentation.editor.SAVE_AS_MADE_DELAY_MILLIS
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.first
