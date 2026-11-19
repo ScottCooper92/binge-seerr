@@ -4,6 +4,7 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -37,6 +38,7 @@ import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import com.binge.designsystem.component.BingeConfirmDialog
 import com.binge.designsystem.component.BingePullToRefresh
 import com.binge.designsystem.component.ListRowPoster
@@ -205,30 +207,32 @@ private fun Ready(
 ) {
     val modals = rememberSaveable(saver = IssueModalState.Saver) { IssueModalState() }
     val detail = state.detail
-    val sides = resolvedContentPadding()
-    // The thread scrolls under the top bar. The navigation bar's inset goes under the pinned bar where there is one, and into
-    // the thread's scroll where there is not.
     // A write in flight refuses a second one, so nothing opens an editor then.
     val writeIdle = state.commentAction == CommentAction.None && state.action == IssueAction.None
-    val pinnedBar = detail.canComment || detail.canResolve
-    Column(modifier = Modifier.fillMaxSize()) {
+    val composer = detail.canComment || detail.canResolve
+    // The card floats over the thread, which scrolls under it: its height, which takes in the keyboard and the navigation bar,
+    // ends the thread above it.
+    var composerHeight by remember { mutableStateOf(Dp.Zero) }
+    Box(modifier = Modifier.fillMaxSize()) {
         BingePullToRefresh(
             isRefreshing = state.isRefreshing,
             onRefresh = actions.onRefresh,
-            modifier = Modifier.weight(1f),
+            modifier = Modifier.fillMaxSize(),
             indicatorTopInset = contentPadding.calculateTopPadding(),
             state = pullState ?: rememberPullToRefreshState(),
         ) {
-            IssueThreadScroll(state, modals, contentPadding, pinnedBar, writeIdle)
+            IssueThreadScroll(state, modals, contentPadding, composerHeight.takeIf { composer }, writeIdle)
         }
-        if (pinnedBar) {
-            ActionBar(
+        if (composer) {
+            IssueComposer(
                 detail = detail,
                 action = state.action,
-                onAddComment = { modals.composing = true },
+                draft = state.draft,
+                onDraftChange = actions.onDraftChange,
+                onPostComment = actions.onPostComment,
                 onToggleStatus = { modals.confirmingStatus = true },
-                sides = sides,
-                modifier = Modifier.padding(bottom = contentPadding.calculateBottomPadding()),
+                onOccupiedHeightChange = { composerHeight = it },
+                modifier = Modifier.align(Alignment.BottomCenter),
             )
         }
     }
@@ -255,7 +259,7 @@ private fun IssueThreadScroll(
     state: IssueDetailUiState.Ready,
     modals: IssueModalState,
     contentPadding: PaddingValues,
-    pinnedBar: Boolean,
+    composerHeight: Dp?,
     writeIdle: Boolean,
 ) {
     val detail = state.detail
@@ -267,7 +271,13 @@ private fun IssueThreadScroll(
             Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(if (pinnedBar) PaddingValues(top = contentPadding.calculateTopPadding()) else contentPadding),
+                .padding(
+                    if (composerHeight != null) {
+                        PaddingValues(top = contentPadding.calculateTopPadding(), bottom = composerHeight)
+                    } else {
+                        contentPadding
+                    },
+                ),
     ) {
         IssueHeader(
             detail.item,

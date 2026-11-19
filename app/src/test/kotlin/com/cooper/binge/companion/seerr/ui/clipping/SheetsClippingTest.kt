@@ -18,7 +18,6 @@ import com.cooper.binge.companion.seerr.ui.handoff.SendAddressUiState
 import com.cooper.binge.companion.seerr.ui.handoff.SignInOffer
 import com.cooper.binge.companion.seerr.ui.handoff.SignInStep
 import com.cooper.binge.companion.seerr.ui.issues.CommentActionsContent
-import com.cooper.binge.companion.seerr.ui.issues.CommentComposerContent
 import com.cooper.binge.companion.seerr.ui.issues.EditCommentContent
 import com.cooper.binge.companion.seerr.ui.issues.IssueManageContent
 import com.cooper.binge.companion.seerr.ui.issues.OutboxActionsContent
@@ -229,7 +228,6 @@ class SheetsClippingTest {
             )
             CommentActionsContent(onEdit = {}, onDelete = {})
             OutboxActionsContent(retryable = true, onRetry = {}, onEdit = {}, onDrop = {})
-            CommentComposerContent(draft = LONG_NAME, onDraftChange = {}, onSubmit = {}, onCancel = {})
             EditCommentContent(
                 title = "Edit $LONG_NAME",
                 draft = LONG_NAME,

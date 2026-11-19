@@ -57,21 +57,6 @@ class IssueSheetsScreenshotTest {
     @Composable
     fun outboxSending() = SheetFrame { OutboxActionsContent(retryable = false, sending = true, onRetry = {}, onEdit = {}, onDrop = {}) }
 
-    /** The composer's empty draft, with Send off until there is something to send. */
-    @PreviewTest
-    @SeerrComponentPreviews
-    @Composable
-    fun commentComposerEmpty() = SheetFrame { CommentComposerContent(draft = "", onDraftChange = {}, onSubmit = {}, onCancel = {}) }
-
-    /** At the expanded width the composer is a side sheet's page. */
-    @PreviewTest
-    @SeerrComponentPreviews
-    @Composable
-    fun commentComposerExpanded() =
-        SideSheetFrame {
-            CommentComposerContent(draft = "The subtitles drift two seconds out of sync.", onDraftChange = {}, onSubmit = {}, onCancel = {})
-        }
-
     /** Editing: Done stays off until the text differs from what was sent. */
     @PreviewTest
     @SeerrComponentPreviews

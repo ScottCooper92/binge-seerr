@@ -1,84 +1,92 @@
 package com.cooper.binge.companion.seerr.ui.issues
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.Dp
+import com.binge.designsystem.component.BingeFilterChip
+import com.binge.designsystem.component.BingeFloatingComposer
 import com.binge.designsystem.component.BingeOutlinedButton
-import com.binge.designsystem.theme.BingeShapes
 import com.cooper.binge.companion.seerr.R
 import com.binge.designsystem.R as DesR
 
 /**
- * The pinned bar: a field that opens the composer, and Resolve or Reopen, each only where the user
- * may. A status change in flight spins its button and holds the field, so the two cannot race.
+ * The card floating over the thread: an inline field for a comment, Resolve or Reopen as a chip where the user may, and Send.
+ * A status change in flight holds the field and shows a spinner in the chip's place, so the two cannot race. A user who may
+ * resolve but not comment gets the chip alone. The card's height comes back through [onOccupiedHeightChange] for the thread to
+ * end above it.
  */
 @Composable
-internal fun ActionBar(
+internal fun IssueComposer(
     detail: IssueDetail,
     action: IssueAction,
-    onAddComment: () -> Unit,
+    draft: String,
+    onDraftChange: (String) -> Unit,
+    onPostComment: () -> Unit,
     onToggleStatus: () -> Unit,
-    sides: PaddingValues,
+    onOccupiedHeightChange: (Dp) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val idle = action == IssueAction.None
-    Column(modifier.fillMaxWidth()) {
-        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(sides).padding(vertical = dimensionResource(DesR.dimen.padding_s)),
-            horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.list_row_gap)),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            if (detail.canComment) ComposerField(onClick = onAddComment, enabled = idle, modifier = Modifier.weight(1f))
-            if (detail.canResolve) {
-                val resolving = detail.item.status == IssueStatus.Open
-                BingeOutlinedButton(
-                    label = stringResource(if (resolving) R.string.issue_action_resolve else R.string.issue_action_reopen),
-                    onClick = onToggleStatus,
-                    enabled = idle,
-                    loading = action == IssueAction.UpdatingStatus,
-                    modifier = if (detail.canComment) Modifier else Modifier.weight(1f),
-                )
-            }
+    val chip: (@Composable RowScope.() -> Unit)? =
+        if (detail.canResolve) {
+            { StatusChip(detail, action, onToggleStatus) }
+        } else {
+            null
+        }
+    if (detail.canComment) {
+        BingeFloatingComposer(
+            value = draft,
+            onValueChange = onDraftChange,
+            onSend = onPostComment,
+            placeholder = stringResource(R.string.issue_comment_hint),
+            sendDescription = stringResource(R.string.issue_comment_send),
+            modifier = modifier,
+            leadingActions = chip,
+            enabled = idle,
+            onOccupiedHeightChange = onOccupiedHeightChange,
+        )
+    } else if (detail.canResolve) {
+        // Nothing to type: the status change alone, in the card's place.
+        Box(modifier.fillMaxWidth().padding(dimensionResource(DesR.dimen.padding_m)), contentAlignment = Alignment.CenterEnd) {
+            val resolving = detail.item.status == IssueStatus.Open
+            BingeOutlinedButton(
+                label = stringResource(if (resolving) R.string.issue_action_resolve else R.string.issue_action_reopen),
+                onClick = onToggleStatus,
+                enabled = idle,
+                loading = action == IssueAction.UpdatingStatus,
+            )
         }
     }
 }
 
+/** Resolve or Reopen, which spins while the change is in flight. */
 @Composable
-internal fun ComposerField(
-    onClick: () -> Unit,
-    enabled: Boolean,
-    modifier: Modifier = Modifier,
+private fun RowScope.StatusChip(
+    detail: IssueDetail,
+    action: IssueAction,
+    onToggleStatus: () -> Unit,
 ) {
-    Box(
-        modifier =
-            modifier
-                .clip(BingeShapes.Pill)
-                .background(MaterialTheme.colorScheme.surfaceContainerLow)
-                .border(dimensionResource(DesR.dimen.hairline_thickness), MaterialTheme.colorScheme.outlineVariant, BingeShapes.Pill)
-                .clickable(enabled = enabled, onClick = onClick)
-                .padding(dimensionResource(DesR.dimen.padding_m)),
-    ) {
-        Text(
-            text = stringResource(R.string.issue_comment_hint),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+    val resolving = detail.item.status == IssueStatus.Open
+    if (action == IssueAction.UpdatingStatus) {
+        CircularProgressIndicator(
+            modifier = Modifier.padding(dimensionResource(DesR.dimen.padding_s)).size(dimensionResource(DesR.dimen.padding_l)),
+            strokeWidth = dimensionResource(DesR.dimen.progress_stroke_width),
+        )
+    } else {
+        BingeFilterChip(
+            label = stringResource(if (resolving) R.string.issue_action_resolve else R.string.issue_action_reopen),
+            selected = false,
+            onClick = onToggleStatus,
+            enabled = action == IssueAction.None,
         )
     }
 }

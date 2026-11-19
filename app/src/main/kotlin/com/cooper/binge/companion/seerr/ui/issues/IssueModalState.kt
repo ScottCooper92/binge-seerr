@@ -8,12 +8,11 @@ import androidx.compose.runtime.saveable.mapSaver
 import androidx.compose.runtime.setValue
 
 /**
- * Which of the page's sheets is open and its draft, restored through [Saver] so an open composer
+ * Which of the page's sheets and dialogs is open and its draft, restored through [Saver] so an open editor
  * and its typed text survive a rotation.
  */
 @Stable
 internal class IssueModalState {
-    var composing by mutableStateOf(false)
     var confirmingStatus by mutableStateOf(false)
     var actingOnCommentId by mutableStateOf<Int?>(null)
     var editingCommentId by mutableStateOf<Int?>(null)
@@ -34,7 +33,6 @@ internal class IssueModalState {
     }
 
     companion object {
-        private const val KEY_COMPOSING = "composing"
         private const val KEY_CONFIRMING_STATUS = "confirmingStatus"
         private const val KEY_ACTING = "acting"
         private const val KEY_EDITING = "editing"
@@ -48,7 +46,6 @@ internal class IssueModalState {
             mapSaver(
                 save = { state ->
                     mapOf(
-                        KEY_COMPOSING to state.composing,
                         KEY_CONFIRMING_STATUS to state.confirmingStatus,
                         KEY_ACTING to state.actingOnCommentId,
                         KEY_EDITING to state.editingCommentId,
@@ -61,7 +58,6 @@ internal class IssueModalState {
                 },
                 restore = { saved ->
                     IssueModalState().apply {
-                        composing = saved[KEY_COMPOSING] as Boolean
                         confirmingStatus = saved[KEY_CONFIRMING_STATUS] as Boolean
                         actingOnCommentId = saved[KEY_ACTING] as Int?
                         editingCommentId = saved[KEY_EDITING] as Int?
