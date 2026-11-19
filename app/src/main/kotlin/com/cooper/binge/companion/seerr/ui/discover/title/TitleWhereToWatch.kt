@@ -3,6 +3,7 @@ package com.cooper.binge.companion.seerr.ui.discover.title
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
@@ -13,6 +14,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.LiveTv
 import androidx.compose.material.icons.filled.ShoppingCart
@@ -31,10 +33,14 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import coil3.compose.SubcomposeAsyncImage
 import com.binge.designsystem.component.BingeFilterChipRow
+import com.binge.designsystem.component.ExternalLinkIcon
 import com.binge.designsystem.component.FilterChipItem
 import com.binge.designsystem.component.SectionHeader
 import com.binge.designsystem.theme.BingeShapes
@@ -114,23 +120,44 @@ private fun ProviderLogo(
     provider: TitleProvider,
     onClick: (() -> Unit)?,
 ) {
+    val opensOutside = stringResource(DesR.string.cd_link_chip_opens_outside, provider.name)
     Column(
         modifier =
             Modifier
                 .width(dimensionResource(R.dimen.provider_column_width) * LocalDensity.current.fontScale.coerceAtLeast(1f))
-                .let { if (onClick != null) it.clickable(role = Role.Button, onClick = onClick) else it },
+                .let {
+                    if (onClick == null) {
+                        it
+                    } else {
+                        it.clickable(role = Role.Button, onClick = onClick).clearAndSetSemantics {
+                            contentDescription = opensOutside
+                            role = Role.Button
+                        }
+                    }
+                },
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        SubcomposeAsyncImage(
-            model = provider.logoUrl,
-            contentDescription = null,
-            contentScale = ContentScale.Crop,
-            modifier =
-                Modifier
-                    .size(dimensionResource(R.dimen.provider_logo_size))
-                    .clip(BingeShapes.Medium)
-                    .background(MaterialTheme.colorScheme.surfaceContainer),
-        )
+        Box(contentAlignment = Alignment.BottomEnd) {
+            SubcomposeAsyncImage(
+                model = provider.logoUrl,
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier =
+                    Modifier
+                        .size(dimensionResource(R.dimen.provider_logo_size))
+                        .clip(BingeShapes.Medium)
+                        .background(MaterialTheme.colorScheme.surfaceContainer),
+            )
+            if (onClick != null) {
+                ExternalLinkIcon(
+                    modifier =
+                        Modifier
+                            .padding(dimensionResource(DesR.dimen.padding_xs))
+                            .background(MaterialTheme.colorScheme.surfaceContainer, CircleShape)
+                            .padding(dimensionResource(DesR.dimen.padding_xs)),
+                )
+            }
+        }
         Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_s)))
         Text(
             text = provider.name,

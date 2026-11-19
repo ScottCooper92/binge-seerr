@@ -17,6 +17,7 @@ import com.cooper.binge.companion.seerr.ui.hub.AccountBarState
 import com.cooper.binge.companion.seerr.ui.hub.AccountBarViewModel
 import com.cooper.binge.companion.seerr.ui.popIfTop
 import com.cooper.binge.companion.seerr.ui.replaceTop
+import com.cooper.binge.companion.seerr.ui.shell.SeerrTab
 import java.time.LocalDate
 
 /** The grid a "see all" opens. It has no pane metadata: it covers the tab bar, and Back returns to the hub it came from. */
@@ -40,6 +41,7 @@ internal fun DiscoverGridEntry(
     backStack: NavBackStack<NavKey>,
     onOpenAccount: (Int) -> Unit,
     title: String? = route.title,
+    reselectKey: Any? = null,
 ) {
     val tomorrow = remember { LocalDate.now().plusDays(1).toString() }
     val model =
@@ -63,6 +65,7 @@ internal fun DiscoverGridEntry(
         onOpenAccount = onOpenAccount,
         kind = route.kind,
         title = title,
+        reselectKey = reselectKey,
         state = state,
         actions =
             DiscoverGridActions(
@@ -91,5 +94,12 @@ internal fun DiscoverTabEntry(
     onOpenAccount: (Int) -> Unit,
 ) {
     val route = stack.lastOrNull() as? DiscoverGridRoute ?: return
-    DiscoverGridEntry(route, onBack = null, backStack = stack, onOpenAccount = onOpenAccount, title = null)
+    DiscoverGridEntry(
+        route,
+        onBack = null,
+        backStack = stack,
+        onOpenAccount = onOpenAccount,
+        title = null,
+        reselectKey = SeerrTab.Discover,
+    )
 }

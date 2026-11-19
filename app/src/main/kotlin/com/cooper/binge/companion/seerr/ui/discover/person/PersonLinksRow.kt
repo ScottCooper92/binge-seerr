@@ -6,17 +6,15 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Movie
-import androidx.compose.material3.AssistChip
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
+import com.binge.designsystem.component.BingeLinkChip
 import com.cooper.binge.companion.seerr.R
 import com.binge.designsystem.R as DesR
 
-/** The pages the server named for the person, each a chip that opens it. Nothing is drawn when it named none. */
+/** The pages the server named for the person, each a chip that opens it outside the app. Nothing is drawn when it named none. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun PersonLinksRow(
@@ -36,7 +34,7 @@ internal fun PersonLinksRow(
                     PersonLinkKind.Imdb -> stringResource(R.string.person_page_imdb) to Icons.Filled.Movie
                     PersonLinkKind.Website -> stringResource(R.string.person_page_website) to Icons.Filled.Language
                 }
-            AssistChip(onClick = { onOpen(link.url) }, label = { Text(label) }, leadingIcon = { Icon(icon, contentDescription = null) })
+            BingeLinkChip(label = label, leadingIcon = icon, onClick = { onOpen(link.url) })
         }
     }
 }

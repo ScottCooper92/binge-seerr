@@ -18,6 +18,7 @@ import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import com.binge.designsystem.component.BingeNavPresentation
 import com.binge.designsystem.component.BingeNavSuiteItem
+import com.binge.designsystem.component.OnTabReselect
 import com.cooper.binge.companion.seerr.theme.SeerrTheme
 import com.cooper.binge.companion.seerr.ui.push
 import com.cooper.binge.companion.seerr.util.createSeerrComposeRule
@@ -101,4 +102,57 @@ class TabShellTest {
         assertEquals(listOf(CounterPage(1)), alpha.toList())
         assertEquals(CounterTab.Alpha, state.selected)
     }
+
+    @Test
+    fun `a tab change cross-fades so both tabs show part way and only the new one after`() {
+        show()
+        compose.mainClock.autoAdvance = false
+
+        compose.onNodeWithTag("tab_Beta").performClick()
+        compose.mainClock.advanceTimeBy(TAB_FADE_HALFWAY_MILLIS)
+
+        compose.onNodeWithText("Alpha 0").assertExists()
+        compose.onNodeWithText("Beta 0").assertExists()
+
+        compose.mainClock.advanceTimeBy(TAB_FADE_REST_MILLIS)
+
+        compose.onNodeWithText("Alpha 0").assertDoesNotExist()
+        compose.onNodeWithText("Beta 0").assertIsDisplayed()
+    }
+
+    @Test
+    fun `a tap on the tab already showing tells that tab and a tap on another tab does not`() {
+        val reselected = mutableListOf<Any>()
+        compose.setContent {
+            SeerrTheme {
+                TabShell(
+                    state = state,
+                    items =
+                        CounterTab.entries.map {
+                            BingeNavSuiteItem(
+                                key = it,
+                                label = it.name,
+                                icon = Icons.Filled.Home,
+                                testTag = "tab_$it",
+                            )
+                        },
+                    presentation = BingeNavPresentation.BottomBar,
+                ) { tab ->
+                    OnTabReselect(tab) { reselected += tab }
+                    Counter(tab.name)
+                }
+            }
+        }
+
+        compose.onNodeWithTag("tab_Beta").performClick()
+        compose.waitForIdle()
+        assertEquals(emptyList<Any>(), reselected)
+
+        compose.onNodeWithTag("tab_Beta").performClick()
+        compose.waitForIdle()
+        assertEquals(listOf<Any>(CounterTab.Beta), reselected)
+    }
 }
+
+private const val TAB_FADE_HALFWAY_MILLIS = 300L
+private const val TAB_FADE_REST_MILLIS = 600L
