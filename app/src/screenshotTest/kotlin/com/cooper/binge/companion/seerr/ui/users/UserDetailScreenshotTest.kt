@@ -1,14 +1,20 @@
 package com.cooper.binge.companion.seerr.ui.users
 
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.dimensionResource
 import androidx.paging.PagingData
 import com.android.tools.screenshot.PreviewTest
+import com.cooper.binge.companion.seerr.flags.LocalDiscoveryEnabled
 import com.cooper.binge.companion.seerr.preview.SeerrFontScalePreviews
 import com.cooper.binge.companion.seerr.preview.SeerrScreenPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrScreenStatePreview
 import com.cooper.binge.companion.seerr.preview.SeerrSpanishPreviews
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flowOf
+import com.binge.designsystem.R as DesR
 
 /** No Ready-state phone screenshot coverage existed for this screen before [manageable]. */
 class UserDetailScreenshotTest {
@@ -34,25 +40,27 @@ class UserDetailScreenshotTest {
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
-    fun ownWatchlist() = Frame(manageableUserDetail().copy(isSelf = true, mayOpenWatchlist = true, watchlistCount = 12))
+    fun ownWatchlist() = DiscoveryFrame(manageableUserDetail().copy(isSelf = true, mayOpenWatchlist = true, watchlistCount = 12))
 
     /** The same row where the server gave no size: the label alone. */
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
-    fun ownWatchlistNoCount() = Frame(manageableUserDetail().copy(isSelf = true, mayOpenWatchlist = true, watchlistCount = null))
+    fun ownWatchlistNoCount() = DiscoveryFrame(manageableUserDetail().copy(isSelf = true, mayOpenWatchlist = true, watchlistCount = null))
 
-    /** The row at font scale 2. */
+    /** The row on its own at font scale 2, where the label and the count both show. */
     @PreviewTest
     @SeerrFontScalePreviews
     @Composable
-    fun ownWatchlistLargeFonts() = Frame(manageableUserDetail().copy(isSelf = true, mayOpenWatchlist = true, watchlistCount = 1234))
+    fun ownWatchlistLargeFonts() =
+        WatchlistRow(count = 1234, onOpen = {}, modifier = Modifier.padding(dimensionResource(DesR.dimen.padding_m)))
 
-    /** The row in Spanish, whose plural for a large count reads "1234 de títulos". */
+    /** The row in Spanish, whose plural for a large count reads "1.000.000 de títulos". */
     @PreviewTest
     @SeerrSpanishPreviews
     @Composable
-    fun ownWatchlistSpanish() = Frame(manageableUserDetail().copy(isSelf = true, mayOpenWatchlist = true, watchlistCount = 1_000_000))
+    fun ownWatchlistSpanish() =
+        DiscoveryFrame(manageableUserDetail().copy(isSelf = true, mayOpenWatchlist = true, watchlistCount = 1_000_000))
 
     /** A viewer the server would refuse this user's requests: the page ends at the profile's own sections, with no Requests header. */
     @PreviewTest
@@ -60,6 +68,10 @@ class UserDetailScreenshotTest {
     @Composable
     fun readOnly() = Frame(manageableUserDetail().copy(canViewRequests = false, canEditSettings = false, canDelete = false))
 }
+
+/** The frame with discovery on, which is what shows the Watchlist row. */
+@Composable
+private fun DiscoveryFrame(detail: UserDetail) = CompositionLocalProvider(LocalDiscoveryEnabled provides true) { Frame(detail) }
 
 @Composable
 private fun Frame(detail: UserDetail) = Frame(UserDetailUiState.Ready(detail = detail))

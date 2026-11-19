@@ -64,6 +64,7 @@ import com.binge.designsystem.layout.layoutAnchor
 import com.binge.designsystem.resolvedContentInset
 import com.binge.designsystem.resolvedContentPadding
 import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.flags.LocalDiscoveryEnabled
 import com.cooper.binge.companion.seerr.seerr.ManageablePermission
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.ui.discover.title.LocalOpenTitle
@@ -168,7 +169,7 @@ fun UserDetailScreen(
 @Composable
 private fun formatCount(count: Int): String = NumberFormat.getIntegerInstance(LocalConfiguration.current.locales[0]).format(count)
 
-/** The row that opens the viewer's own watchlist, on the page of a user whose list this is. */
+/** The row that opens the viewer's own watchlist, on the page of a user whose list this is. Absent when [detail] is null, so the caller withholds it with the discovery flag off. */
 private fun LazyListScope.watchlistRow(
     detail: UserDetail?,
     onOpen: () -> Unit,
@@ -179,7 +180,7 @@ private fun LazyListScope.watchlistRow(
 
 /** The row that opens the viewer's whole watchlist as a grid, with how many titles it holds where the server says. */
 @Composable
-private fun WatchlistRow(
+internal fun WatchlistRow(
     count: Int?,
     onOpen: () -> Unit,
     modifier: Modifier = Modifier,
@@ -212,6 +213,7 @@ private fun UserDetailContent(
 ) {
     val inset = resolvedContentInset()
     val sides = resolvedContentPadding()
+    val discovery = LocalDiscoveryEnabled.current
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(bottom = dimensionResource(DesR.dimen.padding_l)) + contentPadding,
@@ -253,7 +255,7 @@ private fun UserDetailContent(
                 }
             }
         }
-        watchlistRow(detail, actions.onOpenWatchlist, sides)
+        watchlistRow(detail?.takeIf { discovery }, actions.onOpenWatchlist, sides)
         detail?.watch?.takeIf { it.recentlyWatched.isNotEmpty() }?.let { watch ->
             item { TitleCarousel(stringResource(R.string.user_recently_watched), watch.recentlyWatched, detail.serverUrl) }
         }

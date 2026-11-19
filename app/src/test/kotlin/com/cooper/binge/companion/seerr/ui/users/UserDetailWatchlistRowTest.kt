@@ -1,10 +1,12 @@
 package com.cooper.binge.companion.seerr.ui.users
 
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.paging.PagingData
+import com.cooper.binge.companion.seerr.flags.LocalDiscoveryEnabled
 import com.cooper.binge.companion.seerr.seerr.ManageablePermission
 import com.cooper.binge.companion.seerr.theme.SeerrTheme
 import com.cooper.binge.companion.seerr.util.createSeerrComposeRule
@@ -29,22 +31,25 @@ class UserDetailWatchlistRowTest {
     private fun show(
         mayOpen: Boolean,
         count: Int?,
+        discovery: Boolean = true,
     ) = rule.setContent {
-        SeerrTheme {
-            UserDetailScreen(
-                state = UserDetailUiState.Ready(detail = detail(mayOpen, count)),
-                requests = flowOf(PagingData.from(emptyList())),
-                events = emptyFlow(),
-                actions =
-                    UserDetailActions(
-                        onBack = {},
-                        onRetry = {},
-                        onOpenRequest = {},
-                        onOpenSettings = {},
-                        onDeleteUser = {},
-                        onOpenWatchlist = { opened++ },
-                    ),
-            )
+        CompositionLocalProvider(LocalDiscoveryEnabled provides discovery) {
+            SeerrTheme {
+                UserDetailScreen(
+                    state = UserDetailUiState.Ready(detail = detail(mayOpen, count)),
+                    requests = flowOf(PagingData.from(emptyList())),
+                    events = emptyFlow(),
+                    actions =
+                        UserDetailActions(
+                            onBack = {},
+                            onRetry = {},
+                            onOpenRequest = {},
+                            onOpenSettings = {},
+                            onDeleteUser = {},
+                            onOpenWatchlist = { opened++ },
+                        ),
+                )
+            }
         }
     }
 
@@ -77,6 +82,13 @@ class UserDetailWatchlistRowTest {
     @Test
     fun `a page that is not the viewer's own has no row`() {
         show(mayOpen = false, count = 12)
+
+        rule.onNodeWithText("Watchlist").assertDoesNotExist()
+    }
+
+    @Test
+    fun `with discovery off the viewer's own page has no row`() {
+        show(mayOpen = true, count = 12, discovery = false)
 
         rule.onNodeWithText("Watchlist").assertDoesNotExist()
     }
