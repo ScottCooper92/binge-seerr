@@ -26,7 +26,7 @@ class HubSectionOrderTest {
     }
 
     @Test
-    fun `a viewer with no permissions sees only the section about the app`() {
+    fun `a viewer with no permissions sees the requests row and This app, in that order`() {
         assertEquals(listOf(HubSection.Requests, HubSection.ThisApp), HubOverview().visibleSections())
     }
 }
