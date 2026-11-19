@@ -2,6 +2,7 @@ package com.cooper.binge.companion.seerr.ui.grid
 
 import androidx.compose.runtime.Composable
 import com.android.tools.screenshot.PreviewTest
+import com.binge.designsystem.preview.PreviewSystemBarInsets
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.preview.SeerrFontScale13Previews
 import com.cooper.binge.companion.seerr.preview.SeerrFontScalePreviews
@@ -9,6 +10,8 @@ import com.cooper.binge.companion.seerr.preview.SeerrScreenPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrScreenStatePreview
 import com.cooper.binge.companion.seerr.preview.SeerrSpanishPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrTabletPanesPreview
+
+private const val MID_LIST = 9
 
 /** The "see all" grid: its order and the filter the row started with, over posters, and its empty, loading and failed states. */
 class DiscoverGridScreenshotTest {
@@ -51,6 +54,24 @@ class DiscoverGridScreenshotTest {
     @SeerrSpanishPreviews
     @Composable
     fun spanish() = Frame(readyGridState())
+
+    /**
+     * Scrolled mid-list under a status bar and a navigation bar: posters pass under the bar and run down under the gesture bar. The bar's
+     * scrim fades in with a real scroll gesture, which a frame does not make, so the title shows over the posters here.
+     */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun scrolledUnderBars() =
+        PreviewSystemBarInsets {
+            DiscoverGridScreen(
+                TitleKind.Movie,
+                "Drama",
+                readyGridState(),
+                noGridActions,
+                firstVisibleIndex = MID_LIST,
+            )
+        }
 
     /** The row's own chip, then one chip for each filter added in the sheet, each with what it is set to. */
     @PreviewTest
