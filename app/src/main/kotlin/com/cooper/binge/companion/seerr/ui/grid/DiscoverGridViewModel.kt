@@ -200,5 +200,4 @@ private fun GridPreset.toChip(title: String?): ActiveFilterChip? =
 private fun PagedListState<HubCard>.onlyWhileOn(
     preset: GridPreset,
     held: TitleStatusMap,
-): PagedListState<HubCard> =
-    if (preset == GridPreset.Watchlist || preset == GridPreset.OwnWatchlist) withoutOffWatchlist(held) else this
+): PagedListState<HubCard> = if (preset == GridPreset.Watchlist || preset == GridPreset.OwnWatchlist) withoutOffWatchlist(held) else this

@@ -65,9 +65,8 @@ internal fun SeerrTitlePageDto.seedInto(
     read: Long,
     defaultKind: TitleKind?,
     onWatchlist: Boolean? = null,
-) =
-    statuses.seedRows(
-        read,
-        results.map { Triple(it.mediaType?.let(::kindOf) ?: defaultKind, it.tmdbId ?: it.id, it.mediaInfo) },
-        onWatchlist,
-    )
+) = statuses.seedRows(
+    read,
+    results.map { Triple(it.mediaType?.let(::kindOf) ?: defaultKind, it.tmdbId ?: it.id, it.mediaInfo) },
+    onWatchlist,
+)

@@ -84,7 +84,13 @@ class SeerrTitleDetailsRepositoryTest {
 
     private fun recordWatchlist(request: FakeRequest): FakeResponse {
         watchlistCalls += "${request.method} ${request.url.encodedPath}?${request.url.encodedQuery} ${request.body}"
-        return FakeResponse(code = if (watchlistFails) 500 else if (request.method == "POST") 201 else 204)
+        val code =
+            when {
+                watchlistFails -> 500
+                request.method == "POST" -> 201
+                else -> 204
+            }
+        return FakeResponse(code = code)
     }
 
     private fun route(request: FakeRequest): FakeResponse =
