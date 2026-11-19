@@ -21,10 +21,10 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import com.binge.designsystem.R as DesR
 
-/** Two panes: wide enough for the hub beside a section, under the landscape-tablet line. */
+/** Two panes: wide enough for the hub beside a section. */
 private const val WIDE = "w900dp-h800dp"
 
-/** A landscape tablet, where the hub, a section and what it opened sit side by side (#1110). */
+/** A landscape tablet: the same two panes as [WIDE], in a window past the expanded-rail line (#2348). */
 private const val TABLET = "w1280dp-h800dp"
 private const val NARROW = "w400dp-h800dp"
 private const val EMPTY_PAGE = """{"pageInfo":{"pages":0,"results":0},"results":[]}"""
