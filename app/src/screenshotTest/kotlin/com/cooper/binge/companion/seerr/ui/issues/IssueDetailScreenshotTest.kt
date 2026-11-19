@@ -3,16 +3,22 @@ package com.cooper.binge.companion.seerr.ui.issues
 import androidx.compose.runtime.Composable
 import com.android.tools.screenshot.PreviewTest
 import com.binge.designsystem.SaveStatus
+import com.cooper.binge.companion.seerr.preview.SeerrFontScalePreviews
 import com.cooper.binge.companion.seerr.preview.SeerrScreenPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrScreenStatePreview
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.ui.state.RestingPull
 import kotlinx.coroutines.flow.emptyFlow
 
+private const val LONG_COMMENT =
+    "The subtitles drift out of sync about halfway through episode three, and they stay a second behind until the credits. " +
+        "It happens on the TV and on the phone, so it is not the player. The file is the same one the server shows as direct play, " +
+        "so I do not think a transcode is involved. I have not tried another release yet."
+
 /**
  * The issue page: the title it is about, the report, the thread, and — where the viewer may act — the
- * pinned composer/resolve bar (`pinnedBar` in `IssueDetailScreen.kt`'s `Ready`, the one structural
- * branch this screen has). No phone screenshot coverage existed for this screen before these frames.
+ * floating composer (`IssueComposer`, drawn by `IssueDetailScreen.kt`'s `Ready`, the one structural
+ * branch this screen has). The keyboard-open frames wait on a frame host with an IME inset.
  */
 class IssueDetailScreenshotTest {
     /** The Loading arm (#373): the header, the divider, the problem report and the Comments section header. */
@@ -32,6 +38,24 @@ class IssueDetailScreenshotTest {
     @SeerrScreenStatePreview
     @Composable
     fun resolvedReadOnly() = Frame(resolvedIssueReadOnlyDetail())
+
+    /** A comment typed in the card: Send is enabled, with Resolve beside it. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun composerTyped() = Frame(IssueDetailUiState.Ready(detail = openIssueWithActionsDetail(), draft = "Fixed in the latest build."))
+
+    /** A comment past five lines: the card stops growing and the field scrolls inside it, at every font scale. */
+    @PreviewTest
+    @SeerrFontScalePreviews
+    @Composable
+    fun composerLongText() = Frame(IssueDetailUiState.Ready(detail = openIssueWithActionsDetail(), draft = LONG_COMMENT))
+
+    /** Resolve in flight: the chip gives way to a spinner and the field is held. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun composerResolving() = Frame(IssueDetailUiState.Ready(detail = openIssueWithActionsDetail(), action = IssueAction.UpdatingStatus))
 
     /** A row a list already had, before the fetch lands (#1053): its header over the loading body. */
     @PreviewTest

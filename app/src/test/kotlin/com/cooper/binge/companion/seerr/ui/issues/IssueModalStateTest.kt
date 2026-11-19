@@ -2,7 +2,6 @@ package com.cooper.binge.companion.seerr.ui.issues
 
 import androidx.compose.runtime.saveable.SaverScope
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Test
 
@@ -17,7 +16,6 @@ class IssueModalStateTest {
     fun `an open edit and an outbox draft survive the round trip`() {
         val state =
             IssueModalState().apply {
-                composing = true
                 confirmingStatus = true
                 actingOnCommentId = 3
                 deletingCommentId = 4
@@ -46,7 +44,6 @@ class IssueModalStateTest {
 
         val restored = roundTrip(state)
 
-        assertEquals(true, restored.composing)
         assertEquals(true, restored.confirmingStatus)
         assertEquals(3, restored.actingOnCommentId)
         assertEquals(5, restored.editingCommentId)
@@ -61,7 +58,6 @@ class IssueModalStateTest {
     fun `a page with nothing open restores with nothing open`() {
         val restored = roundTrip(IssueModalState())
 
-        assertFalse(restored.composing)
         assertNull(restored.editingCommentId)
         assertNull(restored.editingOutboxId)
         assertEquals("", restored.editDraft)

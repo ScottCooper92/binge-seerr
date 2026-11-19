@@ -17,40 +17,6 @@ import com.cooper.binge.companion.seerr.ui.state.ActionSheetGroup
 import com.cooper.binge.companion.seerr.ui.state.actionItem
 import com.cooper.binge.companion.seerr.ui.state.openItem
 
-/** The composer: submitting hands the draft over and closes, since the pending row is the feedback. */
-@Composable
-internal fun CommentComposerSheet(
-    draft: String,
-    onDraftChange: (String) -> Unit,
-    onSubmit: () -> Unit,
-    onDismiss: () -> Unit,
-) {
-    BingeAdaptiveSheet(kind = BingeSheetKind.Task, onDismissRequest = onDismiss) {
-        CommentComposerContent(draft = draft, onDraftChange = onDraftChange, onSubmit = onSubmit, onCancel = onDismiss)
-    }
-}
-
-/** [CommentComposerSheet]'s body without its window, for a frame. */
-@Composable
-internal fun CommentComposerContent(
-    draft: String,
-    onDraftChange: (String) -> Unit,
-    onSubmit: () -> Unit,
-    onCancel: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    TextEntrySurface(
-        title = stringResource(R.string.issue_comment_title),
-        value = draft,
-        onValueChange = onDraftChange,
-        onSubmit = onSubmit,
-        onCancel = onCancel,
-        submitLabel = stringResource(R.string.issue_comment_send),
-        hint = stringResource(R.string.issue_comment_hint),
-        modifier = modifier.imePadding(),
-    )
-}
-
 /** Editing a comment: Done is live only for a change, and hands it over; the page saves it as it is made (#930). */
 @Composable
 internal fun EditCommentSheet(

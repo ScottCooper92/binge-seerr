@@ -11,17 +11,6 @@ internal fun IssueModals(
     modals: IssueModalState,
 ) {
     val detail = state.detail
-    if (modals.composing) {
-        CommentComposerSheet(
-            draft = state.draft,
-            onDraftChange = actions.onDraftChange,
-            onSubmit = {
-                actions.onPostComment()
-                modals.composing = false
-            },
-            onDismiss = { modals.composing = false },
-        )
-    }
     modals.actingOnCommentId?.let { commentId ->
         val comment = (listOfNotNull(detail.report) + detail.comments).firstOrNull { it.id == commentId }
         if (comment == null) {

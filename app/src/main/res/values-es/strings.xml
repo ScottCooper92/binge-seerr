@@ -406,7 +406,6 @@
     <string name="issue_comments_title">Comentarios</string>
     <string name="issue_no_comments">Aún no hay comentarios.</string>
     <string name="issue_comment_hint">Añade un comentario…</string>
-    <string name="issue_comment_title">Añadir un comentario</string>
     <string name="issue_comment_send">Publicar</string>
     <string name="issue_edit_comment">Editar el comentario</string>
     <string name="issue_edit_report">Editar el aviso</string>
