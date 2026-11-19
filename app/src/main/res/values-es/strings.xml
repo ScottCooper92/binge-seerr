@@ -150,6 +150,8 @@
     <string name="grid_sort_revenue_asc">Menor recaudación</string>
     <string name="grid_sort_title_asc">Título de la A a la Z</string>
     <string name="grid_sort_title_desc">Título de la Z a la A</string>
+    <string name="grid_title">Descubrir</string>
+    <string name="grid_open_filters">Abrir filtros</string>
     <string name="grid_filters_button">Filtros</string>
     <string name="grid_filters_title">Filtros</string>
     <string name="grid_filters_sort">Ordenar por</string>
