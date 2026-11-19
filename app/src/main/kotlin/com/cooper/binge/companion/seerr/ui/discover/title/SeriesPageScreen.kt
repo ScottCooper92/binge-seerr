@@ -96,7 +96,7 @@ private fun ReadySeriesPage(
                     kind = TitleKind.Series,
                     tmdbId = series.tmdbId,
                     title = series.name,
-                    standardOpen = series.standard.mayRequest,
+                    standardOpen = series.standard.mayRequest && !state.requestSheetFourK,
                     fourKOpen = series.fourK?.mayRequest == true,
                     seasonChoices = series.seasonChoices,
                     partialRequests = series.partialRequests,

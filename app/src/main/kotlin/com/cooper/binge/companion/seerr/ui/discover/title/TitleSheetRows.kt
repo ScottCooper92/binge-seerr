@@ -66,7 +66,15 @@ internal fun TitleManageSheet(
             snackbarHostState = snackbar,
             onDismiss = actions.onCloseManage,
             onChanged = actions.onReload,
-            titleRows = rememberTitleSheetRows(facts, actions.onOpenUrl, actions.onRequestFourK),
+            titleRows =
+                rememberTitleSheetRows(
+                    facts,
+                    onWatch = { url ->
+                        actions.onCloseManage()
+                        actions.onOpenUrl(url)
+                    },
+                    onRequestFourK = actions.onRequestFourK,
+                ),
         ),
     )
 }

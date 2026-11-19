@@ -128,7 +128,7 @@ private fun ReadyPage(
                     kind = com.cooper.binge.companion.seerr.discover.TitleKind.Movie,
                     tmdbId = movie.tmdbId,
                     title = movie.title,
-                    standardOpen = movie.standard.mayRequest,
+                    standardOpen = movie.standard.mayRequest && !state.requestSheetFourK,
                     fourKOpen = movie.fourK?.mayRequest == true,
                     posterUrl = movie.posterUrl,
                     meta = movie.requestMeta(),

@@ -188,7 +188,24 @@ class TitlePageViewModelTest {
 
         assertFalse(vm.ready().manageSheetOpen)
         assertTrue(vm.ready().requestSheetOpen)
+        assertTrue(vm.ready().requestSheetFourK)
         assertEquals(7, vm.ready().manageRequestId)
+    }
+
+    @Test
+    fun `Request in 4K starts on 4K even while the standard version is still open`() {
+        val held =
+            movieFixture(
+                standard = VersionState(TitleAvailability.Pending, mayRequest = true),
+                fourK = VersionState(TitleAvailability.None, mayRequest = true),
+            ).copy(requests = listOf(TitleRequest(7, false, SeerrRequestStatusCode.Pending, 5)))
+        val vm = TitlePageViewModel(FakeTitles(movie = held), 603)
+        vm.onPrimary()
+        assertFalse(vm.ready().requestSheetFourK)
+
+        vm.requestFourKFromManage()
+
+        assertTrue(vm.ready().requestSheetFourK)
     }
 
     @Test

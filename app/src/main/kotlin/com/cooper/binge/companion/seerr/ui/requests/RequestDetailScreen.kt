@@ -23,6 +23,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.BingePullToRefresh
@@ -90,7 +91,7 @@ class SiblingSheet(
 
 /** One row the title page adds to a request's sheet. An [external] row leaves the app, and any other opens something in it. */
 class SheetTitleRow(
-    val icon: androidx.compose.ui.graphics.vector.ImageVector,
+    val icon: ImageVector,
     val label: String,
     val external: Boolean,
     val onClick: () -> Unit,
