@@ -59,8 +59,10 @@ class SeerrHealth(
     private val monitor: ConnectionHealthMonitor,
     private val server: suspend () -> ServerId,
 ) {
-    /** The id the saved server is keyed by, minted once and persisted: a read after the first is warm. */
-    suspend fun serverId(): ServerId = server()
+    @Volatile private var known: ServerId? = null
+
+    /** The id the saved server is keyed by, minted once and persisted: read once, then kept, so a call does not touch the store. */
+    suspend fun serverId(): ServerId = known ?: server().also { known = it }
 
     /**
      * What a client for [id] carries to report every call: the shared library's interceptor, with this app's session rule and the
@@ -73,7 +75,7 @@ class SeerrHealth(
             SeerrClientCertificateInterceptor(::reportClientCertificate),
         )
 
-    val health: Flow<ConnectionHealth> = flow { emitAll(monitor.health(server())) }
+    val health: Flow<ConnectionHealth> = flow { emitAll(monitor.health(serverId())) }
 
     private val clientCertificate = MutableStateFlow(false)
 
@@ -87,13 +89,13 @@ class SeerrHealth(
     /** A connection was just validated against the server: start clean at healthy. */
     suspend fun onConnected() {
         clientCertificate.value = false
-        monitor.onConnected(server())
+        monitor.onConnected(serverId())
     }
 
     /** The credentials were cleared: whatever the last call said no longer describes anything. */
     suspend fun reset() {
         clientCertificate.value = false
-        monitor.reset(server())
+        monitor.reset(serverId())
     }
 
     companion object {
