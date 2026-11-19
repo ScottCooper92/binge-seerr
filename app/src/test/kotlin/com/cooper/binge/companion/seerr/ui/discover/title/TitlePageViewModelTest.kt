@@ -119,10 +119,10 @@ class TitlePageViewModelTest {
     fun `the report sheet opens and closes`() {
         val vm = TitlePageViewModel(FakeTitles(), 603)
 
-        vm.openReportSheet()
+        vm.setReportSheetOpen(true)
         assertTrue(vm.ready().reportSheetOpen)
 
-        vm.closeReportSheet()
+        vm.setReportSheetOpen(false)
         assertFalse(vm.ready().reportSheetOpen)
     }
 
@@ -172,6 +172,23 @@ class TitlePageViewModelTest {
         val movie = movieFixture(VersionState(TitleAvailability.Available, false), VersionState(TitleAvailability.None, true))
 
         assertTrue(TitlePageViewModel(FakeTitles(movie = movie), 603).ready().mayRequest)
+    }
+
+    @Test
+    fun `Request in 4K from a request's sheet swaps it for the request sheet`() {
+        val held =
+            movieFixture(
+                standard = VersionState(TitleAvailability.Pending, mayRequest = false),
+                fourK = VersionState(TitleAvailability.None, mayRequest = true),
+            ).copy(requests = listOf(TitleRequest(7, false, SeerrRequestStatusCode.Pending, 5)))
+        val vm = TitlePageViewModel(FakeTitles(movie = held), 603)
+        vm.onPrimary()
+
+        vm.requestFourKFromManage()
+
+        assertFalse(vm.ready().manageSheetOpen)
+        assertTrue(vm.ready().requestSheetOpen)
+        assertEquals(7, vm.ready().manageRequestId)
     }
 
     @Test

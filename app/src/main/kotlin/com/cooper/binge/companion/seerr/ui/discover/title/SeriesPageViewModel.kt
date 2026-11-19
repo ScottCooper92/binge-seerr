@@ -147,9 +147,10 @@ class SeriesPageViewModel
 
         fun closeStatusSheet() = updateReady { it.copy(statusSheetOpen = false) }
 
-        fun openReportSheet() = updateReady { it.copy(reportSheetOpen = true) }
+        /** Request in 4K, tapped in a request's sheet: that sheet gives way to the request sheet. */
+        fun requestFourKFromManage() = updateReady { it.copy(manageSheetOpen = false, requestSheetOpen = true) }
 
-        fun closeReportSheet() = updateReady { it.copy(reportSheetOpen = false) }
+        fun setReportSheetOpen(open: Boolean) = updateReady { it.copy(reportSheetOpen = open) }
 
         /** Closing the sheet reads the show again, since a request moves its seasons and a refused one may mean the server's state moved. */
         fun closeRequestSheet() {

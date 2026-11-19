@@ -118,9 +118,10 @@ class TitlePageViewModel
 
         fun closeStatusSheet() = updateReady { it.copy(statusSheetOpen = false) }
 
-        fun openReportSheet() = updateReady { it.copy(reportSheetOpen = true) }
+        /** Request in 4K, tapped in a request's sheet: that sheet gives way to the request sheet. */
+        fun requestFourKFromManage() = updateReady { it.copy(manageSheetOpen = false, requestSheetOpen = true) }
 
-        fun closeReportSheet() = updateReady { it.copy(reportSheetOpen = false) }
+        fun setReportSheetOpen(open: Boolean) = updateReady { it.copy(reportSheetOpen = open) }
 
         /** Closing the sheet reads the title again, since a refused send may mean the server's state moved under the page. */
         fun closeRequestSheet() {

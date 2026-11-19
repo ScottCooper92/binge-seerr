@@ -37,8 +37,10 @@ import com.binge.designsystem.formatRanges
 import com.binge.designsystem.formatRelativeOrAbsolute
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.state.RequestStateChip
+import com.cooper.binge.companion.seerr.ui.state.externalItem
 import com.cooper.binge.companion.seerr.ui.state.labelRes
 import com.cooper.binge.companion.seerr.ui.state.messageRes
+import com.cooper.binge.companion.seerr.ui.state.openItem
 import com.binge.designsystem.R as DesR
 
 /**
@@ -80,6 +82,23 @@ internal fun RequestActionsContent(
                 ?.takeIf { it.canManage }
                 ?.let { mediaRows(it, model.progress, callbacks) }
                 .orEmpty()
+        if (model.titleRows.isNotEmpty()) {
+            ItemGroup(
+                title = stringResource(R.string.request_sheet_group_title),
+                rows =
+                    model.titleRows.map { row ->
+                        if (row.external) {
+                            externalItem(
+                                row.icon,
+                                row.label,
+                                row.onClick,
+                            )
+                        } else {
+                            openItem(row.icon, row.label, onClick = row.onClick)
+                        }
+                    },
+            )
+        }
         if (requestRows.isNotEmpty()) ItemGroup(title = stringResource(R.string.request_sheet_group_request), rows = requestRows)
         if (mediaRows.isNotEmpty()) ItemGroup(title = stringResource(R.string.request_sheet_group_media), rows = mediaRows)
     }

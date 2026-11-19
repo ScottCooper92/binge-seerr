@@ -84,6 +84,16 @@ class SiblingSheet(
     val onChanged: () -> Unit,
     /** What the opener already knows of the request, so the sheet shows it at once while the detail loads. */
     val preview: RequestPreview? = null,
+    /** What the title page adds above the request's own rows: Watch, then Request in 4K. Empty from every other opener. */
+    val titleRows: List<SheetTitleRow> = emptyList(),
+)
+
+/** One row the title page adds to a request's sheet. An [external] row leaves the app, and any other opens something in it. */
+class SheetTitleRow(
+    val icon: androidx.compose.ui.graphics.vector.ImageVector,
+    val label: String,
+    val external: Boolean,
+    val onClick: () -> Unit,
 )
 
 /** A request and what this viewer may do to it, as a list row knows them before its detail has loaded. */
@@ -235,6 +245,7 @@ internal fun RequestManagementSheets(
     preview: RequestPreview? = null,
     detailLoad: SheetDetailLoad = SheetDetailLoad.Loaded,
     onRetryDetail: () -> Unit = {},
+    titleRows: List<SheetTitleRow> = emptyList(),
 ) {
     val detail = state?.detail
     // Which instance the status sheet is marking, keyed by is4k because that is what tells the
@@ -280,6 +291,7 @@ internal fun RequestManagementSheets(
             progress = state?.progress,
             actionsLanded = state?.actionsLanded,
             actionsLandedNow = actions.actionsLandedNow,
+            titleRows = titleRows,
         )
     }
     state?.edit?.takeUnless { editsInActions }?.let { edit ->

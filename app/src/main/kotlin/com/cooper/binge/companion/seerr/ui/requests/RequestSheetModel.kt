@@ -17,6 +17,7 @@ internal class RequestSheetModel(
     val canManageUsers: Boolean = false,
     val detailLoad: SheetDetailLoad = SheetDetailLoad.Loaded,
     val progress: ActionProgress? = null,
+    val titleRows: List<SheetTitleRow> = emptyList(),
 )
 
 /**

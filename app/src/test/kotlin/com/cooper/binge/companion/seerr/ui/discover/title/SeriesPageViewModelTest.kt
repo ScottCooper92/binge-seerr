@@ -128,10 +128,10 @@ class SeriesPageViewModelTest {
     fun `the report sheet opens and closes`() {
         val vm = SeriesPageViewModel(FakeSeries(), 1399)
 
-        vm.openReportSheet()
+        vm.setReportSheetOpen(true)
         assertTrue(vm.ready().reportSheetOpen)
 
-        vm.closeReportSheet()
+        vm.setReportSheetOpen(false)
         assertFalse(vm.ready().reportSheetOpen)
     }
 
@@ -173,6 +173,23 @@ class SeriesPageViewModelTest {
 
         vm.closeManageSheet()
         assertFalse(vm.ready().manageSheetOpen)
+        assertEquals(7, vm.ready().manageRequestId)
+    }
+
+    @Test
+    fun `Request in 4K from a request's sheet swaps it for the request sheet`() {
+        val held =
+            seriesFixture(
+                standard = VersionState(TitleAvailability.Pending, mayRequest = false),
+                fourK = VersionState(TitleAvailability.None, mayRequest = true),
+            ).copy(requests = listOf(TitleRequest(7, false, SeerrRequestStatusCode.Pending, 5)))
+        val vm = SeriesPageViewModel(FakeSeries(series = held), 1399)
+        vm.onPrimary()
+
+        vm.requestFourKFromManage()
+
+        assertFalse(vm.ready().manageSheetOpen)
+        assertTrue(vm.ready().requestSheetOpen)
         assertEquals(7, vm.ready().manageRequestId)
     }
 

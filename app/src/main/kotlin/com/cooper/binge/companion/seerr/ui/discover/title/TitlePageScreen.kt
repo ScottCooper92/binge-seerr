@@ -48,6 +48,8 @@ class TitlePageActions(
     val onCloseManage: () -> Unit = {},
     /** The status sheet the primary opens where there is no request to manage, closed. */
     val onCloseStatus: () -> Unit = {},
+    /** Request in 4K, tapped in a request's sheet: that sheet closes and the request sheet opens. */
+    val onRequestFourK: () -> Unit = {},
     /** The sheet of one request, backed by that request's own view model, which the nav entry supplies. */
     val manageSheet: @Composable (SiblingSheet) -> Unit = {},
     /** Report, drawn once the title is in the library; null where the page has nothing to report on. */
@@ -147,14 +149,6 @@ private fun ReadyPage(
     }
     if (state.reportSheetOpen) actions.reportSheet(actions.onCloseReport)
     state.manageRequestId?.let { requestId ->
-        actions.manageSheet(
-            SiblingSheet(
-                requestId,
-                open = state.manageSheetOpen,
-                snackbarHostState = snackbar,
-                onDismiss = actions.onCloseManage,
-                onChanged = actions.onReload,
-            ),
-        )
+        TitleManageSheet(requestId, state.manageSheetOpen, snackbar, movie.sheetFacts(), actions)
     }
 }
