@@ -147,7 +147,8 @@ private fun AccountAction(
 ) = HubAccountAction(
     account = account,
     quota = quota,
-    onClick = { if (enabled) actions.onOpenAccount(account.id) },
+    onClick = { actions.onOpenAccount(account.id) },
+    enabled = enabled,
     modifier = Modifier.alpha(alpha).then(if (enabled) Modifier else Modifier.clearAndSetSemantics {}),
 )
 
