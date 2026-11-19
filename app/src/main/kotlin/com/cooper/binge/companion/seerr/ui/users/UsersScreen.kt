@@ -203,8 +203,18 @@ private fun UsersBarActions(
         if (ready.canAdmit) {
             // One way in skips the choice: a server with no media server can only create.
             val onAdd = if (ready.importSource == null) actions.admission.onStartCreate else actions.admission.onStart
-            BingeBarIconAction(Icons.Filled.PersonAdd, stringResource(R.string.users_add_cd), onAdd, glassBackgroundAlpha = glassBackgroundAlpha)
+            BingeBarIconAction(
+                Icons.Filled.PersonAdd,
+                stringResource(R.string.users_add_cd),
+                onAdd,
+                glassBackgroundAlpha = glassBackgroundAlpha,
+            )
         }
-        BingeBarIconAction(Icons.Filled.SwapVert, stringResource(R.string.requests_sort_cd), onSort, glassBackgroundAlpha = glassBackgroundAlpha)
+        BingeBarIconAction(
+            Icons.Filled.SwapVert,
+            stringResource(R.string.requests_sort_cd),
+            onSort,
+            glassBackgroundAlpha = glassBackgroundAlpha,
+        )
     }
 }
