@@ -13,8 +13,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
-import com.binge.designsystem.component.BingeInitialsAvatar
 import com.binge.designsystem.component.ListRow
+import com.binge.designsystem.component.ListRowAvatar
 import com.binge.designsystem.component.ListRowHeader
 import com.binge.designsystem.component.ListRowPoster
 import com.binge.designsystem.component.RatingChip
@@ -45,7 +45,7 @@ internal fun TitleResultRow(
         verticalAlignment = if (result.kind == TitleKind.Person) Alignment.CenterVertically else Alignment.Top,
         leading = {
             if (result.kind == TitleKind.Person) {
-                BingeInitialsAvatar(name = result.name, avatarUrl = artwork)
+                ListRowAvatar(imageUrl = artwork)
             } else {
                 ListRowPoster(imageUrl = artwork, contentDescription = null)
             }

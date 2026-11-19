@@ -513,7 +513,6 @@ app:request_season_number  957bef5ec63a
 app:request_seasons  fe23b7eda6f7
 app:request_server  aef7de28d529
 app:request_sheet_4k  cc1e5d5a9c88
-app:request_sheet_advanced  9443ff69463e
 app:request_sheet_all_films  da84fb50422a
 app:request_sheet_all_seasons  f16dee24ef52
 app:request_sheet_back  76900f1bfd16
@@ -1284,6 +1283,7 @@ app:title_sheet_note_nothing_to_request  e6609fafce25
 app:title_sheet_note_other_request  51ac47503994
 app:title_sheet_note_processing  b7fa2a6d72a1
 app:title_sheet_watch  a71e75732446
+app:title_sheet_watch_in_binge  afe51eac2cb1
 app:title_sheet_watch_on  ffa3023a5e7b
 app:tv_account  7e1b0d5641f2
 app:tv_account_requests_empty  1bea507092bb
