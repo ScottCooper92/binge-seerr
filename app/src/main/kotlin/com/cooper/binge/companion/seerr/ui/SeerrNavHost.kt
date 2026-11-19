@@ -141,7 +141,14 @@ private fun EntryProviderScope<NavKey>.homeEntries(
                         backStack.openSection(HubSection.Requests)
                     },
                 )
-            }, search = { TitleSearchEntry() }, grid = { DiscoverTabEntry(tabs.stack(SeerrTab.Discover)) }, settings = {
+            }, search = {
+                TitleSearchEntry(onOpenGrid = {
+                    grid,
+                    title,
+                    ->
+                    backStack.push(DiscoverGridRoute(grid.kind, grid.preset, title))
+                })
+            }, grid = { DiscoverTabEntry(tabs.stack(SeerrTab.Discover)) }, settings = {
                 if (panes.hubBeside()) {
                     SettingsPanes(
                         threePane = panes.threePane(),

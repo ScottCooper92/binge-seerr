@@ -118,8 +118,8 @@
     <string name="title_search_placeholder">Buscar películas, series y personas</string>
     <string name="title_search_idle_title">Encuentra algo para ver</string>
     <string name="title_search_idle_message">Busca por título o nombre. Los resultados vienen de tu servidor.</string>
-    <string name="title_search_none_title">Sin resultados</string>
-    <string name="title_search_none_message">Nada coincide con “%1$s”. Revisa la ortografía o prueba con menos palabras.</string>
+    <string name="title_search_none_title">Sin resultados para “%1$s”</string>
+    <string name="title_search_none_message">Prueba con otra búsqueda.</string>
     <string name="title_search_more_failed">No se pudo cargar más. Toca para reintentar</string>
     <string name="title_search_recent">Búsquedas recientes</string>
     <string name="title_search_recent_clear">Borrar</string>

@@ -8,7 +8,11 @@ import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import com.binge.companion.sdk.attempt
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
+import com.cooper.binge.companion.seerr.data.TitleKey
+import com.cooper.binge.companion.seerr.data.TitleStatusStore
+import com.cooper.binge.companion.seerr.data.TitleType
 import com.cooper.binge.companion.seerr.di.IoDispatcher
+import com.cooper.binge.companion.seerr.discover.title.unblocking
 import com.cooper.binge.companion.seerr.seerr.SeerrApi
 import com.cooper.binge.companion.seerr.seerr.SeerrCredentials
 import com.cooper.binge.companion.seerr.seerr.SeerrError
@@ -148,6 +152,7 @@ class BlocklistViewModel
         private val cache: BlocklistReadCache,
         private val analytics: Analytics = NoOpAnalytics,
         private val crashBreadcrumbs: CrashBreadcrumbs = NoOpCrashBreadcrumbs,
+        private val statuses: TitleStatusStore = TitleStatusStore(),
     ) : ViewModel() {
         private val selectedFilter = MutableStateFlow(BlocklistFilter.All)
         private val search = MutableStateFlow("")
@@ -307,11 +312,14 @@ class BlocklistViewModel
             crashBreadcrumbs.log("removing from blocklist")
             viewModelScope.launch(dispatcher) {
                 attempt {
-                    connection.api().removeFromBlocklist(
-                        connection.profile().blocklistPath,
-                        item.tmdbId,
-                        connection.profile().unblockMediaType(item.mediaType.seerrMediaType()),
-                    )
+                    val key = TitleKey(if (item.mediaType.seerrMediaType() == "tv") TitleType.Tv else TitleType.Movie, item.tmdbId)
+                    statuses.unblocking(key) {
+                        connection.api().removeFromBlocklist(
+                            connection.profile().blocklistPath,
+                            item.tmdbId,
+                            connection.profile().unblockMediaType(item.mediaType.seerrMediaType()),
+                        )
+                    }
                 }.onSuccess {
                     countsRefresh.update { it + 1 }
                     listVersionState.update { it + 1 }
