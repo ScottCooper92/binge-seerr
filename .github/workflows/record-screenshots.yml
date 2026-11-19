@@ -1,0 +1,37 @@
+name: Record screenshots
+
+# Records the screenshot frames of the tests you name, on a CI runner, and commits only the changed PNGs
+# to the branch. Run it from the Actions tab: pick the branch, type a `--tests` filter such as
+# `com.cooper.binge.companion.seerr.ui.home.*ScreenshotTest`, run. Nothing else starts it: a
+# `workflow_dispatch` needs write access, the shared workflow checks the sender is a person with write
+# permission, and it refuses the default branch.
+#
+# The dispatch inputs are this file's, since a reusable workflow cannot declare a trigger of its own.
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: The branch to record on (empty records on the branch this was run from). Never the default branch.
+        type: string
+        default: ''
+      tests:
+        description: Gradle --tests filters, comma-separated (class names or patterns with *)
+        type: string
+        required: true
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  record:
+    uses: ScottCooper92/binge-ci/.github/workflows/record-screenshots.yml@907404f7bf858a9f2555e925c000a4f769b63331 # v1.0.52
+    with:
+      ref: ${{ inputs.ref || github.ref_name }}
+      tests: ${{ inputs.tests }}
+      private_submodules: homelab-core,binge-design-system,binge-ci
+    secrets:
+      AUTHOR_APP_ID: ${{ secrets.AUTHOR_APP_ID }}
+      AUTHOR_APP_PRIVATE_KEY: ${{ secrets.AUTHOR_APP_PRIVATE_KEY }}
+      REVIEWER_APP_ID: ${{ secrets.REVIEWER_APP_ID }}
+      REVIEWER_APP_PRIVATE_KEY: ${{ secrets.REVIEWER_APP_PRIVATE_KEY }}

@@ -68,7 +68,7 @@ jobs:
       (github.event_name != 'workflow_run' || github.event.workflow_run.event != 'schedule') &&
       (!github.event.pull_request || github.event.pull_request.head.repo.full_name == github.repository) &&
       (!github.event.workflow_run || github.event.workflow_run.head_repository.full_name == github.repository)
-    uses: ScottCooper92/binge-ci/.github/workflows/bot-review.yml@c34892a468b77ebc2f92ef7ec716e27ad5c50d69 # v1.0.50
+    uses: ScottCooper92/binge-ci/.github/workflows/bot-review.yml@907404f7bf858a9f2555e925c000a4f769b63331 # v1.0.52
     with:
       dispatch_pr: ${{ inputs.pr }}
       private_submodules: homelab-core,binge-design-system,binge-ci
