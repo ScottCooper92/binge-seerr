@@ -153,7 +153,13 @@ internal fun List<NavKey>.nothingOpenBesideHub(): Boolean =
  * A page pushed straight over the shell that is not a section, a title or a grid: [ShellPanesStrategy] leaves it to cover the
  * window, so no hub is beside it and it carries its own Back.
  */
-internal fun List<NavKey>.coversWindow(): Boolean = size > 1 && first() == ShellRoute && this[1].hubSection() == null
+internal fun List<NavKey>.coversWindow(): Boolean = size > 1 && first() == ShellRoute && !this[1].opensBesideHub()
+
+/**
+ * Whether [ShellPanesStrategy] draws this route in the Settings tab's content pane when it is the first thing above the shell: a hub
+ * section, or the settings search. The strategy's marker, the stash and [coversWindow] all ask this, so they cannot disagree.
+ */
+internal fun NavKey.opensBesideHub(): Boolean = hubSection() != null || this == SettingsSearchRoute
 
 /** The route a hub section opens. */
 internal fun HubSection.route(): SeerrRoute =
