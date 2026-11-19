@@ -73,7 +73,7 @@ class NavMotionWiringTest {
         val provider =
             entryProvider<NavKey> {
                 titleEntries(stack, specs)
-                discoverGridEntries(stack, specs)
+                discoverGridEntries(stack, specs, onOpenAccount = {})
                 settingsEntries(stack, connected = { true }, panes = panes, onExit = {})
             }
         return provider(route).metadata

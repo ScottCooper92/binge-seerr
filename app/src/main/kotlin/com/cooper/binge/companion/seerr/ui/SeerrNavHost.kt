@@ -82,7 +82,7 @@ fun SeerrNavHost(
         ) { panes ->
             homeEntries(backStack, connected = { connectedState.value }, panes = panes, onExit = exit, tabs = tabs)
             settingsEntries(backStack, connected = { connectedState.value }, panes = panes, onExit = exit)
-            discoverGridEntries(backStack, panes.motion)
+            discoverGridEntries(backStack, panes.motion, onOpenAccount = { id -> backStack.push(UserDetailRoute(id)) })
             titleEntries(backStack, panes.motion)
         }
     }
@@ -148,7 +148,11 @@ private fun EntryProviderScope<NavKey>.homeEntries(
                     ->
                     backStack.push(DiscoverGridRoute(grid.kind, grid.preset, title))
                 })
-            }, grid = { DiscoverTabEntry(tabs.stack(SeerrTab.Discover)) }, settings = {
+            }, grid = {
+                DiscoverTabEntry(tabs.stack(SeerrTab.Discover), onOpenAccount = { id ->
+                    backStack.push(UserDetailRoute(id))
+                })
+            }, settings = {
                 if (panes.hubBeside()) {
                     SettingsPanes(
                         threePane = panes.threePane(),

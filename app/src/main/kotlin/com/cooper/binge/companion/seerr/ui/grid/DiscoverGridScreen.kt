@@ -3,6 +3,7 @@ package com.cooper.binge.companion.seerr.ui.grid
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyRow
@@ -44,6 +45,8 @@ import com.cooper.binge.companion.seerr.discover.grid.DiscoverFilters
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverSort
 import com.cooper.binge.companion.seerr.discover.grid.FilterGroup
 import com.cooper.binge.companion.seerr.discover.sliders.HubCard
+import com.cooper.binge.companion.seerr.ui.hub.AccountBar
+import com.cooper.binge.companion.seerr.ui.hub.TitleBarAccount
 import com.cooper.binge.companion.seerr.ui.hubs.toStatus
 import com.cooper.binge.companion.seerr.ui.state.EmptyScreen
 import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
@@ -81,6 +84,8 @@ internal fun DiscoverGridScreen(
     state: DiscoverGridUiState,
     actions: DiscoverGridActions,
     firstVisibleIndex: Int = 0,
+    accountBar: AccountBar? = null,
+    onOpenAccount: (Int) -> Unit = {},
 ) {
     val scrollBehavior = rememberPaneTopBarScrollBehavior()
     var filtersOpen by rememberSaveable { mutableStateOf(false) }
@@ -94,9 +99,23 @@ internal fun DiscoverGridScreen(
         bar = ScreenBar.Large,
         scrollBehavior = scrollBehavior,
         subtitle = state.controls.subtitle(kind, title),
-        titleTrailing = if (filterable) ({ FilterActionButton(activeCount, pillInteractive, onClick = { filtersOpen = true }) }) else null,
+        titleTrailing =
+            if (filterable || accountBar != null) {
+                {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
+                    ) {
+                        if (filterable) FilterActionButton(activeCount, pillInteractive, onClick = { filtersOpen = true })
+                        accountBar?.let { TitleBarAccount(it, pillInteractive, onOpenAccount) }
+                    }
+                }
+            } else {
+                null
+            },
         actions = {
             if (filterable) CollapsedFilterAction(activeCount, !pillInteractive, collapsed) { filtersOpen = true }
+            accountBar?.let { TitleBarAccount(it, !pillInteractive, onOpenAccount, collapsed) }
         },
         header =
             state.controls.takeIf { it.chip != null || it.groups.isNotEmpty() }?.let { controls ->
