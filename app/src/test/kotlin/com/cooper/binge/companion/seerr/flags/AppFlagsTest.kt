@@ -48,7 +48,8 @@ class AppFlagsTest {
     fun `the keys are the Remote Config names the app has always used`() {
         assertEquals("discovery_enabled", DiscoveryEnabled.key)
         assertEquals("search_toggles_enabled", SearchToggles.key)
-        assertEquals(listOf(SharedFlags.BingePromotion, SharedFlags.ReviewPrompt, DiscoveryEnabled), RemoteFlagKeys)
+        assertEquals(listOf(SharedFlags.BingePromotion, SharedFlags.ReviewPrompt, DiscoveryEnabled, SharedSetupEnabled), RemoteFlagKeys)
+        assertEquals("shared_setup_enabled", SharedSetupEnabled.key)
     }
 
     @Test

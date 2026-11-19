@@ -19,7 +19,7 @@ import com.cooper.binge.companion.seerr.seerr.SEERR_MEDIA_TYPE_TV
 import com.cooper.binge.companion.seerr.ui.SiblingRequestSheet
 import com.cooper.binge.companion.seerr.ui.bingeTitleHandOff
 import com.cooper.binge.companion.seerr.ui.openInBrowser
-import com.cooper.binge.companion.seerr.ui.requests.RequestMediaType
+import com.cooper.binge.companion.seerr.ui.requests.toRequestMediaTypeOrNull
 import com.cooper.binge.companion.seerr.ui.state.EmptyScreen
 
 /**
@@ -169,8 +169,7 @@ private fun rememberTitlePageActions(
     val promoted = LocalFlags.current.bingePromotion
     val watchInBinge =
         remember(context, promoted, side.mediaType, side.tmdbId) {
-            val mediaType = if (side.mediaType == SEERR_MEDIA_TYPE_TV) RequestMediaType.Tv else RequestMediaType.Movie
-            context.bingeTitleHandOff(promoted, mediaType, side.tmdbId)
+            side.mediaType.toRequestMediaTypeOrNull()?.let { context.bingeTitleHandOff(promoted, it, side.tmdbId) }
         }
     return TitlePageActions(
         onBack = onBack,

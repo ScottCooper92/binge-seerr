@@ -7,7 +7,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.feedback.BugReportLinks
@@ -24,14 +23,14 @@ import com.cooper.binge.companion.seerr.feedback.BugReportLinks
 internal fun EditConnectionEntry(
     onDone: () -> Unit,
     showBack: Boolean,
-    viewModel: SetupViewModel = hiltViewModel(),
+    source: SetupSource = rememberSetupSource(),
 ) {
-    val state by viewModel.uiState.collectAsStateWithLifecycle()
-    LaunchedEffect(viewModel) { viewModel.beginEdit() }
+    val state by source.uiState.collectAsStateWithLifecycle()
+    LaunchedEffect(source) { source.beginEdit() }
     rememberEnteredEditingGuard(state, onDone)
     SetupScreen(
         state = state,
-        actions = viewModel.actions(),
+        actions = source.setupActions(tv = false),
         title = stringResource(R.string.settings_edit_connection),
         onBack = onDone.takeIf { showBack },
     )
@@ -45,27 +44,27 @@ internal fun EditConnectionEntry(
 internal fun ReconnectEntry(
     onDisconnect: () -> Unit,
     modifier: Modifier = Modifier,
-    viewModel: SetupViewModel = hiltViewModel(),
+    source: SetupSource = rememberSetupSource(),
 ) {
-    val state by viewModel.uiState.collectAsStateWithLifecycle()
-    LaunchedEffect(viewModel) { viewModel.beginEdit(notice = SetupNotice.SessionRejected) }
+    val state by source.uiState.collectAsStateWithLifecycle()
+    LaunchedEffect(source) { source.beginEdit(notice = SetupNotice.SessionRejected) }
     val context = LocalContext.current
     Box(modifier) {
         SetupScreen(
             state = state,
-            actions = viewModel.actions(onDisconnect),
+            actions = source.setupActions(tv = false, onDisconnect = onDisconnect),
             onReportProblem = { context.openInBrowser(BugReportLinks().url()) },
         )
     }
 }
 
 @Composable
-internal fun SetupEntry(viewModel: SetupViewModel = hiltViewModel()) {
-    val state by viewModel.uiState.collectAsStateWithLifecycle()
+internal fun SetupEntry(source: SetupSource = rememberSetupSource()) {
+    val state by source.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
     SetupScreen(
         state = state,
-        actions = viewModel.actions(),
+        actions = source.setupActions(tv = false),
         onReportProblem = { context.openInBrowser(BugReportLinks().url()) },
     )
 }
