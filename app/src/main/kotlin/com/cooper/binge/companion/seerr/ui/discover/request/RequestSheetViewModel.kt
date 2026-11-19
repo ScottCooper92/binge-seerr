@@ -47,6 +47,7 @@ sealed interface RequestSheetUiState {
         val servers: ServersState = ServersState.Loading,
         val use4k: Boolean = false,
         val pick: DestinationPick? = null,
+        val destinationChanged: Boolean = false,
         val submitting: Boolean = false,
         val problem: RequestProblem? = null,
         val failure: RequestProblem? = null,
@@ -90,9 +91,13 @@ sealed interface RequestSheetUiState {
         val destinationBlocking: Boolean
             get() = choosesDestination && (servers is ServersState.Loading || pick?.choices is ChoicesState.Loading)
 
-        /** The destination the request names: the pick the user can see. A pick whose lists failed still names its server, with that server's own profile and folder. */
+        /**
+         * The destination the request names, only once the user has changed a row: the whole pick they can see, whose profile and
+         * folder are the chosen server's own where they changed only the server. Untouched, the request is a plain one and the
+         * server's override rules apply. A pick whose lists failed still names its server.
+         */
         val destination: DestinationPick?
-            get() = pick?.takeIf { choosesDestination && it.choices !is ChoicesState.Loading }
+            get() = pick?.takeIf { choosesDestination && destinationChanged && it.choices !is ChoicesState.Loading }
 
         val canSubmit: Boolean get() =
             !submitting &&
@@ -179,7 +184,7 @@ class RequestSheetViewModel
             val current = store.ready() ?: return
             if (current.use4k == use4k || !current.canToggle4k) return
             val pick = (current.servers as? ServersState.Ready)?.servers.orEmpty().pickFor(use4k)
-            store.set(current.copy(use4k = use4k, pick = pick, pickedSeasons = emptySet(), pickedFilms = null))
+            store.set(current.copy(use4k = use4k, pick = pick, destinationChanged = false, pickedSeasons = emptySet(), pickedFilms = null))
             pick?.let { reads.choices(it.serverId) }
         }
 
@@ -199,13 +204,18 @@ class RequestSheetViewModel
             val current = store.ready() ?: return
             val server = current.servers4k.firstOrNull { it.id == id } ?: return
             if (current.pick?.serverId == id) return
-            store.set(current.copy(pick = DestinationPick(server.id, server.profileId, server.rootFolder, ChoicesState.Loading)))
+            store.set(
+                current.copy(
+                    pick = DestinationPick(server.id, server.profileId, server.rootFolder, ChoicesState.Loading),
+                    destinationChanged = true,
+                ),
+            )
             reads.choices(id)
         }
 
-        fun selectProfile(id: Int) = store.updatePick { it.copy(profileId = id) }
+        fun selectProfile(id: Int) = store.update { it.copy(destinationChanged = true, pick = it.pick?.copy(profileId = id)) }
 
-        fun selectRootFolder(path: String) = store.updatePick { it.copy(rootFolder = path) }
+        fun selectRootFolder(path: String) = store.update { it.copy(destinationChanged = true, pick = it.pick?.copy(rootFolder = path)) }
 
         fun dismissProblem() = store.update { it.copy(problem = null) }
 
