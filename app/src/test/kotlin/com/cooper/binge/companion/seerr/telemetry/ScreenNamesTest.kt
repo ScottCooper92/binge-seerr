@@ -19,7 +19,7 @@ class ScreenNamesTest {
         assertEquals("hub", HubRoute.screenName())
         assertEquals("settings", SettingsRoute.screenName())
         assertEquals("licences", LicencesRoute.screenName())
-        assertEquals("this_app", ThisAppRoute.screenName())
+        assertEquals("this_app", ThisAppRoute().screenName())
         assertEquals("request_detail", RequestDetailRoute(requestId = 4812).screenName())
     }
 

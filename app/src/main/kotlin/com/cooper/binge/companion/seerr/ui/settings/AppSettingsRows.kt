@@ -20,6 +20,7 @@ import com.cooper.binge.companion.seerr.ui.hub.openBinge
 import com.cooper.binge.companion.seerr.ui.hub.openBingeCompanions
 import com.cooper.binge.companion.seerr.ui.hub.openBingeOnPlayStore
 import com.cooper.binge.companion.seerr.ui.openInBrowser
+import com.cooper.binge.companion.seerr.ui.search.SettingRows
 
 /**
  * This app's own group: Binge first, as on TV, then report a bug in it on GitHub, whether a shake offers to, and the two things
@@ -51,7 +52,7 @@ internal fun appRows(
             label = stringResource(R.string.settings_shake_to_report),
             toggled = app.shakeToReport,
             onClick = { onToggleShakeToReport(!app.shakeToReport) },
-        ),
+        ).copy(key = SettingRows.APP_SHAKE_TO_REPORT),
         ListItem(
             icon = Icons.Filled.Insights,
             iconTint = BingeSentiment.Info.fill(),
@@ -59,14 +60,14 @@ internal fun appRows(
             detail = stringResource(R.string.settings_share_usage_data_caption),
             toggled = app.shareUsageData,
             onClick = { onToggleShareUsageData(!app.shareUsageData) },
-        ),
+        ).copy(key = SettingRows.APP_SHARE_USAGE_DATA),
         ListItem(
             icon = Icons.Filled.Healing,
             iconTint = BingeSentiment.Info.fill(),
             label = stringResource(R.string.settings_send_crash_reports),
             toggled = app.sendCrashReports,
             onClick = { onToggleSendCrashReports(!app.sendCrashReports) },
-        ),
+        ).copy(key = SettingRows.APP_SEND_CRASH_REPORTS),
         // The tip jar's row: only once Play has priced every step (see `TipState.Ready`).
         onOpenTip?.let {
             ListItem(

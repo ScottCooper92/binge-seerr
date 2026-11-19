@@ -82,7 +82,7 @@ fun SeerrRoute.screenName(): String =
         EditConnectionRoute -> "edit_connection"
         LicencesRoute -> "licences"
         DiagnosticsRoute -> "diagnostics"
-        ThisAppRoute -> "this_app"
+        is ThisAppRoute -> "this_app"
         else -> debugScreenName(this)
     }
 

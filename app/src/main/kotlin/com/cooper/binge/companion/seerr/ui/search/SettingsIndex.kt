@@ -97,7 +97,7 @@ internal sealed interface SearchTarget {
         override fun route(
             userId: Int,
             row: String?,
-        ): SeerrRoute = ThisAppRoute
+        ): SeerrRoute = ThisAppRoute(row)
     }
 
     /** The Diagnostics page, which This app opens. */

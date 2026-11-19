@@ -169,7 +169,10 @@ data object SettingsSearchRoute : SeerrRoute
 
 /** This app's own page: Binge, feedback, what it reports, and About. The one section every viewer has. */
 @Serializable
-data object ThisAppRoute : SeerrRoute
+data class ThisAppRoute(
+    /** The row to scroll to and wash, by [com.cooper.binge.companion.seerr.ui.search.SettingRows] key; null opens the page at the top. */
+    val row: String? = null,
+) : SeerrRoute
 
 /** The open-source licences of the libraries the app ships, opened from This app. */
 @Serializable

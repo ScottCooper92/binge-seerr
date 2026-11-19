@@ -22,7 +22,7 @@ import com.cooper.homelab.core.uiandroid.search.SearchToggle
 internal enum class SwitchPage { General, Network, Users }
 
 /**
- * The switch a result for [entry] carries, or null where it keeps its chevron. It is the page's own editor: the same view model,
+ * The switch a result for [entry] carries, or null where it keeps its chevron. For a server setting it is the page's own editor: the same view model,
  * so a flip is one `edit` on the draft that saves as made, with the same failures. The editor is made when the first of its rows
  * is drawn, which is also when [onUsed] says so, and its settings record is read then and not before. While that read has not
  * answered, or has failed, the row stays a plain navigation row.
@@ -34,7 +34,9 @@ internal fun searchToggle(
     onUsed: (SwitchPage) -> Unit,
 ): SearchToggle? {
     val row = entry.row ?: return null
-    val page = (entry.target.target as? SearchTarget.Server)?.page ?: return null
+    val target = entry.target.target
+    if (target is SearchTarget.ThisApp) return deviceToggle(row)
+    val page = (target as? SearchTarget.Server)?.page ?: return null
     return when (page) {
         ServerSettingsPage.General ->
             generalSwitches[row]?.let { switch ->
@@ -55,6 +57,15 @@ internal fun searchToggle(
             }
         else -> null
     }
+}
+
+/** The toggle for a This app setting, from the device's own preferences; null for a row that is not a switch. */
+@Composable
+private fun deviceToggle(row: String): SearchToggle? {
+    val switch = deviceSwitches[row] ?: return null
+    val vm = hiltViewModel<AppSwitchesViewModel>()
+    val app by vm.settings.collectAsStateWithLifecycle()
+    return app?.let { switch.toggle(it) { on -> vm.set(switch, on) } }
 }
 
 @Composable
