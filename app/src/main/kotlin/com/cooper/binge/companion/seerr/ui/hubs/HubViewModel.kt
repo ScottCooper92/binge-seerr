@@ -149,8 +149,25 @@ class HubViewModel
             if (hero.value == null) hero.value = if (attempt { heroes.supported() }.getOrDefault(true)) HeroSlot.Loading else HeroSlot.Gone
             // A failed hero leaves the last one, or none: it never holds the rows.
             attempt { heroes.load(tab) }
-                .onSuccess { titles -> hero.value = if (titles.isEmpty()) HeroSlot.Gone else HeroSlot.Shown(titles) }
-                .onFailure { hero.update { if (it is HeroSlot.Shown) it else HeroSlot.Gone } }
+                .onSuccess { titles ->
+                    hero.value = if (titles.isEmpty()) HeroSlot.Gone else HeroSlot.Shown(titles)
+                    showScores(titles)
+                }.onFailure { hero.update { if (it is HeroSlot.Shown) it else HeroSlot.Gone } }
+        }
+
+        /** The review scores join the hero after it shows, and only the hero they were read for: a newer one is left as it is. */
+        private suspend fun showScores(titles: List<HubHero>) {
+            if (titles.isEmpty()) return
+            val scored = heroes.withScores(titles)
+            hero.update {
+                if (it is HeroSlot.Shown &&
+                    it.titles.map(HubHero::tmdbId) == scored.map(HubHero::tmdbId)
+                ) {
+                    HeroSlot.Shown(scored)
+                } else {
+                    it
+                }
+            }
         }
 
         @AssistedFactory

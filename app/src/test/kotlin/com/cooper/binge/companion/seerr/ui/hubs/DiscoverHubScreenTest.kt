@@ -14,6 +14,7 @@ import androidx.compose.ui.test.getBoundsInRoot
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.junit4.StateRestorationTester
+import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -34,6 +35,7 @@ import com.cooper.binge.companion.seerr.discover.sliders.HubHero
 import com.cooper.binge.companion.seerr.discover.sliders.HubRow
 import com.cooper.binge.companion.seerr.discover.sliders.HubTab
 import com.cooper.binge.companion.seerr.discover.sliders.HubTile
+import com.cooper.binge.companion.seerr.discover.title.TitleRatings
 import com.cooper.binge.companion.seerr.theme.SeerrTheme
 import com.cooper.binge.companion.seerr.util.createSeerrComposeRule
 import org.junit.Assert.assertEquals
@@ -288,6 +290,24 @@ class DiscoverHubScreenTest {
         val server = "https://server.example/"
         show(server, mutableListOf(), hero = listOf(hero(server, rating = 6.4f)))
         compose.onNodeWithText("6.4", substring = true, useUnmergedTree = true).assertExists()
+    }
+
+    @Test
+    fun `a hero shows its review scores and its status after the genres`() {
+        val server = "https://server.example/"
+        show(server, mutableListOf(), hero = listOf(hero(server).copy(ratings = TitleRatings(97, 91, 7.9))))
+        compose.onNodeWithContentDescription("Critics 97 percent", useUnmergedTree = true).assertExists()
+        compose.onNodeWithContentDescription("Audience 91 percent", useUnmergedTree = true).assertExists()
+        compose.onNodeWithContentDescription("IMDb 7.9 out of 10", useUnmergedTree = true).assertExists()
+        compose.onAllNodesWithText("Available", useUnmergedTree = true).assertCountEquals(1)
+    }
+
+    @Test
+    fun `a hero with no scores and no status shows neither`() {
+        val server = "https://server.example/"
+        show(server, mutableListOf(), hero = listOf(hero(server).copy(availability = TitleAvailability.None)))
+        compose.onAllNodesWithContentDescription("Critics", substring = true, useUnmergedTree = true).assertCountEquals(0)
+        compose.onAllNodesWithText("Available", useUnmergedTree = true).assertCountEquals(0)
     }
 
     @Test

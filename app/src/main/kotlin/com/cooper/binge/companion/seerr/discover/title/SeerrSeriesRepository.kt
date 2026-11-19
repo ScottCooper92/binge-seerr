@@ -95,7 +95,7 @@ class SeerrSeriesRepository(
                     ratings =
                         ratings
                             .await()
-                            ?.let { TitleRatings(it.criticsScore, it.audienceScore, imdbScore = null) }
+                            ?.toRatings()
                             ?.takeUnless { it.isEmpty },
                     recommendations =
                         recommendations
