@@ -4,10 +4,14 @@ import android.content.Context
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Info
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.test.core.app.ApplicationProvider
+import com.binge.designsystem.LocalIsSinglePaneNav
+import com.binge.designsystem.PaneContent
+import com.binge.designsystem.PaneEdge
 import com.binge.designsystem.component.DetailInfoEntry
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.theme.SeerrTheme
@@ -42,14 +46,18 @@ class TitleSectionAlignmentTest {
     /** A tag's visible edge: its label sits inside the tag's own horizontal padding, `padding_s`. */
     private fun tagStart(text: String) = start(text) - resources.getDimension(DesR.dimen.padding_s) / resources.displayMetrics.density
 
-    private fun check() {
+    private fun check(besideHub: Boolean = false) {
         val keywords = resources.getString(R.string.title_page_keywords)
         val details = resources.getString(R.string.title_page_details)
         rule.setContent {
             SeerrTheme {
-                Column {
-                    KeywordsSection(listOf("simulation"))
-                    TitleDetailsSection(listOf(DetailInfoEntry(Icons.Outlined.Info, "Status", "Released")))
+                CompositionLocalProvider(LocalIsSinglePaneNav provides !besideHub) {
+                    PaneContent(innerEdge = PaneEdge.Start) {
+                        Column {
+                            KeywordsSection(listOf("simulation"))
+                            TitleDetailsSection(listOf(DetailInfoEntry(Icons.Outlined.Info, "Status", "Released")))
+                        }
+                    }
                 }
             }
         }
@@ -64,6 +72,10 @@ class TitleSectionAlignmentTest {
     @Test
     @Config(qualifiers = "w1280dp-h800dp-xhdpi")
     fun `the headings start where their content does on a 1280dp window`() = check()
+
+    @Test
+    @Config(qualifiers = "w1280dp-h800dp-xhdpi")
+    fun `the headings start where their content does with the hub beside the page`() = check(besideHub = true)
 
     private companion object {
         const val TOLERANCE_DP = 0.5f
