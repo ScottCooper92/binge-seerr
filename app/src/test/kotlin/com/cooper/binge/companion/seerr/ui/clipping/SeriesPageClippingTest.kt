@@ -113,7 +113,7 @@ private fun sheetWorstCase(): RequestSheetUiState.Ready {
 
 private val NO_ACTIONS = TitlePageActions({}, {}, {}, {}, {}, {}, {}, {}, {}, {})
 private val NO_SEASON_ACTIONS = SeasonActions({}, {}, { _, _ -> })
-private val NO_SHEET_ACTIONS = RequestSheetActions({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {})
+private val NO_SHEET_ACTIONS = RequestSheetActions({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {})
 
 /** The series page with every season status, long names and every rating, at font scales 1.3 and 2.0, through the design system's clipping check. */
 @RunWith(RobolectricTestRunner::class)
