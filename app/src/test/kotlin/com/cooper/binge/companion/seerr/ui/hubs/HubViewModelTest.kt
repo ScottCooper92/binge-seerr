@@ -1,5 +1,9 @@
 package com.cooper.binge.companion.seerr.ui.hubs
 
+import com.cooper.binge.companion.seerr.data.TitleKey
+import com.cooper.binge.companion.seerr.data.TitleStatusStore
+import com.cooper.binge.companion.seerr.data.TitleStatuses
+import com.cooper.binge.companion.seerr.data.TitleType
 import com.cooper.binge.companion.seerr.discover.GenreTile
 import com.cooper.binge.companion.seerr.discover.TitleAvailability
 import com.cooper.binge.companion.seerr.discover.TitleKind
@@ -20,6 +24,7 @@ import com.cooper.binge.companion.seerr.discover.sliders.HubTileLoader
 import com.cooper.binge.companion.seerr.discover.sliders.SliderListState
 import com.cooper.binge.companion.seerr.discover.title.TitleRatings
 import com.cooper.binge.companion.seerr.seerr.HydratedTitle
+import com.cooper.binge.companion.seerr.seerr.SeerrMediaStatusCode
 import com.cooper.binge.companion.seerr.seerr.SeerrRequestMediaDto
 import com.cooper.binge.companion.seerr.ui.settings.server.DiscoverSlider
 import com.cooper.binge.companion.seerr.ui.settings.server.SliderForm
@@ -149,6 +154,7 @@ class HubViewModelTest {
         sliders: FakeSliders,
         titles: TitleListRepository = Titles(),
         grid: DiscoverGridRepository = FakeGrid(),
+        statuses: TitleStatusStore = TitleStatusStore(),
     ) = HubViewModel(
         sliders,
         HubCardLoader(titles, NoMedia),
@@ -157,6 +163,7 @@ class HubViewModelTest {
         grid,
         dispatcher,
         HubTab.Movies,
+        statuses,
     )
 
     private suspend fun HubViewModel.settled() = uiState.first { it !is DiscoverHubUiState.Loading }
@@ -201,6 +208,27 @@ class HubViewModelTest {
                     .name,
             )
         }
+
+    @Test
+    fun `a status written anywhere shows on the hub's cards and its hero, and a change shows again`() =
+        runTest {
+            val statuses = TitleStatusStore()
+            val sliders = FakeSliders(SliderListState.Ready(listOf(slider(1, TRENDING))))
+            val model = vm(sliders, statuses = statuses)
+            assertEquals(TitleAvailability.None, model.settled().cardStatus())
+
+            statuses.confirm(TitleKey(TitleType.Movie, 1), TitleStatuses(SeerrMediaStatusCode.Pending))
+
+            val pending = model.uiState.first { it.cardStatus() == TitleAvailability.Pending }
+            assertTrue((pending as DiscoverHubUiState.Ready).hero.all { it.availability == TitleAvailability.Pending })
+
+            statuses.confirm(TitleKey(TitleType.Movie, 1), TitleStatuses(SeerrMediaStatusCode.Available))
+
+            model.uiState.first { it.cardStatus() == TitleAvailability.Available }
+        }
+
+    private fun DiscoverHubUiState.cardStatus(): TitleAvailability? =
+        ((this as? DiscoverHubUiState.Ready)?.rows?.singleOrNull() as? HubRowUi.Cards)?.cards?.singleOrNull()?.availability
 
     @Test
     fun `it reads the slider list once on opening and again on a refresh`() =

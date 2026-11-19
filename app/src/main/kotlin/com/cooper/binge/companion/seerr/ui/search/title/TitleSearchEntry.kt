@@ -7,11 +7,13 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.cooper.binge.companion.seerr.discover.sliders.HubGrid
 import com.cooper.binge.companion.seerr.ui.discover.title.LocalOpenTitle
 
 /** The Search tab's root. A result opens the title's page, or with the flag off the hand-off [LocalOpenTitle] falls back to. */
 @Composable
 fun TitleSearchEntry(
+    onOpenGrid: (HubGrid, String) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: TitleSearchViewModel = hiltViewModel(),
 ) {
@@ -37,6 +39,7 @@ fun TitleSearchEntry(
                 onForgetRecents = viewModel::onForgetRecents,
                 onOpenTitle = viewModel::onOpenTitle,
                 onType = viewModel::onType,
+                onOpenGrid = onOpenGrid,
             ),
         modifier = modifier,
     )

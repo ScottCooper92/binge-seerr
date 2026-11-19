@@ -7,6 +7,7 @@ import com.binge.designsystem.refresh.RefreshTracker
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.data.NoRequestStore
 import com.cooper.binge.companion.seerr.data.RequestStore
+import com.cooper.binge.companion.seerr.data.TitleStatusStore
 import com.cooper.binge.companion.seerr.di.IoDispatcher
 import com.cooper.binge.companion.seerr.seerr.SEERR_MEDIA_TYPE_MOVIE
 import com.cooper.binge.companion.seerr.seerr.SeerrApi
@@ -65,6 +66,7 @@ class RequestDetailViewModel
         private val minuteTicker: Ticker = Ticker(),
         private val queueGates: DownloadQueueGates = DownloadQueueGates(connection),
         private val reviewSignals: ReviewSignalSink = NoReviewSignals,
+        private val statuses: TitleStatusStore = TitleStatusStore(),
     ) : ViewModel() {
         private val state = MutableStateFlow<RequestDetailUiState>(RequestDetailUiState.Loading)
 
@@ -92,6 +94,7 @@ class RequestDetailViewModel
                 crashBreadcrumbs = crashBreadcrumbs,
                 cache = cache,
                 reviewSignals = reviewSignals,
+                statuses = statuses,
                 onModerated = ::reloadAfterAction,
             )
 

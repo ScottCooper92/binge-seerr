@@ -7,10 +7,14 @@ import com.cooper.binge.companion.seerr.core.search.PagedQuerySearch
 import com.cooper.binge.companion.seerr.core.search.QueryHistory
 import com.cooper.binge.companion.seerr.core.search.QuerySearchState
 import com.cooper.binge.companion.seerr.core.search.SearchPage
+import com.cooper.binge.companion.seerr.data.TitleStatusStore
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.TitleListRepository
 import com.cooper.binge.companion.seerr.discover.TitleResult
 import com.cooper.binge.companion.seerr.discover.TitleSource
+import com.cooper.binge.companion.seerr.discover.grid.DiscoverGridRepository
+import com.cooper.binge.companion.seerr.discover.grid.GridPreset
+import com.cooper.binge.companion.seerr.discover.overlaid
 import com.cooper.binge.companion.seerr.discover.sliders.HubCard
 import com.cooper.binge.companion.seerr.discover.sliders.HubMediaSource
 import com.cooper.binge.companion.seerr.discover.sliders.toCard
@@ -38,6 +42,8 @@ class TitleSearchViewModel
         private val titles: TitleListRepository,
         history: QueryHistory,
         private val media: HubMediaSource,
+        private val grid: DiscoverGridRepository,
+        statuses: TitleStatusStore = TitleStatusStore(),
     ) : ViewModel() {
         private val eventFlow = MutableSharedFlow<TitleSearchEvent>(extraBufferCapacity = 1)
         val events: SharedFlow<TitleSearchEvent> = eventFlow.asSharedFlow()
@@ -56,14 +62,23 @@ class TitleSearchViewModel
         private val type = MutableStateFlow(SearchType.All)
         private val trending = MutableStateFlow<Trending>(Trending.Loading)
         private val genreNames = MutableStateFlow<Map<Int, String>>(emptyMap())
+        private val browseAll = MutableStateFlow(true)
+        private val lookups = combine(genreNames, browseAll, ::Pair)
 
         val uiState: StateFlow<TitleSearchUiState> =
-            combine(search.query, search.state, type, trending, genreNames) { text, state, type, trending, genres ->
-                state.toUiState(text, type, trending, genres)
+            combine(
+                search.query,
+                search.state.combine(statuses.statuses) { state, held -> state.overlaid(held) },
+                type,
+                trending,
+                lookups,
+            ) { text, state, type, trending, (genres, browseAll) ->
+                state.toUiState(text, type, trending, genres, browseAll)
             }.stateIn(viewModelScope, SharingStarted.Lazily, TitleSearchUiState.Idle("", emptyList()))
 
         init {
             loadTrending()
+            viewModelScope.launch { browseAll.value = attempt { grid.canRefine(GridPreset.Popular) }.getOrDefault(true) }
             viewModelScope.launch { genreNames.value = attempt { titles.allGenreNames() }.getOrDefault(emptyMap()) }
         }
 
@@ -136,6 +151,7 @@ internal fun QuerySearchState<TitleResult>.toUiState(
     type: SearchType,
     trending: Trending,
     genreNames: Map<Int, String>,
+    browseAll: Boolean = true,
 ): TitleSearchUiState =
     when (this) {
         is QuerySearchState.Idle -> TitleSearchUiState.Idle(text, recents, trending)
@@ -147,14 +163,14 @@ internal fun QuerySearchState<TitleResult>.toUiState(
                 results = all.filter(type::keeps),
                 loaded = all.size,
                 type = type,
-                counts = all.typeCounts(total),
+                counts = all.typeCounts(),
                 genreNames = genreNames,
                 hasMore = hasMore,
                 appending = appending,
                 appendFailed = appendFailed,
             )
         }
-        is QuerySearchState.NoResults -> TitleSearchUiState.NoResults(text, query)
+        is QuerySearchState.NoResults -> TitleSearchUiState.NoResults(text, query, type, browseAll)
         is QuerySearchState.Failed -> TitleSearchUiState.Error(text, cause.toSeerrError())
     }
 

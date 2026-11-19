@@ -31,9 +31,15 @@ sealed interface TitleSearchUiState {
         val appendFailed: Boolean,
     ) : TitleSearchUiState
 
+    /**
+     * The query found nothing. [type] is the chip still chosen, so the row of chips stays, each at zero. [browseAll] is whether
+     * the server can filter the grid the Browse all row opens, as the hub asks.
+     */
     data class NoResults(
         override val text: String,
         val query: String,
+        val type: SearchType,
+        val browseAll: Boolean = true,
     ) : TitleSearchUiState
 
     data class Error(
