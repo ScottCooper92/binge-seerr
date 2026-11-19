@@ -55,6 +55,8 @@ class SeerrTitleDetailsRepository(
                     region = region,
                     mayRequest = permissions.canRequestMovie,
                     mayRequest4k = permissions.mayRequest4k(isTv = false, profile.settings),
+                    viewerId = user.id,
+                    mayViewAllRequests = permissions.canViewRequests,
                     webUrl = serverUrl() + "movie/" + tmdbId,
                 ).copy(companiesOpen = profile.hasDiscoverByCategory)
         }
@@ -95,6 +97,8 @@ internal fun SeerrMovieDetailsDto.toMovieDetails(
     region: String?,
     mayRequest: Boolean,
     mayRequest4k: Boolean,
+    viewerId: Int,
+    mayViewAllRequests: Boolean,
     webUrl: String,
 ): MovieDetails {
     val crew = credits?.crew.orEmpty()
@@ -143,7 +147,12 @@ internal fun SeerrMovieDetailsDto.toMovieDetails(
         mediaId = mediaInfo?.id,
         webUrl = webUrl,
         releaseDate = releaseDate?.takeIf { it.isNotBlank() },
-        requests = mediaInfo?.requests.orEmpty().map { it.toTitleRequest() },
+        requests =
+            mediaInfo
+                ?.requests
+                .orEmpty()
+                .viewableBy(viewerId, mayViewAllRequests)
+                .map { it.toTitleRequest() },
     )
 }
 
@@ -195,6 +204,15 @@ internal suspend fun streamingRegion(
     val discover = listOf(own?.discoverRegion ?: own?.region, server.discoverRegion ?: server.region)
     return (streaming + discover + deviceRegion).firstOrNull { !it.isNullOrBlank() }
 }
+
+/**
+ * The requests this viewer may open. The title's answer lists everyone's, but `GET /request/{id}` refuses another user's to a
+ * viewer who holds neither Manage Requests nor Request View, so those are dropped here rather than offered as a tap that fails.
+ */
+internal fun List<com.cooper.binge.companion.seerr.seerr.SeerrRequestSummaryDto>.viewableBy(
+    viewerId: Int,
+    mayViewAll: Boolean,
+) = if (mayViewAll) this else filter { it.requestedBy?.id == viewerId }
 
 /** The request the title's own answer lists, reduced to what the page keeps: its id, version, state, who asked and when. */
 internal fun com.cooper.binge.companion.seerr.seerr.SeerrRequestSummaryDto.toTitleRequest() =
