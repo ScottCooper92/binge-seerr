@@ -18,6 +18,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 
@@ -105,10 +106,12 @@ class HubSkeletonGeometryTest {
         loading: DiscoverHubUiState = DiscoverHubUiState.Loading,
         loaded: DiscoverHubUiState = ready(row),
     ) {
+        // Where Discover is a tab of its own the Browse all row is not drawn, so there is nothing for the skeleton to reserve.
+        val discoverTab = RuntimeEnvironment.getQualifiers().contains("w840dp")
         val anchors =
-            listOf(
+            listOfNotNull(
                 LayoutAnchors.Hub.HERO,
-                LayoutAnchors.Hub.DISCOVER_ENTRY,
+                LayoutAnchors.Hub.DISCOVER_ENTRY.takeUnless { discoverTab },
                 LayoutAnchors.Hub.FIRST_CAROUSEL,
             ).map(LayoutAnchors::section)
         rule.assertSkeletonReservesGeometry(anchors = anchors, checkSize = true) { resolved ->

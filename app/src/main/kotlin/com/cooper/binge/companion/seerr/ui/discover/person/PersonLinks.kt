@@ -1,7 +1,7 @@
 package com.cooper.binge.companion.seerr.ui.discover.person
 
 import com.cooper.binge.companion.seerr.discover.person.PersonDetails
-import com.cooper.binge.companion.seerr.ui.isOpenableSite
+import com.cooper.binge.companion.seerr.seerr.isOpenableSite
 
 internal enum class PersonLinkKind { Imdb, Website }
 
