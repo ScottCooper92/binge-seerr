@@ -147,7 +147,7 @@ internal fun QuerySearchState<TitleResult>.toUiState(
                 results = all.filter(type::keeps),
                 loaded = all.size,
                 type = type,
-                counts = all.typeCounts(total),
+                counts = all.typeCounts(),
                 genreNames = genreNames,
                 hasMore = hasMore,
                 appending = appending,
