@@ -62,6 +62,7 @@ class SeerrTitleDetailsRepositoryTest {
     private var userRegion = """{"streamingRegion":"US"}"""
     private var movieBody = MOVIE
     private val unblocks = mutableListOf<String>()
+    private val watchlistCalls = mutableListOf<String>()
     private var ratingsAnswer = FakeResponse(headers = JSON, body = RATINGS)
 
     @After
@@ -75,6 +76,11 @@ class SeerrTitleDetailsRepositoryTest {
         return FakeResponse()
     }
 
+    private fun recordWatchlist(request: FakeRequest): FakeResponse {
+        watchlistCalls += "${request.method} ${request.url.encodedPath}?${request.url.encodedQuery} ${request.body}"
+        return FakeResponse(code = if (request.method == "POST") 201 else 204)
+    }
+
     private fun route(request: FakeRequest): FakeResponse =
         when (request.url.encodedPath) {
             "/api/v1/movie/603" -> FakeResponse(headers = JSON, body = movieBody)
@@ -84,6 +90,7 @@ class SeerrTitleDetailsRepositoryTest {
             "/api/v1/collection/2344" -> FakeResponse(headers = JSON, body = COLLECTION)
             "/api/v1/user/9/settings/main" -> FakeResponse(headers = JSON, body = userRegion)
             "/api/v1/blocklist/603", "/api/v1/blacklist/603" -> recordUnblock(request)
+            "/api/v1/watchlist", "/api/v1/watchlist/603" -> recordWatchlist(request)
             else -> FakeResponse(code = 404)
         }
 
@@ -297,6 +304,44 @@ class SeerrTitleDetailsRepositoryTest {
         version = SeerrVersion(3, 0, 0)
         withRepository { it.unblock(603) }
         assertEquals(listOf("DELETE /api/v1/blocklist/603?null"), unblocks)
+    }
+
+    @Test
+    fun `the details say whether the viewer has the title on their watchlist`() {
+        assertFalse(withRepository { it.movie(603) }.onWatchlist)
+
+        movieBody = MOVIE.replaceFirst("{", """{"onUserWatchlist":true,""")
+        assertTrue(withRepository { it.movie(603) }.onWatchlist)
+    }
+
+    @Test
+    fun `the watchlist button is offered only where the server can edit the list`() {
+        assertTrue(withRepository { it.movie(603) }.mayWatchlist)
+
+        variant = SeerrVariant.Overseerr
+        version = SeerrVersion(1, 33, 0)
+        assertFalse("an Overseerr can read the watchlist and never edit it", withRepository { it.movie(603) }.mayWatchlist)
+
+        variant = SeerrVariant.Jellyseerr
+        version = SeerrVersion(1, 5, 0)
+        assertFalse("a Jellyseerr before the edit calls", withRepository { it.movie(603) }.mayWatchlist)
+
+        version = SeerrVersion(1, 6, 0)
+        assertTrue(withRepository { it.movie(603) }.mayWatchlist)
+    }
+
+    @Test
+    fun `adding to the watchlist posts the title and removing it deletes by id with the media type`() {
+        withRepository { it.setWatchlist(603, "The Matrix", onList = true) }
+        withRepository { it.setWatchlist(603, "The Matrix", onList = false) }
+
+        assertEquals(
+            listOf(
+                "POST /api/v1/watchlist?null {\"tmdbId\":603,\"mediaType\":\"movie\",\"title\":\"The Matrix\"}",
+                "DELETE /api/v1/watchlist/603?mediaType=movie ",
+            ),
+            watchlistCalls,
+        )
     }
 
     @Test

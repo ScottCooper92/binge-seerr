@@ -34,6 +34,12 @@ private class FakeEpisodes(
     override suspend fun extras(tmdbId: Int): TitleExtras = error("not read here")
 
     override suspend fun unblock(tmdbId: Int) = error("not used here")
+
+    override suspend fun setWatchlist(
+        tmdbId: Int,
+        title: String,
+        onList: Boolean,
+    ) = error("not used here")
 }
 
 class SeriesEpisodesViewModelTest {
