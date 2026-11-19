@@ -1508,6 +1508,12 @@
     <string name="title_page_request">Pedir</string>
     <string name="title_page_runtime">%1$d h %2$d min</string>
     <string name="title_page_request_4k">Pedir en 4K</string>
+    <string name="title_sheet_watch">Ver</string>
+    <string name="title_sheet_watch_on">Ver en %1$s</string>
+    <string name="title_sheet_note_cannot_request">Tu cuenta no puede solicitar este título.</string>
+    <string name="title_sheet_note_other_request">Otro usuario ha solicitado este título.</string>
+    <string name="title_sheet_note_in_library">Este título está en la biblioteca.</string>
+    <string name="title_sheet_note_blocklisted">Este título está en la lista de bloqueo, así que no se puede solicitar.</string>
     <string name="title_page_action_trailer">Tráiler</string>
     <string name="title_page_action_share">Compartir</string>
     <string name="title_page_stat_released">Estreno</string>

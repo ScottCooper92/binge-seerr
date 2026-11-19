@@ -46,6 +46,8 @@ class TitlePageActions(
     val onReload: () -> Unit = {},
     /** The sheet of a request the primary opened, closed. */
     val onCloseManage: () -> Unit = {},
+    /** The status sheet the primary opens where there is no request to manage, closed. */
+    val onCloseStatus: () -> Unit = {},
     /** The sheet of one request, backed by that request's own view model, which the nav entry supplies. */
     val manageSheet: @Composable (SiblingSheet) -> Unit = {},
 )
@@ -125,6 +127,15 @@ private fun ReadyPage(
                 ),
             onDismiss = actions.onCloseRequest,
             onResult = actions.onRequested,
+        )
+    }
+    if (state.statusSheetOpen) {
+        TitleStatusSheet(
+            state = titleActionsModel(state.movie.standard, state.movie.fourK, state.movie.requests).primary.state,
+            watchUrl = state.movie.watchUrl,
+            mediaServerName = state.movie.mediaServerName,
+            onWatch = actions.onOpenUrl,
+            onDismiss = actions.onCloseStatus,
         )
     }
     state.manageRequestId?.let { requestId ->

@@ -1,0 +1,87 @@
+package com.cooper.binge.companion.seerr.ui.discover.title
+
+import androidx.annotation.StringRes
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.res.stringResource
+import com.binge.designsystem.component.BingeAdaptiveSheet
+import com.binge.designsystem.component.BingeSheetKind
+import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.ui.state.ActionSheetGroup
+import com.cooper.binge.companion.seerr.ui.state.externalItem
+import com.binge.designsystem.R as DesR
+
+/**
+ * What the primary opens where no request of the viewer's is on file: the title's status, Watch once the title is in the library,
+ * and otherwise a line saying why there is nothing to do. The primary is never dead, so this is what a tap shows.
+ */
+@Composable
+internal fun TitleStatusSheet(
+    state: TitleState,
+    watchUrl: String?,
+    mediaServerName: String?,
+    onWatch: (String) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    BingeAdaptiveSheet(kind = BingeSheetKind.Menu, onDismissRequest = onDismiss) {
+        TitleStatusSheetContent(
+            state = state,
+            watchUrl = watchUrl,
+            mediaServerName = mediaServerName,
+            onWatch = { url ->
+                onDismiss()
+                onWatch(url)
+            },
+        )
+    }
+}
+
+/** [TitleStatusSheet]'s body without its window, for a frame. */
+@Composable
+internal fun TitleStatusSheetContent(
+    state: TitleState,
+    watchUrl: String?,
+    mediaServerName: String?,
+    onWatch: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val watch = watchUrl?.takeIf { state.isInLibrary() }
+    if (watch != null) {
+        val label = mediaServerName?.let { stringResource(R.string.title_sheet_watch_on, it) } ?: stringResource(R.string.title_sheet_watch)
+        ActionSheetGroup(
+            rows = listOf(externalItem(Icons.Filled.PlayArrow, label) { onWatch(watch) }),
+            modifier = modifier,
+            title = stringResource(state.labelRes()),
+        )
+    } else {
+        Column(
+            modifier
+                .padding(
+                    horizontal = dimensionResource(DesR.dimen.padding_m),
+                ).padding(bottom = dimensionResource(DesR.dimen.padding_l)),
+        ) {
+            Text(stringResource(state.labelRes()), style = MaterialTheme.typography.titleMedium)
+            Text(
+                stringResource(state.noteRes()),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
+@StringRes
+private fun TitleState.noteRes() =
+    when (this) {
+        TitleState.Request -> R.string.title_sheet_note_cannot_request
+        TitleState.Requested, TitleState.Processing -> R.string.title_sheet_note_other_request
+        TitleState.PartiallyAvailable, TitleState.Available -> R.string.title_sheet_note_in_library
+        TitleState.Blocklisted -> R.string.title_sheet_note_blocklisted
+    }

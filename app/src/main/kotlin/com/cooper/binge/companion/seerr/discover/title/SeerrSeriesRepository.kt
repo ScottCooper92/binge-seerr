@@ -17,6 +17,7 @@ import com.cooper.binge.companion.seerr.seerr.SeerrUserDto
 import com.cooper.binge.companion.seerr.seerr.toPermissions
 import com.cooper.binge.companion.seerr.seerr.toTmdbBackdropUrl
 import com.cooper.binge.companion.seerr.seerr.toTmdbPosterUrl
+import com.cooper.binge.companion.seerr.ui.requests.mediaServerName
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -65,7 +66,11 @@ class SeerrSeriesRepository(
                     mayViewAllRequests = permissions.canViewRequests,
                     settings = profile.settings,
                     webUrl = serverUrl() + "tv/" + tmdbId,
-                ).copy(companiesOpen = profile.hasDiscoverByCategory, keywordsOpen = profile.hasKeywordDiscover)
+                ).copy(
+                    companiesOpen = profile.hasDiscoverByCategory,
+                    mediaServerName = profile.mediaServerName(),
+                    keywordsOpen = profile.hasKeywordDiscover,
+                )
         }
 
     override suspend fun season(
@@ -177,6 +182,7 @@ internal fun SeerrTvDetailsDto.toSeriesDetails(
             },
         partialRequests = settings.partialRequestsEnabled,
         mediaId = mediaInfo?.id,
+        watchUrl = mediaInfo?.watchUrl(),
         webUrl = webUrl,
         requests =
             mediaInfo

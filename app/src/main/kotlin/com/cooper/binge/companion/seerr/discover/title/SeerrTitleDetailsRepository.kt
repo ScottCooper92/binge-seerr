@@ -19,6 +19,8 @@ import com.cooper.binge.companion.seerr.seerr.certificationIn
 import com.cooper.binge.companion.seerr.seerr.toPermissions
 import com.cooper.binge.companion.seerr.seerr.toTmdbBackdropUrl
 import com.cooper.binge.companion.seerr.seerr.toTmdbPosterUrl
+import com.cooper.binge.companion.seerr.ui.isOpenableSite
+import com.cooper.binge.companion.seerr.ui.requests.mediaServerName
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -58,7 +60,11 @@ class SeerrTitleDetailsRepository(
                     viewerId = user.id,
                     mayViewAllRequests = permissions.canViewRequests,
                     webUrl = serverUrl() + "movie/" + tmdbId,
-                ).copy(companiesOpen = profile.hasDiscoverByCategory, keywordsOpen = profile.hasKeywordDiscover)
+                ).copy(
+                    companiesOpen = profile.hasDiscoverByCategory,
+                    mediaServerName = profile.mediaServerName(),
+                    keywordsOpen = profile.hasKeywordDiscover,
+                )
         }
 
     override suspend fun collectionParts(collectionId: Int): List<TitleResult> = collections.collection(collectionId).parts
@@ -145,6 +151,7 @@ internal fun SeerrMovieDetailsDto.toMovieDetails(
         standard = VersionState(standardStatus, mayRequest && standardStatus.mayBeRequested()),
         fourK = if (mayRequest4k) VersionState(status4k, status4k.mayBeRequested()) else null,
         mediaId = mediaInfo?.id,
+        watchUrl = mediaInfo?.watchUrl(),
         webUrl = webUrl,
         releaseDate = releaseDate?.takeIf { it.isNotBlank() },
         requests =
@@ -222,3 +229,7 @@ internal fun com.cooper.binge.companion.seerr.seerr.SeerrRequestSummaryDto.toTit
         status = status,
         requesterId = requestedBy?.id,
     )
+
+/** The title's link in the media server's web UI, whichever of the server's fields it filled; null where none is a real site. */
+internal fun com.cooper.binge.companion.seerr.seerr.SeerrMediaInfoDto.watchUrl(): String? =
+    (mediaUrl ?: jellyfinMediaUrl ?: plexUrl)?.takeIf(::isOpenableSite)

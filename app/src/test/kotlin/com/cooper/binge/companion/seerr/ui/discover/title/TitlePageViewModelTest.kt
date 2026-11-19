@@ -103,6 +103,19 @@ class TitlePageViewModelTest {
     }
 
     @Test
+    fun `a title with nothing of the viewer's to open still opens the status sheet`() {
+        val imported = movieFixture(standard = VersionState(TitleAvailability.Available, mayRequest = false))
+        val vm = TitlePageViewModel(FakeTitles(movie = imported), 603)
+
+        vm.onPrimary()
+        assertTrue(vm.ready().statusSheetOpen)
+        assertFalse(vm.ready().requestSheetOpen)
+
+        vm.closeStatusSheet()
+        assertFalse(vm.ready().statusSheetOpen)
+    }
+
+    @Test
     fun `a failed load is an error that retries`() {
         val titles = FakeTitles(failMovie = IOException("down"))
         val vm = TitlePageViewModel(titles, 603)

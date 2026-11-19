@@ -69,6 +69,10 @@ data class SeriesDetails(
     val webUrl: String,
     /** The requests the server holds for the show, newest last as it lists them. */
     val requests: List<TitleRequest> = emptyList(),
+    /** Where the title opens in the media server's own web UI, once the server holds it and gives a link that can be a real site. */
+    val watchUrl: String? = null,
+    /** The media server the Seerr server fronts, by name, for the Watch row's label; null where it has none this app knows. */
+    val mediaServerName: String? = null,
 ) {
     /** The seasons of each version for the request sheet. */
     val seasonChoices: SeasonChoices

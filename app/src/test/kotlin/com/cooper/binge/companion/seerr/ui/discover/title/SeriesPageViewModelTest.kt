@@ -113,6 +113,18 @@ class SeriesPageViewModelTest {
     }
 
     @Test
+    fun `a series with nothing of the viewer's to open still opens the status sheet`() {
+        val imported = seriesFixture(standard = VersionState(TitleAvailability.Available, mayRequest = false))
+        val vm = SeriesPageViewModel(FakeSeries(series = imported), 1399)
+
+        vm.onPrimary()
+        assertTrue(vm.ready().statusSheetOpen)
+
+        vm.closeStatusSheet()
+        assertFalse(vm.ready().statusSheetOpen)
+    }
+
+    @Test
     fun `a failed load is an error that retries`() {
         val repository = FakeSeries(failSeries = IOException("down"))
         val vm = SeriesPageViewModel(repository, 1399)
