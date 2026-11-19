@@ -1,7 +1,9 @@
 package com.cooper.binge.companion.seerr.discover.collection
 
 import com.binge.companion.sdk.attempt
+import com.cooper.binge.companion.seerr.data.TitleStatusStore
 import com.cooper.binge.companion.seerr.discover.TitleKind
+import com.cooper.binge.companion.seerr.discover.seedRows
 import com.cooper.binge.companion.seerr.discover.toAvailability
 import com.cooper.binge.companion.seerr.discover.toTitleResult
 import com.cooper.binge.companion.seerr.seerr.SeerrApi
@@ -19,10 +21,13 @@ class SeerrCollectionRepository(
     private val viewer: suspend () -> SeerrUserDto,
     private val profile: suspend () -> SeerrServerProfile,
     private val io: CoroutineDispatcher,
+    private val statuses: TitleStatusStore = TitleStatusStore(),
 ) : CollectionRepository {
     override suspend fun collection(id: Int): CollectionDetails =
         withContext(io) {
+            val read = statuses.beginRead()
             val dto = api().collection(id)
+            statuses.seedRows(read, dto.parts.map { Triple(TitleKind.Movie, it.tmdbId ?: it.id, it.mediaInfo) })
             CollectionDetails(
                 id = dto.id,
                 name = dto.name,

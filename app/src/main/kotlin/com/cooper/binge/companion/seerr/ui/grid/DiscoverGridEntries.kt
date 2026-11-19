@@ -5,13 +5,11 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
-import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.DiscoverGridRoute
 import com.cooper.binge.companion.seerr.ui.NavMotionSpecs
 import com.cooper.binge.companion.seerr.ui.discover.title.LocalOpenTitle
@@ -89,7 +87,7 @@ internal fun DiscoverTabEntry(stack: NavBackStack<NavKey>) {
         route,
         onBack = null,
         backStack = stack,
-        title = stringResource(R.string.shell_tab_discover),
+        title = null,
         reselectKey = SeerrTab.Discover,
     )
 }

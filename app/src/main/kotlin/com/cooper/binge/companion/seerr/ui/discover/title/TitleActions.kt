@@ -8,8 +8,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.ReportProblem
+import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -25,7 +27,7 @@ import com.binge.designsystem.R as DesR
 
 /**
  * The actions under the stats: the primary, there in every state and saying where the title stands, then a round
- * Trailer button and, once the title is in the library, a Report button, each carrying a label. Share is in the page's bar only. [onTrailer] is null where the server lists no trailer, and the
+ * Trailer button, a Watchlist button where the server has one and, once the title is in the library, a Report button, each carrying a label. Share is in the page's bar only. [onTrailer] is null where the server lists no trailer, and the
  * button is not drawn.
  */
 @Composable
@@ -35,9 +37,10 @@ internal fun TitleActions(
     onTrailer: (() -> Unit)?,
     onReport: (() -> Unit)?,
     modifier: Modifier = Modifier,
+    watchlist: WatchlistButton? = null,
 ) {
     val report = onReport?.takeIf { model.canReport }
-    val roundButtons = listOfNotNull(onTrailer, report).size
+    val roundButtons = listOfNotNull(onTrailer, watchlist, report).size
     val gap = dimensionResource(DesR.dimen.padding_m)
     val edge = modifier.fillMaxWidth().padding(horizontal = gap)
     if (roundButtons >= STACK_FROM && !isExpandedLayout()) {
@@ -48,13 +51,13 @@ internal fun TitleActions(
                 horizontalArrangement = Arrangement.spacedBy(gap, Alignment.CenterHorizontally),
                 verticalAlignment = Alignment.Top,
             ) {
-                RoundButtons(onTrailer, report)
+                RoundButtons(onTrailer, watchlist, report)
             }
         }
     } else {
         Row(modifier = edge, horizontalArrangement = Arrangement.spacedBy(gap), verticalAlignment = Alignment.Top) {
             PrimaryAction(model.primary, onPrimary, Modifier.weight(1f))
-            RoundButtons(onTrailer, report)
+            RoundButtons(onTrailer, watchlist, report)
         }
     }
 }
@@ -65,6 +68,7 @@ private const val STACK_FROM = 2
 @Composable
 private fun RoundButtons(
     onTrailer: (() -> Unit)?,
+    watchlist: WatchlistButton?,
     onReport: (() -> Unit)?,
 ) {
     onTrailer?.let { trailer ->
@@ -76,7 +80,26 @@ private fun RoundButtons(
             contentDescription = stringResource(DesR.string.cd_link_chip_opens_outside, label),
         )
     }
+    watchlist?.let { WatchlistActionButton(it) }
     onReport?.let { LabelledIconButton(Icons.Filled.ReportProblem, stringResource(R.string.title_page_action_report), it) }
+}
+
+/** The watchlist button's state: [onList] is whether the title is on the user's watchlist, and [onToggle] flips it. Null where the server has no watchlist. */
+internal class WatchlistButton(
+    val onList: Boolean,
+    val onToggle: () -> Unit,
+)
+
+/** A round bookmark, filled while the title is on the watchlist. Its announced name says what a tap does. */
+@Composable
+private fun WatchlistActionButton(watchlist: WatchlistButton) {
+    LabelledIconButton(
+        icon = if (watchlist.onList) Icons.Filled.Bookmark else Icons.Outlined.BookmarkBorder,
+        label = stringResource(R.string.title_page_action_watchlist),
+        onClick = watchlist.onToggle,
+        contentDescription =
+            stringResource(if (watchlist.onList) R.string.title_page_watchlist_remove else R.string.title_page_watchlist_add),
+    )
 }
 
 /**

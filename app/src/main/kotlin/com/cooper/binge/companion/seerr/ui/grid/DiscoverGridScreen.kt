@@ -11,9 +11,7 @@ import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -32,11 +30,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
-import com.binge.designsystem.component.BingeFilledButton
 import com.binge.designsystem.component.DiscoverQuickClearChip
 import com.binge.designsystem.component.MediaCard
 import com.binge.designsystem.component.QuickClearTone
 import com.binge.designsystem.component.ScrollToTopOnTabReselect
+import com.binge.designsystem.component.rememberPaneTopBarScrollBehavior
 import com.binge.designsystem.navOverlayPadding
 import com.binge.designsystem.template.BingeScreenScaffold
 import com.binge.designsystem.template.ScreenBar
@@ -70,6 +68,9 @@ internal class DiscoverGridActions(
 
 private const val LOAD_MORE_AHEAD = 6
 
+/** Past this much collapse the title row's pill gives way to the bar's action. */
+private const val PILL_INTERACTIVE_COLLAPSE = 0.5f
+
 /**
  * The "see all" grid: a bar of the order and the filter the row started with, over a paged grid of posters. [firstVisibleIndex] starts it
  * scrolled, for a frame of the grid mid-list. [reselectKey] is the tab this grid is the root of: a tap on that tab again scrolls it to
@@ -84,13 +85,22 @@ internal fun DiscoverGridScreen(
     firstVisibleIndex: Int = 0,
     reselectKey: Any? = null,
 ) {
-    val fallback = stringResource(if (kind == TitleKind.Series) R.string.hubs_title_tv else R.string.hubs_title_movies)
+    val scrollBehavior = rememberPaneTopBarScrollBehavior()
+    var filtersOpen by rememberSaveable { mutableStateOf(false) }
+    val collapsed = scrollBehavior.state.collapsedFraction
+    val pillInteractive = collapsed < PILL_INTERACTIVE_COLLAPSE
+    val activeCount = state.controls.groups.size
+    val filterable = state.controls.sort != null
     BingeScreenScaffold(
-        title = title ?: fallback,
+        title = stringResource(R.string.grid_title),
         onBack = actions.onBack,
         bar = ScreenBar.Large,
-        subtitle = state.controls.subtitle(kind),
-        titleTrailing = state.controls.sort?.let { { FiltersButton(kind, state.controls, actions) } },
+        scrollBehavior = scrollBehavior,
+        subtitle = state.controls.subtitle(kind, title),
+        titleTrailing = if (filterable) ({ FilterActionButton(activeCount, pillInteractive, onClick = { filtersOpen = true }) }) else null,
+        actions = {
+            if (filterable) CollapsedFilterAction(activeCount, !pillInteractive, collapsed) { filtersOpen = true }
+        },
         header =
             state.controls.takeIf { it.chip != null || it.groups.isNotEmpty() }?.let { controls ->
                 { ActiveFilterChips(controls, actions) }
@@ -103,7 +113,7 @@ internal fun DiscoverGridScreen(
                 navOverlayPadding(
                     PaddingValues(
                         start = dimensionResource(DesR.dimen.screen_content_inset),
-                        top = body.calculateTopPadding(),
+                        top = body.calculateTopPadding() + dimensionResource(DesR.dimen.padding_s),
                         end = dimensionResource(DesR.dimen.screen_content_inset),
                         bottom = body.calculateBottomPadding() + dimensionResource(DesR.dimen.padding_m),
                     ),
@@ -121,26 +131,18 @@ internal fun DiscoverGridScreen(
             }
         }
     }
+    FilterSheetHost(kind, state.controls, actions, open = filtersOpen, onDismiss = { filtersOpen = false })
 }
 
-/** The Filters button of Binge's header. It opens the sheet that holds the order and the filters. */
+/** The sheet that holds the order and the filters, opened from the title row's pill or the collapsed bar's action. */
 @Composable
-private fun FiltersButton(
+private fun FilterSheetHost(
     kind: TitleKind,
     controls: GridControls,
     actions: DiscoverGridActions,
+    open: Boolean,
+    onDismiss: () -> Unit,
 ) {
-    var open by rememberSaveable { mutableStateOf(false) }
-    BingeFilledButton(
-        label = stringResource(R.string.grid_filters_button),
-        onClick = { open = true },
-        leadingIcon = Icons.Filled.FilterList,
-        colors =
-            ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
-            ),
-    )
     if (open && controls.sort != null) {
         DiscoverFilterSheet(
             kind = kind,
@@ -152,7 +154,7 @@ private fun FiltersButton(
             onApply = { next, sort, filters ->
                 if (next == kind) actions.onApply(sort, filters) else actions.onSwitchKind(next, sort, filters)
             },
-            onDismiss = { open = false },
+            onDismiss = onDismiss,
         )
     }
 }
@@ -189,11 +191,14 @@ private fun ActiveFilterChips(
     }
 }
 
-/** The kind and the current order, as Binge words "Movies by popularity"; a list with no order has the kind alone. */
+/** What the grid lists and in what order: the preset or slider's name, then the order. The title says "Discover", as Binge's does. */
 @Composable
-private fun GridControls.subtitle(kind: TitleKind): String {
-    val kindLabel = stringResource(if (kind == TitleKind.Series) R.string.hubs_title_tv else R.string.hubs_title_movies)
-    return sort?.let { stringResource(R.string.grid_subtitle, kindLabel, stringResource(it.labelRes())) } ?: kindLabel
+private fun GridControls.subtitle(
+    kind: TitleKind,
+    name: String?,
+): String {
+    val label = name ?: stringResource(if (kind == TitleKind.Series) R.string.hubs_title_tv else R.string.hubs_title_movies)
+    return sort?.let { stringResource(R.string.grid_subtitle, label, stringResource(it.labelRes())) } ?: label
 }
 
 @Composable

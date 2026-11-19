@@ -61,6 +61,7 @@ internal fun TitlePageBody(
             onPrimary = actions.onRequest,
             onTrailer = movie.videos.trailerUrl()?.let { url -> { actions.onOpenUrl(url) } },
             onReport = actions.onReport,
+            watchlist = movie.mayWatchlist.takeIf { it }?.let { WatchlistButton(movie.onWatchlist, actions.onToggleWatchlist) },
             modifier = Modifier.readingMargin().layoutAnchor(LayoutAnchors.section(LayoutAnchors.Detail.ACTIONS)),
         )
         if (!expanded && movie.overview != null) Box(Modifier.readingMargin()) { OverviewSection(movie.overview) }

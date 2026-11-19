@@ -15,6 +15,7 @@ import com.cooper.binge.companion.seerr.preview.PHONE_WIDTH
 import com.cooper.binge.companion.seerr.preview.SeerrComponentPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrFontScale13ComponentPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrFontScalePreviews
+import com.cooper.binge.companion.seerr.preview.SeerrSpanishPreviews
 
 /**
  * The row of actions under a title's stats, for none, one and two round buttons at 1x, 1.3x and 2x. The primary shares a row with
@@ -58,6 +59,36 @@ class TitleActionsScreenshotTest {
     @Composable
     fun oneRoundButtonLargestText() = Frame(trailer = true, report = false)
 
+    /** Trailer, Watchlist and Report: the primary on its own row, the three buttons centred below. */
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun threeRoundButtons() = Frame(trailer = true, report = true, watchlist = true)
+
+    /** The watchlist filled, the title being on the list. */
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun threeRoundButtonsOnWatchlist() = Frame(trailer = true, report = true, watchlist = true, onList = true)
+
+    /** Three round buttons at font scale 1.3. */
+    @PreviewTest
+    @SeerrFontScale13ComponentPreviews
+    @Composable
+    fun threeRoundButtonsLargeText() = Frame(trailer = true, report = true, watchlist = true)
+
+    /** Three round buttons at font scale 2: each label stays whole under its button, and nothing runs past the window. */
+    @PreviewTest
+    @SeerrFontScalePreviews
+    @Composable
+    fun threeRoundButtonsLargestText() = Frame(trailer = true, report = true, watchlist = true)
+
+    /** The same in Spanish, whose Watchlist label ("Lista de seguimiento") is the longest of the three. */
+    @PreviewTest
+    @SeerrSpanishPreviews
+    @Composable
+    fun threeRoundButtonsSpanish() = Frame(trailer = true, report = true, watchlist = true)
+
     /** Two round buttons at font scale 2: the primary's label stays on one line across its own row. */
     @PreviewTest
     @SeerrFontScalePreviews
@@ -69,6 +100,8 @@ class TitleActionsScreenshotTest {
 private fun Frame(
     trailer: Boolean,
     report: Boolean,
+    watchlist: Boolean = false,
+    onList: Boolean = false,
 ) {
     Box(Modifier.width(PHONE_WIDTH).background(MaterialTheme.colorScheme.surface).padding(vertical = 8.dp)) {
         TitleActions(
@@ -82,6 +115,7 @@ private fun Frame(
             onPrimary = {},
             onTrailer = if (trailer) ({}) else null,
             onReport = if (report) ({}) else null,
+            watchlist = if (watchlist) WatchlistButton(onList, {}) else null,
         )
     }
 }

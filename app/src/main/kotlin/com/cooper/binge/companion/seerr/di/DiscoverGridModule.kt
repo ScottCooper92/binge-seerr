@@ -1,6 +1,7 @@
 package com.cooper.binge.companion.seerr.di
 
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
+import com.cooper.binge.companion.seerr.data.TitleStatusStore
 import com.cooper.binge.companion.seerr.discover.TitleListRepository
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverGridRepository
 import com.cooper.binge.companion.seerr.discover.grid.FilterLookups
@@ -22,8 +23,10 @@ object DiscoverGridModule {
     fun discoverGridRepository(
         connection: SeerrConnection,
         titles: TitleListRepository,
+        statuses: TitleStatusStore,
         @IoDispatcher io: CoroutineDispatcher,
-    ): DiscoverGridRepository = SeerrDiscoverGridRepository(api = connection::api, profile = connection::profile, titles = titles, io = io)
+    ): DiscoverGridRepository =
+        SeerrDiscoverGridRepository(api = connection::api, profile = connection::profile, titles = titles, io = io, statuses = statuses)
 
     @Provides
     @Singleton

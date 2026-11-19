@@ -85,6 +85,17 @@ private class FakeSeries(
     val seasonReads = mutableListOf<Int>()
     var failUnblock: Throwable? = null
     val unblocked = mutableListOf<Int>()
+    var failWatchlist: Throwable? = null
+    val watchlistCalls = mutableListOf<Triple<Int, String, Boolean>>()
+
+    override suspend fun setWatchlist(
+        tmdbId: Int,
+        title: String,
+        onList: Boolean,
+    ) {
+        failWatchlist?.let { throw it }
+        watchlistCalls += Triple(tmdbId, title, onList)
+    }
 
     override suspend fun unblock(tmdbId: Int) {
         failUnblock?.let { throw it }
@@ -127,7 +138,7 @@ class SeriesPageViewModelTest {
         vm.onPrimary()
         assertTrue(vm.ready().statusSheetOpen)
 
-        vm.closeStatusSheet()
+        vm.closeSheet(TitleSheet.Status)
         assertFalse(vm.ready().statusSheetOpen)
     }
 
@@ -178,7 +189,7 @@ class SeriesPageViewModelTest {
         assertEquals(7, vm.ready().manageRequestId)
         assertTrue(vm.ready().manageSheetOpen)
 
-        vm.closeManageSheet()
+        vm.closeSheet(TitleSheet.Manage)
         assertFalse(vm.ready().manageSheetOpen)
         assertEquals(7, vm.ready().manageRequestId)
     }
@@ -270,6 +281,64 @@ class SeriesPageViewModelTest {
                     .ready()
                     .series.standard.availability,
             )
+        }
+
+    @Test
+    fun `the watchlist button flips at once and the server is told`() =
+        runTest {
+            val repo = FakeSeries()
+            repo.series = seriesFixture().copy(mayWatchlist = true)
+            val vm = SeriesPageViewModel(repo, 1399)
+
+            vm.toggleWatchlist()
+            assertTrue(vm.ready().series.onWatchlist)
+            vm.toggleWatchlist()
+            assertFalse(vm.ready().series.onWatchlist)
+
+            assertEquals(listOf(Triple(1399, "A Show", true), Triple(1399, "A Show", false)), repo.watchlistCalls)
+            assertFalse(vm.ready().watchlistBusy)
+        }
+
+    @Test
+    fun `a refused watchlist call puts the button back and says so`() =
+        runTest {
+            val repo = FakeSeries()
+            repo.series = seriesFixture().copy(mayWatchlist = true)
+            repo.failWatchlist = IOException("down")
+            val vm = SeriesPageViewModel(repo, 1399)
+
+            val event = awaitEvent(vm.events)
+            vm.toggleWatchlist()
+
+            assertTrue(event.await() is SeriesPageEvent.WatchlistFailed)
+            assertFalse(vm.ready().series.onWatchlist)
+            assertFalse(vm.ready().watchlistBusy)
+        }
+
+    @Test
+    fun `a title on the watchlist is taken off it`() =
+        runTest {
+            val repo = FakeSeries()
+            repo.series = seriesFixture().copy(mayWatchlist = true, onWatchlist = true)
+            val vm = SeriesPageViewModel(repo, 1399)
+
+            vm.toggleWatchlist()
+
+            assertFalse(vm.ready().series.onWatchlist)
+            assertEquals(listOf(Triple(1399, "A Show", false)), repo.watchlistCalls)
+        }
+
+    @Test
+    fun `a server without a watchlist never gets a call`() =
+        runTest {
+            val repo = FakeSeries()
+            repo.series = seriesFixture()
+            val vm = SeriesPageViewModel(repo, 1399)
+
+            vm.toggleWatchlist()
+
+            assertTrue(repo.watchlistCalls.isEmpty())
+            assertFalse(vm.ready().series.onWatchlist)
         }
 
     @Test
