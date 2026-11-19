@@ -209,8 +209,9 @@ class SeriesPageViewModel
             }
         }
 
-        /** Request in 4K, tapped in a request's sheet: that sheet gives way to the request sheet. */
-        fun requestFourKFromManage() = updateReady { it.copy(manageSheetOpen = false, requestSheetOpen = true, requestSheetFourK = true) }
+        /** Request in 4K or the remaining seasons, tapped in a sheet: that sheet gives way to the request sheet. */
+        fun requestFromSheet(fourK: Boolean) =
+            updateReady { it.copy(manageSheetOpen = false, statusSheetOpen = false, requestSheetOpen = true, requestSheetFourK = fourK) }
 
         fun setReportSheetOpen(open: Boolean) = updateReady { it.copy(reportSheetOpen = open) }
 

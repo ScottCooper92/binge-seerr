@@ -1518,6 +1518,7 @@
     <string name="title_sheet_watch">Ver</string>
     <string name="title_sheet_watch_on">Ver en %1$s</string>
     <string name="title_sheet_watch_in_binge">Ver en Binge</string>
+    <string name="title_sheet_request_remaining">Pedir las temporadas restantes</string>
     <string name="title_sheet_note_cannot_request">Tu cuenta no puede solicitar este título.</string>
     <string name="title_sheet_note_nothing_to_request">Todavía no hay nada que solicitar de este título.</string>
     <string name="title_sheet_note_other_request">Otro usuario ha solicitado este título.</string>

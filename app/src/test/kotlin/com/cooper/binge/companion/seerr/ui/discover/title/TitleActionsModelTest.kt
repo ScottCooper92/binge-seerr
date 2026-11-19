@@ -70,15 +70,27 @@ class TitleActionsModelTest {
     }
 
     @Test
-    fun `a held title with no request on file opens the sheet only if a version is still open`() {
-        assertEquals(PrimaryTap.RequestSheet, primary(held(TitleAvailability.Available), open).tap)
+    fun `a title not in the library with no request on file opens the request sheet only if a version is still open`() {
+        assertEquals(PrimaryTap.RequestSheet, primary(held(TitleAvailability.Pending), open).tap)
+        assertEquals(PrimaryTap.StatusSheet, primary(held(TitleAvailability.Pending)).tap)
+    }
+
+    @Test
+    fun `an available title with no request on file opens the status sheet, so Watch is reachable, whatever may still be requested`() {
+        assertEquals(PrimaryTap.StatusSheet, primary(held(TitleAvailability.Available), open).tap)
         assertEquals(PrimaryTap.StatusSheet, primary(held(TitleAvailability.Available)).tap)
     }
 
     @Test
-    fun `a partly available series that can still be requested opens the request sheet for the remaining seasons`() {
+    fun `an available title with a request on file opens that request's sheet, which holds Watch too`() {
+        assertEquals(PrimaryTap.ManageRequest(7), primary(held(TitleAvailability.Available), open, listOf(request(7))).tap)
+    }
+
+    @Test
+    fun `a partly available series that can still be requested opens the status sheet, or its request's sheet with one`() {
         val partly = VersionState(TitleAvailability.PartiallyAvailable, mayRequest = true)
-        assertEquals(PrimaryTap.RequestSheet, primary(partly, requests = listOf(request(7))).tap)
+        assertEquals(PrimaryTap.StatusSheet, primary(partly).tap)
+        assertEquals(PrimaryTap.ManageRequest(7), primary(partly, requests = listOf(request(7))).tap)
     }
 
     @Test

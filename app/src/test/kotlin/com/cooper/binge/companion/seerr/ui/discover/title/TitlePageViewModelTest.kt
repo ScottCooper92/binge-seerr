@@ -209,12 +209,33 @@ class TitlePageViewModelTest {
         val vm = TitlePageViewModel(FakeTitles(movie = held), 603)
         vm.onPrimary()
 
-        vm.requestFourKFromManage()
+        vm.requestFromSheet(true)
 
         assertFalse(vm.ready().manageSheetOpen)
         assertTrue(vm.ready().requestSheetOpen)
         assertTrue(vm.ready().requestSheetFourK)
         assertEquals(7, vm.ready().manageRequestId)
+    }
+
+    @Test
+    fun `an available title with 4K open opens the status sheet, and Request in 4K leaves it for the request sheet`() {
+        val available =
+            movieFixture(
+                standard = VersionState(TitleAvailability.Available, mayRequest = false),
+                fourK = VersionState(TitleAvailability.None, mayRequest = true),
+            )
+        val vm = TitlePageViewModel(FakeTitles(movie = available), 603)
+
+        vm.onPrimary()
+
+        assertTrue(vm.ready().statusSheetOpen)
+        assertFalse(vm.ready().requestSheetOpen)
+
+        vm.requestFromSheet(true)
+
+        assertFalse(vm.ready().statusSheetOpen)
+        assertTrue(vm.ready().requestSheetOpen)
+        assertTrue(vm.ready().requestSheetFourK)
     }
 
     @Test
@@ -228,7 +249,7 @@ class TitlePageViewModelTest {
         vm.onPrimary()
         assertFalse(vm.ready().requestSheetFourK)
 
-        vm.requestFourKFromManage()
+        vm.requestFromSheet(true)
 
         assertTrue(vm.ready().requestSheetFourK)
     }
