@@ -1,5 +1,6 @@
 package com.cooper.binge.companion.seerr.ui.discover.title
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -17,9 +18,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
-import com.binge.designsystem.component.BingeFilledButton
 import com.binge.designsystem.component.BingeOutlinedButton
+import com.binge.designsystem.component.BingeStatusButton
+import com.binge.designsystem.component.BingeStatusButtonEmphasis
 import com.binge.designsystem.component.LabelledIconButton
+import com.binge.designsystem.theme.BingeSentiment
 import com.cooper.binge.companion.seerr.R
 import com.binge.designsystem.R as DesR
 
@@ -46,8 +49,8 @@ internal fun TitleActions(
 }
 
 /**
- * Request, filled, where nothing is held; otherwise an outlined button that says the state, with its icon. It is drawn disabled
- * where there is nothing to open yet.
+ * The state as the design system's status button: Request, filled with its icon, where nothing is held, and otherwise the state with
+ * its status dot, tonal. Where there is nothing to open yet it is drawn as a disabled outlined button until the sheet always opens.
  */
 @Composable
 private fun PrimaryAction(
@@ -55,25 +58,39 @@ private fun PrimaryAction(
     onClick: () -> Unit,
     modifier: Modifier,
 ) {
-    val enabled = primary.tap != PrimaryTap.Nothing
-    if (primary.state == TitleState.Request) {
-        BingeFilledButton(
-            label = stringResource(if (primary.fourKOnly) R.string.title_page_request_4k else R.string.title_page_request),
-            onClick = onClick,
-            modifier = modifier.fillMaxWidth(),
-            leadingIcon = Icons.Filled.Add,
-            enabled = enabled,
-        )
-    } else {
+    val label = stringResource(primary.label())
+    if (primary.tap == PrimaryTap.Nothing) {
         BingeOutlinedButton(
-            label = stringResource(primary.state.labelRes()),
+            label = label,
             onClick = onClick,
             modifier = modifier.fillMaxWidth(),
             leadingIcon = primary.state.icon(),
-            enabled = enabled,
+            enabled = false,
         )
+        return
     }
+    val request = primary.state == TitleState.Request
+    BingeStatusButton(
+        label = label,
+        onClick = onClick,
+        sentiment = primary.state.sentiment(),
+        modifier = modifier.fillMaxWidth(),
+        icon = if (request) Icons.Filled.Add else null,
+        emphasis = if (request) BingeStatusButtonEmphasis.Filled else BingeStatusButtonEmphasis.Tonal,
+    )
 }
+
+@StringRes
+private fun TitlePrimary.label() = if (state == TitleState.Request && fourKOnly) R.string.title_page_request_4k else state.labelRes()
+
+private fun TitleState.sentiment() =
+    when (this) {
+        TitleState.Request -> BingeSentiment.Neutral
+        TitleState.Requested -> BingeSentiment.Caution
+        TitleState.Processing, TitleState.PartiallyAvailable -> BingeSentiment.Info
+        TitleState.Available -> BingeSentiment.Positive
+        TitleState.Blocklisted -> BingeSentiment.Negative
+    }
 
 private fun TitleState.labelRes() =
     when (this) {
