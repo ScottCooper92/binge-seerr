@@ -71,6 +71,7 @@ internal fun SeriesPageBody(
             onPrimary = actions.onRequest,
             onTrailer = series.videos.trailerUrl()?.let { url -> { actions.onOpenUrl(url) } },
             onReport = actions.onReport,
+            watchlist = series.mayWatchlist.takeIf { it }?.let { WatchlistButton(series.onWatchlist, actions.onToggleWatchlist) },
             modifier = Modifier.readingMargin().layoutAnchor(LayoutAnchors.section(LayoutAnchors.Detail.ACTIONS)),
         )
         if (!expanded && series.overview != null) Box(Modifier.readingMargin()) { OverviewSection(series.overview) }

@@ -64,8 +64,6 @@ fun SeerrNavHost(
     LaunchedEffect(connected, root, shell) { backStack.settleHome(connected, shell) }
     // A section stashed on the Settings tab belongs to the server it was opened on: a sign-out empties it, so the next server does not open it.
     LaunchedEffect(connected) { if (connected == false) tabs?.stack(SeerrTab.Settings)?.popToRoot() }
-    // The default section is seeded only while the Settings tab shows: another tab's pushes must not sit above a section.
-    val settingsSelected = settingsShowing(shell, tabs?.selected)
     // The default section is off the stack, so Back from it leaves; the host's own Back shares the once-only exit.
     val exit = rememberExitOnce(onExit)
     // A disconnect still waiting on the server is not a connection to ask a review of: its card would show as the user leaves.
@@ -77,8 +75,6 @@ fun SeerrNavHost(
             connected,
             exit,
             modifier,
-            defaultSection = { DefaultSectionPane(backStack, exit) },
-            settingsSelected = settingsSelected,
         ) { panes ->
             homeEntries(backStack, connected = { connectedState.value }, panes = panes, onExit = exit, tabs = tabs)
             settingsEntries(backStack, connected = { connectedState.value }, panes = panes, onExit = exit)
@@ -87,15 +83,6 @@ fun SeerrNavHost(
         }
     }
 }
-
-/**
- * Whether the Settings tab is the one showing. With no shell (the flag off) it is, whichever tab was saved from a time the flag
- * was on, so the tablet's hub keeps its section beside it.
- */
-internal fun settingsShowing(
-    shell: Boolean,
-    selected: SeerrTab?,
-): Boolean = !shell || selected == SeerrTab.Settings
 
 private fun HomeUiState.connected(): Boolean? =
     when (this) {
@@ -151,7 +138,6 @@ private fun EntryProviderScope<NavKey>.homeEntries(
             }, grid = { DiscoverTabEntry(tabs.stack(SeerrTab.Discover)) }, settings = {
                 if (panes.hubBeside()) {
                     SettingsPanes(
-                        threePane = panes.threePane(),
                         hub = {
                             PaneContent(innerEdge = PaneEdge.End) {
                                 SettingsHub(backStack, panes, backStack.selectedSection(defaultShowing = true))

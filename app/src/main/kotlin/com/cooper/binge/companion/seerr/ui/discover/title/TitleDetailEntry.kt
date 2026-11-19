@@ -76,19 +76,20 @@ private fun FilmPageEntry(
                 onReload = viewModel::reload,
                 manage =
                     TitleManage(
-                        viewModel::closeManageSheet,
-                        viewModel::closeStatusSheet,
+                        { viewModel.closeSheet(TitleSheet.Manage) },
+                        { viewModel.closeSheet(TitleSheet.Status) },
                         viewModel::requestFourKFromManage,
                         viewModel::unblock,
                         onOpenUser,
                         onOpenServices,
                     ),
-                report =
-                    TitleReport(
+                side =
+                    TitleSideActions(
                         SEERR_MEDIA_TYPE_MOVIE,
                         tmdbId,
                         { viewModel.setReportSheetOpen(true) },
                         { viewModel.setReportSheetOpen(false) },
+                        viewModel::toggleWatchlist,
                     ),
             ),
     )
@@ -123,19 +124,20 @@ private fun SeriesPageEntry(
                 onReload = viewModel::reload,
                 manage =
                     TitleManage(
-                        viewModel::closeManageSheet,
-                        viewModel::closeStatusSheet,
+                        { viewModel.closeSheet(TitleSheet.Manage) },
+                        { viewModel.closeSheet(TitleSheet.Status) },
                         viewModel::requestFourKFromManage,
                         viewModel::unblock,
                         onOpenUser,
                         onOpenServices,
                     ),
-                report =
-                    TitleReport(
+                side =
+                    TitleSideActions(
                         SEERR_MEDIA_TYPE_TV,
                         tmdbId,
                         { viewModel.setReportSheetOpen(true) },
                         { viewModel.setReportSheetOpen(false) },
+                        viewModel::toggleWatchlist,
                     ),
             ),
         seasonActions = SeasonActions(viewModel::selectSeason, viewModel::retryEpisodes, onOpenSeason),
@@ -155,7 +157,7 @@ private fun rememberTitlePageActions(
     onRequested: (RequestResult) -> Unit,
     onReload: () -> Unit,
     manage: TitleManage,
-    report: TitleReport,
+    side: TitleSideActions,
 ): TitlePageActions {
     val context = LocalContext.current
     val openTitle = LocalOpenTitle.current
@@ -178,9 +180,10 @@ private fun rememberTitlePageActions(
         onRequestFourK = manage.onRequestFourK,
         onUnblock = manage.onUnblock,
         manageSheet = { sheet -> SiblingRequestSheet(sheet, manage.onOpenUser, manage.onOpenServices) },
-        onReport = report.onOpen,
-        onCloseReport = report.onClose,
-        reportSheet = { onClose -> TitleReportSheet(report.mediaType, report.tmdbId, onClose) },
+        onReport = side.onOpen,
+        onCloseReport = side.onClose,
+        onToggleWatchlist = side.onToggleWatchlist,
+        reportSheet = { onClose -> TitleReportSheet(side.mediaType, side.tmdbId, onClose) },
     )
 }
 
@@ -194,10 +197,11 @@ private class TitleManage(
     val onOpenServices: () -> Unit,
 )
 
-/** What the page needs to offer a report on its title: which title, and how to open and close the form. */
-private class TitleReport(
+/** What the page needs beside its sheets: which title a report is for, how to open and close the form, and the watchlist toggle. */
+private class TitleSideActions(
     val mediaType: String,
     val tmdbId: Int,
     val onOpen: () -> Unit,
     val onClose: () -> Unit,
+    val onToggleWatchlist: () -> Unit,
 )

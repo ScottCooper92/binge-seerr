@@ -75,10 +75,18 @@ class SeerrTitleDetailsRepository(
                     keywordsOpen = profile.hasKeywordDiscover,
                     mayReport = profile.hasIssues && permissions.canReportIssues,
                     mayUnblock = profile.hasBlocklist && permissions.canManageBlocklist,
+                    onWatchlist = dto.onUserWatchlist == true,
+                    mayWatchlist = profile.hasWatchlistEdit,
                 )
         }
 
     override suspend fun collectionParts(collectionId: Int): List<TitleResult> = collections.collection(collectionId).parts
+
+    override suspend fun setWatchlist(
+        tmdbId: Int,
+        title: String,
+        onList: Boolean,
+    ) = withContext(io) { setOnWatchlist(api(), tmdbId, title, "movie", onList) }
 
     override suspend fun unblock(tmdbId: Int) =
         withContext(io) { statuses.unblocking(TitleKey(TitleType.Movie, tmdbId)) { unblockTitle(api(), profile(), tmdbId, "movie") } }

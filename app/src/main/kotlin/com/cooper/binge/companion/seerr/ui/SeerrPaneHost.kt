@@ -5,7 +5,6 @@ import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.material3.adaptive.layout.calculatePaneScaffoldDirective
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
@@ -33,28 +32,22 @@ import java.util.concurrent.atomic.AtomicBoolean
  * @property hubBeside the hub is on screen beside the pane.
  * @property showBack the pane's Back arrow, by the design system's [paneShowsBack], the same rule its `paneBackOrNull`
  *   reads (#1083).
- * @property threePane a landscape tablet's three panes, where what a section opens replaces what it had open (#1110).
  * @property motion the shared navigation motion an entry puts in its metadata, see [NavMotionSpecs].
  */
 internal class PaneLayout(
     val hubBeside: () -> Boolean,
     val showBack: () -> Boolean,
-    val threePane: () -> Boolean,
     val motion: NavMotionSpecs = NavMotionSpecs.None,
 ) {
     /**
-     * Opens [route] from a section's list or the hub: in place of the open item in three panes, else by [push]. What is
-     * already open is left as it is, so the page on screen keeps the key instance it leaves by.
+     * Opens [route] from a section's list or the hub, by [push]: the pane beside the hub shows the newest, and Back walks down.
+     * What is already open is left as it is, so the page on screen keeps the key instance it leaves by.
      */
     fun open(
         backStack: NavBackStack<NavKey>,
         route: NavKey,
     ) {
-        if (!threePane()) {
-            backStack.push(route)
-        } else if (backStack.lastOrNull() != route) {
-            backStack.openBeside(route)
-        }
+        backStack.push(route)
     }
 
     /**
@@ -72,7 +65,7 @@ internal class PaneLayout(
 /**
  * The [NavDisplay] and the pane locals around it, apart from the entries that fill it. [SeerrNavHost] passes the real
  * entries; [entries] is a parameter so a test can pin the panes with stand-ins,
- * cheaply and on their own. [defaultSection] is the section a wide window shows while none is open.
+ * cheaply and on their own.
  *
  * Back that finds only the root calls [onExit], at most once: a second Back in the same frame reaches the scene from
  * before the first, which still claims it (#1760). Back at a settled root is not claimed, so the system takes it.
@@ -84,8 +77,6 @@ internal fun SeerrPaneHost(
     connected: Boolean?,
     onExit: () -> Unit,
     modifier: Modifier = Modifier,
-    defaultSection: @Composable () -> Unit = {},
-    settingsSelected: Boolean = true,
     entries: EntryProviderScope<NavKey>.(panes: PaneLayout) -> Unit,
 ) {
     val exit = rememberExitOnce(onExit)
@@ -93,15 +84,6 @@ internal fun SeerrPaneHost(
     // about whether the hub is on screen beside a section.
     val directive = calculatePaneScaffoldDirective(currentWindowAdaptiveInfoV2())
     val hubBeside = rememberUpdatedState(connected == true && directive.maxHorizontalPartitions > 1)
-    val threePane = rememberUpdatedState(hubBeside.value && isThreePaneWindow())
-    // Three panes show a section in the middle all the time, so the default one goes on the stack, not a placeholder:
-    // its list then keeps its state when it opens an item. Back from it leaves the app, as from the placeholder (#815).
-    // With the shell it goes on only while the Settings tab is showing: another tab's pushes must not sit above a section.
-    LaunchedEffect(threePane.value, backStack.size, settingsSelected) {
-        if (threePane.value && settingsSelected && backStack.isOnlyPaneRoot()) {
-            backStack.add(DefaultSection.route())
-        }
-    }
     // The one back-arrow rule (paneShowsBack), fed the stack's own shape (paneDepth) alongside
     // hubBeside — read here as a provider for the same reason hubBeside is: an entry's metadata is
     // fixed when it is built, so what the stack looks like later has to be read inside the content.
@@ -119,13 +101,13 @@ internal fun SeerrPaneHost(
             backStack = backStack,
             modifier = modifier,
             onBack = { if (!backStack.pop()) exit() },
-            sceneStrategies = listOf(rememberSeerrPaneStrategy(directive, backStack, threePane.value, defaultSection, hubBeside.value)),
+            sceneStrategies = listOf(rememberSeerrPaneStrategy(directive, backStack, hubBeside.value)),
             entryDecorators =
                 listOf(
                     rememberSaveableStateHolderNavEntryDecorator(),
                     rememberViewModelStoreNavEntryDecorator(),
                 ),
-            entryProvider = entryProvider { entries(PaneLayout({ hubBeside.value }, showBack, { threePane.value }, motion)) },
+            entryProvider = entryProvider { entries(PaneLayout({ hubBeside.value }, showBack, motion)) },
         )
     }
 }

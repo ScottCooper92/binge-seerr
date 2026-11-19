@@ -13,10 +13,7 @@ class PaneLayoutOpenFromSearchTest {
 
     private fun stackOf(vararg keys: NavKey) = NavBackStack(mutableStateListOf(*keys))
 
-    private fun layout(
-        hubBeside: Boolean,
-        threePane: Boolean = false,
-    ) = PaneLayout(hubBeside = { hubBeside }, showBack = { true }, threePane = { threePane })
+    private fun layout(hubBeside: Boolean) = PaneLayout(hubBeside = { hubBeside }, showBack = { true })
 
     private fun NavBackStack<NavKey>.after(layout: PaneLayout): List<NavKey> {
         layout.openFromSearch(this, page)
@@ -35,11 +32,7 @@ class PaneLayoutOpenFromSearchTest {
     }
 
     @Test
-    fun `in three panes and in one pane, a result opens above the search too`() {
-        assertEquals(
-            listOf(HubRoute, RequestsRoute, SettingsSearchRoute, page),
-            stackOf(HubRoute, RequestsRoute, SettingsSearchRoute).after(layout(hubBeside = true, threePane = true)),
-        )
+    fun `in one pane, a result opens above the search too`() {
         assertEquals(listOf(HubRoute, SettingsSearchRoute, page), stackOf(HubRoute, SettingsSearchRoute).after(layout(hubBeside = false)))
     }
 
