@@ -11,19 +11,20 @@ private val KEYWORDS =
         .mapIndexed { index, name -> TitleKeyword(index + 1, name) }
 
 /**
- * The keyword chips on a film's or a series' page, which share this section, framed on their own so the larger text
- * cannot scroll them out of the frame: the chips wrap onto more lines and none is cut off.
+ * The keyword chips on a film's or a series' page, which share this row, framed on their own so the larger text
+ * cannot scroll them out of the frame: the chips wrap onto more lines and none is cut off. The heading is left out,
+ * because a component frame crops to its content and would clip it.
  */
 class KeywordsSectionScreenshotTest {
     /** At font scale 2, the largest the app is checked at. */
     @PreviewTest
     @SeerrFontScalePreviews
     @Composable
-    fun chipsLargestText() = KeywordsSection(KEYWORDS, onOpen = {})
+    fun chipsLargestText() = TagRow(KEYWORDS, onOpen = {})
 
     /** At font scale 1.3, the size a phone's "larger text" setting commonly lands on, in the dark and the light theme. */
     @PreviewTest
     @SeerrFontScale13ComponentPreviews
     @Composable
-    fun chipsLargerText() = KeywordsSection(KEYWORDS, onOpen = {})
+    fun chipsLargerText() = TagRow(KEYWORDS, onOpen = {})
 }
