@@ -36,8 +36,11 @@ class HubHeroLoader(
     private val titles: TitleListRepository,
     private val media: HubMediaSource,
 ) {
+    /** Whether the server has the trending list at all, so a hub knows before it loads whether it has a hero. */
+    suspend fun supported(): Boolean = titles.supports(TitleSource.Trending)
+
     suspend fun load(tab: HubTab): List<HubHero> {
-        if (!titles.supports(TitleSource.Trending)) return emptyList()
+        if (!supported()) return emptyList()
         val serverUrl = media.serverUrl()
         val kind = tab.titleKind()
         val ranked = titles.load(TitleSource.Trending, 1).results.filter { it.kind == kind }

@@ -30,6 +30,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.resetMain
@@ -82,8 +83,15 @@ class HubViewModelTest {
         private val fail: Boolean = false,
         private val canDiscoverByCompany: Boolean = true,
         private val gate: CompletableDeferred<Unit>? = null,
+        private val trendingSupported: Boolean = true,
+        private val trendingEmpty: Boolean = false,
     ) : TitleListRepository {
-        override suspend fun supports(source: TitleSource) = source !is TitleSource.ByCompany || canDiscoverByCompany
+        override suspend fun supports(source: TitleSource) =
+            when (source) {
+                is TitleSource.ByCompany -> canDiscoverByCompany
+                TitleSource.Trending -> trendingSupported
+                else -> true
+            }
 
         override suspend fun load(
             source: TitleSource,
@@ -91,6 +99,7 @@ class HubViewModelTest {
         ): TitlePage {
             if (fail) error("down")
             gate?.await()
+            if (trendingEmpty) return TitlePage(emptyList(), 1, 1)
             val movie = TitleResult(TitleKind.Movie, 1, "One", "2020", null, "/b.jpg", null, null, TitleAvailability.None, null)
             return TitlePage(listOf(movie), 1, 1)
         }
@@ -330,6 +339,78 @@ class HubViewModelTest {
 
             testScheduler.advanceTimeBy(2)
             assertTrue((seen.last() as DiscoverHubUiState.Ready).browseAll)
+        }
+
+    private fun TestScope.heroStates(titles: Titles): List<DiscoverHubUiState> {
+        val model =
+            HubViewModel(
+                FakeSliders(SliderListState.Ready(listOf(slider(1, STUDIOS)))),
+                HubCardLoader(titles, NoMedia),
+                HubTileLoader(titles),
+                HubHeroLoader(titles, NoMedia),
+                FakeGrid(),
+                dispatcher,
+                HubTab.Movies,
+            )
+        val seen = mutableListOf<DiscoverHubUiState>()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { model.uiState.collect { seen += it } }
+        return seen
+    }
+
+    private fun List<DiscoverHubUiState>.ready() = filterIsInstance<DiscoverHubUiState.Ready>()
+
+    @Test
+    fun `a server with no trending list never has a hero place`() =
+        runTest {
+            val seen = heroStates(Titles(trendingSupported = false))
+
+            assertTrue("the rows show", seen.ready().isNotEmpty())
+            assertTrue("and no state kept a place for a hero", seen.ready().none { it.heroPlace })
+        }
+
+    @Test
+    fun `the hero's place is kept while it loads and filled when it answers`() =
+        runTest {
+            val gate = CompletableDeferred<Unit>()
+            val seen = heroStates(Titles(gate = gate))
+            assertTrue("rows are ready with the hero still on its way", seen.ready().last().heroPlace)
+            assertTrue(
+                seen
+                    .ready()
+                    .last()
+                    .hero
+                    .isEmpty(),
+            )
+
+            gate.complete(Unit)
+            assertEquals(
+                listOf(1),
+                seen
+                    .ready()
+                    .last()
+                    .hero
+                    .map { it.tmdbId },
+            )
+            assertTrue("the place was never taken away", seen.ready().all { it.heroPlace })
+        }
+
+    @Test
+    fun `an empty answer takes the hero's place away once, and the rows stay`() =
+        runTest {
+            val gate = CompletableDeferred<Unit>()
+            val seen = heroStates(Titles(gate = gate, trendingEmpty = true))
+            assertTrue(seen.ready().last().heroPlace)
+
+            gate.complete(Unit)
+            assertFalse(seen.ready().last().heroPlace)
+            assertEquals(
+                listOf(1),
+                seen
+                    .ready()
+                    .last()
+                    .rows
+                    .map { it.row.sliderId },
+            )
         }
 }
 

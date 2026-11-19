@@ -44,6 +44,12 @@ class DiscoverHubScreenshotTest {
     @Composable
     fun series() = Frame(readyState(), tab = HubTab.Series)
 
+    /** A server with no trending list: no hero, and no place kept for one, so the rows start at the top under the status bar. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun noHero() = Frame(readyState(heroPlace = false))
+
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
@@ -174,6 +180,7 @@ private fun readyState(
     pending: Int = 0,
     refreshing: Boolean = false,
     hero: List<HubHero> = emptyList(),
+    heroPlace: Boolean = true,
 ) = DiscoverHubUiState.Ready(
     rows =
         listOf(
@@ -184,6 +191,7 @@ private fun readyState(
     pending = pending,
     refreshing = refreshing,
     hero = hero,
+    heroPlace = heroPlace,
 )
 
 private fun longTitleState() =
