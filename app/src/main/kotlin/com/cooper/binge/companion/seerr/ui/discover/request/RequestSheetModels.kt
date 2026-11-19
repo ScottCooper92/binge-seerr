@@ -86,7 +86,7 @@ sealed interface ChoicesState {
     data object Failed : ChoicesState
 }
 
-/** Where the request goes when the user opened Advanced options and chose a destination. */
+/** Where the request goes when the user may choose a destination. */
 data class DestinationPick(
     val serverId: Int,
     val profileId: Int?,

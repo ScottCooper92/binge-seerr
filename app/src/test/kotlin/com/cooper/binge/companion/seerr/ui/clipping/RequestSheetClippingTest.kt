@@ -46,7 +46,6 @@ private fun worstCase(): RequestSheetUiState.Ready {
         quota = QuotaState.Known(RequestQuota(QUOTA_LIMIT, QUOTA_LEFT, QUOTA_DAYS)),
         servers = ServersState.Ready(listOf(server)),
         use4k = true,
-        advancedExpanded = true,
         pick =
             DestinationPick(
                 serverId = 1,
@@ -66,7 +65,7 @@ private fun failedCase(): RequestSheetUiState.Ready =
         footerFailed = true,
     )
 
-private fun noActions() = RequestSheetActions({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {})
+private fun noActions() = RequestSheetActions({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {})
 
 /** The request sheet at its worst: a long title, long server, profile and folder names, 4K on and a quota with a period, at 1.3 and 2.0. */
 @RunWith(RobolectricTestRunner::class)

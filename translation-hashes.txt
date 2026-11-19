@@ -513,7 +513,6 @@ app:request_season_number  957bef5ec63a
 app:request_seasons  fe23b7eda6f7
 app:request_server  aef7de28d529
 app:request_sheet_4k  cc1e5d5a9c88
-app:request_sheet_advanced  9443ff69463e
 app:request_sheet_all_films  da84fb50422a
 app:request_sheet_all_seasons  f16dee24ef52
 app:request_sheet_back  76900f1bfd16
