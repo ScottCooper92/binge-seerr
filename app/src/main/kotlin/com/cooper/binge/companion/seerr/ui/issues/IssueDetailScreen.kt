@@ -209,7 +209,7 @@ private fun Ready(
     val detail = state.detail
     // A write in flight refuses a second one, so nothing opens an editor then.
     val writeIdle = state.commentAction == CommentAction.None && state.action == IssueAction.None
-    val composer = detail.canComment || detail.canResolve
+    val composer = detail.canComment
     // The card floats over the thread, which scrolls under it: its height, which takes in the keyboard and the navigation bar,
     // ends the thread above it.
     var composerHeight by remember { mutableStateOf(Dp(0f)) }
