@@ -225,7 +225,6 @@ app:hub_stat_pending  331551b0de41
 app:hub_unauthorized_headline  2b0211b3421a
 app:hub_unreachable_body  4bb14008686e
 app:hub_unreachable_headline  4da010bad62f
-app:hub_unverified_callers  cdf5a058f8b8
 app:hub_update_available  ff8b555d818f
 app:hub_update_release_notes  1254829bd999
 app:hubs_browse_all_movies  d3e46e91abdb
