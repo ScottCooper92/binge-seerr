@@ -320,15 +320,18 @@ class JobsViewModel
 
         /**
          * Re-reads the list while a job runs. [readFirst] reads at once, for a page back on screen that may have missed
-         * the job stopping.
+         * the job stopping. A poll that starts while nothing watches ends at its first tick without reading, so a start that
+         * races the page leaving cannot go on; internal so a test can start one there.
          */
-        private fun followRunning(readFirst: Boolean = false) {
+        internal fun followRunning(readFirst: Boolean = false) {
             if (refresh?.isActive == true) return
             refresh =
                 viewModelScope.launch(dispatcher) {
                     var wait = !readFirst
                     while (jobs().any { it.running }) {
                         if (wait) delay(runningRefreshMillis)
+                        // A poll started as the page left, after the stop had already run, ends here and does not read.
+                        if (state.subscriptionCount.value == 0) return@launch
                         wait = true
                         attempt { connection.api().jobs().map { it.toServerJob() } }.onSuccess { jobs ->
                             state.update { current -> (current as? JobsUiState.Ready)?.copy(jobs = jobs) ?: current }
