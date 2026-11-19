@@ -97,6 +97,18 @@ class ThisAppScreenshotTest {
     @Composable
     fun loading() = ThisAppFrame(ThisAppUiState.Loading)
 
+    /** The remote flag is on, so the Discovery row shows with the preference on. The frames above have the flag off: no row. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun withDiscoveryRow() = ThisAppFrame(ThisAppUiState.Ready(SampleApp.copy(discovery = true)))
+
+    /** The user has opted out of discovery: the row shows with its switch off. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun withDiscoveryOptedOut() = ThisAppFrame(ThisAppUiState.Ready(SampleApp.copy(discovery = false)))
+
     @PreviewTest
     @SeerrFontScalePreviews
     @Composable

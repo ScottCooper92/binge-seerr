@@ -255,8 +255,6 @@
     <string name="hub_section_settings_desc">Services, notifications and jobs</string>
     <string name="hub_section_this_app">This app</string>
     <string name="hub_section_this_app_desc">Preferences, notifications, feedback and more</string>
-    <string name="three_pane_nothing_open_title">Nothing open</string>
-    <string name="three_pane_nothing_open_message">Pick something from the list to see it here.</string>
     <!-- The detail pane beside the hub, before any section is opened. -->
 
     <string name="requests_filter_all">All</string>
@@ -551,6 +549,10 @@
     <string name="user_plays">Plays</string>
     <string name="user_permissions_title">Permissions</string>
     <string name="user_recently_watched">Recently watched</string>
+    <plurals name="user_watchlist_count">
+        <item quantity="one">%1$s title</item>
+        <item quantity="other">%1$s titles</item>
+    </plurals>
     <string name="user_watchlist">Watchlist</string>
     <string name="user_no_requests">No requests yet.</string>
     <string name="user_delete">Delete user</string>
@@ -1272,6 +1274,8 @@
     <string name="overflow_menu">More options</string>
     <string name="report_problem">Report a problem</string>
     <string name="settings_report_bug_caption">Opens GitHub with your device details filled in</string>
+    <string name="settings_discovery">Discovery</string>
+    <string name="settings_discovery_caption">Browse, search and request titles in the app</string>
     <string name="settings_shake_to_report">Shake to report</string>
     <string name="shake_report_title">Report a bug?</string>
     <string name="shake_report_message">This opens a new issue on this app\'s GitHub page, with your app version and device filled in. Nothing about your server is included.</string>
@@ -1580,6 +1584,9 @@
     <string name="title_sheet_note_processing">This title is on its way to the library.</string>
     <string name="title_sheet_note_in_library">This title is in the library.</string>
     <string name="title_sheet_note_blocklisted">This title is blocklisted, so it can\'t be requested.</string>
+    <string name="title_page_action_watchlist">Watchlist</string>
+    <string name="title_page_watchlist_add">Add to watchlist</string>
+    <string name="title_page_watchlist_remove">Remove from watchlist</string>
     <string name="title_page_action_report">Report</string>
     <string name="title_page_action_trailer">Trailer</string>
     <string name="title_page_action_share">Share</string>

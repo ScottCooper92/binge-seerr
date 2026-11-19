@@ -1,6 +1,10 @@
 package com.cooper.binge.companion.seerr.discover.title
 
 import com.binge.companion.sdk.attempt
+import com.cooper.binge.companion.seerr.data.TitleKey
+import com.cooper.binge.companion.seerr.data.TitleStatusStore
+import com.cooper.binge.companion.seerr.data.TitleType
+import com.cooper.binge.companion.seerr.data.toTitleStatuses
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.TitleResult
 import com.cooper.binge.companion.seerr.discover.collection.CollectionRepository
@@ -9,6 +13,7 @@ import com.cooper.binge.companion.seerr.discover.toReleaseYear
 import com.cooper.binge.companion.seerr.discover.toTitlePage
 import com.cooper.binge.companion.seerr.seerr.FALLBACK_CERTIFICATION_REGION
 import com.cooper.binge.companion.seerr.seerr.SeerrApi
+import com.cooper.binge.companion.seerr.seerr.SeerrMediaStatusCode
 import com.cooper.binge.companion.seerr.seerr.SeerrMovieDetailsDto
 import com.cooper.binge.companion.seerr.seerr.SeerrMovieWatchProviderDto
 import com.cooper.binge.companion.seerr.seerr.SeerrServerProfile
@@ -43,13 +48,16 @@ class SeerrTitleDetailsRepository(
     private val deviceRegion: () -> String?,
     private val collections: CollectionRepository,
     private val io: CoroutineDispatcher,
+    private val statuses: TitleStatusStore = TitleStatusStore(),
 ) : TitleDetailsRepository {
     override suspend fun movie(tmdbId: Int): MovieDetails =
         withContext(io) {
             val api = api()
             val user = viewer()
             val profile = profile()
+            val read = statuses.beginRead()
             val dto = api.movieFullDetails(tmdbId)
+            statuses.seed(TitleKey(TitleType.Movie, tmdbId), dto.mediaInfo.toTitleStatuses(), read)
             val region = streamingRegion(api, user, profile, deviceRegion())
             val permissions = user.toPermissions()
             dto
@@ -67,12 +75,21 @@ class SeerrTitleDetailsRepository(
                     keywordsOpen = profile.hasKeywordDiscover,
                     mayReport = profile.hasIssues && permissions.canReportIssues,
                     mayUnblock = profile.hasBlocklist && permissions.canManageBlocklist,
+                    onWatchlist = dto.onUserWatchlist == true,
+                    mayWatchlist = profile.hasWatchlistEdit,
                 )
         }
 
     override suspend fun collectionParts(collectionId: Int): List<TitleResult> = collections.collection(collectionId).parts
 
-    override suspend fun unblock(tmdbId: Int) = withContext(io) { unblockTitle(api(), profile(), tmdbId, "movie") }
+    override suspend fun setWatchlist(
+        tmdbId: Int,
+        title: String,
+        onList: Boolean,
+    ) = withContext(io) { setOnWatchlist(api(), tmdbId, title, "movie", onList) }
+
+    override suspend fun unblock(tmdbId: Int) =
+        withContext(io) { statuses.unblocking(TitleKey(TitleType.Movie, tmdbId)) { unblockTitle(api(), profile(), tmdbId, "movie") } }
 
     override suspend fun extras(
         kind: TitleKind,
@@ -249,3 +266,14 @@ internal suspend fun unblockTitle(
     tmdbId: Int,
     mediaType: String,
 ) = api.removeFromBlocklist(profile.blocklistPath, tmdbId, profile.unblockMediaType(mediaType))
+
+/** Shows the title unblocked at once, and puts the block back if the server refuses. */
+internal suspend fun TitleStatusStore.unblocking(
+    key: TitleKey,
+    unblock: suspend () -> Unit,
+) {
+    val undo = applyOptimistic(key) { held -> held.copy(standard = held.standard.unlessBlocked(), fourK = held.fourK.unlessBlocked()) }
+    attempt { unblock() }.onFailure { rollback(undo) }.getOrThrow()
+}
+
+private fun SeerrMediaStatusCode?.unlessBlocked(): SeerrMediaStatusCode? = takeUnless { it == SeerrMediaStatusCode.Blocklisted }

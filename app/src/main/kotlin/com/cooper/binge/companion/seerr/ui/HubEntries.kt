@@ -127,6 +127,7 @@ internal fun ThisAppEntry(
             onToggleShakeToReport = viewModel::setShakeToReport,
             onToggleShareUsageData = viewModel::setShareUsageData,
             onToggleSendCrashReports = viewModel::setSendCrashReports,
+            onToggleDiscovery = viewModel::setDiscovery,
             onToggleSignal = viewModel::setSignal,
             onNotificationAccessChanged = viewModel::recheckNotificationAccess,
             onSetPollInterval = viewModel::setPollInterval,
@@ -144,7 +145,7 @@ internal fun ThisAppEntry(
 }
 
 /**
- * The settings search over the whole window. A result opens its page above the search, which stays on the stack, so Back from
+ * The settings search, beside the hub on the hub route and over the whole window on a narrow one. A result opens its page above the search, which stays on the stack, so Back from
  * the page returns to the search.
  */
 @Composable

@@ -14,6 +14,7 @@ import java.time.Instant
 
 /** A made-up show has this many seasons: enough for a request for any ordinary show's seasons. A longer-running one is not checked. */
 private const val MADE_UP_SEASONS = 10
+private const val WATCHLIST_SEED = 3
 private const val ADMIN = 2
 private const val LOCAL_USER = 2
 private const val DOWNLOAD_BYTES = 4_300_000_000.0
@@ -64,6 +65,9 @@ internal class DemoData(
     val requests = mutableListOf<DemoRequest>()
     val issues = mutableListOf<DemoIssue>()
     val blocklist = mutableListOf<DemoBlock>()
+
+    /** The signed-in user's watchlist, in the order titles were added, seeded with the first few films. */
+    val watchlist = DEMO_TITLES.filter { it.isMovie }.take(WATCHLIST_SEED).toMutableList()
     val resources = seedResources()
     val jobs = seedJobs().toMutableList()
     private val madeUp = mutableMapOf<Pair<String, Int>, DemoTitle>()

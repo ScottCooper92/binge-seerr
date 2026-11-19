@@ -40,8 +40,9 @@ class HubPullToRefreshTest {
             }
         }
 
+    /** From the middle of the window: the large title bar fills the top quarter, and a drag there is on the bar, not the dashboard. */
     private fun pull() {
-        rule.onRoot().performTouchInput { swipeDown(startY = top + height / 4f, endY = bottom) }
+        rule.onRoot().performTouchInput { swipeDown(startY = top + height / 2f, endY = bottom) }
         rule.waitForIdle()
     }
 

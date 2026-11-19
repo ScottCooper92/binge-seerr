@@ -45,5 +45,5 @@ object SearchModule {
     fun studioSearch(
         connection: SeerrConnection,
         @IoDispatcher io: CoroutineDispatcher,
-    ): StudioSearch = SeerrStudioSearch(api = connection::api, io = io)
+    ): StudioSearch = SeerrStudioSearch(api = connection::api, profile = connection::profile, io = io)
 }

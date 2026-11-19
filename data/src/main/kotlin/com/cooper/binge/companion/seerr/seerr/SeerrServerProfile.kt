@@ -141,6 +141,9 @@ data class SeerrServerProfile(
     /** The slider routes arrived with Overseerr 1.32 and with Jellyseerr 1.4; Jellyseerr 1.0 to 1.3 answer 404. */
     val hasDiscoverSliders: Boolean get() = if (jellyseerrLineage) atLeast(1, 4) else atLeast(1, 32)
 
+    /** `/search/company` arrived with the slider routes, in the same releases. */
+    val hasCompanySearch: Boolean get() = hasDiscoverSliders
+
     /**
      * The discover variants that arrived after the base calls. Each version is the first release tag whose
      * `server/routes/discover.ts` registers the route, in Overseerr and in Jellyseerr; `docs/server-compatibility.md` has them.
@@ -178,8 +181,11 @@ data class SeerrServerProfile(
     /** Keywords to leave out (`excludeKeywords`): the 3.0 release of the Jellyseerr lineage. */
     val hasDiscoverExcludeKeywords: Boolean get() = jellyseerrLineage && atLeast(3, 0)
 
-    /** The Plex watchlist; whether the signed-in user may use it is a permission, not this. */
+    /** The Plex watchlist, to read (`GET /discover/watchlist`); whether the signed-in user may use it is a permission, not this. */
     val hasDiscoverWatchlist: Boolean get() = if (jellyseerrLineage) atLeast(1, 2) else atLeast(1, 30)
+
+    /** Adding to and removing from the watchlist (`POST /watchlist`, `DELETE /watchlist/{tmdbId}`): Jellyseerr 1.6, and never Overseerr. */
+    val hasWatchlistEdit: Boolean get() = jellyseerrLineage && atLeast(1, 6)
 
     /** The ntfy agent arrived with Jellyseerr 2.6; Overseerr never had it. */
     val hasNtfy: Boolean get() = jellyseerrLineage && atLeast(2, 6)

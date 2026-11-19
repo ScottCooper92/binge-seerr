@@ -32,6 +32,8 @@ sealed interface TitleSearchUiState {
         val hasMore: Boolean,
         val appending: Boolean,
         val appendFailed: Boolean,
+        /** Whether the server has the company search; the Studios chip is left out where it has not. */
+        val hasStudios: Boolean = true,
     ) : TitleSearchUiState
 
     /**
@@ -43,6 +45,7 @@ sealed interface TitleSearchUiState {
         val query: String,
         val type: SearchType,
         val browseAll: Boolean = true,
+        val hasStudios: Boolean = true,
     ) : TitleSearchUiState
 
     data class Error(

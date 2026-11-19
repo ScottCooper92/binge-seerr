@@ -48,6 +48,8 @@ class SeerrServerProfileTest {
         assertTrue(profile("1.4.0", jellyfin).hasDiscoverSliders)
         assertFalse(profile("1.31.0").hasDiscoverSliders)
         assertTrue(profile("1.32.0").hasDiscoverSliders)
+        assertFalse(profile("1.31.0").hasCompanySearch)
+        assertTrue(profile("1.32.0").hasCompanySearch)
     }
 
     @Test
@@ -217,6 +219,20 @@ class SeerrServerProfileTest {
         version: String,
         settings: SeerrPublicSettings = SeerrPublicSettings(),
     ): SeerrServerProfile = SeerrServerProfile.from(SeerrStatusDto(version = version), settings)
+
+    @Test
+    fun `the watchlist can be edited from Jellyseerr 1_6 and never on Overseerr`() {
+        fun on(
+            variant: SeerrVariant,
+            major: Int,
+            minor: Int,
+        ) = SeerrServerProfile(variant = variant, version = SeerrVersion(major, minor, 0)).hasWatchlistEdit
+
+        assertFalse("Overseerr 1.33, which can read the list and never write it", on(SeerrVariant.Overseerr, 1, 33))
+        assertFalse(on(SeerrVariant.Jellyseerr, 1, 5))
+        assertTrue(on(SeerrVariant.Jellyseerr, 1, 6))
+        assertTrue(on(SeerrVariant.Seerr, 3, 2))
+    }
 
     @Test
     fun `only an explicit false means the server is not set up`() {

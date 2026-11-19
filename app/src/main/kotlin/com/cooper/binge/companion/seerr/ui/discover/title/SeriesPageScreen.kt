@@ -60,6 +60,7 @@ private fun ReadySeriesPage(
             when (event) {
                 is SeriesPageEvent.Requested -> snackbar.showSnackbar(resources.getString(event.result.messageRes()))
                 SeriesPageEvent.Unblocked -> snackbar.showSnackbar(resources.getString(R.string.blocklist_removed))
+                is SeriesPageEvent.WatchlistFailed -> snackbar.showSnackbar(resources.getString(event.error.messageRes()))
                 is SeriesPageEvent.UnblockFailed -> snackbar.showSnackbar(resources.getString(event.error.messageRes()))
                 SeriesPageEvent.ReloadFailed -> {
                     val answer =

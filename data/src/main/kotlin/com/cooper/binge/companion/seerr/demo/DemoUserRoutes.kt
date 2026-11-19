@@ -11,6 +11,7 @@ import com.cooper.binge.companion.seerr.seerr.SeerrUserPageDto
 import com.cooper.binge.companion.seerr.seerr.SeerrUserPasswordInfoDto
 import com.cooper.binge.companion.seerr.seerr.SeerrUserPermissionsBody
 import com.cooper.binge.companion.seerr.seerr.SeerrUserPermissionsDto
+import com.cooper.binge.companion.seerr.seerr.SeerrWatchlistItemDto
 import com.cooper.binge.companion.seerr.seerr.SeerrWatchlistPageDto
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.contentOrNull
@@ -30,7 +31,7 @@ internal fun DemoData.userRoutes(): List<DemoRoute> =
         route("DELETE", "user", "{}") { _, (id) -> withUser(id) { remove(it) } },
         route("GET", "user", "{}", "quota") { _, _ -> ok(SeerrQuotaDto()) },
         route("GET", "user", "{}", "watch_data") { _, _ -> demoNotFound },
-        route("GET", "user", "{}", "watchlist") { _, _ -> ok(SeerrWatchlistPageDto()) },
+        route("GET", "user", "{}", "watchlist") { _, (id) -> ok(watchlistOf(id.toIntOrNull())) },
         route("GET", "user", "{}", "settings", "main") { _, (id) -> withUser(id) { jsonAnswer(mainSettings(it)) } },
         route("POST", "user", "{}", "settings", "main") { call, (id) -> withUser(id) { saveMain(it, call.body) } },
         route("GET", "user", "{}", "settings", "password") { _, _ -> ok(SeerrUserPasswordInfoDto(hasPassword = true)) },
@@ -175,3 +176,14 @@ private fun DemoData.importUsers(body: String): DemoAnswer {
     users += added
     return ok(added)
 }
+
+/** The signed-in user's own watchlist as the model holds it, and an empty one for anyone else's. */
+private fun DemoData.watchlistOf(userId: Int?): SeerrWatchlistPageDto =
+    if (userId != DEMO_USER_ID) {
+        SeerrWatchlistPageDto()
+    } else {
+        SeerrWatchlistPageDto(
+            totalResults = watchlist.size,
+            results = watchlist.map { SeerrWatchlistItemDto(tmdbId = it.tmdbId, mediaType = it.mediaType, title = it.title) },
+        )
+    }

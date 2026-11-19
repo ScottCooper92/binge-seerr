@@ -1,6 +1,10 @@
 package com.cooper.binge.companion.seerr.discover.title
 
 import com.binge.companion.sdk.attempt
+import com.cooper.binge.companion.seerr.data.TitleKey
+import com.cooper.binge.companion.seerr.data.TitleStatusStore
+import com.cooper.binge.companion.seerr.data.TitleType
+import com.cooper.binge.companion.seerr.data.toTitleStatuses
 import com.cooper.binge.companion.seerr.discover.TitleAvailability
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.toAvailability
@@ -30,6 +34,13 @@ interface SeriesDetailsRepository {
     /** Takes the show off the blocklist; a failure throws. The viewer's right to is [SeriesDetails.mayUnblock]. */
     suspend fun unblock(tmdbId: Int)
 
+    /** Puts the show on the signed-in user's watchlist, or takes it off; a failure throws. */
+    suspend fun setWatchlist(
+        tmdbId: Int,
+        title: String,
+        onList: Boolean,
+    )
+
     /** Ratings, recommendations and similar shows. Each part that fails or that the server lacks is empty. */
     suspend fun extras(tmdbId: Int): TitleExtras
 
@@ -52,13 +63,16 @@ class SeerrSeriesRepository(
     private val serverUrl: suspend () -> String,
     private val deviceRegion: () -> String?,
     private val io: CoroutineDispatcher,
+    private val statuses: TitleStatusStore = TitleStatusStore(),
 ) : SeriesDetailsRepository {
     override suspend fun series(tmdbId: Int): SeriesDetails =
         withContext(io) {
             val api = api()
             val user = viewer()
             val profile = profile()
+            val read = statuses.beginRead()
             val dto = api.tvFullDetails(tmdbId)
+            statuses.seed(TitleKey(TitleType.Tv, tmdbId), dto.mediaInfo.toTitleStatuses(), read)
             val permissions = user.toPermissions()
             dto
                 .toSeriesDetails(
@@ -76,6 +90,8 @@ class SeerrSeriesRepository(
                     keywordsOpen = profile.hasKeywordDiscover,
                     mayReport = profile.hasIssues && permissions.canReportIssues,
                     mayUnblock = profile.hasBlocklist && permissions.canManageBlocklist,
+                    onWatchlist = dto.onUserWatchlist == true,
+                    mayWatchlist = profile.hasWatchlistEdit,
                 )
         }
 
@@ -96,7 +112,14 @@ class SeerrSeriesRepository(
             }
         }
 
-    override suspend fun unblock(tmdbId: Int) = withContext(io) { unblockTitle(api(), profile(), tmdbId, "tv") }
+    override suspend fun setWatchlist(
+        tmdbId: Int,
+        title: String,
+        onList: Boolean,
+    ) = withContext(io) { setOnWatchlist(api(), tmdbId, title, "tv", onList) }
+
+    override suspend fun unblock(tmdbId: Int) =
+        withContext(io) { statuses.unblocking(TitleKey(TitleType.Tv, tmdbId)) { unblockTitle(api(), profile(), tmdbId, "tv") } }
 
     /** Rotten Tomatoes only: the show route has no IMDb score, and it is served on every lineage. */
     override suspend fun extras(tmdbId: Int): TitleExtras =

@@ -149,7 +149,7 @@ How each gate is applied is in [`server-compatibility.md`](server-compatibility.
 | `GET /user/{userId}/settings/permissions` | Get permission settings for a user | v1.20.0 | v1.0.0 | yes | The user's permissions page. |
 | `POST /user/{userId}/settings/permissions` | Update permission settings for a user | v1.20.0 | v1.0.0 | yes | The user's permissions page; the cached browser row follows. |
 | `GET /user/{userId}/watch_data` | Get watch data | v1.29.0 | v1.1.0 | yes | The user page, where the server returns it. |
-| `GET /user/{userId}/watchlist` | Get the Plex watchlist for a specific user | v1.30.0 | v1.2.0 | yes | The user page, where the server returns it. |
+| `GET /user/{userId}/watchlist` | Get the Plex watchlist for a specific user | v1.30.0 | v1.2.0 | yes | The user page's Watchlist carousel, where the server returns it, and on the viewer's own page the Watchlist row, whose count is the answer's `totalResults`. The row opens the existing watchlist grid. |
 
 ### Phase 8 — server administration
 
@@ -267,8 +267,8 @@ Each row is ticked in "Today" by the PR that covers it.
 | `GET /media` | Get media | v1.0.0 | v1.0.0 | yes | The hubs' Recently Added row (`filter=allavailable`, sorted by `mediaAdded`), where the server has it. |
 | `GET /movie/{movieId}/ratings` | Get movie ratings | v1.0.0 | v1.0.0 |  | Planned under the discovery epic (#2039). |
 | `GET /search` | Search for movies, TV shows, or people | v1.0.0 | v1.0.0 | yes | The Search tab: movies, series and people, paged, debounced, with the queries that found something kept on the device. A `tmdb:<id>` query is the server's own lookup and works the same way. The server's multi search never returns collections; the mapping would show one if it did. |
-| `POST /watchlist` | Add media to watchlist | — | v1.6.0 |  | Planned under the discovery epic (#2039). |
-| `DELETE /watchlist/{tmdbId}` | Delete watchlist item | — | v1.6.0 |  | Planned under the discovery epic (#2039). |
+| `POST /watchlist` | Add media to watchlist | — | v1.6.0 | yes | The title and series pages' Watchlist button (`toggleWatchlist` on each view model), shown where the server can edit the list (`hasWatchlistEdit`: Jellyseerr 1.6 and later, never Overseerr). It requests nothing. Demo mode serves it. |
+| `DELETE /watchlist/{tmdbId}` | Delete watchlist item | — | v1.6.0 | yes | The same button, taking the title off; it needs the media type as a query. Demo mode serves it. |
 
 ### Not planned
 

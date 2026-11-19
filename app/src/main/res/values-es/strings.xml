@@ -234,8 +234,6 @@
     <string name="hub_section_settings_desc">Servicios, notificaciones y tareas</string>
     <string name="hub_section_this_app">Esta aplicación</string>
     <string name="hub_section_this_app_desc">Preferencias, notificaciones, comentarios y más</string>
-    <string name="three_pane_nothing_open_title">Nada abierto</string>
-    <string name="three_pane_nothing_open_message">Elige algo de la lista para verlo aquí.</string>
     <string name="requests_filter_all">Todas</string>
     <string name="requests_filter_pending">Pendientes</string>
     <string name="requests_filter_approved">Aprobadas</string>
@@ -531,6 +529,11 @@
     <string name="user_plays">Reproducciones</string>
     <string name="user_permissions_title">Permisos</string>
     <string name="user_recently_watched">Visto recientemente</string>
+    <plurals name="user_watchlist_count">
+        <item quantity="one">%1$s título</item>
+        <item quantity="many">%1$s de títulos</item>
+        <item quantity="other">%1$s títulos</item>
+    </plurals>
     <string name="user_watchlist">Lista de seguimiento</string>
     <string name="user_no_requests">Aún no hay peticiones.</string>
     <string name="user_delete">Eliminar el usuario</string>
@@ -1214,6 +1217,8 @@
     <string name="overflow_menu">Más opciones</string>
     <string name="report_problem">Informar de un problema</string>
     <string name="settings_report_bug_caption">Abre GitHub con los datos de tu dispositivo ya rellenados</string>
+    <string name="settings_discovery">Descubrir</string>
+    <string name="settings_discovery_caption">Explora, busca y solicita títulos en la app</string>
     <string name="settings_shake_to_report">Agitar para informar</string>
     <string name="shake_report_title">¿Informar de un error?</string>
     <string name="shake_report_message">Se abrirá una incidencia nueva en la página de GitHub de esta aplicación, con la versión de la aplicación y el dispositivo ya rellenados. No se incluye nada sobre tu servidor.</string>
@@ -1520,6 +1525,9 @@
     <string name="title_sheet_note_processing">Este título está de camino a la biblioteca.</string>
     <string name="title_sheet_note_in_library">Este título está en la biblioteca.</string>
     <string name="title_sheet_note_blocklisted">Este título está en la lista de bloqueo, así que no se puede solicitar.</string>
+    <string name="title_page_action_watchlist">Lista de seguimiento</string>
+    <string name="title_page_watchlist_add">Añadir a la lista de seguimiento</string>
+    <string name="title_page_watchlist_remove">Quitar de la lista de seguimiento</string>
     <string name="title_page_action_report">Informar</string>
     <string name="title_page_action_trailer">Tráiler</string>
     <string name="title_page_action_share">Compartir</string>

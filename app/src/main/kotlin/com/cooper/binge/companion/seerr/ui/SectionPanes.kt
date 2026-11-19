@@ -8,7 +8,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.dimensionResource
@@ -58,16 +57,12 @@ internal val DefaultSection: HubSection = HubSection.Requests
  *
  * @param backStack read for the one case the library can't see: [DefaultSection] opened beside the hub,
  *   where popping it would land on its own placeholder and look like Back did nothing (#815).
- * @param threePane a landscape tablet's [ThreePaneStrategy]: the hub first, with [defaultSection] in the
- *   second pane while no section is on the stack (#1110).
  */
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
 internal fun rememberSeerrPaneStrategy(
     directive: PaneScaffoldDirective,
     backStack: List<NavKey>,
-    threePane: Boolean = false,
-    defaultSection: @Composable () -> Unit = {},
     shellBeside: Boolean = false,
 ): SceneStrategy<NavKey> {
     // The design system's gap between the panes in place of Material adaptive's own 24dp (#814), as Binge's is.
@@ -77,15 +72,13 @@ internal fun rememberSeerrPaneStrategy(
             backNavigationBehavior = PaneBackNavigationBehavior,
             directive = spaced.copy(defaultPanePreferredWidth = equalPaneWidth(spaced)),
         )
-    val currentDefault by rememberUpdatedState(defaultSection)
-    return remember(listDetail, backStack, threePane, shellBeside) {
-        val first = if (threePane) ThreePaneStrategy { currentDefault() } else null
-        SeerrPaneStrategy(listDetail, backStack, first, shell = if (shellBeside) ShellPanesStrategy else null)
+    return remember(listDetail, backStack, shellBeside) {
+        SeerrPaneStrategy(listDetail, backStack, shell = if (shellBeside) ShellPanesStrategy else null)
     }
 }
 
 /**
- * [threePane]'s scenes when it has one, else [listDetail]'s, except that one showing the hub beside the default
+ * The shell's scenes when it has one, else [listDetail]'s, except that one showing the hub beside the default
  * section that was opened on purpose claims no Back. The system takes it and leaves the app, as it does from the
  * placeholder, which looks the same. Every scene is wrapped, so a scene's type never changes with the stack and the
  * panes don't animate as if it had.
@@ -93,14 +86,12 @@ internal fun rememberSeerrPaneStrategy(
 private class SeerrPaneStrategy(
     private val listDetail: SceneStrategy<NavKey>,
     private val backStack: List<NavKey>,
-    private val threePane: SceneStrategy<NavKey>? = null,
     private val shell: SceneStrategy<NavKey>? = null,
 ) : SceneStrategy<NavKey> {
     override fun SceneStrategyScope<NavKey>.calculateScene(entries: List<NavEntry<NavKey>>): Scene<NavKey>? {
         val shellScene = shell?.let { with(it) { calculateScene(entries) } }
         val scene =
             shellScene
-                ?: threePane?.let { with(it) { calculateScene(entries) } }
                 ?: with(listDetail) { calculateScene(entries) }
                 ?: return null
         // toList(): a NavBackStack is a list by delegation, without a list's equality.
@@ -152,8 +143,8 @@ internal fun NavKey?.isPaneRoot(): Boolean = this == HubRoute || this == ShellRo
 internal fun List<NavKey>.isOnlyPaneRoot(): Boolean = size == 1 && first().isPaneRoot()
 
 /**
- * The bare hub: nothing is open beside it but the default section, which three panes keep on the stack so its list holds its
- * state. Back from here leaves for the start tab; from anything above it, Back closes that first (#2346).
+ * The bare hub: nothing is open beside it, or only the default section, which the user opened on purpose and which shows the
+ * same screen as the placeholder. Back from here leaves for the start tab; from anything above it, Back closes that first (#2346).
  */
 internal fun List<NavKey>.nothingOpenBesideHub(): Boolean =
     isOnlyPaneRoot() || (size == 2 && first().isPaneRoot() && this[1] == DefaultSection.route())
@@ -162,7 +153,13 @@ internal fun List<NavKey>.nothingOpenBesideHub(): Boolean =
  * A page pushed straight over the shell that is not a section, a title or a grid: [ShellPanesStrategy] leaves it to cover the
  * window, so no hub is beside it and it carries its own Back.
  */
-internal fun List<NavKey>.coversWindow(): Boolean = size > 1 && first() == ShellRoute && this[1].hubSection() == null
+internal fun List<NavKey>.coversWindow(): Boolean = size > 1 && first() == ShellRoute && !this[1].opensBesideHub()
+
+/**
+ * Whether [ShellPanesStrategy] draws this route in the Settings tab's content pane when it is the first thing above the shell: a hub
+ * section, or the settings search. The strategy's marker, the stash and [coversWindow] all ask this, so they cannot disagree.
+ */
+internal fun NavKey.opensBesideHub(): Boolean = hubSection() != null || this == SettingsSearchRoute
 
 /** The route a hub section opens. */
 internal fun HubSection.route(): SeerrRoute =

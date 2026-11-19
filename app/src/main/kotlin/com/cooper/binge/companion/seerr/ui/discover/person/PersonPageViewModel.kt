@@ -3,6 +3,8 @@ package com.cooper.binge.companion.seerr.ui.discover.person
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.binge.companion.sdk.attempt
+import com.cooper.binge.companion.seerr.data.TitleStatusStore
+import com.cooper.binge.companion.seerr.discover.overlaid
 import com.cooper.binge.companion.seerr.discover.person.PersonCredits
 import com.cooper.binge.companion.seerr.discover.person.PersonDetails
 import com.cooper.binge.companion.seerr.discover.person.PersonRepository
@@ -63,6 +65,7 @@ class PersonPageViewModel
     constructor(
         private val repository: PersonRepository,
         @Assisted private val personId: Int,
+        private val statuses: TitleStatusStore = TitleStatusStore(),
     ) : ViewModel() {
         @AssistedFactory
         interface Factory {
@@ -77,6 +80,19 @@ class PersonPageViewModel
 
         init {
             load()
+            // A request, block or removal made anywhere moves the credits' statuses here without a read (#2354).
+            viewModelScope.launch {
+                statuses.statuses.collect { held ->
+                    updateReady { ready ->
+                        val credits = ready.credits
+                        if (credits !is PersonCreditsState.Ready) {
+                            ready
+                        } else {
+                            ready.copy(credits = PersonCreditsState.Ready(credits.credits.overlaid(held)))
+                        }
+                    }
+                }
+            }
         }
 
         fun load() {
