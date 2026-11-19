@@ -50,13 +50,13 @@ class RegistryCredentialStore(
 
     override val credentials: Flow<SeerrCredentials?> =
         activeLogin()
-            .map { active -> active?.let { (server, login) -> login?.let { SeerrCredentials(server.address.url, it.auth, it.variant) } } }
+            .map { active -> active?.let { (server, login) -> signedIn(server, login) } }
             .flowOn(io)
             .distinctUntilChanged()
 
     override val signedOutServer: Flow<String?> =
         activeLogin()
-            .map { active -> active?.let { (server, login) -> server.address.url.takeIf { login == null } } }
+            .map { active -> active?.let { (server, login) -> server.address.url.takeIf { login?.isFor(server) != true } } }
             .flowOn(io)
             .distinctUntilChanged()
 
@@ -66,7 +66,8 @@ class RegistryCredentialStore(
         val existing = registry.current().activeServer
         val id = existing?.id ?: serverId.currentServerId()
         // The login goes first. It encrypts before it writes, so a keymaster that throws leaves the registry exactly as it was.
-        if (attempt { logins.save(id, SeerrLogin(credentials.auth, credentials.variant)) }.isFailure) return false
+        // It carries the address it is for, so between the two writes it reads as signed out and never as the old server's.
+        if (attempt { logins.save(id, SeerrLogin(credentials.auth, credentials.variant, boundTo = address.url)) }.isFailure) return false
         if (existing != null) {
             registry.update(existing.copy(address = address, name = address.host))
         } else {
@@ -87,6 +88,14 @@ class RegistryCredentialStore(
         ready()
         registry.current().activeServer?.let { logins.remove(it.id) }
     }
+
+    private fun signedIn(
+        server: SavedServer,
+        login: SeerrLogin?,
+    ): SeerrCredentials? = login?.takeIf { it.isFor(server) }?.let { SeerrCredentials(server.address.url, it.auth, it.variant) }
+
+    /** A login saved for an address is the server's only while the server still has that address. A row with none is trusted. */
+    private fun SeerrLogin.isFor(server: SavedServer): Boolean = boundTo == null || boundTo == server.address.url
 
     /** Runs the one-time import before anything reads or writes, and never twice. */
     private suspend fun ready() {

@@ -59,9 +59,13 @@ data object SearchRoot : NavKey
 @Serializable
 data object SettingsRoot : NavKey
 
-/** The shell's state: the selected tab, and a stack for each tab holding its root. */
+/**
+ * The shell's state: the selected tab, and a stack for each tab holding its root. With [discovery] on it starts on Movies, which is
+ * also the tab Back returns to; off, there are no discovery tabs and it starts on Settings as the app always has. The selected
+ * tab survives a recreate, so this only decides the first one.
+ */
 @Composable
-internal fun rememberSeerrTabs(): TabShellState<SeerrTab> {
+internal fun rememberSeerrTabs(discovery: Boolean): TabShellState<SeerrTab> {
     val movies = rememberNavBackStack(MoviesRoot)
     val tv = rememberNavBackStack(TvRoot)
     val discover = rememberNavBackStack(DiscoverGridRoute(TitleKind.Movie, GridPreset.Popular))
@@ -77,8 +81,7 @@ internal fun rememberSeerrTabs(): TabShellState<SeerrTab> {
                 SeerrTab.Settings to settings,
             )
         }
-    // Settings stays the start tab for now: the hubs are new and the app opens as it always has. Moving the start to Movies is its own change.
-    return rememberTabShellState(tabs = SeerrTab.entries, initial = SeerrTab.Settings, stacks = stacks)
+    return rememberTabShellState(tabs = SeerrTab.entries, initial = if (discovery) SeerrTab.Movies else SeerrTab.Settings, stacks = stacks)
 }
 
 /**
@@ -97,7 +100,7 @@ internal fun TabShellState<SeerrTab>.openLink(
  * Keeps a wide window's open section off the app's stack while another tab shows. A section on that stack is drawn by
  * [ShellPanesStrategy] inside the Settings tab, so anything pushed over it from Movies, TV or Search would be swallowed by
  * that scene. Leaving Settings moves the section's chain onto the Settings tab's own stack, and coming back puts it
- * on the app's stack again, so Back from another tab lands on Settings with the section open. Its entries are made anew, so its
+ * on the app's stack again, so choosing Settings again from another tab finds the section open. Its entries are made anew, so its
  * filter and scroll start over. The default section seeded in three panes does not block the restore; the chain replaces it.
  */
 internal fun TabShellState<SeerrTab>.settleSectionStash(appStack: NavBackStack<NavKey>) {
