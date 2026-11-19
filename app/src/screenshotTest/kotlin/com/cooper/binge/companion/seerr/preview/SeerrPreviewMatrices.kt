@@ -27,10 +27,10 @@ import com.cooper.binge.companion.seerr.theme.SeerrBrand
  * variant, which carries the AAPT2 pseudolocales, would record every string accented and bracketed.
  *
  * Fewer cells than the shared set, on purpose. A screen's layout frame is [SeerrScreenPreviews], the `phone` cell alone,
- * and a section root adds `phone-land` through [SeerrRootScreenPreviews]. `phone-light` and `foldable` are not cells here:
- * the light theme is covered by the component cells, and the foldable showed what `phone-land` shows. The three-pane
- * layout past the expanded-rail line is [SeerrTabletPanesPreview], on the frames that compose the panes. Add a cell back
- * when a screen gains a layout the cells above do not show.
+ * and a section root adds `phone-light` and `phone-land` through [SeerrRootScreenPreviews], so a root's own chrome is
+ * seen in the light theme. `foldable` is not a cell here: it showed what `phone-land` shows. The three-pane layout past
+ * the expanded-rail line is [SeerrTabletPanesPreview], on the frames that compose the panes. Add a cell back when a
+ * screen gains a layout the cells above do not show.
  */
 
 /** The phone and TV harness themes, wearing [SeerrBrand]. */
@@ -53,9 +53,10 @@ class SeerrTvScreenshotThemeOnBlackWrapper : TvScreenshotThemeOnBlackWrapper() {
 @Preview(name = "phone", device = PHONE_PORTRAIT_SPEC, uiMode = UI_MODE_NIGHT_YES, locale = SOURCE_LOCALE)
 annotation class SeerrScreenPreviews
 
-/** A section root's layout frame: `phone` and `phone-land`, the narrowest window that puts two panes side by side. */
+/** A section root's layout frame: `phone`, `phone-light` for the root's own chrome, and `phone-land`, the narrowest window that puts two panes side by side. */
 @PreviewWrapper(SeerrScreenshotThemeWrapper::class)
 @Preview(name = "phone", device = PHONE_PORTRAIT_SPEC, uiMode = UI_MODE_NIGHT_YES, locale = SOURCE_LOCALE)
+@Preview(name = "phone-light", device = PHONE_PORTRAIT_SPEC, uiMode = UI_MODE_NIGHT_NO, locale = SOURCE_LOCALE)
 @Preview(name = "phone-land", device = PHONE_LANDSCAPE_SPEC, uiMode = UI_MODE_NIGHT_YES, locale = SOURCE_LOCALE)
 annotation class SeerrRootScreenPreviews
 
@@ -89,7 +90,7 @@ annotation class SeerrFontScale13Previews
 @Preview(name = "font20", device = PHONE_PORTRAIT_SPEC, fontScale = 2f, uiMode = UI_MODE_NIGHT_YES, locale = SOURCE_LOCALE)
 annotation class SeerrFontScalePreviews
 
-/** A component at a phone's width and font scale 1.3, the size a phone's own "larger text" setting commonly lands on, between the 1.0 and 1.5 cells. */
+/** A component at a phone's width and font scale 1.3, the size a phone's own "larger text" setting commonly lands on, between the 1.0 and 2.0 cells. */
 @PreviewWrapper(SeerrScreenshotThemeWrapper::class)
 @Preview(name = "font13-dark", widthDp = 411, fontScale = 1.3f, uiMode = UI_MODE_NIGHT_YES, locale = SOURCE_LOCALE)
 @Preview(name = "font13-light", widthDp = 411, fontScale = 1.3f, uiMode = UI_MODE_NIGHT_NO, locale = SOURCE_LOCALE)
