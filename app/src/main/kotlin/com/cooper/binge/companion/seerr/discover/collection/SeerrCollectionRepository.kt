@@ -3,8 +3,8 @@ package com.cooper.binge.companion.seerr.discover.collection
 import com.binge.companion.sdk.attempt
 import com.cooper.binge.companion.seerr.data.TitleStatusStore
 import com.cooper.binge.companion.seerr.discover.TitleKind
-import com.cooper.binge.companion.seerr.discover.toAvailability
 import com.cooper.binge.companion.seerr.discover.seedRows
+import com.cooper.binge.companion.seerr.discover.toAvailability
 import com.cooper.binge.companion.seerr.discover.toTitleResult
 import com.cooper.binge.companion.seerr.seerr.SeerrApi
 import com.cooper.binge.companion.seerr.seerr.SeerrServerProfile

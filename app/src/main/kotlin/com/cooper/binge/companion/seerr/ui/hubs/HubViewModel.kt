@@ -115,7 +115,9 @@ class HubViewModel
         val uiState: StateFlow<DiscoverHubUiState> =
             combine(sliders.sliders, loader.state, loader.refreshing, hero, browseAll) { list, rows, refreshing, hero, browseAll ->
                 toUiState(list, rows, refreshing, hero, browseAll)
-            }.combine(statuses.statuses) { state, held -> state.overlaid(held) }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), DiscoverHubUiState.Loading)
+            }.combine(statuses.statuses) { state, held ->
+                state.overlaid(held)
+            }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), DiscoverHubUiState.Loading)
 
         init {
             viewModelScope.launch {
