@@ -26,9 +26,17 @@ class TitleStatusStyleTest {
     @Test
     fun `the title page's state and the card's availability agree for every status`() {
         TitleState.entries.forEach { state ->
-            assertEquals("$state", state.toAvailability().statusStyle()?.label, state.labelRes().takeIf { state != TitleState.Request })
+            assertEquals(
+                "$state",
+                state.toAvailability().statusStyle()?.label,
+                state.labelRes().takeIf {
+                    state != TitleState.Request &&
+                        state != TitleState.Declined
+                },
+            )
         }
         assertEquals(R.string.title_page_request, TitleState.Request.labelRes())
+        assertEquals(R.string.request_state_declined, TitleState.Declined.labelRes())
     }
 
     @Test

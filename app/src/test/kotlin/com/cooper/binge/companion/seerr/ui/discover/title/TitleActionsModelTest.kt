@@ -157,6 +157,48 @@ class TitleActionsModelTest {
     }
 
     @Test
+    fun `a title whose every request was declined reads Declined and a viewer who may request can ask again`() {
+        val declined = listOf(TitleRequest(id = 7, is4k = false, status = SeerrRequestStatusCode.Declined, requesterId = 1))
+        val open = VersionState(TitleAvailability.None, mayRequest = true)
+
+        assertEquals(
+            TitlePrimary(TitleState.Declined, fourKOnly = false, tap = PrimaryTap.RequestSheet),
+            titleActionsModel(open, null, declined, mayReport = false).primary,
+        )
+    }
+
+    @Test
+    fun `a declined title the viewer may not request opens the status sheet`() {
+        val declined = listOf(TitleRequest(id = 7, is4k = false, status = SeerrRequestStatusCode.Declined, requesterId = 1))
+
+        assertEquals(
+            TitlePrimary(TitleState.Declined, fourKOnly = false, tap = PrimaryTap.StatusSheet),
+            titleActionsModel(held(TitleAvailability.None), null, declined, mayReport = false).primary,
+        )
+    }
+
+    @Test
+    fun `a declined request does not hide a later one that is open or a title that is held`() {
+        val declined = TitleRequest(id = 7, is4k = false, status = SeerrRequestStatusCode.Declined, requesterId = 1)
+        val pending = TitleRequest(id = 8, is4k = false, status = SeerrRequestStatusCode.Pending, requesterId = 1)
+
+        assertEquals(
+            TitleState.Request,
+            titleActionsModel(VersionState(TitleAvailability.None, true), null, listOf(declined, pending), mayReport = false).primary.state,
+        )
+        assertEquals(
+            TitleState.Available,
+            titleActionsModel(held(TitleAvailability.Available), null, listOf(declined), mayReport = false).primary.state,
+        )
+    }
+
+    @Test
+    fun `block is offered on a declined title`() {
+        val declined = listOf(TitleRequest(id = 7, is4k = false, status = SeerrRequestStatusCode.Declined, requesterId = 1))
+        assertTrue(titleActionsModel(held(TitleAvailability.None), null, declined, mayReport = false, mayBlock = true).canBlock)
+    }
+
+    @Test
     fun `the trailer is the first clip the server types as one`() {
         val videos = listOf(TitleVideo("Teaser", "t", isTrailer = false), TitleVideo("Trailer", "u", isTrailer = true))
         assertEquals("u", videos.trailerUrl())

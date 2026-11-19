@@ -5,8 +5,11 @@ import com.cooper.binge.companion.seerr.discover.title.TitleRequest
 import com.cooper.binge.companion.seerr.discover.title.VersionState
 import com.cooper.binge.companion.seerr.seerr.SeerrRequestStatusCode
 
-/** Where a title stands, as the page's one primary button says it: the best of what the server holds of its versions. */
-internal enum class TitleState { Request, Requested, Processing, PartiallyAvailable, Available, Blocklisted }
+/**
+ * Where a title stands, as the page's one primary button says it: the best of what the server holds of its versions. [Declined] is
+ * not a state the server holds of the title: every request on file for it was declined and nothing else is held.
+ */
+internal enum class TitleState { Request, Declined, Requested, Processing, PartiallyAvailable, Available, Blocklisted }
 
 /** What a tap on the primary opens. */
 internal sealed interface PrimaryTap {
@@ -63,16 +66,17 @@ internal fun titleActionsModel(
             listOfNotNull(standard.availability, fourK?.availability).map { it.toState() }.maxByOrNull { it.rank } ?: TitleState.Request
         }
     val mayRequest = standard.mayRequest || fourK?.mayRequest == true
-    val tap = tapFor(state, mayRequest, requests)
+    val shown = if (state == TitleState.Request && requests.isDeclinedOnly()) TitleState.Declined else state
+    val tap = tapFor(shown, mayRequest, requests)
     return TitleActionsModel(
         TitlePrimary(
-            state,
+            shown,
             fourKOnly =
                 state == TitleState.Request && !standard.mayRequest && fourK?.mayRequest == true,
             tap = tap,
         ),
         canReport = mayReport && state.isInLibrary(),
-        canBlock = mayBlock && state == TitleState.Request,
+        canBlock = mayBlock && (shown == TitleState.Request || shown == TitleState.Declined),
     )
 }
 
@@ -83,7 +87,7 @@ private fun tapFor(
     requests: List<TitleRequest>,
 ): PrimaryTap =
     when {
-        state == TitleState.Request -> if (mayRequest) PrimaryTap.RequestSheet else PrimaryTap.StatusSheet
+        state == TitleState.Request || state == TitleState.Declined -> if (mayRequest) PrimaryTap.RequestSheet else PrimaryTap.StatusSheet
         state == TitleState.Blocklisted -> PrimaryTap.StatusSheet
         else ->
             requests.toManage()?.let { PrimaryTap.ManageRequest(it.id) }
@@ -111,8 +115,11 @@ private val TitleState.rank: Int
             TitleState.Processing -> 3
             TitleState.Requested -> 2
             TitleState.Blocklisted -> 1
-            TitleState.Request -> 0
+            TitleState.Request, TitleState.Declined -> 0
         }
+
+/** Every request on file was declined, and there is at least one: the title was asked for and the answer was no. */
+private fun List<TitleRequest>.isDeclinedOnly() = isNotEmpty() && all { it.status == SeerrRequestStatusCode.Declined }
 
 /** The request a tap opens: the newest the server lists that was not declined, else the newest there is. */
 internal fun List<TitleRequest>.toManage(): TitleRequest? =
