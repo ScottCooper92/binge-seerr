@@ -21,13 +21,13 @@ import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.paging.PagingData
 import androidx.paging.compose.collectAsLazyPagingItems
+import com.binge.designsystem.component.BingeBarIconAction
 import com.binge.designsystem.component.BingeConfirmDialog
 import com.binge.designsystem.component.FilterChipItem
 import com.binge.designsystem.component.SnackbarMessageKind
 import com.binge.designsystem.component.showSnackbar
 import com.binge.designsystem.template.FilteredListScreen
 import com.cooper.binge.companion.seerr.R
-import com.cooper.binge.companion.seerr.ui.state.BarIconAction
 import com.cooper.binge.companion.seerr.ui.state.DialogMessage
 import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
 import com.cooper.binge.companion.seerr.ui.state.LoadingScreen
@@ -97,7 +97,12 @@ fun RequestsScreen(
         snackbarHostState = snackbarHostState,
         actions = { glassBackgroundAlpha ->
             if (ready != null) {
-                BarIconAction(Icons.Filled.SwapVert, stringResource(R.string.requests_sort_cd), glassBackgroundAlpha) { showSort = true }
+                BingeBarIconAction(
+                    Icons.Filled.SwapVert,
+                    stringResource(R.string.requests_sort_cd),
+                    { showSort = true },
+                    glassBackgroundAlpha = glassBackgroundAlpha,
+                )
             }
         },
         notReady = { padding ->

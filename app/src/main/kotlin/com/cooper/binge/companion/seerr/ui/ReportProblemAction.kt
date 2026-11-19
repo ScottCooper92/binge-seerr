@@ -15,8 +15,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
+import com.binge.designsystem.component.BingeBarIconAction
 import com.cooper.binge.companion.seerr.R
-import com.cooper.binge.companion.seerr.ui.state.BarIconAction
 
 /**
  * The overflow menu on the setup screens a user sees before a server is connected, where Settings is out of reach. One item
@@ -30,7 +30,7 @@ internal fun ReportProblemAction(
     var expanded by remember { mutableStateOf(false) }
     val more = stringResource(R.string.overflow_menu)
     Box {
-        BarIconAction(Icons.Filled.MoreVert, more, glassBackgroundAlpha) { expanded = true }
+        BingeBarIconAction(Icons.Filled.MoreVert, more, { expanded = true }, glassBackgroundAlpha = glassBackgroundAlpha)
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             DropdownMenuItem(
                 text = { Text(stringResource(R.string.report_problem)) },
