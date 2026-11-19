@@ -10,9 +10,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
@@ -38,10 +36,9 @@ import com.cooper.binge.companion.seerr.ui.HomeRoute
 import com.cooper.binge.companion.seerr.ui.SeerrNavHost
 import com.cooper.binge.companion.seerr.ui.consent.ConsentGate
 import com.cooper.binge.companion.seerr.ui.linkedRequestId
-import com.cooper.binge.companion.seerr.ui.shell.SeerrTab
+import com.cooper.binge.companion.seerr.ui.shell.DiscoveryShellEffect
 import com.cooper.binge.companion.seerr.ui.shell.openLink
 import com.cooper.binge.companion.seerr.ui.shell.rememberSeerrTabs
-import com.cooper.binge.companion.seerr.ui.shell.restart
 import com.cooper.binge.companion.seerr.ui.tv.TvSeerrShell
 import com.cooper.homelab.core.flags.FeatureFlags
 import com.cooper.homelab.core.telemetry.Analytics
@@ -120,18 +117,7 @@ class MainActivity : ComponentActivity() {
             val resolved by discoveryGate.resolved.collectAsStateWithLifecycle()
             val discovery = resolved ?: discoveryGate.fallback
             val tabs = rememberSeerrTabs(discovery = discovery)
-            // Turning discovery off or on starts the app over from its start tab, with no stack left over from the other mode.
-            // Only a change after the gate has resolved is a toggle: the first resolved value is not, so a restored stack or a link stays.
-            var shownDiscovery by remember { mutableStateOf<Boolean?>(null) }
-            LaunchedEffect(resolved) {
-                val now = resolved ?: return@LaunchedEffect
-                val before = shownDiscovery
-                shownDiscovery = now
-                when {
-                    before == null && !now -> tabs.show(SeerrTab.Settings)
-                    before != null && before != now -> tabs.restart(backStack)
-                }
-            }
+            DiscoveryShellEffect(resolved, tabs, backStack)
             LaunchedEffect(backStack) {
                 screenNames(backStack, selectedTab = { tabs.selected }).collect { analytics.screen(it) }
             }

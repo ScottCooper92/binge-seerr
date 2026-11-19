@@ -130,6 +130,16 @@ class DiscoverGridViewModelTest {
     }
 
     @Test
+    fun `the user's own watchlist keeps both movies and series`() {
+        grid.answer = { _, _ -> TitlePage(listOf(title(1), title(2, TitleKind.Series)), 1, 1) }
+        runVm(preset = GridPreset.OwnWatchlist) { vm ->
+            val state = vm.uiState.value as DiscoverGridUiState.Ready
+            assertEquals(2, state.cards.size)
+            assertTrue(state.cards.any { it.kind == TitleKind.Series })
+        }
+    }
+
+    @Test
     fun `it opens on the row's filter and the first page of it`() =
         runVm { vm ->
             val state = vm.uiState.value as DiscoverGridUiState.Ready
