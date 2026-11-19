@@ -5,7 +5,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -16,19 +18,23 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshState
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import com.binge.designsystem.component.BingePullToRefresh
 import com.binge.designsystem.component.HintCard
 import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.component.SectionHeader
+import com.binge.designsystem.component.rememberPaneTopBarScrollBehavior
 import com.binge.designsystem.navOverlayPadding
 import com.binge.designsystem.resolvedContentInset
 import com.binge.designsystem.resolvedContentPadding
 import com.binge.designsystem.template.BingeScreenScaffold
+import com.binge.designsystem.template.ScreenBar
 import com.binge.designsystem.template.screenInnerPadding
 import com.binge.designsystem.template.screenOuterPadding
 import com.cooper.binge.companion.seerr.R
@@ -79,13 +85,16 @@ fun HubScreen(
     val allow = rememberAllowLocalNetwork { if (health == ConnectionHealth.LocalNetworkDenied) actions.onRetry() }
     // The account sits in the bar while the dashboard is up (#1325): the photo or initials, ringed by what is left of the quota.
     val account = ready?.overview?.account?.takeIf { ready.health.showsDashboard() }
+    val scrollBehavior = rememberPaneTopBarScrollBehavior()
+    val collapsed = scrollBehavior.state.collapsedFraction
+    val pillInteractive = collapsed < TITLE_ROW_COLLAPSE
     BingeScreenScaffold(
         title = ready?.server?.title ?: stringResource(R.string.companion_name),
-        actions = {
-            account?.let {
-                HubAccountAction(account = it, quota = ready.overview.quota, onClick = { actions.onOpenAccount(it.id) })
-            }
-        },
+        bar = ScreenBar.Large,
+        scrollBehavior = scrollBehavior,
+        // Beside the large title while it shows, and in the bar once it collapses.
+        titleTrailing = account?.let { { AccountAction(it, ready.overview.quota, actions, pillInteractive) } },
+        actions = { account?.let { AccountAction(it, ready.overview.quota, actions, !pillInteractive, collapsed) } },
     ) { padding ->
         Box(modifier = Modifier.fillMaxSize().padding(padding.screenOuterPadding())) {
             // Inside the tab bar shell the floating pill covers the last row, so the content pads by what the pill publishes.
@@ -127,6 +136,24 @@ fun HubScreen(
     }
 }
 
+/** The account action in the title row (full) or in the collapsed bar (fading in with [alpha]); only the one showing takes taps. */
+@Composable
+private fun AccountAction(
+    account: HubAccount,
+    quota: HubQuota?,
+    actions: HubActions,
+    enabled: Boolean,
+    alpha: Float = 1f,
+) = HubAccountAction(
+    account = account,
+    quota = quota,
+    onClick = { if (enabled) actions.onOpenAccount(account.id) },
+    modifier = Modifier.alpha(alpha).then(if (enabled) Modifier else Modifier.clearAndSetSemantics {}),
+)
+
+/** Past this much collapse the title row's account gives way to the bar's. */
+private const val TITLE_ROW_COLLAPSE = 0.5f
+
 /**
  * Whether the hub shows the server's problem in place of its dashboard. Not [ConnectionHealth.Unauthorized]: a rejection
  * the server confirms takes the app to sign-in (#810), and one it doesn't was a stray answer, not a problem to show.
@@ -164,9 +191,9 @@ private fun Dashboard(
             SectionHeader(title = stringResource(R.string.hub_downloading_now, state.downloading.size))
             DownloadingStrip(state.downloading, onClick = { actions.onOpenRequest(it.requestId) }, sides = sides)
         }
-        SectionHeader(title = stringResource(R.string.hub_manage))
+        Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
         ItemGroup(
-            title = null,
+            title = stringResource(R.string.hub_manage),
             rows =
                 state.overview.visibleSections().map { section ->
                     ListItem(
@@ -244,9 +271,9 @@ private fun DeveloperGroup(
     developerRows: List<DeveloperRow>,
     padding: PaddingValues,
 ) {
-    SectionHeader(title = stringResource(R.string.debug_group_developer))
+    Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
     ItemGroup(
-        title = null,
+        title = stringResource(R.string.debug_group_developer),
         rows =
             developerRows.map { row ->
                 ListItem(
