@@ -110,7 +110,7 @@ internal fun DiscoverGridScreen(
                 navOverlayPadding(
                     PaddingValues(
                         start = dimensionResource(DesR.dimen.screen_content_inset),
-                        top = body.calculateTopPadding(),
+                        top = body.calculateTopPadding() + dimensionResource(DesR.dimen.padding_s),
                         end = dimensionResource(DesR.dimen.screen_content_inset),
                         bottom = body.calculateBottomPadding() + dimensionResource(DesR.dimen.padding_m),
                     ),
