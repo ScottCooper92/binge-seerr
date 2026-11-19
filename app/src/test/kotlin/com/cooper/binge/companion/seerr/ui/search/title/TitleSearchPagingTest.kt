@@ -44,7 +44,7 @@ class TitleSearchPagingTest {
         var loads = 0
         var state by mutableStateOf<TitleSearchUiState>(ready(loaded = 20, hasMore = true))
         rule.setContent {
-            SeerrTheme { TitleSearchScreen(state, TitleSearchActions({}, {}, {}, {}, { loads++ }, {}, {}, {}, {}, { _, _ -> })) }
+            SeerrTheme { TitleSearchScreen(state, TitleSearchActions({}, {}, {}, {}, { loads++ }, {}, {}, {}, {}, { _, _ -> }, {})) }
         }
         rule.waitForIdle()
         assertEquals(1, loads)
@@ -60,7 +60,7 @@ class TitleSearchPagingTest {
             SeerrTheme {
                 TitleSearchScreen(
                     ready(loaded = 40, hasMore = false),
-                    TitleSearchActions({}, {}, {}, {}, {}, {}, {}, {}, {}, { _, _ -> }),
+                    TitleSearchActions({}, {}, {}, {}, {}, {}, {}, {}, {}, { _, _ -> }, {}),
                 )
             }
         }

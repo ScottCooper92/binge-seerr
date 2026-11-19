@@ -41,6 +41,7 @@ internal fun HubAccountAction(
     quota: HubQuota?,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
 ) {
     val description = accountDescription(account, quota)
     Box(
@@ -48,7 +49,7 @@ internal fun HubAccountAction(
             modifier
                 .size(dimensionResource(DesR.dimen.min_touch_target))
                 .clip(BingeShapes.Pill)
-                .clickable(role = Role.Button, onClick = onClick)
+                .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
                 .semantics { contentDescription = description },
         contentAlignment = Alignment.Center,
     ) {

@@ -48,6 +48,7 @@ import com.binge.designsystem.navOverlayStart
 import com.binge.designsystem.nestedScrollConnection
 import com.binge.designsystem.searchResultColumns
 import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.discover.StudioResult
 import com.cooper.binge.companion.seerr.discover.TitleResult
 import com.cooper.binge.companion.seerr.discover.sliders.HubGrid
 import com.cooper.binge.companion.seerr.ui.shell.SeerrTab
@@ -70,6 +71,7 @@ internal class TitleSearchActions(
     val onOpenTitle: (TitleResult) -> Unit,
     val onType: (SearchType) -> Unit,
     val onOpenGrid: (HubGrid, String) -> Unit,
+    val onOpenStudio: (StudioResult) -> Unit,
 )
 
 /**
@@ -146,8 +148,9 @@ private fun SearchHeader(
             )
         }
         when (state) {
-            is TitleSearchUiState.Ready -> TypeChips(state.type, state.counts, actions.onType)
-            is TitleSearchUiState.NoResults -> TypeChips(state.type, SearchType.entries.associateWith { 0 }, actions.onType)
+            is TitleSearchUiState.Ready -> TypeChips(state.type, state.counts, state.hasStudios, actions.onType)
+            is TitleSearchUiState.NoResults ->
+                TypeChips(state.type, SearchType.entries.associateWith { 0 }, state.hasStudios, actions.onType)
             else -> Unit
         }
     }
@@ -157,12 +160,14 @@ private fun SearchHeader(
 private fun TypeChips(
     type: SearchType,
     counts: Map<SearchType, Int>,
+    hasStudios: Boolean,
     onType: (SearchType) -> Unit,
 ) {
+    val types = SearchType.entries.filter { hasStudios || it != SearchType.Studios }
     BingeFilterChipRow(
-        items = SearchType.entries.map { FilterChipItem(label = stringResource(it.labelRes()), count = counts[it]) },
-        selectedIndex = type.ordinal,
-        onSelect = { onType(SearchType.entries[it]) },
+        items = types.map { FilterChipItem(label = stringResource(it.labelRes()), count = counts[it]) },
+        selectedIndex = types.indexOf(type).coerceAtLeast(0),
+        onSelect = { onType(types[it]) },
     )
 }
 
@@ -173,6 +178,7 @@ private fun SearchType.labelRes(): Int =
         SearchType.Movies -> R.string.hubs_title_movies
         SearchType.Series -> R.string.hubs_title_tv
         SearchType.People -> R.string.title_search_type_people
+        SearchType.Studios -> R.string.title_search_type_studios
     }
 
 @Composable
@@ -191,7 +197,10 @@ private fun ResultsList(
     LaunchedEffect(gridState, state.hasMore, state.loaded) {
         if (state.hasMore) snapshotFlow { nearEnd }.distinctUntilChanged().filter { it }.collect { actions.onLoadMore() }
     }
-    if (state.results.isEmpty() && !state.hasMore && !state.appending) {
+    val onStudios = state.type == SearchType.Studios
+    val empty = if (onStudios) state.studios.isEmpty() else state.results.isEmpty()
+    val settled = !state.hasMore && !state.appending && !state.appendFailed
+    if (empty && settled) {
         EmptyScreen(
             message = stringResource(R.string.title_search_type_none_message, state.text.trim()),
             title = stringResource(R.string.title_search_type_none_title),
@@ -209,10 +218,16 @@ private fun ResultsList(
             horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
             verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
         ) {
-            items(state.results, key = { "${it.kind}-${it.tmdbId}" }) { result ->
-                TitleResultRow(result, state.genreNames, onClick = { actions.onOpenTitle(result) })
+            if (onStudios) {
+                items(state.studios, key = { "studio-${it.id}" }) { studio ->
+                    StudioResultRow(studio, onClick = { actions.onOpenStudio(studio) })
+                }
+            } else {
+                items(state.results, key = { "${it.kind}-${it.tmdbId}" }) { result ->
+                    TitleResultRow(result, state.genreNames, onClick = { actions.onOpenTitle(result) })
+                }
             }
-            if (state.appending || state.appendFailed || state.results.isEmpty()) {
+            if (state.appending || state.appendFailed || empty) {
                 item(key = "footer", span = { GridItemSpan(maxLineSpan) }) { AppendFooter(state.appendFailed, actions.onLoadMore) }
             }
         }

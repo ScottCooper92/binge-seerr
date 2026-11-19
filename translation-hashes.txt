@@ -1213,6 +1213,7 @@ app:title_kind_collection  7b790708ff1b
 app:title_kind_movie  941de4447b2e
 app:title_kind_person  6007db63e18e
 app:title_kind_series  ca62d5e073f5
+app:title_kind_studio  0aa91af2ec4c
 app:title_page_action_report  b6ce788d9786
 app:title_page_action_share  29887a5ff984
 app:title_page_action_trailer  6a7b20d1da8a
@@ -1273,6 +1274,7 @@ app:title_search_type_all  a52ace420f21
 app:title_search_type_none_message  c38ab7f5a517
 app:title_search_type_none_title  f66fd111a0f7
 app:title_search_type_people  7db20897053b
+app:title_search_type_studios  e41cca7d2395
 app:title_sheet_note_blocklisted  099c01eec535
 app:title_sheet_note_cannot_request  7cb50e8e8ac7
 app:title_sheet_note_in_library  6aacfe844e11
