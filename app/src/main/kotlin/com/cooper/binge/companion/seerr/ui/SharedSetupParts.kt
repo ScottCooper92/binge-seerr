@@ -113,6 +113,8 @@ internal fun ConnectError?.toSetupError(): SetupError? =
         null -> null
         ConnectError.InvalidAddress -> SetupError.InvalidUrl
         ConnectError.NotThisServer -> SetupError.NotSeerr
+        ConnectError.LinkExpired -> SetupError.LinkExpired
+        ConnectError.LinkNotOffered -> SetupError.Unknown
         is ConnectError.Failed ->
             when (failure) {
                 ServerFailure.SessionRejected, ServerFailure.NotPermitted -> SetupError.Rejected
