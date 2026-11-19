@@ -3,6 +3,7 @@ package com.cooper.binge.companion.seerr.ui.requests
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.data.NoRequestStore
 import com.cooper.binge.companion.seerr.data.RequestStore
+import com.cooper.binge.companion.seerr.data.TitleStatusStore
 import com.cooper.binge.companion.seerr.seerr.SeerrEditRequestBody
 import com.cooper.binge.companion.seerr.seerr.SeerrRequestStatusCode
 import com.cooper.binge.companion.seerr.seerr.updateRequest
@@ -78,9 +79,12 @@ class RequestModeration(
     /** The cached list rows, moved with a success so the list agrees before its refresh lands. */
     private val cache: RequestStore = NoRequestStore,
     reviewSignals: ReviewSignalSink = NoReviewSignals,
+    /** The title statuses every list of cards follows, moved with a success and a block (#2354). */
+    statuses: TitleStatusStore = TitleStatusStore(),
     onModerated: () -> Unit,
 ) : RequestModerationControls {
-    private val runner = ModerationRunner(scope, dispatcher, connection, analytics, crashBreadcrumbs, cache, onModerated, reviewSignals)
+    private val runner =
+        ModerationRunner(scope, dispatcher, connection, analytics, crashBreadcrumbs, cache, onModerated, reviewSignals, statuses)
     private val media = MediaModeration(runner, connection, cache, analytics)
 
     val actingIds: StateFlow<Set<Int>> = runner.actingIds
