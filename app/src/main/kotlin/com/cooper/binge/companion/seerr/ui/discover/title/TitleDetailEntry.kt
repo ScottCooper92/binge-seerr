@@ -3,6 +3,7 @@ package com.cooper.binge.companion.seerr.ui.discover.title
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -11,10 +12,14 @@ import com.cooper.binge.companion.seerr.discover.TitleResult
 import com.cooper.binge.companion.seerr.discover.request.RequestResult
 import com.cooper.binge.companion.seerr.discover.title.TitleCompany
 import com.cooper.binge.companion.seerr.discover.title.TitleKeyword
+import com.cooper.binge.companion.seerr.flags.LocalFlags
+import com.cooper.binge.companion.seerr.flags.bingePromotion
 import com.cooper.binge.companion.seerr.seerr.SEERR_MEDIA_TYPE_MOVIE
 import com.cooper.binge.companion.seerr.seerr.SEERR_MEDIA_TYPE_TV
 import com.cooper.binge.companion.seerr.ui.SiblingRequestSheet
+import com.cooper.binge.companion.seerr.ui.bingeTitleHandOff
 import com.cooper.binge.companion.seerr.ui.openInBrowser
+import com.cooper.binge.companion.seerr.ui.requests.RequestMediaType
 import com.cooper.binge.companion.seerr.ui.state.EmptyScreen
 
 /**
@@ -161,6 +166,12 @@ private fun rememberTitlePageActions(
 ): TitlePageActions {
     val context = LocalContext.current
     val openTitle = LocalOpenTitle.current
+    val promoted = LocalFlags.current.bingePromotion
+    val watchInBinge =
+        remember(context, promoted, side.mediaType, side.tmdbId) {
+            val mediaType = if (side.mediaType == SEERR_MEDIA_TYPE_TV) RequestMediaType.Tv else RequestMediaType.Movie
+            context.bingeTitleHandOff(promoted, mediaType, side.tmdbId)
+        }
     return TitlePageActions(
         onBack = onBack,
         onRetry = onRetry,
@@ -182,6 +193,7 @@ private fun rememberTitlePageActions(
         manageSheet = { sheet -> SiblingRequestSheet(sheet, manage.onOpenUser, manage.onOpenServices) },
         onReport = side.onOpen,
         onCloseReport = side.onClose,
+        onWatchInBinge = watchInBinge,
         onToggleWatchlist = side.onToggleWatchlist,
         reportSheet = { onClose -> TitleReportSheet(side.mediaType, side.tmdbId, onClose) },
     )

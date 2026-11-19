@@ -10,6 +10,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.BingeAdaptiveSheet
@@ -33,6 +34,7 @@ internal fun TitleStatusSheet(
     canRequest: Boolean,
     onWatch: (String) -> Unit,
     onDismiss: () -> Unit,
+    onWatchInBinge: (() -> Unit)? = null,
     onUnblock: (() -> Unit)? = null,
 ) {
     BingeAdaptiveSheet(kind = BingeSheetKind.Menu, onDismissRequest = onDismiss) {
@@ -45,6 +47,13 @@ internal fun TitleStatusSheet(
                 onDismiss()
                 onWatch(url)
             },
+            onWatchInBinge =
+                onWatchInBinge?.let { openInBinge ->
+                    {
+                        onDismiss()
+                        openInBinge()
+                    }
+                },
             onUnblock = onUnblock,
         )
     }
@@ -59,13 +68,13 @@ internal fun TitleStatusSheetContent(
     canRequest: Boolean,
     onWatch: (String) -> Unit,
     modifier: Modifier = Modifier,
+    onWatchInBinge: (() -> Unit)? = null,
     onUnblock: (() -> Unit)? = null,
 ) {
-    val watch = watchUrl?.takeIf { state.isInLibrary() }
-    if (watch != null) {
-        val label = mediaServerName?.let { stringResource(R.string.title_sheet_watch_on, it) } ?: stringResource(R.string.title_sheet_watch)
+    val watchRows = titleWatchRows(state, watchUrl, mediaServerName, onWatchInBinge, onWatch, LocalResources.current)
+    if (watchRows.isNotEmpty()) {
         ActionSheetGroup(
-            rows = listOf(externalItem(Icons.Filled.PlayArrow, label) { onWatch(watch) }),
+            rows = watchRows.map { externalItem(Icons.Filled.PlayArrow, it.label, it.onClick) },
             modifier = modifier,
             title = stringResource(state.labelRes()),
         )
