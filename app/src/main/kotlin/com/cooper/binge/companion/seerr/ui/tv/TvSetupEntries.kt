@@ -3,16 +3,18 @@ package com.cooper.binge.companion.seerr.ui.tv
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.cooper.binge.companion.seerr.ui.SetupActions
 import com.cooper.binge.companion.seerr.ui.SetupNotice
+import com.cooper.binge.companion.seerr.ui.SetupSource
 import com.cooper.binge.companion.seerr.ui.SetupViewModel
+import com.cooper.binge.companion.seerr.ui.rememberSetupSource
+import com.cooper.binge.companion.seerr.ui.setupActions
 
 @Composable
-internal fun TvSetupEntry(viewModel: SetupViewModel = hiltViewModel()) {
-    val state by viewModel.uiState.collectAsStateWithLifecycle()
-    TvSetupScreen(state = state, actions = viewModel.tvActions(), offerHandOff = true)
+internal fun TvSetupEntry(source: SetupSource = rememberSetupSource()) {
+    val state by source.uiState.collectAsStateWithLifecycle()
+    TvSetupScreen(state = state, actions = source.setupActions(tv = true), offerHandOff = true)
 }
 
 /**
@@ -23,11 +25,11 @@ internal fun TvSetupEntry(viewModel: SetupViewModel = hiltViewModel()) {
 @Composable
 internal fun TvReconnectEntry(
     onDisconnect: () -> Unit,
-    viewModel: SetupViewModel = hiltViewModel(),
+    source: SetupSource = rememberSetupSource(),
 ) {
-    val state by viewModel.uiState.collectAsStateWithLifecycle()
-    LaunchedEffect(viewModel) { viewModel.beginEdit(notice = SetupNotice.SessionRejected) }
-    TvSetupScreen(state = state, actions = viewModel.tvActions(onDisconnect), offerHandOff = true)
+    val state by source.uiState.collectAsStateWithLifecycle()
+    LaunchedEffect(source) { source.beginEdit(notice = SetupNotice.SessionRejected) }
+    TvSetupScreen(state = state, actions = source.setupActions(tv = true, onDisconnect = onDisconnect), offerHandOff = true)
 }
 
 /**

@@ -1,24 +1,25 @@
 # Feature flags
 
-Four flags. `BINGE_PROMOTION` decides what this app says about Binge. `REVIEW_PROMPT` decides whether it may ask for a Play review. `discovery_enabled` decides whether the discovery surfaces show (#2039). `search_toggles_enabled` decides whether a settings search result carries its own switch. The first three are off until Remote Config turns them on; the last has no remote value and is on only through a debug build's override.
+Five flags. `BINGE_PROMOTION` decides what this app says about Binge. `REVIEW_PROMPT` decides whether it may ask for a Play review. `discovery_enabled` decides whether the discovery surfaces show (#2039). `shared_setup_enabled` decides whether setup runs on the shared connect machine. `search_toggles_enabled` decides whether a settings search result carries its own switch. The first four are off until Remote Config turns them on; the last has no remote value and is on only through a debug build's override.
 
 | Flag | Remote Config key | Off means |
 | --- | --- | --- |
 | `BINGE_PROMOTION` | `binge_promotion_enabled` | Nothing about Binge: no prompt to install or open it, no hub tile or settings row, Binge-free wording in the setup intro and the disconnect confirmation. Titles open on the server's own page. |
 | `REVIEW_PROMPT` | `review_prompt_enabled` | The app never asks the platform to show its review card. |
 | `DiscoveryEnabled` | `discovery_enabled` | The app is exactly as it was before the discovery epic: no bottom navigation, no Movies, TV or Search tabs, no title, person or collection pages. It is the remote half only: the app shows discovery when this flag is on and the user's own Discovery setting under This app is on too (default on), combined by core's shared `PreferenceGate`. |
+| `SharedSetupEnabled` | `shared_setup_enabled` | Setup runs on the app's own `SetupViewModel`, as released builds always have. On, the entries take `SharedSetupViewModel` instead, which runs the address and sign-in steps on the shared library's connect machine. The screens are the same. It offers the sign-ins that have fields (the key, the local account, Jellyfin and Emby); Plex and Quick Connect are not wired to the library's link flows yet, so they stay on the old path. The choice is made once when the setup entry first shows and is saved with it, so a value that arrives mid-setup, or a rotation after it, does not swap the view model. |
 | `SearchToggles` | none: a debug override only | A settings search result for an on/off setting has no switch; it opens the setting, as before. On, the result carries the setting's own switch, which writes through the page's own editor. |
 
 The `BINGE_PROMOTION` flag is about not pushing anyone to install an app they cannot connect to. It does not gate the integration
 itself: the REQUEST and NOTIFICATIONS Service is always exported, and the hand-off Activities always answer an admitted
 caller, so a Binge that finds this app can use it whatever the flag says.
 
-`DiscoveryEnabled` and `SearchToggles` are this app's own flags, declared as `FlagKey`s in `flags/FeatureFlags.kt` beside the
+`DiscoveryEnabled`, `SharedSetupEnabled` and `SearchToggles` are this app's own flags, declared as `FlagKey`s in `flags/FeatureFlags.kt` beside the
 shared ones, and resolved by the same `FeatureFlags`. Nothing but the `PreferenceGate` built in `DiscoveryModule` reads `DiscoveryEnabled`: the gate combines it with the user's preference, and everything else reads the gate. The Firebase source reads
-`RemoteFlagKeys`, which is the shared flags and `DiscoveryEnabled`, from the one Remote Config instance with its one-hour fetch interval.
+`RemoteFlagKeys`, which is the shared flags, `DiscoveryEnabled` and `SharedSetupEnabled`, from the one Remote Config instance with its one-hour fetch interval.
 `SearchToggles` is deliberately not in that list: it has no remote value, so a Remote Config template cannot turn it on. A debug build
-can override either from the developer flags screen, in the same DataStore as the other overrides under `override_discovery_enabled` and
-`override_search_toggles_enabled`; a release build has no override.
+can override any of them from the developer flags screen, in the same DataStore as the other overrides under `override_discovery_enabled`,
+`override_shared_setup_enabled` and `override_search_toggles_enabled`; a release build has no override.
 
 ## How a value arrives
 

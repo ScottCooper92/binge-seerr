@@ -228,6 +228,15 @@ class SeerrConnection(
     }
 
     /**
+     * [inspect] at exactly [rawBaseUrl], with no retry on the server's own port: a caller that walks the candidates itself, as the
+     * shared connect machine does, asks each one in turn, and the retry here would ask the same address twice.
+     */
+    suspend fun inspectExact(rawBaseUrl: String): Result<SeerrServerPreview> {
+        if (!rawBaseUrl.isValidBaseUrl()) return Result.failure(InvalidServerUrlException())
+        return inspectCandidate(rawBaseUrl.normaliseBaseUrl())
+    }
+
+    /**
      * Probes one candidate base URL, anonymous, for its profile and artwork. On success
      * [SeerrServerPreview.baseUrl] is exactly [baseUrl] — the candidate that answered — so
      * [withPortFallback]'s retry carries forward whichever address actually worked.

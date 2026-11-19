@@ -434,6 +434,27 @@ class SeerrConnectionTest {
         }
 
     @Test
+    fun `inspecting exactly asks the one address and never retries on the default port`() =
+        runTest {
+            val fallback = MockWebServer().routeProfiles().apply { start(5055) }
+            try {
+                val sut = connection(backgroundScope)
+
+                // The portless address is refused (nothing listens on port 80 here), and the default port is not tried: the caller
+                // that walks the candidates asks for it itself.
+                assertTrue(sut.inspectExact("127.0.0.1").exceptionOrNull() is IOException)
+                assertEquals(0, fallback.requestCount)
+
+                fallback.enqueueProfile(json("""{"version":"3.4.0"}"""), json("""{"mediaServerType":2}"""))
+                fallback.enqueue(json("""[]"""))
+                assertEquals("http://127.0.0.1:5055/", sut.inspectExact("127.0.0.1:5055").getOrThrow().baseUrl)
+                assertTrue(sut.inspectExact("not a url").exceptionOrNull() is InvalidServerUrlException)
+            } finally {
+                fallback.close()
+            }
+        }
+
+    @Test
     fun `quick connect polls the code until it is approved, then signs in as that user`() =
         runTest {
             server.enqueue(json("""{"code":"123456","secret":"abcdef12"}"""))
