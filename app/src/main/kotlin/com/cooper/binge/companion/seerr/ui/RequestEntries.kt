@@ -100,6 +100,7 @@ internal fun SiblingRequestSheet(
             preview = sheet.preview,
             detailLoad = page.sheetDetailLoad(),
             onRetryDetail = viewModel::reload,
+            titleRows = sheet.titleRows,
         )
     } else if (sheet.open) {
         RequestSheetPlaceholder(state = page, onRetry = viewModel::reload, onDismiss = sheet.onDismiss)

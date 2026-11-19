@@ -51,6 +51,8 @@ sealed interface SeriesPageUiState {
         val series: SeriesDetails,
         val extras: TitleExtras? = null,
         val requestSheetOpen: Boolean = false,
+        /** The request sheet was opened by Request in 4K, so it starts on that version whatever the standard one still allows. */
+        val requestSheetFourK: Boolean = false,
         /** The request the primary last opened to manage. Kept after the sheet closes, so a moderation's result still has its sheet to land in. */
         val manageRequestId: Int? = null,
         val manageSheetOpen: Boolean = false,
@@ -147,13 +149,14 @@ class SeriesPageViewModel
 
         fun closeStatusSheet() = updateReady { it.copy(statusSheetOpen = false) }
 
-        fun openReportSheet() = updateReady { it.copy(reportSheetOpen = true) }
+        /** Request in 4K, tapped in a request's sheet: that sheet gives way to the request sheet. */
+        fun requestFourKFromManage() = updateReady { it.copy(manageSheetOpen = false, requestSheetOpen = true, requestSheetFourK = true) }
 
-        fun closeReportSheet() = updateReady { it.copy(reportSheetOpen = false) }
+        fun setReportSheetOpen(open: Boolean) = updateReady { it.copy(reportSheetOpen = open) }
 
         /** Closing the sheet reads the show again, since a request moves its seasons and a refused one may mean the server's state moved. */
         fun closeRequestSheet() {
-            updateReady { it.copy(requestSheetOpen = false) }
+            updateReady { it.copy(requestSheetOpen = false, requestSheetFourK = false) }
             reload()
         }
 

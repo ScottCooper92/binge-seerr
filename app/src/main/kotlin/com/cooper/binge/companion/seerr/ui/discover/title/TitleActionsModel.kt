@@ -43,7 +43,7 @@ internal data class TitleActionsModel(
  * The primary is a Request while the standard version is still open and untouched, whatever the 4K version holds. Otherwise it follows the best state any version has: available over partly available over processing over requested, then
  * blocklisted, then nothing held, which is a Request. A tap opens the request sheet where a version can still be asked for and
  * nothing is held, or while a partly available title can still have more requested; otherwise the sheet of the request to manage, the newest one that was not declined; with no request on file and a
- * version still open it is the request sheet again (for the 4K version), and otherwise there is nothing to open.
+ * version still open it is the request sheet again (for the 4K version), and otherwise the status sheet.
  */
 internal fun titleActionsModel(
     standard: VersionState,

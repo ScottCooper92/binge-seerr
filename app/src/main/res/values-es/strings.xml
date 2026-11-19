@@ -317,6 +317,7 @@
     <string name="media_watch_plays">%1$d reproducciones · %2$d en los últimos 7 días · %3$d en los últimos 30 días</string>
     <string name="media_watch_users_label">Visto por</string>
     <string name="media_clear_data">Borrar los datos</string>
+    <string name="request_sheet_group_title">Título</string>
     <string name="request_sheet_group_request">Petición</string>
     <string name="request_sheet_group_media">Contenido</string>
     <string name="request_sheet_requested_by">Solicitada por %1$s</string>

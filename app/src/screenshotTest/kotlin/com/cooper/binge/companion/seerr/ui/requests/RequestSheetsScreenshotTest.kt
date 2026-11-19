@@ -1,5 +1,8 @@
 package com.cooper.binge.companion.seerr.ui.requests
 
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.res.stringResource
@@ -22,6 +25,22 @@ class RequestSheetsScreenshotTest {
     @SeerrComponentPreviews
     @Composable
     fun actionsPending() = SheetFrame { ActionsContent(pendingDetail()) }
+
+    /** A title with a request on file: Watch and Request in 4K lead, then the request's own rows. */
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun actionsWithTitleRows() =
+        SheetFrame {
+            ActionsContent(
+                settledDetail(),
+                titleRows =
+                    listOf(
+                        SheetTitleRow(Icons.Filled.PlayArrow, "Watch on Plex", external = true) {},
+                        SheetTitleRow(Icons.Filled.Add, stringResource(R.string.request_sheet_submit_4k), external = false) {},
+                    ),
+            )
+        }
 
     /** At the expanded width the actions are a side sheet, and Edit request opens as a page of it. */
     @PreviewTest
@@ -238,6 +257,7 @@ private fun ActionsContent(
     detailLoad: SheetDetailLoad = SheetDetailLoad.Loaded,
     progress: ActionProgress? = null,
     onOpenServices: (() -> Unit)? = null,
+    titleRows: List<SheetTitleRow> = emptyList(),
 ) {
     RequestActionsContent(
         model =
@@ -248,6 +268,7 @@ private fun ActionsContent(
                 media = detail.media.takeIf { detailLoad == SheetDetailLoad.Loaded },
                 detailLoad = detailLoad,
                 progress = progress,
+                titleRows = titleRows,
             ),
         callbacks = RequestSheetCallbacks(onApprove = {}, onRetry = {}, onDecline = {}, onRemove = {}, onOpenServices = onOpenServices),
         blockTitle = false,

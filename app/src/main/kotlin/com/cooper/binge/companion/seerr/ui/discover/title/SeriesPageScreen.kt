@@ -19,7 +19,6 @@ import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.ui.discover.request.RequestSheet
 import com.cooper.binge.companion.seerr.ui.discover.request.RequestSheetTarget
 import com.cooper.binge.companion.seerr.ui.discover.request.messageRes
-import com.cooper.binge.companion.seerr.ui.requests.SiblingSheet
 import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
 import com.cooper.binge.companion.seerr.ui.state.MediaHeroDetailPage
 import com.cooper.binge.companion.seerr.ui.state.MediaHeroDetailPlaceholder
@@ -97,7 +96,7 @@ private fun ReadySeriesPage(
                     kind = TitleKind.Series,
                     tmdbId = series.tmdbId,
                     title = series.name,
-                    standardOpen = series.standard.mayRequest,
+                    standardOpen = series.standard.mayRequest && !state.requestSheetFourK,
                     fourKOpen = series.fourK?.mayRequest == true,
                     seasonChoices = series.seasonChoices,
                     partialRequests = series.partialRequests,
@@ -126,14 +125,6 @@ private fun ReadySeriesPage(
     }
     if (state.reportSheetOpen) actions.reportSheet(actions.onCloseReport)
     state.manageRequestId?.let { requestId ->
-        actions.manageSheet(
-            SiblingSheet(
-                requestId,
-                open = state.manageSheetOpen,
-                snackbarHostState = snackbar,
-                onDismiss = actions.onCloseManage,
-                onChanged = actions.onReload,
-            ),
-        )
+        TitleManageSheet(requestId, state.manageSheetOpen, snackbar, series.sheetFacts(), actions)
     }
 }
