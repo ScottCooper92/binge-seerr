@@ -22,12 +22,12 @@ private const val WATCH_PX = 4200
 /** Scrolled past the end: the state clamps it, so the page rests on its last section, the Details. */
 private const val DETAILS_END_PX = 100_000
 
-private val NO_ACTIONS = TitlePageActions({}, {}, {}, {}, {}, {}, {}, {}, {}, {})
+private val NO_ACTIONS = TitlePageActions({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, onReport = {})
 
 private val NO_SEASON_ACTIONS = SeasonActions({}, {}, { _, _ -> })
 
 /** As [NO_ACTIONS], but a network opens its grid, so the networks are links in the accent colour. */
-private val LINKED_ACTIONS = TitlePageActions({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, onOpenCompany = {})
+private val LINKED_ACTIONS = TitlePageActions({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, onOpenCompany = {}, onReport = {})
 
 /** As [NO_ACTIONS], but a keyword opens its grid, so the keywords are chips. */
 private val KEYWORD_ACTIONS = TitlePageActions({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, onOpenKeyword = {})

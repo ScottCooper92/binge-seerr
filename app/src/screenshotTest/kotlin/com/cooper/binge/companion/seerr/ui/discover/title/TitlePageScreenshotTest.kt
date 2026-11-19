@@ -26,10 +26,10 @@ private const val WATCH_LARGE_FONT_PX = 5200
 private const val COLLECTION_PX = 3800
 private const val COLLECTION_LARGE_FONT_PX = 6900
 
-private val NO_ACTIONS = TitlePageActions({}, {}, {}, {}, {}, {}, {}, {}, {}, {})
+private val NO_ACTIONS = TitlePageActions({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, onReport = {})
 
 /** As [NO_ACTIONS], but a studio opens its grid, so the studios are links in the accent colour. */
-private val LINKED_ACTIONS = TitlePageActions({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, onOpenCompany = {})
+private val LINKED_ACTIONS = TitlePageActions({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, onOpenCompany = {}, onReport = {})
 
 /** As [NO_ACTIONS], but a keyword opens its grid, so the keywords are chips. */
 private val KEYWORD_ACTIONS = TitlePageActions({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, onOpenKeyword = {})
@@ -69,7 +69,7 @@ class TitlePageScreenshotTest {
     @Composable
     fun requestableExpandedLargeText() = Frame(TitlePageUiState.Ready(fullMovie(), fullExtras()))
 
-    /** Already in the library, with no request on file and no version open: the primary says Available and is drawn disabled. */
+    /** Already in the library, with no request on file and no version open: the primary says Available and is drawn disabled, and Report joins Trailer. */
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
@@ -77,6 +77,18 @@ class TitlePageScreenshotTest {
         Frame(
             TitlePageUiState.Ready(
                 fullMovie(standard = VersionState(TitleAvailability.Available, mayRequest = false), fourK = null),
+                fullExtras(),
+            ),
+        )
+
+    /** Available to a viewer the server takes no issue from: Trailer is there and Report is not. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun availableNoReport() =
+        Frame(
+            TitlePageUiState.Ready(
+                fullMovie(standard = VersionState(TitleAvailability.Available, mayRequest = false), fourK = null).copy(mayReport = false),
                 fullExtras(),
             ),
         )
@@ -163,6 +175,18 @@ class TitlePageScreenshotTest {
     @SeerrFontScalePreviews
     @Composable
     fun loadingLargeFonts() = Frame(TitlePageUiState.Loading)
+
+    /** An available title at font scale 2: Trailer and Report, both labelled, sit beside the primary and the labels stay whole. */
+    @PreviewTest
+    @SeerrFontScalePreviews
+    @Composable
+    fun availableLargeFonts() =
+        Frame(
+            TitlePageUiState.Ready(
+                fullMovie(standard = VersionState(TitleAvailability.Available, mayRequest = false), fourK = null),
+                fullExtras(),
+            ),
+        )
 
     /** The longest title, tagline and names at font scale 2. */
     @PreviewTest

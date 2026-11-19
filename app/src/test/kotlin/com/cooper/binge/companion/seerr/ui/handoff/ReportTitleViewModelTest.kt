@@ -79,6 +79,17 @@ class ReportTitleViewModelTest {
         }
 
     @Test
+    fun `a title the app shows from its own server needs no address to match`() =
+        runTest {
+            val vm = viewModel(TitleReportLink("", "movie", 949, is4k = false, ownServer = true))
+
+            val state = vm.settled()
+
+            assertTrue(state is ReportTitleUiState.Ready)
+            assertEquals(MEDIA_ID, (state as ReportTitleUiState.Ready).mediaId)
+        }
+
+    @Test
     fun `the 4K mark on the code is kept for the form to say`() =
         runTest {
             assertTrue((viewModel(here(is4k = true)).settled() as ReportTitleUiState.Ready).is4k)
@@ -246,6 +257,62 @@ class ReportTitleViewModelTest {
             vm.uiState.first { (it as? ReportTitleUiState.Ready)?.report == IssueReport.Sent }
 
             assertEquals(2, seerr.count("POST", "/api/v1/issue"))
+        }
+
+    @Test
+    fun `after a report is sent and the form is closed it comes back empty and can send another`() =
+        runTest {
+            val vm = viewModel(here())
+            vm.settled()
+            vm.send(IssueType.Video, "Black screen.")
+            vm.uiState.first { (it as? ReportTitleUiState.Ready)?.report == IssueReport.Sent }
+
+            vm.dismiss()
+            assertEquals(IssueReport.Idle, (vm.settled() as ReportTitleUiState.Ready).report)
+            vm.send(IssueType.Subtitles, "Out of sync.")
+            vm.uiState.first { (it as? ReportTitleUiState.Ready)?.report == IssueReport.Sent }
+
+            assertEquals(2, seerr.count("POST", "/api/v1/issue"))
+        }
+
+    @Test
+    fun `closing the form while a send is in flight leaves it sending, so the form cannot post twice`() =
+        runTest {
+            val vm = viewModel(here())
+            vm.settled()
+
+            vm.send(IssueType.Video, "Black screen.")
+            vm.dismiss()
+            assertEquals(IssueReport.Sending, (vm.uiState.value as ReportTitleUiState.Ready).report)
+            vm.send(IssueType.Video, "Black screen.")
+            vm.uiState.first { (it as? ReportTitleUiState.Ready)?.report == IssueReport.Sent }
+
+            assertEquals(1, seerr.count("POST", "/api/v1/issue"))
+        }
+
+    @Test
+    fun `a failed report is cleared when the form is closed`() =
+        runTest {
+            seerr.serve("POST /api/v1/issue", """{"message":"no"}""", code = 500)
+            val vm = viewModel(here())
+            vm.settled()
+            vm.send(IssueType.Video, "Black screen.")
+            vm.uiState.first { (it as? ReportTitleUiState.Ready)?.report is IssueReport.Failed }
+
+            vm.dismiss()
+
+            assertEquals(IssueReport.Idle, (vm.settled() as ReportTitleUiState.Ready).report)
+        }
+
+    @Test
+    fun `closing the form does nothing before there is a title to report on`() =
+        runTest {
+            val vm = viewModel(here(), connected = false)
+            val before = vm.settled()
+
+            vm.dismiss()
+
+            assertEquals(before, vm.settled())
         }
 
     @Test

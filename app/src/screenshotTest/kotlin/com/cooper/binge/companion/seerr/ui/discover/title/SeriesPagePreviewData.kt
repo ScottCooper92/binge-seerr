@@ -53,6 +53,7 @@ internal fun fullSeries(
     seasons: List<SeasonInfo> = mixedSeasons(),
     standard: VersionState = VersionState(TitleAvailability.PartiallyAvailable, mayRequest = true),
 ) = SeriesDetails(
+    mayReport = true,
     tmdbId = 1399,
     name = name,
     tagline = "Every season has its end",

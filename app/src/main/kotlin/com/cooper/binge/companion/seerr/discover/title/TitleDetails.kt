@@ -109,6 +109,8 @@ data class MovieDetails(
     val releaseDate: String? = null,
     /** The requests the server holds for the film, newest last as it lists them. */
     val requests: List<TitleRequest> = emptyList(),
+    /** The server takes issues and this viewer may report one: its profile has them and their permissions allow it. */
+    val mayReport: Boolean = false,
     /** Whether the server can list what a studio made, so the studios may be links; set from its profile, never from a version here. */
     val companiesOpen: Boolean = false,
     /** Whether the server can list the titles of a keyword, so the keywords may be links; set from its profile. */

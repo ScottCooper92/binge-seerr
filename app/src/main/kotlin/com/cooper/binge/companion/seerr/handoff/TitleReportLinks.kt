@@ -31,6 +31,11 @@ data class TitleReportLink(
      * for a phone that cannot reach the TV's): a phone on either is on this server when neither side has an id to say so.
      */
     val tvServer: String? = null,
+    /**
+     * The title is one this app is showing from its own server, not one a code named, so there is no address to compare. Only
+     * the app sets it; [TitleReportLinks.parse] never does.
+     */
+    val ownServer: Boolean = false,
 )
 
 internal object TitleReportLinks {

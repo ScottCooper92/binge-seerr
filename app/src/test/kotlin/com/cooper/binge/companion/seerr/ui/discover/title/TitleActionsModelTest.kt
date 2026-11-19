@@ -7,7 +7,9 @@ import com.cooper.binge.companion.seerr.discover.title.VersionState
 import com.cooper.binge.companion.seerr.discover.title.trailerUrl
 import com.cooper.binge.companion.seerr.seerr.SeerrRequestStatusCode
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class TitleActionsModelTest {
@@ -24,7 +26,7 @@ class TitleActionsModelTest {
         standard: VersionState,
         fourK: VersionState? = null,
         requests: List<TitleRequest> = emptyList(),
-    ) = titleActionsModel(standard, fourK, requests).primary
+    ) = titleActionsModel(standard, fourK, requests, mayReport = true).primary
 
     @Test
     fun `an open standard version is a Request that opens the sheet`() {
@@ -96,6 +98,24 @@ class TitleActionsModelTest {
             TitlePrimary(TitleState.Blocklisted, fourKOnly = false, tap = PrimaryTap.Nothing),
             primary(held(TitleAvailability.Blocklisted)),
         )
+    }
+
+    @Test
+    fun `report is offered once the title is in the library in whole or in part`() {
+        fun canReport(availability: TitleAvailability) =
+            titleActionsModel(held(availability), null, emptyList(), mayReport = true).canReport
+
+        assertTrue(canReport(TitleAvailability.Available))
+        assertTrue(canReport(TitleAvailability.PartiallyAvailable))
+        assertFalse(canReport(TitleAvailability.None))
+        assertFalse(canReport(TitleAvailability.Pending))
+        assertFalse(canReport(TitleAvailability.Processing))
+        assertFalse(canReport(TitleAvailability.Blocklisted))
+    }
+
+    @Test
+    fun `report is not offered where the server takes no issue from this viewer`() {
+        assertFalse(titleActionsModel(held(TitleAvailability.Available), null, emptyList(), mayReport = false).canReport)
     }
 
     @Test

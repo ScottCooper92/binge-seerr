@@ -65,7 +65,11 @@ class SeerrSeriesRepository(
                     mayViewAllRequests = permissions.canViewRequests,
                     settings = profile.settings,
                     webUrl = serverUrl() + "tv/" + tmdbId,
-                ).copy(companiesOpen = profile.hasDiscoverByCategory, keywordsOpen = profile.hasKeywordDiscover)
+                ).copy(
+                    companiesOpen = profile.hasDiscoverByCategory,
+                    keywordsOpen = profile.hasKeywordDiscover,
+                    mayReport = profile.hasIssues && permissions.canReportIssues,
+                )
         }
 
     override suspend fun season(

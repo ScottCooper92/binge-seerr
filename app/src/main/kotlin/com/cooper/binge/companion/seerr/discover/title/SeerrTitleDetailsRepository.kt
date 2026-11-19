@@ -58,7 +58,11 @@ class SeerrTitleDetailsRepository(
                     viewerId = user.id,
                     mayViewAllRequests = permissions.canViewRequests,
                     webUrl = serverUrl() + "movie/" + tmdbId,
-                ).copy(companiesOpen = profile.hasDiscoverByCategory, keywordsOpen = profile.hasKeywordDiscover)
+                ).copy(
+                    companiesOpen = profile.hasDiscoverByCategory,
+                    keywordsOpen = profile.hasKeywordDiscover,
+                    mayReport = profile.hasIssues && permissions.canReportIssues,
+                )
         }
 
     override suspend fun collectionParts(collectionId: Int): List<TitleResult> = collections.collection(collectionId).parts

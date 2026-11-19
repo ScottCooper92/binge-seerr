@@ -108,6 +108,7 @@ private fun ReadySeriesPage(
             onResult = actions.onRequested,
         )
     }
+    if (state.reportSheetOpen) actions.reportSheet(actions.onCloseReport)
     state.manageRequestId?.let { requestId ->
         actions.manageSheet(
             SiblingSheet(

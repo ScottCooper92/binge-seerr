@@ -1568,6 +1568,7 @@
     <string name="title_page_request">Request</string>
     <string name="title_page_runtime">%1$dh %2$dm</string>
     <string name="title_page_request_4k">Request in 4K</string>
+    <string name="title_page_action_report">Report</string>
     <string name="title_page_action_trailer">Trailer</string>
     <string name="title_page_action_share">Share</string>
     <string name="title_page_stat_released">Released</string>
