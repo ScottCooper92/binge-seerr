@@ -12,6 +12,7 @@ import com.cooper.binge.companion.seerr.discover.title.TitleExtras
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
 import com.cooper.binge.companion.seerr.telemetry.AnalyticsEvents
+import com.cooper.binge.companion.seerr.telemetry.operationFailed
 import com.cooper.homelab.core.telemetry.Analytics
 import com.cooper.homelab.core.telemetry.NoOpAnalytics
 import dagger.assisted.Assisted
@@ -175,7 +176,10 @@ class TitlePageViewModel
                         eventFlow.tryEmit(TitlePageEvent.Unblocked)
                         reload()
                     },
-                    onFailure = { eventFlow.tryEmit(TitlePageEvent.UnblockFailed(it.toSeerrError())) },
+                    onFailure = {
+                        analytics.operationFailed("unblock_title", it, repository.serverProfile())
+                        eventFlow.tryEmit(TitlePageEvent.UnblockFailed(it.toSeerrError()))
+                    },
                 )
             }
         }

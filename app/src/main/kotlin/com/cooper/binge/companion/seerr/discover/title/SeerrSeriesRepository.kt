@@ -36,6 +36,9 @@ interface SeriesDetailsRepository {
     /** Takes the show off the blocklist; a failure throws. The viewer's right to is [SeriesDetails.mayUnblock]. */
     suspend fun unblock(tmdbId: Int)
 
+    /** The server's lineage and version, for the failure event only; null where it cannot be read. */
+    suspend fun serverProfile(): SeerrServerProfile?
+
     /** Puts the show on the signed-in user's watchlist, or takes it off; a failure throws. */
     suspend fun setWatchlist(
         tmdbId: Int,
@@ -122,6 +125,8 @@ class SeerrSeriesRepository(
 
     override suspend fun unblock(tmdbId: Int) =
         withContext(io) { statuses.unblocking(TitleKey(TitleType.Tv, tmdbId)) { api().unblockTitle(profile(), tmdbId, "tv") } }
+
+    override suspend fun serverProfile(): SeerrServerProfile? = attempt { profile() }.getOrNull()
 
     /** Rotten Tomatoes only: the show route has no IMDb score, and it is served on every lineage. */
     override suspend fun extras(tmdbId: Int): TitleExtras =

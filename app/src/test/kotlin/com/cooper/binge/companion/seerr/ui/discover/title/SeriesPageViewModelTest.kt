@@ -23,12 +23,15 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
+import okhttp3.ResponseBody.Companion.toResponseBody
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
+import retrofit2.HttpException
+import retrofit2.Response
 import java.io.IOException
 
 internal fun seasonFixture(
@@ -98,6 +101,8 @@ private class FakeSeries(
         failWatchlist?.let { throw it }
         watchlistCalls += Triple(tmdbId, title, onList)
     }
+
+    override suspend fun serverProfile() = null
 
     override suspend fun unblock(tmdbId: Int) {
         failUnblock?.let { throw it }
@@ -270,6 +275,22 @@ class SeriesPageViewModelTest {
                 listOf(AnalyticsEvents.BLOCKLIST_CHANGED to mapOf<String, Any>(AnalyticsEvents.PARAM_ACTION to "series_unblocked")),
                 analytics.events,
             )
+        }
+
+    @Test
+    fun `a refused unblock the server answers with an error is reported as a failed operation`() =
+        runTest {
+            val repo = FakeSeries()
+            repo.series = seriesFixture(standard = VersionState(TitleAvailability.Blocklisted, mayRequest = false)).copy(mayUnblock = true)
+            repo.failUnblock = HttpException(Response.error<Unit>(500, "".toResponseBody()))
+            val analytics = RecordingAnalytics()
+            val vm = SeriesPageViewModel(repo, 1399, analytics)
+            val event = awaitEvent(vm.events)
+
+            vm.unblock()
+            event.await()
+
+            assertEquals("unblock_title", analytics.events.single().second[AnalyticsEvents.PARAM_OPERATION])
         }
 
     @Test
