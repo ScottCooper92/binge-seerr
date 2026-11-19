@@ -16,11 +16,11 @@ import com.cooper.binge.companion.seerr.data.SeerrCacheDatabase
 import com.cooper.binge.companion.seerr.data.TitleDao
 import com.cooper.binge.companion.seerr.data.UserStore
 import com.cooper.binge.companion.seerr.feedback.FeedbackPrefs
-import com.cooper.binge.companion.seerr.notifications.AndroidNotificationText
-import com.cooper.binge.companion.seerr.notifications.AndroidNotifier
 import com.cooper.binge.companion.seerr.flags.DiscoveryGate
 import com.cooper.binge.companion.seerr.flags.DiscoveryPrefs
 import com.cooper.binge.companion.seerr.flags.PrefsDiscoveryGate
+import com.cooper.binge.companion.seerr.notifications.AndroidNotificationText
+import com.cooper.binge.companion.seerr.notifications.AndroidNotifier
 import com.cooper.binge.companion.seerr.notifications.ApplicationScope
 import com.cooper.binge.companion.seerr.notifications.ForwardedNotificationCodec
 import com.cooper.binge.companion.seerr.notifications.ForwardingNotifier
@@ -32,9 +32,9 @@ import com.cooper.binge.companion.seerr.telemetry.CrashReportingMigration
 import com.cooper.binge.companion.seerr.ui.hub.BingeInstallCheck
 import com.cooper.binge.companion.seerr.ui.hub.PackageManagerBingeInstallCheck
 import com.cooper.homelab.core.bridge.NotificationForwarding
+import com.cooper.homelab.core.flags.FeatureFlags
 import com.cooper.homelab.core.foundation.Clock
 import com.cooper.homelab.core.telemetry.TelemetryPrefs
-import com.cooper.homelab.core.flags.FeatureFlags
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn

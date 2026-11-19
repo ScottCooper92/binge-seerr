@@ -46,7 +46,7 @@ class PrefsDiscoveryGate(
     override val offered: Flow<Boolean> = featureFlags.flags.map { it[DiscoveryEnabled] }.distinctUntilChanged()
     override val preference: Flow<Boolean> = prefs.enabled
 
-    // Until the preference has been read the flag alone decides, which is right for everyone who has not opted out.
+    /** Until the preference has been read the flag alone decides, which is right for everyone who has not opted out. */
     override val enabled: StateFlow<Boolean> =
         combine(offered, preference) { flag, pref -> flag && pref }
             .stateIn(scope, SharingStarted.Eagerly, featureFlags.flags.value[DiscoveryEnabled])

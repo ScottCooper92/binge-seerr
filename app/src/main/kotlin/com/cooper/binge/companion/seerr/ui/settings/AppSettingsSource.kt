@@ -2,9 +2,9 @@ package com.cooper.binge.companion.seerr.ui.settings
 
 import com.cooper.binge.companion.seerr.auth.BingeConnectionStore
 import com.cooper.binge.companion.seerr.feedback.BugReportLinks
+import com.cooper.binge.companion.seerr.feedback.FeedbackPrefs
 import com.cooper.binge.companion.seerr.flags.DiscoveryGate
 import com.cooper.binge.companion.seerr.flags.NoDiscoveryGate
-import com.cooper.binge.companion.seerr.feedback.FeedbackPrefs
 import com.cooper.binge.companion.seerr.telemetry.AnalyticsEvents
 import com.cooper.binge.companion.seerr.ui.hub.BingeInstallCheck
 import com.cooper.binge.companion.seerr.ui.hub.bingeStatusOf
