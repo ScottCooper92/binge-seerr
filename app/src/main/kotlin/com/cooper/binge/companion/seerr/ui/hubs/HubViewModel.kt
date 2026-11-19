@@ -21,6 +21,7 @@ import com.cooper.binge.companion.seerr.discover.sliders.HubTileLoader
 import com.cooper.binge.companion.seerr.discover.sliders.SliderListState
 import com.cooper.binge.companion.seerr.discover.sliders.isTileRow
 import com.cooper.binge.companion.seerr.discover.sliders.rowsFor
+import com.cooper.binge.companion.seerr.discover.withoutOffWatchlist
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
 import com.cooper.binge.companion.seerr.seerr.toServerFailure
@@ -253,8 +254,13 @@ private fun DiscoverHubUiState.overlaid(held: TitleStatusMap): DiscoverHubUiStat
         this
     } else {
         copy(
-            rows =
-                rows.map { row -> if (row is HubRowUi.Cards) row.copy(cards = row.cards.map { it.overlaid(held) }) else row },
+            rows = rows.mapNotNull { row -> if (row is HubRowUi.Cards) row.overlaid(held) else row },
             hero = hero.map { it.overlaid(held) },
         )
     }
+
+/** A row's cards with the latest status; a watchlist row also loses the titles taken off it, and goes when none is left. */
+private fun HubRowUi.Cards.overlaid(held: TitleStatusMap): HubRowUi.Cards? {
+    val cards = cards.map { it.overlaid(held) }.let { if (row is HubRow.Watchlist) it.withoutOffWatchlist(held) else it }
+    return if (cards.isEmpty()) null else copy(cards = cards)
+}

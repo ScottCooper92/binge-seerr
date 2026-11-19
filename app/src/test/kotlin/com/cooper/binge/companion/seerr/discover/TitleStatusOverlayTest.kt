@@ -70,4 +70,31 @@ class TitleStatusOverlayTest {
         assertEquals(1, overlaid.toRequest)
         assertTrue(details.toRequest == 2)
     }
+
+    private val offTheList = mapOf(TitleKey(TitleType.Movie, 1) to TitleStatuses(onWatchlist = false))
+
+    @Test
+    fun `a watchlist loses a title taken off it, and a title nothing is known of stays`() {
+        val cards = listOf(card(tmdbId = 1), card(tmdbId = 2))
+
+        assertEquals(listOf(2), cards.withoutOffWatchlist(offTheList).map { it.tmdbId })
+        assertSame(cards, cards.withoutOffWatchlist(emptyMap()))
+    }
+
+    @Test
+    fun `a title on the watchlist, or one the store has no word on, is not hidden`() {
+        val onIt = mapOf(TitleKey(TitleType.Movie, 1) to TitleStatuses(onWatchlist = true))
+        val unknown = mapOf(TitleKey(TitleType.Movie, 1) to TitleStatuses(onWatchlist = null))
+        val cards = listOf(card(tmdbId = 1))
+
+        assertSame(cards, cards.withoutOffWatchlist(onIt))
+        assertSame(cards, cards.withoutOffWatchlist(unknown))
+    }
+
+    @Test
+    fun `a film and a show with one id are told apart on the watchlist`() {
+        val show = listOf(card(kind = TitleKind.Series, tmdbId = 1))
+
+        assertSame(show, show.withoutOffWatchlist(offTheList))
+    }
 }

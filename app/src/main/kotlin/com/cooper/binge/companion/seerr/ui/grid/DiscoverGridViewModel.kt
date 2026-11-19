@@ -10,6 +10,7 @@ import com.cooper.binge.companion.seerr.core.grid.SortFilterState
 import com.cooper.binge.companion.seerr.core.search.SearchPage
 import com.cooper.binge.companion.seerr.data.TitleStatusStore
 import com.cooper.binge.companion.seerr.discover.TitleKind
+import com.cooper.binge.companion.seerr.discover.TitleStatusMap
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverFilters
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverGridRepository
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverSort
@@ -28,6 +29,7 @@ import com.cooper.binge.companion.seerr.discover.overlaid
 import com.cooper.binge.companion.seerr.discover.sliders.HubCard
 import com.cooper.binge.companion.seerr.discover.sliders.HubMediaSource
 import com.cooper.binge.companion.seerr.discover.sliders.toCard
+import com.cooper.binge.companion.seerr.discover.withoutOffWatchlist
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
@@ -75,7 +77,7 @@ class DiscoverGridViewModel
 
         val uiState: StateFlow<DiscoverGridUiState> =
             combine(
-                list.state.combine(statuses.statuses) { page, held -> page.overlaid(held) },
+                list.state.combine(statuses.statuses) { page, held -> page.overlaid(held).onlyWhileOn(preset, held) },
                 sortFilter.query,
                 refinable,
                 loader.vocabulary,
@@ -193,3 +195,10 @@ private fun GridPreset.toChip(title: String?): ActiveFilterChip? =
         is GridPreset.Keyword -> ActiveFilterChip(ChipKind.Keyword, title)
         is GridPreset.Provider -> ActiveFilterChip(ChipKind.Provider, title)
     }
+
+/** A watchlist grid loses the titles taken off the list since it was read; every other grid keeps its cards. */
+private fun PagedListState<HubCard>.onlyWhileOn(
+    preset: GridPreset,
+    held: TitleStatusMap,
+): PagedListState<HubCard> =
+    if (preset == GridPreset.Watchlist || preset == GridPreset.OwnWatchlist) withoutOffWatchlist(held) else this
