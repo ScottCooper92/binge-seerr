@@ -1,6 +1,7 @@
 package com.cooper.binge.companion.seerr.di
 
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
+import com.cooper.binge.companion.seerr.data.TitleStatusStore
 import com.cooper.binge.companion.seerr.discover.title.SeerrSeriesRepository
 import com.cooper.binge.companion.seerr.discover.title.SeriesDetailsRepository
 import dagger.Module
@@ -16,6 +17,7 @@ object SeriesDetailsModule {
     @Provides
     fun seriesDetailsRepository(
         connection: SeerrConnection,
+        statuses: TitleStatusStore,
         @IoDispatcher io: CoroutineDispatcher,
     ): SeriesDetailsRepository =
         SeerrSeriesRepository(
@@ -25,5 +27,6 @@ object SeriesDetailsModule {
             serverUrl = { connection.current().baseUrl },
             deviceRegion = ::deviceRegion,
             io = io,
+            statuses = statuses,
         )
 }
