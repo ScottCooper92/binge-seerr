@@ -1,6 +1,7 @@
 package com.cooper.binge.companion.seerr.ui.nav
 
 import androidx.compose.ui.test.ComposeTimeoutException
+import androidx.compose.ui.test.hasText
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.HomeRoute
 import dagger.hilt.android.testing.HiltAndroidTest
@@ -35,6 +36,22 @@ class RealNavHostRuleTimeoutTest {
         assertTrue(message, "\"no such text on any screen\" on screen" in message)
         assertTrue(message, "Back stack: [" in message)
         assertTrue("the screen's own text is in it: $message", host.string(R.string.demo_indicator) in message)
+    }
+
+    @Test
+    fun `a wait given a node to watch also lists the horizontal scrollers and how far along they are`() {
+        host.connectDemo()
+        host.launch(HomeRoute)
+        host.awaitShowing(host.string(R.string.demo_indicator))
+
+        val timeout =
+            assertThrows(ComposeTimeoutException::class.java) {
+                host.await("nothing", timeoutMillis = 300, focus = hasText(host.string(R.string.demo_indicator))) { false }
+            }
+
+        val message = timeout.message.orEmpty()
+        assertTrue(message, "Selectable nodes:" in message)
+        assertTrue(message, "Horizontally scrollable nodes:" in message)
     }
 
     @Test
