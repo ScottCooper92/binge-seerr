@@ -39,12 +39,12 @@ fun SeerrMediaInfoDto?.toRequestStatus(
         version(is4k = false, info.status.toAvailability())
             .addAllSeasons(info.seasons.map { it.toSeasonAvailability(it.status) })
     info.downloadStatus.toDownloadProgress(nowMillis)?.let(standard::setDownload)
-    watchLink(info.mediaUrl, info.jellyfinMediaUrl, info.plexUrl)?.let(standard::setWatchUrl)
+    info.standardWatchLink()?.let(standard::setWatchUrl)
     val fourK =
         version(is4k = true, info.status4k.toAvailability())
             .addAllSeasons(info.seasons.map { it.toSeasonAvailability(it.status4k) })
     info.downloadStatus4k.toDownloadProgress(nowMillis)?.let(fourK::setDownload)
-    watchLink(info.mediaUrl4k, info.plexUrl4k)?.let(fourK::setWatchUrl)
+    info.fourKWatchLink()?.let(fourK::setWatchUrl)
     return RequestStatus
         .newBuilder()
         .addVersions(standard)
@@ -52,9 +52,6 @@ fun SeerrMediaInfoDto?.toRequestStatus(
         .addAllRequests(info.requests.map { it.toRequestInfo(qualityLabels.labelOf(it.destination(isTv))) })
         .build()
 }
-
-/** The first of a version's links the server filled in, if it is http or https: the contract carries no other scheme. */
-private fun watchLink(vararg candidates: String?): String? = candidates.firstOrNull { !it.isNullOrBlank() }?.takeIf { it.isWebUrl() }
 
 private fun version(
     is4k: Boolean,

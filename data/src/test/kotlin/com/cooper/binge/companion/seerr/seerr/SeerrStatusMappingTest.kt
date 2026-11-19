@@ -5,6 +5,7 @@ import com.binge.companion.contracts.request.v1.Availability
 import com.binge.companion.contracts.request.v1.DownloadState
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -87,6 +88,31 @@ class SeerrStatusMappingTest {
 
         assertEquals("", status.standardVersion().watchUrl)
         assertEquals("", status.version4k().watchUrl)
+    }
+
+    @Test
+    fun `a link that cannot be a real site is skipped for the next one of the same version`() {
+        val info =
+            SeerrMediaInfoDto(mediaUrl = "https://jellyfin.invalid/a", plexUrl = "https://app.plex.tv/a", plexUrl4k = "https://x.invalid/b")
+        val status = info.toRequestStatus(NOW)
+
+        assertEquals("https://app.plex.tv/a", status.standardVersion().watchUrl)
+        assertEquals("", status.version4k().watchUrl)
+    }
+
+    @Test
+    fun `the page's watch link is the standard version's, else the 4K one's, and agrees with what the Service sends`() {
+        val info = SeerrMediaInfoDto(mediaUrl = "https://jellyfin.invalid/a", mediaUrl4k = "https://jellyfin4k.local/b")
+        val status = info.toRequestStatus(NOW)
+
+        assertEquals("https://jellyfin4k.local/b", info.watchLink())
+        assertEquals("", status.standardVersion().watchUrl)
+        assertEquals(info.fourKWatchLink(), status.version4k().watchUrl)
+        assertEquals(
+            "https://app.plex.tv/s",
+            SeerrMediaInfoDto(plexUrl = "https://app.plex.tv/s", plexUrl4k = "https://app.plex.tv/k").watchLink(),
+        )
+        assertNull(SeerrMediaInfoDto(mediaUrl = "plex://x").watchLink())
     }
 
     @Test

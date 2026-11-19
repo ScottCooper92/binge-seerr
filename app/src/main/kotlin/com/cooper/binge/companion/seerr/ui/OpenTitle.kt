@@ -6,9 +6,9 @@ import androidx.core.net.toUri
 import com.binge.companion.sdk.CompanionManifest
 import com.binge.companion.sdk.attempt
 import com.cooper.binge.companion.seerr.discover.TitleKind
+import com.cooper.binge.companion.seerr.seerr.isOpenableSite
 import com.cooper.binge.companion.seerr.seerr.mediaIdOf
 import com.cooper.binge.companion.seerr.ui.requests.RequestMediaType
-import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 
 /** Where a tapped title goes: Binge's own page for it, or the server's web page when Binge is not there. */
 sealed interface TitleTarget {
@@ -59,12 +59,6 @@ fun Context.bingeAnswersTitleLink(
     val uri = BingeHandOff.titleUri(mediaType, tmdbId) ?: return false
     return Intent(Intent.ACTION_VIEW, uri.toUri()).resolveActivity(packageManager) != null
 }
-
-/**
- * Whether [url] can be a real site: http or https, and not under `.invalid`, the reserved name that never resolves. The
- * demo's address is one, so a title there goes nowhere rather than to a dead page, and nothing here knows of the demo.
- */
-fun isOpenableSite(url: String): Boolean = url.toHttpUrlOrNull()?.host?.let { it != "invalid" && !it.endsWith(".invalid") } ?: false
 
 /**
  * Opens a title in Binge where it is installed and answers, else at [webUrl] on the server. A [webUrl] that cannot be a real
