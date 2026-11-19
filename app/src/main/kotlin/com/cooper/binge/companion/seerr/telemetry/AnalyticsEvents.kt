@@ -15,6 +15,7 @@ object AnalyticsEvents {
     const val PASSWORD_RESET_REQUESTED = "password_reset_requested"
     const val SERVER_DISCONNECTED = "server_disconnected"
     const val NOTIFICATION_SIGNAL_CHANGED = "notification_signal_changed"
+    const val DISCOVERY_CHANGED = "discovery_changed"
     const val SHAKE_TO_REPORT_CHANGED = "shake_to_report_changed"
     const val DVR_INSTANCE_CHANGED = "dvr_instance_changed"
     const val OVERRIDE_RULE_CHANGED = "override_rule_changed"

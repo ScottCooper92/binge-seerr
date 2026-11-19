@@ -97,6 +97,16 @@ internal fun TabShellState<SeerrTab>.openLink(
 }
 
 /**
+ * Discovery was turned on or off: the app starts over, with the start tab showing, every tab at its root and nothing open over
+ * the shell, so no screen from the other mode is left on top.
+ */
+internal fun TabShellState<SeerrTab>.restart(appStack: NavBackStack<NavKey>) {
+    appStack.popToRoot()
+    SeerrTab.entries.forEach { stack(it).popToRoot() }
+    show(startTab)
+}
+
+/**
  * Keeps a wide window's open section, or the settings search, off the app's stack while another tab shows. A section on that stack is drawn by
  * [ShellPanesStrategy] inside the Settings tab, so anything pushed over it from Movies, TV or Search would be swallowed by
  * that scene. Leaving Settings moves the section's chain onto the Settings tab's own stack, and coming back puts it

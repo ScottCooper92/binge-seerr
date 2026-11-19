@@ -148,7 +148,7 @@ jobs:
     permissions:
       issues: write
     steps:
-      - uses: ScottCooper92/binge-ci/.github/actions/nightly-report@907404f7bf858a9f2555e925c000a4f769b63331 # v1.0.52
+      - uses: ScottCooper92/binge-ci/.github/actions/nightly-report@b1a89672099bc3ac62a12b8d4f5d2ceb766aaef5 # v1.0.53
         with:
           result: ${{ needs.canary.result }}
           title: 'Consumer canary: main no longer builds against upstream heads'
