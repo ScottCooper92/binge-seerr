@@ -121,7 +121,7 @@ data class MovieDetails(
     val mayUnblock: Boolean = false,
     /** The title is on the signed-in user's watchlist. */
     val onWatchlist: Boolean = false,
-    /** The server has a watchlist (`profile.hasDiscoverWatchlist`), so the page offers the button. */
+    /** The server can add to and remove from the watchlist (`profile.hasWatchlistEdit`), so the page offers the button. */
     val mayWatchlist: Boolean = false,
     /** Whether the server can list what a studio made, so the studios may be links; set from its profile, never from a version here. */
     val companiesOpen: Boolean = false,

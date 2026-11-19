@@ -315,12 +315,19 @@ class SeerrTitleDetailsRepositoryTest {
     }
 
     @Test
-    fun `the watchlist is offered only where the server has one`() {
+    fun `the watchlist button is offered only where the server can edit the list`() {
         assertTrue(withRepository { it.movie(603) }.mayWatchlist)
 
         variant = SeerrVariant.Overseerr
-        version = SeerrVersion(1, 20, 0)
-        assertFalse("an Overseerr before the watchlist", withRepository { it.movie(603) }.mayWatchlist)
+        version = SeerrVersion(1, 33, 0)
+        assertFalse("an Overseerr can read the watchlist and never edit it", withRepository { it.movie(603) }.mayWatchlist)
+
+        variant = SeerrVariant.Jellyseerr
+        version = SeerrVersion(1, 5, 0)
+        assertFalse("a Jellyseerr before the edit calls", withRepository { it.movie(603) }.mayWatchlist)
+
+        version = SeerrVersion(1, 6, 0)
+        assertTrue(withRepository { it.movie(603) }.mayWatchlist)
     }
 
     @Test

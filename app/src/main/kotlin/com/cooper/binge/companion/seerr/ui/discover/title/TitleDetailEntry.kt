@@ -83,7 +83,7 @@ private fun FilmPageEntry(
                         onOpenUser,
                         onOpenServices,
                     ),
-                report =
+                side =
                     TitleSideActions(
                         SEERR_MEDIA_TYPE_MOVIE,
                         tmdbId,
@@ -131,7 +131,7 @@ private fun SeriesPageEntry(
                         onOpenUser,
                         onOpenServices,
                     ),
-                report =
+                side =
                     TitleSideActions(
                         SEERR_MEDIA_TYPE_TV,
                         tmdbId,
@@ -157,7 +157,7 @@ private fun rememberTitlePageActions(
     onRequested: (RequestResult) -> Unit,
     onReload: () -> Unit,
     manage: TitleManage,
-    report: TitleSideActions,
+    side: TitleSideActions,
 ): TitlePageActions {
     val context = LocalContext.current
     val openTitle = LocalOpenTitle.current
@@ -180,10 +180,10 @@ private fun rememberTitlePageActions(
         onRequestFourK = manage.onRequestFourK,
         onUnblock = manage.onUnblock,
         manageSheet = { sheet -> SiblingRequestSheet(sheet, manage.onOpenUser, manage.onOpenServices) },
-        onReport = report.onOpen,
-        onCloseReport = report.onClose,
-        onToggleWatchlist = report.onToggleWatchlist,
-        reportSheet = { onClose -> TitleReportSheet(report.mediaType, report.tmdbId, onClose) },
+        onReport = side.onOpen,
+        onCloseReport = side.onClose,
+        onToggleWatchlist = side.onToggleWatchlist,
+        reportSheet = { onClose -> TitleReportSheet(side.mediaType, side.tmdbId, onClose) },
     )
 }
 

@@ -84,7 +84,7 @@ class SeerrSeriesRepository(
                     mayReport = profile.hasIssues && permissions.canReportIssues,
                     mayUnblock = profile.hasBlocklist && permissions.canManageBlocklist,
                     onWatchlist = dto.onUserWatchlist == true,
-                    mayWatchlist = profile.hasDiscoverWatchlist,
+                    mayWatchlist = profile.hasWatchlistEdit,
                 )
         }
 
