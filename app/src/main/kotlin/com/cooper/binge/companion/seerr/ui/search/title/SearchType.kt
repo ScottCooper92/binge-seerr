@@ -17,10 +17,7 @@ enum class SearchType(
 }
 
 /**
- * How many results each type chip shows. A type counts what has loaded so far, so it grows as pages arrive. [All] is the
- * server's total where it gave one, and never less than what has loaded.
+ * How many results each type chip shows. A type counts what has loaded so far, so it grows as pages arrive. [SearchType.All]
+ * counts every row loaded, collections included, so it always matches the list under it.
  */
-internal fun List<TitleResult>.typeCounts(total: Int?): Map<SearchType, Int> =
-    SearchType.entries.associateWith { type ->
-        if (type == SearchType.All) maxOf(total ?: 0, size) else count(type::keeps)
-    }
+internal fun List<TitleResult>.typeCounts(): Map<SearchType, Int> = SearchType.entries.associateWith { type -> count(type::keeps) }
