@@ -46,7 +46,7 @@ class DiscoverTabJourneyTest {
         NavHostActivity.discoveryEnabled = true
         host.connectDemo()
         host.launch(HomeRoute)
-        host.awaitShowing(host.string(R.string.hubs_browse_all_movies))
+        host.awaitShowing(host.string(R.string.hubs_row_recently_added))
 
         host.compose.onNodeWithTag("tab_discover").performClick()
 
@@ -60,7 +60,7 @@ class DiscoverTabJourneyTest {
         NavHostActivity.discoveryEnabled = true
         host.connectDemo()
         host.launch(HomeRoute)
-        host.awaitShowing(host.string(R.string.hubs_browse_all_movies))
+        host.awaitShowing(host.string(R.string.hubs_row_recently_added))
         host.compose.onNodeWithTag("tab_discover").performClick()
         host.awaitShowing(host.string(R.string.grid_filters_button))
 

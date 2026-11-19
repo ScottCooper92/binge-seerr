@@ -208,6 +208,18 @@ class DiscoverHubScreenTest {
     }
 
     @Test
+    @Config(qualifiers = "sw600dp")
+    fun `browse all is left out where Discover is a tab of its own`() {
+        val state = DiscoverHubUiState.Ready(emptyList(), pending = 0, refreshing = false)
+        compose.setContent {
+            SeerrTheme {
+                DiscoverHubScreen(HubTab.Movies, state, onRefresh = {}, onOpenTitle = {}, onOpenGrid = { _, _ -> }, onOpenRequests = {})
+            }
+        }
+        compose.onAllNodesWithText("Browse all", substring = true).assertCountEquals(0)
+    }
+
+    @Test
     fun `browse all opens the grid on the popular list of the hubs kind`() {
         val opened = mutableListOf<Pair<HubGrid, String>>()
         val state = DiscoverHubUiState.Ready(emptyList(), pending = 0, refreshing = false)
