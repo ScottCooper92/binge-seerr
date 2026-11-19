@@ -157,10 +157,21 @@ internal class RealTvHostRule(
             )
 
     private fun takeDown() {
+        releaseFocus()
         scenario?.close()
         scenario = null
         compose.waitForIdle()
         seerr.close()
+    }
+
+    /**
+     * Drops focus from whatever holds it, while the looper is live. The activity is the app's own, so its content cannot be taken
+     * down here as [RealNavHostRule] does; but a text field still focused when its composition is disposed leaves work on
+     * Compose's shared UI dispatcher that Robolectric discards, and a later paging test waits for good (#663).
+     */
+    private fun releaseFocus() {
+        scenario?.onActivity { it.window.decorView.clearFocus() }
+        compose.waitForIdle()
     }
 
     private fun graph(): TvHostGraph =
