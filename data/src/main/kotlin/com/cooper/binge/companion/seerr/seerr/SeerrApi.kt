@@ -178,7 +178,7 @@ interface SeerrApi {
     /**
      * The raw [Response], because the STATUS CODE carries meaning the body cannot: a 202 means the
      * server took the call and created nothing, since every season was already covered. It is a
-     * 2xx, so nothing throws, and every field of [SeerrRequestResultDto] is optional, so the 202's
+     * 2xx, so nothing throws, and [SeerrRequestResultDto] reads only the `id`, so the 202's
      * `{"message": ...}` body parses cleanly into an empty result.
      */
     @POST("api/v1/request")

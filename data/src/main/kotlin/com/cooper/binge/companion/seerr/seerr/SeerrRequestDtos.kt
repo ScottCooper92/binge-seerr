@@ -17,6 +17,7 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.intOrNull
+import kotlinx.serialization.serializer
 
 /**
  * A media request. The advanced-option overrides are omitted when absent, so a plain request posts
@@ -105,7 +106,7 @@ data class SeerrRequestResultDto(
     fun toRequest(): SeerrRequestDto? {
         val body = answer ?: return null
         return try {
-            lenientJson.decodeFromJsonElement(SeerrRequestDto.serializer(), body)
+            lenientJson.decodeFromJsonElement(serializer<SeerrRequestDto>(), body)
         } catch (_: SerializationException) {
             null
         } catch (_: IllegalArgumentException) {
