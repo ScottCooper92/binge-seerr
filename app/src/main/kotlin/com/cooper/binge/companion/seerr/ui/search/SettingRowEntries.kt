@@ -8,18 +8,24 @@ import androidx.compose.material.icons.filled.Badge
 import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Event
+import androidx.compose.material.icons.filled.Forum
 import androidx.compose.material.icons.filled.Healing
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Insights
+import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.LiveTv
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.MusicNote
+import androidx.compose.material.icons.filled.NotificationsOff
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.PlayCircle
 import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.Shield
+import androidx.compose.material.icons.filled.Tag
 import androidx.compose.material.icons.filled.Title
 import androidx.compose.material.icons.filled.Translate
 import androidx.compose.material.icons.filled.Tv
@@ -239,6 +245,88 @@ internal val settingRowEntries: List<IndexEntry> =
             ),
         )
         add(
+            setting(
+                UserSettingsPage.Notifications,
+                R.string.user_settings_field_pgp,
+                Icons.Filled.Key,
+                SettingRows.NOTIFICATIONS_PGP_KEY,
+                R.string.search_kw_notifications,
+            ),
+        )
+        add(
+            setting(
+                UserSettingsPage.Notifications,
+                R.string.user_settings_discord_id,
+                Icons.Filled.Person,
+                SettingRows.NOTIFICATIONS_DISCORD_ID,
+                R.string.search_kw_notifications,
+            ),
+        )
+        add(
+            setting(
+                UserSettingsPage.Notifications,
+                R.string.user_settings_field_pushbullet_token,
+                Icons.Filled.Key,
+                SettingRows.NOTIFICATIONS_PUSHBULLET_TOKEN,
+                R.string.search_kw_notifications,
+            ),
+        )
+        add(
+            setting(
+                UserSettingsPage.Notifications,
+                R.string.user_settings_field_pushover_token,
+                Icons.Filled.Key,
+                SettingRows.NOTIFICATIONS_PUSHOVER_APP_TOKEN,
+                R.string.search_kw_notifications,
+            ),
+        )
+        add(
+            setting(
+                UserSettingsPage.Notifications,
+                R.string.user_settings_field_pushover_user,
+                Icons.Filled.Person,
+                SettingRows.NOTIFICATIONS_PUSHOVER_USER_KEY,
+                R.string.search_kw_notifications,
+            ),
+        )
+        add(
+            setting(
+                UserSettingsPage.Notifications,
+                R.string.user_settings_field_pushover_sound,
+                Icons.Filled.MusicNote,
+                SettingRows.NOTIFICATIONS_PUSHOVER_SOUND,
+                R.string.search_kw_notifications,
+            ),
+        )
+        add(
+            setting(
+                UserSettingsPage.Notifications,
+                R.string.user_settings_field_telegram_chat,
+                Icons.Filled.Forum,
+                SettingRows.NOTIFICATIONS_TELEGRAM_CHAT_ID,
+                R.string.search_kw_notifications,
+            ),
+        )
+        add(
+            setting(
+                UserSettingsPage.Notifications,
+                R.string.user_settings_field_telegram_thread,
+                Icons.Filled.Tag,
+                SettingRows.NOTIFICATIONS_TELEGRAM_THREAD_ID,
+                R.string.search_kw_notifications,
+                { it.profile.hasTelegramTopics },
+            ),
+        )
+        add(
+            setting(
+                UserSettingsPage.Notifications,
+                R.string.user_settings_telegram_silent,
+                Icons.Filled.NotificationsOff,
+                SettingRows.NOTIFICATIONS_TELEGRAM_SILENT,
+                R.string.search_kw_notifications,
+            ),
+        )
+        add(
             appSetting(
                 R.string.settings_report_bug,
                 Icons.Filled.BugReport,
@@ -295,7 +383,9 @@ private fun setting(
     @StringRes label: Int,
     icon: ImageVector,
     row: String,
-) = IndexEntry(SearchTarget.Account(page), label, icon, R.string.search_section_account, null, page.titleRes(), row)
+    @StringRes keywords: Int? = null,
+    shown: (SearchAccess) -> Boolean = { true },
+) = IndexEntry(SearchTarget.Account(page), label, icon, R.string.search_section_account, keywords, page.titleRes(), row, shown)
 
 /** The page's title as its own entry shows it. */
 @StringRes

@@ -37,6 +37,16 @@ internal object SettingRows {
     const val ACCOUNT_DISCOVER_REGION = "account.discover-region"
     const val ACCOUNT_DISCOVER_LANGUAGE = "account.discover-language"
 
+    const val NOTIFICATIONS_PGP_KEY = "notifications.pgp-key"
+    const val NOTIFICATIONS_PUSHBULLET_TOKEN = "notifications.pushbullet-token"
+    const val NOTIFICATIONS_PUSHOVER_APP_TOKEN = "notifications.pushover-app-token"
+    const val NOTIFICATIONS_PUSHOVER_USER_KEY = "notifications.pushover-user-key"
+    const val NOTIFICATIONS_PUSHOVER_SOUND = "notifications.pushover-sound"
+    const val NOTIFICATIONS_TELEGRAM_CHAT_ID = "notifications.telegram-chat-id"
+    const val NOTIFICATIONS_TELEGRAM_THREAD_ID = "notifications.telegram-thread-id"
+    const val NOTIFICATIONS_TELEGRAM_SILENT = "notifications.telegram-silent"
+    const val NOTIFICATIONS_DISCORD_ID = "notifications.discord-id"
+
     const val APP_REPORT_BUG = "app.report-bug"
     const val APP_SHAKE_TO_REPORT = "app.shake-to-report"
     const val APP_SHARE_USAGE_DATA = "app.share-usage-data"

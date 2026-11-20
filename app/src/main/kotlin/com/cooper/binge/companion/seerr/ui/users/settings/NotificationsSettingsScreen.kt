@@ -16,6 +16,7 @@ import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
 import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.ui.search.SettingRows
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -82,7 +83,9 @@ private fun AgentGroup(
                         stringResource(R.string.user_settings_telegram_silent),
                         draft.agent(agent).sendSilently,
                         enabled && draft.agent(agent).enabled,
-                    ) { on -> onEdit { it.update(agent) { telegram -> telegram.copy(sendSilently = on) } } }
+                    ) { on ->
+                        onEdit { it.update(agent) { telegram -> telegram.copy(sendSilently = on) } }
+                    }.copy(key = SettingRows.NOTIFICATIONS_TELEGRAM_SILENT)
             else -> AgentField.entries.filter { it.agent == agent }.map { fieldItem(it, draft, enabled, onEdit) }
         }
     val notes = agentNotes(agent, draft)
@@ -138,7 +141,7 @@ private fun discordRows(
                     required = index == 0 && draft.needsValues(NotificationAgent.Discord),
                     check = { typed -> wrongShape.takeIf { !typed.isDiscordIdShape() } },
                     keyboard = NumberKeyboard,
-                )
+                ).let { row -> if (index == 0) row.copy(key = SettingRows.NOTIFICATIONS_DISCORD_ID) else row }
             }
         }
     if (!draft.multipleDiscordIds || draft.discordIds.none { it.isNotBlank() }) return idRows
@@ -206,7 +209,7 @@ private fun fieldItem(
         secret = field.secret,
         multiline = field == AgentField.PgpKey,
         keyboard = field.keyboard(),
-    )
+    ).copy(key = field.rowKey())
 }
 
 /** The sound as a pick from the saved application's sounds, the device's own first; a sound it no longer lists stays. */
@@ -223,7 +226,7 @@ private fun soundItem(
         current = draft.field(AgentField.PushoverSound),
         listed = draft.pushoverSounds.map { it.name to it.description },
         enabled = enabled,
-    ) { name -> onEdit { it.set(AgentField.PushoverSound, name) } }
+    ) { name -> onEdit { it.set(AgentField.PushoverSound, name) } }.copy(key = SettingRows.NOTIFICATIONS_PUSHOVER_SOUND)
 
 /** A value the row does not spell out: a secret, or a PGP key's many lines. */
 private val AgentField.hidden: Boolean get() = secret || this == AgentField.PgpKey
@@ -235,6 +238,18 @@ private fun AgentField.icon(): ImageVector =
         AgentField.TelegramThreadId -> Icons.Filled.Tag
         AgentField.PushoverSound -> Icons.Filled.MusicNote
         AgentField.PgpKey, AgentField.PushbulletToken, AgentField.PushoverAppToken -> Icons.Filled.Key
+    }
+
+/** The key the settings search opens the page on for this field's row. */
+private fun AgentField.rowKey(): String =
+    when (this) {
+        AgentField.PgpKey -> SettingRows.NOTIFICATIONS_PGP_KEY
+        AgentField.PushbulletToken -> SettingRows.NOTIFICATIONS_PUSHBULLET_TOKEN
+        AgentField.PushoverAppToken -> SettingRows.NOTIFICATIONS_PUSHOVER_APP_TOKEN
+        AgentField.PushoverUserKey -> SettingRows.NOTIFICATIONS_PUSHOVER_USER_KEY
+        AgentField.PushoverSound -> SettingRows.NOTIFICATIONS_PUSHOVER_SOUND
+        AgentField.TelegramChatId -> SettingRows.NOTIFICATIONS_TELEGRAM_CHAT_ID
+        AgentField.TelegramThreadId -> SettingRows.NOTIFICATIONS_TELEGRAM_THREAD_ID
     }
 
 /** IDs take digits; a key the server matches exactly is typed with no autocorrect. */
