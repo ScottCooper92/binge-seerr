@@ -2,6 +2,7 @@ package com.cooper.binge.companion.seerr.ui.nav
 
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
+import androidx.compose.ui.test.ComposeTimeoutException
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.hasScrollAction
@@ -11,6 +12,8 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
 import androidx.navigation3.runtime.NavKey
 import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.data.TitleKey
+import com.cooper.binge.companion.seerr.data.TitleType
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.grid.GridPreset
 import com.cooper.binge.companion.seerr.ui.DiscoverGridRoute
@@ -76,12 +79,24 @@ class TitleStatusJourneyTest {
             .fetchSemanticsNodes()
             .isNotEmpty()
 
-    /** The film has a request on the server, so a card that does not show one is not for want of the request. */
-    private fun requestExists(): Boolean =
+    /** The film's requests on the server, as status codes, so a card that does not show one is not for want of the request. */
+    private fun serverRequests(): List<Int?> =
         host
             .api { it.requests(take = REQUESTS_TAKEN) }
             .results
-            .any { it.media.tmdbId == FILM_ID }
+            .filter { it.media.tmdbId == FILM_ID }
+            .map { it.status?.raw }
+
+    /** Waits for the card to read [requested], and says what the server and the store held when it did not. */
+    private fun awaitCard(where: String) {
+        try {
+            host.await("the $where's card for $FILM reads $requested") { cardReads(requested) }
+        } catch (timeout: ComposeTimeoutException) {
+            val held = host.titleStatus(TitleKey(TitleType.Movie, FILM_ID))
+            val saw = "The server's requests for $FILM: ${serverRequests()}\nThe store held: $held"
+            throw AssertionError("${timeout.message}\n$saw", timeout)
+        }
+    }
 
     /**
      * The "Request" that is lowest on screen. The page's own button and the sheet's share a label, and a click that reaches the
@@ -128,8 +143,8 @@ class TitleStatusJourneyTest {
         requestFromTheCardAndGoBack()
 
         awaitStack(ShellRoute)
-        assertTrue("the request for $FILM reached the server", requestExists())
-        host.await("the hub's card for $FILM reads $requested") { cardReads(requested) }
+        assertTrue("the request for $FILM reached the server", serverRequests().isNotEmpty())
+        awaitCard("hub")
     }
 
     @Test
@@ -144,8 +159,8 @@ class TitleStatusJourneyTest {
         requestFromTheCardAndGoBack()
 
         awaitStack(ShellRoute, grid)
-        assertTrue("the request for $FILM reached the server", requestExists())
-        host.await("the grid's card for $FILM reads $requested") { cardReads(requested) }
+        assertTrue("the request for $FILM reached the server", serverRequests().isNotEmpty())
+        awaitCard("grid")
     }
 
     /** The demo seeds no Popular row, so the server is given the built-in one. */
