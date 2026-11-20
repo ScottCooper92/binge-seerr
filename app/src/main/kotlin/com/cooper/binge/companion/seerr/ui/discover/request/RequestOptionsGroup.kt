@@ -7,6 +7,7 @@ import androidx.compose.material.icons.filled.DoneAll
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Hd
 import androidx.compose.material.icons.filled.Movie
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.TriStateCheckbox
@@ -21,6 +22,7 @@ import com.binge.designsystem.component.ListItem
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.request.ItemSelection
 import com.cooper.binge.companion.seerr.discover.request.RequestQuota
+import com.cooper.binge.companion.seerr.discover.request.SeasonChoice
 import com.cooper.binge.companion.seerr.discover.request.SeasonSelection
 
 /**
@@ -53,6 +55,7 @@ private fun seasonsRow(
     actions: RequestSheetActions,
     onOpenSeasons: () -> Unit,
 ): ListItem {
+    selection.onlyOpen?.let { return singleSeasonRow(it, selection, submitting, actions) }
     val checkbox =
         when {
             !selection.partialAllowed || selection.allOpenPicked -> ToggleableState.On
@@ -83,6 +86,29 @@ private fun seasonsRow(
                 )
             }
         },
+    )
+}
+
+/**
+ * The one season a show has left to pick, as the Seasons row itself: named, in the row's place and height, with its own checkbox and no
+ * chevron, because there is no list to open. A tap on the row or on the box toggles the season in place.
+ */
+@Composable
+private fun singleSeasonRow(
+    season: SeasonChoice,
+    selection: SeasonSelection,
+    submitting: Boolean,
+    actions: RequestSheetActions,
+): ListItem {
+    val picked = season.number in selection.picked
+    val enabled = !submitting && (picked || selection.canPickMore)
+    return ListItem(
+        icon = Icons.Filled.DoneAll,
+        label = seasonLabel(season.number, season.name),
+        detail = pluralStringResource(R.plurals.season_episodes, season.episodeCount, season.episodeCount),
+        enabled = enabled,
+        onClick = { actions.onSeason(season.number) },
+        trailingContent = { Checkbox(checked = picked, onCheckedChange = { actions.onSeason(season.number) }, enabled = enabled) },
     )
 }
 
