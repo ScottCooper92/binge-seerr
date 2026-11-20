@@ -41,12 +41,14 @@ internal enum class TvTab(
     /** The page this tab opens things over, which keeps its see-all and detail pages; null for a tab with no board of its own yet. */
     val destination: TvDestination? = null,
     val isDiscovery: Boolean = false,
+    /** Whether the page's backdrop runs behind the bar, as the immersive boards' does; the page pads its focusable content by the bar's height. */
+    val behindBar: Boolean = false,
 ) {
     Search(R.string.shell_tab_search, Icons.Filled.Search, isDiscovery = true),
     Movies(R.string.shell_tab_movies, Icons.Filled.Movie, isDiscovery = true),
     Tv(R.string.shell_tab_tv, Icons.Filled.Tv, isDiscovery = true),
-    Requests(R.string.hub_section_requests, Icons.Filled.Inbox, TvDestination.Hub),
-    Issues(R.string.hub_section_issues, Icons.Filled.ReportProblem, TvDestination.Issues),
+    Requests(R.string.hub_section_requests, Icons.Filled.Inbox, TvDestination.Hub, behindBar = true),
+    Issues(R.string.hub_section_issues, Icons.Filled.ReportProblem, TvDestination.Issues, behindBar = true),
 }
 
 /**
@@ -147,6 +149,7 @@ internal fun TvTabShell(
             accountInitiallyOpen = account.initiallyOpen,
             pendingKeys = pendingTabs,
             gearReturnEpoch = gearReturn,
+            contentBehindBar = tab.behindBar,
         ) {
             // Closing a layer disposes the focused node and focus parks inside the page, where a request into the group would skip its routing:
             // the host's sink takes the parked focus, so the request that follows enters the page and its own memory lands the card.

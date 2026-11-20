@@ -5,6 +5,7 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -24,6 +25,7 @@ import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performKeyInput
 import androidx.compose.ui.test.pressKey
 import com.binge.designsystem.tv.focus.tvShellArrivalTarget
+import com.binge.designsystem.tv.nav.LocalTvTopInset
 import com.binge.designsystem.tv.theme.BingeTvTheme
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.util.createSeerrKeyboardAndroidComposeRule
@@ -92,6 +94,7 @@ class TvTabShellFocusTest {
             modifier =
                 Modifier
                     .fillMaxSize()
+                    .padding(top = LocalTvTopInset.current)
                     .testTag(tag)
                     .tvShellArrivalTarget(claim)
                     .focusable(),
