@@ -16,6 +16,7 @@ import com.cooper.homelab.core.presentation.connect.ProbedServer
 import com.cooper.homelab.core.presentation.connect.SignInForm
 import com.cooper.homelab.core.server.address.ServerAddress
 import com.cooper.homelab.core.uiandroid.connect.ConnectAddressActions
+import com.cooper.homelab.core.uiandroid.connect.ConnectLinkActions
 import com.cooper.homelab.core.uiandroid.connect.ConnectSignInActions
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -76,6 +77,7 @@ class SeerrConnectContentTest {
                 ui = ui,
                 addressActions = ConnectAddressActions({}, {}, { continued++ }, {}),
                 signInActions = ConnectSignInActions({}, {}, {}, {}, { changedServer++ }, { checkedAgain++ }),
+                linkActions = ConnectLinkActions({}, {}),
                 onRequestPasswordReset = {},
                 onDisconnect = onDisconnect,
             )

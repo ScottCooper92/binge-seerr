@@ -15,7 +15,6 @@ import com.cooper.homelab.core.presentation.connect.ConnectState
 import com.cooper.homelab.core.uiandroid.connect.AllowLocalNetwork
 import com.cooper.homelab.core.uiandroid.connect.ConnectAddressActions
 import com.cooper.homelab.core.uiandroid.connect.ConnectLinkActions
-import com.cooper.homelab.core.uiandroid.connect.ConnectLinkCopy
 import com.cooper.homelab.core.uiandroid.connect.ConnectScreen
 import com.cooper.homelab.core.uiandroid.connect.ConnectScreenText
 import com.cooper.homelab.core.uiandroid.connect.ConnectSignInActions
@@ -51,6 +50,7 @@ internal fun SeerrConnectScreen(
         ui = ui,
         addressActions = ConnectAddressActions(vm::editAddress, vm::allowCleartext, vm::inspect, vm.tryDemo),
         signInActions = vm.connectSignInActions,
+        linkActions = ConnectLinkActions(onLaunched = vm.links::launched, onCancel = vm.links::cancel),
         onRequestPasswordReset = vm::requestPasswordReset,
         modifier = modifier,
         localNetwork = allow,
@@ -67,6 +67,7 @@ internal fun SeerrConnectContent(
     ui: SeerrConnectUi,
     addressActions: ConnectAddressActions,
     signInActions: ConnectSignInActions,
+    linkActions: ConnectLinkActions,
     onRequestPasswordReset: () -> Unit,
     modifier: Modifier = Modifier,
     localNetwork: AllowLocalNetwork? = null,
@@ -80,18 +81,18 @@ internal fun SeerrConnectContent(
     val state = (ui.state as? ConnectState.SignIn)?.takeIf { ui.resetBusy }?.copy(isConnecting = true) ?: ui.state
     ConnectScreen(
         state = state,
-        link = null,
+        link = ui.link,
         copy = seerrConnectCopy(),
         text =
             ConnectScreenText(
                 placeholder = stringResource(R.string.placeholder_server_url),
                 notThisServer = stringResource(SetupError.NotSeerr.messageRes()),
                 notSetUpMessage = stringResource(R.string.setup_not_set_up_message),
-                linkCopy = { ConnectLinkCopy(title = "", body = "") },
+                linkCopy = { mode -> seerrLinkCopy(mode) },
             ),
         addressActions = addressActions,
         signInActions = signInActions,
-        linkActions = ConnectLinkActions(onLaunched = {}, onCancel = {}),
+        linkActions = linkActions,
         addressHeading = { SeerrAddressHeading() },
         serverHeading = { server -> SetupServerHeading(server.preview) },
         modifier = modifier.fillMaxWidth(),

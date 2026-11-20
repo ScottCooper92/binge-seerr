@@ -16,6 +16,7 @@ import com.cooper.homelab.core.presentation.connect.ProbedServer
 import com.cooper.homelab.core.presentation.connect.SignInForm
 import com.cooper.homelab.core.server.address.ServerAddress
 import com.cooper.homelab.core.uiandroid.connect.ConnectAddressActions
+import com.cooper.homelab.core.uiandroid.connect.ConnectLinkActions
 import com.cooper.homelab.core.uiandroid.connect.ConnectSignInActions
 
 /**
@@ -96,6 +97,17 @@ class SeerrConnectScreenshotTest {
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
+    fun signInPlex() = ConnectFrame(signInState(SeerrSignInMode.Plex, modes = listOf(SeerrSignInMode.Plex, SeerrSignInMode.ApiKey)))
+
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun signInQuickConnect() =
+        ConnectFrame(signInState(SeerrSignInMode.QuickConnect, modes = listOf(SeerrSignInMode.QuickConnect, SeerrSignInMode.ApiKey)))
+
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
     fun notSetUp() = ConnectFrame(ConnectState.NotSetUp(previewProbed(setUp = false), isChecking = false, error = null))
 
     @PreviewTest
@@ -119,8 +131,11 @@ class SeerrConnectScreenshotTest {
         )
 }
 
-private fun previewProbed(setUp: Boolean = true): ProbedServer<SetupServer> {
-    val server = previewSetupServer().copy(setUp = setUp)
+private fun previewProbed(
+    setUp: Boolean = true,
+    modes: List<SeerrSignInMode> = previewSetupServer().modes,
+): ProbedServer<SetupServer> {
+    val server = previewSetupServer(modes = modes).copy(setUp = setUp)
     return ProbedServer(
         address = requireNotNull(ServerAddress.parse(server.baseUrl)),
         name = server.title,
@@ -151,9 +166,10 @@ private fun signInState(
     vararg values: Pair<String, String>,
     error: ConnectError? = null,
     connecting: Boolean = false,
+    modes: List<SeerrSignInMode> = previewSetupServer().modes,
 ): ConnectState<SetupServer> =
     ConnectState.SignIn(
-        server = previewProbed(),
+        server = previewProbed(modes = modes),
         form = SignInForm(mode = mode.formMode(), values = values.toMap()),
         isConnecting = connecting,
         error = error,
@@ -174,6 +190,7 @@ private fun ConnectFrame(
             ui = SeerrConnectUi(state, notice, resetCoolingDown),
             addressActions = ConnectAddressActions({}, {}, {}, {}),
             signInActions = ConnectSignInActions({}, {}, {}, {}, {}, {}),
+            linkActions = ConnectLinkActions({}, {}),
             onRequestPasswordReset = {},
             title = title,
             onExit = onExit,
