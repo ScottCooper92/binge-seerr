@@ -82,4 +82,4 @@ interface PersonRepository {
 }
 
 /** The pages the server named for this person: IMDb's name page and their own site. A person has no TMDB chip. */
-internal fun PersonDetails.links(): List<ExternalLink> = externalLinks(ImdbPage.Name, imdbId, tmdbUrl = null, homepage = homepage)
+fun PersonDetails.links(): List<ExternalLink> = externalLinks(ImdbPage.Name, imdbId, tmdbUrl = null, homepage = homepage)

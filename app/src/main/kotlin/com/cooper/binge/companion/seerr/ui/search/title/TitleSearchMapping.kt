@@ -114,7 +114,8 @@ private fun SearchType.labelRes(): Int =
 @Composable
 private fun TitleResult.subtitle(): String {
     val kindLabel = stringResource(kind.labelRes())
-    return if (year == null) kindLabel else stringResource(R.string.title_search_kind_year, kindLabel, year)
+    val year = year ?: return kindLabel
+    return stringResource(R.string.title_search_kind_year, kindLabel, year)
 }
 
 @StringRes
