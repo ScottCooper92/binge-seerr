@@ -15,6 +15,7 @@ import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.data.RequestListQuery
 import com.cooper.binge.companion.seerr.data.RequestStore
 import com.cooper.binge.companion.seerr.data.RequestsRemoteMediator
+import com.cooper.binge.companion.seerr.data.TitleStatusStore
 import com.cooper.binge.companion.seerr.data.UserStore
 import com.cooper.binge.companion.seerr.di.IoDispatcher
 import com.cooper.binge.companion.seerr.seerr.ManageablePermission
@@ -34,6 +35,7 @@ import com.cooper.binge.companion.seerr.ui.requests.RequestItem
 import com.cooper.binge.companion.seerr.ui.requests.toRequestEntity
 import com.cooper.binge.companion.seerr.ui.requests.toRequestItem
 import com.cooper.binge.companion.seerr.ui.requests.toRequestMediaTypeOrNull
+import com.cooper.binge.companion.seerr.ui.requests.withBlockFrom
 import com.cooper.binge.companion.seerr.ui.requests.withQueueFrom
 import com.cooper.binge.companion.seerr.ui.users.settings.mayOpenSettings
 import dagger.assisted.Assisted
@@ -53,6 +55,7 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
@@ -92,6 +95,7 @@ class UserDetailViewModel
         private val minuteTicker: Ticker = Ticker(),
         private val settingsChanges: UserSettingsChanges = UserSettingsChanges(),
         private val queueGates: DownloadQueueGates = DownloadQueueGates(connection),
+        private val statuses: TitleStatusStore = TitleStatusStore(),
     ) : ViewModel() {
         private val state = MutableStateFlow<UserDetailUiState>(UserDetailUiState.Loading)
         val uiState: StateFlow<UserDetailUiState> = state.asStateFlow()
@@ -105,8 +109,7 @@ class UserDetailViewModel
         private val eventFlow = MutableSharedFlow<UserDetailEvent>(extraBufferCapacity = 1)
         val events: SharedFlow<UserDetailEvent> = eventFlow.asSharedFlow()
 
-        /** Empty, without asking the server, for a viewer it would refuse: see [mayReadRequests]. */
-        val requests: Flow<PagingData<RequestItem>> =
+        private val cachedRequests: Flow<PagingData<RequestItem>> =
             flow { emit(mayReadRequests()) }
                 .flatMapLatest { allowed ->
                     if (allowed) {
@@ -114,7 +117,12 @@ class UserDetailViewModel
                         Pager(
                             config = PagingConfig(pageSize = REQUESTS_PAGE_SIZE),
                             remoteMediator =
-                                RequestsRemoteMediator(query = query, api = connection::api, store = requestStore) { dto, api, key, index ->
+                                RequestsRemoteMediator(
+                                    query = query,
+                                    api = connection::api,
+                                    store = requestStore,
+                                    statuses = statuses,
+                                ) { dto, api, key, index ->
                                     dto.toRequestEntity(api, titles::get, key, index, System.currentTimeMillis())
                                 },
                         ) { requestStore.pagingSource(query.listKey) }
@@ -124,6 +132,10 @@ class UserDetailViewModel
                         flowOf(PagingData.empty<RequestItem>(sourceLoadStates = FINISHED))
                     }
                 }.cachedIn(viewModelScope)
+
+        /** Empty, without asking the server, for a viewer it would refuse: see [mayReadRequests]. A block made elsewhere shows on its row. */
+        val requests: Flow<PagingData<RequestItem>> =
+            combine(cachedRequests, statuses.statuses) { data, held -> data.map { it.withBlockFrom(held) } }
 
         /**
          * The server lists a user's requests to that user, and to a viewer who holds MANAGE_REQUESTS or REQUEST_VIEW; anyone
