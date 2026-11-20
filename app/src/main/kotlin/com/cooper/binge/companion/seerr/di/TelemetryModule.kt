@@ -34,69 +34,67 @@ import javax.inject.Singleton
 /** Analytics and crash reporting, each off in a build that was not given this app's own project. */
 @Module
 @InstallIn(SingletonComponent::class)
-abstract class TelemetryModule {
-    companion object {
-        /** Whether the saved connection is the demo, which the analytics decorator uses to mark what analytics reports. */
-        @Provides
-        @Singleton
-        fun demoSession(
-            store: CredentialStore,
-            @ApplicationScope scope: CoroutineScope,
-        ): DemoSession = store.demoSession(scope)
+object TelemetryModule {
+    /** Whether the saved connection is the demo, which the analytics decorator uses to mark what analytics reports. */
+    @Provides
+    @Singleton
+    fun demoSession(
+        store: CredentialStore,
+        @ApplicationScope scope: CoroutineScope,
+    ): DemoSession = store.demoSession(scope)
 
-        /** The one owner of "may analytics report"; every backend registers with it. */
-        @Provides
-        @Singleton
-        fun consentGate(
-            prefs: TelemetryPrefs,
-            @ApplicationScope scope: CoroutineScope,
-            logger: Logger,
-        ): AnalyticsConsentGate = AnalyticsConsentGate(prefs, scope, logger)
+    /** The one owner of "may analytics report"; every backend registers with it. */
+    @Provides
+    @Singleton
+    fun consentGate(
+        prefs: TelemetryPrefs,
+        @ApplicationScope scope: CoroutineScope,
+        logger: Logger,
+    ): AnalyticsConsentGate = AnalyticsConsentGate(prefs, scope, logger)
 
-        @Provides
-        @Singleton
-        fun analyticsDecorator(demo: DemoSession): AnalyticsDecorator = DemoAnalyticsDecorator(demo)
+    @Provides
+    @Singleton
+    fun analyticsDecorator(demo: DemoSession): AnalyticsDecorator = DemoAnalyticsDecorator(demo)
 
-        /** A blank key means no PostHog project was built in: no config, no client, and no SDK started. */
-        @Provides
-        @Singleton
-        fun postHogConfig(): PostHogAndroidConfig? =
-            BuildConfig.POSTHOG_API_KEY.takeIf { it.isNotBlank() }?.let { postHogConfig(it, BuildConfig.POSTHOG_HOST) }
+    /** A blank key means no PostHog project was built in: no config, no client, and no SDK started. */
+    @Provides
+    @Singleton
+    fun postHogConfig(): PostHogAndroidConfig? =
+        BuildConfig.POSTHOG_API_KEY.takeIf { it.isNotBlank() }?.let { postHogConfig(it, BuildConfig.POSTHOG_HOST) }
 
-        @Provides
-        @Singleton
-        fun postHog(
-            @ApplicationContext context: Context,
-            config: PostHogAndroidConfig?,
-        ): AnalyticsClient? = config?.let { PostHogClient(PostHogAndroid.with(context, it)) }
+    @Provides
+    @Singleton
+    fun postHog(
+        @ApplicationContext context: Context,
+        config: PostHogAndroidConfig?,
+    ): AnalyticsClient? = config?.let { PostHogClient(PostHogAndroid.with(context, it)) }
 
-        @Provides
-        @Singleton
-        fun analytics(
-            client: AnalyticsClient?,
-            gate: AnalyticsConsentGate,
-            decorator: AnalyticsDecorator,
-            @ApplicationScope scope: CoroutineScope,
-        ): Analytics = GatedAnalytics(client, gate, decorator, scope)
+    @Provides
+    @Singleton
+    fun analytics(
+        client: AnalyticsClient?,
+        gate: AnalyticsConsentGate,
+        decorator: AnalyticsDecorator,
+        @ApplicationScope scope: CoroutineScope,
+    ): Analytics = GatedAnalytics(client, gate, decorator, scope)
 
-        @Provides
-        @Singleton
-        fun crashCollection(
-            @ApplicationContext context: Context,
-        ): CrashCollection = FirebaseCrashCollection(context)
+    @Provides
+    @Singleton
+    fun crashCollection(
+        @ApplicationContext context: Context,
+    ): CrashCollection = FirebaseCrashCollection(context)
 
-        @Provides
-        @Singleton
-        fun crashBreadcrumbs(
-            @ApplicationContext context: Context,
-        ): CrashBreadcrumbs = FirebaseCrashBreadcrumbs(context)
+    @Provides
+    @Singleton
+    fun crashBreadcrumbs(
+        @ApplicationContext context: Context,
+    ): CrashBreadcrumbs = FirebaseCrashBreadcrumbs(context)
 
-        @Provides
-        @Singleton
-        fun crashReportingSwitch(
-            collection: CrashCollection,
-            prefs: TelemetryPrefs,
-            @ApplicationScope scope: CoroutineScope,
-        ): CrashReportingSwitch = CrashReportingSwitch(collection, prefs, scope, isDebugBuild = BuildConfig.DEBUG)
-    }
+    @Provides
+    @Singleton
+    fun crashReportingSwitch(
+        collection: CrashCollection,
+        prefs: TelemetryPrefs,
+        @ApplicationScope scope: CoroutineScope,
+    ): CrashReportingSwitch = CrashReportingSwitch(collection, prefs, scope, isDebugBuild = BuildConfig.DEBUG)
 }
