@@ -9,6 +9,7 @@ import com.binge.designsystem.component.DetailPerson
 import com.binge.designsystem.component.DetailPoster
 import com.binge.designsystem.component.DetailStat
 import com.binge.designsystem.component.ExternalScore
+import com.binge.designsystem.component.PersonCardStyle
 import com.binge.designsystem.template.DetailInfo
 import com.binge.designsystem.template.MediaDetail
 import com.binge.designsystem.template.MediaDetailCallbacks
@@ -120,7 +121,9 @@ internal fun titleDetailModel(
             overviewHeading = stringResource(R.string.title_page_overview),
             peopleRails =
                 listOfNotNull(
-                    input.cast.takeIf { it.isNotEmpty() }?.let { PeopleRail(castTitle, it.map(TitlePerson::toItem), seeAll = true) },
+                    input.cast.takeIf { it.isNotEmpty() }?.let {
+                        PeopleRail(castTitle, it.map(TitlePerson::toItem), seeAll = true, cardStyle = PersonCardStyle.Compact)
+                    },
                     input.crew.takeIf { it.isNotEmpty() }?.let { PeopleRail(crewTitle, it.map(TitlePerson::toItem), seeAll = true) },
                 ),
             posterRails = posterRails,
