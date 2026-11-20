@@ -6,6 +6,7 @@ import androidx.compose.material.icons.filled.BookmarkBorder
 import androidx.compose.material.icons.filled.FilterAltOff
 import androidx.compose.material.icons.filled.SearchOff
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.template.GridFilterBar
 import com.binge.designsystem.template.GridFilterChip
@@ -85,7 +86,12 @@ internal fun GridControls.toFilterBar(today: LocalDate): GridFilterBar? {
     return GridFilterBar(
         activeCount = groups.size,
         pillLabel = stringResource(R.string.grid_filters_button),
-        pillDescription = stringResource(R.string.grid_open_filters),
+        pillDescription =
+            if (groups.isEmpty()) {
+                stringResource(R.string.grid_open_filters)
+            } else {
+                pluralStringResource(R.plurals.grid_open_filters_applied, groups.size, groups.size)
+            },
         chips = listOfNotNull(preset) + groupChips,
     )
 }
