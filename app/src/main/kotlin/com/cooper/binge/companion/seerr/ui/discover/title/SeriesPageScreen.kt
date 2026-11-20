@@ -110,7 +110,7 @@ private fun ReadySeriesPage(
         afterPeople = { WhereToWatchSection(series.providers, actions.onOpenUrl, Modifier.readingMargin()) },
         afterRails = { TitleLinksSection(series.links, actions.onOpenUrl, Modifier.readingMargin()) },
         // The template's column puts its gap before this empty slot: the page's bottom padding under the Details, as it had.
-        atEnd = { Spacer(Modifier) }.takeIf { model.detail.info != null },
+        atEnd = if (model.detail.info != null) ({ Spacer(Modifier) }) else null,
         overlays = { SeriesOverlays(state, actions, snackbar) },
         snackbarHostState = snackbar,
         scrollState = scrollState,
