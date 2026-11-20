@@ -18,8 +18,6 @@ import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.flags.LocalDiscoveryEnabled
 import com.cooper.binge.companion.seerr.flags.LocalFlags
 import com.cooper.binge.companion.seerr.flags.bingePromotion
-import com.cooper.binge.companion.seerr.seerr.SeerrMediaServer
-import com.cooper.binge.companion.seerr.seerr.SeerrServerProfile
 import com.cooper.binge.companion.seerr.seerr.isOpenableSite
 import com.cooper.binge.companion.seerr.ui.bingeAnswersTitleLink
 import com.cooper.binge.companion.seerr.ui.discover.title.LocalOpenTitle
@@ -85,15 +83,6 @@ internal fun rememberRequestOpenLinks(detail: RequestDetail): List<RequestOpenLi
         )
     }
 }
-
-/** The media server the Seerr server fronts, by name; null where it has none configured or one this app does not know. */
-internal fun SeerrServerProfile.mediaServerName(): String? =
-    when (mediaServer) {
-        SeerrMediaServer.Plex -> "Plex"
-        SeerrMediaServer.Jellyfin -> "Jellyfin"
-        SeerrMediaServer.Emby -> "Emby"
-        SeerrMediaServer.NotConfigured, SeerrMediaServer.Unknown -> null
-    }
 
 @Composable
 internal fun RequestOpenSheet(
