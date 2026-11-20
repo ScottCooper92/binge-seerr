@@ -10,17 +10,11 @@ import com.cooper.binge.companion.seerr.preview.SeerrScreenStatePreview
 import com.cooper.binge.companion.seerr.preview.SeerrSpanishPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrTabletPanesPreview
 import com.cooper.binge.companion.seerr.seerr.SeerrError
-import com.cooper.binge.companion.seerr.ui.state.RestingPull
 
 private val NO_ACTIONS = PersonPageActions({}, {}, {}, {}, { _, _ -> }, {}, { _, _ -> })
 
 @Composable
-private fun Frame(state: PersonPageUiState) =
-    PersonPageScreen(
-        state,
-        NO_ACTIONS,
-        pullState = RestingPull.takeIf { (state as? PersonPageUiState.Ready)?.refreshing == true },
-    )
+private fun Frame(state: PersonPageUiState) = PersonPageScreen(state, NO_ACTIONS)
 
 /** The person page: the layout once across the device matrix, then each state of it on the phone. */
 class PersonPageScreenshotTest {
