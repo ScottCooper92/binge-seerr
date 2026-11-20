@@ -1,6 +1,7 @@
 package com.cooper.binge.companion.seerr.ui.discover.title
 
 import android.content.Context
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.onNodeWithText
@@ -32,7 +33,7 @@ class TitleActionsEnabledTest {
     ) {
         var taps = 0
         val model = titleActionsModel(standard, fourK, emptyList(), mayReport = false)
-        rule.setContent { SeerrTheme { TitleActions(model, onPrimary = { taps++ }, onTrailer = null, onReport = null) } }
+        rule.setContent { SeerrTheme { PrimaryAction(model.primary, { taps++ }, Modifier) } }
 
         rule.onNodeWithText(resources.getString(label)).assertIsEnabled().performClick()
 
