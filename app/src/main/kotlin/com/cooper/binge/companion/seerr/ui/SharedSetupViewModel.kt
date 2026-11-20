@@ -1,20 +1,26 @@
 package com.cooper.binge.companion.seerr.ui
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.binge.companion.kit.SecretCipher
 import com.binge.companion.sdk.attempt
+import com.cooper.binge.companion.seerr.auth.PlexPinFlow
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.demo.demoCredentials
 import com.cooper.binge.companion.seerr.di.IoDispatcher
 import com.cooper.binge.companion.seerr.handoff.AddressHandOffs
 import com.cooper.binge.companion.seerr.handoff.HAND_OFF_SESSION_MODE
 import com.cooper.binge.companion.seerr.handoff.HandOffCredentials
+import com.cooper.binge.companion.seerr.seerr.SeerrSignInMode
 import com.cooper.binge.companion.seerr.seerr.insecurePublicHostOrNull
 import com.cooper.binge.companion.seerr.seerr.toServerFailure
 import com.cooper.binge.companion.seerr.telemetry.AnalyticsEvents
 import com.cooper.homelab.core.foundation.ServerFailure
 import com.cooper.homelab.core.presentation.connect.ConnectError
+import com.cooper.homelab.core.presentation.connect.ConnectLinks
 import com.cooper.homelab.core.presentation.connect.ConnectPorts
+import com.cooper.homelab.core.presentation.connect.ConnectState
 import com.cooper.homelab.core.presentation.connect.ConnectViewModel
 import com.cooper.homelab.core.presentation.connect.ProbedServer
 import com.cooper.homelab.core.presentation.connect.SessionSink
@@ -25,6 +31,7 @@ import com.cooper.homelab.core.telemetry.Analytics
 import com.cooper.homelab.core.telemetry.CrashBreadcrumbs
 import com.cooper.homelab.core.telemetry.NoOpAnalytics
 import com.cooper.homelab.core.telemetry.NoOpCrashBreadcrumbs
+import com.cooper.homelab.core.uiandroid.connect.ConnectSignInActions
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.delay
@@ -44,13 +51,16 @@ import javax.inject.Inject
  * Setup on the shared connect machine, behind the shared-setup flag. It gives the screens what [SetupViewModel] does, a
  * [SetupUiState] and the same actions, so they do not change. The address and sign-in steps are the machine's; what is beside
  * it is the app's own: the television's hand-off, the password reset and the notice. Plex and Quick Connect, which finish in
- * another app, are not offered here: they are not wired to the library's link flows yet.
+ * another app, run on the library's link flows ([links]).
  */
 @HiltViewModel
 class SharedSetupViewModel
     @Inject
     constructor(
         private val connection: SeerrConnection,
+        plex: PlexPinFlow,
+        savedState: SavedStateHandle,
+        cipher: SecretCipher,
         handOffs: AddressHandOffs,
         cleartext: CleartextConsent,
         localNetwork: LocalNetworkPermission,
@@ -61,13 +71,15 @@ class SharedSetupViewModel
         SetupSource {
         private val app = MutableStateFlow(SharedSetupApp())
 
+        private val sink = SessionSink<SetupServer, Unit> { _, _ -> true }
+
         private val machine =
             ConnectViewModel(
                 scope = viewModelScope,
                 dispatcher = dispatcher,
                 probe = SeerrServerProbe(connection),
                 authenticators = seerrAuthenticators(connection, crashBreadcrumbs),
-                sink = SessionSink { _, _ -> true },
+                sink = sink,
                 classify = { it.toServerFailure() },
                 ports = ConnectPorts(PortDefaults.SEERR),
                 cleartext = cleartext,
@@ -76,6 +88,26 @@ class SharedSetupViewModel
                 saved = connection.credentials.map { it != null },
                 events = { it.report(analytics) },
                 demo = ::enterDemo,
+            )
+
+        /**
+         * The sign-ins that finish in another app: Plex in the browser, Quick Connect on Jellyfin. The pending link is kept encrypted
+         * in the saved state, so the wait is picked up again after the process dies while the user is over there.
+         */
+        internal val links =
+            ConnectLinks(
+                scope = viewModelScope,
+                dispatcher = dispatcher,
+                machine = machine,
+                providers =
+                    mapOf(
+                        SeerrSignInMode.Plex.name to SeerrPlexLink(connection, plex),
+                        SeerrSignInMode.QuickConnect.name to SeerrQuickConnectLink(connection),
+                    ),
+                sink = sink,
+                stash = SavedStateLinkStash(savedState),
+                cipher = cipher.forLinks(),
+                events = { it.report(analytics) },
             )
 
         private val handOff =
@@ -111,10 +143,47 @@ class SharedSetupViewModel
             )
 
         override val uiState: StateFlow<SetupUiState> =
-            combine(machine.state, connection.credentials, app) { state, saved, beside -> state.toSetupUiState(saved, beside) }
-                .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), SetupUiState.Loading)
+            combine(machine.state, connection.credentials, app, links.link) { state, saved, beside, link ->
+                state.toSetupUiState(saved, beside, link)
+            }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), SetupUiState.Loading)
+
+        /** What the shared connect screen reads: the machine's step, and the two things beside it that are the app's own. */
+        internal val connectUi: StateFlow<SeerrConnectUi> =
+            combine(
+                machine.state,
+                app,
+                links.link,
+            ) { state, beside, link ->
+                SeerrConnectUi(
+                    state,
+                    beside.notice,
+                    beside.resetCoolingDown,
+                    beside.received,
+                    beside.resetBusy,
+                    beside.resetError,
+                    link,
+                )
+            }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), SeerrConnectUi(ConnectState.Loading))
+
+        /** The sign-in step's controls, on the machine's own form. A change clears what the last attempt left on the page. */
+        internal val connectSignInActions: ConnectSignInActions =
+            ConnectSignInActions(
+                onSelectMode = { mode ->
+                    app.update { it.copy(notice = null, handOffRejected = false, resetError = null) }
+                    machine.selectMode(mode)
+                },
+                onEditForm = { transform ->
+                    app.update { it.copy(notice = null, handOffRejected = false, resetError = null) }
+                    machine.editForm(transform)
+                },
+                onConnect = { connect() },
+                onStartLink = { links.start() },
+                onChangeServer = ::changeServer,
+                onCheckAgain = ::inspect,
+            )
 
         init {
+            links.restore()
             reopenSignedOutServer()
             watchHandedSession()
         }
@@ -183,6 +252,7 @@ class SharedSetupViewModel
 
         fun changeServer() {
             handOff.cancel()
+            links.cancel()
             app.update { it.copy(notice = null, code = null, received = false, handOffRejected = false, resetError = null) }
             machine.changeServer()
         }
@@ -205,9 +275,11 @@ class SharedSetupViewModel
             if (changed.isNotEmpty()) machine.editForm { changed.entries.fold(this) { form, (id, value) -> form.with(id, value) } }
         }
 
-        fun connect() {
+        /** A sign-in with fields runs on the machine; one with none (Plex, Quick Connect) asks for its code, a short one for a television. */
+        fun connect(forTelevision: Boolean = false) {
             app.update { it.copy(notice = null, handOffRejected = false, resetError = null) }
-            machine.connect()
+            val form = machine.draft.value.form
+            if (form.mode?.fields?.isEmpty() == true) links.start(forTelevision) else machine.connect()
         }
 
         /** Connects to the demo server: canned data on this device, no address and no sign-in. Disconnecting leaves it. */

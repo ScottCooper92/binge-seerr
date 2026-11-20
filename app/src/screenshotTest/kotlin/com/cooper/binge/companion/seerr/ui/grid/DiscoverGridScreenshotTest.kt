@@ -118,6 +118,34 @@ class DiscoverGridScreenshotTest {
     @Composable
     fun emptySpanish() = Frame(emptyGridState())
 
+    /** The same, at the largest font. */
+    @PreviewTest
+    @SeerrFontScalePreviews
+    @Composable
+    fun emptyLargeText() = Frame(emptyGridState())
+
+    /** An empty watchlist says what fills it. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun emptyWatchlist() = Frame(emptyWatchlistState())
+
+    @PreviewTest
+    @SeerrSpanishPreviews
+    @Composable
+    fun emptyWatchlistSpanish() = Frame(emptyWatchlistState())
+
+    @PreviewTest
+    @SeerrFontScalePreviews
+    @Composable
+    fun emptyWatchlistLargeText() = Frame(emptyWatchlistState())
+
+    /** A list that is empty by itself, with no filter of the user's to clear. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun emptyList() = Frame(emptyListState())
+
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable

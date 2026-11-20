@@ -59,6 +59,8 @@ private fun ReadySeriesPage(
         events.collect { event ->
             when (event) {
                 is SeriesPageEvent.Requested -> snackbar.showSnackbar(resources.getString(event.result.messageRes()))
+                SeriesPageEvent.Blocked -> snackbar.showSnackbar(resources.getString(R.string.request_title_blocked))
+                is SeriesPageEvent.BlockFailed -> snackbar.showSnackbar(resources.getString(event.error.messageRes()))
                 SeriesPageEvent.Unblocked -> snackbar.showSnackbar(resources.getString(R.string.blocklist_removed))
                 is SeriesPageEvent.WatchlistFailed -> snackbar.showSnackbar(resources.getString(event.error.messageRes()))
                 is SeriesPageEvent.UnblockFailed -> snackbar.showSnackbar(resources.getString(event.error.messageRes()))
@@ -125,11 +127,16 @@ private fun ReadySeriesPage(
             canRequest = state.series.canRequest,
             onWatch = actions.onOpenUrl,
             onWatchInBinge = actions.onWatchInBinge,
+            fourKOpen = state.series.fourK?.mayRequest == true,
+            remainingOpen = state.series.standard.mayRequest,
+            onRequestFourK = actions.onRequestFourK,
+            onRequestRemaining = actions.onRequestRemaining,
             onDismiss = actions.onCloseStatus,
             onUnblock = actions.onUnblock.takeIf { state.series.mayUnblock },
         )
     }
     if (state.reportSheetOpen) actions.reportSheet(actions.onCloseReport)
+    if (state.blockConfirmOpen) actions.block?.let { TitleBlockConfirm(state.series.name, it) }
     state.manageRequestId?.let { requestId ->
         TitleManageSheet(requestId, state.manageSheetOpen, snackbar, series.sheetFacts(), actions)
     }

@@ -42,6 +42,23 @@ class RequestSheetsScreenshotTest {
             )
         }
 
+    /** A partly available series with seasons left: Watch, the remaining seasons and Request in 4K lead, then the request's own rows. */
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun actionsWithRemainingSeasonsRow() =
+        SheetFrame {
+            ActionsContent(
+                settledDetail(),
+                titleRows =
+                    listOf(
+                        SheetTitleRow(Icons.Filled.PlayArrow, "Watch on Plex", external = true) {},
+                        SheetTitleRow(Icons.Filled.Add, stringResource(R.string.title_sheet_request_remaining), external = false) {},
+                        SheetTitleRow(Icons.Filled.Add, stringResource(R.string.request_sheet_submit_4k), external = false) {},
+                    ),
+            )
+        }
+
     /** Binge answers the title link: Watch in Binge leads, the media server below it. */
     @PreviewTest
     @SeerrComponentPreviews

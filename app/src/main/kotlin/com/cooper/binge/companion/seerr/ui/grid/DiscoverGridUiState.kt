@@ -50,6 +50,9 @@ data class FilterVocabulary(
     val keywordNames: Map<Int, String> = emptyMap(),
 )
 
+/** Why a grid has nothing to show: the user's own list is empty, filters they added match nothing, or the list itself is. */
+enum class GridEmptyReason { Watchlist, Filtered, Nothing }
+
 /** The "see all" grid. The controls stay in every state, so a filter that empties the list can be cleared from it. */
 sealed interface DiscoverGridUiState {
     val controls: GridControls
@@ -66,8 +69,10 @@ sealed interface DiscoverGridUiState {
         val appendFailed: Boolean,
     ) : DiscoverGridUiState
 
+    /** [reason] is why there is nothing to show, so the screen can say what would change that. */
     data class Empty(
         override val controls: GridControls,
+        val reason: GridEmptyReason = GridEmptyReason.Nothing,
     ) : DiscoverGridUiState
 
     data class Error(

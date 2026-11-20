@@ -125,4 +125,33 @@ class TitleStatusStoreTest {
         assertEquals(TitleStatuses(SeerrMediaStatusCode.Available, SeerrMediaStatusCode.Pending, 7), info.toTitleStatuses())
         assertEquals(TitleStatuses(), (null as SeerrMediaInfoDto?).toTitleStatuses())
     }
+
+    @Test
+    fun `a read that says nothing of the watchlist leaves what an earlier one said`() {
+        store.seed(film, TitleStatuses(onWatchlist = true), store.beginRead())
+
+        store.seed(film, statuses(SeerrMediaStatusCode.Available), store.beginRead())
+
+        assertEquals(true, store.current(film)?.onWatchlist)
+        assertEquals(SeerrMediaStatusCode.Available, store.current(film)?.standard)
+    }
+
+    @Test
+    fun `a later read that says the title is off the watchlist replaces what was held`() {
+        store.seed(film, TitleStatuses(onWatchlist = true), store.beginRead())
+
+        store.seed(film, TitleStatuses(onWatchlist = false), store.beginRead())
+
+        assertEquals(false, store.current(film)?.onWatchlist)
+    }
+
+    @Test
+    fun `a watchlist change is put back when its action fails`() {
+        store.seed(film, TitleStatuses(onWatchlist = true), store.beginRead())
+
+        val undo = store.applyOptimistic(film) { it.copy(onWatchlist = false) }
+        store.rollback(undo)
+
+        assertEquals(true, store.current(film)?.onWatchlist)
+    }
 }

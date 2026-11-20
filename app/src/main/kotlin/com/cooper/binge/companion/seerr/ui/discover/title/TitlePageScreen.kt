@@ -51,10 +51,14 @@ class TitlePageActions(
     val onCloseStatus: () -> Unit = {},
     /** Request in 4K, tapped in a request's sheet: that sheet closes and the request sheet opens. */
     val onRequestFourK: () -> Unit = {},
+    /** Request the remaining seasons of a partly available series, tapped in a sheet: that sheet gives way to the request sheet. */
+    val onRequestRemaining: () -> Unit = {},
     /** Watch in Binge: the hand-off to the title in Binge, or null where Binge is not there to answer it. */
     val onWatchInBinge: (() -> Unit)? = null,
     /** The watchlist button, tapped. */
     val onToggleWatchlist: () -> Unit = {},
+    /** Block, asked and answered; null where this viewer may not block. */
+    val block: TitleBlock? = null,
     /** Remove from blocklist, tapped in the status sheet of a blocklisted title. */
     val onUnblock: () -> Unit = {},
     /** The sheet of one request, backed by that request's own view model, which the nav entry supplies. */
@@ -97,6 +101,8 @@ private fun ReadyPage(
         events.collect { event ->
             when (event) {
                 is TitlePageEvent.Requested -> snackbar.showSnackbar(resources.getString(event.result.messageRes()))
+                TitlePageEvent.Blocked -> snackbar.showSnackbar(resources.getString(R.string.request_title_blocked))
+                is TitlePageEvent.BlockFailed -> snackbar.showSnackbar(resources.getString(event.error.messageRes()))
                 TitlePageEvent.Unblocked -> snackbar.showSnackbar(resources.getString(R.string.blocklist_removed))
                 is TitlePageEvent.WatchlistFailed -> snackbar.showSnackbar(resources.getString(event.error.messageRes()))
                 is TitlePageEvent.UnblockFailed -> snackbar.showSnackbar(resources.getString(event.error.messageRes()))
@@ -155,11 +161,16 @@ private fun ReadyPage(
             canRequest = state.movie.canRequest,
             onWatch = actions.onOpenUrl,
             onWatchInBinge = actions.onWatchInBinge,
+            fourKOpen = state.movie.fourK?.mayRequest == true,
+            remainingOpen = false,
+            onRequestFourK = actions.onRequestFourK,
+            onRequestRemaining = actions.onRequestRemaining,
             onDismiss = actions.onCloseStatus,
             onUnblock = actions.onUnblock.takeIf { state.movie.mayUnblock },
         )
     }
     if (state.reportSheetOpen) actions.reportSheet(actions.onCloseReport)
+    if (state.blockConfirmOpen) actions.block?.let { TitleBlockConfirm(state.movie.title, it) }
     state.manageRequestId?.let { requestId ->
         TitleManageSheet(requestId, state.manageSheetOpen, snackbar, movie.sheetFacts(), actions)
     }

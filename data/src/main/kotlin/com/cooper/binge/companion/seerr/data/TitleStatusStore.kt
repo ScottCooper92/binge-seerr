@@ -22,6 +22,8 @@ data class TitleStatuses(
     val standard: SeerrMediaStatusCode? = null,
     val fourK: SeerrMediaStatusCode? = null,
     val mediaId: Int? = null,
+    /** Whether the signed-in user has the title on their watchlist, or null where nothing read has said. */
+    val onWatchlist: Boolean? = null,
 ) {
     fun statusOf(is4k: Boolean): SeerrMediaStatusCode? = if (is4k) fourK else standard
 
@@ -77,7 +79,9 @@ class TitleStatusStore {
     ) {
         entries.update { current ->
             val existing = current[key]
-            if (existing != null && existing.stamp > readStamp) current else current + (key to Entry(statuses, readStamp))
+            // A read that does not say whether the title is on the watchlist leaves what an earlier one said.
+            val merged = if (statuses.onWatchlist == null) statuses.copy(onWatchlist = existing?.statuses?.onWatchlist) else statuses
+            if (existing != null && existing.stamp > readStamp) current else current + (key to Entry(merged, readStamp))
         }
     }
 

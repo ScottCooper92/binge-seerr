@@ -26,6 +26,7 @@ data class SeerrMovieDetailsDto(
     @SerialName("revenue") val revenue: Long? = null,
     @SerialName("originalLanguage") val originalLanguage: String? = null,
     @SerialName("homepage") val homepage: String? = null,
+    @SerialName("externalIds") val externalIds: SeerrExternalIdsDto? = null,
     @SerialName("genres") val genres: List<SeerrNamedDto> = emptyList(),
     @SerialName("keywords") val keywords: List<SeerrNamedDto> = emptyList(),
     @SerialName("spokenLanguages") val spokenLanguages: List<SeerrLanguageNameDto> = emptyList(),
@@ -39,6 +40,12 @@ data class SeerrMovieDetailsDto(
     @SerialName("mediaInfo") val mediaInfo: SeerrMediaInfoDto? = null,
     /** Whether the signed-in user has the title on their watchlist; absent from a server without one. */
     @SerialName("onUserWatchlist") val onUserWatchlist: Boolean? = null,
+)
+
+/** The ids the server holds for a title on other sites; only IMDb's is read. */
+@Serializable
+data class SeerrExternalIdsDto(
+    @SerialName("imdbId") val imdbId: String? = null,
 )
 
 /** An id and a name: a genre, a keyword or a production company. */

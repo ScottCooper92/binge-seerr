@@ -24,6 +24,7 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.paging.PagingData
 import androidx.paging.compose.collectAsLazyPagingItems
+import com.binge.designsystem.component.BingeBarIconAction
 import com.binge.designsystem.component.SnackbarMessageKind
 import com.binge.designsystem.component.showSnackbar
 import com.binge.designsystem.template.BingeScreenScaffold
@@ -31,7 +32,6 @@ import com.binge.designsystem.template.screenInnerPadding
 import com.binge.designsystem.template.screenOuterPadding
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.seerr.ManageablePermission
-import com.cooper.binge.companion.seerr.ui.state.BarIconAction
 import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
 import com.cooper.binge.companion.seerr.ui.state.LoadingScreen
 import com.cooper.binge.companion.seerr.ui.state.SortSheet
@@ -187,19 +187,34 @@ private fun UsersBarActions(
 ) {
     if (ready == null) return
     if (ready.selection.isNotEmpty()) {
-        BarIconAction(
+        BingeBarIconAction(
             Icons.Filled.ManageAccounts,
             stringResource(R.string.users_edit_permissions),
-            glassBackgroundAlpha,
             actions.onStartBulkEdit,
+            glassBackgroundAlpha = glassBackgroundAlpha,
         )
-        BarIconAction(Icons.Filled.Close, stringResource(R.string.users_clear_selection_cd), glassBackgroundAlpha, actions.onClearSelection)
+        BingeBarIconAction(
+            Icons.Filled.Close,
+            stringResource(R.string.users_clear_selection_cd),
+            actions.onClearSelection,
+            glassBackgroundAlpha = glassBackgroundAlpha,
+        )
     } else {
         if (ready.canAdmit) {
             // One way in skips the choice: a server with no media server can only create.
             val onAdd = if (ready.importSource == null) actions.admission.onStartCreate else actions.admission.onStart
-            BarIconAction(Icons.Filled.PersonAdd, stringResource(R.string.users_add_cd), glassBackgroundAlpha, onAdd)
+            BingeBarIconAction(
+                Icons.Filled.PersonAdd,
+                stringResource(R.string.users_add_cd),
+                onAdd,
+                glassBackgroundAlpha = glassBackgroundAlpha,
+            )
         }
-        BarIconAction(Icons.Filled.SwapVert, stringResource(R.string.requests_sort_cd), glassBackgroundAlpha, onSort)
+        BingeBarIconAction(
+            Icons.Filled.SwapVert,
+            stringResource(R.string.requests_sort_cd),
+            onSort,
+            glassBackgroundAlpha = glassBackgroundAlpha,
+        )
     }
 }

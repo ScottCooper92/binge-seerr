@@ -4,7 +4,9 @@ import android.content.Context
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.test.getBoundsInRoot
+import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onParent
 import androidx.compose.ui.unit.dp
 import androidx.test.core.app.ApplicationProvider
 import com.binge.designsystem.LocalNavOverlayInsets
@@ -24,7 +26,7 @@ import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 
 private val RAIL = 80.dp
-private val GUTTER = 16.dp
+private val GUTTER = 24.dp
 private val MOVIE = TitleResult(TitleKind.Movie, 1, "One", "2020", null, "/b.jpg", null, null, TitleAvailability.None, null)
 
 /** On a wide window the navigation rail overlays the start edge; the idle Search page clears it once, not twice. */
@@ -60,6 +62,21 @@ class TitleSearchRailInsetTest {
 
         assertEquals("the two headings line up", rail.value, recents.value, 0.5f)
         assertEquals("one rail and one gutter in", (RAIL + GUTTER).value, recents.value, 0.5f)
+    }
+
+    @Test
+    fun `the search field and the recents share one left edge`() {
+        showIdle(listOf("one", "two"), Trending.Ready(movies = listOf(MOVIE), series = emptyList()))
+
+        val field =
+            rule
+                .onNode(hasSetTextAction())
+                .onParent()
+                .getBoundsInRoot()
+                .left
+        val recents = rule.onNodeWithText(text(R.string.title_search_recent)).getBoundsInRoot().left
+
+        assertEquals("the field and the recents line up", field.value, recents.value, 0.5f)
     }
 
     @Test

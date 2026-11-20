@@ -17,6 +17,7 @@ import com.cooper.binge.companion.seerr.discover.grid.GridPreset
 import com.cooper.binge.companion.seerr.discover.grid.GridRequest
 import com.cooper.binge.companion.seerr.discover.sliders.DiscoverSliderRepository
 import com.cooper.binge.companion.seerr.discover.sliders.HubCardLoader
+import com.cooper.binge.companion.seerr.discover.sliders.HubFirstFrame
 import com.cooper.binge.companion.seerr.discover.sliders.HubHeroLoader
 import com.cooper.binge.companion.seerr.discover.sliders.HubMediaSource
 import com.cooper.binge.companion.seerr.discover.sliders.HubTab
@@ -304,6 +305,38 @@ class HubViewModelTest {
         }
 
     @Test
+    fun `the skeleton leaves out Browse all where the cached profile says the server cannot filter`() =
+        runTest {
+            val titles = Titles()
+            val model =
+                HubViewModel(
+                    FakeSliders(SliderListState.Loading),
+                    HubCardLoader(titles, NoMedia),
+                    HubTileLoader(titles),
+                    HubHeroLoader(titles, NoMedia),
+                    FakeGrid(),
+                    dispatcher,
+                    HubTab.Movies,
+                    firstFrames = { HubFirstFrame(heroPlace = true, browseAll = false) },
+                )
+            val seen = mutableListOf<DiscoverHubUiState>()
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { model.uiState.collect { seen += it } }
+
+            assertEquals(DiscoverHubUiState.Loading(heroPlace = true, browseAll = false), seen.first())
+            assertEquals(DiscoverHubUiState.Loading(heroPlace = true, browseAll = false), seen.last())
+        }
+
+    @Test
+    fun `a first connection with no cached profile keeps the hero's place and Browse all in the skeleton`() =
+        runTest {
+            val model = vm(FakeSliders(SliderListState.Loading))
+            val seen = mutableListOf<DiscoverHubUiState>()
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { model.uiState.collect { seen += it } }
+
+            assertEquals(DiscoverHubUiState.Loading(), seen.first())
+        }
+
+    @Test
     fun `a cold launch stays a skeleton until the rows above a fast row land, and no row ever moves`() =
         runTest {
             val gate = CompletableDeferred<Unit>()
@@ -321,10 +354,10 @@ class HubViewModelTest {
                 )
             val seen = mutableListOf<DiscoverHubUiState>()
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { model.uiState.collect { seen += it } }
-            assertEquals("the slider list has not answered", DiscoverHubUiState.Loading, seen.last())
+            assertEquals("the slider list has not answered", DiscoverHubUiState.Loading(), seen.last())
 
             sliders.state.value = SliderListState.Ready(listOf(slider(1, TRENDING), slider(2, STUDIOS)))
-            assertEquals("the fast studios row is held behind the slow trending row", DiscoverHubUiState.Loading, seen.last())
+            assertEquals("the fast studios row is held behind the slow trending row", DiscoverHubUiState.Loading(), seen.last())
 
             gate.complete(Unit)
             val ready = seen.last() as DiscoverHubUiState.Ready
@@ -349,7 +382,7 @@ class HubViewModelTest {
             val seen = mutableListOf<DiscoverHubUiState>()
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { model.uiState.collect { seen += it } }
             testScheduler.advanceTimeBy(BROWSE_ALL_WAIT - 1)
-            assertEquals("rows are ready but the answer is not", DiscoverHubUiState.Loading, seen.last())
+            assertEquals("rows are ready but the answer is not", DiscoverHubUiState.Loading(), seen.last())
 
             answer.complete(false)
             val ready = seen.last() as DiscoverHubUiState.Ready
@@ -364,7 +397,7 @@ class HubViewModelTest {
             val seen = mutableListOf<DiscoverHubUiState>()
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { model.uiState.collect { seen += it } }
             testScheduler.advanceTimeBy(BROWSE_ALL_WAIT - 1)
-            assertEquals(DiscoverHubUiState.Loading, seen.last())
+            assertEquals(DiscoverHubUiState.Loading(), seen.last())
 
             testScheduler.advanceTimeBy(2)
             assertTrue((seen.last() as DiscoverHubUiState.Ready).browseAll)

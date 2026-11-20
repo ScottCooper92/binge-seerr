@@ -36,7 +36,7 @@ internal fun RecentSearches(
     modifier: Modifier = Modifier,
 ) {
     var confirming by rememberSaveable { mutableStateOf(false) }
-    val gutter = dimensionResource(DesR.dimen.padding_m)
+    val gutter = dimensionResource(DesR.dimen.screen_content_inset)
     Column(modifier.fillMaxWidth().padding(start = gutter + navOverlayStart(), end = gutter)) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Text(
