@@ -5,7 +5,7 @@ plugins {
 
 // What the tests of every module share, so a per-module test does not carry its own copy: the fake server and the fake stores, the two
 // ciphers, the profile routing, the scripted Seerr, and the rules and helpers for coroutines. Test code, so it is not in any module's
-// coverage; it is held to the same lint, ktlint and detekt as the rest.
+// coverage; it is held to the same lint and ktlint as the rest (detekt is the one gate it does not have: see the note at the end).
 android {
     namespace = "com.cooper.binge.companion.seerr.testing"
     compileSdk = 37
