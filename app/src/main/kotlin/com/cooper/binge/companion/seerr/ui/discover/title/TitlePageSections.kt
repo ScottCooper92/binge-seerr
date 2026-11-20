@@ -33,6 +33,7 @@ import com.cooper.binge.companion.seerr.discover.title.TitleKeyword
 import com.cooper.binge.companion.seerr.discover.title.TitlePerson
 import com.cooper.binge.companion.seerr.discover.title.trailerUrl
 import com.cooper.binge.companion.seerr.seerr.toTmdbPosterUrl
+import com.cooper.binge.companion.seerr.ui.discover.links.ExternalLinksSection
 import com.cooper.binge.companion.seerr.ui.discover.request.joinMeta
 import com.binge.designsystem.R as DesR
 
@@ -75,7 +76,7 @@ internal fun TitlePageBody(
         }
         state.extras?.let { TitleRow(stringResource(R.string.title_page_more_like_this), it.moreLikeThis, actions.onOpenTitle) }
         KeywordsSection(movie.keywords, actions.onOpenKeyword.takeIf { movie.keywordsOpen }, Modifier.readingMargin())
-        TitleLinksSection(movie.links, actions.onOpenUrl, Modifier.readingMargin())
+        ExternalLinksSection(movie.links, actions.onOpenUrl)
         TitleDetailsSection(
             movie.detailEntries(context.resources, locale, actions.onOpenCompany.takeIf { movie.companiesOpen }, actions.onOpenPerson),
         )

@@ -1,8 +1,11 @@
 package com.cooper.binge.companion.seerr.discover.person
 
 import com.binge.companion.sdk.attempt
+import com.cooper.binge.companion.seerr.discover.ExternalLink
+import com.cooper.binge.companion.seerr.discover.ImdbPage
 import com.cooper.binge.companion.seerr.discover.TitleAvailability
 import com.cooper.binge.companion.seerr.discover.TitleKind
+import com.cooper.binge.companion.seerr.discover.externalLinks
 import java.time.LocalDate
 import java.time.Period
 
@@ -77,3 +80,6 @@ interface PersonRepository {
 
     suspend fun credits(personId: Int): PersonCredits
 }
+
+/** The pages the server named for this person: IMDb's name page and their own site. A person has no TMDB chip. */
+internal fun PersonDetails.links(): List<ExternalLink> = externalLinks(ImdbPage.Name, imdbId, tmdbUrl = null, homepage = homepage)

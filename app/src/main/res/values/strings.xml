@@ -1691,10 +1691,10 @@
     <string name="person_page_also_known_as">Also known as</string>
     <string name="person_page_biography">Biography</string>
     <string name="person_page_known_for">Known for</string>
-    <string name="person_page_links">External links</string>
-    <string name="title_link_tmdb">TMDB</string>
-    <string name="person_page_imdb">IMDb</string>
-    <string name="person_page_website">Website</string>
+    <string name="external_links_heading">External links</string>
+    <string name="external_link_tmdb">TMDB</string>
+    <string name="external_link_imdb">IMDb</string>
+    <string name="external_link_website">Website</string>
     <string name="person_stat_from">From</string>
     <string name="person_stat_gender">Gender</string>
     <string name="person_stat_popularity">Popularity</string>

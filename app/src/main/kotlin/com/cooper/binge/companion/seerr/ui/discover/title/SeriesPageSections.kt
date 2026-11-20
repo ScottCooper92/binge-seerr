@@ -22,6 +22,7 @@ import com.binge.designsystem.template.readingMargin
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.title.SeriesDetails
 import com.cooper.binge.companion.seerr.discover.title.trailerUrl
+import com.cooper.binge.companion.seerr.ui.discover.links.ExternalLinksSection
 import com.cooper.binge.companion.seerr.ui.discover.request.joinMeta
 import java.text.NumberFormat
 import java.util.Locale
@@ -85,7 +86,7 @@ internal fun SeriesPageBody(
         EpisodesSection(state, seasonActions, Modifier.readingMargin())
         state.extras?.let { TitleRow(stringResource(R.string.title_page_more_like_this), it.moreLikeThis, actions.onOpenTitle) }
         KeywordsSection(series.keywords, actions.onOpenKeyword.takeIf { series.keywordsOpen }, Modifier.readingMargin())
-        TitleLinksSection(series.links, actions.onOpenUrl, Modifier.readingMargin())
+        ExternalLinksSection(series.links, actions.onOpenUrl)
         TitleDetailsSection(
             series.detailEntries(context.resources, locale, actions.onOpenCompany.takeIf { series.companiesOpen }, actions.onOpenPerson),
         )
