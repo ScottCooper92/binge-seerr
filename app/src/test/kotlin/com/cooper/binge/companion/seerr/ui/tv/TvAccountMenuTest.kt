@@ -69,6 +69,7 @@ class TvAccountMenuTest {
 
     private var retries = 0
     private var signOuts = 0
+    private var accountOpens = 0
     private var detail by mutableStateOf<UserDetailUiState?>(null)
     private var opened = 0
 
@@ -144,6 +145,22 @@ class TvAccountMenuTest {
         assertEquals(1, retries)
     }
 
+    /** The Account row opens the user's own requests, sits above Sign out, and Sign out stays last. */
+    @Test
+    fun accountIsTheFirstRowAboveSignOut() {
+        setBar(detail = UserDetailUiState.Ready(detail()), canOpenAccount = true)
+        focusAvatar()
+        press(Key.DirectionDown)
+        accountRow().assertIsFocused()
+        press(Key.DirectionDown)
+        signOutRow().assertIsFocused()
+        press(Key.DirectionUp)
+
+        press(Key.DirectionCenter)
+
+        assertEquals(1, accountOpens)
+    }
+
     @Test
     fun aKeyConnectionHasNoSignOut() {
         setBar(detail = UserDetailUiState.Ready(detail()), canSignOut = false)
@@ -201,6 +218,7 @@ class TvAccountMenuTest {
     private fun setBar(
         detail: UserDetailUiState?,
         canSignOut: Boolean = true,
+        canOpenAccount: Boolean = false,
         tabs: List<TvTab> = listOf(TvTab.Requests),
     ) {
         this.detail = detail
@@ -222,6 +240,7 @@ class TvAccountMenuTest {
                             accountFailed = false,
                             onRetry = { retries++ },
                             onSignOut = if (canSignOut) ({ signOuts++ }) else null,
+                            onOpenAccount = if (canOpenAccount) ({ accountOpens++ }) else null,
                             demo = false,
                             whileOpen = { SideEffect { opened++ } },
                         ),
@@ -250,6 +269,12 @@ class TvAccountMenuTest {
         press(Key.DirectionUp)
         press(Key.DirectionLeft)
     }
+
+    private fun accountRow() =
+        composeTestRule
+            .onAllNodes(
+                hasText(string(R.string.tv_account)) and isFocusable(),
+            ).filterToOne(!hasContentDescription(string(R.string.tv_account)))
 
     private fun retryRow() = composeTestRule.onNode(hasText(string(R.string.hub_retry)) and isFocusable())
 

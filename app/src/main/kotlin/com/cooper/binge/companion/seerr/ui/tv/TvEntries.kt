@@ -105,6 +105,10 @@ internal fun TvConnectedShell(
                 demo = (hub as? HubUiState.Ready)?.server?.baseUrl?.isDemoOrigin() == true,
                 // Only a session sign-in has a session to end; a server's API key has nothing to sign out of.
                 onSignOut = settingsViewModel::signOut.takeIf { settings.signsInWithSession() },
+                onOpenAccount = {
+                    chosenTab = TvTab.Requests
+                    pages[TvDestination.Hub].seeAll = SEE_ALL_MINE
+                },
             ),
         contentRequester = content,
         topLayer =

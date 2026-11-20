@@ -3,6 +3,7 @@ package com.cooper.binge.companion.seerr.ui.tv.hub
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -26,7 +27,8 @@ import com.cooper.binge.companion.seerr.ui.users.labelRes as originLabelRes
 
 /**
  * The bar's account, assembled for the menu (#1916). The header is [account]'s name with its role, and the origin once the
- * account's own read has it. The rows are Retry when the account could not be read, and Sign out last when [onSignOut] is given
+ * account's own read has it. The rows are Retry when the account could not be read, Account (the user's own requests) when [onOpenAccount]
+ * is given, and Sign out last when [onSignOut] is given
  * (a session sign-in has a session to end; a server's API key has nothing to sign out of), asking first.
  *
  * [whileOpen] is composed with the menu's lines, so only while the menu is open: a place to mark the account's ViewModel visible.
@@ -39,6 +41,7 @@ internal fun tvAccountMenu(
     onRetry: () -> Unit,
     onSignOut: (() -> Unit)?,
     demo: Boolean,
+    onOpenAccount: (() -> Unit)? = null,
     whileOpen: @Composable () -> Unit = {},
     initiallyOpen: Boolean = false,
 ): TvTopBarAccount {
@@ -55,12 +58,16 @@ internal fun tvAccountMenu(
         }
     val failed = accountFailed || detail is UserDetailUiState.Error
     val retry = stringResource(R.string.hub_retry)
+    val accountLabel = stringResource(R.string.tv_account)
     val signOut = stringResource(R.string.tv_account_sign_out)
     val signOutTitle = stringResource(R.string.tv_account_sign_out_title)
     val signOutMessage = stringResource(R.string.tv_account_sign_out_message)
     val rows =
         buildList {
             if (failed) add(TvAccountMenuRow(key = RETRY_KEY, label = retry, icon = Icons.Filled.Refresh, onClick = onRetry))
+            if (onOpenAccount != null && account != null) {
+                add(TvAccountMenuRow(key = ACCOUNT_KEY, label = accountLabel, icon = Icons.Filled.Person, onClick = onOpenAccount))
+            }
             if (onSignOut != null && account != null) {
                 add(
                     TvAccountMenuRow(
@@ -87,6 +94,7 @@ internal fun tvAccountMenu(
     )
 }
 
+private const val ACCOUNT_KEY = "account"
 private const val RETRY_KEY = "retry"
 private const val SIGN_OUT_KEY = "sign-out"
 

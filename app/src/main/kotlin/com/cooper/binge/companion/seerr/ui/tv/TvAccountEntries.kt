@@ -30,6 +30,7 @@ internal fun rememberTvAccount(
     hub: HubUiState,
     demo: Boolean,
     onSignOut: (() -> Unit)?,
+    onOpenAccount: () -> Unit,
 ): TvTopBarAccount {
     val account = (hub as? HubUiState.Ready)?.overview?.account
     if (account == null) {
@@ -52,6 +53,7 @@ internal fun rememberTvAccount(
         onRetry = viewModel::reload,
         onSignOut = onSignOut,
         demo = demo,
+        onOpenAccount = onOpenAccount,
         whileOpen = {
             DisposableEffect(viewModel) {
                 viewModel.setScreenVisible(true)
