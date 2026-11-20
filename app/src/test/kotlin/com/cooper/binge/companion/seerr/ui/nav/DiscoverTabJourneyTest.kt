@@ -1,13 +1,18 @@
 package com.cooper.binge.companion.seerr.ui.nav
 
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollToIndex
 import androidx.navigation3.runtime.NavKey
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.HomeRoute
@@ -16,6 +21,7 @@ import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -27,6 +33,12 @@ private const val TABLET = "w900dp-h800dp"
 
 /** What the bar says once the order is Highest rated. */
 private const val RATED = "Movies · Highest rated"
+
+/** The narrowest tablet window: few columns, so the demo's grid scrolls. */
+private const val NARROW_TABLET = "w600dp-h600dp"
+
+/** The last card the demo's Discover grid holds, to scroll to. */
+private const val LAST_ROW = 7
 
 /** A phone. */
 private const val PHONE = "w400dp-h800dp"
@@ -117,6 +129,42 @@ class DiscoverTabJourneyTest {
 
         host.awaitShowing(RATED)
     }
+
+    @Test
+    fun `the grid's scroll position survives a fold to a phone and an unfold`() {
+        NavHostActivity.discoveryEnabled = true
+        host.connectDemo()
+        host.launch(HomeRoute)
+        host.awaitShowing(host.string(R.string.hubs_row_recently_added))
+        host.rotate(NARROW_TABLET)
+        host.awaitShowing(host.string(R.string.hubs_row_recently_added))
+        host.compose.onNodeWithTag("tab_discover").performClick()
+        host.awaitShowing(host.string(R.string.grid_filters_button))
+        host.compose.onNode(hasScrollAction()).performScrollToIndex(LAST_ROW)
+        host.compose.waitForIdle()
+        val scrolled = scrolledBy()
+        assertTrue("the grid did not scroll, so the test proves nothing", scrolled > 0)
+
+        host.rotate(PHONE)
+        host.awaitShowing(host.string(R.string.hubs_browse_all_movies))
+        host.rotate(NARROW_TABLET)
+        host.awaitShowing(host.string(R.string.hubs_row_recently_added))
+        host.compose.onNodeWithTag("tab_discover").performClick()
+        host.awaitShowing(host.string(R.string.grid_filters_button))
+
+        assertEquals(scrolled, scrolledBy())
+    }
+
+    private fun scrolledBy(): Int =
+        host.compose
+            .onAllNodes(hasScrollAction())
+            .onFirst()
+            .fetchSemanticsNode()
+            .config
+            .getOrNull(SemanticsProperties.VerticalScrollAxisRange)
+            ?.value
+            ?.invoke()
+            ?.toInt() ?: 0
 
     private fun applyInSheet(vararg choices: String) {
         host.clickUntilShowing(host.string(R.string.grid_filters_button), host.string(R.string.grid_filters_show_results))
