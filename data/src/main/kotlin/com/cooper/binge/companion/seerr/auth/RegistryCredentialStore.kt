@@ -36,6 +36,7 @@ class RegistryCredentialStore(
     private val io: CoroutineDispatcher,
 ) : CredentialStore {
     private val importing = Mutex()
+    private val writing = Mutex()
 
     @Volatile
     private var imported = false
@@ -60,7 +61,28 @@ class RegistryCredentialStore(
             .flowOn(io)
             .distinctUntilChanged()
 
-    override suspend fun save(credentials: SeerrCredentials): Boolean {
+    override val profile: Flow<StoredProfile?> =
+        activeLogin()
+            .map { active -> active?.let { (server, login) -> login?.takeIf { it.isFor(server) }?.profile } }
+            .map(StoredProfile::decode)
+            .flowOn(io)
+            .distinctUntilChanged()
+
+    override suspend fun saveProfile(
+        credentials: SeerrCredentials,
+        profile: StoredProfile,
+    ) {
+        ready()
+        writing.withLock {
+            val server = registry.current().activeServer?.takeIf { it.address.url == credentials.baseUrl } ?: return
+            val login = attempt { logins.get(server.id) }.getOrNull()?.takeIf { it.isFor(server) && it.auth == credentials.auth } ?: return
+            attempt { logins.save(server.id, login.copy(profile = profile.encode())) }
+        }
+    }
+
+    override suspend fun save(credentials: SeerrCredentials): Boolean = writing.withLock { saveConnection(credentials) }
+
+    private suspend fun saveConnection(credentials: SeerrCredentials): Boolean {
         ready()
         val address = ServerAddress.parse(credentials.baseUrl) ?: return false
         val existing = registry.current().activeServer
@@ -78,6 +100,10 @@ class RegistryCredentialStore(
 
     override suspend fun clear() {
         ready()
+        writing.withLock { forgetAll() }
+    }
+
+    private suspend fun forgetAll() {
         registry.current().servers.forEach { server ->
             registry.remove(server.id)
             logins.remove(server.id)
@@ -86,7 +112,7 @@ class RegistryCredentialStore(
 
     override suspend fun signOut() {
         ready()
-        registry.current().activeServer?.let { logins.remove(it.id) }
+        writing.withLock { registry.current().activeServer?.let { logins.remove(it.id) } }
     }
 
     private fun signedIn(

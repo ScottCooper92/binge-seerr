@@ -130,6 +130,58 @@ class CredentialStoreTest {
         }
     }
 
+    private val record = StoredProfile(savedAt = 5L, variant = "Jellyseerr", version = "2.7.3")
+
+    @Test
+    fun `a profile kept for the saved server reads back`() =
+        runTest {
+            val store = store(backgroundScope)
+            val saved = SeerrCredentials("http://seerr.local/", SeerrAuth.ApiKey("k3y"), SeerrVariant.Jellyseerr)
+            store.save(saved)
+
+            store.saveProfile(saved, record)
+
+            assertEquals(record, store.profile.first())
+        }
+
+    @Test
+    fun `a profile for a server that is not the saved one is not kept`() =
+        runTest {
+            val store = store(backgroundScope)
+            store.save(SeerrCredentials("http://seerr.local/", SeerrAuth.ApiKey("k3y")))
+
+            store.saveProfile(SeerrCredentials("http://other.local/", SeerrAuth.ApiKey("k3y")), record)
+
+            assertNull(store.profile.first())
+        }
+
+    @Test
+    fun `a new connection, a sign out and a clear each drop the profile`() =
+        runTest {
+            val store = store(backgroundScope)
+            val saved = SeerrCredentials("http://seerr.local/", SeerrAuth.ApiKey("k3y"))
+            store.save(saved)
+            store.saveProfile(saved, record)
+
+            store.save(saved)
+            assertNull(store.profile.first())
+
+            store.saveProfile(saved, record)
+            store.signOut()
+            assertNull(store.profile.first())
+
+            store.save(saved)
+            store.saveProfile(saved, record)
+            store.clear()
+            assertNull(store.profile.first())
+        }
+
+    @Test
+    fun `a stored profile that is not a record reads as none`() =
+        runTest {
+            assertNull(StoredProfile.decode("{"))
+        }
+
     private class FakeCipher : SecretCipher {
         var keyLost = false
         var encryptFails = false
