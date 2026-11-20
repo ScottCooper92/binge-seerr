@@ -44,7 +44,8 @@ non_product() {
 no_frames() {
   case "$1" in
     app/src/test/* | app/src/androidTest/* | app/src/debug/keepRules/* | app/src/main/keepRules/*) return 0 ;;
-    data/src/test/* | data/src/testFixtures/*) return 0 ;;
+    # The shared test support module is test code only: no screenshot test depends on it.
+    data/src/test/* | core/testing/src/*) return 0 ;;
     # seerr only: this app's package.
     app/src/main/kotlin/com/cooper/binge/companion/seerr/service/*) return 0 ;;
     app/src/main/kotlin/com/cooper/binge/companion/seerr/review/*) return 0 ;;
