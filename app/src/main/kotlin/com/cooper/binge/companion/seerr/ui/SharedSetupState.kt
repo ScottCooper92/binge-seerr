@@ -117,3 +117,13 @@ internal fun SharedSetupViewModel.actions(
         onDisconnect = onDisconnect,
         onTryDemo = tryDemo,
     )
+
+/** The connect screen's input: the machine's step, and the notice and reset cooldown that sit beside it, with [received] for the address's error. */
+internal data class SeerrConnectUi(
+    val state: ConnectState<SetupServer>,
+    val notice: SetupNotice? = null,
+    val resetCoolingDown: Boolean = false,
+    val received: Boolean = false,
+    val resetBusy: Boolean = false,
+    val resetError: SetupError? = null,
+)
