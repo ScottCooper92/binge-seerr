@@ -130,6 +130,20 @@ class LoggingCanaryTest {
         }
 
     @Test
+    fun `a literal another part registered stays replaced when the saved connection goes`() =
+        runTest {
+            val credentials = MutableStateFlow<SeerrCredentials?>(SeerrCredentials("http://jellyfin:5055/", SeerrAuth.ApiKey(API_KEY)))
+            redactor.registerWholeToken("jellyfin")
+            redactor.followCredentials(credentials, CoroutineScope(UnconfinedTestDispatcher(testScheduler)))
+            assertEquals("[redacted] timed out", redactor.redact("jellyfin timed out"))
+
+            credentials.value = null
+
+            assertEquals("[redacted] timed out", redactor.redact("jellyfin timed out"))
+            assertEquals("the key $API_KEY", redactor.redact("the key $API_KEY"))
+        }
+
+    @Test
     fun `the bare host of a saved address does not reach the log`() =
         runTest {
             seedRedactor()

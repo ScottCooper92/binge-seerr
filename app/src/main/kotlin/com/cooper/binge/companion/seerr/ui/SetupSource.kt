@@ -3,9 +3,9 @@ package com.cooper.binge.companion.seerr.ui
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import com.cooper.binge.companion.seerr.flags.LocalFlags
 import com.cooper.binge.companion.seerr.flags.SharedSetupEnabled
 import com.cooper.binge.companion.seerr.ui.tv.tvActions
+import com.cooper.homelab.core.uiandroid.flags.LocalFlags
 import kotlinx.coroutines.flow.StateFlow
 
 /**

@@ -7,7 +7,7 @@ import com.cooper.binge.companion.seerr.auth.LegacyCredentialStore
 import com.cooper.binge.companion.seerr.auth.NoBingeConnectionStore
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.feedback.BugReportLinks
-import com.cooper.binge.companion.seerr.feedback.FeedbackPrefs
+import com.cooper.binge.companion.seerr.feedback.shakeToReportPreference
 import com.cooper.binge.companion.seerr.seerr.SeerrApiFactory
 import com.cooper.binge.companion.seerr.seerr.SeerrAuth
 import com.cooper.binge.companion.seerr.seerr.SeerrDefaultAccess
@@ -22,6 +22,7 @@ import com.cooper.binge.companion.seerr.util.FakeSeerrServer
 import com.cooper.binge.companion.seerr.util.MainDispatcherRule
 import com.cooper.binge.companion.seerr.util.PlainCipher
 import com.cooper.binge.companion.seerr.util.RecordingAnalytics
+import com.cooper.homelab.core.flags.BooleanPreference
 import com.cooper.homelab.core.telemetry.AnalyticsConsent
 import com.cooper.homelab.core.telemetry.TelemetryPrefs
 import kotlinx.coroutines.awaitCancellation
@@ -64,7 +65,7 @@ class SettingsViewModelTest {
     private val responses = mutableMapOf<String, () -> FakeResponse>()
     private val viewModels = ViewModelStore()
     private lateinit var connection: SeerrConnection
-    private lateinit var feedbackPrefs: FeedbackPrefs
+    private lateinit var feedbackPrefs: BooleanPreference
     private lateinit var telemetryPrefs: TelemetryPrefs
     private val analytics = RecordingAnalytics()
     private val cache = SettingsReadCache()
@@ -154,7 +155,8 @@ class SettingsViewModelTest {
                 },
                 crashReportingDefault = true,
             )
-        feedbackPrefs = FeedbackPrefs(PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("f.preferences_pb") })
+        feedbackPrefs =
+            shakeToReportPreference(PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("f.preferences_pb") })
         val vm =
             SettingsViewModel(
                 connection,

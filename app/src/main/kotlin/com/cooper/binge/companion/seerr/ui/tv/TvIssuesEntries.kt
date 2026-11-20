@@ -12,8 +12,6 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.binge.designsystem.tv.focus.TvOverlayCloser
-import com.cooper.binge.companion.seerr.flags.LocalFlags
-import com.cooper.binge.companion.seerr.flags.bingePromotion
 import com.cooper.binge.companion.seerr.ui.bingeTitleHandOff
 import com.cooper.binge.companion.seerr.ui.issues.IssueDetailEvent
 import com.cooper.binge.companion.seerr.ui.issues.IssueDetailUiState
@@ -27,6 +25,8 @@ import com.cooper.binge.companion.seerr.ui.tv.issues.TvIssueSheetActions
 import com.cooper.binge.companion.seerr.ui.tv.issues.TvIssuesActions
 import com.cooper.binge.companion.seerr.ui.tv.issues.TvIssuesBoard
 import com.cooper.binge.companion.seerr.ui.tv.issues.TvIssuesGrid
+import com.cooper.homelab.core.flags.bingePromotion
+import com.cooper.homelab.core.uiandroid.flags.LocalFlags
 
 @Composable
 internal fun TvIssuesEntry(

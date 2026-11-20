@@ -3,7 +3,7 @@ package com.cooper.binge.companion.seerr.ui.nav
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import com.cooper.binge.companion.seerr.di.DiscoveryModule
 import com.cooper.binge.companion.seerr.flags.DiscoveryEnabled
-import com.cooper.binge.companion.seerr.flags.DiscoveryPrefs
+import com.cooper.binge.companion.seerr.flags.discoveryPreference
 import com.cooper.binge.companion.seerr.notifications.ApplicationScope
 import com.cooper.homelab.core.flags.FixedFeatureFlags
 import com.cooper.homelab.core.flags.FlagPreferenceGate
@@ -30,8 +30,8 @@ object TestDiscoveryModule {
         @ApplicationScope scope: CoroutineScope,
     ): PreferenceGate {
         val file = File.createTempFile("discovery", ".preferences_pb").also { it.delete() }
-        val prefs = DiscoveryPrefs(PreferenceDataStoreFactory.create(scope = scope) { file })
+        val prefs = discoveryPreference(PreferenceDataStoreFactory.create(scope = scope) { file })
         val flags = FixedFeatureFlags(Flags.of(DiscoveryEnabled to NavHostActivity.discoveryEnabled))
-        return FlagPreferenceGate(flags, DiscoveryEnabled, prefs.enabled, prefs::setEnabled, scope)
+        return FlagPreferenceGate(flags, DiscoveryEnabled, prefs.value, prefs::set, scope)
     }
 }

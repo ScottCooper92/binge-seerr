@@ -9,8 +9,6 @@ import androidx.navigation3.runtime.NavKey
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.grid.GridPreset
 import com.cooper.binge.companion.seerr.flags.LocalDiscoveryEnabled
-import com.cooper.binge.companion.seerr.flags.LocalFlags
-import com.cooper.binge.companion.seerr.flags.bingePromotion
 import com.cooper.binge.companion.seerr.ui.CollectionRoute
 import com.cooper.binge.companion.seerr.ui.DetailPane
 import com.cooper.binge.companion.seerr.ui.DetailPaneContent
@@ -30,6 +28,8 @@ import com.cooper.binge.companion.seerr.ui.openTitle
 import com.cooper.binge.companion.seerr.ui.popIfTop
 import com.cooper.binge.companion.seerr.ui.settings.server.ServerSettingsPage
 import com.cooper.binge.companion.seerr.ui.toRequestMediaType
+import com.cooper.homelab.core.flags.bingePromotion
+import com.cooper.homelab.core.uiandroid.flags.LocalFlags
 
 /** The title pages: a film's or a series' page, every season's episodes of it, a collection, the credits, and a person's page. Each leaves through [popIfTop] with its own key. */
 internal fun EntryProviderScope<NavKey>.titleEntries(

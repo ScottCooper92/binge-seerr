@@ -8,13 +8,14 @@ import com.cooper.binge.companion.seerr.auth.NoBingeConnectionStore
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.di.IoDispatcher
 import com.cooper.binge.companion.seerr.feedback.BugReportLinks
-import com.cooper.binge.companion.seerr.feedback.FeedbackPrefs
+import com.cooper.binge.companion.seerr.feedback.ShakeToReportSetting
 import com.cooper.binge.companion.seerr.seerr.SeerrAuth
 import com.cooper.binge.companion.seerr.telemetry.AnalyticsEvents
 import com.cooper.binge.companion.seerr.ui.Ticker
 import com.cooper.binge.companion.seerr.ui.hub.BingeInstallCheck
 import com.cooper.binge.companion.seerr.ui.hub.NoBingeInstallCheck
 import com.cooper.binge.companion.seerr.ui.minuteClock
+import com.cooper.homelab.core.flags.BooleanPreference
 import com.cooper.homelab.core.flags.FeatureFlags
 import com.cooper.homelab.core.flags.FixedFeatureFlags
 import com.cooper.homelab.core.flags.Flags
@@ -102,7 +103,7 @@ class SettingsViewModel
         private val connection: SeerrConnection,
         private val loader: SettingsLoader,
         private val cache: SettingsReadCache,
-        feedbackPrefs: FeedbackPrefs,
+        @ShakeToReportSetting feedbackPrefs: BooleanPreference,
         telemetryPrefs: TelemetryPrefs,
         bugReportLinks: BugReportLinks,
         @IoDispatcher private val dispatcher: CoroutineDispatcher,

@@ -5,10 +5,11 @@ import androidx.lifecycle.viewModelScope
 import com.cooper.binge.companion.seerr.auth.BingeConnectionStore
 import com.cooper.binge.companion.seerr.di.IoDispatcher
 import com.cooper.binge.companion.seerr.feedback.BugReportLinks
-import com.cooper.binge.companion.seerr.feedback.FeedbackPrefs
+import com.cooper.binge.companion.seerr.feedback.ShakeToReportSetting
 import com.cooper.binge.companion.seerr.ui.hub.BingeInstallCheck
 import com.cooper.binge.companion.seerr.ui.settings.AppSettings
 import com.cooper.binge.companion.seerr.ui.settings.AppSettingsSource
+import com.cooper.homelab.core.flags.BooleanPreference
 import com.cooper.homelab.core.flags.FeatureFlags
 import com.cooper.homelab.core.telemetry.Analytics
 import com.cooper.homelab.core.telemetry.TelemetryPrefs
@@ -51,7 +52,7 @@ internal fun DeviceSwitch.toggle(
 internal class AppSwitchesViewModel
     @Inject
     constructor(
-        feedbackPrefs: FeedbackPrefs,
+        @ShakeToReportSetting feedbackPrefs: BooleanPreference,
         telemetryPrefs: TelemetryPrefs,
         bugReportLinks: BugReportLinks,
         bingeInstallCheck: BingeInstallCheck,

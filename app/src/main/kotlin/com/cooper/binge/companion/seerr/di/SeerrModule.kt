@@ -16,7 +16,8 @@ import com.cooper.binge.companion.seerr.data.SeerrCacheDatabase
 import com.cooper.binge.companion.seerr.data.TitleDao
 import com.cooper.binge.companion.seerr.data.TitleStatusStore
 import com.cooper.binge.companion.seerr.data.UserStore
-import com.cooper.binge.companion.seerr.feedback.FeedbackPrefs
+import com.cooper.binge.companion.seerr.feedback.ShakeToReportSetting
+import com.cooper.binge.companion.seerr.feedback.shakeToReportPreference
 import com.cooper.binge.companion.seerr.notifications.AndroidNotificationText
 import com.cooper.binge.companion.seerr.notifications.AndroidNotifier
 import com.cooper.binge.companion.seerr.notifications.ApplicationScope
@@ -30,6 +31,7 @@ import com.cooper.binge.companion.seerr.telemetry.CrashReportingMigration
 import com.cooper.binge.companion.seerr.ui.hub.BingeInstallCheck
 import com.cooper.binge.companion.seerr.ui.hub.PackageManagerBingeInstallCheck
 import com.cooper.homelab.core.bridge.NotificationForwarding
+import com.cooper.homelab.core.flags.BooleanPreference
 import com.cooper.homelab.core.foundation.Clock
 import com.cooper.homelab.core.telemetry.TelemetryPrefs
 import dagger.Module
@@ -129,9 +131,10 @@ object SeerrModule {
 
     @Provides
     @Singleton
-    fun feedbackPrefs(
+    @ShakeToReportSetting
+    fun shakeToReport(
         @ApplicationContext context: Context,
-    ): FeedbackPrefs = FeedbackPrefs(context.feedbackDataStore)
+    ): BooleanPreference = shakeToReportPreference(context.feedbackDataStore)
 
     @Provides
     @Singleton
