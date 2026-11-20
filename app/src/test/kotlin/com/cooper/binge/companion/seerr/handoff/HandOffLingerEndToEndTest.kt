@@ -2,6 +2,7 @@ package com.cooper.binge.companion.seerr.handoff
 
 import androidx.test.core.app.ApplicationProvider
 import com.cooper.binge.companion.seerr.telemetry.DiscardLogger
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -19,6 +20,8 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import java.net.InetAddress
 import java.net.ServerSocket
+import java.net.SocketException
+import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.time.Duration.Companion.milliseconds
 
 private const val TOKEN = "k7m2pqx4"
@@ -40,7 +43,8 @@ class HandOffLingerEndToEndTest {
             key = key,
         )
     private val screenScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
-    private val appScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+    private val uncaught = CopyOnWriteArrayList<Throwable>()
+    private val appScope = CoroutineScope(Dispatchers.IO + SupervisorJob() + CoroutineExceptionHandler { _, e -> uncaught += e })
     private val client = OkHttpTvSignInClient(OkHttpClient(), logger = DiscardLogger)
     private val target = TvHandOffTarget(host = "127.0.0.1", port = server.localPort, token = TOKEN, key = key)
 
@@ -74,6 +78,19 @@ class HandOffLingerEndToEndTest {
         }
 
     @Test
+    fun `a listener already closed when the linger starts is let go quietly, not thrown into the app scope`() =
+        runBlocking {
+            val closed = ServerSocket(0, 1, InetAddress.getLoopbackAddress())
+            val session = ClosedUnderUs(closed)
+
+            lanHandOffs().linger(session, 1_000.milliseconds)
+            delay(500)
+
+            assertEquals("nothing reached the scope's uncaught handler", emptyList<Throwable>(), uncaught.toList())
+            assertEquals("and the listener was let go", true, session.closedByLinger)
+        }
+
+    @Test
     fun `a listener closed with the screen leaves the phone no answer at all`() =
         runBlocking {
             val serving = screenScope.launch { listener.serve({ HandOffProgress.Connected }, { _, _ -> }, {}) }
@@ -83,4 +100,29 @@ class HandOffLingerEndToEndTest {
 
             assertNull(client.status(target))
         }
+
+    /** A listener whose socket is gone: serving it throws, as a closed one does. */
+    private class ClosedUnderUs(
+        private val server: ServerSocket,
+    ) : AddressHandOffSession {
+        override val url = "http://127.0.0.1/a/x"
+        override val scanUrl = "http://127.0.0.1/a/x"
+        override val pin: String? = null
+
+        @Volatile
+        var closedByLinger = false
+
+        override suspend fun serve(
+            progress: () -> HandOffProgress,
+            onAddress: (address: String, session: String?) -> Unit,
+            onCredentials: (HandOffCredentials) -> Unit,
+        ) {
+            server.close()
+            throw SocketException("Socket closed")
+        }
+
+        override fun close() {
+            closedByLinger = true
+        }
+    }
 }

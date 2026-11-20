@@ -7,7 +7,6 @@ import com.cooper.binge.companion.seerr.auth.LegacyCredentialStore
 import com.cooper.binge.companion.seerr.auth.PlexPinFlow
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.demo.DEMO_ORIGIN
-import com.cooper.binge.companion.seerr.handoff.AddressHandOffSession
 import com.cooper.binge.companion.seerr.handoff.AddressHandOffs
 import com.cooper.binge.companion.seerr.handoff.HAND_OFF_SESSION_MODE
 import com.cooper.binge.companion.seerr.handoff.HandOffCredentials
@@ -634,21 +633,4 @@ class SharedSetupViewModelTest {
         body: String,
         headers: okhttp3.Headers = headersOf(),
     ): FakeResponse = FakeResponse(code = 200, headers = headers.newBuilder().add("Content-Type", "application/json").build(), body = body)
-
-    /** An opener that records the listener handed on to outlive a screen, instead of serving it. */
-    private class RecordingHandOffs(
-        private val session: AddressHandOffSession,
-    ) : AddressHandOffs {
-        @Volatile
-        var lingered: AddressHandOffSession? = null
-
-        override fun open(): HandOffOpening = HandOffOpening.Opened(session)
-
-        override fun linger(
-            session: AddressHandOffSession,
-            within: kotlin.time.Duration,
-        ) {
-            lingered = session
-        }
-    }
 }
