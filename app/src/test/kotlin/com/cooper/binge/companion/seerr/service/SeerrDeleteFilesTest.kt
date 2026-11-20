@@ -103,18 +103,16 @@ class SeerrDeleteFilesTest {
         }
 
     @Test
-    fun `a completed request is withdrawn along with the files`() =
+    fun `a completed request stays when the files go, as history`() =
         runTest {
             val stub = connected()
             seerr.enqueue(json(AVAILABLE_COMPLETED_REQUEST))
-            repeat(2) { seerr.enqueue(answer(204)) }
+            seerr.enqueue(answer(204))
 
             stub.deleteFiles(deleteFiles())
 
-            assertEquals(
-                listOf("GET /api/v1/movie/603", "DELETE /api/v1/media/9/file?is4k=false", "DELETE /api/v1/request/2"),
-                taken(3),
-            )
+            assertEquals(listOf("GET /api/v1/movie/603", "DELETE /api/v1/media/9/file?is4k=false"), taken(2))
+            assertEquals("no request was withdrawn", WARM_UP_CALLS + 2, seerr.requestCount)
         }
 
     @Test

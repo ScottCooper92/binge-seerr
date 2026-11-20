@@ -160,7 +160,8 @@ private fun MediaRecord?.clientRes(): Int = if (this?.isTv == true) R.string.med
 
 /**
  * The ids of the requests that keep [is4k]'s instance requested: every one on it but those declined or completed, which
- * the server no longer counts against the title.
+ * the server no longer counts against the title. The companion's Delete files withdraws the same set, so the two agree
+ * (#1942); a completed request stays as history until Clear data.
  */
 internal fun List<RequestSummary>.openRequestIds(is4k: Boolean): List<Int> =
     filter { it.is4k == is4k && it.status != SeerrRequestStatusCode.Declined && it.status != SeerrRequestStatusCode.Completed }
