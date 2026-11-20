@@ -59,11 +59,11 @@ jobs:
   # the gate rather than reporting beside it. The caller grants `pull-requests: read`, which the
   # shared workflow reads the label with: a reusable workflow cannot hold more than its caller.
   submodule-pins:
-    if: github.event.pull_request.draft == false
+    if: github.event.pull_request.draft == false && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
     permissions:
       contents: read
       pull-requests: read
-    uses: ScottCooper92/binge-ci/.github/workflows/submodule-pins.yml@6d81f1e58e09d0714852848e116dfe7b421f7917 # v1.0.54
+    uses: ScottCooper92/binge-ci/.github/workflows/submodule-pins.yml@a7d61b314a1cff13ca2c9fce144c05b5f1fe4355 # v1.0.55
     with:
       private_submodules: homelab-core,binge-design-system,binge-ci
     secrets:
@@ -114,6 +114,22 @@ jobs:
             exit 0
           }
           [ "$EVENT" = pull_request ] || all "Not a pull request"
+
+          # A fork's pull_request run gets no secrets, so the jobs that mint the submodule token cannot start,
+          # and the submodules are private besides. Skip them on purpose and say so, rather than let four jobs
+          # fail at the token step and read as the contributor's fault. `build` accepts these skips because
+          # they are this job's own answer. Do not fall back to `github.token`: it cannot read a private
+          # submodule, and a fork's run would only fail later and less clearly at the checkout.
+          if [ "$SAME_REPO" != true ]; then
+            printf 'product=false\nscreens=false\nrelease=false\n' >> "$GITHUB_OUTPUT"
+            {
+              echo "Fork pull request: the build, test, screenshot and release jobs are skipped on purpose."
+              echo "Repository secrets are withheld from forks, and the submodules need them. This run built nothing, so a green"
+              echo "\`build\` here does not vouch for the change: a maintainer builds the branch before merging it."
+            } >> "$GITHUB_STEP_SUMMARY"
+            echo "::notice title=Fork pull request::The build jobs are skipped because secrets are withheld from forks. Nothing was built."
+            exit 0
+          fi
 
           head="$(git rev-parse HEAD)"
           # The last commit of this PR that a whole run passed on. What changed since is all a run has to
@@ -461,7 +477,7 @@ jobs:
 
       # binge-ci's shared step: a pinned release verified against its published checksum, with
       # shellcheck at warning severity.
-      - uses: ScottCooper92/binge-ci/.github/actions/actionlint@6d81f1e58e09d0714852848e116dfe7b421f7917 # v1.0.54
+      - uses: ScottCooper92/binge-ci/.github/actions/actionlint@a7d61b314a1cff13ca2c9fce144c05b5f1fe4355 # v1.0.55
 
   # A red nightly has no PR or push to carry it, so without this it is a red mark in the
   # Actions tab that nothing points at. One issue stays open while the canary is red and
@@ -476,7 +492,7 @@ jobs:
     permissions:
       issues: write
     steps:
-      - uses: ScottCooper92/binge-ci/.github/actions/nightly-report@6d81f1e58e09d0714852848e116dfe7b421f7917 # v1.0.54
+      - uses: ScottCooper92/binge-ci/.github/actions/nightly-report@a7d61b314a1cff13ca2c9fce144c05b5f1fe4355 # v1.0.55
         with:
           result: ${{ needs.build.result }}
           title: Nightly CI is failing on main

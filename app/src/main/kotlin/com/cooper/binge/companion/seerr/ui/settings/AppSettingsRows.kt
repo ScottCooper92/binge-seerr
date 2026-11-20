@@ -47,7 +47,7 @@ internal fun appRows(
             detail = stringResource(R.string.settings_report_bug_caption),
             destination = ListItemDestination.External,
             onClick = { context.openInBrowser(app.bugReportUrl) },
-        ),
+        ).copy(key = SettingRows.APP_REPORT_BUG),
         // Only while the remote flag offers discovery, which settings search cannot know, so the row has no search entry.
         app.discovery?.let { on ->
             ListItem(

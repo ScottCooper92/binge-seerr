@@ -99,7 +99,7 @@ private fun FilterSheetHost(
 
 /** What the grid lists and in what order: the preset or slider's name, then the order. The title says "Discover", as Binge's does. */
 @Composable
-private fun GridControls.subtitle(
+internal fun GridControls.subtitle(
     kind: TitleKind,
     name: String?,
 ): String {

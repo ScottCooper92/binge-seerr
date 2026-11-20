@@ -24,5 +24,5 @@ jobs:
   collect:
     # Fork PRs only; the called workflow checks this too. A same-repository PR is the bots' business.
     if: github.event.pull_request.head.repo.full_name != github.repository
-    uses: ScottCooper92/binge-ci/.github/workflows/fork-review.yml@6d81f1e58e09d0714852848e116dfe7b421f7917 # v1.0.54
+    uses: ScottCooper92/binge-ci/.github/workflows/fork-review.yml@a7d61b314a1cff13ca2c9fce144c05b5f1fe4355 # v1.0.55
     # No secrets: a fork's run is handed none, and this stage has no use for one.

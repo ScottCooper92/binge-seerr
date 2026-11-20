@@ -25,6 +25,7 @@ internal object SettingRows {
     const val NETWORK_CSRF = "network.csrf"
 
     const val USERS_LOCAL_LOGIN = "users.local-login"
+    const val USERS_NEW_SIGN_UPS = "users.new-sign-ups"
     const val USERS_DEFAULT_PERMISSIONS = "users.default-permissions"
 
     const val METADATA_TV = "metadata.tv"
@@ -36,6 +37,7 @@ internal object SettingRows {
     const val ACCOUNT_DISCOVER_REGION = "account.discover-region"
     const val ACCOUNT_DISCOVER_LANGUAGE = "account.discover-language"
 
+    const val APP_REPORT_BUG = "app.report-bug"
     const val APP_SHAKE_TO_REPORT = "app.shake-to-report"
     const val APP_SHARE_USAGE_DATA = "app.share-usage-data"
     const val APP_SEND_CRASH_REPORTS = "app.send-crash-reports"

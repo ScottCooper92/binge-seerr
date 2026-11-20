@@ -17,6 +17,7 @@ import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.ui.NavDisplay
 import com.binge.designsystem.PaneContent
 import com.binge.designsystem.PaneEdge
+import com.binge.designsystem.component.OnTabReselect
 import com.cooper.binge.companion.seerr.flags.LocalDiscoveryEnabled
 import com.cooper.binge.companion.seerr.ui.discover.title.LocalOpenTitle
 import com.cooper.binge.companion.seerr.ui.discover.title.rememberOpenTitle
@@ -32,6 +33,7 @@ import com.cooper.binge.companion.seerr.ui.state.LoadingScreen
 import com.cooper.homelab.core.uiandroid.shell.RestartOnSessionEnd
 import com.cooper.homelab.core.uiandroid.shell.TabShellState
 import com.cooper.homelab.core.uiandroid.shell.nothingOpenBeside
+import com.cooper.homelab.core.uiandroid.shell.popToRoot
 import com.cooper.homelab.core.uiandroid.shell.settleStash
 
 /**
@@ -143,6 +145,7 @@ private fun EntryProviderScope<NavKey>.homeEntries(
                     backStack.push(UserDetailRoute(id))
                 })
             }, settings = {
+                OnTabReselect(SeerrTab.Settings) { backStack.popToRoot() }
                 if (panes.hubBeside()) {
                     SettingsPanes(
                         hub = {
