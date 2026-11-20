@@ -13,6 +13,7 @@ import com.cooper.binge.companion.seerr.preview.SeerrScreenPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrScreenStatePreview
 import com.cooper.binge.companion.seerr.preview.SeerrSpanishPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrTabletPanesPreview
+import com.cooper.binge.companion.seerr.seerr.SeerrError
 import kotlinx.coroutines.flow.emptyFlow
 
 private const val EPISODES_PX = 3850
@@ -253,4 +254,16 @@ class SeriesPageScreenshotTest {
             NO_SEASON_ACTIONS,
             scrollState = rememberScrollState(initial = DETAILS_END_PX),
         )
+
+    /** A failed read: this app's headline and message, and Try again. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun failed() = Frame(SeriesPageUiState.Error(SeerrError.Unreachable))
+
+    /** A server Android will not let this app reach: this app's headline, and Allow in place of Try again. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun failedLocalNetworkDenied() = Frame(SeriesPageUiState.Error(SeerrError.LocalNetworkDenied))
 }
