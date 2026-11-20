@@ -1,8 +1,6 @@
 package com.cooper.binge.companion.seerr.ui.nav
 
 import androidx.compose.ui.test.hasSetTextAction
-import androidx.compose.ui.test.hasText
-import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
@@ -61,17 +59,6 @@ class TitleStatusMoreJourneysTest {
         host.await("$FILM on the grid without a status") { !journey.cardReads("") }
     }
 
-    /** Clicks the lowest node reading [label] until [done]: the sheet's or the dialog's button, not the page's behind it. */
-    private fun clickLowestUntil(
-        what: String,
-        label: String,
-        done: () -> Boolean,
-    ) = host.await(what) {
-        val finished = done()
-        if (!finished) journey.lowest(label)?.performClick()
-        finished
-    }
-
     @Test
     fun `a film requested from its page shows its new status on Search's row after Back`() {
         NavHostActivity.discoveryEnabled = true
@@ -96,15 +83,10 @@ class TitleStatusMoreJourneysTest {
     fun `a film blocked from its page shows blocklisted on the grid's card after Back`() {
         launchGrid()
         journey.openPage(shows = declined)
-        host.clickUntil(
-            "the block confirm",
-            target = { host.compose.onAllNodes(hasText(block)).onFirst() },
-            reached = { host.isShowing(host.string(R.string.title_block_confirm_title, FILM)) },
-        )
-        // The page's button and the dialog's confirm share a label, so the dialog's is the lower one.
-        clickLowestUntil("$FILM blocked and the dialog closed", block) {
-            !host.isShowing(host.string(R.string.title_block_confirm_title, FILM))
-        }
+        val blockTitle = host.string(R.string.title_block_confirm_title, FILM)
+        journey.clickUntil("the block confirm", block) { host.isShowing(blockTitle) }
+        // The page's button and the dialog's confirm share a label, so the dialog's is the last.
+        journey.clickUntil("$FILM blocked and the dialog closed", block, last = true) { !host.isShowing(blockTitle) }
 
         host.back()
 
@@ -119,20 +101,11 @@ class TitleStatusMoreJourneysTest {
         journey.requestFromTheCardAndGoBack()
         journey.awaitCard("grid")
         journey.openPage(shows = PROCESSING)
-        host.clickUntil(
-            "the manage sheet",
-            target = { host.compose.onAllNodes(hasText(PROCESSING)).onFirst() },
-            reached = { host.isShowing(remove, exactly = true) },
-        )
-        host.clickUntil(
-            "the remove confirm",
-            target = { host.compose.onAllNodes(hasText(remove)).onFirst() },
-            reached = { host.isShowing(host.string(R.string.request_remove_confirm_title)) },
-        )
-        // The sheet's row and the dialog's confirm share a label, so the dialog's is the lower one.
-        clickLowestUntil("the request removed and the dialog closed", remove) {
-            !host.isShowing(host.string(R.string.request_remove_confirm_title))
-        }
+        val removeTitle = host.string(R.string.request_remove_confirm_title)
+        journey.clickUntil("the manage sheet", PROCESSING) { host.isShowing(remove, exactly = true) }
+        journey.clickUntil("the remove confirm", remove) { host.isShowing(removeTitle) }
+        // The sheet's row and the dialog's confirm share a label, so the dialog's is the last.
+        journey.clickUntil("the request removed and the dialog closed", remove, last = true) { !host.isShowing(removeTitle) }
 
         host.back()
 
@@ -145,12 +118,10 @@ class TitleStatusMoreJourneysTest {
         launchGrid()
         // The film still has the request the demo seeded, so the demo refuses a second one and the store takes its guess back.
         journey.openPage(shows = declined)
-        host.clickUntil(
-            "the request sheet",
-            target = { host.compose.onAllNodes(hasText(declined)).onFirst() },
-            reached = { host.isShowing(journey.submit, exactly = true) },
-        )
-        clickLowestUntil("the sheet closed on the refused request", journey.submit) { !host.isShowing(journey.submit, exactly = true) }
+        journey.clickUntil("the request sheet", declined) { host.isShowing(journey.submit, exactly = true) }
+        journey.clickUntil("the sheet closed on the refused request", journey.submit, last = true) {
+            !host.isShowing(journey.submit, exactly = true)
+        }
         host.await("the page says it was already requested") { host.isShowing(host.string(R.string.request_sheet_done_already)) }
 
         host.back()

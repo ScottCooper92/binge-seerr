@@ -96,6 +96,26 @@ internal class TitleStatusJourney(
         return lowest?.let { nodes[it] }
     }
 
+    /**
+     * Clicks a node reading exactly [label] on each poll until [reached], and says what the screen showed if none ever did. [last]
+     * takes the last match in the tree, which is a dialog's own button over the sheet's or page's behind it, as a dialog's window
+     * is composed after what it covers. A node that is gone when the click lands is waited out, not an error.
+     */
+    fun clickUntil(
+        what: String,
+        label: String,
+        last: Boolean = false,
+        reached: () -> Boolean,
+    ) = host.await(what) {
+        val done = reached()
+        if (!done) {
+            val nodes = host.compose.onAllNodes(hasText(label))
+            val count = nodes.fetchSemanticsNodes().size
+            if (count > 0) nodes[if (last) count - 1 else 0].performClick()
+        }
+        done
+    }
+
     /** Opens [FILM]'s page from [open], which finds its card or row. */
     fun openPage(
         open: () -> SemanticsNodeInteraction = { card().also { it.performScrollTo() } },
