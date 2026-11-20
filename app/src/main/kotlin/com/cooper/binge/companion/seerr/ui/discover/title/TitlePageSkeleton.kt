@@ -140,11 +140,17 @@ private fun ActionsSkeleton(modifier: Modifier = Modifier) {
 
 /**
  * The "Overview" heading, the collapsed synopsis and the expand toggle's row. Each line is a blank [Text] in the page's own style under
- * a plate, so its height follows the font as the page's does, and the toggle is the touch target the page's button is.
+ * a plate, so its height follows the font as the page's does, and the toggle is the touch target the page's button is. [modifier] sits
+ * outside the page's inset, as the design system's section does; [insideInset] sits inside it, for a page that anchors there, and
+ * [inset] is the page's own, where it keeps to a flat one.
  */
 @Composable
-internal fun OverviewSkeleton(modifier: Modifier = Modifier) {
-    Column(modifier = modifier.padding(horizontal = resolvedContentInset())) {
+internal fun OverviewSkeleton(
+    modifier: Modifier = Modifier,
+    insideInset: Modifier = Modifier,
+    inset: Dp = resolvedContentInset(),
+) {
+    Column(modifier = modifier.padding(horizontal = inset).then(insideInset)) {
         TextPlate(MaterialTheme.typography.titleMedium, Modifier.width(dimensionResource(DesR.dimen.skeleton_header_width)))
         Spacer(Modifier.height(dimensionResource(DesR.dimen.detail_meta_spacing)))
         repeat(OVERVIEW_LINE_COUNT) { index ->
