@@ -3,11 +3,12 @@ package com.cooper.binge.companion.seerr.ui.settings
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import com.cooper.binge.companion.seerr.auth.NoBingeConnectionStore
 import com.cooper.binge.companion.seerr.feedback.BugReportLinks
-import com.cooper.binge.companion.seerr.feedback.FeedbackPrefs
+import com.cooper.binge.companion.seerr.feedback.shakeToReportPreference
 import com.cooper.binge.companion.seerr.flags.DiscoveryEnabled
-import com.cooper.binge.companion.seerr.flags.DiscoveryPrefs
+import com.cooper.binge.companion.seerr.flags.discoveryPreference
 import com.cooper.binge.companion.seerr.ui.hub.NoBingeInstallCheck
 import com.cooper.binge.companion.seerr.util.RecordingAnalytics
+import com.cooper.homelab.core.flags.BooleanPreference
 import com.cooper.homelab.core.flags.FixedFeatureFlags
 import com.cooper.homelab.core.flags.FlagPreferenceGate
 import com.cooper.homelab.core.flags.Flags
@@ -30,11 +31,13 @@ class AppSettingsSourceDiscoveryTest {
 
     private val analytics = RecordingAnalytics()
 
-    private fun kotlinx.coroutines.test.TestScope.source(flag: Boolean): Pair<AppSettingsSource, DiscoveryPrefs> {
+    private fun kotlinx.coroutines.test.TestScope.source(flag: Boolean): Pair<AppSettingsSource, BooleanPreference> {
         val dispatcher = UnconfinedTestDispatcher(testScheduler)
         val flags = FixedFeatureFlags(Flags.of(DiscoveryEnabled to flag))
-        val discovery = DiscoveryPrefs(PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("d.preferences_pb") })
-        val feedback = FeedbackPrefs(PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("f.preferences_pb") })
+        val discovery =
+            discoveryPreference(PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("d.preferences_pb") })
+        val feedback =
+            shakeToReportPreference(PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("f.preferences_pb") })
         val telemetry =
             TelemetryPrefs(
                 PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("t.preferences_pb") },
@@ -51,7 +54,7 @@ class AppSettingsSourceDiscoveryTest {
                 analytics,
                 backgroundScope,
                 dispatcher,
-                FlagPreferenceGate(flags, DiscoveryEnabled, discovery.enabled, discovery::setEnabled, backgroundScope),
+                FlagPreferenceGate(flags, DiscoveryEnabled, discovery.value, discovery::set, backgroundScope),
             )
         return source to discovery
     }
@@ -69,7 +72,7 @@ class AppSettingsSourceDiscoveryTest {
             val (source, prefs) = source(flag = true)
             assertEquals(true, source.settings.first().discovery)
 
-            prefs.setEnabled(false)
+            prefs.set(false)
             assertEquals(false, source.settings.first { it.discovery == false }.discovery)
         }
 
@@ -80,7 +83,7 @@ class AppSettingsSourceDiscoveryTest {
 
             source.setDiscovery(false)
 
-            assertEquals(false, prefs.enabled.first { !it })
+            assertEquals(false, prefs.value.first { !it })
             assertEquals(listOf("discovery_changed" to mapOf("enabled" to false)), analytics.events)
         }
 }

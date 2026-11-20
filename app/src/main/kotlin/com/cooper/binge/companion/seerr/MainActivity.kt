@@ -23,8 +23,8 @@ import com.cooper.binge.companion.seerr.auth.ConnectionRestore
 import com.cooper.binge.companion.seerr.auth.ForegroundUserRefresh
 import com.cooper.binge.companion.seerr.discover.sliders.DiscoverSliderRepository
 import com.cooper.binge.companion.seerr.feedback.BugReportLinks
-import com.cooper.binge.companion.seerr.feedback.FeedbackPrefs
 import com.cooper.binge.companion.seerr.feedback.ShakeToReportPrompt
+import com.cooper.binge.companion.seerr.feedback.ShakeToReportSetting
 import com.cooper.binge.companion.seerr.flags.LocalDiscoveryEnabled
 import com.cooper.binge.companion.seerr.flags.LocalFlags
 import com.cooper.binge.companion.seerr.telemetry.LocalAnalytics
@@ -39,6 +39,7 @@ import com.cooper.binge.companion.seerr.ui.shell.SeerrTab
 import com.cooper.binge.companion.seerr.ui.shell.openLink
 import com.cooper.binge.companion.seerr.ui.shell.rememberSeerrTabs
 import com.cooper.binge.companion.seerr.ui.tv.TvSeerrShell
+import com.cooper.homelab.core.flags.BooleanPreference
 import com.cooper.homelab.core.flags.FeatureFlags
 import com.cooper.homelab.core.flags.PreferenceGate
 import com.cooper.homelab.core.telemetry.Analytics
@@ -66,7 +67,8 @@ class MainActivity : ComponentActivity() {
     lateinit var connectionRestore: ConnectionRestore
 
     @Inject
-    lateinit var feedbackPrefs: FeedbackPrefs
+    @field:ShakeToReportSetting
+    lateinit var feedbackPrefs: BooleanPreference
 
     @Inject
     lateinit var bugReportLinks: BugReportLinks
@@ -127,7 +129,7 @@ class MainActivity : ComponentActivity() {
                 deepLinks.backStacks.collect { routes -> tabs.openLink(backStack, routes) }
             }
             // Phone only: a television has no accelerometer, and reports a bug from Settings instead.
-            val shakeToReport by feedbackPrefs.shakeToReport.collectAsStateWithLifecycle(initialValue = false)
+            val shakeToReport by feedbackPrefs.value.collectAsStateWithLifecycle(initialValue = false)
             CompositionLocalProvider(LocalFlags provides flags, LocalDiscoveryEnabled provides discovery) {
                 SeerrTheme {
                     ShakeToReportPrompt(enabled = shakeToReport, bugReportUrl = bugReportLinks::url)

@@ -2,10 +2,10 @@ package com.cooper.binge.companion.seerr.ui.settings
 
 import com.cooper.binge.companion.seerr.auth.BingeConnectionStore
 import com.cooper.binge.companion.seerr.feedback.BugReportLinks
-import com.cooper.binge.companion.seerr.feedback.FeedbackPrefs
 import com.cooper.binge.companion.seerr.telemetry.AnalyticsEvents
 import com.cooper.binge.companion.seerr.ui.hub.BingeInstallCheck
 import com.cooper.binge.companion.seerr.ui.hub.bingeStatusOf
+import com.cooper.homelab.core.flags.BooleanPreference
 import com.cooper.homelab.core.flags.FeatureFlags
 import com.cooper.homelab.core.flags.NoPreferenceGate
 import com.cooper.homelab.core.flags.PreferenceGate
@@ -24,7 +24,7 @@ import kotlinx.coroutines.launch
  * reads. Each screen's ViewModel builds one over its own [scope], so none of them carries the other's server fetches.
  */
 internal class AppSettingsSource(
-    private val feedbackPrefs: FeedbackPrefs,
+    private val feedbackPrefs: BooleanPreference,
     private val telemetryPrefs: TelemetryPrefs,
     bugReportLinks: BugReportLinks,
     private val bingeInstallCheck: BingeInstallCheck,
@@ -40,7 +40,7 @@ internal class AppSettingsSource(
 
     val settings: Flow<AppSettings> =
         combine(
-            feedbackPrefs.shakeToReport,
+            feedbackPrefs.value,
             telemetryPrefs.analyticsConsent,
             telemetryPrefs.crashReportingEnabled,
             combine(bingeInstalled, bingeConnection.hasConnected, featureFlags.flags, ::bingeStatusOf),
@@ -67,7 +67,7 @@ internal class AppSettingsSource(
 
     fun setShakeToReport(enabled: Boolean) {
         analytics.event(AnalyticsEvents.SHAKE_TO_REPORT_CHANGED, mapOf(AnalyticsEvents.PARAM_ENABLED to enabled))
-        scope.launch(dispatcher) { feedbackPrefs.setShakeToReport(enabled) }
+        scope.launch(dispatcher) { feedbackPrefs.set(enabled) }
     }
 
     fun setShareUsageData(enabled: Boolean) {

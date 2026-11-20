@@ -5,7 +5,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
 import com.cooper.binge.companion.seerr.flags.DiscoveryEnabled
-import com.cooper.binge.companion.seerr.flags.DiscoveryPrefs
+import com.cooper.binge.companion.seerr.flags.discoveryPreference
 import com.cooper.binge.companion.seerr.notifications.ApplicationScope
 import com.cooper.homelab.core.flags.FeatureFlags
 import com.cooper.homelab.core.flags.FlagPreferenceGate
@@ -34,7 +34,7 @@ object DiscoveryModule {
         featureFlags: FeatureFlags,
         @ApplicationScope scope: CoroutineScope,
     ): PreferenceGate {
-        val prefs = DiscoveryPrefs(context.discoveryDataStore)
-        return FlagPreferenceGate(featureFlags, DiscoveryEnabled, prefs.enabled, prefs::setEnabled, scope)
+        val prefs = discoveryPreference(context.discoveryDataStore)
+        return FlagPreferenceGate(featureFlags, DiscoveryEnabled, prefs.value, prefs::set, scope)
     }
 }

@@ -1,6 +1,7 @@
 package com.cooper.binge.companion.seerr.flags
 
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import com.cooper.homelab.core.flags.BooleanPreference
 import com.cooper.homelab.core.flags.FixedFeatureFlags
 import com.cooper.homelab.core.flags.FlagPreferenceGate
 import com.cooper.homelab.core.flags.Flags
@@ -26,12 +27,12 @@ class DiscoveryGateTest {
     @get:Rule
     val folder = TemporaryFolder()
 
-    private fun TestScope.wiring(flag: Boolean): Pair<FlagPreferenceGate, DiscoveryPrefs> {
+    private fun TestScope.wiring(flag: Boolean): Pair<FlagPreferenceGate, BooleanPreference> {
         val store = PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("d.preferences_pb") }
-        val prefs = DiscoveryPrefs(store)
+        val prefs = discoveryPreference(store)
         val flags = FixedFeatureFlags(Flags.of(DiscoveryEnabled to flag))
         val scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler))
-        val gate = FlagPreferenceGate(flags, DiscoveryEnabled, prefs.enabled, prefs::setEnabled, scope)
+        val gate = FlagPreferenceGate(flags, DiscoveryEnabled, prefs.value, prefs::set, scope)
         return gate to prefs
     }
 
@@ -39,7 +40,7 @@ class DiscoveryGateTest {
     fun `the preference defaults to on, and the gate offers the row only while the flag is on`() =
         runTest {
             val (on, prefs) = wiring(flag = true)
-            assertTrue(prefs.enabled.first())
+            assertTrue(prefs.value.first())
             assertTrue(on.offered.first())
             assertEquals(true, on.resolved.first { it != null })
         }
@@ -59,7 +60,7 @@ class DiscoveryGateTest {
 
             gate.setPreference(false)
 
-            assertFalse(prefs.enabled.first { !it })
+            assertFalse(prefs.value.first { !it })
             assertEquals(false, gate.resolved.first { it == false })
         }
 }

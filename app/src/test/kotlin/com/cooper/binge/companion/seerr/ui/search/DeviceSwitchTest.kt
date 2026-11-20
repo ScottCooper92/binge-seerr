@@ -4,11 +4,12 @@ import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.lifecycle.ViewModelStore
 import com.cooper.binge.companion.seerr.auth.NoBingeConnectionStore
 import com.cooper.binge.companion.seerr.feedback.BugReportLinks
-import com.cooper.binge.companion.seerr.feedback.FeedbackPrefs
+import com.cooper.binge.companion.seerr.feedback.shakeToReportPreference
 import com.cooper.binge.companion.seerr.ui.hub.NoBingeInstallCheck
 import com.cooper.binge.companion.seerr.ui.settings.AppSettings
 import com.cooper.binge.companion.seerr.util.MainDispatcherRule
 import com.cooper.binge.companion.seerr.util.RecordingAnalytics
+import com.cooper.homelab.core.flags.BooleanPreference
 import com.cooper.homelab.core.flags.FixedFeatureFlags
 import com.cooper.homelab.core.flags.Flags
 import com.cooper.homelab.core.telemetry.AnalyticsConsent
@@ -38,14 +39,15 @@ class DeviceSwitchTest {
 
     private val viewModels = ViewModelStore()
     private val analytics = RecordingAnalytics()
-    private lateinit var feedbackPrefs: FeedbackPrefs
+    private lateinit var feedbackPrefs: BooleanPreference
     private lateinit var telemetryPrefs: TelemetryPrefs
 
     @After
     fun tearDown() = viewModels.clear()
 
     private fun TestScope.viewModel(): AppSwitchesViewModel {
-        feedbackPrefs = FeedbackPrefs(PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("f.preferences_pb") })
+        feedbackPrefs =
+            shakeToReportPreference(PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("f.preferences_pb") })
         telemetryPrefs =
             TelemetryPrefs(
                 PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("t.preferences_pb") },
@@ -91,7 +93,7 @@ class DeviceSwitchTest {
 
             shake.toggle(vm.ready()) { vm.set(shake, it) }.onCheckedChange(false)
             vm.ready { !it.shakeToReport }
-            assertFalse(feedbackPrefs.shakeToReport.first())
+            assertFalse(feedbackPrefs.value.first())
             assertEquals(listOf("shake_to_report_changed" to mapOf("enabled" to false)), analytics.events)
 
             usage.toggle(vm.ready()) { vm.set(usage, it) }.onCheckedChange(true)
