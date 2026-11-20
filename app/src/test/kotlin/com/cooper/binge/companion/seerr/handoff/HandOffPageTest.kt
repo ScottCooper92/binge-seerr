@@ -36,6 +36,8 @@ class HandOffPageTest {
             pinWrong = "Pin wrong",
             pinLocked = "Pin locked",
             failed = "Not found <here>",
+            notSetUpTitle = "Not set up <yet>",
+            notSetUpBody = "Finish it first",
             signInTitle = "Finish",
             signInBody = { server -> "Sign in to $server" },
             connectedTitle = "Done",
@@ -181,6 +183,16 @@ class HandOffPageTest {
         assertTrue(failed.contains("Not found &lt;here&gt;"))
         assertTrue(Regex("""<div id="openapp">[^<]*<hr>.*id="app".*?</div>""", RegexOption.DOT_MATCHES_ALL).containsMatchIn(failed))
         assertFalse(failed.contains("Invalid"))
+    }
+
+    @Test
+    fun `a server that is not set up says so, offers no form, and follows the TV`() {
+        val notSetUp = page.status("en", HandOffProgress.NotSetUp)
+
+        assertTrue(notSetUp.contains("Not set up &lt;yet&gt;"))
+        assertTrue(notSetUp.contains("Finish it first"))
+        assertFalse("no address is taken while the TV is on its not-set-up page", notSetUp.contains("<form method=\"post\">"))
+        assertFalse(HandOffProgress.NotSetUp.acceptsAddress)
     }
 
     @Test

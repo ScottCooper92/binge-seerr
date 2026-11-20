@@ -253,7 +253,16 @@ class SharedSetupViewModel
         fun changeServer() {
             handOff.cancel()
             links.cancel()
-            app.update { it.copy(notice = null, code = null, received = false, handOffRejected = false, resetError = null) }
+            app.update {
+                it.copy(
+                    notice = null,
+                    code = null,
+                    received = false,
+                    handedSession = null,
+                    handOffRejected = false,
+                    resetError = null,
+                )
+            }
             machine.changeServer()
         }
 
@@ -321,8 +330,10 @@ class SharedSetupViewModel
          */
         private suspend fun adoptHandedSession(server: ProbedServer<SetupServer>): Boolean {
             val session = app.value.handedSession
-            if (session == null || !server.setUp) return false
+            if (session == null) return false
             app.update { it.copy(handedSession = null, awaitingPermission = false) }
+            // A server that is not set up has been read but cannot judge a session, so it is not kept for a later read (#1994).
+            if (!server.setUp) return false
             val adopted = connection.adoptHandedSession(server.preview.baseUrl, session, analytics, crashBreadcrumbs)
             if (!adopted) app.update { it.copy(handOffRejected = true) }
             return adopted

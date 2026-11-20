@@ -155,6 +155,8 @@ app:handoff_page_invalid  f66c620771bd
 app:handoff_page_mode  11aaa14268df
 app:handoff_page_mode_api_key  16f0ee47f993
 app:handoff_page_mode_local  871e019bee76
+app:handoff_page_not_set_up_body  72eb233e897a
+app:handoff_page_not_set_up_title  02f2fd768c3d
 app:handoff_page_open_app  e19306c1997f
 app:handoff_page_password  e7cf3ef4f17c
 app:handoff_page_pin_body  3d1ab6d24f6b
@@ -652,6 +654,7 @@ app:send_signin_continue_as  8c3ac09ff743
 app:send_signin_continue_as_you  69d7ffc62e45
 app:send_signin_form  eed872434e62
 app:send_signin_lost  0b8b0899c90a
+app:send_signin_not_set_up  ea754cedd6b4
 app:send_signin_on_tv  b0724ebd3943
 app:send_signin_redirected  0da74fbf0f16
 app:send_signin_rejected  61c349dccc4a

@@ -67,8 +67,8 @@ internal fun SetupUiState.toHandOffProgress(
                 attempt = attempts,
                 serverId = server.instanceId,
             )
-        // The phone has nothing to send to a server that is not set up, so for its page the attempt has failed.
-        is SetupUiState.NotSetUp -> HandOffProgress.Failed
+        // The server was reached and has nothing to sign in to yet: the page says so, as the TV does, and follows it (#1991).
+        is SetupUiState.NotSetUp -> HandOffProgress.NotSetUp
         is SetupUiState.Connected -> HandOffProgress.Connected
     }
 

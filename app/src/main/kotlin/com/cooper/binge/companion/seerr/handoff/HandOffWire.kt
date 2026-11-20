@@ -55,6 +55,9 @@ data class HandOffStatus(
         const val CHECKING = "checking"
         const val CONFIRM = "confirm"
         const val FAILED = "failed"
+
+        /** The server answered and has not finished its first-run setup (#1991). A phone that does not know it reads any unknown state as the TV still checking. */
+        const val NOT_SET_UP = "notsetup"
         const val SIGN_IN = "signin"
         const val CONNECTED = "connected"
     }
@@ -74,6 +77,7 @@ internal fun HandOffProgress.toStatus(): HandOffStatus =
         HandOffProgress.Checking -> HandOffStatus(HandOffStatus.CHECKING)
         HandOffProgress.ConfirmOnTv -> HandOffStatus(HandOffStatus.CONFIRM)
         HandOffProgress.Failed -> HandOffStatus(HandOffStatus.FAILED)
+        HandOffProgress.NotSetUp -> HandOffStatus(HandOffStatus.NOT_SET_UP)
         is HandOffProgress.SignIn ->
             HandOffStatus(
                 HandOffStatus.SIGN_IN,

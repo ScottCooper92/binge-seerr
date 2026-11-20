@@ -46,6 +46,17 @@ class SetupHandOffProgressTest {
         assertEquals(HandOffProgress.Failed, failed.toHandOffProgress(received = true, failed = true, attempts = 0))
     }
 
+    /** #1991: the server was reached, so the phone's page must not say it could not be. */
+    @Test
+    fun `a server that is not set up is its own state for the phone, not a failed address`() {
+        val server =
+            SetupServer("http://192.168.1.5:5055/", "Seerr", SeerrVariant.Seerr, null, null, emptyList(), false, null, setUp = false)
+        val notSetUp = SetupUiState.NotSetUp(server = server, isChecking = false, error = null)
+
+        assertEquals(HandOffProgress.NotSetUp, notSetUp.toHandOffProgress(received = true, failed = false, attempts = 1))
+        assertEquals(HandOffStatus.NOT_SET_UP, HandOffProgress.NotSetUp.toStatus().state)
+    }
+
     @Test
     fun `a TV on its sign-in step tells the phone which server it is, by the id and not only the address`() {
         val server =

@@ -57,6 +57,15 @@ internal fun SigningInContent(
                 modifier = Modifier.fillMaxWidth(),
             )
         }
+        SignInStep.NotSetUp -> {
+            Body(stringResource(R.string.send_signin_not_set_up, state.tv))
+            BingeLoadingIndicator()
+            BingeOutlinedButton(
+                label = stringResource(R.string.send_address_close),
+                onClick = actions.onClose,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
         is SignInStep.OnTv -> Done(stringResource(R.string.send_signin_on_tv, step.server), R.string.send_address_close, actions.onClose)
         is SignInStep.Form -> SignInFormContent(step, actions)
         is SignInStep.Session -> {

@@ -108,6 +108,8 @@ internal class LanAddressHandOffs
                 pinWrong = resources.getString(R.string.handoff_page_pin_wrong),
                 pinLocked = resources.getString(R.string.handoff_page_pin_locked),
                 failed = resources.getString(R.string.handoff_page_failed),
+                notSetUpTitle = resources.getString(R.string.handoff_page_not_set_up_title),
+                notSetUpBody = resources.getString(R.string.handoff_page_not_set_up_body),
                 signInTitle = resources.getString(R.string.handoff_page_signin_title),
                 signInBody = { server -> resources.getString(R.string.handoff_page_signin_body, server) },
                 connectedTitle = resources.getString(R.string.handoff_page_connected_title),
