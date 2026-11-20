@@ -77,7 +77,7 @@ class SeerrConnectPartsTest {
                     state = state,
                     actions = ConnectSignInActions({}, { edits += it }, {}, {}, {}, {}),
                     copy = seerrConnectCopy(),
-                    errorText = ::seerrErrorText,
+                    errorText = { seerrErrorText(it) },
                     afterFields = options.afterFields,
                     afterError = options.afterError,
                     fieldModifier = options.fieldModifier,

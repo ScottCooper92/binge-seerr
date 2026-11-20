@@ -151,6 +151,30 @@ class TitleActionsModelTest {
     }
 
     @Test
+    fun `a declined standard request does not read Declined while the 4K version is held`() {
+        val declined = listOf(TitleRequest(id = 7, is4k = false, status = SeerrRequestStatusCode.Declined, requesterId = 1))
+        val open = VersionState(TitleAvailability.None, mayRequest = true)
+
+        assertEquals(
+            TitleState.Request,
+            titleActionsModel(open, held(TitleAvailability.Pending), declined, mayReport = false).primary.state,
+        )
+        assertEquals(
+            TitleState.Request,
+            titleActionsModel(open, held(TitleAvailability.Available), declined, mayReport = false).primary.state,
+        )
+    }
+
+    @Test
+    fun `block is not offered while the 4K version is held even if the standard one is open`() {
+        val open = VersionState(TitleAvailability.None, mayRequest = true)
+
+        assertFalse(titleActionsModel(open, held(TitleAvailability.Pending), emptyList(), mayReport = false, mayBlock = true).canBlock)
+        assertFalse(titleActionsModel(open, held(TitleAvailability.Available), emptyList(), mayReport = false, mayBlock = true).canBlock)
+        assertTrue(titleActionsModel(open, held(TitleAvailability.None), emptyList(), mayReport = false, mayBlock = true).canBlock)
+    }
+
+    @Test
     fun `block is still offered when the only request on file was declined`() {
         val declined = listOf(TitleRequest(id = 7, is4k = false, status = SeerrRequestStatusCode.Declined, requesterId = 1))
         assertTrue(titleActionsModel(held(TitleAvailability.None), null, declined, mayReport = false, mayBlock = true).canBlock)

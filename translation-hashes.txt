@@ -57,8 +57,12 @@ app:grid_chip_provider  e5fa7a7c503c
 app:grid_chip_upcoming  5f1a2542e4e4
 app:grid_content_movies  dff924b69f96
 app:grid_content_tv  222906f88a30
+app:grid_empty_clear_filters  7179ea0035fc
 app:grid_empty_message  007427707d4f
+app:grid_empty_plain_message  a207e6c09d94
 app:grid_empty_title  f4c7f41c12d6
+app:grid_empty_watchlist_message  da3ba9d6d8b2
+app:grid_empty_watchlist_title  da1b67b6c4e0
 app:grid_filter_any  2b505597daa7
 app:grid_filter_cert  8c76be60512c
 app:grid_filter_cert_country  701d021d08c5

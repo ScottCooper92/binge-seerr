@@ -66,7 +66,7 @@ internal fun titleActionsModel(
             listOfNotNull(standard.availability, fourK?.availability).map { it.toState() }.maxByOrNull { it.rank } ?: TitleState.Request
         }
     val mayRequest = standard.mayRequest || fourK?.mayRequest == true
-    val shown = if (state == TitleState.Request && requests.isDeclinedOnly()) TitleState.Declined else state
+    val shown = if (state == TitleState.Request && fourK.holdsNothing() && requests.isDeclinedOnly()) TitleState.Declined else state
     val tap = tapFor(shown, mayRequest, requests)
     return TitleActionsModel(
         TitlePrimary(
@@ -76,7 +76,7 @@ internal fun titleActionsModel(
             tap = tap,
         ),
         canReport = mayReport && state.isInLibrary(),
-        canBlock = mayBlock && (shown == TitleState.Request || shown == TitleState.Declined),
+        canBlock = mayBlock && fourK.holdsNothing() && (shown == TitleState.Request || shown == TitleState.Declined),
     )
 }
 
@@ -93,6 +93,8 @@ private fun tapFor(
             requests.toManage()?.let { PrimaryTap.ManageRequest(it.id) }
                 ?: if (mayRequest && !state.isInLibrary()) PrimaryTap.RequestSheet else PrimaryTap.StatusSheet
     }
+
+private fun VersionState?.holdsNothing() = this == null || availability == TitleAvailability.None
 
 internal fun TitleState.isInLibrary() = this == TitleState.Available || this == TitleState.PartiallyAvailable
 

@@ -13,6 +13,7 @@ import com.cooper.binge.companion.seerr.seerr.insecurePublicHostOrNull
 import com.cooper.binge.companion.seerr.seerr.toServerFailure
 import com.cooper.binge.companion.seerr.telemetry.AnalyticsEvents
 import com.cooper.homelab.core.presentation.connect.ConnectPorts
+import com.cooper.homelab.core.presentation.connect.ConnectState
 import com.cooper.homelab.core.presentation.connect.ConnectViewModel
 import com.cooper.homelab.core.presentation.connect.ProbedServer
 import com.cooper.homelab.core.presentation.connect.SessionSink
@@ -23,6 +24,7 @@ import com.cooper.homelab.core.telemetry.Analytics
 import com.cooper.homelab.core.telemetry.CrashBreadcrumbs
 import com.cooper.homelab.core.telemetry.NoOpAnalytics
 import com.cooper.homelab.core.telemetry.NoOpCrashBreadcrumbs
+import com.cooper.homelab.core.uiandroid.connect.ConnectSignInActions
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.delay
@@ -100,6 +102,39 @@ class SharedSetupViewModel
         override val uiState: StateFlow<SetupUiState> =
             combine(machine.state, connection.credentials, app) { state, saved, beside -> state.toSetupUiState(saved, beside) }
                 .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), SetupUiState.Loading)
+
+        /** What the shared connect screen reads: the machine's step, and the two things beside it that are the app's own. */
+        internal val connectUi: StateFlow<SeerrConnectUi> =
+            combine(
+                machine.state,
+                app,
+            ) { state, beside ->
+                SeerrConnectUi(
+                    state,
+                    beside.notice,
+                    beside.resetCoolingDown,
+                    beside.received,
+                    beside.resetBusy,
+                    beside.resetError,
+                )
+            }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), SeerrConnectUi(ConnectState.Loading))
+
+        /** The sign-in step's controls, on the machine's own form. A change clears what the last attempt left on the page. */
+        internal val connectSignInActions: ConnectSignInActions =
+            ConnectSignInActions(
+                onSelectMode = { mode ->
+                    app.update { it.copy(notice = null, handOffRejected = false, resetError = null) }
+                    machine.selectMode(mode)
+                },
+                onEditForm = { transform ->
+                    app.update { it.copy(notice = null, handOffRejected = false, resetError = null) }
+                    machine.editForm(transform)
+                },
+                onConnect = ::connect,
+                onStartLink = {},
+                onChangeServer = ::changeServer,
+                onCheckAgain = ::inspect,
+            )
 
         init {
             reopenSignedOutServer()
