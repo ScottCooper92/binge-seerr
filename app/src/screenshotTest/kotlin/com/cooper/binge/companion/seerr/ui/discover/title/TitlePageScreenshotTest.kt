@@ -14,6 +14,7 @@ import com.cooper.binge.companion.seerr.preview.SeerrScreenPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrScreenStatePreview
 import com.cooper.binge.companion.seerr.preview.SeerrSpanishPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrTabletPanesPreview
+import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.seerr.SeerrRequestStatusCode
 import kotlinx.coroutines.flow.emptyFlow
 
@@ -391,4 +392,16 @@ class TitlePageScreenshotTest {
             NO_ACTIONS,
             scrollState = rememberScrollState(initial = COLLECTION_PX),
         )
+
+    /** A failed read: this app's headline and message, and Try again. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun failed() = Frame(TitlePageUiState.Error(SeerrError.Unreachable))
+
+    /** A server Android will not let this app reach: this app's headline, and Allow in place of Try again. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun failedLocalNetworkDenied() = Frame(TitlePageUiState.Error(SeerrError.LocalNetworkDenied))
 }
