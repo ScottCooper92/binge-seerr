@@ -29,8 +29,8 @@ import com.cooper.binge.companion.seerr.seerr.toTmdbPosterUrl
 internal enum class TitlePosterRail { Collection, MoreLikeThis }
 
 /**
- * A film's page as the design system's template takes it: [detail] is the plain-value model, and the rest is what the taps need to
- * turn a key back into the title, the keyword or the rail it came from.
+ * A title's page, a film's or a series', as the design system's template takes it: [detail] is the plain-value model, and the rest
+ * is what the taps need to turn a key back into the title, the keyword or the rail it came from.
  */
 internal class TitleDetailModel(
     val detail: MediaDetail,
