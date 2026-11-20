@@ -31,8 +31,7 @@ class SavedConnectionDemoSessionTest {
     }
 
     private fun TestScope.session() =
-        SavedConnectionDemoSession(
-            store,
+        store.demoSession(
             CoroutineScope(
                 backgroundScope.coroutineContext + UnconfinedTestDispatcher(testScheduler),
             ),

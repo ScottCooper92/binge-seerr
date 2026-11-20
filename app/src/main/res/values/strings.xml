@@ -1288,8 +1288,6 @@
     <string name="settings_discovery">Discovery</string>
     <string name="settings_discovery_caption">Browse, search and request titles in the app</string>
     <string name="settings_shake_to_report">Shake to report</string>
-    <string name="shake_report_title">Report a bug?</string>
-    <string name="shake_report_message">This opens a new issue on this app\'s GitHub page, with your app version and device filled in. Nothing about your server is included.</string>
     <string name="tv_settings_report_bug_show_code">Show code</string>
     <string name="tv_settings_report_bug_scan">Scan it with your phone\'s camera. The report opens with this app\'s version and this TV\'s details filled in.</string>
     <string name="tv_settings_report_bug_code_description">QR code that opens a bug report for this app on GitHub</string>
