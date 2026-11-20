@@ -16,8 +16,6 @@ import com.binge.designsystem.component.BingeAdaptiveSheet
 import com.binge.designsystem.component.BingeSheetKind
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.flags.LocalDiscoveryEnabled
-import com.cooper.binge.companion.seerr.flags.LocalFlags
-import com.cooper.binge.companion.seerr.flags.bingePromotion
 import com.cooper.binge.companion.seerr.seerr.isOpenableSite
 import com.cooper.binge.companion.seerr.ui.bingeAnswersTitleLink
 import com.cooper.binge.companion.seerr.ui.discover.title.LocalOpenTitle
@@ -27,6 +25,8 @@ import com.cooper.binge.companion.seerr.ui.state.ActionSheetGroup
 import com.cooper.binge.companion.seerr.ui.state.externalItem
 import com.cooper.binge.companion.seerr.ui.state.openItem
 import com.cooper.binge.companion.seerr.ui.toTitleKind
+import com.cooper.homelab.core.flags.bingePromotion
+import com.cooper.homelab.core.uiandroid.flags.LocalFlags
 
 /** One place the title can be opened. */
 internal class RequestOpenLink(
