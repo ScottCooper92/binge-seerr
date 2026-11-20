@@ -14,6 +14,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
+import com.binge.designsystem.template.MediaHeroDetailPage
+import com.binge.designsystem.template.MediaWideHeader
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.TitleResult
 import com.cooper.binge.companion.seerr.discover.title.TitleCompany
@@ -23,9 +25,7 @@ import com.cooper.binge.companion.seerr.ui.discover.request.RequestSheetTarget
 import com.cooper.binge.companion.seerr.ui.discover.request.messageRes
 import com.cooper.binge.companion.seerr.ui.requests.SiblingSheet
 import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
-import com.cooper.binge.companion.seerr.ui.state.MediaHeroDetailPage
 import com.cooper.binge.companion.seerr.ui.state.MediaHeroDetailPlaceholder
-import com.cooper.binge.companion.seerr.ui.state.WideHeader
 import com.cooper.binge.companion.seerr.ui.state.messageRes
 import kotlinx.coroutines.flow.Flow
 import com.binge.designsystem.R as DesR
@@ -127,7 +127,7 @@ private fun ReadyPage(
         genres = movie.genres,
         tagline = movie.tagline,
         externalScores = state.extras?.ratings.toExternalScores(context.resources, LocalConfiguration.current.locales[0]),
-        wideHeader = WideHeader(movie.posterUrl, movie.overview, movie.titleStats(LocalConfiguration.current.locales[0])),
+        wideHeader = MediaWideHeader(movie.posterUrl, movie.overview, movie.titleStats(LocalConfiguration.current.locales[0])),
         onBack = actions.onBack,
         modifier = modifier,
         snackbarHostState = snackbar,
