@@ -44,6 +44,7 @@ import com.cooper.binge.companion.seerr.ui.state.PagedPullToRefresh
 import com.cooper.binge.companion.seerr.ui.state.PullableMessage
 import com.cooper.binge.companion.seerr.ui.state.RoleTag
 import com.cooper.binge.companion.seerr.ui.state.rememberPagedPhase
+import com.cooper.binge.companion.seerr.ui.state.rowSkeletonHeight
 import com.cooper.binge.companion.seerr.ui.users.settings.UserRole
 import com.binge.designsystem.R as DesR
 
@@ -79,7 +80,11 @@ internal fun UsersBody(
             PagedPhase.Skeleton ->
                 ListRowSkeletonColumn(
                     contentPadding = resolvedContentPadding(vertical = resolvedContentInset()) + contentPadding,
-                    height = dimensionResource(R.dimen.users_row_skeleton_height),
+                    height =
+                        rowSkeletonHeight(
+                            dimensionResource(R.dimen.users_row_skeleton_height),
+                            dimensionResource(R.dimen.users_row_skeleton_growth),
+                        ),
                     modifier = Modifier.fillMaxSize(),
                 )
             is PagedPhase.Failed ->

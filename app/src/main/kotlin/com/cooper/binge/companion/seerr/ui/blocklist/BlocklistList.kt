@@ -48,6 +48,7 @@ import com.cooper.binge.companion.seerr.ui.state.EmptyScreen
 import com.cooper.binge.companion.seerr.ui.state.PagedPullToRefresh
 import com.cooper.binge.companion.seerr.ui.state.PullableMessage
 import com.cooper.binge.companion.seerr.ui.state.rememberPagedPhase
+import com.cooper.binge.companion.seerr.ui.state.rowSkeletonHeight
 import com.binge.designsystem.R as DesR
 
 /**
@@ -85,6 +86,11 @@ internal fun BlocklistBody(
                 ListRowSkeletonColumn(
                     contentPadding = contentPadding.screenListPadding(),
                     modifier = Modifier.fillMaxSize(),
+                    height =
+                        rowSkeletonHeight(
+                            dimensionResource(R.dimen.blocklist_row_skeleton_height),
+                            dimensionResource(R.dimen.blocklist_row_skeleton_growth),
+                        ),
                 )
             is PagedPhase.Failed ->
                 PagedRefreshError(

@@ -52,6 +52,7 @@ import com.cooper.binge.companion.seerr.ui.state.RequestStateChip
 import com.cooper.binge.companion.seerr.ui.state.belowPinnedLine
 import com.cooper.binge.companion.seerr.ui.state.filteredPagePadding
 import com.cooper.binge.companion.seerr.ui.state.rememberPagedPhase
+import com.cooper.binge.companion.seerr.ui.state.rowSkeletonHeight
 import com.binge.designsystem.R as DesR
 
 /**
@@ -104,6 +105,11 @@ internal fun IssuesBody(
                 ListRowSkeletonColumn(
                     contentPadding = contentPadding.filteredPagePadding(),
                     modifier = Modifier.fillMaxSize(),
+                    height =
+                        rowSkeletonHeight(
+                            dimensionResource(R.dimen.issues_row_skeleton_height),
+                            dimensionResource(R.dimen.issues_row_skeleton_growth),
+                        ),
                 )
             is PagedPhase.Failed ->
                 PagedRefreshError(
