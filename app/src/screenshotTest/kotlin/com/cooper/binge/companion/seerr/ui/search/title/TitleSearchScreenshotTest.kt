@@ -12,11 +12,21 @@ import com.cooper.binge.companion.seerr.preview.SeerrScreenPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrScreenStatePreview
 import com.cooper.binge.companion.seerr.preview.SeerrSpanishPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrTabletPanesPreview
+import com.cooper.binge.companion.seerr.ui.hub.AccountBar
+import com.cooper.binge.companion.seerr.ui.hub.HubAccount
 
 private val RAIL = 80.dp
 
+private val ACCOUNT = AccountBar(HubAccount(id = 1, name = "Ada Lovelace", isAdmin = true, avatarUrl = null), quota = null)
+
 /** The Search tab: idle with recents, results, no results and a failure, at the sizes and in the languages the app ships. */
 class TitleSearchScreenshotTest {
+    /** The account beside the title, over results: the bar's account opens the user's own page. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun withAccount() = TitleSearchScreen(state = readyResultsState(), actions = noActions, accountBar = ACCOUNT)
+
     /** The recents list, with one query too long for its row. */
     @PreviewTest
     @SeerrScreenPreviews
