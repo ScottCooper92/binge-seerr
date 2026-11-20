@@ -60,7 +60,8 @@ class TitleStatusJourneyTest {
     }
 
     private val request get() = host.string(R.string.title_page_request)
-    private val requested = "Requested"
+    /** The demo user is an administrator, so a request is approved at once and the film is Processing, not Requested. */
+    private val processing = "Processing"
 
     private fun awaitStack(vararg stack: NavKey) = host.compose.waitUntil(WAIT_MILLIS) { host.stack() == stack.toList() }
 
@@ -97,10 +98,10 @@ class TitleStatusJourneyTest {
             .filter { it.media.tmdbId == FILM_ID }
             .map { it.status?.raw }
 
-    /** Waits for the card to read [requested], and says what the server and the store held when it did not. */
+    /** Waits for the card to read [processing], and says what the server and the store held when it did not. */
     private fun awaitCard(where: String) {
         try {
-            host.await("the $where's card for $FILM reads $requested") { cardReads(requested) }
+            host.await("the $where's card for $FILM reads $processing") { cardReads(processing) }
         } catch (timeout: ComposeTimeoutException) {
             val held = host.titleStatus(TitleKey(TitleType.Movie, FILM_ID))
             val saw = "The server's requests for $FILM: ${serverRequests()}\nThe store held: $held"
@@ -141,7 +142,7 @@ class TitleStatusJourneyTest {
     }
 
     @Test
-    fun `a film requested from its page shows as requested on the Movies hub's card after Back`() {
+    fun `a film requested from its page shows its new status on the Movies hub's card after Back`() {
         NavHostActivity.discoveryEnabled = true
         host.connectDemo()
         clearFilmRequests()
@@ -149,7 +150,7 @@ class TitleStatusJourneyTest {
         host.launch(HomeRoute)
         host.awaitShowing(host.string(R.string.hubs_browse_all_movies))
         scrollHubTo(FILM)
-        host.await("$FILM on the hub without a status") { host.isShowing(FILM) && !cardReads(requested) }
+        host.await("$FILM on the hub without a status") { host.isShowing(FILM) && !cardReads("") }
 
         requestFromTheCardAndGoBack()
 
@@ -159,14 +160,14 @@ class TitleStatusJourneyTest {
     }
 
     @Test
-    fun `a film requested from its page shows as requested on the Discover grid's card after Back`() {
+    fun `a film requested from its page shows its new status on the Discover grid's card after Back`() {
         NavHostActivity.discoveryEnabled = true
         host.connectDemo()
         clearFilmRequests()
         val grid = DiscoverGridRoute(TitleKind.Movie, GridPreset.Popular, host.string(R.string.hubs_row_popular_movies))
         host.launch(HomeRoute, grid)
         host.awaitShowing(FILM)
-        host.await("$FILM on the grid without a status") { !cardReads(requested) }
+        host.await("$FILM on the grid without a status") { !cardReads("") }
 
         requestFromTheCardAndGoBack()
 
