@@ -2,8 +2,21 @@ package com.cooper.binge.companion.seerr.seerr
 
 import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.SerializationException
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.descriptors.buildClassSerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonDecoder
+import kotlinx.serialization.json.JsonEncoder
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.intOrNull
 
 /**
  * A media request. The advanced-option overrides are omitted when absent, so a plain request posts
@@ -73,25 +86,47 @@ data class SeerrRootFolderDto(
     @SerialName("path") val path: String,
 )
 
-@Serializable
+private val lenientJson =
+    Json {
+        ignoreUnknownKeys = true
+        coerceInputValues = true
+    }
+
+/**
+ * The answer to `POST request`. Only [id] is read when the answer arrives, so nothing in the rest of the body can fail a call
+ * the server has already acted on; [toRequest] reads the rest, and gives up quietly where it is not what it expected.
+ */
+@Serializable(with = SeerrRequestResultSerializer::class)
 data class SeerrRequestResultDto(
-    @SerialName("id") val id: Int? = null,
-    @SerialName("status") val status: SeerrRequestStatusCode? = null,
-    @SerialName("media") val media: SeerrRequestMediaDto? = null,
-    @SerialName("createdAt") val createdAt: String? = null,
-    @SerialName("requestedBy") val requestedBy: SeerrRequestUserDto? = null,
-    @SerialName("is4k") val is4k: Boolean = false,
-    @SerialName("seasons") val seasons: List<SeerrSeasonStatusDto> = emptyList(),
+    val id: Int? = null,
+    val answer: JsonObject? = null,
 ) {
-    /** The request the server made, when its answer carried enough to show it as a row; null for a bare `{"id": n}`. */
-    fun toRequest(): SeerrRequestDto? =
-        SeerrRequestDto(
-            id = id ?: return null,
-            status = status,
-            media = media ?: return null,
-            createdAt = createdAt,
-            requestedBy = requestedBy,
-            is4k = is4k,
-            seasons = seasons,
-        )
+    /** The request the server made, when its answer carried enough to show it as a row; null for a bare `{"id": n}` or anything unexpected. */
+    fun toRequest(): SeerrRequestDto? {
+        val body = answer ?: return null
+        return try {
+            lenientJson.decodeFromJsonElement(SeerrRequestDto.serializer(), body)
+        } catch (_: SerializationException) {
+            null
+        } catch (_: IllegalArgumentException) {
+            null
+        }
+    }
+}
+
+internal object SeerrRequestResultSerializer : KSerializer<SeerrRequestResultDto> {
+    override val descriptor: SerialDescriptor = buildClassSerialDescriptor("SeerrRequestResult")
+
+    override fun deserialize(decoder: Decoder): SeerrRequestResultDto {
+        val body = (decoder as JsonDecoder).decodeJsonElement() as? JsonObject ?: return SeerrRequestResultDto()
+        return SeerrRequestResultDto((body["id"] as? JsonPrimitive)?.intOrNull, body)
+    }
+
+    override fun serialize(
+        encoder: Encoder,
+        value: SeerrRequestResultDto,
+    ) {
+        val body = value.answer ?: buildJsonObject { value.id?.let { put("id", JsonPrimitive(it)) } }
+        (encoder as JsonEncoder).encodeJsonElement(body)
+    }
 }

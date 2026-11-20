@@ -106,4 +106,13 @@ class NewRequestInListTest {
 
         assertEquals(listOf("1:Older"), rows)
     }
+
+    @Test
+    fun `an answer the server shaped oddly is still a made request and leaves the list as it was`() {
+        val odd = """{"id":31,"media":{"id":5},"seasons":null,"requestedBy":"nobody"}"""
+
+        val rows = requestFrom(FakeResponse(headers = headersOf("Content-Type", "application/json"), body = odd))
+
+        assertEquals(listOf("1:Older"), rows)
+    }
 }
