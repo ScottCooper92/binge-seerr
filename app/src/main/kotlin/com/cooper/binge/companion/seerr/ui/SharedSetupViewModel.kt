@@ -16,6 +16,8 @@ import com.cooper.binge.companion.seerr.seerr.SeerrSignInMode
 import com.cooper.binge.companion.seerr.seerr.insecurePublicHostOrNull
 import com.cooper.binge.companion.seerr.seerr.toServerFailure
 import com.cooper.binge.companion.seerr.telemetry.AnalyticsEvents
+import com.cooper.homelab.core.foundation.ServerFailure
+import com.cooper.homelab.core.presentation.connect.ConnectError
 import com.cooper.homelab.core.presentation.connect.ConnectLinks
 import com.cooper.homelab.core.presentation.connect.ConnectPorts
 import com.cooper.homelab.core.presentation.connect.ConnectState
@@ -118,13 +120,24 @@ class SharedSetupViewModel
                 // had the code's key and is bound to this address (#1029), so it goes straight to the read.
                 onAddress = { address, session ->
                     machine.editAddress(address)
-                    app.update { it.copy(handOff = null, received = true, handedSession = session, handOffRejected = false) }
+                    app.update {
+                        it.copy(
+                            handOff = null,
+                            received = true,
+                            handedSession = session,
+                            awaitingPermission = false,
+                            handOffRejected = false,
+                        )
+                    }
                     if (session != null) inspect()
                 },
                 onCredentials = ::onHandedCredentials,
                 onCode = { code -> app.update { it.copy(code = code) } },
                 progress = {
-                    val failed = machine.draft.value.error != null || app.value.handOffRejected
+                    // The permission prompt is the TV's user's to answer, and the session waits for it, so the phone is not told the
+                    // hand-off failed: it would stop following a TV that goes on to sign in (#2428).
+                    val waitingOnPermission = app.value.awaitingPermission && app.value.handedSession != null
+                    val failed = (machine.draft.value.error != null && !waitingOnPermission) || app.value.handOffRejected
                     uiState.value.toHandOffProgress(app.value.received, failed, app.value.attempts)
                 },
             )
@@ -172,7 +185,7 @@ class SharedSetupViewModel
         init {
             links.restore()
             reopenSignedOutServer()
-            clearHandedSessionOnFailure()
+            watchHandedSession()
         }
 
         override fun beginEdit(notice: SetupNotice?) {
@@ -194,7 +207,7 @@ class SharedSetupViewModel
         fun editAddress(value: String) {
             // Typing takes over from the phone: the follow phase ends, so the phone cannot overwrite the field.
             if (app.value.received) handOff.cancel()
-            app.update { it.copy(received = false, handedSession = null) }
+            app.update { it.copy(received = false, handedSession = null, awaitingPermission = false) }
             machine.editAddress(value)
         }
 
@@ -309,7 +322,7 @@ class SharedSetupViewModel
         private suspend fun adoptHandedSession(server: ProbedServer<SetupServer>): Boolean {
             val session = app.value.handedSession
             if (session == null || !server.setUp) return false
-            app.update { it.copy(handedSession = null) }
+            app.update { it.copy(handedSession = null, awaitingPermission = false) }
             val adopted = connection.adoptHandedSession(server.preview.baseUrl, session, analytics, crashBreadcrumbs)
             if (!adopted) app.update { it.copy(handOffRejected = true) }
             return adopted
@@ -325,7 +338,14 @@ class SharedSetupViewModel
             val form = server?.let { credentials.toSignInForm(it.preview.modes) }
             val handedSession = credentials.mode == HAND_OFF_SESSION_MODE && credentials.session.isNotEmpty()
             if (server != null && handedSession) {
-                app.update { it.copy(handedSession = credentials.session, notice = null, handOffRejected = false) }
+                app.update {
+                    it.copy(
+                        handedSession = credentials.session,
+                        awaitingPermission = false,
+                        notice = null,
+                        handOffRejected = false,
+                    )
+                }
                 machine.editAddress(current.address)
                 inspect()
             } else if (form != null) {
@@ -345,11 +365,36 @@ class SharedSetupViewModel
             }
         }
 
-        /** A read that failed ends the phone's session for good: it is never kept to be tried against another address. */
-        private fun clearHandedSessionOnFailure() {
+        /**
+         * A phone's session waits for the read it came with. A read that failed ends it for good, so it is never tried against
+         * another address, except when the failure is the local-network permission: the session then waits for the grant's read,
+         * and is adopted once that read has answered (#2428). Only that read is adopted here: any other read takes the session
+         * through `inspect(then)`, so this does not count or adopt it a second time.
+         */
+        private fun watchHandedSession() {
             viewModelScope.launch(dispatcher) {
                 machine.draft.collect { draft ->
-                    if (draft.error != null && app.value.handedSession != null) app.update { it.copy(handedSession = null) }
+                    if (app.value.handedSession == null) {
+                        if (app.value.awaitingPermission) app.update { it.copy(awaitingPermission = false) }
+                        return@collect
+                    }
+                    val server = draft.server
+                    val waiting = app.value.awaitingPermission
+                    when {
+                        draft.error == ConnectError.Failed(ServerFailure.LocalNetworkDenied) ->
+                            if (!waiting) app.update { it.copy(awaitingPermission = true) }
+                        draft.error != null -> app.update { it.copy(handedSession = null, awaitingPermission = false) }
+                        waiting && server != null && !draft.busy -> {
+                            app.update { it.copy(awaitingPermission = false) }
+                            if (server.setUp) {
+                                app.update { it.copy(attempts = it.attempts + 1) }
+                                adoptHandedSession(server)
+                            } else {
+                                // A server that is not set up cannot judge the session: it is dropped, not kept (#1994).
+                                app.update { it.copy(handedSession = null) }
+                            }
+                        }
+                    }
                 }
             }
         }

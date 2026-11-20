@@ -25,12 +25,16 @@ import androidx.work.WorkManager
 import com.cooper.binge.companion.seerr.auth.ConnectionRestore
 import com.cooper.binge.companion.seerr.auth.CredentialStore
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
+import com.cooper.binge.companion.seerr.data.TitleKey
+import com.cooper.binge.companion.seerr.data.TitleStatusStore
+import com.cooper.binge.companion.seerr.data.TitleStatuses
 import com.cooper.binge.companion.seerr.demo.demoCredentials
 import com.cooper.binge.companion.seerr.seerr.SeerrApi
 import com.cooper.binge.companion.seerr.seerr.SeerrAuth
 import com.cooper.binge.companion.seerr.seerr.SeerrCredentials
 import com.cooper.binge.companion.seerr.ui.HomeRoute
 import com.cooper.binge.companion.seerr.ui.SeerrRoute
+import com.cooper.binge.companion.seerr.ui.shell.SeerrTab
 import com.cooper.binge.companion.seerr.ui.shell.openLink
 import com.cooper.binge.companion.seerr.ui.users.settings.ADMIN
 import com.cooper.binge.companion.seerr.ui.users.settings.ScriptedSeerr
@@ -213,6 +217,9 @@ internal class RealNavHostRule(
         compose.waitForIdle()
     }
 
+    /** The status the app's title-status store holds for [key] now, or null when it holds none. */
+    fun titleStatus(key: TitleKey): TitleStatuses? = graph().titleStatuses().current(key)
+
     /** The settings search's recents as the app's own store holds them, newest first. */
     fun recentSearches(): List<String> = runBlocking { graph().recentSearches().ids.first() }
 
@@ -233,6 +240,9 @@ internal class RealNavHostRule(
 
     /** The back stack as it stands, read on the main thread. */
     fun stack(): List<NavKey> = compose.runOnIdle { activity.backStack.toList() }
+
+    /** The stack [tab] keeps in the shell, read on the main thread. */
+    fun tabStack(tab: SeerrTab): List<NavKey> = compose.runOnIdle { activity.tabs.stack(tab).toList() }
 
     /** Saves [credentials] over the connection, as a sign-in's own save does, so the connection emits again. */
     fun save(credentials: SeerrCredentials) {
@@ -393,6 +403,8 @@ internal class RealNavHostRule(
         fun restore(): ConnectionRestore
 
         fun recentSearches(): RecentSearches
+
+        fun titleStatuses(): TitleStatusStore
     }
 }
 

@@ -7,11 +7,16 @@ import com.cooper.binge.companion.seerr.auth.LegacyCredentialStore
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.data.FakeRequestStore
 import com.cooper.binge.companion.seerr.data.FakeUserStore
+import com.cooper.binge.companion.seerr.data.TitleKey
+import com.cooper.binge.companion.seerr.data.TitleStatusStore
+import com.cooper.binge.companion.seerr.data.TitleStatuses
+import com.cooper.binge.companion.seerr.data.TitleType
 import com.cooper.binge.companion.seerr.data.UserEntity
 import com.cooper.binge.companion.seerr.seerr.ManageablePermission
 import com.cooper.binge.companion.seerr.seerr.SeerrApiFactory
 import com.cooper.binge.companion.seerr.seerr.SeerrAuth
 import com.cooper.binge.companion.seerr.seerr.SeerrError
+import com.cooper.binge.companion.seerr.seerr.SeerrMediaStatusCode
 import com.cooper.binge.companion.seerr.seerr.SeerrRequestStatusCode
 import com.cooper.binge.companion.seerr.seerr.SeerrServerProfile
 import com.cooper.binge.companion.seerr.seerr.SeerrVariant
@@ -114,7 +119,10 @@ class UserDetailViewModelTest {
         serve("DELETE /api/v1/user/8", "{}")
     }
 
-    private suspend fun TestScope.viewModel(userId: Int = 8): UserDetailViewModel {
+    private suspend fun TestScope.viewModel(
+        userId: Int = 8,
+        statuses: TitleStatusStore = TitleStatusStore(),
+    ): UserDetailViewModel {
         val connection =
             SeerrConnection(
                 store =
@@ -135,6 +143,7 @@ class UserDetailViewModelTest {
                 mainDispatcherRule.dispatcher,
                 userId,
                 settingsChanges = settingsChanges,
+                statuses = statuses,
             )
         viewModels.put(vm.hashCode().toString(), vm)
         backgroundScope.launch { vm.uiState.collect {} }
@@ -183,6 +192,23 @@ class UserDetailViewModelTest {
                     .single()
                     .status,
             )
+        }
+
+    /** #2462: a title blocked elsewhere shows blocked on this user's request row, as it does on the Requests list. */
+    @Test
+    fun `a title blocked elsewhere shows blocked on the user's request row`() =
+        runTest {
+            server(viewerId = 1, permissions = ADMIN)
+            val statuses = TitleStatusStore()
+            val vm = viewModel(statuses = statuses)
+            vm.awaitReady()
+            val before = vm.requests.asSnapshot().single()
+            assertEquals(SeerrMediaStatusCode.Processing, before.mediaStatus)
+
+            statuses.seed(TitleKey(TitleType.Movie, 100), TitleStatuses(SeerrMediaStatusCode.Blocklisted), statuses.beginRead())
+
+            val after = vm.requests.asSnapshot().single()
+            assertEquals(SeerrMediaStatusCode.Blocklisted, after.mediaStatus)
         }
 
     /** #1239: "joined" and each request's time age while the page shows, and the clock stops when it leaves. */
