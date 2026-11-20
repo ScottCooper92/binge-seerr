@@ -26,6 +26,8 @@ internal data class SharedSetupApp(
     val attempts: Int = 0,
     /** A phone's session was sent and the server turned it down, so the sign-in step says so. */
     val handOffRejected: Boolean = false,
+    /** The first read of a phone's address failed on the local-network permission, so its session waits for the grant's read (#2428). */
+    val awaitingPermission: Boolean = false,
     val notice: SetupNotice? = null,
     val resetBusy: Boolean = false,
     val resetError: SetupError? = null,

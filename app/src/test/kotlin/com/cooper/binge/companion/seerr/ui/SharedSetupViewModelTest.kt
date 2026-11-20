@@ -8,6 +8,7 @@ import com.cooper.binge.companion.seerr.auth.PlexPinFlow
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.demo.DEMO_ORIGIN
 import com.cooper.binge.companion.seerr.handoff.AddressHandOffs
+import com.cooper.binge.companion.seerr.handoff.HAND_OFF_SESSION_MODE
 import com.cooper.binge.companion.seerr.handoff.HandOffCredentials
 import com.cooper.binge.companion.seerr.handoff.HandOffOpening
 import com.cooper.binge.companion.seerr.handoff.HandOffProgress
@@ -71,6 +72,7 @@ class SharedSetupViewModelTest {
     private fun TestScope.viewModel(
         scripted: Boolean = true,
         unreachable: (HttpUrl) -> Boolean = { false },
+        localNetwork: LocalNetworkPermission = LocalNetworkPermission.AlwaysGranted,
         handOffs: AddressHandOffs = AddressHandOffs { HandOffOpening.NoLocalNetwork },
     ): SharedSetupViewModel {
         connection =
@@ -111,7 +113,7 @@ class SharedSetupViewModelTest {
                 cipher = PlainCipher,
                 handOffs = handOffs,
                 cleartext = cleartext,
-                localNetwork = LocalNetworkPermission.AlwaysGranted,
+                localNetwork = localNetwork,
                 dispatcher = mainDispatcherRule.dispatcher,
                 analytics = analytics,
             )
@@ -398,6 +400,94 @@ class SharedSetupViewModelTest {
             val progress = session.progress() as HandOffProgress.SignIn
             assertTrue(progress.failed)
             assertEquals(1, progress.attempt)
+        }
+
+    @Test
+    fun `a phone's session is kept while the TV asks for the local network, and adopted once it is granted`() =
+        runTest {
+            val session = FakeSession().apply { handedSession = "ph0n3" }
+            var granted = false
+            val vm = viewModel(unreachable = { !granted }, localNetwork = { granted }) { HandOffOpening.Opened(session) }
+            vm.awaitAddress()
+            vm.showHandOff(true)
+            vm.awaitAddress { it.handOff != null }
+
+            session.address.complete("http://192.168.1.20:5055")
+            assertEquals(SetupError.LocalNetworkDenied, vm.awaitAddress { it.error != null }.error)
+            // The prompt is the TV's user's to answer and the session waits for it: the phone must not be told the hand-off failed,
+            // or it stops following a TV that goes on to sign in.
+            assertFalse(session.progress() is HandOffProgress.Failed)
+            seerr.enqueueProfile(json("""{"version":"3.4.0"}"""), json("""{"mediaServerType":2,"localLogin":true}"""))
+            seerr.enqueue(json("[]"))
+            seerr.enqueue(json("""{"id":9,"permissions":2}"""))
+            seerr.enqueueProfile(json("""{"version":"3.4.0"}"""), json("""{"mediaServerType":2,"localLogin":true}"""))
+
+            granted = true
+            vm.localNetworkResult()
+            val connected = vm.awaitConnected()
+
+            assertEquals(SeerrAuth.Session(cookie = "ph0n3", userId = 9, shared = true), connected.credentials.auth)
+            assertEquals(HandOffProgress.Connected, session.progress())
+        }
+
+    @Test
+    fun `a declined permission does not hide a later refusal from the phone once the session is gone`() =
+        runTest {
+            val session = FakeSession().apply { handedSession = "ph0n3" }
+            var granted = false
+            val vm = viewModel(unreachable = { !granted }, localNetwork = { granted }) { HandOffOpening.Opened(session) }
+            vm.awaitAddress()
+            vm.showHandOff(true)
+            vm.awaitAddress { it.handOff != null }
+            session.address.complete("http://192.168.1.20:5055")
+            vm.awaitAddress { it.error == SetupError.LocalNetworkDenied }
+            assertFalse(session.progress() is HandOffProgress.Failed)
+
+            granted = true
+            seerr.enqueueProfile(json("""{"version":"3.4.0"}"""), json("""{"mediaServerType":2,"localLogin":true}"""))
+            seerr.enqueue(json("[]"))
+            vm.editAddress(seerr.url("/"))
+            vm.inspect()
+            vm.awaitSignIn()
+            seerr.enqueue(FakeResponse(code = 401, headers = headersOf("Content-Type", "application/json"), body = """{"message":"no"}"""))
+            session.sendCredentials(HandOffCredentials(mode = "Local", email = "ana@example.com", password = "wrong"))
+            vm.awaitSignIn { it.error != null }
+
+            val progress = session.progress() as HandOffProgress.SignIn
+            assertTrue("the session is gone, so the refusal is the phone's to hear", progress.failed)
+        }
+
+    @Test
+    fun `a session sent from the sign-in step after a refused attempt is adopted and counted once`() =
+        runTest {
+            val session = FakeSession()
+            val vm = viewModel { HandOffOpening.Opened(session) }
+            vm.awaitAddress()
+            vm.showHandOff(true)
+            vm.awaitAddress { it.handOff != null }
+            seerr.enqueueProfile(json("""{"version":"3.4.0"}"""), json("""{"mediaServerType":2,"localLogin":true}"""))
+            seerr.enqueue(json("[]"))
+            session.address.complete(seerr.url("/"))
+            vm.awaitAddress { it.awaitingConfirm }
+            vm.inspect()
+            vm.awaitSignIn()
+            seerr.enqueue(FakeResponse(code = 401, headers = headersOf("Content-Type", "application/json"), body = """{"message":"no"}"""))
+            session.sendCredentials(HandOffCredentials(mode = "Local", email = "ana@example.com", password = "wrong"))
+            vm.awaitSignIn { it.error != null }
+
+            // The form holds an error from the refused attempt. A session sent now reads the server once, and takes the session once.
+            seerr.enqueueProfile(json("""{"version":"3.4.0"}"""), json("""{"mediaServerType":2,"localLogin":true}"""))
+            seerr.enqueue(json("[]"))
+            seerr.enqueue(FakeResponse(code = 401, headers = headersOf("Content-Type", "application/json"), body = """{"message":"no"}"""))
+            session.sendCredentials(HandOffCredentials(mode = HAND_OFF_SESSION_MODE, session = "st4l3"))
+
+            val refused = vm.awaitSignIn { it.error == SetupError.HandOffSessionRejected }
+            assertEquals(SetupError.HandOffSessionRejected, refused.error)
+            assertEquals(
+                "the refused typed attempt, then the session, and no more",
+                2,
+                (session.progress() as HandOffProgress.SignIn).attempt,
+            )
         }
 
     @Test
