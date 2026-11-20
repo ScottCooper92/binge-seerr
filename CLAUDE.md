@@ -111,8 +111,8 @@ to design; the server's API is versioned by release because it is not.
 ## Modules
 
 `:app` is the application. `:data` is an Android library under it that holds the Seerr client (`seerr/`), the connection and its
-credential stores (`auth/`), the demo's transport and fixtures (`demo/`), the Room cache and its stores (`data/`), and the request
-models those stores import. It has no Compose, Activity, Hilt or vendor SDK, so `di/` stays in `:app` and builds its classes by hand.
+credential stores (`auth/`), the demo's transport and fixtures (`demo/`), the Room cache and its stores (`data/`), the discovery repositories (`discover/`), and the request
+models and the request and slider mappings those stores and repositories import. It has no Compose, Activity, Hilt or vendor SDK, so `di/` stays in `:app` and builds its classes by hand.
 Its packages keep the names they had as one module, so a file's package does not say which module it is in.
 
 `internal` stops at the module boundary. Declare something `internal` in `:data` unless `:app` calls it, and a test in `:app` that

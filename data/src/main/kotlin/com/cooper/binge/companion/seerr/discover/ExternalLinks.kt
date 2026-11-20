@@ -30,7 +30,7 @@ enum class ImdbPage(
  * one from its own id, and null where it shows none. An id that is not the shape of an [imdbPage] id, or an address that is not a
  * site, is dropped.
  */
-fun externalLinks(
+internal fun externalLinks(
     imdbPage: ImdbPage,
     imdbId: String?,
     tmdbUrl: String?,
