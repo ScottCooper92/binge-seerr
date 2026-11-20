@@ -5,8 +5,11 @@ import com.android.tools.screenshot.PreviewTest
 import com.cooper.binge.companion.seerr.preview.SeerrComponentPreviews
 import com.cooper.binge.companion.seerr.preview.SheetFrame
 import com.cooper.binge.companion.seerr.preview.SideSheetFrame
+import com.cooper.binge.companion.seerr.seerr.SeerrSignInMode
 import com.cooper.binge.companion.seerr.ui.users.UserOrigin
 import com.cooper.binge.companion.seerr.ui.users.settings.MediaServerLinkContent
+import com.cooper.homelab.core.presentation.connect.LinkState
+import com.cooper.homelab.core.uiandroid.connect.ConnectLinkContent
 
 private val PLEX_LINK = LinkFlow.Plex(code = "A1B2", authUrl = "https://app.plex.tv/auth", launchPending = false)
 private val QUICK_CONNECT = LinkFlow.QuickConnect(code = "482913")
@@ -26,6 +29,20 @@ class LinkSheetsScreenshotTest {
     @SeerrComponentPreviews
     @Composable
     fun plexCodeExpanded() = SideSheetFrame { SetupLinkContent(link = PLEX_LINK, onOpenPlex = {}, onCancel = {}) }
+
+    /** The same code on the flag-on path, where the shared library draws the body: the open button carries the mark there too (#2482). */
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun sharedPlexCode() =
+        SheetFrame {
+            ConnectLinkContent(
+                link = LinkState(code = "A1B2", openUrl = "https://app.plex.tv/auth", launchPending = false),
+                copy = seerrLinkCopy(requireNotNull(SeerrSignInMode.Plex.formMode())),
+                onOpen = {},
+                onCancel = {},
+            )
+        }
 
     /** Quick Connect has no page to reopen, so the button is not offered. */
     @PreviewTest
