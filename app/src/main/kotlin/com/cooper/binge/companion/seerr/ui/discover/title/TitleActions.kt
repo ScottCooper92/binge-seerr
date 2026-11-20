@@ -133,13 +133,13 @@ private fun PrimaryAction(
 private fun TitlePrimary.label() = if (state == TitleState.Request && fourKOnly) R.string.title_page_request_4k else state.labelRes()
 
 private fun TitleState.sentiment() =
-    if (this == TitleState.Declined) BingeSentiment.Negative else toAvailability().statusStyle()?.sentiment ?: BingeSentiment.Neutral
+    when (this) {
+        TitleState.Declined -> BingeSentiment.Negative
+        else -> toAvailability().statusStyle()?.sentiment ?: BingeSentiment.Neutral
+    }
 
 internal fun TitleState.labelRes() =
-    if (this ==
-        TitleState.Declined
-    ) {
-        R.string.request_state_declined
-    } else {
-        toAvailability().statusStyle()?.label ?: R.string.title_page_request
+    when (this) {
+        TitleState.Declined -> R.string.request_state_declined
+        else -> toAvailability().statusStyle()?.label ?: R.string.title_page_request
     }

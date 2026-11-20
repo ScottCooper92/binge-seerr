@@ -66,7 +66,7 @@ internal fun titleActionsModel(
             listOfNotNull(standard.availability, fourK?.availability).map { it.toState() }.maxByOrNull { it.rank } ?: TitleState.Request
         }
     val mayRequest = standard.mayRequest || fourK?.mayRequest == true
-    val shown = if (state == TitleState.Request && requests.isDeclinedOnly()) TitleState.Declined else state
+    val shown = if (state == TitleState.Request && fourK.holdsNothing() && requests.isDeclinedOnly()) TitleState.Declined else state
     val tap = tapFor(shown, mayRequest, requests)
     return TitleActionsModel(
         TitlePrimary(
