@@ -276,6 +276,29 @@ class SettingsIndexTest {
     }
 
     @Test
+    fun `each notification field entry names its agent in its path and its keywords`() {
+        val agentPage =
+            mapOf(
+                SettingRows.NOTIFICATIONS_PGP_KEY to R.string.search_page_notifications_email,
+                SettingRows.NOTIFICATIONS_DISCORD_ID to R.string.search_page_notifications_discord,
+                SettingRows.NOTIFICATIONS_PUSHBULLET_TOKEN to R.string.search_page_notifications_pushbullet,
+                SettingRows.NOTIFICATIONS_PUSHOVER_APP_TOKEN to R.string.search_page_notifications_pushover,
+                SettingRows.NOTIFICATIONS_PUSHOVER_USER_KEY to R.string.search_page_notifications_pushover,
+                SettingRows.NOTIFICATIONS_PUSHOVER_SOUND to R.string.search_page_notifications_pushover,
+                SettingRows.NOTIFICATIONS_TELEGRAM_CHAT_ID to R.string.search_page_notifications_telegram,
+                SettingRows.NOTIFICATIONS_TELEGRAM_THREAD_ID to R.string.search_page_notifications_telegram,
+                SettingRows.NOTIFICATIONS_TELEGRAM_SILENT to R.string.search_page_notifications_telegram,
+            )
+        val fields = settingsIndex.filter { it.target == SearchTarget.Account(UserSettingsPage.Notifications) && it.row != null }
+
+        assertEquals(agentPage.keys, fields.mapNotNull { it.row }.toSet())
+        fields.forEach { entry ->
+            assertEquals(agentPage.getValue(entry.row!!), entry.pageLabel)
+            assertEquals(agentPage.getValue(entry.row!!), entry.keywords)
+        }
+    }
+
+    @Test
     fun `every option an agent's page draws as a row has an entry on that agent, opening the page on it`() {
         val options = AgentOption.entries.filter { it.ownControl }
         val entries = settingsIndex.filter { it.target is SearchTarget.Agent && it.row != null }
@@ -328,5 +351,15 @@ class SettingsIndexTest {
         assertTrue(ServerAgent.Discord in onOverseerr && ServerAgent.Discord in onSeerr)
         assertEquals(admin.profile.offeredAgents().toSet(), onSeerr)
         assertEquals(overseerr.offeredAgents().toSet(), onOverseerr)
+    }
+
+    @Test
+    fun `the movie and TV request limits are entries on the server's Users page, on their own rows`() {
+        val limits = settingsIndex.filter { it.row == SettingRows.USERS_MOVIE_LIMIT || it.row == SettingRows.USERS_TV_LIMIT }
+
+        assertEquals(2, limits.size)
+        assertTrue(limits.all { it.target == SearchTarget.Server(ServerSettingsPage.Users) })
+        assertEquals(setOf(R.string.server_settings_movie_limit, R.string.server_settings_tv_limit), limits.map { it.label }.toSet())
+        assertTrue(limits.all { it.available(admin) && !it.available(member) })
     }
 }
