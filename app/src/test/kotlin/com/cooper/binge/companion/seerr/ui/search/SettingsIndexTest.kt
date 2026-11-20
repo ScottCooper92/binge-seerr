@@ -330,5 +330,4 @@ class SettingsIndexTest {
 
         assertTrue(screen.contains(".copy(key = option.rowKey())"))
     }
-
 }
