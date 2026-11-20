@@ -87,6 +87,7 @@ internal fun movieDetailModel(
             },
         )
     val entries = movie.detailEntries(context.resources, locale, actions.onOpenCompany.takeIf { movie.companiesOpen }, actions.onOpenPerson)
+    val info = if (entries.any { it.value.hasText() }) DetailInfo(stringResource(R.string.title_page_details), entries) else null
     val detail =
         MediaDetail(
             title = movie.title,
@@ -112,9 +113,7 @@ internal fun movieDetailModel(
                         tappable = actions.onOpenKeyword != null && movie.keywordsOpen,
                     )
                 },
-            info =
-                entries.takeIf { it.any { entry -> entry.value.hasText() } }
-                    ?.let { DetailInfo(stringResource(R.string.title_page_details), it) },
+            info = info,
         )
     val titles = (state.collectionParts + moreLikeThis).associateBy { it.railKey() }
     return MovieDetailModel(detail, titles, movie.keywords, rails, collection?.id)
