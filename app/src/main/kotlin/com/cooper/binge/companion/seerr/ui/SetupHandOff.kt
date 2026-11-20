@@ -5,6 +5,7 @@ import com.cooper.binge.companion.seerr.handoff.AddressHandOffs
 import com.cooper.binge.companion.seerr.handoff.HandOffCredentials
 import com.cooper.binge.companion.seerr.handoff.HandOffOpening
 import com.cooper.binge.companion.seerr.handoff.HandOffProgress
+import com.cooper.binge.companion.seerr.seerr.SeerrCredentials
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -16,6 +17,11 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.selects.select
 import kotlinx.coroutines.withTimeoutOrNull
@@ -62,6 +68,14 @@ internal class SetupHandOff(
     @Volatile
     private var session: AddressHandOffSession? = null
 
+    @Volatile
+    private var signedIn = false
+
+    /** The sign-in this hand-off was for has landed: if the screen goes before the phone has read it, the listener stays for [linger]. */
+    fun signedIn() {
+        signedIn = true
+    }
+
     fun start() {
         if (job?.isActive == true) return
         job = scope.launch(dispatcher) { listen() }
@@ -102,7 +116,8 @@ internal class SetupHandOff(
             currentCoroutineContext().ensureActive()
             onState(AddressHandOff.Unavailable(AddressHandOff.Reason.CouldNotListen))
         } finally {
-            listening.close()
+            // Torn down with the sign-in already landed: the phone's page has not read "Connected" yet, so the listener outlives this scope.
+            if (signedIn && !currentCoroutineContext().isActive) handOffs.linger(listening, linger) else listening.close()
             onCode(null)
         }
         return lapsed
@@ -184,4 +199,22 @@ internal class SetupHandOff(
             onState(AddressHandOff.Unavailable(AddressHandOff.Reason.CouldNotListen))
             null
         }
+}
+
+/**
+ * Tells [this] hand-off when a sign-in lands: the saved connection changes to one. What is saved when this is called is not one, so an
+ * Edit connection that has not saved yet is not a sign-in either.
+ */
+internal fun SetupHandOff.signedInWith(
+    scope: CoroutineScope,
+    dispatcher: CoroutineDispatcher,
+    credentials: Flow<SeerrCredentials?>,
+) {
+    scope.launch(dispatcher) {
+        credentials
+            .distinctUntilChanged()
+            .drop(1)
+            .filterNotNull()
+            .collect { signedIn() }
+    }
 }

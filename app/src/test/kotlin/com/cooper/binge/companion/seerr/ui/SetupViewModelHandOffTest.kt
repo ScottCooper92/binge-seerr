@@ -29,6 +29,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.selects.select
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withTimeout
 import okhttp3.Headers.Companion.headersOf
@@ -36,6 +37,7 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -473,6 +475,29 @@ class SetupViewModelHandOffTest {
         }
 
     @Test
+    fun `the listener outlives the setup once the TV is signed in, so the phone can still read Connected`() =
+        runTest {
+            val session = FakeSession().apply { handedSession = "ph0n3" }
+            val handOffs = RecordingHandOffs(session)
+            val vm = viewModel(handOffs)
+            vm.awaitAddress()
+            vm.showHandOff(true)
+            vm.awaitAddress { it.handOff != null }
+            seerr.enqueueProfile(json("""{"version":"3.4.0"}"""), json("""{"mediaServerType":2,"localLogin":true}"""))
+            seerr.enqueue(json("[]"))
+            seerr.enqueue(json("""{"id":9,"permissions":2}"""))
+            seerr.enqueueProfile(json("""{"version":"3.4.0"}"""), json("""{"mediaServerType":2,"localLogin":true}"""))
+            session.address.complete(seerr.url("/"))
+            vm.uiState.first { it is SetupUiState.Connected }
+
+            viewModels.clear()
+            advanceUntilIdle()
+
+            assertSame("handed on to outlive the screen", session, handOffs.lingered)
+            assertFalse("not closed under the phone", session.closed)
+        }
+
+    @Test
     fun `a handed session the server refuses leaves the sign-in form up, saying so, and the phone hears it failed`() =
         runTest {
             val session = FakeSession().apply { handedSession = "st4l3" }
@@ -646,4 +671,21 @@ class SetupViewModelHandOffTest {
 
     private fun json(body: String): FakeResponse =
         FakeResponse(code = 200, headers = headersOf("Content-Type", "application/json"), body = body)
+
+    /** An opener that records the listener handed on to outlive a screen, instead of serving it. */
+    private class RecordingHandOffs(
+        private val session: AddressHandOffSession,
+    ) : AddressHandOffs {
+        @Volatile
+        var lingered: AddressHandOffSession? = null
+
+        override fun open(): HandOffOpening = HandOffOpening.Opened(session)
+
+        override fun linger(
+            session: AddressHandOffSession,
+            within: kotlin.time.Duration,
+        ) {
+            lingered = session
+        }
+    }
 }
