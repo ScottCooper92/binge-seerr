@@ -8,6 +8,7 @@ import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onFirst
+import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
 import androidx.navigation3.runtime.NavKey
@@ -114,15 +115,15 @@ class TitleStatusJourneyTest {
      * The "Request" that is lowest on screen. The page's own button and the sheet's share a label, and a click that reaches the
      * page's button through the sheet's scrim only dismisses the sheet, so the one pinned in the sheet's footer is the one wanted.
      */
-    private fun lowestRequest(): SemanticsNodeInteraction {
+    private fun lowestRequest(): SemanticsNodeInteraction? {
         val nodes = host.compose.onAllNodes(hasText(request))
         val lowest =
             nodes
                 .fetchSemanticsNodes()
                 .withIndex()
                 .maxByOrNull { it.value.boundsInRoot.top }
-                ?.index ?: 0
-        return nodes[lowest]
+                ?.index
+        return lowest?.let { nodes[it] }
     }
 
     /** Opens [FILM]'s page from its card, requests it from the sheet, and comes back with Back. */
@@ -134,11 +135,11 @@ class TitleStatusJourneyTest {
             reached = { host.isShowing(host.string(R.string.request_sheet_status_new)) },
         )
         // The page's button can still read Request once the film is asked for, when its 4K version is open, so the sheet going is the sign.
-        host.clickUntil(
-            "$FILM requested and the sheet closed",
-            target = { lowestRequest() },
-            reached = { !host.isShowing(host.string(R.string.request_sheet_status_new)) },
-        )
+        host.await("$FILM requested and the sheet closed") {
+            val closed = !host.isShowing(host.string(R.string.request_sheet_status_new))
+            if (!closed) lowestRequest()?.performClick()
+            closed
+        }
         host.back()
     }
 
