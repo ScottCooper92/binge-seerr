@@ -1,5 +1,7 @@
 package com.cooper.binge.companion.seerr.discover.title
 
+import com.cooper.binge.companion.seerr.discover.ExternalLink
+import com.cooper.binge.companion.seerr.discover.ExternalLinkKind
 import com.cooper.binge.companion.seerr.seerr.PERMISSION_ADMIN
 import com.cooper.binge.companion.seerr.seerr.SeerrApiFactory
 import com.cooper.binge.companion.seerr.seerr.SeerrPublicSettings
@@ -83,6 +85,14 @@ class SeerrSeriesRepositoryTest {
         variant = SeerrVariant.Overseerr
         version = SeerrVersion(1, 20, 0)
         assertFalse(withRepository { it.series(1399) }.companiesOpen)
+    }
+
+    @Test
+    fun `a show links to its TMDB page as a show`() {
+        assertEquals(
+            listOf(ExternalLink(ExternalLinkKind.Tmdb, "https://www.themoviedb.org/tv/1399")),
+            withRepository { it.series(1399) }.links,
+        )
     }
 
     @Test
