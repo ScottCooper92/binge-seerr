@@ -1224,7 +1224,6 @@
     <string name="setup_error_unreachable_not_local">The server could not be reached. That isn\'t a local address, so this TV may not be able to reach it. Try an address on your home network.</string>
 
     <!-- The television shell: Home, the lists and their action sheets. -->
-    <string name="tv_home">Home</string>
     <string name="tv_hub_health_checking">Checking the server…</string>
     <string name="tv_hub_quota_none_left">None left</string>
     <string name="tv_download_percent">%1$d%%</string>

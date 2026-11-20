@@ -3,7 +3,9 @@ package com.cooper.binge.companion.seerr.ui.tv
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.tv.preview.TvPreviewsOnBlack
 import com.cooper.binge.companion.seerr.R
@@ -222,7 +224,17 @@ internal val SampleSettingsWithApp =
 @TvPreviewsOnBlack
 @Composable
 internal fun TvShellHubPreview() {
-    TvHomeShell(tab = TvDestination.Hub, sheet = null, onSelectTab = {}, onOpenSheet = {}, onCloseSheet = {}) { _, _, _ ->
+    TvTabShell(
+        tab = TvTab.Requests,
+        tabs = listOf(TvTab.Requests, TvTab.Issues),
+        home = TvTab.Requests,
+        onSelectTab = {},
+        sheetOpen = false,
+        onOpenSheet = {},
+        onCloseSheet = {},
+        account = TvTopBarAccount(name = "", avatarUrl = null),
+        contentRequester = remember { FocusRequester() },
+    ) {
         TvHubBoard(state = hub(health = ConnectionHealth.Unreachable), actions = NoHubActions)
     }
 }

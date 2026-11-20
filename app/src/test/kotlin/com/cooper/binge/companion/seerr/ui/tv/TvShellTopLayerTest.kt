@@ -27,7 +27,6 @@ import com.binge.designsystem.tv.nav.LocalTvTopInset
 import com.binge.designsystem.tv.theme.BingeTvTheme
 import com.cooper.binge.companion.seerr.util.createSeerrKeyboardAndroidComposeRule
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -40,7 +39,7 @@ private const val GRID_CELL = "grid-cell"
 private const val PAGE = "page"
 
 /**
- * A title's own page sits over everything, the bar included. It reads no top inset while the pages beneath read the bar's,
+ * A title's own page sits over everything, the bar included. It reads no top inset, nor does the board beneath, which sits below the bar,
  * it keeps focus inside itself, and when it closes focus goes back to what opened it: a card on the board, or a cell of the
  * see-all page it was opened from.
  */
@@ -58,7 +57,7 @@ class TvShellTopLayerTest {
     private fun setShell() {
         composeTestRule.setContent {
             BingeTvTheme {
-                TvHomeShell(
+                TvShellUnderTest(
                     tab = TvDestination.Hub,
                     sheet = null,
                     onSelectTab = {},
@@ -92,13 +91,13 @@ class TvShellTopLayerTest {
     }
 
     @Test
-    fun `the page over the bar reads no top inset while the board beneath reads the bar's`() {
+    fun `the page over the bar and the board beneath it both read no top inset, the board sitting below the bar`() {
         setShell()
         pageOpen = true
         composeTestRule.waitForIdle()
 
         assertEquals(0.dp, pageInset)
-        assertTrue("the board reads no inset under the bar", boardInset > 0.dp)
+        assertEquals("the board sits below the bar, so it reads no inset", 0.dp, boardInset)
     }
 
     @Test

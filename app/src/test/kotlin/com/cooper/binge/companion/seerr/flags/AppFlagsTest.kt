@@ -48,8 +48,20 @@ class AppFlagsTest {
     fun `the keys are the Remote Config names the app has always used`() {
         assertEquals("discovery_enabled", DiscoveryEnabled.key)
         assertEquals("search_toggles_enabled", SearchToggles.key)
-        assertEquals(listOf(SharedFlags.BingePromotion, SharedFlags.ReviewPrompt, DiscoveryEnabled, SharedSetupEnabled), RemoteFlagKeys)
+        assertEquals(
+            listOf(SharedFlags.BingePromotion, SharedFlags.ReviewPrompt, DiscoveryEnabled, SharedSetupEnabled, TvDiscoveryEnabled),
+            RemoteFlagKeys,
+        )
         assertEquals("shared_setup_enabled", SharedSetupEnabled.key)
+        assertEquals("tv_discovery_enabled", TvDiscoveryEnabled.key)
+    }
+
+    /** The television's discovery tabs have no screens yet, so the flag ships off and is separate from the phone's. */
+    @Test
+    fun `the TV discovery flag is off by default and apart from the phone's`() {
+        assertFalse(TvDiscoveryEnabled.default)
+        assertTrue(DiscoveryEnabled.default)
+        assertTrue(TvDiscoveryEnabled in AllFlagKeys)
     }
 
     @Test

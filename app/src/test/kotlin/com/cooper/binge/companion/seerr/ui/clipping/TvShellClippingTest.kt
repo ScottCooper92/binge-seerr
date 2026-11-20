@@ -11,21 +11,22 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.requestFocus
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import com.binge.designsystem.testing.assertNoTextClipped
+import com.binge.designsystem.tv.focus.tvShellArrivalTarget
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.theme.SeerrTvTheme
 import com.cooper.binge.companion.seerr.ui.hub.HubAccount
 import com.cooper.binge.companion.seerr.ui.hub.HubQuota
 import com.cooper.binge.companion.seerr.ui.hub.HubQuotaBucket
 import com.cooper.binge.companion.seerr.ui.tv.TvDestination
-import com.cooper.binge.companion.seerr.ui.tv.TvHomeShell
-import com.cooper.binge.companion.seerr.ui.tv.TvTopBar
+import com.cooper.binge.companion.seerr.ui.tv.TvShellUnderTest
+import com.cooper.binge.companion.seerr.ui.tv.TvTab
+import com.cooper.binge.companion.seerr.ui.tv.TvTabShell
 import com.cooper.binge.companion.seerr.ui.tv.hub.tvAccountMenu
 import com.cooper.binge.companion.seerr.ui.users.UserDetail
 import com.cooper.binge.companion.seerr.ui.users.UserDetailUiState
@@ -55,7 +56,7 @@ class TvShellClippingTest {
     fun `Home with its top row at 1_3`() =
         rule.assertNoTvClippingAt(
             FONT_SCALE_13,
-            settle = { onNode(hasContentDescription(string(R.string.tv_home))).requestFocus() },
+            settle = { onNode(hasContentDescription(string(R.string.hub_section_requests))).requestFocus() },
         ) { Shell() }
 }
 
@@ -85,7 +86,7 @@ class TvTopBarFitClippingTest {
         rule.waitForIdle()
         // Focused, so the tabs are at full size: at rest they are drawn at 0.8, which the check would read as clipping.
         // Focus on the avatar opens its menu, as it does in the app, and holds the bar at full size; otherwise Home takes focus.
-        rule.onNode(hasContentDescription(string(if (open) R.string.tv_account else R.string.tv_home))).requestFocus()
+        rule.onNode(hasContentDescription(string(if (open) R.string.tv_account else R.string.hub_section_requests))).requestFocus()
         rule.waitForIdle()
         val checked = rule.assertNoTextClipped()
         assertTrue("only $checked text nodes were checked", checked >= BAR_TEXT_NODES)
@@ -109,38 +110,36 @@ private const val BAR_TEXT_NODES = 3
 
 @Composable
 private fun FullBar(open: Boolean) {
-    val tabs = listOf(TvDestination.Hub, TvDestination.Issues)
-    val opener = remember { TvDestination.entries.associateWith { FocusRequester() } }
     val entry = remember { FocusRequester() }
-    Box(Modifier.fillMaxSize()) {
-        Box(
-            Modifier
-                .align(Alignment.Center)
-                .size(48.dp)
-                .focusRequester(entry)
-                .focusable(),
-        )
-        TvTopBar(
-            tabs = tabs,
-            current = TvDestination.Hub,
-            opener = opener,
-            accountOpener = remember { FocusRequester() },
-            down = entry,
-            visible = true,
-            account =
-                tvAccountMenu(
-                    account = HubAccount(id = 1, name = LONG_ROW_NAME, isAdmin = true, avatarUrl = null),
-                    detail = UserDetailUiState.Ready(worstCaseAccountDetail()),
-                    accountFailed = false,
-                    onRetry = {},
-                    onSignOut = {},
-                    demo = true,
-                ),
-            onFocusedChange = {},
-            onSelect = {},
-            onOpenSettings = {},
-            modifier = Modifier.align(Alignment.TopCenter),
-        )
+    TvTabShell(
+        tab = TvTab.Requests,
+        tabs = TvTab.entries,
+        home = TvTab.Requests,
+        onSelectTab = {},
+        sheetOpen = false,
+        onOpenSheet = {},
+        onCloseSheet = {},
+        account =
+            tvAccountMenu(
+                account = HubAccount(id = 1, name = LONG_ROW_NAME, isAdmin = true, avatarUrl = null),
+                detail = UserDetailUiState.Ready(worstCaseAccountDetail()),
+                accountFailed = false,
+                onRetry = {},
+                onSignOut = {},
+                demo = true,
+                initiallyOpen = open,
+            ),
+        contentRequester = remember { FocusRequester() },
+    ) {
+        Box(Modifier.fillMaxSize()) {
+            Box(
+                Modifier
+                    .align(Alignment.Center)
+                    .size(48.dp)
+                    .tvShellArrivalTarget(entry)
+                    .focusable(),
+            )
+        }
     }
 }
 
@@ -170,7 +169,7 @@ private fun Content() {
 
 @Composable
 private fun Shell() {
-    TvHomeShell(tab = TvDestination.Hub, sheet = null, onSelectTab = {}, onOpenSheet = {}, onCloseSheet = {}) { _, _, _ ->
+    TvShellUnderTest(tab = TvDestination.Hub, sheet = null, onSelectTab = {}, onOpenSheet = {}, onCloseSheet = {}) { _, _, _ ->
         Content()
     }
 }

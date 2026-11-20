@@ -59,7 +59,7 @@ internal fun BoardInShell(
     onCloseTopLayer: () -> Unit = {},
     board: @Composable () -> Unit,
 ) {
-    TvHomeShell(
+    TvShellUnderTest(
         tab = if (destination.isSheet) TvDestination.Hub else destination,
         sheet = destination.takeIf { it.isSheet },
         onSelectTab = {},

@@ -55,7 +55,7 @@ class TvOverlayCloserWiringTest {
     private fun setShell() {
         composeTestRule.setContent {
             BingeTvTheme {
-                TvHomeShell(
+                TvShellUnderTest(
                     tab = TvDestination.Hub,
                     sheet = sheet,
                     onSelectTab = {},

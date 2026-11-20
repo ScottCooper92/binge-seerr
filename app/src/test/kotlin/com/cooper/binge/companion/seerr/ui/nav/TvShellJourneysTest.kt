@@ -48,7 +48,7 @@ class TvShellJourneysTest {
         )
     }
 
-    private val home get() = host.string(R.string.tv_home)
+    private val home get() = host.string(R.string.hub_section_requests)
     private val settings get() = host.string(R.string.hub_section_settings)
 
     @Test

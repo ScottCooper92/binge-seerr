@@ -15,6 +15,13 @@ val LocalDiscoveryEnabled = staticCompositionLocalOf { false }
 val DiscoveryEnabled = FlagKey("discovery_enabled", default = true)
 
 /**
+ * Whether the television shows the discovery tabs (Search, Movies and TV) in its top bar, and opens on Movies. Off until Remote Config
+ * turns it on, and separate from [DiscoveryEnabled], which is the phone's: a TV user sees Requests and Issues until the TV discovery
+ * screens have content. A debug build's developer override switches it for a check.
+ */
+val TvDiscoveryEnabled = FlagKey("tv_discovery_enabled")
+
+/**
  * Whether setup runs on the shared connect machine from the shared library instead of the app's own view model. Off until Remote
  * Config turns it on, so a released build keeps the path it has always had; a debug build's developer override switches it for a check.
  */
@@ -27,8 +34,8 @@ val SharedSetupEnabled = FlagKey("shared_setup_enabled")
  */
 val SearchToggles = FlagKey("search_toggles_enabled")
 
-/** The flags Remote Config is asked for: the shared ones, and this app's discovery and shared-setup flags. */
-val RemoteFlagKeys: List<FlagKey> = SharedFlags.all + DiscoveryEnabled + SharedSetupEnabled
+/** The flags Remote Config is asked for: the shared ones, and this app's discovery, shared-setup and TV discovery flags. */
+val RemoteFlagKeys: List<FlagKey> = SharedFlags.all + DiscoveryEnabled + SharedSetupEnabled + TvDiscoveryEnabled
 
 /** Every flag the developer flags screen lists and can override. */
 val AllFlagKeys: List<FlagKey> = RemoteFlagKeys + SearchToggles

@@ -1335,7 +1335,6 @@ app:tv_handoff_could_not_listen  9b2ceb3a1d16
 app:tv_handoff_no_network  23bbba026c2f
 app:tv_handoff_pin  fc6a3027d709
 app:tv_handoff_pin_description  163786adb97a
-app:tv_home  3a78695388b3
 app:tv_hub_health_checking  86d5ab0a7412
 app:tv_hub_quota_none_left  7d0b2f243290
 app:tv_issue_edit_on_phone  fd2708005f0a
