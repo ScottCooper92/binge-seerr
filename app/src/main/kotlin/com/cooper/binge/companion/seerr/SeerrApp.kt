@@ -11,6 +11,7 @@ import com.cooper.homelab.core.review.ReviewPrompt
 import com.cooper.homelab.core.telemetry.Analytics
 import com.cooper.homelab.core.telemetry.CrashReportingSwitch
 import com.cooper.homelab.core.tip.TipBilling
+import com.cooper.homelab.core.tip.settleAtStart
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -68,6 +69,6 @@ class SeerrApp :
         planner.start()
         reviewPrompt.start()
         scope.launch { featureFlags.refresh() }
-        scope.launch { tipBilling.settle() }
+        tipBilling.settleAtStart(scope)
     }
 }
