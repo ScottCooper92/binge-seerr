@@ -7,6 +7,7 @@ import com.binge.designsystem.component.BingeConfirmDialogContent
 import com.binge.designsystem.component.ItemGroup
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.preview.SeerrComponentPreviews
+import com.cooper.homelab.core.uiandroid.R as CoreR
 
 private val SampleApp =
     AppSettings(
@@ -50,8 +51,8 @@ class SettingsAppGroupScreenshotTest {
     @Composable
     fun shakeConfirm() =
         BingeConfirmDialogContent(
-            title = stringResource(R.string.shake_report_title),
-            message = stringResource(R.string.shake_report_message),
+            title = stringResource(CoreR.string.shake_report_title),
+            message = stringResource(CoreR.string.shake_report_message),
             confirmLabel = stringResource(R.string.settings_report_bug),
             onConfirm = {},
             onDismissRequest = {},
