@@ -60,7 +60,7 @@ class TitleSearchAccountTest {
             SeerrTheme {
                 DiscoverHubScreen(
                     tab = HubTab.Movies,
-                    state = DiscoverHubUiState.Loading,
+                    state = DiscoverHubUiState.Loading(),
                     onRefresh = {},
                     onOpenTitle = {},
                     onOpenGrid = { _, _ -> },
