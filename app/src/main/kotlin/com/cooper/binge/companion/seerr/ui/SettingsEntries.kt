@@ -224,7 +224,9 @@ internal fun EntryProviderScope<NavKey>.serverSettingsEntries(
         DetailPaneContent { DiscoverSliderEntry(route.id, onBack = { backStack.popIfTop(route) }) }
     }
     entry<NotificationAgentRoute>(metadata = DetailPane + motion.tab) { route ->
-        DetailPaneContent { NotificationAgentEntry(route.agent, onBack = { backStack.popIfTop(route) }) }
+        DetailPaneContent {
+            ProvideRowFocus(route.row) { NotificationAgentEntry(route.agent, onBack = { backStack.popIfTop(route) }) }
+        }
     }
     entry<DvrInstanceRoute>(metadata = DetailPane + motion.tab) { route ->
         DetailPaneContent { DvrInstanceEntry(route.type, route.id, onBack = { backStack.popIfTop(route) }) }

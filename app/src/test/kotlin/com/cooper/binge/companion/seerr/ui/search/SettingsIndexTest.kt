@@ -11,8 +11,10 @@ import com.cooper.binge.companion.seerr.ui.NotificationAgentRoute
 import com.cooper.binge.companion.seerr.ui.ServerSettingsPageRoute
 import com.cooper.binge.companion.seerr.ui.ThisAppRoute
 import com.cooper.binge.companion.seerr.ui.UserSettingsPageRoute
+import com.cooper.binge.companion.seerr.ui.settings.server.AgentOption
 import com.cooper.binge.companion.seerr.ui.settings.server.ServerAgent
 import com.cooper.binge.companion.seerr.ui.settings.server.ServerSettingsPage
+import com.cooper.binge.companion.seerr.ui.settings.server.rowKey
 import com.cooper.binge.companion.seerr.ui.users.settings.UserSettingsPage
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -77,11 +79,13 @@ class SettingsIndexTest {
             .associate { it.name to it.get(null) as String }
 
     @Test
-    fun `every row an entry names is a key SettingRows declares, and every key is named`() {
+    fun `every row an entry names is a key SettingRows or an agent option declares, and every key is named`() {
         val named = settingsIndex.mapNotNull { it.row }.toSet()
+        // An agent option's key is built from the option, which names it, so it has no constant of its own.
+        val declared = rowConstants.values.toSet() + AgentOption.entries.filter { it.ownControl }.map { it.rowKey() }
         assertTrue(rowConstants.isNotEmpty())
-        assertEquals("a key no entry names", emptySet<String>(), rowConstants.values.toSet() - named)
-        assertEquals("a row no key declares", emptySet<String>(), named - rowConstants.values.toSet())
+        assertEquals("a key no entry names", emptySet<String>(), declared - named)
+        assertEquals("a row no key declares", emptySet<String>(), named - declared)
     }
 
     /**
@@ -268,5 +272,39 @@ class SettingsIndexTest {
         assertTrue(rows.size >= 9)
         assertTrue(rows.all { it.startsWith("notifications.") })
         assertTrue(SettingRows.NOTIFICATIONS_DISCORD_ID in offered(member).mapNotNull { it.row })
+    }
+
+    @Test
+    fun `every option an agent's page draws as a row has an entry on that agent, opening the page on it`() {
+        val options = AgentOption.entries.filter { it.ownControl }
+        val entries = settingsIndex.filter { it.target is SearchTarget.Agent && it.row != null }
+
+        assertEquals(options.map { it.rowKey() }.toSet(), entries.mapNotNull { it.row }.toSet())
+        assertEquals(options.size, entries.size)
+        entries.forEach { entry ->
+            val agent = (entry.target as SearchTarget.Agent).agent
+            assertEquals(NotificationAgentRoute(agent, entry.row), entry.target.route(1, entry.row))
+            assertTrue(entry.row!!.startsWith("agent.${agent.segment}."))
+        }
+    }
+
+    @Test
+    fun `an agent's option is offered only where the server has the agent`() {
+        fun offeredRows(access: SearchAccess) = offered(access).mapNotNull { it.row }.toSet()
+
+        assertTrue(AgentOption.NtfyTopic.rowKey() in offeredRows(admin))
+        assertTrue(AgentOption.NtfyTopic.rowKey() !in offeredRows(SearchAccess(1, true, overseerr)))
+        assertTrue(AgentOption.LunaSeaProfileName.rowKey() in offeredRows(SearchAccess(1, true, overseerr)))
+        assertTrue(AgentOption.LunaSeaProfileName.rowKey() !in offeredRows(admin))
+        assertTrue(AgentOption.TelegramMessageThreadId.rowKey() in offeredRows(admin))
+        assertTrue(AgentOption.TelegramMessageThreadId.rowKey() !in offeredRows(SearchAccess(1, true, overseerr)))
+        assertTrue(AgentOption.DiscordWebhookUrl.rowKey() !in offeredRows(member))
+    }
+
+    @Test
+    fun `the agent page gives each option's row its key`() {
+        val screen = File("src/main/kotlin/com/cooper/binge/companion/seerr/ui/settings/server/NotificationAgentScreen.kt").readText()
+
+        assertTrue(screen.contains(".copy(key = option.rowKey())"))
     }
 }

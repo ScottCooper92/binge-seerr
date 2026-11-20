@@ -70,6 +70,9 @@ internal fun ServerAgent.icon(): ImageVector =
         ServerAgent.Webhook -> Icons.Filled.Http
     }
 
+/** The key the settings search opens an agent's page on for this option's row: the agent's path segment and the option's own key. */
+internal fun AgentOption.rowKey(): String = "agent.${agent.segment}.$key"
+
 @StringRes
 internal fun AgentOption.labelRes(): Int =
     when (this) {

@@ -111,6 +111,8 @@ data class DiscoverSliderRoute(
 @Serializable
 data class NotificationAgentRoute(
     val agent: ServerAgent,
+    /** The option row to scroll to and wash, by its `AgentOption` key; null opens the page at the top. */
+    val row: String? = null,
 ) : SeerrRoute
 
 /** One override rule; a null [id] is a new one. */
