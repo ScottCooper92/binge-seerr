@@ -64,8 +64,4 @@
     <dimen name="setup_mode_tabs_edge_padding">0dp</dimen>
     <dimen name="request_sheet_poster_width">64dp</dimen>
     <dimen name="season_dropdown_max_width">180dp</dimen>
-    <dimen name="grid_gap">14dp</dimen>
-    <dimen name="grid_filter_action_padding_h">14dp</dimen>
-    <dimen name="grid_filter_action_spacing">6dp</dimen>
-    <dimen name="grid_filter_action_icon">16dp</dimen>
 </resources>
