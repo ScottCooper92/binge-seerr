@@ -27,6 +27,8 @@ data class SeerrTvDetailsDto(
     @SerialName("numberOfSeasons") val numberOfSeasons: Int? = null,
     @SerialName("numberOfEpisodes") val numberOfEpisodes: Int? = null,
     @SerialName("originalLanguage") val originalLanguage: String? = null,
+    @SerialName("homepage") val homepage: String? = null,
+    @SerialName("externalIds") val externalIds: SeerrExternalIdsDto? = null,
     @SerialName("spokenLanguages") val spokenLanguages: List<SeerrLanguageNameDto> = emptyList(),
     @SerialName("genres") val genres: List<SeerrNamedDto> = emptyList(),
     @SerialName("keywords") val keywords: List<SeerrNamedDto> = emptyList(),

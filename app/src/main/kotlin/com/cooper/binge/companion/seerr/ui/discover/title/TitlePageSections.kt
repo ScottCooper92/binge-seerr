@@ -79,6 +79,7 @@ internal fun TitlePageBody(
         }
         state.extras?.let { TitleRow(stringResource(R.string.title_page_more_like_this), it.moreLikeThis, actions.onOpenTitle) }
         KeywordsSection(movie.keywords, actions.onOpenKeyword.takeIf { movie.keywordsOpen }, Modifier.readingMargin())
+        TitleLinksSection(movie.links, actions.onOpenUrl, Modifier.readingMargin())
         TitleDetailsSection(
             movie.detailEntries(context.resources, locale, actions.onOpenCompany.takeIf { movie.companiesOpen }, actions.onOpenPerson),
         )

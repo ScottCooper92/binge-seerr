@@ -317,6 +317,24 @@ class SeerrTitleDetailsRepositoryTest {
     }
 
     @Test
+    fun `the links are the ones the server named and TMDB's own page`() {
+        assertEquals(
+            listOf(TitleLink(TitleLinkKind.Tmdb, "https://www.themoviedb.org/movie/603")),
+            withRepository { it.movie(603) }.links,
+        )
+
+        movieBody = MOVIE.replaceFirst("{", """{"homepage":"https://matrix.example.org/","externalIds":{"imdbId":"tt0133093"},""")
+        assertEquals(
+            listOf(
+                TitleLink(TitleLinkKind.Imdb, "https://www.imdb.com/title/tt0133093"),
+                TitleLink(TitleLinkKind.Tmdb, "https://www.themoviedb.org/movie/603"),
+                TitleLink(TitleLinkKind.Website, "https://matrix.example.org/"),
+            ),
+            withRepository { it.movie(603) }.links,
+        )
+    }
+
+    @Test
     fun `the right to block is the right to unblock`() {
         assertTrue(withRepository { it.movie(603) }.mayBlock)
 

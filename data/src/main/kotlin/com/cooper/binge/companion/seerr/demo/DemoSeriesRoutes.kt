@@ -67,6 +67,7 @@ private fun DemoData.seriesBody(
     numberOfSeasons = thin.seasons.size,
     numberOfEpisodes = thin.seasons.sumOf { it.episodeCount },
     originalLanguage = "en",
+    homepage = "https://demo.example.com/shows/$tmdbId",
     genres = listOf(SeerrNamedDto(GENRE_DRAMA, "Drama")),
     keywords = listOf(SeerrNamedDto(1, "demo"), SeerrNamedDto(2, "ensemble")),
     networks = listOf(SeerrNamedDto(1, "Demo Network")),

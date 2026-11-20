@@ -194,6 +194,7 @@ internal fun SeerrTvDetailsDto.toSeriesDetails(
     val keyIds = key.map { it.personId }.toSet()
     return SeriesDetails(
         tmdbId = id,
+        links = titleLinks("tv", id, externalIds?.imdbId, homepage),
         name = name,
         tagline = tagline?.takeIf { it.isNotBlank() },
         overview = overview?.takeIf { it.isNotBlank() },
