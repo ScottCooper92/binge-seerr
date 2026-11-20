@@ -113,6 +113,7 @@ class SetupViewModel
         init {
             restore()
             reopenSignedOutServer()
+            handOff.signedInWith(viewModelScope, dispatcher, connection.credentials)
         }
 
         override val uiState: StateFlow<SetupUiState> =

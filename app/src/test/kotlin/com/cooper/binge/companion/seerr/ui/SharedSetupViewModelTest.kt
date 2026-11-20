@@ -7,6 +7,7 @@ import com.cooper.binge.companion.seerr.auth.LegacyCredentialStore
 import com.cooper.binge.companion.seerr.auth.PlexPinFlow
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.demo.DEMO_ORIGIN
+import com.cooper.binge.companion.seerr.handoff.AddressHandOffSession
 import com.cooper.binge.companion.seerr.handoff.AddressHandOffs
 import com.cooper.binge.companion.seerr.handoff.HAND_OFF_SESSION_MODE
 import com.cooper.binge.companion.seerr.handoff.HandOffCredentials
@@ -30,6 +31,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.HttpUrl
@@ -38,6 +40,7 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -513,6 +516,47 @@ class SharedSetupViewModelTest {
         }
 
     @Test
+    fun `the listener outlives the setup once the TV is signed in, so the phone can still read Connected`() =
+        runTest {
+            val session = FakeSession().apply { handedSession = "ph0n3" }
+            val handOffs = RecordingHandOffs(session)
+            val vm = viewModel(handOffs = handOffs)
+            vm.awaitAddress()
+            vm.showHandOff(true)
+            vm.awaitAddress { it.handOff != null }
+            seerr.enqueueProfile(json("""{"version":"3.4.0"}"""), json("""{"mediaServerType":2,"localLogin":true}"""))
+            seerr.enqueue(json("[]"))
+            seerr.enqueue(json("""{"id":9,"permissions":2}"""))
+            seerr.enqueueProfile(json("""{"version":"3.4.0"}"""), json("""{"mediaServerType":2,"localLogin":true}"""))
+            session.address.complete(seerr.url("/"))
+            vm.awaitConnected()
+
+            // The home replaces the setup the moment the session is saved, which clears this view model before the phone has polled.
+            viewModels.clear()
+            advanceUntilIdle()
+
+            assertSame("handed on to outlive the screen", session, handOffs.lingered)
+            assertFalse("not closed under the phone", session.closed)
+        }
+
+    @Test
+    fun `a setup left before the TV signed in closes the listener at once`() =
+        runTest {
+            val session = FakeSession()
+            val handOffs = RecordingHandOffs(session)
+            val vm = viewModel(handOffs = handOffs)
+            vm.awaitAddress()
+            vm.showHandOff(true)
+            vm.awaitAddress { it.handOff != null }
+
+            viewModels.clear()
+            advanceUntilIdle()
+
+            assertNull(handOffs.lingered)
+            assertTrue(session.closed)
+        }
+
+    @Test
     fun `a handed session the server refuses leaves the form up saying so, and the phone hears it failed`() =
         runTest {
             val session = FakeSession().apply { handedSession = "st4l3" }
@@ -539,4 +583,21 @@ class SharedSetupViewModelTest {
         body: String,
         headers: okhttp3.Headers = headersOf(),
     ): FakeResponse = FakeResponse(code = 200, headers = headers.newBuilder().add("Content-Type", "application/json").build(), body = body)
+
+    /** An opener that records the listener handed on to outlive a screen, instead of serving it. */
+    private class RecordingHandOffs(
+        private val session: AddressHandOffSession,
+    ) : AddressHandOffs {
+        @Volatile
+        var lingered: AddressHandOffSession? = null
+
+        override fun open(): HandOffOpening = HandOffOpening.Opened(session)
+
+        override fun linger(
+            session: AddressHandOffSession,
+            within: kotlin.time.Duration,
+        ) {
+            lingered = session
+        }
+    }
 }

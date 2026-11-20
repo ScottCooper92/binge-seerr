@@ -4,12 +4,19 @@ import android.content.Context
 import android.content.res.Configuration
 import android.net.ConnectivityManager
 import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.di.IoDispatcher
+import com.cooper.binge.companion.seerr.notifications.ApplicationScope
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import java.net.Inet4Address
 import java.net.InetAddress
 import java.net.ServerSocket
 import java.util.Locale
 import javax.inject.Inject
+import kotlin.time.Duration
 
 /** What asking for a hand-off came to. */
 sealed interface HandOffOpening {
@@ -25,6 +32,17 @@ sealed interface HandOffOpening {
 fun interface AddressHandOffs {
     /** Throws an `IOException` when the listener cannot be opened on a network the device does have. */
     fun open(): HandOffOpening
+
+    /**
+     * Keeps [session] answering "Connected" for [within], after the screen that owned it is gone: a TV that signed in leaves its setup
+     * at once, and the phone's page has not read the news yet (#2475). The default closes it, for an opener with no scope to outlive one.
+     */
+    fun linger(
+        session: AddressHandOffSession,
+        within: Duration,
+    ) {
+        session.close()
+    }
 }
 
 /**
@@ -43,7 +61,24 @@ internal class LanAddressHandOffs
     @Inject
     constructor(
         @ApplicationContext private val context: Context,
+        @ApplicationScope private val scope: CoroutineScope,
+        @IoDispatcher private val dispatcher: CoroutineDispatcher,
     ) : AddressHandOffs {
+        override fun linger(
+            session: AddressHandOffSession,
+            within: Duration,
+        ) {
+            scope.launch(dispatcher) {
+                try {
+                    withTimeoutOrNull(within) {
+                        session.serve(progress = { HandOffProgress.Connected }, onAddress = { _, _ -> }, onCredentials = {})
+                    }
+                } finally {
+                    session.close()
+                }
+            }
+        }
+
         override fun open(): HandOffOpening {
             val address = lanAddress() ?: return HandOffOpening.NoLocalNetwork
             // A backlog of one: the listener answers one connection at a time, and a queue is no help.

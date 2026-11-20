@@ -183,6 +183,7 @@ class SharedSetupViewModel
             )
 
         init {
+            handOff.signedInWith(viewModelScope, dispatcher, connection.credentials)
             links.restore()
             reopenSignedOutServer()
             watchHandedSession()
