@@ -33,6 +33,10 @@ class RequestListSkeletonGeometryTest {
     fun `on a phone the skeleton holds the first row where the list puts it`() = check()
 
     @Test
+    @Config(qualifiers = "w411dp-h891dp-xhdpi", fontScale = 1.3f)
+    fun `on a phone at a font scale of 1 point 3 the skeleton holds the first row where the list puts it`() = check()
+
+    @Test
     @Config(qualifiers = "w411dp-h891dp-xhdpi", fontScale = 2f)
     fun `on a phone at a font scale of 2 the skeleton holds the first row where the list puts it`() = check()
 

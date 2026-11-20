@@ -30,6 +30,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -37,6 +38,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.itemKey
 import com.binge.companion.sdk.paging.ListRefresh
@@ -116,6 +118,7 @@ internal fun RequestsBody(
                 ListRowSkeletonColumn(
                     contentPadding = contentPadding.filteredPagePadding(),
                     modifier = Modifier.fillMaxSize(),
+                    height = requestRowSkeletonHeight(),
                 )
             is PagedPhase.Failed ->
                 PagedRefreshError(
@@ -134,6 +137,12 @@ internal fun RequestsBody(
         }
     }
 }
+
+/** What a request row is tall, at the font in use: the part that does not scale, and the text lines that do. */
+@Composable
+private fun requestRowSkeletonHeight(): Dp =
+    dimensionResource(R.dimen.requests_row_skeleton_fixed) +
+        dimensionResource(R.dimen.requests_row_skeleton_text) * LocalDensity.current.fontScale
 
 @Composable
 private fun RequestList(
