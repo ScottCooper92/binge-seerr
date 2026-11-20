@@ -1,5 +1,6 @@
 package com.cooper.binge.companion.seerr.ui.search
 
+import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.seerr.SeerrPublicSettings
 import com.cooper.binge.companion.seerr.seerr.SeerrServerProfile
 import com.cooper.binge.companion.seerr.seerr.SeerrVariant
@@ -236,5 +237,16 @@ class SettingsIndexTest {
         assertEquals("this-app|app.report-bug", entry.id)
         assertTrue(SettingRows.APP_REPORT_BUG !in deviceSwitches.keys)
         assertEquals(ThisAppRoute(SettingRows.APP_REPORT_BUG), entry.target.route(7, entry.row))
+    }
+
+    @Test
+    fun `new sign-ups is an entry on the server's Users page under a fixed label, not the server's name`() {
+        val entry = settingsIndex.single { it.row == SettingRows.USERS_NEW_SIGN_UPS }
+
+        assertEquals(SearchTarget.Server(ServerSettingsPage.Users), entry.target)
+        assertEquals(R.string.server_settings_new_sign_ups, entry.label)
+        assertEquals("server.Users|users.new-sign-ups", entry.id)
+        assertTrue(entry.available(admin))
+        assertTrue(!entry.available(member))
     }
 }

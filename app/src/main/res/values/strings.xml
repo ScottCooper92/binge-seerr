@@ -1374,6 +1374,7 @@
     <string name="server_settings_local_login">Local sign-in</string>
     <string name="server_settings_local_login_detail">Signs in with email and password</string>
     <string name="server_settings_media_server_login">%1$s sign-in</string>
+    <string name="server_settings_new_sign_ups">New sign-ups</string>
     <string name="server_settings_new_media_server_login">New %1$s users</string>
     <string name="server_settings_new_media_server_login_detail">Signs them in without importing</string>
     <string name="server_settings_sign_in_required">Keep at least one way to sign in turned on.</string>

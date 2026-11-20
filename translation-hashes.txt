@@ -935,6 +935,7 @@ app:server_settings_network  1744b96470b5
 app:server_settings_network_caption  34907980e765
 app:server_settings_new_media_server_login  1f699e850b7e
 app:server_settings_new_media_server_login_detail  2cddca99f6dd
+app:server_settings_new_sign_ups  e0180777c4a4
 app:server_settings_partial_requests  c615998fdcff
 app:server_settings_partial_requests_detail  451a5a443ea1
 app:server_settings_permissions_none  dc937b598926
