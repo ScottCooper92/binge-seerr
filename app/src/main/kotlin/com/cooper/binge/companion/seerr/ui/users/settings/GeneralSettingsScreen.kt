@@ -228,7 +228,7 @@ private fun quotaRows(
             onToggle = onOverride,
         )
     return if (override) {
-        listOf(toggle) + limitRows(row.icon, stringResource(row.limitLabel), limit, days, enabled, onChange).joined()
+        listOf(toggle) + limitRows(row.icon, stringResource(row.limitLabel), limit, days, enabled, onChange = onChange).joined()
     } else {
         listOf(toggle)
     }

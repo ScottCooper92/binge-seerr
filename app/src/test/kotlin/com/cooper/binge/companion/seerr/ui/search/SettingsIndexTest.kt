@@ -307,4 +307,14 @@ class SettingsIndexTest {
 
         assertTrue(screen.contains(".copy(key = option.rowKey())"))
     }
+
+    @Test
+    fun `the movie and TV request limits are entries on the server's Users page, on their own rows`() {
+        val limits = settingsIndex.filter { it.row == SettingRows.USERS_MOVIE_LIMIT || it.row == SettingRows.USERS_TV_LIMIT }
+
+        assertEquals(2, limits.size)
+        assertTrue(limits.all { it.target == SearchTarget.Server(ServerSettingsPage.Users) })
+        assertEquals(setOf(R.string.server_settings_movie_limit, R.string.server_settings_tv_limit), limits.map { it.label }.toSet())
+        assertTrue(limits.all { it.available(admin) && !it.available(member) })
+    }
 }

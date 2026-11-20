@@ -61,6 +61,7 @@ fun ServerUsersScreen(
                     draft.movieLimit,
                     draft.movieDays,
                     enabled,
+                    key = SettingRows.USERS_MOVIE_LIMIT,
                 ) { limit, days -> actions.onEdit { it.copy(movieLimit = limit, movieDays = days) } } +
                     limitRows(
                         Icons.Filled.Tv,
@@ -68,6 +69,7 @@ fun ServerUsersScreen(
                         draft.tvLimit,
                         draft.tvDays,
                         enabled,
+                        key = SettingRows.USERS_TV_LIMIT,
                     ) { limit, days -> actions.onEdit { it.copy(tvLimit = limit, tvDays = days) } },
         )
         val permissions = extras.defaultPermissions.map { stringResource(it.labelRes()) }.sorted()
@@ -141,6 +143,7 @@ internal fun limitRows(
     limit: Int,
     days: Int,
     enabled: Boolean,
+    key: String? = null,
     onChange: (limit: Int, days: Int) -> Unit,
 ): List<ListItem> {
     val resources = LocalResources.current
@@ -156,7 +159,7 @@ internal fun limitRows(
             enabled = enabled,
             onChange = { onChange(it ?: 0, days) },
             openEndLabel = stringResource(R.string.hub_quota_unlimited),
-        )
+        ).copy(key = key)
     val windowRow =
         bingeNumberItem(
             icon = Icons.Filled.DateRange,

@@ -18,6 +18,7 @@ import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.LiveTv
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.NotificationsOff
 import androidx.compose.material.icons.filled.Person
@@ -199,6 +200,8 @@ internal val settingRowEntries: List<IndexEntry> =
                 R.string.search_kw_sign_in,
             ),
         )
+        add(setting(ServerSettingsPage.Users, R.string.server_settings_movie_limit, Icons.Filled.Movie, SettingRows.USERS_MOVIE_LIMIT))
+        add(setting(ServerSettingsPage.Users, R.string.server_settings_tv_limit, Icons.Filled.Tv, SettingRows.USERS_TV_LIMIT))
         add(
             setting(
                 ServerSettingsPage.Users,
