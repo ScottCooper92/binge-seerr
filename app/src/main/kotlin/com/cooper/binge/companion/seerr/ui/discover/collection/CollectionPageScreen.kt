@@ -19,12 +19,14 @@ import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.TitleResult
 import com.cooper.binge.companion.seerr.discover.collection.CollectionDetails
 import com.cooper.binge.companion.seerr.discover.request.RequestResult
+import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.ui.discover.request.RequestFilm
 import com.cooper.binge.companion.seerr.ui.discover.request.RequestSheet
 import com.cooper.binge.companion.seerr.ui.discover.request.RequestSheetTarget
 import com.cooper.binge.companion.seerr.ui.discover.request.filmsSubmitLabel
 import com.cooper.binge.companion.seerr.ui.discover.request.messageRes
 import com.cooper.binge.companion.seerr.ui.discover.title.statusStyle
+import com.cooper.binge.companion.seerr.ui.rememberAllowLocalNetwork
 import com.cooper.binge.companion.seerr.ui.state.messageRes
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
@@ -57,7 +59,9 @@ internal fun CollectionPageScreen(
     val resources = LocalResources.current
     CollectionEventSnackbars(events, snackbar)
     val ready = state as? CollectionPageUiState.Ready
-    val detail = remember(state, resources) { state.toDetailState(resources) }
+    val denied = (state as? CollectionPageUiState.Error)?.error == SeerrError.LocalNetworkDenied
+    val allow = if (denied) rememberAllowLocalNetwork(actions.onRetry) else null
+    val detail = remember(state, resources, allow) { state.toDetailState(resources, allow) }
     val partsByKey =
         remember(ready?.collection) {
             ready

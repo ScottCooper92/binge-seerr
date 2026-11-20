@@ -1707,6 +1707,7 @@
         <item quantity="other">%d films</item>
     </plurals>
     <string name="collection_page_empty">This collection has no films yet.</string>
+    <string name="collection_page_parts_heading">Films</string>
     <string name="collection_page_meta">%1$s · %2$d to request</string>
     <string name="request_sheet_films">Films</string>
     <string name="request_sheet_all_films">All films</string>
