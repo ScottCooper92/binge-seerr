@@ -9,8 +9,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.binge.designsystem.template.StepHeading
 import com.cooper.binge.companion.seerr.R
-import com.cooper.binge.companion.seerr.flags.LocalFlags
-import com.cooper.binge.companion.seerr.flags.bingePromotion
+import com.cooper.homelab.core.flags.bingePromotion
 import com.cooper.homelab.core.presentation.connect.ConnectState
 import com.cooper.homelab.core.uiandroid.connect.AllowLocalNetwork
 import com.cooper.homelab.core.uiandroid.connect.ConnectAddressActions
@@ -19,6 +18,7 @@ import com.cooper.homelab.core.uiandroid.connect.ConnectScreen
 import com.cooper.homelab.core.uiandroid.connect.ConnectScreenText
 import com.cooper.homelab.core.uiandroid.connect.ConnectSignInActions
 import com.cooper.homelab.core.uiandroid.connect.rememberAllowLocalNetwork
+import com.cooper.homelab.core.uiandroid.flags.LocalFlags
 
 /**
  * The setup flow on the shared connect screen, for the path that runs on [SharedSetupViewModel]: the address, then the sign-in the server

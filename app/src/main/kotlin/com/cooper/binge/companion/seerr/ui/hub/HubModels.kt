@@ -1,11 +1,11 @@
 package com.cooper.binge.companion.seerr.ui.hub
 
-import com.cooper.binge.companion.seerr.flags.bingePromotion
 import com.cooper.binge.companion.seerr.seerr.SeerrPermissions
 import com.cooper.binge.companion.seerr.seerr.SeerrVariant
 import com.cooper.binge.companion.seerr.ui.users.settings.UserRole
 import com.cooper.binge.companion.seerr.ui.users.userRole
 import com.cooper.homelab.core.flags.Flags
+import com.cooper.homelab.core.flags.bingePromotion
 
 /**
  * Live reachability of the connected server as the hub shows it. [Checking] is the brief re-probe;

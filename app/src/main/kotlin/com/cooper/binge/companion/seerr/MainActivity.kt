@@ -26,7 +26,6 @@ import com.cooper.binge.companion.seerr.feedback.BugReportLinks
 import com.cooper.binge.companion.seerr.feedback.ShakeToReportPrompt
 import com.cooper.binge.companion.seerr.feedback.ShakeToReportSetting
 import com.cooper.binge.companion.seerr.flags.LocalDiscoveryEnabled
-import com.cooper.binge.companion.seerr.flags.LocalFlags
 import com.cooper.binge.companion.seerr.telemetry.LocalAnalytics
 import com.cooper.binge.companion.seerr.telemetry.screenNames
 import com.cooper.binge.companion.seerr.theme.SeerrTheme
@@ -43,6 +42,7 @@ import com.cooper.homelab.core.flags.BooleanPreference
 import com.cooper.homelab.core.flags.FeatureFlags
 import com.cooper.homelab.core.flags.PreferenceGate
 import com.cooper.homelab.core.telemetry.Analytics
+import com.cooper.homelab.core.uiandroid.flags.LocalFlags
 import com.cooper.homelab.core.uiandroid.shell.RestartOnGateChange
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.mapNotNull

@@ -3,7 +3,6 @@ package com.cooper.binge.companion.seerr.ui
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import com.android.tools.screenshot.PreviewTest
-import com.cooper.binge.companion.seerr.flags.LocalFlags
 import com.cooper.binge.companion.seerr.preview.SeerrScreenPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrScreenStatePreview
 import com.cooper.binge.companion.seerr.seerr.SeerrSignInMode
@@ -18,6 +17,7 @@ import com.cooper.homelab.core.server.address.ServerAddress
 import com.cooper.homelab.core.uiandroid.connect.ConnectAddressActions
 import com.cooper.homelab.core.uiandroid.connect.ConnectLinkActions
 import com.cooper.homelab.core.uiandroid.connect.ConnectSignInActions
+import com.cooper.homelab.core.uiandroid.flags.LocalFlags
 
 /**
  * The setup flow drawn by the shared connect screen, in the states the old screen's frames show, so a state's frame can be set beside

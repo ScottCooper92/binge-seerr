@@ -1,12 +1,12 @@
 package com.cooper.binge.companion.seerr.flags
 
+import androidx.compose.runtime.ProvidableCompositionLocal
 import androidx.compose.runtime.staticCompositionLocalOf
 import com.cooper.homelab.core.flags.FlagKey
 import com.cooper.homelab.core.flags.Flags
 import com.cooper.homelab.core.flags.SharedFlags
-
-/** The flags for the composition below. Off until a root provides them, so a screen shown alone advertises nothing. */
-val LocalFlags = staticCompositionLocalOf { Flags() }
+import com.cooper.homelab.core.flags.bingePromotion as sharedBingePromotion
+import com.cooper.homelab.core.uiandroid.flags.LocalFlags as SharedLocalFlags
 
 /** Whether the discovery surfaces show: the shell with its tabs, and the page a title opens. Off until a root provides it. */
 val LocalDiscoveryEnabled = staticCompositionLocalOf { false }
@@ -37,8 +37,10 @@ val RemoteFlagKeys: List<FlagKey> = SharedFlags.all + DiscoveryEnabled + SharedS
 /** Every flag the developer flags screen lists and can override. */
 val AllFlagKeys: List<FlagKey> = RemoteFlagKeys + SearchToggles
 
-/** Anything that asks the user to install, open or connect Binge. */
-val Flags.bingePromotion: Boolean get() = this[SharedFlags.BingePromotion]
+/**
+ * Temporary: `RequestOpenSheet` is frozen while the `:data` split lands (#2163), so it still imports these two. They are the shared
+ * library's own, not copies, so a root that provides one provides the other. Remove them, and that file's imports, once it is free.
+ */
+val LocalFlags: ProvidableCompositionLocal<Flags> = SharedLocalFlags
 
-/** Whether the app may ask the platform to show its review card. */
-val Flags.reviewPrompt: Boolean get() = this[SharedFlags.ReviewPrompt]
+val Flags.bingePromotion: Boolean get() = sharedBingePromotion
