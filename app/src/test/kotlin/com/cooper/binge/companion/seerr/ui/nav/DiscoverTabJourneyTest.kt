@@ -4,6 +4,7 @@ import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.navigation3.runtime.NavKey
 import com.cooper.binge.companion.seerr.R
@@ -21,6 +22,9 @@ import org.robolectric.annotation.Config
 
 /** A tablet-width window: a smallest width of 600dp or more. */
 private const val TABLET = "w900dp-h800dp"
+
+/** What the bar says once the order is Highest rated. */
+private const val RATED = "Movies · Highest rated"
 
 /** A phone. */
 private const val PHONE = "w400dp-h800dp"
@@ -68,5 +72,30 @@ class DiscoverTabJourneyTest {
 
         host.compose.onAllNodes(hasTestTag("tab_discover")).assertCountEquals(0)
         host.awaitShowing(host.string(R.string.hubs_browse_all_movies))
+    }
+
+    @Test
+    fun `the order chosen on the tab survives a fold to a phone and an unfold`() {
+        NavHostActivity.discoveryEnabled = true
+        host.connectDemo()
+        host.launch(HomeRoute)
+        host.awaitShowing(host.string(R.string.hubs_row_recently_added))
+        host.compose.onNodeWithTag("tab_discover").performClick()
+        host.awaitShowing(host.string(R.string.grid_filters_button))
+        host.clickUntilShowing(host.string(R.string.grid_filters_button), host.string(R.string.grid_sort_rating_desc))
+        host.compose.onNodeWithText(host.string(R.string.grid_sort_rating_desc)).performClick()
+        host.clickUntil(
+            "the sheet closed",
+            target = { host.compose.onNodeWithText(host.string(R.string.grid_filters_show_results)) },
+            reached = { !host.isShowing(host.string(R.string.grid_filters_show_results)) },
+        )
+        host.awaitShowing(RATED)
+
+        host.rotate(PHONE)
+        host.awaitShowing(host.string(R.string.hubs_browse_all_movies))
+        host.rotate(TABLET)
+        host.compose.onNodeWithTag("tab_discover").performClick()
+
+        host.awaitShowing(RATED)
     }
 }
