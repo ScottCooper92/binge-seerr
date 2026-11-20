@@ -1,6 +1,7 @@
 package com.cooper.binge.companion.seerr.data
 
 import androidx.paging.PagingSource
+import androidx.room.withTransaction
 import com.binge.companion.sdk.paging.OpenPagingSources
 import com.cooper.binge.companion.seerr.seerr.SeerrRequestStatusCode
 import com.cooper.binge.companion.seerr.ui.requests.RequestCounts
@@ -60,6 +61,13 @@ interface RequestStore {
         status: Int?,
         mediaStatus: Int?,
     )
+
+    /**
+     * Puts a request the server has just made at the top of every opened list it belongs in, so the browser shows it with
+     * no refresh. [request]'s own list key and position are ignored. A list it cannot be placed in, because the server
+     * decides its rows by more than the request's own status or it is sorted another way, is left to its next refresh.
+     */
+    suspend fun addCreated(request: RequestEntity)
 
     suspend fun delete(requestId: Int)
 
@@ -126,6 +134,16 @@ class RoomRequestStore(
         statusFilters.forEach { (filter, wanted) -> if (status != wanted) requests.dropFromFilter(requestId, "$filter:%") }
     }
 
+    override suspend fun addCreated(request: RequestEntity) =
+        sources.afterWrite {
+            db.withTransaction {
+                keys.listKeys().filter { it.takesNewRequest(request) }.forEach { listKey ->
+                    val first = requests.firstOrderIndex(listKey) ?: 0
+                    requests.upsertAll(listOf(request.copy(listKey = listKey, orderIndex = first - 1)))
+                }
+            }
+        }
+
     override suspend fun delete(requestId: Int) = sources.afterWrite { requests.delete(requestId) }
 
     override suspend fun deleteTitleOf(requestId: Int) {
@@ -186,9 +204,22 @@ object NoRequestStore : RequestStore {
         mediaStatus: Int?,
     ) = Unit
 
+    override suspend fun addCreated(request: RequestEntity) = Unit
+
     override suspend fun delete(requestId: Int) = Unit
 
     override suspend fun deleteTitleOf(requestId: Int) = Unit
 
     override suspend fun clearAll() = Unit
+}
+
+/** A list key is `filter:sort:scope`. */
+private const val LIST_KEY_PARTS = 3
+
+/** Newest first is the only order a new request is known to lead; the scope is every request or the viewer's own. */
+internal fun String.takesNewRequest(request: RequestEntity): Boolean {
+    val (filter, sort, scope) = split(':').takeIf { it.size == LIST_KEY_PARTS } ?: return false
+    val fits = filter == RequestFilter.All.apiValue || statusFilters[filter] == request.status
+    val sorted = sort == "added" || sort == "modified"
+    return fits && sorted && (scope == "all" || scope == request.requestedById?.toString())
 }

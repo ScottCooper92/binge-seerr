@@ -1,9 +1,11 @@
 package com.cooper.binge.companion.seerr.di
 
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
+import com.cooper.binge.companion.seerr.data.RequestStore
 import com.cooper.binge.companion.seerr.data.TitleStatusStore
 import com.cooper.binge.companion.seerr.discover.request.RequestSheetRepository
 import com.cooper.binge.companion.seerr.discover.request.SeerrRequestSheetRepository
+import com.cooper.binge.companion.seerr.seerr.TitleCache
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -18,6 +20,8 @@ object RequestSheetModule {
     fun requestSheetRepository(
         connection: SeerrConnection,
         statuses: TitleStatusStore,
+        requests: RequestStore,
+        titles: TitleCache,
         @IoDispatcher io: CoroutineDispatcher,
     ): RequestSheetRepository =
         SeerrRequestSheetRepository(
@@ -26,5 +30,7 @@ object RequestSheetModule {
             profile = connection::profile,
             io = io,
             statuses = statuses,
+            requests = requests,
+            titles = titles::get,
         )
 }

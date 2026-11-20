@@ -76,4 +76,22 @@ data class SeerrRootFolderDto(
 @Serializable
 data class SeerrRequestResultDto(
     @SerialName("id") val id: Int? = null,
-)
+    @SerialName("status") val status: SeerrRequestStatusCode? = null,
+    @SerialName("media") val media: SeerrRequestMediaDto? = null,
+    @SerialName("createdAt") val createdAt: String? = null,
+    @SerialName("requestedBy") val requestedBy: SeerrRequestUserDto? = null,
+    @SerialName("is4k") val is4k: Boolean = false,
+    @SerialName("seasons") val seasons: List<SeerrSeasonStatusDto> = emptyList(),
+) {
+    /** The request the server made, when its answer carried enough to show it as a row; null for a bare `{"id": n}`. */
+    fun toRequest(): SeerrRequestDto? =
+        SeerrRequestDto(
+            id = id ?: return null,
+            status = status,
+            media = media ?: return null,
+            createdAt = createdAt,
+            requestedBy = requestedBy,
+            is4k = is4k,
+            seasons = seasons,
+        )
+}
