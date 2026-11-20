@@ -86,7 +86,7 @@ class SettingsIndexTest {
 
     /**
      * The key an entry names has to be carried by a row, or the search opens a page and finds nothing to wash. Each page's rows are built
-     * in its screen file, so each key must be given to a row there: a row the page drops, or a key the screen never uses, fails here.
+     * in its screen file, so each key must be given to a row there (or picked for it by a `->` arm there): a row the page drops, or a key the screen never uses, fails here.
      */
     @Test
     fun `every key an entry names is given to a row in its page's screen`() {
@@ -97,12 +97,13 @@ class SettingsIndexTest {
                 "users." to "settings/server/ServerUsersScreen.kt",
                 "metadata." to "settings/server/MetadataScreen.kt",
                 "account." to "users/settings/GeneralSettingsScreen.kt",
+                "notifications." to "users/settings/NotificationsSettingsScreen.kt",
                 "app." to "settings/AppSettingsRows.kt",
             )
         val root = File("src/main/kotlin/com/cooper/binge/companion/seerr/ui")
         rowConstants.forEach { (name, key) ->
             val file = screens.entries.single { key.startsWith(it.key) }.value
-            val given = Regex("key = SettingRows\\.$name\\b").containsMatchIn(File(root, file).readText())
+            val given = Regex("(key = |-> )SettingRows\\.$name\\b").containsMatchIn(File(root, file).readText())
             assertTrue("$key is not given to a row in $file", given)
         }
     }
@@ -248,5 +249,23 @@ class SettingsIndexTest {
         assertEquals("server.Users|users.new-sign-ups", entry.id)
         assertTrue(entry.available(admin))
         assertTrue(!entry.available(member))
+    }
+
+    @Test
+    fun `the Telegram thread row is offered only where the server keeps a topic`() {
+        val thread = settingsIndex.single { it.row == SettingRows.NOTIFICATIONS_TELEGRAM_THREAD_ID }
+        val withTopics = SearchAccess(userId = 7, isAdmin = false, profile = latest)
+
+        assertEquals(UserSettingsPage.Notifications, (thread.target as SearchTarget.Account).page)
+        assertTrue(thread.available(withTopics))
+        assertTrue(!thread.available(SearchAccess(userId = 7, isAdmin = false, profile = overseerr)))
+    }
+
+    @Test
+    fun `every notification field on the page has an entry on its row for any signed-in viewer`() {
+        val rows = settingsIndex.filter { it.target == SearchTarget.Account(UserSettingsPage.Notifications) }.mapNotNull { it.row }
+        assertTrue(rows.size >= 9)
+        assertTrue(rows.all { it.startsWith("notifications.") })
+        assertTrue(SettingRows.NOTIFICATIONS_DISCORD_ID in offered(member).mapNotNull { it.row })
     }
 }
