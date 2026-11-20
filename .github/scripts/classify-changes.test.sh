@@ -32,7 +32,9 @@ check "a frame"                    "true true false"   app/src/screenshotTestDeb
 check "server code can reach UI"   "true true false"   data/src/main/kotlin/com/cooper/binge/companion/seerr/seerr/SeerrApi.kt
 check "a resource string"          "true true false"   app/src/main/res/values/strings.xml
 check "tests only"                 "true false false"  app/src/test/kotlin/x/YTest.kt
-check "the data module's tests"     "true false false"  data/src/test/kotlin/x/YTest.kt data/src/testFixtures/kotlin/x/Fake.kt
+check "the data module's tests"     "true false false"  data/src/test/kotlin/x/YTest.kt
+check "the shared test support"    "true false false"  core/testing/src/main/kotlin/x/Fake.kt core/testing/src/test/kotlin/x/FakeTest.kt
+check "its build file runs R8 too" "true true true"    core/testing/build.gradle.kts
 check "the exported Service"       "true false false"  "$K/service/SeerrCompanionService.kt"
 check "notifications"              "true true false"   "$K/notifications/NotificationPrefs.kt"
 check "the review launcher"        "true false false"  "$K/review/ReviewPromptLauncher.kt"
