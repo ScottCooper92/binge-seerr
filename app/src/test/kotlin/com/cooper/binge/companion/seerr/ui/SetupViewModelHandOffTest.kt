@@ -671,21 +671,4 @@ class SetupViewModelHandOffTest {
 
     private fun json(body: String): FakeResponse =
         FakeResponse(code = 200, headers = headersOf("Content-Type", "application/json"), body = body)
-
-    /** An opener that records the listener handed on to outlive a screen, instead of serving it. */
-    private class RecordingHandOffs(
-        private val session: AddressHandOffSession,
-    ) : AddressHandOffs {
-        @Volatile
-        var lingered: AddressHandOffSession? = null
-
-        override fun open(): HandOffOpening = HandOffOpening.Opened(session)
-
-        override fun linger(
-            session: AddressHandOffSession,
-            within: kotlin.time.Duration,
-        ) {
-            lingered = session
-        }
-    }
 }

@@ -11,6 +11,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
+import java.io.IOException
 import java.net.Inet4Address
 import java.net.InetAddress
 import java.net.ServerSocket
@@ -73,6 +74,8 @@ internal class LanAddressHandOffs
                     withTimeoutOrNull(within) {
                         session.serve(progress = { HandOffProgress.Connected }, onAddress = { _, _ -> }, onCredentials = {})
                     }
+                } catch (_: IOException) {
+                    // A listener already closed under us has nothing left to answer, and nobody to tell: the application scope has no handler.
                 } finally {
                     session.close()
                 }
