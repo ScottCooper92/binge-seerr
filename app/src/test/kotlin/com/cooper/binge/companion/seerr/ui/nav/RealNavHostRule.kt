@@ -34,6 +34,7 @@ import com.cooper.binge.companion.seerr.seerr.SeerrAuth
 import com.cooper.binge.companion.seerr.seerr.SeerrCredentials
 import com.cooper.binge.companion.seerr.ui.HomeRoute
 import com.cooper.binge.companion.seerr.ui.SeerrRoute
+import com.cooper.binge.companion.seerr.ui.shell.SeerrTab
 import com.cooper.binge.companion.seerr.ui.shell.openLink
 import com.cooper.binge.companion.seerr.ui.users.settings.ADMIN
 import com.cooper.binge.companion.seerr.ui.users.settings.ScriptedSeerr
@@ -239,6 +240,9 @@ internal class RealNavHostRule(
 
     /** The back stack as it stands, read on the main thread. */
     fun stack(): List<NavKey> = compose.runOnIdle { activity.backStack.toList() }
+
+    /** The stack [tab] keeps in the shell, read on the main thread. */
+    fun tabStack(tab: SeerrTab): List<NavKey> = compose.runOnIdle { activity.tabs.stack(tab).toList() }
 
     /** Saves [credentials] over the connection, as a sign-in's own save does, so the connection emits again. */
     fun save(credentials: SeerrCredentials) {

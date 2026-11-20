@@ -10,8 +10,11 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.navigation3.runtime.NavKey
 import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.discover.grid.DiscoverSort
+import com.cooper.binge.companion.seerr.ui.DiscoverGridRoute
 import com.cooper.binge.companion.seerr.ui.HomeRoute
 import com.cooper.binge.companion.seerr.ui.ShellRoute
+import com.cooper.binge.companion.seerr.ui.shell.SeerrTab
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
 import org.junit.After
@@ -99,6 +102,22 @@ class DiscoverTabJourneyTest {
         host.compose.onNodeWithTag("tab_discover").performClick()
 
         host.awaitShowing(RATED)
+    }
+
+    @Test
+    fun `the tab's route carries the order chosen in the sheet`() {
+        NavHostActivity.discoveryEnabled = true
+        host.connectDemo()
+        host.launch(HomeRoute)
+        host.awaitShowing(host.string(R.string.hubs_row_recently_added))
+        host.compose.onNodeWithTag("tab_discover").performClick()
+        host.awaitShowing(host.string(R.string.grid_filters_button))
+
+        applyInSheet(host.string(R.string.grid_sort_rating_desc))
+
+        host.await("the tab's route carries Highest rated") {
+            (host.tabStack(SeerrTab.Discover).lastOrNull() as? DiscoverGridRoute)?.sort == DiscoverSort.RatingDesc
+        }
     }
 
     @Test
