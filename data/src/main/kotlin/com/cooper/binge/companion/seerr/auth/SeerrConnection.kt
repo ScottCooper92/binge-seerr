@@ -169,6 +169,12 @@ class SeerrConnection(
     }
 
     /**
+     * The profile this connection already holds, read without a suspend and never from the network, or null before the first
+     * complete read. A screen that wants its first frame to match the server asks this; a screen that needs the answer calls [profile].
+     */
+    fun cachedProfileOrNull(): SeerrServerProfile? = cachedProfile?.second
+
+    /**
      * The saved server's name for a message saying it did not answer (#1913), read from what is already cached and
      * never from the network: asking an unreachable server for its profile would only wait out a second timeout.
      * With no cached profile it is the edition the credentials recorded, or null when that is not known.

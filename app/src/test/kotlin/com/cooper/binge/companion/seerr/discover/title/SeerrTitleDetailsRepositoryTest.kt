@@ -1,5 +1,8 @@
 package com.cooper.binge.companion.seerr.discover.title
 
+import com.cooper.binge.companion.seerr.data.TitleKey
+import com.cooper.binge.companion.seerr.data.TitleStatusStore
+import com.cooper.binge.companion.seerr.data.TitleType
 import com.cooper.binge.companion.seerr.discover.TitleAvailability
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.collection.SeerrCollectionRepository
@@ -25,6 +28,7 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -63,6 +67,8 @@ class SeerrTitleDetailsRepositoryTest {
     private var movieBody = MOVIE
     private val unblocks = mutableListOf<String>()
     private val watchlistCalls = mutableListOf<String>()
+    private var watchlistFails = false
+    private val statuses = TitleStatusStore()
     private var ratingsAnswer = FakeResponse(headers = JSON, body = RATINGS)
 
     @After
@@ -78,7 +84,13 @@ class SeerrTitleDetailsRepositoryTest {
 
     private fun recordWatchlist(request: FakeRequest): FakeResponse {
         watchlistCalls += "${request.method} ${request.url.encodedPath}?${request.url.encodedQuery} ${request.body}"
-        return FakeResponse(code = if (request.method == "POST") 201 else 204)
+        val code =
+            when {
+                watchlistFails -> 500
+                request.method == "POST" -> 201
+                else -> 204
+            }
+        return FakeResponse(code = code)
     }
 
     private fun route(request: FakeRequest): FakeResponse =
@@ -114,6 +126,7 @@ class SeerrTitleDetailsRepositoryTest {
                                 io = Dispatchers.Unconfined,
                             ),
                         io = Dispatchers.Unconfined,
+                        statuses = statuses,
                     ),
                 )
             }
@@ -342,6 +355,27 @@ class SeerrTitleDetailsRepositoryTest {
             ),
             watchlistCalls,
         )
+    }
+
+    @Test
+    fun `a title put on the watchlist shows on it in the store at once`() {
+        withRepository { it.setWatchlist(603, "The Matrix", onList = true) }
+
+        assertEquals(true, statuses.current(TitleKey(TitleType.Movie, 603))?.onWatchlist)
+
+        withRepository { it.setWatchlist(603, "The Matrix", onList = false) }
+
+        assertEquals(false, statuses.current(TitleKey(TitleType.Movie, 603))?.onWatchlist)
+    }
+
+    @Test
+    fun `a watchlist call the server refuses leaves the store as it was`() {
+        withRepository { it.setWatchlist(603, "The Matrix", onList = true) }
+        watchlistFails = true
+
+        assertThrows(Exception::class.java) { withRepository { it.setWatchlist(603, "The Matrix", onList = false) } }
+
+        assertEquals(true, statuses.current(TitleKey(TitleType.Movie, 603))?.onWatchlist)
     }
 
     @Test

@@ -2,6 +2,7 @@ package com.cooper.binge.companion.seerr.discover.grid
 
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.TitleSource
+import com.cooper.binge.companion.seerr.seerr.SeerrServerProfile
 import kotlinx.serialization.Serializable
 
 /**
@@ -57,6 +58,9 @@ sealed interface GridPreset {
 
 /** Whether the list can be sorted and filtered at all, or is one plain paged call. */
 val GridPreset.isFilterable: Boolean get() = this != GridPreset.Trending && this != GridPreset.Watchlist && this != GridPreset.OwnWatchlist
+
+/** Whether [profile]'s server lets this preset be sorted and filtered, or answers it as one plain list. */
+fun GridPreset.refinableOn(profile: SeerrServerProfile): Boolean = isFilterable && profile.hasDiscoverFilters
 
 /** The filters a preset starts the grid with. */
 fun GridPreset.startingFilters(today: String): DiscoverFilters =

@@ -59,7 +59,7 @@ class TitleSearchViewModel
                 history = history,
                 fetch = { query, page ->
                     val loaded = titles.load(TitleSource.Search(query), page)
-                    SearchPage(loaded.results, loaded.page, loaded.totalPages, loaded.total)
+                    SearchPage(loaded.results, loaded.page, loaded.totalPages)
                 },
                 keyOf = { it.kind to it.tmdbId },
             )

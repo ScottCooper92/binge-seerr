@@ -77,7 +77,7 @@ class SeerrSeriesRepository(
             val profile = profile()
             val read = statuses.beginRead()
             val dto = api.tvFullDetails(tmdbId)
-            statuses.seed(TitleKey(TitleType.Tv, tmdbId), dto.mediaInfo.toTitleStatuses(), read)
+            statuses.seed(TitleKey(TitleType.Tv, tmdbId), dto.mediaInfo.toTitleStatuses().copy(onWatchlist = dto.onUserWatchlist), read)
             val permissions = user.toPermissions()
             dto
                 .toSeriesDetails(
@@ -121,7 +121,9 @@ class SeerrSeriesRepository(
         tmdbId: Int,
         title: String,
         onList: Boolean,
-    ) = withContext(io) { setOnWatchlist(api(), tmdbId, title, "tv", onList) }
+    ) = withContext(io) {
+        statuses.watchlisting(TitleKey(TitleType.Tv, tmdbId), onList) { setOnWatchlist(api(), tmdbId, title, "tv", onList) }
+    }
 
     override suspend fun unblock(tmdbId: Int) =
         withContext(io) { statuses.unblocking(TitleKey(TitleType.Tv, tmdbId)) { api().unblockTitle(profile(), tmdbId, "tv") } }

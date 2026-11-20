@@ -81,9 +81,27 @@ internal fun QuerySearchState<TitleResult>.overlaid(statuses: TitleStatusMap): Q
 internal fun TitleStatusStore.seedRows(
     read: Long,
     rows: List<Triple<TitleKind?, Int?, SeerrMediaInfoDto?>>,
+    onWatchlist: Boolean? = null,
 ) {
     rows.forEach { (kind, tmdbId, info) ->
         val type = kind?.titleType() ?: return@forEach
-        if (tmdbId != null) seed(TitleKey(type, tmdbId), info.toTitleStatuses(), read)
+        if (tmdbId != null) seed(TitleKey(type, tmdbId), info.toTitleStatuses().copy(onWatchlist = onWatchlist), read)
     }
 }
+
+/** The title was taken off the watchlist since the list showing it was read. Nothing known of it is not a reason to hide it. */
+internal fun TitleStatusMap.offWatchlist(
+    kind: TitleKind,
+    tmdbId: Int,
+): Boolean = kind.titleType()?.let { this[TitleKey(it, tmdbId)]?.onWatchlist } == false
+
+/** A watchlist's cards without the titles that came off it since it was read. Adding to it shows on the next read, as #2341 says. */
+internal fun List<HubCard>.withoutOffWatchlist(statuses: TitleStatusMap): List<HubCard> =
+    if (statuses.isEmpty()) this else filterNot { statuses.offWatchlist(it.kind, it.tmdbId) }.let { if (it.size == size) this else it }
+
+internal fun PagedListState<HubCard>.withoutOffWatchlist(statuses: TitleStatusMap): PagedListState<HubCard> =
+    if (this is PagedListState.Ready) {
+        items.withoutOffWatchlist(statuses).let { if (it === items) this else copy(items = it) }
+    } else {
+        this
+    }

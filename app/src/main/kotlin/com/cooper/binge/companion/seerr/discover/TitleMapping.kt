@@ -13,7 +13,6 @@ internal fun SeerrTitlePageDto.toTitlePage(defaultKind: TitleKind?): TitlePage =
         results = results.mapNotNull { it.toTitleResult(defaultKind) },
         page = page,
         totalPages = totalPages,
-        total = totalResults.takeIf { it > 0 },
     )
 
 internal fun SeerrTitleResultDto.toTitleResult(defaultKind: TitleKind?): TitleResult? {
@@ -64,4 +63,9 @@ internal fun SeerrTitlePageDto.seedInto(
     statuses: TitleStatusStore,
     read: Long,
     defaultKind: TitleKind?,
-) = statuses.seedRows(read, results.map { Triple(it.mediaType?.let(::kindOf) ?: defaultKind, it.tmdbId ?: it.id, it.mediaInfo) })
+    onWatchlist: Boolean? = null,
+) = statuses.seedRows(
+    read,
+    results.map { Triple(it.mediaType?.let(::kindOf) ?: defaultKind, it.tmdbId ?: it.id, it.mediaInfo) },
+    onWatchlist,
+)

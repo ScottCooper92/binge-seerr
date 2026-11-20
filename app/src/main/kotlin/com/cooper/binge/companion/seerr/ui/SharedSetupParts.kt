@@ -34,7 +34,7 @@ internal class SeerrMode(
 
 private val FORM_MODES: Map<SeerrSignInMode, SeerrMode> =
     listOf(
-        SeerrMode(SeerrSignInMode.ApiKey, listOf(FieldSpec(FIELD_API_KEY, FieldKind.Secret))),
+        SeerrMode(SeerrSignInMode.ApiKey, listOf(FieldSpec(FIELD_API_KEY, FieldKind.Token))),
         SeerrMode(SeerrSignInMode.Local, listOf(FieldSpec(FIELD_EMAIL, FieldKind.Email), FieldSpec(FIELD_PASSWORD, FieldKind.Secret))),
         SeerrMode(
             SeerrSignInMode.Jellyfin,

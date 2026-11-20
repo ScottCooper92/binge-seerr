@@ -84,7 +84,7 @@ fun DiscoverHubScreen(
     val title = stringResource(if (tab == HubTab.Movies) R.string.hubs_title_movies else R.string.hubs_title_tv)
     val hasHero = (state as? DiscoverHubUiState.Ready)?.hero?.isNotEmpty() == true
     val statusBar = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
-    val reservesHero = state is DiscoverHubUiState.Loading || (state as? DiscoverHubUiState.Ready)?.heroPlace == true
+    val reservesHero = (state as? DiscoverHubUiState.Loading)?.heroPlace == true || (state as? DiscoverHubUiState.Ready)?.heroPlace == true
     val inner = navOverlayPadding(if (reservesHero) PaddingValues() else PaddingValues(top = statusBar))
     // The scrolling states leave Binge's 16dp below their last row, and run under the rail, padding their own first column.
     val scrolling =
@@ -100,7 +100,7 @@ fun DiscoverHubScreen(
         )
     Box(modifier = Modifier.fillMaxSize().semantics { paneTitle = title }) {
         when (state) {
-            DiscoverHubUiState.Loading -> HubSkeleton(scrolling)
+            is DiscoverHubUiState.Loading -> HubSkeleton(state, scrolling)
             DiscoverHubUiState.Empty -> EmptyScreen(stringResource(R.string.hubs_empty_message), Modifier.padding(inner))
             is DiscoverHubUiState.Error -> ErrorScreen(state.error, Modifier.padding(inner), onRetry = onRefresh)
             is DiscoverHubUiState.Ready ->
@@ -116,17 +116,22 @@ fun DiscoverHubScreen(
 }
 
 @Composable
-private fun HubSkeleton(contentPadding: PaddingValues) {
+private fun HubSkeleton(
+    state: DiscoverHubUiState.Loading,
+    contentPadding: PaddingValues,
+) {
     val discoverTab = showDiscoverTab()
     LazyColumn(contentPadding = contentPadding) {
-        item {
-            HeroCarousel(
-                items = emptyList(),
-                onItemClick = {},
-                modifier = Modifier.layoutAnchor(LayoutAnchors.section(LayoutAnchors.Hub.HERO)),
-            )
+        if (state.heroPlace) {
+            item {
+                HeroCarousel(
+                    items = emptyList(),
+                    onItemClick = {},
+                    modifier = Modifier.layoutAnchor(LayoutAnchors.section(LayoutAnchors.Hub.HERO)),
+                )
+            }
         }
-        if (!discoverTab) item { BrowseAllSkeleton() }
+        if (state.browseAll && !discoverTab) item { BrowseAllSkeleton() }
         items(SKELETON_ROWS) { index ->
             CarouselSkeleton(modifier = Modifier.firstCarouselAnchor(index), description = stringResource(R.string.hubs_loading_row))
         }

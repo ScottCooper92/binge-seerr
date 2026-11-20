@@ -7,8 +7,6 @@ data class SearchPage<out T>(
     val items: List<T>,
     val page: Int,
     val totalPages: Int,
-    /** How many results the source says there are in all, where it says. */
-    val total: Int? = null,
 ) {
     val hasMore: Boolean get() = page < totalPages
 }
@@ -31,7 +29,6 @@ sealed interface QuerySearchState<out T> {
         val hasMore: Boolean,
         val appending: Boolean = false,
         val appendFailed: Boolean = false,
-        val total: Int? = null,
     ) : QuerySearchState<T>
 
     data class NoResults(
