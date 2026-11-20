@@ -225,8 +225,8 @@ title's or a request's. A version offers it while it has files to delete: availa
 still processing, the same states the console offers its row for. `DeleteFiles` deletes the files for that
 version, then withdraws the version's open requests, which are those not declined or completed. A completed
 request stays as history, as it does after Seerr's own Delete files; Clear data removes it, and a leftover does not
-stop the title being requested again (#1942). The contract text in binge-companions still says every request is
-withdrawn, so this differs from it for a completed request. A withdrawal that then fails is left unreported,
+stop the title being requested again (#1942). A status read lists the leftover request as
+`APPROVAL_STATE_COMPLETED`. A withdrawal that then fails is left unreported,
 because the contract never answers an error after files are gone.
 A version with a request and no files is withdrawn without a file call. A server with no default Radarr or
 Sonarr for that version answers `409`, which is `FAILED_PRECONDITION`.
