@@ -1,10 +1,10 @@
 package com.cooper.binge.companion.seerr.ui.grid
 
 import com.binge.companion.sdk.attempt
-import com.cooper.binge.companion.seerr.core.search.QUERY_DEBOUNCE_MS
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverGridRepository
 import com.cooper.binge.companion.seerr.discover.grid.FilterLookups
+import com.cooper.homelab.core.presentation.search.QUERY_DEBOUNCE_MS
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow

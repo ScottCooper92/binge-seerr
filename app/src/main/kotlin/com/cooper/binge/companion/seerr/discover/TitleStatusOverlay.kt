@@ -1,7 +1,5 @@
 package com.cooper.binge.companion.seerr.discover
 
-import com.cooper.binge.companion.seerr.core.grid.PagedListState
-import com.cooper.binge.companion.seerr.core.search.QuerySearchState
 import com.cooper.binge.companion.seerr.data.TitleKey
 import com.cooper.binge.companion.seerr.data.TitleStatusStore
 import com.cooper.binge.companion.seerr.data.TitleStatuses
@@ -13,6 +11,8 @@ import com.cooper.binge.companion.seerr.discover.person.PersonCredits
 import com.cooper.binge.companion.seerr.discover.sliders.HubCard
 import com.cooper.binge.companion.seerr.discover.sliders.HubHero
 import com.cooper.binge.companion.seerr.seerr.SeerrMediaInfoDto
+import com.cooper.homelab.core.presentation.paging.PagedListState
+import com.cooper.homelab.core.presentation.search.QuerySearchState
 
 /** What [TitleStatusStore] knows of every title, as a list of cards reads it to show the latest status. */
 internal typealias TitleStatusMap = Map<TitleKey, TitleStatuses>

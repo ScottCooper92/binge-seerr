@@ -1,12 +1,12 @@
 package com.cooper.binge.companion.seerr.discover
 
-import com.cooper.binge.companion.seerr.core.grid.PagedListState
 import com.cooper.binge.companion.seerr.data.TitleKey
 import com.cooper.binge.companion.seerr.data.TitleStatuses
 import com.cooper.binge.companion.seerr.data.TitleType
 import com.cooper.binge.companion.seerr.discover.collection.CollectionDetails
 import com.cooper.binge.companion.seerr.discover.sliders.HubCard
 import com.cooper.binge.companion.seerr.seerr.SeerrMediaStatusCode
+import com.cooper.homelab.core.presentation.paging.PagedListState
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue

@@ -1,13 +1,13 @@
-package com.cooper.binge.companion.seerr.ui.hubs
+package com.cooper.binge.companion.seerr.seerr
 
-import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.homelab.core.foundation.ServerFailure
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
-class HubFailureTest {
+/** What a failure the shared lists and loaders hand back reads as on a screen. */
+class ServerFailureToSeerrErrorTest {
     @Test
-    fun `each failure the loader returns reads as the screen's own error`() {
+    fun `each failure a shared list or loader returns reads as the screen's own error`() {
         val expected =
             mapOf(
                 ServerFailure.NotConnected to SeerrError.NotConnected,

@@ -3,10 +3,6 @@ package com.cooper.binge.companion.seerr.ui.search.title
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.binge.companion.sdk.attempt
-import com.cooper.binge.companion.seerr.core.search.PagedQuerySearch
-import com.cooper.binge.companion.seerr.core.search.QueryHistory
-import com.cooper.binge.companion.seerr.core.search.QuerySearchState
-import com.cooper.binge.companion.seerr.core.search.SearchPage
 import com.cooper.binge.companion.seerr.data.TitleStatusStore
 import com.cooper.binge.companion.seerr.discover.StudioResult
 import com.cooper.binge.companion.seerr.discover.StudioSearch
@@ -21,6 +17,11 @@ import com.cooper.binge.companion.seerr.discover.sliders.HubCard
 import com.cooper.binge.companion.seerr.discover.sliders.HubMediaSource
 import com.cooper.binge.companion.seerr.discover.sliders.toCard
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
+import com.cooper.binge.companion.seerr.seerr.toServerFailure
+import com.cooper.homelab.core.presentation.paging.numberedPage
+import com.cooper.homelab.core.presentation.search.PagedQuerySearch
+import com.cooper.homelab.core.presentation.search.QueryHistory
+import com.cooper.homelab.core.presentation.search.QuerySearchState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -54,22 +55,26 @@ class TitleSearchViewModel
         val events: SharedFlow<TitleSearchEvent> = eventFlow.asSharedFlow()
 
         private val search =
-            PagedQuerySearch<TitleResult>(
+            PagedQuerySearch<TitleResult, Int>(
                 scope = viewModelScope,
                 history = history,
+                first = FIRST_PAGE,
                 fetch = { query, page ->
                     val loaded = titles.load(TitleSource.Search(query), page)
-                    SearchPage(loaded.results, loaded.page, loaded.totalPages)
+                    numberedPage(loaded.results, loaded.page, loaded.totalPages)
                 },
+                classify = { it.toServerFailure() },
                 keyOf = { it.kind to it.tmdbId },
             )
 
         /** The studios for the same query, kept apart from the titles: its own page and its own failure, and no history of its own. */
         private val studioSearch =
-            PagedQuerySearch<StudioResult>(
+            PagedQuerySearch<StudioResult, Int>(
                 scope = viewModelScope,
                 history = NoQueryHistory,
+                first = FIRST_PAGE,
                 fetch = { query, page -> studios.search(query, page) },
+                classify = { it.toServerFailure() },
                 keyOf = { it.id },
             )
 
@@ -230,7 +235,7 @@ internal fun QuerySearchState<TitleResult>.toUiState(
         is QuerySearchState.Results -> ready(items.distinctBy(TitleResult::key), this)
         is QuerySearchState.NoResults ->
             if (found != null) ready(emptyList(), null) else TitleSearchUiState.NoResults(text, query, type, browseAll, hasStudios)
-        is QuerySearchState.Failed -> TitleSearchUiState.Error(text, cause.toSeerrError())
+        is QuerySearchState.Failed -> TitleSearchUiState.Error(text, failure.toSeerrError())
     }
 }
 
@@ -247,3 +252,6 @@ private data class Lookups(
     val browseAll: Boolean,
     val studios: Boolean,
 )
+
+/** Seerr counts its pages from one. */
+private const val FIRST_PAGE = 1
