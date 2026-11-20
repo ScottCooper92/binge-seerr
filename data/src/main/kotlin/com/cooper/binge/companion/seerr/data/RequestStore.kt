@@ -213,9 +213,12 @@ object NoRequestStore : RequestStore {
     override suspend fun clearAll() = Unit
 }
 
+/** A list key is `filter:sort:scope`. */
+private const val LIST_KEY_PARTS = 3
+
 /** Newest first is the only order a new request is known to lead; the scope is every request or the viewer's own. */
 internal fun String.takesNewRequest(request: RequestEntity): Boolean {
-    val (filter, sort, scope) = split(':').takeIf { it.size == 3 } ?: return false
+    val (filter, sort, scope) = split(':').takeIf { it.size == LIST_KEY_PARTS } ?: return false
     val fits = filter == RequestFilter.All.apiValue || statusFilters[filter] == request.status
     val sorted = sort == "added" || sort == "modified"
     return fits && sorted && (scope == "all" || scope == request.requestedById?.toString())
