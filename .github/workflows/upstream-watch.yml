@@ -22,7 +22,7 @@ permissions:
 
 jobs:
   watch:
-    uses: ScottCooper92/binge-ci/.github/workflows/upstream-watch.yml@6d81f1e58e09d0714852848e116dfe7b421f7917 # v1.0.54
+    uses: ScottCooper92/binge-ci/.github/workflows/upstream-watch.yml@a7d61b314a1cff13ca2c9fce144c05b5f1fe4355 # v1.0.55
     with:
       upstreams: '[{"name":"seerr","repo":"seerr-team/seerr"}]'
       dry_run: ${{ inputs.dry_run == true }}
