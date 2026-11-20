@@ -14,6 +14,7 @@ import com.cooper.binge.companion.seerr.ui.UserSettingsPageRoute
 import com.cooper.binge.companion.seerr.ui.settings.server.AgentOption
 import com.cooper.binge.companion.seerr.ui.settings.server.ServerAgent
 import com.cooper.binge.companion.seerr.ui.settings.server.ServerSettingsPage
+import com.cooper.binge.companion.seerr.ui.settings.server.offeredAgents
 import com.cooper.binge.companion.seerr.ui.settings.server.rowKey
 import com.cooper.binge.companion.seerr.ui.users.settings.UserSettingsPage
 import org.junit.Assert.assertEquals
@@ -306,5 +307,22 @@ class SettingsIndexTest {
         val screen = File("src/main/kotlin/com/cooper/binge/companion/seerr/ui/settings/server/NotificationAgentScreen.kt").readText()
 
         assertTrue(screen.contains(".copy(key = option.rowKey())"))
+    }
+
+    @Test
+    fun `an agent's page is offered only where the server has the agent`() {
+        fun agentsOffered(access: SearchAccess) =
+            offered(access).map { it.target }.filterIsInstance<SearchTarget.Agent>().map { it.agent }.toSet()
+
+        val onOverseerr = agentsOffered(SearchAccess(1, true, overseerr))
+        val onSeerr = agentsOffered(admin)
+
+        assertTrue(ServerAgent.Ntfy !in onOverseerr)
+        assertTrue(ServerAgent.LunaSea in onOverseerr)
+        assertTrue(ServerAgent.LunaSea !in onSeerr)
+        assertTrue(ServerAgent.Ntfy in onSeerr)
+        assertTrue(ServerAgent.Discord in onOverseerr && ServerAgent.Discord in onSeerr)
+        assertEquals(admin.profile.offeredAgents().toSet(), onSeerr)
+        assertEquals(overseerr.offeredAgents().toSet(), onOverseerr)
     }
 }
