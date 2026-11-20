@@ -60,6 +60,7 @@ class TitleStatusJourneyTest {
     }
 
     private val request get() = host.string(R.string.title_page_request)
+
     /** The demo user is an administrator, so a request is approved at once and the film is Processing, not Requested. */
     private val processing = "Processing"
 
