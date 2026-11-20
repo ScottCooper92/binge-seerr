@@ -29,6 +29,11 @@
          (top + bottom) plus a titleMedium line, padding_xs and a bodySmall line — which happens to
          match avatar_size_md, since ListRow centres the avatar against that content column. -->
     <dimen name="users_row_skeleton_height">64dp</dimen>
+    <!-- The requests list's skeleton row at a large font: a request row is never shorter than the design system's
+         default row skeleton, and past that its text lines set its height. This is what they come to for each unit
+         of font scale; the skeleton takes the larger of the two, so a row at a large font does not move the rows
+         below it when it loads. Measured: the row is 128dp at a font scale of 1 and 1.3, and 186dp at 2. -->
+    <dimen name="requests_row_skeleton_text">93dp</dimen>
     <!-- RequestDetailSkeleton's headline chip row (#373): BingeTag has no fixed width of its own
          (it sizes to its label), so the skeleton picks a plausible one for each of the two chips
          every request headline shows (media type, request status). -->

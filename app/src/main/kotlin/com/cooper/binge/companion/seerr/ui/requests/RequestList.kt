@@ -30,6 +30,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -37,6 +38,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.itemKey
 import com.binge.companion.sdk.paging.ListRefresh
@@ -50,6 +52,8 @@ import com.binge.designsystem.component.WrappingRow
 import com.binge.designsystem.downloadEtaLabel
 import com.binge.designsystem.formatRanges
 import com.binge.designsystem.formatRelativeOrAbsolute
+import com.binge.designsystem.layout.LayoutAnchors
+import com.binge.designsystem.layout.layoutAnchorIf
 import com.binge.designsystem.template.PagedPhase
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.state.EmptyScreen
@@ -114,6 +118,7 @@ internal fun RequestsBody(
                 ListRowSkeletonColumn(
                     contentPadding = contentPadding.filteredPagePadding(),
                     modifier = Modifier.fillMaxSize(),
+                    height = requestRowSkeletonHeight(),
                 )
             is PagedPhase.Failed ->
                 PagedRefreshError(
@@ -132,6 +137,14 @@ internal fun RequestsBody(
         }
     }
 }
+
+/** What a request row is tall at the font in use: the skeleton's default height, or its text lines once they are taller. */
+@Composable
+private fun requestRowSkeletonHeight(): Dp =
+    maxOf(
+        dimensionResource(DesR.dimen.list_row_skeleton_height),
+        dimensionResource(R.dimen.requests_row_skeleton_text) * LocalDensity.current.fontScale,
+    )
 
 @Composable
 private fun RequestList(
@@ -153,6 +166,7 @@ private fun RequestList(
                 RequestRow(
                     item = item,
                     onClick = { onOpen(item) },
+                    modifier = Modifier.layoutAnchorIf(index == 0, LayoutAnchors.section(LayoutAnchors.Collection.FIRST_ITEM)),
                     onManage = { onManage(item) }.takeIf { item.actions(scope).any },
                     now = now,
                     onOpenTitle = onOpenTitle?.let { open -> { open(item) } },
