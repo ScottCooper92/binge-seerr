@@ -138,11 +138,13 @@ internal fun RequestsBody(
     }
 }
 
-/** What a request row is tall, at the font in use: the part that does not scale, and the text lines that do. */
+/** What a request row is tall at the font in use: the skeleton's default height, or its text lines once they are taller. */
 @Composable
 private fun requestRowSkeletonHeight(): Dp =
-    dimensionResource(R.dimen.requests_row_skeleton_fixed) +
-        dimensionResource(R.dimen.requests_row_skeleton_text) * LocalDensity.current.fontScale
+    maxOf(
+        dimensionResource(DesR.dimen.list_row_skeleton_height),
+        dimensionResource(R.dimen.requests_row_skeleton_text) * LocalDensity.current.fontScale,
+    )
 
 @Composable
 private fun RequestList(
