@@ -66,7 +66,6 @@
     <dimen name="request_sheet_poster_width">64dp</dimen>
     <dimen name="person_portrait_width">140dp</dimen>
     <dimen name="person_skeleton_name_height">32dp</dimen>
-    <dimen name="season_dropdown_max_width">180dp</dimen>
     <dimen name="grid_gap">14dp</dimen>
     <dimen name="grid_filter_action_padding_h">14dp</dimen>
     <dimen name="grid_filter_action_spacing">6dp</dimen>

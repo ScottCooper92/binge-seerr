@@ -1,31 +1,17 @@
 package com.cooper.binge.companion.seerr.ui.discover.title
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.VideoLibrary
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import com.binge.designsystem.component.DetailOverviewSection
 import com.binge.designsystem.component.DetailStat
-import com.binge.designsystem.component.DetailStatsRows
-import com.binge.designsystem.isExpandedLayout
-import com.binge.designsystem.layout.LayoutAnchors
-import com.binge.designsystem.layout.layoutAnchor
-import com.binge.designsystem.template.readingMargin
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.title.SeriesDetails
-import com.cooper.binge.companion.seerr.discover.title.trailerUrl
 import com.cooper.binge.companion.seerr.ui.discover.request.joinMeta
 import java.text.NumberFormat
 import java.util.Locale
-import com.binge.designsystem.R as DesR
 
 private const val MINUTES_PER_HOUR = 60
 
@@ -52,42 +38,4 @@ internal fun SeriesDetails.titleStats(locale: Locale): List<DetailStat> {
         },
         ratedStat(certification),
     )
-}
-
-/** What the page says below its hero. A section the server gave nothing for is not drawn. */
-@Composable
-internal fun SeriesPageBody(
-    state: SeriesPageUiState.Ready,
-    actions: TitlePageActions,
-    seasonActions: SeasonActions,
-) {
-    val series = state.series
-    val context = LocalContext.current
-    val locale = LocalConfiguration.current.locales[0]
-    Column(verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m))) {
-        // The expanded header already shows these and the synopsis.
-        val expanded = isExpandedLayout()
-        val stats = series.titleStats(locale)
-        if (!expanded && stats.isNotEmpty()) DetailStatsRows(stats)
-        TitleActions(
-            model = titleActionsModel(series.standard, series.fourK, series.requests, series.mayReport, series.mayBlock),
-            onPrimary = actions.onRequest,
-            onTrailer = series.videos.trailerUrl()?.let { url -> { actions.onOpenUrl(url) } },
-            onReport = actions.onReport,
-            onBlock = actions.block?.onAsk.takeIf { series.mayBlock },
-            watchlist = series.mayWatchlist.takeIf { it }?.let { WatchlistButton(series.onWatchlist, actions.onToggleWatchlist) },
-            modifier = Modifier.readingMargin().layoutAnchor(LayoutAnchors.section(LayoutAnchors.Detail.ACTIONS)),
-        )
-        if (!expanded) DetailOverviewSection(stringResource(R.string.title_page_overview), series.overview)
-        PeopleRow(stringResource(R.string.title_page_cast), series.cast, actions.onOpenPerson, actions.onOpenCredits)
-        PeopleRow(stringResource(R.string.title_page_crew), series.keyCrew, actions.onOpenPerson, actions.onOpenCredits)
-        WhereToWatchSection(series.providers, actions.onOpenUrl, Modifier.readingMargin())
-        EpisodesSection(state, seasonActions, Modifier.readingMargin())
-        state.extras?.let { TitleRow(stringResource(R.string.title_page_more_like_this), it.moreLikeThis, actions.onOpenTitle) }
-        KeywordsSection(series.keywords, actions.onOpenKeyword.takeIf { series.keywordsOpen }, Modifier.readingMargin())
-        TitleLinksSection(series.links, actions.onOpenUrl, Modifier.readingMargin())
-        TitleDetailsSection(
-            series.detailEntries(context.resources, locale, actions.onOpenCompany.takeIf { series.companiesOpen }, actions.onOpenPerson),
-        )
-    }
 }
