@@ -19,11 +19,14 @@ import com.cooper.binge.companion.seerr.util.FakeResponse
 import com.cooper.binge.companion.seerr.util.FakeSeerrServer
 import com.cooper.binge.companion.seerr.util.MainDispatcherRule
 import com.cooper.binge.companion.seerr.util.PlainCipher
+import com.cooper.binge.companion.seerr.util.RecordingCrashBreadcrumbs
 import com.cooper.binge.companion.seerr.util.ReversingCipher
 import com.cooper.homelab.core.presentation.connect.ConnectError
 import com.cooper.homelab.core.presentation.connect.ConnectState
 import com.cooper.homelab.core.server.network.DataStoreCleartextConsent
 import com.cooper.homelab.core.server.network.LocalNetworkPermission
+import com.cooper.homelab.core.telemetry.CrashBreadcrumbs
+import com.cooper.homelab.core.telemetry.NoOpCrashBreadcrumbs
 import com.cooper.homelab.core.testing.InMemoryDataStore
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -76,6 +79,7 @@ class SharedSetupLinksTest {
         reuseConnection: Boolean = false,
         savedState: SavedStateHandle = SavedStateHandle(),
         cipher: SecretCipher = PlainCipher,
+        breadcrumbs: CrashBreadcrumbs = NoOpCrashBreadcrumbs,
     ): SharedSetupViewModel {
         if (!reuseConnection) {
             connection =
@@ -106,6 +110,7 @@ class SharedSetupLinksTest {
                 cleartext = cleartext,
                 localNetwork = LocalNetworkPermission.AlwaysGranted,
                 dispatcher = mainDispatcherRule.dispatcher,
+                crashBreadcrumbs = breadcrumbs,
             )
         viewModels.put(vm.hashCode().toString(), vm)
         backgroundScope.launch { vm.uiState.collect {} }
@@ -189,6 +194,22 @@ class SharedSetupLinksTest {
             assertEquals("123456", vm.awaitLink().link?.code)
             assertEquals(SeerrVariant.Seerr, vm.awaitConnected().credentials.variant)
             assertEquals("/api/v1/auth/jellyfin/quickconnect/initiate", seerr.takeRequest().url.encodedPath)
+        }
+
+    @Test
+    fun `a quick connect link leaves a crash breadcrumb naming its mode`() =
+        runTest {
+            val breadcrumbs = RecordingCrashBreadcrumbs()
+            val vm = viewModel(breadcrumbs = breadcrumbs)
+            vm.inspect("""{"version":"3.4.0"}""", """{"mediaServerType":2}""")
+            vm.editForm { copy(mode = SeerrSignInMode.QuickConnect) }
+            repeat(3) { seerr.takeRequest() }
+            seerr.enqueue(json("""{"code":"123456","secret":"abcdef12"}"""))
+
+            vm.connect()
+            vm.awaitLink()
+
+            assertEquals(listOf("signing in via QuickConnect"), breadcrumbs.logs)
         }
 
     @Test

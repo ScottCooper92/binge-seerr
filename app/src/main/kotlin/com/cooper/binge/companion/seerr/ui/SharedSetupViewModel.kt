@@ -160,7 +160,7 @@ class SharedSetupViewModel
                     machine.editForm(transform)
                 },
                 onConnect = { connect() },
-                onStartLink = { links.start() },
+                onStartLink = { startLink() },
                 onChangeServer = ::changeServer,
                 onCheckAgain = ::inspect,
             )
@@ -272,7 +272,12 @@ class SharedSetupViewModel
         fun connect(forTelevision: Boolean = false) {
             app.update { it.copy(notice = null, handOffRejected = false, resetError = null) }
             val form = machine.draft.value.form
-            if (form.mode?.fields?.isEmpty() == true) links.start(forTelevision) else machine.connect()
+            if (form.mode?.fields?.isEmpty() == true) startLink(forTelevision) else machine.connect()
+        }
+
+        private fun startLink(forTelevision: Boolean = false) {
+            crashBreadcrumbs.log("signing in via ${machine.draft.value.form.mode?.id}")
+            links.start(forTelevision)
         }
 
         /** Connects to the demo server: canned data on this device, no address and no sign-in. Disconnecting leaves it. */
