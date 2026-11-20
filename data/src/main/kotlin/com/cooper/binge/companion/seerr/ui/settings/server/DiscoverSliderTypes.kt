@@ -170,5 +170,4 @@ fun SeerrDiscoverSliderDto.toForm(): SliderForm {
     return SliderForm(id = id, type = sliderType, title = title.orEmpty(), data = data.orEmpty())
 }
 
-fun SliderForm.toBody(): SeerrDiscoverSliderBody =
-    SeerrDiscoverSliderBody(title = title.trim(), type = type.code, data = data.trim())
+fun SliderForm.toBody(): SeerrDiscoverSliderBody = SeerrDiscoverSliderBody(title = title.trim(), type = type.code, data = data.trim())
