@@ -130,6 +130,7 @@ app:grid_filters_title  546ebb8eb993
 app:grid_loading  f3112e50e1a4
 app:grid_more_failed  457068ead784
 app:grid_open_filters  baaa3007f92b
+app:grid_open_filters_applied  47b4bc445073
 app:grid_sort_date_asc  6e2ebdab3c02
 app:grid_sort_date_desc  ffb6f5764bdd
 app:grid_sort_popularity_asc  e2371374977a
