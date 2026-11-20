@@ -59,7 +59,7 @@ jobs:
   # the gate rather than reporting beside it. The caller grants `pull-requests: read`, which the
   # shared workflow reads the label with: a reusable workflow cannot hold more than its caller.
   submodule-pins:
-    if: github.event.pull_request.draft == false
+    if: github.event.pull_request.draft == false && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
     permissions:
       contents: read
       pull-requests: read
@@ -114,6 +114,22 @@ jobs:
             exit 0
           }
           [ "$EVENT" = pull_request ] || all "Not a pull request"
+
+          # A fork's pull_request run gets no secrets, so the jobs that mint the submodule token cannot start,
+          # and the submodules are private besides. Skip them on purpose and say so, rather than let four jobs
+          # fail at the token step and read as the contributor's fault. `build` accepts these skips because
+          # they are this job's own answer. Do not fall back to `github.token`: it cannot read a private
+          # submodule, and a fork's run would only fail later and less clearly at the checkout.
+          if [ "$SAME_REPO" != true ]; then
+            printf 'product=false\nscreens=false\nrelease=false\n' >> "$GITHUB_OUTPUT"
+            {
+              echo "Fork pull request: the build, test, screenshot and release jobs are skipped on purpose."
+              echo "Repository secrets are withheld from forks, and the submodules need them. This run built nothing, so a green"
+              echo "\`build\` here does not vouch for the change: a maintainer builds the branch before merging it."
+            } >> "$GITHUB_STEP_SUMMARY"
+            echo "::notice title=Fork pull request::The build jobs are skipped because secrets are withheld from forks. Nothing was built."
+            exit 0
+          fi
 
           head="$(git rev-parse HEAD)"
           # The last commit of this PR that a whole run passed on. What changed since is all a run has to
