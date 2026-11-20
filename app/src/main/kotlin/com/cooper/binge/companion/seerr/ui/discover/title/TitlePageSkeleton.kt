@@ -29,12 +29,15 @@ import com.binge.designsystem.component.DetailHero
 import com.binge.designsystem.component.DetailStat
 import com.binge.designsystem.component.DetailStatRow
 import com.binge.designsystem.component.SkeletonPlate
+import com.binge.designsystem.component.statsPerRow
 import com.binge.designsystem.isExpandedLayout
 import com.binge.designsystem.layout.LayoutAnchors
 import com.binge.designsystem.layout.layoutAnchor
 import com.binge.designsystem.modifier.skeleton
+import com.binge.designsystem.resolvedContentInset
 import com.binge.designsystem.resolvedContentPadding
 import com.binge.designsystem.template.HeroDetailScreen
+import com.binge.designsystem.template.readingMargin
 import com.binge.designsystem.theme.BingeShapes
 import com.binge.designsystem.R as DesR
 
@@ -71,7 +74,7 @@ internal fun TitlePageSkeleton(
         Column(Modifier.clearAndSetSemantics {}, verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m))) {
             if (!cinematic) StatsRowsSkeleton(Modifier.layoutAnchor(LayoutAnchors.section(LayoutAnchors.Detail.STATS)))
             ActionsSkeleton(Modifier.readingMargin().layoutAnchor(LayoutAnchors.section(LayoutAnchors.Detail.ACTIONS)))
-            if (!cinematic) OverviewSkeleton(Modifier.readingMargin().layoutAnchor(LayoutAnchors.section(LayoutAnchors.Detail.OVERVIEW)))
+            if (!cinematic) OverviewSkeleton(Modifier.layoutAnchor(LayoutAnchors.section(LayoutAnchors.Detail.OVERVIEW)).readingMargin())
             CarouselSkeleton()
         }
     }
@@ -118,9 +121,9 @@ internal fun TitleHeroSkeleton(
 @Composable
 private fun StatsRowsSkeleton(modifier: Modifier = Modifier) {
     val blank = List(STAT_COUNT) { DetailStat(Icons.Filled.Star, " ", " ") }
-    Column(Modifier.readingMargin(), verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m))) {
-        blank.chunked(statsPerRow()).forEachIndexed { index, row ->
-            Box((if (index == 0) modifier else Modifier).fillMaxWidth().padding(resolvedContentPadding())) {
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m))) {
+        blank.chunked(statsPerRow()).forEach { row ->
+            Box(Modifier.readingMargin().fillMaxWidth().padding(resolvedContentPadding())) {
                 DetailStatRow(row, Modifier.skeleton(visible = true, shape = BingeShapes.Large), contentPadding = PaddingValues())
             }
         }
@@ -137,11 +140,17 @@ private fun ActionsSkeleton(modifier: Modifier = Modifier) {
 
 /**
  * The "Overview" heading, the collapsed synopsis and the expand toggle's row. Each line is a blank [Text] in the page's own style under
- * a plate, so its height follows the font as the page's does, and the toggle is the touch target the page's button is.
+ * a plate, so its height follows the font as the page's does, and the toggle is the touch target the page's button is. [modifier] sits
+ * outside the page's inset, as the design system's section does; [insideInset] sits inside it, for a page that anchors there, and
+ * [inset] is the page's own, where it keeps to a flat one.
  */
 @Composable
-internal fun OverviewSkeleton(modifier: Modifier = Modifier) {
-    Column(modifier = Modifier.padding(horizontal = dimensionResource(DesR.dimen.padding_m)).then(modifier)) {
+internal fun OverviewSkeleton(
+    modifier: Modifier = Modifier,
+    insideInset: Modifier = Modifier,
+    inset: Dp = resolvedContentInset(),
+) {
+    Column(modifier = modifier.padding(horizontal = inset).then(insideInset)) {
         TextPlate(MaterialTheme.typography.titleMedium, Modifier.width(dimensionResource(DesR.dimen.skeleton_header_width)))
         Spacer(Modifier.height(dimensionResource(DesR.dimen.detail_meta_spacing)))
         repeat(OVERVIEW_LINE_COUNT) { index ->

@@ -16,6 +16,7 @@ import com.binge.designsystem.component.SectionHeader
 import com.binge.designsystem.navOverlayEnd
 import com.binge.designsystem.navOverlayStart
 import com.binge.designsystem.resolvedContentPadding
+import com.binge.designsystem.template.readingMargin
 import com.cooper.binge.companion.seerr.R
 import com.binge.designsystem.R as DesR
 

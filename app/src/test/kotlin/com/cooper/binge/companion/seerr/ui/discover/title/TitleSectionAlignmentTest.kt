@@ -44,8 +44,11 @@ class TitleSectionAlignmentTest {
             .getUnclippedBoundsInRoot()
             .left.value
 
-    /** A tag's visible edge: its label sits inside the tag's own horizontal padding, `padding_s`. */
-    private fun tagStart(text: String) = start(text) - resources.getDimension(DesR.dimen.padding_s) / resources.displayMetrics.density
+    /** A tag's visible edge: its label sits inside the compact tag's own horizontal padding. */
+    private fun tagStart(text: String): Float {
+        val padding = resources.getDimension(DesR.dimen.tag_compact_padding_h) / resources.displayMetrics.density
+        return start(text) - padding
+    }
 
     private fun check(besideHub: Boolean = false) {
         val keywords = resources.getString(R.string.title_page_keywords)
