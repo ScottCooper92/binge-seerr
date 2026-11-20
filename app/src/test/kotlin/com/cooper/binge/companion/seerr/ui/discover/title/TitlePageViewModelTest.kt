@@ -77,6 +77,8 @@ private class FakeTitles(
     var movieReads = 0
     var failUnblock: Throwable? = null
     val unblocked = mutableListOf<Int>()
+    var failBlock: Throwable? = null
+    val blocked = mutableListOf<Pair<Int, String>>()
     var failWatchlist: Throwable? = null
     val watchlistCalls = mutableListOf<Triple<Int, String, Boolean>>()
     val collectionReads = mutableListOf<Int>()
@@ -96,6 +98,14 @@ private class FakeTitles(
     }
 
     override suspend fun serverProfile() = null
+
+    override suspend fun block(
+        tmdbId: Int,
+        title: String,
+    ) {
+        failBlock?.let { throw it }
+        blocked += tmdbId to title
+    }
 
     override suspend fun unblock(tmdbId: Int) {
         failUnblock?.let { throw it }
@@ -286,7 +296,7 @@ class TitlePageViewModelTest {
             repo.movie = movieFixture()
 
             val event = awaitEvent(vm.events)
-            vm.unblock()
+            vm.blocklist(BlocklistStep.Unblock)
 
             assertEquals(TitlePageEvent.Unblocked, event.await())
             assertEquals(listOf(603), repo.unblocked)
@@ -308,7 +318,7 @@ class TitlePageViewModelTest {
             val vm = TitlePageViewModel(repo, 603, analytics)
             val event = awaitEvent(vm.events)
 
-            vm.unblock()
+            vm.blocklist(BlocklistStep.Unblock)
             event.await()
 
             assertEquals(
@@ -327,7 +337,7 @@ class TitlePageViewModelTest {
             val vm = TitlePageViewModel(repo, 603, analytics)
             val event = awaitEvent(vm.events)
 
-            vm.unblock()
+            vm.blocklist(BlocklistStep.Unblock)
             event.await()
 
             assertEquals("unblock_title", analytics.events.single().second[AnalyticsEvents.PARAM_OPERATION])
@@ -343,10 +353,85 @@ class TitlePageViewModelTest {
             val vm = TitlePageViewModel(repo, 603, analytics)
             val event = awaitEvent(vm.events)
 
-            vm.unblock()
+            vm.blocklist(BlocklistStep.Unblock)
             event.await()
 
             assertTrue(analytics.events.isEmpty())
+        }
+
+    @Test
+    fun `blocking asks first then blocks reads the title again and says so`() =
+        runTest {
+            val repo = FakeTitles()
+            repo.movie = movieFixture().copy(mayBlock = true)
+            val analytics = RecordingAnalytics()
+            val vm = TitlePageViewModel(repo, 603, analytics)
+            vm.blocklist(BlocklistStep.Ask)
+            assertTrue(vm.ready().blockConfirmOpen)
+            repo.movie = movieFixture(standard = VersionState(TitleAvailability.Blocklisted, mayRequest = false))
+
+            val event = awaitEvent(vm.events)
+            vm.blocklist(BlocklistStep.Block)
+
+            assertEquals(TitlePageEvent.Blocked, event.await())
+            assertEquals(listOf(603 to vm.ready().movie.title), repo.blocked)
+            assertFalse(vm.ready().blockConfirmOpen)
+            assertEquals(
+                TitleAvailability.Blocklisted,
+                vm
+                    .ready()
+                    .movie.standard.availability,
+            )
+            assertEquals(
+                listOf(AnalyticsEvents.BLOCKLIST_CHANGED to mapOf<String, Any>(AnalyticsEvents.PARAM_ACTION to "movie_blocked")),
+                analytics.events,
+            )
+        }
+
+    @Test
+    fun `cancelling the confirm blocks nothing`() {
+        val repo = FakeTitles()
+        repo.movie = movieFixture().copy(mayBlock = true)
+        val vm = TitlePageViewModel(repo, 603)
+
+        vm.blocklist(BlocklistStep.Ask)
+        vm.blocklist(BlocklistStep.Cancel)
+
+        assertFalse(vm.ready().blockConfirmOpen)
+        assertTrue(repo.blocked.isEmpty())
+    }
+
+    @Test
+    fun `a viewer who may not block never reaches the server`() {
+        val repo = FakeTitles()
+        repo.movie = movieFixture()
+        val vm = TitlePageViewModel(repo, 603)
+
+        vm.blocklist(BlocklistStep.Block)
+
+        assertTrue(repo.blocked.isEmpty())
+    }
+
+    @Test
+    fun `a refused block says so and leaves the title as it was`() =
+        runTest {
+            val repo = FakeTitles()
+            repo.movie = movieFixture().copy(mayBlock = true)
+            repo.failBlock = IOException("down")
+            val analytics = RecordingAnalytics()
+            val vm = TitlePageViewModel(repo, 603, analytics)
+
+            val event = awaitEvent(vm.events)
+            vm.blocklist(BlocklistStep.Block)
+
+            assertTrue(event.await() is TitlePageEvent.BlockFailed)
+            assertEquals(
+                TitleAvailability.None,
+                vm
+                    .ready()
+                    .movie.standard.availability,
+            )
+            assertTrue(analytics.events.none { it.first == AnalyticsEvents.BLOCKLIST_CHANGED })
         }
 
     @Test
@@ -355,7 +440,7 @@ class TitlePageViewModelTest {
         repo.movie = movieFixture(standard = VersionState(TitleAvailability.Blocklisted, mayRequest = false))
         val vm = TitlePageViewModel(repo, 603)
 
-        vm.unblock()
+        vm.blocklist(BlocklistStep.Unblock)
 
         assertTrue(repo.unblocked.isEmpty())
     }
@@ -369,7 +454,7 @@ class TitlePageViewModelTest {
             val vm = TitlePageViewModel(repo, 603)
 
             val event = awaitEvent(vm.events)
-            vm.unblock()
+            vm.blocklist(BlocklistStep.Unblock)
 
             assertTrue(event.await() is TitlePageEvent.UnblockFailed)
             assertEquals(
