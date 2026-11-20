@@ -167,7 +167,7 @@ private fun ReadyPage(
         afterPeople = { WhereToWatchSection(movie.providers, actions.onOpenUrl, Modifier.readingMargin()) },
         afterRails = { TitleLinksSection(movie.links, actions.onOpenUrl, Modifier.readingMargin()) },
         // The template's column puts its gap before this empty slot: the page's bottom padding under the Details, as it had.
-        atEnd = { Spacer(Modifier) }.takeIf { model.detail.info != null },
+        atEnd = if (model.detail.info != null) ({ Spacer(Modifier) }) else null,
         overlays = { MovieOverlays(state, actions, snackbar) },
         snackbarHostState = snackbar,
         scrollState = scrollState,
