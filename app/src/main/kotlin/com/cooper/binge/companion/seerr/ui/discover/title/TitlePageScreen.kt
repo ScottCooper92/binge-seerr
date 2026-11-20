@@ -1,6 +1,7 @@
 package com.cooper.binge.companion.seerr.ui.discover.title
 
 import androidx.compose.foundation.ScrollState
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
@@ -165,6 +166,8 @@ private fun ReadyPage(
         topBarActions = { glassAlpha -> ShareBarAction(glassAlpha) { context.shareTitle(movie.title, movie.webUrl) } },
         afterPeople = { WhereToWatchSection(movie.providers, actions.onOpenUrl, Modifier.readingMargin()) },
         afterRails = { TitleLinksSection(movie.links, actions.onOpenUrl, Modifier.readingMargin()) },
+        // The template's column puts its gap before this empty slot: the page's bottom padding under the Details, as it had.
+        atEnd = { Spacer(Modifier) }.takeIf { model.detail.info != null },
         overlays = { MovieOverlays(state, actions, snackbar) },
         snackbarHostState = snackbar,
         scrollState = scrollState,
