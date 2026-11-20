@@ -43,6 +43,10 @@ interface RequestDao {
         mediaType: String,
     )
 
+    /** The first position in one slice, which a new request goes before. */
+    @Query("SELECT MIN(orderIndex) FROM requests WHERE listKey = :listKey")
+    suspend fun firstOrderIndex(listKey: String): Int?
+
     @Query("DELETE FROM requests WHERE listKey = :listKey")
     suspend fun clear(listKey: String)
 
@@ -54,6 +58,10 @@ interface RequestDao {
 interface RequestRemoteKeyDao {
     @Query("SELECT nextSkip FROM request_remote_keys WHERE listKey = :listKey")
     suspend fun nextSkip(listKey: String): Int?
+
+    /** Every list that has been opened, so a new request can be put into each it belongs in. */
+    @Query("SELECT listKey FROM request_remote_keys")
+    suspend fun listKeys(): List<String>
 
     @Upsert
     suspend fun upsert(key: RequestRemoteKeyEntity)

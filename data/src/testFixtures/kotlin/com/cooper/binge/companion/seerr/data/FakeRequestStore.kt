@@ -70,6 +70,14 @@ class FakeRequestStore : RequestStore {
             },
     )
 
+    override suspend fun addCreated(request: RequestEntity) {
+        val added =
+            cursors.keys.filter { it.takesNewRequest(request) }.map { key ->
+                request.copy(listKey = key, orderIndex = (rows.filter { it.listKey == key }.minOfOrNull { it.orderIndex } ?: 0) - 1)
+            }
+        write(rows + added)
+    }
+
     override suspend fun delete(requestId: Int) = write(rows.filterNot { it.id == requestId })
 
     override suspend fun deleteTitleOf(requestId: Int) {

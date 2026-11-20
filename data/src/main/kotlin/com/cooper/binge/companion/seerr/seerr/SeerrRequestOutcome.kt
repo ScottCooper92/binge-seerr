@@ -5,9 +5,10 @@ import retrofit2.Response
 
 /** What `POST request` did, read off the status code: the one reading the exported Service and the in-app request sheet share. */
 sealed interface RequestPostOutcome {
-    /** A request was made. The id is absent where the server did not echo one. */
+    /** A request was made. The id is absent where the server did not echo one, and [request] where it echoed less than a row needs. */
     data class Created(
         val requestId: Int?,
+        val request: SeerrRequestDto? = null,
     ) : RequestPostOutcome
 
     /** The server took the call and created nothing, because everything asked for was already covered. */
@@ -21,7 +22,7 @@ sealed interface RequestPostOutcome {
 fun Response<SeerrRequestResultDto>.toOutcome(): RequestPostOutcome =
     when {
         code() == HTTP_ACCEPTED -> RequestPostOutcome.NothingToRequest
-        isSuccessful -> RequestPostOutcome.Created(body()?.id)
+        isSuccessful -> RequestPostOutcome.Created(body()?.id, body()?.toRequest())
         code() == HTTP_CONFLICT -> RequestPostOutcome.AlreadyRequested
         else -> throw HttpException(this)
     }

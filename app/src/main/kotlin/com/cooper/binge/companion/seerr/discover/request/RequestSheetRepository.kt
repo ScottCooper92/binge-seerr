@@ -1,10 +1,12 @@
 package com.cooper.binge.companion.seerr.discover.request
 
 import com.binge.companion.sdk.attempt
+import com.cooper.binge.companion.seerr.data.RequestStore
 import com.cooper.binge.companion.seerr.data.TitleKey
 import com.cooper.binge.companion.seerr.data.TitleStatusStore
 import com.cooper.binge.companion.seerr.data.TitleType
 import com.cooper.binge.companion.seerr.discover.TitleKind
+import com.cooper.binge.companion.seerr.seerr.HydratedTitle
 import com.cooper.binge.companion.seerr.seerr.RequestPostOutcome
 import com.cooper.binge.companion.seerr.seerr.SEERR_MEDIA_TYPE_MOVIE
 import com.cooper.binge.companion.seerr.seerr.SEERR_MEDIA_TYPE_TV
@@ -19,6 +21,7 @@ import com.cooper.binge.companion.seerr.seerr.arrServer
 import com.cooper.binge.companion.seerr.seerr.offeredServers
 import com.cooper.binge.companion.seerr.seerr.toOutcome
 import com.cooper.binge.companion.seerr.seerr.toPermissions
+import com.cooper.binge.companion.seerr.ui.requests.toRequestEntity
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 
@@ -118,6 +121,9 @@ class SeerrRequestSheetRepository(
     private val profile: suspend () -> SeerrServerProfile,
     private val io: CoroutineDispatcher,
     private val statuses: TitleStatusStore = TitleStatusStore(),
+    /** Where a request the server just made is put, so the Requests list shows it with no refresh; null for a caller with no list. */
+    private val requests: RequestStore? = null,
+    private val titles: suspend (SeerrApi, String, Int) -> HydratedTitle? = { _, _, _ -> null },
 ) : RequestSheetRepository {
     override suspend fun access(kind: TitleKind): RequestAccess =
         withContext(io) {
@@ -173,11 +179,20 @@ class SeerrRequestSheetRepository(
                 }
             val outcome = attempt { api().requestMedia(body).toOutcome() }.onFailure { statuses.rollback(undo) }.getOrThrow()
             when (outcome) {
-                is RequestPostOutcome.Created -> RequestResult.Created
+                is RequestPostOutcome.Created -> RequestResult.Created.also { addToRequests(outcome) }
                 RequestPostOutcome.NothingToRequest -> RequestResult.NothingToRequest.also { statuses.rollback(undo) }
                 RequestPostOutcome.AlreadyRequested -> RequestResult.AlreadyRequested.also { statuses.rollback(undo) }
             }
         }
+
+    /** Best effort: the request exists either way, and the list catches up on its next refresh if this cannot be written. */
+    private suspend fun addToRequests(created: RequestPostOutcome.Created) {
+        val store = requests ?: return
+        val dto = created.request ?: return
+        attempt {
+            dto.toRequestEntity(api(), titles, "", 0, System.currentTimeMillis())?.let { store.addCreated(it) }
+        }
+    }
 
     override suspend fun submitAll(submissions: List<RequestSubmission>): RequestAllResult {
         var created = 0
