@@ -5,16 +5,24 @@ import com.binge.designsystem.component.MediaResult
 import com.binge.designsystem.component.MediaResultKind
 import com.binge.designsystem.template.CollectionDetail
 import com.binge.designsystem.template.CollectionDetailState
+import com.binge.designsystem.template.ScreenAction
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.TitleResult
 import com.cooper.binge.companion.seerr.discover.collection.CollectionDetails
+import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.seerr.toTmdbPosterUrl
 import com.cooper.binge.companion.seerr.ui.state.messageRes
 import com.cooper.binge.companion.seerr.ui.state.titleRes
 import com.cooper.binge.companion.seerr.ui.state.toErrorKind
 
-/** The collection page's state as the shared template takes it: plain values, with every word already in the user's language. */
-internal fun CollectionPageUiState.toDetailState(resources: Resources): CollectionDetailState =
+/**
+ * The collection page's state as the shared template takes it: plain values, with every word already in the user's language.
+ * [allowLocalNetwork] is the action a blocked local server needs; Try again cannot fix that, so it replaces it.
+ */
+internal fun CollectionPageUiState.toDetailState(
+    resources: Resources,
+    allowLocalNetwork: ScreenAction? = null,
+): CollectionDetailState =
     when (this) {
         CollectionPageUiState.Loading -> CollectionDetailState.Loading()
         is CollectionPageUiState.Error ->
@@ -22,6 +30,8 @@ internal fun CollectionPageUiState.toDetailState(resources: Resources): Collecti
                 kind = error.toErrorKind(),
                 title = resources.getString(error.titleRes()),
                 message = resources.getString(error.messageRes()),
+                retryable = !(error == SeerrError.LocalNetworkDenied && allowLocalNetwork != null),
+                secondary = allowLocalNetwork.takeIf { error == SeerrError.LocalNetworkDenied },
             )
         is CollectionPageUiState.Ready -> CollectionDetailState.Content(collection.toDetail(mayRequest, resources))
     }

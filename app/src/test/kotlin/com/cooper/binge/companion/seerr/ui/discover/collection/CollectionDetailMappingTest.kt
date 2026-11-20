@@ -4,11 +4,13 @@ import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import com.binge.designsystem.ErrorKind
 import com.binge.designsystem.template.CollectionDetailState
+import com.binge.designsystem.template.ScreenAction
 import com.cooper.binge.companion.seerr.discover.TitleAvailability
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.TitleResult
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -28,6 +30,22 @@ class CollectionDetailMappingTest {
         val failed = CollectionPageUiState.Error(SeerrError.Unreachable).toDetailState(resources) as CollectionDetailState.Failed
         assertEquals(ErrorKind.Network, failed.kind)
         assertTrue(failed.retryable)
+    }
+
+    @Test
+    fun `a blocked local network offers Allow in place of Try again`() {
+        var allowed = false
+        val allow = ScreenAction("Allow", onClick = { allowed = true })
+        val failed =
+            CollectionPageUiState.Error(SeerrError.LocalNetworkDenied).toDetailState(resources, allow) as CollectionDetailState.Failed
+
+        assertFalse(failed.retryable)
+        failed.secondary!!.onClick()
+        assertTrue(allowed)
+
+        val other = CollectionPageUiState.Error(SeerrError.Unreachable).toDetailState(resources, allow) as CollectionDetailState.Failed
+        assertTrue(other.retryable)
+        assertNull(other.secondary)
     }
 
     @Test

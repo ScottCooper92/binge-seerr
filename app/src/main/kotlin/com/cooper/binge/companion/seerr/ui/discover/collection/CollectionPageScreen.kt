@@ -13,6 +13,7 @@ import com.binge.designsystem.component.StatusChip
 import com.binge.designsystem.component.showSnackbar
 import com.binge.designsystem.template.CollectionDetailCallbacks
 import com.binge.designsystem.template.CollectionDetailScreen
+import com.binge.designsystem.template.ScreenAction
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.TitleAvailability
 import com.cooper.binge.companion.seerr.discover.TitleKind
@@ -25,6 +26,7 @@ import com.cooper.binge.companion.seerr.ui.discover.request.RequestSheetTarget
 import com.cooper.binge.companion.seerr.ui.discover.request.filmsSubmitLabel
 import com.cooper.binge.companion.seerr.ui.discover.request.messageRes
 import com.cooper.binge.companion.seerr.ui.discover.title.statusStyle
+import com.cooper.binge.companion.seerr.ui.rememberAllowLocalNetwork
 import com.cooper.binge.companion.seerr.ui.state.messageRes
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
@@ -57,7 +59,9 @@ internal fun CollectionPageScreen(
     val resources = LocalResources.current
     CollectionEventSnackbars(events, snackbar)
     val ready = state as? CollectionPageUiState.Ready
-    val detail = remember(state, resources) { state.toDetailState(resources) }
+    val allow = rememberAllowLocalNetwork(actions.onRetry)
+    val allowLabel = stringResource(allow.label)
+    val detail = remember(state, resources, allow, allowLabel) { state.toDetailState(resources, ScreenAction(allowLabel, allow.run)) }
     val partsByKey =
         remember(ready?.collection) {
             ready
