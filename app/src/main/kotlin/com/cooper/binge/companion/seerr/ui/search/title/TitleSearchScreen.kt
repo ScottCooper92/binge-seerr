@@ -3,14 +3,13 @@ package com.cooper.binge.companion.seerr.ui.search.title
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import com.binge.designsystem.template.ScreenBar
 import com.binge.designsystem.template.SearchCallbacks
 import com.binge.designsystem.template.SearchScreen
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.StudioResult
 import com.cooper.binge.companion.seerr.discover.TitleResult
 import com.cooper.binge.companion.seerr.discover.sliders.HubGrid
-import com.cooper.binge.companion.seerr.ui.hub.AccountBar
-import com.cooper.binge.companion.seerr.ui.hub.TitleBarAccount
 import com.cooper.binge.companion.seerr.ui.shell.SeerrTab
 import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
 
@@ -30,17 +29,16 @@ internal class TitleSearchActions(
 )
 
 /**
- * The Search tab, drawn by the design system's [SearchScreen]: the title gives way as the results scroll, and the field and the type
- * chips stay pinned under it. The account sits beside the title and in the collapsed bar, as on the Discover grid. Below the bar is
- * whichever of the idle offer, results or a message the state calls for. What is Seerr's own is mapped in `TitleSearchMapping.kt`.
+ * The Search tab, drawn by the design system's [SearchScreen] on a small bar: the title row never collapses, and the field and the type
+ * chips stay pinned under it. The account is not here; it is the Settings tab's avatar. Below the bar is a page for each type chip,
+ * each showing whichever of the idle offer, results or a message the state calls for. What is Seerr's own is mapped in
+ * `TitleSearchMapping.kt`.
  */
 @Composable
 internal fun TitleSearchScreen(
     state: TitleSearchUiState,
     actions: TitleSearchActions,
     modifier: Modifier = Modifier,
-    accountBar: AccountBar? = null,
-    onOpenAccount: (Int) -> Unit = {},
 ) {
     val titles = (state as? TitleSearchUiState.Ready)?.results.orEmpty().associateBy { it.resultKey() }
     val studios = (state as? TitleSearchUiState.Ready)?.studios.orEmpty().associateBy { it.resultKey() }
@@ -68,13 +66,12 @@ internal fun TitleSearchScreen(
         idleTitle = stringResource(R.string.title_search_idle_title),
         idleMessage = stringResource(R.string.title_search_idle_message),
         reselectKey = SeerrTab.Search,
+        bar = ScreenBar.Small,
         recentsTitle = stringResource(R.string.title_search_recent),
         clearLabel = stringResource(R.string.title_search_recent_clear),
         clearTitle = stringResource(R.string.title_search_recent_clear_title),
         clearMessage = stringResource(R.string.title_search_recent_clear_message),
         moreFailedLabel = stringResource(R.string.title_search_more_failed),
-        titleTrailing = accountBar?.let { bar -> { interactive -> TitleBarAccount(bar, interactive, onOpenAccount) } },
-        barActions = { handedOver, fraction -> accountBar?.let { TitleBarAccount(it, handedOver, onOpenAccount, fraction) } },
         resultTrailing = { media -> titles[media.key]?.let { result -> { ResultStatus(result) } } },
         idleExtras = (state as? TitleSearchUiState.Idle)?.let { idle -> { trendingRails(idle.trending, actions.onOpenTitle) } },
         noResultsExtras =

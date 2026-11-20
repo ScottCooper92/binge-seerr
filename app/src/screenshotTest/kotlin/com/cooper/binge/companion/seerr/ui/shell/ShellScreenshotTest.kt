@@ -11,6 +11,9 @@ import com.cooper.binge.companion.seerr.preview.SeerrListPanePreview
 import com.cooper.binge.companion.seerr.preview.SeerrScreenStatePreview
 import com.cooper.binge.companion.seerr.preview.SeerrSpanishPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrTabletPanesPreview
+import com.cooper.binge.companion.seerr.ui.hub.AccountBar
+import com.cooper.binge.companion.seerr.ui.hub.AccountBarState
+import com.cooper.binge.companion.seerr.ui.hub.HubAccount
 import com.cooper.binge.companion.seerr.ui.hub.HubScreen
 import com.cooper.binge.companion.seerr.ui.hub.previewActions
 import com.cooper.binge.companion.seerr.ui.hub.previewReady
@@ -26,6 +29,29 @@ class ShellScreenshotTest {
     @SeerrScreenStatePreview
     @Composable
     fun settingsTab() = ShellFrame(SeerrTab.Settings)
+
+    /** The Settings item is the account's avatar, ringed as selected: initials where the server has no photo. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun accountSelected() = ShellFrame(SeerrTab.Settings, ACCOUNT)
+
+    /** The avatar while another tab is selected. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun accountNotSelected() = ShellFrame(SeerrTab.Search, ACCOUNT)
+
+    /** The avatar at font scale 1.3 and 2, with the longest label under it. */
+    @PreviewTest
+    @SeerrFontScale13Previews
+    @Composable
+    fun accountLargeText13() = ShellFrame(SeerrTab.Settings, ACCOUNT)
+
+    @PreviewTest
+    @SeerrFontScalePreviews
+    @Composable
+    fun accountLargeText() = ShellFrame(SeerrTab.Settings, ACCOUNT)
 
     @PreviewTest
     @SeerrScreenStatePreview
@@ -58,8 +84,14 @@ class ShellScreenshotTest {
     fun largeText() = ShellFrame(SeerrTab.Settings)
 }
 
+private val ACCOUNT =
+    AccountBarState.Ready(AccountBar(HubAccount(id = 1, name = "Ada Lovelace", isAdmin = true, avatarUrl = null), quota = null))
+
 @Composable
-private fun ShellFrame(selected: SeerrTab) {
+private fun ShellFrame(
+    selected: SeerrTab,
+    account: AccountBarState = AccountBarState.Loading,
+) {
     val state =
         TabShellState(
             tabs = SeerrTab.entries,
@@ -68,6 +100,7 @@ private fun ShellFrame(selected: SeerrTab) {
         )
     SeerrTabShell(
         state,
+        account = account,
         discover = { TabPlaceholder(SeerrTab.Movies) },
         settings = { HubScreen(state = previewReady(), actions = previewActions()) },
     )
