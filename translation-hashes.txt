@@ -1285,6 +1285,7 @@ app:title_search_type_people  7db20897053b
 app:title_search_type_studios  e41cca7d2395
 app:title_sheet_note_blocklisted  099c01eec535
 app:title_sheet_note_cannot_request  7cb50e8e8ac7
+app:title_sheet_note_declined  9ea03620e8d9
 app:title_sheet_note_in_library  6aacfe844e11
 app:title_sheet_note_nothing_to_request  e6609fafce25
 app:title_sheet_note_other_request  51ac47503994

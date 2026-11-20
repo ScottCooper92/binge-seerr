@@ -179,6 +179,13 @@ class TitleStatusSheetTest {
     }
 
     @Test
+    fun `a declined title says so`() {
+        show(TitleState.Declined, canRequest = false)
+
+        rule.onNodeWithText("A request for this title was declined. Ask an admin if you want it reconsidered.").assertIsDisplayed()
+    }
+
+    @Test
     fun `a viewer who may request a show with no season to request yet is told there is nothing to request`() {
         show(TitleState.Request, canRequest = true)
 

@@ -1530,6 +1530,7 @@
     <string name="title_sheet_note_processing">Este título está de camino a la biblioteca.</string>
     <string name="title_sheet_note_in_library">Este título está en la biblioteca.</string>
     <string name="title_sheet_note_blocklisted">Este título está en la lista de bloqueo, así que no se puede solicitar.</string>
+    <string name="title_sheet_note_declined">Se rechazó una solicitud de este título. Pregunta a un administrador si quieres que se reconsidere.</string>
     <string name="title_page_action_watchlist">Lista de seguimiento</string>
     <string name="title_page_watchlist_add">Añadir a la lista de seguimiento</string>
     <string name="title_page_watchlist_remove">Quitar de la lista de seguimiento</string>

@@ -1589,6 +1589,7 @@
     <string name="title_sheet_note_processing">This title is on its way to the library.</string>
     <string name="title_sheet_note_in_library">This title is in the library.</string>
     <string name="title_sheet_note_blocklisted">This title is blocklisted, so it can\'t be requested.</string>
+    <string name="title_sheet_note_declined">A request for this title was declined. Ask an admin if you want it reconsidered.</string>
     <string name="title_page_action_watchlist">Watchlist</string>
     <string name="title_page_watchlist_add">Add to watchlist</string>
     <string name="title_page_watchlist_remove">Remove from watchlist</string>

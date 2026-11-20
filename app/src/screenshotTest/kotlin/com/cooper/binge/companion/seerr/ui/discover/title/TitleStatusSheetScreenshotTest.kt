@@ -111,6 +111,24 @@ class TitleStatusSheetScreenshotTest {
     @Composable
     fun nothingToRequest() = SheetFrame { TitleStatusSheetContent(TitleState.Request, null, null, true, {}) }
 
+    /** Every request was declined and this viewer may not ask again: the status and a line saying so. */
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun declined() = SheetFrame { TitleStatusSheetContent(TitleState.Declined, null, null, false, {}) }
+
+    /** The same in Spanish. */
+    @PreviewTest
+    @SeerrSpanishPreviews
+    @Composable
+    fun declinedSpanish() = SheetFrame { TitleStatusSheetContent(TitleState.Declined, null, null, false, {}) }
+
+    /** The same at font scale 1.3: the line wraps and nothing is cut off. */
+    @PreviewTest
+    @SeerrFontScale13ComponentPreviews
+    @Composable
+    fun declinedLargeFonts() = SheetFrame { TitleStatusSheetContent(TitleState.Declined, null, null, false, {}) }
+
     /** A viewer whose account may not request. */
     @PreviewTest
     @SeerrComponentPreviews

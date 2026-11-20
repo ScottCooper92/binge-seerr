@@ -10,12 +10,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.android.tools.screenshot.PreviewTest
 import com.cooper.binge.companion.seerr.discover.TitleAvailability
+import com.cooper.binge.companion.seerr.discover.title.TitleRequest
 import com.cooper.binge.companion.seerr.discover.title.VersionState
 import com.cooper.binge.companion.seerr.preview.PHONE_WIDTH
 import com.cooper.binge.companion.seerr.preview.SeerrComponentPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrFontScale13ComponentPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrFontScalePreviews
 import com.cooper.binge.companion.seerr.preview.SeerrSpanishPreviews
+import com.cooper.binge.companion.seerr.seerr.SeerrRequestStatusCode
 
 /**
  * The row of actions under a title's stats, for none, one and two round buttons at 1x, 1.3x and 2x. The primary shares a row with
@@ -95,6 +97,24 @@ class TitleActionsScreenshotTest {
     @Composable
     fun twoRoundButtonsLargestText() = Frame(trailer = true, report = true)
 
+    /** Every request was declined: the primary reads Declined, tonal, with the round buttons under it. */
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun declinedPrimary() = DeclinedFrame()
+
+    /** The same in Spanish. */
+    @PreviewTest
+    @SeerrSpanishPreviews
+    @Composable
+    fun declinedPrimarySpanish() = DeclinedFrame()
+
+    /** The same at font scale 2. */
+    @PreviewTest
+    @SeerrFontScalePreviews
+    @Composable
+    fun declinedPrimaryLargestText() = DeclinedFrame()
+
     /** Nothing held and the viewer may manage the blocklist: Trailer, Watchlist and Block under the Request button. */
     @PreviewTest
     @SeerrComponentPreviews
@@ -118,6 +138,27 @@ class TitleActionsScreenshotTest {
     @SeerrSpanishPreviews
     @Composable
     fun blockOnAnUnrequestedTitleSpanish() = BlockFrame()
+}
+
+@Composable
+private fun DeclinedFrame() {
+    Box(Modifier.width(PHONE_WIDTH).background(MaterialTheme.colorScheme.surface).padding(vertical = 8.dp)) {
+        TitleActions(
+            model =
+                titleActionsModel(
+                    VersionState(TitleAvailability.None, mayRequest = true),
+                    null,
+                    listOf(TitleRequest(id = 7, is4k = false, status = SeerrRequestStatusCode.Declined, requesterId = 1)),
+                    mayReport = false,
+                    mayBlock = true,
+                ),
+            onPrimary = {},
+            onTrailer = {},
+            onReport = null,
+            watchlist = WatchlistButton(false, {}),
+            onBlock = {},
+        )
+    }
 }
 
 @Composable
