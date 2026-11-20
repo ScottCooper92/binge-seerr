@@ -18,8 +18,6 @@ android {
     namespace = "com.cooper.binge.companion.seerr.data"
     compileSdk = 37
     defaultConfig { minSdk = 26 }
-    // The helpers its tests share with :app's: a fake server, a fake DAO, the two ciphers and the profile routing.
-    testFixtures { enable = true }
     testOptions {
         // The Room and DataStore tests need a real Context, which Robolectric supplies.
         unitTests.isIncludeAndroidResources = true
@@ -62,14 +60,8 @@ dependencies {
     // ApplicationProvider, for the tests that need a real Context.
     testImplementation(libs.androidx.test.ext.junit)
     testImplementation(libs.homelab.testing)
-    testFixturesImplementation(libs.okhttp)
-    testFixturesImplementation(libs.okhttp.mockwebserver)
-    testFixturesImplementation(libs.binge.companion.kit)
-    testFixturesImplementation(libs.kotlinx.coroutines.android)
-    testFixturesImplementation(libs.junit)
-    testFixturesImplementation(libs.paging.runtime)
-    testFixturesImplementation(libs.room.runtime)
-    testFixturesImplementation(libs.androidx.test.ext.junit)
+    // The fakes its tests share with :app's: a fake server, a fake DAO, the two ciphers, the profile routing and the coroutine helpers.
+    testImplementation(project(":core:testing"))
 }
 
 tasks.withType<Test>().configureEach {

@@ -162,7 +162,7 @@ class RoomRequestStore(
  * with another status is not in them. The other filters read the media's status too, which a moderation's answer may
  * not have settled yet, so they are left to refresh.
  */
-internal val statusFilters: Map<String, Int> =
+val statusFilters: Map<String, Int> =
     mapOf(
         RequestFilter.Pending.apiValue to SeerrRequestStatusCode.Pending.raw,
         RequestFilter.Approved.apiValue to SeerrRequestStatusCode.Approved.raw,
@@ -217,7 +217,7 @@ object NoRequestStore : RequestStore {
 private const val LIST_KEY_PARTS = 3
 
 /** Newest first is the only order a new request is known to lead; the scope is every request or the viewer's own. */
-internal fun String.takesNewRequest(request: RequestEntity): Boolean {
+fun String.takesNewRequest(request: RequestEntity): Boolean {
     val (filter, sort, scope) = split(':').takeIf { it.size == LIST_KEY_PARTS } ?: return false
     val fits = filter == RequestFilter.All.apiValue || statusFilters[filter] == request.status
     val sorted = sort == "added" || sort == "modified"
