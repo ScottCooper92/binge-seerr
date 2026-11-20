@@ -43,6 +43,7 @@ import com.binge.designsystem.component.OnTabReselect
 import com.binge.designsystem.component.rememberPaneTopBarScrollBehavior
 import com.binge.designsystem.navOverlayPadding
 import com.binge.designsystem.searchResultColumns
+import com.binge.designsystem.template.BAR_HANDOVER_COLLAPSE
 import com.binge.designsystem.template.BingeScreenScaffold
 import com.binge.designsystem.template.ScreenBar
 import com.binge.designsystem.template.ScreenBody
@@ -50,7 +51,6 @@ import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.StudioResult
 import com.cooper.binge.companion.seerr.discover.TitleResult
 import com.cooper.binge.companion.seerr.discover.sliders.HubGrid
-import com.cooper.binge.companion.seerr.ui.hub.ACCOUNT_HANDOVER_COLLAPSE
 import com.cooper.binge.companion.seerr.ui.hub.AccountBar
 import com.cooper.binge.companion.seerr.ui.hub.TitleBarAccount
 import com.cooper.binge.companion.seerr.ui.shell.SeerrTab
@@ -91,7 +91,7 @@ internal fun TitleSearchScreen(
 ) {
     val scrollBehavior = rememberPaneTopBarScrollBehavior()
     val collapsed = scrollBehavior.state.collapsedFraction
-    val titleRowShows = collapsed < ACCOUNT_HANDOVER_COLLAPSE
+    val titleRowShows = collapsed < BAR_HANDOVER_COLLAPSE
     BingeScreenScaffold(
         title = stringResource(R.string.title_search_title),
         modifier = modifier,

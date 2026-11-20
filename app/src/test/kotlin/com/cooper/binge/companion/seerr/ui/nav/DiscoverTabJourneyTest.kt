@@ -5,8 +5,10 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.isDisplayed
+import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onLast
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -72,7 +74,7 @@ class DiscoverTabJourneyTest {
 
         host.compose.onNodeWithTag("tab_discover").performClick()
 
-        host.awaitShowing(host.string(R.string.grid_filters_button))
+        awaitFilters()
         host.compose.onNodeWithTag("tab_discover").assertIsDisplayed()
         assertEquals("the tab opens nothing on the app's stack", listOf<NavKey>(ShellRoute), host.stack())
     }
@@ -84,7 +86,7 @@ class DiscoverTabJourneyTest {
         host.launch(HomeRoute)
         host.awaitShowing(host.string(R.string.hubs_row_recently_added))
         host.compose.onNodeWithTag("tab_discover").performClick()
-        host.awaitShowing(host.string(R.string.grid_filters_button))
+        awaitFilters()
 
         host.rotate(PHONE)
 
@@ -99,8 +101,8 @@ class DiscoverTabJourneyTest {
         host.launch(HomeRoute)
         host.awaitShowing(host.string(R.string.hubs_row_recently_added))
         host.compose.onNodeWithTag("tab_discover").performClick()
-        host.awaitShowing(host.string(R.string.grid_filters_button))
-        host.clickUntilShowing(host.string(R.string.grid_filters_button), host.string(R.string.grid_sort_rating_desc))
+        awaitFilters()
+        openFilters(host.string(R.string.grid_sort_rating_desc))
         host.compose.onNodeWithText(host.string(R.string.grid_sort_rating_desc)).performClick()
         host.clickUntil(
             "the sheet closed",
@@ -124,7 +126,7 @@ class DiscoverTabJourneyTest {
         host.launch(HomeRoute)
         host.awaitShowing(host.string(R.string.hubs_row_recently_added))
         host.compose.onNodeWithTag("tab_discover").performClick()
-        host.awaitShowing(host.string(R.string.grid_filters_button))
+        awaitFilters()
 
         applyInSheet(host.string(R.string.grid_sort_rating_desc))
 
@@ -140,7 +142,7 @@ class DiscoverTabJourneyTest {
         host.launch(HomeRoute)
         host.awaitShowing(host.string(R.string.hubs_row_recently_added))
         host.compose.onNodeWithTag("tab_discover").performClick()
-        host.awaitShowing(host.string(R.string.grid_filters_button))
+        awaitFilters()
 
         applyInSheet(host.string(R.string.grid_content_tv))
         host.awaitShowing("TV · Most popular")
@@ -159,7 +161,7 @@ class DiscoverTabJourneyTest {
         host.rotate(NARROW_TABLET)
         host.awaitShowing(host.string(R.string.hubs_row_recently_added))
         host.compose.onNodeWithTag("tab_discover").performClick()
-        host.awaitShowing(host.string(R.string.grid_filters_button))
+        awaitFilters()
         awaitCards()
         val atTop = displayedCards()
         host.compose.onNode(hasScrollAction()).performScrollToIndex(LAST_ROW)
@@ -172,7 +174,7 @@ class DiscoverTabJourneyTest {
         host.rotate(NARROW_TABLET)
         host.awaitShowing(host.string(R.string.hubs_row_recently_added))
         host.compose.onNodeWithTag("tab_discover").performClick()
-        host.awaitShowing(host.string(R.string.grid_filters_button))
+        awaitFilters()
         host.await("the same cards are on screen") { displayedCards() == scrolled }
     }
 
@@ -187,8 +189,24 @@ class DiscoverTabJourneyTest {
                 nodes.fetchSemanticsNodes().isNotEmpty() && nodes[0].isDisplayed()
             }.toSet()
 
+    /** The Filters pill is one accessibility item, so it is found by what a screen reader says of it and not by its label. */
+    private fun awaitFilters() =
+        host.await("the Filters pill") {
+            host.compose
+                .onAllNodesWithContentDescription(host.string(R.string.grid_open_filters))
+                .fetchSemanticsNodes()
+                .isNotEmpty()
+        }
+
+    private fun openFilters(outcome: String) =
+        host.clickUntil(
+            "the filters sheet shows $outcome",
+            target = { host.compose.onNodeWithContentDescription(host.string(R.string.grid_open_filters)) },
+            reached = { host.isShowing(outcome) },
+        )
+
     private fun applyInSheet(vararg choices: String) {
-        host.clickUntilShowing(host.string(R.string.grid_filters_button), host.string(R.string.grid_filters_show_results))
+        openFilters(host.string(R.string.grid_filters_show_results))
         choices.forEach { choice ->
             host.compose
                 .onAllNodesWithText(choice)

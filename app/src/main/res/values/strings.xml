@@ -173,6 +173,10 @@
     <string name="grid_sort_title_desc">Title (Z–A)</string>
     <string name="grid_title">Discover</string>
     <string name="grid_open_filters">Open filters</string>
+    <plurals name="grid_open_filters_applied">
+        <item quantity="one">Open filters, %d applied</item>
+        <item quantity="other">Open filters, %d applied</item>
+    </plurals>
     <string name="grid_filters_button">Filters</string>
     <string name="grid_filters_title">Filters</string>
     <string name="grid_filters_sort">Sort by</string>
