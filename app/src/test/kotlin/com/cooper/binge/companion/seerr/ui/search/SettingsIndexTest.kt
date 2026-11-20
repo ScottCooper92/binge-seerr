@@ -86,7 +86,8 @@ class SettingsIndexTest {
 
     /**
      * The key an entry names has to be carried by a row, or the search opens a page and finds nothing to wash. Each page's rows are built
-     * in its screen file, so each key must be given to a row there (or picked for it by a `->` arm there): a row the page drops, or a key the screen never uses, fails here.
+     * in its screen file, so each key must be given to a row there (or picked for it by a `->` arm there): a row the page drops, or a
+     * key the screen never uses, fails here.
      */
     @Test
     fun `every key an entry names is given to a row in its page's screen`() {
