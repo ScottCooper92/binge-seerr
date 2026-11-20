@@ -38,6 +38,9 @@ private val KEYWORD_ACTIONS = TitlePageActions({}, {}, {}, {}, {}, {}, {}, {}, {
 /** As [NO_ACTIONS], but no page opens for a collection, as on the phone today: the rail has no See all. */
 private val NO_COLLECTION_PAGE = TitlePageActions({}, {}, {}, {}, {}, {}, {}, null, {}, {})
 
+/** As [NO_ACTIONS], but the viewer may block, so Block is among the round buttons. */
+private val BLOCK_ACTIONS = TitlePageActions({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, block = TitleBlock({}, {}, {}))
+
 @Composable
 private fun Frame(state: TitlePageUiState) = TitlePageScreen(state, emptyFlow(), NO_ACTIONS)
 
@@ -141,6 +144,21 @@ class TitlePageScreenshotTest {
     @Composable
     fun blocklisted() =
         Frame(TitlePageUiState.Ready(fullMovie(standard = VersionState(TitleAvailability.Blocklisted, mayRequest = false), fourK = null)))
+
+    /** Every request was declined and nothing else is held: the primary reads Declined and is tonal, and Block joins Trailer. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun declined() =
+        TitlePageScreen(
+            TitlePageUiState.Ready(
+                fullMovie(standard = VersionState(TitleAvailability.None, mayRequest = true), fourK = null)
+                    .copy(requests = listOf(TitleRequest(7, false, SeerrRequestStatusCode.Declined, 5)), mayBlock = true),
+                fullExtras(),
+            ),
+            emptyFlow(),
+            BLOCK_ACTIONS,
+        )
 
     /** The sections that load apart have not arrived yet. */
     @PreviewTest
