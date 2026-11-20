@@ -1649,6 +1649,7 @@
         <item quantity="many">%d de películas</item>
         <item quantity="other">%d películas</item>
     </plurals>
+    <string name="collection_page_empty">Esta colección aún no tiene películas.</string>
     <string name="collection_page_meta">%1$s · %2$d por solicitar</string>
     <string name="request_sheet_films">Películas</string>
     <string name="request_sheet_all_films">Todas las películas</string>
