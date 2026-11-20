@@ -57,8 +57,12 @@ app:grid_chip_provider  e5fa7a7c503c
 app:grid_chip_upcoming  5f1a2542e4e4
 app:grid_content_movies  dff924b69f96
 app:grid_content_tv  222906f88a30
+app:grid_empty_clear_filters  7179ea0035fc
 app:grid_empty_message  007427707d4f
+app:grid_empty_plain_message  a207e6c09d94
 app:grid_empty_title  f4c7f41c12d6
+app:grid_empty_watchlist_message  da3ba9d6d8b2
+app:grid_empty_watchlist_title  da1b67b6c4e0
 app:grid_filter_any  2b505597daa7
 app:grid_filter_cert  8c76be60512c
 app:grid_filter_cert_country  701d021d08c5
@@ -484,6 +488,7 @@ app:request_open_binge  2552918b1ba6
 app:request_open_elsewhere  72e56d08d9d1
 app:request_open_media_server  831a97c87049
 app:request_open_title  e446e23c71d1
+app:request_open_title_cd  e19306c1997f
 app:request_primary_manage  5a23444828db
 app:request_primary_review  dcea8abbdff0
 app:request_problem_not_allowed  ca836425fb3f
@@ -1197,6 +1202,8 @@ app:state_error_unknown_title  ab827e3fe17d
 app:state_error_unreachable_message  5ffff6c5878b
 app:state_error_unreachable_title  8884ecffcd27
 app:tip_row  f65a6e40cbc4
+app:title_block_confirm_message  9b9e2f6a5cf6
+app:title_block_confirm_title  2cf38885c065
 app:title_credits_cast  150040557337
 app:title_credits_department_actors  42d6879a1f74
 app:title_credits_department_art  75df3579c730
@@ -1217,6 +1224,8 @@ app:title_kind_movie  941de4447b2e
 app:title_kind_person  6007db63e18e
 app:title_kind_series  ca62d5e073f5
 app:title_kind_studio  0aa91af2ec4c
+app:title_link_tmdb  d48b09a78b6d
+app:title_page_action_block  211d0bb8cf4f
 app:title_page_action_report  b6ce788d9786
 app:title_page_action_share  29887a5ff984
 app:title_page_action_trailer  6a7b20d1da8a
@@ -1280,10 +1289,12 @@ app:title_search_type_people  7db20897053b
 app:title_search_type_studios  e41cca7d2395
 app:title_sheet_note_blocklisted  099c01eec535
 app:title_sheet_note_cannot_request  7cb50e8e8ac7
+app:title_sheet_note_declined  9ea03620e8d9
 app:title_sheet_note_in_library  6aacfe844e11
 app:title_sheet_note_nothing_to_request  e6609fafce25
 app:title_sheet_note_other_request  51ac47503994
 app:title_sheet_note_processing  b7fa2a6d72a1
+app:title_sheet_request_remaining  5ba960b142a9
 app:title_sheet_watch  a71e75732446
 app:title_sheet_watch_in_binge  afe51eac2cb1
 app:title_sheet_watch_on  ffa3023a5e7b

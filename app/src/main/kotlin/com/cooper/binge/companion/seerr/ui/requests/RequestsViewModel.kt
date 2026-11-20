@@ -14,6 +14,7 @@ import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.data.RequestListQuery
 import com.cooper.binge.companion.seerr.data.RequestStore
 import com.cooper.binge.companion.seerr.data.RequestsRemoteMediator
+import com.cooper.binge.companion.seerr.data.TitleStatusStore
 import com.cooper.binge.companion.seerr.data.whileSet
 import com.cooper.binge.companion.seerr.di.IoDispatcher
 import com.cooper.binge.companion.seerr.seerr.SeerrError
@@ -82,6 +83,7 @@ class RequestsViewModel
         @IoDispatcher private val dispatcher: CoroutineDispatcher,
         private val minuteTicker: Ticker = Ticker(),
         private val queueGates: DownloadQueueGates = DownloadQueueGates(connection),
+        private val statuses: TitleStatusStore = TitleStatusStore(),
     ) : ViewModel() {
         private val selectedFilter = MutableStateFlow(RequestFilter.All)
         private val selectedSort = MutableStateFlow(RequestSort.Added)
@@ -184,12 +186,14 @@ class RequestsViewModel
                                     api = connection::api,
                                     store = store,
                                     onRefresh = { rows -> refreshes.record(filter, rows) },
+                                    statuses = statuses,
                                 ) { dto, api, key, index ->
                                     dto.toRequestEntity(api, titles::get, key, index, System.currentTimeMillis())
                                 },
                         ) { store.pagingSource(query.listKey) }.flow
                     }.map { data -> data.map { it.toRequestItem().withQueueFrom(queueGates) } }
                     .cachedIn(viewModelScope)
+                    .let { cached -> combine(cached, statuses.statuses) { data, held -> data.map { it.withBlockFrom(held) } } }
             }
 
         fun requests(filter: RequestFilter): Flow<PagingData<RequestItem>> = streams.getValue(filter)

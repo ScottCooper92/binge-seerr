@@ -28,7 +28,7 @@ internal fun TitleAvailability.statusStyle(): StatusStyle? =
 /** The title page primary's state as the availability it stands for; a title not yet requested is [TitleAvailability.None]. */
 internal fun TitleState.toAvailability(): TitleAvailability =
     when (this) {
-        TitleState.Request -> TitleAvailability.None
+        TitleState.Request, TitleState.Declined -> TitleAvailability.None
         TitleState.Requested -> TitleAvailability.Pending
         TitleState.Processing -> TitleAvailability.Processing
         TitleState.PartiallyAvailable -> TitleAvailability.PartiallyAvailable

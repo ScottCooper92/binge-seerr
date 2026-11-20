@@ -114,13 +114,19 @@ class DiscoverHubScreenshotTest {
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
-    fun loading() = Frame(DiscoverHubUiState.Loading)
+    fun loading() = Frame(DiscoverHubUiState.Loading())
+
+    /** Where the cached profile says the server cannot filter, the skeleton leaves out the Browse all plate. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun loadingNoBrowseAll() = Frame(DiscoverHubUiState.Loading(browseAll = false))
 
     /** The Browse all plate is the row's own height, which grows with the font. */
     @PreviewTest
     @SeerrFontScale13Previews
     @Composable
-    fun loadingFont13() = Frame(DiscoverHubUiState.Loading)
+    fun loadingFont13() = Frame(DiscoverHubUiState.Loading())
 
     @PreviewTest
     @SeerrScreenStatePreview

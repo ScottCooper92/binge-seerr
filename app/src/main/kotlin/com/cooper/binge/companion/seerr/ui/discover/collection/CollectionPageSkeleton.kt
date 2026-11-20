@@ -66,7 +66,10 @@ internal fun CollectionPageSkeleton(
     ) {
         Column(Modifier.clearAndSetSemantics {}) {
             Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
-            OverviewSkeleton(Modifier.layoutAnchor(LayoutAnchors.section(LayoutAnchors.Detail.OVERVIEW)))
+            OverviewSkeleton(
+                insideInset = Modifier.layoutAnchor(LayoutAnchors.section(LayoutAnchors.Detail.OVERVIEW)),
+                inset = dimensionResource(DesR.dimen.padding_m),
+            )
             Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
             Column(
                 modifier = Modifier.padding(horizontal = dimensionResource(DesR.dimen.padding_m)),

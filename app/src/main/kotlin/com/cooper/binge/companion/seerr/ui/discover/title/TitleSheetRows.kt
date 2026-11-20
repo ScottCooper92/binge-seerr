@@ -21,6 +21,7 @@ internal class TitleSheetFacts(
     val watchUrl: String?,
     val mediaServerName: String?,
     val fourKOpen: Boolean,
+    val remainingOpen: Boolean = false,
 )
 
 /**
@@ -33,14 +34,16 @@ internal fun rememberTitleSheetRows(
     onWatch: (String) -> Unit,
     onRequestFourK: () -> Unit,
     onWatchInBinge: (() -> Unit)? = null,
+    onRequestRemaining: () -> Unit = {},
 ): List<SheetTitleRow> {
     val resources = LocalResources.current
     val watch by rememberUpdatedState(onWatch)
     val watchInBinge by rememberUpdatedState(onWatchInBinge)
     val requestFourK by rememberUpdatedState(onRequestFourK)
+    val requestRemaining by rememberUpdatedState(onRequestRemaining)
     val bingeAnswers = onWatchInBinge != null
     val openInBinge: () -> Unit = { watchInBinge?.invoke() }
-    return remember(facts.state, facts.watchUrl, facts.mediaServerName, facts.fourKOpen, bingeAnswers, resources) {
+    return remember(facts.state, facts.watchUrl, facts.mediaServerName, facts.fourKOpen, facts.remainingOpen, bingeAnswers, resources) {
         val watchRows =
             titleWatchRows(
                 facts.state,
@@ -52,6 +55,12 @@ internal fun rememberTitleSheetRows(
             ).map { row -> SheetTitleRow(Icons.Filled.PlayArrow, row.label, external = true, onClick = row.onClick) }
         watchRows +
             listOfNotNull(
+                SheetTitleRow(
+                    Icons.Filled.Add,
+                    resources.getString(R.string.title_sheet_request_remaining),
+                    external = false,
+                    onClick = { requestRemaining() },
+                ).takeIf { facts.remainingOpen && facts.state.isInLibrary() },
                 SheetTitleRow(
                     Icons.Filled.Add,
                     resources.getString(R.string.request_sheet_submit_4k),
@@ -86,6 +95,7 @@ internal fun TitleManageSheet(
                         actions.onOpenUrl(url)
                     },
                     onRequestFourK = actions.onRequestFourK,
+                    onRequestRemaining = actions.onRequestRemaining,
                     onWatchInBinge =
                         actions.onWatchInBinge?.let { openInBinge ->
                             {
@@ -104,6 +114,7 @@ internal fun SeriesDetails.sheetFacts() =
         watchUrl,
         mediaServerName,
         fourK?.mayRequest == true,
+        remainingOpen = standard.mayRequest,
     )
 
 internal fun MovieDetails.sheetFacts() =

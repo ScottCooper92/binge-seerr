@@ -28,9 +28,9 @@ internal fun EditConnectionEntry(
     val state by source.uiState.collectAsStateWithLifecycle()
     LaunchedEffect(source) { source.beginEdit() }
     rememberEnteredEditingGuard(state, onDone)
-    SetupScreen(
+    SetupFlowScreen(
+        source = source,
         state = state,
-        actions = source.setupActions(tv = false),
         title = stringResource(R.string.settings_edit_connection),
         onBack = onDone.takeIf { showBack },
     )
@@ -50,9 +50,10 @@ internal fun ReconnectEntry(
     LaunchedEffect(source) { source.beginEdit(notice = SetupNotice.SessionRejected) }
     val context = LocalContext.current
     Box(modifier) {
-        SetupScreen(
+        SetupFlowScreen(
+            source = source,
             state = state,
-            actions = source.setupActions(tv = false, onDisconnect = onDisconnect),
+            onDisconnect = onDisconnect,
             onReportProblem = { context.openInBrowser(BugReportLinks().url()) },
         )
     }
@@ -62,9 +63,9 @@ internal fun ReconnectEntry(
 internal fun SetupEntry(source: SetupSource = rememberSetupSource()) {
     val state by source.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
-    SetupScreen(
+    SetupFlowScreen(
+        source = source,
         state = state,
-        actions = source.setupActions(tv = false),
         onReportProblem = { context.openInBrowser(BugReportLinks().url()) },
     )
 }
@@ -85,3 +86,33 @@ internal fun SetupViewModel.actions(onDisconnect: (() -> Unit)? = null): SetupAc
         onDisconnect = onDisconnect,
         onTryDemo = tryDemo,
     )
+
+/** The phone's setup on the path [source] runs on: the shared connect screen for the shared view model, the app's own screen otherwise. */
+@Composable
+private fun SetupFlowScreen(
+    source: SetupSource,
+    state: SetupUiState,
+    title: String? = null,
+    onBack: (() -> Unit)? = null,
+    onReportProblem: (() -> Unit)? = null,
+    onDisconnect: (() -> Unit)? = null,
+) {
+    when (source) {
+        is SharedSetupViewModel ->
+            SeerrConnectScreen(
+                vm = source,
+                title = title,
+                onExit = onBack,
+                onReportProblem = onReportProblem,
+                onDisconnect = onDisconnect,
+            )
+        else ->
+            SetupScreen(
+                state = state,
+                actions = source.setupActions(tv = false, onDisconnect = onDisconnect),
+                title = title,
+                onBack = onBack,
+                onReportProblem = onReportProblem,
+            )
+    }
+}

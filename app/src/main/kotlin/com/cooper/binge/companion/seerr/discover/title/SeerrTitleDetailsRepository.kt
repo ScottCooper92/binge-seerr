@@ -12,6 +12,7 @@ import com.cooper.binge.companion.seerr.discover.toAvailability
 import com.cooper.binge.companion.seerr.discover.toReleaseYear
 import com.cooper.binge.companion.seerr.discover.toTitlePage
 import com.cooper.binge.companion.seerr.seerr.FALLBACK_CERTIFICATION_REGION
+import com.cooper.binge.companion.seerr.seerr.SeerrAddToBlocklistBody
 import com.cooper.binge.companion.seerr.seerr.SeerrApi
 import com.cooper.binge.companion.seerr.seerr.SeerrMediaStatusCode
 import com.cooper.binge.companion.seerr.seerr.SeerrMovieDetailsDto
@@ -20,6 +21,7 @@ import com.cooper.binge.companion.seerr.seerr.SeerrServerProfile
 import com.cooper.binge.companion.seerr.seerr.SeerrUserDto
 import com.cooper.binge.companion.seerr.seerr.SeerrVideoDto
 import com.cooper.binge.companion.seerr.seerr.SeerrWatchRegionDto
+import com.cooper.binge.companion.seerr.seerr.addToBlocklistOnce
 import com.cooper.binge.companion.seerr.seerr.certificationIn
 import com.cooper.binge.companion.seerr.seerr.toPermissions
 import com.cooper.binge.companion.seerr.seerr.toTmdbBackdropUrl
@@ -58,7 +60,7 @@ class SeerrTitleDetailsRepository(
             val profile = profile()
             val read = statuses.beginRead()
             val dto = api.movieFullDetails(tmdbId)
-            statuses.seed(TitleKey(TitleType.Movie, tmdbId), dto.mediaInfo.toTitleStatuses(), read)
+            statuses.seed(TitleKey(TitleType.Movie, tmdbId), dto.mediaInfo.toTitleStatuses().copy(onWatchlist = dto.onUserWatchlist), read)
             val region = streamingRegion(api, user, profile, deviceRegion())
             val permissions = user.toPermissions()
             dto
@@ -76,6 +78,7 @@ class SeerrTitleDetailsRepository(
                     keywordsOpen = profile.hasKeywordDiscover,
                     mayReport = profile.hasIssues && permissions.canReportIssues,
                     mayUnblock = profile.hasBlocklist && permissions.canManageBlocklist,
+                    mayBlock = profile.hasBlocklist && permissions.canManageBlocklist,
                     onWatchlist = dto.onUserWatchlist == true,
                     mayWatchlist = profile.hasWatchlistEdit,
                 )
@@ -87,10 +90,21 @@ class SeerrTitleDetailsRepository(
         tmdbId: Int,
         title: String,
         onList: Boolean,
-    ) = withContext(io) { setOnWatchlist(api(), tmdbId, title, "movie", onList) }
+    ) = withContext(io) {
+        statuses.watchlisting(TitleKey(TitleType.Movie, tmdbId), onList) { setOnWatchlist(api(), tmdbId, title, "movie", onList) }
+    }
 
     override suspend fun unblock(tmdbId: Int) =
         withContext(io) { statuses.unblocking(TitleKey(TitleType.Movie, tmdbId)) { api().unblockTitle(profile(), tmdbId, "movie") } }
+
+    override suspend fun block(
+        tmdbId: Int,
+        title: String,
+    ) = withContext(io) {
+        statuses.blocking(TitleKey(TitleType.Movie, tmdbId)) {
+            api().addToBlocklistOnce(profile().blocklistPath, SeerrAddToBlocklistBody(tmdbId, "movie", title, viewer().id))
+        }
+    }
 
     override suspend fun serverProfile(): SeerrServerProfile? = attempt { profile() }.getOrNull()
 
@@ -178,6 +192,7 @@ internal fun SeerrMovieDetailsDto.toMovieDetails(
         mediaId = mediaInfo?.id,
         watchUrl = mediaInfo?.watchLink(),
         webUrl = webUrl,
+        links = titleLinks("movie", id, externalIds?.imdbId, homepage),
         releaseDate = releaseDate?.takeIf { it.isNotBlank() },
         requests =
             mediaInfo
@@ -255,6 +270,16 @@ internal fun com.cooper.binge.companion.seerr.seerr.SeerrRequestSummaryDto.toTit
         requesterId = requestedBy?.id,
     )
 
+/** Shows the title on or off the watchlist at once, and puts it back if the server refuses. */
+internal suspend fun TitleStatusStore.watchlisting(
+    key: TitleKey,
+    onList: Boolean,
+    call: suspend () -> Unit,
+) {
+    val undo = applyOptimistic(key) { it.copy(onWatchlist = onList) }
+    attempt { call() }.onFailure { rollback(undo) }.getOrThrow()
+}
+
 /** Shows the title unblocked at once, and puts the block back if the server refuses. */
 internal suspend fun TitleStatusStore.unblocking(
     key: TitleKey,
@@ -262,6 +287,15 @@ internal suspend fun TitleStatusStore.unblocking(
 ) {
     val undo = applyOptimistic(key) { held -> held.copy(standard = held.standard.unlessBlocked(), fourK = held.fourK.unlessBlocked()) }
     attempt { unblock() }.onFailure { rollback(undo) }.getOrThrow()
+}
+
+/** Shows the title blocked at once, and takes the block back if the server refuses. */
+internal suspend fun TitleStatusStore.blocking(
+    key: TitleKey,
+    block: suspend () -> Unit,
+) {
+    val undo = applyOptimistic(key) { held -> held.copy(standard = SeerrMediaStatusCode.Blocklisted) }
+    attempt { block() }.onFailure { rollback(undo) }.getOrThrow()
 }
 
 private fun SeerrMediaStatusCode?.unlessBlocked(): SeerrMediaStatusCode? = takeUnless { it == SeerrMediaStatusCode.Blocklisted }

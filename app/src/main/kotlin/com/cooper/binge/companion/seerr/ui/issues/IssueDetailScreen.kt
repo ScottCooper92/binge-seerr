@@ -39,6 +39,7 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
+import com.binge.designsystem.component.BingeBarIconAction
 import com.binge.designsystem.component.BingeConfirmDialog
 import com.binge.designsystem.component.BingePullToRefresh
 import com.binge.designsystem.component.ListRowPoster
@@ -56,7 +57,6 @@ import com.binge.designsystem.template.formSaveStatus
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.discover.title.LocalOpenTitle
 import com.cooper.binge.companion.seerr.ui.requests.labelRes
-import com.cooper.binge.companion.seerr.ui.state.BarIconAction
 import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
 import com.cooper.binge.companion.seerr.ui.state.OverflowDetailScaffold
 import com.cooper.binge.companion.seerr.ui.state.RequestStateChip
@@ -141,7 +141,12 @@ fun IssueDetailScreen(
         // After the overflow button: a destructive action is the last on the bar.
         trailingActions = { glassBackgroundAlpha ->
             if (ready?.detail?.canDelete == true) {
-                BarIconAction(Icons.Filled.Delete, stringResource(R.string.issue_delete), glassBackgroundAlpha) { confirmingDelete = true }
+                BingeBarIconAction(
+                    Icons.Filled.Delete,
+                    stringResource(R.string.issue_delete),
+                    { confirmingDelete = true },
+                    glassBackgroundAlpha = glassBackgroundAlpha,
+                )
             }
         },
     ) { inner ->

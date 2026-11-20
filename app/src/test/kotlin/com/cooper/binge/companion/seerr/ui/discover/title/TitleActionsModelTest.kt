@@ -70,15 +70,27 @@ class TitleActionsModelTest {
     }
 
     @Test
-    fun `a held title with no request on file opens the sheet only if a version is still open`() {
-        assertEquals(PrimaryTap.RequestSheet, primary(held(TitleAvailability.Available), open).tap)
+    fun `a title not in the library with no request on file opens the request sheet only if a version is still open`() {
+        assertEquals(PrimaryTap.RequestSheet, primary(held(TitleAvailability.Pending), open).tap)
+        assertEquals(PrimaryTap.StatusSheet, primary(held(TitleAvailability.Pending)).tap)
+    }
+
+    @Test
+    fun `an available title with no request on file opens the status sheet, so Watch is reachable, whatever may still be requested`() {
+        assertEquals(PrimaryTap.StatusSheet, primary(held(TitleAvailability.Available), open).tap)
         assertEquals(PrimaryTap.StatusSheet, primary(held(TitleAvailability.Available)).tap)
     }
 
     @Test
-    fun `a partly available series that can still be requested opens the request sheet for the remaining seasons`() {
+    fun `an available title with a request on file opens that request's sheet, which holds Watch too`() {
+        assertEquals(PrimaryTap.ManageRequest(7), primary(held(TitleAvailability.Available), open, listOf(request(7))).tap)
+    }
+
+    @Test
+    fun `a partly available series that can still be requested opens the status sheet, or its request's sheet with one`() {
         val partly = VersionState(TitleAvailability.PartiallyAvailable, mayRequest = true)
-        assertEquals(PrimaryTap.RequestSheet, primary(partly, requests = listOf(request(7))).tap)
+        assertEquals(PrimaryTap.StatusSheet, primary(partly).tap)
+        assertEquals(PrimaryTap.ManageRequest(7), primary(partly, requests = listOf(request(7))).tap)
     }
 
     @Test
@@ -119,6 +131,95 @@ class TitleActionsModelTest {
     @Test
     fun `report is not offered where the server takes no issue from this viewer`() {
         assertFalse(titleActionsModel(held(TitleAvailability.Available), null, emptyList(), mayReport = false).canReport)
+    }
+
+    @Test
+    fun `block is offered only while nothing is held and the viewer manages the blocklist`() {
+        fun canBlock(
+            availability: TitleAvailability,
+            may: Boolean = true,
+            requests: List<TitleRequest> = emptyList(),
+        ) = titleActionsModel(held(availability), null, requests, mayReport = false, mayBlock = may).canBlock
+
+        assertTrue(canBlock(TitleAvailability.None))
+        assertFalse(canBlock(TitleAvailability.None, may = false))
+        assertFalse(canBlock(TitleAvailability.Pending))
+        assertFalse(canBlock(TitleAvailability.Processing))
+        assertFalse(canBlock(TitleAvailability.PartiallyAvailable))
+        assertFalse(canBlock(TitleAvailability.Available))
+        assertFalse(canBlock(TitleAvailability.Blocklisted))
+    }
+
+    @Test
+    fun `a declined standard request does not read Declined while the 4K version is held`() {
+        val declined = listOf(TitleRequest(id = 7, is4k = false, status = SeerrRequestStatusCode.Declined, requesterId = 1))
+        val open = VersionState(TitleAvailability.None, mayRequest = true)
+
+        assertEquals(
+            TitleState.Request,
+            titleActionsModel(open, held(TitleAvailability.Pending), declined, mayReport = false).primary.state,
+        )
+        assertEquals(
+            TitleState.Request,
+            titleActionsModel(open, held(TitleAvailability.Available), declined, mayReport = false).primary.state,
+        )
+    }
+
+    @Test
+    fun `block is not offered while the 4K version is held even if the standard one is open`() {
+        val open = VersionState(TitleAvailability.None, mayRequest = true)
+
+        assertFalse(titleActionsModel(open, held(TitleAvailability.Pending), emptyList(), mayReport = false, mayBlock = true).canBlock)
+        assertFalse(titleActionsModel(open, held(TitleAvailability.Available), emptyList(), mayReport = false, mayBlock = true).canBlock)
+        assertTrue(titleActionsModel(open, held(TitleAvailability.None), emptyList(), mayReport = false, mayBlock = true).canBlock)
+    }
+
+    @Test
+    fun `block is still offered when the only request on file was declined`() {
+        val declined = listOf(TitleRequest(id = 7, is4k = false, status = SeerrRequestStatusCode.Declined, requesterId = 1))
+        assertTrue(titleActionsModel(held(TitleAvailability.None), null, declined, mayReport = false, mayBlock = true).canBlock)
+    }
+
+    @Test
+    fun `a title whose every request was declined reads Declined and a viewer who may request can ask again`() {
+        val declined = listOf(TitleRequest(id = 7, is4k = false, status = SeerrRequestStatusCode.Declined, requesterId = 1))
+        val open = VersionState(TitleAvailability.None, mayRequest = true)
+
+        assertEquals(
+            TitlePrimary(TitleState.Declined, fourKOnly = false, tap = PrimaryTap.RequestSheet),
+            titleActionsModel(open, null, declined, mayReport = false).primary,
+        )
+    }
+
+    @Test
+    fun `a declined title the viewer may not request opens the status sheet`() {
+        val declined = listOf(TitleRequest(id = 7, is4k = false, status = SeerrRequestStatusCode.Declined, requesterId = 1))
+
+        assertEquals(
+            TitlePrimary(TitleState.Declined, fourKOnly = false, tap = PrimaryTap.StatusSheet),
+            titleActionsModel(held(TitleAvailability.None), null, declined, mayReport = false).primary,
+        )
+    }
+
+    @Test
+    fun `a declined request does not hide a later one that is open or a title that is held`() {
+        val declined = TitleRequest(id = 7, is4k = false, status = SeerrRequestStatusCode.Declined, requesterId = 1)
+        val pending = TitleRequest(id = 8, is4k = false, status = SeerrRequestStatusCode.Pending, requesterId = 1)
+
+        assertEquals(
+            TitleState.Request,
+            titleActionsModel(VersionState(TitleAvailability.None, true), null, listOf(declined, pending), mayReport = false).primary.state,
+        )
+        assertEquals(
+            TitleState.Available,
+            titleActionsModel(held(TitleAvailability.Available), null, listOf(declined), mayReport = false).primary.state,
+        )
+    }
+
+    @Test
+    fun `block is offered on a declined title`() {
+        val declined = listOf(TitleRequest(id = 7, is4k = false, status = SeerrRequestStatusCode.Declined, requesterId = 1))
+        assertTrue(titleActionsModel(held(TitleAvailability.None), null, declined, mayReport = false, mayBlock = true).canBlock)
     }
 
     @Test

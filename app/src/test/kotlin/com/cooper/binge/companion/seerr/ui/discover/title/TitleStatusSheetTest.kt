@@ -27,6 +27,10 @@ class TitleStatusSheetTest {
         onWatch: (String) -> Unit = {},
         onUnblock: (() -> Unit)? = null,
         onWatchInBinge: (() -> Unit)? = null,
+        fourKOpen: Boolean = false,
+        remainingOpen: Boolean = false,
+        onRequestFourK: () -> Unit = {},
+        onRequestRemaining: () -> Unit = {},
     ) = rule.setContent {
         SeerrTheme {
             TitleStatusSheetContent(
@@ -37,6 +41,10 @@ class TitleStatusSheetTest {
                 onWatch,
                 onWatchInBinge = onWatchInBinge,
                 onUnblock = onUnblock,
+                fourKOpen = fourKOpen,
+                remainingOpen = remainingOpen,
+                onRequestFourK = onRequestFourK,
+                onRequestRemaining = onRequestRemaining,
             )
         }
     }
@@ -69,6 +77,44 @@ class TitleStatusSheetTest {
         show(TitleState.Available)
 
         rule.onNodeWithText("Watch in Binge").assertDoesNotExist()
+    }
+
+    @Test
+    fun `an available title with 4K open offers Watch and Request in 4K, and the second opens the request`() {
+        var fourK = false
+        show(TitleState.Available, fourKOpen = true, onRequestFourK = { fourK = true })
+
+        rule.onNodeWithText("Watch on Plex").assertIsDisplayed()
+        rule.onNodeWithText("Request in 4K").assertIsDisplayed().performClick()
+
+        assertTrue(fourK)
+    }
+
+    @Test
+    fun `a partly available series with seasons left offers Watch and the remaining seasons`() {
+        var remaining = false
+        show(TitleState.PartiallyAvailable, remainingOpen = true, onRequestRemaining = { remaining = true })
+
+        rule.onNodeWithText("Watch on Plex").assertIsDisplayed()
+        rule.onNodeWithText("Request the remaining seasons").assertIsDisplayed().performClick()
+
+        assertTrue(remaining)
+    }
+
+    @Test
+    fun `a title with nothing more to request offers no request rows`() {
+        show(TitleState.Available)
+
+        rule.onNodeWithText("Request in 4K").assertDoesNotExist()
+        rule.onNodeWithText("Request the remaining seasons").assertDoesNotExist()
+    }
+
+    @Test
+    fun `a title not in the library offers no request rows even where 4K is open`() {
+        show(TitleState.Requested, fourKOpen = true, remainingOpen = true)
+
+        rule.onNodeWithText("Request in 4K").assertDoesNotExist()
+        rule.onNodeWithText("Request the remaining seasons").assertDoesNotExist()
     }
 
     @Test
@@ -130,6 +176,13 @@ class TitleStatusSheetTest {
         show(TitleState.Blocklisted)
 
         rule.onNodeWithText("This title is blocklisted, so it can't be requested.").assertIsDisplayed()
+    }
+
+    @Test
+    fun `a declined title says so`() {
+        show(TitleState.Declined, canRequest = false)
+
+        rule.onNodeWithText("A request for this title was declined. Ask an admin if you want it reconsidered.").assertIsDisplayed()
     }
 
     @Test

@@ -15,17 +15,13 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.paneTitle
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
-import coil3.SingletonImageLoader
-import coil3.request.ImageRequest
 import com.binge.designsystem.component.BackdropTile
 import com.binge.designsystem.component.BingePullToRefresh
 import com.binge.designsystem.component.CarouselSkeleton
@@ -88,7 +84,7 @@ fun DiscoverHubScreen(
     val title = stringResource(if (tab == HubTab.Movies) R.string.hubs_title_movies else R.string.hubs_title_tv)
     val hasHero = (state as? DiscoverHubUiState.Ready)?.hero?.isNotEmpty() == true
     val statusBar = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
-    val reservesHero = state is DiscoverHubUiState.Loading || (state as? DiscoverHubUiState.Ready)?.heroPlace == true
+    val reservesHero = (state as? DiscoverHubUiState.Loading)?.heroPlace == true || (state as? DiscoverHubUiState.Ready)?.heroPlace == true
     val inner = navOverlayPadding(if (reservesHero) PaddingValues() else PaddingValues(top = statusBar))
     // The scrolling states leave Binge's 16dp below their last row, and run under the rail, padding their own first column.
     val scrolling =
@@ -104,7 +100,7 @@ fun DiscoverHubScreen(
         )
     Box(modifier = Modifier.fillMaxSize().semantics { paneTitle = title }) {
         when (state) {
-            DiscoverHubUiState.Loading -> HubSkeleton(scrolling)
+            is DiscoverHubUiState.Loading -> HubSkeleton(state, scrolling)
             DiscoverHubUiState.Empty -> EmptyScreen(stringResource(R.string.hubs_empty_message), Modifier.padding(inner))
             is DiscoverHubUiState.Error -> ErrorScreen(state.error, Modifier.padding(inner), onRetry = onRefresh)
             is DiscoverHubUiState.Ready ->
@@ -120,17 +116,22 @@ fun DiscoverHubScreen(
 }
 
 @Composable
-private fun HubSkeleton(contentPadding: PaddingValues) {
+private fun HubSkeleton(
+    state: DiscoverHubUiState.Loading,
+    contentPadding: PaddingValues,
+) {
     val discoverTab = showDiscoverTab()
     LazyColumn(contentPadding = contentPadding) {
-        item {
-            HeroCarousel(
-                items = emptyList(),
-                onItemClick = {},
-                modifier = Modifier.layoutAnchor(LayoutAnchors.section(LayoutAnchors.Hub.HERO)),
-            )
+        if (state.heroPlace) {
+            item {
+                HeroCarousel(
+                    items = emptyList(),
+                    onItemClick = {},
+                    modifier = Modifier.layoutAnchor(LayoutAnchors.section(LayoutAnchors.Hub.HERO)),
+                )
+            }
         }
-        if (!discoverTab) item { BrowseAllSkeleton() }
+        if (state.browseAll && !discoverTab) item { BrowseAllSkeleton() }
         items(SKELETON_ROWS) { index ->
             CarouselSkeleton(modifier = Modifier.firstCarouselAnchor(index), description = stringResource(R.string.hubs_loading_row))
         }
@@ -280,7 +281,6 @@ private fun Hero(
     onOpenTitle: (HubCard) -> Unit,
 ) {
     val items = hero.toHeroItems()
-    PreloadBackdrops(items.mapNotNull { it.imageUrl })
     HeroCarousel(
         items = items,
         modifier = Modifier.layoutAnchor(LayoutAnchors.section(LayoutAnchors.Hub.HERO)),
@@ -309,16 +309,3 @@ private fun HubRow.title(tab: HubTab): String =
 /** The one status chip a title's availability shows, on a hub card and in a search row alike; nothing when the server holds nothing of it. */
 @Composable
 internal fun TitleAvailability.toStatus(): MediaCardStatus? = statusStyle()?.let { MediaCardStatus(stringResource(it.label), it.sentiment) }
-
-/**
- * Loads every slide's backdrop as the hero appears, so the first advance crossfades to an image already held rather than to the
- * placeholder while it downloads.
- */
-@Composable
-private fun PreloadBackdrops(urls: List<String>) {
-    val context = LocalContext.current
-    LaunchedEffect(urls) {
-        val loader = SingletonImageLoader.get(context)
-        urls.forEach { loader.enqueue(ImageRequest.Builder(context).data(it).build()) }
-    }
-}

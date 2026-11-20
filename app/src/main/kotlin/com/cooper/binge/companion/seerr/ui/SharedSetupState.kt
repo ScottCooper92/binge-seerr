@@ -5,6 +5,8 @@ import com.cooper.binge.companion.seerr.seerr.SeerrSignInMode
 import com.cooper.binge.companion.seerr.telemetry.AnalyticsEvents
 import com.cooper.homelab.core.presentation.connect.ConnectEvent
 import com.cooper.homelab.core.presentation.connect.ConnectState
+import com.cooper.homelab.core.presentation.connect.LinkState
+import com.cooper.homelab.core.presentation.connect.SignInMode
 import com.cooper.homelab.core.telemetry.Analytics
 import com.cooper.homelab.core.presentation.connect.SignInForm as ConnectForm
 
@@ -46,6 +48,7 @@ internal fun ConnectForm.toSetupForm(): SignInForm =
 internal fun ConnectState<SetupServer>.toSetupUiState(
     saved: SeerrCredentials?,
     app: SharedSetupApp,
+    link: LinkState? = null,
 ): SetupUiState =
     when (this) {
         ConnectState.Loading -> SetupUiState.Loading
@@ -68,7 +71,7 @@ internal fun ConnectState<SetupServer>.toSetupUiState(
                 server = server.preview,
                 form = form.toSetupForm(),
                 isConnecting = isConnecting || app.resetBusy,
-                link = null,
+                link = link?.toLinkFlow(form.mode),
                 error = error.toSetupError() ?: app.resetError ?: SetupError.HandOffSessionRejected.takeIf { app.handOffRejected },
                 notice = app.notice,
                 code = app.code,
@@ -96,7 +99,7 @@ internal fun ConnectEvent.report(analytics: Analytics) {
     )
 }
 
-/** What the screens call: the phone's, or the television's, which also offers the hand-off. Plex and Quick Connect do nothing here. */
+/** What the screens call: the phone's, or the television's, which also offers the hand-off and asks Plex for its short PIN. */
 internal fun SharedSetupViewModel.actions(
     tv: Boolean,
     onDisconnect: (() -> Unit)?,
@@ -107,9 +110,9 @@ internal fun SharedSetupViewModel.actions(
         onChangeServer = ::changeServer,
         onCheckAgain = ::inspect,
         onEditForm = ::editForm,
-        onConnect = ::connect,
-        onPlexLaunched = {},
-        onCancelLink = {},
+        onConnect = { connect(tv) },
+        onPlexLaunched = links::launched,
+        onCancelLink = links::cancel,
         onRequestPasswordReset = ::requestPasswordReset,
         onAllowCleartext = ::allowCleartext,
         onStartHandOff = { if (tv) showHandOff(true) },
@@ -119,3 +122,22 @@ internal fun SharedSetupViewModel.actions(
         onDisconnect = onDisconnect,
         onTryDemo = tryDemo,
     )
+
+/** The connect screen's input: the machine's step, and the notice and reset cooldown that sit beside it, with [received] for the address's error. */
+internal data class SeerrConnectUi(
+    val state: ConnectState<SetupServer>,
+    val notice: SetupNotice? = null,
+    val resetCoolingDown: Boolean = false,
+    val received: Boolean = false,
+    val resetBusy: Boolean = false,
+    val resetError: SetupError? = null,
+    val link: LinkState? = null,
+)
+
+/** The code waiting to be approved, as the screens that still read [LinkFlow] show it: Plex's carries the page to open. */
+internal fun LinkState.toLinkFlow(mode: SignInMode?): LinkFlow =
+    if ((mode as? SeerrMode)?.mode == SeerrSignInMode.Plex && openUrl != null) {
+        LinkFlow.Plex(code, openUrl.orEmpty(), launchPending)
+    } else {
+        LinkFlow.QuickConnect(code)
+    }

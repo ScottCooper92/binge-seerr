@@ -3,13 +3,18 @@ package com.cooper.binge.companion.seerr.ui.grid
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
+import com.cooper.binge.companion.seerr.discover.grid.DiscoverFilters
+import com.cooper.binge.companion.seerr.discover.grid.DiscoverSort
 import com.cooper.binge.companion.seerr.ui.DiscoverGridRoute
 import com.cooper.binge.companion.seerr.ui.NavMotionSpecs
 import com.cooper.binge.companion.seerr.ui.discover.title.LocalOpenTitle
@@ -42,14 +47,22 @@ internal fun DiscoverGridEntry(
     onOpenAccount: (Int) -> Unit,
     title: String? = route.title,
     reselectKey: Any? = null,
+    modelKey: String = route.toString(),
+    onQueryChanged: ((DiscoverFilters, DiscoverSort) -> Unit)? = null,
+    onKindSwitched: () -> Unit = {},
 ) {
     val tomorrow = remember { LocalDate.now().plusDays(1).toString() }
     val model =
         hiltViewModel<DiscoverGridViewModel, DiscoverGridViewModel.Factory>(
-            key = route.toString(),
+            key = modelKey,
             creationCallback = { it.create(route.kind, route.preset, route.title, tomorrow, route.filters, route.sort) },
         )
     val state by model.uiState.collectAsStateWithLifecycle()
+    val controls = state.controls
+    LaunchedEffect(controls.filters, controls.sort) {
+        val sort = controls.sort
+        if (sort != null) onQueryChanged?.invoke(controls.filters, sort)
+    }
     val openTitle by rememberUpdatedState(LocalOpenTitle.current)
     LaunchedEffect(model) {
         model.events.collect { event ->
@@ -77,9 +90,11 @@ internal fun DiscoverGridEntry(
                 onOpenTitle = model::onOpenTitle,
                 onApply = model::onApply,
                 onSwitchKind = { kind, sort, filters ->
+                    onKindSwitched()
                     backStack.replaceTop(route, route.carriedTo(kind, sort, filters))
                 },
                 loads = FilterLoads(model::onProvidersNeeded, model::onKeywordQuery, model::onKeywordsNeeded),
+                onResetFilters = model::onResetFilters,
             ),
     )
 }
@@ -87,6 +102,8 @@ internal fun DiscoverGridEntry(
 /**
  * The Discover tab: the grid at its root, as a tab of its own with no Back arrow. The tab's stack holds the one route, and the
  * Content choice in the filter sheet reopens it as the other kind in place, so the tab picks Movies or TV shows as Binge's does.
+ * The route is kept in step with the order and filters chosen, so a fold that takes the tab away and an unfold reopen it as left.
+ * The grid's ViewModel is keyed by how many times the kind was switched: a write-back keeps it, and every switch starts a fresh one.
  */
 @Composable
 internal fun DiscoverTabEntry(
@@ -94,6 +111,7 @@ internal fun DiscoverTabEntry(
     onOpenAccount: (Int) -> Unit,
 ) {
     val route = stack.lastOrNull() as? DiscoverGridRoute ?: return
+    var switches by rememberSaveable { mutableIntStateOf(0) }
     DiscoverGridEntry(
         route,
         onBack = null,
@@ -101,5 +119,10 @@ internal fun DiscoverTabEntry(
         onOpenAccount = onOpenAccount,
         title = null,
         reselectKey = SeerrTab.Discover,
+        modelKey = "discover-tab-$switches",
+        onKindSwitched = { switches++ },
+        onQueryChanged = { filters, sort ->
+            if (route.filters != filters || route.sort != sort) stack.replaceTop(route, route.copy(filters = filters, sort = sort))
+        },
     )
 }

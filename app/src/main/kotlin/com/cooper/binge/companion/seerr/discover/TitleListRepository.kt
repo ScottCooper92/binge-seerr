@@ -52,7 +52,10 @@ class SeerrTitleListRepository(
         val profile = profile()
         return withContext(io) {
             val read = statuses.beginRead()
-            api().fetch(source, page, profile).also { it.seedInto(statuses, read, source.defaultKind) }.toTitlePage(source.defaultKind)
+            api()
+                .fetch(source, page, profile)
+                .also { it.seedInto(statuses, read, source.defaultKind, onWatchlist = true.takeIf { source == TitleSource.Watchlist }) }
+                .toTitlePage(source.defaultKind)
         }
     }
 

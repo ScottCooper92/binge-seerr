@@ -21,13 +21,13 @@ import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.paging.PagingData
 import androidx.paging.compose.collectAsLazyPagingItems
+import com.binge.designsystem.component.BingeBarIconAction
 import com.binge.designsystem.component.BingeConfirmDialog
 import com.binge.designsystem.component.FilterChipItem
 import com.binge.designsystem.component.SnackbarMessageKind
 import com.binge.designsystem.component.showSnackbar
 import com.binge.designsystem.template.FilteredListScreen
 import com.cooper.binge.companion.seerr.R
-import com.cooper.binge.companion.seerr.ui.state.BarIconAction
 import com.cooper.binge.companion.seerr.ui.state.DialogMessage
 import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
 import com.cooper.binge.companion.seerr.ui.state.LoadingScreen
@@ -51,6 +51,8 @@ class RequestsActions(
      * so a row's sheet carries the same edit and media rows as the detail page's.
      */
     val detailSheet: @Composable (SiblingSheet) -> Unit,
+    /** A row's poster, tapped: the title's own page. Null where discovery is off, so the poster is no target and the row opens the request. */
+    val onOpenTitle: ((RequestItem) -> Unit)? = null,
 )
 
 /**
@@ -97,7 +99,12 @@ fun RequestsScreen(
         snackbarHostState = snackbarHostState,
         actions = { glassBackgroundAlpha ->
             if (ready != null) {
-                BarIconAction(Icons.Filled.SwapVert, stringResource(R.string.requests_sort_cd), glassBackgroundAlpha) { showSort = true }
+                BingeBarIconAction(
+                    Icons.Filled.SwapVert,
+                    stringResource(R.string.requests_sort_cd),
+                    { showSort = true },
+                    glassBackgroundAlpha = glassBackgroundAlpha,
+                )
             }
         },
         notReady = { padding ->
@@ -181,6 +188,7 @@ private fun RequestsPage(
         scope = state.scope,
         now = state.now,
         onOpen = actions.onOpen,
+        onOpenTitle = actions.onOpenTitle,
         onManage = onManage,
         onPull = actions.onRefreshCounts,
         modifier = Modifier.fillMaxSize(),
