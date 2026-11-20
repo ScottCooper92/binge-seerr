@@ -33,7 +33,7 @@ private fun choices(
         SeasonChoice(1, "Season 1", EPISODES, TitleAvailability.Available),
         SeasonChoice(2, "Season 2", EPISODES, TitleAvailability.Processing),
         SeasonChoice(3, "Season 3", EPISODES, TitleAvailability.Pending),
-        SeasonChoice(4, "Season 4", EPISODES, TitleAvailability.None),
+        SeasonChoice(4, if (longName) LONG_NAME else "Season 4", EPISODES, TitleAvailability.None),
     )
 } else {
     listOf(
