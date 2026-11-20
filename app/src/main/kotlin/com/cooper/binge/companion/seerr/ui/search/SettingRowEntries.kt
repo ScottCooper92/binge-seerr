@@ -16,6 +16,7 @@ import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.LiveTv
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.PlayCircle
 import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.Shield
@@ -180,6 +181,15 @@ internal val settingRowEntries: List<IndexEntry> =
                 R.string.server_settings_local_login,
                 Icons.AutoMirrored.Filled.Login,
                 SettingRows.USERS_LOCAL_LOGIN,
+                R.string.search_kw_sign_in,
+            ),
+        )
+        add(
+            setting(
+                ServerSettingsPage.Users,
+                R.string.server_settings_new_sign_ups,
+                Icons.Filled.PersonAdd,
+                SettingRows.USERS_NEW_SIGN_UPS,
                 R.string.search_kw_sign_in,
             ),
         )

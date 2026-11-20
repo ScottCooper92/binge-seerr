@@ -25,6 +25,7 @@ internal object SettingRows {
     const val NETWORK_CSRF = "network.csrf"
 
     const val USERS_LOCAL_LOGIN = "users.local-login"
+    const val USERS_NEW_SIGN_UPS = "users.new-sign-ups"
     const val USERS_DEFAULT_PERMISSIONS = "users.default-permissions"
 
     const val METADATA_TV = "metadata.tv"

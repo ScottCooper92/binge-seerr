@@ -120,7 +120,7 @@ private fun SignInGroup(
                     draft.newMediaServerLogin,
                     enabled,
                     detail = stringResource(R.string.server_settings_new_media_server_login_detail),
-                ) { on -> actions.onEdit { it.copy(newMediaServerLogin = on) } },
+                ) { on -> actions.onEdit { it.copy(newMediaServerLogin = on) } }.copy(key = SettingRows.USERS_NEW_SIGN_UPS),
             ),
         belowRows = if (draft.valid) null else ({ GroupMessage(required, error = true) }),
     )

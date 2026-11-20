@@ -1316,6 +1316,7 @@
     <string name="server_settings_local_login">Inicio de sesión local</string>
     <string name="server_settings_local_login_detail">Entrada con correo y contraseña</string>
     <string name="server_settings_media_server_login">Inicio de sesión con %1$s</string>
+    <string name="server_settings_new_sign_ups">Nuevos registros</string>
     <string name="server_settings_new_media_server_login">Nuevos usuarios de %1$s</string>
     <string name="server_settings_new_media_server_login_detail">Entran sin importarlos antes</string>
     <string name="server_settings_sign_in_required">Deja activada al menos una forma de iniciar sesión.</string>
