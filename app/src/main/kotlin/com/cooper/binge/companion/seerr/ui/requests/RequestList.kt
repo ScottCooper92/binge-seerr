@@ -50,6 +50,8 @@ import com.binge.designsystem.component.WrappingRow
 import com.binge.designsystem.downloadEtaLabel
 import com.binge.designsystem.formatRanges
 import com.binge.designsystem.formatRelativeOrAbsolute
+import com.binge.designsystem.layout.LayoutAnchors
+import com.binge.designsystem.layout.layoutAnchorIf
 import com.binge.designsystem.template.PagedPhase
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.state.EmptyScreen
@@ -153,6 +155,7 @@ private fun RequestList(
                 RequestRow(
                     item = item,
                     onClick = { onOpen(item) },
+                    modifier = Modifier.layoutAnchorIf(index == 0, LayoutAnchors.section(LayoutAnchors.Collection.FIRST_ITEM)),
                     onManage = { onManage(item) }.takeIf { item.actions(scope).any },
                     now = now,
                     onOpenTitle = onOpenTitle?.let { open -> { open(item) } },
