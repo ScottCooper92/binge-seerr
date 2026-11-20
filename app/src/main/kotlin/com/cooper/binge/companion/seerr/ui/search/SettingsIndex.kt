@@ -36,6 +36,7 @@ import com.cooper.binge.companion.seerr.ui.settings.server.ServerAgent
 import com.cooper.binge.companion.seerr.ui.settings.server.ServerSettingsPage
 import com.cooper.binge.companion.seerr.ui.settings.server.icon
 import com.cooper.binge.companion.seerr.ui.settings.server.labelRes
+import com.cooper.binge.companion.seerr.ui.settings.server.offeredAgents
 import com.cooper.binge.companion.seerr.ui.users.settings.UserSettingsPage
 import com.cooper.binge.companion.seerr.ui.users.settings.titleRes
 import com.cooper.homelab.core.uiandroid.R as CoreR
@@ -129,7 +130,7 @@ internal class IndexEntry(
     @param:StringRes val keywords: Int? = null,
     /** The page a setting is on, for its path in the results; null for an entry that is the page itself. */
     @param:StringRes val pageLabel: Int? = null,
-    /** The row to scroll to and wash on the page, by its [SettingRows] key; null opens the page at the top. */
+    /** The row to scroll to and wash on the page, by its [SettingRows] key or an agent option's; null opens the page at the top. */
     val row: String? = null,
     /** A gate of the entry's own, for a page the server has only on some versions or media servers; the target's own gate applies besides. */
     val shown: (SearchAccess) -> Boolean = { true },
@@ -206,6 +207,7 @@ private fun agent(agent: ServerAgent) =
         agent.icon(),
         R.string.settings_section_notifications,
         R.string.search_kw_agent,
+        shown = { access -> agent in access.profile.offeredAgents() },
     )
 
 /**
