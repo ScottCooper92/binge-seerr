@@ -4,6 +4,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -13,6 +15,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import com.binge.designsystem.component.BingeAdaptiveSheet
@@ -81,7 +85,15 @@ internal fun SetupLinkContent(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         if (link is LinkFlow.Plex) {
-            BingeFilledButton(label = stringResource(R.string.link_plex_open), onClick = onOpenPlex, modifier = Modifier.fillMaxWidth())
+            val open = stringResource(R.string.link_plex_open)
+            val description = stringResource(DesR.string.cd_link_chip_opens_outside, open)
+            // The page opens in the browser: the mark and the description say so (#2347).
+            BingeFilledButton(
+                label = open,
+                onClick = onOpenPlex,
+                leadingIcon = Icons.AutoMirrored.Filled.OpenInNew,
+                modifier = Modifier.fillMaxWidth().semantics { contentDescription = description },
+            )
         }
         BingeOutlinedButton(label = stringResource(R.string.link_cancel), onClick = onCancel, modifier = Modifier.fillMaxWidth())
     }
