@@ -10,6 +10,7 @@ import com.cooper.binge.companion.seerr.core.grid.SortFilterState
 import com.cooper.binge.companion.seerr.core.search.SearchPage
 import com.cooper.binge.companion.seerr.data.TitleStatusStore
 import com.cooper.binge.companion.seerr.discover.TitleKind
+import com.cooper.binge.companion.seerr.discover.TitleStatusMap
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverFilters
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverGridRepository
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverSort
@@ -28,6 +29,7 @@ import com.cooper.binge.companion.seerr.discover.overlaid
 import com.cooper.binge.companion.seerr.discover.sliders.HubCard
 import com.cooper.binge.companion.seerr.discover.sliders.HubMediaSource
 import com.cooper.binge.companion.seerr.discover.sliders.toCard
+import com.cooper.binge.companion.seerr.discover.withoutOffWatchlist
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
@@ -75,16 +77,18 @@ class DiscoverGridViewModel
 
         val uiState: StateFlow<DiscoverGridUiState> =
             combine(
-                list.state.combine(statuses.statuses) { page, held -> page.overlaid(held) },
+                list.state.combine(statuses.statuses) { page, held -> page.overlaid(held).onlyWhileOn(preset, held) },
                 sortFilter.query,
                 refinable,
                 loader.vocabulary,
-            ) { page, query, canRefine, words -> toUiState(page, controls(query, canRefine == true, words)) }
-                .stateIn(
-                    viewModelScope,
-                    SharingStarted.Lazily,
-                    DiscoverGridUiState.Loading(controls(sortFilter.query.value, false, FilterVocabulary())),
-                )
+            ) { page, query, canRefine, words ->
+                val controls = controls(query, canRefine == true, words)
+                toUiState(page, controls, emptyReason(preset, controls))
+            }.stateIn(
+                viewModelScope,
+                SharingStarted.Lazily,
+                DiscoverGridUiState.Loading(controls(sortFilter.query.value, false, FilterVocabulary())),
+            )
 
         init {
             viewModelScope.launch {
@@ -144,6 +148,9 @@ class DiscoverGridViewModel
         fun onClearGroup(group: FilterGroup) =
             sortFilter.updateFilters { if (it.keeps(starting)) it.clearedKeeping(group, starting) else it.cleared(group) }
 
+        /** Back to the filters the list opened with, dropping the ones the user added. */
+        fun onResetFilters() = sortFilter.updateFilters { starting }
+
         fun onRetry() = list.retry()
 
         fun onLoadMore() = list.loadMore()
@@ -168,19 +175,30 @@ class DiscoverGridViewModel
 internal fun toUiState(
     page: PagedListState<HubCard>,
     controls: GridControls,
+    emptyReason: GridEmptyReason = GridEmptyReason.Nothing,
 ): DiscoverGridUiState =
     when (page) {
         PagedListState.Loading -> DiscoverGridUiState.Loading(controls)
-        PagedListState.Empty -> DiscoverGridUiState.Empty(controls)
+        PagedListState.Empty -> DiscoverGridUiState.Empty(controls, emptyReason)
         is PagedListState.Failed -> DiscoverGridUiState.Error(controls, page.cause.toSeerrError())
         is PagedListState.Ready ->
-            DiscoverGridUiState.Ready(
-                controls,
-                page.items,
-                page.hasMore,
-                page.appending,
-                page.appendFailed,
-            )
+            // A watchlist loses the titles taken off it, so its last one leaving leaves a list with nothing and nothing more to load.
+            if (page.items.isEmpty() && !page.hasMore) {
+                DiscoverGridUiState.Empty(controls, emptyReason)
+            } else {
+                DiscoverGridUiState.Ready(controls, page.items, page.hasMore, page.appending, page.appendFailed)
+            }
+    }
+
+/** A watchlist's own emptiness, or filters the user added matching nothing, or the list being empty by itself. */
+private fun emptyReason(
+    preset: GridPreset,
+    controls: GridControls,
+): GridEmptyReason =
+    when {
+        controls.groups.isNotEmpty() -> GridEmptyReason.Filtered
+        preset == GridPreset.Watchlist || preset == GridPreset.OwnWatchlist -> GridEmptyReason.Watchlist
+        else -> GridEmptyReason.Nothing
     }
 
 private fun GridPreset.toChip(title: String?): ActiveFilterChip? =
@@ -193,3 +211,9 @@ private fun GridPreset.toChip(title: String?): ActiveFilterChip? =
         is GridPreset.Keyword -> ActiveFilterChip(ChipKind.Keyword, title)
         is GridPreset.Provider -> ActiveFilterChip(ChipKind.Provider, title)
     }
+
+/** A watchlist grid loses the titles taken off the list since it was read; every other grid keeps its cards. */
+private fun PagedListState<HubCard>.onlyWhileOn(
+    preset: GridPreset,
+    held: TitleStatusMap,
+): PagedListState<HubCard> = if (preset == GridPreset.Watchlist || preset == GridPreset.OwnWatchlist) withoutOffWatchlist(held) else this

@@ -1,5 +1,8 @@
 package com.cooper.binge.companion.seerr.discover.title
 
+import com.cooper.binge.companion.seerr.data.TitleKey
+import com.cooper.binge.companion.seerr.data.TitleStatusStore
+import com.cooper.binge.companion.seerr.data.TitleType
 import com.cooper.binge.companion.seerr.discover.TitleAvailability
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.collection.SeerrCollectionRepository
@@ -25,6 +28,7 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -62,7 +66,11 @@ class SeerrTitleDetailsRepositoryTest {
     private var userRegion = """{"streamingRegion":"US"}"""
     private var movieBody = MOVIE
     private val unblocks = mutableListOf<String>()
+    private val blocks = mutableListOf<String>()
+    private var blockCode = 201
     private val watchlistCalls = mutableListOf<String>()
+    private var watchlistFails = false
+    private val statuses = TitleStatusStore()
     private var ratingsAnswer = FakeResponse(headers = JSON, body = RATINGS)
 
     @After
@@ -76,9 +84,20 @@ class SeerrTitleDetailsRepositoryTest {
         return FakeResponse()
     }
 
+    private fun recordBlock(request: FakeRequest): FakeResponse {
+        blocks += "${request.method} ${request.url.encodedPath} ${request.body}"
+        return FakeResponse(code = blockCode)
+    }
+
     private fun recordWatchlist(request: FakeRequest): FakeResponse {
         watchlistCalls += "${request.method} ${request.url.encodedPath}?${request.url.encodedQuery} ${request.body}"
-        return FakeResponse(code = if (request.method == "POST") 201 else 204)
+        val code =
+            when {
+                watchlistFails -> 500
+                request.method == "POST" -> 201
+                else -> 204
+            }
+        return FakeResponse(code = code)
     }
 
     private fun route(request: FakeRequest): FakeResponse =
@@ -90,6 +109,7 @@ class SeerrTitleDetailsRepositoryTest {
             "/api/v1/collection/2344" -> FakeResponse(headers = JSON, body = COLLECTION)
             "/api/v1/user/9/settings/main" -> FakeResponse(headers = JSON, body = userRegion)
             "/api/v1/blocklist/603", "/api/v1/blacklist/603" -> recordUnblock(request)
+            "/api/v1/blocklist", "/api/v1/blacklist" -> recordBlock(request)
             "/api/v1/watchlist", "/api/v1/watchlist/603" -> recordWatchlist(request)
             else -> FakeResponse(code = 404)
         }
@@ -114,6 +134,7 @@ class SeerrTitleDetailsRepositoryTest {
                                 io = Dispatchers.Unconfined,
                             ),
                         io = Dispatchers.Unconfined,
+                        statuses = statuses,
                     ),
                 )
             }
@@ -296,6 +317,58 @@ class SeerrTitleDetailsRepositoryTest {
     }
 
     @Test
+    fun `the links are the ones the server named and TMDB's own page`() {
+        assertEquals(
+            listOf(TitleLink(TitleLinkKind.Tmdb, "https://www.themoviedb.org/movie/603")),
+            withRepository { it.movie(603) }.links,
+        )
+
+        movieBody = MOVIE.replaceFirst("{", """{"homepage":"https://matrix.example.org/","externalIds":{"imdbId":"tt0133093"},""")
+        assertEquals(
+            listOf(
+                TitleLink(TitleLinkKind.Imdb, "https://www.imdb.com/title/tt0133093"),
+                TitleLink(TitleLinkKind.Tmdb, "https://www.themoviedb.org/movie/603"),
+                TitleLink(TitleLinkKind.Website, "https://matrix.example.org/"),
+            ),
+            withRepository { it.movie(603) }.links,
+        )
+    }
+
+    @Test
+    fun `the right to block is the right to unblock`() {
+        assertTrue(withRepository { it.movie(603) }.mayBlock)
+
+        permissions = PERMISSION_REQUEST
+        assertFalse("no blocklist permission", withRepository { it.movie(603) }.mayBlock)
+
+        variant = SeerrVariant.Overseerr
+        version = SeerrVersion(1, 27, 0)
+        permissions = PERMISSION_MANAGE_BLOCKLIST
+        assertFalse("an Overseerr has no blocklist", withRepository { it.movie(603) }.mayBlock)
+    }
+
+    @Test
+    fun `blocking sends the film with the signed in user and reads an already blocked title as done`() {
+        withRepository { it.block(603, "The Matrix") }
+        assertEquals(1, blocks.size)
+        assertTrue(blocks.single().startsWith("POST /api/v1/blocklist "))
+        assertTrue(blocks.single().contains(""""tmdbId":603"""))
+        assertTrue(blocks.single().contains(""""mediaType":"movie""""))
+        assertTrue(blocks.single().contains(""""title":"The Matrix""""))
+
+        blockCode = 412
+        withRepository { it.block(603, "The Matrix") }
+        assertEquals(2, blocks.size)
+    }
+
+    @Test
+    fun `blocking a title the server refuses throws`() {
+        blockCode = 403
+        val failure = runCatching { withRepository { it.block(603, "The Matrix") } }.exceptionOrNull()
+        assertTrue(failure is retrofit2.HttpException)
+    }
+
+    @Test
     fun `unblocking names the movie on a server that needs the media type and omits it on one that refuses it`() {
         withRepository { it.unblock(603) }
         assertEquals(listOf("DELETE /api/v1/blocklist/603?mediaType=movie"), unblocks)
@@ -342,6 +415,27 @@ class SeerrTitleDetailsRepositoryTest {
             ),
             watchlistCalls,
         )
+    }
+
+    @Test
+    fun `a title put on the watchlist shows on it in the store at once`() {
+        withRepository { it.setWatchlist(603, "The Matrix", onList = true) }
+
+        assertEquals(true, statuses.current(TitleKey(TitleType.Movie, 603))?.onWatchlist)
+
+        withRepository { it.setWatchlist(603, "The Matrix", onList = false) }
+
+        assertEquals(false, statuses.current(TitleKey(TitleType.Movie, 603))?.onWatchlist)
+    }
+
+    @Test
+    fun `a watchlist call the server refuses leaves the store as it was`() {
+        withRepository { it.setWatchlist(603, "The Matrix", onList = true) }
+        watchlistFails = true
+
+        assertThrows(Exception::class.java) { withRepository { it.setWatchlist(603, "The Matrix", onList = false) } }
+
+        assertEquals(true, statuses.current(TitleKey(TitleType.Movie, 603))?.onWatchlist)
     }
 
     @Test

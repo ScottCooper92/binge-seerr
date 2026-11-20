@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.ReportProblem
@@ -27,7 +28,7 @@ import com.binge.designsystem.R as DesR
 
 /**
  * The actions under the stats: the primary, there in every state and saying where the title stands, then a round
- * Trailer button, a Watchlist button where the server has one and, once the title is in the library, a Report button, each carrying a label. Share is in the page's bar only. [onTrailer] is null where the server lists no trailer, and the
+ * Trailer button, a Watchlist button where the server has one, a Report button once the title is in the library and a Block button while nothing is held, each carrying a label. Share is in the page's bar only. [onTrailer] is null where the server lists no trailer, and the
  * button is not drawn.
  */
 @Composable
@@ -38,9 +39,11 @@ internal fun TitleActions(
     onReport: (() -> Unit)?,
     modifier: Modifier = Modifier,
     watchlist: WatchlistButton? = null,
+    onBlock: (() -> Unit)? = null,
 ) {
     val report = onReport?.takeIf { model.canReport }
-    val roundButtons = listOfNotNull(onTrailer, watchlist, report).size
+    val block = onBlock?.takeIf { model.canBlock }
+    val roundButtons = listOfNotNull(onTrailer, watchlist, report, block).size
     val gap = dimensionResource(DesR.dimen.padding_m)
     val edge = modifier.fillMaxWidth().padding(horizontal = gap)
     if (roundButtons >= STACK_FROM && !isExpandedLayout()) {
@@ -51,13 +54,13 @@ internal fun TitleActions(
                 horizontalArrangement = Arrangement.spacedBy(gap, Alignment.CenterHorizontally),
                 verticalAlignment = Alignment.Top,
             ) {
-                RoundButtons(onTrailer, watchlist, report)
+                RoundButtons(onTrailer, watchlist, report, block)
             }
         }
     } else {
         Row(modifier = edge, horizontalArrangement = Arrangement.spacedBy(gap), verticalAlignment = Alignment.Top) {
             PrimaryAction(model.primary, onPrimary, Modifier.weight(1f))
-            RoundButtons(onTrailer, watchlist, report)
+            RoundButtons(onTrailer, watchlist, report, block)
         }
     }
 }
@@ -70,6 +73,7 @@ private fun RoundButtons(
     onTrailer: (() -> Unit)?,
     watchlist: WatchlistButton?,
     onReport: (() -> Unit)?,
+    onBlock: (() -> Unit)?,
 ) {
     onTrailer?.let { trailer ->
         val label = stringResource(R.string.title_page_action_trailer)
@@ -82,6 +86,7 @@ private fun RoundButtons(
     }
     watchlist?.let { WatchlistActionButton(it) }
     onReport?.let { LabelledIconButton(Icons.Filled.ReportProblem, stringResource(R.string.title_page_action_report), it) }
+    onBlock?.let { LabelledIconButton(Icons.Filled.Block, stringResource(R.string.title_page_action_block), it) }
 }
 
 /** The watchlist button's state: [onList] is whether the title is on the user's watchlist, and [onToggle] flips it. Null where the server has no watchlist. */
@@ -127,6 +132,14 @@ private fun PrimaryAction(
 @StringRes
 private fun TitlePrimary.label() = if (state == TitleState.Request && fourKOnly) R.string.title_page_request_4k else state.labelRes()
 
-private fun TitleState.sentiment() = toAvailability().statusStyle()?.sentiment ?: BingeSentiment.Neutral
+private fun TitleState.sentiment() =
+    when (this) {
+        TitleState.Declined -> BingeSentiment.Negative
+        else -> toAvailability().statusStyle()?.sentiment ?: BingeSentiment.Neutral
+    }
 
-internal fun TitleState.labelRes() = toAvailability().statusStyle()?.label ?: R.string.title_page_request
+internal fun TitleState.labelRes() =
+    when (this) {
+        TitleState.Declined -> R.string.request_state_declined
+        else -> toAvailability().statusStyle()?.label ?: R.string.title_page_request
+    }

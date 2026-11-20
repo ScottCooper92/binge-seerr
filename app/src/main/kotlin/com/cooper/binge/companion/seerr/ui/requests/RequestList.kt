@@ -1,6 +1,8 @@
 package com.cooper.binge.companion.seerr.ui.requests
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -27,9 +29,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.itemKey
@@ -76,6 +82,7 @@ internal fun RequestsBody(
     onManage: (RequestItem) -> Unit,
     /** A pull, beside the list's own refresh: what else on the page it refreshes. */
     onPull: () -> Unit,
+    onOpenTitle: ((RequestItem) -> Unit)? = null,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
     pullState: PullToRefreshState? = null,
@@ -98,10 +105,10 @@ internal fun RequestsBody(
                     // The failed line is pinned below the top bar and the header; the rows start below it while it shows.
                     Column(Modifier.fillMaxSize().padding(top = contentPadding.calculateTopPadding())) {
                         RefreshFailedLine(R.string.requests_refresh_failed, onRetry = lazyItems::retry)
-                        RequestList(lazyItems, scope, now, onOpen, onManage, contentPadding.belowPinnedLine())
+                        RequestList(lazyItems, scope, now, onOpen, onManage, contentPadding.belowPinnedLine(), onOpenTitle)
                     }
                 } else {
-                    RequestList(lazyItems, scope, now, onOpen, onManage, contentPadding)
+                    RequestList(lazyItems, scope, now, onOpen, onManage, contentPadding, onOpenTitle)
                 }
             PagedPhase.Skeleton ->
                 ListRowSkeletonColumn(
@@ -134,6 +141,7 @@ private fun RequestList(
     onOpen: (RequestItem) -> Unit,
     onManage: (RequestItem) -> Unit,
     contentPadding: PaddingValues,
+    onOpenTitle: ((RequestItem) -> Unit)? = null,
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -147,6 +155,7 @@ private fun RequestList(
                     onClick = { onOpen(item) },
                     onManage = { onManage(item) }.takeIf { item.actions(scope).any },
                     now = now,
+                    onOpenTitle = onOpenTitle?.let { open -> { open(item) } },
                 )
             }
         }
@@ -164,6 +173,7 @@ internal fun RequestRow(
     modifier: Modifier = Modifier,
     onManage: (() -> Unit)? = null,
     now: Long = System.currentTimeMillis(),
+    onOpenTitle: (() -> Unit)? = null,
 ) {
     // Only a transferring grab earns a bar; a queued one stops at its chip.
     val download = item.download?.takeIf { it.downloading }
@@ -171,7 +181,7 @@ internal fun RequestRow(
         modifier = modifier,
         onClick = onClick,
         verticalAlignment = Alignment.CenterVertically,
-        leading = { ListRowPoster(imageUrl = item.posterUrl, contentDescription = null) },
+        leading = { RequestPoster(item, onOpenTitle) },
         trailingContent =
             onManage?.let {
                 {
@@ -182,6 +192,31 @@ internal fun RequestRow(
             },
         footer = download?.let { { DownloadFooter(it) } },
     ) { contentModifier -> RequestRowMeta(item, now, contentModifier) }
+}
+
+/**
+ * The row's poster. With [onOpenTitle] it is its own tap target, labelled for TalkBack, and opens the title's page; the rest of
+ * the row still opens the request. Without it the poster is plain and a tap on it opens the request with the row.
+ */
+@Composable
+private fun RequestPoster(
+    item: RequestItem,
+    onOpenTitle: (() -> Unit)?,
+) {
+    if (onOpenTitle == null) {
+        ListRowPoster(imageUrl = item.posterUrl, contentDescription = null)
+        return
+    }
+    val label = stringResource(R.string.request_open_title_cd, item.title ?: stringResource(item.mediaType.labelRes()))
+    Box(
+        modifier =
+            Modifier
+                .clip(MaterialTheme.shapes.small)
+                .clickable(onClickLabel = label, role = Role.Button, onClick = onOpenTitle)
+                .semantics { contentDescription = label },
+    ) {
+        ListRowPoster(imageUrl = item.posterUrl, contentDescription = null)
+    }
 }
 
 @Composable

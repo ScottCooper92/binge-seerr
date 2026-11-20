@@ -14,15 +14,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
+import com.binge.designsystem.template.MediaHeroDetailPage
+import com.binge.designsystem.template.MediaWideHeader
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.ui.discover.request.RequestSheet
 import com.cooper.binge.companion.seerr.ui.discover.request.RequestSheetTarget
 import com.cooper.binge.companion.seerr.ui.discover.request.messageRes
 import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
-import com.cooper.binge.companion.seerr.ui.state.MediaHeroDetailPage
 import com.cooper.binge.companion.seerr.ui.state.MediaHeroDetailPlaceholder
-import com.cooper.binge.companion.seerr.ui.state.WideHeader
 import com.cooper.binge.companion.seerr.ui.state.messageRes
 import kotlinx.coroutines.flow.Flow
 import com.binge.designsystem.R as DesR
@@ -59,6 +59,8 @@ private fun ReadySeriesPage(
         events.collect { event ->
             when (event) {
                 is SeriesPageEvent.Requested -> snackbar.showSnackbar(resources.getString(event.result.messageRes()))
+                SeriesPageEvent.Blocked -> snackbar.showSnackbar(resources.getString(R.string.request_title_blocked))
+                is SeriesPageEvent.BlockFailed -> snackbar.showSnackbar(resources.getString(event.error.messageRes()))
                 SeriesPageEvent.Unblocked -> snackbar.showSnackbar(resources.getString(R.string.blocklist_removed))
                 is SeriesPageEvent.WatchlistFailed -> snackbar.showSnackbar(resources.getString(event.error.messageRes()))
                 is SeriesPageEvent.UnblockFailed -> snackbar.showSnackbar(resources.getString(event.error.messageRes()))
@@ -83,7 +85,7 @@ private fun ReadySeriesPage(
         genres = series.genres,
         tagline = series.tagline,
         externalScores = state.extras?.ratings.toExternalScores(context.resources, LocalConfiguration.current.locales[0]),
-        wideHeader = WideHeader(series.posterUrl, series.overview, series.titleStats(LocalConfiguration.current.locales[0])),
+        wideHeader = MediaWideHeader(series.posterUrl, series.overview, series.titleStats(LocalConfiguration.current.locales[0])),
         onBack = actions.onBack,
         modifier = modifier,
         snackbarHostState = snackbar,
@@ -125,11 +127,16 @@ private fun ReadySeriesPage(
             canRequest = state.series.canRequest,
             onWatch = actions.onOpenUrl,
             onWatchInBinge = actions.onWatchInBinge,
+            fourKOpen = state.series.fourK?.mayRequest == true,
+            remainingOpen = state.series.standard.mayRequest,
+            onRequestFourK = actions.onRequestFourK,
+            onRequestRemaining = actions.onRequestRemaining,
             onDismiss = actions.onCloseStatus,
             onUnblock = actions.onUnblock.takeIf { state.series.mayUnblock },
         )
     }
     if (state.reportSheetOpen) actions.reportSheet(actions.onCloseReport)
+    if (state.blockConfirmOpen) actions.block?.let { TitleBlockConfirm(state.series.name, it) }
     state.manageRequestId?.let { requestId ->
         TitleManageSheet(requestId, state.manageSheetOpen, snackbar, series.sheetFacts(), actions)
     }

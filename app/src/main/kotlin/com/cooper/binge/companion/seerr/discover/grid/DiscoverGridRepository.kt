@@ -56,7 +56,7 @@ class SeerrDiscoverGridRepository(
     private val io: CoroutineDispatcher,
     private val statuses: TitleStatusStore = TitleStatusStore(),
 ) : DiscoverGridRepository {
-    override suspend fun canRefine(preset: GridPreset): Boolean = preset.isFilterable && profile().hasDiscoverFilters
+    override suspend fun canRefine(preset: GridPreset): Boolean = preset.refinableOn(profile())
 
     override suspend fun genres(kind: TitleKind): List<FilterOption> =
         titles.genreNames(kind).filterValues { it.isNotBlank() }.map { (id, name) -> FilterOption(id.toString(), name) }

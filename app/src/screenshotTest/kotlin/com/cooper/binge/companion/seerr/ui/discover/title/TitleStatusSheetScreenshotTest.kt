@@ -3,6 +3,8 @@ package com.cooper.binge.companion.seerr.ui.discover.title
 import androidx.compose.runtime.Composable
 import com.android.tools.screenshot.PreviewTest
 import com.cooper.binge.companion.seerr.preview.SeerrComponentPreviews
+import com.cooper.binge.companion.seerr.preview.SeerrFontScale13ComponentPreviews
+import com.cooper.binge.companion.seerr.preview.SeerrSpanishPreviews
 import com.cooper.binge.companion.seerr.preview.SheetFrame
 
 /** The sheet behind a primary with no request to manage. Modal windows do not capture, so each frame renders its content on the sheet's colour. */
@@ -20,6 +22,69 @@ class TitleStatusSheetScreenshotTest {
     fun watchInBinge() =
         SheetFrame {
             TitleStatusSheetContent(TitleState.Available, "https://plex.example/watch", "Plex", true, {}, onWatchInBinge = {})
+        }
+
+    /** Available with 4K still open: Watch, and Request in 4K below it. */
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun watchAndRequestIn4k() =
+        SheetFrame {
+            TitleStatusSheetContent(TitleState.Available, "https://plex.example/watch", "Plex", true, {}, fourKOpen = true)
+        }
+
+    /** Partly available with seasons left: Watch, the remaining seasons, and Request in 4K, with Binge first. */
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun partlyAvailableAllRows() =
+        SheetFrame {
+            TitleStatusSheetContent(
+                TitleState.PartiallyAvailable,
+                "https://plex.example/watch",
+                "Plex",
+                true,
+                {},
+                onWatchInBinge = {},
+                fourKOpen = true,
+                remainingOpen = true,
+            )
+        }
+
+    /** The same rows in Spanish, whose labels run longer. */
+    @PreviewTest
+    @SeerrSpanishPreviews
+    @Composable
+    fun partlyAvailableAllRowsSpanish() =
+        SheetFrame {
+            TitleStatusSheetContent(
+                TitleState.PartiallyAvailable,
+                "https://plex.example/watch",
+                "Plex",
+                true,
+                {},
+                onWatchInBinge = {},
+                fourKOpen = true,
+                remainingOpen = true,
+            )
+        }
+
+    /** The same rows at 1.3x font. */
+    @PreviewTest
+    @SeerrFontScale13ComponentPreviews
+    @Composable
+    fun partlyAvailableAllRowsLargeFonts() =
+        SheetFrame {
+            TitleStatusSheetContent(
+                TitleState.PartiallyAvailable,
+                "https://plex.example/watch",
+                "Plex",
+                true,
+                {},
+                onWatchInBinge = {},
+                fourKOpen = true,
+                remainingOpen = true,
+            )
         }
 
     /** In the library with no link to give: the status and a line saying so. */
@@ -45,6 +110,24 @@ class TitleStatusSheetScreenshotTest {
     @SeerrComponentPreviews
     @Composable
     fun nothingToRequest() = SheetFrame { TitleStatusSheetContent(TitleState.Request, null, null, true, {}) }
+
+    /** Every request was declined and this viewer may not ask again: the status and a line saying so. */
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun declined() = SheetFrame { TitleStatusSheetContent(TitleState.Declined, null, null, false, {}) }
+
+    /** The same in Spanish. */
+    @PreviewTest
+    @SeerrSpanishPreviews
+    @Composable
+    fun declinedSpanish() = SheetFrame { TitleStatusSheetContent(TitleState.Declined, null, null, false, {}) }
+
+    /** The same at font scale 1.3: the line wraps and nothing is cut off. */
+    @PreviewTest
+    @SeerrFontScale13ComponentPreviews
+    @Composable
+    fun declinedLargeFonts() = SheetFrame { TitleStatusSheetContent(TitleState.Declined, null, null, false, {}) }
 
     /** A viewer whose account may not request. */
     @PreviewTest

@@ -37,6 +37,11 @@ private class FakeEpisodes(
 
     override suspend fun unblock(tmdbId: Int) = error("not used here")
 
+    override suspend fun block(
+        tmdbId: Int,
+        title: String,
+    ) = error("not used here")
+
     override suspend fun setWatchlist(
         tmdbId: Int,
         title: String,

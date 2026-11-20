@@ -90,6 +90,8 @@ private class FakeSeries(
     val seasonReads = mutableListOf<Int>()
     var failUnblock: Throwable? = null
     val unblocked = mutableListOf<Int>()
+    var failBlock: Throwable? = null
+    val blocked = mutableListOf<Pair<Int, String>>()
     var failWatchlist: Throwable? = null
     val watchlistCalls = mutableListOf<Triple<Int, String, Boolean>>()
 
@@ -103,6 +105,14 @@ private class FakeSeries(
     }
 
     override suspend fun serverProfile() = null
+
+    override suspend fun block(
+        tmdbId: Int,
+        title: String,
+    ) {
+        failBlock?.let { throw it }
+        blocked += tmdbId to title
+    }
 
     override suspend fun unblock(tmdbId: Int) {
         failUnblock?.let { throw it }
@@ -211,7 +221,7 @@ class SeriesPageViewModelTest {
         val vm = SeriesPageViewModel(FakeSeries(series = held), 1399)
         vm.onPrimary()
 
-        vm.requestFourKFromManage()
+        vm.requestFromSheet(true)
 
         assertFalse(vm.ready().manageSheetOpen)
         assertTrue(vm.ready().requestSheetOpen)
@@ -230,9 +240,26 @@ class SeriesPageViewModelTest {
         vm.onPrimary()
         assertFalse(vm.ready().requestSheetFourK)
 
-        vm.requestFourKFromManage()
+        vm.requestFromSheet(true)
 
         assertTrue(vm.ready().requestSheetFourK)
+    }
+
+    @Test
+    fun `a partly available series with seasons left opens the status sheet, and its remaining seasons open the request sheet`() {
+        val partly = seriesFixture(standard = VersionState(TitleAvailability.PartiallyAvailable, mayRequest = true))
+        val vm = SeriesPageViewModel(FakeSeries(series = partly), 1399)
+
+        vm.onPrimary()
+
+        assertTrue(vm.ready().statusSheetOpen)
+        assertFalse(vm.ready().requestSheetOpen)
+
+        vm.requestFromSheet(false)
+
+        assertFalse(vm.ready().statusSheetOpen)
+        assertTrue(vm.ready().requestSheetOpen)
+        assertFalse(vm.ready().requestSheetFourK)
     }
 
     @Test
@@ -246,11 +273,71 @@ class SeriesPageViewModelTest {
             repo.series = seriesFixture()
 
             val event = awaitEvent(vm.events)
-            vm.unblock()
+            vm.blocklist(BlocklistStep.Unblock)
 
             assertEquals(SeriesPageEvent.Unblocked, event.await())
             assertEquals(listOf(1399), repo.unblocked)
             assertFalse(vm.ready().statusSheetOpen)
+            assertEquals(
+                TitleAvailability.None,
+                vm
+                    .ready()
+                    .series.standard.availability,
+            )
+        }
+
+    @Test
+    fun `blocking asks first then blocks reads the show again and says so`() =
+        runTest {
+            val repo = FakeSeries()
+            repo.series = seriesFixture().copy(mayBlock = true)
+            val analytics = RecordingAnalytics()
+            val vm = SeriesPageViewModel(repo, 1399, analytics)
+            vm.blocklist(BlocklistStep.Ask)
+            assertTrue(vm.ready().blockConfirmOpen)
+            repo.series = seriesFixture(standard = VersionState(TitleAvailability.Blocklisted, mayRequest = false))
+
+            val event = awaitEvent(vm.events)
+            vm.blocklist(BlocklistStep.Block)
+
+            assertEquals(SeriesPageEvent.Blocked, event.await())
+            assertEquals(listOf(1399 to vm.ready().series.name), repo.blocked)
+            assertFalse(vm.ready().blockConfirmOpen)
+            assertEquals(
+                TitleAvailability.Blocklisted,
+                vm
+                    .ready()
+                    .series.standard.availability,
+            )
+            assertEquals(
+                listOf(AnalyticsEvents.BLOCKLIST_CHANGED to mapOf<String, Any>(AnalyticsEvents.PARAM_ACTION to "series_blocked")),
+                analytics.events,
+            )
+        }
+
+    @Test
+    fun `a viewer who may not block a show never reaches the server`() {
+        val repo = FakeSeries()
+        repo.series = seriesFixture()
+        val vm = SeriesPageViewModel(repo, 1399)
+
+        vm.blocklist(BlocklistStep.Block)
+
+        assertTrue(repo.blocked.isEmpty())
+    }
+
+    @Test
+    fun `a refused block of a show says so and leaves it as it was`() =
+        runTest {
+            val repo = FakeSeries()
+            repo.series = seriesFixture().copy(mayBlock = true)
+            repo.failBlock = IOException("down")
+            val vm = SeriesPageViewModel(repo, 1399)
+
+            val event = awaitEvent(vm.events)
+            vm.blocklist(BlocklistStep.Block)
+
+            assertTrue(event.await() is SeriesPageEvent.BlockFailed)
             assertEquals(
                 TitleAvailability.None,
                 vm
@@ -268,7 +355,7 @@ class SeriesPageViewModelTest {
             val vm = SeriesPageViewModel(repo, 1399, analytics)
             val event = awaitEvent(vm.events)
 
-            vm.unblock()
+            vm.blocklist(BlocklistStep.Unblock)
             event.await()
 
             assertEquals(
@@ -287,7 +374,7 @@ class SeriesPageViewModelTest {
             val vm = SeriesPageViewModel(repo, 1399, analytics)
             val event = awaitEvent(vm.events)
 
-            vm.unblock()
+            vm.blocklist(BlocklistStep.Unblock)
             event.await()
 
             assertEquals("unblock_title", analytics.events.single().second[AnalyticsEvents.PARAM_OPERATION])
@@ -303,7 +390,7 @@ class SeriesPageViewModelTest {
             val vm = SeriesPageViewModel(repo, 1399, analytics)
             val event = awaitEvent(vm.events)
 
-            vm.unblock()
+            vm.blocklist(BlocklistStep.Unblock)
             event.await()
 
             assertTrue(analytics.events.isEmpty())
@@ -315,7 +402,7 @@ class SeriesPageViewModelTest {
         repo.series = seriesFixture(standard = VersionState(TitleAvailability.Blocklisted, mayRequest = false))
         val vm = SeriesPageViewModel(repo, 1399)
 
-        vm.unblock()
+        vm.blocklist(BlocklistStep.Unblock)
 
         assertTrue(repo.unblocked.isEmpty())
     }
@@ -329,7 +416,7 @@ class SeriesPageViewModelTest {
             val vm = SeriesPageViewModel(repo, 1399)
 
             val event = awaitEvent(vm.events)
-            vm.unblock()
+            vm.blocklist(BlocklistStep.Unblock)
 
             assertTrue(event.await() is SeriesPageEvent.UnblockFailed)
             assertEquals(

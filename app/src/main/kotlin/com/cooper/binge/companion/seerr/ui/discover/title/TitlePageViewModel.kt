@@ -11,8 +11,6 @@ import com.cooper.binge.companion.seerr.discover.title.TitleDetailsRepository
 import com.cooper.binge.companion.seerr.discover.title.TitleExtras
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
-import com.cooper.binge.companion.seerr.telemetry.AnalyticsEvents
-import com.cooper.binge.companion.seerr.telemetry.operationFailed
 import com.cooper.homelab.core.telemetry.Analytics
 import com.cooper.homelab.core.telemetry.NoOpAnalytics
 import dagger.assisted.Assisted
@@ -49,6 +47,8 @@ sealed interface TitlePageUiState {
         val reportSheetOpen: Boolean = false,
         /** A watchlist call is in flight, so another tap is ignored. */
         val watchlistBusy: Boolean = false,
+        /** The confirm for Block is up. */
+        val blockConfirmOpen: Boolean = false,
         val collectionParts: List<TitleResult> = emptyList(),
     ) : TitlePageUiState {
         /** The Request button shows while either version can still be asked for. */
@@ -70,6 +70,14 @@ sealed interface TitlePageEvent {
 
     /** The title came off the blocklist, for the screen's snackbar; the page reads it again. */
     data object Unblocked : TitlePageEvent
+
+    /** The title was blocked, for the screen's snackbar; the page reads it again. */
+    data object Blocked : TitlePageEvent
+
+    /** The server refused or could not be reached, so the title is not blocked. */
+    data class BlockFailed(
+        val error: SeerrError,
+    ) : TitlePageEvent
 
     /** The watchlist call failed, so the button is back where it was; the screen says so. */
     data class WatchlistFailed(
@@ -164,28 +172,50 @@ class TitlePageViewModel
             }
         }
 
-        /** Takes the title off the blocklist from the status sheet: the sheet closes, the page reads the title again, and a snackbar says so. */
-        fun unblock() {
-            val ready = state.value as? TitlePageUiState.Ready ?: return
-            if (!ready.movie.mayUnblock) return
-            closeSheet(TitleSheet.Status)
-            viewModelScope.launch {
-                attempt { repository.unblock(tmdbId) }.fold(
-                    onSuccess = {
-                        analytics.event(AnalyticsEvents.BLOCKLIST_CHANGED, mapOf(AnalyticsEvents.PARAM_ACTION to "movie_unblocked"))
-                        eventFlow.tryEmit(TitlePageEvent.Unblocked)
-                        reload()
-                    },
-                    onFailure = {
-                        analytics.operationFailed("unblock_title", it, repository.serverProfile())
-                        eventFlow.tryEmit(TitlePageEvent.UnblockFailed(it.toSeerrError()))
-                    },
-                )
+        /** Where the blocklist stands for this title: the confirm opens and closes, and a block or an unblock is sent. */
+        fun blocklist(step: BlocklistStep) {
+            when (step) {
+                BlocklistStep.Ask -> updateReady { it.copy(blockConfirmOpen = true) }
+                BlocklistStep.Cancel -> updateReady { it.copy(blockConfirmOpen = false) }
+                BlocklistStep.Block -> {
+                    val ready = state.value as? TitlePageUiState.Ready ?: return
+                    if (!ready.movie.mayBlock) return
+                    updateReady { it.copy(blockConfirmOpen = false) }
+                    viewModelScope.sendBlocklistChange(
+                        analytics,
+                        "movie_blocked",
+                        "block_title",
+                        repository::serverProfile,
+                        send = { repository.block(tmdbId, ready.movie.title) },
+                        onDone = {
+                            eventFlow.tryEmit(TitlePageEvent.Blocked)
+                            reload()
+                        },
+                        onFailed = { eventFlow.tryEmit(TitlePageEvent.BlockFailed(it)) },
+                    )
+                }
+                BlocklistStep.Unblock -> {
+                    if ((state.value as? TitlePageUiState.Ready)?.movie?.mayUnblock != true) return
+                    closeSheet(TitleSheet.Status)
+                    viewModelScope.sendBlocklistChange(
+                        analytics,
+                        "movie_unblocked",
+                        "unblock_title",
+                        repository::serverProfile,
+                        send = { repository.unblock(tmdbId) },
+                        onDone = {
+                            eventFlow.tryEmit(TitlePageEvent.Unblocked)
+                            reload()
+                        },
+                        onFailed = { eventFlow.tryEmit(TitlePageEvent.UnblockFailed(it)) },
+                    )
+                }
             }
         }
 
-        /** Request in 4K, tapped in a request's sheet: that sheet gives way to the request sheet. */
-        fun requestFourKFromManage() = updateReady { it.copy(manageSheetOpen = false, requestSheetOpen = true, requestSheetFourK = true) }
+        /** Request in 4K or the remaining seasons, tapped in a sheet: that sheet gives way to the request sheet. */
+        fun requestFromSheet(fourK: Boolean) =
+            updateReady { it.copy(manageSheetOpen = false, statusSheetOpen = false, requestSheetOpen = true, requestSheetFourK = fourK) }
 
         fun setReportSheetOpen(open: Boolean) = updateReady { it.copy(reportSheetOpen = open) }
 

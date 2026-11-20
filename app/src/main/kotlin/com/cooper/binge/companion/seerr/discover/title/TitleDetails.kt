@@ -120,6 +120,10 @@ data class MovieDetails(
     val mayReport: Boolean = false,
     /** The viewer may take the title off the blocklist: the server has one and the account may manage it. */
     val mayUnblock: Boolean = false,
+    /** The viewer may put the title on the blocklist: the same right as [mayUnblock], named for the other direction. */
+    val mayBlock: Boolean = false,
+    /** Where the title is on other sites: IMDb where the server knows its id, TMDB, and its own site where it has one. */
+    val links: List<TitleLink> = emptyList(),
     /** The title is on the signed-in user's watchlist. */
     val onWatchlist: Boolean = false,
     /** The server can add to and remove from the watchlist (`profile.hasWatchlistEdit`), so the page offers the button. */
@@ -146,6 +150,12 @@ interface TitleDetailsRepository {
 
     /** Takes the film off the blocklist; a failure throws. The viewer's right to is [MovieDetails.mayUnblock]. */
     suspend fun unblock(tmdbId: Int)
+
+    /** Puts the film on the blocklist; a failure throws. The viewer's right to is [MovieDetails.mayBlock]. */
+    suspend fun block(
+        tmdbId: Int,
+        title: String,
+    )
 
     /** The server's lineage and version, for the failure event only; null where it cannot be read. */
     suspend fun serverProfile(): SeerrServerProfile?

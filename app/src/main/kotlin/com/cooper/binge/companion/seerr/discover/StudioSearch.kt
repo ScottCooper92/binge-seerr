@@ -56,7 +56,6 @@ class SeerrStudioSearch(
                     },
                 page = found.page,
                 totalPages = found.totalPages,
-                total = found.totalResults,
             )
         }
 }
