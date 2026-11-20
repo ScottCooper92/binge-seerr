@@ -28,10 +28,10 @@ import java.util.concurrent.TimeUnit
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
-internal const val ADMIN = 2
-internal const val MANAGE_USERS = 1 shl 3
-internal const val MANAGE_REQUESTS = 1 shl 4
-internal const val REQUEST = 1 shl 5
+const val ADMIN = 2
+const val MANAGE_USERS = 1 shl 3
+const val MANAGE_REQUESTS = 1 shl 4
+const val REQUEST = 1 shl 5
 
 private const val REQUEST_WAIT_MILLIS = 2_000L
 private const val EXPECTED_CALL_WAIT_MILLIS = 15_000L
@@ -49,7 +49,7 @@ private const val EMPTY_PAGE = """{"pageInfo":{"pages":0,"results":0},"results":
  * `@After`, which runs before `MainDispatcherRule` resets Main, so a call still in flight lands on
  * a live Main and does not leak into the next test as `UncaughtExceptionsBeforeTest` (#807).
  */
-internal class ScriptedSeerr(
+class ScriptedSeerr(
     private val folder: TemporaryFolder,
 ) {
     val server = MockWebServer()
@@ -235,7 +235,7 @@ internal class ScriptedSeerr(
     }
 
     /** How long a test waits for a call it expects, where a slow machine, not the code, is the likely reason for a miss. */
-    internal fun expectedCallWaitMillis(): Long = EXPECTED_CALL_WAIT_MILLIS
+    fun expectedCallWaitMillis(): Long = EXPECTED_CALL_WAIT_MILLIS
 
     suspend fun connection(
         scope: TestScope,
@@ -267,7 +267,7 @@ internal class ScriptedSeerr(
  * connects, because setup's probe is not gated, and then every call a screen makes is turned away the way Android would.
  * [testDns] sends the name to the scripted server, so nothing but the gate stands between a screen and its answer.
  */
-internal suspend fun ScriptedSeerr.deniedConnection(scope: TestScope): SeerrConnection =
+suspend fun ScriptedSeerr.deniedConnection(scope: TestScope): SeerrConnection =
     connection(
         scope,
         apis =
@@ -281,7 +281,7 @@ internal suspend fun ScriptedSeerr.deniedConnection(scope: TestScope): SeerrConn
     )
 
 /** An answer [ScriptedSeerr.serveHeld] keeps back until [release]. */
-internal class HeldResponse {
+class HeldResponse {
     private val released = CountDownLatch(1)
 
     @Volatile private var code = 200
@@ -300,7 +300,7 @@ internal class HeldResponse {
     }
 
     /** Runs on MockWebServer's thread for the request's connection, so blocking here holds only that call. */
-    internal fun answer(): MockResponse {
+    fun answer(): MockResponse {
         released.await(HOLD_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)
         return MockResponse(code = code, headers = headersOf("Content-Type", "application/json"), body = body)
     }
