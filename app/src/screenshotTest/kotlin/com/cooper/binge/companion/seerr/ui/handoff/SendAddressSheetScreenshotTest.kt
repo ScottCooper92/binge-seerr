@@ -101,6 +101,12 @@ class SendAddressSheetScreenshotTest {
     @Composable
     fun signingInWaiting() = Frame(SendAddressUiState.SigningIn("192.168.86.53", SignInStep.Waiting))
 
+    /** The TV has no server set up to sign in to yet (#1991): the sheet says so and waits. */
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun signingInNotSetUp() = Frame(SendAddressUiState.SigningIn("192.168.86.53", SignInStep.NotSetUp))
+
     /** A public plain-HTTP address: the TV asks its own user, and the sheet says to answer there (#912). */
     @PreviewTest
     @SeerrComponentPreviews
