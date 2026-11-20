@@ -80,6 +80,7 @@ internal fun DiscoverGridEntry(
                     backStack.replaceTop(route, route.carriedTo(kind, sort, filters))
                 },
                 loads = FilterLoads(model::onProvidersNeeded, model::onKeywordQuery, model::onKeywordsNeeded),
+                onResetFilters = model::onResetFilters,
             ),
     )
 }

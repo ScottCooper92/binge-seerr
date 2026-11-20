@@ -230,6 +230,10 @@
     <string name="grid_chip_provider">Servicio de streaming</string>
     <string name="grid_empty_title">No hay nada</string>
     <string name="grid_empty_message">Ningún título coincide. Quita el filtro para ver más.</string>
+    <string name="grid_empty_watchlist_title">Aún no hay nada en tu lista de seguimiento</string>
+    <string name="grid_empty_watchlist_message">Los títulos que añadas a tu lista de seguimiento aparecerán aquí.</string>
+    <string name="grid_empty_plain_message">Todavía no hay nada en esta lista.</string>
+    <string name="grid_empty_clear_filters">Quitar filtros</string>
     <string name="grid_more_failed">No se pudo cargar más. Toca para reintentar</string>
     <string name="hub_section_settings_desc">Servicios, notificaciones y tareas</string>
     <string name="hub_section_this_app">Esta aplicación</string>
