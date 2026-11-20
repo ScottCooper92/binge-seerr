@@ -14,7 +14,9 @@ import com.binge.designsystem.template.PersonDetailCallbacks
 import com.binge.designsystem.template.PersonDetailScreen
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.TitleKind
+import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.ui.discover.title.ShareBarAction
+import com.cooper.binge.companion.seerr.ui.rememberAllowLocalNetwork
 
 /** What the person page does: read again, share, open a title and open a link. */
 class PersonPageActions(
@@ -41,7 +43,9 @@ internal fun PersonPageScreen(
     val resources = LocalContext.current.resources
     val locale = LocalConfiguration.current.locales[0]
     val ready = state as? PersonPageUiState.Ready
-    val detail = remember(state, resources, locale) { state.toDetailState(resources, locale) }
+    val denied = (state as? PersonPageUiState.Error)?.error == SeerrError.LocalNetworkDenied
+    val allow = if (denied) rememberAllowLocalNetwork(actions.onRetry) else null
+    val detail = remember(state, resources, locale, allow) { state.toDetailState(resources, locale, allow) }
     PersonDetailScreen(
         state = detail,
         callbacks =

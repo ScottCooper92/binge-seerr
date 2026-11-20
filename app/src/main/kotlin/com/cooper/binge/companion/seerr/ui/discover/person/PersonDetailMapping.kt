@@ -8,10 +8,12 @@ import com.binge.designsystem.template.CreditsState
 import com.binge.designsystem.template.GridItem
 import com.binge.designsystem.template.PersonDetail
 import com.binge.designsystem.template.PersonDetailState
+import com.binge.designsystem.template.ScreenAction
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.person.PersonCredit
 import com.cooper.binge.companion.seerr.discover.person.PersonDetails
 import com.cooper.binge.companion.seerr.discover.person.PersonGender
+import com.cooper.binge.companion.seerr.ui.AllowLocalNetwork
 import com.cooper.binge.companion.seerr.ui.discover.title.statusStyle
 import com.cooper.binge.companion.seerr.ui.discover.title.toDisplayDate
 import com.cooper.binge.companion.seerr.ui.state.messageRes
@@ -27,6 +29,7 @@ private const val CREW_SECTION = "crew"
 internal fun PersonPageUiState.toDetailState(
     resources: Resources,
     locale: Locale,
+    allow: AllowLocalNetwork? = null,
 ): PersonDetailState =
     when (this) {
         PersonPageUiState.Loading -> PersonDetailState.Loading()
@@ -35,6 +38,8 @@ internal fun PersonPageUiState.toDetailState(
                 kind = error.toErrorKind(),
                 title = resources.getString(error.titleRes()),
                 message = resources.getString(error.messageRes()),
+                retryable = allow == null,
+                secondary = allow?.let { ScreenAction(resources.getString(it.label), it.run) },
             )
         is PersonPageUiState.Ready ->
             PersonDetailState.Content(
