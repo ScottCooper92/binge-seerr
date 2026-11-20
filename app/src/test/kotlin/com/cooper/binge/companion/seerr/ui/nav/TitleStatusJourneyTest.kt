@@ -40,7 +40,7 @@ private const val POPULAR_MOVIES = 5
 private const val REQUESTS_TAKEN = 100
 private const val FILM_ID = 133701
 
-/** A demo film nobody has requested, third in the demo's catalog so it is near the start of every list. */
+/** A demo film, third in the demo's catalog so it is near the start of every list. The demo seeds a declined request for it. */
 private const val FILM = "Tears of Steel"
 
 /**
@@ -78,6 +78,16 @@ class TitleStatusJourneyTest {
             .onAllNodes(hasText(FILM, substring = true) and stateReads(status))
             .fetchSemanticsNodes()
             .isNotEmpty()
+
+    /** Takes away the request the demo seeds for the film, which the demo would otherwise refuse a second request on. */
+    private fun clearFilmRequests() =
+        host.api { api ->
+            api
+                .requests(take = REQUESTS_TAKEN)
+                .results
+                .filter { it.media.tmdbId == FILM_ID }
+                .forEach { api.deleteRequest(it.id) }
+        }
 
     /** The film's requests on the server, as status codes, so a card that does not show one is not for want of the request. */
     private fun serverRequests(): List<Int?> =
@@ -134,6 +144,7 @@ class TitleStatusJourneyTest {
     fun `a film requested from its page shows as requested on the Movies hub's card after Back`() {
         NavHostActivity.discoveryEnabled = true
         host.connectDemo()
+        clearFilmRequests()
         host.api { it.updateDiscoverSliders(popularRow()) }
         host.launch(HomeRoute)
         host.awaitShowing(host.string(R.string.hubs_browse_all_movies))
@@ -151,6 +162,7 @@ class TitleStatusJourneyTest {
     fun `a film requested from its page shows as requested on the Discover grid's card after Back`() {
         NavHostActivity.discoveryEnabled = true
         host.connectDemo()
+        clearFilmRequests()
         val grid = DiscoverGridRoute(TitleKind.Movie, GridPreset.Popular, host.string(R.string.hubs_row_popular_movies))
         host.launch(HomeRoute, grid)
         host.awaitShowing(FILM)
