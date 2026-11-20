@@ -170,18 +170,8 @@ internal fun TvPageWithOverlay(
     page: @Composable () -> Unit,
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
-        Box(
-            modifier =
-                Modifier.fillMaxSize().then(
-                    if (overlay ==
-                        null
-                    ) {
-                        Modifier
-                    } else {
-                        Modifier.focusProperties { canFocus = false }
-                    },
-                ),
-        ) { page() }
+        val pageModifier = if (overlay == null) Modifier else Modifier.focusProperties { canFocus = false }
+        Box(modifier = Modifier.fillMaxSize().then(pageModifier)) { page() }
         overlay?.let { Box(modifier = Modifier.fillMaxSize().focusGroup(), content = it) }
     }
 }
