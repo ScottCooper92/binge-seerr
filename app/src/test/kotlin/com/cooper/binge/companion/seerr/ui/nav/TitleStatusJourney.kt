@@ -84,7 +84,8 @@ internal class TitleStatusJourney(
     /**
      * Clicks a node reading exactly [label], or matching [matcher], on each poll until [reached], and says what the screen showed if none ever did. [last]
      * takes the last match in the tree, which is a dialog's own button over the sheet's or page's behind it, as a dialog's window
-     * is composed after what it covers. A node that is gone when the click lands is waited out, not an error.
+     * is composed after what it covers. The poll lets pending recomposition land before it looks, and a node that is gone when
+     * the click lands (the page recomposed between the look and the click) is waited out, not an error.
      */
     fun clickUntil(
         what: String,
@@ -95,9 +96,16 @@ internal class TitleStatusJourney(
     ) = host.await(what) {
         val done = reached()
         if (!done) {
+            host.compose.waitForIdle()
             val nodes = host.compose.onAllNodes(matcher)
             val count = nodes.fetchSemanticsNodes().size
-            if (count > 0) nodes[if (last) count - 1 else 0].performClick()
+            if (count > 0) {
+                try {
+                    nodes[if (last) count - 1 else 0].performClick()
+                } catch (_: AssertionError) {
+                    // The node was replaced between the look and the click; the next poll looks again.
+                }
+            }
         }
         done
     }
