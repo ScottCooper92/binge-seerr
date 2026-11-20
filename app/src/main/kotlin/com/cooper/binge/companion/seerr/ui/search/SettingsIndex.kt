@@ -79,7 +79,7 @@ internal sealed interface SearchTarget {
         override fun route(
             userId: Int,
             row: String?,
-        ): SeerrRoute = NotificationAgentRoute(agent)
+        ): SeerrRoute = NotificationAgentRoute(agent, row)
     }
 
     /** One of the signed-in user's own settings pages. */
@@ -290,6 +290,7 @@ internal val settingsIndex: List<IndexEntry> =
         add(server(ServerSettingsPage.Logs, R.string.server_settings_logs, Icons.AutoMirrored.Filled.Article, R.string.search_kw_logs))
         add(server(ServerSettingsPage.About, R.string.settings_about, Icons.Filled.Info, R.string.search_kw_about))
         addAll(settingRowEntries)
+        addAll(agentOptionEntries)
         add(
             IndexEntry(
                 SearchTarget.ThisApp,
