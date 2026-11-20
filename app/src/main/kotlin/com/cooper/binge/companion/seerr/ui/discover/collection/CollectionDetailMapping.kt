@@ -9,16 +9,19 @@ import com.binge.designsystem.template.ScreenAction
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.TitleResult
 import com.cooper.binge.companion.seerr.discover.collection.CollectionDetails
+import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.seerr.toTmdbPosterUrl
-import com.cooper.binge.companion.seerr.ui.AllowLocalNetwork
 import com.cooper.binge.companion.seerr.ui.state.messageRes
 import com.cooper.binge.companion.seerr.ui.state.titleRes
 import com.cooper.binge.companion.seerr.ui.state.toErrorKind
 
-/** The collection page's state as the shared template takes it: plain values, with every word already in the user's language. */
+/**
+ * The collection page's state as the shared template takes it: plain values, with every word already in the user's language.
+ * [allowLocalNetwork] is the action a blocked local server needs; Try again cannot fix that, so it replaces it.
+ */
 internal fun CollectionPageUiState.toDetailState(
     resources: Resources,
-    allow: AllowLocalNetwork? = null,
+    allowLocalNetwork: ScreenAction? = null,
 ): CollectionDetailState =
     when (this) {
         CollectionPageUiState.Loading -> CollectionDetailState.Loading()
@@ -27,8 +30,8 @@ internal fun CollectionPageUiState.toDetailState(
                 kind = error.toErrorKind(),
                 title = resources.getString(error.titleRes()),
                 message = resources.getString(error.messageRes()),
-                retryable = allow == null,
-                secondary = allow?.let { ScreenAction(resources.getString(it.label), it.run) },
+                retryable = !(error == SeerrError.LocalNetworkDenied && allowLocalNetwork != null),
+                secondary = allowLocalNetwork.takeIf { error == SeerrError.LocalNetworkDenied },
             )
         is CollectionPageUiState.Ready -> CollectionDetailState.Content(collection.toDetail(mayRequest, resources))
     }

@@ -13,13 +13,13 @@ import com.binge.designsystem.component.StatusChip
 import com.binge.designsystem.component.showSnackbar
 import com.binge.designsystem.template.CollectionDetailCallbacks
 import com.binge.designsystem.template.CollectionDetailScreen
+import com.binge.designsystem.template.ScreenAction
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.TitleAvailability
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.TitleResult
 import com.cooper.binge.companion.seerr.discover.collection.CollectionDetails
 import com.cooper.binge.companion.seerr.discover.request.RequestResult
-import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.ui.discover.request.RequestFilm
 import com.cooper.binge.companion.seerr.ui.discover.request.RequestSheet
 import com.cooper.binge.companion.seerr.ui.discover.request.RequestSheetTarget
@@ -59,9 +59,9 @@ internal fun CollectionPageScreen(
     val resources = LocalResources.current
     CollectionEventSnackbars(events, snackbar)
     val ready = state as? CollectionPageUiState.Ready
-    val denied = (state as? CollectionPageUiState.Error)?.error == SeerrError.LocalNetworkDenied
-    val allow = if (denied) rememberAllowLocalNetwork(actions.onRetry) else null
-    val detail = remember(state, resources, allow) { state.toDetailState(resources, allow) }
+    val allow = rememberAllowLocalNetwork(actions.onRetry)
+    val allowLabel = stringResource(allow.label)
+    val detail = remember(state, resources, allow, allowLabel) { state.toDetailState(resources, ScreenAction(allowLabel, allow.run)) }
     val partsByKey =
         remember(ready?.collection) {
             ready

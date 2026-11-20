@@ -4,12 +4,11 @@ import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import com.binge.designsystem.ErrorKind
 import com.binge.designsystem.template.CollectionDetailState
-import com.cooper.binge.companion.seerr.R
+import com.binge.designsystem.template.ScreenAction
 import com.cooper.binge.companion.seerr.discover.TitleAvailability
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.TitleResult
 import com.cooper.binge.companion.seerr.seerr.SeerrError
-import com.cooper.binge.companion.seerr.ui.AllowLocalNetwork
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -34,20 +33,19 @@ class CollectionDetailMappingTest {
     }
 
     @Test
-    fun `a server Android will not let this app reach offers Allow in place of Try again`() {
-        var allowed = 0
-        val allow = AllowLocalNetwork(R.string.local_network_allow, R.string.local_network_allow_short) { allowed++ }
-
+    fun `a blocked local network offers Allow in place of Try again`() {
+        var allowed = false
+        val allow = ScreenAction("Allow", onClick = { allowed = true })
         val failed =
-            CollectionPageUiState
-                .Error(
-                    SeerrError.LocalNetworkDenied,
-                ).toDetailState(resources, allow) as CollectionDetailState.Failed
+            CollectionPageUiState.Error(SeerrError.LocalNetworkDenied).toDetailState(resources, allow) as CollectionDetailState.Failed
 
         assertFalse(failed.retryable)
-        assertEquals(resources.getString(R.string.local_network_allow), failed.secondary?.label)
-        failed.secondary?.onClick?.invoke()
-        assertEquals(1, allowed)
+        failed.secondary!!.onClick()
+        assertTrue(allowed)
+
+        val other = CollectionPageUiState.Error(SeerrError.Unreachable).toDetailState(resources, allow) as CollectionDetailState.Failed
+        assertTrue(other.retryable)
+        assertNull(other.secondary)
     }
 
     @Test
