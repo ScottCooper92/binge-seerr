@@ -79,11 +79,13 @@ class SettingsIndexTest {
             .associate { it.name to it.get(null) as String }
 
     @Test
-    fun `every row an entry names is a key SettingRows declares, and every key is named`() {
+    fun `every row an entry names is a key SettingRows or an agent option declares, and every key is named`() {
         val named = settingsIndex.mapNotNull { it.row }.toSet()
+        // An agent option's key is built from the option, which names it, so it has no constant of its own.
+        val declared = rowConstants.values.toSet() + AgentOption.entries.filter { it.ownControl }.map { it.rowKey() }
         assertTrue(rowConstants.isNotEmpty())
-        assertEquals("a key no entry names", emptySet<String>(), rowConstants.values.toSet() - named)
-        assertEquals("a row no key declares", emptySet<String>(), named - rowConstants.values.toSet())
+        assertEquals("a key no entry names", emptySet<String>(), declared - named)
+        assertEquals("a row no key declares", emptySet<String>(), named - declared)
     }
 
     /**
