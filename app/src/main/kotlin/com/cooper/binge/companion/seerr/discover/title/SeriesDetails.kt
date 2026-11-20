@@ -79,6 +79,8 @@ data class SeriesDetails(
     val mayReport: Boolean = false,
     /** The viewer may take the title off the blocklist: the server has one and the account may manage it. */
     val mayUnblock: Boolean = false,
+    /** The viewer may put the show on the blocklist: the same right as [mayUnblock], named for the other direction. */
+    val mayBlock: Boolean = false,
     /** The title is on the signed-in user's watchlist. */
     val onWatchlist: Boolean = false,
     /** The server can add to and remove from the watchlist (`profile.hasWatchlistEdit`), so the page offers the button. */

@@ -37,6 +37,8 @@ internal data class TitleActionsModel(
     val primary: TitlePrimary,
     /** Report is offered once the title is in the library, in whole or in part, where the server takes an issue and the viewer may make one. */
     val canReport: Boolean,
+    /** Block is offered while the server holds nothing of the title and the viewer may manage the blocklist; a held title is blocked from its request's own sheet. */
+    val canBlock: Boolean = false,
 )
 
 /**
@@ -51,6 +53,7 @@ internal fun titleActionsModel(
     fourK: VersionState?,
     requests: List<TitleRequest>,
     mayReport: Boolean,
+    mayBlock: Boolean = false,
 ): TitleActionsModel {
     val openStandard = standard.mayRequest && standard.availability == TitleAvailability.None
     val state =
@@ -69,6 +72,7 @@ internal fun titleActionsModel(
             tap = tap,
         ),
         canReport = mayReport && state.isInLibrary(),
+        canBlock = mayBlock && state == TitleState.Request,
     )
 }
 

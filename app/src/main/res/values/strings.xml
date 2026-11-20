@@ -251,6 +251,10 @@
     <string name="grid_chip_provider">Streaming service</string>
     <string name="grid_empty_title">Nothing here</string>
     <string name="grid_empty_message">No titles match. Clear the filter to see more.</string>
+    <string name="grid_empty_watchlist_title">Nothing on your watchlist yet</string>
+    <string name="grid_empty_watchlist_message">Titles you add to your watchlist show up here.</string>
+    <string name="grid_empty_plain_message">There is nothing in this list yet.</string>
+    <string name="grid_empty_clear_filters">Clear filters</string>
     <string name="grid_more_failed">Couldn’t load more. Tap to try again</string>
     <string name="hub_section_settings_desc">Services, notifications and jobs</string>
     <string name="hub_section_this_app">This app</string>
@@ -1589,6 +1593,9 @@
     <string name="title_page_watchlist_add">Add to watchlist</string>
     <string name="title_page_watchlist_remove">Remove from watchlist</string>
     <string name="title_page_action_report">Report</string>
+    <string name="title_page_action_block">Block</string>
+    <string name="title_block_confirm_title">Block %1$s?</string>
+    <string name="title_block_confirm_message">Nobody can request it until it is unblocked. You can unblock it from its page or the blocklist.</string>
     <string name="title_page_action_trailer">Trailer</string>
     <string name="title_page_action_share">Share</string>
     <string name="title_page_stat_released">Released</string>

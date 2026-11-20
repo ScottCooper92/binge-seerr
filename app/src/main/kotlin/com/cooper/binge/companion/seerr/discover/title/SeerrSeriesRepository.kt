@@ -11,6 +11,7 @@ import com.cooper.binge.companion.seerr.discover.toAvailability
 import com.cooper.binge.companion.seerr.discover.toReleaseYear
 import com.cooper.binge.companion.seerr.discover.toTitlePage
 import com.cooper.binge.companion.seerr.seerr.FALLBACK_CERTIFICATION_REGION
+import com.cooper.binge.companion.seerr.seerr.SeerrAddToBlocklistBody
 import com.cooper.binge.companion.seerr.seerr.SeerrApi
 import com.cooper.binge.companion.seerr.seerr.SeerrMediaInfoDto
 import com.cooper.binge.companion.seerr.seerr.SeerrPublicSettings
@@ -18,6 +19,7 @@ import com.cooper.binge.companion.seerr.seerr.SeerrRequestStatusCode
 import com.cooper.binge.companion.seerr.seerr.SeerrServerProfile
 import com.cooper.binge.companion.seerr.seerr.SeerrTvDetailsDto
 import com.cooper.binge.companion.seerr.seerr.SeerrUserDto
+import com.cooper.binge.companion.seerr.seerr.addToBlocklistOnce
 import com.cooper.binge.companion.seerr.seerr.toPermissions
 import com.cooper.binge.companion.seerr.seerr.toTmdbBackdropUrl
 import com.cooper.binge.companion.seerr.seerr.toTmdbPosterUrl
@@ -35,6 +37,12 @@ interface SeriesDetailsRepository {
 
     /** Takes the show off the blocklist; a failure throws. The viewer's right to is [SeriesDetails.mayUnblock]. */
     suspend fun unblock(tmdbId: Int)
+
+    /** Puts the show on the blocklist; a failure throws. The viewer's right to is [SeriesDetails.mayBlock]. */
+    suspend fun block(
+        tmdbId: Int,
+        title: String,
+    )
 
     /** The server's lineage and version, for the failure event only; null where it cannot be read. */
     suspend fun serverProfile(): SeerrServerProfile?
@@ -95,6 +103,7 @@ class SeerrSeriesRepository(
                     keywordsOpen = profile.hasKeywordDiscover,
                     mayReport = profile.hasIssues && permissions.canReportIssues,
                     mayUnblock = profile.hasBlocklist && permissions.canManageBlocklist,
+                    mayBlock = profile.hasBlocklist && permissions.canManageBlocklist,
                     onWatchlist = dto.onUserWatchlist == true,
                     mayWatchlist = profile.hasWatchlistEdit,
                 )
@@ -123,6 +132,15 @@ class SeerrSeriesRepository(
         onList: Boolean,
     ) = withContext(io) {
         statuses.watchlisting(TitleKey(TitleType.Tv, tmdbId), onList) { setOnWatchlist(api(), tmdbId, title, "tv", onList) }
+    }
+
+    override suspend fun block(
+        tmdbId: Int,
+        title: String,
+    ) = withContext(io) {
+        statuses.blocking(TitleKey(TitleType.Tv, tmdbId)) {
+            api().addToBlocklistOnce(profile().blocklistPath, SeerrAddToBlocklistBody(tmdbId, "tv", title, viewer().id))
+        }
     }
 
     override suspend fun unblock(tmdbId: Int) =

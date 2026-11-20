@@ -57,10 +57,11 @@ internal fun TitlePageBody(
         val expanded = isExpandedLayout()
         if (!expanded) TitleStatsRows(movie.titleStats(locale))
         TitleActions(
-            model = titleActionsModel(movie.standard, movie.fourK, movie.requests, movie.mayReport),
+            model = titleActionsModel(movie.standard, movie.fourK, movie.requests, movie.mayReport, movie.mayBlock),
             onPrimary = actions.onRequest,
             onTrailer = movie.videos.trailerUrl()?.let { url -> { actions.onOpenUrl(url) } },
             onReport = actions.onReport,
+            onBlock = actions.block?.onAsk.takeIf { movie.mayBlock },
             watchlist = movie.mayWatchlist.takeIf { it }?.let { WatchlistButton(movie.onWatchlist, actions.onToggleWatchlist) },
             modifier = Modifier.readingMargin().layoutAnchor(LayoutAnchors.section(LayoutAnchors.Detail.ACTIONS)),
         )

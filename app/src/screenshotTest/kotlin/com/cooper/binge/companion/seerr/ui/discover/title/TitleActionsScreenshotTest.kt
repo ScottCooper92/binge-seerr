@@ -94,6 +94,51 @@ class TitleActionsScreenshotTest {
     @SeerrFontScalePreviews
     @Composable
     fun twoRoundButtonsLargestText() = Frame(trailer = true, report = true)
+
+    /** Nothing held and the viewer may manage the blocklist: Trailer, Watchlist and Block under the Request button. */
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun blockOnAnUnrequestedTitle() = BlockFrame()
+
+    /** The same at font scale 1.3. */
+    @PreviewTest
+    @SeerrFontScale13ComponentPreviews
+    @Composable
+    fun blockOnAnUnrequestedTitleLargeText() = BlockFrame()
+
+    /** The same at font scale 2. */
+    @PreviewTest
+    @SeerrFontScalePreviews
+    @Composable
+    fun blockOnAnUnrequestedTitleLargestText() = BlockFrame()
+
+    /** The same in Spanish. */
+    @PreviewTest
+    @SeerrSpanishPreviews
+    @Composable
+    fun blockOnAnUnrequestedTitleSpanish() = BlockFrame()
+}
+
+@Composable
+private fun BlockFrame() {
+    Box(Modifier.width(PHONE_WIDTH).background(MaterialTheme.colorScheme.surface).padding(vertical = 8.dp)) {
+        TitleActions(
+            model =
+                titleActionsModel(
+                    VersionState(TitleAvailability.None, mayRequest = true),
+                    null,
+                    emptyList(),
+                    mayReport = false,
+                    mayBlock = true,
+                ),
+            onPrimary = {},
+            onTrailer = {},
+            onReport = null,
+            watchlist = WatchlistButton(false, {}),
+            onBlock = {},
+        )
+    }
 }
 
 @Composable

@@ -134,6 +134,29 @@ class TitleActionsModelTest {
     }
 
     @Test
+    fun `block is offered only while nothing is held and the viewer manages the blocklist`() {
+        fun canBlock(
+            availability: TitleAvailability,
+            may: Boolean = true,
+            requests: List<TitleRequest> = emptyList(),
+        ) = titleActionsModel(held(availability), null, requests, mayReport = false, mayBlock = may).canBlock
+
+        assertTrue(canBlock(TitleAvailability.None))
+        assertFalse(canBlock(TitleAvailability.None, may = false))
+        assertFalse(canBlock(TitleAvailability.Pending))
+        assertFalse(canBlock(TitleAvailability.Processing))
+        assertFalse(canBlock(TitleAvailability.PartiallyAvailable))
+        assertFalse(canBlock(TitleAvailability.Available))
+        assertFalse(canBlock(TitleAvailability.Blocklisted))
+    }
+
+    @Test
+    fun `block is still offered when the only request on file was declined`() {
+        val declined = listOf(TitleRequest(id = 7, is4k = false, status = SeerrRequestStatusCode.Declined, requesterId = 1))
+        assertTrue(titleActionsModel(held(TitleAvailability.None), null, declined, mayReport = false, mayBlock = true).canBlock)
+    }
+
+    @Test
     fun `the trailer is the first clip the server types as one`() {
         val videos = listOf(TitleVideo("Teaser", "t", isTrailer = false), TitleVideo("Trailer", "u", isTrailer = true))
         assertEquals("u", videos.trailerUrl())

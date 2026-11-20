@@ -320,6 +320,29 @@ class DiscoverGridViewModelTest {
     }
 
     @Test
+    fun `an empty watchlist says so`() {
+        grid.answer = { _, page -> TitlePage(emptyList(), page, 1) }
+        runVm(preset = GridPreset.OwnWatchlist) { vm ->
+            assertEquals(GridEmptyReason.Watchlist, (vm.uiState.value as DiscoverGridUiState.Empty).reason)
+        }
+    }
+
+    @Test
+    fun `filters the user added that match nothing are Filtered, and resetting them returns to the list's own`() {
+        grid.answer = { _, page -> TitlePage(emptyList(), page, 1) }
+        runVm { vm ->
+            vm.onApply(DiscoverSort.PopularityDesc, DiscoverFilters(genres = setOf(18, 35), ratingMin = 8.0))
+            advanceUntilIdle()
+            val filtered = vm.uiState.value as DiscoverGridUiState.Empty
+            assertEquals(GridEmptyReason.Filtered, filtered.reason)
+
+            vm.onResetFilters()
+            advanceUntilIdle()
+            assertTrue((vm.uiState.value as DiscoverGridUiState.Empty).controls.groups.isEmpty())
+        }
+    }
+
+    @Test
     fun `a failure is worded by the server error and can be retried`() {
         grid.answer = { _, _ -> throw IOException("down") }
         runVm { vm ->

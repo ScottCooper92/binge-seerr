@@ -57,6 +57,8 @@ class TitlePageActions(
     val onWatchInBinge: (() -> Unit)? = null,
     /** The watchlist button, tapped. */
     val onToggleWatchlist: () -> Unit = {},
+    /** Block, asked and answered; null where this viewer may not block. */
+    val block: TitleBlock? = null,
     /** Remove from blocklist, tapped in the status sheet of a blocklisted title. */
     val onUnblock: () -> Unit = {},
     /** The sheet of one request, backed by that request's own view model, which the nav entry supplies. */
@@ -99,6 +101,8 @@ private fun ReadyPage(
         events.collect { event ->
             when (event) {
                 is TitlePageEvent.Requested -> snackbar.showSnackbar(resources.getString(event.result.messageRes()))
+                TitlePageEvent.Blocked -> snackbar.showSnackbar(resources.getString(R.string.request_title_blocked))
+                is TitlePageEvent.BlockFailed -> snackbar.showSnackbar(resources.getString(event.error.messageRes()))
                 TitlePageEvent.Unblocked -> snackbar.showSnackbar(resources.getString(R.string.blocklist_removed))
                 is TitlePageEvent.WatchlistFailed -> snackbar.showSnackbar(resources.getString(event.error.messageRes()))
                 is TitlePageEvent.UnblockFailed -> snackbar.showSnackbar(resources.getString(event.error.messageRes()))
@@ -166,6 +170,7 @@ private fun ReadyPage(
         )
     }
     if (state.reportSheetOpen) actions.reportSheet(actions.onCloseReport)
+    if (state.blockConfirmOpen) actions.block?.let { TitleBlockConfirm(state.movie.title, it) }
     state.manageRequestId?.let { requestId ->
         TitleManageSheet(requestId, state.manageSheetOpen, snackbar, movie.sheetFacts(), actions)
     }

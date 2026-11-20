@@ -66,6 +66,8 @@ class SeerrTitleDetailsRepositoryTest {
     private var userRegion = """{"streamingRegion":"US"}"""
     private var movieBody = MOVIE
     private val unblocks = mutableListOf<String>()
+    private val blocks = mutableListOf<String>()
+    private var blockCode = 201
     private val watchlistCalls = mutableListOf<String>()
     private var watchlistFails = false
     private val statuses = TitleStatusStore()
@@ -80,6 +82,11 @@ class SeerrTitleDetailsRepositoryTest {
     private fun recordUnblock(request: FakeRequest): FakeResponse {
         unblocks += "${request.method} ${request.url.encodedPath}?${request.url.encodedQuery}"
         return FakeResponse()
+    }
+
+    private fun recordBlock(request: FakeRequest): FakeResponse {
+        blocks += "${request.method} ${request.url.encodedPath} ${request.body}"
+        return FakeResponse(code = blockCode)
     }
 
     private fun recordWatchlist(request: FakeRequest): FakeResponse {
@@ -102,6 +109,7 @@ class SeerrTitleDetailsRepositoryTest {
             "/api/v1/collection/2344" -> FakeResponse(headers = JSON, body = COLLECTION)
             "/api/v1/user/9/settings/main" -> FakeResponse(headers = JSON, body = userRegion)
             "/api/v1/blocklist/603", "/api/v1/blacklist/603" -> recordUnblock(request)
+            "/api/v1/blocklist", "/api/v1/blacklist" -> recordBlock(request)
             "/api/v1/watchlist", "/api/v1/watchlist/603" -> recordWatchlist(request)
             else -> FakeResponse(code = 404)
         }
@@ -306,6 +314,40 @@ class SeerrTitleDetailsRepositoryTest {
         variant = SeerrVariant.Overseerr
         version = SeerrVersion(1, 27, 0)
         assertFalse("an Overseerr has no blocklist", withRepository { it.movie(603) }.mayUnblock)
+    }
+
+    @Test
+    fun `the right to block is the right to unblock`() {
+        assertTrue(withRepository { it.movie(603) }.mayBlock)
+
+        permissions = PERMISSION_REQUEST
+        assertFalse("no blocklist permission", withRepository { it.movie(603) }.mayBlock)
+
+        variant = SeerrVariant.Overseerr
+        version = SeerrVersion(1, 27, 0)
+        permissions = PERMISSION_MANAGE_BLOCKLIST
+        assertFalse("an Overseerr has no blocklist", withRepository { it.movie(603) }.mayBlock)
+    }
+
+    @Test
+    fun `blocking sends the film with the signed in user and reads an already blocked title as done`() {
+        withRepository { it.block(603, "The Matrix") }
+        assertEquals(1, blocks.size)
+        assertTrue(blocks.single().startsWith("POST /api/v1/blocklist "))
+        assertTrue(blocks.single().contains(""""tmdbId":603"""))
+        assertTrue(blocks.single().contains(""""mediaType":"movie""""))
+        assertTrue(blocks.single().contains(""""title":"The Matrix""""))
+
+        blockCode = 412
+        withRepository { it.block(603, "The Matrix") }
+        assertEquals(2, blocks.size)
+    }
+
+    @Test
+    fun `blocking a title the server refuses throws`() {
+        blockCode = 403
+        val failure = runCatching { withRepository { it.block(603, "The Matrix") } }.exceptionOrNull()
+        assertTrue(failure is retrofit2.HttpException)
     }
 
     @Test
