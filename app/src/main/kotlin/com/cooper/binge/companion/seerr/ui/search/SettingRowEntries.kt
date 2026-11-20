@@ -253,7 +253,8 @@ internal val settingRowEntries: List<IndexEntry> =
                 R.string.user_settings_field_pgp,
                 Icons.Filled.Key,
                 SettingRows.NOTIFICATIONS_PGP_KEY,
-                R.string.search_kw_notifications,
+                R.string.search_page_notifications_email,
+                pageLabel = R.string.search_page_notifications_email,
             ),
         )
         add(
@@ -262,7 +263,8 @@ internal val settingRowEntries: List<IndexEntry> =
                 R.string.user_settings_discord_id,
                 Icons.Filled.Person,
                 SettingRows.NOTIFICATIONS_DISCORD_ID,
-                R.string.search_kw_notifications,
+                R.string.search_page_notifications_discord,
+                pageLabel = R.string.search_page_notifications_discord,
             ),
         )
         add(
@@ -271,7 +273,8 @@ internal val settingRowEntries: List<IndexEntry> =
                 R.string.user_settings_field_pushbullet_token,
                 Icons.Filled.Key,
                 SettingRows.NOTIFICATIONS_PUSHBULLET_TOKEN,
-                R.string.search_kw_notifications,
+                R.string.search_page_notifications_pushbullet,
+                pageLabel = R.string.search_page_notifications_pushbullet,
             ),
         )
         add(
@@ -280,7 +283,8 @@ internal val settingRowEntries: List<IndexEntry> =
                 R.string.user_settings_field_pushover_token,
                 Icons.Filled.Key,
                 SettingRows.NOTIFICATIONS_PUSHOVER_APP_TOKEN,
-                R.string.search_kw_notifications,
+                R.string.search_page_notifications_pushover,
+                pageLabel = R.string.search_page_notifications_pushover,
             ),
         )
         add(
@@ -289,7 +293,8 @@ internal val settingRowEntries: List<IndexEntry> =
                 R.string.user_settings_field_pushover_user,
                 Icons.Filled.Person,
                 SettingRows.NOTIFICATIONS_PUSHOVER_USER_KEY,
-                R.string.search_kw_notifications,
+                R.string.search_page_notifications_pushover,
+                pageLabel = R.string.search_page_notifications_pushover,
             ),
         )
         add(
@@ -298,7 +303,8 @@ internal val settingRowEntries: List<IndexEntry> =
                 R.string.user_settings_field_pushover_sound,
                 Icons.Filled.MusicNote,
                 SettingRows.NOTIFICATIONS_PUSHOVER_SOUND,
-                R.string.search_kw_notifications,
+                R.string.search_page_notifications_pushover,
+                pageLabel = R.string.search_page_notifications_pushover,
             ),
         )
         add(
@@ -307,7 +313,8 @@ internal val settingRowEntries: List<IndexEntry> =
                 R.string.user_settings_field_telegram_chat,
                 Icons.Filled.Forum,
                 SettingRows.NOTIFICATIONS_TELEGRAM_CHAT_ID,
-                R.string.search_kw_notifications,
+                R.string.search_page_notifications_telegram,
+                pageLabel = R.string.search_page_notifications_telegram,
             ),
         )
         add(
@@ -316,8 +323,9 @@ internal val settingRowEntries: List<IndexEntry> =
                 R.string.user_settings_field_telegram_thread,
                 Icons.Filled.Tag,
                 SettingRows.NOTIFICATIONS_TELEGRAM_THREAD_ID,
-                R.string.search_kw_notifications,
+                R.string.search_page_notifications_telegram,
                 { it.profile.hasTelegramTopics },
+                pageLabel = R.string.search_page_notifications_telegram,
             ),
         )
         add(
@@ -326,7 +334,8 @@ internal val settingRowEntries: List<IndexEntry> =
                 R.string.user_settings_telegram_silent,
                 Icons.Filled.NotificationsOff,
                 SettingRows.NOTIFICATIONS_TELEGRAM_SILENT,
-                R.string.search_kw_notifications,
+                R.string.search_page_notifications_telegram,
+                pageLabel = R.string.search_page_notifications_telegram,
             ),
         )
         add(
@@ -388,7 +397,8 @@ private fun setting(
     row: String,
     @StringRes keywords: Int? = null,
     shown: (SearchAccess) -> Boolean = { true },
-) = IndexEntry(SearchTarget.Account(page), label, icon, R.string.search_section_account, keywords, page.titleRes(), row, shown)
+    @StringRes pageLabel: Int = page.titleRes(),
+) = IndexEntry(SearchTarget.Account(page), label, icon, R.string.search_section_account, keywords, pageLabel, row, shown)
 
 /** The page's title as its own entry shows it. */
 @StringRes
