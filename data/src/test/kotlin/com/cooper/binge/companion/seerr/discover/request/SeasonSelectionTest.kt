@@ -3,6 +3,7 @@ package com.cooper.binge.companion.seerr.discover.request
 import com.cooper.binge.companion.seerr.discover.TitleAvailability
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -144,5 +145,29 @@ class SeasonSelectionTest {
 
         assertEquals(full, full.toggle(2))
         assertEquals(full, full.toggleAll())
+    }
+
+    @Test
+    fun `exactly one open season is the only one to pick`() {
+        val oneLeft = listOf(season(1, TitleAvailability.Available), season(2, TitleAvailability.Pending), season(3))
+
+        assertEquals(3, SeasonSelection(oneLeft, partialAllowed = true).onlyOpen?.number)
+    }
+
+    @Test
+    fun `several open seasons are a choice`() {
+        assertNull(SeasonSelection(mixed, partialAllowed = true).onlyOpen)
+    }
+
+    @Test
+    fun `no open season leaves nothing to pick`() {
+        val covered = listOf(season(1, TitleAvailability.Available), season(2, TitleAvailability.Pending))
+
+        assertNull(SeasonSelection(covered, partialAllowed = true).onlyOpen)
+    }
+
+    @Test
+    fun `with partial requests off the whole show is asked for, so no single season is offered`() {
+        assertNull(SeasonSelection(listOf(season(1)), partialAllowed = false).onlyOpen)
     }
 }

@@ -25,7 +25,17 @@ private const val QUOTA_LIMIT = 10
 private const val QUOTA_DAYS = 7
 private const val LONG_NAME = "The Extended Special Collector's Edition Season With A Very Long Name"
 
-private fun choices(longName: Boolean = false) =
+private fun choices(
+    longName: Boolean = false,
+    singleOpen: Boolean = false,
+) = if (singleOpen) {
+    listOf(
+        SeasonChoice(1, "Season 1", EPISODES, TitleAvailability.Available),
+        SeasonChoice(2, "Season 2", EPISODES, TitleAvailability.Processing),
+        SeasonChoice(3, "Season 3", EPISODES, TitleAvailability.Pending),
+        SeasonChoice(4, "Season 4", EPISODES, TitleAvailability.None),
+    )
+} else {
     listOf(
         SeasonChoice(1, if (longName) LONG_NAME else "Season 1", EPISODES, TitleAvailability.Available),
         SeasonChoice(2, "Season 2", EPISODES, TitleAvailability.Processing),
@@ -33,19 +43,21 @@ private fun choices(longName: Boolean = false) =
         SeasonChoice(4, "Season 4", EPISODES, TitleAvailability.None),
         SeasonChoice(5, "Season 5", EPISODES, TitleAvailability.None),
     )
+}
 
 private fun state(
     picked: Set<Int> = emptySet(),
     partial: Boolean = true,
     longName: Boolean = false,
     quota: RequestQuota? = null,
+    singleOpen: Boolean = false,
 ) = RequestSheetUiState.Ready(
     target =
         RequestSheetTarget(
             kind = TitleKind.Series,
             tmdbId = 1399,
             title = "The Long Winter",
-            seasonChoices = SeasonChoices(choices(longName), choices(longName)),
+            seasonChoices = SeasonChoices(choices(longName, singleOpen), choices(longName, singleOpen)),
             partialRequests = partial,
             meta = "2011 · 5 seasons",
         ),
@@ -93,6 +105,29 @@ class RequestSheetSeasonsScreenshotTest {
     @SeerrComponentPreviews
     @Composable
     fun formAllPicked() = Form(state(picked = setOf(4, 5)))
+
+    /** One season left to pick: the Seasons row names it, with its own box and no chevron, in the multi-season row's place. */
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun formSingleSeason() = Form(state(singleOpen = true))
+
+    /** The same season ticked. */
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun formSingleSeasonPicked() = Form(state(picked = setOf(4), singleOpen = true))
+
+    /** The single-season row at font scale 2 and in Spanish. */
+    @PreviewTest
+    @SeerrFontScalePreviews
+    @Composable
+    fun formSingleSeasonLargeFonts() = Form(state(singleOpen = true, longName = true), WORST_HEIGHT)
+
+    @PreviewTest
+    @SeerrSpanishPreviews
+    @Composable
+    fun formSingleSeasonSpanish() = Form(state(picked = setOf(4), singleOpen = true), WORST_HEIGHT)
 
     /** Nothing picked yet on the season page: the covered seasons are shown and cannot be picked. */
     @PreviewTest
