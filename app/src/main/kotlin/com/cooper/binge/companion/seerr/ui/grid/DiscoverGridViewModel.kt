@@ -3,11 +3,6 @@ package com.cooper.binge.companion.seerr.ui.grid
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.binge.companion.sdk.attempt
-import com.cooper.binge.companion.seerr.core.grid.PagedList
-import com.cooper.binge.companion.seerr.core.grid.PagedListState
-import com.cooper.binge.companion.seerr.core.grid.SortFilterQuery
-import com.cooper.binge.companion.seerr.core.grid.SortFilterState
-import com.cooper.binge.companion.seerr.core.search.SearchPage
 import com.cooper.binge.companion.seerr.data.TitleStatusStore
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.TitleStatusMap
@@ -31,6 +26,15 @@ import com.cooper.binge.companion.seerr.discover.sliders.HubMediaSource
 import com.cooper.binge.companion.seerr.discover.sliders.toCard
 import com.cooper.binge.companion.seerr.discover.withoutOffWatchlist
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
+import com.cooper.binge.companion.seerr.seerr.toServerFailure
+import com.cooper.homelab.core.presentation.browse.SortFilterQuery
+import com.cooper.homelab.core.presentation.browse.SortFilterState
+import com.cooper.homelab.core.presentation.paging.GridState
+import com.cooper.homelab.core.presentation.paging.PagedList
+import com.cooper.homelab.core.presentation.paging.PagedListState
+import com.cooper.homelab.core.presentation.paging.ResultPage
+import com.cooper.homelab.core.presentation.paging.numberedPage
+import com.cooper.homelab.core.presentation.paging.toGridState
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -73,7 +77,14 @@ class DiscoverGridViewModel
         val events: SharedFlow<DiscoverGridEvent> = eventFlow.asSharedFlow()
 
         private val list =
-            PagedList(viewModelScope, sortFilter.query, ::fetch, keyOf = { it.kind to it.tmdbId })
+            PagedList(
+                scope = viewModelScope,
+                query = sortFilter.query,
+                first = FIRST_PAGE,
+                fetch = ::fetch,
+                classify = { it.toServerFailure() },
+                keyOf = { it.kind to it.tmdbId },
+            )
 
         val uiState: StateFlow<DiscoverGridUiState> =
             combine(
@@ -107,11 +118,11 @@ class DiscoverGridViewModel
         private suspend fun fetch(
             query: SortFilterQuery<DiscoverFilters, DiscoverSort>,
             page: Int,
-        ): SearchPage<HubCard> {
+        ): ResultPage<HubCard, Int> {
             val loaded = grid.load(GridRequest(kind, preset, query.filters, query.sort), page)
             val serverUrl = media.serverUrl()
             val cards = loaded.results.filter { preset == GridPreset.OwnWatchlist || it.kind == kind }.map { it.toCard(serverUrl) }
-            return SearchPage(cards, loaded.page, loaded.totalPages)
+            return numberedPage(cards, loaded.page, loaded.totalPages)
         }
 
         private fun controls(
@@ -177,17 +188,11 @@ internal fun toUiState(
     controls: GridControls,
     emptyReason: GridEmptyReason = GridEmptyReason.Nothing,
 ): DiscoverGridUiState =
-    when (page) {
-        PagedListState.Loading -> DiscoverGridUiState.Loading(controls)
-        PagedListState.Empty -> DiscoverGridUiState.Empty(controls, emptyReason)
-        is PagedListState.Failed -> DiscoverGridUiState.Error(controls, page.cause.toSeerrError())
-        is PagedListState.Ready ->
-            // A watchlist loses the titles taken off it, so its last one leaving leaves a list with nothing and nothing more to load.
-            if (page.items.isEmpty() && !page.hasMore) {
-                DiscoverGridUiState.Empty(controls, emptyReason)
-            } else {
-                DiscoverGridUiState.Ready(controls, page.items, page.hasMore, page.appending, page.appendFailed)
-            }
+    when (val grid = page.toGridState(controls)) {
+        is GridState.Loading -> DiscoverGridUiState.Loading(controls)
+        is GridState.Empty -> DiscoverGridUiState.Empty(controls, emptyReason)
+        is GridState.Error -> DiscoverGridUiState.Error(controls, grid.failure.toSeerrError())
+        is GridState.Ready -> DiscoverGridUiState.Ready(controls, grid.items, grid.hasMore, grid.appending, grid.appendFailed)
     }
 
 /** A watchlist's own emptiness, or filters the user added matching nothing, or the list being empty by itself. */
@@ -217,3 +222,6 @@ private fun PagedListState<HubCard>.onlyWhileOn(
     preset: GridPreset,
     held: TitleStatusMap,
 ): PagedListState<HubCard> = if (preset == GridPreset.Watchlist || preset == GridPreset.OwnWatchlist) withoutOffWatchlist(held) else this
+
+/** Seerr counts its pages from one. */
+private const val FIRST_PAGE = 1

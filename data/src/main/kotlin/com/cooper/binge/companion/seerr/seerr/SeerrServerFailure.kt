@@ -27,6 +27,23 @@ suspend fun Throwable.toServerFailure(): ServerFailure =
         else -> FailureMapper(SeerrTransport).fromThrowable(this)
     }
 
+/**
+ * The failure a shared list or loader hands back, as the screen's own error. A refusal is a rejection: the lists that use this only
+ * read, so no quota applies. What the app has no word for reads as unknown.
+ */
+fun ServerFailure.toSeerrError(): SeerrError =
+    when (this) {
+        ServerFailure.NotConnected -> SeerrError.NotConnected
+        ServerFailure.SessionRejected -> SeerrError.Unauthorized
+        ServerFailure.NotPermitted -> SeerrError.Forbidden
+        ServerFailure.NotFound -> SeerrError.NotFound
+        is ServerFailure.Refused -> SeerrError.Rejected
+        ServerFailure.ServerError -> SeerrError.Server
+        is ServerFailure.Unreachable -> SeerrError.Unreachable
+        ServerFailure.LocalNetworkDenied -> SeerrError.LocalNetworkDenied
+        else -> SeerrError.Unknown
+    }
+
 /** Whether the server answered the handshake by asking for a client certificate, which the app does not send. Read by the same rules as [toServerFailure]. */
 fun Throwable.wantsClientCertificate(): Boolean = SeerrTransport.read(this) == ServerFailure.ClientCertificateNeeded
 

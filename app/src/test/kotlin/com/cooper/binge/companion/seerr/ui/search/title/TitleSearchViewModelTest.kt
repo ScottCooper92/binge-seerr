@@ -1,8 +1,5 @@
 package com.cooper.binge.companion.seerr.ui.search.title
 
-import com.cooper.binge.companion.seerr.core.search.QUERY_DEBOUNCE_MS
-import com.cooper.binge.companion.seerr.core.search.QueryHistory
-import com.cooper.binge.companion.seerr.core.search.SearchPage
 import com.cooper.binge.companion.seerr.discover.GenreTile
 import com.cooper.binge.companion.seerr.discover.StudioResult
 import com.cooper.binge.companion.seerr.discover.StudioSearch
@@ -22,6 +19,10 @@ import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.seerr.SeerrRequestMediaDto
 import com.cooper.binge.companion.seerr.util.MainDispatcherRule
 import com.cooper.binge.companion.seerr.util.awaitEvent
+import com.cooper.homelab.core.presentation.paging.ResultPage
+import com.cooper.homelab.core.presentation.paging.numberedPage
+import com.cooper.homelab.core.presentation.search.QUERY_DEBOUNCE_MS
+import com.cooper.homelab.core.presentation.search.QueryHistory
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
@@ -115,7 +116,7 @@ class TitleSearchViewModelTest {
                 tmdbId: Int,
             ): HydratedTitle? = null
         }
-    private var studioPage: (String, Int) -> SearchPage<StudioResult> = { _, page -> SearchPage(emptyList(), page, 1) }
+    private var studioPage: (String, Int) -> ResultPage<StudioResult, Int> = { _, page -> numberedPage(emptyList(), page, 1) }
     private var studiosSupported = true
     private val studios =
         object : StudioSearch {
@@ -338,7 +339,7 @@ class TitleSearchViewModelTest {
     @Test
     fun `the Studios chip counts what the company search found and opens its list`() =
         runVm { vm ->
-            studioPage = { _, page -> SearchPage(listOf(StudioResult(1, "Lucasfilm", null), StudioResult(2, "Pixar", null)), page, 1) }
+            studioPage = { _, page -> numberedPage(listOf(StudioResult(1, "Lucasfilm", null), StudioResult(2, "Pixar", null)), page, 1) }
             vm.onQueryChange("lucas")
             advanceUntilIdle()
             val all = vm.uiState.value as TitleSearchUiState.Ready
@@ -354,7 +355,7 @@ class TitleSearchViewModelTest {
     fun `a query only studios answer still shows the chips`() =
         runVm { vm ->
             titles.answer = { _, page -> TitlePage(emptyList(), page, 1) }
-            studioPage = { _, page -> SearchPage(listOf(StudioResult(1, "Lucasfilm", null)), page, 1) }
+            studioPage = { _, page -> numberedPage(listOf(StudioResult(1, "Lucasfilm", null)), page, 1) }
             vm.onQueryChange("lucas")
             advanceUntilIdle()
             val ready = vm.uiState.value as TitleSearchUiState.Ready
@@ -388,7 +389,7 @@ class TitleSearchViewModelTest {
             assertEquals(false, failed.hasMore)
             assertEquals(false, failed.appending)
 
-            studioPage = { _, page -> SearchPage(listOf(StudioResult(1, "Lucasfilm", null)), page, 1) }
+            studioPage = { _, page -> numberedPage(listOf(StudioResult(1, "Lucasfilm", null)), page, 1) }
             vm.onLoadMore()
             advanceUntilIdle()
             assertEquals(listOf("Lucasfilm"), (vm.uiState.value as TitleSearchUiState.Ready).studios.map { it.name })

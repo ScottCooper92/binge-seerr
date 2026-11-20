@@ -1,9 +1,10 @@
 package com.cooper.binge.companion.seerr.discover
 
-import com.cooper.binge.companion.seerr.core.search.SearchPage
 import com.cooper.binge.companion.seerr.seerr.SeerrApi
 import com.cooper.binge.companion.seerr.seerr.SeerrServerProfile
 import com.cooper.binge.companion.seerr.seerr.toTmdbLogoUrl
+import com.cooper.homelab.core.presentation.paging.ResultPage
+import com.cooper.homelab.core.presentation.paging.numberedPage
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 
@@ -22,7 +23,7 @@ interface StudioSearch {
     suspend fun search(
         query: String,
         page: Int,
-    ): SearchPage<StudioResult>
+    ): ResultPage<StudioResult, Int>
 }
 
 /** [StudioSearch] over the server's `/search/company`. [io] is the dispatcher the call runs on; it has no default. */
@@ -36,9 +37,9 @@ class SeerrStudioSearch(
     override suspend fun search(
         query: String,
         page: Int,
-    ): SearchPage<StudioResult> =
+    ): ResultPage<StudioResult, Int> =
         if (!supported()) {
-            SearchPage(emptyList(), page = 1, totalPages = 1)
+            numberedPage(emptyList(), page = 1, totalPages = 1)
         } else {
             searchCompanies(query, page)
         }
@@ -46,10 +47,10 @@ class SeerrStudioSearch(
     private suspend fun searchCompanies(
         query: String,
         page: Int,
-    ): SearchPage<StudioResult> =
+    ): ResultPage<StudioResult, Int> =
         withContext(io) {
             val found = api().searchCompanies(query, page)
-            SearchPage(
+            numberedPage(
                 items =
                     found.results.mapNotNull { dto ->
                         dto.name?.takeIf { it.isNotBlank() }?.let { StudioResult(dto.id, it, dto.logoPath?.toTmdbLogoUrl()) }
