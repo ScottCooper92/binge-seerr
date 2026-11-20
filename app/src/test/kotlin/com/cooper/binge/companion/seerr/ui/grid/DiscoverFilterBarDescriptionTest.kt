@@ -40,7 +40,12 @@ class DiscoverFilterBarDescriptionTest {
 
     @Test
     fun `with filters applied the pill says how many`() {
-        val expected = ApplicationProvider.getApplicationContext<android.content.Context>().resources.getQuantityString(R.plurals.grid_open_filters_applied, 2, 2)
+        val expected =
+            ApplicationProvider.getApplicationContext<android.content.Context>().resources.getQuantityString(
+                R.plurals.grid_open_filters_applied,
+                2,
+                2,
+            )
         assertEquals(expected, descriptionWith(listOf(FilterGroup.Genres, FilterGroup.Rating)))
     }
 }
