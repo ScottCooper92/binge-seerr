@@ -91,12 +91,11 @@ internal class SeerrRequestRpcs(
     }
 
     /**
-     * Deletes the version's files from Radarr or Sonarr, then withdraws its requests, a completed one included (Seerr
-     * keeps it after the files go, #1939). The contract says DeleteFiles withdraws the request; the console's Delete
-     * files still leaves a completed one, which #1942 tracks. A version with a request and no files yet is not gone: the request is withdrawn and the answer is OK. Once the
-     * files are deleted the answer is OK even if a withdrawal then fails, because the contract never answers an error
-     * after deleting; the next status read shows what remains. NOT_FOUND is for a title Seerr has no record of, or one
-     * with neither files nor a request left in that version.
+     * Deletes the version's files, then withdraws its open requests, as the console's Delete files does. A completed one
+     * stays as history, as on Seerr (#1942; docs/server-compatibility.md says why). A version with an open request and no
+     * files is withdrawn and answers OK. Once files are deleted the answer is OK even if a withdrawal fails; the next
+     * status read shows what remains. NOT_FOUND is for a title Seerr has no record of, or a version with neither files
+     * nor an open request.
      */
     suspend fun deleteFiles(request: DeleteFilesRequest): DeleteFilesResponse {
         val media = request.media
@@ -109,7 +108,9 @@ internal class SeerrRequestRpcs(
         val recordId = info.recordIdFor(media)
         val withFiles = (if (is4k) info?.status4k else info?.status).hasFiles()
         val withdrawable =
-            info?.requests.orEmpty().filter { it.is4k == is4k && it.status != SeerrRequestStatusCode.Declined }
+            info?.requests.orEmpty().filter {
+                it.is4k == is4k && it.status != SeerrRequestStatusCode.Declined && it.status != SeerrRequestStatusCode.Completed
+            }
         if (!withFiles && withdrawable.isEmpty()) {
             throw StatusException(Status.NOT_FOUND.withDescription("Seerr has no files or request left for that version"))
         }
