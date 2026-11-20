@@ -44,7 +44,7 @@ suspend fun SeerrRequestDto.toRequestItem(
 }
 
 /** The media's status for the version this request asked for: the 4K one for a 4K request, the regular one otherwise. */
-internal fun SeerrRequestDto.mediaStatusOfRequestedVersion(): SeerrMediaStatusCode? = if (is4k) media.status4k else media.status
+fun SeerrRequestDto.mediaStatusOfRequestedVersion(): SeerrMediaStatusCode? = if (is4k) media.status4k else media.status
 
 private fun List<SeerrDownloadStatusDto>.toDownload(nowMillis: Long): RequestDownload? {
     if (isEmpty()) return null

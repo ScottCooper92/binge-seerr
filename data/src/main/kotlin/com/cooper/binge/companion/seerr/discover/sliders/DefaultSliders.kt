@@ -24,7 +24,7 @@ private val DEFAULT_ORDER =
  * The sliders of a server with no slider API, which shows the web client's own default set. Their ids are the negative of
  * their kind's number, so no one mistakes them for rows the server holds.
  */
-fun defaultSliders(): List<DiscoverSlider> =
+internal fun defaultSliders(): List<DiscoverSlider> =
     DEFAULT_ORDER.map { type ->
         DiscoverSlider(id = -type.code, typeCode = type.code, title = null, builtIn = true, enabled = true, data = null)
     }

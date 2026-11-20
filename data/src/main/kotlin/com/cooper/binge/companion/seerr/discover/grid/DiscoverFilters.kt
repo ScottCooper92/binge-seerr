@@ -69,7 +69,7 @@ const val RATING_SORT_VOTE_FLOOR = 300
  * joined with a comma, TMDB's "all of", and the streaming services with the pipe it reads as "any of". Genres take the pipe too
  * when [DiscoverFilters.genresAny] is set.
  */
-fun toDiscoverQuery(
+internal fun toDiscoverQuery(
     kind: TitleKind,
     filters: DiscoverFilters,
     sort: DiscoverSort,

@@ -104,7 +104,7 @@ class DiscoverSliderViewModel
         }
 
         override suspend fun write(draft: SliderForm): SliderForm =
-            if (draft.id == null) sliders.add(draft) else sliders.update(draft.id, draft)
+            draft.id.let { id -> if (id == null) sliders.add(draft) else sliders.update(id, draft) }
 
         override fun canSave(draft: SliderForm): Boolean = draft.valid
 

@@ -45,7 +45,7 @@ private fun kindOf(mediaType: String): TitleKind? =
     }
 
 /** The server's own status, with every state this app does not show (unknown, deleted, none) as [TitleAvailability.None]. */
-internal fun SeerrMediaStatusCode?.toAvailability(): TitleAvailability =
+fun SeerrMediaStatusCode?.toAvailability(): TitleAvailability =
     when (this) {
         SeerrMediaStatusCode.Pending -> TitleAvailability.Pending
         SeerrMediaStatusCode.Processing -> TitleAvailability.Processing

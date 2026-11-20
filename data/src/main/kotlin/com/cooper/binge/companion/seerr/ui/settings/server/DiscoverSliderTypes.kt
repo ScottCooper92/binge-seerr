@@ -99,7 +99,7 @@ data class StreamingPick(
 }
 
 /** Reads `US,8|337`: a region, then ids; anything missing is empty and anything that is not an id is skipped. */
-internal fun String.toStreamingPick(): StreamingPick =
+fun String.toStreamingPick(): StreamingPick =
     StreamingPick(
         region = substringBefore(',').trim(),
         providerIds = substringAfter(',', "").split('|').mapNotNull { it.trim().toIntOrNull() },
@@ -151,13 +151,13 @@ internal fun SeerrDiscoverSliderDto.toSlider(): DiscoverSlider? {
 }
 
 /** The slider as the page for one reads it; fails for a kind this app does not recognize, as [SeerrDiscoverSliderDto.toForm] does. */
-internal fun DiscoverSlider.toForm(): SliderForm {
+fun DiscoverSlider.toForm(): SliderForm {
     val sliderType = type ?: throw NoSuchElementException("slider type $typeCode")
     return SliderForm(id = id, type = sliderType, title = title.orEmpty(), data = data.orEmpty())
 }
 
 /** The record as the batch update takes it: every field back, with the order and the enabled state as edited. */
-internal fun DiscoverSlider.toDto(): SeerrDiscoverSliderDto =
+fun DiscoverSlider.toDto(): SeerrDiscoverSliderDto =
     SeerrDiscoverSliderDto(id = id, type = typeCode, title = title, isBuiltIn = builtIn, enabled = enabled, data = data)
 
 /**
@@ -165,10 +165,9 @@ internal fun DiscoverSlider.toDto(): SeerrDiscoverSliderDto =
  * falling back to a known kind would, on the next unrelated edit, save that wrong kind over the
  * server's real one.
  */
-internal fun SeerrDiscoverSliderDto.toForm(): SliderForm {
+fun SeerrDiscoverSliderDto.toForm(): SliderForm {
     val sliderType = SliderType.fromCode(type) ?: throw NoSuchElementException("slider type $type")
     return SliderForm(id = id, type = sliderType, title = title.orEmpty(), data = data.orEmpty())
 }
 
-internal fun SliderForm.toBody(): SeerrDiscoverSliderBody =
-    SeerrDiscoverSliderBody(title = title.trim(), type = type.code, data = data.trim())
+fun SliderForm.toBody(): SeerrDiscoverSliderBody = SeerrDiscoverSliderBody(title = title.trim(), type = type.code, data = data.trim())
