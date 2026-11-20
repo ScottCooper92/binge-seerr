@@ -5,8 +5,8 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import com.binge.designsystem.template.EpisodeRow
-import com.binge.designsystem.template.SeasonRow
+import com.binge.designsystem.component.EpisodeRow
+import com.binge.designsystem.component.SeasonRow
 import com.binge.designsystem.template.SeriesDetail
 import com.binge.designsystem.template.SeriesDetailCallbacks
 import com.cooper.binge.companion.seerr.R
