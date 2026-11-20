@@ -3,8 +3,11 @@ package com.cooper.binge.companion.seerr.ui.grid
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.EntryProviderScope
@@ -46,6 +49,7 @@ internal fun DiscoverGridEntry(
     reselectKey: Any? = null,
     modelKey: String = route.toString(),
     onQueryChanged: ((DiscoverFilters, DiscoverSort) -> Unit)? = null,
+    onKindSwitched: () -> Unit = {},
 ) {
     val tomorrow = remember { LocalDate.now().plusDays(1).toString() }
     val model =
@@ -86,6 +90,7 @@ internal fun DiscoverGridEntry(
                 onOpenTitle = model::onOpenTitle,
                 onApply = model::onApply,
                 onSwitchKind = { kind, sort, filters ->
+                    onKindSwitched()
                     backStack.replaceTop(route, route.carriedTo(kind, sort, filters))
                 },
                 loads = FilterLoads(model::onProvidersNeeded, model::onKeywordQuery, model::onKeywordsNeeded),
@@ -97,7 +102,8 @@ internal fun DiscoverGridEntry(
 /**
  * The Discover tab: the grid at its root, as a tab of its own with no Back arrow. The tab's stack holds the one route, and the
  * Content choice in the filter sheet reopens it as the other kind in place, so the tab picks Movies or TV shows as Binge's does.
- * The route is kept in step with the kind, order and filters chosen, so a fold that takes the tab away and an unfold reopen it as left.
+ * The route is kept in step with the order and filters chosen, so a fold that takes the tab away and an unfold reopen it as left.
+ * The grid's ViewModel is keyed by how many times the kind was switched: a write-back keeps it, and every switch starts a fresh one.
  */
 @Composable
 internal fun DiscoverTabEntry(
@@ -105,6 +111,7 @@ internal fun DiscoverTabEntry(
     onOpenAccount: (Int) -> Unit,
 ) {
     val route = stack.lastOrNull() as? DiscoverGridRoute ?: return
+    var switches by rememberSaveable { mutableIntStateOf(0) }
     DiscoverGridEntry(
         route,
         onBack = null,
@@ -112,7 +119,8 @@ internal fun DiscoverTabEntry(
         onOpenAccount = onOpenAccount,
         title = null,
         reselectKey = SeerrTab.Discover,
-        modelKey = "discover-tab-${route.kind}",
+        modelKey = "discover-tab-$switches",
+        onKindSwitched = { switches++ },
         onQueryChanged = { filters, sort ->
             if (route.filters != filters || route.sort != sort) stack.replaceTop(route, route.copy(filters = filters, sort = sort))
         },

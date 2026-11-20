@@ -3,6 +3,8 @@ package com.cooper.binge.companion.seerr.ui.nav
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -97,5 +99,37 @@ class DiscoverTabJourneyTest {
         host.compose.onNodeWithTag("tab_discover").performClick()
 
         host.awaitShowing(RATED)
+    }
+
+    @Test
+    fun `switching to TV shows and back to movies starts the grid from what the sheet chose`() {
+        NavHostActivity.discoveryEnabled = true
+        host.connectDemo()
+        host.launch(HomeRoute)
+        host.awaitShowing(host.string(R.string.hubs_row_recently_added))
+        host.compose.onNodeWithTag("tab_discover").performClick()
+        host.awaitShowing(host.string(R.string.grid_filters_button))
+
+        applyInSheet(host.string(R.string.grid_content_tv))
+        host.awaitShowing("TV · Most popular")
+
+        applyInSheet(host.string(R.string.grid_content_movies), host.string(R.string.grid_sort_rating_desc))
+
+        host.awaitShowing(RATED)
+    }
+
+    private fun applyInSheet(vararg choices: String) {
+        host.clickUntilShowing(host.string(R.string.grid_filters_button), host.string(R.string.grid_filters_show_results))
+        choices.forEach { choice ->
+            host.compose
+                .onAllNodesWithText(choice)
+                .onLast()
+                .performClick()
+        }
+        host.clickUntil(
+            "the sheet closed",
+            target = { host.compose.onNodeWithText(host.string(R.string.grid_filters_show_results)) },
+            reached = { !host.isShowing(host.string(R.string.grid_filters_show_results)) },
+        )
     }
 }
