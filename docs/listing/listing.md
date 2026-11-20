@@ -12,16 +12,21 @@ label (`app_label`). The name is a maintainer's decision; see the README.
 
 80 characters at most.
 
-> Manage your Seerr, Jellyseerr or Overseerr server, and request from Binge.
+> Browse, request and manage your Seerr, Jellyseerr or Overseerr server.
 
-(72 characters)
+(70 characters)
 
 ## Full description
 
 4,000 characters at most.
 
-> An admin console for the Seerr, Jellyseerr or Overseerr server you already run, on your phone and
-> your TV.
+> A client and admin console for the Seerr, Jellyseerr or Overseerr server you already run, on your
+> phone and your TV.
+>
+> **Discover.** On your phone, browse Movies and TV from your own server, search for titles, and
+> open title, person and collection pages: trailers, cast, where to watch and recommendations.
+> Request from any title, choosing seasons and 4K, add it to your watchlist or report a problem,
+> as far as your account and your server allow. You can turn it off in This app.
 >
 > **Requests.** See every request on the server, filtered by state and sorted your way. Approve,
 > decline, retry or remove them, block a title so it cannot be requested again, and change a
@@ -56,7 +61,7 @@ label (`app_label`). The name is a maintainer's decision; see the README.
 > Seerr Companion is an independent app. It is not made by or affiliated with the Seerr, Jellyseerr
 > or Overseerr projects.
 
-(2,114 characters)
+(2,548 characters)
 
 ## Category and contact
 

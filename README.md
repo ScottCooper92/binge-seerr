@@ -1,6 +1,6 @@
 # binge-seerr
 
-An Android admin console for a Seerr, Jellyseerr or Overseerr server, and the reference
+An Android client and admin console for a Seerr, Jellyseerr or Overseerr server, and the reference
 companion app for [Binge](https://github.com/ScottCooper92).
 
 ## For the person running a server
@@ -32,7 +32,7 @@ gains a Request button, Binge shows each title's request state, and an advanced 
 server, profile and folder choices, which Binge renders itself from this app's answers. Binge is
 optional; everything above works without it.
 
-**It is also a discovery client, on the phone.** Behind a feature flag that is off for now, it browses Movies and TV, searches for titles, and opens title, person and collection pages, all from your own server's API, with requesting as the main action. Binge remains the richer browsing app; this one reaches the same titles through the server you already run.
+**It is also a discovery client, on the phone.** Movies and TV hubs, title search, and title, person and collection pages, all from your own server's API, with requesting as the main action: seasons, 4K, the watchlist, and reporting a problem, as far as your account and server allow. It can be turned off under This app. Binge remains the richer browsing app; this one reaches the same titles through the server you already run.
 
 The store listing and the privacy policy are under [`docs/listing/`](docs/listing/). The short
 version: the one secret (your API key or session) is encrypted with an Android Keystore key and
