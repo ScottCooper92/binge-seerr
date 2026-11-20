@@ -116,9 +116,8 @@ models those stores import. It has no Compose, Activity, Hilt or vendor SDK, so 
 Its packages keep the names they had as one module, so a file's package does not say which module it is in.
 
 `internal` stops at the module boundary. Declare something `internal` in `:data` unless `:app` calls it, and a test in `:app` that
-needs an internal of `:data` belongs in `:data`. What tests in every module share, such as the fake server, the fake stores, the ciphers
-and the coroutine helpers, is in `:core:testing`, which takes `:data` and is a test dependency of the modules above it. The Room schemas
-are in `data/schemas`, committed. More modules follow in the order #2163 sets out.
+needs an internal of `:data` belongs in `:data`. What tests in both modules share, such as the fake server and the ciphers, is in
+`:data`'s `testFixtures`. The Room schemas are in `data/schemas`, committed. More modules follow in the order #2163 sets out.
 
 What each module may depend on is the table in `buildSrc/src/main/kotlin/ModuleRules.kt`, and `checkModuleRules` holds the build to it. A new module gets
 a row in the same PR, with what it may depend on and why. A row changes when the design of the modules does, not to get a build green.

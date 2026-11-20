@@ -1,8 +1,6 @@
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.ktlint)
-    id("binge.gates.detekt")
-    id("binge.gates.baseline-staleness")
 }
 
 // What the tests of every module share, so a per-module test does not carry its own copy: the fake server and the fake stores, the two
@@ -46,9 +44,7 @@ kotlin.target.compilations.configureEach {
     compileTaskProvider.configure { compilerOptions.optIn.add("kotlinx.coroutines.ExperimentalCoroutinesApi") }
 }
 
-// binge-ci's detekt gate, as :data runs it, with this module's own baseline (empty).
-detektGate {
-    baselineFile = layout.projectDirectory.file("detekt-baseline.xml")
-    customRulesProject = ":detekt-rules"
-    parallel = false
-}
+// No detekt gate here, on purpose. detekt scans production `src/main` only, and everything in this module is test support: it was in
+// `data/src/testFixtures` and `app/src/test`, which detekt never scanned, and it is not production code now that it has a module of its
+// own. The helpers are not at fault: `OkHttpDrain` needs the real `Dispatchers.Default`, and a fake server is meant to be large. ktlint,
+// Android lint and `checkModuleRules` still run on it.
