@@ -1461,6 +1461,7 @@
     <string name="search_kw_proxy">proxy inverso reenviado</string>
     <string name="search_kw_sign_in">acceso contraseña cuentas</string>
     <string name="hub_update_release_notes">Notas de la versión</string>
+    <string name="hub_update_release_notes_opens_outside">Se abre fuera de la app</string>
     <string name="tv_settings_release_notes">Notas de la versión</string>
     <string name="tv_settings_release_notes_scan">Escanéalo con la cámara del móvil para ver qué cambia en la nueva versión, o ve a %1$s</string>
     <string name="tv_settings_release_notes_code_description">Código QR que abre las notas de la versión del servidor</string>

@@ -1520,6 +1520,7 @@
     <string name="search_kw_proxy">reverse proxy forwarded</string>
     <string name="search_kw_sign_in">login password accounts</string>
     <string name="hub_update_release_notes">Release notes</string>
+    <string name="hub_update_release_notes_opens_outside">Opens outside the app</string>
     <string name="tv_settings_release_notes">Release notes</string>
     <string name="tv_settings_release_notes_scan">Scan it with your phone\'s camera to read what the new version changes, or go to %1$s</string>
     <string name="tv_settings_release_notes_code_description">QR code that opens the server\'s release notes</string>
