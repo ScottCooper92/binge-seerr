@@ -251,7 +251,7 @@ dependencies {
     implementation(libs.homelab.appservices.posthog)
     implementation(libs.homelab.appservices.firebase)
     testImplementation(libs.homelab.testing)
-    testImplementation(testFixtures(project(":data")))
+    testImplementation(project(":core:testing"))
     implementation(libs.hilt.android)
     ksp(libs.hilt.android.compiler)
     implementation(libs.hilt.lifecycle.viewmodel.compose)

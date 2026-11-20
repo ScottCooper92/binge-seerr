@@ -26,6 +26,8 @@ plugins {
 // the map fails the build, and it runs in that module's `check`, which `./gradlew build` carries.
 subprojects {
     val module = this
+    // `include(":core:testing")` also creates `:core`, an empty parent with no build file and nothing to check.
+    if (!module.buildFile.exists()) return@subprojects
     module.afterEvaluate {
         val check =
             module.tasks.register<CheckModuleRulesTask>("checkModuleRules") {

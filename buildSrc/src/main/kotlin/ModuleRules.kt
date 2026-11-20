@@ -49,6 +49,11 @@ val MODULE_RULES: List<ModuleRule> =
                     "no Hilt or Dagger (the graph is built in :app), and no vendor SDK (Play services, Play Billing, Play In-App Review, Firebase, PostHog).",
         ),
         ModuleRule(
+            path = ":core:testing",
+            projects = setOf(":data"),
+            reason = "What the tests of every module share: it reaches the code under test, which is :data, and nothing above it.",
+        ),
+        ModuleRule(
             path = ":detekt-rules",
             projects = emptySet(),
             reason = "The comment rules detekt loads: a build tool, which depends on no module of the app.",
