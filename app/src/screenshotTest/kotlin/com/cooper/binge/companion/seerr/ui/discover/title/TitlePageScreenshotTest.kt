@@ -142,6 +142,21 @@ class TitlePageScreenshotTest {
     fun blocklisted() =
         Frame(TitlePageUiState.Ready(fullMovie(standard = VersionState(TitleAvailability.Blocklisted, mayRequest = false), fourK = null)))
 
+    /** Partly available with 4K still open: the primary says so with its dot, and Report joins Trailer. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun partlyAvailable() =
+        Frame(
+            TitlePageUiState.Ready(
+                fullMovie(
+                    standard = VersionState(TitleAvailability.PartiallyAvailable, mayRequest = false),
+                    fourK = VersionState(TitleAvailability.None, mayRequest = true),
+                ),
+                fullExtras(),
+            ),
+        )
+
     /** The sections that load apart have not arrived yet. */
     @PreviewTest
     @SeerrScreenStatePreview
