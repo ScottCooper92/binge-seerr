@@ -45,7 +45,7 @@ internal fun TitleDetailsSection(
     }
 }
 
-private fun InfoValue.hasText(): Boolean =
+internal fun InfoValue.hasText(): Boolean =
     when (this) {
         is InfoValue.Plain -> text.isNotBlank()
         is InfoValue.Link -> text.isNotBlank()
