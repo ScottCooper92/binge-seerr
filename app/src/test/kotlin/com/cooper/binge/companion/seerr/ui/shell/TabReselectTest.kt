@@ -181,8 +181,11 @@ class TabReselectTest {
         rule.waitForIdle()
 
         reselect(SeerrTab.Movies)
-
         rule.onNodeWithText("Row 0").assertDoesNotExist()
+
+        reselect(SeerrTab.Tv)
+
+        rule.waitUntil(WAIT_MILLIS) { rule.onAllNodesWithText("Row 0").fetchSemanticsNodes().isNotEmpty() }
     }
 
     /** How far the first scrolling node has scrolled, in pixels. */
