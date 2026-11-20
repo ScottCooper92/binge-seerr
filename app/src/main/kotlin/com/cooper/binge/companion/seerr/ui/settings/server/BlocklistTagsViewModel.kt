@@ -136,6 +136,3 @@ class BlocklistTagsViewModel
         private fun editReady(transform: (BlocklistTagsUiState.Ready) -> BlocklistTagsUiState.Ready) =
             state.update { current -> (current as? BlocklistTagsUiState.Ready)?.let(transform) ?: current }
     }
-
-/** The server's comma-separated keyword ids. */
-internal fun String.tagIds(): List<Int> = split(',').mapNotNull { it.trim().toIntOrNull() }
