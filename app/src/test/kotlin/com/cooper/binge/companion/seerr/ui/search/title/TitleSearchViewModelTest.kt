@@ -174,7 +174,7 @@ class TitleSearchViewModelTest {
         }
 
     @Test
-    fun `the type chips count what has loaded and All counts every row, collections too, whatever total the server gave`() =
+    fun `the type chips count what has loaded and All counts every row, collections too, though more pages are to come`() =
         runVm { vm ->
             titles.answer = { _, page ->
                 TitlePage(
@@ -186,7 +186,6 @@ class TitleSearchViewModelTest {
                     ),
                     page,
                     5,
-                    total = 50,
                 )
             }
             vm.onQueryChange("matrix")
