@@ -202,11 +202,13 @@ class UserDetailViewModelTest {
             val statuses = TitleStatusStore()
             val vm = viewModel(statuses = statuses)
             vm.awaitReady()
-            assertEquals(SeerrMediaStatusCode.Processing, vm.requests.asSnapshot().single().mediaStatus)
+            val before = vm.requests.asSnapshot().single()
+            assertEquals(SeerrMediaStatusCode.Processing, before.mediaStatus)
 
             statuses.seed(TitleKey(TitleType.Movie, 100), TitleStatuses(SeerrMediaStatusCode.Blocklisted), statuses.beginRead())
 
-            assertEquals(SeerrMediaStatusCode.Blocklisted, vm.requests.asSnapshot().single().mediaStatus)
+            val after = vm.requests.asSnapshot().single()
+            assertEquals(SeerrMediaStatusCode.Blocklisted, after.mediaStatus)
         }
 
     /** #1239: "joined" and each request's time age while the page shows, and the clock stops when it leaves. */
