@@ -241,7 +241,7 @@ internal fun List<SeerrVideoDto>.toTitleVideos(): List<TitleVideo> =
  * Seerr's default is no region anywhere, so the last resort is [deviceRegion], the country the phone is set to, and a
  * region someone chose always wins over it.
  */
-internal suspend fun streamingRegion(
+suspend fun streamingRegion(
     api: SeerrApi,
     user: SeerrUserDto,
     profile: SeerrServerProfile,
@@ -283,7 +283,7 @@ internal suspend fun TitleStatusStore.watchlisting(
 }
 
 /** Shows the title unblocked at once, and puts the block back if the server refuses. */
-internal suspend fun TitleStatusStore.unblocking(
+suspend fun TitleStatusStore.unblocking(
     key: TitleKey,
     unblock: suspend () -> Unit,
 ) {

@@ -15,9 +15,9 @@ import com.cooper.homelab.core.presentation.paging.PagedListState
 import com.cooper.homelab.core.presentation.search.QuerySearchState
 
 /** What [TitleStatusStore] knows of every title, as a list of cards reads it to show the latest status. */
-internal typealias TitleStatusMap = Map<TitleKey, TitleStatuses>
+typealias TitleStatusMap = Map<TitleKey, TitleStatuses>
 
-internal fun TitleKind.titleType(): TitleType? =
+fun TitleKind.titleType(): TitleType? =
     when (this) {
         TitleKind.Movie -> TitleType.Movie
         TitleKind.Series -> TitleType.Tv
@@ -35,22 +35,22 @@ internal fun TitleStatusMap.availabilityOf(
     return held.standard.toAvailability()
 }
 
-internal fun TitleResult.overlaid(statuses: TitleStatusMap): TitleResult =
+fun TitleResult.overlaid(statuses: TitleStatusMap): TitleResult =
     statuses.availabilityOf(kind, tmdbId, availability).let { if (it == availability) this else copy(availability = it) }
 
-internal fun HubCard.overlaid(statuses: TitleStatusMap): HubCard =
+fun HubCard.overlaid(statuses: TitleStatusMap): HubCard =
     statuses.availabilityOf(kind, tmdbId, availability).let { if (it == availability) this else copy(availability = it) }
 
-internal fun HubHero.overlaid(statuses: TitleStatusMap): HubHero =
+fun HubHero.overlaid(statuses: TitleStatusMap): HubHero =
     statuses.availabilityOf(kind, tmdbId, availability).let { if (it == availability) this else copy(availability = it) }
 
-internal fun PersonCredit.overlaid(statuses: TitleStatusMap): PersonCredit =
+fun PersonCredit.overlaid(statuses: TitleStatusMap): PersonCredit =
     statuses.availabilityOf(kind, tmdbId, availability).let { if (it == availability) this else copy(availability = it) }
 
-internal fun PersonCredits.overlaid(statuses: TitleStatusMap): PersonCredits =
+fun PersonCredits.overlaid(statuses: TitleStatusMap): PersonCredits =
     PersonCredits(cast.overlaidBy(statuses) { it.overlaid(statuses) }, crew.overlaidBy(statuses) { it.overlaid(statuses) })
 
-internal fun CollectionDetails.overlaid(statuses: TitleStatusMap): CollectionDetails =
+fun CollectionDetails.overlaid(statuses: TitleStatusMap): CollectionDetails =
     parts.overlaidBy(statuses) { it.overlaid(statuses) }.let { if (it === parts) this else copy(parts = it) }
 
 /** The list itself when no item changed, so a status that moved elsewhere does not rebuild a list it is not in. */
@@ -63,14 +63,14 @@ internal fun <T> List<T>.overlaidBy(
     return if (mapped.indices.all { mapped[it] === this[it] }) this else mapped
 }
 
-internal fun PagedListState<HubCard>.overlaid(statuses: TitleStatusMap): PagedListState<HubCard> =
+fun PagedListState<HubCard>.overlaid(statuses: TitleStatusMap): PagedListState<HubCard> =
     if (this is PagedListState.Ready) {
         items.overlaidBy(statuses) { it.overlaid(statuses) }.let { if (it === items) this else copy(items = it) }
     } else {
         this
     }
 
-internal fun QuerySearchState<TitleResult>.overlaid(statuses: TitleStatusMap): QuerySearchState<TitleResult> =
+fun QuerySearchState<TitleResult>.overlaid(statuses: TitleStatusMap): QuerySearchState<TitleResult> =
     if (this is QuerySearchState.Results) {
         items.overlaidBy(statuses) { it.overlaid(statuses) }.let { if (it === items) this else copy(items = it) }
     } else {
@@ -96,10 +96,10 @@ internal fun TitleStatusMap.offWatchlist(
 ): Boolean = kind.titleType()?.let { this[TitleKey(it, tmdbId)]?.onWatchlist } == false
 
 /** A watchlist's cards without the titles that came off it since it was read. Adding to it shows on the next read, as #2341 says. */
-internal fun List<HubCard>.withoutOffWatchlist(statuses: TitleStatusMap): List<HubCard> =
+fun List<HubCard>.withoutOffWatchlist(statuses: TitleStatusMap): List<HubCard> =
     if (statuses.isEmpty()) this else filterNot { statuses.offWatchlist(it.kind, it.tmdbId) }.let { if (it.size == size) this else it }
 
-internal fun PagedListState<HubCard>.withoutOffWatchlist(statuses: TitleStatusMap): PagedListState<HubCard> =
+fun PagedListState<HubCard>.withoutOffWatchlist(statuses: TitleStatusMap): PagedListState<HubCard> =
     if (this is PagedListState.Ready) {
         items.withoutOffWatchlist(statuses).let { if (it === items) this else copy(items = it) }
     } else {

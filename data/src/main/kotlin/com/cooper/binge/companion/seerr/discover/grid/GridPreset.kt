@@ -82,7 +82,7 @@ fun GridPreset.startingSort(kind: TitleKind): DiscoverSort =
     }
 
 /** The dedicated route for a preset: what a server with no filter parameters is asked, and the lists that take none. */
-fun GridPreset.toSource(kind: TitleKind): TitleSource =
+internal fun GridPreset.toSource(kind: TitleKind): TitleSource =
     when (this) {
         GridPreset.Popular -> TitleSource.Popular(kind)
         GridPreset.Upcoming -> TitleSource.Upcoming(kind)

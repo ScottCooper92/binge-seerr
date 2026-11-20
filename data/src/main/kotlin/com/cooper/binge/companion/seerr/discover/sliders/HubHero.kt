@@ -13,7 +13,7 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 
 /** Most pages the hero carousel has. */
-const val HERO_PAGES = 5
+internal const val HERO_PAGES = 5
 
 /** One page of a hub's hero carousel: a title with a backdrop, as the trending list ranks it. */
 data class HubHero(

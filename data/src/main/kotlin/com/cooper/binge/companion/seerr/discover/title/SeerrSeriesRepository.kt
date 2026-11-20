@@ -281,7 +281,7 @@ private fun SeerrTvDetailsDto.seasonInfos(
  * What the server holds of one season in one version: its own status when it has one, else Pending when an open request of
  * that version names the season, else None. A declined or completed request covers nothing.
  */
-internal fun SeerrMediaInfoDto?.seasonAvailability(
+fun SeerrMediaInfoDto?.seasonAvailability(
     number: Int,
     is4k: Boolean,
 ): TitleAvailability {

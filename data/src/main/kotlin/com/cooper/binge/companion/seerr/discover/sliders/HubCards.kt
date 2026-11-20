@@ -28,7 +28,7 @@ data class HubCard(
     val rating: Float? = null,
 )
 
-internal fun TitleResult.toCard(serverUrl: String): HubCard =
+fun TitleResult.toCard(serverUrl: String): HubCard =
     HubCard(
         kind,
         tmdbId,

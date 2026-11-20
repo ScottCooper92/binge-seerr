@@ -11,7 +11,7 @@ fun HubTab.titleKind(): TitleKind = if (this == HubTab.Movies) TitleKind.Movie e
  * The title list a row is read from, or null for a row that is not one: the tile rows (genres, studios, networks) and the
  * two that come from the server's media table rather than a title list (recently added, recent requests).
  */
-fun HubRow.toSource(): TitleSource? =
+internal fun HubRow.toSource(): TitleSource? =
     when (this) {
         is HubRow.Trending -> TitleSource.Trending
         is HubRow.Watchlist -> TitleSource.Watchlist
@@ -32,10 +32,10 @@ fun HubRow.toSource(): TitleSource? =
     }
 
 /** Most cards a hub row shows; the rest is the grid's. */
-const val HUB_ROW_CARDS = 10
+internal const val HUB_ROW_CARDS = 10
 
 /**
  * What a hub row keeps of a page: the titles of the hub's own kind (a mixed list holds people, collections and the other
  * kind too), at most [HUB_ROW_CARDS].
  */
-fun List<TitleResult>.forHub(tab: HubTab): List<TitleResult> = filter { it.kind == tab.titleKind() }.take(HUB_ROW_CARDS)
+internal fun List<TitleResult>.forHub(tab: HubTab): List<TitleResult> = filter { it.kind == tab.titleKind() }.take(HUB_ROW_CARDS)

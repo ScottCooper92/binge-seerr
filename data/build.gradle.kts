@@ -40,6 +40,8 @@ dependencies {
     implementation(libs.homelab.appservices)
     implementation(libs.homelab.server)
     implementation(libs.homelab.bridge)
+    // PagedListState, QuerySearchState and ResultPage, which discover/ builds its lists from. Compose-free: checkModuleRules holds it to that.
+    implementation(libs.homelab.presentation)
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.retrofit)
