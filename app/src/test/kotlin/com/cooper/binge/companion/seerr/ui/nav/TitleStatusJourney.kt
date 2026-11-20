@@ -13,8 +13,6 @@ import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.data.TitleKey
 import com.cooper.binge.companion.seerr.data.TitleType
 
-internal const val PHONE = "w400dp-h800dp"
-internal const val WAIT_MILLIS = 5_000L
 private const val REQUESTS_TAKEN = 100
 internal const val FILM_ID = 133701
 

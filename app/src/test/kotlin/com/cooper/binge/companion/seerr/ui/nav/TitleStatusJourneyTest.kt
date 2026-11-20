@@ -24,6 +24,10 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
+private const val PHONE = "w400dp-h800dp"
+
+private const val WAIT_MILLIS = 5_000L
+
 private const val POPULAR_MOVIES = 5
 
 /**

@@ -23,6 +23,8 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
+private const val PHONE = "w400dp-h800dp"
+
 /** The request status the demo gives a declined request, as the server's code. */
 private const val DECLINED = 3
 
