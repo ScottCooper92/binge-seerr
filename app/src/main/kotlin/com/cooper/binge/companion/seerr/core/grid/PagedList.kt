@@ -28,7 +28,6 @@ sealed interface PagedListState<out T> {
         val hasMore: Boolean,
         val appending: Boolean = false,
         val appendFailed: Boolean = false,
-        val total: Int? = null,
     ) : PagedListState<T>
 
     data object Empty : PagedListState<Nothing>
@@ -87,7 +86,7 @@ class PagedList<Q, T>(
             val seen = mutableSetOf<Any>()
             val first = attempt { readPage(query, 1, seen) }.getOrElse { return@flow emit(PagedListState.Failed(it)) }
             if (first.items.isEmpty()) return@flow emit(PagedListState.Empty)
-            var shown = PagedListState.Ready(first.items, first.hasMore, total = first.total)
+            var shown = PagedListState.Ready(first.items, first.hasMore)
             emit(shown)
             var last = first
             moreRequests.collect {
