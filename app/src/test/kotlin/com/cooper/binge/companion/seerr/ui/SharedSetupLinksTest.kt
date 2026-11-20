@@ -203,13 +203,13 @@ class SharedSetupLinksTest {
             val vm = viewModel(breadcrumbs = breadcrumbs)
             vm.inspect("""{"version":"3.4.0"}""", """{"mediaServerType":2}""")
             vm.editForm { copy(mode = SeerrSignInMode.QuickConnect) }
-            repeat(3) { seerr.takeRequest() }
-            seerr.enqueue(json("""{"code":"123456","secret":"abcdef12"}"""))
+            scriptPendingQuickConnect()
 
             vm.connect()
             vm.awaitLink()
 
             assertEquals(listOf("signing in via QuickConnect"), breadcrumbs.logs)
+            vm.links.cancel()
         }
 
     @Test
