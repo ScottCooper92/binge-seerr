@@ -216,9 +216,10 @@ internal class RealNavHostRule(
         compose.waitForIdle()
     }
 
-    /** The settings search's recents as the app's own store holds them, newest first. */
+    /** The status the app's title-status store holds for [key] now, or null when it holds none. */
     fun titleStatus(key: TitleKey): TitleStatuses? = graph().titleStatuses().current(key)
 
+    /** The settings search's recents as the app's own store holds them, newest first. */
     fun recentSearches(): List<String> = runBlocking { graph().recentSearches().ids.first() }
 
     /**
