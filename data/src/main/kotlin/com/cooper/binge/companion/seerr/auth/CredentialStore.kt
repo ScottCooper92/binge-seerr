@@ -2,6 +2,7 @@ package com.cooper.binge.companion.seerr.auth
 
 import com.cooper.binge.companion.seerr.seerr.SeerrCredentials
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 
 /**
  * The saved connection, which is one server and one account. [LegacyCredentialStore] keeps it in the file the released
@@ -14,6 +15,18 @@ interface CredentialStore {
 
     /** The server the user signed out of, while nothing is saved, so setup can open on its sign-in. */
     val signedOutServer: Flow<String?>
+
+    /**
+     * The profile last read for the saved server, or null when none is kept. It lives and dies with the connection it was
+     * read for: [save], [signOut] and [clear] drop it.
+     */
+    val profile: Flow<StoredProfile?> get() = flowOf(null)
+
+    /** Keeps [profile] beside the connection, but only while [credentials] is still the saved one, so a late write cannot outlive a reconnect. */
+    suspend fun saveProfile(
+        credentials: SeerrCredentials,
+        profile: StoredProfile,
+    ) = Unit
 
     /** Persists [credentials]. Returns false, storing nothing, when it could not be saved. */
     suspend fun save(credentials: SeerrCredentials): Boolean

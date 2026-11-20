@@ -281,6 +281,75 @@ class RegistryCredentialStoreTest {
             assertEquals(session, second.store.credentials.first())
         }
 
+    private val record = StoredProfile(savedAt = 5L, variant = "Jellyseerr", version = "2.7.3")
+
+    @Test
+    fun `a profile kept for the saved server reads back and survives a restart`() =
+        runTest {
+            val first = install()
+            first.store.save(apiKey)
+            first.store.saveProfile(apiKey, record)
+
+            assertEquals(record, first.store.profile.first())
+            assertEquals(apiKey, first.store.credentials.first())
+            first.stop()
+
+            assertEquals(record, Install(backgroundScope, this).store.profile.first())
+        }
+
+    @Test
+    fun `a profile read for another login or address is not kept`() =
+        runTest {
+            val install = install()
+            install.store.save(apiKey)
+
+            install.store.saveProfile(apiKey.copy(auth = SeerrAuth.ApiKey("other")), record)
+            install.store.saveProfile(apiKey.copy(baseUrl = "https://elsewhere.example.com/"), record)
+
+            assertNull(install.store.profile.first())
+        }
+
+    @Test
+    fun `a new connection, a sign out and a clear each drop the profile`() =
+        runTest {
+            val install = install()
+            install.store.save(apiKey)
+            install.store.saveProfile(apiKey, record)
+
+            install.store.save(apiKey)
+            assertNull(install.store.profile.first())
+
+            install.store.saveProfile(apiKey, record)
+            install.store.signOut()
+            assertNull(install.store.profile.first())
+
+            install.store.save(apiKey)
+            install.store.saveProfile(apiKey, record)
+            install.store.clear()
+            assertNull(install.store.profile.first())
+        }
+
+    @Test
+    fun `keeping the profile leaves the credentials as they were`() =
+        runTest {
+            val install = install()
+            install.store.save(session)
+
+            install.store.saveProfile(session, record)
+
+            assertEquals(session, install.store.credentials.first())
+        }
+
+    @Test
+    fun `the profile is one more field in the clear and reads back through the codec`() {
+        val login = SeerrLogin(SeerrAuth.ApiKey("k"), SeerrVariant.Seerr, "https://seerr.example.com/", record.encode())
+
+        val parts = SeerrLoginCodec.split(login)
+
+        assertEquals(record.encode(), parts.fields["profile"])
+        assertEquals(login, SeerrLoginCodec.join(parts.fields, parts.secret))
+    }
+
     @Test
     fun `the stored fields are the ones the importer writes`() {
         val parts = SeerrLoginCodec.split(SeerrLogin(SeerrAuth.Session("c", 3, shared = true), SeerrVariant.Seerr))

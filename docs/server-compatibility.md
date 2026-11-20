@@ -52,6 +52,12 @@ would refuse, until the next read answers. A `mediaServerType` that was not read
 `SeerrMediaServer.Unknown`, not Plex, and the media-server page reports a failed load rather than
 showing the Plex form for a Jellyfin server. Overseerr has no such field and is always Plex.
 
+The last complete profile is also kept beside the saved login (`StoredProfile`, with a layout version and
+the time it was saved), so a cold launch can draw a first frame that fits the server before any call has
+answered. It is a guess to draw from and nothing more: `SeerrConnection.profile()` still reads the server
+once for each launch, and the fresh read replaces the kept one. It is dropped when the connection changes,
+when the user signs out or disconnects, and when it is older than 30 days.
+
 `commitTag`, `updateAvailable` and `commitsBehind` from the same call feed the update notice on
 the hub. `versionCheck` in the public settings says whether the server checks at all.
 

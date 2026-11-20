@@ -11,11 +11,13 @@ import com.cooper.homelab.core.server.connection.CredentialParts
  *
  * [boundTo] is the address the login was saved for, or null for a row written before it was kept. The login and the address are
  * two writes, so a reader can see one without the other; a login is read as the saved server's only while the two agree.
+ * [profile] is the [StoredProfile] last read for the server, as the JSON it is kept in, or null before one was read.
  */
 data class SeerrLogin(
     val auth: SeerrAuth,
     val variant: SeerrVariant,
     val boundTo: String? = null,
+    val profile: String? = null,
 )
 
 /**
@@ -28,6 +30,7 @@ object SeerrLoginCodec : CredentialCodec<SeerrLogin> {
     const val SHARED = "shared"
     const val VARIANT = "variant"
     const val ADDRESS = "address"
+    const val PROFILE = "profile"
     const val KIND_API_KEY = "api_key"
     const val KIND_SESSION = "session"
 
@@ -53,7 +56,10 @@ object SeerrLoginCodec : CredentialCodec<SeerrLogin> {
     private fun withAddress(
         fields: Map<String, String>,
         credential: SeerrLogin,
-    ): Map<String, String> = credential.boundTo?.let { fields + (ADDRESS to it) } ?: fields
+    ): Map<String, String> {
+        val bound = credential.boundTo?.let { fields + (ADDRESS to it) } ?: fields
+        return credential.profile?.let { bound + (PROFILE to it) } ?: bound
+    }
 
     override fun join(
         fields: Map<String, String>,
@@ -66,6 +72,6 @@ object SeerrLoginCodec : CredentialCodec<SeerrLogin> {
                 KIND_SESSION -> fields[USER_ID]?.toIntOrNull()?.let { SeerrAuth.Session(secret, it, fields[SHARED] == "true") }
                 else -> null
             }
-        return auth?.let { SeerrLogin(it, variant, fields[ADDRESS]) }
+        return auth?.let { SeerrLogin(it, variant, fields[ADDRESS], fields[PROFILE]) }
     }
 }

@@ -33,6 +33,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.io.IOException
@@ -60,9 +61,10 @@ class SeerrConnection(
     private val clock: () -> Long = System::currentTimeMillis,
 ) {
     private val profileReads = ProfileReads()
+    private val remembered = RememberedProfile(store, clock)
     private val preSignIn = SeerrPreSignIn(apis, quickConnectPollInterval)
 
-    val credentials: Flow<SeerrCredentials?> get() = store.credentials
+    val credentials: Flow<SeerrCredentials?> get() = store.credentials.onEach { remembered.load(it) }
 
     private val forgetting = MutableStateFlow(false)
 
@@ -164,15 +166,21 @@ class SeerrConnection(
                 ?: profileReads
                     .inspect(saved, cachedApi(saved.baseUrl, saved.auth), seen)
                     .getOrElse { SeerrServerProfile.unknown(saved.variant) }
-                    .also { if (it.complete) cachedProfile = saved to it }
+                    .also {
+                        if (it.complete) {
+                            cachedProfile = saved to it
+                            remembered.remember(saved, it)
+                        }
+                    }
         }
     }
 
     /**
-     * The profile this connection already holds, read without a suspend and never from the network, or null before the first
-     * complete read. A screen that wants its first frame to match the server asks this; a screen that needs the answer calls [profile].
+     * The profile this connection already holds, read without a suspend and never from the network: the one read this launch,
+     * else the one a [RememberedProfile] kept from an earlier launch, or null before either. A screen that wants its first frame
+     * to match the server asks this; a screen that needs the answer calls [profile].
      */
-    fun cachedProfileOrNull(): SeerrServerProfile? = cachedProfile?.second
+    fun cachedProfileOrNull(): SeerrServerProfile? = cachedProfile?.second ?: remembered.orNull()
 
     /**
      * The saved server's name for a message saying it did not answer (#1913), read from what is already cached and
@@ -211,8 +219,8 @@ class SeerrConnection(
             cachedProfile = null
             profileReads.inspect(saved, cachedApi(saved.baseUrl, saved.auth), seen).onSuccess {
                 if (it.complete) {
-                    cachedProfile =
-                        saved to it
+                    cachedProfile = saved to it
+                    remembered.remember(saved, it)
                 }
             }
         }
@@ -389,6 +397,7 @@ class SeerrConnection(
             cachedUser = null
             cachedProfile = null
         }
+        remembered.forget()
         // The demo has no sign-in to return to, so signing out of it is leaving it.
         if (keepAddress && saved?.isDemo != true) store.signOut() else store.clear()
         cleartext.retainOnly(null)
@@ -425,6 +434,7 @@ class SeerrConnection(
     ): SeerrCredentials {
         val profile = apis.probe(baseUrl, auth) { it.readProfile(SeerrVariant.Unknown) }
         val credentials = SeerrCredentials(baseUrl, auth, profile.variant)
+        remembered.forget()
         if (!store.save(credentials)) throw CredentialsSaveException()
         // Consent is for plain HTTP to this server, so it survives only when the saved address is itself plain HTTP to a
         // public host. Moving the same host to https drops it, and a redirect back down to http is refused (#1034).
@@ -436,6 +446,7 @@ class SeerrConnection(
             cachedUser = null
             cachedProfile = (credentials to profile).takeIf { profile.complete }
         }
+        if (profile.complete) remembered.remember(credentials, profile)
         healthMonitor.onConnected()
         onServerChanged()
         return credentials
