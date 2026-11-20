@@ -17,6 +17,7 @@ import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.BingeStatusButton
@@ -126,7 +127,7 @@ internal fun PrimaryAction(
         onClick = onClick,
         sentiment = primary.state.sentiment(),
         modifier = modifier.fillMaxWidth(),
-        icon = if (request) Icons.Filled.Add else null,
+        icon = primary.state.icon(),
         emphasis = if (request) BingeStatusButtonEmphasis.Filled else BingeStatusButtonEmphasis.Tonal,
     )
 }
@@ -134,7 +135,11 @@ internal fun PrimaryAction(
 @StringRes
 private fun TitlePrimary.label() = if (state == TitleState.Request && fourKOnly) R.string.title_page_request_4k else state.labelRes()
 
-private fun TitleState.sentiment() =
+/** Only Request carries an icon; every other state says itself with its status dot. */
+internal fun TitleState.icon(): ImageVector? = if (this == TitleState.Request) Icons.Filled.Add else null
+
+/** The colour of the status dot: the one the title's cards use, and red for Declined, which only the page knows. */
+internal fun TitleState.sentiment() =
     when (this) {
         TitleState.Declined -> BingeSentiment.Negative
         else -> toAvailability().statusStyle()?.sentiment ?: BingeSentiment.Neutral

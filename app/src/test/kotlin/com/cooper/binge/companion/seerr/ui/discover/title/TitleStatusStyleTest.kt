@@ -33,6 +33,26 @@ class TitleStatusStyleTest {
         assertEquals(R.string.request_state_declined, TitleState.Declined.labelRes())
     }
 
+    /** Request is the one state with an icon and no dot colour of its own; the rest are drawn tonal with their dot. */
+    @Test
+    fun `the primary's icon and dot colour are pinned for every state`() {
+        val expected =
+            mapOf(
+                TitleState.Request to (true to BingeSentiment.Neutral),
+                TitleState.Declined to (false to BingeSentiment.Negative),
+                TitleState.Requested to (false to BingeSentiment.Caution),
+                TitleState.Processing to (false to BingeSentiment.Info),
+                TitleState.PartiallyAvailable to (false to BingeSentiment.Info),
+                TitleState.Available to (false to BingeSentiment.Positive),
+                TitleState.Blocklisted to (false to BingeSentiment.Negative),
+            )
+        assertEquals(TitleState.entries.toSet(), expected.keys)
+        expected.forEach { (state, look) ->
+            assertEquals("$state icon", look.first, state.icon() != null)
+            assertEquals("$state dot", look.second, state.sentiment())
+        }
+    }
+
     @Test
     fun `every availability is reached from a title page state`() {
         assertEquals(TitleAvailability.entries.toSet(), TitleState.entries.map { it.toAvailability() }.toSet())

@@ -20,6 +20,8 @@ import com.cooper.binge.companion.seerr.seerr.SeerrServerProfile
 import com.cooper.binge.companion.seerr.seerr.SeerrUserDto
 import com.cooper.binge.companion.seerr.seerr.SeerrVariant
 import com.cooper.binge.companion.seerr.seerr.SeerrVersion
+import com.cooper.binge.companion.seerr.ui.discover.title.PrimaryTap
+import com.cooper.binge.companion.seerr.ui.discover.title.titleActionsModel
 import com.cooper.binge.companion.seerr.util.FakeRequest
 import com.cooper.binge.companion.seerr.util.FakeResponse
 import com.cooper.binge.companion.seerr.util.FakeSeerrServer
@@ -463,6 +465,30 @@ class SeerrTitleDetailsRepositoryTest {
 
         permissions = PERMISSION_ADMIN
         assertEquals(listOf(1, 2, 3), withRepository { it.movie(603) }.requests.map { it.id })
+    }
+
+    @Test
+    fun `what the primary opens follows who is looking, for a requester, another user and an admin`() {
+        fun opens(info: String): PrimaryTap {
+            movieBody = MOVIE.replace(""""mediaInfo":{"id":11,"status":5,"status4k":1}""", info)
+            val movie = withRepository { it.movie(603) }
+            return titleActionsModel(movie.standard, movie.fourK, movie.requests, movie.mayReport).primary.tap
+        }
+        val theirs =
+            """"mediaInfo":{"id":11,"status":5,"status4k":1,"requests":[
+                {"id":2,"status":2,"is4k":false,"requestedBy":{"id":4}}]}"""
+        val both =
+            """"mediaInfo":{"id":11,"status":5,"status4k":1,"requests":[
+                {"id":1,"status":2,"is4k":false,"requestedBy":{"id":9}},
+                {"id":2,"status":2,"is4k":false,"requestedBy":{"id":4}}]}"""
+
+        permissions = PERMISSION_REQUEST or PERMISSION_REQUEST_MOVIE
+        assertEquals("the requester manages their own", PrimaryTap.ManageRequest(1), opens(both))
+        assertEquals("another user has no request of their own to manage", PrimaryTap.StatusSheet, opens(theirs))
+
+        permissions = PERMISSION_ADMIN
+        assertEquals("an admin manages the newest", PrimaryTap.ManageRequest(2), opens(both))
+        assertEquals("an admin manages another user's", PrimaryTap.ManageRequest(2), opens(theirs))
     }
 
     @Test
