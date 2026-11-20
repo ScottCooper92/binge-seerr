@@ -1,20 +1,17 @@
 package com.cooper.binge.companion.seerr.ui.discover.person
 
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
-import com.binge.designsystem.component.SectionHeader
 import com.binge.designsystem.template.PersonDetailCallbacks
 import com.binge.designsystem.template.PersonDetailScreen
-import com.binge.designsystem.template.readingInset
-import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.TitleKind
+import com.cooper.binge.companion.seerr.discover.person.links
 import com.cooper.binge.companion.seerr.seerr.SeerrError
+import com.cooper.binge.companion.seerr.ui.discover.links.ExternalLinksSection
 import com.cooper.binge.companion.seerr.ui.discover.title.ShareBarAction
 import com.cooper.binge.companion.seerr.ui.rememberAllowLocalNetwork
 
@@ -62,10 +59,7 @@ internal fun PersonPageScreen(
             if (ready != null) ShareBarAction(glassAlpha) { actions.onShare(ready.person.name, ready.person.webUrl) }
         },
         afterCredits = {
-            ready?.person?.links()?.takeIf { it.isNotEmpty() }?.let { links ->
-                SectionHeader(stringResource(R.string.person_page_links), horizontalPadding = readingInset(), startPadding = readingInset())
-                PersonLinksRow(links, actions.onOpenUrl, Modifier.padding(horizontal = readingInset()))
-            }
+            ready?.person?.let { ExternalLinksSection(it.links(), actions.onOpenUrl) }
         },
     )
 }

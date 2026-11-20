@@ -1,5 +1,6 @@
 package com.cooper.binge.companion.seerr.discover.title
 
+import com.cooper.binge.companion.seerr.discover.ExternalLink
 import com.cooper.binge.companion.seerr.discover.TitleAvailability
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.TitleResult
@@ -123,7 +124,7 @@ data class MovieDetails(
     /** The viewer may put the title on the blocklist: the same right as [mayUnblock], named for the other direction. */
     val mayBlock: Boolean = false,
     /** Where the title is on other sites: IMDb where the server knows its id, TMDB, and its own site where it has one. */
-    val links: List<TitleLink> = emptyList(),
+    val links: List<ExternalLink> = emptyList(),
     /** The title is on the signed-in user's watchlist. */
     val onWatchlist: Boolean = false,
     /** The server can add to and remove from the watchlist (`profile.hasWatchlistEdit`), so the page offers the button. */

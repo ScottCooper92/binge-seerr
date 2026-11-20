@@ -20,6 +20,7 @@ import com.cooper.binge.companion.seerr.discover.TitleResult
 import com.cooper.binge.companion.seerr.discover.title.TitleCompany
 import com.cooper.binge.companion.seerr.discover.title.TitleKeyword
 import com.cooper.binge.companion.seerr.discover.title.trailerUrl
+import com.cooper.binge.companion.seerr.ui.discover.links.ExternalLinksSection
 import com.cooper.binge.companion.seerr.ui.discover.request.RequestSheet
 import com.cooper.binge.companion.seerr.ui.discover.request.RequestSheetTarget
 import com.cooper.binge.companion.seerr.ui.discover.request.messageRes
@@ -155,7 +156,7 @@ private fun ReadyPage(
             ),
         topBarActions = { glassAlpha -> ShareBarAction(glassAlpha) { context.shareTitle(movie.title, movie.webUrl) } },
         afterPeople = { WhereToWatchSection(movie.providers, actions.onOpenUrl, Modifier.readingMargin()) },
-        afterRails = { TitleLinksSection(movie.links, actions.onOpenUrl, Modifier.readingMargin()) },
+        afterRails = { ExternalLinksSection(movie.links, actions.onOpenUrl) },
         // The template's column puts its gap before this empty slot: the page's bottom padding under the Details, as it had.
         atEnd = if (model.detail.info != null) ({ Spacer(Modifier) }) else null,
         overlays = { MovieOverlays(state, actions, snackbar) },

@@ -19,6 +19,7 @@ import com.binge.designsystem.template.readingMargin
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.title.trailerUrl
+import com.cooper.binge.companion.seerr.ui.discover.links.ExternalLinksSection
 import com.cooper.binge.companion.seerr.ui.discover.request.RequestSheet
 import com.cooper.binge.companion.seerr.ui.discover.request.RequestSheetTarget
 import com.cooper.binge.companion.seerr.ui.discover.request.messageRes
@@ -103,7 +104,7 @@ private fun ReadySeriesPage(
             ),
         topBarActions = { glassAlpha -> ShareBarAction(glassAlpha) { context.shareTitle(series.name, series.webUrl) } },
         afterPeople = { WhereToWatchSection(series.providers, actions.onOpenUrl, Modifier.readingMargin()) },
-        afterRails = { TitleLinksSection(series.links, actions.onOpenUrl, Modifier.readingMargin()) },
+        afterRails = { ExternalLinksSection(series.links, actions.onOpenUrl) },
         // The template's column puts its gap before this empty slot: the page's bottom padding under the Details, as it had.
         atEnd = if (model.detail.info != null) ({ Spacer(Modifier) }) else null,
         overlays = { SeriesOverlays(state, actions, snackbar) },

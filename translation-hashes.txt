@@ -51,6 +51,10 @@ app:editor_error_whole_number  e24f56c429cd
 app:editor_field_required  4850b174b713
 app:editor_keep_editing  e76fd2add010
 app:editor_test_and_save  be8494fb38fe
+app:external_link_imdb  061f3a4e4a30
+app:external_link_tmdb  d48b09a78b6d
+app:external_link_website  b5a229ac8bec
+app:external_links_heading  2cedb0696337
 app:grid_chip_company  9f33d44bd3d1
 app:grid_chip_genre  6da795a8664f
 app:grid_chip_keyword  a668022aed26
@@ -440,10 +444,7 @@ app:person_page_also_known_as  4f8c470505d1
 app:person_page_biography  942dbeda9171
 app:person_page_born  16178f9087b8
 app:person_page_died  90f16c1dea8a
-app:person_page_imdb  061f3a4e4a30
 app:person_page_known_for  ead2a038b394
-app:person_page_links  2cedb0696337
-app:person_page_website  b5a229ac8bec
 app:person_refresh_failed  45304549fd49
 app:person_stat_from  218197693424
 app:person_stat_gender  a04630ef8bc3
@@ -1228,7 +1229,6 @@ app:title_kind_movie  941de4447b2e
 app:title_kind_person  6007db63e18e
 app:title_kind_series  ca62d5e073f5
 app:title_kind_studio  0aa91af2ec4c
-app:title_link_tmdb  d48b09a78b6d
 app:title_page_action_block  211d0bb8cf4f
 app:title_page_action_report  b6ce788d9786
 app:title_page_action_share  29887a5ff984

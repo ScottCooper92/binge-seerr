@@ -5,9 +5,11 @@ import com.cooper.binge.companion.seerr.data.TitleKey
 import com.cooper.binge.companion.seerr.data.TitleStatusStore
 import com.cooper.binge.companion.seerr.data.TitleType
 import com.cooper.binge.companion.seerr.data.toTitleStatuses
+import com.cooper.binge.companion.seerr.discover.ImdbPage
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.TitleResult
 import com.cooper.binge.companion.seerr.discover.collection.CollectionRepository
+import com.cooper.binge.companion.seerr.discover.externalLinks
 import com.cooper.binge.companion.seerr.discover.toAvailability
 import com.cooper.binge.companion.seerr.discover.toReleaseYear
 import com.cooper.binge.companion.seerr.discover.toTitlePage
@@ -192,7 +194,7 @@ internal fun SeerrMovieDetailsDto.toMovieDetails(
         mediaId = mediaInfo?.id,
         watchUrl = mediaInfo?.watchLink(),
         webUrl = webUrl,
-        links = titleLinks("movie", id, externalIds?.imdbId, homepage),
+        links = externalLinks(ImdbPage.Title, externalIds?.imdbId, "https://www.themoviedb.org/movie/$id", homepage),
         releaseDate = releaseDate?.takeIf { it.isNotBlank() },
         requests =
             mediaInfo

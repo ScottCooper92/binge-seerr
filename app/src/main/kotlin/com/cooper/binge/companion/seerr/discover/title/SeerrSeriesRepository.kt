@@ -5,8 +5,10 @@ import com.cooper.binge.companion.seerr.data.TitleKey
 import com.cooper.binge.companion.seerr.data.TitleStatusStore
 import com.cooper.binge.companion.seerr.data.TitleType
 import com.cooper.binge.companion.seerr.data.toTitleStatuses
+import com.cooper.binge.companion.seerr.discover.ImdbPage
 import com.cooper.binge.companion.seerr.discover.TitleAvailability
 import com.cooper.binge.companion.seerr.discover.TitleKind
+import com.cooper.binge.companion.seerr.discover.externalLinks
 import com.cooper.binge.companion.seerr.discover.toAvailability
 import com.cooper.binge.companion.seerr.discover.toReleaseYear
 import com.cooper.binge.companion.seerr.discover.toTitlePage
@@ -194,7 +196,7 @@ internal fun SeerrTvDetailsDto.toSeriesDetails(
     val keyIds = key.map { it.personId }.toSet()
     return SeriesDetails(
         tmdbId = id,
-        links = titleLinks("tv", id, externalIds?.imdbId, homepage),
+        links = externalLinks(ImdbPage.Title, externalIds?.imdbId, "https://www.themoviedb.org/tv/$id", homepage),
         name = name,
         tagline = tagline?.takeIf { it.isNotBlank() },
         overview = overview?.takeIf { it.isNotBlank() },
