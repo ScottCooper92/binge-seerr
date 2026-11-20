@@ -76,7 +76,7 @@ internal fun titleActionsModel(
             tap = tap,
         ),
         canReport = mayReport && state.isInLibrary(),
-        canBlock = mayBlock && (shown == TitleState.Request || shown == TitleState.Declined),
+        canBlock = mayBlock && fourK.holdsNothing() && (shown == TitleState.Request || shown == TitleState.Declined),
     )
 }
 
@@ -93,6 +93,8 @@ private fun tapFor(
             requests.toManage()?.let { PrimaryTap.ManageRequest(it.id) }
                 ?: if (mayRequest && !state.isInLibrary()) PrimaryTap.RequestSheet else PrimaryTap.StatusSheet
     }
+
+private fun VersionState?.holdsNothing() = this == null || availability == TitleAvailability.None
 
 internal fun TitleState.isInLibrary() = this == TitleState.Available || this == TitleState.PartiallyAvailable
 
