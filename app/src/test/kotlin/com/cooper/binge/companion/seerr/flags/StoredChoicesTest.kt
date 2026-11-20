@@ -8,7 +8,9 @@ import androidx.datastore.preferences.core.edit
 import com.cooper.binge.companion.seerr.feedback.shakeToReportPreference
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.job
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -35,7 +37,8 @@ class StoredChoicesTest {
         val scope = CoroutineScope(Job())
         val store: DataStore<Preferences> = PreferenceDataStoreFactory.create(scope = scope) { file }
         if (value != null) store.edit { it[booleanPreferencesKey(key)] = value }
-        scope.coroutineContext[Job]?.cancel()
+        // DataStore frees the file when its scope completes, so wait for that before the next one opens the same file.
+        scope.coroutineContext.job.cancelAndJoin()
     }
 
     @Test
