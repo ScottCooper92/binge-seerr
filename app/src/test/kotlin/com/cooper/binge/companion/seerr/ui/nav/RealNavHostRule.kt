@@ -25,6 +25,9 @@ import androidx.work.WorkManager
 import com.cooper.binge.companion.seerr.auth.ConnectionRestore
 import com.cooper.binge.companion.seerr.auth.CredentialStore
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
+import com.cooper.binge.companion.seerr.data.TitleKey
+import com.cooper.binge.companion.seerr.data.TitleStatusStore
+import com.cooper.binge.companion.seerr.data.TitleStatuses
 import com.cooper.binge.companion.seerr.demo.demoCredentials
 import com.cooper.binge.companion.seerr.seerr.SeerrApi
 import com.cooper.binge.companion.seerr.seerr.SeerrAuth
@@ -213,6 +216,9 @@ internal class RealNavHostRule(
         compose.waitForIdle()
     }
 
+    /** The status the app's title-status store holds for [key] now, or null when it holds none. */
+    fun titleStatus(key: TitleKey): TitleStatuses? = graph().titleStatuses().current(key)
+
     /** The settings search's recents as the app's own store holds them, newest first. */
     fun recentSearches(): List<String> = runBlocking { graph().recentSearches().ids.first() }
 
@@ -393,6 +399,8 @@ internal class RealNavHostRule(
         fun restore(): ConnectionRestore
 
         fun recentSearches(): RecentSearches
+
+        fun titleStatuses(): TitleStatusStore
     }
 }
 
