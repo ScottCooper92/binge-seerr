@@ -2,6 +2,7 @@ package com.cooper.binge.companion.seerr.ui
 
 import androidx.activity.OnBackPressedDispatcher
 import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.core.app.ApplicationProvider
@@ -35,7 +36,10 @@ class SeerrConnectContentTest {
 
     private fun string(id: Int): String = ApplicationProvider.getApplicationContext<android.content.Context>().getString(id)
 
-    private fun probed(setUp: Boolean): ProbedServer<SetupServer> {
+    private fun probed(
+        setUp: Boolean,
+        canResetPassword: Boolean = false,
+    ): ProbedServer<SetupServer> {
         val server =
             SetupServer(
                 baseUrl = "http://seerr.lan:5055",
@@ -44,7 +48,7 @@ class SeerrConnectContentTest {
                 versionLabel = "2.7.2",
                 mediaServerName = null,
                 modes = listOf(SeerrSignInMode.Local),
-                canResetPassword = false,
+                canResetPassword = canResetPassword,
                 backdropUrl = null,
                 setUp = setUp,
             )
@@ -60,11 +64,16 @@ class SeerrConnectContentTest {
     private fun show(
         state: ConnectState<SetupServer>,
         onDisconnect: (() -> Unit)? = null,
+    ) = showUi(SeerrConnectUi(state), onDisconnect)
+
+    private fun showUi(
+        ui: SeerrConnectUi,
+        onDisconnect: (() -> Unit)? = null,
     ) = rule.setContent {
         dispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
         BingeExpressiveTheme(dynamicColor = false) {
             SeerrConnectContent(
-                ui = SeerrConnectUi(state),
+                ui = ui,
                 addressActions = ConnectAddressActions({}, {}, { continued++ }, {}),
                 signInActions = ConnectSignInActions({}, {}, {}, {}, { changedServer++ }, { checkedAgain++ }),
                 onRequestPasswordReset = {},
@@ -103,6 +112,35 @@ class SeerrConnectContentTest {
     fun `no way off the server is offered unless the app passes one`() {
         show(ConnectState.SignIn(probed(setUp = true), SignInForm(mode = SeerrSignInMode.Local.formMode()), false, null))
         rule.onNodeWithText(string(R.string.hub_disconnect)).assertDoesNotExist()
+    }
+
+    private fun signIn(): ConnectState<SetupServer> =
+        ConnectState.SignIn(probed(setUp = true), SignInForm(mode = SeerrSignInMode.Local.formMode()), false, null)
+
+    @Test
+    fun `a refused password reset says so on the sign-in step`() {
+        showUi(SeerrConnectUi(signIn(), resetError = SetupError.Unreachable))
+
+        rule.onNodeWithText(string(SetupError.Unreachable.messageRes())).assertExists()
+    }
+
+    @Test
+    fun `a reset in flight holds the sign-in as an attempt does`() {
+        val typed =
+            ConnectState.SignIn(
+                probed(setUp = true, canResetPassword = true),
+                SignInForm(
+                    SeerrSignInMode.Local.formMode(),
+                    mapOf(
+                        FIELD_EMAIL to "ana@example.com",
+                    ),
+                ),
+                false,
+                null,
+            )
+        showUi(SeerrConnectUi(typed, resetBusy = true))
+
+        rule.onNodeWithText(string(R.string.setup_forgot_password)).assertIsNotEnabled()
     }
 
     @Test

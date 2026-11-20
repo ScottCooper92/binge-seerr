@@ -76,8 +76,10 @@ internal fun SeerrConnectContent(
     onDisconnect: (() -> Unit)? = null,
 ) {
     val address = (ui.state as? ConnectState.Address)?.address
+    // A reset in flight holds the step as an attempt does: Connect and the reset wait for it (the old form did the same).
+    val state = (ui.state as? ConnectState.SignIn)?.takeIf { ui.resetBusy }?.copy(isConnecting = true) ?: ui.state
     ConnectScreen(
-        state = ui.state,
+        state = state,
         link = null,
         copy = seerrConnectCopy(),
         text =
@@ -104,6 +106,7 @@ internal fun SeerrConnectContent(
             seerrSignInOptions(
                 notice = ui.notice,
                 resetCoolingDown = ui.resetCoolingDown,
+                resetError = ui.resetError,
                 onRequestPasswordReset = onRequestPasswordReset,
                 onEdit = signInActions.onEditForm,
                 // The fields below already sit inside the screen's gutter, so the row takes none of its own.

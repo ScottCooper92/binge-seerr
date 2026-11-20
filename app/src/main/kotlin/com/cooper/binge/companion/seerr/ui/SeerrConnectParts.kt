@@ -85,13 +85,18 @@ internal fun seerrSignInOptions(
     resetCoolingDown: Boolean,
     onRequestPasswordReset: () -> Unit,
     onEdit: ((SignInForm.() -> SignInForm) -> Unit),
+    resetError: SetupError? = null,
     tabEdgePadding: Dp? = null,
     onDisconnect: (() -> Unit)? = null,
 ): ConnectSignInOptions<SetupServer> =
     ConnectSignInOptions(
         tabEdgePadding = tabEdgePadding,
         afterFields = { state -> SeerrAfterFields(state, resetCoolingDown, onRequestPasswordReset) },
-        afterError = { _ -> notice?.let { SeerrNotice(it) } },
+        afterError = { state ->
+            // A refused reset is the app's own error: the machine's takes the line when it has one, as on the old form.
+            if (state.error == null) resetError?.let { SeerrResetError(it) }
+            notice?.let { SeerrNotice(it) }
+        },
         fieldModifier = { field -> field.savedLogin(onEdit) },
         footerBelow = onDisconnect?.let { leave -> { _ -> DisconnectButton(leave) } },
     )
@@ -120,6 +125,15 @@ private fun ColumnScope.SeerrAfterFields(
             }
         else -> Unit
     }
+}
+
+@Composable
+private fun SeerrResetError(error: SetupError) {
+    Text(
+        stringResource(error.messageRes()),
+        color = MaterialTheme.colorScheme.error,
+        style = MaterialTheme.typography.bodyMedium,
+    )
 }
 
 @Composable

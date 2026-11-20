@@ -105,8 +105,19 @@ class SharedSetupViewModel
 
         /** What the shared connect screen reads: the machine's step, and the two things beside it that are the app's own. */
         internal val connectUi: StateFlow<SeerrConnectUi> =
-            combine(machine.state, app) { state, beside -> SeerrConnectUi(state, beside.notice, beside.resetCoolingDown, beside.received) }
-                .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), SeerrConnectUi(ConnectState.Loading))
+            combine(
+                machine.state,
+                app,
+            ) { state, beside ->
+                SeerrConnectUi(
+                    state,
+                    beside.notice,
+                    beside.resetCoolingDown,
+                    beside.received,
+                    beside.resetBusy,
+                    beside.resetError,
+                )
+            }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), SeerrConnectUi(ConnectState.Loading))
 
         /** The sign-in step's controls, on the machine's own form. A change clears what the last attempt left on the page. */
         internal val connectSignInActions: ConnectSignInActions =

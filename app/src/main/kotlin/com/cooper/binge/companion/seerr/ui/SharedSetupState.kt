@@ -124,4 +124,6 @@ internal data class SeerrConnectUi(
     val notice: SetupNotice? = null,
     val resetCoolingDown: Boolean = false,
     val received: Boolean = false,
+    val resetBusy: Boolean = false,
+    val resetError: SetupError? = null,
 )
