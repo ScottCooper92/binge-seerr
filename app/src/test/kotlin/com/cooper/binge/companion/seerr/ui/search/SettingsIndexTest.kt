@@ -312,7 +312,11 @@ class SettingsIndexTest {
     @Test
     fun `an agent's page is offered only where the server has the agent`() {
         fun agentsOffered(access: SearchAccess) =
-            offered(access).map { it.target }.filterIsInstance<SearchTarget.Agent>().map { it.agent }.toSet()
+            offered(access)
+                .map { it.target }
+                .filterIsInstance<SearchTarget.Agent>()
+                .map { it.agent }
+                .toSet()
 
         val onOverseerr = agentsOffered(SearchAccess(1, true, overseerr))
         val onSeerr = agentsOffered(admin)
