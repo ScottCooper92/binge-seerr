@@ -20,6 +20,7 @@ import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.TitleResult
 import com.cooper.binge.companion.seerr.discover.collection.CollectionDetails
 import com.cooper.binge.companion.seerr.discover.request.RequestResult
+import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.ui.discover.request.RequestFilm
 import com.cooper.binge.companion.seerr.ui.discover.request.RequestSheet
 import com.cooper.binge.companion.seerr.ui.discover.request.RequestSheetTarget
@@ -59,9 +60,12 @@ internal fun CollectionPageScreen(
     val resources = LocalResources.current
     CollectionEventSnackbars(events, snackbar)
     val ready = state as? CollectionPageUiState.Ready
-    val allow = rememberAllowLocalNetwork(actions.onRetry)
-    val allowLabel = stringResource(allow.label)
-    val detail = remember(state, resources, allow, allowLabel) { state.toDetailState(resources, ScreenAction(allowLabel, allow.run)) }
+    val denied = (state as? CollectionPageUiState.Error)?.error == SeerrError.LocalNetworkDenied
+    // Called only while the failure shows: once it is asked, the hook retries on every resume, which a loaded page must not do.
+    val allow = if (denied) rememberAllowLocalNetwork(actions.onRetry) else null
+    val allowLabel = allow?.let { stringResource(it.label) }.orEmpty()
+    val detail =
+        remember(state, resources, allow, allowLabel) { state.toDetailState(resources, allow?.let { ScreenAction(allowLabel, it.run) }) }
     val partsByKey =
         remember(ready?.collection) {
             ready
