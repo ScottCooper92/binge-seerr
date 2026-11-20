@@ -114,7 +114,7 @@ private fun WatchlistActionButton(watchlist: WatchlistButton) {
  * its status dot, tonal. It is enabled in every state, because a tap always opens a sheet.
  */
 @Composable
-private fun PrimaryAction(
+internal fun PrimaryAction(
     primary: TitlePrimary,
     onClick: () -> Unit,
     modifier: Modifier,

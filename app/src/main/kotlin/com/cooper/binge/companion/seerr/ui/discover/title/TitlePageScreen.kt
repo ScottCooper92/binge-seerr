@@ -2,7 +2,6 @@ package com.cooper.binge.companion.seerr.ui.discover.title
 
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
@@ -11,24 +10,23 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.dimensionResource
-import com.binge.designsystem.template.MediaHeroDetailPage
-import com.binge.designsystem.template.MediaWideHeader
+import com.binge.designsystem.template.DetailState
+import com.binge.designsystem.template.MediaDetailCallbacks
+import com.binge.designsystem.template.MovieDetailScreen
+import com.binge.designsystem.template.readingMargin
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.TitleResult
 import com.cooper.binge.companion.seerr.discover.title.TitleCompany
 import com.cooper.binge.companion.seerr.discover.title.TitleKeyword
+import com.cooper.binge.companion.seerr.discover.title.trailerUrl
+import com.cooper.binge.companion.seerr.ui.discover.links.ExternalLinksSection
 import com.cooper.binge.companion.seerr.ui.discover.request.RequestSheet
 import com.cooper.binge.companion.seerr.ui.discover.request.RequestSheetTarget
 import com.cooper.binge.companion.seerr.ui.discover.request.messageRes
 import com.cooper.binge.companion.seerr.ui.requests.SiblingSheet
-import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
-import com.cooper.binge.companion.seerr.ui.state.MediaHeroDetailPlaceholder
 import com.cooper.binge.companion.seerr.ui.state.messageRes
 import kotlinx.coroutines.flow.Flow
-import com.binge.designsystem.R as DesR
 
 class TitlePageActions(
     val onBack: () -> Unit,
@@ -71,7 +69,7 @@ class TitlePageActions(
     val reportSheet: @Composable (onClose: () -> Unit) -> Unit = {},
 )
 
-/** The film page: a hero, its stats, and the actions, with Request first; then the facts and people. */
+/** The film page: the design system's movie template, filled with this app's primary action, sheets and sections. */
 @Composable
 internal fun TitlePageScreen(
     state: TitlePageUiState,
@@ -81,10 +79,31 @@ internal fun TitlePageScreen(
     scrollState: ScrollState = rememberScrollState(),
 ) {
     when (state) {
-        TitlePageUiState.Loading -> TitlePageSkeleton(onBack = actions.onBack, modifier = modifier)
-        is TitlePageUiState.Error -> MediaHeroDetailPlaceholder { ErrorScreen(state.error, onRetry = actions.onRetry) }
+        TitlePageUiState.Loading ->
+            MovieDetailScreen(
+                state = DetailState.Loading(stats = LOADING_STATS, hasPrimary = true, rails = 1),
+                callbacks = MediaDetailCallbacks(onBack = actions.onBack),
+                modifier = modifier,
+            )
+        is TitlePageUiState.Error -> ErrorPage(state, actions, modifier)
         is TitlePageUiState.Ready -> ReadyPage(state, events, actions, modifier, scrollState)
     }
+}
+
+/** What the loaded page is expected to show before it arrives: a rating, a year and a runtime. */
+private const val LOADING_STATS = 3
+
+@Composable
+private fun ErrorPage(
+    state: TitlePageUiState.Error,
+    actions: TitlePageActions,
+    modifier: Modifier,
+) {
+    MovieDetailScreen(
+        state = titleFailedState(state.error, actions.onRetry),
+        callbacks = MediaDetailCallbacks(onBack = actions.onBack, onRetry = actions.onRetry),
+        modifier = modifier,
+    )
 }
 
 @Composable
@@ -120,23 +139,39 @@ private fun ReadyPage(
     }
     val movie = state.movie
     val context = LocalContext.current
-    MediaHeroDetailPage(
-        title = movie.title,
-        backdropUrl = movie.backdropUrl,
-        metaText = "",
-        genres = movie.genres,
-        tagline = movie.tagline,
-        externalScores = state.extras?.ratings.toExternalScores(context.resources, LocalConfiguration.current.locales[0]),
-        wideHeader = MediaWideHeader(movie.posterUrl, movie.overview, movie.titleStats(LocalConfiguration.current.locales[0])),
-        onBack = actions.onBack,
+    val model = movieDetailModel(state, actions)
+    val actionsModel = titleActionsModel(movie.standard, movie.fourK, movie.requests, movie.mayReport, movie.mayBlock)
+    MovieDetailScreen(
+        state = DetailState.Content(model.detail),
+        callbacks = model.callbacks(actions),
         modifier = modifier,
+        primary = { primaryModifier -> PrimaryAction(actionsModel.primary, actions.onRequest, primaryModifier) },
+        roundActions =
+            titleRoundActions(
+                model = actionsModel,
+                onTrailer = movie.videos.trailerUrl()?.let { url -> { actions.onOpenUrl(url) } },
+                watchlist = WatchlistButton(movie.onWatchlist, actions.onToggleWatchlist).takeIf { movie.mayWatchlist },
+                onReport = actions.onReport,
+                onBlock = actions.block?.onAsk.takeIf { movie.mayBlock },
+            ),
+        topBarActions = { glassAlpha -> ShareBarAction(glassAlpha) { context.shareTitle(movie.title, movie.webUrl) } },
+        afterPeople = { WhereToWatchSection(movie.providers, actions.onOpenUrl, Modifier.readingMargin()) },
+        afterRails = { ExternalLinksSection(movie.links, actions.onOpenUrl) },
+        // The template's column puts its gap before this empty slot: the page's bottom padding under the Details, as it had.
+        atEnd = if (model.detail.info != null) ({ Spacer(Modifier) }) else null,
+        overlays = { MovieOverlays(state, actions, snackbar) },
         snackbarHostState = snackbar,
         scrollState = scrollState,
-        topBarActions = { glassAlpha -> ShareBarAction(glassAlpha) { context.shareTitle(movie.title, movie.webUrl) } },
-    ) {
-        Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
-        TitlePageBody(state, actions)
-    }
+    )
+}
+
+@Composable
+private fun MovieOverlays(
+    state: TitlePageUiState.Ready,
+    actions: TitlePageActions,
+    snackbar: SnackbarHostState,
+) {
+    val movie = state.movie
     if (state.requestSheetOpen) {
         RequestSheet(
             target =
@@ -155,22 +190,22 @@ private fun ReadyPage(
     }
     if (state.statusSheetOpen) {
         TitleStatusSheet(
-            state = titleActionsModel(state.movie.standard, state.movie.fourK, state.movie.requests, state.movie.mayReport).primary.state,
-            watchUrl = state.movie.watchUrl,
-            mediaServerName = state.movie.mediaServerName,
-            canRequest = state.movie.canRequest,
+            state = titleActionsModel(movie.standard, movie.fourK, movie.requests, movie.mayReport).primary.state,
+            watchUrl = movie.watchUrl,
+            mediaServerName = movie.mediaServerName,
+            canRequest = movie.canRequest,
             onWatch = actions.onOpenUrl,
             onWatchInBinge = actions.onWatchInBinge,
-            fourKOpen = state.movie.fourK?.mayRequest == true,
+            fourKOpen = movie.fourK?.mayRequest == true,
             remainingOpen = false,
             onRequestFourK = actions.onRequestFourK,
             onRequestRemaining = actions.onRequestRemaining,
             onDismiss = actions.onCloseStatus,
-            onUnblock = actions.onUnblock.takeIf { state.movie.mayUnblock },
+            onUnblock = actions.onUnblock.takeIf { movie.mayUnblock },
         )
     }
     if (state.reportSheetOpen) actions.reportSheet(actions.onCloseReport)
-    if (state.blockConfirmOpen) actions.block?.let { TitleBlockConfirm(state.movie.title, it) }
+    if (state.blockConfirmOpen) actions.block?.let { TitleBlockConfirm(movie.title, it) }
     state.manageRequestId?.let { requestId ->
         TitleManageSheet(requestId, state.manageSheetOpen, snackbar, movie.sheetFacts(), actions)
     }

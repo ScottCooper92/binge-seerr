@@ -1,29 +1,19 @@
 package com.cooper.binge.companion.seerr.ui.discover.title
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
-import com.binge.designsystem.component.DetailOverviewSection
-import com.binge.designsystem.component.DetailStatsRows
 import com.binge.designsystem.component.MediaCard
 import com.binge.designsystem.component.MediaCardStatus
 import com.binge.designsystem.component.MediaCarousel
 import com.binge.designsystem.component.PersonCard
 import com.binge.designsystem.component.SectionHeader
 import com.binge.designsystem.component.TagRow
-import com.binge.designsystem.isExpandedLayout
-import com.binge.designsystem.layout.LayoutAnchors
-import com.binge.designsystem.layout.layoutAnchor
 import com.binge.designsystem.resolvedContentInset
 import com.binge.designsystem.template.readingInset
-import com.binge.designsystem.template.readingMargin
 import com.binge.designsystem.theme.BingeSentiment
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.TitleAvailability
@@ -31,57 +21,11 @@ import com.cooper.binge.companion.seerr.discover.TitleResult
 import com.cooper.binge.companion.seerr.discover.title.MovieDetails
 import com.cooper.binge.companion.seerr.discover.title.TitleKeyword
 import com.cooper.binge.companion.seerr.discover.title.TitlePerson
-import com.cooper.binge.companion.seerr.discover.title.trailerUrl
 import com.cooper.binge.companion.seerr.seerr.toTmdbPosterUrl
-import com.cooper.binge.companion.seerr.ui.discover.links.ExternalLinksSection
 import com.cooper.binge.companion.seerr.ui.discover.request.joinMeta
 import com.binge.designsystem.R as DesR
 
 private const val MINUTES_PER_HOUR = 60
-
-/** What the page says below its hero. A section the server gave nothing for is not drawn. */
-@Composable
-internal fun TitlePageBody(
-    state: TitlePageUiState.Ready,
-    actions: TitlePageActions,
-) {
-    val movie = state.movie
-    val context = LocalContext.current
-    val locale = LocalConfiguration.current.locales[0]
-    Column(verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m))) {
-        // The expanded header already shows these and the synopsis.
-        val expanded = isExpandedLayout()
-        val stats = movie.titleStats(locale)
-        if (!expanded && stats.isNotEmpty()) DetailStatsRows(stats)
-        TitleActions(
-            model = titleActionsModel(movie.standard, movie.fourK, movie.requests, movie.mayReport, movie.mayBlock),
-            onPrimary = actions.onRequest,
-            onTrailer = movie.videos.trailerUrl()?.let { url -> { actions.onOpenUrl(url) } },
-            onReport = actions.onReport,
-            onBlock = actions.block?.onAsk.takeIf { movie.mayBlock },
-            watchlist = movie.mayWatchlist.takeIf { it }?.let { WatchlistButton(movie.onWatchlist, actions.onToggleWatchlist) },
-            modifier = Modifier.readingMargin().layoutAnchor(LayoutAnchors.section(LayoutAnchors.Detail.ACTIONS)),
-        )
-        if (!expanded) DetailOverviewSection(stringResource(R.string.title_page_overview), movie.overview)
-        PeopleRow(stringResource(R.string.title_page_cast), movie.cast, actions.onOpenPerson, actions.onOpenCredits)
-        PeopleRow(stringResource(R.string.title_page_crew), movie.keyCrew, actions.onOpenPerson, actions.onOpenCredits)
-        WhereToWatchSection(movie.providers, actions.onOpenUrl, Modifier.readingMargin())
-        movie.collection?.let { collection ->
-            TitleRow(
-                title = collection.name,
-                titles = state.collectionParts,
-                onOpen = actions.onOpenTitle,
-                onSeeAll = actions.onOpenCollection?.let { open -> { open(collection.id) } },
-            )
-        }
-        state.extras?.let { TitleRow(stringResource(R.string.title_page_more_like_this), it.moreLikeThis, actions.onOpenTitle) }
-        KeywordsSection(movie.keywords, actions.onOpenKeyword.takeIf { movie.keywordsOpen }, Modifier.readingMargin())
-        ExternalLinksSection(movie.links, actions.onOpenUrl)
-        TitleDetailsSection(
-            movie.detailEntries(context.resources, locale, actions.onOpenCompany.takeIf { movie.companiesOpen }, actions.onOpenPerson),
-        )
-    }
-}
 
 /** The line under the title in the request sheet: release year and runtime, whichever the server gave. */
 @Composable

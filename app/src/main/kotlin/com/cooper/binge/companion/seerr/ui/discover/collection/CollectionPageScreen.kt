@@ -1,47 +1,36 @@
 package com.cooper.binge.companion.seerr.ui.discover.collection
 
-import androidx.compose.foundation.ScrollState
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalResources
-import androidx.compose.ui.res.dimensionResource
-import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.BingeActionFooter
-import com.binge.designsystem.component.ExpandableOverview
 import com.binge.designsystem.component.SnackbarMessageKind
+import com.binge.designsystem.component.StatusChip
 import com.binge.designsystem.component.showSnackbar
-import com.binge.designsystem.layout.LayoutAnchors
-import com.binge.designsystem.layout.layoutAnchor
-import com.binge.designsystem.template.MediaHeroDetailPage
+import com.binge.designsystem.template.CollectionDetailCallbacks
+import com.binge.designsystem.template.CollectionDetailScreen
+import com.binge.designsystem.template.ScreenAction
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.TitleAvailability
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.TitleResult
 import com.cooper.binge.companion.seerr.discover.collection.CollectionDetails
 import com.cooper.binge.companion.seerr.discover.request.RequestResult
+import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.ui.discover.request.RequestFilm
 import com.cooper.binge.companion.seerr.ui.discover.request.RequestSheet
 import com.cooper.binge.companion.seerr.ui.discover.request.RequestSheetTarget
 import com.cooper.binge.companion.seerr.ui.discover.request.filmsSubmitLabel
 import com.cooper.binge.companion.seerr.ui.discover.request.messageRes
-import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
-import com.cooper.binge.companion.seerr.ui.state.MediaHeroDetailPlaceholder
+import com.cooper.binge.companion.seerr.ui.discover.title.statusStyle
+import com.cooper.binge.companion.seerr.ui.rememberAllowLocalNetwork
 import com.cooper.binge.companion.seerr.ui.state.messageRes
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
-import com.binge.designsystem.R as DesR
 
 class CollectionPageActions(
     val onBack: () -> Unit,
@@ -55,32 +44,73 @@ class CollectionPageActions(
     val onSetBlocked: (Boolean) -> Unit,
 )
 
-/** The collection page: a hero with its count, the story, then every film as a row that opens the film's page. */
+/**
+ * The collection page on the shared [CollectionDetailScreen]: a hero with its count, the story, then every film as a row that opens the
+ * film's page. The pinned Request button is the template's footer, the overflow sits in the bar, and the request sheet and block
+ * confirm are its overlays.
+ */
 @Composable
 internal fun CollectionPageScreen(
     state: CollectionPageUiState,
     events: Flow<CollectionPageEvent>,
     actions: CollectionPageActions,
     modifier: Modifier = Modifier,
-    scrollState: ScrollState = rememberScrollState(),
 ) {
-    when (state) {
-        CollectionPageUiState.Loading -> CollectionPageSkeleton(onBack = actions.onBack, modifier = modifier)
-        is CollectionPageUiState.Error -> MediaHeroDetailPlaceholder { ErrorScreen(state.error, onRetry = actions.onRetry) }
-        is CollectionPageUiState.Ready -> ReadyPage(state, events, actions, modifier, scrollState)
-    }
+    val snackbar = remember { SnackbarHostState() }
+    val resources = LocalResources.current
+    CollectionEventSnackbars(events, snackbar)
+    val ready = state as? CollectionPageUiState.Ready
+    val denied = (state as? CollectionPageUiState.Error)?.error == SeerrError.LocalNetworkDenied
+    // Called only while the failure shows: once it is asked, the hook retries on every resume, which a loaded page must not do.
+    val allow = if (denied) rememberAllowLocalNetwork(actions.onRetry) else null
+    val allowLabel = allow?.let { stringResource(it.label) }.orEmpty()
+    val detail =
+        remember(state, resources, allow, allowLabel) { state.toDetailState(resources, allow?.let { ScreenAction(allowLabel, it.run) }) }
+    val partsByKey =
+        remember(ready?.collection) {
+            ready
+                ?.collection
+                ?.parts
+                .orEmpty()
+                .associateBy { partKey(it.tmdbId) }
+        }
+    val mayRequest = ready != null && ready.mayRequest && ready.collection.toRequest > 0
+    CollectionDetailScreen(
+        state = detail,
+        callbacks =
+            CollectionDetailCallbacks(
+                onBack = actions.onBack,
+                onRetry = actions.onRetry,
+                onOpenPart = { key -> partsByKey[key]?.let(actions.onOpenTitle) },
+            ),
+        modifier = modifier,
+        snackbarHostState = snackbar,
+        partTrailing = { part ->
+            partsByKey[part.key]?.availability?.statusStyle()?.let { style ->
+                { StatusChip(stringResource(style.label), style.sentiment) }
+            }
+        },
+        footer = if (mayRequest) ({ RequestAllFooter(ready.collection.toRequest, actions.onRequest) }) else null,
+        topBarActions = { glassAlpha ->
+            if (ready != null && ready.mayBlock) {
+                CollectionOverflowAction(
+                    glassBackgroundAlpha = glassAlpha,
+                    blocked = ready.collection.blocked,
+                    enabled = !ready.changing,
+                    onBlock = actions.onAskBlock,
+                    onUnblock = { actions.onSetBlocked(false) },
+                )
+            }
+        },
+        overlays = { if (ready != null) CollectionOverlays(ready, actions) },
+    )
 }
 
 @Composable
-private fun ReadyPage(
-    state: CollectionPageUiState.Ready,
+private fun CollectionEventSnackbars(
     events: Flow<CollectionPageEvent>,
-    actions: CollectionPageActions,
-    modifier: Modifier,
-    scrollState: ScrollState,
+    snackbar: SnackbarHostState,
 ) {
-    val collection = state.collection
-    val snackbar = remember { SnackbarHostState() }
     val resources = LocalResources.current
     LaunchedEffect(events) {
         events.collectLatest { event ->
@@ -96,63 +126,14 @@ private fun ReadyPage(
             snackbar.showSnackbar(resources.getString(message), kind)
         }
     }
-    val mayRequest = state.mayRequest && collection.toRequest > 0
-    MediaHeroDetailPage(
-        title = collection.name,
-        backdropUrl = collection.backdropUrl,
-        metaText = collection.metaText(state.mayRequest),
-        onBack = actions.onBack,
-        modifier = modifier,
-        scrollState = scrollState,
-        snackbarHostState = snackbar,
-        footer = if (mayRequest) ({ RequestAllFooter(collection.toRequest, actions.onRequest) }) else null,
-        topBarActions = { glassAlpha ->
-            if (state.mayBlock) {
-                CollectionOverflowAction(
-                    glassBackgroundAlpha = glassAlpha,
-                    blocked = collection.blocked,
-                    enabled = !state.changing,
-                    onBlock = actions.onAskBlock,
-                    onUnblock = { actions.onSetBlocked(false) },
-                )
-            }
-        },
-    ) {
-        Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
-        collection.overview?.let { overview ->
-            Column(
-                Modifier
-                    .padding(
-                        horizontal = dimensionResource(DesR.dimen.padding_m),
-                    ).layoutAnchor(LayoutAnchors.section(LayoutAnchors.Detail.OVERVIEW)),
-            ) {
-                Text(stringResource(R.string.title_page_overview), style = MaterialTheme.typography.titleMedium)
-                Spacer(Modifier.height(dimensionResource(DesR.dimen.detail_meta_spacing)))
-                ExpandableOverview(text = overview)
-            }
-            Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
-        }
-        Column(
-            modifier = Modifier.padding(horizontal = dimensionResource(DesR.dimen.padding_m)),
-            verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
-        ) {
-            collection.parts.forEachIndexed { index, part ->
-                CollectionPartRow(
-                    part,
-                    onClick = { actions.onOpenTitle(part) },
-                    modifier =
-                        if (index ==
-                            0
-                        ) {
-                            Modifier.layoutAnchor(LayoutAnchors.section(LayoutAnchors.Collection.FIRST_ITEM))
-                        } else {
-                            Modifier
-                        },
-                )
-            }
-        }
-        Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_l)))
-    }
+}
+
+@Composable
+private fun CollectionOverlays(
+    state: CollectionPageUiState.Ready,
+    actions: CollectionPageActions,
+) {
+    val collection = state.collection
     if (state.requestSheetOpen) {
         RequestSheet(target = collection.toRequestTarget(), onDismiss = actions.onCloseRequest, onResult = actions.onRequested)
     }
@@ -183,9 +164,3 @@ private fun CollectionDetails.toRequestTarget() =
         posterUrl = posterUrl,
         films = parts.map { RequestFilm(it.tmdbId, it.name, it.year, it.availability, parts4k[it.tmdbId] ?: TitleAvailability.None) },
     )
-
-@Composable
-private fun CollectionDetails.metaText(mayRequest: Boolean): String {
-    val films = pluralStringResource(R.plurals.collection_page_films, parts.size, parts.size)
-    return if (mayRequest && toRequest > 0) stringResource(R.string.collection_page_meta, films, toRequest) else films
-}
