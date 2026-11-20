@@ -9,11 +9,11 @@ import android.hardware.SensorManager
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.core.app.ApplicationProvider
 import com.cooper.binge.companion.seerr.ui.openInBrowser
+import com.cooper.binge.companion.seerr.util.createSeerrAndroidComposeRule
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -35,7 +35,7 @@ private const val URL = "https://example.test/report"
 @RunWith(RobolectricTestRunner::class)
 class SeerrShakeToReportPromptTest {
     @get:Rule
-    val rule = createAndroidComposeRule<ComponentActivity>()
+    val rule = createSeerrAndroidComposeRule<ComponentActivity>()
 
     private val application get() = ApplicationProvider.getApplicationContext<Application>()
     private val manager get() = application.getSystemService(Context.SENSOR_SERVICE) as SensorManager
