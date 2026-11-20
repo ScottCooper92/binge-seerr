@@ -224,7 +224,17 @@ class SettingsIndexTest {
     fun `each device switch has its own This app entry on its row`() {
         val appEntries = settingsIndex.filter { it.target == SearchTarget.ThisApp && it.row != null }
 
-        assertEquals(deviceSwitches.keys, appEntries.map { it.row }.toSet())
+        assertEquals(deviceSwitches.keys, appEntries.map { it.row }.toSet() - SettingRows.APP_REPORT_BUG)
         assertTrue(appEntries.all { it.available(admin) })
+    }
+
+    @Test
+    fun `Report a bug is a This app entry on its own row, which is a link and not a switch`() {
+        val entry = settingsIndex.single { it.row == SettingRows.APP_REPORT_BUG }
+
+        assertEquals(SearchTarget.ThisApp, entry.target)
+        assertEquals("this-app|app.report-bug", entry.id)
+        assertTrue(SettingRows.APP_REPORT_BUG !in deviceSwitches.keys)
+        assertEquals(ThisAppRoute(SettingRows.APP_REPORT_BUG), entry.target.route(7, entry.row))
     }
 }

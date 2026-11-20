@@ -1514,6 +1514,7 @@
     <string name="search_kw_logs">errors debug history</string>
     <string name="search_kw_about">version update status</string>
     <string name="search_kw_this_app">preferences binge feedback bug report privacy</string>
+    <string name="search_kw_report_bug">feedback issue problem support github</string>
     <string name="search_kw_shake">bug report feedback gesture motion</string>
     <string name="search_kw_usage_data">analytics statistics telemetry privacy</string>
     <string name="search_kw_crash_reports">crashes errors stability privacy</string>

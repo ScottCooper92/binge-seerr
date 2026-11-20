@@ -5,6 +5,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Login
 import androidx.compose.material.icons.filled.Animation
 import androidx.compose.material.icons.filled.Badge
+import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Event
 import androidx.compose.material.icons.filled.Healing
@@ -225,6 +226,14 @@ internal val settingRowEntries: List<IndexEntry> =
                 R.string.server_settings_discover_language,
                 Icons.Filled.Language,
                 SettingRows.ACCOUNT_DISCOVER_LANGUAGE,
+            ),
+        )
+        add(
+            appSetting(
+                R.string.settings_report_bug,
+                Icons.Filled.BugReport,
+                SettingRows.APP_REPORT_BUG,
+                R.string.search_kw_report_bug,
             ),
         )
         add(
