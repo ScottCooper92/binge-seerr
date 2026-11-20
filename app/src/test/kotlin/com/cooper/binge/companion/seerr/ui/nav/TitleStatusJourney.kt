@@ -82,21 +82,6 @@ internal class TitleStatusJourney(
     }
 
     /**
-     * The node reading exactly [text] that is lowest on screen, or null when none shows. A page's button and a sheet's or dialog's
-     * share a label, and a click that reaches the page's through a scrim only dismisses what is on top, so the one pinned lowest is wanted.
-     */
-    fun lowest(text: String): SemanticsNodeInteraction? {
-        val nodes = host.compose.onAllNodes(hasText(text))
-        val lowest =
-            nodes
-                .fetchSemanticsNodes()
-                .withIndex()
-                .maxByOrNull { it.value.boundsInRoot.top }
-                ?.index
-        return lowest?.let { nodes[it] }
-    }
-
-    /**
      * Clicks a node reading exactly [label], or matching [matcher], on each poll until [reached], and says what the screen showed if none ever did. [last]
      * takes the last match in the tree, which is a dialog's own button over the sheet's or page's behind it, as a dialog's window
      * is composed after what it covers. A node that is gone when the click lands is waited out, not an error.
@@ -117,25 +102,33 @@ internal class TitleStatusJourney(
         done
     }
 
-    /** Opens [FILM]'s page from [open], which finds its card or row. */
+    /**
+     * Opens [FILM]'s page from [open], which finds its card or row, and waits for the page to show [shows]. A card that is off screen
+     * or gone for a frame while the list settles is waited out, as a click that lands on a node that has gone is.
+     */
     fun openPage(
         open: () -> SemanticsNodeInteraction = { card().also { it.performScrollTo() } },
         shows: String,
-    ) = host.clickUntil("the page of $FILM", target = open, reached = { host.isShowing(shows, exactly = true) })
+    ) = host.await("the page of $FILM") {
+        val done = host.isShowing(shows, exactly = true)
+        if (!done) {
+            try {
+                open().performClick()
+            } catch (_: AssertionError) {
+                // The node was not there at the instant of the tap; the next poll looks again.
+            }
+        }
+        done
+    }
 
     /** Opens [FILM]'s page from its card, requests it from the sheet, and comes back with Back. */
     fun requestFromTheCardAndGoBack(open: () -> SemanticsNodeInteraction = { card().also { it.performScrollTo() } }) {
         openPage(open, shows = request)
-        host.clickUntil(
-            "the request sheet",
-            target = { host.compose.onAllNodes(hasText(request)).onFirst() },
-            reached = { host.isShowing(host.string(R.string.request_sheet_status_new)) },
-        )
+        clickUntil("the request sheet", request) { host.isShowing(host.string(R.string.request_sheet_status_new)) }
         // The page's button can still read Request once the film is asked for, when its 4K version is open, so the sheet going is the sign.
-        host.await("$FILM requested and the sheet closed") {
-            val closed = !host.isShowing(host.string(R.string.request_sheet_status_new))
-            if (!closed) lowest(request)?.performClick()
-            closed
+        // The sheet's footer shares the page button's label, and a sheet is a window of its own, so its button is the last match.
+        clickUntil("$FILM requested and the sheet closed", request, last = true) {
+            !host.isShowing(host.string(R.string.request_sheet_status_new))
         }
         host.back()
     }

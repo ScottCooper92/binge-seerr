@@ -119,6 +119,15 @@ private fun optionItem(
     extras: AgentExtras,
     enabled: Boolean,
     actions: AgentActions,
+): ListItem = optionRow(option, draft, extras, enabled, actions).copy(key = option.rowKey())
+
+@Composable
+private fun optionRow(
+    option: AgentOption,
+    draft: AgentForm,
+    extras: AgentExtras,
+    enabled: Boolean,
+    actions: AgentActions,
 ): ListItem {
     // An option nothing reads follows the switch that would read it. The switches themselves
     // stay live: exclusivity is enforced by turning the other one off, not by refusing this one.
