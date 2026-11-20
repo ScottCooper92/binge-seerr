@@ -18,6 +18,7 @@ import com.cooper.homelab.core.presentation.connect.ProbedServer
 import com.cooper.homelab.core.presentation.connect.SignInForm
 import com.cooper.homelab.core.presentation.connect.SignInMode
 import com.cooper.homelab.core.uiandroid.connect.ConnectCopy
+import com.cooper.homelab.core.uiandroid.connect.ConnectLinkCopy
 import com.cooper.homelab.core.uiandroid.connect.ConnectSignInOptions
 
 /** The Seerr mode behind [this] and the Seerr server read, or null for a mode or server this app did not make. */
@@ -36,6 +37,13 @@ internal fun seerrConnectCopy(): ConnectCopy =
         modeLabel = { server, mode -> server.seerr(mode)?.let { (kind, setup) -> kind.label(setup) }.orEmpty() },
         fieldLabel = { _, _, field -> stringResource(field.labelRes()) },
         submitLabel = { mode -> (mode as? SeerrMode)?.let { stringResource(it.mode.submitLabelRes()) } },
+        modeHint = { _, mode ->
+            when ((mode as? SeerrMode)?.mode) {
+                SeerrSignInMode.Plex -> stringResource(R.string.setup_plex_hint)
+                SeerrSignInMode.QuickConnect -> stringResource(R.string.setup_quick_connect_hint)
+                else -> null
+            }
+        },
         fieldHint = { _, _, field -> if (field.id == FIELD_API_KEY) stringResource(R.string.setup_api_key_hint) else null },
         fieldPlaceholder = { server, mode, field ->
             when (field.id) {
@@ -154,4 +162,20 @@ private fun FieldSpec.savedLogin(onEdit: (SignInForm.() -> SignInForm) -> Unit):
         }
     } else {
         Modifier
+    }
+
+/** The words of the sheet that shows a code to approve elsewhere, in the strings the old link sheet uses. */
+@Composable
+internal fun seerrLinkCopy(mode: SignInMode): ConnectLinkCopy =
+    if ((mode as? SeerrMode)?.mode == SeerrSignInMode.Plex) {
+        ConnectLinkCopy(
+            title = stringResource(R.string.link_plex_title),
+            body = stringResource(R.string.link_plex_body),
+            openLabel = stringResource(R.string.link_plex_open),
+        )
+    } else {
+        ConnectLinkCopy(
+            title = stringResource(R.string.link_quick_connect_title),
+            body = stringResource(R.string.link_quick_connect_body),
+        )
     }

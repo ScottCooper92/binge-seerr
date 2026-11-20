@@ -1,14 +1,17 @@
 package com.cooper.binge.companion.seerr.ui
 
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModelStore
 import com.cooper.binge.companion.seerr.auth.LegacyCredentialStore
+import com.cooper.binge.companion.seerr.auth.PlexPinFlow
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.demo.DEMO_ORIGIN
 import com.cooper.binge.companion.seerr.handoff.AddressHandOffs
 import com.cooper.binge.companion.seerr.handoff.HandOffCredentials
 import com.cooper.binge.companion.seerr.handoff.HandOffOpening
 import com.cooper.binge.companion.seerr.handoff.HandOffProgress
+import com.cooper.binge.companion.seerr.seerr.PlexClientIdentity
 import com.cooper.binge.companion.seerr.seerr.SeerrApiFactory
 import com.cooper.binge.companion.seerr.seerr.SeerrAuth
 import com.cooper.binge.companion.seerr.seerr.SeerrSignInMode
@@ -99,6 +102,13 @@ class SharedSetupViewModelTest {
         val vm =
             SharedSetupViewModel(
                 connection = connection,
+                plex =
+                    PlexPinFlow(
+                        identity = { PlexClientIdentity("cid", "Seerr Companion", "0.1.0", "Pixel") },
+                        apis = { error("Plex is not used") },
+                    ),
+                savedState = SavedStateHandle(),
+                cipher = PlainCipher,
                 handOffs = handOffs,
                 cleartext = cleartext,
                 localNetwork = LocalNetworkPermission.AlwaysGranted,
@@ -137,7 +147,7 @@ class SharedSetupViewModelTest {
     }
 
     @Test
-    fun `the address step reads the server and offers only the sign-ins that have fields`() =
+    fun `the address step reads the server and offers the sign-ins it accepts`() =
         runTest {
             val vm = viewModel()
 
@@ -148,8 +158,10 @@ class SharedSetupViewModelTest {
                     backdrops = """["/a.jpg"]""",
                 )
 
-            // Quick Connect finishes in another app, so it stays on the old path.
-            assertEquals(listOf(SeerrSignInMode.Jellyfin, SeerrSignInMode.Local, SeerrSignInMode.ApiKey), signIn.server.modes)
+            assertEquals(
+                listOf(SeerrSignInMode.Jellyfin, SeerrSignInMode.QuickConnect, SeerrSignInMode.Local, SeerrSignInMode.ApiKey),
+                signIn.server.modes,
+            )
             assertEquals("Seerr", signIn.server.title)
             assertEquals(SeerrVariant.Seerr, signIn.server.variant)
             assertEquals("Home", signIn.server.mediaServerName)
@@ -159,11 +171,11 @@ class SharedSetupViewModelTest {
         }
 
     @Test
-    fun `plex is not offered on a plex-backed server`() =
+    fun `plex is offered on a plex-backed server`() =
         runTest {
             val signIn = viewModel().read("""{"version":"2.7.0"}""", """{"mediaServerType":1}""")
 
-            assertEquals(listOf(SeerrSignInMode.Local, SeerrSignInMode.ApiKey), signIn.server.modes)
+            assertEquals(listOf(SeerrSignInMode.Plex, SeerrSignInMode.Local, SeerrSignInMode.ApiKey), signIn.server.modes)
         }
 
     @Test

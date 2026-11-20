@@ -24,7 +24,7 @@ internal const val FIELD_USERNAME = "username"
 internal const val FIELD_EMAIL = "email"
 internal const val FIELD_PASSWORD = "password"
 
-/** A sign-in of Seerr's that is typed into a form, as the shared machine sees it. [mode] is its [id]. */
+/** A sign-in of Seerr's as the shared machine sees it, typed into a form or, with no [fields], finished elsewhere. [mode] is its [id]. */
 internal class SeerrMode(
     val mode: SeerrSignInMode,
     override val fields: List<FieldSpec>,
@@ -44,12 +44,15 @@ private val FORM_MODES: Map<SeerrSignInMode, SeerrMode> =
             SeerrSignInMode.Emby,
             listOf(FieldSpec(FIELD_USERNAME, FieldKind.Username), FieldSpec(FIELD_PASSWORD, FieldKind.Secret)),
         ),
+        // Finished in another app, so no field: the link flow runs them, under the same names.
+        SeerrMode(SeerrSignInMode.Plex, emptyList()),
+        SeerrMode(SeerrSignInMode.QuickConnect, emptyList()),
     ).associateBy { it.mode }
 
-/** This mode as a form of fields, or null for Plex and Quick Connect, which finish in another app and stay on the old path. */
+/** This mode as the machine runs it: a form of fields, or none for Plex and Quick Connect, which the link flow runs. */
 internal fun SeerrSignInMode.formMode(): SeerrMode? = FORM_MODES[this]
 
-/** The modes of [this] server that the shared machine can run, in the order the form offers them. */
+/** The modes of [this] server that the shared machine can run, in the order the screen offers them. */
 internal fun SetupServer.formModes(): List<SeerrSignInMode> = modes.filter { it.formMode() != null }
 
 /** Reads the server at one candidate address and shapes the answer for the machine. A server that answers but is not Seerr is its own case. */
