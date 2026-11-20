@@ -46,6 +46,12 @@ class TitleSearchScreenshotTest {
     @Composable
     fun idleLoading() = Frame(idleLoadingState())
 
+    /** A search on its way: the result rows' plates in the results grid's own columns. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun loading() = Frame(TitleSearchUiState.Loading("lighthouse"))
+
     /** A type chosen: only its results are listed, and the chip row keeps every count. */
     @PreviewTest
     @SeerrScreenStatePreview
