@@ -13,7 +13,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.res.stringResource
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
@@ -24,6 +23,7 @@ import com.cooper.binge.companion.seerr.auth.ConnectionRestore
 import com.cooper.binge.companion.seerr.auth.ForegroundUserRefresh
 import com.cooper.binge.companion.seerr.discover.sliders.DiscoverSliderRepository
 import com.cooper.binge.companion.seerr.feedback.BugReportLinks
+import com.cooper.binge.companion.seerr.feedback.SeerrShakeToReportPrompt
 import com.cooper.binge.companion.seerr.feedback.ShakeToReportSetting
 import com.cooper.binge.companion.seerr.flags.LocalDiscoveryEnabled
 import com.cooper.binge.companion.seerr.telemetry.LocalAnalytics
@@ -42,7 +42,6 @@ import com.cooper.homelab.core.flags.BooleanPreference
 import com.cooper.homelab.core.flags.FeatureFlags
 import com.cooper.homelab.core.flags.PreferenceGate
 import com.cooper.homelab.core.telemetry.Analytics
-import com.cooper.homelab.core.uiandroid.feedback.ShakeToReportPrompt
 import com.cooper.homelab.core.uiandroid.flags.LocalFlags
 import com.cooper.homelab.core.uiandroid.shell.RestartOnGateChange
 import dagger.hilt.android.AndroidEntryPoint
@@ -133,11 +132,7 @@ class MainActivity : ComponentActivity() {
             val shakeToReport by feedbackPrefs.value.collectAsStateWithLifecycle(initialValue = false)
             CompositionLocalProvider(LocalFlags provides flags, LocalDiscoveryEnabled provides discovery) {
                 SeerrTheme {
-                    ShakeToReportPrompt(
-                        enabled = shakeToReport,
-                        confirmLabel = stringResource(R.string.settings_report_bug),
-                        bugReportUrl = bugReportLinks::url,
-                    )
+                    SeerrShakeToReportPrompt(enabled = shakeToReport, bugReportUrl = bugReportLinks::url)
                     // The window's own background (the platform default, since Theme.Seerr sets none)
                     // doesn't match this, so a two-pane gutter would otherwise show through as a
                     // different colour than the panes it sits between.
