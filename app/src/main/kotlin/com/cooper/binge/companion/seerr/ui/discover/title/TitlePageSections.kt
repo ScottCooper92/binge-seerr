@@ -1,6 +1,5 @@
 package com.cooper.binge.companion.seerr.ui.discover.title
 
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -9,18 +8,12 @@ import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.MediaCard
 import com.binge.designsystem.component.MediaCardStatus
 import com.binge.designsystem.component.MediaCarousel
-import com.binge.designsystem.component.PersonCard
-import com.binge.designsystem.component.SectionHeader
-import com.binge.designsystem.component.TagRow
-import com.binge.designsystem.resolvedContentInset
 import com.binge.designsystem.template.readingInset
 import com.binge.designsystem.theme.BingeSentiment
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.TitleAvailability
 import com.cooper.binge.companion.seerr.discover.TitleResult
 import com.cooper.binge.companion.seerr.discover.title.MovieDetails
-import com.cooper.binge.companion.seerr.discover.title.TitleKeyword
-import com.cooper.binge.companion.seerr.discover.title.TitlePerson
 import com.cooper.binge.companion.seerr.seerr.toTmdbPosterUrl
 import com.cooper.binge.companion.seerr.ui.discover.request.joinMeta
 import com.binge.designsystem.R as DesR
@@ -32,47 +25,6 @@ private const val MINUTES_PER_HOUR = 60
 internal fun MovieDetails.requestMeta(): String? {
     val runtime = runtimeMinutes?.let { stringResource(R.string.title_page_runtime, it / MINUTES_PER_HOUR, it % MINUTES_PER_HOUR) }
     return joinMeta(listOf(year, runtime), stringResource(R.string.request_sheet_meta_separator))
-}
-
-@Composable
-internal fun KeywordsSection(
-    keywords: List<TitleKeyword>,
-    onOpen: ((TitleKeyword) -> Unit)?,
-    modifier: Modifier = Modifier,
-) {
-    if (keywords.isEmpty()) return
-    SectionHeader(stringResource(R.string.title_page_keywords), modifier)
-    TagRow(
-        tags = keywords.map { it.name },
-        modifier = modifier.padding(horizontal = resolvedContentInset()),
-        compact = true,
-        onTagClick = onOpen?.let { open -> { index -> open(keywords[index]) } },
-    )
-}
-
-@Composable
-internal fun PeopleRow(
-    title: String,
-    people: List<TitlePerson>,
-    onOpen: (Int) -> Unit,
-    onSeeAll: () -> Unit,
-) {
-    if (people.isEmpty()) return
-    MediaCarousel(
-        title = title,
-        items = people,
-        itemKey = { it.personId },
-        onMoreClick = onSeeAll,
-        onEndTileClick = null,
-        horizontalPadding = readingInset(),
-    ) { _, person ->
-        PersonCard(
-            name = person.name,
-            subtitle = person.role,
-            photoUrl = person.photoUrl,
-            onClick = { onOpen(person.personId) },
-        )
-    }
 }
 
 @Composable
