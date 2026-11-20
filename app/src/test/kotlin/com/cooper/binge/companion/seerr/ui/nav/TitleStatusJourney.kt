@@ -97,7 +97,7 @@ internal class TitleStatusJourney(
     }
 
     /**
-     * Clicks a node reading exactly [label] on each poll until [reached], and says what the screen showed if none ever did. [last]
+     * Clicks a node reading exactly [label], or matching [matcher], on each poll until [reached], and says what the screen showed if none ever did. [last]
      * takes the last match in the tree, which is a dialog's own button over the sheet's or page's behind it, as a dialog's window
      * is composed after what it covers. A node that is gone when the click lands is waited out, not an error.
      */
@@ -105,11 +105,12 @@ internal class TitleStatusJourney(
         what: String,
         label: String,
         last: Boolean = false,
+        matcher: SemanticsMatcher = hasText(label),
         reached: () -> Boolean,
     ) = host.await(what) {
         val done = reached()
         if (!done) {
-            val nodes = host.compose.onAllNodes(hasText(label))
+            val nodes = host.compose.onAllNodes(matcher)
             val count = nodes.fetchSemanticsNodes().size
             if (count > 0) nodes[if (last) count - 1 else 0].performClick()
         }

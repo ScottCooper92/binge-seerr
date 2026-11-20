@@ -1,5 +1,6 @@
 package com.cooper.binge.companion.seerr.ui.nav
 
+import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
@@ -84,7 +85,8 @@ class TitleStatusMoreJourneysTest {
         launchGrid()
         journey.openPage(shows = declined)
         val blockTitle = host.string(R.string.title_block_confirm_title, FILM)
-        journey.clickUntil("the block confirm", block) { host.isShowing(blockTitle) }
+        // The page's Block is an icon button the screen reader announces by its description; its label is not a text node.
+        journey.clickUntil("the block confirm", block, matcher = hasContentDescription(block)) { host.isShowing(blockTitle) }
         // The page's button and the dialog's confirm share a label, so the dialog's is the last.
         journey.clickUntil("$FILM blocked and the dialog closed", block, last = true) { !host.isShowing(blockTitle) }
 
