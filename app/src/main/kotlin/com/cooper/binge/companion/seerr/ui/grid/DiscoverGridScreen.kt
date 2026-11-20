@@ -50,7 +50,6 @@ import com.cooper.binge.companion.seerr.ui.hub.ACCOUNT_HANDOVER_COLLAPSE
 import com.cooper.binge.companion.seerr.ui.hub.AccountBar
 import com.cooper.binge.companion.seerr.ui.hub.TitleBarAccount
 import com.cooper.binge.companion.seerr.ui.hubs.toStatus
-import com.cooper.binge.companion.seerr.ui.state.EmptyScreen
 import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
@@ -68,6 +67,7 @@ internal class DiscoverGridActions(
     val onApply: (DiscoverSort, DiscoverFilters) -> Unit,
     val onSwitchKind: (TitleKind, DiscoverSort, DiscoverFilters) -> Unit,
     val loads: FilterLoads,
+    val onResetFilters: () -> Unit = {},
 )
 
 private const val LOAD_MORE_AHEAD = 6
@@ -137,12 +137,7 @@ internal fun DiscoverGridScreen(
                 )
             when (state) {
                 is DiscoverGridUiState.Loading -> GridSkeleton(inner)
-                is DiscoverGridUiState.Empty ->
-                    EmptyScreen(
-                        message = stringResource(R.string.grid_empty_message),
-                        title = stringResource(R.string.grid_empty_title),
-                        modifier = Modifier.padding(inner),
-                    )
+                is DiscoverGridUiState.Empty -> GridEmpty(state, actions.onResetFilters, Modifier.padding(inner))
                 is DiscoverGridUiState.Error -> ErrorScreen(state.error, Modifier.padding(inner), onRetry = actions.onRetry)
                 is DiscoverGridUiState.Ready -> PosterGrid(state, inner, actions, firstVisibleIndex, reselectKey)
             }

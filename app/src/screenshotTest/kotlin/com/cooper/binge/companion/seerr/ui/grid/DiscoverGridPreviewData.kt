@@ -78,7 +78,11 @@ internal fun appendingGridState() =
 internal fun appendFailedGridState() =
     DiscoverGridUiState.Ready(SORTED, gridCards().take(FEW), hasMore = true, appending = false, appendFailed = true)
 
-internal fun emptyGridState() = DiscoverGridUiState.Empty(SORTED)
+internal fun emptyGridState() = DiscoverGridUiState.Empty(ADDED, GridEmptyReason.Filtered)
+
+internal fun emptyWatchlistState() = DiscoverGridUiState.Empty(GridControls(null, null), GridEmptyReason.Watchlist)
+
+internal fun emptyListState() = DiscoverGridUiState.Empty(GridControls(null, null))
 
 internal fun failedGridState() = DiscoverGridUiState.Error(SORTED, SeerrError.Unreachable)
 
