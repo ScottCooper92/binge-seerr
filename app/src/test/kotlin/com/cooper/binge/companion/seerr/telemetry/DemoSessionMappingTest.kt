@@ -18,7 +18,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 
-class SavedConnectionDemoSessionTest {
+class DemoSessionMappingTest {
     @get:Rule
     val folder = TemporaryFolder()
 
