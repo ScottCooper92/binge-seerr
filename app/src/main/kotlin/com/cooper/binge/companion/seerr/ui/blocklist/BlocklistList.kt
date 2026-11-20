@@ -35,6 +35,8 @@ import com.binge.designsystem.component.ListRowSkeletonColumn
 import com.binge.designsystem.component.MediaTypeTag
 import com.binge.designsystem.component.WrappingRow
 import com.binge.designsystem.formatRelativeOrAbsolute
+import com.binge.designsystem.layout.LayoutAnchors
+import com.binge.designsystem.layout.layoutAnchorIf
 import com.binge.designsystem.template.PagedPhase
 import com.binge.designsystem.template.screenListPadding
 import com.cooper.binge.companion.seerr.R
@@ -46,6 +48,7 @@ import com.cooper.binge.companion.seerr.ui.state.EmptyScreen
 import com.cooper.binge.companion.seerr.ui.state.PagedPullToRefresh
 import com.cooper.binge.companion.seerr.ui.state.PullableMessage
 import com.cooper.binge.companion.seerr.ui.state.rememberPagedPhase
+import com.cooper.binge.companion.seerr.ui.state.rowSkeletonHeight
 import com.binge.designsystem.R as DesR
 
 /**
@@ -83,6 +86,11 @@ internal fun BlocklistBody(
                 ListRowSkeletonColumn(
                     contentPadding = contentPadding.screenListPadding(),
                     modifier = Modifier.fillMaxSize(),
+                    height =
+                        rowSkeletonHeight(
+                            dimensionResource(R.dimen.blocklist_row_skeleton_height),
+                            dimensionResource(R.dimen.blocklist_row_skeleton_growth),
+                        ),
                 )
             is PagedPhase.Failed ->
                 PagedRefreshError(
@@ -123,6 +131,7 @@ private fun BlocklistList(
                     isActing = item.tmdbId in actingTmdbIds,
                     onClick = { onOpen(item) },
                     onRemove = if (canManage) ({ onRemove(item) }) else null,
+                    modifier = Modifier.layoutAnchorIf(index == 0, LayoutAnchors.section(LayoutAnchors.Collection.FIRST_ITEM)),
                 )
             }
         }

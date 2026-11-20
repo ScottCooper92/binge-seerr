@@ -31,6 +31,8 @@ import com.binge.designsystem.component.BingeInitialsAvatar
 import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.component.ListRowSkeletonColumn
+import com.binge.designsystem.layout.LayoutAnchors
+import com.binge.designsystem.layout.layoutAnchorIf
 import com.binge.designsystem.resolvedContentInset
 import com.binge.designsystem.resolvedContentPadding
 import com.binge.designsystem.template.PagedPhase
@@ -42,6 +44,7 @@ import com.cooper.binge.companion.seerr.ui.state.PagedPullToRefresh
 import com.cooper.binge.companion.seerr.ui.state.PullableMessage
 import com.cooper.binge.companion.seerr.ui.state.RoleTag
 import com.cooper.binge.companion.seerr.ui.state.rememberPagedPhase
+import com.cooper.binge.companion.seerr.ui.state.rowSkeletonHeight
 import com.cooper.binge.companion.seerr.ui.users.settings.UserRole
 import com.binge.designsystem.R as DesR
 
@@ -77,7 +80,11 @@ internal fun UsersBody(
             PagedPhase.Skeleton ->
                 ListRowSkeletonColumn(
                     contentPadding = resolvedContentPadding(vertical = resolvedContentInset()) + contentPadding,
-                    height = dimensionResource(R.dimen.users_row_skeleton_height),
+                    height =
+                        rowSkeletonHeight(
+                            dimensionResource(R.dimen.users_row_skeleton_height),
+                            dimensionResource(R.dimen.users_row_skeleton_growth),
+                        ),
                     modifier = Modifier.fillMaxSize(),
                 )
             is PagedPhase.Failed ->
@@ -119,6 +126,7 @@ private fun UserList(
                     selected = item.id in selection,
                     onClick = { if (selection.isEmpty()) onOpen(item) else onToggleSelected(item) },
                     onLongClick = { onToggleSelected(item) },
+                    modifier = Modifier.layoutAnchorIf(index == 0, LayoutAnchors.section(LayoutAnchors.Collection.FIRST_ITEM)),
                 )
             }
         }
