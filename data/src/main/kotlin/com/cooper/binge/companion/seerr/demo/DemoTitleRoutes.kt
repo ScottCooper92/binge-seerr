@@ -113,6 +113,7 @@ private fun DemoData.titleBody(
     voteAverage = DEMO_VOTE_AVERAGE,
     voteCount = DEMO_VOTES,
     originalLanguage = "en",
+    homepage = "https://demo.example.com/films/$tmdbId",
     genres = listOf(SeerrNamedDto(GENRE_ANIMATION, "Animation"), SeerrNamedDto(GENRE_COMEDY, "Comedy")),
     keywords = listOf(SeerrNamedDto(1, "demo"), SeerrNamedDto(2, "short film")),
     productionCompanies = listOf(SeerrNamedDto(2, "Demo Studios")),

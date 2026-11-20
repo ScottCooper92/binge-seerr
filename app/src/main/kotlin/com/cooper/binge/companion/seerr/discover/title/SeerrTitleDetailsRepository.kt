@@ -192,6 +192,7 @@ internal fun SeerrMovieDetailsDto.toMovieDetails(
         mediaId = mediaInfo?.id,
         watchUrl = mediaInfo?.watchLink(),
         webUrl = webUrl,
+        links = titleLinks("movie", id, externalIds?.imdbId, homepage),
         releaseDate = releaseDate?.takeIf { it.isNotBlank() },
         requests =
             mediaInfo
