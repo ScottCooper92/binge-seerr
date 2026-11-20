@@ -37,6 +37,9 @@ data class SeasonSelection(
 
     val open: List<SeasonChoice> get() = seasons.filter { it.isOpen }
 
+    /** The one season there is to pick, when partial requests are on and exactly one season is still open; null otherwise. */
+    val onlyOpen: SeasonChoice? get() = open.singleOrNull()?.takeIf { partialAllowed }
+
     /** The seasons the request sends, in order. */
     val requestSeasons: List<Int>
         get() = if (partialAllowed) items.requestIds.sorted() else open.map { it.number }
