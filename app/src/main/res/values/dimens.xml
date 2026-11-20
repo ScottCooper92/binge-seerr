@@ -27,7 +27,8 @@
     <!-- The list skeletons' rows, from what the loaded rows measure: the height at a font scale of 1 (a row's poster or
          avatar and its padding, and its text lines), and what each whole unit of font scale above 1 adds, since the text
          grows and the poster does not. The users row is an avatar-leading card, so the design system's 128dp poster-row
-         default reads far too tall for it. -->
+         default reads far too tall for it. The issues row wraps in steps as the font grows, so its growth is read off a
+         font scale of 1 and 2 only; between them it is an estimate. -->
     <dimen name="users_row_skeleton_height">72dp</dimen>
     <dimen name="users_row_skeleton_growth">32dp</dimen>
     <dimen name="blocklist_row_skeleton_height">132dp</dimen>
