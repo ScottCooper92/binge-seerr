@@ -91,14 +91,11 @@ internal class SeerrRequestRpcs(
     }
 
     /**
-     * Deletes the version's files from Radarr or Sonarr, then withdraws its open requests, as the console's Delete files
-     * does. A completed one stays, as history, like Seerr's own Delete files leaves it: Clear data is what removes it, and
-     * a leftover does not stop the title being requested again (#1942). The contract text still says every request is
-     * withdrawn; this app follows Seerr here, and the difference is for the contract to settle. A version with an open
-     * request and no files yet is not gone: the request is withdrawn and the answer is OK. Once the
-     * files are deleted the answer is OK even if a withdrawal then fails, because the contract never answers an error
-     * after deleting; the next status read shows what remains. NOT_FOUND is for a title Seerr has no record of, or one
-     * with neither files nor a request left in that version.
+     * Deletes the version's files, then withdraws its open requests, as the console's Delete files does. A completed one
+     * stays as history, as on Seerr (#1942; docs/server-compatibility.md says why). A version with an open request and no
+     * files is withdrawn and answers OK. Once files are deleted the answer is OK even if a withdrawal fails; the next
+     * status read shows what remains. NOT_FOUND is for a title Seerr has no record of, or a version with neither files
+     * nor an open request.
      */
     suspend fun deleteFiles(request: DeleteFilesRequest): DeleteFilesResponse {
         val media = request.media
