@@ -11,7 +11,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.template.DetailState
 import com.binge.designsystem.template.MediaDetailCallbacks
 import com.binge.designsystem.template.SeriesDetailCallbacks
@@ -20,14 +19,10 @@ import com.binge.designsystem.template.readingMargin
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.title.trailerUrl
-import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.ui.discover.request.RequestSheet
 import com.cooper.binge.companion.seerr.ui.discover.request.RequestSheetTarget
 import com.cooper.binge.companion.seerr.ui.discover.request.messageRes
-import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
-import com.cooper.binge.companion.seerr.ui.state.MediaHeroDetailPlaceholder
 import com.cooper.binge.companion.seerr.ui.state.messageRes
-import com.cooper.binge.companion.seerr.ui.state.toErrorKind
 import kotlinx.coroutines.flow.Flow
 
 /** The series page: the design system's series template, filled with this app's primary action, sheets and sections. */
@@ -174,19 +169,14 @@ private fun SeriesOverlays(
 /** What the loaded page is expected to show before it arrives: a rating, a year and the episodes or the certification. */
 private const val LOADING_STATS = 3
 
-/** The local-network prompt has its own Allow action, which the template's failure page has no room for: it keeps the old screen. */
 @Composable
 private fun ErrorPage(
     state: SeriesPageUiState.Error,
     actions: TitlePageActions,
     modifier: Modifier,
 ) {
-    if (state.error == SeerrError.LocalNetworkDenied) {
-        MediaHeroDetailPlaceholder { ErrorScreen(state.error, onRetry = actions.onRetry) }
-        return
-    }
     SeriesDetailScreen(
-        state = DetailState.Failed(message = stringResource(state.error.messageRes()), kind = state.error.toErrorKind()),
+        state = titleFailedState(state.error, actions.onRetry),
         series = null,
         callbacks = MediaDetailCallbacks(onBack = actions.onBack, onRetry = actions.onRetry),
         seriesCallbacks = SeriesDetailCallbacks(onSelectSeason = {}),
