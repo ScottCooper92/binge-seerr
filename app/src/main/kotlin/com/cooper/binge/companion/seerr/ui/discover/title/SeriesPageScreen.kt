@@ -2,7 +2,6 @@ package com.cooper.binge.companion.seerr.ui.discover.title
 
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
@@ -11,23 +10,23 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.dimensionResource
-import com.binge.designsystem.template.MediaHeroDetailPage
-import com.binge.designsystem.template.MediaWideHeader
+import com.binge.designsystem.template.DetailState
+import com.binge.designsystem.template.MediaDetailCallbacks
+import com.binge.designsystem.template.SeriesDetailCallbacks
+import com.binge.designsystem.template.SeriesDetailScreen
+import com.binge.designsystem.template.readingMargin
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.TitleKind
+import com.cooper.binge.companion.seerr.discover.title.trailerUrl
+import com.cooper.binge.companion.seerr.ui.discover.links.ExternalLinksSection
 import com.cooper.binge.companion.seerr.ui.discover.request.RequestSheet
 import com.cooper.binge.companion.seerr.ui.discover.request.RequestSheetTarget
 import com.cooper.binge.companion.seerr.ui.discover.request.messageRes
-import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
-import com.cooper.binge.companion.seerr.ui.state.MediaHeroDetailPlaceholder
 import com.cooper.binge.companion.seerr.ui.state.messageRes
 import kotlinx.coroutines.flow.Flow
-import com.binge.designsystem.R as DesR
 
-/** The series page: a hero, its stats, and the actions, with Request first; then the seasons, facts and people. */
+/** The series page: the design system's series template, filled with this app's primary action, sheets and sections. */
 @Composable
 internal fun SeriesPageScreen(
     state: SeriesPageUiState,
@@ -38,8 +37,15 @@ internal fun SeriesPageScreen(
     scrollState: ScrollState = rememberScrollState(),
 ) {
     when (state) {
-        SeriesPageUiState.Loading -> TitlePageSkeleton(onBack = actions.onBack, modifier = modifier)
-        is SeriesPageUiState.Error -> MediaHeroDetailPlaceholder { ErrorScreen(state.error, onRetry = actions.onRetry) }
+        SeriesPageUiState.Loading ->
+            SeriesDetailScreen(
+                state = DetailState.Loading(stats = LOADING_STATS, hasPrimary = true, rails = 1),
+                series = null,
+                callbacks = MediaDetailCallbacks(onBack = actions.onBack),
+                seriesCallbacks = SeriesDetailCallbacks(onSelectSeason = {}),
+                modifier = modifier,
+            )
+        is SeriesPageUiState.Error -> ErrorPage(state, actions, modifier)
         is SeriesPageUiState.Ready -> ReadySeriesPage(state, events, actions, seasonActions, modifier, scrollState)
     }
 }
@@ -78,23 +84,42 @@ private fun ReadySeriesPage(
     }
     val series = state.series
     val context = LocalContext.current
-    MediaHeroDetailPage(
-        title = series.name,
-        backdropUrl = series.backdropUrl,
-        metaText = "",
-        genres = series.genres,
-        tagline = series.tagline,
-        externalScores = state.extras?.ratings.toExternalScores(context.resources, LocalConfiguration.current.locales[0]),
-        wideHeader = MediaWideHeader(series.posterUrl, series.overview, series.titleStats(LocalConfiguration.current.locales[0])),
-        onBack = actions.onBack,
+    val model = seriesDetailModel(state, actions)
+    val episodes = seriesEpisodes(state)
+    val actionsModel = titleActionsModel(series.standard, series.fourK, series.requests, series.mayReport, series.mayBlock)
+    SeriesDetailScreen(
+        state = DetailState.Content(model.detail),
+        series = episodes,
+        callbacks = model.callbacks(actions),
+        seriesCallbacks = seasonActions.callbacks(state.selectedSeason, series.name),
         modifier = modifier,
+        primary = { primaryModifier -> PrimaryAction(actionsModel.primary, actions.onRequest, primaryModifier) },
+        roundActions =
+            titleRoundActions(
+                model = actionsModel,
+                onTrailer = series.videos.trailerUrl()?.let { url -> { actions.onOpenUrl(url) } },
+                watchlist = WatchlistButton(series.onWatchlist, actions.onToggleWatchlist).takeIf { series.mayWatchlist },
+                onReport = actions.onReport,
+                onBlock = actions.block?.onAsk.takeIf { series.mayBlock },
+            ),
+        topBarActions = { glassAlpha -> ShareBarAction(glassAlpha) { context.shareTitle(series.name, series.webUrl) } },
+        afterPeople = { WhereToWatchSection(series.providers, actions.onOpenUrl, Modifier.readingMargin()) },
+        afterRails = { ExternalLinksSection(series.links, actions.onOpenUrl) },
+        // The template's column puts its gap before this empty slot: the page's bottom padding under the Details, as it had.
+        atEnd = if (model.detail.info != null) ({ Spacer(Modifier) }) else null,
+        overlays = { SeriesOverlays(state, actions, snackbar) },
         snackbarHostState = snackbar,
         scrollState = scrollState,
-        topBarActions = { glassAlpha -> ShareBarAction(glassAlpha) { context.shareTitle(series.name, series.webUrl) } },
-    ) {
-        Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
-        SeriesPageBody(state, actions, seasonActions)
-    }
+    )
+}
+
+@Composable
+private fun SeriesOverlays(
+    state: SeriesPageUiState.Ready,
+    actions: TitlePageActions,
+    snackbar: SnackbarHostState,
+) {
+    val series = state.series
     if (state.requestSheetOpen) {
         RequestSheet(
             target =
@@ -140,4 +165,22 @@ private fun ReadySeriesPage(
     state.manageRequestId?.let { requestId ->
         TitleManageSheet(requestId, state.manageSheetOpen, snackbar, series.sheetFacts(), actions)
     }
+}
+
+/** What the loaded page is expected to show before it arrives: a rating, a year and the episodes or the certification. */
+private const val LOADING_STATS = 3
+
+@Composable
+private fun ErrorPage(
+    state: SeriesPageUiState.Error,
+    actions: TitlePageActions,
+    modifier: Modifier,
+) {
+    SeriesDetailScreen(
+        state = titleFailedState(state.error, actions.onRetry),
+        series = null,
+        callbacks = MediaDetailCallbacks(onBack = actions.onBack, onRetry = actions.onRetry),
+        seriesCallbacks = SeriesDetailCallbacks(onSelectSeason = {}),
+        modifier = modifier,
+    )
 }

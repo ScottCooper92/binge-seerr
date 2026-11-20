@@ -64,12 +64,6 @@ class SeriesPageScreenshotTest {
     @Composable
     fun requestableExpandedLargeText() = Frame(SeriesPageUiState.Ready(fullSeries(), seriesExtras()))
 
-    /** The season picker sheet's content: one season in each state, the status beside the ones the server holds, the shown one checked. */
-    @PreviewTest
-    @SeerrScreenStatePreview
-    @Composable
-    fun seasonPicker() = SeasonPickerContent(fullSeries().seasons, selected = 1, onSelect = {})
-
     /** The first season selected: its first five episodes, then the row that opens the rest, reached by scrolling. */
     @PreviewTest
     @SeerrScreenStatePreview
@@ -228,12 +222,6 @@ class SeriesPageScreenshotTest {
     @SeerrFontScalePreviews
     @Composable
     fun longLargeFonts() = Frame(SeriesPageUiState.Ready(longSeries(), seriesExtras()))
-
-    /** The season picker under the longest names at font scale 2. */
-    @PreviewTest
-    @SeerrFontScalePreviews
-    @Composable
-    fun seasonPickerLargeFonts() = SeasonPickerContent(longSeries().seasons, selected = 2, onSelect = {})
 
     @PreviewTest
     @SeerrSpanishPreviews
