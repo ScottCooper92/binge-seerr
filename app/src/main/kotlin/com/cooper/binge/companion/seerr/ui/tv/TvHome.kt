@@ -30,7 +30,7 @@ internal fun TvSeerrShell(
                     // Each in its own view-model scope: a new connection gets new screens, not the last one's.
                     TvHomeUiState.Setup -> ScopedViewModels("setup") { TvSetupEntry() }
                     TvHomeUiState.Reconnect -> ScopedViewModels("reconnect") { TvReconnectEntry(onDisconnect = viewModel::disconnect) }
-                    TvHomeUiState.Connected -> ScopedViewModels("connected") { TvConnectedShell(linkedRequests = linkedRequests) }
+                    TvHomeUiState.Connected -> ScopedViewModels("connected") { TvTabConnectedShell(linkedRequests = linkedRequests) }
                 }
             }
         }

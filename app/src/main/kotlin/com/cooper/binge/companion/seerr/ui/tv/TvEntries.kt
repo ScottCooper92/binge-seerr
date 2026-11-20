@@ -113,14 +113,14 @@ internal fun TvConnectedShell(
     }
 }
 
-private fun SettingsUiState.signsInWithSession(): Boolean = (this as? SettingsUiState.Ready)?.connection?.signInKind == SignInKind.Session
+internal fun SettingsUiState.signsInWithSession(): Boolean = (this as? SettingsUiState.Ready)?.connection?.signInKind == SignInKind.Session
 
 /**
  * Opens a sheet. Settings is held back until its state is ready, so it opens on its page rather than a loading line; its
  * state is collected from the shell's start, so that is rarely a wait.
  */
 @Composable
-private fun rememberSheetOpener(
+internal fun rememberSheetOpener(
     settingsViewModel: SettingsViewModel,
     open: (TvDestination) -> Unit,
 ): (TvDestination) -> Unit {
@@ -138,7 +138,7 @@ private fun rememberSheetOpener(
 }
 
 /** Home's see-all key for the signed-in user's own requests, which belong to no filter. */
-private const val SEE_ALL_MINE = KEY_MY_REQUESTS
+internal const val SEE_ALL_MINE = KEY_MY_REQUESTS
 
 /** Home's see-all page over its rows: a filter's grid, or the user's own requests. A request's page opens above it, over the bar. */
 @Composable
@@ -185,7 +185,7 @@ private fun TvIssuesPages(pages: TvTabPages) {
  * models, cleared when it closes: a reopened page starts fresh, and nothing piles up in the activity's store or outlives a
  * change of server (#789).
  */
-private fun detailPage(
+internal fun detailPage(
     tab: TvDestination,
     pages: TvTabPages,
     onIssueChanged: () -> Unit,
@@ -217,7 +217,7 @@ private val TabRules: List<Pair<TvDestination, (HubOverview) -> Boolean>> =
     )
 
 /** Each tab's see-all page over its board, chosen by tab. */
-private fun tabPages(
+internal fun tabPages(
     tab: TvDestination,
     pages: TvOpenPages,
     seeAllAccountId: Int?,

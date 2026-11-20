@@ -245,7 +245,7 @@ private class TabPageFocus {
  * The page beneath takes focus back through its own hand-off.
  */
 @Composable
-private fun TvShellTopLayer(
+internal fun TvShellTopLayer(
     closer: TvOverlayCloser,
     content: @Composable (TvOverlayCloser) -> Unit,
 ) {
@@ -261,7 +261,7 @@ private fun TvShellTopLayer(
 
 /** A sheet slides in over everything, the bar included; Back closes it unless a page above it takes Back first. */
 @Composable
-private fun TvShellSheet(
+internal fun TvShellSheet(
     overlayOpen: Boolean,
     closer: TvOverlayCloser,
     content: @Composable () -> Unit,
@@ -305,7 +305,7 @@ private fun Modifier.pageTrap(tab: FocusRequester?): Modifier =
  * where the hub's memory lands the card or tile that opened the page (#1509).
  */
 @Composable
-private fun HandBackHost(
+internal fun HandBackHost(
     entry: FocusRequester,
     active: Boolean,
     modifier: Modifier = Modifier,
