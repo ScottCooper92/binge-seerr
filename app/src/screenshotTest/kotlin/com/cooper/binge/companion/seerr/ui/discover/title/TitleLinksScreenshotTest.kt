@@ -1,7 +1,7 @@
 package com.cooper.binge.companion.seerr.ui.discover.title
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
@@ -48,7 +48,7 @@ private val ALL =
 
 @Composable
 private fun Frame(links: List<TitleLink>) {
-    Box(Modifier.width(PHONE_WIDTH).background(MaterialTheme.colorScheme.surface).padding(vertical = 8.dp)) {
+    Column(Modifier.width(PHONE_WIDTH).background(MaterialTheme.colorScheme.surface).padding(vertical = 8.dp)) {
         TitleLinksSection(links, onOpen = {})
     }
 }
