@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- The person page's own reading cap, as Binge's person page has it: wider than the media pages' 640dp from w840dp (values-w840dp). -->
     <!-- The artwork band above the sign-in form; the server's name sits on its lower edge. -->
     <dimen name="setup_backdrop_height">220dp</dimen>
     <!-- The height a request's actions sheet holds while its request loads or fails to. -->

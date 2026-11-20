@@ -29,7 +29,7 @@ class PersonPageScreenshotTest {
     @Composable
     fun narrowTablet() = Frame(readyPerson())
 
-    /** A tablet in landscape, from w840dp: the column widens to Binge's 960dp cap, and the credit rails start where it does. */
+    /** A tablet in landscape, from w840dp: the template keeps its 640dp reading column, and the links start where it does. */
     @PreviewTest
     @SeerrTabletPanesPreview
     @Composable

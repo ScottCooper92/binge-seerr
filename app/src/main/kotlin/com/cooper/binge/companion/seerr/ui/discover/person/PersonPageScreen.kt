@@ -9,9 +9,9 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.SectionHeader
-import com.binge.designsystem.resolvedContentInset
 import com.binge.designsystem.template.PersonDetailCallbacks
 import com.binge.designsystem.template.PersonDetailScreen
+import com.binge.designsystem.template.readingInset
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.seerr.SeerrError
@@ -63,8 +63,8 @@ internal fun PersonPageScreen(
         },
         afterCredits = {
             ready?.person?.links()?.takeIf { it.isNotEmpty() }?.let { links ->
-                SectionHeader(stringResource(R.string.person_page_links))
-                PersonLinksRow(links, actions.onOpenUrl, Modifier.padding(horizontal = resolvedContentInset()))
+                SectionHeader(stringResource(R.string.person_page_links), horizontalPadding = readingInset(), startPadding = readingInset())
+                PersonLinksRow(links, actions.onOpenUrl, Modifier.padding(horizontal = readingInset()))
             }
         },
     )
