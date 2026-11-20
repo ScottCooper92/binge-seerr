@@ -52,7 +52,7 @@ class SeerrStatusMappingTest {
         assertEquals(listOf(1, 2), standard.seasonsList.map { it.seasonNumber })
         assertEquals(Availability.AVAILABILITY_PENDING, standard.seasonsList[1].availability)
         val request = status.requestsList.single()
-        assertEquals(ApprovalState.APPROVAL_STATE_APPROVED, request.state)
+        assertEquals(ApprovalState.APPROVAL_STATE_COMPLETED, request.state)
         // Only an email: the contract never sends any part of one, so the field stays empty (#695).
         assertEquals("", request.requestedBy)
         assertEquals(1_781_253_000_000L, request.requestedAtEpochMs)

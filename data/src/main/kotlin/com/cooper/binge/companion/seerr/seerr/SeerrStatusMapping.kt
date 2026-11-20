@@ -91,13 +91,14 @@ fun SeerrMediaStatusCode?.toAvailability(): Availability =
     }
 
 /**
- * Completed (an approved request that finished downloading) reads as approved; Failed is its own
- * terminal state. Only an unknown or missing status reads as pending — dropping the entry would
- * hide an existing request from the host entirely.
+ * Completed (an approved request that finished downloading) reads as completed, which a host shows as
+ * history. Failed is its own state. Only an unknown or missing status reads as pending — dropping the
+ * entry would hide an existing request from the host entirely.
  */
 fun SeerrRequestStatusCode?.toApprovalState(): ApprovalState =
     when (this) {
-        SeerrRequestStatusCode.Approved, SeerrRequestStatusCode.Completed -> ApprovalState.APPROVAL_STATE_APPROVED
+        SeerrRequestStatusCode.Approved -> ApprovalState.APPROVAL_STATE_APPROVED
+        SeerrRequestStatusCode.Completed -> ApprovalState.APPROVAL_STATE_COMPLETED
         SeerrRequestStatusCode.Declined -> ApprovalState.APPROVAL_STATE_DECLINED
         SeerrRequestStatusCode.Failed -> ApprovalState.APPROVAL_STATE_FAILED
         else -> ApprovalState.APPROVAL_STATE_PENDING

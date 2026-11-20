@@ -1,7 +1,9 @@
 package com.cooper.binge.companion.seerr.service
 
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import com.binge.companion.contracts.request.v1.ApprovalState
 import com.binge.companion.contracts.request.v1.DeleteFilesRequest
+import com.binge.companion.contracts.request.v1.GetStatusRequest
 import com.binge.companion.contracts.request.v1.HandshakeRequest
 import com.binge.companion.contracts.request.v1.RequestServiceGrpcKt
 import com.binge.companion.contracts.v1.MediaId
@@ -51,6 +53,9 @@ private const val AVAILABLE_IN_4K = """{"mediaInfo":{"id":9,"status":1,"status4k
 
 /** Downloaded, so the request is Completed: Seerr leaves it behind when the files are deleted (#1939). */
 private const val AVAILABLE_COMPLETED_REQUEST = """{"mediaInfo":{"id":9,"status":5,"requests":[{"id":2,"status":5,"is4k":false}]}}"""
+
+/** The same title after its files went: Seerr marks the media deleted (7) and still lists the completed request. */
+private const val DELETED_COMPLETED_REQUEST = """{"mediaInfo":{"id":9,"status":7,"requests":[{"id":2,"status":5,"is4k":false}]}}"""
 
 private const val NOTHING_LEFT = """{"mediaInfo":{"id":9,"status":1,"requests":[]}}"""
 
@@ -113,6 +118,21 @@ class SeerrDeleteFilesTest {
 
             assertEquals(listOf("GET /api/v1/movie/603", "DELETE /api/v1/media/9/file?is4k=false"), taken(2))
             assertEquals("no request was withdrawn", WARM_UP_CALLS + 2, seerr.requestCount)
+        }
+
+    @Test
+    fun `the completed request kept after the files go reads as COMPLETED`() =
+        runTest {
+            val stub = connected()
+            seerr.enqueue(json(AVAILABLE_COMPLETED_REQUEST))
+            seerr.enqueue(answer(204))
+            stub.deleteFiles(deleteFiles())
+            taken(2)
+
+            seerr.enqueue(json(DELETED_COMPLETED_REQUEST))
+            val status = stub.getStatus(GetStatusRequest.newBuilder().setMedia(movie).build()).status
+
+            assertEquals(ApprovalState.APPROVAL_STATE_COMPLETED, status.requestsList.single().state)
         }
 
     @Test
