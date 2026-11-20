@@ -34,6 +34,7 @@ import com.binge.designsystem.component.rememberPaneTopBarScrollBehavior
 import com.binge.designsystem.navOverlayPadding
 import com.binge.designsystem.resolvedContentInset
 import com.binge.designsystem.resolvedContentPadding
+import com.binge.designsystem.template.BAR_HANDOVER_COLLAPSE
 import com.binge.designsystem.template.BingeScreenScaffold
 import com.binge.designsystem.template.ScreenBar
 import com.binge.designsystem.template.screenInnerPadding
@@ -89,7 +90,7 @@ fun HubScreen(
     val account = ready?.overview?.account?.takeIf { ready.health.showsDashboard() }
     val scrollBehavior = rememberPaneTopBarScrollBehavior()
     val collapsed = scrollBehavior.state.collapsedFraction
-    val pillInteractive = collapsed < ACCOUNT_HANDOVER_COLLAPSE
+    val pillInteractive = collapsed < BAR_HANDOVER_COLLAPSE
     BingeScreenScaffold(
         title = ready?.server?.title ?: stringResource(R.string.companion_name),
         bar = ScreenBar.Large,
