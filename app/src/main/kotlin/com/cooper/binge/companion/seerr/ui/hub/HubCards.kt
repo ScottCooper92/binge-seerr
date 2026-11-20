@@ -3,6 +3,7 @@ package com.cooper.binge.companion.seerr.ui.hub
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.HourglassEmpty
 import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.People
@@ -46,6 +47,8 @@ internal fun ServerCard(
             label = stringResource(R.string.hub_update_available),
             actionLabel = stringResource(R.string.hub_update_release_notes),
             onClick = { context.openInBrowser(server.variant.releaseNotesUrl()) },
+            actionTrailingIcon = Icons.AutoMirrored.Filled.OpenInNew,
+            actionTrailingContentDescription = stringResource(R.string.hub_update_release_notes_opens_outside),
         ).takeIf { server.updateAvailable }
     DesServerCard(
         title = server.title,
