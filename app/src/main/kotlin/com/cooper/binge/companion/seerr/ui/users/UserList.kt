@@ -31,6 +31,8 @@ import com.binge.designsystem.component.BingeInitialsAvatar
 import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.component.ListRowSkeletonColumn
+import com.binge.designsystem.layout.LayoutAnchors
+import com.binge.designsystem.layout.layoutAnchorIf
 import com.binge.designsystem.resolvedContentInset
 import com.binge.designsystem.resolvedContentPadding
 import com.binge.designsystem.template.PagedPhase
@@ -119,6 +121,7 @@ private fun UserList(
                     selected = item.id in selection,
                     onClick = { if (selection.isEmpty()) onOpen(item) else onToggleSelected(item) },
                     onLongClick = { onToggleSelected(item) },
+                    modifier = Modifier.layoutAnchorIf(index == 0, LayoutAnchors.section(LayoutAnchors.Collection.FIRST_ITEM)),
                 )
             }
         }

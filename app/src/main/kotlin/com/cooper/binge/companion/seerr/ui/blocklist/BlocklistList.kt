@@ -35,6 +35,8 @@ import com.binge.designsystem.component.ListRowSkeletonColumn
 import com.binge.designsystem.component.MediaTypeTag
 import com.binge.designsystem.component.WrappingRow
 import com.binge.designsystem.formatRelativeOrAbsolute
+import com.binge.designsystem.layout.LayoutAnchors
+import com.binge.designsystem.layout.layoutAnchorIf
 import com.binge.designsystem.template.PagedPhase
 import com.binge.designsystem.template.screenListPadding
 import com.cooper.binge.companion.seerr.R
@@ -123,6 +125,7 @@ private fun BlocklistList(
                     isActing = item.tmdbId in actingTmdbIds,
                     onClick = { onOpen(item) },
                     onRemove = if (canManage) ({ onRemove(item) }) else null,
+                    modifier = Modifier.layoutAnchorIf(index == 0, LayoutAnchors.section(LayoutAnchors.Collection.FIRST_ITEM)),
                 )
             }
         }

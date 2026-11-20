@@ -35,6 +35,8 @@ import com.binge.designsystem.component.ListRowSkeletonColumn
 import com.binge.designsystem.component.MediaTypeTag
 import com.binge.designsystem.component.WrappingRow
 import com.binge.designsystem.formatRelativeOrAbsolute
+import com.binge.designsystem.layout.LayoutAnchors
+import com.binge.designsystem.layout.layoutAnchorIf
 import com.binge.designsystem.template.PagedPhase
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.requests.PagedAppendState
@@ -134,7 +136,14 @@ private fun IssueList(
         verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.list_row_spacing)),
     ) {
         items(count = lazyItems.itemCount, key = lazyItems.itemKey { it.id }) { index ->
-            lazyItems[index]?.let { item -> IssueRow(item = item, onClick = { onOpen(item) }, now = now) }
+            lazyItems[index]?.let { item ->
+                IssueRow(
+                    item = item,
+                    onClick = { onOpen(item) },
+                    modifier = Modifier.layoutAnchorIf(index == 0, LayoutAnchors.section(LayoutAnchors.Collection.FIRST_ITEM)),
+                    now = now,
+                )
+            }
         }
         item {
             val append = lazyItems.loadState.mediator?.append ?: lazyItems.loadState.append
