@@ -24,27 +24,6 @@ private fun queued(
     left: String,
 ) = SeerrDownloadStatusDto(title = "Caminandes", size = DOWNLOAD_BYTES, sizeLeft = DOWNLOAD_BYTES, timeLeft = left, status = status)
 
-internal val SEED_REQUESTS =
-    listOf(
-        SeedRequest("Sintel", by = 2, hoursAgo = 26),
-        SeedRequest("Nosferatu", by = DEMO_USER_ID, hoursAgo = 3, profileId = DEMO_HD_PROFILE_ID),
-        SeedRequest("Severance", by = 3, hoursAgo = 7, seasons = listOf(2)),
-        SeedRequest("Big Buck Bunny", by = 2, hoursAgo = 50, status = SeerrRequestStatusCode.Approved, download = false),
-        SeedRequest(
-            "The Expanse",
-            by = 3,
-            hoursAgo = 30,
-            status = SeerrRequestStatusCode.Approved,
-            seasons = listOf(1, 2),
-            profileId = DEMO_HD_PROFILE_ID,
-        ),
-        SeedRequest("Metropolis", by = 1, hoursAgo = 120, status = SeerrRequestStatusCode.Completed),
-        SeedRequest("Night of the Living Dead", by = 2, hoursAgo = 144, status = SeerrRequestStatusCode.Completed),
-        SeedRequest("Spirited Away", by = 1, hoursAgo = 216, status = SeerrRequestStatusCode.Completed),
-        SeedRequest("Tears of Steel", by = 3, hoursAgo = 96, status = SeerrRequestStatusCode.Declined),
-        SeedRequest("The Matrix", by = 2, hoursAgo = 60, status = SeerrRequestStatusCode.Failed),
-    ) + SHEET_STATE_REQUESTS
-
 /** What the request sheet's other states need, older than the rest so the lists keep their first rows. */
 private val SHEET_STATE_REQUESTS =
     listOf(
@@ -70,3 +49,24 @@ private val SHEET_STATE_REQUESTS =
             download = false,
         ),
     )
+
+internal val SEED_REQUESTS =
+    listOf(
+        SeedRequest("Sintel", by = 2, hoursAgo = 26),
+        SeedRequest("Nosferatu", by = DEMO_USER_ID, hoursAgo = 3, profileId = DEMO_HD_PROFILE_ID),
+        SeedRequest("Severance", by = 3, hoursAgo = 7, seasons = listOf(2)),
+        SeedRequest("Big Buck Bunny", by = 2, hoursAgo = 50, status = SeerrRequestStatusCode.Approved, download = false),
+        SeedRequest(
+            "The Expanse",
+            by = 3,
+            hoursAgo = 30,
+            status = SeerrRequestStatusCode.Approved,
+            seasons = listOf(1, 2),
+            profileId = DEMO_HD_PROFILE_ID,
+        ),
+        SeedRequest("Metropolis", by = 1, hoursAgo = 120, status = SeerrRequestStatusCode.Completed),
+        SeedRequest("Night of the Living Dead", by = 2, hoursAgo = 144, status = SeerrRequestStatusCode.Completed),
+        SeedRequest("Spirited Away", by = 1, hoursAgo = 216, status = SeerrRequestStatusCode.Completed),
+        SeedRequest("Tears of Steel", by = 3, hoursAgo = 96, status = SeerrRequestStatusCode.Declined),
+        SeedRequest("The Matrix", by = 2, hoursAgo = 60, status = SeerrRequestStatusCode.Failed),
+    ) + SHEET_STATE_REQUESTS
