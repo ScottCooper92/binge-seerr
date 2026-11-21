@@ -1,6 +1,7 @@
 package com.cooper.binge.companion.seerr.ui.search.title
 
 import android.content.Context
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -12,6 +13,7 @@ import androidx.compose.ui.unit.DpRect
 import androidx.compose.ui.unit.height
 import androidx.test.core.app.ApplicationProvider
 import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.flags.LocalDiscoveryEnabled
 import com.cooper.binge.companion.seerr.theme.SeerrTheme
 import com.cooper.binge.companion.seerr.ui.hub.HubActions
 import com.cooper.binge.companion.seerr.ui.hub.HubOverview
@@ -43,25 +45,27 @@ class SearchFieldPositionTest {
     private fun fieldBounds(): Pair<DpRect, DpRect> {
         rule.setContent {
             SeerrTheme {
-                if (onSearch) {
-                    TitleSearchScreen(
-                        TitleSearchUiState.Idle(text = "", recents = emptyList(), trending = Trending.Unavailable),
-                        TitleSearchActions({}, {}, {}, {}, {}, {}, {}, {}, {}, { _, _ -> }, {}),
-                    )
-                } else {
-                    HubScreen(
-                        readyHub(HubOverview(loaded = true)),
-                        HubActions(
-                            onOpenSection = {},
-                            onOpenAccount = {},
-                            onOpenRequest = {},
-                            onRetry = {},
-                            onReconnect = {},
-                            onDisconnect = {},
-                            onDismissBingeHint = {},
-                            onRefresh = {},
-                        ),
-                    )
+                CompositionLocalProvider(LocalDiscoveryEnabled provides true) {
+                    if (onSearch) {
+                        TitleSearchScreen(
+                            TitleSearchUiState.Idle(text = "", recents = emptyList(), trending = Trending.Unavailable),
+                            TitleSearchActions({}, {}, {}, {}, {}, {}, {}, {}, {}, { _, _ -> }, {}),
+                        )
+                    } else {
+                        HubScreen(
+                            readyHub(HubOverview(loaded = true)),
+                            HubActions(
+                                onOpenSection = {},
+                                onOpenAccount = {},
+                                onOpenRequest = {},
+                                onRetry = {},
+                                onReconnect = {},
+                                onDisconnect = {},
+                                onDismissBingeHint = {},
+                                onRefresh = {},
+                            ),
+                        )
+                    }
                 }
             }
         }
