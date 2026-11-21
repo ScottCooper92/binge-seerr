@@ -6,6 +6,7 @@ import com.binge.companion.sdk.attempt
 import com.cooper.binge.companion.seerr.auth.BingeConnectionStore
 import com.cooper.binge.companion.seerr.auth.NoBingeConnectionStore
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
+import com.cooper.binge.companion.seerr.demo.isDemoOrigin
 import com.cooper.binge.companion.seerr.di.IoDispatcher
 import com.cooper.binge.companion.seerr.feedback.BugReportLinks
 import com.cooper.binge.companion.seerr.feedback.ShakeToReportSetting
@@ -209,6 +210,16 @@ class SettingsViewModel
                 fetchTrigger.value++
                 // The jobs' "next run in 20 minutes" counts down while the screen shows them, and no longer.
                 ticker = viewModelScope.launch(dispatcher) { minuteClock(clock, minuteTicker).collect { now.value = it } }
+            }
+        }
+
+        /** Demo only: views the demo as a requester or as the administrator, then reloads so every group follows. */
+        fun viewDemoAs(viewer: Boolean) {
+            viewModelScope.launch(dispatcher) {
+                val saved = attempt { connection.current() }.getOrNull() ?: return@launch
+                if (!saved.baseUrl.isDemoOrigin()) return@launch
+                connection.viewDemoAs(viewer)
+                fetchTrigger.value++
             }
         }
 

@@ -1,11 +1,13 @@
 package com.cooper.binge.companion.seerr.ui.settings
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Dns
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Public
+import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -15,6 +17,7 @@ import com.binge.designsystem.theme.BingeSentiment
 import com.binge.designsystem.theme.fill
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.demo.isDemoOrigin
+import com.cooper.binge.companion.seerr.flags.LocalDiscoveryEnabled
 import com.cooper.binge.companion.seerr.seerr.isOpenableSite
 import com.cooper.binge.companion.seerr.seerr.releaseNotesUrl
 import com.cooper.binge.companion.seerr.ui.openInBrowser
@@ -31,10 +34,14 @@ internal fun connectionRows(
     onEditConnection: () -> Unit,
     onOpenPage: (ServerSettingsPage) -> Unit,
     showAbout: Boolean = true,
+    onViewDemoAs: (Boolean) -> Unit = {},
+    onOpenSheetStates: () -> Unit = {},
 ): List<ListItem> {
     val context = LocalContext.current
     // The demo has no other server to edit into its place.
     val demo = connection.baseUrl.isDemoOrigin()
+    val discovery = LocalDiscoveryEnabled.current
+    val viewAsRes = if (connection.demoViewer) R.string.settings_demo_view_as_viewer else R.string.settings_demo_view_as_admin
     return listOfNotNull(
         ListItem(
             icon = Icons.Filled.Link,
@@ -79,6 +86,21 @@ internal fun connectionRows(
             detail = stringResource(R.string.settings_edit_connection_caption),
             onClick = onEditConnection,
         ).takeUnless { demo },
+        // Demo-only controls. The states are those of the title page's request sheet, so that row needs discovery on.
+        ListItem(
+            icon = Icons.Filled.Visibility,
+            iconTint = BingeSentiment.Info.fill(),
+            label = stringResource(R.string.settings_demo_view_as),
+            detail = stringResource(viewAsRes),
+            onClick = { onViewDemoAs(!connection.demoViewer) },
+        ).takeIf { demo },
+        ListItem(
+            icon = Icons.AutoMirrored.Filled.List,
+            iconTint = BingeSentiment.Info.fill(),
+            label = stringResource(R.string.settings_demo_sheet_states),
+            detail = stringResource(R.string.settings_demo_sheet_states_caption),
+            onClick = onOpenSheetStates,
+        ).takeIf { demo && discovery },
     )
 }
 

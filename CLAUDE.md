@@ -249,7 +249,7 @@ screens and the exported Service call the real `SeerrApi` and cannot tell. Rules
 - **An endpoint the demo does not serve says so**: a 501 the screens already show as a server error, and that never counts against
   the connection's health. Add a route when a screen needs one; do not make a screen special-case the demo.
 - **Nothing in the app asks "is this the demo"** except to say so: the tag, the exit wording, the Settings rows that make no sense
-  without a server, the handshake's provider name, and the `demo` property on analytics (`DemoSession`, read in the one `DemoAnalyticsDecorator`, so no call
+  without a server, the demo-only "View as" and "Sheet states" rows, the handshake's provider name, and the `demo` property on analytics (`DemoSession`, read in the one `DemoAnalyticsDecorator`, so no call
   site asks). Behaviour does not fork.
 
 ## Gates

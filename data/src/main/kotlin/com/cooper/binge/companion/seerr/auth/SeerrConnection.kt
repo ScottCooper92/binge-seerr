@@ -208,6 +208,19 @@ class SeerrConnection(
         return profile()
     }
 
+    /** Whether the demo is viewed as a user who may only request; false against any other server. */
+    val demoViewer: Boolean get() = apis.demoViewer
+
+    /**
+     * Views the demo as a requester or as the administrator, then re-reads the signed-in user and the profile, both cached for the
+     * life of the connection, so every screen follows with no restart. The demo has no other use for it.
+     */
+    suspend fun viewDemoAs(viewer: Boolean) {
+        apis.viewDemoAs(viewer)
+        refreshAuthenticatedUser()
+        refreshProfile()
+    }
+
     /**
      * [refreshProfile] that says when the server answered neither profile call, rather than
      * profiling it as a guess. A server that answered either one is a success, however partial.

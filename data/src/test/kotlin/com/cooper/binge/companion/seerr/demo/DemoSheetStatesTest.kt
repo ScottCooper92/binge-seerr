@@ -238,6 +238,17 @@ class DemoSheetStatesTest {
             assertFalse(apis.demoViewer)
         }
 
+    @Test
+    fun `every title in the sheet states list is the demo's own title of that name`() {
+        DemoSheetState.entries.forEach { state ->
+            val title = DEMO_TITLES.single { it.tmdbId == state.tmdbId }
+
+            assertEquals(state.title, title.title)
+            assertEquals(state.isMovie, title.isMovie)
+        }
+        assertEquals(13, DemoSheetState.entries.size)
+    }
+
     private companion object {
         const val ELEPHANTS_DREAM = 900_001
         const val INCEPTION = 27205
