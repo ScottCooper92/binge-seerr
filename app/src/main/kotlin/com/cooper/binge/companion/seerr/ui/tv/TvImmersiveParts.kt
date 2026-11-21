@@ -218,7 +218,7 @@ internal fun TvRowsFallback(
                 icon = Icons.Filled.Warning,
                 primary = ScreenAction(stringResource(R.string.hub_retry), onRetryLoad),
             )
-        else -> TvMessagePage(body = emptyBody, modifier = modifier, icon = Icons.Filled.Inbox)
+        else -> TvEmptyPage(body = emptyBody, modifier = modifier, icon = Icons.Filled.Inbox)
     }
 }
 

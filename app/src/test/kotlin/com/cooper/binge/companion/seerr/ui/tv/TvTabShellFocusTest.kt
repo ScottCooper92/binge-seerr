@@ -25,7 +25,6 @@ import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performKeyInput
 import androidx.compose.ui.test.pressKey
 import androidx.compose.ui.test.requestFocus
-import com.binge.designsystem.tv.focus.TvShellArrivalNone
 import com.binge.designsystem.tv.focus.tvShellArrivalTarget
 import com.binge.designsystem.tv.nav.LocalTvTopInset
 import com.binge.designsystem.tv.theme.BingeTvTheme
@@ -104,11 +103,15 @@ class TvTabShellFocusTest {
         )
     }
 
-    /** A page with nothing focusable, as the empty plate of a server with no issues: it settles the shell's arrival and is no focus target. */
+    /** The real empty state of the Issues and Requests boards: nothing to focus, and no focus sink of its own. */
     @Composable
     private fun EmptyPlate() {
-        TvShellArrivalNone()
-        Box(modifier = Modifier.fillMaxSize().testTag("empty-plate"))
+        TvRowsFallback(
+            rows = listOf(TvPagedRows<Any>(count = 0, at = { null })),
+            emptyBody = "Nothing here",
+            onRetryLoad = {},
+            modifier = Modifier.testTag("empty-plate"),
+        )
     }
 
     /** A sheet or a title's page is no destination, so the shell owes it no arrival: it takes focus itself, as a sheet's own page does. */
