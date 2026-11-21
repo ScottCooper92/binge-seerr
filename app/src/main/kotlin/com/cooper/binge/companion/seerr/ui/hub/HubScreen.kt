@@ -191,23 +191,15 @@ private fun Dashboard(
     val scrollState = rememberScrollState()
     OnTabReselect(SeerrTab.Settings) { scrollState.animateScrollTo(0) }
     Column(modifier = Modifier.fillMaxSize().verticalScroll(scrollState).padding(contentPadding)) {
-        if (LocalDiscoveryEnabled.current) {
-            SettingsSearchField(
-                onClick = actions.onOpenSearch,
-                modifier =
-                    Modifier
-                        .padding(sides)
-                        .padding(bottom = dimensionResource(DesR.dimen.padding_m)),
-            )
-        } else {
-            SettingsSearchEntry(
-                onClick = actions.onOpenSearch,
-                modifier =
-                    Modifier
-                        .padding(sides)
-                        .padding(vertical = dimensionResource(DesR.dimen.padding_m)),
-            )
-        }
+        // With discovery on the bar above is small and the field sits where the Search tab's does, so it has no gap above it.
+        SettingsSearchEntry(
+            onClick = actions.onOpenSearch,
+            modifier =
+                Modifier
+                    .padding(sides)
+                    .then(if (LocalDiscoveryEnabled.current) Modifier else Modifier.padding(top = dimensionResource(DesR.dimen.padding_m)))
+                    .padding(bottom = dimensionResource(DesR.dimen.padding_m)),
+        )
         ServerCard(server = state.server, overview = state.overview, sides = sides)
         // Under the server card, while anything is downloading: the part of this page that changes while it is watched.
         if (state.downloading.isNotEmpty()) {
