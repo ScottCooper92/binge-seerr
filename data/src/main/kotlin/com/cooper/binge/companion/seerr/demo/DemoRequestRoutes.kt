@@ -56,11 +56,18 @@ private fun DemoData.create(body: String): DemoAnswer {
     val title = titleFor(asked.mediaType, asked.mediaId)
     return when {
         mediaStatus(title) == SeerrMediaStatusCode.Blocklisted -> demoBlocklisted
-        title.isMovie && requests.any { it.title == title } -> demoAlreadyRequested
+        title.isMovie && requests.any { it.title == title && it.is4k == asked.is4k } -> demoAlreadyRequested
         else -> {
-            val request = add(title, DEMO_USER_ID, seasons = asked.seasons.orEmpty(), profileId = asked.profileId ?: DEMO_PROFILE_ID)
-            // An administrator's request needs no approval, as on a real server.
-            moderate(request, "approve")
+            val request =
+                add(
+                    title,
+                    DEMO_USER_ID,
+                    seasons = asked.seasons.orEmpty(),
+                    profileId = asked.profileId ?: DEMO_PROFILE_ID,
+                    is4k = asked.is4k,
+                )
+            // An administrator's request needs no approval, as on a real server; a requester's waits for one.
+            if (!viewer) moderate(request, "approve")
             ok(SeerrRequestResultDto(request.id))
         }
     }
@@ -127,10 +134,14 @@ internal fun DemoData.mediaOf(title: DemoTitle) =
         tmdbId = title.tmdbId,
         mediaType = title.mediaType,
         status = mediaStatus(title),
+        status4k = mediaStatus4k(title),
         downloadStatus = downloads(title),
+        downloadStatus4k = downloads4k(title),
     )
 
-private fun DemoData.seasonsOf(request: DemoRequest) = request.seasons.map { SeerrSeasonStatusDto(it, status = mediaStatus(request.title)) }
+/** A season is as far along as the request that holds it: a title's other requests do not move it. */
+private fun DemoData.seasonsOf(request: DemoRequest) =
+    request.seasons.map { SeerrSeasonStatusDto(it, status = seasonStatus(request.status)) }
 
 private fun DemoData.toDto(request: DemoRequest) =
     SeerrRequestDto(
@@ -141,8 +152,9 @@ private fun DemoData.toDto(request: DemoRequest) =
         updatedAt = request.updatedAt.toString(),
         requestedBy = user(request.requestedBy),
         modifiedBy = user(request.modifiedBy),
+        is4k = request.is4k,
         seasons = seasonsOf(request),
-        serverId = DEMO_SERVER_ID,
+        serverId = request.serverId,
         profileId = request.profileId,
     )
 
@@ -152,7 +164,8 @@ internal fun DemoData.toSummary(request: DemoRequest) =
         status = request.status,
         createdAt = request.createdAt.toString(),
         requestedBy = user(request.requestedBy),
+        is4k = request.is4k,
         seasons = seasonsOf(request),
-        serverId = DEMO_SERVER_ID,
+        serverId = request.serverId,
         profileId = request.profileId,
     )

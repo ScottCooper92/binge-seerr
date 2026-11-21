@@ -24,8 +24,8 @@ class DemoServicesTest {
     @Test
     fun `as it ships, each kind offers one default server named as in Settings`() =
         demo { api ->
-            val radarr = api.radarrServers().single()
-            val sonarr = api.sonarrServers().single()
+            val radarr = api.radarrServers().single { !it.is4k }
+            val sonarr = api.sonarrServers().single { !it.is4k }
 
             assertEquals(SERVER_ID, radarr.id)
             assertEquals("Demo Radarr", radarr.name)
@@ -40,8 +40,8 @@ class DemoServicesTest {
         demo { api ->
             api.updateDvr("radarr", SERVER_ID, SeerrServiceSettingsDto(isDefault = false, syncEnabled = true))
 
-            assertEquals(false, api.radarrServers().single().isDefault)
-            assertTrue("Sonarr is its own kind", api.sonarrServers().single().isDefault)
+            assertEquals(false, api.radarrServers().single { !it.is4k }.isDefault)
+            assertTrue("Sonarr is its own kind", api.sonarrServers().single { !it.is4k }.isDefault)
         }
 
     @Test
@@ -49,12 +49,12 @@ class DemoServicesTest {
         demo { api ->
             val added = api.createDvr("sonarr", SeerrServiceSettingsDto(name = "Second Sonarr", hostname = "sonarr2.invalid", port = 8989))
 
-            assertEquals(listOf("Demo Sonarr", "Second Sonarr"), api.sonarrServers().map { it.name })
+            assertEquals(listOf("Demo Sonarr", "Second Sonarr"), api.sonarrServers().filter { !it.is4k }.map { it.name })
             assertEquals("Second Sonarr", api.sonarrServer(checkNotNull(added.id)).server?.name)
 
             api.deleteDvr("sonarr", checkNotNull(added.id))
 
-            assertEquals(listOf("Demo Sonarr"), api.sonarrServers().map { it.name })
+            assertEquals(listOf("Demo Sonarr"), api.sonarrServers().filter { !it.is4k }.map { it.name })
         }
 
     @Test
@@ -62,7 +62,7 @@ class DemoServicesTest {
         demo { api ->
             api.updateDvr("radarr", SERVER_ID, SeerrServiceSettingsDto(name = "Renamed Radarr", isDefault = true, syncEnabled = true))
 
-            assertEquals("Renamed Radarr", api.radarrServers().single().name)
+            assertEquals("Renamed Radarr", api.radarrServers().single { !it.is4k }.name)
             assertEquals("Renamed Radarr", api.radarrServer(SERVER_ID).server?.name)
         }
 
@@ -93,16 +93,16 @@ class DemoServicesTest {
                     failure
                 }
             assertEquals(400, refused?.code())
-            assertEquals("Demo Radarr", api.radarrServers().single().name)
+            assertEquals("Demo Radarr", api.radarrServers().single { !it.is4k }.name)
             api.updateDvr("radarr", SERVER_ID, SeerrServiceSettingsDto(name = "Renamed", isDefault = true))
-            assertEquals("Renamed", api.radarrServers().single().name)
+            assertEquals("Renamed", api.radarrServers().single { !it.is4k }.name)
         }
 
     @Test
     fun `each kind's active directory is one of the folders its details offer, as on a real server`() =
         demo { api ->
-            val radarr = api.radarrServers().single()
-            val sonarr = api.sonarrServers().single()
+            val radarr = api.radarrServers().single { !it.is4k }
+            val sonarr = api.sonarrServers().single { !it.is4k }
 
             assertTrue(radarr.activeDirectory in api.radarrServer(radarr.id).rootFolders.map { it.path })
             assertTrue(sonarr.activeDirectory in api.sonarrServer(sonarr.id).rootFolders.map { it.path })
@@ -113,8 +113,8 @@ class DemoServicesTest {
         demo { api ->
             val body = SeerrDvrTestBody(hostname = "demo.invalid", port = 1, useSsl = false, apiKey = "demo")
 
-            val radarr = api.radarrSettings().single().activeDirectory
-            val sonarr = api.sonarrSettings().single().activeDirectory
+            val radarr = api.radarrSettings().single { !it.is4k }.activeDirectory
+            val sonarr = api.sonarrSettings().single { !it.is4k }.activeDirectory
 
             assertTrue(radarr in api.testDvr("radarr", body).rootFolders.map { it.path })
             assertTrue(sonarr in api.testDvr("sonarr", body).rootFolders.map { it.path })

@@ -47,14 +47,14 @@ class DemoServerTest {
         }
 
     @Test
-    fun `the seed has pending requests, two downloading, a failed one and a declined one`() =
+    fun `the seed has pending requests, approved ones, a failed one and a declined one`() =
         demo { api ->
             val count = api.requestCount()
 
-            assertEquals(3, count.pending)
-            assertEquals(2, count.processing)
+            assertEquals(5, count.pending)
+            assertEquals(5, count.processing)
             assertEquals(1, count.declined)
-            assertEquals(2, api.requests(take = 20, filter = "processing").results.size)
+            assertEquals(5, api.requests(take = 20, filter = "processing").results.size)
             assertEquals(1, api.requests(take = 20, filter = "failed").results.size)
         }
 
@@ -68,8 +68,8 @@ class DemoServerTest {
             val after = api.request(sintel.id)
             assertEquals(SeerrRequestStatusCode.Approved, after.status)
             assertEquals(SeerrMediaStatusCode.Processing, after.media.status)
-            assertEquals(2, api.requestCount().pending)
-            assertEquals(3, api.requests(take = 20, filter = "processing").results.size)
+            assertEquals(4, api.requestCount().pending)
+            assertEquals(6, api.requests(take = 20, filter = "processing").results.size)
         }
 
     @Test
@@ -93,7 +93,7 @@ class DemoServerTest {
             val second = api.requests(take = 3, skip = 3)
 
             assertEquals(3, first.results.size)
-            assertEquals(10, first.pageInfo.results)
+            assertEquals(17, first.pageInfo.results)
             assertTrue(first.results.map { it.createdAt.orEmpty() }.let { dates -> dates == dates.sortedDescending() })
             assertTrue(
                 first.results
@@ -176,7 +176,7 @@ class DemoServerTest {
 
             apis.resetDemo()
 
-            assertEquals(3, api.requestCount().pending)
+            assertEquals(5, api.requestCount().pending)
         }
 
     private companion object {

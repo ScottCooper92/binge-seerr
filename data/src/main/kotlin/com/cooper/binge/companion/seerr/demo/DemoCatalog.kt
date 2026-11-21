@@ -137,8 +137,12 @@ internal val DEMO_TITLES =
             2022,
             "Office workers have their work lives surgically split from their own.",
             "/pPHpeI2X1qEd1CS1SeyrdhZ4qnT.jpg",
-            seasons = 2,
+            seasons = 3,
         ),
+        // The next three are placeholders for the sheet states: no artwork, and ids that are not real TMDB ids.
+        DemoTitle(12, 900_001, MOVIE, "Elephants Dream", 2006, "Two men explore a strange machine that is more than it seems.", ""),
+        DemoTitle(13, 900_002, MOVIE, "Caminandes", 2013, "A llama tries to reach the berries behind a fence.", ""),
+        DemoTitle(14, 900_003, TV, "Dune", 2021, "Three houses fight over a desert planet and the spice it grows.", "", seasons = 2),
     )
 
 internal const val TV_TYPE = TV

@@ -27,8 +27,16 @@ internal fun seedResources(): DemoResources =
         objects["tautulli"] = toJson(SeerrTautulliSettingsDto(hostname = "", port = 8181, useSsl = false))
         objects["network"] = toJson(SeerrNetworkSettingsDto(csrfProtection = false, trustProxy = false, forceIpv4First = false))
         objects["metadatas"] = toJson(SeerrMetadataSettingsDto(tv = "tvdb", anime = "tvdb"))
-        lists["radarr"] = mutableListOf(toJson(dvr(1, "Demo Radarr", RADARR_PORT, demoRootFolder("radarr"))))
-        lists["sonarr"] = mutableListOf(toJson(dvr(1, "Demo Sonarr", SONARR_PORT, demoRootFolder("sonarr"))))
+        lists["radarr"] =
+            mutableListOf(
+                toJson(dvr(DEMO_SERVER_ID, "Demo Radarr", RADARR_PORT, demoRootFolder("radarr"))),
+                toJson(dvr(DEMO_4K_SERVER_ID, "Demo Radarr 4K", RADARR_PORT, demoRootFolder("radarr"), is4k = true)),
+            )
+        lists["sonarr"] =
+            mutableListOf(
+                toJson(dvr(DEMO_SERVER_ID, "Demo Sonarr", SONARR_PORT, demoRootFolder("sonarr"))),
+                toJson(dvr(DEMO_4K_SERVER_ID, "Demo Sonarr 4K", SONARR_PORT, demoRootFolder("sonarr"), is4k = true)),
+            )
         lists["rules"] = mutableListOf(toJson(SeerrOverrideRuleDto(id = 1, radarrServiceId = 1, genre = "16", profileId = 2)))
         lists["sliders"] = seedSliders()
     }
@@ -91,10 +99,12 @@ private fun dvr(
     name: String,
     port: Int,
     directory: String,
+    is4k: Boolean = false,
 ) = SeerrServiceSettingsDto(
     id = id,
     name = name,
-    hostname = "${name.substringAfter(' ').lowercase()}.invalid",
+    is4k = is4k,
+    hostname = "${name.substringAfter(' ').lowercase().replace(' ', '-')}.invalid",
     port = port,
     apiKey = "demo",
     activeProfileId = 1,

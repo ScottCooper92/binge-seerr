@@ -67,7 +67,7 @@ class TitleOpenJourneyTest {
     }
 
     private companion object {
-        /** The demo server's first issue. */
-        const val ISSUE_TITLE = "Metropolis"
+        /** The title of the demo server's first issue. */
+        const val ISSUE_TITLE = "Night of the Living Dead"
     }
 }

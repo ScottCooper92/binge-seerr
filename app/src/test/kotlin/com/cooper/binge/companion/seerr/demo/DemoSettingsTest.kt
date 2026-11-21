@@ -106,8 +106,8 @@ class DemoSettingsTest {
     @Test
     fun `the demo's download servers scan, so the app can trust their queues`() =
         demo { api ->
-            assertTrue(api.radarrSettings().single().syncEnabled)
-            assertTrue(api.sonarrSettings().single().syncEnabled)
+            assertTrue(api.radarrSettings().all { it.syncEnabled })
+            assertTrue(api.sonarrSettings().all { it.syncEnabled })
             assertEquals(
                 DownloadQueueGate(
                     movies = true,
@@ -116,6 +116,8 @@ class DemoSettingsTest {
                         setOf(
                             DownloadQueueGate.ScanningInstance(RequestMediaType.Movie, is4k = false, id = 1),
                             DownloadQueueGate.ScanningInstance(RequestMediaType.Tv, is4k = false, id = 1),
+                            DownloadQueueGate.ScanningInstance(RequestMediaType.Movie, is4k = true, id = 2),
+                            DownloadQueueGate.ScanningInstance(RequestMediaType.Tv, is4k = true, id = 2),
                         ),
                 ),
                 DownloadQueueGate.from(api.radarrSettings(), api.sonarrSettings()),
@@ -127,9 +129,9 @@ class DemoSettingsTest {
         demo { api ->
             val server = api.createDvr("radarr", SeerrServiceSettingsDto(name = "Second Radarr", hostname = "radarr2.invalid", port = 7878))
             api.updateDvr("radarr", server.id!!, SeerrServiceSettingsDto(name = "Renamed"))
-            assertEquals(listOf("Demo Radarr", "Renamed"), api.radarrSettings().map { it.name })
+            assertEquals(listOf("Demo Radarr", "Demo Radarr 4K", "Renamed"), api.radarrSettings().map { it.name })
             api.deleteDvr("radarr", server.id!!)
-            assertEquals(1, api.radarrSettings().size)
+            assertEquals(2, api.radarrSettings().size)
 
             val rule = api.createOverrideRule(SeerrOverrideRuleDto(genre = "35"))
             api.deleteOverrideRule(rule.id!!)

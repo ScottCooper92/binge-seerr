@@ -80,7 +80,7 @@ How each gate is applied is in [`server-compatibility.md`](server-compatibility.
 |---|---|---|---|---|---|
 | `DELETE /media/{mediaId}` | Delete media item | v1.0.0 | v1.0.0 | yes | Clear data on the request page's Manage media sheet. |
 | `DELETE /media/{mediaId}/file` | Delete media file | — | v1.5.0 | yes | Delete files on the request page's Manage media sheet, Jellyseerr 1.5+. |
-| `GET /media/{mediaId}/watch_data` | Get watch data | v1.29.0 | v1.1.0 | yes | Watch data on the request page's Manage media sheet, for admins, where Tautulli answers. |
+| `GET /media/{mediaId}/watch_data` | Get watch data | v1.29.0 | v1.1.0 | yes | Watch data on the request page's Manage media sheet, for admins, where Tautulli answers. Demo mode answers it for two titles in its library, so the row can be seen; a Jellyfin server returns none, so that answer is the demo's own. |
 | `POST /media/{mediaId}/{status}` | Update media status | v1.20.0 | v1.0.0 | yes | Mark as on the request page's Manage media sheet, per instance. |
 | `GET /request` | Get all requests | v1.0.0 | v1.0.0 | yes |  |
 | `POST /request` | Create new request | v1.0.0 | v1.0.0 | yes | The host's `SubmitRequest` and `SubmitAdvancedRequest`, and the in-app request sheet (the discovery title pages). Both read the status code through one function: 202 is nothing left to request, 409 is already requested. The sheet also reads the created request off the answer and puts it at the top of the opened Requests lists it belongs in. |

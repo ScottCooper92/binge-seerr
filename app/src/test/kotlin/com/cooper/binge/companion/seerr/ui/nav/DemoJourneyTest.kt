@@ -60,7 +60,7 @@ class DemoJourneyTest {
         host.connectDemo()
         host.launch(HomeRoute)
         host.awaitShowing(host.string(R.string.requests_filter_processing))
-        host.awaitShowing("Big Buck Bunny")
+        host.awaitShowing("The Expanse")
 
         host.compose.onNode(filterChip(host.string(R.string.requests_filter_pending))).performClick()
         host.awaitShowing("Sintel")
@@ -86,7 +86,7 @@ class DemoJourneyTest {
     fun `a delete refused for want of a default server opens Services in the app, and Back brings Delete files back`() {
         host.connectDemo()
         host.launch(HomeRoute)
-        host.awaitShowing("Big Buck Bunny")
+        host.awaitShowing("The Expanse")
         turnOffTheDefaultRadarr()
         host.compose
             .onAllNodesWithText(host.string(R.string.hub_section_requests))
@@ -201,11 +201,11 @@ class DemoJourneyTest {
             .onNodeWithText(host.string(R.string.hub_section_issues_desc), substring = true)
             .performScrollTo()
             .performClick()
-        host.awaitShowing("Metropolis")
         host.awaitShowing("Night of the Living Dead")
 
+        // Two issues are on this title; the list is newest first, so the last row is the older one, which carries the thread.
         host.compose
-            .onAllNodesWithText("Metropolis")
+            .onAllNodesWithText("Night of the Living Dead")
             .onLast()
             .performClick()
         host.awaitShowing("The subtitles drift")
