@@ -1,5 +1,8 @@
 package com.cooper.binge.companion.seerr.ui
 
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.res.stringResource
@@ -48,6 +51,7 @@ class SetupActions(
  * and Back on the address leaves the pane. Setup and reconnect have neither; the step's heading says where the user is. They pass
  * [onReportProblem], which puts a menu with that one item on the bar: a user who cannot connect has no Settings to reach.
  */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun SetupScreen(
     state: SetupUiState,
@@ -62,6 +66,8 @@ fun SetupScreen(
     // The latest second-step state, not the current one, is drawn: a step sliding out must keep what it showed.
     val server = (secondStep as? SetupUiState.NotSetUp)?.server ?: (secondStep as? SetupUiState.SignIn)?.server
     // While the address waits on the local-network permission, asking for it is the way on: Continue could only fail (#1099).
+    // With the keyboard up the sign-in's backdrop and heading step aside: the pager under them needs the room for its focused field.
+    val keyboardUp = WindowInsets.isImeVisible
     val allow = if (address?.needsLocalNetwork == true) rememberAllowLocalNetwork(actions.onLocalNetworkChanged) else null
     StepFlowScreen(
         stepCount = SETUP_STEPS,
@@ -75,7 +81,7 @@ fun SetupScreen(
         loading = state is SetupUiState.Loading || state is SetupUiState.Connected,
         // The sign-in pages scroll themselves, under the mode tabs, so the flow gives the step the height that is left.
         contentScrolls = { step -> !(step == SIGN_IN_STEP && secondStep is SetupUiState.SignIn) },
-        aside = { step -> if (step == SIGN_IN_STEP) server?.let { SetupServerBackdrop(it) } },
+        aside = { step -> if (step == SIGN_IN_STEP && !keyboardUp) server?.let { SetupServerBackdrop(it) } },
         heading = { step ->
             when (step) {
                 ADDRESS_STEP ->
@@ -86,7 +92,7 @@ fun SetupScreen(
                                 if (LocalFlags.current.bingePromotion) R.string.setup_intro else R.string.setup_intro_plain,
                             ),
                     )
-                else -> server?.let { SetupServerHeading(it) }
+                else -> if (!keyboardUp) server?.let { SetupServerHeading(it) }
             }
         },
         footer = { step ->
