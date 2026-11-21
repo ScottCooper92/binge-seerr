@@ -83,6 +83,7 @@ private fun FilmPageEntry(
                 onOpenKeyword = onOpenKeyword,
                 onRetry = viewModel::load,
                 onRequest = viewModel::onPrimary,
+                requestsSheet = RequestsSheetWiring({ viewModel.setRequestsSheetOpen(true) }, { viewModel.setRequestsSheetOpen(false) }, viewModel::openRequest, { viewModel.setServiceSheetOpen(true) }, { viewModel.setServiceSheetOpen(false) }),
                 onCloseRequest = viewModel::closeRequestSheet,
                 onRequested = viewModel::requested,
                 onReload = viewModel::reload,
@@ -139,6 +140,7 @@ private fun SeriesPageEntry(
                 onOpenKeyword = onOpenKeyword,
                 onRetry = viewModel::load,
                 onRequest = viewModel::onPrimary,
+                requestsSheet = RequestsSheetWiring({ viewModel.setRequestsSheetOpen(true) }, { viewModel.setRequestsSheetOpen(false) }, viewModel::openRequest, { viewModel.setServiceSheetOpen(true) }, { viewModel.setServiceSheetOpen(false) }),
                 onCloseRequest = viewModel::closeRequestSheet,
                 onRequested = viewModel::requested,
                 onReload = viewModel::reload,
@@ -179,6 +181,7 @@ private fun rememberTitlePageActions(
     onOpenKeyword: (TitleKeyword) -> Unit,
     onRetry: () -> Unit,
     onRequest: () -> Unit,
+    requestsSheet: RequestsSheetWiring,
     onCloseRequest: () -> Unit,
     onRequested: (RequestResult) -> Unit,
     onReload: () -> Unit,
@@ -215,6 +218,11 @@ private fun rememberTitlePageActions(
         manageSheet = { sheet -> SiblingRequestSheet(sheet, manage.onOpenUser, manage.onOpenServices) },
         onReport = side.onOpen,
         onCloseReport = side.onClose,
+        onOpenRequests = requestsSheet.onOpenRequests,
+        onCloseRequests = requestsSheet.onCloseRequests,
+        onPickRequest = requestsSheet.onPick,
+        onOpenServiceInfo = requestsSheet.onOpenServices,
+        onCloseServiceInfo = requestsSheet.onCloseServices,
         onWatchInBinge = watchInBinge,
         onToggleWatchlist = side.onToggleWatchlist,
         reportSheet = { onClose -> TitleReportSheet(side.mediaType, side.tmdbId, onClose) },
@@ -257,3 +265,12 @@ private fun OpenRequestOnce(
         }
     }
 }
+
+/** What the page needs for the requests list and the services sheet: how they open and close, and which request the list picks. */
+private class RequestsSheetWiring(
+    val onOpenRequests: () -> Unit,
+    val onCloseRequests: () -> Unit,
+    val onPick: (Int) -> Unit,
+    val onOpenServices: () -> Unit,
+    val onCloseServices: () -> Unit,
+)

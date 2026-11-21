@@ -21,6 +21,7 @@ import com.cooper.binge.companion.seerr.discover.title.TitleCompany
 import com.cooper.binge.companion.seerr.discover.title.TitleKeyword
 import com.cooper.binge.companion.seerr.discover.title.trailerUrl
 import com.cooper.binge.companion.seerr.ui.discover.links.ExternalLinksSection
+import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.ui.discover.request.RequestSheet
 import com.cooper.binge.companion.seerr.ui.discover.request.RequestSheetTarget
 import com.cooper.binge.companion.seerr.ui.discover.request.messageRes
@@ -67,6 +68,14 @@ class TitlePageActions(
     val onCloseReport: () -> Unit = {},
     /** The report form for this title, hosted over the page. */
     val reportSheet: @Composable (onClose: () -> Unit) -> Unit = {},
+    /** The list of requests, opened from a row of the title's sheet where there are several, and closed. */
+    val onOpenRequests: () -> Unit = {},
+    val onCloseRequests: () -> Unit = {},
+    /** A request picked from that list: its sheet opens. */
+    val onPickRequest: (Int) -> Unit = {},
+    /** The services sheet's action in the page's round actions; null where the title has no request or link to show. */
+    val onOpenServiceInfo: (() -> Unit)? = null,
+    val onCloseServiceInfo: () -> Unit = {},
 )
 
 /** The film page: the design system's movie template, filled with this app's primary action, sheets and sections. */
@@ -153,6 +162,7 @@ private fun ReadyPage(
                 watchlist = WatchlistButton(movie.onWatchlist, actions.onToggleWatchlist).takeIf { movie.mayWatchlist },
                 onReport = actions.onReport,
                 onBlock = actions.block?.onAsk.takeIf { movie.mayBlock },
+                onServices = actions.onOpenServiceInfo.takeIf { movie.requests.isNotEmpty() || movie.watchUrl != null },
             ),
         topBarActions = { glassAlpha -> ShareBarAction(glassAlpha) { context.shareTitle(movie.title, movie.webUrl) } },
         afterPeople = { WhereToWatchSection(movie.providers, actions.onOpenUrl, Modifier.readingMargin()) },
@@ -209,4 +219,5 @@ private fun MovieOverlays(
     state.manageRequestId?.let { requestId ->
         TitleManageSheet(requestId, state.manageSheetOpen, snackbar, movie.sheetFacts(), actions)
     }
+    TitleRequestsAndServices(state.requestsSheetOpen, state.serviceSheetOpen, movie.requests, movie.tmdbId, TitleKind.Movie, actions)
 }

@@ -43,6 +43,10 @@ sealed interface TitlePageUiState {
         /** The request the primary last opened to manage. Kept after the sheet closes, so a moderation's result still has its sheet to land in. */
         val manageRequestId: Int? = null,
         val manageSheetOpen: Boolean = false,
+        /** The list of the title's requests, where there are several; a row of it opens that request's sheet. */
+        val requestsSheetOpen: Boolean = false,
+        /** The services sheet, opened from the page's Services action. */
+        val serviceSheetOpen: Boolean = false,
         val statusSheetOpen: Boolean = false,
         val reportSheetOpen: Boolean = false,
         /** A watchlist call is in flight, so another tap is ignored. */
@@ -147,7 +151,11 @@ class TitlePageViewModel
             }
 
         /** A request's sheet was asked for from outside the page, as the Requests list does: open it on that request. */
-        fun openRequest(id: Int) = updateReady { it.copy(manageRequestId = id, manageSheetOpen = true) }
+        fun openRequest(id: Int) = updateReady { it.copy(manageRequestId = id, manageSheetOpen = true, requestsSheetOpen = false) }
+
+        fun setRequestsSheetOpen(open: Boolean) = updateReady { it.copy(requestsSheetOpen = open) }
+
+        fun setServiceSheetOpen(open: Boolean) = updateReady { it.copy(serviceSheetOpen = open) }
 
         /** The request's sheet closed. The id stays, and a change made in it reloads the page through the sheet's own `onChanged`. */
         fun closeSheet(sheet: TitleSheet) =

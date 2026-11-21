@@ -1,6 +1,7 @@
 package com.cooper.binge.companion.seerr.ui.discover.title
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ListAlt
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.SnackbarHostState
@@ -22,6 +23,7 @@ internal class TitleSheetFacts(
     val mediaServerName: String?,
     val fourKOpen: Boolean,
     val remainingOpen: Boolean = false,
+    val requests: List<com.cooper.binge.companion.seerr.discover.title.TitleRequest> = emptyList(),
 )
 
 /**
@@ -35,15 +37,17 @@ internal fun rememberTitleSheetRows(
     onRequestFourK: () -> Unit,
     onWatchInBinge: (() -> Unit)? = null,
     onRequestRemaining: () -> Unit = {},
+    onOpenRequests: () -> Unit = {},
 ): List<SheetTitleRow> {
     val resources = LocalResources.current
     val watch by rememberUpdatedState(onWatch)
     val watchInBinge by rememberUpdatedState(onWatchInBinge)
     val requestFourK by rememberUpdatedState(onRequestFourK)
     val requestRemaining by rememberUpdatedState(onRequestRemaining)
+    val openRequests by rememberUpdatedState(onOpenRequests)
     val bingeAnswers = onWatchInBinge != null
     val openInBinge: () -> Unit = { watchInBinge?.invoke() }
-    return remember(facts.state, facts.watchUrl, facts.mediaServerName, facts.fourKOpen, facts.remainingOpen, bingeAnswers, resources) {
+    return remember(facts.state, facts.watchUrl, facts.mediaServerName, facts.fourKOpen, facts.remainingOpen, facts.requests.size, bingeAnswers, resources) {
         val watchRows =
             titleWatchRows(
                 facts.state,
@@ -67,6 +71,12 @@ internal fun rememberTitleSheetRows(
                     external = false,
                     onClick = { requestFourK() },
                 ).takeIf { facts.fourKOpen },
+                SheetTitleRow(
+                    Icons.AutoMirrored.Filled.ListAlt,
+                    resources.getString(R.string.title_sheet_requests, facts.requests.size),
+                    external = false,
+                    onClick = { openRequests() },
+                ).takeIf { facts.requests.size > 1 },
             )
     }
 }
@@ -96,6 +106,10 @@ internal fun TitleManageSheet(
                     },
                     onRequestFourK = actions.onRequestFourK,
                     onRequestRemaining = actions.onRequestRemaining,
+                    onOpenRequests = {
+                        actions.onCloseManage()
+                        actions.onOpenRequests()
+                    },
                     onWatchInBinge =
                         actions.onWatchInBinge?.let { openInBinge ->
                             {
@@ -115,6 +129,7 @@ internal fun SeriesDetails.sheetFacts() =
         mediaServerName,
         fourK?.mayRequest == true,
         remainingOpen = standard.mayRequest,
+        requests = requests,
     )
 
 internal fun MovieDetails.sheetFacts() =
@@ -123,4 +138,5 @@ internal fun MovieDetails.sheetFacts() =
         watchUrl,
         mediaServerName,
         fourK?.mayRequest == true,
+        requests = requests,
     )

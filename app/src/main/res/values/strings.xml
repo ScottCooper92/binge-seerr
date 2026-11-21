@@ -1738,4 +1738,10 @@
     <string name="collection_page_block_title">Block %1$s?</string>
     <string name="collection_page_block_message">None of its films can be requested until it is unblocked.</string>
     <string name="collection_page_block_held">Films already on your server or requested are blocklisted too, and their status is cleared if you unblock the collection later.</string>
+    <string name="title_page_action_services">Services</string>
+    <string name="title_sheet_requests">Requests (%1$d)</string>
+    <string name="title_requests_sheet_title">Requests</string>
+    <string name="title_request_row">Request %1$d</string>
+    <string name="services_plays">Plays</string>
+    <string name="services_watched_by">Watched by</string>
 </resources>
