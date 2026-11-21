@@ -4,14 +4,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.assertTextContains
+import androidx.compose.ui.test.hasAnyDescendant
+import androidx.compose.ui.test.hasScrollToIndexAction
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.test.performTextInput
-import androidx.compose.ui.test.performTouchInput
-import androidx.compose.ui.test.swipeLeft
-import androidx.compose.ui.test.swipeRight
 import com.binge.designsystem.theme.BingeExpressiveTheme
 import com.cooper.binge.companion.seerr.seerr.SeerrSignInMode
 import com.cooper.binge.companion.seerr.seerr.SeerrVariant
@@ -53,11 +53,13 @@ class SetupSignInPagerTest {
             }
         }
 
+    private fun pager() = rule.onNode(hasScrollToIndexAction() and hasAnyDescendant(hasTestTag(SIGN_IN_PAGE_TAG)))
+
     @Test
     fun `swiping to the next page changes the mode`() {
         show()
 
-        rule.onRoot().performTouchInput { swipeLeft() }
+        pager().performScrollToIndex(1)
         rule.waitForIdle()
 
         assertEquals(SeerrSignInMode.Jellyfin, form.mode)
@@ -80,9 +82,10 @@ class SetupSignInPagerTest {
         show()
         rule.onNodeWithText("Email").performTextInput("me@example.com")
 
-        rule.onRoot().performTouchInput { swipeLeft() }
+        pager().performScrollToIndex(1)
         rule.waitForIdle()
-        rule.onRoot().performTouchInput { swipeRight() }
+        rule.onNodeWithText("Username").assertExists()
+        pager().performScrollToIndex(0)
         rule.waitForIdle()
 
         assertEquals(SeerrSignInMode.Local, form.mode)

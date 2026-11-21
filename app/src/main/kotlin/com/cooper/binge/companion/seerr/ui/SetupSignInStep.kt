@@ -19,6 +19,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentType
@@ -66,6 +67,9 @@ internal fun SetupServerHeading(server: SetupServer) {
     )
 }
 
+/** Marks a sign-in page, so a test can find the pager that holds them. */
+internal const val SIGN_IN_PAGE_TAG = "sign_in_page"
+
 /**
  * Step two: a page per sign-in the server accepts, each with the fields of its mode. The page the user is on is
  * [SignInForm.mode], so the choice outlives rotation and process death with the rest of the form, and the typed
@@ -92,6 +96,7 @@ internal fun SetupSignInContent(
             modifier =
                 Modifier
                     .fillMaxSize()
+                    .testTag(SIGN_IN_PAGE_TAG)
                     .verticalScroll(scrolls[page])
                     .padding(top = contentPadding.calculateTopPadding()),
             verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
