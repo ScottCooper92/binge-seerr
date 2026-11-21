@@ -1,7 +1,6 @@
 package com.cooper.binge.companion.seerr.ui.discover.title
 
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.PlayArrow
@@ -15,8 +14,8 @@ import com.cooper.binge.companion.seerr.R
 import com.binge.designsystem.R as DesR
 
 /**
- * The round buttons beside the primary, as the design system's detail page takes them: Trailer (opens outside the app, so it
- * carries the open-in-new mark), Watchlist where the server has one, Report once the title is in the library, and Block while
+ * The round buttons beside the primary, as the design system's detail page takes them: Trailer (opens outside the app: said to a screen
+ * reader, not drawn), Watchlist where the server has one, Report once the title is in the library, and Block while
  * nothing is held. A button the page has no handler for, or the state does not allow, is left out.
  */
 @Composable
@@ -43,7 +42,6 @@ internal fun titleRoundActions(
                 label = trailerLabel,
                 onClick = it,
                 contentDescription = trailerDescription,
-                trailingIcon = Icons.AutoMirrored.Filled.OpenInNew,
             )
         },
         watchlist?.let {
