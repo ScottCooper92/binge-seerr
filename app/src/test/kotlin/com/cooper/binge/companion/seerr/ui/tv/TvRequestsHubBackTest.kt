@@ -212,7 +212,7 @@ class TvRequestsHubBackTest {
         )
     }
 
-    private fun homeTab() = composeTestRule.onNode(hasContentDescription(string(R.string.tv_home)))
+    private fun homeTab() = composeTestRule.onNode(hasContentDescription(string(R.string.hub_section_requests)))
 }
 
 private fun idOf(

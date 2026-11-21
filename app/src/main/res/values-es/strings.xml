@@ -1188,7 +1188,6 @@
     <string name="send_signin_confirm_action">Iniciar sesión en el televisor</string>
     <string name="send_signin_confirm_dismiss">Cancelar</string>
     <string name="setup_error_unreachable_not_local">No se pudo conectar con el servidor. Esa no es una dirección local, así que puede que este televisor no consiga llegar a ella. Prueba con una dirección de tu red doméstica.</string>
-    <string name="tv_home">Inicio</string>
     <string name="tv_hub_health_checking">Comprobando el servidor…</string>
     <string name="tv_hub_quota_none_left">No queda ninguna</string>
     <string name="tv_download_percent">%1$d %%</string>

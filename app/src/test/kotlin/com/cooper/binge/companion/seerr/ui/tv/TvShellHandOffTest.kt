@@ -42,8 +42,8 @@ private const val BEAR = "The Bear"
 
 /** Where focus lands as the bar hands it around, in the real shell: Down from the bar returns to the card the user came from. */
 @RunWith(RobolectricTestRunner::class)
-@Config(qualifiers = "w960dp-h540dp-television-xhdpi")
-class TvHomeShellHandOffTest {
+@Config(qualifiers = "w960dp-h720dp-television-xhdpi")
+class TvShellHandOffTest {
     @get:Rule
     val composeTestRule = createSeerrKeyboardAndroidComposeRule<ComponentActivity>()
 
@@ -52,8 +52,11 @@ class TvHomeShellHandOffTest {
     @Test
     fun theRequestPageClosingThroughItsCloserReturnsToTheCardTheUserLeft() {
         setHomeWithRequests(topLayer = { closer -> StandInPage(onClose = closer::close, tag = TOP_LAYER_TAG) })
-        card(BEAR).requestFocus()
+        // Down from Heat, as the remote reaches the second row: the board remembers the card it is left on.
+        card(HEAT).requestFocus()
         composeTestRule.waitForIdle()
+        composeTestRule.press(Key.DirectionDown)
+        card(BEAR).assertIsFocused()
         topLayerOpen = true
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithTag(TOP_LAYER_TAG).assertIsFocused()
@@ -83,8 +86,11 @@ class TvHomeShellHandOffTest {
                 )
             },
         )
-        card(BEAR).requestFocus()
+        // Down from Heat, as the remote reaches the second row: the board remembers the card it is left on.
+        card(HEAT).requestFocus()
         composeTestRule.waitForIdle()
+        composeTestRule.press(Key.DirectionDown)
+        card(BEAR).assertIsFocused()
         topLayerOpen = true
         composeTestRule.waitForIdle()
 
@@ -114,7 +120,7 @@ class TvHomeShellHandOffTest {
             BingeTvTheme {
                 var tab by rememberSaveable { mutableStateOf(TvDestination.Hub) }
                 var sheet by rememberSaveable { mutableStateOf<TvDestination?>(null) }
-                TvHomeShell(
+                TvShellUnderTest(
                     tab = tab,
                     sheet = sheet,
                     onSelectTab = { tab = it },
@@ -159,5 +165,5 @@ class TvHomeShellHandOffTest {
     private fun card(title: String) = composeTestRule.onNode(hasContentDescription(title) and isFocusable())
 
     /** Up from Home lands on the current tab. */
-    private fun focusedTopRowButton() = composeTestRule.onNode(hasContentDescription(string(R.string.tv_home)) and isFocused())
+    private fun focusedTopRowButton() = composeTestRule.onNode(hasContentDescription(string(R.string.hub_section_requests)) and isFocused())
 }

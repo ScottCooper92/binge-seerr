@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
@@ -18,6 +19,9 @@ import androidx.tv.material3.MaterialTheme
 import coil3.compose.AsyncImage
 import com.binge.designsystem.theme.BingeShapes
 import com.binge.designsystem.tv.component.TvMessagePlate
+import com.binge.designsystem.tv.focus.TvShellArrivalNone
+import com.binge.designsystem.tv.template.currentTvPageHosting
+import com.binge.designsystem.tv.template.tvPagePadding
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.state.RequestStateTone
 
@@ -39,6 +43,29 @@ internal fun TvBoardPlate(
         alignment = Alignment.Center,
         modifier = modifier,
     )
+}
+
+/**
+ * A whole page that says there is nothing here yet. Nothing on it takes focus, so it settles the shell's arrival, and unlike a
+ * `TvMessagePage` with no action it holds no focus sink: under the bar a sink is the one thing Down can reach, and it takes
+ * focus out of sight with every direction cancelled.
+ */
+@Composable
+internal fun TvEmptyPage(
+    body: String,
+    modifier: Modifier = Modifier,
+    icon: ImageVector? = null,
+) {
+    TvShellArrivalNone()
+    Box(
+        modifier =
+            modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
+                .padding(tvPagePadding(currentTvPageHosting())),
+    ) {
+        TvBoardPlate(body = body, icon = icon)
+    }
 }
 
 /** Where a paged list is in a load, as the boards read it off the pager. */

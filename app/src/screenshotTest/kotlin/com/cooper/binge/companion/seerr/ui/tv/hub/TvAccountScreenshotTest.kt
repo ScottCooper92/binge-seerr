@@ -14,8 +14,8 @@ import com.cooper.binge.companion.seerr.ui.FIXED_NOW_MILLIS
 import com.cooper.binge.companion.seerr.ui.hub.HubAccount
 import com.cooper.binge.companion.seerr.ui.hub.HubQuota
 import com.cooper.binge.companion.seerr.ui.hub.HubQuotaBucket
-import com.cooper.binge.companion.seerr.ui.tv.TvDestination
-import com.cooper.binge.companion.seerr.ui.tv.TvHomeShell
+import com.cooper.binge.companion.seerr.ui.tv.PreviewTabShell
+import com.cooper.binge.companion.seerr.ui.tv.TvTab
 import com.cooper.binge.companion.seerr.ui.tv.TvTopBarAccount
 import com.cooper.binge.companion.seerr.ui.users.UserDetail
 import com.cooper.binge.companion.seerr.ui.users.UserDetailUiState
@@ -119,19 +119,27 @@ class TvAccountScreenshotTest {
         Menu(UserDetailUiState.Seeded(detail(quota = null).detail.item))
     }
 
-    /** Home's top row: the Home and Issues tabs, and the avatar and Settings gear in the top-right corner. */
+    /** The top row: the avatar at the start, the Requests and Issues tabs, and the Settings gear at the end. */
     @PreviewTest
     @SeerrTvScreenPreviews
     @Composable
     fun HomeTopRow() {
-        TvHomeShell(
-            tab = TvDestination.Hub,
-            sheet = null,
-            onSelectTab = {},
-            onOpenSheet = {},
-            onCloseSheet = {},
+        PreviewTabShell(
             account = PreviewBarAccount,
-        ) { _, _, _ ->
+        ) {
+            Box(modifier = Modifier.fillMaxSize())
+        }
+    }
+
+    /** The top row with the discovery tabs on (the TV discovery flag): Search, Movies and TV ahead of Requests and Issues. */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun TopRowDiscovery() {
+        PreviewTabShell(
+            tabs = TvTab.entries,
+            account = PreviewBarAccount,
+        ) {
             Box(modifier = Modifier.fillMaxSize())
         }
     }
@@ -141,15 +149,10 @@ class TvAccountScreenshotTest {
     @SeerrTvScreenPreviews
     @Composable
     fun HomeTopRowOneTab() {
-        TvHomeShell(
-            tab = TvDestination.Hub,
-            sheet = null,
-            onSelectTab = {},
-            onOpenSheet = {},
-            onCloseSheet = {},
-            tabs = listOf(TvDestination.Hub),
+        PreviewTabShell(
+            tabs = listOf(TvTab.Requests),
             account = PreviewBarAccount,
-        ) { _, _, _ ->
+        ) {
             Box(modifier = Modifier.fillMaxSize())
         }
     }
@@ -186,12 +189,7 @@ class TvAccountScreenshotTest {
         canSignOut: Boolean = true,
     ) {
         val item = (detail as? UserDetailUiState.Ready)?.detail?.item ?: (detail as? UserDetailUiState.Seeded)?.item
-        TvHomeShell(
-            tab = TvDestination.Hub,
-            sheet = null,
-            onSelectTab = {},
-            onOpenSheet = {},
-            onCloseSheet = {},
+        PreviewTabShell(
             account =
                 tvAccountMenu(
                     account = HubAccount(id = item?.id ?: 7, name = item?.name ?: "Scott", isAdmin = true, avatarUrl = null),
@@ -202,7 +200,7 @@ class TvAccountScreenshotTest {
                     demo = false,
                     initiallyOpen = true,
                 ),
-        ) { _, _, _ ->
+        ) {
             Box(modifier = Modifier.fillMaxSize())
         }
     }

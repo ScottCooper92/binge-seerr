@@ -40,7 +40,7 @@ private const val GRID_CELL = "grid-cell"
 private const val PAGE = "page"
 
 /**
- * A title's own page sits over everything, the bar included. It reads no top inset while the pages beneath read the bar's,
+ * A title's own page sits over everything, the bar included. It reads no top inset, while the board beneath, whose backdrop runs behind the bar, reads the bar's height,
  * it keeps focus inside itself, and when it closes focus goes back to what opened it: a card on the board, or a cell of the
  * see-all page it was opened from.
  */
@@ -58,7 +58,7 @@ class TvShellTopLayerTest {
     private fun setShell() {
         composeTestRule.setContent {
             BingeTvTheme {
-                TvHomeShell(
+                TvShellUnderTest(
                     tab = TvDestination.Hub,
                     sheet = null,
                     onSelectTab = {},
@@ -92,13 +92,13 @@ class TvShellTopLayerTest {
     }
 
     @Test
-    fun `the page over the bar reads no top inset while the board beneath reads the bar's`() {
+    fun `the page over the bar reads no top inset and the board beneath it reads the bar's height`() {
         setShell()
         pageOpen = true
         composeTestRule.waitForIdle()
 
         assertEquals(0.dp, pageInset)
-        assertTrue("the board reads no inset under the bar", boardInset > 0.dp)
+        assertTrue("the board runs behind the bar, so it reads its height", boardInset > 0.dp)
     }
 
     @Test

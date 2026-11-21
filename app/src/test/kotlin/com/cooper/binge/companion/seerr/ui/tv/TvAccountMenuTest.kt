@@ -13,7 +13,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.assertCountEquals
@@ -34,6 +33,7 @@ import androidx.compose.ui.test.requestFocus
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.height
+import com.binge.designsystem.tv.focus.tvShellArrivalTarget
 import com.binge.designsystem.tv.theme.BingeTvTheme
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.seerr.SeerrError
@@ -69,6 +69,7 @@ class TvAccountMenuTest {
 
     private var retries = 0
     private var signOuts = 0
+    private var accountOpens = 0
     private var detail by mutableStateOf<UserDetailUiState?>(null)
     private var opened = 0
 
@@ -144,6 +145,22 @@ class TvAccountMenuTest {
         assertEquals(1, retries)
     }
 
+    /** The Account row opens the user's own requests, sits above Sign out, and Sign out stays last. */
+    @Test
+    fun accountIsTheFirstRowAboveSignOut() {
+        setBar(detail = UserDetailUiState.Ready(detail()), canOpenAccount = true)
+        focusAvatar()
+        press(Key.DirectionDown)
+        accountRow().assertIsFocused()
+        press(Key.DirectionDown)
+        signOutRow().assertIsFocused()
+        press(Key.DirectionUp)
+
+        press(Key.DirectionCenter)
+
+        assertEquals(1, accountOpens)
+    }
+
     @Test
     fun aKeyConnectionHasNoSignOut() {
         setBar(detail = UserDetailUiState.Ready(detail()), canSignOut = false)
@@ -188,23 +205,11 @@ class TvAccountMenuTest {
 
     /** The menu is open while the avatar is focused, with no Select: the remote's arrival alone opens it, as in the other TV app. */
     @Test
-    fun arrivingOnTheAvatarFromTheGearOpensTheMenu() {
-        setBar(detail = UserDetailUiState.Ready(detail()))
-        val gear = composeTestRule.onNode(hasContentDescription(string(TvDestination.Settings.labelRes)) and isFocusable())
-        gear.requestFocus()
+    fun arrivingOnTheAvatarFromTheFirstTabOpensTheMenu() {
+        setBar(detail = UserDetailUiState.Ready(detail()), tabs = listOf(TvTab.Requests, TvTab.Issues))
+        composeTestRule.onNode(hasContentDescription(string(R.string.hub_section_requests)) and isFocusable()).requestFocus()
         composeTestRule.waitForIdle()
         press(Key.DirectionLeft)
-
-        avatar().assertIsFocused()
-        composeTestRule.onNodeWithText("Scott", useUnmergedTree = true).assertExists()
-    }
-
-    @Test
-    fun arrivingOnTheAvatarFromTheLastTabOpensTheMenu() {
-        setBar(detail = UserDetailUiState.Ready(detail()), tabs = listOf(TvDestination.Hub, TvDestination.Issues))
-        composeTestRule.onNode(hasContentDescription(string(TvDestination.Issues.labelRes)) and isFocusable()).requestFocus()
-        composeTestRule.waitForIdle()
-        press(Key.DirectionRight)
 
         avatar().assertIsFocused()
         composeTestRule.onNodeWithText("Scott", useUnmergedTree = true).assertExists()
@@ -213,43 +218,44 @@ class TvAccountMenuTest {
     private fun setBar(
         detail: UserDetailUiState?,
         canSignOut: Boolean = true,
-        tabs: List<TvDestination> = emptyList(),
+        canOpenAccount: Boolean = false,
+        tabs: List<TvTab> = listOf(TvTab.Requests),
     ) {
         this.detail = detail
         composeTestRule.setContent {
             BingeTvTheme {
                 val page = remember { FocusRequester() }
-                Box(Modifier.fillMaxSize()) {
-                    Box(
-                        Modifier
-                            .align(Alignment.Center)
-                            .size(PAGE_SIZE)
-                            .focusRequester(page)
-                            .focusable()
-                            .testTag(PAGE),
-                    )
-                    TvTopBar(
-                        tabs = tabs,
-                        current = TvDestination.Hub,
-                        opener = remember { TvDestination.entries.associateWith { FocusRequester() } },
-                        accountOpener = remember { FocusRequester() },
-                        down = page,
-                        visible = true,
-                        account =
-                            tvAccountMenu(
-                                account = HubAccount(id = 7, name = "Scott", isAdmin = true, avatarUrl = null),
-                                detail = this@TvAccountMenuTest.detail,
-                                accountFailed = false,
-                                onRetry = { retries++ },
-                                onSignOut = if (canSignOut) ({ signOuts++ }) else null,
-                                demo = false,
-                                whileOpen = { SideEffect { opened++ } },
-                            ),
-                        onFocusedChange = {},
-                        onSelect = {},
-                        onOpenSettings = {},
-                        modifier = Modifier.align(Alignment.TopCenter),
-                    )
+                TvTabShell(
+                    tab = TvTab.Requests,
+                    tabs = tabs,
+                    home = TvTab.Requests,
+                    onSelectTab = {},
+                    sheetOpen = false,
+                    onOpenSheet = {},
+                    onCloseSheet = {},
+                    account =
+                        tvAccountMenu(
+                            account = HubAccount(id = 7, name = "Scott", isAdmin = true, avatarUrl = null),
+                            detail = this@TvAccountMenuTest.detail,
+                            accountFailed = false,
+                            onRetry = { retries++ },
+                            onSignOut = if (canSignOut) ({ signOuts++ }) else null,
+                            onOpenAccount = if (canOpenAccount) ({ accountOpens++ }) else null,
+                            demo = false,
+                            whileOpen = { SideEffect { opened++ } },
+                        ),
+                    contentRequester = remember { FocusRequester() },
+                ) {
+                    Box(Modifier.fillMaxSize()) {
+                        Box(
+                            Modifier
+                                .align(Alignment.Center)
+                                .size(PAGE_SIZE)
+                                .tvShellArrivalTarget(page)
+                                .focusable()
+                                .testTag(PAGE),
+                        )
+                    }
                 }
             }
         }
@@ -258,10 +264,17 @@ class TvAccountMenuTest {
 
     private fun avatar() = composeTestRule.onNode(hasContentDescription(string(R.string.tv_account)) and isFocusable())
 
+    /** Reaches the avatar as the remote does, Up out of the page to the first tab and Left to the avatar: a request into the bar is routed to its entry tab. */
     private fun focusAvatar() {
-        avatar().requestFocus()
-        composeTestRule.waitForIdle()
+        press(Key.DirectionUp)
+        press(Key.DirectionLeft)
     }
+
+    private fun accountRow() =
+        composeTestRule
+            .onAllNodes(
+                hasText(string(R.string.tv_account)) and isFocusable(),
+            ).filterToOne(!hasContentDescription(string(R.string.tv_account)))
 
     private fun retryRow() = composeTestRule.onNode(hasText(string(R.string.hub_retry)) and isFocusable())
 

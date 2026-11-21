@@ -195,8 +195,9 @@ internal fun TvPagedRows<*>.hubFailure(onRetry: () -> Unit): TvHubRowFailure? {
 
 /**
  * What an immersive board shows when no row has anything: loading, that it could not load (with a retry), or
- * that there is nothing yet. [rows] are every row's pager, in any order. A whole-page message, so it holds focus
- * itself: the page it hands over to, when rows arrive, is placed by the shell.
+ * that there is nothing yet. [rows] are every row's pager, in any order. A whole-page message: the failed pages
+ * hold focus on their Retry, and the empty page holds none, so Down from the bar stays on the tab. The page it
+ * hands over to, when rows arrive, is placed by the shell.
  */
 @Composable
 internal fun TvRowsFallback(
@@ -218,7 +219,7 @@ internal fun TvRowsFallback(
                 icon = Icons.Filled.Warning,
                 primary = ScreenAction(stringResource(R.string.hub_retry), onRetryLoad),
             )
-        else -> TvMessagePage(body = emptyBody, modifier = modifier, icon = Icons.Filled.Inbox)
+        else -> TvEmptyPage(body = emptyBody, modifier = modifier, icon = Icons.Filled.Inbox)
     }
 }
 

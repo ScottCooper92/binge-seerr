@@ -9,8 +9,7 @@ import com.cooper.binge.companion.seerr.ui.requests.RequestCounts
 import com.cooper.binge.companion.seerr.ui.requests.RequestFilter
 import com.cooper.binge.companion.seerr.ui.requests.RequestsUiState
 import com.cooper.binge.companion.seerr.ui.tv.NoRequestsActions
-import com.cooper.binge.companion.seerr.ui.tv.TvDestination
-import com.cooper.binge.companion.seerr.ui.tv.TvHomeShell
+import com.cooper.binge.companion.seerr.ui.tv.PreviewTabShell
 import com.cooper.binge.companion.seerr.ui.tv.TvLoadPhase
 import com.cooper.binge.companion.seerr.ui.tv.TvPagedRows
 import com.cooper.binge.companion.seerr.ui.tv.TvTopBarAccount
@@ -55,14 +54,9 @@ class TvRequestsScreenshotTest {
     @SeerrTvScreenPreviews
     @Composable
     fun BoardUnderTopBar() {
-        TvHomeShell(
-            tab = TvDestination.Hub,
-            sheet = null,
-            onSelectTab = {},
-            onOpenSheet = {},
-            onCloseSheet = {},
+        PreviewTabShell(
             account = TvTopBarAccount(name = "Scott Cooper", avatarUrl = null),
-        ) { _, _, _ -> Board() }
+        ) { Board() }
     }
 
     /** The demo server's tag beside Settings in the top bar (#1705). */
@@ -70,14 +64,9 @@ class TvRequestsScreenshotTest {
     @SeerrTvScreenPreviews
     @Composable
     fun BoardUnderTopBarDemo() {
-        TvHomeShell(
-            tab = TvDestination.Hub,
-            sheet = null,
-            onSelectTab = {},
-            onOpenSheet = {},
-            onCloseSheet = {},
+        PreviewTabShell(
             account = TvTopBarAccount(name = "Alex", avatarUrl = null, demo = true),
-        ) { _, _, _ -> Board() }
+        ) { Board() }
     }
 
     @PreviewTest

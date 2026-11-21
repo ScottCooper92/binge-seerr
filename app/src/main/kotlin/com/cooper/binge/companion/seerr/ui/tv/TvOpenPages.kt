@@ -50,7 +50,8 @@ internal class TvOpenPages(
 
     /**
      * Keeps the shell on an offered tab, as the phone's tabbed back stack reconciles: a tab that stops being offered loses
-     * its pages, so they do not come back with it, and if it was [tab] the start tab, the first of [offered], takes over.
+     * its pages, so they do not come back with it. Returns [tab] if it is offered, else the first of [offered]; the shell
+     * picks its own start tab, so it may ignore the result.
      */
     fun reconcile(
         tab: TvDestination,
