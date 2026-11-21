@@ -5,6 +5,7 @@ import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.core.app.ApplicationProvider
+import com.binge.designsystem.component.DetailActions
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.TitleAvailability
 import com.cooper.binge.companion.seerr.discover.title.VersionState
@@ -32,7 +33,14 @@ class TitleBlockTest {
     ) {
         val model =
             titleActionsModel(VersionState(availability, mayRequest = true), null, emptyList(), mayReport = false, mayBlock = mayBlock)
-        rule.setContent { SeerrTheme { TitleActions(model, onPrimary = {}, onTrailer = null, onReport = null, onBlock = onBlock) } }
+        rule.setContent {
+            SeerrTheme {
+                DetailActions(
+                    primary = null,
+                    roundActions = titleRoundActions(model, onTrailer = null, watchlist = null, onReport = null, onBlock = onBlock),
+                )
+            }
+        }
     }
 
     @Test

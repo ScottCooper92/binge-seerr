@@ -1650,6 +1650,10 @@
     <string name="title_page_status_canceled">Cancelled</string>
     <string name="title_credits_title">Cast and crew</string>
     <string name="title_credits_cast">Cast</string>
+    <string name="title_credits_crew">Crew</string>
+    <string name="title_credits_loading">Loading cast and crew</string>
+    <string name="title_credits_cast_empty">Nobody is listed in the cast.</string>
+    <string name="title_credits_crew_empty">Nobody is listed in the crew.</string>
     <string name="title_credits_department_other">Other</string>
     <string name="title_credits_department_directing">Directing</string>
     <string name="title_credits_department_writing">Writing</string>

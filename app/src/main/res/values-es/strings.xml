@@ -1593,6 +1593,10 @@
     <string name="title_page_status_canceled">Cancelada</string>
     <string name="title_credits_title">Reparto y equipo</string>
     <string name="title_credits_cast">Reparto</string>
+    <string name="title_credits_crew">Equipo</string>
+    <string name="title_credits_loading">Cargando reparto y equipo</string>
+    <string name="title_credits_cast_empty">Nadie figura en el reparto.</string>
+    <string name="title_credits_crew_empty">Nadie figura en el equipo.</string>
     <string name="title_credits_department_other">Otros</string>
     <string name="title_credits_department_directing">Dirección</string>
     <string name="title_credits_department_writing">Guion</string>
