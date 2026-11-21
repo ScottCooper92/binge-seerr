@@ -1,44 +1,87 @@
 package com.cooper.binge.companion.seerr.ui.discover.title.credits
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextOverflow
-import com.binge.designsystem.component.BingeInitialsAvatar
-import com.binge.designsystem.component.ListRow
-import com.binge.designsystem.component.ListRowHeader
-import com.binge.designsystem.component.SectionHeader
 import com.binge.designsystem.template.BingeScreenScaffold
+import com.binge.designsystem.template.PeopleGridScreen
+import com.binge.designsystem.template.PeopleGridSection
+import com.binge.designsystem.template.PeopleGridState
+import com.binge.designsystem.template.PeopleGridTab
 import com.binge.designsystem.template.screenInnerPadding
 import com.binge.designsystem.template.screenOuterPadding
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.TitleKind
-import com.cooper.binge.companion.seerr.discover.title.TitleCredits
-import com.cooper.binge.companion.seerr.discover.title.TitlePerson
 import com.cooper.binge.companion.seerr.ui.discover.title.LocalOpenTitle
 import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
-import com.cooper.binge.companion.seerr.ui.state.LoadingScreen
-import com.binge.designsystem.R as DesR
 
-/** The whole cast, then the crew by department. A person opens their page. */
+/**
+ * The whole cast and the crew by department, on tabs, each a grid of portrait cards with a fast scrollbar. A person opens their page.
+ * The tab is the screen's own, so it survives a rotation. [initialTab] is for a frame that shows the crew.
+ */
 @Composable
 internal fun TitleCreditsScreen(
     state: TitleCreditsUiState,
     onBack: () -> Unit,
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
+    initialTab: Int = 0,
+) {
+    if (state is TitleCreditsUiState.Error) {
+        CreditsFailed(state, onBack, onRetry, modifier)
+        return
+    }
+    val openTitle = LocalOpenTitle.current
+    var selectedTab by rememberSaveable { mutableIntStateOf(initialTab) }
+    val credits = (state as? TitleCreditsUiState.Ready)?.credits
+    val departmentTitles = credits?.departments.orEmpty().map { it.name.departmentLabel() }
+    val grid = remember(credits, departmentTitles) { credits?.let { creditsGrid(it, departmentTitles) } }
+    val castEmpty = stringResource(R.string.title_credits_cast_empty)
+    val crewEmpty = stringResource(R.string.title_credits_crew_empty)
+    val castLabel = stringResource(R.string.title_credits_cast)
+    val crewLabel = stringResource(R.string.title_credits_crew)
+    PeopleGridScreen(
+        title = stringResource(R.string.title_credits_title),
+        tabs =
+            listOf(
+                PeopleGridTab(castLabel, grid.stateOf(castEmpty) { it.cast }),
+                PeopleGridTab(crewLabel, grid.stateOf(crewEmpty) { it.crew }, sectionBubble = true),
+            ),
+        selectedTab = selectedTab,
+        onTabChange = { selectedTab = it },
+        onOpenPerson = { key -> grid?.personId(key)?.let { openTitle(TitleKind.Person, it, "") } },
+        onRetry = { onRetry() },
+        modifier = modifier,
+        onBack = onBack,
+        loadingLabel = stringResource(R.string.title_credits_loading),
+    )
+}
+
+/** What one tab shows: the loading plates before the credits are known, then its sections, or [emptyMessage] when it has none. */
+private fun CreditsGrid?.stateOf(
+    emptyMessage: String,
+    sections: (CreditsGrid) -> List<PeopleGridSection>,
+): PeopleGridState =
+    when (val shown = this?.let(sections)) {
+        null -> PeopleGridState.Loading
+        else -> if (shown.isEmpty()) PeopleGridState.Empty(emptyMessage) else PeopleGridState.Ready(shown)
+    }
+
+/** A failed read stays an error screen with Try again, which also offers to allow the local network where that is the cause. */
+@Composable
+private fun CreditsFailed(
+    state: TitleCreditsUiState.Error,
+    onBack: () -> Unit,
+    onRetry: () -> Unit,
+    modifier: Modifier,
 ) {
     BingeScreenScaffold(
         title = stringResource(R.string.title_credits_title),
@@ -46,60 +89,7 @@ internal fun TitleCreditsScreen(
         onBack = onBack,
     ) { padding ->
         Box(Modifier.fillMaxSize().padding(padding.screenOuterPadding())) {
-            val inner = padding.screenInnerPadding()
-            when (state) {
-                TitleCreditsUiState.Loading -> LoadingScreen(Modifier.padding(inner))
-                is TitleCreditsUiState.Error -> ErrorScreen(state.error, Modifier.padding(inner), onRetry)
-                is TitleCreditsUiState.Ready -> CreditsList(state.credits, inner)
-            }
+            ErrorScreen(state.error, Modifier.padding(padding.screenInnerPadding()), onRetry)
         }
     }
 }
-
-@Composable
-private fun CreditsList(
-    credits: TitleCredits,
-    contentPadding: PaddingValues,
-) {
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = contentPadding,
-        verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
-    ) {
-        if (credits.cast.isNotEmpty()) {
-            item(key = "cast") { SectionHeader(stringResource(R.string.title_credits_cast)) }
-            items(credits.cast, key = { "cast-${it.personId}" }) { CreditRow(it) }
-        }
-        credits.departments.forEach { department ->
-            item(key = "dept-${department.name}") { SectionHeader(department.name.departmentLabel()) }
-            items(department.people, key = { "${department.name}-${it.personId}" }) { CreditRow(it) }
-        }
-    }
-}
-
-/** A person with an avatar, initials where there is no photo, and their character or jobs under the name. */
-@Composable
-private fun CreditRow(person: TitlePerson) {
-    val openTitle = LocalOpenTitle.current
-    ListRow(
-        modifier = Modifier.padding(horizontal = dimensionResource(DesR.dimen.padding_m)),
-        onClick = { openTitle(TitleKind.Person, person.personId, "") },
-        verticalAlignment = Alignment.CenterVertically,
-        leading = { BingeInitialsAvatar(name = person.name, avatarUrl = person.photoUrl) },
-    ) { contentModifier ->
-        Column(modifier = contentModifier.padding(vertical = dimensionResource(DesR.dimen.padding_xs))) {
-            ListRowHeader(title = person.name)
-            person.role?.let {
-                Text(
-                    text = it,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = ROLE_LINES,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
-        }
-    }
-}
-
-private const val ROLE_LINES = 2

@@ -46,6 +46,12 @@ class TitleCreditsScreenshotTest {
     @Composable
     fun credits() = TitleCreditsScreen(TitleCreditsUiState.Ready(sampleCredits()), {}, {})
 
+    /** The Crew tab: the departments under their headings. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun crew() = TitleCreditsScreen(TitleCreditsUiState.Ready(sampleCredits()), {}, {}, initialTab = 1)
+
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
