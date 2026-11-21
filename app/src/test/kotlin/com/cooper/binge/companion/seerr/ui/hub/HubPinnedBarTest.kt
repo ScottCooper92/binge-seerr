@@ -37,9 +37,18 @@ class HubPinnedBarTest {
 
     @Test
     fun `the bar's title and the field do not move when the page scrolls to its end`() {
+        assertBarAndFieldStayPut(discovery = true)
+    }
+
+    @Test
+    fun `they do not with discovery off either`() {
+        assertBarAndFieldStayPut(discovery = false)
+    }
+
+    private fun assertBarAndFieldStayPut(discovery: Boolean) {
         rule.setContent {
             SeerrTheme {
-                CompositionLocalProvider(LocalDiscoveryEnabled provides true) {
+                CompositionLocalProvider(LocalDiscoveryEnabled provides discovery) {
                     HubScreen(
                         readyHub(HubOverview(loaded = true)),
                         HubActions(
