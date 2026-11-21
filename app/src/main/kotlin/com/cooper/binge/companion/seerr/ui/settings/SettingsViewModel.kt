@@ -6,6 +6,7 @@ import com.binge.companion.sdk.attempt
 import com.cooper.binge.companion.seerr.auth.BingeConnectionStore
 import com.cooper.binge.companion.seerr.auth.NoBingeConnectionStore
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
+import com.cooper.binge.companion.seerr.demo.isDemoOrigin
 import com.cooper.binge.companion.seerr.di.IoDispatcher
 import com.cooper.binge.companion.seerr.feedback.BugReportLinks
 import com.cooper.binge.companion.seerr.feedback.ShakeToReportSetting
@@ -26,6 +27,8 @@ import com.cooper.homelab.core.telemetry.NoOpAnalytics
 import com.cooper.homelab.core.telemetry.NoOpCrashBreadcrumbs
 import com.cooper.homelab.core.telemetry.TelemetryPrefs
 import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
+import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
@@ -44,8 +47,6 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /** How long the screen waits for the admin groups before it paints without them, as placeholders. */
 internal const val SETTLE_MILLIS = 1_000L
@@ -209,6 +210,16 @@ class SettingsViewModel
                 fetchTrigger.value++
                 // The jobs' "next run in 20 minutes" counts down while the screen shows them, and no longer.
                 ticker = viewModelScope.launch(dispatcher) { minuteClock(clock, minuteTicker).collect { now.value = it } }
+            }
+        }
+
+        /** Demo only: views the demo as a requester or as the administrator, then reloads so every group follows. */
+        fun viewDemoAs(viewer: Boolean) {
+            viewModelScope.launch(dispatcher) {
+                val saved = attempt { connection.current() }.getOrNull() ?: return@launch
+                if (!saved.baseUrl.isDemoOrigin()) return@launch
+                connection.viewDemoAs(viewer)
+                fetchTrigger.value++
             }
         }
 

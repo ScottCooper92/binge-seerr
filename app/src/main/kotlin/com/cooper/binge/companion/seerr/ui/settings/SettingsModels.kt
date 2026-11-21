@@ -15,6 +15,8 @@ data class ConnectionSummary(
     val signInKind: SignInKind,
     /** The signed-in user's name; null while `auth/me` has not answered. */
     val userName: String?,
+    /** True while the demo is viewed as a user who may only request; always false against a real server. */
+    val demoViewer: Boolean = false,
 )
 
 data class ServerSummary(

@@ -49,6 +49,7 @@ class SettingsLoader
                 // and a local account signs in with its email, so the email is shown whole. Everywhere else,
                 // the hub's header included, an email is cut to its local part.
                 userName = user?.let { listOfNotNull(it.displayName, it.username, it.email).firstOrNull { name -> name.isNotBlank() } },
+                demoViewer = connection.demoViewer,
             )
         }
 

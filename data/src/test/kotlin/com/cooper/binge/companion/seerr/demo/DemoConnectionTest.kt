@@ -18,6 +18,7 @@ import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
@@ -67,6 +68,26 @@ class DemoConnectionTest {
             assertTrue(connection.current().isDemo)
             assertEquals(SeerrVariant.Seerr, connection.profile().variant)
             assertEquals("blocklist", connection.profile().blocklistPath)
+            assertEquals(2, connection.authenticatedUser().permissions)
+        }
+
+    @Test
+    fun `viewing the demo as a requester re-reads the user and the profile`() =
+        runTest {
+            val connection = connection()
+            val demo = demoCredentials()
+            connection.connect(demo.baseUrl, demo.auth).getOrThrow()
+            assertEquals(2, connection.authenticatedUser().permissions)
+            assertFalse(connection.demoViewer)
+
+            connection.viewDemoAs(true)
+
+            assertEquals(32, connection.authenticatedUser().permissions)
+            assertTrue(connection.demoViewer)
+            assertEquals(SeerrVariant.Seerr, connection.profile().variant)
+
+            connection.viewDemoAs(false)
+
             assertEquals(2, connection.authenticatedUser().permissions)
         }
 

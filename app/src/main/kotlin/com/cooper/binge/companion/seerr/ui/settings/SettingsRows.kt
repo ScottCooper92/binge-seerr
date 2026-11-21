@@ -1,11 +1,13 @@
 package com.cooper.binge.companion.seerr.ui.settings
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Dns
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Public
+import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -31,10 +33,13 @@ internal fun connectionRows(
     onEditConnection: () -> Unit,
     onOpenPage: (ServerSettingsPage) -> Unit,
     showAbout: Boolean = true,
+    onViewDemoAs: (Boolean) -> Unit = {},
+    onOpenSheetStates: () -> Unit = {},
 ): List<ListItem> {
     val context = LocalContext.current
     // The demo has no other server to edit into its place.
     val demo = connection.baseUrl.isDemoOrigin()
+    val viewAsRes = if (connection.demoViewer) R.string.settings_demo_view_as_viewer else R.string.settings_demo_view_as_admin
     return listOfNotNull(
         ListItem(
             icon = Icons.Filled.Link,
@@ -79,6 +84,21 @@ internal fun connectionRows(
             detail = stringResource(R.string.settings_edit_connection_caption),
             onClick = onEditConnection,
         ).takeUnless { demo },
+        // The two rows only the demo has: the one place the app asks whether it is the demo, beside Disconnect's wording.
+        ListItem(
+            icon = Icons.Filled.Visibility,
+            iconTint = BingeSentiment.Info.fill(),
+            label = stringResource(R.string.settings_demo_view_as),
+            detail = stringResource(viewAsRes),
+            onClick = { onViewDemoAs(!connection.demoViewer) },
+        ).takeIf { demo },
+        ListItem(
+            icon = Icons.AutoMirrored.Filled.List,
+            iconTint = BingeSentiment.Info.fill(),
+            label = stringResource(R.string.settings_demo_sheet_states),
+            detail = stringResource(R.string.settings_demo_sheet_states_caption),
+            onClick = onOpenSheetStates,
+        ).takeIf { demo },
     )
 }
 

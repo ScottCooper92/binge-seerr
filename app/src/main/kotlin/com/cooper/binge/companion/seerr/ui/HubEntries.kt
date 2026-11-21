@@ -91,6 +91,8 @@ internal fun SettingsEntry(
             onBack = onBack,
             onEditConnection = { open(EditConnectionRoute) },
             onOpenPage = { page -> open(ServerSettingsPageRoute(page)) },
+            onViewDemoAs = viewModel::viewDemoAs,
+            onOpenTitle = { kind, tmdbId -> open(TitleDetailRoute(kind, tmdbId)) },
             // The home swaps to setup on the credentials clearing; leaving Settings is what lets it show. Only Settings
             // itself is taken off: a second tap while it leaves finds something else on top and takes nothing.
             onDisconnect = {
