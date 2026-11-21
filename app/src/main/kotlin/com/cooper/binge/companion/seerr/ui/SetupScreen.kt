@@ -65,9 +65,9 @@ fun SetupScreen(
     val secondStep = rememberLatest(state.takeIf { it is SetupUiState.SignIn || it is SetupUiState.NotSetUp })
     // The latest second-step state, not the current one, is drawn: a step sliding out must keep what it showed.
     val server = (secondStep as? SetupUiState.NotSetUp)?.server ?: (secondStep as? SetupUiState.SignIn)?.server
-    // While the address waits on the local-network permission, asking for it is the way on: Continue could only fail (#1099).
     // With the keyboard up the sign-in's backdrop and heading step aside: the pager under them needs the room for its focused field.
     val keyboardUp = WindowInsets.isImeVisible
+    // While the address waits on the local-network permission, asking for it is the way on: Continue could only fail (#1099).
     val allow = if (address?.needsLocalNetwork == true) rememberAllowLocalNetwork(actions.onLocalNetworkChanged) else null
     StepFlowScreen(
         stepCount = SETUP_STEPS,
@@ -81,20 +81,8 @@ fun SetupScreen(
         loading = state is SetupUiState.Loading || state is SetupUiState.Connected,
         // The sign-in pages scroll themselves, under the mode tabs, so the flow gives the step the height that is left.
         contentScrolls = { step -> !(step == SIGN_IN_STEP && secondStep is SetupUiState.SignIn) },
-        aside = { step -> if (step == SIGN_IN_STEP && !keyboardUp) server?.let { SetupServerBackdrop(it) } },
-        heading = { step ->
-            when (step) {
-                ADDRESS_STEP ->
-                    StepHeading(
-                        title = stringResource(R.string.tv_setup_headline),
-                        subtitle =
-                            stringResource(
-                                if (LocalFlags.current.bingePromotion) R.string.setup_intro else R.string.setup_intro_plain,
-                            ),
-                    )
-                else -> if (!keyboardUp) server?.let { SetupServerHeading(it) }
-            }
-        },
+        aside = { step -> SetupAside(step, server, keyboardUp) },
+        heading = { step -> SetupHeading(step, server, keyboardUp) },
         footer = { step ->
             when (step) {
                 ADDRESS_STEP -> address?.let { SetupAddressFooter(it, allow, actions.onInspect) }
@@ -108,6 +96,36 @@ fun SetupScreen(
         }
     }
     (state as? SetupUiState.SignIn)?.link?.let { link -> SetupLinkSheet(link, actions.onPlexLaunched, actions.onCancelLink) }
+}
+
+/** Step two's backdrop, unless the keyboard is up. */
+@Composable
+private fun SetupAside(
+    step: Int,
+    server: SetupServer?,
+    keyboardUp: Boolean,
+) {
+    if (step == SIGN_IN_STEP && !keyboardUp) server?.let { SetupServerBackdrop(it) }
+}
+
+/** Each step's heading; step two's gives way while the keyboard is up. */
+@Composable
+private fun SetupHeading(
+    step: Int,
+    server: SetupServer?,
+    keyboardUp: Boolean,
+) {
+    when (step) {
+        ADDRESS_STEP ->
+            StepHeading(
+                title = stringResource(R.string.tv_setup_headline),
+                subtitle =
+                    stringResource(
+                        if (LocalFlags.current.bingePromotion) R.string.setup_intro else R.string.setup_intro_plain,
+                    ),
+            )
+        else -> if (!keyboardUp) server?.let { SetupServerHeading(it) }
+    }
 }
 
 private const val SETUP_STEPS = 2
