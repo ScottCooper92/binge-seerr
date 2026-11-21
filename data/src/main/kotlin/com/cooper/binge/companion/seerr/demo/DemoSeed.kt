@@ -55,7 +55,8 @@ internal val SEED_REQUESTS =
         SeedRequest("Sintel", by = 2, hoursAgo = 26),
         SeedRequest("Nosferatu", by = DEMO_USER_ID, hoursAgo = 3, profileId = DEMO_HD_PROFILE_ID),
         SeedRequest("Severance", by = 3, hoursAgo = 7, seasons = listOf(2)),
-        SeedRequest("Big Buck Bunny", by = 2, hoursAgo = 50, status = SeerrRequestStatusCode.Approved, download = false),
+        // The newest request, so the Requests list opens on it: the sheet state it stands for is "approved, not downloading".
+        SeedRequest("Big Buck Bunny", by = 2, hoursAgo = 1, status = SeerrRequestStatusCode.Approved, download = false),
         SeedRequest(
             "The Expanse",
             by = 3,
