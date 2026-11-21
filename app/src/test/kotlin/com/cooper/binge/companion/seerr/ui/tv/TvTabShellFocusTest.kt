@@ -57,7 +57,7 @@ class TvTabShellFocusTest {
     private var sheetOpen by mutableStateOf(false)
     private var topLayerOpen by mutableStateOf(false)
     private var plainPage = false
-    private var emptyPage = false
+    private var emptyTabs = emptySet<TvTab>()
 
     private fun setShell() {
         composeTestRule.setContent {
@@ -84,7 +84,7 @@ class TvTabShellFocusTest {
                         },
                     onCloseTopLayer = { topLayerOpen = false },
                     sheet = { Layer("sheet") },
-                ) { current -> if (emptyPage) EmptyPlate() else Claiming("page-${current.name}") }
+                ) { current -> if (current in emptyTabs) EmptyPlate() else Claiming("page-${current.name}") }
             }
         }
         composeTestRule.waitForIdle()
@@ -268,7 +268,7 @@ class TvTabShellFocusTest {
     @Test
     fun downFromTheIssuesTabOnAnEmptyPageKeepsFocusOnTheTab() {
         tab = TvTab.Issues
-        emptyPage = true
+        emptyTabs = setOf(TvTab.Issues)
         setShell()
         item(R.string.hub_section_issues).requestFocus()
         item(R.string.hub_section_issues).assertIsFocused()
@@ -280,7 +280,7 @@ class TvTabShellFocusTest {
 
     @Test
     fun downFromTheRequestsTabOnAnEmptyPageKeepsFocusOnTheTab() {
-        emptyPage = true
+        emptyTabs = setOf(TvTab.Requests)
         setShell()
         item(R.string.hub_section_requests).requestFocus()
         item(R.string.hub_section_requests).assertIsFocused()
@@ -293,7 +293,7 @@ class TvTabShellFocusTest {
     /** A title's page closing over an empty page hands focus up to the bar, which it can still move along. */
     @Test
     fun aTopLayerClosingOverAnEmptyPageLeavesFocusOnTheBar() {
-        emptyPage = true
+        emptyTabs = setOf(TvTab.Requests)
         setShell()
         topLayerOpen = true
         composeTestRule.waitForIdle()
@@ -303,6 +303,29 @@ class TvTabShellFocusTest {
         item(R.string.hub_section_requests).assertIsFocused()
         press(Key.DirectionRight)
         item(R.string.hub_section_requests).assertIsNotFocused()
+    }
+
+    /**
+     * The page taking focus straight back after a layer closes leaves nothing owed to the sink, so the bar's Down onto an empty
+     * tab later still finds nothing to land on.
+     */
+    @Test
+    fun aHandBackThatNeededNoSinkLeavesNoSinkForALaterEmptyTab() {
+        emptyTabs = setOf(TvTab.Issues)
+        setShell()
+        topLayerOpen = true
+        composeTestRule.waitForIdle()
+        pressBack()
+        composeTestRule.settleShellHandOff()
+        page(TvTab.Requests).assertIsFocused()
+        press(Key.DirectionUp)
+        press(Key.DirectionRight)
+        press(Key.Enter)
+        item(R.string.hub_section_issues).assertIsFocused()
+
+        press(Key.DirectionDown)
+
+        item(R.string.hub_section_issues).assertIsFocused()
     }
 
     private fun page(tab: TvTab) = composeTestRule.onNodeWithTag("page-${tab.name}")

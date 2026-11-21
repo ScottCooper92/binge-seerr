@@ -105,7 +105,8 @@ internal fun HandBackHost(
     var hostHasFocus by remember { mutableStateOf(false) }
     var contentHasFocus by remember { mutableStateOf(false) }
     var handBackOwed by remember { mutableStateOf(false) }
-    if (covered) handBackOwed = true
+    LaunchedEffect(covered) { if (covered) handBackOwed = true }
+    LaunchedEffect(contentHasFocus) { if (contentHasFocus) handBackOwed = false }
     val sinkWanted = active && !contentHasFocus && (!sinkOnlyWhileCovered || handBackOwed)
     Box(modifier = modifier.fillMaxSize().onFocusChanged { hostHasFocus = it.hasFocus }.focusGroup()) {
         Box(
