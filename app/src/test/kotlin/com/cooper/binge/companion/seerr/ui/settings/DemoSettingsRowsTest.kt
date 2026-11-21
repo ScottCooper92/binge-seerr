@@ -1,5 +1,6 @@
 package com.cooper.binge.companion.seerr.ui.settings
 
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
@@ -7,6 +8,7 @@ import com.binge.designsystem.theme.BingeExpressiveTheme
 import com.cooper.binge.companion.seerr.demo.DEMO_ORIGIN
 import com.cooper.binge.companion.seerr.demo.DemoSheetState
 import com.cooper.binge.companion.seerr.discover.TitleKind
+import com.cooper.binge.companion.seerr.flags.LocalDiscoveryEnabled
 import com.cooper.binge.companion.seerr.seerr.SeerrVariant
 import com.cooper.binge.companion.seerr.util.createSeerrComposeRule
 import org.junit.Assert.assertEquals
@@ -28,32 +30,35 @@ class DemoSettingsRowsTest {
     private fun show(
         baseUrl: String,
         viewer: Boolean = false,
+        discovery: Boolean = true,
     ) = rule.setContent {
-        BingeExpressiveTheme(dynamicColor = false) {
-            SettingsScreen(
-                state =
-                    SettingsUiState.Ready(
-                        connection = ConnectionSummary(baseUrl, SignInKind.Session, "Alex", demoViewer = viewer),
-                        server =
-                            ServerSummary(
-                                title = "Demo",
-                                variant = SeerrVariant.Seerr,
-                                versionLabel = "3.2.0",
-                                updateAvailable = false,
-                                commitsBehind = 0,
-                            ),
-                        config = null,
-                    ),
-                actions =
-                    SettingsActions(
-                        onBack = {},
-                        onEditConnection = {},
-                        onOpenPage = {},
-                        onDisconnect = {},
-                        onViewDemoAs = { viewedAs = it },
-                        onOpenTitle = { kind, tmdbId -> opened = kind to tmdbId },
-                    ),
-            )
+        CompositionLocalProvider(LocalDiscoveryEnabled provides discovery) {
+            BingeExpressiveTheme(dynamicColor = false) {
+                SettingsScreen(
+                    state =
+                        SettingsUiState.Ready(
+                            connection = ConnectionSummary(baseUrl, SignInKind.Session, "Alex", demoViewer = viewer),
+                            server =
+                                ServerSummary(
+                                    title = "Demo",
+                                    variant = SeerrVariant.Seerr,
+                                    versionLabel = "3.2.0",
+                                    updateAvailable = false,
+                                    commitsBehind = 0,
+                                ),
+                            config = null,
+                        ),
+                    actions =
+                        SettingsActions(
+                            onBack = {},
+                            onEditConnection = {},
+                            onOpenPage = {},
+                            onDisconnect = {},
+                            onViewDemoAs = { viewedAs = it },
+                            onOpenTitle = { kind, tmdbId -> opened = kind to tmdbId },
+                        ),
+                )
+            }
         }
     }
 
@@ -64,6 +69,14 @@ class DemoSettingsRowsTest {
         show(DEMO_ORIGIN)
         rule.onNodeWithText("View as").assertExists()
         rule.onNodeWithText("Sheet states").assertExists()
+    }
+
+    @Test
+    fun `with discovery off the demo keeps View as and drops the sheet states`() {
+        show(DEMO_ORIGIN, discovery = false)
+
+        rule.onNodeWithText("View as").assertExists()
+        rule.onNodeWithText("Sheet states").assertDoesNotExist()
     }
 
     @Test
