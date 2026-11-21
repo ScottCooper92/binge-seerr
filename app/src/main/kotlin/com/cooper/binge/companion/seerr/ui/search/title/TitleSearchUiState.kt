@@ -36,6 +36,8 @@ sealed interface TitleSearchUiState {
         val hasStudios: Boolean = true,
         /** The query these results answer, which lags [text] while a newer one is typed and still loading. */
         val query: String? = null,
+        /** Every title the search found, whatever [type] is chosen: each page of the pager lists its own type from this, not from [results]. */
+        val pool: List<TitleResult> = results,
     ) : TitleSearchUiState
 
     /**

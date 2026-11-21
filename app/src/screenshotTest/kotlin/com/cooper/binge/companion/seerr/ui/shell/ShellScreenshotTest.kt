@@ -1,10 +1,12 @@
 package com.cooper.binge.companion.seerr.ui.shell
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import com.android.tools.screenshot.PreviewTest
+import com.cooper.binge.companion.seerr.flags.LocalDiscoveryEnabled
 import com.cooper.binge.companion.seerr.preview.SeerrFontScale13Previews
 import com.cooper.binge.companion.seerr.preview.SeerrFontScalePreviews
 import com.cooper.binge.companion.seerr.preview.SeerrListPanePreview
@@ -98,10 +100,12 @@ private fun ShellFrame(
             selectedIndex = mutableIntStateOf(selected.ordinal),
             stacks = SeerrTab.entries.associateWith { NavBackStack<NavKey>(MoviesRoot) },
         )
-    SeerrTabShell(
-        state,
-        account = account,
-        discover = { TabPlaceholder(SeerrTab.Movies) },
-        settings = { HubScreen(state = previewReady(), actions = previewActions()) },
-    )
+    CompositionLocalProvider(LocalDiscoveryEnabled provides true) {
+        SeerrTabShell(
+            state,
+            account = account,
+            discover = { TabPlaceholder(SeerrTab.Movies) },
+            settings = { HubScreen(state = previewReady(), actions = previewActions()) },
+        )
+    }
 }

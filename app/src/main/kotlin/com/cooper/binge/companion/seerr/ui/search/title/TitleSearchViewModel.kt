@@ -230,6 +230,7 @@ internal fun QuerySearchState<TitleResult>.toUiState(
         appendFailed = if (onStudios) found?.appendFailed ?: (studios is QuerySearchState.Failed) else titleMore?.appendFailed ?: false,
         hasStudios = hasStudios,
         query = answered,
+        pool = all,
     )
     return when (this) {
         is QuerySearchState.Idle -> TitleSearchUiState.Idle(text, recents, trending)

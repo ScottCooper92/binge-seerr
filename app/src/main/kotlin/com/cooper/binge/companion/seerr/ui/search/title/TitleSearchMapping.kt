@@ -69,7 +69,7 @@ private fun TitleSearchUiState.Ready.resultsOf(
     if (chip == SearchType.Studios) {
         studios.map { it.toMediaResult(studioLabel) }
     } else {
-        results.filter(chip::keeps).map { it.toMediaResult(genreNames) }
+        pool.filter(chip::keeps).map { it.toMediaResult(genreNames) }
     }
 
 /** What the idle offer holds under the recents: the rails, or the skeleton that stands in for them while they load. */

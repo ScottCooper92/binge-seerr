@@ -40,7 +40,7 @@ internal fun TitleSearchScreen(
     actions: TitleSearchActions,
     modifier: Modifier = Modifier,
 ) {
-    val titles = (state as? TitleSearchUiState.Ready)?.results.orEmpty().associateBy { it.resultKey() }
+    val titles = (state as? TitleSearchUiState.Ready)?.pool.orEmpty().associateBy { it.resultKey() }
     val studios = (state as? TitleSearchUiState.Ready)?.studios.orEmpty().associateBy { it.resultKey() }
     val error = (state as? TitleSearchUiState.Error)?.error
     SearchScreen(

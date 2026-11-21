@@ -10,6 +10,7 @@ import androidx.compose.ui.unit.dp
 import com.android.tools.screenshot.PreviewTest
 import com.binge.designsystem.LocalPaneWidth
 import com.cooper.binge.companion.seerr.demo.DEMO_ORIGIN
+import com.cooper.binge.companion.seerr.flags.LocalDiscoveryEnabled
 import com.cooper.binge.companion.seerr.preview.SeerrFontScale13Previews
 import com.cooper.binge.companion.seerr.preview.SeerrFontScalePreviews
 import com.cooper.binge.companion.seerr.preview.SeerrListPanePreview
@@ -31,11 +32,17 @@ class HubScreenshotTest {
     @Composable
     fun ready() = HubScreen(state = previewReady(), actions = previewActions())
 
-    /** The Settings tab at font scale 1.3, where the field under the small bar still sits where Search's does. */
+    /** With discovery on, the Settings tab is on a small bar and its field sits where Search's does. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun discovery() = DiscoveryHub()
+
+    /** The same at font scale 1.3, where the field under the small bar still sits where Search's does. */
     @PreviewTest
     @SeerrFontScale13Previews
     @Composable
-    fun readyLargerText() = HubScreen(state = previewReady(), actions = previewActions())
+    fun readyLargerText() = DiscoveryHub()
 
     /**
      * A user who may only request: one manage row, no quota, no downloads, and a stat the server
@@ -187,3 +194,9 @@ class HubScreenshotTest {
             actions = previewActions(),
         )
 }
+
+@Composable
+private fun DiscoveryHub() =
+    CompositionLocalProvider(LocalDiscoveryEnabled provides true) {
+        HubScreen(state = previewReady(), actions = previewActions())
+    }
