@@ -36,6 +36,14 @@ internal class DemoModel(
         routes = routesFor(data)
     }
 
+    /** Whether the demo is viewed as a user who may only request, rather than the administrator it seeds. */
+    val viewer: Boolean
+        @Synchronized get() = data.viewer
+
+    /** Views the demo as a requester or as the administrator; `auth/me` answers the matching permissions from the next read. */
+    @Synchronized
+    fun viewAs(viewer: Boolean) = data.viewAs(viewer)
+
     /** The answer to [call]. A demo call is a list lookup, never slow, so one lock serves them all. */
     @Synchronized
     fun answer(call: DemoCall): DemoAnswer = routes.answer(call) ?: notInTheDemo

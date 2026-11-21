@@ -129,6 +129,12 @@ class SeerrApiFactory(
     /** Puts the demo server back to its seed, for the next time someone tries it. */
     fun resetDemo() = demo.model.reset()
 
+    /** Whether the demo is viewed as a user who may only request, rather than the administrator it seeds. */
+    val demoViewer: Boolean get() = demo.model.viewer
+
+    /** Views the demo as a requester or as the administrator; `auth/me` answers the matching permissions from the next read. */
+    fun viewDemoAs(viewer: Boolean) = demo.model.viewAs(viewer)
+
     /** A throwaway service for probing candidate credentials, released when [block] returns. */
     suspend fun <T> probe(
         baseUrl: String,

@@ -1,5 +1,6 @@
 package com.cooper.binge.companion.seerr.demo
 
+import com.cooper.binge.companion.seerr.seerr.PERMISSION_REQUEST
 import com.cooper.binge.companion.seerr.seerr.SeerrDownloadStatusDto
 import com.cooper.binge.companion.seerr.seerr.SeerrIssueCommentDto
 import com.cooper.binge.companion.seerr.seerr.SeerrIssueStatusCode
@@ -17,9 +18,6 @@ private const val MADE_UP_SEASONS = 10
 private const val WATCHLIST_SEED = 3
 private const val ADMIN = 2
 private const val LOCAL_USER = 2
-private const val DOWNLOAD_BYTES = 4_300_000_000.0
-private const val DOWNLOAD_LEFT_BYTES = 1_900_000_000.0
-private const val DOWNLOAD_TIME_LEFT = "00:18:00"
 
 /** One request in the demo. [download] is set while it is being fetched, which is what the hub's strip and the request page show. */
 internal class DemoRequest(
@@ -33,6 +31,10 @@ internal class DemoRequest(
     var download: Boolean = false,
     var modifiedBy: Int? = null,
     val profileId: Int = DEMO_PROFILE_ID,
+    val is4k: Boolean = false,
+    val serverId: Int = if (is4k) DEMO_4K_SERVER_ID else DEMO_SERVER_ID,
+    /** The queue entries this request is fetched through, where the seed sets them; null is one plain download. */
+    val queue: List<SeerrDownloadStatusDto>? = null,
 )
 
 internal class DemoIssue(
@@ -62,6 +64,10 @@ internal class DemoData(
     private val clock: () -> Instant,
 ) {
     val users = seedUsers().toMutableList()
+
+    /** True while the demo is viewed as a user who may only request, not as the administrator it seeds. */
+    var viewer = false
+        private set
     val requests = mutableListOf<DemoRequest>()
     val issues = mutableListOf<DemoIssue>()
     val blocklist = mutableListOf<DemoBlock>()
@@ -109,9 +115,19 @@ internal class DemoData(
         seasons: List<Int> = emptyList(),
         agoHours: Long = 0,
         profileId: Int = DEMO_PROFILE_ID,
+        is4k: Boolean = false,
+        queue: List<SeerrDownloadStatusDto>? = null,
     ): DemoRequest {
         val at = now().minus(Duration.ofHours(agoHours))
-        return DemoRequest(nextRequest++, title, status, by, at, at, seasons, profileId = profileId).also { requests += it }
+        return DemoRequest(nextRequest++, title, status, by, at, at, seasons, profileId = profileId, is4k = is4k, queue = queue)
+            .also { requests += it }
+    }
+
+    /** Views the demo as a user who may only request, or as the administrator again; the signed-in user's permissions follow. */
+    fun viewAs(viewer: Boolean) {
+        this.viewer = viewer
+        val at = users.indexOfFirst { it.id == DEMO_USER_ID }
+        users[at] = users[at].copy(permissions = if (viewer) PERMISSION_REQUEST else ADMIN)
     }
 
     fun addIssue(
@@ -172,10 +188,11 @@ internal class DemoData(
 
     /** What the server would report for [title]: blocked, set by hand, or read from its requests. */
     fun mediaStatus(title: DemoTitle): SeerrMediaStatusCode {
-        val own = requests.filter { it.title == title }
+        val own = requests.filter { it.title == title && !it.is4k }
         return when {
             blocklist.any { it.title == title } -> SeerrMediaStatusCode.Blocklisted
             mediaOverrides.containsKey(title.tmdbId) -> mediaOverrides.getValue(title.tmdbId)
+            partlyAvailable(title, own) -> SeerrMediaStatusCode.PartiallyAvailable
             own.any { it.status == SeerrRequestStatusCode.Completed } -> SeerrMediaStatusCode.Available
             own.any { it.status == SeerrRequestStatusCode.Approved } -> SeerrMediaStatusCode.Processing
             own.any { it.status == SeerrRequestStatusCode.Pending } -> SeerrMediaStatusCode.Pending
@@ -183,34 +200,20 @@ internal class DemoData(
         }
     }
 
-    fun downloads(title: DemoTitle): List<SeerrDownloadStatusDto> =
-        if (requests.any { it.title == title && it.download }) {
-            listOf(
-                SeerrDownloadStatusDto(
-                    title = title.title,
-                    size = DOWNLOAD_BYTES,
-                    sizeLeft = DOWNLOAD_LEFT_BYTES,
-                    timeLeft = DOWNLOAD_TIME_LEFT,
-                    status = "downloading",
-                ),
-            )
-        } else {
-            emptyList()
-        }
-
     private fun seed() {
         SEED_REQUESTS.forEach { seed ->
-            val request = add(title(seed.title), seed.by, seed.status, seed.seasons, seed.hoursAgo, seed.profileId)
+            val request =
+                add(title(seed.title), seed.by, seed.status, seed.seasons, seed.hoursAgo, seed.profileId, seed.is4k, seed.queue)
             if (seed.status == SeerrRequestStatusCode.Approved) {
                 request.modifiedBy = DEMO_USER_ID
-                request.download = true
+                request.download = seed.download
             }
             if (seed.status == SeerrRequestStatusCode.Declined) request.modifiedBy = DEMO_USER_ID
         }
         block(title("Parasite"), by = DEMO_USER_ID, agoHours = 48)
         val subtitles =
             addIssue(
-                title("Metropolis"),
+                title("Night of the Living Dead"),
                 SeerrIssueTypeCode.Subtitles,
                 by = 2,
                 "The subtitles drift about ten seconds late.",
@@ -232,36 +235,6 @@ internal fun seedUsers() =
         SeerrUserDto(id = DEMO_USER_ID, displayName = "Alex", email = "alex@example.com", permissions = ADMIN, userType = LOCAL_USER),
         SeerrUserDto(id = 2, displayName = "Sam", email = "sam@example.com", permissions = 0, userType = LOCAL_USER),
         SeerrUserDto(id = 3, displayName = "Jordan", email = "jordan@example.com", permissions = 0, userType = LOCAL_USER),
-    )
-
-private class SeedRequest(
-    val title: String,
-    val by: Int,
-    val hoursAgo: Long,
-    val status: SeerrRequestStatusCode = SeerrRequestStatusCode.Pending,
-    val seasons: List<Int> = emptyList(),
-    val profileId: Int = DEMO_PROFILE_ID,
-)
-
-private val SEED_REQUESTS =
-    listOf(
-        SeedRequest("Sintel", by = 2, hoursAgo = 26),
-        SeedRequest("Nosferatu", by = 3, hoursAgo = 3, profileId = DEMO_HD_PROFILE_ID),
-        SeedRequest("Severance", by = 3, hoursAgo = 7, seasons = listOf(1)),
-        SeedRequest("Big Buck Bunny", by = 2, hoursAgo = 50, status = SeerrRequestStatusCode.Approved),
-        SeedRequest(
-            "The Expanse",
-            by = 3,
-            hoursAgo = 30,
-            status = SeerrRequestStatusCode.Approved,
-            seasons = listOf(1, 2),
-            profileId = DEMO_HD_PROFILE_ID,
-        ),
-        SeedRequest("Metropolis", by = 1, hoursAgo = 120, status = SeerrRequestStatusCode.Completed),
-        SeedRequest("Night of the Living Dead", by = 2, hoursAgo = 144, status = SeerrRequestStatusCode.Completed),
-        SeedRequest("Spirited Away", by = 1, hoursAgo = 216, status = SeerrRequestStatusCode.Completed),
-        SeedRequest("Tears of Steel", by = 3, hoursAgo = 96, status = SeerrRequestStatusCode.Declined),
-        SeedRequest("The Matrix", by = 2, hoursAgo = 60, status = SeerrRequestStatusCode.Failed),
     )
 
 private fun seedJobs() =

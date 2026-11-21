@@ -89,6 +89,12 @@ data class SeerrMediaInfoDto(
     @SerialName("requests") val requests: List<SeerrRequestSummaryDto> = emptyList(),
     /** Link to the title in the media server's web UI; [mediaUrl] is general, the others server-specific. */
     @SerialName("mediaUrl") val mediaUrl: String? = null,
+    /** The title's id on a Jellyfin or Emby server, which that server's apps open it by. */
+    @SerialName("jellyfinMediaId") val jellyfinMediaId: String? = null,
+    /** The 4K version's id on the 4K Jellyfin or Emby server. */
+    @SerialName("jellyfinMediaId4k") val jellyfinMediaId4k: String? = null,
+    /** When the title reached the media server's library, as an ISO timestamp, where Seerr returns it. */
+    @SerialName("mediaAddedAt") val mediaAddedAt: String? = null,
     @SerialName("jellyfinMediaUrl") val jellyfinMediaUrl: String? = null,
     @SerialName("plexUrl") val plexUrl: String? = null,
     /**
