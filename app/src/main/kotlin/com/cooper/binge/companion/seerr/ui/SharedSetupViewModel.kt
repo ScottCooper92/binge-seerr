@@ -126,25 +126,21 @@ class SharedSetupViewModel
             )
 
         override val uiState: StateFlow<SetupUiState> =
-            combine(machine.state, connection.credentials, app, links.link) { state, saved, beside, link ->
-                state.toSetupUiState(saved, beside, state.linkWhileLive(link))
+            combine(links.view, connection.credentials, app) { view, saved, beside ->
+                view.state.toSetupUiState(saved, beside, view.link)
             }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), SetupUiState.Loading)
 
         /** What the shared connect screen reads: the machine's step, and the two things beside it that are the app's own. */
         internal val connectUi: StateFlow<SeerrConnectUi> =
-            combine(
-                machine.state,
-                app,
-                links.link,
-            ) { state, beside, link ->
+            combine(links.view, app) { view, beside ->
                 SeerrConnectUi(
-                    state,
+                    view.state,
                     beside.notice,
                     beside.resetCoolingDown,
                     beside.received,
                     beside.resetBusy,
                     beside.resetError,
-                    state.linkWhileLive(link),
+                    view.link,
                 )
             }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), SeerrConnectUi(ConnectState.Loading))
 

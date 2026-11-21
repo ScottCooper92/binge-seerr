@@ -1,6 +1,8 @@
 package com.cooper.binge.companion.seerr.ui
 
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -77,6 +79,8 @@ internal fun SeerrConnectContent(
     onDisconnect: (() -> Unit)? = null,
 ) {
     val address = (ui.state as? ConnectState.Address)?.address
+    // With the keyboard up the backdrop and heading step aside: the pager under them needs the room for its focused field.
+    val keyboardUp = WindowInsets.isImeVisible
     // A reset in flight holds the step as an attempt does: Connect and the reset wait for it (the old form did the same).
     val state = (ui.state as? ConnectState.SignIn)?.takeIf { ui.resetBusy }?.copy(isConnecting = true) ?: ui.state
     ConnectScreen(
@@ -94,13 +98,13 @@ internal fun SeerrConnectContent(
         signInActions = signInActions,
         linkActions = linkActions,
         addressHeading = { SeerrAddressHeading() },
-        serverHeading = { server -> SetupServerHeading(server.preview) },
+        serverHeading = { server -> if (!keyboardUp) SetupServerHeading(server.preview) },
         modifier = modifier.fillMaxWidth(),
         title = title,
         onExit = onExit,
         // Before a server is connected Settings is out of reach, so a problem can still be reported from the bar.
         barActions = onReportProblem?.let { report -> { alpha -> ReportProblemAction(alpha, report) } },
-        aside = { server -> SetupServerBackdrop(server.preview) },
+        aside = { server -> if (!keyboardUp) SetupServerBackdrop(server.preview) },
         localNetwork = localNetwork,
         errorText = { error -> seerrErrorText(error, address = address, received = ui.received) },
         signInOptions =

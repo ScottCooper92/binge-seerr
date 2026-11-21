@@ -83,7 +83,7 @@ internal fun seerrErrorText(
 /**
  * Seerr's own parts of the sign-in step, in the slots the shared one leaves for them: the note under an API key, the forgot-password
  * button under a local account's fields, the notice (a reset email sent, a session the server turned down) after the error, and a
- * saved login offered on the field that names the account. [onDisconnect] is the way off a server that rejected the session (#810),
+ * saved login offered on the field that names the account. The modes are pages: a swipe selects one. [onDisconnect] is the way off a server that rejected the session (#810),
  * under the commit.
  *
  * [onEdit] writes what a credential provider returns into the form.
@@ -97,7 +97,7 @@ internal fun seerrSignInOptions(
     tabEdgePadding: Dp? = null,
     onDisconnect: (() -> Unit)? = null,
 ): ConnectSignInOptions<SetupServer> =
-    ConnectSignInOptions(
+    ConnectSignInOptions<SetupServer>(
         tabEdgePadding = tabEdgePadding,
         afterFields = { state -> SeerrAfterFields(state, resetCoolingDown, onRequestPasswordReset) },
         afterError = { state ->
@@ -107,7 +107,7 @@ internal fun seerrSignInOptions(
         },
         fieldModifier = { field -> field.savedLogin(onEdit) },
         footerBelow = onDisconnect?.let { leave -> { _ -> DisconnectButton(leave) } },
-    )
+    ).swipingBetweenModes()
 
 @Composable
 private fun ColumnScope.SeerrAfterFields(

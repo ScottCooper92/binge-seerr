@@ -4,7 +4,10 @@ import androidx.activity.OnBackPressedDispatcher
 import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipeLeft
 import androidx.test.core.app.ApplicationProvider
 import com.binge.designsystem.theme.BingeExpressiveTheme
 import com.cooper.binge.companion.seerr.R
@@ -14,6 +17,7 @@ import com.cooper.binge.companion.seerr.util.createSeerrComposeRule
 import com.cooper.homelab.core.presentation.connect.ConnectState
 import com.cooper.homelab.core.presentation.connect.ProbedServer
 import com.cooper.homelab.core.presentation.connect.SignInForm
+import com.cooper.homelab.core.presentation.connect.SignInMode
 import com.cooper.homelab.core.server.address.ServerAddress
 import com.cooper.homelab.core.uiandroid.connect.ConnectAddressActions
 import com.cooper.homelab.core.uiandroid.connect.ConnectLinkActions
@@ -40,6 +44,7 @@ class SeerrConnectContentTest {
     private fun probed(
         setUp: Boolean,
         canResetPassword: Boolean = false,
+        modes: List<SeerrSignInMode> = listOf(SeerrSignInMode.Local),
     ): ProbedServer<SetupServer> {
         val server =
             SetupServer(
@@ -48,7 +53,7 @@ class SeerrConnectContentTest {
                 variant = SeerrVariant.Jellyseerr,
                 versionLabel = "2.7.2",
                 mediaServerName = null,
-                modes = listOf(SeerrSignInMode.Local),
+                modes = modes,
                 canResetPassword = canResetPassword,
                 backdropUrl = null,
                 setUp = setUp,
@@ -114,6 +119,34 @@ class SeerrConnectContentTest {
     fun `no way off the server is offered unless the app passes one`() {
         show(ConnectState.SignIn(probed(setUp = true), SignInForm(mode = SeerrSignInMode.Local.formMode()), false, null))
         rule.onNodeWithText(string(R.string.hub_disconnect)).assertDoesNotExist()
+    }
+
+    @Test
+    fun `a swipe between the modes selects the next one`() {
+        val selected = mutableListOf<SignInMode>()
+        val state =
+            ConnectState.SignIn(
+                probed(setUp = true, modes = listOf(SeerrSignInMode.Local, SeerrSignInMode.Jellyfin)),
+                SignInForm(mode = SeerrSignInMode.Local.formMode()),
+                false,
+                null,
+            )
+        rule.setContent {
+            BingeExpressiveTheme(dynamicColor = false) {
+                SeerrConnectContent(
+                    ui = SeerrConnectUi(state),
+                    addressActions = ConnectAddressActions({}, {}, {}, {}),
+                    signInActions = ConnectSignInActions({ selected += it }, {}, {}, {}, {}, {}),
+                    linkActions = ConnectLinkActions({}, {}),
+                    onRequestPasswordReset = {},
+                )
+            }
+        }
+
+        rule.onRoot().performTouchInput { swipeLeft(startX = width * 0.9f, endX = width * 0.1f, durationMillis = 400) }
+        rule.waitForIdle()
+
+        assertEquals(listOf(SeerrSignInMode.Jellyfin.formMode()), selected)
     }
 
     private fun signIn(): ConnectState<SetupServer> =
