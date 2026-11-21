@@ -9,8 +9,10 @@ import com.cooper.binge.companion.seerr.seerr.SeerrServiceSettingsDto
 import kotlinx.serialization.json.decodeFromJsonElement
 
 internal const val DEMO_SERVER_ID = 1
+
 /** The 4K server each kind offers, which a 4K request is sent to. */
 internal const val DEMO_4K_SERVER_ID = 2
+
 internal const val DEMO_PROFILE_ID = 1
 
 /** The second profile the demo's *arr offers; a few requests are for it so the labels differ. */

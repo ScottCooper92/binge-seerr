@@ -16,6 +16,8 @@ private const val DOWNLOAD_TIME_LEFT = "00:18:00"
 /** The two titles whose watch counts the demo answers; a Jellyfin server has none, so this is a demo-only answer. */
 private val WATCHED_TMDB_IDS = setOf(19, 129)
 private const val PLAYS = 12
+private const val SAM = 2
+private const val JORDAN = 3
 private const val PLAYS_LAST_WEEK = 2
 private const val PLAYS_LAST_MONTH = 5
 
@@ -76,9 +78,10 @@ private fun DemoData.plainDownload(title: DemoTitle) =
     )
 
 /** When the title reached the library: the latest of its completed standard requests, or null while it is not there. */
-internal fun DemoData.mediaAddedAt(title: DemoTitle): String? =
-    requests.filter { it.title == title && !it.is4k && it.status == SeerrRequestStatusCode.Completed }.maxOfOrNull { it.updatedAt }
-        ?.toString()
+internal fun DemoData.mediaAddedAt(title: DemoTitle): String? {
+    val completed = requests.filter { it.title == title && !it.is4k && it.status == SeerrRequestStatusCode.Completed }
+    return completed.maxOfOrNull { it.updatedAt }?.toString()
+}
 
 /** The watch counts for a title in the library. A Jellyfin server returns none; the demo answers two titles so the row can be seen. */
 internal fun DemoData.watchData(title: DemoTitle): SeerrWatchDataDto? =
@@ -89,7 +92,7 @@ internal fun DemoData.watchData(title: DemoTitle): SeerrWatchDataDto? =
                     playCount = PLAYS,
                     playCount7Days = PLAYS_LAST_WEEK,
                     playCount30Days = PLAYS_LAST_MONTH,
-                    users = listOfNotNull(user(2), user(3)),
+                    users = listOfNotNull(user(SAM), user(JORDAN)),
                 ),
         )
     }

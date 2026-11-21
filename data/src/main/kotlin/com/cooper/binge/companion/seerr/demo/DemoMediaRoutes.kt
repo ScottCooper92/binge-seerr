@@ -24,8 +24,11 @@ internal fun DemoData.mediaRoutes(): List<DemoRoute> =
     )
 
 /** A Jellyfin server has no watch counts; the demo answers two titles in its library so the row can be seen, and the rest as before. */
-private fun DemoData.watchAnswer(id: String): DemoAnswer =
-    id.toIntOrNull()?.let { titleForMedia(it) }?.let { watchData(it) }?.let { ok(it) } ?: demoNotFound
+private fun DemoData.watchAnswer(id: String): DemoAnswer {
+    val title = id.toIntOrNull()?.let { titleForMedia(it) }
+    val watch = title?.let { watchData(it) }
+    return watch?.let { ok(it) } ?: demoNotFound
+}
 
 private fun DemoData.serverDetails(
     service: String,

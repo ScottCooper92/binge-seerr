@@ -26,6 +26,10 @@ class DemoSheetStatesTest {
 
     private suspend fun SeerrApi.series(tmdbId: Int) = tvDetails(tmdbId)
 
+    private suspend fun SeerrApi.movieInfo(tmdbId: Int) = movieDetails(tmdbId).mediaInfo!!
+
+    private suspend fun SeerrApi.seriesInfo(tmdbId: Int) = tvDetails(tmdbId).mediaInfo!!
+
     @Test
     fun `1 not requested has no request and no media row to open`() =
         demo { api ->
@@ -38,7 +42,7 @@ class DemoSheetStatesTest {
     @Test
     fun `2 a pending request that is someone else's`() =
         demo { api ->
-            val request = api.movie(SINTEL).mediaInfo!!.requests.single()
+            val request = api.movieInfo(SINTEL).requests.single()
 
             assertEquals(SeerrRequestStatusCode.Pending, request.status)
             assertEquals("Sam", request.requestedBy?.displayName)
@@ -47,7 +51,7 @@ class DemoSheetStatesTest {
     @Test
     fun `3 a pending request that is the signed-in user's own`() =
         demo { api ->
-            val request = api.movie(NOSFERATU).mediaInfo!!.requests.single()
+            val request = api.movieInfo(NOSFERATU).requests.single()
 
             assertEquals(SeerrRequestStatusCode.Pending, request.status)
             assertEquals(DEMO_USER_ID, request.requestedBy?.id)
@@ -66,7 +70,7 @@ class DemoSheetStatesTest {
     @Test
     fun `5 downloading carries the size left the time left and an ETA`() =
         demo { api ->
-            val download = api.series(EXPANSE).mediaInfo!!.downloadStatus.single()
+            val download = api.seriesInfo(EXPANSE).downloadStatus.single()
 
             assertEquals("downloading", download.status)
             assertNotNull(download.size)
@@ -146,8 +150,11 @@ class DemoSheetStatesTest {
     @Test
     fun `11 declined and 12 failed are the requests' own states`() =
         demo { api ->
-            assertEquals(SeerrRequestStatusCode.Declined, api.movie(TEARS_OF_STEEL).mediaInfo!!.requests.single().status)
-            assertEquals(SeerrRequestStatusCode.Failed, api.movie(THE_MATRIX).mediaInfo!!.requests.single().status)
+            val declined = api.movieInfo(TEARS_OF_STEEL).requests.single()
+            val failed = api.movieInfo(THE_MATRIX).requests.single()
+
+            assertEquals(SeerrRequestStatusCode.Declined, declined.status)
+            assertEquals(SeerrRequestStatusCode.Failed, failed.status)
         }
 
     @Test
