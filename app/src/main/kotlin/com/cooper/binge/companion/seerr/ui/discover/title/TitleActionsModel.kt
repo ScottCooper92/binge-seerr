@@ -89,8 +89,6 @@ private fun tapFor(
     when {
         state == TitleState.Request || state == TitleState.Declined -> if (mayRequest) PrimaryTap.RequestSheet else PrimaryTap.StatusSheet
         state == TitleState.Blocklisted -> PrimaryTap.StatusSheet
-        // Several requests are the title's to manage, so the sheet lists them under the title's rows and none is drawn in place.
-        requests.size > 1 -> PrimaryTap.StatusSheet
         else ->
             requests.toManage()?.let { PrimaryTap.ManageRequest(it.id) }
                 ?: if (mayRequest && !state.isInLibrary()) PrimaryTap.RequestSheet else PrimaryTap.StatusSheet

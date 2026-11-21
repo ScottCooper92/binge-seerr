@@ -55,6 +55,7 @@ internal fun RequestActionsSheet(
     titleRows: List<SheetTitleRow> = emptyList(),
     titleState: String? = null,
     titleBack: (() -> Unit)? = null,
+    scope: SheetScope = SheetScope.Both,
 ) {
     var blockTitle by rememberSaveable { mutableStateOf(false) }
     var pending by rememberSaveable { mutableStateOf<Pending?>(null) }
@@ -104,6 +105,7 @@ internal fun RequestActionsSheet(
                     titleRows = titleRows,
                     titleState = titleState,
                     titleBack = titleBack,
+                    scope = scope,
                 ),
             callbacks =
                 RequestSheetCallbacks(

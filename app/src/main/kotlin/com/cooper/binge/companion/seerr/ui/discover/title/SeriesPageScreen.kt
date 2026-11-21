@@ -85,7 +85,18 @@ private fun ReadySeriesPage(
     val series = state.series
     val context = LocalContext.current
     val model = seriesDetailModel(state, actions)
-    val servicesContent = rememberServicesContent(series.requests, TitleKind.Series, series.tmdbId)
+    val servicesState = rememberServicesState(series.requests, TitleKind.Series, series.tmdbId)
+    if (!servicesState.settled) {
+        SeriesDetailScreen(
+            state = DetailState.Loading(stats = LOADING_STATS, hasPrimary = true, rails = 1),
+            series = null,
+            callbacks = MediaDetailCallbacks(onBack = actions.onBack),
+            seriesCallbacks = SeriesDetailCallbacks(onSelectSeason = {}),
+            modifier = modifier,
+        )
+        return
+    }
+    val servicesContent = servicesState.groups
     val episodes = seriesEpisodes(state)
     val actionsModel = titleActionsModel(series.standard, series.fourK, series.requests, series.mayReport, series.mayBlock)
     SeriesDetailScreen(
@@ -169,7 +180,7 @@ private fun SeriesOverlays(
     if (state.reportSheetOpen) actions.reportSheet(actions.onCloseReport)
     if (state.blockConfirmOpen) actions.block?.let { TitleBlockConfirm(state.series.name, it) }
     state.manageRequestId?.let { requestId ->
-        TitleManageSheet(requestId, state.manageSheetOpen, snackbar, series.sheetFacts(), actions, state.manageFromList)
+        TitleManageSheet(requestId, state.manageSheetOpen, snackbar, series.sheetFacts(), actions, state.manageFromList, state.manageScope)
     }
     val servicesContent = rememberServicesContent(series.requests, TitleKind.Series, series.tmdbId)
     TitleRequestsAndServices(

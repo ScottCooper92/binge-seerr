@@ -4,6 +4,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ListAlt
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.ReportProblem
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -18,6 +19,7 @@ import com.cooper.binge.companion.seerr.discover.title.MovieDetails
 import com.cooper.binge.companion.seerr.discover.title.SeriesDetails
 import com.cooper.binge.companion.seerr.ui.requests.OpenTarget
 import com.cooper.binge.companion.seerr.ui.requests.ServiceKind
+import com.cooper.binge.companion.seerr.ui.requests.SheetScope
 import com.cooper.binge.companion.seerr.ui.requests.SheetTitleRow
 import com.cooper.binge.companion.seerr.ui.requests.SiblingSheet
 import com.cooper.binge.companion.seerr.ui.requests.openServiceApp
@@ -32,6 +34,7 @@ internal class TitleSheetFacts(
     val requests: List<com.cooper.binge.companion.seerr.discover.title.TitleRequest> = emptyList(),
     val kind: TitleKind = TitleKind.Movie,
     val tmdbId: Int = 0,
+    val canReport: Boolean = false,
 )
 
 /**
@@ -46,6 +49,7 @@ internal fun rememberTitleSheetRows(
     onWatchInBinge: (() -> Unit)? = null,
     onRequestRemaining: () -> Unit = {},
     onOpenRequests: () -> Unit = {},
+    onReport: (() -> Unit)? = null,
 ): List<SheetTitleRow> {
     val resources = LocalResources.current
     val context = LocalContext.current
@@ -62,6 +66,8 @@ internal fun rememberTitleSheetRows(
     val requestFourK by rememberUpdatedState(onRequestFourK)
     val requestRemaining by rememberUpdatedState(onRequestRemaining)
     val openRequests by rememberUpdatedState(onOpenRequests)
+    val report by rememberUpdatedState(onReport)
+    val reportOffered = onReport != null
     val bingeAnswers = onWatchInBinge != null
     val openInBinge: () -> Unit = { watchInBinge?.invoke() }
     return remember(
@@ -129,6 +135,12 @@ internal fun rememberTitleSheetRows(
                     external = false,
                     onClick = { openRequests() },
                 ).takeIf { facts.requests.size > 1 },
+                SheetTitleRow(
+                    Icons.Filled.ReportProblem,
+                    resources.getString(R.string.issue_report_title),
+                    external = false,
+                    onClick = { report?.invoke() },
+                ).takeIf { facts.canReport && reportOffered },
             )
     }
 }
@@ -142,6 +154,7 @@ internal fun TitleManageSheet(
     facts: TitleSheetFacts,
     actions: TitlePageActions,
     fromList: Boolean = false,
+    scope: SheetScope = SheetScope.Both,
 ) {
     actions.manageSheet(
         SiblingSheet(
@@ -151,6 +164,7 @@ internal fun TitleManageSheet(
             onDismiss = actions.onCloseManage,
             onChanged = actions.onReload,
             titleBack = actions.onBackToRequests.takeIf { fromList },
+            scope = scope,
             titleState = stringResource(facts.state.labelRes()),
             titleRows =
                 rememberTitleSheetRows(
@@ -165,6 +179,13 @@ internal fun TitleManageSheet(
                         actions.onCloseManage()
                         actions.onOpenRequests()
                     },
+                    onReport =
+                        actions.onReport?.let { report ->
+                            {
+                                actions.onCloseManage()
+                                report()
+                            }
+                        },
                     onWatchInBinge =
                         actions.onWatchInBinge?.let { openInBinge ->
                             {
@@ -187,6 +208,7 @@ internal fun SeriesDetails.sheetFacts() =
         requests = requests,
         kind = TitleKind.Series,
         tmdbId = tmdbId,
+        canReport = titleActionsModel(standard, fourK, requests, mayReport).canReport,
     )
 
 internal fun MovieDetails.sheetFacts() =
@@ -198,4 +220,5 @@ internal fun MovieDetails.sheetFacts() =
         requests = requests,
         kind = TitleKind.Movie,
         tmdbId = tmdbId,
+        canReport = titleActionsModel(standard, fourK, requests, mayReport).canReport,
     )

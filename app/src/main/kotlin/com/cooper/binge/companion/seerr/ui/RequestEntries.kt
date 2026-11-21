@@ -120,6 +120,7 @@ internal fun SiblingRequestSheet(
             titleRows = sheet.titleRows,
             titleState = sheet.titleState,
             titleBack = sheet.titleBack,
+            scope = sheet.scope,
         )
     } else if (sheet.open) {
         RequestSheetPlaceholder(state = page, onRetry = viewModel::reload, onDismiss = sheet.onDismiss)

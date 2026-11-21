@@ -89,6 +89,7 @@ class SiblingSheet(
     val titleRows: List<SheetTitleRow> = emptyList(),
     val titleState: String? = null,
     val titleBack: (() -> Unit)? = null,
+    val scope: SheetScope = SheetScope.Both,
 )
 
 /** One row the title page adds to a request's sheet. An [external] row leaves the app, and any other opens something in it. */
@@ -251,6 +252,7 @@ internal fun RequestManagementSheets(
     titleRows: List<SheetTitleRow> = emptyList(),
     titleState: String? = null,
     titleBack: (() -> Unit)? = null,
+    scope: SheetScope = SheetScope.Both,
 ) {
     val detail = state?.detail
     // Which instance the status sheet is marking, keyed by is4k because that is what tells the
@@ -299,6 +301,7 @@ internal fun RequestManagementSheets(
             titleRows = titleRows,
             titleState = titleState,
             titleBack = titleBack,
+            scope = scope,
         )
     }
     state?.edit?.takeUnless { editsInActions }?.let { edit ->

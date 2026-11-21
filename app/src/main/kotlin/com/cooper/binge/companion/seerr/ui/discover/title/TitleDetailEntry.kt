@@ -110,7 +110,11 @@ private fun FilmPageEntry(
                         viewModel.setRequestsSheetOpen(false)
                     }, {
                         viewModel.backFromRequests()
-                    }, viewModel::pickRequest, viewModel::backToRequests, { viewModel.setServiceSheetOpen(true) }, { viewModel.setServiceSheetOpen(false) }),
+                    }, viewModel::pickRequest, viewModel::backToRequests, {
+                        viewModel.setServiceSheetOpen(
+                            true,
+                        )
+                    }, { viewModel.setServiceSheetOpen(false) }),
                 onCloseRequest = viewModel::closeRequestSheet,
                 onRequested = viewModel::requested,
                 onReload = viewModel::reload,
@@ -174,7 +178,11 @@ private fun SeriesPageEntry(
                         viewModel.setRequestsSheetOpen(false)
                     }, {
                         viewModel.backFromRequests()
-                    }, viewModel::pickRequest, viewModel::backToRequests, { viewModel.setServiceSheetOpen(true) }, { viewModel.setServiceSheetOpen(false) }),
+                    }, viewModel::pickRequest, viewModel::backToRequests, {
+                        viewModel.setServiceSheetOpen(
+                            true,
+                        )
+                    }, { viewModel.setServiceSheetOpen(false) }),
                 onCloseRequest = viewModel::closeRequestSheet,
                 onRequested = viewModel::requested,
                 onReload = viewModel::reload,

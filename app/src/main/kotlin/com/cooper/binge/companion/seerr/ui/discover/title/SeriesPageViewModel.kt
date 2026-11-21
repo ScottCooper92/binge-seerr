@@ -10,6 +10,7 @@ import com.cooper.binge.companion.seerr.discover.title.SeriesDetailsRepository
 import com.cooper.binge.companion.seerr.discover.title.TitleExtras
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
+import com.cooper.binge.companion.seerr.ui.requests.SheetScope
 import com.cooper.homelab.core.telemetry.Analytics
 import com.cooper.homelab.core.telemetry.NoOpAnalytics
 import dagger.assisted.Assisted
@@ -65,6 +66,8 @@ sealed interface SeriesPageUiState {
         val requestsSheetOpen: Boolean = false,
         /** The request's sheet was opened from the list of requests, so it has a Back to it. */
         val manageFromList: Boolean = false,
+        /** Which of the title's and the request's rows the request's sheet holds: both for one request, the title's for several. */
+        val manageScope: SheetScope = SheetScope.Both,
         /** The services sheet, opened from the page's Services action. */
         val serviceSheetOpen: Boolean = false,
         val statusSheetOpen: Boolean = false,
@@ -178,7 +181,13 @@ class SeriesPageViewModel
                         ).primary.tap
                 ) {
                     PrimaryTap.RequestSheet -> ready.copy(requestSheetOpen = true)
-                    is PrimaryTap.ManageRequest -> ready.copy(manageRequestId = tap.requestId, manageSheetOpen = true)
+                    is PrimaryTap.ManageRequest ->
+                        ready.copy(
+                            manageRequestId = tap.requestId,
+                            manageSheetOpen = true,
+                            manageScope = if (ready.series.requests.size > 1) SheetScope.Title else SheetScope.Both,
+                            manageFromList = false,
+                        )
                     PrimaryTap.StatusSheet -> ready.copy(statusSheetOpen = true)
                 }
             }
@@ -194,7 +203,19 @@ class SeriesPageViewModel
 
         fun backToRequests() = updateReady { it.copy(manageSheetOpen = false, requestsSheetOpen = true, manageFromList = false) }
 
-        fun backFromRequests() = updateReady { it.copy(requestsSheetOpen = false, statusSheetOpen = true) }
+        fun backFromRequests() =
+            updateReady {
+                it.copy(
+                    requestsSheetOpen = false,
+                    manageSheetOpen = true,
+                    manageScope = SheetScope.Title,
+                    manageRequestId =
+                        it.series.requests
+                            .toManage()
+                            ?.id ?: it.manageRequestId,
+                    manageFromList = false,
+                )
+            }
 
         fun setRequestsSheetOpen(open: Boolean) = updateReady { it.copy(requestsSheetOpen = open) }
 

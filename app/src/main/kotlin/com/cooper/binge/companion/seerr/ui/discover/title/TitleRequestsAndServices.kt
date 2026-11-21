@@ -21,11 +21,15 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -61,6 +65,7 @@ import com.cooper.binge.companion.seerr.ui.state.externalItem
 import com.cooper.binge.companion.seerr.ui.state.formatFileSize
 import com.cooper.binge.companion.seerr.ui.state.labelRes
 import com.cooper.binge.companion.seerr.ui.state.stateLabel
+import kotlinx.coroutines.delay
 import com.binge.designsystem.R as DesR
 
 /** The two sheets over a title page besides the request's own: the list of its requests, and the services it sits on. */
@@ -230,11 +235,39 @@ internal fun rememberServicesContent(
     requests: List<TitleRequest>,
     kind: TitleKind,
     tmdbId: Int,
-): List<ServiceGroup> {
+): List<ServiceGroup> = rememberServicesState(requests, kind, tmdbId).groups
+
+/** The services the page's action is drawn from, and whether they are known: the requests' pages have all come back, or the wait for them is over. */
+internal class ServicesState(
+    val groups: List<ServiceGroup>,
+    val settled: Boolean,
+)
+
+/**
+ * The services content with whether it has settled. The page holds its loading frame until it has, so the Services action is in the first
+ * frame that shows and does not push the other actions sideways when it arrives. The wait is bounded, so a slow request page never holds it.
+ */
+@Composable
+internal fun rememberServicesState(
+    requests: List<TitleRequest>,
+    kind: TitleKind,
+    tmdbId: Int,
+): ServicesState {
     val context = LocalContext.current
+    // A preview has no activity to build a view model in, so a frame draws a title with no services.
+    if (LocalInspectionMode.current) return ServicesState(emptyList(), settled = true)
     val details = requests.sortedByDescending { it.id }.map { rememberRequestDetail(it.id) }
-    return remember(details, kind, tmdbId) { servicesContent(details.filterNotNull(), kind, tmdbId) { context.canResolve(it) } }
+    var waited by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        delay(SERVICES_SETTLE_MS)
+        waited = true
+    }
+    val groups = remember(details, kind, tmdbId) { servicesContent(details.filterNotNull(), kind, tmdbId) { context.canResolve(it) } }
+    return ServicesState(groups, settled = waited || details.all { it != null })
 }
+
+/** How long a title page waits for its requests' pages before it shows without Services. */
+private const val SERVICES_SETTLE_MS = 600L
 
 @Composable
 internal fun TitleServicesSheet(

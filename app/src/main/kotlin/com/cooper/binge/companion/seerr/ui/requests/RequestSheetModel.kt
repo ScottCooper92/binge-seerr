@@ -22,7 +22,12 @@ internal class RequestSheetModel(
     val titleState: String? = null,
     /** Back to the list this request's level was opened from, drawn as an arrow above the header; null when it was not. */
     val titleBack: (() -> Unit)? = null,
+    /** Which of the title's and the request's rows the sheet draws; [SheetScope.Both] for a title with one request and for every other opener. */
+    val scope: SheetScope = SheetScope.Both,
 )
+
+/** What a sheet over the title page holds: the title's own rows and media actions, one request's own, or both together. */
+enum class SheetScope { Both, Title, Request }
 
 /**
  * The actions whose progress shows on the control that started them. [closesSheet] is whether the actions sheet goes when

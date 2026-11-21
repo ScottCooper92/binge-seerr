@@ -80,18 +80,36 @@ internal fun RequestActionsContent(
                 Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(DesR.string.cd_navigate_back))
             }
         }
-        RequestSheetHeader(model.item, showRequester = requesterId == null, titleState = model.titleState)
-        DecisionBar(model.actions, blockTitle, model.progress, callbacks)
+        val titleScope = model.scope == SheetScope.Title
+        val requestScope = model.scope == SheetScope.Request
+        RequestSheetHeader(
+            model.item,
+            showRequester = requesterId == null && !titleScope,
+            titleState = model.titleState.takeUnless { requestScope },
+            titleOnly = titleScope,
+        )
+        if (!titleScope) DecisionBar(model.actions, blockTitle, model.progress, callbacks)
         val requestRows =
-            listOfNotNull(requesterId?.let { id -> requesterRow(model.item) { callbacks.onOpenUser?.invoke(id) } }) +
-                requestRows(model, blockTitle, onBlockTitleChange, callbacks)
+            if (titleScope) {
+                emptyList()
+            } else {
+                listOfNotNull(requesterId?.let { id -> requesterRow(model.item) { callbacks.onOpenUser?.invoke(id) } }) +
+                    requestRows(model, blockTitle, onBlockTitleChange, callbacks)
+            }
         val mediaRows =
             model.media
-                ?.takeIf { it.canManage }
+                ?.takeIf { it.canManage && !requestScope }
                 ?.let { mediaRows(it, model.progress, callbacks) }
                 .orEmpty()
-        val blockRows = if (model.titleState != null) blockTitleRows(model, blockTitle, onBlockTitleChange) else emptyList()
-        if (model.titleState != null && (model.titleRows.isNotEmpty() || blockRows.isNotEmpty())) {
+        val blockRows =
+            if (model.titleState != null &&
+                !requestScope
+            ) {
+                blockTitleRows(model, blockTitle, onBlockTitleChange)
+            } else {
+                emptyList()
+            }
+        if (model.titleState != null && !requestScope && (model.titleRows.isNotEmpty() || blockRows.isNotEmpty())) {
             ItemGroup(
                 title = stringResource(R.string.request_sheet_group_title),
                 rows =
@@ -149,6 +167,7 @@ private fun RequestSheetHeader(
     item: RequestItem,
     showRequester: Boolean,
     titleState: String? = null,
+    titleOnly: Boolean = false,
 ) {
     Row(
         horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
@@ -190,6 +209,16 @@ private fun RequestSheetHeader(
             }
             val gap = dimensionResource(DesR.dimen.detail_cast_avatar_label_spacing)
             Row(verticalAlignment = Alignment.CenterVertically) {
+                if (titleOnly) {
+                    titleState?.let {
+                        Text(
+                            text = it,
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.primary,
+                        )
+                    }
+                    return@Row
+                }
                 if (titleState != null) {
                     Text(text = titleState, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
                 } else {
@@ -204,7 +233,7 @@ private fun RequestSheetHeader(
                     )
                 }
             }
-            if (item.seasonNumbers.isNotEmpty()) {
+            if (!titleOnly && item.seasonNumbers.isNotEmpty()) {
                 Text(
                     text = pluralStringResource(R.plurals.requests_seasons, item.seasonNumbers.size, item.seasonNumbers.formatRanges()),
                     style = MaterialTheme.typography.labelMedium,

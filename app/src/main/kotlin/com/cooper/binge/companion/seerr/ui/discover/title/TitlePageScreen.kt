@@ -153,7 +153,16 @@ private fun ReadyPage(
     val movie = state.movie
     val context = LocalContext.current
     val model = movieDetailModel(state, actions)
-    val servicesContent = rememberServicesContent(movie.requests, TitleKind.Movie, movie.tmdbId)
+    val servicesState = rememberServicesState(movie.requests, TitleKind.Movie, movie.tmdbId)
+    if (!servicesState.settled) {
+        MovieDetailScreen(
+            state = DetailState.Loading(stats = LOADING_STATS, hasPrimary = true, rails = 1),
+            callbacks = MediaDetailCallbacks(onBack = actions.onBack),
+            modifier = modifier,
+        )
+        return
+    }
+    val servicesContent = servicesState.groups
     val actionsModel = titleActionsModel(movie.standard, movie.fourK, movie.requests, movie.mayReport, movie.mayBlock)
     MovieDetailScreen(
         state = DetailState.Content(model.detail),
@@ -226,7 +235,7 @@ private fun MovieOverlays(
     if (state.reportSheetOpen) actions.reportSheet(actions.onCloseReport)
     if (state.blockConfirmOpen) actions.block?.let { TitleBlockConfirm(movie.title, it) }
     state.manageRequestId?.let { requestId ->
-        TitleManageSheet(requestId, state.manageSheetOpen, snackbar, movie.sheetFacts(), actions, state.manageFromList)
+        TitleManageSheet(requestId, state.manageSheetOpen, snackbar, movie.sheetFacts(), actions, state.manageFromList, state.manageScope)
     }
     val servicesContent = rememberServicesContent(movie.requests, TitleKind.Movie, movie.tmdbId)
     TitleRequestsAndServices(
