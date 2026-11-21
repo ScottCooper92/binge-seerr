@@ -1,7 +1,9 @@
 package com.cooper.binge.companion.seerr.ui.discover.title
 
 import androidx.annotation.StringRes
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ListAlt
@@ -11,13 +13,16 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import com.binge.designsystem.component.BingeAdaptiveSheet
 import com.binge.designsystem.component.BingeSheetKind
 import com.binge.designsystem.component.ItemGroup
+import com.binge.designsystem.component.ListRowPoster
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.state.ActionSheetGroup
 import com.cooper.binge.companion.seerr.ui.state.actionItem
@@ -45,6 +50,8 @@ internal fun TitleStatusSheet(
     onRequestRemaining: () -> Unit = {},
     requestCount: Int = 0,
     onOpenRequests: () -> Unit = {},
+    header: TitleSheetHeaderFacts? = null,
+    onBlock: (() -> Unit)? = null,
 ) {
     BingeAdaptiveSheet(kind = BingeSheetKind.Menu, onDismissRequest = onDismiss) {
         TitleStatusSheetContent(
@@ -73,6 +80,14 @@ internal fun TitleStatusSheet(
                 onDismiss()
                 onOpenRequests()
             },
+            header = header,
+            onBlock =
+                onBlock?.let { block ->
+                    {
+                        onDismiss()
+                        block()
+                    }
+                },
         )
     }
 }
@@ -94,6 +109,8 @@ internal fun TitleStatusSheetContent(
     onRequestRemaining: () -> Unit = {},
     requestCount: Int = 0,
     onOpenRequests: () -> Unit = {},
+    header: TitleSheetHeaderFacts? = null,
+    onBlock: (() -> Unit)? = null,
 ) {
     val watchRows = titleWatchRows(state, watchUrl, mediaServerName, onWatchInBinge, onWatch, LocalResources.current)
     val requestRows =
@@ -109,11 +126,13 @@ internal fun TitleStatusSheetContent(
             ).takeIf { requestCount > 1 },
         )
     if (watchRows.isNotEmpty() || requestRows.isNotEmpty()) {
-        ActionSheetGroup(
-            rows = watchRows.map { externalItem(Icons.Filled.PlayArrow, it.label, it.onClick) } + requestRows,
-            modifier = modifier,
-            title = stringResource(state.labelRes()),
-        )
+        Column(modifier) {
+            header?.let { TitleSheetHeader(it, stringResource(state.labelRes())) }
+            ActionSheetGroup(
+                rows = watchRows.map { externalItem(Icons.Filled.PlayArrow, it.label, it.onClick) } + requestRows,
+                title = stringResource(R.string.request_sheet_group_title),
+            )
+        }
     } else {
         Column(
             modifier
@@ -148,3 +167,32 @@ private fun TitleState.noteRes(canRequest: Boolean) =
         TitleState.PartiallyAvailable, TitleState.Available -> R.string.title_sheet_note_in_library
         TitleState.Blocklisted -> R.string.title_sheet_note_blocklisted
     }
+
+/** What a title's sheet says about the title itself above its rows. */
+internal class TitleSheetHeaderFacts(
+    val title: String,
+    val posterUrl: String?,
+)
+
+/** The poster, the title and its combined state: what the sheet is about, as a request's sheet says it of the request. */
+@Composable
+internal fun TitleSheetHeader(
+    facts: TitleSheetHeaderFacts,
+    stateLabel: String,
+) {
+    Row(
+        modifier =
+            Modifier
+                .padding(
+                    horizontal = dimensionResource(DesR.dimen.padding_m),
+                ).padding(bottom = dimensionResource(DesR.dimen.padding_m)),
+        horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        ListRowPoster(imageUrl = facts.posterUrl, contentDescription = null)
+        Column(Modifier.weight(1f)) {
+            Text(facts.title, style = MaterialTheme.typography.titleLarge, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            Text(stateLabel, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+        }
+    }
+}

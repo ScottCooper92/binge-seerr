@@ -159,6 +159,8 @@ private fun SeriesOverlays(
             onRequestFourK = actions.onRequestFourK,
             onRequestRemaining = actions.onRequestRemaining,
             requestCount = state.series.requests.size,
+            header = TitleSheetHeaderFacts(state.series.name, state.series.posterUrl),
+            onBlock = actions.block?.onAsk.takeIf { state.series.mayBlock },
             onOpenRequests = actions.onOpenRequests,
             onDismiss = actions.onCloseStatus,
             onUnblock = actions.onUnblock.takeIf { state.series.mayUnblock },
@@ -167,7 +169,7 @@ private fun SeriesOverlays(
     if (state.reportSheetOpen) actions.reportSheet(actions.onCloseReport)
     if (state.blockConfirmOpen) actions.block?.let { TitleBlockConfirm(state.series.name, it) }
     state.manageRequestId?.let { requestId ->
-        TitleManageSheet(requestId, state.manageSheetOpen, snackbar, series.sheetFacts(), actions)
+        TitleManageSheet(requestId, state.manageSheetOpen, snackbar, series.sheetFacts(), actions, state.manageFromList)
     }
     val servicesContent = rememberServicesContent(series.requests, TitleKind.Series, series.tmdbId)
     TitleRequestsAndServices(

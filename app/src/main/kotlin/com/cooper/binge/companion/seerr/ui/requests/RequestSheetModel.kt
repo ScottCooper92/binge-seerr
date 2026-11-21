@@ -20,6 +20,8 @@ internal class RequestSheetModel(
     val titleRows: List<SheetTitleRow> = emptyList(),
     /** The title's combined state in words, which the sheet's header says in place of this one request's status; null from every other opener. */
     val titleState: String? = null,
+    /** Back to the list this request's level was opened from, drawn as an arrow above the header; null when it was not. */
+    val titleBack: (() -> Unit)? = null,
 )
 
 /**

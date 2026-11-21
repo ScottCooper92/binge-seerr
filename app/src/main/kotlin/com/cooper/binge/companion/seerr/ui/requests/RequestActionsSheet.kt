@@ -54,6 +54,7 @@ internal fun RequestActionsSheet(
     actionsLandedNow: () -> Int? = { null },
     titleRows: List<SheetTitleRow> = emptyList(),
     titleState: String? = null,
+    titleBack: (() -> Unit)? = null,
 ) {
     var blockTitle by rememberSaveable { mutableStateOf(false) }
     var pending by rememberSaveable { mutableStateOf<Pending?>(null) }
@@ -102,6 +103,7 @@ internal fun RequestActionsSheet(
                     progress = shown,
                     titleRows = titleRows,
                     titleState = titleState,
+                    titleBack = titleBack,
                 ),
             callbacks =
                 RequestSheetCallbacks(

@@ -73,6 +73,8 @@ class TitlePageActions(
     val onCloseRequests: () -> Unit = {},
     /** Back from the requests list to the title's own sheet. */
     val onBackFromRequests: () -> Unit = {},
+    /** Back from a request's sheet to the list it was picked from. */
+    val onBackToRequests: () -> Unit = {},
     /** A request picked from that list: its sheet opens. */
     val onPickRequest: (Int) -> Unit = {},
     /** The services sheet's action in the page's round actions; null where the title has no request or link to show. */
@@ -214,6 +216,8 @@ private fun MovieOverlays(
             onRequestFourK = actions.onRequestFourK,
             onRequestRemaining = actions.onRequestRemaining,
             requestCount = movie.requests.size,
+            header = TitleSheetHeaderFacts(movie.title, movie.posterUrl),
+            onBlock = actions.block?.onAsk.takeIf { movie.mayBlock },
             onOpenRequests = actions.onOpenRequests,
             onDismiss = actions.onCloseStatus,
             onUnblock = actions.onUnblock.takeIf { movie.mayUnblock },
@@ -222,7 +226,7 @@ private fun MovieOverlays(
     if (state.reportSheetOpen) actions.reportSheet(actions.onCloseReport)
     if (state.blockConfirmOpen) actions.block?.let { TitleBlockConfirm(movie.title, it) }
     state.manageRequestId?.let { requestId ->
-        TitleManageSheet(requestId, state.manageSheetOpen, snackbar, movie.sheetFacts(), actions)
+        TitleManageSheet(requestId, state.manageSheetOpen, snackbar, movie.sheetFacts(), actions, state.manageFromList)
     }
     val servicesContent = rememberServicesContent(movie.requests, TitleKind.Movie, movie.tmdbId)
     TitleRequestsAndServices(

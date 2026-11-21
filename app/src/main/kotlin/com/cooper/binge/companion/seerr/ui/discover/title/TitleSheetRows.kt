@@ -9,13 +9,18 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.title.MovieDetails
 import com.cooper.binge.companion.seerr.discover.title.SeriesDetails
+import com.cooper.binge.companion.seerr.ui.requests.OpenTarget
+import com.cooper.binge.companion.seerr.ui.requests.ServiceKind
 import com.cooper.binge.companion.seerr.ui.requests.SheetTitleRow
 import com.cooper.binge.companion.seerr.ui.requests.SiblingSheet
+import com.cooper.binge.companion.seerr.ui.requests.openServiceApp
 
 /** What the title offers beyond its status, as [rememberTitleSheetRows] reads it. */
 internal class TitleSheetFacts(
@@ -25,6 +30,8 @@ internal class TitleSheetFacts(
     val fourKOpen: Boolean,
     val remainingOpen: Boolean = false,
     val requests: List<com.cooper.binge.companion.seerr.discover.title.TitleRequest> = emptyList(),
+    val kind: TitleKind = TitleKind.Movie,
+    val tmdbId: Int = 0,
 )
 
 /**
@@ -41,6 +48,15 @@ internal fun rememberTitleSheetRows(
     onOpenRequests: () -> Unit = {},
 ): List<SheetTitleRow> {
     val resources = LocalResources.current
+    val context = LocalContext.current
+    val services = rememberServicesContent(facts.requests, facts.kind, facts.tmdbId)
+    val serverOpen =
+        services
+            .firstOrNull { it.kind == ServiceKind.Jellyfin }
+            ?.rows
+            ?.filterIsInstance<ServiceRow.Open>()
+            ?.firstOrNull()
+            ?.target
     val watch by rememberUpdatedState(onWatch)
     val watchInBinge by rememberUpdatedState(onWatchInBinge)
     val requestFourK by rememberUpdatedState(onRequestFourK)
@@ -67,7 +83,33 @@ internal fun rememberTitleSheetRows(
                 onWatchOnServer = { watch(it) },
                 resources = resources,
             ).map { row -> SheetTitleRow(Icons.Filled.PlayArrow, row.label, external = true, onClick = row.onClick) }
-        watchRows +
+        val serverRows =
+            if (watchRows.isEmpty() && facts.state.isInLibrary()) {
+                when (serverOpen) {
+                    is OpenTarget.App ->
+                        listOf(
+                            SheetTitleRow(
+                                Icons.Filled.PlayArrow,
+                                resources.getString(R.string.open_in_named, serverOpen.app.name),
+                                external = true,
+                                onClick = { context.openServiceApp(serverOpen) },
+                            ),
+                        )
+                    is OpenTarget.Web ->
+                        listOf(
+                            SheetTitleRow(
+                                Icons.Filled.PlayArrow,
+                                resources.getString(R.string.title_sheet_watch),
+                                external = true,
+                                onClick = { watch(serverOpen.url) },
+                            ),
+                        )
+                    null -> emptyList()
+                }
+            } else {
+                emptyList()
+            }
+        watchRows + serverRows +
             listOfNotNull(
                 SheetTitleRow(
                     Icons.Filled.Add,
@@ -99,6 +141,7 @@ internal fun TitleManageSheet(
     snackbar: SnackbarHostState,
     facts: TitleSheetFacts,
     actions: TitlePageActions,
+    fromList: Boolean = false,
 ) {
     actions.manageSheet(
         SiblingSheet(
@@ -107,6 +150,7 @@ internal fun TitleManageSheet(
             snackbarHostState = snackbar,
             onDismiss = actions.onCloseManage,
             onChanged = actions.onReload,
+            titleBack = actions.onBackToRequests.takeIf { fromList },
             titleState = stringResource(facts.state.labelRes()),
             titleRows =
                 rememberTitleSheetRows(
@@ -141,6 +185,8 @@ internal fun SeriesDetails.sheetFacts() =
         fourK?.mayRequest == true,
         remainingOpen = standard.mayRequest,
         requests = requests,
+        kind = TitleKind.Series,
+        tmdbId = tmdbId,
     )
 
 internal fun MovieDetails.sheetFacts() =
@@ -150,4 +196,6 @@ internal fun MovieDetails.sheetFacts() =
         mediaServerName,
         fourK?.mayRequest == true,
         requests = requests,
+        kind = TitleKind.Movie,
+        tmdbId = tmdbId,
     )

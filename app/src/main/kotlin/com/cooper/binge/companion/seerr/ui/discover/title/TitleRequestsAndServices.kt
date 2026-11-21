@@ -59,6 +59,8 @@ import com.cooper.binge.companion.seerr.ui.requests.serviceApps
 import com.cooper.binge.companion.seerr.ui.state.RequestStateChip
 import com.cooper.binge.companion.seerr.ui.state.externalItem
 import com.cooper.binge.companion.seerr.ui.state.formatFileSize
+import com.cooper.binge.companion.seerr.ui.state.labelRes
+import com.cooper.binge.companion.seerr.ui.state.stateLabel
 import com.binge.designsystem.R as DesR
 
 /** The two sheets over a title page besides the request's own: the list of its requests, and the services it sits on. */
@@ -297,7 +299,7 @@ private fun serviceListItem(
             ListItem(
                 icon = Icons.Filled.Movie,
                 label = row.season.name ?: stringResource(R.string.request_season_number, row.season.number),
-                detail = row.season.status?.toString(),
+                detail = row.season.status?.let { stringResource(it.stateLabel(row.season.download).labelRes) },
                 clickable = false,
                 destination = ListItemDestination.Action,
                 trailingContent = {},

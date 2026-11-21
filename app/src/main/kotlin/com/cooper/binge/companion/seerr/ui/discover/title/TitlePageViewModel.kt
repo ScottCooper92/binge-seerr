@@ -45,6 +45,8 @@ sealed interface TitlePageUiState {
         val manageSheetOpen: Boolean = false,
         /** The list of the title's requests, where there are several; a row of it opens that request's sheet. */
         val requestsSheetOpen: Boolean = false,
+        /** The request's sheet was opened from the list of requests, so it has a Back to it. */
+        val manageFromList: Boolean = false,
         /** The services sheet, opened from the page's Services action. */
         val serviceSheetOpen: Boolean = false,
         val statusSheetOpen: Boolean = false,
@@ -151,7 +153,15 @@ class TitlePageViewModel
             }
 
         /** A request's sheet was asked for from outside the page, as the Requests list does: open it on that request. */
-        fun openRequest(id: Int) = updateReady { it.copy(manageRequestId = id, manageSheetOpen = true, requestsSheetOpen = false) }
+        fun openRequest(id: Int) =
+            updateReady { it.copy(manageRequestId = id, manageSheetOpen = true, requestsSheetOpen = false, manageFromList = false) }
+
+        fun pickRequest(id: Int) =
+            updateReady {
+                it.copy(manageRequestId = id, manageSheetOpen = true, requestsSheetOpen = false, manageFromList = true)
+            }
+
+        fun backToRequests() = updateReady { it.copy(manageSheetOpen = false, requestsSheetOpen = true, manageFromList = false) }
 
         fun backFromRequests() = updateReady { it.copy(requestsSheetOpen = false, statusSheetOpen = true) }
 

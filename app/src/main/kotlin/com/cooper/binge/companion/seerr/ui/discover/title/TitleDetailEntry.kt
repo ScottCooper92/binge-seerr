@@ -110,7 +110,7 @@ private fun FilmPageEntry(
                         viewModel.setRequestsSheetOpen(false)
                     }, {
                         viewModel.backFromRequests()
-                    }, viewModel::openRequest, { viewModel.setServiceSheetOpen(true) }, { viewModel.setServiceSheetOpen(false) }),
+                    }, viewModel::pickRequest, viewModel::backToRequests, { viewModel.setServiceSheetOpen(true) }, { viewModel.setServiceSheetOpen(false) }),
                 onCloseRequest = viewModel::closeRequestSheet,
                 onRequested = viewModel::requested,
                 onReload = viewModel::reload,
@@ -174,7 +174,7 @@ private fun SeriesPageEntry(
                         viewModel.setRequestsSheetOpen(false)
                     }, {
                         viewModel.backFromRequests()
-                    }, viewModel::openRequest, { viewModel.setServiceSheetOpen(true) }, { viewModel.setServiceSheetOpen(false) }),
+                    }, viewModel::pickRequest, viewModel::backToRequests, { viewModel.setServiceSheetOpen(true) }, { viewModel.setServiceSheetOpen(false) }),
                 onCloseRequest = viewModel::closeRequestSheet,
                 onRequested = viewModel::requested,
                 onReload = viewModel::reload,
@@ -256,6 +256,7 @@ private fun rememberTitlePageActions(
         onCloseRequests = requestsSheet.onCloseRequests,
         onBackFromRequests = requestsSheet.onBackFromRequests,
         onPickRequest = requestsSheet.onPick,
+        onBackToRequests = requestsSheet.onBackToRequests,
         onOpenServiceInfo = requestsSheet.onOpenServices,
         onCloseServiceInfo = requestsSheet.onCloseServices,
         onWatchInBinge = watchInBinge,
@@ -307,6 +308,7 @@ private class RequestsSheetWiring(
     val onCloseRequests: () -> Unit,
     val onBackFromRequests: () -> Unit,
     val onPick: (Int) -> Unit,
+    val onBackToRequests: () -> Unit,
     val onOpenServices: () -> Unit,
     val onCloseServices: () -> Unit,
 )

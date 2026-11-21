@@ -9,10 +9,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -72,6 +75,11 @@ internal fun RequestActionsContent(
             model.item.requestedById?.takeIf {
                 callbacks.onOpenUser != null && canOpenUser(it, model.viewerId, model.canManageUsers)
             }
+        model.titleBack?.let { back ->
+            IconButton(onClick = back) {
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(DesR.string.cd_navigate_back))
+            }
+        }
         RequestSheetHeader(model.item, showRequester = requesterId == null, titleState = model.titleState)
         DecisionBar(model.actions, blockTitle, model.progress, callbacks)
         val requestRows =
@@ -82,8 +90,8 @@ internal fun RequestActionsContent(
                 ?.takeIf { it.canManage }
                 ?.let { mediaRows(it, model.progress, callbacks) }
                 .orEmpty()
-        val blockRows = if (model.titleRows.isNotEmpty()) blockTitleRows(model, blockTitle, onBlockTitleChange) else emptyList()
-        if (model.titleRows.isNotEmpty()) {
+        val blockRows = if (model.titleState != null) blockTitleRows(model, blockTitle, onBlockTitleChange) else emptyList()
+        if (model.titleState != null && (model.titleRows.isNotEmpty() || blockRows.isNotEmpty())) {
             ItemGroup(
                 title = stringResource(R.string.request_sheet_group_title),
                 rows =
@@ -281,7 +289,7 @@ private fun requestRows(
         if (model.canEdit) {
             add(ListItem(icon = Icons.Filled.Edit, label = stringResource(R.string.request_edit_title), onClick = callbacks.onEdit))
         }
-        if (model.titleRows.isEmpty()) addAll(blockTitleRows(model, blockTitle, onBlockTitleChange))
+        if (model.titleState == null) addAll(blockTitleRows(model, blockTitle, onBlockTitleChange))
         if (actions.canRemove) add(removeRow(model.progress, blockTitle, callbacks))
     }
 }
