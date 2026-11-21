@@ -169,6 +169,15 @@ class SetupViewModelTest {
         throw AssertionError("sign-in state never matched; last was ${uiState.value}")
     }
 
+    /**
+     * Waits for [count] analytics events without suspending. The view model saves the credentials, which shows as Connected,
+     * and only then reports the sign-in, so a test that read the events on seeing Connected could read none.
+     */
+    private fun blockUntilEvents(count: Int) {
+        val deadline = System.nanoTime() + 5.seconds.inWholeNanoseconds
+        while (analytics.events.size < count && System.nanoTime() < deadline) Thread.sleep(5)
+    }
+
     private suspend fun SetupViewModel.awaitConnected(): SetupUiState.Connected =
         uiState.first { it is SetupUiState.Connected } as SetupUiState.Connected
 
@@ -459,6 +468,7 @@ class SetupViewModelTest {
             vm.connect()
 
             assertEquals(SeerrVariant.Seerr, vm.awaitConnected().credentials.variant)
+            blockUntilEvents(1)
             assertEquals(
                 listOf("sign_in" to mapOf("method" to "ApiKey", "success" to true)),
                 analytics.events,
