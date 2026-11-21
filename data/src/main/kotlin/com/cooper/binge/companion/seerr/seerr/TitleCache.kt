@@ -19,6 +19,8 @@ data class HydratedTitle(
     val backdropUrl: String? = null,
     val overview: String? = null,
     val certification: String? = null,
+    val rating: Float? = null,
+    val genre: String? = null,
 )
 
 /**
@@ -69,6 +71,8 @@ class TitleCache
                 details.backdropPath?.toTmdbBackdropUrl(),
                 details.overview,
                 details.certification(Locale.getDefault().country),
+                details.rating,
+                details.primaryGenre,
             )
         }
 
@@ -91,7 +95,9 @@ class TitleCache
         ): HydratedTitle? =
             attempt { dao.find(mediaType, tmdbId, now() - MAX_AGE_MILLIS) }
                 .getOrNull()
-                ?.let { HydratedTitle(it.title, it.posterUrl, it.year, it.backdropUrl, it.overview, it.certification) }
+                ?.let {
+                    HydratedTitle(it.title, it.posterUrl, it.year, it.backdropUrl, it.overview, it.certification, it.rating, it.genre)
+                }
 
         private suspend fun persist(
             mediaType: String,
@@ -115,6 +121,8 @@ class TitleCache
                         hydrated.backdropUrl,
                         hydrated.overview,
                         hydrated.certification,
+                        hydrated.rating,
+                        hydrated.genre,
                     ),
                 )
             }

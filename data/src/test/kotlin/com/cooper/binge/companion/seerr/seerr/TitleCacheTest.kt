@@ -100,4 +100,28 @@ class TitleCacheTest {
             assertEquals(first, restarted)
             assertEquals(1, seerr.requestCount)
         }
+
+    @Test
+    fun `a persisted title keeps its score and first genre, and a title nobody voted on has no score`() =
+        runTest {
+            seerr.dispatcher = {
+                FakeResponse(
+                    body =
+                        """
+                        {"title":"Heat","releaseDate":"1995-12-15","voteAverage":7.9,
+                        "genres":[{"id":28,"name":"Action"},{"id":80,"name":"Crime"}]}
+                        """.trimIndent(),
+                )
+            }
+            cache().get(api(), SEERR_MEDIA_TYPE_MOVIE, 100)
+            val restarted = cache().get(api(), SEERR_MEDIA_TYPE_MOVIE, 100)
+            assertEquals(7.9f, restarted?.rating)
+            assertEquals("Action", restarted?.genre)
+            assertEquals(1, seerr.requestCount)
+
+            seerr.dispatcher = { FakeResponse(body = """{"title":"New","voteAverage":0.0,"genres":[]}""") }
+            val unrated = cache().get(api(), SEERR_MEDIA_TYPE_MOVIE, 101)
+            assertNull(unrated?.rating)
+            assertNull(unrated?.genre)
+        }
 }
