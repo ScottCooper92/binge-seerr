@@ -89,6 +89,8 @@ internal fun SetupSignInContent(
         selectedIndex = selected,
         onSelectedIndexChange = { index -> actions.onEditForm { copy(mode = modes[index]) } },
         modifier = Modifier.fillMaxSize(),
+        // The pages already sit inside the step's gutter, so the row takes none of its own.
+        edgePadding = dimensionResource(R.dimen.setup_mode_tabs_edge_padding),
         headerBackground = Color.Transparent,
         scrimFraction = (scrolls[selected].value / scrimDistance).coerceIn(0f, 1f),
     ) { contentPadding, page ->
