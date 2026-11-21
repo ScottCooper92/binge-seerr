@@ -63,7 +63,7 @@ private fun sorted(
     return if (descending) ascending.reversed() else ascending
 }
 
-private fun titles(movie: Boolean): List<DemoTitle> = DEMO_TITLES.filter { it.isMovie == movie }
+private fun titles(movie: Boolean): List<DemoTitle> = DEMO_TITLES.filter { it.isMovie == movie && it.poster.isNotBlank() }
 
 private fun found(call: DemoCall): List<DemoTitle> {
     val query = call.query("query").orEmpty().trim()

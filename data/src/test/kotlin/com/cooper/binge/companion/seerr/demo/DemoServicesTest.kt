@@ -113,8 +113,8 @@ class DemoServicesTest {
         demo { api ->
             val body = SeerrDvrTestBody(hostname = "demo.invalid", port = 1, useSsl = false, apiKey = "demo")
 
-            val radarr = api.radarrSettings().single().activeDirectory
-            val sonarr = api.sonarrSettings().single().activeDirectory
+            val radarr = api.radarrSettings().single { !it.is4k }.activeDirectory
+            val sonarr = api.sonarrSettings().single { !it.is4k }.activeDirectory
 
             assertTrue(radarr in api.testDvr("radarr", body).rootFolders.map { it.path })
             assertTrue(sonarr in api.testDvr("sonarr", body).rootFolders.map { it.path })
