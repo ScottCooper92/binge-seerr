@@ -6,7 +6,7 @@ description: Whole-codebase (or package-scoped) sweep of binge-seerr for bugs, c
 # Codebase audit
 
 CI runs the tasks of `./gradlew build`, split across four parallel jobs, a submodule-pin check on a PR and one
-aggregate `build` job (`.github/workflows/ci.yml`): compile, `:app:test`, ktlint, detekt (type-resolved, zero new
+aggregate `build` job (`.github/workflows/ci.yml`): compile, the unit tests of every module (`:app`, `:data`, `:core:testing`), ktlint, detekt (type-resolved, zero new
 against `detekt-baseline.xml`), Android lint (translation checks and `UnusedResources` pinned to
 error), `checkTranslationStaleness`, `koverVerify` (84%), `validateDebugScreenshotTest` and the R8 release build. Do not
 re-report anything that set decides. The audit's value is what it *doesn't* gate: conventions held
@@ -40,7 +40,7 @@ repos and audits) and `build/`.
 - **Events**: private `MutableSharedFlow(extraBufferCapacity = 1)` exposed via `asSharedFlow()`. A
   `tryEmit` on a flow with no buffer silently drops events; `replay = 1` for a one-shot re-fires on
   recomposition. Tests: `act(); vm.events.first()` is the race `awaitEvent` exists to avoid
-  (`app/src/test/.../util/AwaitEvent.kt`).
+  (`core/testing/src/main/.../util/AwaitEvent.kt`).
 - **Sharing policy** vs the table: root screens `WhileSubscribed(5_000)`; list roots `Lazily` **with**
   `setScreenVisible` called from a `DisposableEffect` (one half without the other never refreshes
   on return); detail screens keyed on an id `Lazily`. A `setScreenVisible` hook that re-reads
