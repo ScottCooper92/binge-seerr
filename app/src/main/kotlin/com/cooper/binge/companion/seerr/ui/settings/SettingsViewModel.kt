@@ -27,8 +27,6 @@ import com.cooper.homelab.core.telemetry.NoOpAnalytics
 import com.cooper.homelab.core.telemetry.NoOpCrashBreadcrumbs
 import com.cooper.homelab.core.telemetry.TelemetryPrefs
 import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
-import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
@@ -47,6 +45,8 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import javax.inject.Inject
+import javax.inject.Singleton
 
 /** How long the screen waits for the admin groups before it paints without them, as placeholders. */
 internal const val SETTLE_MILLIS = 1_000L
