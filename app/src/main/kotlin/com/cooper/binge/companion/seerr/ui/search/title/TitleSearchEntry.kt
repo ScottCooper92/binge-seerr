@@ -11,14 +11,11 @@ import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.grid.GridPreset
 import com.cooper.binge.companion.seerr.discover.sliders.HubGrid
 import com.cooper.binge.companion.seerr.ui.discover.title.LocalOpenTitle
-import com.cooper.binge.companion.seerr.ui.hub.AccountBarState
-import com.cooper.binge.companion.seerr.ui.hub.AccountBarViewModel
 
 /** The Search tab's root. A result opens the title's page, or with the flag off the hand-off [LocalOpenTitle] falls back to. */
 @Composable
 fun TitleSearchEntry(
     onOpenGrid: (HubGrid, String) -> Unit,
-    onOpenAccount: (Int) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: TitleSearchViewModel = hiltViewModel(),
 ) {
@@ -31,11 +28,7 @@ fun TitleSearchEntry(
             }
         }
     }
-    val bar = hiltViewModel<AccountBarViewModel>()
-    val account by bar.uiState.collectAsStateWithLifecycle()
     TitleSearchScreen(
-        accountBar = (account as? AccountBarState.Ready)?.bar,
-        onOpenAccount = onOpenAccount,
         state = state,
         actions =
             TitleSearchActions(

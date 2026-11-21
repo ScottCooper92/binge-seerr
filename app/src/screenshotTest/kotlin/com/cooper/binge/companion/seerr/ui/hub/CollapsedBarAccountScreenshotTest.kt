@@ -21,16 +21,10 @@ import com.binge.designsystem.R as DesR
 private val ACCOUNT = AccountBar(HubAccount(id = 1, name = "Ada Lovelace", isAdmin = true, avatarUrl = null), quota = null)
 
 /**
- * The account in the bar once it has collapsed (#2366). A frame cannot make the scroll gesture, and the templates own their
+ * The Discover grid's account in the bar once it has collapsed (#2366). Search has none: the account is the Settings tab's avatar. A frame cannot make the scroll gesture, and the templates own their
  * scroll behaviour, so the bar here is the design system's own scaffold held collapsed, with the actions the app hands each template.
  */
 class CollapsedBarAccountScreenshotTest {
-    /** The Search tab's collapsed bar: the title and the account, which stays reachable after the title row has gone. */
-    @PreviewTest
-    @SeerrScreenStatePreview
-    @Composable
-    fun searchCollapsed() = CollapsedBar(title = "Search") { TitleBarAccount(ACCOUNT, enabled = true, onOpen = {}) }
-
     /** The Discover grid's collapsed bar: the Filters action with its count, then the account. */
     @PreviewTest
     @SeerrScreenStatePreview

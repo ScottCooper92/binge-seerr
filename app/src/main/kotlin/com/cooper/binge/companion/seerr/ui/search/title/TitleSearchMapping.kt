@@ -35,6 +35,8 @@ internal fun TitleSearchUiState.toSearchState(): SearchState =
                 message = stringResource(R.string.title_search_none_message),
                 title = stringResource(R.string.title_search_none_title, query),
                 types = typeChips(type, SearchType.entries.associateWith { 0 }, hasStudios),
+                pages = SearchType.entries.filter { hasStudios || it != SearchType.Studios }.associate { it.name to emptyList() },
+                query = query,
             )
         is TitleSearchUiState.Error -> SearchState.Failed(kind = error.toErrorKind())
     }
@@ -42,15 +44,12 @@ internal fun TitleSearchUiState.toSearchState(): SearchState =
 @Composable
 private fun TitleSearchUiState.Ready.toReadyState(): SearchState.Ready {
     val studioLabel = stringResource(R.string.title_kind_studio)
+    val chips = SearchType.entries.filter { hasStudios || it != SearchType.Studios }
+    val pages = chips.associate { chip -> chip.name to resultsOf(chip, studioLabel) }
     return SearchState.Ready(
-        results =
-            if (type ==
-                SearchType.Studios
-            ) {
-                studios.map { it.toMediaResult(studioLabel) }
-            } else {
-                results.map { it.toMediaResult(genreNames) }
-            },
+        results = pages[type.name].orEmpty(),
+        pages = pages,
+        query = query,
         loaded = loaded,
         hasMore = hasMore,
         appending = appending,
@@ -60,6 +59,18 @@ private fun TitleSearchUiState.Ready.toReadyState(): SearchState.Ready {
         emptyMessage = stringResource(R.string.title_search_type_none_message, text.trim()),
     )
 }
+
+/** What a type's page shows: its titles, or the studios found on the Studios chip. */
+@Composable
+private fun TitleSearchUiState.Ready.resultsOf(
+    chip: SearchType,
+    studioLabel: String,
+): List<MediaResult> =
+    if (chip == SearchType.Studios) {
+        studios.map { it.toMediaResult(studioLabel) }
+    } else {
+        pool.filter(chip::keeps).map { it.toMediaResult(genreNames) }
+    }
 
 /** What the idle offer holds under the recents: the rails, or the skeleton that stands in for them while they load. */
 private fun Trending.hasRails(): Boolean =
