@@ -37,7 +37,8 @@ internal fun creditsGrid(
         credits.cast
             .takeIf { it.isNotEmpty() }
             ?.let { people ->
-                listOf(PeopleGridSection(CAST_SECTION, title = null, people = people.mapIndexed { index, it -> card("cast/$index", it) }))
+                val cards = people.mapIndexed { index, person -> card("cast/$index", person) }
+                listOf(PeopleGridSection(CAST_SECTION, title = null, people = cards))
             }.orEmpty()
     val crew =
         credits.departments.mapIndexed { index, department ->
