@@ -10,7 +10,10 @@ import com.cooper.binge.companion.seerr.discover.person.PersonCredit
 import com.cooper.binge.companion.seerr.discover.person.PersonCredits
 import com.cooper.binge.companion.seerr.discover.sliders.HubCard
 import com.cooper.binge.companion.seerr.discover.sliders.HubHero
+import com.cooper.binge.companion.seerr.seerr.SEERR_MEDIA_TYPE_MOVIE
+import com.cooper.binge.companion.seerr.seerr.SEERR_MEDIA_TYPE_TV
 import com.cooper.binge.companion.seerr.seerr.SeerrMediaInfoDto
+import com.cooper.binge.companion.seerr.seerr.SeerrRequestMediaDto
 import com.cooper.homelab.core.presentation.paging.PagedListState
 import com.cooper.homelab.core.presentation.search.QuerySearchState
 
@@ -32,7 +35,7 @@ internal fun TitleStatusMap.availabilityOf(
 ): TitleAvailability {
     val type = kind.titleType() ?: return fallback
     val held = this[TitleKey(type, tmdbId)] ?: return fallback
-    return held.standard.toAvailability()
+    return cardAvailability(held.standard, held.fourK)
 }
 
 fun TitleResult.overlaid(statuses: TitleStatusMap): TitleResult =
@@ -77,7 +80,11 @@ fun QuerySearchState<TitleResult>.overlaid(statuses: TitleStatusMap): QuerySearc
         this
     }
 
-/** Records the status a list's rows carry, for [read] to order against actions made while the list was loading. */
+/**
+ * Records the status a list's rows carry, for [read] to order against actions made while the list was loading. A row with no
+ * `mediaInfo` says the server holds nothing for the title, which is not news about a title this process already knows, so it
+ * leaves what is held alone (a watchlist row still records that it is on the list).
+ */
 internal fun TitleStatusStore.seedRows(
     read: Long,
     rows: List<Triple<TitleKind?, Int?, SeerrMediaInfoDto?>>,
@@ -85,7 +92,25 @@ internal fun TitleStatusStore.seedRows(
 ) {
     rows.forEach { (kind, tmdbId, info) ->
         val type = kind?.titleType() ?: return@forEach
-        if (tmdbId != null) seed(TitleKey(type, tmdbId), info.toTitleStatuses().copy(onWatchlist = onWatchlist), read)
+        if (tmdbId == null) return@forEach
+        val key = TitleKey(type, tmdbId)
+        if (info != null) seed(key, info.toTitleStatuses().copy(onWatchlist = onWatchlist), read) else markWatchlist(key, onWatchlist, read)
+    }
+}
+
+/** Records what a request or media list says of its titles, both versions, for [read] to order as any other server read. */
+internal fun TitleStatusStore.seedMedia(
+    read: Long,
+    media: List<SeerrRequestMediaDto>,
+) {
+    media.forEach { row ->
+        val type =
+            when (row.mediaType) {
+                SEERR_MEDIA_TYPE_MOVIE -> TitleType.Movie
+                SEERR_MEDIA_TYPE_TV -> TitleType.Tv
+                else -> null
+            } ?: return@forEach
+        seed(TitleKey(type, row.tmdbId), TitleStatuses(row.status, row.status4k, row.id), read)
     }
 }
 

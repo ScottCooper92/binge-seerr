@@ -29,7 +29,7 @@ internal fun SeerrTitleResultDto.toTitleResult(defaultKind: TitleKind?): TitleRe
         backdropPath = backdropPath,
         overview = overview?.takeIf { it.isNotBlank() },
         rating = voteAverage?.takeIf { it > 0.0 },
-        availability = mediaInfo?.status.toAvailability(),
+        availability = cardAvailability(mediaInfo?.status, mediaInfo?.status4k),
         mediaId = mediaInfo?.id,
         genreIds = genreIds,
     )
@@ -55,8 +55,24 @@ fun SeerrMediaStatusCode?.toAvailability(): TitleAvailability =
         else -> TitleAvailability.None
     }
 
+/**
+ * What a card says of a title with these two versions: the more advanced of the two. [TitleAvailability] is declared in that
+ * order (none, requested, processing, partial, available), with blocklisted last, so one version being blocklisted wins as it did.
+ */
+fun cardAvailability(
+    standard: SeerrMediaStatusCode?,
+    fourK: SeerrMediaStatusCode?,
+): TitleAvailability = maxOf(standard.toAvailability(), fourK.toAvailability())
+
 /** The four-digit year a TMDB date (`1999-03-30`) starts with, or null for a date that does not. */
 internal fun String?.toReleaseYear(): String? = this?.take(YEAR_LENGTH)?.takeIf { it.length == YEAR_LENGTH && it.all(Char::isDigit) }
+
+/** The page itself, after [seedInto], for a read that is handed on as it is. */
+internal fun SeerrTitlePageDto.seededInto(
+    statuses: TitleStatusStore,
+    read: Long,
+    defaultKind: TitleKind?,
+): SeerrTitlePageDto = also { it.seedInto(statuses, read, defaultKind) }
 
 /** Writes what the page's rows say of their titles into [statuses], so every list of cards follows them. */
 internal fun SeerrTitlePageDto.seedInto(

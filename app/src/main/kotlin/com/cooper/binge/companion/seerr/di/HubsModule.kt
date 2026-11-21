@@ -42,11 +42,17 @@ object HubsModule {
     fun hubMediaSource(
         connection: SeerrConnection,
         titles: TitleCache,
+        statuses: TitleStatusStore,
         @IoDispatcher io: CoroutineDispatcher,
     ): HubMediaSource =
-        SeerrHubMediaSource(api = connection::api, profile = connection::profile, titles = titles, io = io, serverUrl = {
-            connection.current().baseUrl
-        })
+        SeerrHubMediaSource(
+            api = connection::api,
+            profile = connection::profile,
+            titles = titles,
+            io = io,
+            serverUrl = { connection.current().baseUrl },
+            statuses = statuses,
+        )
 
     @Provides
     fun hubCardLoader(

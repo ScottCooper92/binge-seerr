@@ -4,7 +4,7 @@ import com.cooper.binge.companion.seerr.discover.TitleAvailability
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.TitleListRepository
 import com.cooper.binge.companion.seerr.discover.TitleResult
-import com.cooper.binge.companion.seerr.discover.toAvailability
+import com.cooper.binge.companion.seerr.discover.cardAvailability
 import com.cooper.binge.companion.seerr.seerr.HydratedTitle
 import com.cooper.binge.companion.seerr.seerr.SEERR_MEDIA_TYPE_MOVIE
 import com.cooper.binge.companion.seerr.seerr.SEERR_MEDIA_TYPE_TV
@@ -118,7 +118,7 @@ private fun SeerrRequestMediaDto.toCard(
             it,
             title.year,
             title.posterUrl,
-            status.toAvailability(),
+            cardAvailability(status, status4k),
             hubWebUrl(serverUrl, tab.titleKind(), tmdbId),
         )
     }
