@@ -3,7 +3,11 @@ package com.cooper.binge.companion.seerr.ui
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -12,7 +16,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentType
@@ -22,6 +28,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import coil3.compose.AsyncImage
 import com.binge.designsystem.component.BingeFilledButton
 import com.binge.designsystem.component.BingeTabRow
+import com.binge.designsystem.component.BingeTabbedPager
 import com.binge.designsystem.component.BingeTextButton
 import com.binge.designsystem.component.BingeTextField
 import com.binge.designsystem.template.StepHeading
@@ -59,31 +66,51 @@ internal fun SetupServerHeading(server: SetupServer) {
     )
 }
 
-/** Step two: only the sign-ins the server accepts, and the fields of the one chosen. */
+/**
+ * Step two: a page per sign-in the server accepts, each with the fields of its mode. The page the user is on is
+ * [SignInForm.mode], so the choice outlives rotation and process death with the rest of the form, and the typed
+ * text with it: a swipe drops the page it leaves, and none of its fields hold state of their own.
+ */
 @Composable
 internal fun SetupSignInContent(
     state: SetupUiState.SignIn,
     actions: SetupActions,
 ) {
-    Column(
-        modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
-    ) {
-        ModeTabs(state.server, state.form.mode) { mode -> actions.onEditForm { copy(mode = mode) } }
-        ModeFields(state, actions.onEditForm, actions.onRequestPasswordReset, actions.onConnect)
-        state.error?.let { error ->
-            Text(
-                stringResource(error.messageRes()),
-                color = MaterialTheme.colorScheme.error,
-                style = MaterialTheme.typography.bodyMedium,
-            )
-        }
-        state.notice?.let { notice ->
-            Text(
-                stringResource(notice.messageRes()),
-                color = MaterialTheme.colorScheme.primary,
-                style = MaterialTheme.typography.bodyMedium,
-            )
+    val modes = state.server.modes
+    val scrolls = List(modes.size) { rememberScrollState() }
+    val selected = modes.indexOf(state.form.mode).coerceAtLeast(0)
+    val scrimDistance = with(LocalDensity.current) { dimensionResource(DesR.dimen.padding_m).toPx() }
+    BingeTabbedPager(
+        tabs = modes.map { it.label(state.server) },
+        selectedIndex = selected,
+        onSelectedIndexChange = { index -> actions.onEditForm { copy(mode = modes[index]) } },
+        modifier = Modifier.fillMaxSize(),
+        headerBackground = Color.Transparent,
+        scrimFraction = (scrolls[selected].value / scrimDistance).coerceIn(0f, 1f),
+    ) { contentPadding, page ->
+        Column(
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .verticalScroll(scrolls[page])
+                    .padding(top = contentPadding.calculateTopPadding()),
+            verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
+        ) {
+            ModeFields(state, actions.onEditForm, actions.onRequestPasswordReset, actions.onConnect, modes[page])
+            state.error?.let { error ->
+                Text(
+                    stringResource(error.messageRes()),
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            }
+            state.notice?.let { notice ->
+                Text(
+                    stringResource(notice.messageRes()),
+                    color = MaterialTheme.colorScheme.primary,
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            }
         }
     }
 }
@@ -126,10 +153,11 @@ internal fun ModeFields(
     onEdit: (SignInForm.() -> SignInForm) -> Unit,
     onRequestPasswordReset: () -> Unit,
     onConnect: () -> Unit,
+    mode: SeerrSignInMode = state.form.mode,
 ) {
     val form = state.form
     val submit = { if (form.canSubmit && !state.isConnecting && state.link == null) onConnect() }
-    when (form.mode) {
+    when (mode) {
         // No content type: the key is the server's, not an account credential, and offering to save
         // it as this user's password is how a password manager ends up holding the wrong secret.
         SeerrSignInMode.ApiKey -> {
@@ -189,7 +217,7 @@ internal fun ModeFields(
                 value = form.username,
                 onValueChange = { value -> onEdit { copy(username = value) } },
                 label = { Text(stringResource(R.string.setup_username)) },
-                placeholder = { Text(stringResource(R.string.setup_username_placeholder, form.mode.label(state.server))) },
+                placeholder = { Text(stringResource(R.string.setup_username_placeholder, mode.label(state.server))) },
                 singleLine = true,
                 // A plain text field is autocorrected, and a rewritten username fails sign-in with no visible cause.
                 keyboardOptions = KeyboardOptions(autoCorrectEnabled = false, imeAction = ImeAction.Next),

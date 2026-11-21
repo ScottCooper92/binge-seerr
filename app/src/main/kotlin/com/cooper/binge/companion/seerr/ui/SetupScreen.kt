@@ -73,6 +73,8 @@ fun SetupScreen(
         actions = { glassBackgroundAlpha -> if (onReportProblem != null) ReportProblemAction(glassBackgroundAlpha, onReportProblem) },
         // The home swaps to the hub on the credentials landing; Connected is the frame in between.
         loading = state is SetupUiState.Loading || state is SetupUiState.Connected,
+        // The sign-in pages scroll themselves, under the mode tabs, so the flow gives the step the height that is left.
+        contentScrolls = { step -> !(step == SIGN_IN_STEP && secondStep is SetupUiState.SignIn) },
         aside = { step -> if (step == SIGN_IN_STEP) server?.let { SetupServerBackdrop(it) } },
         heading = { step ->
             when (step) {
