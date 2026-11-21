@@ -18,8 +18,6 @@ import com.cooper.binge.companion.seerr.discover.grid.DiscoverSort
 import com.cooper.binge.companion.seerr.ui.DiscoverGridRoute
 import com.cooper.binge.companion.seerr.ui.NavMotionSpecs
 import com.cooper.binge.companion.seerr.ui.discover.title.LocalOpenTitle
-import com.cooper.binge.companion.seerr.ui.hub.AccountBarState
-import com.cooper.binge.companion.seerr.ui.hub.AccountBarViewModel
 import com.cooper.binge.companion.seerr.ui.popIfTop
 import com.cooper.binge.companion.seerr.ui.replaceTop
 import com.cooper.binge.companion.seerr.ui.shell.SeerrTab
@@ -29,12 +27,11 @@ import java.time.LocalDate
 internal fun EntryProviderScope<NavKey>.discoverGridEntries(
     backStack: NavBackStack<NavKey>,
     motion: NavMotionSpecs,
-    onOpenAccount: (Int) -> Unit,
 ) {
     entry<DiscoverGridRoute>(metadata = motion.detail) { route ->
         DiscoverGridEntry(route, onBack = {
             backStack.popIfTop(route)
-        }, backStack = backStack, onOpenAccount = onOpenAccount)
+        }, backStack = backStack)
     }
 }
 
@@ -44,7 +41,6 @@ internal fun DiscoverGridEntry(
     route: DiscoverGridRoute,
     onBack: (() -> Unit)?,
     backStack: NavBackStack<NavKey>,
-    onOpenAccount: (Int) -> Unit,
     title: String? = route.title,
     reselectKey: Any? = null,
     modelKey: String = route.toString(),
@@ -71,11 +67,7 @@ internal fun DiscoverGridEntry(
             }
         }
     }
-    val bar = hiltViewModel<AccountBarViewModel>()
-    val account by bar.uiState.collectAsStateWithLifecycle()
     DiscoverGridScreen(
-        accountBar = (account as? AccountBarState.Ready)?.bar,
-        onOpenAccount = onOpenAccount,
         kind = route.kind,
         title = title,
         reselectKey = reselectKey,
@@ -106,17 +98,13 @@ internal fun DiscoverGridEntry(
  * The grid's ViewModel is keyed by how many times the kind was switched: a write-back keeps it, and every switch starts a fresh one.
  */
 @Composable
-internal fun DiscoverTabEntry(
-    stack: NavBackStack<NavKey>,
-    onOpenAccount: (Int) -> Unit,
-) {
+internal fun DiscoverTabEntry(stack: NavBackStack<NavKey>) {
     val route = stack.lastOrNull() as? DiscoverGridRoute ?: return
     var switches by rememberSaveable { mutableIntStateOf(0) }
     DiscoverGridEntry(
         route,
         onBack = null,
         backStack = stack,
-        onOpenAccount = onOpenAccount,
         title = null,
         reselectKey = SeerrTab.Discover,
         modelKey = "discover-tab-$switches",

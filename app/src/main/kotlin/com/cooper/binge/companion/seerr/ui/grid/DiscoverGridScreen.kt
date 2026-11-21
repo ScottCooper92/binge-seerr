@@ -11,8 +11,6 @@ import com.cooper.binge.companion.seerr.discover.grid.DiscoverFilters
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverSort
 import com.cooper.binge.companion.seerr.discover.grid.FilterGroup
 import com.cooper.binge.companion.seerr.discover.sliders.HubCard
-import com.cooper.binge.companion.seerr.ui.hub.AccountBar
-import com.cooper.binge.companion.seerr.ui.hub.TitleBarAccount
 import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
 import java.time.LocalDate
 
@@ -42,8 +40,6 @@ internal fun DiscoverGridScreen(
     state: DiscoverGridUiState,
     actions: DiscoverGridActions,
     firstVisibleIndex: Int = 0,
-    accountBar: AccountBar? = null,
-    onOpenAccount: (Int) -> Unit = {},
     reselectKey: Any? = null,
 ) {
     val controls = state.controls
@@ -66,8 +62,6 @@ internal fun DiscoverGridScreen(
         firstVisibleIndex = firstVisibleIndex,
         loadingLabel = stringResource(R.string.grid_loading),
         moreFailedLabel = stringResource(R.string.grid_more_failed),
-        titleTrailing = accountBar?.let { bar -> { interactive -> TitleBarAccount(bar, interactive, onOpenAccount) } },
-        barActions = { handedOver, fraction -> accountBar?.let { TitleBarAccount(it, handedOver, onOpenAccount, fraction) } },
         failedContent = error?.let { failure -> { modifier -> ErrorScreen(failure, modifier, onRetry = actions.onRetry) } },
         filterSheet = { onDismiss -> FilterSheetHost(kind, controls, actions, onDismiss) },
     )
