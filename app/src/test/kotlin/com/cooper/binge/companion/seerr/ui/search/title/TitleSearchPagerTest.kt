@@ -3,7 +3,9 @@ package com.cooper.binge.companion.seerr.ui.search.title
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
@@ -12,6 +14,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipeDown
 import androidx.compose.ui.test.swipeLeft
 import androidx.compose.ui.test.swipeRight
 import androidx.compose.ui.test.swipeUp
@@ -199,7 +202,62 @@ class TitleSearchPagerTest {
         assertFalse(film1OnScreen())
     }
 
+    @Test
+    fun `a page that arrives scrolled draws the scrolled header over its rows`() {
+        show(LONG_LIST)
+        val aboveChips = chip("Movies").fetchSemanticsNode().boundsInRoot.top
+        val atTop = rule.onRoot().captureToImage().region(aboveChips.toInt())
+
+        chip("Movies").performClick()
+        rule.waitForIdle()
+        scrollAllPageDown()
+        chip("All").performClick()
+        rule.waitForIdle()
+        rule.onRoot().performTouchInput { swipeLeft() }
+        rule.waitForIdle()
+        assertEquals(SearchType.Movies, type)
+        val arrived = rule.onRoot().captureToImage().region(aboveChips.toInt())
+
+        val differing = atTop.differingShare(arrived)
+        assertTrue("rows show through the title and field: $differing of the pixels differ", differing < MAX_DIFFERING_SHARE)
+    }
+
+    @Test
+    fun `scrolling a restored page up by a bar height keeps the scrim at full strength`() {
+        show(LONG_LIST)
+        val headerBottom = chip("Movies").fetchSemanticsNode().boundsInRoot.bottom
+        val aboveChips =
+            chip("Movies")
+                .fetchSemanticsNode()
+                .boundsInRoot.top
+                .toInt()
+        val atTop = rule.onRoot().captureToImage().region(aboveChips)
+
+        scrollAllPageDown()
+        rule.onRoot().performTouchInput { swipeLeft() }
+        rule.waitForIdle()
+        rule.onRoot().performTouchInput { swipeRight() }
+        rule.waitForIdle()
+        assertEquals(SearchType.All, type)
+
+        rule.onRoot().performTouchInput { swipeDown(startY = top + headerBottom, endY = top + headerBottom * 2f) }
+        rule.waitForIdle()
+        assertFalse("the page is still scrolled, not back at the top", film1OnScreen())
+
+        val differing = atTop.differingShare(rule.onRoot().captureToImage().region(aboveChips))
+        assertTrue("the scrim faded early: $differing of the pixels differ", differing < MAX_DIFFERING_SHARE)
+    }
+
+    private fun ImageBitmap.region(height: Int): IntArray {
+        val pixels = IntArray(width * height)
+        readPixels(pixels, 0, 0, width, height)
+        return pixels
+    }
+
+    private fun IntArray.differingShare(other: IntArray): Float = indices.count { this[it] != other[it] } / size.toFloat()
+
     private companion object {
         const val SWIPES = 3
+        const val MAX_DIFFERING_SHARE = 0.02f
     }
 }
