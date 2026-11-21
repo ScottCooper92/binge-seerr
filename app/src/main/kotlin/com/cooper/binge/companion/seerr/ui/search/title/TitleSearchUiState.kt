@@ -34,6 +34,8 @@ sealed interface TitleSearchUiState {
         val appendFailed: Boolean,
         /** Whether the server has the company search; the Studios chip is left out where it has not. */
         val hasStudios: Boolean = true,
+        /** The query these results answer, which lags [text] while a newer one is typed and still loading. */
+        val query: String? = null,
     ) : TitleSearchUiState
 
     /**

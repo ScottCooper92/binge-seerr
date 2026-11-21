@@ -36,6 +36,7 @@ internal fun TitleSearchUiState.toSearchState(): SearchState =
                 title = stringResource(R.string.title_search_none_title, query),
                 types = typeChips(type, SearchType.entries.associateWith { 0 }, hasStudios),
                 pages = SearchType.entries.filter { hasStudios || it != SearchType.Studios }.associate { it.name to emptyList() },
+                query = query,
             )
         is TitleSearchUiState.Error -> SearchState.Failed(kind = error.toErrorKind())
     }
@@ -48,6 +49,7 @@ private fun TitleSearchUiState.Ready.toReadyState(): SearchState.Ready {
     return SearchState.Ready(
         results = pages[type.name].orEmpty(),
         pages = pages,
+        query = query,
         loaded = loaded,
         hasMore = hasMore,
         appending = appending,

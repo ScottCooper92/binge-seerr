@@ -216,6 +216,7 @@ internal fun QuerySearchState<TitleResult>.toUiState(
     fun ready(
         all: List<TitleResult>,
         titleMore: QuerySearchState.Results<TitleResult>?,
+        answered: String,
     ) = TitleSearchUiState.Ready(
         text = text,
         results = all.filter(type::keeps),
@@ -228,13 +229,14 @@ internal fun QuerySearchState<TitleResult>.toUiState(
         appending = if (onStudios) found?.appending ?: (studios is QuerySearchState.Loading) else titleMore?.appending ?: false,
         appendFailed = if (onStudios) found?.appendFailed ?: (studios is QuerySearchState.Failed) else titleMore?.appendFailed ?: false,
         hasStudios = hasStudios,
+        query = answered,
     )
     return when (this) {
         is QuerySearchState.Idle -> TitleSearchUiState.Idle(text, recents, trending)
         is QuerySearchState.Loading -> TitleSearchUiState.Loading(text)
-        is QuerySearchState.Results -> ready(items.distinctBy(TitleResult::key), this)
+        is QuerySearchState.Results -> ready(items.distinctBy(TitleResult::key), this, query)
         is QuerySearchState.NoResults ->
-            if (found != null) ready(emptyList(), null) else TitleSearchUiState.NoResults(text, query, type, browseAll, hasStudios)
+            if (found != null) ready(emptyList(), null, query) else TitleSearchUiState.NoResults(text, query, type, browseAll, hasStudios)
         is QuerySearchState.Failed -> TitleSearchUiState.Error(text, failure.toSeerrError())
     }
 }
