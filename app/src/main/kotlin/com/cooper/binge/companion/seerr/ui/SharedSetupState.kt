@@ -3,6 +3,7 @@ package com.cooper.binge.companion.seerr.ui
 import com.cooper.binge.companion.seerr.seerr.SeerrCredentials
 import com.cooper.binge.companion.seerr.seerr.SeerrSignInMode
 import com.cooper.binge.companion.seerr.telemetry.AnalyticsEvents
+import com.cooper.homelab.core.presentation.connect.ConnectError
 import com.cooper.homelab.core.presentation.connect.ConnectEvent
 import com.cooper.homelab.core.presentation.connect.ConnectState
 import com.cooper.homelab.core.presentation.connect.LinkState
@@ -122,6 +123,13 @@ internal fun SharedSetupViewModel.actions(
         onDisconnect = onDisconnect,
         onTryDemo = tryDemo,
     )
+
+/**
+ * The link to draw beside this step. The machine posts an expired code's error and the link flow takes the code down as two
+ * updates, so a reader of both can see the error with the code still up; an expired code is never drawn.
+ */
+internal fun ConnectState<SetupServer>.linkWhileLive(link: LinkState?): LinkState? =
+    if ((this as? ConnectState.SignIn)?.error == ConnectError.LinkExpired) null else link
 
 /** The connect screen's input: the machine's step, and the notice and reset cooldown that sit beside it, with [received] for the address's error. */
 internal data class SeerrConnectUi(

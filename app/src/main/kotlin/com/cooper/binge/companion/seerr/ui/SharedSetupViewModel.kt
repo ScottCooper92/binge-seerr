@@ -127,7 +127,7 @@ class SharedSetupViewModel
 
         override val uiState: StateFlow<SetupUiState> =
             combine(machine.state, connection.credentials, app, links.link) { state, saved, beside, link ->
-                state.toSetupUiState(saved, beside, link)
+                state.toSetupUiState(saved, beside, state.linkWhileLive(link))
             }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), SetupUiState.Loading)
 
         /** What the shared connect screen reads: the machine's step, and the two things beside it that are the app's own. */
@@ -144,7 +144,7 @@ class SharedSetupViewModel
                     beside.received,
                     beside.resetBusy,
                     beside.resetError,
-                    link,
+                    state.linkWhileLive(link),
                 )
             }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), SeerrConnectUi(ConnectState.Loading))
 
