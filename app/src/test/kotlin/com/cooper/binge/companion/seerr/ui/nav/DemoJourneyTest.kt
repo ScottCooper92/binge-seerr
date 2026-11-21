@@ -92,6 +92,9 @@ class DemoJourneyTest {
             .onAllNodesWithText(host.string(R.string.hub_section_requests))
             .onLast()
             .performClick()
+        // The list is longer than a screen now, so the processing filter brings the approved film to the top.
+        host.awaitShowing(host.string(R.string.requests_filter_processing))
+        host.compose.onNode(filterChip(host.string(R.string.requests_filter_processing))).performClick()
         host.awaitShowing("Big Buck Bunny")
 
         host.compose
