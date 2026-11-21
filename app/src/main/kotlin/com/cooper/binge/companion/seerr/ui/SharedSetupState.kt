@@ -123,6 +123,13 @@ internal fun SharedSetupViewModel.actions(
         onTryDemo = tryDemo,
     )
 
+/**
+ * The link to draw beside this step. An attempt that fails posts its error and the link flow takes the code down as two
+ * updates, so a reader of both can see the error with the code still up. An attempt's ending, whatever its error, never draws the code.
+ */
+internal fun ConnectState<SetupServer>.linkWhileLive(link: LinkState?): LinkState? =
+    if ((this as? ConnectState.SignIn)?.error != null) null else link
+
 /** The connect screen's input: the machine's step, and the notice and reset cooldown that sit beside it, with [received] for the address's error. */
 internal data class SeerrConnectUi(
     val state: ConnectState<SetupServer>,

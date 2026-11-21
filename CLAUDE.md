@@ -112,12 +112,12 @@ to design; the server's API is versioned by release because it is not.
 
 `:app` is the application. `:data` is an Android library under it that holds the Seerr client (`seerr/`), the connection and its
 credential stores (`auth/`), the demo's transport and fixtures (`demo/`), the Room cache and its stores (`data/`), the discovery repositories (`discover/`), and the request
-models and the request and slider mappings those stores and repositories import. It has no Compose, Activity, Hilt or vendor SDK, so `di/` stays in `:app` and builds its classes by hand.
+models, and the request and slider mappings, that those stores and repositories import. It has no Compose, Activity, Hilt or vendor SDK, so `di/` stays in `:app` and builds its classes by hand.
 Its packages keep the names they had as one module, so a file's package does not say which module it is in.
 
 `internal` stops at the module boundary. Declare something `internal` in `:data` unless `:app` calls it, and a test in `:app` that
 needs an internal of `:data` belongs in `:data`. What tests in both modules share, such as the fake server and the ciphers, is in
-`:data`'s `testFixtures`. The Room schemas are in `data/schemas`, committed. More modules follow in the order #2163 sets out.
+`:core:testing`, which `:app` and `:data` take as `testImplementation`. It is test support only: it has no detekt gate and is in no coverage figure. The Room schemas are in `data/schemas`, committed. More modules follow in the order #2163 sets out.
 
 What each module may depend on is the table in `buildSrc/src/main/kotlin/ModuleRules.kt`, and `checkModuleRules` holds the build to it. A new module gets
 a row in the same PR, with what it may depend on and why. A row changes when the design of the modules does, not to get a build green.
@@ -172,7 +172,7 @@ and exposed with `asSharedFlow()`. Editors inherit `EditorViewModel`'s `uiState`
 Never expose a `MutableStateFlow`. Collect with `collectAsStateWithLifecycle`.
 
 That flow has no replay, so **a test subscribes before the action, through `awaitEvent`**
-(`app/src/test/.../util/AwaitEvent.kt`). `act(); vm.events.first()` is a race the test loses by
+(`core/testing/src/main/.../util/AwaitEvent.kt`). `act(); vm.events.first()` is a race the test loses by
 hanging, and a plain `async` before the action is the same race with a longer fuse: it is queued on
 the test scheduler and has registered nothing yet. `awaitEvent` starts undispatched, so it has
 subscribed by the time it returns.
@@ -277,7 +277,7 @@ protection requires, and the one the bots read. `ci.yml` explains the split. A g
 touching `ci.yml`, because that job excludes tasks rather than listing them.
 
 - Kotlin compilation.
-- The unit tests (`test` in every module: `:app` and `:data`).
+- The unit tests (`test` in every module: `:app`, `:data` and `:core:testing`).
 - `ktlintCheck` — the ktlint plugin wires itself into `check`.
 - `detekt` — static analysis of the Kotlin itself, which ktlint and Android lint do not do.
 - **Android lint** (`:app:lint`) — AGP wires this into `check` too. It is easy to
@@ -368,6 +368,8 @@ through the same type resolution.
 **zero new violations** rather than zero total. Do not add to it: a new finding is either fixed or
 argued with in review. The baseline should only shrink. Each module has its own: `detekt-baseline.xml` for `:app` and
 `data/detekt-baseline.xml` for `:data`, because the staleness check would call an entry stale from the wrong module.
+`:core:testing` has no detekt gate and no baseline. Its files were test sources, which detekt never scanned, and running it on them
+reported findings in code that was only moved. The reason is also in `core/testing/build.gradle.kts`.
 
 ### Coverage
 
@@ -382,6 +384,8 @@ package, Room's `*_Impl*` including the inner classes it emits, `*ComposableSing
 `*PreviewData*`, every Activity the manifest declares and the Application class, and every `@Composable` by
 annotation — UI appearance is not a line-coverage question. Nothing is excluded for merely lacking
 tests, and the patterns match fully-qualified names, so each needs its leading `*`.
+
+`:core:testing` is test support and is in neither figure.
 
 The weak spots the figure is honest about are `ui/state` and `ui/tv`. Cover them and raise the
 floor; do not lower it.

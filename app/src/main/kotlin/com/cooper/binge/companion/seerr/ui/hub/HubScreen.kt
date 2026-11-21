@@ -41,6 +41,7 @@ import com.binge.designsystem.template.screenInnerPadding
 import com.binge.designsystem.template.screenOuterPadding
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.demo.isDemoOrigin
+import com.cooper.binge.companion.seerr.flags.LocalDiscoveryEnabled
 import com.cooper.binge.companion.seerr.ui.DisconnectButton
 import com.cooper.binge.companion.seerr.ui.rememberAllowLocalNetwork
 import com.cooper.binge.companion.seerr.ui.shell.SeerrTab
@@ -88,16 +89,25 @@ fun HubScreen(
     val allow = rememberAllowLocalNetwork { if (health == ConnectionHealth.LocalNetworkDenied) actions.onRetry() }
     // The account sits in the bar while the dashboard is up (#1325): the photo or initials, ringed by what is left of the quota.
     val account = ready?.overview?.account?.takeIf { ready.health.showsDashboard() }
+    val discovery = LocalDiscoveryEnabled.current
     val scrollBehavior = rememberPaneTopBarScrollBehavior()
     val collapsed = scrollBehavior.state.collapsedFraction
     val pillInteractive = collapsed < BAR_HANDOVER_COLLAPSE
     BingeScreenScaffold(
         title = ready?.server?.title ?: stringResource(R.string.companion_name),
-        bar = ScreenBar.Large,
-        scrollBehavior = scrollBehavior,
-        // Beside the large title while it shows, and in the bar once it collapses.
-        titleTrailing = account?.let { { AccountAction(it, ready.overview.quota, actions, pillInteractive) } },
-        actions = { account?.let { AccountAction(it, ready.overview.quota, actions, !pillInteractive, collapsed) } },
+        // With discovery on the account is this page's, as Settings is the avatar tab, so its action stays in a small bar.
+        bar = if (discovery) ScreenBar.Small else ScreenBar.Large,
+        scrollBehavior = scrollBehavior.takeUnless { discovery },
+        titleTrailing = account?.takeUnless { discovery }?.let { { AccountAction(it, ready.overview.quota, actions, pillInteractive) } },
+        actions = {
+            account?.let {
+                if (discovery) {
+                    AccountAction(it, ready.overview.quota, actions)
+                } else {
+                    AccountAction(it, ready.overview.quota, actions, !pillInteractive, collapsed)
+                }
+            }
+        },
     ) { padding ->
         Box(modifier = Modifier.fillMaxSize().padding(padding.screenOuterPadding())) {
             // Inside the tab bar shell the floating pill covers the last row, so the content pads by what the pill publishes.
@@ -145,7 +155,7 @@ private fun AccountAction(
     account: HubAccount,
     quota: HubQuota?,
     actions: HubActions,
-    enabled: Boolean,
+    enabled: Boolean = true,
     alpha: Float = 1f,
 ) = HubAccountAction(
     account = account,
@@ -181,13 +191,23 @@ private fun Dashboard(
     val scrollState = rememberScrollState()
     OnTabReselect(SeerrTab.Settings) { scrollState.animateScrollTo(0) }
     Column(modifier = Modifier.fillMaxSize().verticalScroll(scrollState).padding(contentPadding)) {
-        SettingsSearchEntry(
-            onClick = actions.onOpenSearch,
-            modifier =
-                Modifier
-                    .padding(sides)
-                    .padding(vertical = dimensionResource(DesR.dimen.padding_m)),
-        )
+        if (LocalDiscoveryEnabled.current) {
+            SettingsSearchField(
+                onClick = actions.onOpenSearch,
+                modifier =
+                    Modifier
+                        .padding(sides)
+                        .padding(bottom = dimensionResource(DesR.dimen.padding_m)),
+            )
+        } else {
+            SettingsSearchEntry(
+                onClick = actions.onOpenSearch,
+                modifier =
+                    Modifier
+                        .padding(sides)
+                        .padding(vertical = dimensionResource(DesR.dimen.padding_m)),
+            )
+        }
         ServerCard(server = state.server, overview = state.overview, sides = sides)
         // Under the server card, while anything is downloading: the part of this page that changes while it is watched.
         if (state.downloading.isNotEmpty()) {

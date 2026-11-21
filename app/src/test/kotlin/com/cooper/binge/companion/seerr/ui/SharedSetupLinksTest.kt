@@ -269,6 +269,22 @@ class SharedSetupLinksTest {
         }
 
     @Test
+    fun `a quick connect poll that fails is reported and the code taken down`() =
+        runTest {
+            val vm = viewModel()
+            vm.inspect("""{"version":"3.4.0"}""", """{"mediaServerType":2}""")
+            vm.editForm { copy(mode = SeerrSignInMode.QuickConnect) }
+            repeat(3) { seerr.takeRequest() }
+            seerr.enqueue(json("""{"code":"123456","secret":"abcdef12"}"""))
+            seerr.enqueue(FakeResponse(code = 500))
+
+            vm.connect()
+
+            val failed = vm.connectUi.first { (it.state as? ConnectState.SignIn)?.error != null }
+            assertNull(failed.link)
+        }
+
+    @Test
     fun `plex mints a pin, opens its page once, and signs in with the token it is approved with`() =
         runTest {
             val vm = viewModel()

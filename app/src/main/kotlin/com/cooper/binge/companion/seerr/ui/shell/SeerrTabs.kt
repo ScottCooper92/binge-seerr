@@ -27,6 +27,8 @@ import com.cooper.binge.companion.seerr.discover.grid.GridPreset
 import com.cooper.binge.companion.seerr.discover.sliders.HubTab
 import com.cooper.binge.companion.seerr.ui.DiscoverGridRoute
 import com.cooper.binge.companion.seerr.ui.SeerrRoute
+import com.cooper.binge.companion.seerr.ui.hub.AccountBarState
+import com.cooper.binge.companion.seerr.ui.hub.HubAccount
 import com.cooper.binge.companion.seerr.ui.state.EmptyScreen
 import com.cooper.homelab.core.uiandroid.shell.TabShell
 import com.cooper.homelab.core.uiandroid.shell.TabShellState
@@ -113,13 +115,27 @@ private fun SeerrTab.label(): String =
 @ReadOnlyComposable
 internal fun showDiscoverTab(): Boolean = booleanResource(R.bool.shell_show_discover)
 
-/** The bar's destinations, labelled in the user's language. */
+/**
+ * The bar's destinations, labelled in the user's language. The Settings item is the account's avatar once there is one: the photo, or
+ * the initials where the server has none, and the Settings icon only until the account is known.
+ */
 @Composable
-internal fun seerrTabItems(): List<BingeNavSuiteItem> =
+internal fun seerrTabItems(account: HubAccount? = null): List<BingeNavSuiteItem> =
     SeerrTab.entries
         .filter {
             it != SeerrTab.Discover || showDiscoverTab()
-        }.map { BingeNavSuiteItem(key = it, label = it.label(), icon = it.icon, testTag = it.testTag) }
+        }.map { tab ->
+            val avatar = account.takeIf { tab == SeerrTab.Settings }
+            BingeNavSuiteItem(
+                key = tab,
+                label = tab.label(),
+                icon = tab.icon,
+                testTag = tab.testTag,
+                avatarName = avatar?.name,
+                avatarUrl = avatar?.avatarUrl,
+                largeAvatar = avatar != null,
+            )
+        }
 
 /**
  * The tab bar over each tab's root: the Settings tab is the hub, [settings], Movies and TV are the discovery hubs, [discover],
@@ -132,6 +148,7 @@ internal fun SeerrTabShell(
     tabs: TabShellState<SeerrTab>,
     discover: @Composable (HubTab) -> Unit,
     modifier: Modifier = Modifier,
+    account: AccountBarState = AccountBarState.Loading,
     search: @Composable () -> Unit = { TabPlaceholder(SeerrTab.Search) },
     grid: @Composable () -> Unit = { TabPlaceholder(SeerrTab.Discover) },
     backToStart: Boolean = true,
@@ -142,7 +159,7 @@ internal fun SeerrTabShell(
     LaunchedEffect(discoverShown, tabs.selected) { if (!discoverShown && tabs.selected == SeerrTab.Discover) tabs.show(tabs.startTab) }
     TabShell(
         state = tabs,
-        items = seerrTabItems(),
+        items = seerrTabItems((account as? AccountBarState.Ready)?.bar?.account),
         // The design system's own choice: the floating pill, or the rail on a landscape tablet, as Binge does.
         presentation = rememberBingeNavPresentation(),
         modifier = modifier,
