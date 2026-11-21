@@ -28,14 +28,18 @@ class SeerrHubMediaSource(
         if (!profile().hasRecentlyAdded) return emptyList()
         return withContext(io) {
             val read = statuses.beginRead()
-            api().mediaList(filter = "allavailable", take = MEDIA_WINDOW, sort = "mediaAdded").results.also { statuses.seedMedia(read, it) }
+            val media = api().mediaList(filter = "allavailable", take = MEDIA_WINDOW, sort = "mediaAdded").results
+            statuses.seedMedia(read, media)
+            media
         }
     }
 
     override suspend fun recentRequests(): List<SeerrRequestMediaDto> =
         withContext(io) {
             val read = statuses.beginRead()
-            api().requests(take = MEDIA_WINDOW, sort = "added").results.map { it.media }.also { statuses.seedMedia(read, it) }
+            val media = api().requests(take = MEDIA_WINDOW, sort = "added").results.map { it.media }
+            statuses.seedMedia(read, media)
+            media
         }
 
     override suspend fun hydrate(

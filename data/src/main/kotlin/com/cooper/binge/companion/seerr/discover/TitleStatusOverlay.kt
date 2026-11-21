@@ -10,10 +10,7 @@ import com.cooper.binge.companion.seerr.discover.person.PersonCredit
 import com.cooper.binge.companion.seerr.discover.person.PersonCredits
 import com.cooper.binge.companion.seerr.discover.sliders.HubCard
 import com.cooper.binge.companion.seerr.discover.sliders.HubHero
-import com.cooper.binge.companion.seerr.seerr.SEERR_MEDIA_TYPE_MOVIE
-import com.cooper.binge.companion.seerr.seerr.SEERR_MEDIA_TYPE_TV
 import com.cooper.binge.companion.seerr.seerr.SeerrMediaInfoDto
-import com.cooper.binge.companion.seerr.seerr.SeerrRequestMediaDto
 import com.cooper.homelab.core.presentation.paging.PagedListState
 import com.cooper.homelab.core.presentation.search.QuerySearchState
 
@@ -95,22 +92,6 @@ internal fun TitleStatusStore.seedRows(
         if (tmdbId == null) return@forEach
         val key = TitleKey(type, tmdbId)
         if (info != null) seed(key, info.toTitleStatuses().copy(onWatchlist = onWatchlist), read) else markWatchlist(key, onWatchlist, read)
-    }
-}
-
-/** Records what a request or media list says of its titles, both versions, for [read] to order as any other server read. */
-internal fun TitleStatusStore.seedMedia(
-    read: Long,
-    media: List<SeerrRequestMediaDto>,
-) {
-    media.forEach { row ->
-        val type =
-            when (row.mediaType) {
-                SEERR_MEDIA_TYPE_MOVIE -> TitleType.Movie
-                SEERR_MEDIA_TYPE_TV -> TitleType.Tv
-                else -> null
-            } ?: return@forEach
-        seed(TitleKey(type, row.tmdbId), TitleStatuses(row.status, row.status4k, row.id), read)
     }
 }
 
