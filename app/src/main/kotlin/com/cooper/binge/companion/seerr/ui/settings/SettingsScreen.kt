@@ -128,7 +128,12 @@ internal fun DemoNote() {
     PageIntro(stringResource(R.string.settings_demo_note), Modifier.padding(resolvedContentPadding()))
 }
 
-/** One plate where the admin groups will land, so the groups below make room once rather than jumping as each arrives. */
+/**
+ * One plate where the admin groups will land, so the groups below make room once rather than jumping as each arrives. It shows
+ * only after the wait for the groups has run out, and its height is a compromise, not a match: the groups' rows depend on which
+ * sections this viewer may read and which ones the server's own settings turn on, and none of that is known until the config
+ * answers. A viewer who may not read the settings gets no group at all. No one height fits them, so no geometry test holds it.
+ */
 @Composable
 private fun PendingGroups() {
     Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))

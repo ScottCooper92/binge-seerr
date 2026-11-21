@@ -24,6 +24,7 @@ import com.cooper.binge.companion.seerr.ui.discover.title.rememberOpenTitle
 import com.cooper.binge.companion.seerr.ui.discover.title.titleEntries
 import com.cooper.binge.companion.seerr.ui.grid.DiscoverTabEntry
 import com.cooper.binge.companion.seerr.ui.grid.discoverGridEntries
+import com.cooper.binge.companion.seerr.ui.hub.AccountBarViewModel
 import com.cooper.binge.companion.seerr.ui.hub.HubSection
 import com.cooper.binge.companion.seerr.ui.hubs.DiscoverHubEntry
 import com.cooper.binge.companion.seerr.ui.search.title.TitleSearchEntry
@@ -120,45 +121,58 @@ private fun EntryProviderScope<NavKey>.homeEntries(
     entry<ShellRoute>(metadata = ShellPane) {
         if (connected() == true && tabs != null) {
             val hubBeside = panes.hubBeside()
+            val account by hiltViewModel<AccountBarViewModel>().uiState.collectAsStateWithLifecycle()
             val stack = backStack.toList()
             LaunchedEffect(tabs.selected, hubBeside, stack) {
                 if (hubBeside) {
                     tabs.settleStash(backStack, SeerrTab.Settings, NavKey::opensBesideHub, NavKey::isDefaultStandIn)
                 }
             }
-            SeerrTabShell(tabs, backToStart = nothingOpenBeside(stack, NavKey::isPaneRoot, NavKey::isDefaultStandIn), discover = {
-                DiscoverHubEntry(
-                    it,
-                    onOpenGrid = { grid, title -> backStack.push(DiscoverGridRoute(grid.kind, grid.preset, title)) },
-                    onOpenRequests = {
-                        if (panes.hubBeside()) tabs.show(SeerrTab.Settings)
-                        backStack.openSection(HubSection.Requests)
-                    },
-                )
-            }, search = {
-                TitleSearchEntry(
-                    onOpenGrid = { grid, title -> backStack.push(DiscoverGridRoute(grid.kind, grid.preset, title)) },
-                    onOpenAccount = { id -> backStack.push(UserDetailRoute(id)) },
-                )
-            }, grid = {
-                DiscoverTabEntry(tabs.stack(SeerrTab.Discover), onOpenAccount = { id ->
-                    backStack.push(UserDetailRoute(id))
-                })
-            }, settings = {
-                OnTabReselect(SeerrTab.Settings) { backStack.popToRoot() }
-                if (panes.hubBeside()) {
-                    SettingsPanes(
-                        hub = {
-                            PaneContent(innerEdge = PaneEdge.End) {
-                                SettingsHub(backStack, panes, backStack.selectedSection(defaultShowing = true))
-                            }
+            SeerrTabShell(
+                tabs,
+                account = account,
+                backToStart =
+                    nothingOpenBeside(
+                        stack,
+                        NavKey::isPaneRoot,
+                        NavKey::isDefaultStandIn,
+                    ),
+                discover = {
+                    DiscoverHubEntry(
+                        it,
+                        onOpenGrid = { grid, title -> backStack.push(DiscoverGridRoute(grid.kind, grid.preset, title)) },
+                        onOpenRequests = {
+                            if (panes.hubBeside()) tabs.show(SeerrTab.Settings)
+                            backStack.openSection(HubSection.Requests)
                         },
-                        defaultSection = { DefaultSectionPane(backStack, onExit) },
                     )
-                } else {
-                    SettingsHub(backStack, panes, null)
-                }
-            })
+                },
+                search = {
+                    TitleSearchEntry(
+                        onOpenGrid = { grid, title -> backStack.push(DiscoverGridRoute(grid.kind, grid.preset, title)) },
+                    )
+                },
+                grid = {
+                    DiscoverTabEntry(tabs.stack(SeerrTab.Discover), onOpenAccount = { id ->
+                        backStack.push(UserDetailRoute(id))
+                    })
+                },
+                settings = {
+                    OnTabReselect(SeerrTab.Settings) { backStack.popToRoot() }
+                    if (panes.hubBeside()) {
+                        SettingsPanes(
+                            hub = {
+                                PaneContent(innerEdge = PaneEdge.End) {
+                                    SettingsHub(backStack, panes, backStack.selectedSection(defaultShowing = true))
+                                }
+                            },
+                            defaultSection = { DefaultSectionPane(backStack, onExit) },
+                        )
+                    } else {
+                        SettingsHub(backStack, panes, null)
+                    }
+                },
+            )
         } else {
             LoadingScreen()
         }
