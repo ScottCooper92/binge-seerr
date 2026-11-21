@@ -26,9 +26,11 @@ class TitleCreditsGridTest {
         val grid = creditsGrid(credits, emptyList())
 
         assertEquals(1, grid.cast.size)
-        assertNull(grid.cast.single().title)
-        assertEquals(listOf("Carrie-Anne Moss", "Keanu Reeves"), grid.cast.single().people.map { it.name })
-        assertEquals(listOf("Trinity", "Neo"), grid.cast.single().people.map { it.role })
+        val section = grid.cast.single()
+        assertNull(section.title)
+        val people = section.people
+        assertEquals(listOf("Carrie-Anne Moss", "Keanu Reeves"), people.map { it.name })
+        assertEquals(listOf("Trinity", "Neo"), people.map { it.role })
     }
 
     @Test
@@ -86,7 +88,8 @@ class TitleCreditsGridTest {
             )
 
         val grid = creditsGrid(credits, emptyList())
-        val keys = grid.cast.single().people.map { it.key }
+        val people = grid.cast.single().people
+        val keys = people.map { it.key }
 
         assertEquals(2, keys.toSet().size)
         assertEquals(listOf(1, 1), keys.map { grid.personId(it) })

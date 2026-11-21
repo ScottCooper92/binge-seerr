@@ -24,6 +24,7 @@ internal fun creditsGrid(
     departmentTitles: List<String>,
 ): CreditsGrid {
     val personIds = mutableMapOf<String, Int>()
+
     fun card(
         key: String,
         person: TitlePerson,
