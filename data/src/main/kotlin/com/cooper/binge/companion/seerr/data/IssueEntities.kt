@@ -32,6 +32,8 @@ data class IssueEntity(
     val backdropUrl: String? = null,
     val overview: String? = null,
     val certification: String? = null,
+    val rating: Float? = null,
+    val genre: String? = null,
 )
 
 /** One list's pagination cursor: the next server `skip`, or null once its last page is cached. */

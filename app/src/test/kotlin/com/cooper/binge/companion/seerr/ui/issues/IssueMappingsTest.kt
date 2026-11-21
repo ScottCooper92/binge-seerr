@@ -34,6 +34,8 @@ class IssueMappingsTest {
                 backdropUrl = "https://image.tmdb.org/t/p/w1280/sev.jpg",
                 overview = "Mark leads a team.",
                 certification = "TV-MA",
+                rating = 8.7f,
+                genre = "Drama",
             )
 
         val item = entity.toIssueItem()
@@ -46,6 +48,8 @@ class IssueMappingsTest {
         assertEquals("https://image.tmdb.org/t/p/w1280/sev.jpg", item.backdropUrl)
         assertEquals("Mark leads a team.", item.overview)
         assertEquals("TV-MA", item.certification)
+        assertEquals(8.7f, item.rating)
+        assertEquals("Drama", item.genre)
         assertEquals(entity, item.toEntity(listKey = "open:added", orderIndex = 0))
     }
 
