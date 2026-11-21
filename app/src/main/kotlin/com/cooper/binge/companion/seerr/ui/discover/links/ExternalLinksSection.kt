@@ -1,6 +1,7 @@
 package com.cooper.binge.companion.seerr.ui.discover.links
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.padding
@@ -32,25 +33,23 @@ fun ExternalLinksSection(
     modifier: Modifier = Modifier,
 ) {
     if (links.isEmpty()) return
-    SectionHeader(
-        stringResource(R.string.external_links_heading),
-        modifier,
-        horizontalPadding = readingInset(),
-        startPadding = readingInset(),
-    )
-    FlowRow(
-        modifier.padding(horizontal = readingInset()),
-        horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
-        verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
-    ) {
-        links.forEach { link ->
-            val (label, icon) =
-                when (link.kind) {
-                    ExternalLinkKind.Imdb -> stringResource(R.string.external_link_imdb) to Icons.Filled.Movie
-                    ExternalLinkKind.Tmdb -> stringResource(R.string.external_link_tmdb) to Icons.Filled.Public
-                    ExternalLinkKind.Website -> stringResource(R.string.external_link_website) to Icons.Filled.Language
-                }
-            BingeLinkChip(label = label, leadingIcon = icon, onClick = { onOpen(link.url) })
+    // One column, as the keywords section is: its heading and chips are not spaced by the page's own column.
+    Column(modifier) {
+        SectionHeader(stringResource(R.string.external_links_heading), horizontalPadding = readingInset())
+        FlowRow(
+            Modifier.padding(horizontal = readingInset()),
+            horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
+            verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
+        ) {
+            links.forEach { link ->
+                val (label, icon) =
+                    when (link.kind) {
+                        ExternalLinkKind.Imdb -> stringResource(R.string.external_link_imdb) to Icons.Filled.Movie
+                        ExternalLinkKind.Tmdb -> stringResource(R.string.external_link_tmdb) to Icons.Filled.Public
+                        ExternalLinkKind.Website -> stringResource(R.string.external_link_website) to Icons.Filled.Language
+                    }
+                BingeLinkChip(label = label, leadingIcon = icon, onClick = { onOpen(link.url) })
+            }
         }
     }
 }
