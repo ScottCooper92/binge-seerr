@@ -30,6 +30,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.Interceptor
@@ -468,6 +469,8 @@ class SetupViewModelTest {
             vm.connect()
 
             assertEquals(SeerrVariant.Seerr, vm.awaitConnected().credentials.variant)
+            // The credentials land before the attempt reports its end, so the state can be seen a step ahead of the event.
+            advanceUntilIdle()
             blockUntilEvents(1)
             assertEquals(
                 listOf("sign_in" to mapOf("method" to "ApiKey", "success" to true)),
