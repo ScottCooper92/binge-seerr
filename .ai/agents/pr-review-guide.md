@@ -8,7 +8,7 @@ importantly, how hard to press.
 ## 1. What CI has already decided
 
 CI is green on the head under review before a review starts. That means
-`./gradlew build` compiled the Kotlin, ran the unit tests of every module (`:app:test`, `:data:test`), passed `ktlintCheck`, passed
+`./gradlew build` compiled the Kotlin, ran the unit tests of every module (`:app`, `:data` and `:core:testing`), passed `ktlintCheck`, passed
 `detekt` with zero new violations against `detekt-baseline.xml`, and passed Android
 `lint`.
 
