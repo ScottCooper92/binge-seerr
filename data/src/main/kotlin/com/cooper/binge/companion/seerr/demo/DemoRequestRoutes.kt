@@ -66,8 +66,8 @@ private fun DemoData.create(body: String): DemoAnswer {
                     profileId = asked.profileId ?: DEMO_PROFILE_ID,
                     is4k = asked.is4k,
                 )
-            // An administrator's request needs no approval, as on a real server.
-            moderate(request, "approve")
+            // An administrator's request needs no approval, as on a real server; a requester's waits for one.
+            if (!viewer) moderate(request, "approve")
             ok(SeerrRequestResultDto(request.id))
         }
     }
