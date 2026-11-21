@@ -87,7 +87,7 @@ class SiblingSheet(
     val preview: RequestPreview? = null,
     /** What the title page adds above the request's own rows: Watch, then Request in 4K. Empty from every other opener. */
     val titleRows: List<SheetTitleRow> = emptyList(),
-    val titleState: String? = null,
+    val titleState: SheetStateChip? = null,
     val titleBack: (() -> Unit)? = null,
     val scope: SheetScope = SheetScope.Both,
 )
@@ -250,7 +250,7 @@ internal fun RequestManagementSheets(
     detailLoad: SheetDetailLoad = SheetDetailLoad.Loaded,
     onRetryDetail: () -> Unit = {},
     titleRows: List<SheetTitleRow> = emptyList(),
-    titleState: String? = null,
+    titleState: SheetStateChip? = null,
     titleBack: (() -> Unit)? = null,
     scope: SheetScope = SheetScope.Both,
 ) {

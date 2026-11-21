@@ -4,10 +4,8 @@ import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Block
@@ -32,10 +30,13 @@ import androidx.compose.ui.text.style.TextOverflow
 import com.binge.designsystem.component.BingeFilledButton
 import com.binge.designsystem.component.BingeInitialsAvatar
 import com.binge.designsystem.component.BingeOutlinedButton
+import com.binge.designsystem.component.BingeTag
 import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.component.ListItemDestination
 import com.binge.designsystem.component.ListRowPoster
+import com.binge.designsystem.component.MediaTypeTag
+import com.binge.designsystem.component.StatusChip
 import com.binge.designsystem.formatRanges
 import com.binge.designsystem.formatRelativeOrAbsolute
 import com.cooper.binge.companion.seerr.R
@@ -166,7 +167,7 @@ private fun DetailLoadIndicator(
 private fun RequestSheetHeader(
     item: RequestItem,
     showRequester: Boolean,
-    titleState: String? = null,
+    titleState: SheetStateChip? = null,
     titleOnly: Boolean = false,
 ) {
     Row(
@@ -184,15 +185,22 @@ private fun RequestSheetHeader(
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
-            Text(
-                text =
-                    listOfNotNull(
-                        stringResource(item.mediaType.labelRes()),
-                        item.year,
-                    ).joinToString(stringResource(R.string.hub_meta_separator)),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                // One line, in the order of a list row's status line: the status, the kind of title, the year, then 4K where it applies.
+                if (titleState != null) {
+                    StatusChip(label = titleState.label, sentiment = titleState.sentiment)
+                } else {
+                    item.status?.let { RequestStateChip(status = it) }
+                }
+                MediaTypeTag(type = item.mediaType.toTagType())
+                item.year?.takeIf { it.isNotBlank() }?.let { year ->
+                    Text(text = year, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                if (item.is4k && !titleOnly) BingeTag(label = stringResource(R.string.settings_service_4k))
+            }
             if (showRequester) {
                 val requester = item.requestedBy ?: stringResource(R.string.requests_requester_unknown)
                 Text(
@@ -206,32 +214,6 @@ private fun RequestSheetHeader(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
-            }
-            val gap = dimensionResource(DesR.dimen.detail_cast_avatar_label_spacing)
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                if (titleOnly) {
-                    titleState?.let {
-                        Text(
-                            text = it,
-                            style = MaterialTheme.typography.labelLarge,
-                            color = MaterialTheme.colorScheme.primary,
-                        )
-                    }
-                    return@Row
-                }
-                if (titleState != null) {
-                    Text(text = titleState, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
-                } else {
-                    item.status?.let { RequestStateChip(status = it) }
-                }
-                if (item.is4k) {
-                    if (item.status != null || titleState != null) Spacer(Modifier.width(gap))
-                    Text(
-                        text = stringResource(R.string.settings_service_4k),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
             }
             if (!titleOnly && item.seasonNumbers.isNotEmpty()) {
                 Text(

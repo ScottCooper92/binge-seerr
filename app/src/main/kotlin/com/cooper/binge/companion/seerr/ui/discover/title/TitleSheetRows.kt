@@ -20,6 +20,7 @@ import com.cooper.binge.companion.seerr.discover.title.SeriesDetails
 import com.cooper.binge.companion.seerr.ui.requests.OpenTarget
 import com.cooper.binge.companion.seerr.ui.requests.ServiceKind
 import com.cooper.binge.companion.seerr.ui.requests.SheetScope
+import com.cooper.binge.companion.seerr.ui.requests.SheetStateChip
 import com.cooper.binge.companion.seerr.ui.requests.SheetTitleRow
 import com.cooper.binge.companion.seerr.ui.requests.SiblingSheet
 import com.cooper.binge.companion.seerr.ui.requests.openServiceApp
@@ -165,7 +166,7 @@ internal fun TitleManageSheet(
             onChanged = actions.onReload,
             titleBack = actions.onBackToRequests.takeIf { fromList },
             scope = scope,
-            titleState = stringResource(facts.state.labelRes()),
+            titleState = SheetStateChip(stringResource(facts.state.labelRes()), facts.state.sentiment()),
             titleRows =
                 rememberTitleSheetRows(
                     facts,

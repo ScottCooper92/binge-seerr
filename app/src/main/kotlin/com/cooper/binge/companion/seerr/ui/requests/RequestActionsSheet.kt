@@ -53,7 +53,7 @@ internal fun RequestActionsSheet(
     actionsLanded: Int? = null,
     actionsLandedNow: () -> Int? = { null },
     titleRows: List<SheetTitleRow> = emptyList(),
-    titleState: String? = null,
+    titleState: SheetStateChip? = null,
     titleBack: (() -> Unit)? = null,
     scope: SheetScope = SheetScope.Both,
 ) {
