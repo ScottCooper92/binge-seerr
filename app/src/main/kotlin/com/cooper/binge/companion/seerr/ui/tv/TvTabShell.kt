@@ -153,7 +153,12 @@ internal fun TvTabShell(
         ) {
             // Closing a layer disposes the focused node and focus parks inside the page, where a request into the group would skip its routing:
             // the host's sink takes the parked focus, so the request that follows enters the page and its own memory lands the card.
-            HandBackHost(entry = remember { FocusRequester() }, active = !sheetOpen) { content(tab) }
+            HandBackHost(
+                entry = remember { FocusRequester() },
+                active = !sheetOpen,
+                covered = topLayer != null || overlayOpen,
+                sinkOnlyWhileCovered = true,
+            ) { content(tab) }
         }
         topLayer?.let { TvShellTopLayer(topLayerCloser, it) }
         if (sheetOpen) TvShellSheet(overlayOpen = topLayer != null, closer = sheetCloser) { sheet(sheetCloser) }

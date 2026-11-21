@@ -16,10 +16,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.Dp
 import com.binge.companion.sdk.attempt
 import com.binge.designsystem.tv.focus.TvFocusSink
@@ -83,22 +85,28 @@ internal fun TvShellSheet(
 }
 
 /**
- * A surface whose focus is handed back to it, as Home does, when a page or grid above it closes.
+ * A surface whose focus is handed back to it when a page or grid above it closes (#1509). Closing parks focus on the wrong
+ * card, and a request into a group that already holds focus skips its entry routing, so a [TvFocusSink] takes the parked
+ * focus and the hand-off then enters the content's own group.
  *
- * Closing disposes the focused node, and Compose parks focus on the first focusable thing left, which is the wrong
- * card, and a request into a group that already holds focus skips its entry routing. So the surface carries a [TvFocusSink]
- * while nothing in it has focus; the sink takes the parked focus, and the hand-off then enters the content's own group,
- * where the hub's memory lands the card or tile that opened the page (#1509).
+ * With [sinkOnlyWhileCovered] the sink is there only while [covered] and until the hand-off runs, so a page with nothing
+ * focusable does not leave it as the one thing the bar's Down can reach. A hand-off that finds nothing sends focus up to the bar.
  */
 @Composable
 internal fun HandBackHost(
     entry: FocusRequester,
     active: Boolean,
     modifier: Modifier = Modifier,
+    covered: Boolean = false,
+    sinkOnlyWhileCovered: Boolean = false,
     content: @Composable () -> Unit,
 ) {
+    val focusManager = LocalFocusManager.current
     var hostHasFocus by remember { mutableStateOf(false) }
     var contentHasFocus by remember { mutableStateOf(false) }
+    var handBackOwed by remember { mutableStateOf(false) }
+    if (covered) handBackOwed = true
+    val sinkWanted = active && !contentHasFocus && (!sinkOnlyWhileCovered || handBackOwed)
     Box(modifier = modifier.fillMaxSize().onFocusChanged { hostHasFocus = it.hasFocus }.focusGroup()) {
         Box(
             modifier =
@@ -108,10 +116,14 @@ internal fun HandBackHost(
                     .focusRequester(entry)
                     .focusGroup(),
         ) { content() }
-        if (active && !contentHasFocus) TvFocusSink()
+        if (sinkWanted) TvFocusSink()
     }
     val sinkHoldsFocus = active && hostHasFocus && !contentHasFocus
     LaunchedEffect(sinkHoldsFocus) {
-        if (sinkHoldsFocus) attempt { entry.requestFocus() }
+        if (sinkHoldsFocus) {
+            val entered = attempt { entry.requestFocus() }.getOrNull() == true
+            handBackOwed = false
+            if (!entered && sinkOnlyWhileCovered) focusManager.moveFocus(FocusDirection.Up)
+        }
     }
 }

@@ -24,6 +24,8 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performKeyInput
 import androidx.compose.ui.test.pressKey
+import androidx.compose.ui.test.requestFocus
+import com.binge.designsystem.tv.focus.TvShellArrivalNone
 import com.binge.designsystem.tv.focus.tvShellArrivalTarget
 import com.binge.designsystem.tv.nav.LocalTvTopInset
 import com.binge.designsystem.tv.theme.BingeTvTheme
@@ -55,6 +57,7 @@ class TvTabShellFocusTest {
     private var sheetOpen by mutableStateOf(false)
     private var topLayerOpen by mutableStateOf(false)
     private var plainPage = false
+    private var emptyPage = false
 
     private fun setShell() {
         composeTestRule.setContent {
@@ -81,7 +84,7 @@ class TvTabShellFocusTest {
                         },
                     onCloseTopLayer = { topLayerOpen = false },
                     sheet = { Layer("sheet") },
-                ) { current -> Claiming("page-${current.name}") }
+                ) { current -> if (emptyPage) EmptyPlate() else Claiming("page-${current.name}") }
             }
         }
         composeTestRule.waitForIdle()
@@ -99,6 +102,13 @@ class TvTabShellFocusTest {
                     .tvShellArrivalTarget(claim)
                     .focusable(),
         )
+    }
+
+    /** A page with nothing focusable, as the empty plate of a server with no issues: it settles the shell's arrival and is no focus target. */
+    @Composable
+    private fun EmptyPlate() {
+        TvShellArrivalNone()
+        Box(modifier = Modifier.fillMaxSize().testTag("empty-plate"))
     }
 
     /** A sheet or a title's page is no destination, so the shell owes it no arrival: it takes focus itself, as a sheet's own page does. */
@@ -252,6 +262,47 @@ class TvTabShellFocusTest {
         )
 
         page(TvTab.Requests).assertIsFocused()
+    }
+
+    /** Nothing under the bar can take focus, so Down from the tab does nothing: focus stays on the tab, not on something unseen. */
+    @Test
+    fun downFromTheIssuesTabOnAnEmptyPageKeepsFocusOnTheTab() {
+        tab = TvTab.Issues
+        emptyPage = true
+        setShell()
+        item(R.string.hub_section_issues).requestFocus()
+        item(R.string.hub_section_issues).assertIsFocused()
+
+        press(Key.DirectionDown)
+
+        item(R.string.hub_section_issues).assertIsFocused()
+    }
+
+    @Test
+    fun downFromTheRequestsTabOnAnEmptyPageKeepsFocusOnTheTab() {
+        emptyPage = true
+        setShell()
+        item(R.string.hub_section_requests).requestFocus()
+        item(R.string.hub_section_requests).assertIsFocused()
+
+        press(Key.DirectionDown)
+
+        item(R.string.hub_section_requests).assertIsFocused()
+    }
+
+    /** A title's page closing over an empty page hands focus up to the bar, which it can still move along. */
+    @Test
+    fun aTopLayerClosingOverAnEmptyPageLeavesFocusOnTheBar() {
+        emptyPage = true
+        setShell()
+        topLayerOpen = true
+        composeTestRule.waitForIdle()
+        pressBack()
+        composeTestRule.settleShellHandOff()
+
+        item(R.string.hub_section_requests).assertIsFocused()
+        press(Key.DirectionRight)
+        item(R.string.hub_section_requests).assertIsNotFocused()
     }
 
     private fun page(tab: TvTab) = composeTestRule.onNodeWithTag("page-${tab.name}")
