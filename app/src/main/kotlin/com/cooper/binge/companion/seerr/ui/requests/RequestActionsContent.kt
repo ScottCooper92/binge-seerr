@@ -72,7 +72,7 @@ internal fun RequestActionsContent(
             model.item.requestedById?.takeIf {
                 callbacks.onOpenUser != null && canOpenUser(it, model.viewerId, model.canManageUsers)
             }
-        RequestSheetHeader(model.item, showRequester = requesterId == null)
+        RequestSheetHeader(model.item, showRequester = requesterId == null, titleState = model.titleState)
         DecisionBar(model.actions, blockTitle, model.progress, callbacks)
         val requestRows =
             listOfNotNull(requesterId?.let { id -> requesterRow(model.item) { callbacks.onOpenUser?.invoke(id) } }) +
@@ -82,21 +82,23 @@ internal fun RequestActionsContent(
                 ?.takeIf { it.canManage }
                 ?.let { mediaRows(it, model.progress, callbacks) }
                 .orEmpty()
+        val blockRows = if (model.titleRows.isNotEmpty()) blockTitleRows(model, blockTitle, onBlockTitleChange) else emptyList()
         if (model.titleRows.isNotEmpty()) {
             ItemGroup(
                 title = stringResource(R.string.request_sheet_group_title),
                 rows =
-                    model.titleRows.map { row ->
-                        if (row.external) {
-                            externalItem(
-                                row.icon,
-                                row.label,
-                                row.onClick,
-                            )
-                        } else {
-                            openItem(row.icon, row.label, onClick = row.onClick)
-                        }
-                    },
+                    blockRows +
+                        model.titleRows.map { row ->
+                            if (row.external) {
+                                externalItem(
+                                    row.icon,
+                                    row.label,
+                                    row.onClick,
+                                )
+                            } else {
+                                openItem(row.icon, row.label, onClick = row.onClick)
+                            }
+                        },
             )
         }
         if (requestRows.isNotEmpty()) ItemGroup(title = stringResource(R.string.request_sheet_group_request), rows = requestRows)
@@ -138,6 +140,7 @@ private fun DetailLoadIndicator(
 private fun RequestSheetHeader(
     item: RequestItem,
     showRequester: Boolean,
+    titleState: String? = null,
 ) {
     Row(
         horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
@@ -179,9 +182,13 @@ private fun RequestSheetHeader(
             }
             val gap = dimensionResource(DesR.dimen.detail_cast_avatar_label_spacing)
             Row(verticalAlignment = Alignment.CenterVertically) {
-                item.status?.let { RequestStateChip(status = it) }
+                if (titleState != null) {
+                    Text(text = titleState, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+                } else {
+                    item.status?.let { RequestStateChip(status = it) }
+                }
                 if (item.is4k) {
-                    if (item.status != null) Spacer(Modifier.width(gap))
+                    if (item.status != null || titleState != null) Spacer(Modifier.width(gap))
                     Text(
                         text = stringResource(R.string.settings_service_4k),
                         style = MaterialTheme.typography.labelMedium,
@@ -274,17 +281,7 @@ private fun requestRows(
         if (model.canEdit) {
             add(ListItem(icon = Icons.Filled.Edit, label = stringResource(R.string.request_edit_title), onClick = callbacks.onEdit))
         }
-        if (actions.canBlock && (actions.canDecline || actions.canRemove)) {
-            add(
-                ListItem(
-                    icon = Icons.Filled.Block,
-                    label = stringResource(R.string.request_block_title),
-                    detail = stringResource(R.string.request_block_caption),
-                    toggled = blockTitle,
-                    onClick = { onBlockTitleChange(!blockTitle) },
-                ),
-            )
-        }
+        if (model.titleRows.isEmpty()) addAll(blockTitleRows(model, blockTitle, onBlockTitleChange))
         if (actions.canRemove) add(removeRow(model.progress, blockTitle, callbacks))
     }
 }
@@ -333,3 +330,23 @@ private fun removeDetailRes(
         blockTitle -> R.string.request_remove_block_detail
         else -> R.string.request_remove_detail
     }
+
+/** Block this title, as a toggle the Decline and Remove actions read: a title-level row, which the title page puts with the title's own. */
+@Composable
+private fun blockTitleRows(
+    model: RequestSheetModel,
+    blockTitle: Boolean,
+    onBlockTitleChange: (Boolean) -> Unit,
+): List<ListItem> {
+    val actions = model.actions
+    if (!(actions.canBlock && (actions.canDecline || actions.canRemove))) return emptyList()
+    return listOf(
+        ListItem(
+            icon = Icons.Filled.Block,
+            label = stringResource(R.string.request_block_title),
+            detail = stringResource(R.string.request_block_caption),
+            toggled = blockTitle,
+            onClick = { onBlockTitleChange(!blockTitle) },
+        ),
+    )
+}

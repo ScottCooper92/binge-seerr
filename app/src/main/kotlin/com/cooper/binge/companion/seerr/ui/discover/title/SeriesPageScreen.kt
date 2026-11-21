@@ -85,7 +85,7 @@ private fun ReadySeriesPage(
     val series = state.series
     val context = LocalContext.current
     val model = seriesDetailModel(state, actions)
-    val servicesContent = rememberServicesContent(series.requests.toManage()?.id, TitleKind.Series, series.tmdbId)
+    val servicesContent = rememberServicesContent(series.requests, TitleKind.Series, series.tmdbId)
     val episodes = seriesEpisodes(state)
     val actionsModel = titleActionsModel(series.standard, series.fourK, series.requests, series.mayReport, series.mayBlock)
     SeriesDetailScreen(
@@ -158,6 +158,8 @@ private fun SeriesOverlays(
             remainingOpen = state.series.standard.mayRequest,
             onRequestFourK = actions.onRequestFourK,
             onRequestRemaining = actions.onRequestRemaining,
+            requestCount = state.series.requests.size,
+            onOpenRequests = actions.onOpenRequests,
             onDismiss = actions.onCloseStatus,
             onUnblock = actions.onUnblock.takeIf { state.series.mayUnblock },
         )
@@ -167,8 +169,15 @@ private fun SeriesOverlays(
     state.manageRequestId?.let { requestId ->
         TitleManageSheet(requestId, state.manageSheetOpen, snackbar, series.sheetFacts(), actions)
     }
-    val servicesContent = rememberServicesContent(series.requests.toManage()?.id, TitleKind.Series, series.tmdbId)
-    TitleRequestsAndServices(state.requestsSheetOpen, state.serviceSheetOpen, series.requests, servicesContent, series.mediaServerName, actions)
+    val servicesContent = rememberServicesContent(series.requests, TitleKind.Series, series.tmdbId)
+    TitleRequestsAndServices(
+        state.requestsSheetOpen,
+        state.serviceSheetOpen,
+        series.requests,
+        servicesContent,
+        series.mediaServerName,
+        actions,
+    )
 }
 
 /** What the loaded page is expected to show before it arrives: a rating, a year and the episodes or the certification. */

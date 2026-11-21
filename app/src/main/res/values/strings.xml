@@ -1744,4 +1744,5 @@
     <string name="title_request_row">Request %1$d</string>
     <string name="services_plays">Plays</string>
     <string name="services_watched_by">Watched by</string>
+    <string name="services_standard">Standard</string>
 </resources>

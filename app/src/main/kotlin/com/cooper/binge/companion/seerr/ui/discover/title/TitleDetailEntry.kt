@@ -1,13 +1,13 @@
 package com.cooper.binge.companion.seerr.ui.discover.title
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -51,9 +51,29 @@ internal fun TitleDetailEntry(
     onOpenServices: () -> Unit,
 ) {
     when (kind) {
-        TitleKind.Movie -> FilmPageEntry(tmdbId, openRequest, onBack, onOpenCredits, onOpenCompany, onOpenKeyword, onOpenUser, onOpenServices)
+        TitleKind.Movie ->
+            FilmPageEntry(
+                tmdbId,
+                openRequest,
+                onBack,
+                onOpenCredits,
+                onOpenCompany,
+                onOpenKeyword,
+                onOpenUser,
+                onOpenServices,
+            )
         TitleKind.Series ->
-            SeriesPageEntry(tmdbId, openRequest, onBack, onOpenCredits, onOpenSeason, onOpenCompany, onOpenKeyword, onOpenUser, onOpenServices)
+            SeriesPageEntry(
+                tmdbId,
+                openRequest,
+                onBack,
+                onOpenCredits,
+                onOpenSeason,
+                onOpenCompany,
+                onOpenKeyword,
+                onOpenUser,
+                onOpenServices,
+            )
         else -> EmptyScreen(message = "")
     }
 }
@@ -83,7 +103,14 @@ private fun FilmPageEntry(
                 onOpenKeyword = onOpenKeyword,
                 onRetry = viewModel::load,
                 onRequest = viewModel::onPrimary,
-                requestsSheet = RequestsSheetWiring({ viewModel.setRequestsSheetOpen(true) }, { viewModel.setRequestsSheetOpen(false) }, viewModel::openRequest, { viewModel.setServiceSheetOpen(true) }, { viewModel.setServiceSheetOpen(false) }),
+                requestsSheet =
+                    RequestsSheetWiring({
+                        viewModel.setRequestsSheetOpen(true)
+                    }, {
+                        viewModel.setRequestsSheetOpen(false)
+                    }, {
+                        viewModel.backFromRequests()
+                    }, viewModel::openRequest, { viewModel.setServiceSheetOpen(true) }, { viewModel.setServiceSheetOpen(false) }),
                 onCloseRequest = viewModel::closeRequestSheet,
                 onRequested = viewModel::requested,
                 onReload = viewModel::reload,
@@ -140,7 +167,14 @@ private fun SeriesPageEntry(
                 onOpenKeyword = onOpenKeyword,
                 onRetry = viewModel::load,
                 onRequest = viewModel::onPrimary,
-                requestsSheet = RequestsSheetWiring({ viewModel.setRequestsSheetOpen(true) }, { viewModel.setRequestsSheetOpen(false) }, viewModel::openRequest, { viewModel.setServiceSheetOpen(true) }, { viewModel.setServiceSheetOpen(false) }),
+                requestsSheet =
+                    RequestsSheetWiring({
+                        viewModel.setRequestsSheetOpen(true)
+                    }, {
+                        viewModel.setRequestsSheetOpen(false)
+                    }, {
+                        viewModel.backFromRequests()
+                    }, viewModel::openRequest, { viewModel.setServiceSheetOpen(true) }, { viewModel.setServiceSheetOpen(false) }),
                 onCloseRequest = viewModel::closeRequestSheet,
                 onRequested = viewModel::requested,
                 onReload = viewModel::reload,
@@ -220,6 +254,7 @@ private fun rememberTitlePageActions(
         onCloseReport = side.onClose,
         onOpenRequests = requestsSheet.onOpenRequests,
         onCloseRequests = requestsSheet.onCloseRequests,
+        onBackFromRequests = requestsSheet.onBackFromRequests,
         onPickRequest = requestsSheet.onPick,
         onOpenServiceInfo = requestsSheet.onOpenServices,
         onCloseServiceInfo = requestsSheet.onCloseServices,
@@ -270,6 +305,7 @@ private fun OpenRequestOnce(
 private class RequestsSheetWiring(
     val onOpenRequests: () -> Unit,
     val onCloseRequests: () -> Unit,
+    val onBackFromRequests: () -> Unit,
     val onPick: (Int) -> Unit,
     val onOpenServices: () -> Unit,
     val onCloseServices: () -> Unit,

@@ -87,6 +87,7 @@ class SiblingSheet(
     val preview: RequestPreview? = null,
     /** What the title page adds above the request's own rows: Watch, then Request in 4K. Empty from every other opener. */
     val titleRows: List<SheetTitleRow> = emptyList(),
+    val titleState: String? = null,
 )
 
 /** One row the title page adds to a request's sheet. An [external] row leaves the app, and any other opens something in it. */
@@ -247,6 +248,7 @@ internal fun RequestManagementSheets(
     detailLoad: SheetDetailLoad = SheetDetailLoad.Loaded,
     onRetryDetail: () -> Unit = {},
     titleRows: List<SheetTitleRow> = emptyList(),
+    titleState: String? = null,
 ) {
     val detail = state?.detail
     // Which instance the status sheet is marking, keyed by is4k because that is what tells the
@@ -293,6 +295,7 @@ internal fun RequestManagementSheets(
             actionsLanded = state?.actionsLanded,
             actionsLandedNow = actions.actionsLandedNow,
             titleRows = titleRows,
+            titleState = titleState,
         )
     }
     state?.edit?.takeUnless { editsInActions }?.let { edit ->

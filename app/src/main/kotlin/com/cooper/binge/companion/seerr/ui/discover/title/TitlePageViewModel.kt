@@ -153,6 +153,8 @@ class TitlePageViewModel
         /** A request's sheet was asked for from outside the page, as the Requests list does: open it on that request. */
         fun openRequest(id: Int) = updateReady { it.copy(manageRequestId = id, manageSheetOpen = true, requestsSheetOpen = false) }
 
+        fun backFromRequests() = updateReady { it.copy(requestsSheetOpen = false, statusSheetOpen = true) }
+
         fun setRequestsSheetOpen(open: Boolean) = updateReady { it.copy(requestsSheetOpen = open) }
 
         fun setServiceSheetOpen(open: Boolean) = updateReady { it.copy(serviceSheetOpen = open) }

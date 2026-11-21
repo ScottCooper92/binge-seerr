@@ -10,6 +10,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.platform.LocalResources
+import androidx.compose.ui.res.stringResource
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.title.MovieDetails
 import com.cooper.binge.companion.seerr.discover.title.SeriesDetails
@@ -47,7 +48,16 @@ internal fun rememberTitleSheetRows(
     val openRequests by rememberUpdatedState(onOpenRequests)
     val bingeAnswers = onWatchInBinge != null
     val openInBinge: () -> Unit = { watchInBinge?.invoke() }
-    return remember(facts.state, facts.watchUrl, facts.mediaServerName, facts.fourKOpen, facts.remainingOpen, facts.requests.size, bingeAnswers, resources) {
+    return remember(
+        facts.state,
+        facts.watchUrl,
+        facts.mediaServerName,
+        facts.fourKOpen,
+        facts.remainingOpen,
+        facts.requests.size,
+        bingeAnswers,
+        resources,
+    ) {
         val watchRows =
             titleWatchRows(
                 facts.state,
@@ -64,7 +74,7 @@ internal fun rememberTitleSheetRows(
                     resources.getString(R.string.title_sheet_request_remaining),
                     external = false,
                     onClick = { requestRemaining() },
-                ).takeIf { facts.remainingOpen && facts.state.isInLibrary() },
+                ).takeIf { facts.remainingOpen },
                 SheetTitleRow(
                     Icons.Filled.Add,
                     resources.getString(R.string.request_sheet_submit_4k),
@@ -97,6 +107,7 @@ internal fun TitleManageSheet(
             snackbarHostState = snackbar,
             onDismiss = actions.onCloseManage,
             onChanged = actions.onReload,
+            titleState = stringResource(facts.state.labelRes()),
             titleRows =
                 rememberTitleSheetRows(
                     facts,

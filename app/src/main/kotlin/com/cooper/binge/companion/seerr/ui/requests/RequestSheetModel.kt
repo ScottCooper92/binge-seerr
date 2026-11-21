@@ -18,6 +18,8 @@ internal class RequestSheetModel(
     val detailLoad: SheetDetailLoad = SheetDetailLoad.Loaded,
     val progress: ActionProgress? = null,
     val titleRows: List<SheetTitleRow> = emptyList(),
+    /** The title's combined state in words, which the sheet's header says in place of this one request's status; null from every other opener. */
+    val titleState: String? = null,
 )
 
 /**

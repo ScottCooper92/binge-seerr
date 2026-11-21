@@ -41,7 +41,13 @@ internal fun RequestDetailEntry(
     val loaded = state as? RequestDetailUiState.Ready
     if (toTitle != null && loaded != null) {
         // The request is a sheet over its title now: this page only reads which title, and hands over to it.
-        LaunchedEffect(requestId) { toTitle(loaded.detail.item.mediaType.toTitleKind(), loaded.detail.item.tmdbId) }
+        LaunchedEffect(requestId) {
+            toTitle(
+                loaded.detail.item.mediaType
+                    .toTitleKind(),
+                loaded.detail.item.tmdbId,
+            )
+        }
         return
     }
     DisposableEffect(viewModel) {
@@ -112,6 +118,7 @@ internal fun SiblingRequestSheet(
             detailLoad = page.sheetDetailLoad(),
             onRetryDetail = viewModel::reload,
             titleRows = sheet.titleRows,
+            titleState = sheet.titleState,
         )
     } else if (sheet.open) {
         RequestSheetPlaceholder(state = page, onRetry = viewModel::reload, onDismiss = sheet.onDismiss)

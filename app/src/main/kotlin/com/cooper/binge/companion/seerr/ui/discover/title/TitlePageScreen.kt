@@ -16,12 +16,12 @@ import com.binge.designsystem.template.MediaDetailCallbacks
 import com.binge.designsystem.template.MovieDetailScreen
 import com.binge.designsystem.template.readingMargin
 import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.TitleResult
 import com.cooper.binge.companion.seerr.discover.title.TitleCompany
 import com.cooper.binge.companion.seerr.discover.title.TitleKeyword
 import com.cooper.binge.companion.seerr.discover.title.trailerUrl
 import com.cooper.binge.companion.seerr.ui.discover.links.ExternalLinksSection
-import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.ui.discover.request.RequestSheet
 import com.cooper.binge.companion.seerr.ui.discover.request.RequestSheetTarget
 import com.cooper.binge.companion.seerr.ui.discover.request.messageRes
@@ -71,6 +71,8 @@ class TitlePageActions(
     /** The list of requests, opened from a row of the title's sheet where there are several, and closed. */
     val onOpenRequests: () -> Unit = {},
     val onCloseRequests: () -> Unit = {},
+    /** Back from the requests list to the title's own sheet. */
+    val onBackFromRequests: () -> Unit = {},
     /** A request picked from that list: its sheet opens. */
     val onPickRequest: (Int) -> Unit = {},
     /** The services sheet's action in the page's round actions; null where the title has no request or link to show. */
@@ -149,7 +151,7 @@ private fun ReadyPage(
     val movie = state.movie
     val context = LocalContext.current
     val model = movieDetailModel(state, actions)
-    val servicesContent = rememberServicesContent(movie.requests.toManage()?.id, TitleKind.Movie, movie.tmdbId)
+    val servicesContent = rememberServicesContent(movie.requests, TitleKind.Movie, movie.tmdbId)
     val actionsModel = titleActionsModel(movie.standard, movie.fourK, movie.requests, movie.mayReport, movie.mayBlock)
     MovieDetailScreen(
         state = DetailState.Content(model.detail),
@@ -211,6 +213,8 @@ private fun MovieOverlays(
             remainingOpen = false,
             onRequestFourK = actions.onRequestFourK,
             onRequestRemaining = actions.onRequestRemaining,
+            requestCount = movie.requests.size,
+            onOpenRequests = actions.onOpenRequests,
             onDismiss = actions.onCloseStatus,
             onUnblock = actions.onUnblock.takeIf { movie.mayUnblock },
         )
@@ -220,6 +224,13 @@ private fun MovieOverlays(
     state.manageRequestId?.let { requestId ->
         TitleManageSheet(requestId, state.manageSheetOpen, snackbar, movie.sheetFacts(), actions)
     }
-    val servicesContent = rememberServicesContent(movie.requests.toManage()?.id, TitleKind.Movie, movie.tmdbId)
-    TitleRequestsAndServices(state.requestsSheetOpen, state.serviceSheetOpen, movie.requests, servicesContent, movie.mediaServerName, actions)
+    val servicesContent = rememberServicesContent(movie.requests, TitleKind.Movie, movie.tmdbId)
+    TitleRequestsAndServices(
+        state.requestsSheetOpen,
+        state.serviceSheetOpen,
+        movie.requests,
+        servicesContent,
+        movie.mediaServerName,
+        actions,
+    )
 }

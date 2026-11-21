@@ -10,7 +10,6 @@ import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.component.ListItemDestination
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.seerr.SeerrMediaStatusCode
-import com.cooper.binge.companion.seerr.seerr.hasFiles
 import com.cooper.binge.companion.seerr.ui.state.DownloadActivity
 import com.cooper.binge.companion.seerr.ui.state.MediaStateChip
 import com.cooper.binge.companion.seerr.ui.state.labelRes
@@ -36,9 +35,14 @@ internal fun mediaRows(
         // Every picker comes before the first delete, so the destructive rows run together at the end.
         if (media.canDeleteFiles) {
             // A deletion's result stays in place: the row that ran it says how it went, and offers it no more.
-            media.instances.filter { it.filesDeletion != null || it.status.hasFiles() }.forEach { instance ->
-                add(deleteFilesRow(instance, media, client, callbacks))
-            }
+            media.instances
+                .filter {
+                    it.filesDeletion != null ||
+                        it.status == SeerrMediaStatusCode.Available ||
+                        it.status == SeerrMediaStatusCode.PartiallyAvailable
+                }.forEach { instance ->
+                    add(deleteFilesRow(instance, media, client, callbacks))
+                }
         }
         if (media.canClearData) {
             add(

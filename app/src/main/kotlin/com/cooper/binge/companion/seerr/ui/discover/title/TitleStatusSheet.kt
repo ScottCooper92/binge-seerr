@@ -4,6 +4,7 @@ import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ListAlt
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.LockOpen
 import androidx.compose.material.icons.filled.PlayArrow
@@ -21,6 +22,7 @@ import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.state.ActionSheetGroup
 import com.cooper.binge.companion.seerr.ui.state.actionItem
 import com.cooper.binge.companion.seerr.ui.state.externalItem
+import com.cooper.binge.companion.seerr.ui.state.openItem
 import com.binge.designsystem.R as DesR
 
 /**
@@ -41,6 +43,8 @@ internal fun TitleStatusSheet(
     remainingOpen: Boolean = false,
     onRequestFourK: () -> Unit = {},
     onRequestRemaining: () -> Unit = {},
+    requestCount: Int = 0,
+    onOpenRequests: () -> Unit = {},
 ) {
     BingeAdaptiveSheet(kind = BingeSheetKind.Menu, onDismissRequest = onDismiss) {
         TitleStatusSheetContent(
@@ -64,6 +68,11 @@ internal fun TitleStatusSheet(
             remainingOpen = remainingOpen,
             onRequestFourK = onRequestFourK,
             onRequestRemaining = onRequestRemaining,
+            requestCount = requestCount,
+            onOpenRequests = {
+                onDismiss()
+                onOpenRequests()
+            },
         )
     }
 }
@@ -83,14 +92,21 @@ internal fun TitleStatusSheetContent(
     remainingOpen: Boolean = false,
     onRequestFourK: () -> Unit = {},
     onRequestRemaining: () -> Unit = {},
+    requestCount: Int = 0,
+    onOpenRequests: () -> Unit = {},
 ) {
     val watchRows = titleWatchRows(state, watchUrl, mediaServerName, onWatchInBinge, onWatch, LocalResources.current)
     val requestRows =
         listOfNotNull(
             actionItem(Icons.Filled.Add, stringResource(R.string.title_sheet_request_remaining), onClick = onRequestRemaining)
-                .takeIf { state.isInLibrary() && remainingOpen },
+                .takeIf { remainingOpen },
             actionItem(Icons.Filled.Add, stringResource(R.string.request_sheet_submit_4k), onClick = onRequestFourK)
                 .takeIf { state.isInLibrary() && fourKOpen },
+            openItem(
+                Icons.AutoMirrored.Filled.ListAlt,
+                stringResource(R.string.title_sheet_requests, requestCount),
+                onClick = onOpenRequests,
+            ).takeIf { requestCount > 1 },
         )
     if (watchRows.isNotEmpty() || requestRows.isNotEmpty()) {
         ActionSheetGroup(
