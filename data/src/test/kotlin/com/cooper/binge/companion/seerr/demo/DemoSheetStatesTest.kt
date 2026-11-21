@@ -6,6 +6,7 @@ import com.cooper.binge.companion.seerr.seerr.SeerrApi
 import com.cooper.binge.companion.seerr.seerr.SeerrApiFactory
 import com.cooper.binge.companion.seerr.seerr.SeerrIssueStatusCode
 import com.cooper.binge.companion.seerr.seerr.SeerrMediaStatusCode
+import com.cooper.binge.companion.seerr.seerr.SeerrRequestBody
 import com.cooper.binge.companion.seerr.seerr.SeerrRequestStatusCode
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -210,6 +211,23 @@ class DemoSheetStatesTest {
         }
 
     @Test
+    fun `a request made while viewing as a requester waits for approval and the administrator's does not`() =
+        demo { api ->
+            apis.viewDemoAs(true)
+
+            val asked = api.requestMedia(SeerrRequestBody("movie", ELEPHANTS_DREAM)).body()!!
+
+            val waiting = api.request(checkNotNull(asked.id))
+            assertEquals(SeerrRequestStatusCode.Pending, waiting.status)
+            assertTrue(waiting.media.downloadStatus.isEmpty())
+
+            apis.viewDemoAs(false)
+            val made = api.requestMedia(SeerrRequestBody("movie", INCEPTION)).body()!!
+
+            assertEquals(SeerrRequestStatusCode.Approved, api.request(checkNotNull(made.id)).status)
+        }
+
+    @Test
     fun `resetting the demo goes back to the administrator`() =
         demo { api ->
             apis.viewDemoAs(true)
@@ -222,6 +240,7 @@ class DemoSheetStatesTest {
 
     private companion object {
         const val ELEPHANTS_DREAM = 900_001
+        const val INCEPTION = 27205
         const val CAMINANDES = 900_002
         const val DUNE = 900_003
         const val SINTEL = 45745
