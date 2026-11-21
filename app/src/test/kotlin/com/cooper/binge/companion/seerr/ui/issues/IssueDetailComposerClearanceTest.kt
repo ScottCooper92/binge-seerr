@@ -1,9 +1,12 @@
 package com.cooper.binge.companion.seerr.ui.issues
 
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.test.getBoundsInRoot
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipe
 import com.cooper.binge.companion.seerr.theme.SeerrTheme
 import com.cooper.binge.companion.seerr.util.createSeerrComposeRule
 import kotlinx.coroutines.flow.emptyFlow
@@ -41,7 +44,10 @@ class IssueDetailComposerClearanceTest {
             }
         }
         val last = rule.onNodeWithText("Reply number $REPLIES")
-        last.performScrollTo()
+        // To the end of the thread: scrolling the reply into view would stop at the screen's edge, which is under the card.
+        repeat(SWIPES) {
+            rule.onRoot().performTouchInput { swipe(Offset(centerX, height * SWIPE_START), Offset(centerX, 0f)) }
+        }
         rule.waitForIdle()
 
         val lastBottom = last.getBoundsInRoot().bottom
@@ -62,6 +68,8 @@ class IssueDetailComposerClearanceTest {
 
     private companion object {
         const val REPLIES = 12
+        const val SWIPES = 10
+        const val SWIPE_START = 0.4f
         const val FIRST_REPLY_ID = 200
     }
 }
