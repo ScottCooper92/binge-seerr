@@ -97,6 +97,7 @@ fun HubScreen(
         title = ready?.server?.title ?: stringResource(R.string.companion_name),
         // With discovery on the account is this page's, as Settings is the avatar tab, so its action stays in a small bar.
         bar = if (discovery) ScreenBar.Small else ScreenBar.Large,
+        pinned = discovery,
         scrollBehavior = scrollBehavior.takeUnless { discovery },
         titleTrailing = account?.takeUnless { discovery }?.let { { AccountAction(it, ready.overview.quota, actions, pillInteractive) } },
         actions = {
