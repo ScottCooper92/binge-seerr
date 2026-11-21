@@ -2,8 +2,8 @@ package com.cooper.binge.companion.seerr.ui.discover.title
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.Dns
@@ -13,7 +13,10 @@ import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.runtime.Composable
+import android.content.Context
+import android.content.Intent
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
@@ -27,7 +30,10 @@ import com.binge.designsystem.component.ListItem
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.title.TitleRequest
+import com.cooper.binge.companion.seerr.ui.requests.DetailDownload
 import com.cooper.binge.companion.seerr.ui.requests.OpenTarget
+import com.cooper.binge.companion.seerr.ui.requests.SeasonState
+import com.cooper.binge.companion.seerr.ui.requests.WatchStats
 import com.cooper.binge.companion.seerr.ui.requests.RequestDetail
 import com.cooper.binge.companion.seerr.ui.requests.RequestDetailUiState
 import com.cooper.binge.companion.seerr.ui.requests.RequestDetailViewModel
@@ -38,6 +44,7 @@ import com.cooper.binge.companion.seerr.ui.requests.mediaServerBaseUrl
 import com.cooper.binge.companion.seerr.ui.requests.openServiceApp
 import com.cooper.binge.companion.seerr.ui.requests.openTarget
 import com.cooper.binge.companion.seerr.ui.requests.serviceApps
+import com.cooper.binge.companion.seerr.ui.state.externalItem
 import com.cooper.binge.companion.seerr.ui.state.formatFileSize
 import com.cooper.binge.companion.seerr.ui.openInBrowser
 import com.binge.designsystem.R as DesR
@@ -48,12 +55,12 @@ internal fun TitleRequestsAndServices(
     requestsOpen: Boolean,
     servicesOpen: Boolean,
     requests: List<TitleRequest>,
-    tmdbId: Int,
-    kind: TitleKind,
+    servicesContent: List<ServiceGroup>,
+    mediaServerName: String?,
     actions: TitlePageActions,
 ) {
     if (requestsOpen) TitleRequestsSheet(requests, actions.onPickRequest, actions.onCloseRequests)
-    if (servicesOpen) requests.toManage()?.let { TitleServicesSheet(it.id, tmdbId, kind, actions.onCloseServiceInfo) }
+    if (servicesOpen) TitleServicesSheet(servicesContent, mediaServerName, actions.onCloseServiceInfo)
 }
 
 /** One row per request on the title: who made it, which version, where it stands. A row opens that request's sheet. */
@@ -81,97 +88,56 @@ internal fun TitleRequestsSheet(
     }
 }
 
+/** One line of a services group, before it is drawn: what the sheet shows and what decides whether the Services action shows. */
+internal sealed interface ServiceRow {
+    data class Destination(
+        val label: String,
+        val folder: String?,
+    ) : ServiceRow
+
+    data class Download(
+        val download: DetailDownload,
+    ) : ServiceRow
+
+    data class Season(
+        val season: SeasonState,
+    ) : ServiceRow
+
+    data class Watch(
+        val stats: WatchStats,
+    ) : ServiceRow
+
+    data class Open(
+        val target: OpenTarget,
+    ) : ServiceRow
+}
+
+/** Radarr or Sonarr, or the media server, with the rows it has. A group with no rows is never made. */
+internal class ServiceGroup(
+    val kind: ServiceKind,
+    val rows: List<ServiceRow>,
+)
+
 /**
- * The services behind the title, read from the newest request's own page: Radarr or Sonarr with where it was sent, what is downloading
- * and the seasons, and the media server with its watch stats, each with the Open that suits it.
+ * What the Services sheet shows for a title, from its newest request's page: the groups that have a row. The page asks the same
+ * function whether the Services action is there at all, so the action and the sheet cannot disagree.
  */
-@Composable
-internal fun TitleServicesSheet(
-    requestId: Int,
+internal fun servicesContent(
+    detail: RequestDetail?,
+    kind: TitleKind,
     tmdbId: Int,
-    kind: TitleKind,
-    onDismiss: () -> Unit,
-) {
-    val viewModel =
-        hiltViewModel<RequestDetailViewModel, RequestDetailViewModel.Factory>(
-            key = "request-detail-$requestId",
-            creationCallback = { factory -> factory.create(requestId) },
-        )
-    val state by viewModel.uiState.collectAsStateWithLifecycle()
-    val detail = (state as? RequestDetailUiState.Ready)?.detail
-    BingeAdaptiveSheet(kind = BingeSheetKind.Menu, onDismissRequest = onDismiss) {
-        Column(Modifier.verticalScroll(rememberScrollState()).padding(bottom = dimensionResource(DesR.dimen.padding_l))) {
-            if (detail == null) {
-                ItemGroup(title = stringResource(R.string.title_page_action_services), rows = emptyList())
-            } else {
-                ArrServiceGroup(detail, kind)
-                MediaServerGroup(detail, tmdbId, kind)
-            }
-        }
-    }
-}
-
-@Composable
-private fun ArrServiceGroup(
-    detail: RequestDetail,
-    kind: TitleKind,
-) {
-    val context = LocalContext.current
-    val isTv = kind == TitleKind.Series
-    val name = stringResource(if (isTv) R.string.media_client_sonarr else R.string.media_client_radarr)
-    val rows = mutableListOf<ListItem>()
-    detail.destination?.let { destination ->
-        rows += ListItem(
-            icon = Icons.Filled.Dns,
-            label = listOfNotNull(destination.serverName, destination.profileName).joinToString(" · ").ifBlank { name },
-            detail = destination.rootFolder,
-        )
-    }
-    detail.downloads.forEach { download ->
-        rows += ListItem(
-            icon = Icons.Filled.Download,
-            label = download.title ?: stringResource(R.string.request_downloads),
-            detail =
-                listOfNotNull(
-                    "${(download.fraction * PERCENT).toInt()}%",
-                    download.totalBytes?.let(::formatFileSize),
-                    download.etaMinutes?.let { "~$it min" },
-                ).joinToString(" · "),
-        )
-    }
-    detail.seasons.forEach { season ->
-        rows += ListItem(
-            icon = Icons.Filled.Movie,
-            label = season.name ?: stringResource(R.string.request_season_number, season.number),
-            detail = season.status?.toString(),
-        )
-    }
-    val target = (if (isTv) ServiceKind.Sonarr else ServiceKind.Radarr).openTarget(ServiceItem(), detail.serviceUrl, serviceApps()) { false }
-    (target as? OpenTarget.Web)?.let { web ->
-        rows += ListItem(icon = Icons.AutoMirrored.Filled.OpenInNew, label = stringResource(R.string.open_in_named, name), onClick = { context.openInBrowser(web.url) })
-    }
-    if (rows.isNotEmpty()) ItemGroup(title = name, rows = rows)
-}
-
-@Composable
-private fun MediaServerGroup(
-    detail: RequestDetail,
-    tmdbId: Int,
-    kind: TitleKind,
-) {
-    val context = LocalContext.current
-    val serverName = detail.mediaServerName ?: return
-    val rows = mutableListOf<ListItem>()
-    detail.media?.instances?.firstNotNullOfOrNull { it.watch }?.let { watch ->
-        rows += ListItem(
-            icon = Icons.Filled.Visibility,
-            label = stringResource(R.string.services_plays),
-            detail = "${watch.playCount} · 7d ${watch.playCount7Days} · 30d ${watch.playCount30Days}",
-        )
-        if (watch.users.isNotEmpty()) {
-            rows += ListItem(icon = Icons.Filled.Group, label = stringResource(R.string.services_watched_by), detail = watch.users.joinToString(", "))
-        }
-    }
+    resolves: (Intent) -> Boolean,
+): List<ServiceGroup> {
+    detail ?: return emptyList()
+    val arrKind = if (kind == TitleKind.Series) ServiceKind.Sonarr else ServiceKind.Radarr
+    val arrRows =
+        listOfNotNull(
+            detail.destination?.let { ServiceRow.Destination(listOfNotNull(it.serverName, it.profileName).joinToString(" · "), it.rootFolder) }
+                ?.takeIf { it.label.isNotBlank() },
+        ) +
+            detail.downloads.map { ServiceRow.Download(it) } +
+            detail.seasons.map { ServiceRow.Season(it) } +
+            listOfNotNull(arrKind.openTarget(ServiceItem(), detail.serviceUrl, serviceApps()) { false }?.let { ServiceRow.Open(it) })
     val item =
         ServiceItem(
             serverUrl = mediaServerBaseUrl(detail.mediaServerUrl),
@@ -179,15 +145,112 @@ private fun MediaServerGroup(
             tmdbType = if (kind == TitleKind.Series) "tv" else "movie",
             tmdbId = tmdbId,
         )
-    val target = ServiceKind.Jellyfin.openTarget(item, detail.mediaServerUrl, serviceApps()) { context.canResolve(it) }
-    when (target) {
-        is OpenTarget.App ->
-            rows += ListItem(icon = Icons.Filled.PlayArrow, label = stringResource(R.string.open_in_named, target.app.name), onClick = { context.openServiceApp(target) })
-        is OpenTarget.Web ->
-            rows += ListItem(icon = Icons.AutoMirrored.Filled.OpenInNew, label = stringResource(R.string.open_in_named, serverName), onClick = { context.openInBrowser(target.url) })
-        null -> Unit
-    }
-    if (rows.isNotEmpty()) ItemGroup(title = serverName, rows = rows)
+    val serverRows =
+        listOfNotNull(
+            detail.media?.instances?.firstNotNullOfOrNull { it.watch }?.let { ServiceRow.Watch(it) },
+            ServiceKind.Jellyfin.openTarget(item, detail.mediaServerUrl, serviceApps(), resolves)?.let { ServiceRow.Open(it) },
+        )
+    return listOfNotNull(
+        ServiceGroup(arrKind, arrRows).takeIf { arrRows.isNotEmpty() },
+        ServiceGroup(ServiceKind.Jellyfin, serverRows).takeIf { serverRows.isNotEmpty() },
+    )
 }
+
+/**
+ * The newest request's page, read through the view model its sheet shares, as the groups the Services sheet would show. Empty while
+ * it loads, and where the title has no request. The page's Services action and the sheet both read this.
+ */
+@Composable
+internal fun rememberServicesContent(
+    requestId: Int?,
+    kind: TitleKind,
+    tmdbId: Int,
+): List<ServiceGroup> {
+    requestId ?: return emptyList()
+    val context = LocalContext.current
+    val viewModel =
+        hiltViewModel<RequestDetailViewModel, RequestDetailViewModel.Factory>(
+            key = "request-detail-$requestId",
+            creationCallback = { factory -> factory.create(requestId) },
+        )
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val detail = (state as? RequestDetailUiState.Ready)?.detail
+    return remember(detail, kind, tmdbId) { servicesContent(detail, kind, tmdbId) { context.canResolve(it) } }
+}
+
+@Composable
+internal fun TitleServicesSheet(
+    groups: List<ServiceGroup>,
+    mediaServerName: String?,
+    onDismiss: () -> Unit,
+) {
+    val context = LocalContext.current
+    BingeAdaptiveSheet(kind = BingeSheetKind.Menu, onDismissRequest = onDismiss) {
+        Column(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = dimensionResource(DesR.dimen.padding_m))
+                    .padding(bottom = dimensionResource(DesR.dimen.padding_l)),
+            verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
+        ) {
+            groups.forEach { group ->
+                val name =
+                    when (group.kind) {
+                        ServiceKind.Radarr -> stringResource(R.string.media_client_radarr)
+                        ServiceKind.Sonarr -> stringResource(R.string.media_client_sonarr)
+                        else -> mediaServerName ?: stringResource(R.string.request_open_media_server)
+                    }
+                ItemGroup(title = name, rows = group.rows.map { row -> serviceListItem(row, name, context) })
+            }
+        }
+    }
+}
+
+@Composable
+private fun serviceListItem(
+    row: ServiceRow,
+    serviceName: String,
+    context: Context,
+): ListItem =
+    when (row) {
+        is ServiceRow.Destination -> ListItem(icon = Icons.Filled.Dns, label = row.label, detail = row.folder)
+        is ServiceRow.Download ->
+            ListItem(
+                icon = Icons.Filled.Download,
+                label = row.download.title ?: stringResource(R.string.request_downloads),
+                detail =
+                    listOfNotNull(
+                        "${(row.download.fraction * PERCENT).toInt()}%",
+                        row.download.totalBytes?.let(::formatFileSize),
+                        row.download.etaMinutes?.let { "~$it min" },
+                    ).joinToString(" · "),
+            )
+        is ServiceRow.Season ->
+            ListItem(
+                icon = Icons.Filled.Movie,
+                label = row.season.name ?: stringResource(R.string.request_season_number, row.season.number),
+                detail = row.season.status?.toString(),
+            )
+        is ServiceRow.Watch ->
+            ListItem(
+                icon = Icons.Filled.Visibility,
+                label = stringResource(R.string.services_plays),
+                detail =
+                    "${row.stats.playCount} · 7d ${row.stats.playCount7Days} · 30d ${row.stats.playCount30Days}" +
+                        row.stats.users.takeIf { it.isNotEmpty() }?.let { " · " + it.joinToString(", ") }.orEmpty(),
+            )
+        is ServiceRow.Open ->
+            when (val target = row.target) {
+                is OpenTarget.App ->
+                    externalItem(Icons.Filled.PlayArrow, stringResource(R.string.open_in_named, target.app.name)) {
+                        context.openServiceApp(target)
+                    }
+                is OpenTarget.Web ->
+                    externalItem(Icons.AutoMirrored.Filled.OpenInNew, stringResource(R.string.open_in_named, serviceName)) {
+                        context.openInBrowser(target.url)
+                    }
+            }
+    }
 
 private const val PERCENT = 100

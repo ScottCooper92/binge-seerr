@@ -85,6 +85,7 @@ private fun ReadySeriesPage(
     val series = state.series
     val context = LocalContext.current
     val model = seriesDetailModel(state, actions)
+    val servicesContent = rememberServicesContent(series.requests.toManage()?.id, TitleKind.Series, series.tmdbId)
     val episodes = seriesEpisodes(state)
     val actionsModel = titleActionsModel(series.standard, series.fourK, series.requests, series.mayReport, series.mayBlock)
     SeriesDetailScreen(
@@ -101,7 +102,7 @@ private fun ReadySeriesPage(
                 watchlist = WatchlistButton(series.onWatchlist, actions.onToggleWatchlist).takeIf { series.mayWatchlist },
                 onReport = actions.onReport,
                 onBlock = actions.block?.onAsk.takeIf { series.mayBlock },
-                onServices = actions.onOpenServiceInfo.takeIf { series.requests.isNotEmpty() || series.watchUrl != null },
+                onServices = actions.onOpenServiceInfo.takeIf { servicesContent.isNotEmpty() },
             ),
         topBarActions = { glassAlpha -> ShareBarAction(glassAlpha) { context.shareTitle(series.name, series.webUrl) } },
         afterPeople = { WhereToWatchSection(series.providers, actions.onOpenUrl, Modifier.readingMargin()) },
@@ -166,7 +167,8 @@ private fun SeriesOverlays(
     state.manageRequestId?.let { requestId ->
         TitleManageSheet(requestId, state.manageSheetOpen, snackbar, series.sheetFacts(), actions)
     }
-    TitleRequestsAndServices(state.requestsSheetOpen, state.serviceSheetOpen, series.requests, series.tmdbId, TitleKind.Series, actions)
+    val servicesContent = rememberServicesContent(series.requests.toManage()?.id, TitleKind.Series, series.tmdbId)
+    TitleRequestsAndServices(state.requestsSheetOpen, state.serviceSheetOpen, series.requests, servicesContent, series.mediaServerName, actions)
 }
 
 /** What the loaded page is expected to show before it arrives: a rating, a year and the episodes or the certification. */

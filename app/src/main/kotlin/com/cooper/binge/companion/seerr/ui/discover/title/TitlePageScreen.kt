@@ -149,6 +149,7 @@ private fun ReadyPage(
     val movie = state.movie
     val context = LocalContext.current
     val model = movieDetailModel(state, actions)
+    val servicesContent = rememberServicesContent(movie.requests.toManage()?.id, TitleKind.Movie, movie.tmdbId)
     val actionsModel = titleActionsModel(movie.standard, movie.fourK, movie.requests, movie.mayReport, movie.mayBlock)
     MovieDetailScreen(
         state = DetailState.Content(model.detail),
@@ -162,7 +163,7 @@ private fun ReadyPage(
                 watchlist = WatchlistButton(movie.onWatchlist, actions.onToggleWatchlist).takeIf { movie.mayWatchlist },
                 onReport = actions.onReport,
                 onBlock = actions.block?.onAsk.takeIf { movie.mayBlock },
-                onServices = actions.onOpenServiceInfo.takeIf { movie.requests.isNotEmpty() || movie.watchUrl != null },
+                onServices = actions.onOpenServiceInfo.takeIf { servicesContent.isNotEmpty() },
             ),
         topBarActions = { glassAlpha -> ShareBarAction(glassAlpha) { context.shareTitle(movie.title, movie.webUrl) } },
         afterPeople = { WhereToWatchSection(movie.providers, actions.onOpenUrl, Modifier.readingMargin()) },
@@ -219,5 +220,6 @@ private fun MovieOverlays(
     state.manageRequestId?.let { requestId ->
         TitleManageSheet(requestId, state.manageSheetOpen, snackbar, movie.sheetFacts(), actions)
     }
-    TitleRequestsAndServices(state.requestsSheetOpen, state.serviceSheetOpen, movie.requests, movie.tmdbId, TitleKind.Movie, actions)
+    val servicesContent = rememberServicesContent(movie.requests.toManage()?.id, TitleKind.Movie, movie.tmdbId)
+    TitleRequestsAndServices(state.requestsSheetOpen, state.serviceSheetOpen, movie.requests, servicesContent, movie.mediaServerName, actions)
 }
