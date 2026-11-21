@@ -25,6 +25,7 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import com.binge.designsystem.component.BingePullToRefresh
+import com.binge.designsystem.component.BingeSearchFieldHeader
 import com.binge.designsystem.component.HintCard
 import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
@@ -93,11 +94,14 @@ fun HubScreen(
     val scrollBehavior = rememberPaneTopBarScrollBehavior()
     val collapsed = scrollBehavior.state.collapsedFraction
     val pillInteractive = collapsed < BAR_HANDOVER_COLLAPSE
+    val fieldInHeader = discovery && ready?.health?.showsDashboard() == true
     BingeScreenScaffold(
         title = ready?.server?.title ?: stringResource(R.string.companion_name),
         // With discovery on the account is this page's, as Settings is the avatar tab, so its action stays in a small bar.
         bar = if (discovery) ScreenBar.Small else ScreenBar.Large,
         pinned = discovery,
+        // The field is the bar's header, as Search's is, so it stays put while the page scrolls under it.
+        header = if (fieldInHeader) ({ BingeSearchFieldHeader { SettingsSearchEntry(onClick = actions.onOpenSearch) } }) else null,
         scrollBehavior = scrollBehavior.takeUnless { discovery },
         titleTrailing = account?.takeUnless { discovery }?.let { { AccountAction(it, ready.overview.quota, actions, pillInteractive) } },
         actions = {
@@ -144,7 +148,7 @@ fun HubScreen(
                         onRefresh = actions.onRefresh,
                         indicatorTopInset = inner.calculateTopPadding(),
                         state = pullState ?: rememberPullToRefreshState(),
-                    ) { Dashboard(ready, actions, selectedSection, contentPadding = inner) }
+                    ) { Dashboard(ready, actions, selectedSection, contentPadding = inner, fieldInHeader = fieldInHeader) }
             }
         }
     }
@@ -185,6 +189,7 @@ private fun Dashboard(
     actions: HubActions,
     selectedSection: HubSection?,
     contentPadding: PaddingValues,
+    fieldInHeader: Boolean,
 ) {
     val inset = resolvedContentInset()
     // Each side from the pane it sits in: the edge shared with the section beside it takes the narrow inner inset (#819).
@@ -192,15 +197,17 @@ private fun Dashboard(
     val scrollState = rememberScrollState()
     OnTabReselect(SeerrTab.Settings) { scrollState.animateScrollTo(0) }
     Column(modifier = Modifier.fillMaxSize().verticalScroll(scrollState).padding(contentPadding)) {
-        // With discovery on the bar above is small and the field sits where the Search tab's does, so it has no gap above it.
-        SettingsSearchEntry(
-            onClick = actions.onOpenSearch,
-            modifier =
-                Modifier
-                    .padding(sides)
-                    .then(if (LocalDiscoveryEnabled.current) Modifier else Modifier.padding(top = dimensionResource(DesR.dimen.padding_m)))
-                    .padding(bottom = dimensionResource(DesR.dimen.padding_m)),
-        )
+        // With discovery on the field is the bar's header, above this page; without it, it leads the page.
+        if (!fieldInHeader) {
+            SettingsSearchEntry(
+                onClick = actions.onOpenSearch,
+                modifier =
+                    Modifier
+                        .padding(sides)
+                        .padding(top = dimensionResource(DesR.dimen.padding_m))
+                        .padding(bottom = dimensionResource(DesR.dimen.padding_m)),
+            )
+        }
         ServerCard(server = state.server, overview = state.overview, sides = sides)
         // Under the server card, while anything is downloading: the part of this page that changes while it is watched.
         if (state.downloading.isNotEmpty()) {
