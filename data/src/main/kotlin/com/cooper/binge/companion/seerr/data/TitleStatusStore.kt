@@ -85,6 +85,23 @@ class TitleStatusStore {
         }
     }
 
+    /**
+     * Records that a list read put the title on or off the watchlist, without saying anything else of it: only a title already
+     * held changes, so a list that knows nothing of a title does not leave an entry that reads as "not requested".
+     */
+    fun markWatchlist(
+        key: TitleKey,
+        onWatchlist: Boolean?,
+        readStamp: Long,
+    ) {
+        if (onWatchlist == null) return
+        entries.update { current ->
+            val existing = current[key] ?: return@update current
+            val marked = Entry(existing.statuses.copy(onWatchlist = onWatchlist), readStamp)
+            if (existing.stamp > readStamp) current else current + (key to marked)
+        }
+    }
+
     /** The server's own answer to an action: it replaces whatever is there, optimistic or not. */
     fun confirm(
         key: TitleKey,
