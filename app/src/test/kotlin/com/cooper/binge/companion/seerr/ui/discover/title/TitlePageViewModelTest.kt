@@ -16,9 +16,11 @@ import com.cooper.binge.companion.seerr.telemetry.AnalyticsEvents
 import com.cooper.binge.companion.seerr.util.MainDispatcherRule
 import com.cooper.binge.companion.seerr.util.RecordingAnalytics
 import com.cooper.binge.companion.seerr.util.awaitEvent
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import okhttp3.ResponseBody.Companion.toResponseBody
@@ -73,6 +75,7 @@ private class FakeTitles(
     var extras: TitleExtras = TitleExtras(TitleRatings(90, null, null), emptyList(), emptyList()),
     var collection: List<TitleResult> = emptyList(),
     var failCollection: Throwable? = null,
+    var extrasDelayMs: Long = 0,
 ) : TitleDetailsRepository {
     var movieReads = 0
     var failUnblock: Throwable? = null
@@ -120,7 +123,10 @@ private class FakeTitles(
     override suspend fun extras(
         kind: TitleKind,
         tmdbId: Int,
-    ) = extras
+    ): TitleExtras {
+        delay(extrasDelayMs)
+        return extras
+    }
 }
 
 class TitlePageViewModelTest {
@@ -136,6 +142,41 @@ class TitlePageViewModelTest {
         assertEquals("The Matrix", vm.ready().movie.title)
         assertNotNull(vm.ready().extras)
     }
+
+    @Test
+    fun `the scores that arrive inside the wait are in the first frame of the page`() =
+        runTest {
+            val vm = TitlePageViewModel(FakeTitles(extrasDelayMs = HERO_SETTLE_MS - 100), 603)
+            assertTrue(vm.uiState.value is TitlePageUiState.Loading)
+
+            advanceTimeBy(HERO_SETTLE_MS)
+            runCurrent()
+
+            assertEquals(
+                90,
+                vm
+                    .ready()
+                    .extras
+                    ?.ratings
+                    ?.criticsPercent,
+            )
+        }
+
+    @Test
+    fun `scores that miss the wait never move the page that is already showing`() =
+        runTest {
+            val vm = TitlePageViewModel(FakeTitles(extrasDelayMs = HERO_SETTLE_MS * 2), 603)
+
+            advanceTimeBy(HERO_SETTLE_MS + 1)
+            runCurrent()
+            val first = vm.ready()
+            assertEquals(null, first.extras)
+
+            advanceTimeBy(HERO_SETTLE_MS * 2)
+            runCurrent()
+            assertEquals(null, vm.ready().extras?.ratings)
+            assertNotNull(vm.ready().extras)
+        }
 
     @Test
     fun `a title with nothing of the viewer's to open still opens the status sheet`() {
