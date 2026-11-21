@@ -32,7 +32,7 @@ internal fun TitleStatusMap.availabilityOf(
 ): TitleAvailability {
     val type = kind.titleType() ?: return fallback
     val held = this[TitleKey(type, tmdbId)] ?: return fallback
-    return held.standard.toAvailability()
+    return cardAvailability(held.standard, held.fourK)
 }
 
 fun TitleResult.overlaid(statuses: TitleStatusMap): TitleResult =
@@ -77,7 +77,11 @@ fun QuerySearchState<TitleResult>.overlaid(statuses: TitleStatusMap): QuerySearc
         this
     }
 
-/** Records the status a list's rows carry, for [read] to order against actions made while the list was loading. */
+/**
+ * Records the status a list's rows carry, for [read] to order against actions made while the list was loading. A row with no
+ * `mediaInfo` says the server holds nothing for the title, which is not news about a title this process already knows, so it
+ * leaves what is held alone (a watchlist row still records that it is on the list).
+ */
 internal fun TitleStatusStore.seedRows(
     read: Long,
     rows: List<Triple<TitleKind?, Int?, SeerrMediaInfoDto?>>,
@@ -85,7 +89,9 @@ internal fun TitleStatusStore.seedRows(
 ) {
     rows.forEach { (kind, tmdbId, info) ->
         val type = kind?.titleType() ?: return@forEach
-        if (tmdbId != null) seed(TitleKey(type, tmdbId), info.toTitleStatuses().copy(onWatchlist = onWatchlist), read)
+        if (tmdbId == null) return@forEach
+        val key = TitleKey(type, tmdbId)
+        if (info != null) seed(key, info.toTitleStatuses().copy(onWatchlist = onWatchlist), read) else markWatchlist(key, onWatchlist, read)
     }
 }
 
