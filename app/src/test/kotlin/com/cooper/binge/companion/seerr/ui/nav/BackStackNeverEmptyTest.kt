@@ -3,12 +3,14 @@ package com.cooper.binge.companion.seerr.ui.nav
 import android.os.Looper
 import androidx.compose.runtime.snapshots.ObserverHandle
 import androidx.compose.runtime.snapshots.Snapshot
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextInput
 import androidx.navigation3.runtime.NavKey
 import com.cooper.binge.companion.seerr.R
@@ -209,13 +211,14 @@ class BackStackNeverEmptyTest {
     /** Settings' Exit the demo, then the confirm's: Settings leaves, and setup takes the root. */
     private fun exitTheDemo() {
         val exit = host.string(R.string.hub_demo_exit)
-        // With the hub and Settings side by side both show the button, and a click that lands as the panes settle opens no
-        // confirm (#2002): scroll the last one into view, then click until the confirm is up.
-        host.compose
-            .onAllNodesWithText(exit)
-            .onLast()
-            .performScrollTo()
-        host.clickUntilShowing(exit, host.string(R.string.hub_demo_exit_confirm_message))
+        // The button is a row of a lazy list, composed before it is placed: until the list scrolls to it its bounds are zero.
+        // Scrolling places it, flush against the viewport's edge, where a touch and the visibility check are borderline (#2002). So
+        // the click is the button's own action, which does not depend on where it sits.
+        val button = host.compose.onAllNodesWithText(exit).onLast()
+        button.performScrollTo()
+        host.compose.waitForIdle()
+        button.performSemanticsAction(SemanticsActions.OnClick)
+        host.awaitShowing(host.string(R.string.hub_demo_exit_confirm_message))
         host.compose
             .onAllNodesWithText(exit)
             .onLast()
