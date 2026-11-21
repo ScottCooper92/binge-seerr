@@ -172,6 +172,9 @@ class SeriesPageViewModel
                 }
             }
 
+        /** A request's sheet was asked for from outside the page, as the Requests list does: open it on that request. */
+        fun openRequest(id: Int) = updateReady { it.copy(manageRequestId = id, manageSheetOpen = true) }
+
         /** The request's sheet closed. The id stays, and a change made in it reloads the page through the sheet's own `onChanged`. */
         fun closeSheet(sheet: TitleSheet) =
             updateReady {

@@ -7,6 +7,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.flags.LocalDiscoveryEnabled
 import com.cooper.binge.companion.seerr.ui.discover.title.LocalOpenTitle
 import com.cooper.binge.companion.seerr.ui.requests.EditRequestActions
@@ -31,10 +32,18 @@ internal fun RequestDetailEntry(
     onBack: () -> Unit,
     onOpenUser: (Int) -> Unit,
     onOpenServices: () -> Unit,
+    onOpenTitle: ((kind: TitleKind, tmdbId: Int) -> Unit)? = null,
     viewModel: RequestDetailViewModel =
         hiltViewModel<RequestDetailViewModel, RequestDetailViewModel.Factory>(creationCallback = { factory -> factory.create(requestId) }),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val toTitle = onOpenTitle.takeIf { LocalDiscoveryEnabled.current }
+    val loaded = state as? RequestDetailUiState.Ready
+    if (toTitle != null && loaded != null) {
+        // The request is a sheet over its title now: this page only reads which title, and hands over to it.
+        LaunchedEffect(requestId) { toTitle(loaded.detail.item.mediaType.toTitleKind(), loaded.detail.item.tmdbId) }
+        return
+    }
     DisposableEffect(viewModel) {
         viewModel.setScreenVisible(true)
         onDispose { viewModel.setScreenVisible(false) }

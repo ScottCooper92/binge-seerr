@@ -1,6 +1,10 @@
 package com.cooper.binge.companion.seerr.ui.discover.title
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -37,6 +41,7 @@ val LocalOpenTitle = compositionLocalOf<(TitleKind, Int, String) -> Unit> { { _,
 internal fun TitleDetailEntry(
     kind: TitleKind,
     tmdbId: Int,
+    openRequest: Int?,
     onBack: () -> Unit,
     onOpenCredits: () -> Unit,
     onOpenSeason: (seasonNumber: Int, seriesName: String) -> Unit,
@@ -46,9 +51,9 @@ internal fun TitleDetailEntry(
     onOpenServices: () -> Unit,
 ) {
     when (kind) {
-        TitleKind.Movie -> FilmPageEntry(tmdbId, onBack, onOpenCredits, onOpenCompany, onOpenKeyword, onOpenUser, onOpenServices)
+        TitleKind.Movie -> FilmPageEntry(tmdbId, openRequest, onBack, onOpenCredits, onOpenCompany, onOpenKeyword, onOpenUser, onOpenServices)
         TitleKind.Series ->
-            SeriesPageEntry(tmdbId, onBack, onOpenCredits, onOpenSeason, onOpenCompany, onOpenKeyword, onOpenUser, onOpenServices)
+            SeriesPageEntry(tmdbId, openRequest, onBack, onOpenCredits, onOpenSeason, onOpenCompany, onOpenKeyword, onOpenUser, onOpenServices)
         else -> EmptyScreen(message = "")
     }
 }
@@ -56,6 +61,7 @@ internal fun TitleDetailEntry(
 @Composable
 private fun FilmPageEntry(
     tmdbId: Int,
+    openRequest: Int?,
     onBack: () -> Unit,
     onOpenCredits: () -> Unit,
     onOpenCompany: (TitleCompany) -> Unit,
@@ -65,6 +71,7 @@ private fun FilmPageEntry(
 ) {
     val viewModel = hiltViewModel<TitlePageViewModel, TitlePageViewModel.Factory>(creationCallback = { it.create(tmdbId) })
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    OpenRequestOnce(openRequest, state is TitlePageUiState.Ready) { viewModel.openRequest(it) }
     TitlePageScreen(
         state = state,
         events = viewModel.events,
@@ -109,6 +116,7 @@ private fun FilmPageEntry(
 @Composable
 private fun SeriesPageEntry(
     tmdbId: Int,
+    openRequest: Int?,
     onBack: () -> Unit,
     onOpenCredits: () -> Unit,
     onOpenSeason: (Int, String) -> Unit,
@@ -119,6 +127,7 @@ private fun SeriesPageEntry(
 ) {
     val viewModel = hiltViewModel<SeriesPageViewModel, SeriesPageViewModel.Factory>(creationCallback = { it.create(tmdbId) })
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    OpenRequestOnce(openRequest, state is SeriesPageUiState.Ready) { viewModel.openRequest(it) }
     SeriesPageScreen(
         state = state,
         events = viewModel.events,
@@ -232,3 +241,19 @@ private class TitleSideActions(
     val onClose: () -> Unit,
     val onToggleWatchlist: () -> Unit,
 )
+
+/** Opens the request [id] asks for once the page has loaded, and not again after a rotation. */
+@Composable
+private fun OpenRequestOnce(
+    id: Int?,
+    ready: Boolean,
+    open: (Int) -> Unit,
+) {
+    var done by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(ready) {
+        if (id != null && ready && !done) {
+            done = true
+            open(id)
+        }
+    }
+}

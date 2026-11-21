@@ -132,6 +132,8 @@ data class RequestDetailRoute(
 data class TitleDetailRoute(
     val kind: TitleKind,
     val tmdbId: Int,
+    /** A request of the title whose sheet opens with the page, as the Requests list, the Home strip and a request link ask for. */
+    val openRequest: Int? = null,
 ) : SeerrRoute
 
 /** A collection of films as a page, opened from the collection rail on a film's page. */
