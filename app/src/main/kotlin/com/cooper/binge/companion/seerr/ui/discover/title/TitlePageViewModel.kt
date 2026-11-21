@@ -17,6 +17,8 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -25,6 +27,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 
 sealed interface TitlePageUiState {
     data object Loading : TitlePageUiState
@@ -119,9 +122,11 @@ class TitlePageViewModel
             viewModelScope.launch {
                 attempt { repository.movie(tmdbId) }.fold(
                     onSuccess = { movie ->
-                        state.value = TitlePageUiState.Ready(movie)
+                        val extrasLoad = async { attempt { repository.extras(TitleKind.Movie, tmdbId) }.getOrNull() }
+                        val extras = withTimeoutOrNull(HERO_SETTLE_MS) { extrasLoad.await() }
+                        state.value = TitlePageUiState.Ready(movie, extras = extras)
                         movie.collection?.let { loadCollection(it.id) }
-                        loadExtras()
+                        if (extras == null) loadLateExtras(extrasLoad)
                     },
                     onFailure = { state.value = TitlePageUiState.Error(it.toSeerrError()) },
                 )
@@ -249,13 +254,17 @@ class TitlePageViewModel
             }
         }
 
-        private fun loadExtras() {
+        /** Extras that missed the wait fill the rails but not the hero's scores, which would move the copy the page already shows. */
+        private fun loadLateExtras(load: Deferred<TitleExtras?>) {
             viewModelScope.launch {
-                val extras = attempt { repository.extras(TitleKind.Movie, tmdbId) }.getOrNull() ?: return@launch
-                updateReady { it.copy(extras = extras) }
+                val late = load.await() ?: return@launch
+                updateReady { it.copy(extras = late.copy(ratings = null)) }
             }
         }
 
         private fun updateReady(transform: (TitlePageUiState.Ready) -> TitlePageUiState.Ready) =
             state.update { (it as? TitlePageUiState.Ready)?.let(transform) ?: it }
     }
+
+/** How long a loaded page waits for the scores the hero shows, so they are in its first frame and do not move its copy: short, and bounded. */
+internal const val HERO_SETTLE_MS = 500L
