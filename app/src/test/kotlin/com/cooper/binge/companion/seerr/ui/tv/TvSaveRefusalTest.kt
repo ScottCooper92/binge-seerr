@@ -42,7 +42,7 @@ class TvSaveRefusalTest {
 
         assertEquals(SaveStatus.Refused(reason), status)
         composeTestRule.onNodeWithText(reason).assertExists()
-        composeTestRule.onNodeWithText("Try again").assertDoesNotExist()
+        composeTestRule.onNodeWithText("Retry").assertDoesNotExist()
     }
 
     @Test
