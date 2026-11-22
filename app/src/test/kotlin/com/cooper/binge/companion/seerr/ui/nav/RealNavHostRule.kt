@@ -241,6 +241,9 @@ internal class RealNavHostRule(
     /** The back stack as it stands, read on the main thread. */
     fun stack(): List<NavKey> = compose.runOnIdle { activity.backStack.toList() }
 
+    /** The tab the shell shows now, read on the main thread. */
+    fun selectedTab(): SeerrTab = compose.runOnIdle { activity.tabs.selected }
+
     /** The stack [tab] keeps in the shell, read on the main thread. */
     fun tabStack(tab: SeerrTab): List<NavKey> = compose.runOnIdle { activity.tabs.stack(tab).toList() }
 
