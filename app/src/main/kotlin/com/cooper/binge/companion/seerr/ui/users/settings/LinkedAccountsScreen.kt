@@ -53,8 +53,8 @@ import com.cooper.binge.companion.seerr.ui.SetupLinkSheet
 import com.cooper.binge.companion.seerr.ui.savedLoginRequest
 import com.cooper.binge.companion.seerr.ui.state.DialogMessage
 import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
-import com.cooper.binge.companion.seerr.ui.state.LoadingScreen
 import com.cooper.binge.companion.seerr.ui.state.MessageDialogHost
+import com.cooper.binge.companion.seerr.ui.state.SettingsRowsSkeleton
 import com.cooper.binge.companion.seerr.ui.state.dialogMessage
 import com.cooper.binge.companion.seerr.ui.state.messageRes
 import com.cooper.binge.companion.seerr.ui.state.needsDialog
@@ -132,7 +132,7 @@ fun LinkedAccountsScreen(
         Box(modifier = Modifier.fillMaxSize().padding(padding.screenOuterPadding())) {
             val inner = padding.screenInnerPadding()
             when (state) {
-                LinkedAccountsUiState.Loading -> LoadingScreen(Modifier.padding(inner))
+                LinkedAccountsUiState.Loading -> SettingsRowsSkeleton(Modifier.padding(inner))
                 is LinkedAccountsUiState.Error ->
                     ErrorScreen(error = state.error, modifier = Modifier.padding(inner), onRetry = actions.onRetry)
                 is LinkedAccountsUiState.Ready -> LinkedAccountsContent(state, actions, contentPadding = inner)

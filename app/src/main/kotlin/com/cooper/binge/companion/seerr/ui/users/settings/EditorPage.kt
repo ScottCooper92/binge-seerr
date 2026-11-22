@@ -40,8 +40,8 @@ import com.binge.designsystem.theme.BingeShapes
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.state.DialogMessage
 import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
-import com.cooper.binge.companion.seerr.ui.state.LoadingScreen
 import com.cooper.binge.companion.seerr.ui.state.MessageDialogHost
+import com.cooper.binge.companion.seerr.ui.state.SettingsRowsSkeleton
 import com.cooper.binge.companion.seerr.ui.state.dialogMessage
 import com.cooper.binge.companion.seerr.ui.state.messageRes
 import com.cooper.binge.companion.seerr.ui.state.needsDialog
@@ -183,7 +183,7 @@ internal fun <T> EditorPage(
         bottomBar = bottomBar,
         notReady =
             when (state) {
-                EditorUiState.Loading -> { inner -> LoadingScreen(Modifier.padding(inner)) }
+                EditorUiState.Loading -> { inner -> SettingsRowsSkeleton(Modifier.padding(inner)) }
                 is EditorUiState.Error -> { inner ->
                     ErrorScreen(error = state.error, modifier = Modifier.padding(inner), onRetry = actions.onRetry)
                 }

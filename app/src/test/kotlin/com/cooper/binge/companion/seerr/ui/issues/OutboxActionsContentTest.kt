@@ -38,6 +38,6 @@ class OutboxActionsContentTest {
 
         rule.onNodeWithText("Edit comment").assertIsEnabled()
         rule.onNodeWithText("Discard").assertIsEnabled()
-        rule.onNodeWithText("Retry").assertIsEnabled()
+        rule.onNodeWithText("Try again").assertIsEnabled()
     }
 }

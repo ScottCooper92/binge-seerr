@@ -26,7 +26,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 private const val ROW_SERVER = "Server"
-private const val ROW_DISCONNECT = "Disconnect"
+private const val ROW_DISCONNECT = "Sign out"
 private const val OPTION_DISCONNECT = "Disconnect now"
 
 /**

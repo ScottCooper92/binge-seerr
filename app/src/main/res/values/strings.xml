@@ -356,6 +356,7 @@
     <string name="request_sheet_group_request">Request</string>
     <string name="request_sheet_group_media">Media</string>
     <string name="request_sheet_requested_by">Requested by %1$s</string>
+    <string name="settings_loading">Loading settings</string>
     <string name="request_sheet_loading">Loading request details</string>
     <string name="request_remove_detail">The title can be requested again</string>
     <string name="request_remove_block_detail">The title can\'t be requested again</string>
@@ -448,7 +449,7 @@
     <string name="issue_delete_comment_title">Delete this comment?</string>
     <string name="issue_delete_comment_message">The comment is removed from the thread for everyone.</string>
     <string name="issue_comment_actions_cd">Comment actions</string>
-    <string name="issue_comment_retry">Retry</string>
+    <string name="issue_comment_retry">Try again</string>
     <string name="issue_comment_discard">Discard</string>
     <string name="issue_comment_just_now">Just now</string>
     <string name="issue_comment_sending">Sending…</string>
@@ -898,10 +899,10 @@
     <string name="server_settings_log_info">Info</string>
     <string name="server_settings_log_warn">Warning</string>
     <string name="server_settings_log_error">Error</string>
-    <string name="server_settings_job_run">Run now</string>
-    <string name="server_settings_job_succeeded">Finished</string>
-    <string name="server_settings_job_failed">Failed to run</string>
-    <string name="server_settings_job_cancel">Cancel</string>
+    <string name="server_settings_job_run">Run</string>
+    <string name="server_settings_job_succeeded">Done</string>
+    <string name="server_settings_job_failed">Failed</string>
+    <string name="server_settings_job_cancel">Stop</string>
     <string name="server_settings_job_schedule_title">Schedule %1$s</string>
     <string name="server_settings_job_schedule_message">Pick how often it runs, or type a cron expression of your own.</string>
     <string name="server_settings_job_presets">Every</string>
@@ -1060,9 +1061,9 @@
     <string name="settings_about_version">Version %1$s</string>
     <string name="settings_job_running">Running now</string>
     <string name="settings_job_next_run">Next run %1$s</string>
-    <string name="hub_retry">Retry</string>
-    <string name="hub_disconnect">Disconnect</string>
-    <string name="hub_disconnect_confirm_title">Disconnect?</string>
+    <string name="hub_retry">Try again</string>
+    <string name="hub_disconnect">Sign out</string>
+    <string name="hub_disconnect_confirm_title">Sign out?</string>
     <string name="hub_disconnect_confirm_message_plain">You will need to sign in again to reconnect.</string>
     <string name="hub_disconnect_confirm_message">You will need to sign in again to reconnect. Binge stops seeing this server until you do.</string>
     <string name="hub_demo_exit">Exit the demo</string>
@@ -1090,8 +1091,8 @@
     <string name="demo_indicator">Demo server</string>
     <string name="setup_try_demo">Try the demo</string>
     <string name="setup_try_demo_note">Explore the app with sample data. No server needed.</string>
-    <string name="hub_unreachable_headline">Can\'t reach your server</string>
-    <string name="hub_unreachable_body">It did not answer. It may be offline or its address may have changed. Check the server and retry.</string>
+    <string name="hub_unreachable_headline">Couldn\'t load your server</string>
+    <string name="hub_unreachable_body">It did not answer. It may be offline or its address may have changed. Check the server and try again.</string>
     <string name="hub_local_network_headline">Local network access is off</string>
     <string name="hub_local_network_body">Android is blocking this app from reaching your server on your local network. Allow local network access and it will reconnect.</string>
     <string name="hub_client_certificate_headline">This server needs a client certificate</string>
@@ -1252,7 +1253,7 @@
     <string name="tv_hub_quota_none_left">None left</string>
     <string name="tv_download_percent">%1$d%%</string>
     <string name="tv_list_load_failed">The list could not be loaded.</string>
-    <string name="tv_settings_disconnect_confirm">Yes, disconnect</string>
+    <string name="tv_settings_disconnect_confirm">Yes, sign out</string>
     <string name="tv_settings_start_library_scan">Start library scan</string>
     <string name="tv_settings_cancel_library_scan">Cancel library scan</string>
     <string name="tv_settings_job_working">Working…</string>
