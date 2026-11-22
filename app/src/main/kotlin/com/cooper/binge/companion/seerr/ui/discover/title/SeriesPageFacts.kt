@@ -2,16 +2,16 @@ package com.cooper.binge.companion.seerr.ui.discover.title
 
 import android.content.res.Resources
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.CalendarMonth
-import androidx.compose.material.icons.outlined.Event
-import androidx.compose.material.icons.outlined.EventAvailable
-import androidx.compose.material.icons.outlined.Info
-import androidx.compose.material.icons.outlined.Language
-import androidx.compose.material.icons.outlined.LiveTv
-import androidx.compose.material.icons.outlined.Schedule
-import androidx.compose.material.icons.outlined.SkipNext
-import androidx.compose.material.icons.outlined.Translate
-import androidx.compose.material.icons.outlined.Videocam
+import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.Event
+import androidx.compose.material.icons.filled.EventAvailable
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Language
+import androidx.compose.material.icons.filled.LiveTv
+import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.SkipNext
+import androidx.compose.material.icons.filled.Translate
+import androidx.compose.material.icons.filled.Videocam
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.binge.companion.sdk.attempt
 import com.binge.designsystem.component.DetailInfoEntry
@@ -40,31 +40,31 @@ internal fun SeriesDetails.detailEntries(
     ) = DetailInfoEntry(icon, resources.getString(label), value)
     val next = nextEpisode
     return listOf(
-        peopleEntry(Icons.Outlined.Videocam, resources.getString(R.string.series_fact_creators), creators, onOpenPerson),
-        companyEntry(Icons.Outlined.LiveTv, resources.getString(R.string.series_fact_networks), networks, onOpenCompany),
-        entry(Icons.Outlined.Info, R.string.title_page_fact_status, status?.let { seriesStatusRes(it)?.let(resources::getString) ?: it }),
-        entry(Icons.Outlined.CalendarMonth, R.string.series_fact_first_aired, firstAirDate.toDisplayDate(locale)),
+        peopleEntry(Icons.Filled.Videocam, resources.getString(R.string.series_fact_creators), creators, onOpenPerson),
+        companyEntry(Icons.Filled.LiveTv, resources.getString(R.string.series_fact_networks), networks, onOpenCompany),
+        entry(Icons.Filled.Info, R.string.title_page_fact_status, status?.let { seriesStatusRes(it)?.let(resources::getString) ?: it }),
+        entry(Icons.Filled.CalendarMonth, R.string.series_fact_first_aired, firstAirDate.toDisplayDate(locale)),
         entry(
-            Icons.Outlined.EventAvailable,
+            Icons.Filled.EventAvailable,
             R.string.series_fact_last_aired,
             lastAirDate.toDisplayDate(locale).takeUnless { next != null },
         ),
         entry(
-            Icons.Outlined.SkipNext,
+            Icons.Filled.SkipNext,
             R.string.series_fact_next_episode,
             next?.let { resources.getString(R.string.series_next_episode, it.name, it.seasonNumber, it.episodeNumber) },
         ),
-        entry(Icons.Outlined.Event, R.string.series_fact_next_airs, next?.airDate.toDisplayDate(locale)),
+        entry(Icons.Filled.Event, R.string.series_fact_next_airs, next?.airDate.toDisplayDate(locale)),
         entry(
-            Icons.Outlined.Schedule,
+            Icons.Filled.Schedule,
             R.string.title_page_stat_runtime,
             episodeRuntimeMinutes?.let {
                 resources.getString(R.string.series_page_runtime, it)
             },
         ),
-        entry(Icons.Outlined.Language, R.string.title_page_fact_original_language, originalLanguage?.let { languageName(it, locale) }),
+        entry(Icons.Filled.Language, R.string.title_page_fact_original_language, originalLanguage?.let { languageName(it, locale) }),
         entry(
-            Icons.Outlined.Translate,
+            Icons.Filled.Translate,
             R.string.title_page_fact_spoken_languages,
             spokenLanguageCodes.joinToString(", ") {
                 languageName(it, locale)

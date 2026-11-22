@@ -3,8 +3,8 @@ package com.cooper.binge.companion.seerr.ui.discover.title
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.outlined.Shield
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.DetailStat
@@ -41,4 +41,4 @@ internal fun ratingStat(
 
 @Composable
 internal fun ratedStat(certification: String?): DetailStat? =
-    certification?.let { DetailStat(Icons.Outlined.Shield, it, stringResource(R.string.title_page_stat_rated)) }
+    certification?.let { DetailStat(Icons.Filled.Shield, it, stringResource(R.string.title_page_stat_rated)) }
