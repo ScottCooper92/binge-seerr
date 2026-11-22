@@ -46,7 +46,8 @@ enum class SeerrConnectionHealth {
 private const val UNREACHABLE_AFTER = 2
 
 /** The shared library's monitor with this app's rules: [SeerrAuthFailureClassifier], and two calls in a row with no answer is unreachable. */
-fun seerrHealthMonitor(): ConnectionHealthMonitor = ConnectionHealthMonitor(SeerrAuthFailureClassifier(::isArrProxyRoute), UNREACHABLE_AFTER)
+fun seerrHealthMonitor(): ConnectionHealthMonitor =
+    ConnectionHealthMonitor(SeerrAuthFailureClassifier(::isArrProxyRoute), UNREACHABLE_AFTER)
 
 /**
  * Live health of the one saved server, fed by every call the cached client makes. Observe-only. What a call means is the shared
