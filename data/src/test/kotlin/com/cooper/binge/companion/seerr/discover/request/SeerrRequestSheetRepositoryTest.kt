@@ -165,20 +165,26 @@ class SeerrRequestSheetRepositoryTest {
             val chosen = RequestDestination(1, 4, "/movies", listOf(1, 2))
             it.submit(RequestSubmission(TitleKind.Movie, 603, emptyList(), is4k = false, chosen))
         }
-        assertTrue(seerr.requests.last { it.method == "POST" }.body.contains("\"tags\":[1,2]"))
+        val withTags = seerr.requests.last { it.method == "POST" }.body
+        assertTrue(withTags, withTags.contains("\"tags\":[1,2]"))
 
         withRepository {
             val none = RequestDestination(1, 4, "/movies", emptyList())
             it.submit(RequestSubmission(TitleKind.Movie, 603, emptyList(), is4k = false, none))
         }
-        assertTrue(seerr.requests.last { it.method == "POST" }.body.contains("\"tags\":[]"))
+        val withNone = seerr.requests.last { it.method == "POST" }.body
+        assertTrue(withNone, withNone.contains("\"tags\":[]"))
     }
 
     @Test
     fun `untouched tags are left out of the body`() {
-        withRepository { it.submit(RequestSubmission(TitleKind.Movie, 603, emptyList(), is4k = false, RequestDestination(1, 4, "/movies"))) }
+        withRepository {
+            val plain = RequestDestination(1, 4, "/movies")
+            it.submit(RequestSubmission(TitleKind.Movie, 603, emptyList(), is4k = false, plain))
+        }
 
-        assertFalse(seerr.requests.last { it.method == "POST" }.body.contains("tags"))
+        val sent = seerr.requests.last { it.method == "POST" }.body
+        assertFalse(sent, sent.contains("tags"))
     }
 
     @Test

@@ -198,7 +198,8 @@ class RequestSheetViewModelTest {
             vm.submit()
             event.await()
 
-            assertNull(repository.submissions.single().destination?.tags)
+            val destination = repository.submissions.single().destination
+            assertNull(destination?.tags)
         }
 
     @Test
@@ -213,7 +214,8 @@ class RequestSheetViewModelTest {
             vm.submit()
             event.await()
 
-            assertEquals(listOf(1, 2), repository.submissions.single().destination?.tags)
+            val destination = repository.submissions.single().destination
+            assertEquals(listOf(1, 2), destination?.tags)
         }
 
     @Test
@@ -227,7 +229,8 @@ class RequestSheetViewModelTest {
             vm.submit()
             event.await()
 
-            assertEquals(emptyList<Int>(), repository.submissions.single().destination?.tags)
+            val destination = repository.submissions.single().destination
+            assertEquals(emptyList<Int>(), destination?.tags)
         }
 
     @Test

@@ -162,12 +162,13 @@ class SeerrRequestSheetRepository(
     ): RequestChoices =
         withContext(io) {
             val details = api().arrServer(kind == TitleKind.Series, serverId)
+            val defaultTags = details.server?.activeTags.orEmpty()
             RequestChoices(
                 profiles = details.profiles.map { RequestChoice(it.id, it.name) },
                 rootFolders = details.rootFolders.map { it.path },
                 tags = details.tags.map { RequestChoice(it.id, it.label) },
                 defaultProfileId = details.server?.activeProfileId,
-                defaultTagIds = details.server?.activeTags.orEmpty().toSet(),
+                defaultTagIds = defaultTags.toSet(),
                 freeSpace = details.rootFolders.mapNotNull { folder -> folder.freeSpace?.let { folder.path to it } }.toMap(),
             )
         }
