@@ -478,7 +478,7 @@
     <string name="users_edit_permissions_save">Apply</string>
     <string name="users_edit_permissions_mixed">A permission only some of these users have says so, and each user keeps their own. Tap it once to turn it on for everyone, again for off, and again to leave it as it was.</string>
     <string name="users_edit_permission_some_have">Some of these users have this</string>
-    <string name="users_add_cd">Add users</string>
+    <string name="users_add">Add users</string>
     <string name="users_add_create">Create a local user</string>
     <string name="users_add_create_desc">Signs in with an email and password</string>
     <string name="users_add_import">Import from %1$s</string>
@@ -743,6 +743,9 @@
     <string name="server_settings_delete_message">The server forgets it at once. Requests already sent are not affected.</string>
     <string name="server_settings_rules">Override rules</string>
     <string name="server_settings_rule_add">Add a rule</string>
+    <string name="server_settings_services_add">Add</string>
+    <string name="server_settings_dvr_none">No %1$s instances yet</string>
+    <string name="server_settings_rules_none">No override rules yet</string>
     <string name="server_settings_rule_title">Override rule</string>
     <string name="server_settings_rule_applies_to">Applies to</string>
     <plurals name="server_settings_rule_conditions">

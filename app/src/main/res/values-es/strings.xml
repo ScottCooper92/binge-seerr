@@ -457,7 +457,7 @@
     <string name="users_edit_permissions_save">Aplicar</string>
     <string name="users_edit_permissions_mixed">Un permiso que solo tienen algunos de estos usuarios lo indica, y cada usuario conserva el suyo. Tócalo una vez para activarlo para todos, otra para desactivarlo y otra para dejarlo como estaba.</string>
     <string name="users_edit_permission_some_have">Algunos de estos usuarios lo tienen</string>
-    <string name="users_add_cd">Añadir usuarios</string>
+    <string name="users_add">Añadir usuarios</string>
     <string name="users_add_create">Crear un usuario local</string>
     <string name="users_add_create_desc">Inicia sesión con correo y contraseña</string>
     <string name="users_add_import">Importar de %1$s</string>
@@ -720,6 +720,9 @@
     <string name="server_settings_delete_message">El servidor lo olvida al instante. Las peticiones ya enviadas no se ven afectadas.</string>
     <string name="server_settings_rules">Reglas de anulación</string>
     <string name="server_settings_rule_add">Añadir una regla</string>
+    <string name="server_settings_services_add">Añadir</string>
+    <string name="server_settings_dvr_none">Aún no hay instancias de %1$s</string>
+    <string name="server_settings_rules_none">Aún no hay reglas de anulación</string>
     <string name="server_settings_rule_title">Regla de anulación</string>
     <string name="server_settings_rule_applies_to">Se aplica a</string>
     <plurals name="server_settings_rule_conditions">
