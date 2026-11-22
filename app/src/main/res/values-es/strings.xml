@@ -1069,7 +1069,7 @@
     <string name="setup_try_demo">Probar la demo</string>
     <string name="setup_try_demo_note">Explora la app con datos de ejemplo. No necesitas un servidor.</string>
     <string name="hub_unreachable_headline">No se pudo cargar tu servidor</string>
-    <string name="hub_unreachable_body">No respondió. Puede estar apagado o haber cambiado de dirección. Comprueba el servidor y reintenta.</string>
+    <string name="hub_unreachable_body">No respondió. Puede estar apagado o haber cambiado de dirección. Comprueba el servidor y vuelve a intentarlo.</string>
     <string name="hub_local_network_headline">El acceso a la red local está desactivado</string>
     <string name="hub_local_network_body">Android impide que esta aplicación llegue a tu servidor en tu red local. Permite el acceso a la red local y se volverá a conectar.</string>
     <string name="hub_client_certificate_headline">Este servidor necesita un certificado de cliente</string>
