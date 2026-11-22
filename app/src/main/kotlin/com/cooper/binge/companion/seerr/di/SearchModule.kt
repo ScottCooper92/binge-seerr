@@ -23,7 +23,10 @@ import javax.inject.Singleton
 /** The preference the title searches are kept under, apart from the settings search's entries. An on-disk name: it never changes. */
 private const val RECENT_TITLE_QUERIES_KEY = "recent_title_queries"
 
-private val Context.searchDataStore: DataStore<Preferences> by preferencesDataStore(name = "seerr_search")
+private val Context.searchDataStore: DataStore<Preferences> by preferencesDataStore(
+    name = "seerr_search",
+    corruptionHandler = corruptionHandler(),
+)
 
 /** What the settings search keeps on the device: the entries last opened from it. */
 @Module

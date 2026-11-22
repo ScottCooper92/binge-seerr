@@ -18,7 +18,10 @@ import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.CoroutineScope
 import javax.inject.Singleton
 
-private val Context.discoveryDataStore: DataStore<Preferences> by preferencesDataStore(name = "seerr_discovery")
+private val Context.discoveryDataStore: DataStore<Preferences> by preferencesDataStore(
+    name = "seerr_discovery",
+    corruptionHandler = corruptionHandler(),
+)
 
 /**
  * Discovery is the remote flag and the user's own preference, combined by core's shared gate; every reader goes through it.

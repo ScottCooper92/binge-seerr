@@ -56,12 +56,30 @@ import javax.inject.Qualifier
 import javax.inject.Singleton
 import com.cooper.homelab.core.server.connection.CredentialStore as LoginStore
 
-private val Context.credentialsDataStore: DataStore<Preferences> by preferencesDataStore(name = "seerr_credentials")
-private val Context.deviceDataStore: DataStore<Preferences> by preferencesDataStore(name = "seerr_device")
-private val Context.cleartextConsentDataStore: DataStore<Preferences> by preferencesDataStore(name = "cleartext_consent")
-private val Context.bingeConnectionDataStore: DataStore<Preferences> by preferencesDataStore(name = "binge_connection")
-private val Context.serverRegistryDataStore: DataStore<Preferences> by preferencesDataStore(name = "seerr_servers")
-private val Context.serverLoginsDataStore: DataStore<Preferences> by preferencesDataStore(name = "seerr_server_logins")
+private val Context.credentialsDataStore: DataStore<Preferences> by preferencesDataStore(
+    name = "seerr_credentials",
+    corruptionHandler = corruptionHandler(),
+)
+private val Context.deviceDataStore: DataStore<Preferences> by preferencesDataStore(
+    name = "seerr_device",
+    corruptionHandler = corruptionHandler(),
+)
+private val Context.cleartextConsentDataStore: DataStore<Preferences> by preferencesDataStore(
+    name = "cleartext_consent",
+    corruptionHandler = corruptionHandler(),
+)
+private val Context.bingeConnectionDataStore: DataStore<Preferences> by preferencesDataStore(
+    name = "binge_connection",
+    corruptionHandler = corruptionHandler(),
+)
+private val Context.serverRegistryDataStore: DataStore<Preferences> by preferencesDataStore(
+    name = "seerr_servers",
+    corruptionHandler = corruptionHandler(),
+)
+private val Context.serverLoginsDataStore: DataStore<Preferences> by preferencesDataStore(
+    name = "seerr_server_logins",
+    corruptionHandler = corruptionHandler(),
+)
 
 /** Marks the one boolean that says whether the saved connection lives in the shared library's per-server stores. */
 @Qualifier
