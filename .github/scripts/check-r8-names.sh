@@ -2,13 +2,13 @@
 # Fails if R8 renamed one of this app's own classes in a release build.
 #
 # `app/src/main/keepRules/companion.keep` has `-keepnames class com.cooper.binge.companion.seerr.**`, so a release build's stack frames keep the
-# `com.cooper.binge.companion.seerr.` prefix the ring log matches on. The minified debug build the device lane runs is not obfuscated, so a removed
+# `com.cooper.binge.companion.seerr.` prefix the ring log matches on. The device lane's minified debug build is not the build users run, so a removed
 # or narrowed rule would show only on a release user's Diagnostics page. This reads the release build's R8 mapping instead.
 #
 # Usage: check-r8-names.sh <mapping.txt> [<class> ...]
 # A class line in the mapping is `original.Name -> final.Name:` at the start of a line (members are indented). Every sentinel must be
 # there and must map to itself. With no classes named, the sentinels are three that survive shrinking and keep their package: the
-# graph, the main view model and the server client. -keepnames does not stop R8 merging or generating classes, so this checks
+# exported Service, the setup view model and the connection. -keepnames does not stop R8 merging or generating classes, so this checks
 # a short list and not every class. A sentinel missing from the mapping fails too: a renamed or removed class makes the list stale,
 # and a check that finds nothing must not pass.
 set -euo pipefail
