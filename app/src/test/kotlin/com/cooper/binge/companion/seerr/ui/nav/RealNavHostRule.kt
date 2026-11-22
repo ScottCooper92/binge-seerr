@@ -261,6 +261,16 @@ internal class RealNavHostRule(
         timeoutMillis: Long = AWAIT_MILLIS,
     ) = await("\"$text\" on screen", timeoutMillis) { isShowing(text) }
 
+    /**
+     * Waits for the back stack to be [expected]. A screen's text can already be on the page before its route is pushed,
+     * or still be on the page a Back is leaving, so a wait on text alone can return while the stack is not there yet
+     * (#2676). A timeout says what the screen was showing instead.
+     */
+    fun awaitStack(
+        vararg expected: NavKey,
+        timeoutMillis: Long = AWAIT_MILLIS,
+    ) = await("the back stack to be ${expected.toList()}", timeoutMillis) { stack() == expected.toList() }
+
     /** The back stack and the semantics tree, capped at [MAX_TREE_LINES] lines. Never throws: it runs while a failure is already in flight. */
     private fun describeScreen(): String =
         try {
