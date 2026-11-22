@@ -18,6 +18,7 @@ import com.cooper.binge.companion.seerr.seerr.SeerrServerDto
 import com.cooper.binge.companion.seerr.seerr.SeerrServerProfile
 import com.cooper.binge.companion.seerr.seerr.SeerrUserDto
 import com.cooper.binge.companion.seerr.seerr.arrServer
+import com.cooper.binge.companion.seerr.seerr.isAnimeSeries
 import com.cooper.binge.companion.seerr.seerr.offeredServers
 import com.cooper.binge.companion.seerr.seerr.toOutcome
 import com.cooper.binge.companion.seerr.seerr.toPermissions
@@ -33,7 +34,15 @@ data class RequestServer(
     val isDefault: Boolean,
     val profileId: Int?,
     val rootFolder: String?,
-)
+    /** What a plain request for an anime series gets, where the instance sets them. */
+    val animeProfileId: Int? = null,
+    val animeRootFolder: String? = null,
+) {
+    /** The profile a plain request gets: the anime one for an anime series where the instance has one, else the regular one. */
+    fun profileFor(anime: Boolean): Int? = if (anime) animeProfileId ?: profileId else profileId
+
+    fun folderFor(anime: Boolean): String? = if (anime) animeRootFolder ?: rootFolder else rootFolder
+}
 
 data class RequestChoice(
     val id: Int,
@@ -51,7 +60,15 @@ data class RequestChoices(
     val defaultProfileId: Int? = null,
     val defaultTagIds: Set<Int> = emptySet(),
     val freeSpace: Map<String, Long> = emptyMap(),
-)
+    val animeProfileId: Int? = null,
+    val animeTagIds: Set<Int> = emptySet(),
+) {
+    /** The default profile for an anime series where the instance sets one, else the regular one, as Seerr picks it. */
+    fun defaultProfileFor(anime: Boolean): Int? = if (anime) animeProfileId ?: defaultProfileId else defaultProfileId
+
+    /** The default tags: an anime series gets the anime tags alone, never the regular ones (an unset list is none). */
+    fun defaultTagsFor(anime: Boolean): Set<Int> = if (anime) animeTagIds else defaultTagIds
+}
 
 /** How much of a user's request quota is left, for the type of title being requested. Absent where the type is not metered. */
 data class RequestQuota(
@@ -108,6 +125,9 @@ interface RequestSheetRepository {
     /** The quota for this kind of title; null where it is not metered. A failed read throws. */
     suspend fun quota(kind: TitleKind): RequestQuota?
 
+    /** Whether Seerr treats this series as anime, which decides the Sonarr defaults a plain request gets. A failed read throws. */
+    suspend fun isAnime(tmdbId: Int): Boolean = false
+
     /** The servers this user may choose between, empty unless they may choose a destination. A failed read throws. */
     suspend fun servers(kind: TitleKind): List<RequestServer>
 
@@ -149,6 +169,8 @@ class SeerrRequestSheetRepository(
             (if (kind == TitleKind.Series) quota.tv else quota.movie).toRequestQuota()
         }
 
+    override suspend fun isAnime(tmdbId: Int): Boolean = withContext(io) { api().isAnimeSeries(tmdbId) }
+
     override suspend fun servers(kind: TitleKind): List<RequestServer> =
         withContext(io) {
             val access = access(kind)
@@ -163,6 +185,7 @@ class SeerrRequestSheetRepository(
         withContext(io) {
             val details = api().arrServer(kind == TitleKind.Series, serverId)
             val defaultTags = details.server?.activeTags.orEmpty()
+            val animeTags = details.server?.activeAnimeTags.orEmpty()
             RequestChoices(
                 profiles = details.profiles.map { RequestChoice(it.id, it.name) },
                 rootFolders = details.rootFolders.map { it.path },
@@ -170,6 +193,8 @@ class SeerrRequestSheetRepository(
                 defaultProfileId = details.server?.activeProfileId,
                 defaultTagIds = defaultTags.toSet(),
                 freeSpace = details.rootFolders.mapNotNull { folder -> folder.freeSpace?.let { folder.path to it } }.toMap(),
+                animeProfileId = details.server?.activeAnimeProfileId,
+                animeTagIds = animeTags.toSet(),
             )
         }
 
@@ -223,7 +248,8 @@ class SeerrRequestSheetRepository(
     }
 }
 
-private fun SeerrServerDto.toRequestServer() = RequestServer(id, name, is4k, isDefault, activeProfileId, activeDirectory)
+private fun SeerrServerDto.toRequestServer() =
+    RequestServer(id, name, is4k, isDefault, activeProfileId, activeDirectory, activeAnimeProfileId, activeAnimeDirectory)
 
 /** A bucket with no limit is unlimited, which is no quota at all. */
 private fun SeerrQuotaBucketDto?.toRequestQuota(): RequestQuota? {

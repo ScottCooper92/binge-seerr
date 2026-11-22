@@ -60,6 +60,9 @@ data class SeerrServerDto(
     @SerialName("isDefault") val isDefault: Boolean = false,
     @SerialName("activeProfileId") val activeProfileId: Int? = null,
     @SerialName("activeDirectory") val activeDirectory: String? = null,
+    /** What a plain request for an anime series gets, where the instance sets them; Sonarr's list carries these two and no anime tags. */
+    @SerialName("activeAnimeProfileId") val activeAnimeProfileId: Int? = null,
+    @SerialName("activeAnimeDirectory") val activeAnimeDirectory: String? = null,
 )
 
 @Serializable
@@ -79,6 +82,10 @@ data class SeerrServerRefDto(
     @SerialName("activeDirectory") val activeDirectory: String? = null,
     /** The tags a plain request to this instance gets; the details read carries them for both Radarr and Sonarr. */
     @SerialName("activeTags") val activeTags: List<Int> = emptyList(),
+    /** Sonarr's own: an anime series gets these instead of the regular ones, and its tags are these alone, not the regular tags. */
+    @SerialName("activeAnimeProfileId") val activeAnimeProfileId: Int? = null,
+    @SerialName("activeAnimeDirectory") val activeAnimeDirectory: String? = null,
+    @SerialName("activeAnimeTags") val activeAnimeTags: List<Int> = emptyList(),
 )
 
 @Serializable

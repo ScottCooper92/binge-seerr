@@ -38,6 +38,11 @@ private const val RADARR_DETAILED =
        "profiles":[{"id":4,"name":"HD"},{"id":5,"name":"Any"}],
        "rootFolders":[{"id":1,"path":"/movies","freeSpace":1319413953331,"totalSpace":2638827906662},{"id":2,"path":"/more"}],
        "tags":[{"id":1,"label":"family"},{"id":2,"label":"anime"}]}"""
+private const val SONARR_DETAILED =
+    """{"server":{"id":1,"name":"Sonarr","activeProfileId":4,"activeDirectory":"/tv","activeTags":[1],
+       "activeAnimeProfileId":5,"activeAnimeDirectory":"/anime","activeAnimeTags":[2]},
+       "profiles":[{"id":4,"name":"HD"},{"id":5,"name":"Anime"}],"rootFolders":[{"id":1,"path":"/tv"},{"id":2,"path":"/anime"}],
+       "tags":[{"id":1,"label":"family"},{"id":2,"label":"anime"}]}"""
 private const val QUOTA = """{"movie":{"days":7,"limit":10,"used":8,"remaining":2},"tv":{"limit":0}}"""
 
 class SeerrRequestSheetRepositoryTest {
@@ -147,6 +152,68 @@ class SeerrRequestSheetRepositoryTest {
         assertEquals(setOf(1), choices.defaultTagIds)
         assertEquals(listOf(RequestChoice(1, "family"), RequestChoice(2, "anime")), choices.tags)
         assertEquals(mapOf("/movies" to 1_319_413_953_331L), choices.freeSpace)
+    }
+
+    @Test
+    fun `a Sonarr's details carry the anime profile and tags apart from the regular ones`() {
+        route = { request ->
+            FakeResponse(headers = JSON, body = SONARR_DETAILED).takeIf { request.url.encodedPath == "/api/v1/service/sonarr/1" }
+        }
+
+        val choices = withRepository { it.choices(TitleKind.Series, serverId = 1) }
+
+        assertEquals(4, choices.defaultProfileFor(anime = false))
+        assertEquals(5, choices.defaultProfileFor(anime = true))
+        assertEquals(setOf(1), choices.defaultTagsFor(anime = false))
+        assertEquals(setOf(2), choices.defaultTagsFor(anime = true))
+    }
+
+    @Test
+    fun `an anime series with no anime tags on the instance gets none, not the regular tags`() {
+        val choices = RequestChoices(emptyList(), emptyList(), defaultTagIds = setOf(1), animeProfileId = 5)
+
+        assertEquals(emptySet<Int>(), choices.defaultTagsFor(anime = true))
+    }
+
+    @Test
+    fun `a series is anime when its keywords hold the anime keyword`() {
+        route = { request ->
+            request.url.encodedPath.takeIf { it == "/api/v1/tv/1399" }?.let {
+                FakeResponse(headers = JSON, body = """{"id":1399,"keywords":[{"id":9715,"name":"x"},{"id":210024,"name":"anime"}]}""")
+            }
+        }
+
+        assertTrue(withRepository { it.isAnime(1399) })
+    }
+
+    @Test
+    fun `a series without the anime keyword is not anime`() {
+        route = { request ->
+            request.url.encodedPath.takeIf { it == "/api/v1/tv/1399" }?.let {
+                FakeResponse(headers = JSON, body = """{"id":1399,"keywords":[{"id":9715,"name":"x"}]}""")
+            }
+        }
+
+        assertFalse(withRepository { it.isAnime(1399) })
+    }
+
+    @Test
+    fun `a server list names the anime profile and folder of each server`() {
+        route = { request ->
+            FakeResponse(
+                headers = JSON,
+                body =
+                    """[{"id":1,"name":"Sonarr","is4k":false,"isDefault":true,"activeProfileId":4,"activeDirectory":"/tv",
+                    "activeAnimeProfileId":5,"activeAnimeDirectory":"/anime"}]""",
+            ).takeIf { request.url.encodedPath == "/api/v1/service/sonarr" }
+        }
+
+        val server = withRepository { it.servers(TitleKind.Series) }.single()
+
+        assertEquals(5, server.profileFor(anime = true))
+        assertEquals("/anime", server.folderFor(anime = true))
+        assertEquals(4, server.profileFor(anime = false))
+        assertEquals("/tv", server.folderFor(anime = false))
     }
 
     @Test
