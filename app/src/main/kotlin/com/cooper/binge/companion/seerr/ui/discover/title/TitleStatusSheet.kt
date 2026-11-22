@@ -118,7 +118,7 @@ internal fun TitleStatusSheetContent(
     val requestRows =
         listOfNotNull(
             actionItem(Icons.Filled.Add, stringResource(R.string.title_sheet_request_remaining), onClick = onRequestRemaining)
-                .takeIf { remainingOpen },
+                .takeIf { remainingOpen && state.isInLibrary() },
             actionItem(Icons.Filled.Add, stringResource(R.string.request_sheet_submit_4k), onClick = onRequestFourK)
                 .takeIf { state.isInLibrary() && fourKOpen },
             openItem(

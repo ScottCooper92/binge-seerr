@@ -56,6 +56,8 @@ internal fun RequestActionsSheet(
     titleState: SheetStateChip? = null,
     titleBack: (() -> Unit)? = null,
     scope: SheetScope = SheetScope.Both,
+    cards: RequestCardsHost? = null,
+    destination: RequestDestination? = null,
 ) {
     var blockTitle by rememberSaveable { mutableStateOf(false) }
     var pending by rememberSaveable { mutableStateOf<Pending?>(null) }
@@ -106,6 +108,8 @@ internal fun RequestActionsSheet(
                     titleState = titleState,
                     titleBack = titleBack,
                     scope = scope,
+                    destination = destination,
+                    cards = cards?.let { RequestCardsModel(requests, item.id, it.onOpen, it.snackbar, it.onChanged) },
                 ),
             callbacks =
                 RequestSheetCallbacks(

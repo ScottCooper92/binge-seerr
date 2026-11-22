@@ -13,6 +13,7 @@ import com.cooper.binge.companion.seerr.discover.title.TitleRequest
 import com.cooper.binge.companion.seerr.discover.title.VersionState
 import com.cooper.binge.companion.seerr.seerr.SeerrRequestStatusCode
 import com.cooper.binge.companion.seerr.telemetry.AnalyticsEvents
+import com.cooper.binge.companion.seerr.ui.requests.SheetScope
 import com.cooper.binge.companion.seerr.util.MainDispatcherRule
 import com.cooper.binge.companion.seerr.util.RecordingAnalytics
 import com.cooper.binge.companion.seerr.util.awaitEvent
@@ -241,6 +242,56 @@ class TitlePageViewModelTest {
         vm.closeSheet(TitleSheet.Manage)
         assertFalse(vm.ready().manageSheetOpen)
         assertEquals("the id stays so a moderation's result still has its sheet", 7, vm.ready().manageRequestId)
+    }
+
+    @Test
+    fun `a card opens its request's level and back returns to the title level`() {
+        val spiritedAway =
+            movieFixture(
+                standard = VersionState(TitleAvailability.Available, mayRequest = false),
+            ).copy(
+                requests =
+                    listOf(
+                        TitleRequest(3, false, SeerrRequestStatusCode.Completed, 8),
+                        TitleRequest(9, true, SeerrRequestStatusCode.Pending, 5),
+                    ),
+            )
+        val vm = TitlePageViewModel(FakeTitles(movie = spiritedAway), 603)
+        vm.onPrimary()
+        assertEquals(SheetScope.Title, vm.ready().manageScope)
+
+        vm.pickRequest(9)
+        assertEquals(9, vm.ready().manageRequestId)
+        assertEquals(SheetScope.Request, vm.ready().manageScope)
+        assertTrue(vm.ready().manageSheetOpen)
+        assertTrue(vm.ready().manageFromList)
+
+        vm.backToRequests()
+        assertEquals(SheetScope.Title, vm.ready().manageScope)
+        assertFalse(vm.ready().manageFromList)
+        assertTrue(vm.ready().manageSheetOpen)
+    }
+
+    @Test
+    fun `with three requests each card opens its own level and back returns each time`() {
+        val dune =
+            movieFixture(standard = VersionState(TitleAvailability.Available, mayRequest = false)).copy(
+                requests =
+                    listOf(
+                        TitleRequest(1, false, SeerrRequestStatusCode.Completed, 8),
+                        TitleRequest(2, true, SeerrRequestStatusCode.Pending, 5),
+                        TitleRequest(3, false, SeerrRequestStatusCode.Declined, 6),
+                    ),
+            )
+        val vm = TitlePageViewModel(FakeTitles(movie = dune), 603)
+        vm.onPrimary()
+        listOf(1, 2, 3).forEach { id ->
+            vm.pickRequest(id)
+            assertEquals(id, vm.ready().manageRequestId)
+            assertEquals(SheetScope.Request, vm.ready().manageScope)
+            vm.backToRequests()
+            assertEquals(SheetScope.Title, vm.ready().manageScope)
+        }
     }
 
     @Test

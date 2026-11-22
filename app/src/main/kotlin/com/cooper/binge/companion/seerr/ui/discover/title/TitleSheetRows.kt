@@ -1,7 +1,6 @@
 package com.cooper.binge.companion.seerr.ui.discover.title
 
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ListAlt
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.ReportProblem
@@ -18,6 +17,7 @@ import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.title.MovieDetails
 import com.cooper.binge.companion.seerr.discover.title.SeriesDetails
 import com.cooper.binge.companion.seerr.ui.requests.OpenTarget
+import com.cooper.binge.companion.seerr.ui.requests.RequestCardsHost
 import com.cooper.binge.companion.seerr.ui.requests.ServiceKind
 import com.cooper.binge.companion.seerr.ui.requests.SheetScope
 import com.cooper.binge.companion.seerr.ui.requests.SheetStateChip
@@ -49,7 +49,6 @@ internal fun rememberTitleSheetRows(
     onRequestFourK: () -> Unit,
     onWatchInBinge: (() -> Unit)? = null,
     onRequestRemaining: () -> Unit = {},
-    onOpenRequests: () -> Unit = {},
     onReport: (() -> Unit)? = null,
 ): List<SheetTitleRow> {
     val resources = LocalResources.current
@@ -66,7 +65,6 @@ internal fun rememberTitleSheetRows(
     val watchInBinge by rememberUpdatedState(onWatchInBinge)
     val requestFourK by rememberUpdatedState(onRequestFourK)
     val requestRemaining by rememberUpdatedState(onRequestRemaining)
-    val openRequests by rememberUpdatedState(onOpenRequests)
     val report by rememberUpdatedState(onReport)
     val reportOffered = onReport != null
     val bingeAnswers = onWatchInBinge != null
@@ -123,19 +121,13 @@ internal fun rememberTitleSheetRows(
                     resources.getString(R.string.title_sheet_request_remaining),
                     external = false,
                     onClick = { requestRemaining() },
-                ).takeIf { facts.remainingOpen },
+                ).takeIf { facts.remainingOpen && facts.state.isInLibrary() },
                 SheetTitleRow(
                     Icons.Filled.Add,
                     resources.getString(R.string.request_sheet_submit_4k),
                     external = false,
                     onClick = { requestFourK() },
                 ).takeIf { facts.fourKOpen },
-                SheetTitleRow(
-                    Icons.AutoMirrored.Filled.ListAlt,
-                    resources.getString(R.string.title_sheet_requests, facts.requests.size),
-                    external = false,
-                    onClick = { openRequests() },
-                ).takeIf { facts.requests.size > 1 },
                 SheetTitleRow(
                     Icons.Filled.ReportProblem,
                     resources.getString(R.string.issue_report_title),
@@ -166,6 +158,7 @@ internal fun TitleManageSheet(
             onChanged = actions.onReload,
             titleBack = actions.onBackToRequests.takeIf { fromList },
             scope = scope,
+            cards = RequestCardsHost(actions.onPickRequest, actions.onReload, snackbar).takeIf { scope == SheetScope.Title },
             titleState = SheetStateChip(stringResource(facts.state.labelRes()), facts.state.sentiment()),
             titleRows =
                 rememberTitleSheetRows(
@@ -176,10 +169,6 @@ internal fun TitleManageSheet(
                     },
                     onRequestFourK = actions.onRequestFourK,
                     onRequestRemaining = actions.onRequestRemaining,
-                    onOpenRequests = {
-                        actions.onCloseManage()
-                        actions.onOpenRequests()
-                    },
                     onReport =
                         actions.onReport?.let { report ->
                             {

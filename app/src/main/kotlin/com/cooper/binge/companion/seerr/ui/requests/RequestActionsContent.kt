@@ -12,7 +12,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Dns
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Folder
+import androidx.compose.material.icons.filled.HighQuality
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -134,6 +137,13 @@ internal fun RequestActionsContent(
                                 }
                             },
                 )
+            }
+            if (titleScope) model.cards?.takeIf { it.summaries.isNotEmpty() }?.let { RequestCardsSection(it) }
+            if (requestScope) {
+                destinationRows(model.destination)
+                    .takeIf {
+                        it.isNotEmpty()
+                    }?.let { ItemGroup(title = stringResource(R.string.request_sheet_group_destination), rows = it) }
             }
             if (requestRows.isNotEmpty()) ItemGroup(title = stringResource(R.string.request_sheet_group_request), rows = requestRows)
             if (mediaRows.isNotEmpty()) ItemGroup(title = stringResource(R.string.request_sheet_group_media), rows = mediaRows)
@@ -377,3 +387,18 @@ private fun blockTitleRows(
         ),
     )
 }
+
+/** Server, quality profile and root folder the request was sent to, as plain read-out rows. */
+@Composable
+private fun destinationRows(destination: RequestDestination?): List<ListItem> =
+    listOfNotNull(
+        destination?.serverName?.let {
+            ListItem(icon = Icons.Filled.Dns, label = stringResource(R.string.request_server), detail = it, clickable = false)
+        },
+        destination?.profileName?.let {
+            ListItem(icon = Icons.Filled.HighQuality, label = stringResource(R.string.request_profile), detail = it, clickable = false)
+        },
+        destination?.rootFolder?.let {
+            ListItem(icon = Icons.Filled.Folder, label = stringResource(R.string.request_root_folder), detail = it, clickable = false)
+        },
+    )

@@ -25,6 +25,10 @@ internal class RequestSheetModel(
     val titleBack: (() -> Unit)? = null,
     /** Which of the title's and the request's rows the sheet draws; [SheetScope.Both] for a title with one request and for every other opener. */
     val scope: SheetScope = SheetScope.Both,
+    /** The title's requests as cards, drawn at the title level; null from every other opener. */
+    val cards: RequestCardsModel? = null,
+    /** Where the request was sent, drawn at the request's own level; null when the server names nothing. */
+    val destination: RequestDestination? = null,
 )
 
 /** The title's combined state as a chip: its words and the tone of the status chip the cards draw. */

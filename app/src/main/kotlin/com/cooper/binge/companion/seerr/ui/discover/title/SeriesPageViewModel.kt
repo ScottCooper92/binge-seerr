@@ -185,7 +185,7 @@ class SeriesPageViewModel
                         ready.copy(
                             manageRequestId = tap.requestId,
                             manageSheetOpen = true,
-                            manageScope = if (ready.series.requests.size > 1) SheetScope.Title else SheetScope.Both,
+                            manageScope = SheetScope.Title,
                             manageFromList = false,
                         )
                     PrimaryTap.StatusSheet -> ready.copy(statusSheetOpen = true)
@@ -194,14 +194,40 @@ class SeriesPageViewModel
 
         /** A request's sheet was asked for from outside the page, as the Requests list does: open it on that request. */
         fun openRequest(id: Int) =
-            updateReady { it.copy(manageRequestId = id, manageSheetOpen = true, requestsSheetOpen = false, manageFromList = false) }
+            updateReady {
+                it.copy(
+                    manageRequestId = id,
+                    manageSheetOpen = true,
+                    requestsSheetOpen = false,
+                    manageFromList = false,
+                    manageScope = SheetScope.Both,
+                )
+            }
 
         fun pickRequest(id: Int) =
             updateReady {
-                it.copy(manageRequestId = id, manageSheetOpen = true, requestsSheetOpen = false, manageFromList = true)
+                it.copy(
+                    manageRequestId = id,
+                    manageSheetOpen = true,
+                    requestsSheetOpen = false,
+                    manageFromList = true,
+                    manageScope = SheetScope.Request,
+                )
             }
 
-        fun backToRequests() = updateReady { it.copy(manageSheetOpen = false, requestsSheetOpen = true, manageFromList = false) }
+        fun backToRequests() =
+            updateReady {
+                it.copy(
+                    manageSheetOpen = true,
+                    requestsSheetOpen = false,
+                    manageScope = SheetScope.Title,
+                    manageRequestId =
+                        it.series.requests
+                            .toManage()
+                            ?.id ?: it.manageRequestId,
+                    manageFromList = false,
+                )
+            }
 
         fun backFromRequests() =
             updateReady {
