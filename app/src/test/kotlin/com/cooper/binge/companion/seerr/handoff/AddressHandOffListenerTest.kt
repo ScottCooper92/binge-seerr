@@ -46,6 +46,7 @@ class AddressHandOffListenerTest {
             url = "http://127.0.0.1:$port/a/$TOKEN",
             page = FakePage,
             key = key,
+            dispatcher = Dispatchers.IO,
             limits = HandOffLimits(readTimeoutMillis = 300, requestDeadlineMillis = 1_000, drainDeadlineMillis = 500),
         )
 
