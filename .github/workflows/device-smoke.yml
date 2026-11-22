@@ -145,6 +145,17 @@ jobs:
           -Pandroid.testoptions.manageddevices.emulator.gpu=swiftshader_indirect
           -Pandroid.experimental.testOptions.managedDevices.emulator.showKernelLogging=true
 
+      # Diagnostic for #2648. Prints only which public-library Hilt classes each APK defines or references,
+      # filtered to `dagger.hilt.`, so the log shows what R8 left without publishing any private class.
+      - name: List the Hilt classes in the smoke's APKs
+        if: always()
+        run: |
+          an="$ANDROID_HOME/cmdline-tools/latest/bin/apkanalyzer"
+          for apk in app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk; do
+            echo "== $apk"
+            "$an" dex packages "$apk" 2>/dev/null | awk '$1 == "C" && $NF ~ /^dagger\.hilt\./ { print $2, $NF }' | sort -u
+          done
+
       # Push to main only, so a dispatch or the weekly run never overwrites the cache entry.
       - name: Save AVD cache
         if: >
