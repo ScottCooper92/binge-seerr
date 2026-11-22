@@ -265,6 +265,3 @@ class TitlePageViewModel
         private fun updateReady(transform: (TitlePageUiState.Ready) -> TitlePageUiState.Ready) =
             state.update { (it as? TitlePageUiState.Ready)?.let(transform) ?: it }
     }
-
-/** How long a loaded page waits for the scores the hero shows, so they are in its first frame and do not move its copy: short, and bounded. */
-internal const val HERO_SETTLE_MS = 500L
