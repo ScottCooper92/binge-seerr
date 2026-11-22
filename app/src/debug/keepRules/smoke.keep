@@ -63,52 +63,53 @@
 # Methods the test calls that the minified app never does, so R8 removes them: the test is the Binder
 # client and drives MockWebServer. Found by intersecting the method references in the test APK's dex
 # (`dexdump -d`) with the members R8 listed as removed in the app's `usage.txt`; no field, constructor
-# or class is left on that list. Exact methods, not packages. Debug-only.
--keepclassmembers class androidx.tracing.Trace { ** forceEnableAppTracing(...); }
+# or class is left on that list. Exact methods, not packages. Debug-only. The return type is `***`:
+# `**` does not match a primitive, so a `void` method would not be kept.
+-keepclassmembers class androidx.tracing.Trace { *** forceEnableAppTracing(...); }
 
 # The host side of the contract: the app answers these messages, the test builds them.
--keepclassmembers class com.binge.companion.contracts.request.v1.GetStatusRequest { ** newBuilder(...); }
--keepclassmembers class com.binge.companion.contracts.request.v1.GetStatusRequest$Builder { ** setMedia(...); }
--keepclassmembers class com.binge.companion.contracts.request.v1.GetStatusResponse { ** getStatus(...); }
--keepclassmembers class com.binge.companion.contracts.request.v1.HandshakeRequest { ** newBuilder(...); }
--keepclassmembers class com.binge.companion.contracts.request.v1.HandshakeRequest$Builder { ** setHost(...); }
+-keepclassmembers class com.binge.companion.contracts.request.v1.GetStatusRequest { *** newBuilder(...); }
+-keepclassmembers class com.binge.companion.contracts.request.v1.GetStatusRequest$Builder { *** setMedia(...); }
+-keepclassmembers class com.binge.companion.contracts.request.v1.GetStatusResponse { *** getStatus(...); }
+-keepclassmembers class com.binge.companion.contracts.request.v1.HandshakeRequest { *** newBuilder(...); }
+-keepclassmembers class com.binge.companion.contracts.request.v1.HandshakeRequest$Builder { *** setHost(...); }
 -keepclassmembers class com.binge.companion.contracts.request.v1.HandshakeResponse {
-    ** getCapabilitiesCount(...);
-    ** getProviderName(...);
+    *** getCapabilitiesCount(...);
+    *** getProviderName(...);
 }
--keepclassmembers class com.binge.companion.contracts.v1.HostInfo { ** newBuilder(...); }
+-keepclassmembers class com.binge.companion.contracts.v1.HostInfo { *** newBuilder(...); }
 -keepclassmembers class com.binge.companion.contracts.v1.HostInfo$Builder {
-    ** setPackageName(...);
-    ** setVersionCode(...);
-    ** setVersionName(...);
+    *** setPackageName(...);
+    *** setVersionCode(...);
+    *** setVersionName(...);
 }
--keepclassmembers class com.cooper.homelab.core.flags.Flags$Companion { ** of(...); }
--keepclassmembers class io.grpc.binder.AndroidComponentAddress { ** forRemoteComponent(...); }
--keepclassmembers class kotlinx.coroutines.CancellableContinuation { ** resume(...); }
+-keepclassmembers class com.cooper.homelab.core.flags.Flags$Companion { *** of(...); }
+-keepclassmembers class io.grpc.binder.AndroidComponentAddress { *** forRemoteComponent(...); }
+-keepclassmembers class kotlinx.coroutines.CancellableContinuation { *** resume(...); }
 
 # MockWebServer reaches into OkHttp's internals and Okio.
--keepclassmembers class okhttp3.Headers$Builder { ** add(...); }
--keepclassmembers class okhttp3.internal.Internal { ** addHeaderLenient(...); }
--keepclassmembers class okhttp3.internal._UtilJvmKt { ** closeQuietly(...); }
--keepclassmembers class okhttp3.internal.concurrent.TaskQueue { ** idleLatch(...); }
--keepclassmembers class okhttp3.internal.concurrent.TaskRunner { ** activeQueues(...); }
--keepclassmembers class okhttp3.internal.concurrent.TaskRunner$RealBackend { ** shutdown(...); }
+-keepclassmembers class okhttp3.Headers$Builder { *** add(...); }
+-keepclassmembers class okhttp3.internal.Internal { *** addHeaderLenient(...); }
+-keepclassmembers class okhttp3.internal._UtilJvmKt { *** closeQuietly(...); }
+-keepclassmembers class okhttp3.internal.concurrent.TaskQueue { *** idleLatch(...); }
+-keepclassmembers class okhttp3.internal.concurrent.TaskRunner { *** activeQueues(...); }
+-keepclassmembers class okhttp3.internal.concurrent.TaskRunner$RealBackend { *** shutdown(...); }
 -keepclassmembers class okhttp3.internal.http2.Http2Connection {
-    ** pushStream(...);
-    ** setSettings(...);
+    *** pushStream(...);
+    *** setSettings(...);
 }
 -keepclassmembers class okhttp3.internal.http2.Http2Stream {
-    ** enqueueTrailers(...);
-    ** takeHeaders$default(...);
-    ** writeHeaders(...);
+    *** enqueueTrailers(...);
+    *** takeHeaders$default(...);
+    *** writeHeaders(...);
 }
--keepclassmembers class okhttp3.internal.http2.Settings { ** clear(...); }
+-keepclassmembers class okhttp3.internal.http2.Settings { *** clear(...); }
 -keepclassmembers class okhttp3.internal.platform.Platform {
-    ** getHandshakeServerNames(...);
-    ** getServerSocketFactory(...);
+    *** getHandshakeServerNames(...);
+    *** getServerSocketFactory(...);
 }
--keepclassmembers class okio.Buffer { ** copyTo$default(...); }
+-keepclassmembers class okio.Buffer { *** copyTo$default(...); }
 -keepclassmembers class okio.BufferedSink {
-    ** write(...);
-    ** writeAll(...);
+    *** write(...);
+    *** writeAll(...);
 }
