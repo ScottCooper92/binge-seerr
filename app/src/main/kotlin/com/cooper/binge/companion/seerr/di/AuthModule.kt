@@ -34,8 +34,8 @@ import com.cooper.binge.companion.seerr.seerr.PlexClientIdentity
 import com.cooper.binge.companion.seerr.seerr.SeerrApiFactory
 import com.cooper.binge.companion.seerr.seerr.TitleCache
 import com.cooper.binge.companion.seerr.seerr.insecurePublicHostOrNull
-import com.cooper.binge.companion.seerr.telemetry.LogcatLogger
 import com.cooper.binge.companion.seerr.ui.hub.HubOverviewCache
+import com.cooper.homelab.core.diagnostics.LogcatLogger
 import com.cooper.homelab.core.server.connection.ServerRegistry
 import com.cooper.homelab.core.server.network.AndroidLocalNetworkPermission
 import com.cooper.homelab.core.server.network.CleartextConsent
@@ -119,14 +119,14 @@ object AuthModule {
     @Singleton
     fun serverRegistry(
         @ApplicationContext context: Context,
-    ): ServerRegistry = ServerRegistry(context.serverRegistryDataStore, "registry", { UUID.randomUUID().toString() }, LogcatLogger)
+    ): ServerRegistry = ServerRegistry(context.serverRegistryDataStore, "registry", { UUID.randomUUID().toString() }, LogcatLogger())
 
     @Provides
     @Singleton
     fun serverLogins(
         @ApplicationContext context: Context,
         cipher: SecretCipher,
-    ): LoginStore<SeerrLogin> = LoginStore(context.serverLoginsDataStore, SeerrLoginCodec, cipher.forLibrary(), LogcatLogger)
+    ): LoginStore<SeerrLogin> = LoginStore(context.serverLoginsDataStore, SeerrLoginCodec, cipher.forLibrary(), LogcatLogger())
 
     @Provides
     @Singleton
@@ -154,7 +154,7 @@ object AuthModule {
                 logins = logins.get(),
                 marker = context.serverRegistryDataStore,
                 serverId = currentServerId,
-                logger = LogcatLogger,
+                logger = LogcatLogger(),
             )
         return RegistryCredentialStore(registry.get(), logins.get(), importer, currentServerId, io)
     }
