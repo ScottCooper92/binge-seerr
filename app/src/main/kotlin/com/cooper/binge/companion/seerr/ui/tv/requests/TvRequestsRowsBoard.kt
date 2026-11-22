@@ -176,7 +176,7 @@ private fun TvRequestsUnresolved(
         body = stringResource(R.string.tv_list_load_failed),
         modifier = modifier,
         icon = Icons.Filled.Warning,
-        primary = ScreenAction(stringResource(R.string.hub_retry), actions.onRetryScope),
+        primary = ScreenAction(stringResource(R.string.action_try_again), actions.onRetryScope),
     )
 }
 

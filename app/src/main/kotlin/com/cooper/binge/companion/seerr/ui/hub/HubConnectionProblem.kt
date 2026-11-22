@@ -60,7 +60,7 @@ internal fun ConnectionProblem(
             } else {
                 // While a retry is in flight it says so, and can't be pressed again; the other ways out stay open.
                 BingeFilledButton(
-                    label = stringResource(if (rechecking) R.string.hub_rechecking else R.string.hub_retry),
+                    label = stringResource(if (rechecking) R.string.hub_rechecking else R.string.action_try_again),
                     onClick = onRetry,
                     loading = rechecking,
                     modifier = Modifier.fillMaxWidth(),

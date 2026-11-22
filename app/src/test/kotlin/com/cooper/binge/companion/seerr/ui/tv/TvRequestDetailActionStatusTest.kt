@@ -188,13 +188,13 @@ class TvRequestDetailActionStatusTest {
     @Test
     fun retryRequestSavesThenSaved() {
         setContent(RequestActions(canRetry = true))
-        assertSavesThenSaves(R.string.hub_retry, "retry", ModerationEvent.Retried)
+        assertSavesThenSaves(R.string.action_try_again, "retry", ModerationEvent.Retried)
     }
 
     @Test
     fun retryRequestThatFailsKeepsARetry() {
         setContent(RequestActions(canRetry = true))
-        assertFailsThenRetries(R.string.hub_retry, "retry")
+        assertFailsThenRetries(R.string.action_try_again, "retry")
     }
 
     @Test

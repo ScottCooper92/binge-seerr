@@ -57,7 +57,7 @@ internal fun tvAccountMenu(
             ).joinToString(separator)
         }
     val failed = accountFailed || detail is UserDetailUiState.Error
-    val retry = stringResource(R.string.hub_retry)
+    val retry = stringResource(R.string.action_try_again)
     val accountLabel = stringResource(R.string.tv_account)
     val signOut = stringResource(R.string.tv_account_sign_out)
     val signOutTitle = stringResource(R.string.tv_account_sign_out_title)

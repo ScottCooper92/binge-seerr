@@ -276,7 +276,7 @@ class TvAccountMenuTest {
                 hasText(string(R.string.tv_account)) and isFocusable(),
             ).filterToOne(!hasContentDescription(string(R.string.tv_account)))
 
-    private fun retryRow() = composeTestRule.onNode(hasText(string(R.string.hub_retry)) and isFocusable())
+    private fun retryRow() = composeTestRule.onNode(hasText(string(R.string.action_try_again)) and isFocusable())
 
     private fun signOutRow() =
         composeTestRule.onAllNodes(hasText(string(R.string.tv_account_sign_out)) and isFocusable()).filterToOne(!hasAnyAncestor(isDialog()))

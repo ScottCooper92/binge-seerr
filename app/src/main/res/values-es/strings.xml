@@ -428,7 +428,6 @@
     <string name="issue_delete_comment_title">¿Eliminar este comentario?</string>
     <string name="issue_delete_comment_message">El comentario se quita del hilo para todos.</string>
     <string name="issue_comment_actions_cd">Acciones del comentario</string>
-    <string name="issue_comment_retry">Reintentar</string>
     <string name="issue_comment_discard">Descartar</string>
     <string name="issue_comment_just_now">Ahora mismo</string>
     <string name="issue_comment_sending">Enviando…</string>
@@ -1039,7 +1038,6 @@
     <string name="settings_about_version">Versión %1$s</string>
     <string name="settings_job_running">Ejecutándose ahora</string>
     <string name="settings_job_next_run">Próxima ejecución %1$s</string>
-    <string name="hub_retry">Reintentar</string>
     <string name="hub_disconnect">Cerrar sesión</string>
     <string name="hub_disconnect_confirm_title">¿Cerrar sesión?</string>
     <string name="hub_disconnect_confirm_message_plain">Tendrás que iniciar sesión de nuevo para reconectar.</string>
