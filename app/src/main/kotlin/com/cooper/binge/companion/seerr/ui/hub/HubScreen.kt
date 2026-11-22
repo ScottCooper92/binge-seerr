@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -23,7 +24,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.BingePullToRefresh
-import com.binge.designsystem.component.BingeSearchFieldHeader
 import com.binge.designsystem.component.HintCard
 import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
@@ -91,7 +91,7 @@ fun HubScreen(
         title = ready?.server?.title ?: stringResource(R.string.companion_name),
         bar = ScreenBar.Small,
         pinned = true,
-        header = if (fieldInHeader) ({ BingeSearchFieldHeader { SettingsSearchEntry(onClick = actions.onOpenSearch) } }) else null,
+        header = if (fieldInHeader) ({ SettingsFieldHeader(actions.onOpenSearch) }) else null,
         actions = { account?.let { AccountAction(it, ready.overview.quota, actions) } },
     ) { padding ->
         Box(modifier = Modifier.fillMaxSize().padding(padding.screenOuterPadding())) {
@@ -131,6 +131,17 @@ fun HubScreen(
                     ) { Dashboard(ready, actions, selectedSection, contentPadding = inner) }
             }
         }
+    }
+}
+
+/**
+ * The Settings field in the scaffold's header slot, at the page's own side insets so beside another pane it keeps the edge the cards keep.
+ * The slot adds the fade under the header, so the field takes no bottom padding of its own.
+ */
+@Composable
+private fun SettingsFieldHeader(onClick: () -> Unit) {
+    Box(modifier = Modifier.fillMaxWidth().padding(resolvedContentPadding())) {
+        SettingsSearchEntry(onClick = onClick)
     }
 }
 
