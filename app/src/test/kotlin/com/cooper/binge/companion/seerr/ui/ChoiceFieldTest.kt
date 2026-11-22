@@ -59,9 +59,24 @@ class ChoiceFieldTest {
         assertEquals(0, taps)
     }
 
+    @Test
+    fun `a selection that is not among the choices reads as unknown`() {
+        setField(selected = 99)
+
+        composeTestRule.onNodeWithText(string(R.string.settings_value_unknown)).assertIsDisplayed()
+    }
+
+    @Test
+    fun `no choices draws nothing`() {
+        setField(selected = 3, choices = emptyList())
+
+        composeTestRule.onNodeWithText(TITLE).assertDoesNotExist()
+    }
+
     private fun setField(
         selected: Int?,
         enabled: Boolean = true,
+        choices: List<Pair<Int, String>> = CHOICES,
         onClick: () -> Unit = {},
     ) {
         composeTestRule.setContent {
@@ -69,7 +84,7 @@ class ChoiceFieldTest {
                 ChoiceField(
                     icon = Icons.Filled.HighQuality,
                     title = TITLE,
-                    choices = CHOICES,
+                    choices = choices,
                     selected = selected,
                     enabled = enabled,
                     onClick = onClick,

@@ -26,7 +26,7 @@ class TagTicksTest {
     private fun show(enabled: Boolean = true) {
         rule.setContent {
             BingeExpressiveTheme {
-                Column { TagChips(tags, selected.value, enabled) { id -> selected.value = selected.value.toggled(id) } }
+                Column { TagRows(tags, selected.value, enabled) { id -> selected.value = selected.value.toggled(id) } }
             }
         }
     }

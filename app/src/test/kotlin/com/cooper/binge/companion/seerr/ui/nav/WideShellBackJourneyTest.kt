@@ -1,16 +1,17 @@
 package com.cooper.binge.companion.seerr.ui.nav
 
 import androidx.navigation3.runtime.NavKey
+import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.ui.DvrInstanceRoute
 import com.cooper.binge.companion.seerr.ui.HomeRoute
 import com.cooper.binge.companion.seerr.ui.IssueDetailRoute
 import com.cooper.binge.companion.seerr.ui.IssuesRoute
-import com.cooper.binge.companion.seerr.ui.RequestDetailRoute
 import com.cooper.binge.companion.seerr.ui.RequestsRoute
 import com.cooper.binge.companion.seerr.ui.ServerSettingsPageRoute
 import com.cooper.binge.companion.seerr.ui.SettingsRoute
 import com.cooper.binge.companion.seerr.ui.SettingsSearchRoute
 import com.cooper.binge.companion.seerr.ui.ShellRoute
+import com.cooper.binge.companion.seerr.ui.TitleDetailRoute
 import com.cooper.binge.companion.seerr.ui.settings.ServiceType
 import com.cooper.binge.companion.seerr.ui.settings.server.ServerSettingsPage
 import com.cooper.binge.companion.seerr.ui.shell.SeerrTab
@@ -30,6 +31,12 @@ private const val TWO_PANES = "w900dp-h800dp"
 /** An expanded window: a landscape tablet. It is the same two panes as any wide window (#2348). */
 private const val EXPANDED = "w1280dp-h800dp"
 private const val WAIT_MILLIS = 5_000L
+
+/** The film of request 1 in the demo. */
+private const val REQUEST_FILM_ID = 45745
+
+/** The sheet, then the page. */
+private const val BACKS_TO_CLOSE_A_REQUEST = 2
 
 /**
  * Back on a wide window, with the Settings tab selected (#2346). What is open beside the hub closes first, innermost first, then the
@@ -72,11 +79,18 @@ class WideShellBackJourneyTest {
         host.await("the start tab to show", WAIT_MILLIS, null) { tab() == SeerrTab.Movies }
     }
 
-    /** Requests is the default section, so with nothing open in it the hub is bare and Back leaves for the start tab. */
+    /**
+     * Requests is the default section, so with nothing open in it the hub is bare and Back leaves for the start tab. An open request is a
+     * sheet over its title's page, so Back closes the sheet and then the page, and the test does not care which of the two takes a press.
+     */
     private fun requestDetail() {
-        open(RequestsRoute, RequestDetailRoute(1))
+        open(RequestsRoute, TitleDetailRoute(TitleKind.Movie, REQUEST_FILM_ID, openRequest = 1))
 
-        backTo(ShellRoute, RequestsRoute)
+        repeat(BACKS_TO_CLOSE_A_REQUEST) {
+            if (host.stack() != listOf(ShellRoute, RequestsRoute)) host.back()
+        }
+        awaitStack(listOf(ShellRoute, RequestsRoute))
+        assertEquals("Back closed what was open and stayed on Settings", SeerrTab.Settings, tab())
         backToStartTab()
     }
 

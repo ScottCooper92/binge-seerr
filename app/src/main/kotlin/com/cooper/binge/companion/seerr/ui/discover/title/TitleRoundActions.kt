@@ -5,6 +5,7 @@ import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.ReportProblem
+import androidx.compose.material.icons.filled.Storage
 import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
@@ -24,6 +25,7 @@ internal fun titleRoundActions(
     watchlist: WatchlistButton?,
     onReport: (() -> Unit)?,
     onBlock: (() -> Unit)?,
+    onServices: (() -> Unit)? = null,
 ): List<DetailRoundAction> {
     val trailerLabel = stringResource(R.string.title_page_action_trailer)
     val trailerDescription = stringResource(DesR.string.cd_link_chip_opens_outside, trailerLabel)
@@ -32,6 +34,7 @@ internal fun titleRoundActions(
         stringResource(if (watchlist?.onList == true) R.string.title_page_watchlist_remove else R.string.title_page_watchlist_add)
     val reportLabel = stringResource(R.string.title_page_action_report)
     val blockLabel = stringResource(R.string.title_page_action_block)
+    val servicesLabel = stringResource(R.string.title_page_action_services)
     return listOfNotNull(
         onTrailer?.let {
             DetailRoundAction(
@@ -49,6 +52,7 @@ internal fun titleRoundActions(
                 contentDescription = watchlistDescription,
             )
         },
+        onServices?.let { DetailRoundAction(Icons.Filled.Storage, servicesLabel, it) },
         onReport?.takeIf { model.canReport }?.let { DetailRoundAction(Icons.Filled.ReportProblem, reportLabel, it) },
         onBlock?.takeIf { model.canBlock }?.let { DetailRoundAction(Icons.Filled.Block, blockLabel, it) },
     )

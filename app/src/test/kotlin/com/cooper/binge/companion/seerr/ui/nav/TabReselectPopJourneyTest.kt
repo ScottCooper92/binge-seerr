@@ -4,12 +4,13 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.navigation3.runtime.NavKey
+import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.ui.HomeRoute
 import com.cooper.binge.companion.seerr.ui.IssueDetailRoute
 import com.cooper.binge.companion.seerr.ui.IssuesRoute
-import com.cooper.binge.companion.seerr.ui.RequestDetailRoute
 import com.cooper.binge.companion.seerr.ui.RequestsRoute
 import com.cooper.binge.companion.seerr.ui.ShellRoute
+import com.cooper.binge.companion.seerr.ui.TitleDetailRoute
 import com.cooper.binge.companion.seerr.ui.shell.SeerrTab
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
@@ -24,6 +25,9 @@ import org.robolectric.annotation.Config
 /** A wide window: the hub beside one content pane, so the bar stays up while something is open. */
 private const val TWO_PANES = "w900dp-h800dp"
 private const val WAIT_MILLIS = 5_000L
+
+/** The film of request 1 in the demo: a request opens as a sheet over its title's page, so this is where an open request lives. */
+private const val REQUEST_FILM_ID = 45745
 
 /**
  * Tapping the tab that is already showing, with screens opened on top of its root (#2356). On a phone what a tab opens takes the
@@ -58,7 +62,7 @@ class TabReselectPopJourneyTest {
 
     @Test
     fun `reselecting the tab closes an open request and goes back to the hub`() {
-        open(RequestsRoute, RequestDetailRoute(1))
+        open(RequestsRoute, TitleDetailRoute(TitleKind.Movie, REQUEST_FILM_ID, openRequest = 1))
 
         reselectSettings()
 
