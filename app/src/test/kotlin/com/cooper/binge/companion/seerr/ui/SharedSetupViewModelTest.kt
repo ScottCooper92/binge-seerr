@@ -278,7 +278,7 @@ class SharedSetupViewModelTest {
             vm.connect()
 
             assertEquals(SeerrVariant.Seerr, vm.awaitConnected().credentials.variant)
-            assertEquals(listOf("sign_in" to mapOf("method" to "ApiKey", "success" to true)), analytics.events)
+            assertEquals(listOf("sign_in" to mapOf("method" to "ApiKey")), analytics.events)
 
             connection.disconnect()
 
@@ -299,7 +299,7 @@ class SharedSetupViewModelTest {
             val rejected = vm.awaitSignIn { it.error != null }
             assertEquals(SetupError.Rejected, rejected.error)
             assertEquals("bad", rejected.form.apiKey)
-            assertEquals(listOf("sign_in" to mapOf("method" to "ApiKey", "success" to false)), analytics.events)
+            assertEquals(listOf("sign_in_failed" to mapOf("method" to "ApiKey", "reason" to "failed")), analytics.events)
             vm.editForm { copy(apiKey = "better") }
             assertNull(vm.awaitSignIn { it.form.apiKey == "better" }.error)
         }
@@ -330,7 +330,7 @@ class SharedSetupViewModelTest {
             val connected = vm.awaitConnected()
 
             assertEquals(DEMO_ORIGIN, connected.credentials.baseUrl)
-            val signIn = mapOf("method" to "Demo", "success" to true)
+            val signIn = mapOf("method" to "demo")
             assertEquals(listOf("sign_in" to signIn), analytics.events.filter { it.first == "sign_in" })
         }
 

@@ -12,11 +12,11 @@ import com.cooper.binge.companion.seerr.handoff.HandOffOpening
 import com.cooper.binge.companion.seerr.seerr.PlexClientIdentity
 import com.cooper.binge.companion.seerr.seerr.SeerrApiFactory
 import com.cooper.binge.companion.seerr.seerr.SeerrSignInMode
-import com.cooper.binge.companion.seerr.telemetry.AnalyticsEvents
 import com.cooper.binge.companion.seerr.util.MainDispatcherRule
 import com.cooper.binge.companion.seerr.util.PlainCipher
 import com.cooper.homelab.core.server.network.DataStoreCleartextConsent
 import com.cooper.homelab.core.server.network.LocalNetworkPermission
+import com.cooper.homelab.core.telemetry.SharedAnalyticsEvents
 import com.cooper.homelab.core.testing.InMemoryDataStore
 import com.cooper.homelab.core.testing.RecordingAnalytics
 import kotlinx.coroutines.flow.first
@@ -120,8 +120,9 @@ class SharedSetupDemoTest {
             vm.tryDemo()
             vm.uiState.first { it is SetupUiState.Connected }
 
-            val signIn = mapOf(AnalyticsEvents.PARAM_METHOD to AnalyticsEvents.METHOD_DEMO, AnalyticsEvents.PARAM_SUCCESS to true)
-            assertEquals(listOf(AnalyticsEvents.SIGN_IN to signIn), analytics.events.filter { it.first == AnalyticsEvents.SIGN_IN })
+            val signIn = mapOf(SharedAnalyticsEvents.PARAM_METHOD to SharedAnalyticsEvents.METHOD_DEMO)
+            val signIns = analytics.events.filter { it.first == SharedAnalyticsEvents.SIGN_IN }
+            assertEquals(listOf(SharedAnalyticsEvents.SIGN_IN to signIn), signIns)
         }
 
     @Test
