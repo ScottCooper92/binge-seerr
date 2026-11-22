@@ -120,10 +120,9 @@ fun IssueDetailScreen(
                         IssueDetailEvent.CommentDeleted -> resources.getString(R.string.issue_comment_deleted)
                         IssueDetailEvent.IssueResolved -> resources.getString(R.string.issue_resolved)
                         IssueDetailEvent.IssueReopened -> resources.getString(R.string.issue_reopened)
-                        IssueDetailEvent.IssueDeleted -> return@collectLatest
-                        is IssueDetailEvent.Failed -> return@collectLatest
+                        IssueDetailEvent.IssueDeleted, is IssueDetailEvent.Failed -> return@collectLatest
                     },
-                kind = if (event is IssueDetailEvent.Failed) SnackbarMessageKind.Error else SnackbarMessageKind.Confirmation,
+                kind = SnackbarMessageKind.Confirmation,
             )
         }
     }
