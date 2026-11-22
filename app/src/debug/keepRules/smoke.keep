@@ -39,3 +39,23 @@
 # app's `usage.txt` (what R8 removed) with the type descriptors in the test APK's dex.
 -keep class dagger.hilt.internal.TestSingletonComponent { *; }
 -keep class dagger.hilt.internal.TestSingletonComponentManager { *; }
+
+# The Hilt test root names the app's whole graph. `TestComponentDataSupplier` loads, by name, every
+# module and entry point the app's graph declares, and the test's generated components implement
+# Dagger's runtime interfaces. The app's own build needs none of them at runtime once it is minified,
+# so R8 removes them, and the next one the test reaches fails the run one class at a time
+# (`NoClassDefFoundError: ...FragmentGetContextFix$FragmentGetContextFixEntryPoint`). These were
+# found by intersecting the app's `usage.txt` with the type descriptors in the test APK's dex, which
+# listed them all at once. Debug-only, so release shrinks as before.
+-keep class dagger.hilt.** { *; }
+-keep class dagger.internal.Factory { *; }
+-keep class dagger.MembersInjector { *; }
+-keep class **.HiltWrapper_* { *; }
+-keep class **_HiltModules { *; }
+-keep class **_HiltModules$* { *; }
+-keep class **_HiltModule { *; }
+-keep class **_AssistedFactory { *; }
+
+# MockWebServer, in the test APK, names OkHttp's WebSocket classes from its upgrade handling.
+-keep class okhttp3.WebSocketListener { *; }
+-keep class okhttp3.internal.ws.** { *; }
