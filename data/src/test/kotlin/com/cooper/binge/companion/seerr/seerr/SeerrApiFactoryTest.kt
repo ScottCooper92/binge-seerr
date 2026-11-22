@@ -47,7 +47,7 @@ class SeerrApiFactoryTest {
     }
 
     @Test
-    fun `every client fails a dark host in five seconds but still waits fifteen for a slow read`() {
+    fun `every client fails a dark host in ten seconds but still waits fifteen for a slow read`() {
         val seen = mutableListOf<Pair<Int, Int>>()
         val recording =
             SeerrApiFactory(
@@ -69,10 +69,10 @@ class SeerrApiFactoryTest {
 
         assertEquals(4, seen.size)
         seen.forEach { (connect, read) ->
-            assertEquals(5_000, connect)
+            assertEquals(10_000, connect)
             assertEquals(15_000, read)
         }
-        assertEquals(5L, CONNECT_TIMEOUT_SECONDS)
+        assertEquals(10L, CONNECT_TIMEOUT_SECONDS)
         assertEquals(15L, READ_TIMEOUT_SECONDS)
     }
 
