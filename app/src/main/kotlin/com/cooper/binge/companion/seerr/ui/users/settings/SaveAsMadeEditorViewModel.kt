@@ -7,8 +7,7 @@ import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
 import com.cooper.homelab.core.foundation.ServerFailure
 import com.cooper.homelab.core.presentation.editor.EditorState
-import com.cooper.homelab.core.presentation.editor.RefusalNotice
-import com.cooper.homelab.core.presentation.editor.SettingsEditorViewModel
+import com.cooper.homelab.core.presentation.editor.SettingsEditor
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -18,10 +17,11 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import com.cooper.homelab.core.presentation.editor.EditorEvent as EngineEvent
 
 /**
  * A settings page that saves as it changes, on the shared library's engine, shown through the same [uiState] and [events] as
- * any other editor here. A refusal is said through [EditorEvent.Failed], and the library's [RefusalNotice] decides, through
+ * any other editor here. A refusal is said through [EditorEvent.Failed], and the library's refusal notice decides, through
  * [toRefusedEvent], whether the server's own reason goes with it: a dialog for any reason, a snackbar for none. A write the
  * local-network permission blocked is kept unsent with a retry, as before, so [classify] reports it as unreachable. A write that
  * fails on cleartext or a client certificate is now put back and reported, not kept: it cannot follow a load that worked.
@@ -36,8 +36,11 @@ abstract class SaveAsMadeEditorViewModel<T>(
     /** The throwable behind a load that failed, for the error the screen shows. */
     @Volatile private var lastLoadFailure: Throwable? = null
 
+    /** Why the server refused the last change, kept for the screens that show it in place until the next change or [clearRefusal]. */
+    @Volatile private var refusal: SeerrError? = null
+
     private val engine =
-        SettingsEditorViewModel<T>(
+        SettingsEditor.plain<T>(
             scope = viewModelScope,
             appScope = appScope,
             dispatcher = dispatcher,
@@ -57,12 +60,15 @@ abstract class SaveAsMadeEditorViewModel<T>(
 
     init {
         viewModelScope.launch(dispatcher) {
-            var announced: Any? = null
-            engine.state.collect { state ->
-                sync()
-                val refusal = (state as? EditorState.Ready<T>)?.refusal
-                if (refusal != null && refusal !== announced) lastFailure?.let { eventFlow.emit(refusal.toRefusedEvent(it)) }
-                announced = refusal
+            launch { engine.state.collect { sync() } }
+            engine.events.collect { event ->
+                if (event is EngineEvent.Refused) {
+                    lastFailure?.let {
+                        refusal = it.toSeerrError()
+                        sync()
+                        eventFlow.emit(event.notice.toRefusedEvent(it))
+                    }
+                }
             }
         }
     }
@@ -82,18 +88,21 @@ abstract class SaveAsMadeEditorViewModel<T>(
 
     /** Reads the record again, sending a change still waiting first. */
     fun reload() {
+        refusal = null
         engine.reload()
         sync()
     }
 
     fun edit(transform: (T) -> T) {
+        val before = (engine.state.value as? EditorState.Ready<T, *>)?.draft
         engine.change(transform)
+        if ((engine.state.value as? EditorState.Ready<T, *>)?.draft != before) refusal = null
         sync()
     }
 
     /** Drops the refusal a page was showing, as it is left. */
     fun clearRefusal() {
-        engine.clearRefusal()
+        refusal = null
         sync()
     }
 
@@ -124,7 +133,7 @@ abstract class SaveAsMadeEditorViewModel<T>(
 
     override fun onCleared() = engine.close()
 
-    private fun EditorState<T>.toUiState(): EditorUiState<T> =
+    private fun EditorState<T, Unit>.toUiState(): EditorUiState<T> =
         when (this) {
             EditorState.Loading -> EditorUiState.Loading
             is EditorState.Failed -> EditorUiState.Error(lastLoadFailure?.toSeerrError() ?: SeerrError.Unknown)
@@ -134,7 +143,7 @@ abstract class SaveAsMadeEditorViewModel<T>(
                     saved = saved,
                     saveFailed = saveFailed,
                     saveStatus = saveStatus.toUi(),
-                    saveRefusal = refusal?.let { lastFailure?.toSeerrError() },
+                    saveRefusal = refusal,
                 )
         }
 }
