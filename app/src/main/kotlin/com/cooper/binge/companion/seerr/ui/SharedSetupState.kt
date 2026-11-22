@@ -2,7 +2,7 @@ package com.cooper.binge.companion.seerr.ui
 
 import com.cooper.binge.companion.seerr.seerr.SeerrCredentials
 import com.cooper.binge.companion.seerr.seerr.SeerrSignInMode
-import com.cooper.binge.companion.seerr.telemetry.AnalyticsEvents
+import com.cooper.binge.companion.seerr.telemetry.reportSignIn
 import com.cooper.homelab.core.presentation.connect.ConnectEvent
 import com.cooper.homelab.core.presentation.connect.ConnectState
 import com.cooper.homelab.core.presentation.connect.LinkState
@@ -93,11 +93,7 @@ internal fun SignInForm.field(id: String): String =
 /** The machine's sign-in finished: counted under the mode's name, or as the demo. Never an address, a host or a user. */
 internal fun ConnectEvent.report(analytics: Analytics) {
     if (this !is ConnectEvent.SignedIn) return
-    val method = if (mode == "demo") AnalyticsEvents.METHOD_DEMO else mode
-    analytics.event(
-        AnalyticsEvents.SIGN_IN,
-        mapOf(AnalyticsEvents.PARAM_METHOD to method, AnalyticsEvents.PARAM_SUCCESS to success),
-    )
+    analytics.reportSignIn(mode, success)
 }
 
 /** What the screens call: the phone's, or the television's, which also offers the hand-off and asks Plex for its short PIN. */

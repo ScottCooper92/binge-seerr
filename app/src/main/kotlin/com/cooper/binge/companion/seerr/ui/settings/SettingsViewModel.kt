@@ -25,6 +25,7 @@ import com.cooper.homelab.core.telemetry.Analytics
 import com.cooper.homelab.core.telemetry.CrashBreadcrumbs
 import com.cooper.homelab.core.telemetry.NoOpAnalytics
 import com.cooper.homelab.core.telemetry.NoOpCrashBreadcrumbs
+import com.cooper.homelab.core.telemetry.SharedAnalyticsEvents
 import com.cooper.homelab.core.telemetry.TelemetryPrefs
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
@@ -228,14 +229,14 @@ class SettingsViewModel
         fun setSendCrashReports(enabled: Boolean) = appSource.setSendCrashReports(enabled)
 
         fun disconnect() {
-            analytics.event(AnalyticsEvents.SERVER_DISCONNECTED)
+            analytics.event(SharedAnalyticsEvents.SIGN_OUT, mapOf(AnalyticsEvents.PARAM_ACTION to "disconnect"))
             crashBreadcrumbs.log("disconnecting from server")
             viewModelScope.launch(dispatcher) { connection.disconnect() }
         }
 
         /** Ends this session but keeps the server, so setup opens on its sign-in. Callers offer it only for a session sign-in. */
         fun signOut() {
-            analytics.event(AnalyticsEvents.SERVER_DISCONNECTED, mapOf(AnalyticsEvents.PARAM_ACTION to "sign_out"))
+            analytics.event(SharedAnalyticsEvents.SIGN_OUT, mapOf(AnalyticsEvents.PARAM_ACTION to "sign_out"))
             crashBreadcrumbs.log("signing out of the server")
             viewModelScope.launch(dispatcher) { connection.signOut() }
         }

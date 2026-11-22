@@ -102,9 +102,8 @@ class BackStackNeverEmptyTest {
         host.awaitShowing(host.string(R.string.hub_demo_exit))
         assertEquals(hubAlone, host.stack())
 
-        openSection(R.string.hub_section_requests_desc)
+        openSection(R.string.hub_section_requests_desc, HubRoute, RequestsRoute)
         host.awaitShowing(host.string(R.string.requests_filter_processing))
-        assertStack(HubRoute, RequestsRoute)
         approveTheFirstPending()
         assertTrue("the request page was not on top", host.stack().last() is RequestDetailRoute)
         if (!wide) {
@@ -114,9 +113,8 @@ class BackStackNeverEmptyTest {
             assertStack(HubRoute)
         }
 
-        openSection(R.string.hub_section_settings_desc)
+        openSection(R.string.hub_section_settings_desc, HubRoute, SettingsRoute)
         host.awaitShowing(host.string(R.string.settings_about))
-        assertStack(HubRoute, SettingsRoute)
         exitTheDemo()
         assertStack(HomeRoute)
 
@@ -124,9 +122,8 @@ class BackStackNeverEmptyTest {
         assertEquals(hubAlone, host.stack())
 
         // Two Backs in one frame: the first takes Settings, the second finds the root and leaves, once.
-        openSection(R.string.hub_section_settings_desc)
+        openSection(R.string.hub_section_settings_desc, HubRoute, SettingsRoute)
         host.awaitShowing(host.string(R.string.settings_about))
-        assertStack(HubRoute, SettingsRoute)
         host.back(times = 2)
         assertEquals(hubAlone, host.stack())
         assertTrue("Back at the root did not leave", host.activity.isFinishing)
@@ -149,11 +146,12 @@ class BackStackNeverEmptyTest {
         host.launch(HomeRoute)
         watchStack()
         host.awaitShowing(host.string(R.string.hub_couldnt_load_headline))
-        host.compose
-            .onNodeWithText(host.string(R.string.settings_edit_connection))
-            .performClick()
+        host.clickUntil(
+            what = "the back stack to be [HubRoute, EditConnectionRoute] after tapping Edit connection",
+            target = { host.compose.onNodeWithText(host.string(R.string.settings_edit_connection)) },
+            reached = { host.stack() == listOf<NavKey>(HubRoute, EditConnectionRoute) },
+        )
         host.awaitShowing(host.string(R.string.setup_sign_in))
-        assertStack(HubRoute, EditConnectionRoute)
 
         host.seerr.viewer(id = 1, permissions = ADMIN)
         fillSignIn(R.string.setup_mode_local)
@@ -179,13 +177,14 @@ class BackStackNeverEmptyTest {
             .url("/")
             .toString()
 
-    private fun openSection(description: Int) {
-        host.compose
-            .onNodeWithText(host.string(description), substring = true)
-            .performScrollTo()
-            .performClick()
-        host.compose.waitForIdle()
-    }
+    private fun openSection(
+        description: Int,
+        vararg expected: NavKey,
+    ) = host.clickUntil(
+        what = "the back stack to be ${expected.toList()} after opening the section",
+        target = { host.compose.onNodeWithText(host.string(description), substring = true).performScrollTo() },
+        reached = { host.stack() == expected.toList() },
+    )
 
     /** The demo's pending request, approved from its page (#1705), as the crash's breadcrumbs had it. */
     private fun approveTheFirstPending() {
