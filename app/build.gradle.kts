@@ -355,6 +355,8 @@ tasks.withType<Test>().configureEach {
         showExceptions = true
         showCauses = true
         showStackTraces = true
+        // On CI each test prints its name as it starts, so a run that stops making progress ends on the test it is stuck in (#2657).
+        if (System.getenv("CI") != null) events("started")
     }
     // The screenshot render and validate tasks are Test tasks too, and they discover no JUnit tests:
     // the plugin renders @Preview functions rather than executing test code. The plugin also warns

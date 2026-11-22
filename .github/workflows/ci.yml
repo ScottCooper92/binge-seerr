@@ -282,8 +282,28 @@ jobs:
         with:
           cache-read-only: true
 
+      # The suite sometimes stops making progress until the 30-minute timeout (#2657), with the test worker alive and the runner
+      # not short of memory. Gradle prints no test name while it waits, so a watcher takes a thread dump of every test worker at
+      # 20 and again at 25 minutes: the same thread blocked in both is the test. The dump goes to this step's log, and a run that
+      # finishes first kills the watcher.
       - name: Unit tests and coverage
-        run: ./gradlew testDebugUnitTest koverVerify --continue
+        run: |
+          (
+            for wait in 1200 300; do
+              sleep "$wait"
+              echo "::group::Thread dump of the test workers, still running"
+              for pid in $(pgrep -f 'Gradle Test Executor' || true); do
+                echo "=== pid $pid"
+                jstack -l "$pid" || true
+              done
+              echo "::endgroup::"
+            done
+          ) &
+          watcher=$!
+          status=0
+          ./gradlew testDebugUnitTest koverVerify --continue || status=$?
+          kill "$watcher" 2>/dev/null || true
+          exit "$status"
 
       # A timeout cancels the job rather than failing it, so `failure()` alone would skip this on the one run that most needs it.
       - name: Say what memory the failure left

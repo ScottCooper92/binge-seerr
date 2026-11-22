@@ -33,6 +33,7 @@ import com.cooper.binge.companion.seerr.notifications.SharedPlanning
 import com.cooper.binge.companion.seerr.notifications.SharedPollingEnabled
 import com.cooper.binge.companion.seerr.notifications.WorkManagerNotificationScheduler
 import com.cooper.binge.companion.seerr.notifications.anyPollable
+import com.cooper.binge.companion.seerr.notifications.forPoll
 import com.cooper.homelab.core.foundation.Logger
 import com.cooper.homelab.core.notifications.DataStoreFeedCursorStore
 import com.cooper.homelab.core.notifications.FeedCursorStore
@@ -175,7 +176,7 @@ object SharedPollingModule {
         breadcrumbs: CrashBreadcrumbs,
     ): NotificationPlanning =
         if (shared) {
-            SharedPlanning(connection, prefs, identity, scheduler, SeerrPollNotifier(notifier), scope, breadcrumbs)
+            SharedPlanning(connection, prefs, identity, scheduler, SeerrPollNotifier(notifier), scope, breadcrumbs.forPoll())
         } else {
             legacy.get()
         }
