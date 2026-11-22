@@ -28,11 +28,18 @@ internal class RequestSheetStore {
         update { current -> current.copy(pick = current.pick?.let(transform)) }
 }
 
-/** Makes the request for [id], or for the sender again where it is their own id; an id the users read does not hold changes nothing. */
+/**
+ * Makes the request for [id], or for the sender again where it is their own id, which the users read need not hold.
+ * Any other id the read does not hold changes nothing.
+ */
 internal fun RequestSheetStore.requestFor(id: Int) =
     update { current ->
         val chosen = (current.users as? UsersState.Ready)?.users?.firstOrNull { it.id == id }
-        if (chosen == null) current else current.copy(requestFor = chosen.takeUnless { it.id == current.access.viewerId })
+        when {
+            id == current.access.viewerId -> current.copy(requestFor = null)
+            chosen == null -> current
+            else -> current.copy(requestFor = chosen)
+        }
     }
 
 /** The reads that fill the sheet after it opens. Each lands in the state alone, so one failing leaves the others. */

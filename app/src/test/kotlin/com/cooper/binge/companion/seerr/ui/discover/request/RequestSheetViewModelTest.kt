@@ -239,6 +239,22 @@ class RequestSheetViewModelTest {
         }
 
     @Test
+    fun `choosing oneself again works when the users read does not hold the sender`() =
+        runTest {
+            val repository = forOthers().apply { users = listOf(GRACE) }
+            val vm = viewModel(repository)
+            vm.selectRequestFor(12)
+            vm.selectRequestFor(9)
+            val event = awaitEvent(vm.events)
+
+            assertNull(vm.ready().requestFor)
+            vm.submit()
+            event.await()
+
+            assertNull(repository.submissions.single().userId)
+        }
+
+    @Test
     fun `an id the users read does not hold changes nothing`() {
         val vm = viewModel(forOthers())
 
