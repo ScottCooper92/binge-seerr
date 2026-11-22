@@ -326,7 +326,7 @@ private fun serviceListItem(
                 detail =
                     listOfNotNull(
                         "${(row.download.fraction * PERCENT).toInt()}%",
-                        row.download.totalBytes?.let(::formatFileSize),
+                        row.download.totalBytes?.let { formatFileSize(it) },
                         row.download.etaMinutes?.let { "~$it min" },
                     ).joinToString(" · "),
                 clickable = false,
