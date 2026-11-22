@@ -63,7 +63,8 @@ class PersonDetailMappingTest {
     @Test
     fun `a server Android will not let this app reach offers Allow in place of Try again`() {
         var allowed = 0
-        val allow = AllowLocalNetwork(CoreR.string.connect_local_network_allow, CoreR.string.connect_local_network_allow_short) { allowed++ }
+        val allow =
+            AllowLocalNetwork(CoreR.string.connect_local_network_allow, CoreR.string.connect_local_network_allow_short) { allowed++ }
 
         val failed =
             PersonPageUiState.Error(SeerrError.LocalNetworkDenied).toDetailState(resources, Locale.US, allow) as PersonDetailState.Failed
