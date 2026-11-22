@@ -99,7 +99,7 @@ private fun TitleResult.toMediaResult(genreNames: Map<Int, String>): MediaResult
         name = name,
         subtitle = subtitle(),
         rating = rating?.toFloat(),
-        meta = genreLine(genreNames),
+        meta = primaryGenre(genreNames),
         statusInline = kind != TitleKind.Person,
     )
 
@@ -139,15 +139,5 @@ private fun TitleKind.labelRes(): Int =
         TitleKind.Collection -> R.string.title_kind_collection
     }
 
-/** The first two genres the server names for the result, joined; null where it names none. */
-@Composable
-private fun TitleResult.genreLine(names: Map<Int, String>): String? {
-    val shown = genreIds.mapNotNull(names::get).take(GENRES_SHOWN)
-    return when (shown.size) {
-        0 -> null
-        1 -> shown[0]
-        else -> stringResource(R.string.title_search_genres_join, shown[0], shown[1])
-    }
-}
-
-private const val GENRES_SHOWN = 2
+/** The first genre the server names for the result; null where it names none. One genre keeps the status line on one line. */
+internal fun TitleResult.primaryGenre(names: Map<Int, String>): String? = genreIds.firstNotNullOfOrNull(names::get)
