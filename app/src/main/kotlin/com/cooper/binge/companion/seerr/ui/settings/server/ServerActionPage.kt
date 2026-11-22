@@ -14,6 +14,7 @@ import com.binge.designsystem.template.BingeScreenScaffold
 import com.binge.designsystem.template.FormSaveFailureSnackbar
 import com.binge.designsystem.template.FormSaveStatus
 import com.binge.designsystem.template.FormSaveStatusText
+import com.binge.designsystem.template.ScreenBar
 import com.binge.designsystem.template.screenInnerPadding
 import com.binge.designsystem.template.screenOuterPadding
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorEvent
@@ -43,6 +44,7 @@ internal fun ServerActionPage(
     BingeScreenScaffold(
         title = title,
         onBack = paneBackOrNull(onBack),
+        bar = ScreenBar.Small,
         snackbarHostState = snackbarHostState,
         actions = { saveStatus?.let { FormSaveStatusText(it) } },
     ) { padding ->
