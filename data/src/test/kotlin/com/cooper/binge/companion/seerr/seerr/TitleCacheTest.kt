@@ -124,4 +124,15 @@ class TitleCacheTest {
             assertNull(unrated?.rating)
             assertNull(unrated?.genre)
         }
+
+    @Test
+    fun `a lookup maps to the same hydrated title wherever it is read, score and genre included`() {
+        val details = SeerrMediaDetailsDto(title = "Heat", voteAverage = 7.9, genres = listOf(SeerrNamedDto(28, "Action")))
+
+        val hydrated = details.toHydratedTitle()
+
+        assertEquals("Heat", hydrated.title)
+        assertEquals(7.9f, hydrated.rating)
+        assertEquals("Action", hydrated.genre)
+    }
 }

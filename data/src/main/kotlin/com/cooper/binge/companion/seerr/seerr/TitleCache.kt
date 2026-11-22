@@ -23,6 +23,19 @@ data class HydratedTitle(
     val genre: String? = null,
 )
 
+/** What a row shows of a title lookup. A request row, an issue row and the request page all read it here, so they cannot drift. */
+fun SeerrMediaDetailsDto.toHydratedTitle(): HydratedTitle =
+    HydratedTitle(
+        displayTitle,
+        posterPath?.toTmdbPosterUrl(),
+        year,
+        backdropPath?.toTmdbBackdropUrl(),
+        overview,
+        certification(Locale.getDefault().country),
+        rating,
+        primaryGenre,
+    )
+
 /**
  * A title lookup per row, remembered. The request and issue lists carry only a TMDB id, so every
  * row costs a `movie/{id}` or `tv/{id}` call; a filter switch or a refresh re-lists mostly the same
@@ -64,16 +77,7 @@ class TitleCache
                 attempt {
                     if (mediaType == SEERR_MEDIA_TYPE_MOVIE) api.movieDetails(tmdbId) else api.tvDetails(tmdbId)
                 }.getOrNull() ?: return null
-            return HydratedTitle(
-                details.displayTitle,
-                details.posterPath?.toTmdbPosterUrl(),
-                details.year,
-                details.backdropPath?.toTmdbBackdropUrl(),
-                details.overview,
-                details.certification(Locale.getDefault().country),
-                details.rating,
-                details.primaryGenre,
-            )
+            return details.toHydratedTitle()
         }
 
         suspend fun clear() {
