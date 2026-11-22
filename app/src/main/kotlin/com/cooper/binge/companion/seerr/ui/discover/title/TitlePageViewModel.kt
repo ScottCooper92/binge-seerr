@@ -11,6 +11,7 @@ import com.cooper.binge.companion.seerr.discover.title.TitleDetailsRepository
 import com.cooper.binge.companion.seerr.discover.title.TitleExtras
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
+import com.cooper.binge.companion.seerr.ui.requests.SheetScope
 import com.cooper.homelab.core.telemetry.Analytics
 import com.cooper.homelab.core.telemetry.NoOpAnalytics
 import dagger.assisted.Assisted
@@ -46,6 +47,14 @@ sealed interface TitlePageUiState {
         /** The request the primary last opened to manage. Kept after the sheet closes, so a moderation's result still has its sheet to land in. */
         val manageRequestId: Int? = null,
         val manageSheetOpen: Boolean = false,
+        /** The list of the title's requests, where there are several; a row of it opens that request's sheet. */
+        val requestsSheetOpen: Boolean = false,
+        /** The request's sheet was opened from the list of requests, so it has a Back to it. */
+        val manageFromList: Boolean = false,
+        /** Which of the title's and the request's rows the request's sheet holds: both for one request, the title's for several. */
+        val manageScope: SheetScope = SheetScope.Both,
+        /** The services sheet, opened from the page's Services action. */
+        val serviceSheetOpen: Boolean = false,
         val statusSheetOpen: Boolean = false,
         val reportSheetOpen: Boolean = false,
         /** A watchlist call is in flight, so another tap is ignored. */
@@ -146,7 +155,13 @@ class TitlePageViewModel
                         ).primary.tap
                 ) {
                     PrimaryTap.RequestSheet -> ready.copy(requestSheetOpen = true)
-                    is PrimaryTap.ManageRequest -> ready.copy(manageRequestId = tap.requestId, manageSheetOpen = true)
+                    is PrimaryTap.ManageRequest ->
+                        ready.copy(
+                            manageRequestId = tap.requestId,
+                            manageSheetOpen = true,
+                            manageScope = SheetScope.Title,
+                            manageFromList = false,
+                        )
                     PrimaryTap.StatusSheet -> ready.copy(statusSheetOpen = true)
                 }
             }
@@ -262,6 +277,6 @@ class TitlePageViewModel
             }
         }
 
-        private fun updateReady(transform: (TitlePageUiState.Ready) -> TitlePageUiState.Ready) =
+        internal fun updateReady(transform: (TitlePageUiState.Ready) -> TitlePageUiState.Ready) =
             state.update { (it as? TitlePageUiState.Ready)?.let(transform) ?: it }
     }

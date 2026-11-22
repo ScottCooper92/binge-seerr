@@ -45,6 +45,10 @@
         package name is invisible without this on a targetSdk this high.
     -->
     <queries>
+        <!-- Ephyra's open-item contract: an Ephyra that answers it opens a Jellyfin title in the app (#2574). -->
+        <intent>
+            <action android:name="com.cooper.homelab.ephyra.action.OPEN_ITEM" />
+        </intent>
         <intent>
             <action android:name="android.intent.action.VIEW" />
             <data android:scheme="binge" />
