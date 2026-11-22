@@ -108,7 +108,7 @@ internal fun seerrAuthenticators(
 }
 
 /**
- * What a failure is called on the setup form. The same rule as the old path: a refused sign-in is [SetupError.Rejected], an
+ * What a failure is called on the setup form. A refused sign-in is [SetupError.Rejected], an
  * unreachable server, the local-network permission and a client certificate are their own, and the rest is [SetupError.Unknown].
  */
 internal fun ConnectError?.toSetupError(): SetupError? =

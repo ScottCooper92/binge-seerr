@@ -27,6 +27,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 
 /** The setup flow on the shared connect screen: what its controls ask of the view model, and Back from the sign-in. */
 @RunWith(RobolectricTestRunner::class)
@@ -122,6 +123,7 @@ class SeerrConnectContentTest {
     }
 
     @Test
+    @Config(qualifiers = "w411dp-h891dp-xhdpi")
     fun `a swipe between the modes selects the next one`() {
         val selected = mutableListOf<SignInMode>()
         val state =

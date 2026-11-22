@@ -19,6 +19,7 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import com.binge.designsystem.component.BingeBarIconAction
 import com.binge.designsystem.component.FilterChipItem
 import com.binge.designsystem.template.FilteredListScreen
+import com.binge.designsystem.template.ScreenBar
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
 import com.cooper.binge.companion.seerr.ui.state.LoadingScreen
@@ -54,6 +55,7 @@ fun IssuesScreen(
     var showSort by rememberSaveable { mutableStateOf(false) }
     val ready = state as? IssuesUiState.Ready
     FilteredListScreen(
+        bar = ScreenBar.Small,
         title = stringResource(R.string.hub_section_issues),
         onBack = actions.onBack.takeIf { showBack },
         // The console keeps its single-line bar and an opaque header; the default is the gallery's transparent collapsing bar.

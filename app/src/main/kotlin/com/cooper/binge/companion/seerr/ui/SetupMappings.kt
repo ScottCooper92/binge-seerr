@@ -1,6 +1,7 @@
 package com.cooper.binge.companion.seerr.ui
 
 import com.binge.companion.sdk.attempt
+import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.auth.InvalidServerUrlException
 import com.cooper.binge.companion.seerr.auth.NotSeerrServerException
 import com.cooper.binge.companion.seerr.auth.PlexPinExpiredException
@@ -12,9 +13,7 @@ import com.cooper.binge.companion.seerr.handoff.HandOffCredentials
 import com.cooper.binge.companion.seerr.handoff.HandOffProgress
 import com.cooper.binge.companion.seerr.handoff.HandOffSignInModes
 import com.cooper.binge.companion.seerr.handoff.addressLocality
-import com.cooper.binge.companion.seerr.seerr.SeerrAuth
 import com.cooper.binge.companion.seerr.seerr.SeerrError
-import com.cooper.binge.companion.seerr.seerr.SeerrLoginRequest
 import com.cooper.binge.companion.seerr.seerr.SeerrSignInMode
 import com.cooper.binge.companion.seerr.seerr.isBlockedByLocalNetwork
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
@@ -146,17 +145,16 @@ internal suspend fun SeerrConnection.adoptHandedSession(
     return result.isSuccess
 }
 
-/**
- * Signs in to [baseUrl] with what [form] holds, for the modes typed into the form; null for the two that finish in
- * another app, which [SetupLinks] runs instead.
- */
-internal suspend fun SeerrConnection.signIn(
-    baseUrl: String,
-    form: SignInForm,
-): Result<*>? =
-    when (form.mode) {
-        SeerrSignInMode.ApiKey -> connect(baseUrl, SeerrAuth.ApiKey(form.apiKey.trim()))
-        SeerrSignInMode.Local -> logIn(baseUrl, SeerrLoginRequest.Local(form.email.trim(), form.password))
-        SeerrSignInMode.Jellyfin, SeerrSignInMode.Emby -> logIn(baseUrl, SeerrLoginRequest.Jellyfin(form.username.trim(), form.password))
-        SeerrSignInMode.Plex, SeerrSignInMode.QuickConnect -> null
+internal fun SetupError.messageRes(): Int =
+    when (this) {
+        SetupError.InvalidUrl -> R.string.setup_error_invalid_url
+        SetupError.NotSeerr -> R.string.setup_error_not_seerr
+        SetupError.Rejected -> R.string.setup_error_rejected
+        SetupError.Unreachable -> R.string.setup_error_unreachable
+        SetupError.UnreachableNotLocal -> R.string.setup_error_unreachable_not_local
+        SetupError.LocalNetworkDenied -> R.string.setup_error_local_network_denied
+        SetupError.ClientCertificateNeeded -> R.string.setup_error_client_certificate
+        SetupError.Unknown -> R.string.setup_error_unknown
+        SetupError.LinkExpired -> R.string.setup_error_link_expired
+        SetupError.HandOffSessionRejected -> R.string.setup_error_handoff_session_rejected
     }

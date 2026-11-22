@@ -1,14 +1,8 @@
 package com.cooper.binge.companion.seerr.ui
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -16,10 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentType
@@ -27,16 +18,13 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import coil3.compose.AsyncImage
-import com.binge.designsystem.component.BingeFilledButton
 import com.binge.designsystem.component.BingeTabRow
-import com.binge.designsystem.component.BingeTabbedPager
 import com.binge.designsystem.component.BingeTextButton
 import com.binge.designsystem.component.BingeTextField
 import com.binge.designsystem.template.StepHeading
 import com.binge.designsystem.theme.BingeShapes
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.seerr.SeerrSignInMode
-import com.binge.designsystem.R as DesR
 
 /** Step two's aside: the server's own artwork, where it has some. */
 @Composable
@@ -65,77 +53,6 @@ internal fun SetupServerHeading(server: SetupServer) {
                 ?.let { stringResource(R.string.setup_server_edition, server.variant.displayName, it) }
                 ?: stringResource(R.string.setup_server_development, server.variant.displayName),
     )
-}
-
-/** Marks a sign-in page, so a test can find the pager that holds them. */
-internal const val SIGN_IN_PAGE_TAG = "sign_in_page"
-
-/**
- * Step two: a page per sign-in the server accepts, each with the fields of its mode. The page the user is on is
- * [SignInForm.mode], so the choice outlives rotation and process death with the rest of the form, and the typed
- * text with it: a swipe drops the page it leaves, and none of its fields hold state of their own.
- */
-@Composable
-internal fun SetupSignInContent(
-    state: SetupUiState.SignIn,
-    actions: SetupActions,
-) {
-    val modes = state.server.modes
-    val scrolls = List(modes.size) { rememberScrollState() }
-    val selected = modes.indexOf(state.form.mode).coerceAtLeast(0)
-    val scrimDistance = with(LocalDensity.current) { dimensionResource(DesR.dimen.padding_m).toPx() }
-    BingeTabbedPager(
-        tabs = modes.map { it.label(state.server) },
-        selectedIndex = selected,
-        onSelectedIndexChange = { index -> actions.onEditForm { copy(mode = modes[index]) } },
-        modifier = Modifier.fillMaxSize(),
-        // The pages already sit inside the step's gutter, so the row takes none of its own.
-        edgePadding = dimensionResource(R.dimen.setup_mode_tabs_edge_padding),
-        headerBackground = Color.Transparent,
-        scrimFraction = (scrolls[selected].value / scrimDistance).coerceIn(0f, 1f),
-    ) { contentPadding, page ->
-        Column(
-            modifier =
-                Modifier
-                    .fillMaxSize()
-                    .testTag(SIGN_IN_PAGE_TAG)
-                    .verticalScroll(scrolls[page])
-                    .padding(top = contentPadding.calculateTopPadding()),
-            verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
-        ) {
-            ModeFields(state, actions.onEditForm, actions.onRequestPasswordReset, actions.onConnect, modes[page])
-            state.error?.let { error ->
-                Text(
-                    stringResource(error.messageRes()),
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-            }
-            state.notice?.let { notice ->
-                Text(
-                    stringResource(notice.messageRes()),
-                    color = MaterialTheme.colorScheme.primary,
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-            }
-        }
-    }
-}
-
-/** Step two's commit, and the way off a server that rejected the session where the app offers one (#810). */
-@Composable
-internal fun SetupSignInFooter(
-    state: SetupUiState.SignIn,
-    actions: SetupActions,
-) {
-    BingeFilledButton(
-        label = stringResource(state.form.mode.submitLabelRes()),
-        onClick = actions.onConnect,
-        enabled = state.form.canSubmit && !state.isConnecting && state.link == null,
-        loading = state.isConnecting,
-        modifier = Modifier.fillMaxWidth(),
-    )
-    actions.onDisconnect?.let { DisconnectButton(it) }
 }
 
 /** The sign-in modes the server accepts, as tabs: each shows different fields below, so this switches content rather than narrowing a list. */
