@@ -13,9 +13,7 @@ import com.cooper.binge.companion.seerr.handoff.HandOffCredentials
 import com.cooper.binge.companion.seerr.handoff.HandOffProgress
 import com.cooper.binge.companion.seerr.handoff.HandOffSignInModes
 import com.cooper.binge.companion.seerr.handoff.addressLocality
-import com.cooper.binge.companion.seerr.seerr.SeerrAuth
 import com.cooper.binge.companion.seerr.seerr.SeerrError
-import com.cooper.binge.companion.seerr.seerr.SeerrLoginRequest
 import com.cooper.binge.companion.seerr.seerr.SeerrSignInMode
 import com.cooper.binge.companion.seerr.seerr.isBlockedByLocalNetwork
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
@@ -146,21 +144,6 @@ internal suspend fun SeerrConnection.adoptHandedSession(
     )
     return result.isSuccess
 }
-
-/**
- * Signs in to [baseUrl] with what [form] holds, for the modes typed into the form; null for the two that finish in
- * another app, which [SetupLinks] runs instead.
- */
-internal suspend fun SeerrConnection.signIn(
-    baseUrl: String,
-    form: SignInForm,
-): Result<*>? =
-    when (form.mode) {
-        SeerrSignInMode.ApiKey -> connect(baseUrl, SeerrAuth.ApiKey(form.apiKey.trim()))
-        SeerrSignInMode.Local -> logIn(baseUrl, SeerrLoginRequest.Local(form.email.trim(), form.password))
-        SeerrSignInMode.Jellyfin, SeerrSignInMode.Emby -> logIn(baseUrl, SeerrLoginRequest.Jellyfin(form.username.trim(), form.password))
-        SeerrSignInMode.Plex, SeerrSignInMode.QuickConnect -> null
-    }
 
 internal fun SetupError.messageRes(): Int =
     when (this) {
