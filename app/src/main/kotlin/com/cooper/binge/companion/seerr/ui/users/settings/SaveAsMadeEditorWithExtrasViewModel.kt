@@ -5,8 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.binge.companion.sdk.attempt
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
-import com.cooper.homelab.core.presentation.editor.ExtrasEditorState
-import com.cooper.homelab.core.presentation.editor.SettingsEditorWithExtras
+import com.cooper.homelab.core.presentation.editor.EditorState
+import com.cooper.homelab.core.presentation.editor.SettingsEditor
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import com.cooper.homelab.core.presentation.editor.EditorEvent as EngineEvent
 
 /**
  * [SaveAsMadeEditorViewModel] for a page that shows more than the record it edits: [X] sits beside the draft in
@@ -35,8 +36,11 @@ abstract class SaveAsMadeEditorWithExtrasViewModel<T, X>(
     /** The throwable behind a load that failed, for the error the screen shows. */
     @Volatile private var lastLoadFailure: Throwable? = null
 
+    /** Why the server refused the last change, kept for the screens that show it in place until the next change or [clearRefusal]. */
+    @Volatile private var refusal: SeerrError? = null
+
     private val engine =
-        SettingsEditorWithExtras<T, X>(
+        SettingsEditor<T, X>(
             initialExtras = initialExtras,
             scope = viewModelScope,
             appScope = appScope,
@@ -60,12 +64,15 @@ abstract class SaveAsMadeEditorWithExtrasViewModel<T, X>(
 
     init {
         viewModelScope.launch(dispatcher) {
-            var announced: Any? = null
-            engine.state.collect { state ->
-                sync()
-                val refusal = (state as? ExtrasEditorState.Ready<T, X>)?.refusal
-                if (refusal != null && refusal !== announced) lastFailure?.let { eventFlow.emit(refusal.toRefusedEvent(it)) }
-                announced = refusal
+            launch { engine.state.collect { sync() } }
+            engine.events.collect { event ->
+                if (event is EngineEvent.Refused) {
+                    lastFailure?.let {
+                        refusal = it.toSeerrError()
+                        sync()
+                        eventFlow.emit(event.notice.toRefusedEvent(it))
+                    }
+                }
             }
         }
     }
@@ -80,18 +87,21 @@ abstract class SaveAsMadeEditorWithExtrasViewModel<T, X>(
 
     /** Reads the record again, sending a change still waiting first. */
     fun reload() {
+        refusal = null
         engine.reload()
         sync()
     }
 
     fun edit(transform: (T) -> T) {
+        val before = draftNow()
         engine.change(transform)
+        if (draftNow() != before) refusal = null
         sync()
     }
 
     /** Drops the refusal a page was showing, as it is left. */
     fun clearRefusal() {
-        engine.clearRefusal()
+        refusal = null
         sync()
     }
 
@@ -116,6 +126,8 @@ abstract class SaveAsMadeEditorWithExtrasViewModel<T, X>(
         sync()
     }
 
+    private fun draftNow(): T? = (engine.state.value as? EditorState.Ready<T, *>)?.draft
+
     /** Shows the engine's state as it is now, so a page that acts and reads back sees its own action. */
     private fun sync() {
         // Two threads can call this at once (the page, and the collector above), so a write that finds the engine has moved on
@@ -123,7 +135,7 @@ abstract class SaveAsMadeEditorWithExtrasViewModel<T, X>(
         // editor builds its state afresh on every read, so identity would never settle.
         do {
             val state = engine.state.value
-            ui.value = state.toUiState(lastLoadFailure, lastFailure)
+            ui.value = state.toUiState(lastLoadFailure, refusal)
         } while (state != engine.state.value)
     }
 
@@ -138,21 +150,21 @@ abstract class SaveAsMadeEditorWithExtrasViewModel<T, X>(
     override fun onCleared() = engine.close()
 }
 
-/** The engine's state as the screens read it. A refusal and a failed load keep their throwable, which the engine's failure does not. */
-private fun <T, X> ExtrasEditorState<T, X>.toUiState(
+/** The engine's state as the screens read it. A failed load keeps its throwable, which the engine's failure does not, and a refusal is the one the page was told. */
+private fun <T, X> EditorState<T, X>.toUiState(
     loadFailure: Throwable?,
-    refusedWith: Throwable?,
+    refused: SeerrError?,
 ): ExtrasEditorUiState<T, X> =
     when (this) {
-        ExtrasEditorState.Loading -> ExtrasEditorUiState.Loading
-        is ExtrasEditorState.Failed -> ExtrasEditorUiState.Error(loadFailure?.toSeerrError() ?: SeerrError.Unknown)
-        is ExtrasEditorState.Ready ->
+        EditorState.Loading -> ExtrasEditorUiState.Loading
+        is EditorState.Failed -> ExtrasEditorUiState.Error(loadFailure?.toSeerrError() ?: SeerrError.Unknown)
+        is EditorState.Ready ->
             ExtrasEditorUiState.Ready(
                 draft = draft,
                 saved = saved,
                 extras = extras,
                 saveFailed = saveFailed,
                 saveStatus = saveStatus.toUi(),
-                saveRefusal = refusal?.let { refusedWith?.toSeerrError() },
+                saveRefusal = refused,
             )
     }
