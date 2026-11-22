@@ -1,0 +1,18 @@
+# Keeps that exist only so instrumentation can run against the minified debug build (#86, #2648).
+#
+# `androidx.test`'s runner loads inside the *app's* process and resolves against the *app's*
+# classloader, so what it needs has to survive R8's pass over the app. The androidTest APK cannot
+# supply it: those classes reach that APK as classpath, not as its own program classes, and no
+# `-keep` in the test APK moves one into a dex.
+#
+# Without these, `AndroidJUnitRunner.onCreate` dies before test 1 with
+# `NoClassDefFoundError: Lkotlin/LazyKt;`. AGP reports that as a crashed process with exit code 0,
+# so the lane read green without running a test. See docs/device-smoke.md.
+#
+# Both are Kotlin facades the app never calls: R8 inlines every `lazy { }` call site and drops
+# `LazyKt`, correctly. The pair is exact rather than a `kotlin.**` sweep.
+#
+# They live in `main`, not a debug-only source set, so the minified debug build and release minify
+# against one identical set of rules. Two retained facade classes cost the shipped APK almost nothing.
+-keep class kotlin.LazyKt { *; }
+-keep class kotlin.coroutines.intrinsics.IntrinsicsKt { *; }

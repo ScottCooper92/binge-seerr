@@ -4,7 +4,6 @@ import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.performScrollToNode
-import androidx.navigation3.runtime.NavKey
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.grid.GridPreset
@@ -48,8 +47,6 @@ class TitleStatusJourneyTest {
 
     private val journey get() = TitleStatusJourney(host)
 
-    private fun awaitStack(vararg stack: NavKey) = host.compose.waitUntil(WAIT_MILLIS) { host.stack() == stack.toList() }
-
     @Test
     fun `a film requested from its page shows its new status on the Movies hub's card after Back`() {
         NavHostActivity.discoveryEnabled = true
@@ -63,7 +60,7 @@ class TitleStatusJourneyTest {
 
         journey.requestFromTheCardAndGoBack()
 
-        awaitStack(ShellRoute)
+        host.awaitStack(ShellRoute)
         assertTrue("the request for $FILM reached the server", journey.serverRequests().isNotEmpty())
         journey.awaitCard("hub")
     }
@@ -80,7 +77,7 @@ class TitleStatusJourneyTest {
 
         journey.requestFromTheCardAndGoBack()
 
-        awaitStack(ShellRoute, grid)
+        host.awaitStack(ShellRoute, grid)
         assertTrue("the request for $FILM reached the server", journey.serverRequests().isNotEmpty())
         journey.awaitCard("grid")
     }

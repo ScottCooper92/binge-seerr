@@ -59,8 +59,8 @@ class SettingsSearchWideJourneyTest {
             .onNodeWithText(host.string(R.string.hub_section_issues_desc), substring = true)
             .performScrollTo()
             .performClick()
+        host.awaitStack(HubRoute, IssuesRoute)
         host.awaitShowing(host.string(R.string.issues_filter_resolved))
-        assertEquals(listOf(HubRoute, IssuesRoute), host.stack())
 
         val searchTitle = host.string(com.cooper.homelab.core.uiandroid.R.string.search_title)
         host.compose.onNodeWithText(searchTitle).performClick()
@@ -84,7 +84,7 @@ class SettingsSearchWideJourneyTest {
 
         host.back()
 
-        assertEquals("Back from the search is what was open", listOf(HubRoute, IssuesRoute), host.stack())
+        host.awaitStack(HubRoute, IssuesRoute)
         host.awaitShowing(host.string(R.string.issues_filter_resolved))
     }
 }

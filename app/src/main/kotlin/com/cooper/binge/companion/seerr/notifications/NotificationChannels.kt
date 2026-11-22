@@ -6,6 +6,7 @@ import androidx.annotation.StringRes
 import androidx.core.app.NotificationCompat
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.DeepLinks
+import com.cooper.homelab.core.notifications.NotificationChannelSpec
 
 /**
  * The channels: one per kind of activity, so a moderator can mute the feeds and keep their own
@@ -47,6 +48,10 @@ enum class NotificationChannelKind(
         priority = NotificationCompat.PRIORITY_HIGH,
     ),
 }
+
+/** The channel as the shared poster creates it, the first time something posts on it. The ids are on-disk names. */
+val NotificationChannelKind.spec: NotificationChannelSpec
+    get() = NotificationChannelSpec(id, nameRes, descriptionRes, importance)
 
 /** The channel a signal posts on. */
 val NotificationSignal.channel: NotificationChannelKind

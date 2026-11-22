@@ -215,6 +215,6 @@ internal class ModerationRunner(
 
 private const val TV = "tv"
 
-/** The [AnalyticsEvents.PARAM_REASON] a refusal adds to its failure report, so it reads apart from a real conflict. */
+/** The `reason` a refusal adds to its failure report, so it reads apart from a real conflict. */
 private fun ModerationEvent.failureReason(): String? =
     AnalyticsEvents.REASON_NO_DEFAULT_SERVICE.takeIf { this == ModerationEvent.MediaFilesNoDefaultServer }
