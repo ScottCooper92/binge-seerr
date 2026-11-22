@@ -41,8 +41,8 @@ import com.binge.designsystem.template.ScreenBar
 import com.binge.designsystem.template.formSaveStatus
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
-import com.cooper.binge.companion.seerr.ui.state.LoadingScreen
 import com.cooper.binge.companion.seerr.ui.state.SearchResultRow
+import com.cooper.binge.companion.seerr.ui.state.SettingsRowsSkeleton
 import com.binge.designsystem.R as DesR
 
 /** What the blocklisted tags page asks of its view model. */
@@ -76,7 +76,7 @@ fun BlocklistTagsScreen(
         saveStatus = ready?.let { formSaveStatus(it.saveStatus, it.saveFailed, actions.onRetry) },
         notReady =
             when (state) {
-                BlocklistTagsUiState.Loading -> { inner -> LoadingScreen(Modifier.padding(inner)) }
+                BlocklistTagsUiState.Loading -> { inner -> SettingsRowsSkeleton(Modifier.padding(inner)) }
                 is BlocklistTagsUiState.Error -> { inner -> ErrorScreen(state.error, Modifier.padding(inner), onRetry = actions.onReload) }
                 is BlocklistTagsUiState.Ready -> null
             },

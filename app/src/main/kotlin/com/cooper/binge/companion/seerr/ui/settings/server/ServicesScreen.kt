@@ -43,8 +43,8 @@ import com.binge.designsystem.theme.fill
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.settings.ServiceType
 import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
-import com.cooper.binge.companion.seerr.ui.state.LoadingScreen
 import com.cooper.binge.companion.seerr.ui.state.ReloadFailureSnackbar
+import com.cooper.binge.companion.seerr.ui.state.SettingsRowsSkeleton
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorPageActionBar
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
@@ -97,7 +97,7 @@ fun ServicesScreen(
         Box(modifier = Modifier.fillMaxSize().padding(padding.screenOuterPadding())) {
             val inner = padding.screenInnerPadding()
             when (state) {
-                ServicesUiState.Loading -> LoadingScreen(Modifier.padding(inner))
+                ServicesUiState.Loading -> SettingsRowsSkeleton(Modifier.padding(inner))
                 is ServicesUiState.Error -> ErrorScreen(error = state.error, modifier = Modifier.padding(inner), onRetry = actions.onRetry)
                 is ServicesUiState.Ready ->
                     BingePullToRefresh(
