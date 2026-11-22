@@ -43,7 +43,7 @@ class RequestOptionLabelsTest {
     @Test
     fun `a folder with a reported room left says how much, in the size formatter's terms`() {
         show { choices.folderLabel("/movies") }
-        rule.onNodeWithText("/movies · 1.2 TB free").assertExists()
+        rule.onNodeWithText("/movies · 1.32 TB free").assertExists()
     }
 
     @Test
@@ -65,7 +65,7 @@ class RequestOptionLabelsTest {
     }
 
     private companion object {
-        /** 1.2 TB as the size formatter counts it, in 1024s. */
+        /** 1.32 TB as the platform formatter counts it, in thousands. */
         const val FREE_BYTES = 1_319_413_953_331L
     }
 }

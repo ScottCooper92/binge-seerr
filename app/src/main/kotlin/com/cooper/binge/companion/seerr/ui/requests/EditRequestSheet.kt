@@ -247,7 +247,7 @@ private fun DestinationPickerFor(
 
 /**
  * A picker swapped in for [EditRequestContent]'s own body rather than opened as a second bottom
- * sheet: [EditRequestSheet] is already one, and stacking a [ChoiceRow][com.cooper.binge.companion.seerr.ui.ChoiceRow]
+ * sheet: [EditRequestSheet] is already one, and stacking a choice sheet
  * on top of it would be two windows and two scrims for what a pick closes right back out of — see #336.
  */
 @Composable

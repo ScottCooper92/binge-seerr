@@ -37,7 +37,7 @@ import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.ui.DisconnectButton
 import com.cooper.binge.companion.seerr.ui.handoff.rememberScanTvCode
 import com.cooper.binge.companion.seerr.ui.settings.server.ServerSettingsPage
-import com.cooper.binge.companion.seerr.ui.state.LoadingScreen
+import com.cooper.binge.companion.seerr.ui.state.SettingsRowsSkeleton
 import com.binge.designsystem.R as DesR
 
 /**
@@ -77,7 +77,7 @@ fun SettingsScreen(
         Box(modifier = Modifier.fillMaxSize().padding(padding.screenOuterPadding())) {
             val inner = padding.screenInnerPadding()
             when (state) {
-                SettingsUiState.Loading -> LoadingScreen(Modifier.padding(inner))
+                SettingsUiState.Loading -> SettingsRowsSkeleton(Modifier.padding(inner))
                 is SettingsUiState.Ready -> SettingsContent(state, actions, contentPadding = inner)
             }
         }

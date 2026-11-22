@@ -21,7 +21,7 @@ import com.binge.designsystem.template.screenOuterPadding
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.state.EmptyScreen
 import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
-import com.cooper.binge.companion.seerr.ui.state.LoadingScreen
+import com.cooper.binge.companion.seerr.ui.state.SettingsRowsSkeleton
 
 class UserSettingsActions(
     val onBack: () -> Unit,
@@ -51,7 +51,7 @@ fun UserSettingsScreen(
         Box(modifier = Modifier.fillMaxSize().padding(padding.screenOuterPadding())) {
             val inner = padding.screenInnerPadding()
             when (state) {
-                UserSettingsUiState.Loading -> LoadingScreen(Modifier.padding(inner))
+                UserSettingsUiState.Loading -> SettingsRowsSkeleton(Modifier.padding(inner))
                 is UserSettingsUiState.Error ->
                     ErrorScreen(error = state.error, modifier = Modifier.padding(inner), onRetry = actions.onRetry)
                 is UserSettingsUiState.Ready ->

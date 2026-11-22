@@ -1,48 +1,40 @@
 package com.cooper.binge.companion.seerr.ui.state
 
-import org.junit.After
+import com.binge.designsystem.theme.BingeExpressiveTheme
+import com.cooper.binge.companion.seerr.util.createSeerrComposeRule
 import org.junit.Assert.assertEquals
-import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
-import java.util.Locale
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 
-/** `formatFileSize`: one decimal from megabytes up, none below, and never a negative or a unit past terabytes. */
+/** `formatFileSize` is the platform's formatter, so a size reads as the device would write it, and a negative one reads as zero. */
+@RunWith(RobolectricTestRunner::class)
 class FileSizeTest {
-    private val original = Locale.getDefault()
+    @get:Rule
+    val rule = createSeerrComposeRule()
 
-    @Before
-    fun pinLocale() = Locale.setDefault(Locale.US)
-
-    @After
-    fun restoreLocale() = Locale.setDefault(original)
-
-    @Test
-    fun `bytes and kilobytes carry no decimal`() {
-        assertEquals("0 B", formatFileSize(0))
-        assertEquals("1023 B", formatFileSize(1023))
-        assertEquals("1 KB", formatFileSize(1024))
+    private fun format(vararg sizes: Long): List<String> {
+        val out = mutableListOf<String>()
+        rule.setContent { BingeExpressiveTheme { sizes.forEach { out += formatFileSize(it) } } }
+        return out
     }
 
     @Test
-    fun `megabytes and up carry one decimal`() {
-        assertEquals("1.0 MB", formatFileSize(1024L * 1024))
-        assertEquals("1.4 GB", formatFileSize(1_536_000_000))
+    fun `a size reads in the platform's units`() {
+        assertEquals(listOf("0 B", "1.02 kB", "1.02 kB", "1.54 GB", "5.00 PB"), format(0, 1023, 1024, 1_536_000_000, 5_000_000_000_000_000))
     }
 
     @Test
     fun `a negative size reads as zero`() {
-        assertEquals("0 B", formatFileSize(-5))
+        val (negative, zero) = format(-5, 0)
+        assertEquals(zero, negative)
     }
 
     @Test
-    fun `terabytes are the largest unit, so a bigger size stays in terabytes`() {
-        assertEquals("5120.0 TB", formatFileSize(5L * 1024 * 1024 * 1024 * 1024 * 1024))
-    }
-
-    @Test
-    fun `the decimal separator follows the locale`() {
-        Locale.setDefault(Locale.forLanguageTag("es"))
-
-        assertEquals("1,4 GB", formatFileSize(1_536_000_000))
+    @Config(qualifiers = "es")
+    fun `the decimal separator follows the app's language`() {
+        assertEquals(listOf("1,54 GB"), format(1_536_000_000))
     }
 }

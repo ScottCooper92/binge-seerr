@@ -3,8 +3,8 @@ package com.cooper.binge.companion.seerr.ui.tv.settings
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Dns
-import androidx.compose.material.icons.filled.LinkOff
 import androidx.compose.material.icons.filled.QrCode
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -180,7 +180,7 @@ private fun ColumnScope.RootPage(
         }
         TvSideSheetRow(
             label = stringResource(if (demo) R.string.hub_demo_exit else R.string.hub_disconnect),
-            icon = Icons.Filled.LinkOff,
+            icon = Icons.AutoMirrored.Filled.Logout,
             destructive = true,
             onClick = { confirmingDisconnect = true },
             modifier = nav.row(KEY_DISCONNECT),
