@@ -34,7 +34,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -114,7 +113,6 @@ fun UserDetailScreen(
     showBack: Boolean = true,
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
-    val resources = LocalResources.current
     val currentOnBack by rememberUpdatedState(actions.onBack)
     val reporter = rememberErrorReporter(snackbarHostState)
     LaunchedEffect(events) {

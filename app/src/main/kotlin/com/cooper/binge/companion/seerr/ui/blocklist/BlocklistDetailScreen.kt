@@ -21,7 +21,6 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.BingeActionFooter
@@ -67,7 +66,6 @@ fun BlocklistDetailScreen(
     actions: BlocklistDetailActions,
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
-    val resources = LocalResources.current
     var confirming by rememberSaveable { mutableStateOf(false) }
     val currentOnBack by rememberUpdatedState(actions.onBack)
     val reporter = rememberErrorReporter(snackbarHostState)
