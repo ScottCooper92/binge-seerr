@@ -1,6 +1,7 @@
 package com.cooper.binge.companion.seerr.telemetry
 
 import android.util.Log
+import com.cooper.homelab.core.diagnostics.keepPath
 import com.cooper.homelab.core.foundation.LogField
 import com.cooper.homelab.core.foundation.LogLevel
 import com.cooper.homelab.core.foundation.Logger
@@ -20,8 +21,8 @@ private fun LogLevel.priority(): Int =
 
 /**
  * One Logcat line: the constant [event], each field's kept value, and the throwable's class name. Never the throwable's
- * message, which can quote a body or an address. A path keeps no id, query or fragment. A server is the constant `saved`
- * on purpose: the library's registry-ordered label needs state this sink does not have.
+ * message, which can quote a body or an address. A path keeps no host, query, fragment or id (digits, a UUID or long hex).
+ * A server is the constant `saved` on purpose: the library's registry-ordered label needs state this sink does not have.
  */
 internal fun logcatLine(
     event: String,
@@ -42,15 +43,7 @@ private fun LogField.keptValue(): String =
         is LogField.Flag -> value.toString()
         is LogField.Case -> (value as? Enum<*>)?.name ?: value::class.java.simpleName
         is LogField.Server -> "saved"
-        is LogField.Path ->
-            url
-                .substringAfter("://")
-                .substringAfter('/', "")
-                .substringBefore('#')
-                .substringBefore('?')
-                .split('/')
-                .joinToString("/") { if (it.isNotEmpty() && it.all(Char::isDigit)) "{id}" else it }
-                .let { "/$it" }
+        is LogField.Path -> keepPath(url)
         is LogField.Version -> value.toString()
         is LogField.Text -> value
     }
