@@ -3,10 +3,10 @@ package com.cooper.binge.companion.seerr.ui.discover.title
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.Bookmark
+import androidx.compose.material.icons.filled.BookmarkBorder
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.ReportProblem
 import androidx.compose.material.icons.filled.Storage
-import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.DetailRoundAction
@@ -46,7 +46,7 @@ internal fun titleRoundActions(
         },
         watchlist?.let {
             DetailRoundAction(
-                icon = if (it.onList) Icons.Filled.Bookmark else Icons.Outlined.BookmarkBorder,
+                icon = if (it.onList) Icons.Filled.Bookmark else Icons.Filled.BookmarkBorder,
                 label = watchlistLabel,
                 onClick = it.onToggle,
                 contentDescription = watchlistDescription,

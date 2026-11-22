@@ -25,7 +25,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -39,6 +38,7 @@ import com.binge.designsystem.component.BingeFilledButton
 import com.binge.designsystem.component.BingeInitialsAvatar
 import com.binge.designsystem.component.BingeOutlinedButton
 import com.binge.designsystem.component.BingeTag
+import com.binge.designsystem.component.BingeTextButton
 import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.component.ListItemDestination
@@ -194,7 +194,7 @@ private fun DetailLoadIndicator(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.weight(1f),
                 )
-                TextButton(onClick = onRetry) { Text(stringResource(R.string.action_try_again)) }
+                BingeTextButton(label = stringResource(R.string.action_try_again), onClick = onRetry)
             }
     }
 }
