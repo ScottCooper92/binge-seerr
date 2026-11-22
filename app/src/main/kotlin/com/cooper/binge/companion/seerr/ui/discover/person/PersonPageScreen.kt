@@ -13,7 +13,7 @@ import com.cooper.binge.companion.seerr.discover.person.links
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.ui.discover.links.ExternalLinksSection
 import com.cooper.binge.companion.seerr.ui.discover.title.ShareBarAction
-import com.cooper.binge.companion.seerr.ui.rememberAllowLocalNetwork
+import com.cooper.homelab.core.uiandroid.connect.rememberAllowLocalNetwork
 
 /** What the person page does: read again, share, open a title and open a link. */
 class PersonPageActions(
