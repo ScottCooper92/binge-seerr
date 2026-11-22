@@ -75,7 +75,7 @@ class DemoJourneyTest {
 
         // The server took the approval, and the page now reads the request as approved and downloading.
         host.awaitShowing(host.string(R.string.request_approved))
-        host.awaitShowing("4.0 GB")
+        host.awaitShowing("4.30 GB")
     }
 
     /**
