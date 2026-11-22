@@ -31,8 +31,8 @@ import com.binge.designsystem.R as DesR
 
 /**
  * Every season of a show under the show's name, each under a header with its episode count. An episode does not open anything.
- * The bar is the collapsing one Binge's episodes page has: it stays pinned as the list scrolls, and the rows pass under it behind
- * its scrim. A page that opens part way down arrives with the bar already collapsed over the rows.
+ * The bar is the small one: a single line that slides away as the list scrolls down and comes back as it scrolls up. The rows
+ * pass under it behind its scrim.
  */
 @Composable
 internal fun SeriesEpisodesScreen(
