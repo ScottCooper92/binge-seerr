@@ -17,14 +17,12 @@ import com.cooper.homelab.core.server.connection.CredentialStore as LoginStore
 internal const val SEERR_KIND = "seerr"
 
 /**
- * The saved connection in the shared library's per-server stores, as one server and one account: the active server of the
- * registry, and its login. This app has no switcher, so [save] replaces that server and [clear] removes it. The library's
- * [SingleServerStore] keeps the server, the login and the write lock. What stays here is this app's: the address a login is bound
- * to, the credentials it reads as, and the profile kept beside it.
+ * The saved connection in the shared library's per-server stores, as one server and one account. [SingleServerStore] keeps the
+ * server, the login and the write lock; what stays here is the app's: the address a login is bound to, the credentials it reads
+ * as, and the profile kept beside it. This app has no switcher, so [save] replaces the server and [clear] removes it.
  *
- * The first read, and every write, runs [importer] once, so a user who updates has the connection the released version kept. The
- * secret is decrypted on [io], as [LegacyCredentialStore] does: the first screen collects on the main thread, and a Keystore decrypt
- * reads from disk.
+ * The first read, and every write, runs [importer] once, so an updating user has the connection the released version kept. The
+ * secret is decrypted on [io], as [LegacyCredentialStore] does, because the first screen collects on the main thread.
  */
 class RegistryCredentialStore(
     registry: ServerRegistry,
