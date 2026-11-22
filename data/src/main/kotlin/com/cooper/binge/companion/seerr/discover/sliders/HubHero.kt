@@ -11,6 +11,7 @@ import com.cooper.binge.companion.seerr.seerr.toTmdbBackdropUrl
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.withTimeoutOrNull
 
 /** Most pages the hero carousel has. */
 internal const val HERO_PAGES = 5
@@ -56,13 +57,20 @@ class HubHeroLoader(
 ) {
     /**
      * [heroes] with their review scores, each read on its own so a title the server cannot score, or a read that fails, leaves only
-     * that title without. Read after the hero shows, so the scores never hold it back.
+     * that title without. A read that is not back within [waitMs] is left out too: the caller shows the hero then, and its copy does not
+     * move for a score that comes later.
      */
-    suspend fun withScores(heroes: List<HubHero>): List<HubHero> =
+    suspend fun withScores(
+        heroes: List<HubHero>,
+        waitMs: Long = Long.MAX_VALUE,
+    ): List<HubHero> =
         coroutineScope {
             heroes
-                .map { hero -> async { hero.copy(ratings = attempt { scores.ratings(hero.kind, hero.tmdbId) }.getOrNull()) } }
-                .awaitAll()
+                .map { hero ->
+                    async {
+                        hero.copy(ratings = withTimeoutOrNull(waitMs) { attempt { scores.ratings(hero.kind, hero.tmdbId) }.getOrNull() })
+                    }
+                }.awaitAll()
         }
 
     /** Whether the server has the trending list at all, so a hub knows before it loads whether it has a hero. */
