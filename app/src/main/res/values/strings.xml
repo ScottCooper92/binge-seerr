@@ -746,6 +746,7 @@
     <string name="server_settings_delete_message">The server forgets it at once. Requests already sent are not affected.</string>
     <string name="server_settings_rules">Override rules</string>
     <string name="server_settings_rule_add">Add a rule</string>
+    <string name="server_settings_services_add">Add</string>
     <string name="server_settings_rule_title">Override rule</string>
     <string name="server_settings_rule_applies_to">Applies to</string>
     <plurals name="server_settings_rule_conditions">

@@ -11,19 +11,24 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Rule
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.Tv
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.pulltorefresh.PullToRefreshState
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import com.binge.designsystem.component.BingeAdaptiveSheet
 import com.binge.designsystem.component.BingePullToRefresh
+import com.binge.designsystem.component.BingeSheetKind
 import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.paneBackOrNull
@@ -39,6 +44,7 @@ import com.cooper.binge.companion.seerr.ui.settings.ServiceType
 import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
 import com.cooper.binge.companion.seerr.ui.state.LoadingScreen
 import com.cooper.binge.companion.seerr.ui.state.ReloadFailureSnackbar
+import com.cooper.binge.companion.seerr.ui.users.settings.EditorPageActionBar
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.map
@@ -52,7 +58,7 @@ class ServicesActions(
     val onOpenRule: (Int?) -> Unit,
 )
 
-/** The services page: each kind's instances with a way to add one, and the override rules where the server has them. */
+/** The services page: each kind's instances and the override rules where the server has them, with one Add in its footer. */
 @Composable
 fun ServicesScreen(
     state: ServicesUiState,
@@ -70,11 +76,22 @@ fun ServicesScreen(
             }
         }
     ReloadFailureSnackbar(failures, snackbarHostState)
+    var adding by rememberSaveable { mutableStateOf(false) }
+    val ready = state as? ServicesUiState.Ready
     BingeScreenScaffold(
         title = stringResource(R.string.settings_group_services),
         onBack = paneBackOrNull(actions.onBack),
         bar = ScreenBar.Small,
         snackbarHostState = snackbarHostState,
+        bottomBar = {
+            if (ready != null) {
+                EditorPageActionBar(
+                    label = stringResource(R.string.server_settings_services_add),
+                    onClick = { adding = true },
+                    enabled = true,
+                )
+            }
+        },
     ) { padding ->
         Box(modifier = Modifier.fillMaxSize().padding(padding.screenOuterPadding())) {
             val inner = padding.screenInnerPadding()
@@ -90,6 +107,53 @@ fun ServicesScreen(
                     ) { ServicesContent(state, actions, contentPadding = inner) }
             }
         }
+    }
+    if (adding && ready != null) {
+        AddServiceSheet(
+            hasRules = ready.rules != null,
+            onAdd = { type ->
+                adding = false
+                actions.onOpenInstance(type, null)
+            },
+            onAddRule = {
+                adding = false
+                actions.onOpenRule(null)
+            },
+            onDismiss = { adding = false },
+        )
+    }
+}
+
+/** What the footer's Add can make: an instance of either service, or, where the server has them, an override rule. */
+@Composable
+private fun AddServiceSheet(
+    hasRules: Boolean,
+    onAdd: (ServiceType) -> Unit,
+    onAddRule: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    BingeAdaptiveSheet(kind = BingeSheetKind.Menu, onDismissRequest = onDismiss) {
+        ItemGroup(
+            title = null,
+            rows =
+                ServiceType.entries.map { type ->
+                    ListItem(
+                        icon = if (type == ServiceType.Radarr) Icons.Filled.Movie else Icons.Filled.Tv,
+                        iconTint = BingeSentiment.Info.fill(),
+                        label = stringResource(R.string.server_settings_dvr_add, type.name),
+                        onClick = { onAdd(type) },
+                    )
+                } +
+                    listOfNotNull(
+                        ListItem(
+                            icon = Icons.AutoMirrored.Filled.Rule,
+                            iconTint = BingeSentiment.Info.fill(),
+                            label = stringResource(R.string.server_settings_rule_add),
+                            onClick = onAddRule,
+                        ).takeIf { hasRules },
+                    ),
+            modifier = Modifier.padding(resolvedContentPadding()),
+        )
     }
 }
 
@@ -134,13 +198,7 @@ private fun instanceRows(
             detail = instance.address,
             onClick = { actions.onOpenInstance(type, instance.id) },
         )
-    } +
-        ListItem(
-            icon = Icons.Filled.Add,
-            iconTint = BingeSentiment.Info.fill(),
-            label = stringResource(R.string.server_settings_dvr_add, type.name),
-            onClick = { actions.onOpenInstance(type, null) },
-        )
+    }
 
 @Composable
 private fun DvrSummary.label(): String {
@@ -165,10 +223,4 @@ private fun ruleRows(
             detail = pluralStringResource(R.plurals.server_settings_rule_conditions, rule.conditions, rule.conditions),
             onClick = { actions.onOpenRule(rule.id) },
         )
-    } +
-        ListItem(
-            icon = Icons.Filled.Add,
-            iconTint = BingeSentiment.Info.fill(),
-            label = stringResource(R.string.server_settings_rule_add),
-            onClick = { actions.onOpenRule(null) },
-        )
+    }

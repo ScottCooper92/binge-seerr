@@ -723,6 +723,7 @@
     <string name="server_settings_delete_message">El servidor lo olvida al instante. Las peticiones ya enviadas no se ven afectadas.</string>
     <string name="server_settings_rules">Reglas de anulación</string>
     <string name="server_settings_rule_add">Añadir una regla</string>
+    <string name="server_settings_services_add">Añadir</string>
     <string name="server_settings_rule_title">Regla de anulación</string>
     <string name="server_settings_rule_applies_to">Se aplica a</string>
     <plurals name="server_settings_rule_conditions">
