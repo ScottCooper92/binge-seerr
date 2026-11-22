@@ -1114,6 +1114,7 @@ app:settings_job_next_run  7e7327eed643
 app:settings_job_running  cb9581b3d253
 app:settings_jobs_running  40b9722ed3fa
 app:settings_jobs_scheduled  f2f73ac9d26f
+app:settings_loading  509c3e500d38
 app:settings_notifications_battery  61daddc76387
 app:settings_notifications_battery_caption  cc969dbb3218
 app:settings_notifications_blocked  8276fc8f3d9a

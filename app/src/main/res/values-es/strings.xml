@@ -335,6 +335,7 @@
     <string name="request_sheet_group_request">Petición</string>
     <string name="request_sheet_group_media">Contenido</string>
     <string name="request_sheet_requested_by">Solicitada por %1$s</string>
+    <string name="settings_loading">Cargando ajustes</string>
     <string name="request_sheet_loading">Cargando los detalles de la petición</string>
     <string name="request_remove_detail">Se puede volver a solicitar</string>
     <string name="request_remove_block_detail">No se podrá volver a solicitar</string>
