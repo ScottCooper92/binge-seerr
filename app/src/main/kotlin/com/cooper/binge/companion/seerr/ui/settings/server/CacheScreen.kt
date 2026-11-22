@@ -119,7 +119,7 @@ fun CacheScreen(
             }
         }
         (jobs as? JobsUiState.Ready)?.jobs?.firstOrNull { it.id == scheduling }?.let { job ->
-            ScheduleDialog(
+            ScheduleSheet(
                 job = job,
                 onConfirm = { cron ->
                     scheduling = null
