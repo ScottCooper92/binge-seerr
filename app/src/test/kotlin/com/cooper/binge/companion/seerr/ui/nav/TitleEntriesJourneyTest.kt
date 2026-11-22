@@ -4,7 +4,6 @@ import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
-import androidx.navigation3.runtime.NavKey
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.grid.GridPreset
@@ -17,7 +16,6 @@ import com.cooper.binge.companion.seerr.ui.TitleDetailRoute
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
 import org.junit.After
-import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -58,8 +56,6 @@ class TitleEntriesJourneyTest {
         NavHostActivity.discoveryEnabled = false
     }
 
-    private fun awaitStack(vararg stack: NavKey) = host.compose.waitUntil(WAIT_MILLIS) { host.stack() == stack.toList() }
-
     @Test
     fun `a film's page opens and Back leaves it`() {
         NavHostActivity.discoveryEnabled = true
@@ -69,7 +65,7 @@ class TitleEntriesJourneyTest {
 
         host.awaitShowing(DEMO_FILM_NAME)
         host.back()
-        awaitStack(ShellRoute)
+        host.awaitStack(ShellRoute)
     }
 
     @Test
@@ -90,12 +86,11 @@ class TitleEntriesJourneyTest {
             .onNode(seeAll)
             .performScrollTo()
             .performClick()
+        host.awaitStack(ShellRoute, film, CollectionRoute(DEMO_COLLECTION_ID))
         host.awaitShowing(DEMO_COLLECTION_FILMS)
-
-        assertEquals(listOf<NavKey>(ShellRoute, film, CollectionRoute(DEMO_COLLECTION_ID)), host.stack())
         host.back()
+        host.awaitStack(ShellRoute, film)
         host.awaitShowing(DEMO_FILM_NAME)
-        assertEquals(listOf<NavKey>(ShellRoute, film), host.stack())
     }
 
     @Test
@@ -118,10 +113,10 @@ class TitleEntriesJourneyTest {
             .performClick()
 
         val grid = DiscoverGridRoute(TitleKind.Movie, GridPreset.Keyword(DEMO_KEYWORD_ID), DEMO_KEYWORD_NAME)
-        awaitStack(ShellRoute, film, grid)
+        host.awaitStack(ShellRoute, film, grid)
         host.back()
+        host.awaitStack(ShellRoute, film)
         host.awaitShowing(DEMO_FILM_NAME)
-        assertEquals(listOf<NavKey>(ShellRoute, film), host.stack())
     }
 
     @Test
@@ -132,7 +127,7 @@ class TitleEntriesJourneyTest {
 
         host.awaitShowing(DEMO_COLLECTION_NAME)
         host.back()
-        awaitStack(ShellRoute)
+        host.awaitStack(ShellRoute)
     }
 
     @Test
@@ -145,8 +140,8 @@ class TitleEntriesJourneyTest {
 
         host.awaitShowing(host.string(R.string.title_credits_title))
         host.back()
+        host.awaitStack(ShellRoute, film)
         host.awaitShowing(DEMO_FILM_NAME)
-        assertEquals(listOf<NavKey>(ShellRoute, film), host.stack())
     }
 }
 

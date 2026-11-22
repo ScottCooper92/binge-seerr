@@ -24,6 +24,14 @@ class NotificationChannelsTest {
     }
 
     @Test
+    fun `the channel ids are the names already on users' devices`() {
+        assertEquals(
+            listOf("pending_requests", "open_issues", "own_requests", "connection"),
+            NotificationChannelKind.entries.map { it.id },
+        )
+    }
+
+    @Test
     fun `the summary names the first title and counts the rest, and is absent without a title`() {
         val andMore = { first: String, others: Int -> "$first +$others" }
         assertNull(summaryLine(emptyList(), 3, andMore))

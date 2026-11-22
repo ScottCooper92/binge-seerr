@@ -2,6 +2,7 @@ package com.cooper.binge.companion.seerr.ui.requests
 
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.seerr.SeerrIssueTypeCode
+import com.cooper.binge.companion.seerr.seerr.SeerrMediaServer
 import com.cooper.binge.companion.seerr.seerr.SeerrMediaStatusCode
 import com.cooper.binge.companion.seerr.seerr.SeerrRequestStatusCode
 import com.cooper.binge.companion.seerr.ui.DestinationChoices
@@ -221,6 +222,8 @@ data class RequestDetail(
     val mediaServerName: String? = null,
     /** The title on that media server, where its apps can be handed it. */
     val mediaServerItem: MediaServerItem? = null,
+    /** The media server Seerr is set up with, which decides whose app a title opens in. */
+    val mediaServer: SeerrMediaServer? = null,
 ) {
     /** Every request against this title, this page's own first, then [siblings]. */
     fun summaries(): List<RequestSummary> =

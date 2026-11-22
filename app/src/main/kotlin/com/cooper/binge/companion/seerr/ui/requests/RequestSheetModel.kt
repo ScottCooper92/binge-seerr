@@ -1,5 +1,6 @@
 package com.cooper.binge.companion.seerr.ui.requests
 
+import com.binge.designsystem.theme.BingeSentiment
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 
 /**
@@ -18,7 +19,26 @@ internal class RequestSheetModel(
     val detailLoad: SheetDetailLoad = SheetDetailLoad.Loaded,
     val progress: ActionProgress? = null,
     val titleRows: List<SheetTitleRow> = emptyList(),
+    /** The title's combined state in words, which the sheet's header says in place of this one request's status; null from every other opener. */
+    val titleState: SheetStateChip? = null,
+    /** Back to the list this request's level was opened from, drawn as an arrow above the header; null when it was not. */
+    val titleBack: (() -> Unit)? = null,
+    /** Which of the title's and the request's rows the sheet draws; [SheetScope.Both] for a title with one request and for every other opener. */
+    val scope: SheetScope = SheetScope.Both,
+    /** The title's requests as cards, drawn at the title level; null from every other opener. */
+    val cards: RequestCardsModel? = null,
+    /** Where the request was sent, drawn at the request's own level; null when the server names nothing. */
+    val destination: RequestDestination? = null,
 )
+
+/** The title's combined state as a chip: its words and the tone of the status chip the cards draw. */
+class SheetStateChip(
+    val label: String,
+    val sentiment: BingeSentiment,
+)
+
+/** What a sheet over the title page holds: the title's own rows and media actions, one request's own, or both together. */
+enum class SheetScope { Both, Title, Request }
 
 /**
  * The actions whose progress shows on the control that started them. [closesSheet] is whether the actions sheet goes when

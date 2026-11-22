@@ -3,16 +3,25 @@ package com.cooper.binge.companion.seerr.ui.requests
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Dns
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Folder
+import androidx.compose.material.icons.filled.HighQuality
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -29,10 +38,13 @@ import androidx.compose.ui.text.style.TextOverflow
 import com.binge.designsystem.component.BingeFilledButton
 import com.binge.designsystem.component.BingeInitialsAvatar
 import com.binge.designsystem.component.BingeOutlinedButton
+import com.binge.designsystem.component.BingeTag
 import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.component.ListItemDestination
 import com.binge.designsystem.component.ListRowPoster
+import com.binge.designsystem.component.MediaTypeTag
+import com.binge.designsystem.component.StatusChip
 import com.binge.designsystem.formatRanges
 import com.binge.designsystem.formatRelativeOrAbsolute
 import com.cooper.binge.companion.seerr.R
@@ -72,36 +84,90 @@ internal fun RequestActionsContent(
             model.item.requestedById?.takeIf {
                 callbacks.onOpenUser != null && canOpenUser(it, model.viewerId, model.canManageUsers)
             }
-        RequestSheetHeader(model.item, showRequester = requesterId == null)
-        DecisionBar(model.actions, blockTitle, model.progress, callbacks)
+        model.titleBack?.let { back ->
+            IconButton(onClick = back) {
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(DesR.string.cd_navigate_back))
+            }
+        }
+        val titleScope = model.scope == SheetScope.Title
+        val requestScope = model.scope == SheetScope.Request
+        RequestSheetHeader(
+            model.item,
+            showRequester = requesterId == null && !titleScope,
+            titleState = model.titleState.takeUnless { requestScope },
+            titleOnly = titleScope,
+        )
+        RequestActionsBody(model, callbacks, blockTitle, onBlockTitleChange, requesterId)
+    }
+}
+
+/** The header stays at the top; the rest scrolls when the sheet is taller than the screen, and opens at its own height when it fits. */
+@Composable
+private fun ColumnScope.RequestActionsBody(
+    model: RequestSheetModel,
+    callbacks: RequestSheetCallbacks,
+    blockTitle: Boolean,
+    onBlockTitleChange: (Boolean) -> Unit,
+    requesterId: Int?,
+) {
+    val titleScope = model.scope == SheetScope.Title
+    val requestScope = model.scope == SheetScope.Request
+    Column(
+        modifier = Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
+    ) {
+        if (!titleScope) DecisionBar(model.actions, blockTitle, model.progress, callbacks)
         val requestRows =
-            listOfNotNull(requesterId?.let { id -> requesterRow(model.item) { callbacks.onOpenUser?.invoke(id) } }) +
-                requestRows(model, blockTitle, onBlockTitleChange, callbacks)
+            if (titleScope) {
+                emptyList()
+            } else {
+                listOfNotNull(requesterId?.let { id -> requesterRow(model.item) { callbacks.onOpenUser?.invoke(id) } }) +
+                    requestRows(model, blockTitle, onBlockTitleChange, callbacks)
+            }
         val mediaRows =
             model.media
-                ?.takeIf { it.canManage }
+                ?.takeIf { it.canManage && !requestScope }
                 ?.let { mediaRows(it, model.progress, callbacks) }
                 .orEmpty()
-        if (model.titleRows.isNotEmpty()) {
-            ItemGroup(
-                title = stringResource(R.string.request_sheet_group_title),
-                rows =
-                    model.titleRows.map { row ->
-                        if (row.external) {
-                            externalItem(
-                                row.icon,
-                                row.label,
-                                row.onClick,
-                            )
-                        } else {
-                            openItem(row.icon, row.label, onClick = row.onClick)
-                        }
-                    },
-            )
+        TitleGroup(model, blockTitle, onBlockTitleChange)
+        if (titleScope) model.cards?.takeIf { it.summaries.isNotEmpty() }?.let { RequestCardsSection(it) }
+        if (requestScope) {
+            destinationRows(model.destination)
+                .takeIf {
+                    it.isNotEmpty()
+                }?.let { ItemGroup(title = stringResource(R.string.request_sheet_group_destination), rows = it) }
         }
         if (requestRows.isNotEmpty()) ItemGroup(title = stringResource(R.string.request_sheet_group_request), rows = requestRows)
         if (mediaRows.isNotEmpty()) ItemGroup(title = stringResource(R.string.request_sheet_group_media), rows = mediaRows)
     }
+}
+
+/** What the sheet says about the title itself: Block, then the title's own rows. A request's own level has none of it. */
+@Composable
+private fun TitleGroup(
+    model: RequestSheetModel,
+    blockTitle: Boolean,
+    onBlockTitleChange: (Boolean) -> Unit,
+) {
+    if (model.titleState == null || model.scope == SheetScope.Request) return
+    val blockRows = blockTitleRows(model, blockTitle, onBlockTitleChange)
+    if (model.titleRows.isEmpty() && blockRows.isEmpty()) return
+    ItemGroup(
+        title = stringResource(R.string.request_sheet_group_title),
+        rows =
+            blockRows +
+                model.titleRows.map { row ->
+                    if (row.external) {
+                        externalItem(
+                            row.icon,
+                            row.label,
+                            row.onClick,
+                        )
+                    } else {
+                        openItem(row.icon, row.label, onClick = row.onClick)
+                    }
+                },
+    )
 }
 
 /** A thin bar while the detail loads, and a one-line retry when it failed; nothing once it landed. */
@@ -134,10 +200,13 @@ private fun DetailLoadIndicator(
 }
 
 /** Poster, title, what it is, who asked and when, and where the request stands. */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun RequestSheetHeader(
     item: RequestItem,
     showRequester: Boolean,
+    titleState: SheetStateChip? = null,
+    titleOnly: Boolean = false,
 ) {
     Row(
         horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
@@ -154,15 +223,22 @@ private fun RequestSheetHeader(
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
-            Text(
-                text =
-                    listOfNotNull(
-                        stringResource(item.mediaType.labelRes()),
-                        item.year,
-                    ).joinToString(stringResource(R.string.hub_meta_separator)),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
+                verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_xs)),
+            ) {
+                // In the order of a list row's status line, and wrapping at large fonts rather than clipping: the status, the kind of title, the year, then 4K where it applies.
+                if (titleState != null) {
+                    StatusChip(label = titleState.label, sentiment = titleState.sentiment)
+                } else {
+                    item.status?.let { RequestStateChip(status = it) }
+                }
+                MediaTypeTag(type = item.mediaType.toTagType())
+                item.year?.takeIf { it.isNotBlank() }?.let { year ->
+                    Text(text = year, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                if (item.is4k && !titleOnly) BingeTag(label = stringResource(R.string.settings_service_4k))
+            }
             if (showRequester) {
                 val requester = item.requestedBy ?: stringResource(R.string.requests_requester_unknown)
                 Text(
@@ -177,19 +253,7 @@ private fun RequestSheetHeader(
                     overflow = TextOverflow.Ellipsis,
                 )
             }
-            val gap = dimensionResource(DesR.dimen.detail_cast_avatar_label_spacing)
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                item.status?.let { RequestStateChip(status = it) }
-                if (item.is4k) {
-                    if (item.status != null) Spacer(Modifier.width(gap))
-                    Text(
-                        text = stringResource(R.string.settings_service_4k),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
-            if (item.seasonNumbers.isNotEmpty()) {
+            if (!titleOnly && item.seasonNumbers.isNotEmpty()) {
                 Text(
                     text = pluralStringResource(R.plurals.requests_seasons, item.seasonNumbers.size, item.seasonNumbers.formatRanges()),
                     style = MaterialTheme.typography.labelMedium,
@@ -274,17 +338,7 @@ private fun requestRows(
         if (model.canEdit) {
             add(ListItem(icon = Icons.Filled.Edit, label = stringResource(R.string.request_edit_title), onClick = callbacks.onEdit))
         }
-        if (actions.canBlock && (actions.canDecline || actions.canRemove)) {
-            add(
-                ListItem(
-                    icon = Icons.Filled.Block,
-                    label = stringResource(R.string.request_block_title),
-                    detail = stringResource(R.string.request_block_caption),
-                    toggled = blockTitle,
-                    onClick = { onBlockTitleChange(!blockTitle) },
-                ),
-            )
-        }
+        if (model.titleState == null) addAll(blockTitleRows(model, blockTitle, onBlockTitleChange))
         if (actions.canRemove) add(removeRow(model.progress, blockTitle, callbacks))
     }
 }
@@ -333,3 +387,38 @@ private fun removeDetailRes(
         blockTitle -> R.string.request_remove_block_detail
         else -> R.string.request_remove_detail
     }
+
+/** Block this title, as a toggle the Decline and Remove actions read: a title-level row, which the title page puts with the title's own. */
+@Composable
+private fun blockTitleRows(
+    model: RequestSheetModel,
+    blockTitle: Boolean,
+    onBlockTitleChange: (Boolean) -> Unit,
+): List<ListItem> {
+    val actions = model.actions
+    if (!(actions.canBlock && (actions.canDecline || actions.canRemove))) return emptyList()
+    return listOf(
+        ListItem(
+            icon = Icons.Filled.Block,
+            label = stringResource(R.string.request_block_title),
+            detail = stringResource(R.string.request_block_caption),
+            toggled = blockTitle,
+            onClick = { onBlockTitleChange(!blockTitle) },
+        ),
+    )
+}
+
+/** Server, quality profile and root folder the request was sent to, as plain read-out rows. */
+@Composable
+private fun destinationRows(destination: RequestDestination?): List<ListItem> =
+    listOfNotNull(
+        destination?.serverName?.let {
+            ListItem(icon = Icons.Filled.Dns, label = stringResource(R.string.request_server), detail = it, clickable = false)
+        },
+        destination?.profileName?.let {
+            ListItem(icon = Icons.Filled.HighQuality, label = stringResource(R.string.request_profile), detail = it, clickable = false)
+        },
+        destination?.rootFolder?.let {
+            ListItem(icon = Icons.Filled.Folder, label = stringResource(R.string.request_root_folder), detail = it, clickable = false)
+        },
+    )

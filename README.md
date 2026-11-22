@@ -133,9 +133,10 @@ through KSP, at the versions Binge pins; the wiring lives in `di/`: `SeerrModule
 A release build is shrunk by R8, with this app's own keep rules in `app/src/main/keepRules/`
 on top of what the libraries ship. Measured on the unsigned release APK when it was turned on:
 20.2 MB before, 3.4 MB after. What the gate above cannot see is whether those rules hold across a
-real Binder, so `device-smoke.yml` runs one instrumentation test on a hosted emulator against the
-minified build (`-PminifyDebug`, the same rules as release): it binds the exported Service and
-completes a handshake and a status call. It runs on a push to `main` that touches what could
+real Binder, so `device-smoke.yml` runs the instrumentation tests of `CompanionServiceRoundTripTest` on
+an emulator against the minified build (`-PminifyDebug`, the same rules as release): one binds the
+exported Service and completes a handshake and a status call, and one runs the demo across the Binder
+with no server. It runs on a push to `main` that touches what could
 change its answer, weekly, and on request.
 
 ## Releasing

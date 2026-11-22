@@ -46,11 +46,10 @@ internal class ErrorReporter(
     private val dialog: MutableState<DialogMessage?>,
 ) {
     suspend fun report(error: SeerrError) {
+        snackbarHostState.currentSnackbarData?.dismiss()
         if (error.needsDialog()) {
-            snackbarHostState.currentSnackbarData?.dismiss()
             dialog.value = error.dialogMessage(resources)
         } else {
-            snackbarHostState.currentSnackbarData?.dismiss()
             snackbarHostState.showSnackbar(resources.getString(error.messageRes()), SnackbarMessageKind.Error)
         }
     }

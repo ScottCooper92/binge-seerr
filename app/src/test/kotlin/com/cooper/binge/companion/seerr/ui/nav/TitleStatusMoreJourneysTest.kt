@@ -2,6 +2,7 @@ package com.cooper.binge.companion.seerr.ui.nav
 
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasSetTextAction
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
@@ -104,7 +105,16 @@ class TitleStatusMoreJourneysTest {
         journey.awaitCard("grid")
         journey.openPage(shows = PROCESSING)
         val removeTitle = host.string(R.string.request_remove_confirm_title)
-        journey.clickUntil("the manage sheet", PROCESSING) { host.isShowing(remove, exactly = true) }
+        // The page's status opens the title's sheet, which lists the request as a card showing the request's own status, and the card opens
+        // the request's level where Remove is. The card's status is the last of its kind on screen.
+        val approved = host.string(R.string.request_state_approved)
+        val pending = host.string(R.string.request_state_pending)
+        val cardStatus = hasText(approved) or hasText(pending)
+        journey.clickUntil("the title's sheet", PROCESSING) {
+            host.isShowing(approved, exactly = true) ||
+                host.isShowing(pending, exactly = true)
+        }
+        journey.clickUntil("the request's level", approved, last = true, matcher = cardStatus) { host.isShowing(remove, exactly = true) }
         journey.clickUntil("the remove confirm", remove) { host.isShowing(removeTitle) }
         // The sheet's row and the dialog's confirm share a label, so the dialog's is the last.
         journey.clickUntil("the request removed and the dialog closed", remove, last = true) { !host.isShowing(removeTitle) }

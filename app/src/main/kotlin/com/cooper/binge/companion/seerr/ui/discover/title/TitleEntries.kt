@@ -41,6 +41,7 @@ internal fun EntryProviderScope<NavKey>.titleEntries(
             TitleDetailEntry(
                 route.kind,
                 route.tmdbId,
+                route.openRequest,
                 onBack = { backStack.popIfTop(route) },
                 onOpenCredits = { backStack.add(TitleCreditsRoute(route.kind, route.tmdbId)) },
                 onOpenSeason = { number, seriesName -> backStack.add(SeriesEpisodesRoute(route.tmdbId, seriesName, number)) },
