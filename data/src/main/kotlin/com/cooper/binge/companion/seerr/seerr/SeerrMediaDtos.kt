@@ -25,8 +25,17 @@ data class SeerrMediaDetailsDto(
     @SerialName("releases") val releases: SeerrReleasesDto? = null,
     /** A show's age ratings by country. */
     @SerialName("contentRatings") val contentRatings: SeerrContentRatingsDto? = null,
+    /** TMDB's score out of ten, which a row shows as its rating; 0 means no votes yet. */
+    @SerialName("voteAverage") val voteAverage: Double? = null,
+    @SerialName("genres") val genres: List<SeerrNamedDto> = emptyList(),
 ) {
     val displayTitle: String? get() = title ?: name
+
+    /** The score a row shows, or null for a title nobody has voted on. */
+    val rating: Float? get() = voteAverage?.toFloat()?.takeIf { it > 0f }
+
+    /** The first genre TMDB lists, the one a row names. */
+    val primaryGenre: String? get() = genres.firstOrNull()?.name?.takeIf { it.isNotBlank() }
 
     /** The age rating for [region] (`US`, `GB`), falling back to the US one; null when the title has none there. */
     fun certification(region: String): String? =

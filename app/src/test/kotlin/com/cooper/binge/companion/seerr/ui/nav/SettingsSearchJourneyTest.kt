@@ -8,7 +8,6 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.unit.dp
 import com.cooper.binge.companion.seerr.R
@@ -63,7 +62,6 @@ class SettingsSearchJourneyTest {
         host.awaitShowing(host.string(R.string.hub_section_requests_desc))
         host.compose
             .onNodeWithText(host.string(com.cooper.homelab.core.uiandroid.R.string.search_title))
-            .performScrollTo()
             .performClick()
         host.awaitShowing(host.string(com.cooper.homelab.core.uiandroid.R.string.search_prompt))
         assertEquals(SettingsSearchRoute, host.stack().last())

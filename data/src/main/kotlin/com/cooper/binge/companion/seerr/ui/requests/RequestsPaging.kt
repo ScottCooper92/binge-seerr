@@ -40,6 +40,8 @@ suspend fun SeerrRequestDto.toRequestItem(
         backdropUrl = details?.backdropUrl,
         overview = details?.overview,
         certification = details?.certification,
+        rating = details?.rating,
+        genre = details?.genre,
     )
 }
 

@@ -1,11 +1,14 @@
 package com.cooper.binge.companion.seerr.discover
 
+import com.cooper.binge.companion.seerr.discover.sliders.toCard
 import com.cooper.binge.companion.seerr.seerr.SeerrApiFactory
 import com.cooper.binge.companion.seerr.seerr.SeerrServerProfile
 import com.cooper.binge.companion.seerr.seerr.SeerrVariant
 import com.cooper.binge.companion.seerr.seerr.SeerrVersion
+import com.cooper.binge.companion.seerr.seerr.TitleCache
 import com.cooper.binge.companion.seerr.util.FakeResponse
 import com.cooper.binge.companion.seerr.util.FakeSeerrServer
+import com.cooper.binge.companion.seerr.util.FakeTitleDao
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import okhttp3.Headers.Companion.headersOf
@@ -41,6 +44,9 @@ private const val WATCHLIST_PAGE = """{"page":1,"totalPages":1,"totalResults":2,
 {"id":438631,"ratingKey":"abc","title":"Dune","mediaType":"movie","tmdbId":438631},
 {"id":7,"ratingKey":"def","title":"Severance","mediaType":"tv","tmdbId":95396}]}"""
 
+/** What `movie/{id}` and `tv/{id}` answer for a title: the same lookup Recently added is hydrated by. */
+private const val LOOKUP = """{"title":"Looked up","posterPath":"/looked-up.jpg","releaseDate":"2021-10-22"}"""
+
 private const val GENRE_SLIDER = """[{"id":28,"name":"Action","backdrops":["/a.jpg","/b.jpg"]},{"id":35,"name":"Comedy","backdrops":[]}]"""
 
 class TitleListRepositoryTest {
@@ -61,7 +67,8 @@ class TitleListRepositoryTest {
     private fun <T> withRepository(block: suspend (TitleListRepository) -> T): T =
         runBlocking {
             factory.anonymous(seerr.url()) { api ->
-                block(SeerrTitleListRepository(api = { api }, profile = { profile }, io = Dispatchers.Unconfined))
+                val titles = TitleCache(FakeTitleDao())
+                block(SeerrTitleListRepository(api = { api }, profile = { profile }, io = Dispatchers.Unconfined, titles = titles))
             }
         }
 
@@ -147,14 +154,52 @@ class TitleListRepositoryTest {
         assertEquals(4, page.results.size)
     }
 
+    /** The watchlist route answers [WATCHLIST_PAGE]; a title's lookup answers with a poster, or fails where [lookups] is false. */
+    private fun answerWatchlist(lookups: Boolean = true) {
+        seerr.dispatcher = { request ->
+            when {
+                request.url.encodedPath.endsWith("/discover/watchlist") -> FakeResponse(headers = JSON, body = WATCHLIST_PAGE)
+                lookups -> FakeResponse(headers = JSON, body = LOOKUP)
+                else -> FakeResponse(code = 500)
+            }
+        }
+    }
+
     @Test
     fun `the watchlist names a title by its tmdb id and not by a row number`() {
-        answer(WATCHLIST_PAGE)
+        answerWatchlist()
         val titles = withRepository { it.load(TitleSource.Watchlist, page = 1) }.results
 
         assertEquals(listOf(438631, 95396), titles.map { it.tmdbId })
         assertEquals(listOf(TitleKind.Movie, TitleKind.Series), titles.map { it.kind })
+    }
+
+    @Test
+    fun `a watchlist row the server sent with no poster takes the poster and year of the title cache`() {
+        answerWatchlist()
+        val titles = withRepository { it.load(TitleSource.Watchlist, page = 1) }.results
+
+        assertEquals(listOf("/looked-up.jpg", "/looked-up.jpg"), titles.map { it.artworkPath })
+        assertEquals(listOf("2021", "2021"), titles.map { it.year })
+        // The URL a Recently added card is hydrated to for the same title, so a title in both rows draws one poster.
+        assertEquals("https://image.tmdb.org/t/p/w342/looked-up.jpg", titles.first().toCard("https://s/").artworkUrl)
+    }
+
+    @Test
+    fun `a watchlist row whose lookup fails stays as the server sent it`() {
+        answerWatchlist(lookups = false)
+        val titles = withRepository { it.load(TitleSource.Watchlist, page = 1) }.results
+
+        assertEquals(listOf(438631, 95396), titles.map { it.tmdbId })
         assertTrue(titles.all { it.artworkPath == null })
+    }
+
+    @Test
+    fun `a list whose rows carry their own poster is not looked up again`() {
+        answer(MIXED_PAGE)
+        withRepository { it.load(TitleSource.Trending, page = 1) }
+
+        assertEquals(1, seerr.requestCount)
     }
 
     @Test

@@ -2,14 +2,20 @@ package com.cooper.binge.companion.seerr.ui.nav
 
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsOff
+import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.HomeRoute
+import com.cooper.binge.companion.seerr.ui.HubRoute
 import com.cooper.binge.companion.seerr.ui.RequestsRoute
+import com.cooper.binge.companion.seerr.ui.SeerrRoute
+import com.cooper.binge.companion.seerr.ui.ShellRoute
 import com.cooper.binge.companion.seerr.ui.ThisAppRoute
+import com.cooper.binge.companion.seerr.ui.shell.SeerrTab
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
 import org.junit.After
@@ -25,8 +31,9 @@ private const val PHONE = "w400dp-h800dp"
 
 /**
  * The Discovery setting through the real nav host: the remote flag is on, and the user flips the preference on This app's page, as
- * they would. Off leaves Settings as the only screen. On brings the tabs back on the start tab. A cold start of someone who has opted
- * out shows Settings and keeps the link's stack. The demo server stands in for a real one.
+ * they would. The shell changes under the page and the page stays: its switch shows the new state, Back goes to its parent in the new
+ * shell, and a recreate restores the same place. Off leaves Settings as the only tab. On brings the tabs back. A cold start of someone
+ * who has opted out shows Settings and keeps the link's stack. The demo server stands in for a real one.
  */
 @HiltAndroidTest
 @RunWith(RobolectricTestRunner::class)
@@ -44,57 +51,111 @@ class DiscoveryToggleJourneyTest {
 
     private fun barIsGone() = host.compose.onAllNodes(hasTestTag("tab_settings")).assertCountEquals(0)
 
-    /** Opens This app's page above the shell, as the hub's tile does, then taps the Discovery row once. */
-    private fun toggleDiscovery() {
+    private fun discoveryRow() = host.compose.onNodeWithText(host.string(R.string.settings_discovery))
+
+    private fun thisAppIsShowing() = host.isShowing(host.string(R.string.settings_discovery_caption))
+
+    /** Opens This app's page above the shell, as the hub's tile does, and waits for it. */
+    private fun openThisApp() {
         host.push(ThisAppRoute())
         host.awaitShowing(host.string(R.string.settings_discovery_caption))
-        host.compose.onNodeWithText(host.string(R.string.settings_discovery)).performClick()
-        host.compose.waitForIdle()
     }
 
-    /** Off restarts the shell: This app's page, opened above it, is gone and Settings is what shows. */
-    private fun awaitThisAppClosed() =
-        host.await("This app's page closed") { !host.isShowing(host.string(R.string.settings_discovery_caption)) }
+    /** Taps the Discovery row once, and waits until the shell under the page is the one the new setting asks for. */
+    private fun toggleDiscovery(rootAfter: SeerrRoute) {
+        discoveryRow().performClick()
+        host.await("the root is $rootAfter") { host.stack().firstOrNull() == rootAfter }
+    }
 
-    @Test
-    fun `turning discovery off from This app leaves Settings as the only screen`() {
+    private fun assertStillOnThisApp(rootAfter: SeerrRoute) {
+        assertTrue("This app's page is still showing", thisAppIsShowing())
+        assertTrue("the page is still on the stack above the new root: ${host.stack()}", host.stack() == listOf(rootAfter, ThisAppRoute()))
+    }
+
+    private fun startOnThisApp() {
         NavHostActivity.discoveryEnabled = true
         host.connectDemo()
         host.launch(HomeRoute)
         host.awaitShowing(host.string(R.string.hubs_browse_all_movies))
-
-        toggleDiscovery()
-
-        awaitThisAppClosed()
-        barIsGone()
-        assertTrue("nothing from discovery mode is left on the stack: ${host.stack()}", host.stack().size == 1)
+        openThisApp()
     }
 
     @Test
-    fun `turning it on again brings the tabs back on the start tab`() {
-        NavHostActivity.discoveryEnabled = true
-        host.connectDemo()
-        host.launch(HomeRoute)
-        host.awaitShowing(host.string(R.string.hubs_browse_all_movies))
-        toggleDiscovery()
-        awaitThisAppClosed()
+    fun `turning discovery off keeps the user on This app's page, with the switch off`() {
+        startOnThisApp()
+        discoveryRow().assertIsOn()
+
+        toggleDiscovery(rootAfter = HubRoute)
+
+        assertStillOnThisApp(HubRoute)
+        discoveryRow().assertIsOff()
         barIsGone()
+    }
 
-        toggleDiscovery()
+    @Test
+    fun `turning it on again keeps the user on the page, with the switch on`() {
+        startOnThisApp()
+        toggleDiscovery(rootAfter = HubRoute)
 
-        host.awaitShowing(host.string(R.string.hubs_browse_all_movies))
+        toggleDiscovery(rootAfter = ShellRoute)
+
+        assertStillOnThisApp(ShellRoute)
+        discoveryRow().assertIsOn()
+    }
+
+    @Test
+    fun `Back from the page after turning it off goes to the hub`() {
+        startOnThisApp()
+        toggleDiscovery(rootAfter = HubRoute)
+
+        host.back()
+
+        host.await("the hub, with This app's page closed") { !thisAppIsShowing() && host.stack() == listOf(HubRoute) }
+        barIsGone()
+    }
+
+    @Test
+    fun `Back from the page after turning it on goes to the Settings tab`() {
+        startOnThisApp()
+        toggleDiscovery(rootAfter = HubRoute)
+        toggleDiscovery(rootAfter = ShellRoute)
+
+        host.back()
+
+        host.await("the shell, with This app's page closed") { !thisAppIsShowing() && host.stack() == listOf(ShellRoute) }
         barIsShowing()
-        assertTrue("the start tab, Movies, is showing and nothing is open over the shell: ${host.stack()}", host.stack().size == 1)
+        assertTrue("Settings is the tab showing, so the account tab is selected", host.selectedTab() == SeerrTab.Settings)
+    }
+
+    @Test
+    fun `a recreate after turning it off restores the page`() {
+        startOnThisApp()
+        toggleDiscovery(rootAfter = HubRoute)
+
+        host.rotate(PHONE)
+
+        host.awaitShowing(host.string(R.string.settings_discovery_caption))
+        assertStillOnThisApp(HubRoute)
+        discoveryRow().assertIsOff()
+    }
+
+    @Test
+    fun `a recreate after turning it on restores the page`() {
+        startOnThisApp()
+        toggleDiscovery(rootAfter = HubRoute)
+        toggleDiscovery(rootAfter = ShellRoute)
+
+        host.rotate(PHONE)
+
+        host.awaitShowing(host.string(R.string.settings_discovery_caption))
+        assertStillOnThisApp(ShellRoute)
+        discoveryRow().assertIsOn()
     }
 
     @Test
     fun `a cold start of someone who has opted out shows Settings and keeps the link's stack`() {
-        NavHostActivity.discoveryEnabled = true
-        host.connectDemo()
-        host.launch(HomeRoute)
-        host.awaitShowing(host.string(R.string.hubs_browse_all_movies))
-        toggleDiscovery()
-        awaitThisAppClosed()
+        startOnThisApp()
+        toggleDiscovery(rootAfter = HubRoute)
 
         host.launch(HomeRoute, RequestsRoute)
 

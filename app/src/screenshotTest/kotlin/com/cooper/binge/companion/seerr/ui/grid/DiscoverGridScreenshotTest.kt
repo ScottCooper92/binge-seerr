@@ -10,8 +10,6 @@ import com.cooper.binge.companion.seerr.preview.SeerrScreenPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrScreenStatePreview
 import com.cooper.binge.companion.seerr.preview.SeerrSpanishPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrTabletPanesPreview
-import com.cooper.binge.companion.seerr.ui.hub.AccountBar
-import com.cooper.binge.companion.seerr.ui.hub.HubAccount
 
 private const val MID_LIST = 9
 
@@ -22,12 +20,6 @@ class DiscoverGridScreenshotTest {
     @SeerrScreenPreviews
     @Composable
     fun filtered() = Frame(readyGridState())
-
-    /** The account beside the Filters pill in the large title row (#2366). */
-    @PreviewTest
-    @SeerrScreenStatePreview
-    @Composable
-    fun withAccount() = DiscoverGridScreen(TitleKind.Movie, "Drama", readyGridState(), noGridActions, accountBar = ACCOUNT)
 
     /** The same grid at tablet width, in more columns. */
     @PreviewTest
@@ -161,5 +153,3 @@ class DiscoverGridScreenshotTest {
 private fun Frame(state: DiscoverGridUiState) {
     DiscoverGridScreen(kind = TitleKind.Movie, title = "Drama", state = state, actions = noGridActions)
 }
-
-private val ACCOUNT = AccountBar(HubAccount(id = 1, name = "Ada Lovelace", isAdmin = true, avatarUrl = null), quota = null)

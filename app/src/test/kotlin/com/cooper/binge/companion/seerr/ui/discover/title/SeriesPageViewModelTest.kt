@@ -18,9 +18,11 @@ import com.cooper.binge.companion.seerr.telemetry.AnalyticsEvents
 import com.cooper.binge.companion.seerr.util.MainDispatcherRule
 import com.cooper.binge.companion.seerr.util.RecordingAnalytics
 import com.cooper.binge.companion.seerr.util.awaitEvent
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import okhttp3.ResponseBody.Companion.toResponseBody
@@ -86,6 +88,7 @@ private class FakeSeries(
     var failSeries: Throwable? = null,
     var extras: TitleExtras = TitleExtras(TitleRatings(90, null, null), emptyList(), emptyList()),
     var failSeasons: Throwable? = null,
+    var extrasDelayMs: Long = 0,
 ) : SeriesDetailsRepository {
     val seasonReads = mutableListOf<Int>()
     var failUnblock: Throwable? = null
@@ -130,7 +133,10 @@ private class FakeSeries(
 
     override suspend fun series(tmdbId: Int): SeriesDetails = failSeries?.let { throw it } ?: series
 
-    override suspend fun extras(tmdbId: Int) = extras
+    override suspend fun extras(tmdbId: Int): TitleExtras {
+        delay(extrasDelayMs)
+        return extras
+    }
 }
 
 class SeriesPageViewModelTest {
@@ -138,6 +144,40 @@ class SeriesPageViewModelTest {
     val main = MainDispatcherRule()
 
     private fun SeriesPageViewModel.ready() = uiState.value as SeriesPageUiState.Ready
+
+    @Test
+    fun `the scores that arrive inside the wait are in the first frame of the page`() =
+        runTest {
+            val vm = SeriesPageViewModel(FakeSeries(extrasDelayMs = HERO_SETTLE_MS - 100), 1399)
+            assertTrue(vm.uiState.value is SeriesPageUiState.Loading)
+
+            advanceTimeBy(HERO_SETTLE_MS)
+            runCurrent()
+
+            assertEquals(
+                90,
+                vm
+                    .ready()
+                    .extras
+                    ?.ratings
+                    ?.criticsPercent,
+            )
+        }
+
+    @Test
+    fun `scores that miss the wait never move the page that is already showing`() =
+        runTest {
+            val vm = SeriesPageViewModel(FakeSeries(extrasDelayMs = HERO_SETTLE_MS * 2), 1399)
+
+            advanceTimeBy(HERO_SETTLE_MS + 1)
+            runCurrent()
+            assertEquals(null, vm.ready().extras)
+
+            advanceTimeBy(HERO_SETTLE_MS * 2)
+            runCurrent()
+            assertEquals(null, vm.ready().extras?.ratings)
+            assertNotNull(vm.ready().extras)
+        }
 
     @Test
     fun `the page loads the show then its extras`() {
