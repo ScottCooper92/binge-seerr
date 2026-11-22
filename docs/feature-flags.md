@@ -1,6 +1,6 @@
 # Feature flags
 
-Five flags. `BINGE_PROMOTION` decides what this app says about Binge. `REVIEW_PROMPT` decides whether it may ask for a Play review. `discovery_enabled` decides whether the discovery surfaces show (#2039). `tv_discovery_enabled` decides whether the television's top bar offers the Search, Movies and TV tabs. `search_toggles_enabled` decides whether a settings search result carries its own switch. `BINGE_PROMOTION`, `REVIEW_PROMPT`, `shared_setup_enabled` and `tv_discovery_enabled` are off until Remote Config turns them on. `discovery_enabled` is on until Remote Config turns it off. The last has no remote value and is on only through a debug build's override.
+Five flags. `BINGE_PROMOTION` decides what this app says about Binge. `REVIEW_PROMPT` decides whether it may ask for a Play review. `discovery_enabled` decides whether the discovery surfaces show (#2039). `tv_discovery_enabled` decides whether the television's top bar offers the Search, Movies and TV tabs. `search_toggles_enabled` decides whether a settings search result carries its own switch. `BINGE_PROMOTION`, `REVIEW_PROMPT` and `tv_discovery_enabled` are off until Remote Config turns them on. `discovery_enabled` is on until Remote Config turns it off. The last has no remote value and is on only through a debug build's override.
 
 | Flag | Remote Config key | Off means |
 | --- | --- | --- |

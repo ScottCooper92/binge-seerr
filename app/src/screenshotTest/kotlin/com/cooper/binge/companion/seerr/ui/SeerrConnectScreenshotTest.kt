@@ -3,6 +3,7 @@ package com.cooper.binge.companion.seerr.ui
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import com.android.tools.screenshot.PreviewTest
+import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.preview.SeerrScreenPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrScreenStatePreview
 import com.cooper.binge.companion.seerr.preview.SeerrSpanishPreviews
@@ -16,6 +17,7 @@ import com.cooper.homelab.core.presentation.connect.ConnectState
 import com.cooper.homelab.core.presentation.connect.ProbedServer
 import com.cooper.homelab.core.presentation.connect.SignInForm
 import com.cooper.homelab.core.server.address.ServerAddress
+import com.cooper.homelab.core.uiandroid.connect.AllowLocalNetwork
 import com.cooper.homelab.core.uiandroid.connect.ConnectAddressActions
 import com.cooper.homelab.core.uiandroid.connect.ConnectLinkActions
 import com.cooper.homelab.core.uiandroid.connect.ConnectSignInActions
@@ -161,7 +163,8 @@ class SeerrConnectScreenshotTest {
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
-    fun addressNeedsLocalNetwork() = ConnectFrame(addressState(address = "http://192.168.1.20:5055", needsLocalNetwork = true))
+    fun addressNeedsLocalNetwork() =
+        ConnectFrame(addressState(address = "http://192.168.1.20:5055", needsLocalNetwork = true), localNetwork = ALLOW)
 
     @PreviewTest
     @SeerrScreenStatePreview
@@ -173,6 +176,7 @@ class SeerrConnectScreenshotTest {
                 needsLocalNetwork = true,
                 error = ConnectError.Failed(ServerFailure.LocalNetworkDenied),
             ),
+            localNetwork = ALLOW,
         )
 
     @PreviewTest
@@ -183,7 +187,8 @@ class SeerrConnectScreenshotTest {
     @PreviewTest
     @SeerrTabletPanesPreview
     @Composable
-    fun addressNeedsLocalNetworkTabletLand() = ConnectFrame(addressState(address = "http://192.168.1.20:5055", needsLocalNetwork = true))
+    fun addressNeedsLocalNetworkTabletLand() =
+        ConnectFrame(addressState(address = "http://192.168.1.20:5055", needsLocalNetwork = true), localNetwork = ALLOW)
 
     @PreviewTest
     @SeerrTabletPanesPreview
@@ -260,6 +265,7 @@ private fun ConnectFrame(
     title: String? = null,
     onExit: (() -> Unit)? = null,
     onDisconnect: (() -> Unit)? = null,
+    localNetwork: AllowLocalNetwork? = null,
 ) {
     CompositionLocalProvider(LocalFlags provides Flags.of(SharedFlags.BingePromotion to true, SharedFlags.ReviewPrompt to true)) {
         SeerrConnectContent(
@@ -271,6 +277,10 @@ private fun ConnectFrame(
             title = title,
             onExit = onExit,
             onDisconnect = onDisconnect,
+            localNetwork = localNetwork,
         )
     }
 }
+
+/** The permission prompt the real screen offers while the address waits on it: its label replaces Continue. */
+private val ALLOW = AllowLocalNetwork(R.string.local_network_allow, R.string.local_network_allow_short) {}
