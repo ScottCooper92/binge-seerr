@@ -7,7 +7,6 @@ import com.cooper.binge.companion.seerr.auth.NoBingeConnectionStore
 import com.cooper.binge.companion.seerr.di.IoDispatcher
 import com.cooper.binge.companion.seerr.feedback.BugReportLinks
 import com.cooper.binge.companion.seerr.feedback.ShakeToReportSetting
-import com.cooper.binge.companion.seerr.notifications.BackgroundAccess
 import com.cooper.binge.companion.seerr.notifications.NotificationPrefs
 import com.cooper.binge.companion.seerr.notifications.NotificationScheduler
 import com.cooper.binge.companion.seerr.notifications.NotificationSignal
@@ -24,6 +23,7 @@ import com.cooper.homelab.core.flags.Flags
 import com.cooper.homelab.core.flags.NoPreferenceGate
 import com.cooper.homelab.core.flags.PreferenceGate
 import com.cooper.homelab.core.flags.SharedFlags
+import com.cooper.homelab.core.notifications.BackgroundAccess
 import com.cooper.homelab.core.telemetry.Analytics
 import com.cooper.homelab.core.telemetry.NoOpAnalytics
 import com.cooper.homelab.core.telemetry.TelemetryPrefs
