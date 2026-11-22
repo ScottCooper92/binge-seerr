@@ -31,3 +31,11 @@
 -keepclassmembers interface dagger.hilt.internal.GeneratedComponentManagerHolder {
     dagger.hilt.internal.GeneratedComponentManager componentManager();
 }
+
+# The Hilt test root's generated code, in the test APK, implements these two interfaces, which live in
+# the app's inputs. The app never uses them, so R8 removes them (they are in the app's `usage.txt`) and
+# the test Application dies in `Class.newInstance` with
+# `NoClassDefFoundError: dagger.hilt.internal.TestSingletonComponentManager`. Found by intersecting the
+# app's `usage.txt` (what R8 removed) with the type descriptors in the test APK's dex.
+-keep class dagger.hilt.internal.TestSingletonComponent { *; }
+-keep class dagger.hilt.internal.TestSingletonComponentManager { *; }
