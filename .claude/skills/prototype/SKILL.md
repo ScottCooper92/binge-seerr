@@ -23,7 +23,7 @@ device is cost.
    install. The maintainer usually has the device in hand: don't launch, tap or screenshot unless asked.
 4. **Say what changed and what to look at**, in a few lines, then wait.
 5. **Shared design-system changes** go in the `design-system/` submodule checkout while prototyping; they
-   become their own binge-design-system PR afterwards.
+   become their own homelab-design-system PR afterwards.
 
 Answer questions ("should we…?", "is it possible…?") with a recommendation before building.
 
@@ -43,4 +43,4 @@ When the change is agreed:
    reproduced exactly.
 2. Turn it into a PR: strip prototype comments, use dimens and constants, add the Spanish strings and
    `./gradlew updateTranslationHashes`, add unit tests and screenshot frames, and run `./gradlew build` once.
-   Design-system changes go to binge-design-system first, with this repo's submodule pinned to that PR.
+   Design-system changes go to homelab-design-system first, with this repo's submodule pinned to that PR.

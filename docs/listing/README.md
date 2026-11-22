@@ -24,11 +24,9 @@ live when that pull request merges. A second change before then updates the same
 workflow by hand from the Actions tab.
 
 **The old page.** Builds released before the policy moved open https://scottcooper92.github.io/binge-seerr/privacy/ from their About row.
-That site is not unpublished on purpose, since it would answer them with a 404, and it is not left as a copy that goes stale. The
-`privacy-redirect.yml` workflow replaces it with `legacy-privacy-redirect.html`, a page with a meta refresh, a canonical link and a
-visible link to the new URL (GitHub Pages cannot send an HTTP redirect). It deploys when that file or the workflow changes on `main`,
-or when run by hand. It needs Pages on with GitHub Actions as its source, and the `github-pages` environment kept. A maintainer sets
-the Play Console privacy policy field to the new URL, which is #478.
+This repository no longer serves that address. Since the repository was renamed, a separate user site answers it with a page that points to
+the new URL, and nothing here deploys it. The `privacy-redirect.yml` workflow and `legacy-privacy-redirect.html` that used to do it were
+removed. A maintainer sets the Play Console privacy policy field to the new URL, which is #478.
 
 ## What is not here
 

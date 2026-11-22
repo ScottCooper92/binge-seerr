@@ -1,4 +1,4 @@
-# binge-seerr
+# homelab-seerr
 
 An Android client and admin console for a Seerr, Jellyseerr or Overseerr server, and the reference
 companion app for [Binge](https://github.com/ScottCooper92).
@@ -92,7 +92,7 @@ The pieces to read, in order:
 
 The platform's decisions are in Binge's `docs/companion-platform-architecture.md`
 and the wire contract in binge-companions' `contracts/`; this app's own roadmap is
-[#26](https://github.com/ScottCooper92/binge-seerr/issues/26).
+[#26](https://github.com/ScottCooper92/homelab-seerr/issues/26).
 
 ## Feedback
 
@@ -113,11 +113,11 @@ listing waits on its screenshots.
 ## Building
 
 The contracts and the SDK come from binge-companions as source, and the theme and components
-the screens wear from binge-design-system, both through a git submodule and a Gradle composite
+the screens wear from homelab-design-system, both through a git submodule and a Gradle composite
 build, so clone with submodules:
 
 ```sh
-git clone --recurse-submodules https://github.com/ScottCooper92/binge-seerr
+git clone --recurse-submodules https://github.com/ScottCooper92/homelab-seerr
 ./gradlew build
 ```
 

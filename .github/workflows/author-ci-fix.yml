@@ -11,7 +11,7 @@ run-name: >-
       || github.event.workflow_run.head_branch
       || github.ref_name }}
 
-# Thin caller. The workflow itself lives in ScottCooper92/binge-ci.
+# Thin caller. The workflow itself lives in ScottCooper92/homelab-ci.
 #
 # `CI` is matched by NAME - renaming ci.yml's `name:` silently unhooks this, bot-review
 # and author-conflicts all at once.
@@ -28,7 +28,7 @@ on:
 #
 # This is the one way a reusable workflow differs from the copy it replaced. An ordinary workflow
 # declaring `permissions: actions: read` simply gets it; a caller has to hold it first. Found by
-# running it (binge-seerr#1), not by actionlint, which has no way to see across the reference.
+# running it (homelab-seerr#1), not by actionlint, which has no way to see across the reference.
 permissions:
   contents: read
   actions: read
@@ -37,16 +37,16 @@ jobs:
   fix:
     # Skip the scheduled canary run of CI: it has no PR to review, fix or rebase.
     #
-    # A fork PR never reaches the bot. binge-ci refuses one too, and this keeps the guard in sight
-    # here (binge-design-system#407). It checks the events that name a head repository and lets the others through.
+    # A fork PR never reaches the bot. homelab-ci refuses one too, and this keeps the guard in sight
+    # here (homelab-design-system#407). It checks the events that name a head repository and lets the others through.
     if: >-
       (github.event.workflow_run.event != 'schedule') &&
       (!github.event.pull_request || github.event.pull_request.head.repo.full_name == github.repository) &&
       (!github.event.workflow_run || github.event.workflow_run.head_repository.full_name == github.repository)
-    uses: ScottCooper92/binge-ci/.github/workflows/author-ci-fix.yml@de44a7c780434385c40ecf599b7f3ebd10e7fb76 # v1.0.59
+    uses: ScottCooper92/homelab-ci/.github/workflows/author-ci-fix.yml@de44a7c780434385c40ecf599b7f3ebd10e7fb76 # v1.0.59
     with:
       author_bot_id: ${{ vars.AUTHOR_BOT_ID }}
-      private_submodules: homelab-core,binge-design-system,binge-ci
+      private_submodules: homelab-core,homelab-design-system,homelab-ci
       # jvm, not android: this repo's ci.yml is setup-java + setup-gradle and nothing
       # else. ci-setup is Binge's bootstrap - it writes a local.properties carrying a
       # TMDB key this app has no use for, and tunes Gradle for a container this job does
@@ -54,7 +54,7 @@ jobs:
       # why ci.yml installs one too.
       toolchain: jvm
       # The bot may re-record frames of screens its own PR changed, with before/after posted for
-      # review (binge-ci #376). The gate is in gate_rules below.
+      # review (homelab-ci #376). The gate is in gate_rules below.
       rerecord_screenshots: true
       java_version: '21'
       verify_guidance: >

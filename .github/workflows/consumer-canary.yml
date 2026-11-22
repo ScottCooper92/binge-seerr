@@ -64,7 +64,7 @@ jobs:
         with:
           app-id: ${{ secrets.REVIEWER_APP_ID }}
           private-key: ${{ secrets.REVIEWER_APP_PRIVATE_KEY }}
-          repositories: binge-seerr,homelab-core,binge-design-system,binge-ci
+          repositories: homelab-seerr,homelab-core,homelab-design-system,homelab-ci
           permission-contents: read
 
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -148,12 +148,12 @@ jobs:
     permissions:
       issues: write
     steps:
-      - uses: ScottCooper92/binge-ci/.github/actions/nightly-report@de44a7c780434385c40ecf599b7f3ebd10e7fb76 # v1.0.59
+      - uses: ScottCooper92/homelab-ci/.github/actions/nightly-report@de44a7c780434385c40ecf599b7f3ebd10e7fb76 # v1.0.59
         with:
           result: ${{ needs.canary.result }}
           title: 'Consumer canary: main no longer builds against upstream heads'
           note: >-
-            This build uses the heads of design-system/ (binge-design-system) and binge-companions/,
+            This build uses the heads of design-system/ (homelab-design-system) and binge-companions/,
             not the pinned commits. If the nightly CI run is green, an upstream commit broke this app:
             the log names the submodule commits it built against, and bumping the pin would be red too.
             The canary-reports-* artifacts, one per slice that failed, are kept for seven days.

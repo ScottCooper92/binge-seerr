@@ -15,7 +15,7 @@ run-name: >-
       || github.event.issue.number && format('#{0} · rebuttal', github.event.issue.number)
       || github.ref_name }}
 
-# Thin caller. The workflow itself lives in ScottCooper92/binge-ci.
+# Thin caller. The workflow itself lives in ScottCooper92/homelab-ci.
 #
 # All rights reserved, and the reference companion app: what lands on main is what
 # other companions are measured against. `./gradlew build` cannot
@@ -31,7 +31,7 @@ on:
   pull_request:
     types: [labeled]
   # An author-bot reply that disagrees with a finding pushes no commit, so no CI run follows
-  # it. binge-ci's bot-review keys on the `author-response` marker to re-review it.
+  # it. homelab-ci's bot-review keys on the `author-response` marker to re-review it.
   issue_comment:
     types: [created]
   workflow_dispatch:
@@ -48,7 +48,7 @@ on:
 #
 # This is the one way a reusable workflow differs from the copy it replaced. An ordinary workflow
 # declaring `permissions: actions: read` simply gets it; a caller has to hold it first. Found by
-# running it (binge-seerr#1), not by actionlint, which has no way to see across the reference.
+# running it (homelab-seerr#1), not by actionlint, which has no way to see across the reference.
 permissions:
   contents: read
   actions: read
@@ -60,18 +60,18 @@ jobs:
   review:
     # Skip the scheduled canary run of CI: it has no PR to review, fix or rebase.
     #
-    # A fork PR never reaches the bot. binge-ci refuses one too, and this keeps the guard in sight
-    # here (binge-design-system#407). It checks the events that name a head repository and lets the others through.
+    # A fork PR never reaches the bot. homelab-ci refuses one too, and this keeps the guard in sight
+    # here (homelab-design-system#407). It checks the events that name a head repository and lets the others through.
     # Skip coordinator status notes (`<!-- to-coordinator`) so they start no empty run.
     if: >-
       !startsWith(github.event.comment.body, '<!-- to-coordinator') &&
       (github.event_name != 'workflow_run' || github.event.workflow_run.event != 'schedule') &&
       (!github.event.pull_request || github.event.pull_request.head.repo.full_name == github.repository) &&
       (!github.event.workflow_run || github.event.workflow_run.head_repository.full_name == github.repository)
-    uses: ScottCooper92/binge-ci/.github/workflows/bot-review.yml@de44a7c780434385c40ecf599b7f3ebd10e7fb76 # v1.0.59
+    uses: ScottCooper92/homelab-ci/.github/workflows/bot-review.yml@de44a7c780434385c40ecf599b7f3ebd10e7fb76 # v1.0.59
     with:
       dispatch_pr: ${{ inputs.pr }}
-      private_submodules: homelab-core,binge-design-system,binge-ci
+      private_submodules: homelab-core,homelab-design-system,homelab-ci
       auto_merge: true
       # STACKED PRs land here (#99 through #115), and squash rewrites the parent's commits into a
       # new SHA. The moment the parent merges, every child holds commits that are nowhere in main's

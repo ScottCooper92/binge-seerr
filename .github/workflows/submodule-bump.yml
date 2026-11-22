@@ -13,13 +13,13 @@ on:
   schedule:
     - cron: '41 5 * * 1'
 
-# What the called workflow declares, which a caller has to hold - see binge-ci's README.md, "Writing a caller".
+# What the called workflow declares, which a caller has to hold - see homelab-ci's README.md, "Writing a caller".
 permissions:
   contents: read
 
 jobs:
   bump:
-    uses: ScottCooper92/binge-ci/.github/workflows/submodule-bump.yml@de44a7c780434385c40ecf599b7f3ebd10e7fb76 # v1.0.59
+    uses: ScottCooper92/homelab-ci/.github/workflows/submodule-bump.yml@de44a7c780434385c40ecf599b7f3ebd10e7fb76 # v1.0.59
     with:
       submodule_path: homelab-core
       # Private, so the app token has to be able to read it.

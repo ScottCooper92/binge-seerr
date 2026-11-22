@@ -17,7 +17,7 @@
 # artifact, which is deliberately not on the classpath, so it never loads. MaxLineLength and
 # WildcardImport overlap ktlint's own rules and are off so the two cannot double-report.
 #
-# detekt 2.x, through binge-ci's shared gate. 2.x's limits are `allowed…` and report above the value, where 1.x's
+# detekt 2.x, through homelab-ci's shared gate. 2.x's limits are `allowed…` and report above the value, where 1.x's
 # `threshold…` reported at it, so each limit below is the 1.x threshold minus one: the same code passes and fails.
 # 2.x fails on any finding by default, so 1.x's `build: maxIssues: 0` has no counterpart.
 

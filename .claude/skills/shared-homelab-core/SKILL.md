@@ -9,7 +9,7 @@ description: Use when changing the homelab-core submodule or its pin, when addin
 `settings.gradle.kts` substitutes each `com.cooper.homelab:<module>` coordinate with the included
 build's project, one line per module this app uses. The Kotlin package is `com.cooper.homelab.core`.
 
-It holds what the author's server apps do the same way. This repository holds what is binge-seerr's own: its
+It holds what the author's server apps do the same way. This repository holds what is homelab-seerr's own: its
 API client, its screens, its strings and its brand.
 
 The library is private. A checkout without access to it does not build, and CI fetches it with a

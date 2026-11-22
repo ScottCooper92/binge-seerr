@@ -1,5 +1,5 @@
 pluginManagement {
-    // The shared Gradle gates come from binge-ci as source, through a submodule pinned to the release
+    // The shared Gradle gates come from homelab-ci as source, through a submodule pinned to the release
     // the workflows also pin (#1082). Its plugins are applied by id with no version.
     includeBuild("binge-ci/gradle-plugins")
 
@@ -44,7 +44,7 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "binge-seerr"
+rootProject.name = "homelab-seerr"
 
 // The contracts and the SDK come from binge-companions as SOURCE, through a git submodule and a
 // composite build, rather than as a published artifact: nothing is published yet, and a companion
@@ -54,7 +54,7 @@ rootProject.name = "binge-seerr"
 includeBuild("binge-companions")
 
 // The shared design system arrives the same way (Binge#2427): the theme and the components this
-// app's screen wears come from binge-design-system as source, so a user moving between Binge and
+// app's screen wears come from homelab-design-system as source, so a user moving between Binge and
 // this app sees one product without this app depending on Binge. Gradle substitutes
 // `com.binge:designsystem` with the included build's project, and `com.binge:designsystem-tv` — the
 // tv-material foundation the television surface is built from — with its TV module.

@@ -41,7 +41,7 @@ import org.robolectric.annotation.Config
 private val Tabs = listOf(TvTab.Search, TvTab.Movies, TvTab.Requests, TvTab.Issues)
 
 /**
- * The design system's tab scaffold (binge-design-system#1392) under a real D-pad, through this app's [TvTabShell]: where focus
+ * The design system's tab scaffold (homelab-design-system#1392) under a real D-pad, through this app's [TvTabShell]: where focus
  * starts, that Up reaches the tab, that a tab commits on click, Back from the page to the tab and from another tab to the start
  * tab, the gear's sheet handing focus back to the gear, the avatar's menu, and where the avatar sits in the walk of the bar. Every
  * page is a focusable box that claims the shell's arrival, as a board would.

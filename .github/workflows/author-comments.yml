@@ -7,7 +7,7 @@ run-name: >-
       || github.event.pull_request.number && format('#{0}', github.event.pull_request.number)
       || github.ref_name }}
 
-# Thin caller. The workflow itself lives in ScottCooper92/binge-ci.
+# Thin caller. The workflow itself lives in ScottCooper92/homelab-ci.
 #
 # All THREE events, because wiring only `issue_comment` is the usual mistake and it
 # misses every inline comment on the diff.
@@ -36,8 +36,8 @@ jobs:
     # all three events. On a public repo this gate is the control, not a formality - anyone
     # can comment, and the comment body becomes the agent's instructions.
     #
-    # A fork PR never reaches the bot. binge-ci refuses one too, and this keeps the guard in sight
-    # here (binge-design-system#407). It checks the events that name a head repository and lets the others through.
+    # A fork PR never reaches the bot. homelab-ci refuses one too, and this keeps the guard in sight
+    # here (homelab-design-system#407). It checks the events that name a head repository and lets the others through.
     # Skip coordinator status notes (first line `<!-- to-coordinator`): posted under the maintainer's account, they would start a run with nothing to answer.
     if: >
       !startsWith(github.event.comment.body, '<!-- to-coordinator') &&
@@ -63,10 +63,10 @@ jobs:
     concurrency:
       group: author-comments-${{ github.event.issue.number || github.event.pull_request.number }}
       cancel-in-progress: false
-    uses: ScottCooper92/binge-ci/.github/workflows/author-comments.yml@de44a7c780434385c40ecf599b7f3ebd10e7fb76 # v1.0.59
+    uses: ScottCooper92/homelab-ci/.github/workflows/author-comments.yml@de44a7c780434385c40ecf599b7f3ebd10e7fb76 # v1.0.59
     with:
       author_bot_id: ${{ vars.AUTHOR_BOT_ID }}
-      private_submodules: homelab-core,binge-design-system,binge-ci
+      private_submodules: homelab-core,homelab-design-system,homelab-ci
       maintainer_handle: ScottCooper92
       # jvm, not android: this repo's ci.yml is setup-java + setup-gradle and nothing
       # else. ci-setup is Binge's bootstrap - it writes a local.properties carrying a

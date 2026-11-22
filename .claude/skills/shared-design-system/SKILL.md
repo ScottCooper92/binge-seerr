@@ -6,7 +6,7 @@ description: Use when changing anything under this app's ui/ package or the desi
 # The design system is a shared repository
 
 This app's screen is built from
-[binge-design-system](https://github.com/ScottCooper92/binge-design-system), checked out at
+[homelab-design-system](https://github.com/ScottCooper92/homelab-design-system), checked out at
 `design-system/` as a git submodule and included as a composite build (`com.binge:designsystem`,
 package `com.binge.designsystem`). The theme, the components and the dp tokens come from there;
 this repository holds only what is this app's own: its strings, its screens, its ViewModels and its brand.
@@ -17,7 +17,7 @@ app was built against.
 
 ## Which side a change belongs on
 
-- **A component, a token, the theme** — a PR on binge-design-system. Its one rule is that a
+- **A component, a token, the theme** — a PR on homelab-design-system. Its one rule is that a
   component there may not know what Binge's data looks like, and this app is the proof: if it
   needs something a companion could not use, it does not belong there.
 - **Then bump the submodule here in a commit of its own.** `.gitmodules` and the pin are

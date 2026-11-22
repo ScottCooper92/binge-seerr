@@ -28,7 +28,7 @@ jobs:
     if: >-
       github.event.workflow_run.event == 'pull_request' &&
       github.event.workflow_run.head_repository.full_name != github.repository
-    uses: ScottCooper92/binge-ci/.github/workflows/fork-review.yml@de44a7c780434385c40ecf599b7f3ebd10e7fb76 # v1.0.59
+    uses: ScottCooper92/homelab-ci/.github/workflows/fork-review.yml@de44a7c780434385c40ecf599b7f3ebd10e7fb76 # v1.0.59
     with:
       label: fork-review
     secrets:

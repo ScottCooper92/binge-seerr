@@ -139,7 +139,7 @@ internal fun ComposeContentTestRule.assertNoClippingAt(
 
 /**
  * The largest font scale a TV screen is held to: a television is read from across the room, so it stops at 1.3
- * (binge-seerr#1492).
+ * (homelab-seerr#1492).
  */
 internal const val TV_MAX_FONT_SCALE = FONT_SCALE_13
 

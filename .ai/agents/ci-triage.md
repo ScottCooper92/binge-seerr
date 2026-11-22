@@ -10,9 +10,9 @@ all. `.github/workflows/ci.yml` is the source of truth for the split:
 
 | Job | Runs |
 | --- | --- |
-| `submodule-pins` | On a PR only: binge-ci's shared check that every submodule pin is merged upstream, unless the PR carries `hold` |
+| `submodule-pins` | On a PR only: homelab-ci's shared check that every submodule pin is merged upstream, unless the PR carries `hold` |
 | `changes` | On a PR: decides from the changed paths which of `checks`, `tests`, `screenshots` and `release` can be affected (`.github/scripts/classify-changes.sh`), and tests that script and the shard script first. A skipped job is a decision, not a failure; the diff is in the job's summary. A push to `main` and the nightly run everything |
-| `actionlint` | Not on the nightly: binge-ci's shared actionlint step over `.github/workflows/`, with shellcheck at warning severity |
+| `actionlint` | Not on the nightly: homelab-ci's shared actionlint step over `.github/workflows/`, with shellcheck at warning severity |
 | `checks` | `./gradlew build` minus the tasks the next three jobs own — Kotlin compile, `ktlintCheck`, `detekt`, `checkBaselineStaleness`, Android `lint`, `checkTranslationStaleness`, `checkTvMaterialSeparation`, `checkGrpcAlignment`, the debug assemble |
 | `tests` | `testDebugUnitTest` and `koverVerify`, in every module (`:app`, `:data`, `:core:testing`) |
 | `screenshots` | `:app:validateDebugScreenshotTest`, as a matrix of three shards (`screenshots (0)`, `(1)` and `(2)`). `.github/scripts/shard-screenshots.sh` gives each shard its test classes, and every class is in exactly one. The job's result is the shards' together, so one red shard is a red `screenshots`. Each shard uploads its own `build-reports-screenshots-<n>` |

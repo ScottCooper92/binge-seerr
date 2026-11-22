@@ -39,7 +39,7 @@ yet released: the on-device check of that handshake is still open (#85), and the
 
 The contracts, the SDK and the companion kit are consumed as source: `binge-companions/` is a git
 submodule of the binge-companions repository, and `settings.gradle.kts` includes it as a composite build. So is the
-shared design system, `design-system/` (binge-design-system): the screens are built
+shared design system, `design-system/` (homelab-design-system): the screens are built
 from its theme and components, which is what makes this app read as part of Binge's
 family without depending on it. The brand deliberately does not follow — `theme/SeerrTheme.kt`
 passes the design system's `BingeExpressiveTheme`/`BingeTvTheme` this app's own indigo
@@ -309,9 +309,9 @@ touching `ci.yml`, because that job excludes tasks rather than listing them.
   else. The two libraries share simple names, so the wrong import compiles. `theme/SeerrTheme.kt` is
   the one allowed crossing: it projects the colour schemes into tv-material's.
 
-Four of these are binge-ci's shared gates rather than this repository's own code: the detekt wiring,
+Four of these are homelab-ci's shared gates rather than this repository's own code: the detekt wiring,
 `checkTranslationStaleness`, `checkBaselineStaleness` and `checkTvMaterialSeparation`. They come from
-`binge-ci/gradle-plugins`, a submodule pinned to the same binge-ci release as the workflows, and
+`binge-ci/gradle-plugins`, a submodule pinned to the same homelab-ci release as the workflows, and
 `app/build.gradle.kts` only configures them. Move the submodule and the workflow pins together.
 
 `build` depends on `check`, which is what pulls everything after the compile and the tests in.

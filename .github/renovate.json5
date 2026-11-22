@@ -46,7 +46,7 @@
     {
       // The toolchain has to move together with the consumers. The AGP matches Binge's, and the
       // Kotlin version comes from the included binge-companions build, so a bump here ahead of
-      // binge-companions or binge-design-system breaks the composite build. Group it, never
+      // binge-companions or homelab-design-system breaks the composite build. Group it, never
       // automerge it, and only open the PR once a maintainer approves it on the dashboard.
       matchPackageNames: [
         "/^org\\.jetbrains\\.kotlin[.:]/",

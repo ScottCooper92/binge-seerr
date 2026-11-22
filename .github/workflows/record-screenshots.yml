@@ -25,14 +25,14 @@ permissions:
 
 jobs:
   record:
-    uses: ScottCooper92/binge-ci/.github/workflows/record-screenshots.yml@de44a7c780434385c40ecf599b7f3ebd10e7fb76 # v1.0.59
+    uses: ScottCooper92/homelab-ci/.github/workflows/record-screenshots.yml@de44a7c780434385c40ecf599b7f3ebd10e7fb76 # v1.0.59
     with:
       ref: ${{ inputs.ref || github.ref_name }}
       tests: ${{ inputs.tests }}
       # The author bot's login, so that the conflict bot can start a recording after it takes the default
       # branch's frames in a screenshot-only merge conflict. Without it, only a person's dispatch is accepted.
       trusted_dispatcher: binge-pr-author[bot]
-      private_submodules: homelab-core,binge-design-system,binge-ci
+      private_submodules: homelab-core,homelab-design-system,homelab-ci
     secrets:
       AUTHOR_APP_ID: ${{ secrets.AUTHOR_APP_ID }}
       AUTHOR_APP_PRIVATE_KEY: ${{ secrets.AUTHOR_APP_PRIVATE_KEY }}

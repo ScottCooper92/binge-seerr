@@ -52,7 +52,7 @@ permissions:
 
 jobs:
   # #421: a submodule pin can be a commit that only exists on an unmerged branch of its own repo, which
-  # is deliberate while `hold` gates the merge on it and a trap once `hold` comes off. binge-ci's shared
+  # is deliberate while `hold` gates the merge on it and a trap once `hold` comes off. homelab-ci's shared
   # workflow fails a PR whose pin is not an ancestor of its submodule's default branch, unless the PR
   # carries `hold`. It also fails a PR that moves a pin backwards from the base branch's, which is how a
   # stale checkout in an author bot's push would roll a submodule back. It does nothing outside a pull request, and `build` needs it so a red pin fails
@@ -63,9 +63,9 @@ jobs:
     permissions:
       contents: read
       pull-requests: read
-    uses: ScottCooper92/binge-ci/.github/workflows/submodule-pins.yml@de44a7c780434385c40ecf599b7f3ebd10e7fb76 # v1.0.59
+    uses: ScottCooper92/homelab-ci/.github/workflows/submodule-pins.yml@de44a7c780434385c40ecf599b7f3ebd10e7fb76 # v1.0.59
     with:
-      private_submodules: homelab-core,binge-design-system,binge-ci
+      private_submodules: homelab-core,homelab-design-system,homelab-ci
     secrets:
       REVIEWER_APP_ID: ${{ secrets.REVIEWER_APP_ID }}
       REVIEWER_APP_PRIVATE_KEY: ${{ secrets.REVIEWER_APP_PRIVATE_KEY }}
@@ -189,7 +189,7 @@ jobs:
     steps:
       # The contracts and SDK are a submodule (see settings.gradle.kts); without this the
       # included build is an empty directory and Gradle fails at settings evaluation. Recursive,
-      # because a submodule can carry its own: binge-companions includes binge-ci's Gradle gates
+      # because a submodule can carry its own: binge-companions includes homelab-ci's Gradle gates
       # from a binge-ci submodule, and this build includes binge-companions.
       # The submodules are private to the author: the default token reads this repository only. This one is read-only.
       - name: Mint a read-only token for the submodules
@@ -198,7 +198,7 @@ jobs:
         with:
           app-id: ${{ secrets.REVIEWER_APP_ID }}
           private-key: ${{ secrets.REVIEWER_APP_PRIVATE_KEY }}
-          repositories: binge-seerr,homelab-core,binge-design-system,binge-ci
+          repositories: homelab-seerr,homelab-core,homelab-design-system,homelab-ci
           permission-contents: read
 
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -206,7 +206,7 @@ jobs:
           submodules: recursive
           token: ${{ steps.submodule_token.outputs.token }}
 
-      # JDK 21, matching binge-ci's ci-setup. The JDK runs the build and nothing else:
+      # JDK 21, matching homelab-ci's ci-setup. The JDK runs the build and nothing else:
       # `jvmTarget` 17 in app/build.gradle.kts decides the bytecode, so this does not move what
       # runs on a device.
       - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
@@ -267,7 +267,7 @@ jobs:
         with:
           app-id: ${{ secrets.REVIEWER_APP_ID }}
           private-key: ${{ secrets.REVIEWER_APP_PRIVATE_KEY }}
-          repositories: binge-seerr,homelab-core,binge-design-system,binge-ci
+          repositories: homelab-seerr,homelab-core,homelab-design-system,homelab-ci
           permission-contents: read
 
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -354,7 +354,7 @@ jobs:
         with:
           app-id: ${{ secrets.REVIEWER_APP_ID }}
           private-key: ${{ secrets.REVIEWER_APP_PRIVATE_KEY }}
-          repositories: binge-seerr,homelab-core,binge-design-system,binge-ci
+          repositories: homelab-seerr,homelab-core,homelab-design-system,homelab-ci
           permission-contents: read
 
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -416,7 +416,7 @@ jobs:
         with:
           app-id: ${{ secrets.REVIEWER_APP_ID }}
           private-key: ${{ secrets.REVIEWER_APP_PRIVATE_KEY }}
-          repositories: binge-seerr,homelab-core,binge-design-system,binge-ci
+          repositories: homelab-seerr,homelab-core,homelab-design-system,homelab-ci
           permission-contents: read
 
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -519,9 +519,9 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      # binge-ci's shared step: a pinned release verified against its published checksum, with
+      # homelab-ci's shared step: a pinned release verified against its published checksum, with
       # shellcheck at warning severity.
-      - uses: ScottCooper92/binge-ci/.github/actions/actionlint@de44a7c780434385c40ecf599b7f3ebd10e7fb76 # v1.0.59
+      - uses: ScottCooper92/homelab-ci/.github/actions/actionlint@de44a7c780434385c40ecf599b7f3ebd10e7fb76 # v1.0.59
 
   # A red nightly has no PR or push to carry it, so without this it is a red mark in the
   # Actions tab that nothing points at. One issue stays open while the canary is red and
@@ -536,7 +536,7 @@ jobs:
     permissions:
       issues: write
     steps:
-      - uses: ScottCooper92/binge-ci/.github/actions/nightly-report@de44a7c780434385c40ecf599b7f3ebd10e7fb76 # v1.0.59
+      - uses: ScottCooper92/homelab-ci/.github/actions/nightly-report@de44a7c780434385c40ecf599b7f3ebd10e7fb76 # v1.0.59
         with:
           result: ${{ needs.build.result }}
           title: Nightly CI is failing on main

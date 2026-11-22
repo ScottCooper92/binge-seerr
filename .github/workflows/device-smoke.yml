@@ -6,7 +6,7 @@ name: Device smoke (minified)
 # triggered by the paths that can change it, with a weekly run behind that for the one input that
 # varies with time rather than with a diff: the hosted runner image and the system image.
 #
-# The lane itself is binge-ci's shared device-smoke workflow (hosted runner, KVM, freed disk, the AVD
+# The lane itself is homelab-ci's shared device-smoke workflow (hosted runner, KVM, freed disk, the AVD
 # cache, the zero-tests guard, a non-fatal upload). This file owns only the triggers, the
 # concurrency group and the weekly report.
 
@@ -54,9 +54,9 @@ jobs:
     permissions:
       contents: read
       actions: write
-    uses: ScottCooper92/binge-ci/.github/workflows/device-smoke.yml@de44a7c780434385c40ecf599b7f3ebd10e7fb76 # v1.0.59
+    uses: ScottCooper92/homelab-ci/.github/workflows/device-smoke.yml@de44a7c780434385c40ecf599b7f3ebd10e7fb76 # v1.0.59
     with:
-      private_submodules: homelab-core,binge-design-system,binge-ci
+      private_submodules: homelab-core,homelab-design-system,homelab-ci
       ref: ${{ github.event.inputs.ref }}
       submodules: recursive
       device: smokeAtdApi34
@@ -85,7 +85,7 @@ jobs:
     permissions:
       issues: write
     steps:
-      - uses: ScottCooper92/binge-ci/.github/actions/nightly-report@de44a7c780434385c40ecf599b7f3ebd10e7fb76 # v1.0.59
+      - uses: ScottCooper92/homelab-ci/.github/actions/nightly-report@de44a7c780434385c40ecf599b7f3ebd10e7fb76 # v1.0.59
         with:
           result: ${{ needs.companion-smoke.result }}
           title: Weekly device smoke is failing on main

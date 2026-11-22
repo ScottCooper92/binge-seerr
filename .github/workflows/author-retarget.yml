@@ -8,7 +8,7 @@ run-name: >-
         && format('#{0} · {1}', github.event.pull_request.number, github.event.pull_request.head.ref)
       || github.ref_name }}
 
-# Thin caller. The workflow itself lives in ScottCooper92/binge-ci.
+# Thin caller. The workflow itself lives in ScottCooper92/homelab-ci.
 #
 # `pull_request_target`, NOT `pull_request`, and this is load-bearing: a
 # `pull_request` workflow is read from the PR's HEAD branch, so it could never run
@@ -30,15 +30,15 @@ on:
 
 jobs:
   catch-up:
-    # A fork PR never reaches the bot. binge-ci refuses one too, and this keeps the guard in sight
-    # here (binge-design-system#407). It checks the events that name a head repository and lets the others through.
+    # A fork PR never reaches the bot. homelab-ci refuses one too, and this keeps the guard in sight
+    # here (homelab-design-system#407). It checks the events that name a head repository and lets the others through.
     if: >-
       (!github.event.pull_request || github.event.pull_request.head.repo.full_name == github.repository) &&
       (!github.event.workflow_run || github.event.workflow_run.head_repository.full_name == github.repository)
-    uses: ScottCooper92/binge-ci/.github/workflows/author-retarget.yml@de44a7c780434385c40ecf599b7f3ebd10e7fb76 # v1.0.59
+    uses: ScottCooper92/homelab-ci/.github/workflows/author-retarget.yml@de44a7c780434385c40ecf599b7f3ebd10e7fb76 # v1.0.59
     with:
       author_bot_id: ${{ vars.AUTHOR_BOT_ID }}
-      private_submodules: homelab-core,binge-design-system,binge-ci
+      private_submodules: homelab-core,homelab-design-system,homelab-ci
     secrets:
       AUTHOR_APP_ID: ${{ secrets.AUTHOR_APP_ID }}
       AUTHOR_APP_PRIVATE_KEY: ${{ secrets.AUTHOR_APP_PRIVATE_KEY }}

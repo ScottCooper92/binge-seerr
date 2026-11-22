@@ -1,6 +1,6 @@
 ---
 name: audit
-description: Whole-codebase (or package-scoped) sweep of binge-seerr for bugs, convention violations, doc-vs-code drift, dead code, server-gating gaps and weaknesses in the exported Service — the invariants CI does NOT gate, with the repo's exemption rules baked in so findings arrive pre-filtered, verified, and filed as issues. Use when asked to audit the codebase, hunt for bugs/drift/dead code, or health-check a package. For a diff, use /code-review or /security-review instead — this skill is not diff-scoped.
+description: Whole-codebase (or package-scoped) sweep of homelab-seerr for bugs, convention violations, doc-vs-code drift, dead code, server-gating gaps and weaknesses in the exported Service — the invariants CI does NOT gate, with the repo's exemption rules baked in so findings arrive pre-filtered, verified, and filed as issues. Use when asked to audit the codebase, hunt for bugs/drift/dead code, or health-check a package. For a diff, use /code-review or /security-review instead — this skill is not diff-scoped.
 ---
 
 # Codebase audit
