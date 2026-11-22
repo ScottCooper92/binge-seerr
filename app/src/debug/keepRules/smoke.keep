@@ -23,3 +23,10 @@
 # FlagsTestModule installs these fakes.
 -keep class com.cooper.homelab.core.flags.FixedFeatureFlags { *; }
 -keep class com.cooper.homelab.core.flags.NoRemoteFlagSource { *; }
+
+# Hilt's test rule calls these interfaces' methods on the app's own generated Application, and the
+# minified app has no caller of them, so R8 drops the methods:
+# `NoSuchMethodError: No interface method componentManager() in GeneratedComponentManagerHolder`.
+# A class-level diff of the two APKs cannot see a missing method; the lane's logcat does.
+-keep interface dagger.hilt.internal.GeneratedComponentManagerHolder { *; }
+-keep interface dagger.hilt.internal.GeneratedComponentManager { *; }
