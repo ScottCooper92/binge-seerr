@@ -1,5 +1,6 @@
 package com.cooper.binge.companion.seerr.ui.issues
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -179,7 +180,7 @@ internal fun IssueRow(
                 rating = item.rating,
                 meta = item.genre,
                 blurb = item.problem,
-                nameSuffix = issueAffectedShortLabel(item),
+                nameSuffix = issueAffectedLabel(item, R.string.issue_affected_short),
                 statusInline = true,
             ),
         onClick = onClick,
@@ -215,25 +216,19 @@ private fun IssueByline(
     }
 }
 
-/** The affected part as it follows a title: "S2 E3" for an episode, "Season 2" for a season, none for a film. */
+/**
+ * The part of a show an issue affects; a movie is always the whole film, so it carries none. [episodeRes] words a season and an episode:
+ * the long form by default, the short "S2 E3" where it follows a title.
+ */
 @Composable
-private fun issueAffectedShortLabel(item: IssueItem): String? {
+internal fun issueAffectedLabel(
+    item: IssueItem,
+    @StringRes episodeRes: Int = R.string.issue_affected_episode,
+): String? {
     val season = item.problemSeason?.takeIf { it > 0 && item.mediaType == RequestMediaType.Tv } ?: return null
     val episode = item.problemEpisode?.takeIf { it > 0 }
     return if (episode != null) {
-        stringResource(R.string.issue_affected_short, season, episode)
-    } else {
-        stringResource(R.string.request_season_number, season)
-    }
-}
-
-/** The part of a show an issue affects; a movie is always the whole film, so it carries none. */
-@Composable
-internal fun issueAffectedLabel(item: IssueItem): String? {
-    val season = item.problemSeason?.takeIf { it > 0 && item.mediaType == RequestMediaType.Tv } ?: return null
-    val episode = item.problemEpisode?.takeIf { it > 0 }
-    return if (episode != null) {
-        stringResource(R.string.issue_affected_episode, season, episode)
+        stringResource(episodeRes, season, episode)
     } else {
         stringResource(R.string.request_season_number, season)
     }
