@@ -11,6 +11,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Rule
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.Tv
 import androidx.compose.material3.SnackbarHostState
@@ -168,7 +169,14 @@ private fun ServicesContent(
             Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
             ItemGroup(
                 title = type.name,
-                rows = instanceRows(type, state.instances.filter { it.type == type }, actions),
+                rows =
+                    instanceRows(
+                        type,
+                        state.instances.filter {
+                            it.type == type
+                        },
+                        actions,
+                    ).ifEmpty { listOf(emptyRow(stringResource(R.string.server_settings_dvr_none, type.name))) },
                 modifier = Modifier.padding(resolvedContentPadding()),
             )
         }
@@ -176,13 +184,18 @@ private fun ServicesContent(
             Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
             ItemGroup(
                 title = stringResource(R.string.server_settings_rules),
-                rows = ruleRows(rules, actions),
+                rows = ruleRows(rules, actions).ifEmpty { listOf(emptyRow(stringResource(R.string.server_settings_rules_none))) },
                 modifier = Modifier.padding(resolvedContentPadding()),
             )
         }
         Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
     }
 }
+
+/** What a group with nothing in it says, in place of a bare header: it is not a row to open. */
+@Composable
+private fun emptyRow(label: String) =
+    ListItem(icon = Icons.Filled.Info, iconTint = BingeSentiment.Info.fill(), label = label, clickable = false)
 
 @Composable
 private fun instanceRows(

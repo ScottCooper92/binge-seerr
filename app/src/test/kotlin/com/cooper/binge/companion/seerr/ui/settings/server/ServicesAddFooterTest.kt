@@ -70,4 +70,18 @@ class ServicesAddFooterTest {
         rule.onNodeWithText(string(R.string.server_settings_rule_add)).performClick()
         assertEquals(listOf<Int?>(null), rules)
     }
+
+    @Test
+    fun `an empty group says so instead of showing a bare header`() {
+        show(withRules = true)
+        rule.onNodeWithText(string(R.string.server_settings_dvr_none, "Radarr")).assertExists()
+        rule.onNodeWithText(string(R.string.server_settings_dvr_none, "Sonarr")).assertExists()
+        rule.onNodeWithText(string(R.string.server_settings_rules_none)).assertExists()
+    }
+
+    @Test
+    fun `no rules group at all where the server has no rules`() {
+        show(withRules = false)
+        rule.onAllNodesWithText(string(R.string.server_settings_rules_none)).assertCountEquals(0)
+    }
 }

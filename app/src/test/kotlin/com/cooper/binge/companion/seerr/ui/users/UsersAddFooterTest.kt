@@ -64,19 +64,19 @@ class UsersAddFooterTest {
     @Test
     fun `a viewer who may add sees the footer button and it starts a new user`() {
         show(canAdmit = true)
-        rule.onNodeWithText(string(R.string.users_add_cd)).performClick()
+        rule.onNodeWithText(string(R.string.users_add)).performClick()
         assertEquals(1, created)
     }
 
     @Test
     fun `a viewer who may not add has no footer`() {
         show(canAdmit = false)
-        rule.onAllNodesWithText(string(R.string.users_add_cd)).assertCountEquals(0)
+        rule.onAllNodesWithText(string(R.string.users_add)).assertCountEquals(0)
     }
 
     @Test
     fun `ticking rows takes the footer away`() {
         show(canAdmit = true, selection = setOf(7))
-        rule.onAllNodesWithText(string(R.string.users_add_cd)).assertCountEquals(0)
+        rule.onAllNodesWithText(string(R.string.users_add)).assertCountEquals(0)
     }
 }

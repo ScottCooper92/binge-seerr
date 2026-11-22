@@ -97,7 +97,7 @@ fun UsersScreen(
             if (ready != null && ready.canAdmit && selected == 0) {
                 // One way in skips the choice: a server with no media server can only create.
                 val onAdd = if (ready.importSource == null) actions.admission.onStartCreate else actions.admission.onStart
-                EditorPageActionBar(label = stringResource(R.string.users_add_cd), onClick = onAdd, enabled = true)
+                EditorPageActionBar(label = stringResource(R.string.users_add), onClick = onAdd, enabled = true)
             }
         },
         actions = { glassBackgroundAlpha -> UsersBarActions(ready, actions, glassBackgroundAlpha, onSort = { showSort = true }) },
