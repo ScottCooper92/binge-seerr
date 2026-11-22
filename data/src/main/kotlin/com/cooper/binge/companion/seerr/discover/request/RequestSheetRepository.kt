@@ -18,6 +18,7 @@ import com.cooper.binge.companion.seerr.seerr.SeerrServerDto
 import com.cooper.binge.companion.seerr.seerr.SeerrServerProfile
 import com.cooper.binge.companion.seerr.seerr.SeerrUserDto
 import com.cooper.binge.companion.seerr.seerr.arrServer
+import com.cooper.binge.companion.seerr.seerr.isAnimeSeries
 import com.cooper.binge.companion.seerr.seerr.offeredServers
 import com.cooper.binge.companion.seerr.seerr.toOutcome
 import com.cooper.binge.companion.seerr.seerr.toPermissions
