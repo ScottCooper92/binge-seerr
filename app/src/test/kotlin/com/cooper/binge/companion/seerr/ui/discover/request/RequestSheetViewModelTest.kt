@@ -242,6 +242,7 @@ class RequestSheetViewModelTest {
         STANDARD.copy(name = "Sonarr", profileId = 4, rootFolder = "/tv", animeProfileId = 5, animeRootFolder = "/anime")
     private val animeChoices =
         CHOICES.copy(
+            rootFolders = listOf("/tv", "/anime"),
             tags = listOf(RequestChoice(1, "family"), RequestChoice(2, "anime")),
             defaultTagIds = setOf(1),
             animeProfileId = 5,
