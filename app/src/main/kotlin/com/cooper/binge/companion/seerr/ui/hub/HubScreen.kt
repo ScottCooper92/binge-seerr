@@ -161,6 +161,7 @@ internal fun ConnectionHealth.isProblem(): Boolean =
     this == ConnectionHealth.Unreachable ||
         this == ConnectionHealth.LocalNetworkDenied ||
         this == ConnectionHealth.ClientCertificateNeeded ||
+        this == ConnectionHealth.CertificateRefused ||
         this == ConnectionHealth.CouldNotLoad
 
 /** Whether the hub's body is the dashboard: neither a problem page nor the loading page a rejected session waits on. */
