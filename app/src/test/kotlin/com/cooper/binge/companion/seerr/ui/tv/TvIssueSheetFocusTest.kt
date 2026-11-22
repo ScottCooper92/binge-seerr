@@ -100,7 +100,7 @@ class TvIssueSheetFocusTest {
         composeTestRule.waitForIdle()
         composeTestRule.settleShellHandOff()
 
-        row(R.string.hub_retry).assertIsFocused()
+        row(R.string.action_try_again).assertIsFocused()
         composeTestRule.press(Key.DirectionCenter)
         assertEquals(1, retries)
     }

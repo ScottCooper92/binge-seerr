@@ -190,7 +190,7 @@ private const val SYNOPSIS_LINES = 2
 internal fun TvPagedRows<*>.hubFailure(onRetry: () -> Unit): TvHubRowFailure? {
     if (count > 0 || !refresh.isFailure) return null
     val message = if (refresh == TvLoadPhase.Denied) SeerrError.LocalNetworkDenied.messageRes() else R.string.tv_list_load_failed
-    return TvHubRowFailure(message = stringResource(message), retryLabel = stringResource(R.string.hub_retry), onRetry = onRetry)
+    return TvHubRowFailure(message = stringResource(message), retryLabel = stringResource(R.string.action_try_again), onRetry = onRetry)
 }
 
 /**
@@ -217,7 +217,7 @@ internal fun TvRowsFallback(
                 body = stringResource(R.string.tv_list_load_failed),
                 modifier = modifier,
                 icon = Icons.Filled.Warning,
-                primary = ScreenAction(stringResource(R.string.hub_retry), onRetryLoad),
+                primary = ScreenAction(stringResource(R.string.action_try_again), onRetryLoad),
             )
         else -> TvEmptyPage(body = emptyBody, modifier = modifier, icon = Icons.Filled.Inbox)
     }
