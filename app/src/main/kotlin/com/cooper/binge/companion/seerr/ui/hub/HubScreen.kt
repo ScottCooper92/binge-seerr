@@ -39,9 +39,9 @@ import com.binge.designsystem.template.screenOuterPadding
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.demo.isDemoOrigin
 import com.cooper.binge.companion.seerr.ui.DisconnectButton
-import com.cooper.binge.companion.seerr.ui.rememberAllowLocalNetwork
 import com.cooper.binge.companion.seerr.ui.shell.SeerrTab
 import com.cooper.binge.companion.seerr.ui.state.LoadingScreen
+import com.cooper.homelab.core.uiandroid.connect.rememberAllowLocalNetwork
 import com.cooper.homelab.core.uiandroid.search.SettingsSearchEntry
 import com.binge.designsystem.R as DesR
 

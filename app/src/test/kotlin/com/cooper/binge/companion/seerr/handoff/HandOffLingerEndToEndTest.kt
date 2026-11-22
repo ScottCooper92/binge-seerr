@@ -41,11 +41,12 @@ class HandOffLingerEndToEndTest {
             url = "http://127.0.0.1:${server.localPort}/a/$TOKEN",
             page = HandOffPageTemplate(copyFor = { error("not asked for") }, appLink = "x"),
             key = key,
+            dispatcher = Dispatchers.IO,
         )
     private val screenScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private val uncaught = CopyOnWriteArrayList<Throwable>()
     private val appScope = CoroutineScope(Dispatchers.IO + SupervisorJob() + CoroutineExceptionHandler { _, e -> uncaught += e })
-    private val client = OkHttpTvSignInClient(OkHttpClient(), logger = DiscardLogger)
+    private val client = OkHttpTvSignInClient(OkHttpClient(), Dispatchers.IO, DiscardLogger)
     private val target = TvHandOffTarget(host = "127.0.0.1", port = server.localPort, token = TOKEN, key = key)
 
     @After

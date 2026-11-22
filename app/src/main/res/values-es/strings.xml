@@ -31,9 +31,6 @@
     <string name="setup_error_local_network_denied">Android está bloqueando el acceso a tu red local. Permítelo para esta aplicación y vuelve a intentarlo.</string>
     <string name="setup_error_client_certificate">Este servidor pide un certificado de cliente y esta aplicación todavía no puede enviarlo. Conéctate por una dirección que no lo pida, por ejemplo en tu red doméstica, o consulta a quien administra el servidor.</string>
     <string name="setup_local_network_explanation">Este servidor está en tu red local. Android pide tu permiso antes de que una aplicación pueda acceder a otros dispositivos de ella.</string>
-    <string name="local_network_allow">Permitir red local</string>
-    <string name="local_network_allow_short">Permitir acceso</string>
-    <string name="local_network_open_settings">Abrir ajustes</string>
     <string name="setup_error_unknown">El servidor respondió con un error.</string>
     <string name="setup_error_link_expired">El código caducó antes de aprobarse. Inténtalo de nuevo.</string>
     <string name="setup_error_handoff_session_rejected">La sesión del móvil no ha funcionado en este televisor. Inicia sesión aquí.</string>

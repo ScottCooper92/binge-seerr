@@ -15,12 +15,12 @@ import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.seerr.SeerrMediaStatusCode
 import com.cooper.binge.companion.seerr.seerr.SeerrRequestStatusCode
 import com.cooper.binge.companion.seerr.util.PlainCipher
-import com.cooper.binge.companion.seerr.util.RecordingAnalytics
-import com.cooper.binge.companion.seerr.util.RecordingCrashBreadcrumbs
 import com.cooper.binge.companion.seerr.util.awaitEvent
 import com.cooper.binge.companion.seerr.util.requestItem
 import com.cooper.homelab.core.review.NoReviewSignals
 import com.cooper.homelab.core.review.ReviewSignalSink
+import com.cooper.homelab.core.testing.RecordingAnalytics
+import com.cooper.homelab.core.testing.RecordingCrashBreadcrumbs
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
