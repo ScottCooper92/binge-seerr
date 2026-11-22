@@ -13,10 +13,12 @@ import com.cooper.binge.companion.seerr.seerr.PlexClientIdentity
 import com.cooper.binge.companion.seerr.seerr.SeerrApiFactory
 import com.cooper.binge.companion.seerr.seerr.SeerrSignInMode
 import com.cooper.binge.companion.seerr.telemetry.AnalyticsEvents
-import com.cooper.binge.companion.seerr.ui.tv.tvActions
 import com.cooper.binge.companion.seerr.util.MainDispatcherRule
 import com.cooper.binge.companion.seerr.util.PlainCipher
 import com.cooper.binge.companion.seerr.util.RecordingAnalytics
+import com.cooper.homelab.core.server.network.DataStoreCleartextConsent
+import com.cooper.homelab.core.server.network.LocalNetworkPermission
+import com.cooper.homelab.core.testing.InMemoryDataStore
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
@@ -31,7 +33,7 @@ import org.junit.Test
 import org.junit.rules.TemporaryFolder
 
 /** Trying the demo from the address step (#1705): no server exists, so nothing here is scripted. */
-class SetupViewModelDemoTest {
+class SharedSetupDemoTest {
     @get:Rule
     val folder = TemporaryFolder()
 
@@ -46,7 +48,7 @@ class SetupViewModelDemoTest {
     private lateinit var connection: SeerrConnection
     private val analytics = RecordingAnalytics()
 
-    private fun TestScope.viewModel(): SetupViewModel {
+    private fun TestScope.viewModel(): SharedSetupViewModel {
         connection =
             SeerrConnection(
                 store =
@@ -58,7 +60,7 @@ class SetupViewModelDemoTest {
                 apis = SeerrApiFactory(logRequests = false),
             )
         val vm =
-            SetupViewModel(
+            SharedSetupViewModel(
                 connection = connection,
                 plex =
                     PlexPinFlow(
@@ -75,6 +77,8 @@ class SetupViewModelDemoTest {
                 savedState = SavedStateHandle(),
                 cipher = PlainCipher,
                 handOffs = AddressHandOffs { HandOffOpening.NoLocalNetwork },
+                cleartext = DataStoreCleartextConsent(InMemoryDataStore()) { null },
+                localNetwork = LocalNetworkPermission.AlwaysGranted,
                 dispatcher = mainDispatcherRule.dispatcher,
                 analytics = analytics,
             )
@@ -126,7 +130,7 @@ class SetupViewModelDemoTest {
             val vm = viewModel()
             vm.uiState.first { it is SetupUiState.Address }
 
-            vm.tvActions().onTryDemo()
+            vm.actions(tv = true, onDisconnect = null).onTryDemo()
             val connected = vm.uiState.first { it is SetupUiState.Connected } as SetupUiState.Connected
 
             assertEquals(DEMO_ORIGIN, connected.credentials.baseUrl)
