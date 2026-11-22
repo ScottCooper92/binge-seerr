@@ -70,6 +70,7 @@ class SeerrServerFailureTest {
         runTest {
             val cert = SSLHandshakeException("no").apply { initCause(CertificateException("untrusted")) }
             assertEquals(ServerFailure.CertificateRefused, cert.toServerFailure())
+            assertEquals(SeerrError.Unknown, ServerFailure.CertificateRefused.toSeerrError())
             assertEquals(ServerFailure.Unreadable, SerializationException("body").toServerFailure())
             assertEquals(ServerFailure.Unknown, CorruptionException("store").toServerFailure())
             assertEquals(ServerFailure.Unknown, IllegalStateException().toServerFailure())

@@ -121,7 +121,7 @@ internal fun ConnectError?.toSetupError(): SetupError? =
         is ConnectError.Failed ->
             when (failure) {
                 ServerFailure.SessionRejected, ServerFailure.NotPermitted -> SetupError.Rejected
-                is ServerFailure.Unreachable, ServerFailure.CertificateRefused -> SetupError.Unreachable
+                is ServerFailure.Unreachable -> SetupError.Unreachable
                 ServerFailure.LocalNetworkDenied -> SetupError.LocalNetworkDenied
                 ServerFailure.ClientCertificateNeeded -> SetupError.ClientCertificateNeeded
                 else -> SetupError.Unknown

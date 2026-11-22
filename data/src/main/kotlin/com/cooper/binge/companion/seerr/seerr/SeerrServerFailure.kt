@@ -39,7 +39,7 @@ fun ServerFailure.toSeerrError(): SeerrError =
         ServerFailure.NotFound -> SeerrError.NotFound
         is ServerFailure.Refused -> SeerrError.Rejected
         ServerFailure.ServerError -> SeerrError.Server
-        is ServerFailure.Unreachable, ServerFailure.CertificateRefused -> SeerrError.Unreachable
+        is ServerFailure.Unreachable -> SeerrError.Unreachable
         ServerFailure.LocalNetworkDenied -> SeerrError.LocalNetworkDenied
         else -> SeerrError.Unknown
     }
