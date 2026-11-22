@@ -11,9 +11,7 @@ object AnalyticsEvents {
     const val ISSUE_MODERATED = "issue_moderated"
     const val ISSUE_COMMENTED = "issue_commented"
     const val BLOCKLIST_CHANGED = "blocklist_changed"
-    const val SIGN_IN = "sign_in"
     const val PASSWORD_RESET_REQUESTED = "password_reset_requested"
-    const val SERVER_DISCONNECTED = "server_disconnected"
     const val NOTIFICATION_SIGNAL_CHANGED = "notification_signal_changed"
     const val DISCOVERY_CHANGED = "discovery_changed"
     const val SHAKE_TO_REPORT_CHANGED = "shake_to_report_changed"
@@ -25,7 +23,6 @@ object AnalyticsEvents {
     const val REQUEST_OPERATION_FAILED = "request_operation_failed"
 
     const val PARAM_ACTION = "action"
-    const val PARAM_METHOD = "method"
     const val PARAM_SUCCESS = "success"
     const val PARAM_ENABLED = "enabled"
     const val PARAM_TYPE = "type"
@@ -37,11 +34,8 @@ object AnalyticsEvents {
     const val PARAM_SERVER_LINEAGE = "server_lineage"
     const val PARAM_SERVER_VERSION = "server_version"
 
-    /** `sign_in`'s [PARAM_METHOD] for Try the demo, which connects to canned data and signs in to nothing. */
-    const val METHOD_DEMO = "Demo"
-
-    /** Why an operation failed, where the screen tells it apart from what its status alone would say. */
-    const val PARAM_REASON = "reason"
+    /** The one reason `sign_in_failed` carries: the connect machine's event says the sign-in failed, not why. */
+    const val REASON_SIGN_IN_FAILED = "failed"
 
     /** Seerr has no Radarr or Sonarr server set as default for the version, so it cannot delete the files. */
     const val REASON_NO_DEFAULT_SERVICE = "no_default_service"
