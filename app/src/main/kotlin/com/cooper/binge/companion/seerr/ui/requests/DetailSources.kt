@@ -127,6 +127,7 @@ internal class DetailSources(
             serverName = profile.variant.displayName,
             mediaServerName = profile.mediaServerName(),
             mediaServerItem = profile.mediaServerItem(dto.media.jellyfinMediaId),
+            mediaServer = profile.mediaServer,
             siblings =
                 details
                     ?.mediaInfo

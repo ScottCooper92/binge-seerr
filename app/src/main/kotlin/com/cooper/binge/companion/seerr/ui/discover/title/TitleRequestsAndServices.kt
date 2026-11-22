@@ -63,6 +63,7 @@ import com.cooper.binge.companion.seerr.ui.requests.mediaServerBaseUrl
 import com.cooper.binge.companion.seerr.ui.requests.openServiceApp
 import com.cooper.binge.companion.seerr.ui.requests.openTarget
 import com.cooper.binge.companion.seerr.ui.requests.serviceApps
+import com.cooper.binge.companion.seerr.ui.requests.toServiceKind
 import com.cooper.binge.companion.seerr.ui.state.RequestStateChip
 import com.cooper.binge.companion.seerr.ui.state.externalItem
 import com.cooper.binge.companion.seerr.ui.state.formatFileSize
@@ -217,17 +218,18 @@ internal fun servicesContent(
             tmdbType = if (kind == TitleKind.Series) "tv" else "movie",
             tmdbId = tmdbId,
         )
+    val serverKind = detail.mediaServer?.toServiceKind() ?: ServiceKind.Plex
     val serverRows =
         listOfNotNull(
             detail.media
                 ?.instances
                 ?.firstNotNullOfOrNull { it.watch }
                 ?.let { ServiceRow.Watch(it) },
-            ServiceKind.Jellyfin.openTarget(item, detail.mediaServerUrl, serviceApps(), resolves)?.let { ServiceRow.Open(it) },
+            serverKind.openTarget(item, detail.mediaServerUrl, serviceApps(), resolves)?.let { ServiceRow.Open(it) },
         )
     return listOfNotNull(
         ServiceGroup(arrKind, arrRows).takeIf { arrRows.isNotEmpty() },
-        ServiceGroup(ServiceKind.Jellyfin, serverRows).takeIf { serverRows.isNotEmpty() },
+        ServiceGroup(serverKind, serverRows).takeIf { serverRows.isNotEmpty() },
     )
 }
 

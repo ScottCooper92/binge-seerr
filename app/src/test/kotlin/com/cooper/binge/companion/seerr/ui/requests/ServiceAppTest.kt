@@ -1,6 +1,7 @@
 package com.cooper.binge.companion.seerr.ui.requests
 
 import android.content.Intent
+import com.cooper.binge.companion.seerr.seerr.SeerrMediaServer
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -89,6 +90,20 @@ class ServiceAppTest {
     fun `a service with no app of its own always opens the web link`() {
         assertEquals(OpenTarget.Web(web), ServiceKind.Radarr.openTarget(item, web, release) { true })
         assertEquals(OpenTarget.Web(web), ServiceKind.Plex.openTarget(item, web, release) { true })
+    }
+
+    @Test
+    fun `only a Jellyfin server offers Ephyra even where Ephyra answers`() {
+        val answers = { intent: Intent -> intent.`package` == "com.cooper.homelab.ephyra" }
+
+        assertEquals(
+            "Ephyra",
+            (SeerrMediaServer.Jellyfin.toServiceKind()?.openTarget(item, web, release, answers) as OpenTarget.App).app.name,
+        )
+        assertEquals(OpenTarget.Web(web), SeerrMediaServer.Plex.toServiceKind()?.openTarget(item, web, release, answers))
+        assertEquals(OpenTarget.Web(web), SeerrMediaServer.Emby.toServiceKind()?.openTarget(item, web, release, answers))
+        assertNull(SeerrMediaServer.NotConfigured.toServiceKind())
+        assertNull(SeerrMediaServer.Unknown.toServiceKind())
     }
 
     @Test

@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import com.binge.companion.sdk.attempt
 import com.cooper.binge.companion.seerr.BuildConfig
+import com.cooper.binge.companion.seerr.seerr.SeerrMediaServer
 import com.cooper.binge.companion.seerr.seerr.isOpenableSite
 
 /** The services a title's sections are about, each of which may have an app of the user's own on the phone. */
@@ -13,7 +14,20 @@ internal enum class ServiceKind {
     Jellyfin,
     Emby,
     Plex,
+    ;
+
+    /** Whether this is the server the titles are on rather than a download manager. */
+    val isMediaServer: Boolean get() = this == Jellyfin || this == Emby || this == Plex
 }
+
+/** The service kind of the media server Seerr is set up with, where there is one. */
+internal fun SeerrMediaServer.toServiceKind(): ServiceKind? =
+    when (this) {
+        SeerrMediaServer.Jellyfin -> ServiceKind.Jellyfin
+        SeerrMediaServer.Emby -> ServiceKind.Emby
+        SeerrMediaServer.Plex -> ServiceKind.Plex
+        SeerrMediaServer.NotConfigured, SeerrMediaServer.Unknown -> null
+    }
 
 /**
  * What an app is told about the title, all of it optional. [serverUrl] is the media server's base address, so an app opens the item

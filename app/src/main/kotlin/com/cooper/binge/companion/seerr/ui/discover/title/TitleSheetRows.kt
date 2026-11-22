@@ -18,7 +18,6 @@ import com.cooper.binge.companion.seerr.discover.title.MovieDetails
 import com.cooper.binge.companion.seerr.discover.title.SeriesDetails
 import com.cooper.binge.companion.seerr.ui.requests.OpenTarget
 import com.cooper.binge.companion.seerr.ui.requests.RequestCardsHost
-import com.cooper.binge.companion.seerr.ui.requests.ServiceKind
 import com.cooper.binge.companion.seerr.ui.requests.SheetScope
 import com.cooper.binge.companion.seerr.ui.requests.SheetStateChip
 import com.cooper.binge.companion.seerr.ui.requests.SheetTitleRow
@@ -56,7 +55,7 @@ internal fun rememberTitleSheetRows(
     val services = rememberServicesContent(facts.requests, facts.kind, facts.tmdbId)
     val serverOpen =
         services
-            .firstOrNull { it.kind == ServiceKind.Jellyfin }
+            .firstOrNull { it.kind.isMediaServer }
             ?.rows
             ?.filterIsInstance<ServiceRow.Open>()
             ?.firstOrNull()
