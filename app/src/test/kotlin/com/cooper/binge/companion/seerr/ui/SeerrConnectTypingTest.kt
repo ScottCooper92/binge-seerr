@@ -4,6 +4,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performTextInput
 import androidx.test.core.app.ApplicationProvider
 import com.binge.designsystem.theme.BingeExpressiveTheme
@@ -61,7 +62,7 @@ class SeerrConnectTypingTest {
         }
     }
 
-    private fun show() =
+    private fun show(title: String? = null) =
         rule.setContent {
             val current by state.collectAsState()
             BingeExpressiveTheme(dynamicColor = false) {
@@ -91,6 +92,8 @@ class SeerrConnectTypingTest {
                         ),
                     linkActions = ConnectLinkActions({}, {}),
                     onRequestPasswordReset = {},
+                    title = title,
+                    onExit = title?.let { {} },
                 )
             }
         }
@@ -156,6 +159,27 @@ class SeerrConnectTypingTest {
         typeInBursts(rule.onNode(hasSetTextAction() and hasText(string(R.string.setup_api_key))), API_KEY)
 
         awaitValue(FIELD_API_KEY, API_KEY)
+    }
+
+    @Test
+    fun `fast typing into the username loses nothing on the titled Edit connection screen`() {
+        state.value = signIn(SeerrSignInMode.Jellyfin)
+        show(title = "Edit connection")
+
+        rule.onNodeWithText("Edit connection").assertExists()
+        typeInBursts(rule.onNode(hasSetTextAction() and hasText(string(R.string.setup_username))), USERNAME)
+
+        awaitValue(FIELD_USERNAME, USERNAME)
+    }
+
+    @Test
+    fun `fast typing into the address loses nothing on the titled Edit connection screen`() {
+        show(title = "Edit connection")
+
+        typeInBursts(rule.onAllNodes(hasSetTextAction())[0], ADDRESS)
+
+        rule.waitUntil(SETTLE_MILLIS) { (state.value as ConnectState.Address).address == ADDRESS }
+        assertEquals(ADDRESS, (state.value as ConnectState.Address).address)
     }
 
     private fun address(): ConnectState<SetupServer> =
