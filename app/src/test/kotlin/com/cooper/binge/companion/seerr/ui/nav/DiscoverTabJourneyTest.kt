@@ -2,6 +2,8 @@ package com.cooper.binge.companion.seerr.ui.nav
 
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.isDisplayed
@@ -188,6 +190,27 @@ class DiscoverTabJourneyTest {
                 val nodes = host.compose.onAllNodesWithText(title)
                 nodes.fetchSemanticsNodes().isNotEmpty() && nodes[0].isDisplayed()
             }.toSet()
+
+    @Test
+    fun `the grid's bar has no account action, and the Settings hub still does`() {
+        NavHostActivity.discoveryEnabled = true
+        host.connectDemo()
+        host.launch(HomeRoute)
+        host.awaitShowing(host.string(R.string.hubs_row_recently_added))
+
+        host.compose.onNodeWithTag("tab_discover").performClick()
+        awaitFilters()
+        assertEquals("the grid's bar holds no account action", 0, accountActions().size)
+
+        host.compose.onNodeWithTag("tab_settings").performClick()
+        host.await("the account action on the Settings hub") { accountActions().isNotEmpty() }
+    }
+
+    /** The account action: a button described by the signed-in user's name (the demo's is Alex), with its quota after it. */
+    private fun accountActions() =
+        host.compose
+            .onAllNodes(hasContentDescription("Alex", substring = true) and hasClickAction())
+            .fetchSemanticsNodes()
 
     /** The Filters pill is one accessibility item, so it is found by what a screen reader says of it and not by its label. */
     private fun awaitFilters() =

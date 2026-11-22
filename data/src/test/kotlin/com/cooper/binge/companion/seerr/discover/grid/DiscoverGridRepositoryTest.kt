@@ -6,8 +6,10 @@ import com.cooper.binge.companion.seerr.seerr.SeerrApiFactory
 import com.cooper.binge.companion.seerr.seerr.SeerrServerProfile
 import com.cooper.binge.companion.seerr.seerr.SeerrVariant
 import com.cooper.binge.companion.seerr.seerr.SeerrVersion
+import com.cooper.binge.companion.seerr.seerr.TitleCache
 import com.cooper.binge.companion.seerr.util.FakeResponse
 import com.cooper.binge.companion.seerr.util.FakeSeerrServer
+import com.cooper.binge.companion.seerr.util.FakeTitleDao
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import okhttp3.Headers.Companion.headersOf
@@ -39,7 +41,13 @@ class DiscoverGridRepositoryTest {
         runBlocking {
             seerr.dispatcher = { FakeResponse(headers = JSON, body = PAGE) }
             factory.anonymous(seerr.url()) { api ->
-                val titles = SeerrTitleListRepository(api = { api }, profile = { profile }, io = Dispatchers.Unconfined)
+                val titles =
+                    SeerrTitleListRepository(
+                        api = { api },
+                        profile = { profile },
+                        io = Dispatchers.Unconfined,
+                        titles = TitleCache(FakeTitleDao()),
+                    )
                 block(SeerrDiscoverGridRepository(api = { api }, profile = { profile }, titles = titles, io = Dispatchers.Unconfined))
             }
         }

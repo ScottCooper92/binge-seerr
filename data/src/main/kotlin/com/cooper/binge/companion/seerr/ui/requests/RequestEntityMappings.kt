@@ -43,6 +43,8 @@ fun RequestItem.toEntity(
         backdropUrl = backdropUrl,
         overview = overview,
         certification = certification,
+        rating = rating,
+        genre = genre,
     )
 
 fun RequestEntity.toRequestItem(): RequestItem =
@@ -65,4 +67,6 @@ fun RequestEntity.toRequestItem(): RequestItem =
         backdropUrl = backdropUrl,
         overview = overview,
         certification = certification,
+        rating = rating,
+        genre = genre,
     )

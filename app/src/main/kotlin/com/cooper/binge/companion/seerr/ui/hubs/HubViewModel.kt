@@ -27,6 +27,7 @@ import com.cooper.binge.companion.seerr.discover.withoutOffWatchlist
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
 import com.cooper.binge.companion.seerr.seerr.toServerFailure
+import com.cooper.binge.companion.seerr.ui.discover.title.HERO_SETTLE_MS
 import com.cooper.homelab.core.presentation.hub.HubLoader
 import com.cooper.homelab.core.presentation.hub.HubState
 import dagger.assisted.Assisted
@@ -171,24 +172,11 @@ class HubViewModel
             // A failed hero leaves the last one, or none: it never holds the rows.
             attempt { heroes.load(tab) }
                 .onSuccess { titles ->
-                    hero.value = if (titles.isEmpty()) HeroSlot.Gone else HeroSlot.Shown(titles)
-                    showScores(titles)
+                    // The scores are in a slide's first frame or not at all: they are read for a short, bounded wait before the hero shows,
+                    // because a score line that lands after it moves the slide's bottom-anchored copy.
+                    val scored = if (titles.isEmpty()) titles else heroes.withScores(titles, HERO_SETTLE_MS)
+                    hero.value = if (titles.isEmpty()) HeroSlot.Gone else HeroSlot.Shown(scored)
                 }.onFailure { hero.update { if (it is HeroSlot.Shown) it else HeroSlot.Gone } }
-        }
-
-        /** The review scores join the hero after it shows, and only the hero they were read for: a newer one is left as it is. */
-        private suspend fun showScores(titles: List<HubHero>) {
-            if (titles.isEmpty()) return
-            val scored = heroes.withScores(titles)
-            hero.update {
-                if (it is HeroSlot.Shown &&
-                    it.titles.map(HubHero::tmdbId) == scored.map(HubHero::tmdbId)
-                ) {
-                    HeroSlot.Shown(scored)
-                } else {
-                    it
-                }
-            }
         }
 
         @AssistedFactory

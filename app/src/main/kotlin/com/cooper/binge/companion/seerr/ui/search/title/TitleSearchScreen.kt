@@ -67,6 +67,7 @@ internal fun TitleSearchScreen(
         idleMessage = stringResource(R.string.title_search_idle_message),
         reselectKey = SeerrTab.Search,
         bar = ScreenBar.Small,
+        pinned = true,
         recentsTitle = stringResource(R.string.title_search_recent),
         clearLabel = stringResource(R.string.title_search_recent_clear),
         clearTitle = stringResource(R.string.title_search_recent_clear_title),

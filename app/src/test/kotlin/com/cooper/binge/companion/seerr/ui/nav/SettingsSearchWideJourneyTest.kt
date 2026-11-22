@@ -1,16 +1,11 @@
 package com.cooper.binge.companion.seerr.ui.nav
 
-import androidx.compose.ui.test.hasAnyDescendant
-import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasSetTextAction
-import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
-import androidx.compose.ui.test.performTouchInput
-import androidx.compose.ui.test.swipeDown
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.HomeRoute
 import com.cooper.binge.companion.seerr.ui.HubRoute
@@ -68,9 +63,6 @@ class SettingsSearchWideJourneyTest {
         assertEquals(listOf(HubRoute, IssuesRoute), host.stack())
 
         val searchTitle = host.string(com.cooper.homelab.core.uiandroid.R.string.search_title)
-        host.compose
-            .onNode(hasScrollAction().and(hasAnyDescendant(hasText(searchTitle))))
-            .performTouchInput { swipeDown(startY = centerY, endY = bottom) }
         host.compose.onNodeWithText(searchTitle).performClick()
         host.awaitShowing(host.string(com.cooper.homelab.core.uiandroid.R.string.search_prompt))
         assertTrue("the hub stays beside the search", host.isShowing(host.string(R.string.hub_section_requests_desc)))

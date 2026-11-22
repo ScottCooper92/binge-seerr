@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.LiveTv
 import androidx.compose.material.icons.filled.ShoppingCart
@@ -40,7 +39,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import coil3.compose.SubcomposeAsyncImage
 import com.binge.designsystem.component.BingeFilterChipRow
-import com.binge.designsystem.component.ExternalLinkIcon
 import com.binge.designsystem.component.FilterChipItem
 import com.binge.designsystem.component.SectionHeader
 import com.binge.designsystem.theme.BingeShapes
@@ -148,15 +146,6 @@ private fun ProviderLogo(
                         .clip(BingeShapes.Medium)
                         .background(MaterialTheme.colorScheme.surfaceContainer),
             )
-            if (onClick != null) {
-                ExternalLinkIcon(
-                    modifier =
-                        Modifier
-                            .padding(dimensionResource(DesR.dimen.padding_xs))
-                            .background(MaterialTheme.colorScheme.surfaceContainer, CircleShape)
-                            .padding(dimensionResource(DesR.dimen.padding_xs)),
-                )
-            }
         }
         Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_s)))
         Text(

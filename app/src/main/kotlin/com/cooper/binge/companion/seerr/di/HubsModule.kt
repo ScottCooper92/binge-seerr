@@ -30,8 +30,10 @@ object HubsModule {
     fun titleListRepository(
         connection: SeerrConnection,
         statuses: TitleStatusStore,
+        titles: TitleCache,
         @IoDispatcher io: CoroutineDispatcher,
-    ): TitleListRepository = SeerrTitleListRepository(api = connection::api, profile = connection::profile, io = io, statuses = statuses)
+    ): TitleListRepository =
+        SeerrTitleListRepository(api = connection::api, profile = connection::profile, io = io, titles = titles, statuses = statuses)
 
     @Provides
     @Singleton

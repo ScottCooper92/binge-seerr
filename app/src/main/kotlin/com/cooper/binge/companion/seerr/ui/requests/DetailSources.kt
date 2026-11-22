@@ -1,6 +1,5 @@
 package com.cooper.binge.companion.seerr.ui.requests
 
-import com.cooper.binge.companion.seerr.seerr.HydratedTitle
 import com.cooper.binge.companion.seerr.seerr.SEERR_MEDIA_TYPE_MOVIE
 import com.cooper.binge.companion.seerr.seerr.SEERR_MEDIA_TYPE_TV
 import com.cooper.binge.companion.seerr.seerr.SeerrApi
@@ -22,10 +21,9 @@ import com.cooper.binge.companion.seerr.seerr.isWebUrl
 import com.cooper.binge.companion.seerr.seerr.phoneWebRoot
 import com.cooper.binge.companion.seerr.seerr.toAvatarUrl
 import com.cooper.binge.companion.seerr.seerr.toEpochMillisOrNull
+import com.cooper.binge.companion.seerr.seerr.toHydratedTitle
 import com.cooper.binge.companion.seerr.seerr.toTmdbBackdropUrl
-import com.cooper.binge.companion.seerr.seerr.toTmdbPosterUrl
 import com.cooper.binge.companion.seerr.ui.mediaServerItem
-import java.util.Locale
 
 private fun SeerrRequestSummaryDto.toSummary(): RequestSummary =
     RequestSummary(
@@ -93,17 +91,7 @@ internal class DetailSources(
         get() = dto.media.mediaType == SEERR_MEDIA_TYPE_TV && seasonsEditable
 
     suspend fun toDetail(): RequestDetail {
-        val hydrated =
-            details?.let {
-                HydratedTitle(
-                    it.displayTitle,
-                    it.posterPath?.toTmdbPosterUrl(),
-                    it.year,
-                    it.backdropPath?.toTmdbBackdropUrl(),
-                    it.overview,
-                    it.certification(Locale.getDefault().country),
-                )
-            }
+        val hydrated = details?.toHydratedTitle()
         val item =
             checkNotNull(dto.toRequestItem(api, { _, _, _ -> hydrated }, System.currentTimeMillis())) {
                 "Unrenderable media type"
