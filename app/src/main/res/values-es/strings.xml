@@ -406,6 +406,7 @@
     <string name="issue_state_open">Abierta</string>
     <string name="issue_state_resolved">Resuelta</string>
     <string name="issue_affected_episode">Temporada %1$d, episodio %2$d</string>
+    <string name="issue_affected_short">T%1$d E%2$d</string>
     <plurals name="issue_comments">
         <item quantity="one">%1$d comentario</item>
         <item quantity="many">%1$d comentarios</item>

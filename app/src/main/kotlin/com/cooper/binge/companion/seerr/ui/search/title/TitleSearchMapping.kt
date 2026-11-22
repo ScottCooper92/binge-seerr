@@ -100,6 +100,7 @@ private fun TitleResult.toMediaResult(genreNames: Map<Int, String>): MediaResult
         subtitle = subtitle(),
         rating = rating?.toFloat(),
         meta = genreLine(genreNames),
+        statusInline = kind != TitleKind.Person,
     )
 
 /** A studio's logo takes the slot a poster does, with "Studio" under its name. */

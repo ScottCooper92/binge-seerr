@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -27,14 +26,11 @@ import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.itemKey
 import com.binge.companion.sdk.paging.ListRefresh
 import com.binge.designsystem.component.BingeInitialsAvatar
-import com.binge.designsystem.component.BingeTag
 import com.binge.designsystem.component.FontScaleHeight
-import com.binge.designsystem.component.ListRow
-import com.binge.designsystem.component.ListRowHeader
-import com.binge.designsystem.component.ListRowPoster
 import com.binge.designsystem.component.ListRowSkeletonColumn
-import com.binge.designsystem.component.MediaTypeTag
-import com.binge.designsystem.component.WrappingRow
+import com.binge.designsystem.component.MediaResult
+import com.binge.designsystem.component.MediaResultKind
+import com.binge.designsystem.component.MediaResultRow
 import com.binge.designsystem.formatRelativeOrAbsolute
 import com.binge.designsystem.layout.LayoutAnchors
 import com.binge.designsystem.layout.layoutAnchorIf
@@ -45,7 +41,6 @@ import com.cooper.binge.companion.seerr.ui.requests.PagedRefreshError
 import com.cooper.binge.companion.seerr.ui.requests.RefreshFailedLine
 import com.cooper.binge.companion.seerr.ui.requests.RequestMediaType
 import com.cooper.binge.companion.seerr.ui.requests.labelRes
-import com.cooper.binge.companion.seerr.ui.requests.toTagType
 import com.cooper.binge.companion.seerr.ui.state.EmptyScreen
 import com.cooper.binge.companion.seerr.ui.state.PagedPullToRefresh
 import com.cooper.binge.companion.seerr.ui.state.PullableMessage
@@ -155,7 +150,10 @@ private fun IssueList(
     }
 }
 
-/** One issue: poster, title, the state chip, its type and scope, the opening line, and who filed it when. */
+/**
+ * One issue on the shared media row: who filed it and when above the title, the part of the show it affects after the title, then one line
+ * of state, type, kind, year, rating and genre, and the opening line last.
+ */
 @Composable
 internal fun IssueRow(
     item: IssueItem,
@@ -163,67 +161,69 @@ internal fun IssueRow(
     modifier: Modifier = Modifier,
     now: Long = System.currentTimeMillis(),
 ) {
-    ListRow(
-        modifier = modifier,
+    val separator = stringResource(R.string.hub_meta_separator)
+    val subtitle =
+        listOfNotNull(
+            stringResource(item.type.labelRes()),
+            stringResource(item.mediaType.labelRes()),
+            item.year,
+        ).joinToString(separator)
+    MediaResultRow(
+        result =
+            MediaResult(
+                key = item.id.toString(),
+                kind = MediaResultKind.Poster,
+                imageUrl = item.posterUrl,
+                name = item.title ?: stringResource(item.mediaType.labelRes()),
+                subtitle = subtitle,
+                rating = item.rating,
+                meta = item.genre,
+                blurb = item.problem,
+                nameSuffix = issueAffectedShortLabel(item),
+                statusInline = true,
+            ),
         onClick = onClick,
-        leading = { ListRowPoster(imageUrl = item.posterUrl, contentDescription = null) },
-    ) { contentModifier -> IssueRowMeta(item, now, contentModifier) }
+        modifier = modifier,
+        trailing = { RequestStateChip(label = stringResource(item.status.labelRes()), tone = item.status.tone()) },
+        byline = { IssueByline(item, now) },
+    )
 }
 
 @Composable
-private fun IssueRowMeta(
+private fun IssueByline(
     item: IssueItem,
     now: Long,
-    modifier: Modifier,
 ) {
     val gap = dimensionResource(DesR.dimen.detail_cast_avatar_label_spacing)
-    Column(modifier = modifier.padding(top = dimensionResource(DesR.dimen.detail_meta_spacing))) {
-        ListRowHeader(title = item.title ?: stringResource(item.mediaType.labelRes()))
-        Spacer(Modifier.height(gap))
-        // Wraps rather than squeezes: at a large font a plain row gave its last item no width at all.
-        WrappingRow(horizontalSpacing = gap, verticalSpacing = gap) {
-            RequestStateChip(label = stringResource(item.status.labelRes()), tone = item.status.tone())
-            MediaTypeTag(type = item.mediaType.toTagType())
-            BingeTag(label = stringResource(item.type.labelRes()))
-            issueAffectedLabel(item)?.let { affected ->
-                Text(
-                    affected,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        item.reportedBy?.let { reporter ->
+            BingeInitialsAvatar(name = reporter, avatarUrl = item.reportedByAvatarUrl)
+            Spacer(Modifier.width(gap))
         }
-        item.problem?.let { problem ->
-            Spacer(Modifier.height(gap))
-            Text(
-                text = problem,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
-        Spacer(Modifier.height(gap))
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            item.reportedBy?.let { reporter ->
-                BingeInitialsAvatar(name = reporter, avatarUrl = item.reportedByAvatarUrl)
-                Spacer(Modifier.width(gap))
-            }
-            Text(
-                text =
-                    listOfNotNull(
-                        item.reportedBy ?: stringResource(R.string.requests_requester_unknown),
-                        item.commentCount.takeIf { it > 0 }?.let { pluralStringResource(R.plurals.issue_comments, it, it) },
-                        formatRelativeOrAbsolute(item.createdAtMillis, now),
-                    ).joinToString(stringResource(R.string.hub_meta_separator)),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
+        Text(
+            text =
+                listOfNotNull(
+                    item.reportedBy ?: stringResource(R.string.requests_requester_unknown),
+                    item.commentCount.takeIf { it > 0 }?.let { pluralStringResource(R.plurals.issue_comments, it, it) },
+                    formatRelativeOrAbsolute(item.createdAtMillis, now),
+                ).joinToString(stringResource(R.string.hub_meta_separator)),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+    }
+}
+
+/** The affected part as it follows a title: "S2 E3" for an episode, "Season 2" for a season, none for a film. */
+@Composable
+private fun issueAffectedShortLabel(item: IssueItem): String? {
+    val season = item.problemSeason?.takeIf { it > 0 && item.mediaType == RequestMediaType.Tv } ?: return null
+    val episode = item.problemEpisode?.takeIf { it > 0 }
+    return if (episode != null) {
+        stringResource(R.string.issue_affected_short, season, episode)
+    } else {
+        stringResource(R.string.request_season_number, season)
     }
 }
 

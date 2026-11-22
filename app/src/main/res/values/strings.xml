@@ -429,6 +429,7 @@
     <string name="issue_state_open">Open</string>
     <string name="issue_state_resolved">Resolved</string>
     <string name="issue_affected_episode">Season %1$d, episode %2$d</string>
+    <string name="issue_affected_short">S%1$d E%2$d</string>
     <plurals name="issue_comments">
         <item quantity="one">%1$d comment</item>
         <item quantity="other">%1$d comments</item>
