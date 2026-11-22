@@ -66,10 +66,10 @@ class SeerrServerFailureTest {
         }
 
     @Test
-    fun `a certificate refusal an unreadable body and a corrupt store are not unreachable`() =
+    fun `a certificate refusal is its own failure, and an unreadable body and a corrupt store are not unreachable`() =
         runTest {
             val cert = SSLHandshakeException("no").apply { initCause(CertificateException("untrusted")) }
-            assertEquals(ServerFailure.Unknown, cert.toServerFailure())
+            assertEquals(ServerFailure.CertificateRefused, cert.toServerFailure())
             assertEquals(ServerFailure.Unreadable, SerializationException("body").toServerFailure())
             assertEquals(ServerFailure.Unknown, CorruptionException("store").toServerFailure())
             assertEquals(ServerFailure.Unknown, IllegalStateException().toServerFailure())

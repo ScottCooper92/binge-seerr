@@ -18,7 +18,7 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import java.io.IOException
-import java.security.cert.CertPathValidatorException
+import java.security.cert.CertificateException
 import javax.net.ssl.SSLHandshakeException
 
 /** What the certificate-refused interceptor says about a server whose certificate the device does not trust, and what follows. */
@@ -30,9 +30,7 @@ class SeerrHealthCertificateRefusedTest {
     fun tearDown() = server.close()
 
     private val untrusted =
-        SSLHandshakeException("PKIX path building failed").apply {
-            initCause(CertPathValidatorException("Trust anchor for certification path not found."))
-        }
+        SSLHandshakeException("no").apply { initCause(CertificateException("untrusted")) }
 
     private val recordingFailures =
         Interceptor { chain ->
