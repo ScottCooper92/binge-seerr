@@ -87,6 +87,7 @@ internal fun CertificationPage(
                     ListItem(
                         icon = Icons.Filled.Public,
                         label = countryName(code),
+                        selected = code == country,
                         trailingContent = { if (code == country) Icon(Icons.Filled.Check, contentDescription = null) },
                         onClick = { onChange(filters.copy(certificationCountry = code, certification = null)) },
                     )
