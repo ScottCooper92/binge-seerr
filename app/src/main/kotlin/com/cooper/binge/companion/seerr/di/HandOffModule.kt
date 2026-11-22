@@ -24,7 +24,10 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
-private val Context.handOffDataStore: DataStore<Preferences> by preferencesDataStore(name = "tv_handoff")
+private val Context.handOffDataStore: DataStore<Preferences> by preferencesDataStore(
+    name = "tv_handoff",
+    corruptionHandler = corruptionHandler(),
+)
 
 /**
  * The TV-to-phone address hand-off (#323): the television's listener, and the phone's sender with

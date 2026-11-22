@@ -78,7 +78,7 @@ jobs:
       # history, so the merge base falls back to before the parent's work and each child needs a
       # hand-resolved merge. A merge commit keeps those SHAs and the children catch up on their own.
       merge_method: merge
-      gated_checks: ktlint or Android lint
+      gated_checks: ktlint, detekt, Android lint, the coverage floor or the screenshot frames
       # ci.yml here declares no paths-ignore - deliberately, since bot-review needs a
       # successful run against the head and a skipped run is a PR that is never
       # reviewed. So there are no CI-less PRs and unbuilt_paths stays unset; the

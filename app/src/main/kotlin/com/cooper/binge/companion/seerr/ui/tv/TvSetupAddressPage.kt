@@ -36,7 +36,7 @@ import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.SetupActions
 import com.cooper.binge.companion.seerr.ui.SetupUiState
 import com.cooper.binge.companion.seerr.ui.messageRes
-import com.cooper.binge.companion.seerr.ui.rememberAllowLocalNetwork
+import com.cooper.homelab.core.uiandroid.connect.rememberAllowLocalNetwork
 import com.binge.designsystem.tv.R as TvR
 
 /**

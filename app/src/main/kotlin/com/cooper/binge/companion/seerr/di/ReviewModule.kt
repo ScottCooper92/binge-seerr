@@ -22,7 +22,10 @@ import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.CoroutineScope
 import javax.inject.Singleton
 
-private val Context.reviewDataStore: DataStore<Preferences> by preferencesDataStore(name = "seerr_review")
+private val Context.reviewDataStore: DataStore<Preferences> by preferencesDataStore(
+    name = "seerr_review",
+    corruptionHandler = corruptionHandler(),
+)
 
 /** The review prompt's signals on the device, and Play's review card as the way to ask. */
 @Module

@@ -342,9 +342,6 @@ app:link_plex_title  1f1f3da9dea6
 app:link_quick_connect_body  62292e796c94
 app:link_quick_connect_title  307640520f9a
 app:link_waiting  209d60ad4a22
-app:local_network_allow  b97c4592cdf4
-app:local_network_allow_short  e87c3e4e4316
-app:local_network_open_settings  ca381c1e76e6
 app:media_4k_files_deleted  97381da5b68d
 app:media_4k_files_not_deleted  4a60e7858757
 app:media_clear_confirm_message  a64b36050151

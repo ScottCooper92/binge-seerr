@@ -16,12 +16,12 @@ import com.binge.designsystem.tv.focus.tvArrivalObserver
 import com.binge.designsystem.tv.template.TvBoard
 import com.binge.designsystem.tv.theme.TvButtonStyle
 import com.cooper.binge.companion.seerr.R
-import com.cooper.binge.companion.seerr.ui.AllowLocalNetwork
 import com.cooper.binge.companion.seerr.ui.hub.ConnectionHealth
 import com.cooper.binge.companion.seerr.ui.hub.HubUiState
 import com.cooper.binge.companion.seerr.ui.hub.isProblem
-import com.cooper.binge.companion.seerr.ui.rememberAllowLocalNetwork
 import com.cooper.binge.companion.seerr.ui.tv.TvHubLoading
+import com.cooper.homelab.core.uiandroid.connect.AllowLocalNetwork
+import com.cooper.homelab.core.uiandroid.connect.rememberAllowLocalNetwork
 
 /** Everything the problem page can ask for, in one place so the entry stays a wiring. */
 internal class TvHubActions(

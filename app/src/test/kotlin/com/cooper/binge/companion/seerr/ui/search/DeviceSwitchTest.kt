@@ -8,12 +8,12 @@ import com.cooper.binge.companion.seerr.feedback.shakeToReportPreference
 import com.cooper.binge.companion.seerr.ui.hub.NoBingeInstallCheck
 import com.cooper.binge.companion.seerr.ui.settings.AppSettings
 import com.cooper.binge.companion.seerr.util.MainDispatcherRule
-import com.cooper.binge.companion.seerr.util.RecordingAnalytics
 import com.cooper.homelab.core.flags.BooleanPreference
 import com.cooper.homelab.core.flags.FixedFeatureFlags
 import com.cooper.homelab.core.flags.Flags
 import com.cooper.homelab.core.telemetry.AnalyticsConsent
 import com.cooper.homelab.core.telemetry.TelemetryPrefs
+import com.cooper.homelab.core.testing.RecordingAnalytics
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope

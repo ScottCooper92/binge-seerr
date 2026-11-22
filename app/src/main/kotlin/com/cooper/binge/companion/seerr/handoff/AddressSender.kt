@@ -1,10 +1,10 @@
 package com.cooper.binge.companion.seerr.handoff
 
+import com.cooper.binge.companion.seerr.di.IoDispatcher
 import com.cooper.homelab.core.foundation.LogField
 import com.cooper.homelab.core.foundation.Logger
 import com.cooper.homelab.core.foundation.warn
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.FormBody
 import okhttp3.OkHttpClient
@@ -34,12 +34,15 @@ fun interface AddressSender {
  */
 internal class OkHttpAddressSender(
     private val client: OkHttpClient,
-    private val dispatcher: CoroutineDispatcher = Dispatchers.IO,
+    private val dispatcher: CoroutineDispatcher,
     /** Why a send failed: a constant event and typed fields, never the exception's message. */
     private val logger: Logger,
 ) : AddressSender {
     @Inject
-    constructor(logger: Logger) : this(handOffHttpClient(), logger = logger)
+    constructor(
+        logger: Logger,
+        @IoDispatcher dispatcher: CoroutineDispatcher,
+    ) : this(handOffHttpClient(), dispatcher, logger)
 
     override suspend fun send(
         target: TvHandOffTarget,
