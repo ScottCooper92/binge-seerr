@@ -9,10 +9,10 @@ import com.cooper.binge.companion.seerr.ui.users.settings.EditorEvent
 import com.cooper.binge.companion.seerr.ui.users.settings.ExtrasEditorUiState
 import com.cooper.binge.companion.seerr.ui.users.settings.ScriptedSeerr
 import com.cooper.binge.companion.seerr.util.MainDispatcherRule
-import com.cooper.binge.companion.seerr.util.RecordingAnalytics
 import com.cooper.binge.companion.seerr.util.afterProcessDeath
 import com.cooper.binge.companion.seerr.util.awaitEvent
 import com.cooper.homelab.core.presentation.editor.SAVE_AS_MADE_DELAY_MILLIS
+import com.cooper.homelab.core.testing.RecordingAnalytics
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
