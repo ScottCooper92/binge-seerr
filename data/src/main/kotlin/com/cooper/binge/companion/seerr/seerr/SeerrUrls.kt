@@ -14,7 +14,7 @@ import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 fun String.normaliseBaseUrl(): String = ServerAddress.parse(this)?.url ?: trim()
 
 private const val TMDB_BACKDROP_BASE = "https://image.tmdb.org/t/p/w1280"
-private const val TMDB_POSTER_BASE = "https://image.tmdb.org/t/p/w342"
+internal const val TMDB_POSTER_BASE = "https://image.tmdb.org/t/p/w342"
 private const val TMDB_LOGO_BASE = "https://image.tmdb.org/t/p/w780_filter(duotone,ffffff,bababa)"
 
 /** A TMDB `backdrop_path` (`/abc.jpg`), as `GET backdrops` returns them, to the image URL at sign-in width. */
@@ -22,9 +22,6 @@ fun String.toTmdbBackdropUrl(): String = TMDB_BACKDROP_BASE + withLeadingSlash()
 
 /** A TMDB `posterPath`, as a title lookup returns it, to the image URL at row and card width. */
 fun String.toTmdbPosterUrl(): String = TMDB_POSTER_BASE + withLeadingSlash()
-
-/** The TMDB `posterPath` behind an image URL [toTmdbPosterUrl] built, or null for a URL that is not one of those. */
-fun String.toTmdbPosterPath(): String? = takeIf { startsWith(TMDB_POSTER_BASE) }?.removePrefix(TMDB_POSTER_BASE)
 
 /** A TMDB company `logo_path`, to the image URL at tile width, drawn through TMDB's duotone filter as the web client does. */
 fun String.toTmdbLogoUrl(): String = TMDB_LOGO_BASE + withLeadingSlash()

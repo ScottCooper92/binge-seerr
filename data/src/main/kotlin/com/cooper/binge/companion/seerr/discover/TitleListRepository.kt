@@ -10,14 +10,14 @@ import com.cooper.binge.companion.seerr.seerr.SeerrApi
 import com.cooper.binge.companion.seerr.seerr.SeerrGenreSliderDto
 import com.cooper.binge.companion.seerr.seerr.SeerrServerProfile
 import com.cooper.binge.companion.seerr.seerr.SeerrTitlePageDto
+import com.cooper.binge.companion.seerr.seerr.TMDB_POSTER_BASE
 import com.cooper.binge.companion.seerr.seerr.TitleCache
-import com.cooper.binge.companion.seerr.seerr.toTmdbPosterPath
+import java.util.Locale
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
-import java.util.Locale
 
 /**
  * The lists of titles the discovery screens read: the hubs' rows, the grid and search. It knows nothing of Retrofit, so a
@@ -155,3 +155,6 @@ private suspend fun TitleResult.hydrated(
     val found = titles.get(api, type, tmdbId) ?: return this
     return copy(artworkPath = found.posterUrl?.toTmdbPosterPath(), year = year ?: found.year)
 }
+
+/** The TMDB `posterPath` behind a poster URL the title cache built, or null for a URL that is not one of those. */
+private fun String.toTmdbPosterPath(): String? = takeIf { startsWith(TMDB_POSTER_BASE) }?.removePrefix(TMDB_POSTER_BASE)
