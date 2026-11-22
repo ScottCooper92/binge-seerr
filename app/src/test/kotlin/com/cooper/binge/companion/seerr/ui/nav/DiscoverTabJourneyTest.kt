@@ -191,7 +191,6 @@ class DiscoverTabJourneyTest {
                 nodes.fetchSemanticsNodes().isNotEmpty() && nodes[0].isDisplayed()
             }.toSet()
 
-    /** The Filters pill is one accessibility item, so it is found by what a screen reader says of it and not by its label. */
     @Test
     fun `the grid's bar has no account action, and the Settings hub still does`() {
         NavHostActivity.discoveryEnabled = true
@@ -213,6 +212,7 @@ class DiscoverTabJourneyTest {
             .onAllNodes(hasContentDescription("Alex", substring = true) and hasClickAction())
             .fetchSemanticsNodes()
 
+    /** The Filters pill is one accessibility item, so it is found by what a screen reader says of it and not by its label. */
     private fun awaitFilters() =
         host.await("the Filters pill") {
             host.compose
