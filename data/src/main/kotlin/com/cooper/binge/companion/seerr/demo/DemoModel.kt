@@ -7,8 +7,8 @@ import java.time.Instant
 internal const val DEMO_VERSION = "3.2.0"
 private const val JELLYFIN = 2
 
-/** The artwork behind a sign-in page: stills of the open films in [DEMO_TITLES]. */
-private val BACKDROPS =
+/** The artwork behind a sign-in page and behind each demo title's hero: stills of the open films in [DEMO_TITLES]. */
+internal val DEMO_BACKDROPS =
     listOf(
         "/xtdybjRRZ15mCrPOvEld305myys.jpg",
         "/msqeiEyIRpPAtrCeRGFNZQ9tkJL.jpg",
@@ -68,7 +68,7 @@ internal class DemoModel(
         listOf(
             route("GET", "status") { _, _ -> ok(SeerrStatusDto(version = DEMO_VERSION)) },
             route("GET", "settings", "public") { _, _ -> ok(publicSettings()) },
-            route("GET", "backdrops") { _, _ -> ok(BACKDROPS) },
+            route("GET", "backdrops") { _, _ -> ok(DEMO_BACKDROPS) },
             route("GET", "auth", "me") { _, _ -> ok(data.users.first { it.id == DEMO_USER_ID }) },
             route("POST", "auth", "logout") { _, _ -> done },
         )

@@ -119,6 +119,7 @@ internal fun DemoData.toResult(title: DemoTitle): SeerrTitleResultDto =
         title = title.title.takeIf { title.isMovie },
         name = title.title.takeUnless { title.isMovie },
         posterPath = title.poster.ifBlank { null },
+        backdropPath = title.backdrop,
         overview = title.overview,
         releaseDate = "${title.year}-01-01".takeIf { title.isMovie },
         firstAirDate = "${title.year}-01-01".takeUnless { title.isMovie },
