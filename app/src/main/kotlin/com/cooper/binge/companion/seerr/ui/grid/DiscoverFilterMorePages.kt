@@ -3,9 +3,11 @@ package com.cooper.binge.companion.seerr.ui.grid
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Public
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -17,9 +19,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
-import com.binge.designsystem.component.BingeFilterChip
+import com.binge.designsystem.component.BingeFilterChipRow
 import com.binge.designsystem.component.BingeSearchField
 import com.binge.designsystem.component.CheckboxRow
+import com.binge.designsystem.component.FilterChipItem
+import com.binge.designsystem.component.ItemGroup
+import com.binge.designsystem.component.ListItem
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverFilters
 import java.util.Locale
@@ -50,8 +55,7 @@ internal fun countryName(code: String): String =
 
 internal val chipGap @Composable get() = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s))
 
-/** A country's age ratings: the country as chips, then its ratings, of which one is chosen. */
-@OptIn(ExperimentalLayoutApi::class)
+/** A country's age ratings: the country as a list to pick one from, then its ratings in a row, of which one is chosen. */
 @Composable
 internal fun CertificationPage(
     filters: DiscoverFilters,
@@ -60,43 +64,39 @@ internal fun CertificationPage(
     onChange: (DiscoverFilters) -> Unit,
 ) {
     val country = filters.certificationCountry ?: vocabulary.defaultRegion?.takeIf { it in vocabulary.certifications }
-    Column(modifier = inset, verticalArrangement = chipGap) {
-        Text(stringResource(R.string.grid_filter_cert_country), style = MaterialTheme.typography.titleSmall)
-        FlowRow(horizontalArrangement = chipGap) {
-            vocabulary.certifications.keys.sortedBy(::countryName).forEach { code ->
-                BingeFilterChip(
-                    label = countryName(code),
-                    selected = code == country,
-                    onClick = { onChange(filters.copy(certificationCountry = code, certification = null)) },
-                )
-            }
+    val ratings = vocabulary.certifications[country].orEmpty()
+    Column(verticalArrangement = chipGap) {
+        if (ratings.isNotEmpty()) {
+            Text(stringResource(R.string.grid_filter_cert_rating), style = MaterialTheme.typography.titleSmall, modifier = inset)
+            BingeFilterChipRow(
+                items = ratings.map { FilterChipItem(it) },
+                selectedIndex = ratings.indexOf(filters.certification),
+                onSelect = { index ->
+                    val rating = ratings[index]
+                    onChange(
+                        filters.copy(certificationCountry = country, certification = rating.takeUnless { it == filters.certification }),
+                    )
+                },
+            )
         }
-        Text(stringResource(R.string.grid_filter_cert_rating), style = MaterialTheme.typography.titleSmall)
-        FlowRow(horizontalArrangement = chipGap) {
-            vocabulary.certifications[country].orEmpty().forEach { rating ->
-                BingeFilterChip(
-                    label = rating,
-                    selected = rating == filters.certification,
-                    onClick = {
-                        onChange(
-                            filters.copy(
-                                certificationCountry = country,
-                                certification =
-                                    rating.takeUnless {
-                                        it ==
-                                            filters.certification
-                                    },
-                            ),
-                        )
-                    },
-                )
-            }
-        }
+        Text(stringResource(R.string.grid_filter_cert_country), style = MaterialTheme.typography.titleSmall, modifier = inset)
+        ItemGroup(
+            title = null,
+            rows =
+                vocabulary.certifications.keys.sortedBy(::countryName).map { code ->
+                    ListItem(
+                        icon = Icons.Filled.Public,
+                        label = countryName(code),
+                        trailingContent = { if (code == country) Icon(Icons.Filled.Check, contentDescription = null) },
+                        onClick = { onChange(filters.copy(certificationCountry = code, certification = null)) },
+                    )
+                },
+            modifier = inset,
+        )
     }
 }
 
 /** A search over the server's keywords, the ones chosen as chips to drop, and the matches as rows to pick from. */
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun KeywordsPage(
     chosen: Set<Int>,
@@ -123,10 +123,14 @@ internal fun KeywordsPage(
             modifier = inset.fillMaxWidth(),
         )
         if (chosen.isNotEmpty()) {
-            FlowRow(modifier = inset, horizontalArrangement = chipGap) {
+            Column(modifier = inset) {
                 chosen.sorted().forEach { id ->
-                    val name = vocabulary.keywordNames[id] ?: id.toString()
-                    BingeFilterChip(label = name, selected = true, onClick = { onChange(chosen - id) })
+                    CheckboxRow(
+                        label = vocabulary.keywordNames[id] ?: id.toString(),
+                        checked = true,
+                        onCheckedChange = { onChange(chosen - id) },
+                        icon = DiscoverFilterSection.Keywords.icon,
+                    )
                 }
             }
         }
@@ -165,19 +169,19 @@ private fun KeywordMatches(
 }
 
 /** A show's status, any of which a title may have. */
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun StatusPage(
     filters: DiscoverFilters,
     inset: Modifier,
     onChange: (DiscoverFilters) -> Unit,
 ) {
-    FlowRow(modifier = inset, horizontalArrangement = chipGap) {
+    Column(modifier = inset) {
         TV_STATUSES.forEach { (code, label) ->
-            BingeFilterChip(
+            CheckboxRow(
                 label = stringResource(label),
-                selected = code in filters.status,
-                onClick = { onChange(filters.copy(status = filters.status.toggled(code))) },
+                checked = code in filters.status,
+                onCheckedChange = { onChange(filters.copy(status = filters.status.toggled(code))) },
+                icon = DiscoverFilterSection.Status.icon,
             )
         }
     }

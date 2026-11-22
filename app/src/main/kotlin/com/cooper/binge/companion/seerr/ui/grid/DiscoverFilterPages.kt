@@ -3,8 +3,6 @@ package com.cooper.binge.companion.seerr.ui.grid
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -16,7 +14,6 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.BingeActionFooter
 import com.binge.designsystem.component.BingeDateBoundFields
-import com.binge.designsystem.component.BingeFilterChip
 import com.binge.designsystem.component.BingeFilterChipRow
 import com.binge.designsystem.component.BingeNumberSlider
 import com.binge.designsystem.component.BingeRangeSlider
@@ -24,6 +21,7 @@ import com.binge.designsystem.component.BingeSheetDockingHeader
 import com.binge.designsystem.component.BingeSheetFooter
 import com.binge.designsystem.component.BingeSheetTopBar
 import com.binge.designsystem.component.BingeTextButton
+import com.binge.designsystem.component.CheckboxRow
 import com.binge.designsystem.component.FilterChipItem
 import com.binge.designsystem.component.bingeSheetScroll
 import com.cooper.binge.companion.seerr.R
@@ -199,8 +197,7 @@ private fun VotesPage(
     )
 }
 
-/** The genres as chips to tap on and off, and whether a title needs all of them or any one. */
-@OptIn(ExperimentalLayoutApi::class)
+/** The genres as ticks, and whether a title needs all of them or any one. A long vocabulary is a list, not a cloud of chips. */
 @Composable
 private fun GenresPage(
     filters: DiscoverFilters,
@@ -209,27 +206,25 @@ private fun GenresPage(
     onChange: (DiscoverFilters) -> Unit,
 ) {
     val gap = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s))
-    Column(modifier = inset, verticalArrangement = gap) {
-        Text(stringResource(R.string.grid_filter_match), style = MaterialTheme.typography.titleSmall)
-        FlowRow(horizontalArrangement = gap) {
-            BingeFilterChip(
-                label = stringResource(R.string.grid_filter_match_all),
-                selected = !filters.genresAny,
-                onClick = { onChange(filters.copy(genresAny = false)) },
-            )
-            BingeFilterChip(
-                label = stringResource(R.string.grid_filter_match_any),
-                selected = filters.genresAny,
-                onClick = { onChange(filters.copy(genresAny = true)) },
-            )
-        }
-        FlowRow(horizontalArrangement = gap) {
+    Column(verticalArrangement = gap) {
+        Text(stringResource(R.string.grid_filter_match), style = MaterialTheme.typography.titleSmall, modifier = inset)
+        BingeFilterChipRow(
+            items =
+                listOf(
+                    FilterChipItem(stringResource(R.string.grid_filter_match_all)),
+                    FilterChipItem(stringResource(R.string.grid_filter_match_any)),
+                ),
+            selectedIndex = if (filters.genresAny) 1 else 0,
+            onSelect = { onChange(filters.copy(genresAny = it == 1)) },
+        )
+        Column(modifier = inset) {
             vocabulary.genres.forEach { genre ->
                 val id = genre.id.toInt()
-                BingeFilterChip(
+                CheckboxRow(
                     label = genre.name,
-                    selected = id in filters.genres,
-                    onClick = { onChange(filters.copy(genres = filters.genres.toggled(id))) },
+                    checked = id in filters.genres,
+                    onCheckedChange = { onChange(filters.copy(genres = filters.genres.toggled(id))) },
+                    icon = DiscoverFilterSection.Genres.icon,
                 )
             }
         }
