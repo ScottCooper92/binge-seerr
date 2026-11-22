@@ -55,7 +55,9 @@ import com.cooper.binge.companion.seerr.ui.state.DialogMessage
 import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
 import com.cooper.binge.companion.seerr.ui.state.LoadingScreen
 import com.cooper.binge.companion.seerr.ui.state.MessageDialogHost
+import com.cooper.binge.companion.seerr.ui.state.dialogMessage
 import com.cooper.binge.companion.seerr.ui.state.messageRes
+import com.cooper.binge.companion.seerr.ui.state.needsDialog
 import com.cooper.binge.companion.seerr.ui.users.UserOrigin
 import com.cooper.binge.companion.seerr.ui.users.icon
 import com.cooper.binge.companion.seerr.ui.users.labelRes
@@ -110,7 +112,13 @@ fun LinkedAccountsScreen(
                     LinkedAccountsEvent.Linked -> R.string.user_settings_linked_done to SnackbarMessageKind.Confirmation
                     LinkedAccountsEvent.Unlinked -> R.string.user_settings_unlinked_done to SnackbarMessageKind.Confirmation
                     LinkedAccountsEvent.LinkExpired -> R.string.setup_error_link_expired to SnackbarMessageKind.Error
-                    is LinkedAccountsEvent.Failed -> event.error.messageRes() to SnackbarMessageKind.Error
+                    is LinkedAccountsEvent.Failed -> {
+                        if (event.error.needsDialog()) {
+                            dialog = event.error.dialogMessage(resources)
+                            return@collectLatest
+                        }
+                        event.error.messageRes() to SnackbarMessageKind.Error
+                    }
                 }
             snackbarHostState.showSnackbar(resources.getString(message), kind)
         }

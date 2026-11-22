@@ -35,7 +35,7 @@ import com.cooper.binge.companion.seerr.seerr.ManageablePermission
 import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
 import com.cooper.binge.companion.seerr.ui.state.LoadingScreen
 import com.cooper.binge.companion.seerr.ui.state.SortSheet
-import com.cooper.binge.companion.seerr.ui.state.messageRes
+import com.cooper.binge.companion.seerr.ui.state.rememberErrorReporter
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorPageActionBar
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
@@ -152,6 +152,7 @@ private fun UsersSnackbarEffect(
     snackbarHostState: SnackbarHostState,
 ) {
     val resources = LocalResources.current
+    val reporter = rememberErrorReporter(snackbarHostState)
     LaunchedEffect(events) {
         events.collectLatest { event ->
             snackbarHostState.currentSnackbarData?.dismiss()
@@ -176,11 +177,7 @@ private fun UsersSnackbarEffect(
                             },
                         kind = SnackbarMessageKind.Confirmation,
                     )
-                is UsersEvent.Failed ->
-                    snackbarHostState.showSnackbar(
-                        message = resources.getString(event.error.messageRes()),
-                        kind = SnackbarMessageKind.Error,
-                    )
+                is UsersEvent.Failed -> reporter.report(event.error)
             }
         }
     }
