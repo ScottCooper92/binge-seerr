@@ -4,6 +4,8 @@ import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -198,6 +200,7 @@ private fun DetailLoadIndicator(
 }
 
 /** Poster, title, what it is, who asked and when, and where the request stands. */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun RequestSheetHeader(
     item: RequestItem,
@@ -220,11 +223,11 @@ private fun RequestSheetHeader(
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
-            Row(
+            FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
-                verticalAlignment = Alignment.CenterVertically,
+                verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_xs)),
             ) {
-                // One line, in the order of a list row's status line: the status, the kind of title, the year, then 4K where it applies.
+                // In the order of a list row's status line, and wrapping at large fonts rather than clipping: the status, the kind of title, the year, then 4K where it applies.
                 if (titleState != null) {
                     StatusChip(label = titleState.label, sentiment = titleState.sentiment)
                 } else {
