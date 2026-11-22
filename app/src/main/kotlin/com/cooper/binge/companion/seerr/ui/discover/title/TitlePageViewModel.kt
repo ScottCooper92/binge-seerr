@@ -166,61 +166,6 @@ class TitlePageViewModel
                 }
             }
 
-        /** A request's sheet was asked for from outside the page, as the Requests list does: open it on that request. */
-        fun openRequest(id: Int) =
-            updateReady {
-                it.copy(
-                    manageRequestId = id,
-                    manageSheetOpen = true,
-                    requestsSheetOpen = false,
-                    manageFromList = false,
-                    manageScope = SheetScope.Both,
-                )
-            }
-
-        fun pickRequest(id: Int) =
-            updateReady {
-                it.copy(
-                    manageRequestId = id,
-                    manageSheetOpen = true,
-                    requestsSheetOpen = false,
-                    manageFromList = true,
-                    manageScope = SheetScope.Request,
-                )
-            }
-
-        fun backToRequests() =
-            updateReady {
-                it.copy(
-                    manageSheetOpen = true,
-                    requestsSheetOpen = false,
-                    manageScope = SheetScope.Title,
-                    manageRequestId =
-                        it.movie.requests
-                            .toManage()
-                            ?.id ?: it.manageRequestId,
-                    manageFromList = false,
-                )
-            }
-
-        fun backFromRequests() =
-            updateReady {
-                it.copy(
-                    requestsSheetOpen = false,
-                    manageSheetOpen = true,
-                    manageScope = SheetScope.Title,
-                    manageRequestId =
-                        it.movie.requests
-                            .toManage()
-                            ?.id ?: it.manageRequestId,
-                    manageFromList = false,
-                )
-            }
-
-        fun setRequestsSheetOpen(open: Boolean) = updateReady { it.copy(requestsSheetOpen = open) }
-
-        fun setServiceSheetOpen(open: Boolean) = updateReady { it.copy(serviceSheetOpen = open) }
-
         /** The request's sheet closed. The id stays, and a change made in it reloads the page through the sheet's own `onChanged`. */
         fun closeSheet(sheet: TitleSheet) =
             updateReady {
@@ -332,6 +277,6 @@ class TitlePageViewModel
             }
         }
 
-        private fun updateReady(transform: (TitlePageUiState.Ready) -> TitlePageUiState.Ready) =
+        internal fun updateReady(transform: (TitlePageUiState.Ready) -> TitlePageUiState.Ready) =
             state.update { (it as? TitlePageUiState.Ready)?.let(transform) ?: it }
     }

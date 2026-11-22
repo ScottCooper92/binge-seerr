@@ -78,21 +78,7 @@ internal fun RequestActionsSheet(
             }
         },
     ) { nav ->
-        // The page follows the edit, not the tap: an edit begun in a narrow window shows here once it widens.
-        val editOpen = nav.stacksPages && editActions != null && edit != null
-        PushPageOnce(editOpen, nav, EDIT_PAGE, editPushed)
-        // A stack that survived a narrow window keeps its page, but there the editor is a sheet of its own, not this one.
-        if (nav.page == EDIT_PAGE && nav.stacksPages && editActions != null) {
-            EditRequestPage(nav = nav, item = item, edit = edit, actions = editActions)
-            return@BingeAdaptiveSheet
-        }
-        // Mark as follows the choice of instance the same way: a page here, its own sheet where this one does not stack pages.
-        val markOpen = nav.stacksPages && marking != null
-        PushPageOnce(markOpen, nav, MARK_PAGE, markPushed)
-        if (nav.page == MARK_PAGE && nav.stacksPages && marking != null) {
-            MarkAsPage(nav = nav, instance = marking, onSelect = onMarkSelect)
-            return@BingeAdaptiveSheet
-        }
+        if (StackedPage(nav, item, edit, editActions, marking, onMarkSelect, editPushed, markPushed)) return@BingeAdaptiveSheet
         RequestActionsContent(
             model =
                 RequestSheetModel(
@@ -159,6 +145,35 @@ internal fun RequestActionsSheet(
             onRemove = onRemove,
         )
     }
+}
+
+/**
+ * Draws the edit, or the choice of instance for Mark as, as a page of this sheet where it stacks pages, and says whether it did, so the
+ * sheet draws nothing else. The page follows the edit, not the tap: an edit begun in a narrow window shows here once it widens. A stack
+ * that survived a narrow window keeps its page, but there the editor is a sheet of its own, not this one.
+ */
+@Composable
+private fun StackedPage(
+    nav: BingeSheetNav,
+    item: RequestItem,
+    edit: EditState?,
+    editActions: EditRequestActions?,
+    marking: MediaInstance?,
+    onMarkSelect: (MediaStatusChoice) -> Unit,
+    editPushed: MutableState<Boolean>,
+    markPushed: MutableState<Boolean>,
+): Boolean {
+    PushPageOnce(nav.stacksPages && editActions != null && edit != null, nav, EDIT_PAGE, editPushed)
+    if (nav.page == EDIT_PAGE && nav.stacksPages && editActions != null) {
+        EditRequestPage(nav = nav, item = item, edit = edit, actions = editActions)
+        return true
+    }
+    PushPageOnce(nav.stacksPages && marking != null, nav, MARK_PAGE, markPushed)
+    if (nav.page == MARK_PAGE && nav.stacksPages && marking != null) {
+        MarkAsPage(nav = nav, instance = marking, onSelect = onMarkSelect)
+        return true
+    }
+    return false
 }
 
 /** Pushes [page] once while [open], and not again while the page it pushed is still leaving: the state behind it outlives its exit. */

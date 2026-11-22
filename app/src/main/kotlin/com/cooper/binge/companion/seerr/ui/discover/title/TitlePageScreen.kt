@@ -228,7 +228,6 @@ private fun MovieOverlays(
             onRequestRemaining = actions.onRequestRemaining,
             requestCount = movie.requests.size,
             header = TitleSheetHeaderFacts(movie.title, movie.posterUrl),
-            onBlock = actions.block?.onAsk.takeIf { movie.mayBlock },
             onOpenRequests = actions.onOpenRequests,
             onDismiss = actions.onCloseStatus,
             onUnblock = actions.onUnblock.takeIf { movie.mayUnblock },

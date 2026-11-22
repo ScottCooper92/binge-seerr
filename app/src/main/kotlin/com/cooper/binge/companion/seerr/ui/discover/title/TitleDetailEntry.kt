@@ -109,15 +109,13 @@ private fun FilmPageEntry(
                     }, {
                         viewModel.setRequestsSheetOpen(false)
                     }, {
-                        viewModel.backFromRequests()
+                        viewModel.backToRequests()
                     }, viewModel::pickRequest, viewModel::backToRequests, {
                         viewModel.setServiceSheetOpen(
                             true,
                         )
                     }, { viewModel.setServiceSheetOpen(false) }),
-                onCloseRequest = viewModel::closeRequestSheet,
-                onRequested = viewModel::requested,
-                onReload = viewModel::reload,
+                request = TitleRequestActions(viewModel::closeRequestSheet, viewModel::requested, viewModel::reload),
                 manage =
                     TitleManage(
                         { viewModel.closeSheet(TitleSheet.Manage) },
@@ -177,15 +175,13 @@ private fun SeriesPageEntry(
                     }, {
                         viewModel.setRequestsSheetOpen(false)
                     }, {
-                        viewModel.backFromRequests()
+                        viewModel.backToRequests()
                     }, viewModel::pickRequest, viewModel::backToRequests, {
                         viewModel.setServiceSheetOpen(
                             true,
                         )
                     }, { viewModel.setServiceSheetOpen(false) }),
-                onCloseRequest = viewModel::closeRequestSheet,
-                onRequested = viewModel::requested,
-                onReload = viewModel::reload,
+                request = TitleRequestActions(viewModel::closeRequestSheet, viewModel::requested, viewModel::reload),
                 manage =
                     TitleManage(
                         { viewModel.closeSheet(TitleSheet.Manage) },
@@ -224,9 +220,7 @@ private fun rememberTitlePageActions(
     onRetry: () -> Unit,
     onRequest: () -> Unit,
     requestsSheet: RequestsSheetWiring,
-    onCloseRequest: () -> Unit,
-    onRequested: (RequestResult) -> Unit,
-    onReload: () -> Unit,
+    request: TitleRequestActions,
     manage: TitleManage,
     side: TitleSideActions,
 ): TitlePageActions {
@@ -241,8 +235,8 @@ private fun rememberTitlePageActions(
         onBack = onBack,
         onRetry = onRetry,
         onRequest = onRequest,
-        onCloseRequest = onCloseRequest,
-        onRequested = onRequested,
+        onCloseRequest = request.onClose,
+        onRequested = request.onRequested,
         onOpenTitle = { result: TitleResult -> openTitle(result.kind, result.tmdbId, "") },
         onOpenPerson = { openTitle(TitleKind.Person, it, "") },
         onOpenCollection = { id -> openTitle(TitleKind.Collection, id, "") },
@@ -250,7 +244,7 @@ private fun rememberTitlePageActions(
         onOpenCredits = onOpenCredits,
         onOpenCompany = onOpenCompany,
         onOpenKeyword = onOpenKeyword,
-        onReload = onReload,
+        onReload = request.onReload,
         onCloseManage = manage.onClose,
         onCloseStatus = manage.onCloseStatus,
         onRequestFourK = manage.onRequestFourK,
@@ -272,6 +266,13 @@ private fun rememberTitlePageActions(
         reportSheet = { onClose -> TitleReportSheet(side.mediaType, side.tmdbId, onClose) },
     )
 }
+
+/** How the page's request sheet closes, what it does with a request made, and how the page reloads after one. */
+private class TitleRequestActions(
+    val onClose: () -> Unit,
+    val onRequested: (RequestResult) -> Unit,
+    val onReload: () -> Unit,
+)
 
 /** What the page needs for the sheets over it: how the request's and the status sheet close, and where a requester and the services open. */
 private class TitleManage(

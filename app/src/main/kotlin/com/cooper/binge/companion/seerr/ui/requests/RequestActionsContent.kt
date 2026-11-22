@@ -3,6 +3,7 @@ package com.cooper.binge.companion.seerr.ui.requests
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -94,61 +95,77 @@ internal fun RequestActionsContent(
             titleState = model.titleState.takeUnless { requestScope },
             titleOnly = titleScope,
         )
-        // The header stays at the top; the rest scrolls when the sheet is taller than the screen, and opens at its own height when it fits.
-        Column(
-            modifier = Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
-        ) {
-            if (!titleScope) DecisionBar(model.actions, blockTitle, model.progress, callbacks)
-            val requestRows =
-                if (titleScope) {
-                    emptyList()
-                } else {
-                    listOfNotNull(requesterId?.let { id -> requesterRow(model.item) { callbacks.onOpenUser?.invoke(id) } }) +
-                        requestRows(model, blockTitle, onBlockTitleChange, callbacks)
-                }
-            val mediaRows =
-                model.media
-                    ?.takeIf { it.canManage && !requestScope }
-                    ?.let { mediaRows(it, model.progress, callbacks) }
-                    .orEmpty()
-            val blockRows =
-                if (model.titleState != null &&
-                    !requestScope
-                ) {
-                    blockTitleRows(model, blockTitle, onBlockTitleChange)
-                } else {
-                    emptyList()
-                }
-            if (model.titleState != null && !requestScope && (model.titleRows.isNotEmpty() || blockRows.isNotEmpty())) {
-                ItemGroup(
-                    title = stringResource(R.string.request_sheet_group_title),
-                    rows =
-                        blockRows +
-                            model.titleRows.map { row ->
-                                if (row.external) {
-                                    externalItem(
-                                        row.icon,
-                                        row.label,
-                                        row.onClick,
-                                    )
-                                } else {
-                                    openItem(row.icon, row.label, onClick = row.onClick)
-                                }
-                            },
-                )
-            }
-            if (titleScope) model.cards?.takeIf { it.summaries.isNotEmpty() }?.let { RequestCardsSection(it) }
-            if (requestScope) {
-                destinationRows(model.destination)
-                    .takeIf {
-                        it.isNotEmpty()
-                    }?.let { ItemGroup(title = stringResource(R.string.request_sheet_group_destination), rows = it) }
-            }
-            if (requestRows.isNotEmpty()) ItemGroup(title = stringResource(R.string.request_sheet_group_request), rows = requestRows)
-            if (mediaRows.isNotEmpty()) ItemGroup(title = stringResource(R.string.request_sheet_group_media), rows = mediaRows)
-        }
+        RequestActionsBody(model, callbacks, blockTitle, onBlockTitleChange, requesterId)
     }
+}
+
+/** The header stays at the top; the rest scrolls when the sheet is taller than the screen, and opens at its own height when it fits. */
+@Composable
+private fun ColumnScope.RequestActionsBody(
+    model: RequestSheetModel,
+    callbacks: RequestSheetCallbacks,
+    blockTitle: Boolean,
+    onBlockTitleChange: (Boolean) -> Unit,
+    requesterId: Int?,
+) {
+    val titleScope = model.scope == SheetScope.Title
+    val requestScope = model.scope == SheetScope.Request
+    Column(
+        modifier = Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
+    ) {
+        if (!titleScope) DecisionBar(model.actions, blockTitle, model.progress, callbacks)
+        val requestRows =
+            if (titleScope) {
+                emptyList()
+            } else {
+                listOfNotNull(requesterId?.let { id -> requesterRow(model.item) { callbacks.onOpenUser?.invoke(id) } }) +
+                    requestRows(model, blockTitle, onBlockTitleChange, callbacks)
+            }
+        val mediaRows =
+            model.media
+                ?.takeIf { it.canManage && !requestScope }
+                ?.let { mediaRows(it, model.progress, callbacks) }
+                .orEmpty()
+        TitleGroup(model, blockTitle, onBlockTitleChange)
+        if (titleScope) model.cards?.takeIf { it.summaries.isNotEmpty() }?.let { RequestCardsSection(it) }
+        if (requestScope) {
+            destinationRows(model.destination)
+                .takeIf {
+                    it.isNotEmpty()
+                }?.let { ItemGroup(title = stringResource(R.string.request_sheet_group_destination), rows = it) }
+        }
+        if (requestRows.isNotEmpty()) ItemGroup(title = stringResource(R.string.request_sheet_group_request), rows = requestRows)
+        if (mediaRows.isNotEmpty()) ItemGroup(title = stringResource(R.string.request_sheet_group_media), rows = mediaRows)
+    }
+}
+
+/** What the sheet says about the title itself: Block, then the title's own rows. A request's own level has none of it. */
+@Composable
+private fun TitleGroup(
+    model: RequestSheetModel,
+    blockTitle: Boolean,
+    onBlockTitleChange: (Boolean) -> Unit,
+) {
+    if (model.titleState == null || model.scope == SheetScope.Request) return
+    val blockRows = blockTitleRows(model, blockTitle, onBlockTitleChange)
+    if (model.titleRows.isEmpty() && blockRows.isEmpty()) return
+    ItemGroup(
+        title = stringResource(R.string.request_sheet_group_title),
+        rows =
+            blockRows +
+                model.titleRows.map { row ->
+                    if (row.external) {
+                        externalItem(
+                            row.icon,
+                            row.label,
+                            row.onClick,
+                        )
+                    } else {
+                        openItem(row.icon, row.label, onClick = row.onClick)
+                    }
+                },
+    )
 }
 
 /** A thin bar while the detail loads, and a one-line retry when it failed; nothing once it landed. */

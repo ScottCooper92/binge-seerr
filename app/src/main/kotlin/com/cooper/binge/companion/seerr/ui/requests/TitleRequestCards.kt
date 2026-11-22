@@ -49,12 +49,17 @@ internal fun List<RequestSummary>.inCardOrder(): List<RequestSummary> =
         }.thenByDescending { it.id },
     )
 
+private const val RANK_PENDING = 0
+private const val RANK_OPEN = 1
+private const val RANK_COMPLETED = 2
+private const val RANK_ENDED = 3
+
 private fun SeerrRequestStatusCode?.cardRank(): Int =
     when (this) {
-        SeerrRequestStatusCode.Pending -> 0
-        SeerrRequestStatusCode.Completed -> 2
-        SeerrRequestStatusCode.Declined, SeerrRequestStatusCode.Failed -> 3
-        else -> 1
+        SeerrRequestStatusCode.Pending -> RANK_PENDING
+        SeerrRequestStatusCode.Completed -> RANK_COMPLETED
+        SeerrRequestStatusCode.Declined, SeerrRequestStatusCode.Failed -> RANK_ENDED
+        else -> RANK_OPEN
     }
 
 /** Only a pending request waits on a decision. */

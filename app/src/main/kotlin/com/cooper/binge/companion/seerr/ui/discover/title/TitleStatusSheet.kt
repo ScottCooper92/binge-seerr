@@ -53,7 +53,6 @@ internal fun TitleStatusSheet(
     requestCount: Int = 0,
     onOpenRequests: () -> Unit = {},
     header: TitleSheetHeaderFacts? = null,
-    onBlock: (() -> Unit)? = null,
 ) {
     BingeAdaptiveSheet(kind = BingeSheetKind.Menu, onDismissRequest = onDismiss) {
         TitleStatusSheetContent(
@@ -83,13 +82,6 @@ internal fun TitleStatusSheet(
                 onOpenRequests()
             },
             header = header,
-            onBlock =
-                onBlock?.let { block ->
-                    {
-                        onDismiss()
-                        block()
-                    }
-                },
         )
     }
 }
@@ -112,7 +104,6 @@ internal fun TitleStatusSheetContent(
     requestCount: Int = 0,
     onOpenRequests: () -> Unit = {},
     header: TitleSheetHeaderFacts? = null,
-    onBlock: (() -> Unit)? = null,
 ) {
     val watchRows = titleWatchRows(state, watchUrl, mediaServerName, onWatchInBinge, onWatch, LocalResources.current)
     val requestRows =
