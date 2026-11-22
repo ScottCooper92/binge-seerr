@@ -89,7 +89,7 @@ class SeriesEpisodesScreenTest {
 
     @Test
     @Config(qualifiers = "w400dp-h800dp")
-    fun `the bar stays pinned with its Back control as the list scrolls from the opening position`() {
+    fun `the small bar slides away as the list scrolls down and returns as it scrolls up`() {
         val seasons =
             SeriesEpisodesUiState.Ready(
                 listOf(
@@ -102,11 +102,11 @@ class SeriesEpisodesScreenTest {
         compose.waitForIdle()
         val back = compose.onNodeWithContentDescription("Back").getUnclippedBoundsInRoot()
         val title = compose.onNodeWithText("A Show").getUnclippedBoundsInRoot()
-        assertTrue("the title is in the Back button's row, so the bar opened collapsed", title.top < back.bottom)
+        assertTrue("the title is in the Back button's row, so the bar is one line", title.top < back.bottom)
 
         repeat(SCROLLS) { compose.onNode(hasScrollAction()).performTouchInput { swipeUp() } }
         compose.waitForIdle()
-        compose.onNodeWithContentDescription("Back").assertIsDisplayed()
+        compose.onNodeWithContentDescription("Back").assertIsNotDisplayed()
 
         repeat(SCROLLS) { compose.onNode(hasScrollAction()).performTouchInput { swipeDown() } }
         compose.waitForIdle()
