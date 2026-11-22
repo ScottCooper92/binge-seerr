@@ -9,6 +9,7 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.cooper.binge.companion.seerr.seerr.SeerrServerDetailsDto
 import com.cooper.binge.companion.seerr.seerr.SeerrServerDto
+import com.cooper.binge.companion.seerr.seerr.SeerrServerRefDto
 
 /**
  * Where a request goes: the instances it may go to, and the chosen one's profiles, root folders and
@@ -28,6 +29,8 @@ data class DestinationChoices(
     val tagIds: Set<Int> = emptySet(),
     /** The profile a plain request to the chosen instance gets, and the bytes free per root folder where it reported them. */
     val defaultProfileId: Int? = null,
+    /** Seerr treats this series as anime, so an instance's anime profile and folder are its defaults. */
+    val anime: Boolean = false,
     val freeSpace: Map<String, Long> = emptyMap(),
     val loadingChoices: Boolean = false,
 ) {
@@ -40,11 +43,11 @@ data class DestinationChoices(
         copy(
             serverId = server.id,
             profiles = emptyList(),
-            profileId = server.activeProfileId,
-            defaultProfileId = server.activeProfileId,
+            profileId = server.defaultProfile(anime),
+            defaultProfileId = server.defaultProfile(anime),
             freeSpace = emptyMap(),
             rootFolders = emptyList(),
-            rootFolder = server.activeDirectory,
+            rootFolder = server.defaultDirectory(anime),
             tags = emptyList(),
             tagIds = emptySet(),
             loadingChoices = true,
@@ -64,7 +67,7 @@ data class DestinationChoices(
                 details.rootFolders.firstOrNull { it.path == rootFolder }?.path ?: details.rootFolders.firstOrNull()?.path ?: rootFolder,
             tags = details.tags.map { Choice(it.id, it.label) },
             tagIds = tagIds.filter { id -> details.tags.any { it.id == id } }.toSet(),
-            defaultProfileId = details.server?.activeProfileId ?: defaultProfileId,
+            defaultProfileId = details.server?.defaultProfile(anime) ?: defaultProfileId,
             freeSpace = details.rootFolders.mapNotNull { folder -> folder.freeSpace?.let { folder.path to it } }.toMap(),
             loadingChoices = false,
         )
@@ -81,3 +84,9 @@ internal object DestinationIcons {
     val tags: ImageVector = Icons.Filled.LocalOffer
     val user: ImageVector = Icons.Filled.Person
 }
+
+private fun SeerrServerDto.defaultProfile(anime: Boolean) = if (anime) activeAnimeProfileId ?: activeProfileId else activeProfileId
+
+private fun SeerrServerDto.defaultDirectory(anime: Boolean) = if (anime) activeAnimeDirectory ?: activeDirectory else activeDirectory
+
+private fun SeerrServerRefDto.defaultProfile(anime: Boolean) = if (anime) activeAnimeProfileId ?: activeProfileId else activeProfileId

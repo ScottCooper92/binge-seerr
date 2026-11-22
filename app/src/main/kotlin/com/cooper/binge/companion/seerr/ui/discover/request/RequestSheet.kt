@@ -236,7 +236,7 @@ private fun PageFor(
                 DestinationPickerPanel(
                     icon = DestinationIcons.profile,
                     title = stringResource(R.string.advanced_profile),
-                    choices = ready.choices.profiles.map { it.id to ready.choices.profileLabel(it) },
+                    choices = ready.choices.profiles.map { it.id to ready.choices.profileLabel(it, pick.anime) },
                     selected = pick.profileId,
                     onSelect = { id ->
                         actions.onProfile(id)

@@ -109,9 +109,11 @@ data class DestinationPick(
     val choices: ChoicesState,
     /** The tags the user chose; null until they touch them, when the server's own defaults stand. */
     val tagIds: Set<Int>? = null,
+    /** Seerr treats this series as anime, so the instance's anime defaults stand in for the regular ones. */
+    val anime: Boolean = false,
 ) {
     /** The tags the request names: the user's own, or the chosen server's defaults until they touch them. */
-    fun shownTagIds(): Set<Int> = tagIds ?: (choices as? ChoicesState.Ready)?.choices?.defaultTagIds.orEmpty()
+    fun shownTagIds(): Set<Int> = tagIds ?: (choices as? ChoicesState.Ready)?.choices?.defaultTagsFor(anime).orEmpty()
 
     /** The lists the chosen server gave, with the current pick kept where it still offers it, else its first. */
     fun withChoices(loaded: RequestChoices): DestinationPick =

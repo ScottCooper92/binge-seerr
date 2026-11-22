@@ -28,6 +28,7 @@ import retrofit2.Response
 import java.io.IOException
 
 private val TARGET = RequestSheetTarget(TitleKind.Movie, tmdbId = 603, title = "The Matrix")
+private val SERIES = RequestSheetTarget(TitleKind.Series, tmdbId = 1399, title = "Frieren")
 private val STANDARD = RequestServer(1, "Radarr", is4k = false, isDefault = true, profileId = 4, rootFolder = "/movies")
 private val UHD = RequestServer(2, "Radarr 4K", is4k = true, isDefault = false, profileId = 7, rootFolder = "/uhd")
 private val CHOICES = RequestChoices(listOf(RequestChoice(4, "HD"), RequestChoice(5, "Any")), listOf("/movies", "/more"))
@@ -52,6 +53,11 @@ private class FakeRepository(
     var choices: RequestChoices = CHOICES
     var users: List<RequestUser> = emptyList()
     var failUsers: Throwable? = null
+
+    var anime = false
+    var failAnime: Throwable? = null
+
+    override suspend fun isAnime(tmdbId: Int): Boolean = failAnime?.let { throw it } ?: anime
 
     override suspend fun access(kind: TitleKind): RequestAccess = failAccess?.let { throw it } ?: access
 
@@ -334,6 +340,85 @@ class RequestSheetViewModelTest {
             val destination = repository.submissions.single().destination
             assertEquals(emptyList<Int>(), destination?.tags)
         }
+
+    private val sonarr =
+        STANDARD.copy(name = "Sonarr", profileId = 4, rootFolder = "/tv", animeProfileId = 5, animeRootFolder = "/anime")
+    private val animeChoices =
+        CHOICES.copy(
+            rootFolders = listOf("/tv", "/anime"),
+            tags = listOf(RequestChoice(1, "family"), RequestChoice(2, "anime")),
+            defaultTagIds = setOf(1),
+            animeProfileId = 5,
+            animeTagIds = setOf(2),
+        )
+
+    private fun sonarrRepository(anime: Boolean) =
+        FakeRepository(ADVANCED, null, listOf(sonarr)).apply {
+            choices = animeChoices
+            this.anime = anime
+        }
+
+    @Test
+    fun `an anime series starts on the anime profile and folder and shows the anime tags`() {
+        val vm = viewModel(sonarrRepository(anime = true), SERIES)
+
+        val pick = vm.ready().pick
+        assertEquals(5, pick?.profileId)
+        assertEquals("/anime", pick?.rootFolder)
+        assertEquals(setOf(2), pick?.shownTagIds())
+    }
+
+    @Test
+    fun `a series that is not anime keeps the regular defaults`() {
+        val vm = viewModel(sonarrRepository(anime = false), SERIES)
+
+        val pick = vm.ready().pick
+        assertEquals(4, pick?.profileId)
+        assertEquals("/tv", pick?.rootFolder)
+        assertEquals(setOf(1), pick?.shownTagIds())
+    }
+
+    @Test
+    fun `a film never asks whether it is anime`() {
+        val vm = viewModel(sonarrRepository(anime = true), TARGET)
+
+        assertFalse(vm.ready().anime)
+        assertEquals(setOf(1), vm.ready().pick?.shownTagIds())
+    }
+
+    @Test
+    fun `toggling a tag on an anime series keeps its anime defaults and sends them`() =
+        runTest {
+            val repository = sonarrRepository(anime = true)
+            val vm = viewModel(repository, SERIES)
+            vm.toggleTag(1)
+            val event = awaitEvent(vm.events)
+
+            assertEquals(setOf(1, 2), vm.ready().pick?.shownTagIds())
+            vm.submit()
+            event.await()
+
+            val destination = repository.submissions.single().destination
+            assertEquals(listOf(2, 1), destination?.tags)
+            assertEquals(5, destination?.profileId)
+            assertEquals("/anime", destination?.rootFolder)
+        }
+
+    @Test
+    fun `an anime series on an instance with no anime profile falls back to the regular one`() {
+        val repository = sonarrRepository(anime = true).apply { servers = listOf(sonarr.copy(animeProfileId = null)) }
+        val vm = viewModel(repository, SERIES)
+
+        assertEquals(4, vm.ready().pick?.profileId)
+    }
+
+    @Test
+    fun `a failed anime read leaves the regular defaults`() {
+        val repository = sonarrRepository(anime = true).apply { failAnime = IOException("down") }
+        val vm = viewModel(repository, SERIES)
+
+        assertEquals(4, vm.ready().pick?.profileId)
+    }
 
     @Test
     fun `switching to 4K drops the tags chosen for the standard server`() =

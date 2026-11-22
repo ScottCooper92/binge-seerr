@@ -30,13 +30,13 @@ class RequestOptionLabelsTest {
 
     @Test
     fun `the server's default profile is marked and the others are not`() {
-        show { choices.profileLabel(choices.profiles[0]) }
+        show { choices.profileLabel(choices.profiles[0], anime = false) }
         rule.onNodeWithText("HD (default)").assertExists()
     }
 
     @Test
     fun `a profile that is not the default reads as its name`() {
-        show { choices.profileLabel(choices.profiles[1]) }
+        show { choices.profileLabel(choices.profiles[1], anime = false) }
         rule.onNodeWithText("Any").assertExists()
     }
 
