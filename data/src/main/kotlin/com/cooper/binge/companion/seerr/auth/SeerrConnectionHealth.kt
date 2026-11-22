@@ -50,8 +50,8 @@ fun seerrHealthMonitor(): ConnectionHealthMonitor =
     ConnectionHealthMonitor(SeerrAuthFailureClassifier(::isArrProxyRoute), UNREACHABLE_AFTER)
 
 /**
- * Live health of the one saved server, fed by every call the cached client makes. Observe-only. What a call means is the shared
- * app's rule ([SeerrAuthFailureClassifier]); this keys it by [server], which is minted once and persisted. The client for the saved server
+ * Live health of the one saved server, fed by every call the cached client makes. Observe-only. What a call means is this app's rule
+ * ([SeerrAuthFailureClassifier]); this keys it by [server], which is minted once and persisted. The client for the saved server
  * carries [interceptors], built for that id; the throwaway setup-probe client carries none, because its unvalidated candidate
  * credentials must never feed the saved server's health. It does not read the store: "not connected" is [SeerrConnection]'s call.
  */
