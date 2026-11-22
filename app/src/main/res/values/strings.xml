@@ -1096,6 +1096,8 @@
     <string name="hub_local_network_body">Android is blocking this app from reaching your server on your local network. Allow local network access and it will reconnect.</string>
     <string name="hub_client_certificate_headline">This server needs a client certificate</string>
     <string name="hub_client_certificate_body">The server answered, but it asks for a client certificate and this app can\'t send one yet. Connect through an address that doesn\'t ask for one, such as on your home network, or ask whoever runs the server.</string>
+    <string name="hub_certificate_refused_headline">The server certificate is not trusted</string>
+    <string name="hub_certificate_refused_body">Android refused the secure connection because this device does not trust the certificate the server presented. Check the address, or ask whoever runs the server to use a certificate this device trusts, then edit the connection.</string>
     <string name="hub_unauthorized_headline">Reconnect needed</string>
     <string name="hub_couldnt_load_headline">Still connecting…</string>
     <string name="hub_couldnt_load_body">The server answered but the dashboard could not load yet. This can happen on first launch while the connection settles. Retrying automatically.</string>

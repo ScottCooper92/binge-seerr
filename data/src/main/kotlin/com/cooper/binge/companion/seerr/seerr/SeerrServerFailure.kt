@@ -47,6 +47,9 @@ fun ServerFailure.toSeerrError(): SeerrError =
 /** Whether the server answered the handshake by asking for a client certificate, which the app does not send. Read by the same rules as [toServerFailure]. */
 fun Throwable.wantsClientCertificate(): Boolean = SeerrTransport.read(this) == ServerFailure.ClientCertificateNeeded
 
+/** Whether the server's own certificate was refused: the device does not trust it. No retry of the same address can mend it. */
+fun Throwable.certificateRefused(): Boolean = SeerrTransport.read(this) == ServerFailure.CertificateRefused
+
 /** Whether a failure of `GET /auth/me` means the server holds no user for these credentials; the same rule as [SeerrError.rejectsSession]. */
 val ServerFailure.rejectsSession: Boolean
     get() = this == ServerFailure.SessionRejected || this == ServerFailure.NotPermitted

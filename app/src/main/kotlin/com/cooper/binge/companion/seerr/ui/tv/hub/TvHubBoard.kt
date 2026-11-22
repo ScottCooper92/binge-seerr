@@ -75,6 +75,8 @@ private fun TvHubProblem(
     val arrival = rememberTvArrivalFocus()
     TvArrivalFocusEffect(arrival)
     val denied = health == ConnectionHealth.LocalNetworkDenied
+    // A refused certificate is refused again on a retry, so the plate offers none and focus starts on Edit connection.
+    val refused = health == ConnectionHealth.CertificateRefused
     TvErrorPlate(
         kind =
             when (health) {
@@ -89,6 +91,7 @@ private fun TvHubProblem(
                     ConnectionHealth.CouldNotLoad -> R.string.hub_couldnt_load_headline
                     ConnectionHealth.LocalNetworkDenied -> R.string.hub_local_network_headline
                     ConnectionHealth.ClientCertificateNeeded -> R.string.hub_client_certificate_headline
+                    ConnectionHealth.CertificateRefused -> R.string.hub_certificate_refused_headline
                     else -> R.string.hub_unreachable_headline
                 },
             ),
@@ -100,12 +103,13 @@ private fun TvHubProblem(
                     health == ConnectionHealth.CouldNotLoad -> R.string.hub_couldnt_load_body
                     health == ConnectionHealth.LocalNetworkDenied -> R.string.hub_local_network_body
                     health == ConnectionHealth.ClientCertificateNeeded -> R.string.hub_client_certificate_body
+                    refused -> R.string.hub_certificate_refused_body
                     else -> R.string.hub_unreachable_body
                 },
             ),
         // A refused local network is fixed by the permission, not a retry, so the plate leads with it instead.
         onRetry =
-            if (denied) {
+            if (denied || refused) {
                 null
             } else if (rechecking) {
                 ({})
@@ -124,7 +128,11 @@ private fun TvHubProblem(
                     modifier = Modifier.focusRequester(arrival.requester),
                 )
             }
-            TvCompactButton(label = stringResource(R.string.settings_edit_connection), onClick = actions.onReconnect)
+            TvCompactButton(
+                label = stringResource(R.string.settings_edit_connection),
+                onClick = actions.onReconnect,
+                modifier = if (refused) Modifier.focusRequester(arrival.requester) else Modifier,
+            )
             TvCompactButton(label = stringResource(R.string.hub_disconnect), onClick = actions.onDisconnect)
         },
     )

@@ -337,7 +337,9 @@ private fun effectiveHealth(
 
 /** A problem the hub can say more about than "unreachable", which a failed read of the server must not flatten back into it. */
 private fun ConnectionHealth.namesItsOwnCause(): Boolean =
-    this == ConnectionHealth.LocalNetworkDenied || this == ConnectionHealth.ClientCertificateNeeded
+    this == ConnectionHealth.LocalNetworkDenied ||
+        this == ConnectionHealth.ClientCertificateNeeded ||
+        this == ConnectionHealth.CertificateRefused
 
 internal fun SeerrConnectionHealth.toConnectionHealth(): ConnectionHealth =
     when (this) {
@@ -345,6 +347,7 @@ internal fun SeerrConnectionHealth.toConnectionHealth(): ConnectionHealth =
         SeerrConnectionHealth.Unreachable -> ConnectionHealth.Unreachable
         SeerrConnectionHealth.Unauthorized -> ConnectionHealth.Unauthorized
         SeerrConnectionHealth.ClientCertificateNeeded -> ConnectionHealth.ClientCertificateNeeded
+        SeerrConnectionHealth.CertificateRefused -> ConnectionHealth.CertificateRefused
         // Unchecked is every cold start: the credentials are saved and the overview has not landed
         // yet. NotConnected means they vanished mid-check, and the shell swaps to setup on it.
         SeerrConnectionHealth.Unchecked, SeerrConnectionHealth.NotConnected -> ConnectionHealth.Checking

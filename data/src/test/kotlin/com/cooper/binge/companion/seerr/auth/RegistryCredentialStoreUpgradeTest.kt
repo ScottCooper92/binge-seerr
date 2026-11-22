@@ -97,9 +97,9 @@ class RegistryCredentialStoreUpgradeTest {
             after.store.save(again)
 
             assertEquals(again, after.store.credentials.first())
-            val state = after.registry.current()
-            val servers = state.servers
+            val servers = after.registry.current().servers
             assertEquals(listOf(SERVER_ID), servers.map { it.id.value })
+            assertEquals(listOf("seerr.example.com"), servers.map { it.name })
         }
 
     @Test
