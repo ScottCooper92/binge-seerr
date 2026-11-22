@@ -40,7 +40,7 @@ import com.cooper.binge.companion.seerr.ui.DestinationChoices
 import com.cooper.binge.companion.seerr.ui.DestinationIcons
 import com.cooper.binge.companion.seerr.ui.discover.request.folderOptionLabel
 import com.cooper.binge.companion.seerr.ui.discover.request.profileOptionLabel
-import com.cooper.binge.companion.seerr.ui.settings.server.TagChips
+import com.cooper.binge.companion.seerr.ui.settings.server.TagRows
 import com.cooper.binge.companion.seerr.ui.state.MediaStateChip
 import com.cooper.binge.companion.seerr.ui.state.SortContent
 import com.binge.designsystem.R as DesR
@@ -190,7 +190,7 @@ private fun DestinationFields(
         selected = destination.rootFolder,
         enabled = enabled,
     ) { onOpen(DestinationField.RootFolder) }
-    TagChips(destination.tags, destination.tagIds, enabled, actions.onToggleTag)
+    TagRows(destination.tags, destination.tagIds, enabled, actions.onToggleTag)
 }
 
 /**
