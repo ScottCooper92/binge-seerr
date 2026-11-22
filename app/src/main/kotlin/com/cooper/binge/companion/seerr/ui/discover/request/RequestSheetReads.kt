@@ -28,7 +28,14 @@ internal class RequestSheetStore {
         update { current -> current.copy(pick = current.pick?.let(transform)) }
 }
 
-/** The three reads that fill the sheet after it opens. Each lands in the state alone, so one failing leaves the others. */
+/** Makes the request for [id], or for the sender again where it is their own id; an id the users read does not hold changes nothing. */
+internal fun RequestSheetStore.requestFor(id: Int) =
+    update { current ->
+        val chosen = (current.users as? UsersState.Ready)?.users?.firstOrNull { it.id == id }
+        if (chosen == null) current else current.copy(requestFor = chosen.takeUnless { it.id == current.access.viewerId })
+    }
+
+/** The reads that fill the sheet after it opens. Each lands in the state alone, so one failing leaves the others. */
 internal class RequestSheetReads(
     private val repository: RequestSheetRepository,
     private val target: RequestSheetTarget,
@@ -43,6 +50,15 @@ internal class RequestSheetReads(
                     onFailure = { QuotaState.Failed },
                 )
             store.update { it.copy(quota = quota) }
+        }
+    }
+
+    fun users() {
+        scope.launch {
+            attempt { repository.users() }.fold(
+                onSuccess = { users -> store.update { it.copy(users = UsersState.Ready(users)) } },
+                onFailure = { store.update { it.copy(users = UsersState.Failed) } },
+            )
         }
     }
 

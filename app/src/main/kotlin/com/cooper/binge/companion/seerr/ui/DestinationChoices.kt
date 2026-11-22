@@ -5,6 +5,7 @@ import androidx.compose.material.icons.filled.Dns
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.HighQuality
 import androidx.compose.material.icons.filled.LocalOffer
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.cooper.binge.companion.seerr.seerr.SeerrServerDetailsDto
 import com.cooper.binge.companion.seerr.seerr.SeerrServerDto
@@ -78,4 +79,5 @@ internal object DestinationIcons {
     val profile: ImageVector = Icons.Filled.HighQuality
     val rootFolder: ImageVector = Icons.Filled.Folder
     val tags: ImageVector = Icons.Filled.LocalOffer
+    val user: ImageVector = Icons.Filled.Person
 }

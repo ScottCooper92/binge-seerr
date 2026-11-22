@@ -11,6 +11,7 @@ import com.cooper.binge.companion.seerr.discover.request.RequestResult
 import com.cooper.binge.companion.seerr.discover.request.RequestServer
 import com.cooper.binge.companion.seerr.discover.request.RequestSheetRepository
 import com.cooper.binge.companion.seerr.discover.request.RequestSubmission
+import com.cooper.binge.companion.seerr.discover.request.RequestUser
 import com.cooper.binge.companion.seerr.discover.request.SeasonSelection
 import com.cooper.binge.companion.seerr.discover.request.SelectableItem
 import com.cooper.binge.companion.seerr.seerr.SeerrError
@@ -46,6 +47,9 @@ sealed interface RequestSheetUiState {
         val servers: ServersState = ServersState.Loading,
         val use4k: Boolean = false,
         val pick: DestinationPick? = null,
+        val users: UsersState = UsersState.None,
+        /** The user the request is made for; null is the one sending it. */
+        val requestFor: RequestUser? = null,
         val destinationChanged: Boolean = false,
         val submitting: Boolean = false,
         val problem: RequestProblem? = null,
@@ -81,7 +85,8 @@ sealed interface RequestSheetUiState {
         /** The destination rows are offered to a user who may choose, unless the servers read and hold none of this version. */
         val choosesDestination: Boolean get() = access.mayChooseDestination && (servers !is ServersState.Ready || servers4k.isNotEmpty())
 
-        val quotaSpent: Boolean get() = knownQuota?.spent == true
+        /** The quota is the sender's own, which says nothing of the user a request is made for: the server checks theirs. */
+        val quotaSpent: Boolean get() = knownQuota?.spent == true && requestFor == null
 
         /** The 4K switch moves only while both versions are open to request; with one left, that one is the choice. */
         val canToggle4k: Boolean get() = access.may4k && target.standardOpen && target.fourKOpen && !submitting
@@ -117,7 +122,7 @@ sealed interface RequestSheetEvent {
 private const val FOOTER_FAILURE_MILLIS = 4_000L
 
 /** Which of the sheet's reads to try again. */
-enum class RequestRead { Quota, Servers, Choices }
+enum class RequestRead { Quota, Servers, Choices, Users }
 
 @HiltViewModel(assistedFactory = RequestSheetViewModel.Factory::class)
 class RequestSheetViewModel
@@ -139,6 +144,9 @@ class RequestSheetViewModel
         private val eventFlow = MutableSharedFlow<RequestSheetEvent>(extraBufferCapacity = 1)
         val events: SharedFlow<RequestSheetEvent> = eventFlow.asSharedFlow()
 
+        /** Makes the request for [id], or for the sender again where it is their own id. */
+        val selectRequestFor: (Int) -> Unit = store::requestFor
+
         /** The timer that turns the red footer back; a new send or a new failure replaces it, so an old one cannot cut a newer window short. */
         private var footerTimer: Job? = null
 
@@ -153,9 +161,11 @@ class RequestSheetViewModel
                     onSuccess = { access ->
                         val use4k = access.may4k && !target.standardOpen && target.fourKOpen
                         val servers = if (access.mayChooseDestination) ServersState.Loading else ServersState.Ready(emptyList())
-                        store.set(RequestSheetUiState.Ready(target, access, servers = servers, use4k = use4k))
+                        val users = if (access.mayRequestForOthers) UsersState.Loading else UsersState.None
+                        store.set(RequestSheetUiState.Ready(target, access, servers = servers, use4k = use4k, users = users))
                         reads.quota()
                         if (access.mayChooseDestination) reads.servers()
+                        if (access.mayRequestForOthers) reads.users()
                     },
                     onFailure = { store.set(RequestSheetUiState.Error(it.toSeerrError())) },
                 )
@@ -171,6 +181,10 @@ class RequestSheetViewModel
                 RequestRead.Servers -> {
                     store.update { it.copy(servers = ServersState.Loading) }
                     reads.servers()
+                }
+                RequestRead.Users -> {
+                    store.update { it.copy(users = UsersState.Loading) }
+                    reads.users()
                 }
                 RequestRead.Choices ->
                     store.ready()?.pick?.serverId?.let { serverId ->
@@ -237,7 +251,7 @@ class RequestSheetViewModel
             footerTimer?.cancel()
             store.set(current.copy(submitting = true, problem = null, failure = null, footerFailed = false, failureDialog = false))
             val destination = current.destination
-            current.films?.let { return submitFilms(it, destination, current.use4k) }
+            current.films?.let { return submitFilms(it, destination, current.use4k, current.requestFor) }
             val submission =
                 RequestSubmission(
                     kind = target.kind,
@@ -245,6 +259,7 @@ class RequestSheetViewModel
                     seasons = current.seasons?.requestSeasons ?: target.seasons,
                     is4k = current.use4k,
                     destination = destination?.toDestination(),
+                    userId = current.requestFor?.id,
                 )
             viewModelScope.launch {
                 attempt { repository.submit(submission) }.fold(
@@ -263,6 +278,7 @@ class RequestSheetViewModel
             selection: ItemSelection,
             destination: DestinationPick?,
             use4k: Boolean,
+            requestFor: RequestUser?,
         ) {
             val submissions =
                 selection.requestIds.map { id ->
@@ -272,6 +288,7 @@ class RequestSheetViewModel
                         seasons = emptyList(),
                         is4k = use4k,
                         destination = destination?.toDestination(),
+                        userId = requestFor?.id,
                     )
                 }
             viewModelScope.launch {

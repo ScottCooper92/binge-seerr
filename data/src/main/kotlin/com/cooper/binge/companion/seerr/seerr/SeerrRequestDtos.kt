@@ -37,6 +37,8 @@ data class SeerrRequestBody(
     @SerialName("rootFolder") val rootFolder: String? = null,
     /** Sent once the user has touched the tags: an empty list is a deliberate "no tags", and an absent field is left to the server. */
     @SerialName("tags") val tags: List<Int>? = null,
+    /** The user the request is made for, which the server accepts from an administrator or from `MANAGE_USERS` with `MANAGE_REQUESTS`. */
+    @SerialName("userId") val userId: Int? = null,
 )
 
 /** `PUT request/{id}`: only the fields sent change; the seasons list is a show's whole new set. */

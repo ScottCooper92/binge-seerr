@@ -75,6 +75,7 @@ fun RequestSheet(
                     onProfile = viewModel::selectProfile,
                     onRootFolder = viewModel::selectRootFolder,
                     onToggleTag = viewModel::toggleTag,
+                    onRequestFor = viewModel.selectRequestFor,
                     onSubmit = viewModel::submit,
                     onRetry = viewModel::load,
                     onRetryRead = viewModel::retry,
@@ -102,10 +103,11 @@ class RequestSheetActions(
     val onOpenFailure: () -> Unit,
     val onDismissFailure: () -> Unit,
     val onToggleTag: (Int) -> Unit = {},
+    val onRequestFor: (Int) -> Unit = {},
 )
 
 /** A page of the sheet: the form, or one of the lists it opens. */
-private enum class SheetPage { Form, Seasons, Films, Server, Profile, RootFolder, Tags }
+private enum class SheetPage { Form, Seasons, Films, Server, Profile, RootFolder, Tags, RequestFor }
 
 @Composable
 internal fun RequestSheetContent(
@@ -177,6 +179,7 @@ private fun DestinationField.toPage() =
         DestinationField.Profile -> SheetPage.Profile
         DestinationField.RootFolder -> SheetPage.RootFolder
         DestinationField.Tags -> SheetPage.Tags
+        DestinationField.RequestFor -> SheetPage.RequestFor
     }
 
 /** The pinned button. It reads "Request in 4K" for 4K, and turns red with a short reason after a send that got no answer. */
@@ -259,6 +262,22 @@ private fun PageFor(
         SheetPage.Tags ->
             (pick?.choices as? ChoicesState.Ready)?.let { ready ->
                 RequestTagsPage(ready.choices.tags, pick.shownTagIds(), !state.submitting, actions.onToggleTag, onBack)
+            }
+        SheetPage.RequestFor ->
+            (state.users as? UsersState.Ready)?.let { ready ->
+                val me = state.access.viewerId
+                val others = ready.users.filter { it.id != me }.map { it.id to it.name }
+                DestinationPickerPanel(
+                    icon = DestinationIcons.user,
+                    title = stringResource(R.string.request_for),
+                    choices = listOf(me to stringResource(R.string.request_for_me)) + others,
+                    selected = state.requestFor?.id ?: me,
+                    onSelect = { id ->
+                        actions.onRequestFor(id)
+                        onBack()
+                    },
+                    onBack = onBack,
+                )
             }
         SheetPage.Form -> Unit
     }

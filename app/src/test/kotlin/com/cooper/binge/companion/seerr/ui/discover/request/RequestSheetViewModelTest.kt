@@ -10,6 +10,7 @@ import com.cooper.binge.companion.seerr.discover.request.RequestResult
 import com.cooper.binge.companion.seerr.discover.request.RequestServer
 import com.cooper.binge.companion.seerr.discover.request.RequestSheetRepository
 import com.cooper.binge.companion.seerr.discover.request.RequestSubmission
+import com.cooper.binge.companion.seerr.discover.request.RequestUser
 import com.cooper.binge.companion.seerr.util.MainDispatcherRule
 import com.cooper.binge.companion.seerr.util.awaitEvent
 import kotlinx.coroutines.test.advanceTimeBy
@@ -32,6 +33,9 @@ private val UHD = RequestServer(2, "Radarr 4K", is4k = true, isDefault = false, 
 private val CHOICES = RequestChoices(listOf(RequestChoice(4, "HD"), RequestChoice(5, "Any")), listOf("/movies", "/more"))
 private val PLAIN = RequestAccess(may4k = false, mayChooseDestination = false)
 private val ADVANCED = RequestAccess(may4k = true, mayChooseDestination = true)
+private val OTHERS = RequestAccess(may4k = true, mayChooseDestination = true, mayRequestForOthers = true, viewerId = 9)
+private val ADA = RequestUser(9, "Ada")
+private val GRACE = RequestUser(12, "Grace")
 
 private class FakeRepository(
     var access: RequestAccess,
@@ -46,12 +50,16 @@ private class FakeRepository(
 ) : RequestSheetRepository {
     val submissions = mutableListOf<RequestSubmission>()
     var choices: RequestChoices = CHOICES
+    var users: List<RequestUser> = emptyList()
+    var failUsers: Throwable? = null
 
     override suspend fun access(kind: TitleKind): RequestAccess = failAccess?.let { throw it } ?: access
 
     override suspend fun quota(kind: TitleKind): RequestQuota? = failQuota?.let { throw it } ?: quota
 
     override suspend fun servers(kind: TitleKind): List<RequestServer> = failServers?.let { throw it } ?: servers
+
+    override suspend fun users(): List<RequestUser> = failUsers?.let { throw it } ?: users
 
     override suspend fun choices(
         kind: TitleKind,
@@ -182,6 +190,84 @@ class RequestSheetViewModelTest {
             assertEquals(5, destination?.profileId)
             assertEquals("/movies", destination?.rootFolder)
         }
+
+    private fun forOthers(quota: RequestQuota? = RequestQuota(10, 2, 7)) =
+        FakeRepository(OTHERS, quota, listOf(STANDARD, UHD)).apply { users = listOf(ADA, GRACE) }
+
+    @Test
+    fun `a user who may not request for others is offered no users`() {
+        val vm = viewModel(advanced())
+
+        assertEquals(UsersState.None, vm.ready().users)
+    }
+
+    @Test
+    fun `the users are read for one who may request for others`() {
+        val vm = viewModel(forOthers())
+
+        assertEquals(UsersState.Ready(listOf(ADA, GRACE)), vm.ready().users)
+        assertNull(vm.ready().requestFor)
+    }
+
+    @Test
+    fun `a request made for another user names them`() =
+        runTest {
+            val repository = forOthers()
+            val vm = viewModel(repository)
+            vm.selectRequestFor(12)
+            val event = awaitEvent(vm.events)
+
+            vm.submit()
+            event.await()
+
+            assertEquals(12, repository.submissions.single().userId)
+        }
+
+    @Test
+    fun `choosing oneself again names no one`() =
+        runTest {
+            val repository = forOthers()
+            val vm = viewModel(repository)
+            vm.selectRequestFor(12)
+            vm.selectRequestFor(9)
+            val event = awaitEvent(vm.events)
+
+            vm.submit()
+            event.await()
+
+            assertNull(repository.submissions.single().userId)
+        }
+
+    @Test
+    fun `an id the users read does not hold changes nothing`() {
+        val vm = viewModel(forOthers())
+
+        vm.selectRequestFor(404)
+
+        assertNull(vm.ready().requestFor)
+    }
+
+    @Test
+    fun `the sender's spent quota does not stop a request made for someone else`() {
+        val vm = viewModel(forOthers(quota = RequestQuota(10, 0, 7)))
+        assertFalse(vm.ready().canSubmit)
+
+        vm.selectRequestFor(12)
+
+        assertTrue(vm.ready().canSubmit)
+    }
+
+    @Test
+    fun `a failed users read says so and a retry reads them again`() {
+        val repository = forOthers().apply { failUsers = IOException("down") }
+        val vm = viewModel(repository)
+        assertEquals(UsersState.Failed, vm.ready().users)
+
+        repository.failUsers = null
+        vm.retry(RequestRead.Users)
+
+        assertEquals(UsersState.Ready(listOf(ADA, GRACE)), vm.ready().users)
+    }
 
     private val tagged =
         CHOICES.copy(tags = listOf(RequestChoice(1, "family"), RequestChoice(2, "anime")), defaultTagIds = setOf(1))
