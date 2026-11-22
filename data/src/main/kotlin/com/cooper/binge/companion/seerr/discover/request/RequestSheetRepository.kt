@@ -185,6 +185,7 @@ class SeerrRequestSheetRepository(
         withContext(io) {
             val details = api().arrServer(kind == TitleKind.Series, serverId)
             val defaultTags = details.server?.activeTags.orEmpty()
+            val animeTags = details.server?.activeAnimeTags.orEmpty()
             RequestChoices(
                 profiles = details.profiles.map { RequestChoice(it.id, it.name) },
                 rootFolders = details.rootFolders.map { it.path },
@@ -193,7 +194,7 @@ class SeerrRequestSheetRepository(
                 defaultTagIds = defaultTags.toSet(),
                 freeSpace = details.rootFolders.mapNotNull { folder -> folder.freeSpace?.let { folder.path to it } }.toMap(),
                 animeProfileId = details.server?.activeAnimeProfileId,
-                animeTagIds = details.server?.activeAnimeTags.orEmpty().toSet(),
+                animeTagIds = animeTags.toSet(),
             )
         }
 
