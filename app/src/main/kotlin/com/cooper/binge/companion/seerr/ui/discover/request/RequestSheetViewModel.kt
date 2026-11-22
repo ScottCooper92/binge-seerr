@@ -145,7 +145,7 @@ class RequestSheetViewModel
         val events: SharedFlow<RequestSheetEvent> = eventFlow.asSharedFlow()
 
         /** Makes the request for [id], or for the sender again where it is their own id. */
-        val selectRequestFor: (Int) -> Unit = store::requestFor
+        fun selectRequestFor(id: Int) = store.requestFor(id)
 
         /** The timer that turns the red footer back; a new send or a new failure replaces it, so an old one cannot cut a newer window short. */
         private var footerTimer: Job? = null
