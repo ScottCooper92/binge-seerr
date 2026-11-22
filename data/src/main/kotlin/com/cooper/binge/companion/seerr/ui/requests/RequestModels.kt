@@ -99,6 +99,10 @@ data class RequestItem(
     val backdropUrl: String? = null,
     val overview: String? = null,
     val certification: String? = null,
+    /** TMDB's score out of ten, or null for a title nobody has voted on. */
+    val rating: Float? = null,
+    /** The first genre TMDB lists for the title. */
+    val genre: String? = null,
     /** Whether an empty [download] means nothing is downloading; see [DownloadQueueGate]. Set by whoever holds the gate. */
     val queueTracked: Boolean = false,
 )

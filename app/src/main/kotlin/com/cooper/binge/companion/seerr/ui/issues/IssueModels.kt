@@ -64,6 +64,9 @@ data class IssueItem(
     val backdropUrl: String? = null,
     val overview: String? = null,
     val certification: String? = null,
+    /** TMDB's score out of ten and the first genre TMDB lists, from the title lookup the row is hydrated by. */
+    val rating: Float? = null,
+    val genre: String? = null,
 )
 
 /** Who is looking: the permissions decide whether the list is everyone's issues or only the user's own. */
