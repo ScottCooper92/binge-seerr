@@ -190,7 +190,8 @@ class SeerrRequestSheetRepositoryTest {
         val users = withRepository { it.users() }
 
         assertEquals(listOf(RequestUser(9, "Ada"), RequestUser(12, "grace"), RequestUser(13, "13")), users)
-        assertTrue(seerr.requests.any { it.url.encodedQuery.orEmpty().contains("sort=displayname") })
+        val queries = seerr.requests.map { it.url.encodedQuery.orEmpty() }
+        assertTrue(queries.any { it.contains("sort=displayname") })
     }
 
     @Test
