@@ -28,5 +28,6 @@
 # minified app has no caller of them, so R8 drops the methods:
 # `NoSuchMethodError: No interface method componentManager() in GeneratedComponentManagerHolder`.
 # A class-level diff of the two APKs cannot see a missing method; the lane's logcat does.
--keep interface dagger.hilt.internal.GeneratedComponentManagerHolder { *; }
--keep interface dagger.hilt.internal.GeneratedComponentManager { *; }
+-keepclassmembers interface dagger.hilt.internal.GeneratedComponentManagerHolder {
+    dagger.hilt.internal.GeneratedComponentManager componentManager();
+}
