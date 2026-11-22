@@ -18,7 +18,8 @@ import androidx.tv.material3.MaterialTheme
 import com.binge.designsystem.tv.component.TvSideSheetNav
 import com.binge.designsystem.tv.focus.TvOverlayCloser
 import com.cooper.binge.companion.seerr.ui.ScopedViewModels
-import com.cooper.binge.companion.seerr.ui.SetupViewModel
+import com.cooper.binge.companion.seerr.ui.SharedSetupViewModel
+import com.cooper.binge.companion.seerr.ui.actions
 import com.cooper.binge.companion.seerr.ui.hub.HubUiState
 import com.cooper.binge.companion.seerr.ui.hub.HubViewModel
 import com.cooper.binge.companion.seerr.ui.hub.openBinge
@@ -164,13 +165,13 @@ private fun ColumnScope.TvAgentPageEntry(
 @Composable
 internal fun TvEditConnectionOverlay(
     onDone: () -> Unit,
-    viewModel: SetupViewModel = hiltViewModel(),
+    viewModel: SharedSetupViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     LaunchedEffect(viewModel) { viewModel.beginEdit() }
     rememberEnteredEditingGuard(state, onDone)
     BackHandler(onBack = onDone)
     Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-        TvSetupScreen(state = state, actions = viewModel.tvActions(), offerHandOff = true)
+        TvSetupScreen(state = state, actions = viewModel.actions(tv = true, onDisconnect = null), offerHandOff = true)
     }
 }

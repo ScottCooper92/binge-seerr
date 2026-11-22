@@ -66,7 +66,7 @@ private fun FieldSpec.labelRes(): Int =
     }
 
 /**
- * What a failure of the shared machine says on the setup form: the same line [SetupError] gives it on the old path. [address] is set on
+ * What a failure of the shared machine says on the setup form: the line [SetupError] gives it. [address] is set on
  * the address step, where an address a phone sent that is off the home network reads as such ([forAddress]).
  */
 @Composable

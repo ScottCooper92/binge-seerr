@@ -1,6 +1,7 @@
 package com.cooper.binge.companion.seerr.ui
 
 import com.binge.companion.sdk.attempt
+import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.auth.InvalidServerUrlException
 import com.cooper.binge.companion.seerr.auth.NotSeerrServerException
 import com.cooper.binge.companion.seerr.auth.PlexPinExpiredException
@@ -159,4 +160,18 @@ internal suspend fun SeerrConnection.signIn(
         SeerrSignInMode.Local -> logIn(baseUrl, SeerrLoginRequest.Local(form.email.trim(), form.password))
         SeerrSignInMode.Jellyfin, SeerrSignInMode.Emby -> logIn(baseUrl, SeerrLoginRequest.Jellyfin(form.username.trim(), form.password))
         SeerrSignInMode.Plex, SeerrSignInMode.QuickConnect -> null
+    }
+
+internal fun SetupError.messageRes(): Int =
+    when (this) {
+        SetupError.InvalidUrl -> R.string.setup_error_invalid_url
+        SetupError.NotSeerr -> R.string.setup_error_not_seerr
+        SetupError.Rejected -> R.string.setup_error_rejected
+        SetupError.Unreachable -> R.string.setup_error_unreachable
+        SetupError.UnreachableNotLocal -> R.string.setup_error_unreachable_not_local
+        SetupError.LocalNetworkDenied -> R.string.setup_error_local_network_denied
+        SetupError.ClientCertificateNeeded -> R.string.setup_error_client_certificate
+        SetupError.Unknown -> R.string.setup_error_unknown
+        SetupError.LinkExpired -> R.string.setup_error_link_expired
+        SetupError.HandOffSessionRejected -> R.string.setup_error_handoff_session_rejected
     }
