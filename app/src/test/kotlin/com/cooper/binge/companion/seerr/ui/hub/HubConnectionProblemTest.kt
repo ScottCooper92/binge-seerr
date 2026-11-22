@@ -15,6 +15,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import com.cooper.homelab.core.uiandroid.R as CoreR
 
 /** An address that no longer answers needs a way to change it without disconnecting first (#649). */
 @RunWith(RobolectricTestRunner::class)
@@ -68,7 +69,7 @@ class HubConnectionProblemTest {
         show(ConnectionHealth.LocalNetworkDenied) { reconnects++ }
 
         rule.onNode(hasText(string(R.string.hub_local_network_headline))).assertExists()
-        rule.onNode(hasText(string(R.string.local_network_allow))).assertExists()
+        rule.onNode(hasText(string(CoreR.string.connect_local_network_allow))).assertExists()
         rule.onNode(hasText(string(R.string.hub_retry))).assertDoesNotExist()
         rule.onNode(hasText(string(R.string.settings_edit_connection))).performClick()
 
@@ -97,14 +98,14 @@ class HubConnectionProblemTest {
             }
         }
 
-        rule.onNode(hasText(string(R.string.local_network_allow))).performClick()
+        rule.onNode(hasText(string(CoreR.string.connect_local_network_allow))).performClick()
         health = ConnectionHealth.Unreachable
         rule.waitForIdle()
         health = ConnectionHealth.LocalNetworkDenied
         rule.waitForIdle()
 
-        rule.onNode(hasText(string(R.string.local_network_open_settings))).assertExists()
-        rule.onNode(hasText(string(R.string.local_network_allow))).assertDoesNotExist()
+        rule.onNode(hasText(string(CoreR.string.connect_local_network_open_settings))).assertExists()
+        rule.onNode(hasText(string(CoreR.string.connect_local_network_allow))).assertDoesNotExist()
     }
 
     /** The app goes to sign-in for a rejected session (#810), so the hub offers no way out of its own meanwhile. */

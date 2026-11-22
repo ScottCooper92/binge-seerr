@@ -242,6 +242,16 @@ jobs:
           if-no-files-found: ignore
           retention-days: 1
 
+      # The JVM writes a heap dump when the build runs out of heap (`HeapDumpOnOutOfMemoryError` in gradle.properties), but a dump is
+      # never uploaded: this repository is public, and a dump holds the debug classes of the private libraries it builds. This prints how
+      # much memory the runner had and whether a dump was written and how big, which says whether the heap filled or the runner killed
+      # the process.
+      - name: Say what memory the failure left
+        if: ${{ failure() }}
+        run: |
+          free -m
+          find . /home/runner/.gradle/daemon -name '*.hprof' -exec ls -lh {} + 2>/dev/null || true
+
   # The unit tests and the coverage floor read from them.
   tests:
     needs: changes
@@ -273,6 +283,14 @@ jobs:
 
       - name: Unit tests and coverage
         run: ./gradlew testDebugUnitTest koverVerify --continue
+
+      # A timeout cancels the job rather than failing it, so `failure()` alone would skip this on the one run that most needs it.
+      - name: Say what memory the failure left
+        if: ${{ failure() || cancelled() }}
+        run: |
+          free -m
+          ps -eo pid,rss,etime,args --sort=-rss | head -8 | cut -c1-200
+          find . /home/runner/.gradle/daemon -name '*.hprof' -exec ls -lh {} + 2>/dev/null || true
 
       # UncaughtExceptionsBeforeTest names the test that ran next, never the coroutine that leaked. This report names it,
       # and the artifact below expires in a day, so a failed run says what leaked in its own log (#807).

@@ -55,6 +55,15 @@ class LogcatLoggerTest {
     }
 
     @Test
+    fun `a UUID and a long hex segment are ids too`() {
+        val url = "https://host.example/api/v1/issue/123e4567-e89b-12d3-a456-426614174000/file/0123456789abcdef0123"
+
+        val line = logcatLine("event", listOf(LogField.Path(url)), null)
+
+        assertEquals("event path=/api/v1/issue/{id}/file/{id}", line)
+    }
+
+    @Test
     fun `through the ring, the kept error text reaches the Logcat line and the message never does`() {
         val lines = mutableListOf<String>()
         val ring =

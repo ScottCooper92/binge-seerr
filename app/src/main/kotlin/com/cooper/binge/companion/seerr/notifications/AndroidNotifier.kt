@@ -1,20 +1,18 @@
 package com.cooper.binge.companion.seerr.notifications
 
-import android.Manifest
 import android.annotation.SuppressLint
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
-import android.content.pm.PackageManager
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.DeepLinks
 import com.cooper.binge.companion.seerr.ui.issues.IssueItem
 import com.cooper.binge.companion.seerr.ui.requests.RequestItem
+import com.cooper.homelab.core.notifications.canPostNotifications
 
 private const val CONNECTION_NOTIFICATION_ID = 4203
 
@@ -31,11 +29,7 @@ class AndroidNotifier(
      * checked: the feeds can be muted while the connection channel stays on, and the system drops
      * a muted channel's posts itself.
      */
-    override suspend fun canPost(): Boolean = mayPost()
-
-    private fun mayPost(): Boolean =
-        NotificationManagerCompat.from(context).areNotificationsEnabled() &&
-            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
+    override suspend fun canPost(): Boolean = canPostNotifications(context)
 
     override suspend fun notifyNewRequests(items: List<RequestItem>) =
         notifyBatch(NotificationSignal.PendingRequests, items.map { it.id }, items.mapNotNull { it.title })
@@ -90,7 +84,7 @@ class AndroidNotifier(
         )
     }
 
-    /** [mayPost] guards the permission, but lint follows only a check inlined in the same method. */
+    /** [canPostNotifications] guards the permission, but lint follows only a check inlined in the same method. */
     @SuppressLint("MissingPermission")
     private fun post(
         id: Int,
@@ -100,7 +94,7 @@ class AndroidNotifier(
         body: String?,
         link: String,
     ) {
-        if (!mayPost()) return
+        if (!canPostNotifications(context)) return
         ensureChannel(channel)
         val builder =
             NotificationCompat

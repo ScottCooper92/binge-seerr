@@ -5,10 +5,10 @@ import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.template.DetailState
 import com.binge.designsystem.template.ScreenAction
 import com.cooper.binge.companion.seerr.seerr.SeerrError
-import com.cooper.binge.companion.seerr.ui.rememberAllowLocalNetwork
 import com.cooper.binge.companion.seerr.ui.state.messageRes
 import com.cooper.binge.companion.seerr.ui.state.titleRes
 import com.cooper.binge.companion.seerr.ui.state.toErrorKind
+import com.cooper.homelab.core.uiandroid.connect.rememberAllowLocalNetwork
 
 /**
  * The template's failed state for a title page's [error], with this app's headline and message. A server Android will not let this

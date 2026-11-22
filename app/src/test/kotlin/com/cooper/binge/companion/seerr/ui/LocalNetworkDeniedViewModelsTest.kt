@@ -42,7 +42,7 @@ import com.cooper.binge.companion.seerr.ui.users.settings.UserSettingsViewModel
 import com.cooper.binge.companion.seerr.ui.users.settings.deniedConnection
 import com.cooper.binge.companion.seerr.util.FakeTitleDao
 import com.cooper.binge.companion.seerr.util.MainDispatcherRule
-import com.cooper.binge.companion.seerr.util.RecordingAnalytics
+import com.cooper.homelab.core.testing.RecordingAnalytics
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first

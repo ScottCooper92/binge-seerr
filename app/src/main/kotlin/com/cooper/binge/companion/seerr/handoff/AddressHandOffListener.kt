@@ -3,7 +3,6 @@ package com.cooper.binge.companion.seerr.handoff
 import com.binge.companion.sdk.attempt
 import com.cooper.binge.companion.seerr.seerr.isValidBaseUrl
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.decodeFromString
@@ -72,7 +71,7 @@ internal class AddressHandOffListener(
     private val key: HandOffKey? = null,
     private val isAcceptable: (String) -> Boolean = String::isValidBaseUrl,
     private val limits: HandOffLimits = HandOffLimits(),
-    private val dispatcher: CoroutineDispatcher = Dispatchers.IO,
+    private val dispatcher: CoroutineDispatcher,
 ) : AddressHandOffSession {
     private val path = "/a/$token".toByteArray(StandardCharsets.UTF_8)
     private val statusPath = "/s/$token".toByteArray(StandardCharsets.UTF_8)

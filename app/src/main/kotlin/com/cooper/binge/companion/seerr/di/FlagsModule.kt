@@ -25,7 +25,10 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import javax.inject.Singleton
 
-internal val Context.flagOverridesDataStore: DataStore<Preferences> by preferencesDataStore(name = "flag_overrides")
+internal val Context.flagOverridesDataStore: DataStore<Preferences> by preferencesDataStore(
+    name = "flag_overrides",
+    corruptionHandler = corruptionHandler(),
+)
 
 /**
  * The feature flags, this app's own beside the shared ones: Remote Config's values, and in a debug build the developer's own on
