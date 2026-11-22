@@ -60,7 +60,7 @@ abstract class SaveAsMadeEditorViewModel<T>(
             engine.state.collect { state ->
                 sync()
                 val refusal = (state as? EditorState.Ready<T>)?.refusal
-                if (refusal != null && refusal !== announced) lastFailure?.let { eventFlow.emit(EditorEvent.Failed.from(it)) }
+                if (refusal != null && refusal !== announced) lastFailure?.let { eventFlow.emit(refusal.toRefusedEvent(it)) }
                 announced = refusal
             }
         }
