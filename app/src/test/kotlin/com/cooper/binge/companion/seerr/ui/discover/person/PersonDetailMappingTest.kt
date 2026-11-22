@@ -5,14 +5,13 @@ import androidx.test.core.app.ApplicationProvider
 import com.binge.designsystem.ErrorKind
 import com.binge.designsystem.template.CreditsState
 import com.binge.designsystem.template.PersonDetailState
-import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.TitleAvailability
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.person.PersonCredit
 import com.cooper.binge.companion.seerr.discover.person.PersonCredits
 import com.cooper.binge.companion.seerr.discover.person.PersonDetails
 import com.cooper.binge.companion.seerr.seerr.SeerrError
-import com.cooper.binge.companion.seerr.ui.AllowLocalNetwork
+import com.cooper.homelab.core.uiandroid.connect.AllowLocalNetwork
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -21,6 +20,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import java.util.Locale
+import com.cooper.homelab.core.uiandroid.R as CoreR
 
 @RunWith(RobolectricTestRunner::class)
 class PersonDetailMappingTest {
@@ -63,13 +63,13 @@ class PersonDetailMappingTest {
     @Test
     fun `a server Android will not let this app reach offers Allow in place of Try again`() {
         var allowed = 0
-        val allow = AllowLocalNetwork(R.string.local_network_allow, R.string.local_network_allow_short) { allowed++ }
+        val allow = AllowLocalNetwork(CoreR.string.connect_local_network_allow, CoreR.string.connect_local_network_allow_short) { allowed++ }
 
         val failed =
             PersonPageUiState.Error(SeerrError.LocalNetworkDenied).toDetailState(resources, Locale.US, allow) as PersonDetailState.Failed
 
         assertFalse(failed.retryable)
-        assertEquals(resources.getString(R.string.local_network_allow), failed.secondary?.label)
+        assertEquals(resources.getString(CoreR.string.connect_local_network_allow), failed.secondary?.label)
         failed.secondary?.onClick?.invoke()
         assertEquals(1, allowed)
     }

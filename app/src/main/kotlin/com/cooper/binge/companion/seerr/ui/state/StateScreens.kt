@@ -16,7 +16,7 @@ import com.binge.designsystem.template.ScreenAction
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.theme.SeerrTheme
-import com.cooper.binge.companion.seerr.ui.rememberAllowLocalNetwork
+import com.cooper.homelab.core.uiandroid.connect.rememberAllowLocalNetwork
 import com.binge.designsystem.template.EmptyScreen as DesignEmptyScreen
 import com.binge.designsystem.template.ErrorScreen as DesignErrorScreen
 

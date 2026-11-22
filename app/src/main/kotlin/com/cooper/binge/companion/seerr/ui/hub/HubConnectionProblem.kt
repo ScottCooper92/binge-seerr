@@ -11,8 +11,8 @@ import com.binge.designsystem.component.BingeFilledButton
 import com.binge.designsystem.component.BingeOutlinedButton
 import com.binge.designsystem.template.MessageScreen
 import com.cooper.binge.companion.seerr.R
-import com.cooper.binge.companion.seerr.ui.AllowLocalNetwork
 import com.cooper.binge.companion.seerr.ui.DisconnectButton
+import com.cooper.homelab.core.uiandroid.connect.AllowLocalNetwork
 
 /**
  * Server gone or the dashboard not loaded: retry, or edit the connection. A session the server rejected never reaches

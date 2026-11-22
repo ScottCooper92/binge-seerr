@@ -13,12 +13,12 @@ import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.person.PersonCredit
 import com.cooper.binge.companion.seerr.discover.person.PersonDetails
 import com.cooper.binge.companion.seerr.discover.person.PersonGender
-import com.cooper.binge.companion.seerr.ui.AllowLocalNetwork
 import com.cooper.binge.companion.seerr.ui.discover.title.statusStyle
 import com.cooper.binge.companion.seerr.ui.discover.title.toDisplayDate
 import com.cooper.binge.companion.seerr.ui.state.messageRes
 import com.cooper.binge.companion.seerr.ui.state.titleRes
 import com.cooper.binge.companion.seerr.ui.state.toErrorKind
+import com.cooper.homelab.core.uiandroid.connect.AllowLocalNetwork
 import java.text.NumberFormat
 import java.util.Locale
 
