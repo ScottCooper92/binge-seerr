@@ -1,8 +1,8 @@
 package com.cooper.binge.companion.seerr.di
 
 import android.content.Context
-import com.cooper.binge.companion.seerr.notifications.AndroidBackgroundAccess
-import com.cooper.binge.companion.seerr.notifications.BackgroundAccess
+import com.cooper.homelab.core.notifications.AndroidBackgroundAccess
+import com.cooper.homelab.core.notifications.BackgroundAccess
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn

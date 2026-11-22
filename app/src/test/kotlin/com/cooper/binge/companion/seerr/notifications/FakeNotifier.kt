@@ -2,6 +2,7 @@ package com.cooper.binge.companion.seerr.notifications
 
 import com.cooper.binge.companion.seerr.ui.issues.IssueItem
 import com.cooper.binge.companion.seerr.ui.requests.RequestItem
+import com.cooper.homelab.core.notifications.BackgroundAccess
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import java.util.Collections

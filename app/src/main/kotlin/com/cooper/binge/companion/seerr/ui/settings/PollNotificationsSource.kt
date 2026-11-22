@@ -1,12 +1,12 @@
 package com.cooper.binge.companion.seerr.ui.settings
 
-import com.cooper.binge.companion.seerr.notifications.BackgroundAccess
 import com.cooper.binge.companion.seerr.notifications.NotificationPrefs
 import com.cooper.binge.companion.seerr.notifications.NotificationScheduler
 import com.cooper.binge.companion.seerr.notifications.NotificationSignal
 import com.cooper.binge.companion.seerr.notifications.SeerrForwarding
 import com.cooper.binge.companion.seerr.notifications.SeerrNotifier
 import com.cooper.binge.companion.seerr.telemetry.AnalyticsEvents
+import com.cooper.homelab.core.notifications.BackgroundAccess
 import com.cooper.homelab.core.telemetry.Analytics
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
