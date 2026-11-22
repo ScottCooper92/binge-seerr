@@ -23,9 +23,9 @@ import com.cooper.homelab.core.uiandroid.connect.rememberAllowLocalNetwork
 import com.cooper.homelab.core.uiandroid.flags.LocalFlags
 
 /**
- * The setup flow on the shared connect screen, for the path that runs on [SharedSetupViewModel]: the address, then the sign-in the server
- * accepts or the message of one not set up yet. The words and parts are Seerr's own ([seerrConnectCopy], [seerrSignInOptions]); the heading,
- * the server's backdrop and the report-a-problem menu are passed in, as the old [SetupScreen] draws them.
+ * The phone's setup flow on the shared connect screen, on [SharedSetupViewModel]: the address, then the sign-in the server accepts or
+ * the message of one not set up yet. The words and parts are Seerr's own ([seerrConnectCopy], [seerrSignInOptions]); the heading, the
+ * server's backdrop and the report-a-problem menu are passed in.
  *
  * [title] and [onExit] are Edit connection's bar, and [onDisconnect] is the way off a server that rejected the session (#810).
  */

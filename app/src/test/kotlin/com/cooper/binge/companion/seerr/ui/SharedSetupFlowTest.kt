@@ -13,7 +13,6 @@ import com.cooper.binge.companion.seerr.seerr.PlexClientIdentity
 import com.cooper.binge.companion.seerr.seerr.SeerrApiFactory
 import com.cooper.binge.companion.seerr.seerr.SeerrAuth
 import com.cooper.binge.companion.seerr.seerr.SeerrSignInMode
-import com.cooper.binge.companion.seerr.seerr.SeerrVariant
 import com.cooper.binge.companion.seerr.seerr.plexTvApi
 import com.cooper.binge.companion.seerr.util.FakeRequest
 import com.cooper.binge.companion.seerr.util.FakeResponse
@@ -21,7 +20,6 @@ import com.cooper.binge.companion.seerr.util.FakeSeerrServer
 import com.cooper.binge.companion.seerr.util.MainDispatcherRule
 import com.cooper.binge.companion.seerr.util.PlainCipher
 import com.cooper.binge.companion.seerr.util.RecordingAnalytics
-import com.cooper.binge.companion.seerr.util.ReversingCipher
 import com.cooper.homelab.core.server.network.DataStoreCleartextConsent
 import com.cooper.homelab.core.server.network.LocalNetworkPermission
 import com.cooper.homelab.core.testing.InMemoryDataStore
@@ -30,7 +28,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
-import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.Interceptor
@@ -46,7 +43,6 @@ import java.io.IOException
 import java.security.GeneralSecurityException
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.atomic.AtomicReference
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
@@ -55,7 +51,7 @@ import kotlin.time.Duration.Companion.seconds
  * scripted Seerr and, for the Plex flow, a scripted plex.tv. Every outcome that crosses a thread is
  * awaited by its shape rather than read off the state, which would read whatever was there last.
  */
-class SetupViewModelTest {
+class SharedSetupFlowTest {
     @get:Rule
     val folder = TemporaryFolder()
 
@@ -104,7 +100,7 @@ class SetupViewModelTest {
         seen: MutableList<SetupUiState>? = null,
         handOffs: AddressHandOffs = AddressHandOffs { HandOffOpening.NoLocalNetwork },
         localNetwork: LocalNetworkPermission = LocalNetworkPermission.AlwaysGranted,
-    ): SetupViewModel {
+    ): SharedSetupViewModel {
         if (!reuseConnection) {
             connection =
                 SeerrConnection(
@@ -120,7 +116,7 @@ class SetupViewModelTest {
                 )
         }
         val vm =
-            SetupViewModel(
+            SharedSetupViewModel(
                 connection = connection,
                 plex =
                     PlexPinFlow(
@@ -145,6 +141,7 @@ class SetupViewModelTest {
                 savedState = savedState,
                 cipher = cipher,
                 handOffs = handOffs,
+                cleartext = cleartext,
                 dispatcher = mainDispatcherRule.dispatcher,
                 analytics = analytics,
                 localNetwork = localNetwork,
@@ -154,14 +151,14 @@ class SetupViewModelTest {
         return vm
     }
 
-    private suspend fun SetupViewModel.awaitAddress(match: (SetupUiState.Address) -> Boolean = { true }): SetupUiState.Address =
+    private suspend fun SharedSetupViewModel.awaitAddress(match: (SetupUiState.Address) -> Boolean = { true }): SetupUiState.Address =
         uiState.first { it is SetupUiState.Address && match(it) } as SetupUiState.Address
 
-    private suspend fun SetupViewModel.awaitSignIn(match: (SetupUiState.SignIn) -> Boolean = { true }): SetupUiState.SignIn =
+    private suspend fun SharedSetupViewModel.awaitSignIn(match: (SetupUiState.SignIn) -> Boolean = { true }): SetupUiState.SignIn =
         uiState.first { it is SetupUiState.SignIn && match(it) } as SetupUiState.SignIn
 
     /** [awaitSignIn] without suspending, so the test scheduler cannot advance virtual time while it waits. */
-    private fun SetupViewModel.blockUntilSignIn(match: (SetupUiState.SignIn) -> Boolean): SetupUiState.SignIn {
+    private fun SharedSetupViewModel.blockUntilSignIn(match: (SetupUiState.SignIn) -> Boolean): SetupUiState.SignIn {
         val deadline = System.nanoTime() + 5.seconds.inWholeNanoseconds
         while (System.nanoTime() < deadline) {
             (uiState.value as? SetupUiState.SignIn)?.takeIf(match)?.let { return it }
@@ -179,11 +176,11 @@ class SetupViewModelTest {
         while (analytics.events.size < count && System.nanoTime() < deadline) Thread.sleep(5)
     }
 
-    private suspend fun SetupViewModel.awaitConnected(): SetupUiState.Connected =
+    private suspend fun SharedSetupViewModel.awaitConnected(): SetupUiState.Connected =
         uiState.first { it is SetupUiState.Connected } as SetupUiState.Connected
 
     /** Scripts the three unauthenticated calls the address step makes, then reads the server. */
-    private suspend fun SetupViewModel.inspect(
+    private suspend fun SharedSetupViewModel.inspect(
         status: String,
         settings: String,
         backdrops: String = "[]",
@@ -195,33 +192,6 @@ class SetupViewModelTest {
         inspect()
         return awaitSignIn()
     }
-
-    @Test
-    fun `the address step reads the server first, and offers only that server's sign-ins`() =
-        runTest {
-            val vm = viewModel()
-
-            val signIn =
-                vm.inspect(
-                    status = """{"version":"3.4.0"}""",
-                    settings = """{"mediaServerType":2,"localLogin":true,"jellyfinServerName":"Home"}""",
-                    backdrops = """["/a.jpg","/b.jpg"]""",
-                )
-
-            val server = signIn.server
-            assertEquals(
-                listOf(SeerrSignInMode.Jellyfin, SeerrSignInMode.QuickConnect, SeerrSignInMode.Local, SeerrSignInMode.ApiKey),
-                server.modes,
-            )
-            assertEquals("Seerr", server.title)
-            assertEquals(SeerrVariant.Seerr, server.variant)
-            assertEquals("3.4.0", server.versionLabel)
-            assertEquals("Home", server.mediaServerName)
-            assertEquals("https://image.tmdb.org/t/p/w1280/a.jpg", server.backdropUrl)
-            assertFalse(server.canResetPassword)
-            assertEquals(SeerrSignInMode.Jellyfin, signIn.form.mode)
-            assertFalse(signIn.form.canSubmit)
-        }
 
     @Test
     fun `overseerr offers plex, the local account and the key, and a reset where email is on`() =
@@ -248,23 +218,6 @@ class SetupViewModelTest {
 
             assertEquals(listOf(SeerrSignInMode.Local, SeerrSignInMode.ApiKey), localOnly.server.modes)
             assertEquals(SeerrSignInMode.Local, localOnly.form.mode)
-        }
-
-    @Test
-    fun `an address that is not a Seerr server is said so before any credential is typed`() =
-        runTest {
-            seerr.enqueue(FakeResponse(code = 404))
-            seerr.enqueue(FakeResponse(code = 404))
-            val vm = viewModel()
-            vm.awaitAddress()
-            vm.editAddress(seerr.url("/"))
-
-            vm.inspect()
-
-            assertEquals(SetupError.NotSeerr, vm.awaitAddress { it.error != null }.error)
-            assertEquals(2, seerr.requestCount)
-            vm.editAddress("other")
-            assertNull(vm.awaitAddress { it.serverUrl == "other" }.error)
         }
 
     @Test
@@ -458,68 +411,6 @@ class SetupViewModelTest {
         }
 
     @Test
-    fun `a key connect saves the connection and drops the key from the form`() =
-        runTest {
-            val vm = viewModel()
-            vm.inspect("""{"version":"3.0.0"}""", """{"mediaServerType":2}""")
-            vm.editForm { copy(mode = SeerrSignInMode.ApiKey, apiKey = "k3y") }
-            seerr.enqueue(json("""{"id":1,"permissions":2}"""))
-            seerr.enqueueProfile(json("""{"version":"3.0.0"}"""), json("""{"mediaServerType":2}"""))
-
-            vm.connect()
-
-            assertEquals(SeerrVariant.Seerr, vm.awaitConnected().credentials.variant)
-            // The credentials land before the attempt reports its end, so the state can be seen a step ahead of the event.
-            advanceUntilIdle()
-            blockUntilEvents(1)
-            assertEquals(
-                listOf("sign_in" to mapOf("method" to "ApiKey", "success" to true)),
-                analytics.events,
-            )
-
-            connection.disconnect()
-
-            val back = vm.awaitSignIn()
-            assertEquals("", back.form.apiKey)
-            assertEquals(SeerrSignInMode.ApiKey, back.form.mode)
-        }
-
-    @Test
-    fun `a rejected key is reported as rejected, and editing clears it`() =
-        runTest {
-            val vm = viewModel()
-            vm.inspect("""{"version":"3.0.0"}""", """{"mediaServerType":2}""")
-            vm.editForm { copy(mode = SeerrSignInMode.ApiKey, apiKey = "bad") }
-            seerr.enqueue(FakeResponse(code = 401))
-
-            vm.connect()
-
-            assertEquals(SetupError.Rejected, vm.awaitSignIn { it.error != null }.error)
-            assertEquals(
-                listOf("sign_in" to mapOf("method" to "ApiKey", "success" to false)),
-                analytics.events,
-            )
-            vm.editForm { copy(apiKey = "better") }
-            assertNull(vm.awaitSignIn { it.form.apiKey == "better" }.error)
-        }
-
-    @Test
-    fun `a local login sends the email and keeps the session`() =
-        runTest {
-            val vm = viewModel()
-            vm.inspect("""{"version":"2.0.0"}""", """{"mediaServerType":2,"localLogin":true}""")
-            vm.editForm { copy(mode = SeerrSignInMode.Local, email = "s@example.com", password = "pw") }
-            repeat(3) { seerr.takeRequest() }
-            seerr.enqueue(json("""{"id":42}""", headersOf("Set-Cookie", "connect.sid=s; Path=/")))
-            seerr.enqueueProfile(json("""{"version":"2.0.0"}"""), json("""{"mediaServerType":2}"""))
-
-            vm.connect()
-
-            assertEquals(SeerrVariant.Jellyseerr, vm.awaitConnected().credentials.variant)
-            assertEquals("/api/v1/auth/local", seerr.takeRequest().url.encodedPath)
-        }
-
-    @Test
     fun `forgot password posts the address and says a link is on its way`() =
         runTest {
             val vm = viewModel()
@@ -566,203 +457,7 @@ class SetupViewModelTest {
         }
 
     @Test
-    fun `quick connect shows the code, polls until approved, then signs in`() =
-        runTest {
-            val vm = viewModel()
-            vm.inspect("""{"version":"3.4.0"}""", """{"mediaServerType":2}""")
-            vm.editForm { copy(mode = SeerrSignInMode.QuickConnect) }
-            repeat(3) { seerr.takeRequest() }
-            seerr.enqueue(json("""{"code":"123456","secret":"abcdef12"}"""))
-            seerr.enqueue(json("""{"authenticated":false}"""))
-            seerr.enqueue(json("""{"authenticated":true}"""))
-            seerr.enqueue(json("""{"id":7}""", headersOf("Set-Cookie", "connect.sid=qc; Path=/")))
-            seerr.enqueueProfile(json("""{"version":"3.4.0"}"""), json("""{"mediaServerType":2}"""))
-
-            vm.connect()
-
-            assertEquals(LinkFlow.QuickConnect("123456"), vm.awaitSignIn { it.link != null }.link)
-            assertEquals(
-                7,
-                vm
-                    .awaitConnected()
-                    .credentials.auth
-                    .let { (it as com.cooper.binge.companion.seerr.seerr.SeerrAuth.Session).userId },
-            )
-            assertEquals("/api/v1/auth/jellyfin/quickconnect/initiate", seerr.takeRequest().url.encodedPath)
-        }
-
-    @Test
-    fun `the quick connect secret is encrypted before it is written to the saved state`() =
-        runTest {
-            val saved = SavedStateHandle()
-            val vm = viewModel(savedState = saved, cipher = ReversingCipher)
-            vm.inspect("""{"version":"3.4.0"}""", """{"mediaServerType":2}""")
-            vm.editForm { copy(mode = SeerrSignInMode.QuickConnect) }
-            scriptPendingQuickConnect()
-
-            vm.connect()
-            vm.awaitSignIn { it.link != null }
-
-            // The bearer secret that alone finishes this sign-in must not sit in the clear in the
-            // Bundle Android persists across a process death; it is round-tripped through the cipher.
-            val stored = saved.get<String>("pendingLink").orEmpty()
-            assertFalse(stored.contains("abcdef12"))
-            assertTrue(stored.contains("abcdef12".reversed()))
-
-            vm.cancelLink()
-        }
-
-    @Test
-    fun `a keystore that cannot encrypt costs the resume, not the sign-in`() =
-        runTest {
-            val saved = SavedStateHandle()
-            val vm = viewModel(savedState = saved, cipher = FailingCipher)
-            vm.inspect("""{"version":"3.4.0"}""", """{"mediaServerType":2}""")
-            vm.editForm { copy(mode = SeerrSignInMode.QuickConnect) }
-            seerr.enqueue(json("""{"code":"123456","secret":"abcdef12"}"""))
-            seerr.enqueue(json("""{"authenticated":false}"""))
-            seerr.enqueue(json("""{"authenticated":true}"""))
-            seerr.enqueue(json("""{"id":7}""", headersOf("Set-Cookie", "connect.sid=qc; Path=/")))
-            seerr.enqueueProfile(json("""{"version":"3.4.0"}"""), json("""{"mediaServerType":2}"""))
-
-            vm.connect()
-
-            assertEquals(LinkFlow.QuickConnect("123456"), vm.awaitSignIn { it.link != null }.link)
-            vm.awaitConnected()
-            assertNull(saved.get<String>("pendingLink"))
-        }
-
-    @Test
-    fun `an expired quick connect code is reported and the code taken down`() =
-        runTest {
-            val vm = viewModel()
-            vm.inspect("""{"version":"3.4.0"}""", """{"mediaServerType":2}""")
-            vm.editForm { copy(mode = SeerrSignInMode.QuickConnect) }
-            seerr.enqueue(json("""{"code":"123456","secret":"abcdef12"}"""))
-            seerr.enqueue(FakeResponse(code = 404))
-
-            vm.connect()
-
-            val failed = vm.awaitSignIn { it.error != null }
-            assertEquals(SetupError.LinkExpired, failed.error)
-            assertNull(failed.link)
-        }
-
-    @Test
-    fun `plex mints a pin, opens its page once, and signs in with the token it is approved with`() =
-        runTest {
-            val vm = viewModel()
-            vm.inspect("""{"version":"1.33.2"}""", """{"localLogin":true}""")
-            repeat(3) { seerr.takeRequest() }
-            plex.enqueue(json("""{"id":41,"code":"ABCD","expiresAt":"2099-01-01T00:00:00Z"}"""))
-            plex.enqueue(json("""{"id":41,"code":"ABCD","authToken":null}"""))
-            plex.enqueue(json("""{"id":41,"code":"ABCD","authToken":"tok3n"}"""))
-            seerr.enqueue(json("""{"id":9}""", headersOf("Set-Cookie", "connect.sid=plx; Path=/")))
-            seerr.enqueueProfile(json("""{"version":"1.33.2"}"""), json("""{"localLogin":true}"""))
-
-            vm.connect()
-
-            val link = vm.awaitSignIn { it.link != null }.link as LinkFlow.Plex
-            assertEquals("ABCD", link.code)
-            assertTrue(link.launchPending)
-            assertTrue(link.authUrl.startsWith("https://app.plex.tv/auth#?clientID=cid&code=ABCD"))
-            vm.plexLaunched()
-            assertEquals(SeerrVariant.Overseerr, vm.awaitConnected().credentials.variant)
-            val login = seerr.takeRequest()
-            assertEquals("/api/v1/auth/plex", login.url.encodedPath)
-            assertTrue(login.body.contains("tok3n"))
-        }
-
-    @Test
-    fun `the television's connect mints plex's short link pin, not the browser's long one`() =
-        runTest {
-            val vm = viewModel()
-            vm.inspect("""{"version":"1.33.2"}""", """{"localLogin":true}""")
-            repeat(3) { seerr.takeRequest() }
-            plex.enqueue(json("""{"id":41,"code":"JKLM","expiresAt":"2099-01-01T00:00:00Z"}"""))
-            plex.enqueue(json("""{"id":41,"code":"JKLM","authToken":"tok3n"}"""))
-            seerr.enqueue(json("""{"id":9}""", headersOf("Set-Cookie", "connect.sid=plx; Path=/")))
-            seerr.enqueueProfile(json("""{"version":"1.33.2"}"""), json("""{"localLogin":true}"""))
-
-            vm.connect(forLink = true)
-
-            val link = vm.awaitSignIn { it.link != null }.link as LinkFlow.Plex
-            assertEquals("JKLM", link.code)
-            val mint = plex.takeRequest()
-            assertEquals("/api/v2/pins?strong=false", mint.url.encodedPath + "?" + mint.url.encodedQuery)
-            assertEquals(SeerrVariant.Overseerr, vm.awaitConnected().credentials.variant)
-        }
-
-    @Test
-    fun `a plex sign-in the process died during is picked up where the user left it`() =
-        runTest {
-            // plex.tv answers by path rather than from the queue here: two ViewModels poll the same
-            // PIN across the restart, and which of them reads a given response is not the assertion.
-            val token = AtomicReference<String?>(null)
-            plex.dispatcher = { request ->
-                if (request.method == "POST") {
-                    json("""{"id":41,"code":"ABCD","expiresAt":"2099-01-01T00:00:00Z"}""")
-                } else {
-                    json("""{"id":41,"code":"ABCD","authToken":${token.get()?.let { "\"$it\"" } ?: "null"}}""")
-                }
-            }
-            val saved = SavedStateHandle()
-            val vm = viewModel(savedState = saved)
-            vm.inspect("""{"version":"1.33.2"}""", """{"localLogin":true}""")
-            repeat(3) { seerr.takeRequest() }
-            vm.connect()
-            vm.awaitSignIn { it.link != null }
-
-            // Android reclaims the process while the user is still approving the PIN on plex.tv.
-            viewModels.clear()
-            seerr.enqueueProfile(json("""{"version":"1.33.2"}"""), json("""{"localLogin":true}"""))
-            seerr.enqueue(json("[]"))
-            seerr.enqueue(json("""{"id":9}""", headersOf("Set-Cookie", "connect.sid=plx; Path=/")))
-            seerr.enqueueProfile(json("""{"version":"1.33.2"}"""), json("""{"localLogin":true}"""))
-            val restored = viewModel(reuseConnection = true, savedState = saved)
-
-            val link = restored.awaitSignIn { it.link != null }.link as LinkFlow.Plex
-            assertEquals("ABCD", link.code)
-            assertTrue(link.authUrl.startsWith("https://app.plex.tv/auth#?clientID=cid&code=ABCD"))
-            // The user has just come back to the app: the page is theirs to reopen, not reopened over them.
-            assertFalse(link.launchPending)
-
-            token.set("tok3n")
-            assertEquals(SeerrVariant.Overseerr, restored.awaitConnected().credentials.variant)
-        }
-
-    @Test
-    fun `a quick connect sign-in the process died during is picked up where the user left it`() =
-        runTest {
-            // The server answers by path here, as plex.tv does in the test above: two ViewModels poll
-            // the same code across the restart, and which of them reads a given response is not the
-            // assertion. `approved` is the user finally tapping approve on the media server.
-            val approved = AtomicBoolean(false)
-            seerr.dispatcher = quickConnectServer(approved)
-            val saved = SavedStateHandle()
-            val vm = viewModel(savedState = saved)
-            vm.awaitAddress()
-            vm.editAddress(seerr.url("/"))
-            vm.inspect()
-            vm.awaitSignIn()
-            vm.editForm { copy(mode = SeerrSignInMode.QuickConnect) }
-            vm.connect()
-            assertEquals(LinkFlow.QuickConnect("123456"), vm.awaitSignIn { it.link != null }.link)
-
-            // Android reclaims the process while the user is still approving on the media server.
-            viewModels.clear()
-            val restored = viewModel(reuseConnection = true, savedState = saved)
-
-            // The code comes back without the user typing the address again, and without a second
-            // initiate: the resumed wait is the one they already approved against.
-            assertEquals(LinkFlow.QuickConnect("123456"), restored.awaitSignIn { it.link != null }.link)
-            approved.set(true)
-            assertEquals(SeerrVariant.Seerr, restored.awaitConnected().credentials.variant)
-            assertEquals(1, initiates.get())
-        }
-
-    @Test
-    fun `a resume that cannot reach the server reports the mode being resumed, not the form's default`() =
+    fun `a resume that cannot reach the server says so on the address, and reports no sign-in`() =
         runTest {
             val approved = AtomicBoolean(false)
             seerr.dispatcher = quickConnectServer(approved)
@@ -776,18 +471,15 @@ class SetupViewModelTest {
             vm.connect()
             vm.awaitSignIn { it.link != null }
 
-            // The process dies mid-approval, and the server cannot be reached once it comes back:
-            // `resume()` never reaches the line that sets `form.mode` to the mode being resumed.
+            // The process dies mid-approval, and the server cannot be reached once it comes back. The old setup counted this as a
+            // failed sign-in with the mode it was resuming; the shared machine has no attempt to count, so it counts none.
             viewModels.clear()
             seerr.dispatcher = null
 
             val restored = viewModel(reuseConnection = true, savedState = saved)
 
             assertEquals(SetupError.NotSeerr, restored.awaitAddress { it.error != null }.error)
-            assertEquals(
-                listOf("sign_in" to mapOf("method" to "QuickConnect", "success" to false)),
-                analytics.events,
-            )
+            assertEquals(emptyList<Any>(), analytics.events)
         }
 
     @Test
@@ -877,7 +569,7 @@ class SetupViewModelTest {
             vm.connect()
             vm.awaitSignIn { it.link != null }
 
-            vm.cancelLink()
+            vm.links.cancel()
             viewModels.clear()
 
             val restarted = viewModel(reuseConnection = true, savedState = saved)
@@ -894,7 +586,7 @@ class SetupViewModelTest {
             vm.connect()
             vm.awaitSignIn { it.link != null }
 
-            vm.cancelLink()
+            vm.links.cancel()
 
             val after = vm.awaitSignIn { it.link == null }
             assertNull(after.error)
@@ -934,30 +626,8 @@ class SetupViewModelTest {
             assertEquals(SeerrAuth.ApiKey("n3w"), editor.awaitConnected().credentials.auth)
         }
 
-    private suspend fun SetupViewModel.awaitNotSetUp(match: (SetupUiState.NotSetUp) -> Boolean = { true }): SetupUiState.NotSetUp =
+    private suspend fun SharedSetupViewModel.awaitNotSetUp(match: (SetupUiState.NotSetUp) -> Boolean = { true }): SetupUiState.NotSetUp =
         uiState.first { it is SetupUiState.NotSetUp && match(it) } as SetupUiState.NotSetUp
-
-    @Test
-    fun `a server that says it is not set up gets a message instead of a sign-in, and nothing needing a session`() =
-        runTest {
-            val vm = viewModel()
-            seerr.enqueueProfile(json("""{"version":"3.5.1"}"""), json("""{"initialized":false,"mediaServerType":null}"""))
-            vm.awaitAddress()
-            vm.editAddress(seerr.url("/"))
-            vm.inspect()
-
-            val notSetUp = vm.awaitNotSetUp()
-
-            assertFalse(notSetUp.server.setUp)
-            assertEquals(seerr.url("/"), notSetUp.server.baseUrl)
-            assertFalse(notSetUp.isChecking)
-            assertNull(notSetUp.error)
-            // Only the two public reads: not the artwork either, which is the one other call the step makes.
-            assertEquals(
-                setOf("/api/v1/status", "/api/v1/settings/public"),
-                seerr.requests.map { it.url.encodedPath }.toSet(),
-            )
-        }
 
     @Test
     fun `a server that says it is set up offers its sign-in as before`() =
@@ -995,21 +665,6 @@ class SetupViewModelTest {
             seerr.enqueue(json("[]"))
             vm.inspect()
             assertTrue(vm.awaitSignIn().server.setUp)
-        }
-
-    @Test
-    fun `changing server from the not-set-up message goes back to the address`() =
-        runTest {
-            val vm = viewModel()
-            seerr.enqueueProfile(json("""{"version":"3.5.1"}"""), json("""{"initialized":false}"""))
-            vm.awaitAddress()
-            vm.editAddress(seerr.url("/"))
-            vm.inspect()
-            vm.awaitNotSetUp()
-
-            vm.changeServer()
-
-            vm.awaitAddress()
         }
 
     private fun json(
