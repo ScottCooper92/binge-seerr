@@ -104,9 +104,8 @@ class TitleStatusMoreJourneysTest {
         journey.awaitCard("grid")
         journey.openPage(shows = PROCESSING)
         val removeTitle = host.string(R.string.request_remove_confirm_title)
-        val requestsGroup = host.string(R.string.title_sheet_group_requests)
-        journey.clickUntil("the title's sheet", PROCESSING) { host.isShowing(requestsGroup, exactly = true) }
-        // The sheet lists the request as a card, and the card's own level holds Remove. The card's status is the last of its kind.
+        // The page's status opens the title's sheet, which lists the request as a card, and the card opens the request's own level where
+        // Remove is. The card's status is the last of its kind on screen, so each poll's click lands one step further on.
         journey.clickUntil("the request's level", PROCESSING, last = true) { host.isShowing(remove, exactly = true) }
         journey.clickUntil("the remove confirm", remove) { host.isShowing(removeTitle) }
         // The sheet's row and the dialog's confirm share a label, so the dialog's is the last.
