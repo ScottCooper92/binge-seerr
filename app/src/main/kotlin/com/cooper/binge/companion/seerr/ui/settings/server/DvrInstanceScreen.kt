@@ -279,7 +279,7 @@ internal fun DeleteGroup(onDelete: () -> Unit) {
 }
 
 @Composable
-internal fun TagChips(
+internal fun TagRows(
     tags: List<com.cooper.binge.companion.seerr.ui.Choice>,
     selected: Set<Int>,
     enabled: Boolean,
