@@ -284,6 +284,7 @@ app:hubs_title_tv  ca62d5e073f5
 app:issue_action_reopen  a886d1dc4f12
 app:issue_action_resolve  c8f193b315c8
 app:issue_affected_episode  28a528818045
+app:issue_affected_short  5720d2d40229
 app:issue_comment_actions_cd  cf8f6677519a
 app:issue_comment_deleted  7199a134a339
 app:issue_comment_discard  eb1a70e39274
