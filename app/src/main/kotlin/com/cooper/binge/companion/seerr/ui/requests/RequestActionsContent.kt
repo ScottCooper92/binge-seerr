@@ -6,6 +6,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Block
@@ -89,47 +91,53 @@ internal fun RequestActionsContent(
             titleState = model.titleState.takeUnless { requestScope },
             titleOnly = titleScope,
         )
-        if (!titleScope) DecisionBar(model.actions, blockTitle, model.progress, callbacks)
-        val requestRows =
-            if (titleScope) {
-                emptyList()
-            } else {
-                listOfNotNull(requesterId?.let { id -> requesterRow(model.item) { callbacks.onOpenUser?.invoke(id) } }) +
-                    requestRows(model, blockTitle, onBlockTitleChange, callbacks)
+        // The header stays at the top; the rest scrolls when the sheet is taller than the screen, and opens at its own height when it fits.
+        Column(
+            modifier = Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
+        ) {
+            if (!titleScope) DecisionBar(model.actions, blockTitle, model.progress, callbacks)
+            val requestRows =
+                if (titleScope) {
+                    emptyList()
+                } else {
+                    listOfNotNull(requesterId?.let { id -> requesterRow(model.item) { callbacks.onOpenUser?.invoke(id) } }) +
+                        requestRows(model, blockTitle, onBlockTitleChange, callbacks)
+                }
+            val mediaRows =
+                model.media
+                    ?.takeIf { it.canManage && !requestScope }
+                    ?.let { mediaRows(it, model.progress, callbacks) }
+                    .orEmpty()
+            val blockRows =
+                if (model.titleState != null &&
+                    !requestScope
+                ) {
+                    blockTitleRows(model, blockTitle, onBlockTitleChange)
+                } else {
+                    emptyList()
+                }
+            if (model.titleState != null && !requestScope && (model.titleRows.isNotEmpty() || blockRows.isNotEmpty())) {
+                ItemGroup(
+                    title = stringResource(R.string.request_sheet_group_title),
+                    rows =
+                        blockRows +
+                            model.titleRows.map { row ->
+                                if (row.external) {
+                                    externalItem(
+                                        row.icon,
+                                        row.label,
+                                        row.onClick,
+                                    )
+                                } else {
+                                    openItem(row.icon, row.label, onClick = row.onClick)
+                                }
+                            },
+                )
             }
-        val mediaRows =
-            model.media
-                ?.takeIf { it.canManage && !requestScope }
-                ?.let { mediaRows(it, model.progress, callbacks) }
-                .orEmpty()
-        val blockRows =
-            if (model.titleState != null &&
-                !requestScope
-            ) {
-                blockTitleRows(model, blockTitle, onBlockTitleChange)
-            } else {
-                emptyList()
-            }
-        if (model.titleState != null && !requestScope && (model.titleRows.isNotEmpty() || blockRows.isNotEmpty())) {
-            ItemGroup(
-                title = stringResource(R.string.request_sheet_group_title),
-                rows =
-                    blockRows +
-                        model.titleRows.map { row ->
-                            if (row.external) {
-                                externalItem(
-                                    row.icon,
-                                    row.label,
-                                    row.onClick,
-                                )
-                            } else {
-                                openItem(row.icon, row.label, onClick = row.onClick)
-                            }
-                        },
-            )
+            if (requestRows.isNotEmpty()) ItemGroup(title = stringResource(R.string.request_sheet_group_request), rows = requestRows)
+            if (mediaRows.isNotEmpty()) ItemGroup(title = stringResource(R.string.request_sheet_group_media), rows = mediaRows)
         }
-        if (requestRows.isNotEmpty()) ItemGroup(title = stringResource(R.string.request_sheet_group_request), rows = requestRows)
-        if (mediaRows.isNotEmpty()) ItemGroup(title = stringResource(R.string.request_sheet_group_media), rows = mediaRows)
     }
 }
 

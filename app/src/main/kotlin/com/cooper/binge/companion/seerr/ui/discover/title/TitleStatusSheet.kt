@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ListAlt
 import androidx.compose.material.icons.filled.Add
@@ -128,10 +130,12 @@ internal fun TitleStatusSheetContent(
     if (watchRows.isNotEmpty() || requestRows.isNotEmpty()) {
         Column(modifier) {
             header?.let { TitleSheetHeader(it, stringResource(state.labelRes())) }
-            ActionSheetGroup(
-                rows = watchRows.map { externalItem(Icons.Filled.PlayArrow, it.label, it.onClick) } + requestRows,
-                title = stringResource(R.string.request_sheet_group_title),
-            )
+            Column(Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState())) {
+                ActionSheetGroup(
+                    rows = watchRows.map { externalItem(Icons.Filled.PlayArrow, it.label, it.onClick) } + requestRows,
+                    title = stringResource(R.string.request_sheet_group_title),
+                )
+            }
         }
     } else {
         Column(

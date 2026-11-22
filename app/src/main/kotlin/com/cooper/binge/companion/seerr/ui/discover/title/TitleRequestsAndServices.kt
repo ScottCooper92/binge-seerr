@@ -7,6 +7,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
@@ -121,25 +123,27 @@ internal fun TitleRequestsSheet(
                 }
                 Text(stringResource(R.string.title_requests_sheet_title), style = MaterialTheme.typography.titleLarge)
             }
-            ItemGroup(
-                title = null,
-                rows =
-                    summaries.sortedByDescending { it.id }.map { request ->
-                        ListItem(
-                            icon = Icons.Filled.Person,
-                            label = request.requestedBy ?: stringResource(R.string.requests_requester_unknown),
-                            detail =
-                                listOfNotNull(
-                                    stringResource(R.string.settings_service_4k).takeIf { request.is4k },
-                                    request.seasonNumbers.takeIf { it.isNotEmpty() }?.let {
-                                        pluralStringResource(R.plurals.requests_seasons, it.size, it.formatRanges())
-                                    },
-                                ).joinToString(" · ").ifBlank { null },
-                            trailingContent = request.status?.let { status -> { RequestStateChip(status = status) } },
-                            onClick = { onPick(request.id) },
-                        )
-                    },
-            )
+            Column(Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState())) {
+                ItemGroup(
+                    title = null,
+                    rows =
+                        summaries.sortedByDescending { it.id }.map { request ->
+                            ListItem(
+                                icon = Icons.Filled.Person,
+                                label = request.requestedBy ?: stringResource(R.string.requests_requester_unknown),
+                                detail =
+                                    listOfNotNull(
+                                        stringResource(R.string.settings_service_4k).takeIf { request.is4k },
+                                        request.seasonNumbers.takeIf { it.isNotEmpty() }?.let {
+                                            pluralStringResource(R.plurals.requests_seasons, it.size, it.formatRanges())
+                                        },
+                                    ).joinToString(" · ").ifBlank { null },
+                                trailingContent = request.status?.let { status -> { RequestStateChip(status = status) } },
+                                onClick = { onPick(request.id) },
+                            )
+                        },
+                )
+            }
         }
     }
 }
@@ -281,6 +285,7 @@ internal fun TitleServicesSheet(
             modifier =
                 Modifier
                     .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
                     .padding(horizontal = dimensionResource(DesR.dimen.padding_m))
                     .padding(bottom = dimensionResource(DesR.dimen.padding_l)),
             verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
