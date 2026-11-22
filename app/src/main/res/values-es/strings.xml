@@ -1714,7 +1714,6 @@
     <string name="title_sheet_requests">Solicitudes (%1$d)</string>
     <string name="title_sheet_group_requests">Solicitudes</string>
     <string name="title_requests_sheet_title">Solicitudes</string>
-    <string name="title_request_row">Solicitud %1$d</string>
     <string name="services_plays">Reproducciones</string>
     <string name="services_watched_by">Vista por</string>
     <string name="services_standard">Estándar</string>

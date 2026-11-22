@@ -1767,7 +1767,6 @@
     <string name="title_sheet_requests">Requests (%1$d)</string>
     <string name="title_sheet_group_requests">Requests</string>
     <string name="title_requests_sheet_title">Requests</string>
-    <string name="title_request_row">Request %1$d</string>
     <string name="services_plays">Plays</string>
     <string name="services_watched_by">Watched by</string>
     <string name="services_standard">Standard</string>
