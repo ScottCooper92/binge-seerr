@@ -4,6 +4,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Dns
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.HighQuality
+import androidx.compose.material.icons.filled.LocalOffer
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.cooper.binge.companion.seerr.seerr.SeerrServerDetailsDto
 import com.cooper.binge.companion.seerr.seerr.SeerrServerDto
@@ -24,6 +25,9 @@ data class DestinationChoices(
     val rootFolder: String? = null,
     val tags: List<Choice> = emptyList(),
     val tagIds: Set<Int> = emptySet(),
+    /** The profile a plain request to the chosen instance gets, and the bytes free per root folder where it reported them. */
+    val defaultProfileId: Int? = null,
+    val freeSpace: Map<String, Long> = emptyMap(),
     val loadingChoices: Boolean = false,
 ) {
     /**
@@ -36,6 +40,8 @@ data class DestinationChoices(
             serverId = server.id,
             profiles = emptyList(),
             profileId = server.activeProfileId,
+            defaultProfileId = server.activeProfileId,
+            freeSpace = emptyMap(),
             rootFolders = emptyList(),
             rootFolder = server.activeDirectory,
             tags = emptyList(),
@@ -57,6 +63,8 @@ data class DestinationChoices(
                 details.rootFolders.firstOrNull { it.path == rootFolder }?.path ?: details.rootFolders.firstOrNull()?.path ?: rootFolder,
             tags = details.tags.map { Choice(it.id, it.label) },
             tagIds = tagIds.filter { id -> details.tags.any { it.id == id } }.toSet(),
+            defaultProfileId = details.server?.activeProfileId ?: defaultProfileId,
+            freeSpace = details.rootFolders.mapNotNull { folder -> folder.freeSpace?.let { folder.path to it } }.toMap(),
             loadingChoices = false,
         )
 }
@@ -69,4 +77,5 @@ internal object DestinationIcons {
     val server: ImageVector = Icons.Filled.Dns
     val profile: ImageVector = Icons.Filled.HighQuality
     val rootFolder: ImageVector = Icons.Filled.Folder
+    val tags: ImageVector = Icons.Filled.LocalOffer
 }

@@ -6,7 +6,6 @@ import com.binge.companion.sdk.attempt
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.request.ItemSelection
 import com.cooper.binge.companion.seerr.discover.request.RequestAccess
-import com.cooper.binge.companion.seerr.discover.request.RequestDestination
 import com.cooper.binge.companion.seerr.discover.request.RequestQuota
 import com.cooper.binge.companion.seerr.discover.request.RequestResult
 import com.cooper.binge.companion.seerr.discover.request.RequestServer
@@ -217,6 +216,14 @@ class RequestSheetViewModel
 
         fun selectRootFolder(path: String) = store.update { it.copy(destinationChanged = true, pick = it.pick?.copy(rootFolder = path)) }
 
+        /** Flips one tag; the first touch starts from the server's defaults, so a default can be taken off as well as another put on. */
+        fun toggleTag(id: Int) =
+            store.update { current ->
+                val pick = current.pick ?: return@update current
+                val shown = pick.shownTagIds()
+                current.copy(destinationChanged = true, pick = pick.copy(tagIds = if (id in shown) shown - id else shown + id))
+            }
+
         fun dismissProblem() = store.update { it.copy(problem = null) }
 
         /** A tap on the footer while it shows the failure opens the dialog that explains it and offers Retry. */
@@ -237,7 +244,7 @@ class RequestSheetViewModel
                     tmdbId = target.tmdbId,
                     seasons = current.seasons?.requestSeasons ?: target.seasons,
                     is4k = current.use4k,
-                    destination = destination?.let { RequestDestination(it.serverId, it.profileId, it.rootFolder) },
+                    destination = destination?.toDestination(),
                 )
             viewModelScope.launch {
                 attempt { repository.submit(submission) }.fold(
@@ -264,7 +271,7 @@ class RequestSheetViewModel
                         tmdbId = id,
                         seasons = emptyList(),
                         is4k = use4k,
-                        destination = destination?.let { RequestDestination(it.serverId, it.profileId, it.rootFolder) },
+                        destination = destination?.toDestination(),
                     )
                 }
             viewModelScope.launch {

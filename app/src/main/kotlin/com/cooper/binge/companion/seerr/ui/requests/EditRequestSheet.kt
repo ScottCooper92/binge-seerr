@@ -38,6 +38,8 @@ import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.ChoiceField
 import com.cooper.binge.companion.seerr.ui.DestinationChoices
 import com.cooper.binge.companion.seerr.ui.DestinationIcons
+import com.cooper.binge.companion.seerr.ui.discover.request.folderOptionLabel
+import com.cooper.binge.companion.seerr.ui.discover.request.profileOptionLabel
 import com.cooper.binge.companion.seerr.ui.settings.server.TagChips
 import com.cooper.binge.companion.seerr.ui.state.MediaStateChip
 import com.cooper.binge.companion.seerr.ui.state.SortContent
@@ -177,14 +179,14 @@ private fun DestinationFields(
     ChoiceField(
         icon = DestinationIcons.profile,
         title = stringResource(R.string.advanced_profile),
-        choices = destination.profiles.map { it.id to it.label },
+        choices = destination.profiles.map { it.id to profileOptionLabel(it.label, it.id == destination.defaultProfileId) },
         selected = destination.profileId,
         enabled = enabled,
     ) { onOpen(DestinationField.Profile) }
     ChoiceField(
         icon = DestinationIcons.rootFolder,
         title = stringResource(R.string.advanced_root_folder),
-        choices = destination.rootFolders.map { it to it },
+        choices = destination.rootFolders.map { it to folderOptionLabel(it, destination.freeSpace[it]) },
         selected = destination.rootFolder,
         enabled = enabled,
     ) { onOpen(DestinationField.RootFolder) }
@@ -219,7 +221,7 @@ private fun DestinationPickerFor(
             DestinationPickerPanel(
                 icon = DestinationIcons.profile,
                 title = stringResource(R.string.advanced_profile),
-                choices = destination.profiles.map { it.id to it.label },
+                choices = destination.profiles.map { it.id to profileOptionLabel(it.label, it.id == destination.defaultProfileId) },
                 selected = destination.profileId,
                 onSelect = { id ->
                     actions.onSelectProfile(id)
@@ -231,7 +233,7 @@ private fun DestinationPickerFor(
             DestinationPickerPanel(
                 icon = DestinationIcons.rootFolder,
                 title = stringResource(R.string.advanced_root_folder),
-                choices = destination.rootFolders.map { it to it },
+                choices = destination.rootFolders.map { it to folderOptionLabel(it, destination.freeSpace[it]) },
                 selected = destination.rootFolder,
                 onSelect = { path ->
                     actions.onSelectRootFolder(path)

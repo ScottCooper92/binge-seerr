@@ -3,6 +3,7 @@ package com.cooper.binge.companion.seerr.ui.discover.request
 import com.cooper.binge.companion.seerr.discover.TitleAvailability
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.request.RequestChoices
+import com.cooper.binge.companion.seerr.discover.request.RequestDestination
 import com.cooper.binge.companion.seerr.discover.request.RequestQuota
 import com.cooper.binge.companion.seerr.discover.request.RequestServer
 import com.cooper.binge.companion.seerr.discover.request.SeasonChoices
@@ -92,12 +93,21 @@ data class DestinationPick(
     val profileId: Int?,
     val rootFolder: String?,
     val choices: ChoicesState,
+    /** The tags the user chose; null until they touch them, when the server's own defaults stand. */
+    val tagIds: Set<Int>? = null,
 ) {
+    /** The tags the request names: the user's own, or the chosen server's defaults until they touch them. */
+    fun shownTagIds(): Set<Int> = tagIds ?: (choices as? ChoicesState.Ready)?.choices?.defaultTagIds.orEmpty()
+
     /** The lists the chosen server gave, with the current pick kept where it still offers it, else its first. */
     fun withChoices(loaded: RequestChoices): DestinationPick =
         copy(
             choices = ChoicesState.Ready(loaded),
             profileId = loaded.profiles.firstOrNull { it.id == profileId }?.id ?: loaded.profiles.firstOrNull()?.id ?: profileId,
             rootFolder = loaded.rootFolders.firstOrNull { it == rootFolder } ?: loaded.rootFolders.firstOrNull() ?: rootFolder,
+            tagIds = tagIds?.filter { id -> loaded.tags.any { it.id == id } }?.toSet(),
         )
 }
+
+/** What the repository sends: tags only where the user has touched them, so an untouched list is left to the server. */
+internal fun DestinationPick.toDestination() = RequestDestination(serverId, profileId, rootFolder, tagIds?.toList())

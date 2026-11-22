@@ -40,10 +40,17 @@ data class RequestChoice(
     val label: String,
 )
 
-/** The chosen server's quality profiles and root folders. */
+/**
+ * The chosen server's quality profiles, root folders and tags. [defaultProfileId] and [defaultTagIds] are what a plain request to it
+ * gets, [freeSpace] maps a root folder's path to the bytes the instance reports free where it reported any.
+ */
 data class RequestChoices(
     val profiles: List<RequestChoice>,
     val rootFolders: List<String>,
+    val tags: List<RequestChoice> = emptyList(),
+    val defaultProfileId: Int? = null,
+    val defaultTagIds: Set<Int> = emptySet(),
+    val freeSpace: Map<String, Long> = emptyMap(),
 )
 
 /** How much of a user's request quota is left, for the type of title being requested. Absent where the type is not metered. */
@@ -66,6 +73,8 @@ data class RequestDestination(
     val serverId: Int,
     val profileId: Int?,
     val rootFolder: String?,
+    /** Null leaves the tags to the server; a list, even an empty one, is the user's choice. */
+    val tags: List<Int>? = null,
 )
 
 data class RequestSubmission(
@@ -156,6 +165,10 @@ class SeerrRequestSheetRepository(
             RequestChoices(
                 profiles = details.profiles.map { RequestChoice(it.id, it.name) },
                 rootFolders = details.rootFolders.map { it.path },
+                tags = details.tags.map { RequestChoice(it.id, it.label) },
+                defaultProfileId = details.server?.activeProfileId,
+                defaultTagIds = details.server?.activeTags.orEmpty().toSet(),
+                freeSpace = details.rootFolders.mapNotNull { folder -> folder.freeSpace?.let { folder.path to it } }.toMap(),
             )
         }
 
@@ -171,6 +184,7 @@ class SeerrRequestSheetRepository(
                     serverId = destination?.serverId,
                     profileId = destination?.profileId,
                     rootFolder = destination?.rootFolder,
+                    tags = destination?.tags,
                 )
             val key = TitleKey(if (submission.kind == TitleKind.Series) TitleType.Tv else TitleType.Movie, submission.tmdbId)
             val undo =

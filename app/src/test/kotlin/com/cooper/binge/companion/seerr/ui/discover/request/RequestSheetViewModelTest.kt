@@ -45,6 +45,7 @@ private class FakeRepository(
     var result: RequestResult = RequestResult.Created,
 ) : RequestSheetRepository {
     val submissions = mutableListOf<RequestSubmission>()
+    var choices: RequestChoices = CHOICES
 
     override suspend fun access(kind: TitleKind): RequestAccess = failAccess?.let { throw it } ?: access
 
@@ -55,7 +56,7 @@ private class FakeRepository(
     override suspend fun choices(
         kind: TitleKind,
         serverId: Int,
-    ): RequestChoices = failChoices?.let { throw it } ?: CHOICES
+    ): RequestChoices = failChoices?.let { throw it } ?: choices
 
     var allResult: RequestAllResult? = null
 
@@ -180,6 +181,65 @@ class RequestSheetViewModelTest {
             assertEquals(1, destination?.serverId)
             assertEquals(5, destination?.profileId)
             assertEquals("/movies", destination?.rootFolder)
+        }
+
+    private val tagged =
+        CHOICES.copy(tags = listOf(RequestChoice(1, "family"), RequestChoice(2, "anime")), defaultTagIds = setOf(1))
+
+    @Test
+    fun `the server's default tags are shown before the user touches them and left to the server`() =
+        runTest {
+            val repository = advanced().apply { choices = tagged }
+            val vm = viewModel(repository)
+            val event = awaitEvent(vm.events)
+
+            assertEquals(setOf(1), vm.ready().pick?.shownTagIds())
+            vm.selectProfile(5)
+            vm.submit()
+            event.await()
+
+            assertNull(repository.submissions.single().destination?.tags)
+        }
+
+    @Test
+    fun `a tag put on joins the defaults and goes with the destination`() =
+        runTest {
+            val repository = advanced().apply { choices = tagged }
+            val vm = viewModel(repository)
+            vm.toggleTag(2)
+            val event = awaitEvent(vm.events)
+
+            assertEquals(setOf(1, 2), vm.ready().pick?.shownTagIds())
+            vm.submit()
+            event.await()
+
+            assertEquals(listOf(1, 2), repository.submissions.single().destination?.tags)
+        }
+
+    @Test
+    fun `taking off the last default sends an empty list, not the server's choice`() =
+        runTest {
+            val repository = advanced().apply { choices = tagged }
+            val vm = viewModel(repository)
+            vm.toggleTag(1)
+            val event = awaitEvent(vm.events)
+
+            vm.submit()
+            event.await()
+
+            assertEquals(emptyList<Int>(), repository.submissions.single().destination?.tags)
+        }
+
+    @Test
+    fun `switching to 4K drops the tags chosen for the standard server`() =
+        runTest {
+            val repository = advanced().apply { choices = tagged }
+            val vm = viewModel(repository)
+            vm.toggleTag(2)
+
+            vm.setUse4k(true)
+
+            assertNull(vm.ready().pick?.tagIds)
         }
 
     @Test

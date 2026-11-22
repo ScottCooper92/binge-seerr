@@ -305,6 +305,9 @@
     <string name="request_profile">Quality profile</string>
     <string name="request_root_folder">Root folder</string>
     <string name="request_tags">Tags</string>
+    <string name="request_option_default_suffix">%1$s (default)</string>
+    <string name="request_folder_free_space">%1$s · %2$s free</string>
+    <string name="request_tags_none">None</string>
     <string name="request_seasons">Seasons requested</string>
     <string name="request_season_number">Season %1$d</string>
     <string name="request_title_status_caption">The title\'s overall status — this request\'s season may differ below.</string>

@@ -33,6 +33,11 @@ private const val RADARR =
 private const val RADARR_ONE =
     """{"server":{"id":1,"name":"Radarr"},"profiles":[{"id":4,"name":"HD"},{"id":5,"name":"Any"}],
        "rootFolders":[{"id":1,"path":"/movies"},{"id":2,"path":"/more"}],"tags":[]}"""
+private const val RADARR_DETAILED =
+    """{"server":{"id":1,"name":"Radarr","activeProfileId":4,"activeDirectory":"/movies","activeTags":[1]},
+       "profiles":[{"id":4,"name":"HD"},{"id":5,"name":"Any"}],
+       "rootFolders":[{"id":1,"path":"/movies","freeSpace":1319413953331,"totalSpace":2638827906662},{"id":2,"path":"/more"}],
+       "tags":[{"id":1,"label":"family"},{"id":2,"label":"anime"}]}"""
 private const val QUOTA = """{"movie":{"days":7,"limit":10,"used":8,"remaining":2},"tv":{"limit":0}}"""
 
 class SeerrRequestSheetRepositoryTest {
@@ -43,13 +48,18 @@ class SeerrRequestSheetRepositoryTest {
     private var postAnswer = FakeResponse(headers = JSON, body = """{"id":31}""")
     private var postByBody: ((String) -> FakeResponse)? = null
 
+    /** A test's own answer for a path, tried before the shared routes; null falls through to them. */
+    private var route: (FakeRequest) -> FakeResponse? = { null }
+
     @After
     fun tearDown() {
         seerr.awaitIdle()
         seerr.close()
     }
 
-    private fun route(request: FakeRequest): FakeResponse =
+    private fun respond(request: FakeRequest): FakeResponse = route(request) ?: shared(request)
+
+    private fun shared(request: FakeRequest): FakeResponse =
         when (request.url.encodedPath) {
             "/api/v1/service/radarr" -> FakeResponse(headers = JSON, body = RADARR)
             "/api/v1/service/sonarr" -> FakeResponse(headers = JSON, body = "[]")
@@ -60,7 +70,7 @@ class SeerrRequestSheetRepositoryTest {
         }
 
     private fun <T> withRepository(block: suspend (RequestSheetRepository) -> T): T {
-        seerr.dispatcher = ::route
+        seerr.dispatcher = ::respond
         return runBlocking {
             factory.anonymous(seerr.url()) { api ->
                 val profile = SeerrServerProfile(variant = SeerrVariant.Seerr, version = SeerrVersion(3, 2, 0), settings = settings)
@@ -123,6 +133,52 @@ class SeerrRequestSheetRepositoryTest {
 
         assertEquals(listOf(RequestChoice(4, "HD"), RequestChoice(5, "Any")), choices.profiles)
         assertEquals(listOf("/movies", "/more"), choices.rootFolders)
+    }
+
+    @Test
+    fun `a server's details carry its default profile and tags, its tags and the room left on a folder`() {
+        route = { request ->
+            FakeResponse(headers = JSON, body = RADARR_DETAILED).takeIf { request.url.encodedPath == "/api/v1/service/radarr/1" }
+        }
+
+        val choices = withRepository { it.choices(TitleKind.Movie, serverId = 1) }
+
+        assertEquals(4, choices.defaultProfileId)
+        assertEquals(setOf(1), choices.defaultTagIds)
+        assertEquals(listOf(RequestChoice(1, "family"), RequestChoice(2, "anime")), choices.tags)
+        assertEquals(mapOf("/movies" to 1_319_413_953_331L), choices.freeSpace)
+    }
+
+    @Test
+    fun `a details read without tags or free space still parses to none`() {
+        val choices = withRepository { it.choices(TitleKind.Movie, serverId = 1) }
+
+        assertTrue(choices.tags.isEmpty())
+        assertTrue(choices.defaultTagIds.isEmpty())
+        assertTrue(choices.freeSpace.isEmpty())
+        assertNull(choices.defaultProfileId)
+    }
+
+    @Test
+    fun `chosen tags are sent with the destination, and an empty list is sent as the user's choice`() {
+        withRepository {
+            val chosen = RequestDestination(1, 4, "/movies", listOf(1, 2))
+            it.submit(RequestSubmission(TitleKind.Movie, 603, emptyList(), is4k = false, chosen))
+        }
+        assertTrue(seerr.requests.last { it.method == "POST" }.body.contains("\"tags\":[1,2]"))
+
+        withRepository {
+            val none = RequestDestination(1, 4, "/movies", emptyList())
+            it.submit(RequestSubmission(TitleKind.Movie, 603, emptyList(), is4k = false, none))
+        }
+        assertTrue(seerr.requests.last { it.method == "POST" }.body.contains("\"tags\":[]"))
+    }
+
+    @Test
+    fun `untouched tags are left out of the body`() {
+        withRepository { it.submit(RequestSubmission(TitleKind.Movie, 603, emptyList(), is4k = false, RequestDestination(1, 4, "/movies"))) }
+
+        assertFalse(seerr.requests.last { it.method == "POST" }.body.contains("tags"))
     }
 
     @Test
