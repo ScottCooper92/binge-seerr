@@ -74,6 +74,8 @@ fun RequestSheet(
                     onServer = viewModel::selectServer,
                     onProfile = viewModel::selectProfile,
                     onRootFolder = viewModel::selectRootFolder,
+                    onToggleTag = viewModel::toggleTag,
+                    onRequestFor = viewModel.selectRequestFor,
                     onSubmit = viewModel::submit,
                     onRetry = viewModel::load,
                     onRetryRead = viewModel::retry,
@@ -100,10 +102,12 @@ class RequestSheetActions(
     val onDismissProblem: () -> Unit,
     val onOpenFailure: () -> Unit,
     val onDismissFailure: () -> Unit,
+    val onToggleTag: (Int) -> Unit = {},
+    val onRequestFor: (Int) -> Unit = {},
 )
 
 /** A page of the sheet: the form, or one of the lists it opens. */
-private enum class SheetPage { Form, Seasons, Films, Server, Profile, RootFolder }
+private enum class SheetPage { Form, Seasons, Films, Server, Profile, RootFolder, Tags, RequestFor }
 
 @Composable
 internal fun RequestSheetContent(
@@ -174,6 +178,8 @@ private fun DestinationField.toPage() =
         DestinationField.Server -> SheetPage.Server
         DestinationField.Profile -> SheetPage.Profile
         DestinationField.RootFolder -> SheetPage.RootFolder
+        DestinationField.Tags -> SheetPage.Tags
+        DestinationField.RequestFor -> SheetPage.RequestFor
     }
 
 /** The pinned button. It reads "Request in 4K" for 4K, and turns red with a short reason after a send that got no answer. */
@@ -230,7 +236,7 @@ private fun PageFor(
                 DestinationPickerPanel(
                     icon = DestinationIcons.profile,
                     title = stringResource(R.string.advanced_profile),
-                    choices = ready.choices.profiles.map { it.id to it.label },
+                    choices = ready.choices.profiles.map { it.id to ready.choices.profileLabel(it, pick.anime) },
                     selected = pick.profileId,
                     onSelect = { id ->
                         actions.onProfile(id)
@@ -244,10 +250,30 @@ private fun PageFor(
                 DestinationPickerPanel(
                     icon = DestinationIcons.rootFolder,
                     title = stringResource(R.string.advanced_root_folder),
-                    choices = ready.choices.rootFolders.map { it to it },
+                    choices = ready.choices.rootFolders.map { it to ready.choices.folderLabel(it) },
                     selected = pick.rootFolder,
                     onSelect = { path ->
                         actions.onRootFolder(path)
+                        onBack()
+                    },
+                    onBack = onBack,
+                )
+            }
+        SheetPage.Tags ->
+            (pick?.choices as? ChoicesState.Ready)?.let { ready ->
+                RequestTagsPage(ready.choices.tags, pick.shownTagIds(), !state.submitting, actions.onToggleTag, onBack)
+            }
+        SheetPage.RequestFor ->
+            (state.users as? UsersState.Ready)?.let { ready ->
+                val me = state.access.viewerId
+                val others = ready.users.filter { it.id != me }.map { it.id to it.name }
+                DestinationPickerPanel(
+                    icon = DestinationIcons.user,
+                    title = stringResource(R.string.request_for),
+                    choices = listOf(me to stringResource(R.string.request_for_me)) + others,
+                    selected = state.requestFor?.id ?: me,
+                    onSelect = { id ->
+                        actions.onRequestFor(id)
                         onBack()
                     },
                     onBack = onBack,

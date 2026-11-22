@@ -6,12 +6,12 @@ import com.binge.companion.sdk.attempt
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.request.ItemSelection
 import com.cooper.binge.companion.seerr.discover.request.RequestAccess
-import com.cooper.binge.companion.seerr.discover.request.RequestDestination
 import com.cooper.binge.companion.seerr.discover.request.RequestQuota
 import com.cooper.binge.companion.seerr.discover.request.RequestResult
 import com.cooper.binge.companion.seerr.discover.request.RequestServer
 import com.cooper.binge.companion.seerr.discover.request.RequestSheetRepository
 import com.cooper.binge.companion.seerr.discover.request.RequestSubmission
+import com.cooper.binge.companion.seerr.discover.request.RequestUser
 import com.cooper.binge.companion.seerr.discover.request.SeasonSelection
 import com.cooper.binge.companion.seerr.discover.request.SelectableItem
 import com.cooper.binge.companion.seerr.seerr.SeerrError
@@ -46,7 +46,11 @@ sealed interface RequestSheetUiState {
         val quota: QuotaState = QuotaState.Loading,
         val servers: ServersState = ServersState.Loading,
         val use4k: Boolean = false,
+        val anime: Boolean = false,
         val pick: DestinationPick? = null,
+        val users: UsersState = UsersState.None,
+        /** The user the request is made for; null is the one sending it. */
+        val requestFor: RequestUser? = null,
         val destinationChanged: Boolean = false,
         val submitting: Boolean = false,
         val problem: RequestProblem? = null,
@@ -82,7 +86,8 @@ sealed interface RequestSheetUiState {
         /** The destination rows are offered to a user who may choose, unless the servers read and hold none of this version. */
         val choosesDestination: Boolean get() = access.mayChooseDestination && (servers !is ServersState.Ready || servers4k.isNotEmpty())
 
-        val quotaSpent: Boolean get() = knownQuota?.spent == true
+        /** The quota is the sender's own, which says nothing of the user a request is made for: the server checks theirs. */
+        val quotaSpent: Boolean get() = knownQuota?.spent == true && requestFor == null
 
         /** The 4K switch moves only while both versions are open to request; with one left, that one is the choice. */
         val canToggle4k: Boolean get() = access.may4k && target.standardOpen && target.fourKOpen && !submitting
@@ -118,7 +123,7 @@ sealed interface RequestSheetEvent {
 private const val FOOTER_FAILURE_MILLIS = 4_000L
 
 /** Which of the sheet's reads to try again. */
-enum class RequestRead { Quota, Servers, Choices }
+enum class RequestRead { Quota, Servers, Choices, Users }
 
 @HiltViewModel(assistedFactory = RequestSheetViewModel.Factory::class)
 class RequestSheetViewModel
@@ -140,6 +145,9 @@ class RequestSheetViewModel
         private val eventFlow = MutableSharedFlow<RequestSheetEvent>(extraBufferCapacity = 1)
         val events: SharedFlow<RequestSheetEvent> = eventFlow.asSharedFlow()
 
+        /** Makes the request for an id, or for the sender again. A property, so the class stays under the function cap. */
+        val selectRequestFor: (Int) -> Unit = store::requestFor
+
         /** The timer that turns the red footer back; a new send or a new failure replaces it, so an old one cannot cut a newer window short. */
         private var footerTimer: Job? = null
 
@@ -154,9 +162,11 @@ class RequestSheetViewModel
                     onSuccess = { access ->
                         val use4k = access.may4k && !target.standardOpen && target.fourKOpen
                         val servers = if (access.mayChooseDestination) ServersState.Loading else ServersState.Ready(emptyList())
-                        store.set(RequestSheetUiState.Ready(target, access, servers = servers, use4k = use4k))
+                        val users = if (access.mayRequestForOthers) UsersState.Loading else UsersState.None
+                        store.set(RequestSheetUiState.Ready(target, access, servers = servers, use4k = use4k, users = users))
                         reads.quota()
                         if (access.mayChooseDestination) reads.servers()
+                        if (access.mayRequestForOthers) reads.users()
                     },
                     onFailure = { store.set(RequestSheetUiState.Error(it.toSeerrError())) },
                 )
@@ -173,6 +183,10 @@ class RequestSheetViewModel
                     store.update { it.copy(servers = ServersState.Loading) }
                     reads.servers()
                 }
+                RequestRead.Users -> {
+                    store.update { it.copy(users = UsersState.Loading) }
+                    reads.users()
+                }
                 RequestRead.Choices ->
                     store.ready()?.pick?.serverId?.let { serverId ->
                         store.updatePick { it.copy(choices = ChoicesState.Loading) }
@@ -183,7 +197,7 @@ class RequestSheetViewModel
         fun setUse4k(use4k: Boolean) {
             val current = store.ready() ?: return
             if (current.use4k == use4k || !current.canToggle4k) return
-            val pick = (current.servers as? ServersState.Ready)?.servers.orEmpty().pickFor(use4k)
+            val pick = (current.servers as? ServersState.Ready)?.servers.orEmpty().pickFor(use4k, current.anime)
             store.set(current.copy(use4k = use4k, pick = pick, destinationChanged = false, pickedSeasons = emptySet(), pickedFilms = null))
             pick?.let { reads.choices(it.serverId) }
         }
@@ -206,7 +220,7 @@ class RequestSheetViewModel
             if (current.pick?.serverId == id) return
             store.set(
                 current.copy(
-                    pick = DestinationPick(server.id, server.profileId, server.rootFolder, ChoicesState.Loading),
+                    pick = server.pickAt(current.anime),
                     destinationChanged = true,
                 ),
             )
@@ -216,6 +230,14 @@ class RequestSheetViewModel
         fun selectProfile(id: Int) = store.update { it.copy(destinationChanged = true, pick = it.pick?.copy(profileId = id)) }
 
         fun selectRootFolder(path: String) = store.update { it.copy(destinationChanged = true, pick = it.pick?.copy(rootFolder = path)) }
+
+        /** Flips one tag; the first touch starts from the server's defaults, so a default can be taken off as well as another put on. */
+        fun toggleTag(id: Int) =
+            store.update { current ->
+                val pick = current.pick ?: return@update current
+                val shown = pick.shownTagIds()
+                current.copy(destinationChanged = true, pick = pick.copy(tagIds = if (id in shown) shown - id else shown + id))
+            }
 
         fun dismissProblem() = store.update { it.copy(problem = null) }
 
@@ -230,14 +252,46 @@ class RequestSheetViewModel
             footerTimer?.cancel()
             store.set(current.copy(submitting = true, problem = null, failure = null, footerFailed = false, failureDialog = false))
             val destination = current.destination
-            current.films?.let { return submitFilms(it, destination, current.use4k) }
+            // A collection goes as one request per ticked film; the answer says how many the server made and the first refusal.
+            current.films?.let { films ->
+                val submissions =
+                    films.requestIds.map { id ->
+                        RequestSubmission(
+                            kind = TitleKind.Movie,
+                            tmdbId = id,
+                            seasons = emptyList(),
+                            is4k = current.use4k,
+                            destination = destination?.toDestination(),
+                            userId = current.requestFor?.id,
+                        )
+                    }
+                viewModelScope.launch {
+                    val answer = repository.submitAll(submissions)
+                    val failure = answer.failure
+                    when {
+                        failure != null && answer.created == 0 -> onSendFailed(failure.toProblem())
+                        else -> {
+                            val result =
+                                when {
+                                    failure != null -> RequestResult.PartiallyCreated
+                                    answer.created > 0 -> RequestResult.Created
+                                    else -> RequestResult.AlreadyRequested
+                                }
+                            eventFlow.tryEmit(RequestSheetEvent.Done(result))
+                            load()
+                        }
+                    }
+                }
+                return
+            }
             val submission =
                 RequestSubmission(
                     kind = target.kind,
                     tmdbId = target.tmdbId,
                     seasons = current.seasons?.requestSeasons ?: target.seasons,
                     is4k = current.use4k,
-                    destination = destination?.let { RequestDestination(it.serverId, it.profileId, it.rootFolder) },
+                    destination = destination?.toDestination(),
+                    userId = current.requestFor?.id,
                 )
             viewModelScope.launch {
                 attempt { repository.submit(submission) }.fold(
@@ -248,41 +302,6 @@ class RequestSheetViewModel
                     },
                     onFailure = { error -> onSendFailed(error.toProblem()) },
                 )
-            }
-        }
-
-        /** A collection goes as one request per ticked film; the answer says how many the server made and the first refusal. */
-        private fun submitFilms(
-            selection: ItemSelection,
-            destination: DestinationPick?,
-            use4k: Boolean,
-        ) {
-            val submissions =
-                selection.requestIds.map { id ->
-                    RequestSubmission(
-                        kind = TitleKind.Movie,
-                        tmdbId = id,
-                        seasons = emptyList(),
-                        is4k = use4k,
-                        destination = destination?.let { RequestDestination(it.serverId, it.profileId, it.rootFolder) },
-                    )
-                }
-            viewModelScope.launch {
-                val answer = repository.submitAll(submissions)
-                val failure = answer.failure
-                when {
-                    failure != null && answer.created == 0 -> onSendFailed(failure.toProblem())
-                    else -> {
-                        val result =
-                            when {
-                                failure != null -> RequestResult.PartiallyCreated
-                                answer.created > 0 -> RequestResult.Created
-                                else -> RequestResult.AlreadyRequested
-                            }
-                        eventFlow.tryEmit(RequestSheetEvent.Done(result))
-                        load()
-                    }
-                }
             }
         }
 

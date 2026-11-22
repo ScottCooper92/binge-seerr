@@ -27,11 +27,13 @@ import com.cooper.binge.companion.seerr.discover.title.TitleRatings
 import com.cooper.binge.companion.seerr.seerr.HydratedTitle
 import com.cooper.binge.companion.seerr.seerr.SeerrMediaStatusCode
 import com.cooper.binge.companion.seerr.seerr.SeerrRequestMediaDto
+import com.cooper.binge.companion.seerr.ui.discover.title.HERO_SETTLE_MS
 import com.cooper.binge.companion.seerr.ui.settings.server.DiscoverSlider
 import com.cooper.binge.companion.seerr.ui.settings.server.SliderForm
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collect
@@ -41,6 +43,7 @@ import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
@@ -475,31 +478,52 @@ class HubViewModelTest {
             )
         }
 
-    @Test
-    fun `the review scores join the hero after it shows and never hold it back`() =
-        runTest {
-            val gate = CompletableDeferred<TitleRatings?>()
-            val titles = Titles()
-            val model =
-                HubViewModel(
-                    FakeSliders(SliderListState.Ready(listOf(slider(1, STUDIOS)))),
-                    HubCardLoader(titles, NoMedia),
-                    HubTileLoader(titles),
-                    HubHeroLoader(titles, NoMedia) { _, _ -> gate.await() },
-                    FakeGrid(),
-                    dispatcher,
-                    HubTab.Movies,
-                )
-            val seen = mutableListOf<DiscoverHubUiState>()
-            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { model.uiState.collect { seen += it } }
-            val before = seen.filterIsInstance<DiscoverHubUiState.Ready>().last()
-            assertEquals("the hero shows while its scores are still on their way", listOf(1), before.hero.map { it.tmdbId })
-            assertEquals(listOf<TitleRatings?>(null), before.hero.map { it.ratings })
+    private fun TestScope.heroModel(scoresDelayMs: Long): Pair<HubViewModel, MutableList<DiscoverHubUiState>> {
+        val titles = Titles()
+        val model =
+            HubViewModel(
+                FakeSliders(SliderListState.Ready(listOf(slider(1, STUDIOS)))),
+                HubCardLoader(titles, NoMedia),
+                HubTileLoader(titles),
+                HubHeroLoader(titles, NoMedia) { _, _ ->
+                    delay(scoresDelayMs)
+                    TitleRatings(97, 91, 7.9)
+                },
+                FakeGrid(),
+                dispatcher,
+                HubTab.Movies,
+            )
+        val seen = mutableListOf<DiscoverHubUiState>()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { model.uiState.collect { seen += it } }
+        return model to seen
+    }
 
-            gate.complete(TitleRatings(97, 91, 7.9))
-            val after = seen.filterIsInstance<DiscoverHubUiState.Ready>().last()
-            assertEquals(listOf<TitleRatings?>(TitleRatings(97, 91, 7.9)), after.hero.map { it.ratings })
-            assertEquals("the rows did not change", before.rows, after.rows)
+    private fun List<DiscoverHubUiState>.heroes() = filterIsInstance<DiscoverHubUiState.Ready>().last().hero
+
+    @Test
+    fun `the scores that arrive inside the wait are in the hero's first frame`() =
+        runTest {
+            val (_, seen) = heroModel(scoresDelayMs = HERO_SETTLE_MS - 100)
+
+            advanceTimeBy(HERO_SETTLE_MS)
+            runCurrent()
+
+            assertEquals(listOf<TitleRatings?>(TitleRatings(97, 91, 7.9)), seen.heroes().map { it.ratings })
+        }
+
+    @Test
+    fun `scores that miss the wait never move the hero that is already showing`() =
+        runTest {
+            val (_, seen) = heroModel(scoresDelayMs = HERO_SETTLE_MS * 2)
+
+            advanceTimeBy(HERO_SETTLE_MS + 1)
+            runCurrent()
+            assertEquals("the hero shows without them", listOf(1), seen.heroes().map { it.tmdbId })
+            assertEquals(listOf<TitleRatings?>(null), seen.heroes().map { it.ratings })
+
+            advanceTimeBy(HERO_SETTLE_MS * 2)
+            runCurrent()
+            assertEquals("and they are not added later", listOf<TitleRatings?>(null), seen.heroes().map { it.ratings })
         }
 }
 

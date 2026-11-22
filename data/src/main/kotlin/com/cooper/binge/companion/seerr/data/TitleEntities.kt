@@ -21,6 +21,8 @@ data class TitleEntity(
     val backdropUrl: String? = null,
     val overview: String? = null,
     val certification: String? = null,
+    val rating: Float? = null,
+    val genre: String? = null,
 )
 
 @Dao

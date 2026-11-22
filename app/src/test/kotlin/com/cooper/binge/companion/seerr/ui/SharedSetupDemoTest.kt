@@ -1,0 +1,143 @@
+package com.cooper.binge.companion.seerr.ui
+
+import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.ViewModelStore
+import com.cooper.binge.companion.seerr.auth.LegacyCredentialStore
+import com.cooper.binge.companion.seerr.auth.PlexPinFlow
+import com.cooper.binge.companion.seerr.auth.SeerrConnection
+import com.cooper.binge.companion.seerr.demo.DEMO_ORIGIN
+import com.cooper.binge.companion.seerr.handoff.AddressHandOffs
+import com.cooper.binge.companion.seerr.handoff.HandOffOpening
+import com.cooper.binge.companion.seerr.seerr.PlexClientIdentity
+import com.cooper.binge.companion.seerr.seerr.SeerrApiFactory
+import com.cooper.binge.companion.seerr.seerr.SeerrSignInMode
+import com.cooper.binge.companion.seerr.telemetry.AnalyticsEvents
+import com.cooper.binge.companion.seerr.util.MainDispatcherRule
+import com.cooper.binge.companion.seerr.util.PlainCipher
+import com.cooper.binge.companion.seerr.util.RecordingAnalytics
+import com.cooper.homelab.core.server.network.DataStoreCleartextConsent
+import com.cooper.homelab.core.server.network.LocalNetworkPermission
+import com.cooper.homelab.core.testing.InMemoryDataStore
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.runTest
+import org.junit.After
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
+import org.junit.Rule
+import org.junit.Test
+import org.junit.rules.TemporaryFolder
+
+/** Trying the demo from the address step (#1705): no server exists, so nothing here is scripted. */
+class SharedSetupDemoTest {
+    @get:Rule
+    val folder = TemporaryFolder()
+
+    @get:Rule
+    val mainDispatcherRule = MainDispatcherRule()
+
+    private val viewModels = ViewModelStore()
+
+    @After
+    fun tearDown() = viewModels.clear()
+
+    private lateinit var connection: SeerrConnection
+    private val analytics = RecordingAnalytics()
+
+    private fun TestScope.viewModel(): SharedSetupViewModel {
+        connection =
+            SeerrConnection(
+                store =
+                    LegacyCredentialStore(
+                        PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("c.preferences_pb") },
+                        PlainCipher,
+                        UnconfinedTestDispatcher(testScheduler),
+                    ),
+                apis = SeerrApiFactory(logRequests = false),
+            )
+        val vm =
+            SharedSetupViewModel(
+                connection = connection,
+                plex =
+                    PlexPinFlow(
+                        identity = {
+                            PlexClientIdentity(
+                                identifier = "cid",
+                                product = "Seerr Companion",
+                                version = "0.1.0",
+                                device = "Pixel",
+                            )
+                        },
+                        apis = { error("Plex is not used") },
+                    ),
+                savedState = SavedStateHandle(),
+                cipher = PlainCipher,
+                handOffs = AddressHandOffs { HandOffOpening.NoLocalNetwork },
+                cleartext = DataStoreCleartextConsent(InMemoryDataStore()) { null },
+                localNetwork = LocalNetworkPermission.AlwaysGranted,
+                dispatcher = mainDispatcherRule.dispatcher,
+                analytics = analytics,
+            )
+        viewModels.put(vm.hashCode().toString(), vm)
+        backgroundScope.launch { vm.uiState.collect {} }
+        return vm
+    }
+
+    @Test
+    fun `the address step offers the demo`() =
+        runTest {
+            val state = viewModel().uiState.first { it is SetupUiState.Address } as SetupUiState.Address
+
+            assertTrue(state.canTryDemo)
+        }
+
+    @Test
+    fun `trying the demo saves the demo connection and signs in`() =
+        runTest {
+            val vm = viewModel()
+            vm.uiState.first { it is SetupUiState.Address }
+
+            vm.tryDemo()
+            val connected = vm.uiState.first { it is SetupUiState.Connected } as SetupUiState.Connected
+
+            assertEquals(DEMO_ORIGIN, connected.credentials.baseUrl)
+            assertEquals(DEMO_ORIGIN, connection.credentials.first()?.baseUrl)
+            assertEquals(2, connection.authenticatedUser().permissions)
+        }
+
+    /** Not the form's mode, which defaults to an API key and follows whichever tab was last selected (#1715). */
+    @Test
+    fun `the demo reports one sign_in as the demo, whatever tab was selected`() =
+        runTest {
+            val vm = viewModel()
+            vm.uiState.first { it is SetupUiState.Address }
+            vm.editForm { copy(mode = SeerrSignInMode.Local) }
+
+            vm.tryDemo()
+            vm.uiState.first { it is SetupUiState.Connected }
+
+            val signIn = mapOf(AnalyticsEvents.PARAM_METHOD to AnalyticsEvents.METHOD_DEMO, AnalyticsEvents.PARAM_SUCCESS to true)
+            assertEquals(listOf(AnalyticsEvents.SIGN_IN to signIn), analytics.events.filter { it.first == AnalyticsEvents.SIGN_IN })
+        }
+
+    @Test
+    fun `the television's actions run the demo`() =
+        runTest {
+            val vm = viewModel()
+            vm.uiState.first { it is SetupUiState.Address }
+
+            vm.actions(tv = true, onDisconnect = null).onTryDemo()
+            val connected = vm.uiState.first { it is SetupUiState.Connected } as SetupUiState.Connected
+
+            assertEquals(DEMO_ORIGIN, connected.credentials.baseUrl)
+        }
+
+    @Test
+    fun `a state built without the offer does not show it`() {
+        assertFalse(SetupUiState.Address("a", insecure = false, isInspecting = false, error = null).canTryDemo)
+    }
+}

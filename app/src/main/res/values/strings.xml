@@ -153,7 +153,6 @@
     <string name="title_search_type_people">People</string>
     <string name="title_search_trending_movies">Trending movies</string>
     <string name="title_search_trending_series">Trending shows</string>
-    <string name="title_search_genres_join" translatable="false">%1$s · %2$s</string>
     <string name="title_kind_movie">Movie</string>
     <string name="title_kind_series">TV</string>
     <string name="title_kind_person">Person</string>
@@ -305,6 +304,12 @@
     <string name="request_profile">Quality profile</string>
     <string name="request_root_folder">Root folder</string>
     <string name="request_tags">Tags</string>
+    <string name="request_for">Request for</string>
+    <string name="request_for_me">Me</string>
+    <string name="request_sheet_users_failed">Could not load the users</string>
+    <string name="request_option_default_suffix">%1$s (default)</string>
+    <string name="request_folder_free_space">%1$s · %2$s free</string>
+    <string name="request_tags_none">None</string>
     <string name="request_seasons">Seasons requested</string>
     <string name="request_season_number">Season %1$d</string>
     <string name="request_title_status_caption">The title\'s overall status — this request\'s season may differ below.</string>
@@ -430,6 +435,7 @@
     <string name="issue_state_open">Open</string>
     <string name="issue_state_resolved">Resolved</string>
     <string name="issue_affected_episode">Season %1$d, episode %2$d</string>
+    <string name="issue_affected_short">S%1$d E%2$d</string>
     <plurals name="issue_comments">
         <item quantity="one">%1$d comment</item>
         <item quantity="other">%1$d comments</item>

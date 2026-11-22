@@ -7,6 +7,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.feedback.BugReportLinks
@@ -23,16 +24,15 @@ import com.cooper.binge.companion.seerr.feedback.BugReportLinks
 internal fun EditConnectionEntry(
     onDone: () -> Unit,
     showBack: Boolean,
-    source: SetupSource = rememberSetupSource(),
+    source: SharedSetupViewModel = hiltViewModel(),
 ) {
     val state by source.uiState.collectAsStateWithLifecycle()
     LaunchedEffect(source) { source.beginEdit() }
     rememberEnteredEditingGuard(state, onDone)
-    SetupFlowScreen(
-        source = source,
-        state = state,
+    SeerrConnectScreen(
+        vm = source,
         title = stringResource(R.string.settings_edit_connection),
-        onBack = onDone.takeIf { showBack },
+        onExit = onDone.takeIf { showBack },
     )
 }
 
@@ -44,75 +44,24 @@ internal fun EditConnectionEntry(
 internal fun ReconnectEntry(
     onDisconnect: () -> Unit,
     modifier: Modifier = Modifier,
-    source: SetupSource = rememberSetupSource(),
+    source: SharedSetupViewModel = hiltViewModel(),
 ) {
-    val state by source.uiState.collectAsStateWithLifecycle()
     LaunchedEffect(source) { source.beginEdit(notice = SetupNotice.SessionRejected) }
     val context = LocalContext.current
     Box(modifier) {
-        SetupFlowScreen(
-            source = source,
-            state = state,
-            onDisconnect = onDisconnect,
+        SeerrConnectScreen(
+            vm = source,
             onReportProblem = { context.openInBrowser(BugReportLinks().url()) },
+            onDisconnect = onDisconnect,
         )
     }
 }
 
 @Composable
-internal fun SetupEntry(source: SetupSource = rememberSetupSource()) {
-    val state by source.uiState.collectAsStateWithLifecycle()
+internal fun SetupEntry(source: SharedSetupViewModel = hiltViewModel()) {
     val context = LocalContext.current
-    SetupFlowScreen(
-        source = source,
-        state = state,
+    SeerrConnectScreen(
+        vm = source,
         onReportProblem = { context.openInBrowser(BugReportLinks().url()) },
     )
-}
-
-internal fun SetupViewModel.actions(onDisconnect: (() -> Unit)? = null): SetupActions =
-    SetupActions(
-        onEditAddress = ::editAddress,
-        onInspect = ::inspect,
-        onChangeServer = ::changeServer,
-        onCheckAgain = ::inspect,
-        onEditForm = ::editForm,
-        onConnect = ::connect,
-        onPlexLaunched = ::plexLaunched,
-        onCancelLink = ::cancelLink,
-        onRequestPasswordReset = ::requestPasswordReset,
-        onAllowCleartext = ::allowCleartext,
-        onLocalNetworkChanged = ::localNetworkResult,
-        onDisconnect = onDisconnect,
-        onTryDemo = tryDemo,
-    )
-
-/** The phone's setup on the path [source] runs on: the shared connect screen for the shared view model, the app's own screen otherwise. */
-@Composable
-private fun SetupFlowScreen(
-    source: SetupSource,
-    state: SetupUiState,
-    title: String? = null,
-    onBack: (() -> Unit)? = null,
-    onReportProblem: (() -> Unit)? = null,
-    onDisconnect: (() -> Unit)? = null,
-) {
-    when (source) {
-        is SharedSetupViewModel ->
-            SeerrConnectScreen(
-                vm = source,
-                title = title,
-                onExit = onBack,
-                onReportProblem = onReportProblem,
-                onDisconnect = onDisconnect,
-            )
-        else ->
-            SetupScreen(
-                state = state,
-                actions = source.setupActions(tv = false, onDisconnect = onDisconnect),
-                title = title,
-                onBack = onBack,
-                onReportProblem = onReportProblem,
-            )
-    }
 }

@@ -40,6 +40,7 @@ import com.binge.designsystem.paneBackOrNull
 import com.binge.designsystem.resolvedContentPadding
 import com.binge.designsystem.template.FilteredListScreen
 import com.binge.designsystem.template.PagedPhase
+import com.binge.designsystem.template.ScreenBar
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.requests.PagedAppendState
 import com.cooper.binge.companion.seerr.ui.requests.PagedRefreshError
@@ -78,6 +79,7 @@ fun LogsScreen(
 ) {
     val focusManager = LocalFocusManager.current
     FilteredListScreen(
+        bar = ScreenBar.Small,
         title = stringResource(R.string.server_settings_logs),
         onBack = paneBackOrNull(actions.onBack),
         // The console keeps its single-line bar and an opaque header; the default is the gallery's transparent collapsing bar.

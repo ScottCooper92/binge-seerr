@@ -11,6 +11,7 @@ import com.cooper.binge.companion.seerr.seerr.SeerrServerDto
 import com.cooper.binge.companion.seerr.seerr.arrServer
 import com.cooper.binge.companion.seerr.seerr.arrServers
 import com.cooper.binge.companion.seerr.seerr.forRequest
+import com.cooper.binge.companion.seerr.seerr.isAnimeSeries
 import com.cooper.binge.companion.seerr.seerr.isTv
 import com.cooper.binge.companion.seerr.seerr.preferred
 import com.cooper.binge.companion.seerr.ui.Choice
@@ -149,7 +150,10 @@ class RequestEditor(
         }
         servers = loaded
         val serverId = loaded.firstOrNull { it.id == request.serverId }?.id ?: loaded.preferred()?.id
-        updateDestination { it.copy(servers = loaded.map { server -> Choice(server.id, server.name) }, serverId = serverId) }
+        val anime = request.isTv && attempt { connection.api().isAnimeSeries(request.media.tmdbId) }.getOrNull() == true
+        updateDestination {
+            it.copy(servers = loaded.map { server -> Choice(server.id, server.name) }, serverId = serverId, anime = anime)
+        }
         if (serverId == null) updateDestination { it.copy(loadingChoices = false) } else loadChoices(serverId)
     }
 

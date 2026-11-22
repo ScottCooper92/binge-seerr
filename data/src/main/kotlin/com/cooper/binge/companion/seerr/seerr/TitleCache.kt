@@ -19,7 +19,22 @@ data class HydratedTitle(
     val backdropUrl: String? = null,
     val overview: String? = null,
     val certification: String? = null,
+    val rating: Float? = null,
+    val genre: String? = null,
 )
+
+/** What a row shows of a title lookup. A request row, an issue row and the request page all read it here, so they cannot drift. */
+fun SeerrMediaDetailsDto.toHydratedTitle(): HydratedTitle =
+    HydratedTitle(
+        displayTitle,
+        posterPath?.toTmdbPosterUrl(),
+        year,
+        backdropPath?.toTmdbBackdropUrl(),
+        overview,
+        certification(Locale.getDefault().country),
+        rating,
+        primaryGenre,
+    )
 
 /**
  * A title lookup per row, remembered. The request and issue lists carry only a TMDB id, so every
@@ -62,14 +77,7 @@ class TitleCache
                 attempt {
                     if (mediaType == SEERR_MEDIA_TYPE_MOVIE) api.movieDetails(tmdbId) else api.tvDetails(tmdbId)
                 }.getOrNull() ?: return null
-            return HydratedTitle(
-                details.displayTitle,
-                details.posterPath?.toTmdbPosterUrl(),
-                details.year,
-                details.backdropPath?.toTmdbBackdropUrl(),
-                details.overview,
-                details.certification(Locale.getDefault().country),
-            )
+            return details.toHydratedTitle()
         }
 
         suspend fun clear() {
@@ -91,7 +99,9 @@ class TitleCache
         ): HydratedTitle? =
             attempt { dao.find(mediaType, tmdbId, now() - MAX_AGE_MILLIS) }
                 .getOrNull()
-                ?.let { HydratedTitle(it.title, it.posterUrl, it.year, it.backdropUrl, it.overview, it.certification) }
+                ?.let {
+                    HydratedTitle(it.title, it.posterUrl, it.year, it.backdropUrl, it.overview, it.certification, it.rating, it.genre)
+                }
 
         private suspend fun persist(
             mediaType: String,
@@ -115,6 +125,8 @@ class TitleCache
                         hydrated.backdropUrl,
                         hydrated.overview,
                         hydrated.certification,
+                        hydrated.rating,
+                        hydrated.genre,
                     ),
                 )
             }

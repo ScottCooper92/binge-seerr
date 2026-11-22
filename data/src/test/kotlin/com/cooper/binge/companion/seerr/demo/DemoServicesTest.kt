@@ -109,6 +109,19 @@ class DemoServicesTest {
         }
 
     @Test
+    fun `a server's details offer tags, the default server's own tag, and the room left on each folder`() =
+        demo { api ->
+            val radarr = api.radarrServers().single { !it.is4k }
+            val details = api.radarrServer(radarr.id)
+
+            assertEquals(listOf("family", "anime", "kids"), details.tags.map { it.label })
+            assertEquals(listOf(DEMO_DEFAULT_TAG_ID), details.server?.activeTags)
+            assertEquals(DEMO_FOLDER_FREE_BYTES, details.rootFolders.first().freeSpace)
+            assertEquals(DEMO_ARCHIVE_FREE_BYTES, details.rootFolders.last().freeSpace)
+            assertEquals(radarr.activeProfileId, details.server?.activeProfileId)
+        }
+
+    @Test
     fun `the settings page's connection test offers the folder each kind's server is set to`() =
         demo { api ->
             val body = SeerrDvrTestBody(hostname = "demo.invalid", port = 1, useSsl = false, apiKey = "demo")

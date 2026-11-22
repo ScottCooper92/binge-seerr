@@ -8,7 +8,7 @@ import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.DestinationIcons
 
 /** Which destination field's picker is open over the form. */
-internal enum class DestinationField { Server, Profile, RootFolder }
+internal enum class DestinationField { Server, Profile, RootFolder, Tags, RequestFor }
 
 /**
  * Server, profile and root folder, as rows of the options group for a user who may choose a destination. A read still going shows
@@ -77,22 +77,31 @@ private fun choiceRows(
                     detail =
                         choices.choices.profiles
                             .firstOrNull { it.id == pick.profileId }
-                            ?.label,
+                            ?.let { choices.choices.profileLabel(it, pick.anime) },
                     enabled = !state.submitting,
                     onClick = { onOpen(DestinationField.Profile) },
                 ),
                 ListItem(
                     DestinationIcons.rootFolder,
                     label = stringResource(R.string.advanced_root_folder),
-                    detail = pick.rootFolder,
+                    detail = pick.rootFolder?.let { choices.choices.folderLabel(it) },
                     enabled = !state.submitting,
                     onClick = { onOpen(DestinationField.RootFolder) },
                 ),
-            )
+            ) +
+                listOfNotNull(
+                    ListItem(
+                        DestinationIcons.tags,
+                        label = stringResource(R.string.request_tags),
+                        detail = choices.choices.tagsSummary(pick.shownTagIds()),
+                        enabled = !state.submitting,
+                        onClick = { onOpen(DestinationField.Tags) },
+                    ).takeIf { choices.choices.tags.isNotEmpty() },
+                )
     }
 
 @Composable
-private fun failedRow(
+internal fun failedRow(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     message: String,
     onRetry: () -> Unit,

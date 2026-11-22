@@ -3,8 +3,10 @@ package com.cooper.binge.companion.seerr.ui.discover.request
 import com.cooper.binge.companion.seerr.discover.TitleAvailability
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.request.RequestChoices
+import com.cooper.binge.companion.seerr.discover.request.RequestDestination
 import com.cooper.binge.companion.seerr.discover.request.RequestQuota
 import com.cooper.binge.companion.seerr.discover.request.RequestServer
+import com.cooper.binge.companion.seerr.discover.request.RequestUser
 import com.cooper.binge.companion.seerr.discover.request.SeasonChoices
 
 /** One film of a collection as the sheet lists it. It is open to request in a version only while the server holds nothing of it and has no request for it. */
@@ -64,6 +66,19 @@ sealed interface QuotaState {
     data object Failed : QuotaState
 }
 
+/** The users a request can be made for: not offered to most users, read once for the ones it is offered to. */
+sealed interface UsersState {
+    data object None : UsersState
+
+    data object Loading : UsersState
+
+    data class Ready(
+        val users: List<RequestUser>,
+    ) : UsersState
+
+    data object Failed : UsersState
+}
+
 /** The servers the user may choose between, read once and kept. */
 sealed interface ServersState {
     data object Loading : ServersState
@@ -92,12 +107,23 @@ data class DestinationPick(
     val profileId: Int?,
     val rootFolder: String?,
     val choices: ChoicesState,
+    /** The tags the user chose; null until they touch them, when the server's own defaults stand. */
+    val tagIds: Set<Int>? = null,
+    /** Seerr treats this series as anime, so the instance's anime defaults stand in for the regular ones. */
+    val anime: Boolean = false,
 ) {
+    /** The tags the request names: the user's own, or the chosen server's defaults until they touch them. */
+    fun shownTagIds(): Set<Int> = tagIds ?: (choices as? ChoicesState.Ready)?.choices?.defaultTagsFor(anime).orEmpty()
+
     /** The lists the chosen server gave, with the current pick kept where it still offers it, else its first. */
     fun withChoices(loaded: RequestChoices): DestinationPick =
         copy(
             choices = ChoicesState.Ready(loaded),
             profileId = loaded.profiles.firstOrNull { it.id == profileId }?.id ?: loaded.profiles.firstOrNull()?.id ?: profileId,
             rootFolder = loaded.rootFolders.firstOrNull { it == rootFolder } ?: loaded.rootFolders.firstOrNull() ?: rootFolder,
+            tagIds = tagIds?.filter { id -> loaded.tags.any { it.id == id } }?.toSet(),
         )
 }
+
+/** What the repository sends: tags only where the user has touched them, so an untouched list is left to the server. */
+internal fun DestinationPick.toDestination() = RequestDestination(serverId, profileId, rootFolder, tagIds?.toList())

@@ -283,6 +283,12 @@
     <string name="request_profile">Perfil de calidad</string>
     <string name="request_root_folder">Carpeta raíz</string>
     <string name="request_tags">Etiquetas</string>
+    <string name="request_for">Solicitar para</string>
+    <string name="request_for_me">Yo</string>
+    <string name="request_sheet_users_failed">No se pudieron cargar los usuarios</string>
+    <string name="request_option_default_suffix">%1$s (predeterminado)</string>
+    <string name="request_folder_free_space">%1$s · %2$s libres</string>
+    <string name="request_tags_none">Ninguna</string>
     <string name="request_seasons">Temporadas solicitadas</string>
     <string name="request_season_number">Temporada %1$d</string>
     <string name="request_title_status_caption">El estado general del título; la temporada de esta petición puede diferir a continuación.</string>
@@ -407,6 +413,7 @@
     <string name="issue_state_open">Abierta</string>
     <string name="issue_state_resolved">Resuelta</string>
     <string name="issue_affected_episode">Temporada %1$d, episodio %2$d</string>
+    <string name="issue_affected_short">T%1$d E%2$d</string>
     <plurals name="issue_comments">
         <item quantity="one">%1$d comentario</item>
         <item quantity="many">%1$d comentarios</item>

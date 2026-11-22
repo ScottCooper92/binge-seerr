@@ -16,6 +16,7 @@ import com.binge.designsystem.template.PeopleGridScreen
 import com.binge.designsystem.template.PeopleGridSection
 import com.binge.designsystem.template.PeopleGridState
 import com.binge.designsystem.template.PeopleGridTab
+import com.binge.designsystem.template.ScreenBar
 import com.binge.designsystem.template.screenInnerPadding
 import com.binge.designsystem.template.screenOuterPadding
 import com.cooper.binge.companion.seerr.R
@@ -49,6 +50,7 @@ internal fun TitleCreditsScreen(
     val castLabel = stringResource(R.string.title_credits_cast)
     val crewLabel = stringResource(R.string.title_credits_crew)
     PeopleGridScreen(
+        bar = ScreenBar.Small,
         title = stringResource(R.string.title_credits_title),
         tabs =
             listOf(
@@ -84,6 +86,7 @@ private fun CreditsFailed(
     modifier: Modifier,
 ) {
     BingeScreenScaffold(
+        bar = ScreenBar.Small,
         title = stringResource(R.string.title_credits_title),
         modifier = modifier,
         onBack = onBack,

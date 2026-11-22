@@ -4,11 +4,18 @@ import com.cooper.binge.companion.seerr.data.TitleStatusStore
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverFilters
 import com.cooper.binge.companion.seerr.discover.grid.DiscoverSort
 import com.cooper.binge.companion.seerr.discover.grid.toDiscoverQuery
+import com.cooper.binge.companion.seerr.seerr.SEERR_MEDIA_TYPE_MOVIE
+import com.cooper.binge.companion.seerr.seerr.SEERR_MEDIA_TYPE_TV
 import com.cooper.binge.companion.seerr.seerr.SeerrApi
 import com.cooper.binge.companion.seerr.seerr.SeerrGenreSliderDto
 import com.cooper.binge.companion.seerr.seerr.SeerrServerProfile
 import com.cooper.binge.companion.seerr.seerr.SeerrTitlePageDto
+import com.cooper.binge.companion.seerr.seerr.TMDB_POSTER_BASE
+import com.cooper.binge.companion.seerr.seerr.TitleCache
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
 import java.util.Locale
 
@@ -38,6 +45,7 @@ class SeerrTitleListRepository(
     private val api: suspend () -> SeerrApi,
     private val profile: suspend () -> SeerrServerProfile,
     private val io: CoroutineDispatcher,
+    private val titles: TitleCache,
     private val statuses: TitleStatusStore = TitleStatusStore(),
 ) : TitleListRepository {
     override suspend fun supports(source: TitleSource): Boolean = source.supportedBy(profile())
@@ -52,10 +60,13 @@ class SeerrTitleListRepository(
         val profile = profile()
         return withContext(io) {
             val read = statuses.beginRead()
-            api()
-                .fetch(source, page, profile)
-                .also { it.seedInto(statuses, read, source.defaultKind, onWatchlist = true.takeIf { source == TitleSource.Watchlist }) }
-                .toTitlePage(source.defaultKind)
+            val api = api()
+            val loaded =
+                api
+                    .fetch(source, page, profile)
+                    .also { it.seedInto(statuses, read, source.defaultKind, onWatchlist = true.takeIf { source == TitleSource.Watchlist }) }
+                    .toTitlePage(source.defaultKind)
+            if (source == TitleSource.Watchlist) loaded.hydrated(api, titles) else loaded
         }
     }
 
@@ -122,3 +133,28 @@ private suspend fun SeerrApi.discover(
     val query = toDiscoverQuery(kind, filters, DiscoverSort.PopularityDesc, page, profile)
     return if (kind == TitleKind.Series) discoverTvFiltered(query) else discoverMoviesFiltered(query)
 }
+
+/**
+ * The watchlist sends a title, its TMDB id and its media type and nothing else, so its rows take the poster and year the other rows
+ * get from the title cache: the lookup each is hydrated by is remembered, so a title costs one call however many rows it is in.
+ */
+private suspend fun TitlePage.hydrated(
+    api: SeerrApi,
+    titles: TitleCache,
+): TitlePage =
+    coroutineScope {
+        copy(results = results.map { async { it.hydrated(api, titles) } }.awaitAll())
+    }
+
+private suspend fun TitleResult.hydrated(
+    api: SeerrApi,
+    titles: TitleCache,
+): TitleResult {
+    if (artworkPath != null || (kind != TitleKind.Movie && kind != TitleKind.Series)) return this
+    val type = if (kind == TitleKind.Series) SEERR_MEDIA_TYPE_TV else SEERR_MEDIA_TYPE_MOVIE
+    val found = titles.get(api, type, tmdbId) ?: return this
+    return copy(artworkPath = found.posterUrl?.toTmdbPosterPath(), year = year ?: found.year)
+}
+
+/** The TMDB `posterPath` behind a poster URL the title cache built, or null for a URL that is not one of those. */
+private fun String.toTmdbPosterPath(): String? = takeIf { startsWith(TMDB_POSTER_BASE) }?.removePrefix(TMDB_POSTER_BASE)

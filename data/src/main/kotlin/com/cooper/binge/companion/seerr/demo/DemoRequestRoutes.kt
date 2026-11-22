@@ -61,7 +61,7 @@ private fun DemoData.create(body: String): DemoAnswer {
             val request =
                 add(
                     title,
-                    DEMO_USER_ID,
+                    asked.userId ?: DEMO_USER_ID,
                     seasons = asked.seasons.orEmpty(),
                     profileId = asked.profileId ?: DEMO_PROFILE_ID,
                     is4k = asked.is4k,

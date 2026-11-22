@@ -33,9 +33,9 @@
     <dimen name="users_row_skeleton_growth">32dp</dimen>
     <dimen name="blocklist_row_skeleton_height">132dp</dimen>
     <dimen name="blocklist_row_skeleton_growth">58dp</dimen>
-    <dimen name="issues_row_skeleton_height">152dp</dimen>
-    <dimen name="issues_row_skeleton_height_large">181dp</dimen>
-    <dimen name="issues_row_skeleton_height_largest">307dp</dimen>
+    <dimen name="issues_row_skeleton_height">132dp</dimen>
+    <dimen name="issues_row_skeleton_height_large">150dp</dimen>
+    <dimen name="issues_row_skeleton_height_largest">265dp</dimen>
     <!-- The requests list's skeleton row at a large font: a request row is never shorter than the design system's
          default row skeleton, and past that its text lines set its height. This is what they come to for each unit
          of font scale; the skeleton takes the larger of the two, so a row at a large font does not move the rows

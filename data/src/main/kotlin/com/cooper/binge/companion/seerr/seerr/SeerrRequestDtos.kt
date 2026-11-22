@@ -35,6 +35,10 @@ data class SeerrRequestBody(
     @SerialName("serverId") val serverId: Int? = null,
     @SerialName("profileId") val profileId: Int? = null,
     @SerialName("rootFolder") val rootFolder: String? = null,
+    /** Sent once the user has touched the tags: an empty list is a deliberate "no tags", and an absent field is left to the server. */
+    @SerialName("tags") val tags: List<Int>? = null,
+    /** The user the request is made for, which the server accepts from an administrator or from `MANAGE_USERS` with `MANAGE_REQUESTS`. */
+    @SerialName("userId") val userId: Int? = null,
 )
 
 /** `PUT request/{id}`: only the fields sent change; the seasons list is a show's whole new set. */
@@ -58,6 +62,9 @@ data class SeerrServerDto(
     @SerialName("isDefault") val isDefault: Boolean = false,
     @SerialName("activeProfileId") val activeProfileId: Int? = null,
     @SerialName("activeDirectory") val activeDirectory: String? = null,
+    /** What a plain request for an anime series gets, where the instance sets them; Sonarr's list carries these two and no anime tags. */
+    @SerialName("activeAnimeProfileId") val activeAnimeProfileId: Int? = null,
+    @SerialName("activeAnimeDirectory") val activeAnimeDirectory: String? = null,
 )
 
 @Serializable
@@ -73,6 +80,14 @@ data class SeerrServerDetailsDto(
 data class SeerrServerRefDto(
     @SerialName("id") val id: Int? = null,
     @SerialName("name") val name: String? = null,
+    @SerialName("activeProfileId") val activeProfileId: Int? = null,
+    @SerialName("activeDirectory") val activeDirectory: String? = null,
+    /** The tags a plain request to this instance gets; the details read carries them for both Radarr and Sonarr. */
+    @SerialName("activeTags") val activeTags: List<Int> = emptyList(),
+    /** Sonarr's own: an anime series gets these instead of the regular ones, and its tags are these alone, not the regular tags. */
+    @SerialName("activeAnimeProfileId") val activeAnimeProfileId: Int? = null,
+    @SerialName("activeAnimeDirectory") val activeAnimeDirectory: String? = null,
+    @SerialName("activeAnimeTags") val activeAnimeTags: List<Int> = emptyList(),
 )
 
 @Serializable
@@ -85,6 +100,9 @@ data class SeerrProfileDto(
 data class SeerrRootFolderDto(
     @SerialName("id") val id: Int,
     @SerialName("path") val path: String,
+    /** Bytes, as the instance reports them; absent from an older shape or a folder the instance could not measure. */
+    @SerialName("freeSpace") val freeSpace: Long? = null,
+    @SerialName("totalSpace") val totalSpace: Long? = null,
 )
 
 private val lenientJson =

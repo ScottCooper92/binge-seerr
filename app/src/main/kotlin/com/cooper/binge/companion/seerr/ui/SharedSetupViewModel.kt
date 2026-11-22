@@ -43,10 +43,10 @@ import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import javax.inject.Inject
 
 /**
- * Setup on the shared connect machine, behind the shared-setup flag. It gives the screens what [SetupViewModel] does, a
- * [SetupUiState] and the same actions, so they do not change. The address and sign-in steps are the machine's; what is beside
- * it is the app's own: the television's hand-off, the password reset and the notice. Plex and Quick Connect, which finish in
- * another app, run on the library's link flows ([links]).
+ * Setup on the shared connect machine: the one setup view model, for the phone's connect screen and the television's own screens.
+ * It gives them a [SetupUiState] and [SetupActions]. The address and sign-in steps are the machine's; what is beside it is the
+ * app's own: the television's hand-off, the password reset and the notice. Plex and Quick Connect, which finish in another app,
+ * run on the library's link flows ([links]).
  */
 @HiltViewModel
 class SharedSetupViewModel
@@ -62,8 +62,7 @@ class SharedSetupViewModel
         @IoDispatcher private val dispatcher: CoroutineDispatcher,
         private val analytics: Analytics = NoOpAnalytics,
         private val crashBreadcrumbs: CrashBreadcrumbs = NoOpCrashBreadcrumbs,
-    ) : ViewModel(),
-        SetupSource {
+    ) : ViewModel() {
         private val app = MutableStateFlow(SharedSetupApp())
 
         private val sink = SessionSink<SetupServer, Unit> { _, _ -> true }
@@ -125,7 +124,7 @@ class SharedSetupViewModel
                 },
             )
 
-        override val uiState: StateFlow<SetupUiState> =
+        val uiState: StateFlow<SetupUiState> =
             combine(links.view, connection.credentials, app) { view, saved, beside ->
                 view.state.toSetupUiState(saved, beside, view.link)
             }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), SetupUiState.Loading)
@@ -168,7 +167,8 @@ class SharedSetupViewModel
             handed.watch(viewModelScope, dispatcher)
         }
 
-        override fun beginEdit(notice: SetupNotice?) {
+        /** Settings' Edit connection, or the sign-in again after the server rejected the session when [notice] says so. */
+        fun beginEdit(notice: SetupNotice? = null) {
             if (machine.draft.value.editing) return
             crashBreadcrumbs.log("editing server connection")
             viewModelScope.launch(dispatcher) {
