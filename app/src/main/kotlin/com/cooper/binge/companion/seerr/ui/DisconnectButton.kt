@@ -1,6 +1,8 @@
 package com.cooper.binge.companion.seerr.ui
 
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -29,6 +31,7 @@ internal fun DisconnectButton(
     BingeTextButton(
         label = stringResource(if (demo) R.string.hub_demo_exit else R.string.hub_disconnect),
         onClick = { confirming = true },
+        leadingIcon = Icons.AutoMirrored.Filled.Logout,
         destructive = true,
         modifier = modifier.fillMaxWidth(),
     )

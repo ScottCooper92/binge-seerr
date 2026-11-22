@@ -4,7 +4,11 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.PlaylistAddCheck
 import androidx.compose.material.icons.filled.Check
@@ -24,6 +28,8 @@ import androidx.compose.material.icons.filled.Tv
 import androidx.compose.material.icons.filled.VideoLibrary
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -36,16 +42,19 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
-import com.binge.designsystem.component.BingeConfirmDialog
+import com.binge.designsystem.component.BingeActionFooter
+import com.binge.designsystem.component.BingeAdaptiveSheet
+import com.binge.designsystem.component.BingeSheetFooter
+import com.binge.designsystem.component.BingeSheetKind
 import com.binge.designsystem.component.BingeTextField
 import com.binge.designsystem.component.ExpressiveIconButton
+import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.formatRelativeOrAbsolute
 import com.binge.designsystem.theme.BingeSentiment
 import com.binge.designsystem.theme.accent
 import com.binge.designsystem.theme.fill
 import com.cooper.binge.companion.seerr.R
-import com.cooper.binge.companion.seerr.ui.ChoiceRow
 import com.binge.designsystem.R as DesR
 
 class JobsActions(
@@ -145,11 +154,12 @@ private fun OutcomeIcon(outcome: JobOutcome) {
 }
 
 /**
- * A preset, or a cron of the admin's own. A schedule saves as it is made (#930): a preset applies the moment it is picked,
- * and a typed cron on Done, from the keyboard or the dialog. Either closes the dialog; the page says Saving, then Saved.
+ * A preset, or a cron of the admin's own, in a sheet over the page. A schedule saves as it is made (#930): a preset
+ * applies the moment it is picked, and a typed cron on Done, from the keyboard or the footer. Either closes the sheet;
+ * the page says Saving, then Saved.
  */
 @Composable
-internal fun ScheduleDialog(
+internal fun ScheduleSheet(
     job: ServerJob,
     onConfirm: (String) -> Unit,
     onDismiss: () -> Unit,
@@ -157,33 +167,42 @@ internal fun ScheduleDialog(
     var cron by rememberSaveable { mutableStateOf("") }
     val presets = job.presets()
     val applyTyped = { cron.trim().takeIf { it.isNotBlank() }?.let(onConfirm) }
-    BingeConfirmDialog(
-        title = stringResource(R.string.server_settings_job_schedule_title, job.name),
-        message = stringResource(R.string.server_settings_job_schedule_message),
-        confirmLabel = stringResource(R.string.editor_done),
-        onConfirm = { applyTyped() },
-        onDismissRequest = onDismiss,
-        extraContent = {
-            Column(verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s))) {
-                ChoiceRow(
-                    icon = Icons.Filled.Schedule,
-                    title = stringResource(R.string.server_settings_job_presets),
-                    choices = presets.map { it.cron to it.label() },
-                    selected = cron.takeIf { c -> presets.any { it.cron == c } },
-                    onSelect = onConfirm,
-                    choiceIcon = { c -> presets.firstOrNull { it.cron == c }?.unit?.icon() },
-                )
-                BingeTextField(
-                    value = cron,
-                    label = stringResource(R.string.server_settings_job_cron),
-                    supporting = stringResource(R.string.server_settings_job_cron_hint),
-                    imeAction = ImeAction.Done,
-                    onDone = { applyTyped() },
-                    onValueChange = { cron = it },
-                )
-            }
-        },
-    )
+    BingeAdaptiveSheet(kind = BingeSheetKind.Task, onDismissRequest = onDismiss) {
+        Column(
+            modifier =
+                Modifier
+                    .weight(1f, fill = false)
+                    .imePadding()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = dimensionResource(DesR.dimen.padding_m)),
+            verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
+        ) {
+            Text(stringResource(R.string.server_settings_job_schedule_title, job.name), style = MaterialTheme.typography.titleLarge)
+            Text(
+                stringResource(R.string.server_settings_job_schedule_message),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            ItemGroup(
+                title = stringResource(R.string.server_settings_job_presets),
+                rows =
+                    presets.map { preset ->
+                        ListItem(icon = preset.unit.icon(), label = preset.label(), onClick = { onConfirm(preset.cron) })
+                    },
+            )
+            BingeTextField(
+                value = cron,
+                label = stringResource(R.string.server_settings_job_cron),
+                supporting = stringResource(R.string.server_settings_job_cron_hint),
+                imeAction = ImeAction.Done,
+                onDone = { applyTyped() },
+                onValueChange = { cron = it },
+            )
+        }
+        BingeSheetFooter {
+            BingeActionFooter(label = stringResource(R.string.editor_done), onClick = { applyTyped() }, enabled = cron.isNotBlank())
+        }
+    }
 }
 
 @Composable
