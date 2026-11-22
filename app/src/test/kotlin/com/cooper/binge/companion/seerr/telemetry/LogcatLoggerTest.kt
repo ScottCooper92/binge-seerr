@@ -1,84 +1,47 @@
 package com.cooper.binge.companion.seerr.telemetry
 
+import com.cooper.homelab.core.diagnostics.LogcatLogger
 import com.cooper.homelab.core.diagnostics.Redactor
 import com.cooper.homelab.core.diagnostics.RingLog
 import com.cooper.homelab.core.foundation.Clock
 import com.cooper.homelab.core.foundation.LogField
-import com.cooper.homelab.core.foundation.Logger
-import com.cooper.homelab.core.foundation.ServerFailure
 import com.cooper.homelab.core.foundation.error
-import org.junit.Assert.assertEquals
+import com.cooper.homelab.core.foundation.warn
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import kotlin.time.Instant
 
-/** What reaches Logcat: the constant event, the fields' kept values, and never an exception's message. */
+/** What the shared Logcat sink writes for this app's entries: the constant event, and nothing the entry's text could leak. */
 class LogcatLoggerTest {
-    @Test
-    fun `an entry is the event followed by each field`() {
-        val line =
-            logcatLine(
-                "analytics backend failed to react to consent",
-                listOf(LogField.Flag("granted", true), LogField.Status("status", 503), LogField.Count("tries", 2)),
-                null,
-            )
+    private val lines = mutableListOf<String>()
 
-        assertEquals("analytics backend failed to react to consent granted=true status=503 tries=2", line)
-    }
-
-    @Test
-    fun `a throwable is its class name and never its message`() {
-        val line = logcatLine("event", emptyList(), IllegalStateException("http://secret.example/?key=abc"))
-
-        assertEquals("event error=java.lang.IllegalStateException", line)
-        assertFalse(line.contains("secret"))
-    }
+    private fun ring() =
+        RingLog(
+            clock = Clock { Instant.fromEpochMilliseconds(0) },
+            redactor = Redactor(),
+            serverOrder = { emptyList() },
+            ownPackages = listOf("com.cooper.binge."),
+            forward = LogcatLogger { _, _, line -> lines += line },
+        )
 
     @Test
-    fun `a sealed case is its simple class name and a path is only its path`() {
-        val line =
-            logcatLine(
-                "event",
-                listOf(LogField.Case("failure", ServerFailure.NotFound), LogField.Path("https://host.example:5055/api/v1/user?token=x")),
-                null,
-            )
-
-        assertEquals("event failure=NotFound path=/api/v1/user", line)
-    }
-
-    @Test
-    fun `a numeric path segment is an id and a fragment is dropped`() {
-        val line = logcatLine("event", listOf(LogField.Path("https://host.example/api/v1/user/42/settings/main?a=1#frag")), null)
-
-        assertEquals("event path=/api/v1/user/{id}/settings/main", line)
-    }
-
-    @Test
-    fun `a UUID and a long hex segment are ids too`() {
-        val url = "https://host.example/api/v1/issue/123e4567-e89b-12d3-a456-426614174000/file/0123456789abcdef0123"
-
-        val line = logcatLine("event", listOf(LogField.Path(url)), null)
-
-        assertEquals("event path=/api/v1/issue/{id}/file/{id}", line)
-    }
-
-    @Test
-    fun `through the ring, the kept error text reaches the Logcat line and the message never does`() {
-        val lines = mutableListOf<String>()
-        val ring =
-            RingLog(
-                clock = Clock { Instant.fromEpochMilliseconds(0) },
-                redactor = Redactor(),
-                serverOrder = { emptyList() },
-                ownPackages = listOf("com.cooper.binge."),
-                forward = Logger { _, _, event, fields, error -> lines += logcatLine(event, fields, error) },
-            )
-
-        ring.error("tag", "the notification poll threw and will retry", error = IllegalStateException("http://secret.example/?key=abc"))
+    fun `an error reaches Logcat as its event and class, and its message never does`() {
+        ring().error("tag", "the notification poll threw and will retry", error = IllegalStateException("http://secret.example/?key=abc"))
 
         val line = lines.single()
-        assertTrue(line, line.startsWith("the notification poll threw and will retry error=java.lang.IllegalStateException"))
-        assertFalse(line.contains("secret"))
+        assertTrue(line, line.startsWith("the notification poll threw and will retry error="))
+        assertTrue(line, line.contains("IllegalStateException"))
+        assertFalse(line, line.contains("secret"))
+    }
+
+    @Test
+    fun `a path field keeps no host, query or id`() {
+        ring().warn("tag", "request failed", listOf(LogField.Path("https://host.example:5055/api/v1/user/42/settings?token=abc#frag")))
+
+        val line = lines.single()
+        assertTrue(line, line.contains("/api/v1/user/{id}/settings"))
+        assertFalse(line, line.contains("host.example"))
+        assertFalse(line, line.contains("token"))
     }
 }
