@@ -1,7 +1,8 @@
 package com.cooper.binge.companion.seerr.ui.requests
 
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.binge.designsystem.theme.BingeExpressiveTheme
@@ -33,7 +34,10 @@ class RequestRowPosterTest {
         rule.waitForIdle()
     }
 
-    private fun poster() = hasContentDescription("Open The Matrix")
+    private fun poster() =
+        SemanticsMatcher("a poster whose tap is announced as Open The Matrix") {
+            it.config.getOrNull(SemanticsActions.OnClick)?.label == "Open The Matrix"
+        }
 
     @Test
     fun `a tap on the poster opens the title and not the request`() {
