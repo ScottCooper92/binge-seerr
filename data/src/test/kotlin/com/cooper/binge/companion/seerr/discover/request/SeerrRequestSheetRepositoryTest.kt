@@ -2,6 +2,8 @@ package com.cooper.binge.companion.seerr.discover.request
 
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.seerr.PERMISSION_ADMIN
+import com.cooper.binge.companion.seerr.seerr.PERMISSION_MANAGE_REQUESTS
+import com.cooper.binge.companion.seerr.seerr.PERMISSION_MANAGE_USERS
 import com.cooper.binge.companion.seerr.seerr.PERMISSION_REQUEST
 import com.cooper.binge.companion.seerr.seerr.PERMISSION_REQUEST_ADVANCED
 import com.cooper.binge.companion.seerr.seerr.SeerrApiFactory
@@ -38,6 +40,10 @@ private const val RADARR_DETAILED =
        "profiles":[{"id":4,"name":"HD"},{"id":5,"name":"Any"}],
        "rootFolders":[{"id":1,"path":"/movies","freeSpace":1319413953331,"totalSpace":2638827906662},{"id":2,"path":"/more"}],
        "tags":[{"id":1,"label":"family"},{"id":2,"label":"anime"}]}"""
+private const val USERS =
+    """{"pageInfo":{"pages":1,"pageSize":100,"results":2,"page":1},
+       "results":[{"id":9,"displayName":"Ada"},{"id":12,"username":"grace"},{"id":13}]}"""
+
 private const val SONARR_DETAILED =
     """{"server":{"id":1,"name":"Sonarr","activeProfileId":4,"activeDirectory":"/tv","activeTags":[1],
        "activeAnimeProfileId":5,"activeAnimeDirectory":"/anime","activeAnimeTags":[2]},
@@ -70,6 +76,7 @@ class SeerrRequestSheetRepositoryTest {
             "/api/v1/service/sonarr" -> FakeResponse(headers = JSON, body = "[]")
             "/api/v1/service/radarr/1" -> FakeResponse(headers = JSON, body = RADARR_ONE)
             "/api/v1/user/9/quota" -> FakeResponse(headers = JSON, body = QUOTA)
+            "/api/v1/user" -> FakeResponse(headers = JSON, body = USERS)
             "/api/v1/request" -> postByBody?.invoke(request.body) ?: postAnswer
             else -> FakeResponse(code = 404)
         }
@@ -224,6 +231,56 @@ class SeerrRequestSheetRepositoryTest {
         assertTrue(choices.defaultTagIds.isEmpty())
         assertTrue(choices.freeSpace.isEmpty())
         assertNull(choices.defaultProfileId)
+    }
+
+    @Test
+    fun `an administrator may request for others, and so may a user with both manage permissions`() {
+        permissions = PERMISSION_ADMIN
+        assertTrue(withRepository { it.access(TitleKind.Movie) }.mayRequestForOthers)
+
+        permissions = PERMISSION_MANAGE_USERS or PERMISSION_MANAGE_REQUESTS or PERMISSION_REQUEST
+        val access = withRepository { it.access(TitleKind.Movie) }
+        assertTrue(access.mayRequestForOthers)
+        assertEquals(9, access.viewerId)
+    }
+
+    @Test
+    fun `managing requests alone, or users alone, does not let a user request for others`() {
+        permissions = PERMISSION_MANAGE_REQUESTS or PERMISSION_REQUEST
+        assertFalse(withRepository { it.access(TitleKind.Movie) }.mayRequestForOthers)
+
+        permissions = PERMISSION_MANAGE_USERS or PERMISSION_REQUEST
+        assertFalse(withRepository { it.access(TitleKind.Movie) }.mayRequestForOthers)
+    }
+
+    @Test
+    fun `the users to pick from are named by display name, then username, then id`() {
+        val users = withRepository { it.users() }
+
+        assertEquals(listOf(RequestUser(9, "Ada"), RequestUser(12, "grace"), RequestUser(13, "13")), users)
+        val queries = seerr.requests.map { it.url.encodedQuery.orEmpty() }
+        assertTrue(queries.any { it.contains("sort=displayname") })
+    }
+
+    @Test
+    fun `a user who may not request for others reads no users and asks the server for none`() {
+        permissions = PERMISSION_REQUEST
+
+        val users = withRepository { it.users() }
+
+        assertTrue(users.isEmpty())
+        assertTrue(seerr.requests.none { it.url.encodedPath == "/api/v1/user" })
+    }
+
+    @Test
+    fun `a request made for another user names them, and one made for oneself names no one`() {
+        withRepository { it.submit(RequestSubmission(TitleKind.Movie, 603, emptyList(), is4k = false, destination = null, userId = 12)) }
+        val forOther = seerr.requests.last { it.method == "POST" }.body
+        assertTrue(forOther, forOther.contains("\"userId\":12"))
+
+        withRepository { it.submit(RequestSubmission(TitleKind.Movie, 603, emptyList(), is4k = false, destination = null)) }
+        val forSelf = seerr.requests.last { it.method == "POST" }.body
+        assertFalse(forSelf, forSelf.contains("userId"))
     }
 
     @Test

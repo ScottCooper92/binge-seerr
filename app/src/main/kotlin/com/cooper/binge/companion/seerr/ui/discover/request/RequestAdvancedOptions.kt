@@ -8,7 +8,7 @@ import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.DestinationIcons
 
 /** Which destination field's picker is open over the form. */
-internal enum class DestinationField { Server, Profile, RootFolder, Tags }
+internal enum class DestinationField { Server, Profile, RootFolder, Tags, RequestFor }
 
 /**
  * Server, profile and root folder, as rows of the options group for a user who may choose a destination. A read still going shows
@@ -101,7 +101,7 @@ private fun choiceRows(
     }
 
 @Composable
-private fun failedRow(
+internal fun failedRow(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     message: String,
     onRetry: () -> Unit,

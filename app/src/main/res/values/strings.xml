@@ -304,6 +304,9 @@
     <string name="request_profile">Quality profile</string>
     <string name="request_root_folder">Root folder</string>
     <string name="request_tags">Tags</string>
+    <string name="request_for">Request for</string>
+    <string name="request_for_me">Me</string>
+    <string name="request_sheet_users_failed">Could not load the users</string>
     <string name="request_option_default_suffix">%1$s (default)</string>
     <string name="request_folder_free_space">%1$s · %2$s free</string>
     <string name="request_tags_none">None</string>

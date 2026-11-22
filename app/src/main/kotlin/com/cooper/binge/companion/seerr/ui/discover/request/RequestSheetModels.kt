@@ -6,6 +6,7 @@ import com.cooper.binge.companion.seerr.discover.request.RequestChoices
 import com.cooper.binge.companion.seerr.discover.request.RequestDestination
 import com.cooper.binge.companion.seerr.discover.request.RequestQuota
 import com.cooper.binge.companion.seerr.discover.request.RequestServer
+import com.cooper.binge.companion.seerr.discover.request.RequestUser
 import com.cooper.binge.companion.seerr.discover.request.SeasonChoices
 
 /** One film of a collection as the sheet lists it. It is open to request in a version only while the server holds nothing of it and has no request for it. */
@@ -63,6 +64,19 @@ sealed interface QuotaState {
     ) : QuotaState
 
     data object Failed : QuotaState
+}
+
+/** The users a request can be made for: not offered to most users, read once for the ones it is offered to. */
+sealed interface UsersState {
+    data object None : UsersState
+
+    data object Loading : UsersState
+
+    data class Ready(
+        val users: List<RequestUser>,
+    ) : UsersState
+
+    data object Failed : UsersState
 }
 
 /** The servers the user may choose between, read once and kept. */

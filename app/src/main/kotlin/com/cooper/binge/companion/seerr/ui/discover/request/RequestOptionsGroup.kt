@@ -43,7 +43,8 @@ internal fun RequestOptionsGroup(
             state.seasons?.let { seasonsRow(it, state.submitting, actions, onOpenSeasons) },
             state.films?.let { filmsRow(it, state.submitting, actions, onOpenFilms) },
             fourKRow(state, actions),
-            quotaRow(state, actions),
+            quotaRow(state, actions)?.takeIf { state.requestFor == null },
+            requestForRow(state, actions, onOpenDestination),
         ) + destinationRows(state, actions, onOpenDestination)
     if (rows.isNotEmpty()) ItemGroup(title = null, rows = rows, modifier = modifier)
 }
