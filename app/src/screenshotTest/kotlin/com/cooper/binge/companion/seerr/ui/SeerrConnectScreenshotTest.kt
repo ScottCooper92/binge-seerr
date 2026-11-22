@@ -3,7 +3,6 @@ package com.cooper.binge.companion.seerr.ui
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import com.android.tools.screenshot.PreviewTest
-import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.preview.SeerrScreenPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrScreenStatePreview
 import com.cooper.binge.companion.seerr.preview.SeerrSpanishPreviews
@@ -22,6 +21,7 @@ import com.cooper.homelab.core.uiandroid.connect.ConnectAddressActions
 import com.cooper.homelab.core.uiandroid.connect.ConnectLinkActions
 import com.cooper.homelab.core.uiandroid.connect.ConnectSignInActions
 import com.cooper.homelab.core.uiandroid.flags.LocalFlags
+import com.cooper.homelab.core.uiandroid.R as CoreR
 
 /**
  * The setup flow drawn by the shared connect screen, the one setup screen: the address and each state of it, the not-set-up message, and
@@ -283,4 +283,4 @@ private fun ConnectFrame(
 }
 
 /** The permission prompt the real screen offers while the address waits on it: its label replaces Continue. */
-private val ALLOW = AllowLocalNetwork(R.string.local_network_allow, R.string.local_network_allow_short) {}
+private val ALLOW = AllowLocalNetwork(CoreR.string.connect_local_network_allow, CoreR.string.connect_local_network_allow_short) {}

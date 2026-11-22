@@ -21,12 +21,12 @@ import com.cooper.binge.companion.seerr.util.FakeSeerrServer
 import com.cooper.binge.companion.seerr.util.FakeTitleDao
 import com.cooper.binge.companion.seerr.util.MainDispatcherRule
 import com.cooper.binge.companion.seerr.util.PlainCipher
-import com.cooper.binge.companion.seerr.util.RecordingAnalytics
-import com.cooper.binge.companion.seerr.util.RecordingCrashBreadcrumbs
 import com.cooper.binge.companion.seerr.util.afterProcessDeath
 import com.cooper.binge.companion.seerr.util.awaitEvent
 import com.cooper.homelab.core.review.NoReviewSignals
 import com.cooper.homelab.core.review.ReviewSignalSink
+import com.cooper.homelab.core.testing.RecordingAnalytics
+import com.cooper.homelab.core.testing.RecordingCrashBreadcrumbs
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch

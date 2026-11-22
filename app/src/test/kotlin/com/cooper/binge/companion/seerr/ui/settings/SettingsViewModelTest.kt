@@ -21,10 +21,10 @@ import com.cooper.binge.companion.seerr.util.FakeResponse
 import com.cooper.binge.companion.seerr.util.FakeSeerrServer
 import com.cooper.binge.companion.seerr.util.MainDispatcherRule
 import com.cooper.binge.companion.seerr.util.PlainCipher
-import com.cooper.binge.companion.seerr.util.RecordingAnalytics
 import com.cooper.homelab.core.flags.BooleanPreference
 import com.cooper.homelab.core.telemetry.AnalyticsConsent
 import com.cooper.homelab.core.telemetry.TelemetryPrefs
+import com.cooper.homelab.core.testing.RecordingAnalytics
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first

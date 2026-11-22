@@ -98,7 +98,9 @@ internal class LanAddressHandOffs
                     appLink = TvHandOffLinks.intentUrl(target, context.packageName, fallbackUrl = target.url),
                     token = target.token,
                 )
-            return HandOffOpening.Opened(AddressHandOffListener(server, target.token, target.url, page, key = HandOffKey.generate()))
+            return HandOffOpening.Opened(
+                AddressHandOffListener(server, target.token, target.url, page, key = HandOffKey.generate(), dispatcher = dispatcher),
+            )
         }
 
         private fun lanAddress(): Inet4Address? {

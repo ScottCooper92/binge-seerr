@@ -10,6 +10,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import com.cooper.homelab.core.uiandroid.R as CoreR
 
 /**
  * A screen's failure for a server Android will not let this app reach reads as the hub does: the same words and Allow,
@@ -26,7 +27,7 @@ class LocalNetworkDeniedScreenTest {
 
         rule.onNode(hasText(string(R.string.hub_local_network_headline))).assertExists()
         rule.onNode(hasText(string(R.string.hub_local_network_body))).assertExists()
-        rule.onNode(hasText(string(R.string.local_network_allow))).assertExists()
+        rule.onNode(hasText(string(CoreR.string.connect_local_network_allow))).assertExists()
         rule.onNode(hasText(string(R.string.hub_retry))).assertDoesNotExist()
     }
 
@@ -34,6 +35,6 @@ class LocalNetworkDeniedScreenTest {
     fun `a failure that is only unreachable still offers to try again`() {
         rule.setContent { SeerrTheme { ErrorScreen(error = SeerrError.Unreachable, onRetry = {}) } }
 
-        rule.onNode(hasText(string(R.string.local_network_allow))).assertDoesNotExist()
+        rule.onNode(hasText(string(CoreR.string.connect_local_network_allow))).assertDoesNotExist()
     }
 }

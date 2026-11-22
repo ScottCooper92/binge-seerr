@@ -11,10 +11,10 @@ import com.binge.designsystem.tv.template.TvMessagePage
 import com.binge.designsystem.tv.template.TvPageHosting
 import com.binge.designsystem.tv.template.currentTvPageHosting
 import com.cooper.binge.companion.seerr.seerr.SeerrError
-import com.cooper.binge.companion.seerr.ui.rememberAllowLocalNetwork
 import com.cooper.binge.companion.seerr.ui.state.messageRes
 import com.cooper.binge.companion.seerr.ui.state.titleRes
 import com.cooper.binge.companion.seerr.ui.state.toErrorKind
+import com.cooper.homelab.core.uiandroid.connect.rememberAllowLocalNetwork
 
 /**
  * A detail page that could not load, above Home: what went wrong, and a retry. Shared by the request and issue pages.

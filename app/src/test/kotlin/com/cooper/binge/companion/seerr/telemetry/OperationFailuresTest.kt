@@ -1,6 +1,6 @@
 package com.cooper.binge.companion.seerr.telemetry
 
-import com.cooper.binge.companion.seerr.util.RecordingAnalytics
+import com.cooper.homelab.core.testing.RecordingAnalytics
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Protocol
 import okhttp3.Request
