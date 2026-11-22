@@ -16,6 +16,8 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -24,6 +26,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 
 /** One season's episodes as the page holds them: read once when the season is first selected, and again only after a failure. */
 sealed interface EpisodesState {
@@ -133,8 +136,10 @@ class SeriesPageViewModel
                 attempt { repository.series(tmdbId) }.fold(
                     onSuccess = { series ->
                         val first = (series.seasons.firstOrNull { it.number > 0 } ?: series.seasons.firstOrNull())?.number
-                        state.value = SeriesPageUiState.Ready(series, selectedSeason = first)
-                        loadExtras()
+                        val extrasLoad = async { attempt { repository.extras(tmdbId) }.getOrNull() }
+                        val extras = withTimeoutOrNull(HERO_SETTLE_MS) { extrasLoad.await() }
+                        state.value = SeriesPageUiState.Ready(series, selectedSeason = first, extras = extras)
+                        if (extras == null) loadLateExtras(extrasLoad)
                         first?.let(::loadEpisodes)
                     },
                     onFailure = { state.value = SeriesPageUiState.Error(it.toSeerrError()) },
@@ -282,10 +287,11 @@ class SeriesPageViewModel
 
         private val ready: SeriesPageUiState.Ready? get() = state.value as? SeriesPageUiState.Ready
 
-        private fun loadExtras() {
+        /** Extras that missed the wait fill the rails but not the hero's scores, which would move the copy the page already shows. */
+        private fun loadLateExtras(load: Deferred<TitleExtras?>) {
             viewModelScope.launch {
-                val extras = attempt { repository.extras(tmdbId) }.getOrNull() ?: return@launch
-                updateReady { it.copy(extras = extras) }
+                val late = load.await() ?: return@launch
+                updateReady { it.copy(extras = late.copy(ratings = null)) }
             }
         }
 

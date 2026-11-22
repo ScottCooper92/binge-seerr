@@ -9,6 +9,7 @@ import com.cooper.binge.companion.seerr.discover.ImdbPage
 import com.cooper.binge.companion.seerr.discover.TitleAvailability
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.externalLinks
+import com.cooper.binge.companion.seerr.discover.seededInto
 import com.cooper.binge.companion.seerr.discover.toAvailability
 import com.cooper.binge.companion.seerr.discover.toReleaseYear
 import com.cooper.binge.companion.seerr.discover.toTitlePage
@@ -156,8 +157,11 @@ class SeerrSeriesRepository(
             coroutineScope {
                 val api = api()
                 val ratings = async { attempt { api.tvRatings(tmdbId) }.getOrNull() }
-                val recommendations = async { attempt { api.tvRecommendations(tmdbId) }.getOrNull() }
-                val similar = async { attempt { api.tvSimilar(tmdbId) }.getOrNull() }
+                val read = statuses.beginRead()
+                val recommendations =
+                    async { attempt { api.tvRecommendations(tmdbId) }.getOrNull()?.seededInto(statuses, read, TitleKind.Series) }
+                val similar =
+                    async { attempt { api.tvSimilar(tmdbId) }.getOrNull()?.seededInto(statuses, read, TitleKind.Series) }
                 TitleExtras(
                     ratings =
                         ratings

@@ -22,7 +22,7 @@ import androidx.room.RoomDatabase
         RequestRemoteKeyEntity::class,
         TitleEntity::class,
     ],
-    version = 10,
+    version = 11,
     exportSchema = true,
 )
 abstract class SeerrCacheDatabase : RoomDatabase() {

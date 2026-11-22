@@ -14,7 +14,7 @@ import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 fun String.normaliseBaseUrl(): String = ServerAddress.parse(this)?.url ?: trim()
 
 private const val TMDB_BACKDROP_BASE = "https://image.tmdb.org/t/p/w1280"
-private const val TMDB_POSTER_BASE = "https://image.tmdb.org/t/p/w342"
+internal const val TMDB_POSTER_BASE = "https://image.tmdb.org/t/p/w342"
 private const val TMDB_LOGO_BASE = "https://image.tmdb.org/t/p/w780_filter(duotone,ffffff,bababa)"
 
 /** A TMDB `backdrop_path` (`/abc.jpg`), as `GET backdrops` returns them, to the image URL at sign-in width. */

@@ -123,6 +123,8 @@ suspend fun SeerrIssueDto.toIssueItem(
         backdropUrl = details?.backdropUrl,
         overview = details?.overview,
         certification = details?.certification,
+        rating = details?.rating,
+        genre = details?.genre,
     )
 }
 
@@ -161,6 +163,8 @@ fun IssueItem.toEntity(
         backdropUrl = backdropUrl,
         overview = overview,
         certification = certification,
+        rating = rating,
+        genre = genre,
     )
 
 fun IssueEntity.toIssueItem(): IssueItem =
@@ -185,4 +189,6 @@ fun IssueEntity.toIssueItem(): IssueItem =
         backdropUrl = backdropUrl,
         overview = overview,
         certification = certification,
+        rating = rating,
+        genre = genre,
     )

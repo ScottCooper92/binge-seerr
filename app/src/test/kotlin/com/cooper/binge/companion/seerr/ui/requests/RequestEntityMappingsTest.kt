@@ -26,11 +26,13 @@ class RequestEntityMappingsTest {
             backdropUrl = "https://image.tmdb.org/t/p/w1280/heat-wide.jpg",
             overview = "A crew, a cop.",
             certification = "R",
+            rating = 7.9f,
+            genre = "Crime",
         )
 
     /** The backdrop, synopsis and age rating ride the cached row, or a list read back from the cache would lose them. */
     @Test
-    fun `a request keeps its backdrop, synopsis, age rating and requester's photo through the cache`() {
+    fun `a request keeps its backdrop, synopsis, age rating, score, genre and requester's photo through the cache`() {
         assertEquals(item, item.toEntity(listKey = "all:added", orderIndex = 0).toRequestItem())
     }
 }

@@ -1,5 +1,7 @@
 package com.cooper.binge.companion.seerr.discover.sliders
 
+import com.cooper.binge.companion.seerr.data.TitleStatusStore
+import com.cooper.binge.companion.seerr.discover.seedMedia
 import com.cooper.binge.companion.seerr.seerr.HydratedTitle
 import com.cooper.binge.companion.seerr.seerr.SeerrApi
 import com.cooper.binge.companion.seerr.seerr.SeerrRequestMediaDto
@@ -18,16 +20,27 @@ class SeerrHubMediaSource(
     private val titles: TitleCache,
     private val io: CoroutineDispatcher,
     private val serverUrl: suspend () -> String,
+    private val statuses: TitleStatusStore,
 ) : HubMediaSource {
     override suspend fun serverUrl(): String = serverUrl.invoke()
 
     override suspend fun recentlyAdded(): List<SeerrRequestMediaDto> {
         if (!profile().hasRecentlyAdded) return emptyList()
-        return withContext(io) { api().mediaList(filter = "allavailable", take = MEDIA_WINDOW, sort = "mediaAdded").results }
+        return withContext(io) {
+            val read = statuses.beginRead()
+            val media = api().mediaList(filter = "allavailable", take = MEDIA_WINDOW, sort = "mediaAdded").results
+            statuses.seedMedia(read, media)
+            media
+        }
     }
 
     override suspend fun recentRequests(): List<SeerrRequestMediaDto> =
-        withContext(io) { api().requests(take = MEDIA_WINDOW, sort = "added").results.map { it.media } }
+        withContext(io) {
+            val read = statuses.beginRead()
+            val media = api().requests(take = MEDIA_WINDOW, sort = "added").results.map { it.media }
+            statuses.seedMedia(read, media)
+            media
+        }
 
     override suspend fun hydrate(
         mediaType: String,

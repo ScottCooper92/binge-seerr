@@ -30,8 +30,10 @@ object HubsModule {
     fun titleListRepository(
         connection: SeerrConnection,
         statuses: TitleStatusStore,
+        titles: TitleCache,
         @IoDispatcher io: CoroutineDispatcher,
-    ): TitleListRepository = SeerrTitleListRepository(api = connection::api, profile = connection::profile, io = io, statuses = statuses)
+    ): TitleListRepository =
+        SeerrTitleListRepository(api = connection::api, profile = connection::profile, io = io, titles = titles, statuses = statuses)
 
     @Provides
     @Singleton
@@ -42,11 +44,17 @@ object HubsModule {
     fun hubMediaSource(
         connection: SeerrConnection,
         titles: TitleCache,
+        statuses: TitleStatusStore,
         @IoDispatcher io: CoroutineDispatcher,
     ): HubMediaSource =
-        SeerrHubMediaSource(api = connection::api, profile = connection::profile, titles = titles, io = io, serverUrl = {
-            connection.current().baseUrl
-        })
+        SeerrHubMediaSource(
+            api = connection::api,
+            profile = connection::profile,
+            titles = titles,
+            io = io,
+            serverUrl = { connection.current().baseUrl },
+            statuses = statuses,
+        )
 
     @Provides
     fun hubCardLoader(
