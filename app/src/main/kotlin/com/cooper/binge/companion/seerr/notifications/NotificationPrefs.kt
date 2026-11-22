@@ -8,6 +8,8 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
+import com.cooper.homelab.core.notifications.POLL_INTERVAL_CHOICES
+import com.cooper.homelab.core.notifications.PollPrefs
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -34,11 +36,7 @@ enum class NotificationSignal(
 
 private val LAST_RUN = longPreferencesKey("last_run_millis")
 
-private val POLL_INTERVAL = intPreferencesKey("poll_interval_minutes")
-
-/** How often the poll may run, in minutes: WorkManager's 15 is the floor, so these are the steps from there. */
-val POLL_INTERVAL_CHOICES: List<Int> = listOf(15, 30, 60, 120, 360)
-
+/** The poll's interval when none is stored, in minutes: WorkManager's 15 is the floor. */
 const val DEFAULT_POLL_INTERVAL_MINUTES: Int = 15
 
 /**
@@ -58,6 +56,9 @@ class NotificationPrefs(
     /** Starts a signal's cursor over wherever the cursors are kept; [CursorReset.None] while they are the preferences below. */
     private val cursorReset: CursorReset = CursorReset.None,
 ) {
+    /** The interval is the shared library's. It stores under `poll_interval_minutes`, the key this app always has. */
+    private val pollPrefs = PollPrefs(dataStore, DEFAULT_POLL_INTERVAL_MINUTES)
+
     fun enabled(signal: NotificationSignal): Flow<Boolean> = dataStore.data.map { it[signal.toggleKey()] ?: false }.distinctUntilChanged()
 
     /** On while any signal is; what the poll's schedule follows. */
@@ -140,14 +141,11 @@ class NotificationPrefs(
     }
 
     /** How often the poll is asked to run, always one of [POLL_INTERVAL_CHOICES]; Android may run it less often than this. */
-    val pollIntervalMinutes: Flow<Int> =
-        dataStore.data
-            .map { prefs -> prefs[POLL_INTERVAL]?.takeIf { it in POLL_INTERVAL_CHOICES } ?: DEFAULT_POLL_INTERVAL_MINUTES }
-            .distinctUntilChanged()
+    val pollIntervalMinutes: Flow<Int> = pollPrefs.intervalMinutes
 
     suspend fun setPollIntervalMinutes(minutes: Int) {
         require(minutes in POLL_INTERVAL_CHOICES) { "No poll interval of $minutes minutes" }
-        dataStore.edit { it[POLL_INTERVAL] = minutes }
+        pollPrefs.setIntervalMinutes(minutes)
     }
 
     /** When the poll last finished, for the settings row; null before its first run. */
