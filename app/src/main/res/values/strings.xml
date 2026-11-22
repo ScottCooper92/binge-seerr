@@ -318,7 +318,6 @@
     </plurals>
     <string name="request_approve">Approve request</string>
     <string name="request_retry">Retry request</string>
-    <string name="request_send_again">Send again</string>
     <string name="request_decline">Decline request</string>
     <string name="request_decline_and_block">Decline and block</string>
     <string name="request_remove">Remove request</string>
