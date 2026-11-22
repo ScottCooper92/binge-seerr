@@ -14,13 +14,13 @@ import com.cooper.binge.companion.seerr.handoff.HandOffOpening
 import com.cooper.binge.companion.seerr.handoff.HandOffProgress
 import com.cooper.binge.companion.seerr.seerr.PlexClientIdentity
 import com.cooper.binge.companion.seerr.seerr.SeerrApiFactory
-import com.cooper.binge.companion.seerr.seerr.SeerrAuth
 import com.cooper.binge.companion.seerr.seerr.plexTvApi
 import com.cooper.binge.companion.seerr.util.FakeResponse
 import com.cooper.binge.companion.seerr.util.FakeSeerrServer
 import com.cooper.binge.companion.seerr.util.MainDispatcherRule
 import com.cooper.binge.companion.seerr.util.PlainCipher
 import com.cooper.homelab.core.server.network.DataStoreCleartextConsent
+import com.cooper.homelab.core.server.network.LocalNetworkPermission
 import com.cooper.homelab.core.testing.InMemoryDataStore
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.delay
@@ -29,7 +29,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.selects.select
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
-import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withTimeout
 import okhttp3.Headers.Companion.headersOf
@@ -37,7 +36,6 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
-import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -50,7 +48,7 @@ import kotlin.time.Duration.Companion.milliseconds
  * address a phone sends goes exactly where a typed one does, and the listener is closed on every way
  * out. The listener itself is faked here; `AddressHandOffListenerTest` covers it over real sockets.
  */
-class SetupViewModelHandOffTest {
+class SharedSetupHandOffTest {
     @get:Rule
     val folder = TemporaryFolder()
 
@@ -70,7 +68,7 @@ class SetupViewModelHandOffTest {
         seerr.awaitIdle()
     }
 
-    private fun TestScope.viewModel(handOffs: AddressHandOffs): SetupViewModel {
+    private fun TestScope.viewModel(handOffs: AddressHandOffs): SharedSetupViewModel {
         val connection =
             SeerrConnection(
                 store =
@@ -89,7 +87,7 @@ class SetupViewModelHandOffTest {
                 cleartext = cleartext,
             )
         val vm =
-            SetupViewModel(
+            SharedSetupViewModel(
                 connection = connection,
                 plex =
                     PlexPinFlow(
@@ -107,6 +105,8 @@ class SetupViewModelHandOffTest {
                 savedState = SavedStateHandle(),
                 cipher = PlainCipher,
                 handOffs = handOffs,
+                cleartext = cleartext,
+                localNetwork = LocalNetworkPermission.AlwaysGranted,
                 dispatcher = mainDispatcherRule.dispatcher,
             )
         viewModels.put(vm.hashCode().toString(), vm)
@@ -114,11 +114,11 @@ class SetupViewModelHandOffTest {
         return vm
     }
 
-    private suspend fun SetupViewModel.awaitAddress(match: (SetupUiState.Address) -> Boolean = { true }): SetupUiState.Address =
+    private suspend fun SharedSetupViewModel.awaitAddress(match: (SetupUiState.Address) -> Boolean = { true }): SetupUiState.Address =
         uiState.first { it is SetupUiState.Address && match(it) } as SetupUiState.Address
 
     /** The TV's user going on with an address a phone sent, once it is on screen waiting for them (#1084). */
-    private suspend fun SetupViewModel.confirmSent() {
+    private suspend fun SharedSetupViewModel.confirmSent() {
         awaitAddress { it.awaitingConfirm }
         inspect()
     }
@@ -426,147 +426,6 @@ class SetupViewModelHandOffTest {
                 failing.awaitAddress { it.handOff is AddressHandOff.Unavailable }.handOff,
             )
             assertTrue(session.closed)
-        }
-
-    @Test
-    fun `credentials a phone sent sign the TV in as if typed, and the page hears how it went`() =
-        runTest {
-            val session = FakeSession()
-            val vm = viewModel { HandOffOpening.Opened(session) }
-            vm.awaitAddress()
-            vm.showHandOff(true)
-            vm.awaitAddress { it.handOff != null }
-            seerr.enqueueProfile(json("""{"version":"3.4.0"}"""), json("""{"mediaServerType":2,"localLogin":true}"""))
-            seerr.enqueue(json("[]"))
-            session.address.complete(seerr.url("/"))
-            vm.confirmSent()
-            vm.uiState.first { it is SetupUiState.SignIn }
-            val progress = session.progress() as HandOffProgress.SignIn
-            assertEquals(listOf("Local"), progress.modes.filter { it == "Local" })
-
-            // A refused sign-in: the page is told, and the form is the phone's to fill again.
-            seerr.enqueue(FakeResponse(code = 401, headers = headersOf("Content-Type", "application/json"), body = """{"message":"no"}"""))
-            session.sendCredentials(HandOffCredentials(mode = "Local", email = "ana@example.com", password = "wrong"))
-            val refused = vm.uiState.first { it is SetupUiState.SignIn && it.error != null } as SetupUiState.SignIn
-            assertEquals("ana@example.com", refused.form.email)
-            assertTrue((session.progress() as HandOffProgress.SignIn).failed)
-        }
-
-    @Test
-    fun `an address that comes with the phone's session signs the TV straight in, without its sign-in form`() =
-        runTest {
-            val session = FakeSession().apply { handedSession = "ph0n3" }
-            val vm = viewModel { HandOffOpening.Opened(session) }
-            vm.awaitAddress()
-            vm.showHandOff(true)
-            vm.awaitAddress { it.handOff != null }
-            seerr.enqueueProfile(json("""{"version":"3.4.0"}"""), json("""{"mediaServerType":2,"localLogin":true}"""))
-            seerr.enqueue(json("[]"))
-            seerr.enqueue(json("""{"id":9,"permissions":2}"""))
-            seerr.enqueueProfile(json("""{"version":"3.4.0"}"""), json("""{"mediaServerType":2,"localLogin":true}"""))
-            val states = mutableListOf<SetupUiState>()
-            backgroundScope.launch { vm.uiState.collect { states += it } }
-
-            session.address.complete(seerr.url("/"))
-            val connected = vm.uiState.first { it is SetupUiState.Connected } as SetupUiState.Connected
-
-            assertEquals(SeerrAuth.Session(cookie = "ph0n3", userId = 9, shared = true), connected.credentials.auth)
-            assertTrue("the form never shows on the way", states.none { it is SetupUiState.SignIn })
-        }
-
-    @Test
-    fun `the listener outlives the setup once the TV is signed in, so the phone can still read Connected`() =
-        runTest {
-            val session = FakeSession().apply { handedSession = "ph0n3" }
-            val handOffs = RecordingHandOffs(session)
-            val vm = viewModel(handOffs)
-            vm.awaitAddress()
-            vm.showHandOff(true)
-            vm.awaitAddress { it.handOff != null }
-            seerr.enqueueProfile(json("""{"version":"3.4.0"}"""), json("""{"mediaServerType":2,"localLogin":true}"""))
-            seerr.enqueue(json("[]"))
-            seerr.enqueue(json("""{"id":9,"permissions":2}"""))
-            seerr.enqueueProfile(json("""{"version":"3.4.0"}"""), json("""{"mediaServerType":2,"localLogin":true}"""))
-            session.address.complete(seerr.url("/"))
-            vm.uiState.first { it is SetupUiState.Connected }
-
-            viewModels.clear()
-            advanceUntilIdle()
-
-            assertSame("handed on to outlive the screen", session, handOffs.lingered)
-            assertFalse("not closed under the phone", session.closed)
-        }
-
-    @Test
-    fun `a handed session the server refuses leaves the sign-in form up, saying so, and the phone hears it failed`() =
-        runTest {
-            val session = FakeSession().apply { handedSession = "st4l3" }
-            val vm = viewModel { HandOffOpening.Opened(session) }
-            vm.awaitAddress()
-            vm.showHandOff(true)
-            vm.awaitAddress { it.handOff != null }
-            seerr.enqueueProfile(json("""{"version":"3.4.0"}"""), json("""{"mediaServerType":2,"localLogin":true}"""))
-            seerr.enqueue(json("[]"))
-            seerr.enqueue(FakeResponse(code = 401, headers = headersOf("Content-Type", "application/json"), body = """{"message":"no"}"""))
-
-            session.address.complete(seerr.url("/"))
-            val refused = vm.uiState.first { it is SetupUiState.SignIn && it.error != null } as SetupUiState.SignIn
-
-            assertEquals(SetupError.HandOffSessionRejected, refused.error)
-            val progress = session.progress() as HandOffProgress.SignIn
-            assertTrue(progress.failed)
-            assertEquals(1, progress.attempt)
-        }
-
-    @Test
-    fun `a handed session is dropped when the server is not set up, so a later read cannot adopt it`() =
-        runTest {
-            val session = FakeSession().apply { handedSession = "ph0n3" }
-            val vm = viewModel { HandOffOpening.Opened(session) }
-            vm.awaitAddress()
-            vm.showHandOff(true)
-            vm.awaitAddress { it.handOff != null }
-            seerr.enqueueProfile(json("""{"version":"3.4.0"}"""), json("""{"initialized":false}"""))
-
-            session.address.complete(seerr.url("/"))
-            vm.uiState.first { it is SetupUiState.NotSetUp }
-            assertEquals("the phone is told the server is not set up, not that it failed", HandOffProgress.NotSetUp, session.progress())
-
-            seerr.enqueueProfile(json("""{"version":"3.4.0"}"""), json("""{"initialized":true,"mediaServerType":2,"localLogin":true}"""))
-            seerr.enqueue(json("[]"))
-            vm.inspect()
-            val signIn = vm.uiState.first { it is SetupUiState.SignIn } as SetupUiState.SignIn
-
-            assertNull("no stale session was tried against the set-up server", signIn.error)
-            assertTrue(seerr.requests.none { it.url.encodedPath.endsWith("/auth/me") })
-            assertEquals(
-                "the one attempt the phone was told about, not one per check",
-                1,
-                (session.progress() as HandOffProgress.SignIn).attempt,
-            )
-        }
-
-    @Test
-    fun `changing server drops a handed session that was still waiting`() =
-        runTest {
-            val session = FakeSession().apply { handedSession = "ph0n3" }
-            val vm = viewModel { HandOffOpening.Opened(session) }
-            vm.awaitAddress()
-            vm.showHandOff(true)
-            vm.awaitAddress { it.handOff != null }
-            seerr.enqueueProfile(json("""{"version":"3.4.0"}"""), json("""{"initialized":false}"""))
-            session.address.complete(seerr.url("/"))
-            vm.uiState.first { it is SetupUiState.NotSetUp }
-
-            vm.changeServer()
-            vm.awaitAddress()
-            seerr.enqueueProfile(json("""{"version":"3.4.0"}"""), json("""{"initialized":true,"mediaServerType":2,"localLogin":true}"""))
-            seerr.enqueue(json("[]"))
-            vm.editAddress(seerr.url("/"))
-            vm.inspect()
-
-            assertNull(vm.uiState.first { it is SetupUiState.SignIn }.let { (it as SetupUiState.SignIn).error })
-            assertTrue(seerr.requests.none { it.url.encodedPath.endsWith("/auth/me") })
         }
 
     @Test

@@ -13,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.binge.designsystem.component.BingeBarIconAction
 import com.binge.designsystem.template.BingeScreenScaffold
+import com.binge.designsystem.template.ScreenBar
 import com.binge.designsystem.template.screenInnerPadding
 import com.binge.designsystem.template.screenOuterPadding
 
@@ -46,6 +47,7 @@ internal fun OverflowDetailScaffold(
         title = title,
         modifier = modifier,
         onBack = onBack,
+        bar = ScreenBar.Small,
         snackbarHostState = snackbarHostState,
         actions = { glassBackgroundAlpha ->
             leadingActions()

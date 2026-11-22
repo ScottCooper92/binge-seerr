@@ -23,7 +23,7 @@ private const val SHARED_PENDING_LINK = "sharedPendingLink"
 
 /**
  * The pending link of the shared setup, kept in the saved state so it outlives the process dying while the user approves elsewhere.
- * Its own key: the old setup keeps a record of another shape under `pendingLink`, and neither reads the other's.
+ * Its own key, so a record an earlier build left under `pendingLink`, of another shape, is never read as this one.
  */
 internal class SavedStateLinkStash(
     private val savedState: SavedStateHandle,

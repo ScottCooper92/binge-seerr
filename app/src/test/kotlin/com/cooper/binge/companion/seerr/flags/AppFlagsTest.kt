@@ -49,10 +49,9 @@ class AppFlagsTest {
         assertEquals("discovery_enabled", DiscoveryEnabled.key)
         assertEquals("search_toggles_enabled", SearchToggles.key)
         assertEquals(
-            listOf(SharedFlags.BingePromotion, SharedFlags.ReviewPrompt, DiscoveryEnabled, SharedSetupEnabled, TvDiscoveryEnabled),
+            listOf(SharedFlags.BingePromotion, SharedFlags.ReviewPrompt, DiscoveryEnabled, TvDiscoveryEnabled),
             RemoteFlagKeys,
         )
-        assertEquals("shared_setup_enabled", SharedSetupEnabled.key)
         assertEquals("tv_discovery_enabled", TvDiscoveryEnabled.key)
     }
 

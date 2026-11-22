@@ -32,17 +32,17 @@ class LocalFlagsTest {
     fun `nothing is advertised until a root provides the flags`() {
         var promoted = true
         var review = true
-        var shared = true
+        var tvDiscovery = true
         composeTestRule.setContent {
             promoted = LocalFlags.current.bingePromotion
             review = LocalFlags.current.reviewPrompt
-            shared = LocalFlags.current[SharedSetupEnabled]
+            tvDiscovery = LocalFlags.current[TvDiscoveryEnabled]
         }
         composeTestRule.waitForIdle()
 
         assertFalse(promoted)
         assertFalse(review)
-        assertFalse(shared)
+        assertFalse(tvDiscovery)
     }
 
     @Test
@@ -52,7 +52,7 @@ class LocalFlagsTest {
                 InMemoryDataStore(
                     mutablePreferencesOf(
                         booleanPreferencesKey("override_binge_promotion_enabled") to true,
-                        booleanPreferencesKey("override_shared_setup_enabled") to true,
+                        booleanPreferencesKey("override_tv_discovery_enabled") to true,
                     ),
                 )
             val onDisk = DataStoreFlagOverrides(stored).values.first()
@@ -65,18 +65,18 @@ class LocalFlagsTest {
                 )
             var promoted = false
             var review = true
-            var shared = false
+            var tvDiscovery = false
             composeTestRule.setContent {
                 CompositionLocalProvider(LocalFlags provides provided) {
                     promoted = LocalFlags.current.bingePromotion
                     review = LocalFlags.current.reviewPrompt
-                    shared = LocalFlags.current[SharedSetupEnabled]
+                    tvDiscovery = LocalFlags.current[TvDiscoveryEnabled]
                 }
             }
             composeTestRule.waitForIdle()
 
             assertTrue(promoted)
-            assertTrue(shared)
+            assertTrue(tvDiscovery)
             assertFalse(review)
         }
 }

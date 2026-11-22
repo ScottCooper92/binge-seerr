@@ -17,7 +17,7 @@ import com.cooper.binge.companion.seerr.seerr.SeerrApiFactory
 import com.cooper.binge.companion.seerr.seerr.SeerrAuth
 import com.cooper.binge.companion.seerr.seerr.SeerrSignInMode
 import com.cooper.binge.companion.seerr.seerr.SeerrVariant
-import com.cooper.binge.companion.seerr.ui.SetupViewModelHandOffTest.FakeSession
+import com.cooper.binge.companion.seerr.ui.SharedSetupHandOffTest.FakeSession
 import com.cooper.binge.companion.seerr.util.FakeResponse
 import com.cooper.binge.companion.seerr.util.FakeSeerrServer
 import com.cooper.binge.companion.seerr.util.MainDispatcherRule
@@ -47,8 +47,8 @@ import org.junit.rules.TemporaryFolder
 import java.io.IOException
 
 /**
- * Setup on the shared connect machine, behind the shared-setup flag: the same two steps as [SetupViewModelTest], read through the
- * screens' own [SetupUiState]. The machine's own rules (the plain-HTTP opt-in, the port fallback, re-entrancy) are the shared
+ * Setup on the shared connect machine: the address and sign-in steps, read through the screens' own [SetupUiState]; the flow's
+ * remaining cases are in [SharedSetupFlowTest], [SharedSetupLinksTest], [SharedSetupHandOffTest] and [SharedSetupDemoTest]. The machine's own rules (the plain-HTTP opt-in, the port fallback, re-entrancy) are the shared
  * library's tests; what is here is what this app adds to them: its probe, its sign-ins, its errors and the television's hand-off.
  */
 class SharedSetupViewModelTest {

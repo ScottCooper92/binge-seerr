@@ -25,6 +25,12 @@ internal class DemoTitle(
 ) {
     val isMovie: Boolean get() = mediaType == MOVIE
 
+    /**
+     * The still a hero and a title page lean on, one of the sign-in page's own so each is artwork the demo already serves. They are
+     * handed round by media id, so neighbouring titles differ and no title is without one, a placeholder included.
+     */
+    val backdrop: String get() = DEMO_BACKDROPS[mediaId % DEMO_BACKDROPS.size]
+
     fun details(
         status: SeerrMediaStatusCode,
         info: SeerrMediaInfoDto,
@@ -33,6 +39,7 @@ internal class DemoTitle(
         title = title.takeIf { isMovie },
         name = title.takeUnless { isMovie },
         posterPath = poster.ifBlank { null },
+        backdropPath = backdrop,
         overview = overview.ifBlank { null },
         releaseDate = "$year-01-01".takeIf { isMovie && year > 0 },
         firstAirDate = "$year-01-01".takeIf { !isMovie && year > 0 },

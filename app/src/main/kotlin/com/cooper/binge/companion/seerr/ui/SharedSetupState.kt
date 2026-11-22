@@ -8,6 +8,7 @@ import com.cooper.homelab.core.presentation.connect.ConnectState
 import com.cooper.homelab.core.presentation.connect.LinkState
 import com.cooper.homelab.core.presentation.connect.SignInMode
 import com.cooper.homelab.core.telemetry.Analytics
+import kotlin.time.Duration.Companion.seconds
 import com.cooper.homelab.core.presentation.connect.SignInForm as ConnectForm
 
 /**
@@ -141,3 +142,6 @@ internal fun LinkState.toLinkFlow(mode: SignInMode?): LinkFlow =
     } else {
         LinkFlow.QuickConnect(code)
     }
+
+/** How long Forgot password? waits after a reset link went out before it will ask for another. */
+internal val RESET_COOLDOWN = 60.seconds
