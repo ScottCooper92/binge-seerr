@@ -27,7 +27,9 @@ class DataStoreCorruptionTest {
             file.writeBytes(byteArrayOf(0x0A, 0xFF.toByte(), 0xFF.toByte()))
             val store = PreferenceDataStoreFactory.create(corruptionHandler = corruptionHandler(), scope = backgroundScope) { file }
 
-            assertTrue(store.data.first().asMap().isEmpty())
+            val read = store.data.first()
+
+            assertTrue(read.asMap().isEmpty())
         }
 
     @Test
@@ -45,10 +47,18 @@ class DataStoreCorruptionTest {
     @Test
     fun `every preferences store in di carries the handler`() {
         val sources = File("src/main/kotlin/com/cooper/binge/companion/seerr/di").listFiles { f -> f.extension == "kt" }.orEmpty()
-        val declared = sources.sumOf { it.readText().split("preferencesDataStore(").size - 1 }
-        val handled = sources.sumOf { it.readText().split("corruptionHandler = corruptionHandler()").size - 1 }
+        val declared = sources.sumOf { occurrences(it, "preferencesDataStore(") }
+        val handled = sources.sumOf { occurrences(it, "corruptionHandler = corruptionHandler()") }
 
         assertTrue("expected the $STORE_COUNT stores, found $declared", declared >= STORE_COUNT)
         assertEquals("a store is missing its corruption handler", declared, handled)
+    }
+
+    private fun occurrences(
+        file: File,
+        needle: String,
+    ): Int {
+        val parts = file.readText().split(needle)
+        return parts.size - 1
     }
 }
