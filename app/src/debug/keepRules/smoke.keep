@@ -1,14 +1,12 @@
 # Keeps for the device smoke's test code only (#2648). Debug-only, so the release APK does not carry them.
 #
 # The test APK resolves every class it does not define from the app's dex, and `-PminifyDebug`
-# shrinks the app first. These are the classes the smoke test reaches that the app never does, found
-# by diffing what the test APK references against what either APK defines:
-#
-#   apkanalyzer dex packages app-debug-androidTest.apk        (the `C` rows flagged `r`)
-#   apkanalyzer dex packages --defined-only app-debug.apk app-debug-androidTest.apk
+# shrinks the app first. These are what the smoke test reaches that the app never does. How to find
+# the next one is in docs/device-smoke.md ("Finding the next one").
 #
 # The app is the Service side of the Binder, so the client half of gRPC and the test's flag fakes are
-# not in it. An exact list, with the reason for each; do not widen it to a package.
+# not in it. Each rule is exact, with its reason beside it, except where the test loads a whole
+# generated set by name (the Hilt graph, OkHttp's WebSocket classes). Do not widen the others.
 
 # MockWebServer, in the test APK, uses these Kotlin facades; the app inlines or avoids them.
 -keep class kotlin.collections.CollectionsKt { *; }

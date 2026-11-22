@@ -2,7 +2,9 @@
 
 `device-smoke.yml` installs the minified debug build (`-PminifyDebug`) and its test APK on an
 emulator and runs `CompanionServiceRoundTripTest`. It proves the release keep rules hold across a
-real Binder: the exported Service, the generated stubs and the protobuf runtime.
+real Binder: the exported Service, the generated stubs and the protobuf runtime. The lane's build is
+release's shrinking plus the test keeps below, so it can only miss a release-only removal inside
+the classes those keeps hold.
 
 ## A crashed run can read as green
 
