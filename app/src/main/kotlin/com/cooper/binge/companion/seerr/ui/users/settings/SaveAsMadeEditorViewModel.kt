@@ -7,6 +7,7 @@ import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
 import com.cooper.homelab.core.foundation.ServerFailure
 import com.cooper.homelab.core.presentation.editor.EditorState
+import com.cooper.homelab.core.presentation.editor.RefusalNotice
 import com.cooper.homelab.core.presentation.editor.SettingsEditorViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -20,10 +21,10 @@ import kotlinx.coroutines.launch
 
 /**
  * A settings page that saves as it changes, on the shared library's engine, shown through the same [uiState] and [events] as
- * any other editor here. A refusal is said through [EditorEvent.Failed] with the server's own reason, as [EditorViewModel]
- * does: any reason is a dialog, and no reason is a snackbar. A write the local-network permission blocked is kept unsent with a
- * retry, as before, so [classify] reports it as unreachable. A write that fails on cleartext or a client certificate is now put
- * back and reported, not kept: it cannot follow a load that worked.
+ * any other editor here. A refusal is said through [EditorEvent.Failed], and the library's [RefusalNotice] decides, through
+ * [toRefusedEvent], whether the server's own reason goes with it: a dialog for any reason, a snackbar for none. A write the
+ * local-network permission blocked is kept unsent with a retry, as before, so [classify] reports it as unreachable. A write that
+ * fails on cleartext or a client certificate is now put back and reported, not kept: it cannot follow a load that worked.
  */
 abstract class SaveAsMadeEditorViewModel<T>(
     private val dispatcher: CoroutineDispatcher,
