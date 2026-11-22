@@ -1,6 +1,7 @@
 package com.cooper.binge.companion.seerr.auth
 
 import com.cooper.binge.companion.seerr.demo.isDemo
+import com.cooper.binge.companion.seerr.seerr.SeerrCertificateRefusedInterceptor
 import com.cooper.binge.companion.seerr.seerr.SeerrClientCertificateInterceptor
 import com.cooper.binge.companion.seerr.seerr.isArrProxyRoute
 import com.cooper.binge.companion.seerr.seerr.isSessionRejection
@@ -40,6 +41,12 @@ enum class SeerrConnectionHealth {
      * the app cannot send (#2156). Only ever a refinement of [Unreachable]: it takes the same two failures to get here.
      */
     ClientCertificateNeeded,
+
+    /**
+     * Server unreachable the way [Unreachable] is, except that the device refused the server's own certificate. Not transient:
+     * the same address will be refused again, so it is a refinement of [Unreachable] that offers no retry.
+     */
+    CertificateRefused,
 }
 
 /** A single transient failure can be a blip; only a run of them with no answer between reads as unreachable. */
@@ -73,6 +80,7 @@ class SeerrHealth(
         listOf(
             ConnectionHealthInterceptor(monitor, id, sessionRejected = ::isSessionRejection, alwaysReached = HttpUrl::isDemo),
             SeerrClientCertificateInterceptor(::reportClientCertificate),
+            SeerrCertificateRefusedInterceptor(::reportCertificateRefused),
         )
 
     val health: Flow<ConnectionHealth> = flow { emitAll(monitor.health(serverId())) }
@@ -86,15 +94,26 @@ class SeerrHealth(
         clientCertificate.value = needed
     }
 
+    private val certificateRefusedState = MutableStateFlow(false)
+
+    /** Whether the failures that make the server read as unreachable were the device refusing the server's certificate. */
+    val certificateRefused: Flow<Boolean> = certificateRefusedState
+
+    internal fun reportCertificateRefused(refused: Boolean) {
+        certificateRefusedState.value = refused
+    }
+
     /** A connection was just validated against the server: start clean at healthy. */
     suspend fun onConnected() {
         clientCertificate.value = false
+        certificateRefusedState.value = false
         monitor.onConnected(serverId())
     }
 
     /** The credentials were cleared: whatever the last call said no longer describes anything. */
     suspend fun reset() {
         clientCertificate.value = false
+        certificateRefusedState.value = false
         monitor.reset(serverId())
     }
 
@@ -113,10 +132,16 @@ internal fun ConnectionHealth.toSeerr(): SeerrConnectionHealth =
         ConnectionHealth.Unauthorized -> SeerrConnectionHealth.Unauthorized
     }
 
-/** The monitor's verdict, with an unreachable server told apart when it asked for a client certificate. */
-internal fun ConnectionHealth.toSeerr(clientCertificateNeeded: Boolean): SeerrConnectionHealth =
-    if (this == ConnectionHealth.Unreachable && clientCertificateNeeded) {
-        SeerrConnectionHealth.ClientCertificateNeeded
-    } else {
-        toSeerr()
+/**
+ * The monitor's verdict, with an unreachable server told apart when it refused its certificate or asked for a client certificate.
+ * A refused server certificate comes first: it fails the handshake before a client certificate could be asked for.
+ */
+internal fun ConnectionHealth.toSeerr(
+    clientCertificateNeeded: Boolean,
+    certificateRefused: Boolean = false,
+): SeerrConnectionHealth =
+    when {
+        this == ConnectionHealth.Unreachable && certificateRefused -> SeerrConnectionHealth.CertificateRefused
+        this == ConnectionHealth.Unreachable && clientCertificateNeeded -> SeerrConnectionHealth.ClientCertificateNeeded
+        else -> toSeerr()
     }

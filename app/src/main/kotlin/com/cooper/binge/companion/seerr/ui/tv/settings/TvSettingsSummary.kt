@@ -47,6 +47,7 @@ private fun ConnectionHealth.labelRes(): Int =
         ConnectionHealth.CouldNotLoad -> R.string.hub_couldnt_load_headline
         ConnectionHealth.LocalNetworkDenied -> R.string.hub_local_network_headline
         ConnectionHealth.ClientCertificateNeeded -> R.string.hub_client_certificate_headline
+        ConnectionHealth.CertificateRefused -> R.string.hub_certificate_refused_headline
         ConnectionHealth.Unreachable -> R.string.hub_unreachable_headline
     }
 

@@ -208,6 +208,8 @@ app:hub_binge_get  d0d7d58e7428
 app:hub_binge_not_installed_detail  a8e52a9826f0
 app:hub_binge_not_installed_title  d7e27e16cd15
 app:hub_binge_open  f95bbc9b91f4
+app:hub_certificate_refused_body  115ac8b47f86
+app:hub_certificate_refused_headline  d687dc3b2efa
 app:hub_client_certificate_body  feef48a58320
 app:hub_client_certificate_headline  015f84117dd7
 app:hub_couldnt_load_body  221fccfe8796

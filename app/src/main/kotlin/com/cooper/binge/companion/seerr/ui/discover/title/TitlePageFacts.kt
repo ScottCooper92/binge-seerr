@@ -2,14 +2,14 @@ package com.cooper.binge.companion.seerr.ui.discover.title
 
 import android.content.res.Resources
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Business
-import androidx.compose.material.icons.outlined.CalendarMonth
-import androidx.compose.material.icons.outlined.Info
-import androidx.compose.material.icons.outlined.Language
-import androidx.compose.material.icons.outlined.Payments
-import androidx.compose.material.icons.outlined.Translate
-import androidx.compose.material.icons.outlined.TrendingUp
-import androidx.compose.material.icons.outlined.Videocam
+import androidx.compose.material.icons.filled.Business
+import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Language
+import androidx.compose.material.icons.filled.Payments
+import androidx.compose.material.icons.filled.Translate
+import androidx.compose.material.icons.filled.TrendingUp
+import androidx.compose.material.icons.filled.Videocam
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.binge.designsystem.component.DetailInfoEntry
 import com.cooper.binge.companion.seerr.R
@@ -42,20 +42,20 @@ internal fun MovieDetails.detailEntries(
             maximumFractionDigits = 0
         }
     return listOf(
-        peopleEntry(Icons.Outlined.Videocam, resources.getString(R.string.title_page_fact_director), keyCrew.directors(), onOpenPerson),
-        entry(Icons.Outlined.CalendarMonth, R.string.title_page_fact_release_date, releaseDate.toDisplayDate(locale)),
-        entry(Icons.Outlined.Language, R.string.title_page_fact_original_language, originalLanguage?.let { languageName(it, locale) }),
+        peopleEntry(Icons.Filled.Videocam, resources.getString(R.string.title_page_fact_director), keyCrew.directors(), onOpenPerson),
+        entry(Icons.Filled.CalendarMonth, R.string.title_page_fact_release_date, releaseDate.toDisplayDate(locale)),
+        entry(Icons.Filled.Language, R.string.title_page_fact_original_language, originalLanguage?.let { languageName(it, locale) }),
         entry(
-            Icons.Outlined.Translate,
+            Icons.Filled.Translate,
             R.string.title_page_fact_spoken_languages,
             spokenLanguageCodes.joinToString(", ") {
                 languageName(it, locale)
             },
         ),
-        companyEntry(Icons.Outlined.Business, resources.getString(R.string.title_page_fact_studios), studios, onOpenCompany),
-        entry(Icons.Outlined.Info, R.string.title_page_fact_status, status?.let { statusLabelRes(it)?.let(resources::getString) ?: it }),
-        entry(Icons.Outlined.Payments, R.string.title_page_fact_budget, budget?.let(money::format)),
-        entry(Icons.Outlined.TrendingUp, R.string.title_page_fact_revenue, revenue?.let(money::format)),
+        companyEntry(Icons.Filled.Business, resources.getString(R.string.title_page_fact_studios), studios, onOpenCompany),
+        entry(Icons.Filled.Info, R.string.title_page_fact_status, status?.let { statusLabelRes(it)?.let(resources::getString) ?: it }),
+        entry(Icons.Filled.Payments, R.string.title_page_fact_budget, budget?.let(money::format)),
+        entry(Icons.Filled.TrendingUp, R.string.title_page_fact_revenue, revenue?.let(money::format)),
     )
 }
 
