@@ -3,26 +3,21 @@ package com.cooper.binge.companion.seerr.ui.discover.request
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.binge.companion.sdk.attempt
-import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.request.ItemSelection
 import com.cooper.binge.companion.seerr.discover.request.RequestAccess
 import com.cooper.binge.companion.seerr.discover.request.RequestQuota
 import com.cooper.binge.companion.seerr.discover.request.RequestResult
 import com.cooper.binge.companion.seerr.discover.request.RequestServer
 import com.cooper.binge.companion.seerr.discover.request.RequestSheetRepository
-import com.cooper.binge.companion.seerr.discover.request.RequestSubmission
 import com.cooper.binge.companion.seerr.discover.request.RequestUser
 import com.cooper.binge.companion.seerr.discover.request.SeasonSelection
 import com.cooper.binge.companion.seerr.discover.request.SelectableItem
 import com.cooper.binge.companion.seerr.seerr.SeerrError
-import com.cooper.binge.companion.seerr.seerr.serverMessage
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -120,8 +115,6 @@ sealed interface RequestSheetEvent {
     ) : RequestSheetEvent
 }
 
-private const val FOOTER_FAILURE_MILLIS = 4_000L
-
 /** Which of the sheet's reads to try again. */
 enum class RequestRead { Quota, Servers, Choices, Users }
 
@@ -145,11 +138,11 @@ class RequestSheetViewModel
         private val eventFlow = MutableSharedFlow<RequestSheetEvent>(extraBufferCapacity = 1)
         val events: SharedFlow<RequestSheetEvent> = eventFlow.asSharedFlow()
 
-        /** Makes the request for an id, or for the sender again. A property, so the class stays under the function cap. */
-        val selectRequestFor: (Int) -> Unit = store::requestFor
-
-        /** The timer that turns the red footer back; a new send or a new failure replaces it, so an old one cannot cut a newer window short. */
-        private var footerTimer: Job? = null
+        private val sender =
+            RequestSheetSender(repository, target, store, viewModelScope) { result ->
+                eventFlow.tryEmit(RequestSheetEvent.Done(result))
+                load()
+            }
 
         init {
             load()
@@ -239,6 +232,9 @@ class RequestSheetViewModel
                 current.copy(destinationChanged = true, pick = pick.copy(tagIds = if (id in shown) shown - id else shown + id))
             }
 
+        /** Makes the request for an id, or for the sender again. */
+        fun selectRequestFor(id: Int) = store.requestFor(id)
+
         fun dismissProblem() = store.update { it.copy(problem = null) }
 
         /** A tap on the footer while it shows the failure opens the dialog that explains it and offers Retry. */
@@ -246,91 +242,5 @@ class RequestSheetViewModel
 
         fun dismissFailure() = store.update { it.copy(failureDialog = false, failure = null, footerFailed = false) }
 
-        fun submit() {
-            val current = store.ready() ?: return
-            if (!current.canSubmit) return
-            footerTimer?.cancel()
-            store.set(current.copy(submitting = true, problem = null, failure = null, footerFailed = false, failureDialog = false))
-            val destination = current.destination
-            // A collection goes as one request per ticked film; the answer says how many the server made and the first refusal.
-            current.films?.let { films ->
-                val submissions =
-                    films.requestIds.map { id ->
-                        RequestSubmission(
-                            kind = TitleKind.Movie,
-                            tmdbId = id,
-                            seasons = emptyList(),
-                            is4k = current.use4k,
-                            destination = destination?.toDestination(),
-                            userId = current.requestFor?.id,
-                        )
-                    }
-                viewModelScope.launch {
-                    val answer = repository.submitAll(submissions)
-                    val failure = answer.failure
-                    when {
-                        failure != null && answer.created == 0 -> onSendFailed(failure.toProblem())
-                        else -> {
-                            val result =
-                                when {
-                                    failure != null -> RequestResult.PartiallyCreated
-                                    answer.created > 0 -> RequestResult.Created
-                                    else -> RequestResult.AlreadyRequested
-                                }
-                            eventFlow.tryEmit(RequestSheetEvent.Done(result))
-                            load()
-                        }
-                    }
-                }
-                return
-            }
-            val submission =
-                RequestSubmission(
-                    kind = target.kind,
-                    tmdbId = target.tmdbId,
-                    seasons = current.seasons?.requestSeasons ?: target.seasons,
-                    is4k = current.use4k,
-                    destination = destination?.toDestination(),
-                    userId = current.requestFor?.id,
-                )
-            viewModelScope.launch {
-                attempt { repository.submit(submission) }.fold(
-                    onSuccess = { result ->
-                        eventFlow.tryEmit(RequestSheetEvent.Done(result))
-                        // This ViewModel outlives the sheet, so the next opening must not start from the old send.
-                        load()
-                    },
-                    onFailure = { error -> onSendFailed(error.toProblem()) },
-                )
-            }
-        }
-
-        private fun onSendFailed(problem: RequestProblem) {
-            val answered =
-                problem.cause == RequestProblemCause.Quota ||
-                    problem.cause == RequestProblemCause.NotAllowed ||
-                    (problem.cause == RequestProblemCause.Other && !problem.detail.isNullOrBlank())
-            if (answered) {
-                store.update { it.copy(submitting = false, problem = problem) }
-                return
-            }
-            store.update { it.copy(submitting = false, failure = problem, footerFailed = true) }
-            footerTimer?.cancel()
-            footerTimer =
-                viewModelScope.launch {
-                    delay(FOOTER_FAILURE_MILLIS)
-                    store.update { if (!it.failureDialog) it.copy(footerFailed = false) else it }
-                }
-        }
+        fun submit() = sender.submit()
     }
-
-private fun Throwable.toProblem(): RequestProblem {
-    val cause =
-        when (toSeerrError()) {
-            SeerrError.Quota -> RequestProblemCause.Quota
-            SeerrError.Forbidden, SeerrError.Unauthorized -> RequestProblemCause.NotAllowed
-            SeerrError.Unreachable, SeerrError.LocalNetworkDenied, SeerrError.NotConnected -> RequestProblemCause.Unreachable
-            else -> RequestProblemCause.Other
-        }
-    return RequestProblem(cause, serverMessage())
-}

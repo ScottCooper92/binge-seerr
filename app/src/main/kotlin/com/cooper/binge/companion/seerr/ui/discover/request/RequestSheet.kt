@@ -75,7 +75,7 @@ fun RequestSheet(
                     onProfile = viewModel::selectProfile,
                     onRootFolder = viewModel::selectRootFolder,
                     onToggleTag = viewModel::toggleTag,
-                    onRequestFor = viewModel.selectRequestFor,
+                    onRequestFor = viewModel::selectRequestFor,
                     onSubmit = viewModel::submit,
                     onRetry = viewModel::load,
                     onRetryRead = viewModel::retry,
