@@ -10,10 +10,11 @@ import com.android.tools.screenshot.PreviewTest
 import com.cooper.binge.companion.seerr.preview.PHONE_WIDTH
 import com.cooper.binge.companion.seerr.preview.SeerrComponentPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrFontScale13ComponentPreviews
+import com.cooper.binge.companion.seerr.preview.SeerrFontScale20ComponentPreviews
 import com.cooper.binge.companion.seerr.ui.FIXED_NOW_MILLIS
 
 /**
- * The phone request list row (`RequestRow`/`RequestRowMeta` in `RequestList.kt`), which had no frame
+ * The phone request list row (`RequestRow` in `RequestList.kt`, on the shared media row), which had no frame
  * exercising its chip/badge crowding — the #346 regression risk (#347): a long status label alone, the
  * same label sharing the media-type/year line with a 4K badge, and the optional season-list line.
  */
@@ -56,6 +57,18 @@ class RequestListScreenshotTest {
     @SeerrFontScale13ComponentPreviews
     @Composable
     fun longTitleFontScale13() = Frame(longTitleTvRow())
+
+    /** A transferring request: the progress bar and the time left sit under the row, in the shared row's footer. */
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun downloading() = Frame(downloadingRow())
+
+    /** The same transferring row at the largest font scale: the footer must stay under the text and nothing may clip. */
+    @PreviewTest
+    @SeerrFontScale20ComponentPreviews
+    @Composable
+    fun downloadingFontScale20() = Frame(downloadingRow())
 }
 
 @Composable

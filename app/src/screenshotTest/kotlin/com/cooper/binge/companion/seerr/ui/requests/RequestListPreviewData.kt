@@ -72,3 +72,14 @@ internal fun longTitleTvRow(): RequestItem =
         mediaStatus = SeerrMediaStatusCode.PartiallyAvailable,
         seasonNumbers = listOf(1),
     )
+
+/** A movie that is transferring: the row draws its progress bar and time left under the text (the shared row's footer). */
+internal fun downloadingRow(): RequestItem =
+    untrackedRow().copy(
+        id = 9,
+        queueTracked = true,
+        download = RequestDownload(fraction = DOWNLOAD_FRACTION, etaMinutes = DOWNLOAD_ETA_MINUTES, downloading = true),
+    )
+
+private const val DOWNLOAD_FRACTION = 0.6f
+private const val DOWNLOAD_ETA_MINUTES = 95
