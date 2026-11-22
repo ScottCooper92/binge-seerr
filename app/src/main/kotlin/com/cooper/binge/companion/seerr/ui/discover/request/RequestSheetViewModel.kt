@@ -251,7 +251,38 @@ class RequestSheetViewModel
             footerTimer?.cancel()
             store.set(current.copy(submitting = true, problem = null, failure = null, footerFailed = false, failureDialog = false))
             val destination = current.destination
-            current.films?.let { return submitFilms(it, destination, current.use4k, current.requestFor) }
+            // A collection goes as one request per ticked film; the answer says how many the server made and the first refusal.
+            current.films?.let { films ->
+                val submissions =
+                    films.requestIds.map { id ->
+                        RequestSubmission(
+                            kind = TitleKind.Movie,
+                            tmdbId = id,
+                            seasons = emptyList(),
+                            is4k = current.use4k,
+                            destination = destination?.toDestination(),
+                            userId = current.requestFor?.id,
+                        )
+                    }
+                viewModelScope.launch {
+                    val answer = repository.submitAll(submissions)
+                    val failure = answer.failure
+                    when {
+                        failure != null && answer.created == 0 -> onSendFailed(failure.toProblem())
+                        else -> {
+                            val result =
+                                when {
+                                    failure != null -> RequestResult.PartiallyCreated
+                                    answer.created > 0 -> RequestResult.Created
+                                    else -> RequestResult.AlreadyRequested
+                                }
+                            eventFlow.tryEmit(RequestSheetEvent.Done(result))
+                            load()
+                        }
+                    }
+                }
+                return
+            }
             val submission =
                 RequestSubmission(
                     kind = target.kind,
@@ -270,43 +301,6 @@ class RequestSheetViewModel
                     },
                     onFailure = { error -> onSendFailed(error.toProblem()) },
                 )
-            }
-        }
-
-        /** A collection goes as one request per ticked film; the answer says how many the server made and the first refusal. */
-        private fun submitFilms(
-            selection: ItemSelection,
-            destination: DestinationPick?,
-            use4k: Boolean,
-            requestFor: RequestUser?,
-        ) {
-            val submissions =
-                selection.requestIds.map { id ->
-                    RequestSubmission(
-                        kind = TitleKind.Movie,
-                        tmdbId = id,
-                        seasons = emptyList(),
-                        is4k = use4k,
-                        destination = destination?.toDestination(),
-                        userId = requestFor?.id,
-                    )
-                }
-            viewModelScope.launch {
-                val answer = repository.submitAll(submissions)
-                val failure = answer.failure
-                when {
-                    failure != null && answer.created == 0 -> onSendFailed(failure.toProblem())
-                    else -> {
-                        val result =
-                            when {
-                                failure != null -> RequestResult.PartiallyCreated
-                                answer.created > 0 -> RequestResult.Created
-                                else -> RequestResult.AlreadyRequested
-                            }
-                        eventFlow.tryEmit(RequestSheetEvent.Done(result))
-                        load()
-                    }
-                }
             }
         }
 
