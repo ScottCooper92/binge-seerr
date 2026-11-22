@@ -22,7 +22,10 @@ internal fun folderOptionLabel(
 ): String = freeBytes?.let { stringResource(R.string.request_folder_free_space, path, formatFileSize(it)) } ?: path
 
 @Composable
-internal fun RequestChoices.profileLabel(profile: RequestChoice): String = profileOptionLabel(profile.label, profile.id == defaultProfileId)
+internal fun RequestChoices.profileLabel(
+    profile: RequestChoice,
+    anime: Boolean,
+): String = profileOptionLabel(profile.label, profile.id == defaultProfileFor(anime))
 
 @Composable
 internal fun RequestChoices.folderLabel(path: String): String = folderOptionLabel(path, freeSpace[path])

@@ -77,7 +77,7 @@ private fun choiceRows(
                     detail =
                         choices.choices.profiles
                             .firstOrNull { it.id == pick.profileId }
-                            ?.let { choices.choices.profileLabel(it) },
+                            ?.let { choices.choices.profileLabel(it, pick.anime) },
                     enabled = !state.submitting,
                     onClick = { onOpen(DestinationField.Profile) },
                 ),

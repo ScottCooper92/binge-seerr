@@ -45,6 +45,7 @@ sealed interface RequestSheetUiState {
         val quota: QuotaState = QuotaState.Loading,
         val servers: ServersState = ServersState.Loading,
         val use4k: Boolean = false,
+        val anime: Boolean = false,
         val pick: DestinationPick? = null,
         val destinationChanged: Boolean = false,
         val submitting: Boolean = false,
@@ -182,7 +183,7 @@ class RequestSheetViewModel
         fun setUse4k(use4k: Boolean) {
             val current = store.ready() ?: return
             if (current.use4k == use4k || !current.canToggle4k) return
-            val pick = (current.servers as? ServersState.Ready)?.servers.orEmpty().pickFor(use4k)
+            val pick = (current.servers as? ServersState.Ready)?.servers.orEmpty().pickFor(use4k, current.anime)
             store.set(current.copy(use4k = use4k, pick = pick, destinationChanged = false, pickedSeasons = emptySet(), pickedFilms = null))
             pick?.let { reads.choices(it.serverId) }
         }
@@ -205,7 +206,7 @@ class RequestSheetViewModel
             if (current.pick?.serverId == id) return
             store.set(
                 current.copy(
-                    pick = DestinationPick(server.id, server.profileId, server.rootFolder, ChoicesState.Loading),
+                    pick = server.pickAt(current.anime),
                     destinationChanged = true,
                 ),
             )
