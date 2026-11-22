@@ -61,7 +61,7 @@ import com.cooper.binge.companion.seerr.ui.requests.labelRes
 import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
 import com.cooper.binge.companion.seerr.ui.state.OverflowDetailScaffold
 import com.cooper.binge.companion.seerr.ui.state.RequestStateChip
-import com.cooper.binge.companion.seerr.ui.state.messageRes
+import com.cooper.binge.companion.seerr.ui.state.rememberErrorReporter
 import com.cooper.binge.companion.seerr.ui.toTitleKind
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
@@ -102,10 +102,15 @@ fun IssueDetailScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val resources = LocalResources.current
     val currentOnBack by rememberUpdatedState(actions.onBack)
+    val reporter = rememberErrorReporter(snackbarHostState)
     LaunchedEffect(events) {
         events.collectLatest { event ->
             if (event == IssueDetailEvent.IssueDeleted) {
                 currentOnBack()
+                return@collectLatest
+            }
+            if (event is IssueDetailEvent.Failed) {
+                reporter.report(event.error)
                 return@collectLatest
             }
             snackbarHostState.currentSnackbarData?.dismiss()
@@ -116,7 +121,7 @@ fun IssueDetailScreen(
                         IssueDetailEvent.IssueResolved -> resources.getString(R.string.issue_resolved)
                         IssueDetailEvent.IssueReopened -> resources.getString(R.string.issue_reopened)
                         IssueDetailEvent.IssueDeleted -> return@collectLatest
-                        is IssueDetailEvent.Failed -> resources.getString(event.error.messageRes())
+                        is IssueDetailEvent.Failed -> return@collectLatest
                     },
                 kind = if (event is IssueDetailEvent.Failed) SnackbarMessageKind.Error else SnackbarMessageKind.Confirmation,
             )

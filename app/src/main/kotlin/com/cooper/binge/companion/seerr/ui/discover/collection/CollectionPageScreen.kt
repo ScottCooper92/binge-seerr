@@ -28,6 +28,7 @@ import com.cooper.binge.companion.seerr.ui.discover.request.filmsSubmitLabel
 import com.cooper.binge.companion.seerr.ui.discover.request.messageRes
 import com.cooper.binge.companion.seerr.ui.discover.title.statusStyle
 import com.cooper.binge.companion.seerr.ui.state.messageRes
+import com.cooper.binge.companion.seerr.ui.state.rememberErrorReporter
 import com.cooper.homelab.core.uiandroid.connect.rememberAllowLocalNetwork
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
@@ -112,6 +113,7 @@ private fun CollectionEventSnackbars(
     snackbar: SnackbarHostState,
 ) {
     val resources = LocalResources.current
+    val reporter = rememberErrorReporter(snackbar)
     LaunchedEffect(events) {
         events.collectLatest { event ->
             snackbar.currentSnackbarData?.dismiss()
@@ -121,7 +123,10 @@ private fun CollectionEventSnackbars(
                     is CollectionPageEvent.Changed ->
                         (if (event.blocked) R.string.blocklist_collection_blocked else R.string.blocklist_collection_unblocked) to
                             SnackbarMessageKind.Confirmation
-                    is CollectionPageEvent.Failed -> event.error.messageRes() to SnackbarMessageKind.Error
+                    is CollectionPageEvent.Failed -> {
+                        reporter.report(event.error)
+                        return@collectLatest
+                    }
                 }
             snackbar.showSnackbar(resources.getString(message), kind)
         }
