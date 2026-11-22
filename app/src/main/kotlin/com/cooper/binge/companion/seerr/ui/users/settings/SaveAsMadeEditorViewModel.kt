@@ -94,9 +94,9 @@ abstract class SaveAsMadeEditorViewModel<T>(
     }
 
     fun edit(transform: (T) -> T) {
-        val before = draftNow()
+        val before = (engine.state.value as? EditorState.Ready<T, *>)?.draft
         engine.change(transform)
-        if (draftNow() != before) refusal = null
+        if ((engine.state.value as? EditorState.Ready<T, *>)?.draft != before) refusal = null
         sync()
     }
 
@@ -111,8 +111,6 @@ abstract class SaveAsMadeEditorViewModel<T>(
         engine.retry()
         sync()
     }
-
-    private fun draftNow(): T? = (engine.state.value as? EditorState.Ready<T, *>)?.draft
 
     /** Shows the engine's state as it is now, so a page that acts and reads back sees its own action. */
     private fun sync() {
