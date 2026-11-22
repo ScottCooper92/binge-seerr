@@ -53,7 +53,7 @@ jobs:
     permissions:
       contents: read
       actions: write
-    uses: ScottCooper92/binge-ci/.github/workflows/device-smoke.yml@a0aeac957586f54d2dd537a114d5f551f8cd57a1 # v1.0.56
+    uses: ScottCooper92/binge-ci/.github/workflows/device-smoke.yml@de44a7c780434385c40ecf599b7f3ebd10e7fb76 # v1.0.59
     with:
       private_submodules: homelab-core,binge-design-system,binge-ci
       ref: ${{ github.event.inputs.ref }}
@@ -65,6 +65,7 @@ jobs:
       tasks: ':app:smokeAtdApi34DebugAndroidTest -PminifyDebug'
       expected_tests: handshakeAndStatusCrossTheBinderOnTheMinifiedBuild theDemoAnswersAcrossTheBinderWithNoServer
       retention_days: 7
+      capture_logcat: true
     secrets:
       REVIEWER_APP_ID: ${{ secrets.REVIEWER_APP_ID }}
       REVIEWER_APP_PRIVATE_KEY: ${{ secrets.REVIEWER_APP_PRIVATE_KEY }}
@@ -83,7 +84,7 @@ jobs:
     permissions:
       issues: write
     steps:
-      - uses: ScottCooper92/binge-ci/.github/actions/nightly-report@a0aeac957586f54d2dd537a114d5f551f8cd57a1 # v1.0.56
+      - uses: ScottCooper92/binge-ci/.github/actions/nightly-report@de44a7c780434385c40ecf599b7f3ebd10e7fb76 # v1.0.59
         with:
           result: ${{ needs.companion-smoke.result }}
           title: Weekly device smoke is failing on main

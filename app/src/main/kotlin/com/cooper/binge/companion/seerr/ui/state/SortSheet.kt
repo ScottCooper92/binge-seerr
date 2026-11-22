@@ -13,7 +13,7 @@ import com.cooper.binge.companion.seerr.R
 /**
  * A single-select picker over any list, on the design system's choice sheet, the same sheet the settings rows open:
  * picking one applies it and dismisses. [title] defaults to the sort picker's own copy, its first and still most
- * common caller, so a differently-titled caller (`ChoiceRow`) is the only one that has to pass one. [icon] is the glyph a
+ * common caller, so a differently-titled caller is the only one that has to pass one. [icon] is the glyph a
  * choice shows in its tinted box; every caller passes one, since a choice row without an icon reads as unfinished.
  */
 @Composable

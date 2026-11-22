@@ -335,6 +335,7 @@
     <string name="request_sheet_group_request">Petición</string>
     <string name="request_sheet_group_media">Contenido</string>
     <string name="request_sheet_requested_by">Solicitada por %1$s</string>
+    <string name="settings_loading">Cargando ajustes</string>
     <string name="request_sheet_loading">Cargando los detalles de la petición</string>
     <string name="request_remove_detail">Se puede volver a solicitar</string>
     <string name="request_remove_block_detail">No se podrá volver a solicitar</string>
@@ -457,7 +458,7 @@
     <string name="users_edit_permissions_save">Aplicar</string>
     <string name="users_edit_permissions_mixed">Un permiso que solo tienen algunos de estos usuarios lo indica, y cada usuario conserva el suyo. Tócalo una vez para activarlo para todos, otra para desactivarlo y otra para dejarlo como estaba.</string>
     <string name="users_edit_permission_some_have">Algunos de estos usuarios lo tienen</string>
-    <string name="users_add_cd">Añadir usuarios</string>
+    <string name="users_add">Añadir usuarios</string>
     <string name="users_add_create">Crear un usuario local</string>
     <string name="users_add_create_desc">Inicia sesión con correo y contraseña</string>
     <string name="users_add_import">Importar de %1$s</string>
@@ -720,6 +721,9 @@
     <string name="server_settings_delete_message">El servidor lo olvida al instante. Las peticiones ya enviadas no se ven afectadas.</string>
     <string name="server_settings_rules">Reglas de anulación</string>
     <string name="server_settings_rule_add">Añadir una regla</string>
+    <string name="server_settings_services_add">Añadir</string>
+    <string name="server_settings_dvr_none">Aún no hay instancias de %1$s</string>
+    <string name="server_settings_rules_none">Aún no hay reglas de anulación</string>
     <string name="server_settings_rule_title">Regla de anulación</string>
     <string name="server_settings_rule_applies_to">Se aplica a</string>
     <plurals name="server_settings_rule_conditions">
@@ -872,10 +876,10 @@
     <string name="server_settings_log_info">Información</string>
     <string name="server_settings_log_warn">Aviso</string>
     <string name="server_settings_log_error">Error</string>
-    <string name="server_settings_job_run">Ejecutar ahora</string>
-    <string name="server_settings_job_succeeded">Terminado</string>
-    <string name="server_settings_job_failed">Error al ejecutar</string>
-    <string name="server_settings_job_cancel">Cancelar</string>
+    <string name="server_settings_job_run">Ejecutar</string>
+    <string name="server_settings_job_succeeded">Hecho</string>
+    <string name="server_settings_job_failed">Error</string>
+    <string name="server_settings_job_cancel">Detener</string>
     <string name="server_settings_job_schedule_title">Programar %1$s</string>
     <string name="server_settings_job_schedule_message">Elige cada cuánto se ejecuta o escribe tu propia expresión cron.</string>
     <string name="server_settings_job_presets">Cada</string>
@@ -1036,8 +1040,8 @@
     <string name="settings_job_running">Ejecutándose ahora</string>
     <string name="settings_job_next_run">Próxima ejecución %1$s</string>
     <string name="hub_retry">Reintentar</string>
-    <string name="hub_disconnect">Desconectar</string>
-    <string name="hub_disconnect_confirm_title">¿Desconectar?</string>
+    <string name="hub_disconnect">Cerrar sesión</string>
+    <string name="hub_disconnect_confirm_title">¿Cerrar sesión?</string>
     <string name="hub_disconnect_confirm_message_plain">Tendrás que iniciar sesión de nuevo para reconectar.</string>
     <string name="hub_disconnect_confirm_message">Tendrás que iniciar sesión de nuevo para reconectar. Binge deja de ver este servidor hasta que lo hagas.</string>
     <string name="hub_demo_exit">Salir de la demo</string>
@@ -1065,8 +1069,8 @@
     <string name="demo_indicator">Servidor de demostración</string>
     <string name="setup_try_demo">Probar la demo</string>
     <string name="setup_try_demo_note">Explora la app con datos de ejemplo. No necesitas un servidor.</string>
-    <string name="hub_unreachable_headline">No se puede conectar con tu servidor</string>
-    <string name="hub_unreachable_body">No respondió. Puede estar apagado o haber cambiado de dirección. Comprueba el servidor y reintenta.</string>
+    <string name="hub_unreachable_headline">No se pudo cargar tu servidor</string>
+    <string name="hub_unreachable_body">No respondió. Puede estar apagado o haber cambiado de dirección. Comprueba el servidor y vuelve a intentarlo.</string>
     <string name="hub_local_network_headline">El acceso a la red local está desactivado</string>
     <string name="hub_local_network_body">Android impide que esta aplicación llegue a tu servidor en tu red local. Permite el acceso a la red local y se volverá a conectar.</string>
     <string name="hub_client_certificate_headline">Este servidor necesita un certificado de cliente</string>
@@ -1214,7 +1218,7 @@
     <string name="tv_hub_quota_none_left">No queda ninguna</string>
     <string name="tv_download_percent">%1$d %%</string>
     <string name="tv_list_load_failed">No se pudo cargar la lista.</string>
-    <string name="tv_settings_disconnect_confirm">Sí, desconectar</string>
+    <string name="tv_settings_disconnect_confirm">Sí, cerrar sesión</string>
     <string name="tv_settings_start_library_scan">Iniciar escaneo de la biblioteca</string>
     <string name="tv_settings_cancel_library_scan">Cancelar escaneo de la biblioteca</string>
     <string name="tv_settings_job_working">Trabajando…</string>

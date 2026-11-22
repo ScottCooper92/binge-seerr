@@ -21,7 +21,6 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.BingeActionFooter
@@ -33,8 +32,6 @@ import com.binge.designsystem.component.IconButtonTone
 import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.component.SectionHeader
-import com.binge.designsystem.component.SnackbarMessageKind
-import com.binge.designsystem.component.showSnackbar
 import com.binge.designsystem.formatRelativeOrAbsolute
 import com.binge.designsystem.resolvedContentInset
 import com.binge.designsystem.resolvedContentPadding
@@ -45,7 +42,7 @@ import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.flags.LocalDiscoveryEnabled
 import com.cooper.binge.companion.seerr.ui.discover.title.LocalOpenTitle
 import com.cooper.binge.companion.seerr.ui.requests.labelRes
-import com.cooper.binge.companion.seerr.ui.state.messageRes
+import com.cooper.binge.companion.seerr.ui.state.rememberErrorReporter
 import com.cooper.binge.companion.seerr.ui.toTitleKind
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
@@ -69,17 +66,14 @@ fun BlocklistDetailScreen(
     actions: BlocklistDetailActions,
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
-    val resources = LocalResources.current
     var confirming by rememberSaveable { mutableStateOf(false) }
     val currentOnBack by rememberUpdatedState(actions.onBack)
+    val reporter = rememberErrorReporter(snackbarHostState)
     LaunchedEffect(events) {
         events.collectLatest { event ->
             when (event) {
                 BlocklistDetailEvent.Removed -> currentOnBack()
-                is BlocklistDetailEvent.Failed -> {
-                    snackbarHostState.currentSnackbarData?.dismiss()
-                    snackbarHostState.showSnackbar(resources.getString(event.error.messageRes()), SnackbarMessageKind.Error)
-                }
+                is BlocklistDetailEvent.Failed -> reporter.report(event.error)
             }
         }
     }

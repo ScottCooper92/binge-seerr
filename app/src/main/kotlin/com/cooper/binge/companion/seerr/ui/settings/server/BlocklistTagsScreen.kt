@@ -16,7 +16,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Sell
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHostState
@@ -34,6 +33,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.Dp
 import com.binge.designsystem.component.BingeLoadingIndicator
 import com.binge.designsystem.component.BingeTag
+import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.paneBackOrNull
 import com.binge.designsystem.template.FormScreen
 import com.binge.designsystem.template.MessageScreen
@@ -41,8 +41,8 @@ import com.binge.designsystem.template.ScreenBar
 import com.binge.designsystem.template.formSaveStatus
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
-import com.cooper.binge.companion.seerr.ui.state.LoadingScreen
-import com.cooper.binge.companion.seerr.ui.state.SearchResultRow
+import com.cooper.binge.companion.seerr.ui.state.SettingsRowsSkeleton
+import com.cooper.binge.companion.seerr.ui.state.searchResultItem
 import com.binge.designsystem.R as DesR
 
 /** What the blocklisted tags page asks of its view model. */
@@ -76,7 +76,7 @@ fun BlocklistTagsScreen(
         saveStatus = ready?.let { formSaveStatus(it.saveStatus, it.saveFailed, actions.onRetry) },
         notReady =
             when (state) {
-                BlocklistTagsUiState.Loading -> { inner -> LoadingScreen(Modifier.padding(inner)) }
+                BlocklistTagsUiState.Loading -> { inner -> SettingsRowsSkeleton(Modifier.padding(inner)) }
                 is BlocklistTagsUiState.Error -> { inner -> ErrorScreen(state.error, Modifier.padding(inner), onRetry = actions.onReload) }
                 is BlocklistTagsUiState.Ready -> null
             },
@@ -164,20 +164,19 @@ internal fun SearchResults(
         results.isEmpty() -> Note(stringResource(R.string.server_settings_blocklist_tags_no_match), modifier)
         else ->
             Column(modifier = modifier.verticalScroll(rememberScrollState()).padding(bottom = bottomInset)) {
-                results.forEachIndexed { index, keyword ->
-                    SearchResultRow(
-                        title = keyword.name,
-                        added = keyword.id in chosen,
-                        onToggle = { onToggle(keyword.id) },
-                        icon = Icons.Filled.Sell,
-                    )
-                    if (index < results.lastIndex) {
-                        HorizontalDivider(
-                            modifier = Modifier.padding(start = dimensionResource(DesR.dimen.padding_m)),
-                            color = MaterialTheme.colorScheme.outlineVariant,
-                        )
-                    }
-                }
+                ItemGroup(
+                    title = null,
+                    rows =
+                        results.map { keyword ->
+                            searchResultItem(keyword.name, keyword.id in chosen, { onToggle(keyword.id) }, Icons.Filled.Sell)
+                        },
+                    modifier =
+                        Modifier.padding(
+                            start = dimensionResource(DesR.dimen.padding_m),
+                            top = dimensionResource(DesR.dimen.padding_s),
+                            end = dimensionResource(DesR.dimen.padding_m),
+                        ),
+                )
             }
     }
 }

@@ -95,11 +95,6 @@ private fun ConfirmDialogs() {
             stringResource(R.string.server_settings_api_key_regenerate_message),
             stringResource(R.string.server_settings_api_key_regenerate),
         )
-        Confirm(
-            stringResource(R.string.server_settings_job_schedule_title, LONG_ROW_NAME),
-            stringResource(R.string.server_settings_job_schedule_message),
-            stringResource(R.string.editor_done),
-        )
     }
 }
 
