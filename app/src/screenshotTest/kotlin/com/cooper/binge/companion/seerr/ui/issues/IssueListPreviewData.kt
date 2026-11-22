@@ -47,3 +47,11 @@ internal fun crowdedSeasonIssueRow(): IssueItem =
         commentCount = 0,
         problemEpisode = null,
     )
+
+/** The episode-scoped row with the score and the first genre the shared row's status line carries after the year. */
+internal fun ratedEpisodeIssueRow(): IssueItem = crowdedEpisodeIssueRow().copy(id = 3, rating = RATING, genre = "Drama")
+
+/** A season-scoped row with a score and a genre, which falls back to "Season N" after the title. */
+internal fun ratedSeasonIssueRow(): IssueItem = crowdedSeasonIssueRow().copy(id = 4, rating = RATING, genre = "Drama")
+
+private const val RATING = 7.9f
