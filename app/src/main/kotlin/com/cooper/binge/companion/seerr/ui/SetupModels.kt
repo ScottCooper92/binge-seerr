@@ -3,7 +3,6 @@ package com.cooper.binge.companion.seerr.ui
 import com.cooper.binge.companion.seerr.seerr.SeerrCredentials
 import com.cooper.binge.companion.seerr.seerr.SeerrSignInMode
 import com.cooper.binge.companion.seerr.seerr.SeerrVariant
-import kotlinx.serialization.Serializable
 
 /** Why an attempt failed, as the setup form shows it. */
 enum class SetupError {
@@ -92,43 +91,6 @@ sealed interface LinkFlow {
     data class QuickConnect(
         override val code: String,
     ) : LinkFlow
-}
-
-/**
- * A [LinkFlow] as it is kept across the process dying while the user is away approving it. Only
- * what cannot be derived again is stored: the server is read again on the way back, and the Plex
- * authorisation URL is rebuilt from this install's own identity rather than saved with the code.
- */
-@Serializable
-internal sealed interface PendingLink {
-    val serverUrl: String
-    val code: String
-
-    /** Whether this was Settings' Edit connection, whose saved credentials the form must not read as "connected". */
-    val editing: Boolean
-
-    val mode: SeerrSignInMode
-
-    @Serializable
-    data class Plex(
-        override val serverUrl: String,
-        override val code: String,
-        override val editing: Boolean,
-        val pinId: Long,
-        val expiresAtEpochMillis: Long?,
-    ) : PendingLink {
-        override val mode: SeerrSignInMode get() = SeerrSignInMode.Plex
-    }
-
-    @Serializable
-    data class QuickConnect(
-        override val serverUrl: String,
-        override val code: String,
-        override val editing: Boolean,
-        val secret: String,
-    ) : PendingLink {
-        override val mode: SeerrSignInMode get() = SeerrSignInMode.QuickConnect
-    }
 }
 
 /**

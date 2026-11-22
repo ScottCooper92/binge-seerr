@@ -3,8 +3,11 @@ package com.cooper.binge.companion.seerr.ui
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import com.android.tools.screenshot.PreviewTest
+import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.preview.SeerrScreenPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrScreenStatePreview
+import com.cooper.binge.companion.seerr.preview.SeerrSpanishPreviews
+import com.cooper.binge.companion.seerr.preview.SeerrTabletPanesPreview
 import com.cooper.binge.companion.seerr.seerr.SeerrSignInMode
 import com.cooper.homelab.core.flags.Flags
 import com.cooper.homelab.core.flags.SharedFlags
@@ -14,14 +17,15 @@ import com.cooper.homelab.core.presentation.connect.ConnectState
 import com.cooper.homelab.core.presentation.connect.ProbedServer
 import com.cooper.homelab.core.presentation.connect.SignInForm
 import com.cooper.homelab.core.server.address.ServerAddress
+import com.cooper.homelab.core.uiandroid.connect.AllowLocalNetwork
 import com.cooper.homelab.core.uiandroid.connect.ConnectAddressActions
 import com.cooper.homelab.core.uiandroid.connect.ConnectLinkActions
 import com.cooper.homelab.core.uiandroid.connect.ConnectSignInActions
 import com.cooper.homelab.core.uiandroid.flags.LocalFlags
 
 /**
- * The setup flow drawn by the shared connect screen, in the states the old screen's frames show, so a state's frame can be set beside
- * its old one (`SetupScreenshotTest`, the method of the same name). The old frames stay until the flag is gone.
+ * The setup flow drawn by the shared connect screen, the one setup screen: the address and each state of it, the not-set-up message, and
+ * every sign-in mode, at phone and tablet size and in Spanish.
  */
 class SeerrConnectScreenshotTest {
     @PreviewTest
@@ -129,6 +133,80 @@ class SeerrConnectScreenshotTest {
             notice = SetupNotice.SessionRejected,
             onDisconnect = {},
         )
+
+    @PreviewTest
+    @SeerrScreenPreviews
+    @Composable
+    fun addressDemoOffered() = ConnectFrame(addressState(canTryDemo = true))
+
+    @PreviewTest
+    @SeerrSpanishPreviews
+    @Composable
+    fun addressDemoOfferedSpanish() = ConnectFrame(addressState(canTryDemo = true))
+
+    @PreviewTest
+    @SeerrSpanishPreviews
+    @Composable
+    fun notSetUpSpanish() = ConnectFrame(ConnectState.NotSetUp(previewProbed(setUp = false), isChecking = false, error = null))
+
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun notSetUpChecking() = ConnectFrame(ConnectState.NotSetUp(previewProbed(setUp = false), isChecking = true, error = null))
+
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun addressInsecureAllowed() =
+        ConnectFrame(addressState(address = "http://seerr.example.com", insecure = true, cleartextAllowed = true))
+
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun addressNeedsLocalNetwork() =
+        ConnectFrame(addressState(address = "http://192.168.1.20:5055", needsLocalNetwork = true), localNetwork = ALLOW)
+
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun addressLocalNetworkDenied() =
+        ConnectFrame(
+            addressState(
+                address = "http://192.168.1.20:5055",
+                needsLocalNetwork = true,
+                error = ConnectError.Failed(ServerFailure.LocalNetworkDenied),
+            ),
+            localNetwork = ALLOW,
+        )
+
+    @PreviewTest
+    @SeerrTabletPanesPreview
+    @Composable
+    fun addressTabletLand() = ConnectFrame(addressState(address = "http://seerr.lan:5055"))
+
+    @PreviewTest
+    @SeerrTabletPanesPreview
+    @Composable
+    fun addressNeedsLocalNetworkTabletLand() =
+        ConnectFrame(addressState(address = "http://192.168.1.20:5055", needsLocalNetwork = true), localNetwork = ALLOW)
+
+    @PreviewTest
+    @SeerrTabletPanesPreview
+    @Composable
+    fun signInTabletLand() = ConnectFrame(signInState(SeerrSignInMode.Jellyfin))
+
+    @PreviewTest
+    @SeerrTabletPanesPreview
+    @Composable
+    fun signInRejectedTabletLand() =
+        ConnectFrame(
+            signInState(
+                SeerrSignInMode.Local,
+                FIELD_EMAIL to "scott@example.com",
+                FIELD_PASSWORD to "hunter2",
+                error = ConnectError.Failed(ServerFailure.SessionRejected),
+            ),
+        )
 }
 
 private fun previewProbed(
@@ -150,15 +228,18 @@ private fun addressState(
     insecure: Boolean = false,
     isInspecting: Boolean = false,
     error: ConnectError? = null,
+    cleartextAllowed: Boolean = false,
+    needsLocalNetwork: Boolean = false,
+    canTryDemo: Boolean = false,
 ): ConnectState<SetupServer> =
     ConnectState.Address(
         address = address,
         insecure = insecure,
-        cleartextAllowed = false,
+        cleartextAllowed = cleartextAllowed,
         isInspecting = isInspecting,
         error = error,
-        needsLocalNetwork = false,
-        canTryDemo = false,
+        needsLocalNetwork = needsLocalNetwork,
+        canTryDemo = canTryDemo,
     )
 
 private fun signInState(
@@ -184,6 +265,7 @@ private fun ConnectFrame(
     title: String? = null,
     onExit: (() -> Unit)? = null,
     onDisconnect: (() -> Unit)? = null,
+    localNetwork: AllowLocalNetwork? = null,
 ) {
     CompositionLocalProvider(LocalFlags provides Flags.of(SharedFlags.BingePromotion to true, SharedFlags.ReviewPrompt to true)) {
         SeerrConnectContent(
@@ -195,6 +277,10 @@ private fun ConnectFrame(
             title = title,
             onExit = onExit,
             onDisconnect = onDisconnect,
+            localNetwork = localNetwork,
         )
     }
 }
+
+/** The permission prompt the real screen offers while the address waits on it: its label replaces Continue. */
+private val ALLOW = AllowLocalNetwork(R.string.local_network_allow, R.string.local_network_allow_short) {}
