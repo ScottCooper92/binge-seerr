@@ -333,6 +333,7 @@
     <string name="media_clear_data">Borrar los datos</string>
     <string name="request_sheet_group_title">Título</string>
     <string name="request_sheet_group_request">Petición</string>
+    <string name="request_sheet_group_destination">Enviada a</string>
     <string name="request_sheet_group_media">Contenido</string>
     <string name="request_sheet_requested_by">Solicitada por %1$s</string>
     <string name="settings_loading">Cargando ajustes</string>
@@ -1708,4 +1709,10 @@
     <string name="collection_page_block_title">¿Bloquear %1$s?</string>
     <string name="collection_page_block_message">No se podrá solicitar ninguna de sus películas hasta que se desbloquee.</string>
     <string name="collection_page_block_held">Las películas que ya están en tu servidor o solicitadas también se bloquean, y su estado se borra si luego desbloqueas la colección.</string>
+    <string name="title_page_action_services">Servicios</string>
+    <string name="title_sheet_requests">Solicitudes (%1$d)</string>
+    <string name="title_sheet_group_requests">Solicitudes</string>
+    <string name="title_requests_sheet_title">Solicitudes</string>
+    <string name="services_plays">Reproducciones</string>
+    <string name="services_standard">Estándar</string>
 </resources>

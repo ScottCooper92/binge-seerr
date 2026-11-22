@@ -143,6 +143,10 @@ internal fun EntryProviderScope<NavKey>.detailEntries(
                 onBack = { backStack.popIfTop(route) },
                 onOpenUser = { id -> backStack.add(UserDetailRoute(id)) },
                 onOpenServices = { backStack.add(ServerSettingsPageRoute(ServerSettingsPage.Services)) },
+                onOpenTitle = { kind, tmdbId ->
+                    val at = backStack.lastIndexOf(route)
+                    if (at >= 0) backStack[at] = TitleDetailRoute(kind, tmdbId, route.requestId)
+                },
             )
         }
     }

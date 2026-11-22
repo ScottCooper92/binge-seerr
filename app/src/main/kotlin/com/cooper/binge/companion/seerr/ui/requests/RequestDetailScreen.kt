@@ -87,6 +87,18 @@ class SiblingSheet(
     val preview: RequestPreview? = null,
     /** What the title page adds above the request's own rows: Watch, then Request in 4K. Empty from every other opener. */
     val titleRows: List<SheetTitleRow> = emptyList(),
+    val titleState: SheetStateChip? = null,
+    val titleBack: (() -> Unit)? = null,
+    val scope: SheetScope = SheetScope.Both,
+    /** What the title level's request cards call back; null from every other opener. */
+    val cards: RequestCardsHost? = null,
+)
+
+/** What a request card does beyond showing: open its level, and tell the page a moderation on it landed. */
+class RequestCardsHost(
+    val onOpen: (Int) -> Unit,
+    val onChanged: () -> Unit,
+    val snackbar: SnackbarHostState,
 )
 
 /** One row the title page adds to a request's sheet. An [external] row leaves the app, and any other opens something in it. */
@@ -247,6 +259,10 @@ internal fun RequestManagementSheets(
     detailLoad: SheetDetailLoad = SheetDetailLoad.Loaded,
     onRetryDetail: () -> Unit = {},
     titleRows: List<SheetTitleRow> = emptyList(),
+    titleState: SheetStateChip? = null,
+    titleBack: (() -> Unit)? = null,
+    scope: SheetScope = SheetScope.Both,
+    cards: RequestCardsHost? = null,
 ) {
     val detail = state?.detail
     // Which instance the status sheet is marking, keyed by is4k because that is what tells the
@@ -293,6 +309,11 @@ internal fun RequestManagementSheets(
             actionsLanded = state?.actionsLanded,
             actionsLandedNow = actions.actionsLandedNow,
             titleRows = titleRows,
+            titleState = titleState,
+            titleBack = titleBack,
+            scope = scope,
+            cards = cards,
+            destination = detail?.destination,
         )
     }
     state?.edit?.takeUnless { editsInActions }?.let { edit ->

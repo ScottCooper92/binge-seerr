@@ -16,6 +16,7 @@ import com.binge.designsystem.template.MediaDetailCallbacks
 import com.binge.designsystem.template.MovieDetailScreen
 import com.binge.designsystem.template.readingMargin
 import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.TitleResult
 import com.cooper.binge.companion.seerr.discover.title.TitleCompany
 import com.cooper.binge.companion.seerr.discover.title.TitleKeyword
@@ -68,6 +69,18 @@ class TitlePageActions(
     val onCloseReport: () -> Unit = {},
     /** The report form for this title, hosted over the page. */
     val reportSheet: @Composable (onClose: () -> Unit) -> Unit = {},
+    /** The list of requests, opened from a row of the title's sheet where there are several, and closed. */
+    val onOpenRequests: () -> Unit = {},
+    val onCloseRequests: () -> Unit = {},
+    /** Back from the requests list to the title's own sheet. */
+    val onBackFromRequests: () -> Unit = {},
+    /** Back from a request's sheet to the list it was picked from. */
+    val onBackToRequests: () -> Unit = {},
+    /** A request picked from that list: its sheet opens. */
+    val onPickRequest: (Int) -> Unit = {},
+    /** The services sheet's action in the page's round actions; null where the title has no request or link to show. */
+    val onOpenServiceInfo: (() -> Unit)? = null,
+    val onCloseServiceInfo: () -> Unit = {},
 )
 
 /** The film page: the design system's movie template, filled with this app's primary action, sheets and sections. */
@@ -142,6 +155,16 @@ private fun ReadyPage(
     val movie = state.movie
     val context = LocalContext.current
     val model = movieDetailModel(state, actions)
+    val servicesState = rememberServicesState(movie.requests, TitleKind.Movie, movie.tmdbId)
+    if (!servicesState.settled) {
+        MovieDetailScreen(
+            state = DetailState.Loading(stats = LOADING_STATS, hasPrimary = true, rails = 1),
+            callbacks = MediaDetailCallbacks(onBack = actions.onBack),
+            modifier = modifier,
+        )
+        return
+    }
+    val servicesContent = servicesState.groups
     val actionsModel = titleActionsModel(movie.standard, movie.fourK, movie.requests, movie.mayReport, movie.mayBlock)
     MovieDetailScreen(
         state = DetailState.Content(model.detail),
@@ -155,6 +178,7 @@ private fun ReadyPage(
                 watchlist = WatchlistButton(movie.onWatchlist, actions.onToggleWatchlist).takeIf { movie.mayWatchlist },
                 onReport = actions.onReport,
                 onBlock = actions.block?.onAsk.takeIf { movie.mayBlock },
+                onServices = actions.onOpenServiceInfo.takeIf { servicesContent.isNotEmpty() },
             ),
         topBarActions = { glassAlpha -> ShareBarAction(glassAlpha) { context.shareTitle(movie.title, movie.webUrl) } },
         afterPeople = { WhereToWatchSection(movie.providers, actions.onOpenUrl, Modifier.readingMargin()) },
@@ -202,6 +226,9 @@ private fun MovieOverlays(
             remainingOpen = false,
             onRequestFourK = actions.onRequestFourK,
             onRequestRemaining = actions.onRequestRemaining,
+            requestCount = movie.requests.size,
+            header = TitleSheetHeaderFacts(movie.title, movie.posterUrl),
+            onOpenRequests = actions.onOpenRequests,
             onDismiss = actions.onCloseStatus,
             onUnblock = actions.onUnblock.takeIf { movie.mayUnblock },
         )
@@ -209,6 +236,15 @@ private fun MovieOverlays(
     if (state.reportSheetOpen) actions.reportSheet(actions.onCloseReport)
     if (state.blockConfirmOpen) actions.block?.let { TitleBlockConfirm(movie.title, it) }
     state.manageRequestId?.let { requestId ->
-        TitleManageSheet(requestId, state.manageSheetOpen, snackbar, movie.sheetFacts(), actions)
+        TitleManageSheet(requestId, state.manageSheetOpen, snackbar, movie.sheetFacts(), actions, state.manageFromList, state.manageScope)
     }
+    val servicesContent = rememberServicesContent(movie.requests, TitleKind.Movie, movie.tmdbId)
+    TitleRequestsAndServices(
+        state.requestsSheetOpen,
+        state.serviceSheetOpen,
+        movie.requests,
+        servicesContent,
+        movie.mediaServerName,
+        actions,
+    )
 }
