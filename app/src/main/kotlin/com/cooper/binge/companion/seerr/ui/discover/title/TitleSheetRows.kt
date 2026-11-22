@@ -77,6 +77,7 @@ internal fun rememberTitleSheetRows(
         facts.remainingOpen,
         facts.requests.size,
         bingeAnswers,
+        serverOpen,
         resources,
     ) {
         val watchRows =

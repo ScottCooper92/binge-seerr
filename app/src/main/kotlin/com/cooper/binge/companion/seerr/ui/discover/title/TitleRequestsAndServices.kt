@@ -42,6 +42,7 @@ import com.binge.designsystem.component.BingeSheetKind
 import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.component.ListItemDestination
+import com.binge.designsystem.downloadEtaLabel
 import com.binge.designsystem.formatRanges
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.TitleKind
@@ -137,7 +138,7 @@ internal fun TitleRequestsSheet(
                                         request.seasonNumbers.takeIf { it.isNotEmpty() }?.let {
                                             pluralStringResource(R.plurals.requests_seasons, it.size, it.formatRanges())
                                         },
-                                    ).joinToString(" · ").ifBlank { null },
+                                    ).joinToString(stringResource(R.string.hub_meta_separator)).ifBlank { null },
                                 trailingContent = request.status?.let { status -> { RequestStateChip(status = status) } },
                                 onClick = { onPick(request.id) },
                             )
@@ -152,7 +153,7 @@ internal fun TitleRequestsSheet(
 internal sealed interface ServiceRow {
     data class Destination(
         val is4k: Boolean,
-        val label: String,
+        val names: List<String>,
         val folder: String?,
     ) : ServiceRow
 
@@ -201,10 +202,10 @@ internal fun servicesContent(
                     ?.let {
                         ServiceRow.Destination(
                             d.item.is4k,
-                            listOfNotNull(it.serverName, it.profileName).joinToString(" · "),
+                            listOfNotNull(it.serverName, it.profileName),
                             it.rootFolder,
                         )
-                    }?.takeIf { it.label.isNotBlank() }
+                    }?.takeIf { it.names.isNotEmpty() }
             } +
             detail.downloads.map { ServiceRow.Download(it) } +
             detail.seasons.map { ServiceRow.Season(it) } +
@@ -308,12 +309,15 @@ private fun serviceListItem(
     row: ServiceRow,
     serviceName: String,
     context: Context,
-): ListItem =
-    when (row) {
+): ListItem {
+    val separator = stringResource(R.string.hub_meta_separator)
+    return when (row) {
         is ServiceRow.Destination ->
             ListItem(
                 icon = Icons.Filled.Dns,
-                label = stringResource(if (row.is4k) R.string.settings_service_4k else R.string.services_standard) + " · " + row.label,
+                label =
+                    stringResource(if (row.is4k) R.string.settings_service_4k else R.string.services_standard) + separator +
+                        row.names.joinToString(separator),
                 detail = row.folder,
                 clickable = false,
                 destination = ListItemDestination.Action,
@@ -327,8 +331,8 @@ private fun serviceListItem(
                     listOfNotNull(
                         "${(row.download.fraction * PERCENT).toInt()}%",
                         row.download.totalBytes?.let { formatFileSize(it) },
-                        row.download.etaMinutes?.let { "~$it min" },
-                    ).joinToString(" · "),
+                        row.download.etaMinutes?.let { downloadEtaLabel(it) },
+                    ).joinToString(separator),
                 clickable = false,
                 destination = ListItemDestination.Action,
                 trailingContent = {},
@@ -347,10 +351,10 @@ private fun serviceListItem(
                 icon = Icons.Filled.Visibility,
                 label = stringResource(R.string.services_plays),
                 detail =
-                    "${row.stats.playCount} · 7d ${row.stats.playCount7Days} · 30d ${row.stats.playCount30Days}" +
+                    stringResource(R.string.media_watch_plays, row.stats.playCount, row.stats.playCount7Days, row.stats.playCount30Days) +
                         row.stats.users
                             .takeIf { it.isNotEmpty() }
-                            ?.let { " · " + it.joinToString(", ") }
+                            ?.let { separator + it.joinToString(", ") }
                             .orEmpty(),
                 clickable = false,
                 destination = ListItemDestination.Action,
@@ -368,5 +372,6 @@ private fun serviceListItem(
                     }
             }
     }
+}
 
 private const val PERCENT = 100

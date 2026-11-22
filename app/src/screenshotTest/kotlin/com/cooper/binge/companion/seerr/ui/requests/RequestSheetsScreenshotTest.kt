@@ -8,6 +8,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.res.stringResource
 import com.android.tools.screenshot.PreviewTest
 import com.binge.designsystem.component.BingeConfirmDialogContent
+import com.binge.designsystem.theme.BingeSentiment
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.flags.LocalDiscoveryEnabled
 import com.cooper.binge.companion.seerr.preview.SeerrComponentPreviews
@@ -34,6 +35,7 @@ class RequestSheetsScreenshotTest {
         SheetFrame {
             ActionsContent(
                 settledDetail(),
+                titleState = SheetStateChip("Available", BingeSentiment.Positive),
                 titleRows =
                     listOf(
                         SheetTitleRow(Icons.Filled.PlayArrow, "Watch on Plex", external = true) {},
@@ -50,6 +52,7 @@ class RequestSheetsScreenshotTest {
         SheetFrame {
             ActionsContent(
                 settledDetail(),
+                titleState = SheetStateChip("Available", BingeSentiment.Positive),
                 titleRows =
                     listOf(
                         SheetTitleRow(Icons.Filled.PlayArrow, "Watch on Plex", external = true) {},
@@ -67,11 +70,26 @@ class RequestSheetsScreenshotTest {
         SheetFrame {
             ActionsContent(
                 settledDetail(),
+                titleState = SheetStateChip("Available", BingeSentiment.Positive),
                 titleRows =
                     listOf(
                         SheetTitleRow(Icons.Filled.PlayArrow, stringResource(R.string.title_sheet_watch_in_binge), external = true) {},
                         SheetTitleRow(Icons.Filled.PlayArrow, "Watch on Plex", external = true) {},
                     ),
+            )
+        }
+
+    /** A request's own level, opened from the title's list: the back arrow over the request's rows, with no title rows. */
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun actionsRequestLevel() =
+        SheetFrame {
+            ActionsContent(
+                pendingDetail(),
+                titleState = SheetStateChip("Pending", BingeSentiment.Caution),
+                scope = SheetScope.Request,
+                titleBack = {},
             )
         }
 
@@ -291,6 +309,9 @@ private fun ActionsContent(
     progress: ActionProgress? = null,
     onOpenServices: (() -> Unit)? = null,
     titleRows: List<SheetTitleRow> = emptyList(),
+    titleState: SheetStateChip? = null,
+    scope: SheetScope = SheetScope.Both,
+    titleBack: (() -> Unit)? = null,
 ) {
     RequestActionsContent(
         model =
@@ -302,6 +323,9 @@ private fun ActionsContent(
                 detailLoad = detailLoad,
                 progress = progress,
                 titleRows = titleRows,
+                titleState = titleState,
+                scope = scope,
+                titleBack = titleBack,
             ),
         callbacks = RequestSheetCallbacks(onApprove = {}, onRetry = {}, onDecline = {}, onRemove = {}, onOpenServices = onOpenServices),
         blockTitle = false,
