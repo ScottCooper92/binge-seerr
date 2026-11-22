@@ -2,6 +2,7 @@ package com.cooper.binge.companion.seerr.ui.grid
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.binge.designsystem.theme.BingeExpressiveTheme
@@ -85,6 +86,7 @@ class DiscoverFilterListPagesTest {
         rule.onNodeWithText(countryName("GB")).performClick()
         assertEquals("GB", filters.value.certificationCountry)
         assertEquals(null, filters.value.certification)
+        rule.onNodeWithText(countryName("GB")).assertIsSelected()
     }
 
     @Test

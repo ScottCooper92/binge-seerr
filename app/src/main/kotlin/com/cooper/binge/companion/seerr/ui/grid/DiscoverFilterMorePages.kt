@@ -55,7 +55,10 @@ internal fun countryName(code: String): String =
 
 internal val chipGap @Composable get() = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s))
 
-/** A country's age ratings: the country as a list to pick one from, then its ratings in a row, of which one is chosen. */
+/**
+ * A country's age ratings: its ratings in a row first, of which one is chosen, then the countries to pick from. The row is
+ * what people change and the country list is long, so the row stays above the fold. Picking a country clears the rating.
+ */
 @Composable
 internal fun CertificationPage(
     filters: DiscoverFilters,
@@ -87,6 +90,7 @@ internal fun CertificationPage(
                     ListItem(
                         icon = Icons.Filled.Public,
                         label = countryName(code),
+                        selected = code == country,
                         trailingContent = { if (code == country) Icon(Icons.Filled.Check, contentDescription = null) },
                         onClick = { onChange(filters.copy(certificationCountry = code, certification = null)) },
                     )
