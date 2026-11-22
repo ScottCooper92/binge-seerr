@@ -76,5 +76,11 @@ internal fun tvEditState(): EditState =
         destination = editDestination().copy(servers = listOf(Choice(SONARR_ID, "Sonarr"), Choice(SONARR_ID + 1, "Sonarr Anime"))),
     )
 
+/** A show whose server has tags: one ticked, one not, as rows beneath the destination. */
+internal fun taggedEditState(): EditState =
+    destinationOnlyEditState().copy(
+        destination = editDestination().copy(tags = listOf(Choice(1, "kids"), Choice(2, "4k remux")), tagIds = setOf(1)),
+    )
+
 /** A save the server refused, on a form short enough to show the status line and Save together. */
 internal fun refusedEditState(): EditState = destinationOnlyEditState().copy(failed = true)

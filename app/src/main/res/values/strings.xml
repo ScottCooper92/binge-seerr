@@ -45,9 +45,6 @@
     <string name="setup_error_local_network_denied">Android is blocking access to your local network. Allow it for this app, then try again.</string>
     <string name="setup_error_client_certificate">This server asks for a client certificate, and this app can\'t send one yet. Connect through an address that doesn\'t ask for one, such as on your home network, or ask whoever runs the server.</string>
     <string name="setup_local_network_explanation">This server is on your local network. Android asks for your permission before an app can reach other devices on it.</string>
-    <string name="local_network_allow">Allow local network access</string>
-    <string name="local_network_allow_short">Allow access</string>
-    <string name="local_network_open_settings">Open settings</string>
     <string name="setup_error_unknown">The server answered with an error.</string>
     <string name="setup_error_link_expired">The code expired before it was approved. Try again.</string>
     <string name="setup_error_handoff_session_rejected">The phone\'s sign-in didn\'t work on this TV. Sign in here instead.</string>
@@ -481,7 +478,7 @@
     <string name="users_edit_permissions_save">Apply</string>
     <string name="users_edit_permissions_mixed">A permission only some of these users have says so, and each user keeps their own. Tap it once to turn it on for everyone, again for off, and again to leave it as it was.</string>
     <string name="users_edit_permission_some_have">Some of these users have this</string>
-    <string name="users_add_cd">Add users</string>
+    <string name="users_add">Add users</string>
     <string name="users_add_create">Create a local user</string>
     <string name="users_add_create_desc">Signs in with an email and password</string>
     <string name="users_add_import">Import from %1$s</string>
@@ -746,6 +743,9 @@
     <string name="server_settings_delete_message">The server forgets it at once. Requests already sent are not affected.</string>
     <string name="server_settings_rules">Override rules</string>
     <string name="server_settings_rule_add">Add a rule</string>
+    <string name="server_settings_services_add">Add</string>
+    <string name="server_settings_dvr_none">No %1$s instances yet</string>
+    <string name="server_settings_rules_none">No override rules yet</string>
     <string name="server_settings_rule_title">Override rule</string>
     <string name="server_settings_rule_applies_to">Applies to</string>
     <plurals name="server_settings_rule_conditions">

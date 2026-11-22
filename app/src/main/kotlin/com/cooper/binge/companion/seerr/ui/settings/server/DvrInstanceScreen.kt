@@ -18,7 +18,6 @@ import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material.icons.filled.Tag
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -28,6 +27,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.BingeConfirmDialog
+import com.binge.designsystem.component.CheckboxRow
 import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.component.ListItemDestination
@@ -288,7 +288,13 @@ internal fun TagChips(
     if (tags.isEmpty()) return
     Text(stringResource(R.string.request_tags), style = MaterialTheme.typography.titleSmall)
     tags.forEach { tag ->
-        FilterChip(selected = tag.id in selected, onClick = { onToggle(tag.id) }, enabled = enabled, label = { Text(tag.label) })
+        CheckboxRow(
+            label = tag.label,
+            checked = tag.id in selected,
+            onCheckedChange = { onToggle(tag.id) },
+            enabled = enabled,
+            icon = Icons.AutoMirrored.Filled.Label,
+        )
     }
 }
 

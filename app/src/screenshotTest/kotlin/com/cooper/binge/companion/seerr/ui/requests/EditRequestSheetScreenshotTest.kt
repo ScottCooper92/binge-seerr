@@ -44,6 +44,12 @@ class EditRequestSheetScreenshotTest {
     @SeerrComponentPreviews
     @Composable
     fun destinationOnly() = EditFrame(destinationOnlyEditState())
+
+    /** The server's tags are rows to tick beneath the destination, one ticked and one not. */
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun tags() = EditFrame(taggedEditState(), SHORT_RUN_SHEET_HEIGHT)
 }
 
 @Composable

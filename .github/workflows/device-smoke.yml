@@ -130,6 +130,14 @@ jobs:
           -Pandroid.experimental.testOptions.managedDevices.emulator.showKernelLogging=true
           --info
 
+      # The managed-device run keeps no logcat when the instrumentation process crashes (#2648), so this
+      # records it from the runner's adb. The loop restarts the capture if Gradle restarts the adb server.
+      - name: Record logcat while the smoke runs
+        run: |
+          mkdir -p app/build/logcat
+          adb="$ANDROID_HOME/platform-tools/adb"
+          nohup bash -c "while true; do '$adb' wait-for-device logcat -v threadtime -b all >> app/build/logcat/logcat.txt 2>&1; sleep 1; done" > /dev/null 2>&1 &
+
       - name: Run the smoke on the minified debug build
         run: >
           ./gradlew :app:smokeAtdApi34DebugAndroidTest
@@ -158,6 +166,7 @@ jobs:
           path: |
             app/build/reports/androidTests/**
             app/build/outputs/androidTest-results/**
+            app/build/logcat/**
           if-no-files-found: ignore
           retention-days: 7
 
