@@ -15,7 +15,9 @@ import androidx.compose.material.icons.filled.Tv
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
@@ -31,6 +33,7 @@ import com.binge.designsystem.template.screenOuterPadding
 import com.binge.designsystem.theme.BingeShapes
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.demo.isDemoOrigin
+import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.ui.DisconnectButton
 import com.cooper.binge.companion.seerr.ui.handoff.rememberScanTvCode
 import com.cooper.binge.companion.seerr.ui.settings.server.ServerSettingsPage
@@ -47,6 +50,10 @@ class SettingsActions(
     val onEditConnection: () -> Unit,
     val onOpenPage: (ServerSettingsPage) -> Unit,
     val onDisconnect: () -> Unit,
+    /** Demo only: views the demo as a requester (true) or as the administrator (false). */
+    val onViewDemoAs: (Boolean) -> Unit = {},
+    /** Demo only: opens a title from the "Sheet states" list. */
+    val onOpenTitle: (TitleKind, Int) -> Unit = { _, _ -> },
 )
 
 /**
@@ -84,6 +91,7 @@ private fun SettingsContent(
     contentPadding: PaddingValues,
 ) {
     val config = state.config
+    var showSheetStates by rememberSaveable { mutableStateOf(false) }
     Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(contentPadding)) {
         if (state.connection.baseUrl.isDemoOrigin()) DemoNote()
         ItemGroup(
@@ -110,7 +118,15 @@ private fun SettingsContent(
         Group(
             stringResource(R.string.settings_group_connection),
             // About is a server section above when this viewer can read the server's settings, so it isn't said twice.
-            connectionRows(state.connection, state.server, actions.onEditConnection, actions.onOpenPage, showAbout = config == null),
+            connectionRows(
+                state.connection,
+                state.server,
+                actions.onEditConnection,
+                actions.onOpenPage,
+                showAbout = config == null,
+                onViewDemoAs = actions.onViewDemoAs,
+                onOpenSheetStates = { showSheetStates = true },
+            ),
         )
         Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
         DisconnectButton(
@@ -119,6 +135,15 @@ private fun SettingsContent(
             demo = state.connection.baseUrl.isDemoOrigin(),
         )
         Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
+    }
+    if (showSheetStates) {
+        DemoSheetStatesSheet(
+            onDismiss = { showSheetStates = false },
+            onOpenTitle = { demoState ->
+                showSheetStates = false
+                actions.onOpenTitle(if (demoState.isMovie) TitleKind.Movie else TitleKind.Series, demoState.tmdbId)
+            },
+        )
     }
 }
 

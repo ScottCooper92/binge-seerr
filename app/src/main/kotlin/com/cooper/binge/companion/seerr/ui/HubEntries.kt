@@ -16,6 +16,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import com.binge.designsystem.component.BingeSnackbarHost
+import com.cooper.binge.companion.seerr.flags.LocalDiscoveryEnabled
 import com.cooper.binge.companion.seerr.tip.TipHost
 import com.cooper.binge.companion.seerr.ui.hub.DeveloperRow
 import com.cooper.binge.companion.seerr.ui.hub.HubActions
@@ -91,6 +92,8 @@ internal fun SettingsEntry(
             onBack = onBack,
             onEditConnection = { open(EditConnectionRoute) },
             onOpenPage = { page -> open(ServerSettingsPageRoute(page)) },
+            onViewDemoAs = viewModel::viewDemoAs,
+            onOpenTitle = { kind, tmdbId -> open(TitleDetailRoute(kind, tmdbId)) },
             // The home swaps to setup on the credentials clearing; leaving Settings is what lets it show. Only Settings
             // itself is taken off: a second tap while it leaves finds something else on top and takes nothing.
             onDisconnect = {
@@ -176,6 +179,8 @@ internal fun SettingsSearchEntry(
                 } else {
                     null
                 },
+            // With discovery on the account and Search bars stay where they are; with it off the page is as it always was.
+            pinnedBar = LocalDiscoveryEnabled.current,
         )
         inUse.forEach { SwitchPageEvents(it, snackbar) }
         BingeSnackbarHost(snackbar, Modifier.align(Alignment.BottomCenter))

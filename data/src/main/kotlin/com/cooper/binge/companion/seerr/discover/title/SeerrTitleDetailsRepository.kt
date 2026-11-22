@@ -10,6 +10,7 @@ import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.TitleResult
 import com.cooper.binge.companion.seerr.discover.collection.CollectionRepository
 import com.cooper.binge.companion.seerr.discover.externalLinks
+import com.cooper.binge.companion.seerr.discover.seededInto
 import com.cooper.binge.companion.seerr.discover.toAvailability
 import com.cooper.binge.companion.seerr.discover.toReleaseYear
 import com.cooper.binge.companion.seerr.discover.toTitlePage
@@ -118,9 +119,12 @@ class SeerrTitleDetailsRepository(
             coroutineScope {
                 val api = api()
                 val profile = profile()
+                val read = statuses.beginRead()
                 val ratings = async { if (profile.hasCombinedRatings) attempt { api.movieRatings(tmdbId) }.getOrNull() else null }
-                val recommendations = async { attempt { api.movieRecommendations(tmdbId) }.getOrNull() }
-                val similar = async { attempt { api.movieSimilar(tmdbId) }.getOrNull() }
+                val recommendations =
+                    async { attempt { api.movieRecommendations(tmdbId) }.getOrNull()?.seededInto(statuses, read, TitleKind.Movie) }
+                val similar =
+                    async { attempt { api.movieSimilar(tmdbId) }.getOrNull()?.seededInto(statuses, read, TitleKind.Movie) }
                 TitleExtras(
                     ratings = ratings.await()?.toRatings()?.takeUnless { it.isEmpty },
                     recommendations =

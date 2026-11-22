@@ -28,6 +28,7 @@ import androidx.paging.compose.itemKey
 import com.binge.companion.sdk.paging.ListRefresh
 import com.binge.designsystem.component.BingeInitialsAvatar
 import com.binge.designsystem.component.BingeTag
+import com.binge.designsystem.component.FontScaleHeight
 import com.binge.designsystem.component.ListRow
 import com.binge.designsystem.component.ListRowHeader
 import com.binge.designsystem.component.ListRowPoster
@@ -52,7 +53,6 @@ import com.cooper.binge.companion.seerr.ui.state.RequestStateChip
 import com.cooper.binge.companion.seerr.ui.state.belowPinnedLine
 import com.cooper.binge.companion.seerr.ui.state.filteredPagePadding
 import com.cooper.binge.companion.seerr.ui.state.rememberPagedPhase
-import com.cooper.binge.companion.seerr.ui.state.rowSkeletonHeight
 import com.binge.designsystem.R as DesR
 
 /**
@@ -105,11 +105,8 @@ internal fun IssuesBody(
                 ListRowSkeletonColumn(
                     contentPadding = contentPadding.filteredPagePadding(),
                     modifier = Modifier.fillMaxSize(),
-                    height =
-                        rowSkeletonHeight(
-                            dimensionResource(R.dimen.issues_row_skeleton_height),
-                            dimensionResource(R.dimen.issues_row_skeleton_growth),
-                        ),
+                    height = dimensionResource(R.dimen.issues_row_skeleton_height),
+                    fontScaleHeights = issueRowSkeletonHeights(),
                 )
             is PagedPhase.Failed ->
                 PagedRefreshError(
@@ -241,3 +238,15 @@ internal fun issueAffectedLabel(item: IssueItem): String? {
         stringResource(R.string.request_season_number, season)
     }
 }
+
+/** What an issue row measures at the font scales it wraps in steps at: one point for each, so the skeleton follows all three. */
+@Composable
+private fun issueRowSkeletonHeights(): List<FontScaleHeight> =
+    listOf(
+        FontScaleHeight(1f, dimensionResource(R.dimen.issues_row_skeleton_height)),
+        FontScaleHeight(FONT_SCALE_LARGE, dimensionResource(R.dimen.issues_row_skeleton_height_large)),
+        FontScaleHeight(FONT_SCALE_LARGEST, dimensionResource(R.dimen.issues_row_skeleton_height_largest)),
+    )
+
+private const val FONT_SCALE_LARGE = 1.3f
+private const val FONT_SCALE_LARGEST = 2f

@@ -2,8 +2,8 @@ package com.cooper.binge.companion.seerr.discover.person
 
 import com.cooper.binge.companion.seerr.data.TitleStatusStore
 import com.cooper.binge.companion.seerr.discover.TitleKind
+import com.cooper.binge.companion.seerr.discover.cardAvailability
 import com.cooper.binge.companion.seerr.discover.seedRows
-import com.cooper.binge.companion.seerr.discover.toAvailability
 import com.cooper.binge.companion.seerr.seerr.SeerrApi
 import com.cooper.binge.companion.seerr.seerr.SeerrPersonCreditDto
 import com.cooper.binge.companion.seerr.seerr.SeerrPersonCreditsDto
@@ -89,7 +89,7 @@ private fun List<SeerrPersonCreditDto>.toCredits(role: (SeerrPersonCreditDto) ->
                         }.distinct()
                         .joinToString(", ")
                         .ifEmpty { null },
-                availability = first.mediaInfo?.status.toAvailability(),
+                availability = cardAvailability(first.mediaInfo?.status, first.mediaInfo?.status4k),
             )
         }
 

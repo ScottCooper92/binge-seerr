@@ -114,7 +114,7 @@ class SetupSignInKeyboardTest {
 
 /** Opens a keyboard [height] tall over the window, answering every insets dispatch at the parent. */
 @Composable
-private fun WithKeyboard(
+internal fun WithKeyboard(
     height: Dp,
     content: @Composable () -> Unit,
 ) {

@@ -8,6 +8,7 @@ import com.cooper.binge.companion.seerr.discover.TitlePage
 import com.cooper.binge.companion.seerr.discover.TitleResult
 import com.cooper.binge.companion.seerr.discover.TitleSource
 import com.cooper.binge.companion.seerr.seerr.HydratedTitle
+import com.cooper.binge.companion.seerr.seerr.SeerrMediaStatusCode
 import com.cooper.binge.companion.seerr.seerr.SeerrRequestMediaDto
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -123,5 +124,14 @@ class HubCardLoaderTest {
     fun `a tile row has no cards`() =
         runTest {
             assertTrue(HubCardLoader(FakeTitles(emptyList()), FakeMedia()).load(HubRow.Genres(1, null, HubTab.Movies)).isEmpty())
+        }
+
+    @Test
+    fun `a title that is only in 4K shows its 4K status on a recently added card`() =
+        runTest {
+            val only4k = SeerrRequestMediaDto(tmdbId = 1, mediaType = "movie", status4k = SeerrMediaStatusCode.Available)
+            val media = FakeMedia(added = listOf(only4k))
+            val cards = HubCardLoader(FakeTitles(emptyList()), media).load(HubRow.RecentlyAdded(1, null, HubTab.Movies))
+            assertEquals(TitleAvailability.Available, cards.single().availability)
         }
 }
