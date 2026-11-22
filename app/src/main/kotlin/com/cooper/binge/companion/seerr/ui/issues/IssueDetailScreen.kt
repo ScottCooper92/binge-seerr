@@ -42,6 +42,7 @@ import androidx.compose.ui.unit.Dp
 import com.binge.designsystem.component.BingeBarIconAction
 import com.binge.designsystem.component.BingeConfirmDialog
 import com.binge.designsystem.component.BingePullToRefresh
+import com.binge.designsystem.component.BottomBarScrim
 import com.binge.designsystem.component.ListRowPoster
 import com.binge.designsystem.component.SectionHeader
 import com.binge.designsystem.component.SnackbarMessageKind
@@ -229,16 +230,19 @@ private fun Ready(
             IssueThreadScroll(state, modals, contentPadding, composerHeight.takeIf { composer }, writeIdle)
         }
         if (composer) {
-            IssueComposer(
-                detail = detail,
-                action = state.action,
-                draft = state.draft,
-                onDraftChange = actions.onDraftChange,
-                onPostComment = actions.onPostComment,
-                onToggleStatus = { modals.confirmingStatus = true },
-                onOccupiedHeightChange = { composerHeight = it },
-                modifier = Modifier.align(Alignment.BottomCenter),
-            )
+            // The scrim is the box's first child, so the thread fades out above the card and behind it, down past the navigation bar.
+            Box(modifier = Modifier.align(Alignment.BottomCenter)) {
+                BottomBarScrim()
+                IssueComposer(
+                    detail = detail,
+                    action = state.action,
+                    draft = state.draft,
+                    onDraftChange = actions.onDraftChange,
+                    onPostComment = actions.onPostComment,
+                    onToggleStatus = { modals.confirmingStatus = true },
+                    onOccupiedHeightChange = { composerHeight = it },
+                )
+            }
         }
     }
     if (modals.confirmingStatus) {

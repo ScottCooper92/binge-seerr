@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -18,30 +19,25 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshState
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.clearAndSetSemantics
 import com.binge.designsystem.component.BingePullToRefresh
 import com.binge.designsystem.component.HintCard
 import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.component.OnTabReselect
 import com.binge.designsystem.component.SectionHeader
-import com.binge.designsystem.component.rememberPaneTopBarScrollBehavior
 import com.binge.designsystem.navOverlayPadding
 import com.binge.designsystem.resolvedContentInset
 import com.binge.designsystem.resolvedContentPadding
-import com.binge.designsystem.template.BAR_HANDOVER_COLLAPSE
 import com.binge.designsystem.template.BingeScreenScaffold
 import com.binge.designsystem.template.ScreenBar
 import com.binge.designsystem.template.screenInnerPadding
 import com.binge.designsystem.template.screenOuterPadding
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.demo.isDemoOrigin
-import com.cooper.binge.companion.seerr.flags.LocalDiscoveryEnabled
 import com.cooper.binge.companion.seerr.ui.DisconnectButton
 import com.cooper.binge.companion.seerr.ui.rememberAllowLocalNetwork
 import com.cooper.binge.companion.seerr.ui.shell.SeerrTab
@@ -89,25 +85,14 @@ fun HubScreen(
     val allow = rememberAllowLocalNetwork { if (health == ConnectionHealth.LocalNetworkDenied) actions.onRetry() }
     // The account sits in the bar while the dashboard is up (#1325): the photo or initials, ringed by what is left of the quota.
     val account = ready?.overview?.account?.takeIf { ready.health.showsDashboard() }
-    val discovery = LocalDiscoveryEnabled.current
-    val scrollBehavior = rememberPaneTopBarScrollBehavior()
-    val collapsed = scrollBehavior.state.collapsedFraction
-    val pillInteractive = collapsed < BAR_HANDOVER_COLLAPSE
+    // The field is the bar's header, as Search's is, so it stays put while the page scrolls under it.
+    val fieldInHeader = ready?.health?.showsDashboard() == true
     BingeScreenScaffold(
         title = ready?.server?.title ?: stringResource(R.string.companion_name),
-        // With discovery on the account is this page's, as Settings is the avatar tab, so its action stays in a small bar.
-        bar = if (discovery) ScreenBar.Small else ScreenBar.Large,
-        scrollBehavior = scrollBehavior.takeUnless { discovery },
-        titleTrailing = account?.takeUnless { discovery }?.let { { AccountAction(it, ready.overview.quota, actions, pillInteractive) } },
-        actions = {
-            account?.let {
-                if (discovery) {
-                    AccountAction(it, ready.overview.quota, actions)
-                } else {
-                    AccountAction(it, ready.overview.quota, actions, !pillInteractive, collapsed)
-                }
-            }
-        },
+        bar = ScreenBar.Small,
+        pinned = true,
+        header = if (fieldInHeader) ({ SettingsFieldHeader(actions.onOpenSearch) }) else null,
+        actions = { account?.let { AccountAction(it, ready.overview.quota, actions) } },
     ) { padding ->
         Box(modifier = Modifier.fillMaxSize().padding(padding.screenOuterPadding())) {
             // Inside the tab bar shell the floating pill covers the last row, so the content pads by what the pill publishes.
@@ -149,21 +134,24 @@ fun HubScreen(
     }
 }
 
-/** The account action in the title row (full) or in the collapsed bar (fading in with [alpha]); only the one showing takes taps. */
+/**
+ * The Settings field in the scaffold's header slot, at the page's own side insets so beside another pane it keeps the edge the cards keep.
+ * The slot adds the fade under the header, so the field takes no bottom padding of its own.
+ */
+@Composable
+private fun SettingsFieldHeader(onClick: () -> Unit) {
+    Box(modifier = Modifier.fillMaxWidth().padding(resolvedContentPadding())) {
+        SettingsSearchEntry(onClick = onClick)
+    }
+}
+
+/** The account action in the bar: the photo or initials, ringed by what is left of the quota. */
 @Composable
 private fun AccountAction(
     account: HubAccount,
     quota: HubQuota?,
     actions: HubActions,
-    enabled: Boolean = true,
-    alpha: Float = 1f,
-) = HubAccountAction(
-    account = account,
-    quota = quota,
-    onClick = { actions.onOpenAccount(account.id) },
-    enabled = enabled,
-    modifier = Modifier.alpha(alpha).then(if (enabled) Modifier else Modifier.clearAndSetSemantics {}),
-)
+) = HubAccountAction(account = account, quota = quota, onClick = { actions.onOpenAccount(account.id) })
 
 /**
  * Whether the hub shows the server's problem in place of its dashboard. Not [ConnectionHealth.Unauthorized]: a rejection
@@ -191,15 +179,6 @@ private fun Dashboard(
     val scrollState = rememberScrollState()
     OnTabReselect(SeerrTab.Settings) { scrollState.animateScrollTo(0) }
     Column(modifier = Modifier.fillMaxSize().verticalScroll(scrollState).padding(contentPadding)) {
-        // With discovery on the bar above is small and the field sits where the Search tab's does, so it has no gap above it.
-        SettingsSearchEntry(
-            onClick = actions.onOpenSearch,
-            modifier =
-                Modifier
-                    .padding(sides)
-                    .then(if (LocalDiscoveryEnabled.current) Modifier else Modifier.padding(top = dimensionResource(DesR.dimen.padding_m)))
-                    .padding(bottom = dimensionResource(DesR.dimen.padding_m)),
-        )
         ServerCard(server = state.server, overview = state.overview, sides = sides)
         // Under the server card, while anything is downloading: the part of this page that changes while it is watched.
         if (state.downloading.isNotEmpty()) {
