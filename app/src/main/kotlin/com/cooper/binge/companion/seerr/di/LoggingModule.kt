@@ -4,8 +4,8 @@ import android.util.Log
 import com.cooper.binge.companion.seerr.BuildConfig
 import com.cooper.binge.companion.seerr.auth.CredentialStore
 import com.cooper.binge.companion.seerr.notifications.ApplicationScope
-import com.cooper.binge.companion.seerr.telemetry.LogcatLogger
 import com.cooper.binge.companion.seerr.telemetry.followCredentials
+import com.cooper.homelab.core.diagnostics.LogcatLogger
 import com.cooper.homelab.core.diagnostics.Redactor
 import com.cooper.homelab.core.diagnostics.RingLog
 import com.cooper.homelab.core.foundation.Clock
@@ -46,7 +46,7 @@ object LoggingModule {
             redactor = redactor,
             // One saved server: no entry carries a server field today, so there is no order to label.
             serverOrder = { emptyList() },
-            forward = LogcatLogger.takeIf { BuildConfig.DEBUG },
+            forward = LogcatLogger().takeIf { BuildConfig.DEBUG },
             ownPackages = OWN_PACKAGES,
         )
 

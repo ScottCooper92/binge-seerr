@@ -282,10 +282,11 @@ class SeerrApiFactory(
 
 /**
  * How long OkHttp waits for the TCP socket to the server to connect, per address attempt. A server on
- * a LAN, VPN or the internet accepts in milliseconds, so a dark host (Tailscale off) fails fast. It
- * covers the connect only, not the TLS handshake or the response, which [READ_TIMEOUT_SECONDS] bounds.
+ * a LAN, VPN or the internet accepts in milliseconds, so a dark host (Tailscale off) still fails in
+ * seconds, and a slow mobile or VPN path has room to connect. It covers the connect only, not the TLS
+ * handshake or the response, which [READ_TIMEOUT_SECONDS] bounds.
  */
-internal const val CONNECT_TIMEOUT_SECONDS = 5L
+internal const val CONNECT_TIMEOUT_SECONDS = 10L
 
 /** How long a socket read may stall, which also bounds the TLS handshake. Slow servers need this long. */
 internal const val READ_TIMEOUT_SECONDS = 15L

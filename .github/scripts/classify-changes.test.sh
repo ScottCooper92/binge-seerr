@@ -25,6 +25,7 @@ check "docs only"                  "false false false" CLAUDE.md docs/listing/pr
 check "the Play release notes"    "false false false" distribution/whatsnew/whatsnew-en-GB
 check "scripts and tooling only"   "false false false" .github/scripts/classify-changes.sh tools/x.sh
 check "the shard script runs screenshots" "true true false" .github/scripts/shard-screenshots.sh
+check "the R8 name check runs in release" "true false true" .github/scripts/check-r8-names.sh
 check "workflows run every Gradle job, R8 too" "true true true" .github/workflows/ci.yml
 check "empty diff runs everything" "true true true"
 check "a screen"                   "true true false"   "$K/ui/hub/HubScreen.kt"

@@ -25,7 +25,7 @@ import com.binge.designsystem.theme.fill
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.settings.onOffRes
 import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
-import com.cooper.binge.companion.seerr.ui.state.LoadingScreen
+import com.cooper.binge.companion.seerr.ui.state.SettingsRowsSkeleton
 import com.binge.designsystem.R as DesR
 
 class AgentsActions(
@@ -48,7 +48,7 @@ fun NotificationAgentsScreen(
         Box(modifier = Modifier.fillMaxSize().padding(padding.screenOuterPadding())) {
             val inner = padding.screenInnerPadding()
             when (state) {
-                AgentsUiState.Loading -> LoadingScreen(Modifier.padding(inner))
+                AgentsUiState.Loading -> SettingsRowsSkeleton(Modifier.padding(inner))
                 is AgentsUiState.Error -> ErrorScreen(error = state.error, modifier = Modifier.padding(inner), onRetry = actions.onRetry)
                 is AgentsUiState.Ready ->
                     Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(inner)) {

@@ -171,7 +171,7 @@ private fun actionItem(
         TvRequestAction.Retry ->
             TvRequestActionItem(
                 action,
-                stringResource(R.string.hub_retry),
+                stringResource(R.string.request_send_again),
                 Icons.Filled.Refresh,
                 actions.onRetryRequest,
             )

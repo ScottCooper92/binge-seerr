@@ -36,9 +36,10 @@ class HandOffSignInEndToEndTest {
             url = "http://127.0.0.1:${server.localPort}/a/$TOKEN",
             page = HandOffPageTemplate(copyFor = { error("not asked for") }, appLink = "x"),
             key = key,
+            dispatcher = Dispatchers.IO,
         )
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
-    private val client = OkHttpTvSignInClient(OkHttpClient(), logger = DiscardLogger)
+    private val client = OkHttpTvSignInClient(OkHttpClient(), Dispatchers.IO, DiscardLogger)
 
     @Volatile
     private var progress: HandOffProgress = HandOffProgress.Waiting

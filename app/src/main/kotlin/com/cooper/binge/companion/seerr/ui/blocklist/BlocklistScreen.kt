@@ -40,7 +40,7 @@ import com.binge.designsystem.template.screenOuterPadding
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
 import com.cooper.binge.companion.seerr.ui.state.LoadingScreen
-import com.cooper.binge.companion.seerr.ui.state.messageRes
+import com.cooper.binge.companion.seerr.ui.state.rememberErrorReporter
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
 import com.binge.designsystem.R as DesR
@@ -81,13 +81,17 @@ fun BlocklistScreen(
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     val resources = LocalResources.current
+    val reporter = rememberErrorReporter(snackbarHostState)
     LaunchedEffect(events) {
         events.collectLatest { event ->
             snackbarHostState.currentSnackbarData?.dismiss()
             val (message, kind) =
                 when (event) {
                     BlocklistEvent.Removed -> R.string.blocklist_removed to SnackbarMessageKind.Confirmation
-                    is BlocklistEvent.Failed -> event.error.messageRes() to SnackbarMessageKind.Error
+                    is BlocklistEvent.Failed -> {
+                        reporter.report(event.error)
+                        return@collectLatest
+                    }
                 }
             snackbarHostState.showSnackbar(resources.getString(message), kind)
         }

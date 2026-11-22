@@ -1,6 +1,8 @@
 package com.cooper.binge.companion.seerr.notifications
 
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.intPreferencesKey
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -44,5 +46,29 @@ class NotificationPrefsTest {
 
             prefs.forgetServer()
             assertFalse(prefs.pausedForAuthFailure.first())
+        }
+
+    @Test
+    fun `an interval stored before the shared library still reads, and an unknown one falls back`() =
+        runTest {
+            val store = PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("p.preferences_pb") }
+            val prefs = NotificationPrefs(store)
+            assertEquals(DEFAULT_POLL_INTERVAL_MINUTES, prefs.pollIntervalMinutes.first())
+
+            store.edit { it[intPreferencesKey("poll_interval_minutes")] = 120 }
+            assertEquals(120, prefs.pollIntervalMinutes.first())
+
+            store.edit { it[intPreferencesKey("poll_interval_minutes")] = 7 }
+            assertEquals(DEFAULT_POLL_INTERVAL_MINUTES, prefs.pollIntervalMinutes.first())
+        }
+
+    @Test
+    fun `a chosen interval is stored under the key it always was`() =
+        runTest {
+            val store = PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("p.preferences_pb") }
+
+            NotificationPrefs(store).setPollIntervalMinutes(360)
+
+            assertEquals(360, store.data.first()[intPreferencesKey("poll_interval_minutes")])
         }
 }

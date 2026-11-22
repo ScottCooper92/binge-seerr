@@ -129,7 +129,7 @@ internal fun OutboxActionsContent(
     ActionSheetGroup(
         rows =
             listOfNotNull(
-                actionItem(Icons.Filled.Refresh, stringResource(R.string.issue_comment_retry), onClick = onRetry).takeIf { retryable },
+                actionItem(Icons.Filled.Refresh, stringResource(R.string.action_try_again), onClick = onRetry).takeIf { retryable },
                 openItem(Icons.Filled.Edit, stringResource(R.string.issue_edit_comment), enabled = !sending, onClick = onEdit),
                 actionItem(
                     Icons.Filled.Delete,

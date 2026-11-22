@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ManageAccounts
-import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.SwapVert
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.SnackbarHostState
@@ -36,7 +35,8 @@ import com.cooper.binge.companion.seerr.seerr.ManageablePermission
 import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
 import com.cooper.binge.companion.seerr.ui.state.LoadingScreen
 import com.cooper.binge.companion.seerr.ui.state.SortSheet
-import com.cooper.binge.companion.seerr.ui.state.messageRes
+import com.cooper.binge.companion.seerr.ui.state.rememberErrorReporter
+import com.cooper.binge.companion.seerr.ui.users.settings.EditorPageActionBar
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
 
@@ -93,6 +93,13 @@ fun UsersScreen(
                 else -> null
             },
         snackbarHostState = snackbarHostState,
+        bottomBar = {
+            if (ready != null && ready.canAdmit && selected == 0) {
+                // One way in skips the choice: a server with no media server can only create.
+                val onAdd = if (ready.importSource == null) actions.admission.onStartCreate else actions.admission.onStart
+                EditorPageActionBar(label = stringResource(R.string.users_add), onClick = onAdd, enabled = true)
+            }
+        },
         actions = { glassBackgroundAlpha -> UsersBarActions(ready, actions, glassBackgroundAlpha, onSort = { showSort = true }) },
     ) { padding ->
         if (state is UsersUiState.Error) {
@@ -145,6 +152,7 @@ private fun UsersSnackbarEffect(
     snackbarHostState: SnackbarHostState,
 ) {
     val resources = LocalResources.current
+    val reporter = rememberErrorReporter(snackbarHostState)
     LaunchedEffect(events) {
         events.collectLatest { event ->
             snackbarHostState.currentSnackbarData?.dismiss()
@@ -169,17 +177,13 @@ private fun UsersSnackbarEffect(
                             },
                         kind = SnackbarMessageKind.Confirmation,
                     )
-                is UsersEvent.Failed ->
-                    snackbarHostState.showSnackbar(
-                        message = resources.getString(event.error.messageRes()),
-                        kind = SnackbarMessageKind.Error,
-                    )
+                is UsersEvent.Failed -> reporter.report(event.error)
             }
         }
     }
 }
 
-/** The bar's actions in both of its modes: the bulk actions while rows are ticked, add and sort otherwise. */
+/** The bar's actions in both of its modes: the bulk actions while rows are ticked, sort otherwise. Adding is the footer's. */
 @Composable
 private fun UsersBarActions(
     ready: UsersUiState.Ready?,
@@ -202,16 +206,6 @@ private fun UsersBarActions(
             glassBackgroundAlpha = glassBackgroundAlpha,
         )
     } else {
-        if (ready.canAdmit) {
-            // One way in skips the choice: a server with no media server can only create.
-            val onAdd = if (ready.importSource == null) actions.admission.onStartCreate else actions.admission.onStart
-            BingeBarIconAction(
-                Icons.Filled.PersonAdd,
-                stringResource(R.string.users_add_cd),
-                onAdd,
-                glassBackgroundAlpha = glassBackgroundAlpha,
-            )
-        }
         BingeBarIconAction(
             Icons.Filled.SwapVert,
             stringResource(R.string.requests_sort_cd),

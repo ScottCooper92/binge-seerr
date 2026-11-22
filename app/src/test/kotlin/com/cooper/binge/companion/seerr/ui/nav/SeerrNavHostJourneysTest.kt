@@ -223,7 +223,7 @@ class SeerrNavHostJourneysTest {
         problem: String,
         slow: () -> Unit,
     ) {
-        val retry = host.string(R.string.hub_retry)
+        val retry = host.string(R.string.action_try_again)
         host.awaitShowing(problem)
         host.awaitShowing(retry)
         slow()

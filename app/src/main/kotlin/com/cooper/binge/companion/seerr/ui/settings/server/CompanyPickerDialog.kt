@@ -11,7 +11,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Business
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -31,10 +30,11 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.binge.designsystem.component.BingeLoadingIndicator
 import com.binge.designsystem.component.BingeSearchField
+import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.template.FormScreen
 import com.binge.designsystem.template.ScreenBar
 import com.cooper.binge.companion.seerr.R
-import com.cooper.binge.companion.seerr.ui.state.SearchResultRow
+import com.cooper.binge.companion.seerr.ui.state.searchResultItem
 import com.binge.designsystem.R as DesR
 
 /**
@@ -104,20 +104,19 @@ private fun CompanyResults(
         results.isEmpty() -> Note(stringResource(R.string.server_settings_slider_studio_no_match), modifier)
         else ->
             Column(modifier = modifier.verticalScroll(rememberScrollState()).padding(bottom = bottomInset)) {
-                results.forEachIndexed { index, company ->
-                    SearchResultRow(
-                        title = company.name,
-                        added = company.id == chosen,
-                        onToggle = { onPick(company) },
-                        icon = Icons.Filled.Business,
-                    )
-                    if (index < results.lastIndex) {
-                        HorizontalDivider(
-                            modifier = Modifier.padding(start = dimensionResource(DesR.dimen.padding_m)),
-                            color = MaterialTheme.colorScheme.outlineVariant,
-                        )
-                    }
-                }
+                ItemGroup(
+                    title = null,
+                    rows =
+                        results.map { company ->
+                            searchResultItem(company.name, company.id == chosen, { onPick(company) }, Icons.Filled.Business)
+                        },
+                    modifier =
+                        Modifier.padding(
+                            start = dimensionResource(DesR.dimen.padding_m),
+                            top = dimensionResource(DesR.dimen.padding_s),
+                            end = dimensionResource(DesR.dimen.padding_m),
+                        ),
+                )
             }
     }
 }

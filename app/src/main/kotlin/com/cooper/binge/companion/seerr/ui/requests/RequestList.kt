@@ -1,8 +1,6 @@
 package com.cooper.binge.companion.seerr.ui.requests
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -10,7 +8,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -29,26 +26,20 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.itemKey
 import com.binge.companion.sdk.paging.ListRefresh
 import com.binge.designsystem.component.BingeInitialsAvatar
-import com.binge.designsystem.component.ListRow
-import com.binge.designsystem.component.ListRowHeader
-import com.binge.designsystem.component.ListRowPoster
 import com.binge.designsystem.component.ListRowSkeletonColumn
-import com.binge.designsystem.component.MediaTypeTag
-import com.binge.designsystem.component.WrappingRow
+import com.binge.designsystem.component.MediaResult
+import com.binge.designsystem.component.MediaResultKind
+import com.binge.designsystem.component.MediaResultRow
 import com.binge.designsystem.downloadEtaLabel
 import com.binge.designsystem.formatRanges
 import com.binge.designsystem.formatRelativeOrAbsolute
@@ -180,6 +171,10 @@ private fun RequestList(
     }
 }
 
+/**
+ * One request on the shared media row: who asked and when above the title, the seasons after the title, then one line of status, kind,
+ * 4K, year, rating and genre. A transferring download draws its bar under the row, and the poster opens the title where the caller allows.
+ */
 @Composable
 internal fun RequestRow(
     item: RequestItem,
@@ -191,12 +186,36 @@ internal fun RequestRow(
 ) {
     // Only a transferring grab earns a bar; a queued one stops at its chip.
     val download = item.download?.takeIf { it.downloading }
-    ListRow(
-        modifier = modifier,
+    val chip = item.statusChip()
+    val title = item.title ?: stringResource(item.mediaType.labelRes())
+    val subtitle =
+        listOfNotNull(
+            stringResource(item.mediaType.labelRes()),
+            stringResource(R.string.settings_service_4k).takeIf { item.is4k },
+            item.year,
+        ).joinToString(stringResource(R.string.hub_meta_separator))
+    val seasons =
+        item.seasonNumbers
+            .takeIf { it.isNotEmpty() }
+            ?.let { pluralStringResource(R.plurals.requests_seasons, it.size, it.formatRanges()) }
+    MediaResultRow(
+        result =
+            MediaResult(
+                key = item.id.toString(),
+                kind = MediaResultKind.Poster,
+                imageUrl = item.posterUrl,
+                name = title,
+                subtitle = subtitle,
+                rating = item.rating,
+                meta = item.genre,
+                nameSuffix = seasons,
+                statusInline = true,
+            ),
         onClick = onClick,
-        verticalAlignment = Alignment.CenterVertically,
-        leading = { RequestPoster(item, onOpenTitle) },
-        trailingContent =
+        modifier = modifier,
+        trailing = { RequestStateChip(label = stringResource(chip.labelRes), tone = chip.tone) },
+        byline = { RequestByline(item, now) },
+        end =
             onManage?.let {
                 {
                     IconButton(onClick = it) {
@@ -205,32 +224,9 @@ internal fun RequestRow(
                 }
             },
         footer = download?.let { { DownloadFooter(it) } },
-    ) { contentModifier -> RequestRowMeta(item, now, contentModifier) }
-}
-
-/**
- * The row's poster. With [onOpenTitle] it is its own tap target, labelled for TalkBack, and opens the title's page; the rest of
- * the row still opens the request. Without it the poster is plain and a tap on it opens the request with the row.
- */
-@Composable
-private fun RequestPoster(
-    item: RequestItem,
-    onOpenTitle: (() -> Unit)?,
-) {
-    if (onOpenTitle == null) {
-        ListRowPoster(imageUrl = item.posterUrl, contentDescription = null)
-        return
-    }
-    val label = stringResource(R.string.request_open_title_cd, item.title ?: stringResource(item.mediaType.labelRes()))
-    Box(
-        modifier =
-            Modifier
-                .clip(MaterialTheme.shapes.small)
-                .clickable(onClickLabel = label, role = Role.Button, onClick = onOpenTitle)
-                .semantics { contentDescription = label },
-    ) {
-        ListRowPoster(imageUrl = item.posterUrl, contentDescription = null)
-    }
+        onPosterClick = onOpenTitle,
+        posterClickLabel = onOpenTitle?.let { stringResource(R.string.request_open_title_cd, title) },
+    )
 }
 
 @Composable
@@ -245,66 +241,26 @@ private fun DownloadFooter(download: RequestDownload) {
 }
 
 @Composable
-private fun RequestRowMeta(
+private fun RequestByline(
     item: RequestItem,
     now: Long,
-    modifier: Modifier,
 ) {
     val gap = dimensionResource(DesR.dimen.detail_cast_avatar_label_spacing)
-    // modifier already carries fillMaxHeight() from ListRow's content slot, so this column matches
-    // the poster's height and the trailing spacer below can push the requester line to its bottom.
-    Column(modifier = modifier.padding(top = dimensionResource(DesR.dimen.detail_meta_spacing))) {
-        val chip = item.statusChip()
-        ListRowHeader(title = item.title ?: stringResource(item.mediaType.labelRes()))
-        Spacer(Modifier.height(gap))
-        // Wraps rather than clips: the status chip carries a dot, and a long status beside the type, 4K and year
-        // would otherwise cut the year short. `WrappingRow`, not `FlowRow`, so the card counts every wrapped line.
-        WrappingRow(horizontalSpacing = gap, verticalSpacing = gap) {
-            RequestStateChip(label = stringResource(chip.labelRes), tone = chip.tone)
-            MediaTypeTag(type = item.mediaType.toTagType())
-            if (item.is4k) {
-                Text(
-                    stringResource(R.string.settings_service_4k),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            item.year?.let { year ->
-                Text(
-                    year,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                )
-            }
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        item.requestedBy?.let { requester ->
+            BingeInitialsAvatar(name = requester, avatarUrl = item.requestedByAvatarUrl)
+            Spacer(Modifier.width(gap))
         }
-        if (item.seasonNumbers.isNotEmpty()) {
-            Spacer(Modifier.height(gap))
-            Text(
-                text = pluralStringResource(R.plurals.requests_seasons, item.seasonNumbers.size, item.seasonNumbers.formatRanges()),
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.primary,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
-        Spacer(Modifier.weight(1f).heightIn(min = gap))
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            item.requestedBy?.let { requester ->
-                BingeInitialsAvatar(name = requester, avatarUrl = item.requestedByAvatarUrl)
-                Spacer(Modifier.width(gap))
-            }
-            Text(
-                text =
-                    listOfNotNull(
-                        item.requestedBy ?: stringResource(R.string.requests_requester_unknown),
-                        formatRelativeOrAbsolute(item.requestedAtMillis, now),
-                    ).joinToString(stringResource(R.string.hub_meta_separator)),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
+        Text(
+            text =
+                listOfNotNull(
+                    item.requestedBy ?: stringResource(R.string.requests_requester_unknown),
+                    formatRelativeOrAbsolute(item.requestedAtMillis, now),
+                ).joinToString(stringResource(R.string.hub_meta_separator)),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
     }
 }

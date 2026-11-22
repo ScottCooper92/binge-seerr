@@ -34,7 +34,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -56,8 +55,6 @@ import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.component.MediaCard
 import com.binge.designsystem.component.MediaCarousel
 import com.binge.designsystem.component.SectionHeader
-import com.binge.designsystem.component.SnackbarMessageKind
-import com.binge.designsystem.component.showSnackbar
 import com.binge.designsystem.formatRelativeOrAbsolute
 import com.binge.designsystem.layout.LayoutAnchors
 import com.binge.designsystem.layout.layoutAnchor
@@ -81,8 +78,8 @@ import com.cooper.binge.companion.seerr.ui.state.OverflowDetailScaffold
 import com.cooper.binge.companion.seerr.ui.state.RoleTag
 import com.cooper.binge.companion.seerr.ui.state.actionItem
 import com.cooper.binge.companion.seerr.ui.state.externalItem
-import com.cooper.binge.companion.seerr.ui.state.messageRes
 import com.cooper.binge.companion.seerr.ui.state.openItem
+import com.cooper.binge.companion.seerr.ui.state.rememberErrorReporter
 import com.cooper.binge.companion.seerr.ui.toTitleKind
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
@@ -116,19 +113,13 @@ fun UserDetailScreen(
     showBack: Boolean = true,
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
-    val resources = LocalResources.current
     val currentOnBack by rememberUpdatedState(actions.onBack)
+    val reporter = rememberErrorReporter(snackbarHostState)
     LaunchedEffect(events) {
         events.collectLatest { event ->
             when (event) {
                 UserDetailEvent.UserDeleted -> currentOnBack()
-                is UserDetailEvent.Failed -> {
-                    snackbarHostState.currentSnackbarData?.dismiss()
-                    snackbarHostState.showSnackbar(
-                        message = resources.getString(event.error.messageRes()),
-                        kind = SnackbarMessageKind.Error,
-                    )
-                }
+                is UserDetailEvent.Failed -> reporter.report(event.error)
             }
         }
     }

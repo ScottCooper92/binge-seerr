@@ -63,7 +63,7 @@ jobs:
     permissions:
       contents: read
       pull-requests: read
-    uses: ScottCooper92/binge-ci/.github/workflows/submodule-pins.yml@a0aeac957586f54d2dd537a114d5f551f8cd57a1 # v1.0.56
+    uses: ScottCooper92/binge-ci/.github/workflows/submodule-pins.yml@de44a7c780434385c40ecf599b7f3ebd10e7fb76 # v1.0.59
     with:
       private_submodules: homelab-core,binge-design-system,binge-ci
     secrets:
@@ -97,6 +97,7 @@ jobs:
         run: |
           .github/scripts/classify-changes.test.sh
           .github/scripts/shard-screenshots.test.sh
+          .github/scripts/check-r8-names.test.sh
 
       - name: Classify the diff
         id: classify
@@ -242,6 +243,16 @@ jobs:
           if-no-files-found: ignore
           retention-days: 1
 
+      # The JVM writes a heap dump when the build runs out of heap (`HeapDumpOnOutOfMemoryError` in gradle.properties), but a dump is
+      # never uploaded: this repository is public, and a dump holds the debug classes of the private libraries it builds. This prints how
+      # much memory the runner had and whether a dump was written and how big, which says whether the heap filled or the runner killed
+      # the process.
+      - name: Say what memory the failure left
+        if: ${{ failure() }}
+        run: |
+          free -m
+          find . /home/runner/.gradle/daemon -name '*.hprof' -exec ls -lh {} + 2>/dev/null || true
+
   # The unit tests and the coverage floor read from them.
   tests:
     needs: changes
@@ -271,8 +282,36 @@ jobs:
         with:
           cache-read-only: true
 
+      # The suite sometimes stops making progress until the 30-minute timeout (#2657), with the test worker alive and the runner
+      # not short of memory. Gradle prints no test name while it waits, so a watcher takes a thread dump of every test worker at
+      # 20 and again at 25 minutes: the same thread blocked in both is the test. The dump goes to this step's log, and a run that
+      # finishes first kills the watcher.
       - name: Unit tests and coverage
-        run: ./gradlew testDebugUnitTest koverVerify --continue
+        run: |
+          (
+            for wait in 1200 300; do
+              sleep "$wait"
+              echo "::group::Thread dump of the test workers, still running"
+              for pid in $(pgrep -f 'Gradle Test Executor' || true); do
+                echo "=== pid $pid"
+                jstack -l "$pid" || true
+              done
+              echo "::endgroup::"
+            done
+          ) &
+          watcher=$!
+          status=0
+          ./gradlew testDebugUnitTest koverVerify --continue || status=$?
+          kill "$watcher" 2>/dev/null || true
+          exit "$status"
+
+      # A timeout cancels the job rather than failing it, so `failure()` alone would skip this on the one run that most needs it.
+      - name: Say what memory the failure left
+        if: ${{ failure() || cancelled() }}
+        run: |
+          free -m
+          ps -eo pid,rss,etime,args --sort=-rss | head -8 | cut -c1-200
+          find . /home/runner/.gradle/daemon -name '*.hprof' -exec ls -lh {} + 2>/dev/null || true
 
       # UncaughtExceptionsBeforeTest names the test that ran next, never the coroutine that leaked. This report names it,
       # and the artifact below expires in a day, so a failed run says what leaked in its own log (#807).
@@ -395,6 +434,11 @@ jobs:
       - name: Assemble the release build
         run: ./gradlew assembleRelease --continue
 
+      # The ring log keeps a frame only if it starts with this app's package, which `-keepnames` in companion.keep holds. The minified
+      # debug build is not the one users run, so this build's mapping is what shows a rule that stopped working.
+      - name: Check R8 kept this app's class names
+        run: .github/scripts/check-r8-names.sh app/build/outputs/mapping/release/mapping.txt
+
       - name: Upload reports
         if: ${{ failure() }}
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
@@ -477,7 +521,7 @@ jobs:
 
       # binge-ci's shared step: a pinned release verified against its published checksum, with
       # shellcheck at warning severity.
-      - uses: ScottCooper92/binge-ci/.github/actions/actionlint@a0aeac957586f54d2dd537a114d5f551f8cd57a1 # v1.0.56
+      - uses: ScottCooper92/binge-ci/.github/actions/actionlint@de44a7c780434385c40ecf599b7f3ebd10e7fb76 # v1.0.59
 
   # A red nightly has no PR or push to carry it, so without this it is a red mark in the
   # Actions tab that nothing points at. One issue stays open while the canary is red and
@@ -492,7 +536,7 @@ jobs:
     permissions:
       issues: write
     steps:
-      - uses: ScottCooper92/binge-ci/.github/actions/nightly-report@a0aeac957586f54d2dd537a114d5f551f8cd57a1 # v1.0.56
+      - uses: ScottCooper92/binge-ci/.github/actions/nightly-report@de44a7c780434385c40ecf599b7f3ebd10e7fb76 # v1.0.59
         with:
           result: ${{ needs.build.result }}
           title: Nightly CI is failing on main

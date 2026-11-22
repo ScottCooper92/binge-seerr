@@ -18,7 +18,7 @@ import com.cooper.binge.companion.seerr.seerr.SeerrSignInMode
 import com.cooper.binge.companion.seerr.seerr.isBlockedByLocalNetwork
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
 import com.cooper.binge.companion.seerr.seerr.wantsClientCertificate
-import com.cooper.binge.companion.seerr.telemetry.AnalyticsEvents
+import com.cooper.binge.companion.seerr.telemetry.reportSignIn
 import com.cooper.homelab.core.server.network.AddressLocality
 import com.cooper.homelab.core.server.network.LocalNetworkPermission
 import com.cooper.homelab.core.telemetry.Analytics
@@ -138,10 +138,7 @@ internal suspend fun SeerrConnection.adoptHandedSession(
 ): Boolean {
     crashBreadcrumbs.log("signing in with a phone's session")
     val result = adoptSession(baseUrl, session)
-    analytics.event(
-        AnalyticsEvents.SIGN_IN,
-        mapOf(AnalyticsEvents.PARAM_METHOD to HAND_OFF_SESSION_MODE, AnalyticsEvents.PARAM_SUCCESS to result.isSuccess),
-    )
+    analytics.reportSignIn(HAND_OFF_SESSION_MODE, result.isSuccess)
     return result.isSuccess
 }
 

@@ -8,10 +8,10 @@ import com.cooper.binge.companion.seerr.discover.collection.CollectionRepository
 import com.cooper.binge.companion.seerr.discover.request.RequestResult
 import com.cooper.binge.companion.seerr.telemetry.AnalyticsEvents
 import com.cooper.binge.companion.seerr.util.MainDispatcherRule
-import com.cooper.binge.companion.seerr.util.RecordingAnalytics
-import com.cooper.binge.companion.seerr.util.RecordingCrashBreadcrumbs
 import com.cooper.binge.companion.seerr.util.awaitEvent
 import com.cooper.homelab.core.telemetry.NoOpCrashBreadcrumbs
+import com.cooper.homelab.core.testing.RecordingAnalytics
+import com.cooper.homelab.core.testing.RecordingCrashBreadcrumbs
 import kotlinx.coroutines.test.runTest
 import okhttp3.ResponseBody.Companion.toResponseBody
 import org.junit.Assert.assertEquals

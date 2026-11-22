@@ -27,6 +27,7 @@ import com.cooper.binge.companion.seerr.ui.discover.request.RequestSheetTarget
 import com.cooper.binge.companion.seerr.ui.discover.request.messageRes
 import com.cooper.binge.companion.seerr.ui.requests.SiblingSheet
 import com.cooper.binge.companion.seerr.ui.state.messageRes
+import com.cooper.binge.companion.seerr.ui.state.rememberErrorReporter
 import kotlinx.coroutines.flow.Flow
 
 class TitlePageActions(
@@ -128,16 +129,17 @@ private fun ReadyPage(
     scrollState: ScrollState,
 ) {
     val snackbar = remember { SnackbarHostState() }
+    val reporter = rememberErrorReporter(snackbar)
     val resources = LocalContext.current.resources
     LaunchedEffect(events) {
         events.collect { event ->
             when (event) {
                 is TitlePageEvent.Requested -> snackbar.showSnackbar(resources.getString(event.result.messageRes()))
                 TitlePageEvent.Blocked -> snackbar.showSnackbar(resources.getString(R.string.request_title_blocked))
-                is TitlePageEvent.BlockFailed -> snackbar.showSnackbar(resources.getString(event.error.messageRes()))
+                is TitlePageEvent.BlockFailed -> reporter.report(event.error)
                 TitlePageEvent.Unblocked -> snackbar.showSnackbar(resources.getString(R.string.blocklist_removed))
-                is TitlePageEvent.WatchlistFailed -> snackbar.showSnackbar(resources.getString(event.error.messageRes()))
-                is TitlePageEvent.UnblockFailed -> snackbar.showSnackbar(resources.getString(event.error.messageRes()))
+                is TitlePageEvent.WatchlistFailed -> reporter.report(event.error)
+                is TitlePageEvent.UnblockFailed -> reporter.report(event.error)
                 TitlePageEvent.ReloadFailed -> {
                     val answer =
                         snackbar.showSnackbar(

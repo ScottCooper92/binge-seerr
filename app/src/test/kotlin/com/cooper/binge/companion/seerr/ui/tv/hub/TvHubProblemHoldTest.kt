@@ -22,6 +22,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import com.binge.designsystem.R as DesR
+import com.cooper.homelab.core.uiandroid.R as CoreR
 
 /**
  * The problem page stays through a re-probe, rather than blinking to loading and dropping the remote (#796). The view
@@ -58,7 +59,7 @@ class TvHubProblemHoldTest {
             BingeTvTheme { TvHubBoard(state = HubUiState.Error(ConnectionHealth.LocalNetworkDenied), actions = TvHubActions({}, {}, {})) }
         }
 
-        rule.onNode(hasText(string(R.string.local_network_allow_short))).assertExists()
+        rule.onNode(hasText(string(CoreR.string.connect_local_network_allow_short))).assertExists()
         rule.onNode(hasText(string(DesR.string.error_kind_retry))).assertDoesNotExist()
         rule.onNode(hasText(string(R.string.hub_disconnect))).assertExists()
     }
@@ -79,7 +80,7 @@ class TvHubProblemHoldTest {
         }
         rule.waitForIdle()
 
-        rule.onNode(hasText(string(R.string.local_network_allow_short)) and isFocusable()).assertIsFocused()
+        rule.onNode(hasText(string(CoreR.string.connect_local_network_allow_short)) and isFocusable()).assertIsFocused()
     }
 
     private fun ready(health: ConnectionHealth) =

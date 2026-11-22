@@ -33,6 +33,8 @@ non_product() {
   case "$1" in
     # The screenshots job runs this script, so it is an input to the build.
     .github/scripts/shard-screenshots.sh) return 1 ;;
+    # The release job runs this script against R8's mapping, so it is an input to the build.
+    .github/scripts/check-r8-names.sh) return 1 ;;
     *.md | LICENSE* | docs/* | .ai/* | tools/* | .gitignore | .github/ISSUE_TEMPLATE/* | .github/renovate.json5 | .github/scripts/*) return 0 ;;
     # seerr only: the Play release notes, read by release.yml and by no Gradle task.
     distribution/whatsnew/*) return 0 ;;
@@ -49,6 +51,8 @@ no_frames() {
     # seerr only: this app's package.
     app/src/main/kotlin/com/cooper/binge/companion/seerr/service/*) return 0 ;;
     app/src/main/kotlin/com/cooper/binge/companion/seerr/review/*) return 0 ;;
+    # The release job reads it against R8's mapping; no frame does.
+    .github/scripts/check-r8-names.sh) return 0 ;;
     translation-hashes.txt | detekt.yml | .editorconfig | binge-ci) return 0 ;;
   esac
   return 1
@@ -61,6 +65,7 @@ release_input() {
     *.gradle.kts | libs.versions.toml | gradle/* | gradle.properties) return 0 ;;
     design-system | binge-companions | binge-ci | homelab-core | .gitmodules) return 0 ;;
     */src/release/* | */src/main/AndroidManifest.xml | */src/main/res/raw/* | */src/main/res/xml/* | */src/main/assets/*) return 0 ;;
+    .github/scripts/check-r8-names.sh) return 0 ;;
     # The pipeline is validated by running it, release job included.
     .github/workflows/*) return 0 ;;
   esac

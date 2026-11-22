@@ -15,8 +15,8 @@ import com.cooper.binge.companion.seerr.seerr.SeerrRequestStatusCode
 import com.cooper.binge.companion.seerr.telemetry.AnalyticsEvents
 import com.cooper.binge.companion.seerr.ui.requests.SheetScope
 import com.cooper.binge.companion.seerr.util.MainDispatcherRule
-import com.cooper.binge.companion.seerr.util.RecordingAnalytics
 import com.cooper.binge.companion.seerr.util.awaitEvent
+import com.cooper.homelab.core.testing.RecordingAnalytics
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch

@@ -50,8 +50,8 @@ import com.cooper.binge.companion.seerr.seerr.discussionsUrl
 import com.cooper.binge.companion.seerr.seerr.docsUrl
 import com.cooper.binge.companion.seerr.seerr.releaseNotesUrl
 import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
-import com.cooper.binge.companion.seerr.ui.state.LoadingScreen
 import com.cooper.binge.companion.seerr.ui.state.ReloadFailureSnackbar
+import com.cooper.binge.companion.seerr.ui.state.SettingsRowsSkeleton
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.map
@@ -87,7 +87,7 @@ fun AboutScreen(
         Box(modifier = Modifier.fillMaxSize().padding(padding.screenOuterPadding())) {
             val inner = padding.screenInnerPadding()
             when (state) {
-                AboutUiState.Loading -> LoadingScreen(Modifier.padding(inner))
+                AboutUiState.Loading -> SettingsRowsSkeleton(Modifier.padding(inner))
                 is AboutUiState.Error -> ErrorScreen(error = state.error, modifier = Modifier.padding(inner), onRetry = onRetry)
                 is AboutUiState.Ready ->
                     BingePullToRefresh(

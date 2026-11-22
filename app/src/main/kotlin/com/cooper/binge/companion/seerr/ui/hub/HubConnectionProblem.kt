@@ -11,8 +11,8 @@ import com.binge.designsystem.component.BingeFilledButton
 import com.binge.designsystem.component.BingeOutlinedButton
 import com.binge.designsystem.template.MessageScreen
 import com.cooper.binge.companion.seerr.R
-import com.cooper.binge.companion.seerr.ui.AllowLocalNetwork
 import com.cooper.binge.companion.seerr.ui.DisconnectButton
+import com.cooper.homelab.core.uiandroid.connect.AllowLocalNetwork
 
 /**
  * Server gone or the dashboard not loaded: retry, or edit the connection. A session the server rejected never reaches
@@ -60,7 +60,7 @@ internal fun ConnectionProblem(
             } else {
                 // While a retry is in flight it says so, and can't be pressed again; the other ways out stay open.
                 BingeFilledButton(
-                    label = stringResource(if (rechecking) R.string.hub_rechecking else R.string.hub_retry),
+                    label = stringResource(if (rechecking) R.string.hub_rechecking else R.string.action_try_again),
                     onClick = onRetry,
                     loading = rechecking,
                     modifier = Modifier.fillMaxWidth(),

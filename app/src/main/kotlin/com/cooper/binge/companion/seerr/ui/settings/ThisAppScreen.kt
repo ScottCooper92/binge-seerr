@@ -28,9 +28,9 @@ import com.binge.designsystem.template.screenInnerPadding
 import com.binge.designsystem.template.screenOuterPadding
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.notifications.NotificationSignal
-import com.cooper.binge.companion.seerr.notifications.POLL_INTERVAL_CHOICES
-import com.cooper.binge.companion.seerr.ui.state.LoadingScreen
+import com.cooper.binge.companion.seerr.ui.state.SettingsRowsSkeleton
 import com.cooper.binge.companion.seerr.ui.state.SortSheet
+import com.cooper.homelab.core.notifications.POLL_INTERVAL_CHOICES
 import com.cooper.homelab.core.presentation.tip.TipEvent
 import com.cooper.homelab.core.presentation.tip.TipState
 import com.cooper.homelab.core.uiandroid.tip.TipResults
@@ -81,7 +81,7 @@ fun ThisAppScreen(
         Box(modifier = Modifier.fillMaxSize().padding(padding.screenOuterPadding())) {
             val inner = padding.screenInnerPadding()
             when (state) {
-                ThisAppUiState.Loading -> LoadingScreen(Modifier.padding(inner))
+                ThisAppUiState.Loading -> SettingsRowsSkeleton(Modifier.padding(inner))
                 is ThisAppUiState.Ready -> ThisAppContent(state, actions, tip, onGiveTip, contentPadding = inner)
             }
         }

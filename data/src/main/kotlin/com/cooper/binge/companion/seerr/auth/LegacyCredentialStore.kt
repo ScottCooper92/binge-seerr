@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.withContext
 
 private const val AUTH_TYPE_API_KEY = "api_key"
 private const val AUTH_TYPE_SESSION = "session"
@@ -66,7 +67,7 @@ class LegacyCredentialStore(
                 is SeerrAuth.ApiKey -> auth.key
                 is SeerrAuth.Session -> auth.cookie
             }
-        val secret = attempt { cipher.encrypt(plaintext) }.getOrElse { return false }
+        val secret = withContext(io) { attempt { cipher.encrypt(plaintext) } }.getOrElse { return false }
         dataStore.edit { prefs ->
             prefs.remove(Keys.SIGNED_OUT_URL)
             prefs.remove(Keys.PROFILE)

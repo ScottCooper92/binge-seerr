@@ -1,11 +1,11 @@
 package com.cooper.binge.companion.seerr.handoff
 
 import com.binge.companion.sdk.attempt
+import com.cooper.binge.companion.seerr.di.IoDispatcher
 import com.cooper.homelab.core.foundation.LogField
 import com.cooper.homelab.core.foundation.Logger
 import com.cooper.homelab.core.foundation.warn
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -44,11 +44,14 @@ interface TvSignInClient {
  */
 internal class OkHttpTvSignInClient(
     private val client: OkHttpClient,
-    private val dispatcher: CoroutineDispatcher = Dispatchers.IO,
+    private val dispatcher: CoroutineDispatcher,
     private val logger: Logger,
 ) : TvSignInClient {
     @Inject
-    constructor(logger: Logger) : this(handOffHttpClient(), logger = logger)
+    constructor(
+        logger: Logger,
+        @IoDispatcher dispatcher: CoroutineDispatcher,
+    ) : this(handOffHttpClient(), dispatcher, logger)
 
     override suspend fun status(target: TvHandOffTarget): HandOffStatus? =
         withContext(dispatcher) {

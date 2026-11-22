@@ -57,14 +57,21 @@ import javax.inject.Singleton
 @Retention(AnnotationRetention.RUNTIME)
 annotation class IoDispatcher
 
-internal val Context.notificationsDataStore: DataStore<Preferences> by preferencesDataStore(name = "seerr_notifications")
+internal val Context.notificationsDataStore: DataStore<Preferences> by preferencesDataStore(
+    name = "seerr_notifications",
+    corruptionHandler = corruptionHandler(),
+)
 
 private val Context.telemetryDataStore: DataStore<Preferences> by preferencesDataStore(
     name = "seerr_telemetry",
     produceMigrations = { listOf(CrashReportingMigration) },
+    corruptionHandler = corruptionHandler(),
 )
 
-private val Context.feedbackDataStore: DataStore<Preferences> by preferencesDataStore(name = "seerr_feedback")
+private val Context.feedbackDataStore: DataStore<Preferences> by preferencesDataStore(
+    name = "seerr_feedback",
+    corruptionHandler = corruptionHandler(),
+)
 
 /**
  * The wiring that is not the connection's: the cache, the notification plumbing, the reporting
