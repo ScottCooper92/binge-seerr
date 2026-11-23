@@ -28,8 +28,11 @@ import com.cooper.binge.companion.seerr.ui.requests.toRequestEntity
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 
-/** How many users the "Request for" picker lists: the first of them by name, which a small server holds whole. */
+/** How many users one read of the user list asks for. */
 private const val USER_PICKER_PAGE = 100
+
+/** The most pages the "Request for" picker reads, which is 5,000 users: a bound on a server that never ends its list. */
+private const val USER_PICKER_MAX_PAGES = 50
 
 /** One download server a request may go to. 4K is a property of the server, as the server itself keeps it. */
 data class RequestServer(
@@ -202,10 +205,19 @@ class SeerrRequestSheetRepository(
     override suspend fun users(): List<RequestUser> =
         withContext(io) {
             if (!access(TitleKind.Movie).mayRequestForOthers) return@withContext emptyList()
-            api().users(take = USER_PICKER_PAGE, sort = "displayname").results.map {
-                RequestUser(it.id, it.displayString().orEmpty().ifEmpty { it.id.toString() })
-            }
+            readAllUsers().map { RequestUser(it.id, it.displayString().orEmpty().ifEmpty { it.id.toString() }) }
         }
+
+    /** Every user by name, a page at a time: a page shorter than the one asked for is the last, whatever its `pageInfo` says. */
+    private suspend fun readAllUsers(): List<SeerrUserDto> {
+        val all = mutableListOf<SeerrUserDto>()
+        for (page in 0 until USER_PICKER_MAX_PAGES) {
+            val results = api().users(take = USER_PICKER_PAGE, skip = page * USER_PICKER_PAGE, sort = "displayname").results
+            all += results
+            if (results.size < USER_PICKER_PAGE) break
+        }
+        return all
+    }
 
     override suspend fun isAnime(tmdbId: Int): Boolean = withContext(io) { api().isAnimeSeries(tmdbId) }
 

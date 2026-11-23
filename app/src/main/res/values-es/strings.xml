@@ -282,6 +282,8 @@
     <string name="request_tags">Etiquetas</string>
     <string name="request_for">Solicitar para</string>
     <string name="request_for_me">Yo</string>
+    <string name="request_for_no_match">Ningún usuario coincide</string>
+    <string name="request_for_search">Buscar usuarios</string>
     <string name="request_sheet_users_failed">No se pudieron cargar los usuarios</string>
     <string name="request_option_default_suffix">%1$s (predeterminado)</string>
     <string name="request_folder_free_space">%1$s · %2$s libres</string>

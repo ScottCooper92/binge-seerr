@@ -256,6 +256,8 @@ internal fun <T> DestinationPickerPanel(
     selected: T?,
     onSelect: (T) -> Unit,
     onBack: () -> Unit,
+    filterPlaceholder: String? = null,
+    noMatchLabel: String? = null,
 ) {
     // No scroll of its own: the list scrolls itself, and a scroll around it would hand it an unbounded height.
     Column {
@@ -268,6 +270,8 @@ internal fun <T> DestinationPickerPanel(
             icon = { icon },
             onSelect = onSelect,
             modifier = Modifier.weight(1f, fill = false),
+            filterPlaceholder = filterPlaceholder,
+            noMatchLabel = noMatchLabel,
         )
     }
 }

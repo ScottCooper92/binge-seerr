@@ -128,6 +128,9 @@ class RequestSheetActions(
     val onOpenServer: ((String) -> Unit)? = null,
 )
 
+/** How many other users make the "Request for" page worth a search field; a handful reads at a glance. */
+private const val USER_SEARCH_FROM = 8
+
 /** A page of the sheet: the form, or one of the lists it opens. */
 private enum class SheetPage { Form, Seasons, Films, Server, Profile, RootFolder, Tags, RequestFor }
 
@@ -299,6 +302,8 @@ private fun PageFor(
                         onBack()
                     },
                     onBack = onBack,
+                    filterPlaceholder = stringResource(R.string.request_for_search).takeIf { others.size >= USER_SEARCH_FROM },
+                    noMatchLabel = stringResource(R.string.request_for_no_match),
                 )
             }
         SheetPage.Form -> Unit

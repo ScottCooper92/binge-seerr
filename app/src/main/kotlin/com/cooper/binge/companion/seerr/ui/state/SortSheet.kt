@@ -49,6 +49,8 @@ fun <T> SortContent(
     modifier: Modifier = Modifier,
     title: String = stringResource(R.string.sort_title),
     icon: (T) -> ImageVector? = { null },
+    filterPlaceholder: String? = null,
+    noMatchLabel: String? = null,
 ) {
     BingeChoiceSheetContent(
         title = title,
@@ -57,5 +59,7 @@ fun <T> SortContent(
         onSelect = onSelect,
         modifier = modifier,
         dragHandle = false,
+        filterPlaceholder = filterPlaceholder,
+        noMatchLabel = noMatchLabel,
     )
 }

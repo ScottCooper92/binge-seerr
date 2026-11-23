@@ -295,6 +295,55 @@ class SeerrRequestSheetRepositoryTest {
     }
 
     @Test
+    fun `a server with more users than one page is read page by page until a short page`() {
+        fun page(
+            skip: Int,
+            count: Int,
+        ): FakeResponse {
+            val ids = skip until skip + count
+            val users = ids.joinToString(",") { id -> """{"id":$id,"displayName":"U$id"}""" }
+            return FakeResponse(headers = JSON, body = """{"results":[$users]}""")
+        }
+        route = { request ->
+            if (request.url.encodedPath != "/api/v1/user") {
+                null
+            } else {
+                when (request.url.queryParameter("skip")) {
+                    "0" -> page(0, 100)
+                    "100" -> page(100, 100)
+                    "200" -> page(200, 30)
+                    else -> FakeResponse(code = 500)
+                }
+            }
+        }
+
+        val users = withRepository { it.users() }
+
+        assertEquals(230, users.size)
+        assertEquals(RequestUser(229, "U229"), users.last())
+        val skips = seerr.requests.filter { it.url.encodedPath == "/api/v1/user" }.map { it.url.queryParameter("skip") }
+        assertEquals(listOf("0", "100", "200"), skips)
+    }
+
+    @Test
+    fun `a failed later page fails the whole read, not a short list`() {
+        route = { request ->
+            if (request.url.encodedPath != "/api/v1/user") {
+                null
+            } else if (request.url.queryParameter("skip") == "0") {
+                val users = (1..100).joinToString(",") { """{"id":$it}""" }
+                FakeResponse(headers = JSON, body = """{"results":[$users]}""")
+            } else {
+                FakeResponse(code = 500)
+            }
+        }
+
+        val failed = runCatching { withRepository { it.users() } }.isFailure
+
+        assertTrue(failed)
+    }
+
+    @Test
     fun `a user who may not request for others reads no users and asks the server for none`() {
         permissions = PERMISSION_REQUEST
 
