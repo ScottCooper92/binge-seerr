@@ -1254,7 +1254,7 @@ class RequestDetailViewModelTest {
                    "seasons":[{"seasonNumber":1,"status":5},{"seasonNumber":2,"status":3}],
                    "media":{"id":900,"tmdbId":200,"mediaType":"tv","status":4,"status4k":5,
                      "mediaUrl":"https://jellyfin.example.com/item/1","mediaUrl4k":"https://jellyfin.example.com/item/1-4k",
-                     "serviceUrl4k":"https://sonarr.example.com/1-4k",
+                     "serviceUrl4k":"https://sonarr.example.com/1-4k","mediaAddedAt":"2026-05-01T08:00:00.000Z",
                      "downloadStatus":[{"title":"Severance.S02","size":1000,"sizeLeft":250,"status":"downloading","timeLeft":"00:10:00"}]}}""",
             )
             serve(
@@ -1275,6 +1275,8 @@ class RequestDetailViewModelTest {
             assertEquals("https://sonarr.example.com/1-4k", fourK.serviceUrl)
             assertEquals("https://jellyfin.example.com/item/1-4k", fourK.mediaServerUrl)
             assertEquals(WatchStats(3, 1, 2, emptyList()), fourK.watch)
+            assertEquals("2026-05-01T08:00:00.000Z", standard.addedAt)
+            assertNull("Seerr dates only the standard instance", fourK.addedAt)
 
             val statusSet = awaitEvent(vm.events) { it == ModerationEvent.MediaStatusSet }
             vm.moderation.setMediaStatus(11, 900, MediaStatusChoice.Available, is4k = true)

@@ -1771,5 +1771,6 @@
     <string name="title_sheet_group_requests">Requests</string>
     <string name="title_requests_sheet_title">Requests</string>
     <string name="services_plays">Plays</string>
+    <string name="services_added">Added to the library</string>
     <string name="services_standard">Standard</string>
 </resources>
