@@ -1,7 +1,9 @@
 package com.cooper.binge.companion.seerr.ui
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Dns
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.HighQuality
 import androidx.compose.material.icons.filled.LocalOffer
@@ -83,6 +85,8 @@ internal object DestinationIcons {
     val rootFolder: ImageVector = Icons.Filled.Folder
     val tags: ImageVector = Icons.Filled.LocalOffer
     val user: ImageVector = Icons.Filled.Person
+    val editServer: ImageVector = Icons.Filled.Edit
+    val addServer: ImageVector = Icons.Filled.Add
 }
 
 private fun SeerrServerDto.defaultProfile(anime: Boolean) = if (anime) activeAnimeProfileId ?: activeProfileId else activeProfileId

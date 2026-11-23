@@ -112,3 +112,32 @@ internal fun failedRow(
     detail = stringResource(R.string.action_try_again),
     onClick = onRetry,
 )
+
+/**
+ * Edit server for the chosen one, or Add a server where the read holds none of this version, for an administrator: the way out of
+ * choices that are wrong. Each is drawn only where the sheet has a host to open the settings.
+ */
+@Composable
+internal fun adminServerRows(
+    state: RequestSheetUiState.Ready,
+    actions: RequestSheetActions,
+): List<ListItem> {
+    if (!state.access.mayManageServers || !state.access.mayChooseDestination || state.servers !is ServersState.Ready) return emptyList()
+    val edit = actions.onEditServer
+    val add = actions.onAddServer
+    val pick = state.pick
+    return when {
+        state.servers4k.isEmpty() && add != null ->
+            listOf(ListItem(DestinationIcons.addServer, label = stringResource(R.string.request_sheet_add_server), onClick = add))
+        pick != null && edit != null ->
+            listOf(
+                ListItem(
+                    DestinationIcons.editServer,
+                    label = stringResource(R.string.request_sheet_edit_server),
+                    enabled = !state.submitting,
+                    onClick = { edit(pick.serverId) },
+                ),
+            )
+        else -> emptyList()
+    }
+}

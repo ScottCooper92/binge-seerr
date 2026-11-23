@@ -19,6 +19,7 @@ import com.binge.designsystem.PaneContent
 import com.binge.designsystem.PaneEdge
 import com.binge.designsystem.component.OnTabReselect
 import com.cooper.binge.companion.seerr.flags.LocalDiscoveryEnabled
+import com.cooper.binge.companion.seerr.ui.discover.request.LocalServerSettingsLinks
 import com.cooper.binge.companion.seerr.ui.discover.title.LocalOpenTitle
 import com.cooper.binge.companion.seerr.ui.discover.title.rememberOpenTitle
 import com.cooper.binge.companion.seerr.ui.discover.title.titleEntries
@@ -73,7 +74,10 @@ fun SeerrNavHost(
     // A disconnect still waiting on the server is not a connection to ask a review of: its card would show as the user leaves.
     val askable = remember(state) { derivedStateOf { if (state.value == HomeUiState.Disconnecting) false else state.value.connected() } }
     ReviewPromptOnReturnToRoot(connected = askable.value, stackDepth = backStack.size)
-    CompositionLocalProvider(LocalOpenTitle provides rememberOpenTitle(backStack)) {
+    CompositionLocalProvider(
+        LocalOpenTitle provides rememberOpenTitle(backStack),
+        LocalServerSettingsLinks provides rememberServerSettingsLinks(backStack),
+    ) {
         SeerrPaneHost(
             backStack,
             connected,

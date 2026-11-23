@@ -1576,6 +1576,8 @@
     <string name="request_sheet_quota_loading">Checking your quota</string>
     <string name="request_sheet_quota_failed">Couldn\'t read your quota</string>
     <string name="request_sheet_servers_failed">Couldn\'t load the servers</string>
+    <string name="request_sheet_edit_server">Edit server</string>
+    <string name="request_sheet_add_server">Add a server</string>
     <string name="request_sheet_choices_failed">Couldn\'t load the profiles and folders</string>
     <string name="request_sheet_failed_unreachable">Couldn\'t reach your server</string>
     <string name="request_sheet_failed_other">The server turned it down</string>
