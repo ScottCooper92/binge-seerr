@@ -63,7 +63,7 @@ class RowClippingTest {
         }
 
     @Test fun `a user row at 2_0`() =
-        rule.assertNoClippingAt(FONT_SCALE_20, allowBrokenWords = true) {
+        rule.assertNoClippingAt(FONT_SCALE_20) {
             UserRow(worstCaseUser(), selecting = false, selected = false, onClick = {}, onLongClick = {})
         }
 }

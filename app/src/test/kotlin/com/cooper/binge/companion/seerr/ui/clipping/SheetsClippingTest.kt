@@ -75,7 +75,7 @@ class SheetsClippingTest {
 
     @Test fun `the user sheets at 1_3`() = rule.assertNoClippingAt(FONT_SCALE_13) { UserSheets() }
 
-    @Test fun `the user sheets at 2_0`() = rule.assertNoClippingAt(FONT_SCALE_20, allowBrokenWords = true) { UserSheets() }
+    @Test fun `the user sheets at 2_0`() = rule.assertNoClippingAt(FONT_SCALE_20) { UserSheets() }
 
     @Test fun `the request sheets at 1_3`() = rule.assertNoClippingAt(FONT_SCALE_13) { RequestSheets() }
 
@@ -93,9 +93,9 @@ class SheetsClippingTest {
 
     @Test fun `the editor sheets at 2_0`() = rule.assertNoClippingAt(FONT_SCALE_20) { EditorSheets() }
 
-    @Test fun `the send address sheet at 1_3`() = rule.assertNoClippingAt(FONT_SCALE_13, allowBrokenWords = true) { SendAddressSheets() }
+    @Test fun `the send address sheet at 1_3`() = rule.assertNoClippingAt(FONT_SCALE_13) { SendAddressSheets() }
 
-    @Test fun `the send address sheet at 2_0`() = rule.assertNoClippingAt(FONT_SCALE_20, allowBrokenWords = true) { SendAddressSheets() }
+    @Test fun `the send address sheet at 2_0`() = rule.assertNoClippingAt(FONT_SCALE_20) { SendAddressSheets() }
 
     @Composable
     private fun UserSheets() {

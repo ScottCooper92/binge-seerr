@@ -28,9 +28,9 @@ class ReportTitleClippingTest {
     @get:Rule
     val rule = createSeerrComposeRule()
 
-    @Test fun `the report notes at 1_3`() = rule.assertNoClippingAt(FONT_SCALE_13, allowBrokenWords = true) { ReportNotes() }
+    @Test fun `the report notes at 1_3`() = rule.assertNoClippingAt(FONT_SCALE_13) { ReportNotes() }
 
-    @Test fun `the report notes at 2_0`() = rule.assertNoClippingAt(FONT_SCALE_20, allowBrokenWords = true) { ReportNotes() }
+    @Test fun `the report notes at 2_0`() = rule.assertNoClippingAt(FONT_SCALE_20) { ReportNotes() }
 
     @Composable
     private fun ReportNotes() {
