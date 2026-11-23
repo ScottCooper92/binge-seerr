@@ -1572,7 +1572,6 @@
     <string name="request_sheet_status_4k_open">4K is still open to request</string>
     <string name="request_sheet_seasons_count">%1$d of %2$d selected</string>
     <string name="request_sheet_seasons_done">Done</string>
-    <string name="request_sheet_back">Back</string>
     <string name="request_sheet_quota_loading">Checking your quota</string>
     <string name="request_sheet_quota_failed">Couldn\'t read your quota</string>
     <string name="request_sheet_servers_failed">Couldn\'t load the servers</string>

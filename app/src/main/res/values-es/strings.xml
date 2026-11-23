@@ -1515,7 +1515,6 @@
     <string name="request_sheet_status_4k_open">El 4K sigue disponible para pedir</string>
     <string name="request_sheet_seasons_count">%1$d de %2$d seleccionadas</string>
     <string name="request_sheet_seasons_done">Listo</string>
-    <string name="request_sheet_back">Atrás</string>
     <string name="request_sheet_quota_loading">Comprobando tu cuota</string>
     <string name="request_sheet_quota_failed">No se pudo leer tu cuota</string>
     <string name="request_sheet_servers_failed">No se pudieron cargar los servidores</string>
