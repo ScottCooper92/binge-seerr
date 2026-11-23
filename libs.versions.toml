@@ -75,7 +75,7 @@ workManager = "2.12.0"
 coil = "3.6.3"
 # Drag-to-reorder for LazyColumn, built on Modifier.animateItem() rather than a hand-rolled
 # animation. Published as a Kotlin Multiplatform artifact; this module resolves its Android variant.
-reorderable = "2.5.1"
+reorderable = "3.1.0"
 # The phone's in-app scan of a TV's hand-off code (#773). Play Services draws the camera UI itself,
 # so the app needs no camera permission; without Play Services the camera-and-browser route remains.
 codeScanner = "16.1.0"
