@@ -20,10 +20,10 @@ import com.cooper.binge.companion.seerr.flags.LocalDiscoveryEnabled
 import com.cooper.binge.companion.seerr.theme.SeerrTheme
 import com.cooper.binge.companion.seerr.ui.HomeRoute
 import com.cooper.binge.companion.seerr.ui.SeerrNavHost
-import com.cooper.binge.companion.seerr.ui.shell.KeepPlaceOnGateChange
 import com.cooper.binge.companion.seerr.ui.shell.SeerrTab
 import com.cooper.binge.companion.seerr.ui.shell.rememberSeerrTabs
 import com.cooper.homelab.core.flags.PreferenceGate
+import com.cooper.homelab.core.uiandroid.shell.KeepPlaceOnGateChange
 import com.cooper.homelab.core.uiandroid.shell.TabShellState
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
@@ -64,7 +64,7 @@ class NavHostActivity : ComponentActivity() {
             val discovery = resolved ?: discoveryGate.fallback
             val tabs = rememberSeerrTabs(discovery = discovery)
             this.tabs = tabs
-            KeepPlaceOnGateChange(resolved, tabs)
+            KeepPlaceOnGateChange(resolved, tabs, offTab = SeerrTab.Settings)
             // A link's chain sits above the Settings tab, as MainActivity's openLink shows it; a plain launch opens on the start tab.
             LaunchedEffect(tabs) { if (savedInstanceState == null && firstStack.size > 1 && discovery) tabs.show(SeerrTab.Settings) }
             SeerrTheme {
