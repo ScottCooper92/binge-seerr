@@ -263,7 +263,7 @@ internal fun rememberServicesState(
     val context = LocalContext.current
     // A preview has no activity to build a view model in, so a frame draws a title with no services.
     if (LocalInspectionMode.current) return ServicesState(emptyList(), settled = true)
-    val details = requests.sortedByDescending { it.id }.map { rememberRequestDetail(it.id) }
+    val details = servicesRequestIds(requests).map { rememberRequestDetail(it) }
     var waited by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
         delay(SERVICES_SETTLE_MS)
@@ -272,6 +272,10 @@ internal fun rememberServicesState(
     val groups = remember(details, kind, tmdbId) { servicesContent(details.filterNotNull(), kind, tmdbId) { context.canResolve(it) } }
     return ServicesState(groups, settled = waited || details.all { it != null })
 }
+
+/** The requests whose pages the Services sheet reads: the newest of each quality, newest first, so at most two however many there are. */
+internal fun servicesRequestIds(requests: List<TitleRequest>): List<Int> =
+    requests.sortedByDescending { it.id }.distinctBy { it.is4k }.map { it.id }
 
 /** How long a title page waits for its requests' pages before it shows without Services. */
 private const val SERVICES_SETTLE_MS = 600L
