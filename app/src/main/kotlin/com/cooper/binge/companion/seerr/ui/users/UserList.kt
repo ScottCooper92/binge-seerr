@@ -15,7 +15,6 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -161,13 +160,7 @@ internal fun UserRow(
                         )
                     },
                     label = item.name,
-                    detail =
-                        listOfNotNull(
-                            item.handle ?: item.email,
-                            stringResource(item.origin.labelRes()),
-                            pluralStringResource(R.plurals.users_request_count, item.requestCount, item.requestCount).takeIf { !selecting },
-                        )
-                            .joinToString(stringResource(R.string.hub_meta_separator)),
+                    detail = userDetail(item, selecting),
                     trailingContent = {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
@@ -190,4 +183,17 @@ internal fun UserRow(
                 ),
             ),
     )
+}
+
+@Composable
+private fun userDetail(
+    item: UserItem,
+    selecting: Boolean,
+): String {
+    val count = pluralStringResource(R.plurals.users_request_count, item.requestCount, item.requestCount)
+    return listOfNotNull(
+        item.handle ?: item.email,
+        stringResource(item.origin.labelRes()),
+        count.takeIf { !selecting },
+    ).joinToString(stringResource(R.string.hub_meta_separator))
 }
