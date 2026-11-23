@@ -38,7 +38,8 @@ fun <T> SortSheet(
 /**
  * The sort or choice list alone, for a caller that is already a sheet and swaps it in as content: the request editor
  * (#336). It is the design system's stateless choice content, so it lists, sections and marks exactly as [SortSheet]
- * does, without a second drag handle under the host sheet's own. It scrolls itself, so its caller must not.
+ * does, without a second drag handle under the host sheet's own. It scrolls itself, so its caller must not. A null [title]
+ * draws the list alone, for a caller that put the title in its own page header.
  */
 @Composable
 fun <T> SortContent(
@@ -47,7 +48,7 @@ fun <T> SortContent(
     label: @Composable (T) -> String,
     onSelect: (T) -> Unit,
     modifier: Modifier = Modifier,
-    title: String = stringResource(R.string.sort_title),
+    title: String? = stringResource(R.string.sort_title),
     icon: (T) -> ImageVector? = { null },
     filterPlaceholder: String? = null,
     noMatchLabel: String? = null,

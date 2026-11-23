@@ -261,9 +261,9 @@ internal fun <T> DestinationPickerPanel(
 ) {
     // No scroll of its own: the list scrolls itself, and a scroll around it would hand it an unbounded height.
     Column {
-        BingeSheetPageHeader(onBack = onBack)
+        BingeSheetPageHeader(onBack = onBack, title = title)
         SortContent(
-            title = title,
+            title = null,
             choices = choices.map { it.first },
             selected = selected,
             label = { id -> choices.first { it.first == id }.second },
