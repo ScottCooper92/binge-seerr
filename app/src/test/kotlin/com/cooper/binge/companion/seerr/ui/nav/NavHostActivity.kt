@@ -16,6 +16,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.rememberNavBackStack
+import com.binge.designsystem.shell.KeepPlaceOnGateChange
+import com.binge.designsystem.shell.TabShellState
 import com.cooper.binge.companion.seerr.flags.LocalDiscoveryEnabled
 import com.cooper.binge.companion.seerr.theme.SeerrTheme
 import com.cooper.binge.companion.seerr.ui.HomeRoute
@@ -23,8 +25,6 @@ import com.cooper.binge.companion.seerr.ui.SeerrNavHost
 import com.cooper.binge.companion.seerr.ui.shell.SeerrTab
 import com.cooper.binge.companion.seerr.ui.shell.rememberSeerrTabs
 import com.cooper.homelab.core.flags.PreferenceGate
-import com.cooper.homelab.core.uiandroid.shell.KeepPlaceOnGateChange
-import com.cooper.homelab.core.uiandroid.shell.TabShellState
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
