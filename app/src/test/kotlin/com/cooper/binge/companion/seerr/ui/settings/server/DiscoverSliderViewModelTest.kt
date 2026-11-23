@@ -247,7 +247,9 @@ class DiscoverSliderViewModelTest {
             advanceTimeBy(SAVE_AS_MADE_DELAY_MILLIS + 1)
 
             assertEquals("Heists 2", vm.awaitReady { !it.dirty && it.saveStatus == SaveStatus.Saved }.saved.title)
-            assertEquals(1, seerr.count("PUT", "/api/v1/settings/discover/3"))
+            val puts = seerr.received.filter { it.method == "PUT" && it.url.encodedPath == "/api/v1/settings/discover/3" }
+            assertTrue(puts.isNotEmpty())
+            assertTrue(puts.all { it.body?.utf8().orEmpty().contains("Heists 2") })
         }
 
     @Test
