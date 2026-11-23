@@ -15,7 +15,6 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -23,7 +22,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.itemKey
 import com.binge.companion.sdk.paging.ListRefresh
@@ -162,9 +160,7 @@ internal fun UserRow(
                         )
                     },
                     label = item.name,
-                    detail =
-                        listOfNotNull(item.handle ?: item.email, stringResource(item.origin.labelRes()))
-                            .joinToString(stringResource(R.string.hub_meta_separator)),
+                    detail = userDetail(item, selecting),
                     trailingContent = {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
@@ -174,16 +170,6 @@ internal fun UserRow(
                             if (selecting) {
                                 Checkbox(checked = selected, onCheckedChange = null)
                             } else {
-                                // The count gives way before the name does: the group caps this slot, and the count is the
-                                // part of it that ellipsizes, so the role tag and the chevron keep their width.
-                                Text(
-                                    pluralStringResource(R.plurals.users_request_count, item.requestCount, item.requestCount),
-                                    style = MaterialTheme.typography.labelMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                    modifier = Modifier.weight(1f, fill = false),
-                                )
                                 Icon(
                                     imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                                     contentDescription = null,
@@ -197,4 +183,17 @@ internal fun UserRow(
                 ),
             ),
     )
+}
+
+@Composable
+private fun userDetail(
+    item: UserItem,
+    selecting: Boolean,
+): String {
+    val count = pluralStringResource(R.plurals.users_request_count, item.requestCount, item.requestCount)
+    return listOfNotNull(
+        item.handle ?: item.email,
+        stringResource(item.origin.labelRes()),
+        count.takeIf { !selecting },
+    ).joinToString(stringResource(R.string.hub_meta_separator))
 }

@@ -15,8 +15,6 @@ import com.binge.designsystem.component.ListItem
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
 import com.cooper.binge.companion.seerr.ui.state.PeekingListSheet
-import com.cooper.binge.companion.seerr.ui.state.RequestStateChip
-import com.cooper.binge.companion.seerr.ui.state.RequestStateTone
 import com.binge.designsystem.R as DesR
 
 /** The admin's own Plex servers in a peeking sheet, a group of connection rows each: picking one fills the address. */
@@ -63,8 +61,7 @@ private fun connectionRow(
 ): ListItem {
     val reachable =
         connection.reachable?.let { ok ->
-            stringResource(if (ok) R.string.server_settings_plex_reachable else R.string.server_settings_plex_unreachable) to
-                (if (ok) RequestStateTone.Success else RequestStateTone.Declined)
+            stringResource(if (ok) R.string.server_settings_plex_reachable else R.string.server_settings_plex_unreachable)
         }
     return ListItem(
         icon = if (connection.local) Icons.Filled.Home else Icons.Filled.Cloud,
@@ -73,11 +70,8 @@ private fun connectionRow(
             listOfNotNull(
                 stringResource(if (connection.local) R.string.server_settings_plex_local else R.string.server_settings_plex_remote),
                 stringResource(R.string.server_settings_use_ssl).takeIf { connection.useSsl },
+                reachable,
             ).joinToString(stringResource(R.string.hub_meta_separator)),
         onClick = { actions.onChooseConnection(server, connection) },
-        trailingContent =
-            reachable?.let { (label, tone) ->
-                { RequestStateChip(label = label, tone = tone) }
-            },
     )
 }

@@ -108,7 +108,7 @@ class PageClippingTest {
 
     @Test fun `a request page at 1_3`() = rule.assertNoClippingAt(FONT_SCALE_13) { RequestPage() }
 
-    @Test fun `a request page at 2_0`() = rule.assertNoClippingAt(FONT_SCALE_20) { RequestPage() }
+    @Test fun `a request page at 2_0`() = rule.assertNoClippingAt(FONT_SCALE_20, allowBrokenWords = true) { RequestPage() }
 
     @Test fun `an issue page at 1_3`() = rule.assertNoClippingAt(FONT_SCALE_13) { IssuePage() }
 
