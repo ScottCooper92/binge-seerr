@@ -297,7 +297,8 @@ class SeerrRequestSheetRepositoryTest {
     @Test
     fun `a server with more users than one page is read page by page until a short page`() {
         fun page(skip: Int, count: Int): FakeResponse {
-            val users = (skip until skip + count).joinToString(",") { """{"id":$it,"displayName":"U$it"}""" }
+            val ids = skip until skip + count
+            val users = ids.joinToString(",") { id -> """{"id":$id,"displayName":"U$id"}""" }
             return FakeResponse(headers = JSON, body = """{"results":[$users]}""")
         }
         route = { request ->
