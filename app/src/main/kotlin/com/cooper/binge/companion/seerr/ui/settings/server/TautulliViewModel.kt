@@ -3,7 +3,7 @@ package com.cooper.binge.companion.seerr.ui.settings.server
 import androidx.lifecycle.SavedStateHandle
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.di.IoDispatcher
-import com.cooper.binge.companion.seerr.ui.users.settings.EditorViewModel
+import com.cooper.binge.companion.seerr.ui.users.settings.CommitEditorViewModel
 import com.cooper.binge.companion.seerr.ui.users.settings.SavedDraft
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
@@ -21,16 +21,16 @@ class TautulliViewModel
         private val connection: SeerrConnection,
         @IoDispatcher dispatcher: CoroutineDispatcher,
         savedState: SavedStateHandle = SavedStateHandle(),
-    ) : EditorViewModel<TautulliForm>(dispatcher) {
-        /** A connection form, kept across the process being killed (#1246). The API key is not kept: the record's goes back in. */
-        override val savedDraft =
+    ) : CommitEditorViewModel<TautulliForm>(
+            dispatcher,
+            // A connection form, kept across the process being killed (#1246). The API key is not kept: the record's goes back in.
             SavedDraft(
                 savedState,
                 serializer<TautulliForm>(),
                 scrub = { it.copy(apiKey = "") },
                 restore = { kept, loaded -> kept.copy(apiKey = loaded.apiKey) },
-            )
-
+            ),
+        ) {
         init {
             reload()
         }

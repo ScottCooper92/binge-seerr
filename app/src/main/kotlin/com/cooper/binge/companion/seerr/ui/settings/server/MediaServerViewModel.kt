@@ -11,8 +11,8 @@ import com.cooper.binge.companion.seerr.seerr.SeerrLibraryDto
 import com.cooper.binge.companion.seerr.seerr.SeerrLibraryEnabledBody
 import com.cooper.binge.companion.seerr.seerr.SeerrScanCommandBody
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
+import com.cooper.binge.companion.seerr.ui.users.settings.CommitEditorWithExtrasViewModel
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorEvent
-import com.cooper.binge.companion.seerr.ui.users.settings.ExtrasEditorViewModel
 import com.cooper.binge.companion.seerr.ui.users.settings.SavedDraft
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
@@ -41,19 +41,18 @@ class MediaServerViewModel
         private val connection: SeerrConnection,
         @IoDispatcher private val dispatcher: CoroutineDispatcher,
         savedState: SavedStateHandle = SavedStateHandle(),
-    ) : ExtrasEditorViewModel<MediaServerForm, MediaServerExtras>(MediaServerExtras(), dispatcher) {
-        /**
-         * A connection form, kept across the process being killed (#1246). The API key is not kept: the record's goes back
-         * in. A draft of another media server's kind is dropped, since the server's kind is read, not chosen.
-         */
-        override val savedDraft =
+    ) : CommitEditorWithExtrasViewModel<MediaServerForm, MediaServerExtras>(
+            MediaServerExtras(),
+            dispatcher,
+            // A connection form, kept across the process being killed (#1246). The API key is not kept: the record's goes back
+            // in. A draft of another media server's kind is dropped, since the server's kind is read, not chosen.
             SavedDraft(
                 savedState,
                 serializer<MediaServerForm>(),
                 scrub = { it.copy(apiKey = it.apiKey?.let { "" }) },
                 restore = { kept, loaded -> if (kept.kind == loaded.kind) kept.copy(apiKey = loaded.apiKey) else loaded },
-            )
-
+            ),
+        ) {
         /** Test seam for the scan's poll; the constructor is Hilt's. */
         internal var scanPollMillis: Long = SCAN_POLL_MILLIS
 
