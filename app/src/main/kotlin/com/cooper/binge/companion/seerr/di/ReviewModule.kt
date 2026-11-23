@@ -41,7 +41,7 @@ object ReviewModule {
     @Singleton
     fun launcher(
         @ApplicationContext context: Context,
-    ): ReviewPromptLauncher = PlayReviewPromptLauncher(context, AppDispatchers.platform())
+    ): ReviewPromptLauncher = PlayReviewPromptLauncher(context, AppDispatchers.platform().main)
 
     @Provides
     @Singleton
