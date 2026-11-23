@@ -40,7 +40,7 @@ import com.cooper.binge.companion.seerr.ui.requests.PagedRefreshError
 import com.cooper.binge.companion.seerr.ui.state.EmptyScreen
 import com.cooper.binge.companion.seerr.ui.state.PagedPullToRefresh
 import com.cooper.binge.companion.seerr.ui.state.PullableMessage
-import com.cooper.binge.companion.seerr.ui.state.RoleTag
+import com.cooper.binge.companion.seerr.ui.state.labelRes
 import com.cooper.binge.companion.seerr.ui.state.rememberPagedPhase
 import com.cooper.binge.companion.seerr.ui.state.rowSkeletonHeight
 import com.cooper.binge.companion.seerr.ui.users.settings.UserRole
@@ -166,7 +166,6 @@ internal fun UserRow(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
                         ) {
-                            if (item.role != UserRole.User) RoleTag(item.role)
                             if (selecting) {
                                 Checkbox(checked = selected, onCheckedChange = null)
                             } else {
@@ -192,6 +191,7 @@ private fun userDetail(
 ): String {
     val count = pluralStringResource(R.plurals.users_request_count, item.requestCount, item.requestCount)
     return listOfNotNull(
+        stringResource(item.role.labelRes()).takeIf { item.role != UserRole.User },
         item.handle ?: item.email,
         stringResource(item.origin.labelRes()),
         count.takeIf { !selecting },
