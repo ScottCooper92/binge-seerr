@@ -11,8 +11,8 @@ import com.cooper.binge.companion.seerr.seerr.displayString
 import com.cooper.binge.companion.seerr.telemetry.AnalyticsEvents
 import com.cooper.binge.companion.seerr.ui.Choice
 import com.cooper.binge.companion.seerr.ui.settings.ServiceType
+import com.cooper.binge.companion.seerr.ui.users.settings.DualModeEditorViewModel
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorEvent
-import com.cooper.binge.companion.seerr.ui.users.settings.ExtrasEditorViewModel
 import com.cooper.binge.companion.seerr.ui.users.settings.SavedDraft
 import com.cooper.homelab.core.telemetry.Analytics
 import com.cooper.homelab.core.telemetry.CrashBreadcrumbs
@@ -54,15 +54,15 @@ class OverrideRuleViewModel
         private val analytics: Analytics = NoOpAnalytics,
         private val crashBreadcrumbs: CrashBreadcrumbs = NoOpCrashBreadcrumbs,
         savedState: SavedStateHandle = SavedStateHandle(),
-    ) : ExtrasEditorViewModel<OverrideRuleForm, OverrideRuleExtras>(OverrideRuleExtras(), dispatcher) {
-        /**
-         * A new rule's form, kept across the process being killed (#1246). It holds no credential. An existing rule saves
-         * as it changes, so it has no unsaved draft to keep.
-         */
-        override val savedDraft = SavedDraft(savedState, serializer<OverrideRuleForm>()).takeIf { id == null }
-
-        override val saveAsMadeScope: CoroutineScope? = appScope.takeIf { id != null }
-
+    ) : DualModeEditorViewModel<OverrideRuleForm, OverrideRuleExtras>(
+            OverrideRuleExtras(),
+            dispatcher,
+            // An existing rule saves as it changes, on the application's scope (#930).
+            appScope.takeIf { id != null },
+            // A new rule's form, kept across the process being killed (#1246). It holds no credential. An existing rule has no
+            // unsaved draft to keep.
+            SavedDraft(savedState, serializer<OverrideRuleForm>()).takeIf { id == null },
+        ) {
         /** The choices being read for the instance picked last; a newer pick cancels it (#1021). */
         private var choicesJob: Job? = null
 
@@ -115,7 +115,7 @@ class OverrideRuleViewModel
                 val userChoices = users.await().map { user -> Choice(user.id, user.displayString() ?: user.id.toString()) }
                 editExtras { it.copy(instances = instances, users = userChoices) }
                 // What the page will show is the kept draft where there is one, so its instance is the one read.
-                val shown = savedDraft?.restoreOver(form) ?: form
+                val shown = draftKeeper?.restoreOver(form) ?: form
                 shown.serviceId?.let { serviceId -> shown.serviceType?.let { type -> loadChoices(type, serviceId) } }
                 shown.serviceType?.let { genres.ensure(it.genreSegment()) }
                 keywords.name(shown.keywords.tagIds())
