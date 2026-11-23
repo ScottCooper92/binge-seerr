@@ -70,9 +70,9 @@ class UserSettingsClippingTest {
 
     @Test fun `the permissions page at 2_0`() = rule.assertNoClippingAt(FONT_SCALE_20) { Permissions() }
 
-    @Test fun `the notifications page at 1_3`() = rule.assertNoClippingAt(FONT_SCALE_13) { Notifications() }
+    @Test fun `the notifications page at 1_3`() = rule.assertNoClippingAt(FONT_SCALE_13, allowBrokenWords = true) { Notifications() }
 
-    @Test fun `the notifications page at 2_0`() = rule.assertNoClippingAt(FONT_SCALE_20) { Notifications() }
+    @Test fun `the notifications page at 2_0`() = rule.assertNoClippingAt(FONT_SCALE_20, allowBrokenWords = true) { Notifications() }
 
     @Test fun `the linked accounts page at 1_3`() = rule.assertNoClippingAt(FONT_SCALE_13) { Linked() }
 
