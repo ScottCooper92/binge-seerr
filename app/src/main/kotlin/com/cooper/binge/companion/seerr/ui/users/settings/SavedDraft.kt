@@ -2,6 +2,7 @@ package com.cooper.binge.companion.seerr.ui.users.settings
 
 import androidx.lifecycle.SavedStateHandle
 import com.binge.companion.sdk.attempt
+import com.cooper.homelab.core.presentation.editor.DraftKeeper
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.Json
 
@@ -22,9 +23,9 @@ class SavedDraft<T>(
     private val serializer: KSerializer<T>,
     private val scrub: (T) -> T = { it },
     private val restore: (kept: T, loaded: T) -> T = { kept, _ -> kept },
-) {
+) : DraftKeeper<T> {
     /** Keeps [draft], or forgets the kept one when [draft] is null: nothing is unsaved. */
-    fun keep(draft: T?) {
+    override fun keep(draft: T?) {
         if (draft == null) {
             handle.remove<String>(KEY)
         } else {
@@ -33,7 +34,7 @@ class SavedDraft<T>(
     }
 
     /** The kept draft over [loaded], the record just read; null when none was kept, or it no longer reads. */
-    fun restoreOver(loaded: T): T? =
+    override fun restoreOver(loaded: T): T? =
         handle
             .get<String>(KEY)
             ?.let { kept -> attempt { json.decodeFromString(serializer, kept) }.getOrNull() }

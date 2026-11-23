@@ -101,6 +101,14 @@ fun <T> SaveAsMadeEditorViewModel<T>.editorActions(onBack: () -> Unit): EditorAc
 fun <T, X> SaveAsMadeEditorWithExtrasViewModel<T, X>.editorActions(onBack: () -> Unit): EditorActions<T> =
     EditorActions(onBack = onBack, onRetry = ::reload, onEdit = ::edit, onSave = ::save)
 
+/** Same as above, for a page with an explicit commit on the shared library's form. */
+fun <T> CommitEditorViewModel<T>.editorActions(onBack: () -> Unit): EditorActions<T> =
+    EditorActions(onBack = onBack, onRetry = ::reload, onEdit = ::edit, onSave = ::save)
+
+/** Same as above, for a page with an explicit commit that renders extras beside its draft. */
+fun <T, X> CommitEditorWithExtrasViewModel<T, X>.editorActions(onBack: () -> Unit): EditorActions<T> =
+    EditorActions(onBack = onBack, onRetry = ::reload, onEdit = ::edit, onSave = ::save)
+
 /** Same as above, for an editor whose page renders extras beside its draft. */
 fun <T, X> ExtrasEditorViewModel<T, X>.editorActions(onBack: () -> Unit): EditorActions<T> =
     EditorActions(onBack = onBack, onRetry = ::reload, onEdit = ::edit, onSave = ::save)

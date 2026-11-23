@@ -10,7 +10,7 @@ import com.cooper.binge.companion.seerr.seerr.SeerrServiceSettingsDto
 import com.cooper.binge.companion.seerr.telemetry.AnalyticsEvents
 import com.cooper.binge.companion.seerr.ui.settings.ServiceType
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorEvent
-import com.cooper.binge.companion.seerr.ui.users.settings.ExtrasEditorViewModel
+import com.cooper.binge.companion.seerr.ui.users.settings.CommitEditorWithExtrasViewModel
 import com.cooper.binge.companion.seerr.ui.users.settings.SavedDraft
 import com.cooper.homelab.core.telemetry.Analytics
 import com.cooper.homelab.core.telemetry.CrashBreadcrumbs
@@ -41,15 +41,17 @@ class DvrInstanceViewModel
         private val analytics: Analytics = NoOpAnalytics,
         private val crashBreadcrumbs: CrashBreadcrumbs = NoOpCrashBreadcrumbs,
         savedState: SavedStateHandle = SavedStateHandle(),
-    ) : ExtrasEditorViewModel<DvrForm, DvrExtras>(DvrExtras(), dispatcher) {
-        /** A long form, kept across the process being killed (#1026). The API key is not kept: the record's goes back in. */
-        override val savedDraft =
+    ) : CommitEditorWithExtrasViewModel<DvrForm, DvrExtras>(
+            DvrExtras(),
+            dispatcher,
+            // A long form, kept across the process being killed (#1026). The API key is not kept: the record's goes back in.
             SavedDraft(
                 savedState,
                 serializer<DvrForm>(),
                 scrub = { it.copy(apiKey = "") },
                 restore = { kept, loaded -> kept.copy(apiKey = loaded.apiKey) },
-            )
+            ),
+        ) {
 
         init {
             reload()
