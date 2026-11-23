@@ -16,6 +16,7 @@ import com.cooper.binge.companion.seerr.preview.SeerrFontScalePreviews
 import com.cooper.binge.companion.seerr.preview.SeerrScreenPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrScreenStatePreview
 import com.cooper.binge.companion.seerr.preview.SeerrSpanishPreviews
+import com.cooper.binge.companion.seerr.preview.SeerrTabletPanesPreview
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 
 /**
@@ -34,6 +35,12 @@ class DiscoverHubScreenshotTest {
     @SeerrScreenStatePreview
     @Composable
     fun readyWithPendingRow() = Frame(readyState(pending = 1))
+
+    /** A landscape tablet's window: the hero and rows at the width the grid and hub columns grow to, which no phone cell shows. */
+    @PreviewTest
+    @SeerrTabletPanesPreview
+    @Composable
+    fun readyTablet() = Frame(readyState(hero = HEROES))
 
     @PreviewTest
     @SeerrScreenStatePreview
