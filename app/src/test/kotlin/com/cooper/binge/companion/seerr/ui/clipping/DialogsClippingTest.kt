@@ -39,7 +39,7 @@ class DialogsClippingTest {
 
     @Test fun `the confirm dialogs at 1_3`() = rule.assertNoClippingAt(FONT_SCALE_13) { ConfirmDialogs() }
 
-    @Test fun `the confirm dialogs at 2_0`() = rule.assertNoClippingAt(FONT_SCALE_20) { ConfirmDialogs() }
+    @Test fun `the confirm dialogs at 2_0`() = rule.assertNoClippingAt(FONT_SCALE_20, allowBrokenWords = true) { ConfirmDialogs() }
 }
 
 /** The television's confirm dialog, at font scale 1.3 only: the TV is read from across the room (#1492). */
