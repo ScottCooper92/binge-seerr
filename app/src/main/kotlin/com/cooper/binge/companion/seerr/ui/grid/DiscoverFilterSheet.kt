@@ -48,8 +48,7 @@ internal fun DiscoverFilterSheet(
     BingeAdaptiveSheet(
         kind = BingeSheetKind.Task,
         onDismissRequest = onDismiss,
-        skipPartiallyExpanded = false,
-        dockable = true,
+        opensPartWay = true,
         stackPagesWhenCompact = true,
         backLabel = { null },
     ) { nav ->
