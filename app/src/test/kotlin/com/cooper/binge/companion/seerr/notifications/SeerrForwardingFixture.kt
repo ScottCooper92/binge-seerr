@@ -2,8 +2,8 @@ package com.cooper.binge.companion.seerr.notifications
 
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
-import com.cooper.homelab.core.bridge.NotificationForwarding
 import com.cooper.homelab.core.foundation.Clock
+import com.cooper.homelab.core.notifications.NotificationForwarding
 import kotlin.time.Instant
 
 /** The forwarding queue as the app builds it, over [store], reading its time from [now]. */

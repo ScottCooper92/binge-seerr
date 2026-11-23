@@ -30,9 +30,9 @@ import com.cooper.binge.companion.seerr.seerr.TitleCache
 import com.cooper.binge.companion.seerr.telemetry.CrashReportingMigration
 import com.cooper.binge.companion.seerr.ui.hub.BingeInstallCheck
 import com.cooper.binge.companion.seerr.ui.hub.PackageManagerBingeInstallCheck
-import com.cooper.homelab.core.bridge.NotificationForwarding
 import com.cooper.homelab.core.flags.BooleanPreference
 import com.cooper.homelab.core.foundation.Clock
+import com.cooper.homelab.core.notifications.NotificationForwarding
 import com.cooper.homelab.core.telemetry.TelemetryPrefs
 import dagger.Module
 import dagger.Provides
