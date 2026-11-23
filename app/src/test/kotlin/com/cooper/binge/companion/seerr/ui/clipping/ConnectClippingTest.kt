@@ -61,8 +61,7 @@ class ConnectClippingTest {
 
     @Test fun `a local sign-in at 1_3`() = rule.assertNoClippingAt(FONT_SCALE_13) { SignIn(SeerrSignInMode.Local, rejected()) }
 
-    @Test fun `a local sign-in at 2_0`() =
-        rule.assertNoClippingAt(FONT_SCALE_20) { SignIn(SeerrSignInMode.Local, rejected()) }
+    @Test fun `a local sign-in at 2_0`() = rule.assertNoClippingAt(FONT_SCALE_20) { SignIn(SeerrSignInMode.Local, rejected()) }
 
     @Test fun `a sign-in with a reset notice at 2_0`() =
         rule.assertNoClippingAt(FONT_SCALE_20) {
@@ -81,8 +80,7 @@ class ConnectClippingTest {
 
     @Test fun `a plex sign-in at 2_0`() = rule.assertNoClippingAt(FONT_SCALE_20) { SignIn(SeerrSignInMode.Plex) }
 
-    @Test fun `a quick connect sign-in at 2_0`() =
-        rule.assertNoClippingAt(FONT_SCALE_20) { SignIn(SeerrSignInMode.QuickConnect) }
+    @Test fun `a quick connect sign-in at 2_0`() = rule.assertNoClippingAt(FONT_SCALE_20) { SignIn(SeerrSignInMode.QuickConnect) }
 
     @Test fun `the consent question at 1_3`() = rule.assertNoClippingAt(FONT_SCALE_13) { ConsentScreen(onChoice = {}) }
 
