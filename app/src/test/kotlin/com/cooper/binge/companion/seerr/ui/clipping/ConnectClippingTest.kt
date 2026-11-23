@@ -79,8 +79,7 @@ class ConnectClippingTest {
             SignIn(SeerrSignInMode.Jellyfin, resetError = SetupError.HandOffSessionRejected)
         }
 
-    @Test fun `a plex sign-in at 2_0`() =
-        rule.assertNoClippingAt(FONT_SCALE_20, allowBrokenWords = true) { SignIn(SeerrSignInMode.Plex) }
+    @Test fun `a plex sign-in at 2_0`() = rule.assertNoClippingAt(FONT_SCALE_20, allowBrokenWords = true) { SignIn(SeerrSignInMode.Plex) }
 
     @Test fun `a quick connect sign-in at 2_0`() =
         rule.assertNoClippingAt(FONT_SCALE_20, allowBrokenWords = true) { SignIn(SeerrSignInMode.QuickConnect) }
