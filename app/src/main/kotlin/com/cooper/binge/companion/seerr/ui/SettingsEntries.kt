@@ -189,8 +189,9 @@ internal fun EntryProviderScope<NavKey>.detailEntries(
             UserSettingsPageEntry(route.userId, route.page, route.row, onBack = { backStack.popIfTop(route) })
         }
     }
-    entry<EditConnectionRoute>(metadata = DetailPane + motion.tab) { route ->
-        DetailPaneContent { EditConnectionEntry(onDone = { backStack.popIfTop(route) }, showBack = showBack()) }
+    // Full screen, tab bar and nav pill covered, as every opened flow is: beside the hub its mode tabs lost half their width.
+    entry<EditConnectionRoute>(metadata = FullScreenPane + motion.detail) { route ->
+        EditConnectionEntry(onDone = { backStack.popIfTop(route) }, showBack = true)
     }
 }
 

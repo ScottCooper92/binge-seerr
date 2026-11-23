@@ -27,6 +27,15 @@ class SectionPanesTest {
         assertNull(EditConnectionRoute.hubSection())
     }
 
+    /** Edit connection takes the whole window, nav pill included, whether it is opened off the shell or above a section (#2640). */
+    @Test
+    fun `edit connection covers the window even above a section`() {
+        assertEquals(true, listOf<NavKey>(ShellRoute, EditConnectionRoute).coversWindow())
+        assertEquals(true, listOf<NavKey>(ShellRoute, SettingsRoute, EditConnectionRoute).coversWindow())
+        assertEquals(false, listOf<NavKey>(ShellRoute, SettingsRoute).coversWindow())
+        assertEquals(false, listOf<NavKey>(ShellRoute, SettingsRoute, UserDetailRoute(1)).coversWindow())
+    }
+
     @Test
     fun `opening a section from the hub pushes it`() {
         val stack = backStack(HubRoute)
