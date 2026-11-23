@@ -11,8 +11,8 @@ import com.cooper.binge.companion.seerr.seerr.SeerrLibraryDto
 import com.cooper.binge.companion.seerr.seerr.SeerrLibraryEnabledBody
 import com.cooper.binge.companion.seerr.seerr.SeerrScanCommandBody
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
-import com.cooper.binge.companion.seerr.ui.users.settings.EditorEvent
 import com.cooper.binge.companion.seerr.ui.users.settings.CommitEditorWithExtrasViewModel
+import com.cooper.binge.companion.seerr.ui.users.settings.EditorEvent
 import com.cooper.binge.companion.seerr.ui.users.settings.SavedDraft
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
@@ -53,7 +53,6 @@ class MediaServerViewModel
                 restore = { kept, loaded -> if (kept.kind == loaded.kind) kept.copy(apiKey = loaded.apiKey) else loaded },
             ),
         ) {
-
         /** Test seam for the scan's poll; the constructor is Hilt's. */
         internal var scanPollMillis: Long = SCAN_POLL_MILLIS
 

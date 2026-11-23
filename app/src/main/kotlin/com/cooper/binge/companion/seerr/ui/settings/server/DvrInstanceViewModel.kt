@@ -9,8 +9,8 @@ import com.cooper.binge.companion.seerr.di.IoDispatcher
 import com.cooper.binge.companion.seerr.seerr.SeerrServiceSettingsDto
 import com.cooper.binge.companion.seerr.telemetry.AnalyticsEvents
 import com.cooper.binge.companion.seerr.ui.settings.ServiceType
-import com.cooper.binge.companion.seerr.ui.users.settings.EditorEvent
 import com.cooper.binge.companion.seerr.ui.users.settings.CommitEditorWithExtrasViewModel
+import com.cooper.binge.companion.seerr.ui.users.settings.EditorEvent
 import com.cooper.binge.companion.seerr.ui.users.settings.SavedDraft
 import com.cooper.homelab.core.telemetry.Analytics
 import com.cooper.homelab.core.telemetry.CrashBreadcrumbs
@@ -52,7 +52,6 @@ class DvrInstanceViewModel
                 restore = { kept, loaded -> kept.copy(apiKey = loaded.apiKey) },
             ),
         ) {
-
         init {
             reload()
         }
