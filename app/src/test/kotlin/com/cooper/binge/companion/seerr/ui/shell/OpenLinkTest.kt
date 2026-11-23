@@ -3,11 +3,11 @@ package com.cooper.binge.companion.seerr.ui.shell
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
+import com.binge.designsystem.shell.TabShellState
 import com.cooper.binge.companion.seerr.ui.RequestDetailRoute
 import com.cooper.binge.companion.seerr.ui.RequestsRoute
 import com.cooper.binge.companion.seerr.ui.ShellRoute
 import com.cooper.binge.companion.seerr.ui.pop
-import com.cooper.homelab.core.uiandroid.shell.TabShellState
 import org.junit.Assert.assertEquals
 import org.junit.Test
 

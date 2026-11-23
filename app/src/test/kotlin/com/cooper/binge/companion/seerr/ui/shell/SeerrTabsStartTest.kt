@@ -2,8 +2,8 @@ package com.cooper.binge.companion.seerr.ui.shell
 
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.junit4.StateRestorationTester
+import com.binge.designsystem.shell.TabShellState
 import com.cooper.binge.companion.seerr.util.createSeerrComposeRule
-import com.cooper.homelab.core.uiandroid.shell.TabShellState
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue

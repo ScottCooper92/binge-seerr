@@ -21,6 +21,10 @@ import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.rememberNavBackStack
 import com.binge.designsystem.component.BingeNavSuiteItem
 import com.binge.designsystem.component.rememberBingeNavPresentation
+import com.binge.designsystem.shell.TabShell
+import com.binge.designsystem.shell.TabShellState
+import com.binge.designsystem.shell.rememberTabShellState
+import com.binge.designsystem.shell.replaceAll
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.grid.GridPreset
@@ -30,10 +34,6 @@ import com.cooper.binge.companion.seerr.ui.SeerrRoute
 import com.cooper.binge.companion.seerr.ui.hub.AccountBarState
 import com.cooper.binge.companion.seerr.ui.hub.HubAccount
 import com.cooper.binge.companion.seerr.ui.state.EmptyScreen
-import com.cooper.homelab.core.uiandroid.shell.TabShell
-import com.cooper.homelab.core.uiandroid.shell.TabShellState
-import com.cooper.homelab.core.uiandroid.shell.rememberTabShellState
-import com.cooper.homelab.core.uiandroid.shell.replaceAll
 import kotlinx.serialization.Serializable
 
 /** The tabs of the discovery shell, in the order the bar shows them. */

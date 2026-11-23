@@ -19,6 +19,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation3.runtime.rememberNavBackStack
 import com.binge.companion.kit.isTelevision
 import com.binge.companion.sdk.attempt
+import com.binge.designsystem.shell.KeepPlaceOnGateChange
 import com.cooper.binge.companion.seerr.auth.ConnectionRestore
 import com.cooper.binge.companion.seerr.auth.ForegroundUserRefresh
 import com.cooper.binge.companion.seerr.discover.sliders.DiscoverSliderRepository
@@ -43,7 +44,6 @@ import com.cooper.homelab.core.flags.FeatureFlags
 import com.cooper.homelab.core.flags.PreferenceGate
 import com.cooper.homelab.core.telemetry.Analytics
 import com.cooper.homelab.core.uiandroid.flags.LocalFlags
-import com.cooper.homelab.core.uiandroid.shell.KeepPlaceOnGateChange
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.launch
