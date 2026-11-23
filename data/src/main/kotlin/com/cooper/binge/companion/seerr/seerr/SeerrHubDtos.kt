@@ -69,6 +69,8 @@ data class SeerrRequestMediaDto(
     @SerialName("jellyfinMediaId") val jellyfinMediaId: String? = null,
     @SerialName("mediaUrl4k") val mediaUrl4k: String? = null,
     @SerialName("serviceUrl4k") val serviceUrl4k: String? = null,
+    /** When the title reached the media server's library, as an ISO timestamp, where Seerr returns it. */
+    @SerialName("mediaAddedAt") val mediaAddedAt: String? = null,
     /** The Radarr or Sonarr instance the standard version was sent to: an id in `settings/radarr` or `settings/sonarr`. */
     @SerialName("serviceId") val serviceId: Int? = null,
     /** The instance the 4K version was sent to; 4K instances are listed apart from [serviceId]'s. */
