@@ -20,6 +20,7 @@ import com.binge.designsystem.PaneEdge
 import com.binge.designsystem.component.OnTabReselect
 import com.cooper.binge.companion.seerr.flags.LocalDiscoveryEnabled
 import com.cooper.binge.companion.seerr.ui.discover.request.LocalServerSettingsLinks
+import com.cooper.binge.companion.seerr.ui.discover.request.rememberServerSettingsLinks
 import com.cooper.binge.companion.seerr.ui.discover.title.LocalOpenTitle
 import com.cooper.binge.companion.seerr.ui.discover.title.rememberOpenTitle
 import com.cooper.binge.companion.seerr.ui.discover.title.titleEntries
