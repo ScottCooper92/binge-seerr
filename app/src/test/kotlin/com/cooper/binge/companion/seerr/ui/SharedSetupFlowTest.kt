@@ -457,7 +457,7 @@ class SharedSetupFlowTest {
         }
 
     @Test
-    fun `a resume that cannot reach the server says so on the address, and reports no sign-in`() =
+    fun `a resume that cannot reach the server says so on the address, and reports a failed sign-in for the mode it was resuming`() =
         runTest {
             val approved = AtomicBoolean(false)
             seerr.dispatcher = quickConnectServer(approved)
@@ -471,15 +471,16 @@ class SharedSetupFlowTest {
             vm.connect()
             vm.awaitSignIn { it.link != null }
 
-            // The process dies mid-approval, and the server cannot be reached once it comes back. The old setup counted this as a
-            // failed sign-in with the mode it was resuming; the shared machine has no attempt to count, so it counts none.
+            // The process dies mid-approval, and the server cannot be reached once it comes back. The resume counts as a failed
+            // sign-in with the mode it was resuming, as the old setup counted it.
             viewModels.clear()
             seerr.dispatcher = null
 
             val restored = viewModel(reuseConnection = true, savedState = saved)
 
             assertEquals(SetupError.NotSeerr, restored.awaitAddress { it.error != null }.error)
-            assertEquals(emptyList<Any>(), analytics.events)
+            blockUntilEvents(1)
+            assertEquals(listOf("sign_in_failed" to mapOf("method" to "QuickConnect", "reason" to "failed")), analytics.events)
         }
 
     @Test
