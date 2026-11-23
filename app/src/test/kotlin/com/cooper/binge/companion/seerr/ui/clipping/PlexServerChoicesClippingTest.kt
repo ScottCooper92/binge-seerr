@@ -28,10 +28,11 @@ class PlexServerChoicesClippingTest {
     @get:Rule
     val rule = createSeerrComposeRule()
 
-    @Test fun `the server choices at 1_3`() = rule.assertNoClippingAt(FONT_SCALE_13) { Choices() }
+    // the long hostname has no break point (#2714)
+    @Test fun `the server choices at 1_3`() = rule.assertNoClippingAt(FONT_SCALE_13, allowBrokenWords = true) { Choices() }
 
     // the long hostname and the IP address have no break point (#2714)
-    @Test fun `the server choices at 2_0`() = rule.assertNoClippingAt(FONT_SCALE_20) { Choices() }
+    @Test fun `the server choices at 2_0`() = rule.assertNoClippingAt(FONT_SCALE_20, allowBrokenWords = true) { Choices() }
 
     @Composable
     private fun Choices() =
