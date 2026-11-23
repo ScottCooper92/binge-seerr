@@ -21,9 +21,16 @@ import com.binge.designsystem.R as DesR
 
 private const val SHELL_ROLE = "seerr.shell"
 private const val SECTION_ROLE = "seerr.section"
+private const val FULL_SCREEN_ROLE = "seerr.fullScreen"
 
 /** Marks a section's entry, so [ShellPanesStrategy] knows the stack above the shell starts with one and draws it beside the hub. */
 internal val SectionPane: Map<String, Any> = mapOf(SECTION_ROLE to true)
+
+/**
+ * Marks an entry that covers the whole window, tab bar and nav pill included, even when it is opened from a section beside the hub.
+ * [ShellPanesStrategy] leaves a stack whose top entry carries it to the single-pane scene, so Back returns to the section below.
+ */
+internal val FullScreenPane: Map<String, Any> = mapOf(FULL_SCREEN_ROLE to true)
 
 /** Marks the shell's entry, so [ShellPanesStrategy] knows which entry holds the tab bar and the Settings tab. */
 internal val ShellPane: Map<String, Any> = mapOf(SHELL_ROLE to true)
@@ -51,6 +58,7 @@ internal object ShellPanesStrategy : SceneStrategy<NavKey> {
         val shell = entries.firstOrNull()?.takeIf { it.metadata[SHELL_ROLE] == true } ?: return null
         val above = entries.drop(1)
         if (above.isNotEmpty() && above.first().metadata[SECTION_ROLE] != true) return null
+        if (above.lastOrNull()?.metadata?.get(FULL_SCREEN_ROLE) == true) return null
         return ShellPanesScene(entries, shell, ShellDetail(above.lastOrNull()))
     }
 }
