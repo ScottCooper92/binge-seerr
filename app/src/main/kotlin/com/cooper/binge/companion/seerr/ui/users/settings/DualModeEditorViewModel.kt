@@ -6,7 +6,6 @@ import com.binge.companion.sdk.attempt
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
 import com.cooper.homelab.core.foundation.ServerFailure
-import com.cooper.homelab.core.presentation.editor.CommitEvent
 import com.cooper.homelab.core.presentation.editor.CommitForm
 import com.cooper.homelab.core.presentation.editor.CommitState
 import com.cooper.homelab.core.presentation.editor.DraftKeeper
