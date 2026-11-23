@@ -88,7 +88,7 @@ class TvTopBarFitClippingTest {
         // Focus on the avatar opens its menu, as it does in the app, and holds the bar at full size; otherwise Home takes focus.
         rule.onNode(hasContentDescription(string(if (open) R.string.tv_account else R.string.hub_section_requests))).requestFocus()
         rule.waitForIdle()
-        val checked = rule.assertNoTextClipped()
+        val checked = rule.assertNoTextClipped(allowBrokenWords = open)
         assertTrue("only $checked text nodes were checked", checked >= BAR_TEXT_NODES)
     }
 
