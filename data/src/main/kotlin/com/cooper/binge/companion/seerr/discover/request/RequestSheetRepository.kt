@@ -18,6 +18,7 @@ import com.cooper.binge.companion.seerr.seerr.SeerrServerDto
 import com.cooper.binge.companion.seerr.seerr.SeerrServerProfile
 import com.cooper.binge.companion.seerr.seerr.SeerrUserDto
 import com.cooper.binge.companion.seerr.seerr.arrServer
+import com.cooper.binge.companion.seerr.seerr.browsableUrl
 import com.cooper.binge.companion.seerr.seerr.displayString
 import com.cooper.binge.companion.seerr.seerr.isAnimeSeries
 import com.cooper.binge.companion.seerr.seerr.offeredServers
@@ -153,6 +154,9 @@ interface RequestSheetRepository {
     /** The servers this user may choose between, empty unless they may choose a destination. A failed read throws. */
     suspend fun servers(kind: TitleKind): List<RequestServer>
 
+    /** Where each server of this kind can be opened in a browser, by id; empty unless [RequestAccess.mayManageServers]. A failed read throws. */
+    suspend fun serverAddresses(kind: TitleKind): Map<Int, String> = emptyMap()
+
     /** The profiles and root folders of [serverId], one of [servers]. */
     suspend fun choices(
         kind: TitleKind,
@@ -210,6 +214,13 @@ class SeerrRequestSheetRepository(
             val access = access(kind)
             if (!access.mayChooseDestination) return@withContext emptyList()
             api().offeredServers(kind == TitleKind.Series, allow4k = access.may4k).map { it.toRequestServer() }
+        }
+
+    override suspend fun serverAddresses(kind: TitleKind): Map<Int, String> =
+        withContext(io) {
+            if (!access(kind).mayManageServers) return@withContext emptyMap()
+            val instances = if (kind == TitleKind.Series) api().sonarrSettings() else api().radarrSettings()
+            instances.mapNotNull { instance -> instance.id?.let { id -> instance.browsableUrl()?.let { id to it } } }.toMap()
         }
 
     override suspend fun choices(

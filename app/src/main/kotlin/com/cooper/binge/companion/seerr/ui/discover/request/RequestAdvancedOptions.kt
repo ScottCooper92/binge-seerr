@@ -5,6 +5,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.ListItem
 import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.discover.TitleKind
+import com.cooper.binge.companion.seerr.seerr.isOpenableSite
 import com.cooper.binge.companion.seerr.ui.DestinationIcons
 
 /** Which destination field's picker is open over the form. */
@@ -114,8 +116,8 @@ internal fun failedRow(
 )
 
 /**
- * Edit server for the chosen one, or Add a server where the read holds none of this version, for an administrator: the way out of
- * choices that are wrong. Each is drawn only where the sheet has a host to open the settings.
+ * Edit server and Open Radarr or Sonarr for the chosen one, or Add a server where the read holds none of this version, for an
+ * administrator: the way out of choices that are wrong. Each is drawn only where the sheet has a host to open the settings.
  */
 @Composable
 internal fun adminServerRows(
@@ -125,19 +127,38 @@ internal fun adminServerRows(
     if (!state.access.mayManageServers || !state.access.mayChooseDestination || state.servers !is ServersState.Ready) return emptyList()
     val edit = actions.onEditServer
     val add = actions.onAddServer
+    val open = actions.onOpenServer
     val pick = state.pick
-    return when {
-        state.servers4k.isEmpty() && add != null ->
-            listOf(ListItem(DestinationIcons.addServer, label = stringResource(R.string.request_sheet_add_server), onClick = add))
-        pick != null && edit != null ->
-            listOf(
-                ListItem(
-                    DestinationIcons.editServer,
-                    label = stringResource(R.string.request_sheet_edit_server),
-                    enabled = !state.submitting,
-                    onClick = { edit(pick.serverId) },
-                ),
-            )
-        else -> emptyList()
+    if (state.servers4k.isEmpty() && add != null) {
+        return listOf(
+            ListItem(
+                DestinationIcons.addServer,
+                label = stringResource(R.string.request_sheet_add_server),
+                enabled = !state.submitting,
+                onClick = add,
+            ),
+        )
     }
+    if (pick == null) return emptyList()
+    val address = state.serverUrls[pick.serverId]?.takeIf { isOpenableSite(it) }
+    val client = stringResource(if (state.target.kind == TitleKind.Series) R.string.media_client_sonarr else R.string.media_client_radarr)
+    return listOfNotNull(
+        edit?.let { editServer ->
+            ListItem(
+                DestinationIcons.editServer,
+                label = stringResource(R.string.request_sheet_edit_server),
+                enabled = !state.submitting,
+                onClick = { editServer(pick.serverId) },
+            )
+        },
+        if (open != null && address != null) {
+            ListItem(
+                DestinationIcons.openServer,
+                label = stringResource(R.string.open_in_named, client),
+                onClick = { open(address) },
+            )
+        } else {
+            null
+        },
+    )
 }
