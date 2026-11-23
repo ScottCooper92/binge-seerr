@@ -36,7 +36,6 @@ dependencies {
     implementation(libs.datastore.preferences)
     implementation(libs.homelab.appservices)
     implementation(libs.homelab.server)
-    implementation(libs.homelab.bridge)
 }
 
 // The coroutines test API is experimental and the helpers here use it; opting the compilations in once keeps the log clean.
