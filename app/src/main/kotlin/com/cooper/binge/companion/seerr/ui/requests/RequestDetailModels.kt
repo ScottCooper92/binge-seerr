@@ -128,6 +128,8 @@ data class MediaInstance(
     /** What deleting the instance's files from this page came to; null until it was tried. */
     val filesDeletion: FilesDeletion? = null,
     val download: DownloadActivity = DownloadActivity.Untracked,
+    /** When the title reached the media server, as the server wrote it; null for 4K, which Seerr does not date, and where it is not synced. */
+    val addedAt: String? = null,
 )
 
 /** How a deletion of an instance's files from the page ended, shown in place of its delete row while the page stays. */

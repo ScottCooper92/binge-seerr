@@ -1083,6 +1083,7 @@ app:server_settings_version_check  f26f3275e735
 app:server_settings_youtube_default  fb7accfff8c6
 app:server_settings_youtube_url  60d148a500ae
 app:server_settings_youtube_url_hint  a5e06ab9a284
+app:services_added  a86dfb4307f2
 app:services_plays  725b66fb9f52
 app:services_standard  ef6691545d2c
 app:settings_about  4efca0d10c5f

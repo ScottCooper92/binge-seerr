@@ -191,6 +191,7 @@ private fun SeerrRequestDto.mediaRecord(
                     media.mediaUrl?.takeIf { it.isWebUrl() },
                     watch?.data?.toWatchStats(),
                     download = media.downloadStatus.downloadActivity(queueGate.sees(media, is4k = false)),
+                    addedAt = media.mediaAddedAt,
                 ),
                 MediaInstance(
                     true,

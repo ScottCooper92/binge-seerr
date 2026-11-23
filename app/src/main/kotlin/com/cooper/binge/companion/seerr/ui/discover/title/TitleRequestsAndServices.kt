@@ -17,6 +17,7 @@ import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -30,6 +31,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.dimensionResource
@@ -166,6 +168,10 @@ internal sealed interface ServiceRow {
         val season: SeasonState,
     ) : ServiceRow
 
+    data class AddedAt(
+        val date: String,
+    ) : ServiceRow
+
     data class Watch(
         val stats: WatchStats,
     ) : ServiceRow
@@ -221,6 +227,10 @@ internal fun servicesContent(
     val serverKind = detail.mediaServer?.toServiceKind() ?: ServiceKind.Plex
     val serverRows =
         listOfNotNull(
+            detail.media
+                ?.instances
+                ?.firstNotNullOfOrNull { it.addedAt }
+                ?.let { ServiceRow.AddedAt(it) },
             detail.media
                 ?.instances
                 ?.firstNotNullOfOrNull { it.watch }
@@ -348,6 +358,15 @@ private fun serviceListItem(
                 icon = Icons.Filled.Movie,
                 label = row.season.name ?: stringResource(R.string.request_season_number, row.season.number),
                 detail = row.season.status?.let { stringResource(it.stateLabel(row.season.download).labelRes) },
+                clickable = false,
+                destination = ListItemDestination.Action,
+                trailingContent = {},
+            )
+        is ServiceRow.AddedAt ->
+            ListItem(
+                icon = Icons.Filled.Schedule,
+                label = stringResource(R.string.services_added),
+                detail = row.date.toDisplayDate(LocalConfiguration.current.locales[0]) ?: row.date,
                 clickable = false,
                 destination = ListItemDestination.Action,
                 trailingContent = {},
