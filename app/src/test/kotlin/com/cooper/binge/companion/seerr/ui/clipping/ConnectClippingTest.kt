@@ -61,26 +61,32 @@ class ConnectClippingTest {
 
     @Test fun `a local sign-in at 1_3`() = rule.assertNoClippingAt(FONT_SCALE_13) { SignIn(SeerrSignInMode.Local, rejected()) }
 
+    // the long surname has no break point at 2.0 (#2714)
     @Test fun `a local sign-in at 2_0`() =
         rule.assertNoClippingAt(FONT_SCALE_20, allowBrokenWords = true) { SignIn(SeerrSignInMode.Local, rejected()) }
 
+    // the long surname has no break point at 2.0 (#2714)
     @Test fun `a sign-in with a reset notice at 2_0`() =
         rule.assertNoClippingAt(FONT_SCALE_20, allowBrokenWords = true) {
             SignIn(SeerrSignInMode.Local, notice = SetupNotice.ResetEmailSent)
         }
 
+    // the long surname has no break point at 2.0 (#2714)
     @Test fun `a sign-in that came back rejected at 2_0`() =
         rule.assertNoClippingAt(FONT_SCALE_20, allowBrokenWords = true) {
             SignIn(SeerrSignInMode.ApiKey, notice = SetupNotice.SessionRejected)
         }
 
+    // the long surname has no break point at 2.0 (#2714)
     @Test fun `a media server sign-in at 2_0`() =
         rule.assertNoClippingAt(FONT_SCALE_20, allowBrokenWords = true) {
             SignIn(SeerrSignInMode.Jellyfin, resetError = SetupError.HandOffSessionRejected)
         }
 
+    // the long surname has no break point at 2.0 (#2714)
     @Test fun `a plex sign-in at 2_0`() = rule.assertNoClippingAt(FONT_SCALE_20, allowBrokenWords = true) { SignIn(SeerrSignInMode.Plex) }
 
+    // the long surname has no break point at 2.0 (#2714)
     @Test fun `a quick connect sign-in at 2_0`() =
         rule.assertNoClippingAt(FONT_SCALE_20, allowBrokenWords = true) { SignIn(SeerrSignInMode.QuickConnect) }
 

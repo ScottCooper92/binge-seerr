@@ -75,6 +75,7 @@ class SheetsClippingTest {
 
     @Test fun `the user sheets at 1_3`() = rule.assertNoClippingAt(FONT_SCALE_13) { UserSheets() }
 
+    // the long surname has no break point at 2.0 (#2714)
     @Test fun `the user sheets at 2_0`() = rule.assertNoClippingAt(FONT_SCALE_20, allowBrokenWords = true) { UserSheets() }
 
     @Test fun `the request sheets at 1_3`() = rule.assertNoClippingAt(FONT_SCALE_13) { RequestSheets() }
@@ -93,8 +94,10 @@ class SheetsClippingTest {
 
     @Test fun `the editor sheets at 2_0`() = rule.assertNoClippingAt(FONT_SCALE_20) { EditorSheets() }
 
+    // the long hostname has no break point (#2714)
     @Test fun `the send address sheet at 1_3`() = rule.assertNoClippingAt(FONT_SCALE_13, allowBrokenWords = true) { SendAddressSheets() }
 
+    // the long hostname has no break point (#2714)
     @Test fun `the send address sheet at 2_0`() = rule.assertNoClippingAt(FONT_SCALE_20, allowBrokenWords = true) { SendAddressSheets() }
 
     @Composable

@@ -62,6 +62,7 @@ class RowClippingTest {
             UserRow(worstCaseUser(), selecting = false, selected = false, onClick = {}, onLongClick = {})
         }
 
+    // the long surname has no break point at 2.0 (#2714)
     @Test fun `a user row at 2_0`() =
         rule.assertNoClippingAt(FONT_SCALE_20, allowBrokenWords = true) {
             UserRow(worstCaseUser(), selecting = false, selected = false, onClick = {}, onLongClick = {})

@@ -28,8 +28,10 @@ class ReportTitleClippingTest {
     @get:Rule
     val rule = createSeerrComposeRule()
 
+    // the long hostname has no break point (#2714)
     @Test fun `the report notes at 1_3`() = rule.assertNoClippingAt(FONT_SCALE_13, allowBrokenWords = true) { ReportNotes() }
 
+    // the long hostname has no break point (#2714)
     @Test fun `the report notes at 2_0`() = rule.assertNoClippingAt(FONT_SCALE_20, allowBrokenWords = true) { ReportNotes() }
 
     @Composable

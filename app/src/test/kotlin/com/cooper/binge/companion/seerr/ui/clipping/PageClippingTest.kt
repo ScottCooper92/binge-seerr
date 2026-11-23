@@ -108,6 +108,7 @@ class PageClippingTest {
 
     @Test fun `a request page at 1_3`() = rule.assertNoClippingAt(FONT_SCALE_13) { RequestPage() }
 
+    // the long surname has no break point at 2.0 (#2714)
     @Test fun `a request page at 2_0`() = rule.assertNoClippingAt(FONT_SCALE_20, allowBrokenWords = true) { RequestPage() }
 
     @Test fun `an issue page at 1_3`() = rule.assertNoClippingAt(FONT_SCALE_13) { IssuePage() }

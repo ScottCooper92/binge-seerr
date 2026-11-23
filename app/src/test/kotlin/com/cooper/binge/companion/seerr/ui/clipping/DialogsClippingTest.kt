@@ -39,6 +39,7 @@ class DialogsClippingTest {
 
     @Test fun `the confirm dialogs at 1_3`() = rule.assertNoClippingAt(FONT_SCALE_13) { ConfirmDialogs() }
 
+    // the long surname has no break point at 2.0 (#2714)
     @Test fun `the confirm dialogs at 2_0`() = rule.assertNoClippingAt(FONT_SCALE_20, allowBrokenWords = true) { ConfirmDialogs() }
 }
 
