@@ -160,6 +160,7 @@ class DiscoverSliderViewModel
 
         fun delete() {
             val existing = id ?: return
+            val unsent = ready()?.takeIf { it.dirty }?.draft
             // A change still waiting would otherwise be written to the slider as it goes.
             discardUnsent()
             // On the main thread, as save-as-made needs: only the request hops to the dispatcher.
@@ -168,9 +169,9 @@ class DiscoverSliderViewModel
                     .onSuccess { notify(EditorEvent.Deleted) }
                     .onFailure { failure ->
                         notify(EditorEvent.Failed.from(failure))
-                        // The slider is still there, so the change discarded above is owed to it again. The draft read now holds
-                        // it and any edit made while the request ran, and goes back as a change waiting to be sent.
-                        ready()?.takeIf { it.dirty }?.draft?.let { resendDiscarded(it) }
+                        // The slider is still there, so the change discarded above is owed to it again. An edit made while the
+                        // request ran has scheduled its own write, which carries the change too, so only an untouched draft is resent.
+                        unsent?.takeIf { ready()?.draft == it }?.let { resendDiscarded(it) }
                     }
             }
         }
