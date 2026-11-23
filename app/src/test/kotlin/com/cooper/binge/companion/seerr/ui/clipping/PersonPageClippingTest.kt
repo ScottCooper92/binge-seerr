@@ -71,7 +71,7 @@ class PersonPageClippingTest {
     val rule = createSeerrComposeRule()
 
     private fun check(fontScale: Float) =
-        rule.assertNoClippingAt(fontScale, allowBrokenWords = true) {
+        rule.assertNoClippingAt(fontScale) {
             PersonPageScreen(worstCase(), NO_ACTIONS)
         }
 
@@ -89,7 +89,7 @@ class PersonPageSpanishClippingTest {
     val rule = createSeerrComposeRule()
 
     private fun check(fontScale: Float) =
-        rule.assertNoClippingAt(fontScale, allowBrokenWords = true) {
+        rule.assertNoClippingAt(fontScale) {
             PersonPageScreen(worstCase(), NO_ACTIONS)
         }
 

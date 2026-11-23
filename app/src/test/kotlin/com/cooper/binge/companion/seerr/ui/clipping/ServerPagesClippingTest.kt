@@ -51,9 +51,9 @@ class ServerPagesClippingTest {
 
     @Test fun `the about page at 2_0`() = rule.assertNoClippingAt(FONT_SCALE_20) { AboutPage() }
 
-    @Test fun `the cache page at 1_3`() = rule.assertNoClippingAt(FONT_SCALE_13, allowBrokenWords = true) { CachePage() }
+    @Test fun `the cache page at 1_3`() = rule.assertNoClippingAt(FONT_SCALE_13) { CachePage() }
 
-    @Test fun `the cache page at 2_0`() = rule.assertNoClippingAt(FONT_SCALE_20, allowBrokenWords = true) { CachePage() }
+    @Test fun `the cache page at 2_0`() = rule.assertNoClippingAt(FONT_SCALE_20) { CachePage() }
 
     @androidx.compose.runtime.Composable
     private fun NetworkPage() {
