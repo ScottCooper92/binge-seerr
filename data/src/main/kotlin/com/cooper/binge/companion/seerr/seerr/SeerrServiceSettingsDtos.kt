@@ -83,3 +83,18 @@ data class SeerrOverrideRuleDto(
     @SerialName("rootFolder") val rootFolder: String? = null,
     @SerialName("tags") val tags: String? = null,
 )
+
+/** The admin's external URL where set, else the instance's own address; a LAN one opens fine from the same network. */
+fun SeerrServiceSettingsDto.browsableUrl(): String? {
+    externalUrl?.takeIf { it.isNotBlank() }?.let { return it.trimEnd('/') }
+    val host = hostname?.takeIf { it.isNotBlank() } ?: return null
+    val scheme = if (useSsl) "https" else "http"
+    val portPart = port?.let { ":$it" }.orEmpty()
+    val path =
+        baseUrl
+            ?.trim('/')
+            ?.takeIf { it.isNotEmpty() }
+            ?.let { "/$it" }
+            .orEmpty()
+    return "$scheme://$host$portPart$path"
+}

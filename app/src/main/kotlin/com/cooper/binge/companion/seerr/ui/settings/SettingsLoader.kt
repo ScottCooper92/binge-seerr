@@ -10,6 +10,7 @@ import com.cooper.binge.companion.seerr.seerr.SeerrDefaultQuotaDto
 import com.cooper.binge.companion.seerr.seerr.SeerrJobDto
 import com.cooper.binge.companion.seerr.seerr.SeerrMainSettingsDto
 import com.cooper.binge.companion.seerr.seerr.SeerrServiceSettingsDto
+import com.cooper.binge.companion.seerr.seerr.browsableUrl
 import com.cooper.binge.companion.seerr.seerr.toEpochMillisOrNull
 import com.cooper.binge.companion.seerr.seerr.toPermissions
 import kotlinx.coroutines.async
@@ -173,18 +174,3 @@ internal fun SeerrServiceSettingsDto.toService(type: ServiceType): ServerService
         is4k = is4k,
         isDefault = isDefault,
     )
-
-/** The admin's external URL where set, else the instance's own address; a LAN one opens fine from the same network. */
-private fun SeerrServiceSettingsDto.browsableUrl(): String? {
-    externalUrl?.takeIf { it.isNotBlank() }?.let { return it.trimEnd('/') }
-    val host = hostname?.takeIf { it.isNotBlank() } ?: return null
-    val scheme = if (useSsl) "https" else "http"
-    val portPart = port?.let { ":$it" }.orEmpty()
-    val path =
-        baseUrl
-            ?.trim('/')
-            ?.takeIf { it.isNotEmpty() }
-            ?.let { "/$it" }
-            .orEmpty()
-    return "$scheme://$host$portPart$path"
-}

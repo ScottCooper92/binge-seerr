@@ -263,6 +263,29 @@ class SeerrRequestSheetRepositoryTest {
     }
 
     @Test
+    fun `an administrator reads where each server opens, by its external address else its own`() {
+        route = { request ->
+            val body =
+                """[{"id":1,"name":"A","hostname":"radarr.lan","port":7878,"useSsl":false},{"id":2,"name":"B","externalUrl":"https://r.example.com/"}]"""
+            FakeResponse(headers = JSON, body = body).takeIf { request.url.encodedPath == "/api/v1/settings/radarr" }
+        }
+
+        val addresses = withRepository { it.serverAddresses(TitleKind.Movie) }
+
+        assertEquals(mapOf(1 to "http://radarr.lan:7878", 2 to "https://r.example.com"), addresses)
+    }
+
+    @Test
+    fun `a user who may not manage the servers reads no addresses and asks the server for none`() {
+        permissions = PERMISSION_REQUEST_ADVANCED or PERMISSION_REQUEST
+
+        val addresses = withRepository { it.serverAddresses(TitleKind.Movie) }
+
+        assertTrue(addresses.isEmpty())
+        assertTrue(seerr.requests.none { it.url.encodedPath.startsWith("/api/v1/settings/") })
+    }
+
+    @Test
     fun `the users to pick from are named by display name, then username, then id`() {
         val users = withRepository { it.users() }
 

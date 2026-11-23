@@ -55,7 +55,8 @@ private fun advanced(
         },
 )
 
-private fun admin(state: RequestSheetUiState.Ready) = state.copy(access = state.access.copy(mayManageServers = true))
+private fun admin(state: RequestSheetUiState.Ready) =
+    state.copy(access = state.access.copy(mayManageServers = true), serverUrls = mapOf(1 to "https://radarr.example.com"))
 
 private fun worstCase() =
     advanced().copy(
@@ -96,7 +97,7 @@ class RequestSheetScreenshotTest {
     @Composable
     fun advancedUser() = Frame(advanced(), FORM_HEIGHT)
 
-    /** An administrator with a server chosen: Edit server follows the destination rows. */
+    /** An administrator with a server chosen: Edit server and Open Radarr follow the destination rows. */
     @PreviewTest
     @SeerrComponentPreviews
     @Composable
@@ -220,6 +221,7 @@ private fun Frame(
                 {},
                 onEditServer = { _: Int -> }.takeIf { adminActions },
                 onAddServer = {}.takeIf { adminActions },
+                onOpenServer = { _: String -> }.takeIf { adminActions },
             ),
         )
     }

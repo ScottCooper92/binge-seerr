@@ -70,6 +70,13 @@ internal class RequestSheetReads(
         }
     }
 
+    /** Where the servers open in a browser, for an administrator; a read that fails leaves the link out and holds nothing. */
+    fun addresses() {
+        scope.launch {
+            attempt { repository.serverAddresses(target.kind) }.onSuccess { urls -> store.update { it.copy(serverUrls = urls) } }
+        }
+    }
+
     fun servers() {
         scope.launch {
             attempt { repository.servers(target.kind) }.fold(
