@@ -31,6 +31,7 @@ class NavMotionWiringTest {
             TitleCreditsRoute::class,
             DiscoverGridRoute::class,
             SettingsSearchRoute::class,
+            EditConnectionRoute::class,
         )
 
     private val tab: Set<KClass<*>> =
@@ -47,7 +48,6 @@ class NavMotionWiringTest {
             UserDetailRoute::class,
             UserSettingsRoute::class,
             UserSettingsPageRoute::class,
-            EditConnectionRoute::class,
             ServerSettingsPageRoute::class,
             LicencesRoute::class,
             DiagnosticsRoute::class,
