@@ -33,8 +33,7 @@ fun PeekingListSheet(
     BingeAdaptiveSheet(
         kind = BingeSheetKind.Task,
         onDismissRequest = onDismiss,
-        skipPartiallyExpanded = false,
-        dockable = true,
+        opensPartWay = true,
         edgeToEdge = true,
     ) {
         BingeSheetDockingHeader(
