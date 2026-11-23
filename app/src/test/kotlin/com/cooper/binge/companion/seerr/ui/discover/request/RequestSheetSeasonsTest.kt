@@ -28,6 +28,8 @@ private class SeasonsRepository : RequestSheetRepository {
 
     override suspend fun quota(kind: TitleKind): RequestQuota? = quota
 
+    override suspend fun isAnime(tmdbId: Int) = false
+
     override suspend fun servers(kind: TitleKind) = emptyList<RequestServer>()
 
     override suspend fun choices(
