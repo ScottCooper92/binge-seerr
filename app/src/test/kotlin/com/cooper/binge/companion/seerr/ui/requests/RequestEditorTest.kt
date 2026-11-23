@@ -50,11 +50,14 @@ private const val SONARR = "/api/v1/service/sonarr"
 
 private val SERVERS =
     """[{"id":1,"name":"Main","isDefault":true,"activeProfileId":7,"activeDirectory":"/films"},
-       {"id":2,"name":"Spare","activeProfileId":9,"activeDirectory":"/spare"},
+       {"id":2,"name":"Spare","activeProfileId":9,"activeDirectory":"/spare","activeAnimeProfileId":8,"activeAnimeDirectory":"/other"},
        {"id":3,"name":"4K","is4k":true}]"""
 
 /** What the `PUT` answers with; the editor only needs it to decode, not to read anything off it. */
 private val EDITED = """{"id":11,"media":{"tmdbId":550,"mediaType":"movie"}}"""
+
+/** A series whose keywords include anime's (210024), which is all the editor reads of it. */
+private val ANIME_SERIES = """{"id":1399,"keywords":[{"id":210024,"name":"anime"}]}"""
 
 private val SERVER_DETAILS =
     """{"server":{"id":1,"name":"Main"},"profiles":[{"id":7,"name":"HD"},{"id":8,"name":"SD"}],
@@ -74,6 +77,9 @@ class RequestEditorTest {
 
     /** When set, the edit's `PUT` gets Seerr's 202 for an edit that leaves nothing to request. */
     @Volatile private var nothingLeftToRequest = false
+
+    /** Whether the series' TMDB keywords hold anime's, which is what makes Seerr give it a Sonarr instance's anime defaults. */
+    @Volatile private var animeSeries = false
 
     /** Holds an approve's answer until released, so another action can be tried while it is in flight (#1541). */
     private val approveGate = CountDownLatch(1)
@@ -102,6 +108,7 @@ class RequestEditorTest {
                             path == "/api/v1/settings/public" -> """{"mediaServerType":2}"""
                             path == RADARR || path == SONARR -> SERVERS
                             path.startsWith("$RADARR/") || path.startsWith("$SONARR/") -> SERVER_DETAILS
+                            path == "/api/v1/tv/1399" && animeSeries -> ANIME_SERIES
                             path.startsWith("/api/v1/request/") -> EDITED
                             else -> "{}"
                         }
@@ -278,6 +285,36 @@ class RequestEditorTest {
             assertEquals(listOf(RADARR, "$RADARR/1", "$RADARR/2"), paths(RADARR))
             assertEquals(2, moved.destination?.serverId)
             assertEquals(emptySet<Int>(), moved.destination?.tagIds)
+        }
+
+    @Test
+    fun `an anime series starts a switched server from its anime profile and folder, and marks the profile default`() =
+        runTest {
+            animeSeries = true
+            val editor = editor()
+            editor.start(EditSource(tvRequest(), details = showDetails(), canEditDestination = true))
+            assertTrue(editor.awaitLoaded().destination?.anime == true)
+
+            editor.selectServer(2)
+            val moved = editor.awaitLoaded().destination
+
+            assertEquals(2, moved?.serverId)
+            assertEquals(8, moved?.profileId)
+            assertEquals(8, moved?.defaultProfileId)
+            assertEquals("/other", moved?.rootFolder)
+        }
+
+    @Test
+    fun `a series that is not anime marks the instance's regular profile as the default on a switched server`() =
+        runTest {
+            val editor = editor()
+            editor.start(EditSource(tvRequest(), details = showDetails(), canEditDestination = true))
+            assertFalse(editor.awaitLoaded().destination?.anime == true)
+
+            editor.selectServer(2)
+            val moved = editor.awaitLoaded().destination
+
+            assertEquals(9, moved?.defaultProfileId)
         }
 
     @Test

@@ -149,7 +149,7 @@ interface RequestSheetRepository {
     suspend fun users(): List<RequestUser> = emptyList()
 
     /** Whether Seerr treats this series as anime, which decides the Sonarr defaults a plain request gets. A failed read throws. */
-    suspend fun isAnime(tmdbId: Int): Boolean = false
+    suspend fun isAnime(tmdbId: Int): Boolean
 
     /** The servers this user may choose between, empty unless they may choose a destination. A failed read throws. */
     suspend fun servers(kind: TitleKind): List<RequestServer>
