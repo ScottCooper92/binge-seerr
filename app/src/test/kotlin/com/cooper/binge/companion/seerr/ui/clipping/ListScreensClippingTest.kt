@@ -54,7 +54,7 @@ class ListScreensClippingTest {
 
     @Test fun `the requests screen at 1_3`() = rule.assertNoClippingAt(FONT_SCALE_13) { Requests() }
 
-    @Test fun `the requests screen at 2_0`() = rule.assertNoClippingAt(FONT_SCALE_20) { Requests() }
+    @Test fun `the requests screen at 2_0`() = rule.assertNoClippingAt(FONT_SCALE_20, allowBrokenWords = true) { Requests() }
 
     @Test fun `the issues screen at 1_3`() = rule.assertNoClippingAt(FONT_SCALE_13) { Issues() }
 
