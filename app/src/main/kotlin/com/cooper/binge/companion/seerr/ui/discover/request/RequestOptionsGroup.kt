@@ -45,7 +45,7 @@ internal fun RequestOptionsGroup(
             fourKRow(state, actions),
             quotaRow(state, actions)?.takeIf { state.requestFor == null },
             requestForRow(state, actions, onOpenDestination),
-        ) + destinationRows(state, actions, onOpenDestination)
+        ) + destinationRows(state, actions, onOpenDestination) + adminServerRows(state, actions)
     if (rows.isNotEmpty()) ItemGroup(title = null, rows = rows, modifier = modifier)
 }
 

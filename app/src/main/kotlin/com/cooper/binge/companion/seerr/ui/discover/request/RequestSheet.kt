@@ -24,9 +24,11 @@ import com.binge.designsystem.component.BingeAdaptiveSheet
 import com.binge.designsystem.component.BingeConfirmDialog
 import com.binge.designsystem.component.BingeSheetKind
 import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.discover.TitleKind
 import com.cooper.binge.companion.seerr.discover.request.RequestResult
 import com.cooper.binge.companion.seerr.ui.DestinationIcons
 import com.cooper.binge.companion.seerr.ui.requests.DestinationPickerPanel
+import com.cooper.binge.companion.seerr.ui.settings.ServiceType
 import com.cooper.binge.companion.seerr.ui.state.DialogMessage
 import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
 import com.cooper.binge.companion.seerr.ui.state.LoadingScreen
@@ -54,6 +56,8 @@ fun RequestSheet(
             creationCallback = { factory -> factory.create(target) },
         )
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val links = LocalServerSettingsLinks.current
+    val serviceType = if (target.kind == TitleKind.Series) ServiceType.Sonarr else ServiceType.Radarr
     LaunchedEffect(viewModel) {
         viewModel.events.collect { event ->
             when (event) {
@@ -82,6 +86,8 @@ fun RequestSheet(
                     onDismissProblem = viewModel::dismissProblem,
                     onOpenFailure = viewModel::openFailure,
                     onDismissFailure = viewModel::dismissFailure,
+                    onEditServer = links?.let { open -> { id -> onDismiss().also { open.onEdit(serviceType, id) } } },
+                    onAddServer = links?.let { open -> { onDismiss().also { open.onAdd(serviceType) } } },
                 ),
         )
     }
@@ -104,6 +110,9 @@ class RequestSheetActions(
     val onDismissFailure: () -> Unit,
     val onToggleTag: (Int) -> Unit = {},
     val onRequestFor: (Int) -> Unit = {},
+    /** Edit the chosen server's settings, or add one; null where the sheet has no host to open them. */
+    val onEditServer: ((Int) -> Unit)? = null,
+    val onAddServer: (() -> Unit)? = null,
 )
 
 /** A page of the sheet: the form, or one of the lists it opens. */

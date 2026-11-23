@@ -254,6 +254,15 @@ class SeerrRequestSheetRepositoryTest {
     }
 
     @Test
+    fun `only an administrator may manage the servers a request goes to`() {
+        permissions = PERMISSION_ADMIN
+        assertTrue(withRepository { it.access(TitleKind.Movie) }.mayManageServers)
+
+        permissions = PERMISSION_MANAGE_USERS or PERMISSION_MANAGE_REQUESTS or PERMISSION_REQUEST
+        assertFalse(withRepository { it.access(TitleKind.Movie) }.mayManageServers)
+    }
+
+    @Test
     fun `the users to pick from are named by display name, then username, then id`() {
         val users = withRepository { it.users() }
 

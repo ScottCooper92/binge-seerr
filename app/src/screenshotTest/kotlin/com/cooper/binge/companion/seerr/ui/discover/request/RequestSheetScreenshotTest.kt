@@ -55,6 +55,8 @@ private fun advanced(
         },
 )
 
+private fun admin(state: RequestSheetUiState.Ready) = state.copy(access = state.access.copy(mayManageServers = true))
+
 private fun worstCase() =
     advanced().copy(
         target = target("The Lord of the Rings: The Fellowship of the Ring (Extended Director's Cut Special Edition)"),
@@ -93,6 +95,18 @@ class RequestSheetScreenshotTest {
     @SeerrComponentPreviews
     @Composable
     fun advancedUser() = Frame(advanced(), FORM_HEIGHT)
+
+    /** An administrator with a server chosen: Edit server follows the destination rows. */
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun adminEditServer() = Frame(admin(advanced()), FORM_HEIGHT, adminActions = true)
+
+    /** An administrator where the server holds none of this version: Add a server, and no destination rows. */
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun adminAddServer() = Frame(admin(advanced(servers = ServersState.Ready(listOf(UHD)))), FORM_HEIGHT, adminActions = true)
 
     /** While the lists are still being read: spinners in the rows, and the button held. */
     @PreviewTest
@@ -184,8 +198,29 @@ class RequestSheetScreenshotTest {
 private fun Frame(
     state: RequestSheetUiState,
     height: Dp,
+    adminActions: Boolean = false,
 ) {
     SheetFrame(Modifier.height(height)) {
-        RequestSheetContent(state, RequestSheetActions({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}))
+        RequestSheetContent(
+            state,
+            RequestSheetActions(
+                {},
+                {},
+                {},
+                {},
+                {},
+                {},
+                {},
+                {},
+                {},
+                {},
+                {},
+                {},
+                {},
+                {},
+                onEditServer = { _: Int -> }.takeIf { adminActions },
+                onAddServer = {}.takeIf { adminActions },
+            ),
+        )
     }
 }

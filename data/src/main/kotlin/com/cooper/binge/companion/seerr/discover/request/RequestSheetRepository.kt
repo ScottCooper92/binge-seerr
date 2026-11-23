@@ -98,6 +98,8 @@ data class RequestAccess(
     val mayChooseDestination: Boolean,
     val mayRequestForOthers: Boolean = false,
     val viewerId: Int = 0,
+    /** Whether this user may edit the servers a request goes to: the settings gate, which is the administrator. */
+    val mayManageServers: Boolean = false,
 )
 
 /** Where a request goes when the user picked a destination; a null field is left to the server's default. */
@@ -183,6 +185,7 @@ class SeerrRequestSheetRepository(
                 mayChooseDestination = permissions.canRequestAdvanced,
                 mayRequestForOthers = permissions.isAdmin || (permissions.canManageUsers && permissions.canManageRequests),
                 viewerId = user.id,
+                mayManageServers = permissions.isAdmin,
             )
         }
 
