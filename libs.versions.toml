@@ -30,7 +30,7 @@ kotlinxCoroutines = "1.11.0"
 ksp = "2.3.11"
 hilt = "2.60.1"
 androidxHilt = "1.4.0"
-navigation3 = "1.1.7"
+navigation3 = "1.2.2"
 # The list-detail scaffold as a Navigation 3 SceneStrategy. Its own POM asks for navigation3 1.0.0;
 # 1.1.7 above wins the resolution and the scene API it compiles against (androidx.navigation3.scene)
 # is unchanged there. Pinned to the stable line rather than 1.4.0-alpha, which buys nothing here.
