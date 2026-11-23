@@ -10,6 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.BingeActionFooter
+import com.binge.designsystem.component.BingeSheetPageHeader
 import com.binge.designsystem.component.CheckboxRow
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.discover.request.RequestChoice
