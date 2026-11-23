@@ -165,6 +165,18 @@ abstract class DualModeEditorViewModel<T, X>(
         engine?.discardUnsent()
     }
 
+    /**
+     * Puts back a change [discardUnsent] dropped, as a change not yet sent: the editor's draft stays dirty after a discard but
+     * nothing will send it, so the saved record is adopted again and the change applied over it, which schedules the write.
+     */
+    protected fun resendDiscarded(change: T) {
+        engine?.let { made ->
+            (made.state.value as? EditorState.Ready<T, X>)?.saved?.let(made::adopt)
+            made.change { change }
+        }
+        sync()
+    }
+
     private fun sync() {
         // Two threads can call this at once (the page, and the collectors above), so a write that finds the editor has moved on
         // since it read redoes itself: the last one to finish always shows the latest state.
