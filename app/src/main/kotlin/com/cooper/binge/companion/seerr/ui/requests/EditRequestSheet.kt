@@ -11,10 +11,7 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Tv
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -32,6 +29,7 @@ import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.BingeActionFooter
 import com.binge.designsystem.component.BingeAdaptiveSheet
 import com.binge.designsystem.component.BingeSheetKind
+import com.binge.designsystem.component.BingeSheetPageHeader
 import com.binge.designsystem.component.BingeTextButton
 import com.binge.designsystem.component.CheckboxRow
 import com.cooper.binge.companion.seerr.R
@@ -261,9 +259,7 @@ internal fun <T> DestinationPickerPanel(
 ) {
     // No scroll of its own: the list scrolls itself, and a scroll around it would hand it an unbounded height.
     Column {
-        IconButton(onClick = onBack) {
-            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(DesR.string.cd_navigate_back))
-        }
+        BingeSheetPageHeader(onBack = onBack)
         SortContent(
             title = title,
             choices = choices.map { it.first },
