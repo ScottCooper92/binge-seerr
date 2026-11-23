@@ -23,8 +23,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
-import com.binge.designsystem.component.BingeActionFooter
 import com.binge.designsystem.component.BingeConfirmDialog
+import com.binge.designsystem.component.BingeFilledButton
 import com.binge.designsystem.component.BingeTag
 import com.binge.designsystem.component.ExpandableOverview
 import com.binge.designsystem.component.ExpressiveIconButton
@@ -36,6 +36,7 @@ import com.binge.designsystem.formatRelativeOrAbsolute
 import com.binge.designsystem.resolvedContentInset
 import com.binge.designsystem.resolvedContentPadding
 import com.binge.designsystem.template.MediaHeroDetailPage
+import com.binge.designsystem.template.ScreenFooter
 import com.binge.designsystem.theme.BingeShapes
 import com.binge.designsystem.theme.BingeTheme
 import com.cooper.binge.companion.seerr.R
@@ -203,14 +204,12 @@ private fun BlocklistUnblockAction(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    BingeActionFooter(
-        label = stringResource(R.string.blocklist_unblock),
-        onClick = onClick,
-        modifier = modifier,
-        loading = unblocking,
-        shape = BingeShapes.HeroTop,
-        shadowElevation = dimensionResource(DesR.dimen.snackbar_elevation),
-        horizontalPadding = resolvedContentInset(),
-        clearsNavigationBar = true,
-    )
+    ScreenFooter(modifier = modifier) {
+        BingeFilledButton(
+            label = stringResource(R.string.blocklist_unblock),
+            onClick = onClick,
+            loading = unblocking,
+            modifier = Modifier.fillMaxWidth(),
+        )
+    }
 }

@@ -4,6 +4,7 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
@@ -21,22 +22,20 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalResources
-import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.DISABLED_ALPHA
-import com.binge.designsystem.component.BingeActionFooter
 import com.binge.designsystem.component.BingeConfirmDialog
+import com.binge.designsystem.component.BingeFilledButton
 import com.binge.designsystem.component.SnackbarMessageKind
 import com.binge.designsystem.component.showSnackbar
 import com.binge.designsystem.paneBackOrNull
-import com.binge.designsystem.resolvedContentInset
 import com.binge.designsystem.template.BingeScreenScaffold
 import com.binge.designsystem.template.FormAction
 import com.binge.designsystem.template.FormActionPlacement
 import com.binge.designsystem.template.FormScreen
 import com.binge.designsystem.template.ScreenBar
+import com.binge.designsystem.template.ScreenFooter
 import com.binge.designsystem.template.formSaveStatus
-import com.binge.designsystem.theme.BingeShapes
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.state.DialogMessage
 import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
@@ -47,7 +46,6 @@ import com.cooper.binge.companion.seerr.ui.state.messageRes
 import com.cooper.binge.companion.seerr.ui.state.needsDialog
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
-import com.binge.designsystem.R as DesR
 
 /**
  * The top-bar/bottom-bar insets a `scrolling = false` [EditorPage] does not apply itself. A `scrolling = true`
@@ -60,10 +58,9 @@ internal val LocalEditorPageInsets = compositionLocalOf { PaddingValues() }
 
 /**
  * A page's one primary action, anchored in a `bottomBar` slot rather than scrolling away: Discover Sliders' Add,
- * a Permissions page's Save. It is a [BingeActionFooter], rounded and
- * raised, whose background runs full-bleed behind the gesture nav bar, which
- * [BingeActionFooter.clearsNavigationBar] leaves to the button alone to clear. Named for [EditorPage.bottomBar],
- * but any screen with a `bottomBar` slot of the same shape can use it.
+ * a Permissions page's Save. It is a [ScreenFooter] holding a filled button: the design system's raised bar, which clears
+ * the navigation bar and keeps the content's side inset. Named for [EditorPage.bottomBar], but any screen with a `bottomBar`
+ * slot of the same shape can use it.
  */
 @Composable
 internal fun EditorPageActionBar(
@@ -73,18 +70,15 @@ internal fun EditorPageActionBar(
     modifier: Modifier = Modifier,
     loading: Boolean = false,
 ) {
-    BingeActionFooter(
-        label = label,
-        onClick = onClick,
-        enabled = enabled,
-        loading = loading,
-        modifier = modifier,
-        shape = BingeShapes.HeroTop,
-        shadowElevation = dimensionResource(DesR.dimen.snackbar_elevation),
-        bottomPadding = dimensionResource(DesR.dimen.padding_m),
-        horizontalPadding = resolvedContentInset(),
-        clearsNavigationBar = true,
-    )
+    ScreenFooter(modifier = modifier) {
+        BingeFilledButton(
+            label = label,
+            onClick = onClick,
+            enabled = enabled,
+            loading = loading,
+            modifier = Modifier.fillMaxWidth(),
+        )
+    }
 }
 
 /** What every editor page hands its screen: leave, retry the load, change the draft, and save it. */
