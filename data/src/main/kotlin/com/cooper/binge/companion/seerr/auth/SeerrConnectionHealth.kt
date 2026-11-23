@@ -9,7 +9,6 @@ import com.cooper.homelab.core.foundation.ServerId
 import com.cooper.homelab.core.server.connection.ConnectionHealth
 import com.cooper.homelab.core.server.connection.ConnectionHealthInterceptor
 import com.cooper.homelab.core.server.connection.ConnectionHealthMonitor
-import com.cooper.homelab.core.server.connection.SeerrClassifier
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emitAll
@@ -53,12 +52,13 @@ enum class SeerrConnectionHealth {
 /** A single transient failure can be a blip; only a run of them with no answer between reads as unreachable. */
 private const val UNREACHABLE_AFTER = 2
 
-/** The shared library's monitor with this app's rules: [SeerrClassifier], and two calls in a row with no answer is unreachable. */
-fun seerrHealthMonitor(): ConnectionHealthMonitor = ConnectionHealthMonitor(SeerrClassifier(::isArrProxyRoute), UNREACHABLE_AFTER)
+/** The shared library's monitor with this app's rules: [SeerrAuthFailureClassifier], and two calls in a row with no answer is unreachable. */
+fun seerrHealthMonitor(): ConnectionHealthMonitor =
+    ConnectionHealthMonitor(SeerrAuthFailureClassifier(::isArrProxyRoute), UNREACHABLE_AFTER)
 
 /**
- * Live health of the one saved server, fed by every call the cached client makes. Observe-only. What a call means is the shared
- * library's rule ([SeerrClassifier]); this keys it by [server], which is minted once and persisted. The client for the saved server
+ * Live health of the one saved server, fed by every call the cached client makes. Observe-only. What a call means is this app's rule
+ * ([SeerrAuthFailureClassifier]); this keys it by [server], which is minted once and persisted. The client for the saved server
  * carries [interceptors], built for that id; the throwaway setup-probe client carries none, because its unvalidated candidate
  * credentials must never feed the saved server's health. It does not read the store: "not connected" is [SeerrConnection]'s call.
  */

@@ -1,11 +1,11 @@
 package com.cooper.binge.companion.seerr.seerr
 
+import com.cooper.binge.companion.seerr.auth.SeerrAuthFailureClassifier
 import com.cooper.binge.companion.seerr.auth.SeerrHealth
 import com.cooper.binge.companion.seerr.demo.DEMO_HOST
 import com.cooper.homelab.core.foundation.ServerId
 import com.cooper.homelab.core.server.connection.ConnectionHealth
 import com.cooper.homelab.core.server.connection.ConnectionHealthMonitor
-import com.cooper.homelab.core.server.connection.SeerrClassifier
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import mockwebserver3.MockResponse
@@ -43,7 +43,7 @@ class SeerrHealthInterceptorsTest {
     private val baseUrl = server.url("/").toString()
 
     private fun healthOf(unreachableAfter: Int = 1) =
-        SeerrHealth(ConnectionHealthMonitor(SeerrClassifier(::isArrProxyRoute), unreachableAfter)) { id }
+        SeerrHealth(ConnectionHealthMonitor(SeerrAuthFailureClassifier(::isArrProxyRoute), unreachableAfter)) { id }
 
     private fun SeerrHealth.verdict(): ConnectionHealth = runBlocking { health.first() }
 

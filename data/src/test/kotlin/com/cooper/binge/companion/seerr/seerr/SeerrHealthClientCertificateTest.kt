@@ -1,11 +1,11 @@
 package com.cooper.binge.companion.seerr.seerr
 
+import com.cooper.binge.companion.seerr.auth.SeerrAuthFailureClassifier
 import com.cooper.binge.companion.seerr.auth.SeerrConnectionHealth
 import com.cooper.binge.companion.seerr.auth.SeerrHealth
 import com.cooper.binge.companion.seerr.auth.toSeerr
 import com.cooper.homelab.core.foundation.ServerId
 import com.cooper.homelab.core.server.connection.ConnectionHealthMonitor
-import com.cooper.homelab.core.server.connection.SeerrClassifier
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import mockwebserver3.MockResponse
@@ -88,7 +88,7 @@ class SeerrHealthClientCertificateTest {
     @Test
     fun `the health the saved client reports to reads a server that asks for a certificate as one that needs it`() {
         val id = ServerId("server-1")
-        val health = SeerrHealth(ConnectionHealthMonitor(SeerrClassifier(::isArrProxyRoute), 1)) { id }
+        val health = SeerrHealth(ConnectionHealthMonitor(SeerrAuthFailureClassifier(::isArrProxyRoute), 1)) { id }
         val client =
             OkHttpClient
                 .Builder()
