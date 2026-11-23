@@ -22,8 +22,8 @@ private data class Account(
 private class AccountEditorViewModel(
     private val loaded: Account,
     dispatcher: CoroutineDispatcher,
-    override val saveAsMadeScope: CoroutineScope,
-) : EditorViewModel<Account>(dispatcher) {
+    appScope: CoroutineScope,
+) : DualModeEditorViewModel<Account, Unit>(Unit, dispatcher, appScope) {
     val written = mutableListOf<Account>()
 
     override suspend fun load() = loaded
@@ -44,7 +44,7 @@ class SaveAsMadeValidityTest {
     fun tearDown() = viewModels.clear()
 
     private fun CoroutineScope.editor(loaded: Account) =
-        AccountEditorViewModel(loaded, mainDispatcherRule.dispatcher, saveAsMadeScope = this).also {
+        AccountEditorViewModel(loaded, mainDispatcherRule.dispatcher, appScope = this).also {
             viewModels.put("account", it)
             it.reload()
         }

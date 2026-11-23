@@ -13,10 +13,10 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
-/** A minimal [ExtrasEditorViewModel] whose extras are a plain counter, for driving [editExtras] directly. */
+/** A minimal [DualModeEditorViewModel] (committing) whose extras are a plain counter, for driving [editExtras] directly. */
 private class CounterEditorViewModel(
     dispatcher: CoroutineDispatcher,
-) : ExtrasEditorViewModel<Unit, Int>(initialExtras = 0, dispatcher = dispatcher) {
+) : DualModeEditorViewModel<Unit, Int>(initialExtras = 0, dispatcher = dispatcher, appScope = null) {
     override suspend fun load() = Unit
 
     override suspend fun write(draft: Unit) = draft
@@ -35,7 +35,7 @@ private const val EXPECTED_TOTAL = THREAD_COUNT * INCREMENTS_PER_THREAD
  * `Dispatchers.IO` threads at the same moment could both read the same starting value and the
  * later write would silently discard the earlier one. Coroutines alone can't reproduce that —
  * `runTest`'s scheduler is cooperative and never runs two bodies at once — so this drives
- * [ExtrasEditorViewModel.editExtras] from a real thread pool instead, at enough concurrency that
+ * [DualModeEditorViewModel.editExtras] from a real thread pool instead, at enough concurrency that
  * the old `var`-based implementation would reliably lose some of the total.
  */
 class ExtrasEditorViewModelTest {

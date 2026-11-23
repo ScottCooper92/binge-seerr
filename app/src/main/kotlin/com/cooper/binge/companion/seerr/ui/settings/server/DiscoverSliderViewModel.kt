@@ -7,8 +7,8 @@ import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.di.IoDispatcher
 import com.cooper.binge.companion.seerr.discover.sliders.DiscoverSliderRepository
 import com.cooper.binge.companion.seerr.notifications.ApplicationScope
+import com.cooper.binge.companion.seerr.ui.users.settings.DualModeEditorViewModel
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorEvent
-import com.cooper.binge.companion.seerr.ui.users.settings.ExtrasEditorViewModel
 import com.cooper.binge.companion.seerr.ui.users.settings.SavedDraft
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
@@ -35,20 +35,17 @@ class DiscoverSliderViewModel
         @Assisted private val id: Int?,
         @ApplicationScope appScope: CoroutineScope,
         savedState: SavedStateHandle = SavedStateHandle(),
-    ) : ExtrasEditorViewModel<SliderForm, SliderExtras>(SliderExtras(), dispatcher) {
-        /**
-         * A new slider's form, kept across the process being killed (#1246). It holds no credential. An existing slider
-         * saves as it changes, so it has no unsaved draft to keep.
-         */
-        override val savedDraft = SavedDraft(savedState, serializer<SliderForm>()).takeIf { id == null }
-
-        /**
-         * An existing slider saves as it changes (#930), each write the saved slider with the change in it. A change that
-         * leaves it without a title or the data its kind needs (a new kind drops the old kind's data) is held until it is
-         * whole again. A new slider keeps its explicit Create.
-         */
-        override val saveAsMadeScope: CoroutineScope? = appScope.takeIf { id != null }
-
+    ) : DualModeEditorViewModel<SliderForm, SliderExtras>(
+            SliderExtras(),
+            dispatcher,
+            // An existing slider saves as it changes (#930), each write the saved slider with the change in it. A change that
+            // leaves it without a title or the data its kind needs (a new kind drops the old kind's data) is held until it is
+            // whole again. A new slider keeps its explicit Create.
+            appScope.takeIf { id != null },
+            // A new slider's form, kept across the process being killed (#1246). It holds no credential. An existing slider has
+            // no unsaved draft to keep.
+            SavedDraft(savedState, serializer<SliderForm>()).takeIf { id == null },
+        ) {
         private val keywords =
             KeywordLookup(
                 scope = viewModelScope,
@@ -99,7 +96,7 @@ class DiscoverSliderViewModel
                     sliders.refresh().firstOrNull { it.id == id }?.toForm() ?: throw NoSuchElementException("slider $id")
                 }
             // What the page will show is the kept draft where there is one, so it is the draft that is named and offered.
-            readers.readFor(savedDraft?.restoreOver(form) ?: form)
+            readers.readFor(draftKeeper?.restoreOver(form) ?: form)
             return form
         }
 
@@ -163,6 +160,7 @@ class DiscoverSliderViewModel
 
         fun delete() {
             val existing = id ?: return
+            val unsent = ready()?.takeIf { it.dirty }?.draft
             // A change still waiting would otherwise be written to the slider as it goes.
             discardUnsent()
             // On the main thread, as save-as-made needs: only the request hops to the dispatcher.
@@ -171,9 +169,9 @@ class DiscoverSliderViewModel
                     .onSuccess { notify(EditorEvent.Deleted) }
                     .onFailure { failure ->
                         notify(EditorEvent.Failed.from(failure))
-                        // The slider is still there, so the change discarded above is owed to it again: sent now, and kept for a
-                        // retry if that fails too.
-                        if (ready()?.dirty == true) save()
+                        // The slider is still there, so the change discarded above is owed to it again. An edit made while the
+                        // request ran has scheduled its own write, which carries the change too, so only an untouched draft is resent.
+                        unsent?.takeIf { ready()?.draft == it }?.let { resendDiscarded(it) }
                     }
             }
         }

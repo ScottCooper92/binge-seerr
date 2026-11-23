@@ -90,7 +90,7 @@ class EditorActions<T>(
 )
 
 /** Every editor route wires the same four: only where Back goes is the page's own. */
-fun <T> EditorViewModel<T>.editorActions(onBack: () -> Unit): EditorActions<T> =
+fun <T> CommitEditorViewModel<T>.editorActions(onBack: () -> Unit): EditorActions<T> =
     EditorActions(onBack = onBack, onRetry = ::reload, onEdit = ::edit, onSave = ::save)
 
 /** Same as above, for a page that saves as it changes on the shared library's engine. */
@@ -101,16 +101,12 @@ fun <T> SaveAsMadeEditorViewModel<T>.editorActions(onBack: () -> Unit): EditorAc
 fun <T, X> SaveAsMadeEditorWithExtrasViewModel<T, X>.editorActions(onBack: () -> Unit): EditorActions<T> =
     EditorActions(onBack = onBack, onRetry = ::reload, onEdit = ::edit, onSave = ::save)
 
-/** Same as above, for a page with an explicit commit on the shared library's form. */
-fun <T> CommitEditorViewModel<T>.editorActions(onBack: () -> Unit): EditorActions<T> =
-    EditorActions(onBack = onBack, onRetry = ::reload, onEdit = ::edit, onSave = ::save)
-
 /** Same as above, for a page with an explicit commit that renders extras beside its draft. */
 fun <T, X> CommitEditorWithExtrasViewModel<T, X>.editorActions(onBack: () -> Unit): EditorActions<T> =
     EditorActions(onBack = onBack, onRetry = ::reload, onEdit = ::edit, onSave = ::save)
 
-/** Same as above, for an editor whose page renders extras beside its draft. */
-fun <T, X> ExtrasEditorViewModel<T, X>.editorActions(onBack: () -> Unit): EditorActions<T> =
+/** Same as above, for a record that is new (committed) or existing (saved as it changes), with extras beside its draft. */
+fun <T, X> DualModeEditorViewModel<T, X>.editorActions(onBack: () -> Unit): EditorActions<T> =
     EditorActions(onBack = onBack, onRetry = ::reload, onEdit = ::edit, onSave = ::save)
 
 /**

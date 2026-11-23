@@ -204,7 +204,7 @@ abstract class CommitEditorWithExtrasViewModel<T, X>(
 }
 
 /** The form's outcome as the screens read it: a commit that went through says Saved, and a refused or failed one says why, as it always did. */
-private fun CommitEvent.toEditorEvent(failure: Throwable?): EditorEvent =
+internal fun CommitEvent.toEditorEvent(failure: Throwable?): EditorEvent =
     when (this) {
         CommitEvent.Committed -> EditorEvent.Saved
         is CommitEvent.Refused, is CommitEvent.Failed ->

@@ -21,11 +21,11 @@ import org.junit.Test
 import retrofit2.HttpException
 import retrofit2.Response
 
-/** A save-as-made editor over one number on a fake server, whose writes the test answers one at a time. */
+/** A save-as-made dual-mode editor over one number on a fake server, whose writes the test answers one at a time. */
 private class NumberEditorViewModel(
     dispatcher: CoroutineDispatcher,
-    override val saveAsMadeScope: CoroutineScope,
-) : EditorViewModel<Int>(dispatcher) {
+    appScope: CoroutineScope,
+) : DualModeEditorViewModel<Int, Unit>(Unit, dispatcher, appScope) {
     var server = 0
     val writes = mutableListOf<CompletableDeferred<Unit>>()
 
@@ -49,12 +49,12 @@ class EditorReloadTest {
     fun tearDown() = viewModels.clear()
 
     private fun CoroutineScope.editor() =
-        NumberEditorViewModel(mainDispatcherRule.dispatcher, saveAsMadeScope = this).also {
+        NumberEditorViewModel(mainDispatcherRule.dispatcher, appScope = this).also {
             viewModels.put("number", it)
             it.reload()
         }
 
-    private fun NumberEditorViewModel.ready() = uiState.value as EditorUiState.Ready<Int>
+    private fun NumberEditorViewModel.ready() = uiState.value as ExtrasEditorUiState.Ready<Int, Unit>
 
     @Test
     fun `a reload during the write's delay sends the change first, then reads it back`() =
@@ -67,7 +67,7 @@ class EditorReloadTest {
             vm.writes.single().complete(Unit)
             runCurrent()
 
-            assertEquals(EditorUiState.Ready(draft = 5, saved = 5), vm.uiState.value)
+            assertEquals(ExtrasEditorUiState.Ready(draft = 5, saved = 5, extras = Unit), vm.uiState.value)
             advanceTimeBy(SAVE_AS_MADE_DELAY_MILLIS * 3)
             assertEquals("the cancelled delay sends nothing more", 1, vm.writes.size)
         }
@@ -81,11 +81,11 @@ class EditorReloadTest {
             assertEquals(1, vm.writes.size)
 
             vm.reload()
-            assertEquals(EditorUiState.Loading, vm.uiState.value)
+            assertEquals(ExtrasEditorUiState.Loading, vm.uiState.value)
             vm.writes.single().complete(Unit)
             runCurrent()
 
-            assertEquals(EditorUiState.Ready(draft = 5, saved = 5), vm.uiState.value)
+            assertEquals(ExtrasEditorUiState.Ready(draft = 5, saved = 5, extras = Unit), vm.uiState.value)
         }
 
     @Test
@@ -103,13 +103,13 @@ class EditorReloadTest {
             vm.writes[1].completeExceptionally(IllegalStateException("still offline"))
             runCurrent()
 
-            assertEquals(EditorUiState.Ready(draft = 5, saved = 0, saveFailed = true), vm.uiState.value)
+            assertEquals(ExtrasEditorUiState.Ready(draft = 5, saved = 0, extras = Unit, saveFailed = true), vm.uiState.value)
             // Retry still sends the kept change.
             vm.save()
             runCurrent()
             vm.writes[2].complete(Unit)
             runCurrent()
-            assertEquals(EditorUiState.Ready(draft = 5, saved = 5, saveStatus = SaveStatus.Saved), vm.uiState.value)
+            assertEquals(ExtrasEditorUiState.Ready(draft = 5, saved = 5, extras = Unit, saveStatus = SaveStatus.Saved), vm.uiState.value)
         }
 
     @Test
