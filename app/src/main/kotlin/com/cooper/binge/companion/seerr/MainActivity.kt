@@ -34,7 +34,7 @@ import com.cooper.binge.companion.seerr.ui.HomeRoute
 import com.cooper.binge.companion.seerr.ui.SeerrNavHost
 import com.cooper.binge.companion.seerr.ui.consent.ConsentGate
 import com.cooper.binge.companion.seerr.ui.linkedRequestId
-import com.cooper.binge.companion.seerr.ui.shell.KeepPlaceOnGateChange
+import com.cooper.binge.companion.seerr.ui.shell.SeerrTab
 import com.cooper.binge.companion.seerr.ui.shell.openLink
 import com.cooper.binge.companion.seerr.ui.shell.rememberSeerrTabs
 import com.cooper.binge.companion.seerr.ui.tv.TvSeerrShell
@@ -43,6 +43,7 @@ import com.cooper.homelab.core.flags.FeatureFlags
 import com.cooper.homelab.core.flags.PreferenceGate
 import com.cooper.homelab.core.telemetry.Analytics
 import com.cooper.homelab.core.uiandroid.flags.LocalFlags
+import com.cooper.homelab.core.uiandroid.shell.KeepPlaceOnGateChange
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.launch
@@ -119,7 +120,7 @@ class MainActivity : ComponentActivity() {
             val resolved by discoveryGate.resolved.collectAsStateWithLifecycle()
             val discovery = resolved ?: discoveryGate.fallback
             val tabs = rememberSeerrTabs(discovery = discovery)
-            KeepPlaceOnGateChange(resolved, tabs)
+            KeepPlaceOnGateChange(resolved, tabs, offTab = SeerrTab.Settings)
             LaunchedEffect(backStack) {
                 screenNames(backStack, selectedTab = { tabs.selected }).collect { analytics.screen(it) }
             }
