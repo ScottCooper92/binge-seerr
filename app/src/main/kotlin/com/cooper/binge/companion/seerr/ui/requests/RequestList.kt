@@ -193,11 +193,10 @@ internal fun RequestRow(
             stringResource(item.mediaType.labelRes()),
             stringResource(R.string.settings_service_4k).takeIf { item.is4k },
             item.year,
+            item.seasonNumbers
+                .takeIf { it.isNotEmpty() }
+                ?.let { pluralStringResource(R.plurals.requests_seasons, it.size, it.formatRanges()) },
         ).joinToString(stringResource(R.string.hub_meta_separator))
-    val seasons =
-        item.seasonNumbers
-            .takeIf { it.isNotEmpty() }
-            ?.let { pluralStringResource(R.plurals.requests_seasons, it.size, it.formatRanges()) }
     MediaResultRow(
         result =
             MediaResult(
@@ -208,7 +207,6 @@ internal fun RequestRow(
                 subtitle = subtitle,
                 rating = item.rating,
                 meta = item.genre,
-                nameSuffix = seasons,
                 statusInline = true,
             ),
         onClick = onClick,
