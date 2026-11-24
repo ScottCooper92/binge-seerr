@@ -2,6 +2,7 @@ package com.cooper.binge.companion.seerr.ui.settings
 
 import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.component.ListItemDestination
+import com.binge.designsystem.theme.BingeExpressiveTheme
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.util.createSeerrComposeRule
 import com.cooper.binge.companion.seerr.util.string
@@ -23,7 +24,9 @@ class AboutRowsTest {
         var diagnostics = 0
         var rows: List<ListItem> = emptyList()
         composeTestRule.setContent {
-            rows = aboutGroupRows(onOpenLicences = { licences++ }, onOpenDiagnostics = { diagnostics++ })
+            BingeExpressiveTheme(dynamicColor = false) {
+                rows = aboutGroupRows(onOpenLicences = { licences++ }, onOpenDiagnostics = { diagnostics++ })
+            }
         }
         composeTestRule.waitForIdle()
         assertTrue(rows.size >= 4)

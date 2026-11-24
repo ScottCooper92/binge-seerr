@@ -66,8 +66,10 @@ class SwitchRowSemanticsTest {
     fun `the app settings switches expose their state`() {
         var rows: List<ListItem> = emptyList()
         composeTestRule.setContent {
-            val app = AppSettings(bugReportUrl = "", shakeToReport = true, shareUsageData = false, sendCrashReports = true)
-            rows = appRows(app, {}, {}, {})
+            BingeExpressiveTheme(dynamicColor = false) {
+                val app = AppSettings(bugReportUrl = "", shakeToReport = true, shareUsageData = false, sendCrashReports = true)
+                rows = appRows(app, {}, {}, {})
+            }
         }
         composeTestRule.waitForIdle()
         assertEquals(listOf(true, false, true), rows.mapNotNull { it.toggled }.takeLast(3))
@@ -79,9 +81,11 @@ class SwitchRowSemanticsTest {
         var without: List<ListItem> = emptyList()
         var with: List<ListItem> = emptyList()
         composeTestRule.setContent {
-            val app = AppSettings(bugReportUrl = "", shakeToReport = true, shareUsageData = false, sendCrashReports = true)
-            without = appRows(app, {}, {}, {})
-            with = appRows(app, {}, {}, {}, onOpenTip = { opened += 1 })
+            BingeExpressiveTheme(dynamicColor = false) {
+                val app = AppSettings(bugReportUrl = "", shakeToReport = true, shareUsageData = false, sendCrashReports = true)
+                without = appRows(app, {}, {}, {})
+                with = appRows(app, {}, {}, {}, onOpenTip = { opened += 1 })
+            }
         }
         composeTestRule.waitForIdle()
         assertEquals(without.size + 1, with.size)
