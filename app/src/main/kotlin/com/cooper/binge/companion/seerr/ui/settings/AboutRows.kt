@@ -16,30 +16,6 @@ import com.cooper.homelab.core.uiandroid.appsettings.aboutRows
 
 private const val PRIVACY_POLICY_URL = "https://scottcooper92.github.io/app-feedback/seerr/privacy/"
 
-package com.cooper.binge.companion.seerr.ui.settings
-
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Article
-import androidx.compose.material.icons.filled.BugReport
-import androidx.compose.material.icons.filled.Description
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Science
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
-import com.binge.designsystem.component.ListItem
-import com.binge.designsystem.component.ListItemDestination
-import com.binge.designsystem.theme.BingeSentiment
-import com.binge.designsystem.theme.fill
-import com.cooper.binge.companion.seerr.BuildConfig
-import com.cooper.binge.companion.seerr.R
-import com.cooper.binge.companion.seerr.ui.openInBrowser
-import com.cooper.binge.companion.seerr.ui.openPlayStoreListing
-import com.cooper.binge.companion.seerr.ui.openTestingOptIn
-import com.cooper.homelab.core.uiandroid.R as CoreR
-
-private const val PRIVACY_POLICY_URL = "https://scottcooper92.github.io/app-feedback/seerr/privacy/"
-
 /**
  * The About group: the shared library's version, privacy policy, licences and Diagnostics rows, then this app's own beta opt-in.
  * The server's version is in Connection.
