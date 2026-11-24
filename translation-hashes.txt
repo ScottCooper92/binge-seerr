@@ -224,12 +224,6 @@ app:settings_jobs_running  40b9722ed3fa
 app:settings_jobs_scheduled  f2f73ac9d26f
 app:settings_notifications_forwarded  4ea83511756f
 app:settings_notifications_forwarded_caption  d2591af63823
-app:settings_notifications_interval  a0b9aa23865d
-app:settings_notifications_interval_120  9808e0ec3cb3
-app:settings_notifications_interval_15  2f18bc2a00e7
-app:settings_notifications_interval_30  f01a042bbfb3
-app:settings_notifications_interval_360  4105ae3b8a60
-app:settings_notifications_interval_60  f8b8883f0c9d
 app:settings_notifications_last_run  c2fbf9a33a20
 app:settings_notifications_not_yet  881d23f6ba57
 app:settings_notifications_poll  6dddca73fef3
